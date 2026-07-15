@@ -1,12 +1,15 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { MAX_PAID_ASSISTS } from "./partner-types";
 import type {
   PartnerAction,
+  PartnerMessage,
   PartnerResponse,
   VerifyResponse,
 } from "./partner-types";
+
+export type { PartnerMessage };
 
 // Free authored hints are served locally from the lesson's `hints` ladder —
 // they never hit the network. Once this many have been shown, `requestHint()`
@@ -19,11 +22,7 @@ const FREE_HINT_LIMIT = 2;
 
 const PARTNER_ROUTE = "/api/ai/partner";
 const VERIFY_ROUTE = "/api/ai/partner/verify";
-
-export type PartnerMessage =
-  | { role: "user"; text: string }
-  | { role: "ai"; kind: "hint"; text: string }
-  | { role: "ai"; response: PartnerResponse };
+const LOG_ROUTE = "/api/ai/partner/log";
 
 interface UseAiPartnerOptions {
   lessonSlug: string;
@@ -73,6 +72,44 @@ export function useAiPartner({
   const [budgetExhausted, setBudgetExhausted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Rehydrate the persisted chat log + paid-assist count on mount so a
+  // returning learner sees past AI notes without spending again (the log lives
+  // server-side per user+lesson). Seeds only while the chat is still empty and
+  // never lowers a live `paidUsed`, so a fast first interaction during the
+  // async load is never clobbered.
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch(
+          `${LOG_ROUTE}?courseSlug=${encodeURIComponent(
+            courseSlug
+          )}&lessonSlug=${encodeURIComponent(lessonSlug)}`
+        );
+        if (!res.ok || cancelled) return;
+        const data = (await res.json()) as {
+          log?: PartnerMessage[];
+          paidUsed?: number;
+        };
+        if (cancelled) return;
+        if (Array.isArray(data.log) && data.log.length > 0) {
+          const loaded = data.log;
+          setMessages((prev) => (prev.length === 0 ? loaded : prev));
+        }
+        if (typeof data.paidUsed === "number") {
+          const used = data.paidUsed;
+          setPaidUsed((prev) => Math.max(prev, used));
+          if (used >= MAX_PAID_ASSISTS) setBudgetExhausted(true);
+        }
+      } catch {
+        // best-effort: an empty chat on load is an acceptable fallback
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [courseSlug, lessonSlug]);
 
   // Every call to the route is a PAID action (free hints never reach here) —
   // stateless by design, so only the current code/testSummary are sent, never

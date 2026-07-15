@@ -1864,9 +1864,17 @@ CREATE TABLE IF NOT EXISTS challenge_assists (
   user_id     UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   lesson_id   TEXT NOT NULL,
   assists_used INTEGER NOT NULL DEFAULT 0,
+  -- Rendered AI Partner chat turns (JSONB array of PartnerMessage) so a
+  -- returning learner can review past AI notes without spending another paid
+  -- assist. Bounded in practice by MAX_PAID_ASSISTS successful paid actions.
+  chat_log    JSONB NOT NULL DEFAULT '[]'::jsonb,
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (user_id, lesson_id)
 );
+
+-- Idempotent add for DBs created before chat_log existed (this file predates it).
+ALTER TABLE challenge_assists
+  ADD COLUMN IF NOT EXISTS chat_log JSONB NOT NULL DEFAULT '[]'::jsonb;
 
 ALTER TABLE challenge_assists ENABLE ROW LEVEL SECURITY;
 -- No policies: reached only through SECURITY DEFINER RPCs called by service_role.
@@ -1954,3 +1962,50 @@ $$;
 
 REVOKE ALL ON FUNCTION refund_challenge_assist(UUID, TEXT) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION refund_challenge_assist(UUID, TEXT) TO service_role;
+
+-- Append rendered chat turns to a learner's per-lesson AI Partner log.
+-- p_entries is a JSONB array (PartnerMessage[]). The row already exists by the
+-- time this runs (spend_challenge_assist upserted it on the same paid call),
+-- but upsert defensively. Only ever called on a SUCCESSFUL paid response, so it
+-- stays aligned with the assists that were actually charged.
+CREATE OR REPLACE FUNCTION append_challenge_assist_log(
+  p_user_id   UUID,
+  p_lesson_id TEXT,
+  p_entries   JSONB
+) RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+BEGIN
+  IF p_entries IS NULL OR jsonb_typeof(p_entries) <> 'array' THEN
+    RETURN;
+  END IF;
+  INSERT INTO public.challenge_assists (user_id, lesson_id, chat_log, updated_at)
+  VALUES (p_user_id, p_lesson_id, p_entries, now())
+  ON CONFLICT (user_id, lesson_id)
+  DO UPDATE SET
+    chat_log = public.challenge_assists.chat_log || EXCLUDED.chat_log,
+    updated_at = now();
+END;
+$$;
+
+REVOKE ALL ON FUNCTION append_challenge_assist_log(UUID, TEXT, JSONB) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION append_challenge_assist_log(UUID, TEXT, JSONB) TO service_role;
+
+-- Read a learner's per-lesson assist count + chat log for pane rehydration
+-- (so returning to a lesson restores past AI notes without a paid model call).
+CREATE OR REPLACE FUNCTION get_challenge_assist_state(p_user_id UUID, p_lesson_id TEXT)
+RETURNS TABLE (assists_used INT, chat_log JSONB)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT assists_used, chat_log
+  FROM public.challenge_assists
+  WHERE user_id = p_user_id AND lesson_id = p_lesson_id;
+$$;
+
+REVOKE ALL ON FUNCTION get_challenge_assist_state(UUID, TEXT) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION get_challenge_assist_state(UUID, TEXT) TO service_role;

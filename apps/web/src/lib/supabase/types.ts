@@ -945,6 +945,24 @@ export type Database = {
         };
         Returns: undefined;
       };
+      append_challenge_assist_log: {
+        Args: {
+          p_user_id: string;
+          p_lesson_id: string;
+          p_entries: Json;
+        };
+        Returns: undefined;
+      };
+      get_challenge_assist_state: {
+        Args: {
+          p_user_id: string;
+          p_lesson_id: string;
+        };
+        Returns: {
+          assists_used: number;
+          chat_log: Json;
+        }[];
+      };
       award_xp: {
         Args: {
           p_amount: number;

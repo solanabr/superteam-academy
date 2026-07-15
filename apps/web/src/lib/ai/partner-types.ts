@@ -36,6 +36,18 @@ export interface ProposeResponse {
 
 export type PartnerResponse = HintResponse | AnswerResponse | ProposeResponse;
 
+/**
+ * A single rendered turn in the AI Partner chat. Persisted server-side per
+ * (learner, lesson) so a returning learner can review past AI notes without
+ * spending another paid assist. The `{role:"ai",kind:"hint"}` variant is the
+ * only client-only one — free authored hints never hit the paid route, so they
+ * aren't logged (and stay re-viewable for free).
+ */
+export type PartnerMessage =
+  | { role: "user"; text: string }
+  | { role: "ai"; kind: "hint"; text: string }
+  | { role: "ai"; response: PartnerResponse };
+
 /** The comprehension-check answer, sealed into `checkToken` (never sent to the client in the clear). */
 export interface SealedCheck {
   correctIndex: 0 | 1 | 2;
