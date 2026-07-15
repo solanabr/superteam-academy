@@ -938,6 +938,23 @@
       "noCourses": "Nenhum curso no pacote de conteúdo.",
       "noAchievements": "Nenhuma conquista no pacote de conteúdo.",
       "missingFields": "Faltando: {fields}",
+      "table": {
+        "course": "Curso",
+        "lessons": "Lições",
+        "xpPerLesson": "XP/Lição",
+        "status": "Status",
+        "action": "Ação"
+      },
+      "actions": {
+        "deploy": "Implantar",
+        "sync": "Sincronizar",
+        "reactivate": "Reativar",
+        "deactivate": "Desativar",
+        "working": "…",
+        "syncAll": "Sincronizar tudo ({count})",
+        "syncAllBusy": "Sincronizando…"
+      },
+      "deactivated": "Desativado",
       "syncAllConfirm": "{count, plural, one {Sincronizar # curso} other {Sincronizar # cursos}} — {changes, plural, one {# mudança de campo} other {# mudanças de campo}}. Continuar?",
       "deactivateConfirm": "Desativar este curso? Os alunos não poderão se matricular até ele ser reativado.",
       "errors": {
@@ -977,6 +994,7 @@
         "remediation": "\"{title}\" tem campos on-chain imutáveis que diferem do pacote de conteúdo; update_course não pode aplicá-los. Opções: 1. Corrija o valor no repositório courses-academy e publique um novo PR de pacote, ou 2. Desative este curso e implante uma nova versão."
       },
       "recreate": {
+        "summaryPill": "Divergência imutável — {count, plural, one {# campo} other {# campos}}",
         "cardHeading": "Divergência imutável — recriação necessária",
         "cardIntro": "Estes campos são definidos uma única vez no deploy e update_course não pode alterá-los. A única correção é fechar e recriar o curso on-chain.",
         "creatorEmphasis": "Divergência de criador: Course.creator é o destinatário imutável da recompensa de XP. Até o curso ser recriado, cada recompensa de criador é paga à carteira errada.",
@@ -987,7 +1005,7 @@
         "refusedHeading": "Recriação indisponível",
         "loadErrorHeading": "Não foi possível verificar a pré-verificação de recriação",
         "refusalReason": {
-          "noImmutableDiff": "Nenhum campo imutável difere entre o pacote de conteúdo e a conta on-chain — recriar não corrigiria nada e zeraria de forma irreversível os contadores de conclusão/matrícula e causaria indisponibilidade.",
+          "noImmutableDiff": "Nenhum campo imutável difere entre o pacote de conteúdo e a conta on-chain — recriar não corrigiria nada e zeraria de forma irreversível os contadores on-chain de conclusão/inscrição e causaria indisponibilidade.",
           "unconfirmed": "Não foi possível ler a conta on-chain para confirmar uma divergência imutável — atualize a tela de status e tente novamente; recusando recriar sobre um estado não confirmado."
         },
         "modal": {
@@ -997,9 +1015,9 @@
           "immutableHeading": "Campos imutáveis que esta recriação irá definir",
           "lessonCountLabel": "A contagem de lições on-chain é preservada exatamente ({count}). Novas lições são adicionadas depois pela sincronização normal.",
           "resetHeading": "O que é zerado",
-          "resetCounters": "Os contadores de conclusões e inscrições são zerados (conclusões {completions}, inscrições {enrollments}). Isto é irrecuperável.",
+          "resetCounters": "Os contadores on-chain (total de conclusões/inscrições exibido no curso) são zerados — irrecuperável.",
           "preserveHeading": "O que é preservado",
-          "preserveList": "As inscrições, o progresso dos alunos e os certificados conquistados são todos preservados.",
+          "preserveList": "Os registros dos alunos no banco de dados — inscrições, progresso das lições, certificados — permanecem intactos.",
           "downtimeWarning": "Breve indisponibilidade: fechar e criar NÃO são atômicos — há uma janela de alguns segundos em que o PDA do curso não existe e enroll/complete irão falhar.",
           "unusualHeading": "Criador incomum",
           "unusualDescription": "O criador resolvido está na lista de bloqueio ou é igual à autoridade da plataforma — normalmente recusado pela proteção #427.",
@@ -1016,7 +1034,7 @@
           "closeSignature": "Assinatura de fechamento",
           "createSignature": "Assinatura de criação",
           "attempts": "Tentativas de criação",
-          "lostCounters": "Contadores zerados — conclusões {completions}, inscrições {enrollments}.",
+          "lostCounters": "Contadores on-chain zerados — conclusões {completions}, inscrições {enrollments}.",
           "warningsHeading": "Avisos",
           "refresh": "Atualizar"
         },

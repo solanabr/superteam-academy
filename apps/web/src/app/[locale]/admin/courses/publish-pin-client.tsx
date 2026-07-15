@@ -2,6 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { AdminCard } from "@/components/admin/admin-card";
+import {
+  AdminBadge,
+  type AdminBadgeTone,
+} from "@/components/admin/admin-badge";
+import { AdminDisclosure } from "@/components/admin/admin-disclosure";
 import type { ChecksState } from "@/lib/github/types";
 import {
   computePublishVerdict,
@@ -33,18 +39,16 @@ const BUTTON_CLASSES =
 
 function ChecksBadge({ checks }: { checks: ChecksState }): React.ReactElement {
   const t = useTranslations("admin.publishPin");
-  const tone: Record<ChecksState, string> = {
-    success: "border-success bg-success-light text-success",
-    failure: "border-danger bg-danger-light text-danger",
-    pending: "border-streak bg-streak-light text-streak",
-    unknown: "border-border bg-subtle text-text-3",
+  const tone: Record<ChecksState, AdminBadgeTone> = {
+    success: "success",
+    failure: "danger",
+    pending: "warning",
+    unknown: "neutral",
   };
   return (
-    <span
-      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${tone[checks]}`}
-    >
+    <AdminBadge tone={tone[checks]} shape="pill">
       {t(`checks.${checks}`)}
-    </span>
+    </AdminBadge>
   );
 }
 
@@ -117,7 +121,7 @@ export function PublishPinClient(): React.ReactElement {
   }, [load]);
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4 shadow-card">
+    <AdminCard>
       <div className="mb-3 flex items-center justify-between gap-4">
         <h3 className="font-display text-base font-bold text-text">
           {t("title")}
@@ -142,7 +146,7 @@ export function PublishPinClient(): React.ReactElement {
       ) : (
         <PinBody data={data} />
       )}
-    </div>
+    </AdminCard>
   );
 }
 
@@ -225,76 +229,82 @@ function PreparePr({ data }: { data: PinResponse }): React.ReactElement {
   const prUrl = buildPublishPrUrl({ pinnedSha: pin.sha, headSha: head.sha });
 
   return (
-    <section className="space-y-4 rounded-md border border-border bg-bg p-4">
-      <h4 className="font-display text-sm font-bold text-text">
-        {t("prepare.title")}
-      </h4>
-
-      {verdict.warnRedHead && (
-        <div
-          role="alert"
-          className="rounded-md border border-danger bg-danger-light p-3 text-sm text-danger"
-        >
-          {t("prepare.redHeadWarning")}
-        </div>
-      )}
-
-      <div className="space-y-1">
-        <p className="text-xs font-medium uppercase tracking-wide text-text-3">
-          {t("prepare.step1")}
-        </p>
-        <pre className="overflow-x-auto rounded-md border border-border bg-card p-3 text-xs">
-          <code className="font-mono text-text">{diff}</code>
-        </pre>
-      </div>
-
-      <div className="space-y-1">
-        <p className="text-xs font-medium uppercase tracking-wide text-text-3">
-          {t("prepare.step2")}
-        </p>
-        <div className="flex flex-wrap items-center gap-2">
-          <code className="rounded-md border border-border bg-card px-2 py-1 font-mono text-xs text-text">
-            {COMPILE_COMMAND}
-          </code>
-          <CopyButton text={COMPILE_COMMAND} label={t("copyCommand")} />
-        </div>
-        <p className="text-xs text-text-3">
-          {t("prepare.step2Hint", { path: LOCK_PATH })}
-        </p>
-      </div>
-
-      <div className="space-y-2">
-        <p className="text-xs font-medium uppercase tracking-wide text-text-3">
-          {t("prepare.step3")}
-        </p>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs text-text-3">{t("prepare.branch")}</span>
-          <code className="rounded-md border border-border bg-card px-2 py-1 font-mono text-xs text-text">
-            {branch}
-          </code>
-          <CopyButton text={branch} label={t("copyBranch")} />
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <CopyButton text={title} label={t("copyTitle")} />
-          <CopyButton text={body} label={t("copyBody")} />
-          <a
-            href={contentCompareUrl(pin.sha, head.sha)}
-            target="_blank"
-            rel="noreferrer"
-            className={`${BUTTON_CLASSES} inline-flex items-center`}
+    <div className="border-t border-border pt-4">
+      <AdminDisclosure
+        headingLevel={4}
+        summary={
+          <span className="font-display text-sm font-bold text-text">
+            {t("prepare.title")}
+          </span>
+        }
+        contentClassName="mt-3 space-y-4"
+      >
+        {verdict.warnRedHead && (
+          <div
+            role="alert"
+            className="rounded-md border border-danger bg-danger-light p-3 text-sm text-danger"
           >
-            {t("viewCompare")}
-          </a>
-          <a
-            href={prUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center rounded-md border border-primary bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-push-sm transition-all hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary active:translate-y-[1px]"
-          >
-            {t("preparePrLink")}
-          </a>
+            {t("prepare.redHeadWarning")}
+          </div>
+        )}
+
+        <div className="space-y-1">
+          <p className="text-xs font-medium uppercase tracking-wide text-text-3">
+            {t("prepare.step1")}
+          </p>
+          <pre className="overflow-x-auto rounded-md border border-border bg-card p-3 text-xs">
+            <code className="font-mono text-text">{diff}</code>
+          </pre>
         </div>
-      </div>
-    </section>
+
+        <div className="space-y-1">
+          <p className="text-xs font-medium uppercase tracking-wide text-text-3">
+            {t("prepare.step2")}
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <code className="rounded-md border border-border bg-card px-2 py-1 font-mono text-xs text-text">
+              {COMPILE_COMMAND}
+            </code>
+            <CopyButton text={COMPILE_COMMAND} label={t("copyCommand")} />
+          </div>
+          <p className="text-xs text-text-3">
+            {t("prepare.step2Hint", { path: LOCK_PATH })}
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-xs font-medium uppercase tracking-wide text-text-3">
+            {t("prepare.step3")}
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-text-3">{t("prepare.branch")}</span>
+            <code className="rounded-md border border-border bg-card px-2 py-1 font-mono text-xs text-text">
+              {branch}
+            </code>
+            <CopyButton text={branch} label={t("copyBranch")} />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <CopyButton text={title} label={t("copyTitle")} />
+            <CopyButton text={body} label={t("copyBody")} />
+            <a
+              href={contentCompareUrl(pin.sha, head.sha)}
+              target="_blank"
+              rel="noreferrer"
+              className={`${BUTTON_CLASSES} inline-flex items-center`}
+            >
+              {t("viewCompare")}
+            </a>
+            <a
+              href={prUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center rounded-md border border-primary bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-push-sm transition-all hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary active:translate-y-[1px]"
+            >
+              {t("preparePrLink")}
+            </a>
+          </div>
+        </div>
+      </AdminDisclosure>
+    </div>
   );
 }

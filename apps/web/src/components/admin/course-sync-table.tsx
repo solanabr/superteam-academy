@@ -6,6 +6,10 @@ import { StatusBadge, ContentDriftBadge } from "./status-badge";
 import { SyncDiffView } from "./sync-diff-view";
 import { RecreateCourseFlow } from "./recreate-course-flow";
 import { DeployChangePreview } from "./deploy-change-preview";
+import { AdminTableShell } from "./admin-table-shell";
+import { AdminButton } from "./admin-button";
+import { AdminBadge } from "./admin-badge";
+import { AdminDisclosure } from "./admin-disclosure";
 import type { CourseStatus } from "@/app/[locale]/admin/admin-status-types";
 
 interface CourseSyncTableProps {
@@ -155,137 +159,178 @@ export function CourseSyncTable({ courses, onRefresh }: CourseSyncTableProps) {
 
   return (
     <div>
+      {/* Transient action errors get the neutral `streak` treatment, not
+          `danger` — `danger` is reserved for the blocking immutable mismatch and
+          the destructive recreate. */}
       {error && (
-        <div className="mb-3 rounded-md border border-danger bg-danger-light p-3 text-sm text-danger">
+        <div
+          role="alert"
+          className="mb-3 rounded-md border border-streak bg-streak-light p-3 text-sm text-streak"
+        >
           {error}
         </div>
       )}
       {syncableCount > 0 && (
         <div className="mb-3 flex justify-end">
-          <button
+          <AdminButton
+            variant="neutral"
             onClick={() => void handleSyncAll()}
             disabled={syncingAll}
-            className="rounded-md border border-border bg-card px-4 py-1.5 text-xs font-medium text-text shadow-push-sm transition-all hover:bg-subtle active:translate-y-[2px] active:shadow-push-active disabled:pointer-events-none disabled:opacity-50"
           >
-            {syncingAll ? "Syncing..." : `Sync All (${syncableCount})`}
-          </button>
+            {syncingAll
+              ? t("actions.syncAllBusy")
+              : t("actions.syncAll", { count: syncableCount })}
+          </AdminButton>
         </div>
       )}
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-text-3">
-            <th className="pb-2 pr-4 font-medium">Course</th>
-            <th className="pb-2 pr-4 text-center font-medium">Lessons</th>
-            <th className="pb-2 pr-4 text-center font-medium">XP/Lesson</th>
-            <th className="pb-2 pr-4 font-medium">Status</th>
-            <th className="pb-2 font-medium">Action</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border">
-          {courses.map((course) => {
-            const isSyncing = syncing === course.contentId;
-            const immutableDiffs = course.differences.filter(
-              (d) => !d.updateable
-            );
-            const hasImmutableMismatch = immutableDiffs.length > 0;
-            const canSync =
-              !course.isDraft &&
-              course.missingFields.length === 0 &&
-              !hasImmutableMismatch;
-            const actionLabel =
-              course.onChainStatus === "not_deployed" ? "Deploy" : "Sync";
+      <AdminTableShell
+        columns={[
+          { key: "course", label: t("table.course"), headClassName: "pr-4" },
+          {
+            key: "lessons",
+            label: t("table.lessons"),
+            align: "center",
+            headClassName: "pr-4",
+          },
+          {
+            key: "xpPerLesson",
+            label: t("table.xpPerLesson"),
+            align: "center",
+            headClassName: "pr-4",
+          },
+          { key: "status", label: t("table.status"), headClassName: "pr-4" },
+          {
+            key: "action",
+            label: t("table.action"),
+            align: "right",
+            headClassName: "w-44",
+          },
+        ]}
+      >
+        {courses.map((course) => {
+          const isSyncing = syncing === course.contentId;
+          const immutableDiffs = course.differences.filter(
+            (d) => !d.updateable
+          );
+          const hasImmutableMismatch = immutableDiffs.length > 0;
+          const canSync =
+            !course.isDraft &&
+            course.missingFields.length === 0 &&
+            !hasImmutableMismatch;
+          const actionLabel =
+            course.onChainStatus === "not_deployed"
+              ? t("actions.deploy")
+              : t("actions.sync");
 
-            return (
-              <tr
-                key={course.contentId}
-                className="transition-colors hover:bg-subtle"
-              >
-                <td className="py-3 pr-4">
-                  <div className="font-medium text-text">{course.title}</div>
-                  <div className="mt-0.5 font-mono text-xs text-text-3">
-                    {course.slug}
+          return (
+            <tr
+              key={course.contentId}
+              className="transition-colors hover:bg-subtle"
+            >
+              {/* align-top keeps every cell's eyeline steady when a tall
+                  mismatch/diff row expands the Course cell. */}
+              <td className="py-3 pr-4 align-top">
+                <div className="font-medium text-text">{course.title}</div>
+                <div className="mt-0.5 font-mono text-xs text-text-3">
+                  {course.slug}
+                </div>
+                {course.missingFields.length > 0 && (
+                  <div className="mt-1 text-xs text-streak">
+                    {t("missingFields", {
+                      fields: course.missingFields.join(", "),
+                    })}
                   </div>
-                  {course.missingFields.length > 0 && (
-                    <div className="mt-1 text-xs text-streak">
-                      {t("missingFields", {
-                        fields: course.missingFields.join(", "),
-                      })}
-                    </div>
-                  )}
-                  {course.differences.length > 0 && (
-                    <SyncDiffView
-                      differences={course.differences}
-                      title={course.title}
-                    />
-                  )}
-                  {hasImmutableMismatch && (
+                )}
+                {course.differences.length > 0 && (
+                  <SyncDiffView
+                    differences={course.differences}
+                    title={course.title}
+                  />
+                )}
+                {hasImmutableMismatch && (
+                  // Collapse the row-exploding recreate card to a one-line danger
+                  // pill; the disclosure reveals the SAME `RecreateCourseFlow`
+                  // card unchanged (its preflight/execute/refusal logic is
+                  // frozen — this is pure presentation).
+                  <AdminDisclosure
+                    triggerClassName="mt-2 rounded-full border border-danger bg-danger-light px-2.5 py-1 text-xs font-semibold text-danger"
+                    summary={t("recreate.summaryPill", {
+                      count: immutableDiffs.length,
+                    })}
+                  >
                     <RecreateCourseFlow
                       courseId={course.contentId}
                       courseTitle={course.title}
                       immutableDiffs={immutableDiffs}
                       onRecreated={onRefresh}
                     />
-                  )}
-                </td>
-                <td className="py-3 pr-4 text-center text-text">
-                  {course.lessonCount === 0 ? (
-                    <span className="text-streak">—</span>
-                  ) : (
-                    course.lessonCount
-                  )}
-                </td>
-                <td className="py-3 pr-4 text-center text-text">
-                  {course.contentXpPerLesson ?? "—"}
-                </td>
-                <td className="py-3 pr-4">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <StatusBadge status={course.onChainStatus} />
-                    <ContentDriftBadge
-                      onChainStatus={course.onChainStatus}
-                      contentDrift={course.contentDrift}
-                    />
-                    {course.onChainStatus === "synced" &&
-                      course.isActive === false && (
-                        <span className="inline-flex items-center rounded border border-danger bg-danger-light px-2 py-0.5 text-xs font-medium text-danger">
-                          Deactivated
-                        </span>
-                      )}
-                  </div>
-                </td>
-                <td className="py-3">
+                  </AdminDisclosure>
+                )}
+              </td>
+              <td className="py-3 pr-4 text-center align-top text-text">
+                {course.lessonCount === 0 ? (
+                  <span className="text-streak">—</span>
+                ) : (
+                  course.lessonCount
+                )}
+              </td>
+              <td className="py-3 pr-4 text-center align-top text-text">
+                {course.contentXpPerLesson ?? "—"}
+              </td>
+              <td className="py-3 pr-4 align-top">
+                {/* min-w reserves the badge column so wrapping there never
+                    ripples the Course/Action columns' widths. */}
+                <div className="flex min-w-[7.5rem] flex-wrap items-center gap-1.5">
+                  <StatusBadge status={course.onChainStatus} />
+                  <ContentDriftBadge
+                    onChainStatus={course.onChainStatus}
+                    contentDrift={course.contentDrift}
+                  />
+                  {course.onChainStatus === "synced" &&
+                    course.isActive === false && (
+                      <AdminBadge tone="danger">{t("deactivated")}</AdminBadge>
+                    )}
+                </div>
+              </td>
+              <td className="py-3 text-right align-top">
+                <div className="flex justify-end gap-2">
                   {canSync && (
-                    <button
+                    <AdminButton
+                      variant="primary"
                       onClick={() => setPreviewCourse(course)}
                       disabled={isSyncing}
-                      className="rounded-md bg-primary px-3 py-1 font-display text-xs font-bold text-white shadow-push transition-all duration-100 hover:bg-primary-hover active:translate-y-[3px] active:shadow-push-active disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      {isSyncing ? "..." : actionLabel}
-                    </button>
+                      {isSyncing ? t("actions.working") : actionLabel}
+                    </AdminButton>
                   )}
                   {course.onChainStatus === "synced" &&
                     (course.isActive === false ? (
-                      <button
+                      <AdminButton
+                        variant="neutral"
                         onClick={() => void handleReactivate(course.contentId)}
                         disabled={isSyncing}
-                        className="ml-2 rounded-md border border-success px-3 py-1 font-display text-xs font-bold text-success shadow-push-sm transition-all hover:bg-success-light active:translate-y-[2px] active:shadow-push-active disabled:opacity-50"
                       >
-                        {isSyncing ? "..." : "Reactivate"}
-                      </button>
+                        {isSyncing
+                          ? t("actions.working")
+                          : t("actions.reactivate")}
+                      </AdminButton>
                     ) : (
-                      <button
+                      <AdminButton
+                        variant="neutral"
                         onClick={() => void handleDeactivate(course.contentId)}
                         disabled={isSyncing}
-                        className="ml-2 rounded-md border border-border px-3 py-1 font-display text-xs font-bold text-text-2 shadow-push-sm transition-all hover:border-danger hover:bg-danger-light hover:text-danger active:translate-y-[2px] active:shadow-push-active disabled:opacity-50"
                       >
-                        {isSyncing ? "..." : "Deactivate"}
-                      </button>
+                        {isSyncing
+                          ? t("actions.working")
+                          : t("actions.deactivate")}
+                      </AdminButton>
                     ))}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                </div>
+              </td>
+            </tr>
+          );
+        })}
+      </AdminTableShell>
       {previewCourse && (
         <DeployChangePreview
           course={previewCourse}
