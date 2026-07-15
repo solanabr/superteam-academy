@@ -1,6 +1,8 @@
 # Admin-panel revamp — execution plan (WS-A/B/C/D)
 
-**Status:** ✅ SHIPPED 2026-07-15 — all four workstreams merged to main. WS-A `#517` (closes #512, #448) · WS-C `#519` (closes #513) · WS-B `#520` (closes #514) · compileBundle prep `#515`. WS-B merged **dark** (opt-in `GITHUB_PUBLISH_TOKEN` unset ⇒ manual card); owner follow-ups: provision the token + one supervised publish-PR dry-run. Built via worktree subagents; SAFE lanes gate-verified, SENSITIVE lane (WS-B) independently adversarially gate-reviewed + owner-signed-off.
+**Status:** ✅ SHIPPED 2026-07-15 — WS-A `#517` (closes #512, #448) · WS-C `#519` (closes #513) · compileBundle prep `#515`. Built via worktree subagents; SAFE lanes gate-verified.
+
+**WS-B (one-click publish) — REVERTED (owner decision 2026-07-15).** Built + merged (`#520`) dark behind an opt-in `GITHUB_PUBLISH_TOKEN`, then removed. A token-free rebuild (WS-B v2 design) proved the only token-free form is "generate the content bundle at build instead of committing it" (Level 2), which would couple **every** prod deploy to `courses-academy`'s availability + immutability (an outage or force-push of the pinned SHA blocks all deploys, incl. hotfixes) and hide the content diff from app-repo PRs. Owner chose to keep the **manual, token-free, hermetic** publish flow (bump `content.lock` → `pnpm compile-content` → commit → PR). #514 closed as not-planned. Kept from the #520 work (they stand alone): the `ci.yml` freshness check now also diffs `content.lock`, `sanitizeReason`'s GitHub-cred redaction, and #515's `compile-bundle.ts` move.
 **Sequencing (owner decision 2026-07-15):** `#509 merges → WS-A → (WS-C ∥ WS-B)`. Sequential, conflict-free.
 **Freeze:** recreate-course.ts + the recreate/preflight routes' **logic** are FROZEN. Only presentation/copy may change downstream.
 
