@@ -7,8 +7,10 @@ import { useTranslations, useLocale } from "next-intl";
 import { cn } from "@/lib/utils";
 
 // "Courses" is the merged Publish + Deploy screen (the two used to be separate
-// entries, which hid the fact that they are two steps of one flow).
-const SECTIONS = ["courses", "moderation", "status"] as const;
+// entries, which hid the fact that they are two steps of one flow). "Content"
+// (#513 WS-C) is the read-only Quests/Achievements/Paths tab — appended, not
+// inserted, so it doesn't reshuffle the existing three.
+const SECTIONS = ["courses", "moderation", "status", "content"] as const;
 
 /**
  * Best-effort pending-flags count for the "Moderation" nav badge. Reuses the

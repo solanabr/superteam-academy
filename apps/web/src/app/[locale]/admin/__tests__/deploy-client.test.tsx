@@ -15,17 +15,16 @@ function renderWithIntl(ui: ReactElement) {
   );
 }
 
-// The sync tables carry their own tests and fire on-chain sync requests, so
-// they are stubbed; the stubs surface the props wiring under test.
+// The sync table carries its own tests and fires on-chain sync requests, so
+// it is stubbed; the stub surfaces the props wiring under test. The
+// Achievements sync table used to render as a second section here (#513
+// WS-C relocated it into `admin/content/achievements-subview.tsx`).
 vi.mock("@/components/admin/course-sync-table", () => ({
   CourseSyncTable: ({ onRefresh }: { onRefresh: () => void }) => (
     <button data-testid="course-sync-table" onClick={onRefresh}>
       course-table
     </button>
   ),
-}));
-vi.mock("@/components/admin/achievement-sync-table", () => ({
-  AchievementSyncTable: () => <div data-testid="achievement-sync-table" />,
 }));
 
 const status: AdminStatus = {
@@ -52,6 +51,8 @@ const status: AdminStatus = {
       chainDrift: "content_current",
     },
   ],
+  // DeployClient no longer renders achievements (#513 WS-C moved that table to
+  // the Content tab) — this array only needs to satisfy `AdminStatus`'s shape.
   achievements: [
     {
       contentId: "achievement-first-steps",
@@ -60,6 +61,7 @@ const status: AdminStatus = {
       onChainStatus: "synced",
       achievementPda: "Pda222",
       collectionAddress: "Coll111",
+      award: null,
     },
   ],
 };
@@ -83,7 +85,7 @@ afterEach(() => {
 });
 
 describe("DeployClient", () => {
-  it("fetches /api/admin/status and renders both sync tables", async () => {
+  it("fetches /api/admin/status and renders the course sync table", async () => {
     const fetchMock = mockStatusFetch();
     renderWithIntl(<DeployClient />);
 
@@ -92,12 +94,11 @@ describe("DeployClient", () => {
     await waitFor(() => {
       expect(screen.getByTestId("course-sync-table")).toBeInTheDocument();
     });
-    expect(screen.getByTestId("achievement-sync-table")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith("/api/admin/status");
   });
 
-  it("shows the empty-state copy when there are no courses/achievements", async () => {
-    mockStatusFetch({ ...status, courses: [], achievements: [] });
+  it("shows the empty-state copy when there are no courses", async () => {
+    mockStatusFetch({ ...status, courses: [] });
     renderWithIntl(<DeployClient />);
 
     await waitFor(() => {
@@ -105,9 +106,6 @@ describe("DeployClient", () => {
         screen.getByText("No courses in the content bundle.")
       ).toBeInTheDocument();
     });
-    expect(
-      screen.getByText("No achievements in the content bundle.")
-    ).toBeInTheDocument();
   });
 
   it("refetches on the Refresh button and on the table's onRefresh", async () => {
