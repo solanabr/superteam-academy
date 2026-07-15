@@ -28,6 +28,7 @@ import {
   getProgramId,
 } from "./pda";
 import { extractCustomErrorCode, resolveIdlError } from "./parse-program-error";
+import { fetchCourse } from "./academy-reads";
 import { serverEnv } from "@/lib/env.server";
 
 export { getProgramId } from "./pda";
@@ -228,9 +229,24 @@ export async function finalizeCourse(
   const methods = program.methods as unknown as AcademyMethods;
 
   const config = await accounts.config.fetch(configPDA);
-  const course = await accounts.course.fetch(coursePDA);
+  // Length-aware decode (fetchCourse) instead of the typed
+  // accounts.course.fetch(): during the mixed-fleet reset window some Course
+  // accounts are still 224-byte v1 and others are recreated 253-byte
+  // v-next, and the v-next-bound Anchor Program's typed fetch throws a
+  // borsh under-run on a v1 account. finalizeCourse only needs `creator`,
+  // which fetchCourse normalises across both layouts.
+  const course = await fetchCourse(
+    courseId,
+    program.provider.connection,
+    program.programId
+  );
+  if (!course) {
+    throw new Error(
+      `finalizeCourse: Course account not found for courseId "${courseId}"`
+    );
+  }
   const xpMint = config.xpMint as PublicKey;
-  const creator = course.creator as PublicKey;
+  const creator = course.creator;
 
   const learnerTokenAccount = getAssociatedTokenAddressSync(
     xpMint,
@@ -361,7 +377,9 @@ export function describeProgramError(err: unknown): string {
   }
 
   const haystack = [message, ...logLines].join("\n");
-  if (/insufficient lamports|insufficient funds|Attempt to debit/i.test(haystack)) {
+  if (
+    /insufficient lamports|insufficient funds|Attempt to debit/i.test(haystack)
+  ) {
     return "Backend signer wallet has insufficient SOL to pay for the mint";
   }
   if (/BACKEND_SIGNER_SECRET/.test(message)) {
