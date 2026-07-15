@@ -3,7 +3,11 @@ import type { CodeBlockData, ProseBlockData } from "@superteam-lms/types";
 import { createClient } from "@/lib/supabase/server";
 import { isRateLimited } from "@/lib/rate-limit";
 import { getLessonBySlug } from "@/lib/content/queries";
-import { spendAssist, refundAssist } from "@/lib/ai/assist-budget";
+import {
+  spendAssist,
+  refundAssist,
+  appendAssistLog,
+} from "@/lib/ai/assist-budget";
 import { sealCheck } from "@/lib/ai/check-seal";
 import {
   buildStaticPrefix,
@@ -14,6 +18,8 @@ import {
 import type {
   PartnerAction,
   PartnerRequest,
+  PartnerResponse,
+  PartnerMessage,
   HintResponse,
   AnswerResponse,
 } from "@/lib/ai/partner-types";
@@ -353,6 +359,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    let clientResponse: PartnerResponse;
     if (validated.type === "propose") {
       // Seal the answer server-side — the client only ever sees
       // {question, options} + an opaque checkToken. Never spread `validated`
@@ -361,7 +368,7 @@ export async function POST(request: NextRequest) {
         correctIndex: validated.correctIndex,
         explanation: validated.explanation,
       });
-      return NextResponse.json({
+      clientResponse = {
         type: "propose",
         rationale: validated.rationale,
         proposedCode: validated.proposedCode,
@@ -370,10 +377,26 @@ export async function POST(request: NextRequest) {
           options: validated.options,
         },
         checkToken,
-      });
+      };
+    } else {
+      clientResponse = validated;
     }
 
-    return NextResponse.json(validated);
+    // Persist the turn(s) to the per-(user, lesson) log so a returning learner
+    // can review these AI notes without spending another assist. Runs only on
+    // this success path — after every refund branch has returned — so the log
+    // stays aligned with the assists actually charged. "ask" also records the
+    // learner's question; propose/hint carry no user text. Best-effort:
+    // appendAssistLog never throws, and logging must not block the paid reply.
+    const logEntries: PartnerMessage[] = [
+      ...(action === "ask" && message
+        ? [{ role: "user", text: message } as const]
+        : []),
+      { role: "ai", response: clientResponse } as const,
+    ];
+    await appendAssistLog(user.id, lesson._id, logEntries);
+
+    return NextResponse.json(clientResponse);
   } catch (error) {
     console.error("AI partner error:", error);
     // Same reasoning as the other post-spend failure paths: refund the spend
