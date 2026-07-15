@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { StatusBadge, ContentDriftBadge } from "./status-badge";
 import { SyncDiffView } from "./sync-diff-view";
-import { ImmutableMismatchWarning } from "./immutable-mismatch-warning";
+import { RecreateCourseFlow } from "./recreate-course-flow";
 import { DeployChangePreview } from "./deploy-change-preview";
 import type { CourseStatus } from "@/app/[locale]/admin/admin-status-types";
 
@@ -219,9 +219,11 @@ export function CourseSyncTable({ courses, onRefresh }: CourseSyncTableProps) {
                     />
                   )}
                   {hasImmutableMismatch && (
-                    <ImmutableMismatchWarning
-                      immutableDiffs={immutableDiffs}
+                    <RecreateCourseFlow
+                      courseId={course.contentId}
                       courseTitle={course.title}
+                      immutableDiffs={immutableDiffs}
+                      onRecreated={onRefresh}
                     />
                   )}
                 </td>

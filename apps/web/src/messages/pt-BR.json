@@ -975,6 +975,57 @@
         "onChainLabel": "on-chain",
         "bundleLabel": "pacote",
         "remediation": "\"{title}\" tem campos on-chain imutáveis que diferem do pacote de conteúdo; update_course não pode aplicá-los. Opções: 1. Corrija o valor no repositório courses-academy e publique um novo PR de pacote, ou 2. Desative este curso e implante uma nova versão."
+      },
+      "recreate": {
+        "cardHeading": "Divergência imutável — recriação necessária",
+        "cardIntro": "Estes campos são definidos uma única vez no deploy e update_course não pode alterá-los. A única correção é fechar e recriar o curso on-chain.",
+        "creatorEmphasis": "Divergência de criador: Course.creator é o destinatário imutável da recompensa de XP. Até o curso ser recriado, cada recompensa de criador é paga à carteira errada.",
+        "onChainLabel": "on-chain",
+        "bundleLabel": "bundle",
+        "reviewButton": "Recriar curso…",
+        "loading": "Verificando…",
+        "refusedHeading": "Recriação indisponível",
+        "loadErrorHeading": "Não foi possível verificar a pré-verificação de recriação",
+        "refusalReason": {
+          "noImmutableDiff": "Nenhum campo imutável difere entre o pacote de conteúdo e a conta on-chain — recriar não corrigiria nada e zeraria de forma irreversível os contadores de conclusão/matrícula e causaria indisponibilidade.",
+          "unconfirmed": "Não foi possível ler a conta on-chain para confirmar uma divergência imutável — atualize a tela de status e tente novamente; recusando recriar sobre um estado não confirmado."
+        },
+        "modal": {
+          "title": "Recriar “{title}”",
+          "intro": "Isto fecha a conta on-chain do curso e a cria novamente para reescrever os campos imutáveis abaixo. É a operação on-chain mais destrutiva da plataforma.",
+          "creatorLabel": "Criador (imutável)",
+          "immutableHeading": "Campos imutáveis que esta recriação irá definir",
+          "lessonCountLabel": "A contagem de lições on-chain é preservada exatamente ({count}). Novas lições são adicionadas depois pela sincronização normal.",
+          "resetHeading": "O que é zerado",
+          "resetCounters": "Os contadores de conclusões e inscrições são zerados (conclusões {completions}, inscrições {enrollments}). Isto é irrecuperável.",
+          "preserveHeading": "O que é preservado",
+          "preserveList": "As inscrições, o progresso dos alunos e os certificados conquistados são todos preservados.",
+          "downtimeWarning": "Breve indisponibilidade: fechar e criar NÃO são atômicos — há uma janela de alguns segundos em que o PDA do curso não existe e enroll/complete irão falhar.",
+          "unusualHeading": "Criador incomum",
+          "unusualDescription": "O criador resolvido está na lista de bloqueio ou é igual à autoridade da plataforma — normalmente recusado pela proteção #427.",
+          "unusualAck": "Entendo que este criador está na lista de bloqueio / é igual à autoridade da plataforma.",
+          "confirmLabel": "Digite o id do curso para confirmar",
+          "confirmPlaceholder": "{courseId}",
+          "cancel": "Cancelar",
+          "confirm": "Recriar curso",
+          "executing": "Recriando…"
+        },
+        "result": {
+          "heading": "Curso recriado",
+          "coursePda": "PDA do curso",
+          "closeSignature": "Assinatura de fechamento",
+          "createSignature": "Assinatura de criação",
+          "attempts": "Tentativas de criação",
+          "lostCounters": "Contadores zerados — conclusões {completions}, inscrições {enrollments}.",
+          "warningsHeading": "Avisos",
+          "refresh": "Atualizar"
+        },
+        "execError": {
+          "heading": "A recriação falhou",
+          "downRecovery": "Um curso sem PDA aparece como not_deployed — use o botão normal de Deploy para recriá-lo.",
+          "indeterminateRecovery": "A recriação falhou antes de um resultado ser confirmado — o curso pode estar intacto ou no meio da recriação. NÃO tente novamente às cegas. Atualize a tela de status do admin para verificar se o PDA do curso existe antes de agir.",
+          "close": "Fechar"
+        }
       }
     },
     "statusBadge": {

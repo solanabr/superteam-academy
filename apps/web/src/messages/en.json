@@ -975,6 +975,57 @@
         "onChainLabel": "on-chain",
         "bundleLabel": "bundle",
         "remediation": "\"{title}\" has immutable on-chain fields that differ from the content bundle; update_course cannot apply them. Options: 1. Fix the value in the courses-academy repo and publish a new bundle PR, or 2. Deactivate this course and deploy a new version."
+      },
+      "recreate": {
+        "cardHeading": "Immutable mismatch — recreate required",
+        "cardIntro": "These fields are set once at deploy and update_course cannot change them. The only fix is to close and recreate the on-chain course.",
+        "creatorEmphasis": "Creator mismatch: Course.creator is the immutable XP-reward recipient. Until the course is recreated, every creator reward pays the wrong wallet.",
+        "onChainLabel": "on-chain",
+        "bundleLabel": "bundle",
+        "reviewButton": "Recreate course…",
+        "loading": "Checking…",
+        "refusedHeading": "Recreate unavailable",
+        "loadErrorHeading": "Could not check the recreate preflight",
+        "refusalReason": {
+          "noImmutableDiff": "No immutable field differs between the content bundle and the on-chain account — a recreate would fix nothing and would irreversibly reset completion/enrollment counters and cause downtime.",
+          "unconfirmed": "Could not read the on-chain account to confirm an immutable mismatch — refresh the status screen and retry; refusing to recreate on unconfirmed state."
+        },
+        "modal": {
+          "title": "Recreate “{title}”",
+          "intro": "This closes the on-chain course account and creates it again to rewrite the immutable fields below. It is the platform's most destructive on-chain operation.",
+          "creatorLabel": "Creator (immutable)",
+          "immutableHeading": "Immutable fields this recreate will set",
+          "lessonCountLabel": "On-chain lesson count is preserved exactly ({count}). New lessons are added afterwards via the ordinary sync.",
+          "resetHeading": "What resets",
+          "resetCounters": "Completion and enrollment counters reset to 0 (completions {completions}, enrollments {enrollments}). This is unrecoverable.",
+          "preserveHeading": "What is preserved",
+          "preserveList": "Enrollments, learner progress, and earned certificates are all preserved.",
+          "downtimeWarning": "Brief downtime: close and create are NOT atomic — there is a seconds-long window where the course PDA is absent and enroll/complete will fail.",
+          "unusualHeading": "Unusual creator",
+          "unusualDescription": "The resolved creator is on the denylist or equals the platform authority — normally refused by the #427 guard.",
+          "unusualAck": "I understand this creator is on the denylist / equals the platform authority.",
+          "confirmLabel": "Type the course id to confirm",
+          "confirmPlaceholder": "{courseId}",
+          "cancel": "Cancel",
+          "confirm": "Recreate course",
+          "executing": "Recreating…"
+        },
+        "result": {
+          "heading": "Course recreated",
+          "coursePda": "Course PDA",
+          "closeSignature": "Close signature",
+          "createSignature": "Create signature",
+          "attempts": "Create attempts",
+          "lostCounters": "Counters reset — completions {completions}, enrollments {enrollments}.",
+          "warningsHeading": "Warnings",
+          "refresh": "Refresh"
+        },
+        "execError": {
+          "heading": "Recreate failed",
+          "downRecovery": "A course with no PDA reads as not_deployed — use the normal Deploy button to recreate it.",
+          "indeterminateRecovery": "The recreate failed before a result was confirmed — the course may be intact or mid-recreate. Do NOT retry blindly. Refresh the admin status screen to check whether the course PDA exists before acting.",
+          "close": "Close"
+        }
       }
     },
     "statusBadge": {

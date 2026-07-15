@@ -975,6 +975,57 @@
         "onChainLabel": "on-chain",
         "bundleLabel": "paquete",
         "remediation": "\"{title}\" tiene campos on-chain inmutables que difieren del paquete de contenido; update_course no puede aplicarlos. Opciones: 1. Corrige el valor en el repositorio courses-academy y publica un nuevo PR de paquete, o 2. Desactiva este curso y despliega una nueva versión."
+      },
+      "recreate": {
+        "cardHeading": "Discrepancia inmutable — se requiere recrear",
+        "cardIntro": "Estos campos se fijan una sola vez al desplegar y update_course no puede cambiarlos. La única solución es cerrar y recrear el curso on-chain.",
+        "creatorEmphasis": "Discrepancia de creador: Course.creator es el destinatario inmutable de la recompensa de XP. Hasta que se recree el curso, cada recompensa de creador se paga a la wallet equivocada.",
+        "onChainLabel": "on-chain",
+        "bundleLabel": "bundle",
+        "reviewButton": "Recrear curso…",
+        "loading": "Comprobando…",
+        "refusedHeading": "Recrear no disponible",
+        "loadErrorHeading": "No se pudo comprobar la verificación previa de recreación",
+        "refusalReason": {
+          "noImmutableDiff": "Ningún campo inmutable difiere entre el paquete de contenido y la cuenta on-chain — recrear no arreglaría nada y reiniciaría de forma irreversible los contadores de finalización/inscripción y causaría tiempo de inactividad.",
+          "unconfirmed": "No se pudo leer la cuenta on-chain para confirmar una discrepancia inmutable — actualiza la pantalla de estado y reinténtalo; se rechaza recrear sobre un estado no confirmado."
+        },
+        "modal": {
+          "title": "Recrear «{title}»",
+          "intro": "Esto cierra la cuenta on-chain del curso y la vuelve a crear para reescribir los campos inmutables de abajo. Es la operación on-chain más destructiva de la plataforma.",
+          "creatorLabel": "Creador (inmutable)",
+          "immutableHeading": "Campos inmutables que esta recreación establecerá",
+          "lessonCountLabel": "El número de lecciones on-chain se conserva exactamente ({count}). Las nuevas lecciones se añaden después mediante la sincronización habitual.",
+          "resetHeading": "Qué se reinicia",
+          "resetCounters": "Los contadores de finalizaciones e inscripciones se reinician a 0 (finalizaciones {completions}, inscripciones {enrollments}). Esto es irrecuperable.",
+          "preserveHeading": "Qué se conserva",
+          "preserveList": "Las inscripciones, el progreso de los estudiantes y los certificados obtenidos se conservan todos.",
+          "downtimeWarning": "Breve interrupción: cerrar y crear NO son atómicos — hay una ventana de varios segundos en la que el PDA del curso no existe y enroll/complete fallarán.",
+          "unusualHeading": "Creador inusual",
+          "unusualDescription": "El creador resuelto está en la lista de bloqueo o es igual a la autoridad de la plataforma — normalmente rechazado por la protección #427.",
+          "unusualAck": "Entiendo que este creador está en la lista de bloqueo / es igual a la autoridad de la plataforma.",
+          "confirmLabel": "Escribe el id del curso para confirmar",
+          "confirmPlaceholder": "{courseId}",
+          "cancel": "Cancelar",
+          "confirm": "Recrear curso",
+          "executing": "Recreando…"
+        },
+        "result": {
+          "heading": "Curso recreado",
+          "coursePda": "PDA del curso",
+          "closeSignature": "Firma de cierre",
+          "createSignature": "Firma de creación",
+          "attempts": "Intentos de creación",
+          "lostCounters": "Contadores reiniciados — finalizaciones {completions}, inscripciones {enrollments}.",
+          "warningsHeading": "Advertencias",
+          "refresh": "Actualizar"
+        },
+        "execError": {
+          "heading": "La recreación falló",
+          "downRecovery": "Un curso sin PDA aparece como not_deployed — usa el botón normal de Desplegar para recrearlo.",
+          "indeterminateRecovery": "La recreación falló antes de confirmar un resultado — el curso puede estar intacto o a medio recrear. NO reintentes a ciegas. Actualiza la pantalla de estado de administración para comprobar si el PDA del curso existe antes de actuar.",
+          "close": "Cerrar"
+        }
       }
     },
     "statusBadge": {
