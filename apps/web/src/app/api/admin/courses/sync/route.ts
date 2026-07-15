@@ -14,6 +14,7 @@ import {
 import { getAllCoursesAdmin, COURSES_CACHE_TAG } from "@/lib/content/queries";
 import { fetchCourse } from "@/lib/solana/academy-reads";
 import { findCoursePDA, getProgramId } from "@/lib/solana/pda";
+import { isValidLessonCount } from "@/lib/solana/course-write-params";
 import {
   deployCoursePda,
   updateCoursePda,
@@ -148,6 +149,22 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
+  // #332: `lesson_count` is a u8 create_course arg — the program rejects 0
+  // (InvalidLessonCount) and anything above 255 overflows the byte. Fail closed
+  // BEFORE building any create/update params so a malformed content value can
+  // never reach the signer. (v-next still sends lesson_count on create; the
+  // update path derives live-lesson changes from the active_lessons mask.)
+  if (!isValidLessonCount(course.lessonCount)) {
+    return NextResponse.json(
+      {
+        error: `Course lessonCount must be an integer in 1..=255 (got ${String(
+          course.lessonCount
+        )})`,
+      },
+      { status: 400 }
+    );
+  }
+
   const connection = new Connection(serverEnv.SOLANA_RPC_URL, "confirmed");
   const [coursePda] = findCoursePDA(courseId, getProgramId());
   const accountInfo = await connection.getAccountInfo(coursePda);
@@ -207,7 +224,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // both default these to 0), so the deploy value and the drift engine's
     // comparison — which also treats absent as 0 — never disagree.
     const creatorRewardXp = course.creatorRewardXp ?? 0;
-    const minCompletionsForReward = course.minCompletionsForReward ?? 0;
 
     const result = await deployCoursePda({
       courseId,
@@ -219,7 +235,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       prerequisitePda,
       creatorWallet,
       creatorRewardXp,
-      minCompletionsForReward,
     });
 
     if (!result.success) {
@@ -389,19 +404,19 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     courseId: string;
     newXpPerLesson?: number;
     newCreatorRewardXp?: number;
-    newMinCompletionsForReward?: number;
-    newLessonCount?: number;
+    newActiveLessons?: [bigint, bigint, bigint, bigint];
     contentTxId?: number[];
   } = { courseId };
   const updatedFields: string[] = [];
 
-  // §11.0 content commitment. When the panel sends its intended active_lessons
-  // mask, load the committed lockfile INDEPENDENTLY (from the synced tree) and
-  // assert the two agree right before signing — update_course trusts the
-  // authority blindly, so this is where the "slots never reused" invariant is
-  // enforced. The git SHA is committed into content_tx_id in the same update.
-  // (active_lessons itself is written on-chain only once program v2 exposes the
-  // field; until then the assertion + SHA commitment land.)
+  // §11.0 content commitment + v-next live-lesson mask. When the panel sends its
+  // intended active_lessons mask, load the committed lockfile INDEPENDENTLY (from
+  // the synced tree) and assert the two agree right before signing — update_course
+  // trusts the authority blindly, so this is where the "slots never reused"
+  // invariant is enforced. The asserted mask is written on-chain via
+  // new_active_lessons AND the git SHA is committed into content_tx_id in the SAME
+  // update (v-next exposes new_active_lessons; this replaces v1's count-based
+  // new_lesson_count grow).
   if (activeLessons) {
     let commit: ReturnType<typeof buildCourseCommit>;
     try {
@@ -428,6 +443,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
     updateParams.contentTxId = commit.contentTxId;
     updatedFields.push("contentTxId");
+    // v-next: write the (lockfile-asserted) mask on-chain in the same update.
+    updateParams.newActiveLessons = commit.activeLessons;
+    updatedFields.push("newActiveLessons");
   }
 
   if (course.xpPerLesson !== null) {
@@ -438,30 +456,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     updateParams.newCreatorRewardXp = course.creatorRewardXp;
     updatedFields.push("newCreatorRewardXp");
   }
-  if (course.minCompletionsForReward !== null) {
-    updateParams.newMinCompletionsForReward = course.minCompletionsForReward;
-    updatedFields.push("newMinCompletionsForReward");
-  }
-
-  // Grow the on-chain lesson count when a teacher has appended lessons to an
-  // already-deployed course. Increase-only: without this, a new lesson's index
-  // is >= course.lesson_count and complete_lesson reverts (LessonOutOfBounds,
-  // surfaced as a 409 in /api/lessons/complete). fetchCourse returns the
-  // normalised `liveLessonCount`. The program rejects any decrease
-  // (LessonCountDecrease), so we only send the field when Sanity is strictly
-  // higher; equal/lower is left untouched.
-  // Count-based and only correct while masks are dense (today). Once a
-  // sparse-mask course can exist, this must become a per-slot bit test
-  // against `activeLessons` instead of a count comparison.
-  const onChainLessonCount = onChainCourse?.liveLessonCount;
-  if (
-    typeof course.lessonCount === "number" &&
-    typeof onChainLessonCount === "number" &&
-    course.lessonCount > onChainLessonCount
-  ) {
-    updateParams.newLessonCount = course.lessonCount;
-    updatedFields.push("newLessonCount");
-  }
+  // v-next drops `new_min_completions_for_reward` and the count-based
+  // `new_lesson_count` grow entirely. Live-lesson changes (add / retire /
+  // reorder) now flow ONLY through `new_active_lessons` above — the mask the
+  // panel sends, cross-checked against the committed slots.lock.json. A sync
+  // that carries no mask leaves the on-chain live-lesson set untouched.
 
   if (updatedFields.length === 0) {
     // Even if no fields changed, sync the PDA address to Sanity

@@ -17,7 +17,7 @@ import {
 import type { Idl } from "@coral-xyz/anchor";
 import { AnchorProvider, Program } from "@coral-xyz/anchor";
 import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
-import IDL from "./idl/superteam_academy.json";
+import IDL from "./idl/superteam_academy_vnext.json";
 import {
   findConfigPDA,
   findCoursePDA,

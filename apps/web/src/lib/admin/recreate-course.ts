@@ -421,7 +421,6 @@ export async function preflightRecreate(
       prerequisitePda,
       creatorWallet: creatorWallet!,
       creatorRewardXp: course!.creatorRewardXp ?? 0,
-      minCompletionsForReward: course!.minCompletionsForReward ?? 0,
       allowUnusualCreator,
     },
   };

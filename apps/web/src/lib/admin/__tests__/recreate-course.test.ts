@@ -720,7 +720,6 @@ describe("close → create happy path", () => {
         trackLevel: 1,
         lessonCount: 5,
         creatorRewardXp: 500,
-        minCompletionsForReward: 10,
       })
     );
   });

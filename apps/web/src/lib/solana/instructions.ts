@@ -5,7 +5,7 @@ import {
 } from "@solana/web3.js";
 import type { Idl } from "@coral-xyz/anchor";
 import { BorshCoder } from "@coral-xyz/anchor";
-import IDL from "./idl/superteam_academy.json";
+import IDL from "./idl/superteam_academy_vnext.json";
 import { findCoursePDA, findEnrollmentPDA, getProgramId } from "./pda";
 
 const coder = new BorshCoder(IDL as unknown as Idl);
