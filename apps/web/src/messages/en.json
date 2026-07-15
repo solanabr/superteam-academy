@@ -842,7 +842,8 @@
       "courses": "Courses",
       "moderation": "Moderation",
       "pendingFlags": "{count, plural, one {# pending flag} other {# pending flags}}",
-      "status": "Status"
+      "status": "Status",
+      "content": "Content"
     },
     "counts": {
       "courses": "Courses",
@@ -851,7 +852,8 @@
     "screens": {
       "courses": "Courses",
       "moderation": "Community Moderation",
-      "status": "Program Status"
+      "status": "Program Status",
+      "content": "Content"
     },
     "coursesScreen": {
       "intro": {
@@ -934,9 +936,7 @@
     },
     "deployScreen": {
       "coursesHeading": "Courses",
-      "achievementsHeading": "Achievements",
       "noCourses": "No courses in the content bundle.",
-      "noAchievements": "No achievements in the content bundle.",
       "missingFields": "Missing: {fields}",
       "table": {
         "course": "Course",
@@ -1044,6 +1044,82 @@
           "indeterminateRecovery": "The recreate failed before a result was confirmed — the course may be intact or mid-recreate. Do NOT retry blindly. Refresh the admin status screen to check whether the course PDA exists before acting.",
           "close": "Close"
         }
+      }
+    },
+    "contentScreen": {
+      "intro": "Read-only views over the content bundle: quests, achievements, and learning paths. Achievements is the one surface here with an on-chain sync action.",
+      "tabs": {
+        "quests": "Quests",
+        "achievements": "Achievements",
+        "paths": "Paths"
+      },
+      "pin": {
+        "pinned": "Bundle pinned",
+        "drifted": "Bundle drifted",
+        "unknown": "Drift unknown",
+        "unavailable": "Pin status unavailable",
+        "behind": "{count, plural, one {# commit behind} other {# commits behind}}"
+      },
+      "quests": {
+        "heading": "Quests",
+        "description": "Daily quest reward config from the content bundle. Read-only — quests have no on-chain component.",
+        "empty": "No quests in the content bundle.",
+        "table": {
+          "quest": "Quest",
+          "type": "Type",
+          "xpReward": "XP",
+          "targetValue": "Target",
+          "resetType": "Reset",
+          "icon": "Icon"
+        },
+        "type": {
+          "lesson": "Lesson",
+          "lesson_batch": "Lesson batch",
+          "challenge": "Challenge",
+          "login_streak": "Login streak",
+          "module": "Module"
+        },
+        "resetType": {
+          "daily": "Daily",
+          "multi_day": "Multi-day"
+        }
+      },
+      "achievements": {
+        "heading": "Achievements",
+        "empty": "No achievements in the content bundle.",
+        "table": {
+          "achievement": "Achievement",
+          "status": "Status",
+          "collection": "Collection",
+          "action": "Action"
+        },
+        "missingFields": "Missing: {fields}",
+        "actions": {
+          "deploy": "Deploy",
+          "sync": "Sync",
+          "working": "…",
+          "syncAll": "Sync All ({count})",
+          "syncAllBusy": "Syncing…"
+        },
+        "errors": {
+          "sync": "Sync failed",
+          "syncFor": "Sync failed for {name}"
+        },
+        "awardCourse": "Unlocks with course: {title}",
+        "awardPath": "Unlocks with path: {title}",
+        "awardMissingBadge": "missing",
+        "awardMissingRef": "Unresolved ref: {id}"
+      },
+      "paths": {
+        "heading": "Paths",
+        "empty": "No learning paths in the content bundle.",
+        "table": {
+          "path": "Path",
+          "courses": "Course sequence"
+        },
+        "noCourses": "No courses in this path.",
+        "danglingBadge": "missing",
+        "danglingCount": "{count, plural, one {# dangling course reference} other {# dangling course references}}"
       }
     },
     "statusBadge": {
