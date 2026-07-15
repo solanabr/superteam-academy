@@ -95,6 +95,20 @@ function mockFetchCustomPost(post: () => Promise<Response>) {
   return fetchMock;
 }
 
+/** GET → the supplied responder (used to simulate a preflight load failure). */
+function mockFetchCustomGet(get: () => Promise<Response>) {
+  const fetchMock = vi.fn(
+    (_url: string, init?: { method?: string; body?: string }) => {
+      if (!init || !init.method || init.method === "GET") {
+        return get();
+      }
+      throw new Error("unexpected POST in a load-error test");
+    }
+  );
+  global.fetch = fetchMock as unknown as typeof fetch;
+  return fetchMock;
+}
+
 /** Render, open the modal, type the id, and click Confirm with a POST responder. */
 async function executeWith(post: () => Promise<Response>) {
   const onRecreated = vi.fn();
@@ -272,5 +286,75 @@ describe("RecreateCourseFlow — FIX 2 honest execute-failure recovery", () => {
 
     await screen.findByText(DOWN);
     expect(screen.queryByText(INDETERMINATE)).toBeNull();
+  });
+});
+
+describe("RecreateCourseFlow — FIX A: execute error is scrubbed before render (#509 gate)", () => {
+  it("redacts an api-keyed Helius RPC URL embedded in the execute route's error before rendering it", async () => {
+    await executeWith(() =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({
+            error:
+              "closeCoursePda failed at https://rpc.helius.xyz/?api-key=SECRET123",
+          }),
+          { status: 500, headers: { "content-type": "application/json" } }
+        )
+      )
+    );
+
+    await screen.findByText(/closeCoursePda failed at/);
+    // The secret and the raw URL must never reach the DOM.
+    expect(screen.queryByText(/SECRET123/)).toBeNull();
+    expect(screen.queryByText(/rpc\.helius\.xyz/)).toBeNull();
+    expect(screen.getByText(/\[redacted-url\]/)).toBeTruthy();
+  });
+});
+
+describe("RecreateCourseFlow — FIX B: swallowed preflight load error now renders (#509 gate)", () => {
+  it("renders the load-error message when the preflight fetch rejects (network failure)", async () => {
+    const onRecreated = vi.fn();
+    mockFetchCustomGet(() => Promise.reject(new Error("Failed to fetch")));
+    renderWithIntl(
+      <RecreateCourseFlow
+        courseId={COURSE_ID}
+        courseTitle="Solana 101"
+        immutableDiffs={IMMUTABLE_DIFFS}
+        onRecreated={onRecreated}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Recreate course…/ }));
+
+    // Previously the guard `phase !== "error"` made this unreachable — the
+    // admin clicked Recreate and saw nothing. It must render now.
+    await screen.findByText("Failed to fetch");
+    // No dialog should have opened — this is the load-error path, not confirm.
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("renders the load-error message when the preflight response is a non-refusal error (e.g. 500)", async () => {
+    const onRecreated = vi.fn();
+    mockFetchCustomGet(() =>
+      Promise.resolve(
+        new Response(JSON.stringify({ error: "preflight blew up" }), {
+          status: 500,
+          headers: { "content-type": "application/json" },
+        })
+      )
+    );
+    renderWithIntl(
+      <RecreateCourseFlow
+        courseId={COURSE_ID}
+        courseTitle="Solana 101"
+        immutableDiffs={IMMUTABLE_DIFFS}
+        onRecreated={onRecreated}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Recreate course…/ }));
+
+    await screen.findByText("preflight blew up");
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 });

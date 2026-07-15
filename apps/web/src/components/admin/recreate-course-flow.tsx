@@ -8,6 +8,7 @@ import type {
   RecreatePreflightRefusal,
 } from "@/lib/admin/recreate-preflight";
 import type { RecreateCourseResult } from "@/lib/admin/recreate-course";
+import { sanitizeReason } from "@/lib/admin/sanitize-reason";
 
 interface RecreateCourseFlowProps {
   courseId: string;
@@ -164,7 +165,7 @@ export function RecreateCourseFlow({
         <p className="mb-2 font-semibold text-danger">
           {t("execError.heading")}
         </p>
-        <p className="text-xs text-danger">{execError.error}</p>
+        <p className="text-xs text-danger">{sanitizeReason(execError.error)}</p>
         {execError.courseIntact === false && (
           <p className="mt-2 rounded border border-danger bg-card p-2 text-xs font-medium text-danger">
             {t("execError.downRecovery")}
@@ -209,7 +210,7 @@ export function RecreateCourseFlow({
       </ul>
       <p className="mt-2 text-xs text-text-3">{t("cardIntro")}</p>
 
-      {loadError && phase !== "error" && (
+      {loadError && phase === "error" && (
         <p className="mt-2 text-xs text-danger">{loadError}</p>
       )}
 
