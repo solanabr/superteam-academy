@@ -117,7 +117,7 @@ export async function parseAndValidateTree(
 
   // #466 C3: every lesson `skills` slug must be a member of the canonical
   // vocabulary — the allowlist guarantee, kept in sync with the offline
-  // compiler's `validateTree` (scripts/compile-content.ts).
+  // compiler's `validateTree` (compile-bundle.ts).
   issues.push(
     ...checkSkillVocabulary(
       v.lessons.map(({ lesson }) => ({
