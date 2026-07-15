@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "compile-content": "tsx scripts/compile-content.ts",
     "reset-verify": "tsx scripts/reset-verify.ts",
+    "reset-vnext": "tsx --tsconfig scripts/tsconfig.reset.json scripts/reset-vnext.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
