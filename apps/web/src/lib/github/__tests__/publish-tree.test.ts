@@ -41,6 +41,22 @@ describe("bumpLockContent", () => {
     expect(text).not.toContain(oldSha);
   });
 
+  it("preserves extra fields, key order, and whitespace — only the sha changes", () => {
+    const oldSha = "089740d5da52d4180c40d03c44262fd05eed54f1";
+    const newSha = "a".repeat(40);
+    // A lock with an added field, unusual key order, and 4-space indent: every
+    // byte except the sha must survive (this is the from-scratch rebuild's bug).
+    const raw = `{\n    "note": "hand-added",\n    "sha": "${oldSha}",\n    "repo": "solanabr/courses-academy"\n}\n`;
+    const { text, oldSha: reported } = bumpLockContent(raw, newSha);
+    expect(reported).toBe(oldSha);
+    expect(text).toBe(
+      `{\n    "note": "hand-added",\n    "sha": "${newSha}",\n    "repo": "solanabr/courses-academy"\n}\n`
+    );
+    expect(text).toContain(`"note": "hand-added"`);
+    expect(text.indexOf(`"note"`)).toBeLessThan(text.indexOf(`"repo"`));
+    expect(text).not.toContain(oldSha);
+  });
+
   it("throws when the lock has no sha", () => {
     expect(() => bumpLockContent(`{"repo":"x"}`, "b".repeat(40))).toThrow();
   });

@@ -9,6 +9,7 @@ import { sanitizeReason } from "@/lib/admin/sanitize-reason";
 import {
   createGitHubClient,
   createGitHubWriteClient,
+  type GitHubWriteClient,
   type GitTreeEntry,
 } from "@/lib/github/github";
 import {
@@ -17,14 +18,15 @@ import {
   TreeTruncatedError,
 } from "@/lib/github/types";
 import {
-  CONTENT_REPO,
   buildPrTitle,
   buildOpenPrBody,
   suggestBranchName,
 } from "@/lib/github/publish-pin";
 import {
+  bumpLockContent,
   bundleFreshFiles,
   retainedBaseEntries,
+  LOCK_REPO_PATH,
 } from "@/lib/github/publish-tree";
 import { compileBundle } from "@/lib/content/compile/compile-bundle";
 import { extractTarball } from "@/lib/content/compile/tarball";
@@ -66,12 +68,41 @@ function fail(
   );
 }
 
+/**
+ * Resolve a pre-existing `chore/content-pin-<sha>` branch (up-front check OR a
+ * `createBranch` 422 race): if an OPEN PR already targets it, return that PR as
+ * an idempotent success (a re-click gives the user the PR they wanted); if the
+ * branch is orphaned (no open PR), degrade to an ACTIONABLE, scrubbed 409 that
+ * names the branch — never a bare permanent 409 the user can't get past.
+ */
+async function existingBranchResponse(
+  write: GitHubWriteClient,
+  branch: string,
+  headSha: string
+): Promise<NextResponse> {
+  const existing = await write.findOpenPrByHead(branch);
+  if (existing) {
+    return NextResponse.json({
+      pr: { url: existing.url, number: existing.number, branch },
+      pinnedFrom: contentMeta.sha,
+      pinnedTo: headSha,
+    });
+  }
+  return fail(
+    409,
+    `branch ${branch} exists without an open PR — delete it and retry`,
+    { code: "branch_exists" }
+  );
+}
+
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     requireAdminAuth(req);
   } catch (e) {
     if (e instanceof AdminAuthError) return adminUnauthorizedResponse();
-    throw e;
+    // Any other auth-path error must NOT escape to a raw Next 500 with a stack;
+    // scrub it and return a generic 500.
+    return fail(500, e instanceof Error ? e.message : "authorization failed");
   }
 
   // Opt-in: no write token ⇒ the whole feature is unavailable. Surfaced as 501
@@ -114,15 +145,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // ── Idempotency: a pre-existing branch for this sha degrades to 409, never a
-    // 500 or a force-push. Checked up front; the createBranch 422 is the backstop. ──
+    // ── Idempotency: a pre-existing branch for this sha never force-pushes. If an
+    // open PR already targets it, re-click returns that PR (200); an orphaned
+    // branch degrades to an actionable 409. Checked up front; the createBranch
+    // 422 race is the backstop (handled the same way at its call site). ──
     const branch = suggestBranchName(headSha);
     if (await write.branchExists(branch)) {
-      return fail(
-        409,
-        `a publish PR branch for this content already exists (${branch})`,
-        { code: "branch_exists" }
-      );
+      return existingBranchResponse(write, branch, headSha);
     }
 
     // ── Recompile the bundle at HEAD (pure, in-memory). compiledAt is the
@@ -141,7 +170,15 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const baseEntries = await write.recursiveTree(base.treeSha);
     const retained = retainedBaseEntries(baseEntries);
 
-    const lockText = `${JSON.stringify({ repo: CONTENT_REPO, sha: headSha }, null, 2)}\n`;
+    // ── Byte-preserving lock bump: read the CURRENT committed content.lock and
+    // swap ONLY its sha (bumpLockContent) — never rebuild it from scratch, which
+    // would strip any other field/ordering/whitespace. ──
+    const lockEntry = baseEntries.find((e) => e.path === LOCK_REPO_PATH);
+    if (!lockEntry) {
+      return fail(502, "content.lock is missing from the base tree");
+    }
+    const currentLock = await write.readBlob(lockEntry.sha);
+    const { text: lockText } = bumpLockContent(currentLock, headSha);
     const freshFiles = bundleFreshFiles(bundle, lockText);
     const freshEntries: GitTreeEntry[] = await Promise.all(
       freshFiles.map(async (f) => ({
@@ -179,8 +216,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
 
     // createBranch throws RefExistsError (422) if the branch raced into
-    // existence after the up-front check — same 409-degrade, no force-push.
-    await write.createBranch(branch, commitSha);
+    // existence after the up-front check — resolve it the same way (existing PR
+    // → 200, orphan → actionable 409); never a force-push.
+    try {
+      await write.createBranch(branch, commitSha);
+    } catch (e) {
+      if (e instanceof RefExistsError) {
+        return existingBranchResponse(write, e.branch, headSha);
+      }
+      throw e;
+    }
 
     const pr = await write.openPullRequest({
       title: buildPrTitle(headSha),
@@ -199,9 +244,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       pinnedTo: headSha,
     });
   } catch (e) {
-    if (e instanceof RefExistsError) {
-      return fail(409, e.message, { code: "branch_exists" });
-    }
+    // RefExistsError is handled at its only throw site (createBranch), so it
+    // never reaches here.
     if (e instanceof TreeTruncatedError) {
       return fail(502, e.message);
     }

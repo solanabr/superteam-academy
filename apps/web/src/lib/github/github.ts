@@ -154,6 +154,9 @@ export interface GitHubWriteClient {
   /** Every entry of a tree, recursively. Throws `TreeTruncatedError` if the API
    *  truncated the read — a partial list would silently drop repo files. */
   recursiveTree(treeSha: string): Promise<GitTreeEntry[]>;
+  /** Read a blob's UTF-8 text by sha (git blobs API; base64 on the wire). Used to
+   *  fetch the CURRENT content.lock so a bump preserves every other byte. */
+  readBlob(sha: string): Promise<string>;
   /** Upload a blob (bytes, base64-encoded on the wire); returns its sha. */
   createBlob(bytes: Uint8Array): Promise<string>;
   /** Create a brand-new tree from an explicit entry list (NO base_tree). */
@@ -165,6 +168,11 @@ export interface GitHubWriteClient {
   }): Promise<string>;
   /** True if `refs/heads/<branch>` already exists (idempotency pre-check). */
   branchExists(branch: string): Promise<boolean>;
+  /** The OPEN PR whose head is `<owner>:<branch>`, or null if none is open.
+   *  Read-only — lets a re-click on a pre-existing branch return its PR. */
+  findOpenPrByHead(
+    branch: string
+  ): Promise<{ url: string; number: number } | null>;
   /** Create `refs/heads/<branch>` → sha. Throws `RefExistsError` on 422. */
   createBranch(branch: string, sha: string): Promise<void>;
   openPullRequest(input: {
@@ -245,6 +253,18 @@ export function createGitHubWriteClient(
       return body.tree ?? [];
     },
 
+    async readBlob(sha) {
+      const path = `/repos/${repo}/git/blobs/${sha}`;
+      const res = await call(path);
+      if (!res.ok) unavailable("GET", path, res.status);
+      const body = (await res.json()) as { content?: string };
+      if (typeof body.content !== "string") {
+        throw new GitHubUnavailableError("blob response missing content");
+      }
+      // git blobs are always base64 (with embedded newlines Buffer ignores).
+      return Buffer.from(body.content, "base64").toString("utf-8");
+    },
+
     async createBlob(bytes) {
       const path = `/repos/${repo}/git/blobs`;
       const res = await call(path, {
@@ -293,6 +313,20 @@ export function createGitHubWriteClient(
       if (res.status === 404) return false;
       if (!res.ok) unavailable("GET", path, res.status);
       return true;
+    },
+
+    async findOpenPrByHead(branch) {
+      const owner = repo.split("/")[0];
+      const path = `/repos/${repo}/pulls?state=open&head=${owner}:${branch}`;
+      const res = await call(path);
+      if (!res.ok) unavailable("GET", path, res.status);
+      const body = (await res.json()) as {
+        html_url?: string;
+        number?: number;
+      }[];
+      const pr = body[0];
+      if (!pr || !pr.html_url || typeof pr.number !== "number") return null;
+      return { url: pr.html_url, number: pr.number };
     },
 
     async createBranch(branch, sha) {

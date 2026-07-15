@@ -200,6 +200,47 @@ describe("GitHubWriteClient", () => {
     expect(sha).toBe("newtree");
   });
 
+  it("readBlob base64-decodes a blob to UTF-8 text", async () => {
+    const lock = `{\n  "repo": "solanabr/courses-academy",\n  "sha": "abc"\n}\n`;
+    // GitHub returns base64 with embedded newlines; Buffer decode ignores them.
+    const content = Buffer.from(lock)
+      .toString("base64")
+      .replace(/(.{4})/g, "$1\n");
+    const fetchImpl = vi.fn(async (_url: string, _init?: RequestInit) =>
+      okJson({ content, encoding: "base64" })
+    );
+    const client = createGitHubWriteClient({
+      token: "wt",
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+    expect(await client.readBlob("blobsha")).toBe(lock);
+    expect(fetchImpl.mock.calls[0]![0]).toBe(
+      "https://api.github.com/repos/solanabr/superteam-academy/git/blobs/blobsha"
+    );
+  });
+
+  it("findOpenPrByHead returns the open PR (owner:branch query), or null when none", async () => {
+    const withPr = createGitHubWriteClient({
+      token: "wt",
+      fetchImpl: (async (url: string) => {
+        expect(url).toContain(
+          "/repos/solanabr/superteam-academy/pulls?state=open&head=solanabr:chore/content-pin-abc"
+        );
+        return okJson([{ html_url: "https://gh/pr/5", number: 5 }]);
+      }) as unknown as typeof fetch,
+    });
+    expect(await withPr.findOpenPrByHead("chore/content-pin-abc")).toEqual({
+      url: "https://gh/pr/5",
+      number: 5,
+    });
+
+    const none = createGitHubWriteClient({
+      token: "wt",
+      fetchImpl: (async () => okJson([])) as unknown as typeof fetch,
+    });
+    expect(await none.findOpenPrByHead("chore/content-pin-abc")).toBeNull();
+  });
+
   it("throws TreeTruncatedError on a truncated recursive tree", async () => {
     const client = createGitHubWriteClient({
       token: "wt",

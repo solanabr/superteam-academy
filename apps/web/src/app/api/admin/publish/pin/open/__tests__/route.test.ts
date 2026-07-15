@@ -22,8 +22,10 @@ const h = vi.hoisted(() => ({
   },
   write: {
     branchExists: vi.fn(),
+    findOpenPrByHead: vi.fn(),
     branchHead: vi.fn(),
     recursiveTree: vi.fn(),
+    readBlob: vi.fn(),
     createBlob: vi.fn(),
     createTree: vi.fn(),
     createCommit: vi.fn(),
@@ -83,10 +85,16 @@ function primeHappyPath(): void {
     assets: new Map(),
   });
   h.write.branchExists.mockResolvedValue(false);
+  h.write.findOpenPrByHead.mockResolvedValue(null);
   h.write.branchHead.mockResolvedValue({ commitSha: "c1", treeSha: "t1" });
   h.write.recursiveTree.mockResolvedValue([
     { path: "apps/web/package.json", mode: "100644", type: "blob", sha: "b1" },
+    { path: "apps/web/content.lock", mode: "100644", type: "blob", sha: "lk" },
   ]);
+  // The CURRENT committed lock the byte-preserving bump reads + swaps the sha in.
+  h.write.readBlob.mockResolvedValue(
+    `{\n  "repo": "solanabr/courses-academy",\n  "sha": "${"0".repeat(40)}"\n}\n`
+  );
   h.write.createBlob.mockResolvedValue("blobsha");
   h.write.createTree.mockResolvedValue("newtree");
   h.write.createCommit.mockResolvedValue("commit1");
@@ -112,6 +120,22 @@ describe("POST /api/admin/publish/pin/open", () => {
     // Never proceeds to any GitHub call.
     expect(h.read.fetchHeadSha).not.toHaveBeenCalled();
     expect(h.write.createBranch).not.toHaveBeenCalled();
+  });
+
+  it("scrubbed 500 (not a raw 500) when auth throws a non-AdminAuthError", async () => {
+    // FIX 4: a non-AdminAuthError from the auth check must NOT re-throw past the
+    // handler into a raw Next 500 leaking the message — it is scrubbed to a 500.
+    h.requireAdminAuth.mockImplementation(() => {
+      throw new Error("boom at https://api.github.com/x?token=ghs_SECRET");
+    });
+    const res = await post({ headSha: HEAD });
+    expect(res.status).toBe(500);
+    const body = (await res.json()) as { error: string };
+    expect(body.error).not.toMatch(/ghs_SECRET/);
+    expect(body.error).not.toMatch(/api\.github\.com/);
+    expect(body.error).toContain("[redacted-url]");
+    // Still short-circuits before any GitHub work.
+    expect(h.read.fetchHeadSha).not.toHaveBeenCalled();
   });
 
   it("501-degrades when the publish token is unset (client keeps manual card)", async () => {
@@ -149,22 +173,71 @@ describe("POST /api/admin/publish/pin/open", () => {
     expect(h.write.createBranch).not.toHaveBeenCalled();
   });
 
-  it("409s (branch_exists) when the publish branch already exists — no force-push", async () => {
+  it("orphaned pre-existing branch (no open PR) → actionable 409, no force-push", async () => {
     h.write.branchExists.mockResolvedValue(true);
+    h.write.findOpenPrByHead.mockResolvedValue(null);
     const res = await post({ headSha: HEAD });
     expect(res.status).toBe(409);
-    expect(((await res.json()) as { code: string }).code).toBe("branch_exists");
+    const body = (await res.json()) as { code: string; error: string };
+    expect(body.code).toBe("branch_exists");
+    // Actionable: names the branch AND tells the user how to unstick it — not a
+    // bare permanent 409.
+    expect(body.error).toContain(suggestBranchName(HEAD));
+    expect(body.error).toMatch(/delete it and retry/);
     expect(h.write.createTree).not.toHaveBeenCalled();
     expect(h.write.createBranch).not.toHaveBeenCalled();
   });
 
-  it("409s (branch_exists) when createBranch races into a 422 RefExistsError", async () => {
+  it("pre-existing branch WITH an open PR → idempotent 200 returning that PR", async () => {
+    h.write.branchExists.mockResolvedValue(true);
+    h.write.findOpenPrByHead.mockResolvedValue({
+      url: "https://gh/pr/42",
+      number: 42,
+    });
+    const res = await post({ headSha: HEAD });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      pr: { url: string; number: number; branch: string };
+      pinnedFrom: string;
+      pinnedTo: string;
+    };
+    expect(body.pr).toEqual({
+      url: "https://gh/pr/42",
+      number: 42,
+      branch: suggestBranchName(HEAD),
+    });
+    expect(body.pinnedFrom).toBe("b".repeat(40));
+    expect(body.pinnedTo).toBe(HEAD);
+    // Idempotent: a re-click never writes when the branch already has its PR.
+    expect(h.write.createTree).not.toHaveBeenCalled();
+    expect(h.write.createBranch).not.toHaveBeenCalled();
+  });
+
+  it("createBranch 422 race with no open PR → actionable 409", async () => {
     h.write.createBranch.mockRejectedValue(
       new RefExistsError(suggestBranchName(HEAD))
     );
+    h.write.findOpenPrByHead.mockResolvedValue(null);
     const res = await post({ headSha: HEAD });
     expect(res.status).toBe(409);
-    expect(((await res.json()) as { code: string }).code).toBe("branch_exists");
+    const body = (await res.json()) as { code: string; error: string };
+    expect(body.code).toBe("branch_exists");
+    expect(body.error).toMatch(/delete it and retry/);
+  });
+
+  it("createBranch 422 race WITH an open PR → idempotent 200", async () => {
+    h.write.createBranch.mockRejectedValue(
+      new RefExistsError(suggestBranchName(HEAD))
+    );
+    h.write.findOpenPrByHead.mockResolvedValue({
+      url: "https://gh/pr/7",
+      number: 7,
+    });
+    const res = await post({ headSha: HEAD });
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as { pr: { number: number } }).pr.number).toBe(
+      7
+    );
   });
 
   it("409s (already_pinned) when the rebuilt tree equals main's tree", async () => {
@@ -207,8 +280,69 @@ describe("POST /api/admin/publish/pin/open", () => {
       suggestBranchName(HEAD)
     );
     expect(h.write.openPullRequest.mock.calls[0]![0].base).toBe("main");
-    // The write client has no update-ref/force-push surface at all.
-    expect(h.write).not.toHaveProperty("updateRef");
+  });
+
+  it("commits a byte-preserving lock bump (extra fields survive, only sha swapped)", async () => {
+    // FIX 1: the committed content.lock must come from bumpLockContent over the
+    // CURRENT lock, not a from-scratch {repo,sha} rebuild that strips fields.
+    const OLD = "0".repeat(40);
+    h.write.readBlob.mockResolvedValue(
+      `{\n  "repo": "solanabr/courses-academy",\n  "note": "keep me",\n  "sha": "${OLD}"\n}\n`
+    );
+    const res = await post({ headSha: HEAD });
+    expect(res.status).toBe(200);
+    // The blob for the lock is the first fresh file uploaded (bundleFreshFiles
+    // lists content.lock first). Decode it and prove the bump was surgical.
+    const dec = new TextDecoder();
+    const lockBytes = h.write.createBlob.mock.calls[0]![0] as Uint8Array;
+    const lockText = dec.decode(lockBytes);
+    expect(lockText).toBe(
+      `{\n  "repo": "solanabr/courses-academy",\n  "note": "keep me",\n  "sha": "${HEAD}"\n}\n`
+    );
+    expect(lockText).toContain(`"note": "keep me"`);
+    expect(lockText).not.toContain(OLD);
+    // Read the CURRENT lock blob (the one carried by the base tree), not rebuilt.
+    expect(h.write.readBlob.mock.calls[0]![0]).toBe("lk");
+  });
+
+  it("502s when content.lock is absent from the base tree", async () => {
+    h.write.recursiveTree.mockResolvedValue([
+      {
+        path: "apps/web/package.json",
+        mode: "100644",
+        type: "blob",
+        sha: "b1",
+      },
+    ]);
+    const res = await post({ headSha: HEAD });
+    expect(res.status).toBe(502);
+    expect(h.write.createCommit).not.toHaveBeenCalled();
+  });
+
+  it("the REAL write client exposes no update-ref/force/delete-ref surface", async () => {
+    // FIX 5: assert against the ACTUAL client, not the hand-built mock — a
+    // regression that adds a `main`-mutating method is caught here.
+    const actual = await vi.importActual<typeof import("@/lib/github/github")>(
+      "@/lib/github/github"
+    );
+    const client = actual.createGitHubWriteClient({
+      token: "wt",
+      fetchImpl: (async () => new Response()) as unknown as typeof fetch,
+    });
+    const methods = Object.keys(client);
+    for (const banned of [
+      "updateRef",
+      "patchRef",
+      "deleteRef",
+      "deleteBranch",
+      "forcePush",
+      "force",
+    ]) {
+      expect(methods).not.toContain(banned);
+    }
+    // Positive control: it DOES expose the intended PR-only write surface.
+    expect(methods).toContain("createBranch");
+    expect(methods).toContain("openPullRequest");
   });
 
   it("scrubs a tokened GitHub error before returning it (502)", async () => {

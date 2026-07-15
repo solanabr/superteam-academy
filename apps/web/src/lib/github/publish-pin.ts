@@ -75,9 +75,13 @@ export function contentCompareUrl(pinnedSha: string, headSha: string): string {
   return `https://github.com/${CONTENT_REPO}/compare/${pinnedSha}...${headSha}`;
 }
 
-/** Suggested branch name for the bump PR, e.g. `chore/content-pin-a1b2c3d`. */
+/**
+ * Suggested branch name for the bump PR, e.g. `chore/content-pin-a1b2c3d4e5f6`.
+ * Uses a 12-hex-char prefix (wider than the 7-char display `shortSha`) so two
+ * distinct HEADs cannot collide onto the same branch and dead-409 each other.
+ */
 export function suggestBranchName(headSha: string): string {
-  return `chore/content-pin-${shortSha(headSha)}`;
+  return `chore/content-pin-${headSha.slice(0, 12)}`;
 }
 
 /** The exact one-line `content.lock` edit the human PR makes (old → new sha). */

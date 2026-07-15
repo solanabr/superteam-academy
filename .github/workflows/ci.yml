@@ -77,11 +77,11 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           pnpm --filter web compile-content
-          drift="$(git status --porcelain -- apps/web/src/content/generated apps/web/public/content-assets)"
+          drift="$(git status --porcelain -- apps/web/src/content/generated apps/web/public/content-assets apps/web/content.lock)"
           if [ -n "$drift" ]; then
             echo "::error::Content bundle is stale — recompile drifted from the committed bundle."
             echo "$drift"
-            git --no-pager diff -- apps/web/src/content/generated apps/web/public/content-assets
+            git --no-pager diff -- apps/web/src/content/generated apps/web/public/content-assets apps/web/content.lock
             exit 1
           fi
 
