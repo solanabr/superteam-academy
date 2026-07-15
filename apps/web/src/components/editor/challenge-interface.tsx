@@ -295,28 +295,34 @@ export function ChallengeInterface({
           className="order-1 h-px w-full shrink-0 lg:order-none"
         />
 
-        {/* AI Partner — collapsed until the sentinel is reached, then slides in. */}
+        {/* AI Partner — collapsed until the sentinel is reached, then slides in.
+            The pane is NOT mounted while collapsed: a CSS-only hide (max-h-0 /
+            overflow-hidden) would keep its inputs and buttons in the tab order,
+            letting a keyboard user land on invisible controls (WCAG 4.1.2). The
+            transition still runs because it lives on this always-mounted
+            wrapper — the pane simply mounts as the envelope grows. */}
         <div
-          aria-hidden={!aiRevealed}
           className={cn(
             "order-4 px-3 transition-all duration-500 ease-out motion-reduce:transition-none lg:order-none lg:shrink-0",
             aiRevealed
               ? "max-h-[760px] translate-y-0 pb-4 pt-2 opacity-100"
-              : "pointer-events-none max-h-0 translate-y-3 overflow-hidden opacity-0"
+              : "max-h-0 translate-y-3 overflow-hidden opacity-0"
           )}
         >
-          <div className="h-[600px]">
-            <AiPartnerPane
-              lessonSlug={lessonSlug}
-              courseSlug={courseSlug}
-              hints={hints}
-              getCode={() => code}
-              getTestSummary={() => summarize(challengeState.executionResult)}
-              onApply={(proposed) => setCode(proposed)}
-              disabled={isComplete}
-              className="h-full rounded-none border-0"
-            />
-          </div>
+          {aiRevealed && (
+            <div className="h-[600px]">
+              <AiPartnerPane
+                lessonSlug={lessonSlug}
+                courseSlug={courseSlug}
+                hints={hints}
+                getCode={() => code}
+                getTestSummary={() => summarize(challengeState.executionResult)}
+                onApply={(proposed) => setCode(proposed)}
+                disabled={isComplete}
+                className="h-full rounded-none border-0"
+              />
+            </div>
+          )}
         </div>
       </div>
 
