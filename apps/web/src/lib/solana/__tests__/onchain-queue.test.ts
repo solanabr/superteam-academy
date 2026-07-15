@@ -41,7 +41,9 @@ const h = vi.hoisted(() => ({
   >(),
   fetchEnrollment: vi.fn(),
   finalizeCourse: vi.fn(),
+  awardAchievement: vi.fn(),
   isCourseInMaintenance: vi.fn<(courseId: string) => Promise<boolean>>(),
+  isPlatformFrozen: vi.fn<() => Promise<boolean>>(),
   getCourseById: vi.fn(),
   // F5 — simulate the maintenance-defer marker WRITE itself failing (a
   // transient DB error), independent of any other update in the sweep.
@@ -65,7 +67,7 @@ vi.mock("../pda", () => ({
 
 vi.mock("../academy-program", () => ({
   getConnection: () => ({}),
-  awardAchievement: vi.fn(),
+  awardAchievement: (...args: unknown[]) => h.awardAchievement(...args),
   finalizeCourse: (...args: unknown[]) => h.finalizeCourse(...args),
   issueCredential: vi.fn(),
 }));
@@ -83,6 +85,10 @@ vi.mock("@/lib/content/queries", () => ({
 vi.mock("@/lib/content/deployments", () => ({
   isCourseInMaintenance: (...args: [string]) =>
     h.isCourseInMaintenance(...args),
+}));
+
+vi.mock("@/lib/platform/freeze", () => ({
+  isPlatformFrozen: () => h.isPlatformFrozen(),
 }));
 
 vi.mock("@/lib/supabase/admin", () => {
@@ -174,7 +180,10 @@ beforeEach(() => {
   h.awardXp.mockReset();
   h.fetchEnrollment.mockReset();
   h.finalizeCourse.mockReset();
+  h.awardAchievement.mockReset();
   h.isCourseInMaintenance.mockReset();
+  h.isPlatformFrozen.mockReset();
+  h.isPlatformFrozen.mockResolvedValue(false);
   h.getCourseById.mockReset();
   h.deferWriteShouldError = false;
   // Default: course already finalized on-chain, so finalizeCourse is skipped
@@ -481,5 +490,125 @@ describe("retryPendingOnchainActions — maintenance-gate deferral (adversarial-
     // though the defer marker write failed.
     expect(h.finalizeCourse).not.toHaveBeenCalled();
     expect(h.fetchEnrollment).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Reset wave B2 — GLOBAL deploy-window freeze. While the platform is frozen,
+// the drainer must DEFER every on-chain-write case in Pass 2 (achievement,
+// certificate, course_finalize, xp, enroll) WITHOUT bumping retry_count — the
+// same durable-defer contract as the per-course maintenance gate, but
+// platform-wide. quest_xp (Pass 1, DB-only, wallet-less) is NOT an on-chain
+// write and keeps flowing even while frozen.
+// ---------------------------------------------------------------------------
+describe("retryPendingOnchainActions — global freeze deferral (reset wave B2)", () => {
+  it("defers EVERY Pass-2 case with a platform-frozen marker, no retry bump, no on-chain call", async () => {
+    h.rows = [
+      {
+        id: "r-ach",
+        action_type: "achievement",
+        reference_id: "achievement-first",
+        retry_count: 1,
+        payload: { achievementId: "achievement-first", walletAddress: "W" },
+      },
+      {
+        id: "r-cert",
+        action_type: "certificate",
+        reference_id: "course-1",
+        retry_count: 0,
+        payload: { courseId: "course-1" },
+      },
+      {
+        id: "r-cf",
+        action_type: "course_finalize",
+        reference_id: "course-1",
+        retry_count: 3,
+        payload: { courseId: "course-1", walletAddress: "W" },
+      },
+      {
+        id: "r-xp",
+        action_type: "xp",
+        reference_id: "lesson-9",
+        retry_count: 0,
+        payload: { lessonId: "lesson-9", xpAmount: 50 },
+      },
+      {
+        id: "r-enroll",
+        action_type: "enroll",
+        reference_id: "course-1",
+        retry_count: 0,
+        payload: { courseId: "course-1", walletAddress: "W", txSignature: "S" },
+      },
+    ];
+    h.isPlatformFrozen.mockResolvedValue(true);
+
+    await retryPendingOnchainActions(USER_ID);
+
+    for (const id of ["r-ach", "r-cert", "r-cf", "r-xp", "r-enroll"]) {
+      const patch = patchFor(id);
+      expect(patch, `row ${id} should be deferred`).toBeDefined();
+      expect(patch?.last_error).toBe("platform-frozen");
+      expect(patch?.retry_count).toBeUndefined();
+      expect(patch?.resolved_at).toBeUndefined();
+    }
+    // No on-chain write and no chain read may be attempted while frozen.
+    expect(h.awardAchievement).not.toHaveBeenCalled();
+    expect(h.finalizeCourse).not.toHaveBeenCalled();
+    expect(h.fetchEnrollment).not.toHaveBeenCalled();
+    // The per-course gate is never even consulted — the global freeze
+    // short-circuits the whole pass before it.
+    expect(h.isCourseInMaintenance).not.toHaveBeenCalled();
+  });
+
+  it("keeps crediting quest_xp (Pass 1) even while frozen, and defers the on-chain row", async () => {
+    h.rows = [
+      {
+        id: "r-quest",
+        action_type: "quest_xp",
+        reference_id: "quest-daily-1",
+        retry_count: 0,
+        payload: { xpAmount: 25, memo: "daily_quest:quest-daily-1" },
+      },
+      {
+        id: "r-ach",
+        action_type: "achievement",
+        reference_id: "achievement-first",
+        retry_count: 0,
+        payload: { achievementId: "achievement-first", walletAddress: "W" },
+      },
+    ];
+    h.isPlatformFrozen.mockResolvedValue(true);
+    h.awardXp.mockReturnValue({ data: 25, error: null });
+
+    await retryPendingOnchainActions(USER_ID);
+
+    // quest_xp credited + resolved (DB-only, never frozen).
+    expect(h.awardXp).toHaveBeenCalledWith(
+      expect.objectContaining({ p_idempotency_key: "quest-daily-1" })
+    );
+    expect(typeof patchFor("r-quest")?.resolved_at).toBe("string");
+    // The on-chain achievement row is deferred.
+    expect(patchFor("r-ach")?.last_error).toBe("platform-frozen");
+    expect(h.awardAchievement).not.toHaveBeenCalled();
+  });
+
+  it("does NOT defer when the platform is not frozen (xp row resolves normally)", async () => {
+    h.rows = [
+      {
+        id: "r-xp-ok",
+        action_type: "xp",
+        reference_id: "lesson-2",
+        retry_count: 0,
+        payload: { lessonId: "lesson-2", xpAmount: 50 },
+      },
+    ];
+    h.isPlatformFrozen.mockResolvedValue(false);
+    h.awardXp.mockReturnValue({ data: 50, error: null });
+
+    await retryPendingOnchainActions(USER_ID);
+
+    const patch = patchFor("r-xp-ok");
+    expect(patch?.last_error).not.toBe("platform-frozen");
+    expect(typeof patch?.resolved_at).toBe("string");
   });
 });

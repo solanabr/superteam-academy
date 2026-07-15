@@ -14,6 +14,7 @@ vi.mock("server-only", () => ({}));
 
 const {
   isCourseInMaintenance,
+  isPlatformFrozen,
   fetchEnrollment,
   fetchCourse,
   isCourseComplete,
@@ -21,6 +22,7 @@ const {
   upsert,
 } = vi.hoisted(() => ({
   isCourseInMaintenance: vi.fn<() => Promise<boolean>>(),
+  isPlatformFrozen: vi.fn<() => Promise<boolean>>(),
   fetchEnrollment: vi.fn(),
   fetchCourse: vi.fn(),
   isCourseComplete: vi.fn<() => boolean>(),
@@ -35,6 +37,7 @@ const {
 }));
 
 vi.mock("@/lib/content/deployments", () => ({ isCourseInMaintenance }));
+vi.mock("@/lib/platform/freeze", () => ({ isPlatformFrozen }));
 vi.mock("@/lib/solana/academy-reads", () => ({ fetchEnrollment, fetchCourse }));
 vi.mock("@/lib/solana/bitmap", () => ({ isCourseComplete }));
 vi.mock("@/lib/solana/pda", () => ({ getProgramId: () => "program-id" }));
@@ -78,6 +81,7 @@ const CONNECTION = {} as never;
 beforeEach(() => {
   vi.clearAllMocks();
   isCourseInMaintenance.mockResolvedValue(false);
+  isPlatformFrozen.mockResolvedValue(false);
   fetchEnrollment.mockResolvedValue({
     lesson_flags: [0n, 0n, 0n, 0n],
     completed_at: null,
@@ -171,6 +175,32 @@ describe("tryFinalizeCourse — the per-course maintenance gate (rail 3)", () =>
       expect.objectContaining({
         action_type: "course_finalize",
         last_error: "tx failed",
+      }),
+      { onConflict: "user_id,action_type,reference_id" }
+    );
+  });
+});
+
+// Reset wave B2 — the GLOBAL freeze must defer the webhook's on-chain finalize
+// cascade the same way the per-course maintenance gate does: queue for retry,
+// never send a tx, never read the chain.
+describe("tryFinalizeCourse — global freeze gate (reset wave B2)", () => {
+  it("queues (no chain read, no finalize tx) when the platform is frozen", async () => {
+    isCourseInMaintenance.mockResolvedValue(false);
+    isPlatformFrozen.mockResolvedValue(true);
+    isCourseComplete.mockReturnValue(true);
+
+    await tryFinalizeCourse(USER_ID, COURSE_ID, WALLET, CONNECTION);
+
+    expect(fetchEnrollment).not.toHaveBeenCalled();
+    expect(onChainFinalizeCourse).not.toHaveBeenCalled();
+    expect(upsert).toHaveBeenCalledWith(
+      "pending_onchain_actions",
+      expect.objectContaining({
+        user_id: USER_ID,
+        action_type: "course_finalize",
+        reference_id: COURSE_ID,
+        last_error: expect.stringMatching(/frozen/i),
       }),
       { onConflict: "user_id,action_type,reference_id" }
     );

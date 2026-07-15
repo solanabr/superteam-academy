@@ -16,6 +16,8 @@ import { uploadCertificateMetadata } from "@/lib/solana/arweave";
 import { capCredentialName } from "@/lib/solana/credential-metadata";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { isCourseInMaintenance } from "@/lib/content/deployments";
+import { isPlatformFrozen } from "@/lib/platform/freeze";
+import { platformFrozenResponse } from "@/lib/platform/freeze-http";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 
@@ -43,6 +45,13 @@ export async function POST(request: NextRequest) {
       );
     }
     const courseId = body.courseId;
+
+    // Global deploy-window freeze (reset wave B2) — platform-wide, checked
+    // before any rate-limited/paid work (Arweave upload, platform-funded tx).
+    // A clean 503 "try later", not a failed issue_credential tx.
+    if (await isPlatformFrozen()) {
+      return platformFrozenResponse();
+    }
 
     // WS-2 #453 rail 3 — the affected course is mid close+recreate (the Course
     // PDA is briefly absent, non-atomically). Refuse before doing any

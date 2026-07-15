@@ -15,6 +15,7 @@ const {
   isOnChainProgramLive,
   isRateLimited,
   isCourseInMaintenance,
+  isPlatformFrozen,
 } = vi.hoisted(() => ({
   getUser: vi.fn<() => Promise<unknown>>(),
   singleProfile: vi.fn<() => Promise<unknown>>(),
@@ -25,6 +26,7 @@ const {
   isOnChainProgramLive: vi.fn<() => Promise<boolean>>(),
   isRateLimited: vi.fn<(ns: string) => Promise<boolean>>(),
   isCourseInMaintenance: vi.fn<() => Promise<boolean>>(),
+  isPlatformFrozen: vi.fn<() => Promise<boolean>>(),
 }));
 
 vi.mock("@/lib/rate-limit", () => ({
@@ -73,6 +75,7 @@ vi.mock("@/lib/solana/bitmap", () => ({ isLessonComplete: vi.fn() }));
 vi.mock("@/lib/courses/lesson-index", () => ({ findLessonIndex: () => 0 }));
 vi.mock("@/lib/logging", () => ({ logError: vi.fn() }));
 vi.mock("@/lib/content/deployments", () => ({ isCourseInMaintenance }));
+vi.mock("@/lib/platform/freeze", () => ({ isPlatformFrozen }));
 
 import { POST } from "../route";
 import { fetchEnrollment } from "@/lib/solana/academy-reads";
@@ -97,6 +100,41 @@ beforeEach(() => {
   isOnChainProgramLive.mockResolvedValue(false);
   isRateLimited.mockResolvedValue(false);
   isCourseInMaintenance.mockResolvedValue(false);
+  isPlatformFrozen.mockResolvedValue(false);
+});
+
+// Global deploy-window freeze (reset wave B2). Platform-wide, checked before the
+// volume gate + grading so a frozen platform short-circuits to a clean 503
+// without burning rate-limit tokens or running the code executors.
+describe("global freeze gate (reset wave B2)", () => {
+  const lesson = { blocks: [{ _type: "code", key: "c1" }] };
+
+  it("503 { maintenance: true } and never rate-limits or grades when frozen", async () => {
+    getLessonByIdForGrading.mockResolvedValue(lesson);
+    isPlatformFrozen.mockResolvedValue(true);
+
+    const res = await call({ c1: { code: "correct" } });
+
+    expect(res.status).toBe(503);
+    const body = (await res.json()) as { maintenance?: boolean };
+    expect(body.maintenance).toBe(true);
+    // Frozen must short-circuit before the volume gate and the graders.
+    expect(isRateLimited).not.toHaveBeenCalled();
+    expect(codeGrader).not.toHaveBeenCalled();
+    expect(isOnChainProgramLive).not.toHaveBeenCalled();
+  });
+
+  it("proceeds normally when not frozen", async () => {
+    getLessonByIdForGrading.mockResolvedValue(lesson);
+    codeGrader.mockResolvedValue({ ok: false, status: 403 });
+    isPlatformFrozen.mockResolvedValue(false);
+
+    const res = await call({ c1: { code: "wrong" } });
+
+    // Not 503-from-freeze — reached the volume gate + grading.
+    expect(isRateLimited).toHaveBeenCalled();
+    expect(res.status).toBe(403);
+  });
 });
 
 // This route is the chokepoint for every platform-funded on-chain write: the

@@ -7,6 +7,8 @@ import {
   adminUnauthorizedResponse,
   AdminAuthError,
 } from "@/lib/admin/auth";
+import { isPlatformFrozen } from "@/lib/platform/freeze";
+import { platformFrozenResponse } from "@/lib/platform/freeze-http";
 import { updateCoursePda } from "@/lib/solana/admin-signer";
 import { writeCourseActive } from "@/lib/content/deployment-writes";
 import { COURSES_CACHE_TAG } from "@/lib/content/queries";
@@ -17,6 +19,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   } catch (e) {
     if (e instanceof AdminAuthError) return adminUnauthorizedResponse();
     throw e;
+  }
+
+  // Global deploy-window freeze (reset wave B2) — reactivate is an on-chain
+  // write (updateCoursePda newIsActive), so it is frozen during the window.
+  if (await isPlatformFrozen()) {
+    return platformFrozenResponse();
   }
 
   let courseId: string;
