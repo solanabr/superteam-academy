@@ -2,13 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { sanitizeReason } from "@/lib/admin/sanitize-reason";
 import { AdminCard } from "@/components/admin/admin-card";
 import {
   AdminBadge,
   type AdminBadgeTone,
 } from "@/components/admin/admin-badge";
-import { AdminDisclosure } from "@/components/admin/admin-disclosure";
 import type { ChecksState } from "@/lib/github/types";
 import {
   computePublishVerdict,
@@ -37,9 +35,6 @@ const LINK_CLASSES =
 
 const BUTTON_CLASSES =
   "rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-text shadow-push-sm transition-all hover:bg-subtle active:translate-y-[1px] active:shadow-push-active focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-50";
-
-const PRIMARY_BUTTON_CLASSES =
-  "inline-flex items-center rounded-md border border-primary bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-push-sm transition-all hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary active:translate-y-[1px] disabled:pointer-events-none disabled:opacity-50";
 
 function ChecksBadge({ checks }: { checks: ChecksState }): React.ReactElement {
   const t = useTranslations("admin.publishPin");
@@ -219,19 +214,12 @@ function PinBody({ data }: { data: PinResponse }): React.ReactElement {
   );
 }
 
-interface OpenPrResponse {
-  pr: { url: string; number: number; branch: string };
-  pinnedFrom: string;
-  pinnedTo: string;
-}
-
-type OneClickState =
-  | { status: "idle" }
-  | { status: "opening" }
-  | { status: "opened"; pr: OpenPrResponse["pr"] }
-  | { status: "error"; message: string }
-  | { status: "unavailable" };
-
+/**
+ * The manual publish flow — the PRIMARY (and only) path to publish new content
+ * now that the one-click server-side publish route has been removed. Always
+ * rendered, not tucked behind a disclosure: this is the sole way to bump the
+ * pin, so a maintainer must not have to expand anything to reach it.
+ */
 function PreparePr({ data }: { data: PinResponse }): React.ReactElement {
   const t = useTranslations("admin.publishPin");
   const { pin, head, verdict } = data;
@@ -245,175 +233,77 @@ function PreparePr({ data }: { data: PinResponse }): React.ReactElement {
   const branch = suggestBranchName(head.sha);
   const prUrl = buildPublishPrUrl({ pinnedSha: pin.sha, headSha: head.sha });
 
-  const [oneClick, setOneClick] = useState<OneClickState>({ status: "idle" });
-  const checksGreen = head.checks === "success";
-
-  const openPr = useCallback(async () => {
-    setOneClick({ status: "opening" });
-    try {
-      const res = await fetch("/api/admin/publish/pin/open", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ headSha: head.sha }),
-      });
-      // Token unset server-side — degrade silently to the manual card below.
-      if (res.status === 501) {
-        setOneClick({ status: "unavailable" });
-        return;
-      }
-      const payload = (await res.json().catch(() => null)) as
-        | (OpenPrResponse & { error?: string })
-        | null;
-      if (res.ok && payload?.pr) {
-        setOneClick({ status: "opened", pr: payload.pr });
-        return;
-      }
-      // Belt-and-suspenders: the server already scrubs, scrub again before render.
-      const reason = sanitizeReason(payload?.error ?? `HTTP ${res.status}`);
-      setOneClick({
-        status: "error",
-        message: t("oneClick.error", { reason }),
-      });
-    } catch {
-      setOneClick({ status: "error", message: t("oneClick.networkError") });
-    }
-  }, [head.sha, t]);
-
-  // 501 degrade: hide the one-click affordance entirely, leave only the manual
-  // fallback (rendered below, expanded on request as before).
-  const showOneClick = oneClick.status !== "unavailable";
-
   return (
     <div className="space-y-4 border-t border-border pt-4">
-      {showOneClick && (
-        <div className="space-y-2">
-          {oneClick.status === "opened" ? (
-            <div
-              role="status"
-              className="rounded-md border border-success bg-success-light p-3 text-sm text-success"
-            >
-              <p className="font-medium">{t("oneClick.openedTitle")}</p>
-              <a
-                href={oneClick.pr.url}
-                target="_blank"
-                rel="noreferrer"
-                className={`${LINK_CLASSES} mt-1 inline-block`}
-              >
-                {t("oneClick.viewPr", { number: oneClick.pr.number })}
-              </a>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => void openPr()}
-                  disabled={oneClick.status === "opening" || !checksGreen}
-                  className={PRIMARY_BUTTON_CLASSES}
-                >
-                  {oneClick.status === "opening"
-                    ? t("oneClick.opening")
-                    : t("oneClick.button")}
-                </button>
-                {!checksGreen && (
-                  <span className="text-xs text-text-3">
-                    {t("oneClick.blocked")}
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-text-3">{t("oneClick.hint")}</p>
-              {oneClick.status === "error" && (
-                <div
-                  role="alert"
-                  className="rounded-md border border-danger bg-danger-light p-3 text-sm text-danger"
-                >
-                  {oneClick.message}
-                </div>
-              )}
-            </div>
-          )}
+      <h4 className="font-display text-sm font-bold text-text">
+        {t("prepare.title")}
+      </h4>
+
+      {verdict.warnRedHead && (
+        <div
+          role="alert"
+          className="rounded-md border border-danger bg-danger-light p-3 text-sm text-danger"
+        >
+          {t("prepare.redHeadWarning")}
         </div>
       )}
 
-      {oneClick.status === "unavailable" && (
-        <p className="text-sm text-streak">{t("oneClick.unavailable")}</p>
-      )}
+      <div className="space-y-1">
+        <p className="text-xs font-medium uppercase tracking-wide text-text-3">
+          {t("prepare.step1")}
+        </p>
+        <pre className="overflow-x-auto rounded-md border border-border bg-card p-3 text-xs">
+          <code className="font-mono text-text">{diff}</code>
+        </pre>
+      </div>
 
-      <AdminDisclosure
-        headingLevel={4}
-        summary={
-          <span className="font-display text-sm font-bold text-text">
-            {t("prepare.title")}
-          </span>
-        }
-        contentClassName="mt-3 space-y-4"
-      >
-        {verdict.warnRedHead && (
-          <div
-            role="alert"
-            className="rounded-md border border-danger bg-danger-light p-3 text-sm text-danger"
+      <div className="space-y-1">
+        <p className="text-xs font-medium uppercase tracking-wide text-text-3">
+          {t("prepare.step2")}
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <code className="rounded-md border border-border bg-card px-2 py-1 font-mono text-xs text-text">
+            {COMPILE_COMMAND}
+          </code>
+          <CopyButton text={COMPILE_COMMAND} label={t("copyCommand")} />
+        </div>
+        <p className="text-xs text-text-3">
+          {t("prepare.step2Hint", { path: LOCK_PATH })}
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-xs font-medium uppercase tracking-wide text-text-3">
+          {t("prepare.step3")}
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-text-3">{t("prepare.branch")}</span>
+          <code className="rounded-md border border-border bg-card px-2 py-1 font-mono text-xs text-text">
+            {branch}
+          </code>
+          <CopyButton text={branch} label={t("copyBranch")} />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <CopyButton text={title} label={t("copyTitle")} />
+          <CopyButton text={body} label={t("copyBody")} />
+          <a
+            href={contentCompareUrl(pin.sha, head.sha)}
+            target="_blank"
+            rel="noreferrer"
+            className={`${BUTTON_CLASSES} inline-flex items-center`}
           >
-            {t("prepare.redHeadWarning")}
-          </div>
-        )}
-
-        <div className="space-y-1">
-          <p className="text-xs font-medium uppercase tracking-wide text-text-3">
-            {t("prepare.step1")}
-          </p>
-          <pre className="overflow-x-auto rounded-md border border-border bg-card p-3 text-xs">
-            <code className="font-mono text-text">{diff}</code>
-          </pre>
+            {t("viewCompare")}
+          </a>
+          <a
+            href={prUrl}
+            target="_blank"
+            rel="noreferrer"
+            className={`${BUTTON_CLASSES} inline-flex items-center`}
+          >
+            {t("preparePrLink")}
+          </a>
         </div>
-
-        <div className="space-y-1">
-          <p className="text-xs font-medium uppercase tracking-wide text-text-3">
-            {t("prepare.step2")}
-          </p>
-          <div className="flex flex-wrap items-center gap-2">
-            <code className="rounded-md border border-border bg-card px-2 py-1 font-mono text-xs text-text">
-              {COMPILE_COMMAND}
-            </code>
-            <CopyButton text={COMPILE_COMMAND} label={t("copyCommand")} />
-          </div>
-          <p className="text-xs text-text-3">
-            {t("prepare.step2Hint", { path: LOCK_PATH })}
-          </p>
-        </div>
-
-        <div className="space-y-2">
-          <p className="text-xs font-medium uppercase tracking-wide text-text-3">
-            {t("prepare.step3")}
-          </p>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-text-3">{t("prepare.branch")}</span>
-            <code className="rounded-md border border-border bg-card px-2 py-1 font-mono text-xs text-text">
-              {branch}
-            </code>
-            <CopyButton text={branch} label={t("copyBranch")} />
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <CopyButton text={title} label={t("copyTitle")} />
-            <CopyButton text={body} label={t("copyBody")} />
-            <a
-              href={contentCompareUrl(pin.sha, head.sha)}
-              target="_blank"
-              rel="noreferrer"
-              className={`${BUTTON_CLASSES} inline-flex items-center`}
-            >
-              {t("viewCompare")}
-            </a>
-            <a
-              href={prUrl}
-              target="_blank"
-              rel="noreferrer"
-              className={`${BUTTON_CLASSES} inline-flex items-center`}
-            >
-              {t("preparePrLink")}
-            </a>
-          </div>
-        </div>
-      </AdminDisclosure>
+      </div>
     </div>
   );
 }

@@ -917,17 +917,6 @@
         "step2Hint": "Run this after editing {path}, then commit both the lock and the regenerated bundle.",
         "step3": "3. Push a branch and open the PR",
         "branch": "Suggested branch:"
-      },
-      "oneClick": {
-        "button": "Open publish PR",
-        "opening": "Opening PR…",
-        "hint": "Compiles the bundle and opens the PR for you. The CI byte-check runs on the branch before merge.",
-        "openedTitle": "Publish PR opened",
-        "viewPr": "View PR #{number}",
-        "blocked": "Wait for courses-academy CI to pass before publishing.",
-        "unavailable": "One-click publish is unavailable on this deployment — use the manual steps below.",
-        "error": "Publishing failed: {reason}",
-        "networkError": "Could not reach the server. Try again."
       }
     },
     "states": {
