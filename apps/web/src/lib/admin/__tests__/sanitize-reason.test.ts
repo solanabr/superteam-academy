@@ -90,4 +90,55 @@ describe("sanitizeReason", () => {
     const out = sanitizeReason("env GITHUB_TOKEN unset");
     expect(out).toBe("env [redacted-env] unset");
   });
+
+  // ── generic GitHub-token-shape rule (defense-in-depth) ─────────────────────
+  it("redacts a bare ghp_ token with no Bearer/token/URL context", () => {
+    const out = sanitizeReason(
+      "unexpected error, secret=ghp_ABC123liveTokenValue, retry"
+    );
+    expect(out).not.toMatch(/ghp_ABC123liveTokenValue/);
+    expect(out).toContain("[redacted-token]");
+  });
+
+  it("redacts a bare github_pat_ token with no Bearer/token/URL context", () => {
+    const out = sanitizeReason(
+      "unexpected error, secret=github_pat_11ABCDEFG_liveTokenValue, retry"
+    );
+    expect(out).not.toMatch(/github_pat_11ABCDEFG_liveTokenValue/);
+    expect(out).toContain("[redacted-token]");
+  });
+
+  it("still redacts an x-access-token git-credential (no regression)", () => {
+    const out = sanitizeReason(
+      "fetch failed: https://x-access-token:ghs_TopSecretToken@codeload.github.com/x/y"
+    );
+    expect(out).not.toMatch(/ghs_TopSecretToken/);
+    expect(out).not.toMatch(/codeload/);
+  });
+
+  it("still redacts a Bearer authorization value (no regression)", () => {
+    const out = sanitizeReason(
+      "header Authorization: Bearer ghp_LiveTokenXYZ nope"
+    );
+    expect(out).not.toMatch(/ghp_LiveTokenXYZ/);
+    expect(out).toContain("Bearer [redacted-token]");
+  });
+
+  it("still redacts a tokened GitHub URL (no regression)", () => {
+    const out = sanitizeReason(
+      "GitHub GET https://api.github.com/repos/x/y?token=ghs_LeakInQuery → 403"
+    );
+    expect(out).not.toMatch(/ghs_LeakInQuery/);
+    expect(out).not.toMatch(/api\.github\.com/);
+    expect(out).toContain("[redacted-url]");
+  });
+
+  it("still redacts an api-keyed RPC URL (no regression)", () => {
+    const out = sanitizeReason(
+      "boom at https://rpc.example/?api-key=SECRET and more"
+    );
+    expect(out).not.toMatch(/rpc\.example/);
+    expect(out).not.toMatch(/SECRET/);
+    expect(out).toContain("[redacted-url]");
+  });
 });
