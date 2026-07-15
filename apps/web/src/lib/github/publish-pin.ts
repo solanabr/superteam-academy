@@ -125,30 +125,6 @@ export function buildPrBody(input: {
 }
 
 /**
- * PR body for the one-click publish route: the bundle is ALREADY bumped +
- * regenerated in the branch's single commit (unlike `buildPrBody`, which lists
- * manual steps). States the pin transition and links the content compare.
- */
-export function buildOpenPrBody(input: {
-  pinnedSha: string;
-  headSha: string;
-  commitsBehind: number | null;
-}): string {
-  const behind =
-    input.commitsBehind == null
-      ? ""
-      : ` (${input.commitsBehind} commit(s) from ${CONTENT_REPO})`;
-  return (
-    `Automated content pin bump: \`${LOCK_PATH}\` \`${shortSha(input.pinnedSha)}\` → ` +
-    `\`${shortSha(input.headSha)}\`${behind}, with the committed bundle ` +
-    `regenerated in the same commit.\n\n` +
-    `The CI "Content bundle freshness" check recompiles and diffs the bundle on ` +
-    `this branch; merge only once it is green.\n\n` +
-    `Compare: ${contentCompareUrl(input.pinnedSha, input.headSha)}`
-  );
-}
-
-/**
  * Prefilled "new PR" link on the APP repo compare page. GitHub prefills the
  * PR form's title/body from the query params; the contributor selects their
  * pushed branch there. This link performs NO write — it only opens the form.

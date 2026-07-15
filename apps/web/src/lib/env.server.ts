@@ -34,14 +34,6 @@ const serverEnvSchema = z.object({
   // boot; the content routes 503 when unset. Unauthenticated GitHub is 60 req/hr
   // per IP and flakes on Vercel.
   GITHUB_TOKEN: optStr,
-  // Fine-grained WRITE token (contents + pull-requests) for the APP monorepo
-  // solanabr/superteam-academy. SEPARATE from GITHUB_TOKEN (which is read-scoped
-  // on the content repo) so the read path's blast radius is not broadened.
-  // Server-only. Powers the one-click "Open publish PR" route
-  // (POST /api/admin/publish/pin/open): recompiles the bundle in-route and opens
-  // a `chore/content-pin-<sha>` PR against main. Optional at boot; unset → that
-  // route 501s and the admin UI keeps the manual publish card.
-  GITHUB_PUBLISH_TOKEN: optStr,
   // Admin panel HMAC cookie signing key.
   ADMIN_SECRET: optStr,
   // Helius webhook HMAC verification secret.
@@ -79,7 +71,6 @@ const parsed = serverEnvSchema.safeParse({
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
   SOLANA_RPC_URL: process.env.SOLANA_RPC_URL,
   GITHUB_TOKEN: process.env.GITHUB_TOKEN,
-  GITHUB_PUBLISH_TOKEN: process.env.GITHUB_PUBLISH_TOKEN,
   ADMIN_SECRET: process.env.ADMIN_SECRET,
   HELIUS_WEBHOOK_SECRET: process.env.HELIUS_WEBHOOK_SECRET,
   BACKEND_SIGNER_SECRET: process.env.BACKEND_SIGNER_SECRET,
