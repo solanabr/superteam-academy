@@ -14,8 +14,8 @@ import type {
   CodeEditorHandle,
   ExecutionResult,
 } from "./types";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const LESSON_COMPLETE_EVENT = "superteam:lesson-complete";
 
@@ -90,20 +90,38 @@ export function ChallengeInterface({
     }
     prevIsAlreadyCompleted.current = isAlreadyCompleted ?? false;
   }, [isAlreadyCompleted]);
+
   const [panelHeight, setPanelHeight] = useState(120);
-  const [taskHeight, setTaskHeight] = useState(320);
-  // null = default 50/50 (both columns flex-1); a number = user dragged to that
-  // pixel width. Starting null keeps the split half-and-half on any screen.
-  const [railWidth, setRailWidth] = useState<number | null>(null);
-  const resizeRef = useRef<{
-    startY: number;
-    startHeight: number;
-    target: "output" | "task";
-  } | null>(null);
-  const railResizeRef = useRef<{ startX: number; startWidth: number } | null>(
+  // null = default 50/50 (both columns flex-1); a number = the user dragged the
+  // text column to that pixel width. Starting null keeps the split even.
+  const [leftWidth, setLeftWidth] = useState<number | null>(null);
+  const resizeRef = useRef<{ startY: number; startHeight: number } | null>(
     null
   );
-  const railRef = useRef<HTMLDivElement>(null);
+  const splitResizeRef = useRef<{ startX: number; startWidth: number } | null>(
+    null
+  );
+  const leftColRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  // The AI Partner sits at the bottom of the left reading column and stays
+  // hidden until the learner scrolls to the end of the description — then it
+  // slides in. `root: null` watches the viewport, so this works whether the
+  // column scrolls internally (lg+) or the page scrolls (below lg). Once
+  // revealed it stays revealed.
+  const [aiRevealed, setAiRevealed] = useState(false);
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || aiRevealed) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) setAiRevealed(true);
+      },
+      { root: null, rootMargin: "0px 0px -32px 0px", threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [aiRevealed]);
 
   const handleCodeChange = useCallback((newCode: string) => {
     setCode(newCode);
@@ -185,31 +203,21 @@ export function ChallengeInterface({
       window.removeEventListener("superteam:lesson-complete-error", handler);
   }, [lessonId]);
 
+  // Vertical drag for the editor/output split — the resizer sits above the
+  // output panel, so dragging up makes the output taller.
   const handleResizeStart = useCallback(
-    (target: "output" | "task") => (e: React.MouseEvent) => {
+    (e: React.MouseEvent) => {
       e.preventDefault();
-      const startHeight = target === "task" ? taskHeight : panelHeight;
-      resizeRef.current = { startY: e.clientY, startHeight, target };
+      resizeRef.current = { startY: e.clientY, startHeight: panelHeight };
 
       const handleMouseMove = (moveEvent: MouseEvent) => {
         if (!resizeRef.current) return;
-        // Task: drag down = taller (resizer sits below the panel).
-        // Output: drag up = taller (resizer sits above the panel).
-        const delta =
-          resizeRef.current.target === "output"
-            ? resizeRef.current.startY - moveEvent.clientY
-            : moveEvent.clientY - resizeRef.current.startY;
-        const [min, max] =
-          resizeRef.current.target === "task" ? [140, 600] : [88, 500];
+        const delta = resizeRef.current.startY - moveEvent.clientY;
         const newHeight = Math.max(
-          min,
-          Math.min(max, resizeRef.current.startHeight + delta)
+          88,
+          Math.min(500, resizeRef.current.startHeight + delta)
         );
-        if (resizeRef.current.target === "task") {
-          setTaskHeight(newHeight);
-        } else {
-          setPanelHeight(newHeight);
-        }
+        setPanelHeight(newHeight);
       };
 
       const handleMouseUp = () => {
@@ -221,34 +229,32 @@ export function ChallengeInterface({
       document.addEventListener("mousemove", handleMouseMove);
       document.addEventListener("mouseup", handleMouseUp);
     },
-    [panelHeight, taskHeight]
+    [panelHeight]
   );
 
-  // Horizontal (X-axis) drag for the workspace/rail split — the rail is on the
-  // right, so dragging the handle left widens it. Mirrors the vertical
-  // resizers' pattern, just on clientX/width instead of clientY/height.
-  const handleRailResizeStart = useCallback(
+  // Horizontal (X-axis) drag for the text/editor split. The text column is on
+  // the left and the handle sits on its right edge, so dragging right widens
+  // the text. Clamp the max against the container so the editor keeps ≥360px.
+  const handleSplitResizeStart = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
-      // From the flex default (railWidth null) measure the rail's live width;
-      // clamp the max against the container so the editor keeps ≥360px.
-      const startWidth = railWidth ?? railRef.current?.clientWidth ?? 460;
-      const container = railRef.current?.parentElement;
+      const startWidth = leftWidth ?? leftColRef.current?.clientWidth ?? 460;
+      const container = leftColRef.current?.parentElement;
       const maxW = container ? Math.max(360, container.clientWidth - 360) : 900;
-      railResizeRef.current = { startX: e.clientX, startWidth };
+      splitResizeRef.current = { startX: e.clientX, startWidth };
 
       const handleMouseMove = (moveEvent: MouseEvent) => {
-        if (!railResizeRef.current) return;
-        const delta = railResizeRef.current.startX - moveEvent.clientX;
+        if (!splitResizeRef.current) return;
+        const delta = moveEvent.clientX - splitResizeRef.current.startX;
         const next = Math.max(
           320,
-          Math.min(maxW, railResizeRef.current.startWidth + delta)
+          Math.min(maxW, splitResizeRef.current.startWidth + delta)
         );
-        setRailWidth(next);
+        setLeftWidth(next);
       };
 
       const handleMouseUp = () => {
-        railResizeRef.current = null;
+        splitResizeRef.current = null;
         document.removeEventListener("mousemove", handleMouseMove);
         document.removeEventListener("mouseup", handleMouseUp);
       };
@@ -256,7 +262,7 @@ export function ChallengeInterface({
       document.addEventListener("mousemove", handleMouseMove);
       document.addEventListener("mouseup", handleMouseUp);
     },
-    [railWidth]
+    [leftWidth]
   );
 
   return (
@@ -266,10 +272,69 @@ export function ChallengeInterface({
         className
       )}
     >
-      {/* LEFT workspace: toolbar + editor + output. 50/50 with the rail by
-          default (both sides use lg:flex-1); below lg, `contents` flattens
-          this into the root flex-col so its children order alongside the
-          rail's. */}
+      {/* LEFT: lesson text — full height, scrollable as one column. The AI
+          Partner lives at the very bottom and stays hidden until the learner
+          scrolls to the end of the description, then slides in (LeetCode-style
+          reading pane). Below lg, `contents` flattens this so the text
+          (order-1) and AI (order-4) bracket the editor/output (order-2/3). */}
+      <div
+        ref={leftColRef}
+        className={cn(
+          "contents lg:flex lg:min-w-0 lg:flex-col lg:overflow-auto",
+          leftWidth === null ? "lg:flex-1" : "lg:shrink-0"
+        )}
+        style={leftWidth !== null ? { width: leftWidth } : undefined}
+      >
+        {/* Instructions + test cases */}
+        <div className="order-1 lg:order-none lg:shrink-0">{taskSlot}</div>
+
+        {/* Reveal sentinel — entering the viewport unhides the AI Partner. */}
+        <div
+          ref={sentinelRef}
+          aria-hidden="true"
+          className="order-1 h-px w-full shrink-0 lg:order-none"
+        />
+
+        {/* AI Partner — collapsed until the sentinel is reached, then slides in. */}
+        <div
+          aria-hidden={!aiRevealed}
+          className={cn(
+            "order-4 px-3 transition-all duration-500 ease-out motion-reduce:transition-none lg:order-none lg:shrink-0",
+            aiRevealed
+              ? "max-h-[760px] translate-y-0 pb-4 pt-2 opacity-100"
+              : "pointer-events-none max-h-0 translate-y-3 overflow-hidden opacity-0"
+          )}
+        >
+          <div className="h-[600px]">
+            <AiPartnerPane
+              lessonSlug={lessonSlug}
+              courseSlug={courseSlug}
+              hints={hints}
+              getCode={() => code}
+              getTestSummary={() => summarize(challengeState.executionResult)}
+              onApply={(proposed) => setCode(proposed)}
+              disabled={isComplete}
+              className="h-full rounded-none border-0"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Text/editor split resizer — lg+ only; drag right to widen the text. */}
+      <div
+        className="group hidden w-1.5 shrink-0 cursor-col-resize border-x border-border transition-colors [background:var(--resizer-bg)] hover:[background:var(--primary-dim)] lg:relative lg:block"
+        onMouseDown={handleSplitResizeStart}
+        role="separator"
+        aria-orientation="vertical"
+        aria-label={tA11y("resizeRailPanel")}
+        tabIndex={0}
+      >
+        <div className="absolute left-1/2 top-1/2 h-8 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full transition-colors [background:var(--resizer-handle)] group-hover:[background:var(--primary)]" />
+      </div>
+
+      {/* RIGHT: code editor + output — full height. Below lg, `contents`
+          flattens this so the editor (order-2) and output (order-3) slot
+          between the text (order-1) and the AI Partner (order-4). */}
       <div className="contents lg:flex lg:min-w-0 lg:flex-1 lg:flex-col lg:overflow-hidden">
         <div className="order-2 flex min-h-0 flex-col overflow-hidden lg:order-none lg:flex-1">
           {/* Toolbar */}
@@ -400,11 +465,11 @@ export function ChallengeInterface({
           </div>
         </div>
 
-        {/* Editor/output resizer — unchanged mechanism, hidden below lg since
-            the panels stack in natural flow there instead. */}
+        {/* Editor/output resizer — lg+ only; below lg the panels stack in
+            natural flow instead. */}
         <div
           className="lg:group hidden h-1.5 shrink-0 cursor-row-resize border-y border-border transition-colors [background:var(--resizer-bg)] hover:[background:var(--primary-dim)] lg:relative lg:block"
-          onMouseDown={handleResizeStart("output")}
+          onMouseDown={handleResizeStart}
           role="separator"
           aria-orientation="horizontal"
           aria-label={tA11y("resizeOutputPanel")}
@@ -422,65 +487,6 @@ export function ChallengeInterface({
             executionResult={challengeState.executionResult}
             isRunning={challengeState.status === "running"}
             onClear={handleClearOutput}
-            className="h-full rounded-none border-0"
-          />
-        </div>
-      </div>
-
-      {/* Workspace/rail horizontal resizer — lg+ only; drag to rebalance the
-          editor against the task/AI rail. */}
-      <div
-        className="group hidden w-1.5 shrink-0 cursor-col-resize border-x border-border transition-colors [background:var(--resizer-bg)] hover:[background:var(--primary-dim)] lg:relative lg:block"
-        onMouseDown={handleRailResizeStart}
-        role="separator"
-        aria-orientation="vertical"
-        aria-label={tA11y("resizeRailPanel")}
-        tabIndex={0}
-      >
-        <div className="absolute left-1/2 top-1/2 h-8 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full transition-colors [background:var(--resizer-handle)] group-hover:[background:var(--primary)]" />
-      </div>
-
-      {/* RIGHT rail: task brief on top, AI Partner below, resizable split.
-          Width is drag-adjustable (railWidth); below lg, `contents` flattens
-          this into the root flex-col so task/AI take their `order` slots. */}
-      <div
-        ref={railRef}
-        className={cn(
-          "contents lg:flex lg:min-w-0 lg:flex-col lg:overflow-hidden",
-          railWidth === null ? "lg:flex-1" : "lg:shrink-0"
-        )}
-        style={railWidth !== null ? { width: railWidth } : undefined}
-      >
-        {/* Task brief */}
-        <div
-          className="order-1 overflow-auto max-lg:!h-auto lg:order-none lg:shrink-0"
-          style={{ height: taskHeight }}
-        >
-          {taskSlot}
-        </div>
-
-        {/* Task/AI resizer — same drag mechanic as the editor/output one. */}
-        <div
-          className="lg:group hidden h-1.5 shrink-0 cursor-row-resize border-y border-border transition-colors [background:var(--resizer-bg)] hover:[background:var(--primary-dim)] lg:relative lg:block"
-          onMouseDown={handleResizeStart("task")}
-          role="separator"
-          aria-orientation="horizontal"
-          aria-label={tA11y("resizeTaskPanel")}
-          tabIndex={0}
-        >
-          <div className="absolute left-1/2 top-1/2 h-0.5 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full transition-colors [background:var(--resizer-handle)] group-hover:[background:var(--primary)]" />
-        </div>
-
-        {/* AI Partner */}
-        <div className="order-4 lg:order-none lg:min-h-0 lg:flex-1">
-          <AiPartnerPane
-            lessonSlug={lessonSlug}
-            courseSlug={courseSlug}
-            hints={hints}
-            getCode={() => code}
-            getTestSummary={() => summarize(challengeState.executionResult)}
-            onApply={(proposed) => setCode(proposed)}
-            disabled={isComplete}
             className="h-full rounded-none border-0"
           />
         </div>
