@@ -294,8 +294,13 @@ export function LessonPageClient({
         hasCodeBlock ? "max-w-[1600px] px-1 sm:px-2" : "max-w-3xl"
       }`}
     >
-      {/* Lesson top bar */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-border pb-4 sm:gap-3">
+      {/* Lesson top bar — full-bleed on challenges so its bottom border and
+          content line up with the edge-to-edge editor split below. */}
+      <div
+        className={`flex flex-wrap items-center gap-2 border-b border-border pb-4 sm:gap-3 ${
+          hasCodeBlock ? "mx-[calc(50%_-_50vw)] w-screen px-3 sm:px-4" : ""
+        }`}
+      >
         <Link
           href={`/${locale}/courses/${courseSlug}`}
           className="inline-flex items-center gap-1.5 font-display text-sm font-semibold text-text-3 transition-colors hover:text-text"
@@ -325,9 +330,12 @@ export function LessonPageClient({
       </div>
 
       {/* Blocks — challenges render only the code block(s) here (the wide IDE);
-          the instructions ride in the IDE rail via ctx.instructionsSlot. */}
+          the instructions ride in the IDE rail via ctx.instructionsSlot. The
+          split is full-bleed (w-screen + calc margin) so it escapes the platform
+          `container` max-width and spans the viewport edge-to-edge, LeetCode
+          style. `px` leaves a small gutter from the screen edges. */}
       {hasCodeBlock ? (
-        <div className="space-y-4">
+        <div className="mx-[calc(50%_-_50vw)] w-screen space-y-4 px-3 sm:px-4">
           {codeBlocks.map((block) => {
             const Renderer = RENDERERS[block._type];
             return <Renderer key={block.key} block={block} ctx={codeCtx} />;

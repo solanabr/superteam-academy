@@ -61,7 +61,7 @@ export function CodeBlock({ block, ctx }: BlockRenderProps) {
 
   return (
     <div className="overflow-hidden rounded-[var(--r-lg)] border-[2.5px] border-border shadow-card">
-      <div className="flex w-full flex-col overflow-hidden lg:h-[calc(100vh-220px)]">
+      <div className="flex w-full flex-col overflow-hidden lg:h-[calc(100vh-150px)]">
         <ChallengeInterface
           lessonId={ctx.lesson._id}
           courseSlug={ctx.courseSlug}
