@@ -27,7 +27,13 @@ function baseProps(
 }
 
 beforeEach(() => {
-  vi.stubGlobal("fetch", vi.fn());
+  // Default: the on-mount rehydrate GET (/api/ai/partner/log) resolves to an
+  // empty log. Individual tests override with mockResolvedValue for their
+  // action fetch (mockClear in renderPartner keeps that implementation).
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => jsonResponse({ log: [], paidUsed: 0 }))
+  );
 });
 
 afterEach(() => {
@@ -35,9 +41,43 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+// Renders the hook and flushes the on-mount rehydrate fetch
+// (GET /api/ai/partner/log), then clears the fetch mock so each test's
+// assertions only see the action fetches that follow — not the rehydrate call.
+async function renderPartner(
+  props: Parameters<typeof useAiPartner>[0] = baseProps()
+) {
+  const view = renderHook(() => useAiPartner(props));
+  await act(async () => {});
+  vi.mocked(global.fetch).mockClear();
+  return view;
+}
+
 describe("useAiPartner", () => {
-  it("serves the first two requestHint() calls from authored hints with no fetch", async () => {
+  it("rehydrates the persisted chat log + paidUsed on mount (no paid call)", async () => {
+    const stored = [
+      { role: "user", text: "why does this fail?" },
+      { role: "ai", response: { type: "answer", text: "off-by-one." } },
+    ];
+    vi.mocked(global.fetch).mockResolvedValue(
+      jsonResponse({ log: stored, paidUsed: 2 })
+    );
+
     const { result } = renderHook(() => useAiPartner(baseProps()));
+
+    await waitFor(() => expect(result.current.messages).toHaveLength(2));
+    expect(global.fetch).toHaveBeenCalledWith(
+      "/api/ai/partner/log?courseSlug=c-slug&lessonSlug=l-slug"
+    );
+    expect(result.current.messages[0]).toMatchObject({
+      role: "user",
+      text: "why does this fail?",
+    });
+    expect(result.current.paidUsed).toBe(2);
+  });
+
+  it("serves the first two requestHint() calls from authored hints with no fetch", async () => {
+    const { result } = await renderPartner();
 
     await act(async () => {
       result.current.requestHint();
@@ -71,7 +111,7 @@ describe("useAiPartner", () => {
     };
     vi.mocked(global.fetch).mockResolvedValue(jsonResponse(response));
 
-    const { result } = renderHook(() => useAiPartner(baseProps()));
+    const { result } = await renderPartner();
 
     // Drain the two free hints first (no network).
     await act(async () => {
@@ -116,9 +156,8 @@ describe("useAiPartner", () => {
       jsonResponse({ budgetExhausted: true, used: 4 })
     );
 
-    const { result } = renderHook(
-      () => useAiPartner(baseProps({ hints: [] })) // no authored hints -> requestHint always pays
-    );
+    // no authored hints -> requestHint always pays
+    const { result } = await renderPartner(baseProps({ hints: [] }));
 
     await act(async () => {
       await result.current.requestHint();
@@ -142,7 +181,7 @@ describe("useAiPartner", () => {
     };
     vi.mocked(global.fetch).mockResolvedValue(jsonResponse(response));
 
-    const { result } = renderHook(() => useAiPartner(baseProps()));
+    const { result } = await renderPartner();
 
     await act(async () => {
       await result.current.proposeFix();
@@ -166,7 +205,7 @@ describe("useAiPartner", () => {
     };
     vi.mocked(global.fetch).mockResolvedValue(jsonResponse(response));
 
-    const { result } = renderHook(() => useAiPartner(baseProps()));
+    const { result } = await renderPartner();
 
     await act(async () => {
       await result.current.ask("why does this fail?");
@@ -198,7 +237,7 @@ describe("useAiPartner", () => {
       })
     );
 
-    const { result } = renderHook(() => useAiPartner(baseProps()));
+    const { result } = await renderPartner();
 
     expect(result.current.loading).toBe(false);
 
@@ -220,7 +259,7 @@ describe("useAiPartner", () => {
   it("sets error on network failure and does not increment paidUsed", async () => {
     vi.mocked(global.fetch).mockRejectedValue(new Error("network down"));
 
-    const { result } = renderHook(() => useAiPartner(baseProps()));
+    const { result } = await renderPartner();
 
     await act(async () => {
       await result.current.ask("help?");
@@ -235,9 +274,7 @@ describe("useAiPartner", () => {
     const response: PartnerResponse = { type: "hint", text: "paid hint" };
     vi.mocked(global.fetch).mockResolvedValue(jsonResponse(response));
 
-    const { result } = renderHook(() =>
-      useAiPartner(baseProps({ hints: [HINTS[0]!] }))
-    );
+    const { result } = await renderPartner(baseProps({ hints: [HINTS[0]!] }));
 
     await act(async () => {
       result.current.requestHint();
@@ -261,7 +298,7 @@ describe("useAiPartner", () => {
         jsonResponse({ correct: true, explanation: "because B" })
       );
 
-      const { result } = renderHook(() => useAiPartner(baseProps()));
+      const { result } = await renderPartner();
 
       const verdict = await result.current.verifyCheck("tok", 1);
 
@@ -281,7 +318,7 @@ describe("useAiPartner", () => {
         json: async () => ({ error: "invalid check" }),
       } as Response);
 
-      const { result } = renderHook(() => useAiPartner(baseProps()));
+      const { result } = await renderPartner();
 
       const verdict = await result.current.verifyCheck("tok", 1);
 
@@ -291,7 +328,7 @@ describe("useAiPartner", () => {
     it("fails SAFE (correct:false) when the fetch itself throws", async () => {
       vi.mocked(global.fetch).mockRejectedValue(new Error("network down"));
 
-      const { result } = renderHook(() => useAiPartner(baseProps()));
+      const { result } = await renderPartner();
 
       const verdict = await result.current.verifyCheck("tok", 0);
 
