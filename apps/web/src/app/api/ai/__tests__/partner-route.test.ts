@@ -10,9 +10,11 @@ vi.mock("@/lib/supabase/server", () => ({
 
 const spendAssist = vi.fn();
 const refundAssist = vi.fn();
+const appendAssistLog = vi.fn();
 vi.mock("@/lib/ai/assist-budget", () => ({
   spendAssist,
   refundAssist,
+  appendAssistLog,
   MAX_PAID_ASSISTS: 4,
 }));
 
@@ -129,6 +131,7 @@ beforeEach(() => {
   getUser.mockReset();
   spendAssist.mockReset();
   refundAssist.mockReset();
+  appendAssistLog.mockReset();
   isRateLimited.mockReset();
   getLessonBySlug.mockReset();
 
@@ -138,6 +141,7 @@ beforeEach(() => {
   getLessonBySlug.mockResolvedValue(LESSON);
   spendAssist.mockResolvedValue({ allowed: true, used: 1 });
   refundAssist.mockResolvedValue(undefined);
+  appendAssistLog.mockResolvedValue(undefined);
 });
 
 afterEach(() => {
@@ -237,6 +241,36 @@ describe("POST /api/ai/partner", () => {
 
     expect(res.status).toBe(200);
     expect(refundAssist).not.toHaveBeenCalled();
+  });
+
+  it("persists the AI turn to the assist log on a successful paid call", async () => {
+    stubGeminiFetch(PROPOSE_GEMINI_TEXT);
+
+    const { POST } = await import("../partner/route");
+    await POST(makeRequest(VALID_BODY));
+
+    expect(appendAssistLog).toHaveBeenCalledTimes(1);
+    const [userId, lessonId, entries] = appendAssistLog.mock.calls[0]!;
+    expect(userId).toBe("user-1");
+    expect(lessonId).toBe("lesson-1");
+    // propose carries no user turn — just the AI reply (with the sealed token).
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({
+      role: "ai",
+      response: { type: "propose", proposedCode: "let x = 2;" },
+    });
+  });
+
+  it("does NOT persist to the assist log when the paid call fails", async () => {
+    // Gemini errors after spend -> route refunds and 502s; nothing to log.
+    stubGeminiFetch("", { ok: false });
+
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest(VALID_BODY));
+
+    expect(res.status).toBe(502);
+    expect(refundAssist).toHaveBeenCalledTimes(1);
+    expect(appendAssistLog).not.toHaveBeenCalled();
   });
 
   it("does NOT call refundAssist when the budget is already exhausted (no spend happened)", async () => {
