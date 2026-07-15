@@ -58,15 +58,17 @@ import { preflightRecreate, recreateCourse } from "@/lib/admin/recreate-course";
 import {
   ALLOW_UNUSUAL_CREATOR,
   assertCensusComplete,
+  assertCrossRpcForExecute,
   assertDevnetGenesis,
   bindRecreate,
   buildExpected,
   DEFAULT_CREATOR_REWARD_XP,
+  formatCliError,
   orchestrateReset,
   parseCensusExpectation,
   parseFlags,
+  redactUrl,
   resolveMode,
-  ResetStopError,
 } from "@/lib/admin/reset-orchestrator";
 
 const USAGE = `reset-vnext — bulk v-next devnet reset (B3, #356)
@@ -86,22 +88,16 @@ Optional:
 
 Default (no --execute) is a read-only DRY-RUN. Primary RPC = SOLANA_RPC_URL.`;
 
-/** Redact any userinfo/query (a key may live there) — log a host+path only. */
-function redactUrl(raw: string): string {
-  try {
-    const u = new URL(raw);
-    return `${u.protocol}//${u.host}${u.pathname}`;
-  } catch {
-    return "<unparseable-url>";
-  }
-}
-
 async function main(): Promise<void> {
   const flags = parseFlags(process.argv.slice(2));
   if (flags.help === "true") {
     console.error(USAGE);
     return;
   }
+
+  // FIX 2 — a destructive --execute REQUIRES --rpc2 (the cross-RPC census
+  // completeness cross-check). Refuse early, before ANY census or destruction.
+  assertCrossRpcForExecute(flags);
 
   const censusExpectation = parseCensusExpectation(flags);
   const rewardXp =
@@ -183,11 +179,8 @@ async function main(): Promise<void> {
 }
 
 main().catch((err) => {
-  if (err instanceof ResetStopError) {
-    console.error(`\n✖ STOP [${err.phase}]: ${err.message}`);
-    for (const f of err.failures) console.error(`   - ${f}`);
-  } else {
-    console.error(`\n✖ ${err instanceof Error ? err.message : String(err)}`);
-  }
+  // FIX 3 — route EVERY error line through URL/key redaction: a web3.js fetch
+  // error can embed the full RPC URL (which may carry a key in path or query).
+  for (const line of formatCliError(err)) console.error(line);
   process.exitCode = 1;
 });

@@ -176,6 +176,78 @@ export function parseCensusExpectation(
   };
 }
 
+/**
+ * FIX 2 — cross-RPC completeness is MANDATORY for a destructive run. `--rpc2`
+ * (an independent second-RPC completeness cross-check on the PRE census) is what
+ * closes B4's single-RPC blind spot: a partial single-RPC census could match the
+ * wrong operator counts and slip past {@link assertCensusComplete}. A destructive
+ * `--execute` therefore REQUIRES `--rpc2`; a read-only dry-run may still run
+ * without it. Refuses in the "args" phase — BEFORE any census or destruction.
+ *
+ * Gated on the literal presence of `--execute` (not the resolved mode): if the
+ * operator is asking to execute at all, the destructive cross-check is required,
+ * fail-closed.
+ */
+export function assertCrossRpcForExecute(flags: Record<string, string>): void {
+  const wantsExecute = flags.execute === "true";
+  const hasRpc2 = flags.rpc2 !== undefined && flags.rpc2 !== "true";
+  if (wantsExecute && !hasRpc2) {
+    throw new ResetStopError(
+      "--execute requires --rpc2 <url>: a destructive run must be cross-checked against an " +
+        "independent second RPC. Without it a partial single-RPC census could match the wrong " +
+        "operator counts and pass. Refusing to --execute on a single-RPC census.",
+      ["rpc2"],
+      "args"
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// CLI error / URL redaction (a fetch error can embed the full RPC URL + key)
+// -----------------------------------------------------------------------------
+
+/**
+ * Redact a URL for INFORMATIONAL logs: show protocol+host ONLY. Strips userinfo,
+ * the query string (where a `?api-key=` lives) AND the path (where a
+ * path-embedded key can live) — the host alone identifies the cluster without
+ * ever leaking a secret.
+ */
+export function redactUrl(raw: string): string {
+  try {
+    const u = new URL(raw);
+    return `${u.protocol}//${u.host}`;
+  } catch {
+    return "<unparseable-url>";
+  }
+}
+
+/**
+ * FIX 3 — redact free-form error text: nuke EVERY http(s) URL substring
+ * entirely. A web3.js fetch error can embed the full RPC URL with the key in the
+ * path OR the query string, so the whole URL token is replaced — not just its
+ * query — regardless of where the secret sits.
+ */
+export function redactErrorText(text: string): string {
+  return text.replace(/https?:\/\/\S+/gi, "[redacted-url]");
+}
+
+/**
+ * Format a caught error into the exact lines the CLI prints, with every URL
+ * redacted. {@link ResetStopError} messages are operator-authored and safe, but
+ * are passed through redaction too for uniformity. This is what `main().catch`
+ * renders — so every error the CLI surfaces is scrubbed of secrets.
+ */
+export function formatCliError(err: unknown): string[] {
+  if (err instanceof ResetStopError) {
+    return [
+      `\n✖ STOP [${err.phase}]: ${redactErrorText(err.message)}`,
+      ...err.failures.map((f) => `   - ${redactErrorText(f)}`),
+    ];
+  }
+  const msg = err instanceof Error ? err.message : String(err);
+  return [`\n✖ ${redactErrorText(msg)}`];
+}
+
 // -----------------------------------------------------------------------------
 // Completeness guard (#356 §1)
 // -----------------------------------------------------------------------------
@@ -441,6 +513,46 @@ export function bindRecreate(
 }
 
 // -----------------------------------------------------------------------------
+// FIX 1 (HIGH) — live-lesson-count >= 1 precondition (permanent-loss guard)
+// -----------------------------------------------------------------------------
+
+/**
+ * The refusal reason shared by the execute-mode STOP and the dry-run
+ * WOULD-BLOCK. A course whose LIVE on-chain lesson count is 0 cannot be
+ * recreated: the close lands, then `create_course` reverts on
+ * `require!(lesson_count > 0)`, leaving the PDA permanently destroyed with NO
+ * recreate. The frozen `recreate-course.ts` does not guard this, so B3 must — as
+ * a WHOLE-RUN precondition, before the first close.
+ */
+export const ZERO_LESSON_REFUSAL =
+  "live lesson_count 0 — recreate would close then fail create_course " +
+  "(count must be > 0), permanently destroying it; refusing";
+
+/** Course ids in the snapshot whose live on-chain lesson count is < 1. */
+export function findZeroLessonCourses(snapshot: ResetSnapshot): string[] {
+  return snapshot.courses
+    .filter((c) => c.liveLessonCount < 1)
+    .map((c) => c.courseId);
+}
+
+/**
+ * Whole-run precondition: refuse the ENTIRE run if ANY course in the PRE census
+ * has a live lesson count < 1. Thrown BEFORE the first destructive `recreate`
+ * call — a count-0 course anywhere aborts before any course is touched, never a
+ * per-course mid-loop check.
+ */
+export function assertLiveLessonCountsPositive(snapshot: ResetSnapshot): void {
+  const zero = findZeroLessonCourses(snapshot);
+  if (zero.length > 0) {
+    throw new ResetStopError(
+      `${zero.length} course(s) have ${ZERO_LESSON_REFUSAL}. Course(s): ${zero.join(", ")}`,
+      zero,
+      "preflight"
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
 // The orchestrator
 // -----------------------------------------------------------------------------
 
@@ -516,6 +628,7 @@ export async function orchestrateReset(
       `DRY-RUN — ${courseIds.length} course(s) would be recreated. No destructive calls will be made.`
     );
     const blockers: string[] = [];
+    const zeroLessonCourses = new Set(findZeroLessonCourses(preSnapshot));
     for (const courseId of courseIds) {
       const preCourse = preSnapshot.courses.find(
         (c) => c.courseId === courseId
@@ -524,6 +637,14 @@ export async function orchestrateReset(
       log(
         `  live on-chain lesson_count (PRE, H3 pin): ${preCourse?.liveLessonCount}`
       );
+      // FIX 1 — a count-0 course is a hard WOULD-BLOCK: recreating it would close
+      // then fail create_course, permanently destroying it. Surface it loudly so
+      // the dry-run output makes it impossible to miss (never "preflight clean").
+      if (zeroLessonCourses.has(courseId)) {
+        blockers.push(`${courseId}: ${ZERO_LESSON_REFUSAL}`);
+        log(`  WOULD-BLOCK: ${ZERO_LESSON_REFUSAL}`);
+        continue;
+      }
       try {
         const plan = await preflight(courseId);
         const exp = requireExpected(expected, courseId);
@@ -560,6 +681,11 @@ export async function orchestrateReset(
   }
 
   // EXECUTE.
+  // FIX 1 — whole-run precondition: a single count-0 course would be closed then
+  // fail create_course (permanent PDA loss), so refuse the ENTIRE run here,
+  // before the first close, rather than mid-loop after N courses are already down.
+  assertLiveLessonCountsPositive(preSnapshot);
+
   const recreated: string[] = [];
   for (const courseId of courseIds) {
     // 3a. H3 — live on-chain lesson_count from the PRE snapshot, never the bundle.

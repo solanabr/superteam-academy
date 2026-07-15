@@ -9,12 +9,18 @@ import type {
 import type { RecreateCourseResult, RecreatePlan } from "../recreate-course";
 import {
   assertCensusComplete,
+  assertCrossRpcForExecute,
   assertExpectedCoversCensus,
+  assertLiveLessonCountsPositive,
   bindRecreate,
   buildExpected,
+  findZeroLessonCourses,
+  formatCliError,
   orchestrateReset,
   parseCensusExpectation,
   parseFlags,
+  redactErrorText,
+  redactUrl,
   resolveMode,
   ResetStopError,
   type OrchestrateDeps,
@@ -28,7 +34,8 @@ import {
 
 function mkCourse(
   courseId: string,
-  creator = `creator-${courseId}`
+  creator = `creator-${courseId}`,
+  liveLessonCount = 5
 ): CourseSnapshot {
   return {
     courseId,
@@ -36,7 +43,7 @@ function mkCourse(
     sizeBytes: 253,
     creator,
     creatorRewardXp: 30,
-    liveLessonCount: 5,
+    liveLessonCount,
     activeLessonsOrCount: "0".repeat(64),
     contentTxId: "00".repeat(32),
   };
@@ -462,5 +469,207 @@ describe("orchestrateReset — STOP-on-fail halts the loop (#356 §15.3)", () =>
     // STOPPED on the very first course; c2 never touched.
     expect(recreate).toHaveBeenCalledTimes(1);
     expect(recreate).toHaveBeenCalledWith("c1");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// FIX 1 (HIGH) — live-lesson-count >= 1 guard (permanent-loss prevention)
+// ---------------------------------------------------------------------------
+
+describe("FIX 1 — live lesson_count >= 1 precondition", () => {
+  it("findZeroLessonCourses flags only count-0 courses", () => {
+    const snap = mkSnapshot([
+      mkCourse("c1"),
+      mkCourse("c-zero", "creator-c-zero", 0),
+      mkCourse("c3"),
+    ]);
+    expect(findZeroLessonCourses(snap)).toEqual(["c-zero"]);
+  });
+
+  it("all-≥1 census does NOT throw (no false positive)", () => {
+    const snap = mkSnapshot([mkCourse("c1"), mkCourse("c2")]);
+    expect(findZeroLessonCourses(snap)).toEqual([]);
+    expect(() => assertLiveLessonCountsPositive(snap)).not.toThrow();
+  });
+
+  it("EXECUTE: a count-0 course STOPs before ANY recreate call", async () => {
+    const { deps, recreate, snapshot } = mkDeps();
+    const pre = mkSnapshot([mkCourse("c1"), mkCourse("c2", "creator-c2", 0)]);
+    const expected = buildExpected([
+      { _id: "c1", creatorWallet: "creator-c1" },
+      { _id: "c2", creatorWallet: "creator-c2" },
+    ]);
+
+    await expect(
+      orchestrateReset(deps, { preSnapshot: pre, expected, execute: true })
+    ).rejects.toMatchObject({ phase: "preflight" });
+
+    // The whole-run precondition fires BEFORE the first close: zero recreates,
+    // zero POST re-snapshots.
+    expect(recreate).toHaveBeenCalledTimes(0);
+    expect(snapshot).not.toHaveBeenCalled();
+  });
+
+  it("EXECUTE STOP names the course(s) and the create_course reason", async () => {
+    const { deps } = mkDeps();
+    const pre = mkSnapshot([
+      mkCourse("c1"),
+      mkCourse("c-zero", "creator-c-zero", 0),
+    ]);
+    const expected = buildExpected([
+      { _id: "c1", creatorWallet: "creator-c1" },
+      { _id: "c-zero", creatorWallet: "creator-c-zero" },
+    ]);
+
+    try {
+      await orchestrateReset(deps, {
+        preSnapshot: pre,
+        expected,
+        execute: true,
+      });
+      throw new Error("expected a STOP");
+    } catch (err) {
+      expect(err).toBeInstanceOf(ResetStopError);
+      expect((err as ResetStopError).failures).toEqual(["c-zero"]);
+      expect((err as ResetStopError).message).toMatch(
+        /create_course \(count must be > 0\)/
+      );
+      expect((err as ResetStopError).message).toContain("c-zero");
+    }
+  });
+
+  it("DRY-RUN: a count-0 course is a WOULD-BLOCK (not 'preflight clean')", async () => {
+    const logs: string[] = [];
+    const { deps, recreate, preflight } = mkDeps({ log: (l) => logs.push(l) });
+    const pre = mkSnapshot([mkCourse("c1"), mkCourse("c2", "creator-c2", 0)]);
+    const expected = buildExpected([
+      { _id: "c1", creatorWallet: "creator-c1" },
+      { _id: "c2", creatorWallet: "creator-c2" },
+    ]);
+
+    await expect(
+      orchestrateReset(deps, { preSnapshot: pre, expected, execute: false })
+    ).rejects.toMatchObject({ phase: "preflight" });
+
+    // Reported as a would-block, and NOT declared clean.
+    expect(logs.some((l) => /WOULD-BLOCK/.test(l))).toBe(true);
+    expect(logs.some((l) => /preflight clean/.test(l))).toBe(false);
+    // Dry-run never touches the chain; the count-0 course is not preflighted.
+    expect(recreate).not.toHaveBeenCalled();
+    expect(preflight).not.toHaveBeenCalledWith("c2");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// FIX 2 — --rpc2 is mandatory for --execute
+// ---------------------------------------------------------------------------
+
+describe("FIX 2 — assertCrossRpcForExecute", () => {
+  it("dry-run (no --execute) does NOT require --rpc2", () => {
+    expect(() => assertCrossRpcForExecute({})).not.toThrow();
+    expect(() =>
+      assertCrossRpcForExecute({ "expect-courses": "6" })
+    ).not.toThrow();
+  });
+
+  it("--execute WITHOUT --rpc2 refuses in the args phase", () => {
+    try {
+      assertCrossRpcForExecute({ execute: "true" });
+      throw new Error("expected a STOP");
+    } catch (err) {
+      expect(err).toBeInstanceOf(ResetStopError);
+      expect((err as ResetStopError).phase).toBe("args");
+      expect((err as ResetStopError).message).toMatch(
+        /--execute requires --rpc2/
+      );
+    }
+  });
+
+  it("--execute with a bare boolean --rpc2 (no url) still refuses", () => {
+    expect(() =>
+      assertCrossRpcForExecute({ execute: "true", rpc2: "true" })
+    ).toThrow(ResetStopError);
+  });
+
+  it("--execute WITH --rpc2 <url> proceeds past the gate", () => {
+    expect(() =>
+      assertCrossRpcForExecute({
+        execute: "true",
+        rpc2: "https://rpc2.example",
+      })
+    ).not.toThrow();
+  });
+
+  it("the gate runs before orchestrate, so a refused --execute makes ZERO recreate calls", () => {
+    const { recreate } = mkDeps();
+    const flags = {
+      execute: "true",
+      "i-understand-this-destroys-1-courses": "true",
+    };
+    // Mirror the CLI ordering: the gate throws before orchestrateReset is invoked.
+    expect(() => assertCrossRpcForExecute(flags)).toThrow(ResetStopError);
+    expect(recreate).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// FIX 3 — every CLI error line is redacted of URLs/keys
+// ---------------------------------------------------------------------------
+
+describe("FIX 3 — error/URL redaction", () => {
+  it("redactUrl strips a query-string key (host only)", () => {
+    const out = redactUrl("https://rpc.example/?api-key=SECRET");
+    expect(out).not.toContain("SECRET");
+    expect(out).toBe("https://rpc.example");
+  });
+
+  it("redactUrl strips a PATH-embedded token (not just the query)", () => {
+    const out = redactUrl("https://rpc.example/SECRETTOKEN/rpc");
+    expect(out).not.toContain("SECRETTOKEN");
+    expect(out).toBe("https://rpc.example");
+  });
+
+  it("redactErrorText nukes a query-form tokened URL", () => {
+    const out = redactErrorText(
+      "fetch failed for https://rpc.example/?api-key=SECRET oops"
+    );
+    expect(out).not.toContain("SECRET");
+    expect(out).toContain("[redacted-url]");
+  });
+
+  it("redactErrorText nukes a path-embedded tokened URL", () => {
+    const out = redactErrorText(
+      "Error: https://rpc.example/SECRETTOKEN/rpc timed out"
+    );
+    expect(out).not.toContain("SECRETTOKEN");
+    expect(out).toContain("[redacted-url]");
+  });
+
+  it("formatCliError redacts a tokened-URL fetch error the catch would print (query + path)", () => {
+    const queryErr = new Error(
+      "FetchError: request to https://rpc.example/?api-key=SECRET failed"
+    );
+    const pathErr = new Error(
+      "FetchError: request to https://rpc.example/SECRETTOKEN failed"
+    );
+    const queryOut = formatCliError(queryErr).join("\n");
+    const pathOut = formatCliError(pathErr).join("\n");
+    expect(queryOut).not.toContain("SECRET");
+    expect(pathOut).not.toContain("SECRETTOKEN");
+    expect(queryOut).toContain("[redacted-url]");
+    expect(pathOut).toContain("[redacted-url]");
+  });
+
+  it("formatCliError redacts URLs inside ResetStopError message + failures too", () => {
+    const stop = new ResetStopError(
+      "boom against https://rpc.example/?api-key=SECRET",
+      ["cross-RPC mismatch at https://rpc2.example/OTHERSECRET/rpc"],
+      "census"
+    );
+    const out = formatCliError(stop).join("\n");
+    expect(out).not.toContain("SECRET");
+    expect(out).not.toContain("OTHERSECRET");
+    expect(out).toContain("STOP [census]");
+    expect(out).toContain("[redacted-url]");
   });
 });
