@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { AdminBadge, type AdminBadgeTone } from "./admin-badge";
 import type { CourseContentDrift } from "@/lib/github/drift";
 
 type SyncStatus =
@@ -22,6 +23,9 @@ interface StatusBadgeProps {
 
 export function StatusBadge({ status }: StatusBadgeProps) {
   const t = useTranslations("admin.statusBadge");
+  // The on-chain badge carries a bespoke seven-state palette (two of them —
+  // `synced`, `db_unavailable` — sit outside the shared semantic tones), so it
+  // borrows only `AdminBadge`'s chrome and supplies its own colors.
   const className: Record<SyncStatus, string> = {
     synced: "bg-success-bg border-success text-success",
     out_of_sync: "bg-accent-bg border-accent text-accent-dark dark:text-accent",
@@ -32,13 +36,7 @@ export function StatusBadge({ status }: StatusBadgeProps) {
     db_unavailable: "bg-subtle border-solana-purple text-solana-purple",
   };
 
-  return (
-    <span
-      className={`inline-flex items-center rounded border px-2 py-0.5 text-xs font-medium ${className[status]}`}
-    >
-      {t(status)}
-    </span>
-  );
+  return <AdminBadge className={className[status]}>{t(status)}</AdminBadge>;
 }
 
 /**
@@ -82,18 +80,18 @@ export function ContentDriftBadge({
   const state = contentDriftBadgeState(onChainStatus, contentDrift);
   if (state === "none") return null;
 
-  const className: Record<Exclude<typeof state, "none">, string> = {
-    drifted: "bg-streak-light border-streak text-streak",
-    blocked: "bg-danger-light border-danger text-danger",
-    unknown: "bg-subtle border-border text-text-3",
+  // Content drift maps cleanly onto the shared semantic tones: a red-CI upstream
+  // commit is `danger` (blocking), a behind pin is `warning` (attention), an
+  // unreachable GitHub is `neutral`.
+  const tone: Record<Exclude<typeof state, "none">, AdminBadgeTone> = {
+    drifted: "warning",
+    blocked: "danger",
+    unknown: "neutral",
   };
 
   return (
-    <span
-      title={t(`${state}Hint`)}
-      className={`inline-flex items-center rounded border px-2 py-0.5 text-xs font-medium ${className[state]}`}
-    >
+    <AdminBadge tone={tone[state]} title={t(`${state}Hint`)}>
       {t(state)}
-    </span>
+    </AdminBadge>
   );
 }

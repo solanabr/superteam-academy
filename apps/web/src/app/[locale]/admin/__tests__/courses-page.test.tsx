@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
 import AdminCoursesPage from "../courses/page";
+import messages from "@/messages/en.json";
 
 /**
  * `/admin/courses` — the merged Publish + Deploy screen. Both moved components
@@ -91,9 +91,12 @@ describe("AdminCoursesPage", () => {
   it("legends every deploy state the rows can show", async () => {
     await renderPage();
 
+    // The legend is a default-collapsed disclosure (WS-A) — its heading is the
+    // toggle; expand it to reveal the state reference.
     expect(
       screen.getByRole("heading", { name: legend.title })
     ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: legend.title }));
 
     // On-chain states (StatusBadge) — badge label paired with its meaning.
     for (const state of [
@@ -122,6 +125,7 @@ describe("AdminCoursesPage", () => {
 
   it("legends the drifted state as a publish fix, not a redeploy", async () => {
     await renderPage();
+    fireEvent.click(screen.getByRole("button", { name: legend.title }));
     expect(legend.drifted).toMatch(/publish PR/i);
     expect(screen.getByText(legend.drifted)).toBeInTheDocument();
   });

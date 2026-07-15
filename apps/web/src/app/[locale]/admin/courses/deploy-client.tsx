@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useAdminStatus } from "../use-admin-status";
 import { CourseSyncTable } from "@/components/admin/course-sync-table";
 import { AchievementSyncTable } from "@/components/admin/achievement-sync-table";
+import { AdminCard } from "@/components/admin/admin-card";
 
 /**
  * The deploy half of `/admin/courses` (step 2): the Courses + Achievements
@@ -24,8 +25,13 @@ export function DeployClient() {
   }
 
   if (error) {
+    // A failed status fetch is transient/recoverable — neutral `streak`, not the
+    // blocking `danger` red.
     return (
-      <div className="rounded-md border border-danger bg-danger-light p-4 text-sm text-danger">
+      <div
+        role="alert"
+        className="rounded-md border border-streak bg-streak-light p-4 text-sm text-streak"
+      >
         {t(error === "network" ? "states.networkError" : "states.fetchError")}
         <button onClick={refetch} className="ml-3 underline hover:no-underline">
           {t("states.retry")}
@@ -53,13 +59,13 @@ export function DeployClient() {
             {t("states.refresh")}
           </button>
         </div>
-        <div className="rounded-lg border border-border bg-card p-4 shadow-card">
+        <AdminCard>
           {courses.length === 0 ? (
             <p className="text-sm text-text-3">{t("deployScreen.noCourses")}</p>
           ) : (
             <CourseSyncTable courses={courses} onRefresh={refetch} />
           )}
-        </div>
+        </AdminCard>
       </section>
 
       {/* Achievements */}
@@ -67,7 +73,7 @@ export function DeployClient() {
         <h3 className="mb-4 font-display text-lg font-bold text-text">
           {t("deployScreen.achievementsHeading")}
         </h3>
-        <div className="rounded-lg border border-border bg-card p-4 shadow-card">
+        <AdminCard>
           {achievements.length === 0 ? (
             <p className="text-sm text-text-3">
               {t("deployScreen.noAchievements")}
@@ -78,7 +84,7 @@ export function DeployClient() {
               onRefresh={refetch}
             />
           )}
-        </div>
+        </AdminCard>
       </section>
     </div>
   );

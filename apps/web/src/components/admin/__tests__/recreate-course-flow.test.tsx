@@ -358,3 +358,22 @@ describe("RecreateCourseFlow — FIX B: swallowed preflight load error now rende
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 });
+
+describe("RecreateConfirmModal — WS-D copy: on-chain counters vs untouched DB", () => {
+  const modal = messages.admin.deployScreen.recreate.modal;
+
+  it("renders the approved, non-contradictory reset/preserve copy in the modal", async () => {
+    await openModal(false);
+
+    // The two adjacent lines no longer contradict: one scopes the reset to the
+    // on-chain counters, the other says the DB learner records are untouched.
+    expect(screen.getByText(modal.resetCounters)).toBeInTheDocument();
+    expect(screen.getByText(modal.preserveList)).toBeInTheDocument();
+
+    // The reset line is explicitly on-chain; the preserve line is explicitly DB.
+    expect(modal.resetCounters).toMatch(/on-chain counters/i);
+    expect(modal.preserveList).toMatch(/database/i);
+    // The retired copy — "all preserved" against a bare "counters reset" — is gone.
+    expect(screen.queryByText(/are all preserved/i)).toBeNull();
+  });
+});

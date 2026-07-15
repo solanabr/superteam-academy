@@ -218,3 +218,65 @@ describe("CourseSyncTable — Task 5 polish", () => {
     );
   });
 });
+
+describe("CourseSyncTable — WS-A alignment + mismatch disclosure", () => {
+  const mismatchCourse: CourseStatus = {
+    ...syncedCourse,
+    contentId: "course-defi",
+    slug: "defi",
+    title: "DeFi",
+    onChainStatus: "out_of_sync",
+    differences: [
+      {
+        field: "creator",
+        contentValue: "CREATOR111",
+        onChainValue: "AUTH1111",
+        updateable: false,
+      },
+    ],
+    chainDrift: "content_stale",
+  };
+
+  it("gives every body cell align-top so a tall row keeps its siblings' eyeline", () => {
+    const { container } = renderWithIntl(
+      <CourseSyncTable courses={[syncedCourse]} onRefresh={vi.fn()} />
+    );
+    const cells = container.querySelectorAll("tbody td");
+    expect(cells.length).toBe(5);
+    cells.forEach((td) => expect(td.className).toContain("align-top"));
+  });
+
+  it("collapses the immutable mismatch to a one-line danger pill, hiding the recreate card by default", () => {
+    vi.stubGlobal("fetch", vi.fn());
+    renderWithIntl(
+      <CourseSyncTable courses={[mismatchCourse]} onRefresh={vi.fn()} />
+    );
+
+    const pill = screen.getByRole("button", {
+      name: "Immutable mismatch — 1 field",
+    });
+    expect(pill).toHaveAttribute("aria-expanded", "false");
+    // The full RecreateCourseFlow card (its review button) is not mounted yet.
+    expect(
+      screen.queryByRole("button", { name: /Recreate course…/ })
+    ).not.toBeInTheDocument();
+  });
+
+  it("expands the same recreate card behind the disclosure on click", () => {
+    vi.stubGlobal("fetch", vi.fn());
+    renderWithIntl(
+      <CourseSyncTable courses={[mismatchCourse]} onRefresh={vi.fn()} />
+    );
+
+    const pill = screen.getByRole("button", {
+      name: "Immutable mismatch — 1 field",
+    });
+    fireEvent.click(pill);
+
+    expect(pill).toHaveAttribute("aria-expanded", "true");
+    // The unchanged RecreateCourseFlow at-a-glance card is now revealed.
+    expect(
+      screen.getByRole("button", { name: /Recreate course…/ })
+    ).toBeInTheDocument();
+  });
+});

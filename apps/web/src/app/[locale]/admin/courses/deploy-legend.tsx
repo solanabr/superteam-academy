@@ -5,6 +5,8 @@ import {
   StatusBadge,
   ContentDriftBadge,
 } from "@/components/admin/status-badge";
+import { AdminCard } from "@/components/admin/admin-card";
+import { AdminDisclosure } from "@/components/admin/admin-disclosure";
 import type { CourseContentDrift } from "@/lib/github/drift";
 
 /**
@@ -38,63 +40,68 @@ export function DeployLegend() {
   const t = useTranslations("admin.coursesScreen.legend");
 
   return (
-    <section
-      aria-labelledby="deploy-legend-heading"
-      className="rounded-lg border border-border bg-card p-4 shadow-card"
-    >
-      <h3
-        id="deploy-legend-heading"
-        className="font-display text-base font-bold text-text"
+    <AdminCard as="section">
+      <AdminDisclosure
+        headingLevel={3}
+        summary={
+          <span className="font-display text-base font-bold text-text">
+            {t("title")}
+          </span>
+        }
       >
-        {t("title")}
-      </h3>
-      <p className="mt-1 text-sm text-text-3">{t("description")}</p>
+        <p className="mt-1 text-sm text-text-3">{t("description")}</p>
 
-      <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
-        <div>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-3">
-            {t("onChainHeading")}
-          </p>
-          <dl className="space-y-2">
-            {ON_CHAIN_STATES.map((status) => (
-              <div key={status} className="flex flex-wrap items-baseline gap-2">
-                <dt className="shrink-0">
-                  <StatusBadge status={status} />
-                </dt>
-                <dd className="min-w-0 flex-1 text-sm text-text-3">
-                  {t(status)}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-
-        <div>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-3">
-            {t("driftHeading")}
-          </p>
-          <dl className="space-y-2">
-            {DRIFT_STATES.map(({ key, contentDrift }) => (
-              <div key={key} className="flex flex-wrap items-baseline gap-2">
-                <dt className="shrink-0">
-                  <ContentDriftBadge
-                    onChainStatus="synced"
-                    contentDrift={contentDrift}
-                  />
-                </dt>
-                <dd className="min-w-0 flex-1 text-sm text-text-3">{t(key)}</dd>
-              </div>
-            ))}
-          </dl>
-
-          <div className="mt-4 rounded-md border border-danger bg-danger-light p-3">
-            <p className="text-sm font-semibold text-danger">
-              {t("immutableTitle")}
+        <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-3">
+              {t("onChainHeading")}
             </p>
-            <p className="mt-1 text-sm text-text-2">{t("immutableBody")}</p>
+            <dl className="space-y-2">
+              {ON_CHAIN_STATES.map((status) => (
+                <div
+                  key={status}
+                  className="flex flex-wrap items-baseline gap-2"
+                >
+                  <dt className="shrink-0">
+                    <StatusBadge status={status} />
+                  </dt>
+                  <dd className="min-w-0 flex-1 text-sm text-text-3">
+                    {t(status)}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-3">
+              {t("driftHeading")}
+            </p>
+            <dl className="space-y-2">
+              {DRIFT_STATES.map(({ key, contentDrift }) => (
+                <div key={key} className="flex flex-wrap items-baseline gap-2">
+                  <dt className="shrink-0">
+                    <ContentDriftBadge
+                      onChainStatus="synced"
+                      contentDrift={contentDrift}
+                    />
+                  </dt>
+                  <dd className="min-w-0 flex-1 text-sm text-text-3">
+                    {t(key)}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+
+            <div className="mt-4 rounded-md border border-danger bg-danger-light p-3">
+              <p className="text-sm font-semibold text-danger">
+                {t("immutableTitle")}
+              </p>
+              <p className="mt-1 text-sm text-text-2">{t("immutableBody")}</p>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </AdminDisclosure>
+    </AdminCard>
   );
 }

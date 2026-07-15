@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { PublishPinClient } from "./publish-pin-client";
 import { DeployClient } from "./deploy-client";
 import { DeployLegend } from "./deploy-legend";
+import { AdminCard } from "@/components/admin/admin-card";
 
 /**
  * `/admin/courses` — the merged content screen. It composes the two surfaces
@@ -32,7 +33,7 @@ export default async function AdminCoursesPage() {
           {t("screens.courses")}
         </h2>
 
-        <div className="space-y-4 rounded-lg border border-border bg-card p-4 shadow-card">
+        <AdminCard className="space-y-4">
           <p className="text-sm text-text-2">{t("coursesScreen.intro.lede")}</p>
           <ol className="space-y-3">
             {(["step1", "step2"] as const).map((step) => (
@@ -49,7 +50,7 @@ export default async function AdminCoursesPage() {
           <p className="rounded-md border border-primary bg-primary-bg p-3 text-sm text-text-2">
             {t("coursesScreen.intro.contentOnlyNote")}
           </p>
-        </div>
+        </AdminCard>
       </section>
 
       <section
