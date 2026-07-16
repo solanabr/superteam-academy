@@ -9,6 +9,8 @@ import {
   adminUnauthorizedResponse,
   AdminAuthError,
 } from "@/lib/admin/auth";
+import { isPlatformFrozen } from "@/lib/platform/freeze";
+import { platformFrozenResponse } from "@/lib/platform/freeze-http";
 import {
   COURSES_CACHE_TAG,
   getAllAchievementsAdmin,
@@ -25,6 +27,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   } catch (e) {
     if (e instanceof AdminAuthError) return adminUnauthorizedResponse();
     throw e;
+  }
+
+  // Global deploy-window freeze (reset wave B2) — deploying an achievement type
+  // is an on-chain write (deployAchievementType), so it is frozen during the
+  // window.
+  if (await isPlatformFrozen()) {
+    return platformFrozenResponse();
   }
 
   let achievementId: string;

@@ -23,6 +23,7 @@ import {
 } from "@/lib/gamification/achievements";
 import { getCourseById, getDeployedAchievements } from "@/lib/content/queries";
 import { isCourseInMaintenance } from "@/lib/content/deployments";
+import { isPlatformFrozen } from "@/lib/platform/freeze";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 import type {
@@ -444,6 +445,17 @@ export async function tryFinalizeCourse(
       );
     }
 
+    // Global deploy-window freeze (reset wave B2) — defer (queue) the on-chain
+    // finalize rather than sending a tx while the platform is frozen. Throw →
+    // caught below → queued as `course_finalize`; the login drainer then defers
+    // it globally until the window ends. Keeps a straggler LessonCompleted event
+    // from firing a finalize tx during the window.
+    if (await isPlatformFrozen()) {
+      throw new Error(
+        `Platform is frozen (deploy-window freeze) — deferring finalize for "${courseId}"`
+      );
+    }
+
     const enrollment = await fetchEnrollment(
       courseId,
       learnerPk,
@@ -498,6 +510,16 @@ async function tryIssueCredential(
   const learnerPk = new PublicKey(walletAddress);
 
   try {
+    // Global deploy-window freeze (reset wave B2) — defer (queue) the on-chain
+    // credential mint rather than sending a tx while the platform is frozen.
+    // Throw → caught below → queued as `certificate`; the login drainer then
+    // defers it globally until the window ends.
+    if (await isPlatformFrozen()) {
+      throw new Error(
+        `Platform is frozen (deploy-window freeze) — deferring credential for "${courseId}"`
+      );
+    }
+
     // Check if credential already issued on-chain
     const enrollment = await fetchEnrollment(
       courseId,
@@ -689,6 +711,26 @@ async function checkAndAwardAchievements(
       state,
       alreadyUnlocked
     );
+
+    // Global deploy-window freeze (reset wave B2) — while frozen, QUEUE each
+    // newly-earned achievement instead of minting it on-chain. A straggler
+    // LessonCompleted event during the window must not fire an award tx, and
+    // must not DROP the achievement either: the queued rows are delivered by
+    // the login drainer after the window ends (idempotent — the drainer checks
+    // the on-chain receipt before re-awarding). Mirrors the per-achievement
+    // queue-on-failure path below.
+    if (await isPlatformFrozen()) {
+      for (const achievement of newAchievements) {
+        await queueFailedAction(
+          userId,
+          "achievement",
+          achievement.id,
+          { achievementId: achievement.id, walletAddress },
+          new Error("platform-frozen (deploy-window freeze)")
+        );
+      }
+      return;
+    }
 
     // Award each new achievement on-chain
     const recipientPk = new PublicKey(walletAddress);
