@@ -15,6 +15,7 @@ import {
 } from "./academy-reads";
 import { getCourseById } from "@/lib/content/queries";
 import { isCourseInMaintenance } from "@/lib/content/deployments";
+import { isPlatformFrozen } from "@/lib/platform/freeze";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/types";
 
@@ -85,7 +86,24 @@ export async function retryPendingOnchainActions(
   );
 
   // ── Pass 2: on-chain actions (all require a linked wallet) ──
-  if (!rows.some((r) => r.action_type !== "quest_xp")) return;
+  const onchainRows = rows.filter((r) => r.action_type !== "quest_xp");
+  if (onchainRows.length === 0) return;
+
+  // GLOBAL deploy-window freeze (reset wave B2). When the platform is frozen,
+  // DEFER every on-chain-write case in this pass — achievement, certificate,
+  // course_finalize, xp, enroll — exactly like the per-course maintenance
+  // deferral below: leave each row unresolved, record why, and do NOT touch
+  // retry_count, so the next drain (a login after the window ends) retries them.
+  // Deferring here (before the wallet fetch and any chain read) is what stops
+  // the login-drainer CHURN during the window: no failed tx, no wasted RPC, no
+  // retry-budget burn. quest_xp (Pass 1) is DB-only and wallet-less — it is not
+  // an on-chain write, so it is intentionally NOT frozen and already ran above.
+  if (await isPlatformFrozen()) {
+    for (const row of onchainRows) {
+      await deferForPlatformFreeze(adminClient, row);
+    }
+    return;
+  }
 
   const { data: profile } = await adminClient
     .from("profiles")
@@ -618,6 +636,31 @@ async function deferForCourseMaintenance(
     const message = err instanceof Error ? err.message : String(err);
     console.error(
       `[onchain-queue] ${courseId}: failed to write maintenance-defer marker for row ${row.id}: ${message}`
+    );
+  }
+}
+
+// GLOBAL deploy-window freeze deferral (reset wave B2). Same contract as
+// deferForCourseMaintenance, but for the platform-wide freeze rather than a
+// single course: leave the row unresolved, record why, and do NOT touch
+// retry_count. Log-and-swallow on a marker-write failure for the exact F5
+// reason documented above — a transient DB error writing the marker must not
+// fall through to the caller and be mistaken for an on-chain failure that bumps
+// retry_count. The caller skips the on-chain action for this sweep regardless.
+async function deferForPlatformFreeze(
+  adminClient: AdminClient,
+  row: PendingActionRow
+): Promise<void> {
+  try {
+    const { error } = await adminClient
+      .from("pending_onchain_actions")
+      .update({ last_error: "platform-frozen" })
+      .eq("id", row.id);
+    if (error) throw new Error(error.message);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(
+      `[onchain-queue] failed to write platform-freeze-defer marker for row ${row.id}: ${message}`
     );
   }
 }

@@ -20,6 +20,8 @@ import { isLessonComplete } from "@/lib/solana/bitmap";
 import { findLessonIndex } from "@/lib/courses/lesson-index";
 import { serverEnv } from "@/lib/env.server";
 import { isCourseInMaintenance } from "@/lib/content/deployments";
+import { isPlatformFrozen } from "@/lib/platform/freeze";
+import { platformFrozenResponse } from "@/lib/platform/freeze-http";
 
 interface LessonCompleteRequest {
   lessonId: string;
@@ -93,6 +95,15 @@ export async function POST(request: NextRequest) {
       courseId.length > 100
     ) {
       return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+    }
+
+    // ── Global deploy-window freeze (reset wave B2) ───────────────────────
+    // Checked BEFORE the volume gate and grading: a frozen platform short-
+    // circuits to a clean 503 without burning rate-limit tokens or running the
+    // code executors, and — unlike the per-course maintenance gate below — this
+    // is platform-wide. A real "try later", not a failed complete_lesson tx.
+    if (await isPlatformFrozen()) {
+      return platformFrozenResponse();
     }
 
     // ── Volume gate (#459) ────────────────────────────────────────────────

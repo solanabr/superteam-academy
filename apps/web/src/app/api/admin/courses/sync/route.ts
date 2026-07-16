@@ -11,6 +11,8 @@ import {
   adminUnauthorizedResponse,
   AdminAuthError,
 } from "@/lib/admin/auth";
+import { isPlatformFrozen } from "@/lib/platform/freeze";
+import { platformFrozenResponse } from "@/lib/platform/freeze-http";
 import { getAllCoursesAdmin, COURSES_CACHE_TAG } from "@/lib/content/queries";
 import { fetchCourse } from "@/lib/solana/academy-reads";
 import { findCoursePDA, getProgramId } from "@/lib/solana/pda";
@@ -82,6 +84,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   } catch (e) {
     if (e instanceof AdminAuthError) return adminUnauthorizedResponse();
     throw e;
+  }
+
+  // Global deploy-window freeze (reset wave B2). Deploying/updating a Course PDA
+  // is an on-chain write, so it is frozen during the window. EXEMPT: the reset's
+  // own close+recreate (lib/admin/recreate-course.ts via the recreate route),
+  // which is never gated on this flag.
+  if (await isPlatformFrozen()) {
+    return platformFrozenResponse();
   }
 
   let courseId: string;
