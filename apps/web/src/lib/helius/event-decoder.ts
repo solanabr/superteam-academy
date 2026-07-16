@@ -1,6 +1,6 @@
 import { BorshEventCoder, Idl } from "@coral-xyz/anchor";
 import type { DecodedEvent, HeliusRawTransaction } from "./types";
-import IDL from "@/lib/solana/idl/superteam_academy.json";
+import IDL from "@/lib/solana/idl/superteam_academy_vnext.json";
 
 const PROGRAM_ID = process.env.NEXT_PUBLIC_PROGRAM_ID;
 if (!PROGRAM_ID) {

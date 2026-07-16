@@ -23,13 +23,20 @@ import {
   fromWeb3JsPublicKey,
 } from "@metaplex-foundation/umi-web3js-adapters";
 import bs58 from "bs58";
-import IDL from "./idl/superteam_academy.json";
+import IDL from "./idl/superteam_academy_vnext.json";
 import {
   findConfigPDA,
   findCoursePDA,
   findAchievementTypePDA,
   getProgramId,
 } from "./pda";
+import {
+  buildCreateCourseOnChainParams,
+  buildUpdateCourseOnChainParams,
+  type ActiveLessonsMask,
+  type CreateCourseOnChainParams,
+  type UpdateCourseOnChainParams,
+} from "./course-write-params";
 import { serverEnv } from "@/lib/env.server";
 import {
   padContentTxId,
@@ -55,34 +62,11 @@ interface AdminMethods {
   ): MethodBuilder;
 }
 
-// Raw on-chain param shapes that mirror the Rust structs exactly.
-// These are separate from the public API params — the public API params
-// use friendlier names and get mapped here before being sent.
-
-interface CreateCourseOnChainParams {
-  courseId: string;
-  creator: PublicKey;
-  contentTxId: number[];
-  lessonCount: number;
-  difficulty: number;
-  xpPerLesson: number;
-  trackId: number;
-  trackLevel: number;
-  prerequisite: PublicKey | null;
-  creatorRewardXp: number;
-  minCompletionsForReward: number;
-  collection: PublicKey | null;
-}
-
-interface UpdateCourseOnChainParams {
-  newContentTxId: number[] | null;
-  newIsActive: boolean | null;
-  newXpPerLesson: number | null;
-  newCreatorRewardXp: number | null;
-  newMinCompletionsForReward: number | null;
-  newCollection: PublicKey | null;
-  newLessonCount: number | null;
-}
+// The raw on-chain param shapes that mirror the Rust structs
+// (CreateCourseOnChainParams / UpdateCourseOnChainParams) — plus their pure
+// mappers and the mask encoder — live in ./course-write-params, isolated there
+// so the encoding is unit tested without server-only/RPC. The achievement param
+// shape stays local (unchanged by the v-next cutover).
 
 interface CreateAchievementTypeOnChainParams {
   achievementId: string;
@@ -122,7 +106,6 @@ export interface CreateCourseAdminParams {
   trackLevel: number;
   prerequisitePda?: string;
   creatorRewardXp: number;
-  minCompletionsForReward: number;
   /**
    * Instructor's on-curve Solana wallet (base58). Becomes the on-chain
    * `course.creator` (creator-reward recipient). Required — a missing, invalid,
@@ -144,15 +127,17 @@ export interface UpdateCourseAdminParams {
   newXpPerLesson?: number;
   newIsActive?: boolean;
   newCreatorRewardXp?: number;
-  newMinCompletionsForReward?: number;
   /** Base58 address of the Metaplex Core credential collection to set/backfill. */
   newCollection?: string;
   /**
-   * Raise the on-chain lesson count (increase-only) after a teacher appends
-   * lessons to an already-deployed course. The program rejects any value below
-   * the current count (LessonCountDecrease).
+   * The v-next replacement for v1's `newLessonCount`: the 256-bit live-lesson
+   * mask (`[u64; 4]`) written via `update_course.new_active_lessons`. Adding,
+   * retiring, reordering and replacing lessons all reduce to writing a new mask.
+   * The caller MUST cross-check it against the committed `slots.lock.json` first
+   * (the sync route does, via `buildCourseCommit`) — `update_course` trusts the
+   * authority blindly.
    */
-  newLessonCount?: number;
+  newActiveLessons?: ActiveLessonsMask;
   /**
    * The 32-byte `content_tx_id` commitment (§11.0), built by `buildCourseCommit`
    * from the synced git SHA. Written via `update_course.new_content_tx_id`.
@@ -179,9 +164,9 @@ interface SlotsLock {
  * (panel state vs the committed lockfile), the assertion is a real cross-check,
  * not a tautology.
  *
- * NOTE: `active_lessons` is written on-chain only once program v2 (CS-3) exposes
- * `update_course.new_active_lessons`. Until then the returned mask is the
- * asserted invariant carrier; only `content_tx_id` is threaded into the tx.
+ * The returned mask is threaded into `update_course.new_active_lessons` by the
+ * sync route (v-next exposes the field) and `content_tx_id` is committed in the
+ * same tx. This function only asserts + returns; it performs no encoding.
  */
 export function buildCourseCommit(input: {
   courseId: string;
@@ -502,21 +487,21 @@ export async function deployCoursePda(
       params.allowUnusualCreator ?? false
     );
 
-    const onChainParams: CreateCourseOnChainParams = {
-      courseId: params.courseId,
-      creator,
-      contentTxId: Array(32).fill(0) as number[],
-      lessonCount: params.lessonCount,
-      difficulty: params.difficulty,
-      xpPerLesson: params.xpPerLesson,
-      trackId: params.trackId,
-      trackLevel: params.trackLevel,
-      prerequisite,
-      creatorRewardXp: params.creatorRewardXp,
-      minCompletionsForReward: params.minCompletionsForReward,
-      // Collection is created after the PDA exists; backfilled via updateCoursePda.
-      collection: null,
-    };
+    const onChainParams: CreateCourseOnChainParams =
+      buildCreateCourseOnChainParams({
+        courseId: params.courseId,
+        creator,
+        contentTxId: Array(32).fill(0) as number[],
+        lessonCount: params.lessonCount,
+        difficulty: params.difficulty,
+        xpPerLesson: params.xpPerLesson,
+        trackId: params.trackId,
+        trackLevel: params.trackLevel,
+        prerequisite,
+        creatorRewardXp: params.creatorRewardXp,
+        // Collection is created after the PDA exists; backfilled via updateCoursePda.
+        collection: null,
+      });
 
     const methods = _program.methods as unknown as AdminMethods;
 
@@ -561,18 +546,20 @@ export async function updateCoursePda(
     const [configPDA] = findConfigPDA(getProgramId());
     const [coursePDA] = findCoursePDA(params.courseId, getProgramId());
 
-    const onChainParams: UpdateCourseOnChainParams = {
-      newContentTxId: params.contentTxId ?? null,
-      newIsActive: params.newIsActive ?? null,
-      newXpPerLesson: params.newXpPerLesson ?? null,
-      newCreatorRewardXp: params.newCreatorRewardXp ?? null,
-      newMinCompletionsForReward: params.newMinCompletionsForReward ?? null,
-      newCollection:
-        params.newCollection != null
-          ? new PublicKey(params.newCollection)
-          : null,
-      newLessonCount: params.newLessonCount ?? null,
-    };
+    const onChainParams: UpdateCourseOnChainParams =
+      buildUpdateCourseOnChainParams({
+        newContentTxId: params.contentTxId ?? null,
+        newIsActive: params.newIsActive ?? null,
+        newXpPerLesson: params.newXpPerLesson ?? null,
+        newCreatorRewardXp: params.newCreatorRewardXp ?? null,
+        newCollection:
+          params.newCollection != null
+            ? new PublicKey(params.newCollection)
+            : null,
+        // v-next: `new_active_lessons` replaces v1's `new_lesson_count` +
+        // `new_min_completions_for_reward`. Encoded BigInt→BN in the builder.
+        newActiveLessons: params.newActiveLessons ?? null,
+      });
 
     const methods = _program.methods as unknown as AdminMethods;
 
