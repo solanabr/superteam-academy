@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "compile-content": "tsx scripts/compile-content.ts",
     "reset-verify": "tsx scripts/reset-verify.ts",
+    "close-course": "tsx --tsconfig scripts/close-course.tsconfig.json scripts/close-course.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
