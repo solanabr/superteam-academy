@@ -1,0 +1,10 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["../src/*"],
+      "@superteam-lms/types": ["../../../packages/types/src"],
+      "server-only": ["./stubs/server-only.ts"]
+    }
+  }
+}
