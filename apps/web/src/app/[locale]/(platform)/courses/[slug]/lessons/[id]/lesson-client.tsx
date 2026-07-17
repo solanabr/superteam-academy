@@ -336,9 +336,19 @@ export function LessonPageClient({
           style. `px` leaves a small gutter from the screen edges. */}
       {hasCodeBlock ? (
         <div className="mx-[calc(50%_-_50vw)] w-screen space-y-4 px-3 sm:px-4">
-          {codeBlocks.map((block) => {
+          {codeBlocks.map((block, i) => {
             const Renderer = RENDERERS[block._type];
-            return <Renderer key={block.key} block={block} ctx={codeCtx} />;
+            // Only the FIRST code block carries the instructions rail. A lesson
+            // with multiple code blocks would otherwise render the same
+            // instructionsSlot inside every editor (duplicated description +
+            // test cases). None ship today — this guards future content. (#457)
+            return (
+              <Renderer
+                key={block.key}
+                block={block}
+                ctx={i === 0 ? codeCtx : ctx}
+              />
+            );
           })}
         </div>
       ) : (
