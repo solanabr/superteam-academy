@@ -12,6 +12,7 @@ import {
   recreateCourse,
   RecreateCourseError,
 } from "@/lib/admin/recreate-course";
+import { sanitizeReason } from "@/lib/admin/sanitize-reason";
 
 /**
  * POST /api/admin/courses/recreate — DESTRUCTIVE. Closes a course's on-chain PDA
@@ -136,13 +137,25 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         // The PDA is gone, so the catalog/admin reads must re-derive from chain.
         revalidateTag(COURSES_CACHE_TAG);
       }
+      // Scrub before returning: e.message wraps closeCoursePda/deployCoursePda
+      // errors that can embed the api-keyed RPC URL (SOLANA_RPC_URL) or a secret
+      // env name. The response `reason` is rendered verbatim client-side and can
+      // flow into session-replay/telemetry, so redact at the source. Server logs
+      // above keep the full message for debugging.
       return NextResponse.json(
-        { error: e.message, phase: e.phase, courseIntact: e.courseIntact },
+        {
+          error: sanitizeReason(e.message),
+          phase: e.phase,
+          courseIntact: e.courseIntact,
+        },
         { status }
       );
     }
     const message = e instanceof Error ? e.message : String(e);
     console.error(`[admin/courses/recreate] ${courseId}: ${message}`);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      { error: sanitizeReason(message) },
+      { status: 500 }
+    );
   }
 }
