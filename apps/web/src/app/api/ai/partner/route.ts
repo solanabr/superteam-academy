@@ -313,10 +313,17 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
-    console.log(
-      "[ai/partner] cachedContentTokenCount:",
-      data?.usageMetadata?.cachedContentTokenCount ?? 0
-    );
+    // Prompt-cache observability — useful for tuning the cache-shaped prefix, but
+    // this is the SUCCESS path of every paid call, so keep it opt-in (default
+    // off) rather than logging on every request in production. Set
+    // AI_PARTNER_DEBUG=1 to surface it. Failure-path diagnostics below stay
+    // unconditional — they only fire on an actual error.
+    if (process.env.AI_PARTNER_DEBUG === "1") {
+      console.log(
+        "[ai/partner] cachedContentTokenCount:",
+        data?.usageMetadata?.cachedContentTokenCount ?? 0
+      );
+    }
 
     const finishReason = data?.candidates?.[0]?.finishReason;
     const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
