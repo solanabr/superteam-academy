@@ -56,7 +56,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     await writeCourseActive(courseId, true);
     revalidateTag(COURSES_CACHE_TAG);
   } catch (err) {
-    console.error("[admin/courses/reactivate] Sanity write-back failed:", err);
+    console.error(
+      "[admin/courses/reactivate] deployment write-back failed:",
+      err
+    );
     warning =
       "Reactivated on-chain, but the catalog flag didn't update — the course may stay hidden until re-synced.";
   }

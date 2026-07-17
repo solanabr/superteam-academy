@@ -68,7 +68,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const ach = achievements.find((a) => a._id === achievementId);
   if (!ach) {
     return NextResponse.json(
-      { error: "Achievement not found in Sanity" },
+      { error: "Achievement not found in the content bundle" },
       { status: 404 }
     );
   }
@@ -162,7 +162,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       revalidateTag(COURSES_CACHE_TAG);
     } catch (mutationErr) {
       console.error(
-        "[admin/achievements/sync] Sanity write-back failed:",
+        "[admin/achievements/sync] deployment write-back failed:",
         mutationErr
       );
     }

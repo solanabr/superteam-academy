@@ -179,10 +179,12 @@ export async function retryPendingOnchainActions(
           // Already issued on-chain — just resolve the queue entry
           if (enrollment?.credential_asset) break;
 
-          // Derive all fields fresh from Sanity + on-chain (self-sufficient retry)
+          // Derive all fields fresh from the content bundle + on-chain (self-sufficient retry)
           const sanityCourse = await getCourseById(courseId);
           if (!sanityCourse) {
-            throw new Error(`Course "${courseId}" not found in Sanity`);
+            throw new Error(
+              `Course "${courseId}" not found in the content bundle`
+            );
           }
 
           const trackCollectionAddress = sanityCourse.trackCollectionAddress as

@@ -88,7 +88,7 @@ export async function resolveLessonId(
   try {
     const course = await getCourseById(courseId);
     if (!course) {
-      console.warn(`[resolver] No Sanity course found for ${courseId}`);
+      console.warn(`[resolver] No course found for ${courseId}`);
       return null;
     }
     const allLessons = (course.modules ?? []).flatMap(

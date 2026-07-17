@@ -530,7 +530,7 @@ async function tryIssueCredential(
     if (!enrollment) return;
     if (enrollment.credential_asset) return;
 
-    // Fetch course data from Sanity for the display name
+    // Fetch course data from the content bundle for the display name
     const sanityCourse = await getCourseById(courseId);
     if (!sanityCourse) return;
     const courseName = sanityCourse.title ?? courseId;

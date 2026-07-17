@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { createTranslator } from "next-intl";
 import { QuestsTable } from "../quests-table";
-import type { SanityQuest } from "@/lib/content/queries";
+import type { ContentQuest } from "@/lib/content/queries";
 import messages from "@/messages/en.json";
 
 vi.mock("next-intl/server", () => ({
@@ -11,7 +11,7 @@ vi.mock("next-intl/server", () => ({
     createTranslator({ locale: "en", messages, namespace }),
 }));
 
-const quest: SanityQuest = {
+const quest: ContentQuest = {
   id: "quest-three-lessons",
   name: "Three Lessons",
   description: "Complete 3 lessons today.",
@@ -37,7 +37,7 @@ describe("QuestsTable", () => {
   });
 
   it("translates every quest type and reset type", async () => {
-    const quests: SanityQuest[] = [
+    const quests: ContentQuest[] = [
       "lesson",
       "lesson_batch",
       "challenge",
@@ -46,7 +46,7 @@ describe("QuestsTable", () => {
     ].map((type, i) => ({
       ...quest,
       id: `quest-${i}`,
-      type: type as SanityQuest["type"],
+      type: type as ContentQuest["type"],
     }));
     render(await QuestsTable({ quests }));
 

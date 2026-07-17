@@ -47,7 +47,7 @@ function useCertificateData(certId: string) {
           .eq("id", cert.user_id)
           .single();
 
-        // Fetch learning path + difficulty from Sanity
+        // Fetch learning path + difficulty from the content bundle
         const courses = await getCoursesByIds([cert.course_id]);
         const course = courses[0];
         const parts: string[] = [];

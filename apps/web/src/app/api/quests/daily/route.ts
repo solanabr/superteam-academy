@@ -32,7 +32,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // 1. Fetch quest definitions + auxiliary data from Sanity (single round trip)
+    // 1. Fetch quest definitions + auxiliary data from the content bundle (single round trip)
     const questData = await getAllQuests();
 
     if (questData.quests.length === 0) {

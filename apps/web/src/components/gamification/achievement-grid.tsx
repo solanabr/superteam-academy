@@ -22,7 +22,7 @@ import {
 
 interface AchievementGridProps {
   unlockedAchievements: Achievement[];
-  /** Deployed achievement definitions fetched from Sanity — only these are shown. */
+  /** Deployed achievement definitions fetched from the content bundle — only these are shown. */
   catalog: AchievementDefinition[];
   className?: string;
 }

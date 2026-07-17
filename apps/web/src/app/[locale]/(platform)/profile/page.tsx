@@ -169,7 +169,7 @@ function useProfileData(): ProfileData {
           .select("course_id, enrolled_at")
           .eq("user_id", user.id);
 
-        // Resolve enrolled course details from Sanity CMS
+        // Resolve enrolled course details from the content bundle
         const enrolledIds = (enrollmentRows ?? []).map((e) => e.course_id);
         const [courseSummaries, allLessonSkills, allAchievements] =
           await Promise.all([
@@ -206,18 +206,18 @@ function useProfileData(): ProfileData {
 
         const courseMap = new Map(courseSummaries.map((c) => [c._id, c]));
 
-        // Build completed courses list with real titles from Sanity
+        // Build completed courses list with real titles from the content bundle
         const completedCourses: CompletedCourse[] = [];
         const completedCourseIds = new Set<string>();
         for (const enrollment of enrollmentRows ?? []) {
           const completedCount =
             courseProgressMap.get(enrollment.course_id) ?? 0;
           if (completedCount > 0) {
-            const sanity = courseMap.get(enrollment.course_id);
+            const courseInfo = courseMap.get(enrollment.course_id);
             completedCourseIds.add(enrollment.course_id);
             completedCourses.push({
-              title: sanity?.title ?? enrollment.course_id,
-              slug: sanity?.slug ?? enrollment.course_id,
+              title: courseInfo?.title ?? enrollment.course_id,
+              slug: courseInfo?.slug ?? enrollment.course_id,
               completedAt: new Date(
                 enrollment.enrolled_at ?? Date.now()
               ).toLocaleDateString(),

@@ -35,7 +35,7 @@ import {
 // ---------------------------------------------------------------------------
 
 interface GenericProgramExplorerProps {
-  /** Raw IDL JSON string from Sanity */
+  /** Raw IDL JSON string from the content bundle */
   idlJson: string;
   courseSlug: string;
   courseId: string;

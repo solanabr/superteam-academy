@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get course data from Sanity (for the display name only)
+    // Get course data from the content bundle (for the display name only)
     const sanityCourse = await getCourseById(courseId);
     if (!sanityCourse) {
       return NextResponse.json({ error: "Course not found" }, { status: 404 });

@@ -82,7 +82,7 @@ interface DashboardData {
   achievementsCount: number;
   /** Full Sanity _ids of achievements unlocked by this user */
   unlockedAchievementIds: string[];
-  /** All achievements from Sanity — single source of truth for catalog */
+  /** All achievements from the content bundle — single source of truth for catalog */
   achievementCatalog: DeployedAchievement[];
   quests: DailyQuest[];
   questsResetTime: string;
@@ -277,7 +277,7 @@ function useDashboardData(
           if (bonusMatch?.[1]) courseCompleteIdsFromTx.push(bonusMatch[1]);
         }
 
-        // Fetch lesson titles/slugs from Sanity
+        // Fetch lesson titles/slugs from the content bundle
         const uniqueLessonIds = [...new Set(lessonIdsFromTx)];
         const lessonSummaries =
           uniqueLessonIds.length > 0
@@ -291,7 +291,7 @@ function useDashboardData(
           lessonToCourse.set(row.lesson_id, row.course_id);
         }
 
-        // Resolve enrolled course titles and lesson counts from Sanity CMS
+        // Resolve enrolled course titles and lesson counts from the content bundle
         // Exclude courses that already have a minted certificate
         const allEnrolledIds = enrollments?.map((e) => e.course_id) ?? [];
         const enrolledIds = allEnrolledIds.filter(
@@ -325,23 +325,23 @@ function useDashboardData(
         // Build a lookup map: course _id -> Sanity data
         const courseMap = new Map(courseSummaries.map((c) => [c._id, c]));
 
-        // Only surface enrolled courses that still resolve from Sanity. A
+        // Only surface enrolled courses that still resolve from the content bundle. A
         // deactivated (or unpublished) course is filtered out by getCoursesByIds
         // (activeGate), so without this its "Continue learning" card would still
         // render from the Supabase enrollment row with a raw-id title.
         const currentCourses: CurrentCourse[] = enrolledIds
           .filter((id) => courseMap.has(id))
           .map((id) => {
-            const sanity = courseMap.get(id);
+            const courseInfo = courseMap.get(id);
             return {
               courseId: id,
-              title: sanity?.title ?? id,
-              slug: sanity?.slug ?? id,
+              title: courseInfo?.title ?? id,
+              slug: courseInfo?.slug ?? id,
               completedLessons: completedPerCourse.get(id) ?? 0,
-              totalLessons: sanity?.totalLessons ?? 0,
-              difficulty: sanity?.difficulty ?? "beginner",
-              learningPath: sanity?.learningPath ?? null,
-              thumbnail: sanity?.thumbnail ?? null,
+              totalLessons: courseInfo?.totalLessons ?? 0,
+              difficulty: courseInfo?.difficulty ?? "beginner",
+              learningPath: courseInfo?.learningPath ?? null,
+              thumbnail: courseInfo?.thumbnail ?? null,
             };
           });
 

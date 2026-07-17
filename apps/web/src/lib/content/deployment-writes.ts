@@ -84,13 +84,13 @@ async function upsertDeployment(row: DeploymentUpsert): Promise<void> {
  * skipped by an earlier throw.
  */
 export async function writeCourseOnChainStatus(
-  sanityId: string,
+  contentId: string,
   status: string,
   coursePda: string,
   txSignature: string
 ): Promise<void> {
   await upsertDeployment({
-    content_id: sanityId,
+    content_id: contentId,
     kind: "course",
     status,
     course_pda: coursePda,
@@ -107,11 +107,11 @@ export async function writeCourseOnChainStatus(
  * deactivate/reactivate routes call this after the tx succeeds.
  */
 export async function writeCourseActive(
-  sanityId: string,
+  contentId: string,
   isActive: boolean
 ): Promise<void> {
   await upsertDeployment({
-    content_id: sanityId,
+    content_id: contentId,
     kind: "course",
     is_active: isActive,
   });
@@ -137,11 +137,11 @@ export async function writeCourseActive(
  * script) independent of the acquire/release protocol.
  */
 export async function writeCourseMaintenanceFlag(
-  sanityId: string,
+  contentId: string,
   inMaintenance: boolean
 ): Promise<void> {
   await upsertDeployment({
-    content_id: sanityId,
+    content_id: contentId,
     kind: "course",
     in_maintenance: inMaintenance,
   });
@@ -213,23 +213,23 @@ export async function acquireCourseMaintenanceGate(
 }
 
 export async function writeCourseTrackCollection(
-  sanityId: string,
+  contentId: string,
   trackCollectionAddress: string
 ): Promise<void> {
   await upsertDeployment({
-    content_id: sanityId,
+    content_id: contentId,
     kind: "course",
     track_collection_address: trackCollectionAddress,
   });
 }
 
 export async function writeAchievementOnChainStatus(
-  sanityId: string,
+  contentId: string,
   achievementPda: string,
   collectionAddress: string
 ): Promise<void> {
   await upsertDeployment({
-    content_id: sanityId,
+    content_id: contentId,
     kind: "achievement",
     status: "synced",
     achievement_pda: achievementPda,

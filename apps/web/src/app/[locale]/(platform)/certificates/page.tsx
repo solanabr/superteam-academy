@@ -63,7 +63,7 @@ export default function CertificatesPage() {
           }));
           setCertificates(mapped);
 
-          // Fetch course data from Sanity for learning path + difficulty
+          // Fetch course data from the content bundle for learning path + difficulty
           const courseIds = [...new Set(mapped.map((c) => c.courseId))];
           const courses = await getCoursesByIds(courseIds);
           const sMap = new Map<string, string>();
