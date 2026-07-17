@@ -14,6 +14,55 @@ export type Database = {
   };
   public: {
     Tables: {
+      onchain_deployments: {
+        Row: {
+          content_id: string;
+          kind: "course" | "achievement";
+          status: string | null;
+          course_pda: string | null;
+          tx_signature: string | null;
+          collection_address: string | null;
+          track_collection_address: string | null;
+          achievement_pda: string | null;
+          is_active: boolean | null;
+          last_synced: string | null;
+          updated_at: string | null;
+          // Per-course maintenance gate (WS-2 #453 rail 3): true while a
+          // close+recreate is in flight. NOT NULL DEFAULT false on the table
+          // (20260714150000_course_maintenance_gate.sql). Server-only — never
+          // exposed through the public_onchain_deployments view.
+          in_maintenance: boolean;
+        };
+        Insert: {
+          content_id: string;
+          kind: "course" | "achievement";
+          status?: string | null;
+          course_pda?: string | null;
+          tx_signature?: string | null;
+          collection_address?: string | null;
+          track_collection_address?: string | null;
+          achievement_pda?: string | null;
+          is_active?: boolean | null;
+          last_synced?: string | null;
+          updated_at?: string | null;
+          in_maintenance?: boolean;
+        };
+        Update: {
+          content_id?: string;
+          kind?: "course" | "achievement";
+          status?: string | null;
+          course_pda?: string | null;
+          tx_signature?: string | null;
+          collection_address?: string | null;
+          track_collection_address?: string | null;
+          achievement_pda?: string | null;
+          is_active?: boolean | null;
+          last_synced?: string | null;
+          updated_at?: string | null;
+          in_maintenance?: boolean;
+        };
+        Relationships: [];
+      };
       answers: {
         Row: {
           author_id: string;
@@ -862,6 +911,16 @@ export type Database = {
       };
     };
     Views: {
+      public_onchain_deployments: {
+        Row: {
+          content_id: string;
+          kind: "course" | "achievement";
+          status: string | null;
+          is_active: boolean | null;
+          achievement_pda: string | null;
+        };
+        Relationships: [];
+      };
       community_stats: {
         Row: {
           accepted_answers: number | null;
