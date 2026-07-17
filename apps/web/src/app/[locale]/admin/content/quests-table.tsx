@@ -1,10 +1,10 @@
 import { getTranslations } from "next-intl/server";
 import { AdminCard } from "@/components/admin/admin-card";
 import { AdminTableShell } from "@/components/admin/admin-table-shell";
-import type { SanityQuest } from "@/lib/content/queries";
+import type { ContentQuest } from "@/lib/content/queries";
 
 interface QuestsTableProps {
-  quests: SanityQuest[];
+  quests: ContentQuest[];
 }
 
 /**

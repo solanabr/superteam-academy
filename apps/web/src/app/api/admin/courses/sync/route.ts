@@ -146,7 +146,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const course = courses.find((c) => c._id === courseId);
   if (!course) {
     return NextResponse.json(
-      { error: "Course not found in Sanity" },
+      { error: "Course not found in the content bundle" },
       { status: 404 }
     );
   }
@@ -307,7 +307,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     } catch (mutationErr) {
       console.error(
-        "[admin/courses/sync] Sanity write-back failed:",
+        "[admin/courses/sync] deployment write-back failed:",
         mutationErr
       );
     }
@@ -486,7 +486,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         );
       } catch (mutationErr) {
         console.error(
-          "[admin/courses/sync] Sanity PDA write-back failed:",
+          "[admin/courses/sync] deployment PDA write-back failed:",
           mutationErr
         );
       }
@@ -533,7 +533,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   } catch (mutationErr) {
     console.error(
-      "[admin/courses/sync] Sanity write-back failed:",
+      "[admin/courses/sync] deployment write-back failed:",
       mutationErr
     );
   }

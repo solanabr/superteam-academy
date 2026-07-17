@@ -15,7 +15,7 @@ import type {
   DeployedAchievement,
   QuestData,
   RecommendedCourse,
-  SanityQuest,
+  ContentQuest,
 } from "@/lib/content/queries";
 
 /**
@@ -370,7 +370,7 @@ const DRAFT_PREFIX = "drafts.";
 
 /**
  * getAllQuests projection. `quests` = active, non-draft quest docs mapped to
- * {@link SanityQuest} (with the same `description`/`icon` defaults). `challengeLessonIds`
+ * {@link ContentQuest} (with the same `description`/`icon` defaults). `challengeLessonIds`
  * = lessons carrying ≥1 `code` block. `moduleLessonMap` = per-course modules
  * keyed `"<courseId>:<key>"`, lesson ids via ref deref, dropping module-less /
  * empty entries (matches the `.m[]` null-guard + `filter(Boolean)`).
@@ -380,17 +380,17 @@ export function projectQuestData(
   lessons: readonly LessonDoc[],
   courses: readonly CourseDoc[]
 ): QuestData {
-  const activeQuests: SanityQuest[] = quests
+  const activeQuests: ContentQuest[] = quests
     .filter((q) => q.active === true && !q._id.startsWith(DRAFT_PREFIX))
     .map((q) => ({
       id: q._id,
       name: optString(q.name) as string,
       description: optString(q.description) ?? "",
-      type: optString(q.type) as SanityQuest["type"],
+      type: optString(q.type) as ContentQuest["type"],
       icon: optString(q.icon) ?? "CircleDashed",
       xpReward: optNumber(q.xpReward) as number,
       targetValue: optNumber(q.targetValue) as number,
-      resetType: optString(q.resetType) as SanityQuest["resetType"],
+      resetType: optString(q.resetType) as ContentQuest["resetType"],
     }));
 
   const challengeLessonIds = lessons

@@ -426,7 +426,7 @@ export async function getAllAchievements(): Promise<DeployedAchievement[]> {
 
 /* ── Daily Quests ──────────────────────────────────────────────── */
 
-export interface SanityQuest {
+export interface ContentQuest {
   id: string;
   name: string;
   description: string;
@@ -438,7 +438,7 @@ export interface SanityQuest {
 }
 
 export interface QuestData {
-  quests: SanityQuest[];
+  quests: ContentQuest[];
   challengeLessonIds: string[];
   moduleLessonMap: Array<{ id: string; lessonIds: string[] }>;
 }

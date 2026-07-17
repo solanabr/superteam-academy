@@ -35,7 +35,7 @@ interface LessonCompleteRequest {
 }
 
 /**
- * Derive the 0-based lesson index within a course from Sanity content order.
+ * Derive the 0-based lesson index within a course from content-bundle lesson order.
  * Modules and lessons are flattened in order; the index matches the on-chain bitmap position.
  */
 async function deriveLessonIndex(
@@ -273,7 +273,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Derive lesson index from Sanity content order
+    // Derive lesson index from content-bundle lesson order
     const lessonIndex = await deriveLessonIndex(courseId, lessonId);
 
     // Guard: the on-chain complete_lesson reverts when lessonIndex >=

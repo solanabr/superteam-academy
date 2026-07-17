@@ -259,11 +259,11 @@ export default function PublicProfilePage() {
           const completedCount =
             courseProgressMap.get(enrollment.course_id) ?? 0;
           if (completedCount > 0) {
-            const sanity = courseMap.get(enrollment.course_id);
+            const courseInfo = courseMap.get(enrollment.course_id);
             completedCourseIds.add(enrollment.course_id);
             completedCourses.push({
-              title: sanity?.title ?? enrollment.course_id,
-              slug: sanity?.slug ?? enrollment.course_id,
+              title: courseInfo?.title ?? enrollment.course_id,
+              slug: courseInfo?.slug ?? enrollment.course_id,
               completedAt: new Date(
                 enrollment.enrolled_at ?? Date.now()
               ).toLocaleDateString(),

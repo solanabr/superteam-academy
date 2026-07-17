@@ -165,7 +165,7 @@ export class HybridProgressService implements LearningProgressService {
       userId,
       courseId,
       completedLessons,
-      totalLessons: 0, // Caller enriches from Sanity CMS
+      totalLessons: 0, // Caller enriches from the content bundle
       percentComplete: 0,
       lastAccessedAt: new Date(lastAccessed || new Date().toISOString()),
     };
