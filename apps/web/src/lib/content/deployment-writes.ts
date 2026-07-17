@@ -3,10 +3,7 @@ import "server-only";
 import { createClient } from "@supabase/supabase-js";
 import { env } from "@/lib/env";
 import { serverEnv } from "@/lib/env.server";
-import type {
-  DeploymentStatus,
-  OnchainDeploymentRow,
-} from "@/lib/content/deployments";
+import type { Database } from "@/lib/supabase/types";
 
 /**
  * On-chain deployment WRITE seam (SP2-B Task 6).
@@ -47,48 +44,14 @@ type DeploymentUpsert = {
 };
 
 /**
- * supabase-js's `.upsert()`/`.select()` overloads require each relation's
- * `Row`/`Insert` to be assignable to `Record<string, unknown>`. An `interface`
- * (like the read seam's {@link OnchainDeploymentRow}) is NOT — interfaces carry
- * no implicit index signature — which collapses the `.upsert()` value type to
- * `never`. Re-mapping the interface through `{ [K in keyof T]: T[K] }` yields an
- * equivalent object-literal alias that IS index-signature compatible, keeping
- * the client fully typed with zero `any` while reusing the read seam's shapes.
+ * Service-role client typed for this seam (mirrors `lib/supabase/admin.ts`). The
+ * `onchain_deployments` relation now lives in the generated `Database` type, so
+ * the local schema augmentation and the `{ [K in keyof T]: T[K] }` index-
+ * signature workaround are gone — the generated Row is an object-literal type
+ * that `.upsert()`/`.select()` already accept (#438).
  */
-type WriteRow = { [K in keyof OnchainDeploymentRow]: OnchainDeploymentRow[K] };
-type WriteViewRow = { [K in keyof DeploymentStatus]: DeploymentStatus[K] };
-
-/**
- * Minimal Supabase schema for the write. The generated `Database` type does not
- * yet carry `onchain_deployments` (the SP2-B migration adds it; types regenerate
- * in a follow-up), so — like the read seam — we pin exactly the one relation
- * this module writes.
- */
-interface WriteSchema {
-  public: {
-    Tables: {
-      onchain_deployments: {
-        Row: WriteRow;
-        Insert: DeploymentUpsert;
-        Update: Partial<DeploymentUpsert>;
-        Relationships: [];
-      };
-    };
-    Views: {
-      public_onchain_deployments: {
-        Row: WriteViewRow;
-        Relationships: [];
-      };
-    };
-    Functions: Record<string, never>;
-    Enums: Record<string, never>;
-    CompositeTypes: Record<string, never>;
-  };
-}
-
-/** Service-role client typed for this seam (mirrors `lib/supabase/admin.ts`). */
 function createServiceClient() {
-  return createClient<WriteSchema>(
+  return createClient<Database>(
     env.NEXT_PUBLIC_SUPABASE_URL,
     serverEnv.SUPABASE_SERVICE_ROLE_KEY
   );

@@ -7,6 +7,7 @@ import { serverEnv } from "@/lib/env.server";
 import { COURSES_CACHE_TAG } from "@/lib/content/queries";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
+import type { Database } from "@/lib/supabase/types";
 
 /**
  * On-chain deployment read seam (SP2-B Task 3).
@@ -28,69 +29,23 @@ import { ERROR_IDS } from "@/constants/errorIds";
  * {@link isSynced} is the entire public-visibility gate, in one place.
  */
 
-/** The gate-relevant columns exposed by the `public_onchain_deployments` view. */
-export interface DeploymentStatus {
-  content_id: string;
-  kind: "course" | "achievement";
-  status: string | null;
-  is_active: boolean | null;
-  achievement_pda: string | null;
-}
-
-/** The full `onchain_deployments` row (service-role only). */
-export interface OnchainDeploymentRow {
-  content_id: string;
-  kind: "course" | "achievement";
-  status: string | null;
-  course_pda: string | null;
-  tx_signature: string | null;
-  collection_address: string | null;
-  track_collection_address: string | null;
-  achievement_pda: string | null;
-  is_active: boolean | null;
-  last_synced: string | null;
-  updated_at: string | null;
-  /**
-   * Per-course maintenance gate (WS-2 #453 rail 3). `true` while a close+recreate
-   * is in flight for this course — the Course PDA may be transiently absent.
-   * NOT NULL DEFAULT false on the table; see
-   * `20260714150000_course_maintenance_gate.sql`. Never exposed through
-   * `public_onchain_deployments` — it's an operational flag for server-side
-   * write paths ({@link isCourseInMaintenance}), not a public catalog signal.
-   */
-  in_maintenance: boolean;
-}
+/**
+ * The gate-relevant columns exposed by the `public_onchain_deployments` view,
+ * and the full `onchain_deployments` row (service-role only). Both derive from
+ * the generated `Database` types — the SP2-B migration's relations now live in
+ * `lib/supabase/types.ts`, so this seam no longer hand-rolls them (#438). The
+ * full row's `in_maintenance` is the per-course maintenance gate (WS-2 #453
+ * rail 3): `true` while a close+recreate is in flight (the Course PDA may be
+ * transiently absent). It is NOT exposed through the public view — an
+ * operational flag for server-side write paths ({@link isCourseInMaintenance}),
+ * not a public catalog signal.
+ */
+export type DeploymentStatus =
+  Database["public"]["Views"]["public_onchain_deployments"]["Row"];
+export type OnchainDeploymentRow =
+  Database["public"]["Tables"]["onchain_deployments"]["Row"];
 
 const VIEW_COLUMNS = "content_id, kind, status, is_active, achievement_pda";
-
-/**
- * Minimal Supabase schema for this seam. The generated `Database` type does not
- * yet carry `onchain_deployments` / `public_onchain_deployments` (the SP2-B
- * migration adds them; the generated types regenerate in a follow-up), so we
- * pin exactly the two relations this module touches. Keeps the client fully
- * typed with zero `any` and self-documents the expected columns.
- */
-interface DeploymentsSchema {
-  public: {
-    Tables: {
-      onchain_deployments: {
-        Row: OnchainDeploymentRow;
-        Insert: OnchainDeploymentRow;
-        Update: Partial<OnchainDeploymentRow>;
-        Relationships: [];
-      };
-    };
-    Views: {
-      public_onchain_deployments: {
-        Row: DeploymentStatus;
-        Relationships: [];
-      };
-    };
-    Functions: Record<string, never>;
-    Enums: Record<string, never>;
-    CompositeTypes: Record<string, never>;
-  };
-}
 
 /**
  * Cookieless anon client. NOT `lib/supabase/server.ts` — that reads `cookies()`,
@@ -98,7 +53,7 @@ interface DeploymentsSchema {
  * disabled: this is a pure read over a world-readable view.
  */
 function createCookielessClient() {
-  return createClient<DeploymentsSchema>(
+  return createClient<Database>(
     env.NEXT_PUBLIC_SUPABASE_URL,
     env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     { auth: { persistSession: false, autoRefreshToken: false } }
@@ -106,12 +61,12 @@ function createCookielessClient() {
 }
 
 /**
- * Service-role client typed for this seam. Mirrors `lib/supabase/admin.ts` but
- * carries {@link DeploymentsSchema} so `onchain_deployments` is typed until the
- * generated `Database` regenerates with the SP2-B migration's relations.
+ * Service-role client typed for this seam. Mirrors `lib/supabase/admin.ts`; the
+ * `onchain_deployments` / `public_onchain_deployments` relations now live in the
+ * generated `Database` type (#438), so no local schema augmentation is needed.
  */
 function createServiceClient() {
-  return createClient<DeploymentsSchema>(
+  return createClient<Database>(
     env.NEXT_PUBLIC_SUPABASE_URL,
     serverEnv.SUPABASE_SERVICE_ROLE_KEY
   );
