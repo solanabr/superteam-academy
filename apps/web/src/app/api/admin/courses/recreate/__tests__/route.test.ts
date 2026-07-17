@@ -257,4 +257,32 @@ describe("POST /api/admin/courses/recreate — error mapping", () => {
     const body = (await res.json()) as { courseIntact: boolean };
     expect(body.courseIntact).toBe(true);
   });
+
+  it("scrubs a leaked api-keyed RPC URL from a RecreateCourseError response (#511)", async () => {
+    recreateCourse.mockRejectedValue(
+      new RecreateCourseError(
+        "Failed to close: connection to https://devnet.helius-rpc.com/?api-key=SECRET123 refused",
+        "close",
+        true
+      )
+    );
+    const res = await post({ courseId: COURSE_ID, confirm: COURSE_ID });
+    expect(res.status).toBe(500);
+    const body = (await res.json()) as { error: string };
+    expect(body.error).not.toContain("SECRET123");
+    expect(body.error).not.toContain("helius-rpc.com");
+    expect(body.error).toContain("[redacted-url]");
+  });
+
+  it("scrubs secrets from a generic (non-RecreateCourseError) 500 (#511)", async () => {
+    recreateCourse.mockRejectedValue(
+      new Error("SOLANA_RPC_URL misconfigured: https://x.rpc/?api-key=LEAK")
+    );
+    const res = await post({ courseId: COURSE_ID, confirm: COURSE_ID });
+    expect(res.status).toBe(500);
+    const body = (await res.json()) as { error: string };
+    expect(body.error).not.toContain("LEAK");
+    expect(body.error).not.toContain("SOLANA_RPC_URL");
+    expect(body.error).toContain("[redacted-env]");
+  });
 });
