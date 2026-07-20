@@ -29,7 +29,6 @@ pub fn process(accounts: &mut [AccountView], data: &[u8]) -> ProgramResult {
     let track_level = cur.u8()?;
     let prerequisite = cur.option_address()?;
     let creator_reward_xp = cur.u32()?;
-    let min_completions_for_reward = cur.u16()?;
     let collection = cur.option_address()?;
 
     take_accounts!([course, config, authority, system_program] = accounts);
@@ -99,14 +98,13 @@ pub fn process(accounts: &mut [AccountView], data: &[u8]) -> ProgramResult {
                 course_id: course_id.as_bytes(),
                 creator: &creator,
                 content_tx_id,
-                lesson_count,
+                active_lessons: state::course::dense_mask(lesson_count),
                 difficulty,
                 xp_per_lesson,
                 track_id,
                 track_level,
                 prerequisite: prerequisite.as_ref(),
                 creator_reward_xp,
-                min_completions_for_reward,
                 collection: &effective_collection,
                 generation,
                 now,

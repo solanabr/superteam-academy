@@ -112,14 +112,13 @@ fn course_case(course_id: &str, prerequisite: Option<Pubkey>) {
             course_id: course_id.as_bytes(),
             creator: &addr(creator),
             content_tx_id: &content,
-            lesson_count: 12,
+            active_lessons: pstate::course::dense_mask(12),
             difficulty: 2,
             xp_per_lesson: 50,
             track_id: 3,
             track_level: 1,
             prerequisite: prereq_addr.as_ref(),
             creator_reward_xp: 250,
-            min_completions_for_reward: 10,
             collection: &addr(collection),
             generation,
             now: 1_700_000_000,
@@ -140,7 +139,12 @@ fn course_case(course_id: &str, prerequisite: Option<Pubkey>) {
     assert_eq!(parsed.course_id(&d), course_id.as_bytes());
     assert_eq!(parsed.creator(&d).as_array(), &creator.to_bytes());
     assert_eq!(parsed.version(&d), 1, "init version = 1");
-    assert_eq!(parsed.lesson_count(&d), 12);
+    assert_eq!(parsed.live_lesson_count(&d), 12, "dense_mask(12) popcount");
+    assert!(
+        parsed.is_active_slot(&d, 0) && parsed.is_active_slot(&d, 11),
+        "slots 0..12 live"
+    );
+    assert!(!parsed.is_active_slot(&d, 12), "slot 12 not live");
     assert_eq!(parsed.xp_per_lesson(&d), 50);
     assert_eq!(parsed.track_id(&d), 3);
     assert_eq!(parsed.track_level(&d), 1);
@@ -149,18 +153,17 @@ fn course_case(course_id: &str, prerequisite: Option<Pubkey>) {
         prerequisite.map(|p| p.to_bytes())
     );
     assert_eq!(parsed.creator_reward_xp(&d), 250);
-    assert_eq!(parsed.min_completions_for_reward(&d), 10);
     assert_eq!(parsed.total_completions(&d), 0, "init counters = 0");
     assert_eq!(parsed.total_enrollments(&d), 0);
     assert!(parsed.is_active(&d), "init is_active = true");
     assert_eq!(parsed.collection(&d).as_array(), &collection.to_bytes());
     // New field: generation lands right after collection (o_collection + 32).
     // o_collection = 12 + id_len + prereq + [creator..collection fixed run].
-    // Fixed run creator..=updated_at (exclusive of collection) after the id:
-    //   creator..=track_level = 75, prereq_tag = 1, then
-    //   creator_reward_xp..=updated_at = 4+2+4+4+1+8+8 = 31  →  107 total.
+    // v2 fixed run creator..=updated_at (exclusive of collection) after the id:
+    //   creator..=track_level = 106 (active_lessons [u64;4]), prereq_tag = 1, then
+    //   creator_reward_xp..=updated_at = 4+4+4+1+8+8 = 29  →  136 total.
     let prereq_bytes = if prerequisite.is_some() { 32 } else { 0 };
-    let o_collection = 12 + course_id.len() + 107 + prereq_bytes;
+    let o_collection = 12 + course_id.len() + 136 + prereq_bytes;
     let o_generation = o_collection + 32;
     // Pin the hand-computed offset to the reader: collection at o_collection.
     assert_eq!(
@@ -189,7 +192,7 @@ fn course_case(course_id: &str, prerequisite: Option<Pubkey>) {
     off.set_version(&mut d, 2);
     off.set_xp_per_lesson(&mut d, 75);
     off.set_creator_reward_xp(&mut d, 300);
-    off.set_min_completions_for_reward(&mut d, 5);
+    off.set_active_lessons(&mut d, &pstate::course::dense_mask(8));
     off.set_is_active(&mut d, false);
     off.set_updated_at(&mut d, 1_800_000_000);
     off.set_collection(&mut d, &addr(new_collection));
@@ -202,7 +205,11 @@ fn course_case(course_id: &str, prerequisite: Option<Pubkey>) {
     assert_eq!(parsed.version(&d), 2);
     assert_eq!(parsed.xp_per_lesson(&d), 75);
     assert_eq!(parsed.creator_reward_xp(&d), 300);
-    assert_eq!(parsed.min_completions_for_reward(&d), 5);
+    assert_eq!(
+        parsed.live_lesson_count(&d),
+        8,
+        "set_active_lessons -> popcount 8"
+    );
     assert_eq!(parsed.total_completions(&d), 17);
     assert_eq!(parsed.total_enrollments(&d), 41);
     assert!(!parsed.is_active(&d));

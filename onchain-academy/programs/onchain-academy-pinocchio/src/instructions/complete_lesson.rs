@@ -111,8 +111,11 @@ pub fn process(accounts: &mut [AccountView], data: &[u8]) -> ProgramResult {
         let cfg = config.try_borrow()?;
         require!(!state::config::paused(&cfg), AcademyError::MintingPaused);
         let cd = course.try_borrow()?;
+        // The slot must be a live lesson (its bit set in the course's active
+        // mask). Reusing LessonOutOfBounds keeps error codes frozen — "not a
+        // live slot" is the v2 meaning of an out-of-range lesson index.
         require!(
-            lesson_index < course_off.lesson_count(&cd),
+            course_off.is_active_slot(&cd, lesson_index),
             AcademyError::LessonOutOfBounds
         );
         (course_off.xp_per_lesson(&cd), state::config::xp_mint(&cfg))

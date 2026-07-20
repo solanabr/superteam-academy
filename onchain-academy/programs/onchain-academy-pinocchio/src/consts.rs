@@ -67,7 +67,7 @@ pub const UNENROLL_COOLDOWN_SECS: i64 = 86_400;
 
 // Account sizes (allocation sizes; serialized content may be shorter)
 pub const CONFIG_SIZE: usize = 113;
-pub const COURSE_SIZE: usize = 224;
+pub const COURSE_SIZE: usize = 253;
 pub const ENROLLMENT_SIZE: usize = 127;
 pub const MINTER_ROLE_SIZE: usize = 110;
 pub const ACHIEVEMENT_TYPE_SIZE: usize = 338;

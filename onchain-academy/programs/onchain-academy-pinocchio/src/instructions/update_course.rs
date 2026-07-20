@@ -17,8 +17,10 @@ pub fn process(accounts: &mut [AccountView], data: &[u8]) -> ProgramResult {
     let new_is_active = cur.option_bool()?;
     let new_xp_per_lesson = cur.option_u32()?;
     let new_creator_reward_xp = cur.option_u32()?;
-    let new_min_completions_for_reward = cur.option_u16()?;
     let new_collection = cur.option_address()?;
+    // v2: retire/rewrite live lesson slots. Wire is Option<[u64;4]> (32 LE
+    // bytes); replaces v1's new_lesson_count. Dropped: new_min_completions (#469).
+    let new_active_lessons = cur.option_bytes32()?.copied();
 
     take_accounts!([config, course, authority] = accounts);
 
@@ -70,8 +72,12 @@ pub fn process(accounts: &mut [AccountView], data: &[u8]) -> ProgramResult {
         if let Some(reward) = new_creator_reward_xp {
             off.set_creator_reward_xp(&mut d, reward);
         }
-        if let Some(min) = new_min_completions_for_reward {
-            off.set_min_completions_for_reward(&mut d, min);
+        if let Some(bytes) = new_active_lessons {
+            let mut mask = [0u64; 4];
+            for (w, chunk) in bytes.chunks_exact(8).enumerate() {
+                mask[w] = u64::from_le_bytes(chunk.try_into().unwrap());
+            }
+            off.set_active_lessons(&mut d, &mask);
         }
         if let Some(collection) = new_collection {
             // Backfill-only: re-pointing a live collection would orphan
