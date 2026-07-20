@@ -188,14 +188,13 @@ fn course_offsets_roundtrip_all_id_lengths() {
                     course_id: &id,
                     creator: &creator,
                     content_tx_id: &content,
-                    lesson_count: 10,
+                    active_lessons: course::dense_mask(10),
                     difficulty: 2,
                     xp_per_lesson: 50,
                     track_id: 3,
                     track_level: 1,
                     prerequisite: prereq.as_ref(),
                     creator_reward_xp: 25,
-                    min_completions_for_reward: 5,
                     collection: &collection,
                     generation: 11,
                     now: 1000,
@@ -204,7 +203,7 @@ fn course_offsets_roundtrip_all_id_lengths() {
             );
             let off = course::CourseOffsets::parse(&d).unwrap();
             assert_eq!(off.course_id(&d), &id[..]);
-            assert_eq!(off.lesson_count(&d), 10);
+            assert_eq!(off.live_lesson_count(&d), 10);
             assert_eq!(off.xp_per_lesson(&d), 50);
             assert_eq!(off.track_id(&d), 3);
             assert_eq!(

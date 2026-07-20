@@ -215,7 +215,6 @@ pub struct CourseParams<'a> {
     pub track_level: u8,
     pub prerequisite: Option<Pubkey>,
     pub creator_reward_xp: u32,
-    pub min_completions_for_reward: u16,
     pub collection: Option<Pubkey>,
 }
 
@@ -232,7 +231,6 @@ impl<'a> CourseParams<'a> {
             track_level: 1,
             prerequisite: None,
             creator_reward_xp: 0,
-            min_completions_for_reward: 0,
             collection: None,
         }
     }
@@ -259,7 +257,6 @@ pub fn create_course(authority: &Pubkey, p: &CourseParams) -> Instruction {
             .u8(p.track_level)
             .opt(p.prerequisite, |a, k| a.key(&k))
             .u32(p.creator_reward_xp)
-            .u16(p.min_completions_for_reward)
             .opt(p.collection, |a, k| a.key(&k))
             .build(),
     }
@@ -273,8 +270,8 @@ pub fn update_course(
     new_is_active: Option<bool>,
     new_xp_per_lesson: Option<u32>,
     new_creator_reward_xp: Option<u32>,
-    new_min_completions_for_reward: Option<u16>,
     new_collection: Option<Pubkey>,
+    new_active_lessons: Option<[u64; 4]>,
 ) -> Instruction {
     Instruction {
         program_id: program_id(),
@@ -288,8 +285,14 @@ pub fn update_course(
             .opt(new_is_active, |a, v| a.u8(v as u8))
             .opt(new_xp_per_lesson, |a, v| a.u32(v))
             .opt(new_creator_reward_xp, |a, v| a.u32(v))
-            .opt(new_min_completions_for_reward, |a, v| a.u16(v))
             .opt(new_collection, |a, k| a.key(&k))
+            .opt(new_active_lessons, |a, v| {
+                let mut b = [0u8; 32];
+                for (w, word) in v.iter().enumerate() {
+                    b[w * 8..w * 8 + 8].copy_from_slice(&word.to_le_bytes());
+                }
+                a.bytes32(&b)
+            })
             .build(),
     }
 }

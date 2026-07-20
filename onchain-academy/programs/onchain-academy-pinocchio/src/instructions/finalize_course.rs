@@ -131,41 +131,50 @@ pub fn process(accounts: &mut [AccountView], _data: &[u8]) -> ProgramResult {
 
     let now = v::now()?;
 
-    let completed: u32 = {
+    let (completed, live_lessons, xp_per_lesson) = {
         let ed = enrollment.try_borrow()?;
         require!(
             enr_off.completed_at(&ed).is_none(),
             AcademyError::CourseAlreadyFinalized
         );
-        enr_off.completed_lessons(&ed)
-    };
-    let (lesson_count, xp_per_lesson) = {
         let cd = course.try_borrow()?;
-        (course_off.lesson_count(&cd), course_off.xp_per_lesson(&cd))
+        // v2 completion: every LIVE lesson bit must be set in the learner's
+        // flags (lesson_flags & active_lessons == active_lessons, per word).
+        // Retiring a slot (clearing its active bit) never strands a learner who
+        // already completed it.
+        let all_active_completed = (0..4).all(|w| {
+            let active = course_off.active_lesson_word(&cd, w);
+            enr_off.lesson_flag_word(&ed, w) & active == active
+        });
+        require!(all_active_completed, AcademyError::CourseNotCompleted);
+        (
+            enr_off.completed_lessons(&ed),
+            course_off.live_lesson_count(&cd),
+            course_off.xp_per_lesson(&cd),
+        )
     };
-    require!(
-        completed == lesson_count as u32,
-        AcademyError::CourseNotCompleted
-    );
 
     {
         let mut ed = enrollment.try_borrow_mut()?;
         enr_off.set_completed_at(&mut ed, now);
     }
 
-    let total_completions = {
+    {
+        // The total-completions counter still increments (used off-chain); it no
+        // longer gates the creator reward (v2 flat reward, #469).
         let mut cd = course.try_borrow_mut()?;
         let total = course_off
             .total_completions(&cd)
             .checked_add(1)
             .ok_or_else(|| academy(AcademyError::Overflow))?;
         course_off.set_total_completions(&mut cd, total);
-        total
-    };
+    }
 
-    // Completion bonus = 50% of total lesson XP (rounded down).
+    // Completion bonus = 50% of total lesson XP (rounded down). Basis is the
+    // live lesson count (popcount of the active mask), NOT the learner's
+    // completed count — a stray retired bit must not inflate it.
     let total_lesson_xp = (xp_per_lesson as u64)
-        .checked_mul(lesson_count as u64)
+        .checked_mul(live_lessons as u64)
         .ok_or_else(|| academy(AcademyError::Overflow))?;
     let bonus_xp = total_lesson_xp / 2;
     require!(
@@ -187,24 +196,17 @@ pub fn process(accounts: &mut [AccountView], _data: &[u8]) -> ProgramResult {
         )?;
     }
 
-    // Creator reward, only within the bounded completion window
-    // [min_completions, min_completions + CREATOR_REWARD_WINDOW). The
-    // saturating_add can never actually saturate (u16::MAX + 100 << u32::MAX);
-    // it is kept for byte-for-byte behavioral parity with the Anchor build.
-    let (min_completions, creator_reward_xp) = {
+    // Creator reward: flat — minted on every finalize where creator_reward_xp > 0
+    // (still bounded per mint by MAX_XP_PER_MINT). The v1 completion-count window
+    // [min_completions, min_completions + 100) was removed in the v2 program
+    // (WS-1 #469): no threshold, no window.
+    let creator_reward_xp = {
         let cd = course.try_borrow()?;
-        (
-            course_off.min_completions_for_reward(&cd),
-            course_off.creator_reward_xp(&cd),
-        )
+        course_off.creator_reward_xp(&cd)
     };
-    let reward_end = (min_completions as u32).saturating_add(CREATOR_REWARD_WINDOW);
 
     let mut creator_xp: u32 = 0;
-    if total_completions >= min_completions as u32
-        && total_completions < reward_end
-        && creator_reward_xp > 0
-    {
+    if creator_reward_xp > 0 {
         require!(
             creator_reward_xp as u64 <= MAX_XP_PER_MINT,
             AcademyError::XpAmountExceedsMax

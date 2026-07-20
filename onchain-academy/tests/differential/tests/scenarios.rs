@@ -152,8 +152,8 @@ fn update_course_paths() {
         Some(false),
         Some(75),
         Some(300),
-        Some(5),
         None,
+        Some([0b11, 0, 0, 0]),
     );
     ctx.h.run_ok("multi update", &[ix], &authority, &[]);
 
@@ -166,8 +166,8 @@ fn update_course_paths() {
         None,
         None,
         None,
-        None,
         Some(collection),
+        None,
     );
     ctx.h.run_ok("collection backfill", &[ix], &authority, &[]);
     let other = Pubkey::new_unique();
@@ -178,8 +178,8 @@ fn update_course_paths() {
         None,
         None,
         None,
-        None,
         Some(other),
+        None,
     );
     ctx.h
         .run_expect_custom("collection repoint", &[ix], &authority, &[], 6016);
@@ -419,7 +419,6 @@ fn finalize_paths() {
 
     let mut p = CourseParams::simple("fin", creator.pubkey(), 2);
     p.creator_reward_xp = 25;
-    p.min_completions_for_reward = 1;
     ctx.create_course(&p);
 
     let learner = ctx.new_learner();
