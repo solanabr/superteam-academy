@@ -18,7 +18,7 @@ jobs:
       # 1. The caller's content repo (academy-courses) at the PR head, full history
       #    so gate 2 (id immutability) and gate 3 (slots regeneration) can diff base.
       - name: Checkout content
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: content
           fetch-depth: 0
@@ -26,7 +26,7 @@ jobs:
 
       # 2. This monorepo, for @superteam-lms/content-lint + content-schema + executor.
       - name: Checkout linter
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: solanabr/superteam-academy
           ref: ${{ inputs.linter-ref }}
