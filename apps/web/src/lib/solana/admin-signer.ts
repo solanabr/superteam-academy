@@ -244,7 +244,12 @@ function initialize(): { ready: boolean } {
   const provider = new AnchorProvider(_connection, new NodeWallet(_authority), {
     commitment: "confirmed",
   });
-  _program = new Program(IDL as unknown as Idl, provider);
+  // Env-driven program id (see academy-program.ts) so a fresh devnet instance
+  // set via NEXT_PUBLIC_PROGRAM_ID is targeted, matching getProgramId() PDAs.
+  _program = new Program(
+    { ...(IDL as unknown as Idl), address: getProgramId().toBase58() },
+    provider
+  );
 
   return { ready: true };
 }

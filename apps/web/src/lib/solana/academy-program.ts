@@ -115,7 +115,14 @@ export function getProgram(): Program {
   const provider = new AnchorProvider(connection, new NodeWallet(signer), {
     commitment: "confirmed",
   });
-  _serverProgram = new Program(IDL as unknown as Idl, provider);
+  // Target the env-configured program id, not the IDL's committed canonical
+  // address — so pointing NEXT_PUBLIC_PROGRAM_ID at a fresh devnet instance
+  // targets that program (matching the getProgramId()-derived PDAs) instead of
+  // the hardcoded upstream id.
+  _serverProgram = new Program(
+    { ...(IDL as unknown as Idl), address: getProgramId().toBase58() },
+    provider
+  );
   return _serverProgram;
 }
 
