@@ -22,7 +22,16 @@ async function main() {
   console.log("PDA:                     ", coursePda.toBase58());
   console.log("Creator:                 ", course.creator.toBase58());
   console.log("Version:                 ", course.version);
-  console.log("Lesson Count:            ", course.lessonCount);
+  // v2: lesson_count(u8) was replaced by active_lessons ([u64;4] 256-bit mask).
+  const liveLessons = course.activeLessons.reduce(
+    (n, w) => n + (w.toString(2).match(/1/g)?.length ?? 0),
+    0
+  );
+  console.log("Live Lessons:            ", liveLessons);
+  console.log(
+    "Active Lessons (mask):   ",
+    course.activeLessons.map((w) => w.toString())
+  );
   console.log("Difficulty:              ", course.difficulty);
   console.log("XP per Lesson:           ", course.xpPerLesson);
   console.log("Track ID:                ", course.trackId);
@@ -32,7 +41,6 @@ async function main() {
     course.prerequisite?.toBase58() || "none"
   );
   console.log("Creator Reward XP:       ", course.creatorRewardXp);
-  console.log("Min Completions (reward):", course.minCompletionsForReward);
   console.log("Total Completions:       ", course.totalCompletions);
   console.log("Total Enrollments:       ", course.totalEnrollments);
   console.log("Active:                  ", course.isActive);

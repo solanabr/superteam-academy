@@ -35,7 +35,6 @@ async function main() {
       trackLevel: 1,
       prerequisite: null,
       creatorRewardXp: 50,
-      minCompletionsForReward: 10,
       collection: null,
     })
     .accountsStrict({

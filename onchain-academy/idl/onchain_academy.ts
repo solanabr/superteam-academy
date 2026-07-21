@@ -1757,8 +1757,10 @@ export type OnchainAcademy = {
             type: "u16";
           },
           {
-            name: "lessonCount";
-            type: "u8";
+            name: "activeLessons";
+            type: {
+              array: ["u64", 4];
+            };
           },
           {
             name: "difficulty";
@@ -1785,10 +1787,6 @@ export type OnchainAcademy = {
           {
             name: "creatorRewardXp";
             type: "u32";
-          },
-          {
-            name: "minCompletionsForReward";
-            type: "u16";
           },
           {
             name: "totalCompletions";
@@ -2023,10 +2021,6 @@ export type OnchainAcademy = {
           {
             name: "creatorRewardXp";
             type: "u32";
-          },
-          {
-            name: "minCompletionsForReward";
-            type: "u16";
           },
           {
             name: "collection";
@@ -2479,18 +2473,23 @@ export type OnchainAcademy = {
             };
           },
           {
-            name: "newMinCompletionsForReward";
-            type: {
-              option: "u16";
-            };
-          },
-          {
             name: "newCollection";
             docs: [
               "Set/backfill the Metaplex Core credential collection for this course.",
             ];
             type: {
               option: "pubkey";
+            };
+          },
+          {
+            name: "newActiveLessons";
+            docs: [
+              "Retire/rewrite the live lesson slots (256-bit mask). Replaces v1 newLessonCount.",
+            ];
+            type: {
+              option: {
+                array: ["u64", 4];
+              };
             };
           },
         ];
