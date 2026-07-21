@@ -37,6 +37,7 @@ import {
 import { slotsByCourseId } from "@/lib/content/store";
 import { SYNCED_SHA } from "@/lib/content/meta";
 import { MaskMismatchError } from "@/lib/github/types";
+import { deriveActiveMask } from "@/lib/github/content-commit";
 
 /**
  * Load a course's committed `slots.lock.json` from the pinned content bundle
@@ -100,10 +101,17 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // content_tx_id is committed in the same update and the mask is cross-checked
   // against the committed slots.lock.json. Absent → legacy behaviour, unchanged.
   let activeLessons: [bigint, bigint, bigint, bigint] | null = null;
+  // `commitContent: true` requests the same §11.0 commitment without the caller
+  // supplying a mask — the route derives it from the committed slots.lock.json
+  // itself (deriveActiveMask). This is the UI's "Commit content hash" action:
+  // the deleted drift screen used to send an explicit mask, but the lockfile is
+  // the source of truth, so deriving it here needs no browser-side mask logic.
+  let commitContent = false;
   try {
     const body = (await req.json()) as {
       courseId?: unknown;
       activeLessons?: unknown;
+      commitContent?: unknown;
     };
     if (typeof body.courseId !== "string" || !body.courseId) {
       return NextResponse.json(
@@ -112,6 +120,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
     courseId = body.courseId;
+    commitContent = body.commitContent === true;
     if (body.activeLessons !== undefined) {
       activeLessons = parseActiveLessons(body.activeLessons);
       if (!activeLessons) {
@@ -427,15 +436,19 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // new_active_lessons AND the git SHA is committed into content_tx_id in the SAME
   // update (v-next exposes new_active_lessons; this replaces v1's count-based
   // new_lesson_count grow).
-  if (activeLessons) {
+  if (activeLessons || commitContent) {
     let commit: ReturnType<typeof buildCourseCommit>;
     try {
       const { contentSha, slotsLock } = readCourseSlotsLock(courseId);
+      // `commitContent` (no explicit mask) derives the mask from the lockfile;
+      // an explicit `activeLessons` is still cross-checked against it, so the
+      // "slots never reused" invariant holds on both paths.
+      const maskToSend = activeLessons ?? deriveActiveMask(slotsLock);
       commit = buildCourseCommit({
         courseId,
         contentSha,
         slotsLock,
-        activeLessons,
+        activeLessons: maskToSend,
       });
     } catch (e) {
       if (e instanceof MaskMismatchError) {
