@@ -1734,10 +1734,8 @@
             "type": "u16"
           },
           {
-            "name": "active_lessons",
-            "type": {
-              "array": ["u64", 4]
-            }
+            "name": "lesson_count",
+            "type": "u8"
           },
           {
             "name": "difficulty",
@@ -1764,6 +1762,10 @@
           {
             "name": "creator_reward_xp",
             "type": "u32"
+          },
+          {
+            "name": "min_completions_for_reward",
+            "type": "u16"
           },
           {
             "name": "total_completions",
@@ -1998,6 +2000,10 @@
           {
             "name": "creator_reward_xp",
             "type": "u32"
+          },
+          {
+            "name": "min_completions_for_reward",
+            "type": "u16"
           },
           {
             "name": "collection",
@@ -2450,23 +2456,18 @@
             }
           },
           {
+            "name": "new_min_completions_for_reward",
+            "type": {
+              "option": "u16"
+            }
+          },
+          {
             "name": "new_collection",
             "docs": [
               "Set/backfill the Metaplex Core credential collection for this course."
             ],
             "type": {
               "option": "pubkey"
-            }
-          },
-          {
-            "name": "new_active_lessons",
-            "docs": [
-              "Retire/rewrite the live lesson slots (256-bit mask). Replaces v1 new_lesson_count."
-            ],
-            "type": {
-              "option": {
-                "array": ["u64", 4]
-              }
             }
           }
         ]
