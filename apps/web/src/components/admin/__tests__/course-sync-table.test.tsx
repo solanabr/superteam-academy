@@ -81,6 +81,55 @@ describe("CourseSyncTable — deploy opens the change preview", () => {
   });
 });
 
+describe("CourseSyncTable — Commit content hash (§11.0)", () => {
+  const staleCourse: CourseStatus = {
+    ...syncedCourse,
+    contentId: "course-stale",
+    chainDrift: "content_stale",
+  };
+
+  it("hides Commit content hash for a content-current course", () => {
+    vi.stubGlobal("fetch", vi.fn());
+    renderWithIntl(
+      <CourseSyncTable courses={[syncedCourse]} onRefresh={vi.fn()} />
+    );
+    expect(
+      screen.queryByRole("button", { name: "Commit content hash" })
+    ).toBeNull();
+  });
+
+  it("shows Commit content hash for a stale course and posts commitContent (no preview)", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({}),
+    } as Response);
+    vi.stubGlobal("fetch", fetchMock);
+    const onRefresh = vi.fn();
+
+    renderWithIntl(
+      <CourseSyncTable courses={[staleCourse]} onRefresh={onRefresh} />
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Commit content hash" })
+    );
+    // Direct POST — no confirmation dialog for the content commitment.
+    expect(screen.queryByRole("dialog")).toBeNull();
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/admin/courses/sync",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          courseId: "course-stale",
+          commitContent: true,
+        }),
+      })
+    );
+    await waitFor(() => expect(onRefresh).toHaveBeenCalled());
+  });
+});
+
 describe("CourseSyncTable — Task 5 polish", () => {
   const driftedCourse: CourseStatus = {
     ...syncedCourse,

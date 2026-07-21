@@ -952,7 +952,8 @@
         "deactivate": "Desactivar",
         "working": "…",
         "syncAll": "Sincronizar todo ({count})",
-        "syncAllBusy": "Sincronizando…"
+        "syncAllBusy": "Sincronizando…",
+        "commitContent": "Confirmar hash de contenido"
       },
       "deactivated": "Desactivado",
       "syncAllConfirm": "{count, plural, one {Sincronizar # curso} other {Sincronizar # cursos}} — {changes, plural, one {# cambio de campo} other {# cambios de campo}}. ¿Continuar?",
@@ -962,7 +963,8 @@
         "sync": "Falló la sincronización",
         "deactivate": "Falló la desactivación",
         "reactivate": "Falló la reactivación",
-        "syncFor": "Falló la sincronización de {title}"
+        "syncFor": "Falló la sincronización de {title}",
+        "commitContent": "Falló el commit de contenido"
       },
       "contentDrift": {
         "drifted": "Contenido desactualizado",
@@ -978,7 +980,7 @@
         "creatorWalletLabel": "Wallet del creador — este curso quedará atribuido permanentemente a:",
         "creatorWalletImmutable": "Se establece una sola vez — no se puede cambiar después del despliegue.",
         "willWrite": "Esta transacción escribirá:",
-        "contentStale": "Informativo: el compromiso de contenido on-chain de este curso (content_tx_id) está detrás del paquete commiteado. Este despliegue NO lo cambiará — solo escribe los campos del curso listados arriba. El compromiso se actualiza mediante el paso de content-commit en la pantalla de Divergencia de Contenido.",
+        "contentStale": "Informativo: el compromiso de contenido on-chain de este curso (content_tx_id) está detrás del paquete commiteado. Este despliegue NO lo cambiará — solo escribe los campos del curso listados arriba. Usa el botón «Confirmar hash de contenido» en la fila de este curso para actualizar el compromiso.",
         "noChanges": "No se detectaron cambios. ¿Volver a desplegar de todos modos?",
         "blocked": "El despliegue está bloqueado hasta que se resuelva la divergencia inmutable.",
         "confirmDeploy": "Desplegar",

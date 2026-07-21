@@ -164,7 +164,7 @@ describe("DeployChangePreview", () => {
     expect(screen.getByText(/This deploy will NOT change it/)).toBeTruthy();
     expect(
       screen.getByText(
-        /updated by the content-commit step on the Content Drift screen/
+        /Use the "Commit content hash" button on this course's row/
       )
     ).toBeTruthy();
 

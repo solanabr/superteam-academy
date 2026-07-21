@@ -68,6 +68,32 @@ export function CourseSyncTable({ courses, onRefresh }: CourseSyncTableProps) {
     }
   }
 
+  // §11.0: write the on-chain content commitment (content_tx_id) so a
+  // `content_stale` course goes current. Posts `commitContent` alone — the route
+  // derives the active_lessons mask from the committed slots.lock.json. Separate
+  // from the field-sync/redeploy above, which never moves the commitment.
+  async function handleCommitContent(courseId: string) {
+    setSyncing(courseId);
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/courses/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ courseId, commitContent: true }),
+      });
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: string };
+        actionError(data.error, "commitContent");
+      } else {
+        onRefresh();
+      }
+    } catch (e) {
+      actionError(e instanceof Error ? e.message : undefined, "commitContent");
+    } finally {
+      setSyncing(null);
+    }
+  }
+
   async function handleDeactivate(courseId: string) {
     if (!confirm(t("deactivateConfirm"))) return;
     setSyncing(courseId);
@@ -301,6 +327,21 @@ export function CourseSyncTable({ courses, onRefresh }: CourseSyncTableProps) {
                       disabled={isSyncing}
                     >
                       {isSyncing ? t("actions.working") : actionLabel}
+                    </AdminButton>
+                  )}
+                  {/* On-chain content commitment (content_tx_id) is written by a
+                      dedicated action, never by the field deploy/redeploy above
+                      (which posts `{ courseId }` alone). Shown only while the
+                      course is deployed-but-stale. */}
+                  {course.chainDrift === "content_stale" && (
+                    <AdminButton
+                      variant="neutral"
+                      onClick={() => void handleCommitContent(course.contentId)}
+                      disabled={isSyncing}
+                    >
+                      {isSyncing
+                        ? t("actions.working")
+                        : t("actions.commitContent")}
                     </AdminButton>
                   )}
                   {course.onChainStatus === "synced" &&

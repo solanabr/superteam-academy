@@ -952,7 +952,8 @@
         "deactivate": "Deactivate",
         "working": "…",
         "syncAll": "Sync All ({count})",
-        "syncAllBusy": "Syncing…"
+        "syncAllBusy": "Syncing…",
+        "commitContent": "Commit content hash"
       },
       "deactivated": "Deactivated",
       "syncAllConfirm": "{count, plural, one {Sync # course} other {Sync # courses}} — {changes, plural, one {# field change} other {# field changes}}. Continue?",
@@ -962,7 +963,8 @@
         "sync": "Sync failed",
         "deactivate": "Deactivation failed",
         "reactivate": "Reactivation failed",
-        "syncFor": "Sync failed for {title}"
+        "syncFor": "Sync failed for {title}",
+        "commitContent": "Content commit failed"
       },
       "contentDrift": {
         "drifted": "Content drift",
@@ -978,7 +980,7 @@
         "creatorWalletLabel": "Creator wallet — this course will be permanently attributed to:",
         "creatorWalletImmutable": "Set once — cannot be changed after deploy.",
         "willWrite": "This transaction will write:",
-        "contentStale": "For information: this course's on-chain content commitment (content_tx_id) is behind the committed bundle. This deploy will NOT change it — it only writes the course fields listed above. The commitment is updated by the content-commit step on the Content Drift screen.",
+        "contentStale": "For information: this course's on-chain content commitment (content_tx_id) is behind the committed bundle. This deploy will NOT change it — it only writes the course fields listed above. Use the \"Commit content hash\" button on this course's row to update the commitment.",
         "noChanges": "No changes detected. Redeploy anyway?",
         "blocked": "Deploy is blocked until the immutable mismatch is resolved.",
         "confirmDeploy": "Deploy",

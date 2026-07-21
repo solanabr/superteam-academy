@@ -21,10 +21,10 @@ interface DeployChangePreviewProps {
  *
  * `chainDrift: "content_stale"` is shown as an INFORMATIONAL note, never as a
  * pending change: this path posts `{ courseId }` alone, and the sync route only
- * writes `content_tx_id` when given an `activeLessons` mask (the content-commit
- * flow on the drift screen). Confirming here would not move the commitment —
- * the route would answer "Already synced" and the badge would stay stale — so
- * the copy must not promise otherwise.
+ * writes `content_tx_id` when given an `activeLessons` mask or `commitContent`
+ * (the dedicated "Commit content hash" action in the sync table). Confirming
+ * here would not move the commitment — the route would answer "Already synced"
+ * and the badge would stay stale — so the copy must not promise otherwise.
  *
  * #433: on a FIRST deploy, `course.creatorWallet` is surfaced prominently —
  * the SAME value `/api/admin/courses/sync` resolves as `Course.creator` (no
@@ -77,12 +77,13 @@ export function DeployChangePreview({
   const firstDeploy = course.onChainStatus === "not_deployed";
   const contentStale = course.chainDrift === "content_stale";
   // Content staleness is NOT a change this deploy makes: the sync route only
-  // writes `content_tx_id` when the caller supplies an `activeLessons` mask,
-  // and this path posts `{ courseId }` alone (the mask belongs to the
-  // content-commit flow on the drift screen). So a content-stale course with no
-  // field diffs really is "no changes" here — saying otherwise would promise a
-  // fix the confirm cannot deliver, and the route would answer "Already synced"
-  // while the badge stayed stale. The stale note below is informational only.
+  // writes `content_tx_id` when the caller supplies an `activeLessons` mask or
+  // the `commitContent` flag, and this path posts `{ courseId }` alone (the
+  // commitment belongs to the "Commit content hash" action in the sync table).
+  // So a content-stale course with no field diffs really is "no changes" here —
+  // saying otherwise would promise a fix the confirm cannot deliver, and the
+  // route would answer "Already synced" while the badge stayed stale. The stale
+  // note below is informational only.
   const noChanges = !firstDeploy && course.differences.length === 0;
 
   return (
