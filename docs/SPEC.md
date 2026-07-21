@@ -5,7 +5,7 @@ Program ID (all clusters): **`7NeJaSRyb4Wxay3Tcd9bdpD7T3GWYUQSFyrhG8SgwE8V`**
 The spec itself is id-agnostic — every PDA derives from the deployed program
 id. The pinocchio implementation can additionally be built with
 `--features fresh-id` as a self-owned devnet instance
-(`CYneSS6KYx1YA73ZwrxC4vvWKsR2xJKLWpKNJNXC5SnM`; see
+(`Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u`; see
 [DEPLOY-PROGRAM.md](./DEPLOY-PROGRAM.md) § "Fresh devnet instance").
 
 This document is the authoritative, framework-neutral specification of the

@@ -9,7 +9,7 @@ cd "$(dirname "$0")/.."
 MANIFEST=programs/onchain-academy-pinocchio/Cargo.toml
 OUT=target/deploy/onchain_academy_pinocchio.so
 FRESH_OUT=target/deploy/onchain_academy_pinocchio_fresh.so
-KEYPAIR=wallets/pinocchio-program-devnet.json
+KEYPAIR=wallets/pinocchio-program-devnet-v2.json
 
 if [[ -f "$KEYPAIR" ]]; then
   echo "fresh-id program id: $(solana-keygen pubkey "$KEYPAIR")"
