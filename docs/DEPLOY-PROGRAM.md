@@ -422,10 +422,10 @@ Identity baked at compile time by `--features fresh-id`, verified by the
 
 | What                  | Value                                                                                                           |
 | --------------------- | --------------------------------------------------------------------------------------------------------------- |
-| Program id            | `CYneSS6KYx1YA73ZwrxC4vvWKsR2xJKLWpKNJNXC5SnM`                                                                  |
-| Program keypair       | `onchain-academy/wallets/pinocchio-program-devnet.json` (gitignored)                                            |
-| Config PDA (bump 255) | `F6D5iHRkW7F2zGmmExN3Z2ZqSG1gDTgNjgxKWARYWDsm`                                                                  |
-| XP mint               | `FGX55QymSietmLs6gnH8SzyvJhPqW9LZ9F43B9NAcStd` (keypair: `wallets/xp-mint-keypair.json`, repo root, gitignored) |
+| Program id            | `Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u`                                                                  |
+| Program keypair       | `onchain-academy/wallets/pinocchio-program-devnet-v2.json` (gitignored)                                         |
+| Config PDA (bump 254) | `E9GVGKbyoWNSf9B1iR8gNVecwDwqnzNbUxcBzVCVSXan`                                                                  |
+| XP mint               | `BUk5izZcRompFe2da1yv9BLcMLBEEyg7JCvS8nQYoHHd` (keypair: `onchain-academy/wallets/xp-mint-keypair.json`, gitignored) |
 
 ```bash
 cd onchain-academy
@@ -437,27 +437,29 @@ pnpm build:pinocchio:fresh
 # 2. Deploy under your own wallet — fee payer + upgrade authority default to
 #    ~/.config/solana/id.json. Rent for the ~200 KB binary is ~1.5 SOL.
 solana program deploy target/deploy/onchain_academy_pinocchio_fresh.so \
-  --program-id wallets/pinocchio-program-devnet.json \
+  --program-id wallets/pinocchio-program-devnet-v2.json \
   --url devnet
 
 # 3. Initialize: creates Config + the Token-2022 XP mint (from
 #    wallets/xp-mint-keypair.json) + your backend MinterRole.
 #    The public endpoint rate-limits aggressively — any provider URL works
 #    here (e.g. Helius devnet with your key).
-export ACADEMY_PROGRAM_ID=CYneSS6KYx1YA73ZwrxC4vvWKsR2xJKLWpKNJNXC5SnM
+export ACADEMY_PROGRAM_ID=Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u
 export ANCHOR_PROVIDER_URL=https://api.devnet.solana.com
 export ANCHOR_WALLET=~/.config/solana/id.json
-npx ts-node scripts/initialize.ts
+# scripts/initialize.ts reads ../wallets/xp-mint-keypair.json relative to CWD —
+# run it from onchain-academy/scripts/. (No ts-node in deps; tsx works.)
+(cd scripts && npx tsx initialize.ts)
 
 # 4. E2E canary — every scripts/*.ts helper honors ACADEMY_PROGRAM_ID:
-npx ts-node scripts/create-mock-course.ts
-npx ts-node scripts/e2e-flow.ts   # enroll → lessons → finalize → close
-npx ts-node scripts/check-xp.ts
+npx tsx scripts/create-mock-course.ts
+npx tsx scripts/e2e-flow.ts   # enroll → lessons → finalize → close
+npx tsx scripts/check-xp.ts
 # Credential leg: create a track collection first (§10,
 # create-mock-track.ts) and pass it to e2e-flow.ts / issue-credential.ts.
 
 # 5. Verify
-solana program show CYneSS6KYx1YA73ZwrxC4vvWKsR2xJKLWpKNJNXC5SnM --url devnet
+solana program show Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u --url devnet
 ```
 
 Deploying the DEFAULT-flavor `.so` at this id cannot corrupt anything: the

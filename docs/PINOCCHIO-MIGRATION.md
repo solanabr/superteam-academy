@@ -25,12 +25,14 @@ A self-owned instance is deployed and initialized on devnet
 
 | What                       | Value                                          |
 | -------------------------- | ---------------------------------------------- |
-| Program id                 | `CYneSS6KYx1YA73ZwrxC4vvWKsR2xJKLWpKNJNXC5SnM` |
-| Config PDA                 | `F6D5iHRkW7F2zGmmExN3Z2ZqSG1gDTgNjgxKWARYWDsm` |
-| XP mint (Token-2022)       | `FGX55QymSietmLs6gnH8SzyvJhPqW9LZ9F43B9NAcStd` |
-| Authority = backend_signer | `FGUrXnKtsJaXxZwB2NwiJFx2XqH4KmBdpypqgsskcor2` |
+| Program id                 | `Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u` |
+| Config PDA                 | `E9GVGKbyoWNSf9B1iR8gNVecwDwqnzNbUxcBzVCVSXan` |
+| XP mint (Token-2022)       | `BUk5izZcRompFe2da1yv9BLcMLBEEyg7JCvS8nQYoHHd` |
+| Authority = backend_signer | `ATNY5zWeTFnU5AyVdaMJA4AJ91vTmVb1KhU5F985R5oB` |
 
-Frontend env: `NEXT_PUBLIC_PROGRAM_ID=CYneSS6…`, `NEXT_PUBLIC_XP_MINT_ADDRESS=FGX55Qym…`.
+Deployed 2026-07-21 from the v2 (`active_lessons` mask) build. Frontend env:
+`NEXT_PUBLIC_PROGRAM_ID=Dsro2Cd9…`, `NEXT_PUBLIC_XP_MINT_ADDRESS=BUk5izZc…`,
+`NEXT_PUBLIC_BACKEND_SIGNER=ATNY5z…`.
 
 ---
 

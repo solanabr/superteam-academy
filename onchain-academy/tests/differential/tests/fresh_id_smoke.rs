@@ -22,8 +22,8 @@ use solana_sdk::{
 };
 use std::str::FromStr;
 
-const FRESH_PROGRAM_ID: &str = "CYneSS6KYx1YA73ZwrxC4vvWKsR2xJKLWpKNJNXC5SnM";
-const FRESH_CONFIG_PDA: &str = "F6D5iHRkW7F2zGmmExN3Z2ZqSG1gDTgNjgxKWARYWDsm";
+const FRESH_PROGRAM_ID: &str = "Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u";
+const FRESH_CONFIG_PDA: &str = "E9GVGKbyoWNSf9B1iR8gNVecwDwqnzNbUxcBzVCVSXan";
 const IX_INITIALIZE: [u8; 8] = [175, 175, 109, 31, 13, 152, 155, 237];
 const ACC_CONFIG: [u8; 8] = [155, 12, 170, 224, 30, 250, 204, 130];
 
@@ -98,7 +98,7 @@ fn fresh_artifact_initializes_at_its_own_id() {
     assert_eq!(cfg.data[8..40], authority.pubkey().to_bytes()); // authority
     assert_eq!(cfg.data[40..72], authority.pubkey().to_bytes()); // backend_signer
     assert_eq!(cfg.data[72..104], xp_mint.pubkey().to_bytes()); // xp_mint
-    assert_eq!(cfg.data[112], 255); // stored canonical bump
+    assert_eq!(cfg.data[112], 254); // stored canonical bump
 
     // XP mint lives under token-2022 with the config PDA as mint authority.
     let mint = svm.get_account(&xp_mint.pubkey()).expect("mint created");
