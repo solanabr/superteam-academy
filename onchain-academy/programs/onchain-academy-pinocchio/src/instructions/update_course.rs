@@ -6,7 +6,7 @@
 use pinocchio::{AccountView, ProgramResult};
 
 use crate::consts::*;
-use crate::errors::{academy, AcademyError};
+use crate::errors::{academy, fw, AcademyError, INSTRUCTION_DID_NOT_DESERIALIZE};
 use crate::state::course::CourseOffsets;
 use crate::validation as v;
 use crate::{events, require, state, take_accounts};
@@ -75,7 +75,14 @@ pub fn process(accounts: &mut [AccountView], data: &[u8]) -> ProgramResult {
         if let Some(bytes) = new_active_lessons {
             let mut mask = [0u64; 4];
             for (w, chunk) in bytes.chunks_exact(8).enumerate() {
-                mask[w] = u64::from_le_bytes(chunk.try_into().unwrap());
+                // chunks_exact(8) over a [u8;32] always yields 8-byte chunks, so
+                // this can't fail — but propagate rather than unwrap (no
+                // unwrap/expect/panic in program code), mirroring Cursor::bytes32.
+                mask[w] = u64::from_le_bytes(
+                    chunk
+                        .try_into()
+                        .map_err(|_| fw(INSTRUCTION_DID_NOT_DESERIALIZE))?,
+                );
             }
             off.set_active_lessons(&mut d, &mask);
         }
