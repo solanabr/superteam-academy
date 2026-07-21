@@ -21,7 +21,7 @@ use pinocchio::Address;
 #[cfg(not(feature = "fresh-id"))]
 pub const ID: Address = Address::from_str_const("7NeJaSRyb4Wxay3Tcd9bdpD7T3GWYUQSFyrhG8SgwE8V");
 #[cfg(feature = "fresh-id")]
-pub const ID: Address = Address::from_str_const("CYneSS6KYx1YA73ZwrxC4vvWKsR2xJKLWpKNJNXC5SnM");
+pub const ID: Address = Address::from_str_const("Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u");
 
 pub const SYSTEM_PROGRAM_ID: Address = Address::new_from_array([0u8; 32]);
 /// `Pubkey::default()` — the "unset" sentinel used by `Course.collection`.
@@ -43,9 +43,9 @@ pub const CONFIG_PDA: Address =
 pub const CONFIG_BUMP: u8 = 255;
 #[cfg(feature = "fresh-id")]
 pub const CONFIG_PDA: Address =
-    Address::from_str_const("F6D5iHRkW7F2zGmmExN3Z2ZqSG1gDTgNjgxKWARYWDsm");
+    Address::from_str_const("E9GVGKbyoWNSf9B1iR8gNVecwDwqnzNbUxcBzVCVSXan");
 #[cfg(feature = "fresh-id")]
-pub const CONFIG_BUMP: u8 = 255;
+pub const CONFIG_BUMP: u8 = 254;
 
 // PDA seeds
 pub const CONFIG_SEED: &[u8] = b"config";
