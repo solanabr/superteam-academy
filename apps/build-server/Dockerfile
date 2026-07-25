@@ -36,8 +36,10 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --de
 # Install Agave toolchain (includes cargo-build-sbf)
 RUN sh -c "$(curl -sSfL https://release.anza.xyz/v${AGAVE_VERSION}/install)"
 
-# Verify both cargo and solana tools
-RUN cargo --version && cargo-build-sbf --version && solana --version
+# Verify cargo and solana; check cargo-build-sbf by presence only — invoking
+# `--version` resolves the DEFAULT platform-tools and would bake an unused
+# toolchain into the image. The pre-cache step below is its real verification.
+RUN cargo --version && command -v cargo-build-sbf && solana --version
 
 # Copy template programs, then fetch platform-tools v1.54 (rustc 1.89, the
 # anchor-lang 1.x MSRV) into ~/.cache/solana and pre-cache all crates. The
