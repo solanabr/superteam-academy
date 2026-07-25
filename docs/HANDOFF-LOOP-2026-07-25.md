@@ -1,0 +1,92 @@
+# Handoff — orchestrator/gate loop, 2026-07-25
+
+Two Claude sessions, two roles. This document is the contract between them.
+
+> **A previous attempt at this split collapsed** (2026-07-15) because the implementer session absorbed
+> both roles when waiting on the gate got awkward. The fix is mechanical, not cultural: the
+> orchestrator **never waits** on the gate. It labels the PR, drops it, and takes the next issue. The
+> gate works asynchronously from the label queue.
+
+## Roles
+
+|       | **Orchestrator** (fresh session)                                                                 | **Gate** (existing session)                     |
+| ----- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------- |
+| Does  | Picks issues, dispatches subagents, implements, opens PRs                                        | Reviews PRs, verifies claims, merges or bounces |
+| Never | Self-merges anything labelled `needs-gate`; makes owner decisions; touches the do-not-touch list | Implements features; picks issues               |
+| Loop  | Continuous — always has exactly one issue in flight                                              | Drains the `needs-gate` queue when invoked      |
+
+## The plan of record
+
+**`docs/superpowers/specs/2026-07-25-UNIFIED-LAUNCH-SPEC.md`** supersedes the six 2026-07-25 research
+specs. 57 numbered items, every one traceable to a validated claim. The other five specs remain as the
+audit trail — read them only when the unified spec cites them.
+
+Backlog: **issues #549–#608** are the plan. `#549–#589` are the launch-experience workstreams,
+`#590–#592` the AI-tutor cost holes, `#594–#608` the items unification discovered.
+
+## Loop protocol (orchestrator)
+
+1. **Pick** the highest-priority unblocked, unclaimed issue (`priority:P0` → `P1` → `P2`; skip
+   `loop:wip`, `blocked:*`, `needs-human`). Claim it with `loop:wip`.
+2. **Verify it isn't already done** before implementing — stale-but-open issues are common here.
+   If satisfied, comment citing the resolving commit, close, remove `loop:wip`. That closed issue is
+   the unit of progress.
+3. **Implement via one specialist subagent** routed by `area:` (`area:onchain` → anchor-engineer,
+   `area:testing` → solana-qa-engineer, else general-purpose). It implements, **runs the real
+   verification locally** (`pnpm typecheck`, the relevant tests, `content-lint` for content), commits,
+   pushes, opens **one** PR with `Closes #N`.
+4. **Verify the verification.** Do not trust a subagent's "tests pass" — run the command yourself and
+   read the output. This is the single highest-value thing the orchestrator does.
+5. **Route the PR:**
+   - **SAFE** (`area:frontend`/`docs`/`analytics`/`content` and CI green + review approve): merge it.
+   - **SENSITIVE** — any of `supabase/**`, `onchain-academy/**`, `.github/workflows/**`, `.claude/**`,
+     real env files, **or** labels `area:security`/`area:onchain`/`area:db`/`area:ci`: dispatch an
+     **independent adversarial reviewer** (a fresh, hostile agent told to _break_ the claim, not
+     confirm it), fix everything it finds, then label **`needs-gate`**, comment why, and **stop
+     babysitting it**. Do not wait. Take the next issue.
+6. **New findings** → dedup with 2–3 narrow searches, then file with `priority:`/`area:`/`severity:`.
+   Never fix out-of-scope work inline.
+
+## Gate protocol (this session)
+
+Drain `label:needs-gate`. For each PR: re-verify the load-bearing claims **against the code**, not the
+description; confirm the adversarial review actually happened and its findings landed; check nothing
+in the do-not-touch list moved; then merge, or bounce with specifics.
+
+Bounced PRs get `needs-gate` removed and a comment; the orchestrator picks them back up.
+
+## Do not touch without the owner
+
+- **Mainnet anything.** Deploys, course creation, custody (#305).
+- **Production DB migrations** beyond the dry-run stage.
+- **The devnet on-chain window** (#606/#607) — batched, after the track-ladder decision.
+- **`course.creator`, `trackId`, `trackLevel`** — immutable after on-chain creation.
+- **courses-academy PRs #5 and #6** — CI green, awaiting owner merge.
+
+## Owner decisions already made (do not relitigate)
+
+- **No in-app coin.** Superteam sponsors the AI tutor. A learner-facing wall exists and is generous;
+  budget may exceed $300/mo at 10k MAU and must simply be coherent with scale.
+- **No XP re-mint.** Start from zero; clean up the DB (#607). **Never touch `profiles` or auth users** —
+  a large cohort signed up at last week's event.
+- **X, not LinkedIn**, for credential sharing. X share already ships; polish and localize it.
+- **PB-1 recommendation: pure functions over fixtures** (#600) — pending owner confirmation.
+- `course.creator = B7o8Nf…vzJF` is correct, not a placeholder.
+
+## Open decisions that block work — escalate, never guess
+
+- **O-1** AI sponsor commitment figure → blocks #591 thresholds.
+- **O-2** Capstone scope: follow-along vs original program → blocks #561 and the AI-off-in-capstone rule.
+- **O-3** Credential track ladder → blocks the on-chain window; irreversible after mainnet.
+- **O-4** Anonymous progress banking → blocks the landing deep-link (#562).
+
+## Start here
+
+**#594** (build-server bump) — P0, no decision needed, longest pole, gates all Rust authoring.
+Then **#595** (launch-breaking), **#590** (live cost leak), **#598** (blocks a merged-ready content PR).
+
+## Gotchas
+
+`MEMORY.md` loads automatically and carries the expensive ones. The three that bite hardest:
+deploy on-chain **only** via Helius RPC; `gh pr edit --add-label` fails on these repos (use the REST
+API); and pushing to `courses-academy` needs the gh token — the ambient git credential is read-only.
