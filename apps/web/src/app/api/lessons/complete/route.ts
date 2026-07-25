@@ -206,6 +206,7 @@ export async function POST(request: NextRequest) {
       if (
         typeof token !== "string" ||
         !openAttestation(token, {
+          courseId,
           lessonId,
           blockKey: block.key,
           userId: user.id,

@@ -39,6 +39,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.useRealTimers();
   delete process.env.GEMINI_API_KEY;
   delete process.env.OPENENDED_AI_REPLY;
 });
@@ -97,5 +98,27 @@ describe("maybeGenerateReflectionReply", () => {
     const { maybeGenerateReflectionReply } =
       await import("../reflection-reply");
     expect(await maybeGenerateReflectionReply(INPUT)).toBeNull();
+  });
+
+  it("returns null when the model call exceeds the timeout (aborts)", async () => {
+    vi.useFakeTimers();
+    // A never-resolving upstream that only settles when the abort signal fires.
+    const fetchMock = vi.fn(
+      (_url: string, init: { signal: AbortSignal }) =>
+        new Promise((_resolve, reject) => {
+          init.signal.addEventListener("abort", () =>
+            reject(new DOMException("aborted", "AbortError"))
+          );
+        })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const { maybeGenerateReflectionReply } =
+      await import("../reflection-reply");
+
+    const pending = maybeGenerateReflectionReply(INPUT);
+    // Drive past the 10s hard timeout; the fetch aborts and the reply degrades.
+    await vi.advanceTimersByTimeAsync(10_000);
+    await expect(pending).resolves.toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

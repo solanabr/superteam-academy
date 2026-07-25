@@ -109,6 +109,7 @@ describe("POST /api/lessons/reflect", () => {
     // bound to the SAME {lessonId, blockKey, userId} /api/lessons/complete uses.
     expect(
       openAttestation(json.seal, {
+        courseId: "course-1",
         lessonId: "lesson-1",
         blockKey: "reflect-1",
         userId: "user-1",
@@ -121,9 +122,25 @@ describe("POST /api/lessons/reflect", () => {
     const { seal } = (await res.json()) as { seal: string };
     expect(
       openAttestation(seal, {
+        courseId: "course-1",
         lessonId: "lesson-1",
         blockKey: "reflect-1",
         userId: "attacker",
+      })
+    ).toBe(false);
+  });
+
+  it("the minted seal is rejected when replayed into a different course", async () => {
+    const res = await POST(req(VALID_BODY));
+    const { seal } = (await res.json()) as { seal: string };
+    // Same lesson/block/user, different course — the completion gate on
+    // course-2 must not accept a receipt minted for course-1.
+    expect(
+      openAttestation(seal, {
+        courseId: "course-2",
+        lessonId: "lesson-1",
+        blockKey: "reflect-1",
+        userId: "user-1",
       })
     ).toBe(false);
   });
@@ -204,6 +221,7 @@ describe("POST /api/lessons/reflect", () => {
     // And the seal is still valid.
     expect(
       openAttestation(json.seal, {
+        courseId: "course-1",
         lessonId: "lesson-1",
         blockKey: "reflect-1",
         userId: "user-1",

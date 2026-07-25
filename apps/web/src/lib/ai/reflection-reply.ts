@@ -22,6 +22,12 @@ const GEMINI_URL =
 // to spend the whole budget on the visible response.
 const MAX_OUTPUT_TOKENS = 512;
 
+// Hard ceiling on the model call. The reflect route delivers the seal in the
+// SAME response, after this resolves — so a hung upstream must not stall the
+// receipt until the platform kills the function. On timeout the call aborts and
+// the reply degrades to null; the seal ships regardless.
+const REPLY_TIMEOUT_MS = 10_000;
+
 interface ReflectionReplyInput {
   userId: string;
   prompt: string;
@@ -59,10 +65,13 @@ export async function maybeGenerateReflectionReply({
     return null;
   }
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REPLY_TIMEOUT_MS);
   try {
     const response = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
       body: JSON.stringify({
         contents: [
           {
@@ -93,6 +102,9 @@ export async function maybeGenerateReflectionReply({
       ? text.trim()
       : null;
   } catch {
+    // Includes the AbortError thrown when the timeout fires.
     return null;
+  } finally {
+    clearTimeout(timeout);
   }
 }

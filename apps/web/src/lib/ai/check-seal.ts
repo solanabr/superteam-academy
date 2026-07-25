@@ -49,6 +49,7 @@ function isValidAttestation(value: unknown): value is Attestation {
   if (!value || typeof value !== "object") return false;
   const a = value as Record<string, unknown>;
   return (
+    typeof a.courseId === "string" &&
     typeof a.lessonId === "string" &&
     typeof a.blockKey === "string" &&
     typeof a.userId === "string" &&
@@ -116,13 +117,19 @@ export function sealAttestation(payload: Attestation): string {
 
 /**
  * Verify an attestation token against the request it is meant to authorize.
- * Returns `true` only when the sealed payload matches lesson+block+user AND is
- * unexpired. A token sealed for a different lesson/block/user, an expired token,
- * a `SealedCheck` token (domain separation), or a tampered token all → `false`.
+ * Returns `true` only when the sealed payload matches course+lesson+block+user
+ * AND is unexpired. A token sealed for a different course/lesson/block/user, an
+ * expired token, a `SealedCheck` token (domain separation), or a tampered token
+ * all → `false`.
  */
 export function openAttestation(
   token: string,
-  expected: { lessonId: string; blockKey: string; userId: string }
+  expected: {
+    courseId: string;
+    lessonId: string;
+    blockKey: string;
+    userId: string;
+  }
 ): boolean {
   const plaintext = open(ATTEST_LABEL, token);
   if (plaintext === null) return false;
@@ -130,6 +137,7 @@ export function openAttestation(
     const parsed: unknown = JSON.parse(plaintext);
     if (!isValidAttestation(parsed)) return false;
     return (
+      parsed.courseId === expected.courseId &&
       parsed.lessonId === expected.lessonId &&
       parsed.blockKey === expected.blockKey &&
       parsed.userId === expected.userId &&

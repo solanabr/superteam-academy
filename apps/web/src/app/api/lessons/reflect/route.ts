@@ -152,10 +152,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // The receipt. Bound to {lessonId, blockKey, userId} + expiry so it is the
-    // exact shape /api/lessons/complete verifies via openAttestation. Computed
-    // and returned regardless of whether the AI reply below succeeds.
+    // The receipt. Bound to {courseId, lessonId, blockKey, userId} + expiry so it
+    // is the exact shape /api/lessons/complete verifies via openAttestation.
+    // Computed and returned regardless of whether the AI reply below succeeds.
     const seal = sealAttestation({
+      courseId,
       lessonId,
       blockKey,
       userId: user.id,

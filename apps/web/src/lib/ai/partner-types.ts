@@ -57,10 +57,11 @@ export interface SealedCheck {
 /**
  * Proof that the server saw a submission for a required-but-ungraded block
  * (e.g. openEnded, spec §8). Sealed into a token; NOT a correctness verdict.
- * Bound to lesson+block+user+expiry so a captured token cannot be replayed
- * into another lesson, block, user, or after expiry.
+ * Bound to course+lesson+block+user+expiry so a captured token cannot be
+ * replayed into another course, lesson, block, user, or after expiry.
  */
 export interface Attestation {
+  courseId: string;
   lessonId: string;
   blockKey: string;
   userId: string;
