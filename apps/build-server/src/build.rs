@@ -224,6 +224,8 @@ impl BuildService {
 
         let mut child = match Command::new("cargo-build-sbf")
             .args([
+                "--tools-version",
+                "v1.54",
                 "--manifest-path",
                 &manifest_str,
                 "--sbf-out-dir",

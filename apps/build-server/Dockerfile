@@ -1,5 +1,5 @@
 # -- Stage 1: Build the Axum server binary --
-FROM --platform=linux/amd64 rust:1.85-bookworm AS builder
+FROM --platform=linux/amd64 rust:1.89-bookworm AS builder
 
 ARG AGAVE_VERSION="3.0.14"
 
@@ -31,7 +31,7 @@ WORKDIR /home/academy
 ENV RUSTUP_HOME="/home/academy/.rustup"
 ENV CARGO_HOME="/home/academy/.cargo"
 ENV PATH="${CARGO_HOME}/bin:/home/academy/.local/share/solana/install/active_release/bin:${PATH}"
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.85.0
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.89.0
 
 # Install Agave toolchain (includes cargo-build-sbf)
 RUN sh -c "$(curl -sSfL https://release.anza.xyz/v${AGAVE_VERSION}/install)"
@@ -39,9 +39,13 @@ RUN sh -c "$(curl -sSfL https://release.anza.xyz/v${AGAVE_VERSION}/install)"
 # Verify both cargo and solana tools
 RUN cargo --version && cargo-build-sbf --version && solana --version
 
-# Copy template programs and pre-cache all crates
+# Copy template programs, then fetch platform-tools v1.54 (rustc 1.89, the
+# anchor-lang 1.x MSRV) into ~/.cache/solana and pre-cache all crates. The
+# --tools-version MUST match the runtime invocation in src/build.rs: baking it as
+# the academy user lands it in the image, so the read-only-rootfs runtime finds
+# the toolchain already present and never attempts an on-demand fetch.
 COPY --chown=academy:academy programs/ programs/
-RUN cargo-build-sbf --manifest-path programs/Cargo.toml
+RUN cargo-build-sbf --tools-version v1.54 --manifest-path programs/Cargo.toml
 
 # Copy server binary LAST (code changes don't bust toolchain cache)
 COPY --chown=academy:academy --from=builder /build/target/release/academy-build-server .
