@@ -271,46 +271,52 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ budgetExhausted: true, used: spend.used });
   }
 
-  // Post-D4 every test is public; feed them all to the prompt.
-  const visibleTests = codeBlock.tests.map((t) => ({
-    description: t.description,
-    input: t.input,
-    expectedOutput: t.expectedOutput,
-  }));
-
-  // Task brief = the lesson's prose blocks (resolved markdown), joined in order.
-  const task = lesson.blocks
-    .filter((b): b is ProseBlockData => b._type === "prose")
-    .map((b) => b.src)
-    .join("\n\n");
-
-  const prefix = buildStaticPrefix({
-    task,
-    visibleTests,
-    solution: codeBlock.solution,
-    tutorNotes: undefined,
-    language: codeBlock.language,
-  });
-  const suffix = buildDynamicSuffix({
-    lessonSlug,
-    courseSlug,
-    action,
-    message,
-    code,
-    testSummary,
-  });
-
   // Whether Gemini has BILLED us for this request. Flips true the instant the
-  // model returns a 200 — a non-200 or a network throw means it never ran. This
-  // gates the refund: we hand the assist back ONLY when we were not billed. A
-  // successful-but-useless generation (empty, non-JSON, or MAX_TOKENS
-  // truncation) is billed cost and is NOT refunded, closing the hole where
-  // reliably triggering truncation bought unlimited billed calls against a quota
-  // that never decremented (AIE-10/-11). The CAUSE — attacker-triggerable
+  // model returns a 2xx (`response.ok`) — a non-2xx or a network throw means it
+  // never ran. This gates the refund: we hand the assist back ONLY when we were
+  // not billed. A successful-but-useless generation (empty, non-JSON, or
+  // MAX_TOKENS truncation) is billed cost and is NOT refunded, closing the hole
+  // where reliably triggering truncation bought unlimited billed calls against a
+  // quota that never decremented (AIE-10/-11). The CAUSE — attacker-triggerable
   // truncation — is closed separately by spec item 3a (diff-propose +
   // MAX_CODE_CHARS trim), landing the same week.
   let billed = false;
   try {
+    // Prompt-building lives INSIDE the try on purpose: any throw here (a
+    // malformed block, a builder error) is PRE-billing — `billed` is still
+    // false — so the catch refunds it under `if (!billed)`. Nothing built here
+    // is referenced after the try, so widening the boundary changes no other
+    // semantics.
+
+    // Post-D4 every test is public; feed them all to the prompt.
+    const visibleTests = codeBlock.tests.map((t) => ({
+      description: t.description,
+      input: t.input,
+      expectedOutput: t.expectedOutput,
+    }));
+
+    // Task brief = the lesson's prose blocks (resolved markdown), joined in order.
+    const task = lesson.blocks
+      .filter((b): b is ProseBlockData => b._type === "prose")
+      .map((b) => b.src)
+      .join("\n\n");
+
+    const prefix = buildStaticPrefix({
+      task,
+      visibleTests,
+      solution: codeBlock.solution,
+      tutorNotes: undefined,
+      language: codeBlock.language,
+    });
+    const suffix = buildDynamicSuffix({
+      lessonSlug,
+      courseSlug,
+      action,
+      message,
+      code,
+      testSummary,
+    });
+
     const response = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -350,9 +356,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Past this point Gemini has BILLED us (it returned a 200). Mark the request
-    // billed so no downstream failure path refunds it, and record the spend in
-    // the non-refundable billed-assists counter (best-effort, never throws).
+    // Past this point Gemini has BILLED us (`response.ok` — a 2xx). Mark the
+    // request billed so no downstream failure path refunds it, and record the
+    // spend in the non-refundable billed-assists counter (best-effort, never
+    // throws).
     billed = true;
     await recordBilledAssist(user.id, lesson._id);
 

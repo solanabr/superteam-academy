@@ -404,6 +404,26 @@ describe("POST /api/ai/partner", () => {
     expect(refundAssist).toHaveBeenCalledWith("user-1", "lesson-1");
   });
 
+  it("refunds a PRE-billing throw during prompt building (billed still false)", async () => {
+    // The prompt-building block is inside the widened try. A throw there — here
+    // the visibleTests map blows up on a malformed code block (tests: null) —
+    // happens before any Gemini call, so it is pre-billing: the catch refunds it
+    // under `if (!billed)` and records no billed assist.
+    getLessonBySlug.mockResolvedValue({
+      ...LESSON,
+      blocks: [LESSON.blocks[0], { ...LESSON.blocks[1], tests: null }],
+    });
+    stubGeminiFetch(PROPOSE_GEMINI_TEXT); // never reached
+
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest(VALID_BODY));
+
+    expect(res.status).toBe(500);
+    expect(refundAssist).toHaveBeenCalledTimes(1);
+    expect(refundAssist).toHaveBeenCalledWith("user-1", "lesson-1");
+    expect(recordBilledAssist).not.toHaveBeenCalled();
+  });
+
   it("returns 429 when rate limited", async () => {
     isRateLimited.mockResolvedValue(true);
     stubGeminiFetch(PROPOSE_GEMINI_TEXT);
@@ -429,14 +449,19 @@ describe("POST /api/ai/partner", () => {
 
     expect(res.status).toBe(429);
     expect(spendAssist).not.toHaveBeenCalled();
-    // Both dimensions were consulted, and the per-IP key uses failClosed.
+    // Both dimensions were consulted, and BOTH opt into failClosed — a limiter
+    // outage must not wave either through unmetered on the platform-funded key.
     const namespaces = isRateLimited.mock.calls.map((c) => c[0]);
     expect(namespaces).toContain("ai:partner");
     expect(namespaces).toContain("ai:partner:ip");
+    const userCall = isRateLimited.mock.calls.find(
+      (c) => c[0] === "ai:partner"
+    )!;
     const ipCall = isRateLimited.mock.calls.find(
       (c) => c[0] === "ai:partner:ip"
     )!;
-    expect(ipCall[2]).toMatchObject({ failClosed: true });
+    expect(userCall[2]).toEqual(expect.objectContaining({ failClosed: true }));
+    expect(ipCall[2]).toEqual(expect.objectContaining({ failClosed: true }));
   });
 
   it("returns 400 on malformed JSON body", async () => {
