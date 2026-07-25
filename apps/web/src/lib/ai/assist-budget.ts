@@ -96,6 +96,32 @@ export async function refundAssist(
 }
 
 /**
+ * Increment the NON-REFUNDABLE billed-assist counter for a (user, lesson): one
+ * bump per confirmed Gemini 200, regardless of whether the output was usable
+ * (empty / non-JSON / MAX_TOKENS-truncated all still cost us). Unlike
+ * `assists_used` — which the `!response.ok` refund path can hand back — this is
+ * the durable record of real spend against the platform-funded key, so it is
+ * never decremented. Best-effort: an audit-counter write must not break the
+ * paid reply the learner is owed, so this never throws.
+ */
+export async function recordBilledAssist(
+  userId: string,
+  lessonId: string
+): Promise<void> {
+  try {
+    const { error } = await createAdminClient().rpc("record_billed_assist", {
+      p_user_id: userId,
+      p_lesson_id: lessonId,
+    });
+    if (error) {
+      console.warn("[assist-budget] record billed failed:", error.message);
+    }
+  } catch (err) {
+    console.warn("[assist-budget] record billed threw:", err);
+  }
+}
+
+/**
  * Append rendered chat turns to the learner's per-lesson AI Partner log so a
  * returning learner can review past notes without spending another assist.
  * Called ONLY on a successful paid response (after every refund path has

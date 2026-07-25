@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { CodeBlockData, ProseBlockData } from "@superteam-lms/types";
 import { createClient } from "@/lib/supabase/server";
-import { isRateLimited } from "@/lib/rate-limit";
+import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { getLessonBySlug } from "@/lib/content/queries";
 import {
   spendAssist,
   refundAssist,
+  recordBilledAssist,
   appendAssistLog,
 } from "@/lib/ai/assist-budget";
 import { sealCheck } from "@/lib/ai/check-seal";
@@ -207,12 +208,39 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Per-user rate limit (abuse mitigation only — fails open, NOT the cost
-  // ceiling; the fail-closed assist budget below is).
+  // Rate limit this route fail-CLOSED — it spends a platform-funded Gemini key,
+  // so a limiter-store outage must DENY, not wave traffic through unmetered (the
+  // rest of the app's limiters stay fail-open; only cost-critical callers opt
+  // in). Two dimensions, both required and both fail-closed:
+  //   • per-user bounds one account hammering the route;
+  //   • per-IP bounds an ACTOR — wallet sign-up is free, so per-user keys cannot
+  //     bound Sybils where every fresh account is a fresh bucket (the exact
+  //     reason /api/lessons/complete carries both).
   if (
     await isRateLimited("ai:partner", user.id, {
       maxTokens: 20,
       refillIntervalMs: 60_000,
+      failClosed: true,
+    })
+  ) {
+    return NextResponse.json(
+      { error: "Rate limit exceeded. Please wait before trying again." },
+      { status: 429, headers: { "Retry-After": "60" } }
+    );
+  }
+
+  // Per-IP ceiling, sized off the worst LEGITIMATE case, not a round number: a
+  // bootcamp cohort (~60) or a CGNAT'd BR mobile carrier behind one NAT, each
+  // learner holding MAX_PAID_ASSISTS paid assists per lesson. A fixed window is
+  // a cliff, not a throttle, so undershooting 429s a whole classroom at once;
+  // 600/min clears that with headroom while still bounding a Sybil actor's burn
+  // rate from a single address. The cost CEILING is the fail-closed assist
+  // budget below (+ #591's spend ledger), not this throttle.
+  if (
+    await isRateLimited("ai:partner:ip", getClientIp(request.headers), {
+      maxTokens: 600,
+      refillIntervalMs: 60_000,
+      failClosed: true,
     })
   ) {
     return NextResponse.json(
@@ -272,6 +300,16 @@ export async function POST(request: NextRequest) {
     testSummary,
   });
 
+  // Whether Gemini has BILLED us for this request. Flips true the instant the
+  // model returns a 200 — a non-200 or a network throw means it never ran. This
+  // gates the refund: we hand the assist back ONLY when we were not billed. A
+  // successful-but-useless generation (empty, non-JSON, or MAX_TOKENS
+  // truncation) is billed cost and is NOT refunded, closing the hole where
+  // reliably triggering truncation bought unlimited billed calls against a quota
+  // that never decremented (AIE-10/-11). The CAUSE — attacker-triggerable
+  // truncation — is closed separately by spec item 3a (diff-propose +
+  // MAX_CODE_CHARS trim), landing the same week.
+  let billed = false;
   try {
     const response = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
       method: "POST",
@@ -312,6 +350,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Past this point Gemini has BILLED us (it returned a 200). Mark the request
+    // billed so no downstream failure path refunds it, and record the spend in
+    // the non-refundable billed-assists counter (best-effort, never throws).
+    billed = true;
+    await recordBilledAssist(user.id, lesson._id);
+
     const data = await response.json();
     // Prompt-cache observability — useful for tuning the cache-shaped prefix, but
     // this is the SUCCESS path of every paid call, so keep it opt-in (default
@@ -328,10 +372,11 @@ export async function POST(request: NextRequest) {
     const finishReason = data?.candidates?.[0]?.finishReason;
     const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
     if (!rawText) {
-      // finishReason === "MAX_TOKENS" here means the budget was spent before any
-      // visible output (raise maxTokensFor(action)); log it so it's diagnosable.
+      // Billed but useless — usually finishReason "MAX_TOKENS" with the budget
+      // spent before any visible output. NOT refunded: Gemini billed the tokens.
+      // Log the reason so maxTokensFor(action) can be tuned; item 3a's
+      // diff-propose + smaller MAX_CODE_CHARS is what makes this hard to trigger.
       console.error("[ai/partner] empty output", { action, finishReason });
-      await refundAssist(user.id, lesson._id);
       return NextResponse.json(
         { error: "AI could not generate a response" },
         { status: 502 }
@@ -342,14 +387,14 @@ export async function POST(request: NextRequest) {
     try {
       parsed = JSON.parse(rawText);
     } catch {
-      // Usually a truncated payload (finishReason "MAX_TOKENS"): the JSON is cut
-      // off mid-string. Log the reason + a snippet so the cap can be tuned.
+      // Billed but unusable — a truncated payload (finishReason "MAX_TOKENS")
+      // cut off mid-string. NOT refunded: the tokens were billed. Log the reason
+      // + a snippet so the cap can be tuned.
       console.error("[ai/partner] non-JSON output", {
         action,
         finishReason,
         snippet: rawText.slice(0, 200),
       });
-      await refundAssist(user.id, lesson._id);
       return NextResponse.json(
         { error: "AI returned an invalid response" },
         { status: 502 }
@@ -358,8 +403,9 @@ export async function POST(request: NextRequest) {
 
     const validated = validatePartnerResponse(parsed);
     if (!validated) {
+      // Billed but structurally wrong (or truncated past the point the JSON
+      // still parsed). NOT refunded — the tokens were billed.
       console.error("Gemini partner API returned a malformed payload");
-      await refundAssist(user.id, lesson._id);
       return NextResponse.json(
         { error: "AI returned an invalid response" },
         { status: 502 }
@@ -406,9 +452,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(clientResponse);
   } catch (error) {
     console.error("AI partner error:", error);
-    // Same reasoning as the other post-spend failure paths: refund the spend
-    // that already happened before this try block.
-    await refundAssist(user.id, lesson._id);
+    // Refund ONLY if Gemini never billed us — a throw before the 200 (network
+    // failure, DNS, TLS, abort). A throw AFTER `billed` (envelope parse, seal,
+    // or appendAssistLog) is post-billing and must NOT refund: this catch wraps
+    // appendAssistLog, so the old unconditional refund handed back a fully
+    // billed success (the AIE-10 line-411 correction).
+    if (!billed) {
+      await refundAssist(user.id, lesson._id);
+    }
     return NextResponse.json(
       { error: "Failed to get response" },
       { status: 500 }

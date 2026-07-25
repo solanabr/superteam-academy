@@ -1,11 +1,23 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: vi.fn() }));
 
-import { getClientIp } from "@/lib/rate-limit";
+import { getClientIp, isRateLimited } from "@/lib/rate-limit";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const h = (headers: Record<string, string>) => new Headers(headers);
+
+// Wire createAdminClient().rpc("check_rate_limit", …) to a canned result: an
+// object resolves to { data, error }; an Error instance makes rpc throw.
+function stubRpc(result: { data?: unknown; error?: unknown } | Error) {
+  vi.mocked(createAdminClient).mockReturnValue({
+    rpc: vi.fn(async () => {
+      if (result instanceof Error) throw result;
+      return { data: result.data ?? null, error: result.error ?? null };
+    }),
+  } as unknown as ReturnType<typeof createAdminClient>);
+}
 
 describe("getClientIp — header trust order", () => {
   it("prefers x-vercel-forwarded-for, which the client cannot forge", () => {
@@ -117,5 +129,61 @@ describe("getClientIp — IPv6 collapses to a /64 bucket", () => {
     expect(getClientIp(h({ "x-real-ip": "203.0.113.8" }))).not.toBe(
       "203.0.113.7"
     );
+  });
+});
+
+// The default is fail-OPEN (a store blip must not hard-block traffic on a
+// non-auth throttle); cost-critical callers opt into fail-CLOSED. #590 turns the
+// AI route fail-closed so a limiter outage can't hand out unmetered generations
+// on the platform-funded Gemini key.
+describe("isRateLimited — fail-open default, fail-closed opt-in", () => {
+  const OPTS = { maxTokens: 20, refillIntervalMs: 60_000 };
+
+  beforeEach(() => {
+    vi.mocked(createAdminClient).mockReset();
+  });
+
+  it("returns the store verdict when the store is healthy (limited)", async () => {
+    stubRpc({ data: true });
+    expect(await isRateLimited("ns", "key", OPTS)).toBe(true);
+  });
+
+  it("returns the store verdict when the store is healthy (allowed)", async () => {
+    stubRpc({ data: false });
+    expect(await isRateLimited("ns", "key", OPTS)).toBe(false);
+  });
+
+  it("fails OPEN by default when the RPC returns an error", async () => {
+    stubRpc({ error: { message: "store down" } });
+    expect(await isRateLimited("ns", "key", OPTS)).toBe(false);
+  });
+
+  it("fails OPEN by default when the RPC throws", async () => {
+    stubRpc(new Error("connection refused"));
+    expect(await isRateLimited("ns", "key", OPTS)).toBe(false);
+  });
+
+  it("fails CLOSED (denies) on an RPC error when failClosed is set", async () => {
+    stubRpc({ error: { message: "store down" } });
+    expect(
+      await isRateLimited("ai:partner", "key", { ...OPTS, failClosed: true })
+    ).toBe(true);
+  });
+
+  it("fails CLOSED (denies) on an RPC throw when failClosed is set", async () => {
+    stubRpc(new Error("connection refused"));
+    expect(
+      await isRateLimited("ai:partner", "key", { ...OPTS, failClosed: true })
+    ).toBe(true);
+  });
+
+  it("a flagged and an unflagged caller diverge on the SAME store error", async () => {
+    stubRpc({ error: { message: "store down" } });
+    // Same failure, opposite verdicts — the flag is the only difference, so one
+    // route hardening cannot silently change another caller's semantics.
+    expect(await isRateLimited("other", "key", OPTS)).toBe(false);
+    expect(
+      await isRateLimited("ai:partner", "key", { ...OPTS, failClosed: true })
+    ).toBe(true);
   });
 });
