@@ -6,10 +6,19 @@
 --      (mirrors the action_type / flags.reason CHECK-IN-list convention).
 --   2. Backfills existing rows by reason prefix (mapping below, derived from
 --      the actual writers), then sets NOT NULL — safe because the whole file
---      runs in one transaction and ALTER TABLE holds an exclusive lock, so no
---      concurrent insert can slip in a NULL between backfill and NOT NULL.
+--      runs in ONE transaction (explicit BEGIN/COMMIT below, so it holds for a
+--      manual psql apply too, not only under the Supabase CLI's per-file
+--      wrap) and ALTER TABLE holds an exclusive lock, so no concurrent insert
+--      from the still-live old award_xp can slip in a NULL between backfill
+--      and NOT NULL.
 --   3. Redefines award_xp / award_community_xp (the only two functions that
 --      INSERT into xp_transactions) to write `source` on every new row.
+--
+-- Idempotent (repo convention, cf. 20260703130652 / 20260624193000):
+-- ADD COLUMN IF NOT EXISTS; pg_constraint-guarded CHECK add (Postgres has no
+-- ADD CONSTRAINT IF NOT EXISTS for CHECKs); backfill scoped to source IS NULL;
+-- SET NOT NULL is a natural no-op when already set; CREATE OR REPLACE and
+-- REVOKE/GRANT re-run cleanly.
 --
 -- DESIGN — source is DERIVED from p_reason inside award_xp, not threaded as a
 -- new parameter through the ~6 TS call sites:
@@ -46,6 +55,11 @@
 -- "Completed challenge:" string is display-only, never written to the table).
 -- Values are derived from real call sites, not invented.
 
+-- Explicit transaction: under the Supabase CLI this nests inside the per-file
+-- wrap (inner BEGIN is a warning-level no-op); under a manual psql apply it is
+-- what makes backfill → NOT NULL → function swap atomic.
+BEGIN;
+
 -- ── 1. Shared reason→source derivation ───────────────────────
 -- Single source of truth for both the backfill below and every future
 -- award_xp insert. Pure and IMMUTABLE (no table access; search_path
@@ -76,28 +90,42 @@ REVOKE EXECUTE ON FUNCTION public.xp_source_for_reason(TEXT) FROM PUBLIC, anon, 
 
 -- ── 2. Column + backfill + constraints ───────────────────────
 
-ALTER TABLE public.xp_transactions ADD COLUMN source TEXT;
+ALTER TABLE public.xp_transactions ADD COLUMN IF NOT EXISTS source TEXT;
 
--- Backfill every existing row by reason prefix (mapping above).
+-- Backfill every unset row by reason prefix (mapping above). Scoped to
+-- source IS NULL so a re-run is a no-op.
 UPDATE public.xp_transactions
-SET source = public.xp_source_for_reason(reason);
+SET source = public.xp_source_for_reason(reason)
+WHERE source IS NULL;
 
 -- Safe: the backfill just populated every row (xp_source_for_reason never
 -- returns NULL — NULL/unknown reasons fall to 'platform'), and this file runs
--- in one transaction under the ADD COLUMN's exclusive lock.
+-- in one transaction under the ADD COLUMN's exclusive lock. Idempotent:
+-- SET NOT NULL is a no-op when the column is already NOT NULL.
 ALTER TABLE public.xp_transactions
   ALTER COLUMN source SET NOT NULL;
 
-ALTER TABLE public.xp_transactions
-  ADD CONSTRAINT chk_xp_transactions_source CHECK (source IN (
-    'lesson',
-    'course_completion',
-    'achievement',
-    'quest',
-    'creator_reward',
-    'community',
-    'platform'
-  ));
+-- Guarded add: Postgres has no ADD CONSTRAINT IF NOT EXISTS for CHECKs
+-- (mirrors chk_profiles_role in 20260703130652).
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'chk_xp_transactions_source'
+      AND conrelid = 'public.xp_transactions'::regclass
+  ) THEN
+    ALTER TABLE public.xp_transactions
+      ADD CONSTRAINT chk_xp_transactions_source CHECK (source IN (
+        'lesson',
+        'course_completion',
+        'achievement',
+        'quest',
+        'creator_reward',
+        'community',
+        'platform'
+      ));
+  END IF;
+END $$;
 
 -- ── 3. award_xp: write source on every insert ────────────────
 -- Verbatim from supabase/schema.sql (last redefined in
@@ -353,3 +381,5 @@ $$;
 -- Defensive re-assert (mirrors 20260630165536).
 REVOKE ALL ON FUNCTION award_community_xp(UUID, INTEGER, TEXT, TEXT) FROM public, anon, authenticated;
 GRANT EXECUTE ON FUNCTION award_community_xp(UUID, INTEGER, TEXT, TEXT) TO service_role;
+
+COMMIT;
