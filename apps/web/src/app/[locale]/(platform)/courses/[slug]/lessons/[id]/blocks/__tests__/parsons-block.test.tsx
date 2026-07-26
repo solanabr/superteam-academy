@@ -187,6 +187,15 @@ describe("ParsonsBlock — arrange interaction", () => {
     ).toBeDisabled();
   });
 
+  it("no paired distractor → no look-alike marker and no pairing hint", () => {
+    // The default block's distractor carries no `pairedWith`, so nothing pairs.
+    renderWithIntl(<ParsonsBlock block={parsonsBlock} ctx={makeCtx()} />);
+    expect(screen.queryByText(/Look-alike/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Some lines are look-alikes/)
+    ).not.toBeInTheDocument();
+  });
+
   it("renders the verdict inside an aria-live region", () => {
     const { container } = renderWithIntl(
       <ParsonsBlock block={parsonsBlock} ctx={makeCtx()} />
@@ -197,6 +206,68 @@ describe("ParsonsBlock — arrange interaction", () => {
     fireEvent.click(screen.getByRole("button", { name: "Check order" }));
     expect(
       within(live as HTMLElement).getByText("Correct!")
+    ).toBeInTheDocument();
+  });
+});
+
+/** A block whose distractor `bad` is paired with the real line `ret` (F13). */
+const pairedBlock: ParsonsBlockData = {
+  _type: "parsons",
+  key: "p-paired",
+  prompt: "Arrange the function.",
+  lines: [
+    { id: "sig", content: "function add(a, b) {" },
+    { id: "ret", content: "  return a + b;" },
+    { id: "close", content: "}" },
+    {
+      id: "bad",
+      content: "  return a - b;",
+      distractor: true,
+      pairedWith: "ret",
+    },
+  ],
+  correctOrder: ["sig", "ret", "close"],
+  explanation: "Signature first, then the body, then the closing brace.",
+};
+
+describe("ParsonsBlock — paired distractors (F13)", () => {
+  it("marks BOTH the distractor and its pairedWith target with one shared tag", () => {
+    renderWithIntl(<ParsonsBlock block={pairedBlock} ctx={makeCtx()} />);
+    // `bad` and its target `ret` share group 1 → two identical markers, and the
+    // marker never says which of the pair is the trap.
+    expect(screen.getAllByText("Look-alike 1")).toHaveLength(2);
+    expect(screen.getByText(/Some lines are look-alikes/)).toBeInTheDocument();
+  });
+
+  it("the marker is not colour-only — it carries the group text for AT", () => {
+    renderWithIntl(<ParsonsBlock block={pairedBlock} ctx={makeCtx()} />);
+    // The visible, machine-readable text is the accessible signal (colour is
+    // decorative), so a colour-blind or AT user still perceives the pairing.
+    expect(screen.getAllByText("Look-alike 1")[0]).toBeVisible();
+  });
+
+  it("the pairing marker follows a line as it moves into the solution", () => {
+    renderWithIntl(<ParsonsBlock block={pairedBlock} ctx={makeCtx()} />);
+    fireEvent.click(
+      screen.getByRole("button", { name: /Add line: return a \+ b/ })
+    );
+    // `ret` now sits in the solution and `bad` still in the bank — both keep the
+    // shared marker, so the count is unchanged.
+    expect(screen.getAllByText("Look-alike 1")).toHaveLength(2);
+  });
+
+  it("including a look-alike distractor grades wrong client-side", () => {
+    renderWithIntl(<ParsonsBlock block={pairedBlock} ctx={makeCtx()} />);
+    fireEvent.click(
+      screen.getByRole("button", { name: /Add line: function add/ })
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /Add line: return a - b/ })
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Add line: \}/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Check order" }));
+    expect(
+      screen.getByText("Not quite — some lines are out of order.")
     ).toBeInTheDocument();
   });
 });

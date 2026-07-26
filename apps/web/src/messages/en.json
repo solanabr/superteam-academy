@@ -236,6 +236,8 @@
     "parsonsCheck": "Check order",
     "parsonsCorrect": "Correct!",
     "parsonsIncorrect": "Not quite — some lines are out of order.",
+    "parsonsPairLabel": "Look-alike {group}",
+    "parsonsPairHint": "Some lines are look-alikes sharing a tag — only one of each pair belongs in your solution.",
     "reflectionSubmit": "Submit reflection",
     "reflectionSubmitting": "Submitting…",
     "reflectionSubmitted": "Reflection recorded",
