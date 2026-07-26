@@ -118,6 +118,10 @@ const nextConfig = {
   // (validates env vars). Stable in Next 15; opt-in in Next 14.
   experimental: {
     instrumentationHook: true,
+    // Tree-shake the per-icon barrel so only the icons a client component
+    // actually imports land in its bundle (55+ named-import sites across the
+    // app). Named imports only — no namespace/dynamic imports of the package.
+    optimizePackageImports: ["@phosphor-icons/react"],
     // The server-side challenge executor (lib/challenge/executor.ts) runs learner
     // code in QuickJS-on-WASM. Keep these packages EXTERNAL so webpack does not
     // re-bundle the single-file variant — its WASM is embedded via octal escapes
