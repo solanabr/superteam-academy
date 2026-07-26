@@ -69,6 +69,20 @@ export function gate4aCheck(model: RepoModel): Diagnostic[] {
         }
         break;
       }
+      // Non-ref kinds: nothing to resolve. Enumerated explicitly (not a bare
+      // fall-through) so a NEW award kind added to the schema union fails this
+      // build via the `never` default — a future ref-bearing kind must not be
+      // silently skipped by this gate (fail-open class, #749 review).
+      case "lessons-completed":
+      case "streak":
+      case "user-number":
+      case "community-stat":
+      case "manual":
+        break;
+      default: {
+        const _exhaustive: never = award;
+        void _exhaustive;
+      }
     }
   }
 
