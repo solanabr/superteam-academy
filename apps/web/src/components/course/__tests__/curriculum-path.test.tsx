@@ -148,17 +148,23 @@ describe("CurriculumPath — every lesson stays openable (no locks)", () => {
 });
 
 describe("CurriculumPath — progress map", () => {
-  it("marks completed lessons for screen readers and shows per-module progress", () => {
+  it("marks completed lessons for screen readers and shows per-module progress as a count", () => {
     renderPath(["l1", "l2", "l3"]);
 
     // Completed nodes carry an sr-only "Completed" state.
     expect(screen.getAllByText(messages.courses.completed)).toHaveLength(3);
 
-    // Per-module progress bars: module 1 fully complete, module 2 untouched.
-    const bars = screen.getAllByRole("progressbar");
-    expect(bars).toHaveLength(2);
-    expect(bars[0]).toHaveAttribute("aria-valuenow", "100");
-    expect(bars[1]).toHaveAttribute("aria-valuenow", "0");
+    // Per-module progress is the x/y count in the module header — module 1 fully
+    // complete, module 2 untouched. There is deliberately NO per-module progress
+    // bar: the count plus the per-lesson node markers already carry that state,
+    // so a third indicator for the same fact was removed as noise.
+    expect(
+      screen.getByText(`3/3 ${messages.courses.lessons}`)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(`0/2 ${messages.courses.lessons}`)
+    ).toBeInTheDocument();
+    expect(screen.queryAllByRole("progressbar")).toHaveLength(0);
   });
 
   it("renders modules and lessons with list semantics", () => {
