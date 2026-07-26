@@ -56,8 +56,8 @@
 -- completion bonus:' / 'Creator reward:' / 'Achievement reward:' / 'daily_quest:'
 -- prefixes, or they will be counted. The real hardening — writing `source`
 -- positively at each award call site instead of reverse-deriving it — touches
--- the XP writers (#731-incident territory) and is a reviewed follow-up, not this
--- display-only PR.
+-- the XP writers (#731-incident territory) and is tracked as follow-up #736, not
+-- this display-only PR.
 --
 -- ── RLS / PRIVACY (spec §3 cross-check REQUIRED) ────────────────────────────
 --   * user_xp stays own-row (untouched here). Cohort exposure is ONLY via the
