@@ -14,17 +14,10 @@
   {
     "_id": "path-defi",
     "_type": "learningPath",
-    "courses": [
-      {
-        "_key": "course-defi-on-solana",
-        "_ref": "course-defi-on-solana",
-        "_type": "reference",
-        "_weak": true
-      }
-    ],
+    "courses": [],
     "description": "Specialize in decentralized finance on Solana. Understand AMMs, lending protocols, token mechanics, and create DeFi primitives.",
     "difficulty": "advanced",
-    "draft": false,
+    "draft": true,
     "order": 4,
     "slug": "defi",
     "tag": "DeFi",
@@ -64,23 +57,10 @@
   {
     "_id": "path-rust-programs",
     "_type": "learningPath",
-    "courses": [
-      {
-        "_key": "course-rust-for-solana",
-        "_ref": "course-rust-for-solana",
-        "_type": "reference",
-        "_weak": true
-      },
-      {
-        "_key": "course-anchor-framework",
-        "_ref": "course-anchor-framework",
-        "_type": "reference",
-        "_weak": true
-      }
-    ],
+    "courses": [],
     "description": "Master Rust for blockchain and the Anchor framework. Write, test, and deploy production-ready Solana programs.",
     "difficulty": "intermediate",
-    "draft": false,
+    "draft": true,
     "order": 2,
     "slug": "rust-programs",
     "tag": "Builder",
@@ -101,10 +81,34 @@
   {
     "_id": "path-solana-core",
     "_type": "learningPath",
+    "courses": [],
+    "description": "The complete path from zero to Solana developer. Start with the fundamentals, understand how the network works, and build your first on-chain program.",
+    "difficulty": "beginner",
+    "draft": true,
+    "order": 1,
+    "slug": "solana-core",
+    "tag": "Foundation",
+    "title": "Solana Core"
+  },
+  {
+    "_id": "path-zero-to-deployed",
+    "_type": "learningPath",
     "courses": [
       {
         "_key": "course-solana-fundamentals",
         "_ref": "course-solana-fundamentals",
+        "_type": "reference",
+        "_weak": true
+      },
+      {
+        "_key": "course-rust-for-solana",
+        "_ref": "course-rust-for-solana",
+        "_type": "reference",
+        "_weak": true
+      },
+      {
+        "_key": "course-anchor-framework",
+        "_ref": "course-anchor-framework",
         "_type": "reference",
         "_weak": true
       },
@@ -115,12 +119,12 @@
         "_weak": true
       }
     ],
-    "description": "The complete path from zero to Solana developer. Start with the fundamentals, understand how the network works, and build your first on-chain program.",
+    "description": "The complete path from zero to your first deployed Solana program. Learn how the network works, master Rust and Anchor, then write, build, and ship a real program to Devnet.",
     "difficulty": "beginner",
     "draft": false,
     "order": 1,
-    "slug": "solana-core",
+    "slug": "zero-to-deployed",
     "tag": "Foundation",
-    "title": "Solana Core"
+    "title": "Zero to Deployed"
   }
 ]

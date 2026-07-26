@@ -122,7 +122,7 @@
         "gte": null,
         "kind": "path-completed",
         "lte": null,
-        "path": "path-solana-core",
+        "path": "path-zero-to-deployed",
         "stat": null
       },
       "category": "skills",

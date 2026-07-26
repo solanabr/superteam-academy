@@ -32,7 +32,14 @@
     "lesson-testing-challenge",
     "lesson-token-math-challenge",
     "lesson-transfer-challenge",
-    "lesson-vault-challenge"
+    "lesson-vault-challenge",
+    "lesson-sap-payment-rails-decision-map",
+    "lesson-sap-token-or-token-2022",
+    "lesson-sap-subscription-authority-and-allowance",
+    "lesson-sap-recurring-delegation-paid-tier",
+    "lesson-sap-meter-an-endpoint-with-x402",
+    "lesson-sap-pay-the-402-programmatically",
+    "lesson-sap-budgeted-agent-with-a-hard-cap"
   ],
   "moduleLessonMap": [
     {
@@ -204,6 +211,30 @@
         "lesson-account-challenge",
         "lesson-programs-overview",
         "lesson-program-challenge"
+      ]
+    },
+    {
+      "_id": "course-stablecoin-payments:sap-paid-tier",
+      "lessonIds": [
+        "lesson-sap-payment-rails-decision-map",
+        "lesson-sap-token-or-token-2022",
+        "lesson-sap-subscription-authority-and-allowance",
+        "lesson-sap-recurring-delegation-paid-tier"
+      ]
+    },
+    {
+      "_id": "course-stablecoin-payments:sap-metered-agentic",
+      "lessonIds": [
+        "lesson-sap-meter-an-endpoint-with-x402",
+        "lesson-sap-pay-the-402-programmatically",
+        "lesson-sap-budgeted-agent-with-a-hard-cap"
+      ]
+    },
+    {
+      "_id": "course-stablecoin-payments:sap-get-paid",
+      "lessonIds": [
+        "lesson-sap-write-the-deep-dive",
+        "lesson-sap-submit-and-what-you-built"
       ]
     }
   ],

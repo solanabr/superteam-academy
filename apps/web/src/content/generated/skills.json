@@ -94,5 +94,77 @@
   {
     "label": "TypeScript",
     "slug": "typescript"
+  },
+  {
+    "label": "Solana Kit",
+    "slug": "solana-kit"
+  },
+  {
+    "label": "Token-2022",
+    "slug": "token-2022"
+  },
+  {
+    "label": "Transfer Hook",
+    "slug": "transfer-hook"
+  },
+  {
+    "label": "Error Handling",
+    "slug": "error-handling"
+  },
+  {
+    "label": "Protocol Versioning",
+    "slug": "protocol-versioning"
+  },
+  {
+    "label": "Version Pinning",
+    "slug": "version-pinning"
+  },
+  {
+    "label": "Payment Model Selection",
+    "slug": "payment-model-selection"
+  },
+  {
+    "label": "Solana Pay",
+    "slug": "solana-pay"
+  },
+  {
+    "label": "x402 Protocol",
+    "slug": "x402-protocol"
+  },
+  {
+    "label": "API Monetization",
+    "slug": "api-monetization"
+  },
+  {
+    "label": "Subscriptions Program",
+    "slug": "subscriptions-program"
+  },
+  {
+    "label": "Subscription Authority",
+    "slug": "subscription-authority"
+  },
+  {
+    "label": "Fixed Delegation",
+    "slug": "fixed-delegation"
+  },
+  {
+    "label": "Recurring Delegation",
+    "slug": "recurring-delegation"
+  },
+  {
+    "label": "Agent Budgets",
+    "slug": "agent-budgets"
+  },
+  {
+    "label": "Technical Writing",
+    "slug": "technical-writing"
+  },
+  {
+    "label": "Brazil Compliance",
+    "slug": "brazil-compliance"
+  },
+  {
+    "label": "Earn Submission",
+    "slug": "earn-submission"
   }
 ]

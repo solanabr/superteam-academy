@@ -105,7 +105,7 @@
     "_type": "achievement",
     "award": {
       "kind": "path-completed",
-      "path": "path-solana-core"
+      "path": "path-zero-to-deployed"
     },
     "category": "skills",
     "description": "Complete all courses in the Solana Developer Path",

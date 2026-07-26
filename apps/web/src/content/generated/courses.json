@@ -801,5 +801,129 @@
     "trackLevel": 1,
     "xpPerLesson": 10,
     "xpReward": 600
+  },
+  {
+    "_id": "course-stablecoin-payments",
+    "_type": "course",
+    "creator": "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF",
+    "creatorRewardXp": 30,
+    "description": "You have a deployed vault app that earns nothing. Put a price on it. Open a Subscription Authority and a Recurring Delegation so the app has a real paid tier, meter a route with an x402 v2 challenge, and give an autonomous agent a wallet that can say no — an on-chain spend cap instead of an unlimited keypair. TypeScript only, no Rust and no local toolchain. You finish by publishing a version-pinned deep dive and submitting one live Superteam Earn listing. Scope is what BCB Resolution 561 leaves open to Brazilian builders from 2026-10-01, domestic merchant acceptance, contractor payouts, subscriptions and agent budgets.",
+    "difficulty": "intermediate",
+    "duration": 10,
+    "minCompletionsForReward": 10,
+    "modules": [
+      {
+        "_key": "sap-paid-tier",
+        "_type": "courseModule",
+        "description": "Pick the rail your requirement actually needs, decide between Token and Token-2022 for the payment mint, then open a Subscription Authority and a Recurring Delegation on devnet. You end holding a delegation PDA and a settlement signature for a charge that correctly refuses to run a second time inside the same period.",
+        "key": "sap-paid-tier",
+        "lessons": [
+          {
+            "_key": "lesson-sap-payment-rails-decision-map",
+            "_ref": "lesson-sap-payment-rails-decision-map",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-sap-token-or-token-2022",
+            "_ref": "lesson-sap-token-or-token-2022",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-sap-subscription-authority-and-allowance",
+            "_ref": "lesson-sap-subscription-authority-and-allowance",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-sap-recurring-delegation-paid-tier",
+            "_ref": "lesson-sap-recurring-delegation-paid-tier",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "The Paid Tier"
+      },
+      {
+        "_key": "sap-metered-agentic",
+        "_type": "courseModule",
+        "description": "Price one route so it returns a real 402 challenge, read a challenge and pay it programmatically across both live protocol versions, then wire a call loop that spends only from a Fixed Delegation and halts cleanly when the allowance refuses the next payment.",
+        "key": "sap-metered-agentic",
+        "lessons": [
+          {
+            "_key": "lesson-sap-meter-an-endpoint-with-x402",
+            "_ref": "lesson-sap-meter-an-endpoint-with-x402",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-sap-pay-the-402-programmatically",
+            "_ref": "lesson-sap-pay-the-402-programmatically",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-sap-budgeted-agent-with-a-hard-cap",
+            "_ref": "lesson-sap-budgeted-agent-with-a-hard-cap",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Metered & Agentic"
+      },
+      {
+        "_key": "sap-get-paid",
+        "_type": "courseModule",
+        "description": "Publish a technical deep dive in the shape Superteam chapters pay for — dated, version-pinned, reproducible — then submit one live Earn listing and name every layer of the artifact you built, from your first signed transaction to a metered endpoint an agent pays for.",
+        "key": "sap-get-paid",
+        "lessons": [
+          {
+            "_key": "lesson-sap-write-the-deep-dive",
+            "_ref": "lesson-sap-write-the-deep-dive",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-sap-submit-and-what-you-built",
+            "_ref": "lesson-sap-submit-and-what-you-built",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Get Paid"
+      }
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "stablecoin-agentic-payments"
+    },
+    "tags": [
+      "agent-budgets",
+      "api-monetization",
+      "brazil-compliance",
+      "earn-submission",
+      "error-handling",
+      "fixed-delegation",
+      "payment-model-selection",
+      "pdas",
+      "protocol-versioning",
+      "recurring-delegation",
+      "solana-kit",
+      "solana-pay",
+      "spl-tokens",
+      "subscription-authority",
+      "subscriptions-program",
+      "technical-writing",
+      "token-2022",
+      "transfer-hook",
+      "version-pinning",
+      "x402-protocol"
+    ],
+    "title": "Getting Paid: Stablecoin & Agentic Payments",
+    "trackId": 1,
+    "trackLevel": 5,
+    "xpPerLesson": 25,
+    "xpReward": 750
   }
 ]

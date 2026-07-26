@@ -116,5 +116,21 @@
       "lesson-wallet-setup": 2
     },
     "version": 1
+  },
+  "course-stablecoin-payments": {
+    "next": 9,
+    "retired": [],
+    "slots": {
+      "lesson-sap-budgeted-agent-with-a-hard-cap": 6,
+      "lesson-sap-meter-an-endpoint-with-x402": 4,
+      "lesson-sap-pay-the-402-programmatically": 5,
+      "lesson-sap-payment-rails-decision-map": 0,
+      "lesson-sap-recurring-delegation-paid-tier": 3,
+      "lesson-sap-submit-and-what-you-built": 8,
+      "lesson-sap-subscription-authority-and-allowance": 2,
+      "lesson-sap-token-or-token-2022": 1,
+      "lesson-sap-write-the-deep-dive": 7
+    },
+    "version": 1
   }
 }
