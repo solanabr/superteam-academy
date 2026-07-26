@@ -83,9 +83,15 @@ jobs:
           echo "Days until $DEADLINE: $days_left"
 
           # Idempotency: is there already a reminder (any state) with our marker?
+          # The title match below is client-side, so this limit bounds how far
+          # back we can see. At this repo's issue velocity a 5-week arm window can
+          # bury the tracking issue under 200 newer issues, and a later weekly run
+          # would then file a duplicate. 1000 leaves months of headroom.
+          # Deliberately not `--search`: GitHub's search index is eventually
+          # consistent, and idempotency must not depend on its freshness.
           existing="$(gh issue list \
             --repo "$GITHUB_REPOSITORY" \
-            --state all --limit 200 \
+            --state all --limit 1000 \
             --json number,state,title \
             --jq "[.[] | select(.title | startswith(\"$TITLE_PREFIX\"))][0] // empty")"
 
