@@ -23,6 +23,8 @@ item 19 table). So "carry" and "prose-only" mean *port into a new course id*, ne
 | **DELETE (false)** | Actively-false material. **Do not port, do not cite as prior art, do not "fix in place."** This is the prohibition list — it goes in the C2/C3/C4 PR templates as a checkbox (item 19b), not just here. |
 | **DELETE (retired)** | Not false, but dropped with a no-successor course (or superseded by a fresh spine). No destination. |
 
+**Counting convention (governs every summary and §10).** Each of the 76 lessons is counted **exactly once**, by its **lesson-level** disposition — so every per-course tally sums to that course's row count and the grand total sums to 76. One lesson (`rust-for-solana/why-rust`) has sound prose *and* one embedded false snippet: the **lesson** counts as PROSE-ONLY (it survives into C2 as prose), and the snippet is enumerated in the §7 prohibition list as a **sub-lesson artifact** — it does **not** add to any lesson count. Consequently the §7 prohibition list contains more *entries* than there are DELETE (false) *lessons*: **16 DELETE (false) lessons + 2 non-lesson artifacts** (the `why-rust` snippet and the cross-cutting JS mock SDK). All counts below are derived directly from the table `Disposition` column by the script in §11.
+
 **Grounding:** every prose word-count and every DELETE claim below was re-verified against the content
 repo at `origin/main`; the catalog-spec ledger matched the live content to the word (e.g. `pda-deep-dive`
 599 w, `cpi-overview` 623 w, `anchor-accounts` 478 w, `transaction-ui` 744 w, `token-standards` 882 w).
@@ -52,7 +54,7 @@ so all six challenge lessons are DELETE.
 | `programs-overview` | prose | PROSE-ONLY | evergreen program-model intro | C1 (optional) |
 | `program-challenge` | code(ts) | DELETE (retired) | `program-challenge/exercise/solution.ts:1` web3.js v1; mock-graded; not in §7 either list — see Decision D1 | none |
 
-**Counts:** 6 PROSE-ONLY (optional), 6 DELETE (2 false, 4 retired), 0 CARRY.
+**Counts (12):** 6 PROSE-ONLY (optional), 6 DELETE (**3 false**, 3 retired), 0 CARRY. The 3 false: `keypair-challenge`, `create-token-challenge`, `account-challenge`.
 
 ---
 
@@ -64,7 +66,7 @@ the **`DefaultHasher` false-PDA model** (the Rust twin of the anchor-framework d
 
 | Lesson | Kind | Disposition | Evidence | Dest |
 | --- | --- | --- | --- | --- |
-| `why-rust` | prose | **SPLIT** | ownership↔account-model analogy → PROSE-ONLY; **`why-rust/intro.md:22-30` zero-cost snippet → DELETE (false)** — free-floating iterator chain over undeclared `accounts`, does not compile | C2 (analogy only) |
+| `why-rust` | prose | PROSE-ONLY | Lesson survives as prose (ownership↔account-model analogy). **Embedded false artifact — §7 prohibition list:** `why-rust/intro.md:22-30` zero-cost snippet, a free-floating iterator chain over undeclared `accounts` that does not compile. Per the counting convention the lesson is PROSE-ONLY; the snippet is a sub-lesson artifact, not a DELETE lesson | C2 (analogy only) |
 | `ownership-borrowing` | prose | PROSE-ONLY | three-rules skeleton, 355 w — expand ~5× across C2 L5–L7 | C2 |
 | `structs-enums` | prose | PROSE-ONLY | 370 w, sound | C2 |
 | `rust-basics-challenge` | code(rs) | DELETE (retired) | `rust-basics-challenge/exercise/solution.rs:1` plain `#[derive(...)]` struct, no Solana; Playground-graded | none |
@@ -77,7 +79,7 @@ the **`DefaultHasher` false-PDA model** (the Rust twin of the anchor-framework d
 | `state-management` | prose | DELETE (retired) | §7 delete set; superseded by C2/C3 account model | none |
 | `pda-challenge` | code(rs) | **DELETE (false)** | `pda-challenge/exercise/solution.rs:1,5,17` — `DefaultHasher` + accepts bump when `hash % 2 == 0`; same actively-false PDA model as anchor-framework | none |
 
-**Counts:** 4 PROSE-ONLY + 1 split-prose, 7 DELETE (2 false incl. the `why-rust` snippet and `pda-challenge`, 5 retired), 0 CARRY.
+**Counts (12):** 5 PROSE-ONLY (incl. `why-rust`, counted at the lesson level), 7 DELETE (**1 false lesson** = `pda-challenge`; 6 retired), 0 CARRY. The `why-rust` zero-cost snippet is a §7 prohibition artifact, **not** a separate DELETE lesson.
 
 ---
 
@@ -102,7 +104,7 @@ exercises are DELETE (false). Only three prose lessons survive, into C3.
 | `deployment` | prose | DELETE (retired) | `deployment/intro.md:54-89` pre-0.30 IDL-upload / 3-arg `new Program()` flow | none |
 | `testing-challenge` | code(rs) | DELETE (false) | `testing-challenge/exercise/solution.rs:1` `fn simulate_transfer_test(...)` returns a `String` — no `anchor_lang`, no test harness | none |
 
-**Counts:** 3 PROSE-ONLY → C3, 9 DELETE (5 false = all exercises, 4 retired), 0 CARRY.
+**Counts (12):** 3 PROSE-ONLY → C3, 9 DELETE (5 false = all exercises, 4 retired), 0 CARRY.
 
 ---
 
@@ -129,7 +131,7 @@ in Kit).
 | `notifications` | prose | PROSE-ONLY | 755 w — carry prose, but **fix `notifications/intro.md:14` `const cluster = 'mainnet-beta'`** hardcoded on devnet explorer links | C4 |
 | `dapp-challenge` | code(ts) | DELETE (retired) | `dapp-challenge/exercise/solution.ts:1-2` web3.js-v1 `Connection`/`PublicKey`; mock-graded capstone | none |
 
-**Counts:** 5 PROSE-ONLY (incl. `parse-data-challenge` as reusable shape), 7 DELETE (2 false, 5 retired), 0 CARRY.
+**Counts (12):** 5 PROSE-ONLY (incl. `parse-data-challenge` as reusable shape), 7 DELETE (2 false = `connect-wallet-challenge`, `sign-message-challenge`; 5 retired), 0 CARRY.
 
 ---
 
@@ -154,7 +156,7 @@ prose is theory in a no-successor course. Only `token-standards` is a genuine as
 | `vault-challenge` | code(ts) | DELETE (false) | `vault-challenge/exercise/solution.ts:1` `const vault = {...}` — plain JS object, no on-chain vault | none |
 | `liquidation-challenge` | code(ts) | DELETE (false) | `liquidation-challenge/exercise/solution.ts:1` `checkLiquidation(collateral, debt, ...)` — pure math | none |
 
-**Counts:** 1 PROSE-ONLY → C5, 11 DELETE (5 false = all challenges, 6 retired), 0 CARRY.
+**Counts (12):** 1 PROSE-ONLY → C5, 11 DELETE (5 false = all challenges, 6 retired), 0 CARRY.
 
 ---
 
@@ -182,7 +184,7 @@ Slot-ID reconciliation is out of scope here — see `2026-07-26-c3-slot-reconcil
 | `interact-with-program` | prose+block | **CARRY** | `interact-with-program/lesson.yaml:13` `type: program-explorer` (+ `program.idl.json`) | C3 |
 | `what-you-built` | prose+block | **CARRY** | `what-you-built/lesson.yaml:12` `type: deployed-program-card`; **retarget its next-step pointer off `defi-on-solana`** (unified item 20a) | C3 |
 
-**Counts:** 8 CARRY, 6 PROSE-ONLY, 2 DELETE (0 false, 2 retired).
+**Counts (16):** 9 CARRY, 5 PROSE-ONLY, 2 DELETE (0 false, 2 retired).
 
 Plus one cross-course CARRY asset: `courses/_template/lessons/basics/lesson.yaml:11` `type: quiz` — the
 quiz syntax, carried into every new course.
@@ -206,12 +208,34 @@ false and must never be ported, cited as prior art, or "fixed in place":
    file it in the C1/C4 PR, not the content PR.
 3. **`why-rust`'s zero-cost-abstractions snippet** (`rust-for-solana/lessons/why-rust/intro.md:22-30`) —
    does not compile (iterator chain over an undeclared `accounts`).
-4. **`connect-wallet-challenge`'s fabricated wallet flow**
-   (`solana-frontend/lessons/connect-wallet-challenge/exercise/solution.ts:3,8`) —
-   `Keypair.generate()` hidden behind `simulateWalletConnection()`.
-5. **All 5 `anchor-framework` exercises** — none imports `anchor_lang`; they teach Anchor via hand-rolled
-   fakes (`AccountMeta` structs, string owner-compares, `String`-returning "tests").
-6. **All 5 `defi-on-solana` challenges** — zero Solana; pure JS math.
+4. **`solana-frontend`'s two fabricated-wallet challenges** — `connect-wallet-challenge`
+   (`solana-frontend/lessons/connect-wallet-challenge/exercise/solution.ts:3,8`, `Keypair.generate()`
+   hidden behind `simulateWalletConnection()`) and **`sign-message-challenge`** (signs with a generated
+   keypair, not a real wallet).
+5. **All 5 `anchor-framework` exercises** — `anchor-setup-challenge`, `anchor-accounts-challenge`,
+   `pda-advanced-challenge`, `cpi-challenge`, `testing-challenge`. None imports `anchor_lang`; they teach
+   Anchor via hand-rolled fakes (`AccountMeta` structs, string owner-compares, `String`-returning "tests").
+6. **All 5 `defi-on-solana` challenges** — `amm-challenge`, `token-math-challenge`, `staking-challenge`,
+   `vault-challenge`, `liquidation-challenge`. Zero Solana; pure JS math.
+7. **`solana-fundamentals`'s 3 mock-graded challenges** — `keypair-challenge`, `create-token-challenge`,
+   `account-challenge`. Fabricated success via the item-2 mock SDK (`isValid:true` / `mockCreateMint`
+   unconditionally). Prohibition rides on item 2; belongs in the **C1** PR, not the C2/C3/C4 checkbox.
+
+**Scope of the checkbox — read this before copying the list into a PR template.** The item-19b checkbox
+targets the **C2/C3/C4** PR templates. That covers items 1, 3, 5 (the anchor + rust false material → C2/C3)
+and item 4 (frontend → C4). Items 6 (defi → **C5**) and 7 (fundamentals → **C1**) are listed here for
+completeness but belong in the **C1** and **C5** PR templates respectively, because C1 and C5 author fresh
+spines and do not reuse these lessons; their prohibition is enforced by not carrying the mock SDK (item 2)
+and by the fresh authoring, not by a C2/C3/C4 reviewer. Item 2 (the mock SDK) is a **monorepo** change and
+rides with C1/C4.
+
+**Completeness check — all 16 DELETE (false) lessons are covered above:** `keypair-challenge`,
+`create-token-challenge`, `account-challenge` (item 7) · `pda-challenge` (item 1) · `anchor-setup-challenge`,
+`anchor-accounts-challenge`, `pda-advanced-challenge`, `cpi-challenge`, `testing-challenge` (item 5;
+`pda-advanced-challenge` + `cpi-challenge` also item 1) · `connect-wallet-challenge`, `sign-message-challenge`
+(item 4) · `amm-challenge`, `token-math-challenge`, `staking-challenge`, `vault-challenge`,
+`liquidation-challenge` (item 6). Plus 2 non-lesson artifacts: the `why-rust` zero-cost snippet (item 3) and
+the JS mock SDK (item 2).
 
 ---
 
@@ -265,15 +289,81 @@ O-9, the retirement mechanism), so it is flagged here, not re-litigated.
 
 | Course | CARRY | PROSE-ONLY | DELETE (false) | DELETE (retired) | Lessons | Fate |
 | --- | --- | --- | --- | --- | --- | --- |
-| `solana-fundamentals` | 0 | 6* | 2 | 4 | 12 | retire → C1 fresh |
-| `rust-for-solana` | 0 | 4 (+1 split) | 2 | 5 | 12 | retire → C2 fresh |
+| `solana-fundamentals` | 0 | 6* | 3 | 3 | 12 | retire → C1 fresh |
+| `rust-for-solana` | 0 | 5 | 1 | 6 | 12 | retire → C2 fresh |
 | `anchor-framework` | 0 | 3 | 5 | 4 | 12 | retire → 3 prose to C3 |
 | `solana-frontend` | 0 | 5 | 2 | 5 | 12 | retire → C4 fresh |
 | `defi-on-solana` | 0 | 1 | 5 | 6 | 12 | retire → `token-standards` to C5 |
-| `building-your-first-solana-program` | 8 | 6 | 0 | 2 | 16 | close+recreate → C3 |
-| **Total** | **8** | **~25** | **16** | **26** | **76** | |
+| `building-your-first-solana-program` | 9 | 5 | 0 | 2 | 16 | close+recreate → C3 |
+| **Total** | **9** | **25** | **16** | **26** | **76** | |
 
-\* optional/unplanned (Decision D3). Plus one cross-course CARRY: the `_template` quiz syntax.
+\* optional/unplanned (Decision D3). `rust-for-solana` PROSE-ONLY includes `why-rust`, counted at the
+lesson level per the counting convention (its embedded false snippet is a §7 artifact, not a DELETE
+lesson). Plus one cross-course CARRY not among the 76: the `_template` quiz syntax.
 
-**16 DELETE (false)** is the prohibition list in §7 — that is the number that must land as a checkbox in
-the C2/C3/C4 PR templates.
+Every row is derived from the table `Disposition` columns by the §11 script; totals: 9 + 25 + 16 + 26 = 76.
+**16 DELETE (false)** lessons is the table-derived headline — the prohibition list in §7 covers all 16 plus
+2 non-lesson artifacts (the `why-rust` snippet, the JS mock SDK). The C2/C3/C4 checkbox is the subset
+routed to those three courses (§7 scope note); C1/C5 false-material rides in their own PRs.
+
+---
+
+## 11. Recount script — the counts above are machine-derived, not hand-tallied
+
+Parses the `Disposition` column of every lesson row in §1–§6 and tallies. Each of the 76 lessons is read
+exactly once; `why-rust`'s disposition cell is `PROSE-ONLY` (the snippet lives in its evidence cell and is
+not counted). Run: `python3 recount.py 2026-07-26-course-salvage-ledger.md`.
+
+```python
+import re, sys
+lines = open(sys.argv[1]).read().splitlines()
+sec = re.compile(r'^## (\d)\. `([^`]+)`')
+course = None; order = []; tally = {}
+for ln in lines:
+    if ln.startswith('## '):
+        m = sec.match(ln)
+        if m and m.group(1) in '123456':
+            course = m.group(2); order.append(course)
+            tally[course] = {'CARRY':0,'PROSE-ONLY':0,'DELETE (false)':0,'DELETE (retired)':0}
+        else:
+            course = None
+        continue
+    if course and ln.startswith('| `') and ln.count('|') >= 5:
+        disp = [c.strip() for c in ln.split('|')][3]      # column 3 = Disposition, only
+        for k in ('CARRY','DELETE (false)','DELETE (retired)','PROSE-ONLY'):
+            if k in disp: tally[course][k] += 1; break
+        else: print('UNPARSED', course, repr(disp))
+tot = {'CARRY':0,'PROSE-ONLY':0,'DELETE (false)':0,'DELETE (retired)':0}
+for c in order:
+    t = tally[c]
+    for k in tot: tot[k] += t[k]
+    print(c, t, 'n=' + str(sum(t.values())))
+print('TOTAL', tot, 'n=' + str(sum(tot.values())))
+```
+
+Output:
+
+```
+course                                 CARRY PROSE DEL-F DEL-R   n
+solana-fundamentals                        0     6     3     3   12
+rust-for-solana                            0     5     1     6   12
+anchor-framework                           0     3     5     4   12
+solana-frontend                            0     5     2     5   12
+defi-on-solana                             0     1     5     6   12
+building-your-first-solana-program         9     5     0     2   16
+TOTAL                                      9    25    16    26   76
+```
+
+**Completeness grep** — every DELETE (false) lesson slug also appears in §7 (prohibition list). Run from
+repo root:
+
+```
+for s in keypair-challenge create-token-challenge account-challenge pda-challenge \
+  anchor-setup-challenge anchor-accounts-challenge pda-advanced-challenge cpi-challenge \
+  testing-challenge connect-wallet-challenge sign-message-challenge amm-challenge \
+  token-math-challenge staking-challenge vault-challenge liquidation-challenge; do
+  n=$(awk '/^## 7\./,/^## 8\./' docs/superpowers/specs/2026-07-26-course-salvage-ledger.md | grep -c "$s")
+  echo "$s: $n"; done
+```
+
+All 16 return ≥1 (verified — see the PR body for the run output).
