@@ -172,7 +172,7 @@ describe("useAiPartner", () => {
     const response: PartnerResponse = {
       type: "propose",
       rationale: "Fixes the off-by-one.",
-      proposedCode: "let x = 2;",
+      edits: [{ search: "let x = 1;", replace: "let x = 2;" }],
       check: {
         question: "Why?",
         options: ["A", "B", "C"],

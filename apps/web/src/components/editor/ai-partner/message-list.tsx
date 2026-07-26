@@ -155,7 +155,7 @@ export function MessageList({
             >
               <DiffCard
                 current={getCode()}
-                proposed={response.proposedCode}
+                edits={response.edits}
                 rationale={response.rationale}
                 check={response.check}
                 checkToken={response.checkToken}

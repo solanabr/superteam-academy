@@ -813,6 +813,7 @@
       "reject": "Descartar",
       "dismissed": "Proposta descartada.",
       "stale": "Seu código mudou — esta proposta está desatualizada.",
+      "applyFailed": "Esta sugestão não pôde ser aplicada automaticamente — revise-a abaixo e faça a alteração manualmente.",
       "checkPrompt": "Uma pergunta rápida antes de aplicar:",
       "checkIncorrect": "Quase lá.",
       "checkVerifyError": "Não foi possível verificar sua resposta. Tente novamente.",

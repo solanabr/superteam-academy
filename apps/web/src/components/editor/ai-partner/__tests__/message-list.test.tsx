@@ -21,7 +21,7 @@ const proposeMessages: PartnerMessage[] = [
     response: {
       type: "propose",
       rationale: "adds b",
-      proposedCode: "a\nb",
+      edits: [{ search: "a", replace: "a\nb" }],
       check: {
         question: "Why?",
         options: ["A", "B", "C"],

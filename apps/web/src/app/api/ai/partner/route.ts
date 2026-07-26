@@ -15,6 +15,7 @@ import {
   buildDynamicSuffix,
   maxTokensFor,
   responseSchemaFor,
+  MAX_PROPOSE_EDITS,
 } from "@/lib/ai/partner-prompt";
 import type {
   PartnerAction,
@@ -23,14 +24,18 @@ import type {
   PartnerMessage,
   HintResponse,
   AnswerResponse,
+  CodeEdit,
 } from "@/lib/ai/partner-types";
 import { serverEnv } from "@/lib/env.server";
 
 const GEMINI_API_KEY = serverEnv.GEMINI_API_KEY;
 
-// Input caps for the AI Partner route.
+// Input caps for the AI Partner route. MAX_CODE_CHARS is 8,000 (was 20,000):
+// paired with diff-propose it collapses AIE-11's truncation lever — a smaller
+// buffer to inflate, and the model no longer echoes it. No client mirrors this
+// cap today; the route returns a semantically-correct 413 on overflow.
 const MAX_BODY_CHARS = 50_000;
-const MAX_CODE_CHARS = 20_000;
+const MAX_CODE_CHARS = 8_000;
 const MAX_MESSAGE_CHARS = 4_000;
 const MAX_SLUG_CHARS = 256;
 const MAX_TEST_SUMMARY_CHARS = 2_000;
@@ -40,8 +45,7 @@ const MAX_TEST_SUMMARY_CHARS = 2_000;
 // longer available"). gemini-3.5-flash is available and supports structured
 // output. NOTE it's a *thinking* model — thinking tokens draw from the
 // maxOutputTokens budget — so thinking is disabled in generationConfig
-// (thinkingBudget: 0) to keep the whole budget for the response (esp. `propose`,
-// which returns the entire updated file).
+// (thinkingBudget: 0) to keep the whole budget for the structured response.
 const GEMINI_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent";
 
@@ -62,11 +66,30 @@ type PartnerRequestBody = Partial<Record<keyof PartnerRequest, unknown>>;
 interface ValidatedProposeResponse {
   type: "propose";
   rationale: string;
-  proposedCode: string;
+  edits: CodeEdit[];
   question: string;
   options: [string, string, string];
   correctIndex: 0 | 1 | 2;
   explanation: string;
+}
+
+// Narrow the Gemini `edits` array. Each entry must be an object with a NON-empty
+// string `search` (empty is unlocatable) and a string `replace` (empty is a
+// valid deletion). Rejects a missing/empty/oversized list. The route does not
+// apply the edits — the client does, against the live buffer — but it still
+// enforces shape so a malformed payload 502s here rather than reaching the UI.
+function validateEdits(value: unknown): CodeEdit[] | null {
+  if (!Array.isArray(value) || value.length === 0) return null;
+  if (value.length > MAX_PROPOSE_EDITS) return null;
+  const edits: CodeEdit[] = [];
+  for (const item of value) {
+    if (!item || typeof item !== "object") return null;
+    const e = item as Record<string, unknown>;
+    if (typeof e.search !== "string" || e.search.length === 0) return null;
+    if (typeof e.replace !== "string") return null;
+    edits.push({ search: e.search, replace: e.replace });
+  }
+  return edits;
 }
 
 type ValidatedResponse =
@@ -95,8 +118,8 @@ function validatePartnerResponse(parsed: unknown): ValidatedResponse | null {
   if (obj.type === "propose") {
     if (typeof obj.rationale !== "string" || obj.rationale.length === 0)
       return null;
-    if (typeof obj.proposedCode !== "string" || obj.proposedCode.length === 0)
-      return null;
+    const edits = validateEdits(obj.edits);
+    if (!edits) return null;
 
     const check = obj.check;
     if (!check || typeof check !== "object") return null;
@@ -122,7 +145,7 @@ function validatePartnerResponse(parsed: unknown): ValidatedResponse | null {
     return {
       type: "propose",
       rationale: obj.rationale,
-      proposedCode: obj.proposedCode,
+      edits,
       question: c.question,
       options: [c.options[0], c.options[1], c.options[2]] as [
         string,
@@ -278,8 +301,9 @@ export async function POST(request: NextRequest) {
   // MAX_TOKENS truncation) is billed cost and is NOT refunded, closing the hole
   // where reliably triggering truncation bought unlimited billed calls against a
   // quota that never decremented (AIE-10/-11). The CAUSE — attacker-triggerable
-  // truncation — is closed separately by spec item 3a (diff-propose +
-  // MAX_CODE_CHARS trim), landing the same week.
+  // truncation — is closed by spec item 3a (diff-propose + MAX_CODE_CHARS 8k),
+  // implemented here: propose emits compact edits at a 2,048-token cap, so there
+  // is no full-file echo to inflate and no deterministic MAX_TOKENS to trigger.
   let billed = false;
   try {
     // Prompt-building lives INSIDE the try on purpose: any throw here (a
@@ -381,8 +405,8 @@ export async function POST(request: NextRequest) {
     if (!rawText) {
       // Billed but useless — usually finishReason "MAX_TOKENS" with the budget
       // spent before any visible output. NOT refunded: Gemini billed the tokens.
-      // Log the reason so maxTokensFor(action) can be tuned; item 3a's
-      // diff-propose + smaller MAX_CODE_CHARS is what makes this hard to trigger.
+      // Log the reason so maxTokensFor(action) can be tuned; diff-propose +
+      // MAX_CODE_CHARS 8k (item 3a, this change) is what makes this hard to hit.
       console.error("[ai/partner] empty output", { action, finishReason });
       return NextResponse.json(
         { error: "AI could not generate a response" },
@@ -431,7 +455,7 @@ export async function POST(request: NextRequest) {
       clientResponse = {
         type: "propose",
         rationale: validated.rationale,
-        proposedCode: validated.proposedCode,
+        edits: validated.edits,
         check: {
           question: validated.question,
           options: validated.options,
