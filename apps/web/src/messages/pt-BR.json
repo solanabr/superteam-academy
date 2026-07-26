@@ -419,7 +419,22 @@
     "you": "Você",
     "xpRemaining": "<em>{xp} {xpLabel}</em> para {levelLabel} {level}",
     "xpTooltip": "{xp} {xpLabel} para {levelLabel} {level}",
-    "surpriseBonus": "Bônus surpresa! +{amount} XP"
+    "surpriseBonus": "Bônus surpresa! +{amount} XP",
+    "league": "Liga",
+    "global": "Global",
+    "leagueSubtitle": "Seu grupo da semana — a classificação desta semana",
+    "globalSubtitle": "XP de todos os tempos entre todos",
+    "leagueTier1": "Liga Semente",
+    "leagueTier2": "Liga Broto",
+    "leagueTier3": "Liga Muda",
+    "leagueTier4": "Liga Copa",
+    "cohortMembers": "{count} estudantes",
+    "leagueResets": "reinicia na segunda",
+    "anonymousLearner": "Estudante anônimo",
+    "leagueSignIn": "Entre para participar da liga desta semana.",
+    "cohortStripTitle": "Sua liga",
+    "cohortStripAria": "Sua posição na liga",
+    "cohortViewAll": "Ver liga"
   },
   "certificates": {
     "title": "Certificado de Conclusão",

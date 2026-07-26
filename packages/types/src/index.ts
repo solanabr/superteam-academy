@@ -2,6 +2,8 @@ export type {
   Progress,
   StreakData,
   LeaderboardEntry,
+  CohortLeaderboardEntry,
+  CohortLeague,
   XpTransaction,
   Credential,
   DailyQuest,

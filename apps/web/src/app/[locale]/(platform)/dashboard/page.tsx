@@ -14,6 +14,7 @@ import {
 } from "@/components/dashboard/continue-card";
 import { CurrentCoursesSection } from "@/components/dashboard/current-courses-section";
 import { ReviewStrip } from "@/components/dashboard/review-strip";
+import { CohortStrip } from "@/components/dashboard/cohort-strip";
 import { MasteryPanel } from "@/components/dashboard/mastery-panel";
 import { NameRevealDialog } from "@/components/dashboard/name-reveal-dialog";
 import { NextLessonPlan } from "@/components/dashboard/next-lesson-plan";
@@ -107,6 +108,10 @@ export default function DashboardPage() {
       {/* Due-review strip — additive hero slot under Continue (LX-B6); renders
           nothing when the review queue is empty. */}
       <ReviewStrip userId={data.userId} />
+
+      {/* Cohort league "you ±3" strip — additive slot (LX-B9b); renders nothing
+          until the viewer has a weekly cohort with at least one neighbor. */}
+      <CohortStrip userId={data.userId} />
 
       {/* V9 Dashboard Identity Panel — Level+XP | Medals | Activity Grid */}
       <DashboardIdentityPanel

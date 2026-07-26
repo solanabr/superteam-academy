@@ -2654,3 +2654,265 @@ CREATE POLICY "Course changelog visible for synced-active courses"
     )
   );
 -- NO write policy: service_role-only writes (bypasses RLS) from the admin sync route.
+
+-- ─────────────────────────────────────────────────────────────────────────
+-- Cohort leagues (LX-B9b, #574): weekly small-cohort leagues + you-±3 strip,
+-- replacing the "poisoned by design" global-absolute board. DISPLAY-ONLY — no
+-- reward contingency (PED-10/14, UIU-09); score is derived from XP already
+-- earned, filtered to learning sources (is_league_eligible_source, the LX-B9a
+-- source column) so creator/community/platform XP never becomes competitive
+-- currency. LAZY on-first-read assignment (D-4 undecided → no scheduler; the
+-- get_daily_quest_state precedent). SNAPSHOT scoring: league_members.score is
+-- materialized and recomputed for a whole cohort in one throttled pass
+-- (refresh_cohort_scores) — the read RPCs never SUM xp_transactions per call.
+-- RLS: league_tiers public-read reference data; cohorts have NO policy (RPC-only
+-- exposure); members own-row SELECT only. Read RPCs are SECURITY DEFINER,
+-- project only public_profiles columns, and anonymize (never drop) private
+-- members. Mirror of 20260726200000_cohort_leagues.sql.
+-- ─────────────────────────────────────────────────────────────────────────
+CREATE OR REPLACE FUNCTION public.is_league_eligible_source(p_source TEXT)
+RETURNS BOOLEAN
+LANGUAGE sql
+IMMUTABLE
+AS $$
+  SELECT p_source IN ('lesson', 'course_completion', 'quest', 'achievement')
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.is_league_eligible_source(TEXT)
+  FROM PUBLIC, anon, authenticated;
+
+CREATE OR REPLACE FUNCTION public.league_week_start(p_date DATE)
+RETURNS DATE
+LANGUAGE sql
+IMMUTABLE
+AS $$
+  SELECT (date_trunc('week', p_date::timestamp))::date
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.league_week_start(DATE)
+  FROM PUBLIC, anon, authenticated;
+
+CREATE TABLE IF NOT EXISTS league_tiers (
+  tier              SMALLINT PRIMARY KEY,
+  min_prior_week_xp INTEGER  NOT NULL CHECK (min_prior_week_xp >= 0),
+  UNIQUE (min_prior_week_xp)
+);
+
+ALTER TABLE league_tiers ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "League tiers are viewable by everyone" ON league_tiers;
+CREATE POLICY "League tiers are viewable by everyone"
+  ON league_tiers FOR SELECT USING (true);
+
+INSERT INTO league_tiers (tier, min_prior_week_xp) VALUES
+  (1, 0),
+  (2, 100),
+  (3, 500),
+  (4, 2000)
+ON CONFLICT (tier) DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS league_cohorts (
+  id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  week_start          DATE     NOT NULL,
+  tier                SMALLINT NOT NULL REFERENCES league_tiers(tier),
+  member_count        INTEGER  NOT NULL DEFAULT 0 CHECK (member_count >= 0),
+  scores_refreshed_at TIMESTAMPTZ,
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_league_cohorts_week_tier
+  ON league_cohorts (week_start, tier, created_at DESC);
+
+ALTER TABLE league_cohorts ENABLE ROW LEVEL SECURITY;
+-- NO policy: cohorts are exposed only through the SECURITY DEFINER read RPCs.
+
+CREATE TABLE IF NOT EXISTS league_members (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  cohort_id  UUID NOT NULL REFERENCES league_cohorts(id) ON DELETE CASCADE,
+  user_id    UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  week_start DATE NOT NULL,
+  score      BIGINT NOT NULL DEFAULT 0 CHECK (score >= 0),
+  joined_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (user_id, week_start)
+);
+
+CREATE INDEX IF NOT EXISTS idx_league_members_cohort_score
+  ON league_members (cohort_id, score DESC);
+
+ALTER TABLE league_members ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view their own league membership" ON league_members;
+CREATE POLICY "Users can view their own league membership"
+  ON league_members FOR SELECT USING (auth.uid() = user_id);
+-- No INSERT/UPDATE/DELETE policy: writes go through the SECURITY DEFINER RPCs.
+
+CREATE OR REPLACE FUNCTION public.ensure_league_membership(p_user_id UUID)
+RETURNS UUID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  LEAGUE_COHORT_CAPACITY CONSTANT INTEGER := 30;
+  v_week_start      DATE;
+  v_prior_start     DATE;
+  v_prior_xp        BIGINT;
+  v_tier            SMALLINT;
+  v_cohort_id       UUID;
+  v_inserted_cohort UUID;
+BEGIN
+  v_week_start  := public.league_week_start(CURRENT_DATE);
+
+  SELECT cohort_id INTO v_cohort_id
+  FROM public.league_members
+  WHERE user_id = p_user_id AND week_start = v_week_start;
+  IF FOUND THEN
+    RETURN v_cohort_id;
+  END IF;
+
+  v_prior_start := v_week_start - 7;
+  SELECT COALESCE(SUM(x.amount), 0) INTO v_prior_xp
+  FROM public.xp_transactions x
+  WHERE x.user_id = p_user_id
+    AND x.created_at >= v_prior_start::timestamptz
+    AND x.created_at <  v_week_start::timestamptz
+    AND public.is_league_eligible_source(x.source);
+
+  SELECT t.tier INTO v_tier
+  FROM public.league_tiers t
+  WHERE t.min_prior_week_xp <= v_prior_xp
+  ORDER BY t.min_prior_week_xp DESC
+  LIMIT 1;
+  IF v_tier IS NULL THEN
+    SELECT MIN(t.tier) INTO v_tier FROM public.league_tiers t;
+  END IF;
+
+  SELECT c.id INTO v_cohort_id
+  FROM public.league_cohorts c
+  WHERE c.week_start = v_week_start
+    AND c.tier = v_tier
+    AND c.member_count < LEAGUE_COHORT_CAPACITY
+  ORDER BY c.created_at DESC
+  LIMIT 1
+  FOR UPDATE SKIP LOCKED;
+
+  IF v_cohort_id IS NULL THEN
+    INSERT INTO public.league_cohorts (week_start, tier, member_count)
+    VALUES (v_week_start, v_tier, 0)
+    RETURNING id INTO v_cohort_id;
+  END IF;
+
+  INSERT INTO public.league_members (cohort_id, user_id, week_start, score)
+  VALUES (v_cohort_id, p_user_id, v_week_start, 0)
+  ON CONFLICT (user_id, week_start) DO NOTHING
+  RETURNING cohort_id INTO v_inserted_cohort;
+
+  IF v_inserted_cohort IS NOT NULL THEN
+    UPDATE public.league_cohorts
+    SET member_count = member_count + 1
+    WHERE id = v_cohort_id;
+    RETURN v_cohort_id;
+  END IF;
+
+  SELECT cohort_id INTO v_cohort_id
+  FROM public.league_members
+  WHERE user_id = p_user_id AND week_start = v_week_start;
+  RETURN v_cohort_id;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.ensure_league_membership(UUID)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.ensure_league_membership(UUID) TO service_role;
+
+CREATE OR REPLACE FUNCTION public.refresh_cohort_scores(p_cohort_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  LEAGUE_REFRESH_THROTTLE CONSTANT INTERVAL := INTERVAL '1 minute';
+  v_week_start DATE;
+  v_refreshed  TIMESTAMPTZ;
+BEGIN
+  SELECT week_start, scores_refreshed_at INTO v_week_start, v_refreshed
+  FROM public.league_cohorts
+  WHERE id = p_cohort_id
+  FOR UPDATE;
+  IF NOT FOUND THEN
+    RETURN;
+  END IF;
+
+  IF v_refreshed IS NOT NULL
+     AND v_refreshed > now() - LEAGUE_REFRESH_THROTTLE THEN
+    RETURN;
+  END IF;
+
+  UPDATE public.league_members m
+  SET score = COALESCE((
+    SELECT SUM(x.amount)
+    FROM public.xp_transactions x
+    WHERE x.user_id = m.user_id
+      AND x.created_at >= v_week_start::timestamptz
+      AND x.created_at <  (v_week_start + 7)::timestamptz
+      AND public.is_league_eligible_source(x.source)
+  ), 0)
+  WHERE m.cohort_id = p_cohort_id;
+
+  UPDATE public.league_cohorts
+  SET scores_refreshed_at = now()
+  WHERE id = p_cohort_id;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.refresh_cohort_scores(UUID)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.refresh_cohort_scores(UUID) TO service_role;
+
+CREATE OR REPLACE FUNCTION public.get_cohort_leaderboard(p_user_id UUID)
+RETURNS TABLE (
+  user_id    UUID,
+  username   TEXT,
+  avatar_url TEXT,
+  score      BIGINT,
+  rank       BIGINT,
+  is_you     BOOLEAN,
+  tier       SMALLINT,
+  week_start DATE
+)
+-- VOLATILE (default): assigns membership + refreshes the snapshot on read.
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_cohort_id UUID;
+BEGIN
+  v_cohort_id := public.ensure_league_membership(p_user_id);
+  PERFORM public.refresh_cohort_scores(v_cohort_id);
+
+  RETURN QUERY
+  SELECT
+    -- Anonymized non-you rows expose no id; the caller always sees their own.
+    CASE WHEN pp.id IS NULL AND m.user_id <> p_user_id THEN NULL ELSE m.user_id END,
+    pp.username,
+    pp.avatar_url,
+    m.score,
+    ROW_NUMBER() OVER (ORDER BY m.score DESC, m.joined_at ASC, m.user_id)::BIGINT,
+    (m.user_id = p_user_id),
+    c.tier,
+    c.week_start
+  FROM public.league_members m
+  JOIN public.league_cohorts c ON c.id = m.cohort_id
+  LEFT JOIN public.public_profiles pp ON pp.id = m.user_id
+  WHERE m.cohort_id = v_cohort_id
+  ORDER BY m.score DESC, m.joined_at ASC, m.user_id;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.get_cohort_leaderboard(UUID)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_cohort_leaderboard(UUID) TO service_role;
+-- The "you ±3" strip window is derived in the API layer (cohortStripWindow) over
+-- this board's snapshot rows — no second per-call SUM, no SQL⇄TS duplication.

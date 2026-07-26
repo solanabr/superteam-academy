@@ -41,6 +41,34 @@ export interface LeaderboardEntry {
   walletAddress?: string;
 }
 
+/**
+ * One row of a weekly cohort league (LX-B9b). `username`/`avatarUrl`/`userId`
+ * are null when the member is a private or deleted profile — the row is kept
+ * (never dropped) and rendered as an anonymous learner, with even the opaque id
+ * withheld from peers (the viewer's own row keeps its id). `rank` is the
+ * member's true position within the cohort. `isYou` flags the viewer's own row
+ * so the UI can label it even when the viewer is anonymized.
+ */
+export interface CohortLeaderboardEntry {
+  userId: string | null;
+  username: string | null;
+  avatarUrl: string | null;
+  score: number;
+  rank: number;
+  isYou: boolean;
+}
+
+/** A viewer's weekly cohort: the league header plus its ranked members. */
+export interface CohortLeague {
+  /** Engagement tier (1 = floor). Named for display via i18n, never stored. */
+  tier: number;
+  /** ISO date (YYYY-MM-DD) of the Monday the cohort's week started. */
+  weekStart: string;
+  /** Current cohort size (may be below capacity while filling). */
+  memberCount: number;
+  entries: CohortLeaderboardEntry[];
+}
+
 export interface XpTransaction {
   userId: string;
   amount: number;
