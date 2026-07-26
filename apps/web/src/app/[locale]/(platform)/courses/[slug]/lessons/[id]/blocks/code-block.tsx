@@ -64,6 +64,7 @@ export function CodeBlock({ block, ctx }: BlockRenderProps) {
       <div className="flex w-full flex-col overflow-hidden lg:h-[calc(100vh-150px)]">
         <ChallengeInterface
           lessonId={ctx.lesson._id}
+          courseId={ctx.courseId}
           courseSlug={ctx.courseSlug}
           lessonSlug={ctx.lesson.slug}
           taskSlot={taskSlot}

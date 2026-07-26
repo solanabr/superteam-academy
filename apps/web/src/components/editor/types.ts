@@ -65,6 +65,8 @@ export interface ChallengeRunnerProps {
 
 export interface ChallengeInterfaceProps {
   lessonId: string;
+  /** Content id of the parent course — analytics only (challenge lifecycle events). */
+  courseId?: string;
   /** Sanity slug of the parent course — threaded to the AI Partner route. */
   courseSlug: string;
   /** Sanity slug of this lesson — threaded to the AI Partner route. */
