@@ -4,6 +4,13 @@
 
 Method note: four research pillars (learning science, motivation/gamification, modern learning apps, web3 education market) were researched and then adversarially verified against independent sources. Findings below carry their verification verdict. No claims were refuted outright; WEAKENED claims carry their caveats inline. Effect sizes are reported honestly, including where they shrank under scrutiny.
 
+> **Correction note (2026-07-26, per #608 — do not rewrite the body below; this note governs).** Two figures used in this report were later refuted _as applied_ and are struck from all live guidance:
+>
+> - **d=−0.88** (used below at the executive summary, §on motivation, and the never-do list for leaderboards / XP→money bridges / monetary salience): refuted _as attribution_ (MAS-20). −0.88 is Deci/Koestner/Ryan's performance-contingent-less-than-maximum reward vs a no-feedback control (6 studies) — it measures no leaderboard, prize, or monetary framing. The no-prize / no-bridge decision survives on PED-10 + PED-14 + UIU-09 and the airdrop-extraction literature, not on −0.88.
+> - **Interleaving g≈0.34 / g=−0.39** (used below for "confusables help / prose is harmful"): refuted _as numbers_ for prose (MAS-22). g≈0.34 is mathematical-task interleaving; g=−0.39 is word-list interleaving. The lesson-prose analogue is expository text **g=0.21, p=.119 — n.s., not harmful**. The "interleave only inside review sets, never reorder lesson prose" ruling stands on that null, not on a prose-harm number.
+>
+> Authoritative dispositions: `docs/superpowers/specs/2026-07-25-UNIFIED-LAUNCH-SPEC.md` §1 evidence table + §3 item 52.
+
 ---
 
 ## 1. Executive Summary
