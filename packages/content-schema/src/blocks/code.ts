@@ -34,6 +34,16 @@ export const CodeBlock = z
     solution: z.string().min(1),
     tests: relativePath(".json"),
     hints: z.array(z.string().min(1)).default([]),
+    /**
+     * Teacher-authored "common mistakes" for this challenge, fed to the AI
+     * Partner as `[TUTOR_NOTES]` (issue #592). This is the second half of the
+     * evidenced output contract (AIE-25/-26): the reference solution already
+     * reaches the model, these authored nudges never did. Optional — absent
+     * leaves the AI prompt exactly as today. Each note is one bullet; keep them
+     * to the common wrong turns, NEVER the answer. Bounded (max 6 × 500 chars)
+     * so authored input can never dominate the cache-shaped prefix.
+     */
+    tutorNotes: z.array(z.string().min(1).max(500)).max(6).optional(),
   })
   .refine((b) => b.buildType !== "buildable" || b.language === "rust", {
     message: "buildType 'buildable' requires language 'rust'",

@@ -54,6 +54,13 @@ export interface CodeBlockData extends LessonBlockBase {
   solution: string;
   tests: TestCase[];
   hints?: string[] | null;
+  /**
+   * Teacher-authored common-mistake bullets, fed to the AI Partner as
+   * `[TUTOR_NOTES]` (#592). Post-dates the frozen GROQ capture, so the
+   * projector surfaces it ONLY when a challenge carries it (absent → omitted,
+   * AI prompt unchanged).
+   */
+  tutorNotes?: string[];
 }
 
 export interface QuizOptionData {

@@ -153,6 +153,14 @@ function projectBlock(raw: unknown): LessonBlock {
     amount: optNumber(b.amount),
     network: optString(b.network),
     idl: optString(b.idl),
+    // `tutorNotes` (#592) post-dates the frozen GROQ capture the golden fixtures
+    // pin, so — unlike the null-filled siblings above — it is surfaced ONLY when
+    // a block actually carries it. A challenge without notes therefore projects
+    // byte-identically to the golden, and the AI Partner sees exactly today's
+    // prompt (buildStaticPrefix skips absent notes).
+    ...(Array.isArray(b.tutorNotes) && b.tutorNotes.length > 0
+      ? { tutorNotes: b.tutorNotes as string[] }
+      : {}),
   } as unknown as LessonBlock;
 }
 
