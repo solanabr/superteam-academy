@@ -5,7 +5,7 @@
 // solution_revealed and best-effort reschedules the lesson into review; the XP
 // path is untouched.
 import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { resetAnalyticsEventDedupeForTests } from "@/lib/analytics/events";
 import messages from "@/messages/en.json";
@@ -145,7 +145,7 @@ describe("ChallengeInterface — solution-reveal soft-gate (LX-C6)", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("confirming reveals the solution, logs it once, and reschedules into review", () => {
+  it("confirming reveals the solution, logs it once, and reschedules into review", async () => {
     renderChallenge();
     fireEvent.click(
       screen.getByRole("button", { name: /view reference solution/i })
@@ -171,5 +171,42 @@ describe("ChallengeInterface — solution-reveal soft-gate (LX-C6)", () => {
       courseSlug: "solana-101",
       lessonSlug: "first-challenge",
     });
+
+    // Honesty (AIE-27): the "marked for review" claim appears ONLY after the
+    // server confirms (2xx + scheduled=true) — not synchronously on reveal.
+    expect(
+      screen.getByText(messages.lesson.solutionRevealedNote)
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText(messages.lesson.solutionReviewScheduledNote)
+    ).toBeInTheDocument();
+  });
+
+  it("makes NO review-queue claim when the reschedule fails (e.g. anonymous 401)", async () => {
+    // Anonymous learner: the route 401s. The component reads the body only when
+    // res.ok, so the json shape here is never consumed — it just satisfies the
+    // mock's inferred type.
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      json: async () => ({ scheduled: false }),
+    });
+    renderChallenge();
+    fireEvent.click(
+      screen.getByRole("button", { name: /view reference solution/i })
+    );
+    fireEvent.click(screen.getByRole("button", { name: /show solution/i }));
+
+    // Solution still revealed (never a refusal), and the fetch was attempted.
+    expect(screen.getByText(SOLUTION)).toBeInTheDocument();
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    // Let the fetch chain settle, then assert the panel shows the neutral note
+    // and never the "marked for review" claim.
+    await new Promise((r) => setTimeout(r, 0));
+    expect(
+      screen.getByText(messages.lesson.solutionRevealedNote)
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(messages.lesson.solutionReviewScheduledNote)
+    ).not.toBeInTheDocument();
   });
 });

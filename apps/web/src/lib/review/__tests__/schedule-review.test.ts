@@ -1,10 +1,10 @@
-/* eslint-disable import/order -- vi.mock must precede importing the helper. */
+/* eslint-disable import/order -- vi.mock must precede importing the helpers. */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
 const { rpc, logError } = vi.hoisted(() => ({
-  rpc: vi.fn<(...a: unknown[]) => Promise<{ error: unknown }>>(),
+  rpc: vi.fn<(...a: unknown[]) => Promise<{ data?: unknown; error: unknown }>>(),
   logError: vi.fn(),
 }));
 
@@ -13,11 +13,12 @@ vi.mock("@/lib/supabase/admin", () => ({
 }));
 vi.mock("@/lib/logging", () => ({ logError }));
 
-import { captureReviewFailure } from "../schedule-review";
+import { captureReviewFailure, scheduleReviewItem } from "../schedule-review";
 
 beforeEach(() => {
   vi.clearAllMocks();
   rpc.mockResolvedValue({ error: null });
+  vi.spyOn(console, "warn").mockImplementation(() => {});
 });
 
 describe("captureReviewFailure", () => {
@@ -87,5 +88,32 @@ describe("captureReviewFailure", () => {
     };
     expect(arg.context.failedTestIds).toEqual(["t2", "t5"]);
     expect(arg.context.step).toBe("review_capture");
+  });
+});
+
+describe("scheduleReviewItem (best-effort review reschedule)", () => {
+  it("calls the SECURITY DEFINER RPC with the raw ids and returns true on success", async () => {
+    rpc.mockResolvedValue({ data: [{ box: 1 }], error: null });
+    await expect(scheduleReviewItem("user-1", "lesson-abc")).resolves.toBe(
+      true
+    );
+    expect(rpc).toHaveBeenCalledWith("schedule_review_item", {
+      p_user_id: "user-1",
+      p_item_key: "lesson-abc",
+    });
+  });
+
+  it("returns false (never throws) when the RPC reports an error", async () => {
+    rpc.mockResolvedValue({ data: null, error: { message: "denied" } });
+    await expect(scheduleReviewItem("user-1", "lesson-abc")).resolves.toBe(
+      false
+    );
+  });
+
+  it("returns false (never throws) when the RPC call rejects", async () => {
+    rpc.mockRejectedValue(new Error("network down"));
+    await expect(scheduleReviewItem("user-1", "lesson-abc")).resolves.toBe(
+      false
+    );
   });
 });

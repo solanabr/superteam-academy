@@ -121,6 +121,12 @@ export function ChallengeInterface({
   const [solutionGate, setSolutionGate] = useState<
     "closed" | "confirming" | "revealed"
   >("closed");
+  // Honest copy (AIE-27): the "marked for review" note is claimed ONLY after the
+  // server confirms the reschedule (2xx + scheduled=true). The reschedule is
+  // best-effort — it no-ops for an anonymous learner (401) and can fail
+  // transiently — so until it is confirmed the revealed panel makes no queue
+  // claim, only self-study guidance.
+  const [reviewScheduled, setReviewScheduled] = useState(false);
 
   // Analytics (LX-F1): challenge lifecycle events compose alongside the
   // existing state. The fail streak is mirrored in a ref because the state
@@ -264,15 +270,23 @@ export function ChallengeInterface({
 
   const handleConfirmRevealSolution = useCallback(() => {
     setSolutionGate("revealed");
+    setReviewScheduled(false);
     trackSolutionRevealed({ lessonId, courseId, challengeKind });
     // Best-effort reschedule into the review queue. The reveal itself never
     // blocks on this: an anonymous learner (401) or a transient failure still
-    // gets the solution — only the review row is skipped.
+    // gets the solution — only the review row is skipped. The revealed panel
+    // claims "marked for review" ONLY if this confirms (2xx + scheduled=true),
+    // so the copy never asserts a reschedule that did not happen.
     void fetch("/api/lessons/reveal-solution", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ courseSlug, lessonSlug }),
-    }).catch(() => {});
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((body: { scheduled?: unknown } | null) => {
+        if (body && body.scheduled === true) setReviewScheduled(true);
+      })
+      .catch(() => {});
   }, [lessonId, courseId, challengeKind, courseSlug, lessonSlug]);
 
   const handleClearOutput = useCallback(() => {
@@ -604,7 +618,9 @@ export function ChallengeInterface({
                     <code>{solution}</code>
                   </pre>
                   <p className="text-xs text-text-3">
-                    {t("solutionRevealedNote")}
+                    {reviewScheduled
+                      ? t("solutionReviewScheduledNote")
+                      : t("solutionRevealedNote")}
                   </p>
                 </div>
               )}
