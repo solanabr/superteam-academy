@@ -301,6 +301,7 @@
     "more": "Mais",
     "todayLabel": "Hoje",
     "dailyQuest": "Missão Diária: {name}",
+    "surpriseBonus": "Bônus surpresa",
     "dailyQuests": "Missões Diárias",
     "resetsIn": "Reseta em {hours}h",
     "allQuestsBonus": "Complete todas para bônus",
@@ -354,7 +355,8 @@
     "onChain": "on-chain",
     "you": "Você",
     "xpRemaining": "<em>{xp} {xpLabel}</em> para {levelLabel} {level}",
-    "xpTooltip": "{xp} {xpLabel} para {levelLabel} {level}"
+    "xpTooltip": "{xp} {xpLabel} para {levelLabel} {level}",
+    "surpriseBonus": "Bônus surpresa! +{amount} XP"
   },
   "certificates": {
     "title": "Certificado de Conclusão",
@@ -407,6 +409,12 @@
     "content": "Bounties de conteúdo",
     "grants": "Grants",
     "opensInNewTab": "abre em uma nova aba"
+  },
+  "mastery": {
+    "title": "Domínio de habilidades",
+    "caption": "Seu progresso nas habilidades que você praticou",
+    "lessonsRatio": "{completed}/{total} lições",
+    "progressLabel": "{skill}: {completed} de {total} lições concluídas"
   },
   "profile": {
     "editProfile": "Editar Perfil",

@@ -13,6 +13,7 @@ import {
   type ContinueCardTarget,
 } from "@/components/dashboard/continue-card";
 import { CurrentCoursesSection } from "@/components/dashboard/current-courses-section";
+import { MasteryPanel } from "@/components/dashboard/mastery-panel";
 import { NameRevealDialog } from "@/components/dashboard/name-reveal-dialog";
 import { RecommendedCoursesSection } from "@/components/dashboard/recommended-courses-section";
 
@@ -118,6 +119,9 @@ export default function DashboardPage() {
         currentCourses={data.currentCourses}
         userId={data.userId}
       />
+
+      {/* ═══ Skill Mastery (LX-B16) ═══ */}
+      <MasteryPanel skills={data.masterySkills} />
 
       {/* ═══ Activity ═══ */}
       <ActivitySection recentActivity={data.recentActivity} />

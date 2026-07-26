@@ -3,12 +3,15 @@
 import { useEffect, useRef } from "react";
 import { trackCredentialMinted } from "@/lib/analytics/events";
 import { createClient } from "@/lib/supabase/client";
+import { celebrate } from "@/lib/gamification/celebration";
+import { isSurpriseBonusReason } from "@/lib/gamification/surprise-bonus";
 import {
   dispatchAchievementUnlock,
   dispatchAchievementXp,
 } from "@/components/gamification/achievement-popup";
 import { dispatchCertificateMinted } from "@/components/gamification/certificate-popup";
 import { dispatchLevelUp } from "@/components/gamification/level-up-popup";
+import { dispatchSurpriseBonus } from "@/components/gamification/surprise-bonus-toast";
 
 let xpEventCounter = 0;
 
@@ -116,6 +119,17 @@ export function useGamificationEvents(userId: string | undefined) {
 
           // Daily quest XP → suppress popup (quests panel already shows the reward)
           if (row.reason?.startsWith("daily_quest:")) return;
+
+          // Surprise bonus (LX-B15) → informational toast (never confetti). The
+          // reward only surfaces here, AFTER it is granted server-side — there
+          // is no pre-announcement anywhere in the UI. Localization happens in
+          // the mounted SurpriseBonusToastListener (inside the intl provider).
+          if (row.reason && isSurpriseBonusReason(row.reason)) {
+            celebrate("surprise-bonus");
+            dispatchSurpriseBonus(amount);
+            dispatchXpGain(amount);
+            return;
+          }
 
           dispatchXpGain(amount);
         }

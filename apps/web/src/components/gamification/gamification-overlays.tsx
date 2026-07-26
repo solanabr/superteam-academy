@@ -6,6 +6,7 @@ import { CertificatePopup } from "@/components/gamification/certificate-popup";
 import { LevelUpPopup } from "@/components/gamification/level-up-popup";
 import { useGamificationEvents } from "@/hooks/use-gamification-events";
 import { ToastContainer } from "@/components/ui/toast-container";
+import { SurpriseBonusToastListener } from "@/components/gamification/surprise-bonus-toast";
 import { BankedProgressReplay } from "@/components/lessons/banked-progress-replay";
 
 export function GamificationOverlays() {
@@ -18,6 +19,8 @@ export function GamificationOverlays() {
     <>
       {/* Toast container always renders — works for auth and non-auth contexts */}
       <ToastContainer />
+      {/* Localizes + shows the LX-B15 surprise-bonus toast (informational tier) */}
+      <SurpriseBonusToastListener />
       {/* Replays anonymously-banked completions once signed in (LX-A4c). */}
       <BankedProgressReplay />
       {!userId ? null : (
