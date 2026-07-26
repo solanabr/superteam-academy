@@ -83,7 +83,8 @@ export interface ExperimentRegistryEntry {
 export const EXPERIMENT_REGISTRY: readonly ExperimentRegistryEntry[] = [
   {
     id: "celebration-retiering",
-    mechanic: "Celebration re-tiering — confetti only at deploy + credential mint",
+    mechanic:
+      "Celebration re-tiering — confetti only at deploy + credential mint",
     issue: 549,
     hypothesis:
       "Reserving the full celebration for deploy/mint (not every lesson) raises the signal without training reward-seeking.",
@@ -91,7 +92,8 @@ export const EXPERIMENT_REGISTRY: readonly ExperimentRegistryEntry[] = [
     exposureUnit: "learner",
     mergedDate: "2026-07-26",
     evidenceBasis: "PED-10 overjustification; UIU-09 reward framing",
-    preregisteredDirection: "no drop in weekly return; celebration events concentrate at deploy/mint",
+    preregisteredDirection:
+      "no drop in weekly return; celebration events concentrate at deploy/mint",
     status: "merged-pre-launch",
   },
   {
@@ -103,8 +105,10 @@ export const EXPERIMENT_REGISTRY: readonly ExperimentRegistryEntry[] = [
     primaryMetric: "weekly return of previously-active learners",
     exposureUnit: "learner",
     mergedDate: "2026-07-26",
-    evidenceBasis: "UIU-08 GitHub streak-removal natural experiment; PED-14/UIU-09 leaderboards",
-    preregisteredDirection: "weekly return holds or rises; weekend/one-token grinding falls",
+    evidenceBasis:
+      "UIU-08 GitHub streak-removal natural experiment; PED-14/UIU-09 leaderboards",
+    preregisteredDirection:
+      "weekly return holds or rises; weekend/one-token grinding falls",
     status: "merged-pre-launch",
   },
   {
@@ -116,7 +120,8 @@ export const EXPERIMENT_REGISTRY: readonly ExperimentRegistryEntry[] = [
     primaryMetric: "lesson-2 continuation rate",
     exposureUnit: "learner",
     mergedDate: "2026-07-26",
-    evidenceBasis: "endowed-progress effect (Nunes & Drèze); stated-reason framing",
+    evidenceBasis:
+      "endowed-progress effect (Nunes & Drèze); stated-reason framing",
     preregisteredDirection: "higher lesson-2 continuation vs no endowed tick",
     status: "merged-pre-launch",
   },
@@ -142,8 +147,10 @@ export const EXPERIMENT_REGISTRY: readonly ExperimentRegistryEntry[] = [
     primaryMetric: "Earn submission within 30 days of handoff",
     exposureUnit: "learner",
     mergedDate: "2026-07-26",
-    evidenceBasis: "E8 (personalization report); launch KPI = capstone deploys + Earn submissions",
-    preregisteredDirection: "non-zero Earn submissions attributable to the handoff",
+    evidenceBasis:
+      "E8 (personalization report); launch KPI = capstone deploys + Earn submissions",
+    preregisteredDirection:
+      "non-zero Earn submissions attributable to the handoff",
     status: "merged-pre-launch",
   },
   {
@@ -168,13 +175,31 @@ export const EXPERIMENT_REGISTRY: readonly ExperimentRegistryEntry[] = [
     primaryMetric: "comprehension-check first-attempt accuracy",
     exposureUnit: "learner",
     mergedDate: "2026-07-26",
-    evidenceBasis: "PED-01 retrieval practice; PED-02 transfer requires explanatory feedback",
+    evidenceBasis:
+      "PED-01 retrieval practice; PED-02 transfer requires explanatory feedback",
     preregisteredDirection: "higher first-attempt accuracy on later checks",
     status: "merged-pre-launch",
   },
   {
+    id: "stuck-nudge",
+    mechanic:
+      "Stuck-nudge v1 — authored hint offered in-editor after N failed runs",
+    issue: 576,
+    hypothesis:
+      "Surfacing a free authored hint in-editor after repeated failed runs raises the post-nudge solve rate without learners abandoning the challenge.",
+    primaryMetric: "post-nudge solve rate",
+    exposureUnit: "learner",
+    mergedDate: "2026-07-26",
+    evidenceBasis:
+      "UIUX experiment #7 (authored per-challenge scaffolding); F17 authored beats LLM-generated",
+    preregisteredDirection:
+      "higher solve rate among nudge-exposed learners; no rise in challenge abandonment",
+    status: "merged-pre-launch",
+  },
+  {
     id: "streak-freeze-insurance",
-    mechanic: "Streak forgiveness / absence insurance (one PR, all streak paths)",
+    mechanic:
+      "Streak forgiveness / absence insurance (one PR, all streak paths)",
     issue: 573,
     hypothesis:
       "Absence insurance before prominence reduces streak abandonment after a missed day (forgiveness-before-prominence).",
@@ -191,13 +216,17 @@ export const EXPERIMENT_REGISTRY: readonly ExperimentRegistryEntry[] = [
  * `null` when exposure has not started (no launch date), because a read date does
  * not exist until the novelty clock does.
  */
-export function earliestReadDate(exposureStart: string | null | undefined): string | null {
+export function earliestReadDate(
+  exposureStart: string | null | undefined
+): string | null {
   if (!exposureStart) return null;
   return addDays(exposureStart, EVALUATION_WINDOW_DAYS);
 }
 
 /** Resolves a row's exposure start: its own override, else the shared launch date. */
-export function exposureStartFor(entry: ExperimentRegistryEntry): string | null {
+export function exposureStartFor(
+  entry: ExperimentRegistryEntry
+): string | null {
   return entry.exposureStart ?? LAUNCH_DATE;
 }
 
@@ -225,7 +254,10 @@ export function registryWithEarliestRead(): ExperimentRow[] {
  * whenever the clock has not started or the window has not elapsed — so a caller
  * that gates on this fails closed inside the novelty trough.
  */
-export function isReadable(entry: ExperimentRegistryEntry, on: Date = new Date()): boolean {
+export function isReadable(
+  entry: ExperimentRegistryEntry,
+  on: Date = new Date()
+): boolean {
   const earliest = earliestReadDate(exposureStartFor(entry));
   if (!earliest) return false;
   return on.getTime() >= parseIsoDateUtc(earliest).getTime();

@@ -44,11 +44,13 @@ function challengePayload(ctx: ChallengeEventContext): Record<string, unknown> {
 // (lib/gamification/celebration.ts): module-level, reset only in tests.
 const startedLessons = new Set<string>();
 const mintedCourses = new Set<string>();
+const nudgedLessons = new Set<string>();
 
 /** Test-only: clears the session-scoped event dedupe state. */
 export function resetAnalyticsEventDedupeForTests(): void {
   startedLessons.clear();
   mintedCourses.clear();
+  nudgedLessons.clear();
 }
 
 /**
@@ -84,9 +86,55 @@ export function trackChallengeFailed(
   });
 }
 
-/** `challenge_solved` — a run where every test (or the build) passed. */
-export function trackChallengeSolved(ctx: ChallengeEventContext): void {
-  trackEvent("challenge_solved", challengePayload(ctx));
+/**
+ * `challenge_solved` — a run where every test (or the build) passed. When the
+ * stuck-nudge (LX-C4) had already surfaced for this lesson, `postNudge: true`
+ * tags the solve so post-nudge solve rate is a straight partition of solves;
+ * the flag is omitted otherwise, keeping the common payload lean.
+ */
+export function trackChallengeSolved(
+  ctx: ChallengeEventContext,
+  opts: { postNudge?: boolean } = {}
+): void {
+  trackEvent("challenge_solved", {
+    ...challengePayload(ctx),
+    ...(opts.postNudge ? { postNudge: true } : {}),
+  });
+}
+
+/**
+ * `stuck_nudge_shown` — the LX-C4 stuck-nudge (an authored hint offered
+ * in-editor after ENCOURAGEMENT_THRESHOLD consecutive failed runs) became
+ * visible. Deduped per lesson per session: one exposure = one event, so
+ * acceptance and post-nudge solve rates share a stable denominator even though
+ * the banner re-renders on every subsequent failed run.
+ */
+export function trackStuckNudgeShown(
+  ctx: ChallengeEventContext,
+  consecutiveFails: number
+): void {
+  if (nudgedLessons.has(ctx.lessonId)) return;
+  nudgedLessons.add(ctx.lessonId);
+  trackEvent("stuck_nudge_shown", {
+    ...challengePayload(ctx),
+    consecutiveFails,
+  });
+}
+
+/**
+ * `stuck_nudge_accepted` — the learner revealed an authored hint from the
+ * stuck-nudge. `hintIndex` is the zero-based position in the authored-hint
+ * list (content ids only, never the hint text — that is authored content, but
+ * payloads stay lean and PII-free regardless).
+ */
+export function trackStuckNudgeAccepted(
+  ctx: ChallengeEventContext,
+  hintIndex: number
+): void {
+  trackEvent("stuck_nudge_accepted", {
+    ...challengePayload(ctx),
+    hintIndex,
+  });
 }
 
 export type CredentialMintObservationSource = "manual_mint" | "realtime";

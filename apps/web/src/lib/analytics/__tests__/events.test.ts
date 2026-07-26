@@ -7,6 +7,8 @@ import {
   trackChallengeSolved,
   trackChallengeStarted,
   trackCredentialMinted,
+  trackStuckNudgeAccepted,
+  trackStuckNudgeShown,
 } from "../events";
 
 const { trackEvent } = vi.hoisted(() => ({ trackEvent: vi.fn() }));
@@ -65,6 +67,23 @@ describe("challenge lifecycle events", () => {
     });
   });
 
+  it("challenge_solved omits postNudge unless a nudge was shown", () => {
+    trackChallengeSolved(ctx, { postNudge: false });
+    expect(trackEvent).toHaveBeenLastCalledWith("challenge_solved", {
+      lessonId: "lesson-anchor-pda",
+      challengeKind: "rust",
+      courseId: "course-solana-201",
+    });
+
+    trackChallengeSolved(ctx, { postNudge: true });
+    expect(trackEvent).toHaveBeenLastCalledWith("challenge_solved", {
+      lessonId: "lesson-anchor-pda",
+      challengeKind: "rust",
+      courseId: "course-solana-201",
+      postNudge: true,
+    });
+  });
+
   it("omits courseId when the surface does not know it", () => {
     trackChallengeRun({ lessonId: "l1", challengeKind: "js" });
     expect(trackEvent).toHaveBeenCalledWith("challenge_run", {
@@ -86,6 +105,34 @@ describe("challenge lifecycle events", () => {
 
     trackChallengeStarted({ ...ctx, lessonId: "another-lesson" });
     expect(trackEvent).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("stuck-nudge events (LX-C4)", () => {
+  it("stuck_nudge_shown dedupes per lesson per session", () => {
+    trackStuckNudgeShown(ctx, 3);
+    trackStuckNudgeShown(ctx, 4);
+    expect(trackEvent).toHaveBeenCalledTimes(1);
+    expect(trackEvent).toHaveBeenCalledWith("stuck_nudge_shown", {
+      lessonId: "lesson-anchor-pda",
+      challengeKind: "rust",
+      courseId: "course-solana-201",
+      consecutiveFails: 3,
+    });
+
+    trackStuckNudgeShown({ ...ctx, lessonId: "another-lesson" }, 3);
+    expect(trackEvent).toHaveBeenCalledTimes(2);
+  });
+
+  it("stuck_nudge_accepted carries the zero-based hint index, never text", () => {
+    trackStuckNudgeAccepted(ctx, 0);
+    trackStuckNudgeAccepted(ctx, 1);
+    expect(trackEvent).toHaveBeenNthCalledWith(2, "stuck_nudge_accepted", {
+      lessonId: "lesson-anchor-pda",
+      challengeKind: "rust",
+      courseId: "course-solana-201",
+      hintIndex: 1,
+    });
   });
 });
 

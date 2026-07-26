@@ -25,6 +25,8 @@ import {
   trackChallengeRun,
   trackChallengeSolved,
   trackChallengeStarted,
+  trackStuckNudgeAccepted,
+  trackStuckNudgeShown,
 } from "@/lib/analytics/events";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -98,6 +100,14 @@ export function ChallengeInterface({
   // failed runs; a passing run resets the counter and the dismissal.
   const [consecutiveFails, setConsecutiveFails] = useState(0);
   const [encouragementDismissed, setEncouragementDismissed] = useState(false);
+
+  // Stuck-nudge v1 (LX-C4): once the encouragement threshold is crossed AND the
+  // challenge ships authored hints, the same banner offers to reveal one hint at
+  // a time in-editor (the free authored-hint channel, never the AI chat). A
+  // passing run resets the reveal. `nudgeShownRef` records whether the nudge was
+  // ever surfaced this attempt so the eventual solve can be tagged postNudge.
+  const [revealedHintCount, setRevealedHintCount] = useState(0);
+  const nudgeShownRef = useRef(false);
 
   // Analytics (LX-F1): challenge lifecycle events compose alongside the
   // existing state. The fail streak is mirrored in a ref because the state
@@ -191,9 +201,11 @@ export function ChallengeInterface({
       trackChallengeRun(ctx);
       if (result.success) {
         failStreakRef.current = 0;
-        trackChallengeSolved(ctx);
+        trackChallengeSolved(ctx, { postNudge: nudgeShownRef.current });
+        nudgeShownRef.current = false;
         setConsecutiveFails(0);
         setEncouragementDismissed(false);
+        setRevealedHintCount(0);
       } else {
         failStreakRef.current += 1;
         trackChallengeFailed(ctx, failStreakRef.current);
@@ -202,6 +214,37 @@ export function ChallengeInterface({
     },
     [lessonId, courseId, challengeKind]
   );
+
+  // Stuck-nudge visibility (LX-C4) — the same threshold + dismissal that drive
+  // the encouragement copy, further gated on there being an authored hint to
+  // surface. Authored hints are a static content channel, so revealing one is
+  // safe even while the AI pane is suppressed (LX-C1/F18): the nudge points at
+  // hints, never at the tutor.
+  const hasHints = hints.length > 0;
+  const nudgeVisible =
+    shouldShowEncouragement(consecutiveFails) &&
+    !encouragementDismissed &&
+    !isComplete;
+  const hintNudgeVisible = nudgeVisible && hasHints;
+
+  // One `stuck_nudge_shown` per lesson exposure (the event helper dedupes), and
+  // record the exposure so the eventual solve is tagged postNudge.
+  useEffect(() => {
+    if (!hintNudgeVisible) return;
+    nudgeShownRef.current = true;
+    trackStuckNudgeShown(
+      { lessonId, courseId, challengeKind },
+      consecutiveFails
+    );
+  }, [hintNudgeVisible, consecutiveFails, lessonId, courseId, challengeKind]);
+
+  const handleRevealHint = useCallback(() => {
+    setRevealedHintCount((count) => {
+      if (count >= hints.length) return count;
+      trackStuckNudgeAccepted({ lessonId, courseId, challengeKind }, count);
+      return count + 1;
+    });
+  }, [hints.length, lessonId, courseId, challengeKind]);
 
   const handleClearOutput = useCallback(() => {
     setChallengeState((prev) => ({
@@ -558,15 +601,19 @@ export function ChallengeInterface({
           <div className="absolute left-1/2 top-1/2 h-0.5 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full transition-colors [background:var(--resizer-handle)] group-hover:[background:var(--primary)]" />
         </div>
 
-        {/* Struggling encouragement — supportive, non-blocking nudge after
-            ≥3 consecutive failed runs (LX-B11 / F11, R10). */}
-        {shouldShowEncouragement(consecutiveFails) &&
-          !encouragementDismissed &&
-          !isComplete && (
-            <div
-              role="status"
-              className="order-3 flex shrink-0 items-center gap-2 border-t border-border bg-card px-3 py-2 lg:order-none"
-            >
+        {/* Struggling encouragement + stuck-nudge — supportive, non-blocking
+            banner after ≥3 consecutive failed runs (LX-B11 / F11, R10). When the
+            challenge ships authored hints (LX-C4) the banner also reveals them
+            one at a time in-editor; while the AI pane is suppressed (LX-C1/F18)
+            the copy points at hints only, never the tutor. role="status" is a
+            polite live region, so a newly revealed hint is announced without
+            stealing focus. */}
+        {nudgeVisible && (
+          <div
+            role="status"
+            className="order-3 flex shrink-0 flex-col gap-2 border-t border-border bg-card px-3 py-2 lg:order-none"
+          >
+            <div className="flex items-center gap-2">
               <Lightbulb
                 size={18}
                 weight="duotone"
@@ -577,7 +624,9 @@ export function ChallengeInterface({
                 <span className="font-bold text-text">
                   {t("encouragementTitle")}
                 </span>{" "}
-                {t("encouragementBody")}
+                {aiSuppressed
+                  ? t("encouragementBodyHintsOnly")
+                  : t("encouragementBody")}
               </p>
               <button
                 onClick={() => setEncouragementDismissed(true)}
@@ -587,7 +636,32 @@ export function ChallengeInterface({
                 <X size={14} weight="bold" aria-hidden="true" />
               </button>
             </div>
-          )}
+
+            {hasHints && (
+              <div className="flex flex-col gap-1.5 pl-6">
+                {hints.slice(0, revealedHintCount).map((hint, i) => (
+                  <p key={i} className="text-xs text-text-2">
+                    <span className="font-semibold text-text">
+                      {t("stuckNudgeHintLabel", { number: i + 1 })}
+                    </span>{" "}
+                    {hint}
+                  </p>
+                ))}
+                {revealedHintCount < hints.length && (
+                  <button
+                    type="button"
+                    onClick={handleRevealHint}
+                    className="self-start rounded-md border border-border px-2.5 py-1 text-xs font-medium text-text transition-colors hover:border-primary hover:[background:var(--accent-bg)]"
+                  >
+                    {revealedHintCount === 0
+                      ? t("stuckNudgeAction")
+                      : t("stuckNudgeNextAction")}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Output panel */}
         <div
