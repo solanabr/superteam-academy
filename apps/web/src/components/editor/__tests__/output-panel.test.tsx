@@ -250,6 +250,65 @@ describe("degenerate synthesized shapes", () => {
   });
 });
 
+describe("authored failure_message (#575)", () => {
+  const withMessage: ExecutionResult = {
+    success: false,
+    output: "",
+    testResults: [
+      {
+        testCase: {
+          ...tc("t1", "handles zero", "0, 0", "result === 0"),
+          failureMessage:
+            "Adding zero should return the other operand unchanged.",
+        },
+        passed: false,
+        actualOutput: "fail: assertion false",
+      },
+    ],
+  };
+
+  it("renders the authored explanation on the failing test", () => {
+    renderWithIntl(panel(withMessage));
+
+    expect(screen.getByText(/why this failed/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/adding zero should return the other operand/i)
+    ).toBeInTheDocument();
+    // The raw actualOutput is still shown — the authored message composes with
+    // the existing failure detail, it does not replace it.
+    expect(screen.getByText("fail: assertion false")).toBeInTheDocument();
+  });
+
+  it("shows exactly today's display when no failureMessage is authored", () => {
+    renderWithIntl(panel(jsResult));
+
+    expect(screen.queryByText(/why this failed/i)).not.toBeInTheDocument();
+  });
+
+  it("never renders a failureMessage on a passing test", () => {
+    renderWithIntl(
+      panel({
+        success: true,
+        output: "",
+        testResults: [
+          {
+            testCase: {
+              ...tc("t1", "adds", "1, 2", "result === 3"),
+              failureMessage: "should not appear on a pass",
+            },
+            passed: true,
+            actualOutput: "pass",
+          },
+        ],
+      })
+    );
+
+    fireEvent.mouseDown(screen.getByRole("tab", { name: /test cases/i }));
+    expect(screen.queryByText(/why this failed/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/should not appear/i)).not.toBeInTheDocument();
+  });
+});
+
 describe("stdout cap", () => {
   it("caps stdout at 10,000 characters and shows a truncation notice", () => {
     const bigOutput = "x".repeat(10_000) + "END_MARKER";

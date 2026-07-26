@@ -18,6 +18,15 @@ export const TestCase = z.object({
   description: z.string().min(1),
   input: z.string(),
   expectedOutput: z.string(),
+  /**
+   * Teacher-authored explanation shown when THIS case fails (issue #575, LX-C3).
+   * Optional — absent leaves the failure display exactly as today. Authored, never
+   * LLM-generated (UIUX-04 / F17: expert-written per-test explanations beat both
+   * stock and GPT-4 messages). One or two sentences; bounded so it stays a nudge,
+   * not a wall of text. EN-only v1 — localization rides the content-i18n mechanism
+   * (LX-D5), never scoped to one field.
+   */
+  failureMessage: z.string().min(1).max(300).optional(),
 });
 export type TestCaseT = z.infer<typeof TestCase>;
 

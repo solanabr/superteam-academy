@@ -10,6 +10,12 @@ export interface TestCase {
   description: string;
   input: string;
   expectedOutput: string;
+  /**
+   * Teacher-authored explanation shown when this case fails (#575, LX-C3).
+   * Post-dates the frozen GROQ capture, so the projector surfaces it ONLY when a
+   * test carries it (absent → omitted, failure display unchanged). EN-only v1.
+   */
+  failureMessage?: string;
 }
 
 /**

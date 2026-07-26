@@ -46,6 +46,13 @@ function TestResultRow({
   const hasTestCode = input.length > 0 || expectedOutput.length > 0;
   const message = result.actualOutput.trim();
 
+  // Teacher-authored per-test explanation (#575, LX-C3). Rendered only on a
+  // failing case that carries one; absent → exactly today's display. Authored,
+  // never LLM-generated (F17).
+  const failureMessage = !result.passed
+    ? result.testCase.failureMessage?.trim()
+    : undefined;
+
   return (
     <div
       className={cn(
@@ -102,6 +109,16 @@ function TestResultRow({
         </span>
       </button>
       <div id={detailId} hidden={!expanded}>
+        {failureMessage && (
+          <div className="mx-3 mb-3 ml-9 rounded-md border p-3 [background:var(--danger-light)] [border-color:var(--danger-border)]">
+            <div className="mb-1 text-xs font-semibold text-danger">
+              {t("whyThisFailed")}
+            </div>
+            <p className="text-xs leading-relaxed text-text">
+              {failureMessage}
+            </p>
+          </div>
+        )}
         <div
           className={cn(
             "grid gap-3 px-3 pb-3 pl-9 text-xs",

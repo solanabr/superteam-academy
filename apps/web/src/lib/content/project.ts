@@ -97,6 +97,14 @@ function projectTests(v: unknown): TestCase[] | null {
       description: optString(o.description),
       input: optString(o.input),
       expectedOutput: optString(o.expectedOutput),
+      // `failureMessage` (#575) post-dates the frozen GROQ capture the golden
+      // fixtures pin, so — like `tutorNotes` below — it is surfaced ONLY when a
+      // test actually carries it. A case without an authored message therefore
+      // projects byte-identically to the golden, and the OutputPanel falls back
+      // to exactly today's failure display.
+      ...(typeof o.failureMessage === "string" && o.failureMessage.length > 0
+        ? { failureMessage: o.failureMessage }
+        : {}),
     };
   }) as unknown as TestCase[];
 }
