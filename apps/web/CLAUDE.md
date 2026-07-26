@@ -78,6 +78,11 @@ AI_PARTNER_SEAL_SECRET=            # Optional dedicated key for sealing the comp
                                     # SUPABASE_SERVICE_ROLE_KEY.
 AI_PARTNER_DEBUG=                  # Set to "1" to log per-call prompt-cache token counts
                                     # from /api/ai/partner. Default off (quiet in production).
+OPENENDED_AI_REPLY=                # Set to "1" to enable the best-effort AI reply on
+                                    # /api/lessons/reflect (openEnded reflections). Default OFF:
+                                    # the reflection SEAL is always returned regardless; the reply
+                                    # is enrichment only and is a metered cost path whose accounting
+                                    # is owned by #590. Requires GEMINI_API_KEY when enabled.
 
 # Optional — Rust playground proxy (server-only)
 RUST_PLAYGROUND_URL=               # /api/rust/execute upstream (default: play.rust-lang.org/execute)

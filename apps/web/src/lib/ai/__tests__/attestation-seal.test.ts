@@ -36,6 +36,7 @@ afterEach(() => {
 
 const future = () => Date.now() + 5 * 60_000;
 const expect3 = {
+  courseId: "course-solana-101",
   lessonId: "lesson-accounts",
   blockKey: "reflect",
   userId: "user-1",
@@ -53,6 +54,14 @@ describe("attestation-seal", () => {
     const token = sealAttestation({ ...expect3, exp: future() });
     expect(
       openAttestation(token, { ...expect3, lessonId: "lesson-pdas" })
+    ).toBe(false);
+  });
+
+  it("REJECTS replay into a different course (same-named lesson/block)", async () => {
+    const { sealAttestation, openAttestation } = await import("../check-seal");
+    const token = sealAttestation({ ...expect3, exp: future() });
+    expect(
+      openAttestation(token, { ...expect3, courseId: "course-solana-201" })
     ).toBe(false);
   });
 
