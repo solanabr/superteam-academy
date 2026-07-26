@@ -2,8 +2,8 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 
 vi.mock("server-only", () => ({}));
 import type { AdminTestCase, CodeBlockData } from "@superteam-lms/types";
-import { isExecutorAvailable, runJsSubmission } from "../executor";
 import { gradeCode } from "@/lib/grading/graders/code";
+import { isExecutorAvailable, runJsSubmission } from "../executor";
 
 // The executor runs on QuickJS compiled to WebAssembly (no native addon), so it
 // loads in every environment — CI, and Vercel serverless. EXECUTOR_AVAILABLE is
@@ -262,20 +262,24 @@ describe.skipIf(!EXECUTOR_AVAILABLE)("gradeCode (executor present)", () => {
     });
   });
 
-  it("403 for a wrong submission (gate would 403)", async () => {
-    expect(await gradeCode(codeBlock(), { code: WRONG })).toEqual({
-      ok: false,
-      status: 403,
-    });
+  it("403 for a wrong submission (gate would 403), carrying the failed tests (LX-B4)", async () => {
+    const result = await gradeCode(codeBlock(), { code: WRONG });
+    expect(result).toMatchObject({ ok: false, status: 403 });
+    // The failure-capture feed reads these; the real executor must surface them.
+    const failedTests = (result as { failedTests?: { passed: boolean }[] })
+      .failedTests;
+    expect(failedTests?.length).toBeGreaterThan(0);
+    expect(failedTests?.every((t) => !t.passed)).toBe(true);
   });
 
-  it("403 for a forged-visible-only submission", async () => {
-    expect(await gradeCode(codeBlock(), { code: PASSES_VISIBLE_ONLY })).toEqual(
-      {
-        ok: false,
-        status: 403,
-      }
-    );
+  it("403 for a forged-visible-only submission, capturing the failed HIDDEN test", async () => {
+    const result = await gradeCode(codeBlock(), { code: PASSES_VISIBLE_ONLY });
+    expect(result).toMatchObject({ ok: false, status: 403 });
+    const failedTests = (
+      result as { failedTests?: { hidden: boolean; passed: boolean }[] }
+    ).failedTests;
+    expect(failedTests?.some((t) => t.hidden)).toBe(true);
+    expect(failedTests?.every((t) => !t.passed)).toBe(true);
   });
 });
 

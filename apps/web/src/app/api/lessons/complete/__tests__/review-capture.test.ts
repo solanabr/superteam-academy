@@ -1,9 +1,9 @@
 /* eslint-disable import/order -- vi.mock calls must precede importing the route. */
-// The 403 `reason` discriminator (#564): the route's 403 bodies must carry a
-// machine string the client can map to the RIGHT localized copy — without it a
-// failed quiz rendered the "verify enrollment" message. Companion to
-// gate.test.ts, with BOTH graders registered (gate.test.ts deliberately omits
-// `quiz` to prove the no-grader 503 path).
+// LX-B4: a GRADED miss on the completion route's deny path is captured into the
+// review substrate; a "could-not-judge" 503 and the non-learning denials
+// (enrollment / reflection) are NOT. Capture is best-effort — a capture failure
+// must never change the deny response. Shares the mock harness with
+// deny-reasons.test.ts.
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 import type { GradeResult } from "@/lib/grading/types";
@@ -22,6 +22,7 @@ const {
   isRateLimited,
   isCourseInMaintenance,
   isPlatformFrozen,
+  captureReviewFailure,
 } = vi.hoisted(() => ({
   getUser: vi.fn<() => Promise<unknown>>(),
   singleProfile: vi.fn<() => Promise<unknown>>(),
@@ -34,42 +35,34 @@ const {
   isRateLimited: vi.fn<(ns: string) => Promise<boolean>>(),
   isCourseInMaintenance: vi.fn<() => Promise<boolean>>(),
   isPlatformFrozen: vi.fn<() => Promise<boolean>>(),
+  captureReviewFailure: vi.fn<() => Promise<void>>(),
 }));
 
 vi.mock("@/lib/rate-limit", () => ({
   isRateLimited: (ns: string) => isRateLimited(ns),
   getClientIp: () => "203.0.113.7",
 }));
-
 vi.mock("@/lib/supabase/server", () => ({
   createClient: async () => ({ auth: { getUser } }),
 }));
-
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
-    from: () => ({
-      select: () => ({ eq: () => ({ single: singleProfile }) }),
-    }),
+    from: () => ({ select: () => ({ eq: () => ({ single: singleProfile }) }) }),
   }),
 }));
-
 vi.mock("@/lib/content/queries", () => ({
   getLessonByIdForGrading,
   getCourseById,
 }));
-
 vi.mock("@/lib/grading/graders", () => ({
   GRADERS: { code: () => codeGrader(), quiz: () => quizGrader() },
 }));
-
 vi.mock("@/lib/review/schedule-review", () => ({
-  captureReviewFailure: vi.fn().mockResolvedValue(undefined),
+  captureReviewFailure: (...a: unknown[]) => captureReviewFailure(...(a as [])),
 }));
-
 vi.mock("@/lib/ai/check-seal", () => ({
   openAttestation: () => openAttestation(),
 }));
-
 vi.mock("@/lib/solana/academy-program", () => ({
   isOnChainProgramLive,
   completeLesson: vi.fn(),
@@ -96,14 +89,8 @@ function req(body: unknown): NextRequest {
     headers: { "content-type": "application/json" },
   });
 }
-
 const call = (proofs: Record<string, unknown> = {}) =>
   POST(req({ lessonId: "lesson-1", courseId: "course-1", proofs }));
-
-interface DenyBody {
-  error: string;
-  reason?: string;
-}
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -117,10 +104,11 @@ beforeEach(() => {
   isRateLimited.mockResolvedValue(false);
   isCourseInMaintenance.mockResolvedValue(false);
   isPlatformFrozen.mockResolvedValue(false);
+  captureReviewFailure.mockResolvedValue(undefined);
 });
 
-describe("403 reason discriminator (#564)", () => {
-  it("failed quiz grade → reason 'quiz_failed'", async () => {
+describe("LX-B4 failure capture on the deny path", () => {
+  it("captures a failed QUIZ (403) keyed by lesson id, reason quiz_failed", async () => {
     getLessonByIdForGrading.mockResolvedValue({
       blocks: [{ _type: "quiz", key: "q1" }],
     });
@@ -129,49 +117,48 @@ describe("403 reason discriminator (#564)", () => {
     const res = await call({ q1: { selections: { x: ["wrong"] } } });
 
     expect(res.status).toBe(403);
-    expect(((await res.json()) as DenyBody).reason).toBe("quiz_failed");
+    expect(captureReviewFailure).toHaveBeenCalledTimes(1);
+    expect(captureReviewFailure).toHaveBeenCalledWith({
+      userId: "user-1",
+      lessonId: "lesson-1",
+      reason: "quiz_failed",
+      failedTests: undefined,
+    });
   });
 
-  it("failed code grade → reason 'challenge_failed'", async () => {
+  it("captures a failed CHALLENGE (403) and plumbs its failedTests through", async () => {
     getLessonByIdForGrading.mockResolvedValue({
       blocks: [{ _type: "code", key: "c1" }],
     });
-    codeGrader.mockResolvedValue({ ok: false, status: 403 });
+    const failedTests = [
+      { id: "t2", hidden: true, passed: false, detail: "wrong output" },
+    ];
+    codeGrader.mockResolvedValue({ ok: false, status: 403, failedTests });
 
     const res = await call({ c1: { code: "wrong" } });
 
     expect(res.status).toBe(403);
-    expect(((await res.json()) as DenyBody).reason).toBe("challenge_failed");
-  });
-
-  it("mixed lesson where only the QUIZ fails → 'quiz_failed', not 'challenge_failed'", async () => {
-    getLessonByIdForGrading.mockResolvedValue({
-      blocks: [
-        { _type: "code", key: "c1" },
-        { _type: "quiz", key: "q1" },
-      ],
+    expect(captureReviewFailure).toHaveBeenCalledWith({
+      userId: "user-1",
+      lessonId: "lesson-1",
+      reason: "challenge_failed",
+      failedTests,
     });
-    codeGrader.mockResolvedValue({ ok: true });
-    quizGrader.mockResolvedValue({ ok: false, status: 403 });
-
-    const res = await call({ c1: { code: "ok" }, q1: { selections: {} } });
-
-    expect(res.status).toBe(403);
-    expect(((await res.json()) as DenyBody).reason).toBe("quiz_failed");
   });
 
-  it("missing reflection attestation → reason 'reflection_required'", async () => {
+  it("does NOT capture a 503 (could-not-judge, not a learning signal)", async () => {
     getLessonByIdForGrading.mockResolvedValue({
-      blocks: [{ _type: "openEnded", key: "o1" }],
+      blocks: [{ _type: "code", key: "c1" }],
     });
+    codeGrader.mockResolvedValue({ ok: false, status: 503 });
 
-    const res = await call({});
+    const res = await call({ c1: { code: "x" } });
 
-    expect(res.status).toBe(403);
-    expect(((await res.json()) as DenyBody).reason).toBe("reflection_required");
+    expect(res.status).toBe(503);
+    expect(captureReviewFailure).not.toHaveBeenCalled();
   });
 
-  it("missing on-chain enrollment → reason 'enrollment_missing'", async () => {
+  it("does NOT capture a missing-enrollment deny (grading passed — not a miss)", async () => {
     getLessonByIdForGrading.mockResolvedValue({
       blocks: [{ _type: "quiz", key: "q1" }],
     });
@@ -181,18 +168,32 @@ describe("403 reason discriminator (#564)", () => {
     const res = await call({ q1: { selections: {} } });
 
     expect(res.status).toBe(403);
-    expect(((await res.json()) as DenyBody).reason).toBe("enrollment_missing");
+    expect(captureReviewFailure).not.toHaveBeenCalled();
   });
 
-  it("grader 503 (could-not-judge) carries NO reason — the block did not fail", async () => {
+  it("does NOT capture a missing-reflection deny (not a graded miss)", async () => {
     getLessonByIdForGrading.mockResolvedValue({
-      blocks: [{ _type: "code", key: "c1" }],
+      blocks: [{ _type: "openEnded", key: "o1" }],
     });
-    codeGrader.mockResolvedValue({ ok: false, status: 503 });
 
-    const res = await call({ c1: { code: "x" } });
+    const res = await call({});
 
-    expect(res.status).toBe(503);
-    expect(((await res.json()) as DenyBody).reason).toBeUndefined();
+    expect(res.status).toBe(403);
+    expect(captureReviewFailure).not.toHaveBeenCalled();
+  });
+
+  it("best-effort: a capture throw NEVER changes the deny response", async () => {
+    getLessonByIdForGrading.mockResolvedValue({
+      blocks: [{ _type: "quiz", key: "q1" }],
+    });
+    quizGrader.mockResolvedValue({ ok: false, status: 403 });
+    captureReviewFailure.mockRejectedValue(new Error("substrate down"));
+
+    const res = await call({ q1: { selections: { x: ["wrong"] } } });
+
+    expect(res.status).toBe(403);
+    expect(((await res.json()) as { reason?: string }).reason).toBe(
+      "quiz_failed"
+    );
   });
 });

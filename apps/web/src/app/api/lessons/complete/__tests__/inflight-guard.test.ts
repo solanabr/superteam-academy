@@ -65,6 +65,9 @@ vi.mock("@/lib/content/queries", () => ({
   getCourseById,
 }));
 vi.mock("@/lib/grading/graders", () => ({ GRADERS: {} }));
+vi.mock("@/lib/review/schedule-review", () => ({
+  captureReviewFailure: vi.fn().mockResolvedValue(undefined),
+}));
 vi.mock("@/lib/ai/check-seal", () => ({ openAttestation: () => true }));
 vi.mock("@/lib/solana/academy-program", () => ({
   isOnChainProgramLive,

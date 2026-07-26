@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getCourseById, getLessonByIdForGrading } from "@/lib/content/queries";
 import type { CompletionDenyReason } from "@/lib/lessons/completion-error";
 import { GRADERS, type GradedBlockType } from "@/lib/grading/graders";
+import { captureReviewFailure } from "@/lib/review/schedule-review";
 import { openAttestation } from "@/lib/ai/check-seal";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { logError } from "@/lib/logging";
@@ -227,6 +228,20 @@ export async function POST(request: NextRequest) {
       if (!grader) return deny(503, "No grader for this block type");
       const result = await grader(block, proofs[block.key]);
       if (!result.ok) {
+        // A genuine graded MISS (403) is a learning signal → capture it into the
+        // review substrate keyed by this lesson (LX-B4). A 503 is "could not
+        // judge" (executor outage), not a miss — never captured. Best-effort:
+        // the helper never throws by contract, and the `.catch` here is a second
+        // guard so a review-write hiccup can NEVER change this deny response.
+        if (result.status === 403) {
+          await captureReviewFailure({
+            userId: user.id,
+            lessonId,
+            reason: type === "quiz" ? "quiz_failed" : "challenge_failed",
+            failedTests:
+              "failedTests" in result ? result.failedTests : undefined,
+          }).catch(() => {});
+        }
         // 503 = we could not judge (executor outage) — no `reason`, since the
         // block did not "fail"; grading was unavailable.
         return deny(

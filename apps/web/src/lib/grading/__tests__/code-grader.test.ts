@@ -68,6 +68,38 @@ describe("gradeCode", () => {
     });
   });
 
+  it("plumbs the FAILED test cases through on a 403 (LX-B4)", async () => {
+    isExecutorAvailable.mockResolvedValue(true);
+    runJsSubmission.mockResolvedValue({
+      available: true,
+      passed: false,
+      results: [
+        { id: "t1", hidden: false, passed: true, detail: "pass" },
+        { id: "t2", hidden: true, passed: false, detail: "wrong output" },
+      ],
+    });
+    expect(await gradeCode(jsBlock, { code: "wrong" })).toEqual({
+      ok: false,
+      status: 403,
+      // only the FAILING subset rides along — passing cases are dropped
+      failedTests: [
+        { id: "t2", hidden: true, passed: false, detail: "wrong output" },
+      ],
+    });
+  });
+
+  it("omits failedTests when the run has no per-test rows (degenerate verdict)", async () => {
+    runRustSubmission.mockResolvedValue({
+      available: true,
+      passed: false,
+      results: [],
+    });
+    const rustBlock = { ...jsBlock, language: "rust" as const };
+    const result = await gradeCode(rustBlock, { code: "fn main(){}" });
+    expect(result).toEqual({ ok: false, status: 403 });
+    expect("failedTests" in result).toBe(false);
+  });
+
   it("503 when the isolate is unavailable (degrade closed)", async () => {
     isExecutorAvailable.mockResolvedValue(false);
     expect(await gradeCode(jsBlock, { code: "x" })).toEqual({
