@@ -16,7 +16,16 @@ const {
   profileSingle,
   upsert,
   userClientFrom,
+  logEvent,
 } = vi.hoisted(() => ({
+  logEvent:
+    vi.fn<
+      (params: {
+        event: string;
+        level?: string;
+        context?: Record<string, unknown>;
+      }) => void
+    >(),
   getUser: vi.fn<() => Promise<unknown>>(),
   isRateLimited: vi.fn<
     (
@@ -38,7 +47,13 @@ const {
     >(),
   profileSingle:
     vi.fn<() => Promise<{ data: { wallet_address: string } | null }>>(),
-  upsert: vi.fn<(row: unknown, opts: unknown) => Promise<{ error: null }>>(),
+  upsert:
+    vi.fn<
+      (
+        row: unknown,
+        opts: unknown
+      ) => Promise<{ error: { message: string } | null }>
+    >(),
   // Spy so tests can prove POST never touches a table through the
   // user-scoped client — deployed_programs is service_role-write-only
   // (20260726120000_lockdown_deployed_programs_rls), so a user-client write
@@ -71,8 +86,10 @@ vi.mock("@/lib/rate-limit", () => ({
 vi.mock("@/lib/solana/academy-program", () => ({
   getConnection: () => ({ getAccountInfo }),
 }));
+vi.mock("@/lib/logging", () => ({ logEvent }));
 
 import { POST } from "../route";
+import { CAPSTONE_CREDENTIAL } from "@/lib/credentials/capstone-gate";
 
 // ---------------------------------------------------------------------------
 // BPF Upgradeable Loader fixtures
@@ -584,6 +601,148 @@ describe("POST /api/deploy/save — service_role-only writes (RLS lockdown)", ()
     expect(schema).toContain(`CREATE POLICY ${SELECT_POLICY}`);
     expect(schema).toContain(
       "ALTER TABLE deployed_programs ENABLE ROW LEVEL SECURITY;"
+    );
+  });
+});
+
+// #725 — the save path had silent deny/exception paths (incl. an empty
+// `catch {}`), so a broken write looked identical to the gate correctly
+// withholding. Every non-success path must now emit a structured, greppable
+// event; every success must too (0 prod rows ever — the first real run must be
+// visible).
+describe("POST /api/deploy/save — observability logging (#725)", () => {
+  function loggedEvents(): string[] {
+    return logEvent.mock.calls.map((c) => c[0].event);
+  }
+
+  it("logs a saved event (info) with the row keys on success", async () => {
+    setHappyChain();
+
+    await POST(req(validBody));
+
+    expect(logEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: "deploy-save.saved",
+        level: "info",
+        context: expect.objectContaining({
+          userId: "user-1",
+          courseId: "course-1",
+          lessonId: "lesson-1",
+          programId: programId.toBase58(),
+        }),
+      })
+    );
+  });
+
+  it("logs a rejected event carrying the on-chain reason (not leaked to client)", async () => {
+    setHappyChain(Keypair.generate().publicKey); // authority mismatch
+
+    const res = await POST(req(validBody));
+
+    expect(((await res.json()) as { error: string }).error).toBe(
+      "Program verification failed"
+    );
+    expect(logEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: "deploy-save.rejected",
+        context: expect.objectContaining({
+          reason: "verification:authority-mismatch",
+        }),
+      })
+    );
+  });
+
+  it("logs a rejected event when no wallet is linked", async () => {
+    profileSingle.mockResolvedValue({ data: null });
+
+    await POST(req(validBody));
+
+    expect(logEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: "deploy-save.rejected",
+        context: expect.objectContaining({ reason: "no-wallet-linked" }),
+      })
+    );
+  });
+
+  it("logs an error event when the RPC is unreachable (fail-closed 503)", async () => {
+    getAccountInfo.mockRejectedValue(new Error("fetch failed"));
+
+    const res = await POST(req(validBody));
+
+    expect(res.status).toBe(503);
+    expect(logEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: "deploy-save.rpc-unavailable",
+        level: "error",
+      })
+    );
+  });
+
+  it("logs an error event when the verified row fails to write", async () => {
+    setHappyChain();
+    upsert.mockResolvedValue({ error: { message: "insert failed" } });
+
+    const res = await POST(req(validBody));
+
+    expect(res.status).toBe(500);
+    expect(logEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: "deploy-save.write-failed",
+        level: "error",
+      })
+    );
+  });
+
+  it("logs an unhandled event instead of swallowing an unexpected throw", async () => {
+    getUser.mockRejectedValue(new Error("auth exploded"));
+
+    const res = await POST(req(validBody));
+
+    expect(res.status).toBe(500);
+    expect(logEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: "deploy-save.unhandled",
+        level: "error",
+      })
+    );
+  });
+
+  it("does not log a rejection on the happy path", async () => {
+    setHappyChain();
+
+    await POST(req(validBody));
+
+    expect(loggedEvents()).not.toContain("deploy-save.rejected");
+  });
+});
+
+// The gate reads a `deployed_programs` row keyed by (user_id, course_id,
+// lesson_id). This proves the WRITE side stamps exactly the keys the READ side
+// (checkCapstoneCredentialGate) queries — a mismatch would silently deny every
+// legitimate capstone credential. Pinned to the real capstone constants, so a
+// content rename that moves the gate also breaks this test.
+describe("POST /api/deploy/save — writes the keys the capstone gate reads (#721/#725)", () => {
+  it("upserts a row scoped to the capstone course + deploy lesson", async () => {
+    setHappyChain();
+
+    const res = await POST(
+      req({
+        courseId: CAPSTONE_CREDENTIAL.courseId,
+        lessonId: CAPSTONE_CREDENTIAL.deployLessonId,
+        programId: programId.toBase58(),
+      })
+    );
+
+    expect(res.status).toBe(200);
+    expect(upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        user_id: "user-1",
+        course_id: CAPSTONE_CREDENTIAL.courseId,
+        lesson_id: CAPSTONE_CREDENTIAL.deployLessonId,
+        program_id: programId.toBase58(),
+      }),
+      { onConflict: "user_id,course_id,lesson_id" }
     );
   });
 });
