@@ -83,7 +83,7 @@ export function OpenEndedBlock({ block, ctx }: BlockRenderProps) {
           variant={status === "done" ? "outline" : "pushSuccess"}
           size="sm"
           onClick={submit}
-          disabled={!canSubmit && status !== "error"}
+          disabled={!canSubmit}
           aria-disabled={!canSubmit}
         >
           {status === "submitting" ? (

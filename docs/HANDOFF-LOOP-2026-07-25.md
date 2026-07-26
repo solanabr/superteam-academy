@@ -49,11 +49,31 @@ Backlog: **issues #549–#608** are the plan. `#549–#589` are the launch-exper
 
 ## Gate protocol (this session)
 
-Drain `label:needs-gate`. For each PR: re-verify the load-bearing claims **against the code**, not the
-description; confirm the adversarial review actually happened and its findings landed; check nothing
-in the do-not-touch list moved; then merge, or bounce with specifics.
+Drain `label:needs-gate`. For each PR, in this order:
+
+1. **CI green.**
+2. **Read the `claude[bot]` review body** — not just that a comment exists. A green `claude-review`
+   check only means the action ran. Every non-blocking finding must be fixed or filed before merge;
+   one left neither is lost work.
+3. **Re-verify the load-bearing claims against the code**, not the description.
+4. **Confirm the adversarial review happened** and its findings landed.
+5. **Check nothing in the do-not-touch list moved.** Then merge, or bounce with specifics.
 
 Bounced PRs get `needs-gate` removed and a comment; the orchestrator picks them back up.
+
+### Branch lifecycle — the collision that already happened once
+
+The gate squash-merges with `--delete-branch`. **Once a PR is merged, its branch is closed for
+business.** Pushing further commits to it _recreates_ the branch with work attached to no open PR,
+where it is silently orphaned.
+
+- **Orchestrator:** after the gate merges, land follow-ups on a **new branch off `main`**, referencing
+  the issue. Never re-push to a merged branch.
+- **Gate:** before merging, check whether the orchestrator is still pushing; after merging, comment on
+  the issue so it knows the branch is closed.
+
+This cost two commits on 2026-07-26 (recovered in #618) — the deny-egress comment correction and the
+`aria-disabled` fix.
 
 ## Do not touch without the owner
 
