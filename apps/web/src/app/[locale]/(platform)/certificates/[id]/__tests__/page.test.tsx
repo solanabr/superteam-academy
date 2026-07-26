@@ -18,19 +18,23 @@ const METADATA_URI = "https://gateway.irys.xyz/test-metadata";
 const db = vi.hoisted(() => ({
   certRow: null as Record<string, unknown> | null,
   profileRow: null as Record<string, unknown> | null,
+  tables: [] as string[],
 }));
 
 vi.mock("@/lib/supabase/client", () => ({
   createClient: () => ({
-    from: (table: string) => ({
-      select: () => ({
-        eq: () => ({
-          single: async () => ({
-            data: table === "certificates" ? db.certRow : db.profileRow,
+    from: (table: string) => {
+      db.tables.push(table);
+      return {
+        select: () => ({
+          eq: () => ({
+            single: async () => ({
+              data: table === "certificates" ? db.certRow : db.profileRow,
+            }),
           }),
         }),
-      }),
-    }),
+      };
+    },
   }),
 }));
 
@@ -93,6 +97,7 @@ const ORIGINAL_NETWORK = process.env.NEXT_PUBLIC_SOLANA_NETWORK;
 
 beforeEach(() => {
   trackEvent.mockClear();
+  db.tables = [];
   delete process.env.NEXT_PUBLIC_SOLANA_NETWORK;
   setCert();
   stubMetadataFetch([{ trait_type: "Course Version", value: 3 }]);
@@ -169,6 +174,15 @@ describe("certificate verify page — localized recipient fallback", () => {
   it("renders the username when the profile has one", async () => {
     renderPage();
     expect(await screen.findByText("gabi")).toBeInTheDocument();
+  });
+
+  // #493: the recipient's identity must come from the public_profiles view,
+  // never the raw profiles table (which exposes google_id/github_id).
+  it("reads the recipient from public_profiles, never the raw profiles table", async () => {
+    renderPage();
+    expect(await screen.findByText("gabi")).toBeInTheDocument();
+    expect(db.tables).toContain("public_profiles");
+    expect(db.tables).not.toContain("profiles");
   });
 
   it("falls back to the message catalog when the username is missing", async () => {

@@ -938,6 +938,8 @@ export type Database = {
         Row: {
           avatar_url: string | null;
           bio: string | null;
+          created_at: string | null;
+          id: string | null;
           social_links: Json | null;
           username: string | null;
           wallet_address: string | null;

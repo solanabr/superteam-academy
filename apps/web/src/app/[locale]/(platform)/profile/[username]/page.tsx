@@ -4,14 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
-import {
-  Lock,
-  ArrowLeft,
-  GraduationCap,
-  CircleNotch,
-} from "@phosphor-icons/react";
+import { ArrowLeft, GraduationCap, CircleNotch } from "@phosphor-icons/react";
 import type { Achievement, Certificate } from "@superteam-lms/types";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ProfileHeroPanel } from "@/components/gamification/profile-hero-panel";
 import { SkillRadar } from "@/components/gamification/skill-radar";
 import { AchievementGrid } from "@/components/gamification/achievement-grid";
@@ -68,7 +62,6 @@ interface ProfileData {
   completedCourses: CompletedCourse[];
   isLoading: boolean;
   notFound: boolean;
-  isPrivate: boolean;
   isOwnProfile: boolean;
 }
 
@@ -83,7 +76,6 @@ const INITIAL_STATE: ProfileData = {
   completedCourses: [],
   isLoading: true,
   notFound: false,
-  isPrivate: false,
   isOwnProfile: false,
 };
 
@@ -107,16 +99,19 @@ export default function PublicProfilePage() {
         } = await supabase.auth.getSession();
         const currentUserId = session?.user?.id ?? null;
 
-        // Look up profile by username
+        // Look up profile by username via the public_profiles view (#493). The
+        // base profiles table has no cross-user read path anymore — the view is
+        // the sole public surface and never exposes google_id/github_id. It
+        // returns public, non-deleted profiles only, so a private (or missing)
+        // profile simply yields no row -> notFound, and the owner views their
+        // own private profile from /profile, not this public URL.
         const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select(
-            "id, username, bio, avatar_url, social_links, is_public, created_at"
-          )
+          .from("public_profiles")
+          .select("id, username, bio, avatar_url, social_links, created_at")
           .eq("username", username)
           .single();
 
-        if (profileError || !profile) {
+        if (profileError || !profile || !profile.id) {
           setData((prev) => ({
             ...prev,
             isLoading: false,
@@ -126,25 +121,6 @@ export default function PublicProfilePage() {
         }
 
         const isOwn = currentUserId === profile.id;
-
-        // If profile is private and it's not the owner, show private message
-        if (!profile.is_public && !isOwn) {
-          setData((prev) => ({
-            ...prev,
-            isLoading: false,
-            isPrivate: true,
-            user: {
-              id: profile.id,
-              username: profile.username,
-              bio: "",
-              avatarUrl: profile.avatar_url ?? "",
-              joinedAt: new Date(profile.created_at ?? Date.now()),
-              socialLinks: {},
-            },
-          }));
-          return;
-        }
-
         const userId = profile.id;
 
         // Fetch all public data in parallel
@@ -184,7 +160,7 @@ export default function PublicProfilePage() {
 
         const userData: UserData = {
           id: profile.id,
-          username: profile.username,
+          username: profile.username ?? username,
           bio: profile.bio ?? "",
           avatarUrl: profile.avatar_url ?? "",
           joinedAt: new Date(profile.created_at ?? Date.now()),
@@ -303,7 +279,6 @@ export default function PublicProfilePage() {
           completedCourses,
           isLoading: false,
           notFound: false,
-          isPrivate: false,
           isOwnProfile: isOwn,
         });
       } catch {
@@ -339,28 +314,6 @@ export default function PublicProfilePage() {
         </p>
         <h2 className="mb-2 text-xl font-semibold">{t("userNotFound")}</h2>
         <p className="text-text-3">{t("userNotFoundDescription")}</p>
-      </div>
-    );
-  }
-
-  if (data.isPrivate && data.user) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <Avatar className="mb-4 h-16 w-16 border-[3px] border-border">
-          {data.user.avatarUrl && (
-            <AvatarImage src={data.user.avatarUrl} alt={data.user.username} />
-          )}
-          <AvatarFallback className="font-display text-xl font-black">
-            {data.user.username.slice(0, 2).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
-        <h2 className="mb-2 font-display text-xl font-black">
-          {data.user.username}
-        </h2>
-        <div className="flex items-center gap-2 text-text-3">
-          <Lock size={16} weight="bold" />
-          <p className="font-body text-sm">{t("profileIsPrivate")}</p>
-        </div>
       </div>
     );
   }

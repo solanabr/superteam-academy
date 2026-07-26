@@ -52,8 +52,11 @@ function useCertificateData(certId: string) {
           return;
         }
 
+        // Recipient identity via the public_profiles view (#493) — the base
+        // profiles table has no cross-user read path. A certificate is public,
+        // so its owner's public profile resolves here by id.
         const { data: profile } = await supabase
-          .from("profiles")
+          .from("public_profiles")
           .select("username, wallet_address")
           .eq("id", cert.user_id)
           .single();
