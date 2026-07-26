@@ -235,7 +235,9 @@ export async function POST(request: NextRequest) {
           result.status === 403
             ? type === "quiz"
               ? "quiz_failed"
-              : "challenge_failed"
+              : type === "parsons"
+                ? "parsons_failed"
+                : "challenge_failed"
             : undefined
         );
       }

@@ -24,6 +24,21 @@ describe("Block union", () => {
     ).toBe("quiz");
   });
 
+  it("discriminates a parsons block", () => {
+    expect(
+      Block.parse({
+        type: "parsons",
+        key: "p",
+        prompt: "Order the lines",
+        lines: [
+          { id: "a", content: "let x = 1;" },
+          { id: "b", content: "return x;" },
+        ],
+        correctOrder: ["a", "b"],
+      }).type
+    ).toBe("parsons");
+  });
+
   it("rejects an unknown block type", () => {
     expect(Block.safeParse({ type: "podcast", key: "p" }).success).toBe(false);
   });
@@ -36,6 +51,7 @@ describe("BLOCK_REGISTRY", () => {
       "video",
       "code",
       "quiz",
+      "parsons",
       "openEnded",
       "wallet-funding",
       "program-explorer",
@@ -44,18 +60,18 @@ describe("BLOCK_REGISTRY", () => {
     expect(Object.keys(BLOCK_REGISTRY).sort()).toEqual([...types].sort());
   });
 
-  it("marks exactly code and quiz as graded", () => {
+  it("marks exactly code, quiz and parsons as graded", () => {
     const graded = Object.keys(BLOCK_REGISTRY).filter((t) =>
       isGraded(t as never)
     );
-    expect(graded.sort()).toEqual(["code", "quiz"]);
+    expect(graded.sort()).toEqual(["code", "parsons", "quiz"]);
   });
 
-  it("marks code, quiz and openEnded as required", () => {
+  it("marks code, quiz, parsons and openEnded as required", () => {
     const required = Object.keys(BLOCK_REGISTRY).filter((t) =>
       isRequired(t as never)
     );
-    expect(required.sort()).toEqual(["code", "openEnded", "quiz"]);
+    expect(required.sort()).toEqual(["code", "openEnded", "parsons", "quiz"]);
   });
 
   it("never marks a block graded without also marking it required", () => {

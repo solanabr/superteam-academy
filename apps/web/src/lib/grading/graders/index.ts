@@ -3,6 +3,7 @@ import { BLOCK_REGISTRY, type BlockType } from "@superteam-lms/content-schema";
 import type { Grader } from "../types";
 import { gradeCode } from "./code";
 import { gradeQuiz } from "./quiz";
+import { gradeParsons } from "./parsons";
 
 /** The graded block types, derived from CS-1's registry — not a hand-kept list. */
 export type GradedBlockType = {
@@ -19,4 +20,5 @@ export type GradedBlockType = {
 export const GRADERS = {
   code: gradeCode,
   quiz: gradeQuiz,
+  parsons: gradeParsons,
 } satisfies Record<GradedBlockType, Grader>;

@@ -89,6 +89,27 @@ export interface QuizBlockData extends LessonBlockBase {
   questions: QuizQuestionData[];
 }
 
+export interface ParsonsLineData {
+  id: string;
+  content: string;
+  distractor?: boolean | null;
+  /** Distractor-only pairing hint (presentational, not graded). */
+  pairedWith?: string | null;
+}
+
+export interface ParsonsBlockData extends LessonBlockBase {
+  _type: "parsons";
+  prompt: string;
+  lines: ParsonsLineData[];
+  /**
+   * Ordered non-distractor line ids — the sole grading key. The server grader
+   * accepts iff the learner's arranged ids deep-equal this array. Ships to the
+   * client (D4 open-book) so the renderer can give instant feedback.
+   */
+  correctOrder: string[];
+  explanation?: string | null;
+}
+
 export interface OpenEndedBlockData extends LessonBlockBase {
   _type: "openEnded";
   prompt: string;
@@ -120,6 +141,7 @@ export type LessonBlock =
   | VideoBlockData
   | CodeBlockData
   | QuizBlockData
+  | ParsonsBlockData
   | OpenEndedBlockData
   | WalletFundingBlockData
   | ProgramExplorerBlockData

@@ -9,7 +9,6 @@ import type {
   LessonBlock,
   TestCase,
 } from "@superteam-lms/types";
-import type { AchievementDoc, CourseDoc, LessonDoc, QuestDoc } from "./types";
 import type {
   CourseSummary,
   DeployedAchievement,
@@ -17,6 +16,7 @@ import type {
   RecommendedCourse,
   ContentQuest,
 } from "@/lib/content/queries";
+import type { AchievementDoc, CourseDoc, LessonDoc, QuestDoc } from "./types";
 
 /**
  * Content projectors (SP2-B Task 4). Pure functions that reshape a RAW bundle
@@ -168,6 +168,15 @@ function projectBlock(raw: unknown): LessonBlock {
     // prompt (buildStaticPrefix skips absent notes).
     ...(Array.isArray(b.tutorNotes) && b.tutorNotes.length > 0
       ? { tutorNotes: b.tutorNotes as string[] }
+      : {}),
+    // `parsons` fields (LX-C7) post-date the frozen GROQ capture too, so they
+    // follow the same conditional-surfacing rule: a non-parsons block omits them
+    // and projects byte-identically to the golden. `lines` and `correctOrder`
+    // are the grader's inputs (order-only sequence check).
+    ...(Array.isArray(b.lines) ? { lines: b.lines } : {}),
+    ...(Array.isArray(b.correctOrder) ? { correctOrder: b.correctOrder } : {}),
+    ...(typeof b.explanation === "string" && b.explanation.length > 0
+      ? { explanation: b.explanation }
       : {}),
   } as unknown as LessonBlock;
 }

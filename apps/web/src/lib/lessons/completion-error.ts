@@ -13,6 +13,7 @@
 /** Discriminator carried in the completion route's 403 bodies (#564). */
 export type CompletionDenyReason =
   | "quiz_failed"
+  | "parsons_failed"
   | "challenge_failed"
   | "reflection_required"
   | "enrollment_missing";
@@ -20,6 +21,7 @@ export type CompletionDenyReason =
 /** Message key within the `lesson` namespace. */
 export type CompletionErrorKey =
   | "completionFailedQuiz"
+  | "completionFailedParsons"
   | "completionFailedChallenge"
   | "completionFailedReflection"
   | "completionFailedEnrollment"
@@ -34,6 +36,7 @@ interface LessonShape {
 
 const REASON_KEYS: Record<CompletionDenyReason, CompletionErrorKey> = {
   quiz_failed: "completionFailedQuiz",
+  parsons_failed: "completionFailedParsons",
   challenge_failed: "completionFailedChallenge",
   reflection_required: "completionFailedReflection",
   enrollment_missing: "completionFailedEnrollment",

@@ -22,6 +22,8 @@ export type {
   QuizOptionData,
   QuizQuestionData,
   QuizBlockData,
+  ParsonsLineData,
+  ParsonsBlockData,
   OpenEndedBlockData,
   WalletFundingBlockData,
   ProgramExplorerBlockData,

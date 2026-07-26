@@ -3,6 +3,7 @@ import { ProseBlock } from "./prose-block";
 import { VideoBlock } from "./video-block";
 import { CodeBlock } from "./code-block";
 import { QuizBlock } from "./quiz-block";
+import { ParsonsBlock } from "./parsons-block";
 import { OpenEndedBlock } from "./open-ended-block";
 import { WalletFundingBlock } from "./wallet-funding-block";
 import { ProgramExplorerBlock } from "./program-explorer-block";
@@ -21,6 +22,7 @@ export const RENDERERS = {
   video: VideoBlock,
   code: CodeBlock,
   quiz: QuizBlock,
+  parsons: ParsonsBlock,
   openEnded: OpenEndedBlock,
   "wallet-funding": WalletFundingBlock,
   "program-explorer": ProgramExplorerBlock,
