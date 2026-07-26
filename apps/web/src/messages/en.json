@@ -218,6 +218,8 @@
     "rustRateLimited": "Too many requests. Please wait a moment.",
     "rustCompileTimeout": "Compilation timed out. Try simplifying your code.",
     "enrollToSaveProgress": "Enroll in this course to save your progress and earn XP.",
+    "encouragementTitle": "Stuck? That's part of it.",
+    "encouragementBody": "Every failed run narrows things down. Peek at the hints or ask the AI partner for a nudge — you're closer than it feels.",
     "buildProgram": "Build",
     "buildingProgram": "Building Solana program...",
     "buildSuccess": "Program compiled successfully!",

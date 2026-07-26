@@ -11,8 +11,8 @@ import {
   type DeployResult,
   type DeployStep,
 } from "@superteam-lms/deploy";
-import confetti from "canvas-confetti";
 import { useTranslations } from "next-intl";
+import { celebrate } from "@/lib/gamification/celebration";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -308,8 +308,9 @@ export function DeployPanel({
         }
       }
 
-      // Fire confetti celebration
-      confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+      // Medium celebration — a successful devnet deploy is one of the two
+      // confetti-worthy milestones (LX-B11); respects prefers-reduced-motion.
+      celebrate("deploy-success");
 
       // Notify challenge runner that deployment is complete (enables submit)
       window.dispatchEvent(new CustomEvent("superteam:deploy-complete"));
