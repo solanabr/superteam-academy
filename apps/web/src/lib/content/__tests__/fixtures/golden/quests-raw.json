@@ -24,22 +24,34 @@
     "lesson-pda-advanced-challenge",
     "lesson-pda-challenge",
     "lesson-program-challenge",
+    "lesson-rpd-borrowing-shared-vs-mutable",
+    "lesson-rpd-build-the-vault-core",
+    "lesson-rpd-checked-lamport-math",
+    "lesson-rpd-enums-option-result",
+    "lesson-rpd-error-plumbing",
+    "lesson-rpd-fix-the-borrow-checker",
+    "lesson-rpd-functions-and-control-flow",
+    "lesson-rpd-lifetimes-and-slices",
+    "lesson-rpd-moves-copy-and-clone",
+    "lesson-rpd-structs-traits-and-derives",
+    "lesson-rpd-types-and-mutability",
+    "lesson-rpd-your-first-rust-build",
     "lesson-rust-basics-challenge",
     "lesson-rust-program-challenge",
+    "lesson-sap-budgeted-agent-with-a-hard-cap",
+    "lesson-sap-meter-an-endpoint-with-x402",
+    "lesson-sap-pay-the-402-programmatically",
+    "lesson-sap-payment-rails-decision-map",
+    "lesson-sap-recurring-delegation-paid-tier",
+    "lesson-sap-subscription-authority-and-allowance",
+    "lesson-sap-token-or-token-2022",
     "lesson-serialization-challenge",
     "lesson-sign-message-challenge",
     "lesson-staking-challenge",
     "lesson-testing-challenge",
     "lesson-token-math-challenge",
     "lesson-transfer-challenge",
-    "lesson-vault-challenge",
-    "lesson-sap-payment-rails-decision-map",
-    "lesson-sap-token-or-token-2022",
-    "lesson-sap-subscription-authority-and-allowance",
-    "lesson-sap-recurring-delegation-paid-tier",
-    "lesson-sap-meter-an-endpoint-with-x402",
-    "lesson-sap-pay-the-402-programmatically",
-    "lesson-sap-budgeted-agent-with-a-hard-cap"
+    "lesson-vault-challenge"
   ],
   "moduleLessonMap": [
     {
@@ -130,6 +142,40 @@
         "lesson-oracle-design",
         "lesson-vault-challenge",
         "lesson-liquidation-challenge"
+      ]
+    },
+    {
+      "_id": "course-rust-for-program-devs:rpd-rust-that-compiles",
+      "lessonIds": [
+        "lesson-rpd-your-first-rust-build",
+        "lesson-rpd-types-and-mutability",
+        "lesson-rpd-functions-and-control-flow",
+        "lesson-rpd-checked-lamport-math"
+      ]
+    },
+    {
+      "_id": "course-rust-for-program-devs:rpd-ownership-borrowing-lifetimes",
+      "lessonIds": [
+        "lesson-rpd-moves-copy-and-clone",
+        "lesson-rpd-borrowing-shared-vs-mutable",
+        "lesson-rpd-fix-the-borrow-checker",
+        "lesson-rpd-lifetimes-and-slices",
+        "lesson-rpd-ownership-checkpoint"
+      ]
+    },
+    {
+      "_id": "course-rust-for-program-devs:rpd-modeling-state",
+      "lessonIds": [
+        "lesson-rpd-structs-traits-and-derives",
+        "lesson-rpd-enums-option-result",
+        "lesson-rpd-error-plumbing"
+      ]
+    },
+    {
+      "_id": "course-rust-for-program-devs:rpd-the-vault-core",
+      "lessonIds": [
+        "lesson-rpd-build-the-vault-core",
+        "lesson-rpd-what-you-built"
       ]
     },
     {
