@@ -49,8 +49,8 @@ interface EntryBase {
   id: number;
   /** On-chain `course.version` after the change. */
   version: number;
-  /** The mutation's on-chain signature (public), or `null`. */
-  txSignature: string | null;
+  /** The mutation's on-chain signature (public). NOT NULL — the dedup key. */
+  txSignature: string;
   /** ISO timestamp. */
   createdAt: string;
 }

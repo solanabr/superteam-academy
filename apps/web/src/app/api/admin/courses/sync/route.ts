@@ -327,17 +327,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     // Course changelog (#654): record the first on-chain deploy. Non-fatal —
     // the course is already live; a missing log entry must not fail the sync.
-    try {
-      await recordCourseDeployed({
-        courseId,
-        txSignature: result.signature!,
-        lessonCount: course.lessonCount,
-      });
-    } catch (changelogErr) {
-      console.error(
-        "[admin/courses/sync] changelog (deploy) failed:",
-        changelogErr
-      );
+    // tx_signature is NOT NULL (the dedup key), so only log with a real sig.
+    if (result.signature) {
+      try {
+        await recordCourseDeployed({
+          courseId,
+          txSignature: result.signature,
+          lessonCount: course.lessonCount,
+        });
+      } catch (changelogErr) {
+        console.error(
+          "[admin/courses/sync] changelog (deploy) failed:",
+          changelogErr
+        );
+      }
     }
 
     // The course is now "synced" in Sanity — purge the catalog cache so it
@@ -576,12 +579,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // state is in `updateParams`. `content_tx_id` being committed bumps the
   // on-chain version by 1 (update_course.rs). Non-fatal: a missing log entry
   // must not fail a landed on-chain update.
-  if (onChainCourse) {
+  if (onChainCourse && result.signature) {
     try {
       const contentCommitted = updateParams.contentTxId !== undefined;
       await recordCourseUpdate({
         courseId,
-        txSignature: result.signature!,
+        txSignature: result.signature,
         oldMask: onChainCourse.activeLessons,
         newMask: updateParams.newActiveLessons,
         oldXp: onChainCourse.xp_per_lesson,

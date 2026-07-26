@@ -43,7 +43,7 @@ type ChangelogInsert = {
     | "content_updated";
   version: number;
   detail: Json;
-  tx_signature: string | null;
+  tx_signature: string;
 };
 
 /**

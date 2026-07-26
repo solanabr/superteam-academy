@@ -43,7 +43,7 @@ function decodeEntry(row: {
   kind: string;
   version: number;
   detail: Json;
-  tx_signature: string | null;
+  tx_signature: string;
   created_at: string;
 }): CourseChangelogEntry | null {
   const base = {

@@ -25,16 +25,24 @@
 -- retired long ago may no longer exist in the bundle, and even a renamed lesson
 -- should read, in the log, under the name it had when it changed.
 --
--- SECURITY — house pattern, learner-visible variant.
--- Rows are non-sensitive: course id, on-chain version, change kind, lesson
--- title snapshots, xp numbers, a public tx signature, a timestamp. Nothing here
--- is a secret (quiz answers/solutions live only in the server-only bundle; the
--- tx signature is already public on-chain). So — unlike `onchain_deployments`,
--- which hides reward-path pubkeys behind a view — this table takes a PUBLIC
--- SELECT policy (anon + authenticated; course pages are anon-accessible) and no
--- write policy: RLS is on with no INSERT/UPDATE/DELETE policy, so ONLY
--- service_role (which bypasses RLS) can write, and the sync route's
--- createAdminClient() is the sole writer.
+-- SECURITY — house pattern, learner-visible-but-scoped variant.
+-- Rows carry no secrets (quiz answers/solutions live only in the server-only
+-- bundle; the tx signature is already public on-chain). But the snapshotted
+-- lesson TITLES must not leak for a course that isn't publicly visible — a
+-- course can be on-chain-deployed yet hidden from the catalog (deactivated, or
+-- synced-then-deactivated). A blanket `USING (true)` would let any anon
+-- PostgREST caller enumerate every course's title history regardless of catalog
+-- visibility. So the SELECT policy is FAIL-CLOSED and mirrors the catalog's own
+-- visibility gate EXACTLY: a row is visible only when its course currently has a
+-- `synced` AND active deployment — the same `status = 'synced' AND
+-- COALESCE(is_active, true)` predicate `isSynced` (lib/content/deployments.ts)
+-- applies. The EXISTS runs against `public_onchain_deployments` (the anon-
+-- readable owner-privilege VIEW), NOT the base `onchain_deployments` table
+-- (RLS-on/no-policy → anon sees zero rows, which would hide EVERYTHING). No
+-- deployment row, unsynced, or inactive ⇒ hidden.
+-- Writes: RLS is on with no INSERT/UPDATE/DELETE policy, so ONLY service_role
+-- (which bypasses RLS) can write — the sync route's createAdminClient() is the
+-- sole writer.
 --
 -- Idempotent (repo convention): CREATE TABLE/INDEX IF NOT EXISTS, DROP POLICY
 -- IF EXISTS before CREATE POLICY, a UNIQUE constraint + ON CONFLICT DO NOTHING
@@ -69,13 +77,15 @@ CREATE TABLE IF NOT EXISTS public.course_changelog (
   -- Kind-specific, title-snapshotted payload. Never resolved from the live
   -- bundle at read time (a retired lesson may be gone from it).
   detail       JSONB NOT NULL DEFAULT '{}'::jsonb,
-  -- The on-chain signature for this mutation (public data). NULL only for a
-  -- record with no single tx (none today). Used as the idempotency key.
-  tx_signature TEXT,
+  -- The on-chain signature for this mutation (public data). NOT NULL: it is the
+  -- dedup key, and Postgres treats NULLs as DISTINCT in a UNIQUE — a nullable
+  -- column would silently defeat the idempotency guard below. Every writer has
+  -- a confirmed signature (a mutation with none never reaches capture).
+  tx_signature TEXT NOT NULL,
   created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
   -- Re-running the same sync (same tx) must not double-log: one row per
-  -- (course, kind, tx). NULLs are distinct in a UNIQUE, but the writer always
-  -- supplies a tx_signature, so ON CONFLICT DO NOTHING is effective.
+  -- (course, kind, tx). With tx_signature NOT NULL, this UNIQUE fully
+  -- determines conflicts, so ON CONFLICT DO NOTHING at the write site is exact.
   CONSTRAINT course_changelog_dedup UNIQUE (course_id, kind, tx_signature)
 );
 
@@ -86,11 +96,25 @@ CREATE INDEX IF NOT EXISTS idx_course_changelog_course_created
 -- ── RLS: public read, service_role-only write ───────────────────────────────
 ALTER TABLE public.course_changelog ENABLE ROW LEVEL SECURITY;
 
--- Public read: the log is learner-facing and non-sensitive. anon + authenticated
--- both get it (course pages are anon-accessible).
+-- Scoped read: visible only for a course that is currently synced AND active —
+-- the SAME gate the catalog applies (isSynced). Fail-closed: a hidden/
+-- deactivated course's title history never leaks to an anon PostgREST caller.
+-- The EXISTS targets the anon-readable VIEW (owner-privilege), not the base
+-- table (RLS-on/no-policy would make this subquery see nothing → hide all).
 DROP POLICY IF EXISTS "Course changelog is viewable by everyone" ON public.course_changelog;
-CREATE POLICY "Course changelog is viewable by everyone"
-  ON public.course_changelog FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Course changelog visible for synced-active courses" ON public.course_changelog;
+CREATE POLICY "Course changelog visible for synced-active courses"
+  ON public.course_changelog FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1
+      FROM public.public_onchain_deployments d
+      WHERE d.content_id = course_changelog.course_id
+        AND d.kind = 'course'
+        AND d.status = 'synced'
+        AND COALESCE(d.is_active, true)
+    )
+  );
 -- NO write policy: writes only via service_role (bypasses RLS) from the admin
 -- sync route. An INSERT/UPDATE/DELETE policy here would open a client forge path.
 

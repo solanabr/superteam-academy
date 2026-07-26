@@ -39,19 +39,33 @@ for (const [label, sql] of [
       );
     });
 
-    it("grants a PUBLIC read policy and NO write policy", () => {
-      expect(sql).toContain(
-        "ON public.course_changelog FOR SELECT USING (true)"
-      );
-      // Any INSERT/UPDATE/DELETE/ALL policy would open a client forge path —
-      // writes must stay service_role-only (bypasses RLS).
+    it("scopes SELECT to synced+active courses — NOT a blanket USING (true)", () => {
+      // MINOR-1: a blanket public read would let any anon PostgREST caller
+      // enumerate title history for a hidden/deactivated course. The policy must
+      // fail closed, gating on the catalog's own visibility state (isSynced).
+      expect(sql).toContain("ON public.course_changelog FOR SELECT");
+      // Mutation: reverting to `USING (true)` must break this guard.
+      expect(sql).not.toMatch(/course_changelog FOR SELECT USING \(true\)/);
+      // The EXISTS gates on the anon-readable deployments VIEW with the exact
+      // isSynced predicate (status = 'synced' AND coalesce(is_active, true)).
+      expect(sql).toContain("FROM public.public_onchain_deployments d");
+      expect(sql).toContain("d.content_id = course_changelog.course_id");
+      expect(sql).toMatch(/d\.status\s*=\s*'synced'/);
+      expect(sql).toMatch(/COALESCE\(d\.is_active,\s*true\)/);
+    });
+
+    it("keeps writes service_role-only — NO write policy", () => {
+      // Any INSERT/UPDATE/DELETE/ALL policy would open a client forge path.
       expect(sql).not.toMatch(
         /ON public\.course_changelog FOR (INSERT|UPDATE|DELETE|ALL)/
       );
     });
 
-    it("dedups on (course_id, kind, tx_signature) so a re-run never double-logs", () => {
+    it("dedups on (course_id, kind, tx_signature) with a NOT NULL signature", () => {
       expect(sql).toContain("UNIQUE (course_id, kind, tx_signature)");
+      // MINOR-2: a nullable tx_signature would silently defeat the UNIQUE
+      // (Postgres treats NULLs as distinct), so it must be NOT NULL.
+      expect(sql).toMatch(/tx_signature\s+TEXT NOT NULL/);
     });
 
     it("constrains kind to the five captured change types", () => {
@@ -86,7 +100,7 @@ describe("#654 course_changelog — migration-only guarantees", () => {
       "CREATE INDEX IF NOT EXISTS idx_course_changelog_course_created"
     );
     expect(migration).toContain(
-      'DROP POLICY IF EXISTS "Course changelog is viewable by everyone"'
+      'DROP POLICY IF EXISTS "Course changelog visible for synced-active courses"'
     );
   });
 

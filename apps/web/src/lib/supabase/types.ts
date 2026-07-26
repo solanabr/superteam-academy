@@ -1006,7 +1006,7 @@ export type Database = {
             | "content_updated";
           version: number;
           detail: Json;
-          tx_signature: string | null;
+          tx_signature: string;
           created_at: string;
         };
         Insert: {
@@ -1020,7 +1020,7 @@ export type Database = {
             | "content_updated";
           version: number;
           detail?: Json;
-          tx_signature?: string | null;
+          tx_signature: string;
           created_at?: string;
         };
         Update: {
@@ -1034,7 +1034,7 @@ export type Database = {
             | "content_updated";
           version?: number;
           detail?: Json;
-          tx_signature?: string | null;
+          tx_signature?: string;
           created_at?: string;
         };
         Relationships: [];
