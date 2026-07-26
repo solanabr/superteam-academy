@@ -775,6 +775,32 @@ export type Database = {
           },
         ];
       };
+      streak_freezes_used: {
+        Row: {
+          created_at: string;
+          frozen_date: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          frozen_date: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          frozen_date?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "streak_freezes_used_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       user_xp: {
         Row: {
           current_streak: number | null;
@@ -782,6 +808,7 @@ export type Database = {
           last_activity_date: string | null;
           level: number | null;
           longest_streak: number | null;
+          streak_freezes: number;
           total_xp: number | null;
           user_id: string | null;
         };
@@ -791,6 +818,7 @@ export type Database = {
           last_activity_date?: string | null;
           level?: number | null;
           longest_streak?: number | null;
+          streak_freezes?: number;
           total_xp?: number | null;
           user_id?: string | null;
         };
@@ -800,6 +828,7 @@ export type Database = {
           last_activity_date?: string | null;
           level?: number | null;
           longest_streak?: number | null;
+          streak_freezes?: number;
           total_xp?: number | null;
           user_id?: string | null;
         };

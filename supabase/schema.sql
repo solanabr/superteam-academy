@@ -73,7 +73,11 @@ CREATE TABLE user_xp (
   level INTEGER DEFAULT 0,
   current_streak INTEGER DEFAULT 0,
   longest_streak INTEGER DEFAULT 0,
-  last_activity_date DATE
+  last_activity_date DATE,
+  -- Streak-freeze inventory (LX-B8, #573). A missed day is consumed from here
+  -- instead of resetting the streak. Capped at 2 by chk_..._streak_freezes_bounds;
+  -- earned server-side via the login_streak quest reward, never client-minted.
+  streak_freezes INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE xp_transactions (
@@ -89,6 +93,18 @@ CREATE TABLE xp_transactions (
   -- award_xp via xp_source_for_reason(); hardcoded 'community' inside
   -- award_community_xp. CHECK constraint below (chk_xp_transactions_source).
   source TEXT NOT NULL
+);
+
+-- Consumed-freeze log (LX-B8, #573): one row per day a streak freeze saved.
+-- Drives the retroactive calendar snowflake AND makes freeze consumption
+-- idempotent per calendar day across the three concurrent streak writers.
+-- Writes only via the SECURITY DEFINER streak helpers; own-row SELECT for the
+-- client calendar (RLS policy below).
+CREATE TABLE streak_freezes_used (
+  user_id     UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  frozen_date DATE NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, frozen_date)
 );
 
 CREATE TABLE user_achievements (
@@ -179,6 +195,8 @@ ALTER TABLE user_xp
   ADD CONSTRAINT chk_user_xp_longest_streak_non_negative CHECK (longest_streak >= 0);
 ALTER TABLE user_xp
   ADD CONSTRAINT chk_user_xp_longest_gte_current CHECK (longest_streak >= current_streak);
+ALTER TABLE user_xp
+  ADD CONSTRAINT chk_user_xp_streak_freezes_bounds CHECK (streak_freezes BETWEEN 0 AND 2);
 
 ALTER TABLE xp_transactions
   ADD CONSTRAINT chk_xp_transactions_amount_positive CHECK (amount > 0);
@@ -239,6 +257,7 @@ ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE enrollments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_progress ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_xp ENABLE ROW LEVEL SECURITY;
+ALTER TABLE streak_freezes_used ENABLE ROW LEVEL SECURITY;
 ALTER TABLE xp_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_achievements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE certificates ENABLE ROW LEVEL SECURITY;
@@ -333,6 +352,13 @@ CREATE POLICY "Public profile progress is viewable"
 CREATE POLICY "Users can view their own XP"
   ON user_xp FOR SELECT USING (auth.uid() = user_id);
 
+-- streak_freezes_used (SELECT own only — the client calendar renders the
+-- learner's own snowflakes; writes only via the SECURITY DEFINER streak helpers.
+-- No INSERT/UPDATE/DELETE policy: a client write path would let a learner forge
+-- frozen days.)
+CREATE POLICY "Users can view their own frozen days"
+  ON streak_freezes_used FOR SELECT USING (auth.uid() = user_id);
+
 -- xp_transactions (SELECT own only — raw rows never exposed to anon; aggregates
 -- served via get_leaderboard()/community_stats; inserts via award_xp function)
 CREATE POLICY "Users can view their own XP transactions"
@@ -404,9 +430,124 @@ $$;
 -- award functions, which execute as the function owner.
 REVOKE EXECUTE ON FUNCTION public.xp_source_for_reason(TEXT) FROM PUBLIC, anon, authenticated;
 
+-- ── Streak forgiveness helpers (LX-B8, #573) ────────────────────────────────
+-- Shared by all three streak writers so they agree by construction. See
+-- migration 20260726190000_streak_forgiveness.sql for the full design rationale.
+
+-- Covers every day in [p_from_date, p_to_date] not already frozen. Returns TRUE
+-- iff the whole gap is covered (streak survives). Consumes exactly the number of
+-- not-already-frozen days in one guarded UPDATE (atomic, never over-consumes,
+-- never negative), and logs each covered day for the calendar snowflake.
+CREATE OR REPLACE FUNCTION cover_missed_days_with_freezes(
+  p_user_id   UUID,
+  p_from_date DATE,
+  p_to_date   DATE
+) RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_needed INTEGER;
+  v_d      DATE;
+BEGIN
+  IF p_to_date < p_from_date THEN
+    RETURN TRUE;
+  END IF;
+
+  SELECT COUNT(*) INTO v_needed
+  FROM generate_series(p_from_date, p_to_date, INTERVAL '1 day') AS g(d)
+  WHERE NOT EXISTS (
+    SELECT 1 FROM public.streak_freezes_used sfu
+    WHERE sfu.user_id = p_user_id AND sfu.frozen_date = g.d::date
+  );
+
+  IF v_needed = 0 THEN
+    RETURN TRUE;
+  END IF;
+
+  UPDATE public.user_xp
+  SET streak_freezes = streak_freezes - v_needed
+  WHERE user_id = p_user_id AND streak_freezes >= v_needed;
+
+  IF NOT FOUND THEN
+    RETURN FALSE;
+  END IF;
+
+  FOR v_d IN
+    SELECT g.d::date FROM generate_series(p_from_date, p_to_date, INTERVAL '1 day') AS g(d)
+  LOOP
+    INSERT INTO public.streak_freezes_used (user_id, frozen_date)
+    VALUES (p_user_id, v_d)
+    ON CONFLICT (user_id, frozen_date) DO NOTHING;
+  END LOOP;
+
+  RETURN TRUE;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION cover_missed_days_with_freezes(UUID, DATE, DATE) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION cover_missed_days_with_freezes(UUID, DATE, DATE) TO service_role;
+
+-- The shared headline-streak decision (award_xp + award_community_xp):
+--   no prior activity → 1 · active today → keep · active yesterday → +1 ·
+--   gap > 1 day → +1 if freezes cover it, else 1 (reset).
+CREATE OR REPLACE FUNCTION next_streak_value(
+  p_user_id        UUID,
+  p_last_activity  DATE,
+  p_current_streak INTEGER,
+  p_today          DATE
+) RETURNS INTEGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+BEGIN
+  IF p_last_activity IS NULL THEN
+    RETURN 1;
+  ELSIF p_last_activity >= p_today THEN
+    RETURN GREATEST(COALESCE(p_current_streak, 1), 1);
+  ELSIF p_last_activity = p_today - 1 THEN
+    RETURN COALESCE(p_current_streak, 0) + 1;
+  ELSIF public.cover_missed_days_with_freezes(
+          p_user_id, p_last_activity + 1, p_today - 1) THEN
+    RETURN COALESCE(p_current_streak, 0) + 1;
+  ELSE
+    RETURN 1;
+  END IF;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION next_streak_value(UUID, DATE, INTEGER, DATE) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION next_streak_value(UUID, DATE, INTEGER, DATE) TO service_role;
+
+-- Grant a freeze (quest reward, capped at 2). Upserts user_xp so a learner with
+-- no XP yet still banks it; auto-applied server-side on login_streak completion.
+CREATE OR REPLACE FUNCTION grant_streak_freeze(p_user_id UUID)
+RETURNS INTEGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_count INTEGER;
+BEGIN
+  INSERT INTO public.user_xp (user_id, streak_freezes)
+  VALUES (p_user_id, 1)
+  ON CONFLICT (user_id) DO UPDATE SET
+    streak_freezes = LEAST(user_xp.streak_freezes + 1, 2)
+  RETURNING streak_freezes INTO v_count;
+  RETURN v_count;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION grant_streak_freeze(UUID) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION grant_streak_freeze(UUID) TO service_role;
+
 -- Award XP (called from API routes with service_role key only)
 -- Also handles streak tracking: increments current_streak if last activity was
--- yesterday, resets to 1 if gap > 1 day, and updates longest_streak.
+-- yesterday, applies a streak freeze (or resets to 1) if gap > 1 day, and
+-- updates longest_streak. Streak decision delegated to next_streak_value.
 -- p_idempotency_key: when provided, uses ON CONFLICT DO NOTHING to prevent
 -- double-award from concurrent retries (race-safe deduplication).
 --
@@ -518,27 +659,15 @@ BEGIN
     VALUES (p_user_id, p_amount, p_reason, v_source, p_tx_signature);
   END IF;
 
-  -- Get current streak state before updating
+  -- Get current streak state, then apply the shared forgiveness-aware decision.
+  -- next_streak_value consumes freezes (and logs frozen days) on a forgiven gap
+  -- BEFORE the upsert below writes the surviving streak — same row, one txn.
   SELECT last_activity_date, current_streak, longest_streak
   INTO v_last_activity, v_current_streak, v_longest_streak
   FROM public.user_xp
   WHERE user_id = p_user_id;
 
-  -- Calculate new streak
-  IF v_last_activity IS NULL THEN
-    -- First activity ever
-    v_new_streak := 1;
-  ELSIF v_last_activity = CURRENT_DATE THEN
-    -- Already active today, keep current streak
-    v_new_streak := COALESCE(v_current_streak, 1);
-  ELSIF v_last_activity = CURRENT_DATE - INTERVAL '1 day' THEN
-    -- Active yesterday, increment streak
-    v_new_streak := COALESCE(v_current_streak, 0) + 1;
-  ELSE
-    -- Gap > 1 day, reset streak
-    v_new_streak := 1;
-  END IF;
-
+  v_new_streak := public.next_streak_value(p_user_id, v_last_activity, v_current_streak, CURRENT_DATE);
   v_new_longest := GREATEST(COALESCE(v_longest_streak, 0), v_new_streak);
 
   INSERT INTO public.user_xp (user_id, total_xp, level, last_activity_date, current_streak, longest_streak)
@@ -1057,8 +1186,20 @@ BEGIN
         v_current := v_existing.current_value + 1;
         v_period  := v_existing.period_start;
 
+      ELSIF public.cover_missed_days_with_freezes(
+              p_user_id,
+              v_existing.period_start + v_existing.current_value,
+              CURRENT_DATE - 1) THEN
+        -- Case 3a (LX-B8): diff > cv — gap, but freezes cover every missed day,
+        -- so the quest streak survives and today's login increments it. Missed
+        -- days run from the first uncounted day (period_start + current_value)
+        -- through yesterday, using the SAME freeze log as the headline streak so
+        -- the two agree.
+        v_current := v_existing.current_value + 1;
+        v_period  := v_existing.period_start;
+
       ELSE
-        -- Case 3: diff > cv — gap detected, streak broken, start new
+        -- Case 3b: diff > cv, no freeze — streak broken, start new
         v_current := 1;
         v_period  := CURRENT_DATE;
       END IF;
@@ -1095,6 +1236,11 @@ BEGIN
             jsonb_build_object('xpAmount', v_xp, 'memo', 'daily_quest:' || v_quest_id)
           )
           ON CONFLICT (user_id, action_type, reference_id) DO NOTHING;
+
+          -- Quest reward that funds forgiveness (LX-B8): completing the
+          -- consistency quest banks a streak freeze (capped at 2, server-side),
+          -- on first completion only (guarded by the xp_granted flip above).
+          PERFORM public.grant_streak_freeze(p_user_id);
         END IF;
       END IF;
 
@@ -1626,6 +1772,11 @@ DECLARE
   v_daily_total INTEGER;
   v_daily_vote_total INTEGER;
   v_is_vote_xp BOOLEAN;
+  v_last_activity DATE;
+  v_current_streak INTEGER;
+  v_longest_streak INTEGER;
+  v_new_streak INTEGER;
+  v_new_longest INTEGER;
 BEGIN
   IF p_amount <= 0 THEN RETURN FALSE; END IF;
 
@@ -1680,30 +1831,29 @@ BEGIN
     VALUES (p_user_id, p_amount, p_reason, 'community');
   END IF;
 
+  -- Shared forgiveness-aware streak decision (identical rail to award_xp): the
+  -- prior inline CASE hard-reset a frozen streak whenever community XP was the
+  -- day's first write. Read the streak state, then defer to next_streak_value.
+  SELECT last_activity_date, current_streak, longest_streak
+  INTO v_last_activity, v_current_streak, v_longest_streak
+  FROM public.user_xp
+  WHERE user_id = p_user_id;
+
+  v_new_streak := public.next_streak_value(p_user_id, v_last_activity, v_current_streak, CURRENT_DATE);
+  v_new_longest := GREATEST(COALESCE(v_longest_streak, 0), v_new_streak);
+
   INSERT INTO public.user_xp (id, user_id, total_xp, level, current_streak, longest_streak, last_activity_date)
   VALUES (
     gen_random_uuid(), p_user_id, p_amount,
     floor(sqrt(p_amount / 100.0))::int,
-    1, 1, CURRENT_DATE
+    v_new_streak, v_new_longest, CURRENT_DATE
   )
   ON CONFLICT (user_id) DO UPDATE SET
     total_xp = user_xp.total_xp + p_amount,
     level = floor(sqrt((user_xp.total_xp + p_amount) / 100.0))::int,
     last_activity_date = CURRENT_DATE,
-    current_streak = CASE
-      WHEN user_xp.last_activity_date IS NULL THEN 1
-      WHEN user_xp.last_activity_date = CURRENT_DATE THEN user_xp.current_streak
-      WHEN user_xp.last_activity_date = CURRENT_DATE - INTERVAL '1 day' THEN user_xp.current_streak + 1
-      ELSE 1
-    END,
-    longest_streak = GREATEST(
-      user_xp.longest_streak,
-      CASE
-        WHEN user_xp.last_activity_date = CURRENT_DATE - INTERVAL '1 day' THEN user_xp.current_streak + 1
-        WHEN user_xp.last_activity_date = CURRENT_DATE THEN user_xp.current_streak
-        ELSE 1
-      END
-    );
+    current_streak = v_new_streak,
+    longest_streak = v_new_longest;
 
   RETURN TRUE;
 END;

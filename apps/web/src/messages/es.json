@@ -388,6 +388,8 @@
     "category_special": "Especial",
     "noEntries": "Sin ranking aún. Completa lecciones para ganar XP y aparecer aquí.",
     "streakKeepGoing": "¡Aprende hoy para mantener la racha!",
+    "streakFrozenDay": "Racha salvada con una congelación",
+    "streakFreezesRemaining": "{count, plural, one {# congelación} other {# congelaciones}}",
     "noAchievements": "Completa una lección para ganar tu primer logro",
     "showLocked": "Mostrar bloqueados",
     "tier_seed": "Semilla",

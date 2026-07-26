@@ -388,6 +388,8 @@
     "category_special": "Special",
     "noEntries": "No rankings yet. Complete lessons to earn XP and appear here.",
     "streakKeepGoing": "Learn today to keep it going!",
+    "streakFrozenDay": "Streak saved with a freeze",
+    "streakFreezesRemaining": "{count, plural, one {# freeze} other {# freezes}}",
     "noAchievements": "Complete a lesson to earn your first achievement",
     "showLocked": "Show locked",
     "tier_seed": "Seed",

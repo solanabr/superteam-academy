@@ -45,6 +45,10 @@ export function updateStreak(streak: StreakData): StreakData {
       ...streak.streakHistory,
       [today]: (streak.streakHistory[today] ?? 0) + 1,
     },
+    // Display-only helper: freeze state is server-authoritative, so it is passed
+    // through unchanged (this path never mints or consumes a freeze).
+    frozenDays: streak.frozenDays,
+    freezesRemaining: streak.freezesRemaining,
   };
 }
 
@@ -67,20 +71,37 @@ export function getNextMilestone(
   return STREAK_MILESTONES.find((m) => currentStreak < m.days) ?? null;
 }
 
+/** A calendar cell. `frozen` is a day a streak freeze saved (LX-B8) — an
+ *  inactive day that nonetheless kept the streak alive, rendered as a snowflake.
+ *  `active` and `frozen` are mutually exclusive: a day with real activity is
+ *  never "frozen" even if it also appears in the freeze log. */
+export interface StreakCalendarDay {
+  date: string;
+  active: boolean;
+  frozen: boolean;
+}
+
+/** Days a freeze saved, merged into the calendar so a forgiven gap renders as a
+ *  preserved streak rather than a hole. A day is `frozen` only when it has no
+ *  real activity (activity always wins). */
 export function generateStreakCalendar(
   streakHistory: Record<string, number>,
-  days: number = 30
-): { date: string; active: boolean }[] {
-  const calendar: { date: string; active: boolean }[] = [];
+  days: number = 30,
+  frozenDays: readonly string[] = []
+): StreakCalendarDay[] {
+  const frozen = new Set(frozenDays);
+  const calendar: StreakCalendarDay[] = [];
   const today = getNow();
 
   for (let i = days - 1; i >= 0; i--) {
     const date = new Date(today);
     date.setDate(today.getDate() - i);
     const dateStr = toDateString(date);
+    const active = (streakHistory[dateStr] ?? 0) > 0;
     calendar.push({
       date: dateStr,
-      active: (streakHistory[dateStr] ?? 0) > 0,
+      active,
+      frozen: !active && frozen.has(dateStr),
     });
   }
 
@@ -88,21 +109,25 @@ export function generateStreakCalendar(
 }
 
 export function generateWeekCalendar(
-  streakHistory: Record<string, number>
-): { date: string; active: boolean }[] {
+  streakHistory: Record<string, number>,
+  frozenDays: readonly string[] = []
+): StreakCalendarDay[] {
+  const frozen = new Set(frozenDays);
   const today = getNow();
   const dayOfWeek = today.getDay(); // 0 = Sunday
   const sunday = new Date(today);
   sunday.setDate(today.getDate() - dayOfWeek);
 
-  const calendar: { date: string; active: boolean }[] = [];
+  const calendar: StreakCalendarDay[] = [];
   for (let i = 0; i < 7; i++) {
     const date = new Date(sunday);
     date.setDate(sunday.getDate() + i);
     const dateStr = toDateString(date);
+    const active = (streakHistory[dateStr] ?? 0) > 0;
     calendar.push({
       date: dateStr,
-      active: (streakHistory[dateStr] ?? 0) > 0,
+      active,
+      frozen: !active && frozen.has(dateStr),
     });
   }
 

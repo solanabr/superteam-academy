@@ -12,6 +12,15 @@ export interface StreakData {
   longestStreak: number;
   lastActivityDate: string;
   streakHistory: Record<string, number>;
+  /**
+   * Days a streak freeze saved (LX-B8), as `YYYY-MM-DD` strings. Rendered as
+   * retroactive snowflakes and merged into the calendar so a forgiven gap reads
+   * as "streak preserved". Populated server-side from streak_freezes_used; the
+   * client only displays them, it never mints them.
+   */
+  frozenDays: string[];
+  /** Freeze tokens the learner currently holds (0–2). Display-only. */
+  freezesRemaining: number;
 }
 
 export interface LeaderboardEntry {

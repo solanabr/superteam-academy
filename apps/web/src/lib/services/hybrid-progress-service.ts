@@ -194,17 +194,29 @@ export class HybridProgressService implements LearningProgressService {
   // -------------------------------------------------------------------------
 
   async getStreak(userId: string): Promise<StreakData> {
-    const { data } = await this.supabase
-      .from("user_xp")
-      .select("current_streak, longest_streak, last_activity_date")
-      .eq("user_id", userId)
-      .single();
+    const [{ data }, { data: frozen }] = await Promise.all([
+      this.supabase
+        .from("user_xp")
+        .select(
+          "current_streak, longest_streak, last_activity_date, streak_freezes"
+        )
+        .eq("user_id", userId)
+        .single(),
+      // Own-row read (RLS) of the days a freeze saved — drives the calendar
+      // snowflakes. Writes are server-only; this is display state.
+      this.supabase
+        .from("streak_freezes_used")
+        .select("frozen_date")
+        .eq("user_id", userId),
+    ]);
 
     return {
       currentStreak: data?.current_streak ?? 0,
       longestStreak: data?.longest_streak ?? 0,
       lastActivityDate: data?.last_activity_date ?? "",
       streakHistory: {},
+      frozenDays: (frozen ?? []).map((r) => r.frozen_date),
+      freezesRemaining: data?.streak_freezes ?? 0,
     };
   }
 

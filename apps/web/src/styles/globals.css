@@ -63,6 +63,11 @@
     --streak-dim: rgba(234, 88, 12, 0.1);
     --streak-light: rgba(234, 88, 12, 0.1);
     --streak-border: rgba(234, 88, 12, 0.4);
+    /* ── Streak freeze (LX-B8) — cool blue, distinct from the green activity
+       ramp and amber today marker ── */
+    --freeze: #0284c7;
+    --freeze-fg: #ffffff;
+    --freeze-bg: rgba(2, 132, 199, 0.12);
 
     /* ── Level ── */
     --level: #7c3aed;
@@ -206,6 +211,10 @@
     --streak-dim: rgba(249, 115, 22, 0.13);
     --streak-light: rgba(249, 115, 22, 0.12);
     --streak-border: rgba(249, 115, 22, 0.4);
+    /* ── Streak freeze (LX-B8) — cool blue for dark theme ── */
+    --freeze: #38bdf8;
+    --freeze-fg: #06283d;
+    --freeze-bg: rgba(56, 189, 248, 0.14);
 
     --level: #a78bfa;
     --level-dim: rgba(167, 139, 250, 0.13);
@@ -4353,6 +4362,13 @@ a.path-step-card:hover .path-step-badge.skip {
 .cday.today {
   background: var(--sg-today);
   animation: today-cell 2s ease-in-out infinite;
+}
+/* Streak-freeze day (LX-B8): an inactive day a freeze saved. Rendered in the
+   cool --freeze blue so it reads as "preserved", distinct from the green
+   activity ramp and the amber today marker. */
+.cday.frozen {
+  background: var(--freeze);
+  box-shadow: inset 0 0 0 1px var(--card);
 }
 .contrib-legend {
   display: flex;

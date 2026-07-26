@@ -52,6 +52,12 @@ const config: Config = {
           DEFAULT: "var(--streak)",
           light: "var(--streak-light)",
         },
+        /* ── Streak freeze — Cool Blue (LX-B8) ── */
+        freeze: {
+          DEFAULT: "var(--freeze)",
+          fg: "var(--freeze-fg)",
+          bg: "var(--freeze-bg)",
+        },
         /* ── Danger — Warm Coral ── */
         danger: {
           DEFAULT: "var(--danger)",
