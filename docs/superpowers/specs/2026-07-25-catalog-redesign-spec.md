@@ -188,6 +188,7 @@ Prereqs: C1 (context, not a hard spend — see the funded-wallet correction belo
 
 Prereqs: C2 (`vault_core.rs`), C1 (funded wallet). **Segment-2 entry point** — see §5 for the skip affordance.
 `trackLevel` 3 (was 2 — requires close+recreate) · `xpPerLesson` 20 · **version stamp: anchor-lang 1.1.2 / Agave 3.1.10 / Rust 1.89+**
+> **Slot map (authoritative):** the exact `id → slot` reconciliation against `slots.lock` is resolved in `2026-07-26-c3-slot-reconciliation.md` (12 kept / 4 retired / 3 new — supersedes the `16 − 2 + 1` figure in §"On-chain implications" item 89). The content PR MUST set each lesson `id:` per that table.
 
 > **Module 1 is 3 lessons, not 4** (reviewer finding, accepted): the old M1 opened with two consecutive orientation lessons and closed with an admittedly "deliberately trivial" independent-write, then jumped subgoal→blank-page with no completion rung. Fixed by folding the framing prose into the build lesson and making `add-an-instruction` the parsons rung.
 
