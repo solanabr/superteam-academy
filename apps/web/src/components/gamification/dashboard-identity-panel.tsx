@@ -34,6 +34,8 @@ interface HeatmapCell {
   level: 0 | 1 | 2 | 3 | 4;
   isToday: boolean;
   count: number;
+  /** An inactive day a streak freeze saved (LX-B8) — rendered as a snowflake. */
+  frozen: boolean;
 }
 
 interface HeatmapData {
@@ -86,11 +88,16 @@ function ordinal(n: number): string {
   }
 }
 
-function formatCellTooltip(dateStr: string, count: number): string {
+function formatCellTooltip(
+  dateStr: string,
+  count: number,
+  frozen: boolean
+): string {
   if (!dateStr) return "";
   const d = new Date(dateStr + "T00:00:00");
   const month = MONTH_FULL[d.getMonth()]!;
   const day = ordinal(d.getDate());
+  if (frozen) return `Streak frozen on ${month} ${day}`;
   if (count === 0) return `No activity on ${month} ${day}`;
   if (count === 1) return `1 lesson completed on ${month} ${day}`;
   return `${count} lessons completed on ${month} ${day}`;
@@ -104,7 +111,11 @@ function countToLevel(count: number): 0 | 1 | 2 | 3 | 4 {
   return 4;
 }
 
-function buildHeatmapData(streakHistory: Record<string, number>): HeatmapData {
+function buildHeatmapData(
+  streakHistory: Record<string, number>,
+  frozenDays: readonly string[] = []
+): HeatmapData {
+  const frozenSet = new Set(frozenDays);
   const today = new Date();
   const todayStr = today.toISOString().split("T")[0]!;
   const todayDow = today.getDay();
@@ -121,7 +132,13 @@ function buildHeatmapData(streakHistory: Record<string, number>): HeatmapData {
       const daysAgo = startOffset - cellIdx;
 
       if (daysAgo < 0) {
-        colCells.push({ date: "", level: 0, isToday: false, count: 0 });
+        colCells.push({
+          date: "",
+          level: 0,
+          isToday: false,
+          count: 0,
+          frozen: false,
+        });
         continue;
       }
 
@@ -131,8 +148,10 @@ function buildHeatmapData(streakHistory: Record<string, number>): HeatmapData {
       const isToday = dateStr === todayStr;
       const count = streakHistory[dateStr] ?? 0;
       const level = countToLevel(count);
+      // Activity always wins: a day is only "frozen" if it has no real activity.
+      const frozen = count === 0 && frozenSet.has(dateStr);
 
-      colCells.push({ date: dateStr, level, isToday, count });
+      colCells.push({ date: dateStr, level, isToday, count, frozen });
 
       if (row === 0 && !monthLabelMap.has(col)) {
         const month = d.getMonth();
@@ -376,8 +395,8 @@ export function DashboardIdentityPanel({
   }, []);
 
   const heatmap = useMemo(
-    () => buildHeatmapData(streak.streakHistory),
-    [streak.streakHistory]
+    () => buildHeatmapData(streak.streakHistory, streak.frozenDays),
+    [streak.streakHistory, streak.frozenDays]
   );
 
   // Tap-to-show tooltip state (mobile touch support)
@@ -543,6 +562,7 @@ export function DashboardIdentityPanel({
                                   cell.level === 2 && "l2",
                                   cell.level === 3 && "l3",
                                   cell.level === 4 && "l4",
+                                  cell.frozen && "frozen",
                                   cell.isToday && "today"
                                 )}
                                 onClick={(e) => {
@@ -559,7 +579,11 @@ export function DashboardIdentityPanel({
                                 sideOffset={6}
                                 side="top"
                               >
-                                {formatCellTooltip(cell.date, cell.count)}
+                                {formatCellTooltip(
+                                  cell.date,
+                                  cell.count,
+                                  cell.frozen
+                                )}
                                 <Tooltip.Arrow className="fill-[var(--card)]" />
                               </Tooltip.Content>
                             </Tooltip.Portal>

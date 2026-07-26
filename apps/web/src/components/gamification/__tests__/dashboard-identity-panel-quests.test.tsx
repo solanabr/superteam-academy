@@ -15,6 +15,8 @@ const STREAK: StreakData = {
   longestStreak: 0,
   lastActivityDate: "",
   streakHistory: {},
+  frozenDays: [],
+  freezesRemaining: 0,
 };
 
 function quest(overrides: Partial<DailyQuest>): DailyQuest {

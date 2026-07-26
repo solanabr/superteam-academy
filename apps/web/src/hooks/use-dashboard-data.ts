@@ -30,6 +30,8 @@ const defaultStreak: StreakData = {
   longestStreak: 0,
   lastActivityDate: "",
   streakHistory: {},
+  frozenDays: [],
+  freezesRemaining: 0,
 };
 
 export interface CurrentCourse {

@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useLocale } from "next-intl";
-import { Fire } from "@phosphor-icons/react";
+import { Fire, Snowflake } from "@phosphor-icons/react";
 import type { StreakData } from "@superteam-lms/types";
 // Import directly from the source module, not the @/lib/gamification barrel.
 // The barrel re-exports `achievements.ts`, which is `server-only`; importing
@@ -25,7 +25,10 @@ export function StreakDisplay({ streak, className }: StreakDisplayProps) {
   const t = useTranslations("gamification");
   const locale = useLocale();
   const activeToday = isActiveToday(streak);
-  const calendar = generateWeekCalendar(streak.streakHistory);
+  const calendar = generateWeekCalendar(
+    streak.streakHistory,
+    streak.frozenDays
+  );
   const milestones = getStreakMilestones(streak.currentStreak);
 
   const todayDate = todayDateString();
@@ -45,6 +48,17 @@ export function StreakDisplay({ streak, className }: StreakDisplayProps) {
             {activeToday ? t("active") : t("streakKeepGoing")}
           </div>
         </div>
+        {streak.freezesRemaining > 0 && (
+          <div
+            className="ml-auto inline-flex items-center gap-1 rounded-full bg-freeze-bg px-2.5 py-1 font-display text-xs font-bold text-freeze"
+            title={t("streakFreezesRemaining", {
+              count: streak.freezesRemaining,
+            })}
+          >
+            <Snowflake size={14} weight="fill" aria-hidden="true" />
+            {t("streakFreezesRemaining", { count: streak.freezesRemaining })}
+          </div>
+        )}
       </div>
 
       {/* Weekly day circles */}
@@ -68,11 +82,18 @@ export function StreakDisplay({ streak, className }: StreakDisplayProps) {
                   ? "animate-pulse-ring border-primary-dark bg-primary text-white shadow-[0_2px_0_0_var(--primary-dark)]"
                   : day.active
                     ? "border-success bg-success-light text-success-dark shadow-[0_2px_0_0_var(--success-dark)]"
-                    : "border-border bg-subtle text-text-3"
+                    : day.frozen
+                      ? "border-freeze bg-freeze-bg text-freeze"
+                      : "border-border bg-subtle text-text-3"
               )}
-              title={day.date}
+              title={day.frozen ? t("streakFrozenDay") : day.date}
+              aria-label={day.frozen ? t("streakFrozenDay") : undefined}
             >
-              {dayLabel}
+              {day.frozen ? (
+                <Snowflake size={16} weight="fill" aria-hidden="true" />
+              ) : (
+                dayLabel
+              )}
             </div>
           );
         })}
