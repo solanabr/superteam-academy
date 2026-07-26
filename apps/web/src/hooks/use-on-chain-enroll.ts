@@ -33,6 +33,12 @@ function withTimeout<T>(
 interface UseOnChainEnrollOptions {
   courseId: string;
   userId: string | null;
+  /**
+   * Called instead of enrolling when there is no signed-in user — callers
+   * open the AuthModal here. Required so an anonymous Enroll click can never
+   * be a silent no-op (#556).
+   */
+  onRequireAuth: () => void;
   onSuccess?: () => void;
   onError?: (message: string) => void;
 }
@@ -46,6 +52,7 @@ interface UseOnChainEnrollResult {
 export function useOnChainEnroll({
   courseId,
   userId,
+  onRequireAuth,
   onSuccess,
   onError,
 }: UseOnChainEnrollOptions): UseOnChainEnrollResult {
@@ -56,7 +63,12 @@ export function useOnChainEnroll({
   const [enrollError, setEnrollError] = useState<string | null>(null);
 
   const handleEnroll = useCallback(async () => {
-    if (isEnrolling || !userId) return;
+    if (isEnrolling) return;
+
+    if (!userId) {
+      onRequireAuth();
+      return;
+    }
 
     if (!publicKey) {
       setWalletModalVisible(true);
@@ -116,6 +128,7 @@ export function useOnChainEnroll({
   }, [
     userId,
     courseId,
+    onRequireAuth,
     publicKey,
     sendTransaction,
     connection,

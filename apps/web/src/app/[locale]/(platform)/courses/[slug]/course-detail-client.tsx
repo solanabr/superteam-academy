@@ -74,6 +74,7 @@ export function CourseDetailClient({
   const [completedLessons, setCompletedLessons] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [discussionModalOpen, setDiscussionModalOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
 
   const fetchEnrollmentAndProgress = useCallback(async () => {
     if (!userId) {
@@ -134,6 +135,10 @@ export function CourseDetailClient({
   const { isEnrolling, handleEnroll } = useOnChainEnroll({
     courseId: course._id,
     userId,
+    // Anonymous Enroll opens the auth modal instead of silently no-oping
+    // (#556). The signed-out CTA below already renders the AuthModal trigger,
+    // so this only fires if handleEnroll is reached some other way.
+    onRequireAuth: () => setAuthModalOpen(true),
     onSuccess: () => setIsEnrolled(true),
   });
 
@@ -280,6 +285,8 @@ export function CourseDetailClient({
             </>
           ) : !isLoading ? (
             <AuthModal
+              open={authModalOpen}
+              onOpenChange={setAuthModalOpen}
               trigger={
                 <Button
                   variant="push"

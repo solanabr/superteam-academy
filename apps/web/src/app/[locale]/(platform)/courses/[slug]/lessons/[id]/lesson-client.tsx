@@ -84,6 +84,7 @@ export function LessonPageClient({
   const [isEnrolled, setIsEnrolled] = useState(false);
   const hasLinkedWallet = authProfile ? !!authProfile.wallet_address : null;
   const [isDiscussionOpen, setIsDiscussionOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [buildUuid, setBuildUuid] = useState<string | null>(null);
   const [programKeypairSecret, setProgramKeypairSecret] = useState<
     number[] | null
@@ -103,6 +104,9 @@ export function LessonPageClient({
   const { isEnrolling, handleEnroll, enrollError } = useOnChainEnroll({
     courseId,
     userId,
+    // Anonymous Enroll (e.g. the challenge "tests passed" overlay) opens the
+    // auth modal instead of silently no-oping (#556).
+    onRequireAuth: () => setIsAuthModalOpen(true),
     onSuccess: () => setIsEnrolled(true),
   });
 
@@ -495,6 +499,14 @@ export function LessonPageClient({
           </p>
         )}
       </div>
+
+      {/* Programmatic auth modal — opened when an anonymous visitor clicks an
+          Enroll CTA that lives outside this component (the ChallengeInterface
+          "tests passed" overlay calls ctx.onEnroll). No trigger: controlled
+          only (#556). */}
+      {!userId && (
+        <AuthModal open={isAuthModalOpen} onOpenChange={setIsAuthModalOpen} />
+      )}
 
       {/* Discussion */}
       <div className="border-t border-border pt-6">
