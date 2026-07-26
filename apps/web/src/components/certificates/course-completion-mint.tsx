@@ -4,11 +4,11 @@ import { useEffect, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import { GraduationCap, CheckCircle, Wallet } from "@phosphor-icons/react";
-import { EarnHandoffCard } from "./earn-handoff-card";
-import { CredentialShareNudge } from "./credential-share-nudge";
 import { trackCredentialMinted } from "@/lib/analytics/events";
 import { celebrate } from "@/lib/gamification/celebration";
 import { createClient } from "@/lib/supabase/client";
+import { CredentialShareNudge } from "./credential-share-nudge";
+import { EarnHandoffCard } from "./earn-handoff-card";
 
 interface CourseCompletionMintProps {
   courseId: string;
@@ -123,7 +123,11 @@ export function CourseCompletionMint({
         body: JSON.stringify({ courseId }),
       });
       if (!res.ok) {
-        const data = (await res.json()) as { error?: string; reason?: string };
+        const data = (await res.json()) as {
+          error?: string;
+          reason?: string;
+          code?: string;
+        };
         if (res.status === 409) {
           setState({
             status: "already_minted",
@@ -133,6 +137,12 @@ export function CourseCompletionMint({
               courseId
             ),
           });
+          return;
+        }
+        // LX-E2 — the capstone gate returns a stable machine code so the copy
+        // is localized here rather than served in English from the route.
+        if (data.code === "capstone_deploy_required") {
+          setState({ status: "mint_error", message: t("deployRequired") });
           return;
         }
         const base = data.error ?? "Minting failed";

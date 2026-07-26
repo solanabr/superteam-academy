@@ -399,6 +399,7 @@
     "unknownError": "Erro desconhecido",
     "courseComplete": "Curso concluído! Emita seu certificado NFT.",
     "mintDescription": "Reivindique seu certificado on-chain como NFT na Solana Devnet.",
+    "deployRequired": "Faça o deploy do seu programa capstone na devnet para desbloquear esta credencial.",
     "completed": "Concluído",
     "mint": "Mint",
     "collection": "Superteam Academy Certificates",

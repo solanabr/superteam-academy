@@ -25,6 +25,7 @@ import { getCourseById, getDeployedAchievements } from "@/lib/content/queries";
 import { maybeAwardSurpriseBonus } from "@/lib/gamification/surprise-bonus";
 import { isCourseInMaintenance } from "@/lib/content/deployments";
 import { isPlatformFrozen } from "@/lib/platform/freeze";
+import { checkCapstoneCredentialGate } from "@/lib/credentials/capstone-gate";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 import type {
@@ -528,7 +529,7 @@ export async function tryFinalizeCourse(
 // Internal: try to issue a credential NFT after course finalization
 // ---------------------------------------------------------------------------
 
-async function tryIssueCredential(
+export async function tryIssueCredential(
   userId: string,
   courseId: string,
   walletAddress: string,
@@ -556,6 +557,25 @@ async function tryIssueCredential(
     );
     if (!enrollment) return;
     if (enrollment.credential_asset) return;
+
+    const supabase = createAdminClient();
+
+    // LX-E2 (owner decision O-2) — the capstone credential is withheld until
+    // the learner's graded deploy is VERIFIED (a `deployed_programs` row for
+    // the capstone deploy lesson). Non-capstone courses return `not_capstone`
+    // and are unaffected — learner XP already landed on lesson completion, so
+    // gating here never delays XP (spec §LX-E2 cross-check). `deploy_required`
+    // and `indeterminate` both DEFER (throw → `certificate` queue) rather than
+    // issue: fail-closed, and a genuine capstone finalized before its deploy
+    // row lands (the #622 silent-save class) still mints once the row appears
+    // on a later drain. The login drainer re-runs this same gate, so a queued
+    // capstone can never mint ungated.
+    const gate = await checkCapstoneCredentialGate(supabase, userId, courseId);
+    if (gate.status === "deploy_required" || gate.status === "indeterminate") {
+      throw new Error(
+        `Capstone credential for "${courseId}" withheld (${gate.status}) — no verified deploy`
+      );
+    }
 
     // Fetch course data from the content bundle for the display name
     const sanityCourse = await getCourseById(courseId);
@@ -594,7 +614,6 @@ async function tryIssueCredential(
       Number(onChainCourse.xp_per_lesson) * onChainCourse.liveLessonCount;
 
     // Fetch user profile for metadata
-    const supabase = createAdminClient();
     const { data: profile } = await supabase
       .from("profiles")
       .select("username")
