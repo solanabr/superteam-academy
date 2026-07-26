@@ -11,6 +11,7 @@ import { DashboardIdentityPanel } from "../dashboard-identity-panel";
 // keep rendering as plain, non-interactive cards (the prior behavior).
 
 const STREAK: StreakData = {
+  available: true,
   currentStreak: 0,
   longestStreak: 0,
   lastActivityDate: "",

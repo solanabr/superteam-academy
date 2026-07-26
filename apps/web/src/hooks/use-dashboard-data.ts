@@ -26,6 +26,9 @@ import {
 
 // Default streak for unauthenticated or on error
 const defaultStreak: StreakData = {
+  // A true, available zero for the anonymous / initial-load state (distinct from
+  // a failed read, which getStreak marks available:false — see #731).
+  available: true,
   currentStreak: 0,
   longestStreak: 0,
   lastActivityDate: "",

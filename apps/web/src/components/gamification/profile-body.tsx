@@ -21,7 +21,7 @@ interface ProfileBodyProps {
   /** Own profile: show the public/private visibility badge on the hero. */
   showVisibilityBadge?: boolean;
   /** Own profile: day-streak stat (own-row under RLS). */
-  streak?: { currentStreak: number; longestStreak: number };
+  streak?: { currentStreak: number; longestStreak: number; available: boolean };
 }
 
 /**

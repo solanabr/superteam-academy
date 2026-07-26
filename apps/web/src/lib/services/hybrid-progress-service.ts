@@ -14,6 +14,25 @@ import {
 } from "@solana/spl-token";
 import { env } from "@/lib/env";
 import type { Database } from "@/lib/supabase/types";
+import { logError } from "@/lib/logging";
+
+/**
+ * A Supabase/PostgREST read error, normalized for `logError`. Capturing and
+ * logging these (instead of destructuring `data` alone and letting it fall to a
+ * `?? 0` / `?? []` default) is the #731 fix: a failed read must be VISIBLE, and
+ * — where the value would otherwise masquerade as a legitimate empty result —
+ * distinguishable from a true zero.
+ */
+type ReadError = { message: string; code?: string; details?: string } | null;
+
+function logReadError(errorId: string, error: ReadError, userId: string): void {
+  if (!error) return;
+  logError({
+    errorId,
+    error: new Error(error.message),
+    context: { userId, code: error.code, details: error.details },
+  });
+}
 
 // ---------------------------------------------------------------------------
 // HybridProgressService
@@ -71,11 +90,19 @@ export class HybridProgressService implements LearningProgressService {
     }
 
     // Always read Supabase total (includes community XP that is DB-only)
-    const { data } = await this.supabase
+    const { data, error } = await this.supabase
       .from("user_xp")
       .select("total_xp")
       .eq("user_id", userId)
       .single();
+
+    // A genuinely absent row (new user) surfaces as PGRST116 (no rows) — that
+    // is a true zero, not an error to log. Any OTHER error (e.g. an unapplied
+    // column, RLS misconfig) is logged so a schema break is never silent; the
+    // on-chain value below still bounds the degraded answer.
+    if (error && error.code !== "PGRST116") {
+      logReadError("getXP.user_xp", error, userId);
+    }
 
     const supabaseXp = data?.total_xp ?? 0;
 
@@ -104,11 +131,12 @@ export class HybridProgressService implements LearningProgressService {
     const profile = await this.getProfileByWallet(walletAddress);
     if (!profile) return [];
 
-    const { data: certs } = await this.supabase
+    const { data: certs, error } = await this.supabase
       .from("certificates")
       .select("*")
       .eq("user_id", profile.id);
 
+    if (error) logReadError("getCredentials.certificates", error, profile.id);
     if (!certs) return [];
 
     return certs.map((cert): Credential => {
@@ -144,12 +172,14 @@ export class HybridProgressService implements LearningProgressService {
   // -------------------------------------------------------------------------
 
   async getProgress(userId: string, courseId: string): Promise<Progress> {
-    const { data: rows } = await this.supabase
+    const { data: rows, error } = await this.supabase
       .from("user_progress")
       .select("lesson_id, completed_at")
       .eq("user_id", userId)
       .eq("course_id", courseId)
       .eq("completed", true);
+
+    if (error) logReadError("getProgress.user_progress", error, userId);
 
     const completedLessons = (rows ?? []).map((r) => r.lesson_id);
 
@@ -194,7 +224,7 @@ export class HybridProgressService implements LearningProgressService {
   // -------------------------------------------------------------------------
 
   async getStreak(userId: string): Promise<StreakData> {
-    const [{ data }, { data: frozen }] = await Promise.all([
+    const [xpRes, frozenRes] = await Promise.all([
       this.supabase
         .from("user_xp")
         .select(
@@ -210,7 +240,31 @@ export class HybridProgressService implements LearningProgressService {
         .eq("user_id", userId),
     ]);
 
+    const { data, error: xpError } = xpRes;
+    const { data: frozen, error: frozenError } = frozenRes;
+
+    // #731: an errored read is NOT a zero streak. A brand-new user legitimately
+    // has no user_xp row (PGRST116 = no rows) — that is a true, available zero.
+    // Any real read failure (unapplied column/table, RLS misconfig, transport)
+    // returns `available: false` so the UI renders em-dash/hidden instead of a
+    // misleading "0 day streak", and is logged so the break is never silent.
+    const realXpError = xpError && xpError.code !== "PGRST116" ? xpError : null;
+    if (realXpError || frozenError) {
+      logReadError("getStreak.user_xp", realXpError, userId);
+      logReadError("getStreak.streak_freezes_used", frozenError, userId);
+      return {
+        available: false,
+        currentStreak: 0,
+        longestStreak: 0,
+        lastActivityDate: "",
+        streakHistory: {},
+        frozenDays: [],
+        freezesRemaining: 0,
+      };
+    }
+
     return {
+      available: true,
       currentStreak: data?.current_streak ?? 0,
       longestStreak: data?.longest_streak ?? 0,
       lastActivityDate: data?.last_activity_date ?? "",
@@ -228,11 +282,16 @@ export class HybridProgressService implements LearningProgressService {
    * Resolve a Supabase user ID to their connected wallet address.
    */
   private async getWalletForUser(userId: string): Promise<string | null> {
-    const { data } = await this.supabase
+    const { data, error } = await this.supabase
       .from("profiles")
       .select("wallet_address")
       .eq("id", userId)
       .single();
+
+    // PGRST116 (no row) is an expected "no wallet" answer, not a fault to log.
+    if (error && error.code !== "PGRST116") {
+      logReadError("getWalletForUser.profiles", error, userId);
+    }
 
     return data?.wallet_address ?? null;
   }
@@ -243,11 +302,16 @@ export class HybridProgressService implements LearningProgressService {
   private async getProfileByWallet(
     walletAddress: string
   ): Promise<{ id: string } | null> {
-    const { data } = await this.supabase
+    const { data, error } = await this.supabase
       .from("profiles")
       .select("id")
       .eq("wallet_address", walletAddress)
       .single();
+
+    // PGRST116 (no row) is an expected "unknown wallet" answer, not a fault.
+    if (error && error.code !== "PGRST116") {
+      logReadError("getProfileByWallet.profiles", error, walletAddress);
+    }
 
     return data ?? null;
   }
@@ -258,11 +322,12 @@ export class HybridProgressService implements LearningProgressService {
   private async getLeaderboardFromSupabase(
     timeframe: "weekly" | "monthly" | "alltime"
   ): Promise<LeaderboardEntry[]> {
-    const { data } = await this.supabase.rpc("get_leaderboard", {
+    const { data, error } = await this.supabase.rpc("get_leaderboard", {
       p_timeframe: timeframe,
       p_limit: 20,
     });
 
+    if (error) logReadError("getLeaderboard.get_leaderboard", error, timeframe);
     if (!data) return [];
 
     return data.map(

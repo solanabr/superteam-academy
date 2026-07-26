@@ -297,7 +297,7 @@ export interface OwnProfileResult {
   user: ProfileUser;
   stats: ProfileStats;
   content: ProfileContent;
-  streak: { currentStreak: number; longestStreak: number };
+  streak: { currentStreak: number; longestStreak: number; available: boolean };
 }
 
 /**
@@ -368,6 +368,9 @@ export async function fetchOwnProfile(
     streak: {
       currentStreak: streakData.currentStreak,
       longestStreak: streakData.longestStreak,
+      // #731: propagate the degraded flag so the hero renders em-dash on a
+      // failed read instead of a misleading 0.
+      available: streakData.available,
     },
   };
 }
