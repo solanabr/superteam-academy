@@ -4,11 +4,13 @@ import {
   forwardRef,
   useCallback,
   useEffect,
+  useId,
   useImperativeHandle,
   useRef,
+  useState,
 } from "react";
 import Editor, { type OnMount, type BeforeMount } from "@monaco-editor/react";
-import type { editor } from "monaco-editor";
+import type { editor, IDisposable } from "monaco-editor";
 import { useTheme } from "next-themes";
 import { useTranslations } from "next-intl";
 import { superteamDark, superteamLight, THEME_MAP } from "./themes";
@@ -18,6 +20,7 @@ import type {
   EditorLanguage,
 } from "./types";
 import { cn } from "@/lib/utils";
+import { tabFocusModeChord } from "@/lib/utils/keyboard";
 
 const AUTOSAVE_DELAY_MS = 1000;
 
@@ -68,6 +71,20 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
     const tA11y = useTranslations("a11y");
     const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
 
+    // Tab-trap escape affordance (LX-C5 / WCAG 2.1.2). Monaco traps Tab by
+    // design; the built-in escape is `editor.action.toggleTabFocusMode`, bound
+    // to Ctrl+M (Windows/Linux) / Ctrl+Shift+M (macOS). The chord is resolved
+    // client-side after mount — during SSR/hydration there is no navigator, so
+    // rendering it eagerly would mismatch on Macs.
+    const hintId = useId();
+    const [escapeChord, setEscapeChord] = useState<string | null>(null);
+    const [isFocused, setIsFocused] = useState(false);
+    const focusListenersRef = useRef<IDisposable[]>([]);
+
+    useEffect(() => {
+      setEscapeChord(tabFocusModeChord());
+    }, []);
+
     useImperativeHandle(
       ref,
       () => ({
@@ -102,6 +119,21 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
       (editorInstance) => {
         editorRef.current = editorInstance;
 
+        // Show the Tab-trap escape hint while the editor owns the keyboard.
+        focusListenersRef.current.push(
+          editorInstance.onDidFocusEditorWidget(() => setIsFocused(true)),
+          editorInstance.onDidBlurEditorWidget(() => setIsFocused(false))
+        );
+
+        // Associate the hint with the element that actually receives focus.
+        // Monaco has no public describedby option (only `ariaLabel`), so this
+        // reaches for its hidden <textarea>; the group-level aria-describedby
+        // below remains the fallback if the internal structure ever changes.
+        editorInstance
+          .getDomNode()
+          ?.querySelector("textarea")
+          ?.setAttribute("aria-describedby", hintId);
+
         // Restore saved code from localStorage
         try {
           const saved = localStorage.getItem(getStorageKey(lessonId));
@@ -112,7 +144,7 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
           // localStorage may be unavailable
         }
       },
-      [lessonId]
+      [lessonId, hintId]
     );
 
     const handleChange = useCallback(
@@ -148,74 +180,110 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
       }
     }, [value]);
 
-    // Cleanup autosave timer on unmount
+    // Cleanup autosave timer + focus listeners on unmount
     useEffect(() => {
+      const focusListeners = focusListenersRef.current;
       return () => {
         if (autosaveTimerRef.current) {
           clearTimeout(autosaveTimerRef.current);
         }
+        focusListeners.forEach((listener) => listener.dispose());
+        focusListeners.length = 0;
       };
     }, []);
 
     return (
       <div
+        role="group"
         className={cn(
-          "relative h-full w-full overflow-hidden rounded-md border",
+          "relative flex h-full w-full flex-col overflow-hidden rounded-md border",
           className
         )}
         aria-label={tA11y("codeEditor")}
+        aria-describedby={hintId}
       >
-        <Editor
-          defaultValue={initialCode}
-          language={getMonacoLanguage(language)}
-          theme={themeName}
-          beforeMount={handleBeforeMount}
-          onMount={handleMount}
-          onChange={handleChange}
-          loading={<EditorSkeleton />}
-          options={{
-            readOnly,
-            minimap: { enabled: false },
-            fontSize: 14,
-            lineHeight: 22,
-            fontFamily:
-              "'JetBrains Mono', 'Fira Code', 'Cascadia Code', Menlo, monospace",
-            fontLigatures: true,
-            tabSize: 2,
-            insertSpaces: true,
-            wordWrap: "off",
-            scrollBeyondLastLine: false,
-            automaticLayout: true,
-            padding: { top: 16, bottom: 16 },
-            renderLineHighlight: "line",
-            cursorBlinking: "smooth",
-            cursorSmoothCaretAnimation: "on",
-            smoothScrolling: true,
-            bracketPairColorization: { enabled: true },
-            guides: {
-              bracketPairs: true,
-              indentation: true,
-            },
-            suggest: {
-              showKeywords: true,
-              showSnippets: true,
-            },
-            quickSuggestions: {
-              other: true,
-              comments: false,
-              strings: false,
-            },
-            scrollbar: {
-              verticalScrollbarSize: 8,
-              horizontalScrollbarSize: 8,
-            },
-            overviewRulerBorder: false,
-            hideCursorInOverviewRuler: true,
-            fixedOverflowWidgets: true,
-            contextmenu: true,
-            accessibilitySupport: "auto",
-          }}
-        />
+        <div className="relative min-h-0 flex-1">
+          <Editor
+            defaultValue={initialCode}
+            language={getMonacoLanguage(language)}
+            theme={themeName}
+            beforeMount={handleBeforeMount}
+            onMount={handleMount}
+            onChange={handleChange}
+            loading={<EditorSkeleton />}
+            options={{
+              readOnly,
+              // Names Monaco's focus target (its hidden <textarea>) for screen
+              // readers; the group label alone is not announced on focus.
+              ariaLabel: tA11y("codeEditor"),
+              minimap: { enabled: false },
+              fontSize: 14,
+              lineHeight: 22,
+              fontFamily:
+                "'JetBrains Mono', 'Fira Code', 'Cascadia Code', Menlo, monospace",
+              fontLigatures: true,
+              tabSize: 2,
+              insertSpaces: true,
+              wordWrap: "off",
+              scrollBeyondLastLine: false,
+              automaticLayout: true,
+              padding: { top: 16, bottom: 16 },
+              renderLineHighlight: "line",
+              cursorBlinking: "smooth",
+              cursorSmoothCaretAnimation: "on",
+              smoothScrolling: true,
+              bracketPairColorization: { enabled: true },
+              guides: {
+                bracketPairs: true,
+                indentation: true,
+              },
+              suggest: {
+                showKeywords: true,
+                showSnippets: true,
+              },
+              quickSuggestions: {
+                other: true,
+                comments: false,
+                strings: false,
+              },
+              scrollbar: {
+                verticalScrollbarSize: 8,
+                horizontalScrollbarSize: 8,
+              },
+              overviewRulerBorder: false,
+              hideCursorInOverviewRuler: true,
+              fixedOverflowWidgets: true,
+              contextmenu: true,
+              // "auto" defers to Monaco's screen-reader detection, which also
+              // scales accessibilityPageSize. Tab focus mode itself stays OFF by
+              // default (Tab indents while coding); the built-in
+              // `editor.action.toggleTabFocusMode` chord advertised by the hint
+              // below is the escape (WCAG 2.1.2), and F8 / Shift+F8 marker
+              // navigation works against the syntax-only diagnostics configured
+              // in beforeMount.
+              accessibilitySupport: "auto",
+            }}
+          />
+        </div>
+
+        {/* Tab-trap escape hint — reserved strip, so its appearance on focus
+            never shifts the layout. Plain text (no focusable content: it must
+            not add a keyboard stop of its own) that fades in while the editor
+            owns the keyboard. It stays in the accessibility tree at opacity-0,
+            keeping the aria-describedby associations valid at all times.
+            {escapeChord} is null until mount (SSR has no navigator). */}
+        <p
+          id={hintId}
+          data-focused={isFocused || undefined}
+          className={cn(
+            "min-h-7 shrink-0 border-t border-border bg-card px-3 py-1.5 text-xs text-text-3 transition-opacity motion-reduce:transition-none",
+            isFocused ? "opacity-100" : "opacity-0"
+          )}
+        >
+          {escapeChord
+            ? tA11y("editorKeyboardHint", { chord: escapeChord })
+            : " "}
+        </p>
       </div>
     );
   }

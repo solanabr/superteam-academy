@@ -486,6 +486,7 @@
     "dismiss": "Dismiss",
     "close": "Close",
     "codeEditor": "Code editor",
+    "editorKeyboardHint": "Press {chord} to toggle whether Tab indents code or moves focus out of the editor. Press F8 or Shift+F8 to cycle through errors.",
     "clearOutput": "Clear output",
     "resizeOutputPanel": "Resize output panel",
     "resizeTaskPanel": "Resize task panel",
