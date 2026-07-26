@@ -35,6 +35,34 @@ export function mergeBase(
   return tip ? { ref: tip, exact: false } : null;
 }
 
+/**
+ * A best-effort base ref for a run with no explicit `GITHUB_BASE_REF` /
+ * `LINT_BASE_REF` (a bare local invocation). Prefers the remote's default branch
+ * (`origin/HEAD` → e.g. `origin/main`), then the common `origin/main` /
+ * `origin/master`. Returns null when no remote-tracking base exists — a repo with
+ * no fetched remote — in which case gates 2/3 cannot verify immutability and MUST
+ * say so rather than fabricate a comparison. Never invents `HEAD` as its own base.
+ */
+export function resolveLocalBase(root: string): string | null {
+  const head = git(root, [
+    "symbolic-ref",
+    "--quiet",
+    "refs/remotes/origin/HEAD",
+  ])
+    ?.trim()
+    .replace(/^refs\/remotes\//, "");
+  if (head && head !== "origin/HEAD") return head;
+  for (const cand of ["origin/main", "origin/master"]) {
+    if (
+      git(root, ["rev-parse", "--verify", "--quiet", `${cand}^{commit}`]) !==
+      null
+    ) {
+      return cand;
+    }
+  }
+  return null;
+}
+
 /** File contents at `ref`, or null when the path did not exist there. */
 export function gitShow(
   root: string,
