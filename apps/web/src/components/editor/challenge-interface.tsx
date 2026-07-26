@@ -1,9 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import confetti from "canvas-confetti";
 import { useTranslations } from "next-intl";
-import { ArrowCounterClockwise, Trophy, X } from "@phosphor-icons/react";
+import {
+  ArrowCounterClockwise,
+  CheckCircle,
+  Lightbulb,
+  Trophy,
+  X,
+} from "@phosphor-icons/react";
 import { CodeEditor, resetEditorStorage } from "./code-editor";
 import { OutputPanel } from "./output-panel";
 import { ChallengeRunner } from "./challenge-runner";
@@ -16,6 +21,7 @@ import type {
 } from "./types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { shouldShowEncouragement } from "@/lib/gamification/celebration";
 
 const LESSON_COMPLETE_EVENT = "superteam:lesson-complete";
 
@@ -76,17 +82,22 @@ export function ChallengeInterface({
   const [isSaving, setIsSaving] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
 
+  // Struggling-encouragement state (LX-B11 / F11, R10): count consecutive
+  // failed runs; a passing run resets the counter and the dismissal.
+  const [consecutiveFails, setConsecutiveFails] = useState(0);
+  const [encouragementDismissed, setEncouragementDismissed] = useState(false);
+
   const editorHandle = useRef<CodeEditorHandle>(null);
 
   // Sync when the async DB check resolves after mount.
   // Also fires when lesson-client sets isCompleted=true after API returns —
-  // this is when we show the overlay and trigger confetti.
+  // this is when we show the calm completion acknowledgment. No confetti here:
+  // celebration is reserved for deploy + credential-mint milestones (LX-B11).
   const prevIsAlreadyCompleted = useRef(isAlreadyCompleted ?? false);
   useEffect(() => {
     if (isAlreadyCompleted && !prevIsAlreadyCompleted.current) {
       setIsComplete(true);
       setIsSaving(false);
-      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
     }
     prevIsAlreadyCompleted.current = isAlreadyCompleted ?? false;
   }, [isAlreadyCompleted]);
@@ -134,6 +145,12 @@ export function ChallengeInterface({
       status: result.success ? "success" : "error",
       executionResult: result,
     }));
+    if (result.success) {
+      setConsecutiveFails(0);
+      setEncouragementDismissed(false);
+    } else {
+      setConsecutiveFails((prev) => prev + 1);
+    }
   }, []);
 
   const handleClearOutput = useCallback(() => {
@@ -449,14 +466,14 @@ export function ChallengeInterface({
               </div>
             )}
 
-            {/* Success overlay */}
+            {/* Success overlay — calm checkmark acknowledgment (LX-B11) */}
             {isComplete && (
               <div className="pointer-events-none absolute inset-0 flex items-center justify-center backdrop-blur-sm [background:color-mix(in_srgb,var(--bg)_60%,transparent)]">
                 <div className="flex flex-col items-center gap-2 rounded-xl border-[2.5px] border-border bg-card p-6 shadow-card">
-                  <Trophy
+                  <CheckCircle
                     size={32}
                     weight="duotone"
-                    className="text-accent"
+                    className="text-success"
                     aria-hidden="true"
                   />
                   <p className="font-display text-lg font-black">
@@ -483,6 +500,37 @@ export function ChallengeInterface({
         >
           <div className="absolute left-1/2 top-1/2 h-0.5 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full transition-colors [background:var(--resizer-handle)] group-hover:[background:var(--primary)]" />
         </div>
+
+        {/* Struggling encouragement — supportive, non-blocking nudge after
+            ≥3 consecutive failed runs (LX-B11 / F11, R10). */}
+        {shouldShowEncouragement(consecutiveFails) &&
+          !encouragementDismissed &&
+          !isComplete && (
+            <div
+              role="status"
+              className="order-3 flex shrink-0 items-center gap-2 border-t border-border bg-card px-3 py-2 lg:order-none"
+            >
+              <Lightbulb
+                size={18}
+                weight="duotone"
+                className="shrink-0 text-accent"
+                aria-hidden="true"
+              />
+              <p className="flex-1 text-xs text-text-3">
+                <span className="font-bold text-text">
+                  {t("encouragementTitle")}
+                </span>{" "}
+                {t("encouragementBody")}
+              </p>
+              <button
+                onClick={() => setEncouragementDismissed(true)}
+                className="shrink-0 text-text-3 transition-colors hover:text-text"
+                aria-label={tA11y("dismiss")}
+              >
+                <X size={14} weight="bold" aria-hidden="true" />
+              </button>
+            </div>
+          )}
 
         {/* Output panel */}
         <div

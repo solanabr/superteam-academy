@@ -218,6 +218,8 @@
     "rustRateLimited": "Muitas requisições. Aguarde um momento.",
     "rustCompileTimeout": "Compilação expirou. Tente simplificar seu código.",
     "enrollToSaveProgress": "Inscreva-se neste curso para salvar seu progresso e ganhar XP.",
+    "encouragementTitle": "Travou? Faz parte.",
+    "encouragementBody": "Cada execução que falha elimina possibilidades. Dê uma olhada nas dicas ou peça uma força ao parceiro de IA — você está mais perto do que parece.",
     "buildProgram": "Compilar",
     "buildingProgram": "Compilando programa Solana...",
     "buildSuccess": "Programa compilado com sucesso!",

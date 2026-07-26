@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { celebrate } from "@/lib/gamification/celebration";
 import { cn } from "@/lib/utils";
 
 /**
@@ -38,6 +39,10 @@ export function CertificatePopup({ className }: { className?: string }) {
   const handleMinted = useCallback((e: Event) => {
     const detail = (e as CustomEvent<CertificateEvent>).detail;
     setEvents((prev) => [...prev, detail]);
+    // Full celebration — a credential mint is the rarest milestone (LX-B11).
+    // celebrate() dedupes against the manual-mint path and respects
+    // prefers-reduced-motion.
+    celebrate("credential-mint");
     setTimeout(() => {
       setEvents((prev) => prev.filter((ev) => ev.uid !== detail.uid));
     }, 7000);

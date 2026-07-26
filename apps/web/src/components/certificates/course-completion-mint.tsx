@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import { GraduationCap, CheckCircle, Wallet } from "@phosphor-icons/react";
+import { celebrate } from "@/lib/gamification/celebration";
 import { createClient } from "@/lib/supabase/client";
 
 interface CourseCompletionMintProps {
@@ -105,6 +106,9 @@ export function CourseCompletionMint({
         return;
       }
       setState({ status: "already_minted" });
+      // Full celebration on a fresh mint (LX-B11) — celebrate() dedupes
+      // against the Realtime certificate-INSERT popup firing the same moment.
+      celebrate("credential-mint");
     } catch (e) {
       setState({
         status: "mint_error",

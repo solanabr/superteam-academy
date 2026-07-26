@@ -7,6 +7,7 @@ import {
   dispatchAchievementXp,
 } from "@/components/gamification/achievement-popup";
 import { dispatchCertificateMinted } from "@/components/gamification/certificate-popup";
+import { dispatchLevelUp } from "@/components/gamification/level-up-popup";
 
 let xpEventCounter = 0;
 
@@ -65,6 +66,12 @@ export function useGamificationEvents(userId: string | undefined) {
         },
         (payload) => {
           const newLevel = (payload.new as { level?: number }).level ?? 0;
+          const previousLevel = lastKnownLevelRef.current;
+          // Only celebrate a genuine increase — the ref starts null until the
+          // seed query resolves, so the first UPDATE can't false-trigger.
+          if (previousLevel !== null && newLevel > previousLevel) {
+            dispatchLevelUp(newLevel);
+          }
           lastKnownLevelRef.current = newLevel;
         }
       )
