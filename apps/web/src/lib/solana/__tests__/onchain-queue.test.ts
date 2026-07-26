@@ -45,6 +45,14 @@ const h = vi.hoisted(() => ({
   isCourseInMaintenance: vi.fn<(courseId: string) => Promise<boolean>>(),
   isPlatformFrozen: vi.fn<() => Promise<boolean>>(),
   getCourseById: vi.fn(),
+  checkCapstoneCredentialGate:
+    vi.fn<
+      (
+        client: unknown,
+        userId: string,
+        courseId: string
+      ) => Promise<{ status: string }>
+    >(),
   // F5 — simulate the maintenance-defer marker WRITE itself failing (a
   // transient DB error), independent of any other update in the sweep.
   deferWriteShouldError: false,
@@ -89,6 +97,11 @@ vi.mock("@/lib/content/deployments", () => ({
 
 vi.mock("@/lib/platform/freeze", () => ({
   isPlatformFrozen: () => h.isPlatformFrozen(),
+}));
+
+vi.mock("@/lib/credentials/capstone-gate", () => ({
+  checkCapstoneCredentialGate: (...args: [unknown, string, string]) =>
+    h.checkCapstoneCredentialGate(...args),
 }));
 
 vi.mock("@/lib/supabase/admin", () => {
@@ -185,6 +198,10 @@ beforeEach(() => {
   h.isPlatformFrozen.mockReset();
   h.isPlatformFrozen.mockResolvedValue(false);
   h.getCourseById.mockReset();
+  h.checkCapstoneCredentialGate.mockReset();
+  // Default: non-capstone course — the gate is a no-op so the existing
+  // certificate/finalize tests exercise their original paths unchanged.
+  h.checkCapstoneCredentialGate.mockResolvedValue({ status: "not_capstone" });
   h.deferWriteShouldError = false;
   // Default: course already finalized on-chain, so finalizeCourse is skipped
   // and each test exercises the XP-settlement path in isolation.
@@ -610,5 +627,101 @@ describe("retryPendingOnchainActions — global freeze deferral (reset wave B2)"
     const patch = patchFor("r-xp-ok");
     expect(patch?.last_error).not.toBe("platform-frozen");
     expect(typeof patch?.resolved_at).toBe("string");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// LX-E2 — the login drainer is a THIRD credential-mint path. A `certificate`
+// row queued by the webhook (deploy save lagged behind finalize) must not be
+// minted ungated on the next drain: the same capstone gate runs here, and a
+// missing/indeterminate deploy DEFERS without burning a retry (so it lands the
+// moment the verified deploy row appears, and never before).
+// ---------------------------------------------------------------------------
+
+describe("retryPendingOnchainActions — capstone credential gate (LX-E2)", () => {
+  it("defers a capstone certificate row when deploy is required, WITHOUT bumping retry_count or minting", async () => {
+    h.rows = [
+      {
+        id: "r-cap-cert",
+        action_type: "certificate",
+        reference_id: "course-building-first-program",
+        retry_count: 1,
+        payload: { courseId: "course-building-first-program" },
+      },
+    ];
+    h.fetchEnrollment.mockResolvedValue({
+      completed_at: 1,
+      credential_asset: null,
+    });
+    h.checkCapstoneCredentialGate.mockResolvedValue({
+      status: "deploy_required",
+    });
+
+    await retryPendingOnchainActions(USER_ID);
+
+    const patch = patchFor("r-cap-cert");
+    expect(patch).toBeDefined();
+    expect(patch?.resolved_at).toBeUndefined();
+    expect(patch?.retry_count).toBeUndefined();
+    expect(String(patch?.last_error)).toContain(
+      "capstone-gate-deploy_required"
+    );
+    // Deferred BEFORE any mint machinery — no credential derived or issued.
+    expect(h.getCourseById).not.toHaveBeenCalled();
+  });
+
+  it("fails closed (defers, never mints) when the deploy state is indeterminate", async () => {
+    h.rows = [
+      {
+        id: "r-cap-cert-ind",
+        action_type: "certificate",
+        reference_id: "course-building-first-program",
+        retry_count: 0,
+        payload: { courseId: "course-building-first-program" },
+      },
+    ];
+    h.fetchEnrollment.mockResolvedValue({
+      completed_at: 1,
+      credential_asset: null,
+    });
+    h.checkCapstoneCredentialGate.mockResolvedValue({
+      status: "indeterminate",
+    });
+
+    await retryPendingOnchainActions(USER_ID);
+
+    const patch = patchFor("r-cap-cert-ind");
+    expect(patch?.retry_count).toBeUndefined();
+    expect(String(patch?.last_error)).toContain("capstone-gate-indeterminate");
+    expect(h.getCourseById).not.toHaveBeenCalled();
+  });
+
+  it("proceeds past the gate to mint machinery once the deploy is verified", async () => {
+    h.rows = [
+      {
+        id: "r-cap-cert-ok",
+        action_type: "certificate",
+        reference_id: "course-building-first-program",
+        retry_count: 0,
+        payload: { courseId: "course-building-first-program" },
+      },
+    ];
+    h.fetchEnrollment.mockResolvedValue({
+      completed_at: 1,
+      credential_asset: null,
+    });
+    h.checkCapstoneCredentialGate.mockResolvedValue({ status: "allowed" });
+    // Gate passed → the drainer reads the content bundle. Return null so it
+    // stops there (bumps retry) instead of needing the full mint mocked; the
+    // point is only that the gate did NOT block.
+    h.getCourseById.mockResolvedValue(null);
+
+    await retryPendingOnchainActions(USER_ID);
+
+    expect(h.getCourseById).toHaveBeenCalledWith(
+      "course-building-first-program"
+    );
+    const patch = patchFor("r-cap-cert-ok");
+    expect(String(patch?.last_error ?? "")).not.toContain("capstone-gate");
   });
 });

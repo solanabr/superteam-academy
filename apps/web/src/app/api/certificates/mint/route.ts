@@ -18,6 +18,7 @@ import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { isCourseInMaintenance } from "@/lib/content/deployments";
 import { isPlatformFrozen } from "@/lib/platform/freeze";
 import { platformFrozenResponse } from "@/lib/platform/freeze-http";
+import { checkCapstoneCredentialGate } from "@/lib/credentials/capstone-gate";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 
@@ -156,6 +157,37 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Credential already issued on-chain" },
         { status: 409 }
+      );
+    }
+
+    // LX-E2 (owner decision O-2) — the capstone credential requires a VERIFIED
+    // deploy (a `deployed_programs` row for the capstone deploy lesson, written
+    // only by the on-chain-verified /api/deploy/save). Non-capstone courses
+    // return `not_capstone` and proceed unchanged. This runs AFTER the
+    // already-issued short-circuit above, so a pre-gate holder is never
+    // re-evaluated (grandfathered). `code` is stable and machine-readable so
+    // the client can render a localized "deploy required" state.
+    const gate = await checkCapstoneCredentialGate(
+      adminClient,
+      user.id,
+      courseId
+    );
+    if (gate.status === "deploy_required") {
+      return NextResponse.json(
+        {
+          error:
+            "Deploy your capstone program to devnet before minting this credential.",
+          code: "capstone_deploy_required",
+        },
+        { status: 403 }
+      );
+    }
+    if (gate.status === "indeterminate") {
+      // Fail-closed on an unreadable deploy state — transient, so "try again"
+      // rather than a hard denial, and before any paid work (Arweave, tx).
+      return NextResponse.json(
+        { error: "Unable to verify your deploy right now. Please try again." },
+        { status: 503, headers: { "Retry-After": "30" } }
       );
     }
 

@@ -1,23 +1,24 @@
 import "server-only";
 
 import { PublicKey } from "@solana/web3.js";
-import { getProgramId } from "./pda";
+import { getCourseById } from "@/lib/content/queries";
+import { isCourseInMaintenance } from "@/lib/content/deployments";
+import { isPlatformFrozen } from "@/lib/platform/freeze";
+import { checkCapstoneCredentialGate } from "@/lib/credentials/capstone-gate";
+import { createAdminClient } from "@/lib/supabase/admin";
+import type { Database } from "@/lib/supabase/types";
+import {
+  fetchAchievementReceipt,
+  fetchEnrollment,
+  fetchCourse,
+} from "./academy-reads";
 import {
   getConnection,
   awardAchievement,
   finalizeCourse,
   issueCredential,
 } from "./academy-program";
-import {
-  fetchAchievementReceipt,
-  fetchEnrollment,
-  fetchCourse,
-} from "./academy-reads";
-import { getCourseById } from "@/lib/content/queries";
-import { isCourseInMaintenance } from "@/lib/content/deployments";
-import { isPlatformFrozen } from "@/lib/platform/freeze";
-import { createAdminClient } from "@/lib/supabase/admin";
-import type { Database } from "@/lib/supabase/types";
+import { getProgramId } from "./pda";
 
 type OnchainActionType =
   | "achievement"
@@ -178,6 +179,27 @@ export async function retryPendingOnchainActions(
 
           // Already issued on-chain — just resolve the queue entry
           if (enrollment?.credential_asset) break;
+
+          // LX-E2 — re-run the capstone gate HERE too: a `certificate` row
+          // queued by the webhook (e.g. the deploy save lagged behind finalize)
+          // must never be minted ungated by the drainer. `deploy_required` /
+          // `indeterminate` DEFER without burning a retry (mirrors the
+          // maintenance defer), so a capstone credential lands once the
+          // verified deploy row appears — and never before. Runs after the
+          // already-issued short-circuit above, so pre-gate holders resolve
+          // cleanly (grandfathered).
+          const gate = await checkCapstoneCredentialGate(
+            adminClient,
+            userId,
+            courseId
+          );
+          if (
+            gate.status === "deploy_required" ||
+            gate.status === "indeterminate"
+          ) {
+            await deferForCapstoneGate(adminClient, row, courseId, gate.status);
+            continue;
+          }
 
           // Derive all fields fresh from the content bundle + on-chain (self-sufficient retry)
           const sanityCourse = await getCourseById(courseId);
@@ -638,6 +660,33 @@ async function deferForCourseMaintenance(
     const message = err instanceof Error ? err.message : String(err);
     console.error(
       `[onchain-queue] ${courseId}: failed to write maintenance-defer marker for row ${row.id}: ${message}`
+    );
+  }
+}
+
+// LX-E2 capstone-gate deferral. Same contract as deferForCourseMaintenance:
+// leave the row unresolved, record why, and do NOT touch retry_count, so a
+// capstone credential queued before its verified deploy is neither minted
+// ungated nor abandoned (the < 5 retry budget is never burned). The next drain
+// re-checks the gate and mints the moment the `deployed_programs` row appears.
+// Log-and-swallow a marker-write failure for the same F5 reason: a transient DB
+// error must not fall through to the caller's outer catch and bump retry_count.
+async function deferForCapstoneGate(
+  adminClient: AdminClient,
+  row: PendingActionRow,
+  courseId: string,
+  reason: string
+): Promise<void> {
+  try {
+    const { error } = await adminClient
+      .from("pending_onchain_actions")
+      .update({ last_error: `capstone-gate-${reason}:${courseId}` })
+      .eq("id", row.id);
+    if (error) throw new Error(error.message);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(
+      `[onchain-queue] ${courseId}: failed to write capstone-gate-defer marker for row ${row.id}: ${message}`
     );
   }
 }
