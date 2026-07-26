@@ -630,6 +630,61 @@ describe("POST /api/ai/partner", () => {
     expect(prompt).not.toContain("[TUTOR_NOTES]");
   });
 
+  it("re-bounds an out-of-contract tutorNotes array at runtime (6 bullets, each ≤500 chars)", async () => {
+    // The schema caps this at 6 × 500, but a schema-bypassing bundle (hand-edit)
+    // must not push unbounded text into the platform-funded prompt. Feed 7 notes,
+    // one 900 chars long: the prompt must carry exactly 6 bullets with the long
+    // one truncated to 500.
+    const longNote = "L".repeat(900);
+    getLessonBySlug.mockResolvedValue({
+      ...LESSON,
+      blocks: [
+        LESSON.blocks[0],
+        {
+          ...LESSON.blocks[1],
+          tutorNotes: [
+            longNote,
+            "note 2",
+            "note 3",
+            "note 4",
+            "note 5",
+            "note 6",
+            "note 7 must be dropped",
+          ],
+        },
+      ],
+    });
+    const fetchSpy = vi.fn(async (_url: string, init: { body: string }) => {
+      void init;
+      return {
+        ok: true,
+        text: async () => "",
+        json: async () => ({
+          candidates: [{ content: { parts: [{ text: PROPOSE_GEMINI_TEXT }] } }],
+          usageMetadata: { cachedContentTokenCount: 0 },
+        }),
+      };
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const { POST } = await import("../partner/route");
+    await POST(makeRequest(VALID_BODY));
+
+    const [, init] = fetchSpy.mock.calls[0]!;
+    const prompt = (
+      JSON.parse(init.body) as {
+        contents: { parts: { text: string }[] }[];
+      }
+    ).contents[0]!.parts[0]!.text;
+    const notesSection = prompt.slice(prompt.indexOf("[TUTOR_NOTES]"));
+    // Exactly 6 bullets survive (the 7th is sliced off).
+    expect(notesSection.match(/^- /gm)).toHaveLength(6);
+    expect(notesSection).not.toContain("note 7 must be dropped");
+    // The long note is truncated to 500 chars (bullet = "- " + 500 L's).
+    expect(notesSection).toContain(`- ${"L".repeat(500)}\n`);
+    expect(notesSection).not.toContain("L".repeat(501));
+  });
+
   it("returns 502 on a malformed (missing required fields) propose payload", async () => {
     stubGeminiFetch(
       JSON.stringify({ type: "propose", rationale: "only rationale" })
