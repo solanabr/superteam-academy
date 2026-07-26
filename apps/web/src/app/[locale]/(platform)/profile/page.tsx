@@ -56,6 +56,8 @@ interface ProfileData {
     coursesCompleted: number;
     certificatesCount: number;
   };
+  /** Day-streak stat — lives here at launch, not on the dashboard hero (LX-B13, #583) */
+  streak: { currentStreak: number; longestStreak: number };
   skills: SkillItem[];
   totalLessons: number;
   achievements: Achievement[];
@@ -69,6 +71,7 @@ function useProfileData(): ProfileData {
   const [data, setData] = useState<ProfileData>({
     user: null,
     stats: { totalXp: 0, level: 0, coursesCompleted: 0, certificatesCount: 0 },
+    streak: { currentStreak: 0, longestStreak: 0 },
     skills: [],
     totalLessons: 0,
     achievements: [],
@@ -99,9 +102,12 @@ function useProfileData(): ProfileData {
           .eq("id", user.id)
           .single();
 
-        // Fetch XP via service layer (on-chain first, Supabase fallback)
+        // Fetch XP + streak via service layer (on-chain first, Supabase fallback)
         const service = getProgressService(supabase);
-        const totalXp = await service.getXP(user.id);
+        const [totalXp, streakData] = await Promise.all([
+          service.getXP(user.id),
+          service.getStreak(user.id),
+        ]);
 
         // Fetch achievements
         const { data: achievementRows } = await supabase
@@ -247,6 +253,10 @@ function useProfileData(): ProfileData {
             coursesCompleted: completedCourses.length,
             certificatesCount: certificates.length,
           },
+          streak: {
+            currentStreak: streakData.currentStreak,
+            longestStreak: streakData.longestStreak,
+          },
           skills: skills.length > 0 ? skills : [],
           totalLessons: totalCompletedLessons,
           achievements,
@@ -306,6 +316,7 @@ export default function ProfilePage() {
         achievements={data.achievements}
         deployedAchievements={data.deployedAchievements}
         showVisibilityBadge
+        streak={data.streak}
       />
 
       {/* ─── Skills Radar ─── */}

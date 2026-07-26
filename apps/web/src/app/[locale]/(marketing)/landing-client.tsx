@@ -6,8 +6,8 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   ChatCircle,
-  Fire,
   GithubLogo,
+  Lightning,
   Wallet,
   GoogleLogo,
 } from "@phosphor-icons/react";
@@ -366,10 +366,12 @@ export function LandingPageClient({
       title: t("featureCommunityTitle"),
       description: t("featureCommunityDesc"),
     },
+    // LX-B13 (#583): quests framing replaces the old streak-pressure feature
+    // card at launch (restore streak copy only after forgiveness ships, LX-B8).
     {
-      icon: Fire,
-      title: t("featureStreaksTitle"),
-      description: t("featureStreaksDesc"),
+      icon: Lightning,
+      title: t("featureQuestsTitle"),
+      description: t("featureQuestsDesc"),
     },
     {
       icon: GithubLogo,

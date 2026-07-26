@@ -31,6 +31,12 @@ interface ProfileHeroPanelProps {
   deployedAchievements: DeployedAchievement[];
   /** Show public/private badge (only on own profile) */
   showVisibilityBadge?: boolean;
+  /**
+   * Day-streak stat (own profile only — streak data is own-row under RLS).
+   * LX-B13 (#583): this stats strip is the streak's home at launch; it is
+   * deliberately absent from the dashboard hero and header surfaces.
+   */
+  streak?: { currentStreak: number; longestStreak: number };
 }
 
 export function ProfileHeroPanel({
@@ -39,6 +45,7 @@ export function ProfileHeroPanel({
   achievements,
   deployedAchievements,
   showVisibilityBadge = false,
+  streak,
 }: ProfileHeroPanelProps) {
   const t = useTranslations("profile");
   const { xpInCurrentLevel, xpRequiredForNext, progressPercent } =
@@ -164,6 +171,12 @@ export function ProfileHeroPanel({
           </div>
           <div className="prof-stat-key">{t("achievementsUnlocked")}</div>
         </div>
+        {streak && (
+          <div className="prof-stat">
+            <div className="prof-stat-val">{streak.currentStreak}</div>
+            <div className="prof-stat-key">{t("dayStreak")}</div>
+          </div>
+        )}
       </div>
     </div>
   );

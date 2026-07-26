@@ -3,21 +3,21 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
-import { House, Book, ChatCircle, Trophy } from "@phosphor-icons/react";
+import { House, Book, ChatCircle } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth/auth-provider";
 
+// LX-B13 (#583): leaderboard demoted out of primary nav at launch (reachable
+// via user menu + footer). Restore when cohort leagues land (LX-B9).
 const navItems = [
   { key: "dashboard", icon: House, href: "/dashboard" },
   { key: "courses", icon: Book, href: "/courses" },
   { key: "community", icon: ChatCircle, href: "/community" },
-  { key: "leaderboard", icon: Trophy, href: "/leaderboard" },
 ] as const;
 
 const publicNavItems = [
   { key: "courses", icon: Book, href: "/courses" },
   { key: "community", icon: ChatCircle, href: "/community" },
-  { key: "leaderboard", icon: Trophy, href: "/leaderboard" },
 ] as const;
 
 export function MobileBottomNav() {
