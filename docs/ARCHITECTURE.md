@@ -973,7 +973,7 @@ read-only; the publish flow's output is a **prefilled PR link**, not a write.
 | `enrollments`         | Course enrollment records                | `user_id`, `course_id`, `completed_at`, `tx_signature`             |
 | `user_progress`       | Per-lesson completion                    | `user_id`, `lesson_id`, `completed`, `lesson_index`                |
 | `user_xp`             | XP totals and streaks                    | `user_id`, `total_xp`, `level`, `current_streak`, `longest_streak` |
-| `xp_transactions`     | XP award history                         | `user_id`, `amount`, `reason`, `tx_signature`                      |
+| `xp_transactions`     | XP award history                         | `user_id`, `amount`, `reason`, `source`, `tx_signature`            |
 | `user_achievements`   | Achievement unlock records               | `user_id`, `achievement_id`, `asset_address`                       |
 | `certificates`        | Credential NFT records                   | `user_id`, `course_id`, `mint_address`, `credential_type`          |
 | `nft_metadata`        | Full Metaplex metadata JSON              | `id`, `data` (JSONB)                                               |

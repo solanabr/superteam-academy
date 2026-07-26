@@ -871,6 +871,7 @@ export type Database = {
           id: string;
           idempotency_key: string | null;
           reason: string;
+          source: string;
           tx_signature: string | null;
           user_id: string | null;
         };
@@ -880,6 +881,7 @@ export type Database = {
           id?: string;
           idempotency_key?: string | null;
           reason: string;
+          source: string;
           tx_signature?: string | null;
           user_id?: string | null;
         };
@@ -889,6 +891,7 @@ export type Database = {
           id?: string;
           idempotency_key?: string | null;
           reason?: string;
+          source?: string;
           tx_signature?: string | null;
           user_id?: string | null;
         };

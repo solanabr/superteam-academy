@@ -69,7 +69,12 @@ CREATE TABLE xp_transactions (
   reason TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   tx_signature TEXT,
-  idempotency_key TEXT
+  idempotency_key TEXT,
+  -- Typed award source (LX-B9a, #557) — league scoring filters by this instead
+  -- of parsing free-text reasons. Derived from the reason prefix inside
+  -- award_xp via xp_source_for_reason(); hardcoded 'community' inside
+  -- award_community_xp. CHECK constraint below (chk_xp_transactions_source).
+  source TEXT NOT NULL
 );
 
 CREATE TABLE user_achievements (
@@ -149,6 +154,16 @@ ALTER TABLE user_xp
 
 ALTER TABLE xp_transactions
   ADD CONSTRAINT chk_xp_transactions_amount_positive CHECK (amount > 0);
+ALTER TABLE xp_transactions
+  ADD CONSTRAINT chk_xp_transactions_source CHECK (source IN (
+    'lesson',
+    'course_completion',
+    'achievement',
+    'quest',
+    'creator_reward',
+    'community',
+    'platform'
+  ));
 
 -- A course can only be completed at or after it was enrolled. Closes the
 -- forged sub-24h enrolled->completed window that fakes Speed Runner. NULL
@@ -323,6 +338,40 @@ CREATE POLICY "Anyone can read nft metadata"
 -- 4. SECURE SERVER-SIDE FUNCTIONS
 -- ─────────────────────────────────────────────
 
+-- Reason→source derivation for xp_transactions.source (LX-B9a, #557).
+-- Single source of truth for the go-forward writes in award_xp AND the
+-- backfill in 20260726120000_add_xp_transactions_source.sql — old and new
+-- rows can never disagree. Source is DERIVED from the reason prefix (not a
+-- new award_xp parameter) because reason prefixes are already load-bearing
+-- machine-readable convention here: award_xp's daily cap counts
+-- `NOT LIKE 'community:%'`, award_community_xp's cap counts
+-- `LIKE 'community:%'`, and durable pending_onchain_actions payloads carry
+-- reasons that may be swept long after deploy. Each prefix below is verified
+-- against its writer; unknown reasons (on-chain reward_xp memos are arbitrary
+-- authority-supplied text) fall to 'platform'. No 'challenge'/'streak' values:
+-- no writer exists for either (challenges complete as lessons on-chain).
+CREATE OR REPLACE FUNCTION public.xp_source_for_reason(p_reason TEXT)
+RETURNS TEXT
+LANGUAGE sql
+IMMUTABLE
+AS $$
+  SELECT CASE
+    WHEN p_reason LIKE 'community:%'              THEN 'community'
+    WHEN p_reason LIKE 'daily_quest:%'            THEN 'quest'
+    WHEN p_reason LIKE 'Completed lesson:%'       THEN 'lesson'
+    WHEN p_reason LIKE 'Course completion bonus:%' THEN 'course_completion'
+    WHEN p_reason LIKE 'Completed course:%'       THEN 'course_completion'
+    WHEN p_reason LIKE 'Creator reward:%'         THEN 'creator_reward'
+    WHEN p_reason LIKE 'Achievement reward:%'     THEN 'achievement'
+    ELSE 'platform'
+  END
+$$;
+
+-- Not a client RPC — block PostgREST exposure (#377 convention). No
+-- service_role grant needed: only called from inside the SECURITY DEFINER
+-- award functions, which execute as the function owner.
+REVOKE EXECUTE ON FUNCTION public.xp_source_for_reason(TEXT) FROM PUBLIC, anon, authenticated;
+
 -- Award XP (called from API routes with service_role key only)
 -- Also handles streak tracking: increments current_streak if last activity was
 -- yesterday, resets to 1 if gap > 1 day, and updates longest_streak.
@@ -366,6 +415,9 @@ DECLARE
   v_new_longest INTEGER;
   v_daily_total INTEGER;
   v_prev_amount INTEGER;
+  -- Typed source derived from the reason prefix (LX-B9a) — see
+  -- xp_source_for_reason for the mapping and the derivation rationale.
+  v_source TEXT;
   -- Hard per-award ceiling. Matches the documented "max 2000 XP per award"
   -- (the largest legitimate single award is a course-completion bonus).
   c_max_award_xp CONSTANT INTEGER := 2000;
@@ -411,9 +463,11 @@ BEGIN
     RETURN 0;
   END IF;
 
+  v_source := public.xp_source_for_reason(p_reason);
+
   IF p_idempotency_key IS NOT NULL THEN
-    INSERT INTO public.xp_transactions (user_id, amount, reason, idempotency_key, tx_signature)
-    VALUES (p_user_id, p_amount, p_reason, p_idempotency_key, p_tx_signature)
+    INSERT INTO public.xp_transactions (user_id, amount, reason, source, idempotency_key, tx_signature)
+    VALUES (p_user_id, p_amount, p_reason, v_source, p_idempotency_key, p_tx_signature)
     ON CONFLICT (user_id, idempotency_key) WHERE idempotency_key IS NOT NULL DO NOTHING;
 
     -- If nothing was inserted (duplicate), skip the XP update too. Report the
@@ -428,8 +482,8 @@ BEGIN
       RETURN COALESCE(v_prev_amount, 0);
     END IF;
   ELSE
-    INSERT INTO public.xp_transactions (user_id, amount, reason, tx_signature)
-    VALUES (p_user_id, p_amount, p_reason, p_tx_signature);
+    INSERT INTO public.xp_transactions (user_id, amount, reason, source, tx_signature)
+    VALUES (p_user_id, p_amount, p_reason, v_source, p_tx_signature);
   END IF;
 
   -- Get current streak state before updating
@@ -1502,16 +1556,19 @@ BEGIN
   END IF;
   IF p_amount <= 0 THEN RETURN FALSE; END IF;
 
+  -- source is hardcoded: this function IS the community XP path (LX-B9a). All
+  -- callers pass 'community:%' reasons — the daily-cap accounting above
+  -- already depends on that convention.
   IF p_idempotency_key IS NOT NULL THEN
-    INSERT INTO public.xp_transactions (user_id, amount, reason, idempotency_key)
-    VALUES (p_user_id, p_amount, p_reason, p_idempotency_key)
+    INSERT INTO public.xp_transactions (user_id, amount, reason, source, idempotency_key)
+    VALUES (p_user_id, p_amount, p_reason, 'community', p_idempotency_key)
     ON CONFLICT (user_id, idempotency_key) WHERE idempotency_key IS NOT NULL
     DO NOTHING;
 
     IF NOT FOUND THEN RETURN FALSE; END IF;
   ELSE
-    INSERT INTO public.xp_transactions (user_id, amount, reason)
-    VALUES (p_user_id, p_amount, p_reason);
+    INSERT INTO public.xp_transactions (user_id, amount, reason, source)
+    VALUES (p_user_id, p_amount, p_reason, 'community');
   END IF;
 
   INSERT INTO public.user_xp (id, user_id, total_xp, level, current_streak, longest_streak, last_activity_date)
