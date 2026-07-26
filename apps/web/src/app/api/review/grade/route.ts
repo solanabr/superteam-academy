@@ -72,6 +72,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const admin = createAdminClient();
+
+    // ── Due-gate (adversarial review, PR #709) ─────────────────────────────
+    // The box schedule only means anything if grading is gated on the item
+    // actually being due. Without this, a learner could POST-grade not-yet-due
+    // items and walk every box to the 21-day terminal in seconds — harmless for
+    // XP today, but the moment #707's review-quest YAML activates, the quest
+    // would decouple from the real due schedule. The UI can never reach this
+    // (the page only ever surfaces DUE items, via the capped read), so the 409
+    // needs no dedicated copy — it is a server-authoritative backstop.
+    //
+    // A missing row keeps the existing "not found" 404 (not the caller's own
+    // item, or already cleared). Own-row read via the admin client keyed on the
+    // SESSION user — a foreign item_key reads nothing and 404s.
+    const { data: existing, error: dueError } = await admin
+      .from("review_items")
+      .select("due_at")
+      .eq("user_id", user.id)
+      .eq("item_key", itemKey)
+      .maybeSingle();
+    if (dueError) throw new Error(dueError.message);
+    if (!existing) {
+      return NextResponse.json(
+        { error: "Review item not found" },
+        { status: 404 }
+      );
+    }
+    if (new Date(existing.due_at).getTime() > Date.now()) {
+      return NextResponse.json(
+        { error: "Review item is not due yet" },
+        { status: 409 }
+      );
+    }
+
     // Every quiz block must pass — the whole retrieval-close is the exercise.
     let passed = true;
     for (const block of resolved.quiz) {
@@ -82,7 +116,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const admin = createAdminClient();
     const { data, error: rpcError } = await admin.rpc("record_review_result", {
       p_user_id: user.id,
       p_item_key: itemKey,

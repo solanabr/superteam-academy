@@ -6,18 +6,27 @@ import type { ResolvedReviewItem } from "@/lib/content/queries";
 
 vi.mock("server-only", () => ({}));
 
-const { getUser, resolveReviewItems, gradeQuiz, rpc } = vi.hoisted(() => ({
-  getUser: vi.fn<() => Promise<unknown>>(),
-  resolveReviewItems: vi.fn<() => Promise<ResolvedReviewItem[]>>(),
-  gradeQuiz: vi.fn<() => Promise<GradeResult>>(),
-  rpc: vi.fn<() => Promise<{ data: unknown; error: unknown }>>(),
-}));
+const { getUser, resolveReviewItems, gradeQuiz, rpc, maybeSingle } = vi.hoisted(
+  () => ({
+    getUser: vi.fn<() => Promise<unknown>>(),
+    resolveReviewItems: vi.fn<() => Promise<ResolvedReviewItem[]>>(),
+    gradeQuiz: vi.fn<() => Promise<GradeResult>>(),
+    rpc: vi.fn<() => Promise<{ data: unknown; error: unknown }>>(),
+    maybeSingle: vi.fn<() => Promise<{ data: unknown; error: unknown }>>(),
+  })
+);
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: async () => ({ auth: { getUser } }),
 }));
 vi.mock("@/lib/supabase/admin", () => ({
-  createAdminClient: () => ({ rpc }),
+  // The admin client serves the own-row due-read chain AND the grade RPC.
+  createAdminClient: () => ({
+    from: () => ({
+      select: () => ({ eq: () => ({ eq: () => ({ maybeSingle }) }) }),
+    }),
+    rpc,
+  }),
 }));
 vi.mock("@/lib/content/queries", () => ({ resolveReviewItems }));
 vi.mock("@/lib/grading/graders/quiz", () => ({ gradeQuiz }));
@@ -63,6 +72,11 @@ beforeEach(() => {
   getUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
   resolveReviewItems.mockResolvedValue([quizItem()]);
   gradeQuiz.mockResolvedValue({ ok: true });
+  // Default: the learner owns the item and it is due (past due_at).
+  maybeSingle.mockResolvedValue({
+    data: { due_at: "2000-01-01T00:00:00Z" },
+    error: null,
+  });
   rpc.mockResolvedValue({
     data: [{ box: 2, due_at: "2026-08-01T00:00:00Z" }],
     error: null,
@@ -91,6 +105,50 @@ describe("POST /api/review/grade (LX-B5)", () => {
     const res = await POST(req({ itemKey: "lesson-pdas", proofs: {} }));
     expect(res.status).toBe(404);
     expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("409s a not-yet-due item and NEVER grades or mutates (anti-speed-run)", async () => {
+    maybeSingle.mockResolvedValue({
+      data: { due_at: "2999-01-01T00:00:00Z" },
+      error: null,
+    });
+    const res = await POST(
+      req({
+        itemKey: "lesson-pdas",
+        proofs: { qb: { selections: { q1: ["a"] } } },
+      })
+    );
+    expect(res.status).toBe(409);
+    expect(gradeQuiz).not.toHaveBeenCalled();
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("404s (and never grades) when the learner has no such review row", async () => {
+    maybeSingle.mockResolvedValue({ data: null, error: null });
+    const res = await POST(
+      req({
+        itemKey: "lesson-pdas",
+        proofs: { qb: { selections: { q1: ["a"] } } },
+      })
+    );
+    expect(res.status).toBe(404);
+    expect(gradeQuiz).not.toHaveBeenCalled();
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("grades a due-now item (due_at in the past passes the gate)", async () => {
+    maybeSingle.mockResolvedValue({
+      data: { due_at: new Date(Date.now() - 1000).toISOString() },
+      error: null,
+    });
+    const res = await POST(
+      req({
+        itemKey: "lesson-pdas",
+        proofs: { qb: { selections: { q1: ["a"] } } },
+      })
+    );
+    expect(res.status).toBe(200);
+    expect(rpc).toHaveBeenCalledOnce();
   });
 
   it("grades server-side and records a PASS keyed on the session user", async () => {
