@@ -2,19 +2,21 @@
 
 import { useState, useEffect, useRef } from "react";
 import {
-  Fire,
+  GraduationCap,
   Lightning,
   Medal,
   CheckCircle,
-  Trophy,
+  Sparkle,
 } from "@phosphor-icons/react";
 
 /* ────────────────────────────────────────────────────────────────────
    Hero showcase — who you become, not what you type. A Builder ID card
    in the Solana gradient floats center stage; the loot you earn (XP,
-   a live terminal, achievements, streaks, rank, a minted credential)
-   orbits it on two parallax layers, while faint program code rains up
-   behind everything on the deepest layer.
+   a live terminal, achievements, lesson progress, level-ups, a minted
+   credential) orbits it on two parallax layers, while faint program
+   code rains up behind everything on the deepest layer.
+   LX-B13 (#583): no streak counter or global-rank chip in this hero —
+   both are demoted at launch until forgiveness/cohorts ship (LX-B8/B9).
    Pure decoration (aria-hidden): the hero copy carries the semantics.
    Reduced motion: a static composition (blanket CSS rule + JS guards).
    ──────────────────────────────────────────────────────────────────── */
@@ -306,13 +308,13 @@ export function HeroShowcase({ compact = false }: { compact?: boolean }) {
           className="hero-loot absolute bottom-[9%] right-[1%] flex items-center gap-1.5 rounded-md border-[2.5px] border-border bg-card px-3 py-2 font-mono text-sm font-black text-xp shadow-card"
           style={{ animationDelay: "1.15s, 1.9s" }}
         >
-          <Fire size={15} weight="fill" /> 12
+          <GraduationCap size={15} weight="fill" /> 12/16
         </div>
         <div
           className="hero-loot absolute right-[0%] top-[40%] flex items-center gap-1.5 rounded-md border-[2.5px] border-border bg-card px-3 py-2 font-mono text-sm font-black text-text-2 shadow-card"
           style={{ animationDelay: "1.45s, 2.3s" }}
         >
-          <Trophy size={15} weight="fill" className="text-xp" /> #4{" "}
+          <Sparkle size={15} weight="fill" className="text-xp" /> Level 5{" "}
           <span className="text-success">↑</span>
         </div>
       </div>

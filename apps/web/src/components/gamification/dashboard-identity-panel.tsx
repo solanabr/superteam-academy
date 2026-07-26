@@ -472,23 +472,13 @@ export function DashboardIdentityPanel({
         <div className="dash-grid">
           {/* ::before left-edge green glow is handled by CSS */}
 
-          {/* Grid header: streak label + stats */}
+          {/* Grid header — LX-B13 (#583): streak counters are demoted out of
+              the dashboard hero at launch (a raw streak counter punishes a
+              missed day before forgiveness exists). The calendar stays as a
+              neutral activity view; day-streak stats live in profile stats.
+              Restore counters here when streak freezes land (LX-B8). */}
           <div className="dash-grid-header">
-            <span className="dash-grid-title">{t("streak")}</span>
-            <div className="dash-grid-stats">
-              <div className="dgs">
-                <div className="dgs-val" style={{ color: "var(--primary)" }}>
-                  {streak.currentStreak}d
-                </div>
-                <div className="dgs-key">{tDash("current")}</div>
-              </div>
-              <div className="dgs">
-                <div className="dgs-val" style={{ color: "var(--xp)" }}>
-                  {streak.longestStreak}d
-                </div>
-                <div className="dgs-key">{tDash("bestStreak")}</div>
-              </div>
-            </div>
+            <span className="dash-grid-title">{t("activity")}</span>
           </div>
 
           {/* Heatmap scroll area */}
@@ -528,7 +518,7 @@ export function DashboardIdentityPanel({
                   <div
                     className="contrib-grid"
                     role="img"
-                    aria-label={t("streak")}
+                    aria-label={t("activity")}
                   >
                     {/* Grid cells — iterate column-major */}
                     {heatmap.columns.flatMap((col, colIdx) =>

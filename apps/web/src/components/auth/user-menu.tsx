@@ -9,6 +9,7 @@ import {
   Copy,
   GearSix,
   SignOut,
+  Trophy,
   UserCircle,
 } from "@phosphor-icons/react";
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -36,6 +37,7 @@ export function UserMenu({
   locale,
 }: UserMenuProps) {
   const tCommon = useTranslations("common");
+  const tNav = useTranslations("nav");
   const { disconnect, connected } = useWallet();
   const [copied, setCopied] = useState(false);
 
@@ -140,6 +142,17 @@ export function UserMenu({
           >
             <Certificate size={14} weight="bold" />
             {tCommon("certificates")}
+          </Link>
+        </DropdownMenuItem>
+        {/* LX-B13 (#583): demoted leaderboard entry point — kept reachable
+            here after removal from the primary nav. */}
+        <DropdownMenuItem asChild>
+          <Link
+            href={`/${locale}/leaderboard`}
+            className="flex items-center gap-2 font-display text-[13px] font-semibold"
+          >
+            <Trophy size={14} weight="bold" />
+            {tNav("leaderboard")}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>

@@ -5,13 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
-import {
-  House,
-  Book,
-  Trophy,
-  ChatCircle,
-  Chalkboard,
-} from "@phosphor-icons/react";
+import { House, Book, ChatCircle, Chalkboard } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { isInstructorWallet } from "@/lib/content/client-queries";
@@ -25,17 +19,18 @@ import { useXpBalance } from "@/lib/solana/hooks";
 import { createClient } from "@/lib/supabase/client";
 import { LowSolBanner } from "@/components/layout/low-sol-banner";
 
+// LX-B13 (#583): the leaderboard is intentionally NOT a primary nav CTA at
+// launch — it stays reachable via the user menu and the footer. Restore it
+// here when cohort leagues land (LX-B9).
 const navItems = [
   { key: "dashboard", icon: House, href: "/dashboard" },
   { key: "courses", icon: Book, href: "/courses" },
   { key: "community", icon: ChatCircle, href: "/community" },
-  { key: "leaderboard", icon: Trophy, href: "/leaderboard" },
 ] as const;
 
 const publicNavItems = [
   { key: "courses", icon: Book, href: "/courses" },
   { key: "community", icon: ChatCircle, href: "/community" },
-  { key: "leaderboard", icon: Trophy, href: "/leaderboard" },
 ] as const;
 
 export function Header() {

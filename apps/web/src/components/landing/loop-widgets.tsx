@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Fire, Lightning, CheckCircle, Circle } from "@phosphor-icons/react";
+import { Lightning, CheckCircle, Circle } from "@phosphor-icons/react";
 
 /* ────────────────────────────────────────────────────────────────────
    Landing "loop" widgets — the product loop rebuilt as live miniatures
@@ -201,19 +201,21 @@ export function BuildWidget({
 }
 
 /* ════════════════════════════════════════════════════════════════════
-   02 · EARN — XP meter: counter, bar fill, streak igniting, quest tick
+   02 · EARN — XP meter: counter, bar fill, activity filling, quest tick
+   LX-B13 (#583): the old flame-streak row is demoted at launch — the
+   miniature shows a neutral 7-day activity strip instead.
    ════════════════════════════════════════════════════════════════════ */
 
 const XP_FROM = 3011;
 const XP_TO = 3036;
-const STREAK_LIT = 5;
+const ACTIVITY_LIT = 5;
 
 export function EarnWidget({ replayLabel }: { replayLabel: string }) {
   const { ref, inView } = useInViewOnce();
   const [runKey, setRunKey] = useState(0);
   const [started, setStarted] = useState(false);
   const [xp, setXp] = useState(XP_FROM);
-  const [litFlames, setLitFlames] = useState(0);
+  const [litDays, setLitDays] = useState(0);
   const [questDone, setQuestDone] = useState(false);
   const [popOrb, setPopOrb] = useState(false);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -226,14 +228,14 @@ export function EarnWidget({ replayLabel }: { replayLabel: string }) {
     if (prefersReducedMotion()) {
       setStarted(true);
       setXp(XP_TO);
-      setLitFlames(STREAK_LIT);
+      setLitDays(ACTIVITY_LIT);
       setQuestDone(true);
       return;
     }
 
     setStarted(false);
     setXp(XP_FROM);
-    setLitFlames(0);
+    setLitDays(0);
     setQuestDone(false);
     setPopOrb(false);
 
@@ -252,8 +254,8 @@ export function EarnWidget({ replayLabel }: { replayLabel: string }) {
     };
     requestAnimationFrame(tick);
 
-    for (let i = 0; i < STREAK_LIT; i++) {
-      timers.current.push(setTimeout(() => setLitFlames(i + 1), 600 + i * 160));
+    for (let i = 0; i < ACTIVITY_LIT; i++) {
+      timers.current.push(setTimeout(() => setLitDays(i + 1), 600 + i * 160));
     }
     timers.current.push(setTimeout(() => setQuestDone(true), 1450));
     timers.current.push(setTimeout(() => setPopOrb(true), 1650));
@@ -315,25 +317,19 @@ export function EarnWidget({ replayLabel }: { replayLabel: string }) {
           </div>
         </div>
 
-        {/* Streak row */}
+        {/* Activity row — 7-day mini heatmap */}
         <div className="mt-5 flex items-center gap-2" aria-hidden="true">
           {Array.from({ length: 7 }, (_, i) => {
-            const lit = i < litFlames;
+            const lit = i < litDays;
             return (
               <div
                 key={i}
-                className={`flex h-8 flex-1 items-center justify-center rounded-md border-[2px] transition-colors duration-200 ${
+                className={`h-8 flex-1 rounded-md border-[2px] transition-colors duration-200 ${
                   lit
-                    ? "border-[var(--accent-border)] [background:var(--xp-dim)]"
+                    ? "border-[var(--primary-border)] [background:var(--primary-dim)]"
                     : "border-border bg-subtle"
                 }`}
-              >
-                <Fire
-                  size={14}
-                  weight={lit ? "fill" : "regular"}
-                  className={lit ? "text-xp" : "text-text-3 opacity-40"}
-                />
-              </div>
+              />
             );
           })}
         </div>
