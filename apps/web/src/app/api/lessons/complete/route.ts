@@ -396,6 +396,54 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // ── Per-(user,lesson) in-flight guard (#651) ─────────────────────────
+    // Everything above is settled: grading PASSED, enrollment exists, and the
+    // lesson is NOT yet set in the on-chain bitmap. Between that stale read
+    // (`alreadyOnChain` above) and the confirmed complete_lesson tx below, N
+    // concurrent same-lesson requests all see the unset bit and each fire a tx;
+    // one confirms, the rest revert on the program's double-complete guard — but
+    // the backend keypair (payer) eats each reverted tx's base fee, and the
+    // graders already ran for all N. This 1-token / 30s bucket is a coarse lock
+    // over that critical section: the first request through takes the token, a
+    // second concurrent one 429s.
+    //
+    // Keyed per (user, lesson): it never touches a learner's OTHER lessons, and
+    // — sitting AFTER grading — it leaves normal retries alone. A wrong/failed
+    // submission 403s above and never reaches here; a re-fire of an ALREADY-
+    // completed lesson short-circuits at `alreadyOnChain` above. So the only
+    // request this blocks is a duplicate of an already-valid completion that is
+    // still in flight — exactly what "already in progress" means. That also
+    // covers a forged same-lesson `replay` flood, which flows through here like
+    // any other completion (honest replays are per-lesson-distinct, so they
+    // never collide on this key).
+    //
+    // 30s ≈ the grading + submit + confirm window the stale read spans. Fixed-
+    // window alignment makes this a coarse lock, not a mutex (two requests
+    // straddling a window boundary can both pass) — acceptable: it bounds the
+    // burn, it does not need to be exact.
+    //
+    // Fail-OPEN (no `failClosed`): a store blip degrades to today's pre-existing
+    // race, never to a blocked completion. This is a cost optimisation, not a
+    // correctness gate — the program's own double-complete check is the real
+    // guarantee — so a transient DB hiccup must never stop a learner finishing a
+    // lesson.
+    if (
+      await isRateLimited(
+        "lessons:complete:inflight",
+        `${user.id}:${lessonId}`,
+        { maxTokens: 1, refillIntervalMs: 30_000 }
+      )
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "This lesson completion is already being processed. Please wait a moment and try again.",
+          reason: "completion_in_progress",
+        },
+        { status: 429, headers: { "Retry-After": "30" } }
+      );
+    }
+
     // Execute on-chain completeLesson
     const signature = await onChainCompleteLesson(
       courseId,

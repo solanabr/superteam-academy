@@ -213,6 +213,7 @@
     "completionFailedEnrollment": "No pudimos verificar tu inscripción on-chain en este curso. Vuelve a inscribirte e inténtalo de nuevo.",
     "completionFailedGeneric": "No pudimos completar esta lección. Inténtalo de nuevo en un momento.",
     "completionRateLimited": "Estás completando lecciones muy rápido. Espera un momento e inténtalo de nuevo — tu progreso está guardado.",
+    "completionInProgress": "Esta lección ya se está completando. Espera un instante e inténtalo de nuevo — tu progreso está guardado.",
     "completionFailedQuiz": "Una o más respuestas del quiz aún no son correctas. Revisa tus respuestas arriba y envíalo de nuevo.",
     "completionFailedReflection": "Esta lección incluye una reflexión que aún no se ha enviado. Envía tu reflexión e inténtalo de nuevo.",
     "quizCheck": "Comprobar respuesta",
