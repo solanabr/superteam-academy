@@ -300,6 +300,7 @@
     "more": "More",
     "todayLabel": "Today",
     "dailyQuest": "Daily Quest: {name}",
+    "surpriseBonus": "Surprise bonus",
     "dailyQuests": "Daily Quests",
     "resetsIn": "Resets in {hours}h",
     "allQuestsBonus": "Complete all for bonus",
@@ -353,7 +354,8 @@
     "onChain": "on-chain",
     "you": "You",
     "xpRemaining": "<em>{xp} {xpLabel}</em> to {levelLabel} {level}",
-    "xpTooltip": "{xp} {xpLabel} to {levelLabel} {level}"
+    "xpTooltip": "{xp} {xpLabel} to {levelLabel} {level}",
+    "surpriseBonus": "Surprise bonus! +{amount} XP"
   },
   "certificates": {
     "title": "Certificate of Completion",
@@ -406,6 +408,12 @@
     "content": "Content bounties",
     "grants": "Grants",
     "opensInNewTab": "opens in a new tab"
+  },
+  "mastery": {
+    "title": "Skill mastery",
+    "caption": "Your progress across the skills you've practiced",
+    "lessonsRatio": "{completed}/{total} lessons",
+    "progressLabel": "{skill}: {completed} of {total} lessons complete"
   },
   "profile": {
     "editProfile": "Edit Profile",

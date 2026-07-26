@@ -50,6 +50,7 @@ describe("celebrationTierFor — the LX-B11 tier map", () => {
     "deploy-success": "medium",
     "level-up": "popup",
     "credential-mint": "full",
+    "surprise-bonus": "none",
   };
 
   for (const [event, tier] of Object.entries(expected)) {

@@ -20,7 +20,8 @@ export type CelebrationEvent =
   | "challenge-pass"
   | "deploy-success"
   | "level-up"
-  | "credential-mint";
+  | "credential-mint"
+  | "surprise-bonus";
 
 export type CelebrationTier = "none" | "popup" | "medium" | "full";
 
@@ -30,6 +31,9 @@ export const CELEBRATION_TIERS: Record<CelebrationEvent, CelebrationTier> = {
   "deploy-success": "medium",
   "level-up": "popup",
   "credential-mint": "full",
+  // A surprise bonus (LX-B15) is an informational moment — a calm toast, never
+  // confetti. Its delight is the unexpectedness of the reward, not spectacle.
+  "surprise-bonus": "none",
 } as const;
 
 export function celebrationTierFor(event: CelebrationEvent): CelebrationTier {

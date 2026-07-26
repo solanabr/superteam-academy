@@ -12,7 +12,9 @@ import {
   getLessonsByIds,
   getRecommendedCourses,
   getAllAchievements,
+  getAllLessonSkills,
 } from "@/lib/content/client-queries";
+import { deriveMastery, type MasterySkill } from "@/lib/gamification/mastery";
 import type {
   RecommendedCourse,
   DeployedAchievement,
@@ -73,6 +75,8 @@ export interface DashboardData {
   /** Next-incomplete-lesson derivation for the hero Continue card (LX-B2). */
   continueTarget: ContinueTarget | null;
   recommendedCourses: RecommendedCourse[];
+  /** Per-skill mastery progress derived from completed lessons × skill tags (LX-B16). */
+  masterySkills: MasterySkill[];
   recentActivity: ActivityItem[];
   username: string;
   userId: string;
@@ -98,6 +102,7 @@ export function useDashboardData(
     currentCourses: [],
     continueTarget: null,
     recommendedCourses: [],
+    masterySkills: [],
     recentActivity: [],
     username: "Builder",
     userId: "",
@@ -235,6 +240,7 @@ export function useDashboardData(
           /^Course completion bonus:\s*(.+)$/;
         const dailyQuestPattern = /^daily_quest:(.+)$/;
         const communityPattern = /^community:(.+)$/;
+        const surpriseBonusPattern = /^surprise_bonus:(.+)$/;
         const lessonIdsFromTx: string[] = [];
         const courseCompleteIdsFromTx: string[] = [];
         for (const tx of transactions ?? []) {
@@ -285,17 +291,30 @@ export function useDashboardData(
         const excludeFromRecommended = [
           ...new Set([...allEnrolledIds, ...mintedCourseIds]),
         ];
-        const [courseSummaries, recommended, achievementCatalog, lessonOrders] =
-          await Promise.all([
-            allCourseIdsToFetch.length > 0
-              ? getCoursesByIds(allCourseIdsToFetch)
-              : Promise.resolve([]),
-            getRecommendedCourses(excludeFromRecommended),
-            getAllAchievements(),
-            allEnrolledIds.length > 0
-              ? getCourseLessonOrders(allEnrolledIds)
-              : Promise.resolve([]),
-          ]);
+        const [
+          courseSummaries,
+          recommended,
+          achievementCatalog,
+          lessonOrders,
+          allLessonSkills,
+        ] = await Promise.all([
+          allCourseIdsToFetch.length > 0
+            ? getCoursesByIds(allCourseIdsToFetch)
+            : Promise.resolve([]),
+          getRecommendedCourses(excludeFromRecommended),
+          getAllAchievements(),
+          allEnrolledIds.length > 0
+            ? getCourseLessonOrders(allEnrolledIds)
+            : Promise.resolve([]),
+          // Mastery is a secondary P2 panel — never let it fail the dashboard.
+          getAllLessonSkills().catch(() => []),
+        ]);
+
+        // Per-skill mastery from completed lessons × their skill tags (LX-B16).
+        const masterySkills = deriveMastery(
+          (progressRows ?? []).map((r) => r.lesson_id),
+          allLessonSkills
+        );
         // Build a lookup map: course _id -> Sanity data
         const courseMap = new Map(courseSummaries.map((c) => [c._id, c]));
 
@@ -471,6 +490,15 @@ export function useDashboardData(
               txSignature: tx.tx_signature ?? null,
               href: "/community",
             });
+          } else if (surpriseBonusPattern.exec(tx.reason)?.[1]) {
+            raw.push({
+              type: "xp_other",
+              action: tDash("surpriseBonus"),
+              xp: tx.amount,
+              time: tx.created_at ?? new Date().toISOString(),
+              txSignature: tx.tx_signature ?? null,
+              href: null,
+            });
           } else {
             raw.push({
               type: "xp_other",
@@ -556,6 +584,7 @@ export function useDashboardData(
           currentCourses,
           continueTarget,
           recommendedCourses: recommended,
+          masterySkills,
           recentActivity,
           username: profile?.username ?? "Builder",
           userId: authUserId,
