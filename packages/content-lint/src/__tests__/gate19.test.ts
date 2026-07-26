@@ -33,9 +33,22 @@ blocks:
   };
 }
 
-function registry(slugs: string[]): Record<string, string> {
+/**
+ * A registry entry: a bare slug, or `{ slug, reviewExempt }` to emit the
+ * declarative single-use marker (catalog spec §5 policy 4) that gate 19b honours.
+ */
+type RegistryEntry = string | { slug: string; reviewExempt?: boolean };
+
+function registry(entries: RegistryEntry[]): Record<string, string> {
+  const line = (e: RegistryEntry) =>
+    typeof e === "string"
+      ? `- slug: ${e}`
+      : `- slug: ${e.slug}` +
+        (e.reviewExempt === undefined
+          ? ""
+          : `\n  reviewExempt: ${e.reviewExempt}`);
   return {
-    "skills.yaml": slugs.map((s) => `- slug: ${s}`).join("\n") + "\n",
+    "skills.yaml": entries.map(line).join("\n") + "\n",
   };
 }
 
@@ -136,12 +149,46 @@ describe("gate 19b — minimum reuse bar", () => {
     expect(r.ok).toBe(true);
   });
 
-  it("allows the singleton exceptions at one lesson", async () => {
+  it("allows a `reviewExempt: true` singleton at one lesson", async () => {
     const r = await runLint(
       makeTempRepo({
-        ...registry(["pdas", "brazil-compliance", "earn-submission"]),
+        ...registry([
+          "pdas",
+          { slug: "brazil-compliance", reviewExempt: true },
+          { slug: "earn-submission", reviewExempt: true },
+        ]),
         ...lesson("a", ["pdas", "brazil-compliance"]),
         ...lesson("b", ["pdas", "earn-submission"]),
+      })
+    );
+    expect(of(r, "gate-19b")).toEqual([]);
+    expect(r.ok).toBe(true);
+  });
+
+  it("errors on a single-use slug NOT marked reviewExempt (the mechanism is declarative, not a hardcoded allowlist)", async () => {
+    // brazil-compliance / earn-submission are spec examples, but the exemption
+    // comes from the skills.yaml marker — an unmarked entry still fails the bar.
+    const r = await runLint(
+      makeTempRepo({
+        ...registry(["pdas", "brazil-compliance"]),
+        ...lesson("a", ["pdas", "brazil-compliance"]),
+        ...lesson("b", ["pdas"]),
+      })
+    );
+    const g = of(r, "gate-19b");
+    expect(g).toHaveLength(1);
+    expect(g[0]?.severity).toBe("error");
+    expect(g[0]?.message).toContain('"brazil-compliance"');
+    expect(g[0]?.message).toContain("reviewExempt");
+    expect(r.ok).toBe(false);
+  });
+
+  it("honours reviewExempt for any slug, not just the spec's named examples", async () => {
+    const r = await runLint(
+      makeTempRepo({
+        ...registry(["pdas", { slug: "token-2022", reviewExempt: true }]),
+        ...lesson("a", ["pdas", "token-2022"]),
+        ...lesson("b", ["pdas"]),
       })
     );
     expect(of(r, "gate-19b")).toEqual([]);

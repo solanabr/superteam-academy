@@ -21,9 +21,11 @@ import { diag, type Diagnostic } from "../diagnostics";
  *                runs at SYNC time (`checkSkillVocabulary`) — an invented
  *                slug must fail the content PR, not the sync.
  *  19b (error)   minimum reuse bar: every registry slug applied to at least
- *                one lesson is applied to ≥2, except the allowed singletons
- *                (`brazil-compliance`, `earn-submission`). A registry slug
- *                applied to NO lesson is a warning (dead vocabulary entry).
+ *                one lesson is applied to ≥2, except slugs marked
+ *                `reviewExempt: true` in `skills.yaml` (single-use by design,
+ *                catalog spec §5 policy 4 — e.g. `brazil-compliance`,
+ *                `earn-submission`). A registry slug applied to NO lesson is a
+ *                warning (dead vocabulary entry).
  *  19c (warning) interleaving-pair vocabulary: both members of each
  *                REVIEW_INTERLEAVING_PAIRS pair exist in `skills.yaml` and
  *                are applied to ≥2 lessons each. WARNING tier for now: the
@@ -36,20 +38,22 @@ import { diag, type Diagnostic } from "../diagnostics";
  *                review set on them.
  */
 
-/** Registry slugs allowed to be applied to exactly one lesson. */
-export const ALLOWED_SINGLETON_SKILLS: readonly string[] = [
-  "brazil-compliance",
-  "earn-submission",
-];
-
 /**
- * Pre-existing single-lesson slugs demoted from error to warning so this gate
- * can merge without reddening courses-academy CI (its `validate-content.yml`
- * pulls this linter from monorepo `main` and runs full-tree). `oracles` is
- * applied to exactly one lesson today; the content fix (tag a second lesson or
- * drop the slug + registry entry) is owner-gated and tracked on #559. Remove
- * this slug from the list once that content PR lands. A *new* single-lesson
- * slug not on this list still errors.
+ * TEMPORARY, code-side escape hatch — distinct from the permanent declarative
+ * mechanism below. These are pre-existing single-lesson slugs on content *main*
+ * that the owner has not yet touched to either mark `reviewExempt: true` or fix
+ * (tag a second lesson / drop the slug). They are demoted from error to warning
+ * so this gate can merge without reddening courses-academy CI (its
+ * `validate-content.yml` pulls this linter from monorepo `main` and runs
+ * full-tree). `oracles` is applied to exactly one lesson on main today; the
+ * content fix is owner-gated and tracked on #559. Remove this slug once that
+ * content PR lands — at which point the ratchet is empty and the only exemption
+ * path is the declarative `reviewExempt` marker. A *new* single-lesson slug not
+ * on this list (and not `reviewExempt`) still errors.
+ *
+ * This is NOT the spec's exemption mechanism. A content author cannot express
+ * "single-use by design" here — that is `reviewExempt: true` in `skills.yaml`
+ * (catalog spec §5 policy 4), honoured in gate 19b below.
  */
 export const GRANDFATHERED_SINGLETONS: readonly string[] = ["oracles"];
 
@@ -159,7 +163,8 @@ export function gate19Check(model: RepoModel): Diagnostic[] {
   }
 
   // 19b — minimum reuse bar over the registry.
-  for (const { slug } of registry) {
+  for (const entry of registry) {
+    const { slug } = entry;
     const uses = lessonsBySlug.get(slug) ?? [];
     if (uses.length === 0) {
       out.push(
@@ -170,14 +175,23 @@ export function gate19Check(model: RepoModel): Diagnostic[] {
           `skill "${slug}" is in skills.yaml but applied to no lesson (dead vocabulary entry)`
         )
       );
-    } else if (uses.length === 1 && !ALLOWED_SINGLETON_SKILLS.includes(slug)) {
+    } else if (uses.length === 1) {
+      // Exactly one lesson fails the reuse bar unless the slug is exempt. Two
+      // escape hatches, deliberately kept distinct:
+      //   • reviewExempt (permanent, declarative, content-side): the author has
+      //     marked this slug single-use by design in skills.yaml — spec §5
+      //     policy 4. No diagnostic at all.
+      //   • GRANDFATHERED_SINGLETONS (temporary, code-side): pre-existing debt
+      //     on content main the owner hasn't marked/fixed yet. Demoted to a
+      //     warning so it never fails CI; see the constant above.
+      if (entry.reviewExempt) continue;
       const grandfathered = GRANDFATHERED_SINGLETONS.includes(slug);
       out.push(
         diag(
           "gate-19b",
           grandfathered ? "warning" : "error",
           SKILLS_FILE,
-          `skill "${slug}" is applied to only 1 lesson (${uses[0]}) — the minimum reuse bar is 2; tag a second lesson or drop the slug` +
+          `skill "${slug}" is applied to only 1 lesson (${uses[0]}) — the minimum reuse bar is 2; tag a second lesson, drop the slug, or mark it "reviewExempt: true" in skills.yaml if it is single-use by design` +
             (grandfathered
               ? " (grandfathered to a warning pending the content fix, #559)"
               : "")

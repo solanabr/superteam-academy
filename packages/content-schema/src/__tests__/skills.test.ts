@@ -39,6 +39,25 @@ describe("SkillDef", () => {
   it("rejects a malformed slug", () => {
     expect(SkillDef.safeParse({ slug: "Not A Slug" }).success).toBe(false);
   });
+
+  it("accepts the optional reviewExempt marker (catalog spec §5 policy 4)", () => {
+    const parsed = SkillDef.parse({
+      slug: "earn-submission",
+      reviewExempt: true,
+    });
+    expect(parsed.reviewExempt).toBe(true);
+  });
+
+  it("leaves reviewExempt undefined when absent (backward-compatible)", () => {
+    const parsed = SkillDef.parse({ slug: "pdas" });
+    expect(parsed.reviewExempt).toBeUndefined();
+  });
+
+  it("rejects a non-boolean reviewExempt", () => {
+    expect(
+      SkillDef.safeParse({ slug: "pdas", reviewExempt: "yes" }).success
+    ).toBe(false);
+  });
 });
 
 describe("SkillsTaxonomy", () => {

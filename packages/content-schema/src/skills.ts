@@ -17,6 +17,16 @@ export const SkillDef = z.object({
   slug: SkillTag,
   label: z.string().min(1).optional(),
   description: z.string().optional(),
+  /**
+   * Marks a slug as single-use *by design* (catalog spec §5 policy 4). A tag so
+   * marked is exempt from content-lint gate 19b's ≥2-lesson reuse bar: the
+   * author is declaring "this tag will only ever back one lesson" (e.g.
+   * `brazil-compliance`, `earn-submission`) rather than the linter guessing.
+   * Optional and defaulting to absent, so every existing entry keeps its
+   * current (non-exempt) behaviour. Purely a review-bar signal — it has no
+   * bearing on registry resolution (19a) or facet-only classification (19d).
+   */
+  reviewExempt: z.boolean().optional(),
 });
 export type SkillDefT = z.infer<typeof SkillDef>;
 
