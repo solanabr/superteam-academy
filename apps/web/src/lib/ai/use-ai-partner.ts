@@ -43,6 +43,7 @@ interface UseAiPartnerResult {
   requestHint: () => Promise<void>;
   proposeFix: () => Promise<void>;
   ask: (message: string) => Promise<void>;
+  review: () => Promise<void>;
   verifyCheck: (
     checkToken: string,
     pickedIndex: 0 | 1 | 2
@@ -170,6 +171,13 @@ export function useAiPartner({
     await callPartnerRoute("propose");
   }, [callPartnerRoute]);
 
+  // Post-pass idiomatic review (LX-C9). A paid action like propose/ask — it
+  // spends an assist and appends the AI review to the chat. The caller gates
+  // this on a passing run; the route is agnostic to that (it grades nothing).
+  const review = useCallback(async () => {
+    await callPartnerRoute("review");
+  }, [callPartnerRoute]);
+
   const ask = useCallback(
     async (message: string) => {
       setMessages((prev) => [...prev, { role: "user", text: message }]);
@@ -216,6 +224,7 @@ export function useAiPartner({
     requestHint,
     proposeFix,
     ask,
+    review,
     verifyCheck,
   };
 }

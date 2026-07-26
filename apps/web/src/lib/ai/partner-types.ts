@@ -1,4 +1,4 @@
-export type PartnerAction = "hint" | "propose" | "ask";
+export type PartnerAction = "hint" | "propose" | "ask" | "review";
 
 export interface PartnerRequest {
   lessonSlug: string;
@@ -17,6 +17,21 @@ export interface HintResponse {
 export interface AnswerResponse {
   type: "answer";
   text: string;
+}
+
+/**
+ * A post-pass idiomatic review of the learner's PASSING solution (LX-C9). Strictly
+ * additive: it gates nothing and grants nothing — the learner has already solved
+ * the challenge, and this reviews the working code for idiom/clarity against the
+ * reference. `summary` is a one/two-sentence overall read that affirms the pass;
+ * `notes` is a bounded list of short, specific suggestions and MAY be empty when
+ * the solution is already idiomatic (the model must not invent problems). Never
+ * carries a rewrite or applicable edits — it is feedback, not a fix.
+ */
+export interface ReviewResponse {
+  type: "review";
+  summary: string;
+  notes: string[];
 }
 
 /**
@@ -50,7 +65,11 @@ export interface ProposeResponse {
   checkToken: string;
 }
 
-export type PartnerResponse = HintResponse | AnswerResponse | ProposeResponse;
+export type PartnerResponse =
+  | HintResponse
+  | AnswerResponse
+  | ProposeResponse
+  | ReviewResponse;
 
 /**
  * A single rendered turn in the AI Partner chat. Persisted server-side per

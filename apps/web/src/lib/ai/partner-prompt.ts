@@ -64,10 +64,28 @@ export function buildStaticPrefix(ctx: StaticPrefixContext): string {
   return sections.join("\n\n");
 }
 
+// Max number of idiomatic-review notes a single `review` response may carry.
+// Mirrors the schema's `maxItems` and gives `validatePartnerResponse` a hard
+// ceiling to reject past. A review MAY carry zero notes (already idiomatic).
+export const MAX_REVIEW_NOTES = 6;
+
+// Instruction block appended to the DYNAMIC SUFFIX for the post-pass `review`
+// action ONLY (LX-C9). It lives in the suffix — not the cached static prefix or
+// the shared SYSTEM_PERSONA — so the pre-pass prompt (hint/propose/ask) stays
+// byte-identical: the no-answer contract is untouched. Post-pass semantics: the
+// solution already passes, so the model reviews idiom/clarity WITHOUT regrading,
+// claiming failure, or rewriting the whole solution.
+const REVIEW_INSTRUCTIONS = `[REVIEW_INSTRUCTIONS]
+The learner's code above ALREADY PASSES every visible test — this is a post-pass idiomatic review, NOT grading and NOT a fix. Do not re-run or re-grade it, never claim it is wrong or failing, and never rewrite the whole solution or emit a code block. Compare it against the reference solution for idiom, clarity, and language conventions, then return:
+- "summary": ONE or TWO sentences affirming the solution passes and giving the overall idiomatic read.
+- "notes": zero to ${MAX_REVIEW_NOTES} short, specific suggestions for more idiomatic or clearer code (naming, standard-library usage, error handling, structure) — each a single sentence, none a rewrite. If the solution is already idiomatic, return an EMPTY notes array rather than inventing problems.`;
+
 /**
  * Builds the dynamic, per-turn suffix: the learner's live code (delimited
  * and labeled as data), the latest test-run summary, the optional free-form
- * "ask" message, and the requested action.
+ * "ask" message, and the requested action. The `review` action also appends
+ * its post-pass instruction block here (never in the cached prefix), so the
+ * pre-pass suffix for the other actions is unchanged.
  */
 export function buildDynamicSuffix(req: PartnerRequest): string {
   const sections = [
@@ -80,6 +98,10 @@ export function buildDynamicSuffix(req: PartnerRequest): string {
   }
 
   sections.push(`[ACTION]\n${req.action}`);
+
+  if (req.action === "review") {
+    sections.push(REVIEW_INSTRUCTIONS);
+  }
 
   return sections.join("\n\n");
 }
@@ -102,6 +124,11 @@ const MAX_TOKENS: Record<PartnerAction, number> = {
   hint: 512,
   propose: 2048,
   ask: 4096,
+  // `review` is a bounded structured payload — one/two-sentence summary + up to
+  // MAX_REVIEW_NOTES single-sentence notes — so it sits between hint and propose.
+  // It cannot echo the whole file (schema has no code field), so there is no
+  // truncation lever to inflate; 1536 leaves headroom for the JSON envelope.
+  review: 1536,
 };
 
 export function maxTokensFor(action: PartnerAction): number {
@@ -192,12 +219,41 @@ const PROPOSE_RESPONSE_SCHEMA = {
   required: ["type", "rationale", "edits", "check"],
 } as const;
 
+// Schema for the post-pass `review` variant (LX-C9). A bounded `summary` plus a
+// `notes` array (0..MAX_REVIEW_NOTES). Deliberately has NO code/edit/whole-file
+// field, so a review is structured feedback the model physically cannot turn
+// into a rewrite or a full-file echo — it reviews, it does not fix.
+const REVIEW_RESPONSE_SCHEMA = {
+  type: "object",
+  properties: {
+    type: { type: "string", enum: ["review"] },
+    summary: {
+      type: "string",
+      description:
+        "ONE or TWO sentences: the overall idiomatic read, affirming the solution passes.",
+    },
+    notes: {
+      type: "array",
+      items: { type: "string" },
+      // No `minItems`: an already-idiomatic solution yields an empty list rather
+      // than invented problems. `maxItems` bounds a runaway list.
+      maxItems: MAX_REVIEW_NOTES,
+      description:
+        "Zero to six short, single-sentence idiomatic/clarity suggestions — never a rewrite.",
+    },
+  },
+  required: ["type", "summary", "notes"],
+} as const;
+
 /**
  * The Gemini `responseSchema` for a given action. `propose` gets a schema with
  * no `text` field (forcing the structured fields and preventing a runaway
- * narrative); `hint`/`ask` get the text-body schema. Paired with
+ * narrative); `review` gets a summary+notes schema with no code field;
+ * `hint`/`ask` get the text-body schema. Paired with
  * `responseMimeType: "application/json"` at the call site.
  */
 export function responseSchemaFor(action: PartnerAction) {
-  return action === "propose" ? PROPOSE_RESPONSE_SCHEMA : TEXT_RESPONSE_SCHEMA;
+  if (action === "propose") return PROPOSE_RESPONSE_SCHEMA;
+  if (action === "review") return REVIEW_RESPONSE_SCHEMA;
+  return TEXT_RESPONSE_SCHEMA;
 }

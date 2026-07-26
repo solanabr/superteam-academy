@@ -876,6 +876,8 @@
       "propose": "Propose fix",
       "askPlaceholder": "Ask a question about this challenge...",
       "askSend": "Send",
+      "review": "Review my solution",
+      "reviewHint": "Get idiomatic feedback on your passing solution — this doesn't change your XP.",
       "budgetExhausted": "You've used all {max} paid assists for this challenge."
     },
     "diff": {

@@ -1,0 +1,95 @@
+// @vitest-environment jsdom
+// LX-C9 post-pass review: the opt-in "Review my solution" button lives in the
+// AI Partner pane and is gated on `solutionPassed`. It appears ONLY after a
+// passing run, never pre-pass. Suppression (an unanswered quiz block) is
+// enforced one level up in ChallengeInterface, which does not mount this pane
+// at all while suppressed (see challenge-interface-ai-gate.test.tsx), so a
+// suppressed lesson can never surface this button.
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
+import { AiPartnerPane } from "../ai-partner-pane";
+
+const review = vi.fn();
+const hookState = {
+  messages: [] as unknown[],
+  freeHintsUsed: 0,
+  paidUsed: 0,
+  paidRemaining: 4,
+  budgetExhausted: false,
+  loading: false,
+  error: null as string | null,
+  requestHint: vi.fn(),
+  proposeFix: vi.fn(),
+  ask: vi.fn(),
+  review,
+  verifyCheck: vi.fn(),
+};
+
+vi.mock("@/lib/ai/use-ai-partner", () => ({
+  useAiPartner: () => hookState,
+}));
+
+function renderPane(
+  props: { solutionPassed?: boolean; disabled?: boolean } = {}
+) {
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <AiPartnerPane
+        lessonSlug="l"
+        courseSlug="c"
+        hints={[]}
+        getCode={() => "code"}
+        getTestSummary={() => "3/3 passing"}
+        onApply={() => {}}
+        {...props}
+      />
+    </NextIntlClientProvider>
+  );
+}
+
+const reviewLabel = messages.aiPartner.actions.review;
+
+beforeEach(() => {
+  review.mockReset();
+  hookState.budgetExhausted = false;
+  hookState.loading = false;
+});
+
+describe("AiPartnerPane — post-pass review button (LX-C9)", () => {
+  it("does NOT render the review button before a passing run", () => {
+    renderPane({ solutionPassed: false });
+    expect(
+      screen.queryByRole("button", { name: reviewLabel })
+    ).not.toBeInTheDocument();
+  });
+
+  it("does NOT render the review button when the prop is omitted", () => {
+    renderPane();
+    expect(
+      screen.queryByRole("button", { name: reviewLabel })
+    ).not.toBeInTheDocument();
+  });
+
+  it("renders the review button after a passing run and calls review() on click", () => {
+    renderPane({ solutionPassed: true });
+    const button = screen.getByRole("button", { name: reviewLabel });
+    expect(button).toBeEnabled();
+    fireEvent.click(button);
+    expect(review).toHaveBeenCalledTimes(1);
+  });
+
+  it("offers the review even after the lesson is complete (disabled=true) — it is post-pass", () => {
+    // `disabled` (lesson complete) hard-stops hints/propose/ask but NOT review:
+    // reviewing the solution you just passed is the point of the surface.
+    renderPane({ solutionPassed: true, disabled: true });
+    expect(screen.getByRole("button", { name: reviewLabel })).toBeEnabled();
+  });
+
+  it("disables the review button when the paid budget is exhausted", () => {
+    hookState.budgetExhausted = true;
+    renderPane({ solutionPassed: true });
+    expect(screen.getByRole("button", { name: reviewLabel })).toBeDisabled();
+  });
+});

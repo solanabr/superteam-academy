@@ -84,4 +84,52 @@ describe("partner-prompt", () => {
     expect(prefix).toContain("replace");
     expect(prefix).not.toContain("the full updated file");
   });
+
+  // LX-C9: the post-pass review action.
+  it("review output cap is bounded and sits between hint and propose", () => {
+    expect(maxTokensFor("hint")).toBeLessThan(maxTokensFor("review"));
+    expect(maxTokensFor("review")).toBeLessThan(maxTokensFor("propose"));
+    expect(maxTokensFor("review")).toBe(1536);
+  });
+
+  it("review schema requests summary + notes, never a code/edit/whole-file field", () => {
+    const schema = responseSchemaFor("review");
+    expect(schema.properties).toHaveProperty("summary");
+    expect(schema.properties).toHaveProperty("notes");
+    // A review is feedback, not a fix: it can carry no rewrite or applicable edit.
+    expect(schema.properties).not.toHaveProperty("edits");
+    expect(schema.properties).not.toHaveProperty("proposedCode");
+    expect(schema.properties).not.toHaveProperty("text");
+    expect(schema.required).toEqual(["type", "summary", "notes"]);
+  });
+
+  it("appends the post-pass REVIEW_INSTRUCTIONS block ONLY for the review action", () => {
+    const base = {
+      lessonSlug: "l",
+      courseSlug: "c",
+      code: "let x = 1;",
+      testSummary: "3/3 passing",
+    } as const;
+
+    const reviewSuffix = buildDynamicSuffix({ ...base, action: "review" });
+    expect(reviewSuffix).toContain("[REVIEW_INSTRUCTIONS]");
+    expect(reviewSuffix).toContain("post-pass idiomatic review");
+    // The review must not regrade or rewrite.
+    expect(reviewSuffix).toContain("never claim it is wrong");
+
+    // The pre-pass actions carry a byte-identical suffix to today's — no review
+    // block leaks into the no-answer contract.
+    for (const action of ["hint", "propose", "ask"] as const) {
+      const suffix = buildDynamicSuffix({ ...base, action });
+      expect(suffix).not.toContain("[REVIEW_INSTRUCTIONS]");
+    }
+  });
+
+  it("static prefix is byte-identical regardless of action (review adds nothing to the cache)", () => {
+    // The review instructions live in the suffix, so the cached static prefix —
+    // task, tests, solution, persona — is untouched: pre-pass behavior is
+    // byte-identical whether or not the review action exists.
+    expect(buildStaticPrefix(ctx)).not.toContain("[REVIEW_INSTRUCTIONS]");
+    expect(buildStaticPrefix(ctx)).not.toContain("post-pass");
+  });
 });

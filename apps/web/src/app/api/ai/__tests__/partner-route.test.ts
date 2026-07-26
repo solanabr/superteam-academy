@@ -850,4 +850,176 @@ describe("POST /api/ai/partner", () => {
 
     expect(res.status).toBe(502);
   });
+
+  // --- LX-C9: post-pass idiomatic review (`review` action) ---
+
+  const REVIEW_BODY = {
+    ...VALID_BODY,
+    action: "review",
+    testSummary: "3/3 passing",
+  };
+
+  const REVIEW_GEMINI_TEXT = JSON.stringify({
+    type: "review",
+    summary: "Your solution passes and reads clearly.",
+    notes: [
+      "Prefer iter().sum() over the manual loop.",
+      "Name `n` for clarity.",
+    ],
+  });
+
+  it("passes through a well-formed review response for the review action", async () => {
+    stubGeminiFetch(REVIEW_GEMINI_TEXT);
+
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest(REVIEW_BODY));
+    const json = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(json).toEqual({
+      type: "review",
+      summary: "Your solution passes and reads clearly.",
+      notes: [
+        "Prefer iter().sum() over the manual loop.",
+        "Name `n` for clarity.",
+      ],
+    });
+  });
+
+  it("accepts a review with an empty notes array (already idiomatic)", async () => {
+    stubGeminiFetch(
+      JSON.stringify({
+        type: "review",
+        summary: "Already idiomatic — nothing to change.",
+        notes: [],
+      })
+    );
+
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest(REVIEW_BODY));
+    const json = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(json).toEqual({
+      type: "review",
+      summary: "Already idiomatic — nothing to change.",
+      notes: [],
+    });
+  });
+
+  it("is a metered paid action: spends once, records billed once, no refund (billed-path)", async () => {
+    stubGeminiFetch(REVIEW_GEMINI_TEXT);
+
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest(REVIEW_BODY));
+
+    expect(res.status).toBe(200);
+    // The review rides the same billed, fail-closed, assist-metered path as
+    // every other action — never an unmetered generation.
+    expect(spendAssist).toHaveBeenCalledTimes(1);
+    expect(spendAssist).toHaveBeenCalledWith("user-1", "lesson-1");
+    expect(recordBilledAssist).toHaveBeenCalledTimes(1);
+    expect(refundAssist).not.toHaveBeenCalled();
+  });
+
+  it("returns budgetExhausted for review when the assist budget is spent", async () => {
+    spendAssist.mockResolvedValue({ allowed: false, used: 4 });
+    stubGeminiFetch(REVIEW_GEMINI_TEXT);
+
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest(REVIEW_BODY));
+    const json = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(json).toMatchObject({ budgetExhausted: true, used: 4 });
+  });
+
+  it("caps review output below propose and uses the summary+notes schema", async () => {
+    const fetchSpy = vi.fn(async (_url: string, init: { body: string }) => {
+      void init;
+      return {
+        ok: true,
+        text: async () => "",
+        json: async () => ({
+          candidates: [{ content: { parts: [{ text: REVIEW_GEMINI_TEXT }] } }],
+          usageMetadata: { cachedContentTokenCount: 0 },
+        }),
+      };
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const { POST } = await import("../partner/route");
+    await POST(makeRequest(REVIEW_BODY));
+
+    const [, init] = fetchSpy.mock.calls[0]!;
+    const sent = JSON.parse(init.body) as {
+      contents: { parts: { text: string }[] }[];
+      generationConfig: {
+        maxOutputTokens: number;
+        responseSchema: { properties: Record<string, unknown> };
+      };
+    };
+    expect(sent.generationConfig.maxOutputTokens).toBe(1536);
+    const schema = sent.generationConfig.responseSchema;
+    expect(schema.properties).toHaveProperty("summary");
+    expect(schema.properties).toHaveProperty("notes");
+    expect(schema.properties).not.toHaveProperty("edits");
+    // The post-pass instruction block reaches the model only for review.
+    const prompt = sent.contents[0]!.parts[0]!.text;
+    expect(prompt).toContain("[REVIEW_INSTRUCTIONS]");
+  });
+
+  it("returns 502 on a review payload missing summary — billed, not refunded", async () => {
+    stubGeminiFetch(JSON.stringify({ type: "review", notes: ["a note"] }));
+
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest(REVIEW_BODY));
+
+    expect(res.status).toBe(502);
+    expect(refundAssist).not.toHaveBeenCalled();
+    expect(recordBilledAssist).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns 502 when a review note is not a non-empty string", async () => {
+    stubGeminiFetch(
+      JSON.stringify({ type: "review", summary: "s", notes: ["ok", ""] })
+    );
+
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest(REVIEW_BODY));
+
+    expect(res.status).toBe(502);
+  });
+
+  it("re-bounds an over-long review notes list to the ceiling", async () => {
+    const eight = Array.from({ length: 8 }, (_, i) => `note ${i}`);
+    stubGeminiFetch(
+      JSON.stringify({ type: "review", summary: "s", notes: eight })
+    );
+
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest(REVIEW_BODY));
+    const json = await res.json();
+
+    expect(res.status).toBe(200);
+    // Six-note ceiling (MAX_REVIEW_NOTES) enforced at the money surface.
+    expect(json.notes).toHaveLength(6);
+    expect(json.notes).not.toContain("note 6");
+  });
+
+  it("persists the review turn to the assist log with no user turn", async () => {
+    stubGeminiFetch(REVIEW_GEMINI_TEXT);
+
+    const { POST } = await import("../partner/route");
+    await POST(makeRequest(REVIEW_BODY));
+
+    expect(appendAssistLog).toHaveBeenCalledTimes(1);
+    const [, , entries] = appendAssistLog.mock.calls[0]!;
+    // review carries no user message — only the AI reply.
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({
+      role: "ai",
+      response: { type: "review" },
+    });
+  });
 });

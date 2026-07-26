@@ -3,9 +3,9 @@ import type { ReactElement } from "react";
 import { it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import { MessageList } from "../message-list";
 import messages from "@/messages/en.json";
 import type { PartnerMessage } from "@/lib/ai/use-ai-partner";
+import { MessageList } from "../message-list";
 
 function renderWithIntl(ui: ReactElement) {
   return render(
@@ -30,6 +30,62 @@ const proposeMessages: PartnerMessage[] = [
     },
   },
 ];
+
+it("renders a post-pass review with its summary and idiomatic notes", () => {
+  const reviewMessages: PartnerMessage[] = [
+    {
+      role: "ai",
+      response: {
+        type: "review",
+        summary: "Your solution passes and is clear.",
+        notes: ["Use iter().sum().", "Rename n to count."],
+      },
+    },
+  ];
+
+  renderWithIntl(
+    <MessageList
+      messages={reviewMessages}
+      onApply={() => {}}
+      getCode={() => "a"}
+      onVerify={vi.fn()}
+    />
+  );
+
+  expect(
+    screen.getByText("Your solution passes and is clear.")
+  ).toBeInTheDocument();
+  expect(screen.getByText("Use iter().sum().")).toBeInTheDocument();
+  expect(screen.getByText("Rename n to count.")).toBeInTheDocument();
+});
+
+it("renders an already-idiomatic review (empty notes) with just the summary", () => {
+  const reviewMessages: PartnerMessage[] = [
+    {
+      role: "ai",
+      response: {
+        type: "review",
+        summary: "Already idiomatic — nothing to change.",
+        notes: [],
+      },
+    },
+  ];
+
+  renderWithIntl(
+    <MessageList
+      messages={reviewMessages}
+      onApply={() => {}}
+      getCode={() => "a"}
+      onVerify={vi.fn()}
+    />
+  );
+
+  expect(
+    screen.getByText("Already idiomatic — nothing to change.")
+  ).toBeInTheDocument();
+  // No list is rendered when there are no notes.
+  expect(screen.queryByRole("list")).not.toBeInTheDocument();
+});
 
 it("dismisses a proposal when Dismiss is clicked", () => {
   renderWithIntl(

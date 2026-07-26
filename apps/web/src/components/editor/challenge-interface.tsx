@@ -9,16 +9,6 @@ import {
   Trophy,
   X,
 } from "@phosphor-icons/react";
-import { CodeEditor, resetEditorStorage } from "./code-editor";
-import { OutputPanel } from "./output-panel";
-import { ChallengeRunner } from "./challenge-runner";
-import { AiPartnerPane } from "./ai-partner/ai-partner-pane";
-import type {
-  ChallengeInterfaceProps,
-  ChallengeState,
-  CodeEditorHandle,
-  ExecutionResult,
-} from "./types";
 import {
   challengeKindFor,
   trackChallengeFailed,
@@ -31,6 +21,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { shouldShowEncouragement } from "@/lib/gamification/celebration";
+import { CodeEditor, resetEditorStorage } from "./code-editor";
+import { OutputPanel } from "./output-panel";
+import { ChallengeRunner } from "./challenge-runner";
+import { AiPartnerPane } from "./ai-partner/ai-partner-pane";
+import type {
+  ChallengeInterfaceProps,
+  ChallengeState,
+  CodeEditorHandle,
+  ExecutionResult,
+} from "./types";
 
 const LESSON_COMPLETE_EVENT = "superteam:lesson-complete";
 // Carries the passing code to lesson-client WITHOUT driving a completion, so an
@@ -436,6 +436,7 @@ export function ChallengeInterface({
                 getTestSummary={() => summarize(challengeState.executionResult)}
                 onApply={(proposed) => setCode(proposed)}
                 disabled={isComplete}
+                solutionPassed={challengeState.status === "success"}
                 className="h-full rounded-none border-0"
               />
             </div>
