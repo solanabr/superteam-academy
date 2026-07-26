@@ -1,7 +1,7 @@
 id: lesson-t-interact
 slug: interact
 title: Interact
-skills: [program-interaction]
+skills: [program-interaction, wallet-funding]
 blocks:
   - {
       key: explore,

@@ -12,3 +12,4 @@ export * from "./checks/gate6-executor";
 export * from "./checks/gate7-quiz";
 export * from "./checks/gate13a-capabilities";
 export * from "./checks/gate13bcd-widgets";
+export * from "./checks/gate19-skills";

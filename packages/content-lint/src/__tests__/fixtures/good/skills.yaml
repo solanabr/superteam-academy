@@ -1,0 +1,10 @@
+# Canonical skill vocabulary for the template fixture (gate 19). Every slug
+# below is applied to >=2 lessons so the fixture clears the minimum reuse bar.
+- slug: fundamentals
+  label: Fundamentals
+- slug: deployment
+  label: Deployment
+- slug: wallet-funding
+  label: Wallet Funding
+- slug: program-interaction
+  label: Program Interaction
