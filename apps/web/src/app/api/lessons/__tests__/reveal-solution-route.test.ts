@@ -1,3 +1,4 @@
+/* eslint-disable import/order -- vi.mock must precede importing the route under test. */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 

@@ -4,7 +4,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 vi.mock("server-only", () => ({}));
 
 const { rpc, logError } = vi.hoisted(() => ({
-  rpc: vi.fn<(...a: unknown[]) => Promise<{ data?: unknown; error: unknown }>>(),
+  rpc: vi.fn<
+    (...a: unknown[]) => Promise<{ data?: unknown; error: unknown }>
+  >(),
   logError: vi.fn(),
 }));
 
