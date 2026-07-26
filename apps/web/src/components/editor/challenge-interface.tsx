@@ -31,6 +31,9 @@ import { cn } from "@/lib/utils";
 import { shouldShowEncouragement } from "@/lib/gamification/celebration";
 
 const LESSON_COMPLETE_EVENT = "superteam:lesson-complete";
+// Carries the passing code to lesson-client WITHOUT driving a completion, so an
+// anonymous learner's submission can be banked before they enroll (LX-A4c).
+const CHALLENGE_PROOF_EVENT = "superteam:challenge-proof";
 
 /**
  * Turns a run's test results into the compact summary string the AI Partner
@@ -235,12 +238,19 @@ export function ChallengeInterface({
 
   const handleSubmit = useCallback(() => {
     if (!isEnrolled) {
-      // Tests passed but not enrolled — prompt enrollment
+      // Tests passed but not enrolled — prompt enrollment. Stash the passing
+      // code first so it is banked if the learner is anonymous and chooses
+      // "Later" at the sign-in prompt (LX-A4c).
+      window.dispatchEvent(
+        new CustomEvent(CHALLENGE_PROOF_EVENT, {
+          detail: { lessonId, submittedCode: code },
+        })
+      );
       setPendingSubmit(true);
       return;
     }
     completeLesson();
-  }, [isEnrolled, completeLesson]);
+  }, [isEnrolled, completeLesson, lessonId, code]);
 
   // Auto-complete when user enrolls after passing all tests
   useEffect(() => {

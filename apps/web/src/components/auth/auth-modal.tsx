@@ -27,12 +27,22 @@ interface AuthModalProps {
    */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /**
+   * Claim-moment mode (LX-A4b): the learner just did the work and is being asked
+   * to sign in to keep it. Shows the "keep your progress" framing plus a "Later"
+   * escape that dismisses without ever implying the work is lost — it stays
+   * banked locally (F4: never "discard progress").
+   */
+  showLater?: boolean;
+  onLater?: () => void;
 }
 
 export function AuthModal({
   trigger,
   open: controlledOpen,
   onOpenChange,
+  showLater = false,
+  onLater,
 }: AuthModalProps) {
   const t = useTranslations("auth");
   const tCommon = useTranslations("common");
@@ -48,6 +58,18 @@ export function AuthModal({
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { setVisible } = useWalletModal();
+
+  // Return the learner to the page they signed in from (#619 review): the OAuth
+  // callback otherwise always lands on /dashboard, stranding someone mid-lesson
+  // — and, post-LX-A4, away from the replay that finishes their banked work. The
+  // callback re-sanitizes this against open-redirect, so a path is all we pass.
+  const oauthRedirectTo = () => {
+    const base = `${window.location.origin}/api/auth/callback`;
+    const next = window.location.pathname;
+    return next && next !== "/"
+      ? `${base}?next=${encodeURIComponent(next)}`
+      : base;
+  };
 
   const handleConnectSolana = () => {
     setLoading("solana");
@@ -69,7 +91,7 @@ export function AuthModal({
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "github",
         options: {
-          redirectTo: `${window.location.origin}/api/auth/callback`,
+          redirectTo: oauthRedirectTo(),
         },
       });
       if (error) {
@@ -95,7 +117,7 @@ export function AuthModal({
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/api/auth/callback`,
+          redirectTo: oauthRedirectTo(),
         },
       });
       if (error) {
@@ -129,9 +151,11 @@ export function AuthModal({
       )}
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle className="text-center">{t("signInTitle")}</DialogTitle>
+          <DialogTitle className="text-center">
+            {t(showLater ? "keepProgressTitle" : "signInTitle")}
+          </DialogTitle>
           <DialogDescription className="text-center">
-            {t("signInSubtitle")}
+            {t(showLater ? "keepProgressSubtitle" : "signInSubtitle")}
           </DialogDescription>
         </DialogHeader>
         <div className="mt-6 space-y-3">
@@ -190,6 +214,26 @@ export function AuthModal({
             <p className="text-center text-sm text-danger" role="alert">
               {errorMessage}
             </p>
+          )}
+
+          {showLater && (
+            <div className="space-y-3 pt-1">
+              <Button
+                variant="ghost"
+                className="h-10 w-full text-sm font-medium text-text-3"
+                onClick={() => {
+                  setOpen(false);
+                  onLater?.();
+                }}
+                disabled={loading !== null}
+              >
+                {t("later")}
+              </Button>
+              {/* Reassurance — the work is KEPT, never discarded (F4). */}
+              <p className="text-center text-xs text-text-3">
+                {t("progressSavedLocally")}
+              </p>
+            </div>
           )}
         </div>
       </DialogContent>

@@ -19,6 +19,8 @@ import { completionErrorKey } from "@/lib/lessons/completion-error";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { useOnChainEnroll } from "@/hooks/use-on-chain-enroll";
+import { bankCompletion, removeBanked } from "@/lib/lessons/progress-bank";
+import { REPLAY_BANKED_EVENT } from "@/components/lessons/banked-progress-replay";
 import { ThreadList } from "@/components/community/thread-list";
 import { CreateThreadModal } from "@/components/community/create-thread-modal";
 
@@ -114,13 +116,41 @@ export function LessonPageClient({
     setProgramKeypairSecret(null);
   }, []);
 
+  // Bank the work done on THIS lesson so an anonymous learner never loses it at
+  // the sign-in wall (LX-A4c). Stores exactly the proofs the completion POST
+  // would carry; on sign-in they replay server-side (which re-grades them).
+  const bankCurrentLesson = useCallback(() => {
+    bankCompletion({
+      courseId,
+      courseSlug,
+      lessonId: lesson._id,
+      lessonSlug: lesson.slug,
+      lessonTitle: lesson.title,
+      proofs: { ...proofsRef.current },
+    });
+  }, [courseId, courseSlug, lesson._id, lesson.slug, lesson.title]);
+
+  // Claim moment: bank first, THEN open the sign-in prompt with its "Later"
+  // escape. Ordering matters — the modal's Later path relies on the work
+  // already being saved.
+  const openClaimAuth = useCallback(() => {
+    bankCurrentLesson();
+    setIsAuthModalOpen(true);
+  }, [bankCurrentLesson]);
+
   const { isEnrolling, handleEnroll, enrollError } = useOnChainEnroll({
     courseId,
     userId,
-    // Anonymous Enroll (e.g. the challenge "tests passed" overlay) opens the
-    // auth modal instead of silently no-oping (#556).
-    onRequireAuth: () => setIsAuthModalOpen(true),
-    onSuccess: () => setIsEnrolled(true),
+    // Anonymous Enroll (e.g. the challenge "tests passed" overlay) banks the
+    // learner's work and opens the auth modal instead of silently no-oping
+    // (#556) or dead-ending (LX-A4).
+    onRequireAuth: openClaimAuth,
+    onSuccess: () => {
+      setIsEnrolled(true);
+      // Now enrolled — invite the global replay to finish any banked lessons
+      // for this course (they 403'd on enrollment_missing before this point).
+      window.dispatchEvent(new CustomEvent(REPLAY_BANKED_EVENT));
+    },
   });
 
   const hasCodeBlock = lesson.blocks.some((b) => b._type === "code");
@@ -188,6 +218,9 @@ export function LessonPageClient({
       );
       setIsCompleting(false);
       setIsCompleted(true);
+      // Completed for real on the authed path — drop any banked copy so it can
+      // never re-replay (e.g. a stale entry the learner redid in-app).
+      removeBanked(courseId, lesson._id);
 
       if (!result.alreadyCompleted) {
         setEarnedXp(courseXpPerLesson);
@@ -257,6 +290,29 @@ export function LessonPageClient({
         handleChallengeComplete
       );
   }, [lesson, handleComplete]);
+
+  // An anonymous learner who passes a challenge submits BEFORE enrolling, so the
+  // passing code never rides `superteam:lesson-complete` (which drives an authed
+  // completion). Capture it here as the code block's proof so `bankCurrentLesson`
+  // banks a real submission, not an empty payload — the server re-grades it.
+  useEffect(() => {
+    const handleChallengeProof = (e: Event) => {
+      const detail = (
+        e as CustomEvent<{ lessonId: string; submittedCode?: string }>
+      ).detail;
+      if (detail.lessonId !== lesson._id) return;
+      const codeBlock = lesson.blocks.find((b) => b._type === "code");
+      if (codeBlock && typeof detail.submittedCode === "string") {
+        proofsRef.current[codeBlock.key] = { code: detail.submittedCode };
+      }
+    };
+    window.addEventListener("superteam:challenge-proof", handleChallengeProof);
+    return () =>
+      window.removeEventListener(
+        "superteam:challenge-proof",
+        handleChallengeProof
+      );
+  }, [lesson]);
 
   // Build-complete events (deployable code blocks / deployed-program card).
   useEffect(() => {
@@ -482,13 +538,17 @@ export function LessonPageClient({
                 </Button>
               )
             ) : (
-              <AuthModal
-                trigger={
-                  <Button variant="push" size="lg" className="gap-2">
-                    {t("signInToTrack")}
-                  </Button>
-                }
-              />
+              // Anonymous: banks the work done so far, then opens the sign-in
+              // prompt with its "Later" escape (LX-A4). The controlled modal is
+              // rendered once below.
+              <Button
+                variant="push"
+                size="lg"
+                className="gap-2"
+                onClick={openClaimAuth}
+              >
+                {t("signInToTrack")}
+              </Button>
             ))}
 
           {nextLesson ? (
@@ -535,12 +595,17 @@ export function LessonPageClient({
         )}
       </div>
 
-      {/* Programmatic auth modal — opened when an anonymous visitor clicks an
-          Enroll CTA that lives outside this component (the ChallengeInterface
-          "tests passed" overlay calls ctx.onEnroll). No trigger: controlled
-          only (#556). */}
+      {/* Programmatic auth modal — opened at the claim moment (the "tests
+          passed" enroll overlay, or the "Sign in to track" button). The work is
+          already banked before it opens, so it offers a "Later" escape framed as
+          "your progress is saved", never "discard" (LX-A4b). Controlled only
+          (#556). */}
       {!userId && (
-        <AuthModal open={isAuthModalOpen} onOpenChange={setIsAuthModalOpen} />
+        <AuthModal
+          open={isAuthModalOpen}
+          onOpenChange={setIsAuthModalOpen}
+          showLater
+        />
       )}
 
       {/* Discussion */}

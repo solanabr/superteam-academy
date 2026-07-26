@@ -186,6 +186,44 @@ describe("volume gate (#459)", () => {
   });
 });
 
+// Replay-of-banked-proofs exemption (LX-A4c). A completion the learner earned
+// while anonymous, banked, and replays after signing in skips ONLY the per-user
+// token bucket — the per-IP key (the one that actually bounds a Sybil farm's
+// burn rate) still applies. Non-replay traffic is unchanged (covered above).
+describe("replay exemption (LX-A4c)", () => {
+  const lesson = { blocks: [{ _type: "code", key: "c1" }] };
+  const callReplay = (proofs: Record<string, unknown> = {}) =>
+    POST(
+      req({ lessonId: "lesson-1", courseId: "course-1", proofs, replay: true })
+    );
+
+  it("skips the per-user gate — a replay proceeds even when per-user is exhausted", async () => {
+    getLessonByIdForGrading.mockResolvedValue(lesson);
+    codeGrader.mockResolvedValue({ ok: false, status: 403 });
+    // Per-user is exhausted; a live completion would 429 here.
+    isRateLimited.mockImplementation(async (ns) => ns === "lessons:complete");
+
+    const res = await callReplay({ c1: { code: "wrong" } });
+
+    // Reached grading (403), NOT throttled — the per-user gate was never queried.
+    expect(res.status).toBe(403);
+    expect(isRateLimited).not.toHaveBeenCalledWith("lessons:complete");
+  });
+
+  it("still enforces the per-IP gate — the burn-rate bound is not loosened", async () => {
+    getLessonByIdForGrading.mockResolvedValue(lesson);
+    isRateLimited.mockImplementation(
+      async (ns) => ns === "lessons:complete:ip"
+    );
+
+    const res = await callReplay({ c1: { code: "correct" } });
+
+    expect(res.status).toBe(429);
+    expect(codeGrader).not.toHaveBeenCalled();
+    expect(isRateLimited).toHaveBeenCalledWith("lessons:complete:ip");
+  });
+});
+
 describe("maintenance gate (WS-2 #453 rail 3)", () => {
   const lesson = { blocks: [{ _type: "code", key: "c1" }] };
 
