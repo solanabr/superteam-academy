@@ -41,7 +41,7 @@ for file in "${files[@]}"; do
 
     # Excluded: local reusable workflows and docker image refs (not SHA-pinnable as a git ref).
     case "$value" in
-      ./*|.\\*) continue ;;
+      ./*) continue ;;
       docker://*) continue ;;
     esac
 

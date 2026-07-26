@@ -2,21 +2,21 @@ name: Action pin guard
 
 # #661 — reject any GitHub Action `uses:` that is not pinned to a 40-char commit
 # SHA, so the #635/#659 hardening cannot silently regress. Standalone (not a job
-# in ci.yml) to keep the diff off the sensitive ci.yml and its required checks.
-# Not a required check, so `on.paths` is safe here (unlike ci.yml — see its
-# header): it simply doesn't run when no workflow/guard file changed.
+# in ci.yml) to keep the diff off the sensitive ci.yml.
+#
+# NO `on.paths` FILTER, deliberately. This must be registerable as a required
+# check to actually satisfy #661 ("cannot slip back in") — a red ✗ that does not
+# block a merge is advisory, not a guard. And per ci.yml's header, a workflow
+# gated by workflow-level `on.paths` leaves a required check stuck "pending" and
+# blocks every merge that does not touch the filtered paths. The two properties
+# are mutually exclusive, so the filter goes. The job is ~4s of pure bash on
+# every PR, which is cheaper than the enforcement it buys.
 
 on:
   push:
     branches: ["**"]
-    paths:
-      - ".github/workflows/**"
-      - "scripts/check-action-pins.sh"
   pull_request:
     branches: [main]
-    paths:
-      - ".github/workflows/**"
-      - "scripts/check-action-pins.sh"
 
 concurrency:
   group: action-pin-guard-${{ github.workflow }}-${{ github.ref }}
