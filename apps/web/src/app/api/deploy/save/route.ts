@@ -1,4 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { PublicKey } from "@solana/web3.js";
+import { isRateLimited, getClientIp } from "@/lib/rate-limit";
+import { getConnection } from "@/lib/solana/academy-program";
+import {
+  verifyProgramDeployment,
+  type DeployVerificationResult,
+} from "@/lib/solana/verify-program-deploy";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 interface SaveDeployRequest {
@@ -9,6 +17,23 @@ interface SaveDeployRequest {
 
 // Auth/cookie + per-request DB access — never statically prerender (DYNAMIC_SERVER_USAGE).
 export const dynamic = "force-dynamic";
+
+// One generic message for every on-chain rejection: distinguishing
+// missing/non-executable/wrong-authority would hand probers a free oracle
+// over arbitrary program ids (#560 / LX-E1).
+const VERIFICATION_FAILED = "Program verification failed";
+
+// The client POSTs immediately after its own RPC confirms the deploy tx, but
+// the server reads through a DIFFERENT RPC node — at "confirmed" commitment
+// the account can lag there for a moment. One short retry absorbs that window
+// (a rejected save is silently dropped client-side, which would later block
+// the capstone credential gate for a legitimate deploy).
+//
+// The retry makes the "missing" path ~1.5s slower than other rejections — a
+// timing oracle, but only over account EXISTENCE, which anyone can already
+// read for free from any public devnet RPC. Equalizing would add 1.5s to
+// every legitimate failure response for no secrecy gain, so we don't.
+const MISSING_ACCOUNT_RETRY_DELAY_MS = 1_500;
 
 export async function POST(request: NextRequest) {
   try {
@@ -41,8 +66,118 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Upsert — if user re-deploys to the same lesson, update the program_id
-    const { error } = await supabase.from("deployed_programs").upsert(
+    let programPubkey: PublicKey;
+    try {
+      programPubkey = new PublicKey(body.programId);
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid program ID format" },
+        { status: 400 }
+      );
+    }
+
+    // Each save costs two RPC reads against the server RPC; a save is a rare
+    // event (once per deploy lesson, occasional redeploys), so a tight
+    // per-user cap plus a classroom-sized per-IP cap bounds the spend.
+    // failClosed: this limiter meters platform-funded RPC reads, so a store
+    // error DENIES rather than handing out unmetered requests (same rationale
+    // as the AI routes). A save that hits the store blip retries cleanly.
+    if (
+      await isRateLimited("deploy:save", user.id, {
+        maxTokens: 20,
+        refillIntervalMs: 3_600_000,
+        failClosed: true,
+      })
+    ) {
+      return NextResponse.json(
+        { error: "Too many save attempts. Please try again later." },
+        { status: 429, headers: { "Retry-After": "3600" } }
+      );
+    }
+    if (
+      await isRateLimited("deploy:save:ip", getClientIp(request.headers), {
+        maxTokens: 200,
+        refillIntervalMs: 3_600_000,
+        failClosed: true,
+      })
+    ) {
+      return NextResponse.json(
+        { error: "Too many save attempts from this network." },
+        { status: 429, headers: { "Retry-After": "3600" } }
+      );
+    }
+
+    // The wallet the deploy must be attributed to: the learner's LINKED
+    // wallet (profiles.wallet_address), not whatever the request claims. The
+    // deploy flow signs with the connected wallet, which becomes the
+    // program's upgrade authority — for a legitimate deploy these match.
+    const adminClient = createAdminClient();
+    const { data: profile } = await adminClient
+      .from("profiles")
+      .select("wallet_address")
+      .eq("id", user.id)
+      .single();
+
+    if (!profile?.wallet_address) {
+      return NextResponse.json(
+        {
+          error: "Wallet not connected. Link your wallet to save deployments.",
+        },
+        { status: 400 }
+      );
+    }
+
+    let walletPubkey: PublicKey;
+    try {
+      walletPubkey = new PublicKey(profile.wallet_address);
+    } catch {
+      return NextResponse.json({ error: VERIFICATION_FAILED }, { status: 400 });
+    }
+
+    // On-chain verification (#560 / LX-E1): the submitted id must be a live,
+    // executable upgradeable program whose upgrade authority is the linked
+    // wallet. Without this, any self-reported base58 counts as a deploy and
+    // the capstone credential gate (LX-E2) is farmable with someone else's
+    // public program id.
+    let verification: DeployVerificationResult;
+    try {
+      const connection = getConnection();
+      verification = await verifyProgramDeployment(
+        connection,
+        programPubkey,
+        walletPubkey
+      );
+      if (!verification.ok && verification.reason === "missing") {
+        await new Promise((resolve) =>
+          setTimeout(resolve, MISSING_ACCOUNT_RETRY_DELAY_MS)
+        );
+        verification = await verifyProgramDeployment(
+          connection,
+          programPubkey,
+          walletPubkey
+        );
+      }
+    } catch {
+      // RPC unreachable — fail closed, but as "try again", not as a rejection.
+      return NextResponse.json(
+        { error: "Verification temporarily unavailable. Please try again." },
+        { status: 503, headers: { "Retry-After": "30" } }
+      );
+    }
+
+    if (!verification.ok) {
+      console.warn(
+        `[deploy-save] rejected program ${body.programId} for user ${user.id}: ${verification.reason}`
+      );
+      return NextResponse.json({ error: VERIFICATION_FAILED }, { status: 400 });
+    }
+
+    // Upsert — if user re-deploys to the same lesson, update the program_id.
+    // Service-role client on purpose: deployed_programs has NO client
+    // INSERT/UPDATE policies (20260726120000_lockdown_deployed_programs_rls),
+    // so this verified route is the only write path — a direct devtools
+    // insert can't bypass the on-chain check above.
+    const { error } = await adminClient.from("deployed_programs").upsert(
       {
         user_id: user.id,
         course_id: body.courseId,

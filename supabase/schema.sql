@@ -795,14 +795,14 @@ CREATE INDEX idx_deployed_programs_course_id ON deployed_programs(course_id);
 
 ALTER TABLE deployed_programs ENABLE ROW LEVEL SECURITY;
 
+-- NOTE: All writes to this table go through service_role (/api/deploy/save,
+-- after on-chain verification of the submitted program id — #560 / LX-E1).
+-- No INSERT/UPDATE RLS policies exist because authenticated/anon roles never
+-- write directly; a client-writable row would bypass the verification and let
+-- a learner claim anyone's public program as their own deploy
+-- (20260726120000_lockdown_deployed_programs_rls.sql).
 CREATE POLICY "Users can view their own deployments"
   ON deployed_programs FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert their own deployments"
-  ON deployed_programs FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update their own deployments"
-  ON deployed_programs FOR UPDATE USING (auth.uid() = user_id);
 
 -- ─────────────────────────────────────────────
 -- 8. PENDING ON-CHAIN ACTIONS (retry queue)
