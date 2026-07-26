@@ -62,6 +62,7 @@ export function ChallengeInterface({
   isEnrolled: isEnrolledProp,
   onEnroll,
   onComplete,
+  aiSuppressed = false,
   className,
 }: ChallengeInterfaceProps) {
   const t = useTranslations("lesson");
@@ -119,8 +120,11 @@ export function ChallengeInterface({
   // hidden until the learner scrolls to the end of the description — then it
   // slides in. `root: null` watches the viewport, so this works whether the
   // column scrolls internally (lg+) or the page scrolls (below lg). Once
-  // revealed it stays revealed.
+  // revealed it stays revealed — but `aiSuppressed` (an unanswered quiz block
+  // in this lesson, LX-C1/F18) overrides the reveal entirely: the observer
+  // keeps tracking, and the pane slides in once the quiz is answered.
   const [aiRevealed, setAiRevealed] = useState(false);
+  const aiVisible = aiRevealed && !aiSuppressed;
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el || aiRevealed) return;
@@ -321,12 +325,12 @@ export function ChallengeInterface({
         <div
           className={cn(
             "order-4 px-3 transition-all duration-500 ease-out motion-reduce:transition-none lg:order-none lg:shrink-0",
-            aiRevealed
+            aiVisible
               ? "max-h-[760px] translate-y-0 pb-4 pt-2 opacity-100"
               : "max-h-0 translate-y-3 overflow-hidden opacity-0"
           )}
         >
-          {aiRevealed && (
+          {aiVisible && (
             <div className="h-[600px]">
               <AiPartnerPane
                 lessonSlug={lessonSlug}

@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { ProgressBar } from "@/components/course/progress-bar";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { trackEvent } from "@/lib/analytics";
+import { completionErrorKey } from "@/lib/lessons/completion-error";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { useOnChainEnroll } from "@/hooks/use-on-chain-enroll";
@@ -36,13 +37,18 @@ interface CompletionResponse {
   signature: string | null;
 }
 
-/** Carries the HTTP status so the caller can map it to a localized reason. */
+/**
+ * Carries the HTTP status plus the route's `reason` discriminator so the
+ * caller can map the failure to the RIGHT localized copy (#564).
+ */
 class CompletionError extends Error {
   readonly status: number;
-  constructor(status: number) {
+  readonly reason?: string;
+  constructor(status: number, reason?: string) {
     super(`Failed to complete lesson (${status})`);
     this.name = "CompletionError";
     this.status = status;
+    this.reason = reason;
   }
 }
 
@@ -57,7 +63,14 @@ async function completeLessonAPI(
     body: JSON.stringify({ lessonId, courseId, proofs }),
   });
   if (!res.ok) {
-    throw new CompletionError(res.status);
+    let reason: string | undefined;
+    try {
+      const body = (await res.json()) as { reason?: unknown };
+      if (typeof body.reason === "string") reason = body.reason;
+    } catch {
+      // Non-JSON error body — the status alone drives the mapping.
+    }
+    throw new CompletionError(res.status, reason);
   }
   return res.json() as Promise<CompletionResponse>;
 }
@@ -111,6 +124,25 @@ export function LessonPageClient({
   });
 
   const hasCodeBlock = lesson.blocks.some((b) => b._type === "code");
+  const hasQuizBlock = lesson.blocks.some((b) => b._type === "quiz");
+
+  // F18 (#564): retrieval stays AI-free. Each QuizBlock reports whether all of
+  // its questions have been checked; while any quiz block in the lesson is
+  // still unanswered, the AI Partner pane inside ChallengeInterface stays
+  // hidden (mixed code+quiz lessons — nothing to gate elsewhere). A lesson the
+  // learner already completed never suppresses.
+  const [answeredQuizzes, setAnsweredQuizzes] = useState<
+    Record<string, boolean>
+  >({});
+  const setQuizAnswered = useCallback((blockKey: string, answered: boolean) => {
+    setAnsweredQuizzes((prev) =>
+      prev[blockKey] === answered ? prev : { ...prev, [blockKey]: answered }
+    );
+  }, []);
+  const aiSuppressed =
+    hasQuizBlock &&
+    !isCompleted &&
+    lesson.blocks.some((b) => b._type === "quiz" && !answeredQuizzes[b.key]);
 
   // Parallelize enrollment + completion checks once auth is ready
   useEffect(() => {
@@ -167,19 +199,17 @@ export function LessonPageClient({
       }
     } catch (err) {
       setIsCompleting(false);
-      const status = err instanceof CompletionError ? err.status : 0;
-      const message =
-        status === 403 && hasCodeBlock
-          ? t("completionFailedChallenge")
-          : status === 403
-            ? t("completionFailedEnrollment")
-            : // A throttle is not a failure, and must not read like one. Without
-              // this the 429 fell through to the generic "something went wrong",
-              // so a whole cohort sharing one NAT would see an outage and retry
-              // — each retry burning another token and extending the window.
-              status === 429
-              ? t("completionRateLimited")
-              : t("completionFailedGeneric");
+      // The route's `reason` discriminator picks the copy — a failed quiz no
+      // longer reads as a broken enrollment (#564). 429 stays a throttle
+      // notice, never a failure (see completionErrorKey).
+      const message = t(
+        err instanceof CompletionError
+          ? completionErrorKey(err.status, err.reason, {
+              hasCodeBlock,
+              hasQuizBlock,
+            })
+          : "completionFailedGeneric"
+      );
       setCompletionError(message);
       // Unstick the challenge editor's "saving" overlay and show the reason
       // there too (code submits originate from ChallengeInterface).
@@ -197,6 +227,7 @@ export function LessonPageClient({
     isCompleting,
     hasLinkedWallet,
     hasCodeBlock,
+    hasQuizBlock,
     t,
   ]);
 
@@ -255,6 +286,8 @@ export function LessonPageClient({
       earnedXp,
       onEnroll: handleEnroll,
       setProof,
+      setQuizAnswered,
+      aiSuppressed,
       buildUuid,
       programKeypairSecret,
       resetBuild,
@@ -270,6 +303,8 @@ export function LessonPageClient({
       earnedXp,
       handleEnroll,
       setProof,
+      setQuizAnswered,
+      aiSuppressed,
       buildUuid,
       programKeypairSecret,
       resetBuild,

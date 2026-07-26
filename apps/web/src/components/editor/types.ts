@@ -83,6 +83,12 @@ export interface ChallengeInterfaceProps {
   isEnrolled?: boolean;
   onEnroll?: () => void;
   onComplete?: () => void;
+  /**
+   * Keep the AI Partner pane hidden regardless of scroll reveal (LX-C1/F18):
+   * true while a quiz block in this lesson is unanswered, so the retrieval
+   * close cannot be delegated to the tutor.
+   */
+  aiSuppressed?: boolean;
   className?: string;
 }
 
