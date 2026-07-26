@@ -2894,7 +2894,8 @@ BEGIN
 
   RETURN QUERY
   SELECT
-    m.user_id,
+    -- Anonymized non-you rows expose no id; the caller always sees their own.
+    CASE WHEN pp.id IS NULL AND m.user_id <> p_user_id THEN NULL ELSE m.user_id END,
     pp.username,
     pp.avatar_url,
     m.score,

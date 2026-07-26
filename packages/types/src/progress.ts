@@ -42,14 +42,15 @@ export interface LeaderboardEntry {
 }
 
 /**
- * One row of a weekly cohort league (LX-B9b). `username`/`avatarUrl` are null
- * when the member is a private or deleted profile — the row is kept (never
- * dropped) and rendered as an anonymous learner. `rank` is the member's true
- * position within the cohort. `isYou` flags the viewer's own row so the UI can
- * label it even when the viewer is anonymized.
+ * One row of a weekly cohort league (LX-B9b). `username`/`avatarUrl`/`userId`
+ * are null when the member is a private or deleted profile — the row is kept
+ * (never dropped) and rendered as an anonymous learner, with even the opaque id
+ * withheld from peers (the viewer's own row keeps its id). `rank` is the
+ * member's true position within the cohort. `isYou` flags the viewer's own row
+ * so the UI can label it even when the viewer is anonymized.
  */
 export interface CohortLeaderboardEntry {
-  userId: string;
+  userId: string | null;
   username: string | null;
   avatarUrl: string | null;
   score: number;

@@ -196,7 +196,7 @@ function LeagueBoard({ cohort }: { cohort: CohortLeague | null }) {
       <div className="lb-list">
         {cohort.entries.map((entry, i) => (
           <CohortRow
-            key={entry.userId}
+            key={entry.rank}
             entry={entry}
             style={{ "--i": i } as React.CSSProperties}
           />

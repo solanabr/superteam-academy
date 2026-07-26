@@ -1347,7 +1347,7 @@ export type Database = {
       get_cohort_leaderboard: {
         Args: { p_user_id: string };
         Returns: {
-          user_id: string;
+          user_id: string | null;
           username: string | null;
           avatar_url: string | null;
           score: number;

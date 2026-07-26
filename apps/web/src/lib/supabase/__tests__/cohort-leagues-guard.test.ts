@@ -172,6 +172,14 @@ for (const [label, sql] of [
       expect(sql).not.toMatch(/\n  JOIN public\.public_profiles/);
     });
 
+    it("withholds the opaque user_id of anonymized non-you members from peers", () => {
+      // An anonymized row (not in public_profiles) that is not the caller's own
+      // must return NULL user_id — the id must not reach ~30 cohort peers.
+      expect(sql).toContain(
+        "CASE WHEN pp.id IS NULL AND m.user_id <> p_user_id THEN NULL ELSE m.user_id END"
+      );
+    });
+
     it("cohort capacity is the ~30 Duolingo shape", () => {
       expect(sql).toContain("LEAGUE_COHORT_CAPACITY CONSTANT INTEGER := 30");
     });

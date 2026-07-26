@@ -85,7 +85,7 @@ export function CohortStrip({ userId }: CohortStripProps) {
       <div className="lb-list lb-list-compact">
         {league.entries.map((entry, i) => (
           <CohortRow
-            key={entry.userId}
+            key={entry.rank}
             entry={entry}
             style={{ "--i": i } as React.CSSProperties}
           />

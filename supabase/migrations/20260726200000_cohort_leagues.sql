@@ -37,12 +37,27 @@
 --
 -- ── LEAGUE-ELIGIBLE XP (anti-gaming + PED-14) ───────────────────────────────
 -- Cohort score counts ONLY learning-source XP, filtered by xp_transactions.
--- source (LX-B9a) via is_league_eligible_source() — the server-written allowlist
--- the #574 review notes asked for, NOT free-text reason parsing. Excludes
--- creator_reward, community, and platform. `platform` is the deliberate
--- catch-all for surprise_bonus:* and arbitrary on-chain reward_xp memos (issue
--- #574 notes 1 & 2) — those must NEVER become competitive currency, so an
--- operator promo minted with a 'Completed lesson:'-shaped memo cannot leak in.
+-- source (LX-B9a) via is_league_eligible_source() — a source allowlist, NOT
+-- free-text reason parsing. Excludes creator_reward, community, and platform.
+-- surprise_bonus:* → platform → excluded (issue #574 note 2), and community /
+-- creator XP are excluded by their own source values (note 1's user-reachable
+-- paths).
+--
+-- HONEST LIMIT OF THIS GUARANTEE (issue #574 note 1): `source` is not written
+-- independently — for the on-chain reward_xp path it is REVERSE-DERIVED from the
+-- award memo by xp_source_for_reason (its ELSE→'platform' is the sole
+-- exclusion). So an AUTHORITY-supplied reward_xp memo deliberately shaped
+-- 'Completed lesson: …' WOULD classify as 'lesson' and score as league-eligible.
+-- This is NOT user-exploitable: memos are authority-supplied, every
+-- user-reachable XP path sits behind graded/on-chain gates, leagues are
+-- display-only, and the 5000/day cap bounds blast radius. The operative rule is
+-- therefore a convention, not an enforced invariant: OPERATOR PROMOS MINTED VIA
+-- reward_xp MUST NOT use 'Completed lesson:' / 'Completed course:' / 'Course
+-- completion bonus:' / 'Creator reward:' / 'Achievement reward:' / 'daily_quest:'
+-- prefixes, or they will be counted. The real hardening — writing `source`
+-- positively at each award call site instead of reverse-deriving it — touches
+-- the XP writers (#731-incident territory) and is a reviewed follow-up, not this
+-- display-only PR.
 --
 -- ── RLS / PRIVACY (spec §3 cross-check REQUIRED) ────────────────────────────
 --   * user_xp stays own-row (untouched here). Cohort exposure is ONLY via the
@@ -338,9 +353,10 @@ GRANT EXECUTE ON FUNCTION public.refresh_cohort_scores(UUID) TO service_role;
 -- ── get_cohort_leaderboard (full cohort board) ──────────────────────────────
 -- Assigns (lazy) + refreshes the snapshot, then returns the whole cohort ranked
 -- by stored score. Identity comes from public_profiles via LEFT JOIN: private /
--- deleted members return NULL username+avatar (anonymized, NEVER dropped).
--- is_you flags the caller so the UI labels their row even when anonymized. tier
--- and week_start are denormalized onto each row for the league header.
+-- deleted members return NULL username+avatar (anonymized, NEVER dropped) AND a
+-- NULL user_id (their opaque id must not reach ~30 peers either) — the caller's
+-- own id is preserved. is_you flags the caller so the UI labels their row even
+-- when anonymized. tier/week_start are denormalized onto each row for the header.
 CREATE OR REPLACE FUNCTION public.get_cohort_leaderboard(p_user_id UUID)
 RETURNS TABLE (
   user_id    UUID,
@@ -367,7 +383,8 @@ BEGIN
 
   RETURN QUERY
   SELECT
-    m.user_id,
+    -- Anonymized non-you rows expose no id; the caller always sees their own.
+    CASE WHEN pp.id IS NULL AND m.user_id <> p_user_id THEN NULL ELSE m.user_id END,
     pp.username,
     pp.avatar_url,
     m.score,
