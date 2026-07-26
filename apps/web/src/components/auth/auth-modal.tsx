@@ -20,12 +20,29 @@ import { trackEvent } from "@/lib/analytics";
 
 interface AuthModalProps {
   trigger?: React.ReactNode;
+  /**
+   * Controlled open state. Pass together with `onOpenChange` to drive the
+   * modal programmatically (e.g. an anonymous Enroll click, #556). When
+   * controlled and no `trigger` is given, no trigger button is rendered.
+   */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function AuthModal({ trigger }: AuthModalProps) {
+export function AuthModal({
+  trigger,
+  open: controlledOpen,
+  onOpenChange,
+}: AuthModalProps) {
   const t = useTranslations("auth");
   const tCommon = useTranslations("common");
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = (v: boolean) => {
+    if (!isControlled) setInternalOpen(v);
+    onOpenChange?.(v);
+  };
   const [loading, setLoading] = useState<"solana" | "google" | "github" | null>(
     null
   );
@@ -105,9 +122,11 @@ export function AuthModal({ trigger }: AuthModalProps) {
         }
       }}
     >
-      <DialogTrigger asChild>
-        {trigger ?? <Button variant="push">{tCommon("signIn")}</Button>}
-      </DialogTrigger>
+      {(trigger !== undefined || !isControlled) && (
+        <DialogTrigger asChild>
+          {trigger ?? <Button variant="push">{tCommon("signIn")}</Button>}
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle className="text-center">{t("signInTitle")}</DialogTitle>
