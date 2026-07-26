@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import { GraduationCap, CheckCircle, Wallet } from "@phosphor-icons/react";
+import { EarnHandoffCard } from "./earn-handoff-card";
 import { celebrate } from "@/lib/gamification/celebration";
 import { createClient } from "@/lib/supabase/client";
 
@@ -133,11 +134,15 @@ export function CourseCompletionMint({
 
   if (state.status === "already_minted") {
     return (
-      <div className="border-success/30 rounded-xl border bg-card px-5 py-4 shadow-[var(--shadow-card)]">
-        <div className="flex items-center justify-center gap-2 text-sm text-success">
-          <CheckCircle size={20} weight="duotone" aria-hidden="true" />
-          <span className="font-display font-bold">{t("mintSuccess")}</span>
+      <div className="flex flex-col gap-3">
+        <div className="border-success/30 rounded-xl border bg-card px-5 py-4 shadow-[var(--shadow-card)]">
+          <div className="flex items-center justify-center gap-2 text-sm text-success">
+            <CheckCircle size={20} weight="duotone" aria-hidden="true" />
+            <span className="font-display font-bold">{t("mintSuccess")}</span>
+          </div>
         </div>
+        {/* Post-mint bridge to paid work (LX-E4) — the KPI terminus */}
+        <EarnHandoffCard source="mint_success" courseId={courseId} />
       </div>
     );
   }
