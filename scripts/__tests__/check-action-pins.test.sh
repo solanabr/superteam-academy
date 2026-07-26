@@ -1,13 +1,17 @@
 #!/bin/bash
 # Exercises scripts/check-action-pins.sh against fixture trees so the guard is
 # never shipped unexercised (#662 "prove it fails on a bad line"; #614). Runs in
-# the Action pin guard workflow *before* the real scan, so every PR proves the
-# guard both accepts a fully-pinned tree and rejects an unpinned ref — in a
-# workflow file AND in a composite action (#681).
+# the Action pin guard workflow *before* the real scan.
 #
-# Pure bash, no test framework: the guard itself is pure bash and CI runs the
-# monorepo vitest via `pnpm -r test`, not the root `scripts/` suite, so a vitest
-# spec here would not gate. Self-contained + exit-code assertions do.
+# These are representative cases, not a proof of completeness: they show the
+# guard accepts a fully-pinned tree and rejects unpinned refs across the surfaces
+# that have bitten us — block style in a workflow AND a composite action (#681),
+# and flow style `[{uses: ...}]` / `- { uses: ... }` and symlinked composite
+# files (#723). New evasions should arrive here as a new failing case first.
+#
+# Pure bash, no test framework: CI runs the monorepo vitest via `pnpm -r test`,
+# not the root `scripts/` suite, so a vitest spec here would not gate.
+# Self-contained + exit-code assertions do.
 set -uo pipefail
 
 guard="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/check-action-pins.sh"
@@ -102,6 +106,79 @@ jobs:
       - uses: actions/setup-node@1111111 # short SHA
 EOF
 run 1 "branch ref / short SHA rejected"
+cleanup
+
+# 6. Flow-style mapping, unpinned → fail (the #723 bypass: grep was blind to this).
+new_fixture
+cat > "$fixture/.github/workflows/ci.yml" <<EOF
+jobs:
+  a:
+    steps:
+      - { uses: actions/checkout@v4 }
+EOF
+run 1 "flow-style mapping unpinned is rejected (#723)"
+cleanup
+
+# 7. Flow-style sequence, unpinned → fail (the #723 bypass, second form).
+new_fixture
+cat > "$fixture/.github/workflows/ci.yml" <<EOF
+jobs:
+  a:
+    steps: [{uses: actions/checkout@v4}]
+EOF
+run 1 "flow-style sequence unpinned is rejected (#723)"
+cleanup
+
+# 8. Flow-style, correctly pinned → pass (guard is precise, not a blanket reject).
+new_fixture
+cat > "$fixture/.github/workflows/ci.yml" <<EOF
+jobs:
+  a:
+    steps: [{uses: actions/checkout@$sha}]
+EOF
+run 0 "flow-style correctly pinned is accepted"
+cleanup
+
+# 9. Symlinked composite action.yml, unpinned → fail (find -L must follow it; the
+#    old find -type f skipped symlinks while the workflow glob followed them — #723).
+new_fixture
+cat > "$fixture/real-action.yml" <<EOF
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+EOF
+mkdir -p "$fixture/.github/actions/linked"
+ln -s "$fixture/real-action.yml" "$fixture/.github/actions/linked/action.yml"
+run 1 "symlinked composite action.yml is scanned (#723)"
+cleanup
+
+# 10. A `uses` key that is NOT an action ref — an env var and a `with:` input both
+#     named `uses` — must NOT be flagged (the real step ref is pinned) → pass.
+#     The old any-depth walk wrongly rejected these (#723 review MINOR).
+new_fixture
+cat > "$fixture/.github/workflows/ci.yml" <<EOF
+jobs:
+  a:
+    env:
+      uses: my-build@latest
+    steps:
+      - uses: actions/checkout@$sha # v7.0.1
+        with:
+          uses: some-input-value@latest
+EOF
+run 0 "env / with keys named 'uses' are not treated as action refs"
+cleanup
+
+# 11. Reusable-workflow call (jobs.<id>.uses), unpinned → fail. Proves the
+#     schema-scoped walk keeps this real pinnable ref in scope.
+new_fixture
+cat > "$fixture/.github/workflows/ci.yml" <<EOF
+jobs:
+  call:
+    uses: org/repo/.github/workflows/reusable.yml@v1
+EOF
+run 1 "unpinned reusable-workflow call is rejected"
 cleanup
 
 if [ "$fails" -gt 0 ]; then

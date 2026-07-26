@@ -16,17 +16,23 @@
 #   - local reusable workflows / composite actions:  uses: ./.github/actions/foo
 #   - Docker image refs:         uses: docker://alpine:3.20  (pin by @sha256 digest)
 #
-# Pure bash + grep — no third-party action or tool, so the guard can't itself
-# reintroduce an unpinned dependency. Runnable locally: scripts/check-action-pins.sh
+# This shell owns file discovery + the CHECK_ACTION_PINS_ROOT test seam; the
+# YAML-aware matching lives in check-action-pins.py (parses each file with a real
+# YAML parser and walks every `uses` key). A line-anchored grep used to do the
+# match, but it was blind to flow-style YAML — `steps: [{uses: foo@v4}]` passed
+# green while unpinned (#723). The only runtime dependency is python3 + PyYAML,
+# both pre-installed on GitHub's ubuntu runners (PyYAML ships with the
+# pre-installed yamllint); no `npm/pip install` at guard time and no third-party
+# Action to pin, so the guard can't reintroduce the unpinned-dependency risk it
+# exists to prevent. Runnable locally: scripts/check-action-pins.sh
 # Test seam: CHECK_ACTION_PINS_ROOT overrides the repo root so the guard can be
 # exercised against fixture trees (scripts/__tests__/check-action-pins.test.sh).
 set -euo pipefail
 
-repo_root="${CHECK_ACTION_PINS_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+repo_root="${CHECK_ACTION_PINS_ROOT:-$(cd "$script_dir/.." && pwd)}"
 workflow_dir="$repo_root/.github/workflows"
 actions_dir="$repo_root/.github/actions"
-sha_re='^[0-9a-fA-F]{40}$'
-violations=0
 
 shopt -s nullglob
 files=("$workflow_dir"/*.yml "$workflow_dir"/*.yaml)
@@ -34,11 +40,13 @@ shopt -u nullglob
 
 # Composite actions (.github/actions/**/action.yml) at any nesting depth. `find`
 # rather than a `**` glob: globstar is bash 4+ only and this must also run under
-# the bash 3.2 that ships on macOS (local runs, .husky pre-commit).
+# the bash 3.2 that ships on macOS. `-L` follows symlinks so a symlinked
+# action.yml is included — matching the workflow glob above, which follows
+# symlinks too (the asymmetry was a #723 minor).
 if [ -d "$actions_dir" ]; then
   while IFS= read -r action_file; do
     files+=("$action_file")
-  done < <(find "$actions_dir" -type f \( -name action.yml -o -name action.yaml \))
+  done < <(find -L "$actions_dir" -type f \( -name action.yml -o -name action.yaml \))
 fi
 
 if [ ${#files[@]} -eq 0 ]; then
@@ -46,35 +54,4 @@ if [ ${#files[@]} -eq 0 ]; then
   exit 1
 fi
 
-for file in "${files[@]}"; do
-  rel="${file#"$repo_root"/}"
-  # `uses:` as a step/list key: optional leading "- ", then uses:. Skips comments
-  # and run-block prose (those don't start with an optional "- " + "uses:" key).
-  while IFS=: read -r lineno _; do
-    raw="$(sed -n "${lineno}p" "$file")"
-    # Strip up to and including "uses:", trailing "# comment", surrounding quotes/space.
-    value="${raw#*uses:}"
-    value="${value%%#*}"
-    value="$(echo "$value" | tr -d '\r' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^["'\'']//' -e 's/["'\'']$//')"
-
-    # Excluded: local reusable workflows and docker image refs (not SHA-pinnable as a git ref).
-    case "$value" in
-      ./*) continue ;;
-      docker://*) continue ;;
-    esac
-
-    ref="${value##*@}"
-    if [ "$ref" = "$value" ] || ! [[ "$ref" =~ $sha_re ]]; then
-      printf '::error file=%s,line=%s::Action is not SHA-pinned: `%s`. Pin to a 40-char commit SHA with a version comment, e.g. `uses: owner/repo@<40-hex-sha> # v1.2.3`.\n' \
-        "$rel" "$lineno" "$value"
-      violations=$((violations + 1))
-    fi
-  done < <(grep -nE '^[[:space:]]*(-[[:space:]]+)?uses:[[:space:]]*[^[:space:]]' "$file")
-done
-
-if [ "$violations" -gt 0 ]; then
-  echo "::error::$violations GitHub Action(s) are not pinned to a commit SHA. See #635 — mutable tags are forbidden."
-  exit 1
-fi
-
-echo "All GitHub Actions \`uses:\` refs are SHA-pinned across ${#files[@]} file(s) in .github/workflows/ and .github/actions/. ✓"
+exec python3 "$script_dir/check-action-pins.py" "$repo_root" "${files[@]}"

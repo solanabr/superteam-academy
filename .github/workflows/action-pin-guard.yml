@@ -31,6 +31,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # The guard's parser needs PyYAML. It already ships with the runner's
+      # pre-installed yamllint, so this is a fallback that pins the dependency
+      # explicitly rather than relying on the image incidentally carrying it (a
+      # future image change would otherwise break the guard). apt's distro
+      # package, not `pip install --user`: ubuntu-24.04's system python is
+      # externally-managed (PEP 668) and refuses --user installs.
+      - name: Ensure PyYAML (guard parser dependency)
+        run: |
+          python3 -c 'import yaml' 2>/dev/null || {
+            sudo apt-get update -qq
+            sudo apt-get install -y python3-yaml
+          }
       # Prove the guard actually rejects unpinned refs (in workflows AND composite
       # actions) and accepts pinned trees before trusting its verdict — #662 /
       # #614 "don't ship an unexercised guard".
