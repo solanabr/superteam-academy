@@ -623,6 +623,22 @@
       "buildExpired": "Build expirado",
       "rebuildHint": "Haz clic en \"Run\" en el editor para recompilar y despliega de nuevo."
     },
+    "save": {
+      "recording": "Registrando tu despliegue…",
+      "retrying": "El registro no se completó — reintentando…",
+      "recorded": "Despliegue registrado",
+      "notRecordedTitle": "El despliegue aún no se ha registrado",
+      "notRecordedBody": "Tu programa está activo en Devnet, pero no pudimos guardarlo en tu cuenta, y tu credencial final necesita este registro. Inténtalo de nuevo.",
+      "rejectedTitle": "No se pudo registrar este despliegue",
+      "rejectedBody": "Tu programa se desplegó, pero no se pudo registrar en tu cuenta. Normalmente esto significa que la billetera con la que desplegaste no es la vinculada a tu cuenta. Conecta tu billetera vinculada (o vincula esta en Ajustes) y vuelve a intentarlo.",
+      "retry": "Reintentar registro"
+    },
+    "walletCheck": {
+      "mismatchTitle": "Atención: billetera distinta",
+      "mismatchBody": "Estás conectado con una billetera distinta a la vinculada a tu cuenta ({linked}). Este despliegue se registrará con tu billetera vinculada: conéctala, o vincula en Ajustes la que usas ahora, para que se desbloquee tu credencial final. Aun así puedes desplegar.",
+      "unlinkedTitle": "Atención: billetera no vinculada",
+      "unlinkedBody": "La billetera con la que estás conectado no está vinculada a tu cuenta, así que este despliegue no podrá registrarse para tu credencial final. Vincúlala primero en Ajustes, o despliega ahora y regístralo más tarde. Aun así puedes desplegar."
+    },
     "explorer": {
       "title": "Explorador de Programas",
       "notInitialized": "No inicializado",

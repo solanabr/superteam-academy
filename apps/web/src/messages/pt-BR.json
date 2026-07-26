@@ -623,6 +623,22 @@
       "buildExpired": "Build expirado",
       "rebuildHint": "Clique em \"Run\" no editor para recompilar e faça o deploy novamente."
     },
+    "save": {
+      "recording": "Registrando seu deploy…",
+      "retrying": "O registro não foi concluído — tentando novamente…",
+      "recorded": "Deploy registrado",
+      "notRecordedTitle": "Deploy ainda não registrado",
+      "notRecordedBody": "Seu programa está no ar na Devnet, mas não conseguimos salvá-lo na sua conta — e sua credencial final precisa desse registro. Tente novamente.",
+      "rejectedTitle": "Não foi possível registrar este deploy",
+      "rejectedBody": "Seu programa foi implantado, mas não pôde ser registrado na sua conta. Isso normalmente significa que a carteira usada no deploy não é a vinculada à sua conta. Conecte sua carteira vinculada (ou vincule esta em Configurações) e tente novamente.",
+      "retry": "Tentar registrar de novo"
+    },
+    "walletCheck": {
+      "mismatchTitle": "Atenção: carteira diferente",
+      "mismatchBody": "Você está conectado com uma carteira diferente da vinculada à sua conta ({linked}). Este deploy será registrado na sua carteira vinculada — conecte-a, ou vincule em Configurações a que você está usando agora, para que sua credencial final seja liberada. Você ainda pode fazer o deploy.",
+      "unlinkedTitle": "Atenção: carteira não vinculada",
+      "unlinkedBody": "A carteira com a qual você está conectado não está vinculada à sua conta, então este deploy não poderá ser registrado para sua credencial final. Vincule-a primeiro em Configurações, ou faça o deploy agora e registre depois. Você ainda pode fazer o deploy."
+    },
     "explorer": {
       "title": "Explorador de Programas",
       "notInitialized": "Não inicializado",

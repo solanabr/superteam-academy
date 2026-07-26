@@ -13,10 +13,17 @@ import {
 } from "@superteam-lms/deploy";
 import { useTranslations } from "next-intl";
 import { celebrate } from "@/lib/gamification/celebration";
+import { useAuth } from "@/lib/auth/auth-provider";
+import {
+  saveDeploymentWithRetry,
+  type SaveStatus,
+} from "@/lib/deploy/save-deployment";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import { DeploySaveStatus } from "./deploy-save-status";
+import { WalletMismatchWarning } from "./wallet-mismatch-warning";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -129,9 +136,14 @@ export function DeployPanel({
   const t = useTranslations("deploy.deployment");
   const { publicKey, signTransaction, signAllTransactions } = useWallet();
   const { connection } = useConnection();
+  const { profile, isLoading: authLoading } = useAuth();
 
   // Panel state
   const [panelState, setPanelState] = useState<PanelState>("ready");
+  // Server-record status — the deploy is only "recorded" (source of truth for
+  // the capstone credential gate) once the save succeeds (#622). Separate from
+  // panelState, which tracks the on-chain deploy itself.
+  const [saveStatus, setSaveStatus] = useState<SaveStatus | "idle">("idle");
   const [currentStep, setCurrentStep] = useState<DeployStep>("buffer");
   const [chunkCurrent, setChunkCurrent] = useState(0);
   const [chunkTotal, setChunkTotal] = useState(0);
@@ -152,6 +164,30 @@ export function DeployPanel({
   // Ref for scrollable log
   const logEndRef = useRef<HTMLDivElement>(null);
 
+  // Save-loop lifecycle: cancel the in-flight save + suppress setState after
+  // unmount (the retry loop can outlive the component).
+  const mountedRef = useRef(true);
+  const saveCancelledRef = useRef(false);
+  // Focus target for the un-recorded (retryable/rejected) error surface.
+  const saveErrorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      saveCancelledRef.current = true;
+    };
+  }, []);
+
+  // Move focus to the save-error surface when a deploy ends up un-recorded, so
+  // the learner (and screen readers) can't miss that the credential-gated
+  // record didn't land.
+  useEffect(() => {
+    if (saveStatus === "retryable" || saveStatus === "rejected") {
+      saveErrorRef.current?.focus();
+    }
+  }, [saveStatus]);
+
   // Elapsed timer
   useEffect(() => {
     if (panelState !== "deploying") return;
@@ -169,63 +205,109 @@ export function DeployPanel({
   // Wallet-scoped localStorage key prefix to prevent cross-user cache leaks
   const walletPrefix = publicKey ? publicKey.toBase58().slice(0, 8) : "";
 
-  // Check for existing deployment on mount — try localStorage first (has stats),
-  // then fall back to server API (only has programId).
+  // Pre-flight wallet check: the server records a deploy against the LINKED
+  // wallet (profiles.wallet_address), while the deploy signs with the CONNECTED
+  // wallet. When they differ, a successful deploy can't be recorded and the
+  // capstone credential gate (LX-E2) would later deny it — so warn before the
+  // learner spends SOL (#622). Wait for auth to resolve to avoid a false
+  // "not linked" flash.
+  const linkedWallet = profile?.wallet_address ?? null;
+  const connectedWallet = publicKey?.toBase58() ?? null;
+  const walletWarning: "mismatch" | "unlinked" | null =
+    authLoading || !connectedWallet
+      ? null
+      : !linkedWallet
+        ? "unlinked"
+        : linkedWallet !== connectedWallet
+          ? "mismatch"
+          : null;
+
+  // Check for an existing deployment on mount. The SERVER record is the source
+  // of truth for whether this deploy is recorded; localStorage is only an
+  // optimistic cache of the on-chain deploy (proof it happened, plus stats).
   useEffect(() => {
-    async function checkExistingDeployment() {
-      // 1. Try localStorage (preserves stats across refresh)
+    let cancelled = false;
+
+    function readCachedResult(): DeployResult | null {
       try {
         const key = walletPrefix
           ? `deploy-result-${walletPrefix}-${courseSlug}-${lessonId}`
           : null;
-        const cached = key ? localStorage.getItem(key) : null;
-        if (cached) {
-          const parsed = JSON.parse(cached) as {
-            programId: string;
-            totalChunks: number;
-            durationMs: number;
-            rentLamports: number;
-          };
-          if (parsed.programId) {
-            setResult({
-              programId: parsed.programId,
-              programIdPubkey: new PublicKey(parsed.programId),
-              totalChunks: parsed.totalChunks,
-              durationMs: parsed.durationMs,
-              rentLamports: parsed.rentLamports,
-            });
-            setPanelState("success");
-            window.dispatchEvent(new CustomEvent("superteam:deploy-complete"));
-            return;
-          }
-        }
+        const raw = key ? localStorage.getItem(key) : null;
+        if (!raw) return null;
+        const parsed = JSON.parse(raw) as {
+          programId: string;
+          totalChunks: number;
+          durationMs: number;
+          rentLamports: number;
+        };
+        if (!parsed.programId) return null;
+        return {
+          programId: parsed.programId,
+          programIdPubkey: new PublicKey(parsed.programId),
+          totalChunks: parsed.totalChunks,
+          durationMs: parsed.durationMs,
+          rentLamports: parsed.rentLamports,
+        };
       } catch {
-        // fall through to server check
+        return null;
       }
+    }
 
-      // 2. Fall back to server API (no stats, but at least has programId)
+    async function checkExistingDeployment() {
+      const cached = readCachedResult();
+
+      // Authoritative: does the server have a recorded row for this lesson?
+      let serverProgramId: string | null = null;
       try {
         const res = await fetch(
           `/api/deploy/save?lessonId=${encodeURIComponent(lessonId)}&courseId=${encodeURIComponent(courseId)}`
         );
-        if (!res.ok) return;
-        const data = await res.json();
-        if (data.deployed && data.programId) {
-          setResult({
-            programId: data.programId,
-            programIdPubkey: new PublicKey(data.programId),
-            totalChunks: 0,
-            durationMs: 0,
-            rentLamports: 0,
-          });
-          setPanelState("success");
-          window.dispatchEvent(new CustomEvent("superteam:deploy-complete"));
+        if (res.ok) {
+          const data = await res.json();
+          if (data.deployed && data.programId) {
+            serverProgramId = data.programId as string;
+          }
         }
       } catch {
-        // Non-critical — fall back to normal flow
+        // Server unreachable — fall back to the optimistic cache below.
+      }
+      if (cancelled) return;
+
+      if (serverProgramId) {
+        // Recorded. Reuse cached stats when they describe the same program.
+        setResult(
+          cached && cached.programId === serverProgramId
+            ? cached
+            : {
+                programId: serverProgramId,
+                programIdPubkey: new PublicKey(serverProgramId),
+                totalChunks: 0,
+                durationMs: 0,
+                rentLamports: 0,
+              }
+        );
+        setSaveStatus("saved");
+        setPanelState("success");
+        window.dispatchEvent(new CustomEvent("superteam:deploy-complete"));
+        return;
+      }
+
+      if (cached) {
+        // The on-chain deploy really happened (we cached its result), but no
+        // server row exists — show it, but as UN-RECORDED with a retry, never
+        // silently "done".
+        setResult(cached);
+        setSaveStatus("retryable");
+        setPanelState("success");
+        window.dispatchEvent(new CustomEvent("superteam:deploy-complete"));
       }
     }
+
     checkExistingDeployment();
+    return () => {
+      cancelled = true;
+    };
   }, [lessonId, courseId, courseSlug, walletPrefix]);
 
   // Check for resumable state on mount
@@ -279,6 +361,29 @@ export function DeployPanel({
     };
   }, [buildUuid]);
 
+  // Persist the deploy to the server (source of truth for the credential
+  // gate), retrying transient failures with backoff and surfacing the outcome
+  // via saveStatus. Also used by the manual "retry saving" affordance.
+  const runSave = useCallback(
+    (deployResult: DeployResult) => {
+      saveCancelledRef.current = false;
+      void saveDeploymentWithRetry(
+        {
+          lessonId,
+          courseId,
+          programId: deployResult.programId,
+        },
+        {
+          onStatus: (status) => {
+            if (mountedRef.current) setSaveStatus(status);
+          },
+          isCancelled: () => saveCancelledRef.current || !mountedRef.current,
+        }
+      );
+    },
+    [lessonId, courseId]
+  );
+
   // Save program ID on success
   const handleSuccess = useCallback(
     (deployResult: DeployResult) => {
@@ -315,28 +420,12 @@ export function DeployPanel({
       // Notify challenge runner that deployment is complete (enables submit)
       window.dispatchEvent(new CustomEvent("superteam:deploy-complete"));
 
-      // Attempt to persist to server (silently fail -- API route not yet created)
-      try {
-        fetch("/api/deploy/save", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            lessonId,
-            courseId,
-            courseSlug,
-            programId: deployResult.programId,
-            totalChunks: deployResult.totalChunks,
-            durationMs: deployResult.durationMs,
-            rentLamports: deployResult.rentLamports,
-          }),
-        }).catch(() => {
-          // API route not yet implemented -- localStorage is primary persistence
-        });
-      } catch {
-        // ignore
-      }
+      // Persist to the server — the recorded row, not localStorage, is what the
+      // capstone credential gate reads. Its outcome drives saveStatus so a
+      // failed save is surfaced with a retry, never silently swallowed (#622).
+      runSave(deployResult);
     },
-    [buildUuid, courseSlug, lessonId, courseId, walletPrefix]
+    [buildUuid, courseSlug, lessonId, walletPrefix, runSave]
   );
 
   // Deploy handler
@@ -350,6 +439,8 @@ export function DeployPanel({
     setErrorMessage(null);
     setResult(null);
     setBatchInfo(null);
+    setSaveStatus("idle");
+    saveCancelledRef.current = true;
     startTimeRef.current = Date.now();
 
     const callbacks = buildCallbacks();
@@ -441,6 +532,8 @@ export function DeployPanel({
     setResult(null);
     setBatchInfo(null);
     setCurrentStep("buffer");
+    setSaveStatus("idle");
+    saveCancelledRef.current = true;
   }, [buildUuid]);
 
   // Copy program ID
@@ -577,6 +670,16 @@ export function DeployPanel({
               </div>
             </div>
           )}
+
+          {/* Server-record status — the deploy only counts toward the capstone
+              credential once it's recorded; un-recorded shows a retry. */}
+          <DeploySaveStatus
+            ref={saveErrorRef}
+            status={saveStatus}
+            onRetry={() => {
+              if (result) runSave(result);
+            }}
+          />
         </CardContent>
       </Card>
     );
@@ -890,6 +993,15 @@ export function DeployPanel({
           <span className="text-xs text-muted-foreground">Build: </span>
           <span className="font-mono text-xs">{buildUuid.slice(0, 12)}...</span>
         </div>
+
+        {/* Pre-flight: warn (don't block) when this deploy won't be recorded
+            against the wallet the learner is connected with. */}
+        {walletWarning && (
+          <WalletMismatchWarning
+            variant={walletWarning}
+            linkedWallet={linkedWallet}
+          />
+        )}
 
         <Button
           onClick={handleDeploy}
