@@ -4,6 +4,7 @@ export * from "./wallet";
 export * from "./capabilities";
 export * from "./licensing";
 export * from "./skills";
+export * from "./version-stamp";
 export * from "./blocks";
 export * from "./lesson";
 export * from "./course";

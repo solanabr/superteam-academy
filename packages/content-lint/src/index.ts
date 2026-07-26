@@ -14,3 +14,4 @@ export * from "./checks/gate13a-capabilities";
 export * from "./checks/gate13bcd-widgets";
 export * from "./checks/gate19-skills";
 export * from "./checks/gate20-originality";
+export * from "./checks/gate21-version-currency";
