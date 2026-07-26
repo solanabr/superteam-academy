@@ -2,6 +2,7 @@ import "server-only";
 
 import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
+import { Connection } from "@solana/web3.js";
 import {
   requireAdminAuth,
   adminUnauthorizedResponse,
@@ -9,8 +10,12 @@ import {
 } from "@/lib/admin/auth";
 import { isPlatformFrozen } from "@/lib/platform/freeze";
 import { platformFrozenResponse } from "@/lib/platform/freeze-http";
+import { serverEnv } from "@/lib/env.server";
 import { updateCoursePda } from "@/lib/solana/admin-signer";
 import { writeCourseActive } from "@/lib/content/deployment-writes";
+import { recordCourseReactivated } from "@/lib/content/changelog-writes";
+import { fetchCourse } from "@/lib/solana/academy-reads";
+import { getProgramId } from "@/lib/solana/pda";
 import { COURSES_CACHE_TAG } from "@/lib/content/queries";
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
@@ -62,6 +67,29 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
     warning =
       "Reactivated on-chain, but the catalog flag didn't update — the course may stay hidden until re-synced.";
+  }
+
+  // Course changelog (#738): record the reactivation. Non-fatal — the on-chain
+  // flip already landed; a missing log entry must not fail the operation.
+  // reactivate does not bump version, so record the current on-chain version;
+  // if it can't be read, skip the entry rather than logging a wrong version.
+  if (result.signature) {
+    try {
+      const connection = new Connection(serverEnv.SOLANA_RPC_URL, "confirmed");
+      const onChain = await fetchCourse(courseId, connection, getProgramId());
+      if (onChain) {
+        await recordCourseReactivated({
+          courseId,
+          txSignature: result.signature,
+          version: onChain.version,
+        });
+      }
+    } catch (changelogErr) {
+      console.error(
+        "[admin/courses/reactivate] changelog write failed:",
+        changelogErr
+      );
+    }
   }
 
   return NextResponse.json({

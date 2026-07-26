@@ -102,6 +102,15 @@ vi.mock("@/lib/content/deployment-writes", () => ({
   }),
 }));
 
+// #738 — the recreate now records a `recreated` changelog entry (non-fatal,
+// last). Mock it so the test stays hermetic (no real supabase) and so we can
+// assert it fires on the happy path and its ordering (after synced + gate off).
+vi.mock("@/lib/content/changelog-writes", () => ({
+  recordCourseRecreated: vi.fn(async () => {
+    calls.push("changelog:recreated");
+  }),
+}));
+
 vi.mock("@solana/web3.js", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@solana/web3.js")>();
   return {
@@ -553,6 +562,9 @@ describe("rail 3 — the maintenance gate", () => {
       "bind",
       "db:synced",
       "gate:off",
+      // #738 — the changelog entry is recorded LAST (non-fatal), after the
+      // course is fully up, restored, and the gate is cleared.
+      "changelog:recreated",
     ]);
   });
 
@@ -680,6 +692,7 @@ describe("rail 3 — the maintenance gate", () => {
       "bind",
       "db:synced",
       "gate:off",
+      "changelog:recreated",
     ]);
   });
 });
@@ -700,6 +713,7 @@ describe("close → create happy path", () => {
       "bind",
       "db:synced",
       "gate:off",
+      "changelog:recreated",
     ]);
 
     expect(result.action).toBe("recreated");
@@ -751,6 +765,7 @@ describe("close → create happy path", () => {
       "deactivate",
       "db:synced",
       "gate:off",
+      "changelog:recreated",
     ]);
     expect(result.warnings.join(" ")).not.toMatch(/currently LIVE/);
   });
@@ -837,6 +852,7 @@ describe("create fails after close — the course is DOWN", () => {
       "bind",
       "db:synced",
       "gate:off",
+      "changelog:recreated",
     ]);
   });
 

@@ -208,7 +208,13 @@
     "changelogXpChangedDetail": "XP per lesson changed from {from} to {to}.",
     "changelogContentUpdated": "Content updated",
     "changelogContentUpdatedDetail": "Lesson content was refreshed.",
-    "changelogLessonSlot": "Lesson slot {slot}"
+    "changelogLessonSlot": "Lesson slot {slot}",
+    "changelogDeactivated": "Course deactivated",
+    "changelogDeactivatedDetail": "This course was removed from the catalog.",
+    "changelogReactivated": "Course reactivated",
+    "changelogReactivatedDetail": "This course is available again.",
+    "changelogRecreated": "Course rebuilt on-chain",
+    "changelogRecreatedDetail": "The on-chain course account was recreated. Your progress and XP were preserved."
   },
   "lesson": {
     "content": "Content",

@@ -49,7 +49,14 @@ vi.mock("@/lib/content/store", () => ({
   ]),
 }));
 
-import { recordCourseDeployed, recordCourseUpdate } from "../changelog-writes";
+import {
+  recordCourseDeployed,
+  recordCourseUpdate,
+  recordCourseChange,
+  recordCourseDeactivated,
+  recordCourseReactivated,
+  recordCourseRecreated,
+} from "../changelog-writes";
 
 /** Build a single-word mask from a list of slot indices (all < 64). */
 function mask(...slots: number[]): bigint[] {
@@ -215,6 +222,85 @@ describe("recordCourseUpdate", () => {
         ...baseUpdate,
         oldMask: mask(0),
         newMask: mask(0, 1),
+      })
+    ).resolves.toBeUndefined();
+  });
+});
+
+describe("#738 status + recreate recorders", () => {
+  it("recordCourseChange writes one row through the shared low-level seam", async () => {
+    await recordCourseChange({
+      courseId: "course-x",
+      kind: "deactivated",
+      version: 3,
+      txSignature: "SIG",
+    });
+    expect(lastTable).toBe("course_changelog");
+    expect(lastRows).toHaveLength(1);
+    expect(lastRows?.[0]).toMatchObject({
+      course_id: "course-x",
+      kind: "deactivated",
+      version: 3,
+      tx_signature: "SIG",
+      detail: {},
+    });
+    // Same idempotency contract as every other recorder.
+    expect(lastOptions).toEqual({
+      onConflict: "course_id,kind,tx_signature",
+      ignoreDuplicates: true,
+    });
+  });
+
+  it("recordCourseDeactivated logs a deactivated row at the current version", async () => {
+    await recordCourseDeactivated({
+      courseId: "course-x",
+      txSignature: "SIG_D",
+      version: 5,
+    });
+    expect(lastRows?.[0]).toMatchObject({
+      kind: "deactivated",
+      version: 5,
+      tx_signature: "SIG_D",
+      detail: {},
+    });
+  });
+
+  it("recordCourseReactivated logs a reactivated row at the current version", async () => {
+    await recordCourseReactivated({
+      courseId: "course-x",
+      txSignature: "SIG_R",
+      version: 5,
+    });
+    expect(lastRows?.[0]).toMatchObject({
+      kind: "reactivated",
+      version: 5,
+      tx_signature: "SIG_R",
+      detail: {},
+    });
+  });
+
+  it("recordCourseRecreated logs at version 1 with the preserved lesson count", async () => {
+    // create_course resets version to 1; lessonCount is the H3-preserved live count.
+    await recordCourseRecreated({
+      courseId: "course-x",
+      txSignature: "SIG_CREATE",
+      lessonCount: 7,
+    });
+    expect(lastRows?.[0]).toMatchObject({
+      kind: "recreated",
+      version: 1,
+      tx_signature: "SIG_CREATE",
+      detail: { lessonCount: 7 },
+    });
+  });
+
+  it("status recorders are non-fatal when the upsert errors", async () => {
+    upsertError = { message: "boom" };
+    await expect(
+      recordCourseDeactivated({
+        courseId: "course-x",
+        txSignature: "SIG",
+        version: 1,
       })
     ).resolves.toBeUndefined();
   });

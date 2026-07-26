@@ -2622,7 +2622,10 @@ CREATE TABLE IF NOT EXISTS public.course_changelog (
                  'lessons_added',
                  'lessons_removed',
                  'xp_changed',
-                 'content_updated'
+                 'content_updated',
+                 'deactivated',
+                 'reactivated',
+                 'recreated'
                )),
   version      INTEGER NOT NULL,
   detail       JSONB NOT NULL DEFAULT '{}'::jsonb,

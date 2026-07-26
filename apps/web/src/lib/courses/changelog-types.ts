@@ -14,7 +14,11 @@ export type ChangelogKind =
   | "lessons_added"
   | "lessons_removed"
   | "xp_changed"
-  | "content_updated";
+  | "content_updated"
+  // #738 — the other on-chain course mutators, previously silent:
+  | "deactivated" // deactivate route (is_active → false; #713 retirement path)
+  | "reactivated" // reactivate route (is_active → true)
+  | "recreated"; // close + recreate (WS-2), the account rebuild
 
 /**
  * A lesson referenced by a changelog entry. `slot` is the permanent bit index
@@ -44,6 +48,12 @@ export interface ContentUpdatedDetail {
   /** The content bundle git SHA this re-sync pinned. */
   sha: string;
 }
+export interface RecreatedDetail {
+  /** Live lesson count preserved through the recreate (never widened — H3). */
+  lessonCount: number;
+}
+/** Status flips carry no payload — the kind + version + timestamp say it all. */
+export type StatusChangeDetail = Record<string, never>;
 
 interface EntryBase {
   id: number;
@@ -64,4 +74,7 @@ export type CourseChangelogEntry =
   | (EntryBase & { kind: "lessons_added"; detail: LessonsDetail })
   | (EntryBase & { kind: "lessons_removed"; detail: LessonsDetail })
   | (EntryBase & { kind: "xp_changed"; detail: XpChangedDetail })
-  | (EntryBase & { kind: "content_updated"; detail: ContentUpdatedDetail });
+  | (EntryBase & { kind: "content_updated"; detail: ContentUpdatedDetail })
+  | (EntryBase & { kind: "deactivated"; detail: StatusChangeDetail })
+  | (EntryBase & { kind: "reactivated"; detail: StatusChangeDetail })
+  | (EntryBase & { kind: "recreated"; detail: RecreatedDetail });

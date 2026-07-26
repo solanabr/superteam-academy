@@ -1092,7 +1092,10 @@ export type Database = {
             | "lessons_added"
             | "lessons_removed"
             | "xp_changed"
-            | "content_updated";
+            | "content_updated"
+            | "deactivated"
+            | "reactivated"
+            | "recreated";
           version: number;
           detail: Json;
           tx_signature: string;
@@ -1106,7 +1109,10 @@ export type Database = {
             | "lessons_added"
             | "lessons_removed"
             | "xp_changed"
-            | "content_updated";
+            | "content_updated"
+            | "deactivated"
+            | "reactivated"
+            | "recreated";
           version: number;
           detail?: Json;
           tx_signature: string;
@@ -1120,7 +1126,10 @@ export type Database = {
             | "lessons_added"
             | "lessons_removed"
             | "xp_changed"
-            | "content_updated";
+            | "content_updated"
+            | "deactivated"
+            | "reactivated"
+            | "recreated";
           version?: number;
           detail?: Json;
           tx_signature?: string;

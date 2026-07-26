@@ -2,6 +2,7 @@ import "server-only";
 
 import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
+import { Connection } from "@solana/web3.js";
 import {
   requireAdminAuth,
   adminUnauthorizedResponse,
@@ -9,8 +10,12 @@ import {
 } from "@/lib/admin/auth";
 import { isPlatformFrozen } from "@/lib/platform/freeze";
 import { platformFrozenResponse } from "@/lib/platform/freeze-http";
+import { serverEnv } from "@/lib/env.server";
 import { deactivateCoursePda } from "@/lib/solana/admin-signer";
 import { writeCourseActive } from "@/lib/content/deployment-writes";
+import { recordCourseDeactivated } from "@/lib/content/changelog-writes";
+import { fetchCourse } from "@/lib/solana/academy-reads";
+import { getProgramId } from "@/lib/solana/pda";
 import { COURSES_CACHE_TAG } from "@/lib/content/queries";
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
@@ -64,6 +69,31 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
     warning =
       "Deactivated on-chain, but the catalog flag didn't update — the course may still show until re-synced.";
+  }
+
+  // Course changelog (#738): record the deactivation — the path #713 retires the
+  // superseded courses with. Non-fatal. deactivate does not close the account or
+  // bump version, so the course is still readable on-chain; record its current
+  // version. NOTE: under the #654 RLS (synced+active only) this entry is not
+  // publicly readable while the course is inactive — it becomes visible if the
+  // course is later reactivated. See #738 on deferring the retired-course surface.
+  if (result.signature) {
+    try {
+      const connection = new Connection(serverEnv.SOLANA_RPC_URL, "confirmed");
+      const onChain = await fetchCourse(courseId, connection, getProgramId());
+      if (onChain) {
+        await recordCourseDeactivated({
+          courseId,
+          txSignature: result.signature,
+          version: onChain.version,
+        });
+      }
+    } catch (changelogErr) {
+      console.error(
+        "[admin/courses/deactivate] changelog write failed:",
+        changelogErr
+      );
+    }
   }
 
   return NextResponse.json({

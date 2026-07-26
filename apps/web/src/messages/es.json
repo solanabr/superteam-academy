@@ -208,7 +208,13 @@
     "changelogXpChangedDetail": "El XP por lección cambió de {from} a {to}.",
     "changelogContentUpdated": "Contenido actualizado",
     "changelogContentUpdatedDetail": "Se actualizó el contenido de las lecciones.",
-    "changelogLessonSlot": "Lección posición {slot}"
+    "changelogLessonSlot": "Lección posición {slot}",
+    "changelogDeactivated": "Curso desactivado",
+    "changelogDeactivatedDetail": "Este curso se retiró del catálogo.",
+    "changelogReactivated": "Curso reactivado",
+    "changelogReactivatedDetail": "Este curso vuelve a estar disponible.",
+    "changelogRecreated": "Curso reconstruido on-chain",
+    "changelogRecreatedDetail": "La cuenta on-chain del curso se recreó. Tu progreso y XP se conservaron."
   },
   "lesson": {
     "content": "Contenido",

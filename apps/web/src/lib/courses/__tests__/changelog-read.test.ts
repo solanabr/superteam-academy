@@ -120,4 +120,41 @@ describe("getCourseChangelog", () => {
     rows = [];
     expect(await getCourseChangelog("course-x")).toEqual([]);
   });
+
+  it("decodes the #738 status + recreate kinds", async () => {
+    rows = [
+      {
+        id: 3,
+        kind: "reactivated",
+        version: 4,
+        detail: {},
+        tx_signature: "S3",
+        created_at: "2026-07-26T03:00:00Z",
+      },
+      {
+        id: 2,
+        kind: "recreated",
+        version: 1,
+        detail: { lessonCount: 7 },
+        tx_signature: "S2",
+        created_at: "2026-07-26T02:00:00Z",
+      },
+      {
+        id: 1,
+        kind: "deactivated",
+        version: 4,
+        detail: {},
+        tx_signature: "S1",
+        created_at: "2026-07-26T01:00:00Z",
+      },
+    ];
+    const entries = await getCourseChangelog("course-x");
+    expect(entries.map((e) => e.kind)).toEqual([
+      "reactivated",
+      "recreated",
+      "deactivated",
+    ]);
+    const recreated = entries.find((e) => e.kind === "recreated");
+    expect(recreated?.detail).toEqual({ lessonCount: 7 });
+  });
 });
