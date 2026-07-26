@@ -20,10 +20,21 @@ function isCodeProof(proof: unknown): proof is CodeProof {
   );
 }
 
-/** Map an executor run onto a grade verdict: pass→ok, fail→403, outage→503. */
+/**
+ * Map an executor run onto a grade verdict: pass→ok, fail→403, outage→503.
+ *
+ * On a fail with per-test detail, the failed cases ride along in `failedTests`
+ * (LX-B4 — stop discarding `run.results`): the failure-capture feed reads them
+ * to enrich the review item. Omitted when the run reported no per-test rows (a
+ * degenerate rust/build verdict) so the fail verdict stays exactly `{ok,status}`.
+ */
 function fromRun(run: SubmissionRunResult): GradeResult {
   if (!run.available) return { ok: false, status: 503 };
-  return run.passed ? { ok: true } : { ok: false, status: 403 };
+  if (run.passed) return { ok: true };
+  const failedTests = run.results.filter((r) => !r.passed);
+  return failedTests.length
+    ? { ok: false, status: 403, failedTests }
+    : { ok: false, status: 403 };
 }
 
 /**

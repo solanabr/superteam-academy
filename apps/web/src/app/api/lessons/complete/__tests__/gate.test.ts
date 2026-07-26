@@ -57,6 +57,10 @@ vi.mock("@/lib/grading/graders", () => ({
   GRADERS: { code: () => codeGrader() },
 }));
 
+vi.mock("@/lib/review/schedule-review", () => ({
+  captureReviewFailure: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock("@/lib/ai/check-seal", () => ({
   openAttestation: () => openAttestation(),
 }));

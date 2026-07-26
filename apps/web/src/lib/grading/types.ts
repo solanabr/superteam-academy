@@ -1,8 +1,18 @@
+import type { ServerTestResult } from "@/lib/challenge/executor";
+
 /**
  * A grader's verdict. `403` = a genuine wrong/absent answer; `503` = we could
  * NOT judge (executor outage, unrecognised type) → degrade CLOSED, never grant.
+ *
+ * `failedTests` (LX-B4) is present only on a `403` from a code grader that
+ * produced per-test results: the subset that failed, carried up so the
+ * failure-capture feed can enrich the review item. It is OMITTED (not `[]`) when
+ * there are no per-test results — a quiz miss, or a degenerate rust/build verdict
+ * with no rows. It never gates completion; the `status` alone does that.
  */
-export type GradeResult = { ok: true } | { ok: false; status: 403 | 503 };
+export type GradeResult =
+  | { ok: true }
+  | { ok: false; status: 403 | 503; failedTests?: ServerTestResult[] };
 
 /**
  * A grader is deterministic. It takes a projected block (`unknown` so the
