@@ -110,3 +110,31 @@ Then **#595** (launch-breaking), **#590** (live cost leak), **#598** (blocks a m
 `MEMORY.md` loads automatically and carries the expensive ones. The three that bite hardest:
 deploy on-chain **only** via Helius RPC; `gh pr edit --add-label` fails on these repos (use the REST
 API); and pushing to `courses-academy` needs the gh token — the ambient git credential is read-only.
+
+## Two agents, one backlog, one file tree (added 2026-07-26)
+
+Both roles now author. That is fine, but it collides on files unless scoped, and the collisions are
+**invisible in a diff** — a dropped array during a rebase looks exactly like a clean rebase.
+
+Hit twice on 2026-07-26:
+
+- **#10 ↔ #11** — both edited the `blocks:` region of four `bfsp` lesson files (#10 added `tutorNotes`,
+  #11 appended a `retrieval-close` quiz). Resolution was keep-both; dropping #10's arrays would have
+  silently reverted merged work.
+- **#14 ↔ C3** — the orchestrator picked #683 (tutorNotes for `your-first-build` /
+  `deploy-program-devnet`) from the backlog while an in-flight C3 authoring workflow was instructed to
+  add the same notes **and renames both lessons** (`from-rust-core-to-anchor`,
+  `deploy-and-publish-the-idl`). Duplicated work, and #14's notes land on paths C3 deletes.
+
+**Rules:**
+
+1. **Announce an authoring workflow's file scope before launching it**, as a comment on the issues it
+   subsumes. A course-level workflow owns every lesson in that course for its duration.
+2. **Do not pick a backlog issue whose files an in-flight workflow owns.** #683 was in-scope for C3;
+   it should have been left to C3 or C3 told to skip it. Either is fine — both is not.
+3. **On any rebase touching content, verify the OTHER side's additions survived**, per file, by
+   counting them. Never infer it from "the rebase was clean". Both incidents above would have passed
+   that inference and lost data.
+4. **A rename makes the other side's edit land on a dead path.** Check for renames before assuming a
+   conflict is a content disagreement — CATALOG-specified renames are not conflicts to adjudicate,
+   they are paths to carry edits onto.
