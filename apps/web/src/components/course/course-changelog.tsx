@@ -9,6 +9,9 @@ import {
   MinusCircle,
   Lightning,
   ArrowsClockwise,
+  ArrowsCounterClockwise,
+  EyeSlash,
+  Eye,
 } from "@phosphor-icons/react";
 import type {
   CourseChangelogEntry,
@@ -37,6 +40,12 @@ function iconFor(kind: CourseChangelogEntry["kind"]) {
       return Lightning;
     case "content_updated":
       return ArrowsClockwise;
+    case "deactivated":
+      return EyeSlash;
+    case "reactivated":
+      return Eye;
+    case "recreated":
+      return ArrowsCounterClockwise;
   }
 }
 
@@ -170,6 +179,12 @@ function ChangelogTitle({
       return <>{t("changelogXpChanged")}</>;
     case "content_updated":
       return <>{t("changelogContentUpdated")}</>;
+    case "deactivated":
+      return <>{t("changelogDeactivated")}</>;
+    case "reactivated":
+      return <>{t("changelogReactivated")}</>;
+    case "recreated":
+      return <>{t("changelogRecreated")}</>;
   }
 }
 
@@ -219,6 +234,18 @@ function ChangelogBody({
         <p className="text-sm text-text-2">
           {t("changelogContentUpdatedDetail")}
         </p>
+      );
+    case "deactivated":
+      return (
+        <p className="text-sm text-text-2">{t("changelogDeactivatedDetail")}</p>
+      );
+    case "reactivated":
+      return (
+        <p className="text-sm text-text-2">{t("changelogReactivatedDetail")}</p>
+      );
+    case "recreated":
+      return (
+        <p className="text-sm text-text-2">{t("changelogRecreatedDetail")}</p>
       );
   }
 }

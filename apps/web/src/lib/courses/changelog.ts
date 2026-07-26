@@ -79,6 +79,16 @@ function decodeEntry(row: {
         detail: { from: d.from, to: d.to },
       };
     }
+    case "deactivated":
+    case "reactivated": {
+      // Status flips carry no payload — the kind + version + timestamp say it all.
+      return { ...base, kind: row.kind, detail: {} };
+    }
+    case "recreated": {
+      const lessonCount =
+        isRecord(d) && typeof d.lessonCount === "number" ? d.lessonCount : 0;
+      return { ...base, kind: "recreated", detail: { lessonCount } };
+    }
     case "content_updated": {
       const sha = isRecord(d) && typeof d.sha === "string" ? d.sha : "";
       return { ...base, kind: "content_updated", detail: { sha } };

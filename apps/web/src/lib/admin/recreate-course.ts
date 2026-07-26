@@ -1,11 +1,6 @@
 import "server-only";
 
 import { Connection, PublicKey } from "@solana/web3.js";
-import {
-  difficultyToNumber,
-  getMissingCourseFields,
-  isDraftId,
-} from "./sync-diff";
 import { serverEnv } from "@/lib/env.server";
 import { getAllCoursesAdmin } from "@/lib/content/queries";
 import {
@@ -13,6 +8,7 @@ import {
   writeCourseMaintenanceFlag,
   acquireCourseMaintenanceGate,
 } from "@/lib/content/deployment-writes";
+import { recordCourseRecreated } from "@/lib/content/changelog-writes";
 import { fetchCourse } from "@/lib/solana/academy-reads";
 import { findCoursePDA, getProgramId } from "@/lib/solana/pda";
 import {
@@ -24,6 +20,11 @@ import {
   updateCoursePda,
   type CreateCourseAdminParams,
 } from "@/lib/solana/admin-signer";
+import {
+  difficultyToNumber,
+  getMissingCourseFields,
+  isDraftId,
+} from "./sync-diff";
 
 /**
  * Close + recreate a Course PDA (issue #440).
@@ -667,6 +668,24 @@ export async function recreateCourse(
   //    paths can resume immediately rather than waiting for the operator to do
   //    it manually. Unconditionally reached even if step 6 threw (see above).
   await clearMaintenanceGate(courseId);
+
+  // 8. CHANGELOG (#738). Record the recreate — the most dramatic on-chain
+  //    mutation, and previously silent. Non-fatal and last: the course is
+  //    already up, restored, and the gate is cleared, so a changelog blip must
+  //    not affect any of that. create_course reset version to 1; lessonCount is
+  //    the live count preserved through the recreate (H3 never widens it).
+  try {
+    await recordCourseRecreated({
+      courseId,
+      txSignature: createSignature,
+      lessonCount: plan.createParams.lessonCount,
+    });
+  } catch (changelogErr) {
+    console.error(
+      `[recreate-course] ${courseId}: changelog write failed:`,
+      changelogErr
+    );
+  }
 
   return {
     action: "recreated",

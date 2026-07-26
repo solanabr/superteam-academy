@@ -106,4 +106,43 @@ describe("CourseChangelog", () => {
     expect(screen.queryByText(/since you enrolled/i)).not.toBeInTheDocument();
     expect(screen.queryByText("New")).not.toBeInTheDocument();
   });
+
+  it("renders the #738 status + recreate kinds", () => {
+    renderWithIntl(
+      <CourseChangelog
+        entries={[
+          {
+            id: 12,
+            kind: "reactivated",
+            version: 4,
+            txSignature: "S12",
+            createdAt: "2026-07-26T03:00:00Z",
+            detail: {},
+          },
+          {
+            id: 11,
+            kind: "recreated",
+            version: 1,
+            txSignature: "S11",
+            createdAt: "2026-07-26T02:00:00Z",
+            detail: { lessonCount: 7 },
+          },
+          {
+            id: 10,
+            kind: "deactivated",
+            version: 4,
+            txSignature: "S10",
+            createdAt: "2026-07-26T01:00:00Z",
+            detail: {},
+          },
+        ]}
+      />
+    );
+    expect(screen.getByText("Course deactivated")).toBeInTheDocument();
+    expect(screen.getByText("Course reactivated")).toBeInTheDocument();
+    expect(screen.getByText("Course rebuilt on-chain")).toBeInTheDocument();
+    expect(
+      screen.getByText(/on-chain course account was recreated/i)
+    ).toBeInTheDocument();
+  });
 });
