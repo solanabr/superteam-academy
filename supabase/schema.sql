@@ -18,6 +18,11 @@ CREATE TABLE profiles (
   bio TEXT,
   avatar_url TEXT,
   social_links JSONB DEFAULT '{}',
+  -- Learner-owned UI preferences (LX-A6, #582). First consumer: the session-end
+  -- if-then plan { "nextLesson": { "day": "tue", "time": "19:00" } }. Non-PII;
+  -- written self-service via the profiles UPDATE RLS policy (the role trigger
+  -- guards only `role`). See 20260726160000_add_profiles_prefs.sql.
+  prefs JSONB NOT NULL DEFAULT '{}',
   is_public BOOLEAN DEFAULT true,
   name_rerolls_used INTEGER DEFAULT 0,
   wallet_xp_synced_at TIMESTAMPTZ,

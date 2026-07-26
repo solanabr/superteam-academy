@@ -16,6 +16,7 @@ import { CurrentCoursesSection } from "@/components/dashboard/current-courses-se
 import { ReviewStrip } from "@/components/dashboard/review-strip";
 import { MasteryPanel } from "@/components/dashboard/mastery-panel";
 import { NameRevealDialog } from "@/components/dashboard/name-reveal-dialog";
+import { NextLessonPlan } from "@/components/dashboard/next-lesson-plan";
 import { RecommendedCoursesSection } from "@/components/dashboard/recommended-courses-section";
 
 /**
@@ -118,6 +119,11 @@ export default function DashboardPage() {
         quests={data.quests}
         questsResetTime={data.questsResetTime}
       />
+
+      {/* Session-end if-then plan — "when's your next lesson?" (LX-A6). A
+          return-cadence surface, so it sits beside the streak/quest identity
+          panel. Display-only in v1: stored in profiles.prefs, shown on return. */}
+      <NextLessonPlan userId={data.userId} />
 
       {/* ═══ Current Courses ═══ */}
       <CurrentCoursesSection

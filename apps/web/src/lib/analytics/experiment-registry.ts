@@ -16,9 +16,16 @@
  * the mechanic, so anchoring the window to a merge that predates launch would read
  * the trough too early and defeat the rule.
  *
- * Scope: this is the minimal registry substrate item 48's rule needs to point at.
- * Item 45 (#582's third component) owns growing it into the full experiment
- * registry — E1–E8, the UIUX A/B sets, and E6 as INFEASIBLE-AS-DESIGNED.
+ * Scope: item 48 seeded the minimal substrate the 10-week rule points at; item 45
+ * (LX-F4, #582) grew it into the full experiment registry the reports call for —
+ * every report experiment gets a row (continue-hero, retrieval on/off, anonymous
+ * trial, test-out visibility, nudge threshold, weekly cadence, cohort vs global,
+ * LinkedIn nudge, endowed first-tick, celebration tiering, and the challenge-first
+ * lesson pilot), the preregistered NULLS are marked as such (`preregisteredNull` —
+ * the S4 planning-prompt-completion row), and E6 (the incentive-graded XP ladder)
+ * is carried as an `infeasible-as-designed` row so it is not re-proposed: xpPerLesson
+ * is fixed on-chain, so XP cannot vary by rung or user level without a program
+ * change (see the LX-C7 justified drop in the launch-experience master spec).
  */
 
 /** The evaluation-window floor from PED-15/PED-31/MAS-29. Weeks, not days. */
@@ -72,6 +79,14 @@ export interface ExperimentRegistryEntry {
   evidenceBasis: string;
   /** Direction pre-registered before any read (item 43: preregister direction, not doubling). */
   preregisteredDirection: string;
+  /**
+   * True when the pre-registered expectation is a NULL — no movement on the
+   * primary metric is expected in this version (S4: pre-registering a null so a
+   * null read is a confirmed prediction, not a walk-back). The LX-A6
+   * planning-prompt is the launch example: v1 is display-only with no delivery
+   * channel, so it cannot move return; we commit to that up front.
+   */
+  preregisteredNull?: boolean;
   status: ExperimentStatus;
 }
 
@@ -208,6 +223,122 @@ export const EXPERIMENT_REGISTRY: readonly ExperimentRegistryEntry[] = [
     evidenceBasis: "UIU-08; Sharif & Shu forgiveness",
     preregisteredDirection: "higher continuation after a missed day",
     status: "planned",
+  },
+  {
+    id: "retrieval-practice",
+    mechanic:
+      "Retrieval on/off — in-lesson comprehension closes on the spine (LX-D2)",
+    hypothesis:
+      "Interleaving a retrieval close in each spine lesson raises later-lesson retention over exposition-only lessons.",
+    primaryMetric: "next-lesson first-attempt accuracy on retained material",
+    exposureUnit: "learner",
+    evidenceBasis: "PED-01 retrieval practice; PED-02 transfer",
+    preregisteredDirection: "higher retention on retrieval-bearing lessons",
+    status: "planned",
+  },
+  {
+    id: "anonymous-trial",
+    mechanic:
+      "Anonymous trial — first lesson playable before auth, banked on sign-in (LX-A4)",
+    hypothesis:
+      "Letting a visitor complete the first lesson before authenticating raises signup conversion without losing the banked work.",
+    primaryMetric: "visitor → authenticated-enrollment conversion",
+    exposureUnit: "session",
+    evidenceBasis: "activation-friction reduction (personalization report)",
+    preregisteredDirection: "higher signup conversion; banked lesson preserved",
+    status: "planned",
+  },
+  {
+    id: "test-out-visibility",
+    mechanic:
+      "Test-out offer visibility for returning/experienced learners (LX-A5)",
+    hypothesis:
+      "Surfacing a course-level test-out to segment-2 learners speeds them to the capstone without depressing completion quality.",
+    primaryMetric: "capstone reach rate for segment-2 learners",
+    exposureUnit: "learner",
+    evidenceBasis: "S9 expert-asymmetry; I5 retroactive-XP non-penalty",
+    preregisteredDirection: "faster capstone reach; no drop in capstone pass",
+    status: "planned",
+  },
+  {
+    id: "nudge-threshold",
+    mechanic:
+      "Stuck-nudge threshold — failed-run count before the authored hint offers",
+    hypothesis:
+      "Tuning the consecutive-fail threshold that triggers the stuck-nudge changes solve rate without raising abandonment (a threshold sweep on the LX-C4 mechanic).",
+    primaryMetric: "post-nudge solve rate at the chosen threshold",
+    exposureUnit: "learner",
+    evidenceBasis: "UIUX experiment #7; productive-struggle window",
+    preregisteredDirection:
+      "an interior threshold beats both eager and late offers on solve rate",
+    status: "planned",
+  },
+  {
+    id: "weekly-cadence",
+    mechanic: "Weekly return cadence — quest/goal framing on a weekly window",
+    hypothesis:
+      "Framing the return goal on a weekly cadence sustains weekly return better than a daily-streak framing once the novelty trough passes.",
+    primaryMetric: "weekly return of previously-active learners",
+    exposureUnit: "learner",
+    evidenceBasis: "PED-15 novelty trough; UIU-08 streak grinding",
+    preregisteredDirection: "weekly return holds or rises past week 10",
+    status: "planned",
+  },
+  {
+    id: "cohort-vs-global",
+    mechanic: "Cohort leagues vs the global leaderboard (LX-B9b)",
+    hypothesis:
+      "A small-cohort league sustains return better than the global absolute board, which discourages all but the top rank.",
+    primaryMetric: "weekly return of mid-rank learners",
+    exposureUnit: "cohort",
+    evidenceBasis: "PED-14/UIU-09 leaderboards; social-comparison bounding",
+    preregisteredDirection: "higher mid-rank return under cohort leagues",
+    status: "planned",
+  },
+  {
+    id: "challenge-first-pilot",
+    mechanic:
+      "Challenge-first lesson pilot — attempt-before-exposition, ONE course only (pedagogy roadmap #14 / open question #6)",
+    hypothesis:
+      "Placing the challenge before the exposition in a single pilot course raises engagement and transfer (active learning ~+0.47 SD), scoped to one course so a null or a backfire is contained.",
+    primaryMetric: "pilot-course capstone reach + transfer-check accuracy",
+    exposureUnit: "learner (single pilot course)",
+    evidenceBasis:
+      "PED active-learning meta-analysis (+0.47 SD); roadmap #14 open question #6",
+    preregisteredDirection:
+      "higher engagement/transfer in the pilot course; scoped to one course",
+    status: "planned",
+  },
+  {
+    id: "planning-prompt",
+    mechanic:
+      "Session-end if-then planning prompt — 'when's your next lesson?' (LX-A6)",
+    issue: 582,
+    hypothesis:
+      "An implementation-intention prompt lifts planning-prompt completion; v1 is display-only with no delivery channel, so it is NOT expected to move return until a notification workstream ships.",
+    primaryMetric: "planning-prompt completion rate",
+    exposureUnit: "learner",
+    mergedDate: "2026-07-26",
+    evidenceBasis:
+      "implementation-intention effect (Gollwitzer); S4 pre-registered null",
+    preregisteredDirection:
+      "planning-prompt completion is non-zero; NULL on weekly return in v1 (display-only, no delivery) — the null is pre-registered so a null read is a confirmed prediction, not a walk-back",
+    preregisteredNull: true,
+    status: "merged-pre-launch",
+  },
+  {
+    id: "incentive-graded-xp-ladder",
+    mechanic:
+      "E6 — incentive-graded XP ladder (Codewars: XP per challenge scales with rung minus user level)",
+    hypothesis:
+      "Cannot run as designed: xpPerLesson is fixed on-chain (non-goal #1), so XP cannot vary by rung or user level without a program change. Kept as a row so it is not re-proposed; the framing-level substitute (visible difficulty labels, no XP variance) ships with LX-C7.",
+    primaryMetric: "n/a — not runnable as designed",
+    exposureUnit: "n/a",
+    evidenceBasis:
+      "Codewars incentive-graded ladder; blocked by fixed on-chain xpPerLesson (LX-C7 justified drop)",
+    preregisteredDirection:
+      "n/a — infeasible as designed; difficulty labels ship without XP variance",
+    status: "infeasible-as-designed",
   },
 ];
 

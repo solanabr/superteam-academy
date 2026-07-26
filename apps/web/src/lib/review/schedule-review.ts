@@ -66,3 +66,40 @@ export async function captureReviewFailure(
     });
   }
 }
+
+/**
+ * Enqueue a lesson's retrieval item into the learner's spaced-review queue at
+ * box 1, via the SECURITY DEFINER `schedule_review_item` RPC (LX-B3 substrate).
+ * `itemKey` is the RAW lesson _id — PDA-seed convention: never strip/transform
+ * ids. The RPC is idempotent (ON CONFLICT DO NOTHING), so re-scheduling an item
+ * the learner already has never resets their box progress.
+ *
+ * Best-effort: a scheduling failure is a warn, not a throw — the callers (e.g.
+ * the LX-C6 solution reveal) treat review-scheduling as a side effect that must
+ * never block the primary action. Returns whether the row is now scheduled.
+ *
+ * Sibling to `captureReviewFailure` above (LX-B4): both enqueue through the same
+ * idempotent RPC, but from different signals — that one from a graded miss on
+ * the completion deny path (fire-and-forget, void), this one from a deliberate
+ * solution reveal (the route reports the outcome so the UI can be honest about
+ * whether the reschedule landed).
+ */
+export async function scheduleReviewItem(
+  userId: string,
+  itemKey: string
+): Promise<boolean> {
+  try {
+    const { error } = await createAdminClient().rpc("schedule_review_item", {
+      p_user_id: userId,
+      p_item_key: itemKey,
+    });
+    if (error) {
+      console.warn("[review] schedule failed:", error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn("[review] schedule threw:", err);
+    return false;
+  }
+}

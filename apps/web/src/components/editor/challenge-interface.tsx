@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import {
   ArrowCounterClockwise,
   CheckCircle,
+  Eye,
   Lightbulb,
   Trophy,
   X,
@@ -15,6 +16,7 @@ import {
   trackChallengeRun,
   trackChallengeSolved,
   trackChallengeStarted,
+  trackSolutionRevealed,
   trackStuckNudgeAccepted,
   trackStuckNudgeShown,
 } from "@/lib/analytics/events";
@@ -69,6 +71,7 @@ export function ChallengeInterface({
   isDeployable,
   tests,
   hints,
+  solution,
   xpReward,
   earnedXp,
   isAlreadyCompleted,
@@ -108,6 +111,16 @@ export function ChallengeInterface({
   // ever surfaced this attempt so the eventual solve can be tagged postNudge.
   const [revealedHintCount, setRevealedHintCount] = useState(0);
   const nudgeShownRef = useRef(false);
+
+  // Solution-reveal soft-gate (LX-C6). The reference solution already ships in
+  // the client payload; this gates it behind a deliberate, confirmed click
+  // (never auto-shown, never refused — one-tap override, AIE-27). Confirming
+  // logs the reveal and best-effort reschedules the lesson into the review
+  // queue; the XP path is untouched (xpPerLesson is fixed on-chain — the only
+  // consequence is review-scheduling + framing).
+  const [solutionGate, setSolutionGate] = useState<
+    "closed" | "confirming" | "revealed"
+  >("closed");
 
   // Analytics (LX-F1): challenge lifecycle events compose alongside the
   // existing state. The fail streak is mirrored in a ref because the state
@@ -245,6 +258,22 @@ export function ChallengeInterface({
       return count + 1;
     });
   }, [hints.length, lessonId, courseId, challengeKind]);
+
+  const hasSolution =
+    typeof solution === "string" && solution.trim().length > 0;
+
+  const handleConfirmRevealSolution = useCallback(() => {
+    setSolutionGate("revealed");
+    trackSolutionRevealed({ lessonId, courseId, challengeKind });
+    // Best-effort reschedule into the review queue. The reveal itself never
+    // blocks on this: an anonymous learner (401) or a transient failure still
+    // gets the solution — only the review row is skipped.
+    void fetch("/api/lessons/reveal-solution", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ courseSlug, lessonSlug }),
+    }).catch(() => {});
+  }, [lessonId, courseId, challengeKind, courseSlug, lessonSlug]);
 
   const handleClearOutput = useCallback(() => {
     setChallengeState((prev) => ({
@@ -479,6 +508,25 @@ export function ChallengeInterface({
               </div>
 
               <div className="flex items-center gap-1">
+                {hasSolution && !isComplete && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() =>
+                      setSolutionGate((s) =>
+                        s === "closed" ? "confirming" : "closed"
+                      )
+                    }
+                    className="gap-1 text-xs"
+                    aria-expanded={solutionGate !== "closed"}
+                    aria-controls="reference-solution-panel"
+                  >
+                    <Eye size={16} weight="duotone" aria-hidden="true" />
+                    <span className="hidden sm:inline">
+                      {t("viewSolution")}
+                    </span>
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -496,6 +544,72 @@ export function ChallengeInterface({
               </div>
             </div>
           </div>
+
+          {/* Solution-reveal soft-gate panel (LX-C6). Confirming step is a
+              non-blocking nudge, not a refusal: the learner can back out or
+              reveal in one tap. The reveal itself is a deliberate, logged click
+              that reschedules the lesson into review — the XP path is untouched.
+              role="region" so the disclosure is announced; the code is read-only
+              reference, never editable. */}
+          {hasSolution && solutionGate !== "closed" && (
+            <div
+              id="reference-solution-panel"
+              role="region"
+              aria-label={t("solutionRevealedLabel")}
+              className="shrink-0 border-b border-border bg-card px-3 py-3"
+            >
+              {solutionGate === "confirming" ? (
+                <div className="flex flex-col gap-2">
+                  <p className="text-xs text-text-3">
+                    <span className="font-bold text-text">
+                      {t("solutionGateTitle")}
+                    </span>{" "}
+                    {t("solutionGateBody")}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="push"
+                      size="sm"
+                      onClick={handleConfirmRevealSolution}
+                      className="text-xs"
+                    >
+                      {t("solutionGateConfirm")}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSolutionGate("closed")}
+                      className="text-xs"
+                    >
+                      {t("solutionGateCancel")}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <h4 className="text-xs font-semibold uppercase text-text-3">
+                      {t("solutionRevealedLabel")}
+                    </h4>
+                    <button
+                      type="button"
+                      onClick={() => setSolutionGate("closed")}
+                      className="shrink-0 text-text-3 transition-colors hover:text-text"
+                      aria-label={tCommon("close")}
+                    >
+                      <X size={14} weight="bold" aria-hidden="true" />
+                    </button>
+                  </div>
+                  <pre className="max-h-64 overflow-auto rounded-md border border-border p-2.5 text-xs [background:var(--input)]">
+                    <code>{solution}</code>
+                  </pre>
+                  <p className="text-xs text-text-3">
+                    {t("solutionRevealedNote")}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Editor */}
           <div ref={editorAreaRef} className="relative min-h-0 flex-1">

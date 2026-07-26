@@ -79,6 +79,12 @@ export interface ChallengeInterfaceProps {
   isDeployable?: boolean;
   tests: TestCase[];
   hints: string[];
+  /**
+   * Reference solution source, already in the client payload. Empty/undefined
+   * when the challenge ships none. Gated behind the LX-C6 soft-gate — never
+   * auto-shown, revealed only on a deliberate, confirmed click.
+   */
+  solution?: string;
   xpReward: number;
   earnedXp?: number | null;
   isAlreadyCompleted?: boolean;

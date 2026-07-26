@@ -74,6 +74,7 @@ export function CodeBlock({ block, ctx }: BlockRenderProps) {
           isDeployable={b.deployable ?? undefined}
           tests={b.tests}
           hints={b.hints ?? []}
+          solution={b.solution}
           xpReward={ctx.xpReward}
           earnedXp={ctx.earnedXp}
           isAlreadyCompleted={ctx.isCompleted}
