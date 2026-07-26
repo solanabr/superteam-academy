@@ -16,3 +16,8 @@ packages/content-schema/schema/
 # `git diff --exit-code`s it; prettier must not reformat it (it collapses short
 # arrays onto one line), or the committed bytes drift from the compiler output.
 apps/web/src/content/generated/
+
+# Golden snapshot fixtures for project.golden.test.ts — deep-compared as parsed
+# objects, so formatting is irrelevant, and the 580KB lessons.json OOM-kills
+# prettier when lint-staged runs it at commit time.
+apps/web/src/lib/content/__tests__/fixtures/golden/
