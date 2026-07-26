@@ -4,25 +4,34 @@ import { useState, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import Image from "next/image";
-import { Trophy, Crown, Lightning, Medal } from "@phosphor-icons/react";
-import type { LeaderboardEntry } from "@superteam-lms/types";
+import {
+  Trophy,
+  Crown,
+  Lightning,
+  Medal,
+  UsersThree,
+} from "@phosphor-icons/react";
+import type { LeaderboardEntry, CohortLeague } from "@superteam-lms/types";
 import { LevelBadge } from "@/components/gamification/level-badge";
+import { CohortRow } from "@/components/leaderboard/cohort-row";
 import { cn } from "@/lib/utils";
 
 type Timeframe = "weekly" | "monthly" | "alltime";
+type Board = "league" | "global";
 
 interface LeaderboardClientProps {
-  initialEntries: LeaderboardEntry[];
-  initialTimeframe: Timeframe;
+  initialGlobalEntries: LeaderboardEntry[];
+  initialCohort: CohortLeague | null;
   currentUserId: string;
 }
 
-function truncateWallet(address: string): string {
-  if (address.length <= 10) return address;
-  return `${address.slice(0, 4)}...${address.slice(-4)}`;
+/** Localized league tier name (1-based), clamped to the four seeded tiers. */
+function tierName(t: (k: string) => string, tier: number): string {
+  const clamped = Math.min(Math.max(tier, 1), 4);
+  return t(`leagueTier${clamped}`);
 }
 
-/* ── Podium card for ranks 1-3 ── */
+/* ── Podium card for ranks 1-3 (global board) ── */
 function PodiumCard({
   entry,
   isCurrentUser,
@@ -50,7 +59,6 @@ function PodiumCard({
           isCurrentUser && "me"
         )}
       >
-        {/* Rank icon */}
         <div className="podium-rank-icon">
           {rank === 1 ? (
             <Crown size={20} weight="fill" />
@@ -61,7 +69,6 @@ function PodiumCard({
           )}
         </div>
 
-        {/* Avatar */}
         <div className={cn("podium-avatar", rank === 1 && "gold")}>
           {entry.avatarUrl ? (
             <Image
@@ -77,23 +84,20 @@ function PodiumCard({
           )}
         </div>
 
-        {/* Name */}
         <div className="podium-name">
           <span className="truncate">{entry.username}</span>
           {isCurrentUser && <span className="lb-me-tag">{t("you")}</span>}
         </div>
 
-        {/* XP */}
         <div className="podium-xp">{entry.totalXp.toLocaleString()} XP</div>
 
-        {/* Level badge */}
         <LevelBadge level={entry.level} size="sm" />
       </div>
     </Link>
   );
 }
 
-/* ── Ranked row for positions 4+ ── */
+/* ── Ranked row for positions 4+ (global board) ── */
 function RankedRow({
   entry,
   isCurrentUser,
@@ -139,9 +143,7 @@ function RankedRow({
             {isCurrentUser && <span className="lb-me-tag">{t("you")}</span>}
           </div>
           {entry.walletAddress && (
-            <div className="lb-wallet">
-              {truncateWallet(entry.walletAddress)}
-            </div>
+            <div className="lb-wallet">{entry.walletAddress}</div>
           )}
         </div>
 
@@ -154,50 +156,77 @@ function RankedRow({
   );
 }
 
-export function LeaderboardClient({
-  initialEntries,
-  initialTimeframe,
+/* ── League (cohort) board — the primary view ── */
+function LeagueBoard({ cohort }: { cohort: CohortLeague | null }) {
+  const t = useTranslations("gamification");
+
+  if (!cohort) {
+    return (
+      <div className="lb-empty">
+        <UsersThree size={48} weight="duotone" aria-hidden="true" />
+        <p>{t("leagueSignIn")}</p>
+      </div>
+    );
+  }
+
+  if (cohort.entries.length === 0) {
+    return (
+      <div className="lb-empty">
+        <UsersThree size={48} weight="duotone" aria-hidden="true" />
+        <p>{t("noEntries")}</p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="lb-league-head">
+        <span className="lb-league-icon" aria-hidden="true">
+          <UsersThree size={22} weight="fill" />
+        </span>
+        <div className="min-w-0">
+          <p className="lb-league-tier">{tierName(t, cohort.tier)}</p>
+          <p className="lb-league-sub">
+            {t("cohortMembers", { count: cohort.memberCount })} ·{" "}
+            {t("leagueResets")}
+          </p>
+        </div>
+      </div>
+
+      <div className="lb-list">
+        {cohort.entries.map((entry, i) => (
+          <CohortRow
+            key={entry.userId}
+            entry={entry}
+            style={{ "--i": i } as React.CSSProperties}
+          />
+        ))}
+      </div>
+    </>
+  );
+}
+
+/* ── Global board — demoted secondary view ── */
+function GlobalBoard({
+  entries,
+  isLoading,
+  timeframe,
+  onTimeframeChange,
   currentUserId,
-}: LeaderboardClientProps) {
+  locale,
+}: {
+  entries: LeaderboardEntry[];
+  isLoading: boolean;
+  timeframe: Timeframe;
+  onTimeframeChange: (tf: Timeframe) => void;
+  currentUserId: string;
+  locale: string;
+}) {
   const t = useTranslations("gamification");
   const tCommon = useTranslations("common");
-  const locale = useLocale();
-  const [timeframe, setTimeframe] = useState<Timeframe>(initialTimeframe);
-  const [entries, setEntries] = useState<LeaderboardEntry[]>(initialEntries);
-  const [isLoading, setIsLoading] = useState(false);
 
-  const fetchLeaderboard = useCallback(async (tf: Timeframe) => {
-    setIsLoading(true);
-    try {
-      const res = await fetch(`/api/leaderboard?timeframe=${tf}`);
-      if (!res.ok) {
-        setEntries([]);
-        return;
-      }
-      const { entries: leaderboard } = (await res.json()) as {
-        entries: LeaderboardEntry[];
-      };
-      setEntries(leaderboard);
-    } catch {
-      setEntries([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const handleTimeframeChange = useCallback(
-    (tf: Timeframe) => {
-      setTimeframe(tf);
-      fetchLeaderboard(tf);
-    },
-    [fetchLeaderboard]
-  );
-
-  // Split entries into podium (top 3) and rest
   const podiumEntries = entries.slice(0, 3);
   const restEntries = entries.slice(3);
-
-  // Reorder podium: [2nd, 1st, 3rd] for visual layout
   const podiumOrdered: LeaderboardEntry[] =
     podiumEntries.length >= 3
       ? [podiumEntries[1]!, podiumEntries[0]!, podiumEntries[2]!]
@@ -206,23 +235,12 @@ export function LeaderboardClient({
   const TIMEFRAMES: Timeframe[] = ["weekly", "monthly", "alltime"];
 
   return (
-    <div className="lb-page">
-      {/* Header */}
-      <div className="lb-header">
-        <h1 className="font-display text-2xl font-black tracking-[-0.5px] sm:text-3xl">
-          {t("leaderboard")}
-        </h1>
-        <p className="mt-1 text-text-3">
-          {t("rank")} — {t(timeframe === "alltime" ? "allTime" : timeframe)}
-        </p>
-      </div>
-
-      {/* Timeframe tabs — underline style matching catalog-tabs */}
+    <>
       <div className="lb-timeframe-tabs">
         {TIMEFRAMES.map((tf) => (
           <button
             key={tf}
-            onClick={() => handleTimeframeChange(tf)}
+            onClick={() => onTimeframeChange(tf)}
             className={cn("lb-tf-tab", timeframe === tf && "active")}
           >
             {t(tf === "alltime" ? "allTime" : tf)}
@@ -230,7 +248,6 @@ export function LeaderboardClient({
         ))}
       </div>
 
-      {/* Content */}
       {isLoading ? (
         <div className="flex items-center justify-center py-20">
           <div className="sol-spinner" />
@@ -243,7 +260,6 @@ export function LeaderboardClient({
         </div>
       ) : (
         <>
-          {/* ═══ Podium ═══ */}
           <div
             className={cn(
               "podium-grid",
@@ -260,7 +276,6 @@ export function LeaderboardClient({
             ))}
           </div>
 
-          {/* ═══ Ranked List ═══ */}
           {restEntries.length > 0 && (
             <div className="lb-list">
               {restEntries.map((entry, i) => (
@@ -275,6 +290,104 @@ export function LeaderboardClient({
             </div>
           )}
         </>
+      )}
+    </>
+  );
+}
+
+export function LeaderboardClient({
+  initialGlobalEntries,
+  initialCohort,
+  currentUserId,
+}: LeaderboardClientProps) {
+  const t = useTranslations("gamification");
+  const locale = useLocale();
+
+  // League is primary; fall back to global for anon visitors with no cohort.
+  const [board, setBoard] = useState<Board>(
+    initialCohort ? "league" : "global"
+  );
+  const [timeframe, setTimeframe] = useState<Timeframe>("alltime");
+  const [globalEntries, setGlobalEntries] =
+    useState<LeaderboardEntry[]>(initialGlobalEntries);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const fetchGlobal = useCallback(async (tf: Timeframe) => {
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/leaderboard?timeframe=${tf}`);
+      if (!res.ok) {
+        setGlobalEntries([]);
+        return;
+      }
+      const { entries } = (await res.json()) as { entries: LeaderboardEntry[] };
+      setGlobalEntries(entries);
+    } catch {
+      setGlobalEntries([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const handleTimeframeChange = useCallback(
+    (tf: Timeframe) => {
+      setTimeframe(tf);
+      fetchGlobal(tf);
+    },
+    [fetchGlobal]
+  );
+
+  const BOARDS: { id: Board; label: string }[] = [
+    { id: "league", label: t("league") },
+    { id: "global", label: t("global") },
+  ];
+
+  return (
+    <div className="lb-page">
+      <div className="lb-header">
+        <h1 className="font-display text-2xl font-black tracking-[-0.5px] sm:text-3xl">
+          {t("leaderboard")}
+        </h1>
+        <p className="mt-1 text-text-3">
+          {board === "league" ? t("leagueSubtitle") : t("globalSubtitle")}
+        </p>
+      </div>
+
+      {/* Primary board switch — League (cohort) is the default; Global demoted. */}
+      <div
+        className="lb-board-tabs"
+        role="tablist"
+        aria-label={t("leaderboard")}
+      >
+        {BOARDS.map((b) => (
+          <button
+            key={b.id}
+            role="tab"
+            aria-selected={board === b.id}
+            onClick={() => setBoard(b.id)}
+            className={cn("lb-board-tab", board === b.id && "active")}
+          >
+            {b.id === "league" ? (
+              <UsersThree size={16} weight="bold" aria-hidden="true" />
+            ) : (
+              <Trophy size={16} weight="bold" aria-hidden="true" />
+            )}
+            {b.label}
+          </button>
+        ))}
+      </div>
+
+      {board === "league" ? (
+        <LeagueBoard cohort={initialCohort} />
+      ) : (
+        <GlobalBoard
+          entries={globalEntries}
+          isLoading={isLoading}
+          timeframe={timeframe}
+          onTimeframeChange={handleTimeframeChange}
+          currentUserId={currentUserId}
+          locale={locale}
+        />
       )}
     </div>
   );

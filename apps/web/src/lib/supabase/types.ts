@@ -14,6 +14,66 @@ export type Database = {
   };
   public: {
     Tables: {
+      league_tiers: {
+        Row: { tier: number; min_prior_week_xp: number };
+        Insert: { tier: number; min_prior_week_xp: number };
+        Update: { tier?: number; min_prior_week_xp?: number };
+        Relationships: [];
+      };
+      league_cohorts: {
+        Row: {
+          id: string;
+          week_start: string;
+          tier: number;
+          member_count: number;
+          scores_refreshed_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          week_start: string;
+          tier: number;
+          member_count?: number;
+          scores_refreshed_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          week_start?: string;
+          tier?: number;
+          member_count?: number;
+          scores_refreshed_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      league_members: {
+        Row: {
+          id: string;
+          cohort_id: string;
+          user_id: string;
+          week_start: string;
+          score: number;
+          joined_at: string;
+        };
+        Insert: {
+          id?: string;
+          cohort_id: string;
+          user_id: string;
+          week_start: string;
+          score?: number;
+          joined_at?: string;
+        };
+        Update: {
+          id?: string;
+          cohort_id?: string;
+          user_id?: string;
+          week_start?: string;
+          score?: number;
+          joined_at?: string;
+        };
+        Relationships: [];
+      };
       onchain_deployments: {
         Row: {
           content_id: string;
@@ -1283,6 +1343,27 @@ export type Database = {
           user_id: string;
           username: string;
         }[];
+      };
+      get_cohort_leaderboard: {
+        Args: { p_user_id: string };
+        Returns: {
+          user_id: string;
+          username: string | null;
+          avatar_url: string | null;
+          score: number;
+          rank: number;
+          is_you: boolean;
+          tier: number;
+          week_start: string;
+        }[];
+      };
+      ensure_league_membership: {
+        Args: { p_user_id: string };
+        Returns: string;
+      };
+      refresh_cohort_scores: {
+        Args: { p_cohort_id: string };
+        Returns: undefined;
       };
       increment_view_count: {
         Args: { p_thread_id: string; p_user_id?: string };

@@ -3044,6 +3044,79 @@ a.path-step-card:hover .path-step-badge.skip {
   border-bottom-color: var(--primary);
 }
 
+/* ── Primary board switch — League (cohort) vs Global (LX-B9b) ── */
+.lb-board-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--card);
+  border: 2.5px solid var(--border);
+  border-radius: var(--r-md);
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+}
+.lb-board-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-display, var(--font-d));
+  font-weight: 800;
+  font-size: 14px;
+  padding: 8px 16px;
+  min-height: 40px;
+  border: none;
+  border-radius: var(--r-sm, 8px);
+  background: none;
+  color: var(--text-3);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.lb-board-tab:hover {
+  color: var(--text);
+}
+.lb-board-tab.active {
+  color: var(--primary);
+  background: var(--primary-dim);
+}
+
+/* ── League header — tier name + cohort meta ── */
+.lb-league-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.lb-league-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--primary-dim);
+  color: var(--primary);
+}
+.lb-league-tier {
+  font-family: var(--font-display, var(--font-d));
+  font-weight: 900;
+  font-size: 18px;
+  color: var(--text);
+}
+.lb-league-sub {
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+/* ── Compact list variant — dashboard you-±3 strip ── */
+.lb-list-compact {
+  gap: 4px;
+}
+.lb-list-compact .lb-row {
+  padding: 7px 12px;
+}
+
 /* ── Empty state ── */
 .lb-empty {
   display: flex;
