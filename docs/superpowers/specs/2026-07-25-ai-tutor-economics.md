@@ -3,6 +3,8 @@
 **FINAL SPEC** · 2026-07-25 · supersedes the draft of the same name
 Code facts labelled `[VERIFIED]` were reproduced against the working tree at `bd4776c`. Every price carries a dated source.
 
+> **Correction note (2026-07-26, per #608 — do not rewrite the body below; this note governs).** This doc cites **d=−0.88** (in §6 non-negotiable #1 and the time-based-grant section) as the harm figure for performance-contingent / rank-based / tier-scarce rewards. −0.88 is refuted _as attribution_ (MAS-20): it is Deci/Koestner/Ryan's performance-contingent-less-than-maximum reward vs a no-feedback control (6 studies), not a measurement of leaderboards, prizes, or monetary salience. The prohibition on rank-based / tier-scarce contingency survives on PED-10 + PED-14 + UIU-09 and the contingency structure itself, not on −0.88. Authoritative disposition: `docs/superpowers/specs/2026-07-25-UNIFIED-LAUNCH-SPEC.md` §1 evidence table + §3 item 52.
+
 ---
 
 ## 1. VERDICT UP FRONT
