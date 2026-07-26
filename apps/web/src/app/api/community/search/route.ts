@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import {
+  fetchAuthorProfiles,
+  buildAuthor,
+} from "@/lib/community/author-profiles";
 
 // Auth/cookie + per-request DB access — never statically prerender (DYNAMIC_SERVER_USAGE).
 export const dynamic = "force-dynamic";
@@ -26,7 +30,6 @@ export async function GET(request: NextRequest) {
       .select(
         `
         *,
-        author:profiles!author_id(username, avatar_url),
         category:forum_categories!category_id(id, name, slug)
       `
       )
@@ -74,13 +77,14 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Author identity (username/avatar) via public_profiles — see #493 note in
+    // fetchAuthorProfiles: the old RLS-bound profiles embed no longer resolves.
+    const authorProfiles = await fetchAuthorProfiles(supabase, authorIds);
+
     // Build response with enriched author data and user votes
     const result = (threads || []).map((t: Record<string, unknown>) => ({
       ...t,
-      author: {
-        ...(t.author as Record<string, unknown>),
-        level: authorLevels[t.author_id as string] || 0,
-      },
+      author: buildAuthor(t.author_id as string, authorProfiles, authorLevels),
       userVote: userVotes[t.id as string] || null,
     }));
 

@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  fetchAuthorProfiles,
+  buildAuthor,
+} from "@/lib/community/author-profiles";
 import { logError } from "@/lib/logging";
 import { serverEnv } from "@/lib/env.server";
 
@@ -28,7 +32,6 @@ export async function GET(
       .select(
         `
         *,
-        author:profiles!author_id(username, avatar_url),
         category:forum_categories!category_id(id, name, slug)
       `
       )
@@ -43,12 +46,7 @@ export async function GET(
     // Fetch answers sorted: accepted first, then by vote_score desc
     const { data: answers } = await supabase
       .from("answers")
-      .select(
-        `
-        *,
-        author:profiles!author_id(username, avatar_url)
-      `
-      )
+      .select(`*`)
       .eq("thread_id", thread.id)
       .is("deleted_at", null)
       .order("is_accepted", { ascending: false })
@@ -68,6 +66,10 @@ export async function GET(
     const authorLevels: Record<string, number> = Object.fromEntries(
       (xpData || []).map((x) => [x.user_id ?? "", x.level ?? 0])
     );
+
+    // Author identity (username/avatar) via public_profiles — see #493 note in
+    // fetchAuthorProfiles: the old RLS-bound profiles embed no longer resolves.
+    const authorProfiles = await fetchAuthorProfiles(supabase, uniqueAuthorIds);
 
     // Fetch user's votes (if authenticated)
     let userThreadVote = null;
@@ -115,17 +117,15 @@ export async function GET(
     // Build response
     const result = {
       ...thread,
-      author: {
-        ...(thread.author as Record<string, unknown>),
-        level: authorLevels[thread.author_id] || 0,
-      },
+      author: buildAuthor(thread.author_id, authorProfiles, authorLevels),
       userVote: userThreadVote,
       answers: (answers || []).map((a: Record<string, unknown>) => ({
         ...a,
-        author: {
-          ...(a.author as Record<string, unknown>),
-          level: authorLevels[a.author_id as string] || 0,
-        },
+        author: buildAuthor(
+          a.author_id as string,
+          authorProfiles,
+          authorLevels
+        ),
         userVote: userAnswerVotes[a.id as string] || null,
       })),
     };

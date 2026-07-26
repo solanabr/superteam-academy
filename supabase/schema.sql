@@ -216,9 +216,37 @@ ALTER TABLE user_achievements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE certificates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE nft_metadata ENABLE ROW LEVEL SECURITY;
 
+-- is_public_profile (#493): SECURITY DEFINER boolean predicate — "is this user a
+-- public, non-deleted profile?" — evaluated as the function owner so it bypasses
+-- RLS on profiles. The sibling public-read policies on enrollments,
+-- user_progress, user_achievements and certificates use it INSTEAD of an inline
+-- `EXISTS (SELECT 1 FROM profiles ...)`, whose subquery would otherwise run under
+-- the caller's RLS on profiles. Since profiles has no public-profile row policy
+-- anymore (the google_id/github_id deanonymization fix), that inline subquery
+-- would see only the caller's own row and break every cross-user read of those
+-- tables. Returning a bare boolean leaks no row or column.
+CREATE OR REPLACE FUNCTION public.is_public_profile(p_user_id uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = p_user_id AND is_public = true
+  );
+$$;
+
+REVOKE ALL ON FUNCTION public.is_public_profile(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.is_public_profile(uuid) TO anon, authenticated;
+
 -- profiles
-CREATE POLICY "Public profiles are viewable by everyone"
-  ON profiles FOR SELECT USING (is_public = true);
+-- No public-profile row policy (#493): a logged-in user could otherwise read
+-- google_id/github_id (OAuth subject IDs) of any is_public profile via the wide
+-- `authenticated` column grant, deanonymizing a public wallet -> real identity.
+-- authenticated/anon reach only their OWN row (own-row SELECT below / anon none);
+-- cross-user profile identity is served solely by the public_profiles view.
 
 CREATE POLICY "Users can view their own profile"
   ON profiles FOR SELECT USING (auth.uid() = id);
@@ -259,26 +287,14 @@ CREATE POLICY "Users can view their own enrollments"
 -- SELECT policies (own + public-profile) are intentionally left in place.
 
 CREATE POLICY "Public profile enrollments are viewable"
-  ON enrollments FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE profiles.id = enrollments.user_id
-      AND profiles.is_public = true
-    )
-  );
+  ON enrollments FOR SELECT USING (public.is_public_profile(user_id));
 
 -- user_progress
 CREATE POLICY "Users can view their own progress"
   ON user_progress FOR SELECT USING (auth.uid() = user_id);
 
 CREATE POLICY "Public profile progress is viewable"
-  ON user_progress FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE profiles.id = user_progress.user_id
-      AND profiles.is_public = true
-    )
-  );
+  ON user_progress FOR SELECT USING (public.is_public_profile(user_id));
 
 -- No authenticated INSERT/UPDATE: progress is written only by service_role
 -- (Helius webhook + admin resync). Direct client writes would let users forge
@@ -299,26 +315,14 @@ CREATE POLICY "Users can view their own achievements"
   ON user_achievements FOR SELECT USING (auth.uid() = user_id);
 
 CREATE POLICY "Public achievements are viewable on public profiles"
-  ON user_achievements FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE profiles.id = user_achievements.user_id
-      AND profiles.is_public = true
-    )
-  );
+  ON user_achievements FOR SELECT USING (public.is_public_profile(user_id));
 
 -- certificates
 CREATE POLICY "Users can view their own certificates"
   ON certificates FOR SELECT USING (auth.uid() = user_id);
 
 CREATE POLICY "Public certificates are viewable by everyone"
-  ON certificates FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE profiles.id = certificates.user_id
-      AND profiles.is_public = true
-    )
-  );
+  ON certificates FOR SELECT USING (public.is_public_profile(user_id));
 
 -- NOTE: No INSERT or UPDATE policies on certificates.
 -- All certificate writes go through service_role via the API routes.
@@ -722,21 +726,27 @@ CREATE OR REPLACE VIEW public_user_xp AS
 REVOKE ALL ON public_user_xp FROM PUBLIC, anon, authenticated;
 GRANT SELECT ON public_user_xp TO anon, authenticated;
 
--- public_profiles (#478): by-wallet public projection of the four non-sensitive
--- profile fields, so instructor identity resolves from a course's creator wallet.
--- Mirrors the public_user_xp pattern. This is a CURATED read surface, not the
--- security boundary for the base table: profiles already has a public row-read
--- RLS policy + wide anon column grants, so anon can read public rows' columns
--- (incl. google_id/github_id) directly from profiles — tracked separately as the
--- base-table hardening in #486. This view is a strict subset of that exposure.
--- INVARIANT: the SELECT list and the is_public + deleted_at filters keep the view
--- itself limited. Never add a sensitive column to the SELECT; never drop a filter.
+-- public_profiles (#478/#493): the SOLE cross-user profile read surface now that
+-- the base table has no public-profile row policy (#493). Exposes only
+-- non-sensitive fields for public, non-deleted profiles — never google_id or
+-- github_id. Instructor identity resolves by wallet_address; /profile/[username]
+-- resolves by username and needs `id` (to key the user's XP/achievements/certs/
+-- progress reads) + `created_at` (join date); /certificates/[id] resolves by
+-- `id` and needs username + wallet_address. `id` and `created_at` are already
+-- public elsewhere (id via public_user_xp/user_achievements/certificates,
+-- created_at is the shown join date), so they are safe to project here.
+-- The `wallet_address IS NOT NULL` filter is intentionally omitted so a
+-- wallet-less public profile (OAuth-only) still resolves on its public pages;
+-- it is inert for instructor resolution, which matches a concrete wallet and so
+-- never matches a NULL row.
+-- INVARIANT: the is_public + deleted_at filters are the access guard; the SELECT
+-- list is non-sensitive. Never add google_id/github_id; never drop a filter.
 CREATE OR REPLACE VIEW public_profiles AS
-  SELECT p.wallet_address, p.username, p.avatar_url, p.bio, p.social_links
+  SELECT p.wallet_address, p.username, p.avatar_url, p.bio, p.social_links,
+         p.id, p.created_at
   FROM profiles p
   WHERE p.is_public = true
-    AND p.deleted_at IS NULL
-    AND p.wallet_address IS NOT NULL;
+    AND p.deleted_at IS NULL;
 
 REVOKE ALL ON public_profiles FROM PUBLIC, anon, authenticated;
 GRANT SELECT ON public_profiles TO anon, authenticated;
