@@ -1,48 +1,67 @@
 /* eslint-disable import/order -- vi.mock('server-only') must be hoisted above
    the route import so the `server-only` graph loads under vitest. */
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { NextRequest } from "next/server";
 import { Keypair, PublicKey, type AccountInfo } from "@solana/web3.js";
 
 vi.mock("server-only", () => ({}));
 
-const { getUser, isRateLimited, getAccountInfo, profileSingle, upsert } =
-  vi.hoisted(() => ({
-    getUser: vi.fn<() => Promise<unknown>>(),
-    isRateLimited: vi.fn<
+const {
+  getUser,
+  isRateLimited,
+  getAccountInfo,
+  profileSingle,
+  upsert,
+  userClientFrom,
+} = vi.hoisted(() => ({
+  getUser: vi.fn<() => Promise<unknown>>(),
+  isRateLimited: vi.fn<
+    (
+      namespace: string,
+      key: string,
+      opts: {
+        maxTokens: number;
+        refillIntervalMs: number;
+        failClosed?: boolean;
+      }
+    ) => Promise<boolean>
+  >(),
+  getAccountInfo:
+    vi.fn<
       (
-        namespace: string,
-        key: string,
-        opts: {
-          maxTokens: number;
-          refillIntervalMs: number;
-          failClosed?: boolean;
-        }
-      ) => Promise<boolean>
+        pubkey: import("@solana/web3.js").PublicKey,
+        config?: unknown
+      ) => Promise<AccountInfo<Buffer> | null>
     >(),
-    getAccountInfo:
-      vi.fn<
-        (
-          pubkey: import("@solana/web3.js").PublicKey,
-          config?: unknown
-        ) => Promise<AccountInfo<Buffer> | null>
-      >(),
-    profileSingle:
-      vi.fn<() => Promise<{ data: { wallet_address: string } | null }>>(),
-    upsert: vi.fn<(row: unknown, opts: unknown) => Promise<{ error: null }>>(),
-  }));
+  profileSingle:
+    vi.fn<() => Promise<{ data: { wallet_address: string } | null }>>(),
+  upsert: vi.fn<(row: unknown, opts: unknown) => Promise<{ error: null }>>(),
+  // Spy so tests can prove POST never touches a table through the
+  // user-scoped client — deployed_programs is service_role-write-only
+  // (20260726120000_lockdown_deployed_programs_rls), so a user-client write
+  // would be an RLS-bypass regression AND would fail in production.
+  userClientFrom: vi.fn<(table: string) => never>(() => {
+    throw new Error(
+      "user-scoped client must not touch tables in POST /api/deploy/save"
+    );
+  }),
+}));
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: async () => ({
     auth: { getUser },
-    from: () => ({ upsert }),
+    from: userClientFrom,
   }),
 }));
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
-    from: () => ({
-      select: () => ({ eq: () => ({ single: profileSingle }) }),
-    }),
+    from: (table: string) =>
+      table === "profiles"
+        ? { select: () => ({ eq: () => ({ single: profileSingle }) }) }
+        : { upsert },
   }),
 }));
 vi.mock("@/lib/rate-limit", () => ({
@@ -506,5 +525,65 @@ describe("POST /api/deploy/save — rate limiting", () => {
     expect(res.status).toBe(429);
     expect(getAccountInfo).not.toHaveBeenCalled();
     expect(upsert).not.toHaveBeenCalled();
+  });
+});
+
+describe("POST /api/deploy/save — service_role-only writes (RLS lockdown)", () => {
+  it("upserts through the admin (service_role) client, never the user-scoped client", async () => {
+    setHappyChain();
+
+    const res = await POST(req(validBody));
+
+    expect(res.status).toBe(200);
+    expect(upsert).toHaveBeenCalledTimes(1);
+    // deployed_programs has no client INSERT/UPDATE policies — a write
+    // through the user-scoped client would bypass on-chain verification in
+    // this suite and fail RLS in production.
+    expect(userClientFrom).not.toHaveBeenCalled();
+  });
+
+  // deployed_programs must be service_role-write-only: authenticated users
+  // could otherwise insert rows from devtools with anyone's program id,
+  // skipping the on-chain verification above entirely. RLS itself cannot be
+  // exercised in unit tests, so pin the SQL artifacts that enforce it.
+  const repoRoot = resolve(
+    dirname(fileURLToPath(import.meta.url)),
+    "../../../../../../../.."
+  );
+  const INSERT_POLICY = `"Users can insert their own deployments"`;
+  const UPDATE_POLICY = `"Users can update their own deployments"`;
+  const SELECT_POLICY = `"Users can view their own deployments"`;
+
+  it("migration drops the client INSERT and UPDATE policies on deployed_programs", () => {
+    const migration = readFileSync(
+      resolve(
+        repoRoot,
+        "supabase/migrations/20260726120000_lockdown_deployed_programs_rls.sql"
+      ),
+      "utf8"
+    );
+
+    expect(migration).toContain(
+      `DROP POLICY IF EXISTS ${INSERT_POLICY} ON deployed_programs;`
+    );
+    expect(migration).toContain(
+      `DROP POLICY IF EXISTS ${UPDATE_POLICY} ON deployed_programs;`
+    );
+    // Keep SELECT: the migration must not touch the read policy.
+    expect(migration).not.toContain(`DROP POLICY IF EXISTS ${SELECT_POLICY}`);
+  });
+
+  it("schema.sql end-state has no client INSERT/UPDATE policies on deployed_programs, keeps SELECT", () => {
+    const schema = readFileSync(
+      resolve(repoRoot, "supabase/schema.sql"),
+      "utf8"
+    );
+
+    expect(schema).not.toContain(`CREATE POLICY ${INSERT_POLICY}`);
+    expect(schema).not.toContain(`CREATE POLICY ${UPDATE_POLICY}`);
+    expect(schema).toContain(`CREATE POLICY ${SELECT_POLICY}`);
+    expect(schema).toContain(
+      "ALTER TABLE deployed_programs ENABLE ROW LEVEL SECURITY;"
+    );
   });
 });

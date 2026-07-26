@@ -28,6 +28,11 @@ const VERIFICATION_FAILED = "Program verification failed";
 // the account can lag there for a moment. One short retry absorbs that window
 // (a rejected save is silently dropped client-side, which would later block
 // the capstone credential gate for a legitimate deploy).
+//
+// The retry makes the "missing" path ~1.5s slower than other rejections — a
+// timing oracle, but only over account EXISTENCE, which anyone can already
+// read for free from any public devnet RPC. Equalizing would add 1.5s to
+// every legitimate failure response for no secrecy gain, so we don't.
 const MISSING_ACCOUNT_RETRY_DELAY_MS = 1_500;
 
 export async function POST(request: NextRequest) {
@@ -167,8 +172,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: VERIFICATION_FAILED }, { status: 400 });
     }
 
-    // Upsert — if user re-deploys to the same lesson, update the program_id
-    const { error } = await supabase.from("deployed_programs").upsert(
+    // Upsert — if user re-deploys to the same lesson, update the program_id.
+    // Service-role client on purpose: deployed_programs has NO client
+    // INSERT/UPDATE policies (20260726120000_lockdown_deployed_programs_rls),
+    // so this verified route is the only write path — a direct devtools
+    // insert can't bypass the on-chain check above.
+    const { error } = await adminClient.from("deployed_programs").upsert(
       {
         user_id: user.id,
         course_id: body.courseId,
