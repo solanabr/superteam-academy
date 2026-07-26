@@ -161,10 +161,12 @@
   },
   {
     "label": "Brazil Compliance",
+    "reviewExempt": true,
     "slug": "brazil-compliance"
   },
   {
     "label": "Earn Submission",
+    "reviewExempt": true,
     "slug": "earn-submission"
   }
 ]
