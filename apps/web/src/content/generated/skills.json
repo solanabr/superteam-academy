@@ -168,5 +168,85 @@
     "label": "Earn Submission",
     "reviewExempt": true,
     "slug": "earn-submission"
+  },
+  {
+    "label": "Rust Types & Integer Widths",
+    "slug": "rust-types"
+  },
+  {
+    "label": "Rust Control Flow",
+    "slug": "rust-control-flow"
+  },
+  {
+    "label": "Ownership",
+    "slug": "rust-ownership"
+  },
+  {
+    "label": "Move Semantics",
+    "slug": "rust-move-semantics"
+  },
+  {
+    "label": "Borrowing",
+    "slug": "rust-borrowing"
+  },
+  {
+    "label": "Lifetimes",
+    "slug": "rust-lifetimes"
+  },
+  {
+    "label": "Slices & Byte Views",
+    "slug": "rust-slices"
+  },
+  {
+    "label": "Structs",
+    "slug": "rust-structs"
+  },
+  {
+    "label": "Enums & Pattern Matching",
+    "slug": "rust-enums"
+  },
+  {
+    "label": "Traits & Derives",
+    "slug": "rust-traits"
+  },
+  {
+    "label": "Option",
+    "slug": "rust-option"
+  },
+  {
+    "label": "Result",
+    "slug": "rust-result"
+  },
+  {
+    "label": "Modules & Visibility",
+    "slug": "rust-modules"
+  },
+  {
+    "label": "Checked Arithmetic",
+    "slug": "checked-arithmetic"
+  },
+  {
+    "label": "Reading Compiler Errors",
+    "slug": "compiler-errors"
+  },
+  {
+    "label": "Debugging",
+    "slug": "debugging"
+  },
+  {
+    "label": "Browser Build Server",
+    "slug": "build-server"
+  },
+  {
+    "label": "Toolchain Versions",
+    "slug": "toolchain-versions"
+  },
+  {
+    "label": "Account Layout",
+    "slug": "account-layout"
+  },
+  {
+    "label": "Program Security",
+    "slug": "program-security"
   }
 ]

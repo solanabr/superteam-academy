@@ -57,6 +57,14 @@ vi.mock("server-only", () => ({}));
 //    and reviewExempt skill markers (#8). lessons.json and course-by-slug.json
 //    were regenerated from the bundle through the real projectors for the
 //    affected docs; all other fixtures untouched.
+//  - launch-content wave 3 (bump to courses-academy @1b74e4a6): C2
+//    `rust-for-program-devs` lands (courses-academy #12: +1 course, +14
+//    lessons, new challenge/module entries in quests-raw's derived fields —
+//    staged, not on-chain, so it stays hidden until owner course-creation),
+//    tutorNotes on the two CARRY deploy-path challenges (#14), C5 + template
+//    quiz explanations (#15). courses.json, lessons.json and quests-raw.json's
+//    challengeLessonIds/moduleLessonMap regenerated from the bundle through
+//    the real projectors (order preserved, raw quest docs untouched).
 const deps = { lessonsById };
 
 function bundleCourse(id: string): CourseDoc {

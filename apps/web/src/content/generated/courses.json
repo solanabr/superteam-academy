@@ -418,6 +418,174 @@
     "xpReward": 1000
   },
   {
+    "_id": "course-rust-for-program-devs",
+    "_type": "course",
+    "creator": "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF",
+    "creatorRewardXp": 30,
+    "description": "You can read a Solana account's bytes. You cannot yet write the struct those bytes came from. You finish this course holding `vault_core.rs` — a `VaultState` with `owner`, `balance` and `bump`, `deposit` and `withdraw` built on `checked_add`/`checked_sub` so a `u64` can never silently wrap, a `VaultError` enum with four named variants, and not one `unwrap()` — compiled green against the real Anchor 1.x toolchain on our build server. Nothing is installed locally — no rustup, no cargo, no `.so` upload. Ownership, borrowing and lifetimes are taught here rather than deferred, because `Account<'info, Vault>` is unreadable without them. Your file deliberately carries no `#[program]` and no `#[derive(Accounts)]` — that omission is the handoff, and Course 3 is what wraps around it.",
+    "difficulty": "intermediate",
+    "duration": 12,
+    "minCompletionsForReward": 10,
+    "modules": [
+      {
+        "_key": "rpd-rust-that-compiles",
+        "_type": "courseModule",
+        "description": "Get a green build before learning any syntax, then meet exactly the types the vault needs — `u64` lamports, `u8` bump, `i64` timestamps — and the compiler's opinions about mutability, tail expressions and the missing `return`. You end holding a file of your own — two `const fn` helpers that add and subtract lamports and return `None` on overflow or underflow instead of wrapping or panicking, verified by compile-time assertions. That arithmetic becomes `VaultState::withdraw` nine lessons later.",
+        "key": "rpd-rust-that-compiles",
+        "lessons": [
+          {
+            "_key": "lesson-rpd-your-first-rust-build",
+            "_ref": "lesson-rpd-your-first-rust-build",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-rpd-types-and-mutability",
+            "_ref": "lesson-rpd-types-and-mutability",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-rpd-functions-and-control-flow",
+            "_ref": "lesson-rpd-functions-and-control-flow",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-rpd-checked-lamport-math",
+            "_ref": "lesson-rpd-checked-lamport-math",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Rust That Compiles"
+      },
+      {
+        "_key": "rpd-ownership-borrowing-lifetimes",
+        "_type": "courseModule",
+        "description": "Moves, `Copy`, `.clone()`, shared versus mutable borrows, and lifetimes — taught against account-shaped signatures instead of toy strings, and with the compiler as the teacher. You read four real borrow-checker errors (E0382, E0502, E0499, and a reference outliving its local) and repair each one. You leave with three functions compiling in your own file — `balance_of(&VaultLike) -> u64`, `credit(&mut VaultLike, u64)` and `discriminator(&[u8]) -> Option<&[u8]>`, a real borrowed reader over Anchor's 8-byte discriminator. The first two are the exact method receivers you write in module 4, and the `'info` in `Account<'info, Vault>` stops being noise.",
+        "key": "rpd-ownership-borrowing-lifetimes",
+        "lessons": [
+          {
+            "_key": "lesson-rpd-moves-copy-and-clone",
+            "_ref": "lesson-rpd-moves-copy-and-clone",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-rpd-borrowing-shared-vs-mutable",
+            "_ref": "lesson-rpd-borrowing-shared-vs-mutable",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-rpd-fix-the-borrow-checker",
+            "_ref": "lesson-rpd-fix-the-borrow-checker",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-rpd-lifetimes-and-slices",
+            "_ref": "lesson-rpd-lifetimes-and-slices",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-rpd-ownership-checkpoint",
+            "_ref": "lesson-rpd-ownership-checkpoint",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Ownership, Borrowing, Lifetimes"
+      },
+      {
+        "_key": "rpd-modeling-state",
+        "_type": "courseModule",
+        "description": "The vault's data model, compiling. Define `VaultState` and hand-write one of the traits `#[derive]` would have generated, so the macro stops being magic and the byte layout stops being a mystery. Define `VaultError`, then add a fifth variant just to watch the compiler enumerate every site you failed to handle. Finally, replace panics with `Result` and let `?` carry errors up a chain of fallible functions, converting between error types on the way through.",
+        "key": "rpd-modeling-state",
+        "lessons": [
+          {
+            "_key": "lesson-rpd-structs-traits-and-derives",
+            "_ref": "lesson-rpd-structs-traits-and-derives",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-rpd-enums-option-result",
+            "_ref": "lesson-rpd-enums-option-result",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-rpd-error-plumbing",
+            "_ref": "lesson-rpd-error-plumbing",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Modeling State: Structs, Enums, Result"
+      },
+      {
+        "_key": "rpd-the-vault-core",
+        "_type": "courseModule",
+        "description": "Write the whole core — `VaultState`, checked `deposit` and `withdraw`, `VaultError`, an inline `mod` and its `use` — first by completing a given skeleton, then from signatures alone against a fixed verification harness you are not allowed to edit. You close by rereading your own file line by line, mapping each line back to the lesson that produced it, and copying it out. `vault_core.rs` is the named input to Course 3.",
+        "key": "rpd-the-vault-core",
+        "lessons": [
+          {
+            "_key": "lesson-rpd-build-the-vault-core",
+            "_ref": "lesson-rpd-build-the-vault-core",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-rpd-what-you-built",
+            "_ref": "lesson-rpd-what-you-built",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "The Vault Core"
+      }
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "rust-for-program-devs"
+    },
+    "tags": [
+      "account-layout",
+      "anchor",
+      "borsh-serialization",
+      "build-server",
+      "checked-arithmetic",
+      "compiler-errors",
+      "debugging",
+      "error-handling",
+      "pdas",
+      "program-security",
+      "rust",
+      "rust-borrowing",
+      "rust-control-flow",
+      "rust-enums",
+      "rust-lifetimes",
+      "rust-modules",
+      "rust-move-semantics",
+      "rust-option",
+      "rust-ownership",
+      "rust-result",
+      "rust-slices",
+      "rust-structs",
+      "rust-traits",
+      "rust-types",
+      "toolchain-versions"
+    ],
+    "title": "Rust for Program Developers",
+    "trackId": 1,
+    "trackLevel": 2,
+    "xpPerLesson": 20,
+    "xpReward": 800
+  },
+  {
     "_id": "course-rust-for-solana",
     "_type": "course",
     "creator": "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF",
