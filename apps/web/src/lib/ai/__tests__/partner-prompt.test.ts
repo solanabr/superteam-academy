@@ -3,6 +3,7 @@ import {
   buildStaticPrefix,
   buildDynamicSuffix,
   maxTokensFor,
+  responseSchemaFor,
 } from "../partner-prompt";
 
 const ctx = {
@@ -58,12 +59,29 @@ describe("partner-prompt", () => {
     expect(buildStaticPrefix(ctx)).not.toContain("let x = 1;");
   });
 
-  it("token caps grow with intent and stay within the model ceiling", () => {
-    // Ordered by how much output each intent needs — hint (a sentence) <
-    // ask (a full answer) < propose (the entire updated file + a 3-option
-    // check) — and every cap fits Flash-Lite's 8192-token output ceiling.
-    expect(maxTokensFor("hint")).toBeLessThan(maxTokensFor("ask"));
-    expect(maxTokensFor("ask")).toBeLessThan(maxTokensFor("propose"));
-    expect(maxTokensFor("propose")).toBeLessThanOrEqual(8192);
+  it("propose output cap dropped to 2048 and sits below the full-answer ask cap", () => {
+    // Post diff-propose (AIE-15): propose emits only the changed lines as compact
+    // search/replace edits (median reference edit ~150 tokens), so it no longer
+    // needs the biggest budget — the order is now hint < propose < ask, and
+    // propose is pinned at 2048 to close AIE-11's truncation lever.
+    expect(maxTokensFor("hint")).toBeLessThan(maxTokensFor("propose"));
+    expect(maxTokensFor("propose")).toBe(2048);
+    expect(maxTokensFor("propose")).toBeLessThan(maxTokensFor("ask"));
+  });
+
+  it("propose schema requests compact edits, never a whole-file field or prose", () => {
+    const schema = responseSchemaFor("propose");
+    expect(schema.properties).toHaveProperty("edits");
+    expect(schema.properties).not.toHaveProperty("proposedCode");
+    expect(schema.required).toContain("edits");
+    // Still no `text` field — a propose response cannot emit a runaway narrative.
+    expect(schema.properties).not.toHaveProperty("text");
+  });
+
+  it("persona instructs minimal search/replace edits, not a full-file echo", () => {
+    const prefix = buildStaticPrefix(ctx);
+    expect(prefix).toContain("search");
+    expect(prefix).toContain("replace");
+    expect(prefix).not.toContain("the full updated file");
   });
 });

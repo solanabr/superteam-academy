@@ -5,7 +5,8 @@ import { useTranslations } from "next-intl";
 import { Check, X, Sparkle, WarningCircle } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import type { ProposeResponse } from "@/lib/ai/partner-types";
+import { applyEdits } from "@/lib/ai/apply-edits";
+import type { CodeEdit, ProposeResponse } from "@/lib/ai/partner-types";
 
 type DiffLine =
   | { kind: "unchanged"; text: string }
@@ -65,7 +66,7 @@ function diffLines(current: string, proposed: string): DiffLine[] {
 
 interface DiffCardProps {
   current: string;
-  proposed: string;
+  edits: CodeEdit[];
   rationale: string;
   check: ProposeResponse["check"];
   checkToken: string;
@@ -81,7 +82,7 @@ interface DiffCardProps {
 
 export function DiffCard({
   current,
-  proposed,
+  edits,
   rationale,
   check,
   checkToken,
@@ -98,9 +99,16 @@ export function DiffCard({
   const [checking, setChecking] = useState(false);
   const [accepted, setAccepted] = useState(false);
 
+  // Reconstruct the proposed buffer by applying the search/replace edits to the
+  // learner's live code. A clean apply drives the usual diff + earned-Accept
+  // flow; a miss (the model's snippet no longer occurs — e.g. the code changed
+  // since the request) degrades to showing the edit textually, never mutating
+  // the buffer.
+  const applied = useMemo(() => applyEdits(current, edits), [current, edits]);
+
   const lines = useMemo(
-    () => diffLines(current, proposed),
-    [current, proposed]
+    () => (applied.ok ? diffLines(current, applied.proposed) : []),
+    [current, applied]
   );
 
   // The correct index/explanation are sealed server-side (`checkToken`) and
@@ -133,10 +141,74 @@ export function DiffCard({
   // Applying the change is gated on a verified-correct answer — never fires
   // otherwise, so the code only changes on an intentional, earned Accept.
   const handleAccept = () => {
-    if (stale || correctPick === null || accepted) return;
-    onAccept(proposed);
+    if (!applied.ok || stale || correctPick === null || accepted) return;
+    onAccept(applied.proposed);
     setAccepted(true);
   };
+
+  // Degrade path: the edit no longer applies to the live buffer. Show it
+  // textually (search → replace) so the learner can apply it by hand — never a
+  // silent no-op, never an Accept that would corrupt the buffer.
+  if (!applied.ok) {
+    return (
+      <div
+        className={cn("card-chunky space-y-3 p-4", className)}
+        role="group"
+        aria-label={t("a11y.diffCard")}
+      >
+        <div className="flex items-center gap-2">
+          <Sparkle
+            size={16}
+            weight="duotone"
+            className="shrink-0 text-primary"
+            aria-hidden="true"
+          />
+          <p className="text-sm font-medium text-text">{rationale}</p>
+        </div>
+
+        <div className="flex items-start gap-2 rounded-md border p-2 text-xs [background:var(--danger-light)] [border-color:var(--danger-border)]">
+          <WarningCircle
+            size={14}
+            weight="duotone"
+            className="mt-0.5 shrink-0 text-danger"
+            aria-hidden="true"
+          />
+          <span className="text-danger">{t("diff.applyFailed")}</span>
+        </div>
+
+        {edits.map((edit, index) => (
+          <div
+            key={index}
+            className="overflow-x-auto rounded-md border border-border [background:var(--input)]"
+          >
+            <pre className="whitespace-pre p-3 font-mono text-xs leading-relaxed">
+              <div className="text-danger [background:var(--danger-light)]">
+                <span className="sr-only">{t("diff.lineRemoved")}: </span>
+                {edit.search}
+              </div>
+              <div className="text-success [background:var(--success-light)]">
+                <span className="sr-only">{t("diff.lineAdded")}: </span>
+                {edit.replace}
+              </div>
+            </pre>
+          </div>
+        ))}
+
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onReject}
+            className="gap-1.5"
+          >
+            <X size={14} weight="bold" aria-hidden="true" />
+            {t("diff.reject")}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

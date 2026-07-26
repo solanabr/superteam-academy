@@ -19,14 +19,30 @@ export interface AnswerResponse {
   text: string;
 }
 
+/**
+ * A single minimal search/replace edit. `search` is an exact, contiguous
+ * snippet copied verbatim from the learner's current code (located by substring
+ * match); `replace` is what it becomes (may be empty for a pure deletion).
+ * Propose emits an array of these instead of echoing the whole file — the client
+ * applies them to the live editor buffer (see `apply-edits.ts`).
+ */
+export interface CodeEdit {
+  search: string;
+  replace: string;
+}
+
 // The CLIENT shape of a propose response. `check` no longer carries the
 // answer (`correctIndex`/`explanation`) — those are sealed server-side into
 // `checkToken` and verified by POST /api/ai/partner/verify, never shipped to
-// the browser. See `check-seal.ts` and `SealedCheck` below.
+// the browser. See `check-seal.ts` and `SealedCheck` below. `edits` replaced
+// the former full-file `proposedCode`: the model returns only the lines that
+// change (bounded output, no attacker-triggerable full-file echo — see
+// AIE-11/AIE-15), and the client reconstructs the proposed buffer by applying
+// them.
 export interface ProposeResponse {
   type: "propose";
   rationale: string;
-  proposedCode: string;
+  edits: CodeEdit[];
   check: {
     question: string;
     options: [string, string, string];

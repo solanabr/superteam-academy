@@ -791,6 +791,7 @@
       "reject": "Descartar",
       "dismissed": "Proposta descartada.",
       "stale": "Seu código mudou — esta proposta está desatualizada.",
+      "applyFailed": "Não foi possível aplicar automaticamente — seu código mudou. Aplique a alteração abaixo manualmente:",
       "checkPrompt": "Uma pergunta rápida antes de aplicar:",
       "checkIncorrect": "Quase lá.",
       "checkVerifyError": "Não foi possível verificar sua resposta. Tente novamente.",

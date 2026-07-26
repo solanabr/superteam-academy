@@ -90,10 +90,12 @@ function makeRequest(body: unknown): NextRequest {
   });
 }
 
+const PROPOSE_EDITS = [{ search: "let x = 1;", replace: "let x = 2;" }];
+
 const PROPOSE_GEMINI_TEXT = JSON.stringify({
   type: "propose",
   rationale: "This fixes the off-by-one error.",
-  proposedCode: "let x = 2;",
+  edits: PROPOSE_EDITS,
   check: {
     question: "Why does this work?",
     options: ["Because A", "Because B", "Because C"],
@@ -210,12 +212,14 @@ describe("POST /api/ai/partner", () => {
     expect(json).toMatchObject({
       type: "propose",
       rationale: "This fixes the off-by-one error.",
-      proposedCode: "let x = 2;",
+      edits: PROPOSE_EDITS,
       check: {
         question: "Why does this work?",
         options: ["Because A", "Because B", "Because C"],
       },
     });
+    // The full-file echo is gone — a propose response carries only edits.
+    expect(json).not.toHaveProperty("proposedCode");
     expect(typeof json.checkToken).toBe("string");
     expect(json.checkToken.length).toBeGreaterThan(0);
     // The answer must NEVER be in the client-facing JSON — see the
@@ -297,7 +301,7 @@ describe("POST /api/ai/partner", () => {
     expect(entries).toHaveLength(1);
     expect(entries[0]).toMatchObject({
       role: "ai",
-      response: { type: "propose", proposedCode: "let x = 2;" },
+      response: { type: "propose", edits: PROPOSE_EDITS },
     });
   });
 
@@ -476,13 +480,25 @@ describe("POST /api/ai/partner", () => {
     expect(res.status).toBe(400);
   });
 
-  it("returns 413 when code exceeds the cap", async () => {
+  it("returns 413 when code exceeds the 8k cap", async () => {
     const { POST } = await import("../partner/route");
     const res = await POST(
-      makeRequest({ ...VALID_BODY, code: "x".repeat(20_001) })
+      makeRequest({ ...VALID_BODY, code: "x".repeat(8_001) })
     );
 
     expect(res.status).toBe(413);
+  });
+
+  it("accepts code exactly at the 8k boundary", async () => {
+    stubGeminiFetch(PROPOSE_GEMINI_TEXT);
+
+    const { POST } = await import("../partner/route");
+    const res = await POST(
+      makeRequest({ ...VALID_BODY, code: "x".repeat(8_000) })
+    );
+
+    // At the cap (not over) the request is served, not 413'd.
+    expect(res.status).toBe(200);
   });
 
   it("returns 413 when message exceeds the cap", async () => {
@@ -599,5 +615,115 @@ describe("POST /api/ai/partner", () => {
       type: "answer",
       text: "Here is the explanation.",
     });
+  });
+
+  it("caps propose output at 2048 tokens and asks for edits, not the whole file", async () => {
+    const fetchSpy = vi.fn(async (_url: string, init: { body: string }) => {
+      void init;
+      return {
+        ok: true,
+        text: async () => "",
+        json: async () => ({
+          candidates: [{ content: { parts: [{ text: PROPOSE_GEMINI_TEXT }] } }],
+          usageMetadata: { cachedContentTokenCount: 0 },
+        }),
+      };
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const { POST } = await import("../partner/route");
+    await POST(makeRequest(VALID_BODY));
+
+    const [, init] = fetchSpy.mock.calls[0]!;
+    const sent = JSON.parse(init.body) as {
+      contents: { parts: { text: string }[] }[];
+      generationConfig: {
+        maxOutputTokens: number;
+        responseSchema: {
+          properties: Record<string, unknown>;
+          required: string[];
+        };
+      };
+    };
+    // Output budget dropped 8192 -> 2048 (AIE-15; closes AIE-11's inflation lever).
+    expect(sent.generationConfig.maxOutputTokens).toBe(2048);
+    // The propose schema requests an `edits` array and NO whole-file field.
+    const schema = sent.generationConfig.responseSchema;
+    expect(schema.properties).toHaveProperty("edits");
+    expect(schema.properties).not.toHaveProperty("proposedCode");
+    expect(schema.required).toContain("edits");
+    // The persona no longer instructs a full-file echo.
+    const prompt = sent.contents[0]!.parts[0]!.text;
+    expect(prompt).not.toContain("the full updated file");
+    expect(prompt).toContain("search");
+  });
+
+  it("returns 502 on a propose payload with an empty edits array", async () => {
+    stubGeminiFetch(
+      JSON.stringify({
+        type: "propose",
+        rationale: "r",
+        edits: [],
+        check: {
+          question: "q",
+          options: ["a", "b", "c"],
+          correctIndex: 0,
+          explanation: "e",
+        },
+      })
+    );
+
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest(VALID_BODY));
+
+    expect(res.status).toBe(502);
+    expect(refundAssist).not.toHaveBeenCalled();
+    expect(recordBilledAssist).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns 502 when a propose edit has an empty search snippet", async () => {
+    stubGeminiFetch(
+      JSON.stringify({
+        type: "propose",
+        rationale: "r",
+        edits: [{ search: "", replace: "x" }],
+        check: {
+          question: "q",
+          options: ["a", "b", "c"],
+          correctIndex: 0,
+          explanation: "e",
+        },
+      })
+    );
+
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest(VALID_BODY));
+
+    expect(res.status).toBe(502);
+  });
+
+  it("returns 502 when a propose response carries more than the edit ceiling", async () => {
+    const tooMany = Array.from({ length: 11 }, (_, i) => ({
+      search: `s${i}`,
+      replace: `r${i}`,
+    }));
+    stubGeminiFetch(
+      JSON.stringify({
+        type: "propose",
+        rationale: "r",
+        edits: tooMany,
+        check: {
+          question: "q",
+          options: ["a", "b", "c"],
+          correctIndex: 0,
+          explanation: "e",
+        },
+      })
+    );
+
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest(VALID_BODY));
+
+    expect(res.status).toBe(502);
   });
 });

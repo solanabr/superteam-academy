@@ -3,13 +3,18 @@ import type { ReactElement } from "react";
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import { DiffCard } from "../diff-card";
 import messages from "@/messages/en.json";
+import type { CodeEdit } from "@/lib/ai/partner-types";
+import { DiffCard } from "../diff-card";
 
 const check = {
   question: "Why?",
   options: ["A", "B", "C"] as [string, string, string],
 };
+
+// Applied to current "a", this yields the proposed buffer "a\nb" (a real
+// newline): the edit path is search/replace, not a whole-file echo.
+const ADD_B: CodeEdit[] = [{ search: "a", replace: "a\nb" }];
 
 function renderWithIntl(ui: ReactElement) {
   return render(
@@ -29,7 +34,7 @@ it("gates Accept behind a correct answer and only applies on the Accept click", 
   renderWithIntl(
     <DiffCard
       current="a"
-      proposed="a\nb"
+      edits={ADD_B}
       rationale="adds b"
       check={check}
       checkToken="tok"
@@ -59,12 +64,9 @@ it("gates Accept behind a correct answer and only applies on the Accept click", 
     expect(screen.getByRole("button", { name: /accept/i })).not.toBeDisabled()
   );
 
-  // Only the explicit Accept click applies the proposed code.
-  // NOTE: `proposed="a\nb"` is a JSX string-literal attribute, whose runtime
-  // value is the 4-char string a\nb (backslash + n), not a real newline — so
-  // the assertion matches a literal backslash-n.
+  // Only the explicit Accept click applies the reconstructed buffer.
   fireEvent.click(screen.getByRole("button", { name: /accept/i }));
-  expect(onAccept).toHaveBeenCalledWith("a\\nb");
+  expect(onAccept).toHaveBeenCalledWith("a\nb");
 
   // After applying, the card confirms and retires the action buttons.
   expect(screen.getByText(/applied to your code/i)).toBeInTheDocument();
@@ -80,7 +82,7 @@ it("Accept is disabled when stale", () => {
   renderWithIntl(
     <DiffCard
       current="a"
-      proposed="b"
+      edits={[{ search: "a", replace: "b" }]}
       rationale=""
       check={check}
       checkToken="tok"
@@ -98,7 +100,7 @@ describe("DiffCard additional behavior", () => {
     renderWithIntl(
       <DiffCard
         current="a"
-        proposed="a\nb"
+        edits={ADD_B}
         rationale="adds b"
         check={check}
         checkToken="tok"
@@ -117,7 +119,7 @@ describe("DiffCard additional behavior", () => {
     renderWithIntl(
       <DiffCard
         current="a"
-        proposed="a\nb"
+        edits={ADD_B}
         rationale="adds b"
         check={check}
         checkToken="tok"
@@ -135,7 +137,7 @@ describe("DiffCard additional behavior", () => {
     renderWithIntl(
       <DiffCard
         current="a"
-        proposed="a\nb"
+        edits={ADD_B}
         rationale="adds b for clarity"
         check={check}
         checkToken="tok"
@@ -154,7 +156,7 @@ describe("DiffCard additional behavior", () => {
     renderWithIntl(
       <DiffCard
         current="a"
-        proposed="a\nb"
+        edits={ADD_B}
         rationale="adds b"
         check={check}
         checkToken="tok"
@@ -184,7 +186,7 @@ describe("DiffCard additional behavior", () => {
     renderWithIntl(
       <DiffCard
         current="a"
-        proposed="a\nb"
+        edits={ADD_B}
         rationale="adds b"
         check={check}
         checkToken="tok"
@@ -202,5 +204,41 @@ describe("DiffCard additional behavior", () => {
 
     resolveVerify({ correct: false, explanation: "nope" });
     await screen.findByText(/nope/);
+  });
+
+  it("degrades to a textual edit (no Accept, no check) when the edit does not apply", () => {
+    const onAccept = vi.fn();
+    renderWithIntl(
+      <DiffCard
+        current="totally different buffer"
+        edits={[{ search: "NOT_IN_BUFFER", replace: "the replacement" }]}
+        rationale="adds a guard"
+        check={check}
+        checkToken="tok"
+        onVerify={vi.fn()}
+        onAccept={onAccept}
+        onReject={() => {}}
+        stale={false}
+      />
+    );
+
+    // The learner sees why it couldn't auto-apply plus the edit spelled out.
+    expect(
+      screen.getByText(/couldn't apply this automatically/i)
+    ).toBeInTheDocument();
+    expect(screen.getByText("NOT_IN_BUFFER")).toBeInTheDocument();
+    expect(screen.getByText("the replacement")).toBeInTheDocument();
+    expect(screen.getByText("adds a guard")).toBeInTheDocument();
+
+    // No Accept (the buffer is never mutated from a failed edit) and no check;
+    // the proposal can still be dismissed.
+    expect(
+      screen.queryByRole("button", { name: /^accept$/i })
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(check.question)).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /dismiss/i })
+    ).toBeInTheDocument();
+    expect(onAccept).not.toHaveBeenCalled();
   });
 });

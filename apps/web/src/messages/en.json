@@ -791,6 +791,7 @@
       "reject": "Dismiss",
       "dismissed": "Proposal dismissed.",
       "stale": "Your code changed — this proposal is out of date.",
+      "applyFailed": "Couldn't apply this automatically — your code changed since. Apply the change below by hand:",
       "checkPrompt": "Quick check before applying:",
       "checkIncorrect": "Not quite.",
       "checkVerifyError": "Couldn't verify your answer. Please try again.",
