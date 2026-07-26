@@ -22,6 +22,13 @@ title: ${id}
 blocks: [{ type: prose, key: intro, src: intro.md }]
 `;
 
+const correctLock = JSON.stringify({
+  version: 1,
+  slots: { "lesson-a": 0, "lesson-b": 1 },
+  retired: [],
+  next: 2,
+});
+
 describe("gate 3 — slots", () => {
   const tree = (lock: string) => ({
     "courses/x/course.yaml": course,
@@ -32,47 +39,143 @@ describe("gate 3 — slots", () => {
     "courses/x/lessons/b/intro.md": "# b",
   });
 
-  it("passes when the lock matches a fresh regeneration", async () => {
-    const lock = JSON.stringify({
-      version: 1,
-      slots: { "lesson-a": 0, "lesson-b": 1 },
-      retired: [],
-      next: 2,
-    });
-    const r = await runLint(makeTempRepo(tree(lock)));
+  /** A temp repo committed on `main` — a resolvable base ref for the immutability diff. */
+  const gitRepo = (lock: string): { root: string } => {
+    const root = makeTempRepo(tree(lock));
+    const git = (...args: string[]) =>
+      execFileSync("git", args, { cwd: root, stdio: "ignore" });
+    git("init", "-q");
+    git("config", "user.email", "t@t.t");
+    git("config", "user.name", "t");
+    git("add", "-A");
+    git("commit", "-qm", "c1");
+    git("branch", "-M", "main");
+    return { root };
+  };
+
+  it("passes when the lock matches the base regeneration", async () => {
+    const { root } = gitRepo(correctLock);
+    const r = await runLint(root, { baseRef: "main" });
     expect(r.diagnostics.filter((d) => d.gate === "gate-3")).toEqual([]);
   });
 
-  it("errors when a slot was renumbered", async () => {
-    const lock = JSON.stringify({
-      version: 1,
-      slots: { "lesson-a": 5, "lesson-b": 1 },
-      retired: [],
-      next: 6,
-    });
-    const r = await runLint(makeTempRepo(tree(lock)));
-    expect(r.diagnostics.some((d) => d.gate === "gate-3")).toBe(true);
+  it("errors when a slot was renumbered against the base", async () => {
+    // Base (committed on main) is correct; the working tree renumbers lesson-a.
+    const { root } = gitRepo(correctLock);
+    writeFileSync(
+      join(root, "courses/x/slots.lock.json"),
+      JSON.stringify({
+        version: 1,
+        slots: { "lesson-a": 5, "lesson-b": 1 },
+        retired: [],
+        next: 6,
+      }),
+      "utf8"
+    );
+    const r = await runLint(root, { baseRef: "main" });
+    expect(
+      r.diagnostics.some((d) => d.gate === "gate-3" && d.severity === "error")
+    ).toBe(true);
   });
 
   it("errors when a new lesson is missing from the lock", async () => {
-    const lock = JSON.stringify({
-      version: 1,
-      slots: { "lesson-a": 0 },
-      retired: [],
-      next: 1,
-    });
-    const r = await runLint(makeTempRepo(tree(lock)));
-    expect(r.diagnostics.some((d) => d.gate === "gate-3")).toBe(true);
+    // course.yaml lists lesson-a + lesson-b but the committed lock only has lesson-a.
+    const { root } = gitRepo(
+      JSON.stringify({
+        version: 1,
+        slots: { "lesson-a": 0 },
+        retired: [],
+        next: 1,
+      })
+    );
+    const r = await runLint(root, { baseRef: "main" });
+    expect(
+      r.diagnostics.some((d) => d.gate === "gate-3" && d.severity === "error")
+    ).toBe(true);
+  });
+
+  it("the mismatch remedy never suggests regenerating a deployed lock (#737)", async () => {
+    const { root } = gitRepo(correctLock);
+    writeFileSync(
+      join(root, "courses/x/slots.lock.json"),
+      JSON.stringify({
+        version: 1,
+        slots: { "lesson-a": 5, "lesson-b": 1 },
+        retired: [],
+        next: 6,
+      }),
+      "utf8"
+    );
+    const r = await runLint(root, { baseRef: "main" });
+    const msg = r.diagnostics.find(
+      (d) => d.gate === "gate-3" && d.severity === "error"
+    )?.message;
+    expect(msg).toBeDefined();
+    // The destructive suggestion is gone; the invariant + a DANGER note replace it.
+    expect(msg).not.toMatch(/content:slots/);
+    expect(msg).not.toMatch(/Run `/);
+    expect(msg).toMatch(/DANGER/);
+    expect(msg).toMatch(/invariant/i);
+    expect(msg).toMatch(/by hand/i);
+  });
+
+  it("skips (warning, never error) when no base ref is resolvable — #737", async () => {
+    // A renumbered lock that WOULD be a mismatch, but with no git repo and no base
+    // ref there is nothing to diff against: gate-3 must not fabricate a failure.
+    const root = makeTempRepo(
+      tree(
+        JSON.stringify({
+          version: 1,
+          slots: { "lesson-a": 5, "lesson-b": 1 },
+          retired: [],
+          next: 6,
+        })
+      )
+    );
+    const r = await runLint(root); // no baseRef, not a git repo
+    expect(
+      r.diagnostics.filter((d) => d.gate === "gate-3" && d.severity === "error")
+    ).toEqual([]);
+    expect(
+      r.diagnostics.some(
+        (d) =>
+          d.gate === "gate-3" &&
+          d.severity === "warning" &&
+          /no base ref/i.test(d.message)
+      )
+    ).toBe(true);
+  });
+
+  it("still errors on a genuinely missing lock even with no base ref", async () => {
+    const t = tree(correctLock) as Record<string, string>;
+    delete t["courses/x/slots.lock.json"];
+    const root = makeTempRepo(t);
+    const r = await runLint(root); // no baseRef
+    expect(
+      r.diagnostics.some(
+        (d) =>
+          d.gate === "gate-3" &&
+          d.severity === "error" &&
+          /missing slots\.lock\.json/i.test(d.message)
+      )
+    ).toBe(true);
+  });
+
+  it("resolves origin/main locally so a correct lock passes with no explicit base ref", async () => {
+    // Simulate a fresh clone: a bare invocation (no GITHUB_BASE_REF) must resolve
+    // origin/main and validate the lock instead of regenerating it from scratch.
+    const { root } = gitRepo(correctLock);
+    const git = (...args: string[]) =>
+      execFileSync("git", args, { cwd: root, stdio: "ignore" });
+    // Make origin/main a real remote-tracking ref pointing at the same commit.
+    git("update-ref", "refs/remotes/origin/main", "main");
+    git("symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/main");
+    const r = await runLint(root); // no explicit baseRef
+    expect(r.diagnostics.filter((d) => d.gate === "gate-3")).toEqual([]);
   });
 
   it("emits a warning (never silent) when no exact merge-base exists", async () => {
-    const lock = JSON.stringify({
-      version: 1,
-      slots: { "lesson-a": 0, "lesson-b": 1 },
-      retired: [],
-      next: 2,
-    });
-    const root = makeTempRepo(tree(lock));
+    const root = makeTempRepo(tree(correctLock));
     const git = (...args: string[]) => execFileSync("git", args, { cwd: root });
     git("init", "-q");
     git("config", "user.email", "t@t.t");
