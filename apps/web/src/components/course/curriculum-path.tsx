@@ -2,7 +2,6 @@
 
 import { useTranslations } from "next-intl";
 import { CheckCircle, Play, Code, Article } from "@phosphor-icons/react";
-import { ProgressBar } from "./progress-bar";
 import { cn } from "@/lib/utils";
 
 interface PathLesson {
@@ -69,7 +68,10 @@ export function CurriculumPath({
               allComplete && "border-success/30"
             )}
           >
-            {/* Module header + per-module progress */}
+            {/* Module header. No per-module progress bar: the x/y count here and
+                the per-lesson node markers below already carry that state, and a
+                third indicator for the same fact read as noise. The course-level
+                bar stays — it's the one that isn't redundant. */}
             <div className="border-b border-border p-4">
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0 flex-1">
@@ -80,16 +82,15 @@ export function CurriculumPath({
                     {mod.title}
                   </h4>
                 </div>
-                <span className="shrink-0 font-display text-[13px] font-bold tabular-nums text-text-3">
+                <span
+                  className={cn(
+                    "shrink-0 font-display text-[13px] font-bold tabular-nums",
+                    allComplete ? "text-success" : "text-text-3"
+                  )}
+                >
                   {completedInModule}/{mod.lessons.length} {t("lessons")}
                 </span>
               </div>
-              <ProgressBar
-                value={completedInModule}
-                max={Math.max(mod.lessons.length, 1)}
-                variant={allComplete ? "success" : "primary"}
-                className="mt-3"
-              />
             </div>
 
             {/* Lesson nodes on the path */}
