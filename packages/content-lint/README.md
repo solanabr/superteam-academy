@@ -23,10 +23,15 @@ exits non-zero **iff** any `error`-severity diagnostic is produced; `warning` an
 | **13b**                | Every block `type` is a `BLOCK_REGISTRY` key.                                                                                                                                                                                                                                 | error    |
 | **13c**                | Each `program-explorer` block's `idl` file parses as JSON with a non-empty `instructions` array and a non-empty `metadata.name`.                                                                                                                                              | error    |
 | **13d**                | Slot-exhaustion warning when a course's `slots.lock.json` `next > 200` (of 256).                                                                                                                                                                                              | warning  |
+| **19a–d**              | Skill-tag vocabulary — every lesson `skills:` slug resolves to `skills.yaml` (19a, error); reuse bar (19b, warning), interleaving pairs (19c, warning), facet-only tags (19d, notice). Unified launch spec §3 item 7.                                                         | mixed    |
+| **20a**                | Originality/licensing — a code block's optional `attribution` must not cite a forbidden corpus (program-examples, sealevel-attacks, developer-content, developer-bootcamp, Ackee, Neodyme, Metaplex, GPL-3.0 solana.com docs); fires regardless of declared license (CAT-15). | error    |
+| **20b**                | Originality/licensing — a declared `attribution.license` must be adaptable (Apache-2.0 or MIT: LiteSVM/Mollusk/Surfpool/Trident). No `attribution` = claimed original, attested by human review, not the linter. See `docs/CONTENT-ORIGINALITY.md`.                           | error    |
 
 Gates 8–12 (quest/achievement/path enums + caps) are enforced by the
 content-schema Zod refines at Gate 1. Gates 14–18 (governance, Sanity/Supabase/
 chain-config) run server-side at sync-time (spec §6.2), not in repo CI.
+Gate 19 (skill vocabulary) and gate 20 (originality/licensing) are numbered
+after §6.2's reserved 1–18.
 
 ## CLI
 

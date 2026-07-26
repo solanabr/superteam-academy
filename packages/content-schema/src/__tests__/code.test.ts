@@ -114,6 +114,40 @@ describe("CodeBlock", () => {
     expect(r.success).toBe(false);
   });
 
+  it("omits attribution by default (a code sample is claimed original)", () => {
+    expect(CodeBlock.parse(valid).attribution).toBeUndefined();
+  });
+
+  it("accepts an adaptation declaration; the license allow-list is gate 20's job", () => {
+    // Schema validates SHAPE only — a GPL-3.0 value parses here and is caught by
+    // content-lint gate 20 with an educational message (mirrors gate 19).
+    const b = CodeBlock.parse({
+      ...valid,
+      attribution: { source: "LiteSVM", license: "GPL-3.0" },
+    });
+    expect(b.attribution?.source).toBe("LiteSVM");
+  });
+
+  it("rejects an attribution with an empty source", () => {
+    const r = CodeBlock.safeParse({
+      ...valid,
+      attribution: { source: "", license: "MIT" },
+    });
+    expect(r.success).toBe(false);
+  });
+
+  it("rejects an attribution url that is not a url", () => {
+    const r = CodeBlock.safeParse({
+      ...valid,
+      attribution: {
+        source: "LiteSVM",
+        license: "Apache-2.0",
+        url: "not a url",
+      },
+    });
+    expect(r.success).toBe(false);
+  });
+
   it("rejects a code block producing a capability it cannot create", () => {
     const r = CodeBlock.safeParse({
       ...valid,
