@@ -15,6 +15,7 @@ import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import type { Course } from "@superteam-lms/types";
 import { Button } from "@/components/ui/button";
 import { CurriculumAccordion } from "@/components/course/curriculum-accordion";
+import { CurriculumPath } from "@/components/course/curriculum-path";
 import { ProgressBar } from "@/components/course/progress-bar";
 import { InstructorCard } from "@/components/course/instructor-card";
 import { createClient } from "@/lib/supabase/client";
@@ -322,12 +323,25 @@ export function CourseDetailClient({
         <p className="text-sm text-text-3">
           {modules.length} {t("modules")} &middot; {totalLessons} {t("lessons")}
         </p>
-        <CurriculumAccordion
-          modules={accordionModules}
-          courseSlug={course.slug}
-          locale={locale}
-          completedLessons={completedLessons}
-        />
+        {isEnrolled ? (
+          // Linear-path progress map (LX-B14): one visually-active "next"
+          // node from the shared derivation; every lesson stays a plain
+          // link — presentation only, never a lock.
+          <CurriculumPath
+            modules={accordionModules}
+            courseSlug={course.slug}
+            locale={locale}
+            completedLessons={completedLessons}
+            activeLessonId={nextIncompleteLesson?._id ?? null}
+          />
+        ) : (
+          <CurriculumAccordion
+            modules={accordionModules}
+            courseSlug={course.slug}
+            locale={locale}
+            completedLessons={completedLessons}
+          />
+        )}
       </div>
 
       {/* Discussions */}

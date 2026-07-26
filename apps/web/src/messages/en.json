@@ -178,7 +178,9 @@
     "ofXp": "of {total} XP",
     "coursesCount": "{count} of {total} done",
     "discussions": "Course Discussions",
-    "startDiscussion": "Start a Discussion"
+    "startDiscussion": "Start a Discussion",
+    "moduleLabel": "Module {number}",
+    "upNext": "Up next"
   },
   "lesson": {
     "content": "Content",
