@@ -398,6 +398,11 @@ export async function POST(request: NextRequest) {
     // spend in the non-refundable billed-assists counter (best-effort, never
     // throws).
     billed = true;
+    // Deliberately awaited, not `void`ed: on Vercel serverless, work not settled
+    // before the response returns can be frozen/killed with the lambda, which
+    // would silently drop this billing record — the durable audit of spend. The
+    // one added RPC is on the paid path only (max 4/lesson). If latency ever
+    // matters here, use `after()`/`waitUntil` semantics, never a bare `void`.
     await recordBilledAssist(user.id, lesson._id);
 
     const data = await response.json();
