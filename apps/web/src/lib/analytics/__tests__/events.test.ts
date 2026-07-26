@@ -7,6 +7,8 @@ import {
   trackChallengeSolved,
   trackChallengeStarted,
   trackCredentialMinted,
+  trackNextLessonPlanCommitted,
+  trackSolutionRevealed,
   trackStuckNudgeAccepted,
   trackStuckNudgeShown,
 } from "../events";
@@ -132,6 +134,39 @@ describe("stuck-nudge events (LX-C4)", () => {
       challengeKind: "rust",
       courseId: "course-solana-201",
       hintIndex: 1,
+    });
+  });
+});
+
+describe("solution_revealed (LX-C6 soft-gate)", () => {
+  it("dedupes per lesson per session and carries the lean payload", () => {
+    trackSolutionRevealed(ctx);
+    trackSolutionRevealed(ctx);
+    expect(trackEvent).toHaveBeenCalledTimes(1);
+    expect(trackEvent).toHaveBeenCalledWith("solution_revealed", {
+      lessonId: "lesson-anchor-pda",
+      challengeKind: "rust",
+      courseId: "course-solana-201",
+    });
+
+    trackSolutionRevealed({ ...ctx, lessonId: "another-lesson" });
+    expect(trackEvent).toHaveBeenCalledTimes(2);
+  });
+
+  it("omits courseId when the surface does not know it", () => {
+    trackSolutionRevealed({ lessonId: "l1", challengeKind: "js" });
+    expect(trackEvent).toHaveBeenCalledWith("solution_revealed", {
+      lessonId: "l1",
+      challengeKind: "js",
+    });
+  });
+});
+
+describe("next_lesson_plan_committed (LX-A6 if-then plan)", () => {
+  it("carries only the closed-set weekday id — never the exact time or PII", () => {
+    trackNextLessonPlanCommitted({ day: "tue" });
+    expect(trackEvent).toHaveBeenCalledWith("next_lesson_plan_committed", {
+      day: "tue",
     });
   });
 });

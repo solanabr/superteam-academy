@@ -457,6 +457,7 @@ export type Database = {
           id: string;
           is_public: boolean | null;
           name_rerolls_used: number | null;
+          prefs: Json | null;
           segment: number | null;
           social_links: Json | null;
           username: string;
@@ -476,6 +477,7 @@ export type Database = {
           id: string;
           is_public?: boolean | null;
           name_rerolls_used?: number | null;
+          prefs?: Json | null;
           segment?: number | null;
           social_links?: Json | null;
           username: string;
@@ -495,6 +497,7 @@ export type Database = {
           id?: string;
           is_public?: boolean | null;
           name_rerolls_used?: number | null;
+          prefs?: Json | null;
           segment?: number | null;
           social_links?: Json | null;
           username?: string;

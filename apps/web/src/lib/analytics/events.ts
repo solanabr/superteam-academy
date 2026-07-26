@@ -45,6 +45,7 @@ function challengePayload(ctx: ChallengeEventContext): Record<string, unknown> {
 const startedLessons = new Set<string>();
 const mintedCourses = new Set<string>();
 const nudgedLessons = new Set<string>();
+const revealedSolutionLessons = new Set<string>();
 let onboardingStartedFired = false;
 
 /** Test-only: clears the session-scoped event dedupe state. */
@@ -52,6 +53,7 @@ export function resetAnalyticsEventDedupeForTests(): void {
   startedLessons.clear();
   mintedCourses.clear();
   nudgedLessons.clear();
+  revealedSolutionLessons.clear();
   onboardingStartedFired = false;
 }
 
@@ -201,6 +203,36 @@ export function trackOnboardingCompleted(payload: {
   dailyGoal: number;
 }): void {
   trackEvent("onboarding_completed", payload);
+}
+
+/**
+ * `solution_revealed` — the learner deliberately opened the reference solution
+ * behind the LX-C6 soft-gate (a solution ships in the client payload but is
+ * gated behind an explicit, confirmed click). Deduped per lesson per session:
+ * one reveal = one event, so the reschedule-into-review side effect and the
+ * reveal rate share a stable per-lesson denominator. Never carries the solution
+ * text — the payload is the same lean challenge shape as the other lifecycle
+ * events. XP is untouched; the reveal is framing + review-scheduling only.
+ */
+export function trackSolutionRevealed(ctx: ChallengeEventContext): void {
+  if (revealedSolutionLessons.has(ctx.lessonId)) return;
+  revealedSolutionLessons.add(ctx.lessonId);
+  trackEvent("solution_revealed", challengePayload(ctx));
+}
+
+/** Closed-set weekday id for the LX-A6 plan — never a free-text day name. */
+export type PlanWeekday = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
+
+/**
+ * `next_lesson_plan_committed` — the learner committed the LX-A6 session-end
+ * if-then plan ("when's your next lesson?"). Only the closed-set weekday id
+ * travels; the exact time and any identity stay out of the payload. v1 is
+ * display-only (no notification channel), so this event's effect on return is a
+ * pre-registered NULL in the experiment registry — the event is the leading
+ * indicator (plan completion) that the null is judged against.
+ */
+export function trackNextLessonPlanCommitted(opts: { day: PlanWeekday }): void {
+  trackEvent("next_lesson_plan_committed", { day: opts.day });
 }
 
 export type CredentialMintObservationSource = "manual_mint" | "realtime";

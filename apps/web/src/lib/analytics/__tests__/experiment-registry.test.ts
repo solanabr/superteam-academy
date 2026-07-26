@@ -94,6 +94,48 @@ describe("EXPERIMENT_REGISTRY seed", () => {
     );
   });
 
+  it("covers the full report experiment set (LX-F4, item 45)", () => {
+    const ids = EXPERIMENT_REGISTRY.map((e) => e.id);
+    // continue-hero, LinkedIn nudge, endowed first-tick and celebration tiering
+    // are the pre-existing rows (continue-card / share-nudge / endowed-progress /
+    // celebration-retiering); these are the rows LX-F4 added to complete the set.
+    expect(ids).toEqual(
+      expect.arrayContaining([
+        "retrieval-practice",
+        "anonymous-trial",
+        "test-out-visibility",
+        "nudge-threshold",
+        "weekly-cadence",
+        "cohort-vs-global",
+        "challenge-first-pilot",
+        "planning-prompt",
+        "incentive-graded-xp-ladder",
+      ])
+    );
+  });
+
+  it("scopes the challenge-first pilot to a single course", () => {
+    const pilot = EXPERIMENT_REGISTRY.find(
+      (e) => e.id === "challenge-first-pilot"
+    );
+    expect(pilot?.exposureUnit).toMatch(/single pilot course/i);
+  });
+
+  it("marks the S4 planning-prompt row as a pre-registered null", () => {
+    const plan = EXPERIMENT_REGISTRY.find((e) => e.id === "planning-prompt");
+    expect(plan?.preregisteredNull).toBe(true);
+    // Only genuine nulls carry the flag — everything else omits it.
+    const flagged = EXPERIMENT_REGISTRY.filter((e) => e.preregisteredNull);
+    expect(flagged.map((e) => e.id)).toEqual(["planning-prompt"]);
+  });
+
+  it("carries E6 as infeasible-as-designed so it is not re-proposed", () => {
+    const e6 = EXPERIMENT_REGISTRY.find(
+      (e) => e.id === "incentive-graded-xp-ladder"
+    );
+    expect(e6?.status).toBe("infeasible-as-designed");
+  });
+
   it("every row carries the columns the rule needs", () => {
     for (const entry of EXPERIMENT_REGISTRY) {
       expect(entry.hypothesis).toBeTruthy();

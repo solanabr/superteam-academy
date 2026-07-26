@@ -18,6 +18,13 @@ CREATE TABLE profiles (
   bio TEXT,
   avatar_url TEXT,
   social_links JSONB DEFAULT '{}',
+  -- Learner-owned UI preferences (LX-A6, #582). First consumer: the session-end
+  -- if-then plan { "nextLesson": { "day": "tue", "time": "19:00" } }. Non-PII,
+  -- not in public_profiles; written self-service via the own-row profiles UPDATE
+  -- RLS policy. No column on profiles is privilege-bearing, so the shape+size
+  -- CHECKs below (chk_profiles_prefs_object / chk_profiles_prefs_size) are the
+  -- sole bound on this self-write. See 20260726160000_add_profiles_prefs.sql.
+  prefs JSONB NOT NULL DEFAULT '{}',
   is_public BOOLEAN DEFAULT true,
   name_rerolls_used INTEGER DEFAULT 0,
   wallet_xp_synced_at TIMESTAMPTZ,
@@ -154,6 +161,13 @@ ALTER TABLE profiles
   ADD CONSTRAINT chk_profiles_goal CHECK (goal IN ('job', 'build', 'explore'));
 ALTER TABLE profiles
   ADD CONSTRAINT chk_profiles_daily_goal CHECK (daily_goal BETWEEN 1 AND 20);
+-- Bound the self-writable prefs JSONB on both shape and size (LX-A6, #582): a
+-- JSON object of at most 2 KB. This is the sole bound on the self-write — no
+-- profiles column is privilege-bearing. See 20260726160000_add_profiles_prefs.sql.
+ALTER TABLE profiles
+  ADD CONSTRAINT chk_profiles_prefs_object CHECK (jsonb_typeof(prefs) = 'object');
+ALTER TABLE profiles
+  ADD CONSTRAINT chk_profiles_prefs_size CHECK (pg_column_size(prefs) <= 2048);
 
 ALTER TABLE user_xp
   ADD CONSTRAINT chk_user_xp_total_xp_non_negative CHECK (total_xp >= 0);
