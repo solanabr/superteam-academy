@@ -30,8 +30,8 @@ vi.mock("server-only", () => ({}));
 // from prod Sanity (public dataset 4e3i2wwc/production). Each projector, fed the
 // committed bundle doc, must deep-equal the captured GROQ shape. Divergences
 // here mean the locked bundle SHA and prod Sanity have drifted (report, do not
-// fudge the fixture) — EXCEPT two documented content-wave deltas, hand-edited
-// into the fixtures because the golden capture predates them:
+// fudge the fixture) — EXCEPT the documented content-wave deltas below, hand-
+// edited into the fixtures because the golden capture predates them:
 //
 //  - `instructor` → `creator` (issue #478): the retired instructor deref no
 //    longer exists. RESOLVED by #399/B3 — every course now carries a real
@@ -41,6 +41,15 @@ vi.mock("server-only", () => ({}));
 //    content: it's the sorted, deduplicated union of the course's lessons'
 //    `skills`. The fixtures carry the DERIVED tags computed from each course's
 //    real lesson `skills`, not the original authored (now-retired) tag list.
+//  - launch-catalog activation (issue #559): the bump to courses-academy
+//    @012cd03d adds course 5 (`course-stablecoin-payments`, 9 lessons / 3
+//    modules) and retargets `achievement-full-stack-solana` from
+//    `path-solana-core` to `path-zero-to-deployed`, and course 4's capstone
+//    `lesson-bfsp-m4-capstone` swaps its held-DeFi "What's Next" pointer for
+//    the Superteam Earn terminus. This content never existed in the pre-flip
+//    Sanity capture, so for these docs the golden = the projected bundle (the
+//    committed bundle is the post-SP2 source of truth); every pre-existing
+//    doc still matches the original prod-Sanity capture unchanged.
 const deps = { lessonsById };
 
 function bundleCourse(id: string): CourseDoc {
