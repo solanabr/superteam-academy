@@ -114,6 +114,11 @@ soteria -analyzeAll .
 
 ### Mainnet First Deploy
 
+> Before creating any course on mainnet, clear the **instructor credibility &
+> track ladder** items in the [Pre-Mainnet Checklist](#pre-mainnet-checklist) —
+> `creator` / `trackId` / `trackLevel` are immutable at creation with no mainnet
+> recreate escape.
+
 ```bash
 # 1. Ensure sufficient SOL (deployment costs ~2-5 SOL depending on program size)
 solana balance --url mainnet
@@ -513,6 +518,8 @@ anchor deploy --provider.cluster devnet --program-keypair wallets/program-keypai
 
 ## Pre-Mainnet Checklist
 
+### Program & deploy
+
 - [ ] All tests passing (unit + integration + fuzz 10+ min)
 - [ ] Security audit completed
 - [ ] Verifiable build (`anchor build --verifiable`)
@@ -522,6 +529,43 @@ anchor deploy --provider.cluster devnet --program-keypair wallets/program-keypai
 - [ ] Frontend Lighthouse: Performance 90+, Accessibility 95+, Best Practices 95+, SEO 90+
 - [ ] AI slop removed from branch
 - [ ] User explicit confirmation received
+
+### Instructor credibility & track ladder (course creation — IRREVERSIBLE at mainnet)
+
+`Course.creator`, `Course.track_id`, and `Course.track_level` are set once at
+`create_course` and have **no on-chain setter** — `update_course` cannot touch
+them. On devnet a wrong value is recoverable only via a full WS-2 recreate
+(new account, re-enroll). **On mainnet there is no recreate escape: every course
+must be created correctly the FIRST time.** All six devnet courses today carry
+`creator` = platform authority (created pre-#399) — do NOT copy that mistake to
+mainnet. Source of truth for all three fields is the course content doc
+(`creatorWallet` / `trackId` / `trackLevel` in `lib/content`), passed straight
+through the admin sync route to `create_course`; there is **no platform-authority
+fallback** — a missing or invalid creator wallet fails the deploy loudly.
+
+**Do this per course, before the first mainnet `create_course`:**
+
+- [ ] **Final instructor wallet confirmed with each instructor** — a wallet they
+      control (not a placeholder, not the platform authority). Devnet courses use
+      mock placeholder wallets; these MUST be replaced before mainnet.
+- [ ] Each course content doc's `creatorWallet` set to that confirmed wallet and
+      it is a valid on-curve address (the sync route rejects invalid/missing).
+- [ ] **Owner decision D-6 settled** — the credential track ladder
+      (`trackId` / `trackLevel` per course) is finalized against the launch spine
+      _before_ mainnet. Recreate-only afterward, one full recreate per course. See
+      the launch-experience master spec §"Owner Decisions" (D-6) and task LX-D6.
+- [ ] `trackId` / `trackLevel` in every course content doc match that finalized
+      ladder (no `undefined`/`0` defaults left where a real rung is intended).
+- [ ] **Credibility display verified against real data** — instructor identity is
+      surfaced ONLY via the `public_profiles` view, resolved from `course.creator`
+      by `resolvePublicProfileByWallet` (`api/content/instructor-wallet`). The
+      retired wallet→Instructor-content-doc path is gone (post-#478). Confirm each
+      confirmed creator wallet is linked to a public academy profile, so course
+      and certificate pages show a real instructor identity rather than the
+      truncated-wallet fallback.
+- [ ] courses-academy contributor docs (CLAUDE.md / CONTRIBUTING) describe the
+      real wallet→instructor flow — no reference to a nonexistent `instructors/`
+      directory (LX-D6 docs-drift fix; that fix lands in the separate content repo).
 
 ## Best Practices Summary
 
