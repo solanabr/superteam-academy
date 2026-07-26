@@ -1125,6 +1125,20 @@ BEGIN
         END IF;
       END LOOP;
 
+    ELSIF v_type = 'review' THEN
+      -- Reviews CLEARED today = the learner's own review_items passed today.
+      -- A pass advances the item's spacing box (record_review_result); a miss
+      -- resets it to box 1 with last_result=false, which is NOT a clear and so
+      -- must not count. Additive branch: it only computes v_current and falls
+      -- through to the generic upsert below, so the xp_granted /
+      -- pending_onchain_actions atomicity invariant is inherited unchanged and
+      -- no other quest type is affected.
+      SELECT COUNT(*)::INTEGER INTO v_current
+      FROM public.review_items
+      WHERE user_id = p_user_id
+        AND last_result = true
+        AND last_reviewed_at::date = CURRENT_DATE;
+
     ELSE
       -- Unknown quest type (e.g. a CMS typo). Skip this ONE quest with a loud
       -- server-log warning rather than RAISE-ing — a single mis-typed quest

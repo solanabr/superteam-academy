@@ -20,7 +20,8 @@
         "lesson_batch",
         "challenge",
         "login_streak",
-        "module"
+        "module",
+        "review"
       ]
     },
     "icon": {

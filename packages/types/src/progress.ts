@@ -43,8 +43,23 @@ export interface Credential {
   metadataUri?: string;
 }
 
+/**
+ * Mirrors packages/content-schema QUEST_TYPES (the SQL get_daily_quest_state
+ * IF/ELSIF chain). Kept as a literal union here so this leaf package stays
+ * dependency-free; the content-schema constants test pins the canonical list.
+ */
+export type QuestType =
+  | "lesson"
+  | "lesson_batch"
+  | "challenge"
+  | "login_streak"
+  | "module"
+  | "review";
+
 export interface DailyQuest {
   id: string;
+  /** Quest kind — drives the per-type deep-link on the quest card. */
+  type: QuestType;
   name: string;
   description: string;
   icon: string;

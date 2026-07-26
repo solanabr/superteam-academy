@@ -4446,6 +4446,19 @@ a.path-step-card:hover .path-step-badge.skip {
 .dq.done {
   opacity: 0.65;
 }
+/* Quest cards that deep-link to a surface (e.g. review → /review). */
+.dq-link {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+.dq-link:hover {
+  border-color: var(--primary);
+}
+.dq-link:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
 .dq-icon {
   width: 28px;
   height: 28px;
