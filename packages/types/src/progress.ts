@@ -8,6 +8,14 @@ export interface Progress {
 }
 
 export interface StreakData {
+  /**
+   * Whether the streak read actually succeeded. `false` is a DISTINCT degraded
+   * state (the DB read errored — e.g. an unapplied migration), NOT a real zero:
+   * the UI must render it as em-dash/hidden, never as "0 day streak". Guards
+   * against the #731 incident where a swallowed PostgREST error made every
+   * learner's streak silently render as 0.
+   */
+  available: boolean;
   currentStreak: number;
   longestStreak: number;
   lastActivityDate: string;

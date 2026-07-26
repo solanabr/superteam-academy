@@ -36,7 +36,7 @@ interface ProfileHeroPanelProps {
    * LX-B13 (#583): this stats strip is the streak's home at launch; it is
    * deliberately absent from the dashboard hero and header surfaces.
    */
-  streak?: { currentStreak: number; longestStreak: number };
+  streak?: { currentStreak: number; longestStreak: number; available: boolean };
 }
 
 export function ProfileHeroPanel({
@@ -173,7 +173,15 @@ export function ProfileHeroPanel({
         </div>
         {streak && (
           <div className="prof-stat">
-            <div className="prof-stat-val">{streak.currentStreak}</div>
+            {/* #731: a failed streak read renders as an em-dash, never a "0"
+                that a learner would read as a lost streak. */}
+            <div className="prof-stat-val">
+              {streak.available ? (
+                streak.currentStreak
+              ) : (
+                <span title={t("streakUnavailable")}>—</span>
+              )}
+            </div>
             <div className="prof-stat-key">{t("dayStreak")}</div>
           </div>
         )}

@@ -42,7 +42,11 @@ export function StreakDisplay({ streak, className }: StreakDisplayProps) {
         </div>
         <div>
           <div className="font-display text-[26px] font-black leading-tight">
-            {t("streakDays", { count: streak.currentStreak })}
+            {/* #731: a failed read shows em-dash, never a misleading "0 day
+                streak". */}
+            {streak.available
+              ? t("streakDays", { count: streak.currentStreak })
+              : t("streakUnavailable")}
           </div>
           <div className="font-body text-[13px] text-text-3">
             {activeToday ? t("active") : t("streakKeepGoing")}

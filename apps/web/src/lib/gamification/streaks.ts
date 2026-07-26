@@ -45,10 +45,11 @@ export function updateStreak(streak: StreakData): StreakData {
       ...streak.streakHistory,
       [today]: (streak.streakHistory[today] ?? 0) + 1,
     },
-    // Display-only helper: freeze state is server-authoritative, so it is passed
-    // through unchanged (this path never mints or consumes a freeze).
+    // Display-only helper: freeze state and availability are server-owned, so
+    // they pass through unchanged (this path never mints/consumes a freeze).
     frozenDays: streak.frozenDays,
     freezesRemaining: streak.freezesRemaining,
+    available: streak.available,
   };
 }
 
