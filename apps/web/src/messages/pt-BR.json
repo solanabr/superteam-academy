@@ -318,7 +318,6 @@
     "category_skills": "Habilidades",
     "category_community": "Comunidade",
     "category_special": "Especial",
-    "xpToNextLevel": "{current} / {needed} XP para o Nível {level}",
     "noEntries": "Nenhum ranking ainda. Complete aulas para ganhar XP e aparecer aqui.",
     "streakKeepGoing": "Aprenda hoje para manter a sequência!",
     "noAchievements": "Complete uma lição para ganhar sua primeira conquista",
@@ -331,7 +330,7 @@
     "onChain": "on-chain",
     "you": "Você",
     "xpRemaining": "<em>{xp} {xpLabel}</em> para {levelLabel} {level}",
-    "xpToNextLevel": "{xp} {xpLabel} para {levelLabel} {level}"
+    "xpTooltip": "{xp} {xpLabel} para {levelLabel} {level}"
   },
   "certificates": {
     "title": "Certificado de Conclusão",

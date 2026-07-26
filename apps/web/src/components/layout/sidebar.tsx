@@ -233,7 +233,7 @@ export function Sidebar() {
               <LevelBadge level={level} size="sm" />
             </div>
             <div className="mb-[7px] font-mono text-[10px] tabular-nums text-[var(--text-3)]">
-              {tGam("xpToNextLevel", {
+              {tGam("xpTooltip", {
                 xp: xpRemaining.toLocaleString(),
                 xpLabel: tGam("xp"),
                 levelLabel: tGam("level"),

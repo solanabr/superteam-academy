@@ -292,7 +292,7 @@ export function Header() {
                   "group relative flex items-center gap-[8px] rounded-full border border-[var(--border)] bg-[var(--card)] py-[4px] pl-[4px] pr-[12px] transition-all duration-500",
                   glowing && "shadow-glow-xp"
                 )}
-                title={tGam("xpToNextLevel", {
+                title={tGam("xpTooltip", {
                   xp: xpRemaining.toLocaleString(),
                   xpLabel: tGam("xp"),
                   levelLabel: tGam("level"),
