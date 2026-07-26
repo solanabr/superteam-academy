@@ -1,4 +1,5 @@
 import type {
+  CourseLessonOrder,
   CourseSummary,
   DeployedAchievement,
   LessonSummary,
@@ -37,6 +38,16 @@ export async function getCoursesByIds(ids: string[]): Promise<CourseSummary[]> {
   if (ids.length === 0) return [];
   const data = await getJson<{ courses: CourseSummary[] }>(
     `/api/content/courses?ids=${idsParam(ids)}`
+  );
+  return data.courses;
+}
+
+export async function getCourseLessonOrders(
+  ids: string[]
+): Promise<CourseLessonOrder[]> {
+  if (ids.length === 0) return [];
+  const data = await getJson<{ courses: CourseLessonOrder[] }>(
+    `/api/content/course-lessons?ids=${idsParam(ids)}`
   );
   return data.courses;
 }

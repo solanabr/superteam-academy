@@ -18,6 +18,7 @@ import { CurriculumAccordion } from "@/components/course/curriculum-accordion";
 import { ProgressBar } from "@/components/course/progress-bar";
 import { InstructorCard } from "@/components/course/instructor-card";
 import { createClient } from "@/lib/supabase/client";
+import { findNextIncompleteLesson } from "@/lib/courses/continue-learning";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { useOnChainEnroll } from "@/hooks/use-on-chain-enroll";
@@ -140,6 +141,16 @@ export function CourseDetailClient({
   const completedCount = completedLessons.length;
   const isComplete = completedCount === totalLessons && totalLessons > 0;
 
+  // Next incomplete lesson in module→lesson order (LX-B2 — this used to be
+  // hardcoded to the first lesson regardless of progress). Fully complete
+  // courses fall back to the first lesson for review.
+  const orderedLessons = accordionModules.flatMap((m) => m.lessons);
+  const nextIncompleteLesson = findNextIncompleteLesson(
+    orderedLessons,
+    new Set(completedLessons)
+  );
+  const ctaLessonSlug = (nextIncompleteLesson ?? orderedLessons[0])?.slug ?? "";
+
   return (
     <div className="space-y-6">
       {/* Back to catalog */}
@@ -260,7 +271,7 @@ export function CourseDetailClient({
                 >
                   {isEnrolled ? (
                     <a
-                      href={`/${locale}/courses/${course.slug}/lessons/${modules[0]?.lessons?.[0]?.slug ?? ""}`}
+                      href={`/${locale}/courses/${course.slug}/lessons/${ctaLessonSlug}`}
                     >
                       {t("continueCourse")}
                     </a>

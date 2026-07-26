@@ -6,6 +6,7 @@ vi.mock("server-only", () => ({}));
 
 const fns = vi.hoisted(() => ({
   getCoursesByIds: vi.fn(),
+  getCourseLessonOrders: vi.fn(),
   getLessonsByIds: vi.fn(),
   getRecommendedCourses: vi.fn(),
   getAllCourseTags: vi.fn(),
@@ -16,6 +17,7 @@ const fns = vi.hoisted(() => ({
 vi.mock("@/lib/content/queries", () => fns);
 
 import { GET as getCourses } from "../courses/route";
+import { GET as getCourseLessons } from "../course-lessons/route";
 import { GET as getLessons } from "../lessons-summary/route";
 import { GET as getRecommended } from "../recommended/route";
 import { GET as getTags } from "../tags/route";
@@ -73,6 +75,60 @@ describe("GET /api/content/courses", () => {
     const res = await getCourses(req("/api/content/courses?ids=course-a"));
     expect(res.status).toBe(500);
     expect(JSON.stringify(await res.json())).not.toContain("secret detail");
+  });
+});
+
+describe("GET /api/content/course-lessons", () => {
+  it("passes validated ids through and wraps the result", async () => {
+    fns.getCourseLessonOrders.mockResolvedValue([
+      {
+        _id: "course-a",
+        slug: "a",
+        lessons: [{ _id: "lesson-1", title: "One", slug: "one" }],
+      },
+    ]);
+    const res = await getCourseLessons(
+      req("/api/content/course-lessons?ids=course-a,course-b")
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      courses: [
+        {
+          _id: "course-a",
+          slug: "a",
+          lessons: [{ _id: "lesson-1", title: "One", slug: "one" }],
+        },
+      ],
+    });
+    expect(fns.getCourseLessonOrders).toHaveBeenCalledWith([
+      "course-a",
+      "course-b",
+    ]);
+  });
+
+  it("400s on missing or malformed ids", async () => {
+    expect(
+      (await getCourseLessons(req("/api/content/course-lessons"))).status
+    ).toBe(400);
+    expect(
+      (
+        await getCourseLessons(
+          req(
+            `/api/content/course-lessons?ids=${encodeURIComponent("bad id!")}`
+          )
+        )
+      ).status
+    ).toBe(400);
+    expect(fns.getCourseLessonOrders).not.toHaveBeenCalled();
+  });
+
+  it("500s with a generic message on failure", async () => {
+    fns.getCourseLessonOrders.mockRejectedValue(new Error("boom secret"));
+    const res = await getCourseLessons(
+      req("/api/content/course-lessons?ids=course-a")
+    );
+    expect(res.status).toBe(500);
+    expect(JSON.stringify(await res.json())).not.toContain("secret");
   });
 });
 

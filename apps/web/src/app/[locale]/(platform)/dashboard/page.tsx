@@ -39,6 +39,7 @@ import { dispatchToast } from "@/components/ui/toast-container";
 import { getProgressService } from "@/lib/services";
 import { calculateLevel } from "@/lib/gamification/xp";
 import {
+  getCourseLessonOrders,
   getCoursesByIds,
   getLessonsByIds,
   getRecommendedCourses,
@@ -48,6 +49,14 @@ import type {
   RecommendedCourse,
   DeployedAchievement,
 } from "@/lib/content/queries";
+import {
+  deriveContinueTarget,
+  type ContinueTarget,
+} from "@/lib/courses/continue-learning";
+import {
+  ContinueCard,
+  type ContinueCardTarget,
+} from "@/components/dashboard/continue-card";
 
 const SOLANA_CLUSTER = process.env.NEXT_PUBLIC_SOLANA_NETWORK ?? "devnet";
 function explorerTxUrl(sig: string): string {
@@ -87,6 +96,8 @@ interface DashboardData {
   quests: DailyQuest[];
   questsResetTime: string;
   currentCourses: CurrentCourse[];
+  /** Next-incomplete-lesson derivation for the hero Continue card (LX-B2). */
+  continueTarget: ContinueTarget | null;
   recommendedCourses: RecommendedCourse[];
   recentActivity: {
     type:
@@ -126,6 +137,7 @@ function useDashboardData(
     quests: [],
     questsResetTime: "",
     currentCourses: [],
+    continueTarget: null,
     recommendedCourses: [],
     recentActivity: [],
     username: "Builder",
@@ -221,7 +233,7 @@ function useDashboardData(
             .eq("user_id", authUserId),
           supabase
             .from("user_progress")
-            .select("course_id, lesson_id, completed")
+            .select("course_id, lesson_id, completed, completed_at")
             .eq("user_id", authUserId)
             .eq("completed", true),
           supabase
@@ -314,13 +326,16 @@ function useDashboardData(
         const excludeFromRecommended = [
           ...new Set([...allEnrolledIds, ...mintedCourseIds]),
         ];
-        const [courseSummaries, recommended, achievementCatalog] =
+        const [courseSummaries, recommended, achievementCatalog, lessonOrders] =
           await Promise.all([
             allCourseIdsToFetch.length > 0
               ? getCoursesByIds(allCourseIdsToFetch)
               : Promise.resolve([]),
             getRecommendedCourses(excludeFromRecommended),
             getAllAchievements(),
+            allEnrolledIds.length > 0
+              ? getCourseLessonOrders(allEnrolledIds)
+              : Promise.resolve([]),
           ]);
         // Build a lookup map: course _id -> Sanity data
         const courseMap = new Map(courseSummaries.map((c) => [c._id, c]));
@@ -344,6 +359,37 @@ function useDashboardData(
               thumbnail: courseInfo?.thumbnail ?? null,
             };
           });
+
+        // Derive the hero Continue card target: next incomplete lesson in the
+        // most recently active enrolled course (LX-B2). Minted (certified)
+        // courses still count as enrolled-and-finished for the all-complete
+        // state but are never a continue candidate.
+        const lessonOrderById = new Map(
+          lessonOrders.map((o) => [o._id, o.lessons])
+        );
+        const enrolledAtById = new Map(
+          (enrollments ?? []).map((e) => [e.course_id, e.enrolled_at])
+        );
+        const continueTarget = deriveContinueTarget(
+          allEnrolledIds
+            .filter((id) => courseMap.has(id))
+            .map((id) => {
+              const info = courseMap.get(id)!;
+              return {
+                courseId: id,
+                title: info.title,
+                slug: info.slug,
+                enrolledAt: enrolledAtById.get(id) ?? null,
+                certified: mintedCourseIds.has(id),
+                lessons: lessonOrderById.get(id) ?? [],
+              };
+            }),
+          (progressRows ?? []).map((row) => ({
+            courseId: row.course_id,
+            lessonId: row.lesson_id,
+            completedAt: row.completed_at,
+          }))
+        );
 
         // Build multi-source activity feed. Each source uses a different timestamp
         // column name; normalise all to `time` before merging and sorting.
@@ -549,6 +595,7 @@ function useDashboardData(
           quests: questsResult.quests ?? [],
           questsResetTime: questsResult.nextResetTime ?? "",
           currentCourses,
+          continueTarget,
           recommendedCourses: recommended,
           recentActivity,
           username: profile?.username ?? "Builder",
@@ -730,6 +777,30 @@ export default function DashboardPage() {
     [publicKey, sendTransaction, connection, setWalletModalVisible, t, tErrors]
   );
 
+  // Map the derived continue target onto the hero card's shape. All-complete
+  // learners are pointed at the next (recommended) course, or the catalog when
+  // nothing is left to recommend. No enrollments → no card (the Current
+  // Courses empty state keeps its catalog CTA).
+  const continueCardTarget: ContinueCardTarget | null = (() => {
+    const target = data.continueTarget;
+    if (!target) return null;
+    if (target.kind === "lesson") {
+      return {
+        kind: "lesson",
+        courseTitle: target.courseTitle,
+        courseSlug: target.courseSlug,
+        lessonTitle: target.lesson.title,
+        lessonSlug: target.lesson.slug,
+        completedLessons: target.completedLessons,
+        totalLessons: target.totalLessons,
+      };
+    }
+    const next = data.recommendedCourses[0];
+    return next
+      ? { kind: "nextCourse", courseTitle: next.title, courseSlug: next.slug }
+      : { kind: "catalog" };
+  })();
+
   const formatTimeAgo = (isoDate: string): string => {
     const diffMs = Date.now() - new Date(isoDate).getTime();
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
@@ -780,6 +851,11 @@ export default function DashboardPage() {
       <h1 className="font-display text-2xl font-black tracking-[-0.5px] sm:text-3xl">
         {t("title")}
       </h1>
+
+      {/* Hero Continue card — deep link to the next incomplete lesson (LX-B2) */}
+      {continueCardTarget && (
+        <ContinueCard target={continueCardTarget} locale={locale} />
+      )}
 
       {/* V9 Dashboard Identity Panel — Level+XP | Medals | Activity Grid */}
       <DashboardIdentityPanel
