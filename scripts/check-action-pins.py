@@ -45,21 +45,73 @@ def is_pinned(value):
     return bool(SHA_RE.match(ref))
 
 
-def iter_uses(node):
-    """Yield (uses_value, line) for every mapping key `uses` with a scalar value,
-    at any depth, in both block and flow style."""
-    if isinstance(node, yaml.MappingNode):
-        for key_node, val_node in node.value:
-            if (
-                isinstance(key_node, yaml.ScalarNode)
-                and key_node.value == "uses"
-                and isinstance(val_node, yaml.ScalarNode)
-            ):
-                yield val_node.value, val_node.start_mark.line + 1
-            yield from iter_uses(val_node)
-    elif isinstance(node, yaml.SequenceNode):
-        for item in node.value:
-            yield from iter_uses(item)
+def _pairs(node):
+    """Key/value node pairs of a MappingNode (empty for anything else). Aliases
+    are already resolved to the referenced node by yaml.compose, so anchored /
+    aliased steps and jobs are walked like inline ones."""
+    return node.value if isinstance(node, yaml.MappingNode) else []
+
+
+def _first(node, name):
+    """First value node for scalar key `name` in a mapping, else None."""
+    for key_node, val_node in _pairs(node):
+        if isinstance(key_node, yaml.ScalarNode) and key_node.value == name:
+            return val_node
+    return None
+
+
+def _uses_of(mapping):
+    """Value nodes of the effective `uses` key(s) of one step/job mapping.
+    Explicit keys win (all of them, so a duplicate-key `uses` can't smuggle an
+    unpinned second value); only if there is none do we follow YAML merge keys
+    (`<<`), so a `uses` injected via an anchor/merge is still seen."""
+    explicit = [
+        v for k, v in _pairs(mapping)
+        if isinstance(k, yaml.ScalarNode) and k.value == "uses"
+    ]
+    if explicit:
+        return explicit
+    merged = []
+    for k, v in _pairs(mapping):
+        if isinstance(k, yaml.ScalarNode) and k.value == "<<":
+            sources = v.value if isinstance(v, yaml.SequenceNode) else [v]
+            for src in sources:
+                merged.extend(_uses_of(src))
+    return merged
+
+
+def _emit(mapping, out):
+    for v in _uses_of(mapping):
+        if isinstance(v, yaml.ScalarNode):
+            out.append((v.value, v.start_mark.line + 1))
+
+
+def iter_uses(doc):
+    """Yield (uses_value, line) for pinnable GitHub Action refs only, walking the
+    Actions schema rather than every `uses` key:
+
+      - workflow  jobs.<id>.steps[*].uses   (step action)
+      - workflow  jobs.<id>.uses            (reusable-workflow call — pinnable)
+      - action    runs.steps[*].uses        (composite action step)
+
+    A `uses` key elsewhere is NOT an action ref — e.g. an env var or a `with:`
+    input named `uses` — and is deliberately ignored so it can't wrongly fail the
+    guard (#723 review). This also drops the old walk's blind descent, which
+    flagged such keys at any depth."""
+    out = []
+    for _job_id, job in _pairs(_first(doc, "jobs")):
+        if not isinstance(job, yaml.MappingNode):
+            continue
+        _emit(job, out)  # reusable-workflow call at job level
+        steps = _first(job, "steps")
+        if isinstance(steps, yaml.SequenceNode):
+            for step in steps.value:
+                _emit(step, out)
+    runs_steps = _first(_first(doc, "runs"), "steps")
+    if isinstance(runs_steps, yaml.SequenceNode):
+        for step in runs_steps.value:
+            _emit(step, out)
+    return out
 
 
 def scan_file(path, rel):
