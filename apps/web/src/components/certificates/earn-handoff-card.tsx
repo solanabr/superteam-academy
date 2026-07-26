@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import { useTranslations } from "next-intl";
 import { ArrowUpRight, Coins } from "@phosphor-icons/react";
 import { trackEvent } from "@/lib/analytics";
@@ -33,6 +34,9 @@ interface EarnHandoffCardProps {
 
 export function EarnHandoffCard({ source, courseId }: EarnHandoffCardProps) {
   const t = useTranslations("earnHandoff");
+  // Unique per instance — the card can render multiple times on one page
+  // (e.g. CourseCompletionMint is mapped per enrolled course on the dashboard)
+  const titleId = useId();
 
   function handleClick(category: EarnCategory): void {
     trackEvent("earn_handoff_click", {
@@ -44,7 +48,7 @@ export function EarnHandoffCard({ source, courseId }: EarnHandoffCardProps) {
 
   return (
     <section
-      aria-labelledby="earn-handoff-title"
+      aria-labelledby={titleId}
       className="rounded-xl bg-cert-gradient p-[1.5px] shadow-[var(--shadow-card)]"
     >
       <div className="rounded-[11px] bg-card px-5 py-4">
@@ -55,10 +59,7 @@ export function EarnHandoffCard({ source, courseId }: EarnHandoffCardProps) {
             className="shrink-0 text-secondary"
             aria-hidden="true"
           />
-          <h2
-            id="earn-handoff-title"
-            className="font-display text-sm font-bold text-text"
-          >
+          <h2 id={titleId} className="font-display text-sm font-bold text-text">
             {t("title")}
           </h2>
         </div>

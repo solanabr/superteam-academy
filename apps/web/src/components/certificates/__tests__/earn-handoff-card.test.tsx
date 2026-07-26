@@ -48,6 +48,28 @@ describe("EarnHandoffCard — curated category links", () => {
     ).toBeInTheDocument();
     expect(screen.getAllByText("(opens in a new tab)")).toHaveLength(3);
   });
+
+  it("keeps heading ids unique when rendered multiple times on one page", () => {
+    // CourseCompletionMint renders once per enrolled course on the dashboard
+    renderWithIntl(
+      <>
+        <EarnHandoffCard source="mint_success" courseId="course-a" />
+        <EarnHandoffCard source="mint_success" courseId="course-b" />
+      </>
+    );
+    const headings = screen.getAllByRole("heading", {
+      name: "Turn your credential into paid work",
+    });
+    expect(headings).toHaveLength(2);
+    const ids = headings.map((h) => h.id);
+    expect(ids[0]).toBeTruthy();
+    expect(new Set(ids).size).toBe(2);
+    // Each region must reference its own heading
+    for (const region of screen.getAllByRole("region")) {
+      const labelledBy = region.getAttribute("aria-labelledby");
+      expect(region.querySelector(`[id="${labelledBy}"]`)).not.toBeNull();
+    }
+  });
 });
 
 describe("EarnHandoffCard — copy guardrails", () => {
