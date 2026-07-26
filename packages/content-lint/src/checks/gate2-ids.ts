@@ -77,19 +77,32 @@ export function gate2Check(model: RepoModel, ctx: LintContext): Diagnostic[] {
   const resolvedRef = ctx.baseRef ?? resolveLocalBase(ctx.root);
   const base = resolvedRef ? mergeBase(ctx.root, resolvedRef) : null;
 
-  // No base ref at all: id immutability CANNOT be verified. Previously this branch
-  // was `if (ctx.baseRef)` with no else, so the check vanished with NO diagnostic —
-  // a check that cannot run must not report a failure, but must not silently
-  // disappear either (#614/#694, and the gate-3 half of #737).
   if (!base) {
-    out.push(
-      diag(
-        "gate-2",
-        "warning",
-        "",
-        "id immutability not checked — no base ref (set GITHUB_BASE_REF, or fetch origin/main with full history). Id invariants are verified in CI."
-      )
-    );
+    if (ctx.baseRef) {
+      // A base ref was EXPLICITLY requested (CI sets LINT_BASE_REF) but does not
+      // resolve — never fetched, or the ref name is wrong. Fail CLOSED: warning-and-
+      // skip here would silently disable the id-immutability gate on a green run.
+      out.push(
+        diag(
+          "gate-2",
+          "error",
+          "",
+          `CI misconfiguration: told to diff id immutability against "${ctx.baseRef}" but it is not resolvable — fetch it (fetch-depth: 0) or fix LINT_BASE_REF. Id immutability was NOT verified.`
+        )
+      );
+    } else {
+      // No base ref at all (bare local, no origin remote): there is genuinely
+      // nothing to diff against. Say the check was skipped rather than fabricating
+      // a verdict — but never vanish silently (#614/#694).
+      out.push(
+        diag(
+          "gate-2",
+          "warning",
+          "",
+          "id immutability not checked — no base ref (set GITHUB_BASE_REF, or fetch origin/main with full history). Id invariants are verified in CI."
+        )
+      );
+    }
     return out;
   }
 

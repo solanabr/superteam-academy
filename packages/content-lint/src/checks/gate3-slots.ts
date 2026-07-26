@@ -33,17 +33,34 @@ function baseLock(
   return parsed.success ? parsed.data : null;
 }
 
-/** Emitted once when no base ref is resolvable — the check is skipped, not failed. */
-function missingLockDiag(course: CourseEntry): Diagnostic {
+/**
+ * Diagnostic for a course whose lock is missing or unparseable. Uses the base ref
+ * (when one is resolved) to tell a brand-new course — safe to generate a fresh
+ * lock — apart from an accidentally-deleted DEPLOYED lock, where the only safe
+ * remedy is to restore the base copy, never regenerate (that renumbers live slots).
+ */
+function missingLockDiag(
+  course: CourseEntry,
+  ctx: LintContext,
+  baseRef: string | null
+): Diagnostic {
   const file = course.slotsPath ?? `${course.dir}/slots.lock.json`;
-  // A brand-new course with no lock file yet is the ONLY safe place to generate a
-  // fresh 0-N assignment. A present-but-unparseable lock is different: the course
-  // may already be deployed, so we flag it for a human instead of inviting a
-  // from-scratch regeneration that would renumber live slots.
-  const message =
-    course.slotsPath === null
-      ? "missing slots.lock.json — a new course needs one generated from its lesson order"
-      : "slots.lock.json is present but does not parse against the schema — fix it by hand; do NOT regenerate a deployed course's lock from scratch (that renumbers live slots)";
+  if (course.slotsPath !== null) {
+    // File is present but does not parse — the course may already be deployed.
+    return diag(
+      "gate-3",
+      "error",
+      file,
+      "slots.lock.json is present but does not parse against the schema — fix it by hand; do NOT regenerate a deployed course's lock from scratch (that renumbers live slots)"
+    );
+  }
+  // File is absent from the working tree. If the base ref HAS a lock here, it was a
+  // deployed course whose lock was deleted — restore it, don't generate a new one.
+  const baseHadLock =
+    baseRef !== null && gitShow(ctx.root, baseRef, file) !== null;
+  const message = baseHadLock
+    ? `slots.lock.json was deleted for a deployed course — restore it from the base ref (\`git show <base>:${file}\`); do NOT regenerate it (that renumbers live slots)`
+    : "missing slots.lock.json — a new course needs one generated from its lesson order";
   return diag("gate-3", "error", file, message);
 }
 
@@ -53,18 +70,34 @@ export function gate3Check(model: RepoModel, ctx: LintContext): Diagnostic[] {
   // CI sets ctx.baseRef; a bare local run does not. Fall back to a remote-tracking
   // default (origin/HEAD → origin/main) so a correct lock validates locally too,
   // instead of being regenerated from scratch and reported as a false mismatch (#737).
-  const resolvedRef = ctx.baseRef ?? resolveLocalBase(ctx.root);
+  const explicitBase = ctx.baseRef;
+  const resolvedRef = explicitBase ?? resolveLocalBase(ctx.root);
 
   // Resolve the fork point ONCE (same baseRef for every course). A degrade to the
   // base tip (e.g. a shallow --depth=1 fetch) makes the slots-lock immutability
   // comparison inexact, so surface it — never silently — exactly once.
   const base = resolvedRef ? mergeBase(ctx.root, resolvedRef) : null;
 
-  // No base ref at all (no CI ref, no origin remote): slot immutability CANNOT be
-  // verified — the base state to diff against is unknown. Never regenerate a fresh
-  // 0-N lock and assert a mismatch against a correct one (#737); say the check was
-  // skipped and only catch a genuinely missing lock, which needs no base ref.
   if (!base) {
+    if (explicitBase) {
+      // A base ref was EXPLICITLY requested (CI sets LINT_BASE_REF) but it does not
+      // resolve — the base was not fetched, or the ref name is wrong. This is a hard
+      // failure, NOT a skip: silently passing here would fail OPEN and disable the
+      // slot-immutability gate. Fail CLOSED so a misconfigured workflow is caught.
+      out.push(
+        diag(
+          "gate-3",
+          "error",
+          "",
+          `CI misconfiguration: told to diff slot immutability against "${explicitBase}" but it is not resolvable — fetch it (fetch-depth: 0) or fix LINT_BASE_REF. Slot immutability was NOT verified.`
+        )
+      );
+      return out;
+    }
+    // Bare local run with no base ref at all (no CI ref, no origin remote): slot
+    // immutability CANNOT be verified — the base state is unknown. Never regenerate a
+    // fresh 0-N lock and assert a mismatch against a correct one (#737); say the check
+    // was skipped and only catch a genuinely missing lock, which needs no base ref.
     out.push(
       diag(
         "gate-3",
@@ -74,7 +107,7 @@ export function gate3Check(model: RepoModel, ctx: LintContext): Diagnostic[] {
       )
     );
     for (const course of model.courses) {
-      if (!course.slotsLock) out.push(missingLockDiag(course));
+      if (!course.slotsLock) out.push(missingLockDiag(course, ctx, null));
     }
     return out;
   }
@@ -94,7 +127,7 @@ export function gate3Check(model: RepoModel, ctx: LintContext): Diagnostic[] {
   for (const course of model.courses) {
     const file = course.slotsPath ?? `${course.dir}/slots.lock.json`;
     if (!course.slotsLock) {
-      out.push(missingLockDiag(course));
+      out.push(missingLockDiag(course, ctx, baseRef));
       continue;
     }
     const displayOrder = course.course.modules.flatMap((m) => m.lessons);
