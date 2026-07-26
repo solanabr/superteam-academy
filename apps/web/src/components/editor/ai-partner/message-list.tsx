@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { User, Sparkle, Lightbulb } from "@phosphor-icons/react";
-import { DiffCard } from "./diff-card";
 import { cn } from "@/lib/utils";
 import type { PartnerMessage } from "@/lib/ai/use-ai-partner";
+import { DiffCard } from "./diff-card";
 
 interface MessageListProps {
   messages: PartnerMessage[];
@@ -167,6 +167,31 @@ export function MessageList({
                 stale={index !== lastProposeIndex}
                 className="w-full"
               />
+            </MessageBubble>
+          );
+        }
+
+        // Post-pass idiomatic review (LX-C9) — a summary plus a bounded list of
+        // idiomatic notes. An empty notes list is a valid, affirming outcome
+        // ("already idiomatic"), so render the summary alone in that case.
+        if (response.type === "review") {
+          return (
+            <MessageBubble
+              key={index}
+              role="ai"
+              icon={<Sparkle size={14} weight="duotone" aria-hidden="true" />}
+              label={t("messages.ai")}
+            >
+              <div className="space-y-2 rounded-lg rounded-tl-sm bg-card px-3 py-2 text-sm text-text shadow-[var(--shadow-card)]">
+                <p>{response.summary}</p>
+                {response.notes.length > 0 && (
+                  <ul className="list-disc space-y-1 pl-4 text-text-2">
+                    {response.notes.map((note, noteIndex) => (
+                      <li key={noteIndex}>{note}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </MessageBubble>
           );
         }

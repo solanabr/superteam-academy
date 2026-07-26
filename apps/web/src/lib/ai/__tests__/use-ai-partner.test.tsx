@@ -229,6 +229,30 @@ describe("useAiPartner", () => {
     });
   });
 
+  it("review() POSTs action:review and pushes the structured review response", async () => {
+    const response: PartnerResponse = {
+      type: "review",
+      summary: "Passes and reads clearly.",
+      notes: ["Use iter().sum()."],
+    };
+    vi.mocked(global.fetch).mockResolvedValue(jsonResponse(response));
+
+    const { result } = await renderPartner();
+
+    await act(async () => {
+      await result.current.review();
+    });
+
+    const [url, init] = vi.mocked(global.fetch).mock.calls[0]!;
+    expect(url).toBe("/api/ai/partner");
+    const sentBody = JSON.parse((init as RequestInit).body as string);
+    expect(sentBody.action).toBe("review");
+    // review carries no local user turn — only the AI reply lands in the chat.
+    expect(result.current.paidUsed).toBe(1);
+    expect(result.current.messages).toHaveLength(1);
+    expect(result.current.messages[0]).toMatchObject({ role: "ai", response });
+  });
+
   it("sets loading true during a paid fetch and false after it resolves", async () => {
     let resolveFetch!: (value: Response) => void;
     vi.mocked(global.fetch).mockReturnValue(

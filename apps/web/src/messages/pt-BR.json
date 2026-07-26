@@ -879,6 +879,8 @@
       "propose": "Propor correção",
       "askPlaceholder": "Faça uma pergunta sobre este desafio...",
       "askSend": "Enviar",
+      "review": "Revisar minha solução",
+      "reviewHint": "Receba comentários idiomáticos sobre a solução que você já concluiu — isto não altera seu XP.",
       "budgetExhausted": "Você já usou todas as {max} assistências pagas deste desafio."
     },
     "diff": {

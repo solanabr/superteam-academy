@@ -16,6 +16,7 @@ import {
   maxTokensFor,
   responseSchemaFor,
   MAX_PROPOSE_EDITS,
+  MAX_REVIEW_NOTES,
 } from "@/lib/ai/partner-prompt";
 import type {
   PartnerAction,
@@ -24,6 +25,7 @@ import type {
   PartnerMessage,
   HintResponse,
   AnswerResponse,
+  ReviewResponse,
   CodeEdit,
 } from "@/lib/ai/partner-types";
 import { serverEnv } from "@/lib/env.server";
@@ -49,7 +51,12 @@ const MAX_TEST_SUMMARY_CHARS = 2_000;
 const GEMINI_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent";
 
-const VALID_ACTIONS: readonly PartnerAction[] = ["hint", "propose", "ask"];
+const VALID_ACTIONS: readonly PartnerAction[] = [
+  "hint",
+  "propose",
+  "ask",
+  "review",
+];
 
 function isPartnerAction(value: string): value is PartnerAction {
   return (VALID_ACTIONS as readonly string[]).includes(value);
@@ -95,6 +102,7 @@ function validateEdits(value: unknown): CodeEdit[] | null {
 type ValidatedResponse =
   | HintResponse
   | AnswerResponse
+  | ReviewResponse
   | ValidatedProposeResponse;
 
 /**
@@ -113,6 +121,23 @@ function validatePartnerResponse(parsed: unknown): ValidatedResponse | null {
   if (obj.type === "hint" || obj.type === "answer") {
     if (typeof obj.text !== "string" || obj.text.length === 0) return null;
     return { type: obj.type, text: obj.text };
+  }
+
+  if (obj.type === "review") {
+    // summary must be present; notes may be empty (already idiomatic) but every
+    // entry must be a non-empty string, and the list is re-bounded here even
+    // though the schema caps it — a malformed/oversized payload 502s rather than
+    // forwarding unbounded text. Truncate defensively to the same ceiling.
+    if (typeof obj.summary !== "string" || obj.summary.length === 0)
+      return null;
+    if (!Array.isArray(obj.notes)) return null;
+    if (!obj.notes.every((n) => typeof n === "string" && n.length > 0))
+      return null;
+    return {
+      type: "review",
+      summary: obj.summary,
+      notes: (obj.notes as string[]).slice(0, MAX_REVIEW_NOTES),
+    };
   }
 
   if (obj.type === "propose") {
