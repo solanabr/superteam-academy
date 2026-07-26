@@ -1,7 +1,7 @@
 id: lesson-t-deploy
 slug: deploy
 title: Deploy
-skills: [deployment]
+skills: [deployment, program-interaction]
 blocks:
   - key: build
     type: code

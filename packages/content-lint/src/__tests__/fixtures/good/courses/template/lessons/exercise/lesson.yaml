@@ -1,7 +1,7 @@
 id: lesson-t-exercise
 slug: exercise
 title: Exercise
-skills: [fundamentals]
+skills: [fundamentals, deployment]
 blocks:
   - key: ts
     type: code

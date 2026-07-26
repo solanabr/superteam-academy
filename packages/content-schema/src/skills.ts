@@ -17,6 +17,16 @@ export const SkillDef = z.object({
   slug: SkillTag,
   label: z.string().min(1).optional(),
   description: z.string().optional(),
+  /**
+   * Marks a slug as single-use *by design* (catalog spec §5 policy 4). A tag so
+   * marked is exempt from content-lint gate 19b's ≥2-lesson reuse bar: the
+   * author is declaring "this tag will only ever back one lesson" (e.g.
+   * `brazil-compliance`, `earn-submission`) rather than the linter guessing.
+   * Optional and defaulting to absent, so every existing entry keeps its
+   * current (non-exempt) behaviour. Purely a review-bar signal — it has no
+   * bearing on registry resolution (19a) or facet-only classification (19d).
+   */
+  reviewExempt: z.boolean().optional(),
 });
 export type SkillDefT = z.infer<typeof SkillDef>;
 
@@ -38,6 +48,44 @@ export const SkillsTaxonomy = z
     message: "skill slugs must be unique",
   });
 export type SkillsTaxonomyT = z.infer<typeof SkillsTaxonomy>;
+
+/**
+ * Skill tags that are catalog facets ONLY — never review keys (unified launch
+ * spec 2026-07-25 §3 item 7, restored from CAT-24). Tags of this grain
+ * ("typescript", "react", …) retrieve nothing useful for spaced review: a
+ * review set keyed on them would span half the catalog. They stay legal on
+ * lessons (the catalog and skill radar still facet on them); the review-set
+ * builder (Wave 3) must exclude them via {@link isReviewEligibleSkill}, and
+ * content-lint gate 19d surfaces them as facet-only notices.
+ */
+export const NON_REVIEW_ELIGIBLE_SKILLS = [
+  "typescript",
+  "react",
+  "program-basics",
+] as const;
+export type NonReviewEligibleSkill =
+  (typeof NON_REVIEW_ELIGIBLE_SKILLS)[number];
+
+/** True iff `slug` may key a review set (i.e. it is not a facet-only tag). */
+export function isReviewEligibleSkill(slug: string): boolean {
+  return !(NON_REVIEW_ELIGIBLE_SKILLS as readonly string[]).includes(slug);
+}
+
+/**
+ * The interleaving pairs Wave 3's review sets must be able to express
+ * (unified launch spec 2026-07-25 §3 item 7). Both members of each pair must
+ * exist in `skills.yaml` AND be applied to ≥2 lessons each; content-lint
+ * gate 19c asserts this against the content tree. Shared from here so the
+ * review-set builder consumes the same pairs the linter enforces.
+ */
+export const REVIEW_INTERLEAVING_PAIRS: readonly (readonly [string, string])[] =
+  [
+    ["pdas", "account-model"],
+    ["cpi", "signers"],
+    ["anchor", "program-security"],
+    ["checked-arithmetic", "rust-result"],
+    ["compute-budget", "transaction-fees"],
+  ] as const;
 
 /**
  * The C3 allowlist guarantee: every lesson `skills` slug must be a member of
