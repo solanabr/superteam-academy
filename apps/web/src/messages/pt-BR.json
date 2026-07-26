@@ -488,6 +488,7 @@
     "dismiss": "Dispensar",
     "close": "Fechar",
     "codeEditor": "Editor de código",
+    "editorKeyboardHint": "Pressione {chord} para alternar se Tab indenta o código ou move o foco para fora do editor. Pressione F8 ou Shift+F8 para percorrer os erros.",
     "clearOutput": "Limpar saída",
     "resizeOutputPanel": "Redimensionar painel de saída",
     "resizeTaskPanel": "Redimensionar painel de tarefa",
