@@ -52,21 +52,31 @@ function sequenceEqual(a: readonly string[], b: readonly string[]): boolean {
 
 /**
  * Group every distractor with the solution line it mimics (`pairedWith`, F13),
- * so both members of a pair carry the SAME group number. Symmetric on purpose:
- * the marker says "one of this pair belongs, one doesn't" WITHOUT revealing
- * which is the trap — that discrimination is the exercise. Presentational only;
- * grading (sequence equality) is untouched. Lines with no pairing are absent
- * from the map and render unmarked.
+ * so every member of a group carries the SAME number. Grouped by TARGET id, not
+ * per distractor: a real line may have more than one look-alike (two traps for
+ * one line is legitimate authoring — the schema allows repeated `pairedWith`),
+ * and all of them plus the target must share one marker. Keying on the distractor
+ * would mint a fresh group per distractor and overwrite the target, orphaning
+ * every look-alike but the last. Symmetric on purpose: the marker says "one of
+ * this group belongs, the rest don't" WITHOUT revealing which is real — that
+ * discrimination is the exercise. Presentational only; grading (sequence
+ * equality) is untouched. Lines with no pairing are absent and render unmarked.
  */
 function pairGroups(lines: ParsonsLineData[]): Map<string, number> {
   const byId = new Map(lines.map((l) => [l.id, l]));
   const groups = new Map<string, number>();
+  const groupOfTarget = new Map<string, number>();
   let next = 1;
   for (const line of lines) {
     if (line.distractor && line.pairedWith && byId.has(line.pairedWith)) {
-      groups.set(line.id, next);
-      groups.set(line.pairedWith, next);
-      next += 1;
+      const target = line.pairedWith;
+      let group = groupOfTarget.get(target);
+      if (group === undefined) {
+        group = next++;
+        groupOfTarget.set(target, group);
+        groups.set(target, group);
+      }
+      groups.set(line.id, group);
     }
   }
   return groups;

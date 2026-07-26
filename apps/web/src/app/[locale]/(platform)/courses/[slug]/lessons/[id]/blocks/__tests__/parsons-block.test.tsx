@@ -270,4 +270,38 @@ describe("ParsonsBlock — paired distractors (F13)", () => {
       screen.getByText("Not quite — some lines are out of order.")
     ).toBeInTheDocument();
   });
+
+  it("two look-alikes for ONE real line all share a single group (no orphan)", () => {
+    // Two traps for `ret` is legitimate authoring; grouping by target keeps the
+    // target + both distractors in one group of three, never orphaning the first
+    // distractor into its own marker.
+    const twoTraps: ParsonsBlockData = {
+      _type: "parsons",
+      key: "p-two-traps",
+      prompt: "Arrange the function.",
+      lines: [
+        { id: "sig", content: "function add(a, b) {" },
+        { id: "ret", content: "  return a + b;" },
+        { id: "close", content: "}" },
+        {
+          id: "bad1",
+          content: "  return a - b;",
+          distractor: true,
+          pairedWith: "ret",
+        },
+        {
+          id: "bad2",
+          content: "  return b - a;",
+          distractor: true,
+          pairedWith: "ret",
+        },
+      ],
+      correctOrder: ["sig", "ret", "close"],
+    };
+    renderWithIntl(<ParsonsBlock block={twoTraps} ctx={makeCtx()} />);
+    // ret + bad1 + bad2 = three members, one shared marker, and only one group
+    // exists (no stray "Look-alike 2").
+    expect(screen.getAllByText("Look-alike 1")).toHaveLength(3);
+    expect(screen.queryByText("Look-alike 2")).not.toBeInTheDocument();
+  });
 });
