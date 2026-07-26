@@ -65,13 +65,6 @@ vi.mock("server-only", () => ({}));
 //    quiz explanations (#15). courses.json, lessons.json and quests-raw.json's
 //    challengeLessonIds/moduleLessonMap regenerated from the bundle through
 //    the real projectors (order preserved, raw quest docs untouched).
-//  - launch-content wave 4 (bump to courses-academy @7a49747): C3 transform of
-//    the LIVE `building-your-first-solana-program` (16 → 15 lessons: 4 retired,
-//    3 added, 0 surviving lessons renumbered — slot-keyed progress bitmaps for
-//    the 38 live enrollments are untouched by construction; capstone lesson id
-//    unchanged, #721 gate constants still hold). courses.json, lessons.json,
-//    quests-raw derived fields, paths.json and course-summaries.json
-//    regenerated from the bundle through the real projectors.
 const deps = { lessonsById };
 
 function bundleCourse(id: string): CourseDoc {

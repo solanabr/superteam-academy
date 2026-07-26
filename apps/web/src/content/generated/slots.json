@@ -19,27 +19,23 @@
     "version": 1
   },
   "course-building-first-program": {
-    "next": 19,
-    "retired": [
-      0,
-      2,
-      11,
-      14
-    ],
+    "next": 16,
+    "retired": [],
     "slots": {
       "lesson-bfsp-account-constraints": 6,
       "lesson-bfsp-add-instruction": 3,
       "lesson-bfsp-adding-instructions": 8,
+      "lesson-bfsp-anatomy-anchor-program": 2,
       "lesson-bfsp-build-increment": 9,
       "lesson-bfsp-complete-counter": 10,
-      "lesson-bfsp-cpi-lamports": 17,
       "lesson-bfsp-define-counter": 5,
+      "lesson-bfsp-deploy-to-devnet": 11,
+      "lesson-bfsp-from-code-to-chain": 0,
       "lesson-bfsp-m4-airdrop": 12,
       "lesson-bfsp-m4-capstone": 15,
       "lesson-bfsp-m4-deploy": 13,
+      "lesson-bfsp-m4-interact": 14,
       "lesson-bfsp-on-chain-state": 4,
-      "lesson-bfsp-pdas-vault": 16,
-      "lesson-bfsp-pre-flight-check": 18,
       "lesson-bfsp-wire-up-initialize": 7,
       "lesson-bfsp-your-first-build": 1
     },

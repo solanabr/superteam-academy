@@ -5,15 +5,12 @@
     "lesson-anchor-accounts-challenge",
     "lesson-anchor-setup-challenge",
     "lesson-balance-checker-challenge",
-    "lesson-bfsp-account-constraints",
     "lesson-bfsp-add-instruction",
-    "lesson-bfsp-adding-instructions",
     "lesson-bfsp-build-increment",
     "lesson-bfsp-complete-counter",
-    "lesson-bfsp-cpi-lamports",
     "lesson-bfsp-define-counter",
+    "lesson-bfsp-deploy-to-devnet",
     "lesson-bfsp-m4-deploy",
-    "lesson-bfsp-pdas-vault",
     "lesson-bfsp-wire-up-initialize",
     "lesson-bfsp-your-first-build",
     "lesson-connect-wallet-challenge",
@@ -87,35 +84,36 @@
     {
       "_id": "course-building-first-program:bfsp-build-pipeline",
       "lessonIds": [
+        "lesson-bfsp-from-code-to-chain",
         "lesson-bfsp-your-first-build",
-        "lesson-bfsp-add-instruction",
-        "lesson-bfsp-adding-instructions"
+        "lesson-bfsp-anatomy-anchor-program",
+        "lesson-bfsp-add-instruction"
       ]
     },
     {
-      "_id": "course-building-first-program:bfsp-state-vault-pda",
+      "_id": "course-building-first-program:bfsp-state-accounts",
       "lessonIds": [
         "lesson-bfsp-on-chain-state",
-        "lesson-bfsp-pdas-vault",
         "lesson-bfsp-define-counter",
+        "lesson-bfsp-account-constraints",
         "lesson-bfsp-wire-up-initialize"
       ]
     },
     {
-      "_id": "course-building-first-program:bfsp-deposit-withdraw-harden",
+      "_id": "course-building-first-program:bfsp-full-counter",
       "lessonIds": [
-        "lesson-bfsp-cpi-lamports",
+        "lesson-bfsp-adding-instructions",
         "lesson-bfsp-build-increment",
         "lesson-bfsp-complete-counter",
-        "lesson-bfsp-account-constraints"
+        "lesson-bfsp-deploy-to-devnet"
       ]
     },
     {
-      "_id": "course-building-first-program:bfsp-ship-it",
+      "_id": "course-building-first-program:bfsp-deploy-interact",
       "lessonIds": [
-        "lesson-bfsp-pre-flight-check",
         "lesson-bfsp-m4-airdrop",
         "lesson-bfsp-m4-deploy",
+        "lesson-bfsp-m4-interact",
         "lesson-bfsp-m4-capstone"
       ]
     },

@@ -248,25 +248,5 @@
   {
     "label": "Program Security",
     "slug": "program-security"
-  },
-  {
-    "label": "Program Build Pipeline",
-    "slug": "program-build"
-  },
-  {
-    "label": "Rent & Account Space",
-    "slug": "rent-and-space"
-  },
-  {
-    "label": "Program Errors",
-    "slug": "program-errors"
-  },
-  {
-    "label": "IDL",
-    "slug": "idl"
-  },
-  {
-    "label": "Solana Explorer",
-    "slug": "solana-explorer"
   }
 ]
