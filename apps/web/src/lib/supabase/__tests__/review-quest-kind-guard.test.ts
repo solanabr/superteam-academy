@@ -34,7 +34,7 @@ function findRepoRoot(): string {
 
 const repoRoot = findRepoRoot();
 const migration = readFileSync(
-  resolve(repoRoot, "supabase/migrations/20260726160000_review_quest_kind.sql"),
+  resolve(repoRoot, "supabase/migrations/20260726170000_review_quest_kind.sql"),
   "utf8"
 );
 const schema = readFileSync(resolve(repoRoot, "supabase/schema.sql"), "utf8");
