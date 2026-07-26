@@ -18,7 +18,8 @@ import {
   fetchEnrollment,
   fetchAchievementReceiptData,
 } from "@/lib/solana/academy-reads";
-import { decodeLessonBitmap } from "@/lib/solana/bitmap";
+import { isLessonComplete } from "@/lib/solana/bitmap";
+import { slotToLiveLessonId } from "@/lib/courses/lesson-slot";
 import { getAllCourses, getAllAchievements } from "@/lib/content/queries";
 import { calculateLevel } from "@/lib/gamification/xp";
 
@@ -149,32 +150,28 @@ export async function POST(req: NextRequest) {
       );
       results.enrollments++;
 
-      // Decode lesson bitmap → sync individual lesson progress. Display order is
-      // the array position now (spec §10.1), so the flattened order IS the
-      // on-chain bitmap order — matching findLessonIndex.
-      const allLessons = (course.modules ?? []).flatMap((m) => m.lessons ?? []);
-
-      const lessonCount = enrollment.lesson_count
-        ? Number(enrollment.lesson_count)
-        : allLessons.length;
-
-      if (enrollment.lesson_flags && lessonCount > 0) {
-        const bitmap = decodeLessonBitmap(enrollment.lesson_flags, lessonCount);
-
-        for (let i = 0; i < bitmap.length && i < allLessons.length; i++) {
-          const lesson = allLessons[i];
-          if (bitmap[i] && lesson) {
+      // Reconstruct lesson progress from the on-chain bitmap by SLOT, not array
+      // position (#741). A bit at index N means "slot N is complete"; slot N maps
+      // to a lessonId via the committed slot lock, which is stable across
+      // restructures. Iterating array position instead would mis-map every live
+      // lesson once a course is sparse (retire/insert), and would resurrect a
+      // retired slot's stale bit onto whichever lesson now sits at that array
+      // index. A retired slot has no entry in the live map, so its bit is ignored.
+      if (enrollment.lesson_flags) {
+        for (const [slot, lessonId] of slotToLiveLessonId(course._id)) {
+          if (isLessonComplete(enrollment.lesson_flags, slot)) {
             await supabase.from("user_progress").upsert(
               {
                 user_id: profile.id,
                 course_id: course._id,
-                lesson_id: lesson._id,
+                lesson_id: lessonId,
                 completed: true,
                 completed_at: enrollment.enrolled_at
                   ? new Date(
                       Number(enrollment.enrolled_at) * 1000
                     ).toISOString()
                   : new Date().toISOString(),
+                lesson_index: slot,
               },
               { onConflict: "user_id,lesson_id", ignoreDuplicates: true }
             );

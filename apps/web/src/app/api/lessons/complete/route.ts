@@ -4,7 +4,7 @@ import { PublicKey } from "@solana/web3.js";
 import { BLOCK_REGISTRY, type BlockType } from "@superteam-lms/content-schema";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getCourseById, getLessonByIdForGrading } from "@/lib/content/queries";
+import { getLessonByIdForGrading } from "@/lib/content/queries";
 import type { CompletionDenyReason } from "@/lib/lessons/completion-error";
 import { GRADERS, type GradedBlockType } from "@/lib/grading/graders";
 import { DENY_REASONS } from "@/lib/grading/deny-reason";
@@ -21,7 +21,7 @@ import {
 } from "@/lib/solana/academy-program";
 import { fetchEnrollment, fetchCourse } from "@/lib/solana/academy-reads";
 import { isLessonComplete } from "@/lib/solana/bitmap";
-import { findLessonIndex } from "@/lib/courses/lesson-index";
+import { getLessonSlot } from "@/lib/courses/lesson-slot";
 import { serverEnv } from "@/lib/env.server";
 import { isCourseInMaintenance } from "@/lib/content/deployments";
 import { isPlatformFrozen } from "@/lib/platform/freeze";
@@ -43,21 +43,6 @@ interface LessonCompleteRequest {
    * gate below and NOTHING else — see the gate comment for why that is safe.
    */
   replay?: boolean;
-}
-
-/**
- * Derive the 0-based lesson index within a course from content-bundle lesson order.
- * Modules and lessons are flattened in order; the index matches the on-chain bitmap position.
- */
-async function deriveLessonIndex(
-  courseId: string,
-  lessonId: string
-): Promise<number> {
-  const course = await getCourseById(courseId);
-  if (!course) throw new Error(`Course not found: ${courseId}`);
-  const index = findLessonIndex(course, lessonId);
-  if (index === -1) throw new Error(`Lesson not found in course: ${lessonId}`);
-  return index;
 }
 
 /**
@@ -445,36 +430,45 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Derive lesson index from content-bundle lesson order
-      const lessonIndex = await deriveLessonIndex(courseId, lessonId);
+      // Resolve the lesson's permanent on-chain bitmap SLOT from the committed
+      // slot lock — NEVER its position in the flattened module array. Array
+      // position shifts whenever the course is restructured (reorder/retire/
+      // insert), so the same lessonId would map to a different bit and silently
+      // complete a different (possibly retired) lesson (#741). Fail-closed: an
+      // unslotted lesson throws → outer catch → 500 (no wrong-slot completion).
+      const lessonSlot = getLessonSlot(courseId, lessonId);
 
-      // Guard: the on-chain complete_lesson reverts when lessonIndex >=
-      // course.lesson_count. That happens when a teacher appended lessons to an
-      // already-deployed course but the Course PDA's lesson_count has not yet been
-      // raised by an admin re-sync (update_course.new_lesson_count). Detect it here
-      // and return a clear 409 instead of letting the on-chain TX throw a generic
-      // 500. fetchCourse returns the normalised `liveLessonCount`.
-      // Count-based and only correct while masks are dense (today). Once a
-      // sparse-mask course can exist, this must become a per-slot bit test
-      // against `activeLessons` instead of a count comparison.
-      const onChainLessonCount = onChainCourse?.liveLessonCount;
-      if (
-        typeof onChainLessonCount === "number" &&
-        lessonIndex >= onChainLessonCount
-      ) {
-        return NextResponse.json(
-          {
-            error:
-              "This course was recently extended and is pending an admin re-sync — try again shortly.",
-          },
-          { status: 409 }
-        );
+      // Guard: the on-chain complete_lesson reverts when the target slot is not
+      // a LIVE bit in the Course PDA's `active_lessons` mask. That happens when a
+      // teacher added a lesson (new slot) but the admin mask re-sync
+      // (update_course.new_active_lessons) hasn't landed yet. Detect it here and
+      // return a clear 409 instead of letting the on-chain TX throw a generic
+      // 500. This is a per-SLOT bit test, not a count comparison: once a mask is
+      // sparse, popcount(active_lessons) (== liveLessonCount) no longer equals
+      // the highest live slot, so a count compare would wrongly 409 valid high
+      // slots (e.g. a capstone at slot 15 when popcount is 15).
+      const activeLessons = onChainCourse?.activeLessons;
+      if (activeLessons) {
+        const word = Math.floor(lessonSlot / 64);
+        const bit = BigInt(lessonSlot % 64);
+        const slotIsLive = ((activeLessons[word] ?? 0n) & (1n << bit)) !== 0n;
+        if (!slotIsLive) {
+          return NextResponse.json(
+            {
+              error:
+                "This course was recently extended and is pending an admin re-sync — try again shortly.",
+            },
+            { status: 409 }
+          );
+        }
       }
 
-      // Idempotency: skip on-chain TX if lesson already completed in bitmap
+      // Idempotency: skip on-chain TX if this SLOT's bit is already set. Tested
+      // against the slot (not array position) so a retired lesson's stale set bit
+      // can never make a different, live lesson read as already complete (#741).
       const alreadyOnChain = isLessonComplete(
         onChainEnrollment.lesson_flags as (bigint | number)[],
-        lessonIndex
+        lessonSlot
       );
 
       if (alreadyOnChain) {
@@ -490,7 +484,11 @@ export async function POST(request: NextRequest) {
               completed: true,
               completed_at: new Date().toISOString(),
               tx_signature: null,
-              lesson_index: lessonIndex,
+              // Stores the on-chain SLOT (the true bitmap position), not array
+              // order — see getLessonSlot. Historical rows written pre-#741 may
+              // hold old array-space values; they are left as a historical record
+              // (no live-DB backfill), and every new write here is slot-space.
+              lesson_index: lessonSlot,
             },
             { onConflict: "user_id,lesson_id", ignoreDuplicates: true }
           );
@@ -567,7 +565,7 @@ export async function POST(request: NextRequest) {
       const signature = await onChainCompleteLesson(
         courseId,
         walletPubkey,
-        lessonIndex
+        lessonSlot
       );
 
       // Write directly to Supabase so progress is visible on the dashboard
@@ -583,7 +581,7 @@ export async function POST(request: NextRequest) {
             completed: true,
             completed_at: new Date().toISOString(),
             tx_signature: signature,
-            lesson_index: lessonIndex,
+            lesson_index: lessonSlot, // on-chain slot (see getLessonSlot / #741)
           },
           { onConflict: "user_id,lesson_id" }
         );
