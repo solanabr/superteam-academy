@@ -1400,5 +1400,28 @@
     "revisitLabel": "Revisit",
     "revisitHint": "No quick quiz for this one yet — revisit the lesson to refresh.",
     "revisitCta": "Open lesson"
+  },
+  "testOut": {
+    "eyebrow": "Test out",
+    "title": "Test out of {course}",
+    "subtitle": "Already know this material? Pass a short challenge to skip ahead — you'll still earn the full XP for every lesson.",
+    "signInTitle": "Sign in to test out",
+    "signInHint": "Your progress and XP are tied to your account.",
+    "loading": "Loading your challenge…",
+    "loadError": "We couldn't load the challenge. Please try again.",
+    "retry": "Retry",
+    "intro": "Answer these {count} questions. Get at least {required} right to test out.",
+    "questionNumber": "Q{n}/{total}",
+    "passedTitle": "You tested out!",
+    "failedTitle": "Not quite yet",
+    "score": "You got {correct} of {total} correct.",
+    "passedBody": "Every lesson in this course is now complete and its XP is on the way. Taking you to what's next…",
+    "failedBody": "No problem — work through the course and try again anytime. Nothing was lost.",
+    "submitError": "We couldn't submit your answers. Please try again.",
+    "tryAgain": "Try again",
+    "submitting": "Checking…",
+    "submit": "Submit answers",
+    "unavailableTitle": "Test-out isn't available here",
+    "unavailableBody": "This course doesn't offer a test-out right now. Open it and work through the lessons instead — you'll earn XP for each one."
   }
 }

@@ -1400,5 +1400,28 @@
     "revisitLabel": "Revisar",
     "revisitHint": "Aún no hay un cuestionario rápido para esto: vuelve a la lección para repasar.",
     "revisitCta": "Abrir lección"
+  },
+  "testOut": {
+    "eyebrow": "Prueba de nivel",
+    "title": "Sáltate {course}",
+    "subtitle": "¿Ya dominas este contenido? Aprueba un breve reto para avanzar — aun así ganas todo el XP de cada lección.",
+    "signInTitle": "Inicia sesión para hacer la prueba",
+    "signInHint": "Tu progreso y XP están vinculados a tu cuenta.",
+    "loading": "Cargando tu reto…",
+    "loadError": "No pudimos cargar el reto. Inténtalo de nuevo.",
+    "retry": "Reintentar",
+    "intro": "Responde estas {count} preguntas. Acierta al menos {required} para saltarte el curso.",
+    "questionNumber": "Q{n}/{total}",
+    "passedTitle": "¡Te saltaste el curso!",
+    "failedTitle": "Aún no",
+    "score": "Acertaste {correct} de {total}.",
+    "passedBody": "Todas las lecciones de este curso están completas y el XP está en camino. Te llevamos a lo siguiente…",
+    "failedBody": "No pasa nada — haz el curso e inténtalo cuando quieras. No se perdió nada.",
+    "submitError": "No pudimos enviar tus respuestas. Inténtalo de nuevo.",
+    "tryAgain": "Intentar de nuevo",
+    "submitting": "Comprobando…",
+    "submit": "Enviar respuestas",
+    "unavailableTitle": "La prueba de nivel no está disponible aquí",
+    "unavailableBody": "Este curso no ofrece prueba de nivel por ahora. Ábrelo y haz las lecciones — ganas XP en cada una."
   }
 }

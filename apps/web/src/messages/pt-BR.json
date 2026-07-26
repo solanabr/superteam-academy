@@ -1400,5 +1400,28 @@
     "revisitLabel": "Revisitar",
     "revisitHint": "Ainda não há um quiz rápido para este — revisite a lição para relembrar.",
     "revisitCta": "Abrir lição"
+  },
+  "testOut": {
+    "eyebrow": "Teste de dispensa",
+    "title": "Dispense-se de {course}",
+    "subtitle": "Já conhece este conteúdo? Passe em um desafio rápido para avançar — você ainda ganha todo o XP de cada lição.",
+    "signInTitle": "Entre para fazer o teste",
+    "signInHint": "Seu progresso e XP estão vinculados à sua conta.",
+    "loading": "Carregando seu desafio…",
+    "loadError": "Não conseguimos carregar o desafio. Tente novamente.",
+    "retry": "Repetir",
+    "intro": "Responda estas {count} perguntas. Acerte pelo menos {required} para se dispensar.",
+    "questionNumber": "Q{n}/{total}",
+    "passedTitle": "Você se dispensou!",
+    "failedTitle": "Ainda não",
+    "score": "Você acertou {correct} de {total}.",
+    "passedBody": "Todas as lições deste curso estão concluídas e o XP está a caminho. Levando você para o próximo passo…",
+    "failedBody": "Sem problemas — faça o curso e tente novamente quando quiser. Nada foi perdido.",
+    "submitError": "Não conseguimos enviar suas respostas. Tente novamente.",
+    "tryAgain": "Tentar de novo",
+    "submitting": "Verificando…",
+    "submit": "Enviar respostas",
+    "unavailableTitle": "O teste de dispensa não está disponível aqui",
+    "unavailableBody": "Este curso não oferece teste de dispensa no momento. Abra-o e faça as lições — você ganha XP em cada uma."
   }
 }
