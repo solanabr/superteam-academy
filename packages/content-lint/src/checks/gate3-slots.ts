@@ -129,7 +129,7 @@ export function gate3Check(model: RepoModel, ctx: LintContext): Diagnostic[] {
           // learner progress (#737).
           `slots.lock.json violates the slot invariant — surviving lessons must keep their assigned slot, retired slots are never reused, and \`next\` only grows. ` +
             `Fix the lock BY HAND to preserve every slot already assigned in the base ref (diff it: \`git show <base>:${file}\`). ` +
-            `DANGER: do NOT run any regenerate-from-scratch command on a deployed course — it renumbers slots and re-points 38+ learners' completed-lesson bitmaps. Regeneration is ONLY for a brand-new course that has never been deployed. ` +
+            `DANGER: do NOT run any regenerate-from-scratch command on a deployed course — it renumbers slots and re-points every already-enrolled learner's completed-lesson bitmap. Regeneration is ONLY for a brand-new course that has never been deployed. ` +
             `Expected ${JSON.stringify(expected)}`
         )
       );

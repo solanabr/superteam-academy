@@ -138,4 +138,54 @@ describe("gate 2 — ids", () => {
       )
     ).toBe(true);
   });
+
+  it("warns (never silently skips) when no base ref is resolvable", async () => {
+    // Previously `if (ctx.baseRef)` with no else: outside CI the id-immutability
+    // comparison vanished with no diagnostic at all, so a bare run looked clean
+    // whether or not the check had actually run. It must say it was skipped.
+    const root = makeTempRepo({
+      "courses/a/course.yaml": course("course-a"),
+    });
+    const r = await runLint(root); // no baseRef, not a git repo
+    expect(
+      r.diagnostics.filter((d) => d.gate === "gate-2" && d.severity === "error")
+    ).toEqual([]);
+    expect(
+      r.diagnostics.some(
+        (d) =>
+          d.gate === "gate-2" &&
+          d.severity === "warning" &&
+          /no base ref/i.test(d.message)
+      )
+    ).toBe(true);
+  });
+
+  it("resolves origin/main locally so immutability is still checked with no explicit base ref", async () => {
+    const root = makeTempRepo({
+      "courses/a/course.yaml": course("course-original"),
+    });
+    const git = (...args: string[]) => execFileSync("git", args, { cwd: root });
+    git("init", "-q");
+    git("config", "user.email", "t@t.t");
+    git("config", "user.name", "t");
+    git("add", "-A");
+    git("commit", "-qm", "base");
+    git("update-ref", "refs/remotes/origin/main", "HEAD");
+    git("symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/main");
+    // Mutate the id AFTER origin/main was pinned — a bare run must still catch it.
+    writeFileSync(
+      join(root, "courses/a/course.yaml"),
+      course("course-renamed"),
+      "utf8"
+    );
+    const r = await runLint(root); // no explicit baseRef
+    expect(
+      r.diagnostics.some(
+        (d) =>
+          d.gate === "gate-2" &&
+          d.severity === "error" &&
+          /immutable|changed/i.test(d.message)
+      )
+    ).toBe(true);
+  });
 });
