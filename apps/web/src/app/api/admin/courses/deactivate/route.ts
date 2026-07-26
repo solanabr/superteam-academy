@@ -87,6 +87,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           txSignature: result.signature,
           version: onChain.version,
         });
+      } else {
+        // #731 honesty standard: skipping (to avoid logging a wrong version)
+        // must itself be visible — a silent miss is an invisible audit gap.
+        console.warn(
+          `[course-changelog] ${courseId}: 'deactivated' entry SKIPPED — on-chain course unreadable after mutation (tx ${result.signature})`
+        );
       }
     } catch (changelogErr) {
       console.error(
