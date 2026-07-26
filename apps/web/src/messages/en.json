@@ -348,7 +348,11 @@
     "pageSubtitle": "Your earned NFT certificates on Solana",
     "linkWalletToMint": "Link a wallet in Settings to mint your certificate.",
     "insertFailed": "Failed to record certificate. Please try again.",
-    "onChain": "On-chain"
+    "onChain": "On-chain",
+    "shareXText": "I just earned my \"{courseTitle}\" certificate on @SuperteamBR Academy! 🎓\n\nVerify on-chain:",
+    "addToLinkedIn": "Add to your LinkedIn profile",
+    "shareNudgeTitle": "Show off your credential",
+    "opensInNewTab": "opens in a new tab"
   },
   "earnHandoff": {
     "title": "Turn your credential into paid work",

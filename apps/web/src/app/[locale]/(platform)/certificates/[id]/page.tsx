@@ -10,6 +10,12 @@ import { CertificateCard } from "@/components/certificates/certificate-card";
 import { EarnHandoffCard } from "@/components/certificates/earn-handoff-card";
 import { createClient } from "@/lib/supabase/client";
 import { getCoursesByIds } from "@/lib/content/client-queries";
+import {
+  CREDENTIAL_ISSUER_NAME,
+  buildLinkedInAddToProfileUrl,
+  buildXShareIntentUrl,
+  trackCredentialShareClick,
+} from "@/lib/credentials/share";
 import { CERTIFICATE_STYLES as CS } from "@/lib/styles/styleClasses";
 import { truncateAddress } from "@/lib/utils";
 
@@ -152,18 +158,27 @@ export default function CertificateViewPage() {
     ? `https://explorer.solana.com/address/${mintAddress}?cluster=${network}`
     : "";
 
-  function handleShareX() {
-    const pageUrl = window.location.href;
-    const text = encodeURIComponent(
-      `I just earned my "${cert.courseTitle}" certificate on @SuperteamBR Academy! 🎓\n\nVerify on-chain:`
-    );
-    const url = encodeURIComponent(pageUrl);
-    window.open(
-      `https://x.com/intent/tweet?text=${text}&url=${url}`,
-      "_blank",
-      "noopener,noreferrer"
-    );
-  }
+  // This page only renders content client-side (data arrives via useEffect),
+  // so window is available whenever `data` is set.
+  const pageUrl = typeof window !== "undefined" ? window.location.href : "";
+  const xShareUrl = pageUrl
+    ? buildXShareIntentUrl(
+        t("shareXText", { courseTitle: cert.courseTitle }),
+        pageUrl
+      )
+    : "";
+  // Profile-entry deep link (LX-E3) — NOT a social share; the share channel
+  // is X. All fields come from data already on this page.
+  const linkedInAddUrl = pageUrl
+    ? buildLinkedInAddToProfileUrl({
+        name: cert.courseTitle,
+        organizationName: CREDENTIAL_ISSUER_NAME,
+        issueYear: cert.mintedAt.getFullYear(),
+        issueMonth: cert.mintedAt.getMonth() + 1,
+        certUrl: pageUrl,
+        certId: mintAddress || undefined,
+      })
+    : "";
 
   async function handleCopyLink() {
     await navigator.clipboard.writeText(window.location.href);
@@ -192,9 +207,44 @@ export default function CertificateViewPage() {
             </a>
           </Button>
         )}
-        <Button variant="outline" size="sm" onClick={handleShareX}>
-          {t("share")}
-        </Button>
+        {linkedInAddUrl && (
+          <Button variant="outline" size="sm" asChild>
+            <a
+              href={linkedInAddUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() =>
+                trackCredentialShareClick(
+                  "linkedin_add",
+                  "certificate_page",
+                  cert.courseId
+                )
+              }
+            >
+              {t("addToLinkedIn")}
+              <span className="sr-only">({t("opensInNewTab")})</span>
+            </a>
+          </Button>
+        )}
+        {xShareUrl && (
+          <Button variant="outline" size="sm" asChild>
+            <a
+              href={xShareUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() =>
+                trackCredentialShareClick(
+                  "x",
+                  "certificate_page",
+                  cert.courseId
+                )
+              }
+            >
+              {t("share")}
+              <span className="sr-only">({t("opensInNewTab")})</span>
+            </a>
+          </Button>
+        )}
         <Button variant="outline" size="sm" onClick={handleCopyLink}>
           {t("copyLink")}
         </Button>

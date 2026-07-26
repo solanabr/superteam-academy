@@ -348,7 +348,11 @@
     "pageSubtitle": "Seus certificados NFT conquistados na Solana",
     "linkWalletToMint": "Vincule uma carteira em Configurações para cunhar seu certificado.",
     "insertFailed": "Falha ao registrar o certificado. Por favor, tente novamente.",
-    "onChain": "On-chain"
+    "onChain": "On-chain",
+    "shareXText": "Acabei de conquistar meu certificado de \"{courseTitle}\" na @SuperteamBR Academy! 🎓\n\nVerifique on-chain:",
+    "addToLinkedIn": "Adicionar ao seu perfil do LinkedIn",
+    "shareNudgeTitle": "Mostre sua credencial",
+    "opensInNewTab": "abre em uma nova aba"
   },
   "earnHandoff": {
     "title": "Transforme sua credencial em trabalho pago",

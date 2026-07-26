@@ -5,6 +5,7 @@ import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import { GraduationCap, CheckCircle, Wallet } from "@phosphor-icons/react";
 import { EarnHandoffCard } from "./earn-handoff-card";
+import { CredentialShareNudge } from "./credential-share-nudge";
 import { celebrate } from "@/lib/gamification/celebration";
 import { createClient } from "@/lib/supabase/client";
 
@@ -14,6 +15,14 @@ interface CourseCompletionMintProps {
   totalLessons: number;
 }
 
+/** Fields the post-mint share nudge needs from the certificates row. */
+interface MintedCertificate {
+  id: string;
+  mintAddress: string | null;
+  mintedAt: string | null;
+  courseTitle: string | null;
+}
+
 type CompletionState =
   | { status: "loading" }
   | { status: "incomplete"; completedCount: number }
@@ -21,7 +30,27 @@ type CompletionState =
   | { status: "no_wallet" }
   | { status: "minting" }
   | { status: "mint_error"; message: string }
-  | { status: "already_minted" };
+  | { status: "already_minted"; cert: MintedCertificate | null };
+
+async function fetchMintedCertificate(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  courseId: string
+): Promise<MintedCertificate | null> {
+  const { data } = await supabase
+    .from("certificates")
+    .select("id, mint_address, minted_at, course_title")
+    .eq("user_id", userId)
+    .eq("course_id", courseId)
+    .maybeSingle();
+  if (!data) return null;
+  return {
+    id: data.id,
+    mintAddress: data.mint_address,
+    mintedAt: data.minted_at,
+    courseTitle: data.course_title,
+  };
+}
 
 /**
  * Displays course completion status and credential mint state.
@@ -43,15 +72,14 @@ export function CourseCompletionMint({
     async function checkCompletion() {
       const supabase = createClient();
 
-      const { data: existingCert } = await supabase
-        .from("certificates")
-        .select("id")
-        .eq("user_id", userId)
-        .eq("course_id", courseId)
-        .maybeSingle();
+      const existingCert = await fetchMintedCertificate(
+        supabase,
+        userId,
+        courseId
+      );
 
       if (existingCert) {
-        setState({ status: "already_minted" });
+        setState({ status: "already_minted", cert: existingCert });
         return;
       }
 
@@ -96,7 +124,14 @@ export function CourseCompletionMint({
       if (!res.ok) {
         const data = (await res.json()) as { error?: string; reason?: string };
         if (res.status === 409) {
-          setState({ status: "already_minted" });
+          setState({
+            status: "already_minted",
+            cert: await fetchMintedCertificate(
+              createClient(),
+              userId,
+              courseId
+            ),
+          });
           return;
         }
         const base = data.error ?? "Minting failed";
@@ -106,10 +141,13 @@ export function CourseCompletionMint({
         });
         return;
       }
-      setState({ status: "already_minted" });
       // Full celebration on a fresh mint (LX-B11) — celebrate() dedupes
       // against the Realtime certificate-INSERT popup firing the same moment.
       celebrate("credential-mint");
+      setState({
+        status: "already_minted",
+        cert: await fetchMintedCertificate(createClient(), userId, courseId),
+      });
     } catch (e) {
       setState({
         status: "mint_error",
@@ -133,6 +171,7 @@ export function CourseCompletionMint({
   }
 
   if (state.status === "already_minted") {
+    const cert = state.cert;
     return (
       <div className="flex flex-col gap-3">
         <div className="border-success/30 rounded-xl border bg-card px-5 py-4 shadow-[var(--shadow-card)]">
@@ -143,6 +182,17 @@ export function CourseCompletionMint({
         </div>
         {/* Post-mint bridge to paid work (LX-E4) — the KPI terminus */}
         <EarnHandoffCard source="mint_success" courseId={courseId} />
+        {/* Secondary share nudge (LX-E3) — Earn card stays most prominent */}
+        {cert?.courseTitle && (
+          <CredentialShareNudge
+            source="mint_success"
+            courseId={courseId}
+            courseTitle={cert.courseTitle}
+            certificateId={cert.id}
+            mintAddress={cert.mintAddress}
+            mintedAt={new Date(cert.mintedAt ?? Date.now())}
+          />
+        )}
       </div>
     );
   }
