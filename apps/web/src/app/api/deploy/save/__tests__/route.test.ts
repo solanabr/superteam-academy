@@ -9,7 +9,17 @@ vi.mock("server-only", () => ({}));
 const { getUser, isRateLimited, getAccountInfo, profileSingle, upsert } =
   vi.hoisted(() => ({
     getUser: vi.fn<() => Promise<unknown>>(),
-    isRateLimited: vi.fn<() => Promise<boolean>>(),
+    isRateLimited: vi.fn<
+      (
+        namespace: string,
+        key: string,
+        opts: {
+          maxTokens: number;
+          refillIntervalMs: number;
+          failClosed?: boolean;
+        }
+      ) => Promise<boolean>
+    >(),
     getAccountInfo:
       vi.fn<
         (
@@ -344,6 +354,156 @@ describe("POST /api/deploy/save — on-chain verification (#560 / LX-E1)", () =>
     const res = await POST(req(validBody));
 
     expect(res.status).toBe(401);
+    expect(getAccountInfo).not.toHaveBeenCalled();
+    expect(upsert).not.toHaveBeenCalled();
+  });
+});
+
+describe("POST /api/deploy/save — adversarial account layouts", () => {
+  async function expectGenericReject(): Promise<void> {
+    const res = await POST(req(validBody));
+    expect(res.status).toBe(400);
+    expect(((await res.json()) as { error: string }).error).toBe(
+      "Program verification failed"
+    );
+    expect(upsert).not.toHaveBeenCalled();
+  }
+
+  it("rejects a program account with truncated data (< 36 bytes)", async () => {
+    setAccounts({
+      [programId.toBase58()]: account({ data: Buffer.alloc(10) }),
+    });
+
+    await expectGenericReject();
+    // Malformed program account never triggers the ProgramData read.
+    expect(getAccountInfo).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects a program account with the wrong state tag", async () => {
+    const data = programAccountData();
+    data.writeUInt32LE(1, 0); // tag 1 = Buffer, not Program
+
+    setAccounts({ [programId.toBase58()]: account({ data }) });
+
+    await expectGenericReject();
+    expect(getAccountInfo).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects a ProgramData account with a truncated header (< 45 bytes)", async () => {
+    setAccounts({
+      [programId.toBase58()]: account({ data: programAccountData() }),
+      [programDataAddress.toBase58()]: account({
+        executable: false,
+        data: programDataHeader(wallet).subarray(0, 20),
+      }),
+    });
+
+    await expectGenericReject();
+  });
+
+  it("rejects a ProgramData account with the wrong state tag", async () => {
+    const header = programDataHeader(wallet);
+    header.writeUInt32LE(2, 0); // tag 2 = Program, not ProgramData
+
+    setAccounts({
+      [programId.toBase58()]: account({ data: programAccountData() }),
+      [programDataAddress.toBase58()]: account({
+        executable: false,
+        data: header,
+      }),
+    });
+
+    await expectGenericReject();
+  });
+
+  it("rejects a ProgramData account owned by a non-loader program", async () => {
+    setAccounts({
+      [programId.toBase58()]: account({ data: programAccountData() }),
+      [programDataAddress.toBase58()]: account({
+        executable: false,
+        owner: OTHER_LOADER,
+        data: programDataHeader(wallet),
+      }),
+    });
+
+    await expectGenericReject();
+  });
+
+  it("rejects regex-passing base58 that fails PublicKey construction", async () => {
+    // 44 valid base58 chars, but decodes to 33 bytes — the regex passes and
+    // `new PublicKey()` throws. Must reject before rate limiting / RPC.
+    const res = await POST(req({ ...validBody, programId: "z".repeat(44) }));
+
+    expect(res.status).toBe(400);
+    expect(((await res.json()) as { error: string }).error).toBe(
+      "Invalid program ID format"
+    );
+    expect(isRateLimited).not.toHaveBeenCalled();
+    expect(getAccountInfo).not.toHaveBeenCalled();
+    expect(upsert).not.toHaveBeenCalled();
+  });
+});
+
+describe("POST /api/deploy/save — rate limiting", () => {
+  it("passes failClosed to both limiters (store error must deny, not allow)", async () => {
+    setHappyChain();
+
+    await POST(req(validBody));
+
+    expect(isRateLimited).toHaveBeenCalledWith(
+      "deploy:save",
+      "user-1",
+      expect.objectContaining({ failClosed: true })
+    );
+    expect(isRateLimited).toHaveBeenCalledWith(
+      "deploy:save:ip",
+      "203.0.113.7",
+      expect.objectContaining({ failClosed: true })
+    );
+  });
+
+  it("429s when only the per-user limit trips, without consulting the IP limiter", async () => {
+    setHappyChain();
+    isRateLimited.mockImplementation(async (namespace) => {
+      return namespace === "deploy:save";
+    });
+
+    const res = await POST(req(validBody));
+
+    expect(res.status).toBe(429);
+    expect(((await res.json()) as { error: string }).error).toMatch(
+      /try again later/i
+    );
+    expect(isRateLimited).toHaveBeenCalledTimes(1);
+    expect(getAccountInfo).not.toHaveBeenCalled();
+    expect(upsert).not.toHaveBeenCalled();
+  });
+
+  it("429s when only the per-IP limit trips, even for an unthrottled user", async () => {
+    setHappyChain();
+    isRateLimited.mockImplementation(async (namespace) => {
+      return namespace === "deploy:save:ip";
+    });
+
+    const res = await POST(req(validBody));
+
+    expect(res.status).toBe(429);
+    expect(((await res.json()) as { error: string }).error).toMatch(/network/i);
+    expect(isRateLimited).toHaveBeenCalledTimes(2);
+    expect(getAccountInfo).not.toHaveBeenCalled();
+    expect(upsert).not.toHaveBeenCalled();
+  });
+
+  it("429s (denies) when the limiter store errors in fail-closed mode", async () => {
+    setHappyChain();
+    // The real limiter returns `true` (deny) on a store error when
+    // failClosed is set — the route must translate that into a 429, never
+    // an unmetered RPC read.
+    isRateLimited.mockResolvedValue(true);
+
+    const res = await POST(req(validBody));
+
+    expect(res.status).toBe(429);
     expect(getAccountInfo).not.toHaveBeenCalled();
     expect(upsert).not.toHaveBeenCalled();
   });

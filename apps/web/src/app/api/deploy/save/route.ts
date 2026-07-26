@@ -74,10 +74,14 @@ export async function POST(request: NextRequest) {
     // Each save costs two RPC reads against the server RPC; a save is a rare
     // event (once per deploy lesson, occasional redeploys), so a tight
     // per-user cap plus a classroom-sized per-IP cap bounds the spend.
+    // failClosed: this limiter meters platform-funded RPC reads, so a store
+    // error DENIES rather than handing out unmetered requests (same rationale
+    // as the AI routes). A save that hits the store blip retries cleanly.
     if (
       await isRateLimited("deploy:save", user.id, {
         maxTokens: 20,
         refillIntervalMs: 3_600_000,
+        failClosed: true,
       })
     ) {
       return NextResponse.json(
@@ -89,6 +93,7 @@ export async function POST(request: NextRequest) {
       await isRateLimited("deploy:save:ip", getClientIp(request.headers), {
         maxTokens: 200,
         refillIntervalMs: 3_600_000,
+        failClosed: true,
       })
     ) {
       return NextResponse.json(
