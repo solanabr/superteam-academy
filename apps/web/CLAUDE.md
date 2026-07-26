@@ -50,8 +50,8 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=     # Public anon key (safe for browser)
 SUPABASE_SERVICE_ROLE_KEY=         # PRIVATE — server-only, for admin operations
 
 # Required — Solana
-NEXT_PUBLIC_SOLANA_RPC_URL=https://api.devnet.solana.com   # PUBLIC browser RPC — no privileged key
-SOLANA_RPC_URL=                    # SERVER-ONLY RPC (may carry the Helius key; required at boot)
+NEXT_PUBLIC_SOLANA_RPC_URL=https://api.devnet.solana.com   # PUBLIC browser RPC — keyless, or a Helius key DOMAIN-RESTRICTED to the app's origins
+SOLANA_RPC_URL=                    # SERVER-ONLY RPC — a SEPARATE, unrestricted Helius key (never NEXT_PUBLIC_); required at boot
 NEXT_PUBLIC_SOLANA_NETWORK=devnet
 NEXT_PUBLIC_PROGRAM_ID=            # Deployed program ID (used by webhook decoder + frontend)
 NEXT_PUBLIC_XP_MINT_ADDRESS=       # XP mint pubkey (from initialize.ts output)
@@ -65,7 +65,7 @@ GITHUB_TOKEN=                      # Fine-grained READ token for solanabr/course
                                    # 60 req/hr per IP and flakes on Vercel). Server-only. Powers
                                    # the publish-pin card (HEAD polling + ahead-by) and the
                                    # Checks API (blocked state); unset → those admin reads 503.
-HELIUS_API_KEY=                    # Helius key for webhook management + DAS API (lib/helius)
+HELIUS_API_KEY=                    # Helius key for webhook management + DAS API (lib/helius) — server-only, unrestricted, distinct from the browser key
 HELIUS_WEBHOOK_SECRET=             # Helius webhook signature verification
 BACKEND_SIGNER_SECRET=             # Rotatable backend co-signer keypair (completeLesson etc.)
 XP_MINT_AUTHORITY_SECRET=          # XP mint authority keypair (JSON array of 64 keypair bytes)

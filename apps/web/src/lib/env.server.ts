@@ -28,6 +28,9 @@ const serverEnvSchema = z.object({
   // privileged Helius API key — it is never inlined into the client bundle
   // (`server-only` enforces that). Required so a misconfigured deployment
   // fails loudly here instead of silently falling back to public devnet.
+  // Use a SEPARATE, UNRESTRICTED Helius key here — distinct from the domain-
+  // restricted key behind NEXT_PUBLIC_SOLANA_RPC_URL. Server requests carry no
+  // browser Origin, so an origin-restricted key would 4xx on every call.
   SOLANA_RPC_URL: z.url(),
   // Fine-grained READ token for solanabr/courses-academy. Server-only. Needed by
   // the drift UI (HEAD polling) and the Checks API (blocked state). Optional at
@@ -59,7 +62,9 @@ const serverEnvSchema = z.object({
   // (lib/solana/arweave.ts). Unset → mint falls back to the app-served
   // metadata URL.
   ARWEAVE_UPLOADER_SECRET: optStr,
-  // Helius key for webhook management + DAS API (lib/helius).
+  // Helius key for webhook management + DAS API (lib/helius). Server-only and
+  // UNRESTRICTED — never NEXT_PUBLIC_, and not the same key as the domain-
+  // restricted one behind NEXT_PUBLIC_SOLANA_RPC_URL.
   HELIUS_API_KEY: optStr,
   // Optional dedicated key for sealing the AI Partner's comprehension-check /
   // attestation tokens (lib/ai/check-seal.ts). Falls back to
