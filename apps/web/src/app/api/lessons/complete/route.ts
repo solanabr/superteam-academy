@@ -33,6 +33,13 @@ interface LessonCompleteRequest {
    * attestation token. Block-level pass/fail is transient — never persisted.
    */
   proofs?: Record<string, unknown>;
+  /**
+   * Set only by the client's replay-on-signin pass (LX-A4c): completions the
+   * learner earned while ANONYMOUS, banked in localStorage, and now replayed
+   * once they have an account. It exempts this request from the per-USER volume
+   * gate below and NOTHING else — see the gate comment for why that is safe.
+   */
+  replay?: boolean;
 }
 
 /**
@@ -81,6 +88,12 @@ export async function POST(request: NextRequest) {
     const { lessonId, courseId } = body;
     const proofs: Record<string, unknown> =
       body.proofs && typeof body.proofs === "object" ? body.proofs : {};
+    // Replay-of-banked-proof marker (LX-A4c). A bare client boolean is enough
+    // BECAUSE it can only skip the per-user gate, which the analysis below shows
+    // is worthless against the only actor it could bound (a Sybil farmer). It
+    // never touches grading, enrollment, or the per-IP gate, so a caller who
+    // forges it gains nothing an honest replay wouldn't.
+    const isReplay = body.replay === true;
 
     if (!lessonId || !courseId) {
       return NextResponse.json(
@@ -132,11 +145,26 @@ export async function POST(request: NextRequest) {
     // cohort working through a 16-lesson course in one window is ~960 requests.
     // 1200 clears that; a fixed-window counter is a cliff, not a throttle, so
     // undershooting here 429s an entire classroom at once.
+    //
+    // ── Replay exemption (LX-A4c) ─────────────────────────────────────────
+    // A replay-of-banked-proofs request skips ONLY the per-user token bucket.
+    // A learner who worked through many lessons anonymously, then signs in, must
+    // be able to bank the whole batch in one burst — more than the 40/hr a fresh
+    // account carries — without their own honest history throttling them.
+    //
+    // This does NOT loosen the gate globally. By the argument above, the per-user
+    // key does nothing against the only actor worth stopping: a Sybil farmer
+    // mints a fresh SIWS account (hence a fresh per-user key) per replay, so the
+    // 40/hr bucket never bound them in the first place — the per-IP key is what
+    // bounds the burn rate, and replays stay fully subject to it (checked
+    // unconditionally below). So exempting replays costs zero Sybil resistance
+    // while unblocking the honest batch. Non-replay traffic is untouched.
     if (
-      await isRateLimited("lessons:complete", user.id, {
+      !isReplay &&
+      (await isRateLimited("lessons:complete", user.id, {
         maxTokens: 40,
         refillIntervalMs: 3_600_000,
-      })
+      }))
     ) {
       return NextResponse.json(
         { error: "Too many lesson completions. Please slow down." },

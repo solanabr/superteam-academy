@@ -86,3 +86,53 @@ describe("AuthModal — uncontrolled mode (unchanged)", () => {
     expect(screen.getByText(TITLE)).toBeInTheDocument();
   });
 });
+
+describe("AuthModal — Later affordance (LX-A4b)", () => {
+  it("shows the keep-progress framing, a Later button, and reassurance copy", () => {
+    renderWithIntl(<AuthModal open onOpenChange={() => {}} showLater />);
+
+    expect(screen.getByText(messages.auth.keepProgressTitle)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: messages.auth.later })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(messages.auth.progressSavedLocally)
+    ).toBeInTheDocument();
+  });
+
+  it("never uses discard/lose/delete language (F4) — progress is framed as kept", () => {
+    const claimCopy = [
+      messages.auth.keepProgressTitle,
+      messages.auth.keepProgressSubtitle,
+      messages.auth.later,
+      messages.auth.progressSavedLocally,
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    for (const forbidden of ["discard", "lose", "lost", "delete", "erase"]) {
+      expect(claimCopy).not.toContain(forbidden);
+    }
+    expect(claimCopy).toContain("saved");
+  });
+
+  it("closes and calls onLater when Later is tapped", () => {
+    const onOpenChange = vi.fn();
+    const onLater = vi.fn();
+    renderWithIntl(
+      <AuthModal open onOpenChange={onOpenChange} showLater onLater={onLater} />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: messages.auth.later }));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onLater).toHaveBeenCalledTimes(1);
+  });
+
+  it("omits the Later affordance by default", () => {
+    renderWithIntl(<AuthModal open onOpenChange={() => {}} />);
+
+    expect(
+      screen.queryByRole("button", { name: messages.auth.later })
+    ).not.toBeInTheDocument();
+  });
+});

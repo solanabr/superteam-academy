@@ -83,7 +83,11 @@
     "githubSignInFailed": "Could not start GitHub sign-in. Please try again.",
     "signingIn": "Signing in with your wallet...",
     "signingMessage": "Sign this message to verify your wallet ownership",
-    "walletConnected": "Wallet Connected"
+    "walletConnected": "Wallet Connected",
+    "keepProgressTitle": "Save your progress",
+    "keepProgressSubtitle": "Sign in to keep the work you just did. It's saved on this device until you do.",
+    "later": "Later",
+    "progressSavedLocally": "No rush — your progress stays saved on this device."
   },
   "landing": {
     "poweredBy": "Powered by",
@@ -249,7 +253,10 @@
     "askQuestion": "Ask a Question",
     "signInToAsk": "Sign in to ask a question",
     "dismissSuggestion": "Dismiss",
-    "dismissAllSuggestions": "Dismiss All"
+    "dismissAllSuggestions": "Dismiss All",
+    "progressRestored": "{count, plural, one {Restored # completed lesson} other {Restored # completed lessons}}",
+    "progressNeedsEnroll": "{count, plural, one {Enroll to save the lesson you completed} other {Enroll to save the # lessons you completed}}",
+    "progressNeedsRedo": "\"{lesson}\" needs to be finished — open it to complete."
   },
   "dashboard": {
     "allCaughtUp": "All caught up!",

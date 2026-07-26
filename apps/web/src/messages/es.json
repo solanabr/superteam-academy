@@ -83,7 +83,11 @@
     "githubSignInFailed": "No se pudo iniciar sesión con GitHub. Inténtalo de nuevo.",
     "signingIn": "Iniciando sesión con tu billetera...",
     "signingMessage": "Firma este mensaje para verificar la propiedad de tu billetera",
-    "walletConnected": "Billetera Conectada"
+    "walletConnected": "Billetera Conectada",
+    "keepProgressTitle": "Guarda tu progreso",
+    "keepProgressSubtitle": "Inicia sesión para conservar lo que acabas de hacer. Se guarda en este dispositivo hasta entonces.",
+    "later": "Más tarde",
+    "progressSavedLocally": "Sin prisa: tu progreso permanece guardado en este dispositivo."
   },
   "landing": {
     "poweredBy": "Powered by",
@@ -249,7 +253,10 @@
     "askQuestion": "Hacer una Pregunta",
     "signInToAsk": "Inicia sesión para hacer una pregunta",
     "dismissSuggestion": "Descartar",
-    "dismissAllSuggestions": "Descartar Todas"
+    "dismissAllSuggestions": "Descartar Todas",
+    "progressRestored": "{count, plural, one {# lección completada restaurada} other {# lecciones completadas restauradas}}",
+    "progressNeedsEnroll": "{count, plural, one {Inscríbete para guardar la lección que completaste} other {Inscríbete para guardar las # lecciones que completaste}}",
+    "progressNeedsRedo": "\"{lesson}\" debe completarse: ábrela para finalizar."
   },
   "dashboard": {
     "allCaughtUp": "¡Todo al día!",
