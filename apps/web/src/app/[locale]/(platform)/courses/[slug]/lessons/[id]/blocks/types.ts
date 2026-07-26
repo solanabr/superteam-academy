@@ -19,6 +19,17 @@ export interface BlockContext {
   onEnroll: () => void;
   /** Record a per-block proof keyed by the block `key`. */
   setProof: (blockKey: string, proof: unknown) => void;
+  /**
+   * Report whether a quiz block is "answered" (every question checked at least
+   * once). Drives AI-partner suppression in mixed code+quiz lessons: retrieval
+   * stays AI-free until the learner has attempted it (F18, #564).
+   */
+  setQuizAnswered: (blockKey: string, answered: boolean) => void;
+  /**
+   * True while any quiz block in this lesson is still unanswered — the code
+   * block threads it to ChallengeInterface, which keeps the AI Partner hidden.
+   */
+  aiSuppressed: boolean;
   /** Latest successful build (for deployable code + the deployed-program card). */
   buildUuid: string | null;
   programKeypairSecret: number[] | null;

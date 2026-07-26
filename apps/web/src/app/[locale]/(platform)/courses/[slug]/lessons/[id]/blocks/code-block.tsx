@@ -78,6 +78,7 @@ export function CodeBlock({ block, ctx }: BlockRenderProps) {
           isAlreadyCompleted={ctx.isCompleted}
           isEnrolled={ctx.isEnrolled}
           onEnroll={ctx.onEnroll}
+          aiSuppressed={ctx.aiSuppressed}
           className="h-full"
         />
       </div>

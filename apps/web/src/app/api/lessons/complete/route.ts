@@ -4,6 +4,7 @@ import { BLOCK_REGISTRY, type BlockType } from "@superteam-lms/content-schema";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCourseById, getLessonByIdForGrading } from "@/lib/content/queries";
+import type { CompletionDenyReason } from "@/lib/lessons/completion-error";
 import { GRADERS, type GradedBlockType } from "@/lib/grading/graders";
 import { openAttestation } from "@/lib/ai/check-seal";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
@@ -167,8 +168,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
     }
 
-    const deny = (status: 403 | 404 | 503, error: string) =>
-      NextResponse.json({ error }, { status });
+    // `reason` is the client's ONLY discriminator between the 403 causes (wrong
+    // quiz answer vs failed code suite vs missing reflection vs missing
+    // enrollment) — without it the client guessed from lesson shape and showed
+    // quiz-failers the "verify enrollment" copy (#564). Deliberately a bare
+    // machine string: the human copy stays localized client-side.
+    const deny = (
+      status: 403 | 404 | 503,
+      error: string,
+      reason?: CompletionDenyReason
+    ) => NextResponse.json(reason ? { error, reason } : { error }, { status });
 
     // 0) Unknown block type → CLOSED. A block whose _type is not in the registry
     //    cannot be reasoned about, so completion is denied (not silently skipped).
@@ -189,7 +198,19 @@ export async function POST(request: NextRequest) {
       const grader = GRADERS[type as GradedBlockType];
       if (!grader) return deny(503, "No grader for this block type");
       const result = await grader(block, proofs[block.key]);
-      if (!result.ok) return deny(result.status, "Block did not pass");
+      if (!result.ok) {
+        // 503 = we could not judge (executor outage) — no `reason`, since the
+        // block did not "fail"; grading was unavailable.
+        return deny(
+          result.status,
+          "Block did not pass",
+          result.status === 403
+            ? type === "quiz"
+              ? "quiz_failed"
+              : "challenge_failed"
+            : undefined
+        );
+      }
     }
 
     // 2) Required-but-UNGRADED blocks (openEnded): a sealed attestation must
@@ -212,7 +233,11 @@ export async function POST(request: NextRequest) {
           userId: user.id,
         })
       ) {
-        return deny(403, "This lesson requires a completed reflection");
+        return deny(
+          403,
+          "This lesson requires a completed reflection",
+          "reflection_required"
+        );
       }
     }
 
@@ -266,11 +291,10 @@ export async function POST(request: NextRequest) {
     ]);
 
     if (!onChainEnrollment) {
-      return NextResponse.json(
-        {
-          error: "On-chain enrollment not found. Please re-enroll the course.",
-        },
-        { status: 403 }
+      return deny(
+        403,
+        "On-chain enrollment not found. Please re-enroll the course.",
+        "enrollment_missing"
       );
     }
 
