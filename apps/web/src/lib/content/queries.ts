@@ -1,7 +1,12 @@
 import "server-only";
 
 import type { AwardT } from "@superteam-lms/content-schema";
-import type { Course, Lesson, LearningPath } from "@superteam-lms/types";
+import type {
+  Course,
+  Lesson,
+  LearningPath,
+  QuizBlockData,
+} from "@superteam-lms/types";
 import {
   getActiveDeployments,
   getDeploymentById,
@@ -219,6 +224,68 @@ export async function getLessonByIdForGrading(
   if (!inCourse) return null;
   const lesson = lessonsById.get(lessonId);
   return lesson ? projectLesson(lesson) : null;
+}
+
+/**
+ * A due review item (LX-B5) resolved against the content bundle: the lesson it
+ * retrieves, the course that owns it (for the deep link and the grade route's
+ * bundle-validation), the lesson's skill tags (interleaving key, F/pedagogy #12),
+ * and its retrieval-close quiz blocks.
+ *
+ * `quiz` is the v1 gradable retrieval exercise — the same authored quiz block
+ * used inside the lesson (LX-C1/LX-D2 reuse the quiz block for retrieval-closes),
+ * so `correct` flags ship here exactly as they do in the lesson (D4 open-book).
+ * The box transition is NOT client-asserted from them: grading re-runs the
+ * server quiz grader (see `/api/review/grade`). An empty `quiz` is a lesson with
+ * no authored retrieval-close yet — the surface renders it as a revisit link,
+ * never a Monaco editor (mobile constraint), and it is not inline-gradable in v1.
+ */
+export interface ResolvedReviewItem {
+  itemKey: string;
+  lessonTitle: string;
+  lessonSlug: string;
+  courseId: string;
+  courseSlug: string;
+  skills: string[];
+  quiz: QuizBlockData[];
+}
+
+/**
+ * Resolve due review item_keys (raw lesson `_id`s — PDA-seed convention, never
+ * stripped) into their bundle content. UNGATED, exactly like
+ * {@link getLessonByIdForGrading}: a review item exists because the learner
+ * completed the lesson, so it must resolve for review independent of current
+ * catalog visibility. Order is preserved; an item whose lesson or owning course
+ * is no longer in the bundle is dropped (it cannot be reviewed).
+ */
+export async function resolveReviewItems(
+  itemKeys: readonly string[]
+): Promise<ResolvedReviewItem[]> {
+  if (itemKeys.length === 0) return [];
+  const out: ResolvedReviewItem[] = [];
+  for (const itemKey of itemKeys) {
+    const lessonDoc = lessonsById.get(itemKey);
+    if (!lessonDoc) continue;
+    let owner: CourseDoc | undefined;
+    for (const c of coursesById.values()) {
+      if (courseLessonDocs(c).some((l) => l._id === itemKey)) {
+        owner = c;
+        break;
+      }
+    }
+    if (!owner) continue;
+    const lesson = projectLesson(lessonDoc);
+    out.push({
+      itemKey,
+      lessonTitle: lesson.title,
+      lessonSlug: lesson.slug,
+      courseId: owner._id,
+      courseSlug: owner.slug.current,
+      skills: strArr(lessonDoc.skills),
+      quiz: lesson.blocks.filter((b): b is QuizBlockData => b._type === "quiz"),
+    });
+  }
+  return out;
 }
 
 export async function getAllLearningPaths(): Promise<LearningPath[]> {

@@ -72,7 +72,7 @@ const intlMiddleware = createIntlMiddleware({
 function isProtectedRoute(pathname: string): boolean {
   // Only routes that require authentication (personal data)
   // Public routes (/courses, /leaderboard, /certificates/[id]) are NOT listed here
-  const protectedPaths = ["/dashboard", "/settings", "/teach"];
+  const protectedPaths = ["/dashboard", "/settings", "/teach", "/review"];
 
   // Strip locale prefix to check the remaining path
   for (const locale of locales) {

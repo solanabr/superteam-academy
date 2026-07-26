@@ -7,6 +7,7 @@ import { useTranslations, useLocale } from "next-intl";
 import {
   House,
   Book,
+  Brain,
   Trophy,
   UserCircle,
   Certificate,
@@ -22,6 +23,9 @@ import { useXpTotal } from "@/lib/solana/hooks";
 const sidebarItems = [
   { key: "dashboard", icon: House, href: "/dashboard" },
   { key: "courses", icon: Book, href: "/courses" },
+  // Review is a learning surface (LX-B5), sits next to Courses — not a
+  // competitive surface like the (demoted, #583) leaderboard below it.
+  { key: "review", icon: Brain, href: "/review" },
   { key: "leaderboard", icon: Trophy, href: "/leaderboard" },
   { key: "certificates", icon: Certificate, href: "/certificates" },
   { key: "profile", icon: UserCircle, href: "/profile" },

@@ -13,6 +13,7 @@ import {
   type ContinueCardTarget,
 } from "@/components/dashboard/continue-card";
 import { CurrentCoursesSection } from "@/components/dashboard/current-courses-section";
+import { ReviewStrip } from "@/components/dashboard/review-strip";
 import { MasteryPanel } from "@/components/dashboard/mastery-panel";
 import { NameRevealDialog } from "@/components/dashboard/name-reveal-dialog";
 import { RecommendedCoursesSection } from "@/components/dashboard/recommended-courses-section";
@@ -101,6 +102,10 @@ export default function DashboardPage() {
       {continueCardTarget && (
         <ContinueCard target={continueCardTarget} locale={locale} />
       )}
+
+      {/* Due-review strip — additive hero slot under Continue (LX-B6); renders
+          nothing when the review queue is empty. */}
+      <ReviewStrip userId={data.userId} />
 
       {/* V9 Dashboard Identity Panel — Level+XP | Medals | Activity Grid */}
       <DashboardIdentityPanel

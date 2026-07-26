@@ -53,7 +53,8 @@
     "certificates": "Certificados",
     "lowSolBalance": "Saldo SOL baixo.",
     "getDevnetSol": "Obter SOL devnet ->",
-    "dismissBanner": "Fechar"
+    "dismissBanner": "Fechar",
+    "review": "Revisão"
   },
   "auth": {
     "accountDeleted": "Esta conta foi excluída e não pode mais fazer login.",
@@ -324,7 +325,11 @@
     "communityActivity_answer_posted": "Postou uma resposta",
     "communityActivity_answer_accepted": "Resposta aceita",
     "communityActivity_upvote_thread": "Recebeu um voto positivo na discussão",
-    "communityActivity_upvote_answer": "Recebeu um voto positivo na resposta"
+    "communityActivity_upvote_answer": "Recebeu um voto positivo na resposta",
+    "reviewDueTitle": "{count} para revisar",
+    "reviewDueAria": "{count} itens para revisar, abrir revisão",
+    "reviewMore": "+{count} mais",
+    "reviewNow": "Revisar agora"
   },
   "gamification": {
     "xp": "XP",
@@ -1342,5 +1347,29 @@
       "perDay": "{count, plural, one {# lição por dia} other {# lições por dia}}"
     },
     "browseAll": "Ou explore todos os cursos"
+  },
+  "review": {
+    "title": "Revisão",
+    "subtitle": "Uma sessão curta de recuperação espaçada — lembre rápido o que você aprendeu.",
+    "signInTitle": "Entre para revisar",
+    "signInHint": "Sua fila de revisão é pessoal da sua conta.",
+    "emptyTitle": "Tudo em dia",
+    "emptyHint": "Nada para revisar agora. Volte mais tarde.",
+    "browseCourses": "Explorar cursos",
+    "progress": "{done} de {total} revisados",
+    "sessionComplete": "Sessão concluída — boa memória.",
+    "retrievalLabel": "Prática de recuperação",
+    "cardLabel": "Revisão: {lesson}",
+    "explanationLabel": "Por quê",
+    "answerCorrect": "Correto",
+    "answerIncorrect": "Quase",
+    "scheduledPass": "Agendado para mais adiante — você mandou bem.",
+    "scheduledMiss": "Vamos trazer este de volta mais cedo.",
+    "gradeError": "Não foi possível salvar sua revisão. Tente de novo.",
+    "retry": "Tentar de novo",
+    "submit": "Verificar resposta",
+    "revisitLabel": "Revisitar",
+    "revisitHint": "Ainda não há um quiz rápido para este — revisite a lição para relembrar.",
+    "revisitCta": "Abrir lição"
   }
 }
