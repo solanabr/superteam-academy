@@ -791,7 +791,7 @@
       "reject": "Descartar",
       "dismissed": "Propuesta descartada.",
       "stale": "Tu código cambió — esta propuesta quedó desactualizada.",
-      "applyFailed": "No se pudo aplicar automáticamente — tu código cambió. Aplica el cambio de abajo a mano:",
+      "applyFailed": "Esta sugerencia no se pudo aplicar automáticamente — revísala abajo y haz el cambio manualmente.",
       "checkPrompt": "Una pregunta rápida antes de aplicar:",
       "checkIncorrect": "No es así.",
       "checkVerifyError": "No se pudo verificar tu respuesta. Inténtalo de nuevo.",

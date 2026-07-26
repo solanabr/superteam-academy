@@ -224,7 +224,7 @@ describe("DiffCard additional behavior", () => {
 
     // The learner sees why it couldn't auto-apply plus the edit spelled out.
     expect(
-      screen.getByText(/couldn't apply this automatically/i)
+      screen.getByText(/couldn't be applied automatically/i)
     ).toBeInTheDocument();
     expect(screen.getByText("NOT_IN_BUFFER")).toBeInTheDocument();
     expect(screen.getByText("the replacement")).toBeInTheDocument();
