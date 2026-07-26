@@ -37,9 +37,14 @@ const publicEnvSchema = z.object({
       { error: "must use https:// in production" }
     ),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
-  // Public, rate-limited browser RPC endpoint. MUST NOT carry a privileged
-  // Helius API key — it is inlined into the client bundle. The Helius-keyed
-  // endpoint lives server-side as SOLANA_RPC_URL in env.server.ts.
+  // Public browser RPC endpoint — inlined into the client bundle, so the key it
+  // carries (if any) is visible in the Network tab. Two ways to populate it
+  // safely: a keyless rate-limited public endpoint (e.g. api.devnet.solana.com),
+  // or a Helius key that is DOMAIN-RESTRICTED in the Helius dashboard (Allowed
+  // Origins = the app's domains only) so a copied key can't be abused off-domain.
+  // This key MUST be a *separate* key from the server's SOLANA_RPC_URL: that one
+  // is unrestricted, and server calls send no browser Origin — sharing one key
+  // and origin-restricting it would break every server-side RPC/DAS read.
   NEXT_PUBLIC_SOLANA_RPC_URL: z.url(),
   // Optional Sentry DSN (public/safe to expose). Unset disables Sentry.
   NEXT_PUBLIC_SENTRY_DSN: z.url().optional().or(z.literal("")),

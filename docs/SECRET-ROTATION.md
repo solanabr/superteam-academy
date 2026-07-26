@@ -122,11 +122,11 @@ dashboard (Authentication → Providers → Google).
 
 ### Known drift in the env surface (not secrets — clean these up)
 
-| Var                                                                                                     | Where                            | Status                                                                                                              |
-| ------------------------------------------------------------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_SANITY_PROJECT_ID`, `NEXT_PUBLIC_SANITY_DATASET`, `SANITY_API_TOKEN`, `SANITY_ADMIN_TOKEN` | `turbo.json` `env` (lines 12-15) | **DEAD.** Read nowhere in the codebase. Delete from `turbo.json` and from every env store.                          |
-| `NEXT_PUBLIC_HELIUS_API_KEY`                                                                            | `turbo.json` `env`               | **PHANTOM.** Declared as a build-cache key but read nowhere. Helius is server-side only (`HELIUS_API_KEY`). Delete. |
-| `GITHUB_TOKEN`, `MODERATION_WEBHOOK_URL`                                                                | absent from `.env.example`       | **UNDOCUMENTED.** Both are live in `env.server.ts`. Add them to `.env.example`.                                     |
+| Var                                                                                                     | Where                            | Status                                                                                                                                                                                            |
+| ------------------------------------------------------------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SANITY_PROJECT_ID`, `NEXT_PUBLIC_SANITY_DATASET`, `SANITY_API_TOKEN`, `SANITY_ADMIN_TOKEN` | `turbo.json` `env` (lines 12-15) | **DEAD.** Read nowhere in the codebase. Delete from `turbo.json` and from every env store.                                                                                                        |
+| `NEXT_PUBLIC_HELIUS_API_KEY`                                                                            | (removed)                        | **RESOLVED (#467).** Was a phantom `turbo.json` build-cache key, read nowhere; now deleted. Helius is server-side only (`HELIUS_API_KEY`). Purge any leftover value from Vercel/local env stores. |
+| `GITHUB_TOKEN`, `MODERATION_WEBHOOK_URL`                                                                | absent from `.env.example`       | **UNDOCUMENTED.** Both are live in `env.server.ts`. Add them to `.env.example`.                                                                                                                   |
 
 Google OAuth has **no** app-side env var — the client ID/secret live in the Supabase
 dashboard (Authentication → Providers → Google).
@@ -157,9 +157,9 @@ dashboard (Authentication → Providers → Google).
 - [ ] Helius (`HELIUS_API_KEY` **+ `SOLANA_RPC_URL` together**), Gemini, `GITHUB_TOKEN`, `ADMIN_SECRET`, `BUILD_SERVER_API_KEY`, `SENTRY_AUTH_TOKEN`, `MODERATION_WEBHOOK_URL` all freshly minted for prod.
 - [ ] `AI_PARTNER_SEAL_SECRET` set explicitly in prod (not derived from `SUPABASE_SERVICE_ROLE_KEY`, so rotating the DB key doesn't silently invalidate live check tokens).
 - [ ] `ARWEAVE_UPLOADER_SECRET` is a dedicated, funded keypair — never reused as a signer.
-- [ ] Dead `SANITY_*` + phantom `NEXT_PUBLIC_HELIUS_API_KEY` deleted from `turbo.json` and every env store (Vercel prod + preview, local).
+- [ ] Dead `SANITY_*` deleted from `turbo.json` and every env store; phantom `NEXT_PUBLIC_HELIUS_API_KEY` already removed from `turbo.json` (#467) — purge any leftover value from Vercel prod + preview + local.
 - [ ] `GITHUB_TOKEN` + `MODERATION_WEBHOOK_URL` added to `.env.example`.
-- [ ] `NEXT_PUBLIC_SOLANA_RPC_URL` verified to carry **no** API key (it ships in the browser bundle).
+- [ ] `NEXT_PUBLIC_SOLANA_RPC_URL` carries either no API key or a **domain-restricted** Helius key (it ships in the browser bundle) — and is a **separate** key from the unrestricted `SOLANA_RPC_URL` (#467).
 - [ ] `backend_signer` rotated to a distinct hot key at mainnet init (**#118**).
 - [ ] Program / mint authority under Squads multisig (**#144**).
 - [ ] All prod secrets live only in the Vercel/Cloud Run encrypted env; on-chain keypairs in multisig/HW; repo clean.
