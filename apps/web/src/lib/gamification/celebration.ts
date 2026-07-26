@@ -3,10 +3,14 @@ import confetti from "canvas-confetti";
 /**
  * Celebration re-tiering (LX-B11, PED-10 overjustification).
  *
- * Routine per-lesson rewards undermine intrinsic motivation, so confetti is
- * reserved for RARE, meaningful milestones. Lesson/challenge completion gets a
- * calm checkmark acknowledgment; a successful devnet deploy and a level-up get
- * a medium moment; a credential mint gets the full-screen celebration.
+ * Routine per-lesson rewards undermine intrinsic motivation, so per the
+ * LX-B11 acceptance line, confetti fires ONLY at deploy + credential mint.
+ * Lesson/challenge completion gets a calm checkmark acknowledgment; a
+ * level-up gets a popup-only medium moment — with Level = floor(sqrt(XP/100))
+ * early level-ups arrive every few lessons, and confetti that frequent would
+ * recreate the routine-reward pattern this tiering exists to kill; a
+ * successful devnet deploy gets a single confetti burst; a credential mint
+ * gets the full-screen celebration.
  *
  * All visual celebration respects `prefers-reduced-motion`.
  */
@@ -18,13 +22,13 @@ export type CelebrationEvent =
   | "level-up"
   | "credential-mint";
 
-export type CelebrationTier = "none" | "medium" | "full";
+export type CelebrationTier = "none" | "popup" | "medium" | "full";
 
 export const CELEBRATION_TIERS: Record<CelebrationEvent, CelebrationTier> = {
   "lesson-complete": "none",
   "challenge-pass": "none",
   "deploy-success": "medium",
-  "level-up": "medium",
+  "level-up": "popup",
   "credential-mint": "full",
 } as const;
 
@@ -75,10 +79,13 @@ export function resetCelebrationThrottleForTests(): void {
 /**
  * Fire the visual celebration for an event according to its tier.
  * `none` renders nothing — the calm acknowledgment lives in the calling UI.
+ * `popup` also fires NO confetti — the animated popup rendered by the calling
+ * UI (e.g. LevelUpPopup's pop-spring card) IS the medium moment; only the
+ * `medium` and `full` tiers ever reach canvas-confetti.
  */
 export function celebrate(event: CelebrationEvent): void {
   const tier = celebrationTierFor(event);
-  if (tier === "none") return;
+  if (tier === "none" || tier === "popup") return;
   if (typeof window === "undefined") return;
   if (prefersReducedMotion()) return;
 

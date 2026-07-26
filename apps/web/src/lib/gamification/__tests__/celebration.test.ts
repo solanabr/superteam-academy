@@ -48,7 +48,7 @@ describe("celebrationTierFor — the LX-B11 tier map", () => {
     "lesson-complete": "none",
     "challenge-pass": "none",
     "deploy-success": "medium",
-    "level-up": "medium",
+    "level-up": "popup",
     "credential-mint": "full",
   };
 
@@ -58,16 +58,12 @@ describe("celebrationTierFor — the LX-B11 tier map", () => {
     });
   }
 
-  it("confetti-worthy tiers are exactly deploy, level-up, and credential mint", () => {
-    const celebrated = Object.entries(CELEBRATION_TIERS)
-      .filter(([, tier]) => tier !== "none")
+  it("confetti-worthy tiers are EXACTLY deploy + credential mint (LX-B11 accept line)", () => {
+    const confettiWorthy = Object.entries(CELEBRATION_TIERS)
+      .filter(([, tier]) => tier === "medium" || tier === "full")
       .map(([event]) => event)
       .sort();
-    expect(celebrated).toEqual([
-      "credential-mint",
-      "deploy-success",
-      "level-up",
-    ]);
+    expect(confettiWorthy).toEqual(["credential-mint", "deploy-success"]);
   });
 });
 
@@ -105,11 +101,15 @@ describe("celebrate — confetti firing per tier", () => {
     expect(confettiMock).not.toHaveBeenCalled();
   });
 
-  it("fires a single medium burst for deploy success and level-up", () => {
+  it("never fires for level-up — the popup itself is the medium moment", () => {
+    celebrate("level-up");
+    vi.advanceTimersByTime(1000);
+    expect(confettiMock).not.toHaveBeenCalled();
+  });
+
+  it("fires a single medium burst for deploy success", () => {
     celebrate("deploy-success");
     expect(confettiMock).toHaveBeenCalledTimes(1);
-    celebrate("level-up");
-    expect(confettiMock).toHaveBeenCalledTimes(2);
   });
 
   it("fires the full multi-burst sequence for a credential mint", () => {
@@ -140,7 +140,6 @@ describe("celebrate — confetti firing per tier", () => {
     stubMatchMedia(true);
     expect(prefersReducedMotion()).toBe(true);
     celebrate("deploy-success");
-    celebrate("level-up");
     celebrate("credential-mint");
     vi.advanceTimersByTime(1000);
     expect(confettiMock).not.toHaveBeenCalled();

@@ -6,7 +6,12 @@ import { celebrate } from "@/lib/gamification/celebration";
 import { cn } from "@/lib/utils";
 
 /**
- * Level-up popup — the "medium" celebration moment (LX-B11).
+ * Level-up popup — the popup-only medium moment (LX-B11 acceptance line:
+ * "confetti fires only at deploy + credential mint; level-up gets a medium
+ * moment"). The animated pop-spring card IS the moment — the level-up tier
+ * resolves to "popup" in the celebration module, so celebrate("level-up")
+ * fires no confetti (early level-ups arrive every few lessons; confetti that
+ * frequent would recreate the routine-reward pattern PED-10 warns about).
  * Reuses the v9 .popup-grad pattern shared with achievement/certificate popups.
  */
 
@@ -35,6 +40,8 @@ export function LevelUpPopup({ className }: { className?: string }) {
   const handleLevelUp = useCallback((e: Event) => {
     const detail = (e as CustomEvent<LevelUpEvent>).detail;
     setEvents((prev) => [...prev, detail]);
+    // Routed through the tier module for uniformity; resolves to the "popup"
+    // tier, which is guaranteed confetti-free (asserted in celebration.test.ts).
     celebrate("level-up");
     setTimeout(() => {
       setEvents((prev) => prev.filter((ev) => ev.uid !== detail.uid));
