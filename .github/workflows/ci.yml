@@ -58,6 +58,13 @@ jobs:
           filters: |
             frontend:
               - 'apps/web/**'
+              # The `Unit tests` step runs `pnpm -r test`, which covers
+              # content-schema and content-lint (that was the #374 fix). Without
+              # `packages/**` here the whole job is skipped for a packages-only
+              # PR, so those suites never run on precisely the changes they
+              # exist to guard — #638 shipped two new test files with zero CI
+              # coverage. Keep this in sync with what `pnpm -r` reaches.
+              - 'packages/**'
               - 'package.json'
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
