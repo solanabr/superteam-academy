@@ -640,6 +640,63 @@ CREATE TRIGGER trg_enforce_profile_role_write
 REVOKE EXECUTE ON FUNCTION public.enforce_profile_role_write() FROM PUBLIC, anon, authenticated;
 
 -- ─────────────────────────────────────────────
+-- 5a-bis. LOCK profiles.wallet_address WRITES TO service_role (#408)
+-- ─────────────────────────────────────────────
+-- Same escalation class as the role lock above, different column. The
+-- self-service profiles RLS policies (auth.uid() = id for INSERT/UPDATE) do not
+-- constrain WHICH columns are written, so without this guard any authenticated
+-- user could overwrite wallet_address on their own row — clobbering their linked
+-- wallet, or squatting an unclaimed wallet before its real owner links it — via
+-- a PostgREST INSERT/UPDATE, spoofing the wallet identity that Helius XP
+-- resolution and the linked-wallet trust chain rely on. wallet_address is
+-- legitimately written only by the two service-role SIWS paths (api/auth/wallet,
+-- api/auth/link-wallet). This BEFORE trigger makes it writable only by
+-- service_role: non-privileged UPDATEs that change it error; non-privileged
+-- INSERTs are coerced back to NULL (the signup path never sets it). SECURITY
+-- INVOKER so current_user reflects the actual caller. Live on prod since
+-- 2026-07-10. See migration 20260710120000_drop_teacher_role.sql.
+CREATE OR REPLACE FUNCTION public.enforce_profile_wallet_write()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = ''
+AS $$
+DECLARE
+  jwt_role TEXT;
+  is_privileged BOOLEAN;
+BEGIN
+  jwt_role := NULLIF(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role';
+  is_privileged := COALESCE(current_user = 'service_role' OR jwt_role = 'service_role', false);
+
+  IF is_privileged THEN
+    RETURN NEW;
+  END IF;
+
+  IF TG_OP = 'UPDATE' THEN
+    IF NEW.wallet_address IS DISTINCT FROM OLD.wallet_address THEN
+      RAISE EXCEPTION
+        'permission denied: wallet_address may only be changed by service_role'
+        USING ERRCODE = 'insufficient_privilege';
+    END IF;
+  ELSIF TG_OP = 'INSERT' THEN
+    IF NEW.wallet_address IS NOT NULL THEN
+      NEW.wallet_address := NULL;
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_enforce_profile_wallet_write ON public.profiles;
+CREATE TRIGGER trg_enforce_profile_wallet_write
+  BEFORE INSERT OR UPDATE ON public.profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION public.enforce_profile_wallet_write();
+
+REVOKE EXECUTE ON FUNCTION public.enforce_profile_wallet_write() FROM PUBLIC, anon, authenticated;
+
+-- ─────────────────────────────────────────────
 -- 5b. LEADERBOARD RPC
 -- ─────────────────────────────────────────────
 
