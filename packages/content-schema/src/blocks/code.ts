@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { blockBase, relativePath } from "./base";
+import { Attribution } from "../licensing";
 
 export const LANGUAGES = ["typescript", "rust"] as const;
 export const BUILD_TYPES = ["standard", "buildable"] as const;
@@ -53,6 +54,16 @@ export const CodeBlock = z
      * so authored input can never dominate the cache-shaped prefix.
      */
     tutorNotes: z.array(z.string().min(1).max(500)).max(6).optional(),
+    /**
+     * Optional adaptation declaration (unified launch spec §3 item 31, CAT-15).
+     * Absent = the sample is claimed ORIGINAL — the catalog default, and the
+     * common case; nothing is emitted. Present = the author is asserting they
+     * adapted an upstream, and content-lint gate 20 holds `license` to the
+     * ALLOWED_LICENSES allow-list and `source`/`url` to the forbidden-corpus
+     * list. The field cannot prove undeclared code is original — that is the
+     * human review checkbox (docs/CONTENT-ORIGINALITY.md).
+     */
+    attribution: Attribution.optional(),
   })
   .refine((b) => b.buildType !== "buildable" || b.language === "rust", {
     message: "buildType 'buildable' requires language 'rust'",
