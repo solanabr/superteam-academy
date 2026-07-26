@@ -7,6 +7,7 @@ import type { Course, LearningPath } from "@superteam-lms/types";
 import { CourseCard } from "@/components/course/course-card";
 import { type PathCourseProgress } from "@/components/course/learning-path-section";
 import { PathsView } from "@/components/course/paths-view";
+import { useSegmentState } from "@/lib/onboarding/use-segment-state";
 import { createClient } from "@/lib/supabase/client";
 
 type Difficulty = "beginner" | "intermediate" | "advanced";
@@ -122,6 +123,9 @@ export function CourseCatalogClient({
   );
   const [activePath, setActivePath] = useState<string | null>(null);
   const { statuses, progress } = useCourseProgress(courses);
+  // Segment/goal from the /start intake (LX-A3): drives the path-page modality
+  // and the goal framing line. Absent for learners who never ran the intake.
+  const { segment, goal } = useSegmentState();
 
   // Build reverse lookup: courseId → first learning path title (for course cards)
   const coursePathLabel = useMemo(() => {
@@ -321,13 +325,16 @@ export function CourseCatalogClient({
       )}
 
       {/* ════════ TAB 2: LEARNING PATHS (LX-A7) ════════ */}
-      {/* `segment` is intentionally omitted until LX-A3 segment state lands
-          (#566) — PathsView defaults to the segment-1 presentation. */}
+      {/* segment/goal come from the /start intake (LX-A3); both are undefined
+          for learners who never ran it, and PathsView defaults to the
+          segment-1 presentation with no goal framing. */}
       {activeTab === "paths" && (
         <PathsView
           learningPaths={learningPaths}
           progress={progress}
           onBrowseAll={() => setActiveTab("all")}
+          segment={segment}
+          goal={goal}
         />
       )}
     </div>

@@ -188,9 +188,12 @@
     "startHere": "Comece aqui",
     "browseAllCourses": "Ver todos os cursos",
     "skipAhead": "Pular adiante",
-    "pathGuidanceFixed": "Siga a trilha na ordem \u2014 cada curso se apoia no anterior.",
-    "pathGuidanceGuided": "Os cursos seguem uma ordem recomendada \u2014 pule adiante quando quiser.",
-    "pathGuidanceOpen": "Entre em qualquer curso \u2014 a ordem é uma recomendação, não uma exigência."
+    "pathGuidanceFixed": "Siga a trilha na ordem — cada curso se apoia no anterior.",
+    "pathGuidanceGuided": "Os cursos seguem uma ordem recomendada — pule adiante quando quiser.",
+    "pathGuidanceOpen": "Entre em qualquer curso — a ordem é uma recomendação, não uma exigência.",
+    "pathGoalJob": "Sua trilha rumo a uma vaga de dev Solana começa aqui.",
+    "pathGoalBuild": "Tudo o que você precisa para lançar seu próprio projeto Solana.",
+    "pathGoalExplore": "Explore como a Solana funciona, um curso de cada vez."
   },
   "lesson": {
     "content": "Conteúdo",
@@ -1263,5 +1266,67 @@
       "errorFetch": "Falha ao atualizar a denúncia. Tente novamente.",
       "errorNetwork": "Erro de rede. Tente novamente."
     }
+  },
+  "start": {
+    "back": "Voltar",
+    "progress": "Passo {current} de {total}",
+    "screen1": {
+      "title": "Você já programou antes?",
+      "subtitle": "Isso serve só para te levar à primeira lição certa — você pode mudar quando quiser."
+    },
+    "exp": {
+      "jsTs": {
+        "label": "Já publiquei apps com JavaScript ou TypeScript",
+        "desc": "Você já programa — o modelo da Solana é a parte nova."
+      },
+      "web3": {
+        "label": "Já escrevi contratos inteligentes ou publiquei on-chain",
+        "desc": "Pule o básico e vá direto para construir na Solana."
+      },
+      "new": {
+        "label": "Ainda não programei profissionalmente",
+        "desc": "Comece do zero, uma lição de cada vez."
+      }
+    },
+    "screen2": {
+      "title": "O que você veio fazer?",
+      "subtitle": "Vamos moldar sua trilha em torno disso."
+    },
+    "goal": {
+      "job": {
+        "label": "Conquistar uma vaga de dev Solana",
+        "desc": "Monte um portfólio de trabalho on-chain e uma credencial verificável."
+      },
+      "build": {
+        "label": "Lançar meu próprio projeto",
+        "desc": "Chegue a um app ou protocolo Solana funcionando o quanto antes."
+      },
+      "explore": {
+        "label": "Entender como a Solana funciona",
+        "desc": "Aprenda os conceitos no seu ritmo, sem pressão."
+      }
+    },
+    "screen3": {
+      "title": "Com o que você curte trabalhar?",
+      "subtitle": "Opcional — escolha o que combina, ou pule. Ajuda a ajustar os exemplos.",
+      "skip": "Pular",
+      "continue": "Continuar"
+    },
+    "interest": {
+      "defi": "DeFi",
+      "nfts": "NFTs",
+      "payments": "Pagamentos",
+      "gaming": "Games",
+      "infra": "Infraestrutura",
+      "ai": "IA x Solana"
+    },
+    "screen4": {
+      "title": "Defina uma meta diária",
+      "subtitle": "Uma meta diária pequena vence a maratona ocasional. Você pode mudar depois."
+    },
+    "dailyGoal": {
+      "perDay": "{count, plural, one {# lição por dia} other {# lições por dia}}"
+    },
+    "browseAll": "Ou explore todos os cursos"
   }
 }

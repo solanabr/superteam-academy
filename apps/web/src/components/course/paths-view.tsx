@@ -8,7 +8,9 @@ import { ArrowRight, BookOpen } from "@phosphor-icons/react";
 import type { LearningPath } from "@superteam-lms/types";
 import {
   DEFAULT_SEGMENT,
+  GOAL_FRAMING_KEY,
   SEGMENT_PATH_MODALITY,
+  type GoalId,
   type LearnerSegment,
   type PathGuidanceModality,
 } from "@/lib/courses/learner-segment";
@@ -30,6 +32,12 @@ interface PathsViewProps {
    * the stored segment and passes it here — no other change required.
    */
   segment?: LearnerSegment;
+  /**
+   * Learner goal from the /start intake (LX-A2). When present, a goal-specific
+   * framing line renders above the guidance row ("goal→path-page framing
+   * copy"). Omitted for learners who never ran the intake.
+   */
+  goal?: GoalId;
 }
 
 const GUIDANCE_KEY: Record<PathGuidanceModality, string> = {
@@ -49,6 +57,7 @@ export function PathsView({
   progress,
   onBrowseAll,
   segment = DEFAULT_SEGMENT,
+  goal,
 }: PathsViewProps) {
   const t = useTranslations("courses");
   const locale = useLocale();
@@ -89,6 +98,11 @@ export function PathsView({
 
   return (
     <div className="space-y-6">
+      {/* Goal-specific framing (LX-A2: goal→path-page framing copy). */}
+      {goal ? (
+        <p className="path-goal-framing">{t(GOAL_FRAMING_KEY[goal])}</p>
+      ) : null}
+
       {/* Guidance line + browse-all escape */}
       <div className="path-guidance-row">
         <p className="path-guidance">{t(GUIDANCE_KEY[modality])}</p>

@@ -26,6 +26,13 @@ CREATE TABLE profiles (
   -- the self-service profiles RLS policies. See migration
   -- 20260703130652_add_profiles_role_and_lock_role_writes.sql.
   role TEXT NOT NULL DEFAULT 'learner',
+  -- /start intake state (LX-A3, #566). Self-writable via the own-row UPDATE
+  -- policy — unlike role, these are non-sensitive and untouched by the role
+  -- trigger. NULL until a learner runs the intake. See migration
+  -- 20260726150000_add_profiles_segment_state.sql.
+  segment SMALLINT,
+  goal TEXT,
+  daily_goal SMALLINT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -140,6 +147,13 @@ ALTER TABLE profiles
   ADD CONSTRAINT chk_profiles_name_rerolls_max CHECK (name_rerolls_used <= 3);
 ALTER TABLE profiles
   ADD CONSTRAINT chk_profiles_role CHECK (role IN ('learner', 'teacher', 'admin'));
+-- /start intake bounds (LX-A3, #566). NULL passes each CHECK (never-onboarded rows).
+ALTER TABLE profiles
+  ADD CONSTRAINT chk_profiles_segment CHECK (segment IN (1, 2, 3));
+ALTER TABLE profiles
+  ADD CONSTRAINT chk_profiles_goal CHECK (goal IN ('job', 'build', 'explore'));
+ALTER TABLE profiles
+  ADD CONSTRAINT chk_profiles_daily_goal CHECK (daily_goal BETWEEN 1 AND 20);
 
 ALTER TABLE user_xp
   ADD CONSTRAINT chk_user_xp_total_xp_non_negative CHECK (total_xp >= 0);
