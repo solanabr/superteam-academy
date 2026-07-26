@@ -912,6 +912,72 @@ export type Database = {
           },
         ];
       };
+      review_schedule: {
+        Row: {
+          box: number;
+          interval_days: number;
+        };
+        Insert: {
+          box: number;
+          interval_days: number;
+        };
+        Update: {
+          box?: number;
+          interval_days?: number;
+        };
+        Relationships: [];
+      };
+      review_items: {
+        Row: {
+          user_id: string;
+          item_key: string;
+          box: number;
+          due_at: string;
+          last_result: boolean | null;
+          last_reviewed_at: string | null;
+          lapses: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          item_key: string;
+          box?: number;
+          due_at?: string;
+          last_result?: boolean | null;
+          last_reviewed_at?: string | null;
+          lapses?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          item_key?: string;
+          box?: number;
+          due_at?: string;
+          last_result?: boolean | null;
+          last_reviewed_at?: string | null;
+          lapses?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "review_items_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "review_items_box_fkey";
+            columns: ["box"];
+            isOneToOne: false;
+            referencedRelation: "review_schedule";
+            referencedColumns: ["box"];
+          },
+        ];
+      };
     };
     Views: {
       public_onchain_deployments: {
@@ -1032,6 +1098,27 @@ export type Database = {
         Returns: {
           assists_used: number;
           chat_log: Json;
+        }[];
+      };
+      schedule_review_item: {
+        Args: {
+          p_user_id: string;
+          p_item_key: string;
+        };
+        Returns: {
+          box: number;
+          due_at: string;
+        }[];
+      };
+      record_review_result: {
+        Args: {
+          p_user_id: string;
+          p_item_key: string;
+          p_passed: boolean;
+        };
+        Returns: {
+          box: number;
+          due_at: string;
         }[];
       };
       award_xp: {

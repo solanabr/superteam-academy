@@ -2110,3 +2110,134 @@ $$;
 
 REVOKE ALL ON FUNCTION get_challenge_assist_state(UUID, TEXT) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION get_challenge_assist_state(UUID, TEXT) TO service_role;
+
+-- ─────────────────────────────────────────────────────────────────────────
+-- Review spine (LX-B3, #569): spaced-repetition substrate. review_schedule
+-- holds the box→interval schedule AS DATA (PED-04: 1/3/7/21 is convention, not
+-- evidence — re-tunable by editing rows, never hardcoded in a function; no ML
+-- scheduler ever). review_items holds each learner's per-lesson queue. Writes
+-- go ONLY through the two SECURITY DEFINER RPCs (challenge_assists hardening);
+-- learners read their OWN queue via an own-row SELECT policy. item_key is the
+-- raw lesson _id (PDA-seed convention); skills resolve from the bundle at read
+-- time, so there is no skill column. The feed (LX-B4) and /review page (LX-B5)
+-- build on this; neither is defined here.
+-- ─────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS review_schedule (
+  box           SMALLINT PRIMARY KEY,
+  interval_days INTEGER  NOT NULL CHECK (interval_days > 0)
+);
+
+ALTER TABLE review_schedule ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Review schedule is viewable by everyone" ON review_schedule;
+CREATE POLICY "Review schedule is viewable by everyone"
+  ON review_schedule FOR SELECT USING (true);
+
+-- CONVENTION, NOT EVIDENCE (PED-04): 1 / 3 / 7 / 21 days as data.
+INSERT INTO review_schedule (box, interval_days) VALUES
+  (1, 1),
+  (2, 3),
+  (3, 7),
+  (4, 21)
+ON CONFLICT (box) DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS review_items (
+  user_id        UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  item_key       TEXT NOT NULL,
+  box            SMALLINT NOT NULL DEFAULT 1 REFERENCES review_schedule(box),
+  due_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_result    BOOLEAN,
+  last_reviewed_at TIMESTAMPTZ,
+  lapses         INTEGER NOT NULL DEFAULT 0,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, item_key)
+);
+
+CREATE INDEX IF NOT EXISTS idx_review_items_user_due
+  ON review_items (user_id, due_at);
+
+ALTER TABLE review_items ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view their own review items" ON review_items;
+CREATE POLICY "Users can view their own review items"
+  ON review_items FOR SELECT USING (auth.uid() = user_id);
+
+-- Enqueue a lesson's item at box 1 if absent; existing item left untouched.
+CREATE OR REPLACE FUNCTION schedule_review_item(
+  p_user_id  UUID,
+  p_item_key TEXT
+) RETURNS TABLE (box SMALLINT, due_at TIMESTAMPTZ)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_interval INT;
+BEGIN
+  SELECT interval_days INTO v_interval
+    FROM public.review_schedule WHERE box = 1;
+
+  INSERT INTO public.review_items (user_id, item_key, box, due_at)
+  VALUES (p_user_id, p_item_key, 1, now() + make_interval(days => v_interval))
+  ON CONFLICT (user_id, item_key) DO NOTHING;
+
+  RETURN QUERY
+    SELECT ri.box, ri.due_at
+    FROM public.review_items ri
+    WHERE ri.user_id = p_user_id AND ri.item_key = p_item_key;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION schedule_review_item(UUID, TEXT) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION schedule_review_item(UUID, TEXT) TO service_role;
+
+-- Record a graded review: pass advances box (clamped at max), miss resets to
+-- box 1 and counts a lapse. No day counts in the body — read from the schedule.
+CREATE OR REPLACE FUNCTION record_review_result(
+  p_user_id  UUID,
+  p_item_key TEXT,
+  p_passed   BOOLEAN
+) RETURNS TABLE (box SMALLINT, due_at TIMESTAMPTZ)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_max_box  SMALLINT;
+  v_new_box  SMALLINT;
+  v_interval INT;
+BEGIN
+  SELECT max(rs.box) INTO v_max_box FROM public.review_schedule rs;
+
+  IF p_passed THEN
+    v_new_box := LEAST(
+      (SELECT ri.box FROM public.review_items ri
+        WHERE ri.user_id = p_user_id AND ri.item_key = p_item_key) + 1,
+      v_max_box
+    );
+  ELSE
+    v_new_box := 1;
+  END IF;
+
+  SELECT interval_days INTO v_interval
+    FROM public.review_schedule WHERE box = v_new_box;
+
+  UPDATE public.review_items ri
+     SET box              = v_new_box,
+         due_at           = now() + make_interval(days => v_interval),
+         last_result      = p_passed,
+         last_reviewed_at = now(),
+         lapses           = ri.lapses + CASE WHEN p_passed THEN 0 ELSE 1 END,
+         updated_at       = now()
+   WHERE ri.user_id = p_user_id AND ri.item_key = p_item_key;
+
+  RETURN QUERY
+    SELECT ri.box, ri.due_at
+    FROM public.review_items ri
+    WHERE ri.user_id = p_user_id AND ri.item_key = p_item_key;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION record_review_result(UUID, TEXT, BOOLEAN) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION record_review_result(UUID, TEXT, BOOLEAN) TO service_role;
