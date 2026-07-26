@@ -53,7 +53,8 @@
     "certificates": "Certificados",
     "lowSolBalance": "Saldo SOL bajo.",
     "getDevnetSol": "Obtener SOL devnet ->",
-    "dismissBanner": "Cerrar"
+    "dismissBanner": "Cerrar",
+    "review": "Repaso"
   },
   "auth": {
     "accountDeleted": "Esta cuenta ha sido eliminada y no puede iniciar sesión.",
@@ -324,7 +325,11 @@
     "communityActivity_answer_posted": "Publicó una respuesta",
     "communityActivity_answer_accepted": "Respuesta aceptada",
     "communityActivity_upvote_thread": "Recibió un voto positivo en la discusión",
-    "communityActivity_upvote_answer": "Recibió un voto positivo en la respuesta"
+    "communityActivity_upvote_answer": "Recibió un voto positivo en la respuesta",
+    "reviewDueTitle": "{count} para repasar",
+    "reviewDueAria": "{count} elementos para repasar, abrir repaso",
+    "reviewMore": "+{count} más",
+    "reviewNow": "Repasar ahora"
   },
   "gamification": {
     "xp": "XP",
@@ -1342,5 +1347,29 @@
       "perDay": "{count, plural, one {# lección al día} other {# lecciones al día}}"
     },
     "browseAll": "O explora todos los cursos"
+  },
+  "review": {
+    "title": "Repaso",
+    "subtitle": "Una sesión corta de repaso espaciado: recuerda rápido lo que aprendiste.",
+    "signInTitle": "Inicia sesión para repasar",
+    "signInHint": "Tu cola de repaso es personal de tu cuenta.",
+    "emptyTitle": "Todo al día",
+    "emptyHint": "No hay nada para repasar ahora mismo. Vuelve más tarde.",
+    "browseCourses": "Explorar cursos",
+    "progress": "{done} de {total} repasados",
+    "sessionComplete": "Sesión completa: buen recuerdo.",
+    "retrievalLabel": "Práctica de recuerdo",
+    "cardLabel": "Repaso: {lesson}",
+    "explanationLabel": "Por qué",
+    "answerCorrect": "Correcto",
+    "answerIncorrect": "Casi",
+    "scheduledPass": "Programado para más adelante: lo tienes.",
+    "scheduledMiss": "Lo traeremos de vuelta antes.",
+    "gradeError": "No se pudo guardar tu repaso. Inténtalo de nuevo.",
+    "retry": "Reintentar",
+    "submit": "Comprobar respuesta",
+    "revisitLabel": "Revisar",
+    "revisitHint": "Aún no hay un cuestionario rápido para esto: vuelve a la lección para repasar.",
+    "revisitCta": "Abrir lección"
   }
 }

@@ -3,15 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
-import { House, Book, ChatCircle } from "@phosphor-icons/react";
+import { House, Book, Brain, ChatCircle } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth/auth-provider";
 
 // LX-B13 (#583): leaderboard demoted out of primary nav at launch (reachable
 // via user menu + footer). Restore when cohort leagues land (LX-B9).
+// Review (LX-B5) is the mobile-first retrieval surface — a primary learning
+// tab. Auth-only: it is absent from publicNavItems (the route is protected).
 const navItems = [
   { key: "dashboard", icon: House, href: "/dashboard" },
   { key: "courses", icon: Book, href: "/courses" },
+  { key: "review", icon: Brain, href: "/review" },
   { key: "community", icon: ChatCircle, href: "/community" },
 ] as const;
 
