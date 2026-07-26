@@ -22,6 +22,7 @@ export const QUEST_TYPES = [
   "challenge",
   "login_streak",
   "module",
+  "review",
 ] as const;
 
 /** Fields of UserState sourced from the community_stats view. */

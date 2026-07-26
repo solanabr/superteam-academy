@@ -30,6 +30,7 @@ describe("constants", () => {
       "challenge",
       "login_streak",
       "module",
+      "review",
     ]);
   });
 });

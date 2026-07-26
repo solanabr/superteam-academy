@@ -5,6 +5,7 @@ export type {
   XpTransaction,
   Credential,
   DailyQuest,
+  QuestType,
   LearningProgressService,
 } from "./progress";
 

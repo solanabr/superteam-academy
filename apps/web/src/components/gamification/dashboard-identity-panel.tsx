@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useRef, useCallback, useState, useEffect } from "react";
-import { useTranslations } from "next-intl";
+import Link from "next/link";
+import { useTranslations, useLocale } from "next-intl";
 import {
   Lock,
   CheckCircle,
@@ -18,6 +19,7 @@ import type { StreakData, DailyQuest } from "@superteam-lms/types";
 import { LevelBadge } from "@/components/gamification/level-badge";
 import type { AchievementDefinition } from "@/lib/gamification";
 import { xpToNextLevel } from "@/lib/gamification/xp";
+import { questHref } from "@/lib/gamification/quest-links";
 import { cn } from "@/lib/utils";
 
 /* ---------------------------------------------------------------
@@ -283,6 +285,7 @@ export function DashboardIdentityPanel({
 }: DashboardIdentityPanelProps) {
   const t = useTranslations("gamification");
   const tDash = useTranslations("dashboard");
+  const locale = useLocale();
 
   const { xpInCurrentLevel, xpRequiredForNext, progressPercent } =
     xpToNextLevel(xp);
@@ -626,11 +629,9 @@ export function DashboardIdentityPanel({
           >
             {quests.map((quest) => {
               const IconComp = getQuestIcon(quest.icon);
-              return (
-                <div
-                  key={quest.id}
-                  className={cn("dq", quest.completed && "done")}
-                >
+              const href = questHref(quest.type, locale);
+              const inner = (
+                <>
                   <div className="dq-icon">
                     <IconComp size={16} weight="duotone" />
                   </div>
@@ -651,6 +652,20 @@ export function DashboardIdentityPanel({
                       {quest.currentValue}/{quest.targetValue}
                     </span>
                   )}
+                </>
+              );
+              const className = cn(
+                "dq",
+                quest.completed && "done",
+                href && "dq-link"
+              );
+              return href ? (
+                <Link key={quest.id} href={href} className={className}>
+                  {inner}
+                </Link>
+              ) : (
+                <div key={quest.id} className={className}>
+                  {inner}
                 </div>
               );
             })}

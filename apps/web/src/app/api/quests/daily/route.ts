@@ -102,6 +102,7 @@ export async function GET() {
       const progress = progressMap.get(q.id);
       return {
         id: q.id,
+        type: q.type,
         name: q.name,
         description: q.description,
         icon: q.icon,
