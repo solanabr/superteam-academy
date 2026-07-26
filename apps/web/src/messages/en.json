@@ -616,6 +616,22 @@
       "buildExpired": "Build expired",
       "rebuildHint": "Click \"Run\" in the editor to rebuild, then deploy again."
     },
+    "save": {
+      "recording": "Recording your deployment…",
+      "retrying": "Recording didn't go through — retrying…",
+      "recorded": "Deployment recorded",
+      "notRecordedTitle": "Deployment not recorded yet",
+      "notRecordedBody": "Your program is live on Devnet, but we couldn't save it to your account — and your capstone credential needs this record. Try again.",
+      "rejectedTitle": "Couldn't record this deployment",
+      "rejectedBody": "Your program deployed, but it couldn't be recorded to your account. This usually means the wallet you deployed with isn't the one linked to your account. Connect your linked wallet (or link this one in Settings), then retry.",
+      "retry": "Retry saving"
+    },
+    "walletCheck": {
+      "mismatchTitle": "Heads up: wallet mismatch",
+      "mismatchBody": "You're connected with a different wallet than the one linked to your account ({linked}). This deploy will be recorded against your linked wallet — connect it, or link the wallet you're using now in Settings, so your capstone credential unlocks. You can still deploy.",
+      "unlinkedTitle": "Heads up: wallet not linked",
+      "unlinkedBody": "The wallet you're connected with isn't linked to your account, so this deploy can't be recorded toward your capstone credential. Link it in Settings first, or deploy now and record it later. You can still deploy."
+    },
     "explorer": {
       "title": "Program Explorer",
       "notInitialized": "Not initialized",
