@@ -54,7 +54,7 @@ describe("#493 migration — routes public profile reads through the view", () =
       "CREATE OR REPLACE FUNCTION public.is_public_profile(p_user_id uuid)"
     );
     expect(migration).toContain("SECURITY DEFINER");
-    expect(migration).toContain("SET search_path = public");
+    expect(migration).toContain("SET search_path = ''");
     expect(migration).toContain(
       "GRANT EXECUTE ON FUNCTION public.is_public_profile(uuid) TO anon, authenticated;"
     );

@@ -43,14 +43,14 @@ BEGIN;
 -- SECURITY DEFINER boolean helper: "is this user a public, non-deleted
 -- profile?", evaluated as the function owner so it bypasses RLS on profiles.
 -- Returns nothing but a boolean, so it cannot leak a row or a sensitive column.
--- STABLE (no writes), search_path pinned to public to prevent search-path
--- hijacking of the `profiles` reference.
+-- STABLE (no writes); search_path pinned to '' (the body fully-qualifies
+-- public.profiles) to prevent search-path hijacking — repo convention.
 CREATE OR REPLACE FUNCTION public.is_public_profile(p_user_id uuid)
 RETURNS boolean
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
-SET search_path = public
+SET search_path = ''
 AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.profiles
