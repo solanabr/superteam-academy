@@ -3,6 +3,7 @@ import { ProseBlock } from "./prose";
 import { VideoBlock } from "./video";
 import { CodeBlock } from "./code";
 import { QuizBlock } from "./quiz";
+import { ParsonsBlock } from "./parsons";
 import { OpenEndedBlock } from "./open-ended";
 import {
   WalletFundingBlock,
@@ -15,19 +16,21 @@ export * from "./prose";
 export * from "./video";
 export * from "./code";
 export * from "./quiz";
+export * from "./parsons";
 export * from "./open-ended";
 export * from "./widgets";
 
 /**
- * `CodeBlock` and `QuizBlock` carry `.refine()`, so they are ZodEffects rather
- * than ZodObject. `z.discriminatedUnion` in zod 4 accepts them because the
- * discriminator is still statically resolvable through the effect.
+ * `CodeBlock`, `QuizBlock` and `ParsonsBlock` carry `.refine()`, so they are
+ * ZodEffects rather than ZodObject. `z.discriminatedUnion` in zod 4 accepts them
+ * because the discriminator is still statically resolvable through the effect.
  */
 export const Block = z.discriminatedUnion("type", [
   ProseBlock,
   VideoBlock,
   CodeBlock,
   QuizBlock,
+  ParsonsBlock,
   OpenEndedBlock,
   WalletFundingBlock,
   ProgramExplorerBlock,
@@ -55,6 +58,7 @@ export const BLOCK_REGISTRY = {
   video: { graded: false, required: false },
   code: { graded: true, required: true },
   quiz: { graded: true, required: true },
+  parsons: { graded: true, required: true },
   openEnded: { graded: false, required: true },
   "wallet-funding": { graded: false, required: false },
   "program-explorer": { graded: false, required: false },

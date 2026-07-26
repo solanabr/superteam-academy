@@ -23,3 +23,8 @@ export interface CodeProof {
 export interface QuizProof {
   selections: Record<string, string[]>;
 }
+
+/** Proof for a `parsons` block: the learner's arranged line ids, in order. */
+export interface ParsonsProof {
+  order: string[];
+}

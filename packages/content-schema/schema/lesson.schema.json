@@ -284,6 +284,89 @@
             "properties": {
               "type": {
                 "type": "string",
+                "const": "parsons"
+              },
+              "key": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
+              "produces": {
+                "type": "string",
+                "enum": [
+                  "funded-wallet",
+                  "deployed-program"
+                ]
+              },
+              "consumes": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "funded-wallet",
+                    "deployed-program"
+                  ]
+                }
+              },
+              "prompt": {
+                "type": "string",
+                "minLength": 1
+              },
+              "lines": {
+                "minItems": 2,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "content": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "distractor": {
+                      "default": false,
+                      "type": "boolean"
+                    },
+                    "pairedWith": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "content"
+                  ]
+                }
+              },
+              "correctOrder": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "explanation": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "type",
+              "key",
+              "prompt",
+              "lines",
+              "correctOrder"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
                 "const": "openEnded"
               },
               "key": {
