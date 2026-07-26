@@ -221,6 +221,65 @@ jobs:
       - name: Tests
         run: cargo test --manifest-path apps/build-server/Cargo.toml
 
+  # ── Build-server image: full Docker bake (#614) ─────────────────────────────
+  # Proves what fmt/clippy/test cannot: the host toolchain install, the Agave
+  # install, the `cargo-build-sbf --tools-version v1.54` pre-cache of the
+  # anchor template in programs/ (an independent crate no other job compiles),
+  # and the setuid-strip verification — all baked into the Dockerfile. Build
+  # only: no push, no registry, no credentials. The deep runtime check (POST a
+  # real submission to /build) stays an enable-time gate per #610; the smoke
+  # here just boots the image under the production runtime contract
+  # (read-only rootfs, tmpfs /tmp) and hits the public /health.
+  build-server-image:
+    name: Build server (docker build · smoke)
+    runs-on: ubuntu-latest
+    needs: changes
+    timeout-minutes: 30
+    if: >-
+      github.event.action != 'labeled' &&
+      (needs.changes.outputs.buildserver == 'true' || github.event_name == 'workflow_dispatch')
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      # Needed for the GHA layer cache below (the default docker driver cannot
+      # export type=gha).
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+
+      - name: Build image
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: apps/build-server
+          push: false
+          load: true # export into the local daemon for the smoke step
+          tags: academy-build-server:ci
+          # Default mode=min caches only final-image layers — which includes
+          # every expensive one (apt, rustup, Agave, platform-tools bake) while
+          # keeping the GHA cache footprint bounded. The stage-1 server build
+          # re-runs cold, but a src/ change would bust it anyway.
+          cache-from: type=gha,scope=build-server-image
+          cache-to: type=gha,scope=build-server-image
+
+      # Mirrors the enable-time gate command from #614/#610 minus the /build
+      # POST: boot with the hardened runtime flags and require /health to answer.
+      - name: Smoke test (read-only rootfs · /health)
+        run: |
+          docker run -d --name bs-smoke --read-only --tmpfs /tmp:exec \
+            -e BUILDS_DIR=/tmp/academy-builds -e ACADEMY_API_KEY=ci-smoke \
+            -p 8080:8080 academy-build-server:ci
+          ok=""
+          for _ in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:8080/health; then ok=1; break; fi
+            sleep 1
+          done
+          echo
+          docker logs bs-smoke
+          docker rm -f bs-smoke >/dev/null
+          if [ -z "$ok" ]; then
+            echo "::error::/health did not respond within 30s under --read-only rootfs"
+            exit 1
+          fi
+
   # ── Dependency audit ────────────────────────────────────────────────────────
   # Non-blocking for now: the pinned Solana 2.0.x tree carries known transitive
   # advisories. Triage them, then flip continue-on-error to false to make this a
