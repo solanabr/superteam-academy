@@ -349,6 +349,16 @@
     "insertFailed": "Error al registrar el certificado. Por favor, inténtelo de nuevo.",
     "onChain": "On-chain"
   },
+  "earnHandoff": {
+    "title": "Convierte tu credencial en trabajo pagado",
+    "description": "Superteam Earn es donde los equipos de Solana publican bounties y proyectos pagados — más de US$ 15 millones pagados a builders hasta hoy. Consigue tus primeros US$ 500–5.000 de trabajo pagado en Solana.",
+    "grantNote": "¿Construyes tu propio proyecto? Los grants de Brasil promedian US$ 5,5 mil.",
+    "linksLabel": "Explorar Superteam Earn",
+    "development": "Bounties de desarrollo",
+    "content": "Bounties de contenido",
+    "grants": "Grants",
+    "opensInNewTab": "se abre en una pestaña nueva"
+  },
   "profile": {
     "editProfile": "Editar Perfil",
     "skills": "Habilidades",

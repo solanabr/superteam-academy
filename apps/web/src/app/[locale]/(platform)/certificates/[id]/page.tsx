@@ -7,6 +7,7 @@ import { Copy, Check } from "@phosphor-icons/react";
 import type { Certificate } from "@superteam-lms/types";
 import { Button } from "@/components/ui/button";
 import { CertificateCard } from "@/components/certificates/certificate-card";
+import { EarnHandoffCard } from "@/components/certificates/earn-handoff-card";
 import { createClient } from "@/lib/supabase/client";
 import { getCoursesByIds } from "@/lib/content/client-queries";
 import { CERTIFICATE_STYLES as CS } from "@/lib/styles/styleClasses";
@@ -197,6 +198,11 @@ export default function CertificateViewPage() {
         <Button variant="outline" size="sm" onClick={handleCopyLink}>
           {t("copyLink")}
         </Button>
+      </div>
+
+      {/* Bridge from credential to paid work on Superteam Earn (LX-E4) */}
+      <div className="mt-6">
+        <EarnHandoffCard source="certificate_page" courseId={cert.courseId} />
       </div>
 
       {/* NFT Details card — copyable values */}

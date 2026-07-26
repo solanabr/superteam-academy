@@ -349,6 +349,16 @@
     "insertFailed": "Failed to record certificate. Please try again.",
     "onChain": "On-chain"
   },
+  "earnHandoff": {
+    "title": "Turn your credential into paid work",
+    "description": "Superteam Earn is where Solana teams post paid bounties and projects — over $15M paid out to builders so far. Land your first $500–$5,000 of paid Solana work.",
+    "grantNote": "Building your own project? Brazil grants average $5.5k.",
+    "linksLabel": "Browse Superteam Earn",
+    "development": "Development bounties",
+    "content": "Content bounties",
+    "grants": "Grants",
+    "opensInNewTab": "opens in a new tab"
+  },
   "profile": {
     "editProfile": "Edit Profile",
     "skills": "Skills",
