@@ -1,5 +1,6 @@
 import "server-only";
 import type { ServerTestResult } from "@/lib/challenge/executor";
+import type { GradedDenyReason } from "@/lib/grading/deny-reason";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
@@ -18,7 +19,12 @@ export interface ReviewFailureCapture {
    * lesson, regardless of which block inside the lesson failed.
    */
   lessonId: string;
-  reason: "quiz_failed" | "challenge_failed";
+  /**
+   * Which graded block type missed, from the one exhaustive `DENY_REASONS` map
+   * (#703 item 2b) — so a new graded type can never silently fold into
+   * `challenge_failed` here. Observability only; the box math never reads it.
+   */
+  reason: GradedDenyReason;
   /**
    * The failing test cases, when the grader produced per-test detail (code
    * challenges). Carried for observability / future item enrichment; the box
