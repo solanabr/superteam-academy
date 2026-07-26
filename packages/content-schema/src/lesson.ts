@@ -2,6 +2,7 @@ import { z } from "zod";
 import { LessonId } from "./ids";
 import { Block } from "./blocks";
 import { SkillTag } from "./skills";
+import { VersionStamp } from "./version-stamp";
 
 const unique = <T>(xs: readonly T[]) => new Set(xs).size === xs.length;
 
@@ -28,6 +29,15 @@ export const Lesson = z
      * via `checkSkillVocabulary`, not by this Zod schema (slug shape only).
      */
     skills: z.array(SkillTag).min(1),
+    /**
+     * Optional version stamp (unified launch spec §3 item 8): the exact package
+     * versions this lesson was authored against + the date the pin was last
+     * verified. Absent leaves the lesson exactly as today — the field is opt-in
+     * (like `tutorNotes`/`failureMessage`), so today's content validates
+     * unchanged and stamps land via content PRs. When present, content-lint
+     * gate 21 warns on drift from the registry's `latest`. See version-stamp.ts.
+     */
+    versionStamp: VersionStamp.optional(),
   })
   .refine((l) => unique(l.blocks.map((b) => b.key)), {
     message: "block keys must be unique within a lesson",
