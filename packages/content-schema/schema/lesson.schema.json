@@ -164,6 +164,15 @@
                   "type": "string",
                   "minLength": 1
                 }
+              },
+              "tutorNotes": {
+                "maxItems": 6,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500
+                }
               }
             },
             "required": [

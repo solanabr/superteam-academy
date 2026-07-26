@@ -325,11 +325,18 @@ export async function POST(request: NextRequest) {
       .map((b) => b.src)
       .join("\n\n");
 
+    // Teacher-authored common mistakes (#592) — the second half of the
+    // evidenced output contract (AIE-25/-26). One bullet per note; absent leaves
+    // the prefix exactly as before. Bounded at the schema (max 6 × 500 chars).
+    const tutorNotes = codeBlock.tutorNotes?.length
+      ? codeBlock.tutorNotes.map((note) => `- ${note}`).join("\n")
+      : undefined;
+
     const prefix = buildStaticPrefix({
       task,
       visibleTests,
       solution: codeBlock.solution,
-      tutorNotes: undefined,
+      tutorNotes,
       language: codeBlock.language,
     });
     const suffix = buildDynamicSuffix({

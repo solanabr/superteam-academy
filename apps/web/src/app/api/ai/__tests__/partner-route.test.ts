@@ -561,6 +561,75 @@ describe("POST /api/ai/partner", () => {
     expect(sentBody).toContain("the answer");
   });
 
+  it("threads authored tutorNotes into the prompt as [TUTOR_NOTES] (#592)", async () => {
+    getLessonBySlug.mockResolvedValue({
+      ...LESSON,
+      blocks: [
+        LESSON.blocks[0],
+        {
+          ...LESSON.blocks[1],
+          tutorNotes: [
+            "Learners often forget to await the RPC call.",
+            "A common mistake is an off-by-one loop bound.",
+          ],
+        },
+      ],
+    });
+    const fetchSpy = vi.fn(async (_url: string, init: { body: string }) => {
+      void init;
+      return {
+        ok: true,
+        text: async () => "",
+        json: async () => ({
+          candidates: [{ content: { parts: [{ text: PROPOSE_GEMINI_TEXT }] } }],
+          usageMetadata: { cachedContentTokenCount: 0 },
+        }),
+      };
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const { POST } = await import("../partner/route");
+    await POST(makeRequest(VALID_BODY));
+
+    const [, init] = fetchSpy.mock.calls[0]!;
+    const prompt = (
+      JSON.parse(init.body) as {
+        contents: { parts: { text: string }[] }[];
+      }
+    ).contents[0]!.parts[0]!.text;
+    expect(prompt).toContain("[TUTOR_NOTES]");
+    expect(prompt).toContain("- Learners often forget to await the RPC call.");
+    expect(prompt).toContain("- A common mistake is an off-by-one loop bound.");
+  });
+
+  it("omits [TUTOR_NOTES] when the challenge authors none (absent → unchanged)", async () => {
+    // The default LESSON code block carries no tutorNotes: the prompt must be
+    // exactly today's, with no marker section.
+    const fetchSpy = vi.fn(async (_url: string, init: { body: string }) => {
+      void init;
+      return {
+        ok: true,
+        text: async () => "",
+        json: async () => ({
+          candidates: [{ content: { parts: [{ text: PROPOSE_GEMINI_TEXT }] } }],
+          usageMetadata: { cachedContentTokenCount: 0 },
+        }),
+      };
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const { POST } = await import("../partner/route");
+    await POST(makeRequest(VALID_BODY));
+
+    const [, init] = fetchSpy.mock.calls[0]!;
+    const prompt = (
+      JSON.parse(init.body) as {
+        contents: { parts: { text: string }[] }[];
+      }
+    ).contents[0]!.parts[0]!.text;
+    expect(prompt).not.toContain("[TUTOR_NOTES]");
+  });
+
   it("returns 502 on a malformed (missing required fields) propose payload", async () => {
     stubGeminiFetch(
       JSON.stringify({ type: "propose", rationale: "only rationale" })

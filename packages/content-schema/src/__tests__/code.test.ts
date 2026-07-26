@@ -77,6 +77,43 @@ describe("CodeBlock", () => {
     expect(r.success).toBe(false); // a standard TS exercise deploys nothing
   });
 
+  it("omits tutorNotes by default (optional, absent leaves the AI prompt unchanged)", () => {
+    const b = CodeBlock.parse(valid);
+    expect(b.tutorNotes).toBeUndefined();
+  });
+
+  it("accepts authored tutorNotes bullets (#592)", () => {
+    const b = CodeBlock.parse({
+      ...valid,
+      tutorNotes: [
+        "Learners often forget to await the RPC call.",
+        "A common mistake is off-by-one on the loop bound.",
+      ],
+    });
+    expect(b.tutorNotes).toHaveLength(2);
+  });
+
+  it("rejects more than six tutorNotes bullets (bounded prompt surface)", () => {
+    const r = CodeBlock.safeParse({
+      ...valid,
+      tutorNotes: Array.from({ length: 7 }, (_, i) => `mistake ${i}`),
+    });
+    expect(r.success).toBe(false);
+  });
+
+  it("rejects an empty tutorNotes bullet", () => {
+    const r = CodeBlock.safeParse({ ...valid, tutorNotes: [""] });
+    expect(r.success).toBe(false);
+  });
+
+  it("rejects a tutorNotes bullet over 500 chars", () => {
+    const r = CodeBlock.safeParse({
+      ...valid,
+      tutorNotes: ["x".repeat(501)],
+    });
+    expect(r.success).toBe(false);
+  });
+
   it("rejects a code block producing a capability it cannot create", () => {
     const r = CodeBlock.safeParse({
       ...valid,
