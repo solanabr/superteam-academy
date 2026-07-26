@@ -2447,3 +2447,36 @@ $$;
 
 REVOKE ALL ON FUNCTION get_ai_spend_today() FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION get_ai_spend_today() TO service_role;
+
+-- ============================================================================
+-- course_changelog (#654) — post-deployment course evolution log.
+-- Mirror of supabase/migrations/20260726210000_course_changelog.sql. See that
+-- file's header for the full rationale. Server-side capture at mutation time
+-- (the admin sync route, service_role); learner-visible public read.
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS public.course_changelog (
+  id           BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  course_id    TEXT NOT NULL,
+  kind         TEXT NOT NULL CHECK (kind IN (
+                 'deployed',
+                 'lessons_added',
+                 'lessons_removed',
+                 'xp_changed',
+                 'content_updated'
+               )),
+  version      INTEGER NOT NULL,
+  detail       JSONB NOT NULL DEFAULT '{}'::jsonb,
+  tx_signature TEXT,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT course_changelog_dedup UNIQUE (course_id, kind, tx_signature)
+);
+
+CREATE INDEX IF NOT EXISTS idx_course_changelog_course_created
+  ON public.course_changelog (course_id, created_at DESC);
+
+ALTER TABLE public.course_changelog ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Course changelog is viewable by everyone" ON public.course_changelog;
+CREATE POLICY "Course changelog is viewable by everyone"
+  ON public.course_changelog FOR SELECT USING (true);
+-- NO write policy: service_role-only writes (bypasses RLS) from the admin sync route.

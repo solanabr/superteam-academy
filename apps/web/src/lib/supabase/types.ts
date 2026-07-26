@@ -990,6 +990,55 @@ export type Database = {
           },
         ];
       };
+      course_changelog: {
+        // #654: post-deployment course evolution log. Written service_role-only
+        // at mutation time by the admin sync route; public SELECT (RLS policy).
+        // `detail` is a kind-specific, title-snapshotted payload — decoded to a
+        // discriminated union at the read seam (lib/courses/changelog.ts).
+        Row: {
+          id: number;
+          course_id: string;
+          kind:
+            | "deployed"
+            | "lessons_added"
+            | "lessons_removed"
+            | "xp_changed"
+            | "content_updated";
+          version: number;
+          detail: Json;
+          tx_signature: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: never;
+          course_id: string;
+          kind:
+            | "deployed"
+            | "lessons_added"
+            | "lessons_removed"
+            | "xp_changed"
+            | "content_updated";
+          version: number;
+          detail?: Json;
+          tx_signature?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: never;
+          course_id?: string;
+          kind?:
+            | "deployed"
+            | "lessons_added"
+            | "lessons_removed"
+            | "xp_changed"
+            | "content_updated";
+          version?: number;
+          detail?: Json;
+          tx_signature?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       public_onchain_deployments: {

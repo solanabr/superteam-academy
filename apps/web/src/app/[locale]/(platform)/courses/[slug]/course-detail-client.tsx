@@ -26,7 +26,9 @@ import { useOnChainEnroll } from "@/hooks/use-on-chain-enroll";
 import { findEnrollmentPDA } from "@/lib/solana/pda";
 import { ThreadList } from "@/components/community/thread-list";
 import { CreateThreadModal } from "@/components/community/create-thread-modal";
+import { CourseChangelog } from "@/components/course/course-changelog";
 import type { PublicProfile } from "@/lib/profiles/public-profile";
+import type { CourseChangelogEntry } from "@/lib/courses/changelog-types";
 
 interface CourseDetailClientProps {
   course: Course;
@@ -36,11 +38,17 @@ interface CourseDetailClientProps {
    * so the instructor section never has to fetch client-side.
    */
   instructorProfile: PublicProfile | null;
+  /**
+   * The course's post-deployment evolution log (issue #654), read server-side
+   * and passed in already decoded. Rendered below the curriculum.
+   */
+  changelog: CourseChangelogEntry[];
 }
 
 export function CourseDetailClient({
   course,
   instructorProfile,
+  changelog,
 }: CourseDetailClientProps) {
   const t = useTranslations("courses");
   const tCommon = useTranslations("common");
@@ -73,6 +81,9 @@ export function CourseDetailClient({
   const walletAddress = authProfile?.wallet_address ?? null;
 
   const [isEnrolled, setIsEnrolled] = useState(false);
+  // ISO enrollment timestamp — lets the changelog flag entries newer than the
+  // learner's enrollment (issue #654 point 3). Null when signed-out/unenrolled.
+  const [enrolledAt, setEnrolledAt] = useState<string | null>(null);
   const [completedLessons, setCompletedLessons] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [discussionModalOpen, setDiscussionModalOpen] = useState(false);
@@ -92,10 +103,12 @@ export function CourseDetailClient({
       // (enrollment PDA exists on-chain but Supabase has no record).
       const { data: enrollment } = await supabase
         .from("enrollments")
-        .select("id")
+        .select("id, enrolled_at")
         .eq("user_id", userId)
         .eq("course_id", course._id)
         .maybeSingle();
+
+      setEnrolledAt(enrollment?.enrolled_at ?? null);
 
       let enrolled = !!enrollment;
 
@@ -374,6 +387,9 @@ export function CourseDetailClient({
           />
         )}
       </div>
+
+      {/* Changelog (issue #654) — how the course has evolved since deployment. */}
+      <CourseChangelog entries={changelog} enrolledAt={enrolledAt} />
     </div>
   );
 }
