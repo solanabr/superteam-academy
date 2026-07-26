@@ -177,7 +177,7 @@ export function ChallengeInterface({
     onComplete?.();
 
     // Emit custom event — lesson-client.tsx calls the API and sets
-    // isAlreadyCompleted=true when done, which triggers the overlay + confetti.
+    // isAlreadyCompleted=true when done, which triggers the completion overlay.
     // The submitted code travels with the event so the server can re-validate
     // it authoritatively (the browser test pass is UX-only).
     const event = new CustomEvent(LESSON_COMPLETE_EVENT, {
