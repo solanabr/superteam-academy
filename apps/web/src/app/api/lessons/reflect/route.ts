@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getLessonByIdForGrading } from "@/lib/content/queries";
 import { sealAttestation } from "@/lib/ai/check-seal";
 import { maybeGenerateReflectionReply } from "@/lib/ai/reflection-reply";
-import { isRateLimited } from "@/lib/rate-limit";
+import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 import { serverEnv } from "@/lib/env.server";
@@ -171,6 +171,9 @@ export async function POST(request: NextRequest) {
     try {
       reply = await maybeGenerateReflectionReply({
         userId: user.id,
+        // Per-IP spend dimension (#724): the reply is metered under the #591
+        // ledger, which needs the actor's IP, not just the user id.
+        ip: getClientIp(request.headers),
         prompt: (block as OpenEndedBlockData).prompt,
         reflection: text,
       });

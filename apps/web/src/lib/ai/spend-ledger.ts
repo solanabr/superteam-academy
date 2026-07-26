@@ -171,13 +171,31 @@ export async function checkAiSpend(
  * path, and must never break the reply the learner is owed, so it never throws.
  * A recording failure loses one data point of audit, not correctness — the CAP
  * is enforced by `checkAiSpend`, which fails closed on its own.
+ *
+ * `fallback` books a CONSERVATIVE estimate when `usage` is absent or measures
+ * zero — a billed call whose 200 body was non-JSON, or that carried no
+ * usageMetadata, still cost tokens, and booking $0 would silently under-report
+ * true key burn (#724). Pass the caller's own worst-case shape (its full output
+ * budget + a generous input estimate); it is used ONLY when the metered estimate
+ * is zero, so a normal metered call is unaffected.
  */
 export async function recordAiSpend(
   userId: string,
   ip: string,
-  usage: GeminiUsageMetadata | undefined
+  usage: GeminiUsageMetadata | undefined,
+  fallback?: { promptTokens: number; outputTokens: number }
 ): Promise<void> {
-  const microUsd = estimateSpendMicroUsd(usage, rates());
+  const r = rates();
+  let microUsd = estimateSpendMicroUsd(usage, r);
+  if (microUsd <= 0 && fallback) {
+    microUsd = estimateSpendMicroUsd(
+      {
+        promptTokenCount: fallback.promptTokens,
+        candidatesTokenCount: fallback.outputTokens,
+      },
+      r
+    );
+  }
   try {
     const { error } = await createAdminClient().rpc("record_ai_spend", {
       p_user_id: userId,

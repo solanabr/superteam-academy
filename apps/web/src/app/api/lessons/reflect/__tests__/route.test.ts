@@ -37,7 +37,10 @@ const {
 vi.mock("@/lib/supabase/server", () => ({
   createClient: async () => ({ auth: { getUser } }),
 }));
-vi.mock("@/lib/rate-limit", () => ({ isRateLimited }));
+vi.mock("@/lib/rate-limit", () => ({
+  isRateLimited,
+  getClientIp: () => "203.0.113.7",
+}));
 vi.mock("@/lib/content/queries", () => ({ getLessonByIdForGrading }));
 vi.mock("@/lib/ai/reflection-reply", () => ({ maybeGenerateReflectionReply }));
 vi.mock("@/lib/logging", () => ({ logError: vi.fn() }));
@@ -200,6 +203,14 @@ describe("POST /api/lessons/reflect", () => {
     const res = await POST(req(VALID_BODY));
     expect(res.status).toBe(429);
     expect(res.headers.get("Retry-After")).toBe("60");
+  });
+
+  it("passes the client IP to the reply helper (per-IP spend dimension, #724)", async () => {
+    maybeGenerateReflectionReply.mockResolvedValue("ok");
+    await POST(req(VALID_BODY));
+    expect(maybeGenerateReflectionReply).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "user-1", ip: "203.0.113.7" })
+    );
   });
 
   it("still issues the seal when the AI reply is disabled/unavailable (reply null)", async () => {
