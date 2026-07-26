@@ -8,13 +8,21 @@ import { createAdminClient } from "@/lib/supabase/admin";
 // atomic `check_rate_limit` SECURITY DEFINER function, so limits hold across
 // all serverless instances (unlike the previous in-memory Map).
 //
-// Fails OPEN: if the store is unreachable we allow the request rather than
-// hard-blocking traffic on a transient DB issue (the limiter is abuse/cost
-// mitigation, not an auth gate). Failures are logged.
+// Fails OPEN by default: if the store is unreachable we allow the request
+// rather than hard-blocking traffic on a transient DB issue (the limiter is
+// abuse/cost mitigation, not an auth gate). Failures are logged. Cost-critical
+// callers pass `failClosed: true` to DENY instead — see RateLimiterOptions.
 
 interface RateLimiterOptions {
   maxTokens: number;
   refillIntervalMs: number;
+  // On a store error the limiter normally fails OPEN (allow) — it is abuse/cost
+  // mitigation, not an auth gate, and a transient DB blip shouldn't hard-block
+  // traffic. Cost-critical callers opt into failing CLOSED: a store error then
+  // DENIES rather than handing out an unmetered request against a
+  // platform-funded resource (the AI route on the shared Gemini key). Default:
+  // fail open, so every existing caller keeps its current behaviour.
+  failClosed?: boolean;
 }
 
 /**
@@ -104,19 +112,23 @@ export async function isRateLimited(
 
     if (error) {
       console.warn(
-        `[rate-limit] check_rate_limit failed for ${namespace}, allowing:`,
+        `[rate-limit] check_rate_limit failed for ${namespace}, ${
+          opts.failClosed ? "denying" : "allowing"
+        }:`,
         error.message
       );
-      return false;
+      return opts.failClosed === true;
     }
 
     return data === true;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.warn(
-      `[rate-limit] limiter unavailable for ${namespace}, allowing:`,
+      `[rate-limit] limiter unavailable for ${namespace}, ${
+        opts.failClosed ? "denying" : "allowing"
+      }:`,
       message
     );
-    return false;
+    return opts.failClosed === true;
   }
 }

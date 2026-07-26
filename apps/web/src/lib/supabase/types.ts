@@ -1004,6 +1004,13 @@ export type Database = {
         };
         Returns: undefined;
       };
+      record_billed_assist: {
+        Args: {
+          p_user_id: string;
+          p_lesson_id: string;
+        };
+        Returns: undefined;
+      };
       append_challenge_assist_log: {
         Args: {
           p_user_id: string;

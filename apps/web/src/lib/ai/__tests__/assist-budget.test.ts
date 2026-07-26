@@ -11,6 +11,7 @@ import {
   spendAssist,
   getAssistsUsed,
   refundAssist,
+  recordBilledAssist,
   MAX_PAID_ASSISTS,
 } from "../assist-budget";
 
@@ -80,6 +81,27 @@ describe("assist-budget", () => {
     it("swallows a thrown RPC without throwing", async () => {
       rpc.mockRejectedValueOnce(new Error("network"));
       await expect(refundAssist("u", "l")).resolves.toBeUndefined();
+    });
+  });
+
+  describe("recordBilledAssist", () => {
+    it("calls the billed-counter RPC with the right args", async () => {
+      rpc.mockResolvedValue({ data: null, error: null });
+      await recordBilledAssist("u", "l");
+      expect(rpc).toHaveBeenCalledWith("record_billed_assist", {
+        p_user_id: "u",
+        p_lesson_id: "l",
+      });
+    });
+
+    it("swallows an RPC error without throwing (best-effort audit write)", async () => {
+      rpc.mockResolvedValue({ data: null, error: { message: "db down" } });
+      await expect(recordBilledAssist("u", "l")).resolves.toBeUndefined();
+    });
+
+    it("swallows a thrown RPC without throwing", async () => {
+      rpc.mockRejectedValueOnce(new Error("network"));
+      await expect(recordBilledAssist("u", "l")).resolves.toBeUndefined();
     });
   });
 });

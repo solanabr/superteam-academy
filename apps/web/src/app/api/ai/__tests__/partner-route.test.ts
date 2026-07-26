@@ -10,17 +10,21 @@ vi.mock("@/lib/supabase/server", () => ({
 
 const spendAssist = vi.fn();
 const refundAssist = vi.fn();
+const recordBilledAssist = vi.fn();
 const appendAssistLog = vi.fn();
 vi.mock("@/lib/ai/assist-budget", () => ({
   spendAssist,
   refundAssist,
+  recordBilledAssist,
   appendAssistLog,
   MAX_PAID_ASSISTS: 4,
 }));
 
 const isRateLimited = vi.fn();
+const getClientIp = vi.fn(() => "203.0.113.9");
 vi.mock("@/lib/rate-limit", () => ({
   isRateLimited,
+  getClientIp,
 }));
 
 const getLessonBySlug = vi.fn();
@@ -100,7 +104,11 @@ const PROPOSE_GEMINI_TEXT = JSON.stringify({
 
 function stubGeminiFetch(
   text: string,
-  opts: { ok?: boolean; cachedContentTokenCount?: number } = {}
+  opts: {
+    ok?: boolean;
+    cachedContentTokenCount?: number;
+    finishReason?: string;
+  } = {}
 ) {
   vi.stubGlobal(
     "fetch",
@@ -109,7 +117,12 @@ function stubGeminiFetch(
         ok: opts.ok ?? true,
         text: async () => "error",
         json: async () => ({
-          candidates: [{ content: { parts: [{ text }] } }],
+          candidates: [
+            {
+              finishReason: opts.finishReason,
+              content: { parts: [{ text }] },
+            },
+          ],
           usageMetadata: {
             cachedContentTokenCount: opts.cachedContentTokenCount ?? 0,
           },
@@ -131,6 +144,7 @@ beforeEach(() => {
   getUser.mockReset();
   spendAssist.mockReset();
   refundAssist.mockReset();
+  recordBilledAssist.mockReset();
   appendAssistLog.mockReset();
   isRateLimited.mockReset();
   getLessonBySlug.mockReset();
@@ -141,6 +155,7 @@ beforeEach(() => {
   getLessonBySlug.mockResolvedValue(LESSON);
   spendAssist.mockResolvedValue({ allowed: true, used: 1 });
   refundAssist.mockResolvedValue(undefined);
+  recordBilledAssist.mockResolvedValue(undefined);
   appendAssistLog.mockResolvedValue(undefined);
 });
 
@@ -243,6 +258,31 @@ describe("POST /api/ai/partner", () => {
     expect(refundAssist).not.toHaveBeenCalled();
   });
 
+  it("records a billed assist exactly once on a successful paid call", async () => {
+    stubGeminiFetch(PROPOSE_GEMINI_TEXT);
+
+    const { POST } = await import("../partner/route");
+    await POST(makeRequest(VALID_BODY));
+
+    expect(recordBilledAssist).toHaveBeenCalledTimes(1);
+    expect(recordBilledAssist).toHaveBeenCalledWith("user-1", "lesson-1");
+  });
+
+  it("does NOT refund a post-success throw (appendAssistLog throws) — billed", async () => {
+    // The outer catch wraps appendAssistLog; a throw AFTER Gemini has billed us
+    // must NOT refund (the AIE-10 line-411 correction). The spend is recorded
+    // and the assist stays charged even though logging blew up.
+    stubGeminiFetch(PROPOSE_GEMINI_TEXT);
+    appendAssistLog.mockRejectedValue(new Error("log store down"));
+
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest(VALID_BODY));
+
+    expect(res.status).toBe(500);
+    expect(refundAssist).not.toHaveBeenCalled();
+    expect(recordBilledAssist).toHaveBeenCalledTimes(1);
+  });
+
   it("persists the AI turn to the assist log on a successful paid call", async () => {
     stubGeminiFetch(PROPOSE_GEMINI_TEXT);
 
@@ -294,29 +334,48 @@ describe("POST /api/ai/partner", () => {
     expect(refundAssist).toHaveBeenCalledWith("user-1", "lesson-1");
   });
 
-  it("calls refundAssist when Gemini returns an empty candidate text (502)", async () => {
+  it("does NOT refund an empty candidate text — it was billed (502)", async () => {
+    // Gemini returned a 200 (billed) but no visible output. The tokens are
+    // spent, so the assist must NOT be handed back, and the spend is recorded.
     stubGeminiFetch("");
 
     const { POST } = await import("../partner/route");
     const res = await POST(makeRequest(VALID_BODY));
 
     expect(res.status).toBe(502);
-    expect(refundAssist).toHaveBeenCalledTimes(1);
-    expect(refundAssist).toHaveBeenCalledWith("user-1", "lesson-1");
+    expect(refundAssist).not.toHaveBeenCalled();
+    expect(recordBilledAssist).toHaveBeenCalledTimes(1);
+    expect(recordBilledAssist).toHaveBeenCalledWith("user-1", "lesson-1");
   });
 
-  it("calls refundAssist when Gemini returns non-JSON text (502)", async () => {
+  it("does NOT refund non-JSON text — it was billed (502)", async () => {
     stubGeminiFetch("not valid json {{{");
 
     const { POST } = await import("../partner/route");
     const res = await POST(makeRequest(VALID_BODY));
 
     expect(res.status).toBe(502);
-    expect(refundAssist).toHaveBeenCalledTimes(1);
-    expect(refundAssist).toHaveBeenCalledWith("user-1", "lesson-1");
+    expect(refundAssist).not.toHaveBeenCalled();
+    expect(recordBilledAssist).toHaveBeenCalledTimes(1);
   });
 
-  it("calls refundAssist when Gemini returns a malformed propose payload (502)", async () => {
+  it("does NOT refund a MAX_TOKENS-truncated payload — it was billed (502)", async () => {
+    // AIE-11: the attacker-triggerable path. A truncated envelope arrives with
+    // finishReason "MAX_TOKENS" and cut-off JSON; Gemini billed the full output
+    // budget, so refunding it is exactly the hole #590 closes.
+    stubGeminiFetch('{"type":"propose","rationale":"the JSON is cut off her', {
+      finishReason: "MAX_TOKENS",
+    });
+
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest(VALID_BODY));
+
+    expect(res.status).toBe(502);
+    expect(refundAssist).not.toHaveBeenCalled();
+    expect(recordBilledAssist).toHaveBeenCalledTimes(1);
+  });
+
+  it("does NOT refund a malformed propose payload — it was billed (502)", async () => {
     stubGeminiFetch(
       JSON.stringify({ type: "propose", rationale: "only rationale" })
     );
@@ -325,8 +384,8 @@ describe("POST /api/ai/partner", () => {
     const res = await POST(makeRequest(VALID_BODY));
 
     expect(res.status).toBe(502);
-    expect(refundAssist).toHaveBeenCalledTimes(1);
-    expect(refundAssist).toHaveBeenCalledWith("user-1", "lesson-1");
+    expect(refundAssist).not.toHaveBeenCalled();
+    expect(recordBilledAssist).toHaveBeenCalledTimes(1);
   });
 
   it("calls refundAssist when an unexpected error is thrown after spend (500)", async () => {
@@ -345,6 +404,26 @@ describe("POST /api/ai/partner", () => {
     expect(refundAssist).toHaveBeenCalledWith("user-1", "lesson-1");
   });
 
+  it("refunds a PRE-billing throw during prompt building (billed still false)", async () => {
+    // The prompt-building block is inside the widened try. A throw there — here
+    // the visibleTests map blows up on a malformed code block (tests: null) —
+    // happens before any Gemini call, so it is pre-billing: the catch refunds it
+    // under `if (!billed)` and records no billed assist.
+    getLessonBySlug.mockResolvedValue({
+      ...LESSON,
+      blocks: [LESSON.blocks[0], { ...LESSON.blocks[1], tests: null }],
+    });
+    stubGeminiFetch(PROPOSE_GEMINI_TEXT); // never reached
+
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest(VALID_BODY));
+
+    expect(res.status).toBe(500);
+    expect(refundAssist).toHaveBeenCalledTimes(1);
+    expect(refundAssist).toHaveBeenCalledWith("user-1", "lesson-1");
+    expect(recordBilledAssist).not.toHaveBeenCalled();
+  });
+
   it("returns 429 when rate limited", async () => {
     isRateLimited.mockResolvedValue(true);
     stubGeminiFetch(PROPOSE_GEMINI_TEXT);
@@ -354,6 +433,35 @@ describe("POST /api/ai/partner", () => {
 
     expect(res.status).toBe(429);
     expect(spendAssist).not.toHaveBeenCalled();
+  });
+
+  it("trips the per-IP ceiling independently of the per-user bucket (429)", async () => {
+    // Per-user passes, per-IP ("ai:partner:ip") trips — every fresh account is a
+    // fresh per-user bucket, so per-IP is the only dimension that bounds a Sybil
+    // actor. The IP ceiling alone must 429 before any spend.
+    isRateLimited.mockImplementation(async (namespace: string) => {
+      return namespace === "ai:partner:ip";
+    });
+    stubGeminiFetch(PROPOSE_GEMINI_TEXT);
+
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest(VALID_BODY));
+
+    expect(res.status).toBe(429);
+    expect(spendAssist).not.toHaveBeenCalled();
+    // Both dimensions were consulted, and BOTH opt into failClosed — a limiter
+    // outage must not wave either through unmetered on the platform-funded key.
+    const namespaces = isRateLimited.mock.calls.map((c) => c[0]);
+    expect(namespaces).toContain("ai:partner");
+    expect(namespaces).toContain("ai:partner:ip");
+    const userCall = isRateLimited.mock.calls.find(
+      (c) => c[0] === "ai:partner"
+    )!;
+    const ipCall = isRateLimited.mock.calls.find(
+      (c) => c[0] === "ai:partner:ip"
+    )!;
+    expect(userCall[2]).toEqual(expect.objectContaining({ failClosed: true }));
+    expect(ipCall[2]).toEqual(expect.objectContaining({ failClosed: true }));
   });
 
   it("returns 400 on malformed JSON body", async () => {

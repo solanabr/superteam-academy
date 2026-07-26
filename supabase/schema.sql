@@ -1864,6 +1864,12 @@ CREATE TABLE IF NOT EXISTS challenge_assists (
   user_id     UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   lesson_id   TEXT NOT NULL,
   assists_used INTEGER NOT NULL DEFAULT 0,
+  -- Monotonic count of BILLED Gemini generations (one per confirmed 200),
+  -- incremented by record_billed_assist and NEVER decremented — the durable
+  -- record of real spend against the platform-funded key. Distinct from
+  -- assists_used, which the !response.ok refund path can hand back: a billed-but-
+  -- useless generation (empty / non-JSON / MAX_TOKENS) still counts here.
+  billed_assists INTEGER NOT NULL DEFAULT 0,
   -- Rendered AI Partner chat turns (JSONB array of PartnerMessage) so a
   -- returning learner can review past AI notes without spending another paid
   -- assist. Bounded in practice by MAX_PAID_ASSISTS successful paid actions.
@@ -1875,6 +1881,10 @@ CREATE TABLE IF NOT EXISTS challenge_assists (
 -- Idempotent add for DBs created before chat_log existed (this file predates it).
 ALTER TABLE challenge_assists
   ADD COLUMN IF NOT EXISTS chat_log JSONB NOT NULL DEFAULT '[]'::jsonb;
+
+-- Idempotent add for DBs created before the non-refundable billed counter.
+ALTER TABLE challenge_assists
+  ADD COLUMN IF NOT EXISTS billed_assists INTEGER NOT NULL DEFAULT 0;
 
 ALTER TABLE challenge_assists ENABLE ROW LEVEL SECURITY;
 -- No policies: reached only through SECURITY DEFINER RPCs called by service_role.
@@ -1962,6 +1972,30 @@ $$;
 
 REVOKE ALL ON FUNCTION refund_challenge_assist(UUID, TEXT) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION refund_challenge_assist(UUID, TEXT) TO service_role;
+
+-- Increment-by-one, never decremented. Records that a BILLED Gemini generation
+-- occurred for this (user, lesson) — called once per confirmed 200, regardless
+-- of whether the output was usable. This is the audit trail of real spend
+-- against the platform-funded key; unlike assists_used it is never refunded, so
+-- a truncated/empty/malformed-but-billed generation still counts. The row
+-- already exists by the time this runs (spend_challenge_assist upserted it on
+-- the same paid call), but upsert defensively.
+CREATE OR REPLACE FUNCTION record_billed_assist(p_user_id UUID, p_lesson_id TEXT)
+RETURNS VOID
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  INSERT INTO public.challenge_assists (user_id, lesson_id, billed_assists, updated_at)
+  VALUES (p_user_id, p_lesson_id, 1, now())
+  ON CONFLICT (user_id, lesson_id)
+  DO UPDATE SET
+    billed_assists = public.challenge_assists.billed_assists + 1,
+    updated_at = now();
+$$;
+
+REVOKE ALL ON FUNCTION record_billed_assist(UUID, TEXT) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION record_billed_assist(UUID, TEXT) TO service_role;
 
 -- Append rendered chat turns to a learner's per-lesson AI Partner log.
 -- p_entries is a JSONB array (PartnerMessage[]). The row already exists by the
