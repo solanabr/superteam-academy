@@ -26,6 +26,7 @@ const h = vi.hoisted(() => {
     isCourseInMaintenance: vi.fn(async () => false),
     batchCompleteCourse: vi.fn(),
     nextCourseAfter: vi.fn(async () => "course-next"),
+    isCourseTestOutEligible: vi.fn(async () => true),
     resolveEntryLessonHref: vi.fn(async () => "/en/courses/next/lessons/first"),
     logError: vi.fn(),
     BatchCompleteError,
@@ -62,6 +63,7 @@ vi.mock("@/lib/platform/freeze-http", () => ({
 vi.mock("@/lib/content/queries", () => ({ getCourseById: h.getCourseById }));
 vi.mock("@/lib/courses/path-order", () => ({
   nextCourseAfter: h.nextCourseAfter,
+  isCourseTestOutEligible: h.isCourseTestOutEligible,
 }));
 vi.mock("@/lib/courses/entry-lesson", () => ({
   resolveEntryLessonHref: h.resolveEntryLessonHref,
@@ -78,8 +80,10 @@ const COURSE_ID = "course-x";
 // A valid base58 pubkey (System Program) so `new PublicKey(...)` succeeds.
 const WALLET = "11111111111111111111111111111111";
 
-function fixtureCourse() {
-  const questions = Array.from({ length: 5 }, (_, i) => ({
+// 10 questions — at/above MIN_TEST_OUT_POOL (8), so the whole pool is the set.
+const POOL = 10;
+function courseWithQuestions(n: number) {
+  const questions = Array.from({ length: n }, (_, i) => ({
     id: `q${i}`,
     prompt: `Question ${i}?`,
     multiSelect: false,
@@ -107,11 +111,14 @@ function fixtureCourse() {
     ],
   };
 }
+function fixtureCourse() {
+  return courseWithQuestions(POOL);
+}
 
 const uid = (i: number) => `lesson-1::qb::q${i}`;
 function selections(rightCount: number): Record<string, string[]> {
   const sel: Record<string, string[]> = {};
-  for (let i = 0; i < 5; i++) sel[uid(i)] = [i < rightCount ? "a" : "b"];
+  for (let i = 0; i < POOL; i++) sel[uid(i)] = [i < rightCount ? "a" : "b"];
   return sel;
 }
 
@@ -137,12 +144,13 @@ beforeEach(() => {
   h.isOnChainProgramLive.mockResolvedValue(true);
   h.isCourseInMaintenance.mockResolvedValue(false);
   h.nextCourseAfter.mockResolvedValue("course-next");
+  h.isCourseTestOutEligible.mockResolvedValue(true);
   h.resolveEntryLessonHref.mockResolvedValue("/en/courses/next/lessons/first");
   h.getCourseById.mockResolvedValue(fixtureCourse());
   h.profileSingle.mockResolvedValue({ data: { wallet_address: WALLET } });
   h.batchCompleteCourse.mockResolvedValue({
-    total: 5,
-    newlyCompleted: 5,
+    total: POOL,
+    newlyCompleted: POOL,
     alreadyComplete: 0,
     pending: 0,
   });
@@ -160,9 +168,9 @@ describe("GET /api/courses/test-out", () => {
     const res = await GET(req);
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.count).toBe(5);
+    expect(body.count).toBe(POOL);
     expect(body.passRatio).toBeCloseTo(0.8);
-    expect(body.questions).toHaveLength(5);
+    expect(body.questions).toHaveLength(POOL);
     // No `correct` flag reaches the client.
     expect(JSON.stringify(body.questions)).not.toContain("correct");
   });
@@ -175,7 +183,7 @@ describe("GET /api/courses/test-out", () => {
     expect((await GET(req)).status).toBe(401);
   });
 
-  it("404s a course with no quiz pool", async () => {
+  it("404s a course with no quiz pool (insufficient_questions)", async () => {
     h.getCourseById.mockResolvedValue({
       _id: COURSE_ID,
       title: "x",
@@ -190,14 +198,40 @@ describe("GET /api/courses/test-out", () => {
     const req = new NextRequest(
       `http://localhost/api/courses/test-out?courseId=${COURSE_ID}`
     );
-    expect((await GET(req)).status).toBe(404);
+    const res = await GET(req);
+    expect(res.status).toBe(404);
+    expect((await res.json()).reason).toBe("insufficient_questions");
+  });
+
+  it("404s a pool below the minimum floor (insufficient_questions)", async () => {
+    h.getCourseById.mockResolvedValue(courseWithQuestions(7)); // < MIN (8)
+    const req = new NextRequest(
+      `http://localhost/api/courses/test-out?courseId=${COURSE_ID}`
+    );
+    const res = await GET(req);
+    expect(res.status).toBe(404);
+    expect((await res.json()).reason).toBe("insufficient_questions");
+  });
+
+  it("404s an out-of-scope (ineligible) course (test_out_unavailable)", async () => {
+    h.isCourseTestOutEligible.mockResolvedValue(false);
+    const req = new NextRequest(
+      `http://localhost/api/courses/test-out?courseId=${COURSE_ID}`
+    );
+    const res = await GET(req);
+    expect(res.status).toBe(404);
+    expect((await res.json()).reason).toBe("test_out_unavailable");
   });
 });
 
 describe("POST /api/courses/test-out — grading", () => {
   it("a passing submission batch-completes the course and routes onward", async () => {
     const res = await POST(
-      postReq({ courseId: COURSE_ID, selections: selections(5), locale: "en" })
+      postReq({
+        courseId: COURSE_ID,
+        selections: selections(POOL),
+        locale: "en",
+      })
     );
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -220,6 +254,17 @@ describe("POST /api/courses/test-out — grading", () => {
     expect(h.batchCompleteCourse).not.toHaveBeenCalled();
   });
 
+  it("just below the threshold fails (no batch completion)", async () => {
+    // required = ceil(10 * 0.8) = 8; 7 correct must fail.
+    const res = await POST(
+      postReq({ courseId: COURSE_ID, selections: selections(7) })
+    );
+    const body = await res.json();
+    expect(body.passed).toBe(false);
+    expect(body.correct).toBe(7);
+    expect(h.batchCompleteCourse).not.toHaveBeenCalled();
+  });
+
   it("re-grades server-side: a forged client verdict cannot force a pass", async () => {
     // The client claims it passed and sends mostly-wrong answers.
     const res = await POST(
@@ -233,11 +278,31 @@ describe("POST /api/courses/test-out — grading", () => {
   it("ignores extraneous client-supplied question ids (uses the derived set)", async () => {
     // All authoritative answers correct, plus a bogus extra id — still a pass,
     // and the bogus id is simply not part of the graded set.
-    const sel = { ...selections(5), "forged::uid": ["a"] };
+    const sel = { ...selections(POOL), "forged::uid": ["a"] };
     const res = await POST(postReq({ courseId: COURSE_ID, selections: sel }));
     const body = await res.json();
     expect(body.passed).toBe(true);
-    expect(body.total).toBe(5);
+    expect(body.total).toBe(POOL);
+  });
+
+  it("refuses an out-of-scope course before grading (test_out_unavailable)", async () => {
+    h.isCourseTestOutEligible.mockResolvedValue(false);
+    const res = await POST(
+      postReq({ courseId: COURSE_ID, selections: selections(POOL) })
+    );
+    expect(res.status).toBe(404);
+    expect((await res.json()).reason).toBe("test_out_unavailable");
+    expect(h.batchCompleteCourse).not.toHaveBeenCalled();
+  });
+
+  it("refuses a pool below the floor before grading (insufficient_questions)", async () => {
+    h.getCourseById.mockResolvedValue(courseWithQuestions(7));
+    const res = await POST(
+      postReq({ courseId: COURSE_ID, selections: selections(POOL) })
+    );
+    expect(res.status).toBe(404);
+    expect((await res.json()).reason).toBe("insufficient_questions");
+    expect(h.batchCompleteCourse).not.toHaveBeenCalled();
   });
 });
 
@@ -254,7 +319,7 @@ describe("POST /api/courses/test-out — guards", () => {
   it("503s when the on-chain program is not live", async () => {
     h.isOnChainProgramLive.mockResolvedValue(false);
     const res = await POST(
-      postReq({ courseId: COURSE_ID, selections: selections(5) })
+      postReq({ courseId: COURSE_ID, selections: selections(POOL) })
     );
     expect(res.status).toBe(503);
     expect(h.batchCompleteCourse).not.toHaveBeenCalled();
@@ -263,7 +328,7 @@ describe("POST /api/courses/test-out — guards", () => {
   it("400s when no wallet is linked", async () => {
     h.profileSingle.mockResolvedValue({ data: { wallet_address: null } });
     const res = await POST(
-      postReq({ courseId: COURSE_ID, selections: selections(5) })
+      postReq({ courseId: COURSE_ID, selections: selections(POOL) })
     );
     expect(res.status).toBe(400);
   });
@@ -273,7 +338,7 @@ describe("POST /api/courses/test-out — guards", () => {
       new h.BatchCompleteError("enrollment_missing", "no enrollment")
     );
     const res = await POST(
-      postReq({ courseId: COURSE_ID, selections: selections(5) })
+      postReq({ courseId: COURSE_ID, selections: selections(POOL) })
     );
     expect(res.status).toBe(403);
     const body = await res.json();
@@ -287,8 +352,19 @@ describe("POST /api/courses/test-out — guards", () => {
       new h.BatchCompleteError("xp_cap_exceeded", "too much xp")
     );
     const res = await POST(
-      postReq({ courseId: COURSE_ID, selections: selections(5) })
+      postReq({ courseId: COURSE_ID, selections: selections(POOL) })
     );
     expect(res.status).toBe(409);
+  });
+
+  it("maps xp_unavailable (cap fail-closed) from the batch to a 409", async () => {
+    h.batchCompleteCourse.mockRejectedValue(
+      new h.BatchCompleteError("xp_unavailable", "no xp-per-lesson")
+    );
+    const res = await POST(
+      postReq({ courseId: COURSE_ID, selections: selections(POOL) })
+    );
+    expect(res.status).toBe(409);
+    expect((await res.json()).reason).toBe("xp_unavailable");
   });
 });

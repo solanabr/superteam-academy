@@ -22,3 +22,24 @@ export async function nextCourseAfter(
   }
   return null;
 }
+
+/**
+ * Whether a course is eligible for test-out (LX-A5 server-side scope).
+ *
+ * The spec frames test-out around the flagship "Zero to Deployed" path (segment
+ * 2 skipping foundational path courses), so the offer is scoped to courses that
+ * are BOTH live and part of a structured learning path — never a standalone or
+ * held/trimmed course (e.g. the held defi module, #711). `getAllLearningPaths`
+ * already filters its members through the catalog's synced+active predicate, so
+ * a course that appears as a path member here is necessarily live; a
+ * deactivated, unsynced, or path-less course is not eligible. This is the single
+ * server-side gate — UI-only scoping would be bypassable — and it is not
+ * hardcoded to one course id, so the per-module follow-on and a future JS/TS
+ * entry-rung course remain in scope automatically.
+ */
+export async function isCourseTestOutEligible(
+  courseId: string
+): Promise<boolean> {
+  const paths = await getAllLearningPaths();
+  return paths.some((path) => path.courses.some((c) => c._id === courseId));
+}

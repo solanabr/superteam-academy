@@ -1416,6 +1416,8 @@
     "submitError": "No pudimos enviar tus respuestas. Inténtalo de nuevo.",
     "tryAgain": "Intentar de nuevo",
     "submitting": "Comprobando…",
-    "submit": "Enviar respuestas"
+    "submit": "Enviar respuestas",
+    "unavailableTitle": "La prueba de nivel no está disponible aquí",
+    "unavailableBody": "Este curso no ofrece prueba de nivel por ahora. Ábrelo y haz las lecciones — ganas XP en cada una."
   }
 }

@@ -1416,6 +1416,8 @@
     "submitError": "Não conseguimos enviar suas respostas. Tente novamente.",
     "tryAgain": "Tentar de novo",
     "submitting": "Verificando…",
-    "submit": "Enviar respostas"
+    "submit": "Enviar respostas",
+    "unavailableTitle": "O teste de dispensa não está disponível aqui",
+    "unavailableBody": "Este curso não oferece teste de dispensa no momento. Abra-o e faça as lições — você ganha XP em cada uma."
   }
 }

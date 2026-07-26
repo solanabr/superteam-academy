@@ -33,6 +33,15 @@ export const TEST_OUT_QUESTION_COUNT = 10;
 export const TEST_OUT_PASS_RATIO = 0.8;
 
 /**
+ * Minimum authoritative question pool for a course to offer test-out at all.
+ * The challenge is `min(10, pool)` questions at an 80% bar, so a course with a
+ * sparse quiz pool would otherwise gate ALL of its lessons' XP behind 1–2
+ * open-book answers. Below this floor the offer is refused (fail-closed) rather
+ * than shipped as a trivially-passable skip.
+ */
+export const MIN_TEST_OUT_POOL = 8;
+
+/**
  * Hard ceiling on the retroactive XP a single test-out may drive, matching the
  * spec acceptance criterion `xpPerLesson × lessonCount ≤ 10000`. A course whose
  * on-chain economics exceed this is refused rather than allowed to mint an

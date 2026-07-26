@@ -159,6 +159,24 @@ describe("batchCompleteCourse", () => {
     expect(h.completeLesson).not.toHaveBeenCalled();
   });
 
+  it("fail-closed: refuses when xp_per_lesson is missing (undefined)", async () => {
+    h.fetchEnrollment.mockResolvedValue({ lesson_flags: [0n] });
+    h.fetchCourse.mockResolvedValue({ liveLessonCount: 4 }); // no xp_per_lesson
+    await expect(
+      batchCompleteCourse({ userId: "u", courseId: "course-x", wallet: WALLET })
+    ).rejects.toMatchObject({ code: "xp_unavailable" });
+    expect(h.completeLesson).not.toHaveBeenCalled();
+  });
+
+  it("fail-closed: refuses when xp_per_lesson is zero", async () => {
+    h.fetchEnrollment.mockResolvedValue({ lesson_flags: [0n] });
+    h.fetchCourse.mockResolvedValue({ liveLessonCount: 4, xp_per_lesson: 0 });
+    await expect(
+      batchCompleteCourse({ userId: "u", courseId: "course-x", wallet: WALLET })
+    ).rejects.toMatchObject({ code: "xp_unavailable" });
+    expect(h.completeLesson).not.toHaveBeenCalled();
+  });
+
   it("throws course_not_found for an unknown course", async () => {
     h.getCourseById.mockResolvedValue(null);
     await expect(

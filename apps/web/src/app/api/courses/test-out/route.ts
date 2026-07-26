@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PublicKey } from "@solana/web3.js";
+import type { Course } from "@superteam-lms/types";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCourseById } from "@/lib/content/queries";
@@ -8,7 +9,10 @@ import { isOnChainProgramLive } from "@/lib/solana/academy-program";
 import { isCourseInMaintenance } from "@/lib/content/deployments";
 import { isPlatformFrozen } from "@/lib/platform/freeze";
 import { platformFrozenResponse } from "@/lib/platform/freeze-http";
-import { nextCourseAfter } from "@/lib/courses/path-order";
+import {
+  nextCourseAfter,
+  isCourseTestOutEligible,
+} from "@/lib/courses/path-order";
 import { resolveEntryLessonHref } from "@/lib/courses/entry-lesson";
 import { locales, defaultLocale, type Locale } from "@/lib/i18n/config";
 import { serverEnv } from "@/lib/env.server";
@@ -16,15 +20,61 @@ import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 import {
   selectTestOutQuestions,
+  gatherCourseQuizQuestions,
   toPublicQuestion,
   gradeTestOut,
   TEST_OUT_PASS_RATIO,
+  MIN_TEST_OUT_POOL,
+  type PooledQuestion,
   type TestOutSelections,
 } from "@/lib/courses/test-out";
 import {
   batchCompleteCourse,
   BatchCompleteError,
 } from "@/lib/lessons/batch-complete";
+
+type ChallengeResolution =
+  | { ok: true; course: Course; selected: PooledQuestion[] }
+  | { ok: false; status: number; reason: string; error: string };
+
+/**
+ * Load and scope a course's test-out challenge for a user. The single
+ * server-side gate shared by GET and POST: the course must exist, be test-out
+ * ELIGIBLE (live + a learning-path member — UI scoping is bypassable), and carry
+ * an authoritative quiz pool at or above {@link MIN_TEST_OUT_POOL}. Each refusal
+ * carries a stable `reason` the client localizes.
+ */
+async function resolveChallenge(
+  courseId: string,
+  userId: string
+): Promise<ChallengeResolution> {
+  const course = await getCourseById(courseId);
+  if (!course) {
+    return {
+      ok: false,
+      status: 404,
+      reason: "course_not_found",
+      error: "Course not found",
+    };
+  }
+  if (!(await isCourseTestOutEligible(courseId))) {
+    return {
+      ok: false,
+      status: 404,
+      reason: "test_out_unavailable",
+      error: "Test-out is not available for this course",
+    };
+  }
+  if (gatherCourseQuizQuestions(course).length < MIN_TEST_OUT_POOL) {
+    return {
+      ok: false,
+      status: 404,
+      reason: "insufficient_questions",
+      error: "Test-out is not available for this course",
+    };
+  }
+  return { ok: true, course, selected: selectTestOutQuestions(course, userId) };
+}
 
 // A passing submission drives one confirmed complete_lesson tx per incomplete
 // lesson, sequentially — a 12–16-lesson course can take well past the default
@@ -68,25 +118,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
-    const course = await getCourseById(courseId);
-    if (!course) {
-      return NextResponse.json({ error: "Course not found" }, { status: 404 });
-    }
-
-    const selected = selectTestOutQuestions(course, user.id);
-    if (selected.length === 0) {
-      // No authored quiz pool → no test-out for this course.
+    const resolved = await resolveChallenge(courseId, user.id);
+    if (!resolved.ok) {
       return NextResponse.json(
-        { error: "Test-out is not available for this course" },
-        { status: 404 }
+        { error: resolved.error, reason: resolved.reason },
+        { status: resolved.status }
       );
     }
 
     return NextResponse.json({
-      courseId: course._id,
-      count: selected.length,
+      courseId: resolved.course._id,
+      count: resolved.selected.length,
       passRatio: TEST_OUT_PASS_RATIO,
-      questions: selected.map(toPublicQuestion),
+      questions: resolved.selected.map(toPublicQuestion),
     });
   } catch (err: unknown) {
     logError({
@@ -175,21 +219,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const course = await getCourseById(courseId);
-    if (!course) {
-      return NextResponse.json({ error: "Course not found" }, { status: 404 });
-    }
-
-    // Re-derive the authoritative set and grade it — the client's selections and
-    // any verdict it computed are ignored beyond the raw option ids.
-    const selected = selectTestOutQuestions(course, user.id);
-    if (selected.length === 0) {
+    // Re-derive the authoritative set (same server-side scope as GET) and grade
+    // it — the client's selections and any verdict it computed are ignored beyond
+    // the raw option ids.
+    const resolved = await resolveChallenge(courseId, user.id);
+    if (!resolved.ok) {
       return NextResponse.json(
-        { error: "Test-out is not available for this course" },
-        { status: 404 }
+        { error: resolved.error, reason: resolved.reason },
+        { status: resolved.status }
       );
     }
-    const grade = gradeTestOut(selected, selections);
+    const grade = gradeTestOut(resolved.selected, selections);
 
     if (!grade.passed) {
       return NextResponse.json({
@@ -281,7 +321,7 @@ export async function POST(request: NextRequest) {
       const status =
         err.code === "enrollment_missing"
           ? 403
-          : err.code === "xp_cap_exceeded"
+          : err.code === "xp_cap_exceeded" || err.code === "xp_unavailable"
             ? 409
             : 404;
       return NextResponse.json(

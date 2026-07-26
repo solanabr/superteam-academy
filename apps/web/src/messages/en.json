@@ -1416,6 +1416,8 @@
     "submitError": "We couldn't submit your answers. Please try again.",
     "tryAgain": "Try again",
     "submitting": "Checking…",
-    "submit": "Submit answers"
+    "submit": "Submit answers",
+    "unavailableTitle": "Test-out isn't available here",
+    "unavailableBody": "This course doesn't offer a test-out right now. Open it and work through the lessons instead — you'll earn XP for each one."
   }
 }

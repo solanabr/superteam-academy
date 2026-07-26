@@ -15,6 +15,7 @@ import { TEST_OUT_MAX_XP } from "@/lib/courses/test-out";
 export type BatchCompleteErrorCode =
   | "course_not_found"
   | "enrollment_missing"
+  | "xp_unavailable"
   | "xp_cap_exceeded";
 
 /**
@@ -105,7 +106,17 @@ export async function batchCompleteCourse(params: {
 
   // Spec cap: refuse a course whose retroactive XP would exceed the ceiling
   // rather than driving an absurd batch mint (xpPerLesson × lessonCount ≤ 10000).
-  const xpPerLesson = onChainCourse?.xp_per_lesson ?? 0;
+  // Fail-CLOSED on an unreadable/zero xp_per_lesson: if the on-chain value is
+  // missing or non-positive we refuse rather than let `?? 0` silently zero the
+  // product and skip the cap entirely (the on-chain value is authoritative, but
+  // the advisory cap must never vanish because a read came back empty).
+  const xpPerLesson = onChainCourse?.xp_per_lesson;
+  if (typeof xpPerLesson !== "number" || xpPerLesson <= 0) {
+    throw new BatchCompleteError(
+      "xp_unavailable",
+      "Course XP-per-lesson is unavailable; refusing test-out batch"
+    );
+  }
   if (xpPerLesson * total > TEST_OUT_MAX_XP) {
     throw new BatchCompleteError(
       "xp_cap_exceeded",
