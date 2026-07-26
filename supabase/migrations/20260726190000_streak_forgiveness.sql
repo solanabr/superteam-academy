@@ -100,6 +100,17 @@ BEGIN
     RETURN TRUE;
   END IF;
 
+  -- Serialize the freeze decision ACROSS the three streak writers. award_xp and
+  -- award_community_xp hold DIFFERENT per-writer advisory locks (and the quest
+  -- path holds none), so without this a concurrent pair could both read the
+  -- count below before either consumed, and the loser would see 0 freezes,
+  -- return FALSE, and spuriously reset a streak while the freeze it needed was
+  -- burnt by the winner (snowflake logged, streak reset). A single shared
+  -- 'streak:<uid>' lock, taken BEFORE the count, forces the loser to run after
+  -- the winner committed: it then sees the day already in streak_freezes_used
+  -- (v_needed = 0) and returns TRUE, so both streaks survive on one freeze.
+  PERFORM pg_advisory_xact_lock(hashtext('streak:' || p_user_id::text)::bigint);
+
   -- Count missed days not already covered by a prior freeze. A day another
   -- streak path already froze today does not re-charge a second freeze.
   SELECT COUNT(*) INTO v_needed
@@ -159,18 +170,24 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = ''
 AS $$
+-- The three non-gap branches are byte-faithful to the prior inline logic in
+-- award_xp (IS NULL → 1, = today → keep current, = yesterday → +1); only the
+-- ELSE (gap > 1 day) branch changes — it now forgives via freezes instead of an
+-- unconditional reset. `= p_today` (not `>=`) is deliberate: it preserves the
+-- base behavior of resetting on a future last_activity (clock skew), which
+-- writers never actually produce since they always stamp CURRENT_DATE.
 BEGIN
   IF p_last_activity IS NULL THEN
-    RETURN 1;                                            -- first activity ever
-  ELSIF p_last_activity >= p_today THEN
-    RETURN GREATEST(COALESCE(p_current_streak, 1), 1);   -- already active today
+    RETURN 1;                                    -- first activity ever
+  ELSIF p_last_activity = p_today THEN
+    RETURN COALESCE(p_current_streak, 1);        -- already active today: keep
   ELSIF p_last_activity = p_today - 1 THEN
-    RETURN COALESCE(p_current_streak, 0) + 1;            -- active yesterday
+    RETURN COALESCE(p_current_streak, 0) + 1;    -- active yesterday: increment
   ELSIF public.cover_missed_days_with_freezes(
           p_user_id, p_last_activity + 1, p_today - 1) THEN
-    RETURN COALESCE(p_current_streak, 0) + 1;            -- gap forgiven
+    RETURN COALESCE(p_current_streak, 0) + 1;    -- gap forgiven by freezes
   ELSE
-    RETURN 1;                                            -- gap, no freeze: reset
+    RETURN 1;                                    -- gap, no freeze: reset
   END IF;
 END;
 $$;

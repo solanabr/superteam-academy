@@ -455,6 +455,13 @@ BEGIN
     RETURN TRUE;
   END IF;
 
+  -- Serialize the freeze decision across all three streak writers (they hold
+  -- different per-writer advisory locks, so without this a concurrent pair races
+  -- on the unlocked count below and the loser spuriously resets while burning
+  -- the freeze). Taken BEFORE the count: the loser runs after the winner
+  -- committed, sees the day already logged (v_needed = 0), and survives.
+  PERFORM pg_advisory_xact_lock(hashtext('streak:' || p_user_id::text)::bigint);
+
   SELECT COUNT(*) INTO v_needed
   FROM generate_series(p_from_date, p_to_date, INTERVAL '1 day') AS g(d)
   WHERE NOT EXISTS (
@@ -502,11 +509,14 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = ''
 AS $$
+-- Non-gap branches are byte-faithful to award_xp's prior inline logic; only the
+-- ELSE (gap > 1 day) forgives via freezes instead of an unconditional reset.
+-- `= p_today` (not `>=`) preserves the base reset-on-future-date behavior.
 BEGIN
   IF p_last_activity IS NULL THEN
     RETURN 1;
-  ELSIF p_last_activity >= p_today THEN
-    RETURN GREATEST(COALESCE(p_current_streak, 1), 1);
+  ELSIF p_last_activity = p_today THEN
+    RETURN COALESCE(p_current_streak, 1);
   ELSIF p_last_activity = p_today - 1 THEN
     RETURN COALESCE(p_current_streak, 0) + 1;
   ELSIF public.cover_missed_days_with_freezes(

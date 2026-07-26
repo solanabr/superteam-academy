@@ -104,6 +104,25 @@ for (const [label, sql] of [
       );
     });
 
+    it("serializes the freeze decision across writers with ONE shared lock", () => {
+      // award_xp / award_community_xp hold DIFFERENT per-writer locks, so the
+      // freeze decision must take a SHARED 'streak:<uid>' advisory lock (inside
+      // cover_missed_days_with_freezes, before the count) or a concurrent pair
+      // races the unlocked count and the loser spuriously resets. Pin the exact
+      // key so a future edit cannot silently split it back into per-writer keys.
+      const cover = sliceFn(
+        sql,
+        "CREATE OR REPLACE FUNCTION cover_missed_days_with_freezes("
+      );
+      expect(cover).toContain(
+        "pg_advisory_xact_lock(hashtext('streak:' || p_user_id::text)::bigint)"
+      );
+      // The lock must precede the missed-day count (lock-then-read, not after).
+      expect(cover.indexOf("pg_advisory_xact_lock")).toBeLessThan(
+        cover.indexOf("SELECT COUNT(*) INTO v_needed")
+      );
+    });
+
     it("only charges a freeze for a day not already frozen (idempotent log)", () => {
       // Cross-writer idempotency: a day one path froze is not re-charged by
       // another. Missed-day count excludes already-logged days; the log insert
