@@ -234,6 +234,16 @@ Note on XP token metadata: The `initialize` instruction sets the `MetadataPointe
 npx ts-node scripts/create-mock-course.ts
 ```
 
+> **Mainnet caveat.** `create-mock-course.ts` uses a placeholder creator wallet
+> and default `trackId` / `trackLevel`. `Course.creator`, `track_id`, and
+> `track_level` are **immutable** after `create_course` (no `update_course`
+> setter; recoverable on devnet only via a full recreate, and NOT at all on
+> mainnet). Before any mainnet course creation, work the **instructor
+> credibility & track ladder** section of the Pre-Mainnet Checklist in the
+> `superteam-academy-dev` skill (`deployment.md`): real instructor wallets
+> confirmed per course, `trackId` / `trackLevel` finalized per owner decision
+> D-6, credibility display verified.
+
 ---
 
 ## 10. Create Track Collection (optional — credential flow only)
