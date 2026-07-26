@@ -231,8 +231,16 @@
     "dismissAllSuggestions": "Dismiss All"
   },
   "dashboard": {
+    "allCaughtUp": "All caught up!",
+    "allCaughtUpHint": "You've finished every lesson in your enrolled courses.",
     "browseCourses": "Browse Courses",
+    "continueAria": "Continue {course} — next lesson: {lesson}",
+    "continueLearning": "Continue learning",
     "currentCourses": "Current Courses",
+    "lessonsDone": "{completed} of {total} lessons completed",
+    "resumeLesson": "Resume lesson",
+    "startNextCourse": "Start your next course",
+    "startNextCourseAria": "Start your next course: {course}",
     "fetchError": "Could not load your dashboard",
     "fetchErrorDetail": "We had trouble loading your data. Your progress is safe — please try refreshing the page.",
     "noCourses": "You haven't enrolled in any courses yet",

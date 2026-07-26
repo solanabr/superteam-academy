@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
+  getCourseLessonOrders,
   getCoursesByIds,
   getLessonsByIds,
   getRecommendedCourses,
@@ -41,6 +42,23 @@ describe("client-queries — /api/content fetch wrappers", () => {
 
   it("getCoursesByIds([]) short-circuits without a request", async () => {
     expect(await getCoursesByIds([])).toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("getCourseLessonOrders hits course-lessons and unwraps", async () => {
+    fetchMock.mockResolvedValue(
+      ok({ courses: [{ _id: "course-a", slug: "a", lessons: [] }] })
+    );
+    expect(await getCourseLessonOrders(["course-a", "course-b"])).toEqual([
+      { _id: "course-a", slug: "a", lessons: [] },
+    ]);
+    expect(fetchMock).toHaveBeenCalledWith(
+      `/api/content/course-lessons?ids=${encodeURIComponent(
+        "course-a,course-b"
+      )}`
+    );
+    fetchMock.mockClear();
+    expect(await getCourseLessonOrders([])).toEqual([]);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 

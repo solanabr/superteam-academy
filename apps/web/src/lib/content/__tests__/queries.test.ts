@@ -299,6 +299,22 @@ describe("gated catalog fns — synced+active only, order(title asc)", () => {
     expect(res[0]?.learningPath).toBe("Main");
   });
 
+  it("getCourseLessonOrders returns bundle-ordered lesson summaries, gated on synced+active", async () => {
+    const res = await q.getCourseLessonOrders([
+      "course-zeta",
+      "course-off",
+      "course-pending",
+    ]);
+    expect(res).toEqual([
+      {
+        _id: "course-zeta",
+        slug: "zeta",
+        lessons: [{ _id: "lesson-live-1", title: "Live One", slug: "live-1" }],
+      },
+    ]);
+    expect(await q.getCourseLessonOrders([])).toEqual([]);
+  });
+
   it("getRecommendedCourses excludes ids + gates + sorts", async () => {
     const res = await q.getRecommendedCourses(["course-zeta"]);
     expect(res.map((c) => c._id)).toEqual(["course-alpha"]);

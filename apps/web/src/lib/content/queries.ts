@@ -298,6 +298,33 @@ export interface LessonSummary {
   slug: string;
 }
 
+/** A course's lessons in module→lesson display order (LX-B2 Continue card). */
+export interface CourseLessonOrder {
+  _id: string;
+  slug: string;
+  lessons: LessonSummary[];
+}
+
+/**
+ * Ordered lesson summaries for the given course ids, gated on synced+active
+ * like every public catalog read. Summary-safe shape only (no lesson content)
+ * — this feeds the dashboard's next-incomplete-lesson derivation.
+ */
+export async function getCourseLessonOrders(
+  ids: string[]
+): Promise<CourseLessonOrder[]> {
+  if (ids.length === 0) return [];
+  const idSet = new Set(ids);
+  const map = await getActiveDeployments();
+  return [...coursesById.values()]
+    .filter((c) => idSet.has(c._id) && isSynced(map.get(c._id)))
+    .map((c) => ({
+      _id: c._id,
+      slug: c.slug.current,
+      lessons: courseLessonDocs(c).map(projectLessonSummary),
+    }));
+}
+
 export async function getLessonsByIds(ids: string[]): Promise<LessonSummary[]> {
   if (ids.length === 0) return [];
   const idSet = new Set(ids);

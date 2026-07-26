@@ -231,8 +231,16 @@
     "dismissAllSuggestions": "Descartar Todas"
   },
   "dashboard": {
+    "allCaughtUp": "¡Todo al día!",
+    "allCaughtUpHint": "Has completado todas las lecciones de tus cursos inscritos.",
     "browseCourses": "Explorar Cursos",
+    "continueAria": "Continuar {course} — siguiente lección: {lesson}",
+    "continueLearning": "Continúa aprendiendo",
     "currentCourses": "Cursos Actuales",
+    "lessonsDone": "{completed} de {total} lecciones completadas",
+    "resumeLesson": "Reanudar lección",
+    "startNextCourse": "Comienza tu próximo curso",
+    "startNextCourseAria": "Comenzar tu próximo curso: {course}",
     "fetchError": "No se pudo cargar tu panel",
     "fetchErrorDetail": "Tuvimos problemas al cargar tus datos. Tu progreso está seguro — intenta actualizar la página.",
     "noCourses": "Aún no te has inscrito en ningún curso",
