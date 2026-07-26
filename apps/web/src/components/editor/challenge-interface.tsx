@@ -625,7 +625,9 @@ export function ChallengeInterface({
                   {t("encouragementTitle")}
                 </span>{" "}
                 {aiSuppressed
-                  ? t("encouragementBodyHintsOnly")
+                  ? hasHints
+                    ? t("encouragementBodyHintsOnly")
+                    : t("encouragementBodyNeutral")
                   : t("encouragementBody")}
               </p>
               <button

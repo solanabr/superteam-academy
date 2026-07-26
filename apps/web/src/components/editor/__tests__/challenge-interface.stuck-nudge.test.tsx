@@ -234,6 +234,28 @@ describe("ChallengeInterface — stuck-nudge (LX-C4)", () => {
     expect(screen.queryByTestId("ai-pane")).not.toBeInTheDocument();
   });
 
+  it("suppressed with no hints shows neutral copy — no tutor, no hint UI", () => {
+    renderChallenge({ aiSuppressed: true, hints: [] });
+    expect(screen.queryByTestId("ai-pane")).not.toBeInTheDocument();
+
+    act(() => h.runnerProps?.onResult(fail));
+    act(() => h.runnerProps?.onResult(fail));
+    act(() => h.runnerProps?.onResult(fail));
+
+    // Neutral copy points at neither the gated tutor nor a hint that will not
+    // render — the banner must not promise an affordance that does not exist.
+    expect(
+      screen.getByText(messages.lesson.encouragementBodyNeutral)
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(messages.lesson.encouragementBodyHintsOnly)
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /show a hint/i })
+    ).not.toBeInTheDocument();
+    expect(eventsNamed("stuck_nudge_shown")).toHaveLength(0);
+  });
+
   it("with no authored hints, keeps the plain encouragement banner (no nudge)", () => {
     renderChallenge({ hints: [] });
     act(() => h.runnerProps?.onResult(fail));
