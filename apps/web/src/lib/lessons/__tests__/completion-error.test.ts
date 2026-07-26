@@ -73,6 +73,16 @@ describe("completionErrorKey — non-403 statuses", () => {
     );
   });
 
+  it("429 with completion_in_progress → the in-flight notice, not the volume one (#651)", () => {
+    expect(completionErrorKey(429, "completion_in_progress", mixed)).toBe(
+      "completionInProgress"
+    );
+    // A 429 whose reason isn't the in-flight marker stays the volume copy.
+    expect(completionErrorKey(429, "quiz_failed", mixed)).toBe(
+      "completionRateLimited"
+    );
+  });
+
   it("anything else → generic copy", () => {
     expect(completionErrorKey(500, undefined, mixed)).toBe(
       "completionFailedGeneric"

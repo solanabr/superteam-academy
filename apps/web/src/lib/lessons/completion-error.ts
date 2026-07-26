@@ -24,7 +24,8 @@ export type CompletionErrorKey =
   | "completionFailedReflection"
   | "completionFailedEnrollment"
   | "completionFailedGeneric"
-  | "completionRateLimited";
+  | "completionRateLimited"
+  | "completionInProgress";
 
 interface LessonShape {
   hasCodeBlock: boolean;
@@ -50,8 +51,15 @@ export function completionErrorKey(
   // A throttle is not a failure, and must not read like one. Without this the
   // 429 fell through to the generic "something went wrong", so a whole cohort
   // sharing one NAT would see an outage and retry — each retry burning another
-  // token and extending the window.
-  if (status === 429) return "completionRateLimited";
+  // token and extending the window. The in-flight guard (#651) is also a 429
+  // but a different situation — a duplicate of a completion already being
+  // submitted, clearing in ~30s — so it carries its own reason and copy ("wait
+  // a moment"), distinct from the volume-limit "slow down for a while".
+  if (status === 429) {
+    return reason === "completion_in_progress"
+      ? "completionInProgress"
+      : "completionRateLimited";
+  }
 
   if (status === 403) {
     if (reason !== undefined && isDenyReason(reason)) {

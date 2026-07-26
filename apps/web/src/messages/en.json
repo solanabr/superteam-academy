@@ -213,6 +213,7 @@
     "completionFailedEnrollment": "We couldn't verify your on-chain enrollment for this course. Please re-enroll and try again.",
     "completionFailedGeneric": "We couldn't complete this lesson. Please try again in a moment.",
     "completionRateLimited": "You're completing lessons very quickly. Please wait a little while and try again — your progress is safe.",
+    "completionInProgress": "This lesson is already being completed. Give it a moment and try again — your progress is safe.",
     "completionFailedQuiz": "One or more quiz answers aren't correct yet. Check your answers above and submit again.",
     "completionFailedReflection": "This lesson includes a reflection that hasn't been submitted yet. Submit your reflection, then try again.",
     "quizCheck": "Check answer",
