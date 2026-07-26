@@ -146,8 +146,9 @@ GRANT EXECUTE ON FUNCTION schedule_review_item(UUID, TEXT) TO service_role;
 --   missed  → box := 1, lapses += 1, due_at := now() + interval(box 1)
 -- The terminal box is whatever the highest review_schedule row is — advance
 -- clamps there instead of walking off the end. No day counts in this body.
--- No-op (returns nothing) if the item does not exist: the caller must have
--- scheduled it first, and this must never silently resurrect a deleted row.
+-- No-op (returns nothing) if the item does not exist: an early guard bails
+-- before any transition is computed — the caller must schedule first, and a
+-- deleted row is never silently resurrected.
 CREATE OR REPLACE FUNCTION record_review_result(
   p_user_id  UUID,
   p_item_key TEXT,
@@ -158,33 +159,32 @@ SECURITY DEFINER
 SET search_path = ''
 AS $$
 DECLARE
-  v_max_box  SMALLINT;
-  v_new_box  SMALLINT;
-  v_interval INT;
+  v_max_box SMALLINT;
 BEGIN
-  SELECT max(rs.box) INTO v_max_box FROM public.review_schedule rs;
-
-  IF p_passed THEN
-    v_new_box := LEAST(
-      (SELECT ri.box FROM public.review_items ri
-        WHERE ri.user_id = p_user_id AND ri.item_key = p_item_key) + 1,
-      v_max_box
-    );
-  ELSE
-    v_new_box := 1;
+  -- Early guard: nothing to grade if the learner has no such item.
+  IF NOT EXISTS (
+    SELECT 1 FROM public.review_items ri
+    WHERE ri.user_id = p_user_id AND ri.item_key = p_item_key
+  ) THEN
+    RETURN;
   END IF;
 
-  SELECT interval_days INTO v_interval
-    FROM public.review_schedule WHERE box = v_new_box;
+  SELECT max(rs.box) INTO v_max_box FROM public.review_schedule rs;
 
+  -- Atomic read-modify-write: the new box is derived from the row's OWN box
+  -- inside the UPDATE (no separate SELECT of the current box), so two
+  -- concurrent grades cannot double-read a stale value. review_schedule is
+  -- joined for the new box's interval in the same statement — no day counts.
   UPDATE public.review_items ri
-     SET box              = v_new_box,
-         due_at           = now() + make_interval(days => v_interval),
+     SET box              = CASE WHEN p_passed THEN LEAST(ri.box + 1, v_max_box) ELSE 1 END,
+         due_at           = now() + make_interval(days => sched.interval_days),
          last_result      = p_passed,
          last_reviewed_at = now(),
          lapses           = ri.lapses + CASE WHEN p_passed THEN 0 ELSE 1 END,
          updated_at       = now()
-   WHERE ri.user_id = p_user_id AND ri.item_key = p_item_key;
+    FROM public.review_schedule sched
+   WHERE ri.user_id = p_user_id AND ri.item_key = p_item_key
+     AND sched.box = CASE WHEN p_passed THEN LEAST(ri.box + 1, v_max_box) ELSE 1 END;
 
   RETURN QUERY
     SELECT ri.box, ri.due_at
@@ -202,6 +202,10 @@ GRANT EXECUTE ON FUNCTION record_review_result(UUID, TEXT, BOOLEAN) TO service_r
 -- the box-1 interval out from now(); per-session flood-shaping (a learner with
 -- many completions) is the feed's job (LX-B4/B5 cap items per session), not the
 -- substrate's.
+-- FK-safety: the source user_progress.user_id is itself FK'd to profiles(id)
+-- (same ON DELETE CASCADE target as review_items.user_id), so every seeded
+-- user_id is guaranteed to satisfy review_items' FK — the seed cannot abort on
+-- an orphan row.
 INSERT INTO review_items (user_id, item_key, box, due_at)
 SELECT up.user_id,
        up.lesson_id,

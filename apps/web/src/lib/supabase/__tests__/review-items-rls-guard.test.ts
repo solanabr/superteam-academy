@@ -65,6 +65,15 @@ for (const [label, sql] of [
       expect(sql).not.toMatch(/ON review_items FOR (INSERT|UPDATE|DELETE|ALL)/);
     });
 
+    it("gives review_schedule a read-only policy — NO client write path", () => {
+      // Reference data: public read, but writes only via DDL / service_role.
+      // A write policy here would let a client rewrite everyone's spacing.
+      expect(sql).toContain(`ON review_schedule FOR SELECT USING (true)`);
+      expect(sql).not.toMatch(
+        /ON review_schedule FOR (INSERT|UPDATE|DELETE|ALL)/
+      );
+    });
+
     it("item_key is the raw lesson id — no skill column (bundle resolves skills)", () => {
       const start = sql.indexOf("CREATE TABLE IF NOT EXISTS review_items");
       expect(start).toBeGreaterThan(-1);
@@ -131,6 +140,21 @@ describe("#569 review spine — migration-only guarantees", () => {
     expect(migration).toContain("FROM user_progress up");
     expect(migration).toContain("WHERE up.completed = true");
     expect(migration).toContain("ON CONFLICT (user_id, item_key) DO NOTHING");
+  });
+
+  it("documents the seed's FK-safety argument", () => {
+    // The seed cannot abort on an orphan because user_progress.user_id is
+    // itself FK'd to profiles(id) — the reasoning must stay recorded next to
+    // the INSERT so a future edit doesn't drop the invariant unknowingly.
+    expect(migration).toMatch(/FK-safety:[\s\S]*user_progress\.user_id/);
+  });
+
+  it("advances the box atomically — no separate current-box read", () => {
+    // The transition must derive the new box from the row's own value inside a
+    // single UPDATE (LEAST(ri.box + 1, …)), never a standalone SELECT of box
+    // that a concurrent grade could double-read.
+    expect(migration).toContain("LEAST(ri.box + 1, v_max_box)");
+    expect(migration).not.toMatch(/v_new_box\s*:=\s*LEAST\(\s*\(SELECT/);
   });
 
   it("ships a rollback that drops exactly what it created", () => {
