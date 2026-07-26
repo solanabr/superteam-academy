@@ -8,6 +8,36 @@ are optional today**, so events only reach a backend once
 `NEXT_PUBLIC_GA4_MEASUREMENT_ID` / `NEXT_PUBLIC_POSTHOG_KEY` +
 `NEXT_PUBLIC_POSTHOG_HOST` are configured in the deployment.
 
+## The 10–12 week evaluation rule — read before reading any metric (#605)
+
+**No mechanic is evaluated before week 10 of learner exposure. Week-3 numbers lie.**
+
+The gamification novelty effect dips at week 4 and only recovers by weeks 6–10
+(PED-15, N=756 Brazilian CS1 undergraduates; PED-31 and MAS-29 concur). A read
+taken inside that trough will show a mechanic underperforming when it is merely
+new, and can trigger a strategy reversal that the week-14 numbers would have
+reversed again. The launch KPI (capstone deploys + Earn submissions) and the
+north star (weekly return of previously-active learners) are both judged on a
+**10–12 week window, never earlier**.
+
+The rule is encoded in code, not just prose: `experiment-registry.ts` holds one
+row per shipped mechanic, and each row's **earliest-read date is computed** as
+`exposureStart + 10 weeks` (`earliestReadDate()` / `EVALUATION_WINDOW_DAYS = 70`),
+never typed. The clock starts at **learner exposure (production launch)**, not at
+the merge date — the trough is measured from when a learner first sees the
+mechanic. `LAUNCH_DATE` is the single place that date is set; while it is `null`,
+every launch-cohort row reports `earliestReadDate === null` and `isReadable()`
+returns `false`, so the rule holds by default and a metric cannot be treated as
+decision-grade before its window elapses.
+
+PostHog dashboards (config-side, owner territory) must carry the same "do not
+evaluate before week 10" note on any tile that charts a mechanic. This module is
+the source of truth the dashboards restate.
+
+Scope: this is the minimal registry item 48's rule points at. Item 45 (#582's
+third component) owns growing it into the full experiment registry — E1–E8, the
+UIUX A/B sets, and E6 as `INFEASIBLE-AS-DESIGNED`.
+
 ## Conventions
 
 - **Event names**: `snake_case`, verb in past tense for outcomes

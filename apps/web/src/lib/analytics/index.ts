@@ -33,6 +33,19 @@ export {
   resetPostHogUser,
 } from "./posthog";
 export { initSentry, captureError, setSentryUser } from "./sentry";
+export {
+  EVALUATION_WINDOW_WEEKS,
+  EVALUATION_WINDOW_DAYS,
+  LAUNCH_DATE,
+  EXPERIMENT_REGISTRY,
+  earliestReadDate,
+  exposureStartFor,
+  registryWithEarliestRead,
+  isReadable,
+  type ExperimentRegistryEntry,
+  type ExperimentRow,
+  type ExperimentStatus,
+} from "./experiment-registry";
 
 /**
  * Initialize all analytics providers.
