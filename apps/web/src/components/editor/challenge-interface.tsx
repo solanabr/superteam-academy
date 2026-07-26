@@ -19,6 +19,13 @@ import type {
   CodeEditorHandle,
   ExecutionResult,
 } from "./types";
+import {
+  challengeKindFor,
+  trackChallengeFailed,
+  trackChallengeRun,
+  trackChallengeSolved,
+  trackChallengeStarted,
+} from "@/lib/analytics/events";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { shouldShowEncouragement } from "@/lib/gamification/celebration";
@@ -47,6 +54,7 @@ function summarize(executionResult: ExecutionResult | null): string {
 
 export function ChallengeInterface({
   lessonId,
+  courseId,
   courseSlug,
   lessonSlug,
   taskSlot,
@@ -87,7 +95,30 @@ export function ChallengeInterface({
   const [consecutiveFails, setConsecutiveFails] = useState(0);
   const [encouragementDismissed, setEncouragementDismissed] = useState(false);
 
+  // Analytics (LX-F1): challenge lifecycle events compose alongside the
+  // existing state. The fail streak is mirrored in a ref because the state
+  // above updates functionally (no synchronous read at event time), and side
+  // effects inside state updaters would double-fire under StrictMode.
+  const challengeKind = challengeKindFor(language, buildType);
+  const failStreakRef = useRef(0);
+
   const editorHandle = useRef<CodeEditorHandle>(null);
+  const editorAreaRef = useRef<HTMLDivElement>(null);
+
+  // challenge_started = first genuine interaction, never a page view. A
+  // keystroke in the editor area is that signal for edit-first learners
+  // (CodeEditor's onChange also fires for the localStorage restore on mount,
+  // so it can't be used); run-first learners are covered in handleResult.
+  // trackChallengeStarted dedupes per lesson per session.
+  useEffect(() => {
+    const el = editorAreaRef.current;
+    if (!el) return;
+    const fireStarted = () =>
+      trackChallengeStarted({ lessonId, courseId, challengeKind });
+    el.addEventListener("keydown", fireStarted, { capture: true });
+    return () =>
+      el.removeEventListener("keydown", fireStarted, { capture: true });
+  }, [lessonId, courseId, challengeKind]);
 
   // Sync when the async DB check resolves after mount.
   // Also fires when lesson-client sets isCompleted=true after API returns —
@@ -139,19 +170,31 @@ export function ChallengeInterface({
     setServerError(null);
   }, []);
 
-  const handleResult = useCallback((result: ExecutionResult) => {
-    setChallengeState((prev) => ({
-      ...prev,
-      status: result.success ? "success" : "error",
-      executionResult: result,
-    }));
-    if (result.success) {
-      setConsecutiveFails(0);
-      setEncouragementDismissed(false);
-    } else {
-      setConsecutiveFails((prev) => prev + 1);
-    }
-  }, []);
+  const handleResult = useCallback(
+    (result: ExecutionResult) => {
+      setChallengeState((prev) => ({
+        ...prev,
+        status: result.success ? "success" : "error",
+        executionResult: result,
+      }));
+      // Lifecycle events (LX-F1): a run reaching a result IS an interaction,
+      // so run-first learners get their challenge_started here (deduped).
+      const ctx = { lessonId, courseId, challengeKind };
+      trackChallengeStarted(ctx);
+      trackChallengeRun(ctx);
+      if (result.success) {
+        failStreakRef.current = 0;
+        trackChallengeSolved(ctx);
+        setConsecutiveFails(0);
+        setEncouragementDismissed(false);
+      } else {
+        failStreakRef.current += 1;
+        trackChallengeFailed(ctx, failStreakRef.current);
+        setConsecutiveFails((prev) => prev + 1);
+      }
+    },
+    [lessonId, courseId, challengeKind]
+  );
 
   const handleClearOutput = useCallback(() => {
     setChallengeState((prev) => ({
@@ -397,7 +440,7 @@ export function ChallengeInterface({
           </div>
 
           {/* Editor */}
-          <div className="relative min-h-0 flex-1">
+          <div ref={editorAreaRef} className="relative min-h-0 flex-1">
             <CodeEditor
               ref={editorHandle}
               lessonId={lessonId}

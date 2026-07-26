@@ -6,6 +6,7 @@ import Link from "next/link";
 import { GraduationCap, CheckCircle, Wallet } from "@phosphor-icons/react";
 import { EarnHandoffCard } from "./earn-handoff-card";
 import { CredentialShareNudge } from "./credential-share-nudge";
+import { trackCredentialMinted } from "@/lib/analytics/events";
 import { celebrate } from "@/lib/gamification/celebration";
 import { createClient } from "@/lib/supabase/client";
 
@@ -141,6 +142,9 @@ export function CourseCompletionMint({
         });
         return;
       }
+      // credential_minted baseline (LX-F1) — trackCredentialMinted() dedupes
+      // against the Realtime certificate-INSERT observation of the same mint.
+      trackCredentialMinted(courseId, "manual_mint");
       // Full celebration on a fresh mint (LX-B11) — celebrate() dedupes
       // against the Realtime certificate-INSERT popup firing the same moment.
       celebrate("credential-mint");

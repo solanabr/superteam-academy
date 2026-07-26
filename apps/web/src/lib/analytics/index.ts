@@ -14,6 +14,10 @@
  *   trackEvent("lesson_completed", { lessonId: "intro-1", xp: 50 });
  *   trackPageView("/en/courses/intro-to-solana");
  *   identifyUser("user-uuid", { walletAddress: "7xK..." });
+ *
+ * The canonical event inventory (names, payload shapes, reserved names) is
+ * documented in README.md next to this file; typed helpers with dedupe live
+ * in events.ts.
  */
 
 import { initGA4, trackGA4Event, trackGA4PageView } from "./ga4";

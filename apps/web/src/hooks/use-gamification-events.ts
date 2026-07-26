@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { trackCredentialMinted } from "@/lib/analytics/events";
 import { createClient } from "@/lib/supabase/client";
 import {
   dispatchAchievementUnlock,
@@ -157,12 +158,18 @@ export function useGamificationEvents(userId: string | undefined) {
           filter: `user_id=eq.${userId}`,
         },
         (payload) => {
-          const row = payload.new as { id?: string };
+          const row = payload.new as { id?: string; course_id?: string };
           if (!row.id) return;
           if (seenIdsRef.current.has(row.id)) return;
           seenIdsRef.current.add(row.id);
           const certId = row.id;
           setTimeout(() => seenIdsRef.current.delete(certId), 15_000);
+          // credential_minted baseline (LX-F1) — the helper dedupes per
+          // course, so the manual-mint success firing moments earlier (or
+          // later) never double-counts the same mint.
+          if (row.course_id) {
+            trackCredentialMinted(row.course_id, "realtime");
+          }
           dispatchCertificateMinted(certId);
         }
       )
