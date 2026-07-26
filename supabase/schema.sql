@@ -153,7 +153,7 @@ ALTER TABLE profiles
 ALTER TABLE profiles
   ADD CONSTRAINT chk_profiles_goal CHECK (goal IN ('job', 'build', 'explore'));
 ALTER TABLE profiles
-  ADD CONSTRAINT chk_profiles_daily_goal CHECK (daily_goal > 0);
+  ADD CONSTRAINT chk_profiles_daily_goal CHECK (daily_goal BETWEEN 1 AND 20);
 
 ALTER TABLE user_xp
   ADD CONSTRAINT chk_user_xp_total_xp_non_negative CHECK (total_xp >= 0);

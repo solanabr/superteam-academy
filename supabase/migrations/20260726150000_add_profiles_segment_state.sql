@@ -10,9 +10,11 @@
 --                                 launch (§3.5 deferral).
 --   goal        TEXT              learner goal (job|build|explore) — consumed as
 --                                 path-page framing copy, nothing reward-bearing.
---   daily_goal  SMALLINT  > 0     chosen daily lesson goal — an existing quest
---                                 target value (the picker is wired to the daily
---                                 lesson quests, so this always matches one).
+--   daily_goal  SMALLINT  1..20   chosen daily lesson goal. The picker's OPTIONS
+--                                 derive from the daily lesson quest targets, so
+--                                 the value always matches a real quest target —
+--                                 but nothing reads this column yet; it is stored
+--                                 for a future quest-engine wiring (E2 intention).
 --
 -- All three are NULLABLE (a learner who never ran the intake has none) and all
 -- three DEFAULT NULL, so existing rows are untouched and the ADD COLUMNs take no
@@ -82,8 +84,10 @@ BEGIN
     WHERE conname = 'chk_profiles_daily_goal'
       AND conrelid = 'public.profiles'::regclass
   ) THEN
+    -- Bounded on BOTH ends: a daily lesson goal above ~20 is not a real target,
+    -- and an unbounded self-writable integer is a needless abuse surface.
     ALTER TABLE profiles
-      ADD CONSTRAINT chk_profiles_daily_goal CHECK (daily_goal > 0);
+      ADD CONSTRAINT chk_profiles_daily_goal CHECK (daily_goal BETWEEN 1 AND 20);
   END IF;
 END $$;
 

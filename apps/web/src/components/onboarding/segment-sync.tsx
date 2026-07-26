@@ -3,7 +3,10 @@
 import { useEffect, useRef } from "react";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { createClient } from "@/lib/supabase/client";
-import { readSegmentState } from "@/lib/onboarding/segment-state";
+import {
+  clearSegmentState,
+  readSegmentState,
+} from "@/lib/onboarding/segment-state";
 
 /**
  * Copy-on-signin for the anonymous /start intake (LX-A3).
@@ -19,6 +22,12 @@ import { readSegmentState } from "@/lib/onboarding/segment-state";
  * design: any write failure (including the columns not yet existing in an
  * environment where the migration has not applied) is swallowed — the
  * localStorage copy remains the read fallback, exactly like the progress bank.
+ *
+ * Shared-browser hygiene (F4): once the signed-in user's DB row is the
+ * authoritative source — whether we just copied into it OR it already carried a
+ * segment — the local copy is cleared. Otherwise user A's anonymous answers,
+ * left in this browser, would bleed into the next fresh user B who signs in
+ * here. The copy is retained ONLY on a transient failure, so a retry can finish.
  */
 export function SegmentSync() {
   const { userId } = useAuth();
@@ -39,7 +48,17 @@ export function SegmentSync() {
         .select("segment")
         .eq("id", userId)
         .single();
-      if (readError || (data && data.segment !== null)) return;
+      if (readError) {
+        // Transient — keep the local copy and allow a later retry.
+        done.current = false;
+        return;
+      }
+      if (data && data.segment !== null) {
+        // The row is already authoritative for THIS user; the lingering local
+        // copy is a stale anonymous pick and a bleed risk — drop it.
+        clearSegmentState();
+        return;
+      }
 
       const { error: writeError } = await supabase
         .from("profiles")
@@ -50,9 +69,13 @@ export function SegmentSync() {
         })
         .eq("id", userId);
 
-      // Leave localStorage in place on failure so reads still resolve; a
-      // successful copy makes the DB authoritative and the local copy moot.
-      if (writeError) done.current = false;
+      if (writeError) {
+        // Keep the local copy so reads still resolve and a retry can finish.
+        done.current = false;
+        return;
+      }
+      // Copy landed — the DB is authoritative; clear the local copy.
+      clearSegmentState();
     })();
   }, [userId]);
 

@@ -78,7 +78,8 @@ for (const [label, sql] of [
       expect(sql).toContain("chk_profiles_goal");
       expect(sql).toMatch(/goal IN \('job', 'build', 'explore'\)/);
       expect(sql).toContain("chk_profiles_daily_goal");
-      expect(sql).toMatch(/daily_goal > 0/);
+      // Bounded on both ends (F3): a positive floor and a sane cap.
+      expect(sql).toMatch(/daily_goal BETWEEN 1 AND 20/);
     });
 
     it("adds NO new RLS policy — the existing own-row UPDATE governs the columns", () => {

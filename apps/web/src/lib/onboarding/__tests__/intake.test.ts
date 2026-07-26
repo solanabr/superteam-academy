@@ -89,4 +89,15 @@ describe("dailyGoalOptionsFromQuests — wired to existing quest targets (LX-A2)
       ])
     ).toEqual([5]);
   });
+
+  it("clamps out targets above the daily-goal cap (F3 — mirrors the DB CHECK)", () => {
+    // A target of 50 would violate chk_profiles_daily_goal (1..20) on write, so
+    // the picker must never offer it.
+    expect(
+      dailyGoalOptionsFromQuests([
+        { type: "lesson", resetType: "daily", targetValue: 1 },
+        { type: "lesson_batch", resetType: "daily", targetValue: 50 },
+      ])
+    ).toEqual([1]);
+  });
 });

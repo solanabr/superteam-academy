@@ -165,6 +165,14 @@ export interface QuestTargetSource {
 const DAILY_LESSON_QUEST_TYPES = new Set(["lesson", "lesson_batch"]);
 
 /**
+ * Upper bound on a daily lesson goal — mirrors the `chk_profiles_daily_goal`
+ * CHECK (1..20). The picker must never offer a value the profile column would
+ * reject on write, so the derivation clamps to this even if content ever ships
+ * an implausibly large daily quest target.
+ */
+export const MAX_DAILY_GOAL = 20;
+
+/**
  * Distinct daily lesson-completion targets, ascending. Falls back to a single
  * one-lesson goal if the bundle somehow carries no daily lesson quest, so the
  * picker is never empty.
@@ -178,7 +186,8 @@ export function dailyGoalOptionsFromQuests(
       DAILY_LESSON_QUEST_TYPES.has(q.type) &&
       q.resetType === "daily" &&
       Number.isInteger(q.targetValue) &&
-      q.targetValue > 0
+      q.targetValue > 0 &&
+      q.targetValue <= MAX_DAILY_GOAL
     ) {
       targets.add(q.targetValue);
     }
