@@ -246,6 +246,13 @@ interface LandingPageProps {
   credentialsIssued: number;
   learningPaths: LearningPath[];
   achievements: DeployedAchievement[];
+  /**
+   * LX-A1: anonymous-first deep-link into the flagship path's lesson 1
+   * (locale-prefixed, sync-gated to `/{locale}/courses` when unsynced). The
+   * primary hero and bottom CTAs point here instead of opening the auth modal —
+   * anonymous access already works; auth is deferred to the completion attempt.
+   */
+  flagshipLessonHref: string;
 }
 
 // Community stats stay hidden until seeding gives them weight (GTM cold-start:
@@ -277,6 +284,7 @@ export function LandingPageClient({
   credentialsIssued,
   learningPaths,
   achievements,
+  flagshipLessonHref,
 }: LandingPageProps) {
   const t = useTranslations("landing");
   const tCommon = useTranslations("common");
@@ -461,8 +469,11 @@ export function LandingPageClient({
                   className="hero-seq flex flex-wrap gap-3"
                   style={{ "--seq": 4 } as React.CSSProperties}
                 >
+                  {/* LX-A1: primary hero CTA deep-links straight into flagship
+                      lesson 1 \u2014 one click, no auth modal (anonymous access
+                      works; auth is deferred to the first completion attempt). */}
                   <Button variant="push" size="lg" asChild>
-                    <Link href={`/${locale}/courses`}>
+                    <Link href={flagshipLessonHref}>
                       {t("exploreCourses")} {"\u2192"}
                     </Link>
                   </Button>
@@ -752,14 +763,14 @@ export function LandingPageClient({
               {t("ctaSubtitle")}
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4">
+              {/* LX-A1: bottom "Get Started" deep-links into flagship lesson 1
+                  instead of opening the auth modal. */}
               {!isLoggedIn && (
-                <AuthModal
-                  trigger={
-                    <Button variant="pushAccent" size="lg">
-                      {tCommon("getStarted")} {"\u2192"}
-                    </Button>
-                  }
-                />
+                <Button variant="pushAccent" size="lg" asChild>
+                  <Link href={flagshipLessonHref}>
+                    {tCommon("getStarted")} {"\u2192"}
+                  </Link>
+                </Button>
               )}
               <Button
                 variant="push"

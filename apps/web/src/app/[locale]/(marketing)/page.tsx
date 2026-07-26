@@ -1,10 +1,11 @@
-import { LandingPageClient } from "./landing-client";
 import {
   getAllCourses,
   getAllLearningPaths,
   getDeployedAchievements,
 } from "@/lib/content/queries";
+import { resolveFlagshipLessonHref } from "@/lib/courses/entry-lesson";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { LandingPageClient } from "./landing-client";
 
 // The landing shows live platform stats (courses, enrolled builders, credentials,
 // XP). Without revalidation it renders fully static and freezes at build time —
@@ -12,12 +13,21 @@ import { createAdminClient } from "@/lib/supabase/admin";
 // and never refreshed. 5-minute ISR keeps the numbers current without per-request cost.
 export const revalidate = 300;
 
-export default async function LandingPage() {
-  const [courses, learningPaths, achievements] = await Promise.all([
-    getAllCourses(),
-    getAllLearningPaths(),
-    getDeployedAchievements(),
-  ]);
+export default async function LandingPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const [courses, learningPaths, achievements, flagshipLessonHref] =
+    await Promise.all([
+      getAllCourses(),
+      getAllLearningPaths(),
+      getDeployedAchievements(),
+      // LX-A1: the anonymous-first deep-link target — flagship lesson 1, or the
+      // catalog when that course isn't synced (resolveFlagshipLessonHref gate).
+      resolveFlagshipLessonHref(locale),
+    ]);
 
   // Fetch on-chain stats from Supabase
   let totalXpMinted = 0;
@@ -56,6 +66,7 @@ export default async function LandingPage() {
       credentialsIssued={credentialsIssued}
       learningPaths={learningPaths}
       achievements={achievements}
+      flagshipLessonHref={flagshipLessonHref}
     />
   );
 }
