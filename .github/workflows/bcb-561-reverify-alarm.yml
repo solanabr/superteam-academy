@@ -1,0 +1,142 @@
+name: BCB-561 re-verification alarm
+
+# Item 30 of the unified launch spec (CAT-07 CONFIRMED). Course 5's compliance
+# lesson (C5 L1) is written against Brazil's BCB Resolution 561 — published
+# 2026-04-30, EFFECTIVE 2026-10-01 — which bars regulated eFX providers from
+# taking reais and settling abroad in virtual assets. C5 carries NO remittance
+# copy anywhere and L1 teaches that boundary; the regulation is a dated decay
+# clock, so the course text must be re-verified against the FINAL rules before
+# the effective date. A docs note cannot fire on its own — this scheduled job
+# is the alarm: once the arming window opens it files (and then weekly nudges)
+# a tracking issue so the re-verification cannot be silently forgotten.
+#
+# Self-contained by design: it drives the Issues API through the preinstalled
+# `gh` CLI and needs NO third-party actions (nothing to SHA-pin) and no secret
+# beyond the default GITHUB_TOKEN.
+
+on:
+  schedule:
+    # Weekly, Mondays 09:23 UTC (off the hour, per the fuzz-job convention).
+    # The cron cannot express "start on a date", so the ARM_START/ARM_END gate
+    # in the job body bounds the real firing window; the cron just ticks weekly.
+    - cron: "23 9 * * 1"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Log the action instead of creating/commenting (default true so a test dispatch is side-effect-free)."
+        type: boolean
+        default: true
+      force:
+        description: "Bypass the ARM_START/ARM_END date gate (test the create/search logic outside the window)."
+        type: boolean
+        default: false
+
+concurrency:
+  group: bcb-561-alarm
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write # file / comment on the tracking issue
+
+jobs:
+  reverify-alarm:
+    name: Arm BCB-561 re-verification reminder
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      # Arming window. Opens ~1 month before the effective date to leave runway;
+      # closes ON the effective date — after 2026-10-01 the deadline has passed
+      # and the alarm disarms (the reminder issue, if unfinished, stays open on
+      # its own). Re-verification also touches the Unicad registration deadline
+      # (2026-10-30) and the provider authorization window (to 2027-05-31).
+      ARM_START: "2026-09-01"
+      ARM_END: "2026-10-01"
+      DEADLINE: "2026-10-01"
+      # Stable title marker used to find an existing reminder (idempotency key).
+      TITLE_PREFIX: "[alarm] BCB-561 re-verification due before 2026-10-01"
+      DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+      FORCE: ${{ github.event.inputs.force || 'false' }}
+    steps:
+      - name: Arm or nudge the re-verification reminder
+        run: |
+          set -euo pipefail
+
+          today="$(date -u +%F)"
+          echo "Today (UTC): $today | window [$ARM_START, $ARM_END) | dry_run=$DRY_RUN force=$FORCE"
+
+          # Date gate: only fire inside [ARM_START, ARM_END). String compare is
+          # safe for zero-padded YYYY-MM-DD. `force` (dispatch only) bypasses it.
+          if [ "$FORCE" != "true" ]; then
+            if [[ "$today" < "$ARM_START" ]]; then
+              echo "Not yet armed — before $ARM_START. No-op."
+              exit 0
+            fi
+            if [[ ! "$today" < "$ARM_END" ]]; then
+              echo "Disarmed — on/after $ARM_END the deadline has passed. No-op."
+              exit 0
+            fi
+          fi
+
+          days_left=$(( ( $(date -u -d "$DEADLINE" +%s) - $(date -u -d "$today" +%s) ) / 86400 ))
+          echo "Days until $DEADLINE: $days_left"
+
+          # Idempotency: is there already a reminder (any state) with our marker?
+          existing="$(gh issue list \
+            --repo "$GITHUB_REPOSITORY" \
+            --state all --limit 200 \
+            --json number,state,title \
+            --jq "[.[] | select(.title | startswith(\"$TITLE_PREFIX\"))][0] // empty")"
+
+          if [ -n "$existing" ]; then
+            num="$(echo "$existing" | jq -r '.number')"
+            state="$(echo "$existing" | jq -r '.state | ascii_downcase')"
+            echo "Existing reminder found: #$num ($state)."
+            if [ "$state" != "open" ]; then
+              echo "Reminder already resolved (closed). No-op."
+              exit 0
+            fi
+            comment="Still open with **$days_left day(s)** until BCB Resolution 561 takes effect on **$DEADLINE**. Re-verify C5 L1 and all payment-flow copy against the final rules, then close this issue."
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "[dry-run] would comment on #$num: $comment"
+            else
+              gh issue comment "$num" --repo "$GITHUB_REPOSITORY" --body "$comment"
+              echo "Nudged #$num."
+            fi
+            exit 0
+          fi
+
+          echo "No existing reminder — filing one."
+          body="$(cat <<EOF
+          **Automated alarm — item 30, unified launch spec (CAT-07 CONFIRMED).**
+
+          BCB Resolution 561 (published 2026-04-30) takes effect **$DEADLINE** — **$days_left day(s)** away. Course 5's compliance lesson (C5 L1) is written against it. Re-verify before the effective date.
+
+          ### Re-verification protocol
+          - [ ] Re-read Resolution 561's **final** text (confirm no amendment/revocation since 2026-04-30).
+          - [ ] Confirm the boundary C5 L1 teaches still matches: regulated eFX providers may **not** take reais and settle abroad in virtual assets; domestic merchant acceptance, contractor payouts, subscriptions and agent budgets remain in scope.
+          - [ ] Re-check **all** C5 payment-flow copy — **no remittance copy anywhere in C5**.
+          - [ ] Confirm the follow-on dates: Unicad registration deadline **2026-10-30**; unauthorised-provider authorization window to **2027-05-31**.
+          - [ ] Close this issue once C5 is verified against the final rules.
+
+          _Filed by \`.github/workflows/bcb-561-reverify-alarm.yml\`. Spec: \`docs/superpowers/specs/2026-07-25-UNIFIED-LAUNCH-SPEC.md\` §2.3 (CAT-07) and §3 item 30._
+          EOF
+          )"
+          title="$TITLE_PREFIX"
+
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "[dry-run] would create issue:"
+            echo "  title: $title"
+            printf '%s\n' "$body"
+            exit 0
+          fi
+
+          # Prefer to label with area:content; fall back to no label if it is
+          # renamed/absent so a missing label never swallows the alarm.
+          if ! gh issue create --repo "$GITHUB_REPOSITORY" \
+                --title "$title" --body "$body" --label "area:content"; then
+            echo "Labelled create failed (label missing?) — creating without a label."
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "$body"
+          fi
+          echo "Reminder filed."

@@ -762,9 +762,12 @@ Corrected order:
 
 C3 may publish before C1 only if its false opener is fixed in the same PR.
 
-**30. BCB-561 re-verification alarm.** — no issue
-C5 is the only course with a dated decay clock (**2026-10-01**, CAT-07 CONFIRMED). Set a calendar
-task to re-verify C5 L1 before it. Nothing currently does.
+**30. BCB-561 re-verification alarm.** — #603 (RESOLVED)
+C5 is the only course with a dated decay clock (**2026-10-01**, CAT-07 CONFIRMED). The alarm now
+exists: `.github/workflows/bcb-561-reverify-alarm.yml` runs weekly from 2026-09-01 and files (then
+nudges) a tracking issue so C5 L1 is re-verified against Resolution 561's final text before it takes
+effect. The re-verification protocol is the checklist in the catalog spec's C5 section
+(`2026-07-25-catalog-redesign-spec.md`).
 
 **31. Originality gate for catalog code.** — no issue
 CAT-15 CONFIRMED: the reference corpora authors are told to use are all-rights-reserved, and the live
