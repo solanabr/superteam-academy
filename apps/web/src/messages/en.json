@@ -246,6 +246,7 @@
     "hideTestDetails": "Hide test details",
     "testCode": "Test code",
     "testMessage": "Message",
+    "whyThisFailed": "Why this failed",
     "outputTruncated": "Output truncated to the first {limit, number} characters.",
     "linkWalletToEarnXp": "Link your wallet to earn on-chain XP.",
     "linkWalletSettings": "Go to Settings →",

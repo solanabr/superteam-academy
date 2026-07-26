@@ -118,6 +118,43 @@ describe("projectLesson — full blocks[] projection", () => {
     );
     expect((cb as unknown as { questions: unknown }).questions).toBeNull();
   });
+
+  it("surfaces a test's failureMessage only when authored (#575)", () => {
+    const projected = projectLesson({
+      _id: "lesson-synthetic-575",
+      title: "t",
+      slug: { current: "s" },
+      blocks: [
+        {
+          _key: "exercise",
+          _type: "code",
+          tests: [
+            {
+              id: "t1",
+              description: "authored",
+              input: "1",
+              expectedOutput: "1",
+              failureMessage: "Off by one — start the loop at 0.",
+            },
+            {
+              id: "t2",
+              description: "bare",
+              input: "2",
+              expectedOutput: "2",
+            },
+          ],
+        },
+      ],
+    } as unknown as Parameters<typeof projectLesson>[0]);
+
+    const tests = (
+      projected.blocks[0] as unknown as { tests: Record<string, unknown>[] }
+    ).tests;
+    expect(tests[0]!.failureMessage).toBe("Off by one — start the loop at 0.");
+    // Absent on the raw test → key omitted entirely (byte-identical to golden),
+    // not present-as-null like the frozen-capture siblings.
+    expect("failureMessage" in tests[1]!).toBe(false);
+  });
 });
 
 describe("projectAchievement — mapAchievement over the bundle", () => {

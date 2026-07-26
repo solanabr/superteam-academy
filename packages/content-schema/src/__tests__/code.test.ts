@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { CodeBlock } from "../blocks/code";
+import { CodeBlock, TestCase } from "../blocks/code";
 
 const valid = {
   type: "code" as const,
@@ -125,5 +125,41 @@ describe("CodeBlock", () => {
       produces: "funded-wallet",
     });
     expect(r.success).toBe(false);
+  });
+});
+
+describe("TestCase", () => {
+  const validCase = {
+    id: "t1",
+    description: "returns three",
+    input: "1, 2",
+    expectedOutput: "result === 3",
+  };
+
+  it("accepts a case without failureMessage (backward-compatible)", () => {
+    const c = TestCase.parse(validCase);
+    expect(c.failureMessage).toBeUndefined();
+  });
+
+  it("accepts an authored failureMessage (#575)", () => {
+    const c = TestCase.parse({
+      ...validCase,
+      failureMessage:
+        "Check that you added the two arguments, not concatenated them.",
+    });
+    expect(c.failureMessage).toBeTruthy();
+  });
+
+  it("rejects an empty failureMessage", () => {
+    expect(
+      TestCase.safeParse({ ...validCase, failureMessage: "" }).success
+    ).toBe(false);
+  });
+
+  it("rejects a failureMessage over 300 chars", () => {
+    expect(
+      TestCase.safeParse({ ...validCase, failureMessage: "x".repeat(301) })
+        .success
+    ).toBe(false);
   });
 });

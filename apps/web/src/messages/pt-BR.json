@@ -246,6 +246,7 @@
     "hideTestDetails": "Ocultar detalhes do teste",
     "testCode": "Código do teste",
     "testMessage": "Mensagem",
+    "whyThisFailed": "Por que isto falhou",
     "outputTruncated": "Saída truncada nos primeiros {limit, number} caracteres.",
     "linkWalletToEarnXp": "Conecte sua carteira para ganhar XP on-chain.",
     "linkWalletSettings": "Ir para Configurações →",
