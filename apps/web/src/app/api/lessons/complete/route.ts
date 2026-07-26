@@ -9,7 +9,7 @@ import type { CompletionDenyReason } from "@/lib/lessons/completion-error";
 import { GRADERS, type GradedBlockType } from "@/lib/grading/graders";
 import { captureReviewFailure } from "@/lib/review/schedule-review";
 import { openAttestation } from "@/lib/ai/check-seal";
-import { isRateLimited, getClientIp } from "@/lib/rate-limit";
+import { isRateLimited, getClientIp, releaseRateLimit } from "@/lib/rate-limit";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 import {
@@ -229,34 +229,48 @@ export async function POST(request: NextRequest) {
     // quiz checks) before one of them takes the in-flight token — wasted CPU on
     // a platform-funded resource.
     //
-    // This guard closes that gap without reintroducing the throttle the in-flight
-    // guard was careful to avoid. It is keyed on the SUBMISSION IDENTITY — the
-    // (user, lesson, proofs-fingerprint) triple — NOT on (user, lesson) alone.
-    // That distinction is the whole point:
-    //   • A genuine re-attempt of a failed submission carries DIFFERENT answers/
-    //     code, hence a different fingerprint and a different key, so it is never
-    //     blocked — the 403 path and its reasons are untouched.
-    //   • A true duplicate (the client re-firing the identical body, or a forged
-    //     replay flood of the same payload) carries the SAME fingerprint and
-    //     short-circuits here, so grading runs once for the burst.
+    // This is a true IN-PROGRESS LOCK, not a 30s window. It ACQUIRES a 1-token
+    // key atomically here, then RELEASES it in the `finally` below on EVERY exit
+    // once the request stops processing. So the key means exactly what its 429
+    // copy says — "a twin request is processing right now" — and never lingers
+    // after a request that failed, threw, or finished.
     //
-    // The window matches the in-flight guard's: 1 token / 30s spans a request's
-    // grade+submit+confirm lifetime, so a duplicate arriving anytime while the
-    // first is still in flight is caught. The response mirrors the in-flight
-    // guard exactly (429 + `completion_in_progress` + Retry-After: 30) so the
-    // client copy is identical whether a duplicate is deduped before or after
-    // grading — this adds no new client contract.
+    // Keyed on the SUBMISSION IDENTITY — the (user, lesson, proofs-fingerprint)
+    // triple, NOT (user, lesson) alone — for two independent reasons:
+    //   • Concurrency: two truly-simultaneous identical submissions collide on
+    //     one key, so grading runs once for the burst and the losers 429 WHILE
+    //     the winner is in flight.
+    //   • Honesty: because the lock is released the instant the winner exits, a
+    //     later sequential resubmit — identical or not — finds the key free and
+    //     re-grades normally, getting its real 403/reason. The fingerprint keeps
+    //     even the pathological "resubmit the exact failing answer twice in the
+    //     same millisecond" case from blocking a DIFFERENT concurrent attempt.
+    //
+    // We RELEASE on the success path too: once the tx lands the on-chain bit is
+    // set, so any later duplicate short-circuits at `alreadyOnChain`, and the
+    // brief concurrent-submit window is already covered by #651's guard below —
+    // holding this lock past success would only risk a false 429 on a genuine
+    // (bit-not-yet-propagated) retry, buying nothing.
+    //
+    // Release is AWAITED (release-before-response), not fire-and-forget: it makes
+    // the lock provably gone before the caller can resubmit, so an honest
+    // re-click never races the delete. The extra round-trip is one indexed
+    // DELETE and off the concurrency-sensitive path.
     //
     // Fail-OPEN (no `failClosed`, inherited from isRateLimited's default): a
     // store blip degrades to today's behaviour — grading runs — never to a
     // blocked completion. This is a cost optimisation, not a correctness gate.
+    const gradingDedupNs = "lessons:complete:grading-dedup";
+    const gradingDedupKey = `${user.id}:${lessonId}:${proofsFingerprint(proofs)}`;
     if (
-      await isRateLimited(
-        "lessons:complete:grading-dedup",
-        `${user.id}:${lessonId}:${proofsFingerprint(proofs)}`,
-        { maxTokens: 1, refillIntervalMs: 30_000 }
-      )
+      await isRateLimited(gradingDedupNs, gradingDedupKey, {
+        maxTokens: 1,
+        refillIntervalMs: 30_000,
+      })
     ) {
+      // A twin request holds the lock → it is genuinely in progress. We did NOT
+      // acquire it, so we must NOT release it here (that would free the twin's
+      // lock) — hence this return is OUTSIDE the try/finally below.
       return NextResponse.json(
         {
           error:
@@ -267,200 +281,302 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── Server-authoritative completion gate (block model, spec §7.2) ──────
-    // Inverted from the old fail-OPEN `if (answerKey.type === "challenge")`:
-    // every dispatch below defaults to DENY. An unknown block type, a graded
-    // block with no grader/wrong proof, an executor outage, or a missing/forged
-    // required-block attestation each blocks completion — a forged client
-    // "passed" can never mint XP. Block-level results are transient (never
-    // persisted); the lesson stays the only durable progress unit.
-    const gradedLesson = await getLessonByIdForGrading(courseId, lessonId);
-    if (!gradedLesson) {
-      return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
-    }
-
-    // `reason` is the client's ONLY discriminator between the 403 causes (wrong
-    // quiz answer vs failed code suite vs missing reflection vs missing
-    // enrollment) — without it the client guessed from lesson shape and showed
-    // quiz-failers the "verify enrollment" copy (#564). Deliberately a bare
-    // machine string: the human copy stays localized client-side.
-    const deny = (
-      status: 403 | 404 | 503,
-      error: string,
-      reason?: CompletionDenyReason
-    ) => NextResponse.json(reason ? { error, reason } : { error }, { status });
-
-    // 0) Unknown block type → CLOSED. A block whose _type is not in the registry
-    //    cannot be reasoned about, so completion is denied (not silently skipped).
-    for (const block of gradedLesson.blocks) {
-      if (!((block._type as string) in BLOCK_REGISTRY)) {
-        return deny(
-          503,
-          "This lesson has an unrecognized block and cannot be completed yet"
+    // We hold the lock. Every path out of here — deny, 503, 409, the already-
+    // completed 200, the success 200, or a throw — must hand it back, so the
+    // guarded section is wrapped in try/finally with the release in `finally`.
+    try {
+      // ── Server-authoritative completion gate (block model, spec §7.2) ──────
+      // Inverted from the old fail-OPEN `if (answerKey.type === "challenge")`:
+      // every dispatch below defaults to DENY. An unknown block type, a graded
+      // block with no grader/wrong proof, an executor outage, or a missing/forged
+      // required-block attestation each blocks completion — a forged client
+      // "passed" can never mint XP. Block-level results are transient (never
+      // persisted); the lesson stays the only durable progress unit.
+      const gradedLesson = await getLessonByIdForGrading(courseId, lessonId);
+      if (!gradedLesson) {
+        return NextResponse.json(
+          { error: "Lesson not found" },
+          { status: 404 }
         );
       }
-    }
 
-    // 1) Graded blocks (code, quiz): a deterministic grader MUST pass. A missing
-    //    grader for a graded type is a second, independent fail-closed path.
-    for (const block of gradedLesson.blocks) {
-      const type = block._type as BlockType;
-      if (!BLOCK_REGISTRY[type].graded) continue;
-      const grader = GRADERS[type as GradedBlockType];
-      if (!grader) return deny(503, "No grader for this block type");
-      const result = await grader(block, proofs[block.key]);
-      if (!result.ok) {
-        // A genuine graded MISS (403) is a learning signal → capture it into the
-        // review substrate keyed by this lesson (LX-B4). A 503 is "could not
-        // judge" (executor outage), not a miss — never captured. Best-effort:
-        // the helper never throws by contract, and the `.catch` here is a second
-        // guard so a review-write hiccup can NEVER change this deny response.
-        if (result.status === 403) {
-          await captureReviewFailure({
-            userId: user.id,
-            lessonId,
-            reason: type === "quiz" ? "quiz_failed" : "challenge_failed",
-            failedTests:
-              "failedTests" in result ? result.failedTests : undefined,
-          }).catch(() => {});
+      // `reason` is the client's ONLY discriminator between the 403 causes (wrong
+      // quiz answer vs failed code suite vs missing reflection vs missing
+      // enrollment) — without it the client guessed from lesson shape and showed
+      // quiz-failers the "verify enrollment" copy (#564). Deliberately a bare
+      // machine string: the human copy stays localized client-side.
+      const deny = (
+        status: 403 | 404 | 503,
+        error: string,
+        reason?: CompletionDenyReason
+      ) =>
+        NextResponse.json(reason ? { error, reason } : { error }, { status });
+
+      // 0) Unknown block type → CLOSED. A block whose _type is not in the registry
+      //    cannot be reasoned about, so completion is denied (not silently skipped).
+      for (const block of gradedLesson.blocks) {
+        if (!((block._type as string) in BLOCK_REGISTRY)) {
+          return deny(
+            503,
+            "This lesson has an unrecognized block and cannot be completed yet"
+          );
         }
-        // 503 = we could not judge (executor outage) — no `reason`, since the
-        // block did not "fail"; grading was unavailable.
-        return deny(
-          result.status,
-          "Block did not pass",
-          result.status === 403
-            ? type === "quiz"
-              ? "quiz_failed"
-              : type === "parsons"
-                ? "parsons_failed"
-                : "challenge_failed"
-            : undefined
+      }
+
+      // 1) Graded blocks (code, quiz): a deterministic grader MUST pass. A missing
+      //    grader for a graded type is a second, independent fail-closed path.
+      for (const block of gradedLesson.blocks) {
+        const type = block._type as BlockType;
+        if (!BLOCK_REGISTRY[type].graded) continue;
+        const grader = GRADERS[type as GradedBlockType];
+        if (!grader) return deny(503, "No grader for this block type");
+        const result = await grader(block, proofs[block.key]);
+        if (!result.ok) {
+          // A genuine graded MISS (403) is a learning signal → capture it into the
+          // review substrate keyed by this lesson (LX-B4). A 503 is "could not
+          // judge" (executor outage), not a miss — never captured. Best-effort:
+          // the helper never throws by contract, and the `.catch` here is a second
+          // guard so a review-write hiccup can NEVER change this deny response.
+          if (result.status === 403) {
+            await captureReviewFailure({
+              userId: user.id,
+              lessonId,
+              reason: type === "quiz" ? "quiz_failed" : "challenge_failed",
+              failedTests:
+                "failedTests" in result ? result.failedTests : undefined,
+            }).catch(() => {});
+          }
+          // 503 = we could not judge (executor outage) — no `reason`, since the
+          // block did not "fail"; grading was unavailable.
+          return deny(
+            result.status,
+            "Block did not pass",
+            result.status === 403
+              ? type === "quiz"
+                ? "quiz_failed"
+                : type === "parsons"
+                  ? "parsons_failed"
+                  : "challenge_failed"
+              : undefined
+          );
+        }
+      }
+
+      // 2) Required-but-UNGRADED blocks (openEnded): a sealed attestation must
+      //    prove the server saw a submission for THIS lesson+block+user. The
+      //    `!graded` filter is essential — a graded block's proof is an answer set,
+      //    not an attestation, so running it through openAttestation would 403
+      //    every valid code/quiz completion.
+      for (const block of gradedLesson.blocks) {
+        const type = block._type as BlockType;
+        if (!(BLOCK_REGISTRY[type].required && !BLOCK_REGISTRY[type].graded)) {
+          continue;
+        }
+        const token = proofs[block.key];
+        if (
+          typeof token !== "string" ||
+          !openAttestation(token, {
+            courseId,
+            lessonId,
+            blockKey: block.key,
+            userId: user.id,
+          })
+        ) {
+          return deny(
+            403,
+            "This lesson requires a completed reflection",
+            "reflection_required"
+          );
+        }
+      }
+
+      // Look up user's wallet — required for on-chain operations
+      const supabaseAdmin = createAdminClient();
+      const { data: profile } = await supabaseAdmin
+        .from("profiles")
+        .select("wallet_address")
+        .eq("id", user.id)
+        .single();
+
+      if (!profile?.wallet_address) {
+        return NextResponse.json(
+          {
+            error:
+              "Wallet not connected. Link your wallet to earn on-chain XP.",
+          },
+          { status: 400 }
         );
       }
-    }
 
-    // 2) Required-but-UNGRADED blocks (openEnded): a sealed attestation must
-    //    prove the server saw a submission for THIS lesson+block+user. The
-    //    `!graded` filter is essential — a graded block's proof is an answer set,
-    //    not an attestation, so running it through openAttestation would 403
-    //    every valid code/quiz completion.
-    for (const block of gradedLesson.blocks) {
-      const type = block._type as BlockType;
-      if (!(BLOCK_REGISTRY[type].required && !BLOCK_REGISTRY[type].graded)) {
-        continue;
+      const programLive = await isOnChainProgramLive();
+      if (!programLive) {
+        return NextResponse.json(
+          { error: "On-chain program not available" },
+          { status: 503 }
+        );
       }
-      const token = proofs[block.key];
-      if (
-        typeof token !== "string" ||
-        !openAttestation(token, {
-          courseId,
-          lessonId,
-          blockKey: block.key,
-          userId: user.id,
-        })
-      ) {
+
+      // WS-2 #453 rail 3 — the affected course is mid close+recreate (the Course
+      // PDA is briefly absent, non-atomically). Refuse rather than racing that
+      // window; the learner's proofs/grading above are already validated and
+      // durable client-side, so a retry shortly after is lossless.
+      if (await isCourseInMaintenance(courseId)) {
+        return NextResponse.json(
+          {
+            error:
+              "This course is undergoing maintenance. Please try again in a few minutes.",
+          },
+          { status: 503, headers: { "Retry-After": "60" } }
+        );
+      }
+
+      const walletPubkey = new PublicKey(profile.wallet_address);
+      const connection = getConnection();
+
+      // Verify on-chain enrollment exists. The course fetch (for the lesson-count
+      // guard below) is independent, so run both RPC reads in parallel.
+      const [onChainEnrollment, onChainCourse] = await Promise.all([
+        fetchEnrollment(courseId, walletPubkey, connection, getProgramId()),
+        fetchCourse(courseId, connection, getProgramId()),
+      ]);
+
+      if (!onChainEnrollment) {
         return deny(
           403,
-          "This lesson requires a completed reflection",
-          "reflection_required"
+          "On-chain enrollment not found. Please re-enroll the course.",
+          "enrollment_missing"
         );
       }
-    }
 
-    // Look up user's wallet — required for on-chain operations
-    const supabaseAdmin = createAdminClient();
-    const { data: profile } = await supabaseAdmin
-      .from("profiles")
-      .select("wallet_address")
-      .eq("id", user.id)
-      .single();
+      // Derive lesson index from content-bundle lesson order
+      const lessonIndex = await deriveLessonIndex(courseId, lessonId);
 
-    if (!profile?.wallet_address) {
-      return NextResponse.json(
-        {
-          error: "Wallet not connected. Link your wallet to earn on-chain XP.",
-        },
-        { status: 400 }
+      // Guard: the on-chain complete_lesson reverts when lessonIndex >=
+      // course.lesson_count. That happens when a teacher appended lessons to an
+      // already-deployed course but the Course PDA's lesson_count has not yet been
+      // raised by an admin re-sync (update_course.new_lesson_count). Detect it here
+      // and return a clear 409 instead of letting the on-chain TX throw a generic
+      // 500. fetchCourse returns the normalised `liveLessonCount`.
+      // Count-based and only correct while masks are dense (today). Once a
+      // sparse-mask course can exist, this must become a per-slot bit test
+      // against `activeLessons` instead of a count comparison.
+      const onChainLessonCount = onChainCourse?.liveLessonCount;
+      if (
+        typeof onChainLessonCount === "number" &&
+        lessonIndex >= onChainLessonCount
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "This course was recently extended and is pending an admin re-sync — try again shortly.",
+          },
+          { status: 409 }
+        );
+      }
+
+      // Idempotency: skip on-chain TX if lesson already completed in bitmap
+      const alreadyOnChain = isLessonComplete(
+        onChainEnrollment.lesson_flags as (bigint | number)[],
+        lessonIndex
       );
-    }
 
-    const programLive = await isOnChainProgramLive();
-    if (!programLive) {
-      return NextResponse.json(
-        { error: "On-chain program not available" },
-        { status: 503 }
+      if (alreadyOnChain) {
+        // Sync progress in case the Helius webhook missed this completion.
+        // ignoreDuplicates avoids overwriting an existing tx_signature with null.
+        const { error: recoveryError } = await supabaseAdmin
+          .from("user_progress")
+          .upsert(
+            {
+              user_id: user.id,
+              course_id: courseId,
+              lesson_id: lessonId,
+              completed: true,
+              completed_at: new Date().toISOString(),
+              tx_signature: null,
+              lesson_index: lessonIndex,
+            },
+            { onConflict: "user_id,lesson_id", ignoreDuplicates: true }
+          );
+
+        if (recoveryError) {
+          logError({
+            errorId: ERROR_IDS.LESSON_COMPLETE_FAILED,
+            error: new Error(recoveryError.message),
+            context: {
+              route: "/api/lessons/complete",
+              step: "recovery_sync",
+              userId: user.id,
+              courseId,
+              lessonId,
+            },
+          });
+        }
+        return NextResponse.json({
+          success: true,
+          alreadyCompleted: true,
+          signature: null,
+        });
+      }
+
+      // ── Per-(user,lesson) in-flight guard (#651) ─────────────────────────
+      // Everything above is settled: grading PASSED, enrollment exists, and the
+      // lesson is NOT yet set in the on-chain bitmap. Between that stale read
+      // (`alreadyOnChain` above) and the confirmed complete_lesson tx below, N
+      // concurrent same-lesson requests all see the unset bit and each fire a tx;
+      // one confirms, the rest revert on the program's double-complete guard — but
+      // the backend keypair (payer) eats each reverted tx's base fee, and the
+      // graders already ran for all N. This 1-token / 30s bucket is a coarse lock
+      // over that critical section: the first request through takes the token, a
+      // second concurrent one 429s.
+      //
+      // Keyed per (user, lesson): it never touches a learner's OTHER lessons, and
+      // — sitting AFTER grading — it leaves normal retries alone. A wrong/failed
+      // submission 403s above and never reaches here; a re-fire of an ALREADY-
+      // completed lesson short-circuits at `alreadyOnChain` above. So the only
+      // request this blocks is a duplicate of an already-valid completion that is
+      // still in flight — exactly what "already in progress" means. That also
+      // covers a forged same-lesson `replay` flood, which flows through here like
+      // any other completion (honest replays are per-lesson-distinct, so they
+      // never collide on this key).
+      //
+      // 30s ≈ the grading + submit + confirm window the stale read spans. Fixed-
+      // window alignment makes this a coarse lock, not a mutex (two requests
+      // straddling a window boundary can both pass) — acceptable: it bounds the
+      // burn, it does not need to be exact.
+      //
+      // Fail-OPEN (no `failClosed`): a store blip degrades to today's pre-existing
+      // race, never to a blocked completion. This is a cost optimisation, not a
+      // correctness gate — the program's own double-complete check is the real
+      // guarantee — so a transient DB hiccup must never stop a learner finishing a
+      // lesson.
+      if (
+        await isRateLimited(
+          "lessons:complete:inflight",
+          `${user.id}:${lessonId}`,
+          { maxTokens: 1, refillIntervalMs: 30_000 }
+        )
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "This lesson completion is already being processed. Please wait a moment and try again.",
+            reason: "completion_in_progress",
+          },
+          { status: 429, headers: { "Retry-After": "30" } }
+        );
+      }
+
+      // Execute on-chain completeLesson
+      const signature = await onChainCompleteLesson(
+        courseId,
+        walletPubkey,
+        lessonIndex
       );
-    }
 
-    // WS-2 #453 rail 3 — the affected course is mid close+recreate (the Course
-    // PDA is briefly absent, non-atomically). Refuse rather than racing that
-    // window; the learner's proofs/grading above are already validated and
-    // durable client-side, so a retry shortly after is lossless.
-    if (await isCourseInMaintenance(courseId)) {
-      return NextResponse.json(
-        {
-          error:
-            "This course is undergoing maintenance. Please try again in a few minutes.",
-        },
-        { status: 503, headers: { "Retry-After": "60" } }
-      );
-    }
-
-    const walletPubkey = new PublicKey(profile.wallet_address);
-    const connection = getConnection();
-
-    // Verify on-chain enrollment exists. The course fetch (for the lesson-count
-    // guard below) is independent, so run both RPC reads in parallel.
-    const [onChainEnrollment, onChainCourse] = await Promise.all([
-      fetchEnrollment(courseId, walletPubkey, connection, getProgramId()),
-      fetchCourse(courseId, connection, getProgramId()),
-    ]);
-
-    if (!onChainEnrollment) {
-      return deny(
-        403,
-        "On-chain enrollment not found. Please re-enroll the course.",
-        "enrollment_missing"
-      );
-    }
-
-    // Derive lesson index from content-bundle lesson order
-    const lessonIndex = await deriveLessonIndex(courseId, lessonId);
-
-    // Guard: the on-chain complete_lesson reverts when lessonIndex >=
-    // course.lesson_count. That happens when a teacher appended lessons to an
-    // already-deployed course but the Course PDA's lesson_count has not yet been
-    // raised by an admin re-sync (update_course.new_lesson_count). Detect it here
-    // and return a clear 409 instead of letting the on-chain TX throw a generic
-    // 500. fetchCourse returns the normalised `liveLessonCount`.
-    // Count-based and only correct while masks are dense (today). Once a
-    // sparse-mask course can exist, this must become a per-slot bit test
-    // against `activeLessons` instead of a count comparison.
-    const onChainLessonCount = onChainCourse?.liveLessonCount;
-    if (
-      typeof onChainLessonCount === "number" &&
-      lessonIndex >= onChainLessonCount
-    ) {
-      return NextResponse.json(
-        {
-          error:
-            "This course was recently extended and is pending an admin re-sync — try again shortly.",
-        },
-        { status: 409 }
-      );
-    }
-
-    // Idempotency: skip on-chain TX if lesson already completed in bitmap
-    const alreadyOnChain = isLessonComplete(
-      onChainEnrollment.lesson_flags as (bigint | number)[],
-      lessonIndex
-    );
-
-    if (alreadyOnChain) {
-      // Sync progress in case the Helius webhook missed this completion.
-      // ignoreDuplicates avoids overwriting an existing tx_signature with null.
-      const { error: recoveryError } = await supabaseAdmin
+      // Write directly to Supabase so progress is visible on the dashboard
+      // immediately, without depending on Helius webhook delivery timing.
+      // The webhook will upsert the same row again (idempotent) when it arrives.
+      const { error: progressError } = await supabaseAdmin
         .from("user_progress")
         .upsert(
           {
@@ -469,120 +585,36 @@ export async function POST(request: NextRequest) {
             lesson_id: lessonId,
             completed: true,
             completed_at: new Date().toISOString(),
-            tx_signature: null,
+            tx_signature: signature,
             lesson_index: lessonIndex,
           },
-          { onConflict: "user_id,lesson_id", ignoreDuplicates: true }
+          { onConflict: "user_id,lesson_id" }
         );
 
-      if (recoveryError) {
+      if (progressError) {
         logError({
           errorId: ERROR_IDS.LESSON_COMPLETE_FAILED,
-          error: new Error(recoveryError.message),
+          error: new Error(progressError.message),
           context: {
             route: "/api/lessons/complete",
-            step: "recovery_sync",
+            step: "sync_progress",
             userId: user.id,
             courseId,
             lessonId,
           },
         });
       }
-      return NextResponse.json({
-        success: true,
-        alreadyCompleted: true,
-        signature: null,
-      });
+
+      return NextResponse.json({ success: true, signature });
+    } finally {
+      // Hand the in-progress lock back on EVERY exit from the guarded section —
+      // graded-failure 403s, reflection_required, wallet-not-connected,
+      // program-not-live, maintenance, pending-re-sync, already-completed,
+      // success, and thrown errors alike. A `finally` is the only placement that
+      // no return or throw can bypass, so the key never outlives the request
+      // that held it and a later honest resubmit always re-grades.
+      await releaseRateLimit(gradingDedupNs, gradingDedupKey);
     }
-
-    // ── Per-(user,lesson) in-flight guard (#651) ─────────────────────────
-    // Everything above is settled: grading PASSED, enrollment exists, and the
-    // lesson is NOT yet set in the on-chain bitmap. Between that stale read
-    // (`alreadyOnChain` above) and the confirmed complete_lesson tx below, N
-    // concurrent same-lesson requests all see the unset bit and each fire a tx;
-    // one confirms, the rest revert on the program's double-complete guard — but
-    // the backend keypair (payer) eats each reverted tx's base fee, and the
-    // graders already ran for all N. This 1-token / 30s bucket is a coarse lock
-    // over that critical section: the first request through takes the token, a
-    // second concurrent one 429s.
-    //
-    // Keyed per (user, lesson): it never touches a learner's OTHER lessons, and
-    // — sitting AFTER grading — it leaves normal retries alone. A wrong/failed
-    // submission 403s above and never reaches here; a re-fire of an ALREADY-
-    // completed lesson short-circuits at `alreadyOnChain` above. So the only
-    // request this blocks is a duplicate of an already-valid completion that is
-    // still in flight — exactly what "already in progress" means. That also
-    // covers a forged same-lesson `replay` flood, which flows through here like
-    // any other completion (honest replays are per-lesson-distinct, so they
-    // never collide on this key).
-    //
-    // 30s ≈ the grading + submit + confirm window the stale read spans. Fixed-
-    // window alignment makes this a coarse lock, not a mutex (two requests
-    // straddling a window boundary can both pass) — acceptable: it bounds the
-    // burn, it does not need to be exact.
-    //
-    // Fail-OPEN (no `failClosed`): a store blip degrades to today's pre-existing
-    // race, never to a blocked completion. This is a cost optimisation, not a
-    // correctness gate — the program's own double-complete check is the real
-    // guarantee — so a transient DB hiccup must never stop a learner finishing a
-    // lesson.
-    if (
-      await isRateLimited(
-        "lessons:complete:inflight",
-        `${user.id}:${lessonId}`,
-        { maxTokens: 1, refillIntervalMs: 30_000 }
-      )
-    ) {
-      return NextResponse.json(
-        {
-          error:
-            "This lesson completion is already being processed. Please wait a moment and try again.",
-          reason: "completion_in_progress",
-        },
-        { status: 429, headers: { "Retry-After": "30" } }
-      );
-    }
-
-    // Execute on-chain completeLesson
-    const signature = await onChainCompleteLesson(
-      courseId,
-      walletPubkey,
-      lessonIndex
-    );
-
-    // Write directly to Supabase so progress is visible on the dashboard
-    // immediately, without depending on Helius webhook delivery timing.
-    // The webhook will upsert the same row again (idempotent) when it arrives.
-    const { error: progressError } = await supabaseAdmin
-      .from("user_progress")
-      .upsert(
-        {
-          user_id: user.id,
-          course_id: courseId,
-          lesson_id: lessonId,
-          completed: true,
-          completed_at: new Date().toISOString(),
-          tx_signature: signature,
-          lesson_index: lessonIndex,
-        },
-        { onConflict: "user_id,lesson_id" }
-      );
-
-    if (progressError) {
-      logError({
-        errorId: ERROR_IDS.LESSON_COMPLETE_FAILED,
-        error: new Error(progressError.message),
-        context: {
-          route: "/api/lessons/complete",
-          step: "sync_progress",
-          userId: user.id,
-          courseId,
-          lessonId,
-        },
-      });
-    }
-
-    return NextResponse.json({ success: true, signature });
   } catch (err: unknown) {
     logError({
       errorId: ERROR_IDS.LESSON_COMPLETE_FAILED,

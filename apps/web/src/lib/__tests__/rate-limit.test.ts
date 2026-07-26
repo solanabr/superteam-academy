@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: vi.fn() }));
 
-import { getClientIp, isRateLimited } from "@/lib/rate-limit";
+import { getClientIp, isRateLimited, releaseRateLimit } from "@/lib/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const h = (headers: Record<string, string>) => new Headers(headers);
@@ -185,5 +185,52 @@ describe("isRateLimited — fail-open default, fail-closed opt-in", () => {
     expect(
       await isRateLimited("ai:partner", "key", { ...OPTS, failClosed: true })
     ).toBe(true);
+  });
+});
+
+// Release hands a lock-style key (maxTokens: 1) back early so the next request
+// starts clean instead of waiting out the window — the correctness half of the
+// #693 grading-dedup guard. It deletes the row directly (check_rate_limit only
+// counts up) and must fail SOFT: a store blip can never surface to the caller,
+// since a leaked lock self-heals when its window expires.
+describe("releaseRateLimit — early lock hand-back, fail-soft", () => {
+  beforeEach(() => {
+    vi.mocked(createAdminClient).mockReset();
+  });
+
+  /** Capture the `.eq("key", …)` filter and return a canned delete outcome. */
+  function stubDelete(outcome: { error?: unknown } | Error) {
+    const eq = vi.fn(async () => {
+      if (outcome instanceof Error) throw outcome;
+      return { error: outcome.error ?? null };
+    });
+    const from = vi.fn(() => ({ delete: () => ({ eq }) }));
+    vi.mocked(createAdminClient).mockReturnValue({
+      from,
+    } as unknown as ReturnType<typeof createAdminClient>);
+    return { from, eq };
+  }
+
+  it("deletes the rate_limits row keyed EXACTLY `${namespace}:${key}`", async () => {
+    const { from, eq } = stubDelete({});
+    await releaseRateLimit(
+      "lessons:complete:grading-dedup",
+      "user-1:lesson-1:ab"
+    );
+    expect(from).toHaveBeenCalledWith("rate_limits");
+    expect(eq).toHaveBeenCalledWith(
+      "key",
+      "lessons:complete:grading-dedup:user-1:lesson-1:ab"
+    );
+  });
+
+  it("fails SOFT when the delete returns an error (never throws)", async () => {
+    stubDelete({ error: { message: "delete failed" } });
+    await expect(releaseRateLimit("ns", "key")).resolves.toBeUndefined();
+  });
+
+  it("fails SOFT when the admin client throws (never throws)", async () => {
+    stubDelete(new Error("connection refused"));
+    await expect(releaseRateLimit("ns", "key")).resolves.toBeUndefined();
   });
 });

@@ -132,3 +132,47 @@ export async function isRateLimited(
     return opts.failClosed === true;
   }
 }
+
+/**
+ * Release a lock-style rate-limit key by deleting its row(s), so the very next
+ * request with the same key starts from a clean window instead of waiting out
+ * the fixed window.
+ *
+ * This is ONLY meaningful for a 1-token "in-progress lock" (maxTokens: 1), where
+ * the single token means "a request holding this key is processing right now"
+ * and must be handed back the moment that request stops. Calling it on a
+ * volume/burst limiter (maxTokens > 1) would defeat the limit — don't.
+ *
+ * Keyed EXACTLY like `isRateLimited`: the stored row's key is `${namespace}:
+ * ${key}`, and the delete matches all windows for it (there is at most a current
+ * row plus a stale one check_rate_limit would have pruned anyway). Touches the
+ * table directly rather than through check_rate_limit — that function only
+ * counts up; releasing is a delete — and stays service-role-only (the table has
+ * no RLS policies, so only the admin client reaches it).
+ *
+ * Fails SOFT: a delete error is logged and swallowed. A lock that fails to
+ * release self-heals when its window expires (≤ the window length), so a
+ * transient store blip must never surface to the caller — exactly mirroring the
+ * fail-open stance of the acquire side.
+ */
+export async function releaseRateLimit(
+  namespace: string,
+  key: string
+): Promise<void> {
+  try {
+    const admin = createAdminClient();
+    const { error } = await admin
+      .from("rate_limits")
+      .delete()
+      .eq("key", `${namespace}:${key}`);
+    if (error) {
+      console.warn(
+        `[rate-limit] release failed for ${namespace}:`,
+        error.message
+      );
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.warn(`[rate-limit] release unavailable for ${namespace}:`, message);
+  }
+}
