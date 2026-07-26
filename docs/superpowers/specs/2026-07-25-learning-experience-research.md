@@ -11,6 +11,12 @@ Method note: four research pillars (learning science, motivation/gamification, m
 >
 > Authoritative dispositions: `docs/superpowers/specs/2026-07-25-UNIFIED-LAUNCH-SPEC.md` §1 evidence table + §3 item 52.
 
+> **Correction note (2026-07-26, per #645 — do not rewrite the body below; this note governs).** One further figure in this report was weakened under adversarial verification and must not be quoted from live guidance:
+>
+> - **"≈0.08 on standardized/transfer measures" for mastery learning** (used below in the Kulik 1990 line, §on the mechanizable mentorship / mastery-gating evidence): the "≈0.08" is not in the primary and **must never be quoted** (PED-07 WEAKENED). The standardized effect is **d=0.33 (k=9) / 0.10 (k=2)**; high-standard mastery beat conventional teaching by 0.60–0.76 SD on standardized tests, and stricter thresholds beat lenient ones. The ruling — gate the credential on the capstone, do not market gating as transfer — stands on those figures, not on 0.08.
+>
+> Authoritative disposition: UNIFIED-LAUNCH-SPEC §1 evidence table (PED-07) + §3 item 52.
+
 ---
 
 ## 1. Executive Summary

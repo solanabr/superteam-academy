@@ -5,6 +5,13 @@
 **Evidence-tier labels used throughout:** `[peer-reviewed]` · `[company A/B]` (self-reported, unaudited) · `[company metric]` (self-reported, no experiment) · `[teardown]` · `[practitioner consensus]`
 **Verdict handling:** One claim was REFUTED in adversarial review (the arXiv 2512.22407 "scaffold-by-experience-level" claim — the paper is an n=9 non-peer-reviewed perception study that contains none of the claimed findings) and is **excluded** from this report. All WEAKENED caveats are carried inline where the claim is used.
 
+> **Correction note (2026-07-26, per #645 — do not rewrite the body below; this note governs).** Two claims in this report were later bounded and must not be quoted in those forms from live guidance:
+>
+> - **LinkedIn credential sharing → employment** (the F-item citing Stanford/Coursera arXiv 2405.00247, "+9% certificate-related jobs, +15-20 resume-score points"): **the study is NOT peer-reviewed** (arXiv preprint / Stanford GSB working paper); the new-employment figure is **+8%, not +9%**; the outcomes are **LinkedIn profile updates, not administrative employment records**; and the **"+15-20 resume-score points" is unsourced** (UIU-02 WEAKENED). Use only the surviving, sourced figures — +17pp sharing, +6% new employment, +12% bottom-employability tercile — and never present the claim as peer-reviewed or cite a resume-score delta.
+> - **"3rd-largest esports audience"** (used below in the PT-BR localization line): **REFUTED** (UIU-26). Brazil is **3rd in _pro players_**, not audience; the audience is **34M+ fans**. Competitive mechanics remain culturally safe on the 34M figure — never cite the esports _rank_.
+>
+> Authoritative dispositions: UNIFIED-LAUNCH-SPEC §1 evidence table (UIU-02, UIU-26) + §3 item 52.
+
 ---
 
 ## 1. Executive Summary

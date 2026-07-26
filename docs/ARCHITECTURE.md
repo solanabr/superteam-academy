@@ -618,7 +618,10 @@ Mirror writes are non-fatal: if a Supabase write fails after an on-chain TX succ
 - **Generic errors**: No stack traces or internal details in API responses
 - **Env var guards**: API routes fail-fast with 500 if required vars are missing
 
-### RLS Model (19 tables, all with RLS enabled)
+### RLS Model (20 tables, all with RLS enabled)
+
+<!-- Table count corrected 19 → 20 per #645: schema.sql defines 20 tables; the 20th is `challenge_assists` (the AI-assist ledger). The per-table matrices below enumerate a subset for the RLS-policy summary and are not a full inventory. -->
+
 
 #### Core Tables
 
