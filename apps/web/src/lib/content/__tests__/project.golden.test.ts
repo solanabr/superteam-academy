@@ -50,6 +50,13 @@ vi.mock("server-only", () => ({}));
 //    Sanity capture, so for these docs the golden = the projected bundle (the
 //    committed bundle is the post-SP2 source of truth); every pre-existing
 //    doc still matches the original prod-Sanity capture unchanged.
+//  - launch-content wave 2 (bump to courses-academy @e1190680): retrieval
+//    closes across the flagship spine (courses-academy #11, 28 quiz blocks
+//    keyed `retrieval-close`), item-52b factual fixes (#9: faucet rate-limit
+//    mechanism, Token-2022 maturity row deleted), challenge tutorNotes (#10),
+//    and reviewExempt skill markers (#8). lessons.json and course-by-slug.json
+//    were regenerated from the bundle through the real projectors for the
+//    affected docs; all other fixtures untouched.
 const deps = { lessonsById };
 
 function bundleCourse(id: string): CourseDoc {
