@@ -8,6 +8,7 @@ import {
 } from "@/lib/solana/verify-program-deploy";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { logEvent } from "@/lib/logging";
 
 interface SaveDeployRequest {
   lessonId: string;
@@ -119,6 +120,18 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (!profile?.wallet_address) {
+      // A learner reached the deploy step with no linked wallet — they cannot
+      // pass the capstone credential gate until they connect one. Loud so a
+      // wave of these near launch is visible, not silent.
+      logEvent({
+        event: "deploy-save.rejected",
+        context: {
+          reason: "no-wallet-linked",
+          userId: user.id,
+          courseId: body.courseId,
+          lessonId: body.lessonId,
+        },
+      });
       return NextResponse.json(
         {
           error: "Wallet not connected. Link your wallet to save deployments.",
@@ -131,6 +144,18 @@ export async function POST(request: NextRequest) {
     try {
       walletPubkey = new PublicKey(profile.wallet_address);
     } catch {
+      // The stored wallet_address does not parse — a data-integrity fault, not
+      // a normal user error. Never silent: it fail-closes a legitimate deploy.
+      logEvent({
+        event: "deploy-save.rejected",
+        level: "error",
+        context: {
+          reason: "linked-wallet-unparseable",
+          userId: user.id,
+          courseId: body.courseId,
+          lessonId: body.lessonId,
+        },
+      });
       return NextResponse.json({ error: VERIFICATION_FAILED }, { status: 400 });
     }
 
@@ -157,8 +182,22 @@ export async function POST(request: NextRequest) {
           walletPubkey
         );
       }
-    } catch {
+    } catch (err) {
       // RPC unreachable — fail closed, but as "try again", not as a rejection.
+      // Loud: a stale/wrong RPC that always throws here would silently block
+      // every legitimate deploy (and the capstone credential behind it), and
+      // "verification fails closed" is exactly the invisible failure #725 is
+      // about.
+      logEvent({
+        event: "deploy-save.rpc-unavailable",
+        level: "error",
+        context: {
+          userId: user.id,
+          courseId: body.courseId,
+          lessonId: body.lessonId,
+          error: err instanceof Error ? err.message : String(err),
+        },
+      });
       return NextResponse.json(
         { error: "Verification temporarily unavailable. Please try again." },
         { status: 503, headers: { "Retry-After": "30" } }
@@ -166,9 +205,19 @@ export async function POST(request: NextRequest) {
     }
 
     if (!verification.ok) {
-      console.warn(
-        `[deploy-save] rejected program ${body.programId} for user ${user.id}: ${verification.reason}`
-      );
+      // Structured so a run of a single reason (e.g. authority-mismatch across
+      // many users → wrong RPC network) is greppable, without leaking the
+      // reason to the client (VERIFICATION_FAILED stays generic — #560).
+      logEvent({
+        event: "deploy-save.rejected",
+        context: {
+          reason: `verification:${verification.reason}`,
+          userId: user.id,
+          courseId: body.courseId,
+          lessonId: body.lessonId,
+          programId: body.programId,
+        },
+      });
       return NextResponse.json({ error: VERIFICATION_FAILED }, { status: 400 });
     }
 
@@ -190,15 +239,50 @@ export async function POST(request: NextRequest) {
     );
 
     if (error) {
-      console.error("Failed to save deployment:", error);
+      // The verified deploy could not be recorded — the capstone credential
+      // gate reads this exact row, so a swallowed write here is the #725
+      // failure mode itself. Loud and structured.
+      logEvent({
+        event: "deploy-save.write-failed",
+        level: "error",
+        context: {
+          userId: user.id,
+          courseId: body.courseId,
+          lessonId: body.lessonId,
+          programId: body.programId,
+          error: error.message,
+        },
+      });
       return NextResponse.json(
         { error: "Failed to save deployment" },
         { status: 500 }
       );
     }
 
+    // A successful write is the event #725 is waiting on (0 rows in prod, ever)
+    // — log it at info so the first real end-to-end run is observable and the
+    // funnel's `deploys` count has a per-event breadcrumb.
+    logEvent({
+      event: "deploy-save.saved",
+      level: "info",
+      context: {
+        userId: user.id,
+        courseId: body.courseId,
+        lessonId: body.lessonId,
+        programId: body.programId,
+      },
+    });
+
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (err) {
+    // Previously an empty `catch {}` — any unexpected throw returned a generic
+    // 500 with NO log, making a broken save path completely invisible. Never
+    // silent again.
+    logEvent({
+      event: "deploy-save.unhandled",
+      level: "error",
+      context: { error: err instanceof Error ? err.message : String(err) },
+    });
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
