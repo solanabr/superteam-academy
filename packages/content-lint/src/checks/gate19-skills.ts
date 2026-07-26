@@ -42,7 +42,27 @@ export const ALLOWED_SINGLETON_SKILLS: readonly string[] = [
   "earn-submission",
 ];
 
+/**
+ * Pre-existing single-lesson slugs demoted from error to warning so this gate
+ * can merge without reddening courses-academy CI (its `validate-content.yml`
+ * pulls this linter from monorepo `main` and runs full-tree). `oracles` is
+ * applied to exactly one lesson today; the content fix (tag a second lesson or
+ * drop the slug + registry entry) is owner-gated and tracked on #559. Remove
+ * this slug from the list once that content PR lands. A *new* single-lesson
+ * slug not on this list still errors.
+ */
+export const GRANDFATHERED_SINGLETONS: readonly string[] = ["oracles"];
+
 const SKILLS_FILE = "skills.yaml";
+
+/**
+ * `courses/_template/**` holds scaffolding, not shippable content. Its lessons
+ * are excluded from gate 19 so a template tag never contributes to (or hides) a
+ * reuse-bar result — e.g. a template lesson sharing a real slug would otherwise
+ * lift that slug's count from 1 to 2 and suppress a legitimate singleton error.
+ * Scoped to gate 19 only; other gates keep their current view of `_template`.
+ */
+const TEMPLATE_LESSON_PREFIX = "courses/_template/";
 
 function loadRegistry(root: string, out: Diagnostic[]): SkillsTaxonomyT | null {
   let text: string;
@@ -69,6 +89,19 @@ function loadRegistry(root: string, out: Diagnostic[]): SkillsTaxonomyT | null {
         "error",
         SKILLS_FILE,
         `failed to parse: ${err instanceof Error ? err.message : String(err)}`
+      )
+    );
+    return null;
+  }
+  // An empty or whitespace-only file parses to null/undefined — a distinct,
+  // actionable failure from a mis-shaped (e.g. object) document below.
+  if (data == null) {
+    out.push(
+      diag(
+        "gate-19a",
+        "error",
+        SKILLS_FILE,
+        "skills.yaml is empty — expected a non-empty list of skill definitions"
       )
     );
     return null;
@@ -105,6 +138,7 @@ export function gate19Check(model: RepoModel): Diagnostic[] {
   // Distinct-lesson count per slug (a slug repeated within one lesson counts once).
   const lessonsBySlug = new Map<string, string[]>();
   for (const entry of model.lessons) {
+    if (entry.file.startsWith(TEMPLATE_LESSON_PREFIX)) continue;
     for (const slug of new Set(entry.lesson.skills)) {
       // 19a — registry resolution.
       if (!known.has(slug)) {
@@ -137,12 +171,16 @@ export function gate19Check(model: RepoModel): Diagnostic[] {
         )
       );
     } else if (uses.length === 1 && !ALLOWED_SINGLETON_SKILLS.includes(slug)) {
+      const grandfathered = GRANDFATHERED_SINGLETONS.includes(slug);
       out.push(
         diag(
           "gate-19b",
-          "error",
+          grandfathered ? "warning" : "error",
           SKILLS_FILE,
-          `skill "${slug}" is applied to only 1 lesson (${uses[0]}) — the minimum reuse bar is 2; tag a second lesson or drop the slug`
+          `skill "${slug}" is applied to only 1 lesson (${uses[0]}) — the minimum reuse bar is 2; tag a second lesson or drop the slug` +
+            (grandfathered
+              ? " (grandfathered to a warning pending the content fix, #559)"
+              : "")
         )
       );
     }

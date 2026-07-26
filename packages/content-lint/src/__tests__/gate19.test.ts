@@ -16,6 +16,23 @@ blocks:
   };
 }
 
+/** A lesson at an explicit repo-relative directory (e.g. under `courses/_template`). */
+function lessonAt(
+  dir: string,
+  name: string,
+  skills: string[]
+): Record<string, string> {
+  return {
+    [`${dir}/lesson.yaml`]: `id: lesson-${name}
+slug: ${name}
+title: ${name}
+skills: [${skills.join(", ")}]
+blocks:
+  - { key: intro, type: prose, src: intro.md }
+`,
+  };
+}
+
 function registry(slugs: string[]): Record<string, string> {
   return {
     "skills.yaml": slugs.map((s) => `- slug: ${s}`).join("\n") + "\n",
@@ -89,6 +106,22 @@ describe("gate 19b — minimum reuse bar", () => {
   it("errors when a slug is applied to only one lesson", async () => {
     const r = await runLint(
       makeTempRepo({
+        ...registry(["pdas", "staking"]),
+        ...lesson("a", ["pdas", "staking"]),
+        ...lesson("b", ["pdas"]),
+      })
+    );
+    const g = of(r, "gate-19b");
+    expect(g).toHaveLength(1);
+    expect(g[0]?.severity).toBe("error");
+    expect(g[0]?.message).toContain('"staking"');
+    expect(g[0]?.message).toContain("courses/x/lessons/a/lesson.yaml");
+    expect(r.ok).toBe(false);
+  });
+
+  it("grandfathers `oracles` to a warning at one lesson (pending #559)", async () => {
+    const r = await runLint(
+      makeTempRepo({
         ...registry(["pdas", "oracles"]),
         ...lesson("a", ["pdas", "oracles"]),
         ...lesson("b", ["pdas"]),
@@ -96,10 +129,11 @@ describe("gate 19b — minimum reuse bar", () => {
     );
     const g = of(r, "gate-19b");
     expect(g).toHaveLength(1);
-    expect(g[0]?.severity).toBe("error");
+    expect(g[0]?.severity).toBe("warning");
     expect(g[0]?.message).toContain('"oracles"');
-    expect(g[0]?.message).toContain("courses/x/lessons/a/lesson.yaml");
-    expect(r.ok).toBe(false);
+    expect(g[0]?.message).toContain("#559");
+    // A grandfathered singleton never fails the lint.
+    expect(r.ok).toBe(true);
   });
 
   it("allows the singleton exceptions at one lesson", async () => {
@@ -218,5 +252,79 @@ describe("gate 19d — facet-only tags are not review-eligible", () => {
       })
     );
     expect(of(r, "gate-19d")).toEqual([]);
+  });
+});
+
+describe("gate 19 — `courses/_template` lessons are excluded from reuse counts", () => {
+  it("does not let a _template lesson lift a real singleton to two uses", async () => {
+    const r = await runLint(
+      makeTempRepo({
+        ...registry(["pdas", "staking"]),
+        // `staking` is used by exactly one real lesson…
+        ...lesson("a", ["pdas", "staking"]),
+        ...lesson("b", ["pdas"]),
+        // …and a template lesson that must NOT count toward the reuse bar.
+        ...lessonAt("courses/_template/lessons/tmpl", "tmpl", [
+          "pdas",
+          "staking",
+        ]),
+      })
+    );
+    const g = of(r, "gate-19b");
+    expect(g).toHaveLength(1);
+    expect(g[0]?.severity).toBe("error");
+    expect(g[0]?.message).toContain('"staking"');
+    // Named lesson is the real one, never the template.
+    expect(g[0]?.message).toContain("courses/x/lessons/a/lesson.yaml");
+    expect(r.ok).toBe(false);
+  });
+});
+
+describe("gate 19a — skills.yaml file shape", () => {
+  it("errors with a parse diagnostic on malformed YAML", async () => {
+    const r = await runLint(
+      makeTempRepo({
+        "skills.yaml": "[unterminated\n",
+        ...lesson("a", ["pdas"]),
+        ...lesson("b", ["pdas"]),
+      })
+    );
+    const g = of(r, "gate-19a");
+    expect(g).toHaveLength(1);
+    expect(g[0]?.severity).toBe("error");
+    expect(g[0]?.message).toContain("failed to parse");
+    expect(r.ok).toBe(false);
+  });
+
+  it("errors distinctly when skills.yaml is empty", async () => {
+    const r = await runLint(
+      makeTempRepo({
+        "skills.yaml": "",
+        ...lesson("a", ["pdas"]),
+        ...lesson("b", ["pdas"]),
+      })
+    );
+    const g = of(r, "gate-19a");
+    expect(g).toHaveLength(1);
+    expect(g[0]?.severity).toBe("error");
+    expect(g[0]?.message).toContain("empty");
+    expect(g[0]?.message).not.toContain("not a valid skills taxonomy");
+    expect(r.ok).toBe(false);
+  });
+
+  it("errors distinctly when skills.yaml is an object, not a list", async () => {
+    const r = await runLint(
+      makeTempRepo({
+        "skills.yaml": "slug: pdas\n",
+        ...lesson("a", ["pdas"]),
+        ...lesson("b", ["pdas"]),
+      })
+    );
+    const g = of(r, "gate-19a");
+    expect(g).toHaveLength(1);
+    expect(g[0]?.severity).toBe("error");
+    expect(g[0]?.message).toContain("not a valid skills taxonomy");
+    expect(g[0]?.message).not.toContain("empty");
+    expect(r.ok).toBe(false);
   });
 });
