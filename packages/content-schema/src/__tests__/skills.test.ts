@@ -4,6 +4,9 @@ import {
   SkillDef,
   SkillsTaxonomy,
   checkSkillVocabulary,
+  NON_REVIEW_ELIGIBLE_SKILLS,
+  REVIEW_INTERLEAVING_PAIRS,
+  isReviewEligibleSkill,
 } from "../skills";
 
 describe("SkillTag", () => {
@@ -87,5 +90,36 @@ describe("checkSkillVocabulary (#466 C3 — the allowlist guarantee)", () => {
   it("fails closed against an empty (absent skills.yaml) vocabulary", () => {
     const lessons = [{ id: "lesson-a", skills: ["pdas"] }];
     expect(checkSkillVocabulary(lessons, [])).toHaveLength(1);
+  });
+});
+
+describe("review-eligibility policy (unified launch spec §3 item 7)", () => {
+  it("denylists the facet-only tags", () => {
+    expect(isReviewEligibleSkill("typescript")).toBe(false);
+    expect(isReviewEligibleSkill("react")).toBe(false);
+    expect(isReviewEligibleSkill("program-basics")).toBe(false);
+    expect(isReviewEligibleSkill("pdas")).toBe(true);
+  });
+
+  it("every denylist entry and pair member is a valid skill slug", () => {
+    for (const slug of NON_REVIEW_ELIGIBLE_SKILLS) {
+      expect(SkillTag.safeParse(slug).success).toBe(true);
+    }
+    for (const [a, b] of REVIEW_INTERLEAVING_PAIRS) {
+      expect(SkillTag.safeParse(a).success).toBe(true);
+      expect(SkillTag.safeParse(b).success).toBe(true);
+    }
+  });
+
+  it("no interleaving-pair member is denylisted (pairs must be review-eligible)", () => {
+    for (const [a, b] of REVIEW_INTERLEAVING_PAIRS) {
+      expect(isReviewEligibleSkill(a), a).toBe(true);
+      expect(isReviewEligibleSkill(b), b).toBe(true);
+    }
+  });
+
+  it("pair members are distinct within and across pairs", () => {
+    const members = REVIEW_INTERLEAVING_PAIRS.flat();
+    expect(new Set(members).size).toBe(members.length);
   });
 });
