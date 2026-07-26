@@ -294,6 +294,41 @@ describe("useAiPartner", () => {
     expect(result.current.loading).toBe(false);
   });
 
+  it("flips spendCapped (not error) on a 503 with spendCapped, without paying", async () => {
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: false,
+      status: 503,
+      json: async () => ({ spendCapped: true, reason: "spend_cap" }),
+    } as Response);
+
+    const { result } = await renderPartner(baseProps({ hints: [] }));
+
+    await act(async () => {
+      await result.current.requestHint();
+    });
+
+    expect(result.current.spendCapped).toBe(true);
+    expect(result.current.error).toBeNull();
+    expect(result.current.paidUsed).toBe(0);
+  });
+
+  it("shows the generic error (not spendCapped) on a 503 that is not a spend cap", async () => {
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: false,
+      status: 503,
+      json: async () => ({ error: "AI partner not configured" }),
+    } as Response);
+
+    const { result } = await renderPartner(baseProps({ hints: [] }));
+
+    await act(async () => {
+      await result.current.requestHint();
+    });
+
+    expect(result.current.spendCapped).toBe(false);
+    expect(result.current.error).toBeTruthy();
+  });
+
   it("requestHint() pays immediately when hints ladder is shorter than 2", async () => {
     const response: PartnerResponse = { type: "hint", text: "paid hint" };
     vi.mocked(global.fetch).mockResolvedValue(jsonResponse(response));

@@ -2340,3 +2340,108 @@ $$;
 
 REVOKE ALL ON FUNCTION record_review_result(UUID, TEXT, BOOLEAN) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION record_review_result(UUID, TEXT, BOOLEAN) TO service_role;
+
+-- ─────────────────────────────────────────────────────────────────────────
+-- AI tutor spend ledger (#591): the AI Partner spends a Superteam-sponsored
+-- Gemini key. challenge_assists counts TURNS, not spend. ai_spend_ledger records
+-- actual micro-USD (USD × 1e6, integer money) per billed generation in three
+-- daily buckets on America/Sao_Paulo days (AIE-21): account, ip, and a global
+-- envelope backstop. The route reads the totals via check_ai_spend BEFORE the
+-- model call (under soft → full; over soft → degrade; over hard → deny) and
+-- records usage via record_ai_spend AFTER it bills us. Thresholds live in env
+-- (TS), not here, so caps move with the sponsor commitment (O-1, $500/mo). All
+-- RPCs follow the challenge_assists hardening: SECURITY DEFINER, pinned path,
+-- RLS-on table with no policies, REVOKEd from clients, GRANTed to service_role.
+-- The TS wrapper fails CLOSED (any check error → deny), never open.
+-- ─────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS ai_spend_ledger (
+  scope         TEXT NOT NULL,
+  scope_key     TEXT NOT NULL,
+  spend_day     DATE NOT NULL,
+  micro_usd     BIGINT NOT NULL DEFAULT 0,
+  request_count INTEGER NOT NULL DEFAULT 0,
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (scope, scope_key, spend_day),
+  CONSTRAINT ai_spend_ledger_scope_check CHECK (scope IN ('account', 'ip', 'global'))
+);
+
+ALTER TABLE ai_spend_ledger ENABLE ROW LEVEL SECURITY;
+-- No policies: reached only through SECURITY DEFINER RPCs called by service_role.
+
+-- Add p_micro_usd to all three of today's buckets in one upsert. Negative input
+-- is clamped to 0. The SP-day is computed here so callers never pass a clock.
+CREATE OR REPLACE FUNCTION record_ai_spend(
+  p_user_id   UUID,
+  p_ip        TEXT,
+  p_micro_usd BIGINT
+) RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_day    DATE   := (now() AT TIME ZONE 'America/Sao_Paulo')::date;
+  v_amount BIGINT := GREATEST(COALESCE(p_micro_usd, 0), 0);
+  v_ip     TEXT   := COALESCE(NULLIF(p_ip, ''), 'unknown');
+BEGIN
+  INSERT INTO public.ai_spend_ledger (scope, scope_key, spend_day, micro_usd, request_count, updated_at)
+  VALUES
+    ('account', p_user_id::text, v_day, v_amount, 1, now()),
+    ('ip',      v_ip,            v_day, v_amount, 1, now()),
+    ('global',  '',              v_day, v_amount, 1, now())
+  ON CONFLICT (scope, scope_key, spend_day)
+  DO UPDATE SET
+    micro_usd     = public.ai_spend_ledger.micro_usd + EXCLUDED.micro_usd,
+    request_count = public.ai_spend_ledger.request_count + 1,
+    updated_at    = now();
+END;
+$$;
+
+REVOKE ALL ON FUNCTION record_ai_spend(UUID, TEXT, BIGINT) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION record_ai_spend(UUID, TEXT, BIGINT) TO service_role;
+
+-- Read today's accumulated micro-USD for account, IP, and global. The route
+-- compares these to the env thresholds to pick full/degrade/deny.
+CREATE OR REPLACE FUNCTION check_ai_spend(
+  p_user_id UUID,
+  p_ip      TEXT
+) RETURNS TABLE (account_micro_usd BIGINT, ip_micro_usd BIGINT, global_micro_usd BIGINT)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT
+    COALESCE((SELECT micro_usd FROM public.ai_spend_ledger
+      WHERE scope = 'account' AND scope_key = p_user_id::text
+        AND spend_day = (now() AT TIME ZONE 'America/Sao_Paulo')::date), 0),
+    COALESCE((SELECT micro_usd FROM public.ai_spend_ledger
+      WHERE scope = 'ip' AND scope_key = COALESCE(NULLIF(p_ip, ''), 'unknown')
+        AND spend_day = (now() AT TIME ZONE 'America/Sao_Paulo')::date), 0),
+    COALESCE((SELECT micro_usd FROM public.ai_spend_ledger
+      WHERE scope = 'global' AND scope_key = ''
+        AND spend_day = (now() AT TIME ZONE 'America/Sao_Paulo')::date), 0);
+$$;
+
+REVOKE ALL ON FUNCTION check_ai_spend(UUID, TEXT) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION check_ai_spend(UUID, TEXT) TO service_role;
+
+-- Admin observability: the global burn for the current SP day.
+CREATE OR REPLACE FUNCTION get_ai_spend_today()
+RETURNS TABLE (micro_usd BIGINT, request_count INTEGER)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT
+    COALESCE(l.micro_usd, 0),
+    COALESCE(l.request_count, 0)
+  FROM (SELECT 1) AS one
+  LEFT JOIN public.ai_spend_ledger l
+    ON l.scope = 'global' AND l.scope_key = ''
+   AND l.spend_day = (now() AT TIME ZONE 'America/Sao_Paulo')::date;
+$$;
+
+REVOKE ALL ON FUNCTION get_ai_spend_today() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION get_ai_spend_today() TO service_role;

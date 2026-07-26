@@ -1133,6 +1133,32 @@ export type Database = {
           due_at: string;
         }[];
       };
+      check_ai_spend: {
+        Args: {
+          p_user_id: string;
+          p_ip: string;
+        };
+        Returns: {
+          account_micro_usd: number;
+          ip_micro_usd: number;
+          global_micro_usd: number;
+        }[];
+      };
+      record_ai_spend: {
+        Args: {
+          p_user_id: string;
+          p_ip: string;
+          p_micro_usd: number;
+        };
+        Returns: undefined;
+      };
+      get_ai_spend_today: {
+        Args: Record<string, never>;
+        Returns: {
+          micro_usd: number;
+          request_count: number;
+        }[];
+      };
       award_xp: {
         Args: {
           p_amount: number;

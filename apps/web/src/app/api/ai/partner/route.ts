@@ -9,6 +9,11 @@ import {
   recordBilledAssist,
   appendAssistLog,
 } from "@/lib/ai/assist-budget";
+import {
+  checkAiSpend,
+  recordAiSpend,
+  degradedMaxTokens,
+} from "@/lib/ai/spend-ledger";
 import { sealCheck } from "@/lib/ai/check-seal";
 import {
   buildStaticPrefix,
@@ -284,8 +289,9 @@ export async function POST(request: NextRequest) {
   // 600/min clears that with headroom while still bounding a Sybil actor's burn
   // rate from a single address. The cost CEILING is the fail-closed assist
   // budget below (+ #591's spend ledger), not this throttle.
+  const clientIp = getClientIp(request.headers);
   if (
-    await isRateLimited("ai:partner:ip", getClientIp(request.headers), {
+    await isRateLimited("ai:partner:ip", clientIp, {
       maxTokens: 600,
       refillIntervalMs: 60_000,
       failClosed: true,
@@ -309,6 +315,30 @@ export async function POST(request: NextRequest) {
   if (!lesson || !codeBlock) {
     return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
   }
+
+  // Daily SPEND gate (#591) — the cost ceiling on the Superteam-sponsored key,
+  // separate from the per-lesson assist quota below. Reads today's accumulated
+  // micro-USD for this account, this IP, and the global envelope and picks a
+  // tier. FAIL CLOSED: a ledger error denies (503), never serves unmetered. This
+  // runs BEFORE spendAssist so a hard-cap / ledger-outage denial does not burn
+  // one of the learner's paid assists.
+  const spendGate = await checkAiSpend(user.id, clientIp);
+  if (spendGate.decision === "denied") {
+    // Both the hard-cap and the fail-closed ledger-outage return 503 with a
+    // `spendCapped` flag the client localizes; `reason` distinguishes them for
+    // logs/tests without changing the learner-facing copy.
+    return NextResponse.json(
+      {
+        error: "AI tutor daily limit reached",
+        spendCapped: true,
+        reason: spendGate.reason,
+      },
+      { status: 503 }
+    );
+  }
+  // Over a soft cap → degrade: serve with a shorter output budget (the dominant
+  // cost lever) rather than refusing. "Degrade first, then stop" (owner).
+  const degraded = spendGate.decision === "degraded";
 
   // Every request that reaches this route is a PAID action — free authored
   // hints are served client-side from the block's `hints` ladder and never
@@ -391,7 +421,11 @@ export async function POST(request: NextRequest) {
         ],
         generationConfig: {
           temperature: 0.3,
-          maxOutputTokens: maxTokensFor(action),
+          // Degrade-first (#591): past a soft spend cap, halve the output budget
+          // (floored to stay usable) to cut the dominant cost before any refusal.
+          maxOutputTokens: degraded
+            ? degradedMaxTokens(maxTokensFor(action))
+            : maxTokensFor(action),
           // gemini-3.5-flash is a thinking model and thinking tokens share the
           // maxOutputTokens budget; disable it so the full budget goes to the
           // structured response (and to cut latency/cost).
@@ -431,6 +465,14 @@ export async function POST(request: NextRequest) {
     await recordBilledAssist(user.id, lesson._id);
 
     const data = await response.json();
+    // Record the ACTUAL cost of this billed generation into the spend ledger
+    // (#591) from usageMetadata — prompt + candidate + thinking tokens, thinking
+    // billed at the output rate. Runs on EVERY billed path (including the
+    // empty / non-JSON / truncated branches below, which all still cost tokens),
+    // so it sits right after the parse. Best-effort and awaited for the same
+    // Vercel-freeze reason as recordBilledAssist: the cost audit must settle
+    // before the response returns. Never throws.
+    await recordAiSpend(user.id, clientIp, data?.usageMetadata);
     // Prompt-cache observability — useful for tuning the cache-shaped prefix, but
     // this is the SUCCESS path of every paid call, so keep it opt-in (default
     // off) rather than logging on every request in production. Set

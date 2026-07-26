@@ -18,6 +18,7 @@ const hookState = {
   paidUsed: 0,
   paidRemaining: 4,
   budgetExhausted: false,
+  spendCapped: false,
   loading: false,
   error: null as string | null,
   requestHint: vi.fn(),
@@ -54,7 +55,22 @@ const reviewLabel = messages.aiPartner.actions.review;
 beforeEach(() => {
   review.mockReset();
   hookState.budgetExhausted = false;
+  hookState.spendCapped = false;
   hookState.loading = false;
+  hookState.error = null;
+});
+
+describe("AiPartnerPane — daily spend cap (#591)", () => {
+  it("shows the localized spend-cap copy, not the generic error, when spendCapped", () => {
+    hookState.spendCapped = true;
+    renderPane();
+    expect(
+      screen.getByText(messages.aiPartner.messages.spendCapped)
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(messages.aiPartner.messages.error)
+    ).not.toBeInTheDocument();
+  });
 });
 
 describe("AiPartnerPane — post-pass review button (LX-C9)", () => {

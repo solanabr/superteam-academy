@@ -78,6 +78,21 @@ AI_PARTNER_SEAL_SECRET=            # Optional dedicated key for sealing the comp
                                     # SUPABASE_SERVICE_ROLE_KEY.
 AI_PARTNER_DEBUG=                  # Set to "1" to log per-call prompt-cache token counts
                                     # from /api/ai/partner. Default off (quiet in production).
+
+# Optional — AI tutor daily spend caps (#591). Whole/decimal USD, per
+# America/Sao_Paulo day, enforced by the ai_spend_ledger (lib/ai/spend-ledger).
+# Derived DOWNWARD from the $500/mo sponsor commitment (O-1); config, not
+# constants — bump when the commitment moves. Over a SOFT cap the tutor degrades
+# (shorter output budget); only a HARD cap denies (503, fail-closed). Defaults
+# shown; unset/"" uses the default.
+AI_SPEND_GLOBAL_SOFT_USD=          # Global degrade threshold      (default 14)
+AI_SPEND_GLOBAL_HARD_USD=          # Global hard deny              (default 25)
+AI_SPEND_ACCOUNT_SOFT_USD=         # Per-account degrade           (default 0.5)
+AI_SPEND_ACCOUNT_HARD_USD=         # Per-account hard deny         (default 1.5)
+AI_SPEND_IP_SOFT_USD=              # Per-IP degrade                (default 2)
+AI_SPEND_IP_HARD_USD=              # Per-IP hard deny              (default 5)
+AI_SPEND_INPUT_USD_PER_MTOK=       # Gemini input price  $/1M tok  (default 0.3)
+AI_SPEND_OUTPUT_USD_PER_MTOK=      # Gemini output price $/1M tok  (default 2.5; thinking bills here)
 OPENENDED_AI_REPLY=                # Set to "1" to enable the best-effort AI reply on
                                     # /api/lessons/reflect (openEnded reflections). Default OFF:
                                     # the reflection SEAL is always returned regardless; the reply

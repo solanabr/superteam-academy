@@ -14,6 +14,16 @@ const optUrl = z.preprocess(
   z.url().optional()
 );
 
+// A non-negative USD amount from an env var, with a default. Treats "" (blank
+// Vercel placeholder) and unset as the default, and coerces the string value to
+// a number. Rejects a set-to-garbage or negative value so a fat-fingered cap
+// fails loudly at boot rather than silently disabling the ledger.
+const usdNum = (fallback: number) =>
+  z.preprocess(
+    (v) => (v === "" || v === undefined ? fallback : v),
+    z.coerce.number().min(0)
+  );
+
 /**
  * Server-only secrets. Never imported into client code (`server-only` enforces
  * this). Validated eagerly at boot via `instrumentation.ts`.
@@ -70,6 +80,25 @@ const serverEnvSchema = z.object({
   // attestation tokens (lib/ai/check-seal.ts). Falls back to
   // SUPABASE_SERVICE_ROLE_KEY when unset.
   AI_PARTNER_SEAL_SECRET: optStr,
+
+  // AI tutor spend caps (#591). Daily ceilings in whole US dollars, per
+  // America/Sao_Paulo day, enforced by the ai_spend_ledger (lib/ai/spend-ledger).
+  // Derived DOWNWARD from the $500/mo sponsor commitment (O-1): a $16.67/day
+  // envelope. Config, not constants — bump these when the commitment moves; the
+  // ledger binds on the envelope, not on any cost estimate. Over a *soft* cap the
+  // route DEGRADES (shorter output budget); only a *hard* cap denies (503).
+  // usdNum: whole/decimal dollars, "" → default. Must be non-negative.
+  AI_SPEND_GLOBAL_SOFT_USD: usdNum(14), // ~84% of the daily envelope
+  AI_SPEND_GLOBAL_HARD_USD: usdNum(25), // 1.5× envelope; absorbs a spike day
+  AI_SPEND_ACCOUNT_SOFT_USD: usdNum(0.5), // ~17× the $0.03/learner/mo average
+  AI_SPEND_ACCOUNT_HARD_USD: usdNum(1.5), // a single account ≤ ~9% of the envelope
+  AI_SPEND_IP_SOFT_USD: usdNum(2), // survives a NAT'd classroom
+  AI_SPEND_IP_HARD_USD: usdNum(5), // caps a single-IP farm at ~30% of the envelope
+  // Gemini price sheet (USD per 1M tokens) used to turn usageMetadata token
+  // counts into micro-USD. Thinking tokens bill at the OUTPUT rate (#591). These
+  // move with the provider's pricing, not the sponsor commitment.
+  AI_SPEND_INPUT_USD_PER_MTOK: usdNum(0.3),
+  AI_SPEND_OUTPUT_USD_PER_MTOK: usdNum(2.5),
 });
 
 const parsed = serverEnvSchema.safeParse({
@@ -88,6 +117,14 @@ const parsed = serverEnvSchema.safeParse({
   ARWEAVE_UPLOADER_SECRET: process.env.ARWEAVE_UPLOADER_SECRET,
   HELIUS_API_KEY: process.env.HELIUS_API_KEY,
   AI_PARTNER_SEAL_SECRET: process.env.AI_PARTNER_SEAL_SECRET,
+  AI_SPEND_GLOBAL_SOFT_USD: process.env.AI_SPEND_GLOBAL_SOFT_USD,
+  AI_SPEND_GLOBAL_HARD_USD: process.env.AI_SPEND_GLOBAL_HARD_USD,
+  AI_SPEND_ACCOUNT_SOFT_USD: process.env.AI_SPEND_ACCOUNT_SOFT_USD,
+  AI_SPEND_ACCOUNT_HARD_USD: process.env.AI_SPEND_ACCOUNT_HARD_USD,
+  AI_SPEND_IP_SOFT_USD: process.env.AI_SPEND_IP_SOFT_USD,
+  AI_SPEND_IP_HARD_USD: process.env.AI_SPEND_IP_HARD_USD,
+  AI_SPEND_INPUT_USD_PER_MTOK: process.env.AI_SPEND_INPUT_USD_PER_MTOK,
+  AI_SPEND_OUTPUT_USD_PER_MTOK: process.env.AI_SPEND_OUTPUT_USD_PER_MTOK,
 });
 
 if (!parsed.success) {

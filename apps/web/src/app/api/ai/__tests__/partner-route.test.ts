@@ -27,6 +27,16 @@ vi.mock("@/lib/rate-limit", () => ({
   getClientIp,
 }));
 
+// #591 spend ledger. checkAiSpend gates the call fail-closed; recordAiSpend
+// books the cost. degradedMaxTokens is the real pure helper (halve, floor 256).
+const checkAiSpend = vi.fn();
+const recordAiSpend = vi.fn();
+vi.mock("@/lib/ai/spend-ledger", () => ({
+  checkAiSpend,
+  recordAiSpend,
+  degradedMaxTokens: (base: number) => Math.max(256, Math.floor(base / 2)),
+}));
+
 const getLessonBySlug = vi.fn();
 vi.mock("@/lib/content/queries", () => ({
   getLessonBySlug,
@@ -150,6 +160,8 @@ beforeEach(() => {
   appendAssistLog.mockReset();
   isRateLimited.mockReset();
   getLessonBySlug.mockReset();
+  checkAiSpend.mockReset();
+  recordAiSpend.mockReset();
 
   // Happy-path defaults; individual tests override as needed.
   getUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
@@ -159,6 +171,9 @@ beforeEach(() => {
   refundAssist.mockResolvedValue(undefined);
   recordBilledAssist.mockResolvedValue(undefined);
   appendAssistLog.mockResolvedValue(undefined);
+  // Under every spend cap by default → serve at full budget.
+  checkAiSpend.mockResolvedValue({ decision: "full" });
+  recordAiSpend.mockResolvedValue(undefined);
 });
 
 afterEach(() => {
@@ -1021,5 +1036,141 @@ describe("POST /api/ai/partner", () => {
       role: "ai",
       response: { type: "review" },
     });
+  });
+
+  // --- #591: daily spend ledger gate (per-account / per-IP / global) ---
+
+  it("checks the spend ledger with the user id and client IP before spending", async () => {
+    stubGeminiFetch(PROPOSE_GEMINI_TEXT);
+
+    const { POST } = await import("../partner/route");
+    await POST(makeRequest(VALID_BODY));
+
+    expect(checkAiSpend).toHaveBeenCalledTimes(1);
+    expect(checkAiSpend).toHaveBeenCalledWith("user-1", "203.0.113.9");
+  });
+
+  it("under cap: serves at the FULL output budget and records the spend", async () => {
+    checkAiSpend.mockResolvedValue({ decision: "full" });
+    const fetchSpy = vi.fn(async (_url: string, init: { body: string }) => {
+      void init;
+      return {
+        ok: true,
+        text: async () => "",
+        json: async () => ({
+          candidates: [{ content: { parts: [{ text: PROPOSE_GEMINI_TEXT }] } }],
+          usageMetadata: {
+            promptTokenCount: 1000,
+            candidatesTokenCount: 500,
+            thoughtsTokenCount: 0,
+          },
+        }),
+      };
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest(VALID_BODY));
+
+    expect(res.status).toBe(200);
+    // Full budget: propose stays at 2048, not the degraded 1024.
+    const [, init] = fetchSpy.mock.calls[0]!;
+    const sent = JSON.parse(init.body) as {
+      generationConfig: { maxOutputTokens: number };
+    };
+    expect(sent.generationConfig.maxOutputTokens).toBe(2048);
+    // The actual usage is booked against the ledger with the request's IP.
+    expect(recordAiSpend).toHaveBeenCalledTimes(1);
+    expect(recordAiSpend).toHaveBeenCalledWith("user-1", "203.0.113.9", {
+      promptTokenCount: 1000,
+      candidatesTokenCount: 500,
+      thoughtsTokenCount: 0,
+    });
+  });
+
+  it("soft cap: DEGRADES to a shorter output budget but still serves (200)", async () => {
+    checkAiSpend.mockResolvedValue({ decision: "degraded" });
+    const fetchSpy = vi.fn(async (_url: string, init: { body: string }) => {
+      void init;
+      return {
+        ok: true,
+        text: async () => "",
+        json: async () => ({
+          candidates: [{ content: { parts: [{ text: PROPOSE_GEMINI_TEXT }] } }],
+          usageMetadata: { promptTokenCount: 10, candidatesTokenCount: 10 },
+        }),
+      };
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest(VALID_BODY));
+
+    expect(res.status).toBe(200);
+    // Degrade first: propose output budget halved 2048 -> 1024 before any refusal.
+    const [, init] = fetchSpy.mock.calls[0]!;
+    const sent = JSON.parse(init.body) as {
+      generationConfig: { maxOutputTokens: number };
+    };
+    expect(sent.generationConfig.maxOutputTokens).toBe(1024);
+    // A degraded call is still a real paid, billed, booked call.
+    expect(spendAssist).toHaveBeenCalledTimes(1);
+    expect(recordAiSpend).toHaveBeenCalledTimes(1);
+  });
+
+  it("hard cap: DENIES with 503 + spendCapped, spends no assist, calls no model", async () => {
+    checkAiSpend.mockResolvedValue({
+      decision: "denied",
+      reason: "spend_cap",
+    });
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest(VALID_BODY));
+    const json = await res.json();
+
+    expect(res.status).toBe(503);
+    expect(json).toMatchObject({ spendCapped: true, reason: "spend_cap" });
+    // No assist burned, no model call, no spend recorded — the gate is before spend.
+    expect(spendAssist).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(recordAiSpend).not.toHaveBeenCalled();
+  });
+
+  it("ledger unreachable: FAILS CLOSED with 503, never serving unmetered", async () => {
+    // checkAiSpend returns "denied" on any ledger error (fail-closed contract).
+    checkAiSpend.mockResolvedValue({
+      decision: "denied",
+      reason: "ledger_unavailable",
+    });
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest(VALID_BODY));
+    const json = await res.json();
+
+    expect(res.status).toBe(503);
+    expect(json).toMatchObject({
+      spendCapped: true,
+      reason: "ledger_unavailable",
+    });
+    expect(spendAssist).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("does not leak the solution in a hard-cap 503 body", async () => {
+    checkAiSpend.mockResolvedValue({
+      decision: "denied",
+      reason: "spend_cap",
+    });
+    vi.stubGlobal("fetch", vi.fn());
+
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest(VALID_BODY));
+    const json = await res.json();
+
+    expect(JSON.stringify(json)).not.toContain("the answer");
   });
 });
