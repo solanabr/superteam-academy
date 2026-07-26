@@ -14,7 +14,7 @@ a mechanism.
 PT-BR **original** content is the stated moat — every incumbent ships stale 2022
 machine translations, so first-party PT-BR is the differentiator. Today the
 content repo (`solanabr/courses-academy`) is **English end-to-end**, and
-`next-intl` localizes only the app *chrome* (`apps/web/src/messages/{en,pt-BR,es}.json`);
+`next-intl` localizes only the app _chrome_ (`apps/web/src/messages/{en,pt-BR,es}.json`);
 lesson prose, quiz text, hints, and failure messages have no locale dimension at
 all. `apps/web/src/lib/i18n/config.ts` already declares `locales = ["en","pt-BR","es"]`,
 `defaultLocale = "en"`.
@@ -29,7 +29,7 @@ and it was unpriced by every research report (master-spec cross-check):
 
 The spec is explicit: **design once for all content — "never scope content-i18n
 to one field"** (`code.ts:28`, master spec §3 LX-C3). The mechanism must serve
-prose *and* structured fields, fall back to EN, and keep CI's byte-verification.
+prose _and_ structured fields, fall back to EN, and keep CI's byte-verification.
 
 ### Hard constraints, each derived from a real file
 
@@ -60,7 +60,7 @@ prose *and* structured fields, fall back to EN, and keep CI's byte-verification.
 - **Staged-vs-live visibility.** Content stages until an `apps/web/content.lock`
   SHA bump activates it (see memory: courses-academy content-PR workflow). A
   translation is just more input at a SHA — it inherits the same staging, so no
-  separate visibility switch is needed, but a *partially* translated course must
+  separate visibility switch is needed, but a _partially_ translated course must
   render safely (EN fallback per leaf).
 - **The C1–C5 authoring wave is in flight.** 99 lessons exist today
   (`generated/meta.json`). The mechanism must impose **zero rewrite** on the EN
@@ -70,15 +70,15 @@ prose *and* structured fields, fall back to EN, and keep CI's byte-verification.
 
 Enumerated against the real schema so nothing is missed:
 
-| Where | Fields | File |
-|---|---|---|
-| Prose | the markdown body | `<lesson>/*.md` via `prose` block `src` (`prose.ts`) |
-| Quiz | question `prompt`, question `explanation`, option `label`, option `feedback` | inline in `lesson.yaml` (`quiz.ts`) |
-| Code | `hints[]`, `tutorNotes[]` | inline in `lesson.yaml` (`code.ts`) |
-| Code tests | per-case `description`, `failureMessage` | `<lesson>/**/tests.json` (`code.ts` `TestCase`) |
-| Lesson | `title` | `lesson.yaml` (`lesson.ts`) |
-| Course | `title`, `description`, module `title` + `description` | `course.yaml` (`projector.ts:118-149`) |
-| Video | `url` (optional dubbed/subbed variant) | `lesson.yaml` (`video.ts`) — see §6 |
+| Where      | Fields                                                                       | File                                                                                                                                                                                                   |
+| ---------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Prose      | the markdown body                                                            | `<lesson>/*.md` via `prose` block `src` (`prose.ts`)                                                                                                                                                   |
+| Quiz       | question `prompt`, question `explanation`, option `label`, option `feedback` | inline in `lesson.yaml` (`quiz.ts`)                                                                                                                                                                    |
+| Code       | `hints[]`, `tutorNotes[]`                                                    | inline in `lesson.yaml` (`code.ts`)                                                                                                                                                                    |
+| Code tests | per-case `description`, `failureMessage`                                     | `<lesson>/**/tests.json` (`code.ts` `TestCase`)                                                                                                                                                        |
+| Lesson     | `title`                                                                      | `lesson.yaml` (`lesson.ts`)                                                                                                                                                                            |
+| Course     | `title`, `description`, module `title` + `description`                       | `course.yaml` (`projector.ts:118-149`)                                                                                                                                                                 |
+| Video      | `url` (optional dubbed/subbed variant)                                       | `lesson.yaml` (`video.ts`) — overlay-compatible (a `blocks.<key>.url` leaf in `l10n/<locale>.yaml`, same per-leaf EN fallback), but producing dubbed/subbed assets is out of scope for launch — see §8 |
 
 **Never translated:** ids, slugs, `skills`, block `key`/order, code `starter`/
 `solution`, `tests.json` `input`/`expectedOutput` (byte-compared), all XP/creator/
@@ -91,7 +91,7 @@ absent, master spec §3).
 
 All three keep the EN tree as the source of truth and add PT-BR (and any
 `config.locales` entry) as an **overlay** — EN fallback is the default in every
-one. They differ in *where translated strings live* and *how staleness is caught*.
+one. They differ in _where translated strings live_ and _how staleness is caught_.
 
 ### Candidate A — co-located per-locale variants (sibling files + per-lesson overlay)
 
@@ -106,10 +106,10 @@ Translations live next to their EN source in the same lesson directory.
 
   ```yaml
   # lessons/basics/l10n/pt-BR.yaml
-  basedOn: "sha256:…"          # hash of the EN translatable-set (staleness pin)
+  basedOn: "sha256:…" # hash of the EN translatable-set (staleness pin)
   title: "Fundamentos"
   blocks:
-    check:                      # block key
+    check: # block key
       q1: { prompt: "Quais contas armazenam estado?" }
       q1.options: { c: { feedback: "Entradas, não contas." } }
     challenge:
@@ -117,6 +117,7 @@ Translations live next to their EN source in the same lesson directory.
       tutorNotes: ["Esquecer o discriminador é o erro comum"]
       tests: { case-1: { failureMessage: "Verifique o tamanho da conta" } }
   ```
+
 - **Course/module strings:** `<course>/l10n/pt-BR.yaml` (title, description,
   module titles/descriptions).
 
@@ -140,7 +141,7 @@ mirroring the EN lesson subtree, holding a **translatable-only subset** of
   (nice for a translator taking a whole course, and for a per-course "PT-BR
   complete" coverage read).
 - **Risk:** a mirrored `lesson.yaml` subset re-declares block keys and structure,
-  so it *can* drift from EN (a renamed/removed block, a reordered option). Needs
+  so it _can_ drift from EN (a renamed/removed block, a reordered option). Needs
   a strict "overlay may contain translatable leaves only — no ids, no slots, no
   block additions/removals/reorders" gate to regain the safety Candidate A gets
   structurally. More gate surface for the same guarantee.
@@ -154,9 +155,9 @@ fetches both tarballs and merges by id + field path.
 
 - **Pro:** decouples translation cadence from content cadence; translators never
   touch the content repo.
-- **Con:** doubles the lock/CI surface and *worsens* the core hard problem —
+- **Con:** doubles the lock/CI surface and _worsens_ the core hard problem —
   staleness now spans two independently-moving SHAs, so "is this translation
-  current with EN?" becomes a cross-repo diff. `gate3-slots` reads the *content*
+  current with EN?" becomes a cross-repo diff. `gate3-slots` reads the _content_
   repo's history; a split repo can't see slot/id changes to validate against.
   Byte-repro now depends on two pinned SHAs staying coherent. Rejected as the
   launch mechanism (revisit only if translation is outsourced to a party that
@@ -168,7 +169,7 @@ fetches both tarballs and merges by id + field path.
 
 When an EN lesson is edited and its PT-BR lags, the learner silently reads a
 stale translation. The mechanism must **detect and surface** this, and it must
-never *block* an EN-only content PR (that would make every EN edit wait on a
+never _block_ an EN-only content PR (that would make every EN edit wait on a
 translator — the exact anti-pattern gate 21 avoids for version pins).
 
 **Design:** hash-pin per translated unit, borrowing the `versionStamp` +
@@ -183,13 +184,13 @@ translator — the exact anti-pattern gate 21 avoids for version pins).
   (authors never hand-write it, exactly as they never hand-write `slots.lock`).
 - **New gate 22 — translation staleness**, tiered exactly like gate 21 (warning/
   notice, **never error**, degrades cleanly):
-  - *warning* — `basedOn` ≠ current EN hash for a lesson that has a translation
+  - _warning_ — `basedOn` ≠ current EN hash for a lesson that has a translation
     (EN moved, translation lags). Actionable: re-translate the changed leaves and
     re-run `content:l10n-sync`.
-  - *warning* — a translation file references a block key / field path that no
+  - _warning_ — a translation file references a block key / field path that no
     longer exists in EN (structural drift). Candidate A makes this rare (paths
     are the only structure); Candidate B makes it common.
-  - *notice* — coverage report per course per locale (translated leaves / total),
+  - _notice_ — coverage report per course per locale (translated leaves / total),
     so the owner can see "Zero-to-Deployed is 100% PT-BR, C4 is 40%".
 - Granularity: **per-lesson hash** for launch (a change to any EN leaf marks the
   whole lesson stale — coarse but simple, matches `versionStamp`'s whole-lesson
@@ -221,7 +222,7 @@ different repos at different SHAs, so `basedOn` compares across a moving target.
 
 **Size impact:** additive and proportional to translated volume, not to locale
 count × full catalog. A fully-translated flagship (≈52 lessons) adds roughly one
-more `lessons.json`-worth of *prose+strings only* (no duplicated code/tests/
+more `lessons.json`-worth of _prose+strings only_ (no duplicated code/tests/
 solutions — those never translate), i.e. materially less than the EN bundle. The
 serverless bundle only loads overlays for configured locales; unconfigured
 locales cost nothing.
@@ -243,7 +244,7 @@ The block renderer and `OutputPanel` never learn about locales.
   subtree (Candidate B) contains **only** translatable leaf strings at known
   paths — **error** if it carries an id, slug, slot, XP, `correct` flag, block
   key not in EN, or any non-translatable field. This is the structural guard that
-  makes "translations can't touch the on-chain surface" a *checked* invariant,
+  makes "translations can't touch the on-chain surface" a _checked_ invariant,
   not a convention. Candidate A needs the smaller version of this gate; Candidate
   B needs the larger one.
 - **Existing gates:** gate3-slots, gate5a-xp, gate2-ids are unaffected — they run
@@ -282,9 +283,9 @@ keyed by field path), with the **sparse per-locale overlay bundle** (§4) and th
   content — the mechanism exists but no translated content is required to launch
   (master spec: "everything ships EN-first until then"). Size: the **L** the
   spec already priced.
-- **Timing vs fast-follow courses (LX-D3/D4/D7):** land the *mechanism* **before
+- **Timing vs fast-follow courses (LX-D3/D4/D7):** land the _mechanism_ **before
   or alongside** the fast-follow authoring so PT-BR can be written next to EN
-  from day one rather than retrofitted. Actual PT-BR *translation* of the
+  from day one rather than retrofitted. Actual PT-BR _translation_ of the
   flagship spine is a **post-launch** content effort (translator time, not eng
   time), gated by the owner's quality policy (D-5 item 6).
 - **First translated target:** the Zero-to-Deployed flagship spine, then the
@@ -318,10 +319,10 @@ Each item states the options and the recommended pick.
    Recommend building locale-generic but **committing translator effort to
    `pt-BR` only** at launch (the moat); `es` rides the same mechanism later.
    Owner: pt-BR only, or pt-BR + es?
-6. **AI-translation-quality policy** — *owner's call, deliberately not designed
-   here* (master spec forbids this doc taking a position). Options: human-only
+6. **AI-translation-quality policy** — _owner's call, deliberately not designed
+   here_ (master spec forbids this doc taking a position). Options: human-only
    translation; machine-translation seed **with** mandatory human review; or a
-   later per-course quality bar. This gates *when* PT-BR content is advertised as
+   later per-course quality bar. This gates _when_ PT-BR content is advertised as
    the "original, non-stale" moat, so it must be answered before promotion.
 7. **Coverage threshold for promotion.** Should a course be advertised as
    "available in PT-BR" only above a coverage % (gate 22 reports it), or is
@@ -333,10 +334,16 @@ Each item states the options and the recommended pick.
 
 ## 8. Explicitly out of scope
 
+- **Dubbed/subtitled video production.** The overlay mechanism can carry a
+  per-locale `url` leaf the moment an asset exists (no schema change), but
+  commissioning, hosting, and QA of localized video is a content-production
+  effort, not part of this mechanism, and is not required for the PT-BR text
+  moat.
+
 - **Slug localization / locale-prefixed content URLs.** Slugs stay EN and
   id-stable; localized slugs are an SEO nicety for a later issue, not the moat.
 - **AI-translation quality / provider choice** — D-5 item 6, owner's decision.
-- **Localizing the AI Partner's *runtime* conversation** (as opposed to the
+- **Localizing the AI Partner's _runtime_ conversation** (as opposed to the
   authored `tutorNotes` inputs) — separate concern (AI-tutor economics spec).
 - **RTL or non-Latin locales** — `config.locales` is pt-BR/es/en; no RTL work.
 - **Translating code** (`starter`/`solution`/test `input`/`expectedOutput`) —
