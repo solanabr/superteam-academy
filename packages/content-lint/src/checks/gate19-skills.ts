@@ -20,12 +20,17 @@ import { diag, type Diagnostic } from "../diagnostics";
  *                `skills.yaml` registry. This is the check that today only
  *                runs at SYNC time (`checkSkillVocabulary`) — an invented
  *                slug must fail the content PR, not the sync.
- *  19b (error)   minimum reuse bar: every registry slug applied to at least
- *                one lesson is applied to ≥2, except slugs marked
+ *  19b (warning) minimum reuse bar: every registry slug applied to at least
+ *                one lesson should be applied to ≥2, except slugs marked
  *                `reviewExempt: true` in `skills.yaml` (single-use by design,
  *                catalog spec §5 policy 4 — e.g. `brazil-compliance`,
- *                `earn-submission`). A registry slug applied to NO lesson is a
- *                warning (dead vocabulary entry).
+ *                `earn-submission`), which emit nothing. A registry slug applied
+ *                to NO lesson is also a warning (dead vocabulary entry).
+ *                WARNING tier for now — the reuse bar guards the Wave 3 review
+ *                queue, which cannot collect its benefit before the 5-course
+ *                catalog (C1–C4) exists; erroring today would block correct
+ *                content for a benefit that isn't yet reachable. Flip to error
+ *                once the catalog lands — see the TODO at the 19b loop (#596).
  *  19c (warning) interleaving-pair vocabulary: both members of each
  *                REVIEW_INTERLEAVING_PAIRS pair exist in `skills.yaml` and
  *                are applied to ≥2 lessons each. WARNING tier for now: the
@@ -37,25 +42,6 @@ import { diag, type Diagnostic } from "../diagnostics";
  *                stay legal as catalog facets but are flagged so nobody keys a
  *                review set on them.
  */
-
-/**
- * TEMPORARY, code-side escape hatch — distinct from the permanent declarative
- * mechanism below. These are pre-existing single-lesson slugs on content *main*
- * that the owner has not yet touched to either mark `reviewExempt: true` or fix
- * (tag a second lesson / drop the slug). They are demoted from error to warning
- * so this gate can merge without reddening courses-academy CI (its
- * `validate-content.yml` pulls this linter from monorepo `main` and runs
- * full-tree). `oracles` is applied to exactly one lesson on main today; the
- * content fix is owner-gated and tracked on #559. Remove this slug once that
- * content PR lands — at which point the ratchet is empty and the only exemption
- * path is the declarative `reviewExempt` marker. A *new* single-lesson slug not
- * on this list (and not `reviewExempt`) still errors.
- *
- * This is NOT the spec's exemption mechanism. A content author cannot express
- * "single-use by design" here — that is `reviewExempt: true` in `skills.yaml`
- * (catalog spec §5 policy 4), honoured in gate 19b below.
- */
-export const GRANDFATHERED_SINGLETONS: readonly string[] = ["oracles"];
 
 const SKILLS_FILE = "skills.yaml";
 
@@ -163,6 +149,17 @@ export function gate19Check(model: RepoModel): Diagnostic[] {
   }
 
   // 19b — minimum reuse bar over the registry.
+  //
+  // TODO(#596): flip the single-lesson case below from `warning` to `error`
+  // once the 5-course catalog (C1–C4) has landed. The bar exists to guard the
+  // Wave 3 spaced-review queue — a slug behind one lesson can only re-serve
+  // that lesson, never generate a genuine review item. That benefit is
+  // unreachable until the catalog exists, so until then a hard error would
+  // block correct, in-progress content for nothing (course 5's tags are
+  // legitimately single-use *today* and gain a second lesson as C1–C4 fill in).
+  // Warning tier surfaces every under-applied slug honestly on each run without
+  // reddening content CI; `reviewExempt` still silences the by-design
+  // singletons, which is what makes the eventual error-flip clean.
   for (const entry of registry) {
     const { slug } = entry;
     const uses = lessonsBySlug.get(slug) ?? [];
@@ -176,25 +173,16 @@ export function gate19Check(model: RepoModel): Diagnostic[] {
         )
       );
     } else if (uses.length === 1) {
-      // Exactly one lesson fails the reuse bar unless the slug is exempt. Two
-      // escape hatches, deliberately kept distinct:
-      //   • reviewExempt (permanent, declarative, content-side): the author has
-      //     marked this slug single-use by design in skills.yaml — spec §5
-      //     policy 4. No diagnostic at all.
-      //   • GRANDFATHERED_SINGLETONS (temporary, code-side): pre-existing debt
-      //     on content main the owner hasn't marked/fixed yet. Demoted to a
-      //     warning so it never fails CI; see the constant above.
+      // A slug marked `reviewExempt: true` is single-use by design (catalog
+      // spec §5 policy 4) — no diagnostic at all. Every other single-lesson
+      // slug warns (see the TODO above for why this is not yet an error).
       if (entry.reviewExempt) continue;
-      const grandfathered = GRANDFATHERED_SINGLETONS.includes(slug);
       out.push(
         diag(
           "gate-19b",
-          grandfathered ? "warning" : "error",
+          "warning",
           SKILLS_FILE,
-          `skill "${slug}" is applied to only 1 lesson (${uses[0]}) — the minimum reuse bar is 2; tag a second lesson, drop the slug, or mark it "reviewExempt: true" in skills.yaml if it is single-use by design` +
-            (grandfathered
-              ? " (grandfathered to a warning pending the content fix, #559)"
-              : "")
+          `skill "${slug}" is applied to only 1 lesson (${uses[0]}) — the minimum reuse bar is 2; tag a second lesson, drop the slug, or mark it "reviewExempt: true" in skills.yaml if it is single-use by design. Becomes an error once the 5-course catalog lands (#596)`
         )
       );
     }
