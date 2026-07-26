@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { GoogleLogo } from "@/components/icons/google-logo";
 import { SolanaLogo } from "@/components/icons/solana-logo";
 import { createClient } from "@/lib/supabase/client";
+import { buildOAuthRedirect } from "@/lib/auth/oauth-redirect";
 import { trackEvent } from "@/lib/analytics";
 
 interface AuthModalProps {
@@ -62,14 +63,10 @@ export function AuthModal({
   // Return the learner to the page they signed in from (#619 review): the OAuth
   // callback otherwise always lands on /dashboard, stranding someone mid-lesson
   // — and, post-LX-A4, away from the replay that finishes their banked work. The
-  // callback re-sanitizes this against open-redirect, so a path is all we pass.
-  const oauthRedirectTo = () => {
-    const base = `${window.location.origin}/api/auth/callback`;
-    const next = window.location.pathname;
-    return next && next !== "/"
-      ? `${base}?next=${encodeURIComponent(next)}`
-      : base;
-  };
+  // path-shape guard lives in buildOAuthRedirect (unit-tested); the callback
+  // re-sanitizes server-side too.
+  const oauthRedirectTo = () =>
+    buildOAuthRedirect(window.location.origin, window.location.pathname);
 
   const handleConnectSolana = () => {
     setLoading("solana");
