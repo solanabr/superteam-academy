@@ -4,8 +4,14 @@ import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import Image from "next/image";
-import { CaretDown, Lock, CheckCircle } from "@phosphor-icons/react";
+import {
+  CaretDoubleRight,
+  CaretDown,
+  Lock,
+  CheckCircle,
+} from "@phosphor-icons/react";
 import type { LearningPath } from "@superteam-lms/types";
+import type { PathGuidanceModality } from "@/lib/courses/learner-segment";
 import { cn } from "@/lib/utils";
 
 export interface PathCourseProgress {
@@ -20,12 +26,19 @@ interface LearningPathSectionProps {
   learningPath: LearningPath;
   progress: Map<string, PathCourseProgress>;
   defaultOpen?: boolean;
+  /**
+   * Per-segment guidance modality (LX-A7). Only the framing changes — the
+   * sequence itself is identical across modalities. Defaults to the legacy
+   * locked sequence so existing call sites keep their behavior.
+   */
+  modality?: PathGuidanceModality;
 }
 
 export function LearningPathSection({
   learningPath,
   progress,
   defaultOpen = false,
+  modality = "fixed",
 }: LearningPathSectionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const t = useTranslations("courses");
@@ -62,8 +75,10 @@ export function LearningPathSection({
 
   const totalHours = courses.reduce((s, c) => s + c.duration, 0);
 
-  // Determine locked state: course N locked if course N-1 not completed
-  function isLocked(index: number): boolean {
+  // Sequential gate: course N is "ahead" if course N-1 is not completed.
+  // Only the `fixed` modality turns this into a hard lock; `guided-skip`
+  // surfaces it as a skip-ahead hint and `open` ignores it entirely.
+  function isAhead(index: number): boolean {
     if (index === 0) return false;
     const prevCourse = courses[index - 1];
     if (!prevCourse) return false;
@@ -134,7 +149,9 @@ export function LearningPathSection({
       <div className="path-timeline">
         {courses.map((course, idx) => {
           const p = progress.get(course._id);
-          const locked = isLocked(idx);
+          const ahead = isAhead(idx);
+          const locked = modality === "fixed" && ahead;
+          const skipAhead = modality === "guided-skip" && ahead;
           const isComplete = p?.isCompleted ?? false;
           const isActive = (p?.isEnrolled && !p?.isCompleted) ?? false;
           const percent =
@@ -181,6 +198,12 @@ export function LearningPathSection({
                   {isActive && (
                     <span className="path-step-badge active">
                       {completedLessons}/{lessonCount}
+                    </span>
+                  )}
+                  {skipAhead && (
+                    <span className="path-step-badge skip">
+                      <CaretDoubleRight size={11} weight="bold" />{" "}
+                      {t("skipAhead")}
                     </span>
                   )}
                   {locked && (

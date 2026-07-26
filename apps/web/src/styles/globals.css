@@ -2523,6 +2523,180 @@ a.path-step-card:hover .path-step-thumb img {
   background: var(--primary);
 }
 
+/* ── Skip-ahead badge (LX-A7 guided-skip modality) ── */
+.path-step-badge.skip {
+  color: var(--text-3);
+  border-color: var(--border);
+  background: var(--subtle);
+}
+a.path-step-card:hover .path-step-badge.skip {
+  color: var(--text);
+  border-color: var(--border-hover);
+}
+
+/* ═══ PATHS VIEW — guidance row + start-here card (LX-A7) ═══ */
+.path-guidance-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.path-guidance {
+  font-size: 13px;
+  color: var(--text-3);
+  margin: 0;
+}
+.path-browse-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2, var(--text-3));
+  background: none;
+  border: none;
+  padding: 4px 2px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: color 0.15s ease;
+}
+.path-browse-all:hover {
+  color: var(--text);
+}
+.path-browse-all:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.path-browse-all.prominent {
+  color: var(--primary);
+  border: 2px solid color-mix(in srgb, var(--primary) 35%, transparent);
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  padding: 6px 12px;
+  border-radius: var(--r-md);
+}
+.path-browse-all.prominent:hover {
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+/* One highlighted start card — gradient border, not a grid tile */
+.path-start-card {
+  position: relative;
+  border: 2.5px solid transparent;
+  border-radius: var(--r-lg);
+  background:
+    linear-gradient(var(--card), var(--card)) padding-box,
+    var(--sol-grad) border-box;
+  box-shadow: var(--shadow);
+  padding: 18px;
+}
+.path-start-badge {
+  position: absolute;
+  top: -11px;
+  left: 16px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--sol-grad);
+  border-radius: 99px;
+  padding: 3px 10px;
+}
+.path-start-inner {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+.path-start-thumb {
+  flex-shrink: 0;
+  width: 224px;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  border: 2px solid var(--border);
+}
+.path-start-thumb img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+.path-start-content {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.path-start-title {
+  font-family: var(--font-display, var(--font-d));
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  margin: 0;
+}
+.path-start-desc {
+  font-size: 13px;
+  color: var(--text-3);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.path-start-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-3);
+  flex-wrap: wrap;
+}
+.path-start-meta-xp {
+  color: var(--xp);
+  font-weight: 700;
+}
+.path-start-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--primary);
+  border-radius: var(--r-md);
+  padding: 8px 16px;
+  text-decoration: none;
+  transition:
+    transform 0.15s ease,
+    filter 0.15s ease;
+}
+.path-start-cta:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+.path-start-cta:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+@media (max-width: 640px) {
+  .path-start-inner {
+    flex-direction: column;
+  }
+  .path-start-thumb {
+    width: 100%;
+  }
+  .path-start-cta {
+    align-self: stretch;
+    justify-content: center;
+  }
+}
+
 /* ── Mobile responsive ── */
 @media (max-width: 640px) {
   .path-header {
