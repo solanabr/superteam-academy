@@ -117,6 +117,11 @@ describe("gate 3 — slots", () => {
     expect(msg).toMatch(/DANGER/);
     expect(msg).toMatch(/invariant/i);
     expect(msg).toMatch(/by hand/i);
+    // The DANGER note states the generic truth, not a fabricated enrollment count —
+    // it fires for every mismatching course, including a zero-enrollment new one.
+    // (Digits still legitimately appear in the trailing Expected-lock JSON.)
+    expect(msg).toMatch(/every already-enrolled learner/i);
+    expect(msg).not.toMatch(/\d+\+?\s*(?:live\s+)?learner/i); // no hardcoded count e.g. "38+ learners"
   });
 
   it("skips (warning, never error) when no base ref is resolvable — #737", async () => {
