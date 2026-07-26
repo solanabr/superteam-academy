@@ -1,0 +1,35 @@
+name: Action pin guard
+
+# #661 — reject any GitHub Action `uses:` that is not pinned to a 40-char commit
+# SHA, so the #635/#659 hardening cannot silently regress. Standalone (not a job
+# in ci.yml) to keep the diff off the sensitive ci.yml and its required checks.
+# Not a required check, so `on.paths` is safe here (unlike ci.yml — see its
+# header): it simply doesn't run when no workflow/guard file changed.
+
+on:
+  push:
+    branches: ["**"]
+    paths:
+      - ".github/workflows/**"
+      - "scripts/check-action-pins.sh"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/**"
+      - "scripts/check-action-pins.sh"
+
+concurrency:
+  group: action-pin-guard-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    name: SHA-pin guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Assert every `uses:` is SHA-pinned
+        run: ./scripts/check-action-pins.sh
