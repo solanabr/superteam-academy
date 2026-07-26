@@ -7,13 +7,14 @@ import Image from "next/image";
 import { Transaction } from "@solana/web3.js";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { BookOpen, X } from "@phosphor-icons/react";
+import { BookOpen, X, Sparkle, ArrowUp } from "@phosphor-icons/react";
 import { buildCloseEnrollmentInstruction } from "@/lib/solana/instructions";
 import {
   parseProgramError,
   preflightTransaction,
 } from "@/lib/solana/program-errors";
 import type { CurrentCourse } from "@/hooks/use-dashboard-data";
+import { deriveEndowedProgress } from "@/lib/courses/endowed-progress";
 import { CourseCompletionMint } from "@/components/certificates/course-completion-mint";
 import { dispatchToast } from "@/components/ui/toast-container";
 
@@ -115,21 +116,28 @@ export function CurrentCoursesSection({
       {courses.length > 0 ? (
         <div className="cc-grid">
           {courses.map((course, i) => {
-            const isComplete =
-              course.completedLessons >= course.totalLessons &&
-              course.totalLessons > 0;
+            // Endowed progress (LX-B12): a non-zero first tick at enrollment
+            // (with a stated reason) and near-goal intensification, derived
+            // from the honest lesson counts — which still render as-is below.
+            const ep = deriveEndowedProgress(
+              course.completedLessons,
+              course.totalLessons
+            );
+            const isComplete = ep.isComplete;
             const ringR = 15;
             const ringC = 2 * Math.PI * ringR;
-            const progress =
-              course.totalLessons > 0
-                ? course.completedLessons / course.totalLessons
-                : 0;
-            const ringOffset = ringC * (1 - progress);
+            const ringOffset = ringC * (1 - ep.displayFraction);
+            const progressAria = t("lessonsDone", {
+              completed: course.completedLessons,
+              total: course.totalLessons,
+            });
 
             return (
               <div
                 key={course.courseId}
-                className="cc-card"
+                className={
+                  ep.nearGoal ? "cc-card cc-card--near-goal" : "cc-card"
+                }
                 style={{ "--i": i } as React.CSSProperties}
               >
                 {!isComplete && (
@@ -164,8 +172,12 @@ export function CurrentCoursesSection({
                         {course.learningPath ?? tCourses(course.difficulty)}
                       </span>
                     </div>
-                    <span className="cc-progress">
-                      <span className="cc-ring-wrap">
+                    <span
+                      className="cc-progress"
+                      role="img"
+                      aria-label={progressAria}
+                    >
+                      <span className="cc-ring-wrap" aria-hidden="true">
                         <svg className="cc-ring" viewBox="0 0 36 36">
                           <circle
                             cx="18"
@@ -190,11 +202,24 @@ export function CurrentCoursesSection({
                           /{course.totalLessons}
                         </span>
                       </span>
-                      <span className="cc-ring-label">
+                      <span className="cc-ring-label" aria-hidden="true">
                         {tCourses("lessons")}
                       </span>
                     </span>
                   </div>
+                  {/* Stated reason for a pre-credited tick, or the near-goal
+                      nudge — never claims a lesson that isn't done. */}
+                  {ep.reasonKey ? (
+                    <p className="cc-reason">
+                      <Sparkle size={11} weight="fill" aria-hidden="true" />
+                      {t(`endowedProgress.${ep.reasonKey}`)}
+                    </p>
+                  ) : ep.nearGoal ? (
+                    <p className="cc-reason cc-reason--near-goal">
+                      <ArrowUp size={11} weight="bold" aria-hidden="true" />
+                      {t("endowedProgress.nearGoal")}
+                    </p>
+                  ) : null}
                 </Link>
 
                 {isComplete && userId && (

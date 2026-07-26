@@ -4848,6 +4848,40 @@ a.path-step-card:hover .path-step-title {
   margin-left: 4px;
 }
 
+/* ── Endowed-progress reason (LX-B12) — stated cause for a pre-credited tick,
+   or the near-goal nudge. Sits below the card body, never over the ring. ── */
+.cc-reason {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0 14px 10px;
+  font-family: var(--font-mono, var(--font-m));
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-3);
+  letter-spacing: 0.01em;
+}
+.cc-reason svg {
+  flex-shrink: 0;
+  color: var(--primary);
+}
+.cc-reason--near-goal {
+  color: var(--primary);
+}
+
+/* Near-goal intensification: a thicker, glowing ring as a course approaches
+   completion. Emphasis is purely visual — the counts stay honest. */
+.cc-card--near-goal .cc-ring-fill {
+  stroke-width: 4;
+  filter: drop-shadow(
+    0 0 3px color-mix(in srgb, var(--primary) 55%, transparent)
+  );
+}
+.cc-card--near-goal .cc-ring-done {
+  font-size: 12px;
+}
+
 /* ── Unenroll ── */
 .cc-unenroll {
   position: absolute;
