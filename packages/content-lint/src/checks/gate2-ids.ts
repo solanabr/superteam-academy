@@ -74,7 +74,19 @@ export function gate2Check(model: RepoModel, ctx: LintContext): Diagnostic[] {
   // Immutability vs the PR base: an id present at base whose value changed is a hard fail.
   if (ctx.baseRef) {
     const base = mergeBase(ctx.root, ctx.baseRef);
-    if (base) {
+    if (!base) {
+      // A base ref was EXPLICITLY requested (CI sets LINT_BASE_REF) but it does not
+      // resolve — the base was not fetched, or the ref name is wrong. Fail CLOSED:
+      // silently skipping here would fail OPEN and disable the id-immutability gate.
+      out.push(
+        diag(
+          "gate-2",
+          "error",
+          "",
+          `CI misconfiguration: told to diff id immutability against "${ctx.baseRef}" but it is not resolvable — fetch it (fetch-depth: 0) or fix LINT_BASE_REF. Id immutability was NOT verified.`
+        )
+      );
+    } else {
       if (!base.exact) {
         // Degraded to the base tip (e.g. a shallow --depth=1 base fetch). The tip
         // is not the fork point on a diverged base, so the immutability comparison

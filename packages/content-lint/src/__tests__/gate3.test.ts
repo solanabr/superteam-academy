@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { execFileSync } from "node:child_process";
-import { writeFileSync } from "node:fs";
+import { writeFileSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 import { runLint } from "../lint";
 import "../checks/gate1-schema";
@@ -159,6 +159,53 @@ describe("gate 3 — slots", () => {
           /missing slots\.lock\.json/i.test(d.message)
       )
     ).toBe(true);
+  });
+
+  it("fails CLOSED when an explicit base ref is set but unresolvable — #737 (no fail-open)", async () => {
+    // CI sets LINT_BASE_REF but the ref was never fetched (e.g. a shallow/no fetch).
+    // Slot immutability cannot be checked, and a skip here would fail OPEN, silently
+    // disabling the hard gate. It must ERROR, not warn.
+    const { root } = gitRepo(correctLock);
+    // Renumber a slot to prove the gate would otherwise have work to do.
+    writeFileSync(
+      join(root, "courses/x/slots.lock.json"),
+      JSON.stringify({
+        version: 1,
+        slots: { "lesson-a": 9, "lesson-b": 1 },
+        retired: [],
+        next: 10,
+      }),
+      "utf8"
+    );
+    const r = await runLint(root, { baseRef: "origin/does-not-exist" });
+    expect(
+      r.diagnostics.some(
+        (d) =>
+          d.gate === "gate-3" &&
+          d.severity === "error" &&
+          /misconfiguration/i.test(d.message)
+      )
+    ).toBe(true);
+    // Never a soft warning-skip for an explicitly-requested-but-missing base.
+    expect(
+      r.diagnostics.some((d) => d.gate === "gate-3" && d.severity === "warning")
+    ).toBe(false);
+  });
+
+  it("tells you to RESTORE a deleted deployed lock, never regenerate it — #737", async () => {
+    // Base (main) has the lock; the working tree deletes it. This is an
+    // accidentally-deleted deployed course, not a new one.
+    const { root } = gitRepo(correctLock);
+    unlinkSync(join(root, "courses/x/slots.lock.json"));
+    const r = await runLint(root, { baseRef: "main" });
+    const msg = r.diagnostics.find(
+      (d) => d.gate === "gate-3" && d.severity === "error"
+    )?.message;
+    expect(msg).toBeDefined();
+    expect(msg).toMatch(/deleted/i);
+    expect(msg).toMatch(/restore/i);
+    // Must NOT suggest generating a fresh lock for a course that was deployed.
+    expect(msg).not.toMatch(/generated from its lesson order/i);
   });
 
   it("resolves origin/main locally so a correct lock passes with no explicit base ref", async () => {

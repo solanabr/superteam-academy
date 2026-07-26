@@ -106,6 +106,31 @@ describe("gate 2 — ids", () => {
     ).toBe(false);
   });
 
+  it("fails CLOSED when an explicit base ref is set but unresolvable — #737 (no fail-open)", async () => {
+    // LINT_BASE_REF points at a ref that was never fetched. Id immutability cannot
+    // be checked; a silent skip would fail OPEN. It must ERROR.
+    const root = makeTempRepo({
+      "courses/a/course.yaml": course("course-x"),
+    });
+    const git = (...args: string[]) => execFileSync("git", args, { cwd: root });
+    git("init", "-q");
+    git("config", "user.email", "t@t.t");
+    git("config", "user.name", "t");
+    git("add", "-A");
+    git("commit", "-qm", "c1");
+    git("branch", "-M", "main");
+
+    const r = await runLint(root, { baseRef: "origin/does-not-exist" });
+    expect(
+      r.diagnostics.some(
+        (d) =>
+          d.gate === "gate-2" &&
+          d.severity === "error" &&
+          /misconfiguration/i.test(d.message)
+      )
+    ).toBe(true);
+  });
+
   it("emits a warning (never silent) when no exact merge-base exists", async () => {
     // An orphan base branch shares NO history with HEAD, so `git merge-base`
     // fails and the check degrades to the base tip — which must be surfaced.
