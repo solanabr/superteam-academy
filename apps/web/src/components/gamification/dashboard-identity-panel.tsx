@@ -639,7 +639,8 @@ export function DashboardIdentityPanel({
                     <span className="dq-desc">{quest.description}</span>
                   </div>
                   <div className="dq-reward">
-                    <Lightning size={12} weight="fill" />+{quest.xpReward}
+                    <Lightning size={12} weight="fill" />+{quest.xpReward}{" "}
+                    {t("xp")}
                   </div>
                   {quest.completed ? (
                     <div className="dq-check">

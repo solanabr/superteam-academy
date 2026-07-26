@@ -6,23 +6,23 @@ import { PublicKey } from "@solana/web3.js";
 import { fetchConfig, fetchXpBalance } from "../academy-reads";
 import { getProgramId } from "../pda";
 
-interface UseXpBalanceResult {
-  balance: number;
+interface UseXpTotalResult {
+  total: number;
   isLoading: boolean;
   error: string | null;
   refetch: () => void;
 }
 
-export function useXpBalance(): UseXpBalanceResult {
+export function useXpTotal(): UseXpTotalResult {
   const { connection } = useConnection();
   const { publicKey } = useWallet();
-  const [balance, setBalance] = useState(0);
+  const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     if (!publicKey) {
-      setBalance(0);
+      setTotal(0);
       setIsLoading(false);
       return;
     }
@@ -33,7 +33,7 @@ export function useXpBalance(): UseXpBalanceResult {
     try {
       const config = await fetchConfig(connection, getProgramId());
       if (!config) {
-        setBalance(0);
+        setTotal(0);
         setIsLoading(false);
         return;
       }
@@ -43,15 +43,13 @@ export function useXpBalance(): UseXpBalanceResult {
         config.xp_mint as PublicKey,
         connection
       );
-      setBalance(result.balance);
+      setTotal(result.balance);
       if (result.error) {
         setError(result.error);
       }
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to fetch XP balance"
-      );
-      setBalance(0);
+      setError(err instanceof Error ? err.message : "Failed to fetch XP total");
+      setTotal(0);
     } finally {
       setIsLoading(false);
     }
@@ -61,5 +59,5 @@ export function useXpBalance(): UseXpBalanceResult {
     fetchData();
   }, [fetchData]);
 
-  return { balance, isLoading, error, refetch: fetchData };
+  return { total, isLoading, error, refetch: fetchData };
 }

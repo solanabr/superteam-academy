@@ -15,7 +15,7 @@ import { AuthModal } from "@/components/auth/auth-modal";
 import { UserMenu } from "@/components/auth/user-menu";
 import { LevelBadge } from "@/components/gamification/level-badge";
 import { xpToNextLevel, calculateLevel } from "@/lib/gamification/xp";
-import { useXpBalance } from "@/lib/solana/hooks";
+import { useXpTotal } from "@/lib/solana/hooks";
 import { createClient } from "@/lib/supabase/client";
 import { LowSolBanner } from "@/components/layout/low-sol-banner";
 
@@ -36,6 +36,7 @@ const publicNavItems = [
 export function Header() {
   const t = useTranslations("nav");
   const tA11y = useTranslations("a11y");
+  const tGam = useTranslations("gamification");
   const locale = useLocale();
   const pathname = usePathname();
   const { user, profile, isLoading: authLoading } = useAuth();
@@ -57,7 +58,7 @@ export function Header() {
   // continuing — a visible jump.
   const displayedXpRef = useRef(0);
 
-  const { balance: onChainXp } = useXpBalance();
+  const { total: onChainXp } = useXpTotal();
 
   // Teacher authoring entry is UX-only; the real gate is the server-side
   // /teach viewer. Replaces the old `profiles.role` check — the role-removal
@@ -291,7 +292,12 @@ export function Header() {
                   "group relative flex items-center gap-[8px] rounded-full border border-[var(--border)] bg-[var(--card)] py-[4px] pl-[4px] pr-[12px] transition-all duration-500",
                   glowing && "shadow-glow-xp"
                 )}
-                title={`${xpRemaining.toLocaleString()} XP to Level ${level + 1}`}
+                title={tGam("xpTooltip", {
+                  xp: xpRemaining.toLocaleString(),
+                  xpLabel: tGam("xp"),
+                  levelLabel: tGam("level"),
+                  level: level + 1,
+                })}
               >
                 <LevelBadge level={level} size="sm" />
 

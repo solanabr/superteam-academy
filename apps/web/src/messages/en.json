@@ -328,7 +328,6 @@
     "category_skills": "Skills",
     "category_community": "Community",
     "category_special": "Special",
-    "xpToNextLevel": "{current} / {needed} XP to Level {level}",
     "noEntries": "No rankings yet. Complete lessons to earn XP and appear here.",
     "streakKeepGoing": "Learn today to keep it going!",
     "noAchievements": "Complete a lesson to earn your first achievement",
@@ -340,7 +339,8 @@
     "viewOnExplorer": "View on Explorer",
     "onChain": "on-chain",
     "you": "You",
-    "xpRemaining": "<em>{xp} {xpLabel}</em> to {levelLabel} {level}"
+    "xpRemaining": "<em>{xp} {xpLabel}</em> to {levelLabel} {level}",
+    "xpTooltip": "{xp} {xpLabel} to {levelLabel} {level}"
   },
   "certificates": {
     "title": "Certificate of Completion",
