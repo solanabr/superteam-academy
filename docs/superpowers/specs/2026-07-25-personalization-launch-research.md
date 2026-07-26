@@ -3,6 +3,14 @@
 **Date:** 2026-07-25 · **Status:** Final deliverable (4 pillars, adversarially verified; REFUTED claims dropped, WEAKENED caveats carried inline)
 **Evidence tiers:** A = peer-reviewed/meta-analysis or large field experiment · B = platform first-party data with concrete numbers · C = practitioner case study/teardown · D = marketing-tier (anti-citation only)
 
+> **Correction note (2026-07-26, per #645 — do not rewrite the body below; this note governs).** Three figures/claims below were bounded or refuted after publication and must not be carried forward in those forms:
+>
+> - **Dev-bounty submission counts ("≤12 submissions", the "0-12" half):** **refuted** (LAU-14 WEAKENED). The six dev listings now read 4/53/11/80/5/50. The listing set and the scarce-but-rich framing hold; the low submission counts do not. Do not optimise on, or quote, submission counts.
+> - **"$318.8B received" / "+207.7% YoY" (Brazil stablecoin market, D7):** the $318.8B is the **Jul 2024 – Jun 2025** window — **date it or do not use it** (LAU-17 CONFIRMED with a dating boundary). Solana's 32.6% share, the +207.7% YoY figure and the $650B Feb-2026 figure are **not independently verified**; real payments ≈ $300M/month.
+> - **"No surveyed / surviving platform teaches programming-from-scratch through Rust" (C9, and the exec-summary line):** **drop the absolute from positioning** (LAU-22 WEAKENED) — Cyfrin ships Rust Programming Basics _and_ a beginner Solana course, and Blueshift ships a _comece do zero_ path. Keep the "never market learn-to-code-via-Rust" prohibition; it survives on the reward-liquid-capture reasoning, not on the absence claim.
+>
+> Authoritative dispositions: UNIFIED-LAUNCH-SPEC §1 evidence table (LAU-14, LAU-17, LAU-22) + §3 item 52.
+
 ---
 
 ## 1. Executive Summary
