@@ -10,22 +10,26 @@ import { CertificateCard } from "@/components/certificates/certificate-card";
 import { EarnHandoffCard } from "@/components/certificates/earn-handoff-card";
 import { createClient } from "@/lib/supabase/client";
 import { getCoursesByIds } from "@/lib/content/client-queries";
+import { fetchCourseVersion } from "@/lib/credentials/metadata";
 import {
   CREDENTIAL_ISSUER_NAME,
   buildLinkedInAddToProfileUrl,
   buildXShareIntentUrl,
   trackCredentialShareClick,
 } from "@/lib/credentials/share";
+import { resolveSolanaNetwork } from "@/lib/solana/network";
 import { CERTIFICATE_STYLES as CS } from "@/lib/styles/styleClasses";
 import { truncateAddress } from "@/lib/utils";
 
 interface CertDetail {
   cert: Certificate;
-  recipientName: string;
+  /** Profile username; null when unset — the UI supplies a localized fallback. */
+  recipientName: string | null;
   subtitle: string;
   mintAddress: string;
   metadataUri: string;
-  network: string;
+  /** #497 Course Version stamp from the credential metadata; null pre-#497. */
+  courseVersion: number | null;
 }
 
 function useCertificateData(certId: string) {
@@ -66,6 +70,10 @@ function useCertificateData(certId: string) {
           );
         }
 
+        // Best-effort read of the #497 Course Version stamp from the
+        // credential metadata (its only off-chain home) — null pre-#497.
+        const courseVersion = await fetchCourseVersion(cert.metadata_uri ?? "");
+
         setData({
           cert: {
             id: cert.id,
@@ -76,11 +84,11 @@ function useCertificateData(certId: string) {
             metadataUri: cert.metadata_uri ?? "",
             mintedAt: new Date(cert.minted_at ?? Date.now()),
           },
-          recipientName: profile?.username ?? "Builder",
+          recipientName: profile?.username ?? null,
           subtitle: parts.join(" · "),
           mintAddress: cert.mint_address ?? "",
           metadataUri: cert.metadata_uri ?? "",
-          network: "devnet",
+          courseVersion,
         });
       } catch {
         setNotFound(true);
@@ -152,10 +160,11 @@ export default function CertificateViewPage() {
     );
   }
 
-  const { cert, recipientName, subtitle, mintAddress, metadataUri, network } =
-    data;
+  const { cert, subtitle, mintAddress, metadataUri, courseVersion } = data;
+  const recipientName = data.recipientName ?? t("recipientFallback");
+  const { cluster, label: networkLabel } = resolveSolanaNetwork();
   const explorerUrl = mintAddress
-    ? `https://explorer.solana.com/address/${mintAddress}?cluster=${network}`
+    ? `https://explorer.solana.com/address/${mintAddress}?cluster=${cluster}`
     : "";
 
   // This page only renders content client-side (data arrives via useEffect),
@@ -255,16 +264,27 @@ export default function CertificateViewPage() {
         <EarnHandoffCard source="certificate_page" courseId={cert.courseId} />
       </div>
 
-      {/* NFT Details card — copyable values */}
+      {/* NFT Details card — credential anatomy (F35): issuer, unique ID
+          (mint address), course version, each clearly labeled */}
       <div className={v.nftCard}>
         <div className={v.nftTitle}>{t("nftDetails")}</div>
         <div className={v.nftRow}>
-          <span className={v.nftLabel}>{t("mintAddress")}</span>
+          <span className={v.nftLabel}>{t("issuer")}</span>
+          <span className={v.nftValue}>{CREDENTIAL_ISSUER_NAME}</span>
+        </div>
+        <div className={v.nftRow}>
+          <span className={v.nftLabel}>{t("credentialId")}</span>
           <CopyableValue
             value={truncateAddress(mintAddress)}
             full={mintAddress}
           />
         </div>
+        {courseVersion !== null && (
+          <div className={v.nftRow}>
+            <span className={v.nftLabel}>{t("courseVersion")}</span>
+            <span className={v.nftValue}>{courseVersion}</span>
+          </div>
+        )}
         <div className={v.nftRow}>
           <span className={v.nftLabel}>{t("metadataUri")}</span>
           <CopyableValue
@@ -274,16 +294,14 @@ export default function CertificateViewPage() {
         </div>
         <div className={v.nftRow}>
           <span className={v.nftLabel}>{t("network")}</span>
-          <span className={v.nftValue}>
-            {network.charAt(0).toUpperCase() + network.slice(1)}
-          </span>
+          <span className={v.nftValue}>{networkLabel}</span>
         </div>
         <div className={v.nftRow}>
           <span className={v.nftLabel}>{t("standard")}</span>
-          <span className={v.nftValue}>Metaplex Core</span>
+          <span className={v.nftValue}>{t("standardValue")}</span>
         </div>
         <div className={v.nftRow}>
-          <span className={v.nftLabel}>{t("collection")}</span>
+          <span className={v.nftLabel}>{t("collectionLabel")}</span>
           <span className={v.nftValue}>{t("collection")}</span>
         </div>
       </div>

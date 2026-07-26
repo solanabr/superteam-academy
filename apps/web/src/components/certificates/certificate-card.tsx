@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import type { Certificate } from "@superteam-lms/types";
+import { resolveSolanaNetwork } from "@/lib/solana/network";
 import { CERTIFICATE_STYLES as CS, cx } from "@/lib/styles/styleClasses";
 import { truncateAddress } from "@/lib/utils";
 import { ProofPill } from "@/components/ui/proof-pill";
@@ -28,8 +29,7 @@ export function CertificateCard({
   const isCompact = variant === "compact";
   const wrapClass = isCompact ? CS.compact.wrap : CS.wrap;
 
-  const network = process.env.NEXT_PUBLIC_SOLANA_NETWORK ?? "devnet";
-  const cluster = network === "mainnet" ? "mainnet-beta" : network;
+  const { cluster, label: networkLabel } = resolveSolanaNetwork();
 
   return (
     <div className={cx(wrapClass, className)}>
@@ -91,7 +91,7 @@ export function CertificateCard({
               </div>
             )}
             <div className={CS.network}>
-              Solana {cluster.charAt(0).toUpperCase() + cluster.slice(1)}
+              {t("networkFooter", { network: networkLabel })}
             </div>
           </div>
         </div>

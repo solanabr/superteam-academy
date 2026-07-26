@@ -357,7 +357,14 @@
     "shareXText": "Acabei de conquistar meu certificado de \"{courseTitle}\" na @SuperteamBR Academy! 🎓\n\nVerifique on-chain:",
     "addToLinkedIn": "Adicionar ao seu perfil do LinkedIn",
     "shareNudgeTitle": "Mostre sua credencial",
-    "opensInNewTab": "abre em uma nova aba"
+    "opensInNewTab": "abre em uma nova aba",
+    "recipientFallback": "Builder",
+    "issuer": "Emissor",
+    "credentialId": "ID da Credencial",
+    "courseVersion": "Versão do Curso",
+    "collectionLabel": "Coleção",
+    "standardValue": "Metaplex Core",
+    "networkFooter": "Solana {network}"
   },
   "earnHandoff": {
     "title": "Transforme sua credencial em trabalho pago",

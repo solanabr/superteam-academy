@@ -357,7 +357,14 @@
     "shareXText": "I just earned my \"{courseTitle}\" certificate on @SuperteamBR Academy! 🎓\n\nVerify on-chain:",
     "addToLinkedIn": "Add to your LinkedIn profile",
     "shareNudgeTitle": "Show off your credential",
-    "opensInNewTab": "opens in a new tab"
+    "opensInNewTab": "opens in a new tab",
+    "recipientFallback": "Builder",
+    "issuer": "Issuer",
+    "credentialId": "Credential ID",
+    "courseVersion": "Course Version",
+    "collectionLabel": "Collection",
+    "standardValue": "Metaplex Core",
+    "networkFooter": "Solana {network}"
   },
   "earnHandoff": {
     "title": "Turn your credential into paid work",
