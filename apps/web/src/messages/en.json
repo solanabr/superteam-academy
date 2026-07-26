@@ -889,7 +889,8 @@
       "you": "You",
       "ai": "AI Partner",
       "loading": "Thinking...",
-      "error": "Something went wrong. Try again."
+      "error": "Something went wrong. Try again.",
+      "spendCapped": "The AI Partner has reached today's usage limit. It'll be back tomorrow — meanwhile, the authored hints and tests are still here to help."
     },
     "actions": {
       "hint": "Hint",

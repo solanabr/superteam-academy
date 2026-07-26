@@ -889,7 +889,8 @@
       "you": "Você",
       "ai": "Parceiro de IA",
       "loading": "Pensando...",
-      "error": "Algo deu errado. Tente novamente."
+      "error": "Algo deu errado. Tente novamente.",
+      "spendCapped": "O Parceiro de IA atingiu o limite de uso de hoje. Ele volta amanhã; enquanto isso, as dicas e os testes continuam aqui para ajudar."
     },
     "actions": {
       "hint": "Dica",

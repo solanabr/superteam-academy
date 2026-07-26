@@ -38,6 +38,10 @@ interface UseAiPartnerResult {
   paidUsed: number;
   paidRemaining: number;
   budgetExhausted: boolean;
+  // The platform-wide daily spend cap was hit (#591) — distinct from
+  // budgetExhausted (this learner's per-lesson assist quota). The route 503s
+  // with `spendCapped: true`; the pane shows dedicated localized copy.
+  spendCapped: boolean;
   loading: boolean;
   error: string | null;
   requestHint: () => Promise<void>;
@@ -71,6 +75,7 @@ export function useAiPartner({
   const [freeHintsUsed, setFreeHintsUsed] = useState(0);
   const [paidUsed, setPaidUsed] = useState(0);
   const [budgetExhausted, setBudgetExhausted] = useState(false);
+  const [spendCapped, setSpendCapped] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -119,6 +124,7 @@ export function useAiPartner({
     async (action: PartnerAction, message?: string) => {
       setLoading(true);
       setError(null);
+      setSpendCapped(false);
       try {
         const res = await fetch(PARTNER_ROUTE, {
           method: "POST",
@@ -134,6 +140,25 @@ export function useAiPartner({
         });
 
         if (!res.ok) {
+          // The daily spend cap (#591) returns 503 with `spendCapped: true`.
+          // Surface it as its own state so the pane shows dedicated localized
+          // copy ("tutor at capacity today") rather than the generic error.
+          if (res.status === 503) {
+            try {
+              const body: unknown = await res.json();
+              if (
+                typeof body === "object" &&
+                body !== null &&
+                "spendCapped" in body &&
+                (body as { spendCapped?: unknown }).spendCapped === true
+              ) {
+                setSpendCapped(true);
+                return;
+              }
+            } catch {
+              // Non-JSON 503 → fall through to the generic error below.
+            }
+          }
           setError(`Request failed (${res.status})`);
           return;
         }
@@ -219,6 +244,7 @@ export function useAiPartner({
     paidUsed,
     paidRemaining: Math.max(0, MAX_PAID_ASSISTS - paidUsed),
     budgetExhausted,
+    spendCapped,
     loading,
     error,
     requestHint,

@@ -889,7 +889,8 @@
       "you": "Tú",
       "ai": "Compañero de IA",
       "loading": "Pensando...",
-      "error": "Algo salió mal. Inténtalo de nuevo."
+      "error": "Algo salió mal. Inténtalo de nuevo.",
+      "spendCapped": "El Compañero de IA alcanzó el límite de uso de hoy. Volverá mañana; mientras tanto, las pistas y las pruebas siguen disponibles para ayudarte."
     },
     "actions": {
       "hint": "Pista",

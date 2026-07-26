@@ -45,6 +45,7 @@ export function AiPartnerPane({
     freeHintsUsed,
     paidUsed,
     budgetExhausted,
+    spendCapped,
     loading,
     error,
     requestHint,
@@ -109,7 +110,13 @@ export function AiPartnerPane({
         />
       )}
 
-      {error && (
+      {spendCapped && (
+        <div className="shrink-0 border-t border-border px-4 py-2">
+          <p className="text-xs text-text-3">{t("messages.spendCapped")}</p>
+        </div>
+      )}
+
+      {error && !spendCapped && (
         <div className="shrink-0 border-t border-border px-4 py-2">
           <p className="text-xs text-danger">{t("messages.error")}</p>
         </div>
