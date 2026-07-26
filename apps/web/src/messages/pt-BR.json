@@ -253,6 +253,10 @@
     "continueLearning": "Continue aprendendo",
     "currentCourses": "Cursos Atuais",
     "lessonsDone": "{completed} de {total} aulas concluídas",
+    "endowedProgress": {
+      "enrolledFirstStep": "Matriculado — seu primeiro passo",
+      "nearGoal": "Quase lá — continue assim"
+    },
     "resumeLesson": "Retomar aula",
     "startNextCourse": "Comece seu próximo curso",
     "startNextCourseAria": "Começar seu próximo curso: {course}",
