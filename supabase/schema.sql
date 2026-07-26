@@ -2607,3 +2607,50 @@ $$;
 
 REVOKE ALL ON FUNCTION get_ai_spend_today() FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION get_ai_spend_today() TO service_role;
+
+-- ============================================================================
+-- course_changelog (#654) — post-deployment course evolution log.
+-- Mirror of supabase/migrations/20260726210000_course_changelog.sql. See that
+-- file's header for the full rationale. Server-side capture at mutation time
+-- (the admin sync route, service_role); learner-visible public read.
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS public.course_changelog (
+  id           BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  course_id    TEXT NOT NULL,
+  kind         TEXT NOT NULL CHECK (kind IN (
+                 'deployed',
+                 'lessons_added',
+                 'lessons_removed',
+                 'xp_changed',
+                 'content_updated'
+               )),
+  version      INTEGER NOT NULL,
+  detail       JSONB NOT NULL DEFAULT '{}'::jsonb,
+  tx_signature TEXT NOT NULL,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT course_changelog_dedup UNIQUE (course_id, kind, tx_signature)
+);
+
+CREATE INDEX IF NOT EXISTS idx_course_changelog_course_created
+  ON public.course_changelog (course_id, created_at DESC);
+
+ALTER TABLE public.course_changelog ENABLE ROW LEVEL SECURITY;
+
+-- Fail-closed public read: visible only for a synced+active course (the catalog
+-- gate, isSynced). EXISTS runs against the anon-readable public_onchain_deployments
+-- view, defined by 20260711120000_onchain_deployments.sql.
+DROP POLICY IF EXISTS "Course changelog is viewable by everyone" ON public.course_changelog;
+DROP POLICY IF EXISTS "Course changelog visible for synced-active courses" ON public.course_changelog;
+CREATE POLICY "Course changelog visible for synced-active courses"
+  ON public.course_changelog FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1
+      FROM public.public_onchain_deployments d
+      WHERE d.content_id = course_changelog.course_id
+        AND d.kind = 'course'
+        AND d.status = 'synced'
+        AND COALESCE(d.is_active, true)
+    )
+  );
+-- NO write policy: service_role-only writes (bypasses RLS) from the admin sync route.

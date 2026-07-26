@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
-import { CourseDetailClient } from "./course-detail-client";
 import { getCourseBySlug } from "@/lib/content/queries";
 import { resolvePublicProfileByWallet } from "@/lib/profiles/public-profile";
+import { getCourseChangelog } from "@/lib/courses/changelog";
 import { createClient } from "@/lib/supabase/server";
+import { CourseDetailClient } from "./course-detail-client";
 
 interface CourseDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -23,7 +24,15 @@ export default async function CourseDetailPage({
     ? await resolvePublicProfileByWallet(await createClient(), course.creator)
     : null;
 
+  // Course changelog (#654) — the post-deployment evolution log, read server-
+  // side through the public RLS policy and passed down already decoded.
+  const changelog = await getCourseChangelog(course._id);
+
   return (
-    <CourseDetailClient course={course} instructorProfile={instructorProfile} />
+    <CourseDetailClient
+      course={course}
+      instructorProfile={instructorProfile}
+      changelog={changelog}
+    />
   );
 }

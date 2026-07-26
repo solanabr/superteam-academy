@@ -34,6 +34,10 @@ import {
   writeCourseOnChainStatus,
   writeCourseTrackCollection,
 } from "@/lib/content/deployment-writes";
+import {
+  recordCourseDeployed,
+  recordCourseUpdate,
+} from "@/lib/content/changelog-writes";
 import { slotsByCourseId } from "@/lib/content/store";
 import { SYNCED_SHA } from "@/lib/content/meta";
 import { MaskMismatchError } from "@/lib/github/types";
@@ -321,6 +325,24 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
 
+    // Course changelog (#654): record the first on-chain deploy. Non-fatal —
+    // the course is already live; a missing log entry must not fail the sync.
+    // tx_signature is NOT NULL (the dedup key), so only log with a real sig.
+    if (result.signature) {
+      try {
+        await recordCourseDeployed({
+          courseId,
+          txSignature: result.signature,
+          lessonCount: course.lessonCount,
+        });
+      } catch (changelogErr) {
+        console.error(
+          "[admin/courses/sync] changelog (deploy) failed:",
+          changelogErr
+        );
+      }
+    }
+
     // The course is now "synced" in Sanity — purge the catalog cache so it
     // appears immediately instead of after the 1h ISR window.
     revalidateTag(COURSES_CACHE_TAG);
@@ -549,6 +571,34 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       "[admin/courses/sync] deployment write-back failed:",
       mutationErr
     );
+  }
+
+  // Course changelog (#654): record what this update_course changed — lessons
+  // added/retired (diffed from the mask), an xp-per-lesson delta, or a pure
+  // content re-sync. `onChainCourse` is the PRE-update state; the intended new
+  // state is in `updateParams`. `content_tx_id` being committed bumps the
+  // on-chain version by 1 (update_course.rs). Non-fatal: a missing log entry
+  // must not fail a landed on-chain update.
+  if (onChainCourse && result.signature) {
+    try {
+      const contentCommitted = updateParams.contentTxId !== undefined;
+      await recordCourseUpdate({
+        courseId,
+        txSignature: result.signature,
+        oldMask: onChainCourse.activeLessons,
+        newMask: updateParams.newActiveLessons,
+        oldXp: onChainCourse.xp_per_lesson,
+        newXp: updateParams.newXpPerLesson,
+        contentCommitted,
+        newVersion: onChainCourse.version + (contentCommitted ? 1 : 0),
+        contentSha: SYNCED_SHA,
+      });
+    } catch (changelogErr) {
+      console.error(
+        "[admin/courses/sync] changelog (update) failed:",
+        changelogErr
+      );
+    }
   }
 
   revalidateTag(COURSES_CACHE_TAG);

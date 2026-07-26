@@ -194,7 +194,21 @@
     "pathGuidanceOpen": "Entre em qualquer curso — a ordem é uma recomendação, não uma exigência.",
     "pathGoalJob": "Sua trilha rumo a uma vaga de dev Solana começa aqui.",
     "pathGoalBuild": "Tudo o que você precisa para lançar seu próprio projeto Solana.",
-    "pathGoalExplore": "Explore como a Solana funciona, um curso de cada vez."
+    "pathGoalExplore": "Explore como a Solana funciona, um curso de cada vez.",
+    "changelog": "Histórico de alterações",
+    "changelogEmpty": "Nenhuma alteração registrada ainda. Você verá atualizações aqui quando lições ou recompensas mudarem.",
+    "changelogSinceEnrolled": "{count, plural, one {# atualização desde que você se inscreveu} other {# atualizações desde que você se inscreveu}}",
+    "changelogNew": "Novo",
+    "changelogVersion": "v{version}",
+    "changelogDeployed": "Curso publicado",
+    "changelogDeployedDetail": "{count, plural, one {# lição no lançamento} other {# lições no lançamento}}",
+    "changelogLessonsAdded": "{count, plural, one {# lição adicionada} other {# lições adicionadas}}",
+    "changelogLessonsRemoved": "{count, plural, one {# lição removida} other {# lições removidas}}",
+    "changelogXpChanged": "Recompensa de XP alterada",
+    "changelogXpChangedDetail": "O XP por lição mudou de {from} para {to}.",
+    "changelogContentUpdated": "Conteúdo atualizado",
+    "changelogContentUpdatedDetail": "O conteúdo das lições foi atualizado.",
+    "changelogLessonSlot": "Lição posição {slot}"
   },
   "lesson": {
     "content": "Conteúdo",
