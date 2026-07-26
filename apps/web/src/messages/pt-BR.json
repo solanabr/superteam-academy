@@ -392,6 +392,7 @@
     "streakKeepGoing": "Aprenda hoje para manter a sequência!",
     "streakFrozenDay": "Sequência salva com um congelamento",
     "streakUnavailable": "—",
+    "streakUnavailableLabel": "Sequência indisponível",
     "streakFreezesRemaining": "{count, plural, one {# congelamento} other {# congelamentos}}",
     "noAchievements": "Complete uma lição para ganhar sua primeira conquista",
     "showLocked": "Mostrar bloqueados",

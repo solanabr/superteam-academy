@@ -44,9 +44,16 @@ export function StreakDisplay({ streak, className }: StreakDisplayProps) {
           <div className="font-display text-[26px] font-black leading-tight">
             {/* #731: a failed read shows em-dash, never a misleading "0 day
                 streak". */}
-            {streak.available
-              ? t("streakDays", { count: streak.currentStreak })
-              : t("streakUnavailable")}
+            {streak.available ? (
+              t("streakDays", { count: streak.currentStreak })
+            ) : (
+              <span
+                aria-label={t("streakUnavailableLabel")}
+                title={t("streakUnavailableLabel")}
+              >
+                {t("streakUnavailable")}
+              </span>
+            )}
           </div>
           <div className="font-body text-[13px] text-text-3">
             {activeToday ? t("active") : t("streakKeepGoing")}

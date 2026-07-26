@@ -392,6 +392,7 @@
     "streakKeepGoing": "¡Aprende hoy para mantener la racha!",
     "streakFrozenDay": "Racha salvada con una congelación",
     "streakUnavailable": "—",
+    "streakUnavailableLabel": "Racha no disponible",
     "streakFreezesRemaining": "{count, plural, one {# congelación} other {# congelaciones}}",
     "noAchievements": "Completa una lección para ganar tu primer logro",
     "showLocked": "Mostrar bloqueados",

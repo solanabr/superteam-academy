@@ -97,6 +97,12 @@ into `/api/admin/status`; the publish card reads `/api/admin/publish/pin`. There
 is no separate drift route — one existed, was never wired to a UI, and was
 deleted in #444.
 
+## Health
+
+| Route                | Method | Auth | Purpose                                                                                                                                                                                                                                                                                         |
+| -------------------- | ------ | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/api/health/schema` | GET    | none | Schema-expectation check (#731): 200 when every release-critical DB object exists, 503 naming the missing objects + their migrations. Detects the merge→apply gap; expectation list lives in `lib/supabase/schema-expectations.ts` — extend it when a migration adds a runtime-critical object. |
+
 ## Route Conventions
 
 - Env var null guards on every route; generic error messages (no stack traces)

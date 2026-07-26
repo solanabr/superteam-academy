@@ -392,6 +392,7 @@
     "streakKeepGoing": "Learn today to keep it going!",
     "streakFrozenDay": "Streak saved with a freeze",
     "streakUnavailable": "—",
+    "streakUnavailableLabel": "Streak unavailable",
     "streakFreezesRemaining": "{count, plural, one {# freeze} other {# freezes}}",
     "noAchievements": "Complete a lesson to earn your first achievement",
     "showLocked": "Show locked",
