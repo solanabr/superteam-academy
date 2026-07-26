@@ -31,6 +31,7 @@ const {
 
 vi.mock("@/lib/rate-limit", () => ({
   isRateLimited: (ns: string) => isRateLimited(ns),
+  releaseRateLimit: () => Promise.resolve(),
   getClientIp: () => "203.0.113.7",
 }));
 

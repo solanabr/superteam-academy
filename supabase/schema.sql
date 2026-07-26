@@ -1939,8 +1939,10 @@ GRANT SELECT ON community_stats TO anon, authenticated;
 -- ============================================================
 -- Shared rate-limit store (P1-7)
 -- ============================================================
--- Atomic, cross-instance fixed-window limiter. Accessed only via
--- check_rate_limit() (service_role); the table is service_role-only.
+-- Atomic, cross-instance fixed-window limiter. Counted up via check_rate_limit()
+-- (service_role); lock-style keys (maxTokens: 1) are also handed back early by a
+-- direct service_role DELETE (see releaseRateLimit in lib/rate-limit.ts). The
+-- table is service_role-only (no RLS policies), so both paths are privileged.
 
 CREATE TABLE IF NOT EXISTS rate_limits (
   key          TEXT        NOT NULL,
