@@ -1,1 +1,1 @@
-export { useXpBalance } from "./use-xp-balance";
+export { useXpTotal } from "./use-xp-total";

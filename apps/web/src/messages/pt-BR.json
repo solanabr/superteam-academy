@@ -330,7 +330,8 @@
     "viewOnExplorer": "Ver no Explorer",
     "onChain": "on-chain",
     "you": "Você",
-    "xpRemaining": "<em>{xp} {xpLabel}</em> para {levelLabel} {level}"
+    "xpRemaining": "<em>{xp} {xpLabel}</em> para {levelLabel} {level}",
+    "xpToNextLevel": "{xp} {xpLabel} para {levelLabel} {level}"
   },
   "certificates": {
     "title": "Certificado de Conclusão",

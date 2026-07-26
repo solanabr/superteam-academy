@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { LevelBadge } from "@/components/gamification/level-badge";
 import { xpToNextLevel, calculateLevel } from "@/lib/gamification/xp";
-import { useXpBalance } from "@/lib/solana/hooks";
+import { useXpTotal } from "@/lib/solana/hooks";
 
 const sidebarItems = [
   { key: "dashboard", icon: House, href: "/dashboard" },
@@ -30,6 +30,7 @@ const sidebarItems = [
 export function Sidebar() {
   const t = useTranslations("nav");
   const tA11y = useTranslations("a11y");
+  const tGam = useTranslations("gamification");
   const locale = useLocale();
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(true);
@@ -47,8 +48,8 @@ export function Sidebar() {
   const prevLevelRef = useRef(0);
   const rafRef = useRef<number>(0);
 
-  // On-chain XP balance as supplementary source
-  const { balance: onChainXp } = useXpBalance();
+  // On-chain XP total as supplementary source
+  const { total: onChainXp } = useXpTotal();
 
   const fetchXp = useCallback(async () => {
     const supabase = createClient();
@@ -231,8 +232,13 @@ export function Sidebar() {
               </span>
               <LevelBadge level={level} size="sm" />
             </div>
-            <div className="mb-[7px] font-mono text-[10px] text-[var(--text-3)]">
-              {xpRemaining.toLocaleString()} XP to Level {level + 1}
+            <div className="mb-[7px] font-mono text-[10px] tabular-nums text-[var(--text-3)]">
+              {tGam("xpToNextLevel", {
+                xp: xpRemaining.toLocaleString(),
+                xpLabel: tGam("xp"),
+                levelLabel: tGam("level"),
+                level: level + 1,
+              })}
             </div>
             <div
               className="sidebar-prog overflow-hidden rounded-full"

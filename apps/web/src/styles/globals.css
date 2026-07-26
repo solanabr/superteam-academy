@@ -424,6 +424,8 @@
     font-family: var(--font-display), "Nunito", sans-serif;
     font-weight: 900;
     letter-spacing: -0.5px;
+    /* F37: tabular numerals so level digits never reflow between values */
+    font-variant-numeric: tabular-nums;
     transition:
       transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
       box-shadow 0.2s;
@@ -3030,6 +3032,7 @@ a.path-step-card:hover .path-step-thumb img {
   font-weight: 900;
   font-size: 16px;
   color: var(--xp);
+  font-variant-numeric: tabular-nums; /* F37 */
 }
 .podium-card.gold .podium-xp {
   font-size: 18px;
@@ -3079,6 +3082,7 @@ a.path-step-card:hover .path-step-thumb img {
   text-align: center;
   color: var(--text-3);
   flex-shrink: 0;
+  font-variant-numeric: tabular-nums; /* F37 */
 }
 
 .lb-av {
@@ -3138,6 +3142,7 @@ a.path-step-card:hover .path-step-thumb img {
   color: var(--xp);
   text-align: right;
   min-width: 54px;
+  font-variant-numeric: tabular-nums; /* F37 */
 }
 
 /* ── Responsive: stack podium on small screens ── */
@@ -3645,6 +3650,7 @@ a.path-step-card:hover .path-step-thumb img {
   letter-spacing: -1.5px;
   line-height: 1;
   margin-bottom: 2px;
+  font-variant-numeric: tabular-nums; /* F37 */
 }
 @media (min-width: 640px) {
   .dash-xp-num {
@@ -3666,6 +3672,7 @@ a.path-step-card:hover .path-step-thumb img {
   font-size: 12px;
   color: var(--text-2);
   margin-bottom: 10px;
+  font-variant-numeric: tabular-nums; /* F37 */
 }
 .dash-xp-to em {
   color: var(--xp);
@@ -4303,6 +4310,7 @@ a.path-step-card:hover .path-step-thumb img {
   font-weight: 700;
   color: var(--xp);
   white-space: nowrap;
+  font-variant-numeric: tabular-nums; /* F37 */
 }
 .dq-check {
   color: var(--primary);
@@ -4314,6 +4322,7 @@ a.path-step-card:hover .path-step-thumb img {
   font-size: 10px;
   color: var(--text-3);
   white-space: nowrap;
+  font-variant-numeric: tabular-nums; /* F37 */
 }
 
 /* Heatmap tooltip — Radix-positioned, GitHub-style */
@@ -4924,6 +4933,7 @@ a.path-step-card:hover .path-step-title {
   background: var(--xp-dim);
   border: 1.5px solid rgba(245, 166, 35, 0.25);
   white-space: nowrap;
+  font-variant-numeric: tabular-nums; /* F37 */
 }
 .act-time {
   font-family: var(--font-mono, var(--font-m));
