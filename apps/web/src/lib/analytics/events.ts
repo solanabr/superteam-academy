@@ -45,12 +45,14 @@ function challengePayload(ctx: ChallengeEventContext): Record<string, unknown> {
 const startedLessons = new Set<string>();
 const mintedCourses = new Set<string>();
 const nudgedLessons = new Set<string>();
+let onboardingStartedFired = false;
 
 /** Test-only: clears the session-scoped event dedupe state. */
 export function resetAnalyticsEventDedupeForTests(): void {
   startedLessons.clear();
   mintedCourses.clear();
   nudgedLessons.clear();
+  onboardingStartedFired = false;
 }
 
 /**
@@ -135,6 +137,70 @@ export function trackStuckNudgeAccepted(
     ...challengePayload(ctx),
     hintIndex,
   });
+}
+
+// ── Onboarding funnel (E2/E7, LX-A2/LX-F1) ───────────────────
+// The /start intake funnel. Payloads carry only closed-set option ids and the
+// integer daily goal — never free text (the intake is tap-only). Names and
+// shapes match the inventory reserved in README.md (#633).
+
+export type OnboardingStep = 1 | 2 | 3 | 4;
+
+/**
+ * `onboarding_started` — the first genuine interaction with /start screen 1
+ * (the first tap), never the page view. Session-deduped so it is a clean funnel
+ * top even though screen 1 can re-render.
+ */
+export function trackOnboardingStarted(): void {
+  if (onboardingStartedFired) return;
+  onboardingStartedFired = true;
+  trackEvent("onboarding_started", {});
+}
+
+/**
+ * `onboarding_step_completed` — one event per screen advanced. `choice` is the
+ * closed-set answer id(s): the experience/goal id, the interest-chip id array
+ * (or `null` when the optional screen is skipped), or the chosen daily-goal
+ * integer.
+ */
+export function trackOnboardingStepCompleted(
+  step: OnboardingStep,
+  choice: string | string[] | number | null
+): void {
+  trackEvent("onboarding_step_completed", { step, choice });
+}
+
+/**
+ * `onboarding_goal_committed` — the E2 implementation-intention substrate: the
+ * learner committed to a daily lesson goal (an existing quest target).
+ */
+export function trackOnboardingGoalCommitted(dailyGoal: number): void {
+  trackEvent("onboarding_goal_committed", { dailyGoal });
+}
+
+/**
+ * `onboarding_route_accepted` — E7 segment-routing acceptance. `accepted` is
+ * true when the learner takes the recommended entry course, false when they
+ * override via "Browse all courses". `recommendedCourseId` is the content id
+ * the segment routed them to either way.
+ */
+export function trackOnboardingRouteAccepted(
+  accepted: boolean,
+  recommendedCourseId: string
+): void {
+  trackEvent("onboarding_route_accepted", { accepted, recommendedCourseId });
+}
+
+/**
+ * `onboarding_completed` — the intake finished. Values are the closed-set
+ * option ids and the daily-goal integer, never free text.
+ */
+export function trackOnboardingCompleted(payload: {
+  experience: string;
+  goal: string;
+  dailyGoal: number;
+}): void {
+  trackEvent("onboarding_completed", payload);
 }
 
 export type CredentialMintObservationSource = "manual_mint" | "realtime";

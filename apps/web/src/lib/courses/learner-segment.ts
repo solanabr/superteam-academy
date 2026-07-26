@@ -6,10 +6,11 @@
  *   2 — web3 dev  ("I already ship web3 / smart contracts")
  *   3 — beginner  ("I'm new to programming")
  *
- * This module is the SEAM for #566 (LX-A3 segment state). It deliberately
- * contains no storage or routing — only the segment type and the per-segment
- * path-page guidance modality (LX-A7). When #566 lands, the stored segment is
- * read by the page and passed down; nothing here changes.
+ * This module is the SEAM for #566 (LX-A3 segment state). #566 extends it with
+ * the launch routing table (`SEGMENT_ENTRY_COURSE`) and the learner-goal
+ * framing (`GoalId` / `GOAL_FRAMING_KEY`); the localStorage/profiles storage
+ * lives next door in `lib/onboarding`. This file stays the single source of
+ * truth for the segment/goal TYPES and the app-side routing constant.
  */
 
 export type LearnerSegment = 1 | 2 | 3;
@@ -42,4 +43,60 @@ export const SEGMENT_PATH_MODALITY: Record<
   1: "guided-skip",
   2: "open",
   3: "fixed",
+};
+
+/**
+ * Launch routing table (LX-A3): each segment → the content course id it enters
+ * after /start. This is an APP-SIDE constant on purpose — the spec rules out
+ * path-schema metadata to avoid the two-repo content-staging cycle, so routing
+ * changes ship with a code deploy, not a content.lock bump.
+ *
+ * Grounded in the "Zero to Deployed" flagship path ordering
+ * (fundamentals → rust → anchor → building-first-program):
+ *
+ *   1 — CORE web2 (ships JS/TS, new to Solana) → Solana Fundamentals (path course 1)
+ *   2 — web3 dev (already ships on-chain)       → Anchor Framework (skips fundamentals)
+ *   3 — beginner (new to programming)           → Solana Fundamentals (most foundational)
+ *
+ * Segment 3 shares the fundamentals entry until the dedicated JS/TS entry-rung
+ * course (LX-D3, P2 fast-follow) exists; when it lands, only this line moves.
+ * The acknowledged §3.5 deferral applies: launch segmentation is topic-routing,
+ * not guidance-level differentiation.
+ */
+export const SEGMENT_ENTRY_COURSE: Record<LearnerSegment, string> = {
+  1: "course-solana-fundamentals",
+  2: "course-anchor-framework",
+  3: "course-solana-fundamentals",
+};
+
+export function entryCourseForSegment(segment: LearnerSegment): string {
+  return SEGMENT_ENTRY_COURSE[segment];
+}
+
+/**
+ * Learner goal from /start screen 2. Consumed as path-page framing copy
+ * (GOAL_FRAMING_KEY) — never as routing or as anything reward-bearing.
+ *
+ *   job     — land a Solana developer role
+ *   build   — ship my own project / startup
+ *   explore — understand how Solana works
+ */
+export type GoalId = "job" | "build" | "explore";
+
+export const GOAL_IDS: readonly GoalId[] = ["job", "build", "explore"] as const;
+
+export function isGoalId(value: unknown): value is GoalId {
+  return (
+    typeof value === "string" && (GOAL_IDS as readonly string[]).includes(value)
+  );
+}
+
+/**
+ * Path-page framing line per goal (LX-A2: goal→path-page framing copy). Values
+ * are i18n keys under the `courses` namespace, resolved by PathsView.
+ */
+export const GOAL_FRAMING_KEY: Record<GoalId, string> = {
+  job: "pathGoalJob",
+  build: "pathGoalBuild",
+  explore: "pathGoalExplore",
 };

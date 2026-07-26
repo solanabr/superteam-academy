@@ -2549,6 +2549,14 @@ a.path-step-card:hover .path-step-badge.skip {
   color: var(--text-3);
   margin: 0;
 }
+/* Goal framing line from the /start intake (LX-A2: goal→path-page framing). */
+.path-goal-framing {
+  font-family: var(--font-display, inherit);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-1, var(--text-2));
+  margin: 0;
+}
 .path-browse-all {
   display: inline-flex;
   align-items: center;

@@ -79,19 +79,20 @@ enrollment success moment that exists today is the on-chain path, which
 `enrollment_onchain` already covers. If a wallet-less enrollment path ships,
 instrument it as `enroll_completed { courseId, method }`.
 
-## Reserved — onboarding funnel (E2/E7), do NOT fire yet
+## Onboarding funnel (E2/E7)
 
-The `/start` intake (#566) is **unbuilt**. These names are reserved so
-dashboards and the intake PR agree on shapes; nothing may emit them until the
-surface exists:
+The `/start` intake (#566, LX-A2). Helpers live in `events.ts`
+(`trackOnboarding*`); `onboarding_started` is session-deduped to the first
+screen-1 tap. Payloads carry only closed-set option ids and the integer daily
+goal — never free text (the intake is tap-only).
 
-| Event                       | Payload                                      | Purpose                                                                    |
-| --------------------------- | -------------------------------------------- | -------------------------------------------------------------------------- |
-| `onboarding_started`        | `{}`                                         | First interaction with `/start` screen 1 (not the page view)               |
-| `onboarding_step_completed` | `{ step: 1 \| 2 \| 3 \| 4, choice }`         | Per-screen funnel step (experience fork / goal / value chips / daily goal) |
-| `onboarding_goal_committed` | `{ dailyGoal }`                              | E2 implementation-intention substrate (daily-goal picker)                  |
-| `onboarding_route_accepted` | `{ accepted: boolean, recommendedCourseId }` | E7 segment-routing acceptance vs "Browse all" override                     |
-| `onboarding_completed`      | `{ experience, goal, dailyGoal }`            | Intake finished; values are the closed-set option ids, never free text     |
+| Event                       | Payload                                      | Fires from                                                                                                                                   |
+| --------------------------- | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `onboarding_started`        | `{}`                                         | `trackOnboardingStarted()` — first interaction with `/start` screen 1 (not the page view)                                                    |
+| `onboarding_step_completed` | `{ step: 1 \| 2 \| 3 \| 4, choice }`         | `trackOnboardingStepCompleted()` — per screen; `choice` is the option id(s)/daily-goal int, `null` when the optional chips screen is skipped |
+| `onboarding_goal_committed` | `{ dailyGoal }`                              | `trackOnboardingGoalCommitted()` — E2 implementation-intention substrate (daily-goal picker)                                                 |
+| `onboarding_route_accepted` | `{ accepted: boolean, recommendedCourseId }` | `trackOnboardingRouteAccepted()` — E7: recommended entry taken vs "Browse all" override                                                      |
+| `onboarding_completed`      | `{ experience, goal, dailyGoal }`            | `trackOnboardingCompleted()` — intake finished; closed-set ids + daily-goal int, never free text                                             |
 
 ## Planned (not reserved-blocked, just future)
 
