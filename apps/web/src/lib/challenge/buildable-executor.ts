@@ -46,13 +46,15 @@
  * ⚠️ OPERATIONAL SECURITY — grading an untrusted `anchor build` runs the
  * submission's `build.rs` / proc-macros as arbitrary code on the build host; the
  * SBF target sandboxes the *compiled* program, NOT the build itself. Network
- * egress isolation is what contains that, and it is delivered: #193 attaches the
- * Cloud Run build server to a VPC whose firewall DENIES egress (one-time
- * `gcloud` steps in `apps/build-server/deploy/HARDENING.md`). Enabling this
- * grader in production is therefore an OPS action, not a code change: set
- * `BUILD_SERVER_URL` + `BUILD_SERVER_API_KEY` in the prod env, and only against a
- * build server actually deployed with the deny-egress VPC vars. While they are
- * unset the grader fails closed (buildable lessons 503) and blocks nothing.
+ * egress isolation is what contains that. The mechanism exists (#193: Cloud Run
+ * VPC + deny-egress firewall, `apps/build-server/deploy/HARDENING.md`) but it is
+ * OPT-IN at deploy time — `deploy/deploy.sh` only attaches the VPC when
+ * `VPC_NETWORK`/`VPC_SUBNET` are set, and WARNS-then-deploys unrestricted when
+ * they are not. Enabling this grader in production is therefore an OPS action
+ * with a verification step, not a code change: confirm the live build server
+ * was deployed WITH the deny-egress VPC vars, then set `BUILD_SERVER_URL` +
+ * `BUILD_SERVER_API_KEY` in the prod env. While they are unset the grader fails
+ * closed (buildable lessons 503) and blocks nothing.
  */
 
 import type { AdminTestCase } from "@superteam-lms/types";
