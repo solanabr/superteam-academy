@@ -31,10 +31,29 @@
 
 ## AI Lesson Assistant
 
-| Route             | Method | Auth     | Purpose                                                         |
-| ----------------- | ------ | -------- | --------------------------------------------------------------- |
-| `/api/ai/chat`    | POST   | Required | Lesson tutor chat (Gemini); rate-limited + input-capped         |
-| `/api/ai/suggest` | POST   | Required | Challenge code suggestion (Gemini); rate-limited + input-capped |
+| Route                    | Method | Auth     | Purpose                                                                                           |
+| ------------------------ | ------ | -------- | ------------------------------------------------------------------------------------------------- |
+| `/api/ai/partner`        | POST   | Required | AI Partner reply (Gemini); rate-limited **fail-closed** + input-capped; spends a paid assist      |
+| `/api/ai/partner/log`    | GET    | Required | Persisted chat log + remaining paid-assist budget for the current user/lesson                     |
+| `/api/ai/partner/verify` | POST   | Required | Grade a comprehension-check pick server-side (AES-GCM open + compare; no Gemini, no assist spent) |
+
+## Content (committed bundle → client)
+
+Public, read-only faces of the `server-only` content-bundle store (`lib/content/`).
+All gated server-side on synced+active deployments; only summary-safe shapes cross
+the boundary (never the full `Lesson` `blocks[]`, which carries solutions/tests).
+
+| Route                            | Method | Auth | Purpose                                                                       |
+| -------------------------------- | ------ | ---- | ----------------------------------------------------------------------------- |
+| `/api/content/courses`           | GET    | None | Course summaries by id (dashboard/profile/certificates)                       |
+| `/api/content/course-lessons`    | GET    | None | Ordered `{_id,title,slug}` lesson summaries per course (Continue card, LX-B2) |
+| `/api/content/lessons-summary`   | GET    | None | Lesson summaries by id — `{_id,title,slug}` only (recent-activity titles)     |
+| `/api/content/recommended`       | GET    | None | Recommended-course summaries (dashboard); optional `exclude`                  |
+| `/api/content/achievements`      | GET    | None | Achievement catalog (name/icon/award rule/xp); statically cached, hourly      |
+| `/api/content/tags`              | GET    | None | Course tags (profile skill radar); statically cached, hourly                  |
+| `/api/content/lesson-skills`     | GET    | None | Per-lesson skill tags (profile Skills radar, #466 C3); cached, hourly         |
+| `/api/content/is-instructor`     | GET    | None | Whether a wallet is a known instructor (header "Teach" nav gate)              |
+| `/api/content/instructor-wallet` | GET    | None | Wallet → public academy profile for display (#478 B4)                         |
 
 ## Community Forum
 
@@ -58,15 +77,20 @@
 
 ## Admin
 
-| Route                           | Method | Auth         | Purpose                                             |
-| ------------------------------- | ------ | ------------ | --------------------------------------------------- |
-| `/api/admin/auth`               | POST   | ADMIN_SECRET | Admin authentication                                |
-| `/api/admin/status`             | GET    | ADMIN_SECRET | Platform status (program liveness, authority match) |
-| `/api/admin/courses/sync`       | POST   | ADMIN_SECRET | Deploy course PDA + collection on-chain             |
-| `/api/admin/courses/deactivate` | POST   | ADMIN_SECRET | Set course `is_active = false`                      |
-| `/api/admin/courses/reactivate` | POST   | ADMIN_SECRET | Set course `is_active = true`                       |
-| `/api/admin/achievements/sync`  | POST   | ADMIN_SECRET | Deploy achievement type + collection on-chain       |
-| `/api/admin/resync`             | POST   | ADMIN_SECRET | Resync on-chain state to Supabase                   |
+| Route                                   | Method   | Auth         | Purpose                                                            |
+| --------------------------------------- | -------- | ------------ | ------------------------------------------------------------------ |
+| `/api/admin/auth`                       | POST     | ADMIN_SECRET | Admin authentication                                               |
+| `/api/admin/status`                     | GET      | ADMIN_SECRET | Platform status (program liveness, authority match)                |
+| `/api/admin/courses/sync`               | POST     | ADMIN_SECRET | Deploy course PDA + collection on-chain                            |
+| `/api/admin/courses/deactivate`         | POST     | ADMIN_SECRET | Set course `is_active = false`                                     |
+| `/api/admin/courses/reactivate`         | POST     | ADMIN_SECRET | Set course `is_active = true`                                      |
+| `/api/admin/courses/recreate`           | POST     | ADMIN_SECRET | **DESTRUCTIVE** — close + recreate course PDA (create-only fields) |
+| `/api/admin/courses/recreate/preflight` | GET      | ADMIN_SECRET | Read-only preflight validation for the recreate execute route      |
+| `/api/admin/achievements/sync`          | POST     | ADMIN_SECRET | Deploy achievement type + collection on-chain                      |
+| `/api/admin/resync`                     | POST     | ADMIN_SECRET | Resync on-chain state to Supabase                                  |
+| `/api/admin/flags`                      | GET      | ADMIN_SECRET | Pending community flags for the moderation queue                   |
+| `/api/admin/freeze`                     | GET/POST | ADMIN_SECRET | Read/set the global deploy-window freeze (reset wave B2)           |
+| `/api/admin/publish/pin`                | GET      | ADMIN_SECRET | Content pin: pinned bundle SHA + counts vs courses-academy HEAD    |
 
 Content drift (bundle SHA vs `courses-academy` HEAD) and chain drift are folded
 into `/api/admin/status`; the publish card reads `/api/admin/publish/pin`. There
