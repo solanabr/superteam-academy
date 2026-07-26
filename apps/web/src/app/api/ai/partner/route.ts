@@ -14,6 +14,7 @@ import {
   recordAiSpend,
   degradedMaxTokens,
 } from "@/lib/ai/spend-ledger";
+import type { GeminiUsageMetadata } from "@/lib/ai/spend-ledger";
 import { sealCheck } from "@/lib/ai/check-seal";
 import {
   buildStaticPrefix,
@@ -46,6 +47,24 @@ const MAX_CODE_CHARS = 8_000;
 const MAX_MESSAGE_CHARS = 4_000;
 const MAX_SLUG_CHARS = 256;
 const MAX_TEST_SUMMARY_CHARS = 2_000;
+
+// Conservative input-token estimate for the spend-ledger fallback (#724) when a
+// billed 200 carries no usageMetadata to measure. The prompt is prefix (task +
+// public tests + solution + tutor notes) + suffix (code ≤8k chars + message ≤4k
+// chars); at ~4 chars/token that input tops out near this figure. Over-estimating
+// here is deliberate — an unmeasurable billed call should read as more spend, not
+// less. Only used when the metered estimate is zero.
+const SPEND_FALLBACK_PROMPT_TOKENS = 6_000;
+
+// The Gemini generateContent envelope, narrowed to the fields this route reads.
+// Typed (not `any`) so the defensive parse below stays type-safe.
+interface GeminiEnvelope {
+  candidates?: Array<{
+    finishReason?: string;
+    content?: { parts?: Array<{ text?: string }> };
+  }>;
+  usageMetadata?: GeminiUsageMetadata & { cachedContentTokenCount?: number };
+}
 
 // Model history: gemini-2.5-flash(-lite) are gated for new keys (404 "not
 // available to new users") and gemini-2.0-flash is now fully retired (404 "no
@@ -322,6 +341,15 @@ export async function POST(request: NextRequest) {
   // tier. FAIL CLOSED: a ledger error denies (503), never serves unmetered. This
   // runs BEFORE spendAssist so a hard-cap / ledger-outage denial does not burn
   // one of the learner's paid assists.
+  //
+  // Bounded TOCTOU residual (#724 minor): the check reads accumulated spend, then
+  // the request bills, then recordAiSpend writes — so N requests already in
+  // flight when the hard cap is crossed can each still bill, overshooting by up
+  // to ~N × the per-call cost (a full-budget propose ≈ $0.006). N is bounded by
+  // this route's fail-closed limiters (20/min per user, 600/min per IP), so the
+  // worst-case overshoot is small and self-limiting, not unbounded — an accepted
+  // residual, not a hole. Tightening it would require reserving spend before the
+  // call (a pre-charge/settle), which is not worth the latency at these amounts.
   const spendGate = await checkAiSpend(user.id, clientIp);
   if (spendGate.decision === "denied") {
     // Both the hard-cap and the fail-closed ledger-outage return 503 with a
@@ -464,15 +492,28 @@ export async function POST(request: NextRequest) {
     // matters here, use `after()`/`waitUntil` semantics, never a bare `void`.
     await recordBilledAssist(user.id, lesson._id);
 
-    const data = await response.json();
+    // Parse the envelope DEFENSIVELY. A 200 with a non-JSON body STILL billed us,
+    // so response.json() must not throw past the spend booking below — otherwise
+    // the assist is recorded but the spend is not (#724 minor). A parse failure
+    // yields `undefined`, which the empty-output branch below turns into a 502.
+    let data: GeminiEnvelope | undefined;
+    try {
+      data = (await response.json()) as GeminiEnvelope;
+    } catch {
+      data = undefined;
+    }
     // Record the ACTUAL cost of this billed generation into the spend ledger
     // (#591) from usageMetadata — prompt + candidate + thinking tokens, thinking
-    // billed at the output rate. Runs on EVERY billed path (including the
-    // empty / non-JSON / truncated branches below, which all still cost tokens),
-    // so it sits right after the parse. Best-effort and awaited for the same
-    // Vercel-freeze reason as recordBilledAssist: the cost audit must settle
-    // before the response returns. Never throws.
-    await recordAiSpend(user.id, clientIp, data?.usageMetadata);
+    // billed at the output rate. Runs on EVERY billed path (empty / non-JSON /
+    // truncated all still cost tokens). When usageMetadata is ABSENT (e.g. a
+    // non-JSON 200) the ledger books a CONSERVATIVE fallback — full output budget
+    // + a generous input estimate — instead of $0, so an unmeasurable-but-billed
+    // call is never under-reported. Awaited for the same Vercel-freeze reason as
+    // recordBilledAssist. Never throws.
+    await recordAiSpend(user.id, clientIp, data?.usageMetadata, {
+      promptTokens: SPEND_FALLBACK_PROMPT_TOKENS,
+      outputTokens: maxTokensFor(action),
+    });
     // Prompt-cache observability — useful for tuning the cache-shaped prefix, but
     // this is the SUCCESS path of every paid call, so keep it opt-in (default
     // off) rather than logging on every request in production. Set

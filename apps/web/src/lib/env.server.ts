@@ -24,6 +24,22 @@ const usdNum = (fallback: number) =>
     z.coerce.number().min(0)
   );
 
+// A HARD-cap dollar amount. Identical to usdNum but rejects 0: a hard cap of $0
+// denies every request (self-DoS). Fail-closed makes that "safe" but silent —
+// so reject it loudly at boot instead of letting a fat-fingered `=0` take the
+// tutor offline (#724 minor). Soft caps may legitimately be 0 (always degrade),
+// so only the hard caps use this stricter guard.
+const usdNumHard = (fallback: number) =>
+  z.preprocess(
+    (v) => (v === "" || v === undefined ? fallback : v),
+    z.coerce
+      .number()
+      .gt(
+        0,
+        "AI spend HARD cap must be greater than 0 (a $0 hard cap denies every request)"
+      )
+  );
+
 /**
  * Server-only secrets. Never imported into client code (`server-only` enforces
  * this). Validated eagerly at boot via `instrumentation.ts`.
@@ -89,11 +105,11 @@ const serverEnvSchema = z.object({
   // route DEGRADES (shorter output budget); only a *hard* cap denies (503).
   // usdNum: whole/decimal dollars, "" → default. Must be non-negative.
   AI_SPEND_GLOBAL_SOFT_USD: usdNum(14), // ~84% of the daily envelope
-  AI_SPEND_GLOBAL_HARD_USD: usdNum(25), // 1.5× envelope; absorbs a spike day
+  AI_SPEND_GLOBAL_HARD_USD: usdNumHard(25), // 1.5× envelope; absorbs a spike day
   AI_SPEND_ACCOUNT_SOFT_USD: usdNum(0.5), // ~17× the $0.03/learner/mo average
-  AI_SPEND_ACCOUNT_HARD_USD: usdNum(1.5), // a single account ≤ ~9% of the envelope
+  AI_SPEND_ACCOUNT_HARD_USD: usdNumHard(1.5), // a single account ≤ ~9% of the envelope
   AI_SPEND_IP_SOFT_USD: usdNum(2), // survives a NAT'd classroom
-  AI_SPEND_IP_HARD_USD: usdNum(5), // caps a single-IP farm at ~30% of the envelope
+  AI_SPEND_IP_HARD_USD: usdNumHard(5), // caps a single-IP farm at ~30% of the envelope
   // Gemini price sheet (USD per 1M tokens) used to turn usageMetadata token
   // counts into micro-USD. Thinking tokens bill at the OUTPUT rate (#591). These
   // move with the provider's pricing, not the sponsor commitment.

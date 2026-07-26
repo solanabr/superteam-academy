@@ -1,18 +1,27 @@
 import "server-only";
 import { isRateLimited } from "@/lib/rate-limit";
 import { serverEnv } from "@/lib/env.server";
+import {
+  checkAiSpend,
+  recordAiSpend,
+  degradedMaxTokens,
+} from "@/lib/ai/spend-ledger";
+import type { GeminiUsageMetadata } from "@/lib/ai/spend-ledger";
 
 // Best-effort AI feedback for an `openEnded` reflection. NEVER blocks the seal:
 // the attestation route computes and returns the receipt independently, then
-// calls this for enrichment only. Any failure, rate-limit, disabled flag, or
-// unset key resolves to `null` and the seal is issued regardless (spec §3 item
-// 6 — "degrade never block", AIE-21).
+// calls this for enrichment only. Any failure, rate-limit, disabled flag, unset
+// key, or spend-cap denial resolves to `null` and the seal is issued regardless
+// (spec §3 item 6 — "degrade never block", AIE-21).
 //
-// Default OFF. The reply is a metered cost path, and AI spend accounting is
-// owned by #590 — until it lands, the reply ships behind OPENENDED_AI_REPLY so
-// launch runs seal-only at zero AI cost. This helper deliberately does NOT touch
-// the assist-budget ledger (spendAssist/refundAssist): the reflection reply is
-// not a code-challenge assist and must not draw from that budget.
+// Default OFF behind OPENENDED_AI_REPLY. When enabled, this reply spends the
+// SAME sponsored GEMINI_API_KEY as the AI Partner, so — per #724 — it now runs
+// UNDER the #591 spend ledger: the same fail-closed checkAiSpend gate and
+// recordAiSpend booking (account + IP + global caps), and a fail-CLOSED reply
+// limiter. A denied reply is skipped, not 503'd — the seal still ships. This
+// helper deliberately does NOT touch the assist-budget ledger
+// (spendAssist/refundAssist): the reflection reply is not a code-challenge
+// assist and must not draw from that per-lesson quota.
 
 const GEMINI_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent";
@@ -22,6 +31,20 @@ const GEMINI_URL =
 // to spend the whole budget on the visible response.
 const MAX_OUTPUT_TOKENS = 512;
 
+// Conservative input-token estimate for the spend-ledger fallback (#724) when a
+// billed 200 carries no usageMetadata. The prompt is the block prompt + the
+// learner reflection (≤10k chars, ~2.5k tokens); round up so an unmeasurable
+// billed call reads as more spend, not less. Used only when the metered estimate
+// is zero.
+const SPEND_FALLBACK_PROMPT_TOKENS = 3_000;
+
+// The Gemini generateContent envelope, narrowed to the fields this helper reads.
+// Typed (not `any`) so the defensive parse below stays type-safe.
+interface ReflectionEnvelope {
+  candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+  usageMetadata?: GeminiUsageMetadata;
+}
+
 // Hard ceiling on the model call. The reflect route delivers the seal in the
 // SAME response, after this resolves — so a hung upstream must not stall the
 // receipt until the platform kills the function. On timeout the call aborts and
@@ -30,17 +53,21 @@ const REPLY_TIMEOUT_MS = 10_000;
 
 interface ReflectionReplyInput {
   userId: string;
+  // The request's client IP, for the per-IP spend dimension (#724). Free wallet
+  // signup means per-user keys alone cannot bound a Sybil actor.
+  ip: string;
   prompt: string;
   reflection: string;
 }
 
 /**
  * Returns a brief AI note on the learner's reflection, or `null` when the reply
- * is disabled, the key is unset, the caller is over the reply rate limit, or the
- * model call fails in any way. Never throws.
+ * is disabled, the key is unset, the caller is over the reply rate limit, the
+ * daily spend cap is hit, or the model call fails in any way. Never throws.
  */
 export async function maybeGenerateReflectionReply({
   userId,
+  ip,
   prompt,
   reflection,
 }: ReflectionReplyInput): Promise<string | null> {
@@ -50,19 +77,34 @@ export async function maybeGenerateReflectionReply({
   if (!apiKey) return null;
 
   // Bound the reply independently of the route's seal limiter, so enabling the
-  // flag cannot uncork unbounded model spend. Fails open like every limiter —
-  // but the try/catch below still contains any resulting call failure to `null`.
+  // flag cannot uncork unbounded model spend. FAIL-CLOSED (#724): this spends the
+  // sponsored key, so a limiter-store outage must skip the reply, not wave it
+  // through unmetered. A skipped reply is free — the seal ships regardless.
   try {
     if (
       await isRateLimited("ai:reflection", userId, {
         maxTokens: 10,
         refillIntervalMs: 60_000,
+        failClosed: true,
       })
     ) {
       return null;
     }
   } catch {
     return null;
+  }
+
+  // Daily SPEND gate (#724): this reply spends the same sponsored key as the AI
+  // Partner, so it sits under the SAME #591 ledger — account + IP + global caps.
+  // checkAiSpend fails closed on its own (a ledger outage returns "denied"), so a
+  // denied decision — hard cap OR ledger down — SKIPS the reply and the seal
+  // still ships (degrade never blocks, AIE-21). Over a soft cap, degrade to a
+  // shorter reply rather than skipping.
+  let outputTokens = MAX_OUTPUT_TOKENS;
+  const gate = await checkAiSpend(userId, ip);
+  if (gate.decision === "denied") return null;
+  if (gate.decision === "degraded") {
+    outputTokens = degradedMaxTokens(MAX_OUTPUT_TOKENS);
   }
 
   const controller = new AbortController();
@@ -88,7 +130,7 @@ export async function maybeGenerateReflectionReply({
         ],
         generationConfig: {
           temperature: 0.4,
-          maxOutputTokens: MAX_OUTPUT_TOKENS,
+          maxOutputTokens: outputTokens,
           thinkingConfig: { thinkingBudget: 0 },
         },
       }),
@@ -96,7 +138,20 @@ export async function maybeGenerateReflectionReply({
 
     if (!response.ok) return null;
 
-    const data = await response.json();
+    // Billed past here (2xx). Parse DEFENSIVELY so a non-JSON 200 can't throw
+    // past the spend booking, then record the cost on the SAME ledger — with a
+    // conservative fallback when usageMetadata is absent, so a billed reply is
+    // never under-reported (#724). Best-effort: recordAiSpend never throws.
+    let data: ReflectionEnvelope | undefined;
+    try {
+      data = (await response.json()) as ReflectionEnvelope;
+    } catch {
+      data = undefined;
+    }
+    await recordAiSpend(userId, ip, data?.usageMetadata, {
+      promptTokens: SPEND_FALLBACK_PROMPT_TOKENS,
+      outputTokens: MAX_OUTPUT_TOKENS,
+    });
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
     return typeof text === "string" && text.trim().length > 0
       ? text.trim()

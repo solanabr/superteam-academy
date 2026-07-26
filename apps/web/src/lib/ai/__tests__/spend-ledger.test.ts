@@ -211,6 +211,53 @@ describe("recordAiSpend", () => {
       recordAiSpend("u", "1.2.3.4", { promptTokenCount: 10 })
     ).resolves.toBeUndefined();
   });
+
+  it("books a CONSERVATIVE fallback when usageMetadata is absent (#724)", async () => {
+    rpc.mockResolvedValue({ data: null, error: null });
+    // usage undefined → metered estimate is 0 → fall back to the caller's shape.
+    // 3000 input × 0.30 = 900; 512 output × 2.50 = 1280; total 2180 micro.
+    await recordAiSpend("u", "1.2.3.4", undefined, {
+      promptTokens: 3000,
+      outputTokens: 512,
+    });
+    expect(rpc).toHaveBeenCalledWith("record_ai_spend", {
+      p_user_id: "u",
+      p_ip: "1.2.3.4",
+      p_micro_usd: 2180,
+    });
+  });
+
+  it("prefers the METERED estimate over the fallback when usage is present", async () => {
+    rpc.mockResolvedValue({ data: null, error: null });
+    // Real usage present → 1000×0.30 + 500×2.50 = 1550; the fallback is ignored.
+    await recordAiSpend(
+      "u",
+      "1.2.3.4",
+      { promptTokenCount: 1000, candidatesTokenCount: 500 },
+      { promptTokens: 9999, outputTokens: 9999 }
+    );
+    expect(rpc).toHaveBeenCalledWith(
+      "record_ai_spend",
+      expect.objectContaining({ p_micro_usd: 1550 })
+    );
+  });
+
+  it("falls back when usage is present but measures zero", async () => {
+    rpc.mockResolvedValue({ data: null, error: null });
+    await recordAiSpend(
+      "u",
+      "1.2.3.4",
+      {},
+      {
+        promptTokens: 3000,
+        outputTokens: 512,
+      }
+    );
+    expect(rpc).toHaveBeenCalledWith(
+      "record_ai_spend",
+      expect.objectContaining({ p_micro_usd: 2180 })
+    );
+  });
 });
 
 describe("getAiSpendToday", () => {

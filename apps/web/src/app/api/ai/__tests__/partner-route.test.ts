@@ -1079,13 +1079,54 @@ describe("POST /api/ai/partner", () => {
       generationConfig: { maxOutputTokens: number };
     };
     expect(sent.generationConfig.maxOutputTokens).toBe(2048);
-    // The actual usage is booked against the ledger with the request's IP.
+    // The actual usage is booked against the ledger with the request's IP, plus
+    // a conservative fallback (full output budget + generous input) used only
+    // when usageMetadata is absent (#724).
     expect(recordAiSpend).toHaveBeenCalledTimes(1);
-    expect(recordAiSpend).toHaveBeenCalledWith("user-1", "203.0.113.9", {
-      promptTokenCount: 1000,
-      candidatesTokenCount: 500,
-      thoughtsTokenCount: 0,
-    });
+    expect(recordAiSpend).toHaveBeenCalledWith(
+      "user-1",
+      "203.0.113.9",
+      {
+        promptTokenCount: 1000,
+        candidatesTokenCount: 500,
+        thoughtsTokenCount: 0,
+      },
+      { promptTokens: 6000, outputTokens: 2048 }
+    );
+  });
+
+  it("records spend on a 200 with a NON-JSON body (billed but unparseable, #724)", async () => {
+    // The 200 billed us, but response.json() throws — the ordering fix must still
+    // book the spend (with the fallback) and the billed-assist, then 502.
+    checkAiSpend.mockResolvedValue({ decision: "full" });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        text: async () => "",
+        json: async () => {
+          throw new SyntaxError("Unexpected token < in JSON");
+        },
+      }))
+    );
+
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest(VALID_BODY));
+
+    expect(res.status).toBe(502);
+    // Billed audit + spend both recorded despite the unparseable body.
+    expect(recordBilledAssist).toHaveBeenCalledTimes(1);
+    expect(recordAiSpend).toHaveBeenCalledTimes(1);
+    // usageMetadata is undefined (no parse), so the conservative fallback carries
+    // the estimate — never $0 for a real billed call.
+    expect(recordAiSpend).toHaveBeenCalledWith(
+      "user-1",
+      "203.0.113.9",
+      undefined,
+      { promptTokens: 6000, outputTokens: 2048 }
+    );
+    // Not refunded — Gemini billed us.
+    expect(refundAssist).not.toHaveBeenCalled();
   });
 
   it("soft cap: DEGRADES to a shorter output budget but still serves (200)", async () => {
