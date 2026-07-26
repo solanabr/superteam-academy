@@ -180,7 +180,13 @@
     "discussions": "Discusiones del Curso",
     "startDiscussion": "Iniciar una Discusión",
     "moduleLabel": "Módulo {number}",
-    "upNext": "A continuación"
+    "upNext": "A continuación",
+    "startHere": "Empieza aquí",
+    "browseAllCourses": "Ver todos los cursos",
+    "skipAhead": "Saltar adelante",
+    "pathGuidanceFixed": "Sigue la ruta en orden \u2014 cada curso se apoya en el anterior.",
+    "pathGuidanceGuided": "Los cursos siguen un orden recomendado \u2014 salta adelante cuando quieras.",
+    "pathGuidanceOpen": "Entra en cualquier curso \u2014 el orden es una recomendación, no un requisito."
   },
   "lesson": {
     "content": "Contenido",

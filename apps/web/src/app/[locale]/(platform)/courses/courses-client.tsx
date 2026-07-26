@@ -5,10 +5,8 @@ import { useTranslations } from "next-intl";
 import { MagnifyingGlass, X } from "@phosphor-icons/react";
 import type { Course, LearningPath } from "@superteam-lms/types";
 import { CourseCard } from "@/components/course/course-card";
-import {
-  LearningPathSection,
-  type PathCourseProgress,
-} from "@/components/course/learning-path-section";
+import { type PathCourseProgress } from "@/components/course/learning-path-section";
+import { PathsView } from "@/components/course/paths-view";
 import { createClient } from "@/lib/supabase/client";
 
 type Difficulty = "beginner" | "intermediate" | "advanced";
@@ -322,21 +320,15 @@ export function CourseCatalogClient({
         </div>
       )}
 
-      {/* ════════ TAB 2: LEARNING PATHS ════════ */}
+      {/* ════════ TAB 2: LEARNING PATHS (LX-A7) ════════ */}
+      {/* `segment` is intentionally omitted until LX-A3 segment state lands
+          (#566) — PathsView defaults to the segment-1 presentation. */}
       {activeTab === "paths" && (
-        <div className="space-y-8">
-          {learningPaths.map((path, idx) => {
-            if ((path.courses?.length ?? 0) === 0) return null;
-            return (
-              <LearningPathSection
-                key={path._id}
-                learningPath={path}
-                progress={progress}
-                defaultOpen={idx === 0}
-              />
-            );
-          })}
-        </div>
+        <PathsView
+          learningPaths={learningPaths}
+          progress={progress}
+          onBrowseAll={() => setActiveTab("all")}
+        />
       )}
     </div>
   );
