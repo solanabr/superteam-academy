@@ -51,8 +51,8 @@ jobs:
       onchain: ${{ steps.filter.outputs.onchain }}
       buildserver: ${{ steps.filter.outputs.buildserver }}
     steps:
-      - uses: actions/checkout@v7
-      - uses: dorny/paths-filter@v3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dorny/paths-filter@d1c1ffe0248fe513906c8e24db8ea791d46f8590 # v3.0.3
         id: filter
         with:
           filters: |
@@ -322,7 +322,7 @@ jobs:
       # Prebuilt binary (taiki-e/install-action) instead of `cargo install
       # cargo-audit` from source — saves the ~1-2 min compile every run.
       - name: Install cargo-audit
-        uses: taiki-e/install-action@v2
+        uses: taiki-e/install-action@41049aa56687c35e0afa74eed4f09cec4f9afabf # v2.85.2
         with:
           tool: cargo-audit
 
@@ -367,7 +367,7 @@ jobs:
       # Cache the Solana CLI install + the SBF platform-tools (v1.54, hundreds
       # of MB) so cargo-build-sbf doesn't re-download them every run.
       - name: Cache Solana CLI + platform-tools
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: |
             ~/.local/share/solana/install
@@ -445,7 +445,7 @@ jobs:
           workspaces: onchain-academy
 
       - name: Cache Solana CLI + platform-tools
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: |
             ~/.local/share/solana/install
