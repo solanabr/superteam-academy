@@ -31,5 +31,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # Prove the guard actually rejects unpinned refs (in workflows AND composite
+      # actions) and accepts pinned trees before trusting its verdict — #662 /
+      # #614 "don't ship an unexercised guard".
+      - name: Self-test the guard against fixtures
+        run: ./scripts/__tests__/check-action-pins.test.sh
       - name: Assert every `uses:` is SHA-pinned
         run: ./scripts/check-action-pins.sh
