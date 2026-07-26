@@ -3,7 +3,7 @@ import { byteLength } from "@superteam-lms/content-schema";
 import { registerCheck, type LintContext } from "../lint";
 import { type RepoModel } from "../model";
 import { diag, type Diagnostic } from "../diagnostics";
-import { mergeBase, gitShow } from "../git";
+import { mergeBase, gitShow, resolveLocalBase } from "../git";
 
 const BYTE_CAP: Record<string, number> = { course: 32, achievement: 32 };
 
@@ -72,38 +72,55 @@ export function gate2Check(model: RepoModel, ctx: LintContext): Diagnostic[] {
   }
 
   // Immutability vs the PR base: an id present at base whose value changed is a hard fail.
-  if (ctx.baseRef) {
-    const base = mergeBase(ctx.root, ctx.baseRef);
-    if (base) {
-      if (!base.exact) {
-        // Degraded to the base tip (e.g. a shallow --depth=1 base fetch). The tip
-        // is not the fork point on a diverged base, so the immutability comparison
-        // below may be wrong — never let that be silent (fetch base with full
-        // history, `fetch-depth: 0`, to restore an exact merge-base).
-        out.push(
-          diag(
-            "gate-2",
-            "warning",
-            "",
-            `could not compute an exact merge-base with "${ctx.baseRef}" (shallow base?) — comparing id immutability against the base TIP instead of the fork point; results may be inaccurate. Fetch the base with full history (fetch-depth: 0).`
-          )
-        );
-      }
-      for (const { kind, id, file } of all) {
-        const baseText = gitShow(ctx.root, base.ref, file);
-        if (baseText === null) continue; // file is new at head — nothing to compare
-        const baseId = idFrom(baseText);
-        if (baseId !== undefined && baseId !== id) {
-          out.push(
-            diag(
-              "gate-2",
-              "error",
-              file,
-              `${kind} id changed from "${baseId}" to "${id}" — ids are immutable (spec §4.7)`
-            )
-          );
-        }
-      }
+  // Base resolution mirrors gate-3 (#737): CI supplies ctx.baseRef; a bare local run
+  // falls back to a remote-tracking default so the check still runs outside CI.
+  const resolvedRef = ctx.baseRef ?? resolveLocalBase(ctx.root);
+  const base = resolvedRef ? mergeBase(ctx.root, resolvedRef) : null;
+
+  // No base ref at all: id immutability CANNOT be verified. Previously this branch
+  // was `if (ctx.baseRef)` with no else, so the check vanished with NO diagnostic —
+  // a check that cannot run must not report a failure, but must not silently
+  // disappear either (#614/#694, and the gate-3 half of #737).
+  if (!base) {
+    out.push(
+      diag(
+        "gate-2",
+        "warning",
+        "",
+        "id immutability not checked — no base ref (set GITHUB_BASE_REF, or fetch origin/main with full history). Id invariants are verified in CI."
+      )
+    );
+    return out;
+  }
+
+  if (!base.exact) {
+    // Degraded to the base tip (e.g. a shallow --depth=1 base fetch). The tip
+    // is not the fork point on a diverged base, so the immutability comparison
+    // below may be wrong — never let that be silent (fetch base with full
+    // history, `fetch-depth: 0`, to restore an exact merge-base).
+    out.push(
+      diag(
+        "gate-2",
+        "warning",
+        "",
+        `could not compute an exact merge-base with "${resolvedRef}" (shallow base?) — comparing id immutability against the base TIP instead of the fork point; results may be inaccurate. Fetch the base with full history (fetch-depth: 0).`
+      )
+    );
+  }
+
+  for (const { kind, id, file } of all) {
+    const baseText = gitShow(ctx.root, base.ref, file);
+    if (baseText === null) continue; // file is new at head — nothing to compare
+    const baseId = idFrom(baseText);
+    if (baseId !== undefined && baseId !== id) {
+      out.push(
+        diag(
+          "gate-2",
+          "error",
+          file,
+          `${kind} id changed from "${baseId}" to "${id}" — ids are immutable (spec §4.7)`
+        )
+      );
     }
   }
 

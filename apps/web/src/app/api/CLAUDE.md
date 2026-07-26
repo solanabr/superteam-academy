@@ -91,6 +91,7 @@ the boundary (never the full `Lesson` `blocks[]`, which carries solutions/tests)
 | `/api/admin/flags`                      | GET      | ADMIN_SECRET | Pending community flags for the moderation queue                   |
 | `/api/admin/freeze`                     | GET/POST | ADMIN_SECRET | Read/set the global deploy-window freeze (reset wave B2)           |
 | `/api/admin/publish/pin`                | GET      | ADMIN_SECRET | Content pin: pinned bundle SHA + counts vs courses-academy HEAD    |
+| `/api/admin/capstone-funnel`            | GET      | ADMIN_SECRET | Capstone credential funnel counters (#725)                         |
 
 Content drift (bundle SHA vs `courses-academy` HEAD) and chain drift are folded
 into `/api/admin/status`; the publish card reads `/api/admin/publish/pin`. There
