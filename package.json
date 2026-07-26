@@ -21,18 +21,6 @@
     "tsx": "^4.21.0",
     "turbo": "^2.3.0"
   },
-  "lint-staged": {
-    "apps/web/**/*.{ts,tsx,js,jsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "*.{ts,tsx,js,jsx}": [
-      "prettier --write"
-    ],
-    "*.{json,css,md}": [
-      "prettier --write"
-    ]
-  },
   "pnpm": {
     "overrides": {
       "@noble/hashes": "^1.8.0",
