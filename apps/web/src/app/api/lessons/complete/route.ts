@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { PublicKey } from "@solana/web3.js";
 import { BLOCK_REGISTRY, type BlockType } from "@superteam-lms/content-schema";
@@ -56,6 +57,41 @@ async function deriveLessonIndex(
   const index = findLessonIndex(course, lessonId);
   if (index === -1) throw new Error(`Lesson not found in course: ${lessonId}`);
   return index;
+}
+
+/**
+ * Order-independent canonical form of a JSON value: object keys sorted
+ * recursively, array order preserved (answer/test order is meaningful). Two
+ * payloads that differ only in key spelling order collapse to the same string;
+ * any difference in actual content survives. Used to fingerprint a submission
+ * so a byte-for-byte re-fire hashes identically while a genuinely different
+ * attempt does not.
+ */
+function canonicalize(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (value && typeof value === "object") {
+    const source = value as Record<string, unknown>;
+    return Object.keys(source)
+      .sort()
+      .reduce<Record<string, unknown>>((acc, key) => {
+        acc[key] = canonicalize(source[key]);
+        return acc;
+      }, {});
+  }
+  return value;
+}
+
+/**
+ * Fingerprint of the graded submission — a hash of the canonicalised proofs.
+ * A true duplicate (the client re-firing the same body) yields the same digest;
+ * a legitimate re-attempt carries different answers/code and therefore a
+ * different one. This is what lets the pre-grading dedup guard tell "the same
+ * request twice" from "a second, different attempt" (#693).
+ */
+function proofsFingerprint(proofs: Record<string, unknown>): string {
+  return createHash("sha256")
+    .update(JSON.stringify(canonicalize(proofs)))
+    .digest("hex");
 }
 
 /**
@@ -182,6 +218,52 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Too many lesson completions from this network." },
         { status: 429, headers: { "Retry-After": "3600" } }
+      );
+    }
+
+    // ── Pre-grading submission-dedup guard (#693) ────────────────────────
+    // The per-(user,lesson) in-flight guard further down sits AFTER grading (so
+    // it can never throttle a legitimate re-attempt) and only dedups the on-chain
+    // submit. That leaves a residual: N concurrent duplicates of the SAME
+    // submission each still run the full server grading suite (code executors,
+    // quiz checks) before one of them takes the in-flight token — wasted CPU on
+    // a platform-funded resource.
+    //
+    // This guard closes that gap without reintroducing the throttle the in-flight
+    // guard was careful to avoid. It is keyed on the SUBMISSION IDENTITY — the
+    // (user, lesson, proofs-fingerprint) triple — NOT on (user, lesson) alone.
+    // That distinction is the whole point:
+    //   • A genuine re-attempt of a failed submission carries DIFFERENT answers/
+    //     code, hence a different fingerprint and a different key, so it is never
+    //     blocked — the 403 path and its reasons are untouched.
+    //   • A true duplicate (the client re-firing the identical body, or a forged
+    //     replay flood of the same payload) carries the SAME fingerprint and
+    //     short-circuits here, so grading runs once for the burst.
+    //
+    // The window matches the in-flight guard's: 1 token / 30s spans a request's
+    // grade+submit+confirm lifetime, so a duplicate arriving anytime while the
+    // first is still in flight is caught. The response mirrors the in-flight
+    // guard exactly (429 + `completion_in_progress` + Retry-After: 30) so the
+    // client copy is identical whether a duplicate is deduped before or after
+    // grading — this adds no new client contract.
+    //
+    // Fail-OPEN (no `failClosed`, inherited from isRateLimited's default): a
+    // store blip degrades to today's behaviour — grading runs — never to a
+    // blocked completion. This is a cost optimisation, not a correctness gate.
+    if (
+      await isRateLimited(
+        "lessons:complete:grading-dedup",
+        `${user.id}:${lessonId}:${proofsFingerprint(proofs)}`,
+        { maxTokens: 1, refillIntervalMs: 30_000 }
+      )
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "This lesson completion is already being processed. Please wait a moment and try again.",
+          reason: "completion_in_progress",
+        },
+        { status: 429, headers: { "Retry-After": "30" } }
       );
     }
 
