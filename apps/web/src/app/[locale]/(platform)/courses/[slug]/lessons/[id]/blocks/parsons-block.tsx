@@ -9,6 +9,7 @@ import {
   X,
   CheckCircle,
   XCircle,
+  LinkSimple,
 } from "@phosphor-icons/react";
 import type { ParsonsBlockData, ParsonsLineData } from "@superteam-lms/types";
 import { Button } from "@/components/ui/button";
@@ -50,6 +51,52 @@ function sequenceEqual(a: readonly string[], b: readonly string[]): boolean {
 }
 
 /**
+ * Group every distractor with the solution line it mimics (`pairedWith`, F13),
+ * so every member of a group carries the SAME number. Grouped by TARGET id, not
+ * per distractor: a real line may have more than one look-alike (two traps for
+ * one line is legitimate authoring — the schema allows repeated `pairedWith`),
+ * and all of them plus the target must share one marker. Keying on the distractor
+ * would mint a fresh group per distractor and overwrite the target, orphaning
+ * every look-alike but the last. Symmetric on purpose: the marker says "one of
+ * this group belongs, the rest don't" WITHOUT revealing which is real — that
+ * discrimination is the exercise. Presentational only; grading (sequence
+ * equality) is untouched. Lines with no pairing are absent and render unmarked.
+ */
+function pairGroups(lines: ParsonsLineData[]): Map<string, number> {
+  const byId = new Map(lines.map((l) => [l.id, l]));
+  const groups = new Map<string, number>();
+  const groupOfTarget = new Map<string, number>();
+  let next = 1;
+  for (const line of lines) {
+    if (line.distractor && line.pairedWith && byId.has(line.pairedWith)) {
+      const target = line.pairedWith;
+      let group = groupOfTarget.get(target);
+      if (group === undefined) {
+        group = next++;
+        groupOfTarget.set(target, group);
+        groups.set(target, group);
+      }
+      groups.set(line.id, group);
+    }
+  }
+  return groups;
+}
+
+/**
+ * Marks a line as one half of a paired look-alike. NOT colour-only — carries an
+ * icon and the group text — so it survives for AT and colour-blind learners, per
+ * the keyboard/AT contract the renderer was built to.
+ */
+function PairMarker({ label }: { label: string }) {
+  return (
+    <span className="inline-flex w-fit items-center gap-1 rounded-full border-[1.5px] border-accent bg-accent-bg px-2 py-0.5 font-display text-[10px] font-bold uppercase tracking-wide text-accent-dark">
+      <LinkSimple size={11} weight="bold" aria-hidden="true" />
+      {label}
+    </span>
+  );
+}
+
+/**
  * Arrange-the-lines (Parsons) renderer. The learner moves lines from an
  * available "bank" into an ordered "solution" list and reorders them; the proof
  * is the solution's line ids in order (`{ order }`), reported via `ctx.setProof`.
@@ -72,6 +119,9 @@ export function ParsonsBlock({ block, ctx }: BlockRenderProps) {
     () => seededOrder(b.key, b.lines).map((l) => l.id),
     [b.key, b.lines]
   );
+  // id → paired look-alike group (distractor + its `pairedWith` target). Shared,
+  // symmetric marker; empty when the block authored no paired distractors.
+  const pairGroup = useMemo(() => pairGroups(b.lines), [b.lines]);
 
   // The solution is the ordered list of placed line ids; the bank is every line
   // not currently placed, kept in the stable seeded order.
@@ -126,9 +176,21 @@ export function ParsonsBlock({ block, ctx }: BlockRenderProps) {
 
   const lineText = (id: string): string => byId.get(id)?.content ?? id;
 
+  // A paired line's marker, or null. Rendered above the line in both the bank
+  // and the solution so the pairing follows the line wherever it sits.
+  const marker = (id: string) => {
+    const group = pairGroup.get(id);
+    return group === undefined ? null : (
+      <PairMarker label={t("parsonsPairLabel", { group })} />
+    );
+  };
+
   return (
     <div className="space-y-4 rounded-[var(--r-lg)] border-[2.5px] border-border bg-card p-5 shadow-card">
       <p className="font-display font-bold text-text">{b.prompt}</p>
+      {pairGroup.size > 0 && (
+        <p className="text-sm text-text-3">{t("parsonsPairHint")}</p>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2">
         {/* Bank */}
@@ -139,9 +201,12 @@ export function ParsonsBlock({ block, ctx }: BlockRenderProps) {
           <ul className="space-y-1.5">
             {bank.map((id) => (
               <li key={id} className="flex items-stretch gap-2">
-                <pre className="flex-1 overflow-x-auto rounded-md border border-border bg-subtle px-2 py-1.5 font-mono text-sm text-text">
-                  {lineText(id)}
-                </pre>
+                <div className="flex flex-1 flex-col gap-1">
+                  {marker(id)}
+                  <pre className="w-full overflow-x-auto rounded-md border border-border bg-subtle px-2 py-1.5 font-mono text-sm text-text">
+                    {lineText(id)}
+                  </pre>
+                </div>
                 <Button
                   variant="secondary"
                   size="sm"
@@ -172,17 +237,20 @@ export function ParsonsBlock({ block, ctx }: BlockRenderProps) {
                 const slotOk = judged ? result!.slotOk[index] : undefined;
                 return (
                   <li key={id} className="flex items-stretch gap-2">
-                    <pre
-                      className={`flex-1 overflow-x-auto rounded-md border px-2 py-1.5 font-mono text-sm text-text ${
-                        slotOk === undefined
-                          ? "border-border bg-subtle"
-                          : slotOk
-                            ? "border-success"
-                            : "border-danger"
-                      }`}
-                    >
-                      {lineText(id)}
-                    </pre>
+                    <div className="flex flex-1 flex-col gap-1">
+                      {marker(id)}
+                      <pre
+                        className={`w-full overflow-x-auto rounded-md border px-2 py-1.5 font-mono text-sm text-text ${
+                          slotOk === undefined
+                            ? "border-border bg-subtle"
+                            : slotOk
+                              ? "border-success"
+                              : "border-danger"
+                        }`}
+                      >
+                        {lineText(id)}
+                      </pre>
+                    </div>
                     <div className="flex flex-col gap-1">
                       <Button
                         variant="secondary"

@@ -236,6 +236,8 @@
     "parsonsCheck": "Comprobar orden",
     "parsonsCorrect": "¡Correcto!",
     "parsonsIncorrect": "Todavía no — algunas líneas están fuera de orden.",
+    "parsonsPairLabel": "Parecida {group}",
+    "parsonsPairHint": "Algunas líneas son parecidas y comparten la misma etiqueta — solo una de cada par pertenece a tu solución.",
     "reflectionSubmit": "Enviar reflexión",
     "reflectionSubmitting": "Enviando…",
     "reflectionSubmitted": "Reflexión registrada",

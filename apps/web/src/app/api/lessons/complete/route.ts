@@ -7,6 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getCourseById, getLessonByIdForGrading } from "@/lib/content/queries";
 import type { CompletionDenyReason } from "@/lib/lessons/completion-error";
 import { GRADERS, type GradedBlockType } from "@/lib/grading/graders";
+import { DENY_REASONS } from "@/lib/grading/deny-reason";
 import { captureReviewFailure } from "@/lib/review/schedule-review";
 import { openAttestation } from "@/lib/ai/check-seal";
 import { isRateLimited, getClientIp, releaseRateLimit } from "@/lib/rate-limit";
@@ -341,7 +342,7 @@ export async function POST(request: NextRequest) {
             await captureReviewFailure({
               userId: user.id,
               lessonId,
-              reason: type === "quiz" ? "quiz_failed" : "challenge_failed",
+              reason: DENY_REASONS[type as GradedBlockType],
               failedTests:
                 "failedTests" in result ? result.failedTests : undefined,
             }).catch(() => {});
@@ -352,11 +353,7 @@ export async function POST(request: NextRequest) {
             result.status,
             "Block did not pass",
             result.status === 403
-              ? type === "quiz"
-                ? "quiz_failed"
-                : type === "parsons"
-                  ? "parsons_failed"
-                  : "challenge_failed"
+              ? DENY_REASONS[type as GradedBlockType]
               : undefined
           );
         }

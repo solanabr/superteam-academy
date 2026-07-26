@@ -17,6 +17,7 @@ const {
   getCourseById,
   codeGrader,
   quizGrader,
+  parsonsGrader,
   openAttestation,
   isOnChainProgramLive,
   isRateLimited,
@@ -29,6 +30,7 @@ const {
   getCourseById: vi.fn(),
   codeGrader: vi.fn<() => Promise<GradeResult>>(),
   quizGrader: vi.fn<() => Promise<GradeResult>>(),
+  parsonsGrader: vi.fn<() => Promise<GradeResult>>(),
   openAttestation: vi.fn<() => boolean>(),
   isOnChainProgramLive: vi.fn<() => Promise<boolean>>(),
   isRateLimited: vi.fn<(ns: string) => Promise<boolean>>(),
@@ -60,7 +62,11 @@ vi.mock("@/lib/content/queries", () => ({
 }));
 
 vi.mock("@/lib/grading/graders", () => ({
-  GRADERS: { code: () => codeGrader(), quiz: () => quizGrader() },
+  GRADERS: {
+    code: () => codeGrader(),
+    quiz: () => quizGrader(),
+    parsons: () => parsonsGrader(),
+  },
 }));
 
 vi.mock("@/lib/review/schedule-review", () => ({
@@ -143,6 +149,18 @@ describe("403 reason discriminator (#564)", () => {
 
     expect(res.status).toBe(403);
     expect(((await res.json()) as DenyBody).reason).toBe("challenge_failed");
+  });
+
+  it("failed parsons grade → reason 'parsons_failed'", async () => {
+    getLessonByIdForGrading.mockResolvedValue({
+      blocks: [{ _type: "parsons", key: "p1" }],
+    });
+    parsonsGrader.mockResolvedValue({ ok: false, status: 403 });
+
+    const res = await call({ p1: { order: ["wrong"] } });
+
+    expect(res.status).toBe(403);
+    expect(((await res.json()) as DenyBody).reason).toBe("parsons_failed");
   });
 
   it("mixed lesson where only the QUIZ fails → 'quiz_failed', not 'challenge_failed'", async () => {
