@@ -58,56 +58,81 @@
 --                                        column the gate's cross-check used
 --   user_achievements  unlocked_at      TIMESTAMPTZ DEFAULT NOW(), non-null
 --
+-- ROUND-4 FORENSICS (why the numbers below moved). The apply's final-gate fresh
+-- counts tripped this migration's OWN pre-flight asserts (working as designed):
+-- xp_transactions era = 15 (pin said 16), truly-stranded-active user_xp = 1 (pin
+-- said 2). Cause: at 11:13 UTC 2026-07-27, BEFORE the dry-run counts were posted,
+-- the owner logged into the dashboard; the login-streak daily quest awarded XP to
+-- the AUTHORITY account (one of the two "stranded" users) — adding one post-cutoff
+-- xp_transactions row and bumping that user_xp row's last_activity_date to
+-- 2026-07-27. The dry-run counted TOTALS, which absorbed that fresh row, so the
+-- era pins inherited a one-off error. No data vanished; era truth was 15 / 1.
+--
 -- WHAT THIS DOES. Reset ONLY chain-mirrored, pre-move state:
 --   • enrollments, user_progress, xp_transactions, user_achievements —
---     ERA-SCOPED DELETE (WHERE <ts> < '2026-07-21'); the posted counts are all
---     2 users / 7·63·16·7 rows, all pre-move.
---   • user_xp — UPDATE-to-zero, NEVER DELETE (see the 🔴 note).
+--     ERA-SCOPED DELETE (WHERE <ts> < '2026-07-21'); era counts 7·63·15·7.
+--   • user_xp — RECONCILE in place, NEVER DELETE (see the 🔴 note).
 --
--- 🔴 user_xp IS 1:1 WITH profiles — UPDATE (era-scoped), NEVER DELETE. Unlike
--- the other four tables (rows for 2 users), user_xp has a row for EVERY learner:
--- a row is created at signup regardless of activity, most of them pristine zeros
--- belonging to last week's event cohort. A `DELETE FROM user_xp` — the shape
--- that is correct for the other four — would remove all those pristine rows,
--- adjacent to the exact constraint this issue protects. So user_xp gets a
--- WHERE-scoped UPDATE, and the WHERE carries BOTH the state chain (keeps it off
--- the pristine rows) AND the era clause `last_activity_date < '2026-07-21'`
--- (keeps it off VALID POST-MOVE learners — since the move, real learners have
--- earned XP on the new instance, e.g. the #725 test learner's 1070 XP dated
--- 2026-07-27; without the era clause the state chain alone would zero them).
--- The stranded-active rows are frozen (≤ 2026-07-16), so this targets IN (0, 2)
--- rows, asserted pre-flight. The post-apply assert pins user_xp's row count
--- unchanged (== before), enforcing "never deleted from" structurally.
+-- 🔴 user_xp IS 1:1 WITH profiles — RECONCILE, NEVER DELETE. It has a row for
+-- EVERY learner (created at signup), most pristine zeros. A `DELETE FROM user_xp`
+-- would remove those pristine rows — the exact constraint this issue protects —
+-- so user_xp is UPDATED in place. An earlier era-scoped zero-UPDATE had a hole
+-- the authority now demonstrates: a stranded user who logs in POST-cutoff escapes
+-- an era-scoped WHERE, yet its total is still era-tainted (4350 XP accrued from
+-- rows the era-DELETEs remove). Zeroing can't fix that and blind-zeroing would
+-- wipe valid post-move learners (the #725 test learner's 1070 XP dated
+-- 2026-07-27). So instead we RECONCILE FROM SURVIVORS (statements A + B, after
+-- the DELETEs):
+--   A. total_xp = SUM(surviving xp_transactions.amount) per user, level via
+--      award_xp's exact formula — touch-minimal (`<>` guard) and idempotent.
+--      Streak fields are LEFT ALONE (a post-cutoff-active user's streak is real).
+--   B. users with state but NO surviving rows (fully stranded, e.g. 467e7e23) →
+--      full zero incl. streak/last_activity (era-active → full zero).
+-- Result, consistent-by-construction for EVERY case: authority 4350 → its one
+-- surviving ~30-XP amount; 467e7e23 → 0; live learners + pristine rows already
+-- consistent → untouched. The post-assert is then the drift-proof invariant
+-- (total_xp == sum of surviving xp_transactions), no frozen count needed. The
+-- row-count-unchanged assert still enforces "never deleted from" structurally.
 --
--- DRY-RUN COUNTS (gate, prod pywhtmidcrptomrabbrw; posted #607 2026-07-27, and
--- already drifted to 76/76 by 2026-07-27 evening as signups + the #725 test
--- landed). This is why NO absolute live-count pin is used: the assert blocks pin
--- only the FROZEN era counts (7/63/16/7 delete targets, 2 stranded-active
--- user_xp rows) and the drift-immune before==after never-touch invariants — so
--- concurrent signups can't spuriously abort. RE-VERIFY the era counts against
--- the live DB BEFORE applying; a drift there fails the migration and forces
--- reconciliation. Re-run:
+-- DRY-RUN COUNTS (gate, prod pywhtmidcrptomrabbrw; posted #607 2026-07-27,
+-- CORRECTED per the round-4 forensics above; live totals already drifted to
+-- 76/76 as signups + the #725 test landed). This is why NO absolute live-count
+-- pin is used: the assert blocks pin only the FROZEN era counts (7/63/15/7
+-- delete targets, 1 truly-stranded-active user_xp row) and the drift-immune
+-- before==after never-touch invariants + the reconcile invariant — so concurrent
+-- signups can't spuriously abort. RE-VERIFY the era counts against the live DB
+-- BEFORE applying; a drift there fails the migration and forces reconciliation.
+-- Re-run:
 --
 --   -- era-scoped delete targets (must match the DELETE WHERE clauses below):
 --   select 'enrollments' t, count(*) from enrollments       where enrolled_at  < '2026-07-21'
 --   union all select 'user_progress', count(*) from user_progress   where completed_at < '2026-07-21'
 --   union all select 'xp_transactions', count(*) from xp_transactions where created_at   < '2026-07-21'
 --   union all select 'user_achievements', count(*) from user_achievements where unlocked_at < '2026-07-21';
---   -- expected: enrollments 7 · user_progress 63 · xp_transactions 16 · user_achievements 7
+--   -- expected: enrollments 7 · user_progress 63 · xp_transactions 15 · user_achievements 7
 --
---   -- sanity: the posted UNCONDITIONAL counts were the same before #725 ran;
---   -- after #725/new signups the unconditional counts are HIGHER (live rows),
---   -- but the era-scoped counts above must be unchanged.
+--   -- sanity: after #725/new signups the UNCONDITIONAL counts are HIGHER (live
+--   -- rows) but the era-scoped counts above must match. NOTE xp_transactions is
+--   -- 15 not 16 — the extra unconditional row is the authority's post-cutoff
+--   -- login-quest XP (see ROUND-4 FORENSICS), correctly OUTSIDE the era window.
 --
---   -- stranded-active user_xp (the ONLY rows the era-scoped UPDATE may zero):
+--   -- truly-stranded-active user_xp (era-active; the authority is NOT here, it
+--   -- escaped by logging in post-cutoff and is handled by the reconcile):
 --   select count(*) from user_xp
 --   where last_activity_date < '2026-07-21'
 --     and (total_xp > 0 OR level > 0 OR current_streak > 0 OR longest_streak > 0);
---   -- expected: 2 (frozen). A NULL-dated row with state must NOT exist:
+--   -- expected: 1 (467e7e23, frozen). A NULL-dated row with state must NOT exist:
 --   select count(*) from user_xp
 --   where last_activity_date IS NULL
 --     and (total_xp > 0 OR level > 0 OR current_streak > 0 OR longest_streak > 0);
 --   -- expected: 0.
+--
+--   -- reconcile invariant (must hold AFTER apply; drift-proof, no frozen count):
+--   -- no user_xp total_xp disagrees with the sum of its surviving xp_transactions.
+--   select count(*) from user_xp u
+--   left join (select user_id, sum(amount)::bigint remaining
+--              from xp_transactions group by user_id) s on s.user_id = u.user_id
+--   where u.total_xp <> greatest(0, coalesce(s.remaining, 0));   -- expected: 0
 --
 --   -- never-touch / excluded tables (asserted before==after, NOT pinned to an
 --   -- absolute value — they drift with signups): note the live totals so you can
@@ -166,11 +191,13 @@ SELECT
   -- holds its first real row (the #725 proof); this migration never writes it
   -- and asserts the count is unchanged across the batch.
   (SELECT count(*) FROM public.deployed_programs) AS deployed_programs,
-  -- user_xp era counts. uxp_active_era = stranded-era rows still carrying state
-  -- (the era-scoped UPDATE's exact targets: frozen at ≤ 2026-07-16, so IN(0,2)).
-  -- uxp_null_state = rows with state but a NULL activity date — impossible by
-  -- construction (award_xp always stamps last_activity_date), verified because
-  -- the era clause is NULL-blind and this is an irreversible reset.
+  -- user_xp era counts. uxp_active_era = truly-stranded-active rows (state AND
+  -- last_activity_date < cutoff), frozen at ≤ 2026-07-16, so IN(0,1) — the
+  -- authority escaped via its post-cutoff login (round-4 forensics) and is fixed
+  -- by the reconcile, not here. uxp_null_state = rows with state but a NULL
+  -- activity date — NOT produced by award_xp (it stamps the date), but
+  -- admin/resync upserts user_xp directly and could, so this is a DEFENSIVE
+  -- count (the era clause is NULL-blind; abort for inspection, don't assume).
   (SELECT count(*) FROM public.user_xp
      WHERE last_activity_date < '2026-07-21'
        AND (total_xp > 0 OR level > 0 OR current_streak > 0 OR longest_streak > 0)) AS uxp_active_era,
@@ -193,8 +220,8 @@ BEGIN
   IF b.up_era NOT IN (0, 63) THEN
     RAISE EXCEPTION 'user_progress era-count (completed_at < 2026-07-21) = % — expected 63 or 0. A live post-move row must NOT fall in this window; re-verify before applying.', b.up_era;
   END IF;
-  IF b.xp_era NOT IN (0, 16) THEN
-    RAISE EXCEPTION 'xp_transactions era-count (created_at < 2026-07-21) = % — expected 16 or 0. Re-verify before applying.', b.xp_era;
+  IF b.xp_era NOT IN (0, 15) THEN
+    RAISE EXCEPTION 'xp_transactions era-count (created_at < 2026-07-21) = % — expected 15 or 0. Re-verify before applying.', b.xp_era;
   END IF;
   IF b.ach_era NOT IN (0, 7) THEN
     RAISE EXCEPTION 'user_achievements era-count (unlocked_at < 2026-07-21) = % — expected 7 or 0. Re-verify before applying.', b.ach_era;
@@ -218,66 +245,96 @@ BEGIN
   END IF;
 
   -- user_xp pre-flight (same discipline as the DELETE tables):
-  -- • stranded-active rows are frozen (≤ 2026-07-16) so the era-scoped UPDATE
-  --   targets exactly IN (0, 2) rows; anything else means a post-move learner
-  --   fell inside the window or the boundary drifted — ABORT.
-  -- • a state-bearing row with a NULL activity date cannot exist (award_xp
-  --   always stamps last_activity_date), but the era clause is NULL-blind, so
-  --   verify it and ABORT rather than silently skip on an irreversible reset.
-  IF b.uxp_active_era NOT IN (0, 2) THEN
-    RAISE EXCEPTION 'user_xp stranded-active count (state AND last_activity_date < 2026-07-21) = % — expected 2 (first apply) or 0 (re-apply). A post-move learner must NOT fall in this window; re-verify before applying.', b.uxp_active_era;
+  -- • Truly-stranded-active rows are frozen. Round-4 forensic correction: the
+  --   authority account logged in on 2026-07-27 (a daily login-streak quest
+  --   awarded it XP and bumped its last_activity_date PAST the cutoff), so it
+  --   ESCAPES this window — leaving exactly 1 truly-stranded-active row
+  --   (467e7e23, last activity 2026-07-15). The escaped authority is handled by
+  --   the reconcile below, not here. IN (0, 1): 1 first apply, 0 re-apply.
+  -- • a state-bearing row with a NULL activity date is NOT produced by award_xp
+  --   (which always stamps last_activity_date), but admin/resync upserts user_xp
+  --   directly from the on-chain balance and can leave total_xp>0 with a NULL
+  --   date — so this is a DEFENSIVE assert (ABORT for inspection), not an
+  --   assumption. The era clause is NULL-blind, so a NULL-dated state row must
+  --   be surfaced, never silently skipped, on an irreversible reset.
+  IF b.uxp_active_era NOT IN (0, 1) THEN
+    RAISE EXCEPTION 'user_xp truly-stranded-active count (state AND last_activity_date < 2026-07-21) = % — expected 1 (first apply) or 0 (re-apply). A post-move learner must NOT fall in this window; re-verify before applying.', b.uxp_active_era;
   END IF;
   IF b.uxp_null_state <> 0 THEN
-    RAISE EXCEPTION 'user_xp has % row(s) with state but NULL last_activity_date — invisible to the era clause. Inspect before applying (award_xp should make this impossible).', b.uxp_null_state;
+    RAISE EXCEPTION 'user_xp has % row(s) with state but NULL last_activity_date — invisible to the era clause. Inspect before applying (award_xp stamps the date; admin/resync bypasses it, hence this defensive assert).', b.uxp_null_state;
   END IF;
 END $$;
 
 -- ── Reset chain-mirrored state (ERA-SCOPED DELETEs — post-move rows survive) ──
--- Maps to the dry-run counts: enrollments 7 · user_progress 63 ·
--- xp_transactions 16 · user_achievements 7 (all 2 users, all pre-move).
--- Idempotent: a re-run finds no pre-move rows and deletes 0.
+-- Maps to the (round-4-corrected) era counts: enrollments 7 · user_progress 63 ·
+-- xp_transactions 15 · user_achievements 7. Idempotent: a re-run finds no
+-- pre-move rows and deletes 0.
 DELETE FROM public.enrollments       WHERE enrolled_at  < '2026-07-21';
 DELETE FROM public.user_progress     WHERE completed_at < '2026-07-21';
 DELETE FROM public.xp_transactions   WHERE created_at   < '2026-07-21';
 DELETE FROM public.user_achievements WHERE unlocked_at  < '2026-07-21';
 
--- ── user_xp: UPDATE-to-zero, ERA-SCOPED to stranded-active rows ──
--- Two clauses, both load-bearing:
---   • the state chain (total_xp > 0 OR …) keeps the UPDATE off the 73 pristine
---     signup rows and makes it idempotent (once zeroed it matches 0 rows);
---   • AND last_activity_date < '2026-07-21' confines it to STRANDED-era rows, so
---     it can NEVER zero a valid post-move learner (e.g. the #725 test learner's
---     1070 XP, activity 2026-07-27). This is the same era discipline as the
---     DELETEs — user_xp was the last statement still living in the pre-drift
---     world (round-3 gate catch).
--- NULL reasoning: pristine rows have last_activity_date IS NULL → the era clause
--- (NULL < date → UNKNOWN) excludes them → correct, they need no reset. And a
--- state-bearing row with a NULL date cannot exist (award_xp always stamps
--- last_activity_date on award) — verified by the pre-flight uxp_null_state
--- assert above, so the era clause being the sole anchor is safe by construction.
--- streak_freezes is INTENTIONALLY preserved as-is (0 for every row; the earned
--- freeze inventory, not chain-mirrored XP). Setting current_streak and
--- longest_streak together to 0 satisfies chk_user_xp_longest_gte_current.
-UPDATE public.user_xp
+-- ── user_xp: RECONCILE in place, NEVER DELETE (two statements, A then B) ──
+-- streak_freezes is INTENTIONALLY preserved throughout (0 for every row; the
+-- earned freeze inventory, not chain-mirrored XP). See the 🔴 header note for
+-- why reconcile (not an era-scoped zero-UPDATE) — the escaped-authority hole.
+--
+-- Statement A — RECONCILE total_xp/level from the SURVIVING xp_transactions.
+-- Run AFTER the era-DELETEs, this makes total_xp consistent-by-construction for
+-- every user whose sum-of-surviving-XP disagrees with their stored total. It
+-- fixes the escaped-authority case that a blind era-zero could not: the
+-- authority logged in post-cutoff so its last_activity_date > cutoff (it escapes
+-- any era-scoped WHERE), yet its 4350 total was accrued from now-deleted era
+-- rows — after the DELETEs remove those, reconcile rewrites 4350 → its one
+-- surviving ~30-XP quest amount. level uses award_xp's EXACT formula
+-- (schema.sql:697: floor(sqrt(total_xp / 100.0))::int); the GREATEST(0, …) only
+-- guards the sqrt domain / chk_user_xp_total_xp_non_negative (mirrors award_xp's
+-- own deduction clamp, schema.sql:1853) and is a no-op for all non-negative sums
+-- here. The `<>` guard makes it touch-minimal and idempotent: live learners
+-- whose total already equals their surviving sum (built via award_xp) are
+-- untouched. Streak fields are deliberately NOT reconciled — a post-cutoff-
+-- active user's streak is REAL (the authority's is today's login streak); the
+-- fully-stranded case is handled by statement B.
+UPDATE public.user_xp u
+SET total_xp = GREATEST(0, COALESCE(s.remaining, 0)),
+    level    = floor(sqrt(GREATEST(0, COALESCE(s.remaining, 0)) / 100.0))::int
+FROM (
+  SELECT user_id, SUM(amount)::bigint AS remaining
+  FROM public.xp_transactions
+  GROUP BY user_id
+) s
+WHERE s.user_id = u.user_id
+  AND u.total_xp <> GREATEST(0, COALESCE(s.remaining, 0));
+
+-- Statement B — fully-stranded users: state but NO surviving xp_transactions.
+-- Statement A's inner join only reaches users who still have rows; a user whose
+-- every xp row was era-deleted (467e7e23, last activity 2026-07-15) needs an
+-- explicit full zero — and, unlike the escaped authority, its streak/activity
+-- ARE stranded-era, so they are zeroed too (era-active → full zero, as the old
+-- UPDATE did). streak_freezes stays as-is (0). Setting both streak columns to 0
+-- together satisfies chk_user_xp_longest_gte_current.
+UPDATE public.user_xp u
 SET total_xp           = 0,
     level              = 0,
     current_streak     = 0,
     longest_streak     = 0,
     last_activity_date = NULL
 WHERE (
-       total_xp > 0
-    OR level > 0
-    OR current_streak > 0
-    OR longest_streak > 0
-    OR last_activity_date IS NOT NULL
+       u.total_xp > 0
+    OR u.level > 0
+    OR u.current_streak > 0
+    OR u.longest_streak > 0
+    OR u.last_activity_date IS NOT NULL
   )
-  AND last_activity_date < '2026-07-21';
+  AND NOT EXISTS (
+    SELECT 1 FROM public.xp_transactions x WHERE x.user_id = u.user_id
+  );
 
 -- ── Post-apply assertions — roll the whole batch back if any invariant fails ──
 DO $$
 DECLARE
   b            RECORD;
-  v_active     INTEGER;
+  v_mismatch   INTEGER;
   v_profiles   INTEGER;
   v_auth       INTEGER;
   v_user_xp    INTEGER;
@@ -321,25 +378,30 @@ BEGIN
     RAISE EXCEPTION 'deployed_programs row count changed (% -> %): this migration must never touch deployed_programs', b.deployed_programs, v_deployed;
   END IF;
 
-  -- UPDATE-not-DELETE invariant: user_xp keeps every row (still 1:1 with
+  -- RECONCILE-not-DELETE invariant: user_xp keeps every row (still 1:1 with
   -- profiles). If this fired, a DELETE reached user_xp — the exact mistake the
   -- 🔴 note exists to prevent.
   SELECT count(*) INTO v_user_xp FROM public.user_xp;
   IF v_user_xp <> b.user_xp THEN
-    RAISE EXCEPTION 'user_xp row count changed (% -> %): user_xp must be UPDATED to zero, NEVER deleted', b.user_xp, v_user_xp;
+    RAISE EXCEPTION 'user_xp row count changed (% -> %): user_xp must be RECONCILED in place, NEVER deleted', b.user_xp, v_user_xp;
   END IF;
 
-  -- Reset invariant (ERA-SCOPED): no STRANDED-ERA row still carries state after
-  -- the UPDATE. It must NOT demand universal zeroing — a valid post-move learner
-  -- legitimately keeps state, and pinning "0 rows carry state" would abort the
-  -- txn the moment one exists (round-3 gate catch). The reset rows now have
-  -- last_activity_date = NULL, so they fall outside this window too; a stranded
-  -- row the UPDATE somehow missed would still be < boundary AND carry state.
-  SELECT count(*) INTO v_active FROM public.user_xp
-  WHERE last_activity_date < '2026-07-21'
-    AND (total_xp > 0 OR level > 0 OR current_streak > 0 OR longest_streak > 0);
-  IF v_active <> 0 THEN
-    RAISE EXCEPTION 'user_xp: % stranded-era row(s) still carry state after reset', v_active;
+  -- Reconcile invariant (round-4 gate): the REAL, drift-proof post-condition —
+  -- no user_xp row's total_xp disagrees with the sum of its surviving
+  -- xp_transactions (0 for a user with none). This needs no frozen count: it
+  -- holds by construction after statements A + B for every case — the
+  -- reconciled authority, the fully-zeroed 467e7e23, live learners (already
+  -- consistent), and pristine rows (0 == 0) alike.
+  SELECT count(*) INTO v_mismatch
+  FROM public.user_xp u
+  LEFT JOIN (
+    SELECT user_id, SUM(amount)::bigint AS remaining
+    FROM public.xp_transactions
+    GROUP BY user_id
+  ) s ON s.user_id = u.user_id
+  WHERE u.total_xp <> GREATEST(0, COALESCE(s.remaining, 0));
+  IF v_mismatch <> 0 THEN
+    RAISE EXCEPTION 'user_xp: % row(s) whose total_xp disagrees with the sum of surviving xp_transactions', v_mismatch;
   END IF;
 
   -- Era-clean invariant: no pre-move row survives in any of the four reset
@@ -353,7 +415,7 @@ BEGIN
     RAISE EXCEPTION 'pre-move rows survived the reset: enrollments=%, user_progress=%, xp_transactions=%, user_achievements=%', v_enr, v_up, v_xp, v_ach;
   END IF;
 
-  RAISE NOTICE 'stranded-instance cleanup OK: deleted pre-move rows (enr % / up % / xp % / ach %), zeroed % stranded-active user_xp row(s); untouched: profiles=%, auth.users=%, certificates=%, deployed_programs=%, user_xp rowcount=%', b.enr_era, b.up_era, b.xp_era, b.ach_era, b.uxp_active_era, v_profiles, v_auth, v_certs, v_deployed, v_user_xp;
+  RAISE NOTICE 'stranded-instance cleanup OK: deleted pre-move rows (enr % / up % / xp % / ach %), reconciled user_xp to surviving-XP sums (% truly-stranded-active row zeroed); untouched: profiles=%, auth.users=%, certificates=%, deployed_programs=%, user_xp rowcount=%', b.enr_era, b.up_era, b.xp_era, b.ach_era, b.uxp_active_era, v_profiles, v_auth, v_certs, v_deployed, v_user_xp;
 END $$;
 
 COMMIT;
