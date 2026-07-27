@@ -11,7 +11,7 @@
 // Playwright then polls APP_BASE_URL. SIGTERM/SIGINT tears both children down.
 
 import { spawn, spawnSync } from "node:child_process";
-import { mkdtempSync } from "node:fs";
+import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -141,11 +141,25 @@ async function main() {
   children.push(mock);
   await waitForPort(MOCK_PORT, "127.0.0.1", "mock supabase");
 
-  // ── 3. Build (skippable in CI, which builds in its own cached step) ───────
+  // ── 3. Build (skippable via E2E_NO_BUILD=1 to reuse an existing .next) ─────
   if (process.env.E2E_NO_BUILD !== "1") {
     console.log("[serve] next build (E2E env)…");
     await run("pnpm", ["exec", "next", "build"], { cwd: webRoot, env: appEnv });
   }
+
+  // ── 3b. Purge the Next DATA cache (unstable_cache / fetch-cache) ──────────
+  // getActiveDeployments() is wrapped in `unstable_cache` (revalidate 3600),
+  // whose result persists to .next/cache/fetch-cache ACROSS process restarts.
+  // Without this purge, a rerun on a reused .next (or a CI cache restore) serves
+  // the PREVIOUS run's deployment snapshot, so the catalog spec silently no-ops
+  // on stale data instead of reading the current fixture. Deleting it here makes
+  // every run start with a cold data cache that re-reads the mock. The webpack
+  // BUILD cache under .next/cache/webpack is left intact (that is the safe,
+  // fixture-independent speedup CI restores).
+  rmSync(join(webRoot, ".next", "cache", "fetch-cache"), {
+    recursive: true,
+    force: true,
+  });
 
   // ── 4. Start ──────────────────────────────────────────────────────────────
   console.log(`[serve] next start on :${APP_PORT}…`);

@@ -185,13 +185,17 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Cache the Next build cache so the `next build` inside the harness stays
-      # incremental across runs (keeps the E2E wall-clock down — the specs
-      # themselves are seconds; the cold build is the bulk).
-      - name: Cache Next build
+      # Cache ONLY the webpack BUILD cache so `next build` inside the harness
+      # stays incremental (the cold build is the bulk of the E2E wall-clock; the
+      # specs are seconds). Deliberately NOT `.next/cache` wholesale: that would
+      # restore `.next/cache/fetch-cache` — the `unstable_cache` DATA cache — and
+      # a restored stale deployment snapshot would let the catalog spec no-op on
+      # last-run's data (the gate's finding). The harness also purges fetch-cache
+      # before `next start`; this narrower path is the belt to that suspenders.
+      - name: Cache Next build (webpack only, never fetch-cache)
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
-          path: apps/web/.next/cache
+          path: apps/web/.next/cache/webpack
           key: nextcache-e2e-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/web/src/**') }}
           restore-keys: |
             nextcache-e2e-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
