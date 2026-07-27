@@ -130,7 +130,16 @@ SELECT
   (SELECT count(*) FROM public.enrollments       WHERE enrolled_at  < '2026-07-21') AS enr_era,
   (SELECT count(*) FROM public.user_progress     WHERE completed_at < '2026-07-21') AS up_era,
   (SELECT count(*) FROM public.xp_transactions   WHERE created_at   < '2026-07-21') AS xp_era,
-  (SELECT count(*) FROM public.user_achievements WHERE unlocked_at  < '2026-07-21') AS ach_era;
+  (SELECT count(*) FROM public.user_achievements WHERE unlocked_at  < '2026-07-21') AS ach_era,
+  -- NULL-anchor counts: none of the four timestamp columns is NOT NULL, so a
+  -- NULL anchor would slip past the era predicate (NULL < date → UNKNOWN) and
+  -- survive as a silent orphan. Verified unreachable via every current writer,
+  -- but this migration is an irreversible wipe, so a NULL is an ABORT-for-
+  -- inspection signal, not a silent skip.
+  (SELECT count(*) FROM public.enrollments       WHERE enrolled_at  IS NULL) AS enr_null,
+  (SELECT count(*) FROM public.user_progress     WHERE completed_at IS NULL) AS up_null,
+  (SELECT count(*) FROM public.xp_transactions   WHERE created_at   IS NULL) AS xp_null,
+  (SELECT count(*) FROM public.user_achievements WHERE unlocked_at  IS NULL) AS ach_null;
 
 -- ── Pre-DELETE structural guard ──
 -- Each era-scoped count must equal its posted value (first apply) OR 0 (already
@@ -152,6 +161,23 @@ BEGIN
   END IF;
   IF b.ach_era NOT IN (0, 7) THEN
     RAISE EXCEPTION 'user_achievements era-count (unlocked_at < 2026-07-21) = % — expected 7 or 0. Re-verify before applying.', b.ach_era;
+  END IF;
+
+  -- NULL-anchor guard: a NULL timestamp is invisible to the era predicate, so a
+  -- NULL-anchored row (should be impossible via every current writer) would
+  -- silently survive this irreversible wipe as an orphan. Expect 0; ABORT for
+  -- operator inspection otherwise — never a silent skip.
+  IF b.enr_null <> 0 THEN
+    RAISE EXCEPTION 'enrollments has % row(s) with NULL enrolled_at — invisible to the era filter. Inspect and reconcile before applying.', b.enr_null;
+  END IF;
+  IF b.up_null <> 0 THEN
+    RAISE EXCEPTION 'user_progress has % row(s) with NULL completed_at — invisible to the era filter. Inspect and reconcile before applying.', b.up_null;
+  END IF;
+  IF b.xp_null <> 0 THEN
+    RAISE EXCEPTION 'xp_transactions has % row(s) with NULL created_at — invisible to the era filter. Inspect and reconcile before applying.', b.xp_null;
+  END IF;
+  IF b.ach_null <> 0 THEN
+    RAISE EXCEPTION 'user_achievements has % row(s) with NULL unlocked_at — invisible to the era filter. Inspect and reconcile before applying.', b.ach_null;
   END IF;
 END $$;
 

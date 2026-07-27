@@ -87,6 +87,25 @@ describe("#607 stranded-instance cleanup — transaction + shape", () => {
     // Post-DELETE: no pre-move row survives in any reset table.
     expect(migration).toMatch(/pre-move rows survived the reset/);
   });
+
+  it("aborts on a NULL anchor in any reset table (invisible to the era filter)", () => {
+    // A NULL timestamp is invisible to `< '2026-07-21'`, so a NULL-anchored row
+    // would silently survive the wipe. None of the four columns is NOT NULL, so
+    // each gets an explicit IS NULL count that must be 0. Mutation: removing any
+    // one of these four asserts fails this test.
+    expect(migration).toContain("b.enr_null <> 0");
+    expect(migration).toContain("b.up_null <> 0");
+    expect(migration).toContain("b.xp_null <> 0");
+    expect(migration).toContain("b.ach_null <> 0");
+    for (const [ts] of [
+      ["enrolled_at"],
+      ["completed_at"],
+      ["created_at"],
+      ["unlocked_at"],
+    ] as const) {
+      expect(code).toMatch(new RegExp(`WHERE ${ts}\\s+IS NULL`));
+    }
+  });
 });
 
 describe("#607 stranded-instance cleanup — user_xp is UPDATE, never DELETE", () => {
