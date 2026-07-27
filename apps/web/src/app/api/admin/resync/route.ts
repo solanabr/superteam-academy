@@ -257,6 +257,7 @@ export async function POST(req: NextRequest) {
           p_reason: `Achievement reward: ${achievement.id}`,
           p_idempotency_key: `resync:${assetAddr}:xp`,
           p_tx_signature: `resync:${assetAddr}`,
+          p_source: "achievement", // #736
         });
       }
 

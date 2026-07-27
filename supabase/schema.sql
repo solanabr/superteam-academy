@@ -397,11 +397,12 @@ CREATE POLICY "Anyone can read nft metadata"
 -- ─────────────────────────────────────────────
 
 -- Reason→source derivation for xp_transactions.source (LX-B9a, #557).
--- Single source of truth for the go-forward writes in award_xp AND the
--- backfill in 20260726120000_add_xp_transactions_source.sql — old and new
--- rows can never disagree. Source is DERIVED from the reason prefix (not a
--- new award_xp parameter) because reason prefixes are already load-bearing
--- machine-readable convention here: award_xp's daily cap counts
+-- DEMOTED by #736 to a DEFAULT/BACKFILL helper: award_xp now takes an explicit
+-- p_source and only falls back to this derivation when the caller passes NULL.
+-- Still the single mapping shared by that fallback AND the old-row backfill in
+-- 20260726120000_add_xp_transactions_source.sql, so derived rows never disagree.
+-- Kept because reason prefixes remain load-bearing elsewhere: award_xp's daily
+-- cap counts
 -- `NOT LIKE 'community:%'`, award_community_xp's cap counts
 -- `LIKE 'community:%'`, and durable pending_onchain_actions payloads carry
 -- reasons that may be swept long after deploy. Each prefix below is verified
@@ -577,7 +578,8 @@ CREATE OR REPLACE FUNCTION award_xp(
   p_amount INTEGER,
   p_reason TEXT,
   p_idempotency_key TEXT DEFAULT NULL,
-  p_tx_signature TEXT DEFAULT NULL
+  p_tx_signature TEXT DEFAULT NULL,
+  p_source TEXT DEFAULT NULL
 ) RETURNS INTEGER
 -- Returns the amount actually credited (after per-award + daily-cap clamps).
 --   > 0 → XP landed (or, for an idempotency-key duplicate, had already landed —
@@ -598,8 +600,10 @@ DECLARE
   v_new_longest INTEGER;
   v_daily_total INTEGER;
   v_prev_amount INTEGER;
-  -- Typed source derived from the reason prefix (LX-B9a) — see
-  -- xp_source_for_reason for the mapping and the derivation rationale.
+  -- Typed source (LX-B9a / #736). POSITIVE by default: the caller states it via
+  -- p_source. Falls back to the reason-prefix derivation (xp_source_for_reason)
+  -- only when the caller passes NULL, so un-migrated callers are unaffected and
+  -- old-row backfill still shares one mapping.
   v_source TEXT;
   -- Hard per-award ceiling. Matches the documented "max 2000 XP per award"
   -- (the largest legitimate single award is a course-completion bonus).
@@ -646,7 +650,8 @@ BEGIN
     RETURN 0;
   END IF;
 
-  v_source := public.xp_source_for_reason(p_reason);
+  -- Positive source wins; derivation is the fallback for NULL (#736).
+  v_source := COALESCE(p_source, public.xp_source_for_reason(p_reason));
 
   IF p_idempotency_key IS NOT NULL THEN
     INSERT INTO public.xp_transactions (user_id, amount, reason, source, idempotency_key, tx_signature)

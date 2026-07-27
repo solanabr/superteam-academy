@@ -201,6 +201,8 @@ export async function handleLessonCompleted(
     p_reason: `Completed lesson: ${lessonId ?? `index:${event.lessonIndex}`}`,
     p_idempotency_key: `${txSignature}:LessonCompleted`,
     p_tx_signature: txSignature,
+    // #736: state the source positively rather than let it be reverse-derived.
+    p_source: "lesson",
   });
 
   if (xpError) {
@@ -294,6 +296,7 @@ export async function handleCourseFinalized(
       p_reason: `Course completion bonus: ${courseId}`,
       p_idempotency_key: `${txSignature}:CourseFinalized:bonus`,
       p_tx_signature: txSignature,
+      p_source: "course_completion", // #736
     });
 
     if (xpError) {
@@ -320,6 +323,7 @@ export async function handleCourseFinalized(
         p_reason: `Creator reward: ${courseId}`,
         p_idempotency_key: `${txSignature}:CourseFinalized:creator`,
         p_tx_signature: txSignature,
+        p_source: "creator_reward", // #736 — not league-eligible
       });
 
       if (creatorXpError) {
@@ -399,6 +403,7 @@ export async function handleAchievementAwarded(
       p_reason: `Achievement reward: ${event.achievementId}`,
       p_idempotency_key: `${txSignature}:AchievementAwarded:xp`,
       p_tx_signature: txSignature,
+      p_source: "achievement", // #736
     });
 
     if (xpError) {
@@ -435,6 +440,11 @@ export async function handleXpRewarded(
     p_reason: event.memo || "XP reward",
     p_idempotency_key: `${txSignature}:XpRewarded`,
     p_tx_signature: txSignature,
+    // #736 (the fix's core): XpRewarded carries an ARBITRARY authority-supplied
+    // memo. Without an explicit source, a promo shaped as "Completed lesson: …"
+    // would reverse-derive to a league-eligible source. Pin it to 'platform'
+    // (never league-eligible) so the memo can never launder into eligibility.
+    p_source: "platform",
   });
 
   if (error) {

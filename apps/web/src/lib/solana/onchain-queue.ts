@@ -376,7 +376,8 @@ export async function retryPendingOnchainActions(
               row,
               xpAmount,
               reason,
-              row.reference_id
+              row.reference_id,
+              "course_completion" // #736
             );
             continue; // settlement (resolve / cap-defer / retry) handled inside
           }
@@ -409,7 +410,8 @@ export async function retryPendingOnchainActions(
             row,
             xpAmount,
             reason,
-            row.reference_id
+            row.reference_id,
+            "lesson" // #736 — the "xp" action credits lesson-completion XP
           );
           continue; // settlement (resolve / cap-defer / retry) handled inside
         }
@@ -542,7 +544,8 @@ async function creditQuestXpRows(
       row,
       xpAmount,
       reason,
-      row.reference_id
+      row.reference_id,
+      "quest" // #736 — Pass 1 credits daily-quest XP
     );
   }
 }
@@ -569,7 +572,11 @@ async function creditXpAndSettle(
   row: PendingActionRow,
   amount: number,
   reason: string,
-  idempotencyKey: string
+  idempotencyKey: string,
+  // #736: the true source of this credit, stated positively by the caller (the
+  // queue payload's reason may be authority-influenced, so it is not trusted to
+  // reverse-derive the league-eligibility-bearing source).
+  source: string
 ): Promise<void> {
   try {
     const { data: credited, error: xpRpcError } = await adminClient.rpc(
@@ -579,6 +586,7 @@ async function creditXpAndSettle(
         p_amount: amount,
         p_reason: reason,
         p_idempotency_key: idempotencyKey,
+        p_source: source,
       }
     );
     if (xpRpcError) throw new Error(xpRpcError.message);
