@@ -46,6 +46,16 @@ Backlog: **issues #549–#608** are the plan. `#549–#589` are the launch-exper
      babysitting it**. Do not wait. Take the next issue.
 6. **New findings** → dedup with 2–3 narrow searches, then file with `priority:`/`area:`/`severity:`.
    Never fix out-of-scope work inline.
+7. **The loop drains; it never "wraps up".** The gate files issues and bounces PRs continuously
+   while the orchestrator works — a drained board can refill within minutes. The orchestrator is
+   done only when ALL of these hold simultaneously:
+   - no open PR of ours lacks `needs-gate` — a bounced PR with the label removed is orchestrator
+     work, not the gate's;
+   - no open, unblocked issue remains that isn't owner-gated or blocked on an upstream
+     dependency;
+   - the board has been re-polled AFTER the last push and nothing new appeared.
+     Re-poll before every done-declaration, every time: open PRs (ours, missing `needs-gate` = mine
+     to fix) and open issues by priority label (unclaimed, unblocked = mine to do).
 
 ## Gate protocol (this session)
 
