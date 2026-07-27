@@ -139,6 +139,44 @@ impl Harness {
         }
     }
 
+    /// Runs the tx, asserts success, and returns the compute units consumed
+    /// (`TransactionMetadata.compute_units_consumed`). This is the CU-budget
+    /// gate's measurement primitive — deterministic on the litesvm 0.12 (Agave
+    /// 3.x) runtime this suite already uses. Feeds #141 [G-4]. See
+    /// tests/cu_budget.rs and tests/CU_BASELINE.rust.md.
+    pub fn run_cu(
+        &mut self,
+        label: &str,
+        ixs_list: &[Instruction],
+        payer: &Keypair,
+        signers: &[&Keypair],
+    ) -> u64 {
+        // Same fresh-blockhash + signer-dedup logic as `execute`, but returns
+        // the metadata's compute-unit count instead of the logs.
+        self.svm.expire_blockhash();
+        let mut all_signers: Vec<&Keypair> = vec![payer];
+        for s in signers {
+            if s.pubkey() != payer.pubkey() {
+                all_signers.push(s);
+            }
+        }
+        let tx = Transaction::new_signed_with_payer(
+            ixs_list,
+            Some(&payer.pubkey()),
+            &all_signers,
+            self.svm.latest_blockhash(),
+        );
+        match self.svm.send_transaction(tx) {
+            Ok(meta) => meta.compute_units_consumed,
+            Err(failed) => {
+                panic!(
+                    "[{label}] expected success, got {:?}\nlogs: {:#?}",
+                    failed.err, failed.meta.logs
+                )
+            }
+        }
+    }
+
     /// Asserts the tx fails (any error).
     pub fn run_expect_err(
         &mut self,
