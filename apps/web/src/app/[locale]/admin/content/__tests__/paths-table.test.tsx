@@ -10,8 +10,9 @@ import messages from "@/messages/en.json";
 // rather than a raw key lookup — `next-intl/server`'s `getTranslations` needs
 // a request context this test environment doesn't have.
 vi.mock("next-intl/server", () => ({
-  getTranslations: async (namespace: string) =>
-    createTranslator({ locale: "en", messages, namespace }),
+  getTranslations: async (
+    namespace: Parameters<typeof createTranslator<typeof messages>>[0]["namespace"]
+  ) => createTranslator({ locale: "en", messages, namespace }),
 }));
 
 async function renderTable(paths: AdminLearningPathWithRefs[]) {

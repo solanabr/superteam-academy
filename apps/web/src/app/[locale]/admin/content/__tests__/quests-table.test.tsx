@@ -7,8 +7,9 @@ import type { ContentQuest } from "@/lib/content/queries";
 import messages from "@/messages/en.json";
 
 vi.mock("next-intl/server", () => ({
-  getTranslations: async (namespace: string) =>
-    createTranslator({ locale: "en", messages, namespace }),
+  getTranslations: async (
+    namespace: Parameters<typeof createTranslator<typeof messages>>[0]["namespace"]
+  ) => createTranslator({ locale: "en", messages, namespace }),
 }));
 
 const quest: ContentQuest = {
