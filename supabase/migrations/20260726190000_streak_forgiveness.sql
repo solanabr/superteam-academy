@@ -37,6 +37,18 @@
 -- apply. A tested ROLLBACK block is at the very bottom.
 -- Mirrored into supabase/schema.sql (the full-schema snapshot).
 --
+-- WARNING — TWO-MIGRATION JUMP ON A PRE-170000 DATABASE: this migration's
+-- get_daily_quest_state body is built on 20260726170000 (review-quest-kind),
+-- so applying it to a database that never ran 170000 (e.g. prod as of
+-- 2026-07-27, whose live body predates both review and freeze) ALSO activates
+-- the review-quest daily-quest branch — TWO behavioral changes, not just "add
+-- streak freezes". Whether that is intended is a deliberate call for the
+-- applier. Because of it, the ROLLBACK below is DB-STATE-DEPENDENT for
+-- get_daily_quest_state (see step 4), and CREATE OR REPLACE is only reversible
+-- if the prior body was captured: BEFORE applying anywhere, snapshot
+-- pg_get_functiondef for award_xp, award_community_xp, get_daily_quest_state,
+-- and record the step-4 probe (position('review' in prosrc)).
+--
 -- DEFERRED (documented, out of this PR's acceptance): the weekly-cadence streak
 -- mode (spec F32) is gated on owner A/B decision (pedagogy open question #2) and
 -- is not part of the LX-B8 acceptance criteria; it is intentionally not built
@@ -660,9 +672,12 @@ GRANT EXECUTE ON FUNCTION get_daily_quest_state TO service_role;
 COMMIT;
 
 -- ============================================================================
--- ROLLBACK (tested) — returns the DB to the exact pre-forgiveness state.
--- This migration MODIFIED three existing writers, so the rollback both drops the
--- new objects AND restores each writer's prior body verbatim. Run as one txn:
+-- ROLLBACK — restores the pre-forgiveness state. Steps 1-3 are unconditional
+-- (drop the new objects; restore award_xp / award_community_xp verbatim). Step
+-- 4 (get_daily_quest_state) is DB-STATE-DEPENDENT: its correct prior body differs
+-- by whether 20260726170000 had been applied to THIS database, so it is NOT a
+-- single verbatim restore — see step 4. CREATE OR REPLACE is only reversible if
+-- the prior body was snapshotted first (see the header warning). Run as one txn:
 -- ----------------------------------------------------------------------------
 -- BEGIN;
 --
@@ -781,10 +796,511 @@ COMMIT;
 -- REVOKE ALL ON FUNCTION award_community_xp(UUID, INTEGER, TEXT, TEXT) FROM public, anon, authenticated;
 -- GRANT EXECUTE ON FUNCTION award_community_xp(UUID, INTEGER, TEXT, TEXT) TO service_role;
 --
--- -- 4. Restore get_daily_quest_state: re-apply the migration that last defined it
--- --    before forgiveness — 20260726170000_review_quest_kind.sql (which carries the
--- --    full function body with the original Case-3 reset and no freeze grant).
--- --    (Its login_streak branch is the only part this migration changed.)
+-- -- 4. Restore get_daily_quest_state. UNLIKE steps 2-3, the correct prior body
+-- --    is NOT fixed: it depends on whether 20260726170000 (review-quest-kind)
+-- --    had been applied to THIS database before 190000. Determine which with the
+-- --    probe below, run BEFORE applying 190000 (afterwards the live body is
+-- --    190000's own and can no longer tell you which prior state you were in):
+--
+--   SELECT position('review' in prosrc) > 0 AS had_review_branch
+--   FROM pg_proc WHERE proname = 'get_daily_quest_state';
+--
+-- --    PREFERRED: if before applying you captured
+-- --      pg_get_functiondef('public.get_daily_quest_state(UUID, JSONB, TEXT[], JSONB)'::regprocedure)
+-- --    (see the header warning), restore THAT verbatim and skip 4a/4b — it is
+-- --    exact by construction. Otherwise pick the fork below from had_review_branch:
+--
+-- -- 4a. had_review_branch = TRUE — 170000 WAS applied. Restore its body
+-- --     (review branch, original login_streak Case-3 reset, NO freeze grant),
+-- --     copied verbatim from 20260726170000_review_quest_kind.sql:
+-- CREATE OR REPLACE FUNCTION get_daily_quest_state(
+--   p_user_id           UUID,
+--   p_quest_definitions JSONB,
+--   p_challenge_ids     TEXT[],
+--   p_module_lesson_map JSONB
+-- ) RETURNS JSONB
+-- LANGUAGE plpgsql
+-- SECURITY DEFINER
+-- SET search_path = ''
+-- AS $$
+-- DECLARE
+--   v_quest        JSONB;
+--   v_quest_id     TEXT;
+--   v_type         TEXT;
+--   v_target       INTEGER;
+--   v_xp           INTEGER;
+--   v_reset_type   TEXT;
+--   v_current      INTEGER;
+--   v_period       DATE;
+--   v_existing     RECORD;
+--   v_results      JSONB := '[]'::JSONB;
+--   v_mod          JSONB;
+--   v_mod_lessons  TEXT[];
+--   v_all_done     BOOLEAN;
+--   v_max_date     DATE;
+--   v_just_awarded BOOLEAN;
+--   v_completed    BOOLEAN;
+-- BEGIN
+--   FOR v_quest IN SELECT * FROM jsonb_array_elements(p_quest_definitions)
+--   LOOP
+--     v_quest_id   := v_quest->>'id';
+--     v_type       := v_quest->>'type';
+--     v_target     := (v_quest->>'targetValue')::INTEGER;
+--     v_xp         := (v_quest->>'xpReward')::INTEGER;
+--     v_reset_type := v_quest->>'resetType';
+--     v_current    := 0;
+--     v_just_awarded := false;
+--
+--     -- ── Calculate current_value per quest type ──
+--     IF v_type = 'lesson' OR v_type = 'lesson_batch' THEN
+--       SELECT COUNT(*)::INTEGER INTO v_current
+--       FROM public.user_progress
+--       WHERE user_id = p_user_id
+--         AND completed = true
+--         AND completed_at::date = CURRENT_DATE;
+--
+--     ELSIF v_type = 'challenge' THEN
+--       SELECT COUNT(*)::INTEGER INTO v_current
+--       FROM public.user_progress
+--       WHERE user_id = p_user_id
+--         AND completed = true
+--         AND completed_at::date = CURRENT_DATE
+--         AND lesson_id = ANY(p_challenge_ids);
+--
+--     ELSIF v_type = 'login_streak' THEN
+--       -- Dashboard load = login signal.
+--       -- Find the most recent active (non-completed) streak row for this quest.
+--       SELECT * INTO v_existing
+--       FROM public.user_daily_quests
+--       WHERE user_id = p_user_id
+--         AND quest_id = v_quest_id
+--         AND completed = false
+--       ORDER BY period_start DESC
+--       LIMIT 1;
+--
+--       -- Three-case state machine for login streaks.
+--       -- Let diff = CURRENT_DATE - period_start (days since streak started).
+--       --
+--       -- Walkthrough (target = 3):
+--       --   Day 1 created:       period_start=D1, current_value=1, diff=0
+--       --   Day 1 reload:        diff=0, cv=1 → diff = cv-1 (0=0) → no-op ✓
+--       --   Day 2 first load:    diff=1, cv=1 → diff = cv   (1=1) → increment to 2 ✓
+--       --   Day 2 reload:        diff=1, cv=2 → diff = cv-1 (1=1) → no-op ✓
+--       --   Day 3 first load:    diff=2, cv=2 → diff = cv   (2=2) → increment to 3 → COMPLETE ✓
+--       --   Day 5 (skipped D4):  diff=4, cv=3 → diff > cv   (4>3) → gap, start new ✓
+--
+--       IF v_existing IS NULL THEN
+--         -- Case 0: No active streak row — start fresh
+--         v_current := 1;
+--         v_period  := CURRENT_DATE;
+--
+--       ELSIF (CURRENT_DATE - v_existing.period_start)::INTEGER = v_existing.current_value - 1 THEN
+--         -- Case 1: Already counted today (idempotent reload) — no-op
+--         -- diff = cv-1 means today is the same day as the last increment
+--         v_current := v_existing.current_value;
+--         v_period  := v_existing.period_start;
+--
+--       ELSIF (CURRENT_DATE - v_existing.period_start)::INTEGER = v_existing.current_value THEN
+--         -- Case 2: Unbroken streak, new day — increment
+--         -- diff = cv means yesterday was the last counted day
+--         v_current := v_existing.current_value + 1;
+--         v_period  := v_existing.period_start;
+--
+--       ELSE
+--         -- Case 3: diff > cv — gap detected, streak broken, start new
+--         v_current := 1;
+--         v_period  := CURRENT_DATE;
+--       END IF;
+--
+--       -- Completion requires a positive target: a targetValue of 0 must NOT
+--       -- auto-complete (that would mint free XP every day for a 0-target quest).
+--       v_completed := v_target > 0 AND v_current >= v_target;
+--
+--       -- Upsert the streak row and skip the generic upsert below
+--       INSERT INTO public.user_daily_quests (user_id, quest_id, current_value, completed, completed_at, xp_granted, period_start)
+--       VALUES (p_user_id, v_quest_id, v_current, v_completed, CASE WHEN v_completed THEN NOW() ELSE NULL END, false, v_period)
+--       ON CONFLICT (user_id, quest_id, period_start) DO UPDATE SET
+--         current_value = EXCLUDED.current_value,
+--         completed     = EXCLUDED.completed,
+--         completed_at  = EXCLUDED.completed_at;
+--
+--       -- Mark xp_granted on first completion and durably enqueue the XP credit
+--       -- in the SAME transaction (atomic with the flip): a quest is never marked
+--       -- granted without a pending_onchain_actions row, so the enqueue can never
+--       -- be lost to a swallowed app-side error. retryPendingOnchainActions()
+--       -- delivers it idempotently via award_xp (reference_id = idempotency key).
+--       IF v_completed THEN
+--         UPDATE public.user_daily_quests
+--         SET xp_granted = true
+--         WHERE user_id = p_user_id AND quest_id = v_quest_id AND period_start = v_period AND xp_granted = false;
+--
+--         IF FOUND THEN
+--           v_just_awarded := true;
+--           INSERT INTO public.pending_onchain_actions (user_id, action_type, reference_id, payload)
+--           VALUES (
+--             p_user_id,
+--             'quest_xp',
+--             v_quest_id || ':' || v_period::text,
+--             jsonb_build_object('xpAmount', v_xp, 'memo', 'daily_quest:' || v_quest_id)
+--           )
+--           ON CONFLICT (user_id, action_type, reference_id) DO NOTHING;
+--         END IF;
+--       END IF;
+--
+--       v_results := v_results || jsonb_build_object(
+--         'questId', v_quest_id,
+--         'currentValue', v_current,
+--         'completed', v_completed,
+--         'justAwarded', v_just_awarded,
+--         'xpReward', v_xp
+--       );
+--       CONTINUE;  -- Skip generic upsert
+--
+--     ELSIF v_type = 'module' THEN
+--       -- Check if ALL lessons in ANY module are completed AND the last one was completed today
+--       v_current := 0;
+--       FOR v_mod IN SELECT * FROM jsonb_array_elements(p_module_lesson_map)
+--       LOOP
+--         v_mod_lessons := ARRAY(SELECT jsonb_array_elements_text(v_mod->'lessonIds'));
+--         IF array_length(v_mod_lessons, 1) IS NULL OR array_length(v_mod_lessons, 1) = 0 THEN
+--           CONTINUE;
+--         END IF;
+--
+--         -- Check all lessons completed
+--         SELECT COUNT(*) = array_length(v_mod_lessons, 1) INTO v_all_done
+--         FROM public.user_progress
+--         WHERE user_id = p_user_id
+--           AND completed = true
+--           AND lesson_id = ANY(v_mod_lessons);
+--
+--         IF v_all_done THEN
+--           -- Check if the most recent completion in this module was today
+--           SELECT MAX(completed_at::date) INTO v_max_date
+--           FROM public.user_progress
+--           WHERE user_id = p_user_id
+--             AND completed = true
+--             AND lesson_id = ANY(v_mod_lessons);
+--
+--           IF v_max_date = CURRENT_DATE THEN
+--             v_current := 1;
+--             EXIT;  -- One completed module is enough
+--           END IF;
+--         END IF;
+--       END LOOP;
+--
+--     ELSIF v_type = 'review' THEN
+--       -- Reviews CLEARED today = the learner's own review_items passed today.
+--       -- A pass advances the item's spacing box (record_review_result); a miss
+--       -- resets it to box 1 with last_result=false, which is NOT a clear and so
+--       -- must not count. Additive branch: it only computes v_current and falls
+--       -- through to the generic upsert below, so the xp_granted /
+--       -- pending_onchain_actions atomicity invariant is inherited unchanged and
+--       -- no other quest type is affected.
+--       SELECT COUNT(*)::INTEGER INTO v_current
+--       FROM public.review_items
+--       WHERE user_id = p_user_id
+--         AND last_result = true
+--         AND last_reviewed_at::date = CURRENT_DATE;
+--
+--     ELSE
+--       -- Unknown quest type (e.g. a CMS typo). Skip this ONE quest with a loud
+--       -- server-log warning rather than RAISE-ing — a single mis-typed quest
+--       -- definition must not 500 the whole daily-quests endpoint for every user
+--       -- (and, now that the enqueue is transactional, roll back other quests'
+--       -- durable XP rows in the same call). It is not rendered as a silent 0/N:
+--       -- it is omitted from the result and flagged in the logs for the operator.
+--       RAISE WARNING 'get_daily_quest_state: skipping unknown quest type: %', v_type;
+--       CONTINUE;
+--     END IF;
+--
+--     -- ── Generic daily quest upsert (lesson, lesson_batch, challenge, module) ──
+--     v_period := CURRENT_DATE;
+--
+--     -- Completion requires a positive target: a targetValue of 0 must NOT
+--     -- auto-complete (that would mint free XP every day for a 0-target quest).
+--     v_completed := v_target > 0 AND v_current >= v_target;
+--
+--     INSERT INTO public.user_daily_quests (user_id, quest_id, current_value, completed, completed_at, xp_granted, period_start)
+--     VALUES (p_user_id, v_quest_id, v_current, v_completed, CASE WHEN v_completed THEN NOW() ELSE NULL END, false, v_period)
+--     ON CONFLICT (user_id, quest_id, period_start) DO UPDATE SET
+--       current_value = EXCLUDED.current_value,
+--       completed     = EXCLUDED.completed,
+--       completed_at  = COALESCE(user_daily_quests.completed_at, EXCLUDED.completed_at);
+--
+--     -- Mark xp_granted on first completion and durably enqueue the XP credit in
+--     -- the SAME transaction (atomic with the flip) — see the login_streak branch.
+--     IF v_completed THEN
+--       UPDATE public.user_daily_quests
+--       SET xp_granted = true
+--       WHERE user_id = p_user_id AND quest_id = v_quest_id AND period_start = v_period AND xp_granted = false;
+--
+--       IF FOUND THEN
+--         v_just_awarded := true;
+--         INSERT INTO public.pending_onchain_actions (user_id, action_type, reference_id, payload)
+--         VALUES (
+--           p_user_id,
+--           'quest_xp',
+--           v_quest_id || ':' || v_period::text,
+--           jsonb_build_object('xpAmount', v_xp, 'memo', 'daily_quest:' || v_quest_id)
+--         )
+--         ON CONFLICT (user_id, action_type, reference_id) DO NOTHING;
+--       END IF;
+--     END IF;
+--
+--     v_results := v_results || jsonb_build_object(
+--       'questId', v_quest_id,
+--       'currentValue', v_current,
+--       'completed', v_completed,
+--       'justAwarded', v_just_awarded,
+--       'xpReward', v_xp
+--     );
+--   END LOOP;
+--
+--   RETURN v_results;
+-- END;
+-- $$;
+--
+-- REVOKE EXECUTE ON FUNCTION get_daily_quest_state FROM authenticated, anon, public;
+-- GRANT EXECUTE ON FUNCTION get_daily_quest_state TO service_role;
+--
+-- -- 4b. had_review_branch = FALSE — 170000 was NOT applied (current prod). Restore
+-- --     the body that preceded it (NEITHER review nor freeze), copied verbatim
+-- --     from 20260709120000_quest_xp_durable_delivery.sql:
+-- CREATE OR REPLACE FUNCTION get_daily_quest_state(
+--   p_user_id           UUID,
+--   p_quest_definitions JSONB,
+--   p_challenge_ids     TEXT[],
+--   p_module_lesson_map JSONB
+-- ) RETURNS JSONB
+-- LANGUAGE plpgsql
+-- SECURITY DEFINER
+-- SET search_path = ''
+-- AS $$
+-- DECLARE
+--   v_quest        JSONB;
+--   v_quest_id     TEXT;
+--   v_type         TEXT;
+--   v_target       INTEGER;
+--   v_xp           INTEGER;
+--   v_reset_type   TEXT;
+--   v_current      INTEGER;
+--   v_period       DATE;
+--   v_existing     RECORD;
+--   v_results      JSONB := '[]'::JSONB;
+--   v_mod          JSONB;
+--   v_mod_lessons  TEXT[];
+--   v_all_done     BOOLEAN;
+--   v_max_date     DATE;
+--   v_just_awarded BOOLEAN;
+--   v_completed    BOOLEAN;
+-- BEGIN
+--   FOR v_quest IN SELECT * FROM jsonb_array_elements(p_quest_definitions)
+--   LOOP
+--     v_quest_id   := v_quest->>'id';
+--     v_type       := v_quest->>'type';
+--     v_target     := (v_quest->>'targetValue')::INTEGER;
+--     v_xp         := (v_quest->>'xpReward')::INTEGER;
+--     v_reset_type := v_quest->>'resetType';
+--     v_current    := 0;
+--     v_just_awarded := false;
+--
+--     -- ── Calculate current_value per quest type ──
+--     IF v_type = 'lesson' OR v_type = 'lesson_batch' THEN
+--       SELECT COUNT(*)::INTEGER INTO v_current
+--       FROM public.user_progress
+--       WHERE user_id = p_user_id
+--         AND completed = true
+--         AND completed_at::date = CURRENT_DATE;
+--
+--     ELSIF v_type = 'challenge' THEN
+--       SELECT COUNT(*)::INTEGER INTO v_current
+--       FROM public.user_progress
+--       WHERE user_id = p_user_id
+--         AND completed = true
+--         AND completed_at::date = CURRENT_DATE
+--         AND lesson_id = ANY(p_challenge_ids);
+--
+--     ELSIF v_type = 'login_streak' THEN
+--       -- Dashboard load = login signal.
+--       -- Find the most recent active (non-completed) streak row for this quest.
+--       SELECT * INTO v_existing
+--       FROM public.user_daily_quests
+--       WHERE user_id = p_user_id
+--         AND quest_id = v_quest_id
+--         AND completed = false
+--       ORDER BY period_start DESC
+--       LIMIT 1;
+--
+--       -- Three-case state machine for login streaks.
+--       -- Let diff = CURRENT_DATE - period_start (days since streak started).
+--       --
+--       -- Walkthrough (target = 3):
+--       --   Day 1 created:       period_start=D1, current_value=1, diff=0
+--       --   Day 1 reload:        diff=0, cv=1 → diff = cv-1 (0=0) → no-op ✓
+--       --   Day 2 first load:    diff=1, cv=1 → diff = cv   (1=1) → increment to 2 ✓
+--       --   Day 2 reload:        diff=1, cv=2 → diff = cv-1 (1=1) → no-op ✓
+--       --   Day 3 first load:    diff=2, cv=2 → diff = cv   (2=2) → increment to 3 → COMPLETE ✓
+--       --   Day 5 (skipped D4):  diff=4, cv=3 → diff > cv   (4>3) → gap, start new ✓
+--
+--       IF v_existing IS NULL THEN
+--         -- Case 0: No active streak row — start fresh
+--         v_current := 1;
+--         v_period  := CURRENT_DATE;
+--
+--       ELSIF (CURRENT_DATE - v_existing.period_start)::INTEGER = v_existing.current_value - 1 THEN
+--         -- Case 1: Already counted today (idempotent reload) — no-op
+--         -- diff = cv-1 means today is the same day as the last increment
+--         v_current := v_existing.current_value;
+--         v_period  := v_existing.period_start;
+--
+--       ELSIF (CURRENT_DATE - v_existing.period_start)::INTEGER = v_existing.current_value THEN
+--         -- Case 2: Unbroken streak, new day — increment
+--         -- diff = cv means yesterday was the last counted day
+--         v_current := v_existing.current_value + 1;
+--         v_period  := v_existing.period_start;
+--
+--       ELSE
+--         -- Case 3: diff > cv — gap detected, streak broken, start new
+--         v_current := 1;
+--         v_period  := CURRENT_DATE;
+--       END IF;
+--
+--       -- Completion requires a positive target: a targetValue of 0 must NOT
+--       -- auto-complete (that would mint free XP every day for a 0-target quest).
+--       v_completed := v_target > 0 AND v_current >= v_target;
+--
+--       -- Upsert the streak row and skip the generic upsert below
+--       INSERT INTO public.user_daily_quests (user_id, quest_id, current_value, completed, completed_at, xp_granted, period_start)
+--       VALUES (p_user_id, v_quest_id, v_current, v_completed, CASE WHEN v_completed THEN NOW() ELSE NULL END, false, v_period)
+--       ON CONFLICT (user_id, quest_id, period_start) DO UPDATE SET
+--         current_value = EXCLUDED.current_value,
+--         completed     = EXCLUDED.completed,
+--         completed_at  = EXCLUDED.completed_at;
+--
+--       -- Mark xp_granted on first completion and durably enqueue the XP credit
+--       -- in the SAME transaction (atomic with the flip): a quest is never marked
+--       -- granted without a pending_onchain_actions row, so the enqueue can never
+--       -- be lost to a swallowed app-side error. retryPendingOnchainActions()
+--       -- delivers it idempotently via award_xp (reference_id = idempotency key).
+--       IF v_completed THEN
+--         UPDATE public.user_daily_quests
+--         SET xp_granted = true
+--         WHERE user_id = p_user_id AND quest_id = v_quest_id AND period_start = v_period AND xp_granted = false;
+--
+--         IF FOUND THEN
+--           v_just_awarded := true;
+--           INSERT INTO public.pending_onchain_actions (user_id, action_type, reference_id, payload)
+--           VALUES (
+--             p_user_id,
+--             'quest_xp',
+--             v_quest_id || ':' || v_period::text,
+--             jsonb_build_object('xpAmount', v_xp, 'memo', 'daily_quest:' || v_quest_id)
+--           )
+--           ON CONFLICT (user_id, action_type, reference_id) DO NOTHING;
+--         END IF;
+--       END IF;
+--
+--       v_results := v_results || jsonb_build_object(
+--         'questId', v_quest_id,
+--         'currentValue', v_current,
+--         'completed', v_completed,
+--         'justAwarded', v_just_awarded,
+--         'xpReward', v_xp
+--       );
+--       CONTINUE;  -- Skip generic upsert
+--
+--     ELSIF v_type = 'module' THEN
+--       -- Check if ALL lessons in ANY module are completed AND the last one was completed today
+--       v_current := 0;
+--       FOR v_mod IN SELECT * FROM jsonb_array_elements(p_module_lesson_map)
+--       LOOP
+--         v_mod_lessons := ARRAY(SELECT jsonb_array_elements_text(v_mod->'lessonIds'));
+--         IF array_length(v_mod_lessons, 1) IS NULL OR array_length(v_mod_lessons, 1) = 0 THEN
+--           CONTINUE;
+--         END IF;
+--
+--         -- Check all lessons completed
+--         SELECT COUNT(*) = array_length(v_mod_lessons, 1) INTO v_all_done
+--         FROM public.user_progress
+--         WHERE user_id = p_user_id
+--           AND completed = true
+--           AND lesson_id = ANY(v_mod_lessons);
+--
+--         IF v_all_done THEN
+--           -- Check if the most recent completion in this module was today
+--           SELECT MAX(completed_at::date) INTO v_max_date
+--           FROM public.user_progress
+--           WHERE user_id = p_user_id
+--             AND completed = true
+--             AND lesson_id = ANY(v_mod_lessons);
+--
+--           IF v_max_date = CURRENT_DATE THEN
+--             v_current := 1;
+--             EXIT;  -- One completed module is enough
+--           END IF;
+--         END IF;
+--       END LOOP;
+--
+--     ELSE
+--       -- Unknown quest type (e.g. a CMS typo). Skip this ONE quest with a loud
+--       -- server-log warning rather than RAISE-ing — a single mis-typed quest
+--       -- definition must not 500 the whole daily-quests endpoint for every user
+--       -- (and, now that the enqueue is transactional, roll back other quests'
+--       -- durable XP rows in the same call). It is not rendered as a silent 0/N:
+--       -- it is omitted from the result and flagged in the logs for the operator.
+--       RAISE WARNING 'get_daily_quest_state: skipping unknown quest type: %', v_type;
+--       CONTINUE;
+--     END IF;
+--
+--     -- ── Generic daily quest upsert (lesson, lesson_batch, challenge, module) ──
+--     v_period := CURRENT_DATE;
+--
+--     -- Completion requires a positive target: a targetValue of 0 must NOT
+--     -- auto-complete (that would mint free XP every day for a 0-target quest).
+--     v_completed := v_target > 0 AND v_current >= v_target;
+--
+--     INSERT INTO public.user_daily_quests (user_id, quest_id, current_value, completed, completed_at, xp_granted, period_start)
+--     VALUES (p_user_id, v_quest_id, v_current, v_completed, CASE WHEN v_completed THEN NOW() ELSE NULL END, false, v_period)
+--     ON CONFLICT (user_id, quest_id, period_start) DO UPDATE SET
+--       current_value = EXCLUDED.current_value,
+--       completed     = EXCLUDED.completed,
+--       completed_at  = COALESCE(user_daily_quests.completed_at, EXCLUDED.completed_at);
+--
+--     -- Mark xp_granted on first completion and durably enqueue the XP credit in
+--     -- the SAME transaction (atomic with the flip) — see the login_streak branch.
+--     IF v_completed THEN
+--       UPDATE public.user_daily_quests
+--       SET xp_granted = true
+--       WHERE user_id = p_user_id AND quest_id = v_quest_id AND period_start = v_period AND xp_granted = false;
+--
+--       IF FOUND THEN
+--         v_just_awarded := true;
+--         INSERT INTO public.pending_onchain_actions (user_id, action_type, reference_id, payload)
+--         VALUES (
+--           p_user_id,
+--           'quest_xp',
+--           v_quest_id || ':' || v_period::text,
+--           jsonb_build_object('xpAmount', v_xp, 'memo', 'daily_quest:' || v_quest_id)
+--         )
+--         ON CONFLICT (user_id, action_type, reference_id) DO NOTHING;
+--       END IF;
+--     END IF;
+--
+--     v_results := v_results || jsonb_build_object(
+--       'questId', v_quest_id,
+--       'currentValue', v_current,
+--       'completed', v_completed,
+--       'justAwarded', v_just_awarded,
+--       'xpReward', v_xp
+--     );
+--   END LOOP;
+--
+--   RETURN v_results;
+-- END;
+-- $$;
+--
+-- REVOKE EXECUTE ON FUNCTION get_daily_quest_state FROM authenticated, anon, public;
+-- GRANT EXECUTE ON FUNCTION get_daily_quest_state TO service_role;
 --
 -- COMMIT;
 -- ============================================================================
