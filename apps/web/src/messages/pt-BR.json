@@ -428,7 +428,7 @@
     "surpriseBonus": "Bônus surpresa! +{amount} XP",
     "league": "Liga",
     "global": "Global",
-    "leagueSubtitle": "Seu grupo da semana — a classificação desta semana",
+    "leagueSubtitle": "Seu grupo da semana — a classificação atual",
     "globalSubtitle": "XP de todos os tempos entre todos",
     "leagueTier1": "Liga Semente",
     "leagueTier2": "Liga Broto",
@@ -444,7 +444,7 @@
     "leagueThisWeek": "Esta semana",
     "leagueScoreAria": "{score} XP ganhos esta semana",
     "leagueScoringInfoLabel": "Sobre a pontuação da liga",
-    "leagueScoringInfo": "A pontuação da liga conta o XP de aprendizado ganho esta semana — aulas, desafios, missões e conquistas. Bônus e XP da comunidade não contam."
+    "leagueScoringInfo": "A pontuação da liga conta o XP de aprendizado ganho esta semana — aulas, desafios, cursos concluídos, missões e conquistas. Bônus e XP da comunidade não contam."
   },
   "certificates": {
     "title": "Certificado de Conclusão",

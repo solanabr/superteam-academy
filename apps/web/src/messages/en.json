@@ -428,7 +428,7 @@
     "surpriseBonus": "Surprise bonus! +{amount} XP",
     "league": "League",
     "global": "Global",
-    "leagueSubtitle": "Your weekly cohort — this week's standings",
+    "leagueSubtitle": "Your weekly cohort — live standings",
     "globalSubtitle": "All-time XP across everyone",
     "leagueTier1": "Seed League",
     "leagueTier2": "Sprout League",
@@ -444,7 +444,7 @@
     "leagueThisWeek": "This week",
     "leagueScoreAria": "{score} XP earned this week",
     "leagueScoringInfoLabel": "About league scoring",
-    "leagueScoringInfo": "League scores count learning XP earned this week — lessons, challenges, quests, and achievements. Bonuses and community XP don't count."
+    "leagueScoringInfo": "League scores count learning XP earned this week — lessons, challenges, course completions, quests, and achievements. Bonuses and community XP don't count."
   },
   "certificates": {
     "title": "Certificate of Completion",
