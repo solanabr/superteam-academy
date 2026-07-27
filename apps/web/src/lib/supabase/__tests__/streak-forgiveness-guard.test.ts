@@ -192,8 +192,7 @@ describe("#573 streak forgiveness — migration-only guarantees", () => {
 
   it("ships a rollback that drops the new objects AND restores the writers", () => {
     // Function-modifying migration: the rollback must both drop what it created
-    // and restore the two rewritten writers' prior bodies (get_daily_quest_state
-    // is restored by re-applying its prior migration).
+    // and restore the rewritten writers' prior bodies.
     expect(migration).toContain(
       "DROP FUNCTION IF EXISTS public.grant_streak_freeze(UUID)"
     );
@@ -209,11 +208,28 @@ describe("#573 streak forgiveness — migration-only guarantees", () => {
     expect(migration).toContain(
       "ALTER TABLE public.user_xp DROP COLUMN IF EXISTS streak_freezes"
     );
-    // Restores the two rewritten XP writers, and points at the quest migration.
+    // Steps 2-3 restore the two rewritten XP writers verbatim.
     expect(migration).toMatch(/Restore award_xp to its pre-forgiveness body/);
     expect(migration).toMatch(
       /Restore award_community_xp to its pre-forgiveness body/
     );
-    expect(migration).toContain("20260726170000_review_quest_kind.sql");
+  });
+
+  it("step 4 is SELF-CONTAINED: inlines BOTH prior bodies with a probe fork (#750)", () => {
+    // get_daily_quest_state's correct prior body is DB-state-dependent (whether
+    // 20260726170000 had been applied). The rollback must NOT tell the operator
+    // to "re-apply" another migration — prod never ran 170000, so that would
+    // move it FORWARD, not back. Instead: a probe + two inlined fork bodies.
+    expect(migration).not.toMatch(/re-apply the migration/i);
+    // The probe the operator runs (before applying) to choose the fork.
+    expect(migration).toContain("position('review' in prosrc)");
+    // Both prior bodies are inlined (commented), one per fork branch (4a/4b).
+    const restoreDefs =
+      migration.match(
+        /^-- CREATE OR REPLACE FUNCTION get_daily_quest_state\(/gm
+      ) ?? [];
+    expect(restoreDefs).toHaveLength(2);
+    // The header prices in the two-migration jump on a pre-170000 DB.
+    expect(migration).toMatch(/TWO-MIGRATION JUMP ON A PRE-170000 DATABASE/);
   });
 });
