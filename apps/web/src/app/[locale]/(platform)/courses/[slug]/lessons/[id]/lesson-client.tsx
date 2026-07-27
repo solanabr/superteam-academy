@@ -112,12 +112,6 @@ export function LessonPageClient({
   // create-thread modal above).
   const [isDiscussionListOpen, setIsDiscussionListOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  // Challenge pages lock to exactly one viewport. The available height is the
-  // distance from this element's top to the bottom of the viewport — MEASURED,
-  // because the header's height is not a constant we can safely hardcode (#770).
-  // Desktop only; below lg the page scrolls normally.
-  const challengeRootRef = useRef<HTMLDivElement>(null);
-  const [challengeHeight, setChallengeHeight] = useState<string | undefined>();
   const [buildUuid, setBuildUuid] = useState<string | null>(null);
   const [programKeypairSecret, setProgramKeypairSecret] = useState<
     number[] | null
@@ -172,25 +166,6 @@ export function LessonPageClient({
   });
 
   const hasCodeBlock = lesson.blocks.some((b) => b._type === "code");
-
-  useEffect(() => {
-    if (!hasCodeBlock) return;
-    const measure = () => {
-      const el = challengeRootRef.current;
-      if (!el) return;
-      if (window.innerWidth < 1024) {
-        setChallengeHeight(undefined);
-        return;
-      }
-      // Document-absolute top, so the result doesn't drift with scroll
-      // position. The element's own height never feeds back into this.
-      const top = el.getBoundingClientRect().top + window.scrollY;
-      setChallengeHeight(`calc(100dvh - ${Math.max(0, Math.round(top))}px)`);
-    };
-    measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  }, [hasCodeBlock]);
   const hasQuizBlock = lesson.blocks.some((b) => b._type === "quiz");
 
   // F18 (#564): retrieval stays AI-free. Each QuizBlock reports whether all of
@@ -422,21 +397,14 @@ export function LessonPageClient({
 
   return (
     <div
-      ref={challengeRootRef}
-      style={
-        hasCodeBlock && challengeHeight
-          ? { height: challengeHeight }
-          : undefined
-      }
       className={`mx-auto ${
         hasCodeBlock
-          ? // Challenge pages fill exactly one viewport with no page scroll.
-            // The height is MEASURED (see challengeHeight) rather than derived
-            // from a hardcoded header offset: the old calc(100dvh-60px) guessed
-            // wrong, so the column overshot the viewport and left a tall dead
-            // strip below the IDE plus a page scrollbar (#770). Negative margins
-            // cancel the platform container's vertical padding.
-            "max-w-[1600px] space-y-0 lg:-mb-8 lg:-mt-8 lg:flex lg:flex-col lg:overflow-hidden"
+          ? // Challenge pages fill exactly one viewport at lg with no page
+            // scroll: cancel the platform container's pt-8/pb-8 (#770) with
+            // negative margins and become a fixed-height flex column
+            // (100dvh minus the fixed header's 60px offset). Top bar is
+            // shrink-0; the IDE flex-fills the rest.
+            "max-w-[1600px] space-y-0 lg:-mb-8 lg:-mt-8 lg:flex lg:h-[calc(100dvh-60px)] lg:flex-col"
           : "max-w-3xl space-y-6"
       }`}
     >
