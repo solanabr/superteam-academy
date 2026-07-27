@@ -20,6 +20,15 @@
     "lesson-cpi-challenge",
     "lesson-create-token-challenge",
     "lesson-dapp-challenge",
+    "lesson-dsk-first-signed-deposit",
+    "lesson-dsk-idl-to-typed-client",
+    "lesson-dsk-package-surface-and-readme",
+    "lesson-dsk-price-the-priority-fee",
+    "lesson-dsk-publish-the-package",
+    "lesson-dsk-signers-chains-and-the-legacy-seam",
+    "lesson-dsk-simulate-before-you-send",
+    "lesson-dsk-states-errors-and-reads",
+    "lesson-dsk-wrap-the-generated-client",
     "lesson-error-challenge",
     "lesson-keypair-challenge",
     "lesson-liquidation-challenge",
@@ -117,6 +126,32 @@
         "lesson-bfsp-m4-airdrop",
         "lesson-bfsp-m4-deploy",
         "lesson-bfsp-m4-capstone"
+      ]
+    },
+    {
+      "_id": "course-dapp-sdk-kit:dsk-package",
+      "lessonIds": [
+        "lesson-dsk-idl-to-typed-client",
+        "lesson-dsk-wrap-the-generated-client",
+        "lesson-dsk-package-surface-and-readme",
+        "lesson-dsk-publish-the-package"
+      ]
+    },
+    {
+      "_id": "course-dapp-sdk-kit:dsk-app",
+      "lessonIds": [
+        "lesson-dsk-connect-with-wallet-standard",
+        "lesson-dsk-signers-chains-and-the-legacy-seam",
+        "lesson-dsk-first-signed-deposit"
+      ]
+    },
+    {
+      "_id": "course-dapp-sdk-kit:dsk-correct-cheap-honest",
+      "lessonIds": [
+        "lesson-dsk-simulate-before-you-send",
+        "lesson-dsk-price-the-priority-fee",
+        "lesson-dsk-states-errors-and-reads",
+        "lesson-dsk-what-you-shipped"
       ]
     },
     {

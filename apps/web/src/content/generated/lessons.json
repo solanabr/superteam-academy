@@ -3333,6 +3333,1762 @@
     "title": "Deploying Solana Programs"
   },
   {
+    "_id": "lesson-dsk-connect-with-wallet-standard",
+    "_type": "lesson",
+    "blocks": [
+      {
+        "_key": "intro",
+        "_type": "prose",
+        "src": "# Connect a Wallet Without wallet-adapter\n\nYou have a published package. Now build the app that uses it — starting with the one thing every dApp needs and most get wrong: connecting a wallet.\n\n> **Why there is no graded exercise here.** This lesson's runtime is a sandbox with no DOM and no module resolution, so a React component and live Wallet Standard discovery cannot be graded. You get an annotated walkthrough instead. The graded rung of this module is the next lesson, where signer selection is pure logic. The lesson after that grades the transaction you assemble.\n\n## One client, built from plugins\n\nKit builds a client by composing plugins. You build it **once, at module scope**, and share it through a provider:\n\n```ts\n// client.ts — built once\nimport { createClient } from \"@solana/kit\";\nimport { solanaDevnetRpc } from \"@solana/kit-plugin-rpc\";\nimport { walletSigner } from \"@solana/kit-plugin-wallet\";\nimport { vaultProgram } from \"@your-scope/vault-client\";\n\nexport const client = createClient()\n  .use(solanaDevnetRpc())\n  .use(walletSigner())\n  .use(vaultProgram());\n```\n\nInstall list (verify at authoring — this course pins kit 7.0.0, checked 2026-07-27):\n\n```\n@solana/kit @solana/kit-plugin-rpc @solana/kit-plugin-wallet @solana/react @solana-program/system swr @tanstack/react-query\n```\n\nThe last two are not optional decoration: `@solana/react` peer-depends on `swr` and `@tanstack/react-query`, and omitting them produces missing-module errors on the first install — the single most common setup failure.\n\n## The stale trap this lesson exists to kill\n\nThe old stack — `ConnectionProvider`, `WalletProvider`, `WalletModalProvider`, `PhantomWalletAdapter`, `useWallet()` — is what most tutorials and most of your search results still teach. This app uses **none of it**. Wallet Standard is a browser protocol wallets implement directly, so discovery needs no per-wallet adapter package. If a code sample in this course reaches for `WalletProvider`, it is wrong.\n\n## The surprise: a client is bound to one chain\n\nA Kit client is bound to exactly one chain and one endpoint at build time. Switching clusters — devnet to mainnet — is not a config change you flip; it means **rebuilding the client**, which in React means a `useMemo` keyed on the endpoint. This is the first thing that surprises people, so the walkthrough builds it in from the start.\n\nRead the annotated walkthrough next: it publishes the client with `ClientProvider`, reads it with `useClient()`, and renders a connect/disconnect control driven by the Wallet Standard hooks — keeping the loading / empty / error states that age well from the old `react-patterns` material, and rewriting every line of its code.\n"
+      },
+      {
+        "_key": "walkthrough",
+        "_type": "prose",
+        "src": "# Annotated Walkthrough: Connect / Disconnect\n\nRead each step and the note under it. You will build this for real when you deploy in lesson 7; here the goal is to recognize every piece.\n\n## 1. Publish the client to the tree\n\n```tsx\nimport { ClientProvider } from \"@solana/react\";\nimport { client } from \"./client\";\n\nexport function App() {\n  return (\n    <ClientProvider client={client}>\n      <WalletBar />\n    </ClientProvider>\n  );\n}\n```\n\n`ClientProvider` puts the one module-scope client on the context. Every component below reads the same instance — you never build a second one per render.\n\n## 2. Rebuild only when the endpoint changes\n\n```tsx\nimport { useMemo } from \"react\";\nimport { createClient } from \"@solana/kit\";\nimport { solanaDevnetRpc } from \"@solana/kit-plugin-rpc\";\n\nfunction useVaultClient(endpoint: string) {\n  // Keyed on the endpoint: switching devnet -> mainnet rebuilds the client,\n  // because a Kit client is bound to one chain and cannot be re-pointed.\n  return useMemo(\n    () => createClient().use(solanaDevnetRpc(endpoint)).use(walletSigner()).use(vaultProgram()),\n    [endpoint]\n  );\n}\n```\n\nThe `useMemo` dependency is the whole point: nothing rebuilds on a normal render, but a cluster switch does.\n\n## 3. Discover, connect, disconnect\n\n```tsx\nimport { useWallets, useConnect, useConnectedWallet, useDisconnect } from \"@solana/kit-plugin-wallet/react\";\n\nfunction WalletBar() {\n  const wallets = useWallets();          // whatever the visitor actually has installed\n  const connect = useConnect();\n  const connected = useConnectedWallet(); // undefined until one is connected\n  const disconnect = useDisconnect();\n\n  if (connected) {\n    return (\n      <button onClick={() => disconnect()}>\n        Disconnect {connected.accounts[0]?.address.slice(0, 4)}…\n      </button>\n    );\n  }\n\n  if (wallets.length === 0) {\n    // The EMPTY state — no wallet installed. Do not render a dead button.\n    return <p>No Solana wallet found. Install one to continue.</p>;\n  }\n\n  return (\n    <>\n      {wallets.map((w) => (\n        <button key={w.name} onClick={() => connect(w)}>Connect {w.name}</button>\n      ))}\n    </>\n  );\n}\n```\n\n`useWallets()` returns whatever Wallet Standard wallets the browser advertises — no adapter package per wallet, no hardcoded Phantom. The three states from `react-patterns` survive as concepts: **connected** (show identity + disconnect), **empty** (no wallet — a real state, not an error), and the **error** state you add when a connect attempt is rejected.\n\n## What is deliberately absent\n\nNo `ConnectionProvider`. No `WalletProvider`. No `PhantomWalletAdapter`. No `useWallet()`. If you paste any of them in from a tutorial, you are on the old stack, and it will not compose with the Kit client you built.\n"
+      },
+      {
+        "_key": "check",
+        "_type": "quiz",
+        "questions": [
+          {
+            "explanation": "A Kit client binds one chain and one endpoint when it is built. There is no re-point; a cluster switch rebuilds the client, which in React is a `useMemo` keyed on the endpoint so nothing rebuilds on an ordinary render but a switch does.",
+            "id": "q1",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "The client was built once and cached — a Kit client is bound to one chain and endpoint, so a switch means rebuilding it (a `useMemo` keyed on the endpoint), not mutating it"
+              },
+              {
+                "correct": false,
+                "feedback": "It is not a response cache. The client instance itself is still pointed at devnet, because a Kit client cannot be re-pointed after it is built — you build a new one.",
+                "id": "b",
+                "label": "The RPC plugin caches responses; clearing the cache would fix it"
+              },
+              {
+                "correct": false,
+                "feedback": "The client's chain is fixed at build time by its RPC plugin, not inherited from the wallet. A wallet can refuse a chain, but it does not repoint your client.",
+                "id": "c",
+                "label": "The wallet is still on devnet and the client follows the wallet's chain"
+              }
+            ],
+            "prompt": "You switch the app from devnet to mainnet by changing the endpoint string, but the app keeps talking to devnet. Predict the cause."
+          },
+          {
+            "explanation": "Wallet Standard is a protocol wallets implement directly, so discovery is `useWallets()` with no adapter package per wallet and no `WalletProvider`. Recognizing which stack an import belongs to is half of not accidentally shipping the deprecated one.",
+            "id": "q2",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "`useWallets` from `@solana/kit-plugin-wallet/react` — Wallet Standard discovery, no per-wallet adapter"
+              },
+              {
+                "correct": false,
+                "feedback": "That is the old stack this lesson exists to retire. Wallet Standard needs no `WalletProvider` and no per-wallet adapter — the wallet advertises itself to the browser.",
+                "id": "b",
+                "label": "`WalletProvider` and `PhantomWalletAdapter` from the wallet-adapter packages"
+              },
+              {
+                "correct": false,
+                "feedback": "`useWallet()` is the wallet-adapter hook. You will learn to READ it (next lesson) because you will meet it in other codebases, but you do not write it here.",
+                "id": "c",
+                "label": "`useWallet` from `@solana/wallet-adapter-react`"
+              }
+            ],
+            "prompt": "Which import belongs in a Wallet Standard app built on Kit?"
+          }
+        ]
+      }
+    ],
+    "skills": [
+      "wallet-standard",
+      "solana-kit",
+      "react",
+      "web3-frontend"
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "connect-with-wallet-standard"
+    },
+    "title": "Connect a Wallet Without wallet-adapter"
+  },
+  {
+    "_id": "lesson-dsk-first-signed-deposit",
+    "_type": "lesson",
+    "blocks": [
+      {
+        "_key": "intro",
+        "_type": "prose",
+        "src": "# Your First Deposit, From Your Own App\n\nThis is where the two artifacts join. You install the package you published — from the **real registry**, not a local path — and use it to send one real devnet deposit to your own vault, from an app at a public URL.\n\n```\nnpm i @your-scope/vault-client\n```\n\nInstalling from a `file:../client` path proves nothing: it only shows the code works on your machine, where you wrote it. Installing `@your-scope/vault-client` from npm is the first proof it works for someone who is not you — which is the entire point of publishing.\n\n## The send path\n\nWith the wrapper, sending is one line:\n\n```ts\nawait client.sendTransaction([vaultClient.deposit({ owner, amountLamports })]);\n```\n\nUnder that line, the client assembles a transaction message, applies your signer, and sends. You will do the assembly by hand once — in the exercise — so the collapsed version is not a mystery. The manual equivalent is a `pipe(...)` that sets the fee payer, sets a lifetime (a recent blockhash), and appends the instruction.\n\n## The four subgoals\n\nYou write `assembleDeposit(owner, amountLamports, blockhash)`, building the transaction message in four numbered steps in the starter:\n\n1. **Set the fee payer** to the owner. (done for you)\n2. **Set the transaction lifetime** to the given blockhash — a transaction with no recent blockhash is rejected.\n3. **Append the deposit instruction** built from your wrapper.\n4. **Return the message**, and leave `computeUnitLimitSet` as `false`.\n\nSubgoal 4 is not an oversight. This deposit goes out with **no** `SetComputeUnitLimit`, at the 200,000-CU default — so the next lesson has a real, measurable overpay to fix and you can diff the two fees. Do not add a compute budget here.\n\n## Deploy\n\nRead the deploy note after the exercise: connect the repo to Vercel in the browser, set the devnet RPC as an environment variable, and record your public URL.\n"
+      },
+      {
+        "_key": "assemble",
+        "_type": "code",
+        "buildType": "standard",
+        "deployable": false,
+        "hints": [
+          "Subgoal 2: `const lifetimeBlockhash = blockhash;` — a message with no recent blockhash is rejected.",
+          "Subgoal 3: `const instructions = [buildDepositInstruction(owner, amountLamports)];` — call the wrapper, do not rebuild the instruction by hand.",
+          "Subgoal 4: leave `computeUnitLimitSet: false`. The overpay is deliberate — the next lesson measures and fixes it."
+        ],
+        "language": "typescript",
+        "solution": "/**\n * Assemble the deposit transaction message by hand, in four subgoals.\n */\nfunction assembleDeposit(\n  owner: string,\n  amountLamports: bigint,\n  blockhash: string\n): {\n  feePayer: string;\n  lifetimeBlockhash: string;\n  instructions: { programAddress: string; accounts: { address: string; role: string }[]; data: { amountLamports: bigint } }[];\n  computeUnitLimitSet: boolean;\n} {\n  // Subgoal 1 — set the fee payer to the owner (done for you).\n  const feePayer = owner;\n\n  // Subgoal 2 — set the transaction lifetime to the given blockhash.\n  const lifetimeBlockhash = blockhash;\n\n  // Subgoal 3 — append the deposit instruction built from your wrapper.\n  const instructions = [buildDepositInstruction(owner, amountLamports)];\n\n  // Subgoal 4 — return the message; leave computeUnitLimitSet as false.\n  return {\n    feePayer,\n    lifetimeBlockhash,\n    instructions,\n    computeUnitLimitSet: false,\n  };\n}\n\n// --- your published wrapper's instruction builder — treat as given -------\nfunction buildDepositInstruction(\n  owner: string,\n  amountLamports: bigint\n): { programAddress: string; accounts: { address: string; role: string }[]; data: { amountLamports: bigint } } {\n  return {\n    programAddress: \"VauLtPr0gram1111111111111111111111111111111\",\n    accounts: [\n      { address: owner, role: \"writable-signer\" },\n      { address: \"Vau1t\" + owner.slice(0, 38).padEnd(38, \"1\"), role: \"writable\" },\n      { address: \"11111111111111111111111111111111\", role: \"readonly\" },\n    ],\n    data: { amountLamports },\n  };\n}\n",
+        "starter": "/**\n * Assemble the deposit transaction message by hand, in four subgoals.\n *\n * `buildDepositInstruction` below is your published wrapper's output — treat it\n * as given. Build the message with the owner as fee payer, the given blockhash\n * as its lifetime, and the deposit instruction appended. Do NOT set a compute\n * unit limit — that overpay is the next lesson's exercise.\n */\nfunction assembleDeposit(\n  owner: string,\n  amountLamports: bigint,\n  blockhash: string\n): {\n  feePayer: string;\n  lifetimeBlockhash: string;\n  instructions: { programAddress: string; accounts: { address: string; role: string }[]; data: { amountLamports: bigint } }[];\n  computeUnitLimitSet: boolean;\n} {\n  // Subgoal 1 — set the fee payer to the owner (done for you).\n  const feePayer = owner;\n\n  // Subgoal 2 — set the transaction lifetime to the given blockhash.\n  // const lifetimeBlockhash = ...\n\n  // Subgoal 3 — append the deposit instruction built from your wrapper.\n  // const instructions = [ buildDepositInstruction(owner, amountLamports) ];\n\n  // Subgoal 4 — return the message; leave computeUnitLimitSet as false.\n  return {\n    feePayer,\n    lifetimeBlockhash: \"\",\n    instructions: [],\n    computeUnitLimitSet: false,\n  };\n}\n\n// --- your published wrapper's instruction builder — treat as given -------\nfunction buildDepositInstruction(\n  owner: string,\n  amountLamports: bigint\n): { programAddress: string; accounts: { address: string; role: string }[]; data: { amountLamports: bigint } } {\n  return {\n    programAddress: \"VauLtPr0gram1111111111111111111111111111111\",\n    accounts: [\n      { address: owner, role: \"writable-signer\" },\n      { address: \"Vau1t\" + owner.slice(0, 38).padEnd(38, \"1\"), role: \"writable\" },\n      { address: \"11111111111111111111111111111111\", role: \"readonly\" },\n    ],\n    data: { amountLamports },\n  };\n}\n",
+        "tests": [
+          {
+            "description": "Subgoal 1: the fee payer is the owner",
+            "expectedOutput": "result.feePayer === '0wnerWa11etAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'",
+            "id": "t1",
+            "input": "'0wnerWa11etAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', 1000000n, 'B1ockhash1111111111111111111111111111111111'"
+          },
+          {
+            "description": "Subgoal 2: the transaction lifetime is the given blockhash",
+            "expectedOutput": "result.lifetimeBlockhash === 'B1ockhash1111111111111111111111111111111111'",
+            "id": "t2",
+            "input": "'0wnerWa11etAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', 1000000n, 'B1ockhash1111111111111111111111111111111111'"
+          },
+          {
+            "description": "Subgoal 3: exactly one instruction, the deposit, with the owner signing",
+            "expectedOutput": "result.instructions.length === 1 && result.instructions[0].accounts[0].address === '0wnerWa11etAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'",
+            "id": "t3",
+            "input": "'0wnerWa11etAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', 1000000n, 'B1ockhash1111111111111111111111111111111111'"
+          },
+          {
+            "description": "Subgoal 3: the deposit instruction carries the amount",
+            "expectedOutput": "result.instructions[0].data.amountLamports === 2500000n",
+            "id": "t4",
+            "input": "'0wnerWa11etAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', 2500000n, 'B1ockhash1111111111111111111111111111111111'"
+          },
+          {
+            "description": "Subgoal 4: no compute unit limit is set — that overpay is next lesson's fix",
+            "expectedOutput": "result.computeUnitLimitSet === false",
+            "id": "t5",
+            "input": "'0wnerWa11etAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', 1000000n, 'B1ockhash1111111111111111111111111111111111'"
+          }
+        ],
+        "tutorNotes": [
+          "Learners add a `SetComputeUnitLimit` here to 'do it properly', removing the deliberate 200,000-CU overpay the next lesson exists to measure — leave `computeUnitLimitSet` false.",
+          "They skip the blockhash in subgoal 2, so the assembled message has no lifetime and would be rejected the moment it is sent.",
+          "They rebuild the deposit instruction inline instead of calling the wrapper, reintroducing the discriminator and PDA the published package exists to hide.",
+          "They install the client from a `file:` path to test, which proves it runs on their machine but not that it installs and works from the registry — the one thing publishing was for."
+        ]
+      },
+      {
+        "_key": "deploy",
+        "_type": "prose",
+        "src": "# Deploy It\n\nThe app is not real until it has a URL someone else can open.\n\n1. Push the repo to GitHub (browser only — you already did this for the package).\n2. On vercel.com, **Import** the repo. Vercel detects the framework; you add one thing.\n3. Set an environment variable for the **devnet** RPC endpoint — the same endpoint your module-scope client is built with. Do not hardcode it in the bundle; a redeploy to another cluster should be an env change, not a code change.\n4. Deploy. Vercel gives you a public URL.\n5. Open it, connect your wallet, and send the deposit. The transaction you just assembled by hand goes out — signed by your wallet, against your vault, using the client you published.\n\nRecord the URL. You will keep shipping to it: the next three lessons make this same app correct, cheap and honest, and Course 5 adds a paid tier to it.\n"
+      },
+      {
+        "_key": "check",
+        "_type": "quiz",
+        "questions": [
+          {
+            "explanation": "Installing from the registry is the first test of the package as a package: its `files` allowlist, its `exports` map, its peer dependencies. A local path reuses your source tree and silently skips all of that, so it can pass while a real `npm i` fails.",
+            "id": "q1",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "That the package installs and works from the public registry for someone who is not you — the actual deliverable of publishing"
+              },
+              {
+                "correct": false,
+                "feedback": "A local path exercises the same wrapper code, so that part is proven. What is not proven is that the PUBLISHED artifact — its files list, exports map and dependencies — resolves from npm.",
+                "id": "b",
+                "label": "That the wrapper composes the generated client correctly"
+              },
+              {
+                "correct": false,
+                "feedback": "They are not equivalent. A local path skips the packed tarball, the `files` allowlist and dependency resolution from the registry — the exact things a first real install can get wrong.",
+                "id": "c",
+                "label": "Nothing — a local path and a registry install are equivalent"
+              }
+            ],
+            "prompt": "To test quickly you install the client with `file:../client` instead of `npm i @your-scope/vault-client`. It works. What have you NOT proven?"
+          },
+          {
+            "explanation": "With no limit set, the transaction requests the 200,000-CU default per non-builtin instruction, and the priority fee is charged on that requested number — not on consumption. That is the overpay the next lesson measures by diffing your simulated cost against this one.",
+            "id": "q2",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "The default 200,000 CU per non-builtin instruction — you are billed on the requested limit, not what the transaction actually consumed"
+              },
+              {
+                "correct": false,
+                "feedback": "That is the trap. The priority fee is charged on the REQUESTED limit, and with no `SetComputeUnitLimit` the request defaults to 200,000 CU per instruction — usually far more than a deposit uses.",
+                "id": "b",
+                "label": "The compute units the transaction actually consumed at runtime"
+              },
+              {
+                "correct": false,
+                "feedback": "The next lesson does add the price, but the point stands: whatever price applies is multiplied by the REQUESTED limit, and the default request is 200,000 CU. Sizing it down is the saving.",
+                "id": "c",
+                "label": "Zero — priority fees only apply when you set a compute unit price"
+              }
+            ],
+            "prompt": "Your deposit goes out with no `SetComputeUnitLimit`. Predict what the priority fee is charged against."
+          }
+        ]
+      },
+      {
+        "_key": "milestone",
+        "_type": "openEnded",
+        "maxWords": 60,
+        "prompt": "Deploy the app and paste its public URL (e.g. https://your-vault-app.vercel.app). Confirm you sent one real devnet deposit from it. Self-reported — record the URL; module 3 keeps shipping to it."
+      }
+    ],
+    "skills": [
+      "transactions",
+      "wallet-standard",
+      "solana-kit",
+      "deployment",
+      "web3-frontend"
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "first-signed-deposit"
+    },
+    "title": "Your First Deposit, From Your Own App"
+  },
+  {
+    "_id": "lesson-dsk-idl-to-typed-client",
+    "_type": "lesson",
+    "blocks": [
+      {
+        "_key": "intro",
+        "_type": "prose",
+        "src": "# From IDL to a Typed Client\n\nYou finished Course 3 holding two things: a program id on devnet, and an Anchor 1.x IDL — a JSON description of every instruction, account and error your vault exposes. Those two artifacts are the entire input to this course. Nobody who installs your client will read your Rust; they will read the IDL you already have, through a generated TypeScript client.\n\n> **Version stamp — kit 7.0.0, @codama/renderers-js 2.3.0, checked 2026-07-27.** This is the most version-fragile course in the catalog: it sits on sub-1.0 Kit plugins. Every version below is pinned at authoring and verified against the live registry. A kit-8 release (an `8.0.0-canary` was published 2026-07-24) would invalidate these stamps first — check the date before trusting them.\n\n## What Codama does\n\n[Codama](https://github.com/codama-idl/codama) reads an IDL and generates a client: typed instruction builders, account decoders, PDA helpers and a decoded error map. Its config lives at your repo root:\n\n```json\n{\n  \"idl\": \"program/idl.json\",\n  \"scripts\": { \"js\": { \"from\": \"@codama/renderers-js\", \"args\": [\"src/generated/vault\"] } }\n}\n```\n\n`npx codama run js` writes a tree like this:\n\n```\nsrc/generated/vault/\n  accounts/       fetchVault, fetchMaybeVault, getVaultDecoder\n  instructions/   getDepositInstruction, getWithdrawInstruction\n  types/          the argument and account types\n  errors/         a decoded map of your VaultError codes\n  programs/       a Kit program plugin\n```\n\nThe types are **Kit types**, not the old web3.js ones: an account address is an `Address`, not a `PublicKey`, and a lamport amount is a `bigint`, not a `number`. That difference runs through the whole course.\n\n## Why you read the output here instead of generating it now\n\nThe documented `renderVisitor` writes files to disk, and this lesson's runner is a sandbox with no filesystem — so codegen does not run here. It runs later, in your CI workflow (lesson 4), which is also where it belongs: the client is regenerated from the IDL on every publish, never edited by hand. In this lesson you read the shape of what it produces and call a builder the way the generated code does, so the structure is familiar before you depend on it.\n\nAnchor 1.x can run this same generation itself — `anchor codama generate -l js -p clients` — if you would rather not add a Codama config. Either way the output is the same shape.\n\n## Two things this course will never do\n\n- It will **never** teach `new Program(idl, provider)`. That is the old Anchor TypeScript client; the Kit path is a generated client plus your own wrapper.\n- It will **never** fetch the IDL from the chain with the old `anchor idl` instructions. Your IDL is the build artifact from Course 3 — a file you already have.\n\n## The worked example\n\nBelow is a hand-written stand-in for one generated instruction builder — `buildDepositInstruction` — assembled exactly the way `getDepositInstruction` assembles it: a program address, an ordered account list with roles, and a data payload carrying the instruction discriminator and the argument. Run it, read the returned object, and notice three things: the accounts are ordered and role-tagged, the amount is a `bigint`, and nothing in the shape mentions your Rust. That object is what every later lesson sends.\n"
+      },
+      {
+        "_key": "inspect",
+        "_type": "code",
+        "buildType": "standard",
+        "deployable": false,
+        "hints": [
+          "This is a worked example — everything is written except one value. The data payload hardcodes `0n`; pass `amountLamports` through instead.",
+          "Keep the `n` — the amount is a `bigint`, not a `number`. A u64 lamport amount does not fit a JS number.",
+          "Once it passes, read the returned object. Notice the account order and roles; the IDL fixes both, and the generated builder never lets you shuffle them."
+        ],
+        "language": "typescript",
+        "solution": "/**\n * WORKED EXAMPLE — a hand-written stand-in for one Codama-generated builder.\n *\n * This is what `getDepositInstruction(...)` assembles for you from the IDL:\n * a program address, an ORDERED account list where each entry carries a role,\n * and a data payload holding the 8-byte instruction discriminator plus the\n * argument. Run it, read the returned object, and try changing the amount.\n *\n * Note the Kit conventions the real generated code uses:\n *   - addresses are strings (Kit `Address`), never `PublicKey` objects\n *   - the amount is a `bigint`, never a `number`\n *   - the account order is fixed by the IDL and must not be shuffled\n */\nfunction buildDepositInstruction(\n  programAddress: string,\n  vaultPda: string,\n  owner: string,\n  amountLamports: bigint\n): {\n  programAddress: string;\n  accounts: { address: string; role: string }[];\n  data: { discriminator: number[]; amountLamports: bigint };\n} {\n  // The System Program — deposit moves lamports through a System CPI, so it\n  // must be present and read-only.\n  const SYSTEM_PROGRAM = \"11111111111111111111111111111111\";\n\n  // The first 8 bytes Anchor writes to identify the `deposit` instruction.\n  // The generated client carries this so you never hand-write it.\n  const DEPOSIT_DISCRIMINATOR = [242, 35, 198, 137, 82, 225, 242, 182];\n\n  return {\n    programAddress,\n    accounts: [\n      { address: owner, role: \"writable-signer\" }, // pays the lamports, signs\n      { address: vaultPda, role: \"writable\" }, // receives them\n      { address: SYSTEM_PROGRAM, role: \"readonly\" }, // the CPI target\n    ],\n    data: {\n      discriminator: DEPOSIT_DISCRIMINATOR,\n      amountLamports,\n    },\n  };\n}\n",
+        "starter": "/**\n * WORKED EXAMPLE — a hand-written stand-in for one Codama-generated builder.\n *\n * This is what `getDepositInstruction(...)` assembles for you from the IDL:\n * a program address, an ORDERED account list where each entry carries a role,\n * and a data payload holding the 8-byte instruction discriminator plus the\n * argument.\n *\n * It is complete except for ONE value: the data payload hardcodes `0n` instead\n * of passing the amount through. Wire the `amountLamports` parameter into the\n * payload, then run it and read the returned object.\n *\n * Note the Kit conventions the real generated code uses:\n *   - addresses are strings (Kit `Address`), never `PublicKey` objects\n *   - the amount is a `bigint`, never a `number`\n *   - the account order is fixed by the IDL and must not be shuffled\n */\nfunction buildDepositInstruction(\n  programAddress: string,\n  vaultPda: string,\n  owner: string,\n  amountLamports: bigint\n): {\n  programAddress: string;\n  accounts: { address: string; role: string }[];\n  data: { discriminator: number[]; amountLamports: bigint };\n} {\n  // The System Program — deposit moves lamports through a System CPI, so it\n  // must be present and read-only.\n  const SYSTEM_PROGRAM = \"11111111111111111111111111111111\";\n\n  // The first 8 bytes Anchor writes to identify the `deposit` instruction.\n  // The generated client carries this so you never hand-write it.\n  const DEPOSIT_DISCRIMINATOR = [242, 35, 198, 137, 82, 225, 242, 182];\n\n  return {\n    programAddress,\n    accounts: [\n      { address: owner, role: \"writable-signer\" }, // pays the lamports, signs\n      { address: vaultPda, role: \"writable\" }, // receives them\n      { address: SYSTEM_PROGRAM, role: \"readonly\" }, // the CPI target\n    ],\n    data: {\n      discriminator: DEPOSIT_DISCRIMINATOR,\n      amountLamports: 0n, // TODO: pass `amountLamports` through instead of 0n\n    },\n  };\n}\n",
+        "tests": [
+          {
+            "description": "The builder returns the program address it was given",
+            "expectedOutput": "result.programAddress === 'VauLtPr0gram1111111111111111111111111111111'",
+            "id": "t1",
+            "input": "'VauLtPr0gram1111111111111111111111111111111', 'Vau1tPDA1111111111111111111111111111111111', '0wnerWa11et11111111111111111111111111111111', 1000000n"
+          },
+          {
+            "description": "The amount is carried as a bigint, not a number",
+            "expectedOutput": "typeof result.data.amountLamports === 'bigint' && result.data.amountLamports === 1000000n",
+            "id": "t2",
+            "input": "'VauLtPr0gram1111111111111111111111111111111', 'Vau1tPDA1111111111111111111111111111111111', '0wnerWa11et11111111111111111111111111111111', 1000000n"
+          },
+          {
+            "description": "The account order is owner, vault, system program",
+            "expectedOutput": "result.accounts[0].address === '0wnerWa11et11111111111111111111111111111111' && result.accounts[1].address === 'Vau1tPDA1111111111111111111111111111111111'",
+            "id": "t3",
+            "input": "'VauLtPr0gram1111111111111111111111111111111', 'Vau1tPDA1111111111111111111111111111111111', '0wnerWa11et11111111111111111111111111111111', 1000000n"
+          },
+          {
+            "description": "The signer is the owner, and the vault is writable but not a signer",
+            "expectedOutput": "result.accounts[0].role === 'writable-signer' && result.accounts[1].role === 'writable'",
+            "id": "t4",
+            "input": "'VauLtPr0gram1111111111111111111111111111111', 'Vau1tPDA1111111111111111111111111111111111', '0wnerWa11et11111111111111111111111111111111', 1000000n"
+          },
+          {
+            "description": "The data payload carries an 8-byte discriminator",
+            "expectedOutput": "Array.isArray(result.data.discriminator) && result.data.discriminator.length === 8",
+            "id": "t5",
+            "input": "'VauLtPr0gram1111111111111111111111111111111', 'Vau1tPDA1111111111111111111111111111111111', '0wnerWa11et11111111111111111111111111111111', 5n"
+          }
+        ],
+        "tutorNotes": [
+          "Learners try to `import` `@solana/kit` or `@codama/renderers-js` inside this runner; it has no module resolution, so the real codegen and the real Kit types live in prose only — the exercise is a hand-written stand-in for the shape.",
+          "They reorder the account list or drop the System Program, not realizing the IDL fixes the order and a shuffled list is a different, wrong instruction the program will reject.",
+          "They change `amountLamports` to a plain number and lose the `bigint` the generated builder guarantees — a u64 amount does not fit a JS number, which is why Kit uses bigint everywhere.",
+          "They expect this lesson to generate files on disk; `renderVisitor` needs a filesystem, so real `codama run js` happens in the CI workflow at lesson 4, not here."
+        ]
+      },
+      {
+        "_key": "check",
+        "_type": "quiz",
+        "questions": [
+          {
+            "explanation": "Generated code is regenerated output, never source. The rule this course hammers: never edit `src/generated`, always wrap it. A fix belongs in the IDL (regenerate) or in the ergonomic wrapper you build next lesson — the wrapper is the part that survives an IDL change and the part a consumer imports.",
+            "id": "q1",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "It is overwritten — codegen regenerates the whole `src/generated` tree from the IDL, so anything hand-edited there is lost on the next run"
+              },
+              {
+                "correct": false,
+                "feedback": "There is no merge step. `codama run js` writes the tree from the IDL each time; it has no memory of edits you made to its output.",
+                "id": "b",
+                "label": "It is preserved — Codama merges hand edits with regenerated output"
+              },
+              {
+                "correct": false,
+                "feedback": "Codegen does not read your edits before overwriting them — it simply regenerates. You get no error, just a silently reverted fix.",
+                "id": "c",
+                "label": "It causes a codegen error, because the file no longer matches the IDL"
+              }
+            ],
+            "prompt": "You run `npx codama run js`, then hand-edit a bug fix directly into `src/generated/vault/instructions/deposit.ts`. Predict what happens to your edit the next time CI publishes."
+          },
+          {
+            "explanation": "A generated instruction builder returns a plain instruction object: a program address, an ordered account list, and a data payload — exactly the shape you inspected. Getting it on-chain is assemble → sign → send, three steps this course builds up over modules 2 and 3.",
+            "id": "q2",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "An instruction object — they still have to put it in a transaction, sign it, and send it; the builder only assembles the instruction"
+              },
+              {
+                "correct": false,
+                "feedback": "A builder builds; it never touches a wallet or the network. Signing and sending are separate steps you wire up in module 2.",
+                "id": "b",
+                "label": "A transaction signature — the builder signs and submits in one call"
+              },
+              {
+                "correct": false,
+                "feedback": "Nothing is confirmed here — building an instruction is pure, local and synchronous. Confirmation is a module-3 concern with its own commitment ladder.",
+                "id": "c",
+                "label": "A promise that resolves once the deposit is confirmed"
+              }
+            ],
+            "prompt": "A teammate calls `getDepositInstruction({...})` and expects the deposit to land on devnet. Predict what they actually get back."
+          }
+        ]
+      }
+    ],
+    "skills": [
+      "codama",
+      "idl",
+      "client-codegen",
+      "solana-kit"
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "idl-to-typed-client"
+    },
+    "title": "From IDL to a Typed Client"
+  },
+  {
+    "_id": "lesson-dsk-package-surface-and-readme",
+    "_type": "lesson",
+    "blocks": [
+      {
+        "_key": "intro",
+        "_type": "prose",
+        "src": "# Exports, Types, README, Semver\n\nYour wrapper works. Now make it a package a stranger can install and trust — which is three decisions: what you export, what you promise about changes, and what the README says.\n\n## The exports map\n\nIn `package.json`:\n\n```json\n{\n  \"type\": \"module\",\n  \"exports\": {\n    \".\": { \"types\": \"./dist/index.d.ts\", \"import\": \"./dist/index.js\" }\n  },\n  \"files\": [\"dist\"],\n  \"peerDependencies\": { \"@solana/kit\": \">=7 <8\" }\n}\n```\n\nTwo things carry weight. `\"types\"` must be listed **first** in each condition — resolvers read the map in order, and a `types` entry after `import` is silently skipped, so consumers get your code with no type hints. And `@solana/kit` is a **peer** dependency, not a hard one: your client and the consumer's app must share one Kit instance, and a hard dependency would install a second copy. The range `>=7 <8` is a bet you are making on purpose — Kit went 1.0 to 7.0 in about eighteen months, so pinning a single version would strand consumers on the day they upgrade.\n\n## The semver policy you write down\n\nA client whose IDL will change needs a rule its consumers can rely on. This is the one you commit to and are held to at publish time:\n\n- **New instruction** → **minor**. Existing callers are untouched; new capability is additive.\n- **Removed field, changed account layout, or renamed export** → **major**. Something a caller depended on is gone or moved.\n- **Regenerating against an unchanged IDL** → **patch**. The interface is identical; only the generated bytes were refreshed.\n\nThe subtlety the exercise drills: **the most breaking change wins.** A release that both adds an instruction *and* changes an account layout is a **major**, not a minor — you check for breakage before you check for additions, or an added instruction masks a layout change and a consumer's build breaks on what you called a minor bump.\n\n## README minimum\n\nA README a stranger can install from has: the install line, a ten-line `deposit` example that actually compiles, the program id and cluster, and the supported Kit range. Undated and unpinned is exactly how every competitor's material rotted — so state the versions.\n\n## The exercise\n\n`classifyChange` receives four pipe-joined descriptors — the instruction names and account fields before and after a change — and returns `'major'`, `'minor'` or `'patch'`. Every branch you need is already in the starter, but they are in the wrong order and one decoy is mixed in. Order them so the most breaking change is decided first.\n"
+      },
+      {
+        "_key": "classify",
+        "_type": "code",
+        "buildType": "standard",
+        "deployable": false,
+        "hints": [
+          "Check for breakage before you check for additions. The line that returns `major` must run before the line that returns `minor`.",
+          "Leave the decoy commented. An added field changes an account's byte layout, so it is a `major`, not the `minor` the decoy claims.",
+          "Order: `major` (breakage) → `minor` (added instruction) → `patch` (nothing changed)."
+        ],
+        "language": "typescript",
+        "solution": "/**\n * Classify a client change as a semver bump.\n *\n * Inputs are pipe-joined descriptors: the instruction names and the account\n * field names, before and after the change. Empty string means \"none\".\n *   e.g. beforeInstrs = \"deposit|withdraw\", afterFields = \"owner|balance|bump\"\n *\n * The most breaking change is decided first: breakage (removed field, changed\n * layout, removed instruction) outranks addition, or an added instruction would\n * mask a layout change and a \"minor\" bump would break a consumer's build.\n */\nfunction classifyChange(\n  beforeInstrs: string,\n  afterInstrs: string,\n  beforeFields: string,\n  afterFields: string\n): \"major\" | \"minor\" | \"patch\" {\n  const split = (s: string): string[] => (s === \"\" ? [] : s.split(\"|\"));\n  const bI = split(beforeInstrs);\n  const aI = split(afterInstrs);\n  const bF = split(beforeFields);\n  const aF = split(afterFields);\n\n  const fieldsChanged =\n    bF.length !== aF.length ||\n    bF.some((f) => !aF.includes(f)) ||\n    aF.some((f) => !bF.includes(f));\n  const instrRemoved = bI.some((i) => !aI.includes(i));\n  const instrAdded = aI.some((i) => !bI.includes(i));\n\n  if (fieldsChanged || instrRemoved) return \"major\"; // (B) breakage first\n  if (instrAdded) return \"minor\"; // (A) additive\n  return \"patch\"; // (D) identical surface, regenerated\n}\n",
+        "starter": "/**\n * Classify a client change as a semver bump.\n *\n * Inputs are pipe-joined descriptors: the instruction names and the account\n * field names, before and after the change. Empty string means \"none\".\n *   e.g. beforeInstrs = \"deposit|withdraw\", afterFields = \"owner|balance|bump\"\n *\n * PARSONS: the three return branches you need are all present below, plus one\n * decoy. They are in the WRONG ORDER. Reorder them so the most breaking change\n * is decided first — a change that both adds an instruction and alters a layout\n * is a `major`, never a `minor`.\n */\nfunction classifyChange(\n  beforeInstrs: string,\n  afterInstrs: string,\n  beforeFields: string,\n  afterFields: string\n): \"major\" | \"minor\" | \"patch\" {\n  const split = (s: string): string[] => (s === \"\" ? [] : s.split(\"|\"));\n  const bI = split(beforeInstrs);\n  const aI = split(afterInstrs);\n  const bF = split(beforeFields);\n  const aF = split(afterFields);\n\n  const fieldsChanged =\n    bF.length !== aF.length ||\n    bF.some((f) => !aF.includes(f)) ||\n    aF.some((f) => !bF.includes(f));\n  const instrRemoved = bI.some((i) => !aI.includes(i));\n  const instrAdded = aI.some((i) => !bI.includes(i));\n\n  // --- reorder the four lines below ---------------------------------------\n  if (instrAdded) return \"minor\"; // (A)\n  if (fieldsChanged || instrRemoved) return \"major\"; // (B)\n  // if (aF.length > bF.length) return \"minor\"; // (C) DECOY — an added field is a layout change, i.e. major\n  return \"patch\"; // (D)\n}\n",
+        "tests": [
+          {
+            "description": "Identical surface, regenerated bytes only, is a patch",
+            "expectedOutput": "result === 'patch'",
+            "id": "t1",
+            "input": "'deposit|withdraw', 'deposit|withdraw', 'owner|balance|bump', 'owner|balance|bump'"
+          },
+          {
+            "description": "A new instruction with no layout change is a minor",
+            "expectedOutput": "result === 'minor'",
+            "id": "t2",
+            "input": "'deposit|withdraw', 'deposit|withdraw|close', 'owner|balance|bump', 'owner|balance|bump'"
+          },
+          {
+            "description": "A removed field is a major",
+            "expectedOutput": "result === 'major'",
+            "id": "t3",
+            "input": "'deposit|withdraw', 'deposit|withdraw', 'owner|balance|bump', 'owner|balance'"
+          },
+          {
+            "description": "An added field is a layout change, so also a major",
+            "expectedOutput": "result === 'major'",
+            "id": "t4",
+            "input": "'deposit|withdraw', 'deposit|withdraw', 'owner|balance', 'owner|balance|bump'"
+          },
+          {
+            "description": "The discriminator: an added instruction AND a changed layout is a major, not a minor",
+            "expectedOutput": "result === 'major'",
+            "id": "t5",
+            "input": "'deposit', 'deposit|withdraw', 'owner|balance', 'owner|balance|bump'"
+          },
+          {
+            "description": "A removed instruction is a major",
+            "expectedOutput": "result === 'major'",
+            "id": "t6",
+            "input": "'deposit|withdraw', 'deposit', 'owner|balance', 'owner|balance'"
+          }
+        ],
+        "tutorNotes": [
+          "Learners leave the `instrAdded → minor` check above the breakage check, so a release that both adds an instruction and changes a layout is classified `minor` — shipping a build-break under a bump consumers trusted not to break them.",
+          "They uncomment the decoy (added field → minor), missing that adding a field changes the account's byte layout, which the semver policy calls a major.",
+          "They read a regenerate-only change (identical instructions and fields) as `minor` because bytes changed on disk; an unchanged IDL is a `patch` by definition.",
+          "They call a removed instruction a `minor` because nothing was added; a removed export is breakage, so it is a `major`."
+        ]
+      },
+      {
+        "_key": "check",
+        "_type": "quiz",
+        "questions": [
+          {
+            "explanation": "New instruction, nothing removed or relaid-out: additive, so minor. The policy only escalates to major when something a caller depended on is gone or moved.",
+            "id": "q1",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "Minor — a new instruction is additive, so existing callers are untouched"
+              },
+              {
+                "correct": false,
+                "feedback": "Adding is not breaking. A caller who never calls `close` compiles and runs exactly as before, which is the definition of a minor.",
+                "id": "b",
+                "label": "Major — any change to the instruction set is breaking"
+              },
+              {
+                "correct": false,
+                "feedback": "A patch is for regenerating against an unchanged IDL. Here the IDL gained an instruction, so there is new surface — that is a minor.",
+                "id": "c",
+                "label": "Patch — no account layout changed"
+              }
+            ],
+            "prompt": "Your next release adds a `close` instruction and touches no account layout and no existing export. Which bump, under the policy you wrote?"
+          },
+          {
+            "explanation": "Removed field, changed layout, or renamed export — all three break a consumer and all three are major. The rule tracks what a caller depended on, and they depended on the name.",
+            "id": "q2",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "Major — a renamed export breaks every consumer's import line"
+              },
+              {
+                "correct": false,
+                "feedback": "Behaviour is not the contract; the surface is. `import { getVault }` stops resolving the moment you rename it, which breaks builds — a major.",
+                "id": "b",
+                "label": "Minor — the underlying behaviour is identical"
+              },
+              {
+                "correct": false,
+                "feedback": "A name is the API. Renaming an export is exactly the \"renamed export\" case the policy calls major.",
+                "id": "c",
+                "label": "Patch — it is only a name"
+              }
+            ],
+            "prompt": "You rename the exported `getVault` to `fetchVaultState` and change nothing else. Which bump?"
+          },
+          {
+            "explanation": "Condition order is significant: put `\"types\"` first in every condition so the resolver sees it before it matches `import` or `require` and stops. Same files, one wrong order, and every consumer loses their types.",
+            "id": "q3",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "`types` is listed after `import`; resolvers read conditions in order and match `import` first, so the `types` entry is never reached"
+              },
+              {
+                "correct": false,
+                "feedback": "`files: [\"dist\"]` already ships everything under `dist`, `.d.ts` included. The types are present; the resolver just never looks at the entry, because of its order.",
+                "id": "b",
+                "label": "The `.d.ts` files were not included because `files` must list them explicitly"
+              },
+              {
+                "correct": false,
+                "feedback": "Modern TypeScript resolves through the `exports` map, which is why order inside each condition matters. It honours the map — it just takes the first matching condition.",
+                "id": "c",
+                "label": "TypeScript ignores the exports map and only reads `\"types\"` at the top level"
+              }
+            ],
+            "prompt": "A consumer installs your package and gets no autocomplete or type errors, even though you shipped `.d.ts` files. Your exports condition reads `{ \"import\": \"./dist/index.js\", \"types\": \"./dist/index.d.ts\" }`. Why?"
+          }
+        ]
+      }
+    ],
+    "skills": [
+      "npm-publishing",
+      "semver",
+      "api-design",
+      "technical-writing"
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "package-surface-and-readme"
+    },
+    "title": "Exports, Types, README, Semver"
+  },
+  {
+    "_id": "lesson-dsk-price-the-priority-fee",
+    "_type": "lesson",
+    "blocks": [
+      {
+        "_key": "intro",
+        "_type": "prose",
+        "src": "# Price It From the Network, Not From a Blog Post\n\nYou sized the compute limit. The other half of the fee is the **price** per compute unit — and the right price is not a number you copy from a tutorial. It is derived from what the network actually charged recently for the accounts you are about to write.\n\n## Scope the query to your writable accounts\n\n`getRecentPrioritizationFees` accepts an array of **writable** account addresses and scopes its answer to contention on exactly those accounts. Pass the accounts your transaction writes — the **vault PDA** and the **fee payer** — not an empty array. An empty array is the mistake that makes every estimate identical and useless: you get a network-wide figure instead of one scoped to the contention you will actually hit.\n\nApply the result with `setTransactionMessageComputeUnitPrice(microLamports, message)` — a `bigint`. (Note the fork: v1 messages use `setTransactionMessagePriorityFeeLamports`, a total in lamports, instead.)\n\n## Honest framing\n\nPriority fees are optional under normal conditions and only matter under congestion. A hardcoded `10,000` µlamports/CU is a silent overpay on a quiet devnet — which, now that you can *measure* the fee, you can see for yourself. So derive it: take a percentile of the recently observed fees, and **floor** it so a quiet slot (where observed fees are all zero) does not hand you a price of 0 when you do want to be prioritized.\n\n## One of each, only\n\nCompute-budget instructions are transaction-wide, and only **one** of each variant is permitted. Add a second `SetComputeUnitPrice` and the transaction fails with `DuplicateInstruction`.\n\n## The exercise\n\n`priceFee(recentFeesPipe, percentile, floorMicroLamports)` turns the observed fees for your writable accounts into a price, in four numbered subgoals:\n\n1. **Parse** the pipe-joined observed fees. (done for you)\n2. **Sort and pick** the value at the chosen percentile.\n3. **Floor** it against the minimum so a quiet slot does not produce 0.\n4. **Return** the price as `{ microLamports }`.\n"
+      },
+      {
+        "_key": "price",
+        "_type": "code",
+        "buildType": "standard",
+        "deployable": false,
+        "hints": [
+          "Subgoal 2: sort a copy ascending, then `index = Math.floor((percentile / 100) * (sorted.length - 1))`. Use length - 1 so the top percentile lands on the last element, not past it.",
+          "Subgoal 3: `Math.max(picked, floorMicroLamports)` — the floor is what stops a quiet slot from pricing at 0.",
+          "Subgoal 4: return `{ microLamports: floored }`."
+        ],
+        "language": "typescript",
+        "solution": "/**\n * Derive a priority-fee price from recently observed fees.\n */\nfunction priceFee(\n  recentFeesPipe: string,\n  percentile: number,\n  floorMicroLamports: number\n): { microLamports: number } {\n  // Subgoal 1 — parse the pipe-joined observed fees (done for you).\n  const fees = recentFeesPipe === \"\" ? [] : recentFeesPipe.split(\"|\").map(Number);\n\n  // Subgoal 2 — sort ascending and pick the value at `percentile`.\n  const sorted = fees.slice().sort((a, b) => a - b);\n  const index = sorted.length === 0 ? -1 : Math.floor((percentile / 100) * (sorted.length - 1));\n  const picked = index === -1 ? 0 : sorted[index];\n\n  // Subgoal 3 — floor it so a quiet slot (all zeros) does not produce 0.\n  const floored = Math.max(picked, floorMicroLamports);\n\n  // Subgoal 4 — return the price.\n  return { microLamports: floored };\n}\n",
+        "starter": "/**\n * Derive a priority-fee price from recently observed fees.\n *\n * `recentFeesPipe` is a pipe-joined list of observed micro-lamport-per-CU fees\n * for your writable accounts, e.g. \"0|100|300|500\". Build the price in four\n * numbered subgoals.\n *\n * @param recentFeesPipe    observed fees, pipe-joined\n * @param percentile        0..100 — which observed fee to take\n * @param floorMicroLamports minimum price so a quiet slot does not yield 0\n */\nfunction priceFee(\n  recentFeesPipe: string,\n  percentile: number,\n  floorMicroLamports: number\n): { microLamports: number } {\n  // Subgoal 1 — parse the pipe-joined observed fees (done for you).\n  const fees = recentFeesPipe === \"\" ? [] : recentFeesPipe.split(\"|\").map(Number);\n\n  // Subgoal 2 — sort ascending and pick the value at `percentile`.\n  //   index = Math.floor((percentile / 100) * (fees.length - 1))\n  // const picked = ...\n\n  // Subgoal 3 — floor it so a quiet slot (all zeros) does not produce 0.\n  // const floored = Math.max(picked, floorMicroLamports)\n\n  // Subgoal 4 — return the price.\n  return { microLamports: 0 };\n}\n",
+        "tests": [
+          {
+            "description": "A quiet slot (all zeros) is floored to the minimum, not left at 0",
+            "expectedOutput": "result.microLamports === 1000",
+            "id": "t1",
+            "input": "'0|0|0|0|0', 50, 1000"
+          },
+          {
+            "description": "The median of five observed fees",
+            "expectedOutput": "result.microLamports === 300",
+            "id": "t2",
+            "input": "'100|200|300|400|500', 50, 50"
+          },
+          {
+            "description": "A higher percentile picks a higher observed fee",
+            "expectedOutput": "result.microLamports === 400",
+            "id": "t3",
+            "input": "'100|200|300|400|500', 90, 50"
+          },
+          {
+            "description": "An observed fee above the floor is kept as-is",
+            "expectedOutput": "result.microLamports === 5000",
+            "id": "t4",
+            "input": "'5000|10000', 50, 1000"
+          },
+          {
+            "description": "The floor bites when the picked observed fee is below it",
+            "expectedOutput": "result.microLamports === 1000",
+            "id": "t5",
+            "input": "'10|20|30', 0, 1000"
+          }
+        ],
+        "tutorNotes": [
+          "Learners pass an empty account array to the fee query, so every estimate is a network-wide number rather than one scoped to the vault PDA and fee payer — identical across calls and useless for pricing your contention.",
+          "They skip the floor, so on a quiet devnet the percentile of all-zero observed fees is 0 and the transaction gets no prioritization when they actually wanted some.",
+          "They index the percentile off `length` instead of `length - 1`, running one past the end of the sorted array on the top percentile and reading `undefined`.",
+          "They add a second `SetComputeUnitPrice` thinking more is better; only one of each compute-budget variant is allowed, and a duplicate fails the whole transaction with `DuplicateInstruction`."
+        ]
+      },
+      {
+        "_key": "check",
+        "_type": "quiz",
+        "questions": [
+          {
+            "explanation": "The account array is what scopes the estimate to your write set. Pass the vault PDA and the fee payer and the number tracks the contention you will actually hit; pass an empty array and every call returns the same unscoped figure, which cannot price your transaction.",
+            "id": "q1",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "Roughly identical and useless — with no accounts to scope to, you get a network-wide figure, not the contention on the vault PDA and fee payer you are actually writing"
+              },
+              {
+                "correct": false,
+                "feedback": "Network-wide is exactly the wrong scope. You want the fees seen for the accounts YOU will write, because that is the contention your transaction competes in.",
+                "id": "b",
+                "label": "More accurate, because it samples the whole network"
+              },
+              {
+                "correct": false,
+                "feedback": "It is not zero — it returns a broad, unscoped figure. The problem is that it does not reflect your accounts, so it does not move with the contention you care about.",
+                "id": "c",
+                "label": "Always zero, because no accounts were specified"
+              }
+            ],
+            "prompt": "You call `getRecentPrioritizationFees` with an empty account array instead of your writable accounts. Predict what your estimate looks like across many calls."
+          },
+          {
+            "explanation": "Priority fees are optional and often zero on a quiet devnet, so a raw percentile can hand you a price of 0 — no prioritization. Flooring keeps a minimum so the fee still buys ordering when you want it, while a busy slot pushes the price above the floor on its own.",
+            "id": "q2",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "On a quiet slot the observed fees can all be zero, so the percentile is 0 — the floor keeps a minimum price when you still want the transaction prioritized"
+              },
+              {
+                "correct": false,
+                "feedback": "A floor is a minimum, not a cap. It stops the price falling to zero on a quiet slot; it does not limit how high a busy slot can push it.",
+                "id": "b",
+                "label": "The floor is the maximum you are willing to pay, capping the fee"
+              },
+              {
+                "correct": false,
+                "feedback": "The percentile is computed fine on any sample. The floor addresses a different problem: a legitimately-zero result on a quiet network.",
+                "id": "c",
+                "label": "Percentiles cannot be computed on small samples, so the floor substitutes for them"
+              }
+            ],
+            "prompt": "Why floor the derived price against a minimum instead of taking the raw percentile of observed fees?"
+          },
+          {
+            "explanation": "Compute-budget instructions (`SetComputeUnitLimit`, `SetComputeUnitPrice`) are transaction-wide and you may include only one of each. A duplicate is `DuplicateInstruction`, which fails the whole transaction — set the price once, from your derived number.",
+            "id": "q3",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "The transaction fails with `DuplicateInstruction` — only one of each compute-budget variant is permitted per transaction"
+              },
+              {
+                "correct": false,
+                "feedback": "There is no override. Compute-budget instructions are transaction- wide and singular; a second one of the same variant is rejected, not applied.",
+                "id": "b",
+                "label": "The second one wins and overrides the first"
+              },
+              {
+                "correct": false,
+                "feedback": "They do not sum. Two of the same compute-budget instruction is a hard error, so the transaction never runs to combine anything.",
+                "id": "c",
+                "label": "They add together into a higher price"
+              }
+            ],
+            "prompt": "You set the compute unit price, then add a second `SetComputeUnitPrice` instruction to bump it. Predict the result."
+          }
+        ]
+      }
+    ],
+    "skills": [
+      "priority-fees",
+      "compute-budget",
+      "transaction-fees",
+      "transactions",
+      "solana-kit"
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "price-the-priority-fee"
+    },
+    "title": "Price It From the Network, Not From a Blog Post"
+  },
+  {
+    "_id": "lesson-dsk-publish-the-package",
+    "_type": "lesson",
+    "blocks": [
+      {
+        "_key": "intro",
+        "_type": "prose",
+        "src": "# Publish It\n\nThis is the module milestone: a real, versioned client on the public npm registry, published from CI with build provenance, and installed back from the registry to prove it works for someone who is not you.\n\n> **Milestone honesty.** No block on this platform can verify \"this package is on npm\" yet, so the milestone is self-reported — you paste the package URL at the end. The work is real; the check is manual.\n\n## Trusted publishing, not a token\n\nThe modern path is npm **trusted publishing (OIDC)** from GitHub Actions — no `NPM_TOKEN` secret anywhere. The workflow proves its identity to npm with a short-lived OIDC token GitHub mints for the run, and npm attaches build provenance automatically. A provenance-attested CI publish is exactly what a bounty reviewer wants to see: proof the bytes on the registry were built from the commit you point at.\n\nIt needs three things: the workflow requests `permissions: { id-token: write, contents: read }`, the runner has npm CLI ≥ 11.5.1, and you configured the trusted publisher once on the package's page at npmjs.com. The whole flow is browser-only — you create the repo, edit files, and commit the workflow on github.com, and Actions runs `npx codama run js` and `npm publish` for you.\n\n```yaml\n# .github/workflows/publish.yml  (ships as prose — you author the decision logic below)\nname: publish\non:\n  release:\n    types: [published]\npermissions:\n  id-token: write\n  contents: read\njobs:\n  publish:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with: { node-version: \"22\", registry-url: \"https://registry.npmjs.org\" }\n      - run: npm ci\n      - run: npx codama run js   # regenerate the client from the IDL\n      - run: npm publish         # OIDC provenance is automatic; no token\n```\n\nThe fallback, only if trusted publishing is not set up, is a `NPM_TOKEN` secret plus `npm publish --provenance --access public`.\n\n## The one failure everyone hits\n\nA **scoped** package (`@your-scope/vault-client`) is private by default, and the very first publish needs `--access public` or npm rejects it with a **402 Payment Required** — npm thinks you are trying to publish a private package without a paid plan. It is the single most common first-publish failure. Set access to public on that first publish and it never recurs.\n\n## The exercise\n\nYou author the decision logic a publish step runs before it calls `npm publish`: given whether the package is scoped, whether this is the first publish, whether you passed the public-access flag, whether a trusted publisher is configured, and whether the npm CLI is new enough — decide the auth method and catch the 402 before it happens. Signature and rules are in the starter; there is no pattern shown. Write it.\n"
+      },
+      {
+        "_key": "gate",
+        "_type": "code",
+        "buildType": "standard",
+        "deployable": false,
+        "hints": [
+          "auth is `oidc` only when BOTH a trusted publisher is configured AND the CLI is new enough; otherwise `token`.",
+          "The 402 only bites a scoped package on its FIRST publish when the public-access flag is missing. All three must be true.",
+          "When you stop the 402, return `ok: false` — detecting it but leaving `ok: true` lets the pipeline walk straight into it."
+        ],
+        "language": "typescript",
+        "solution": "/**\n * The publish decision logic.\n */\nfunction publishGate(\n  isScoped: boolean,\n  isFirstPublish: boolean,\n  accessPublicFlag: boolean,\n  hasTrustedPublisher: boolean,\n  npmCliOk: boolean\n): { ok: boolean; error: string; auth: string } {\n  const auth = hasTrustedPublisher && npmCliOk ? \"oidc\" : \"token\";\n\n  if (isScoped && isFirstPublish && !accessPublicFlag) {\n    return { ok: false, error: \"E402_SCOPED_NEEDS_ACCESS_PUBLIC\", auth };\n  }\n\n  return { ok: true, error: \"\", auth };\n}\n",
+        "starter": "/**\n * The publish decision logic. INDEPENDENT-WRITE — no pattern is shown; write it\n * from the spec.\n *\n * Decide the auth method and pre-empt the scoped-first-publish 402.\n *\n * @param isScoped            is the package name scoped, e.g. \"@scope/name\"\n * @param isFirstPublish      is this the first publish of this package\n * @param accessPublicFlag    did the command pass `--access public`\n * @param hasTrustedPublisher is a trusted publisher configured on npmjs.com\n * @param npmCliOk            is the npm CLI >= 11.5.1\n *\n * Return `{ ok, error, auth }` where:\n *   - auth is \"oidc\" when a trusted publisher is configured AND the CLI is new\n *     enough; otherwise \"token\" (the fallback route).\n *   - a scoped package's FIRST publish WITHOUT the public-access flag must be\n *     stopped: return ok=false and error=\"E402_SCOPED_NEEDS_ACCESS_PUBLIC\".\n *   - every other case returns ok=true and error=\"\".\n */\nfunction publishGate(\n  isScoped: boolean,\n  isFirstPublish: boolean,\n  accessPublicFlag: boolean,\n  hasTrustedPublisher: boolean,\n  npmCliOk: boolean\n): { ok: boolean; error: string; auth: string } {\n  // Write it.\n  return { ok: true, error: \"\", auth: \"token\" };\n}\n",
+        "tests": [
+          {
+            "description": "Trusted publisher + new CLI selects OIDC",
+            "expectedOutput": "result.ok === true && result.auth === 'oidc'",
+            "id": "t1",
+            "input": "true, true, true, true, true"
+          },
+          {
+            "description": "Scoped first publish without --access public is stopped with the 402 error",
+            "expectedOutput": "result.ok === false && result.error === 'E402_SCOPED_NEEDS_ACCESS_PUBLIC'",
+            "id": "t2",
+            "input": "true, true, false, true, true"
+          },
+          {
+            "description": "No trusted publisher falls back to the token route",
+            "expectedOutput": "result.ok === true && result.auth === 'token'",
+            "id": "t3",
+            "input": "true, false, true, false, true"
+          },
+          {
+            "description": "An old npm CLI cannot use OIDC even with a trusted publisher",
+            "expectedOutput": "result.auth === 'token'",
+            "id": "t4",
+            "input": "false, false, false, true, false"
+          },
+          {
+            "description": "An unscoped first publish without the flag is fine — the 402 is scoped-only",
+            "expectedOutput": "result.ok === true && result.auth === 'oidc'",
+            "id": "t5",
+            "input": "false, true, false, true, true"
+          },
+          {
+            "description": "A scoped later publish without the flag is fine — the 402 only bites the first publish",
+            "expectedOutput": "result.ok === true",
+            "id": "t6",
+            "input": "true, false, false, true, true"
+          }
+        ],
+        "tutorNotes": [
+          "Learners gate the 402 on `isScoped` alone, firing it on every scoped publish instead of only the first — the missing-flag failure only happens on the first publish.",
+          "They compute `auth` from `hasTrustedPublisher` alone and forget the npm-CLI floor, so an old runner that physically cannot do OIDC is still told to use `oidc`.",
+          "They stop an unscoped first publish for a missing `--access public`; the 402 is a scoped-package rule only, and unscoped packages are public by default.",
+          "They set the error string but leave `ok: true`, so the publish proceeds into the exact 402 they just detected."
+        ]
+      },
+      {
+        "_key": "check",
+        "_type": "quiz",
+        "questions": [
+          {
+            "explanation": "Scoped packages default to private, so npm treats a first publish with no access flag as a paid private publish and returns 402. `--access public` on that first publish sets the package public for good; later publishes no longer need it.",
+            "id": "q1",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "Publish with `--access public` — a scoped package is private by default, and the first publish must opt into public or npm reads it as a paid private package"
+              },
+              {
+                "correct": false,
+                "feedback": "402 is npm's way of saying \"this looks like a private publish on a free plan\". The package is meant to be public; the fix is to say so with `--access public`, not to pay.",
+                "id": "b",
+                "label": "Upgrade to a paid npm plan — 402 means the registry requires payment"
+              },
+              {
+                "correct": false,
+                "feedback": "You can, but you do not have to lose your scope. Scoped public packages are normal — they just need `--access public` on the first publish.",
+                "id": "c",
+                "label": "Rename the package to an unscoped name"
+              }
+            ],
+            "prompt": "Your first CI publish of `@your-scope/vault-client` fails with `402 Payment Required`. You are on npm's free plan and the package is meant to be public. What is the fix?"
+          },
+          {
+            "explanation": "A stored token is a standing liability — anything that reads the repo's secrets can publish as you. OIDC mints a short-lived identity per run and npm records provenance, so a reviewer can verify the published bytes trace to a specific commit. That attestation is the thing a bounty reviewer is looking for.",
+            "id": "q2",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "There is no long-lived secret to leak, and npm attaches provenance proving the bytes were built from the exact commit the workflow ran"
+              },
+              {
+                "correct": false,
+                "feedback": "It does not skip the build — the workflow still runs codegen and `npm publish`. The gain is security and provenance, not speed.",
+                "id": "b",
+                "label": "OIDC publishes faster because it skips the build step"
+              },
+              {
+                "correct": false,
+                "feedback": "A token can publish scoped packages (that is the fallback route). The reason to prefer OIDC is no stored secret plus automatic provenance, not a capability gap.",
+                "id": "c",
+                "label": "A token cannot publish scoped packages at all"
+              }
+            ],
+            "prompt": "Why prefer OIDC trusted publishing over storing an `NPM_TOKEN` secret in the repo?"
+          }
+        ]
+      },
+      {
+        "_key": "milestone",
+        "_type": "openEnded",
+        "maxWords": 60,
+        "prompt": "Publish the client and paste the public npm URL of your package (e.g. https://www.npmjs.com/package/@your-scope/vault-client). This is self-reported — record the URL you will install from in the next module."
+      }
+    ],
+    "skills": [
+      "npm-publishing",
+      "ci",
+      "deployment",
+      "technical-writing"
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "publish-the-package"
+    },
+    "title": "Publish It"
+  },
+  {
+    "_id": "lesson-dsk-signers-chains-and-the-legacy-seam",
+    "_type": "lesson",
+    "blocks": [
+      {
+        "_key": "intro",
+        "_type": "prose",
+        "src": "# Which Signer, and Why\n\nA Wallet Standard wallet advertises what it can do as a list of **features**. Your job is to pick the right signer for the feature the wallet actually offers — and to know who broadcasts the transaction once it is signed, because that changes what your app is responsible for.\n\n## The taxonomy\n\nFrom `@solana/wallet-account-signer` (React equivalents in `@solana/react`):\n\n| Advertised feature | Signer factory | Result | Who broadcasts |\n| --- | --- | --- | --- |\n| `solana:signTransaction` | `createTransactionSignerFromWalletAccount` | a `TransactionModifyingSigner` | **your app** — you get the signed bytes and send them |\n| `solana:signAndSendTransaction` | `createTransactionSendingSignerFromWalletAccount` | a sending signer | **the wallet** — you never see the signed bytes |\n| `solana:signMessage` | `createMessageSignerFromWalletAccount` | a message signer | nobody — you cannot send a transaction with only this |\n\n`createSignerFromWalletAccount` inspects the features at call time and throws if neither transaction feature exists.\n\n## The rule for *this* app\n\nWhen a wallet advertises both transaction features, this app prefers `solana:signTransaction` — the one where **your app broadcasts**. That is not the universal default; it is the right call here because module 3 simulates the transaction, sizes its compute budget, and prices a priority fee, all of which have to happen to a transaction *you* still hold before it goes out. A sending signer hands broadcast to the wallet and takes that control away. Prefer the modifying signer; fall back to the sending signer only when the wallet offers nothing else.\n\n## Chains are literal, and a wallet can say no\n\nChain ids are strings: `'solana:devnet'`, `'solana:mainnet'`. A connected account can **refuse** a chain — you ask it to sign for `solana:devnet` and it throws because it is a mainnet-only account. That is a real runtime error worth handling, not an edge case.\n\n## The seam — read it, don't write it\n\nThe old stack has not gone away. `@solana/web3.js` v1 still holds npm's `latest` tag and out-downloads Kit (roughly 2.1M vs 1.65M weekly at the time of writing), and `@solana/wallet-adapter-react` is around 810k/week with a repo that is still maintained. \"Canonical\" and \"what you will be paid to touch\" have diverged: you will open codebases that use `useWallet()`, `publicKey` and `sendTransaction`, and you need to read them fluently — map `useWallet()` to Wallet Standard discovery, `publicKey` to the connected account's `address`, `sendTransaction` to a sending signer. Learn to read it. Do not learn to write it; this app does not.\n\n## The exercise\n\n`selectSigner` receives a pipe-joined list of the features a wallet advertises and returns `{ signer, broadcaster }`. Every branch is present in the starter but scrambled, with one decoy. Order them so this app's preference — a modifying signer when it can get one — comes out right.\n"
+      },
+      {
+        "_key": "select",
+        "_type": "code",
+        "buildType": "standard",
+        "deployable": false,
+        "hints": [
+          "Check `solana:signTransaction` before `solana:signAndSendTransaction` — this app prefers to hold and broadcast the transaction itself.",
+          "Leave the decoy commented. A message signer cannot send a transaction, so it must never map to a sending/wallet result.",
+          "Order: signTransaction (modifying/app) → signAndSendTransaction (sending/wallet) → signMessage (message/none) → nothing (none/none)."
+        ],
+        "language": "typescript",
+        "solution": "/**\n * Choose the signer for the features a wallet advertises.\n *\n * `features` is a pipe-joined list of Wallet Standard feature ids, e.g.\n *   \"solana:signTransaction|solana:signMessage\"\n * Empty string means the wallet advertises no signing feature.\n *\n * This app prefers a modifying signer (it must hold the transaction to size and\n * price it in module 3), so signTransaction is checked before the sending\n * signer, and a message-only wallet cannot send at all.\n */\nfunction selectSigner(features: string): { signer: string; broadcaster: string } {\n  const has = (f: string): boolean =>\n    features === \"\" ? false : features.split(\"|\").indexOf(f) !== -1;\n\n  if (has(\"solana:signTransaction\")) return { signer: \"modifying\", broadcaster: \"app\" }; // (B) preferred\n  if (has(\"solana:signAndSendTransaction\")) return { signer: \"sending\", broadcaster: \"wallet\" }; // (A) fallback\n  if (has(\"solana:signMessage\")) return { signer: \"message\", broadcaster: \"none\" }; // (C) cannot send\n  return { signer: \"none\", broadcaster: \"none\" }; // (E) nothing usable\n}\n",
+        "starter": "/**\n * Choose the signer for the features a wallet advertises.\n *\n * `features` is a pipe-joined list of Wallet Standard feature ids, e.g.\n *   \"solana:signTransaction|solana:signMessage\"\n * Empty string means the wallet advertises no signing feature.\n *\n * Return { signer, broadcaster }:\n *   - \"solana:signTransaction\"        -> signer \"modifying\", broadcaster \"app\"\n *   - \"solana:signAndSendTransaction\" -> signer \"sending\",   broadcaster \"wallet\"\n *   - \"solana:signMessage\" only       -> signer \"message\",   broadcaster \"none\"\n *   - nothing usable                  -> signer \"none\",      broadcaster \"none\"\n *\n * PARSONS: the branches are all here but scrambled, plus one decoy. Order them\n * so THIS app's preference wins — a modifying signer whenever the wallet can\n * offer one, because module 3 must still hold the transaction to size and price\n * it before broadcast.\n */\nfunction selectSigner(features: string): { signer: string; broadcaster: string } {\n  const has = (f: string): boolean =>\n    features === \"\" ? false : features.split(\"|\").indexOf(f) !== -1;\n\n  // --- reorder these branches ---------------------------------------------\n  if (has(\"solana:signAndSendTransaction\")) return { signer: \"sending\", broadcaster: \"wallet\" }; // (A)\n  if (has(\"solana:signTransaction\")) return { signer: \"modifying\", broadcaster: \"app\" }; // (B)\n  if (has(\"solana:signMessage\")) return { signer: \"message\", broadcaster: \"none\" }; // (C)\n  // if (has(\"solana:signMessage\")) return { signer: \"sending\", broadcaster: \"wallet\" }; // (D) DECOY — a message signer cannot send\n  return { signer: \"none\", broadcaster: \"none\" }; // (E)\n}\n",
+        "tests": [
+          {
+            "description": "signTransaction gives a modifying signer, app broadcasts",
+            "expectedOutput": "result.signer === 'modifying' && result.broadcaster === 'app'",
+            "id": "t1",
+            "input": "'solana:signTransaction'"
+          },
+          {
+            "description": "signAndSendTransaction gives a sending signer, wallet broadcasts",
+            "expectedOutput": "result.signer === 'sending' && result.broadcaster === 'wallet'",
+            "id": "t2",
+            "input": "'solana:signAndSendTransaction'"
+          },
+          {
+            "description": "A message-only wallet cannot send a transaction",
+            "expectedOutput": "result.signer === 'message' && result.broadcaster === 'none'",
+            "id": "t3",
+            "input": "'solana:signMessage'"
+          },
+          {
+            "description": "No signing feature at all yields none/none",
+            "expectedOutput": "result.signer === 'none' && result.broadcaster === 'none'",
+            "id": "t4",
+            "input": "''"
+          },
+          {
+            "description": "The discriminator: a wallet advertising BOTH transaction features gets the modifying signer, because this app must broadcast",
+            "expectedOutput": "result.signer === 'modifying' && result.broadcaster === 'app'",
+            "id": "t5",
+            "input": "'solana:signAndSendTransaction|solana:signTransaction|solana:signMessage'"
+          }
+        ],
+        "tutorNotes": [
+          "Learners leave the sending-signer check first, so a wallet advertising both features hands broadcast to the wallet — and module 3 can no longer simulate, size, or price the transaction because it never holds it.",
+          "They uncomment the decoy that routes `solana:signMessage` to a sending signer; a message signer cannot send a transaction at all, only prove identity.",
+          "They treat an empty feature list as message-signing; no signing feature means none/none, which is the case `createSignerFromWalletAccount` throws on.",
+          "They assume `signAndSendTransaction` is always better because the wallet does more work; for this app it removes exactly the control the compute-budget and priority-fee lessons depend on."
+        ]
+      },
+      {
+        "_key": "retrieval",
+        "_type": "quiz",
+        "questions": [
+          {
+            "explanation": "A sending signer moves broadcast into the wallet: you hand it a transaction message and get a signature, never the signed bytes. That is why this app prefers a modifying signer — it needs to hold the transaction to size and price it before it goes out.",
+            "id": "q1",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "The wallet broadcasts, and your app never sees the signed bytes — it gets a signature back, not a transaction to send"
+              },
+              {
+                "correct": false,
+                "feedback": "That is the `signTransaction` path. `signAndSendTransaction` means the wallet does the sending; you never hold the signed bytes.",
+                "id": "b",
+                "label": "Your app broadcasts after the wallet returns the signed transaction"
+              },
+              {
+                "correct": false,
+                "feedback": "The wallet sends as part of the same operation. Confirmation is a later, separate concern — but the broadcast already happened, in the wallet.",
+                "id": "c",
+                "label": "Neither broadcasts until you call a separate confirm step"
+              }
+            ],
+            "prompt": "A wallet advertises only `solana:signAndSendTransaction`. You build a sending signer and sign. Predict who broadcasts and what your app sees."
+          },
+          {
+            "explanation": "A connected account can decline a chain it is not scoped to, and it surfaces as a thrown error at sign time. Handle it like any other runtime failure — the chain id was fine; the account just does not serve that cluster.",
+            "id": "q2",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "The account can refuse a chain — it is scoped to a different cluster (e.g. mainnet-only) and rejects the devnet request"
+              },
+              {
+                "correct": false,
+                "feedback": "Chain ids are literally these strings — `'solana:devnet'`, `'solana:mainnet'`. The string is correct; the account simply does not serve that chain.",
+                "id": "b",
+                "label": "Chain ids must be numeric; `'solana:devnet'` is malformed"
+              },
+              {
+                "correct": false,
+                "feedback": "Signing is not chain-gated like that. The account refused the chain itself — a real runtime error to handle, not a signing-capability gap.",
+                "id": "c",
+                "label": "Devnet does not support message signing"
+              }
+            ],
+            "prompt": "You ask a connected account to sign for `'solana:devnet'` and it throws. Predict the most likely cause."
+          },
+          {
+            "explanation": "\"Canonical\" and \"what you will be paid to touch\" have diverged, so the skill is bilingual: build in Kit + Wallet Standard, but read the wallet-adapter idioms fluently enough to map them. Reading is a requirement; writing is not.",
+            "id": "q3",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "Read it fluently and map it — `useWallet()` to Wallet Standard discovery, `publicKey` to the account `address`, `sendTransaction` to a sending signer — without adopting the stack"
+              },
+              {
+                "correct": false,
+                "feedback": "The course's whole point is the other direction: Kit + Wallet Standard is what you build. You read the old stack; you do not spread it.",
+                "id": "b",
+                "label": "Migrate the whole app to wallet-adapter for consistency"
+              },
+              {
+                "correct": false,
+                "feedback": "It is neither deprecated nor irrelevant — web3.js v1 still holds npm's `latest` tag and out-downloads Kit. You will meet it, so you must be able to read it.",
+                "id": "c",
+                "label": "Ignore it — wallet-adapter is deprecated and irrelevant"
+              }
+            ],
+            "prompt": "You inherit a codebase that uses `useWallet()`, `publicKey` and `sendTransaction` from wallet-adapter. What does this course tell you to do?"
+          },
+          {
+            "explanation": "This is the Course 3 result you carry into signer selection: a program-owned account is debited by its program directly, so the owner signs the instruction and the PDA never signs its own withdrawal. Knowing who must sign is the same question you are answering when you pick a wallet signer.",
+            "id": "q4",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "The owner signs; the PDA does not sign its own withdrawal — the program debits the program-owned vault directly, which is why signer seeds are not the mechanism there"
+              },
+              {
+                "correct": false,
+                "feedback": "A bump is not a signature. The program owns the vault account, so it debits it directly; the PDA does not — and cannot — sign its own withdrawal. Course 3 spent a lesson on exactly this.",
+                "id": "b",
+                "label": "The PDA signs for itself using its bump as the signature"
+              },
+              {
+                "correct": false,
+                "feedback": "The instruction still needs the owner's signature to authorize the withdrawal. What is NOT needed is a PDA signature over its own debit — the program moves the lamports directly.",
+                "id": "c",
+                "label": "No signature is needed because the vault is program-owned"
+              }
+            ],
+            "prompt": "Seeded from Course 3. A withdrawal moves lamports out of a program-owned vault PDA. Who signs the withdraw instruction, and does the PDA sign for itself?"
+          },
+          {
+            "explanation": "Finding the canonical bump means retrying the derivation with a decreasing bump until the result falls off the ed25519 curve — real compute. Storing the bump the search found lets every later instruction re-validate the PDA cheaply, which is why the vault carries a `bump` field.",
+            "id": "q5",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "Re-deriving searches bumps downward from 255 until the address is off-curve, which costs compute every call; storing the found bump lets later instructions validate the PDA without repeating the search"
+              },
+              {
+                "correct": false,
+                "feedback": "The canonical bump for a fixed set of seeds does not change. It is stored to avoid re-running the search, not because it drifts.",
+                "id": "b",
+                "label": "The bump changes over time, so it must be cached to stay consistent"
+              },
+              {
+                "correct": false,
+                "feedback": "Rent-exemption is about the account's lamport balance versus its size, unrelated to the bump. Storing the bump is a compute optimization.",
+                "id": "c",
+                "label": "Storing it is required for the account to be rent-exempt"
+              }
+            ],
+            "prompt": "Also from Course 3. Your vault account stores its canonical `bump`. Why store it instead of re-deriving it each time?"
+          }
+        ]
+      }
+    ],
+    "skills": [
+      "signers",
+      "wallet-standard",
+      "solana-kit",
+      "web3-frontend"
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "signers-chains-and-the-legacy-seam"
+    },
+    "title": "Which Signer, and Why"
+  },
+  {
+    "_id": "lesson-dsk-simulate-before-you-send",
+    "_type": "lesson",
+    "blocks": [
+      {
+        "_key": "intro",
+        "_type": "prose",
+        "src": "# Simulate, Then Size the Transaction\n\nYour deposit works, and it overpays every time. This lesson kills that.\n\n## The cost bug\n\nA priority fee is charged on the compute-unit limit your transaction **requests**, not on what it actually **consumes**. With no `SetComputeUnitLimit`, every non-builtin instruction requests the default **200,000 CU** (clamped at 1,400,000 per transaction). A deposit uses a small fraction of that — so you pay the priority-fee rate on 200,000 CU while consuming maybe a few thousand. Almost every tutorial ships this at the learner's expense. You are going to measure it against your own lesson-7 transaction.\n\n## Simulate, then set the limit\n\nThe fix is: simulate the transaction to learn its real cost, add a small margin, and set the limit to that. In Kit the current path is (version stamp: kit 7.0.0, checked 2026-07-27):\n\n- build the message with `fillTransactionMessageProvisoryResourceLimits` at construction,\n- estimate with `estimateResourceLimitsFactory({ rpc })`,\n- apply with `estimateAndSetResourceLimitsFactory(estimator)`.\n\nThree cautions that cost people hours:\n\n- The **deprecated** line is the compute-unit-named one: `fillTransactionMessageProvisoryComputeUnitLimit`, `estimateComputeUnitLimitFactory`, `estimateAndSetComputeUnitLimitFactory`. The halves are **not** interchangeable with the resource-limit line.\n- The resource estimator returns `{ computeUnitLimit, loadedAccountsDataSizeLimit }` — an object, **not** a bare number. Passing it where a number is expected breaks.\n- Do **not** reach for `@solana-program/compute-budget`'s estimators. Kit absorbed them.\n\nAdd roughly a **10% margin** over the estimate: compute can vary slightly run to run, and a limit set exactly at one observed value will occasionally fail with an exceeded-CU error. Ten percent absorbs the variance without meaningfully raising the fee.\n\n## The worked example\n\n`feeComparison(consumedUnits, microLamportsPerCu)` shows the whole argument in arithmetic: the fee you pay at the 200,000-CU default, the fee you pay at a tightly-sized limit (consumed + 10%), and the difference. It is complete except for one line — the saving — which you wire from the two fees. Run it against your lesson-7 numbers and watch the gap.\n"
+      },
+      {
+        "_key": "compare",
+        "_type": "code",
+        "buildType": "standard",
+        "deployable": false,
+        "hints": [
+          "One line to finish — `savedLamports = defaultFeeLamports - tightFeeLamports`.",
+          "The fee formula is already written: requested CU times price in micro-lamports, divided by 1,000,000.",
+          "Run it with your lesson-7 numbers and read the gap between the default fee and the tight fee."
+        ],
+        "language": "typescript",
+        "solution": "/**\n * WORKED EXAMPLE — the compute-budget overpay, in arithmetic.\n *\n * A priority fee is charged on the REQUESTED compute-unit limit, not on what the\n * transaction consumes. This compares the fee at the 200,000-CU default against\n * a tightly-sized limit (consumed + a 10% margin).\n *\n * It is complete except for ONE line: `savedLamports` is stubbed to 0. Wire it\n * to the difference between the two fees, then run it on your lesson-7 numbers.\n *\n * @param consumedUnits      compute units the transaction actually used\n * @param microLamportsPerCu the priority-fee price, in micro-lamports per CU\n */\nfunction feeComparison(\n  consumedUnits: number,\n  microLamportsPerCu: number\n): {\n  defaultFeeLamports: number;\n  tightLimit: number;\n  tightFeeLamports: number;\n  savedLamports: number;\n} {\n  const DEFAULT_LIMIT = 200000; // the per-instruction default when you set none\n  const tightLimit = Math.ceil(consumedUnits * 1.1); // consumed + ~10% margin\n\n  // fee (lamports) = requested CU * price (micro-lamports/CU) / 1e6\n  const defaultFeeLamports = Math.ceil((DEFAULT_LIMIT * microLamportsPerCu) / 1_000_000);\n  const tightFeeLamports = Math.ceil((tightLimit * microLamportsPerCu) / 1_000_000);\n\n  const savedLamports = defaultFeeLamports - tightFeeLamports;\n\n  return { defaultFeeLamports, tightLimit, tightFeeLamports, savedLamports };\n}\n",
+        "starter": "/**\n * WORKED EXAMPLE — the compute-budget overpay, in arithmetic.\n *\n * A priority fee is charged on the REQUESTED compute-unit limit, not on what the\n * transaction consumes. This compares the fee at the 200,000-CU default against\n * a tightly-sized limit (consumed + a 10% margin).\n *\n * It is complete except for ONE line: `savedLamports` is stubbed to 0. Wire it\n * to the difference between the two fees, then run it on your lesson-7 numbers.\n *\n * @param consumedUnits      compute units the transaction actually used\n * @param microLamportsPerCu the priority-fee price, in micro-lamports per CU\n */\nfunction feeComparison(\n  consumedUnits: number,\n  microLamportsPerCu: number\n): {\n  defaultFeeLamports: number;\n  tightLimit: number;\n  tightFeeLamports: number;\n  savedLamports: number;\n} {\n  const DEFAULT_LIMIT = 200000; // the per-instruction default when you set none\n  const tightLimit = Math.ceil(consumedUnits * 1.1); // consumed + ~10% margin\n\n  // fee (lamports) = requested CU * price (micro-lamports/CU) / 1e6\n  const defaultFeeLamports = Math.ceil((DEFAULT_LIMIT * microLamportsPerCu) / 1_000_000);\n  const tightFeeLamports = Math.ceil((tightLimit * microLamportsPerCu) / 1_000_000);\n\n  const savedLamports = 0; // TODO: defaultFeeLamports - tightFeeLamports\n\n  return { defaultFeeLamports, tightLimit, tightFeeLamports, savedLamports };\n}\n",
+        "tests": [
+          {
+            "description": "The default-limit fee is charged on the full 200,000 CU",
+            "expectedOutput": "result.defaultFeeLamports === 2000",
+            "id": "t1",
+            "input": "1200, 10000"
+          },
+          {
+            "description": "The tight limit is the consumed units plus a 10% margin",
+            "expectedOutput": "result.tightLimit === 1320",
+            "id": "t2",
+            "input": "1200, 10000"
+          },
+          {
+            "description": "The tight-limit fee is charged on the sized request, not the default",
+            "expectedOutput": "result.tightFeeLamports === 14",
+            "id": "t3",
+            "input": "1200, 10000"
+          },
+          {
+            "description": "The saving is the difference between the two fees",
+            "expectedOutput": "result.savedLamports === 1986",
+            "id": "t4",
+            "input": "1200, 10000"
+          },
+          {
+            "description": "A cheaper price still shows a saving from sizing the limit",
+            "expectedOutput": "result.savedLamports === result.defaultFeeLamports - result.tightFeeLamports && result.savedLamports > 0",
+            "id": "t5",
+            "input": "5000, 2000"
+          }
+        ],
+        "tutorNotes": [
+          "Learners wire the saving backwards or leave it at 0, missing the whole point — you were being billed on 200,000 requested CU while consuming a fraction of it.",
+          "They pass the resource estimator's return `{ computeUnitLimit, loadedAccountsDataSizeLimit }` where a bare number is expected, because they assume it returns just the CU number.",
+          "They set the limit exactly at the observed consumption with no margin, so a slightly heavier run exceeds it and the transaction fails on compute units.",
+          "They reach for `@solana-program/compute-budget`'s estimators, which Kit absorbed, or mix the deprecated compute-unit-limit half with the resource-limit half — the two lines are not interchangeable."
+        ]
+      },
+      {
+        "_key": "check",
+        "_type": "quiz",
+        "questions": [
+          {
+            "explanation": "The priority fee multiplies your compute-unit PRICE by your requested LIMIT. Leave the limit unset and the request is 200,000 CU per instruction, so you pay that rate on 200,000 units no matter how little the transaction consumes. Simulate, size the request, and the fee drops.",
+            "id": "q1",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "The requested limit — so an unset limit bills you on the 200,000-CU default regardless of what you actually used"
+              },
+              {
+                "correct": false,
+                "feedback": "The runtime meters consumption to enforce the limit, but the priority fee is priced on what you REQUESTED. That gap is the whole overpay.",
+                "id": "b",
+                "label": "The consumed units — the runtime meters real usage and charges that"
+              },
+              {
+                "correct": false,
+                "feedback": "It is specifically the requested limit. Since the request is normally higher than consumption, sizing the request down is what saves money.",
+                "id": "c",
+                "label": "The larger of the two, whichever is higher"
+              }
+            ],
+            "prompt": "A priority fee is charged against which number — the compute units you requested, or the compute units the transaction consumed?"
+          },
+          {
+            "explanation": "The resource estimator returns both a compute-unit limit and a loaded-accounts-data-size limit, so its result is an object. Use the matching `estimateAndSetResourceLimitsFactory` to apply it, or read `computeUnitLimit` off the object yourself — do not treat it as a bare number, and do not mix it with the deprecated compute-unit-only line.",
+            "id": "q2",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "The estimator returns `{ computeUnitLimit, loadedAccountsDataSizeLimit }` — an object, not a bare number, so you must read `computeUnitLimit` off it or use the paired apply factory"
+              },
+              {
+                "correct": false,
+                "feedback": "Awaiting matters, but the specific breakage here is the shape: it resolves to an object with two limits, not a single CU number.",
+                "id": "b",
+                "label": "The estimator is async and you forgot to await it"
+              },
+              {
+                "correct": false,
+                "feedback": "Simulation is standard. The failure is a type mismatch — you handed an object to something expecting a number.",
+                "id": "c",
+                "label": "The RPC endpoint does not support simulation"
+              }
+            ],
+            "prompt": "You call `estimateResourceLimitsFactory({ rpc })`, get a value back, and pass it straight into a \"set the compute unit limit\" call, which breaks. Why?"
+          },
+          {
+            "explanation": "Compute usage is not perfectly stable between runs, so a limit pinned to a single simulation will sometimes be too low and the transaction fails with an exceeded-CU error. A ~10% margin covers the variance and costs almost nothing, because the fee scales with the limit and 10% more of a small number is still small.",
+            "id": "q3",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "Real consumption varies slightly run to run; a limit set at one observed value will occasionally be exceeded and fail the transaction, and 10% absorbs that without meaningfully raising the fee"
+              },
+              {
+                "correct": false,
+                "feedback": "There is no such rule. The margin is about variance in real usage, not a formatting requirement.",
+                "id": "b",
+                "label": "Solana requires all limits to be multiples of 10%"
+              },
+              {
+                "correct": false,
+                "feedback": "Prioritization comes from the price you set, not from a margin on the limit. The margin is a safety buffer against exceeding the limit on a heavier run.",
+                "id": "c",
+                "label": "The margin is what pays the validator; without it the transaction is not prioritized"
+              }
+            ],
+            "prompt": "Why add roughly a 10% margin over the simulated compute usage instead of setting the limit exactly at what you measured?"
+          }
+        ]
+      }
+    ],
+    "skills": [
+      "compute-budget",
+      "transaction-fees",
+      "simulation",
+      "transactions",
+      "solana-kit"
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "simulate-before-you-send"
+    },
+    "title": "Simulate, Then Size the Transaction"
+  },
+  {
+    "_id": "lesson-dsk-states-errors-and-reads",
+    "_type": "lesson",
+    "blocks": [
+      {
+        "_key": "intro",
+        "_type": "prose",
+        "src": "# Pending, Confirmed, Failed — and What the Chain Actually Says\n\nThe app sends and pays correctly. Now make it honest: drive the UI from real confirmation state and decoded program errors, not from a spinner that guesses.\n\nThis is the course's last technical rung, and it is **independent-write**. Two courses ago you wrote `vault_core.rs` and a hardened Anchor program unaided; you get a spec here, not a pattern.\n\n## The commitment ladder\n\nA transaction advances `processed → confirmed → finalized`, and each rung is honest to display differently. `processed` means a validator saw it; `confirmed` means a supermajority voted on its block; `finalized` means it cannot be rolled back. Show what is true — do not paint \"confirmed\" the moment you hit send.\n\nIn Kit the confirmation path is `sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions })` plus `getSignatureFromTransaction`. **There is no `connection.confirmTransaction` in Kit** — the old catalog's confirmation code cannot be ported line for line. Reads come from your generated client: `fetchVault` and `fetchMaybeVault`.\n\n## The error taxonomy, each mapped to a UI state\n\nNot every failure is a failed transaction. Map each to what is honest:\n\n- **User rejected** — the wallet said no. This never reached the network, so **do not show a failed transaction.** Return the UI to its resting state.\n- **Blockhash expired** — the transaction aged out. This is **retryable**: rebuild with a fresh blockhash and resend.\n- **Preflight failure** — simulation rejected it before it went out. This is **your bug** — surface the logs.\n- **Custom program error** — your program returned a `VaultError`. Decode it with the **generated error map** from your module-1 Codama client — the concrete payoff of generating a client instead of hand-writing one. It is a failure, with a real reason.\n- **Insufficient lamports** — the fee payer cannot cover the transaction. A failure.\n\n## Explorer links\n\nWhen you link a transaction to the explorer, drive the cluster from the app's environment — never hardcode `cluster=mainnet-beta` on what are devnet links. That single hardcode is why so many devnet apps link to a transaction that \"does not exist\".\n\n## The exercise\n\nWrite `nextUiState(current, event)` — a pure reducer that takes the current UI state and one lifecycle-or-error event and returns the next state. The spec is in the starter; there is no pattern shown. It is graded on hidden fixtures. After it passes, ship the app and record the URL.\n"
+      },
+      {
+        "_key": "reduce",
+        "_type": "code",
+        "buildType": "standard",
+        "deployable": false,
+        "hints": [
+          "A `switch` on the event is enough. Lifecycle events map to their own state; the interesting decisions are the error events.",
+          "`user-rejected` returns to `idle`, not `failed` — it never reached the network, so there is no failed transaction to show.",
+          "`blockhash-expired` is `retryable`; the three real failures (`preflight-failure`, `program-error`, `insufficient-lamports`) are `failed`; an unknown event returns `current` unchanged."
+        ],
+        "language": "typescript",
+        "solution": "/**\n * The UI state reducer.\n */\nfunction nextUiState(current: string, event: string): string {\n  switch (event) {\n    case \"submit\":\n      return \"pending\";\n    case \"processed\":\n      return \"processed\";\n    case \"confirmed\":\n      return \"confirmed\";\n    case \"finalized\":\n      return \"finalized\";\n    case \"user-rejected\":\n      return \"idle\"; // never reached the network — not a failure\n    case \"blockhash-expired\":\n      return \"retryable\"; // aged out — rebuild and resend\n    case \"preflight-failure\":\n    case \"program-error\":\n    case \"insufficient-lamports\":\n      return \"failed\";\n    default:\n      return current; // unrecognized event — no change\n  }\n}\n",
+        "starter": "/**\n * The UI state reducer. INDEPENDENT-WRITE — write it from the spec; no pattern\n * is shown, and it is graded on hidden fixtures.\n *\n * Return the next UI state given the current state and one event.\n *\n * Lifecycle events advance the ladder:\n *   \"submit\"    -> \"pending\"\n *   \"processed\" -> \"processed\"\n *   \"confirmed\" -> \"confirmed\"\n *   \"finalized\" -> \"finalized\"\n *\n * Error events map to a state that is HONEST about what happened:\n *   \"user-rejected\"        -> \"idle\"       (never reached the network; NOT a failure)\n *   \"blockhash-expired\"    -> \"retryable\"  (aged out; rebuild and resend)\n *   \"preflight-failure\"    -> \"failed\"     (your bug; surface the logs)\n *   \"program-error\"        -> \"failed\"     (decoded VaultError; a real reason)\n *   \"insufficient-lamports\"-> \"failed\"\n *\n * Any unrecognized event leaves the state unchanged.\n */\nfunction nextUiState(current: string, event: string): string {\n  // Write it.\n  return current;\n}\n",
+        "tests": [
+          {
+            "description": "Submitting moves idle to pending",
+            "expectedOutput": "result === 'pending'",
+            "id": "t1",
+            "input": "'idle', 'submit'"
+          },
+          {
+            "description": "A user rejection returns to idle, not failed — it never reached the network",
+            "expectedOutput": "result === 'idle'",
+            "id": "t2",
+            "input": "'pending', 'user-rejected'"
+          },
+          {
+            "description": "An expired blockhash is retryable, not a hard failure",
+            "expectedOutput": "result === 'retryable'",
+            "id": "t3",
+            "input": "'pending', 'blockhash-expired'"
+          },
+          {
+            "description": "A preflight failure is a failure",
+            "expectedOutput": "result === 'failed'",
+            "id": "t4",
+            "input": "'pending', 'preflight-failure'"
+          },
+          {
+            "description": "A decoded program error is a failure",
+            "expectedOutput": "result === 'failed'",
+            "id": "t5",
+            "input": "'pending', 'program-error'"
+          },
+          {
+            "description": "Insufficient lamports is a failure",
+            "expectedOutput": "result === 'failed'",
+            "id": "t6",
+            "input": "'pending', 'insufficient-lamports'"
+          },
+          {
+            "description": "Confirmation advances the ladder",
+            "expectedOutput": "result === 'confirmed'",
+            "id": "t7",
+            "input": "'processed', 'confirmed'"
+          },
+          {
+            "description": "Finalized is its own honest terminal state",
+            "expectedOutput": "result === 'finalized'",
+            "id": "t8",
+            "input": "'confirmed', 'finalized'"
+          },
+          {
+            "description": "An unrecognized event leaves the state unchanged",
+            "expectedOutput": "result === 'confirmed'",
+            "id": "t9",
+            "input": "'confirmed', 'noise'"
+          }
+        ],
+        "tutorNotes": [
+          "Learners map `user-rejected` to `failed`, painting a red error for a transaction that never left the wallet — it never reached the network, so the honest next state is the resting one.",
+          "They collapse `blockhash-expired` into `failed`, hiding that it is retryable with a fresh blockhash and sending the user back to square one.",
+          "They reach for `connection.confirmTransaction` from memory; Kit has no such method — confirmation is `sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions })`.",
+          "They decode a custom program error by hand instead of using the generated error map from the module-1 client, throwing away the concrete payoff of generating the client."
+        ]
+      },
+      {
+        "_key": "deploy",
+        "_type": "prose",
+        "src": "# Ship the Finished App\n\nWire the reducer into the app: every send drives `nextUiState`, and the view renders from the state — a spinner for `pending`, the explorer link and vault balance for `confirmed`/`finalized`, a retry affordance for `retryable`, the decoded reason for `failed`, and nothing alarming for a plain `idle` after a rejection.\n\nRead the live vault with `fetchMaybeVault` so a not-yet-initialized vault renders as empty rather than throwing, and `fetchVault` once you know it exists.\n\nRedeploy to the same Vercel URL from module 2 — the app grows, it does not restart. Record the URL: it is one of the two artifacts you name in the recap, and Course 5 puts a paid tier on this exact app.\n"
+      },
+      {
+        "_key": "check",
+        "_type": "quiz",
+        "questions": [
+          {
+            "explanation": "A user rejection never reaches the network, so no transaction failed. The honest state is the resting one — the user declined and can try again from a clean slate. Reserve \"failed\" for transactions that actually went out and did not succeed.",
+            "id": "q1",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "No — it never reached the network, so there is nothing that failed on-chain; return the UI to its resting state"
+              },
+              {
+                "correct": false,
+                "feedback": "Nothing was submitted, so there is no transaction to have failed. Showing a red failure for a rejection is dishonest and alarming — the user simply declined.",
+                "id": "b",
+                "label": "Yes — the user's action failed, so show a failed transaction"
+              },
+              {
+                "correct": false,
+                "feedback": "Retry belongs to a blockhash-expired transaction that really went out. A rejection did not go out; the honest state is resting, not failed-with-retry.",
+                "id": "c",
+                "label": "Yes — show it as failed but with a \"retry\" button"
+              }
+            ],
+            "prompt": "The wallet returns a user-rejection. Should the UI show a failed transaction? Predict the honest state."
+          },
+          {
+            "explanation": "A blockhash expires because the transaction aged out before landing — nothing about it was wrong, so a fresh blockhash and a resend is the fix. Program errors and insufficient funds reproduce on resend, so they are failures, not retries.",
+            "id": "q2",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "Blockhash expired — rebuild with a fresh blockhash and resend"
+              },
+              {
+                "correct": false,
+                "feedback": "A program error means the program rejected the operation on its merits. Resending the same transaction reproduces it — that is a failure with a reason, not a retry.",
+                "id": "b",
+                "label": "A custom program error returned by your vault program"
+              },
+              {
+                "correct": false,
+                "feedback": "Resending without funding the payer fails identically. That is a failure until the balance changes, not a retry.",
+                "id": "c",
+                "label": "Insufficient lamports on the fee payer"
+              }
+            ],
+            "prompt": "Which of these transaction outcomes is retryable rather than a hard failure?"
+          },
+          {
+            "explanation": "The generated client carries a decoded error map keyed to your program's `VaultError` codes, so a raw custom-error code becomes a named reason you can show and act on. That map regenerates with the IDL, which is the whole argument for generating the client rather than hand-writing the decoders.",
+            "id": "q3",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "The generated error map from your Codama client — decoding a program error by name is the concrete return on generating a typed client instead of hand-writing one"
+              },
+              {
+                "correct": false,
+                "feedback": "You could hand-write one, but then a changed error enum silently drifts from your switch. The generated map regenerates with the IDL — that is exactly why you generated the client.",
+                "id": "b",
+                "label": "A hardcoded switch you write over the numeric codes"
+              },
+              {
+                "correct": false,
+                "feedback": "The wallet returns a raw code; it does not know your program's error names. Decoding to a name is your client's job, via the generated error map.",
+                "id": "c",
+                "label": "The wallet decodes it before returning"
+              }
+            ],
+            "prompt": "Your vault program returns a custom error and the client surfaces a raw error code. What decodes it into a named reason, and why is that the payoff of this course's approach?"
+          },
+          {
+            "explanation": "`processed` means a validator saw it, `confirmed` means a supermajority voted on its block, and `finalized` means it cannot be rolled back. Painting \"confirmed\" at send time claims a guarantee you do not have — drive the label from the real commitment the confirmation path reports.",
+            "id": "q4",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "No — the ladder is processed then confirmed then finalized, and each means something different; show what is actually true at each rung"
+              },
+              {
+                "correct": false,
+                "feedback": "They are distinct. Send puts the transaction on the wire; confirmation is a later signal that a supermajority voted on its block. Conflating them tells the user something that is not yet true.",
+                "id": "b",
+                "label": "Yes — sending and confirming are the same event in Kit"
+              },
+              {
+                "correct": false,
+                "feedback": "A send that did not throw only means the transaction was accepted for processing, not confirmed. \"Confirmed\" is a specific commitment level you have to wait for.",
+                "id": "c",
+                "label": "Yes, as long as the send did not throw"
+              }
+            ],
+            "prompt": "Is it honest to display \"confirmed\" the moment you call send?"
+          }
+        ]
+      },
+      {
+        "_key": "milestone",
+        "_type": "openEnded",
+        "maxWords": 60,
+        "prompt": "Ship the finished app and paste its public URL. Confirm deposit, withdraw, live vault state, a sized compute budget and a network-priced fee all work. Self-reported — this is one of the two artifacts you name in the recap."
+      }
+    ],
+    "skills": [
+      "confirmation",
+      "error-handling",
+      "account-model",
+      "web3-frontend",
+      "transactions"
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "states-errors-and-reads"
+    },
+    "title": "Pending, Confirmed, Failed — and What the Chain Actually Says"
+  },
+  {
+    "_id": "lesson-dsk-what-you-shipped",
+    "_type": "lesson",
+    "blocks": [
+      {
+        "_key": "intro",
+        "_type": "prose",
+        "src": "# What You Shipped\n\nName it by URL, because that is how a bounty reviewer will see it:\n\n- **the published package** — a real, versioned client on npm,\n- **the deployed app** — a public URL that connects a wallet and moves lamports against your vault,\n- **the program id from Course 3** — the on-chain program underneath both.\n\nOne artifact, three layers: the program you deployed, the client you generated and published, and the app that consumes it. That vertical is the thing that gets paid — not the page on its own.\n\n## The commitment you now owe\n\nIn lesson 3 you wrote a semver policy: new instruction is a minor, a removed field or renamed export is a major, a regenerate-only change is a patch. The moment someone installed your package, that policy stopped being a note to yourself and became a promise to a consumer. Keep it: a major bump when you break them, and a changelog they can read.\n\n## The paid work this shape answers\n\nSuperteam Brasil's SDK and tooling bounties are exactly this shape: \"Build Solana-native plugins for Zeroclaw\" ($5,000 USDG), \"Extend the Solana Vault Standard programs & SDK\" ($4,000), an RPC-reliability SDK ($1,000). Your README is already half of a technical deep dive that Superteam chapters pay $1.5k–$3k for.\n\nTwo honest caveats, because the course thesis depends on being honest:\n\n- **This is not a frontend job promise.** The $5,000 frontend-only listing drew 731 submissions; the SDK and tooling listings sit at 11–52. The odds are on the package, not the page.\n- **Do not read a single day's submission count as a competition rate.** Listings accrue over weeks.\n\nThe thesis, one line: **ship the package, not just the page.**\n\n## Handoff\n\nCourse 5 does not restart this app — it grows it. It adds a paid tier to this exact vault app and meters an endpoint with x402, then gives a budget-capped agent a wallet that can pay for it. Same app, one more layer.\n\nRun the cumulative check — it draws across all three modules and two items back into Course 3 — then record both URLs.\n"
+      },
+      {
+        "_key": "cumulative",
+        "_type": "quiz",
+        "questions": [
+          {
+            "explanation": "Generated code is regenerated output. The wrapper survives regeneration and is what consumers import, so a behavioural fix goes there; an interface fix goes in the IDL and regenerates.",
+            "id": "q1",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "In the wrapper (or the IDL, then regenerate) — never in generated code, which the next codegen overwrites"
+              },
+              {
+                "correct": false,
+                "feedback": "An edit there is erased the next time codegen runs. The fix lives in the wrapper if it is behavioural, or the IDL if the interface is wrong.",
+                "id": "b",
+                "label": "In `src/generated`, since that is where the bug is"
+              },
+              {
+                "correct": false,
+                "feedback": "The tool is fine; your wrapper is the seam you own. Patch there, not in the generator.",
+                "id": "c",
+                "label": "In a fork of Codama"
+              }
+            ],
+            "prompt": "A consumer finds a bug and asks you to patch it in `src/generated/instructions/deposit.ts`. Where does the fix actually belong?"
+          },
+          {
+            "explanation": "Scoped packages default to private, so the first publish without `--access public` looks like a paid private publish and returns 402. The flag sets it public once and for all.",
+            "id": "q2",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "`--access public` — a scoped package is private by default and the first publish must opt into public"
+              },
+              {
+                "correct": false,
+                "feedback": "402 here means npm read it as a private publish on a free plan. The package is public; say so with `--access public`.",
+                "id": "b",
+                "label": "Upgrade to a paid npm plan"
+              },
+              {
+                "correct": false,
+                "feedback": "A token is the auth fallback, unrelated to the 402. The 402 is about access level on the first publish of a scoped package.",
+                "id": "c",
+                "label": "Add an `NPM_TOKEN` secret"
+              }
+            ],
+            "prompt": "Your first CI publish of the scoped package fails with 402. What is the one-flag fix?"
+          },
+          {
+            "explanation": "A sending signer moves broadcast into the wallet. This app prefers a modifying signer precisely so it keeps the transaction long enough to size the compute budget and price the fee before it goes out.",
+            "id": "q3",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "The wallet — you hand it a message and get a signature; you never see the signed bytes"
+              },
+              {
+                "correct": false,
+                "feedback": "That is the `signTransaction` path. `signAndSend` puts broadcast in the wallet, which is why this app prefers the modifying signer.",
+                "id": "b",
+                "label": "Your app, after the wallet returns the signed transaction"
+              },
+              {
+                "correct": false,
+                "feedback": "Nothing schedules a broadcast. With a sending signer the wallet submits it immediately as part of the same call.",
+                "id": "c",
+                "label": "The RPC node, on a schedule"
+              }
+            ],
+            "prompt": "The wallet advertises `solana:signAndSendTransaction` and you use it. Who broadcasts?"
+          },
+          {
+            "explanation": "Kit binds one chain and endpoint per client at build time, so a cluster switch rebuilds the client. In React that is a `useMemo` keyed on the endpoint — nothing rebuilds on a normal render, but a switch does.",
+            "id": "q4",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "A Kit client is bound to one chain and endpoint at build; switching means rebuilding the client (a `useMemo` on the endpoint), not mutating it"
+              },
+              {
+                "correct": false,
+                "feedback": "It is the client binding, not a response cache. The instance is still built for devnet.",
+                "id": "b",
+                "label": "The RPC plugin cached the responses"
+              },
+              {
+                "correct": false,
+                "feedback": "The client's chain is fixed by its RPC plugin at build time; the wallet does not repoint it.",
+                "id": "c",
+                "label": "The wallet overrides the client's chain"
+              }
+            ],
+            "prompt": "You change your app's RPC endpoint to point at mainnet, but it keeps hitting devnet. Why, in Kit terms?"
+          },
+          {
+            "explanation": "Priority fee equals price times requested limit. Leave the limit unset and you request the 200,000-CU default and pay on it — which is why simulating and sizing the limit is real money saved.",
+            "id": "q5",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "The requested limit — the 200,000-CU default per instruction — not what the transaction consumed"
+              },
+              {
+                "correct": false,
+                "feedback": "The fee is priced on the request, not consumption. An unset limit requests 200,000 CU, so you pay on that.",
+                "id": "b",
+                "label": "The consumed compute units"
+              },
+              {
+                "correct": false,
+                "feedback": "There is no flat minimum here; the fee is your price times your requested limit, and the request defaults to 200,000 CU.",
+                "id": "c",
+                "label": "A flat network minimum"
+              }
+            ],
+            "prompt": "With no `SetComputeUnitLimit`, your priority fee is charged against what?"
+          },
+          {
+            "explanation": "A rejection never reaches the network, so the honest state is resting — the user declined and can start again cleanly. \"Failed\" is reserved for transactions that actually went out and did not succeed.",
+            "id": "q6",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "Its resting state — the transaction never reached the network, so nothing failed on-chain"
+              },
+              {
+                "correct": false,
+                "feedback": "Nothing was submitted, so there is no on-chain failure. Showing a failure for a decline is dishonest.",
+                "id": "b",
+                "label": "A failed transaction with the rejection reason"
+              },
+              {
+                "correct": false,
+                "feedback": "Retry is for a transaction that went out and aged out (blockhash expired). A rejection did not go out.",
+                "id": "c",
+                "label": "A retryable state with a resend button"
+              }
+            ],
+            "prompt": "The wallet returns a user rejection. What state should the UI show?"
+          },
+          {
+            "explanation": "Course 3's result carried into your app: the owner signs the withdraw instruction and the program moves the lamports out of the vault it owns directly. Knowing who signs is the same question you answered choosing a wallet signer this course.",
+            "id": "q7",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "The owner — the program debits the program-owned vault directly, so the PDA does not sign its own withdrawal"
+              },
+              {
+                "correct": false,
+                "feedback": "A program-owned account is debited by its program; the PDA does not sign its own withdrawal. Course 3 spent a lesson on why signer seeds are not the mechanism there.",
+                "id": "b",
+                "label": "The vault PDA signs for itself"
+              },
+              {
+                "correct": false,
+                "feedback": "The owner still authorizes the withdrawal with a signature. What is absent is a PDA self-signature over its own debit.",
+                "id": "c",
+                "label": "No signature is required for a program-owned account"
+              }
+            ],
+            "prompt": "Seeded from Course 3. Your app builds a withdrawal from the program-owned vault PDA. Who must sign it?"
+          },
+          {
+            "explanation": "Every Anchor account spends its first 8 bytes on a discriminator hashed from the account type's name. Your generated decoder skips them before reading `owner` and `balance` — the same layout fact you met decoding by hand in Course 1.",
+            "id": "q8",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "The Anchor discriminator — 8 bytes identifying the account type, written at offset 0 and skipped before the fields are read"
+              },
+              {
+                "correct": false,
+                "feedback": "Lamports live in the account's metadata, not in its data bytes. The first 8 data bytes are the discriminator.",
+                "id": "b",
+                "label": "The account's lamport balance, stored inline"
+              },
+              {
+                "correct": false,
+                "feedback": "A fixed-size Anchor account carries no length prefix. The 8 bytes are the type discriminator, the same ones your Course 1 decoder sliced off.",
+                "id": "c",
+                "label": "A length prefix for the struct"
+              }
+            ],
+            "prompt": "Also from Course 3. Your generated `fetchVault` skips the first 8 bytes of the account before decoding. What are they?"
+          }
+        ]
+      },
+      {
+        "_key": "milestone",
+        "_type": "openEnded",
+        "maxWords": 80,
+        "prompt": "Paste both URLs — the published npm package and the deployed app — and the Course 3 program id they sit on. Name the one artifact in its three layers."
+      }
+    ],
+    "skills": [
+      "npm-publishing",
+      "solana-kit",
+      "wallet-standard",
+      "compute-budget",
+      "api-design"
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "what-you-shipped"
+    },
+    "title": "What You Shipped"
+  },
+  {
+    "_id": "lesson-dsk-wrap-the-generated-client",
+    "_type": "lesson",
+    "blocks": [
+      {
+        "_key": "intro",
+        "_type": "prose",
+        "src": "# Wrap It: the API You'd Actually Want to Import\n\nThe generated client works, but nobody wants to import it raw. To make a deposit with the bare generated code a consumer has to know the vault's seeds, derive the PDA themselves, assemble the account list in the right order, and remember that the amount is a `bigint`. That is exactly the knowledge your package exists to hide.\n\nSo you write a wrapper: a small, hand-authored surface — `deposit`, `withdraw`, `getVault` — that takes the two or three things a caller actually has (an owner, an amount) and returns something they can send. The wrapper calls the generated code; it never reimplements it.\n\n## The rule to hammer\n\n**Generated code is regenerated output. Never edit it — always wrap it.** The moment your IDL changes and you run codegen again, every hand-edit inside `src/generated` is gone. The wrapper is the part that survives, the part you version, and the part a bounty reviewer reads. This is exactly where this course diverges from a pure codegen tutorial: the codegen is three commands; the wrapper is the product.\n\n## What the generated surface gives you\n\nFrom your vault IDL, Codama generates (names are stable in Anchor 1.x IDLs):\n\n- `getDepositInstruction`, `getWithdrawInstruction` — instruction builders\n- `fetchVault(rpc, address)`, `fetchMaybeVault(...)` — account readers\n- `getVaultDecoder()` — the raw decoder\n- `findVaultPda(...)` — present because a 1.x IDL declares the seeds\n\nTheir types are Kit types: an `Address` (a branded string), not a `PublicKey`; lamports as `bigint`, not `number`.\n\n## The four subgoals\n\nIn the exercise you write `deposit(owner, amountLamports)`. The generated surface — `deriveVaultPda` and `getDepositInstruction` — is already in the file and must not be edited. Your wrapper does four things, marked as numbered subgoals in the starter:\n\n1. **Derive the PDA** from the owner, using the generated helper. (pre-filled)\n2. **Narrow the input** — a deposit amount must be a positive `bigint`, so reject anything else before building. (pre-filled)\n3. **Build from the generated builder** — call `getDepositInstruction` with the owner, the derived PDA and the amount.\n4. **Return the ergonomic shape** — `{ ok: true, vaultPda, instruction }`, so the caller gets back exactly what they need and never touches a discriminator or a seed.\n\nSubgoals 1 and 2 are written for you. Complete 3 and 4.\n"
+      },
+      {
+        "_key": "wrap",
+        "_type": "code",
+        "buildType": "standard",
+        "deployable": false,
+        "hints": [
+          "Subgoal 3: call the generated builder — `getDepositInstruction({ owner, vaultPda, amountLamports })` — and keep its result in a variable.",
+          "Subgoal 4: return `{ ok: true, vaultPda, instruction }`. Reuse the `vaultPda` subgoal 1 already derived; do not derive it again.",
+          "Do not touch `deriveVaultPda` or `getDepositInstruction` — they stand in for generated code that codegen overwrites. Compose them; never edit them."
+        ],
+        "language": "typescript",
+        "solution": "/**\n * The ergonomic wrapper around the generated client.\n *\n * `deriveVaultPda` and `getDepositInstruction` below are the GENERATED surface —\n * treat them as read-only (in a real package they live in `src/generated`, which\n * codegen overwrites). Your job is the wrapper `deposit`, in four subgoals.\n */\nfunction deposit(\n  owner: string,\n  amountLamports: bigint\n): {\n  ok: boolean;\n  vaultPda: string;\n  instruction: {\n    programAddress: string;\n    accounts: { address: string; role: string }[];\n    data: { discriminator: number[]; amountLamports: bigint };\n  } | null;\n} {\n  // Subgoal 1 — derive the vault PDA from the owner (done for you).\n  const vaultPda = deriveVaultPda(owner);\n\n  // Subgoal 2 — narrow the input: a deposit must be a positive bigint (done for you).\n  if (typeof amountLamports !== \"bigint\" || amountLamports <= 0n) {\n    return { ok: false, vaultPda, instruction: null };\n  }\n\n  // Subgoal 3 — build the instruction from the generated builder.\n  const instruction = getDepositInstruction({ owner, vaultPda, amountLamports });\n\n  // Subgoal 4 — return the ergonomic shape: { ok: true, vaultPda, instruction }.\n  return { ok: true, vaultPda, instruction };\n}\n\n// --- generated surface — do not edit -------------------------------------\nfunction deriveVaultPda(owner: string): string {\n  // Stands in for the generated `findVaultPda`. Deterministic in the owner:\n  // the same owner always yields the same vault address, a different owner a\n  // different one.\n  return \"Vau1t\" + owner.slice(0, 38).padEnd(38, \"1\");\n}\n\nfunction getDepositInstruction(args: {\n  owner: string;\n  vaultPda: string;\n  amountLamports: bigint;\n}): {\n  programAddress: string;\n  accounts: { address: string; role: string }[];\n  data: { discriminator: number[]; amountLamports: bigint };\n} {\n  return {\n    programAddress: \"VauLtPr0gram1111111111111111111111111111111\",\n    accounts: [\n      { address: args.owner, role: \"writable-signer\" },\n      { address: args.vaultPda, role: \"writable\" },\n      { address: \"11111111111111111111111111111111\", role: \"readonly\" },\n    ],\n    data: { discriminator: [242, 35, 198, 137, 82, 225, 242, 182], amountLamports: args.amountLamports },\n  };\n}\n",
+        "starter": "/**\n * The ergonomic wrapper around the generated client.\n *\n * `deriveVaultPda` and `getDepositInstruction` below are the GENERATED surface —\n * treat them as read-only (in a real package they live in `src/generated`, which\n * codegen overwrites). Your job is the wrapper `deposit`, in four subgoals.\n */\nfunction deposit(\n  owner: string,\n  amountLamports: bigint\n): {\n  ok: boolean;\n  vaultPda: string;\n  instruction: {\n    programAddress: string;\n    accounts: { address: string; role: string }[];\n    data: { discriminator: number[]; amountLamports: bigint };\n  } | null;\n} {\n  // Subgoal 1 — derive the vault PDA from the owner (done for you).\n  const vaultPda = deriveVaultPda(owner);\n\n  // Subgoal 2 — narrow the input: a deposit must be a positive bigint (done for you).\n  if (typeof amountLamports !== \"bigint\" || amountLamports <= 0n) {\n    return { ok: false, vaultPda, instruction: null };\n  }\n\n  // Subgoal 3 — build the instruction from the generated builder.\n  //   Call getDepositInstruction({ owner, vaultPda, amountLamports }).\n  // const instruction = ...\n\n  // Subgoal 4 — return the ergonomic shape: { ok: true, vaultPda, instruction }.\n  //   The caller should never see a discriminator or a seed.\n  return { ok: false, vaultPda, instruction: null }; // replace this line\n}\n\n// --- generated surface — do not edit -------------------------------------\nfunction deriveVaultPda(owner: string): string {\n  // Stands in for the generated `findVaultPda`. Deterministic in the owner:\n  // the same owner always yields the same vault address, a different owner a\n  // different one.\n  return \"Vau1t\" + owner.slice(0, 38).padEnd(38, \"1\");\n}\n\nfunction getDepositInstruction(args: {\n  owner: string;\n  vaultPda: string;\n  amountLamports: bigint;\n}): {\n  programAddress: string;\n  accounts: { address: string; role: string }[];\n  data: { discriminator: number[]; amountLamports: bigint };\n} {\n  return {\n    programAddress: \"VauLtPr0gram1111111111111111111111111111111\",\n    accounts: [\n      { address: args.owner, role: \"writable-signer\" },\n      { address: args.vaultPda, role: \"writable\" },\n      { address: \"11111111111111111111111111111111\", role: \"readonly\" },\n    ],\n    data: { discriminator: [242, 35, 198, 137, 82, 225, 242, 182], amountLamports: args.amountLamports },\n  };\n}\n",
+        "tests": [
+          {
+            "description": "Subgoal 3+4: a valid deposit returns ok with an instruction",
+            "expectedOutput": "result.ok === true && result.instruction !== null",
+            "id": "t1",
+            "input": "'0wnerWa11etAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', 1000000n"
+          },
+          {
+            "description": "Subgoal 3: the built instruction carries the amount as a bigint",
+            "expectedOutput": "result.instruction.data.amountLamports === 1000000n",
+            "id": "t2",
+            "input": "'0wnerWa11etAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', 1000000n"
+          },
+          {
+            "description": "Subgoal 1: the vault PDA is derived from the owner via the generated helper",
+            "expectedOutput": "result.vaultPda.slice(0, 5) === 'Vau1t'",
+            "id": "t3",
+            "input": "'0wnerWa11etAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', 1000000n"
+          },
+          {
+            "description": "Subgoal 2: a zero amount is rejected before anything is built",
+            "expectedOutput": "result.ok === false && result.instruction === null",
+            "id": "t4",
+            "input": "'0wnerWa11etAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', 0n"
+          },
+          {
+            "description": "Subgoal 4: the returned instruction is well-formed — owner signs, vault is the derived PDA",
+            "expectedOutput": "result.instruction.accounts[0].role === 'writable-signer' && result.instruction.accounts[1].address === result.vaultPda",
+            "id": "t5",
+            "input": "'0wnerWa11etAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', 2500000n"
+          }
+        ],
+        "tutorNotes": [
+          "Learners edit the `deriveVaultPda` or `getDepositInstruction` helpers to force a test green, instead of composing them in the wrapper — those stand in for generated code, which codegen overwrites on the next run.",
+          "They pass `amountLamports` as a plain number, so subgoal 2's `typeof !== 'bigint'` narrowing rejects it and they blame subgoal 3; the whole client is bigint-typed on purpose.",
+          "They return the raw `getDepositInstruction` result instead of the ergonomic `{ ok, vaultPda, instruction }` shape, so the caller still has to know the internals the wrapper exists to hide.",
+          "They re-derive or hardcode the vault PDA inside subgoal 3 instead of reusing the address subgoal 1 already produced, so the returned `vaultPda` and the instruction's account can silently disagree."
+        ]
+      },
+      {
+        "_key": "check",
+        "_type": "quiz",
+        "questions": [
+          {
+            "explanation": "The wrapper composes the generated primitives so the consumer supplies only what they have — an owner and an amount — and gets back a ready instruction. That composition is the product; the generated code underneath is a regenerated implementation detail.",
+            "id": "q1",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "Your wrapper — it called the generated `findVaultPda` and `getDepositInstruction` for them, which is the whole reason the wrapper exists"
+              },
+              {
+                "correct": false,
+                "feedback": "If they had to derive the PDA themselves, the wrapper would have failed at its one job. Hiding the seed and the discriminator is the value the package sells.",
+                "id": "b",
+                "label": "The consumer's code — they must still pass the derived PDA in"
+              },
+              {
+                "correct": false,
+                "feedback": "PDA derivation is pure client-side math over seeds; the runtime only re-checks it. Your wrapper does the derivation before anything is sent.",
+                "id": "c",
+                "label": "The Solana runtime — PDAs are derived on-chain at execution time"
+              }
+            ],
+            "prompt": "A consumer runs `import { deposit } from '@your-scope/vault-client'` and calls `deposit(owner, 1_000_000n)`. They never derive a PDA or write a discriminator. Which layer did that work?"
+          },
+          {
+            "explanation": "This is the rule in one incident: generated code is regenerated output. The wrapper is where a fix lives if it is behavioural, and the IDL is where it lives if the interface is wrong — either survives regeneration, an edit to `src/generated` never does.",
+            "id": "q2",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "Codegen rewrote the whole `src/generated` tree from the IDL, discarding your edit — fixes belong in the wrapper or the IDL, never in generated code"
+              },
+              {
+                "correct": false,
+                "feedback": "Adding a field does not rewrite an instruction discriminator, and nothing \"undid\" the fix — it was overwritten wholesale when the tree regenerated.",
+                "id": "b",
+                "label": "The new field shifted the discriminator, which happened to undo your fix"
+              },
+              {
+                "correct": false,
+                "feedback": "There is no edit-preservation. Generated files are written fresh each run; the tool has no record of your changes.",
+                "id": "c",
+                "label": "Codegen preserves edits but reordered them below the new field"
+              }
+            ],
+            "prompt": "Your IDL gains a field, you run codegen again, and a bug you had \"fixed\" by editing `src/generated/instructions/deposit.ts` reappears. Why?"
+          }
+        ]
+      }
+    ],
+    "skills": [
+      "api-design",
+      "codama",
+      "solana-kit",
+      "pdas"
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "wrap-the-generated-client"
+    },
+    "title": "Wrap It: the API You'd Actually Want to Import"
+  },
+  {
     "_id": "lesson-error-challenge",
     "_type": "lesson",
     "blocks": [
