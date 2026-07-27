@@ -92,6 +92,15 @@ const serverEnvSchema = z.object({
   // UNRESTRICTED — never NEXT_PUBLIC_, and not the same key as the domain-
   // restricted one behind NEXT_PUBLIC_SOLANA_RPC_URL.
   HELIUS_API_KEY: optStr,
+  // Resend API key for marketing/announcement email (#769). Server-only.
+  // Optional at boot — the email pipeline is FAIL-CLOSED: unset ⇒ send() returns
+  // an 'unconfigured' result and NOTHING is sent (lib/email/resend.ts). The
+  // owner sets this once a Resend sending domain (DKIM/SPF/DMARC) is verified.
+  RESEND_API_KEY: optStr,
+  // The verified From identity for marketing mail, e.g.
+  // "Superteam Academy <news@st.academy>". Optional — falls back to
+  // DEFAULT_EMAIL_FROM (lib/email/resend.ts) when unset.
+  EMAIL_FROM: optStr,
   // Optional dedicated key for sealing the AI Partner's comprehension-check /
   // attestation tokens (lib/ai/check-seal.ts). Falls back to
   // SUPABASE_SERVICE_ROLE_KEY when unset.
@@ -132,6 +141,8 @@ const parsed = serverEnvSchema.safeParse({
   GEMINI_API_KEY: process.env.GEMINI_API_KEY,
   ARWEAVE_UPLOADER_SECRET: process.env.ARWEAVE_UPLOADER_SECRET,
   HELIUS_API_KEY: process.env.HELIUS_API_KEY,
+  RESEND_API_KEY: process.env.RESEND_API_KEY,
+  EMAIL_FROM: process.env.EMAIL_FROM,
   AI_PARTNER_SEAL_SECRET: process.env.AI_PARTNER_SEAL_SECRET,
   AI_SPEND_GLOBAL_SOFT_USD: process.env.AI_SPEND_GLOBAL_SOFT_USD,
   AI_SPEND_GLOBAL_HARD_USD: process.env.AI_SPEND_GLOBAL_HARD_USD,

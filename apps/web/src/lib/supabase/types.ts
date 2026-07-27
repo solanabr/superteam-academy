@@ -1137,6 +1137,37 @@ export type Database = {
         };
         Relationships: [];
       };
+      email_subscriptions: {
+        // #769: marketing-email consent. Opt-out by default; own-row SELECT;
+        // writes only via SECURITY DEFINER RPCs (set_marketing_opt_in /
+        // unsubscribe_by_token). The unsubscribe route reads a matched row's
+        // user via unsubscribe_by_token; the settings UI reads opt_in own-row.
+        Row: {
+          user_id: string;
+          opt_in: boolean;
+          consent_at: string | null;
+          unsubscribed_at: string | null;
+          unsubscribe_token: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          opt_in?: boolean;
+          consent_at?: string | null;
+          unsubscribed_at?: string | null;
+          unsubscribe_token?: string;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          opt_in?: boolean;
+          consent_at?: string | null;
+          unsubscribed_at?: string | null;
+          unsubscribe_token?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       public_onchain_deployments: {
@@ -1184,6 +1215,23 @@ export type Database = {
       course_lesson_completion_counts: {
         Args: { p_course_id: string };
         Returns: { lesson_id: string; completed_by: number }[];
+      };
+      // #769 marketing-email consent RPCs.
+      set_marketing_opt_in: {
+        Args: { p_opt_in: boolean };
+        Returns: undefined;
+      };
+      list_marketing_recipients: {
+        Args: Record<string, never>;
+        Returns: {
+          user_id: string;
+          email: string;
+          unsubscribe_token: string;
+        }[];
+      };
+      unsubscribe_by_token: {
+        Args: { p_token: string };
+        Returns: boolean;
       };
       award_community_xp: {
         Args: {
