@@ -2,6 +2,16 @@ import { describe, it, expect } from "vitest";
 import BN from "bn.js";
 import { decodeLessonBitmap, isCourseComplete } from "../bitmap";
 
+/** Build a 4-word [u64;4] mask (bigints) with the given bit positions set. */
+function mask(...bits: number[]): bigint[] {
+  const words: [bigint, bigint, bigint, bigint] = [0n, 0n, 0n, 0n];
+  for (const b of bits) {
+    const w = Math.floor(b / 64) as 0 | 1 | 2 | 3;
+    words[w] |= 1n << BigInt(b % 64);
+  }
+  return words;
+}
+
 describe("decodeLessonBitmap", () => {
   it("empty bitmap returns all false", () => {
     expect(
@@ -116,6 +126,23 @@ describe("isCourseComplete", () => {
         [0n, 0n, 0n, 0n]
       )
     ).toBe(true);
+  });
+
+  // C3-shaped (#741): capstone lives at slot 15 while slot 14 (m4-interact) is
+  // retired. A real learner carries a stale bit-14 completion. Finalize must
+  // require slot 15 (the capstone) and ignore the burned bit 14.
+  const c3Active = mask(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15);
+
+  it("C3: capstone slot 15 set + retired slot 14 stale bit -> complete", () => {
+    const flags = mask(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
+    expect(isCourseComplete(flags, c3Active)).toBe(true);
+  });
+
+  it("C3: every live slot but the capstone (15) -> incomplete", () => {
+    // The stale retired bit 14 is set but slot 15 is not — must NOT pass, which
+    // is the credential-gating property (#721): the capstone really is required.
+    const flags = mask(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14);
+    expect(isCourseComplete(flags, c3Active)).toBe(false);
   });
 
   it("treats a missing/short lessonFlags word as 0", () => {

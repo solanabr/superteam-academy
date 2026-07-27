@@ -78,7 +78,7 @@ vi.mock("@/lib/solana/academy-program", () => ({
 }));
 vi.mock("@/lib/solana/academy-reads", () => ({ fetchEnrollment, fetchCourse }));
 vi.mock("@/lib/solana/bitmap", () => ({ isLessonComplete }));
-vi.mock("@/lib/courses/lesson-index", () => ({ findLessonIndex: () => 0 }));
+vi.mock("@/lib/courses/lesson-slot", () => ({ getLessonSlot: () => 0 }));
 vi.mock("@/lib/logging", () => ({ logError: vi.fn() }));
 vi.mock("@/lib/content/deployments", () => ({ isCourseInMaintenance }));
 vi.mock("@/lib/platform/freeze", () => ({ isPlatformFrozen }));
