@@ -77,26 +77,36 @@ the boundary (never the full `Lesson` `blocks[]`, which carries solutions/tests)
 
 ## Admin
 
-| Route                                   | Method   | Auth         | Purpose                                                            |
-| --------------------------------------- | -------- | ------------ | ------------------------------------------------------------------ |
-| `/api/admin/auth`                       | POST     | ADMIN_SECRET | Admin authentication                                               |
-| `/api/admin/status`                     | GET      | ADMIN_SECRET | Platform status (program liveness, authority match)                |
-| `/api/admin/courses/sync`               | POST     | ADMIN_SECRET | Deploy course PDA + collection on-chain                            |
-| `/api/admin/courses/deactivate`         | POST     | ADMIN_SECRET | Set course `is_active = false`                                     |
-| `/api/admin/courses/reactivate`         | POST     | ADMIN_SECRET | Set course `is_active = true`                                      |
-| `/api/admin/courses/recreate`           | POST     | ADMIN_SECRET | **DESTRUCTIVE** — close + recreate course PDA (create-only fields) |
-| `/api/admin/courses/recreate/preflight` | GET      | ADMIN_SECRET | Read-only preflight validation for the recreate execute route      |
-| `/api/admin/achievements/sync`          | POST     | ADMIN_SECRET | Deploy achievement type + collection on-chain                      |
-| `/api/admin/resync`                     | POST     | ADMIN_SECRET | Resync on-chain state to Supabase                                  |
-| `/api/admin/flags`                      | GET      | ADMIN_SECRET | Pending community flags for the moderation queue                   |
-| `/api/admin/freeze`                     | GET/POST | ADMIN_SECRET | Read/set the global deploy-window freeze (reset wave B2)           |
-| `/api/admin/publish/pin`                | GET      | ADMIN_SECRET | Content pin: pinned bundle SHA + counts vs courses-academy HEAD    |
-| `/api/admin/capstone-funnel`            | GET      | ADMIN_SECRET | Capstone credential funnel counters (#725)                         |
+| Route                                   | Method   | Auth         | Purpose                                                              |
+| --------------------------------------- | -------- | ------------ | -------------------------------------------------------------------- |
+| `/api/admin/auth`                       | POST     | ADMIN_SECRET | Admin authentication                                                 |
+| `/api/admin/status`                     | GET      | ADMIN_SECRET | Platform status (program liveness, authority match)                  |
+| `/api/admin/courses/sync`               | POST     | ADMIN_SECRET | Deploy course PDA + collection on-chain                              |
+| `/api/admin/courses/deactivate`         | POST     | ADMIN_SECRET | Set course `is_active = false`                                       |
+| `/api/admin/courses/reactivate`         | POST     | ADMIN_SECRET | Set course `is_active = true`                                        |
+| `/api/admin/courses/recreate`           | POST     | ADMIN_SECRET | **DESTRUCTIVE** — close + recreate course PDA (create-only fields)   |
+| `/api/admin/courses/recreate/preflight` | GET      | ADMIN_SECRET | Read-only preflight validation for the recreate execute route        |
+| `/api/admin/achievements/sync`          | POST     | ADMIN_SECRET | Deploy achievement type + collection on-chain                        |
+| `/api/admin/resync`                     | POST     | ADMIN_SECRET | Resync on-chain state to Supabase                                    |
+| `/api/admin/flags`                      | GET      | ADMIN_SECRET | Pending community flags for the moderation queue                     |
+| `/api/admin/freeze`                     | GET/POST | ADMIN_SECRET | Read/set the global deploy-window freeze (reset wave B2)             |
+| `/api/admin/publish/pin`                | GET      | ADMIN_SECRET | Content pin: pinned bundle SHA + counts vs courses-academy HEAD      |
+| `/api/admin/capstone-funnel`            | GET      | ADMIN_SECRET | Capstone credential funnel counters (#725)                           |
+| `/api/admin/email/announce-course`      | POST     | ADMIN_SECRET | Send "new course available" email to marketing-opted-in users (#769) |
 
 Content drift (bundle SHA vs `courses-academy` HEAD) and chain drift are folded
 into `/api/admin/status`; the publish card reads `/api/admin/publish/pin`. There
 is no separate drift route — one existed, was never wired to a UI, and was
 deleted in #444.
+
+## Email (#769)
+
+Marketing-consent model (opt-in defaults OFF; LGPD/GDPR/CAN-SPAM). The admin
+send trigger lives in the Admin table (`/api/admin/email/announce-course`).
+
+| Route                    | Method   | Auth  | Purpose                                                                                                                                                   |
+| ------------------------ | -------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/api/email/unsubscribe` | GET/POST | Token | One-click List-Unsubscribe by per-user token (GET renders a confirmation page; POST is the RFC 8058 one-click). No session — the email link carries none. |
 
 ## Health
 
