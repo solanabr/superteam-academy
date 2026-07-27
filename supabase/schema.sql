@@ -2970,7 +2970,10 @@ SECURITY DEFINER
 SET search_path = ''
 AS $$
 DECLARE
-  v_matched BOOLEAN;
+  -- Row count from GET DIAGNOSTICS is an integer, so v_matched must be INTEGER —
+  -- a BOOLEAN here makes `RETURN v_matched > 0` raise "operator does not exist:
+  -- boolean > integer" on every call, breaking one-click unsubscribe.
+  v_matched INTEGER;
 BEGIN
   UPDATE public.email_subscriptions
   SET opt_in = false, unsubscribed_at = now(), updated_at = now()
