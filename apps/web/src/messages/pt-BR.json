@@ -820,6 +820,12 @@
     "invalidXpReward": "A recompensa de XP deve ser maior que zero.",
     "enrollmentFinalized": "Esta inscrição foi finalizada e não pode mais ser cancelada ou encerrada.",
     "invalidCourseAccount": "A conta não é um curso válido.",
+    "mintingPaused": "A emissão de XP está pausada no momento. Tente novamente mais tarde.",
+    "wrongXpMint": "Sua conta de token não corresponde ao mint de XP atual.",
+    "xpAmountExceedsMax": "A quantidade de XP excede o limite máximo por emissão.",
+    "staleEnrollment": "Esta matrícula pertence a uma versão anterior do curso. Matricule-se novamente para continuar.",
+    "oldMinterRoleMissing": "A rotação de backend requer a conta anterior de papel de minter do backend.",
+    "enrollmentInProgress": "Uma matrícula com aulas concluídas não pode ser encerrada.",
     "unknown": "Transação falhou. Tente novamente."
   },
   "community": {

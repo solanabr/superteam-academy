@@ -4,8 +4,10 @@ import type { PublicKey } from "@solana/web3.js";
 /**
  * Centralized map of on-chain AcademyError codes → i18n keys.
  *
- * Anchor assigns codes starting at 6000 + enum index.
- * See: onchain-academy/programs/onchain-academy/src/errors.rs
+ * Codes start at 6000 + enum index (Anchor convention; the live Pinocchio
+ * program emits wire-compatible custom errors and log lines).
+ * See: onchain-academy/programs/onchain-academy-pinocchio/src/errors.rs
+ * and the `errors` table in idl/superteam_academy.json (kept in sync).
  *
  * Each entry maps to a key under the "programErrors" i18n namespace.
  * Components with `t()` use `t("programErrors.<key>")`;
@@ -174,6 +176,38 @@ const ERROR_MAP: Record<number, ProgramErrorEntry> = {
     name: "InvalidCourseAccount",
     i18nKey: "invalidCourseAccount",
     fallback: "Account is not a valid course.",
+  },
+  6031: {
+    name: "MintingPaused",
+    i18nKey: "mintingPaused",
+    fallback: "XP minting is currently paused. Please try again later.",
+  },
+  6032: {
+    name: "WrongXpMint",
+    i18nKey: "wrongXpMint",
+    fallback: "Your token account does not match the current XP mint.",
+  },
+  6033: {
+    name: "XpAmountExceedsMax",
+    i18nKey: "xpAmountExceedsMax",
+    fallback: "XP amount exceeds the per-mint ceiling.",
+  },
+  6034: {
+    name: "StaleEnrollment",
+    i18nKey: "staleEnrollment",
+    fallback:
+      "This enrollment belongs to an older version of the course. Please re-enroll to continue.",
+  },
+  6035: {
+    name: "OldMinterRoleMissing",
+    i18nKey: "oldMinterRoleMissing",
+    fallback:
+      "Backend rotation requires the previous backend minter role account.",
+  },
+  6036: {
+    name: "EnrollmentInProgress",
+    i18nKey: "enrollmentInProgress",
+    fallback: "An enrollment with completed lessons cannot be closed.",
   },
 };
 
