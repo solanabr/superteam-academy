@@ -223,7 +223,7 @@ export async function POST(request: NextRequest) {
 
     // Upsert — if user re-deploys to the same lesson, update the program_id.
     // Service-role client on purpose: deployed_programs has NO client
-    // INSERT/UPDATE policies (20260726120000_lockdown_deployed_programs_rls),
+    // INSERT/UPDATE policies (20260726121000_lockdown_deployed_programs_rls),
     // so this verified route is the only write path — a direct devtools
     // insert can't bypass the on-chain check above.
     const { error } = await adminClient.from("deployed_programs").upsert(

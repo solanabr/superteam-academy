@@ -6,8 +6,14 @@ import { describe, it, expect } from "vitest";
 // #566 (LX-A3): the /start intake adds segment/goal/daily_goal to profiles.
 // RLS/trigger invariants can't be exercised in unit tests, so — as with the
 // #493 profile guard and #569 review spine — pin them in both the migration and
-// the schema.sql mirror. The load-bearing security property here is NEGATIVE:
-// the escalation-lockdown trigger on profiles.role must be provably UNDISTURBED.
+// the schema.sql mirror. The load-bearing security property is NEGATIVE: the
+// segment migration must not touch the profiles escalation lockdown.
+//
+// #699 CORRECTION: profiles.role was RETIRED by SP1 (migration 20260710120000);
+// prod has no role column/trigger. The previous assertion here pinned the
+// retired role trigger in schema.sql — green while guarding nothing. It now
+// pins the DEPLOYED wallet lockdown and asserts the role machinery is ABSENT
+// from the mirror (so the snapshot matches prod).
 
 function findRepoRoot(): string {
   let dir = dirname(fileURLToPath(import.meta.url));
@@ -30,12 +36,12 @@ const migration = readFileSync(
 );
 const schema = readFileSync(resolve(repoRoot, "supabase/schema.sql"), "utf8");
 
-describe("#566 segment state — trigger safety (role lockdown undisturbed)", () => {
-  it("the migration issues NO DDL against the role column, trigger, or function", () => {
-    // The whole point of LX-A3: these columns are self-writable UNLIKE role. The
-    // migration DOCUMENTS the trigger by name (to prove it is untouched) but must
-    // not emit a single statement that redefines, drops, or fires it — nor touch
-    // the role column. Prose mentions are fine; DDL/DML is not.
+describe("#566 segment state — escalation lockdown mirror (role retired, wallet lock present)", () => {
+  it("the migration issues NO DDL against role or any trigger", () => {
+    // The segment migration must not emit a single statement that redefines,
+    // drops, or fires a profiles trigger — nor touch the (now-retired) role
+    // column. Prose mentions are fine; DDL/DML is not. Still a valid guard: the
+    // migration applied cleanly against a DB where role was already gone.
     expect(migration).not.toMatch(
       /CREATE\s+(OR\s+REPLACE\s+)?FUNCTION[^;]*enforce_profile_role_write/i
     );
@@ -45,16 +51,28 @@ describe("#566 segment state — trigger safety (role lockdown undisturbed)", ()
     expect(migration).not.toMatch(/UPDATE\s+profiles\s+SET\s+role/i);
   });
 
-  it("schema.sql still defines the role trigger exactly once (mirror intact)", () => {
-    const triggerDefs = schema.match(
-      /CREATE TRIGGER trg_enforce_profile_role_write/g
+  it("schema.sql mirrors the DEPLOYED wallet lockdown and NOT the retired role machinery (#699)", () => {
+    // The surviving profiles escalation guard is the wallet-write lock — pin it.
+    const walletTriggers = schema.match(
+      /CREATE TRIGGER trg_enforce_profile_wallet_write/g
     );
-    expect(triggerDefs).toHaveLength(1);
+    expect(walletTriggers).toHaveLength(1);
     expect(schema).toContain(
+      "CREATE OR REPLACE FUNCTION public.enforce_profile_wallet_write()"
+    );
+    expect(schema).toContain(
+      "NEW.wallet_address IS DISTINCT FROM OLD.wallet_address"
+    );
+    // The retired role machinery must be ABSENT from the mirror (matches prod).
+    // Check for the DDL, not the string — explanatory prose may name it.
+    expect(schema).not.toContain(
       "CREATE OR REPLACE FUNCTION public.enforce_profile_role_write()"
     );
-    // The guard still keys on role, and role only.
-    expect(schema).toContain("NEW.role IS DISTINCT FROM OLD.role");
+    expect(schema).not.toContain(
+      "CREATE TRIGGER trg_enforce_profile_role_write"
+    );
+    expect(schema).not.toMatch(/ADD CONSTRAINT chk_profiles_role\b/);
+    expect(schema).not.toMatch(/^\s*role TEXT NOT NULL DEFAULT/m);
   });
 });
 

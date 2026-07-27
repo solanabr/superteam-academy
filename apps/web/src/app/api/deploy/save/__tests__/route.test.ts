@@ -56,7 +56,7 @@ const {
     >(),
   // Spy so tests can prove POST never touches a table through the
   // user-scoped client — deployed_programs is service_role-write-only
-  // (20260726120000_lockdown_deployed_programs_rls), so a user-client write
+  // (20260726121000_lockdown_deployed_programs_rls), so a user-client write
   // would be an RLS-bypass regression AND would fail in production.
   userClientFrom: vi.fn<(table: string) => never>(() => {
     throw new Error(
@@ -575,7 +575,7 @@ describe("POST /api/deploy/save — service_role-only writes (RLS lockdown)", ()
     const migration = readFileSync(
       resolve(
         repoRoot,
-        "supabase/migrations/20260726120000_lockdown_deployed_programs_rls.sql"
+        "supabase/migrations/20260726121000_lockdown_deployed_programs_rls.sql"
       ),
       "utf8"
     );
