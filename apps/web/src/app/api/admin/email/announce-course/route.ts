@@ -13,6 +13,17 @@ import { defaultLocale } from "@/lib/i18n/config";
 // Reads the admin cookie + service-role DB (recipient list) — never prerender.
 export const dynamic = "force-dynamic";
 
+// The campaign sends SERIALLY: recipients are chunked to Resend's 100/batch
+// limit and each batch is followed by a 600ms courtesy delay
+// (DELAY_BETWEEN_BATCHES_MS in lib/email/campaign.ts) plus the batch's own
+// Resend round-trip. At the default serverless limit that outgrows the window
+// after only a few thousand recipients, truncating a send mid-campaign. 300s is
+// the Vercel plan's hard ceiling on this project (same value api/build-program
+// and api/courses/test-out already use); at ~600ms + round-trip per 100-address
+// batch it covers well over ten thousand opted-in recipients — beyond any near-
+// term list — and the platform hard-kills at 300s regardless of a larger value.
+export const maxDuration = 300;
+
 /**
  * POST /api/admin/email/announce-course — admin-triggered "new course available"
  * announcement to marketing-opted-in users (#769). NO automatic sends: this is

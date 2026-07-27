@@ -34,4 +34,17 @@ describe("newCourseAnnouncementEmail", () => {
     expect(r.html).not.toContain("<script>alert(1)</script>");
     expect(r.html).toContain("&lt;script&gt;");
   });
+
+  it("scrubs CR/LF from the subject (header-injection defense, #807)", () => {
+    const r = newCourseAnnouncementEmail({
+      courseTitle: "Legit Title\r\nBcc: victim@example.com",
+      courseUrl: "https://x/c",
+      unsubscribeUrl: "https://x/u",
+    });
+    // A mail subject is a header line — a raw newline could split it or smuggle
+    // another header. The title's visible text survives; only the CR/LF go.
+    expect(r.subject).not.toMatch(/[\r\n]/);
+    expect(r.subject).toContain("Legit Title");
+    expect(r.subject).toContain("Bcc: victim@example.com");
+  });
 });

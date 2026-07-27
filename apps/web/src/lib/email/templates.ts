@@ -17,6 +17,17 @@ function escapeHtml(s: string): string {
     .replace(/'/g, "&#39;");
 }
 
+/**
+ * Strip CR/LF from a value bound into an email SUBJECT (a mail header line).
+ * Resend's JSON API already blocks raw header injection, but the subject
+ * interpolates a user-controlled course title, so we neutralize newlines at the
+ * boundary as defense-in-depth (#807): they can never split the header line or
+ * smuggle an extra one, regardless of the transport underneath.
+ */
+function scrubHeaderValue(s: string): string {
+  return s.replace(/[\r\n]/g, " ");
+}
+
 export interface RenderedEmail {
   subject: string;
   html: string;
@@ -40,7 +51,9 @@ export function newCourseAnnouncementEmail(
   const title = escapeHtml(params.courseTitle);
   const courseUrl = escapeHtml(params.courseUrl);
   const unsubscribeUrl = escapeHtml(params.unsubscribeUrl);
-  const subject = `New course on Superteam Academy: ${params.courseTitle}`;
+  const subject = scrubHeaderValue(
+    `New course on Superteam Academy: ${params.courseTitle}`
+  );
 
   const html = `<!doctype html>
 <html>
