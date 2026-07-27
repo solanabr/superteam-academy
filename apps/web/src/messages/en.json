@@ -951,7 +951,8 @@
     "completed": "Challenge complete — nice work!",
     "lock": {
       "title": "Give it a real try first",
-      "body": "The AI Partner unlocks in {time}. Attempt the challenge yourself before asking for help."
+      "body": "The AI Partner unlocks in {time}. Attempt the challenge yourself before asking for help.",
+      "tooltip": "Working through it yourself first is what makes it stick — the AI Partner is here for when you're truly stuck."
     },
     "start": {
       "greeting": "How can I help you build this?",

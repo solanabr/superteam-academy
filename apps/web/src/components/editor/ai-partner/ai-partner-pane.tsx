@@ -120,7 +120,9 @@ export function AiPartnerPane({
           {locked && (
             <span
               role="status"
-              className="ml-auto flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-bold tabular-nums text-text [background:var(--input)]"
+              title={t("lock.tooltip")}
+              aria-label={`${countdown} — ${t("lock.tooltip")}`}
+              className="ml-auto flex cursor-help items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-bold tabular-nums text-text [background:var(--input)]"
             >
               <Lock
                 size={16}

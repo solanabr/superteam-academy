@@ -951,7 +951,8 @@
     "completed": "Desafio concluído — mandou bem!",
     "lock": {
       "title": "Tente de verdade primeiro",
-      "body": "O Parceiro de IA desbloqueia em {time}. Tente resolver o desafio sozinho antes de pedir ajuda."
+      "body": "O Parceiro de IA desbloqueia em {time}. Tente resolver o desafio sozinho antes de pedir ajuda.",
+      "tooltip": "Resolver sozinho primeiro é o que fixa o aprendizado — o AI Partner está aqui para quando você travar de verdade."
     },
     "start": {
       "greeting": "Como posso te ajudar a construir isto?",
