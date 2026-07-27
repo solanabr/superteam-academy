@@ -38,7 +38,7 @@ import {
 } from "@metaplex-foundation/umi-web3js-adapters";
 import BN from "bn.js";
 import { expect } from "chai";
-import { readFileSync, writeFileSync } from "fs";
+import { readFileSync, writeFileSync, writeSync } from "fs";
 import * as path from "path";
 
 // ts-mocha runs from the onchain-academy package root.
@@ -75,6 +75,15 @@ describe("CU measurement (#121)", () => {
 
   const rows: Row[] = [];
 
+  // Synchronous progress trace to fd 2. console.log to a CI pipe is buffered and
+  // is LOST when the litesvm native addon aborts the process (e.g. a std::bad_alloc
+  // from the SBF JIT on the x86-64 runner — a path macOS/arm64 never takes because
+  // rbpf has no aarch64 JIT). writeSync to stderr survives the abort, so the last
+  // trace line pinpoints the exact instruction that killed the process. [#141 CI]
+  function trace(msg: string) {
+    writeSync(2, `[cu-trace] ${msg}\n`);
+  }
+
   function record(
     name: string,
     ix: anchor.web3.TransactionInstruction,
@@ -84,6 +93,7 @@ describe("CU measurement (#121)", () => {
     tx.recentBlockhash = svm.latestBlockhash();
     tx.feePayer = authority.publicKey;
     tx.sign(authority, ...signers);
+    trace(`sendTransaction: ${name}`);
     const res = svm.sendTransaction(tx);
     if (res instanceof FailedTransactionMetadata) {
       rows.push({ name, cu: null, note: res.err().toString().slice(0, 80) });
@@ -125,6 +135,7 @@ describe("CU measurement (#121)", () => {
     tx.recentBlockhash = svm.latestBlockhash();
     tx.feePayer = authority.publicKey;
     tx.sign(authority, ...signers);
+    trace(`setup sendTransaction (${ixs.length} ix)`);
     const res = svm.sendTransaction(tx);
     if (res instanceof FailedTransactionMetadata) {
       throw new Error(res.err().toString().slice(0, 120));
