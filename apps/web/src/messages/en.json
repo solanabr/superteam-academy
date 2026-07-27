@@ -440,7 +440,11 @@
     "leagueSignIn": "Sign in to join this week's league.",
     "cohortStripTitle": "Your league",
     "cohortStripAria": "Your league standing",
-    "cohortViewAll": "View league"
+    "cohortViewAll": "View league",
+    "leagueThisWeek": "This week",
+    "leagueScoreAria": "{score} XP earned this week",
+    "leagueScoringInfoLabel": "About league scoring",
+    "leagueScoringInfo": "League scores count learning XP earned this week — lessons, challenges, quests, and achievements. Bonuses and community XP don't count."
   },
   "certificates": {
     "title": "Certificate of Completion",

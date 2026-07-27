@@ -10,7 +10,9 @@ import {
   Lightning,
   Medal,
   UsersThree,
+  Info,
 } from "@phosphor-icons/react";
+import * as Tooltip from "@radix-ui/react-tooltip";
 import type { LeaderboardEntry, CohortLeague } from "@superteam-lms/types";
 import { LevelBadge } from "@/components/gamification/level-badge";
 import { CohortRow } from "@/components/leaderboard/cohort-row";
@@ -184,13 +186,17 @@ function LeagueBoard({ cohort }: { cohort: CohortLeague | null }) {
         <span className="lb-league-icon" aria-hidden="true">
           <UsersThree size={22} weight="fill" />
         </span>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="lb-league-tier">{tierName(t, cohort.tier)}</p>
+          {/* "This week" leads the subtitle so the league values read as weekly,
+              not lifetime (#789). */}
           <p className="lb-league-sub">
+            {t("leagueThisWeek")} ·{" "}
             {t("cohortMembers", { count: cohort.memberCount })} ·{" "}
             {t("leagueResets")}
           </p>
         </div>
+        <LeagueScoringInfo />
       </div>
 
       <div className="lb-list">
@@ -203,6 +209,38 @@ function LeagueBoard({ cohort }: { cohort: CohortLeague | null }) {
         ))}
       </div>
     </>
+  );
+}
+
+/* ── Info affordance explaining league scoring (weekly, eligible sources) ── */
+function LeagueScoringInfo() {
+  const t = useTranslations("gamification");
+  return (
+    <Tooltip.Provider delayDuration={0} skipDelayDuration={150}>
+      <Tooltip.Root>
+        <Tooltip.Trigger asChild>
+          <button
+            type="button"
+            className="lb-league-info"
+            aria-label={t("leagueScoringInfoLabel")}
+          >
+            <Info size={18} weight="bold" aria-hidden="true" />
+          </button>
+        </Tooltip.Trigger>
+        <Tooltip.Portal>
+          <Tooltip.Content
+            className="lb-tooltip"
+            sideOffset={6}
+            side="bottom"
+            align="end"
+            collisionPadding={12}
+          >
+            {t("leagueScoringInfo")}
+            <Tooltip.Arrow className="fill-[var(--card)]" />
+          </Tooltip.Content>
+        </Tooltip.Portal>
+      </Tooltip.Root>
+    </Tooltip.Provider>
   );
 }
 
