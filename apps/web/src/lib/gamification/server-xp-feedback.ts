@@ -141,6 +141,12 @@ export interface XpTransactionRow {
 }
 
 function surpriseKey(r: XpTransactionRow): string {
+  // KEEP IN SYNC with the inline key in use-gamification-events.ts: both
+  // channels share claimSurpriseBonus's seen-set, so they must derive the SAME
+  // key for the same award. maybeAwardSurpriseBonus always sets
+  // idempotency_key, so the fallback below is dead today — but if it ever
+  // becomes optional, both sites' fallbacks must stay aligned or a bonus would
+  // toast twice (once per path).
   return r.idempotency_key ?? `${r.tx_signature ?? ""}:${r.created_at ?? ""}`;
 }
 

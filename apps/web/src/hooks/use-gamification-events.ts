@@ -131,6 +131,12 @@ export function useGamificationEvents(userId: string | undefined) {
           // dedupe SHARED with that path, so whichever fires first wins and the
           // other is a no-op — never a double toast.
           if (row.reason && isSurpriseBonusReason(row.reason)) {
+            // KEEP IN SYNC with surpriseKey() in server-xp-feedback.ts: both
+            // channels share claimSurpriseBonus's seen-set, so they must derive
+            // the SAME key for the same award. maybeAwardSurpriseBonus always
+            // sets idempotency_key, so the fallbacks below are dead today — but
+            // if it ever becomes optional, both sites' fallbacks must stay
+            // aligned or a bonus would toast twice (once per path).
             if (
               claimSurpriseBonus(
                 row.idempotency_key ?? row.id ?? row.tx_signature ?? ""

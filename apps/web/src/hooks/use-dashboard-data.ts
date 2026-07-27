@@ -201,6 +201,7 @@ export function useDashboardData(
           );
         }
         for (const amount of pickSurpriseBonusToasts(transactions ?? [])) {
+          dispatchXpGain(amount);
           celebrate("surprise-bonus");
           dispatchSurpriseBonus(amount);
         }
