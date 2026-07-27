@@ -2884,7 +2884,7 @@ GRANT EXECUTE ON FUNCTION public.get_cohort_leaderboard(UUID) TO service_role;
 
 -- ============================================================================
 -- email_subscriptions (#769) — marketing-email consent model.
--- Mirror of supabase/migrations/20260727140000_email_subscriptions.sql. See that
+-- Mirror of supabase/migrations/20260727150000_email_subscriptions.sql. See that
 -- file's header for the full rationale. Opt-out by default; own-row read; writes
 -- via SECURITY DEFINER RPCs (self-service toggle, pipeline read, one-click
 -- unsubscribe).

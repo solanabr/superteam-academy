@@ -24,7 +24,7 @@ const repoRoot = findRepoRoot();
 const migration = readFileSync(
   resolve(
     repoRoot,
-    "supabase/migrations/20260727140000_email_subscriptions.sql"
+    "supabase/migrations/20260727150000_email_subscriptions.sql"
   ),
   "utf8"
 );
