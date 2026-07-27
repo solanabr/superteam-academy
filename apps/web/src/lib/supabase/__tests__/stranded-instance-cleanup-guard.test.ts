@@ -47,15 +47,45 @@ describe("#607 stranded-instance cleanup — transaction + shape", () => {
     expect(migration).toContain("COMMIT;");
   });
 
-  it("resets the four chain-mirrored tables with straight DELETEs", () => {
-    for (const t of [
-      "enrollments",
-      "user_progress",
-      "xp_transactions",
-      "user_achievements",
-    ]) {
-      expect(migration).toContain(`DELETE FROM public.${t};`);
+  // The four reset tables are ERA-SCOPED, each on its own creation timestamp,
+  // so live post-move rows (e.g. the #725 e2e completions, or any completion
+  // written directly by lessons/complete) survive. A missing WHERE would make
+  // the DELETE unbounded — the exact bug the review caught — so pin the shape.
+  const ERA_DELETES: ReadonlyArray<[string, string]> = [
+    ["enrollments", "enrolled_at"],
+    ["user_progress", "completed_at"],
+    ["xp_transactions", "created_at"],
+    ["user_achievements", "unlocked_at"],
+  ];
+
+  it("era-scopes every DELETE (WHERE <ts> < '2026-07-21')", () => {
+    for (const [table, ts] of ERA_DELETES) {
+      expect(code).toMatch(
+        new RegExp(
+          `DELETE FROM public\\.${table}\\s+WHERE ${ts}\\s*<\\s*'2026-07-21'`
+        )
+      );
     }
+  });
+
+  it("never issues an UNBOUNDED delete against a reset table (mutation guard)", () => {
+    // Removing the WHERE must fail this: a bare `DELETE FROM public.<t>;` would
+    // destroy live post-move rows.
+    for (const [table] of ERA_DELETES) {
+      expect(code).not.toMatch(
+        new RegExp(`DELETE FROM public\\.${table}\\s*;`)
+      );
+    }
+  });
+
+  it("guards the era counts before AND after deleting", () => {
+    // Pre-DELETE: each era count must equal the posted value OR 0 (idempotent).
+    expect(migration).toContain("b.enr_era NOT IN (0, 7)");
+    expect(migration).toContain("b.up_era NOT IN (0, 63)");
+    expect(migration).toContain("b.xp_era NOT IN (0, 16)");
+    expect(migration).toContain("b.ach_era NOT IN (0, 7)");
+    // Post-DELETE: no pre-move row survives in any reset table.
+    expect(migration).toMatch(/pre-move rows survived the reset/);
   });
 });
 
