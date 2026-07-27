@@ -22,6 +22,21 @@ const MAX_FILE_SIZE: usize = 100 * 1024; // 100KB
 const MAX_TOTAL_SIZE: usize = 500 * 1024; // 500KB
 const MAX_PATH_LENGTH: usize = 128;
 
+/// The cdylib artifact cargo-build-sbf emits for `academy-program` (dashes →
+/// underscores). Written to `--sbf-out-dir` (the build dir) and read back for the
+/// inline deploy response.
+const SO_FILENAME: &str = "academy_program.so";
+
+/// A build succeeded only when the compiler exited zero AND left the `.so` behind.
+///
+/// Fail-closed (#776 item 6): success was previously inferred from stderr
+/// substrings, so a linker crash / OOM whose output matched neither pattern was
+/// reported as `success: true` with no binary. The exit status plus the artifact's
+/// existence are the ground truth; stderr text is not.
+fn build_succeeded(exit_success: bool, so_path: &Path) -> bool {
+    exit_success && so_path.exists()
+}
+
 const BLOCKED_PATTERNS: &[&str] = &[
     "std::process",
     "std::fs::",
@@ -176,8 +191,11 @@ impl BuildService {
 
         // Copy pre-built target/ from the template so dependency crates are
         // already compiled. Uses --reflink=auto for CoW on supported FS,
-        // falling back to regular copy on tmpfs. This turns a ~180s full
-        // rebuild into a ~10-15s incremental compile of just the student crate.
+        // falling back to regular copy on tmpfs. Dependencies are then warm and
+        // only the student's leaf crate is (re)compiled per request; that cost is
+        // dominated by [profile.release] in programs/Cargo.toml (relaxed in #776).
+        // Measure it via academy_build_duration_seconds on /metrics — do not
+        // assume a fixed figure.
         let template_target = Path::new(&config.programs_dir).join("target");
         if template_target.is_dir() {
             let build_target = build_dir.join("target");
@@ -253,11 +271,13 @@ impl BuildService {
         let timeout_duration = Duration::from_secs(config.build_timeout_secs);
 
         match tokio::time::timeout(timeout_duration, child.wait()).await {
-            Ok(Ok(_status)) => {
+            Ok(Ok(status)) => {
                 let stderr = stderr_task.await.unwrap_or_default();
-                let has_error =
-                    stderr.contains("error: could not compile") || stderr.contains("error[");
-                (!has_error, stderr)
+                // Trust the compiler's exit status AND require the artifact — never
+                // infer success from stderr text, which fails OPEN on a linker
+                // crash / OOM that matches no known pattern (#776 item 6).
+                let so_path = build_dir.join(SO_FILENAME);
+                (build_succeeded(status.success(), &so_path), stderr)
             }
             Ok(Err(e)) => (false, format!("Error waiting for build: {e}")),
             Err(_) => {
@@ -294,7 +314,7 @@ impl BuildService {
             let binary_b64 = if cached.success {
                 let so_path = Path::new(&self.config.builds_dir)
                     .join(&cached.uuid)
-                    .join("academy_program.so");
+                    .join(SO_FILENAME);
                 tokio::fs::read(&so_path)
                     .await
                     .ok()
@@ -368,7 +388,7 @@ impl BuildService {
 
         // 8. Read binary before any cleanup (same instance has the file)
         let binary_b64 = if success {
-            let so_path = build_dir.join("academy_program.so");
+            let so_path = build_dir.join(SO_FILENAME);
             match tokio::fs::read(&so_path).await {
                 Ok(bytes) => Some(STANDARD.encode(&bytes)),
                 Err(e) => {
@@ -412,7 +432,7 @@ impl BuildService {
 
         let binary_path = Path::new(&self.config.builds_dir)
             .join(uuid)
-            .join("academy_program.so");
+            .join(SO_FILENAME);
 
         tokio::fs::read(&binary_path)
             .await
@@ -505,5 +525,39 @@ mod tests {
             "use anchor_lang::prelude::*;\ndeclare_id!(\"...\");",
         )]);
         assert!(BuildService::check_blocked_patterns(&files).is_ok());
+    }
+
+    // --- #776 item 6: success is exit-status + artifact, never stderr inference ---
+
+    /// A path guaranteed to exist during the test (this crate's own manifest).
+    fn existing_path() -> PathBuf {
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("Cargo.toml")
+    }
+
+    #[test]
+    fn build_succeeds_only_on_zero_exit_with_artifact() {
+        assert!(build_succeeded(true, &existing_path()));
+    }
+
+    #[test]
+    fn build_fails_closed_on_nonzero_exit_even_with_artifact() {
+        // The exact regression: a failing build whose stderr matched no known
+        // pattern used to report success. A non-zero exit is now always a failure,
+        // regardless of any leftover .so.
+        assert!(!build_succeeded(false, &existing_path()));
+    }
+
+    #[test]
+    fn build_fails_closed_on_zero_exit_without_artifact() {
+        // A "clean" exit that produced no binary (e.g. a silent linker/OOM abort)
+        // is a failure — we never report success without the .so.
+        let missing = Path::new("/nonexistent/academy_program.so");
+        assert!(!build_succeeded(true, missing));
+    }
+
+    #[test]
+    fn build_fails_closed_on_nonzero_exit_without_artifact() {
+        let missing = Path::new("/nonexistent/academy_program.so");
+        assert!(!build_succeeded(false, missing));
     }
 }

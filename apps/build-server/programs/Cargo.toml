@@ -7,11 +7,19 @@ edition = "2021"
 crate-type = ["cdylib", "lib"]
 path = "src/lib.rs"
 
+# Per-request learner builds optimise for COMPILE TIME, not binary size: the fat
+# LTO merge + single-codegen-unit codegen of the leaf cdylib reran on every Run
+# click (30-120s per the metrics buckets) even though the warm target/ caches
+# dependencies (#776 item 1). overflow-checks stays ON — it is load-bearing for the
+# C2 curriculum, where a bare `-` must still panic. NOTE: changing this profile
+# invalidates the pre-warmed programs/target/ baked by the Dockerfile; it is
+# re-warmed automatically on the next image build (Dockerfile `cargo-build-sbf
+# --manifest-path programs/Cargo.toml`), no separate step.
 [profile.release]
 overflow-checks = true
-lto = true
-codegen-units = 1
-opt-level = "z"
+lto = false
+codegen-units = 16
+opt-level = 1
 
 [dependencies]
 # Anchor 1.1.2 re-exports solana-program — no direct dep needed
