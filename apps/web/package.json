@@ -12,7 +12,10 @@
     "reset-verify": "tsx scripts/reset-verify.ts",
     "reset-vnext": "tsx --tsconfig scripts/tsconfig.reset.json scripts/reset-vnext.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui",
+    "e2e:report": "playwright show-report"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.32.1",
@@ -76,6 +79,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "1.59.1",
     "@tailwindcss/typography": "^0.5.19",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^14.3.1",

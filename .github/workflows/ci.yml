@@ -155,6 +155,71 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: test-anon-key
         run: pnpm -r test
 
+  # ── E2E: Playwright, the 3 critical learner paths (#781) ────────────────────
+  # Runs the learner-path specs against a PRODUCTION build (`next build &&
+  # next start`) fronted by a mock Supabase — the runtime coverage the gate's
+  # manual smokes used to give, now permanent. Change-gated on `frontend` (same
+  # as the frontend job) so it does NOT run on every push of every PR — only when
+  # apps/web (or the shared deps that reach it) change, or on manual dispatch.
+  # See apps/web/e2e/README.md for the harness + mock-boundary map.
+  e2e:
+    name: E2E (Playwright · learner paths)
+    runs-on: ubuntu-latest
+    needs: changes
+    timeout-minutes: 15
+    if: >-
+      github.event.action != 'labeled' &&
+      (needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch')
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Cache the Next build cache so the `next build` inside the harness stays
+      # incremental across runs (keeps the E2E wall-clock down — the specs
+      # themselves are seconds; the cold build is the bulk).
+      - name: Cache Next build
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: apps/web/.next/cache
+          key: nextcache-e2e-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/web/src/**') }}
+          restore-keys: |
+            nextcache-e2e-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+            nextcache-e2e-${{ runner.os }}-
+
+      # Pinned via package.json (@playwright/test 1.59.1); --with-deps pulls the
+      # OS libs the browser needs on the runner. openssl (for the mock cert) is
+      # pre-installed on ubuntu-latest.
+      - name: Install Playwright browser
+        run: pnpm --filter web exec playwright install --with-deps chromium
+
+      - name: Run E2E (build + start + specs)
+        # The harness (apps/web/e2e/harness/serve.mjs) generates the cert, starts
+        # the mock, runs `next build`, then `next start`. Single source of the
+        # E2E env, so build-time NEXT_PUBLIC_* and runtime agree.
+        run: pnpm --filter web e2e
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: playwright-report
+          path: |
+            apps/web/playwright-report
+            apps/web/test-results
+          if-no-files-found: ignore
+          retention-days: 7
+
   # ── On-chain program: fmt, clippy, Rust unit tests ──────────────────────────
   onchain-rust:
     name: On-chain (fmt · clippy · cargo test)

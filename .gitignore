@@ -99,6 +99,11 @@ docs/FLOW_AUDIT.md
 docs/DEEP_AUDIT_REPORT.md
 audit/
 
+# Playwright (E2E — #781)
+playwright-report/
+test-results/
+/apps/web/playwright/.cache/
+
 # Misc
 *.log
 *.tmp
