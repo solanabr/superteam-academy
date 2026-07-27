@@ -310,7 +310,10 @@
     "dismissAllSuggestions": "Descartar Todas",
     "progressRestored": "{count, plural, one {# lección completada restaurada} other {# lecciones completadas restauradas}}",
     "progressNeedsEnroll": "{count, plural, one {Inscríbete para guardar la lección que completaste} other {Inscríbete para guardar las # lecciones que completaste}}",
-    "progressNeedsRedo": "\"{lesson}\" debe completarse: ábrela para finalizar."
+    "progressNeedsRedo": "\"{lesson}\" debe completarse: ábrela para finalizar.",
+    "quizScore": "{correct}/{total} correctas",
+    "toggleSection": "Alternar sección",
+    "quiz": "Cuestionario"
   },
   "dashboard": {
     "allCaughtUp": "¡Todo al día!",
@@ -943,7 +946,7 @@
   },
   "aiPartner": {
     "title": "Compañero de IA",
-    "subtitle": "¿Atascado? Pide una pista, una corrección propuesta o haz una pregunta.",
+    "subtitle": "¿Atascado? Pide una pista.",
     "completed": "Reto completado — ¡bien hecho!",
     "lock": {
       "title": "Inténtalo de verdad primero",
@@ -957,12 +960,10 @@
       "approachPrompt": "¿Cuáles son los primeros pasos y los conceptos clave que necesito para resolver este reto?"
     },
     "meter": {
-      "label": "{free} de 2 pistas gratuitas usadas, {paid} de {max} asistencias pagas usadas",
-      "freeLabel": "Pistas gratuitas",
-      "paidLabel": "Asistencias pagas"
+      "label": "{used} pistas usadas"
     },
     "messages": {
-      "empty": "Pide una pista o una corrección propuesta para empezar.",
+      "empty": "Pide una pista para empezar.",
       "you": "Tú",
       "ai": "Compañero de IA",
       "loading": "Pensando...",

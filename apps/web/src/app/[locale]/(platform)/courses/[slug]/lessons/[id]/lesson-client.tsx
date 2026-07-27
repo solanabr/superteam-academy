@@ -414,7 +414,7 @@ export function LessonPageClient({
           discussion+XP+progress (right). lg:shrink-0 so it never eats the
           IDE's flex height. */}
       <div
-        className={`flex items-center gap-2 border-b border-border pb-4 sm:gap-3 lg:shrink-0 ${
+        className={`flex items-center gap-2 border-b border-border py-2 sm:gap-3 lg:shrink-0 ${
           hasCodeBlock ? "mx-[calc(50%_-_50vw)] w-screen px-3 sm:px-4" : ""
         }`}
       >

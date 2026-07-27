@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Robot, MagnifyingGlass, Lock } from "@phosphor-icons/react";
+import { Robot, MagnifyingGlass, Lock, CaretDown } from "@phosphor-icons/react";
 import { useAiPartner } from "@/lib/ai/use-ai-partner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -45,6 +45,8 @@ export function AiPartnerPane({
   className,
 }: AiPartnerPaneProps) {
   const t = useTranslations("aiPartner");
+  const tLesson = useTranslations("lesson");
+  const [open, setOpen] = useState(true);
 
   // Think-first lock (#770): the tutor is held for the first few minutes after
   // a challenge is opened so learners attempt it before asking for help. Tick
@@ -76,8 +78,6 @@ export function AiPartnerPane({
     loading,
     error,
     requestHint,
-    proposeFix,
-    ask,
     review,
     verifyCheck,
   } = useAiPartner({ lessonSlug, courseSlug, hints, getCode, getTestSummary });
@@ -89,7 +89,15 @@ export function AiPartnerPane({
         className
       )}
     >
-      <div className="flex shrink-0 flex-col gap-2 border-b border-border px-4 py-3">
+      {/* Collapsible (#770): the whole pane folds to its header so the reading
+          column can be reclaimed. Starts open. */}
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-controls="ai-partner-body"
+        className="flex shrink-0 flex-col gap-2 border-b border-border px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
         <div className="flex items-center gap-2">
           <Robot
             size={18}
@@ -100,32 +108,26 @@ export function AiPartnerPane({
           <h2 className="font-display text-sm font-extrabold text-text">
             {t("title")}
           </h2>
+          <CaretDown
+            size={14}
+            weight="bold"
+            aria-hidden="true"
+            className={cn(
+              "ml-auto text-text-3 transition-transform",
+              !open && "-rotate-90"
+            )}
+          />
+          <span className="sr-only">{tLesson("toggleSection")}</span>
         </div>
         <p className="text-xs text-text-3">
           {disabled ? t("completed") : t("subtitle")}
         </p>
         <AssistMeter freeHintsUsed={freeHintsUsed} paidUsed={paidUsed} />
-      </div>
+      </button>
 
-      {messages.length === 0 ? (
+      {!open ? null : messages.length === 0 ? (
         <div className="flex flex-1 flex-col gap-2 overflow-auto px-4 py-4">
-          <p className="text-sm font-medium text-text">{t("start.greeting")}</p>
-          <button
-            type="button"
-            onClick={() => ask(t("start.explainPrompt"))}
-            disabled={loading || budgetExhausted || actionsBlocked}
-            className="rounded-md border border-border px-3 py-2.5 text-left text-xs text-text transition-colors hover:border-primary hover:[background:var(--accent-bg)] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {t("start.explain")}
-          </button>
-          <button
-            type="button"
-            onClick={() => ask(t("start.approachPrompt"))}
-            disabled={loading || budgetExhausted || actionsBlocked}
-            className="rounded-md border border-border px-3 py-2.5 text-left text-xs text-text transition-colors hover:border-primary hover:[background:var(--accent-bg)] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {t("start.approach")}
-          </button>
+          <p className="text-sm text-text-3">{t("messages.empty")}</p>
         </div>
       ) : (
         <MessageList
@@ -137,19 +139,19 @@ export function AiPartnerPane({
         />
       )}
 
-      {spendCapped && (
+      {open && spendCapped && (
         <div className="shrink-0 border-t border-border px-4 py-2">
           <p className="text-xs text-text-3">{t("messages.spendCapped")}</p>
         </div>
       )}
 
-      {error && !spendCapped && (
+      {open && error && !spendCapped && (
         <div className="shrink-0 border-t border-border px-4 py-2">
           <p className="text-xs text-danger">{t("messages.error")}</p>
         </div>
       )}
 
-      {loading && (
+      {open && loading && (
         <div className="shrink-0 px-4 py-2">
           <p className="flex items-center gap-2 text-xs text-text-3">
             <span
@@ -167,7 +169,7 @@ export function AiPartnerPane({
           `disabled` (lesson complete) — reviewing the solution you just passed
           is the whole point. Suppression is handled upstream: this pane is not
           mounted at all while a quiz block is unanswered (LX-C1/F18). */}
-      {solutionPassed && (
+      {open && solutionPassed && (
         <div className="shrink-0 border-t border-border px-3 pt-3">
           <Button
             type="button"
@@ -189,7 +191,7 @@ export function AiPartnerPane({
       {/* Think-first lock banner (#770): a calm, non-refusing hold with a live
           countdown. It gates the actions below (actionsBlocked) rather than
           hiding them, so the learner always sees what is coming. */}
-      {locked && (
+      {open && locked && (
         <div
           role="status"
           className="flex shrink-0 items-center gap-2.5 border-t border-border px-4 py-3"
@@ -209,13 +211,13 @@ export function AiPartnerPane({
         </div>
       )}
 
-      <QuickActions
-        onHint={requestHint}
-        onPropose={proposeFix}
-        onAsk={ask}
-        disabled={loading || actionsBlocked}
-        budgetExhausted={budgetExhausted}
-      />
+      {open && (
+        <QuickActions
+          onHint={requestHint}
+          disabled={loading || actionsBlocked}
+          budgetExhausted={budgetExhausted}
+        />
+      )}
     </div>
   );
 }

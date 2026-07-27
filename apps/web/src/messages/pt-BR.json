@@ -310,7 +310,10 @@
     "dismissAllSuggestions": "Dispensar Todas",
     "progressRestored": "{count, plural, one {# aula concluída restaurada} other {# aulas concluídas restauradas}}",
     "progressNeedsEnroll": "{count, plural, one {Matricule-se para salvar a aula que você concluiu} other {Matricule-se para salvar as # aulas que você concluiu}}",
-    "progressNeedsRedo": "\"{lesson}\" precisa ser concluída — abra para finalizar."
+    "progressNeedsRedo": "\"{lesson}\" precisa ser concluída — abra para finalizar.",
+    "quizScore": "{correct}/{total} corretas",
+    "toggleSection": "Alternar seção",
+    "quiz": "Quiz"
   },
   "dashboard": {
     "allCaughtUp": "Tudo em dia!",
@@ -943,7 +946,7 @@
   },
   "aiPartner": {
     "title": "Parceiro de IA",
-    "subtitle": "Travou? Peça uma dica, uma correção proposta ou faça uma pergunta.",
+    "subtitle": "Travado? Peça uma dica.",
     "completed": "Desafio concluído — mandou bem!",
     "lock": {
       "title": "Tente de verdade primeiro",
@@ -957,12 +960,10 @@
       "approachPrompt": "Quais são os primeiros passos e os conceitos principais que eu preciso para resolver este desafio?"
     },
     "meter": {
-      "label": "{free} de 2 dicas gratuitas usadas, {paid} de {max} assistências pagas usadas",
-      "freeLabel": "Dicas gratuitas",
-      "paidLabel": "Assistências pagas"
+      "label": "{used} dicas usadas"
     },
     "messages": {
-      "empty": "Peça uma dica ou uma correção proposta para começar.",
+      "empty": "Peça uma dica para começar.",
       "you": "Você",
       "ai": "Parceiro de IA",
       "loading": "Pensando...",
