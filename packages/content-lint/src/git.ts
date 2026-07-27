@@ -63,6 +63,13 @@ export function resolveLocalBase(root: string): string | null {
   return null;
 }
 
+/** True when `ref` resolves to a commit object in `root`. */
+export function resolvesRef(root: string, ref: string): boolean {
+  return (
+    git(root, ["rev-parse", "--verify", "--quiet", `${ref}^{commit}`]) !== null
+  );
+}
+
 /** File contents at `ref`, or null when the path did not exist there. */
 export function gitShow(
   root: string,

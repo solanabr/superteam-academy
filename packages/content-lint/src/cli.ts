@@ -1,15 +1,10 @@
 import { runLint } from "./lint";
+import { normalizeBaseRef } from "./base-ref";
 import type { Diagnostic } from "./diagnostics";
 // Side-effect import: running `./index` executes every check module's top-level
 // `registerCheck` / `registerSchemaCheck`, so the CLI lints with all gates
 // registered (without it, no gate runs and every repo trivially "passes").
 import "./index";
-
-function normalizeBaseRef(raw: string | undefined): string | undefined {
-  if (!raw) return undefined;
-  // GITHUB_BASE_REF is a bare branch name ("main"); a full ref is used verbatim.
-  return raw.includes("/") ? raw : `origin/${raw}`;
-}
 
 function format(d: Diagnostic): string {
   const where = d.file ? ` ${d.file}` : "";
@@ -19,7 +14,8 @@ function format(d: Diagnostic): string {
 async function main(): Promise<void> {
   const root = process.argv[2] ?? process.cwd();
   const baseRef = normalizeBaseRef(
-    process.env.LINT_BASE_REF ?? process.env.GITHUB_BASE_REF
+    process.env.LINT_BASE_REF ?? process.env.GITHUB_BASE_REF,
+    root
   );
   const { diagnostics, ok } = await runLint(root, { baseRef });
 
