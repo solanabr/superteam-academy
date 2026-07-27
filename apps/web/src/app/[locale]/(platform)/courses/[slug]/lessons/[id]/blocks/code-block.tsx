@@ -60,8 +60,12 @@ export function CodeBlock({ block, ctx }: BlockRenderProps) {
     ) : undefined;
 
   return (
-    <div className="overflow-hidden rounded-[var(--r-lg)] border-[2.5px] border-border shadow-card">
-      <div className="flex w-full flex-col overflow-hidden lg:h-[calc(100vh-150px)]">
+    // Edge-to-edge IDE (#770): no card rounding/shadow/side border — the split
+    // sits flush against the viewport and the top bar. Only a top border marks
+    // the seam. Full viewport height minus the compact top bar so the editor
+    // fills the screen with no dead page-background gaps around it.
+    <div className="overflow-hidden border-t border-border">
+      <div className="flex w-full flex-col overflow-hidden lg:h-[calc(100vh-88px)]">
         <ChallengeInterface
           lessonId={ctx.lesson._id}
           courseId={ctx.courseId}
