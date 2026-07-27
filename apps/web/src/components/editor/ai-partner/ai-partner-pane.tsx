@@ -2,7 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Robot, MagnifyingGlass, Lock } from "@phosphor-icons/react";
+import {
+  Robot,
+  MagnifyingGlass,
+  Lock,
+  CaretDown,
+  Lightbulb,
+} from "@phosphor-icons/react";
 import { useAiPartner } from "@/lib/ai/use-ai-partner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -45,6 +51,8 @@ export function AiPartnerPane({
   className,
 }: AiPartnerPaneProps) {
   const t = useTranslations("aiPartner");
+  const tLesson = useTranslations("lesson");
+  const [open, setOpen] = useState(true);
 
   // Think-first lock (#770): the tutor is held for the first few minutes after
   // a challenge is opened so learners attempt it before asking for help. Tick
@@ -76,8 +84,6 @@ export function AiPartnerPane({
     loading,
     error,
     requestHint,
-    proposeFix,
-    ask,
     review,
     verifyCheck,
   } = useAiPartner({ lessonSlug, courseSlug, hints, getCode, getTestSummary });
@@ -85,11 +91,19 @@ export function AiPartnerPane({
   return (
     <div
       className={cn(
-        "flex h-full flex-col overflow-hidden rounded-md border bg-card",
+        "flex flex-col overflow-hidden rounded-md border bg-card",
         className
       )}
     >
-      <div className="flex shrink-0 flex-col gap-2 border-b border-border px-4 py-3">
+      {/* Collapsible (#770): the whole pane folds to its header so the reading
+          column can be reclaimed. Starts open. */}
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-controls="ai-partner-body"
+        className="flex shrink-0 flex-col gap-2 border-b border-border px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
         <div className="flex items-center gap-2">
           <Robot
             size={18}
@@ -100,32 +114,61 @@ export function AiPartnerPane({
           <h2 className="font-display text-sm font-extrabold text-text">
             {t("title")}
           </h2>
+
+          {/* Think-first countdown (#770): prominent, in the header's right
+              rail, so the wait is the first thing read — not a footnote. */}
+          {locked && (
+            <span
+              role="status"
+              title={t("lock.tooltip")}
+              aria-label={`${countdown} — ${t("lock.tooltip")}`}
+              className="ml-auto flex cursor-help items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-bold tabular-nums text-text [background:var(--input)]"
+            >
+              <Lock
+                size={16}
+                weight="duotone"
+                className="shrink-0 text-text-3"
+                aria-hidden="true"
+              />
+              {countdown}
+            </span>
+          )}
+          <CaretDown
+            size={14}
+            weight="bold"
+            aria-hidden="true"
+            className={cn(
+              "text-text-3 transition-transform",
+              !locked && "ml-auto",
+              !open && "-rotate-90"
+            )}
+          />
+          <span className="sr-only">{tLesson("toggleSection")}</span>
         </div>
         <p className="text-xs text-text-3">
-          {disabled ? t("completed") : t("subtitle")}
+          {disabled ? t("completed") : locked ? t("lock.title") : t("subtitle")}
         </p>
         <AssistMeter freeHintsUsed={freeHintsUsed} paidUsed={paidUsed} />
-      </div>
+      </button>
 
-      {messages.length === 0 ? (
-        <div className="flex flex-1 flex-col gap-2 overflow-auto px-4 py-4">
-          <p className="text-sm font-medium text-text">{t("start.greeting")}</p>
-          <button
+      {/* Empty state stays COMPACT (#770): the prompt and the Hint button sit
+          together in a short block — no reserved conversation area. The pane
+          only grows (and the button drops to the bottom) once there are
+          messages to show. */}
+      {!open ? null : messages.length === 0 ? (
+        <div className="flex flex-col gap-3 px-4 py-4">
+          <p className="text-sm text-text-3">{t("messages.empty")}</p>
+          <Button
             type="button"
-            onClick={() => ask(t("start.explainPrompt"))}
-            disabled={loading || budgetExhausted || actionsBlocked}
-            className="rounded-md border border-border px-3 py-2.5 text-left text-xs text-text transition-colors hover:border-primary hover:[background:var(--accent-bg)] disabled:cursor-not-allowed disabled:opacity-50"
+            variant="secondary"
+            size="sm"
+            onClick={requestHint}
+            disabled={loading || actionsBlocked}
+            className="w-full gap-1.5"
           >
-            {t("start.explain")}
-          </button>
-          <button
-            type="button"
-            onClick={() => ask(t("start.approachPrompt"))}
-            disabled={loading || budgetExhausted || actionsBlocked}
-            className="rounded-md border border-border px-3 py-2.5 text-left text-xs text-text transition-colors hover:border-primary hover:[background:var(--accent-bg)] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {t("start.approach")}
-          </button>
+            <Lightbulb size={14} weight="duotone" aria-hidden="true" />
+            {t("actions.hint")}
+          </Button>
         </div>
       ) : (
         <MessageList
@@ -133,23 +176,23 @@ export function AiPartnerPane({
           onApply={onApply}
           getCode={getCode}
           onVerify={verifyCheck}
-          className="flex-1"
+          className="min-h-0 flex-1"
         />
       )}
 
-      {spendCapped && (
+      {open && spendCapped && (
         <div className="shrink-0 border-t border-border px-4 py-2">
           <p className="text-xs text-text-3">{t("messages.spendCapped")}</p>
         </div>
       )}
 
-      {error && !spendCapped && (
+      {open && error && !spendCapped && (
         <div className="shrink-0 border-t border-border px-4 py-2">
           <p className="text-xs text-danger">{t("messages.error")}</p>
         </div>
       )}
 
-      {loading && (
+      {open && loading && (
         <div className="shrink-0 px-4 py-2">
           <p className="flex items-center gap-2 text-xs text-text-3">
             <span
@@ -167,7 +210,7 @@ export function AiPartnerPane({
           `disabled` (lesson complete) — reviewing the solution you just passed
           is the whole point. Suppression is handled upstream: this pane is not
           mounted at all while a quiz block is unanswered (LX-C1/F18). */}
-      {solutionPassed && (
+      {open && solutionPassed && (
         <div className="shrink-0 border-t border-border px-3 pt-3">
           <Button
             type="button"
@@ -186,36 +229,13 @@ export function AiPartnerPane({
         </div>
       )}
 
-      {/* Think-first lock banner (#770): a calm, non-refusing hold with a live
-          countdown. It gates the actions below (actionsBlocked) rather than
-          hiding them, so the learner always sees what is coming. */}
-      {locked && (
-        <div
-          role="status"
-          className="flex shrink-0 items-center gap-2.5 border-t border-border px-4 py-3"
-        >
-          <Lock
-            size={18}
-            weight="duotone"
-            className="shrink-0 text-text-3"
-            aria-hidden="true"
-          />
-          <div className="min-w-0">
-            <p className="text-xs font-semibold text-text">{t("lock.title")}</p>
-            <p className="text-[11px] text-text-3">
-              {t("lock.body", { time: countdown })}
-            </p>
-          </div>
-        </div>
+      {open && messages.length > 0 && (
+        <QuickActions
+          onHint={requestHint}
+          disabled={loading || actionsBlocked}
+          budgetExhausted={budgetExhausted}
+        />
       )}
-
-      <QuickActions
-        onHint={requestHint}
-        onPropose={proposeFix}
-        onAsk={ask}
-        disabled={loading || actionsBlocked}
-        budgetExhausted={budgetExhausted}
-      />
     </div>
   );
 }

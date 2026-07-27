@@ -168,6 +168,27 @@ export function LessonPageClient({
   const hasCodeBlock = lesson.blocks.some((b) => b._type === "code");
   const hasQuizBlock = lesson.blocks.some((b) => b._type === "quiz");
 
+  // Challenge pages are viewport-locked: the IDE column is sized to the screen,
+  // so the document must not scroll at all. Without this, any few-pixel
+  // mismatch between the column's calc() height and the real header height
+  // leaves the page scrollable — which is what surfaced the dead strip below
+  // the editor (#770). Locking `body` also kills the phantom horizontal
+  // scrollbar from the full-bleed `w-screen` children (100vw counts the
+  // scrollbar gutter). Desktop only; below lg the page scrolls normally.
+  useEffect(() => {
+    if (!hasCodeBlock) return;
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const apply = () => {
+      document.body.style.overflow = mq.matches ? "hidden" : "";
+    };
+    apply();
+    mq.addEventListener("change", apply);
+    return () => {
+      mq.removeEventListener("change", apply);
+      document.body.style.overflow = "";
+    };
+  }, [hasCodeBlock]);
+
   // F18 (#564): retrieval stays AI-free. Each QuizBlock reports whether all of
   // its questions have been checked; while any quiz block in the lesson is
   // still unanswered, the AI Partner pane inside ChallengeInterface stays
@@ -414,7 +435,7 @@ export function LessonPageClient({
           discussion+XP+progress (right). lg:shrink-0 so it never eats the
           IDE's flex height. */}
       <div
-        className={`flex items-center gap-2 border-b border-border pb-4 sm:gap-3 lg:shrink-0 ${
+        className={`flex items-center gap-2 border-b border-border py-2 sm:gap-3 lg:shrink-0 ${
           hasCodeBlock ? "mx-[calc(50%_-_50vw)] w-screen px-3 sm:px-4" : ""
         }`}
       >
@@ -545,149 +566,155 @@ export function LessonPageClient({
         </div>
       )}
 
-      {/* Completion + navigation */}
-      <div className="space-y-2">
-        {completionError && (
-          <div
-            role="alert"
-            className="rounded-lg border-[2.5px] px-4 py-3 text-sm text-danger"
-            style={{
-              borderColor: "var(--danger-border)",
-              background: "var(--danger-bg)",
-            }}
-          >
-            {completionError}
-          </div>
-        )}
-        {/* Bottom nav hidden on challenge pages (#770): Prev/Next live in the
+      {/* Completion + navigation — challenge pages render NOTHING below the
+          IDE (#770): the viewport-locked column owns the screen, Prev/Next sit
+          in the top bar, and completion happens via the in-IDE submit. Leaving
+          this wrapper mounted there contributed the dead strip under the
+          editor. */}
+      {!hasCodeBlock && (
+        <div className="space-y-2">
+          {completionError && (
+            <div
+              role="alert"
+              className="rounded-lg border-[2.5px] px-4 py-3 text-sm text-danger"
+              style={{
+                borderColor: "var(--danger-border)",
+                background: "var(--danger-bg)",
+              }}
+            >
+              {completionError}
+            </div>
+          )}
+          {/* Bottom nav hidden on challenge pages (#770): Prev/Next live in the
             top bar and code lessons complete via the ChallengeInterface submit. */}
-        {!hasCodeBlock && (
-          <div className="flex flex-col gap-3 border-t border-border pt-6 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center">
-            {prevLesson && (
-              <Button
-                variant="pushOutline"
-                size="default"
-                asChild
-                className="w-full justify-center sm:w-auto sm:min-w-[120px]"
-              >
-                <Link
-                  href={`/${locale}/courses/${courseSlug}/lessons/${prevLesson.slug}`}
+          {!hasCodeBlock && (
+            <div className="flex flex-col gap-3 border-t border-border pt-6 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center">
+              {prevLesson && (
+                <Button
+                  variant="pushOutline"
+                  size="default"
+                  asChild
+                  className="w-full justify-center sm:w-auto sm:min-w-[120px]"
                 >
-                  &larr; {tCommon("previous")}
-                </Link>
-              </Button>
-            )}
-
-            {/* Code lessons complete via the ChallengeInterface submit; other
-              lessons complete via this explicit button. */}
-            {!hasCodeBlock &&
-              (userId ? (
-                isEnrolled ? (
-                  <Button
-                    variant={isCompleted ? "outline" : "pushSuccess"}
-                    size="lg"
-                    disabled={
-                      isCompleted || isCompleting || hasLinkedWallet === false
-                    }
-                    onClick={() => handleComplete()}
-                    className="w-full gap-2 sm:w-auto"
+                  <Link
+                    href={`/${locale}/courses/${courseSlug}/lessons/${prevLesson.slug}`}
                   >
-                    {isCompleting ? (
-                      <>
-                        <div
-                          className="h-5 w-5 animate-spin rounded-full border-[3px] border-white/30 border-t-white"
+                    &larr; {tCommon("previous")}
+                  </Link>
+                </Button>
+              )}
+
+              {/* Code lessons complete via the ChallengeInterface submit; other
+              lessons complete via this explicit button. */}
+              {!hasCodeBlock &&
+                (userId ? (
+                  isEnrolled ? (
+                    <Button
+                      variant={isCompleted ? "outline" : "pushSuccess"}
+                      size="lg"
+                      disabled={
+                        isCompleted || isCompleting || hasLinkedWallet === false
+                      }
+                      onClick={() => handleComplete()}
+                      className="w-full gap-2 sm:w-auto"
+                    >
+                      {isCompleting ? (
+                        <>
+                          <div
+                            className="h-5 w-5 animate-spin rounded-full border-[3px] border-white/30 border-t-white"
+                            aria-hidden="true"
+                          />
+                          <span className="sr-only">{tCommon("loading")}</span>
+                        </>
+                      ) : isCompleted ? (
+                        <CheckCircle
+                          size={20}
+                          weight="duotone"
+                          className="text-success"
                           aria-hidden="true"
                         />
-                        <span className="sr-only">{tCommon("loading")}</span>
-                      </>
-                    ) : isCompleted ? (
-                      <CheckCircle
-                        size={20}
-                        weight="duotone"
-                        className="text-success"
-                        aria-hidden="true"
-                      />
-                    ) : null}
-                    {isCompleted ? t("lessonComplete") : t("markComplete")}
-                  </Button>
+                      ) : null}
+                      {isCompleted ? t("lessonComplete") : t("markComplete")}
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="push"
+                      size="lg"
+                      disabled={isEnrolling}
+                      onClick={handleEnroll}
+                      className="gap-2"
+                    >
+                      {isEnrolling && (
+                        <>
+                          <div
+                            className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
+                            aria-hidden="true"
+                          />
+                          <span className="sr-only">{tCommon("loading")}</span>
+                        </>
+                      )}
+                      {tCourses("enrollNow")}
+                    </Button>
+                  )
                 ) : (
+                  // Anonymous: banks the work done so far, then opens the sign-in
+                  // prompt with its "Later" escape (LX-A4). The controlled modal is
+                  // rendered once below.
                   <Button
                     variant="push"
                     size="lg"
-                    disabled={isEnrolling}
-                    onClick={handleEnroll}
                     className="gap-2"
+                    onClick={openClaimAuth}
                   >
-                    {isEnrolling && (
-                      <>
-                        <div
-                          className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
-                          aria-hidden="true"
-                        />
-                        <span className="sr-only">{tCommon("loading")}</span>
-                      </>
-                    )}
-                    {tCourses("enrollNow")}
+                    {t("signInToTrack")}
                   </Button>
-                )
-              ) : (
-                // Anonymous: banks the work done so far, then opens the sign-in
-                // prompt with its "Later" escape (LX-A4). The controlled modal is
-                // rendered once below.
-                <Button
-                  variant="push"
-                  size="lg"
-                  className="gap-2"
-                  onClick={openClaimAuth}
-                >
-                  {t("signInToTrack")}
-                </Button>
-              ))}
+                ))}
 
-            {nextLesson ? (
-              <Button
-                variant={isCompleted ? "push" : "pushOutline"}
-                size="default"
-                asChild
-                className="w-full justify-center sm:w-auto sm:min-w-[120px]"
-              >
-                <Link
-                  href={`/${locale}/courses/${courseSlug}/lessons/${nextLesson.slug}`}
+              {nextLesson ? (
+                <Button
+                  variant={isCompleted ? "push" : "pushOutline"}
+                  size="default"
+                  asChild
+                  className="w-full justify-center sm:w-auto sm:min-w-[120px]"
                 >
-                  {tCommon("next")} &rarr;
-                </Link>
-              </Button>
-            ) : (
-              <Button
-                variant={isCompleted ? "push" : "pushOutline"}
-                size="default"
-                asChild
-                className="w-full justify-center sm:w-auto sm:min-w-[120px]"
+                  <Link
+                    href={`/${locale}/courses/${courseSlug}/lessons/${nextLesson.slug}`}
+                  >
+                    {tCommon("next")} &rarr;
+                  </Link>
+                </Button>
+              ) : (
+                <Button
+                  variant={isCompleted ? "push" : "pushOutline"}
+                  size="default"
+                  asChild
+                  className="w-full justify-center sm:w-auto sm:min-w-[120px]"
+                >
+                  <Link href={`/${locale}/courses/${courseSlug}`}>
+                    {t("lessonComplete")}
+                  </Link>
+                </Button>
+              )}
+            </div>
+          )}
+          {enrollError && (
+            <p role="alert" className="text-center text-sm text-danger">
+              {tCourses("enrollFailed")}
+            </p>
+          )}
+          {hasLinkedWallet === false && isEnrolled && (
+            <p role="alert" className="text-center text-sm text-text-3">
+              {t("linkWalletToEarnXp")}{" "}
+              <Link
+                href={`/${locale}/settings`}
+                className="font-medium text-primary underline-offset-2 hover:underline"
               >
-                <Link href={`/${locale}/courses/${courseSlug}`}>
-                  {t("lessonComplete")}
-                </Link>
-              </Button>
-            )}
-          </div>
-        )}
-        {enrollError && (
-          <p role="alert" className="text-center text-sm text-danger">
-            {tCourses("enrollFailed")}
-          </p>
-        )}
-        {hasLinkedWallet === false && isEnrolled && (
-          <p role="alert" className="text-center text-sm text-text-3">
-            {t("linkWalletToEarnXp")}{" "}
-            <Link
-              href={`/${locale}/settings`}
-              className="font-medium text-primary underline-offset-2 hover:underline"
-            >
-              {t("linkWalletSettings")}
-            </Link>
-          </p>
-        )}
-      </div>
+                {t("linkWalletSettings")}
+              </Link>
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Programmatic auth modal — opened at the claim moment (the "tests
           passed" enroll overlay, or the "Sign in to track" button). The work is

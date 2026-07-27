@@ -226,6 +226,7 @@
     "testsPassed": "All tests passed!",
     "testsFailed": "Some tests failed. Try again!",
     "testCases": "Test Cases",
+    "examples": "Examples",
     "output": "Output",
     "expected": "Expected",
     "passed": "Passed",
@@ -309,7 +310,11 @@
     "dismissAllSuggestions": "Dismiss All",
     "progressRestored": "{count, plural, one {Restored # completed lesson} other {Restored # completed lessons}}",
     "progressNeedsEnroll": "{count, plural, one {Enroll to save the lesson you completed} other {Enroll to save the # lessons you completed}}",
-    "progressNeedsRedo": "\"{lesson}\" needs to be finished — open it to complete."
+    "progressNeedsRedo": "\"{lesson}\" needs to be finished — open it to complete.",
+    "quizScore": "{correct}/{total} correct",
+    "toggleSection": "Toggle section",
+    "quiz": "Quiz",
+    "quizUnlocksAssistant": "Answer every question to unlock the AI Partner for this lesson."
   },
   "dashboard": {
     "allCaughtUp": "All caught up!",
@@ -950,11 +955,12 @@
   },
   "aiPartner": {
     "title": "AI Partner",
-    "subtitle": "Stuck? Get a hint, a proposed fix, or ask a question.",
+    "subtitle": "Stuck? Get a hint.",
     "completed": "Challenge complete — nice work!",
     "lock": {
       "title": "Give it a real try first",
-      "body": "The AI Partner unlocks in {time}. Attempt the challenge yourself before asking for help."
+      "body": "The AI Partner unlocks in {time}. Attempt the challenge yourself before asking for help.",
+      "tooltip": "Working through it yourself first is what makes it stick — the AI Partner is here for when you're truly stuck."
     },
     "start": {
       "greeting": "How can I help you build this?",
@@ -964,12 +970,10 @@
       "approachPrompt": "What are the first steps and key concepts I need to solve this challenge?"
     },
     "meter": {
-      "label": "{free} of 2 free hints used, {paid} of {max} paid assists used",
-      "freeLabel": "Free hints",
-      "paidLabel": "Paid assists"
+      "label": "{used} hints used"
     },
     "messages": {
-      "empty": "Ask for a hint or a proposed fix to get started.",
+      "empty": "Ask for a hint to get started.",
       "you": "You",
       "ai": "AI Partner",
       "loading": "Thinking...",

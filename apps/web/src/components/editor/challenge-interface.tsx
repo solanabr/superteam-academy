@@ -181,17 +181,14 @@ export function ChallengeInterface({
     null
   );
   const leftColRef = useRef<HTMLDivElement>(null);
-  const sentinelRef = useRef<HTMLDivElement>(null);
 
-  // The AI Partner sits at the bottom of the left reading column and stays
-  // hidden until the learner scrolls to the end of the description — then it
-  // slides in. `root: null` watches the viewport, so this works whether the
-  // column scrolls internally (lg+) or the page scrolls (below lg). Once
-  // revealed it stays revealed — but `aiSuppressed` (an unanswered quiz block
-  // in this lesson, LX-C1/F18) overrides the reveal entirely: the observer
-  // keeps tracking, and the pane slides in once the quiz is answered.
-  const [aiRevealed, setAiRevealed] = useState(false);
-  const aiVisible = aiRevealed && !aiSuppressed;
+  // The AI Partner sits at the bottom of the left reading column and is ALWAYS
+  // mounted (#770). It used to reveal only once a scroll sentinel hit the
+  // viewport, but in the compact full-height layout the left column scrolls
+  // internally and that sentinel could never intersect — the tutor was simply
+  // unreachable. Discoverability is not the gate: the think-first timer below
+  // is. `aiSuppressed` (an unanswered quiz block, LX-C1/F18) still hides it.
+  const aiVisible = !aiSuppressed;
 
   // AI Partner think-first lock (#770): the tutor stays locked for AI_LOCK_MS
   // after a challenge is first opened. The open timestamp is persisted per
@@ -221,18 +218,6 @@ export function ChallengeInterface({
     }
     setAiUnlockAt(openedAt + AI_LOCK_MS);
   }, [lessonId, isComplete]);
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el || aiRevealed) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) setAiRevealed(true);
-      },
-      { root: null, rootMargin: "0px 0px -32px 0px", threshold: 0 }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [aiRevealed]);
 
   const handleCodeChange = useCallback((newCode: string) => {
     setCode(newCode);
@@ -481,42 +466,31 @@ export function ChallengeInterface({
         {/* Instructions + test cases */}
         <div className="order-1 lg:order-none lg:shrink-0">{taskSlot}</div>
 
-        {/* Reveal sentinel — entering the viewport unhides the AI Partner. */}
-        <div
-          ref={sentinelRef}
-          aria-hidden="true"
-          className="order-1 h-px w-full shrink-0 lg:order-none"
-        />
-
-        {/* AI Partner — collapsed until the sentinel is reached, then slides in.
-            The pane is NOT mounted while collapsed: a CSS-only hide (max-h-0 /
-            overflow-hidden) would keep its inputs and buttons in the tab order,
-            letting a keyboard user land on invisible controls (WCAG 4.1.2). The
-            transition still runs because it lives on this always-mounted
-            wrapper — the pane simply mounts as the envelope grows. */}
+        {/* AI Partner — sized to its CONTENT, never a fixed box (#770). It used
+            to force h-[600px] inside a max-h-[760px] envelope, which reserved a
+            huge empty region below the rail once the pane became always-mounted
+            and collapsible. Now it grows with the conversation and caps out,
+            scrolling internally past the cap. Hidden outright when suppressed so
+            no invisible controls sit in the tab order (WCAG 4.1.2). */}
         <div
           className={cn(
-            "order-4 px-3 transition-all duration-500 ease-out motion-reduce:transition-none lg:order-none lg:shrink-0",
-            aiVisible
-              ? "max-h-[760px] translate-y-0 pb-4 pt-2 opacity-100"
-              : "max-h-0 translate-y-3 overflow-hidden opacity-0"
+            "order-4 px-3 pb-4 pt-2 lg:order-none lg:shrink-0",
+            !aiVisible && "hidden"
           )}
         >
           {aiVisible && (
-            <div className="h-[600px]">
-              <AiPartnerPane
-                lessonSlug={lessonSlug}
-                courseSlug={courseSlug}
-                hints={hints}
-                getCode={() => code}
-                getTestSummary={() => summarize(challengeState.executionResult)}
-                onApply={(proposed) => setCode(proposed)}
-                disabled={isComplete}
-                solutionPassed={challengeState.status === "success"}
-                unlockAt={aiUnlockAt}
-                className="h-full rounded-none border-0"
-              />
-            </div>
+            <AiPartnerPane
+              lessonSlug={lessonSlug}
+              courseSlug={courseSlug}
+              hints={hints}
+              getCode={() => code}
+              getTestSummary={() => summarize(challengeState.executionResult)}
+              onApply={(proposed) => setCode(proposed)}
+              disabled={isComplete}
+              solutionPassed={challengeState.status === "success"}
+              unlockAt={aiUnlockAt}
+              className="max-h-[560px]"
+            />
           )}
         </div>
       </div>
@@ -842,6 +816,7 @@ export function ChallengeInterface({
         >
           <OutputPanel
             executionResult={challengeState.executionResult}
+            tests={tests}
             isRunning={challengeState.status === "running"}
             onClear={handleClearOutput}
             className="h-full rounded-none border-0"

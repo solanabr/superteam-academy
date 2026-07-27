@@ -108,3 +108,6 @@ test-results/
 *.log
 *.tmp
 .cache/
+
+# Node compile cache (accidentally committed once in #791)
+node-compile-cache/

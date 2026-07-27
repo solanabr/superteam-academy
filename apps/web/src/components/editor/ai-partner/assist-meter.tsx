@@ -5,7 +5,8 @@ import { cn } from "@/lib/utils";
 import { MAX_PAID_ASSISTS } from "@/lib/ai/partner-types";
 
 const FREE_HINT_LIMIT = 2;
-const TOTAL_PIPS = FREE_HINT_LIMIT + MAX_PAID_ASSISTS;
+/** Learner-facing hint allowance (#770) — two pips, not one per billing slot. */
+const TOTAL_PIPS = 2;
 
 interface AssistMeterProps {
   freeHintsUsed: number;
@@ -13,6 +14,11 @@ interface AssistMeterProps {
   className?: string;
 }
 
+/**
+ * Learner-facing hint usage. The free/paid split is an internal billing detail
+ * (#770): the meter shows ONE combined count and uniform pips, so a learner
+ * never has to reason about which channel a hint came from.
+ */
 export function AssistMeter({
   freeHintsUsed,
   paidUsed,
@@ -20,11 +26,12 @@ export function AssistMeter({
 }: AssistMeterProps) {
   const t = useTranslations("aiPartner");
 
-  const label = t("meter.label", {
-    free: Math.min(freeHintsUsed, FREE_HINT_LIMIT),
-    paid: Math.min(paidUsed, MAX_PAID_ASSISTS),
-    max: MAX_PAID_ASSISTS,
-  });
+  const used = Math.min(
+    Math.min(freeHintsUsed, FREE_HINT_LIMIT) +
+      Math.min(paidUsed, MAX_PAID_ASSISTS),
+    TOTAL_PIPS
+  );
+  const label = t("meter.label", { used });
 
   return (
     <div
@@ -33,23 +40,16 @@ export function AssistMeter({
       aria-label={`${t("a11y.assistMeter")}: ${label}`}
     >
       <div className="flex items-center gap-1">
-        {Array.from({ length: TOTAL_PIPS }, (_, index) => {
-          const isFree = index < FREE_HINT_LIMIT;
-          const usedCount = isFree ? freeHintsUsed : paidUsed;
-          const positionInGroup = isFree ? index : index - FREE_HINT_LIMIT;
-          const isFilled = positionInGroup < usedCount;
-
-          return (
-            <span
-              key={index}
-              aria-hidden="true"
-              className={cn(
-                "h-2 w-2 rounded-full transition-colors",
-                isFilled ? (isFree ? "bg-success" : "bg-xp") : "bg-border"
-              )}
-            />
-          );
-        })}
+        {Array.from({ length: TOTAL_PIPS }, (_, index) => (
+          <span
+            key={index}
+            aria-hidden="true"
+            className={cn(
+              "h-2 w-2 rounded-full transition-colors",
+              index < used ? "bg-success" : "bg-border"
+            )}
+          />
+        ))}
       </div>
       <span className="text-xs text-text-3">{label}</span>
     </div>
