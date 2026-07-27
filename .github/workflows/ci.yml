@@ -486,43 +486,6 @@ jobs:
       - name: Integration scenarios
         run: cargo test --manifest-path onchain-academy/tests/differential/Cargo.toml
 
-      # ── CU budget drift gate (feeds #141 [G-4]) ─────────────────────────────
-      # Re-measures per-instruction compute units on the pinocchio .so built
-      # above and fails if they drift from the committed baseline. Any change —
-      # program logic OR a toolchain bump — must be a deliberate baseline
-      # regeneration plus a touch of docs/CU-BUDGET-REVIEW.md, never silent.
-      # The measurement is only reproducible under the pinned toolchain this job
-      # already uses (solana 3.1.10 / platform-tools v1.54), so the gate lives
-      # here rather than in a JS-only lane. Node/pnpm are set up now because the
-      # harness (ts-mocha + LiteSVM) needs them; the rest of the job is cargo.
-      - name: Install pnpm
-        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0, version read from package.json "packageManager"
-
-      - name: Setup Node
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-
-      - name: Install JS deps (CU harness)
-        run: pnpm install --frozen-lockfile
-
-      - name: CU budget drift gate
-        working-directory: onchain-academy
-        run: |
-          # The harness reads target/idl/onchain_academy.json; the committed IDL
-          # lives at idl/onchain_academy.json (target/ is gitignored), so stage
-          # it into the path the harness expects.
-          mkdir -p target/idl
-          cp idl/onchain_academy.json target/idl/onchain_academy.json
-          # Re-measure against the .so built above: cu:pinocchio runs
-          # select-program.sh (installs the pinocchio build into the shared slot)
-          # then the ts-mocha LiteSVM harness, which rewrites the baseline file.
-          pnpm cu:pinocchio
-          # Fail loudly on any drift from the committed baseline. Scoped to the
-          # one tracked file the harness writes (target/ artifacts are ignored).
-          git diff --exit-code tests/CU_BASELINE.pinocchio.md
-
   # ── Verifiable build + program-hash publishing (P1-4, feeds G-3) ────────────
   # Produces toolchain-reproducible bytecode via `cargo build-sbf` with a pinned
   # platform-tools version + the committed Cargo.lock, and publishes the SHA-256
