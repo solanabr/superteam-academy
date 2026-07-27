@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import { trackCredentialMinted } from "@/lib/analytics/events";
 import { createClient } from "@/lib/supabase/client";
 import { celebrate } from "@/lib/gamification/celebration";
@@ -43,6 +44,12 @@ export function useGamificationEvents(userId: string | undefined) {
     if (!userId) return;
 
     const supabase = createClient();
+    // The effect is async now (we await the session before subscribing), so a
+    // component that unmounts mid-await must not leave a dangling channel or
+    // subscribe after teardown. `cancelled` guards the await points; `channel`
+    // is assigned only once the socket is authed and subscribed.
+    let cancelled = false;
+    let channel: RealtimeChannel | null = null;
 
     // Seed the ref with the current level so the first UPDATE doesn't false-trigger.
     // Guard: only write the seed if no Realtime event has already set the ref —
@@ -58,159 +65,196 @@ export function useGamificationEvents(userId: string | undefined) {
         }
       });
 
-    const channel = supabase
-      .channel(`gamification:${userId}`)
-      // XP changes → detect level-up via local ref comparison
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "user_xp",
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload) => {
-          const newLevel = (payload.new as { level?: number }).level ?? 0;
-          const previousLevel = lastKnownLevelRef.current;
-          // Only celebrate a genuine increase — the ref starts null until the
-          // seed query resolves, so the first UPDATE can't false-trigger.
-          if (previousLevel !== null && newLevel > previousLevel) {
-            dispatchLevelUp(newLevel);
-          }
-          lastKnownLevelRef.current = newLevel;
-        }
-      )
-      // New XP transactions → XP popup (or enrich achievement popup)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "xp_transactions",
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload) => {
-          const row = payload.new as {
-            id?: string;
-            amount?: number;
-            reason?: string;
-            tx_signature?: string;
-            idempotency_key?: string;
-          };
+    // Authenticate the Realtime socket BEFORE subscribing. The browser client's
+    // socket otherwise joins as `anon`, and own-row RLS on xp_transactions (and
+    // the other gamification tables) then filters every event server-side while
+    // the channel still reports SUBSCRIBED — so no popup ever fires. Awaiting
+    // the session here also closes a hydration race: the subscribe used to run
+    // synchronously on mount, before the cookie session had been recovered.
+    async function connect() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (cancelled) return;
+      // No session → leave the socket anon (graceful degrade); own-row RLS
+      // yields nothing but the hook still subscribes without erroring.
+      if (session?.access_token) {
+        await supabase.realtime.setAuth(session.access_token);
+        if (cancelled) return;
+      }
 
-          // Deduplicate by row id (primary defence) or tx_signature (fallback)
-          const dedupeKey = row.id ?? row.tx_signature;
-          if (dedupeKey) {
-            if (seenIdsRef.current.has(dedupeKey)) return;
-            seenIdsRef.current.add(dedupeKey);
-            setTimeout(() => seenIdsRef.current.delete(dedupeKey), 15_000);
-          }
-
-          const amount = row.amount;
-          if (!amount || amount <= 0) return;
-
-          // Achievement XP → enrich the achievement popup instead of separate XP popup
-          const achievementMatch = row.reason?.match(
-            /^Achievement reward: (.+)$/
-          );
-          if (achievementMatch?.[1]) {
-            dispatchAchievementXp(achievementMatch[1], amount);
-            dispatchXpGain(amount);
-            return;
-          }
-
-          // Daily quest XP → suppress popup (quests panel already shows the reward)
-          if (row.reason?.startsWith("daily_quest:")) return;
-
-          // Surprise bonus (LX-B15) → informational toast (never confetti). The
-          // reward only surfaces here, AFTER it is granted server-side — there
-          // is no pre-announcement anywhere in the UI. Localization happens in
-          // the mounted SurpriseBonusToastListener (inside the intl provider).
-          // #790: the dashboard poll also detects surprise bonuses (for sessions
-          // where Realtime isn't delivering); claimSurpriseBonus is a session
-          // dedupe SHARED with that path, so whichever fires first wins and the
-          // other is a no-op — never a double toast.
-          if (row.reason && isSurpriseBonusReason(row.reason)) {
-            // KEEP IN SYNC with surpriseKey() in server-xp-feedback.ts: both
-            // channels share claimSurpriseBonus's seen-set, so they must derive
-            // the SAME key for the same award. maybeAwardSurpriseBonus always
-            // sets idempotency_key, so the fallbacks below are dead today — but
-            // if it ever becomes optional, both sites' fallbacks must stay
-            // aligned or a bonus would toast twice (once per path).
-            if (
-              claimSurpriseBonus(
-                row.idempotency_key ?? row.id ?? row.tx_signature ?? "",
-                userId
-              )
-            ) {
-              celebrate("surprise-bonus");
-              dispatchSurpriseBonus(amount);
+      channel = supabase
+        .channel(`gamification:${userId}`)
+        // XP changes → detect level-up via local ref comparison
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "user_xp",
+            filter: `user_id=eq.${userId}`,
+          },
+          (payload) => {
+            const newLevel = (payload.new as { level?: number }).level ?? 0;
+            const previousLevel = lastKnownLevelRef.current;
+            // Only celebrate a genuine increase — the ref starts null until the
+            // seed query resolves, so the first UPDATE can't false-trigger.
+            if (previousLevel !== null && newLevel > previousLevel) {
+              dispatchLevelUp(newLevel);
             }
-            dispatchXpGain(amount);
-            return;
+            lastKnownLevelRef.current = newLevel;
           }
+        )
+        // New XP transactions → XP popup (or enrich achievement popup)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "xp_transactions",
+            filter: `user_id=eq.${userId}`,
+          },
+          (payload) => {
+            const row = payload.new as {
+              id?: string;
+              amount?: number;
+              reason?: string;
+              tx_signature?: string;
+              idempotency_key?: string;
+            };
 
-          dispatchXpGain(amount);
-        }
-      )
-      // New achievements → achievement popup
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "user_achievements",
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload) => {
-          const row = payload.new as {
-            id?: string;
-            achievement_id?: string;
-          };
-          const key = row.id ?? row.achievement_id;
-          if (key) {
-            if (seenIdsRef.current.has(key)) return;
-            seenIdsRef.current.add(key);
-            setTimeout(() => seenIdsRef.current.delete(key), 15_000);
+            // Deduplicate by row id (primary defence) or tx_signature (fallback)
+            const dedupeKey = row.id ?? row.tx_signature;
+            if (dedupeKey) {
+              if (seenIdsRef.current.has(dedupeKey)) return;
+              seenIdsRef.current.add(dedupeKey);
+              setTimeout(() => seenIdsRef.current.delete(dedupeKey), 15_000);
+            }
+
+            const amount = row.amount;
+            if (!amount || amount <= 0) return;
+
+            // Achievement XP → enrich the achievement popup instead of separate XP popup
+            const achievementMatch = row.reason?.match(
+              /^Achievement reward: (.+)$/
+            );
+            if (achievementMatch?.[1]) {
+              dispatchAchievementXp(achievementMatch[1], amount);
+              dispatchXpGain(amount);
+              return;
+            }
+
+            // Daily quest XP → suppress popup (quests panel already shows the reward)
+            if (row.reason?.startsWith("daily_quest:")) return;
+
+            // Surprise bonus (LX-B15) → informational toast (never confetti). The
+            // reward only surfaces here, AFTER it is granted server-side — there
+            // is no pre-announcement anywhere in the UI. Localization happens in
+            // the mounted SurpriseBonusToastListener (inside the intl provider).
+            // #790: the dashboard poll also detects surprise bonuses (for sessions
+            // where Realtime isn't delivering); claimSurpriseBonus is a session
+            // dedupe SHARED with that path, so whichever fires first wins and the
+            // other is a no-op — never a double toast.
+            if (row.reason && isSurpriseBonusReason(row.reason)) {
+              // KEEP IN SYNC with surpriseKey() in server-xp-feedback.ts: both
+              // channels share claimSurpriseBonus's seen-set, so they must derive
+              // the SAME key for the same award. maybeAwardSurpriseBonus always
+              // sets idempotency_key, so the fallbacks below are dead today — but
+              // if it ever becomes optional, both sites' fallbacks must stay
+              // aligned or a bonus would toast twice (once per path).
+              if (
+                claimSurpriseBonus(
+                  row.idempotency_key ?? row.id ?? row.tx_signature ?? "",
+                  userId
+                )
+              ) {
+                celebrate("surprise-bonus");
+                dispatchSurpriseBonus(amount);
+              }
+              dispatchXpGain(amount);
+              return;
+            }
+
+            dispatchXpGain(amount);
           }
-          if (row.achievement_id) {
-            const displayName = row.achievement_id
-              .replace(/_/g, " ")
-              .replace(/\b\w/g, (c) => c.toUpperCase());
-            dispatchAchievementUnlock(row.achievement_id, displayName);
+        )
+        // New achievements → achievement popup
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "user_achievements",
+            filter: `user_id=eq.${userId}`,
+          },
+          (payload) => {
+            const row = payload.new as {
+              id?: string;
+              achievement_id?: string;
+            };
+            const key = row.id ?? row.achievement_id;
+            if (key) {
+              if (seenIdsRef.current.has(key)) return;
+              seenIdsRef.current.add(key);
+              setTimeout(() => seenIdsRef.current.delete(key), 15_000);
+            }
+            if (row.achievement_id) {
+              const displayName = row.achievement_id
+                .replace(/_/g, " ")
+                .replace(/\b\w/g, (c) => c.toUpperCase());
+              dispatchAchievementUnlock(row.achievement_id, displayName);
+            }
           }
-        }
-      )
-      // New certificates → certificate popup
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "certificates",
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload) => {
-          const row = payload.new as { id?: string; course_id?: string };
-          if (!row.id) return;
-          if (seenIdsRef.current.has(row.id)) return;
-          seenIdsRef.current.add(row.id);
-          const certId = row.id;
-          setTimeout(() => seenIdsRef.current.delete(certId), 15_000);
-          // credential_minted baseline (LX-F1) — the helper dedupes per
-          // course, so the manual-mint success firing moments earlier (or
-          // later) never double-counts the same mint.
-          if (row.course_id) {
-            trackCredentialMinted(row.course_id, "realtime");
+        )
+        // New certificates → certificate popup
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "certificates",
+            filter: `user_id=eq.${userId}`,
+          },
+          (payload) => {
+            const row = payload.new as { id?: string; course_id?: string };
+            if (!row.id) return;
+            if (seenIdsRef.current.has(row.id)) return;
+            seenIdsRef.current.add(row.id);
+            const certId = row.id;
+            setTimeout(() => seenIdsRef.current.delete(certId), 15_000);
+            // credential_minted baseline (LX-F1) — the helper dedupes per
+            // course, so the manual-mint success firing moments earlier (or
+            // later) never double-counts the same mint.
+            if (row.course_id) {
+              trackCredentialMinted(row.course_id, "realtime");
+            }
+            dispatchCertificateMinted(certId);
           }
-          dispatchCertificateMinted(certId);
-        }
-      )
-      .subscribe();
+        )
+        .subscribe();
+    }
+    void connect();
+
+    // Keep the socket authed across the page's lifetime. When GoTrue rotates
+    // the JWT (TOKEN_REFRESHED) or a sign-in completes on this page (SIGNED_IN),
+    // re-set the Realtime token so the connection doesn't silently fall back to
+    // filtering everything. This callback must stay synchronous — GoTrue awaits
+    // onAuthStateChange callbacks during init, and an async body that reached
+    // getSession would deadlock; setAuth takes the token straight off the event.
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event !== "TOKEN_REFRESHED" && event !== "SIGNED_IN") return;
+      if (session?.access_token) {
+        void supabase.realtime.setAuth(session.access_token);
+      }
+    });
 
     const seenIds = seenIdsRef.current;
     return () => {
-      supabase.removeChannel(channel);
+      cancelled = true;
+      subscription.unsubscribe();
+      if (channel) supabase.removeChannel(channel);
       seenIds.clear();
     };
   }, [userId]);
