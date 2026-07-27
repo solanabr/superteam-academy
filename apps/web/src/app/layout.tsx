@@ -73,7 +73,13 @@ export default async function RootLayout({
   return (
     <html lang={locale} suppressHydrationWarning>
       <body
-        className={`${fontSans.variable} ${fontDisplay.variable} ${fontMono.variable} font-sans antialiased`}
+        // overflow-x-clip: the challenge page's full-bleed split uses a 100vw
+        // width (mx-[calc(50%-50vw)] w-screen), and 100vw includes the vertical
+        // scrollbar gutter — leaving a phantom horizontal scrollbar the width of
+        // the scrollbar (#770). Clipping the x-overflow here kills it without a
+        // scroll container (so sticky headers still work) and without touching
+        // the intentional full-bleed, since body spans the full viewport.
+        className={`${fontSans.variable} ${fontDisplay.variable} ${fontMono.variable} overflow-x-clip font-sans antialiased`}
       >
         <a
           href="#main-content"
