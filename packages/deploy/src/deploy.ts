@@ -119,32 +119,44 @@ async function confirmTx(
  * Raised 20 -> 50 (#349). A typical buildable-challenge .so is roughly
  * 100-250 KB, i.e. ~110-280 chunks at CHUNK_SIZE=900B: BATCH_SIZE=50 turns
  * that into ~3-6 upload-batch prompts (+2 for buffer-create/finalize)
- * instead of ~6-14, with SEND_DELAY_MS and the rebroadcast cadence untouched.
+ * instead of ~6-14.
  *
  * Blockhash-window budget per batch (a recent blockhash is valid ~150 slots,
- * ~60-90s on devnet) at BATCH_SIZE=50:
- *   - stagger to send all 50:                     49 * SEND_DELAY_MS ≈ 2.5s
+ * ~60-90s on devnet) at BATCH_SIZE=50 (#776 updated the dispatch + resend math):
+ *   - dispatch all 50 via the bounded pool (SEND_CONCURRENCY=12,
+ *     ~ceil(50/12)=5 waves of ~1 RTT):                             ≈ 0.5-2s
  *   - typical confirm (priority fee lands most on the first send): ≈ 1-2s
  *   - pessimistic confirm (a few chunks dropped, 1-2 rebroadcast
- *     cycles at the ~4s cadence in confirmBatch):                  ≈ 8-12s
- *   realistic worst case total                                     ≈ 15-25s
+ *     cycles at the ~4s base cadence in confirmBatch, each capped
+ *     at MAX_RESENDS_PER_CYCLE and staggered):                     ≈ 8-12s
+ *   realistic worst case total                                     ≈ 12-20s
  * — comfortably inside the ~90s window, with room left over for the time the
  * user takes to see the wallet popup and click Approve (that delay counts
  * against the same blockhash, since it's fetched just before signing).
  *
- * Why not go straight to 100+ (the issue's outer bound): confirmBatch's
- * rebroadcast loop resends the still-unconfirmed set sequentially (one
- * awaited sendRawTransaction after another, no concurrency). At 50, a
- * full-batch resend pass is still just tens of RPC round trips; at 100+ a
- * bad pass (e.g. an RPC hiccup that drops most of the batch) could itself
- * burn a large fraction of the 90s budget, leaving no margin for a second
- * pass. 50 is the largest size where a full-batch resend still fits
- * comfortably inside the window.
+ * The whole batch shares the ONE blockhash fetched just before signing; neither
+ * the send pool nor the resend loop re-fetches or re-signs, so both only spend
+ * the window faster/leaner, never extend what must fit in it.
+ *
+ * Why not go straight to 100+ (the issue's outer bound): a resend cycle is now
+ * capped at MAX_RESENDS_PER_CYCLE and backs off on 429, so a bad pass no longer
+ * fires the whole set back-to-back; but at 100+ a batch that mostly drops still
+ * needs several capped cycles to re-cover, and clearing it inside one blockhash
+ * window gets tight. 50 keeps a full recovery comfortably inside the window.
  */
 const BATCH_SIZE = 50;
 
-/** Small stagger between sends to avoid RPC rate limits. */
+/** Small stagger between staggered rebroadcast sends to avoid RPC rate limits. */
 const SEND_DELAY_MS = 50;
+
+/**
+ * Max write-txs kept in flight when firing an upload batch (item 3 / #776).
+ * Replaces the old one-RTT-per-tx serial loop. 12 sits in the issue's 8–16
+ * band: enough to collapse a 50-tx batch's dispatch from ~50 serial round trips
+ * to ~5 waves, while staying well under a keyed RPC's rate limit so the initial
+ * burst itself does not provoke the 429s that confirmBatch then has to nurse.
+ */
+const SEND_CONCURRENCY = 12;
 
 /**
  * Priority fee (compute-unit price, micro-lamports) added to every deploy tx.
@@ -155,11 +167,127 @@ const SEND_DELAY_MS = 50;
  */
 const PRIORITY_FEE_MICROLAMPORTS = 100_000;
 
-/** Compute-unit-price instruction prepended to each deploy transaction. */
-function priorityFeeIx() {
+/**
+ * Compute-unit LIMIT for a single buffer WRITE tx (item 4 / #776).
+ *
+ * A Loader-v3 Write instruction is a bounded memcpy of <=CHUNK_SIZE (900) bytes
+ * into the buffer account; the Anchor CLI measures it at ~2,670 CU and sets its
+ * own tight `WRITE_COMPUTE_UNIT_LIMIT` on exactly these txs. Plus the two
+ * ComputeBudget ixs (~150 CU each), a write tx consumes ~3k CU.
+ *
+ * Without an explicit limit each non-builtin ix is reserved the ~200k default,
+ * which (a) the leader must reserve when packing — so far fewer write txs fit a
+ * block — and (b) is what the priority fee is charged against (fee = price ×
+ * REQUESTED limit, not actual). 10k is ~3.5x the measured cost (comfortable
+ * headroom for chunk-size variance — a too-tight limit fails the tx outright)
+ * while cutting the reserved/charged budget ~20x. Verification is unit-level (no
+ * on-chain sends), so the figure is the Anchor-measured cost, not a live sim.
+ *
+ * Applied ONLY to the write burst — NOT the one-off buffer-create/deploy txs:
+ * those are a single tx each (packing is irrelevant) and the deploy ix needs the
+ * full default budget for the loader's ELF verification. This mirrors the Anchor
+ * CLI, which tightens only its write txs.
+ */
+const WRITE_CU_LIMIT = 10_000;
+
+/** Compute-unit-price instruction prepended to the one-off (buffer/deploy) txs. */
+export function priorityFeeIx() {
   return ComputeBudgetProgram.setComputeUnitPrice({
     microLamports: PRIORITY_FEE_MICROLAMPORTS,
   });
+}
+
+/**
+ * Compute-budget instructions for a WRITE tx: an explicit unit LIMIT plus the
+ * price. The limit is the packing/fee fix (item 4); the price is unchanged.
+ */
+export function writeComputeBudgetIxs() {
+  return [
+    ComputeBudgetProgram.setComputeUnitLimit({ units: WRITE_CU_LIMIT }),
+    ComputeBudgetProgram.setComputeUnitPrice({
+      microLamports: PRIORITY_FEE_MICROLAMPORTS,
+    }),
+  ];
+}
+
+/**
+ * Fire a batch of pre-signed, serialized txs with BOUNDED concurrency, returning
+ * index-aligned signatures (item 3 / #776). Up to `concurrency` sends are in
+ * flight at once, replacing the old one-`await`-per-tx serial loop that cost one
+ * RTT + a 50ms sleep per chunk (~20–40s for a 100KB program). `signatures[i]`
+ * corresponds to `serializedTxs[i]` — the alignment confirmBatch relies on to
+ * rebroadcast the right bytes for a dropped signature.
+ *
+ * Blockhash-window interaction: the caller fetched ONE blockhash for the whole
+ * batch and signed every tx against it; this pool only compresses the DISPATCH
+ * phase and never re-signs or re-fetches, so it does not change any tx's
+ * validity. It strictly WIDENS the confirmation margin inside the same ~150-slot
+ * (~60–90s devnet) window — all N are simply sent sooner — rather than consuming
+ * more of it. Concurrency stays modest so the burst itself does not trip the RPC
+ * rate limit (a 429 storm would delay landing and eat the window instead).
+ */
+export async function sendAllBounded(
+  connection: Connection,
+  serializedTxs: Uint8Array[],
+  concurrency = SEND_CONCURRENCY
+): Promise<string[]> {
+  const signatures = new Array<string>(serializedTxs.length);
+  let cursor = 0;
+  const worker = async (): Promise<void> => {
+    for (let i = cursor++; i < serializedTxs.length; i = cursor++) {
+      signatures[i] = await sendWithRetry(connection, serializedTxs[i]!);
+    }
+  };
+  const workerCount = Math.min(concurrency, serializedTxs.length);
+  await Promise.all(Array.from({ length: workerCount }, () => worker()));
+  return signatures;
+}
+
+/** Base interval between rebroadcast cycles in confirmBatch (item 7 / #776). */
+const RESEND_INTERVAL_MS = 4_000;
+/** Ceiling for the backed-off rebroadcast interval after 429s (item 7). */
+const MAX_RESEND_INTERVAL_MS = 30_000;
+/**
+ * Max txs rebroadcast per cycle — caps the old up-to-50 back-to-back resend
+ * storm so one cycle can't burn a large fraction of the blockhash window (item
+ * 7). The still-unconfirmed remainder is picked up on the next cycle.
+ */
+const MAX_RESENDS_PER_CYCLE = 15;
+
+/** True if an RPC error looks like an HTTP 429 / rate-limit response. */
+export function is429(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return /\b429\b|too many requests|rate.?limit/i.test(msg);
+}
+
+/**
+ * Retry-After delay (ms) parsed from an error message if the RPC surfaced one,
+ * else null. web3.js flattens the HTTP response into an Error message, so this
+ * is a best-effort scrape of a "Retry-After: N" / "retry after N seconds" hint.
+ */
+export function parseRetryAfterMs(err: unknown): number | null {
+  const msg = err instanceof Error ? err.message : String(err);
+  const m = /retry[- ]?after[:\s]+(\d+)/i.exec(msg);
+  if (!m) return null;
+  const seconds = Number(m[1]);
+  return Number.isFinite(seconds) ? seconds * 1000 : null;
+}
+
+/**
+ * Next rebroadcast interval after a resend cycle (item 7). A 429 WIDENS the
+ * cadence — honoring an explicit Retry-After when present, else exponential
+ * (double) — capped at MAX_RESEND_INTERVAL_MS. Any clean cycle relaxes back to
+ * the base cadence. `err` is null when the cycle hit no 429.
+ */
+export function nextResendInterval(
+  current: number,
+  err: unknown | null
+): number {
+  if (err !== null && is429(err)) {
+    const retryAfter = parseRetryAfterMs(err);
+    return Math.min(retryAfter ?? current * 2, MAX_RESEND_INTERVAL_MS);
+  }
+  return RESEND_INTERVAL_MS;
 }
 
 /**
@@ -169,7 +297,7 @@ function priorityFeeIx() {
  *
  * This is how the Solana CLI confirms deploys — much faster than sequential.
  */
-async function confirmBatch(
+export async function confirmBatch(
   connection: Connection,
   serializedTxs: Uint8Array[],
   signatures: string[],
@@ -184,6 +312,8 @@ async function confirmBatch(
   const start = Date.now();
   // The txs were just sent by the caller; wait a beat before the first resend.
   let lastResend = Date.now();
+  // Rebroadcast cadence, widened on 429 and relaxed on a clean cycle (item 7).
+  let resendIntervalMs = RESEND_INTERVAL_MS;
 
   while (unconfirmed.size > 0) {
     if (Date.now() - start > timeoutMs) {
@@ -216,23 +346,42 @@ async function confirmBatch(
       }
     }
 
-    // Rebroadcast still-unconfirmed txs every ~4s: devnet drops transactions
-    // under load, and the RPC won't rebroadcast them for us (maxRetries: 0), so
-    // a dropped chunk would otherwise never land and the batch would stall.
-    // Re-sending the same signed tx is safe (idempotent) while its blockhash is
-    // still valid, which the BATCH_SIZE tuning above (see its comment) keeps
-    // us inside even in the pessimistic case.
-    if (unconfirmed.size > 0 && Date.now() - lastResend > 4000) {
-      for (const idx of unconfirmed.values()) {
+    // Rebroadcast still-unconfirmed txs: devnet drops transactions under load,
+    // and the RPC won't rebroadcast them for us (maxRetries: 0), so a dropped
+    // chunk would otherwise never land and the batch would stall. Re-sending the
+    // same signed tx is safe (idempotent) while its blockhash is still valid,
+    // which the BATCH_SIZE tuning above keeps us inside even pessimistically.
+    //
+    // Unlike the old loop — which re-fired the ENTIRE unconfirmed set back to
+    // back and swallowed every error including 429s — this (item 7 / #776):
+    //   • caps the cycle at MAX_RESENDS_PER_CYCLE (a big batch can't turn one
+    //     resend into a 50-deep synchronous RPC storm),
+    //   • STAGGERS each resend by SEND_DELAY_MS, and
+    //   • BACKS OFF on a 429: stops hammering for the rest of the cycle and
+    //     widens the interval (Retry-After if given, else exponential).
+    if (unconfirmed.size > 0 && Date.now() - lastResend > resendIntervalMs) {
+      const toResend = [...unconfirmed.values()].slice(
+        0,
+        MAX_RESENDS_PER_CYCLE
+      );
+      let cycleErr: unknown | null = null;
+      for (const idx of toResend) {
         try {
           await connection.sendRawTransaction(serializedTxs[idx]!, {
             skipPreflight: true,
             maxRetries: 0,
           });
-        } catch {
-          // Ignore — the next poll cycle will resend.
+        } catch (err) {
+          if (is429(err)) {
+            // Rate-limited — stop this cycle and let the interval widen below.
+            cycleErr = err;
+            break;
+          }
+          // Non-429: ignore; the next cycle picks it up.
         }
+        await new Promise((r) => setTimeout(r, SEND_DELAY_MS));
       }
+      resendIntervalMs = nextResendInterval(resendIntervalMs, cycleErr);
       lastResend = Date.now();
     }
   }
@@ -339,7 +488,7 @@ export async function deployProgram(params: {
       const chunk = binary.slice(offset, offset + CHUNK_SIZE);
 
       const writeTx = new Transaction().add(
-        priorityFeeIx(),
+        ...writeComputeBudgetIxs(),
         createWriteInstruction(bufferKeypair.publicKey, payer, offset, chunk)
       );
       writeTx.feePayer = payer;
@@ -357,19 +506,11 @@ export async function deployProgram(params: {
     // Batch sign (1 wallet popup per batch)
     const signedBatch = await wallet.signAllTransactions(batchTxs);
 
-    // Send all txs rapidly (parallel fire with small stagger). Keep each
-    // serialized so confirmBatch can rebroadcast any that get dropped.
-    const signatures: string[] = [];
-    const serializedTxs: Uint8Array[] = [];
-    for (let j = 0; j < signedBatch.length; j++) {
-      const serialized = signedBatch[j]!.serialize();
-      serializedTxs.push(serialized);
-      const sig = await sendWithRetry(connection, serialized);
-      signatures.push(sig);
-      if (j < signedBatch.length - 1) {
-        await new Promise((r) => setTimeout(r, SEND_DELAY_MS));
-      }
-    }
+    // Serialize (kept so confirmBatch can rebroadcast any that get dropped),
+    // then fire the whole batch with BOUNDED concurrency. Signatures come back
+    // index-aligned to serializedTxs, which confirmBatch's bookkeeping requires.
+    const serializedTxs = signedBatch.map((tx) => tx.serialize());
+    const signatures = await sendAllBounded(connection, serializedTxs);
 
     // Confirm all via batch polling; rebroadcasts dropped txs until they land.
     let batchConfirmed = 0;
