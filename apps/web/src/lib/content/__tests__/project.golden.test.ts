@@ -85,7 +85,7 @@ vi.mock("server-only", () => ({}));
 //    rewired to that ladder; frontend path retired (draft/empty); the
 //    full-blocks course-by-slug fixture RETARGETED anchor-framework -> C3;
 //    3 achievement awards retargeted (anchor-expert -> C3, rust-rookie -> C2,
-//    course-completer -> C2 pending C1). courses/lessons/paths/summaries/
+//    course-completer -> C2 pending C1 (#673)). courses/lessons/paths/summaries/
 //    quests-raw-derived regenerated; achievements-raw patched for the 3
 //    retargets only (rest stays the prod-Sanity capture).
 const deps = { lessonsById };
