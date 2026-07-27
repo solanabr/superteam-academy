@@ -60,16 +60,27 @@ describe("slot lock ↔ array-index equivalence (current bundle) — #741", () =
     expect(checkedLessons).toBeGreaterThan(0);
   });
 
-  // LANDMINE BY DESIGN. This documents that the CURRENT committed bundle is
-  // entirely dense, which is exactly what makes #741 byte-identical today. When
-  // a restructure bump (e.g. #740) lands and a course becomes sparse, RELAX THIS
-  // ONE TEST — the dense⟹equivalence test above and the sparse-fixture tests in
-  // slot-aware.test.ts / lesson-slot.test.ts remain the real guarantees, and the
-  // slot-aware route is precisely what makes the now-sparse course correct.
-  it("the current bundle is entirely dense (slot-space == array-space today)", () => {
+  // LANDMINE BY DESIGN — relaxed once, exactly as its author intended.
+  //
+  // It originally asserted the whole bundle was dense, which is what made #741
+  // byte-identical at the time it shipped. #740 (re-landed after #741 made the
+  // completion path slot-aware) restructured `course-building-first-program`:
+  // retired slots [0,2,11,14], added 16-18. That course is now legitimately
+  // SPARSE, and the slot-aware route/webhook/batch paths are precisely what make
+  // it correct — array-space would name the wrong lesson there.
+  //
+  // So this stays a tripwire rather than being deleted: it pins the sparse set to
+  // exactly the courses we intend to be sparse. A NEW sparse course appearing
+  // here is a real signal — either a restructure landed that nobody reviewed for
+  // slot-awareness, or a slots.lock was hand-edited. Add an id here only with the
+  // same deliberation #740 got.
+  const EXPECTED_SPARSE = ["course-building-first-program"];
+
+  it("only the expected courses are sparse (everything else is slot-space == array-space)", () => {
     const sparse = [...slotsByCourseId.entries()]
       .filter(([, lock]) => !isDense(lock))
-      .map(([id]) => id);
-    expect(sparse).toEqual([]);
+      .map(([id]) => id)
+      .sort();
+    expect(sparse).toEqual([...EXPECTED_SPARSE].sort());
   });
 });
