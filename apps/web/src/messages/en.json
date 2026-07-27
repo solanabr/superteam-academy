@@ -944,6 +944,10 @@
     "title": "AI Partner",
     "subtitle": "Stuck? Get a hint, a proposed fix, or ask a question.",
     "completed": "Challenge complete — nice work!",
+    "lock": {
+      "title": "Give it a real try first",
+      "body": "The AI Partner unlocks in {time}. Attempt the challenge yourself before asking for help."
+    },
     "start": {
       "greeting": "How can I help you build this?",
       "explain": "Explain this challenge",
