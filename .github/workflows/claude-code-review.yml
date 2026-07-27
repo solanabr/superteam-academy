@@ -2,18 +2,36 @@ name: Claude Code Review
 
 on:
   pull_request:
-    # Cost: review on open / ready / reopen — NOT on every `synchronize` (every push),
-    # which re-reviews a PR on each commit and burns the OAuth-token budget. Re-trigger a
-    # fresh review by commenting `@claude review` (claude.yml) or reopening.
-    types: [opened, ready_for_review, reopened]
+    # Every PR is reviewed on open / ready / reopen. Additionally — and ONLY for PRs
+    # carrying `needs-gate` — re-review on every push (`synchronize`) and when the
+    # label is first applied (`labeled`). This closes the #710 race: the orchestrator
+    # pushes hardening commits after the review has started, so the review reported on
+    # a head that no longer existed (and 3 of 5 stale reviews missed the security-
+    # relevant commit). Scoping the push re-review to needs-gate keeps the OAuth-token
+    # cost off every ordinary PR push; the `if:` below enforces the scope, and the
+    # concurrency group cancels an in-flight review the moment a newer head arrives so
+    # a stale verdict can never post.
+    types: [opened, ready_for_review, reopened, synchronize, labeled]
+
+# One review per PR at a time; a newer head cancels the older review in flight (the
+# mechanical core of the #710 fix — the pre-fix head's review is superseded, never
+# posted as if current). Keyed on PR number so PRs don't cancel each other.
+concurrency:
+  group: claude-code-review-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   claude-review:
-    # Optional: Filter by PR author
-    # if: |
-    #   github.event.pull_request.user.login == 'external-contributor' ||
-    #   github.event.pull_request.user.login == 'new-developer' ||
-    #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
+    # opened/ready/reopened review any PR (unchanged). synchronize + labeled fire for
+    # every PR but are admitted here only for needs-gate, so a fresh-head review is
+    # guaranteed both when the PR is queued (label added) and on each subsequent push,
+    # without re-reviewing every push of every PR.
+    if: >-
+      github.event.action == 'opened' ||
+      github.event.action == 'ready_for_review' ||
+      github.event.action == 'reopened' ||
+      (github.event.action == 'synchronize' && contains(github.event.pull_request.labels.*.name, 'needs-gate')) ||
+      (github.event.action == 'labeled' && github.event.label.name == 'needs-gate')
 
     runs-on: ubuntu-latest
     permissions:
