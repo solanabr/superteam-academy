@@ -148,6 +148,20 @@ describe("#607 stranded-instance cleanup — user_xp RECONCILE, never DELETE", (
     );
   });
 
+  it("bounds Statement B's blast radius with a pre-flight that names the user (round-5/6 gate)", () => {
+    // Statement B is deliberately era-UNBOUNDED (the reconcile post-invariant
+    // needs it), so a live/resync user with state but no post-cutoff XP could be
+    // silently full-zeroed. A pre-flight counts B's would-be targets using the
+    // PRE-DELETE survivor view (created_at >= cutoff — NOT the current-rows view)
+    // and ABORTS NAMING the user_id(s) if ever more than the expected ONE.
+    expect(migration).toContain("uxp_b_blast");
+    expect(migration).toContain("b.uxp_b_blast NOT IN (0, 1)");
+    // The pre-delete survivor view: at-or-after the cutoff, not "current rows".
+    expect(code).toMatch(/created_at >= '2026-07-21'/);
+    // Names the offending row(s) in the abort message.
+    expect(code).toMatch(/string_agg/);
+  });
+
   it("verifies no state-bearing row has a NULL activity date (defensive)", () => {
     // Not "impossible": award_xp stamps last_activity_date, but admin/resync
     // upserts user_xp directly and can leave total_xp>0 with a NULL date. Hence

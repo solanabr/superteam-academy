@@ -203,7 +203,23 @@ SELECT
        AND (total_xp > 0 OR level > 0 OR current_streak > 0 OR longest_streak > 0)) AS uxp_active_era,
   (SELECT count(*) FROM public.user_xp
      WHERE last_activity_date IS NULL
-       AND (total_xp > 0 OR level > 0 OR current_streak > 0 OR longest_streak > 0)) AS uxp_null_state;
+       AND (total_xp > 0 OR level > 0 OR current_streak > 0 OR longest_streak > 0)) AS uxp_null_state,
+  -- uxp_b_blast: the rows Statement B would FULL-ZERO — state AND no WOULD-BE
+  -- surviving xp row. Statement B is deliberately era-UNBOUNDED (the reconcile
+  -- post-invariant needs it), so instead of scoping B we BOUND its blast radius
+  -- here: expected exactly 1 (467e7e23); abort NAMING the row if ever more, so a
+  -- live/resync user with state but no post-cutoff XP can never be silently
+  -- wiped. NOTE `created_at >= '2026-07-21'`: this runs BEFORE the DELETEs, so a
+  -- "survivor" is a row AT-OR-AFTER the cutoff (a would-be survivor), NOT the
+  -- current-rows view — writing it as NOT(<cutoff) or via the post-delete state
+  -- miscounts. NULL created_at is already excluded by the xp_null guard above.
+  (SELECT count(*) FROM public.user_xp u
+     WHERE (u.total_xp > 0 OR u.level > 0 OR u.current_streak > 0
+            OR u.longest_streak > 0 OR u.last_activity_date IS NOT NULL)
+       AND NOT EXISTS (
+         SELECT 1 FROM public.xp_transactions x
+         WHERE x.user_id = u.user_id AND x.created_at >= '2026-07-21'
+       )) AS uxp_b_blast;
 
 -- ── Pre-DELETE structural guard ──
 -- Each era-scoped count must equal its posted value (first apply) OR 0 (already
@@ -263,6 +279,24 @@ BEGIN
   IF b.uxp_null_state <> 0 THEN
     RAISE EXCEPTION 'user_xp has % row(s) with state but NULL last_activity_date — invisible to the era clause. Inspect before applying (award_xp stamps the date; admin/resync bypasses it, hence this defensive assert).', b.uxp_null_state;
   END IF;
+
+  -- Statement B blast-radius bound (round-5/6 gate). B is era-UNBOUNDED by
+  -- design, so its target set (state + no would-be survivor) is validated here
+  -- rather than scoped: exactly 1 today (467e7e23), 0 on re-apply. If it is ever
+  -- MORE than 1, a row the pre-flight did not expect would be silently zeroed —
+  -- ABORT and NAME the offending user_id(s) so the operator inspects first.
+  IF b.uxp_b_blast NOT IN (0, 1) THEN
+    RAISE EXCEPTION 'Statement B would full-zero % user_xp row(s) [user_id(s): %] — expected exactly 1 (467e7e23) or 0 (re-apply). A live/resync user with state but no post-cutoff XP must NOT be silently zeroed; inspect before applying.',
+      b.uxp_b_blast,
+      (SELECT string_agg(u.user_id::text, ', ' ORDER BY u.user_id::text)
+       FROM public.user_xp u
+       WHERE (u.total_xp > 0 OR u.level > 0 OR u.current_streak > 0
+              OR u.longest_streak > 0 OR u.last_activity_date IS NOT NULL)
+         AND NOT EXISTS (
+           SELECT 1 FROM public.xp_transactions x
+           WHERE x.user_id = u.user_id AND x.created_at >= '2026-07-21'
+         ));
+  END IF;
 END $$;
 
 -- ── Reset chain-mirrored state (ERA-SCOPED DELETEs — post-move rows survive) ──
@@ -309,10 +343,14 @@ WHERE s.user_id = u.user_id
 -- Statement B — fully-stranded users: state but NO surviving xp_transactions.
 -- Statement A's inner join only reaches users who still have rows; a user whose
 -- every xp row was era-deleted (467e7e23, last activity 2026-07-15) needs an
--- explicit full zero — and, unlike the escaped authority, its streak/activity
--- ARE stranded-era, so they are zeroed too (era-active → full zero, as the old
--- UPDATE did). streak_freezes stays as-is (0). Setting both streak columns to 0
--- together satisfies chk_user_xp_longest_gte_current.
+-- explicit full zero including streak/last_activity (there is nothing left to
+-- reconcile to). B is deliberately era-UNBOUNDED — the reconcile post-invariant
+-- requires it (an escaped no-survivor user must reduce to 0, not survive) — and
+-- its blast radius is bounded by the uxp_b_blast pre-flight above (expected
+-- exactly 1) rather than by a date predicate here, so an unexpected target
+-- aborts loudly-named instead of being silently zeroed. streak_freezes stays
+-- as-is (0). Setting both streak columns to 0 satisfies
+-- chk_user_xp_longest_gte_current.
 UPDATE public.user_xp u
 SET total_xp           = 0,
     level              = 0,
