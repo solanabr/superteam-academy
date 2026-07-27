@@ -398,98 +398,117 @@ export function LessonPageClient({
   return (
     <div
       className={`mx-auto ${
-        hasCodeBlock ? "max-w-[1600px] space-y-0" : "max-w-3xl space-y-6"
+        hasCodeBlock
+          ? // Challenge pages fill exactly one viewport at lg with no page
+            // scroll: cancel the platform container's pt-8/pb-8 (#770) with
+            // negative margins and become a fixed-height flex column
+            // (100dvh minus the fixed header's 60px offset). Top bar is
+            // shrink-0; the IDE flex-fills the rest.
+            "max-w-[1600px] space-y-0 lg:-mb-8 lg:-mt-8 lg:flex lg:h-[calc(100dvh-60px)] lg:flex-col"
+          : "max-w-3xl space-y-6"
       }`}
     >
       {/* Lesson top bar — full-bleed on challenges so its bottom border and
-          content line up with the edge-to-edge editor split below. */}
+          content line up with the edge-to-edge editor split below. Three
+          columns: back+title (left), Prev/Next (center, challenge pages),
+          discussion+XP+progress (right). lg:shrink-0 so it never eats the
+          IDE's flex height. */}
       <div
-        className={`flex flex-wrap items-center gap-2 border-b border-border pb-4 sm:gap-3 ${
+        className={`flex items-center gap-2 border-b border-border pb-4 sm:gap-3 lg:shrink-0 ${
           hasCodeBlock ? "mx-[calc(50%_-_50vw)] w-screen px-3 sm:px-4" : ""
         }`}
       >
-        <Link
-          href={`/${locale}/courses/${courseSlug}`}
-          className="inline-flex items-center gap-1.5 font-display text-sm font-semibold text-text-3 transition-colors hover:text-text"
-        >
-          <ArrowLeft size={16} weight="bold" />
-          {tCommon("back")}
-        </Link>
-        <h1 className="min-w-0 flex-1 truncate font-display text-base font-black text-text sm:text-lg">
-          {lesson.title}
-        </h1>
-        <div className="ml-auto flex items-center gap-2 sm:gap-3">
-          {/* Prev/Next + Discussion move into the top bar on challenge pages
-              (#770) so the challenge itself owns the whole viewport below. */}
+        <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+          <Link
+            href={`/${locale}/courses/${courseSlug}`}
+            className="inline-flex shrink-0 items-center gap-1.5 font-display text-sm font-semibold text-text-3 transition-colors hover:text-text"
+          >
+            <ArrowLeft size={16} weight="bold" />
+            <span className="hidden sm:inline">{tCommon("back")}</span>
+          </Link>
+          <h1 className="min-w-0 truncate font-display text-base font-black text-text sm:text-lg">
+            {lesson.title}
+          </h1>
+        </div>
+
+        {/* Prev/Next centered on challenge pages (#770) — labeled + visible. */}
+        {hasCodeBlock && (
+          <div className="flex shrink-0 items-center gap-2">
+            <Button
+              variant="pushOutline"
+              size="sm"
+              asChild={!!prevLesson}
+              disabled={!prevLesson}
+              className="gap-1"
+            >
+              {prevLesson ? (
+                <Link
+                  href={`/${locale}/courses/${courseSlug}/lessons/${prevLesson.slug}`}
+                >
+                  <CaretLeft size={14} weight="bold" aria-hidden="true" />
+                  <span className="hidden sm:inline">
+                    {tCommon("previous")}
+                  </span>
+                </Link>
+              ) : (
+                <span className="inline-flex items-center gap-1">
+                  <CaretLeft size={14} weight="bold" aria-hidden="true" />
+                  <span className="hidden sm:inline">
+                    {tCommon("previous")}
+                  </span>
+                </span>
+              )}
+            </Button>
+            <Button
+              variant="pushOutline"
+              size="sm"
+              asChild={!!nextLesson}
+              disabled={!nextLesson}
+              className="gap-1"
+            >
+              {nextLesson ? (
+                <Link
+                  href={`/${locale}/courses/${courseSlug}/lessons/${nextLesson.slug}`}
+                >
+                  <span className="hidden sm:inline">{tCommon("next")}</span>
+                  <CaretRight size={14} weight="bold" aria-hidden="true" />
+                </Link>
+              ) : (
+                <span className="inline-flex items-center gap-1">
+                  <span className="hidden sm:inline">{tCommon("next")}</span>
+                  <CaretRight size={14} weight="bold" aria-hidden="true" />
+                </span>
+              )}
+            </Button>
+          </div>
+        )}
+
+        <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3">
           {hasCodeBlock && (
-            <div className="flex items-center gap-0.5">
-              <Button
-                variant="ghost"
-                size="sm"
-                asChild={!!prevLesson}
-                disabled={!prevLesson}
-                aria-label={tCommon("previous")}
-                title={tCommon("previous")}
-                className="h-8 w-8 p-0"
-              >
-                {prevLesson ? (
-                  <Link
-                    href={`/${locale}/courses/${courseSlug}/lessons/${prevLesson.slug}`}
-                  >
-                    <CaretLeft size={16} weight="bold" aria-hidden="true" />
-                  </Link>
-                ) : (
-                  <CaretLeft size={16} weight="bold" aria-hidden="true" />
-                )}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                asChild={!!nextLesson}
-                disabled={!nextLesson}
-                aria-label={tCommon("next")}
-                title={tCommon("next")}
-                className="h-8 w-8 p-0"
-              >
-                {nextLesson ? (
-                  <Link
-                    href={`/${locale}/courses/${courseSlug}/lessons/${nextLesson.slug}`}
-                  >
-                    <CaretRight size={16} weight="bold" aria-hidden="true" />
-                  </Link>
-                ) : (
-                  <CaretRight size={16} weight="bold" aria-hidden="true" />
-                )}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsDiscussionListOpen(true)}
-                aria-label={t("discussion")}
-                title={t("discussion")}
-                className="h-8 gap-1.5 px-2 text-xs"
-              >
-                <ChatCircle size={16} weight="duotone" aria-hidden="true" />
-                <span className="hidden md:inline">{t("discussion")}</span>
-              </Button>
-              <span
-                className="mx-1 hidden h-5 w-px bg-border sm:block"
-                aria-hidden="true"
-              />
-            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsDiscussionListOpen(true)}
+              aria-label={t("discussion")}
+              title={t("discussion")}
+              className="h-8 shrink-0 gap-1.5 px-2 text-xs"
+            >
+              <ChatCircle size={16} weight="duotone" aria-hidden="true" />
+              <span className="hidden lg:inline">{t("discussion")}</span>
+            </Button>
           )}
-          <span className="flex items-center gap-1 font-display text-sm font-black text-xp">
+          <span className="flex shrink-0 items-center gap-1 font-display text-sm font-black text-xp">
             <Lightning size={14} weight="fill" />+
             {earnedXp ?? courseXpPerLesson} XP
           </span>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <span className="font-mono text-xs tabular-nums text-text-3">
               {currentIndex + 1}/{allLessons.length}
             </span>
             <ProgressBar
               value={currentIndex + 1}
               max={allLessons.length}
-              className="w-16 sm:w-20"
+              className="hidden w-16 sm:block sm:w-20"
             />
           </div>
         </div>
@@ -501,7 +520,7 @@ export function LessonPageClient({
           `container` max-width and spans the viewport edge-to-edge, LeetCode
           style. `px` leaves a small gutter from the screen edges. */}
       {hasCodeBlock ? (
-        <div className="mx-[calc(50%_-_50vw)] w-screen space-y-4">
+        <div className="mx-[calc(50%_-_50vw)] w-screen space-y-4 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:space-y-0">
           {codeBlocks.map((block, i) => {
             const Renderer = RENDERERS[block._type];
             // Only the FIRST code block carries the instructions rail. A lesson
