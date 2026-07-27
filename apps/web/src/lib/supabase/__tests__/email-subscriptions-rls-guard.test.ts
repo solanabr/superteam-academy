@@ -105,6 +105,9 @@ for (const [label, sql] of [
       const body = sql.slice(start, sql.indexOf("$$;", start));
       expect(body).toContain("es.opt_in = true");
       expect(body).toContain("u.email IS NOT NULL");
+      // Deterministic order (#779): chunk boundaries + the membership-hash
+      // idempotency key depend on a stable recipient order.
+      expect(body).toContain("ORDER BY es.user_id");
     });
   });
 }

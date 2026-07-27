@@ -2952,7 +2952,8 @@ AS $$
   JOIN auth.users u ON u.id = es.user_id
   WHERE es.opt_in = true
     AND u.email IS NOT NULL
-    AND u.email <> '';
+    AND u.email <> ''
+  ORDER BY es.user_id;
 $$;
 
 REVOKE ALL ON FUNCTION list_marketing_recipients() FROM PUBLIC, anon, authenticated;

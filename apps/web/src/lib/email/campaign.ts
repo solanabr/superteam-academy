@@ -1,5 +1,6 @@
 import "server-only";
 
+import { createHash } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   isEmailConfigured,
@@ -40,6 +41,25 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 /** Defensive email sanity check on top of the RPC's NOT NULL / non-empty gate. */
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+/**
+ * Idempotency key derived from the chunk's MEMBER ids, not its array index
+ * (#779 review). Keying on WHO is in the batch — over a deterministic
+ * `ORDER BY user_id` from the RPC — means a retry after a mid-campaign
+ * unsubscribe re-sends only the chunks whose membership actually changed (new
+ * key ⇒ Resend sends) while every unchanged chunk keys identically (cached ⇒
+ * never double-sent). This eliminates the silent-SKIP an index key would cause;
+ * the residual is a rare, benign DUPLICATE to members who shifted position in a
+ * changed chunk — the right trade for marketing mail (a missed opt-in learner
+ * is worse than a duplicate).
+ */
+function chunkIdempotencyKey(courseId: string, userIds: string[]): string {
+  const digest = createHash("sha256")
+    .update(userIds.join(","))
+    .digest("hex")
+    .slice(0, 16);
+  return `new-course:${courseId}:${digest}`;
 }
 
 export async function sendNewCourseAnnouncement(params: {
@@ -102,7 +122,10 @@ export async function sendNewCourseAnnouncement(params: {
       };
     });
 
-    const idempotencyKey = `new-course:${params.courseId}:${i / RESEND_MAX_BATCH}`;
+    const idempotencyKey = chunkIdempotencyKey(
+      params.courseId,
+      chunk.map((r) => r.user_id)
+    );
     const result = await sendEmailBatch(messages, { idempotencyKey });
     if (result.ok) {
       sent += result.sent;

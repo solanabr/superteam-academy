@@ -92,8 +92,9 @@ describe("sendNewCourseAnnouncement — consent gating", () => {
     expect(messages[0]!.html).toContain(
       "https://app.test/api/email/unsubscribe?token=tok-a"
     );
-    // Per-course/per-chunk idempotency key → retries never double-send.
-    expect(opts.idempotencyKey).toBe("new-course:course-x:0");
+    // Idempotency key is derived from the chunk's member ids (#779), namespaced
+    // by course — a stable 16-hex digest, not the array index.
+    expect(opts.idempotencyKey).toMatch(/^new-course:course-x:[0-9a-f]{16}$/);
   });
 
   it("drops a malformed email defensively (belt over the RPC's gate)", async () => {
@@ -117,11 +118,41 @@ describe("sendNewCourseAnnouncement — consent gating", () => {
     const r = await sendNewCourseAnnouncement(params);
     expect(r).toMatchObject({ status: "sent", recipients: 150, sent: 150 });
     expect(emailMocks.sendBatch).toHaveBeenCalledTimes(2);
+    const key0 = emailMocks.sendBatch.mock.calls[0]![1].idempotencyKey;
+    const key1 = emailMocks.sendBatch.mock.calls[1]![1].idempotencyKey;
+    expect(key0).toMatch(/^new-course:course-x:[0-9a-f]{16}$/);
+    expect(key1).toMatch(/^new-course:course-x:[0-9a-f]{16}$/);
+    // Different membership ⇒ different keys (no cross-chunk cache collision).
+    expect(key0).not.toBe(key1);
+  });
+
+  it("keys idempotency on chunk MEMBERSHIP — stable across runs, changes when it shifts", async () => {
+    const set = [
+      recipient("a@b.com", "ta"),
+      recipient("b@b.com", "tb"),
+      recipient("c@b.com", "tc"),
+    ];
+    rpc.mockResolvedValue({ data: set, error: null });
+    await sendNewCourseAnnouncement(params);
+    const firstKey = emailMocks.sendBatch.mock.calls[0]![1].idempotencyKey;
+
+    // Re-run with the IDENTICAL set → identical key (cached ⇒ never double-sent).
+    emailMocks.sendBatch.mockClear();
+    await sendNewCourseAnnouncement(params);
     expect(emailMocks.sendBatch.mock.calls[0]![1].idempotencyKey).toBe(
-      "new-course:course-x:0"
+      firstKey
     );
-    expect(emailMocks.sendBatch.mock.calls[1]![1].idempotencyKey).toBe(
-      "new-course:course-x:1"
+
+    // A mid-campaign unsubscribe shifts the set → the chunk's key CHANGES, so a
+    // retry re-sends it (the shifted-in recipient is never silently skipped).
+    emailMocks.sendBatch.mockClear();
+    rpc.mockResolvedValue({
+      data: [set[0]!, set[2]!], // "b" unsubscribed
+      error: null,
+    });
+    await sendNewCourseAnnouncement(params);
+    expect(emailMocks.sendBatch.mock.calls[0]![1].idempotencyKey).not.toBe(
+      firstKey
     );
   });
 

@@ -121,7 +121,13 @@ AS $$
   JOIN auth.users u ON u.id = es.user_id
   WHERE es.opt_in = true
     AND u.email IS NOT NULL
-    AND u.email <> '';
+    AND u.email <> ''
+  -- DETERMINISTIC ORDER (#779 review): the campaign chunks this list by array
+  -- position and derives each batch's idempotency key from the chunk's member
+  -- ids. A stable ORDER BY makes chunk boundaries reproducible across a partial-
+  -- send retry, so an unchanged chunk keys identically (cached, never double-
+  -- sent) and only a chunk whose membership actually shifted re-sends.
+  ORDER BY es.user_id;
 $$;
 
 REVOKE ALL ON FUNCTION list_marketing_recipients() FROM PUBLIC, anon, authenticated;
