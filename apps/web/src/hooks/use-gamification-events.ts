@@ -65,6 +65,21 @@ export function useGamificationEvents(userId: string | undefined) {
         }
       });
 
+    // Monotonic guard against a stale-token race: bumped every time a token is
+    // pushed to the socket. If a TOKEN_REFRESHED lands while connect()'s
+    // getSession() is in flight, the auth listener pushes the newer token and
+    // bumps this; connect() then sees the generation moved and must NOT
+    // overwrite the socket with the older token it captured before the refresh.
+    let authGeneration = 0;
+
+    // Push a JWT to the Realtime socket. setAuth's rejection contract isn't
+    // guaranteed across supabase-js versions, so swallow rejections — a failed
+    // re-auth must never surface as unhandled-rejection noise.
+    function pushRealtimeAuth(token: string): Promise<void> {
+      authGeneration += 1;
+      return supabase.realtime.setAuth(token).catch(() => {});
+    }
+
     // Authenticate the Realtime socket BEFORE subscribing. The browser client's
     // socket otherwise joins as `anon`, and own-row RLS on xp_transactions (and
     // the other gamification tables) then filters every event server-side while
@@ -72,14 +87,18 @@ export function useGamificationEvents(userId: string | undefined) {
     // the session here also closes a hydration race: the subscribe used to run
     // synchronously on mount, before the cookie session had been recovered.
     async function connect() {
+      const generationBefore = authGeneration;
       const {
         data: { session },
       } = await supabase.auth.getSession();
       if (cancelled) return;
       // No session → leave the socket anon (graceful degrade); own-row RLS
-      // yields nothing but the hook still subscribes without erroring.
-      if (session?.access_token) {
-        await supabase.realtime.setAuth(session.access_token);
+      // yields nothing but the hook still subscribes without erroring. Skip the
+      // push if a fresher token was applied by the auth listener while
+      // getSession() was in flight — reverting to this now-stale token would
+      // silently de-auth the socket until the next refresh.
+      if (session?.access_token && authGeneration === generationBefore) {
+        await pushRealtimeAuth(session.access_token);
         if (cancelled) return;
       }
 
@@ -233,7 +252,9 @@ export function useGamificationEvents(userId: string | undefined) {
         )
         .subscribe();
     }
-    void connect();
+    // getSession() can reject; swallow so the initial connect can't surface as
+    // unhandled-rejection noise (the setAuth push inside is already guarded).
+    connect().catch(() => {});
 
     // Keep the socket authed across the page's lifetime. When GoTrue rotates
     // the JWT (TOKEN_REFRESHED) or a sign-in completes on this page (SIGNED_IN),
@@ -246,7 +267,9 @@ export function useGamificationEvents(userId: string | undefined) {
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (event !== "TOKEN_REFRESHED" && event !== "SIGNED_IN") return;
       if (session?.access_token) {
-        void supabase.realtime.setAuth(session.access_token);
+        // pushRealtimeAuth swallows rejections internally, so the floating
+        // promise here can never become unhandled-rejection noise.
+        void pushRealtimeAuth(session.access_token);
       }
     });
 
