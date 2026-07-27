@@ -8,9 +8,10 @@ import {
   CheckCircle,
   ArrowLeft,
   ChatCircle,
+  CaretLeft,
+  CaretRight,
 } from "@phosphor-icons/react";
 import type { Lesson } from "@superteam-lms/types";
-import { RENDERERS, type BlockContext } from "./blocks";
 import { Button } from "@/components/ui/button";
 import { ProgressBar } from "@/components/course/progress-bar";
 import { AuthModal } from "@/components/auth/auth-modal";
@@ -23,6 +24,13 @@ import { bankCompletion, removeBanked } from "@/lib/lessons/progress-bank";
 import { REPLAY_BANKED_EVENT } from "@/components/lessons/banked-progress-replay";
 import { ThreadList } from "@/components/community/thread-list";
 import { CreateThreadModal } from "@/components/community/create-thread-modal";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { RENDERERS, type BlockContext } from "./blocks";
 
 interface LessonPageClientProps {
   lesson: Lesson;
@@ -99,6 +107,10 @@ export function LessonPageClient({
   const [isEnrolled, setIsEnrolled] = useState(false);
   const hasLinkedWallet = authProfile ? !!authProfile.wallet_address : null;
   const [isDiscussionOpen, setIsDiscussionOpen] = useState(false);
+  // Challenge pages surface discussion in a modal (#770) to keep the page
+  // focused on the code; this controls that modal (distinct from the
+  // create-thread modal above).
+  const [isDiscussionListOpen, setIsDiscussionListOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [buildUuid, setBuildUuid] = useState<string | null>(null);
   const [programKeypairSecret, setProgramKeypairSecret] = useState<
@@ -385,8 +397,8 @@ export function LessonPageClient({
 
   return (
     <div
-      className={`mx-auto space-y-6 ${
-        hasCodeBlock ? "max-w-[1600px] px-1 sm:px-2" : "max-w-3xl"
+      className={`mx-auto ${
+        hasCodeBlock ? "max-w-[1600px] space-y-0" : "max-w-3xl space-y-6"
       }`}
     >
       {/* Lesson top bar — full-bleed on challenges so its bottom border and
@@ -406,7 +418,66 @@ export function LessonPageClient({
         <h1 className="min-w-0 flex-1 truncate font-display text-base font-black text-text sm:text-lg">
           {lesson.title}
         </h1>
-        <div className="ml-auto flex items-center gap-2 sm:gap-4">
+        <div className="ml-auto flex items-center gap-2 sm:gap-3">
+          {/* Prev/Next + Discussion move into the top bar on challenge pages
+              (#770) so the challenge itself owns the whole viewport below. */}
+          {hasCodeBlock && (
+            <div className="flex items-center gap-0.5">
+              <Button
+                variant="ghost"
+                size="sm"
+                asChild={!!prevLesson}
+                disabled={!prevLesson}
+                aria-label={tCommon("previous")}
+                title={tCommon("previous")}
+                className="h-8 w-8 p-0"
+              >
+                {prevLesson ? (
+                  <Link
+                    href={`/${locale}/courses/${courseSlug}/lessons/${prevLesson.slug}`}
+                  >
+                    <CaretLeft size={16} weight="bold" aria-hidden="true" />
+                  </Link>
+                ) : (
+                  <CaretLeft size={16} weight="bold" aria-hidden="true" />
+                )}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                asChild={!!nextLesson}
+                disabled={!nextLesson}
+                aria-label={tCommon("next")}
+                title={tCommon("next")}
+                className="h-8 w-8 p-0"
+              >
+                {nextLesson ? (
+                  <Link
+                    href={`/${locale}/courses/${courseSlug}/lessons/${nextLesson.slug}`}
+                  >
+                    <CaretRight size={16} weight="bold" aria-hidden="true" />
+                  </Link>
+                ) : (
+                  <CaretRight size={16} weight="bold" aria-hidden="true" />
+                )}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsDiscussionListOpen(true)}
+                aria-label={t("discussion")}
+                title={t("discussion")}
+                className="h-8 gap-1.5 px-2 text-xs"
+              >
+                <ChatCircle size={16} weight="duotone" aria-hidden="true" />
+                <span className="hidden md:inline">{t("discussion")}</span>
+              </Button>
+              <span
+                className="mx-1 hidden h-5 w-px bg-border sm:block"
+                aria-hidden="true"
+              />
+            </div>
+          )}
           <span className="flex items-center gap-1 font-display text-sm font-black text-xp">
             <Lightning size={14} weight="fill" />+
             {earnedXp ?? courseXpPerLesson} XP
@@ -430,7 +501,7 @@ export function LessonPageClient({
           `container` max-width and spans the viewport edge-to-edge, LeetCode
           style. `px` leaves a small gutter from the screen edges. */}
       {hasCodeBlock ? (
-        <div className="mx-[calc(50%_-_50vw)] w-screen space-y-4 px-3 sm:px-4">
+        <div className="mx-[calc(50%_-_50vw)] w-screen space-y-4">
           {codeBlocks.map((block, i) => {
             const Renderer = RENDERERS[block._type];
             // Only the FIRST code block carries the instructions rail. A lesson
@@ -469,114 +540,118 @@ export function LessonPageClient({
             {completionError}
           </div>
         )}
-        <div className="flex flex-col gap-3 border-t border-border pt-6 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center">
-          {prevLesson && (
-            <Button
-              variant="pushOutline"
-              size="default"
-              asChild
-              className="w-full justify-center sm:w-auto sm:min-w-[120px]"
-            >
-              <Link
-                href={`/${locale}/courses/${courseSlug}/lessons/${prevLesson.slug}`}
+        {/* Bottom nav hidden on challenge pages (#770): Prev/Next live in the
+            top bar and code lessons complete via the ChallengeInterface submit. */}
+        {!hasCodeBlock && (
+          <div className="flex flex-col gap-3 border-t border-border pt-6 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center">
+            {prevLesson && (
+              <Button
+                variant="pushOutline"
+                size="default"
+                asChild
+                className="w-full justify-center sm:w-auto sm:min-w-[120px]"
               >
-                &larr; {tCommon("previous")}
-              </Link>
-            </Button>
-          )}
-
-          {/* Code lessons complete via the ChallengeInterface submit; other
-              lessons complete via this explicit button. */}
-          {!hasCodeBlock &&
-            (userId ? (
-              isEnrolled ? (
-                <Button
-                  variant={isCompleted ? "outline" : "pushSuccess"}
-                  size="lg"
-                  disabled={
-                    isCompleted || isCompleting || hasLinkedWallet === false
-                  }
-                  onClick={() => handleComplete()}
-                  className="w-full gap-2 sm:w-auto"
+                <Link
+                  href={`/${locale}/courses/${courseSlug}/lessons/${prevLesson.slug}`}
                 >
-                  {isCompleting ? (
-                    <>
-                      <div
-                        className="h-5 w-5 animate-spin rounded-full border-[3px] border-white/30 border-t-white"
+                  &larr; {tCommon("previous")}
+                </Link>
+              </Button>
+            )}
+
+            {/* Code lessons complete via the ChallengeInterface submit; other
+              lessons complete via this explicit button. */}
+            {!hasCodeBlock &&
+              (userId ? (
+                isEnrolled ? (
+                  <Button
+                    variant={isCompleted ? "outline" : "pushSuccess"}
+                    size="lg"
+                    disabled={
+                      isCompleted || isCompleting || hasLinkedWallet === false
+                    }
+                    onClick={() => handleComplete()}
+                    className="w-full gap-2 sm:w-auto"
+                  >
+                    {isCompleting ? (
+                      <>
+                        <div
+                          className="h-5 w-5 animate-spin rounded-full border-[3px] border-white/30 border-t-white"
+                          aria-hidden="true"
+                        />
+                        <span className="sr-only">{tCommon("loading")}</span>
+                      </>
+                    ) : isCompleted ? (
+                      <CheckCircle
+                        size={20}
+                        weight="duotone"
+                        className="text-success"
                         aria-hidden="true"
                       />
-                      <span className="sr-only">{tCommon("loading")}</span>
-                    </>
-                  ) : isCompleted ? (
-                    <CheckCircle
-                      size={20}
-                      weight="duotone"
-                      className="text-success"
-                      aria-hidden="true"
-                    />
-                  ) : null}
-                  {isCompleted ? t("lessonComplete") : t("markComplete")}
-                </Button>
+                    ) : null}
+                    {isCompleted ? t("lessonComplete") : t("markComplete")}
+                  </Button>
+                ) : (
+                  <Button
+                    variant="push"
+                    size="lg"
+                    disabled={isEnrolling}
+                    onClick={handleEnroll}
+                    className="gap-2"
+                  >
+                    {isEnrolling && (
+                      <>
+                        <div
+                          className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
+                          aria-hidden="true"
+                        />
+                        <span className="sr-only">{tCommon("loading")}</span>
+                      </>
+                    )}
+                    {tCourses("enrollNow")}
+                  </Button>
+                )
               ) : (
+                // Anonymous: banks the work done so far, then opens the sign-in
+                // prompt with its "Later" escape (LX-A4). The controlled modal is
+                // rendered once below.
                 <Button
                   variant="push"
                   size="lg"
-                  disabled={isEnrolling}
-                  onClick={handleEnroll}
                   className="gap-2"
+                  onClick={openClaimAuth}
                 >
-                  {isEnrolling && (
-                    <>
-                      <div
-                        className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
-                        aria-hidden="true"
-                      />
-                      <span className="sr-only">{tCommon("loading")}</span>
-                    </>
-                  )}
-                  {tCourses("enrollNow")}
+                  {t("signInToTrack")}
                 </Button>
-              )
-            ) : (
-              // Anonymous: banks the work done so far, then opens the sign-in
-              // prompt with its "Later" escape (LX-A4). The controlled modal is
-              // rendered once below.
-              <Button
-                variant="push"
-                size="lg"
-                className="gap-2"
-                onClick={openClaimAuth}
-              >
-                {t("signInToTrack")}
-              </Button>
-            ))}
+              ))}
 
-          {nextLesson ? (
-            <Button
-              variant={isCompleted ? "push" : "pushOutline"}
-              size="default"
-              asChild
-              className="w-full justify-center sm:w-auto sm:min-w-[120px]"
-            >
-              <Link
-                href={`/${locale}/courses/${courseSlug}/lessons/${nextLesson.slug}`}
+            {nextLesson ? (
+              <Button
+                variant={isCompleted ? "push" : "pushOutline"}
+                size="default"
+                asChild
+                className="w-full justify-center sm:w-auto sm:min-w-[120px]"
               >
-                {tCommon("next")} &rarr;
-              </Link>
-            </Button>
-          ) : (
-            <Button
-              variant={isCompleted ? "push" : "pushOutline"}
-              size="default"
-              asChild
-              className="w-full justify-center sm:w-auto sm:min-w-[120px]"
-            >
-              <Link href={`/${locale}/courses/${courseSlug}`}>
-                {t("lessonComplete")}
-              </Link>
-            </Button>
-          )}
-        </div>
+                <Link
+                  href={`/${locale}/courses/${courseSlug}/lessons/${nextLesson.slug}`}
+                >
+                  {tCommon("next")} &rarr;
+                </Link>
+              </Button>
+            ) : (
+              <Button
+                variant={isCompleted ? "push" : "pushOutline"}
+                size="default"
+                asChild
+                className="w-full justify-center sm:w-auto sm:min-w-[120px]"
+              >
+                <Link href={`/${locale}/courses/${courseSlug}`}>
+                  {t("lessonComplete")}
+                </Link>
+              </Button>
+            )}
+          </div>
+        )}
         {enrollError && (
           <p role="alert" className="text-center text-sm text-danger">
             {tCourses("enrollFailed")}
@@ -608,42 +683,68 @@ export function LessonPageClient({
         />
       )}
 
-      {/* Discussion */}
-      <div className="border-t border-border pt-6">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="flex items-center gap-2 font-display text-lg font-bold text-text">
-            <ChatCircle size={20} weight="duotone" />
-            {t("discussion")}
-          </h3>
-          {userId ? (
-            <Button
-              variant="pushOutline"
-              size="sm"
-              onClick={() => setIsDiscussionOpen(true)}
-            >
-              {t("askQuestion")}
-            </Button>
-          ) : (
-            <AuthModal
-              trigger={
-                <Button variant="pushOutline" size="sm">
-                  {t("signInToAsk")}
-                </Button>
-              }
-            />
-          )}
-        </div>
-        <ThreadList
-          scope={{ courseId, lessonId: lesson._id }}
-          showFilters
-          emptyMessage={tCommunity("empty.lesson")}
-        />
-        <CreateThreadModal
-          open={isDiscussionOpen}
-          onOpenChange={setIsDiscussionOpen}
-          defaultScope={{ courseId, lessonId: lesson._id }}
-        />
-      </div>
+      {/* Discussion — a focused modal on challenge pages (#770, opened from the
+          top-bar button) to keep the page on the code; inline on reading
+          lessons where there's room. The ask-question header is shared. */}
+      {(() => {
+        const askAction = userId ? (
+          <Button
+            variant="pushOutline"
+            size="sm"
+            onClick={() => setIsDiscussionOpen(true)}
+          >
+            {t("askQuestion")}
+          </Button>
+        ) : (
+          <AuthModal
+            trigger={
+              <Button variant="pushOutline" size="sm">
+                {t("signInToAsk")}
+              </Button>
+            }
+          />
+        );
+        const threads = (
+          <ThreadList
+            scope={{ courseId, lessonId: lesson._id }}
+            showFilters
+            emptyMessage={tCommunity("empty.lesson")}
+          />
+        );
+        return hasCodeBlock ? (
+          <Dialog
+            open={isDiscussionListOpen}
+            onOpenChange={setIsDiscussionListOpen}
+          >
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <ChatCircle size={20} weight="duotone" />
+                  {t("discussion")}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="mb-1 flex justify-end">{askAction}</div>
+              <div className="max-h-[60vh] overflow-auto">{threads}</div>
+            </DialogContent>
+          </Dialog>
+        ) : (
+          <div className="border-t border-border pt-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="flex items-center gap-2 font-display text-lg font-bold text-text">
+                <ChatCircle size={20} weight="duotone" />
+                {t("discussion")}
+              </h3>
+              {askAction}
+            </div>
+            {threads}
+          </div>
+        );
+      })()}
+      <CreateThreadModal
+        open={isDiscussionOpen}
+        onOpenChange={setIsDiscussionOpen}
+        defaultScope={{ courseId, lessonId: lesson._id }}
+      />
     </div>
   );
 }
