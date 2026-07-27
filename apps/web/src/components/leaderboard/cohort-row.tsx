@@ -61,7 +61,17 @@ export function CohortRow({ entry, style }: CohortRowProps) {
       </div>
 
       <div className="lb-right">
-        <span className="lb-xp">{entry.score.toLocaleString()} XP</span>
+        {/* League score is WEEKLY league-eligible XP (#789) — the '+' frames it
+            as points earned this period, distinct from the lifetime header
+            total; the surface subtitle + this aria-label carry "this week". */}
+        <span
+          className="lb-xp"
+          aria-label={t("leagueScoreAria", {
+            score: entry.score.toLocaleString(),
+          })}
+        >
+          +{entry.score.toLocaleString()} XP
+        </span>
       </div>
     </div>
   );

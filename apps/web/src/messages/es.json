@@ -440,7 +440,11 @@
     "leagueSignIn": "Inicia sesión para unirte a la liga de esta semana.",
     "cohortStripTitle": "Tu liga",
     "cohortStripAria": "Tu posición en la liga",
-    "cohortViewAll": "Ver liga"
+    "cohortViewAll": "Ver liga",
+    "leagueThisWeek": "Esta semana",
+    "leagueScoreAria": "{score} XP ganados esta semana",
+    "leagueScoringInfoLabel": "Sobre la puntuación de la liga",
+    "leagueScoringInfo": "La puntuación de la liga cuenta el XP de aprendizaje ganado esta semana — lecciones, desafíos, misiones y logros. Las bonificaciones y el XP de la comunidad no cuentan."
   },
   "certificates": {
     "title": "Certificado de Finalización",
