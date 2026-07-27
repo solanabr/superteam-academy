@@ -1,5 +1,5 @@
 import path from "path";
-import { defineConfig } from "vitest/config";
+import { defineConfig, configDefaults } from "vitest/config";
 
 export default defineConfig({
   // tsconfig.json sets "jsx": "preserve" (Next.js compiles JSX at build
@@ -14,6 +14,10 @@ export default defineConfig({
     globals: true,
     environment: "node",
     setupFiles: ["./vitest.setup.ts"],
+    // The Playwright E2E specs share the `*.spec.ts` glob but must NOT be
+    // collected by vitest (they import `@playwright/test`, not the vitest
+    // runner). They run via `pnpm --filter web e2e`. Keep vitest's own defaults.
+    exclude: [...configDefaults.exclude, "e2e/**"],
   },
   resolve: {
     alias: {
