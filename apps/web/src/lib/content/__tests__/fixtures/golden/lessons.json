@@ -761,7 +761,13 @@
         "maxWords": null,
         "amount": null,
         "network": null,
-        "idl": null
+        "idl": null,
+        "tutorNotes": [
+          "Learners trust the passed `from_vault` for attack (a); re-derive it from the SIGNER's key and check `constraint = from_vault.owner == user.key()`, so a caller cannot pass someone else's vault.",
+          "They reach for `dup` when `recipient` can equal the signer; both vaults are `mut`, so when the two are one account Anchor refuses with error 2040 — the fix is the account model, not a `dup` directive.",
+          "They widen a field or reorder the accounts struct; the non-editable harness pins every field, type and position and is the only part of the spec the build server checks.",
+          "They try to move real lamports; this instruction is bookkeeping only (recorded balance), so there is no CPI and no `system_program`."
+        ]
       },
       {
         "key": "retrieval-close",
@@ -951,7 +957,13 @@
         "maxWords": null,
         "amount": null,
         "network": null,
-        "idl": null
+        "idl": null,
+        "tutorNotes": [
+          "Learners build first and read the four errors as four problems; all four come from the harness referencing the two items they owe (`greet` and `Greet`), so writing both clears them together.",
+          "They add the `greet` handler but forget the `Greet` accounts struct (or the reverse); `Context<Greet>` needs a `#[derive(Accounts)]` struct to exist, so one without the other still fails.",
+          "They put `Greet` inside the `#[program]` module; the accounts struct is a top-level item next to `Version`, not a handler.",
+          "They edit the `version` handler instead of copying its shape into a new `greet`; part 2 wants a second handler, not a changed first one."
+        ]
       },
       {
         "key": "retrieval-close",
@@ -1129,7 +1141,13 @@
         "maxWords": null,
         "amount": null,
         "network": null,
-        "idl": null
+        "idl": null,
+        "tutorNotes": [
+          "Learners try to invent lines; everything needed is already in the two pools — uncomment the ones that belong and order them, leaving the rest commented.",
+          "They keep the one pool-A line that compiles green but is wrong; three pool lines belong nowhere and only two are caught by the compiler, so reason about the third before building.",
+          "They order pool A wrong; the block-opening line ends in `{`, the closing line is `}`, and the body runs top to bottom with the returned value last.",
+          "They swap the two pool-B attributes; `#[account]` describes the bytes inside one account, `#[derive(Accounts)]` describes the account list an instruction touches, and `Context<VaultInfo>` needs the second."
+        ]
       }
     ]
   },
@@ -9123,7 +9141,13 @@
         "maxWords": null,
         "amount": null,
         "network": null,
-        "idl": null
+        "idl": null,
+        "tutorNotes": [
+          "In subgoal 3 learners bind `&v.balance` instead of the `u64` that `balance_of` returns; passing `&mut` where `&` is wanted is a reborrow, and you want the number it hands back, not a reference to it.",
+          "They add a zero-amount guard or an `else` for the `None` case in subgoal 2; the `None` case is deliberately nothing, and zero-amount policy lives in a later lesson.",
+          "They delete the `compile_error!` line but leave the `todo!()` under it (or the reverse); both must go together, because `todo!()` alone type-checks and would hide an unwritten body.",
+          "They hold a shared borrow across a later mutation and hit E0502; because `u64` is `Copy`, taking the value ends the borrow and the conflict disappears."
+        ]
       },
       {
         "key": "check",
@@ -9366,7 +9390,13 @@
         "maxWords": null,
         "amount": null,
         "network": null,
-        "idl": null
+        "idl": null,
+        "tutorNotes": [
+          "Learners pick decoy (5), bare subtraction, which panics under `overflow-checks = true` instead of returning the error; use `checked_sub(...).ok_or(InsufficientFunds)?`.",
+          "They pick decoy (2), `checked_sub(...).unwrap()`, which panics on underflow rather than returning `Err`; `unwrap` is banned in program code for exactly this.",
+          "They read the twelve unresolved-name errors as twelve problems; they are one missing crate-root re-export, `pub use vault::{VaultError, VaultState};` (pool line 4).",
+          "They leave an empty method body (`()`), failing `expected Result<(), Error>, found ()`; each body is three pool lines ending in `Ok(())`, and two lines are used twice."
+        ]
       },
       {
         "key": "write",
@@ -9422,7 +9452,13 @@
         "maxWords": null,
         "amount": null,
         "network": null,
-        "idl": null
+        "idl": null,
+        "tutorNotes": [
+          "Learners type before reading the non-editable harness; it names every item, field and type and is the only thing the build server checks — it is the spec, in Rust.",
+          "They widen the bump to `u64` and trip `assert!(INIT_SPACE == 41)`; 41 is `Pubkey`(32) + `u64`(8) + `u8`(1), so keep `bump: u8`.",
+          "They forget the crate-root `pub use vault::{VaultError, VaultState};`, so the harness outside `mod vault` cannot see the items; `use super::*` reaches the crate root, not into a sibling module.",
+          "Compile-only grading passes a `withdraw` that calls `checked_add` or omits the zero-amount check; the harness verifies shape, not behaviour, so the operator is on you — the lesson says so."
+        ]
       },
       {
         "key": "check",
@@ -9612,7 +9648,13 @@
         "maxWords": null,
         "amount": null,
         "network": null,
-        "idl": null
+        "idl": null,
+        "tutorNotes": [
+          "Learners reach for `?` on the `Option` inside a `const fn`; it is unstable in const context (E0015). Use `match` — `?` on `Result` becomes legal in lesson 12.",
+          "They use a bare `+` or `-` on lamports (banned, and it panics under `overflow-checks`); `checked_add`/`checked_sub` are themselves `const fn` and return the `Option` you need.",
+          "In `transfer_lamports` they try to bail out mid-expression without `?`; inspect the second operation where the first has already succeeded (a nested `match`), not inside one expression.",
+          "They leave a `todo!()` body and read `E0080: evaluation panicked: not yet implemented` as a compiler bug; that is the const-assertion reaching `todo!()`, and a real body makes the failing assertion print itself with the exact wrong input."
+        ]
       },
       {
         "key": "check",
@@ -9802,7 +9844,13 @@
         "maxWords": null,
         "amount": null,
         "network": null,
-        "idl": null
+        "idl": null,
+        "tutorNotes": [
+          "Learners add a zero-amount guard in subgoal 2; that is lesson-13 deposit policy, not this lesson. Keep the two matches to `checked_add`/`Overflow` and `checked_sub`/`InsufficientFunds`.",
+          "They add `VaultFrozen` before both matches are green, so two `E0004: non-exhaustive patterns` errors pile onto unfinished code; get the four variants matching first, then add the fifth and rebuild.",
+          "In `balance_after_deposit` they try to return the `Result` from the `match`; the function returns a plain `u64`, so both arms must yield a `u64` (`Ok(n) => n`, `Err(_) => balance`) — the one place a wildcard is correct.",
+          "They conflate `error!(VaultError::Overflow)` with the `From<VaultError> for Error` impl; `error!` uses `name()`, `From<..> for u32` and `Display`, not the `Error` conversion that `?` reaches for."
+        ]
       },
       {
         "key": "check",
@@ -10024,7 +10072,13 @@
         "maxWords": null,
         "amount": null,
         "network": null,
-        "idl": null
+        "idl": null,
+        "tutorNotes": [
+          "Learners chase all four errors at once; both `E0425: cannot find value` errors mean a statement uses a name a later line defines — move the definition up, and read only the first error.",
+          "They keep the decoy `let amount = read_amount(data);` (no `?`), so `amount` is a `Result` the next call rejects; the correct line carries `?`.",
+          "They keep the decoy `checked_sub(amount)?` on an `Option`; `?` needs an error to convert and `None` carries none. The correct subtraction uses `.ok_or(error!(VaultError::InsufficientFunds))?`.",
+          "They reorder `withdraw_amount` wrongly; the chain is owner check, read, policy check, subtract — a check placed after the subtraction guards nothing."
+        ]
       },
       {
         "key": "check",
@@ -10214,7 +10268,13 @@
         "maxWords": null,
         "amount": null,
         "network": null,
-        "idl": null
+        "idl": null,
+        "tutorNotes": [
+          "Learners fix bugs bottom-up and chase cascade errors; read only the FIRST error, fix it, and rebuild — the later errors move or vanish.",
+          "On bug 2 they keep dereferencing a reference held across the mutation; `u64` is `Copy`, so take the number and drop the `*`, which ends the borrow before the mutation (E0502 clears).",
+          "On bug 4 they bind the `Vec` with `let` or build it inline in the return; a returned reference must outlive the call, and a `Vec` created in the function does not (E0515). Return a view of `data`, which does.",
+          "They pick a decoy candidate that fails in a different way; each list mixes belongs-lines with decoys, so match the fix to the error code, not to the first plausible line."
+        ]
       },
       {
         "key": "check",
@@ -10404,7 +10464,13 @@
         "maxWords": null,
         "amount": null,
         "network": null,
-        "idl": null
+        "idl": null,
+        "tutorNotes": [
+          "Learners place the `dust` arm that swallows 0 (`0..=999_999`) above `0 => \"empty\"`; it compiles with only a warn-level `unreachable pattern`, which a green build discards, so nothing external catches it — read the arms by hand.",
+          "They keep the semicolon body for `min_balance` (`{ a; }`), which discards the value and yields `()`, failing the `u64` return with E0308; the `help:` line names the semicolon to delete.",
+          "They invent arms that are not in the parts bin, or use fewer than four, leaving `match` non-exhaustive (E0004).",
+          "They order a range arm before `0`, assuming a more-specific pattern wins; `match` is strictly top to bottom, first match wins."
+        ]
       },
       {
         "key": "check",
@@ -10594,7 +10660,13 @@
         "maxWords": null,
         "amount": null,
         "network": null,
-        "idl": null
+        "idl": null,
+        "tutorNotes": [
+          "Learners give function 2 one lifetime for both inputs; only the input the returned bytes come from needs the name in the return type, and one name for both over-constrains it (the quiz-2 mistake).",
+          "They reach for slice `==` or iterators in a `const fn`; both are unavailable in const context, so compare the eight bytes with indexing and a `while` loop (`for` is not const).",
+          "On function 1 they return a shorter slice or panic when `data` is too short; the spec says return `None` — guard the length first, then hand back `split_at(8).0`.",
+          "They edit the non-editable `mod verify` harness to pass; it calls the functions at compile time, so a wrong length or a `todo!()` body is a build failure, not a silent pass."
+        ]
       },
       {
         "key": "check",
@@ -10778,7 +10850,13 @@
         "maxWords": null,
         "amount": null,
         "network": null,
-        "idl": null
+        "idl": null,
+        "tutorNotes": [
+          "Learners try to fix the file; it is a complete worked example that compiles. The only edit is uncommenting the BREAK IT line in section 6, reading the two lines the error names, then commenting it back.",
+          "They expect `VaultLike` to be `Copy` because all its fields are; `Copy` is an opt-in derive that is deliberately omitted, which is what makes each assignment in section 3 a move (E0382).",
+          "They read the slow first build (downloading anchor-lang 1.1.2) as a hang; the second build of the same file is fast.",
+          "They lose the file while editing and cannot get back; Reset Code restores the worked original."
+        ]
       },
       {
         "key": "check",
@@ -11321,7 +11399,13 @@
         "maxWords": null,
         "amount": null,
         "network": null,
-        "idl": null
+        "idl": null,
+        "tutorNotes": [
+          "Learners try to fix the file; it is complete and correct. The only edit is the experiment — add a field, watch `INIT_SPACE` change — then Reset Code.",
+          "They add a `String` or `Vec` field and read `Expected max_len attribute` as a bug; `InitSpace` refuses to guess a size for a variable-length field, and neither can an account.",
+          "They widen a field (e.g. `created_at: i64`) and see `assert!(INIT_SPACE == 41)` trip; 41 is `Pubkey`(32) + `u64`(8) + `u8`(1), so a wider field is a bigger account — the assertion is doing its job.",
+          "They read the slow first build (compiling the Anchor crates cold) as a hang rather than a one-time cold-cache compile."
+        ]
       },
       {
         "key": "check",
@@ -11543,7 +11627,13 @@
         "maxWords": null,
         "amount": null,
         "network": null,
-        "idl": null
+        "idl": null,
+        "tutorNotes": [
+          "Learners fix one subgoal, rebuild, and panic at the others still failing; `rustc` reports every independent error in one pass, so build once and read the whole to-do list.",
+          "They add `mut` in only one of the two places subgoal 2 needs it (the `&mut VaultLike` parameter and the `let mut` binding), leaving an E0384 or E0594 behind.",
+          "They reach for `as` to turn `u8` into `u64` (banned here, and it truncates the other direction); the fix is `u64::from(bump)`, infallible because every u8 fits.",
+          "They edit the non-editable harness at the bottom to make a type error disappear; it is the answer key and pins `is_after` to `i64` and `byte_at` to `usize`."
+        ]
       },
       {
         "key": "check",
@@ -12069,7 +12159,13 @@
         "maxWords": null,
         "amount": null,
         "network": null,
-        "idl": null
+        "idl": null,
+        "tutorNotes": [
+          "Learners edit the starter looking for something to fix, but it already compiles; a red build here is almost always a self-inflicted edit, and the fix is Reset Code, not a new one.",
+          "They read the slow first build (downloading anchor-lang 1.1.2 and its deps) or a timeout as a real failure and stop, instead of clicking Build again as the hints say.",
+          "They expect a local `cargo build`; compilation runs on the build server via `cargo-build-sbf`, and a green build discards the log, so any warning here never reaches them.",
+          "They take the green check to mean the program is deployed on devnet; it only means the `.so` compiled. Deployment is Course 3."
+        ]
       },
       {
         "key": "output",
@@ -12268,7 +12364,13 @@
         "maxWords": null,
         "amount": null,
         "network": null,
-        "idl": null
+        "idl": null,
+        "tutorNotes": [
+          "Learners try to fix the file; it is a worked example that compiles — build it and read the two statements in `deposit`: one a System Program CPI (`transfer`), one a plain update of a number the program owns.",
+          "They read the slow first build (compiling the Anchor crates cold) as a hang; the second build of the same file is fast.",
+          "They miss why `user` is both `#[account(mut)]` and a `Signer`: lamports leave it (so `mut`), the System Program refuses to debit a non-signer, and that signature is the only authorization in the instruction.",
+          "They expect the CPI to update the recorded balance too; the CPI moves real lamports, and the separate field update is what keeps the vault's own number in step."
+        ]
       },
       {
         "key": "retrieval-close",
@@ -12470,7 +12572,13 @@
         "maxWords": null,
         "amount": null,
         "network": null,
-        "idl": null
+        "idl": null,
+        "tutorNotes": [
+          "Learners read `no field 'vault' on type '&InitializeVaultBumps'` as a mystery; Anchor grows the bumps struct a field per account only once that account carries a `seeds` constraint, so the error means subgoal 1 is missing.",
+          "They add `seeds = [b\"vault\", user.key().as_ref()],` but forget the trailing comma the `space = ...` line above now needs, so the attribute list stops parsing.",
+          "They store the bump with a literal or a re-derivation instead of `vault.bump = ctx.bumps.vault;`, which reads the canonical bump Anchor already found.",
+          "Compile-only grading cannot tell whether they actually stored the bump; the harness checks shape, so writing `ctx.bumps.vault` is on them."
+        ]
       },
       {
         "key": "retrieval-close",
