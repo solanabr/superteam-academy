@@ -36,47 +36,44 @@ that ceiling.
 
 ## Per-instruction measurement
 
-Source of truth: [`onchain-academy/tests/CU_BASELINE.pinocchio.md`](../onchain-academy/tests/CU_BASELINE.pinocchio.md),
-captured by the LiteSVM harness (`onchain-academy/tests/cu-measurement.ts`)
-against a release SBF build of the Pinocchio program. The table below is derived
-directly from that baseline; the CI drift gate guarantees they stay in sync.
-`update_config` is measured twice (pause + resume), so the file lists 19 rows
-across the 18 instructions.
+Source of truth: [`onchain-academy/tests/CU_BASELINE.rust.md`](../onchain-academy/tests/CU_BASELINE.rust.md),
+captured by the **litesvm 0.12 (Agave 3.x) Rust harness**
+(`onchain-academy/tests/differential/tests/cu_budget.rs`) against a release SBF
+build of the pinocchio program. The table below is derived directly from that
+baseline; the CI drift gate guarantees they stay in sync. `update_config` is
+measured twice (pause + resume), so the file lists 19 rows across the 18
+instructions.
 
 | Instruction                   |     CU | % of 200k ceiling | Headroom |
 | ----------------------------- | -----: | ----------------: | -------: |
-| `initialize`                  | 18,321 |             9.16% |   90.84% |
-| `update_config` (pause)       |    729 |             0.36% |   99.64% |
-| `update_config` (resume)      |    727 |             0.36% |   99.64% |
-| `create_course`               |  4,634 |             2.32% |   97.68% |
-| `update_course`               |  2,821 |             1.41% |   98.59% |
-| `register_minter`             |  4,359 |             2.18% |   97.82% |
-| `update_minter`               |  2,588 |             1.29% |   98.71% |
-| `revoke_minter`               |  2,612 |             1.31% |   98.69% |
-| `enroll`                      |  6,091 |             3.05% |   96.95% |
-| `complete_lesson`             |  7,595 |             3.80% |   96.20% |
-| `finalize_course`             | 10,888 |             5.44% |   94.56% |
-| `reward_xp`                   |  6,002 |             3.00% |   97.00% |
-| `close_enrollment`            |  4,416 |             2.21% |   97.79% |
-| `create_achievement_type`     | 12,729 |             6.36% |   93.64% |
-| `award_achievement`           | 40,172 |            20.09% |   79.91% |
-| `deactivate_achievement_type` |  2,943 |             1.47% |   98.53% |
-| `issue_credential`            | 34,614 |            17.31% |   82.69% |
-| `upgrade_credential`          | 46,552 |            23.28% |   76.72% |
-| `close_course`                |  2,558 |             1.28% |   98.72% |
+| `initialize`                  | 15,662 |             7.83% |   92.17% |
+| `update_config (pause)`       |    729 |             0.36% |   99.64% |
+| `update_config (resume)`      |    727 |             0.36% |   99.64% |
+| `create_course`               |  4,596 |             2.30% |   97.70% |
+| `update_course`               |  2,696 |             1.35% |   98.65% |
+| `register_minter`             |  4,323 |             2.16% |   97.84% |
+| `update_minter`               |  2,604 |             1.30% |   98.70% |
+| `revoke_minter`               |  2,628 |             1.31% |   98.69% |
+| `enroll`                      |  8,984 |             4.49% |   95.51% |
+| `complete_lesson`             |  7,703 |             3.85% |   96.15% |
+| `finalize_course`             |  8,436 |             4.22% |   95.78% |
+| `reward_xp`                   |  6,103 |             3.05% |   96.95% |
+| `close_enrollment`            |  4,438 |             2.22% |   97.78% |
+| `create_achievement_type`     | 11,106 |             5.55% |   94.45% |
+| `award_achievement`           | 36,449 |            18.22% |   81.78% |
+| `deactivate_achievement_type` |  2,926 |             1.46% |   98.54% |
+| `issue_credential`            | 31,135 |            15.57% |   84.43% |
+| `upgrade_credential`          | 37,009 |            18.50% |   81.50% |
+| `close_course`                |  8,522 |             4.26% |   95.74% |
 
 ## Ruling
 
 **All 18 instructions are within budget.** The worst case is `upgrade_credential`
-at **46,552 CU — 23.28% of the 200,000 CU ceiling** (76.72% headroom). Every
-other instruction sits below 21%, and the median instruction is under 4%. No
-instruction is anywhere near the point where a `ComputeBudget` bump would be
-required, and none requests one.
-
-For context, the Pinocchio rewrite cut total measured CU from 347,367 (Anchor) to
-211,351 (−39.2%) — see
-[`CU_COMPARISON.md`](../onchain-academy/tests/CU_COMPARISON.md) — so the current
-budget is already the post-optimization figure.
+at **37,009 CU — 18.50% of the 200,000 CU ceiling** (81.50% headroom).
+Every other instruction sits at or below the next-heaviest (`award_achievement`,
+18.22%), and the median instruction (6,103 CU) is about
+3.1% of the ceiling. No instruction is anywhere near the point where a
+`ComputeBudget` bump would be required, and none requests one.
 
 ### Heaviest trio — the mpl_core CPI instructions
 
@@ -86,12 +83,12 @@ their cost concentrates:
 
 | Instruction          |     CU | % of ceiling | mpl_core CPI               |
 | -------------------- | -----: | -----------: | -------------------------- |
-| `upgrade_credential` | 46,552 |       23.28% | asset update (V2)          |
-| `award_achievement`  | 40,172 |       20.09% | asset mint into collection |
-| `issue_credential`   | 34,614 |       17.31% | asset create               |
+| `upgrade_credential` | 37,009 |       18.50% | asset update (V2)          |
+| `award_achievement`  | 36,449 |       18.22% | asset mint into collection |
+| `issue_credential`   | 31,135 |       15.57% | asset create               |
 
 These are the instructions to watch, because their cost is dominated by a
-callee we do not control. Even so, the heaviest leaves **76.72% headroom**, so
+callee we do not control. Even so, the heaviest leaves **81.50% headroom**, so
 there is no action to take today.
 
 ### When to re-review
@@ -102,53 +99,70 @@ Re-run this review (and expect the drift gate below to force it) when any of:
   (e.g. an mpl_core major-version bump) — CPI cost is the dominant term and the
   least under our control.
 - **An instruction starts touching materially more accounts** (rule of thumb:
-  any instruction whose account list grows past ~12, or any new
+  any instruction whose account list grows past ~15, or any new
   `remaining_accounts` fan-out), since account loading and serialization scale
   with account count.
 - **The CI drift gate fails** — any measured-CU change against the committed
-  baseline, from a program-logic change or a toolchain bump, forces a deliberate
-  baseline update and a look back at this ruling.
+  baseline, from a program-logic change or a toolchain bump, requires a
+  deliberate baseline regeneration (a review-doc update by convention) and a
+  look back at this ruling.
 
 ## Measurement procedure & determinism
 
-Reproduce locally:
+The gate is a Rust test in the differential suite. Reproduce locally:
 
 ```bash
 cd onchain-academy
-pnpm build:pinocchio        # cargo build-sbf --tools-version v1.54
-pnpm cu:pinocchio           # select-program.sh + ts-mocha harness → writes CU_BASELINE.pinocchio.md
-pnpm cu:compare             # optional: regenerate CU_COMPARISON.md vs the Anchor baseline
+pnpm build:pinocchio    # cargo build-sbf --tools-version v1.54 → target/deploy/onchain_academy_pinocchio.so
+# assert against the committed baseline:
+cargo test --manifest-path tests/differential/Cargo.toml --test cu_budget
+# regenerate the baseline after an intended change:
+CU_BASELINE_REGEN=1 cargo test --manifest-path tests/differential/Cargo.toml --test cu_budget
 ```
 
-The harness runs the program in an **in-process LiteSVM** (no validator), which
-reports `computeUnitsConsumed` per transaction directly. It is deterministic for
-a fixed build.
+The harness runs the program in an **in-process litesvm 0.12** (the Agave 3.x
+runtime line; no validator), which reports `compute_units_consumed` per
+transaction. It is deterministic: all account addresses are derived from fixed
+keypair seeds, because the program derives PDAs on-chain with a canonical-bump
+search whose per-address iteration count (each a ~1,500 CU sha256 syscall) would
+otherwise make the numbers wander run to run.
 
 **Determinism caveat (this is what the drift gate exists to catch).** The
-measured numbers are a function of the compiled bytecode and the LiteSVM
-runtime, so they move when the toolchain moves:
+measured numbers are a function of the compiled bytecode and the runtime, so
+they move when the toolchain moves — the SBF platform-tools version
+(`--tools-version v1.54`, pinned) and the litesvm / solana-program versions.
+That is a feature: a toolchain bump that shifts CU is exactly the kind of drift
+the gate should surface for a deliberate re-baseline. When the gate fails in CI,
+the failing test prints a full expected-vs-actual table plus a ready-to-commit
+baseline block — a maintainer lifts the correct numbers straight from the
+failing CI log, commits `CU_BASELINE.rust.md`, and re-runs this doc's generator.
 
-- the **SBF platform-tools** version (`--tools-version v1.54`, pinned) and the
-  Solana CLI / `cargo-build-sbf` version that produce the `.so`;
-- the `litesvm` / `anchor-litesvm` / `solana-program` npm versions the harness
-  runs against.
+### Why not the TypeScript harness?
 
-Concretely: building this same program with an _older_ toolchain
-(solana-cli 3.0.1 / platform-tools v1.51) instead of the pinned CI toolchain
-(solana 3.1.10 / platform-tools v1.54) shifts several instructions by hundreds
-to a couple-thousand CU (`initialize` 18,321→15,321, `enroll` 6,091→7,700). None
-of that moves any instruction near the ceiling, but it does mean **the committed
-baseline is only reproducible under the pinned toolchain**, which is precisely
-why the drift gate runs inside the pinned `Integration (pinocchio · LiteSVM)` CI
-lane and not on an arbitrary developer machine.
+A litesvm-**JS** harness also exists at
+[`onchain-academy/tests/cu-measurement.ts`](../onchain-academy/tests/cu-measurement.ts)
+(`pnpm cu:pinocchio`). It is a **local, macOS-only developer tool and must not be
+wired into CI.** Its Linux x86-64 native addon (litesvm-JS 0.3.3) is
+memory-unsafe: against a byte-identical `.so` it produces run-to-run CU deltas
+and a wandering `std::bad_alloc`/SIGABRT (proven on the ubuntu runner — the same
+program, the same toolchain, different numbers every run). macOS/arm64 avoids the
+crash because rbpf has no aarch64 JIT, so the bug only surfaces on Linux. The
+CI-enforced, deterministic measurement is the Rust gate above; the JS harness
+remains only for quick local spot-checks by developers already on macOS.
 
 ## CI drift gate
 
-`.github/workflows/ci.yml`, job `Integration (pinocchio · LiteSVM)`, step
-**"CU drift gate"**: after the pinocchio `.so` is built, the step runs
-`pnpm cu:pinocchio` and then `git diff --exit-code
-onchain-academy/tests/CU_BASELINE.pinocchio.md`. Any change in measured CU makes
-the diff non-empty and **fails CI loudly**, forcing a deliberate baseline
-regeneration and a review touch (this document) rather than silent drift. The
-job — and therefore the gate — runs whenever `onchain-academy/**` or `ci.yml`
-changes, which includes any edit to the baseline itself.
+The gate is the `cu_budget_within_baseline` test in the differential suite. It
+runs inside the existing **`Integration (pinocchio · LiteSVM)`** CI job with **no
+`ci.yml` changes** — that job already runs `cargo test` over the whole
+`onchain-academy/tests/differential` crate, which now includes this test. It
+measures all 19 rows on the pinocchio `.so` and asserts them against
+`CU_BASELINE.rust.md`; any drift fails the test (and the job) loudly, forcing a
+deliberate baseline regeneration rather than silent drift. The job runs whenever
+`onchain-academy/**` changes, which includes the baseline and the test itself.
+
+> Note on [`CU_COMPARISON.md`](../onchain-academy/tests/CU_COMPARISON.md): its
+> Anchor→Pinocchio −39.2% figure was measured under the **litesvm-JS** harness
+> and is retained only as a historical migration record. Do not compare its
+> numbers against this document's Rust-harness figures — the two runtimes account
+> compute differently.
