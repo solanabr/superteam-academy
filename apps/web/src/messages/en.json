@@ -426,6 +426,7 @@
     "xpRemaining": "<em>{xp} {xpLabel}</em> to {levelLabel} {level}",
     "xpTooltip": "{xp} {xpLabel} to {levelLabel} {level}",
     "surpriseBonus": "Surprise bonus! +{amount} XP",
+    "questReward": "Quest complete: {name} +{amount} XP",
     "league": "League",
     "global": "Global",
     "leagueSubtitle": "Your weekly cohort — this week's standings",

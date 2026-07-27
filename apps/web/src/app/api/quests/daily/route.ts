@@ -89,12 +89,14 @@ export async function GET() {
 
     const progressMap = new Map<
       string,
-      { currentValue: number; completed: boolean }
+      { currentValue: number; completed: boolean; justAwarded: boolean }
     >();
     for (const row of progressRows) {
       progressMap.set(row.questId, {
         currentValue: row.currentValue,
         completed: row.completed,
+        // #790: surface the one-shot award signal so the client can toast it.
+        justAwarded: row.justAwarded,
       });
     }
 
@@ -111,6 +113,7 @@ export async function GET() {
         currentValue: progress?.currentValue ?? 0,
         completed: progress?.completed ?? false,
         resetType: q.resetType,
+        justAwarded: progress?.justAwarded ?? false,
       };
     });
 

@@ -113,6 +113,14 @@ export interface DailyQuest {
   currentValue: number;
   completed: boolean;
   resetType: "daily" | "multi_day";
+  /**
+   * True on the SINGLE poll of /api/quests/daily where this quest's XP was just
+   * granted (mirrors `v_just_awarded` in get_daily_quest_state — the server
+   * flips it once, when xp_granted goes false→true). Drives the one-time XP
+   * toast (#790); every later poll returns false. Absent on quests fetched
+   * outside that endpoint.
+   */
+  justAwarded?: boolean;
 }
 
 export interface LearningProgressService {
