@@ -38,6 +38,11 @@ import {
   recordCourseDeployed,
   recordCourseUpdate,
 } from "@/lib/content/changelog-writes";
+import {
+  contentShaFromTxId,
+  resolvePriorRemovedLessons,
+} from "@/lib/content/prior-content";
+import { diffMasks } from "@/lib/courses/changelog-diff";
 import { slotsByCourseId } from "@/lib/content/store";
 import { SYNCED_SHA } from "@/lib/content/meta";
 import { MaskMismatchError } from "@/lib/github/types";
@@ -582,6 +587,31 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   if (onChainCourse && result.signature) {
     try {
       const contentCommitted = updateParams.contentTxId !== undefined;
+      // #757 — a removed lesson is gone from the CURRENT bundle, so its id/title
+      // can only come from the PRIOR content revision. Resolve those from the
+      // pre-update on-chain content_tx_id (a padded courses-academy sha) ONLY
+      // when this update actually retires a slot. Best-effort: any failure
+      // leaves `priorRemoved` empty and the removed entry records slot-only.
+      let priorRemoved:
+        | ReadonlyMap<number, { id: string; title: string | null }>
+        | undefined;
+      if (updateParams.newActiveLessons) {
+        const { removedSlots } = diffMasks(
+          onChainCourse.activeLessons,
+          updateParams.newActiveLessons
+        );
+        const priorSha =
+          removedSlots.length > 0
+            ? contentShaFromTxId(onChainCourse.content_tx_id)
+            : null;
+        if (priorSha) {
+          priorRemoved = await resolvePriorRemovedLessons({
+            courseId,
+            priorSha,
+            removedSlots,
+          });
+        }
+      }
       await recordCourseUpdate({
         courseId,
         txSignature: result.signature,
@@ -592,6 +622,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         contentCommitted,
         newVersion: onChainCourse.version + (contentCommitted ? 1 : 0),
         contentSha: SYNCED_SHA,
+        priorRemoved,
       });
     } catch (changelogErr) {
       console.error(
