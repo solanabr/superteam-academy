@@ -123,6 +123,7 @@ See `docs/ARCHITECTURE.md` for the program specification and frontend integratio
 - `award_xp()`, `unlock_achievement()`, and `get_daily_quest_state()` are **SECURITY DEFINER** functions
 - **REVOKE**d from `authenticated`, `anon`, and `public` roles — **GRANT**ed only to `service_role`
 - Called exclusively from API routes via `createAdminClient()` (`lib/supabase/admin.ts`)
+- **Migration ledger**: migrations applied via the Supabase MCP get an MCP-stamped version that diverges from the repo filename, so `schema_migrations` does not match `supabase/migrations/`. The authoritative cross-reference + the required post-apply reconciliation rule live in [`docs/DB-MIGRATION-LEDGER.md`](docs/DB-MIGRATION-LEDGER.md) — read it before any `supabase db push` / `migration list`, and extend the mapping when you apply a migration via MCP (#708).
 
 ### Auth Security
 
