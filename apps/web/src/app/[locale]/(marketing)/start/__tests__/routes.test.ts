@@ -12,8 +12,8 @@ const byId = vi.mocked(getCourseById);
 const lessonsOf = vi.mocked(getCourseLessons);
 
 // Use each entry course's id as its slug for the fixtures (1:1, arbitrary).
-const FUNDAMENTALS = SEGMENT_ENTRY_COURSE[1];
-const ANCHOR = SEGMENT_ENTRY_COURSE[2];
+const SEG1_ENTRY = SEGMENT_ENTRY_COURSE[1];
+const SEG2_ENTRY = SEGMENT_ENTRY_COURSE[2];
 
 beforeEach(() => {
   byId.mockReset();
@@ -33,20 +33,20 @@ describe("resolveSegmentRoutes — F1 sync gating (funnel must never 404)", () =
   it("deep-links to the first lesson when the entry course is synced", async () => {
     lessonsOf.mockResolvedValue([lesson("intro"), lesson("second")]);
     const routes = await resolveSegmentRoutes("en");
-    expect(routes[1].href).toBe(`/en/courses/${FUNDAMENTALS}/lessons/intro`);
-    expect(routes[2].href).toBe(`/en/courses/${ANCHOR}/lessons/intro`);
-    expect(routes[1].courseId).toBe(FUNDAMENTALS);
+    expect(routes[1].href).toBe(`/en/courses/${SEG1_ENTRY}/lessons/intro`);
+    expect(routes[2].href).toBe(`/en/courses/${SEG2_ENTRY}/lessons/intro`);
+    expect(routes[1].courseId).toBe(SEG1_ENTRY);
   });
 
   it("falls back to /courses when the entry course is present but UNSYNCED", async () => {
     // getCourseLessons returns [] for an unsynced course (or a DB-degraded
     // empty deployment map) — the realistic launch state. Must NOT deep-link.
     lessonsOf.mockImplementation(async (slug: string) =>
-      slug === ANCHOR ? [] : [lesson("intro")]
+      slug === SEG2_ENTRY ? [] : [lesson("intro")]
     );
     const routes = await resolveSegmentRoutes("en");
-    expect(routes[2].href).toBe("/en/courses"); // unsynced anchor → catalog
-    expect(routes[1].href).toBe(`/en/courses/${FUNDAMENTALS}/lessons/intro`);
+    expect(routes[2].href).toBe("/en/courses"); // unsynced seg-2 entry → catalog
+    expect(routes[1].href).toBe(`/en/courses/${SEG1_ENTRY}/lessons/intro`);
   });
 
   it("falls back to /courses when the entry course is absent from the bundle", async () => {
