@@ -490,7 +490,9 @@ fn cu_budget_within_baseline() {
     );
 
     // Regenerate the baseline on demand (CU_BASELINE_REGEN=1) instead of asserting.
-    if std::env::var("CU_BASELINE_REGEN").is_ok() {
+    // Match exactly "1" — not any/empty value — so a stray `CU_BASELINE_REGEN=`
+    // or `=0` can't silently turn the gate into a no-op that skips the assert.
+    if matches!(std::env::var("CU_BASELINE_REGEN").as_deref(), Ok("1")) {
         std::fs::write(baseline_path(), render_baseline(&rows)).expect("write baseline");
         eprintln!("regenerated {}", baseline_path());
         return;
