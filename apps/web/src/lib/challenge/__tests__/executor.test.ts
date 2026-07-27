@@ -236,6 +236,43 @@ describe.skipIf(!EXECUTOR_AVAILABLE)(
       expect(run.results.find((r) => r.id === "no-process")?.passed).toBe(true);
       expect(run.results.find((r) => r.id === "no-require")?.passed).toBe(true);
     });
+
+    // CAT-21: the fabricated PublicKey.findProgramAddressSync / isOnCurve mock
+    // was retired with the legacy web3.js-v1 exercises (PB-1: graded blocks are
+    // pure functions over injected fixtures, no SDK imports). A future block that
+    // reaches for the removed function must FAIL LOUDLY with an explicit message,
+    // NOT an "undefined is not a function" mystery. This test is meaningful (not
+    // vacuous): it asserts the specific retirement message AND that the failure
+    // is not a generic TypeError — it regresses (fails) if the loud stub is
+    // replaced by a bare `undefined` or the message loses its CAT-21/PB-1 marker.
+    it("FAILS LOUDLY when a block calls the retired findProgramAddressSync mock (CAT-21)", async () => {
+      const pdaTests: AdminTestCase[] = [
+        {
+          id: "derive",
+          description: "derives a PDA via the retired v1 helper",
+          input: "",
+          expectedOutput: "typeof result === 'string'",
+        },
+      ];
+      const usesRetiredMock = `import { PublicKey } from "@solana/web3.js";
+function derive() {
+  const seed = new TextEncoder().encode("vault");
+  const [pda] = PublicKey.findProgramAddressSync([seed], new PublicKey("11111111111111111111111111111111"));
+  return pda.toBase58();
+}`;
+      const run = await runJsSubmission(usesRetiredMock, pdaTests);
+      expect(run.available).toBe(true);
+      if (!run.available) return;
+      expect(run.passed).toBe(false);
+      const detail = run.results.find((r) => r.id === "derive")?.detail ?? "";
+      // Explicit, actionable message — the retirement is named.
+      expect(detail).toContain("findProgramAddressSync");
+      expect(detail).toContain("not available in the grading sandbox");
+      expect(detail).toContain("CAT-21");
+      // Meaningful-ness guard: must NOT regress to the generic mystery error a
+      // bare `undefined` static would produce.
+      expect(detail).not.toMatch(/is not a function/);
+    });
   }
 );
 

@@ -7,15 +7,15 @@ import { Play, CircleNotch } from "@phosphor-icons/react";
 import type { TestCase } from "@superteam-lms/types";
 import { Keypair } from "@solana/web3.js";
 import { setCachedBinary } from "@superteam-lms/deploy";
+import { executeRustCode } from "@/lib/rust/execute";
+import { buildProgram } from "@/lib/build-server/client";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import type {
   ChallengeRunnerProps,
   ExecutionResult,
   TestResult,
 } from "./types";
-import { executeRustCode } from "@/lib/rust/execute";
-import { buildProgram } from "@/lib/build-server/client";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 
 // ---------------------------------------------------------------------------
 // Web Worker sandbox — all user code executes in a separate thread with no
@@ -62,16 +62,23 @@ class MockPublicKey {
     if (!other || !other._bytes) return false;
     return this.toBase58() === other.toBase58();
   }
-  static isOnCurve() { return true; }
-  static findProgramAddressSync(seeds, programId) {
-    void programId;
-    const combined = new Uint8Array(seeds.reduce(function(a,s){ return a+s.length; }, 0) + 1);
-    let offset = 0;
-    for (const s of seeds) { combined.set(s, offset); offset += s.length; }
-    combined[offset] = 254;
-    const hash = new Uint8Array(32);
-    for (let i = 0; i < 32; i++) hash[i] = (combined[i % combined.length] || 0) ^ 0x5a;
-    return [new MockPublicKey(hash), 254];
+  // CAT-21: the fabricated findProgramAddressSync / isOnCurve mock retired with
+  // the legacy web3.js-v1 exercises. Kept as loud stubs so browser grading stays
+  // identical to the server executor — a block reaching for them fails with an
+  // explicit message, never a silent fabricated "pass". See executor.ts.
+  static isOnCurve() {
+    throw new Error(
+      "PublicKey.isOnCurve is not available in the grading sandbox (CAT-21: the " +
+      "web3.js-v1 PDA mock was retired; PB-1 grades challenges as pure functions " +
+      "over injected fixtures).",
+    );
+  }
+  static findProgramAddressSync() {
+    throw new Error(
+      "PublicKey.findProgramAddressSync is not available in the grading sandbox " +
+      "(CAT-21: the web3.js-v1 PDA mock was retired; PB-1 grades challenges as " +
+      "pure functions over injected fixtures).",
+    );
   }
 }
 

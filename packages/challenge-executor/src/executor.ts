@@ -242,19 +242,28 @@ MockPublicKey.prototype.equals = function (other) {
   if (!other || !other._bytes) return false;
   return this.toBase58() === other.toBase58();
 };
-MockPublicKey.isOnCurve = function () { return true; };
-MockPublicKey.findProgramAddressSync = function (seeds, programId) {
-  void programId;
-  var total = 1;
-  for (var i = 0; i < seeds.length; i++) total += seeds[i].length;
-  var combined = new Uint8Array(total);
-  var offset = 0;
-  for (var j = 0; j < seeds.length; j++) { combined.set(seeds[j], offset); offset += seeds[j].length; }
-  combined[offset] = 254;
-  var hash = new Uint8Array(32);
-  for (var k = 0; k < 32; k++) hash[k] = (combined[k % combined.length] || 0) ^ 0x5a;
-  return [new MockPublicKey(hash), 254];
-};
+/* CAT-21: the fabricated PublicKey.findProgramAddressSync / isOnCurve mock — a
+ * web3.js-v1 shim whose findProgramAddressSync returned a hand-rolled hash with
+ * the bump hardcoded to 254 (no curve check, no retry loop) and whose isOnCurve
+ * always returned true — was RETIRED with the legacy web3.js-v1 exercises. It is
+ * the JavaScript twin of the DefaultHasher PDA model the Rust syllabi delete,
+ * and it is the documented root cause of the old keypair-challenge grading
+ * isValid:true unconditionally. Grading is now pure functions over injected
+ * fixtures (PB-1), so no live block imports these. They stay as LOUD stubs so a
+ * future block reaching for them fails with an explicit message rather than an
+ * "undefined is not a function" mystery. */
+function __retiredPdaShim__(name) {
+  return function () {
+    /* Markers front-loaded so they survive the 200-char detail slice. */
+    throw new Error(
+      name + " is not available in the grading sandbox (CAT-21: the web3.js-v1 " +
+      "PDA mock was retired; PB-1 grades challenges as pure functions over " +
+      "injected fixtures)."
+    );
+  };
+}
+MockPublicKey.isOnCurve = __retiredPdaShim__("PublicKey.isOnCurve");
+MockPublicKey.findProgramAddressSync = __retiredPdaShim__("PublicKey.findProgramAddressSync");
 
 function MockKeypair() {
   this.secretKey = randomBytes(64);
