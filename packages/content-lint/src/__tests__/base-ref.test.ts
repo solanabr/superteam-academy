@@ -90,6 +90,29 @@ describe("normalizeBaseRef (#748)", () => {
     expect(normalizeBaseRef("release/9.9", root)).toBe("origin/release/9.9");
   });
 
+  it("never falls through to a LOCAL branch shadowing the base name — stays fail-closed (#761 review)", () => {
+    const root = repoWithBranches();
+    // A local branch named "release" exists, but there is NO origin/release. A bare
+    // branch name must not resolve against the (possibly stale) local branch.
+    execFileSync("git", ["branch", "release"], { cwd: root, stdio: "ignore" });
+    expect(normalizeBaseRef("release", root)).toBe("origin/release");
+  });
+
+  it("a base shadowed only by a local branch still fails CLOSED end-to-end (#747)", async () => {
+    const root = repoWithBranches();
+    execFileSync("git", ["branch", "release"], { cwd: root, stdio: "ignore" });
+    const baseRef = normalizeBaseRef("release", root); // origin/release, unresolvable
+    const r = await runLint(root, { baseRef });
+    expect(
+      r.diagnostics.some(
+        (d) =>
+          d.gate === "gate-3" &&
+          d.severity === "error" &&
+          /misconfiguration/i.test(d.message)
+      )
+    ).toBe(true);
+  });
+
   it("resolves a slashed base end-to-end: gate-3 runs (no misconfiguration error)", async () => {
     const root = repoWithBranches();
     const baseRef = normalizeBaseRef("release/1.0", root);
