@@ -47,6 +47,9 @@ export interface OutputPanelProps {
   executionResult: ExecutionResult | null;
   isRunning: boolean;
   onClear: () => void;
+  /** Authored test-case spec, shown in the "Examples" tab before any run (#770).
+   * Distinct from `executionResult.testResults`, which is per-run outcomes. */
+  tests?: TestCase[];
   className?: string;
 }
 

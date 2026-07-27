@@ -1,7 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useTranslations } from "next-intl";
 import type { CodeBlockData } from "@superteam-lms/types";
 import type { BlockRenderProps } from "./types";
 
@@ -21,43 +20,14 @@ const ChallengeInterface = dynamic(
  */
 export function CodeBlock({ block, ctx }: BlockRenderProps) {
   const b = block as CodeBlockData;
-  const t = useTranslations("lesson");
 
-  const hasTests = !!(b.tests && b.tests.length > 0);
-  // The rail carries the lesson instructions (threaded from lesson-client) above
-  // the test cases, so the description sits beside the editor instead of stacked
-  // full-width on top of it.
-  const taskSlot =
-    ctx.instructionsSlot || hasTests ? (
-      <div className="space-y-5 p-4 sm:p-5">
-        {ctx.instructionsSlot}
-        {hasTests && (
-          <div className="space-y-3">
-            <h4 className="text-xs font-semibold uppercase text-text-3">
-              {t("testCases")}
-            </h4>
-            <div className="space-y-1.5">
-              {b.tests!.map((tc) => (
-                <div
-                  key={tc.id}
-                  className="rounded-md border border-border p-2 text-xs [background:var(--input)]"
-                >
-                  <span className="font-medium">{tc.description}</span>
-                  <div className="mt-1 flex gap-4 font-mono text-text-3">
-                    <span>
-                      {t("input")}: <code>{tc.input}</code>
-                    </span>
-                    <span>
-                      {t("expected")}: <code>{tc.expectedOutput}</code>
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    ) : undefined;
+  // The rail carries ONLY the lesson instructions now: the authored test-case
+  // spec moved into the IDE's output panel as its own "Examples" tab (#770), so
+  // the reading column stays short and the spec sits next to the run results it
+  // describes.
+  const taskSlot = ctx.instructionsSlot ? (
+    <div className="space-y-5 p-4 sm:p-5">{ctx.instructionsSlot}</div>
+  ) : undefined;
 
   return (
     // Edge-to-edge IDE (#770): no card rounding/shadow/side border — the split

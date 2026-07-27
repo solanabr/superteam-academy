@@ -226,6 +226,7 @@
     "testsPassed": "Todos os testes passaram!",
     "testsFailed": "Alguns testes falharam. Tente novamente!",
     "testCases": "Casos de Teste",
+    "examples": "Exemplos",
     "output": "Saída",
     "expected": "Esperado",
     "passed": "Aprovado",

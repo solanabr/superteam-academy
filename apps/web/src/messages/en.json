@@ -226,6 +226,7 @@
     "testsPassed": "All tests passed!",
     "testsFailed": "Some tests failed. Try again!",
     "testCases": "Test Cases",
+    "examples": "Examples",
     "output": "Output",
     "expected": "Expected",
     "passed": "Passed",

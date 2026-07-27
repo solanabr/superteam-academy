@@ -8,10 +8,10 @@ import {
   XCircle,
   Warning,
 } from "@phosphor-icons/react";
-import type { OutputPanelProps, TestResult } from "./types";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import type { OutputPanelProps, TestResult } from "./types";
 
 /** Max characters of captured stdout/stderr rendered in the Output tab. */
 const OUTPUT_CAP_CHARS = 10_000;
@@ -181,6 +181,7 @@ export function OutputPanel({
   executionResult,
   isRunning,
   onClear,
+  tests,
   className,
 }: OutputPanelProps) {
   const t = useTranslations("lesson");
@@ -223,6 +224,7 @@ export function OutputPanel({
     });
   };
 
+  const hasSpec = Boolean(tests && tests.length > 0);
   const hasTestResults = Boolean(testResults && testResults.length > 0);
   const passedCount = testResults?.filter((r) => r.passed).length ?? 0;
   const totalCount = testResults?.length ?? 0;
@@ -280,6 +282,14 @@ export function OutputPanel({
                 </span>
               )}
             </TabsTrigger>
+            {hasSpec && (
+              <TabsTrigger
+                value="examples"
+                className="h-7 rounded-sm px-2 text-xs data-[state=active]:[background:var(--input)]"
+              >
+                {t("examples")}
+              </TabsTrigger>
+            )}
           </TabsList>
           <Button
             variant="ghost"
@@ -371,6 +381,34 @@ export function OutputPanel({
             <p className="text-sm text-text-3">{t("testCasesPrompt")}</p>
           )}
         </TabsContent>
+
+        {/* Authored spec (#770) — the examples that used to sit under the
+            instructions. Static: always available, never tied to a run. */}
+        {hasSpec && (
+          <TabsContent
+            value="examples"
+            className="m-0 flex-1 overflow-auto p-3"
+          >
+            <div className="space-y-1.5">
+              {tests?.map((tc) => (
+                <div
+                  key={tc.id}
+                  className="rounded-md border border-border p-2 text-xs [background:var(--input)]"
+                >
+                  <span className="font-medium">{tc.description}</span>
+                  <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 font-mono text-text-3">
+                    <span className="min-w-0 break-words">
+                      {t("input")}: <code>{tc.input}</code>
+                    </span>
+                    <span className="min-w-0 break-words">
+                      {t("expected")}: <code>{tc.expectedOutput}</code>
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
