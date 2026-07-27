@@ -70,6 +70,9 @@ describe("LeaderboardClient — league framing + scoring info (#789)", () => {
     const copy = messages.gamification.leagueScoringInfo;
     expect(copy).toMatch(/this week/i);
     expect(copy).toMatch(/lessons/i);
+    // course_completion is an is_league_eligible_source — the enumeration must
+    // name every eligible source, not silently omit one (#793).
+    expect(copy).toMatch(/course completions/i);
     expect(copy).toMatch(/[Bb]onuses.*(don't|do not) count/);
   });
 
