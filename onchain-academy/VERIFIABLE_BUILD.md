@@ -1,5 +1,14 @@
 # Verifiable Build Record (#140)
 
+> **⚠️ SUPERSEDED (2026-07-27).** This is a stale manual record from the pre-Pinocchio
+> `anchor build --verifiable` era (the program has since been rewritten in Pinocchio;
+> same Program ID). The authoritative, CI-maintained record is
+> [`docs/PROGRAM-HASH.md`](../docs/PROGRAM-HASH.md) — the live hash lives on the
+> CI-owned `program-hash` branch
+> (`git fetch origin program-hash && git show origin/program-hash:docs/PROGRAM-HASH.md`),
+> published by the `publish-hash` job on every main-branch build. This file is kept
+> only as a historical record of the 2026-07-13 attempt.
+
 **Date:** 2026-07-13
 **Program:** `onchain-academy`
 **Program ID:** `7NeJaSRyb4Wxay3Tcd9bdpD7T3GWYUQSFyrhG8SgwE8V`
