@@ -34,6 +34,9 @@ export const LEARNER = {
 //   • synced + is_active:false  → ABSENT  (a DEACTIVATED course — the #711 leak)
 //   • no row                    → ABSENT  (fail-closed)
 // content_id values are real bundle course ids; the catalog renders their slugs.
+// The bundle is the live 4-course ladder (C2/C3/C4/C5). Three rows are
+// synced+active; one live bundle course is marked is_active:false so the spec
+// keeps its two-directional assertion (present set AND a deactivated absentee).
 export const DEPLOYMENTS = [
   {
     content_id: "course-building-first-program",
@@ -43,23 +46,24 @@ export const DEPLOYMENTS = [
     achievement_pda: null,
   },
   {
-    content_id: "course-solana-fundamentals",
+    content_id: "course-rust-for-program-devs",
     kind: "course",
     status: "synced",
     is_active: true,
     achievement_pda: null,
   },
   {
-    content_id: "course-rust-for-solana",
+    content_id: "course-dapp-sdk-kit",
     kind: "course",
     status: "synced",
     is_active: true,
     achievement_pda: null,
   },
   // The deactivated course. Must NOT appear in the catalog — this row is the
-  // permanent guard that a deactivated course can never leak back in.
+  // permanent guard that a deactivated course can never leak back in. It is a
+  // real live bundle course, gated out only by is_active:false.
   {
-    content_id: "course-anchor-framework",
+    content_id: "course-stablecoin-payments",
     kind: "course",
     status: "synced",
     is_active: false,
@@ -71,10 +75,10 @@ export const DEPLOYMENTS = [
 // is caught here rather than silently passing).
 export const ACTIVE_COURSE_SLUGS = [
   "building-your-first-solana-program",
-  "solana-fundamentals",
-  "rust-for-solana",
+  "rust-for-program-devs",
+  "dapp-and-sdk-with-kit",
 ];
-export const DEACTIVATED_COURSE_SLUG = "anchor-framework";
+export const DEACTIVATED_COURSE_SLUG = "stablecoin-agentic-payments";
 
 // The learn-loop target (spec 1): a quiz-only lesson with a known answer key.
 export const LEARN_LOOP = {

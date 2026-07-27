@@ -3,7 +3,7 @@
     {
       "_id": "achievement-anchor-expert",
       "award": {
-        "course": "course-anchor-framework",
+        "course": "course-building-first-program",
         "days": null,
         "gte": null,
         "kind": "course-completed",
@@ -60,7 +60,7 @@
     {
       "_id": "achievement-course-completer",
       "award": {
-        "course": "course-solana-fundamentals",
+        "course": "course-rust-for-program-devs",
         "days": null,
         "gte": null,
         "kind": "course-completed",
@@ -166,7 +166,7 @@
     {
       "_id": "achievement-rust-rookie",
       "award": {
-        "course": "course-rust-for-solana",
+        "course": "course-rust-for-program-devs",
         "days": null,
         "gte": 1,
         "kind": "lessons-completed-in-course",

@@ -79,6 +79,15 @@ vi.mock("server-only", () => ({}));
 //    lessons.json and quests-raw's challengeLessonIds/moduleLessonMap
 //    regenerated from the bundle through the real projectors (existing doc
 //    order preserved, raw quest docs untouched).
+//  - catalog finalization (courses-academy #21, wave 5): the 5 superseded
+//    courses DELETED from content (already deactivated on-chain) — bundle is
+//    now the live 4-course ladder (C2/C3/C4/C5, 49 lessons); zero-to-deployed
+//    rewired to that ladder; frontend path retired (draft/empty); the
+//    full-blocks course-by-slug fixture RETARGETED anchor-framework -> C3;
+//    3 achievement awards retargeted (anchor-expert -> C3, rust-rookie -> C2,
+//    course-completer -> C2 pending C1 (#673)). courses/lessons/paths/summaries/
+//    quests-raw-derived regenerated; achievements-raw patched for the 3
+//    retargets only (rest stays the prod-Sanity capture).
 const deps = { lessonsById };
 
 function bundleCourse(id: string): CourseDoc {
@@ -233,7 +242,9 @@ describe("projectAchievement — mapAchievement over the bundle", () => {
     );
     expect(anchor.award).toEqual({
       kind: "course-completed",
-      course: "course-anchor-framework",
+      // Retargeted from course-anchor-framework in the catalog finalization
+      // (courses-academy #21): the Anchor prose merged into C3.
+      course: "course-building-first-program",
     });
     expect(anchor.glyph).toBe("⬡");
     expect(anchor.solTier).toBe(false);
