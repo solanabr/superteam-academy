@@ -35,6 +35,10 @@ import type {
 } from "./types";
 
 const LESSON_COMPLETE_EVENT = "superteam:lesson-complete";
+
+// Think-first lock (#770): how long the AI Partner stays locked after a
+// challenge is first opened, so learners attempt it before asking for help.
+const AI_LOCK_MS = 3 * 60 * 1000;
 // Carries the passing code to lesson-client WITHOUT driving a completion, so an
 // anonymous learner's submission can be banked before they enroll (LX-A4c).
 const CHALLENGE_PROOF_EVENT = "superteam:challenge-proof";
@@ -188,6 +192,30 @@ export function ChallengeInterface({
   // keeps tracking, and the pane slides in once the quiz is answered.
   const [aiRevealed, setAiRevealed] = useState(false);
   const aiVisible = aiRevealed && !aiSuppressed;
+
+  // AI Partner think-first lock (#770): the tutor stays locked for AI_LOCK_MS
+  // after a challenge is first opened. The open timestamp is persisted per
+  // lesson so a reload can't reset the timer; already-complete lessons are
+  // exempt (aiUnlockAt = null).
+  const [aiUnlockAt, setAiUnlockAt] = useState<number | null>(null);
+  useEffect(() => {
+    if (isComplete || typeof window === "undefined") {
+      setAiUnlockAt(null);
+      return;
+    }
+    const key = `challenge:ai-open:${lessonId}`;
+    const stored = Number(window.localStorage.getItem(key));
+    const openedAt =
+      Number.isFinite(stored) && stored > 0 ? stored : Date.now();
+    if (openedAt !== stored) {
+      try {
+        window.localStorage.setItem(key, String(openedAt));
+      } catch {
+        // Private-mode / quota — fall back to a session-only timer.
+      }
+    }
+    setAiUnlockAt(openedAt + AI_LOCK_MS);
+  }, [lessonId, isComplete]);
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el || aiRevealed) return;
@@ -480,6 +508,7 @@ export function ChallengeInterface({
                 onApply={(proposed) => setCode(proposed)}
                 disabled={isComplete}
                 solutionPassed={challengeState.status === "success"}
+                unlockAt={aiUnlockAt}
                 className="h-full rounded-none border-0"
               />
             </div>
@@ -522,13 +551,18 @@ export function ChallengeInterface({
               </div>
 
               <div className="flex items-center gap-1">
-                {hasSolution && !isComplete && (
+                {/* Reference solution is a post-completion reward, not a crutch:
+                    the button only appears once the challenge is verified
+                    complete, and reveals directly. The LX-C6 confirm step +
+                    /api/lessons/reveal-solution review-reschedule are retained
+                    below but unreachable via this path (follow-up: #770). */}
+                {hasSolution && isComplete && (
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() =>
                       setSolutionGate((s) =>
-                        s === "closed" ? "confirming" : "closed"
+                        s === "revealed" ? "closed" : "revealed"
                       )
                     }
                     className="gap-1 text-xs"

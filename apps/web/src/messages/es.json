@@ -944,6 +944,10 @@
     "title": "Compañero de IA",
     "subtitle": "¿Atascado? Pide una pista, una corrección propuesta o haz una pregunta.",
     "completed": "Reto completado — ¡bien hecho!",
+    "lock": {
+      "title": "Inténtalo de verdad primero",
+      "body": "El Compañero de IA se desbloquea en {time}. Intenta resolver el reto por tu cuenta antes de pedir ayuda."
+    },
     "start": {
       "greeting": "¿Cómo puedo ayudarte a construir esto?",
       "explain": "Explica este reto",

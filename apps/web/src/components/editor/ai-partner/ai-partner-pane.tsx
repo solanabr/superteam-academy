@@ -1,7 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Robot, MagnifyingGlass } from "@phosphor-icons/react";
+import { Robot, MagnifyingGlass, Lock } from "@phosphor-icons/react";
 import { useAiPartner } from "@/lib/ai/use-ai-partner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,10 @@ interface AiPartnerPaneProps {
    * never automatically and never pre-pass. Independent of `disabled` — a
    * post-pass review is valid (and most natural) once the challenge is solved. */
   solutionPassed?: boolean;
+  /** Epoch-ms moment the tutor unlocks, or null when there is no lock (already
+   * complete, or the think-first window has passed). While `Date.now()` is
+   * before this, every AI action is locked and a countdown is shown (#770). */
+  unlockAt?: number | null;
   className?: string;
 }
 
@@ -36,9 +41,31 @@ export function AiPartnerPane({
   onApply,
   disabled = false,
   solutionPassed = false,
+  unlockAt = null,
   className,
 }: AiPartnerPaneProps) {
   const t = useTranslations("aiPartner");
+
+  // Think-first lock (#770): the tutor is held for the first few minutes after
+  // a challenge is opened so learners attempt it before asking for help. Tick
+  // once a second while the window is open; stop as soon as it elapses.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (unlockAt == null || Date.now() >= unlockAt) return;
+    const id = setInterval(() => {
+      setNow(Date.now());
+      if (Date.now() >= unlockAt) clearInterval(id);
+    }, 1000);
+    return () => clearInterval(id);
+  }, [unlockAt]);
+
+  const locked = unlockAt != null && now < unlockAt;
+  const remainingMs = locked ? unlockAt - now : 0;
+  const countdown = `${Math.floor(remainingMs / 60000)}:${String(
+    Math.floor((remainingMs % 60000) / 1000)
+  ).padStart(2, "0")}`;
+  // Locked OR complete both hard-disable the billed/free actions below.
+  const actionsBlocked = disabled || locked;
 
   const {
     messages,
@@ -86,7 +113,7 @@ export function AiPartnerPane({
           <button
             type="button"
             onClick={() => ask(t("start.explainPrompt"))}
-            disabled={loading || budgetExhausted || disabled}
+            disabled={loading || budgetExhausted || actionsBlocked}
             className="rounded-md border border-border px-3 py-2.5 text-left text-xs text-text transition-colors hover:border-primary hover:[background:var(--accent-bg)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {t("start.explain")}
@@ -94,7 +121,7 @@ export function AiPartnerPane({
           <button
             type="button"
             onClick={() => ask(t("start.approachPrompt"))}
-            disabled={loading || budgetExhausted || disabled}
+            disabled={loading || budgetExhausted || actionsBlocked}
             className="rounded-md border border-border px-3 py-2.5 text-left text-xs text-text transition-colors hover:border-primary hover:[background:var(--accent-bg)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {t("start.approach")}
@@ -147,7 +174,7 @@ export function AiPartnerPane({
             variant="secondary"
             size="sm"
             onClick={() => review()}
-            disabled={loading || budgetExhausted}
+            disabled={loading || budgetExhausted || locked}
             className="w-full gap-1.5"
           >
             <MagnifyingGlass size={14} weight="duotone" aria-hidden="true" />
@@ -159,11 +186,34 @@ export function AiPartnerPane({
         </div>
       )}
 
+      {/* Think-first lock banner (#770): a calm, non-refusing hold with a live
+          countdown. It gates the actions below (actionsBlocked) rather than
+          hiding them, so the learner always sees what is coming. */}
+      {locked && (
+        <div
+          role="status"
+          className="flex shrink-0 items-center gap-2.5 border-t border-border px-4 py-3"
+        >
+          <Lock
+            size={18}
+            weight="duotone"
+            className="shrink-0 text-text-3"
+            aria-hidden="true"
+          />
+          <div className="min-w-0">
+            <p className="text-xs font-semibold text-text">{t("lock.title")}</p>
+            <p className="text-[11px] text-text-3">
+              {t("lock.body", { time: countdown })}
+            </p>
+          </div>
+        </div>
+      )}
+
       <QuickActions
         onHint={requestHint}
         onPropose={proposeFix}
         onAsk={ask}
-        disabled={loading || disabled}
+        disabled={loading || actionsBlocked}
         budgetExhausted={budgetExhausted}
       />
     </div>

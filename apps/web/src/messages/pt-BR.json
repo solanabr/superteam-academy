@@ -944,6 +944,10 @@
     "title": "Parceiro de IA",
     "subtitle": "Travou? Peça uma dica, uma correção proposta ou faça uma pergunta.",
     "completed": "Desafio concluído — mandou bem!",
+    "lock": {
+      "title": "Tente de verdade primeiro",
+      "body": "O Parceiro de IA desbloqueia em {time}. Tente resolver o desafio sozinho antes de pedir ajuda."
+    },
     "start": {
       "greeting": "Como posso te ajudar a construir isto?",
       "explain": "Explique este desafio",

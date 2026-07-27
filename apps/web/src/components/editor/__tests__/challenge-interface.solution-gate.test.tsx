@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
-// Solution-reveal soft-gate (LX-C6, #582): the reference solution already ships
-// in the client payload; this gates it behind a deliberate, confirmed click
-// (never auto-shown, never refused — one-tap override, AIE-27). Confirming logs
-// solution_revealed and best-effort reschedules the lesson into review; the XP
-// path is untouched.
+// Solution-reveal post-completion gate (#770): the reference solution is a
+// reward, not a crutch. The "View reference solution" control is hidden until
+// the challenge is verified complete; once complete it reveals the solution
+// directly (no confirm step, no review-reschedule side effect — that LX-C6
+// machinery is retained in code but unreachable via this path).
 import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { resetAnalyticsEventDedupeForTests } from "@/lib/analytics/events";
 import messages from "@/messages/en.json";
@@ -98,115 +98,50 @@ function renderChallenge(
   );
 }
 
-function eventsNamed(name: string) {
-  return h.trackEvent.mock.calls.filter((c) => c[0] === name);
-}
-
-describe("ChallengeInterface — solution-reveal soft-gate (LX-C6)", () => {
+describe("ChallengeInterface — reference solution post-completion gate (#770)", () => {
   it("offers no reveal control when the challenge ships no solution", () => {
-    renderChallenge({ solution: undefined });
+    renderChallenge({ solution: undefined, isAlreadyCompleted: true });
     expect(
       screen.queryByRole("button", { name: /view reference solution/i })
     ).not.toBeInTheDocument();
   });
 
-  it("offers no reveal control once the lesson is already complete", () => {
+  it("hides the reveal control until the challenge is complete", () => {
+    renderChallenge();
+    expect(
+      screen.queryByRole("button", { name: /view reference solution/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows the reveal control once the lesson is complete", () => {
     renderChallenge({ isAlreadyCompleted: true });
     expect(
-      screen.queryByRole("button", { name: /view reference solution/i })
-    ).not.toBeInTheDocument();
-  });
-
-  it("gates the reveal behind a confirm — the solution is not shown on the first click", () => {
-    renderChallenge();
-    fireEvent.click(
       screen.getByRole("button", { name: /view reference solution/i })
-    );
-    // Confirm prompt is up; the solution text and the reveal event are not.
-    expect(
-      screen.getByText(messages.lesson.solutionGateBody)
     ).toBeInTheDocument();
-    expect(screen.queryByText(SOLUTION)).not.toBeInTheDocument();
-    expect(eventsNamed("solution_revealed")).toHaveLength(0);
-    expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("backing out of the confirm reveals nothing and logs nothing (one-tap override)", () => {
-    renderChallenge();
+  it("reveals the solution directly on click — no confirm, no review-reschedule", () => {
+    renderChallenge({ isAlreadyCompleted: true });
     fireEvent.click(
       screen.getByRole("button", { name: /view reference solution/i })
     );
-    fireEvent.click(screen.getByRole("button", { name: /keep trying/i }));
+    // Solution is shown immediately; the old confirm prompt never appears.
+    expect(screen.getByText(SOLUTION)).toBeInTheDocument();
     expect(
       screen.queryByText(messages.lesson.solutionGateBody)
     ).not.toBeInTheDocument();
-    expect(screen.queryByText(SOLUTION)).not.toBeInTheDocument();
-    expect(eventsNamed("solution_revealed")).toHaveLength(0);
+    // Post-completion reveal carries no review-reschedule side effect.
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("confirming reveals the solution, logs it once, and reschedules into review", async () => {
-    renderChallenge();
-    fireEvent.click(
-      screen.getByRole("button", { name: /view reference solution/i })
-    );
-    fireEvent.click(screen.getByRole("button", { name: /show solution/i }));
-
+  it("toggles the panel closed on a second click", () => {
+    renderChallenge({ isAlreadyCompleted: true });
+    const button = screen.getByRole("button", {
+      name: /view reference solution/i,
+    });
+    fireEvent.click(button);
     expect(screen.getByText(SOLUTION)).toBeInTheDocument();
-    expect(eventsNamed("solution_revealed")).toHaveLength(1);
-    expect(h.trackEvent).toHaveBeenCalledWith("solution_revealed", {
-      lessonId: "lesson-1",
-      challengeKind: "js",
-      courseId: "course-1",
-    });
-
-    // Best-effort review reschedule, keyed by the lesson slugs.
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [url, init] = fetchMock.mock.calls[0] as unknown as [
-      string,
-      RequestInit,
-    ];
-    expect(url).toBe("/api/lessons/reveal-solution");
-    expect(JSON.parse(init.body as string)).toEqual({
-      courseSlug: "solana-101",
-      lessonSlug: "first-challenge",
-    });
-
-    // Honesty (AIE-27): the "marked for review" claim appears ONLY after the
-    // server confirms (2xx + scheduled=true) — not synchronously on reveal.
-    expect(
-      screen.getByText(messages.lesson.solutionRevealedNote)
-    ).toBeInTheDocument();
-    expect(
-      await screen.findByText(messages.lesson.solutionReviewScheduledNote)
-    ).toBeInTheDocument();
-  });
-
-  it("makes NO review-queue claim when the reschedule fails (e.g. anonymous 401)", async () => {
-    // Anonymous learner: the route 401s. The component reads the body only when
-    // res.ok, so the json shape here is never consumed — it just satisfies the
-    // mock's inferred type.
-    fetchMock.mockResolvedValueOnce({
-      ok: false,
-      json: async () => ({ scheduled: false }),
-    });
-    renderChallenge();
-    fireEvent.click(
-      screen.getByRole("button", { name: /view reference solution/i })
-    );
-    fireEvent.click(screen.getByRole("button", { name: /show solution/i }));
-
-    // Solution still revealed (never a refusal), and the fetch was attempted.
-    expect(screen.getByText(SOLUTION)).toBeInTheDocument();
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-    // Let the fetch chain settle, then assert the panel shows the neutral note
-    // and never the "marked for review" claim.
-    await new Promise((r) => setTimeout(r, 0));
-    expect(
-      screen.getByText(messages.lesson.solutionRevealedNote)
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByText(messages.lesson.solutionReviewScheduledNote)
-    ).not.toBeInTheDocument();
+    fireEvent.click(button);
+    expect(screen.queryByText(SOLUTION)).not.toBeInTheDocument();
   });
 });
