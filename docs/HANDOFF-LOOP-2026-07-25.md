@@ -61,6 +61,29 @@ Drain `label:needs-gate`. For each PR, in this order:
 
 Bounced PRs get `needs-gate` removed and a comment; the orchestrator picks them back up.
 
+### Ship-loop upgrades (added 2026-07-27, owner-approved)
+
+Three rules imported from red-first/BDD practice, each patching a failure this loop actually had:
+
+1. **A bounce comes back as a failing test, not prose.** When the gate bounces a PR for a defect,
+   the fix push MUST include a regression test that **fails at the bounced head** and passes at the
+   new one. The gate verifies red-first the way it verifies md5s (stash/checkout the old head, run
+   exactly that test, watch it fail). Rationale: green-while-guarding-nothing tests are how #699's
+   hollow guards happened; prose bounces are how #738/#748 stayed unfixed for hours.
+2. **PR bodies claim red-proof explicitly.** Any PR whose point is "this can never happen again"
+   states: `regression test <file> verified failing at <sha>`. A checkable claim, not a vibe.
+   (First done ad hoc on #746 — now the convention.)
+3. **The critical learner paths get Playwright, in CI** (tracked in its own issue): enroll →
+   complete → XP; catalog gate (active courses render, deactivated don't); unsubscribe. The gate's
+   manual runtime smokes caught #711 and validated the Next 15 upgrade, but they die with the
+   session — 04-layer coverage must outlive the operator.
+
+What we deliberately did NOT import: full Gherkin/BDD ceremony (two-agent loop, launch week), and
+collapsing the gate into a pipeline stage. The gate's value is that it is a **different agent
+verifying claims against reality** (prod DB, chain, live renders) — not the same author's context
+checking rule-compliance. Records-vs-reality was our biggest bug class (6 instances); no in-pipeline
+gate catches those.
+
 ### Branch lifecycle — the collision that already happened once
 
 The gate squash-merges with `--delete-branch`. **Once a PR is merged, its branch is closed for
