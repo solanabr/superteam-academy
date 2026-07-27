@@ -31,6 +31,17 @@ import { extractTarball } from "@/lib/content/compile/tarball";
 const decoder = new TextDecoder();
 
 /**
+ * Bound the whole prior-content fetch (redirect + tarball body read). A hung
+ * GitHub response must not stall the admin sync; on timeout the AbortController
+ * aborts the fetch and we degrade to slot-only. 30s is generous for a
+ * small-repo tarball while still failing a truly stuck request.
+ */
+const TARBALL_TIMEOUT_MS = 30_000;
+
+/** Prefix every prior-content degrade log so an operator can grep the cause. */
+const LOG = "[changelog:prior-content]";
+
+/**
  * Decode `Course.content_tx_id` (§11.0: 12 leading zero bytes + a 20-byte git
  * SHA-1) back to the 40-hex sha. Returns `null` when the bytes are not a padded
  * sha — e.g. all-zero (a course that never committed content) or non-zero in
@@ -79,12 +90,25 @@ export async function resolvePriorRemovedLessons(params: {
   if (params.removedSlots.length === 0) return out;
 
   let tree: Map<string, Uint8Array>;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TARBALL_TIMEOUT_MS);
   try {
-    const tarball = await createGitHubClient().fetchTarball(params.priorSha);
+    const tarball = await createGitHubClient().fetchTarball(
+      params.priorSha,
+      controller.signal
+    );
     tree = await extractTarball(tarball);
-  } catch {
-    // No GITHUB_TOKEN, network/HTTP error, or a tarball too large/corrupt.
+  } catch (err) {
+    // No GITHUB_TOKEN, network/HTTP error, timeout, or a tarball too large/
+    // corrupt. Log loudly (#731 bar) so an admin retiring lessons with, e.g.,
+    // an expired token sees WHY enrichment degraded rather than silent nulls.
+    const reason = err instanceof Error ? err.message : String(err);
+    console.warn(
+      `${LOG} ${params.courseId}: could not fetch/extract prior content at ${params.priorSha} — removed lessons will record slot-only (${reason})`
+    );
     return out;
+  } finally {
+    clearTimeout(timer);
   }
 
   // 1. Locate the course by matching each course.yaml's `id` (dir != slug).
@@ -97,11 +121,21 @@ export async function resolvePriorRemovedLessons(params: {
       break;
     }
   }
-  if (!courseDir) return out;
+  if (!courseDir) {
+    console.warn(
+      `${LOG} ${params.courseId}: not found in prior content at ${params.priorSha} — removed lessons will record slot-only`
+    );
+    return out;
+  }
 
   // 2. Reverse the prior slots.lock.json (lessonId→slot) for the removed slots.
   const lockBytes = tree.get(`${courseDir}/slots.lock.json`);
-  if (!lockBytes) return out;
+  if (!lockBytes) {
+    console.warn(
+      `${LOG} ${params.courseId}: ${courseDir}/slots.lock.json missing at ${params.priorSha} — removed lessons will record slot-only`
+    );
+    return out;
+  }
   const slotToId = new Map<number, string>();
   try {
     const lock = JSON.parse(decoder.decode(lockBytes)) as {
@@ -110,7 +144,11 @@ export async function resolvePriorRemovedLessons(params: {
     for (const [lessonId, slot] of Object.entries(lock.slots ?? {})) {
       slotToId.set(Number(slot), lessonId);
     }
-  } catch {
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : String(err);
+    console.warn(
+      `${LOG} ${params.courseId}: ${courseDir}/slots.lock.json unparseable at ${params.priorSha} — removed lessons will record slot-only (${reason})`
+    );
     return out;
   }
 

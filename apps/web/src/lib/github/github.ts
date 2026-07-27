@@ -1,13 +1,18 @@
 import "server-only";
-import { type ChecksState, GitHubUnavailableError } from "./types";
 import { serverEnv } from "@/lib/env.server";
+import { type ChecksState, GitHubUnavailableError } from "./types";
 
 const REPO = "solanabr/courses-academy";
 const BRANCH = "main";
 const API = "https://api.github.com";
 
 export interface GitHubClient {
-  fetchTarball(sha: string): Promise<Uint8Array>;
+  /**
+   * Download a repo tarball at `sha`. `signal` lets the caller bound the whole
+   * fetch (redirect + body read) with a timeout — aborting the fetch aborts the
+   * response stream too. Existing callers pass none (unbounded, unchanged).
+   */
+  fetchTarball(sha: string, signal?: AbortSignal): Promise<Uint8Array>;
   fetchHeadSha(): Promise<string>;
   fetchChecksState(sha: string): Promise<ChecksState>;
   /** Commits `head` is ahead of `base` (compare API `ahead_by`). */
@@ -23,7 +28,11 @@ export function createGitHubClient(opts: Opts = {}): GitHubClient {
   const token = "token" in opts ? opts.token : serverEnv.GITHUB_TOKEN;
   const doFetch = opts.fetchImpl ?? fetch;
 
-  async function call(path: string, accept: string): Promise<Response> {
+  async function call(
+    path: string,
+    accept: string,
+    signal?: AbortSignal
+  ): Promise<Response> {
     if (!token) {
       throw new GitHubUnavailableError("GITHUB_TOKEN is not configured");
     }
@@ -35,6 +44,7 @@ export function createGitHubClient(opts: Opts = {}): GitHubClient {
           Accept: accept,
           "X-GitHub-Api-Version": "2022-11-28",
         },
+        signal,
       });
     } catch (e) {
       throw new GitHubUnavailableError(
@@ -48,11 +58,12 @@ export function createGitHubClient(opts: Opts = {}): GitHubClient {
   }
 
   return {
-    async fetchTarball(sha) {
+    async fetchTarball(sha, signal) {
       // `tarball/<sha>` 302-redirects to codeload; fetch follows redirects by default.
       const res = await call(
         `/repos/${REPO}/tarball/${sha}`,
-        "application/vnd.github+json"
+        "application/vnd.github+json",
+        signal
       );
       return new Uint8Array(await res.arrayBuffer());
     },

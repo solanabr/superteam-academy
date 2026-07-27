@@ -140,16 +140,24 @@ describe("resolvePriorRemovedLessons", () => {
     expect(map.has(99)).toBe(false);
   });
 
-  it("degrades to empty when the course id is not found in the prior tree", async () => {
+  it("degrades to empty (and WARNS) when the course id is not found", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const map = await resolvePriorRemovedLessons({
       courseId: "course-does-not-exist",
       priorSha: "x",
       removedSlots: [0],
     });
     expect(map.size).toBe(0);
+    // #731 bar: the degrade is not silent — it names the course and the reason.
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("course-does-not-exist")
+    );
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("slot-only"));
+    warn.mockRestore();
   });
 
-  it("degrades to empty (never throws) when the tarball fetch fails", async () => {
+  it("degrades to empty (never throws, and WARNS) when the tarball fetch fails", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     fetchTarballImpl = () => Promise.reject(new Error("GITHUB_TOKEN not set"));
     const map = await resolvePriorRemovedLessons({
       courseId: "course-building-first-program",
@@ -157,6 +165,10 @@ describe("resolvePriorRemovedLessons", () => {
       removedSlots: [0, 2],
     });
     expect(map.size).toBe(0);
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("GITHUB_TOKEN not set")
+    );
+    warn.mockRestore();
   });
 
   it("short-circuits with no removed slots", async () => {

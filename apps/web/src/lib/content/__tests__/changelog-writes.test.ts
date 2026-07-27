@@ -399,5 +399,17 @@ describe("#757 removed-lesson id/title from prior state", () => {
         title: "Interact with Your Program",
       },
     ]);
+
+    // Cross-contamination pin: added lessons resolve from the CURRENT bundle
+    // ONLY — priorRemoved (slots 0/2/11/14) must never bleed into the added
+    // row. Slots 16/17/18 aren't in the test bundle, so they stay slot-only.
+    const added = lastRows?.find((r) => r.kind === "lessons_added");
+    expect(added?.detail).toEqual({
+      lessons: [
+        { slot: 16, id: null, title: null },
+        { slot: 17, id: null, title: null },
+        { slot: 18, id: null, title: null },
+      ],
+    });
   });
 });
