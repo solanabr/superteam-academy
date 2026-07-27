@@ -3,22 +3,29 @@ name: Claude Code Review
 on:
   pull_request:
     # Every PR is reviewed on open / ready / reopen. Additionally — and ONLY for PRs
-    # carrying `needs-gate` — re-review on every push (`synchronize`) and when the
-    # label is first applied (`labeled`). This closes the #710 race: the orchestrator
+    # carrying `needs-gate` — re-review on every push (`synchronize`). This closes
+    # the #710 race: the orchestrator
     # pushes hardening commits after the review has started, so the review reported on
     # a head that no longer existed (and 3 of 5 stale reviews missed the security-
     # relevant commit). Scoping the push re-review to needs-gate keeps the OAuth-token
     # cost off every ordinary PR push; the `if:` below enforces the scope, and the
     # concurrency group cancels an in-flight review the moment a newer head arrives so
     # a stale verdict can never post.
-    types: [opened, ready_for_review, reopened, synchronize, labeled]
+    types: [opened, ready_for_review, reopened, synchronize]
 
 jobs:
   claude-review:
-    # opened/ready/reopened review any PR (unchanged). synchronize + labeled fire for
-    # every PR but are admitted here only for needs-gate, so a fresh-head review is
-    # guaranteed both when the PR is queued (label added) and on each subsequent push,
-    # without re-reviewing every push of every PR.
+    # opened/ready/reopened review any PR (unchanged). synchronize fires for every
+    # PR but is admitted here only for needs-gate, so a fresh-head review is
+    # guaranteed on each subsequent push without re-reviewing every push of every PR.
+    #
+    # `labeled` is deliberately NOT a trigger (#765): the review action's
+    # track_progress publish mechanism only supports opened/synchronize/
+    # ready_for_review/reopened, so a labeled-triggered run hard-fails before
+    # reviewing — and a bot-posted `@claude` comment can't substitute because
+    # GITHUB_TOKEN-created events never trigger workflows. Queue-time fresh
+    # reviews are therefore the queuing party's job: comment `@claude review`
+    # when adding needs-gate (existing loop practice).
     #
     # No draft-PR guard is intentional: a needs-gate draft's pushes still review, which
     # is what we want — a PR is queued for the gate precisely to be reviewed at head.
@@ -26,8 +33,7 @@ jobs:
       github.event.action == 'opened' ||
       github.event.action == 'ready_for_review' ||
       github.event.action == 'reopened' ||
-      (github.event.action == 'synchronize' && contains(github.event.pull_request.labels.*.name, 'needs-gate')) ||
-      (github.event.action == 'labeled' && github.event.label.name == 'needs-gate')
+      (github.event.action == 'synchronize' && contains(github.event.pull_request.labels.*.name, 'needs-gate'))
 
     # One review per PR at a time; a newer head cancels the older review in flight (the
     # mechanical core of the #710 fix — the pre-fix head's review is superseded, never
