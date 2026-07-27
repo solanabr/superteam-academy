@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { ComputeBudgetProgram, type Connection } from "@solana/web3.js";
+import {
+  ComputeBudgetProgram,
+  Keypair,
+  PublicKey,
+  Transaction,
+  type Connection,
+} from "@solana/web3.js";
 import {
   writeComputeBudgetIxs,
   priorityFeeIx,
@@ -8,7 +14,15 @@ import {
   is429,
   parseRetryAfterMs,
   nextResendInterval,
+  deployProgram,
+  resumeDeployment,
+  setCachedBinary,
 } from "../deploy";
+import type {
+  DeploymentCallbacks,
+  DeploymentState,
+  WalletAdapter,
+} from "../types";
 
 // ---------------------------------------------------------------------------
 // Item 4 — setComputeUnitLimit on the write txs (not the one-off txs)
@@ -110,10 +124,20 @@ describe("rebroadcast backoff decision (item 7)", () => {
     expect(is429(new Error("Transaction simulation failed"))).toBe(false);
   });
 
-  it("parseRetryAfterMs scrapes an explicit hint, else null", () => {
+  it("parseRetryAfterMs scrapes an explicit delta-seconds hint, else null", () => {
     expect(parseRetryAfterMs(new Error("429; Retry-After: 3"))).toBe(3000);
     expect(parseRetryAfterMs(new Error("retry after 10 seconds"))).toBe(10_000);
     expect(parseRetryAfterMs(new Error("429 Too Many Requests"))).toBeNull();
+  });
+
+  it("parseRetryAfterMs does NOT misread an HTTP-date Retry-After as seconds", () => {
+    // The date form always leads with a weekday, so no integer follows the
+    // header — must be null, never e.g. the day-of-month (21) or year (2015).
+    expect(
+      parseRetryAfterMs(
+        new Error("429 Retry-After: Wed, 21 Oct 2015 07:28:00 GMT")
+      )
+    ).toBeNull();
   });
 
   it("a clean cycle relaxes to the base cadence (4s)", () => {
@@ -219,5 +243,138 @@ describe("confirmBatch rebroadcast (item 7)", () => {
     expect(callTimes[0]).toBeGreaterThanOrEqual(4_000);
     const firstGap = callTimes[1]! - callTimes[0]!;
     expect(firstGap).toBeGreaterThanOrEqual(7_500); // ~8s, backed off from 4s
+  });
+});
+
+// ---------------------------------------------------------------------------
+// BOTH entry points end-to-end: the reviewer's gap — the first pass migrated
+// deployProgram but not resumeDeployment, and no test drove either. These run
+// each real path against one mocked-connection harness and assert (1) its send
+// dispatch is POOLED (peak concurrency > 1, not serial) and (2) every write tx
+// carries the CU-limit ix.
+// ---------------------------------------------------------------------------
+describe("deployProgram + resumeDeployment both use the pool + CU limit (#776)", () => {
+  const ZERO_HASH = "11111111111111111111111111111111"; // valid 32-byte base58
+
+  function harness(bufferKp: Keypair) {
+    let inFlight = 0;
+    let peak = 0;
+    let sigN = 0;
+    const writeTxs: Transaction[] = [];
+
+    const sendRawTransaction = vi.fn(async () => {
+      inFlight++;
+      peak = Math.max(peak, inFlight);
+      await new Promise((r) => setTimeout(r, 5));
+      inFlight--;
+      return `sig-${sigN++}`;
+    });
+
+    const connection = {
+      getLatestBlockhash: vi.fn(async () => ({
+        blockhash: ZERO_HASH,
+        lastValidBlockHeight: 1000,
+      })),
+      getMinimumBalanceForRentExemption: vi.fn(async () => 1_000_000),
+      sendRawTransaction,
+      confirmTransaction: vi.fn(async () => ({ value: { err: null } })),
+      // Confirm everything on the first poll so confirmBatch drains without a
+      // rebroadcast cycle.
+      getSignatureStatuses: vi.fn(async (pending: string[]) => ({
+        value: pending.map(() => ({
+          err: null,
+          confirmationStatus: "confirmed" as const,
+        })),
+      })),
+      // resume: buffer still exists, program account does not yet.
+      getAccountInfo: vi.fn(async (pk: PublicKey) =>
+        pk.equals(bufferKp.publicKey) ? { data: Buffer.alloc(0) } : null
+      ),
+    } as unknown as Connection;
+
+    const kp = Keypair.generate();
+    const wallet: WalletAdapter = {
+      publicKey: kp.publicKey,
+      signTransaction: async (tx) => {
+        tx.partialSign(kp);
+        return tx;
+      },
+      signAllTransactions: async (txs) => {
+        for (const tx of txs) {
+          writeTxs.push(tx);
+          tx.partialSign(kp);
+        }
+        return txs;
+      },
+    };
+
+    const callbacks: DeploymentCallbacks = {
+      onStepChange: vi.fn(),
+      onChunkProgress: vi.fn(),
+      onTransactionConfirmed: vi.fn(),
+      onError: vi.fn(),
+      onStateUpdate: vi.fn(),
+      onBatchStart: vi.fn(),
+    };
+
+    return { connection, wallet, callbacks, writeTxs, peak: () => peak };
+  }
+
+  /** A write tx must contain a ComputeBudget SetComputeUnitLimit ix (disc 2). */
+  const hasCuLimit = (tx: Transaction) =>
+    tx.instructions.some(
+      (ix) =>
+        ix.programId.equals(ComputeBudgetProgram.programId) && ix.data[0] === 2
+    );
+
+  // 5 chunks at CHUNK_SIZE=900 → one batch of 5 write txs, enough to observe the
+  // pool overlapping sends.
+  const BINARY = new Uint8Array(4500).fill(7);
+
+  it("deployProgram: pooled dispatch (peak > 1) and every write tx has the CU limit", async () => {
+    const bufferKp = Keypair.generate();
+    const h = harness(bufferKp);
+    setCachedBinary("uuid-deploy", BINARY);
+
+    await deployProgram({
+      connection: h.connection,
+      wallet: h.wallet,
+      buildServerUrl: "unused",
+      buildUuid: "uuid-deploy",
+      callbacks: h.callbacks,
+    });
+
+    expect(h.peak()).toBeGreaterThan(1); // pooled, not the old serial loop
+    expect(h.writeTxs.length).toBe(5);
+    expect(h.writeTxs.every(hasCuLimit)).toBe(true);
+  });
+
+  it("resumeDeployment: pooled dispatch (peak > 1) and every write tx has the CU limit", async () => {
+    const bufferKp = Keypair.generate();
+    const programKp = Keypair.generate();
+    const h = harness(bufferKp);
+    setCachedBinary("uuid-resume", BINARY);
+
+    const state: DeploymentState = {
+      buildUuid: "uuid-resume",
+      bufferKeypairSecret: Array.from(bufferKp.secretKey),
+      programKeypairSecret: Array.from(programKp.secretKey),
+      lastUploadedChunk: -1,
+      totalChunks: 5,
+      phase: "uploading",
+    };
+
+    await resumeDeployment({
+      connection: h.connection,
+      wallet: h.wallet,
+      buildServerUrl: "unused",
+      state,
+      callbacks: h.callbacks,
+    });
+
+    // This is the assertion the first pass lacked — the migrated resume path.
+    expect(h.peak()).toBeGreaterThan(1);
+    expect(h.writeTxs.length).toBe(5);
+    expect(h.writeTxs.every(hasCuLimit)).toBe(true);
   });
 });

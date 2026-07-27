@@ -171,22 +171,22 @@ const PRIORITY_FEE_MICROLAMPORTS = 100_000;
  * Compute-unit LIMIT for a single buffer WRITE tx (item 4 / #776).
  *
  * A Loader-v3 Write instruction is a bounded memcpy of <=CHUNK_SIZE (900) bytes
- * into the buffer account; the Anchor CLI measures it at ~2,670 CU and sets its
- * own tight `WRITE_COMPUTE_UNIT_LIMIT` on exactly these txs. Plus the two
- * ComputeBudget ixs (~150 CU each), a write tx consumes ~3k CU.
+ * into the buffer account — low-thousands of CU; with the two ComputeBudget ixs
+ * (~150 CU each) a write tx is ~3k CU. (The upstream program-deploy tooling
+ * likewise puts a tight limit on its write txs specifically.)
  *
  * Without an explicit limit each non-builtin ix is reserved the ~200k default,
  * which (a) the leader must reserve when packing — so far fewer write txs fit a
  * block — and (b) is what the priority fee is charged against (fee = price ×
- * REQUESTED limit, not actual). 10k is ~3.5x the measured cost (comfortable
- * headroom for chunk-size variance — a too-tight limit fails the tx outright)
- * while cutting the reserved/charged budget ~20x. Verification is unit-level (no
- * on-chain sends), so the figure is the Anchor-measured cost, not a live sim.
+ * REQUESTED limit, not actual). 10k is conservative headroom over the ~3k cost
+ * (a too-tight limit fails the tx outright) while cutting the reserved/charged
+ * budget ~20x. It follows the standard "simulate, then add margin" guidance;
+ * verification here is unit-level (no on-chain sends), so 10k is a safe
+ * estimate-plus-margin rather than a live-simulated figure.
  *
  * Applied ONLY to the write burst — NOT the one-off buffer-create/deploy txs:
  * those are a single tx each (packing is irrelevant) and the deploy ix needs the
- * full default budget for the loader's ELF verification. This mirrors the Anchor
- * CLI, which tightens only its write txs.
+ * full default budget for the loader's ELF verification.
  */
 const WRITE_CU_LIMIT = 10_000;
 
@@ -264,11 +264,22 @@ export function is429(err: unknown): boolean {
  * Retry-After delay (ms) parsed from an error message if the RPC surfaced one,
  * else null. web3.js flattens the HTTP response into an Error message, so this
  * is a best-effort scrape of a "Retry-After: N" / "retry after N seconds" hint.
+ *
+ * ONLY the delta-seconds (bare integer) form is honored. Retry-After's other
+ * legal form is an HTTP-date ("Wed, 21 Oct 2015 07:28:00 GMT"), which always
+ * leads with a weekday word — so the integer never immediately follows the
+ * header and this returns null for it. The trailing-char guard additionally
+ * rejects a number embedded in a date/time token (another digit, ':' time, '-'
+ * date), so a stray day-of-month or year can never be misread as seconds.
+ * nextResendInterval also clamps the result to MAX_RESEND_INTERVAL_MS as a
+ * second line of defense.
  */
 export function parseRetryAfterMs(err: unknown): number | null {
   const msg = err instanceof Error ? err.message : String(err);
-  const m = /retry[- ]?after[:\s]+(\d+)/i.exec(msg);
+  const m = /retry[- ]?after"?\s*[:=]?\s*(\d+)([^]?)/i.exec(msg);
   if (!m) return null;
+  const trailing = m[2] ?? "";
+  if (/[\d:\-a-z]/i.test(trailing)) return null; // digit is part of a date/time
   const seconds = Number(m[1]);
   return Number.isFinite(seconds) ? seconds * 1000 : null;
 }
@@ -652,7 +663,7 @@ export async function resumeDeployment(params: {
         const chunk = binary.slice(offset, offset + CHUNK_SIZE);
 
         const writeTx = new Transaction().add(
-          priorityFeeIx(),
+          ...writeComputeBudgetIxs(),
           createWriteInstruction(bufferKeypair.publicKey, payer, offset, chunk)
         );
         writeTx.feePayer = payer;
@@ -669,19 +680,13 @@ export async function resumeDeployment(params: {
 
       const signedBatch = await wallet.signAllTransactions(batchTxs);
 
-      // Send all txs rapidly (parallel fire with small stagger). Keep each
-      // serialized so confirmBatch can rebroadcast any that get dropped.
-      const signatures: string[] = [];
-      const serializedTxs: Uint8Array[] = [];
-      for (let j = 0; j < signedBatch.length; j++) {
-        const serialized = signedBatch[j]!.serialize();
-        serializedTxs.push(serialized);
-        const sig = await sendWithRetry(connection, serialized);
-        signatures.push(sig);
-        if (j < signedBatch.length - 1) {
-          await new Promise((r) => setTimeout(r, SEND_DELAY_MS));
-        }
-      }
+      // Serialize (kept so confirmBatch can rebroadcast any that get dropped),
+      // then fire the whole batch with BOUNDED concurrency. Signatures come back
+      // index-aligned to serializedTxs, which confirmBatch's bookkeeping requires.
+      // (Resume runs AFTER a failure, i.e. on a likely-worse network — the same
+      // path the pool matters most for, so it must not stay serial.)
+      const serializedTxs = signedBatch.map((tx) => tx.serialize());
+      const signatures = await sendAllBounded(connection, serializedTxs);
 
       // Confirm all via batch polling; rebroadcasts dropped txs until they land.
       let batchConfirmed = 0;
