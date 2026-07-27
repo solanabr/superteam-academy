@@ -15,7 +15,11 @@ name: CI
 
 on:
   push:
-    branches: ["**"] # every branch — gives fork branches CI before the upstream PR
+    # `**` = every branch (gives fork branches CI before the upstream PR).
+    # `!program-hash` excludes the CI-owned hash-record branch so pushes there
+    # never spin up CI — defense-in-depth vs a future PAT swap (GITHUB_TOKEN
+    # pushes already don't trigger workflows). Negation MUST follow `**` to win.
+    branches: ["**", "!program-hash"]
   pull_request:
     branches: [main]
     # `labeled` lets the verifiable-build job (gated on the `verifiable-build`
@@ -499,14 +503,13 @@ jobs:
   verifiable-build:
     name: Verifiable build (program hash)
     runs-on: ubuntu-latest
-    # Job-level override of the workflow's `contents: read`. Needed ONLY by the
-    # "Publish program hash" step, which commits the hash record to the CI-owned
-    # `program-hash` branch (feeds #140 / G-3). Scoped to this job so no other
-    # job gains write. The default GITHUB_TOKEN cannot push to `main` (branch
-    # protection requires a PR), which is why the record lands on a dedicated
-    # branch — see docs/PROGRAM-HASH.md.
-    permissions:
-      contents: write
+    # No job-level `permissions:` here on purpose. This job runs PR-controlled
+    # build code — `cargo build-sbf` executes the crate's build.rs / proc-macros
+    # — on same-repo PRs carrying the `verifiable-build` label. It therefore
+    # inherits the workflow's read-only `contents: read` and NEVER holds a
+    # write-capable token in a job that runs untrusted code. The durable publish
+    # (which needs write) is a SEPARATE job, `publish-hash`, that runs only on
+    # trusted `main` and never checks out PR code. See #140 / G-3.
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
@@ -517,7 +520,12 @@ jobs:
       # pinned platform-tools (v1.54 = rustc 1.89).
       SOLANA_VERSION: "3.1.10"
     outputs:
-      program_sha256: ${{ steps.hash.outputs.sha256 }}
+      # Non-secret record fields consumed by the `publish-hash` job — plain
+      # strings (hash, byte size, toolchain versions), no artifact plumbing.
+      sha256: ${{ steps.hash.outputs.sha256 }}
+      size: ${{ steps.hash.outputs.size }}
+      solana: ${{ steps.hash.outputs.solana }}
+      platform_tools: ${{ steps.hash.outputs.platform_tools }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -565,7 +573,13 @@ jobs:
           fi
           SHA="$(sha256sum "$SO_PATH" | awk '{print $1}')"
           SIZE="$(wc -c < "$SO_PATH" | tr -d ' ')"
-          echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
+          # Expose the record fields as job outputs for the `publish-hash` job.
+          {
+            echo "sha256=$SHA"
+            echo "size=$SIZE"
+            echo "solana=$SOLANA_VERSION"
+            echo "platform_tools=v1.54"
+          } >> "$GITHUB_OUTPUT"
           # Plain artifact for downstream comparison / scripting.
           printf '%s  %s\n' "$SHA" "onchain_academy_pinocchio.so" > program-hash.txt
           {
@@ -598,30 +612,48 @@ jobs:
             onchain-academy/program-hash.txt
           if-no-files-found: error
 
-      # ── Durable hash record (feeds #140 / G-3) ──────────────────────────────
-      # The step above (upload-artifact) is EPHEMERAL — the artifact expires. This
-      # step makes the hash durable: on every push to main, it publishes the
-      # verified hash to the CI-owned `program-hash` branch (see docs/PROGRAM-HASH.md
-      # for why a branch and not a commit to `main`: branch protection requires a
-      # PR, so the bot cannot push to `main`).
-      #
-      # Loop / spam safety (verifiable-build runs on EVERY main push, path-filter
-      # free, so this must not rebuild-and-commit forever):
-      #   1. Idempotence (primary): publish only when the hash CHANGED. A doc-only
-      #      or any hash-unchanged main push short-circuits with no commit.
-      #   2. Structural: the push targets `program-hash`, not `main` — it can never
-      #      re-trigger this main-gated job regardless of anything else.
-      #   3. GITHUB_TOKEN pushes never trigger workflow runs (GitHub's built-in
-      #      recursion guard; cf. claude-code-review.yml).
-      #   4. `[skip ci]` in the bot commit message — a belt for a future PAT swap.
-      - name: Publish program hash (main only)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          NEW_SHA: ${{ steps.hash.outputs.sha256 }}
-          PUBLISH_BRANCH: program-hash
-          RECORD_PATH: docs/PROGRAM-HASH.md
-          SO_PATH: onchain-academy/target/deploy/onchain_academy_pinocchio.so
-          PROGRAM_ID: 7NeJaSRyb4Wxay3Tcd9bdpD7T3GWYUQSFyrhG8SgwE8V
+  # ── Durable hash record (feeds #140 / G-3) ──────────────────────────────────
+  # SEPARATE job from verifiable-build so the write-capable token is never present
+  # while PR-controlled build code runs. verifiable-build (which runs cargo
+  # build-sbf, i.e. PR build.rs / proc-macros on labeled same-repo PRs) stays
+  # read-only; ONLY this job holds `contents: write`, it runs ONLY on trusted
+  # `main`, and it never checks out PR code. It renders the record purely from
+  # verifiable-build's non-secret string outputs plus git facts re-derived from
+  # its OWN clean `main` checkout.
+  #
+  # The upload-artifact in verifiable-build is EPHEMERAL; this makes the hash
+  # durable by publishing it to the CI-owned `program-hash` branch (see
+  # docs/PROGRAM-HASH.md for why a branch, not a commit to protected `main`).
+  #
+  # Loop / spam safety (verifiable-build runs on EVERY main push, path-filter free):
+  #   1. Idempotence (primary): publish only when the hash CHANGED — a doc-only or
+  #      any hash-unchanged main push short-circuits with no commit.
+  #   2. Structural: the push targets `program-hash` (excluded from `on.push`,
+  #      never `main`), so it cannot re-trigger this main-gated job.
+  #   3. GITHUB_TOKEN pushes never trigger workflow runs (GitHub recursion guard;
+  #      cf. claude-code-review.yml).
+  #   4. `[skip ci]` in the bot commit message — a belt for a future PAT swap.
+  publish-hash:
+    name: Publish program hash
+    needs: verifiable-build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      NEW_SHA: ${{ needs.verifiable-build.outputs.sha256 }}
+      SIZE: ${{ needs.verifiable-build.outputs.size }}
+      SOLANA_VERSION: ${{ needs.verifiable-build.outputs.solana }}
+      PLATFORM_TOOLS: ${{ needs.verifiable-build.outputs.platform_tools }}
+      PUBLISH_BRANCH: program-hash
+      RECORD_PATH: docs/PROGRAM-HASH.md
+      PROGRAM_ID: 7NeJaSRyb4Wxay3Tcd9bdpD7T3GWYUQSFyrhG8SgwE8V
+    steps:
+      # Clean checkout of the TRUSTED main ref (the push's own commit) — never PR
+      # code. persist-credentials (default true) supplies the push credential.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Publish record to the program-hash branch
         run: |
           set -euo pipefail
 
@@ -638,17 +670,17 @@ jobs:
             exit 0
           fi
 
-          SIZE="$(wc -c < "$SO_PATH" | tr -d ' ')"
+          # Git facts re-derived from THIS job's clean main checkout (HEAD == the
+          # pushed main commit) — nothing sourced from PR-controlled state.
           SRC_COMMIT="$(git rev-parse HEAD)"
-          # Deterministic build date = source commit's committer date, not wall clock.
-          BUILD_DATE="$(git show -s --format=%cI HEAD)"
+          BUILD_DATE="$(git show -s --format=%cI HEAD)"  # committer date, not wall clock
 
-          # --- Render the record (echo-group style, matching the hash step above) ---
+          # --- Render the record (echo-group style, matching the hash step) ---
           RECORD="$(mktemp)"
           {
             echo "<!--"
             echo "  CI-MAINTAINED — DO NOT EDIT BY HAND. Published by .github/workflows/ci.yml"
-            echo "  (verifiable-build job) on every push to main whose program hash changed."
+            echo "  (publish-hash job) on every push to main whose program hash changed."
             echo "  The human-readable spec + reproduction guide lives on main at"
             echo "  docs/PROGRAM-HASH.md."
             echo "-->"
@@ -669,14 +701,14 @@ jobs:
             echo "| SHA-256 | \`${NEW_SHA}\` |"
             echo "| Program ID | \`${PROGRAM_ID}\` |"
             echo "| Solana | \`${SOLANA_VERSION}\` |"
-            echo "| platform-tools | \`v1.54\` |"
+            echo "| platform-tools | \`${PLATFORM_TOOLS}\` |"
             echo "| Source commit | \`${SRC_COMMIT}\` |"
             echo "| Build date | \`${BUILD_DATE}\` |"
             echo ""
             echo "## Reproduce"
             echo ""
             echo '```bash'
-            echo "cargo build-sbf --manifest-path onchain-academy/programs/onchain-academy-pinocchio/Cargo.toml --tools-version v1.54"
+            echo "cargo build-sbf --manifest-path onchain-academy/programs/onchain-academy-pinocchio/Cargo.toml --tools-version ${PLATFORM_TOOLS}"
             echo "sha256sum onchain-academy/target/deploy/onchain_academy_pinocchio.so"
             echo '```'
             echo ""
@@ -688,11 +720,17 @@ jobs:
             echo '```'
           } > "$RECORD"
 
-          # --- Commit + push in an isolated worktree (never touches the build tree) ---
+          # --- Commit + push in an isolated worktree (never touches the checkout) ---
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           WT="$(mktemp -d)"
+          cleanup() {
+            git worktree remove --force "$WT" >/dev/null 2>&1 || true
+            rm -rf "$WT" >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
           if [ -n "$OLD_SHA" ] || git ls-remote --exit-code --heads origin "$PUBLISH_BRANCH" >/dev/null 2>&1; then
             git worktree add "$WT" "refs/remotes/origin/${PUBLISH_BRANCH}"
             git -C "$WT" checkout -B "$PUBLISH_BRANCH"
@@ -712,4 +750,3 @@ jobs:
             git -C "$WT" push origin "HEAD:refs/heads/${PUBLISH_BRANCH}"
             echo "Published program hash ${NEW_SHA} to ${PUBLISH_BRANCH}."
           fi
-          git worktree remove --force "$WT" 2>/dev/null || true

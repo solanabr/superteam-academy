@@ -1,6 +1,6 @@
 <!--
   CI-MAINTAINED — DO NOT EDIT BY HAND.
-  The live, machine-updated copy of this file is published by the `verifiable-build`
+  The live, machine-updated copy of this file is published by the `publish-hash`
   job in .github/workflows/ci.yml to the dedicated `program-hash` branch, once per
   push to `main` (only when the program hash actually changes). See "Where the live
   record lives" below.
@@ -47,8 +47,10 @@ The **build** is the guarantee; the **hash** is the comparable artifact.
 ## Where the live record lives
 
 Branch protection on `main` requires every change to go through a pull request, so
-CI cannot commit an updated hash back to `main`. Instead, the `verifiable-build` CI
-job publishes the live record to a dedicated **`program-hash`** branch (unprotected,
+CI cannot commit an updated hash back to `main`. Instead, the `publish-hash` CI job
+(a separate job from the build, holding the only `contents: write` token and running
+only on trusted main) publishes the live record to a dedicated **`program-hash`**
+branch (unprotected,
 CI-owned — analogous to a `gh-pages` branch). Every distinct program hash ever built
 from `main` is one commit on that branch, giving a tamper-evident audit trail.
 
