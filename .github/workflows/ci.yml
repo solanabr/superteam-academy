@@ -499,6 +499,14 @@ jobs:
   verifiable-build:
     name: Verifiable build (program hash)
     runs-on: ubuntu-latest
+    # Job-level override of the workflow's `contents: read`. Needed ONLY by the
+    # "Publish program hash" step, which commits the hash record to the CI-owned
+    # `program-hash` branch (feeds #140 / G-3). Scoped to this job so no other
+    # job gains write. The default GITHUB_TOKEN cannot push to `main` (branch
+    # protection requires a PR), which is why the record lands on a dedicated
+    # branch — see docs/PROGRAM-HASH.md.
+    permissions:
+      contents: write
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
@@ -589,3 +597,119 @@ jobs:
             onchain-academy/idl/*.json
             onchain-academy/program-hash.txt
           if-no-files-found: error
+
+      # ── Durable hash record (feeds #140 / G-3) ──────────────────────────────
+      # The step above (upload-artifact) is EPHEMERAL — the artifact expires. This
+      # step makes the hash durable: on every push to main, it publishes the
+      # verified hash to the CI-owned `program-hash` branch (see docs/PROGRAM-HASH.md
+      # for why a branch and not a commit to `main`: branch protection requires a
+      # PR, so the bot cannot push to `main`).
+      #
+      # Loop / spam safety (verifiable-build runs on EVERY main push, path-filter
+      # free, so this must not rebuild-and-commit forever):
+      #   1. Idempotence (primary): publish only when the hash CHANGED. A doc-only
+      #      or any hash-unchanged main push short-circuits with no commit.
+      #   2. Structural: the push targets `program-hash`, not `main` — it can never
+      #      re-trigger this main-gated job regardless of anything else.
+      #   3. GITHUB_TOKEN pushes never trigger workflow runs (GitHub's built-in
+      #      recursion guard; cf. claude-code-review.yml).
+      #   4. `[skip ci]` in the bot commit message — a belt for a future PAT swap.
+      - name: Publish program hash (main only)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          NEW_SHA: ${{ steps.hash.outputs.sha256 }}
+          PUBLISH_BRANCH: program-hash
+          RECORD_PATH: docs/PROGRAM-HASH.md
+          SO_PATH: onchain-academy/target/deploy/onchain_academy_pinocchio.so
+          PROGRAM_ID: 7NeJaSRyb4Wxay3Tcd9bdpD7T3GWYUQSFyrhG8SgwE8V
+        run: |
+          set -euo pipefail
+
+          # --- Idempotence guard: compare against the currently published hash ---
+          OLD_SHA=""
+          if git ls-remote --exit-code --heads origin "$PUBLISH_BRANCH" >/dev/null 2>&1; then
+            git fetch --no-tags --depth=1 origin \
+              "+refs/heads/${PUBLISH_BRANCH}:refs/remotes/origin/${PUBLISH_BRANCH}"
+            OLD_SHA="$(git show "refs/remotes/origin/${PUBLISH_BRANCH}:${RECORD_PATH}" 2>/dev/null \
+                        | grep -oiE '^[0-9a-f]{64}' | head -1 || true)"
+          fi
+          if [ -n "$OLD_SHA" ] && [ "$OLD_SHA" = "$NEW_SHA" ]; then
+            echo "Program hash unchanged ($NEW_SHA); nothing to publish."
+            exit 0
+          fi
+
+          SIZE="$(wc -c < "$SO_PATH" | tr -d ' ')"
+          SRC_COMMIT="$(git rev-parse HEAD)"
+          # Deterministic build date = source commit's committer date, not wall clock.
+          BUILD_DATE="$(git show -s --format=%cI HEAD)"
+
+          # --- Render the record (echo-group style, matching the hash step above) ---
+          RECORD="$(mktemp)"
+          {
+            echo "<!--"
+            echo "  CI-MAINTAINED — DO NOT EDIT BY HAND. Published by .github/workflows/ci.yml"
+            echo "  (verifiable-build job) on every push to main whose program hash changed."
+            echo "  The human-readable spec + reproduction guide lives on main at"
+            echo "  docs/PROGRAM-HASH.md."
+            echo "-->"
+            echo ""
+            echo "# Verifiable build — program hash (feeds #140 / G-3)"
+            echo ""
+            echo "SHA-256 of the toolchain-reproducible \`onchain_academy_pinocchio.so\`,"
+            echo "published by CI so the deployed bytes can be independently verified."
+            echo ""
+            echo '```'
+            echo "${NEW_SHA}  onchain_academy_pinocchio.so"
+            echo '```'
+            echo ""
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| Artifact | \`onchain_academy_pinocchio.so\` |"
+            echo "| Size (bytes) | \`${SIZE}\` |"
+            echo "| SHA-256 | \`${NEW_SHA}\` |"
+            echo "| Program ID | \`${PROGRAM_ID}\` |"
+            echo "| Solana | \`${SOLANA_VERSION}\` |"
+            echo "| platform-tools | \`v1.54\` |"
+            echo "| Source commit | \`${SRC_COMMIT}\` |"
+            echo "| Build date | \`${BUILD_DATE}\` |"
+            echo ""
+            echo "## Reproduce"
+            echo ""
+            echo '```bash'
+            echo "cargo build-sbf --manifest-path onchain-academy/programs/onchain-academy-pinocchio/Cargo.toml --tools-version v1.54"
+            echo "sha256sum onchain-academy/target/deploy/onchain_academy_pinocchio.so"
+            echo '```'
+            echo ""
+            echo "## Verify against the deployed program"
+            echo ""
+            echo '```bash'
+            echo "solana program dump ${PROGRAM_ID} onchain.so"
+            echo "sha256sum onchain.so   # must equal the SHA-256 above"
+            echo '```'
+          } > "$RECORD"
+
+          # --- Commit + push in an isolated worktree (never touches the build tree) ---
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          WT="$(mktemp -d)"
+          if [ -n "$OLD_SHA" ] || git ls-remote --exit-code --heads origin "$PUBLISH_BRANCH" >/dev/null 2>&1; then
+            git worktree add "$WT" "refs/remotes/origin/${PUBLISH_BRANCH}"
+            git -C "$WT" checkout -B "$PUBLISH_BRANCH"
+          else
+            # First ever run: start the branch as an orphan (no repo history baggage).
+            git worktree add --detach "$WT"
+            git -C "$WT" checkout --orphan "$PUBLISH_BRANCH"
+            git -C "$WT" rm -rf --quiet . 2>/dev/null || true
+          fi
+
+          install -D -m 0644 "$RECORD" "$WT/${RECORD_PATH}"
+          git -C "$WT" add "$RECORD_PATH"
+          if git -C "$WT" diff --cached --quiet; then
+            echo "docs/PROGRAM-HASH.md unchanged; skipping commit."
+          else
+            git -C "$WT" commit -q -m "chore(ci): record program hash ${NEW_SHA} [skip ci]"
+            git -C "$WT" push origin "HEAD:refs/heads/${PUBLISH_BRANCH}"
+            echo "Published program hash ${NEW_SHA} to ${PUBLISH_BRANCH}."
+          fi
+          git worktree remove --force "$WT" 2>/dev/null || true
