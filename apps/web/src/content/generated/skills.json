@@ -268,5 +268,61 @@
   {
     "label": "Solana Explorer",
     "slug": "solana-explorer"
+  },
+  {
+    "label": "Codama Codegen",
+    "slug": "codama"
+  },
+  {
+    "label": "Client Code Generation",
+    "slug": "client-codegen"
+  },
+  {
+    "label": "API Design",
+    "slug": "api-design"
+  },
+  {
+    "label": "npm Publishing",
+    "slug": "npm-publishing"
+  },
+  {
+    "label": "Semantic Versioning",
+    "slug": "semver"
+  },
+  {
+    "label": "Continuous Integration",
+    "slug": "ci"
+  },
+  {
+    "label": "Deployment",
+    "slug": "deployment"
+  },
+  {
+    "label": "Wallet Standard",
+    "slug": "wallet-standard"
+  },
+  {
+    "label": "Signers",
+    "slug": "signers"
+  },
+  {
+    "label": "Transaction Fees",
+    "slug": "transaction-fees"
+  },
+  {
+    "label": "Compute Budget",
+    "slug": "compute-budget"
+  },
+  {
+    "label": "Priority Fees",
+    "slug": "priority-fees"
+  },
+  {
+    "label": "Transaction Simulation",
+    "slug": "simulation"
+  },
+  {
+    "label": "Confirmation & Commitment",
+    "slug": "confirmation"
   }
 ]

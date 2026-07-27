@@ -901,5 +901,121 @@
         ]
       }
     ]
+  },
+  {
+    "_id": "course-dapp-sdk-kit",
+    "title": "Full-Stack Solana: Publish the SDK, Ship the dApp",
+    "slug": "dapp-and-sdk-with-kit",
+    "description": "You arrive holding a deployed vault program — a devnet program id and an Anchor 1.x IDL from Course 3. This course turns that program into two things a bounty reviewer will pay for: a published npm client anyone can install, and a deployed dApp that consumes it. You generate a typed Kit client from your own IDL with Codama, wrap it in the ergonomic API a stranger would actually import, write a README and a semver policy, and publish to npm from CI with build provenance. Then you build the app — connect a Wallet Standard wallet with no wallet-adapter, choose the right signer for what each wallet advertises, and send your first real devnet deposit from a public URL using the package you just published. You finish by making it correct, cheap and honest: a simulated and tightly-sized compute budget, a network-priced priority fee, and a UI driven by real confirmation commitment and decoded program errors. TypeScript and the browser only — nothing is installed locally. Version stamp — kit 7.0.0, @codama/renderers-js 2.3.0, checked 2026-07-27.",
+    "difficulty": "intermediate",
+    "duration": 11,
+    "thumbnail": null,
+    "creator": "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF",
+    "tags": [
+      "account-model",
+      "api-design",
+      "ci",
+      "client-codegen",
+      "codama",
+      "compute-budget",
+      "confirmation",
+      "deployment",
+      "error-handling",
+      "idl",
+      "npm-publishing",
+      "pdas",
+      "priority-fees",
+      "react",
+      "semver",
+      "signers",
+      "simulation",
+      "solana-kit",
+      "technical-writing",
+      "transaction-fees",
+      "transactions",
+      "wallet-standard",
+      "web3-frontend"
+    ],
+    "xpReward": 850,
+    "trackId": 1,
+    "trackLevel": 4,
+    "modules": [
+      {
+        "key": "dsk-package",
+        "title": "Your Program, as a Package Someone Can Install",
+        "description": "Turn your Course 3 IDL into an installable client. Generate a Kit-compatible TypeScript client with Codama, wrap the generated output in an ergonomic API, assemble a package.json and README with a written semver policy, and publish to npm from CI with build provenance. You end holding a real, versioned package a stranger can install.",
+        "lessons": [
+          {
+            "_id": "lesson-dsk-idl-to-typed-client",
+            "title": "From IDL to a Typed Client",
+            "slug": "idl-to-typed-client"
+          },
+          {
+            "_id": "lesson-dsk-wrap-the-generated-client",
+            "title": "Wrap It: the API You'd Actually Want to Import",
+            "slug": "wrap-the-generated-client"
+          },
+          {
+            "_id": "lesson-dsk-package-surface-and-readme",
+            "title": "Exports, Types, README, Semver",
+            "slug": "package-surface-and-readme"
+          },
+          {
+            "_id": "lesson-dsk-publish-the-package",
+            "title": "Publish It",
+            "slug": "publish-the-package"
+          }
+        ]
+      },
+      {
+        "key": "dsk-app",
+        "title": "A Real Wallet, on a Real URL",
+        "description": "Build the app around the package you published. Discover and connect a Wallet Standard wallet with no wallet-adapter, choose the correct signer from the feature a wallet advertises, and send one real devnet deposit to your own vault from a deployed public URL — installing your client from the registry, not a local path.",
+        "lessons": [
+          {
+            "_id": "lesson-dsk-connect-with-wallet-standard",
+            "title": "Connect a Wallet Without wallet-adapter",
+            "slug": "connect-with-wallet-standard"
+          },
+          {
+            "_id": "lesson-dsk-signers-chains-and-the-legacy-seam",
+            "title": "Which Signer, and Why",
+            "slug": "signers-chains-and-the-legacy-seam"
+          },
+          {
+            "_id": "lesson-dsk-first-signed-deposit",
+            "title": "Your First Deposit, From Your Own App",
+            "slug": "first-signed-deposit"
+          }
+        ]
+      },
+      {
+        "key": "dsk-correct-cheap-honest",
+        "title": "Make It Correct, Cheap, and Honest",
+        "description": "Finish the vault app. Simulate the transaction and size its compute budget so you stop overpaying the default, price the priority fee from fees the network actually observed, and drive the UI from real confirmation commitment and decoded program errors — then name every layer of what you shipped.",
+        "lessons": [
+          {
+            "_id": "lesson-dsk-simulate-before-you-send",
+            "title": "Simulate, Then Size the Transaction",
+            "slug": "simulate-before-you-send"
+          },
+          {
+            "_id": "lesson-dsk-price-the-priority-fee",
+            "title": "Price It From the Network, Not From a Blog Post",
+            "slug": "price-the-priority-fee"
+          },
+          {
+            "_id": "lesson-dsk-states-errors-and-reads",
+            "title": "Pending, Confirmed, Failed — and What the Chain Actually Says",
+            "slug": "states-errors-and-reads"
+          },
+          {
+            "_id": "lesson-dsk-what-you-shipped",
+            "title": "What You Shipped",
+            "slug": "what-you-shipped"
+          }
+        ]
+      }
+    ]
   }
 ]

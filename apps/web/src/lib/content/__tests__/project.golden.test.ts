@@ -72,6 +72,13 @@ vi.mock("server-only", () => ({}));
 //    from array position; re-landed only after #751 made every on-chain path
 //    slot-aware. courses/lessons/quests-raw-derived/paths/course-summaries
 //    regenerated through the real projectors.
+//  - launch-content wave 5 (bump to courses-academy @6d352db): C4
+//    `dapp-and-sdk-with-kit` lands (courses-academy #18: +1 course, +11 dense
+//    lessons at slots 0-10, trackLevel 4 — completing the track-1 ladder 1..5;
+//    staged, not on-chain, hidden until owner course-creation). courses.json,
+//    lessons.json and quests-raw's challengeLessonIds/moduleLessonMap
+//    regenerated from the bundle through the real projectors (existing doc
+//    order preserved, raw quest docs untouched).
 const deps = { lessonsById };
 
 function bundleCourse(id: string): CourseDoc {

@@ -45,6 +45,24 @@
     },
     "version": 1
   },
+  "course-dapp-sdk-kit": {
+    "next": 11,
+    "retired": [],
+    "slots": {
+      "lesson-dsk-connect-with-wallet-standard": 4,
+      "lesson-dsk-first-signed-deposit": 6,
+      "lesson-dsk-idl-to-typed-client": 0,
+      "lesson-dsk-package-surface-and-readme": 2,
+      "lesson-dsk-price-the-priority-fee": 8,
+      "lesson-dsk-publish-the-package": 3,
+      "lesson-dsk-signers-chains-and-the-legacy-seam": 5,
+      "lesson-dsk-simulate-before-you-send": 7,
+      "lesson-dsk-states-errors-and-reads": 9,
+      "lesson-dsk-what-you-shipped": 10,
+      "lesson-dsk-wrap-the-generated-client": 1
+    },
+    "version": 1
+  },
   "course-defi-on-solana": {
     "next": 12,
     "retired": [],
