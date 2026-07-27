@@ -13,25 +13,36 @@ on:
     # a stale verdict can never post.
     types: [opened, ready_for_review, reopened, synchronize, labeled]
 
-# One review per PR at a time; a newer head cancels the older review in flight (the
-# mechanical core of the #710 fix — the pre-fix head's review is superseded, never
-# posted as if current). Keyed on PR number so PRs don't cancel each other.
-concurrency:
-  group: claude-code-review-pr-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
-
 jobs:
   claude-review:
     # opened/ready/reopened review any PR (unchanged). synchronize + labeled fire for
     # every PR but are admitted here only for needs-gate, so a fresh-head review is
     # guaranteed both when the PR is queued (label added) and on each subsequent push,
     # without re-reviewing every push of every PR.
+    #
+    # No draft-PR guard is intentional: a needs-gate draft's pushes still review, which
+    # is what we want — a PR is queued for the gate precisely to be reviewed at head.
     if: >-
       github.event.action == 'opened' ||
       github.event.action == 'ready_for_review' ||
       github.event.action == 'reopened' ||
       (github.event.action == 'synchronize' && contains(github.event.pull_request.labels.*.name, 'needs-gate')) ||
       (github.event.action == 'labeled' && github.event.label.name == 'needs-gate')
+
+    # One review per PR at a time; a newer head cancels the older review in flight (the
+    # mechanical core of the #710 fix — the pre-fix head's review is superseded, never
+    # posted as if current). Keyed on PR number so PRs don't cancel each other.
+    #
+    # MUST stay job-level, NOT workflow-level. A skipped job (the `if` above is false)
+    # never enters the concurrency group, so it can't cancel anything. Workflow-level
+    # concurrency is claimed the moment the run is created, BEFORE the `if` is
+    # evaluated — so an ordinary (non-needs-gate) PR that gets a quick push after open
+    # would create a synchronize run that cancels the in-flight open review and then
+    # skips its own job, silently killing the only review. Keeping this at job level is
+    # what confines cancellation to runs that will actually post a replacement review.
+    concurrency:
+      group: claude-code-review-pr-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
 
     runs-on: ubuntu-latest
     permissions:
