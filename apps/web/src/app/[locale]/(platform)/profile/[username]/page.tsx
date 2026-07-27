@@ -4,11 +4,12 @@ import { fetchPublicProfile } from "@/lib/profile/profile-data";
 import { ProfileBody } from "@/components/gamification/profile-body";
 import { ProfileBackButton } from "./profile-back-button";
 
-export default async function PublicProfilePage({
-  params,
-}: {
-  params: { username: string };
-}) {
+export default async function PublicProfilePage(
+  props: {
+    params: Promise<{ username: string }>;
+  }
+) {
+  const params = await props.params;
   const username = decodeURIComponent(params.username);
   const supabase = await createClient();
   const {

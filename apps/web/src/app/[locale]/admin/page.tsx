@@ -12,11 +12,17 @@ import { isValidAdminSession } from "@/lib/admin/auth";
  * `/admin/*` sub-routes back to `/admin`, so an unconditional redirect would
  * loop (`/admin` → `/admin/courses` → middleware → `/admin` → …).
  */
-export default async function AdminPage({
-  params: { locale },
-}: {
-  params: { locale: string };
-}) {
+export default async function AdminPage(
+  props: {
+    params: Promise<{ locale: string }>;
+  }
+) {
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
   const cookieStore = await cookies();
   const session = cookieStore.get("admin_session");
 

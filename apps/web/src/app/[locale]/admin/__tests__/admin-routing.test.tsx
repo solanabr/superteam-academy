@@ -40,12 +40,12 @@ beforeEach(() => {
 
 describe("/admin default landing", () => {
   it("sends an authenticated admin to the Courses screen", async () => {
-    await AdminPage({ params: { locale: "en" } });
+    await AdminPage({ params: Promise.resolve({ locale: "en" }) });
     expect(redirectMock).toHaveBeenCalledWith("/en/admin/courses");
   });
 
   it("keeps the locale prefix on the landing redirect", async () => {
-    await AdminPage({ params: { locale: "pt-BR" } });
+    await AdminPage({ params: Promise.resolve({ locale: "pt-BR" }) });
     expect(redirectMock).toHaveBeenCalledWith("/pt-BR/admin/courses");
   });
 
@@ -54,7 +54,7 @@ describe("/admin default landing", () => {
     cookieGetMock.mockReturnValue(undefined);
 
     render(
-      (await AdminPage({ params: { locale: "en" } })) as React.ReactElement
+      (await AdminPage({ params: Promise.resolve({ locale: "en" }) })) as React.ReactElement
     );
 
     expect(screen.getByTestId("admin-login-form")).toBeInTheDocument();
@@ -63,13 +63,13 @@ describe("/admin default landing", () => {
 });
 
 describe("retired admin routes", () => {
-  it("redirects /admin/publish to /admin/courses", () => {
-    AdminPublishRedirect({ params: { locale: "en" } });
+  it("redirects /admin/publish to /admin/courses", async () => {
+    await AdminPublishRedirect({ params: Promise.resolve({ locale: "en" }) });
     expect(redirectMock).toHaveBeenCalledWith("/en/admin/courses");
   });
 
-  it("redirects /admin/deploy to /admin/courses", () => {
-    AdminDeployRedirect({ params: { locale: "es" } });
+  it("redirects /admin/deploy to /admin/courses", async () => {
+    await AdminDeployRedirect({ params: Promise.resolve({ locale: "es" }) });
     expect(redirectMock).toHaveBeenCalledWith("/es/admin/courses");
   });
 });
