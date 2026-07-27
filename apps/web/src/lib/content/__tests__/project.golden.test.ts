@@ -65,6 +65,13 @@ vi.mock("server-only", () => ({}));
 //    quiz explanations (#15). courses.json, lessons.json and quests-raw.json's
 //    challengeLessonIds/moduleLessonMap regenerated from the bundle through
 //    the real projectors (order preserved, raw quest docs untouched).
+//  - launch-content wave 4 RE-LAND (bump to courses-academy @7a49747): C3
+//    transform of the LIVE flagship course (16 -> 15 lessons; retired slots
+//    0/2/11/14 burned, new slots 16-18; SPARSE slot map). First attempt #740
+//    was reverted (#744) because the completion path derived bitmap indices
+//    from array position; re-landed only after #751 made every on-chain path
+//    slot-aware. courses/lessons/quests-raw-derived/paths/course-summaries
+//    regenerated through the real projectors.
 const deps = { lessonsById };
 
 function bundleCourse(id: string): CourseDoc {
