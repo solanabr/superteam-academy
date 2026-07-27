@@ -60,16 +60,18 @@ describe("slot lock ↔ array-index equivalence (current bundle) — #741", () =
     expect(checkedLessons).toBeGreaterThan(0);
   });
 
-  // LANDMINE BY DESIGN. This documents that the CURRENT committed bundle is
-  // entirely dense, which is exactly what makes #741 byte-identical today. When
-  // a restructure bump (e.g. #740) lands and a course becomes sparse, RELAX THIS
-  // ONE TEST — the dense⟹equivalence test above and the sparse-fixture tests in
-  // slot-aware.test.ts / lesson-slot.test.ts remain the real guarantees, and the
-  // slot-aware route is precisely what makes the now-sparse course correct.
-  it("the current bundle is entirely dense (slot-space == array-space today)", () => {
+  // Relaxed per this test's own design note when the C3 restructure bump
+  // re-landed (#740 → reverted #744 → prerequisite #751 merged → re-land):
+  // `course-building-first-program` is now legitimately SPARSE (retired slots
+  // 0/2/11/14, new slots 16-18). The dense⟹equivalence test above and the
+  // sparse-fixture tests in slot-aware.test.ts / lesson-slot.test.ts are the
+  // real guarantees; this test now pins the EXACT expected sparse set so any
+  // FUTURE course going sparse is still a deliberate, reviewed event.
+  it("only the C3-restructured course is sparse; every other course stays dense", () => {
     const sparse = [...slotsByCourseId.entries()]
       .filter(([, lock]) => !isDense(lock))
-      .map(([id]) => id);
-    expect(sparse).toEqual([]);
+      .map(([id]) => id)
+      .sort();
+    expect(sparse).toEqual(["course-building-first-program"]);
   });
 });
