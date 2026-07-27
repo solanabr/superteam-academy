@@ -116,6 +116,7 @@ describe("AiPartnerPane — post-pass review button (LX-C9)", () => {
 
 describe("AiPartnerPane — think-first lock (#770)", () => {
   const lockTitle = messages.aiPartner.lock.title;
+  const lockTooltip = messages.aiPartner.lock.tooltip;
   const hintLabel = messages.aiPartner.actions.hint;
   const THREE_MIN = 3 * 60 * 1000;
 
@@ -123,23 +124,38 @@ describe("AiPartnerPane — think-first lock (#770)", () => {
     vi.useRealTimers();
   });
 
-  it("shows the lock banner with a live countdown and disables the actions while locked", () => {
-    // A fresh 3-minute lock renders a m:ss countdown in the localized body
-    // (~2:59/3:00 depending on the sub-ms gap to the pane's own Date.now()).
+  it("shows the lock countdown chip and disables the actions while locked", () => {
+    // Post-#791 the locked state is announced by a header chip (role="status")
+    // rather than a body banner: it shows a tabular m:ss countdown (~2:59/3:00
+    // depending on the sub-ms gap to the pane's own Date.now()) with the
+    // think-first messaging in its aria-label/title. Assert the chip, not the
+    // retired `lock.body` text.
     renderPane({ unlockAt: Date.now() + THREE_MIN });
+
+    const chip = screen.getByRole("status");
+    expect(chip).toHaveTextContent(/^\d:\d\d$/);
+    expect(chip).toHaveAttribute("title", lockTooltip);
+    const ariaLabel = chip.getAttribute("aria-label") ?? "";
+    expect(ariaLabel).toMatch(/^\d:\d\d — /);
+    expect(ariaLabel).toContain(lockTooltip);
+
+    // Subtitle switches to the think-first prompt while locked.
     expect(screen.getByText(lockTitle)).toBeInTheDocument();
-    expect(screen.getByText(/unlocks in \d:\d\d/)).toBeInTheDocument();
+
+    // Actions stay hard-disabled while locked (must NOT weaken).
     expect(screen.getByRole("button", { name: hintLabel })).toBeDisabled();
   });
 
   it("does not lock when unlockAt is null (completed lesson / no lock)", () => {
     renderPane({ unlockAt: null });
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
     expect(screen.queryByText(lockTitle)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: hintLabel })).toBeEnabled();
   });
 
   it("does not lock when unlockAt is already in the past", () => {
     renderPane({ unlockAt: Date.now() - 1000 });
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
     expect(screen.queryByText(lockTitle)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: hintLabel })).toBeEnabled();
   });
@@ -148,14 +164,16 @@ describe("AiPartnerPane — think-first lock (#770)", () => {
     vi.useFakeTimers();
     const start = Date.now();
     renderPane({ unlockAt: start + 2000 });
-    expect(screen.getByText(lockTitle)).toBeInTheDocument();
+    // Chip present + actions disabled while locked.
+    expect(screen.getByRole("status")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: hintLabel })).toBeDisabled();
 
     act(() => {
       vi.advanceTimersByTime(2000);
     });
 
-    expect(screen.queryByText(lockTitle)).not.toBeInTheDocument();
+    // Chip gone + actions re-enabled once the window elapses.
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: hintLabel })).toBeEnabled();
   });
 });
