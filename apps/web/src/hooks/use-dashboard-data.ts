@@ -192,7 +192,8 @@ export function useDashboardData(
         const questPeriod = new Date().toISOString().split("T")[0] as string;
         for (const reward of pickQuestRewardToasts(
           (questsResult.quests ?? []) as DailyQuest[],
-          questPeriod
+          questPeriod,
+          authUserId
         )) {
           dispatchXpGain(reward.xpReward);
           dispatchToast(
@@ -200,7 +201,10 @@ export function useDashboardData(
             "success"
           );
         }
-        for (const amount of pickSurpriseBonusToasts(transactions ?? [])) {
+        for (const amount of pickSurpriseBonusToasts(
+          transactions ?? [],
+          authUserId
+        )) {
           dispatchXpGain(amount);
           celebrate("surprise-bonus");
           dispatchSurpriseBonus(amount);

@@ -125,9 +125,10 @@ afterEach(() => {
 
 describe("useDashboardData — poll-detected surprise bonus", () => {
   it("dispatches an xp-gain for a surprise bonus the poll newly detects", async () => {
-    // Seed the tab: the first observation silently marks existing history seen,
-    // so a bonus that appears on a LATER poll is the one that toasts (#790).
-    pickSurpriseBonusToasts([]);
+    // Seed the tab for this user: the first observation silently marks existing
+    // history seen, so a bonus that appears on a LATER poll is the one that
+    // toasts (#790). Keyed by the same user id the hook polls under (#796).
+    pickSurpriseBonusToasts([], "user-1");
 
     const AMOUNT = 25;
     h.transactions = [
@@ -151,5 +152,43 @@ describe("useDashboardData — poll-detected surprise bonus", () => {
 
     // #796 regression: the poll path must also move the header XP counter.
     expect(h.dispatchXpGain).toHaveBeenCalledWith(AMOUNT);
+  });
+
+  it("re-seeds silently for a new user — never storms user B with their own history", async () => {
+    // #796 round-3: sign-out hard-navigates without clearing sessionStorage, so
+    // a same-tab account switch must NOT let user B inherit user A's init flag —
+    // otherwise B's ENTIRE surprise-bonus history toasts at once on first poll.
+
+    // User A initialised earlier in this tab (their init flag is now set).
+    pickSurpriseBonusToasts([], "user-A");
+
+    // User B signs in on the same tab with pre-existing surprise-bonus history.
+    h.transactions = [
+      {
+        amount: 20,
+        reason: "surprise_bonus:lesson-one",
+        created_at: "2026-07-20T00:00:00.000Z",
+        tx_signature: "sigB1",
+        idempotency_key: "user-B-bonus-1",
+      },
+      {
+        amount: 35,
+        reason: "surprise_bonus:lesson-two",
+        created_at: "2026-07-21T00:00:00.000Z",
+        tx_signature: "sigB2",
+        idempotency_key: "user-B-bonus-2",
+      },
+    ];
+
+    const { result } = renderHook(() => useDashboardData("user-B", false));
+
+    // Wait for the poll to finish (isLoading flips false once the surprise-bonus
+    // loop has run) so the "nothing toasted" assertions aren't racing the fetch.
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    // B's history is theirs from before this session — seed it silently, toast
+    // nothing, move no counter.
+    expect(h.dispatchSurpriseBonus).not.toHaveBeenCalled();
+    expect(h.dispatchXpGain).not.toHaveBeenCalled();
   });
 });

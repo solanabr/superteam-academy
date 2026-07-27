@@ -28,9 +28,17 @@ import { isSurpriseBonusReason } from "@/lib/gamification/surprise-bonus";
 
 const firedQuestKeys = new Set<string>();
 
-/** True the first time (questId, period) is claimed this session; marks it seen. */
-export function claimQuestReward(questId: string, period: string): boolean {
-  const key = `${questId}:${period}`;
+/**
+ * True the first time (questId, period) is claimed this session; marks it seen.
+ * Namespaced by the authenticated user id so a same-tab account switch never
+ * lets a new user inherit the previous user's fired keys.
+ */
+export function claimQuestReward(
+  questId: string,
+  period: string,
+  userId?: string
+): boolean {
+  const key = `${ns(userId)}:${questId}:${period}`;
   if (firedQuestKeys.has(key)) return false;
   firedQuestKeys.add(key);
   return true;
@@ -49,11 +57,12 @@ export interface QuestRewardToast {
  */
 export function pickQuestRewardToasts(
   quests: readonly DailyQuest[],
-  period: string
+  period: string,
+  userId?: string
 ): QuestRewardToast[] {
   const out: QuestRewardToast[] = [];
   for (const q of quests) {
-    if (q.justAwarded && claimQuestReward(q.id, period)) {
+    if (q.justAwarded && claimQuestReward(q.id, period, userId)) {
       out.push({ questId: q.id, name: q.name, xpReward: q.xpReward });
     }
   }
@@ -65,9 +74,36 @@ export function pickQuestRewardToasts(
 const SURPRISE_SEEN_KEY = "stbr:surprise-bonus-seen";
 const SURPRISE_INIT_KEY = "stbr:surprise-bonus-init";
 
-// In-memory fallback for SSR / non-DOM test env (sessionStorage absent).
-const memSeen = new Set<string>();
-let memInit = false;
+// The seen-set and init flag are keyed by the authenticated user id. Sign-out
+// hard-navigates without clearing sessionStorage, so a same-tab account switch
+// would otherwise let the new user inherit the previous user's init flag and
+// storm them with their OWN entire surprise-bonus history. A per-user namespace
+// means an unseen user id has no init flag → it seeds silently, exactly like a
+// fresh tab. An absent id (SSR / anonymous) collapses to a single "" namespace,
+// preserving the original single-user behaviour byte-for-byte.
+function ns(userId?: string): string {
+  return userId ?? "";
+}
+function seenStorageKey(userId?: string): string {
+  return `${SURPRISE_SEEN_KEY}:${ns(userId)}`;
+}
+function initStorageKey(userId?: string): string {
+  return `${SURPRISE_INIT_KEY}:${ns(userId)}`;
+}
+
+// In-memory fallback for SSR / non-DOM test env (sessionStorage absent), also
+// namespaced per user id.
+const memSeen = new Map<string, Set<string>>();
+const memInit = new Set<string>();
+
+function memSeenSet(userId?: string): Set<string> {
+  let set = memSeen.get(ns(userId));
+  if (!set) {
+    set = new Set<string>();
+    memSeen.set(ns(userId), set);
+  }
+  return set;
+}
 
 function store(): Storage | null {
   try {
@@ -79,55 +115,59 @@ function store(): Storage | null {
   }
 }
 
-function readSeen(): Set<string> {
+function readSeen(userId?: string): Set<string> {
   const s = store();
-  if (!s) return memSeen;
+  if (!s) return memSeenSet(userId);
   try {
-    const raw = s.getItem(SURPRISE_SEEN_KEY);
+    const raw = s.getItem(seenStorageKey(userId));
     return new Set(raw ? (JSON.parse(raw) as string[]) : []);
   } catch {
-    return memSeen;
+    return memSeenSet(userId);
   }
 }
 
-function writeSeen(seen: Set<string>): void {
+function writeSeen(seen: Set<string>, userId?: string): void {
   const s = store();
   if (!s) return;
   try {
     // Cap so the store can't grow without bound over a long session.
-    s.setItem(SURPRISE_SEEN_KEY, JSON.stringify([...seen].slice(-200)));
+    s.setItem(seenStorageKey(userId), JSON.stringify([...seen].slice(-200)));
   } catch {
     // Storage full / disabled — the in-memory set still dedupes this session.
   }
 }
 
-function hasInitialized(): boolean {
+function hasInitialized(userId?: string): boolean {
   const s = store();
-  if (!s) return memInit;
-  return s.getItem(SURPRISE_INIT_KEY) === "1";
+  if (!s) return memInit.has(ns(userId));
+  return s.getItem(initStorageKey(userId)) === "1";
 }
 
-function markInitialized(seen: Set<string>): void {
+function markInitialized(seen: Set<string>, userId?: string): void {
   const s = store();
   if (!s) {
-    memInit = true;
+    memInit.add(ns(userId));
     return;
   }
-  writeSeen(seen);
+  writeSeen(seen, userId);
   try {
-    s.setItem(SURPRISE_INIT_KEY, "1");
+    s.setItem(initStorageKey(userId), "1");
   } catch {
-    memInit = true;
+    memInit.add(ns(userId));
   }
 }
 
-/** True the first time this surprise-bonus award key is claimed; marks it seen. */
-export function claimSurpriseBonus(key: string): boolean {
+/**
+ * True the first time this surprise-bonus award key is claimed; marks it seen.
+ * Namespaced by user id so the seen-set is never shared across a same-tab
+ * account switch.
+ */
+export function claimSurpriseBonus(key: string, userId?: string): boolean {
   if (!key) return false;
-  const seen = readSeen();
+  const seen = readSeen(userId);
   if (seen.has(key)) return false;
   seen.add(key);
-  writeSeen(seen);
+  writeSeen(seen, userId);
   return true;
 }
 
@@ -158,7 +198,8 @@ function surpriseKey(r: XpTransactionRow): string {
  * Realtime path via claimSurpriseBonus.
  */
 export function pickSurpriseBonusToasts(
-  rows: readonly XpTransactionRow[]
+  rows: readonly XpTransactionRow[],
+  userId?: string
 ): number[] {
   const bonuses = rows.filter(
     (r) =>
@@ -168,16 +209,17 @@ export function pickSurpriseBonusToasts(
       r.amount > 0
   );
 
-  if (!hasInitialized()) {
-    const seen = readSeen();
+  if (!hasInitialized(userId)) {
+    const seen = readSeen(userId);
     for (const r of bonuses) seen.add(surpriseKey(r));
-    markInitialized(seen);
+    markInitialized(seen, userId);
     return [];
   }
 
   const out: number[] = [];
   for (const r of bonuses) {
-    if (claimSurpriseBonus(surpriseKey(r))) out.push(r.amount as number);
+    if (claimSurpriseBonus(surpriseKey(r), userId))
+      out.push(r.amount as number);
   }
   return out;
 }
@@ -186,12 +228,22 @@ export function pickSurpriseBonusToasts(
 export function __resetServerXpFeedbackForTests(): void {
   firedQuestKeys.clear();
   memSeen.clear();
-  memInit = false;
+  memInit.clear();
   const s = store();
   if (s) {
     try {
-      s.removeItem(SURPRISE_SEEN_KEY);
-      s.removeItem(SURPRISE_INIT_KEY);
+      // Keys are per-user namespaced, so remove every surprise-bonus entry.
+      const doomed: string[] = [];
+      for (let i = 0; i < s.length; i++) {
+        const k = s.key(i);
+        if (
+          k &&
+          (k.startsWith(SURPRISE_SEEN_KEY) || k.startsWith(SURPRISE_INIT_KEY))
+        ) {
+          doomed.push(k);
+        }
+      }
+      for (const k of doomed) s.removeItem(k);
     } catch {
       // ignore
     }

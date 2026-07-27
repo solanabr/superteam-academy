@@ -139,7 +139,8 @@ export function useGamificationEvents(userId: string | undefined) {
             // aligned or a bonus would toast twice (once per path).
             if (
               claimSurpriseBonus(
-                row.idempotency_key ?? row.id ?? row.tx_signature ?? ""
+                row.idempotency_key ?? row.id ?? row.tx_signature ?? "",
+                userId
               )
             ) {
               celebrate("surprise-bonus");
