@@ -122,12 +122,23 @@ describe("#607 stranded-instance cleanup — user_xp is UPDATE, never DELETE", (
     expect(code).not.toMatch(/TRUNCATE\s+(TABLE\s+)?(public\.)?user_xp/i);
   });
 
-  it("scopes the UPDATE so it can only touch rows with state (idempotent)", () => {
-    // WHERE must gate on the state columns so it hits exactly the 2 active rows
-    // now and 0 rows on re-apply — never the 73 pristine zeros.
-    expect(migration).toMatch(
-      /WHERE\s+total_xp\s*>\s*0[\s\S]*last_activity_date\s+IS\s+NOT\s+NULL/
+  it("ERA-scopes the UPDATE so it can never zero a post-move learner", () => {
+    // Round-3 gate catch: the WHERE must gate on the state columns AND carry the
+    // era clause. The state chain alone matched EVERY active learner — including
+    // valid post-move ones (e.g. the #725 test learner's 1070 XP). The era
+    // clause (last_activity_date < 2026-07-21) confines it to stranded rows.
+    expect(code).toMatch(/last_activity_date\s+IS\s+NOT\s+NULL/); // state chain
+    expect(code).toMatch(
+      /UPDATE public\.user_xp[\s\S]*?AND last_activity_date < '2026-07-21'/
     );
+  });
+
+  it("verifies no state-bearing row has a NULL activity date (era clause is NULL-blind)", () => {
+    // award_xp always stamps last_activity_date, so total_xp>0 with a NULL date
+    // is impossible by construction — but the era clause cannot see a NULL, so
+    // the migration verifies the claim and aborts if ever violated (else a
+    // silent survivor of an irreversible reset). Expect 0.
+    expect(migration).toContain("uxp_null_state");
   });
 
   it("preserves streak_freezes (not in the SET list)", () => {
@@ -138,6 +149,16 @@ describe("#607 stranded-instance cleanup — user_xp is UPDATE, never DELETE", (
 
   it("asserts user_xp row count is unchanged after the reset", () => {
     expect(migration).toMatch(/user_xp must be UPDATED to zero, NEVER deleted/);
+  });
+
+  it("ERA-scopes the post-reset assert (live learners may keep state)", () => {
+    // Round-3 gate catch: the post-assert must NOT demand universal zeroing (a
+    // valid post-move learner would abort the txn). It asserts only that no
+    // STRANDED-ERA row (last_activity_date < 2026-07-21) still carries state.
+    expect(migration).toMatch(/stranded-era row\(s\) still carry state/);
+    expect(migration).not.toMatch(
+      /user_xp still has % row\(s\) with non-zero state/
+    );
   });
 });
 
@@ -165,16 +186,28 @@ describe("#607 stranded-instance cleanup — never-touch + excluded tables", () 
     expect(code).not.toMatch(/TRUNCATE\s+(TABLE\s+)?(public\.)?certificates/i);
   });
 
-  it("asserts profiles, auth.users and certificates are unchanged at COMMIT", () => {
+  it("never writes deployed_programs (holds the #725 proof row) and asserts it unchanged", () => {
+    // Gate ask: deployed_programs now has its first real row; assert untouched.
+    expect(code).not.toMatch(/DELETE\s+FROM\s+(public\.)?deployed_programs/i);
+    expect(code).not.toMatch(/UPDATE\s+(public\.)?deployed_programs\s+SET/i);
+    expect(migration).toMatch(/must never touch deployed_programs/);
+  });
+
+  it("asserts profiles, auth.users, certificates and deployed_programs unchanged at COMMIT", () => {
     expect(migration).toMatch(/this migration must never touch profiles/);
     expect(migration).toMatch(/must never touch auth users/);
     expect(migration).toMatch(/certificates is EXCLUDED from this cleanup/);
+    expect(migration).toMatch(/must never touch deployed_programs/);
   });
 
-  it("pins the posted dry-run baseline so it fails on drift", () => {
-    expect(migration).toContain("b.profiles <> 75");
-    expect(migration).toContain("b.user_xp <> 75");
-    expect(migration).toContain("b.certificates <> 4");
+  it("drops the absolute live-count pins (drift-immune before==after only)", () => {
+    // Round-3 gate catch: absolute pins on LIVE counts go stale the moment
+    // anyone signs up (profiles/user_xp were already 76/76). They reintroduce
+    // the race era-scoping removes. Only the frozen ERA counts deserve pins; the
+    // never-touch tables are guarded by before==after (see the asserts above).
+    expect(migration).not.toContain("b.profiles <> 75");
+    expect(migration).not.toContain("b.user_xp <> 75");
+    expect(migration).not.toContain("b.certificates <> 4");
   });
 });
 
