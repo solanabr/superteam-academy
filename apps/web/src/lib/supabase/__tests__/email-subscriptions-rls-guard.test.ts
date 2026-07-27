@@ -24,7 +24,7 @@ const repoRoot = findRepoRoot();
 const migration = readFileSync(
   resolve(
     repoRoot,
-    "supabase/migrations/20260727150000_email_subscriptions.sql"
+    "supabase/migrations/20260728120000_email_subscriptions.sql"
   ),
   "utf8"
 );
@@ -108,6 +108,16 @@ for (const [label, sql] of [
       // Deterministic order (#779): chunk boundaries + the membership-hash
       // idempotency key depend on a stable recipient order.
       expect(body).toContain("ORDER BY es.user_id");
+    });
+
+    it("excludes synthetic wallet-auth placeholder addresses (never emailable)", () => {
+      const start = sql.indexOf(
+        "CREATE OR REPLACE FUNCTION list_marketing_recipients("
+      );
+      const body = sql.slice(start, sql.indexOf("$$;", start));
+      // `<pubkey>@wallet.superteam-lms.local` (apps/web/src/app/api/auth/wallet/
+      // route.ts) is non-null/non-empty but undeliverable — it must be filtered.
+      expect(body).toContain("u.email NOT LIKE '%@wallet.superteam-lms.local'");
     });
   });
 }

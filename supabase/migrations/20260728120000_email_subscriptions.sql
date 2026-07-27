@@ -122,6 +122,13 @@ AS $$
   WHERE es.opt_in = true
     AND u.email IS NOT NULL
     AND u.email <> ''
+    -- Exclude synthetic wallet-auth placeholders. Wallet/SIWS sign-ins get a
+    -- deterministic `<pubkey>@wallet.superteam-lms.local` address (see
+    -- apps/web/src/app/api/auth/wallet/route.ts) — it satisfies the NOT NULL /
+    -- non-empty checks above but is NOT a real inbox, so it must never receive
+    -- mail. The domain suffix is a fixed lowercase literal, so a plain LIKE is
+    -- sufficient (the pubkey local-part case is irrelevant to the match).
+    AND u.email NOT LIKE '%@wallet.superteam-lms.local'
   -- DETERMINISTIC ORDER (#779 review): the campaign chunks this list by array
   -- position and derives each batch's idempotency key from the chunk's member
   -- ids. A stable ORDER BY makes chunk boundaries reproducible across a partial-

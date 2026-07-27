@@ -2884,7 +2884,7 @@ GRANT EXECUTE ON FUNCTION public.get_cohort_leaderboard(UUID) TO service_role;
 
 -- ============================================================================
 -- email_subscriptions (#769) — marketing-email consent model.
--- Mirror of supabase/migrations/20260727150000_email_subscriptions.sql. See that
+-- Mirror of supabase/migrations/20260728120000_email_subscriptions.sql. See that
 -- file's header for the full rationale. Opt-out by default; own-row read; writes
 -- via SECURITY DEFINER RPCs (self-service toggle, pipeline read, one-click
 -- unsubscribe).
@@ -2953,6 +2953,10 @@ AS $$
   WHERE es.opt_in = true
     AND u.email IS NOT NULL
     AND u.email <> ''
+    -- Exclude synthetic wallet-auth placeholders (`<pubkey>@wallet.superteam-lms.local`,
+    -- see apps/web/src/app/api/auth/wallet/route.ts): a real-looking but
+    -- undeliverable address that must never receive mail.
+    AND u.email NOT LIKE '%@wallet.superteam-lms.local'
   ORDER BY es.user_id;
 $$;
 
