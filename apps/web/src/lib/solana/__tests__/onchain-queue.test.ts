@@ -288,7 +288,11 @@ describe("retryPendingOnchainActions — xp credit-loss (#372)", () => {
     await retryPendingOnchainActions(USER_ID);
 
     expect(h.awardXp).toHaveBeenCalledWith(
-      expect.objectContaining({ p_idempotency_key: "lesson-4", p_amount: 40 })
+      expect.objectContaining({
+        p_idempotency_key: "lesson-4",
+        p_amount: 40,
+        p_source: "lesson", // #736 — the "xp" thread credits lesson XP
+      })
     );
   });
 });
@@ -379,7 +383,11 @@ describe("retryPendingOnchainActions — course_finalize credit-loss (#372)", ()
     const patch = patchFor("r-cf-ok");
     expect(typeof patch?.resolved_at).toBe("string");
     expect(h.awardXp).toHaveBeenCalledWith(
-      expect.objectContaining({ p_idempotency_key: "course-3", p_amount: 1500 })
+      expect.objectContaining({
+        p_idempotency_key: "course-3",
+        p_amount: 1500,
+        p_source: "course_completion", // #736
+      })
     );
   });
 });
@@ -601,7 +609,10 @@ describe("retryPendingOnchainActions — global freeze deferral (reset wave B2)"
 
     // quest_xp credited + resolved (DB-only, never frozen).
     expect(h.awardXp).toHaveBeenCalledWith(
-      expect.objectContaining({ p_idempotency_key: "quest-daily-1" })
+      expect.objectContaining({
+        p_idempotency_key: "quest-daily-1",
+        p_source: "quest", // #736 — Pass 1 credits daily-quest XP
+      })
     );
     expect(typeof patchFor("r-quest")?.resolved_at).toBe("string");
     // The on-chain achievement row is deferred.

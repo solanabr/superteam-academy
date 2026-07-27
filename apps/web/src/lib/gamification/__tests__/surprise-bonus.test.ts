@@ -118,6 +118,8 @@ describe("maybeAwardSurpriseBonus", () => {
       p_reason: `${SURPRISE_BONUS_REASON_PREFIX}lesson-pdas-1`,
       p_idempotency_key: "sig-abc:SurpriseBonus",
       p_tx_signature: "sig-abc",
+      // #736: source stated positively (a surprise bonus is a platform grant).
+      p_source: "platform",
     });
   });
 

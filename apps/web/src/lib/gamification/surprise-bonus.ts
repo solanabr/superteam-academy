@@ -105,6 +105,10 @@ export async function maybeAwardSurpriseBonus(
     p_reason: surpriseBonusReason(lessonId),
     p_idempotency_key: `${txSignature}:SurpriseBonus`,
     p_tx_signature: txSignature,
+    // #736: a surprise bonus is a platform grant, not learning XP — pin the
+    // source (its 'surprise_bonus:' reason already derived to 'platform', but
+    // state it positively so it can never drift).
+    p_source: "platform",
   });
 
   if (error) throw new Error(error.message);
