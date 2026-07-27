@@ -56,13 +56,22 @@ type ChangelogInsert = {
 };
 
 /**
- * Resolve a slot (bit index) to a lesson id + title snapshot from the committed
- * bundle. Inverts the course's `slots` map (lessonId → slot) once per call set.
- * Returns `{ slot, id: null, title: null }` when the slot is unknown to the
- * bundle (e.g. a slot retired before its lesson was tracked) so the entry still
- * records the slot number.
+ * Resolve a slot (bit index) to a lesson id + title snapshot. Inverts the
+ * course's CURRENT `slots` map (lessonId → slot) once per call set.
+ *
+ * `prior` (#757) is an override for slots whose lesson is no longer in the
+ * current bundle — i.e. REMOVED lessons, which are by definition absent from
+ * the current `slots`/`lessonsById` and would otherwise resolve to
+ * `{id:null,title:null}`. It is resolved from the prior content revision
+ * (see {@link file://./prior-content.ts}) and takes precedence when present.
+ * A slot with neither a prior entry nor a current-bundle hit still records the
+ * slot number (`{id:null,title:null}`) so the entry is never dropped.
  */
-function resolveSlots(courseId: string, slots: number[]): ChangelogLessonRef[] {
+function resolveSlots(
+  courseId: string,
+  slots: number[],
+  prior?: ReadonlyMap<number, { id: string; title: string | null }>
+): ChangelogLessonRef[] {
   const lock = slotsByCourseId.get(courseId);
   const slotToLessonId = new Map<number, string>();
   if (lock) {
@@ -71,6 +80,8 @@ function resolveSlots(courseId: string, slots: number[]): ChangelogLessonRef[] {
     }
   }
   return slots.map((slot) => {
+    const priorRef = prior?.get(slot);
+    if (priorRef) return { slot, id: priorRef.id, title: priorRef.title };
     const id = slotToLessonId.get(slot) ?? null;
     const rawTitle = id ? lessonsById.get(id)?.title : undefined;
     const title = typeof rawTitle === "string" ? rawTitle : null;
@@ -160,6 +171,13 @@ export async function recordCourseUpdate(params: {
   newVersion: number;
   /** The content bundle SHA pinned by this re-sync (for `content_updated`). */
   contentSha: string;
+  /**
+   * #757 — id/title for REMOVED slots, resolved from the prior content revision
+   * (the current bundle no longer has them). Keyed by slot. Absent/empty ⇒ the
+   * removed lessons record slot-only, exactly as before. Never applies to added
+   * lessons, which resolve from the current bundle.
+   */
+  priorRemoved?: ReadonlyMap<number, { id: string; title: string | null }>;
 }): Promise<void> {
   const rows: ChangelogInsert[] = [];
   const base = {
@@ -188,7 +206,11 @@ export async function recordCourseUpdate(params: {
     if (removedSlots.length > 0) {
       liveSetChanged = true;
       const detail: LessonsDetail = {
-        lessons: resolveSlots(params.courseId, removedSlots),
+        lessons: resolveSlots(
+          params.courseId,
+          removedSlots,
+          params.priorRemoved
+        ),
       };
       rows.push({
         ...base,

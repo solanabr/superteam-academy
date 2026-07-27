@@ -305,3 +305,99 @@ describe("#738 status + recreate recorders", () => {
     ).resolves.toBeUndefined();
   });
 });
+
+describe("#757 removed-lesson id/title from prior state", () => {
+  const baseUpdate = {
+    courseId: "course-x",
+    txSignature: "SIG_UPDATE",
+    oldXp: 10,
+    contentCommitted: true,
+    newVersion: 4,
+    contentSha: "abc123",
+  };
+
+  it("uses priorRemoved for removed slots (id + title), overriding the null bundle miss", async () => {
+    const priorRemoved = new Map([
+      [3, { id: "lesson-gone", title: "A Retired Lesson" }],
+    ]);
+    await recordCourseUpdate({
+      ...baseUpdate,
+      oldMask: mask(0, 1, 3),
+      newMask: mask(0, 1), // slot 3 removed; absent from the current bundle
+      priorRemoved,
+    });
+    const removed = lastRows?.find((r) => r.kind === "lessons_removed");
+    expect(removed?.detail).toEqual({
+      lessons: [{ slot: 3, id: "lesson-gone", title: "A Retired Lesson" }],
+    });
+  });
+
+  it("still records slot-only when priorRemoved lacks the slot (never fabricates)", async () => {
+    await recordCourseUpdate({
+      ...baseUpdate,
+      oldMask: mask(0, 1, 3),
+      newMask: mask(0, 1),
+      priorRemoved: new Map(), // resolver degraded / slot unresolved
+    });
+    const removed = lastRows?.find((r) => r.kind === "lessons_removed");
+    expect(removed?.detail).toEqual({
+      lessons: [{ slot: 3, id: null, title: null }],
+    });
+  });
+
+  it("reproduces the exact C3 prod case (tx 5T1jeJ68) — full removed entries, no nulls", async () => {
+    // Live-before: slots 0..15. Live-now: remove {0,2,11,14}, add {16,17,18}.
+    const priorRemoved = new Map([
+      [
+        0,
+        { id: "lesson-bfsp-from-code-to-chain", title: "From Code to Chain" },
+      ],
+      [
+        2,
+        {
+          id: "lesson-bfsp-anatomy-anchor-program",
+          title: "Anatomy of an Anchor Program",
+        },
+      ],
+      [11, { id: "lesson-bfsp-deploy-to-devnet", title: "Deploy to Devnet" }],
+      [
+        14,
+        { id: "lesson-bfsp-m4-interact", title: "Interact with Your Program" },
+      ],
+    ]);
+    await recordCourseUpdate({
+      ...baseUpdate,
+      oldMask: mask(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15),
+      newMask: mask(1, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 15, 16, 17, 18),
+      priorRemoved,
+    });
+    const removed = lastRows?.find((r) => r.kind === "lessons_removed");
+    const lessons = (
+      removed?.detail as { lessons: Array<Record<string, unknown>> }
+    ).lessons;
+    // The exact prod regression (all id:null/title:null) is gone.
+    expect(lessons.every((l) => l.id !== null && l.title !== null)).toBe(true);
+    expect(lessons).toEqual([
+      {
+        slot: 0,
+        id: "lesson-bfsp-from-code-to-chain",
+        title: "From Code to Chain",
+      },
+      {
+        slot: 2,
+        id: "lesson-bfsp-anatomy-anchor-program",
+        title: "Anatomy of an Anchor Program",
+      },
+      {
+        slot: 11,
+        id: "lesson-bfsp-deploy-to-devnet",
+        title: "Deploy to Devnet",
+      },
+      {
+        slot: 14,
+        id: "lesson-bfsp-m4-interact",
+        title: "Interact with Your Program",
+      },
+    ]);
+  });
+});
