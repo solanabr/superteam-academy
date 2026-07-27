@@ -15,7 +15,7 @@ type AdminClient = ReturnType<typeof createAdminClient>;
 // verified `deployed_programs` row exists for the capstone deploy lesson.
 //
 // "Verified" is load-bearing: `deployed_programs` has NO client INSERT/UPDATE
-// RLS policy (20260726120000_lockdown_deployed_programs_rls), and the only
+// RLS policy (20260726121000_lockdown_deployed_programs_rls), and the only
 // write path is `/api/deploy/save`, which first confirms on-chain that the
 // program is live, executable, and upgrade-authority-owned by the learner's
 // linked wallet (#620 / LX-E1). A row therefore means a real, attributable

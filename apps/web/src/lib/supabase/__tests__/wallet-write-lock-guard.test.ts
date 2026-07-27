@@ -109,21 +109,28 @@ for (const [label, sql] of [
   });
 }
 
-describe("#696 wallet-write lock — coexistence", () => {
-  it("schema.sql keeps the role-write lock alongside the wallet lock", () => {
-    // The wallet guard is additive: it must not displace the role guard. Both
-    // BEFORE-write triggers run on profiles and are column-specific.
-    expect(schema).toContain(
+describe("#696 wallet-write lock — mirror matches prod (#699)", () => {
+  it("schema.sql mirrors the DEPLOYED wallet lock and NOT the retired role lock", () => {
+    // profiles.role was retired by SP1 (migration 20260710120000): prod has no
+    // role column, function, or trigger. The wallet-write lock is the surviving
+    // escalation guard and must stay mirrored; the role machinery must be absent
+    // so the snapshot matches prod. (#699 — this case previously pinned the
+    // retired role trigger, a green assertion guarding nothing.)
+    expect(schema).toContain(`CREATE OR REPLACE FUNCTION ${FN}`);
+    expect(schema).toContain(`CREATE TRIGGER ${TRIGGER}`);
+    // DDL must be gone (explanatory prose naming it is fine).
+    expect(schema).not.toContain(
       "CREATE OR REPLACE FUNCTION public.enforce_profile_role_write()"
     );
-    expect(schema).toContain("CREATE TRIGGER trg_enforce_profile_role_write");
-    expect(schema).toContain(`CREATE TRIGGER ${TRIGGER}`);
+    expect(schema).not.toContain(
+      "CREATE TRIGGER trg_enforce_profile_role_write"
+    );
   });
 
-  it("guards a distinct column — no crosstalk between the two triggers", () => {
+  it("guards a distinct column — wallet body never touches role/segment/goal", () => {
     // The wallet trigger touches only wallet_address; it never reads or writes
-    // any segment/goal/daily_goal column (#695) or role (the role trigger's
-    // domain), so those policies/columns are orthogonal to it.
+    // any segment/goal/daily_goal column (#695) or the retired role column, so
+    // those columns are orthogonal to it.
     const start = schema.indexOf(`CREATE OR REPLACE FUNCTION ${FN}`);
     const body = schema.slice(start, schema.indexOf("$$;", start));
     expect(body).not.toMatch(/\bNEW\.role\b/);

@@ -28,15 +28,14 @@ CREATE TABLE profiles (
   is_public BOOLEAN DEFAULT true,
   name_rerolls_used INTEGER DEFAULT 0,
   wallet_xp_synced_at TIMESTAMPTZ,
-  -- Coarse account role. Writable ONLY by service_role (enforced by the
-  -- enforce_profile_role_write() trigger below) to block self-escalation via
-  -- the self-service profiles RLS policies. See migration
-  -- 20260703130652_add_profiles_role_and_lock_role_writes.sql.
-  role TEXT NOT NULL DEFAULT 'learner',
+  -- NOTE: profiles.role was RETIRED by SP1 (migration 20260710120000, applied to
+  -- prod as ledger 20260711152518). The column, its chk_profiles_role CHECK, and
+  -- the enforce_profile_role_write lockdown trigger are all gone from prod, so
+  -- they are absent from this snapshot too (#699). Nothing privilege-bearing
+  -- remains on profiles — self-writes are bounded by the CHECK constraints alone.
   -- /start intake state (LX-A3, #566). Self-writable via the own-row UPDATE
-  -- policy — unlike role, these are non-sensitive and untouched by the role
-  -- trigger. NULL until a learner runs the intake. See migration
-  -- 20260726150000_add_profiles_segment_state.sql.
+  -- policy: non-sensitive columns bounded only by the CHECKs below. NULL until a
+  -- learner runs the intake. See migration 20260726150000_add_profiles_segment_state.sql.
   segment SMALLINT,
   goal TEXT,
   daily_goal SMALLINT,
@@ -168,8 +167,7 @@ ALTER TABLE profiles
   ADD CONSTRAINT chk_profiles_name_rerolls_non_negative CHECK (name_rerolls_used >= 0);
 ALTER TABLE profiles
   ADD CONSTRAINT chk_profiles_name_rerolls_max CHECK (name_rerolls_used <= 3);
-ALTER TABLE profiles
-  ADD CONSTRAINT chk_profiles_role CHECK (role IN ('learner', 'teacher', 'admin'));
+-- (chk_profiles_role removed with the retired role column — see #699.)
 -- /start intake bounds (LX-A3, #566). NULL passes each CHECK (never-onboarded rows).
 ALTER TABLE profiles
   ADD CONSTRAINT chk_profiles_segment CHECK (segment IN (1, 2, 3));
@@ -756,61 +754,20 @@ CREATE OR REPLACE TRIGGER on_auth_user_created
   FOR EACH ROW EXECUTE FUNCTION handle_new_user();
 
 -- ─────────────────────────────────────────────
--- 5a. LOCK profiles.role WRITES TO service_role
+-- 5a. (RETIRED) profiles.role write-lock
 -- ─────────────────────────────────────────────
--- The self-service profiles RLS policies (auth.uid() = id for INSERT/UPDATE) do
--- not constrain WHICH columns are written, so without this a user could escalate
--- by writing role='teacher'/'admin' to their own row. This BEFORE trigger makes
--- role writable only by service_role: non-privileged UPDATEs that change role
--- error; non-privileged INSERTs are coerced back to 'learner'. SECURITY INVOKER
--- so current_user reflects the actual caller. See migration
--- 20260703130652_add_profiles_role_and_lock_role_writes.sql.
-CREATE OR REPLACE FUNCTION public.enforce_profile_role_write()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-SECURITY INVOKER
-SET search_path = ''
-AS $$
-DECLARE
-  jwt_role TEXT;
-  is_privileged BOOLEAN;
-BEGIN
-  jwt_role := NULLIF(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role';
-  is_privileged := COALESCE(current_user = 'service_role' OR jwt_role = 'service_role', false);
-
-  IF is_privileged THEN
-    RETURN NEW;
-  END IF;
-
-  IF TG_OP = 'UPDATE' THEN
-    IF NEW.role IS DISTINCT FROM OLD.role THEN
-      RAISE EXCEPTION
-        'permission denied: role may only be changed by service_role'
-        USING ERRCODE = 'insufficient_privilege';
-    END IF;
-  ELSIF TG_OP = 'INSERT' THEN
-    IF NEW.role IS DISTINCT FROM 'learner' THEN
-      NEW.role := 'learner';
-    END IF;
-  END IF;
-
-  RETURN NEW;
-END;
-$$;
-
-DROP TRIGGER IF EXISTS trg_enforce_profile_role_write ON public.profiles;
-CREATE TRIGGER trg_enforce_profile_role_write
-  BEFORE INSERT OR UPDATE ON public.profiles
-  FOR EACH ROW
-  EXECUTE FUNCTION public.enforce_profile_role_write();
-
-REVOKE EXECUTE ON FUNCTION public.enforce_profile_role_write() FROM PUBLIC, anon, authenticated;
+-- The profiles.role column and its enforce_profile_role_write lockdown trigger
+-- were RETIRED by SP1 (migration 20260710120000_drop_teacher_role.sql, applied
+-- to prod as ledger 20260711152518). They are intentionally absent here so this
+-- snapshot matches prod (#699). Teacher/admin authorization no longer lives on a
+-- profiles column. Do NOT re-add the column or trigger.
 
 -- ─────────────────────────────────────────────
 -- 5a-bis. LOCK profiles.wallet_address WRITES TO service_role (#408)
 -- ─────────────────────────────────────────────
--- Same escalation class as the role lock above, different column. The
--- self-service profiles RLS policies (auth.uid() = id for INSERT/UPDATE) do not
+-- This is the surviving profiles escalation lockdown (the role lock above was
+-- retired). The self-service profiles RLS policies (auth.uid() = id for
+-- INSERT/UPDATE) do not
 -- constrain WHICH columns are written, so without this guard any authenticated
 -- user could overwrite wallet_address on their own row — clobbering their linked
 -- wallet, or squatting an unclaimed wallet before its real owner links it — via
@@ -1034,7 +991,7 @@ ALTER TABLE deployed_programs ENABLE ROW LEVEL SECURITY;
 -- No INSERT/UPDATE RLS policies exist because authenticated/anon roles never
 -- write directly; a client-writable row would bypass the verification and let
 -- a learner claim anyone's public program as their own deploy
--- (20260726120000_lockdown_deployed_programs_rls.sql).
+-- (20260726121000_lockdown_deployed_programs_rls.sql).
 CREATE POLICY "Users can view their own deployments"
   ON deployed_programs FOR SELECT USING (auth.uid() = user_id);
 
