@@ -51,22 +51,34 @@ export const SEGMENT_PATH_MODALITY: Record<
  * path-schema metadata to avoid the two-repo content-staging cycle, so routing
  * changes ship with a code deploy, not a content.lock bump.
  *
- * Grounded in the "Zero to Deployed" flagship path ordering
- * (fundamentals → rust → anchor → building-first-program):
+ * Grounded in the new 5-course "Zero to Deployed" ladder (courses-academy
+ * CATALOG.md §2, one sequential path — trackId 1, trackLevel 1→5):
  *
- *   1 — CORE web2 (ships JS/TS, new to Solana) → Solana Fundamentals (path course 1)
- *   2 — web3 dev (already ships on-chain)       → Anchor Framework (skips fundamentals)
- *   3 — beginner (new to programming)           → Solana Fundamentals (most foundational)
+ *   C1 solana-for-web-devs → C2 rust-for-program-devs →
+ *   C3 building-your-first-solana-program → C4 dapp-and-sdk-with-kit →
+ *   C5 stablecoin-agentic-payments
  *
- * Segment 3 shares the fundamentals entry until the dedicated JS/TS entry-rung
- * course (LX-D3, P2 fast-follow) exists; when it lands, only this line moves.
- * The acknowledged §3.5 deferral applies: launch segmentation is topic-routing,
- * not guidance-level differentiation.
+ * The previous entries (solana-fundamentals, anchor-framework) are RETIRED
+ * (CATALOG §3) and deactivated on-chain. Routing to a deactivated course sends
+ * the /start funnel + landing deep-link to the catalog fallback: the
+ * `resolveEntryLessonHref` sync gate keeps that from 404-ing, but the deep-link
+ * into flagship lesson 1 goes dead — the regression this table fixes.
+ *
+ *   1 — CORE web2 (ships JS/TS, new to Solana) → C2 rust-for-program-devs (†)
+ *   2 — web3 dev (already ships on-chain)       → C3 building-your-first-solana-program (segment 2 "enters here", skips the on-ramp)
+ *   3 — beginner (new to programming)           → C2 rust-for-program-devs (†) (shares segment 1's entry)
+ *
+ * (†) TODO(#599/#673): segments 1 and 3 should enter at C1
+ * `course-solana-for-web-devs` (the JS/TS on-ramp) once it lands on-chain — it
+ * is not in the committed bundle yet, so today they enter at the live entry
+ * rung C2. When C1 lands, only these two lines move. Segment 3 stays out of
+ * scope this wave (CATALOG §1) but still routes to the live on-ramp rather than
+ * a dead course.
  */
 export const SEGMENT_ENTRY_COURSE: Record<LearnerSegment, string> = {
-  1: "course-solana-fundamentals",
-  2: "course-anchor-framework",
-  3: "course-solana-fundamentals",
+  1: "course-rust-for-program-devs",
+  2: "course-building-first-program",
+  3: "course-rust-for-program-devs",
 };
 
 export function entryCourseForSegment(segment: LearnerSegment): string {
