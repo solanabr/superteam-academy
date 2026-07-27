@@ -820,6 +820,12 @@
     "invalidXpReward": "XP reward must be greater than zero.",
     "enrollmentFinalized": "This enrollment is finalized and can no longer be unenrolled or closed.",
     "invalidCourseAccount": "Account is not a valid course.",
+    "mintingPaused": "XP minting is currently paused. Please try again later.",
+    "wrongXpMint": "Your token account does not match the current XP mint.",
+    "xpAmountExceedsMax": "XP amount exceeds the per-mint ceiling.",
+    "staleEnrollment": "This enrollment belongs to an older version of the course. Please re-enroll to continue.",
+    "oldMinterRoleMissing": "Backend rotation requires the previous backend minter role account.",
+    "enrollmentInProgress": "An enrollment with completed lessons cannot be closed.",
     "unknown": "Transaction failed. Please try again."
   },
   "community": {
