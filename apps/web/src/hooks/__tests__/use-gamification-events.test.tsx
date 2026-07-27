@@ -100,13 +100,11 @@ function certInsert(id: string, courseId: string): unknown {
 
 async function mountHook(userId = "user-1") {
   const utils = renderHook(() => useGamificationEvents(userId));
-  // The effect is now async (getSession → setAuth → subscribe); flush the
-  // microtask chain so the channel is subscribed and handlers registered.
-  await act(async () => {
-    await Promise.resolve();
-    await Promise.resolve();
-    await Promise.resolve();
-  });
+  // The effect is async (getSession → setAuth → subscribe). Wait on the
+  // observable end-state (the channel subscribed) rather than a fixed number of
+  // microtask ticks — that way an added await in connect() fails loudly here
+  // (subscribe never observed → timeout) instead of silently under-flushing.
+  await waitFor(() => expect(h.order).toContain("subscribe"));
   return utils;
 }
 
@@ -187,6 +185,51 @@ describe("useGamificationEvents — Realtime socket auth (#800)", () => {
     await mountHook();
     await waitFor(() => expect(h.order).toContain("subscribe"));
     expect(h.setAuth).not.toHaveBeenCalled();
+  });
+
+  it("does not revert the socket to a stale token when a refresh races a slow getSession", async () => {
+    // Hold getSession() open so connect() is suspended mid-await, then land a
+    // TOKEN_REFRESHED before it resolves. connect() must not overwrite the
+    // fresher token with the pre-refresh one it captured (#806 stale-token race).
+    let resolveSession!: (value: unknown) => void;
+    h.getSession.mockReturnValue(
+      new Promise((resolve) => {
+        resolveSession = resolve;
+      })
+    );
+
+    renderHook(() => useGamificationEvents("user-1"));
+    // The auth listener registers synchronously while connect() awaits getSession.
+    await waitFor(() => expect(h.authCallback).toBeTypeOf("function"));
+
+    // Refresh lands while getSession is still in flight → newer token applied.
+    act(() =>
+      h.authCallback?.("TOKEN_REFRESHED", {
+        access_token: "tok-new",
+        user: { id: "user-1" },
+      })
+    );
+    expect(h.setAuth).toHaveBeenCalledWith("tok-new");
+
+    // getSession finally resolves with the PRE-refresh (now stale) token.
+    await act(async () => {
+      resolveSession({
+        data: {
+          session: { access_token: "tok-stale", user: { id: "user-1" } },
+        },
+      });
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    await waitFor(() => expect(h.order).toContain("subscribe"));
+
+    // The socket must remain on the newer token: the stale one is never pushed,
+    // and the last token applied is the refreshed one.
+    expect(h.setAuth).not.toHaveBeenCalledWith("tok-stale");
+    const appliedTokens = h.order
+      .filter((entry) => entry.startsWith("setAuth:"))
+      .map((entry) => entry.slice("setAuth:".length));
+    expect(appliedTokens.at(-1)).toBe("tok-new");
   });
 });
 
