@@ -114,26 +114,29 @@ const staticCspHeader = {
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable the instrumentation hook so src/instrumentation.ts runs at startup
-  // (validates env vars). Stable in Next 15; opt-in in Next 14.
+  // src/instrumentation.ts runs at startup (validates env vars). The
+  // instrumentation hook is stable in Next 15, so no experimental opt-in is
+  // needed — the file is picked up automatically.
   experimental: {
-    instrumentationHook: true,
     // Tree-shake the per-icon barrel so only the icons a client component
     // actually imports land in its bundle (55+ named-import sites across the
     // app). Named imports only — no namespace/dynamic imports of the package.
     optimizePackageImports: ["@phosphor-icons/react"],
-    // The server-side challenge executor (lib/challenge/executor.ts) runs learner
-    // code in QuickJS-on-WASM. Keep these packages EXTERNAL so webpack does not
-    // re-bundle the single-file variant — its WASM is embedded via octal escapes
-    // in a template literal, which Node's module loader rejects once webpack has
-    // re-emitted it. Left external, Node loads the package's own (valid) file and
-    // Next's output file tracing still includes it (the WASM travels inside the
-    // JS, so there is no separate .wasm artifact to trace).
-    serverComponentsExternalPackages: [
-      "quickjs-emscripten-core",
-      "@jitl/quickjs-singlefile-cjs-release-sync",
-    ],
   },
+  // The server-side challenge executor (lib/challenge/executor.ts) runs learner
+  // code in QuickJS-on-WASM. Keep these packages EXTERNAL so webpack does not
+  // re-bundle the single-file variant — its WASM is embedded via octal escapes
+  // in a template literal, which Node's module loader rejects once webpack has
+  // re-emitted it. Left external, Node loads the package's own (valid) file and
+  // Next's output file tracing still includes it (the WASM travels inside the
+  // JS, so there is no separate .wasm artifact to trace).
+  //
+  // `serverComponentsExternalPackages` (experimental in Next 14) graduated to
+  // the stable top-level `serverExternalPackages` in Next 15.
+  serverExternalPackages: [
+    "quickjs-emscripten-core",
+    "@jitl/quickjs-singlefile-cjs-release-sync",
+  ],
   transpilePackages: ["@superteam-lms/types"],
   images: {
     remotePatterns: [
