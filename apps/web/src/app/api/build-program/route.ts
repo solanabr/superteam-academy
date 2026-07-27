@@ -35,9 +35,24 @@ interface BuildProgramResponse {
 
 // --- Config ------------------------------------------------------------------
 
+// Let the serverless function run long enough to cover the build server's full
+// window. Cloud Run allows 300s (deploy/deploy.sh `--timeout 300`), so a cold
+// build (fat-LTO codegen; #776 item 1) can legitimately take minutes. 300 is
+// the Vercel plan's hard ceiling for maxDuration on this project (the same value
+// api/courses/test-out already uses) — the platform kills the function at 300s
+// regardless of any larger number here, so the upstream abort below sits just
+// UNDER it to return a clean 504 before that hard kill. See the PR/#776 item 5
+// for the residual (a build using the entire 300s can still 504 in the last
+// headroom window) and the owner-side `--min-instances 1` mitigation.
+export const maxDuration = 300;
+
 const BUILD_SERVER_URL = serverEnv.BUILD_SERVER_URL;
 const BUILD_SERVER_API_KEY = serverEnv.BUILD_SERVER_API_KEY;
-const UPSTREAM_TIMEOUT_MS = 130_000; // slightly above the 120s build timeout
+// Was 130s — it 504'd cold builds the build server (Cloud Run, 300s) was still
+// finishing, wasting the compile and showing a confusing failure (#776 item 5).
+// Sits ~5s under maxDuration so the abort's own 504 is returned before Vercel
+// hard-kills the function at 300s.
+const UPSTREAM_TIMEOUT_MS = 295_000;
 const MAX_TOTAL_SIZE = 500 * 1024; // 500KB, matches build server limit
 
 // --- Route Handler -----------------------------------------------------------
@@ -156,7 +171,7 @@ export async function POST(
           stderr: "",
           uuid: null,
           error: isAbort
-            ? "Build timed out (130s limit)"
+            ? `Build timed out (${UPSTREAM_TIMEOUT_MS / 1000}s limit)`
             : "Failed to reach build server",
         },
         { status: 504 }
