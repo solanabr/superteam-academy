@@ -2881,3 +2881,107 @@ REVOKE ALL ON FUNCTION public.get_cohort_leaderboard(UUID)
 GRANT EXECUTE ON FUNCTION public.get_cohort_leaderboard(UUID) TO service_role;
 -- The "you ±3" strip window is derived in the API layer (cohortStripWindow) over
 -- this board's snapshot rows — no second per-call SUM, no SQL⇄TS duplication.
+
+-- ============================================================================
+-- email_subscriptions (#769) — marketing-email consent model.
+-- Mirror of supabase/migrations/20260728120000_email_subscriptions.sql. See that
+-- file's header for the full rationale. Opt-out by default; own-row read; writes
+-- via SECURITY DEFINER RPCs (self-service toggle, pipeline read, one-click
+-- unsubscribe).
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS email_subscriptions (
+  user_id           UUID PRIMARY KEY REFERENCES profiles(id) ON DELETE CASCADE,
+  opt_in            BOOLEAN NOT NULL DEFAULT false,
+  consent_at        TIMESTAMPTZ,
+  unsubscribed_at   TIMESTAMPTZ,
+  unsubscribe_token UUID NOT NULL DEFAULT gen_random_uuid(),
+  updated_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT email_subscriptions_token_unique UNIQUE (unsubscribe_token)
+);
+
+CREATE INDEX IF NOT EXISTS idx_email_subscriptions_opt_in
+  ON email_subscriptions (opt_in) WHERE opt_in = true;
+
+ALTER TABLE email_subscriptions ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view their own email subscription" ON email_subscriptions;
+CREATE POLICY "Users can view their own email subscription"
+  ON email_subscriptions FOR SELECT USING (auth.uid() = user_id);
+-- NO write policy: writes only via the SECURITY DEFINER RPCs below.
+
+CREATE OR REPLACE FUNCTION set_marketing_opt_in(p_opt_in BOOLEAN)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_uid UUID := auth.uid();
+BEGIN
+  IF v_uid IS NULL THEN
+    RAISE EXCEPTION 'not authenticated';
+  END IF;
+  INSERT INTO public.email_subscriptions (user_id, opt_in, consent_at, unsubscribed_at, updated_at)
+  VALUES (
+    v_uid,
+    p_opt_in,
+    CASE WHEN p_opt_in THEN now() ELSE NULL END,
+    CASE WHEN p_opt_in THEN NULL ELSE now() END,
+    now()
+  )
+  ON CONFLICT (user_id) DO UPDATE SET
+    opt_in          = EXCLUDED.opt_in,
+    consent_at      = CASE WHEN EXCLUDED.opt_in THEN now() ELSE public.email_subscriptions.consent_at END,
+    unsubscribed_at = CASE WHEN EXCLUDED.opt_in THEN public.email_subscriptions.unsubscribed_at ELSE now() END,
+    updated_at      = now();
+END;
+$$;
+
+REVOKE ALL ON FUNCTION set_marketing_opt_in(BOOLEAN) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION set_marketing_opt_in(BOOLEAN) TO authenticated;
+
+CREATE OR REPLACE FUNCTION list_marketing_recipients()
+RETURNS TABLE (user_id UUID, email TEXT, unsubscribe_token UUID)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT es.user_id, u.email::text, es.unsubscribe_token
+  FROM public.email_subscriptions es
+  JOIN auth.users u ON u.id = es.user_id
+  WHERE es.opt_in = true
+    AND u.email IS NOT NULL
+    AND u.email <> ''
+    -- Exclude synthetic wallet-auth placeholders (`<pubkey>@wallet.superteam-lms.local`,
+    -- see apps/web/src/app/api/auth/wallet/route.ts): a real-looking but
+    -- undeliverable address that must never receive mail.
+    AND u.email NOT LIKE '%@wallet.superteam-lms.local'
+  ORDER BY es.user_id;
+$$;
+
+REVOKE ALL ON FUNCTION list_marketing_recipients() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION list_marketing_recipients() TO service_role;
+
+CREATE OR REPLACE FUNCTION unsubscribe_by_token(p_token UUID)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  -- Row count from GET DIAGNOSTICS is an integer, so v_matched must be INTEGER —
+  -- a BOOLEAN here makes `RETURN v_matched > 0` raise "operator does not exist:
+  -- boolean > integer" on every call, breaking one-click unsubscribe.
+  v_matched INTEGER;
+BEGIN
+  UPDATE public.email_subscriptions
+  SET opt_in = false, unsubscribed_at = now(), updated_at = now()
+  WHERE unsubscribe_token = p_token;
+  GET DIAGNOSTICS v_matched = ROW_COUNT;
+  RETURN v_matched > 0;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION unsubscribe_by_token(UUID) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION unsubscribe_by_token(UUID) TO service_role;

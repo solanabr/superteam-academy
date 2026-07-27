@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
+import { EmailPreferences } from "./email-preferences";
 
 // ── Types ─────────────────────────────────────────────────────────
 interface PrivacyTabProps {
@@ -143,6 +144,8 @@ export function PrivacyTab({ isPublic, onPublicChange }: PrivacyTabProps) {
             />
           </button>
         </div>
+
+        <EmailPreferences />
 
         <div className="border-t border-border pt-4">
           <Button variant="outline" onClick={handleExportData}>
