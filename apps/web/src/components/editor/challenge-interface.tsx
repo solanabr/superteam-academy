@@ -205,8 +205,13 @@ export function ChallengeInterface({
     }
     const key = `challenge:ai-open:${lessonId}`;
     const stored = Number(window.localStorage.getItem(key));
+    // A valid past timestamp is the real open moment. But a stored value in the
+    // FUTURE (a wrong device clock when it was written, or tampering) must never
+    // lock the tutor beyond the 3-min window, so clamp to now — remaining stays
+    // ≤ AI_LOCK_MS. The clamp also self-heals the stored value below.
+    const now = Date.now();
     const openedAt =
-      Number.isFinite(stored) && stored > 0 ? stored : Date.now();
+      Number.isFinite(stored) && stored > 0 ? Math.min(stored, now) : now;
     if (openedAt !== stored) {
       try {
         window.localStorage.setItem(key, String(openedAt));

@@ -5,8 +5,8 @@
 // enforced one level up in ChallengeInterface, which does not mount this pane
 // at all while suppressed (see challenge-interface-ai-gate.test.tsx), so a
 // suppressed lesson can never surface this button.
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/messages/en.json";
 import { AiPartnerPane } from "../ai-partner-pane";
@@ -33,7 +33,11 @@ vi.mock("@/lib/ai/use-ai-partner", () => ({
 }));
 
 function renderPane(
-  props: { solutionPassed?: boolean; disabled?: boolean } = {}
+  props: {
+    solutionPassed?: boolean;
+    disabled?: boolean;
+    unlockAt?: number | null;
+  } = {}
 ) {
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
@@ -107,5 +111,51 @@ describe("AiPartnerPane — post-pass review button (LX-C9)", () => {
     hookState.budgetExhausted = true;
     renderPane({ solutionPassed: true });
     expect(screen.getByRole("button", { name: reviewLabel })).toBeDisabled();
+  });
+});
+
+describe("AiPartnerPane — think-first lock (#770)", () => {
+  const lockTitle = messages.aiPartner.lock.title;
+  const hintLabel = messages.aiPartner.actions.hint;
+  const THREE_MIN = 3 * 60 * 1000;
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("shows the lock banner with a live countdown and disables the actions while locked", () => {
+    // A fresh 3-minute lock renders a m:ss countdown in the localized body
+    // (~2:59/3:00 depending on the sub-ms gap to the pane's own Date.now()).
+    renderPane({ unlockAt: Date.now() + THREE_MIN });
+    expect(screen.getByText(lockTitle)).toBeInTheDocument();
+    expect(screen.getByText(/unlocks in \d:\d\d/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: hintLabel })).toBeDisabled();
+  });
+
+  it("does not lock when unlockAt is null (completed lesson / no lock)", () => {
+    renderPane({ unlockAt: null });
+    expect(screen.queryByText(lockTitle)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: hintLabel })).toBeEnabled();
+  });
+
+  it("does not lock when unlockAt is already in the past", () => {
+    renderPane({ unlockAt: Date.now() - 1000 });
+    expect(screen.queryByText(lockTitle)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: hintLabel })).toBeEnabled();
+  });
+
+  it("counts down and unlocks once the window elapses", () => {
+    vi.useFakeTimers();
+    const start = Date.now();
+    renderPane({ unlockAt: start + 2000 });
+    expect(screen.getByText(lockTitle)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: hintLabel })).toBeDisabled();
+
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+
+    expect(screen.queryByText(lockTitle)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: hintLabel })).toBeEnabled();
   });
 });
