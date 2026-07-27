@@ -426,6 +426,7 @@
     "xpRemaining": "<em>{xp} {xpLabel}</em> para {levelLabel} {level}",
     "xpTooltip": "{xp} {xpLabel} para {levelLabel} {level}",
     "surpriseBonus": "¡Bono sorpresa! +{amount} XP",
+    "questReward": "Misión completada: {name} +{amount} XP",
     "league": "Liga",
     "global": "Global",
     "leagueSubtitle": "Tu grupo de la semana — la clasificación actual",

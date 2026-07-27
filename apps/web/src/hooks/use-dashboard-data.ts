@@ -23,6 +23,14 @@ import {
   deriveContinueTarget,
   type ContinueTarget,
 } from "@/lib/courses/continue-learning";
+import {
+  pickQuestRewardToasts,
+  pickSurpriseBonusToasts,
+} from "@/lib/gamification/server-xp-feedback";
+import { dispatchXpGain } from "@/hooks/use-gamification-events";
+import { dispatchSurpriseBonus } from "@/components/gamification/surprise-bonus-toast";
+import { dispatchToast } from "@/components/ui/toast-container";
+import { celebrate } from "@/lib/gamification/celebration";
 
 // Default streak for unauthenticated or on error
 const defaultStreak: StreakData = {
@@ -95,6 +103,7 @@ export function useDashboardData(
   authLoading: boolean
 ): DashboardData {
   const tDash = useTranslations("dashboard");
+  const tGam = useTranslations("gamification");
   const [data, setData] = useState<DashboardData>({
     xp: 0,
     level: 0,
@@ -169,10 +178,37 @@ export function useDashboardData(
         // every lesson a user ever completed.
         const { data: transactions } = await supabase
           .from("xp_transactions")
-          .select("amount, reason, created_at, tx_signature")
+          .select("amount, reason, created_at, tx_signature, idempotency_key")
           .eq("user_id", authUserId)
           .order("created_at", { ascending: false })
           .limit(100);
+
+        // #790: server-granted XP (daily-quest rewards + surprise bonuses) has
+        // no synchronous UI cause. Toast it ONCE from the poll the dashboard
+        // already makes — quest rewards from /api/quests/daily's justAwarded,
+        // surprise bonuses from the transactions above. Both are deduped
+        // session-wide (see server-xp-feedback), so a re-poll never re-toasts,
+        // and the surprise-bonus dedupe is shared with the Realtime path.
+        const questPeriod = new Date().toISOString().split("T")[0] as string;
+        for (const reward of pickQuestRewardToasts(
+          (questsResult.quests ?? []) as DailyQuest[],
+          questPeriod,
+          authUserId
+        )) {
+          dispatchXpGain(reward.xpReward);
+          dispatchToast(
+            tGam("questReward", { name: reward.name, amount: reward.xpReward }),
+            "success"
+          );
+        }
+        for (const amount of pickSurpriseBonusToasts(
+          transactions ?? [],
+          authUserId
+        )) {
+          dispatchXpGain(amount);
+          celebrate("surprise-bonus");
+          dispatchSurpriseBonus(amount);
+        }
 
         // Fetch activity dates for streak heatmap (last 270 days)
         const oneYearAgo = new Date();
@@ -609,7 +645,7 @@ export function useDashboardData(
     }
 
     fetchData();
-  }, [authUserId, authLoading, tDash]);
+  }, [authUserId, authLoading, tDash, tGam]);
 
   return data;
 }

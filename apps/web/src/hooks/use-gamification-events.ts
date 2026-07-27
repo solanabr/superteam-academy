@@ -5,6 +5,7 @@ import { trackCredentialMinted } from "@/lib/analytics/events";
 import { createClient } from "@/lib/supabase/client";
 import { celebrate } from "@/lib/gamification/celebration";
 import { isSurpriseBonusReason } from "@/lib/gamification/surprise-bonus";
+import { claimSurpriseBonus } from "@/lib/gamification/server-xp-feedback";
 import {
   dispatchAchievementUnlock,
   dispatchAchievementXp,
@@ -94,6 +95,7 @@ export function useGamificationEvents(userId: string | undefined) {
             amount?: number;
             reason?: string;
             tx_signature?: string;
+            idempotency_key?: string;
           };
 
           // Deduplicate by row id (primary defence) or tx_signature (fallback)
@@ -124,9 +126,26 @@ export function useGamificationEvents(userId: string | undefined) {
           // reward only surfaces here, AFTER it is granted server-side — there
           // is no pre-announcement anywhere in the UI. Localization happens in
           // the mounted SurpriseBonusToastListener (inside the intl provider).
+          // #790: the dashboard poll also detects surprise bonuses (for sessions
+          // where Realtime isn't delivering); claimSurpriseBonus is a session
+          // dedupe SHARED with that path, so whichever fires first wins and the
+          // other is a no-op — never a double toast.
           if (row.reason && isSurpriseBonusReason(row.reason)) {
-            celebrate("surprise-bonus");
-            dispatchSurpriseBonus(amount);
+            // KEEP IN SYNC with surpriseKey() in server-xp-feedback.ts: both
+            // channels share claimSurpriseBonus's seen-set, so they must derive
+            // the SAME key for the same award. maybeAwardSurpriseBonus always
+            // sets idempotency_key, so the fallbacks below are dead today — but
+            // if it ever becomes optional, both sites' fallbacks must stay
+            // aligned or a bonus would toast twice (once per path).
+            if (
+              claimSurpriseBonus(
+                row.idempotency_key ?? row.id ?? row.tx_signature ?? "",
+                userId
+              )
+            ) {
+              celebrate("surprise-bonus");
+              dispatchSurpriseBonus(amount);
+            }
             dispatchXpGain(amount);
             return;
           }
