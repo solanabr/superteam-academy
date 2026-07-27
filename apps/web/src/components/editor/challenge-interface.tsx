@@ -461,35 +461,31 @@ export function ChallengeInterface({
         {/* Instructions + test cases */}
         <div className="order-1 lg:order-none lg:shrink-0">{taskSlot}</div>
 
-        {/* AI Partner — collapsed until the sentinel is reached, then slides in.
-            The pane is NOT mounted while collapsed: a CSS-only hide (max-h-0 /
-            overflow-hidden) would keep its inputs and buttons in the tab order,
-            letting a keyboard user land on invisible controls (WCAG 4.1.2). The
-            transition still runs because it lives on this always-mounted
-            wrapper — the pane simply mounts as the envelope grows. */}
+        {/* AI Partner — sized to its CONTENT, never a fixed box (#770). It used
+            to force h-[600px] inside a max-h-[760px] envelope, which reserved a
+            huge empty region below the rail once the pane became always-mounted
+            and collapsible. Now it grows with the conversation and caps out,
+            scrolling internally past the cap. Hidden outright when suppressed so
+            no invisible controls sit in the tab order (WCAG 4.1.2). */}
         <div
           className={cn(
-            "order-4 px-3 transition-all duration-500 ease-out motion-reduce:transition-none lg:order-none lg:shrink-0",
-            aiVisible
-              ? "max-h-[760px] translate-y-0 pb-4 pt-2 opacity-100"
-              : "max-h-0 translate-y-3 overflow-hidden opacity-0"
+            "order-4 px-3 pb-4 pt-2 lg:order-none lg:shrink-0",
+            !aiVisible && "hidden"
           )}
         >
           {aiVisible && (
-            <div className="h-[600px]">
-              <AiPartnerPane
-                lessonSlug={lessonSlug}
-                courseSlug={courseSlug}
-                hints={hints}
-                getCode={() => code}
-                getTestSummary={() => summarize(challengeState.executionResult)}
-                onApply={(proposed) => setCode(proposed)}
-                disabled={isComplete}
-                solutionPassed={challengeState.status === "success"}
-                unlockAt={aiUnlockAt}
-                className="h-full rounded-none border-0"
-              />
-            </div>
+            <AiPartnerPane
+              lessonSlug={lessonSlug}
+              courseSlug={courseSlug}
+              hints={hints}
+              getCode={() => code}
+              getTestSummary={() => summarize(challengeState.executionResult)}
+              onApply={(proposed) => setCode(proposed)}
+              disabled={isComplete}
+              solutionPassed={challengeState.status === "success"}
+              unlockAt={aiUnlockAt}
+              className="max-h-[560px]"
+            />
           )}
         </div>
       </div>

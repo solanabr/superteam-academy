@@ -2,7 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Robot, MagnifyingGlass, Lock, CaretDown } from "@phosphor-icons/react";
+import {
+  Robot,
+  MagnifyingGlass,
+  Lock,
+  CaretDown,
+  Lightbulb,
+} from "@phosphor-icons/react";
 import { useAiPartner } from "@/lib/ai/use-ai-partner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -85,7 +91,7 @@ export function AiPartnerPane({
   return (
     <div
       className={cn(
-        "flex h-full flex-col overflow-hidden rounded-md border bg-card",
+        "flex flex-col overflow-hidden rounded-md border bg-card",
         className
       )}
     >
@@ -108,26 +114,59 @@ export function AiPartnerPane({
           <h2 className="font-display text-sm font-extrabold text-text">
             {t("title")}
           </h2>
+
+          {/* Think-first countdown (#770): prominent, in the header's right
+              rail, so the wait is the first thing read — not a footnote. */}
+          {locked && (
+            <span
+              role="status"
+              className="ml-auto flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-bold tabular-nums text-text [background:var(--input)]"
+            >
+              <Lock
+                size={16}
+                weight="duotone"
+                className="shrink-0 text-text-3"
+                aria-hidden="true"
+              />
+              {countdown}
+            </span>
+          )}
           <CaretDown
             size={14}
             weight="bold"
             aria-hidden="true"
             className={cn(
-              "ml-auto text-text-3 transition-transform",
+              "text-text-3 transition-transform",
+              !locked && "ml-auto",
               !open && "-rotate-90"
             )}
           />
           <span className="sr-only">{tLesson("toggleSection")}</span>
         </div>
         <p className="text-xs text-text-3">
-          {disabled ? t("completed") : t("subtitle")}
+          {disabled ? t("completed") : locked ? t("lock.title") : t("subtitle")}
         </p>
         <AssistMeter freeHintsUsed={freeHintsUsed} paidUsed={paidUsed} />
       </button>
 
+      {/* Empty state stays COMPACT (#770): the prompt and the Hint button sit
+          together in a short block — no reserved conversation area. The pane
+          only grows (and the button drops to the bottom) once there are
+          messages to show. */}
       {!open ? null : messages.length === 0 ? (
-        <div className="flex flex-1 flex-col gap-2 overflow-auto px-4 py-4">
+        <div className="flex flex-col gap-3 px-4 py-4">
           <p className="text-sm text-text-3">{t("messages.empty")}</p>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={requestHint}
+            disabled={loading || actionsBlocked}
+            className="w-full gap-1.5"
+          >
+            <Lightbulb size={14} weight="duotone" aria-hidden="true" />
+            {t("actions.hint")}
+          </Button>
         </div>
       ) : (
         <MessageList
@@ -135,7 +174,7 @@ export function AiPartnerPane({
           onApply={onApply}
           getCode={getCode}
           onVerify={verifyCheck}
-          className="flex-1"
+          className="min-h-0 flex-1"
         />
       )}
 
@@ -188,30 +227,7 @@ export function AiPartnerPane({
         </div>
       )}
 
-      {/* Think-first lock banner (#770): a calm, non-refusing hold with a live
-          countdown. It gates the actions below (actionsBlocked) rather than
-          hiding them, so the learner always sees what is coming. */}
-      {open && locked && (
-        <div
-          role="status"
-          className="flex shrink-0 items-center gap-2.5 border-t border-border px-4 py-3"
-        >
-          <Lock
-            size={18}
-            weight="duotone"
-            className="shrink-0 text-text-3"
-            aria-hidden="true"
-          />
-          <div className="min-w-0">
-            <p className="text-xs font-semibold text-text">{t("lock.title")}</p>
-            <p className="text-[11px] text-text-3">
-              {t("lock.body", { time: countdown })}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {open && (
+      {open && messages.length > 0 && (
         <QuickActions
           onHint={requestHint}
           disabled={loading || actionsBlocked}

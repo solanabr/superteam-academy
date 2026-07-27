@@ -313,7 +313,8 @@
     "progressNeedsRedo": "\"{lesson}\" debe completarse: ábrela para finalizar.",
     "quizScore": "{correct}/{total} correctas",
     "toggleSection": "Alternar sección",
-    "quiz": "Cuestionario"
+    "quiz": "Cuestionario",
+    "quizUnlocksAssistant": "Responde todas las preguntas para desbloquear el AI Partner en esta lección."
   },
   "dashboard": {
     "allCaughtUp": "¡Todo al día!",

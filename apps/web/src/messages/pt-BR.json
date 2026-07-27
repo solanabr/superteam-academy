@@ -313,7 +313,8 @@
     "progressNeedsRedo": "\"{lesson}\" precisa ser concluída — abra para finalizar.",
     "quizScore": "{correct}/{total} corretas",
     "toggleSection": "Alternar seção",
-    "quiz": "Quiz"
+    "quiz": "Quiz",
+    "quizUnlocksAssistant": "Responda todas as perguntas para desbloquear o AI Partner nesta lição."
   },
   "dashboard": {
     "allCaughtUp": "Tudo em dia!",

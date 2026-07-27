@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { CaretDown, CheckCircle, XCircle } from "@phosphor-icons/react";
+import { CaretDown, CheckCircle, Robot, XCircle } from "@phosphor-icons/react";
 import type { QuizBlockData, QuizQuestionData } from "@superteam-lms/types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -229,6 +229,21 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
             </fieldset>
           );
         })}
+
+        {/* The AI Partner is suppressed while any question is unchecked
+            (LX-C1/F18) — retrieval stays AI-free. Say so, so its absence reads
+            as a rule rather than a missing feature (#770). */}
+        {!allChecked && (
+          <p className="flex items-start gap-2 rounded-md border border-border p-3 text-xs text-text-3 [background:var(--input)]">
+            <Robot
+              size={16}
+              weight="duotone"
+              className="mt-px shrink-0 text-primary"
+              aria-hidden="true"
+            />
+            {t("quizUnlocksAssistant")}
+          </p>
+        )}
       </div>
     </div>
   );

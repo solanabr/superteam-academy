@@ -313,7 +313,8 @@
     "progressNeedsRedo": "\"{lesson}\" needs to be finished — open it to complete.",
     "quizScore": "{correct}/{total} correct",
     "toggleSection": "Toggle section",
-    "quiz": "Quiz"
+    "quiz": "Quiz",
+    "quizUnlocksAssistant": "Answer every question to unlock the AI Partner for this lesson."
   },
   "dashboard": {
     "allCaughtUp": "All caught up!",

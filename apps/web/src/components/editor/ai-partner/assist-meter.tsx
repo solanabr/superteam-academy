@@ -5,7 +5,8 @@ import { cn } from "@/lib/utils";
 import { MAX_PAID_ASSISTS } from "@/lib/ai/partner-types";
 
 const FREE_HINT_LIMIT = 2;
-const TOTAL_PIPS = FREE_HINT_LIMIT + MAX_PAID_ASSISTS;
+/** Learner-facing hint allowance (#770) — two pips, not one per billing slot. */
+const TOTAL_PIPS = 2;
 
 interface AssistMeterProps {
   freeHintsUsed: number;
