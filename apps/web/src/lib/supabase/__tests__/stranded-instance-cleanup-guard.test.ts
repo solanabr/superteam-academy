@@ -82,7 +82,10 @@ describe("#607 stranded-instance cleanup — transaction + shape", () => {
     // Pre-DELETE: each era count must equal the posted value OR 0 (idempotent).
     expect(migration).toContain("b.enr_era NOT IN (0, 7)");
     expect(migration).toContain("b.up_era NOT IN (0, 63)");
-    expect(migration).toContain("b.xp_era NOT IN (0, 16)");
+    // Round-4 forensic correction: an authority login on 2026-07-27, BEFORE the
+    // dry-run counts were posted, added one post-cutoff xp_transactions row, so
+    // the posted total (16) inherited a one-off error — era truth is 15.
+    expect(migration).toContain("b.xp_era NOT IN (0, 15)");
     expect(migration).toContain("b.ach_era NOT IN (0, 7)");
     // Post-DELETE: no pre-move row survives in any reset table.
     expect(migration).toMatch(/pre-move rows survived the reset/);
@@ -108,12 +111,7 @@ describe("#607 stranded-instance cleanup — transaction + shape", () => {
   });
 });
 
-describe("#607 stranded-instance cleanup — user_xp is UPDATE, never DELETE", () => {
-  it("UPDATEs user_xp to zero", () => {
-    expect(migration).toMatch(/UPDATE\s+public\.user_xp\s+SET/);
-    expect(migration).toContain("total_xp           = 0");
-  });
-
+describe("#607 stranded-instance cleanup — user_xp RECONCILE, never DELETE", () => {
   it("never issues a DELETE or TRUNCATE against user_xp", () => {
     // The whole point of the 🔴 note: a DELETE here would remove the 73 pristine
     // signup rows (37x the target). This must never regress. Checked against
@@ -122,43 +120,79 @@ describe("#607 stranded-instance cleanup — user_xp is UPDATE, never DELETE", (
     expect(code).not.toMatch(/TRUNCATE\s+(TABLE\s+)?(public\.)?user_xp/i);
   });
 
-  it("ERA-scopes the UPDATE so it can never zero a post-move learner", () => {
-    // Round-3 gate catch: the WHERE must gate on the state columns AND carry the
-    // era clause. The state chain alone matched EVERY active learner — including
-    // valid post-move ones (e.g. the #725 test learner's 1070 XP). The era
-    // clause (last_activity_date < 2026-07-21) confines it to stranded rows.
-    expect(code).toMatch(/last_activity_date\s+IS\s+NOT\s+NULL/); // state chain
-    expect(code).toMatch(
+  it("RECONCILEs total_xp from surviving xp_transactions (not a blind era-zero)", () => {
+    // Round-4 gate redesign: a stranded user who logged in post-cutoff (the
+    // authority, 4350 XP) escapes an era-scoped zero-UPDATE but its total is
+    // still era-tainted. Reconcile recomputes total_xp = SUM(surviving amounts)
+    // AFTER the era-DELETEs, so every row is consistent-by-construction. The old
+    // single era-scoped zero-UPDATE must be GONE.
+    expect(code).toMatch(/SUM\(amount\)/);
+    expect(code).toMatch(/FROM public\.xp_transactions\s+GROUP BY user_id/);
+    // level recomputed with award_xp's exact formula (schema.sql:697).
+    expect(code).toMatch(/floor\(sqrt\(/);
+    // Touch-minimal + idempotent: only rows whose total disagrees.
+    expect(code).toMatch(/u\.total_xp <> /);
+    // The pre-round-4 blind era-zero UPDATE (SET total_xp = 0 gated only by the
+    // era clause) must no longer be the user_xp mutation.
+    expect(code).not.toMatch(
       /UPDATE public\.user_xp[\s\S]*?AND last_activity_date < '2026-07-21'/
     );
   });
 
-  it("verifies no state-bearing row has a NULL activity date (era clause is NULL-blind)", () => {
-    // award_xp always stamps last_activity_date, so total_xp>0 with a NULL date
-    // is impossible by construction — but the era clause cannot see a NULL, so
-    // the migration verifies the claim and aborts if ever violated (else a
-    // silent survivor of an irreversible reset). Expect 0.
+  it("zeroes users with state but NO surviving xp_transactions rows", () => {
+    // The reconcile UPDATE...FROM only covers users WITH surviving rows; a fully
+    // stranded user (467e7e23, all rows deleted) needs an explicit zero incl.
+    // streak/last_activity. Gate design, statement 2.
+    expect(code).toMatch(
+      /NOT EXISTS\s*\(\s*SELECT 1 FROM public\.xp_transactions/
+    );
+  });
+
+  it("bounds Statement B's blast radius with a pre-flight that names the user (round-5/6 gate)", () => {
+    // Statement B is deliberately era-UNBOUNDED (the reconcile post-invariant
+    // needs it), so a live/resync user with state but no post-cutoff XP could be
+    // silently full-zeroed. A pre-flight counts B's would-be targets using the
+    // PRE-DELETE survivor view (created_at >= cutoff — NOT the current-rows view)
+    // and ABORTS NAMING the user_id(s) if ever more than the expected ONE.
+    expect(migration).toContain("uxp_b_blast");
+    expect(migration).toContain("b.uxp_b_blast NOT IN (0, 1)");
+    // The pre-delete survivor view: at-or-after the cutoff, not "current rows".
+    expect(code).toMatch(/created_at >= '2026-07-21'/);
+    // Names the offending row(s) in the abort message.
+    expect(code).toMatch(/string_agg/);
+  });
+
+  it("verifies no state-bearing row has a NULL activity date (defensive)", () => {
+    // Not "impossible": award_xp stamps last_activity_date, but admin/resync
+    // upserts user_xp directly and can leave total_xp>0 with a NULL date. Hence
+    // the pre-flight uxp_null_state assert ABORTS for inspection rather than
+    // assuming. Expect 0.
     expect(migration).toContain("uxp_null_state");
   });
 
-  it("preserves streak_freezes (not in the SET list)", () => {
+  it("corrects the stranded-active pre-pin to the round-4 truth (1, not 2)", () => {
+    // The authority's post-cutoff login bumped its last_activity_date past the
+    // cutoff, so only 1 user_xp row (467e7e23) is truly stranded-active.
+    expect(migration).toContain("b.uxp_active_era NOT IN (0, 1)");
+  });
+
+  it("preserves streak_freezes (not in any SET list)", () => {
     // Owner decision: streak_freezes is the earned freeze inventory (0 today),
     // preserved as-is. It must not appear on the left of an assignment.
     expect(code).not.toMatch(/streak_freezes\s*=/);
   });
 
-  it("asserts user_xp row count is unchanged after the reset", () => {
-    expect(migration).toMatch(/user_xp must be UPDATED to zero, NEVER deleted/);
+  it("asserts user_xp row count is unchanged (reconciled, never deleted)", () => {
+    expect(migration).toMatch(/user_xp row count changed/);
+    expect(migration).toMatch(/NEVER deleted/);
   });
 
-  it("ERA-scopes the post-reset assert (live learners may keep state)", () => {
-    // Round-3 gate catch: the post-assert must NOT demand universal zeroing (a
-    // valid post-move learner would abort the txn). It asserts only that no
-    // STRANDED-ERA row (last_activity_date < 2026-07-21) still carries state.
-    expect(migration).toMatch(/stranded-era row\(s\) still carry state/);
-    expect(migration).not.toMatch(
-      /user_xp still has % row\(s\) with non-zero state/
-    );
+  it("post-assert is the RECONCILE invariant (total_xp == sum of survivors)", () => {
+    // Round-4 gate: replace the era-scoped "no stranded row carries state" check
+    // with the drift-proof invariant — no row's total_xp disagrees with the sum
+    // of its surviving xp_transactions. The old era-scoped reset assert is gone.
+    expect(migration).toMatch(/total_xp.*(disagrees|!= sum|<> )/i);
+    expect(migration).not.toMatch(/stranded-era row\(s\) still carry state/);
   });
 });
 
