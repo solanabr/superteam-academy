@@ -12,6 +12,7 @@ const h = vi.hoisted(() => ({
   fetchCourse: vi.fn(),
   upsert: vi.fn(async () => ({ error: null })),
   logError: vi.fn(),
+  getLessonSlot: vi.fn<(courseId: string, lessonId: string) => number>(),
 }));
 
 vi.mock("@/lib/content/queries", () => ({ getCourseById: h.getCourseById }));
@@ -28,6 +29,9 @@ vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({ from: () => ({ upsert: h.upsert }) }),
 }));
 vi.mock("@/lib/logging", () => ({ logError: h.logError }));
+vi.mock("@/lib/courses/lesson-slot", () => ({
+  getLessonSlot: h.getLessonSlot,
+}));
 
 import { batchCompleteCourse, BatchCompleteError } from "../batch-complete";
 
@@ -46,12 +50,27 @@ function courseWithLessons(n: number) {
   };
 }
 
+/** Build a 4-word [u64;4] mask (bigints) with the given bit positions set. */
+function mask(...bits: number[]): bigint[] {
+  const words: [bigint, bigint, bigint, bigint] = [0n, 0n, 0n, 0n];
+  for (const b of bits) {
+    const w = Math.floor(b / 64) as 0 | 1 | 2 | 3;
+    words[w] |= 1n << BigInt(b % 64);
+  }
+  return words;
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   h.getCourseById.mockResolvedValue(courseWithLessons(4));
   h.fetchCourse.mockResolvedValue({ liveLessonCount: 4, xp_per_lesson: 100 });
   h.completeLesson.mockResolvedValue("sig");
   h.upsert.mockResolvedValue({ error: null });
+  // Default dense mapping: lesson `lN` → slot N (slot == array index). Existing
+  // dense cases stay byte-identical; sparse cases override this per test.
+  h.getLessonSlot.mockImplementation((_courseId, lessonId) =>
+    Number(String(lessonId).replace("l", ""))
+  );
 });
 
 describe("batchCompleteCourse", () => {
@@ -96,9 +115,16 @@ describe("batchCompleteCourse", () => {
     expect(h.completeLesson).not.toHaveBeenCalled();
   });
 
-  it("clamps to the on-chain live lesson count (content/chain drift)", async () => {
-    h.getCourseById.mockResolvedValue(courseWithLessons(6)); // content has 6
-    h.fetchCourse.mockResolvedValue({ liveLessonCount: 4, xp_per_lesson: 100 }); // chain has 4
+  it("skips slots not live in the on-chain mask, per-slot (sparse/drift)", async () => {
+    // Content has 6 lessons (slots 0..5) but the on-chain mask only activates
+    // 0..3. The two un-activated slots are isolated into `pending` — via the
+    // per-SLOT bit test, NOT a count truncation — and no revert-bound tx fires
+    // for them (#741).
+    h.getCourseById.mockResolvedValue(courseWithLessons(6));
+    h.fetchCourse.mockResolvedValue({
+      activeLessons: mask(0, 1, 2, 3),
+      xp_per_lesson: 100,
+    });
     h.fetchEnrollment.mockResolvedValue({ lesson_flags: [0n] });
 
     const result = await batchCompleteCourse({
@@ -107,10 +133,73 @@ describe("batchCompleteCourse", () => {
       wallet: WALLET,
     });
 
-    expect(result.total).toBe(4);
-    expect(result.newlyCompleted).toBe(4);
+    expect(result).toEqual({
+      total: 6,
+      newlyCompleted: 4,
+      alreadyComplete: 0,
+      pending: 2, // slots 4 and 5 not live → skipped, no tx
+    });
     const maxIndex = Math.max(...h.completeLesson.mock.calls.map((c) => c[2]));
-    expect(maxIndex).toBe(3); // never touches slots 4 or 5
+    expect(maxIndex).toBe(3); // never attempts slots 4 or 5
+  });
+
+  it("sends the SLOT to completeLesson, not array position (C3 capstone at 15)", async () => {
+    // A 2-lesson course whose second lesson keeps slot 15 (capstone) while a
+    // retired slot 14 sits between; array position would send 1, the slot is 15.
+    h.getCourseById.mockResolvedValue(courseWithLessons(2));
+    h.getLessonSlot.mockImplementation((_c, id) => (id === "l0" ? 0 : 15));
+    h.fetchCourse.mockResolvedValue({
+      activeLessons: mask(0, 15), // 14 retired, 15 (capstone) live
+      xp_per_lesson: 100,
+    });
+    // Old enrollment carries a stale retired-slot-14 bit; it must NOT read as the
+    // capstone being complete.
+    h.fetchEnrollment.mockResolvedValue({ lesson_flags: mask(14) });
+
+    const result = await batchCompleteCourse({
+      userId: "u",
+      courseId: "course-x",
+      wallet: WALLET,
+    });
+
+    expect(result).toEqual({
+      total: 2,
+      newlyCompleted: 2,
+      alreadyComplete: 0,
+      pending: 0,
+    });
+    const slots = h.completeLesson.mock.calls
+      .map((c) => c[2])
+      .sort((a, b) => a - b);
+    expect(slots).toEqual([0, 15]); // capstone sent as slot 15, never 1 or 14
+  });
+
+  it("isolates an unslotted lesson into `pending` (fail-closed, batch continues)", async () => {
+    // Middle lesson has no slot → must NOT fall back to array position; it lands
+    // in `pending` with a logged reason and the rest of the batch proceeds.
+    h.getCourseById.mockResolvedValue(courseWithLessons(3));
+    h.getLessonSlot.mockImplementation((_c, id) => {
+      if (id === "l1") throw new Error("Lesson l1 has no slot in course");
+      return Number(String(id).replace("l", ""));
+    });
+    h.fetchEnrollment.mockResolvedValue({ lesson_flags: [0n] });
+
+    const result = await batchCompleteCourse({
+      userId: "u",
+      courseId: "course-x",
+      wallet: WALLET,
+    });
+
+    expect(result).toEqual({
+      total: 3,
+      newlyCompleted: 2, // l0, l2
+      alreadyComplete: 0,
+      pending: 1, // l1 unslotted
+    });
+    const slots = h.completeLesson.mock.calls
+      .map((c) => c[2])
+      .sort((a, b) => a - b);
+    expect(slots).toEqual([0, 2]); // never attempted l1 at any index
   });
 
   it("isolates a single lesson's on-chain failure into `pending`", async () => {

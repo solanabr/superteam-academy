@@ -8,6 +8,7 @@ import {
 } from "@/lib/solana/academy-program";
 import { fetchEnrollment, fetchCourse } from "@/lib/solana/academy-reads";
 import { isLessonComplete } from "@/lib/solana/bitmap";
+import { getLessonSlot } from "@/lib/courses/lesson-slot";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 import { TEST_OUT_MAX_XP } from "@/lib/courses/test-out";
@@ -94,15 +95,14 @@ export async function batchCompleteCourse(params: {
     );
   }
 
-  // Only complete slots the program will accept: indices < the live lesson
-  // count. A content-vs-chain drift (content has more lessons than the chain has
-  // activated) would otherwise revert on `is_active_slot`. Count-based, correct
-  // while masks are dense (today) — mirrors the complete route's guard.
-  const liveLessonCount =
-    typeof onChainCourse?.liveLessonCount === "number"
-      ? onChainCourse.liveLessonCount
-      : lessons.length;
-  const total = Math.min(lessons.length, liveLessonCount);
+  // Every live lesson is a candidate; `total` (the XP-cap basis and result
+  // denominator) is the live-lesson count. Whether the program will ACCEPT a
+  // given lesson is a per-SLOT decision (`is_active_slot`), tested inside the
+  // loop against `activeLessons` — NOT a count truncation. A count bound would,
+  // on a sparse mask, attempt the wrong lessons (array positions 0..popcount-1)
+  // and skip live high slots such as a capstone at slot 15 (#741).
+  const total = lessons.length;
+  const activeLessons = onChainCourse?.activeLessons;
 
   // Spec cap: refuse a course whose retroactive XP would exceed the ceiling
   // rather than driving an absurd batch mint (xpPerLesson × lessonCount ≤ 10000).
@@ -133,17 +133,63 @@ export async function batchCompleteCourse(params: {
 
   // Sequential: the backend keypair is payer on every tx, and serialising keeps
   // the recent-blockhash / nonce path simple and the RPC load bounded.
-  for (let index = 0; index < total; index++) {
-    const lesson = lessons[index];
+  for (const lesson of lessons) {
     if (!lesson) continue;
 
-    if (isLessonComplete(flags, index)) {
+    // Resolve the permanent on-chain SLOT — never array position (#741).
+    // Fail-CLOSED per lesson: an unslotted lesson is isolated into `pending`
+    // with a logged reason and the batch continues; it never falls back to an
+    // index, which would complete the wrong bit.
+    let slot: number;
+    try {
+      slot = getLessonSlot(courseId, lesson._id);
+    } catch (err: unknown) {
+      pending++;
+      logError({
+        errorId: ERROR_IDS.TEST_OUT_FAILED,
+        error: err instanceof Error ? err : new Error(String(err)),
+        context: {
+          step: "resolve_slot",
+          userId,
+          courseId,
+          lessonId: lesson._id,
+        },
+      });
+      continue;
+    }
+
+    // Skip slots the program has not activated — `complete_lesson` reverts on
+    // `is_active_slot`, so attempting would only burn a reverted-tx fee. Per-SLOT
+    // bit test against the mask (the slot-space replacement for the old count
+    // bound). Counted as `pending`: a re-run after the admin mask re-sync lands
+    // it.
+    if (activeLessons) {
+      const word = Math.floor(slot / 64);
+      const bit = BigInt(slot % 64);
+      const slotLive = ((activeLessons[word] ?? 0n) & (1n << bit)) !== 0n;
+      if (!slotLive) {
+        pending++;
+        logError({
+          errorId: ERROR_IDS.TEST_OUT_FAILED,
+          error: new Error(`slot ${slot} not live on-chain (re-sync pending)`),
+          context: {
+            step: "slot_not_live",
+            userId,
+            courseId,
+            lessonId: lesson._id,
+          },
+        });
+        continue;
+      }
+    }
+
+    if (isLessonComplete(flags, slot)) {
       alreadyComplete++;
       continue;
     }
 
     try {
-      const signature = await completeLesson(courseId, wallet, index);
+      const signature = await completeLesson(courseId, wallet, slot);
       const { error } = await admin.from("user_progress").upsert(
         {
           user_id: userId,
@@ -152,7 +198,7 @@ export async function batchCompleteCourse(params: {
           completed: true,
           completed_at: new Date().toISOString(),
           tx_signature: signature,
-          lesson_index: index,
+          lesson_index: slot,
         },
         { onConflict: "user_id,lesson_id" }
       );
@@ -185,7 +231,7 @@ export async function batchCompleteCourse(params: {
           userId,
           courseId,
           lessonId: lesson._id,
-          lessonIndex: index,
+          lessonIndex: slot,
         },
       });
     }

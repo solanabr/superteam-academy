@@ -76,34 +76,36 @@ export async function resolveCourseId(
 }
 
 /**
- * Resolve lesson_index to lesson_id using Sanity course structure.
- * Flattens modules → lessons and returns the lesson at the given index.
+ * Resolve an on-chain LessonCompleted event's index to a lesson_id.
+ *
+ * The event index IS the permanent on-chain SLOT (that is what the program sets
+ * and what our completion route now sends — #741), NOT the lesson's position in
+ * the flattened module array. Resolving it via array position (the old
+ * `allLessons[index]`) would, on any sparse/reordered course, name the WRONG
+ * lesson — writing a phantom `user_progress` row and an XP reason for a lesson
+ * the learner never did. Resolve slot → lessonId through the committed slot lock.
+ *
+ * A retired or not-yet-synced slot has no live lesson → returns null, which the
+ * caller (`handleLessonCompleted`) already handles gracefully: it skips the
+ * progress upsert and falls the XP reason back to the raw index. Never throws —
+ * a webhook that throws is retried into a loop.
  */
 export async function resolveLessonId(
   courseId: string,
   lessonIndex: number
 ): Promise<string | null> {
-  // Dynamic import to avoid pulling Sanity client into non-page contexts
-  const { getCourseById } = await import("@/lib/content/queries");
   try {
-    const course = await getCourseById(courseId);
-    if (!course) {
-      console.warn(`[resolver] No course found for ${courseId}`);
-      return null;
-    }
-    const allLessons = (course.modules ?? []).flatMap(
-      (m: { lessons?: { _id: string }[] }) => m.lessons ?? []
-    );
-    const lessonId = allLessons[lessonIndex]?._id ?? null;
+    const { slotToLiveLessonId } = await import("@/lib/courses/lesson-slot");
+    const lessonId = slotToLiveLessonId(courseId).get(lessonIndex) ?? null;
     if (!lessonId) {
       console.warn(
-        `[resolver] No lesson at index ${lessonIndex} for course ${courseId} (total: ${allLessons.length})`
+        `[resolver] No live lesson at slot ${lessonIndex} for course ${courseId} (retired or re-sync pending)`
       );
     }
     return lessonId;
   } catch (err) {
     console.error(
-      `[resolver] resolveLessonId failed for course=${courseId} index=${lessonIndex}:`,
+      `[resolver] resolveLessonId failed for course=${courseId} slot=${lessonIndex}:`,
       err
     );
     return null;
