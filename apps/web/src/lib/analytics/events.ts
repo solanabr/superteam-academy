@@ -214,6 +214,20 @@ export function trackOnboardingCompleted(payload: {
  * text — the payload is the same lean challenge shape as the other lifecycle
  * events. XP is untouched; the reveal is framing + review-scheduling only.
  */
+/**
+ * One quiz Check press (#836). `correct` is the client-side set-equality
+ * verdict (D4 open-book — the server re-grades at completion); every press
+ * fires, so retries after a wrong pick are visible as attempt funnels.
+ */
+export function trackQuizChecked(opts: {
+  lessonId: string;
+  courseId: string;
+  questionId: string;
+  correct: boolean;
+}): void {
+  trackEvent("quiz_checked", opts);
+}
+
 export function trackSolutionRevealed(ctx: ChallengeEventContext): void {
   if (revealedSolutionLessons.has(ctx.lessonId)) return;
   revealedSolutionLessons.add(ctx.lessonId);

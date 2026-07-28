@@ -6,6 +6,7 @@ import { CaretDown, CheckCircle, Robot, XCircle } from "@phosphor-icons/react";
 import type { QuizBlockData, QuizQuestionData } from "@superteam-lms/types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { trackQuizChecked } from "@/lib/analytics/events";
 import type { BlockRenderProps } from "./types";
 
 /**
@@ -81,14 +82,26 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
     []
   );
 
-  const check = useCallback((q: QuizQuestionData, chosen: string[]) => {
-    if (chosen.length === 0) return;
-    setResults((prev) => ({
-      ...prev,
-      [q.id]: { chosen, correct: isChoiceCorrect(q, chosen) },
-    }));
-    setCheckedEver((prev) => (prev[q.id] ? prev : { ...prev, [q.id]: true }));
-  }, []);
+  const check = useCallback(
+    (q: QuizQuestionData, chosen: string[]) => {
+      if (chosen.length === 0) return;
+      const correct = isChoiceCorrect(q, chosen);
+      setResults((prev) => ({
+        ...prev,
+        [q.id]: { chosen, correct },
+      }));
+      setCheckedEver((prev) => (prev[q.id] ? prev : { ...prev, [q.id]: true }));
+      // #836: quiz correctness is not persisted server-side; this event is its
+      // only analytics trail (PostHog/GA4, silent no-op when unconfigured).
+      trackQuizChecked({
+        lessonId: ctx.lesson._id,
+        courseId: ctx.courseId,
+        questionId: q.id,
+        correct,
+      });
+    },
+    [ctx.lesson._id, ctx.courseId]
+  );
 
   // Collapsed summary (#770): how many questions are currently answered
   // correctly. Turns green only at a clean sweep, so the badge doubles as the

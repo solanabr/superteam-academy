@@ -1055,7 +1055,8 @@
       "moderation": "Moderación",
       "pendingFlags": "{count, plural, one {# reporte pendiente} other {# reportes pendientes}}",
       "status": "Estado",
-      "content": "Contenido"
+      "content": "Contenido",
+      "insights": "Métricas"
     },
     "counts": {
       "courses": "Cursos",
@@ -1373,6 +1374,43 @@
       "dismiss": "Descartar",
       "errorFetch": "No se pudo actualizar el reporte. Inténtalo de nuevo.",
       "errorNetwork": "Error de red. Inténtalo de nuevo."
+    },
+    "insightsScreen": {
+      "title": "Métricas",
+      "subtitle": "Comportamiento agregado de la plataforma — uso del tutor de IA y actividad de aprendizaje. Sin datos por estudiante.",
+      "loading": "Cargando…",
+      "error": "No se pudieron cargar las métricas.",
+      "empty": "Aún sin datos.",
+      "quizNote": "El acierto en los quizzes se registra como el evento de analítica quiz_checked (PostHog) — no se persiste en el servidor, por lo que aparece en los tableros de PostHog y no aquí.",
+      "ai": {
+        "title": "Tutor de IA",
+        "learners": "Estudiantes que usan IA",
+        "assists": "Asistencias usadas",
+        "spend30d": "Gasto (30d)",
+        "requests30d": "Solicitudes (30d)",
+        "topLessons": "Lecciones por asistencias de IA",
+        "topLessonsHint": "Dónde piden más ayuda — un indicador de dificultad de la lección.",
+        "lesson": "Lección",
+        "assistsCol": "Asistencias",
+        "learnersCol": "Estudiantes",
+        "spendByDay": "Gasto diario",
+        "day": "Día",
+        "usd": "USD",
+        "requests": "Solicitudes"
+      },
+      "learning": {
+        "title": "Aprendizaje",
+        "learners": "Estudiantes",
+        "enrollments": "Inscripciones",
+        "active7d": "Activos (7d)",
+        "active30d": "Activos (30d)",
+        "perCourse": "Completadas por curso",
+        "course": "Curso",
+        "completions": "Completadas",
+        "learnersCol": "Estudiantes",
+        "completionsByDay": "Completadas por día (30d)",
+        "day": "Día"
+      }
     }
   },
   "start": {

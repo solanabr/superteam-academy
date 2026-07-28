@@ -1055,7 +1055,8 @@
       "moderation": "Moderation",
       "pendingFlags": "{count, plural, one {# pending flag} other {# pending flags}}",
       "status": "Status",
-      "content": "Content"
+      "content": "Content",
+      "insights": "Insights"
     },
     "counts": {
       "courses": "Courses",
@@ -1373,6 +1374,43 @@
       "dismiss": "Dismiss",
       "errorFetch": "Failed to update the flag. Please try again.",
       "errorNetwork": "Network error. Please try again."
+    },
+    "insightsScreen": {
+      "title": "Insights",
+      "subtitle": "Aggregate platform behaviour — AI-tutor usage and learning activity. No per-learner data.",
+      "loading": "Loading…",
+      "error": "Failed to load insights.",
+      "empty": "No data yet.",
+      "quizNote": "Quiz correctness is tracked as the quiz_checked product-analytics event (PostHog) — it is not persisted server-side, so it appears in PostHog dashboards rather than here.",
+      "ai": {
+        "title": "AI Tutor",
+        "learners": "Learners using AI",
+        "assists": "Assists used",
+        "spend30d": "Spend (30d)",
+        "requests30d": "Requests (30d)",
+        "topLessons": "Lessons ranked by AI assists",
+        "topLessonsHint": "Where learners ask for the most help — a proxy for lesson difficulty.",
+        "lesson": "Lesson",
+        "assistsCol": "Assists",
+        "learnersCol": "Learners",
+        "spendByDay": "Daily spend",
+        "day": "Day",
+        "usd": "USD",
+        "requests": "Requests"
+      },
+      "learning": {
+        "title": "Learning",
+        "learners": "Learners",
+        "enrollments": "Enrollments",
+        "active7d": "Active (7d)",
+        "active30d": "Active (30d)",
+        "perCourse": "Completions by course",
+        "course": "Course",
+        "completions": "Completions",
+        "learnersCol": "Learners",
+        "completionsByDay": "Completions by day (30d)",
+        "day": "Day"
+      }
     }
   },
   "start": {

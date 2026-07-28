@@ -3,8 +3,8 @@ import type { ReactElement } from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import { AdminNav } from "../admin-nav";
 import messages from "@/messages/en.json";
+import { AdminNav } from "../admin-nav";
 
 const { usePathnameMock } = vi.hoisted(() => ({
   usePathnameMock: vi.fn<() => string>(),
@@ -46,10 +46,10 @@ afterEach(() => {
 });
 
 describe("AdminNav", () => {
-  it("renders exactly the four section links pointing at locale-prefixed routes", () => {
+  it("renders exactly the five section links pointing at locale-prefixed routes", () => {
     renderWithIntl(<AdminNav />);
     const links = screen.getAllByRole("link");
-    expect(links).toHaveLength(4);
+    expect(links).toHaveLength(5);
 
     expect(screen.getByRole("link", { name: nav.courses })).toHaveAttribute(
       "href",
@@ -58,6 +58,10 @@ describe("AdminNav", () => {
     expect(screen.getByRole("link", { name: nav.moderation })).toHaveAttribute(
       "href",
       "/en/admin/moderation"
+    );
+    expect(screen.getByRole("link", { name: nav.insights })).toHaveAttribute(
+      "href",
+      "/en/admin/insights"
     );
     expect(screen.getByRole("link", { name: nav.status })).toHaveAttribute(
       "href",
@@ -93,7 +97,12 @@ describe("AdminNav", () => {
       "aria-current",
       "page"
     );
-    for (const label of [nav.moderation, nav.status, nav.content]) {
+    for (const label of [
+      nav.moderation,
+      nav.insights,
+      nav.status,
+      nav.content,
+    ]) {
       expect(screen.getByRole("link", { name: label })).not.toHaveAttribute(
         "aria-current"
       );
@@ -141,8 +150,8 @@ describe("AdminNav", () => {
     renderWithIntl(<AdminNav />);
 
     await waitFor(() => expect(global.fetch).toHaveBeenCalled());
-    // Nav still renders its four links; the badge simply never shows.
-    expect(screen.getAllByRole("link")).toHaveLength(4);
+    // Nav still renders its five links; the badge simply never shows.
+    expect(screen.getAllByRole("link")).toHaveLength(5);
     expect(
       screen.getByRole("link", { name: nav.moderation })
     ).toBeInTheDocument();

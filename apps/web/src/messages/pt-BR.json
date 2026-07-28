@@ -1055,7 +1055,8 @@
       "moderation": "Moderação",
       "pendingFlags": "{count, plural, one {# denúncia pendente} other {# denúncias pendentes}}",
       "status": "Status",
-      "content": "Conteúdo"
+      "content": "Conteúdo",
+      "insights": "Métricas"
     },
     "counts": {
       "courses": "Cursos",
@@ -1373,6 +1374,43 @@
       "dismiss": "Descartar",
       "errorFetch": "Falha ao atualizar a denúncia. Tente novamente.",
       "errorNetwork": "Erro de rede. Tente novamente."
+    },
+    "insightsScreen": {
+      "title": "Métricas",
+      "subtitle": "Comportamento agregado da plataforma — uso do tutor de IA e atividade de aprendizado. Sem dados por aluno.",
+      "loading": "Carregando…",
+      "error": "Não foi possível carregar as métricas.",
+      "empty": "Sem dados ainda.",
+      "quizNote": "O acerto nos quizzes é registrado como o evento de analytics quiz_checked (PostHog) — não é persistido no servidor, então aparece nos dashboards do PostHog e não aqui.",
+      "ai": {
+        "title": "Tutor de IA",
+        "learners": "Alunos usando IA",
+        "assists": "Assistências usadas",
+        "spend30d": "Gasto (30d)",
+        "requests30d": "Requisições (30d)",
+        "topLessons": "Lições por assistências de IA",
+        "topLessonsHint": "Onde os alunos mais pedem ajuda — um indicador de dificuldade da lição.",
+        "lesson": "Lição",
+        "assistsCol": "Assistências",
+        "learnersCol": "Alunos",
+        "spendByDay": "Gasto diário",
+        "day": "Dia",
+        "usd": "USD",
+        "requests": "Requisições"
+      },
+      "learning": {
+        "title": "Aprendizado",
+        "learners": "Alunos",
+        "enrollments": "Matrículas",
+        "active7d": "Ativos (7d)",
+        "active30d": "Ativos (30d)",
+        "perCourse": "Concluídas por curso",
+        "course": "Curso",
+        "completions": "Concluídas",
+        "learnersCol": "Alunos",
+        "completionsByDay": "Concluídas por dia (30d)",
+        "day": "Dia"
+      }
     }
   },
   "start": {
