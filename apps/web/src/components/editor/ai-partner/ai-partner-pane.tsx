@@ -97,59 +97,68 @@ export function AiPartnerPane({
     >
       {/* Collapsible (#770): the whole pane folds to its header so the reading
           column can be reclaimed. Starts open. */}
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        aria-controls="ai-partner-body"
-        className="flex shrink-0 flex-col gap-2 border-b border-border px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      >
-        <div className="flex items-center gap-2">
-          <Robot
-            size={18}
-            weight="duotone"
-            className="text-primary"
-            aria-hidden="true"
-          />
-          <h2 className="font-display text-sm font-extrabold text-text">
-            {t("title")}
-          </h2>
+      {/* The countdown is a SIBLING of the toggle, not a child (#842). Inside
+          the button, its tooltip was unreadable: any click to inspect it
+          toggled the pane, moving it out from under the pointer. Two controls
+          must not share pixels — so the row splits into [toggle][badge]. */}
+      <div className="flex shrink-0 items-start gap-2 border-b border-border px-4 py-3">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          aria-controls="ai-partner-body"
+          className="flex min-w-0 flex-1 flex-col gap-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <div className="flex items-center gap-2">
+            <Robot
+              size={18}
+              weight="duotone"
+              className="text-primary"
+              aria-hidden="true"
+            />
+            <h2 className="font-display text-sm font-extrabold text-text">
+              {t("title")}
+            </h2>
+            <CaretDown
+              size={14}
+              weight="bold"
+              aria-hidden="true"
+              className={cn(
+                "ml-auto text-text-3 transition-transform",
+                !open && "-rotate-90"
+              )}
+            />
+            <span className="sr-only">{tLesson("toggleSection")}</span>
+          </div>
+          <p className="text-xs text-text-3">
+            {disabled
+              ? t("completed")
+              : locked
+                ? t("lock.title")
+                : t("subtitle")}
+          </p>
+          <AssistMeter freeHintsUsed={freeHintsUsed} paidUsed={paidUsed} />
+        </button>
 
-          {/* Think-first countdown (#770): prominent, in the header's right
-              rail, so the wait is the first thing read — not a footnote. */}
-          {locked && (
-            <span
-              role="status"
-              title={t("lock.tooltip")}
-              aria-label={`${countdown} — ${t("lock.tooltip")}`}
-              className="ml-auto flex cursor-help items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-bold tabular-nums text-text [background:var(--input)]"
-            >
-              <Lock
-                size={16}
-                weight="duotone"
-                className="shrink-0 text-text-3"
-                aria-hidden="true"
-              />
-              {countdown}
-            </span>
-          )}
-          <CaretDown
-            size={14}
-            weight="bold"
-            aria-hidden="true"
-            className={cn(
-              "text-text-3 transition-transform",
-              !locked && "ml-auto",
-              !open && "-rotate-90"
-            )}
-          />
-          <span className="sr-only">{tLesson("toggleSection")}</span>
-        </div>
-        <p className="text-xs text-text-3">
-          {disabled ? t("completed") : locked ? t("lock.title") : t("subtitle")}
-        </p>
-        <AssistMeter freeHintsUsed={freeHintsUsed} paidUsed={paidUsed} />
-      </button>
+        {/* Think-first countdown (#770): prominent, in the header's right rail,
+            so the wait is the first thing read — not a footnote. */}
+        {locked && (
+          <span
+            role="status"
+            title={t("lock.tooltip")}
+            aria-label={`${countdown} — ${t("lock.tooltip")}`}
+            className="flex shrink-0 cursor-help items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-bold tabular-nums text-text [background:var(--input)]"
+          >
+            <Lock
+              size={16}
+              weight="duotone"
+              className="shrink-0 text-text-3"
+              aria-hidden="true"
+            />
+            {countdown}
+          </span>
+        )}
+      </div>
 
       {/* Empty state stays COMPACT (#770): the prompt and the Hint button sit
           together in a short block — no reserved conversation area. The pane
