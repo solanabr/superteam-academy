@@ -13,6 +13,12 @@ describe("parsePrUrl", () => {
     });
   });
 
+  it("tolerates a trailing slash — the paste that hid every preview link (#831)", () => {
+    expect(
+      parsePrUrl("https://github.com/solanabr/courses-academy/pull/24/")
+    ).toMatchObject({ ok: true, number: 24 });
+  });
+
   it("ignores trailing segments and fragments", () => {
     const parsed = parsePrUrl(
       "https://github.com/solanabr/courses-academy/pull/7/files#diff-abc"
