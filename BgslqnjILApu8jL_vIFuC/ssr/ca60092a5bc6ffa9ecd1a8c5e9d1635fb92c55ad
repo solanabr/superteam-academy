@@ -1,0 +1,132 @@
+Object.defineProperty(__vite_ssr_exports__, "default", { enumerable: true, configurable: true, get(){ try { return __vite_ssr_export_default__ } catch {} }});
+const __vite_ssr_export_default__ = [
+	{
+		_id: "path-ai-solana",
+		_type: "learningPath",
+		courses: [
+		],
+		description: "Explore the intersection of artificial intelligence and Solana. Build AI agents that interact with on-chain data and execute transactions.",
+		difficulty: "intermediate",
+		draft: true,
+		order: 6,
+		slug: "ai-solana",
+		tag: "AI Agents",
+		title: "AI x Solana"
+	},
+	{
+		_id: "path-defi",
+		_type: "learningPath",
+		courses: [
+		],
+		description: "Specialize in decentralized finance on Solana. Understand AMMs, lending protocols, token mechanics, and create DeFi primitives.",
+		difficulty: "advanced",
+		draft: true,
+		order: 4,
+		slug: "defi",
+		tag: "DeFi",
+		title: "DeFi"
+	},
+	{
+		_id: "path-frontend",
+		_type: "learningPath",
+		courses: [
+		],
+		description: "Build production-ready Solana dApp frontends. Master wallet integration, on-chain data reading, and interactive transaction UIs.",
+		difficulty: "intermediate",
+		draft: true,
+		order: 3,
+		slug: "frontend",
+		tag: "UI/UX",
+		title: "Frontend"
+	},
+	{
+		_id: "path-infrastructure",
+		_type: "learningPath",
+		courses: [
+		],
+		description: "Learn to build and maintain Solana infrastructure — validators, RPCs, indexers, and developer tooling.",
+		difficulty: "advanced",
+		draft: true,
+		order: 5,
+		slug: "infrastructure",
+		tag: "Infra",
+		title: "Infrastructure"
+	},
+	{
+		_id: "path-rust-programs",
+		_type: "learningPath",
+		courses: [
+		],
+		description: "Master Rust for blockchain and the Anchor framework. Write, test, and deploy production-ready Solana programs.",
+		difficulty: "intermediate",
+		draft: true,
+		order: 2,
+		slug: "rust-programs",
+		tag: "Builder",
+		title: "Rust & Programs"
+	},
+	{
+		_id: "path-security",
+		_type: "learningPath",
+		courses: [
+		],
+		description: "Learn to audit Solana programs for vulnerabilities. Understand common exploit patterns, best practices, and security testing methodologies.",
+		difficulty: "advanced",
+		draft: true,
+		order: 7,
+		slug: "security",
+		tag: "Security",
+		title: "Security & Auditing"
+	},
+	{
+		_id: "path-solana-core",
+		_type: "learningPath",
+		courses: [
+		],
+		description: "The complete path from zero to Solana developer. Start with the fundamentals, understand how the network works, and build your first on-chain program.",
+		difficulty: "beginner",
+		draft: true,
+		order: 1,
+		slug: "solana-core",
+		tag: "Foundation",
+		title: "Solana Core"
+	},
+	{
+		_id: "path-zero-to-deployed",
+		_type: "learningPath",
+		courses: [
+			{
+				_key: "course-rust-for-program-devs",
+				_ref: "course-rust-for-program-devs",
+				_type: "reference",
+				_weak: true
+			},
+			{
+				_key: "course-building-first-program",
+				_ref: "course-building-first-program",
+				_type: "reference",
+				_weak: true
+			},
+			{
+				_key: "course-dapp-sdk-kit",
+				_ref: "course-dapp-sdk-kit",
+				_type: "reference",
+				_weak: true
+			},
+			{
+				_key: "course-stablecoin-payments",
+				_ref: "course-stablecoin-payments",
+				_type: "reference",
+				_weak: true
+			}
+		],
+		description: "The complete path from zero to your first deployed Solana program. Learn how the network works, master Rust and Anchor, then write, build, and ship a real program to Devnet.",
+		difficulty: "beginner",
+		draft: false,
+		order: 1,
+		slug: "zero-to-deployed",
+		tag: "Foundation",
+		title: "Zero to Deployed"
+	}
+];
+//# vitestCache=W3siZmlsZSI6IjEiLCJpZCI6IjEiLCJ1cmwiOiIyIiwiaW1wb3J0ZWRVcmxzIjoiMyIsIm1hcHBpbmdzIjpmYWxzZX0sIi9Vc2Vycy9kYXZpZC9Eb2N1bWVudHMva21pbm8vc29sL3N1cGVydGVhbS1hY2FkZW15L2FwcHMvd2ViL3NyYy9jb250ZW50L2dlbmVyYXRlZC9wYXRocy5qc29uIiwiL3NyYy9jb250ZW50L2dlbmVyYXRlZC9wYXRocy5qc29uIixbXV0=

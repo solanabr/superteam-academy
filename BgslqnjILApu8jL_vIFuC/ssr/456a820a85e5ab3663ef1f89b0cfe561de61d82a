@@ -1,0 +1,46 @@
+Object.defineProperty(__vite_ssr_exports__, "QuizOption", { enumerable: true, configurable: true, get(){ try { return QuizOption } catch {} }});
+Object.defineProperty(__vite_ssr_exports__, "QuizQuestion", { enumerable: true, configurable: true, get(){ try { return QuizQuestion } catch {} }});
+Object.defineProperty(__vite_ssr_exports__, "QuizBlock", { enumerable: true, configurable: true, get(){ try { return QuizBlock } catch {} }});
+const __vite_ssr_import_0__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/zod@4.4.3/node_modules/zod/index.js", {"importedNames":["z"]});
+const __vite_ssr_import_1__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/packages/content-schema/src/blocks/base.ts", {"importedNames":["blockBase"]});
+const unique = (xs) => new Set(xs).size === xs.length;
+const QuizOption = __vite_ssr_import_0__.z.object({
+  id: __vite_ssr_import_0__.z.string().min(1),
+  label: __vite_ssr_import_0__.z.string().min(1),
+  correct: __vite_ssr_import_0__.z.boolean(),
+  /** Shown when the learner picks this specific option. OLX `<choicehint>`. */
+  feedback: __vite_ssr_import_0__.z.string().min(1).optional()
+});
+const QuizQuestion = __vite_ssr_import_0__.z.object({
+  id: __vite_ssr_import_0__.z.string().min(1),
+  prompt: __vite_ssr_import_0__.z.string().min(1),
+  /** true → correctness is a SET of option ids (QTI `cardinality="multiple"`). */
+  multiSelect: __vite_ssr_import_0__.z.boolean().default(false),
+  options: __vite_ssr_import_0__.z.array(QuizOption).min(2),
+  /** Shown after submission regardless of choice. OLX `<solution>`. */
+  explanation: __vite_ssr_import_0__.z.string().min(1).optional()
+}).refine((q) => unique(q.options.map((o) => o.id)), {
+  message: "option ids must be unique within a question",
+  path: ["options"]
+}).refine((q) => q.options.some((o) => o.correct), {
+  message: "at least one option must be correct",
+  path: ["options"]
+}).refine(
+  (q) => q.multiSelect || q.options.filter((o) => o.correct).length === 1,
+  {
+    message: "exactly one option must be correct when multiSelect is false",
+    path: ["options"]
+  }
+);
+const QuizBlock = __vite_ssr_import_0__.z.object({
+  type: __vite_ssr_import_0__.z.literal("quiz"),
+  ...__vite_ssr_import_1__.blockBase,
+  questions: __vite_ssr_import_0__.z.array(QuizQuestion).min(1)
+}).refine((b) => unique(b.questions.map((q) => q.id)), {
+  message: "question ids must be unique within a quiz",
+  path: ["questions"]
+});
+//# sourceMappingSource=vite-generated
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJtYXBwaW5ncyI6IkFBQUEsQ0FBQTs7O0FBQUE7QUFDQTtBQUVBLE1BQU0sU0FBUyxDQUFJLE9BQXFCLElBQUksSUFBSSxFQUFFLEVBQUUsU0FBUyxHQUFHO0FBUXpELE1BQU0sYUFBYSx3QkFBRSxPQUFPO0FBQUEsRUFDakMsSUFBSSx3QkFBRSxPQUFPLEVBQUUsSUFBSSxDQUFDO0FBQUEsRUFDcEIsT0FBTyx3QkFBRSxPQUFPLEVBQUUsSUFBSSxDQUFDO0FBQUEsRUFDdkIsU0FBUyx3QkFBRSxRQUFRO0FBQUE7QUFBQSxFQUVuQixVQUFVLHdCQUFFLE9BQU8sRUFBRSxJQUFJLENBQUMsRUFBRSxTQUFTO0FBQ3ZDLENBQUM7QUFFTSxNQUFNLGVBQWUsd0JBQ3pCLE9BQU87QUFBQSxFQUNOLElBQUksd0JBQUUsT0FBTyxFQUFFLElBQUksQ0FBQztBQUFBLEVBQ3BCLFFBQVEsd0JBQUUsT0FBTyxFQUFFLElBQUksQ0FBQztBQUFBO0FBQUEsRUFFeEIsYUFBYSx3QkFBRSxRQUFRLEVBQUUsUUFBUSxLQUFLO0FBQUEsRUFDdEMsU0FBUyx3QkFBRSxNQUFNLFVBQVUsRUFBRSxJQUFJLENBQUM7QUFBQTtBQUFBLEVBRWxDLGFBQWEsd0JBQUUsT0FBTyxFQUFFLElBQUksQ0FBQyxFQUFFLFNBQVM7QUFDMUMsQ0FBQyxFQUNBLE9BQU8sQ0FBQyxNQUFNLE9BQU8sRUFBRSxRQUFRLElBQUksQ0FBQyxNQUFNLEVBQUUsRUFBRSxDQUFDLEdBQUc7QUFBQSxFQUNqRCxTQUFTO0FBQUEsRUFDVCxNQUFNLENBQUMsU0FBUztBQUNsQixDQUFDLEVBQ0EsT0FBTyxDQUFDLE1BQU0sRUFBRSxRQUFRLEtBQUssQ0FBQyxNQUFNLEVBQUUsT0FBTyxHQUFHO0FBQUEsRUFDL0MsU0FBUztBQUFBLEVBQ1QsTUFBTSxDQUFDLFNBQVM7QUFDbEIsQ0FBQyxFQUNBO0FBQUEsRUFDQyxDQUFDLE1BQU0sRUFBRSxlQUFlLEVBQUUsUUFBUSxPQUFPLENBQUMsTUFBTSxFQUFFLE9BQU8sRUFBRSxXQUFXO0FBQUEsRUFDdEU7QUFBQSxJQUNFLFNBQVM7QUFBQSxJQUNULE1BQU0sQ0FBQyxTQUFTO0FBQUEsRUFDbEI7QUFDRjtBQUVLLE1BQU0sWUFBWSx3QkFDdEIsT0FBTztBQUFBLEVBQ04sTUFBTSx3QkFBRSxRQUFRLE1BQU07QUFBQSxFQUN0QixHQUFHO0FBQUEsRUFDSCxXQUFXLHdCQUFFLE1BQU0sWUFBWSxFQUFFLElBQUksQ0FBQztBQUN4QyxDQUFDLEVBQ0EsT0FBTyxDQUFDLE1BQU0sT0FBTyxFQUFFLFVBQVUsSUFBSSxDQUFDLE1BQU0sRUFBRSxFQUFFLENBQUMsR0FBRztBQUFBLEVBQ25ELFNBQVM7QUFBQSxFQUNULE1BQU0sQ0FBQyxXQUFXO0FBQ3BCLENBQUMiLCJuYW1lcyI6W10sImlnbm9yZUxpc3QiOltdLCJzb3VyY2VzIjpbInF1aXoudHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgeiB9IGZyb20gXCJ6b2RcIjtcbmltcG9ydCB7IGJsb2NrQmFzZSB9IGZyb20gXCIuL2Jhc2VcIjtcblxuY29uc3QgdW5pcXVlID0gPFQ+KHhzOiByZWFkb25seSBUW10pID0+IG5ldyBTZXQoeHMpLnNpemUgPT09IHhzLmxlbmd0aDtcblxuLyoqXG4gKiBDb3JyZWN0bmVzcyBpcyBrZXllZCB0byBhIHN0YWJsZSBvcHRpb24gYGlkYCwgbmV2ZXIgYW4gYXJyYXkgaW5kZXgg4oCUIGJvdGggZWRYXG4gKiBPTFggKGA8Y2hvaWNlIG5hbWU9XCJhXCIgY29ycmVjdD1cInRydWVcIj5gKSBhbmQgSU1TIFFUSSAoYDxzaW1wbGVDaG9pY2VcbiAqIGlkZW50aWZpZXI9XCJDaG9pY2VBXCI+YCkgZG8gdGhpcywgYmVjYXVzZSByZW9yZGVyaW5nIG9wdGlvbnMgbXVzdCBub3Qgc2lsZW50bHlcbiAqIGNoYW5nZSB0aGUgYW5zd2VyLlxuICovXG5leHBvcnQgY29uc3QgUXVpek9wdGlvbiA9IHoub2JqZWN0KHtcbiAgaWQ6IHouc3RyaW5nKCkubWluKDEpLFxuICBsYWJlbDogei5zdHJpbmcoKS5taW4oMSksXG4gIGNvcnJlY3Q6IHouYm9vbGVhbigpLFxuICAvKiogU2hvd24gd2hlbiB0aGUgbGVhcm5lciBwaWNrcyB0aGlzIHNwZWNpZmljIG9wdGlvbi4gT0xYIGA8Y2hvaWNlaGludD5gLiAqL1xuICBmZWVkYmFjazogei5zdHJpbmcoKS5taW4oMSkub3B0aW9uYWwoKSxcbn0pO1xuXG5leHBvcnQgY29uc3QgUXVpelF1ZXN0aW9uID0gelxuICAub2JqZWN0KHtcbiAgICBpZDogei5zdHJpbmcoKS5taW4oMSksXG4gICAgcHJvbXB0OiB6LnN0cmluZygpLm1pbigxKSxcbiAgICAvKiogdHJ1ZSDihpIgY29ycmVjdG5lc3MgaXMgYSBTRVQgb2Ygb3B0aW9uIGlkcyAoUVRJIGBjYXJkaW5hbGl0eT1cIm11bHRpcGxlXCJgKS4gKi9cbiAgICBtdWx0aVNlbGVjdDogei5ib29sZWFuKCkuZGVmYXVsdChmYWxzZSksXG4gICAgb3B0aW9uczogei5hcnJheShRdWl6T3B0aW9uKS5taW4oMiksXG4gICAgLyoqIFNob3duIGFmdGVyIHN1Ym1pc3Npb24gcmVnYXJkbGVzcyBvZiBjaG9pY2UuIE9MWCBgPHNvbHV0aW9uPmAuICovXG4gICAgZXhwbGFuYXRpb246IHouc3RyaW5nKCkubWluKDEpLm9wdGlvbmFsKCksXG4gIH0pXG4gIC5yZWZpbmUoKHEpID0+IHVuaXF1ZShxLm9wdGlvbnMubWFwKChvKSA9PiBvLmlkKSksIHtcbiAgICBtZXNzYWdlOiBcIm9wdGlvbiBpZHMgbXVzdCBiZSB1bmlxdWUgd2l0aGluIGEgcXVlc3Rpb25cIixcbiAgICBwYXRoOiBbXCJvcHRpb25zXCJdLFxuICB9KVxuICAucmVmaW5lKChxKSA9PiBxLm9wdGlvbnMuc29tZSgobykgPT4gby5jb3JyZWN0KSwge1xuICAgIG1lc3NhZ2U6IFwiYXQgbGVhc3Qgb25lIG9wdGlvbiBtdXN0IGJlIGNvcnJlY3RcIixcbiAgICBwYXRoOiBbXCJvcHRpb25zXCJdLFxuICB9KVxuICAucmVmaW5lKFxuICAgIChxKSA9PiBxLm11bHRpU2VsZWN0IHx8IHEub3B0aW9ucy5maWx0ZXIoKG8pID0+IG8uY29ycmVjdCkubGVuZ3RoID09PSAxLFxuICAgIHtcbiAgICAgIG1lc3NhZ2U6IFwiZXhhY3RseSBvbmUgb3B0aW9uIG11c3QgYmUgY29ycmVjdCB3aGVuIG11bHRpU2VsZWN0IGlzIGZhbHNlXCIsXG4gICAgICBwYXRoOiBbXCJvcHRpb25zXCJdLFxuICAgIH1cbiAgKTtcblxuZXhwb3J0IGNvbnN0IFF1aXpCbG9jayA9IHpcbiAgLm9iamVjdCh7XG4gICAgdHlwZTogei5saXRlcmFsKFwicXVpelwiKSxcbiAgICAuLi5ibG9ja0Jhc2UsXG4gICAgcXVlc3Rpb25zOiB6LmFycmF5KFF1aXpRdWVzdGlvbikubWluKDEpLFxuICB9KVxuICAucmVmaW5lKChiKSA9PiB1bmlxdWUoYi5xdWVzdGlvbnMubWFwKChxKSA9PiBxLmlkKSksIHtcbiAgICBtZXNzYWdlOiBcInF1ZXN0aW9uIGlkcyBtdXN0IGJlIHVuaXF1ZSB3aXRoaW4gYSBxdWl6XCIsXG4gICAgcGF0aDogW1wicXVlc3Rpb25zXCJdLFxuICB9KTtcblxuZXhwb3J0IHR5cGUgUXVpekJsb2NrVCA9IHouaW5mZXI8dHlwZW9mIFF1aXpCbG9jaz47XG4iXSwiZmlsZSI6Ii9AZnMvVXNlcnMvZGF2aWQvRG9jdW1lbnRzL2ttaW5vL3NvbC9zdXBlcnRlYW0tYWNhZGVteS9wYWNrYWdlcy9jb250ZW50LXNjaGVtYS9zcmMvYmxvY2tzL3F1aXoudHMifQ==
+
+//# vitestCache=W3siZmlsZSI6IjEiLCJpZCI6IjEiLCJ1cmwiOiIyIiwiaW1wb3J0ZWRVcmxzIjoiMyIsIm1hcHBpbmdzIjpmYWxzZX0sIi9Vc2Vycy9kYXZpZC9Eb2N1bWVudHMva21pbm8vc29sL3N1cGVydGVhbS1hY2FkZW15L3BhY2thZ2VzL2NvbnRlbnQtc2NoZW1hL3NyYy9ibG9ja3MvcXVpei50cyIsIi9AZnMvVXNlcnMvZGF2aWQvRG9jdW1lbnRzL2ttaW5vL3NvbC9zdXBlcnRlYW0tYWNhZGVteS9wYWNrYWdlcy9jb250ZW50LXNjaGVtYS9zcmMvYmxvY2tzL3F1aXoudHMiLFtdXQ==

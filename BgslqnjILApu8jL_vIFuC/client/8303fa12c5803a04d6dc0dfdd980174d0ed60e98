@@ -1,0 +1,63 @@
+Object.defineProperty(__vite_ssr_exports__, "initGA4", { enumerable: true, configurable: true, get(){ try { return __vite_ssr_import_3__.initGA4 } catch {} }});
+Object.defineProperty(__vite_ssr_exports__, "trackGA4Event", { enumerable: true, configurable: true, get(){ try { return __vite_ssr_import_3__.trackGA4Event } catch {} }});
+Object.defineProperty(__vite_ssr_exports__, "trackGA4PageView", { enumerable: true, configurable: true, get(){ try { return __vite_ssr_import_3__.trackGA4PageView } catch {} }});
+Object.defineProperty(__vite_ssr_exports__, "initPostHog", { enumerable: true, configurable: true, get(){ try { return __vite_ssr_import_4__.initPostHog } catch {} }});
+Object.defineProperty(__vite_ssr_exports__, "trackPostHogEvent", { enumerable: true, configurable: true, get(){ try { return __vite_ssr_import_4__.trackPostHogEvent } catch {} }});
+Object.defineProperty(__vite_ssr_exports__, "identifyPostHogUser", { enumerable: true, configurable: true, get(){ try { return __vite_ssr_import_4__.identifyPostHogUser } catch {} }});
+Object.defineProperty(__vite_ssr_exports__, "resetPostHogUser", { enumerable: true, configurable: true, get(){ try { return __vite_ssr_import_4__.resetPostHogUser } catch {} }});
+Object.defineProperty(__vite_ssr_exports__, "initSentry", { enumerable: true, configurable: true, get(){ try { return __vite_ssr_import_5__.initSentry } catch {} }});
+Object.defineProperty(__vite_ssr_exports__, "captureError", { enumerable: true, configurable: true, get(){ try { return __vite_ssr_import_5__.captureError } catch {} }});
+Object.defineProperty(__vite_ssr_exports__, "setSentryUser", { enumerable: true, configurable: true, get(){ try { return __vite_ssr_import_5__.setSentryUser } catch {} }});
+Object.defineProperty(__vite_ssr_exports__, "EVALUATION_WINDOW_WEEKS", { enumerable: true, configurable: true, get(){ try { return __vite_ssr_import_6__.EVALUATION_WINDOW_WEEKS } catch {} }});
+Object.defineProperty(__vite_ssr_exports__, "EVALUATION_WINDOW_DAYS", { enumerable: true, configurable: true, get(){ try { return __vite_ssr_import_6__.EVALUATION_WINDOW_DAYS } catch {} }});
+Object.defineProperty(__vite_ssr_exports__, "LAUNCH_DATE", { enumerable: true, configurable: true, get(){ try { return __vite_ssr_import_6__.LAUNCH_DATE } catch {} }});
+Object.defineProperty(__vite_ssr_exports__, "EXPERIMENT_REGISTRY", { enumerable: true, configurable: true, get(){ try { return __vite_ssr_import_6__.EXPERIMENT_REGISTRY } catch {} }});
+Object.defineProperty(__vite_ssr_exports__, "earliestReadDate", { enumerable: true, configurable: true, get(){ try { return __vite_ssr_import_6__.earliestReadDate } catch {} }});
+Object.defineProperty(__vite_ssr_exports__, "exposureStartFor", { enumerable: true, configurable: true, get(){ try { return __vite_ssr_import_6__.exposureStartFor } catch {} }});
+Object.defineProperty(__vite_ssr_exports__, "registryWithEarliestRead", { enumerable: true, configurable: true, get(){ try { return __vite_ssr_import_6__.registryWithEarliestRead } catch {} }});
+Object.defineProperty(__vite_ssr_exports__, "isReadable", { enumerable: true, configurable: true, get(){ try { return __vite_ssr_import_6__.isReadable } catch {} }});
+Object.defineProperty(__vite_ssr_exports__, "initAnalytics", { enumerable: true, configurable: true, get(){ try { return initAnalytics } catch {} }});
+Object.defineProperty(__vite_ssr_exports__, "trackEvent", { enumerable: true, configurable: true, get(){ try { return trackEvent } catch {} }});
+Object.defineProperty(__vite_ssr_exports__, "trackPageView", { enumerable: true, configurable: true, get(){ try { return trackPageView } catch {} }});
+Object.defineProperty(__vite_ssr_exports__, "identifyUser", { enumerable: true, configurable: true, get(){ try { return identifyUser } catch {} }});
+const __vite_ssr_import_0__ = await __vite_ssr_import__("/src/lib/analytics/ga4.ts", {"importedNames":["initGA4","trackGA4Event","trackGA4PageView"]});
+const __vite_ssr_import_1__ = await __vite_ssr_import__("/src/lib/analytics/posthog.ts", {"importedNames":["initPostHog","trackPostHogEvent","identifyPostHogUser"]});
+const __vite_ssr_import_2__ = await __vite_ssr_import__("/src/lib/analytics/sentry.ts", {"importedNames":["initSentry","setSentryUser"]});
+const __vite_ssr_import_3__ = await __vite_ssr_import__("/src/lib/analytics/ga4.ts", {"importedNames":["initGA4","trackGA4Event","trackGA4PageView"]});
+const __vite_ssr_import_4__ = await __vite_ssr_import__("/src/lib/analytics/posthog.ts", {"importedNames":["initPostHog","trackPostHogEvent","identifyPostHogUser","resetPostHogUser"]});
+
+
+
+
+
+const __vite_ssr_import_5__ = await __vite_ssr_import__("/src/lib/analytics/sentry.ts", {"importedNames":["initSentry","captureError","setSentryUser"]});
+const __vite_ssr_import_6__ = await __vite_ssr_import__("/src/lib/analytics/experiment-registry.ts", {"importedNames":["EVALUATION_WINDOW_WEEKS","EVALUATION_WINDOW_DAYS","LAUNCH_DATE","EXPERIMENT_REGISTRY","earliestReadDate","exposureStartFor","registryWithEarliestRead","isReadable"]});
+
+
+
+
+
+
+
+
+
+async function initAnalytics() {
+  (0,__vite_ssr_import_0__.initGA4)();
+  await Promise.all([(0,__vite_ssr_import_1__.initPostHog)(), (0,__vite_ssr_import_2__.initSentry)()]);
+};
+function trackEvent(name, properties) {
+  (0,__vite_ssr_import_0__.trackGA4Event)(name, properties);
+  (0,__vite_ssr_import_1__.trackPostHogEvent)(name, properties);
+};
+function trackPageView(url) {
+  (0,__vite_ssr_import_0__.trackGA4PageView)(url);
+  (0,__vite_ssr_import_1__.trackPostHogEvent)("$pageview", { $current_url: url });
+};
+function identifyUser(userId, traits) {
+  (0,__vite_ssr_import_1__.identifyPostHogUser)(userId, traits);
+  (0,__vite_ssr_import_2__.setSentryUser)(userId);
+}
+//# sourceMappingSource=vite-generated
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJtYXBwaW5ncyI6IkFBQUEsQ0FBQTs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7OztBQXNCQTtBQUNBO0FBQ0E7QUFHQTtBQUNBOzs7Ozs7QUFNQTtBQUNBOzs7Ozs7Ozs7O0FBa0JBLGVBQXNCLGdCQUErQjtBQUNuRCxvQ0FBUTtBQUNSLFFBQU0sUUFBUSxJQUFJLElBQUMsbUNBQVksTUFBRyxrQ0FBVyxDQUFDLENBQUM7QUFDakQ7QUFLTyxTQUFTLFdBQ2QsTUFDQSxZQUNNO0FBQ04sMENBQWMsTUFBTSxVQUFVO0FBQzlCLDhDQUFrQixNQUFNLFVBQVU7QUFDcEM7QUFLTyxTQUFTLGNBQWMsS0FBbUI7QUFDL0MsNkNBQWlCLEdBQUc7QUFDcEIsOENBQWtCLGFBQWEsRUFBRSxjQUFjLElBQUksQ0FBQztBQUN0RDtBQUtPLFNBQVMsYUFDZCxRQUNBLFFBQ007QUFDTixnREFBb0IsUUFBUSxNQUFNO0FBQ2xDLDBDQUFjLE1BQU07QUFDdEIiLCJuYW1lcyI6W10sImlnbm9yZUxpc3QiOltdLCJzb3VyY2VzIjpbImluZGV4LnRzIl0sInNvdXJjZXNDb250ZW50IjpbIi8qKlxuICogQW5hbHl0aWNzIGZhY2FkZSDigJQgdW5pZmllZCBlbnRyeSBwb2ludCBmb3IgYWxsIGFuYWx5dGljcyBwcm92aWRlcnMuXG4gKlxuICogRGlzcGF0Y2hlcyB0cmFja2luZyBjYWxscyB0byBHQTQsIFBvc3RIb2csIGFuZCBTZW50cnkuIEVhY2ggcHJvdmlkZXJcbiAqIGdyYWNlZnVsbHkgZGVncmFkZXMgd2hlbiBpdHMgZW52aXJvbm1lbnQgdmFyaWFibGVzIGFyZSBub3QgY29uZmlndXJlZC5cbiAqXG4gKiBVc2FnZTpcbiAqICAgaW1wb3J0IHsgaW5pdEFuYWx5dGljcywgdHJhY2tFdmVudCwgdHJhY2tQYWdlVmlldywgaWRlbnRpZnlVc2VyIH0gZnJvbSBcIkAvbGliL2FuYWx5dGljc1wiO1xuICpcbiAqICAgLy8gQ2FsbCBvbmNlIG9uIGFwcCBtb3VudCAoZS5nLiwgaW4gYSBjbGllbnQtc2lkZSBsYXlvdXQgZWZmZWN0KVxuICogICBhd2FpdCBpbml0QW5hbHl0aWNzKCk7XG4gKlxuICogICAvLyBUcmFjayBldmVudHNcbiAqICAgdHJhY2tFdmVudChcImxlc3Nvbl9jb21wbGV0ZWRcIiwgeyBsZXNzb25JZDogXCJpbnRyby0xXCIsIHhwOiA1MCB9KTtcbiAqICAgdHJhY2tQYWdlVmlldyhcIi9lbi9jb3Vyc2VzL2ludHJvLXRvLXNvbGFuYVwiKTtcbiAqICAgaWRlbnRpZnlVc2VyKFwidXNlci11dWlkXCIsIHsgd2FsbGV0QWRkcmVzczogXCI3eEsuLi5cIiB9KTtcbiAqXG4gKiBUaGUgY2Fub25pY2FsIGV2ZW50IGludmVudG9yeSAobmFtZXMsIHBheWxvYWQgc2hhcGVzLCByZXNlcnZlZCBuYW1lcykgaXNcbiAqIGRvY3VtZW50ZWQgaW4gUkVBRE1FLm1kIG5leHQgdG8gdGhpcyBmaWxlOyB0eXBlZCBoZWxwZXJzIHdpdGggZGVkdXBlIGxpdmVcbiAqIGluIGV2ZW50cy50cy5cbiAqL1xuXG5pbXBvcnQgeyBpbml0R0E0LCB0cmFja0dBNEV2ZW50LCB0cmFja0dBNFBhZ2VWaWV3IH0gZnJvbSBcIi4vZ2E0XCI7XG5pbXBvcnQgeyBpbml0UG9zdEhvZywgdHJhY2tQb3N0SG9nRXZlbnQsIGlkZW50aWZ5UG9zdEhvZ1VzZXIgfSBmcm9tIFwiLi9wb3N0aG9nXCI7XG5pbXBvcnQgeyBpbml0U2VudHJ5LCBzZXRTZW50cnlVc2VyIH0gZnJvbSBcIi4vc2VudHJ5XCI7XG5cbi8vIFJlLWV4cG9ydCBpbmRpdmlkdWFsIG1vZHVsZXMgZm9yIGdyYW51bGFyIGFjY2Vzc1xuZXhwb3J0IHsgaW5pdEdBNCwgdHJhY2tHQTRFdmVudCwgdHJhY2tHQTRQYWdlVmlldyB9IGZyb20gXCIuL2dhNFwiO1xuZXhwb3J0IHtcbiAgaW5pdFBvc3RIb2csXG4gIHRyYWNrUG9zdEhvZ0V2ZW50LFxuICBpZGVudGlmeVBvc3RIb2dVc2VyLFxuICByZXNldFBvc3RIb2dVc2VyLFxufSBmcm9tIFwiLi9wb3N0aG9nXCI7XG5leHBvcnQgeyBpbml0U2VudHJ5LCBjYXB0dXJlRXJyb3IsIHNldFNlbnRyeVVzZXIgfSBmcm9tIFwiLi9zZW50cnlcIjtcbmV4cG9ydCB7XG4gIEVWQUxVQVRJT05fV0lORE9XX1dFRUtTLFxuICBFVkFMVUFUSU9OX1dJTkRPV19EQVlTLFxuICBMQVVOQ0hfREFURSxcbiAgRVhQRVJJTUVOVF9SRUdJU1RSWSxcbiAgZWFybGllc3RSZWFkRGF0ZSxcbiAgZXhwb3N1cmVTdGFydEZvcixcbiAgcmVnaXN0cnlXaXRoRWFybGllc3RSZWFkLFxuICBpc1JlYWRhYmxlLFxuICB0eXBlIEV4cGVyaW1lbnRSZWdpc3RyeUVudHJ5LFxuICB0eXBlIEV4cGVyaW1lbnRSb3csXG4gIHR5cGUgRXhwZXJpbWVudFN0YXR1cyxcbn0gZnJvbSBcIi4vZXhwZXJpbWVudC1yZWdpc3RyeVwiO1xuXG4vKipcbiAqIEluaXRpYWxpemUgYWxsIGFuYWx5dGljcyBwcm92aWRlcnMuXG4gKiBDYWxsIHRoaXMgb25jZSB3aGVuIHRoZSBhcHBsaWNhdGlvbiBtb3VudHMgb24gdGhlIGNsaWVudCBzaWRlLlxuICovXG5leHBvcnQgYXN5bmMgZnVuY3Rpb24gaW5pdEFuYWx5dGljcygpOiBQcm9taXNlPHZvaWQ+IHtcbiAgaW5pdEdBNCgpO1xuICBhd2FpdCBQcm9taXNlLmFsbChbaW5pdFBvc3RIb2coKSwgaW5pdFNlbnRyeSgpXSk7XG59XG5cbi8qKlxuICogVHJhY2sgYSBuYW1lZCBldmVudCBhY3Jvc3MgYWxsIGNvbmZpZ3VyZWQgcHJvdmlkZXJzLlxuICovXG5leHBvcnQgZnVuY3Rpb24gdHJhY2tFdmVudChcbiAgbmFtZTogc3RyaW5nLFxuICBwcm9wZXJ0aWVzPzogUmVjb3JkPHN0cmluZywgdW5rbm93bj5cbik6IHZvaWQge1xuICB0cmFja0dBNEV2ZW50KG5hbWUsIHByb3BlcnRpZXMpO1xuICB0cmFja1Bvc3RIb2dFdmVudChuYW1lLCBwcm9wZXJ0aWVzKTtcbn1cblxuLyoqXG4gKiBUcmFjayBhIHBhZ2UgdmlldyBhY3Jvc3MgYWxsIGNvbmZpZ3VyZWQgcHJvdmlkZXJzLlxuICovXG5leHBvcnQgZnVuY3Rpb24gdHJhY2tQYWdlVmlldyh1cmw6IHN0cmluZyk6IHZvaWQge1xuICB0cmFja0dBNFBhZ2VWaWV3KHVybCk7XG4gIHRyYWNrUG9zdEhvZ0V2ZW50KFwiJHBhZ2V2aWV3XCIsIHsgJGN1cnJlbnRfdXJsOiB1cmwgfSk7XG59XG5cbi8qKlxuICogSWRlbnRpZnkgdGhlIGN1cnJlbnQgdXNlciBhY3Jvc3MgYWxsIGNvbmZpZ3VyZWQgcHJvdmlkZXJzLlxuICovXG5leHBvcnQgZnVuY3Rpb24gaWRlbnRpZnlVc2VyKFxuICB1c2VySWQ6IHN0cmluZyxcbiAgdHJhaXRzPzogUmVjb3JkPHN0cmluZywgdW5rbm93bj5cbik6IHZvaWQge1xuICBpZGVudGlmeVBvc3RIb2dVc2VyKHVzZXJJZCwgdHJhaXRzKTtcbiAgc2V0U2VudHJ5VXNlcih1c2VySWQpO1xufVxuIl0sImZpbGUiOiIvc3JjL2xpYi9hbmFseXRpY3MvaW5kZXgudHMifQ==
+
+//# vitestCache=W3siZmlsZSI6IjEiLCJpZCI6IjEiLCJ1cmwiOiIyIiwiaW1wb3J0ZWRVcmxzIjoiMyIsIm1hcHBpbmdzIjpmYWxzZX0sIi9Vc2Vycy9kYXZpZC9Eb2N1bWVudHMva21pbm8vc29sL3N1cGVydGVhbS1hY2FkZW15L2FwcHMvd2ViL3NyYy9saWIvYW5hbHl0aWNzL2luZGV4LnRzIiwiL3NyYy9saWIvYW5hbHl0aWNzL2luZGV4LnRzIixbXV0=

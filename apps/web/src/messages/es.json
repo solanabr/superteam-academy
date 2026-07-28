@@ -1483,5 +1483,38 @@
     "submit": "Enviar respuestas",
     "unavailableTitle": "La prueba de nivel no está disponible aquí",
     "unavailableBody": "Este curso no ofrece prueba de nivel por ahora. Ábrelo y haz las lecciones — ganas XP en cada una."
+  },
+  "teachPreview": {
+    "title": "Vista previa del curso",
+    "subtitle": "Pega un enlace de pull request del repo de cursos para ver cómo se verá en la Academia.",
+    "loading": "Cargando",
+    "auth": {
+      "title": "Vista previa para docentes",
+      "body": "Ingresa la contraseña de acceso para previsualizar cursos no publicados.",
+      "placeholder": "Contraseña de acceso",
+      "submit": "Desbloquear",
+      "invalid": "Contraseña inválida"
+    },
+    "form": {
+      "placeholder": "https://github.com/solanabr/courses-academy/pull/42",
+      "submit": "Previsualizar",
+      "loading": "Compilando…"
+    },
+    "head": {
+      "meta": "por {author} · {branch} · {sha}"
+    },
+    "course": {
+      "lessons": "{count} lecciones"
+    },
+    "issues": {
+      "title": "{count} problema(s) de contenido",
+      "body": "Son las mismas verificaciones que corren en CI. Corrígelas en tu pull request y vuelve a previsualizar."
+    },
+    "errors": {
+      "generic": "No se pudo compilar este pull request.",
+      "network": "Error de red. Inténtalo de nuevo."
+    },
+    "empty": "Este pull request no contiene cursos.",
+    "viewCommit": "Ver commit en GitHub"
   }
 }

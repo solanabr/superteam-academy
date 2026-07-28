@@ -1,0 +1,22 @@
+Object.defineProperty(__vite_ssr_exports__, "LearningPath", { enumerable: true, configurable: true, get(){ try { return LearningPath } catch {} }});
+const __vite_ssr_import_0__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/zod@4.4.3/node_modules/zod/index.js", {"importedNames":["z"]});
+const __vite_ssr_import_1__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/packages/content-schema/src/ids.ts", {"importedNames":["CourseId","PathId"]});
+const __vite_ssr_import_2__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/packages/content-schema/src/constants.ts", {"importedNames":["DIFFICULTIES"]});
+const LearningPath = __vite_ssr_import_0__.z.object({
+  id: __vite_ssr_import_1__.PathId,
+  slug: __vite_ssr_import_0__.z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  title: __vite_ssr_import_0__.z.string().min(1),
+  description: __vite_ssr_import_0__.z.string().optional(),
+  tag: __vite_ssr_import_0__.z.string().optional(),
+  order: __vite_ssr_import_0__.z.number().int().min(0).default(0),
+  difficulty: __vite_ssr_import_0__.z.enum((0,__vite_ssr_import_2__.DIFFICULTIES)),
+  draft: __vite_ssr_import_0__.z.boolean().default(false),
+  courses: __vite_ssr_import_0__.z.array((0,__vite_ssr_import_1__.CourseId)).default([])
+}).refine((p) => p.draft || p.courses.length >= 1, {
+  message: "a non-draft learning path must contain at least one course",
+  path: ["courses"]
+});
+//# sourceMappingSource=vite-generated
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJtYXBwaW5ncyI6IkFBQUEsQ0FBQTtBQUFBO0FBQ0E7QUFDQTtBQU1PLE1BQU0sZUFBZSx3QkFDekIsT0FBTztBQUFBLEVBQ04sSUFBSTtBQUFBLEVBQ0osTUFBTSx3QkFBRSxPQUFPLEVBQUUsTUFBTSw0QkFBNEI7QUFBQSxFQUNuRCxPQUFPLHdCQUFFLE9BQU8sRUFBRSxJQUFJLENBQUM7QUFBQSxFQUN2QixhQUFhLHdCQUFFLE9BQU8sRUFBRSxTQUFTO0FBQUEsRUFDakMsS0FBSyx3QkFBRSxPQUFPLEVBQUUsU0FBUztBQUFBLEVBQ3pCLE9BQU8sd0JBQUUsT0FBTyxFQUFFLElBQUksRUFBRSxJQUFJLENBQUMsRUFBRSxRQUFRLENBQUM7QUFBQSxFQUN4QyxZQUFZLHdCQUFFLFFBQUssbUNBQVk7QUFBQSxFQUMvQixPQUFPLHdCQUFFLFFBQVEsRUFBRSxRQUFRLEtBQUs7QUFBQSxFQUNoQyxTQUFTLHdCQUFFLFNBQU0sK0JBQVEsRUFBRSxRQUFRLENBQUMsQ0FBQztBQUN2QyxDQUFDLEVBQ0EsT0FBTyxDQUFDLE1BQU0sRUFBRSxTQUFTLEVBQUUsUUFBUSxVQUFVLEdBQUc7QUFBQSxFQUMvQyxTQUFTO0FBQUEsRUFDVCxNQUFNLENBQUMsU0FBUztBQUNsQixDQUFDIiwibmFtZXMiOltdLCJpZ25vcmVMaXN0IjpbXSwic291cmNlcyI6WyJwYXRoLnRzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IHogfSBmcm9tIFwiem9kXCI7XG5pbXBvcnQgeyBDb3Vyc2VJZCwgUGF0aElkIH0gZnJvbSBcIi4vaWRzXCI7XG5pbXBvcnQgeyBESUZGSUNVTFRJRVMgfSBmcm9tIFwiLi9jb25zdGFudHNcIjtcblxuLyoqXG4gKiBgcGF0aC1pbmZyYXN0cnVjdHVyZWAgYW5kIGBwYXRoLXNlY3VyaXR5YCBhcmUgbGl2ZSB0b2RheSB3aXRoIHplcm8gY291cnNlcyBhbmRcbiAqIHJlbmRlciBhcyBlbXB0eSBzaGVsdmVzLiBBIHBhdGggaXMgZWl0aGVyIHBvcHVsYXRlZCBvciBleHBsaWNpdGx5IGEgZHJhZnQuXG4gKi9cbmV4cG9ydCBjb25zdCBMZWFybmluZ1BhdGggPSB6XG4gIC5vYmplY3Qoe1xuICAgIGlkOiBQYXRoSWQsXG4gICAgc2x1Zzogei5zdHJpbmcoKS5yZWdleCgvXlthLXowLTldKyg/Oi1bYS16MC05XSspKiQvKSxcbiAgICB0aXRsZTogei5zdHJpbmcoKS5taW4oMSksXG4gICAgZGVzY3JpcHRpb246IHouc3RyaW5nKCkub3B0aW9uYWwoKSxcbiAgICB0YWc6IHouc3RyaW5nKCkub3B0aW9uYWwoKSxcbiAgICBvcmRlcjogei5udW1iZXIoKS5pbnQoKS5taW4oMCkuZGVmYXVsdCgwKSxcbiAgICBkaWZmaWN1bHR5OiB6LmVudW0oRElGRklDVUxUSUVTKSxcbiAgICBkcmFmdDogei5ib29sZWFuKCkuZGVmYXVsdChmYWxzZSksXG4gICAgY291cnNlczogei5hcnJheShDb3Vyc2VJZCkuZGVmYXVsdChbXSksXG4gIH0pXG4gIC5yZWZpbmUoKHApID0+IHAuZHJhZnQgfHwgcC5jb3Vyc2VzLmxlbmd0aCA+PSAxLCB7XG4gICAgbWVzc2FnZTogXCJhIG5vbi1kcmFmdCBsZWFybmluZyBwYXRoIG11c3QgY29udGFpbiBhdCBsZWFzdCBvbmUgY291cnNlXCIsXG4gICAgcGF0aDogW1wiY291cnNlc1wiXSxcbiAgfSk7XG5cbmV4cG9ydCB0eXBlIExlYXJuaW5nUGF0aFQgPSB6LmluZmVyPHR5cGVvZiBMZWFybmluZ1BhdGg+O1xuIl0sImZpbGUiOiIvQGZzL1VzZXJzL2RhdmlkL0RvY3VtZW50cy9rbWluby9zb2wvc3VwZXJ0ZWFtLWFjYWRlbXkvcGFja2FnZXMvY29udGVudC1zY2hlbWEvc3JjL3BhdGgudHMifQ==
+
+//# vitestCache=W3siZmlsZSI6IjEiLCJpZCI6IjEiLCJ1cmwiOiIyIiwiaW1wb3J0ZWRVcmxzIjoiMyIsIm1hcHBpbmdzIjpmYWxzZX0sIi9Vc2Vycy9kYXZpZC9Eb2N1bWVudHMva21pbm8vc29sL3N1cGVydGVhbS1hY2FkZW15L3BhY2thZ2VzL2NvbnRlbnQtc2NoZW1hL3NyYy9wYXRoLnRzIiwiL0Bmcy9Vc2Vycy9kYXZpZC9Eb2N1bWVudHMva21pbm8vc29sL3N1cGVydGVhbS1hY2FkZW15L3BhY2thZ2VzL2NvbnRlbnQtc2NoZW1hL3NyYy9wYXRoLnRzIixbXV0=
