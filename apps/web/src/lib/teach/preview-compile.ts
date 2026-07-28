@@ -9,6 +9,7 @@ import { ContentValidationError } from "@/lib/content/compile/types";
 import { projectCourse } from "@/lib/content/project";
 import type { CourseProjectionDeps } from "@/lib/content/project";
 import { CONTENT_REPO } from "./pr-url";
+import { changedCourseDirs, changedCourseIds } from "./pr-files";
 
 /**
  * Compiles a courses-academy PR into the same JSON modules the live site reads
@@ -124,6 +125,32 @@ export async function fetchPrHead(number: number): Promise<PrHead> {
 }
 
 /**
+ * Changed file paths of a PR, for scoping the preview to its courses (#831).
+ * Paginated (100/page, capped at 5 pages — a content PR is dozens of files,
+ * not hundreds). BEST-EFFORT: any failure returns [], which downstream means
+ * "don't filter" — scoping is a nicety and must never take the preview down.
+ */
+export async function fetchPrChangedFiles(number: number): Promise<string[]> {
+  const paths: string[] = [];
+  try {
+    for (let page = 1; page <= 5; page++) {
+      const res = await ghFetch(
+        `/repos/${CONTENT_REPO}/pulls/${number}/files?per_page=100&page=${page}`
+      );
+      if (!res.ok) return [];
+      const body = (await res.json()) as { filename?: string }[];
+      for (const f of body) {
+        if (typeof f.filename === "string") paths.push(f.filename);
+      }
+      if (body.length < 100) break;
+    }
+  } catch {
+    return [];
+  }
+  return paths;
+}
+
+/**
  * The compiled PR, in exactly the shapes the real page components consume.
  * Produced with the SAME projector the live site uses (`projectCourse` /
  * `projectLesson`), so a previewed course is structurally identical to a
@@ -140,6 +167,12 @@ export interface PreviewResult {
    * separately via `getCourseIdBySlug`.
    */
   xpPerLessonById: Record<string, number>;
+  /**
+   * Ids of the courses this PR adds or modifies — what the teacher came to
+   * see. EMPTY means "show everything": the PR touches no course dir, or a
+   * touched dir could not be matched to a compiled course (fail open, #831).
+   */
+  changedCourseIds: string[];
   counts: Record<string, number>;
 }
 
@@ -221,7 +254,19 @@ export async function compilePrPreview(
     xpPerLessonById[String(doc._id)] = typeof xp === "number" ? xp : 0;
   }
 
-  return { head, courses, lessonsByCourse, xpPerLessonById, counts };
+  // Scope to the PR's own courses (#831) — dir names from the changed files,
+  // matched to compiled slugs. Best-effort by construction on both sides.
+  const touched = changedCourseDirs(await fetchPrChangedFiles(number));
+  const changed = changedCourseIds(courses, touched);
+
+  return {
+    head,
+    courses,
+    lessonsByCourse,
+    xpPerLessonById,
+    changedCourseIds: changed,
+    counts,
+  };
 }
 
 export { ContentValidationError, GitHubUnavailableError };

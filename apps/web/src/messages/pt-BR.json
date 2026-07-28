@@ -1516,6 +1516,7 @@
     },
     "empty": "Este pull request não contém cursos.",
     "viewCommit": "Ver commit no GitHub",
-    "openCourse": "Abrir prévia do curso"
+    "openCourse": "Abrir prévia do curso",
+    "scopedNote": "Mostrando apenas os cursos alterados neste pull request ({count} sem alterações ocultos)."
   }
 }

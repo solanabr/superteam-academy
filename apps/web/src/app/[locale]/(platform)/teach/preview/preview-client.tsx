@@ -43,6 +43,8 @@ interface PreviewResult {
   lessonsByCourse: Record<string, PreviewLesson[]>;
   /** Per-course XP (the projected Course does not carry it). */
   xpPerLessonById: Record<string, number>;
+  /** Courses this PR adds/modifies; empty = show everything (fail open). */
+  changedCourseIds: string[];
   counts: Record<string, number>;
 }
 
@@ -163,6 +165,19 @@ export function TeachPreviewClient() {
     },
     [prUrl, t]
   );
+
+  // Scope the list to the PR's own courses (#831). Empty means "no filter" —
+  // either the PR touches no course, or matching failed and the server chose
+  // to fail open rather than hide a course.
+  const changedSet = new Set(result?.changedCourseIds ?? []);
+  const visibleCourses = result
+    ? changedSet.size > 0
+      ? result.courses.filter((c) => changedSet.has(c._id))
+      : result.courses
+    : [];
+  const hiddenCount = result
+    ? result.courses.length - visibleCourses.length
+    : 0;
 
   if (authed === null) {
     return (
@@ -304,12 +319,18 @@ export function TeachPreviewClient() {
             </p>
           </div>
 
-          {result.courses.length === 0 ? (
+          {hiddenCount > 0 && (
+            <p className="text-xs text-text-3">
+              {t("scopedNote", { count: hiddenCount })}
+            </p>
+          )}
+
+          {visibleCourses.length === 0 ? (
             <p className="rounded-md border border-border p-4 text-sm text-text-3">
               {t("empty")}
             </p>
           ) : (
-            result.courses.map((course) => {
+            visibleCourses.map((course) => {
               const lessons = result.lessonsByCourse[course._id] ?? [];
               const open = openCourseId === course._id;
               return (
