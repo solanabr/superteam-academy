@@ -10,7 +10,13 @@ import { cn } from "@/lib/utils";
 // entries, which hid the fact that they are two steps of one flow). "Content"
 // (#513 WS-C) is the read-only Quests/Achievements/Paths tab — appended, not
 // inserted, so it doesn't reshuffle the existing three.
-const SECTIONS = ["courses", "moderation", "status", "content"] as const;
+const SECTIONS = [
+  "courses",
+  "moderation",
+  "insights",
+  "status",
+  "content",
+] as const;
 
 /**
  * Best-effort pending-flags count for the "Moderation" nav badge. Reuses the
