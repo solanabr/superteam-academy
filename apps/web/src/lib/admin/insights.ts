@@ -12,9 +12,21 @@ import type { createAdminClient } from "@/lib/supabase/admin";
  *
  * Sources are the operational tables that already exist (no schema changes):
  * `challenge_assists`, `ai_spend_ledger` (global scope), `user_progress`,
- * plus head-counts of `profiles` and `enrollments`. Quiz correctness is
- * deliberately absent — it is not persisted server-side; the `quiz_checked`
- * PostHog event (same issue) is its home.
+ * `enrollments` and `profiles`. Quiz correctness is deliberately absent — it is
+ * not persisted server-side; the `quiz_checked` PostHog event (same issue) is
+ * its home.
+ *
+ * SOFT-DELETED ACCOUNTS ARE EXCLUDED EVERYWHERE. `POST /api/account/delete`
+ * tombstones a profile (`deleted_at` set, username anonymized, `is_public`
+ * false) but the FK cascades never fire, so that learner's `enrollments`,
+ * `user_progress` and `challenge_assists` rows all survive. Counting them would
+ * inflate every headline number on a panel whose whole purpose is an honest
+ * read — so the deleted-id set is fetched once and subtracted here.
+ *
+ * `deleted_at IS NULL` is the filter, NOT `is_public = true`. The public
+ * surfaces (`public_profiles`, `get_leaderboard`) also require `is_public`
+ * because it is a learner's privacy preference about being *listed*; a private
+ * profile is still an active learner and must count in an internal total.
  */
 
 export interface AssistRow {
@@ -79,10 +91,23 @@ export function aggregateInsights(input: {
   assists: AssistRow[];
   spend: SpendRow[];
   progress: ProgressRow[];
+  /** One `user_id` per enrollment row (deleted learners still included). */
+  enrollments: { user_id: string }[];
+  /** Soft-deleted (`profiles.deleted_at IS NOT NULL`) learner ids to exclude. */
+  deletedUserIds: ReadonlySet<string>;
+  /** Head-count of live profiles — already filtered by the caller. */
   totalLearners: number;
-  totalEnrollments: number;
 }): PlatformInsights {
-  const { now, assists, spend, progress } = input;
+  const { now, spend, deletedUserIds } = input;
+
+  // A tombstoned learner's rows outlive the tombstone (no FK cascade on a soft
+  // delete), so every per-user source is filtered through the same set.
+  const isLive = (userId: string): boolean => !deletedUserIds.has(userId);
+  const assists = input.assists.filter((r) => isLive(r.user_id));
+  const progress = input.progress.filter((r) => isLive(r.user_id));
+  const totalEnrollments = input.enrollments.filter((r) =>
+    isLive(r.user_id)
+  ).length;
 
   // --- AI ------------------------------------------------------------------
   const aiUsers = new Set<string>();
@@ -183,7 +208,7 @@ export function aggregateInsights(input: {
     },
     learning: {
       totalLearners: input.totalLearners,
-      totalEnrollments: input.totalEnrollments,
+      totalEnrollments,
       activeLearners7d: active7.size,
       activeLearners30d: active30.size,
       completionsByDay,
@@ -224,28 +249,36 @@ export async function getPlatformInsights(
     .toISOString()
     .slice(0, 10);
 
-  const [profiles, enrollments, progress, assists, spend] = await Promise.all([
-    client.from("profiles").select("id", { count: "exact", head: true }),
-    client.from("enrollments").select("id", { count: "exact", head: true }),
-    client
-      .from("user_progress")
-      .select("user_id, course_id, completed_at")
-      .eq("completed", true)
-      .limit(MAX_ROWS),
-    (client as unknown as RawDb)
-      .from("challenge_assists")
-      .select("user_id, lesson_id, assists_used, billed_assists")
-      .limit(MAX_ROWS),
-    (client as unknown as RawDb)
-      .from("ai_spend_ledger")
-      .select("spend_day, micro_usd, request_count")
-      .eq("scope", "global")
-      .gte("spend_day", cut30Day)
-      .limit(100),
-  ]);
+  const [profiles, deleted, enrollments, progress, assists, spend] =
+    await Promise.all([
+      // Live learners only — a tombstoned account is not a learner.
+      client
+        .from("profiles")
+        .select("id", { count: "exact", head: true })
+        .is("deleted_at", null),
+      // The tombstoned ids, to subtract from every per-user source below.
+      client.from("profiles").select("id").not("deleted_at", "is", null),
+      client.from("enrollments").select("user_id").limit(MAX_ROWS),
+      client
+        .from("user_progress")
+        .select("user_id, course_id, completed_at")
+        .eq("completed", true)
+        .limit(MAX_ROWS),
+      (client as unknown as RawDb)
+        .from("challenge_assists")
+        .select("user_id, lesson_id, assists_used, billed_assists")
+        .limit(MAX_ROWS),
+      (client as unknown as RawDb)
+        .from("ai_spend_ledger")
+        .select("spend_day, micro_usd, request_count")
+        .eq("scope", "global")
+        .gte("spend_day", cut30Day)
+        .limit(100),
+    ]);
 
   const firstError =
     profiles.error ??
+    deleted.error ??
     enrollments.error ??
     progress.error ??
     assists.error ??
@@ -257,7 +290,10 @@ export async function getPlatformInsights(
     assists: (assists.data ?? []) as unknown as AssistRow[],
     spend: (spend.data ?? []) as unknown as SpendRow[],
     progress: (progress.data ?? []) as ProgressRow[],
+    enrollments: (enrollments.data ?? []) as { user_id: string }[],
+    deletedUserIds: new Set(
+      ((deleted.data ?? []) as { id: string }[]).map((r) => r.id)
+    ),
     totalLearners: profiles.count ?? 0,
-    totalEnrollments: enrollments.count ?? 0,
   });
 }

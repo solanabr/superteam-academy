@@ -15,7 +15,8 @@ describe("aggregateInsights", () => {
     const out = aggregateInsights({
       now: NOW,
       totalLearners: 10,
-      totalEnrollments: 12,
+      enrollments: [],
+      deletedUserIds: new Set<string>(),
       progress: [],
       spend: [],
       assists: [
@@ -67,7 +68,8 @@ describe("aggregateInsights", () => {
     const out = aggregateInsights({
       now: NOW,
       totalLearners: 0,
-      totalEnrollments: 0,
+      enrollments: [],
+      deletedUserIds: new Set<string>(),
       progress: [],
       assists: [],
       spend: [
@@ -89,7 +91,8 @@ describe("aggregateInsights", () => {
     const out = aggregateInsights({
       now: NOW,
       totalLearners: 50,
-      totalEnrollments: 60,
+      enrollments: [{ user_id: "u1" }, { user_id: "u2" }],
+      deletedUserIds: new Set<string>(),
       assists: [],
       spend: [],
       progress: [
@@ -104,6 +107,7 @@ describe("aggregateInsights", () => {
     });
 
     expect(out.learning.totalLearners).toBe(50);
+    expect(out.learning.totalEnrollments).toBe(2);
     expect(out.learning.activeLearners7d).toBe(1);
     expect(out.learning.activeLearners30d).toBe(2);
     // 45-day-old and null completions are outside the 30d day buckets.
@@ -114,5 +118,50 @@ describe("aggregateInsights", () => {
       { courseId: "c1", completions: 3, learners: 2 },
       { courseId: "c2", completions: 2, learners: 2 },
     ]);
+  });
+
+  // #837 review: POST /api/account/delete tombstones the profile but the FK
+  // cascades never fire, so a deleted learner's rows outlive them. Counting
+  // those inflates exactly the numbers this panel exists to report honestly.
+  it("excludes soft-deleted learners from every per-user source", () => {
+    const out = aggregateInsights({
+      now: NOW,
+      totalLearners: 1, // caller already filtered deleted_at IS NULL
+      deletedUserIds: new Set(["gone"]),
+      enrollments: [{ user_id: "live" }, { user_id: "gone" }],
+      assists: [
+        {
+          user_id: "live",
+          lesson_id: "l1",
+          assists_used: 2,
+          billed_assists: 2,
+        },
+        {
+          user_id: "gone",
+          lesson_id: "l1",
+          assists_used: 9,
+          billed_assists: 9,
+        },
+      ],
+      progress: [
+        { user_id: "live", course_id: "c1", completed_at: days(1) },
+        { user_id: "gone", course_id: "c1", completed_at: days(1) },
+      ],
+      spend: [],
+    });
+
+    expect(out.learning.totalEnrollments).toBe(1);
+    expect(out.learning.activeLearners7d).toBe(1);
+    expect(out.learning.perCourse).toEqual([
+      { courseId: "c1", completions: 1, learners: 1 },
+    ]);
+    // The deleted learner's 9 assists must not reach the AI totals either.
+    expect(out.ai.learnersUsingAi).toBe(1);
+    expect(out.ai.totalAssists).toBe(2);
+    expect(out.ai.topLessons[0]).toEqual({
+      lessonId: "l1",
+      assists: 2,
+      learners: 1,
+    });
   });
 });
