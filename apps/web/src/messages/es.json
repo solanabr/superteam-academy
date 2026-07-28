@@ -314,6 +314,9 @@
     "quizScore": "{correct}/{total} correctas",
     "toggleSection": "Alternar sección",
     "quiz": "Cuestionario",
+    "quizPosition": "Pregunta {current} de {total}",
+    "quizPrev": "Pregunta anterior",
+    "quizNext": "Siguiente pregunta",
     "quizUnlocksAssistant": "Responde todas las preguntas para desbloquear el AI Partner en esta lección."
   },
   "dashboard": {
