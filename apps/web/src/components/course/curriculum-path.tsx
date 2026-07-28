@@ -30,6 +30,11 @@ interface CurriculumPathProps {
    * uses — LX-B2). `null` means the course is fully complete: no active node.
    */
   activeLessonId: string | null;
+  /**
+   * Base path for lesson links. Defaults to the live catalogue
+   * (`/{locale}/courses`); the teacher preview (#831) points it at itself.
+   */
+  hrefBase?: string;
 }
 
 /**
@@ -46,7 +51,9 @@ export function CurriculumPath({
   locale,
   completedLessons,
   activeLessonId,
+  hrefBase,
 }: CurriculumPathProps) {
+  const linkBase = hrefBase ?? `/${locale}/courses`;
   const t = useTranslations("courses");
   const tLesson = useTranslations("lesson");
   const completedSet = new Set(completedLessons);
@@ -118,7 +125,7 @@ export function CurriculumPath({
                     {/* Every state renders the same plain link — nothing is
                         locked or disabled; the map is presentation only. */}
                     <a
-                      href={`/${locale}/courses/${courseSlug}/lessons/${lesson.slug}`}
+                      href={`${linkBase}/${courseSlug}/lessons/${lesson.slug}`}
                       aria-current={isActive ? "step" : undefined}
                       className={cn(
                         "relative flex items-center gap-3 rounded-lg px-3 py-3 text-sm transition-colors hover:bg-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary",

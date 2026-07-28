@@ -9,6 +9,7 @@ import {
   Lock,
   Warning,
 } from "@phosphor-icons/react";
+import { useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -44,6 +45,14 @@ interface PreviewResult {
   counts: Record<string, number>;
 }
 
+/** Last path segment / bare number of a pasted PR link — mirrors parsePrUrl. */
+function parsePrNumber(input: string): number | null {
+  const m = /(?:pulls?\/)?(\d+)\s*$/.exec(input.trim());
+  if (!m?.[1]) return null;
+  const n = Number(m[1]);
+  return Number.isSafeInteger(n) && n > 0 ? n : null;
+}
+
 /** Human label for a block `_type` (`openEnded` → "Open ended"). */
 function blockLabel(type: string): string {
   const spaced = type.replace(/([A-Z])/g, " $1").toLowerCase();
@@ -52,6 +61,7 @@ function blockLabel(type: string): string {
 
 export function TeachPreviewClient() {
   const t = useTranslations("teachPreview");
+  const locale = useLocale();
 
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [password, setPassword] = useState("");
@@ -64,6 +74,8 @@ export function TeachPreviewClient() {
   const [issues, setIssues] = useState<string[] | null>(null);
   const [result, setResult] = useState<PreviewResult | null>(null);
   const [openCourseId, setOpenCourseId] = useState<string | null>(null);
+  // PR number of the rendered result, for links into the full-page preview.
+  const [prNumber, setPrNumber] = useState<number | null>(null);
 
   // Resolve the existing session on mount so a returning teacher (24h cookie)
   // skips the password step.
@@ -143,6 +155,7 @@ export function TeachPreviewClient() {
 
         const loaded = body as PreviewResult;
         setResult(loaded);
+        setPrNumber(parsePrNumber(prUrl));
         setOpenCourseId(loaded.courses[0]?._id ?? null);
       } catch {
         setError(t("errors.network"));
@@ -347,6 +360,20 @@ export function TeachPreviewClient() {
                     </div>
                   </button>
 
+                  {/* The real thing (#831): open the course exactly as a
+                      learner sees it, with every lesson reachable. */}
+                  {prNumber !== null && (
+                    <div className="border-t border-border px-5 py-3">
+                      <Button variant="push" size="sm" asChild>
+                        <a
+                          href={`/${locale}/teach/preview/${prNumber}/courses/${course.slug}`}
+                        >
+                          {t("openCourse")}
+                        </a>
+                      </Button>
+                    </div>
+                  )}
+
                   <ul
                     className={cn(
                       "divide-y divide-border border-t border-border",
@@ -359,9 +386,18 @@ export function TeachPreviewClient() {
                           <span className="font-mono text-xs text-text-3">
                             {i + 1}
                           </span>
-                          <span className="font-medium text-text">
-                            {lesson.title}
-                          </span>
+                          {prNumber !== null ? (
+                            <a
+                              href={`/${locale}/teach/preview/${prNumber}/courses/${course.slug}/lessons/${lesson.slug}`}
+                              className="font-medium text-text underline-offset-2 hover:text-primary hover:underline"
+                            >
+                              {lesson.title}
+                            </a>
+                          ) : (
+                            <span className="font-medium text-text">
+                              {lesson.title}
+                            </span>
+                          )}
                         </div>
                         <div className="mt-1.5 flex flex-wrap gap-1.5">
                           {lesson.blocks.map((b, bi) => (

@@ -1,10 +1,13 @@
 import "server-only";
 
+import type { Course, Lesson } from "@superteam-lms/types";
 import { serverEnv } from "@/lib/env.server";
 import { GitHubUnavailableError } from "@/lib/github/types";
 import { extractTarball } from "@/lib/content/compile/tarball";
 import { compileContent } from "@/lib/content/compile/compile-bundle";
 import { ContentValidationError } from "@/lib/content/compile/types";
+import { projectCourse } from "@/lib/content/project";
+import type { CourseProjectionDeps } from "@/lib/content/project";
 import { CONTENT_REPO } from "./pr-url";
 
 /**
@@ -18,6 +21,14 @@ import { CONTENT_REPO } from "./pr-url";
  */
 
 const API = "https://api.github.com";
+
+// Derived from the projector's own signature so this file needs no new exports
+// from `lib/content/project` — the doc shapes stay private to that module.
+type CourseDocT = Parameters<typeof projectCourse>[0];
+type LessonDocT =
+  CourseProjectionDeps["lessonsById"] extends ReadonlyMap<string, infer V>
+    ? V
+    : never;
 
 /**
  * `courses-academy` is PUBLIC, so every read here works unauthenticated (#830).
@@ -112,30 +123,23 @@ export async function fetchPrHead(number: number): Promise<PrHead> {
   };
 }
 
-/** Course + lesson shapes the preview UI consumes (a subset of the bundle). */
-export interface PreviewCourse {
-  _id: string;
-  slug: string;
-  title: string;
-  description?: string;
-  difficulty?: string;
-  xpPerLesson?: number;
-  lessonCount: number;
-}
-
-export interface PreviewLesson {
-  _id: string;
-  slug: string;
-  title: string;
-  courseId?: string;
-  blocks: { _type: string }[];
-}
-
+/**
+ * The compiled PR, in exactly the shapes the real page components consume.
+ * Produced with the SAME projector the live site uses (`projectCourse` /
+ * `projectLesson`), so a previewed course is structurally identical to a
+ * published one — modules carry hydrated lessons, not refs.
+ */
 export interface PreviewResult {
   head: PrHead;
-  courses: PreviewCourse[];
-  /** Full lesson docs, keyed by course id, for the lesson-level preview. */
-  lessonsByCourse: Record<string, PreviewLesson[]>;
+  courses: Course[];
+  /** Hydrated lessons per course id, in course order. */
+  lessonsByCourse: Record<string, Lesson[]>;
+  /**
+   * Per-course XP, keyed by course id. Read from the raw doc because the
+   * projected `Course` does not carry it — the live lesson page fetches it
+   * separately via `getCourseIdBySlug`.
+   */
+  xpPerLessonById: Record<string, number>;
   counts: Record<string, number>;
 }
 
@@ -148,10 +152,6 @@ function readArray(
   if (!raw) return [];
   const parsed: unknown = JSON.parse(raw);
   return Array.isArray(parsed) ? (parsed as Record<string, unknown>[]) : [];
-}
-
-function str(value: unknown): string {
-  return typeof value === "string" ? value : "";
 }
 
 /**
@@ -181,36 +181,32 @@ export async function compilePrPreview(
   // stamp a wall-clock time that would differ from a real compile of this SHA.
   const files = compileContent(tree, { sha: head.sha, compiledAt: null });
 
-  const lessons = readArray(files, "lessons.json");
-  const lessonsByCourse: Record<string, PreviewLesson[]> = {};
-  for (const lesson of lessons) {
-    const courseId = str(lesson.course ?? lesson.courseId);
-    const entry: PreviewLesson = {
-      _id: str(lesson._id),
-      slug: str(lesson.slug),
-      title: str(lesson.title),
-      courseId,
-      blocks: Array.isArray(lesson.blocks)
-        ? (lesson.blocks as { _type: string }[])
-        : [],
-    };
-    (lessonsByCourse[courseId] ??= []).push(entry);
+  // Courses reference their lessons (`_ref`), so hydration runs through the
+  // projector rather than a field on the lesson — lessons carry no back-pointer.
+  const lessonsById = new Map<string, LessonDocT>();
+  for (const doc of readArray(files, "lessons.json")) {
+    lessonsById.set(String(doc._id), doc as unknown as LessonDocT);
   }
 
-  const courses: PreviewCourse[] = readArray(files, "courses.json").map((c) => {
-    const id = str(c._id);
-    return {
-      _id: id,
-      slug: str(c.slug),
-      title: str(c.title),
-      description:
-        typeof c.description === "string" ? c.description : undefined,
-      difficulty: typeof c.difficulty === "string" ? c.difficulty : undefined,
-      xpPerLesson:
-        typeof c.xpPerLesson === "number" ? c.xpPerLesson : undefined,
-      lessonCount: lessonsByCourse[id]?.length ?? 0,
-    };
-  });
+  const courseDocs = readArray(files, "courses.json");
+  const courses = courseDocs.map((doc) =>
+    projectCourse(
+      doc as unknown as CourseDocT,
+      { lessonsById },
+      {
+        fullLessons: true,
+      }
+    )
+  );
+
+  // Flatten each projected course's modules back into an ordered lesson list —
+  // the same order the curriculum renders, so prev/next in the preview matches.
+  const lessonsByCourse: Record<string, Lesson[]> = {};
+  for (const course of courses) {
+    lessonsByCourse[course._id] = (course.modules ?? []).flatMap(
+      (m) => (m.lessons ?? []) as Lesson[]
+    );
+  }
 
   let counts: Record<string, number> = {};
   const metaRaw = files.get("meta.json");
@@ -219,7 +215,13 @@ export async function compilePrPreview(
     counts = meta.counts ?? {};
   }
 
-  return { head, courses, lessonsByCourse, counts };
+  const xpPerLessonById: Record<string, number> = {};
+  for (const doc of courseDocs) {
+    const xp = doc.xpPerLesson;
+    xpPerLessonById[String(doc._id)] = typeof xp === "number" ? xp : 0;
+  }
+
+  return { head, courses, lessonsByCourse, xpPerLessonById, counts };
 }
 
 export { ContentValidationError, GitHubUnavailableError };

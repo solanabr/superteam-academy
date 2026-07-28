@@ -1515,6 +1515,7 @@
       "network": "Network error. Try again."
     },
     "empty": "This pull request contains no courses.",
-    "viewCommit": "View commit on GitHub"
+    "viewCommit": "View commit on GitHub",
+    "openCourse": "Open course preview"
   }
 }

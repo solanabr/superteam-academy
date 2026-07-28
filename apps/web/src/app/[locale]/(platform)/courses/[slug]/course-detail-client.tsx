@@ -43,12 +43,27 @@ interface CourseDetailClientProps {
    * and passed in already decoded. Rendered below the curriculum.
    */
   changelog: CourseChangelogEntry[];
+  /**
+   * Where lesson links point. Defaults to the live catalogue
+   * (`/{locale}/courses`); the teacher preview (#831) passes its own base so
+   * navigation stays inside the preview instead of escaping to `/courses`,
+   * where an unpublished course does not exist.
+   */
+  hrefBase?: string;
+  /**
+   * Preview mode (#831): the course is not on-chain and its lessons are not in
+   * the live bundle, so enrolment must be inert — no wallet prompt, no
+   * `useOnChainEnroll`. Live rendering is unaffected (defaults to false).
+   */
+  readOnly?: boolean;
 }
 
 export function CourseDetailClient({
   course,
   instructorProfile,
   changelog,
+  hrefBase,
+  readOnly = false,
 }: CourseDetailClientProps) {
   const t = useTranslations("courses");
   const tCommon = useTranslations("common");
@@ -58,6 +73,9 @@ export function CourseDetailClient({
 
   const modules = course.modules ?? [];
   const tags = course.tags ?? [];
+
+  // Live catalogue unless a caller overrides it (#831 teacher preview).
+  const linkBase = hrefBase ?? `/${locale}/courses`;
 
   const totalLessons = modules.reduce(
     (acc, mod) => acc + (mod.lessons?.length ?? 0),
@@ -174,7 +192,7 @@ export function CourseDetailClient({
     <div className="space-y-6">
       {/* Back to catalog */}
       <Link
-        href={`/${locale}/courses`}
+        href={linkBase}
         className="inline-flex items-center gap-1.5 font-display text-sm font-semibold text-text-3 transition-colors hover:text-text"
       >
         <ArrowLeft size={16} weight="bold" />
@@ -284,13 +302,16 @@ export function CourseDetailClient({
                   variant="push"
                   size="lg"
                   className="w-full font-semibold md:w-auto"
-                  onClick={isEnrolled ? undefined : handleEnroll}
+                  onClick={isEnrolled || readOnly ? undefined : handleEnroll}
                   disabled={isEnrolling}
-                  asChild={isEnrolled ? true : undefined}
+                  asChild={isEnrolled || readOnly ? true : undefined}
                 >
-                  {isEnrolled ? (
+                  {/* readOnly (#831): a previewed course has no on-chain
+                      enrolment to make, so the CTA opens the first lesson
+                      instead of prompting a wallet. */}
+                  {isEnrolled || readOnly ? (
                     <a
-                      href={`/${locale}/courses/${course.slug}/lessons/${ctaLessonSlug}`}
+                      href={`${linkBase}/${course.slug}/lessons/${ctaLessonSlug}`}
                     >
                       {t("continueCourse")}
                     </a>
@@ -344,6 +365,7 @@ export function CourseDetailClient({
             modules={accordionModules}
             courseSlug={course.slug}
             locale={locale}
+            hrefBase={hrefBase}
             completedLessons={completedLessons}
             activeLessonId={nextIncompleteLesson?._id ?? null}
           />
@@ -352,6 +374,7 @@ export function CourseDetailClient({
             modules={accordionModules}
             courseSlug={course.slug}
             locale={locale}
+            hrefBase={hrefBase}
             completedLessons={completedLessons}
           />
         )}
