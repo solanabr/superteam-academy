@@ -39,6 +39,20 @@ interface LessonPageClientProps {
   courseSlug: string;
   courseId: string;
   courseXpPerLesson: number;
+  /**
+   * Base path for in-lesson navigation (back, prev/next). Defaults to the live
+   * catalogue (`/{locale}/courses`); the teacher preview (#831) points it at
+   * itself so navigation never escapes into `/courses`, where an unpublished
+   * lesson does not exist.
+   */
+  hrefBase?: string;
+  /**
+   * Preview mode (#831). A previewed lesson is not in the live bundle and its
+   * course is not on-chain, so every write path must be inert: no completion
+   * POST, no enrolment, and no anonymous progress banked into localStorage.
+   * Defaults to false — live behaviour is untouched.
+   */
+  readOnly?: boolean;
 }
 
 interface CompletionResponse {
@@ -92,7 +106,11 @@ export function LessonPageClient({
   courseSlug,
   courseId,
   courseXpPerLesson,
+  hrefBase,
+  readOnly = false,
 }: LessonPageClientProps) {
+  // Live catalogue unless a caller overrides it (#831 teacher preview).
+  const linkBase = hrefBase ?? `/${locale}/courses`;
   const t = useTranslations("lesson");
   const tCommon = useTranslations("common");
   const tCourses = useTranslations("courses");
@@ -132,6 +150,9 @@ export function LessonPageClient({
   // the sign-in wall (LX-A4c). Stores exactly the proofs the completion POST
   // would carry; on sign-in they replay server-side (which re-grades them).
   const bankCurrentLesson = useCallback(() => {
+    // #831: never persist preview work — a previewed lesson id would replay
+    // against the live bundle on sign-in and fail there.
+    if (readOnly) return;
     bankCompletion({
       courseId,
       courseSlug,
@@ -140,7 +161,7 @@ export function LessonPageClient({
       lessonTitle: lesson.title,
       proofs: { ...proofsRef.current },
     });
-  }, [courseId, courseSlug, lesson._id, lesson.slug, lesson.title]);
+  }, [readOnly, courseId, courseSlug, lesson._id, lesson.slug, lesson.title]);
 
   // Claim moment: bank first, THEN open the sign-in prompt with its "Later"
   // escape. Ordering matters — the modal's Later path relies on the work
@@ -239,6 +260,9 @@ export function LessonPageClient({
     currentIndex < allLessons.length - 1 ? allLessons[currentIndex + 1] : null;
 
   const handleComplete = useCallback(async () => {
+    // #831: a previewed lesson is not in the live bundle, so completing it
+    // would POST an unknown lessonId. Refuse before the request is built.
+    if (readOnly) return;
     if (isCompleted || isCompleting) return;
     if (hasLinkedWallet === false) return;
     setIsCompleting(true);
@@ -441,7 +465,7 @@ export function LessonPageClient({
       >
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
           <Link
-            href={`/${locale}/courses/${courseSlug}`}
+            href={`${linkBase}/${courseSlug}`}
             className="inline-flex shrink-0 items-center gap-1.5 font-display text-sm font-semibold text-text-3 transition-colors hover:text-text"
           >
             <ArrowLeft size={16} weight="bold" />
@@ -464,7 +488,7 @@ export function LessonPageClient({
             >
               {prevLesson ? (
                 <Link
-                  href={`/${locale}/courses/${courseSlug}/lessons/${prevLesson.slug}`}
+                  href={`${linkBase}/${courseSlug}/lessons/${prevLesson.slug}`}
                 >
                   <CaretLeft size={14} weight="bold" aria-hidden="true" />
                   <span className="hidden sm:inline">
@@ -489,7 +513,7 @@ export function LessonPageClient({
             >
               {nextLesson ? (
                 <Link
-                  href={`/${locale}/courses/${courseSlug}/lessons/${nextLesson.slug}`}
+                  href={`${linkBase}/${courseSlug}/lessons/${nextLesson.slug}`}
                 >
                   <span className="hidden sm:inline">{tCommon("next")}</span>
                   <CaretRight size={14} weight="bold" aria-hidden="true" />
@@ -597,7 +621,7 @@ export function LessonPageClient({
                   className="w-full justify-center sm:w-auto sm:min-w-[120px]"
                 >
                   <Link
-                    href={`/${locale}/courses/${courseSlug}/lessons/${prevLesson.slug}`}
+                    href={`${linkBase}/${courseSlug}/lessons/${prevLesson.slug}`}
                   >
                     &larr; {tCommon("previous")}
                   </Link>
@@ -678,7 +702,7 @@ export function LessonPageClient({
                   className="w-full justify-center sm:w-auto sm:min-w-[120px]"
                 >
                   <Link
-                    href={`/${locale}/courses/${courseSlug}/lessons/${nextLesson.slug}`}
+                    href={`${linkBase}/${courseSlug}/lessons/${nextLesson.slug}`}
                   >
                     {tCommon("next")} &rarr;
                   </Link>
@@ -690,7 +714,7 @@ export function LessonPageClient({
                   asChild
                   className="w-full justify-center sm:w-auto sm:min-w-[120px]"
                 >
-                  <Link href={`/${locale}/courses/${courseSlug}`}>
+                  <Link href={`${linkBase}/${courseSlug}`}>
                     {t("lessonComplete")}
                   </Link>
                 </Button>

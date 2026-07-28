@@ -27,6 +27,11 @@ interface CurriculumAccordionProps {
   courseSlug: string;
   locale: string;
   completedLessons?: string[];
+  /**
+   * Base path for lesson links. Defaults to the live catalogue
+   * (`/{locale}/courses`); the teacher preview (#831) points it at itself.
+   */
+  hrefBase?: string;
 }
 
 export function CurriculumAccordion({
@@ -34,7 +39,9 @@ export function CurriculumAccordion({
   courseSlug,
   locale,
   completedLessons = [],
+  hrefBase,
 }: CurriculumAccordionProps) {
+  const linkBase = hrefBase ?? `/${locale}/courses`;
   const t = useTranslations("courses");
   const tLesson = useTranslations("lesson");
   const [openModules, setOpenModules] = useState<Set<string>>(
@@ -101,7 +108,7 @@ export function CurriculumAccordion({
                   return (
                     <a
                       key={lesson._id}
-                      href={`/${locale}/courses/${courseSlug}/lessons/${lesson.slug}`}
+                      href={`${linkBase}/${courseSlug}/lessons/${lesson.slug}`}
                       className={cn(
                         "border-border/60 flex items-center gap-3 border-b px-4 py-3 text-sm transition-colors last:border-b-0 hover:bg-subtle",
                         isCompleted && "text-text-3"

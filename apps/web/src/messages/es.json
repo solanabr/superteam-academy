@@ -1515,6 +1515,7 @@
       "network": "Error de red. Inténtalo de nuevo."
     },
     "empty": "Este pull request no contiene cursos.",
-    "viewCommit": "Ver commit en GitHub"
+    "viewCommit": "Ver commit en GitHub",
+    "openCourse": "Abrir vista previa del curso"
   }
 }
