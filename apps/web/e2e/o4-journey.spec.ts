@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { signInAsLearner } from "./harness/session";
 import { LEARN_LOOP } from "./harness/fixtures.mjs";
+import { answerQuizStepper } from "./harness/quiz";
 
 // Spec 4 — The O-4 journey (#819): anonymous deep-link → do the work → claim
 // moment → sign in → banked progress replays and the completion is recorded.
@@ -98,15 +99,10 @@ test.describe("O-4 journey (anonymous → sign in → banked replay)", () => {
 
     // ── 2. Do the graded work while signed out ───────────────────────────────
     // Answer the retrieval quiz (option "a" is the key for every question) and
-    // check each one, exercising the real QuizBlock. Selecting the options is
+    // check each one, exercising the real QuizBlock — since #849 a stepper:
+    // answer → check → next, one question at a time. Selecting the options is
     // what drives ctx.setProof → the proofs the bank will carry.
-    for (const qid of ["q1", "q2", "q3", "q4"]) {
-      await page.locator(`input[name="${qid}"][value="a"]`).check();
-    }
-    const checkButtons = page.getByRole("button", { name: "Check answer" });
-    const checkCount = await checkButtons.count();
-    expect(checkCount).toBeGreaterThan(0);
-    for (let i = 0; i < checkCount; i++) await checkButtons.nth(i).click();
+    await answerQuizStepper(page, ["q1", "q2", "q3", "q4"]);
 
     // Nothing has hit the completion route yet — an anonymous learner cannot
     // complete on-chain; the work only lives locally at this point.

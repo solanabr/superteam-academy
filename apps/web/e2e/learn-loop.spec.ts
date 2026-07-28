@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { signInAsLearner } from "./harness/session";
 import { LEARN_LOOP } from "./harness/fixtures.mjs";
+import { answerQuizStepper } from "./harness/quiz";
 
 // Spec 1 — Learn loop.
 //
@@ -45,16 +46,9 @@ test.describe("learn loop", () => {
 
     // Work the retrieval quiz: option "a" is correct for every question. Grading
     // is server-side (mocked here); answering exercises the real quiz UI so the
-    // "learn loop" is faithful, not a bare button click.
-    for (const qid of ["q1", "q2", "q3", "q4"]) {
-      await page.locator(`input[name="${qid}"][value="a"]`).check();
-    }
-    const checkButtons = page.getByRole("button", { name: "Check answer" });
-    const count = await checkButtons.count();
-    expect(count).toBeGreaterThan(0);
-    for (let i = 0; i < count; i++) {
-      await checkButtons.nth(i).click();
-    }
+    // "learn loop" is faithful, not a bare button click. Since #849 the quiz is
+    // a stepper — answer → check → next, one question at a time.
+    await answerQuizStepper(page, ["q1", "q2", "q3", "q4"]);
 
     // The complete button only renders for a signed-in, enrolled learner — its
     // presence is itself the "enrolled course" assertion. Auto-waits for the
