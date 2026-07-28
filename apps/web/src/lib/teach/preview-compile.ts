@@ -1,7 +1,6 @@
 import "server-only";
 
 import { serverEnv } from "@/lib/env.server";
-import { createGitHubClient } from "@/lib/github/github";
 import { GitHubUnavailableError } from "@/lib/github/types";
 import { extractTarball } from "@/lib/content/compile/tarball";
 import { compileContent } from "@/lib/content/compile/compile-bundle";
@@ -20,6 +19,57 @@ import { CONTENT_REPO } from "./pr-url";
 
 const API = "https://api.github.com";
 
+/**
+ * `courses-academy` is PUBLIC, so every read here works unauthenticated (#830).
+ * The token is used when configured — unauthenticated GitHub is 60 req/hr per
+ * IP and shared egress like Vercel burns that quickly — but it is never
+ * required, so a fresh checkout with no `GITHUB_TOKEN` can still preview.
+ *
+ * `lib/github/github.ts` deliberately keeps requiring the token: its callers are
+ * admin paths where a silent drop to an anonymous rate limit would be worse
+ * than failing loudly.
+ */
+function ghHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {
+    Accept: "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28",
+  };
+  const token = serverEnv.GITHUB_TOKEN;
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return headers;
+}
+
+/** Rate limiting is the one failure a missing token actually causes — name it. */
+function rateLimitError(res: Response): GitHubUnavailableError | null {
+  const remaining = res.headers.get("x-ratelimit-remaining");
+  if ((res.status === 403 || res.status === 429) && remaining === "0") {
+    return new GitHubUnavailableError(
+      serverEnv.GITHUB_TOKEN
+        ? "GitHub rate limit reached. Try again shortly."
+        : "GitHub rate limit reached for anonymous requests. Set GITHUB_TOKEN for a higher limit."
+    );
+  }
+  return null;
+}
+
+async function ghFetch(path: string, accept?: string): Promise<Response> {
+  const headers = ghHeaders();
+  if (accept) headers.Accept = accept;
+
+  let res: Response;
+  try {
+    res = await fetch(`${API}${path}`, { headers, cache: "no-store" });
+  } catch (e) {
+    throw new GitHubUnavailableError(
+      e instanceof Error ? e.message : String(e)
+    );
+  }
+
+  const limited = rateLimitError(res);
+  if (limited) throw limited;
+  return res;
+}
+
 /** A PR's head commit plus the bits of metadata the preview header shows. */
 export interface PrHead {
   sha: string;
@@ -30,26 +80,7 @@ export interface PrHead {
 }
 
 export async function fetchPrHead(number: number): Promise<PrHead> {
-  const token = serverEnv.GITHUB_TOKEN;
-  if (!token) {
-    throw new GitHubUnavailableError("GITHUB_TOKEN is not configured");
-  }
-
-  let res: Response;
-  try {
-    res = await fetch(`${API}/repos/${CONTENT_REPO}/pulls/${number}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-      },
-      cache: "no-store",
-    });
-  } catch (e) {
-    throw new GitHubUnavailableError(
-      e instanceof Error ? e.message : String(e)
-    );
-  }
+  const res = await ghFetch(`/repos/${CONTENT_REPO}/pulls/${number}`);
 
   if (res.status === 404) {
     throw new GitHubUnavailableError(`Pull request #${number} not found`);
@@ -134,9 +165,17 @@ export async function compilePrPreview(
 ): Promise<PreviewResult> {
   const head = await (opts.fetchHead ?? fetchPrHead)(number);
 
-  const gh = createGitHubClient();
-  const tarball = await gh.fetchTarball(head.sha);
-  const tree = await extractTarball(tarball);
+  // `tarball/<sha>` 302-redirects to codeload; fetch follows redirects.
+  const res = await ghFetch(
+    `/repos/${CONTENT_REPO}/tarball/${head.sha}`,
+    "application/vnd.github+json"
+  );
+  if (!res.ok) {
+    throw new GitHubUnavailableError(
+      `GitHub tarball/${head.sha.slice(0, 7)} → ${res.status}`
+    );
+  }
+  const tree = await extractTarball(new Uint8Array(await res.arrayBuffer()));
 
   // `compiledAt: null` — the preview is not a reproducible bundle and must never
   // stamp a wall-clock time that would differ from a real compile of this SHA.
