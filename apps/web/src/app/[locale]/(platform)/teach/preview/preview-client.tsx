@@ -10,6 +10,7 @@ import {
   Warning,
 } from "@phosphor-icons/react";
 import { useLocale } from "next-intl";
+import { parsePrUrl } from "@/lib/teach/pr-url";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -26,8 +27,6 @@ interface PreviewCourse {
   title: string;
   description?: string;
   difficulty?: string;
-  xpPerLesson?: number;
-  lessonCount: number;
 }
 
 interface PreviewHead {
@@ -42,15 +41,9 @@ interface PreviewResult {
   head: PreviewHead;
   courses: PreviewCourse[];
   lessonsByCourse: Record<string, PreviewLesson[]>;
+  /** Per-course XP (the projected Course does not carry it). */
+  xpPerLessonById: Record<string, number>;
   counts: Record<string, number>;
-}
-
-/** Last path segment / bare number of a pasted PR link — mirrors parsePrUrl. */
-function parsePrNumber(input: string): number | null {
-  const m = /(?:pulls?\/)?(\d+)\s*$/.exec(input.trim());
-  if (!m?.[1]) return null;
-  const n = Number(m[1]);
-  return Number.isSafeInteger(n) && n > 0 ? n : null;
 }
 
 /** Human label for a block `_type` (`openEnded` → "Open ended"). */
@@ -155,7 +148,12 @@ export function TeachPreviewClient() {
 
         const loaded = body as PreviewResult;
         setResult(loaded);
-        setPrNumber(parsePrNumber(prUrl));
+        {
+          // Same parser the server uses — an ad-hoc regex here broke on a
+          // trailing slash (`/pull/24/`), which silently hid every preview link.
+          const parsed = parsePrUrl(prUrl);
+          setPrNumber(parsed.ok ? parsed.number : null);
+        }
         setOpenCourseId(loaded.courses[0]?._id ?? null);
       } catch {
         setError(t("errors.network"));
@@ -348,12 +346,12 @@ export function TeachPreviewClient() {
                           </span>
                         )}
                         <span>
-                          {t("course.lessons", { count: course.lessonCount })}
+                          {t("course.lessons", { count: lessons.length })}
                         </span>
-                        {course.xpPerLesson != null && (
+                        {result.xpPerLessonById[course._id] != null && (
                           <span className="flex items-center gap-1 text-xp">
                             <Lightning size={12} weight="fill" />+
-                            {course.xpPerLesson} XP
+                            {result.xpPerLessonById[course._id]} XP
                           </span>
                         )}
                       </div>
