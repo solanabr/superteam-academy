@@ -160,6 +160,33 @@ describe("AiPartnerPane — think-first lock (#770)", () => {
     expect(screen.getByRole("button", { name: hintLabel })).toBeEnabled();
   });
 
+  it("renders the countdown chip OUTSIDE the collapse toggle; clicking it does not toggle (#842)", () => {
+    renderPane({ unlockAt: Date.now() + THREE_MIN });
+
+    const chip = screen.getByRole("status");
+    const toggle = screen.getByRole("button", { expanded: true });
+
+    // The chip must not live inside the toggle: nested, its clicks bubbled to
+    // the toggle and the pane collapsed out from under the tooltip (#842).
+    expect(toggle.contains(chip)).toBe(false);
+
+    // Clicking the countdown does nothing — pane stays open.
+    fireEvent.click(chip);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("button", { name: hintLabel })).toBeInTheDocument();
+
+    // The toggle itself still collapses and re-expands the pane.
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(
+      screen.queryByRole("button", { name: hintLabel })
+    ).not.toBeInTheDocument();
+    // The chip survives the collapse — the wait stays visible in the header.
+    expect(screen.getByRole("status")).toBeInTheDocument();
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+  });
+
   it("counts down and unlocks once the window elapses", () => {
     vi.useFakeTimers();
     const start = Date.now();
