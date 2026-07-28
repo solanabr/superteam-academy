@@ -1,0 +1,21 @@
+Object.defineProperty(__vite_ssr_exports__, "GET", { enumerable: true, configurable: true, get(){ try { return GET } catch {} }});
+const __vite_ssr_import_0__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/next@14.2.35_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/server.js", {"importedNames":["NextResponse"]});
+const __vite_ssr_import_1__ = await __vite_ssr_import__("/src/app/api/content/params.ts", {"importedNames":["parseIds"]});
+const __vite_ssr_import_2__ = await __vite_ssr_import__("/src/lib/content/queries.ts", {"importedNames":["getRecommendedCourses"]});
+async function GET(request) {
+  const exclude = (0,__vite_ssr_import_1__.parseIds)(request.nextUrl.searchParams.get("exclude"), true);
+  if (exclude instanceof __vite_ssr_import_0__.NextResponse) return exclude;
+  try {
+    const courses = await (0,__vite_ssr_import_2__.getRecommendedCourses)(exclude);
+    return __vite_ssr_import_0__.NextResponse.json({ courses });
+  } catch {
+    return __vite_ssr_import_0__.NextResponse.json(
+      { error: "Failed to fetch recommendations" },
+      { status: 500 }
+    );
+  }
+}
+//# sourceMappingSource=vite-generated
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJtYXBwaW5ncyI6IkFBQUEsQ0FBQTtBQUFBO0FBQ0E7QUFDQTtBQU9BLGVBQXNCLElBQUksU0FBc0I7QUFDOUMsUUFBTSxhQUFVLGdDQUFTLFFBQVEsUUFBUSxhQUFhLElBQUksU0FBUyxHQUFHLElBQUk7QUFDMUUsTUFBSSxtQkFBbUIsbUNBQWMsUUFBTztBQUM1QyxNQUFJO0FBQ0YsVUFBTSxVQUFVLFNBQU0sNkNBQXNCLE9BQU87QUFDbkQsV0FBTyxtQ0FBYSxLQUFLLEVBQUUsUUFBUSxDQUFDO0FBQUEsRUFDdEMsUUFBUTtBQUNOLFdBQU8sbUNBQWE7QUFBQSxNQUNsQixFQUFFLE9BQU8sa0NBQWtDO0FBQUEsTUFDM0MsRUFBRSxRQUFRLElBQUk7QUFBQSxJQUNoQjtBQUFBLEVBQ0Y7QUFDRiIsIm5hbWVzIjpbXSwiaWdub3JlTGlzdCI6W10sInNvdXJjZXMiOlsicm91dGUudHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgTmV4dFJlcXVlc3QsIE5leHRSZXNwb25zZSB9IGZyb20gXCJuZXh0L3NlcnZlclwiO1xuaW1wb3J0IHsgcGFyc2VJZHMgfSBmcm9tIFwiLi4vcGFyYW1zXCI7XG5pbXBvcnQgeyBnZXRSZWNvbW1lbmRlZENvdXJzZXMgfSBmcm9tIFwiQC9saWIvY29udGVudC9xdWVyaWVzXCI7XG5cbi8qKlxuICogUHVibGljIHJlY29tbWVuZGVkLWNvdXJzZSBzdW1tYXJpZXMg4oCUIHRoZSBjbGllbnQtc2lkZSBmYWNlIG9mXG4gKiBgZ2V0UmVjb21tZW5kZWRDb3Vyc2VzYCAoZGFzaGJvYXJkKS4gYGV4Y2x1ZGVgIG1heSBiZSBhYnNlbnQgKHJlY29tbWVuZCBmcm9tXG4gKiB0aGUgd2hvbGUgZ2F0ZWQgY2F0YWxvZykuIEdhdGVkIHNlcnZlci1zaWRlIG9uIHN5bmNlZCthY3RpdmUuXG4gKi9cbmV4cG9ydCBhc3luYyBmdW5jdGlvbiBHRVQocmVxdWVzdDogTmV4dFJlcXVlc3QpIHtcbiAgY29uc3QgZXhjbHVkZSA9IHBhcnNlSWRzKHJlcXVlc3QubmV4dFVybC5zZWFyY2hQYXJhbXMuZ2V0KFwiZXhjbHVkZVwiKSwgdHJ1ZSk7XG4gIGlmIChleGNsdWRlIGluc3RhbmNlb2YgTmV4dFJlc3BvbnNlKSByZXR1cm4gZXhjbHVkZTtcbiAgdHJ5IHtcbiAgICBjb25zdCBjb3Vyc2VzID0gYXdhaXQgZ2V0UmVjb21tZW5kZWRDb3Vyc2VzKGV4Y2x1ZGUpO1xuICAgIHJldHVybiBOZXh0UmVzcG9uc2UuanNvbih7IGNvdXJzZXMgfSk7XG4gIH0gY2F0Y2gge1xuICAgIHJldHVybiBOZXh0UmVzcG9uc2UuanNvbihcbiAgICAgIHsgZXJyb3I6IFwiRmFpbGVkIHRvIGZldGNoIHJlY29tbWVuZGF0aW9uc1wiIH0sXG4gICAgICB7IHN0YXR1czogNTAwIH1cbiAgICApO1xuICB9XG59XG4iXSwiZmlsZSI6Ii9zcmMvYXBwL2FwaS9jb250ZW50L3JlY29tbWVuZGVkL3JvdXRlLnRzIn0=
+
+//# vitestCache=W3siZmlsZSI6IjEiLCJpZCI6IjEiLCJ1cmwiOiIyIiwiaW1wb3J0ZWRVcmxzIjoiMyIsIm1hcHBpbmdzIjpmYWxzZX0sIi9Vc2Vycy9kYXZpZC9Eb2N1bWVudHMva21pbm8vc29sL3N1cGVydGVhbS1hY2FkZW15L2FwcHMvd2ViL3NyYy9hcHAvYXBpL2NvbnRlbnQvcmVjb21tZW5kZWQvcm91dGUudHMiLCIvc3JjL2FwcC9hcGkvY29udGVudC9yZWNvbW1lbmRlZC9yb3V0ZS50cyIsW11d

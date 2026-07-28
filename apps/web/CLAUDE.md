@@ -99,6 +99,13 @@ OPENENDED_AI_REPLY=                # Set to "1" to enable the best-effort AI rep
                                     # is enrichment only and is a metered cost path whose accounting
                                     # is owned by #590. Requires GEMINI_API_KEY when enabled.
 
+# Optional — Teacher course preview (#828), server-only
+TEACH_PREVIEW_PASSWORD=            # Shared password for /teach/preview. Defaults to "123" —
+                                   # an INTERIM value; set a real one before sharing the URL.
+                                   # Gates read-only rendering of unpublished course PRs only:
+                                   # never on-chain writes, never the admin surface (separate
+                                   # cookie from admin_session, so it cannot satisfy admin auth).
+
 # Optional — Rust playground proxy (server-only)
 RUST_PLAYGROUND_URL=               # /api/rust/execute upstream (default: play.rust-lang.org/execute)
 

@@ -1483,5 +1483,38 @@
     "submit": "Enviar respostas",
     "unavailableTitle": "O teste de dispensa não está disponível aqui",
     "unavailableBody": "Este curso não oferece teste de dispensa no momento. Abra-o e faça as lições — você ganha XP em cada uma."
+  },
+  "teachPreview": {
+    "title": "Prévia do curso",
+    "subtitle": "Cole um link de pull request do repositório de cursos para ver como ficará na Academia.",
+    "loading": "Carregando",
+    "auth": {
+      "title": "Prévia para professores",
+      "body": "Digite a senha de acesso para visualizar cursos não publicados.",
+      "placeholder": "Senha de acesso",
+      "submit": "Desbloquear",
+      "invalid": "Senha inválida"
+    },
+    "form": {
+      "placeholder": "https://github.com/solanabr/courses-academy/pull/42",
+      "submit": "Visualizar",
+      "loading": "Compilando…"
+    },
+    "head": {
+      "meta": "por {author} · {branch} · {sha}"
+    },
+    "course": {
+      "lessons": "{count} lições"
+    },
+    "issues": {
+      "title": "{count} problema(s) de conteúdo",
+      "body": "São as mesmas verificações que rodam no CI. Corrija-as no seu pull request e visualize novamente."
+    },
+    "errors": {
+      "generic": "Não foi possível compilar este pull request.",
+      "network": "Erro de rede. Tente novamente."
+    },
+    "empty": "Este pull request não contém cursos.",
+    "viewCommit": "Ver commit no GitHub"
   }
 }

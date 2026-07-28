@@ -1,0 +1,14 @@
+Object.defineProperty(__vite_ssr_exports__, "locales", { enumerable: true, configurable: true, get(){ try { return locales } catch {} }});
+Object.defineProperty(__vite_ssr_exports__, "defaultLocale", { enumerable: true, configurable: true, get(){ try { return defaultLocale } catch {} }});
+Object.defineProperty(__vite_ssr_exports__, "localeNames", { enumerable: true, configurable: true, get(){ try { return localeNames } catch {} }});
+const locales = ["en", "pt-BR", "es"];
+const defaultLocale = "en";
+const localeNames = {
+  en: "English",
+  "pt-BR": "Portugues (BR)",
+  es: "Espanol"
+};
+//# sourceMappingSource=vite-generated
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJtYXBwaW5ncyI6IkFBQUEsQ0FBQTs7O0FBQU8sTUFBTSxVQUFVLENBQUMsTUFBTSxTQUFTLElBQUk7QUFFcEMsTUFBTSxnQkFBd0I7QUFFOUIsTUFBTSxjQUFzQztBQUFBLEVBQ2pELElBQUk7QUFBQSxFQUNKLFNBQVM7QUFBQSxFQUNULElBQUk7QUFDTiIsIm5hbWVzIjpbXSwiaWdub3JlTGlzdCI6W10sInNvdXJjZXMiOlsiY29uZmlnLnRzIl0sInNvdXJjZXNDb250ZW50IjpbImV4cG9ydCBjb25zdCBsb2NhbGVzID0gW1wiZW5cIiwgXCJwdC1CUlwiLCBcImVzXCJdIGFzIGNvbnN0O1xuZXhwb3J0IHR5cGUgTG9jYWxlID0gKHR5cGVvZiBsb2NhbGVzKVtudW1iZXJdO1xuZXhwb3J0IGNvbnN0IGRlZmF1bHRMb2NhbGU6IExvY2FsZSA9IFwiZW5cIjtcblxuZXhwb3J0IGNvbnN0IGxvY2FsZU5hbWVzOiBSZWNvcmQ8TG9jYWxlLCBzdHJpbmc+ID0ge1xuICBlbjogXCJFbmdsaXNoXCIsXG4gIFwicHQtQlJcIjogXCJQb3J0dWd1ZXMgKEJSKVwiLFxuICBlczogXCJFc3Bhbm9sXCIsXG59O1xuIl0sImZpbGUiOiIvc3JjL2xpYi9pMThuL2NvbmZpZy50cyJ9
+
+//# vitestCache=W3siZmlsZSI6IjEiLCJpZCI6IjEiLCJ1cmwiOiIyIiwiaW1wb3J0ZWRVcmxzIjoiMyIsIm1hcHBpbmdzIjpmYWxzZX0sIi9Vc2Vycy9kYXZpZC9Eb2N1bWVudHMva21pbm8vc29sL3N1cGVydGVhbS1hY2FkZW15L2FwcHMvd2ViL3NyYy9saWIvaTE4bi9jb25maWcudHMiLCIvc3JjL2xpYi9pMThuL2NvbmZpZy50cyIsW11d

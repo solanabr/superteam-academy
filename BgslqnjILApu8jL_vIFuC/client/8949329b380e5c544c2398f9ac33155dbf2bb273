@@ -1,0 +1,94 @@
+Object.defineProperty(__vite_ssr_exports__, "SyncDiffView", { enumerable: true, configurable: true, get(){ try { return SyncDiffView } catch {} }});
+const __vite_ssr_import_0__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/react@18.3.1/node_modules/react/jsx-dev-runtime.js", {"importedNames":["jsxDEV"]});const __vite_ssr_import_1__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/react@18.3.1/node_modules/react/index.js", {"importedNames":["useState"]});"use client";
+
+
+function SyncDiffView({ differences, title }) {
+  const [expanded, setExpanded] = (0,__vite_ssr_import_1__.useState)(false);
+  if (differences.length === 0) return null;
+  return /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("div", { className: "mt-2", children: [
+    /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)(
+      "button",
+      {
+        onClick: () => setExpanded(!expanded),
+        className: "flex items-center gap-1 text-xs text-text-3 transition-colors hover:text-text",
+        children: [
+          /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("span", { children: expanded ? "▼" : "▶" }, void 0, false, {
+            fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/admin/sync-diff-view.tsx",
+            lineNumber: 22,
+            columnNumber: 9
+          }, this),
+          title,
+          " — ",
+          differences.length,
+          " difference",
+          differences.length !== 1 ? "s" : ""
+        ]
+      },
+      void 0,
+      true,
+      {
+        fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/admin/sync-diff-view.tsx",
+        lineNumber: 18,
+        columnNumber: 7
+      },
+      this
+    ),
+    expanded && /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("div", { className: "mt-2 space-y-1.5 border-l border-border pl-3", children: differences.map((d) => /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("div", { className: "font-mono text-xs", children: [
+      /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("span", { className: "text-text-3", children: d.field }, void 0, false, {
+        fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/admin/sync-diff-view.tsx",
+        lineNumber: 31,
+        columnNumber: 15
+      }, this),
+      " ",
+      /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("span", { className: "text-text-3", children: "on-chain:" }, void 0, false, {
+        fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/admin/sync-diff-view.tsx",
+        lineNumber: 32,
+        columnNumber: 15
+      }, this),
+      " ",
+      /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("span", { className: "text-danger", children: String(d.onChainValue) }, void 0, false, {
+        fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/admin/sync-diff-view.tsx",
+        lineNumber: 33,
+        columnNumber: 15
+      }, this),
+      "  ",
+      /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("span", { className: "text-text-3", children: "bundle:" }, void 0, false, {
+        fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/admin/sync-diff-view.tsx",
+        lineNumber: 35,
+        columnNumber: 15
+      }, this),
+      " ",
+      /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("span", { className: "text-success", children: String(d.contentValue) }, void 0, false, {
+        fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/admin/sync-diff-view.tsx",
+        lineNumber: 36,
+        columnNumber: 15
+      }, this),
+      " ",
+      d.updateable ? /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("span", { className: "text-text-3", children: "[updateable]" }, void 0, false, {
+        fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/admin/sync-diff-view.tsx",
+        lineNumber: 38,
+        columnNumber: 17
+      }, this) : /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("span", { className: "font-semibold text-danger", children: "[immutable]" }, void 0, false, {
+        fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/admin/sync-diff-view.tsx",
+        lineNumber: 40,
+        columnNumber: 17
+      }, this)
+    ] }, d.field, true, {
+      fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/admin/sync-diff-view.tsx",
+      lineNumber: 30,
+      columnNumber: 13
+    }, this)) }, void 0, false, {
+      fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/admin/sync-diff-view.tsx",
+      lineNumber: 28,
+      columnNumber: 9
+    }, this)
+  ] }, void 0, true, {
+    fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/admin/sync-diff-view.tsx",
+    lineNumber: 17,
+    columnNumber: 5
+  }, this);
+}
+//# sourceMappingSource=vite-generated
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJtYXBwaW5ncyI6IkFBQUEsQ0FBQTtBQXFCUSxzTkFuQlI7OztBQVFPLFNBQVMsYUFBYSxFQUFFLGFBQWEsTUFBTSxHQUFzQjtBQUN0RSxRQUFNLENBQUMsVUFBVSxXQUFXLE9BQUksZ0NBQVMsS0FBSztBQUU5QyxNQUFJLFlBQVksV0FBVyxFQUFHLFFBQU87QUFFckMsU0FDRSxpREFBQyxTQUFJLFdBQVUsUUFDYjtBQUFBO0FBQUEsTUFBQztBQUFBO0FBQUEsUUFDQyxTQUFTLE1BQU0sWUFBWSxDQUFDLFFBQVE7QUFBQSxRQUNwQyxXQUFVO0FBQUEsUUFFVjtBQUFBLDJEQUFDLFVBQU0scUJBQVcsTUFBTSxPQUF4QjtBQUFBO0FBQUE7QUFBQTtBQUFBLGlCQUE0QjtBQUFBLFVBQzNCO0FBQUEsVUFBTTtBQUFBLFVBQUksWUFBWTtBQUFBLFVBQU87QUFBQSxVQUM3QixZQUFZLFdBQVcsSUFBSSxNQUFNO0FBQUE7QUFBQTtBQUFBLE1BTnBDO0FBQUE7QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUFBO0FBQUE7QUFBQSxJQU9BO0FBQUEsSUFFQyxZQUNDLGlEQUFDLFNBQUksV0FBVSxnREFDWixzQkFBWSxJQUFJLENBQUMsTUFDaEIsaURBQUMsU0FBa0IsV0FBVSxxQkFDM0I7QUFBQSx1REFBQyxVQUFLLFdBQVUsZUFBZSxZQUFFLFNBQWpDO0FBQUE7QUFBQTtBQUFBO0FBQUEsYUFBdUM7QUFBQSxNQUFRO0FBQUEsTUFDL0MsaURBQUMsVUFBSyxXQUFVLGVBQWMseUJBQTlCO0FBQUE7QUFBQTtBQUFBO0FBQUEsYUFBdUM7QUFBQSxNQUFRO0FBQUEsTUFDL0MsaURBQUMsVUFBSyxXQUFVLGVBQWUsaUJBQU8sRUFBRSxZQUFZLEtBQXBEO0FBQUE7QUFBQTtBQUFBO0FBQUEsYUFBc0Q7QUFBQSxNQUNyRDtBQUFBLE1BQ0QsaURBQUMsVUFBSyxXQUFVLGVBQWMsdUJBQTlCO0FBQUE7QUFBQTtBQUFBO0FBQUEsYUFBcUM7QUFBQSxNQUFRO0FBQUEsTUFDN0MsaURBQUMsVUFBSyxXQUFVLGdCQUFnQixpQkFBTyxFQUFFLFlBQVksS0FBckQ7QUFBQTtBQUFBO0FBQUE7QUFBQSxhQUF1RDtBQUFBLE1BQVE7QUFBQSxNQUM5RCxFQUFFLGFBQ0QsaURBQUMsVUFBSyxXQUFVLGVBQWMsNEJBQTlCO0FBQUE7QUFBQTtBQUFBO0FBQUEsYUFBMEMsSUFFMUMsaURBQUMsVUFBSyxXQUFVLDZCQUE0QiwyQkFBNUM7QUFBQTtBQUFBO0FBQUE7QUFBQSxhQUF1RDtBQUFBLFNBVmpELEVBQUUsT0FBWjtBQUFBO0FBQUE7QUFBQTtBQUFBLFdBWUEsQ0FDRCxLQWZIO0FBQUE7QUFBQTtBQUFBO0FBQUEsV0FnQkE7QUFBQSxPQTNCSjtBQUFBO0FBQUE7QUFBQTtBQUFBLFNBNkJBO0FBRUoiLCJuYW1lcyI6W10sImlnbm9yZUxpc3QiOltdLCJzb3VyY2VzIjpbInN5bmMtZGlmZi12aWV3LnRzeCJdLCJzb3VyY2VzQ29udGVudCI6WyJcInVzZSBjbGllbnRcIjtcblxuaW1wb3J0IHsgdXNlU3RhdGUgfSBmcm9tIFwicmVhY3RcIjtcbmltcG9ydCB0eXBlIHsgRGlmZkVudHJ5IH0gZnJvbSBcIkAvbGliL2FkbWluL3N5bmMtZGlmZlwiO1xuXG5pbnRlcmZhY2UgU3luY0RpZmZWaWV3UHJvcHMge1xuICBkaWZmZXJlbmNlczogRGlmZkVudHJ5W107XG4gIHRpdGxlOiBzdHJpbmc7XG59XG5cbmV4cG9ydCBmdW5jdGlvbiBTeW5jRGlmZlZpZXcoeyBkaWZmZXJlbmNlcywgdGl0bGUgfTogU3luY0RpZmZWaWV3UHJvcHMpIHtcbiAgY29uc3QgW2V4cGFuZGVkLCBzZXRFeHBhbmRlZF0gPSB1c2VTdGF0ZShmYWxzZSk7XG5cbiAgaWYgKGRpZmZlcmVuY2VzLmxlbmd0aCA9PT0gMCkgcmV0dXJuIG51bGw7XG5cbiAgcmV0dXJuIChcbiAgICA8ZGl2IGNsYXNzTmFtZT1cIm10LTJcIj5cbiAgICAgIDxidXR0b25cbiAgICAgICAgb25DbGljaz17KCkgPT4gc2V0RXhwYW5kZWQoIWV4cGFuZGVkKX1cbiAgICAgICAgY2xhc3NOYW1lPVwiZmxleCBpdGVtcy1jZW50ZXIgZ2FwLTEgdGV4dC14cyB0ZXh0LXRleHQtMyB0cmFuc2l0aW9uLWNvbG9ycyBob3Zlcjp0ZXh0LXRleHRcIlxuICAgICAgPlxuICAgICAgICA8c3Bhbj57ZXhwYW5kZWQgPyBcIuKWvFwiIDogXCLilrZcIn08L3NwYW4+XG4gICAgICAgIHt0aXRsZX0g4oCUIHtkaWZmZXJlbmNlcy5sZW5ndGh9IGRpZmZlcmVuY2VcbiAgICAgICAge2RpZmZlcmVuY2VzLmxlbmd0aCAhPT0gMSA/IFwic1wiIDogXCJcIn1cbiAgICAgIDwvYnV0dG9uPlxuXG4gICAgICB7ZXhwYW5kZWQgJiYgKFxuICAgICAgICA8ZGl2IGNsYXNzTmFtZT1cIm10LTIgc3BhY2UteS0xLjUgYm9yZGVyLWwgYm9yZGVyLWJvcmRlciBwbC0zXCI+XG4gICAgICAgICAge2RpZmZlcmVuY2VzLm1hcCgoZCkgPT4gKFxuICAgICAgICAgICAgPGRpdiBrZXk9e2QuZmllbGR9IGNsYXNzTmFtZT1cImZvbnQtbW9ubyB0ZXh0LXhzXCI+XG4gICAgICAgICAgICAgIDxzcGFuIGNsYXNzTmFtZT1cInRleHQtdGV4dC0zXCI+e2QuZmllbGR9PC9zcGFuPntcIiBcIn1cbiAgICAgICAgICAgICAgPHNwYW4gY2xhc3NOYW1lPVwidGV4dC10ZXh0LTNcIj5vbi1jaGFpbjo8L3NwYW4+e1wiIFwifVxuICAgICAgICAgICAgICA8c3BhbiBjbGFzc05hbWU9XCJ0ZXh0LWRhbmdlclwiPntTdHJpbmcoZC5vbkNoYWluVmFsdWUpfTwvc3Bhbj5cbiAgICAgICAgICAgICAge1wiICBcIn1cbiAgICAgICAgICAgICAgPHNwYW4gY2xhc3NOYW1lPVwidGV4dC10ZXh0LTNcIj5idW5kbGU6PC9zcGFuPntcIiBcIn1cbiAgICAgICAgICAgICAgPHNwYW4gY2xhc3NOYW1lPVwidGV4dC1zdWNjZXNzXCI+e1N0cmluZyhkLmNvbnRlbnRWYWx1ZSl9PC9zcGFuPntcIiBcIn1cbiAgICAgICAgICAgICAge2QudXBkYXRlYWJsZSA/IChcbiAgICAgICAgICAgICAgICA8c3BhbiBjbGFzc05hbWU9XCJ0ZXh0LXRleHQtM1wiPlt1cGRhdGVhYmxlXTwvc3Bhbj5cbiAgICAgICAgICAgICAgKSA6IChcbiAgICAgICAgICAgICAgICA8c3BhbiBjbGFzc05hbWU9XCJmb250LXNlbWlib2xkIHRleHQtZGFuZ2VyXCI+W2ltbXV0YWJsZV08L3NwYW4+XG4gICAgICAgICAgICAgICl9XG4gICAgICAgICAgICA8L2Rpdj5cbiAgICAgICAgICApKX1cbiAgICAgICAgPC9kaXY+XG4gICAgICApfVxuICAgIDwvZGl2PlxuICApO1xufVxuIl0sImZpbGUiOiIvc3JjL2NvbXBvbmVudHMvYWRtaW4vc3luYy1kaWZmLXZpZXcudHN4In0=
+
+//# vitestCache=W3siZmlsZSI6IjEiLCJpZCI6IjEiLCJ1cmwiOiIyIiwiaW1wb3J0ZWRVcmxzIjoiMyIsIm1hcHBpbmdzIjpmYWxzZX0sIi9Vc2Vycy9kYXZpZC9Eb2N1bWVudHMva21pbm8vc29sL3N1cGVydGVhbS1hY2FkZW15L2FwcHMvd2ViL3NyYy9jb21wb25lbnRzL2FkbWluL3N5bmMtZGlmZi12aWV3LnRzeCIsIi9zcmMvY29tcG9uZW50cy9hZG1pbi9zeW5jLWRpZmYtdmlldy50c3giLFtdXQ==

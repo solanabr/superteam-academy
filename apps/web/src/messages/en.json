@@ -1483,5 +1483,38 @@
     "submit": "Submit answers",
     "unavailableTitle": "Test-out isn't available here",
     "unavailableBody": "This course doesn't offer a test-out right now. Open it and work through the lessons instead — you'll earn XP for each one."
+  },
+  "teachPreview": {
+    "title": "Course preview",
+    "subtitle": "Paste a pull-request link from the courses repo to see how it will look in the Academy.",
+    "loading": "Loading",
+    "auth": {
+      "title": "Teacher preview",
+      "body": "Enter the access password to preview unpublished courses.",
+      "placeholder": "Access password",
+      "submit": "Unlock",
+      "invalid": "Invalid password"
+    },
+    "form": {
+      "placeholder": "https://github.com/solanabr/courses-academy/pull/42",
+      "submit": "Preview",
+      "loading": "Compiling…"
+    },
+    "head": {
+      "meta": "by {author} · {branch} · {sha}"
+    },
+    "course": {
+      "lessons": "{count} lessons"
+    },
+    "issues": {
+      "title": "{count} content issue(s)",
+      "body": "These are the same checks that run in CI. Fix them in your pull request and preview again."
+    },
+    "errors": {
+      "generic": "Could not compile this pull request.",
+      "network": "Network error. Try again."
+    },
+    "empty": "This pull request contains no courses.",
+    "viewCommit": "View commit on GitHub"
   }
 }
