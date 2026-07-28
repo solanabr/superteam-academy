@@ -86,6 +86,7 @@ export function NameRevealDialog({
     return !error;
   };
 
+  /** Real confirmation ("Ship it!") — record it durably, cross-device. */
   const handleNameConfirm = () => {
     localStorage.setItem("nameRevealSeen", "1");
     setShowNameReveal(false);
@@ -94,11 +95,16 @@ export function NameRevealDialog({
     // covers this browser if the write fails.
     void (async () => {
       const supabase = createClient();
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("profiles")
         .select("prefs")
         .eq("id", userId)
         .maybeSingle();
+      // Fail closed, mirroring the gating read: without a good read we cannot
+      // merge, and writing anyway would clobber sibling prefs keys. Skip the
+      // durable write — the localStorage fast path already covers this
+      // browser, and another device simply re-prompts.
+      if (error) return;
       const prefs = { ...toPrefsObject(data?.prefs), nameRevealSeen: true };
       await supabase
         .from("profiles")
@@ -109,8 +115,20 @@ export function NameRevealDialog({
     })();
   };
 
+  /**
+   * Bare dismissal (Escape / overlay / X) — NOT a confirmation. Keep only the
+   * pre-#843 per-browser localStorage record so this browser stops nagging,
+   * but skip the durable write: an accidental Escape must not permanently
+   * bury the reveal on every other device.
+   */
+  const handleDismiss = (open: boolean) => {
+    if (open) return;
+    localStorage.setItem("nameRevealSeen", "1");
+    setShowNameReveal(false);
+  };
+
   return (
-    <Dialog open={showNameReveal} onOpenChange={handleNameConfirm}>
+    <Dialog open={showNameReveal} onOpenChange={handleDismiss}>
       <DialogContent className="sm:max-w-md">
         <div className="py-4">
           <WalletNameGenerator

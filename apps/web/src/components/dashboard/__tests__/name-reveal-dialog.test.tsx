@@ -106,6 +106,52 @@ describe("NameRevealDialog — durable already-seen gate (#843)", () => {
     );
   });
 
+  it("skips the durable write when the confirm-time prefs read fails — never clobber on a blind merge", async () => {
+    // Gate read succeeds (new learner) → dialog shows.
+    maybeSingle.mockResolvedValueOnce({ data: { prefs: null }, error: null });
+    // Confirm-time re-read fails: merging is impossible, so writing anyway
+    // would clobber sibling prefs keys (e.g. nextLesson) with a bare
+    // { nameRevealSeen: true } object.
+    maybeSingle.mockResolvedValue({
+      data: null,
+      error: { message: "read failed" },
+    });
+
+    renderDialog({ nameRerollsUsed: 0 });
+    await screen.findByRole("dialog");
+
+    screen.getByRole("button", { name: /ship it/i }).click();
+
+    // Both reads settled (gate + confirm re-read) …
+    await waitFor(() => expect(maybeSingle).toHaveBeenCalledTimes(2));
+    // … but no prefs UPDATE happened; the localStorage fast path still covers
+    // this browser and the dialog still closes.
+    expect(updatePayloads).toHaveLength(0);
+    expect(localStorage.getItem("nameRevealSeen")).toBe("1");
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    );
+  });
+
+  it("does NOT write prefs on bare dismissal (Escape/overlay/X) — only per-browser localStorage", async () => {
+    maybeSingle.mockResolvedValue({ data: { prefs: null }, error: null });
+
+    renderDialog({ nameRerollsUsed: 0 });
+    const dialog = await screen.findByRole("dialog");
+
+    // The X close button drives Radix onOpenChange(false), same path as
+    // Escape and overlay taps.
+    screen.getByRole("button", { name: /close/i }).click();
+
+    await waitFor(() => expect(dialog).not.toBeInTheDocument());
+    // Accidental dismissal must not durably bury the reveal cross-device:
+    // no prefs write, no confirm-time re-read — only the gate read ran.
+    expect(updatePayloads).toHaveLength(0);
+    expect(maybeSingle).toHaveBeenCalledTimes(1);
+    // Pre-#843 per-browser behavior is kept: this browser stops nagging.
+    expect(localStorage.getItem("nameRevealSeen")).toBe("1");
+  });
+
   it("keeps localStorage as an offline fast path — no prompt, no fetch, when already recorded locally", () => {
     localStorage.setItem("nameRevealSeen", "1");
 
