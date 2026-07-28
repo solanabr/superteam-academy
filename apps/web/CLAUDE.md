@@ -100,6 +100,9 @@ OPENENDED_AI_REPLY=                # Set to "1" to enable the best-effort AI rep
                                     # is owned by #590. Requires GEMINI_API_KEY when enabled.
 
 # Optional — Teacher course preview (#828), server-only
+#                                  # Needs no GITHUB_TOKEN: courses-academy is public, so the
+#                                  # preview reads it anonymously (#830). A token is used when
+#                                  # set, purely to lift the 60 req/hr anonymous rate limit.
 TEACH_PREVIEW_PASSWORD=            # Shared password for /teach/preview. Defaults to "123" —
                                    # an INTERIM value; set a real one before sharing the URL.
                                    # Gates read-only rendering of unpublished course PRs only:
