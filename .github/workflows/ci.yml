@@ -197,7 +197,7 @@ jobs:
       # last-run's data (the gate's finding). The harness also purges fetch-cache
       # before `next start`; this narrower path is the belt to that suspenders.
       - name: Cache Next build (webpack only, never fetch-cache)
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: apps/web/.next/cache/webpack
           key: nextcache-e2e-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/web/src/**') }}
@@ -447,7 +447,7 @@ jobs:
       # Cache the Solana CLI install + the SBF platform-tools (v1.54, hundreds
       # of MB) so cargo-build-sbf doesn't re-download them every run.
       - name: Cache Solana CLI + platform-tools
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             ~/.local/share/solana/install
@@ -537,7 +537,7 @@ jobs:
           workspaces: onchain-academy
 
       - name: Cache Solana CLI + platform-tools
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             ~/.local/share/solana/install
