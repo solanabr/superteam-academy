@@ -33,7 +33,10 @@ import { check, group, sleep } from "k6";
 
 // --- Config (env-driven, safe defaults) -------------------------------------
 
-const BASE_URL = (__ENV.BASE_URL || "http://localhost:3000").replace(/\/+$/, "");
+const BASE_URL = (__ENV.BASE_URL || "http://localhost:3000").replace(
+  /\/+$/,
+  ""
+);
 const LOCALE = __ENV.LOCALE || "en";
 // Fallback course slug used only if setup() can't discover one from the sitemap.
 const FALLBACK_COURSE_SLUG = __ENV.COURSE_SLUG || "";
@@ -49,7 +52,9 @@ if (__ENV.ALLOW_PROD !== "1") {
   let host = "";
   try {
     // k6 has no URL global; extract host cheaply.
-    host = BASE_URL.replace(/^https?:\/\//i, "").split("/")[0].split(":")[0];
+    host = BASE_URL.replace(/^https?:\/\//i, "")
+      .split("/")[0]
+      .split(":")[0];
   } catch (_e) {
     host = "";
   }

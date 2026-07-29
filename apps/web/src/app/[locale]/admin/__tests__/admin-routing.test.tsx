@@ -54,7 +54,9 @@ describe("/admin default landing", () => {
     cookieGetMock.mockReturnValue(undefined);
 
     render(
-      (await AdminPage({ params: Promise.resolve({ locale: "en" }) })) as React.ReactElement
+      (await AdminPage({
+        params: Promise.resolve({ locale: "en" }),
+      })) as React.ReactElement
     );
 
     expect(screen.getByTestId("admin-login-form")).toBeInTheDocument();

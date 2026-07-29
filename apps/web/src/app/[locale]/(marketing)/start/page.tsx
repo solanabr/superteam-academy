@@ -14,16 +14,12 @@ export const metadata: Metadata = {
 // the resolved routes fresh if the bundle changes without a per-request cost.
 export const revalidate = 300;
 
-export default async function StartPage(
-  props: {
-    params: Promise<{ locale: string }>;
-  }
-) {
+export default async function StartPage(props: {
+  params: Promise<{ locale: string }>;
+}) {
   const params = await props.params;
 
-  const {
-    locale
-  } = params;
+  const { locale } = params;
 
   const [routes, questData] = await Promise.all([
     resolveSegmentRoutes(locale),

@@ -19,13 +19,9 @@ interface LocaleLayoutProps {
 export default async function LocaleLayout(props: LocaleLayoutProps) {
   const params = await props.params;
 
-  const {
-    locale
-  } = params;
+  const { locale } = params;
 
-  const {
-    children
-  } = props;
+  const { children } = props;
 
   if (!locales.includes(locale as Locale)) {
     notFound();

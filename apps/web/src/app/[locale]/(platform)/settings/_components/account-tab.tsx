@@ -84,9 +84,10 @@ export function AccountTab({
           | undefined;
 
         if (googleId) {
-          const updatePayload: Database["public"]["Tables"]["profiles"]["Update"] = {
-            google_id: googleId,
-          };
+          const updatePayload: Database["public"]["Tables"]["profiles"]["Update"] =
+            {
+              google_id: googleId,
+            };
           if (!avatarUrl && googleAvatar) {
             updatePayload.avatar_url = googleAvatar;
           }
@@ -147,9 +148,10 @@ export function AccountTab({
           | undefined;
 
         if (githubId) {
-          const updatePayload: Database["public"]["Tables"]["profiles"]["Update"] = {
-            github_id: githubId,
-          };
+          const updatePayload: Database["public"]["Tables"]["profiles"]["Update"] =
+            {
+              github_id: githubId,
+            };
           if (!avatarUrl && ghAvatar) {
             updatePayload.avatar_url = ghAvatar;
           }

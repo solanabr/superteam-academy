@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import {
   Robot,
@@ -66,6 +67,61 @@ export function AiPartnerPane({
     }, 1000);
     return () => clearInterval(id);
   }, [unlockAt]);
+
+  // Lock-reason disclosure (#842). Hover/focus reveals it transiently; a click
+  // pins it so it survives the pointer leaving — the thing a native `title`
+  // tooltip cannot do, since browsers dismiss those on pointer-down.
+  //
+  // It renders as a FLOATING bubble (portal + position:fixed), never in flow.
+  // An in-flow hint grew the pane, which pushed the chip out from under the
+  // cursor, which fired mouseleave and closed the hint — a feedback loop that
+  // made the text unreadable. A portal also escapes the pane's `overflow-hidden`,
+  // which would otherwise clip an absolutely-positioned bubble.
+  const [hintPinned, setHintPinned] = useState(false);
+  const [hintHovered, setHintHovered] = useState(false);
+  const [hintAt, setHintAt] = useState<{ top: number; left: number } | null>(
+    null
+  );
+  const chipRef = useRef<HTMLButtonElement>(null);
+  const hintVisible = hintPinned || hintHovered;
+
+  // Portals need `document`; only render the bubble after mount so SSR and the
+  // first client render agree.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  /** Anchor under the chip rather than to the raw cursor: no jitter as the
+   *  pointer moves, and the bubble cannot land under the cursor itself. */
+  const placeHint = useCallback(() => {
+    const rect = chipRef.current?.getBoundingClientRect();
+    if (rect) setHintAt({ top: rect.bottom + 8, left: rect.right });
+  }, []);
+
+  const openHint = useCallback(() => {
+    placeHint();
+    setHintHovered(true);
+  }, [placeHint]);
+
+  useEffect(() => {
+    if (!hintVisible) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setHintPinned(false);
+        setHintHovered(false);
+      }
+    };
+    // `position: fixed` does not follow an ancestor's scroll, so re-anchor
+    // while the bubble is up (capture: the pane's own column scrolls, not just
+    // the window).
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("scroll", placeHint, true);
+    window.addEventListener("resize", placeHint);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("scroll", placeHint, true);
+      window.removeEventListener("resize", placeHint);
+    };
+  }, [hintVisible, placeHint]);
 
   const locked = unlockAt != null && now < unlockAt;
   const remainingMs = locked ? unlockAt - now : 0;
@@ -141,14 +197,28 @@ export function AiPartnerPane({
 
         {/* Think-first countdown (#770): prominent, in the header's right
             rail, so the wait is the first thing read — not a footnote.
-            Outside the toggle's hit area (#842), so hovering it holds the
-            tooltip and clicking it does nothing. */}
+
+            Outside the toggle's hit area (#842) AND a real button rather than
+            a `title` attribute: browsers DISMISS native tooltips on
+            pointer-down, so clicking the chip to read the reason could never
+            work, and `title` never appears on touch at all. Hover and focus
+            reveal it; a click pins it. */}
         {locked && (
-          <span
-            role="status"
-            title={t("lock.tooltip")}
+          <button
+            ref={chipRef}
+            type="button"
+            onClick={() => {
+              placeHint();
+              setHintPinned((v) => !v);
+            }}
+            onMouseEnter={openHint}
+            onMouseLeave={() => setHintHovered(false)}
+            onFocus={openHint}
+            onBlur={() => setHintHovered(false)}
+            aria-expanded={hintVisible}
+            aria-controls="ai-lock-hint"
             aria-label={`${countdown} — ${t("lock.tooltip")}`}
-            className="mr-4 mt-3 flex shrink-0 cursor-help items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-bold tabular-nums text-text [background:var(--input)]"
+            className="mr-4 mt-3 flex shrink-0 cursor-help items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-bold tabular-nums text-text [background:var(--input)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <Lock
               size={16}
@@ -156,10 +226,37 @@ export function AiPartnerPane({
               className="shrink-0 text-text-3"
               aria-hidden="true"
             />
-            {countdown}
-          </span>
+            {/* The ticking value keeps its own live region: the button carries
+                the control semantics, this span carries the status. */}
+            <span role="status">{countdown}</span>
+          </button>
         )}
       </div>
+
+      {/* Floating bubble, portalled to <body> and `position: fixed`, so it
+          takes NO layout space (the in-flow version grew the pane, pushed the
+          chip off the cursor and closed itself) and escapes the pane's
+          `overflow-hidden`. `pointer-events-none` guarantees the bubble can
+          never itself steal or block the hover that is keeping it open. */}
+      {mounted &&
+        locked &&
+        hintVisible &&
+        hintAt &&
+        createPortal(
+          <div
+            id="ai-lock-hint"
+            role="note"
+            style={{
+              top: hintAt.top,
+              left: hintAt.left,
+              transform: "translateX(-100%)",
+            }}
+            className="pointer-events-none fixed z-50 max-w-[16rem] rounded-md border border-border px-3 py-2 text-xs leading-relaxed text-text shadow-card [background:var(--card)]"
+          >
+            {t("lock.tooltip")}
+          </div>,
+          document.body
+        )}
 
       {/* Empty state stays COMPACT (#770): the prompt and the Hint button sit
           together in a short block — no reserved conversation area. The pane

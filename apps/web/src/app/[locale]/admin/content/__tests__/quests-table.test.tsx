@@ -2,13 +2,15 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { createTranslator } from "next-intl";
-import { QuestsTable } from "../quests-table";
 import type { ContentQuest } from "@/lib/content/queries";
 import messages from "@/messages/en.json";
+import { QuestsTable } from "../quests-table";
 
 vi.mock("next-intl/server", () => ({
   getTranslations: async (
-    namespace: Parameters<typeof createTranslator<typeof messages>>[0]["namespace"]
+    namespace: Parameters<
+      typeof createTranslator<typeof messages>
+    >[0]["namespace"]
   ) => createTranslator({ locale: "en", messages, namespace }),
 }));
 
