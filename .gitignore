@@ -111,3 +111,12 @@ test-results/
 
 # Node compile cache (accidentally committed once in #791)
 node-compile-cache/
+
+# Generated SSR/client chunk cache written to the REPO ROOT under a random
+# nanoid-style directory name (`<id>/client/`, `<id>/ssr/`, hashed filenames
+# containing __vite_ssr_exports__). Swept into git by a `git add -A` in #879.
+# gitignore has no regex quantifiers, so a random name cannot be matched
+# generically. Listed explicitly rather than as `*/client/` + `*/ssr/`, which
+# would also shadow a future real package such as `packages/client/`.
+/sco5yHj4dsqv45Yc8yrM5/
+/BgslqnjILApu8jL_vIFuC/
