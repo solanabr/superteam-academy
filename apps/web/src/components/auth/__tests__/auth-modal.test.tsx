@@ -3,8 +3,8 @@ import type { ReactElement } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import { AuthModal } from "../auth-modal";
 import messages from "@/messages/en.json";
+import { AuthModal } from "../auth-modal";
 
 vi.mock("@solana/wallet-adapter-react-ui", () => ({
   useWalletModal: () => ({ setVisible: vi.fn() }),
@@ -91,7 +91,9 @@ describe("AuthModal — Later affordance (LX-A4b)", () => {
   it("shows the keep-progress framing, a Later button, and reassurance copy", () => {
     renderWithIntl(<AuthModal open onOpenChange={() => {}} showLater />);
 
-    expect(screen.getByText(messages.auth.keepProgressTitle)).toBeInTheDocument();
+    expect(
+      screen.getByText(messages.auth.keepProgressTitle)
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: messages.auth.later })
     ).toBeInTheDocument();

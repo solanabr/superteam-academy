@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { AdminLoginForm } from "./admin-login-form";
 import { isValidAdminSession } from "@/lib/admin/auth";
+import { AdminLoginForm } from "./admin-login-form";
 
 /**
  * `/admin` root. Unauthenticated → render `<AdminLoginForm/>` (the layout
@@ -12,16 +12,12 @@ import { isValidAdminSession } from "@/lib/admin/auth";
  * `/admin/*` sub-routes back to `/admin`, so an unconditional redirect would
  * loop (`/admin` → `/admin/courses` → middleware → `/admin` → …).
  */
-export default async function AdminPage(
-  props: {
-    params: Promise<{ locale: string }>;
-  }
-) {
+export default async function AdminPage(props: {
+  params: Promise<{ locale: string }>;
+}) {
   const params = await props.params;
 
-  const {
-    locale
-  } = params;
+  const { locale } = params;
 
   const cookieStore = await cookies();
   const session = cookieStore.get("admin_session");

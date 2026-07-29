@@ -67,6 +67,22 @@ export function AiPartnerPane({
     return () => clearInterval(id);
   }, [unlockAt]);
 
+  // Lock-reason disclosure (#842). Hover/focus reveals it transiently; a click
+  // pins it so it survives the pointer leaving — the thing a native `title`
+  // tooltip cannot do, since browsers dismiss those on click.
+  const [hintPinned, setHintPinned] = useState(false);
+  const [hintHovered, setHintHovered] = useState(false);
+  const hintVisible = hintPinned || hintHovered;
+
+  useEffect(() => {
+    if (!hintPinned) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setHintPinned(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [hintPinned]);
+
   const locked = unlockAt != null && now < unlockAt;
   const remainingMs = locked ? unlockAt - now : 0;
   const countdown = `${Math.floor(remainingMs / 60000)}:${String(
@@ -141,13 +157,24 @@ export function AiPartnerPane({
         </button>
 
         {/* Think-first countdown (#770): prominent, in the header's right rail,
-            so the wait is the first thing read — not a footnote. */}
+            so the wait is the first thing read — not a footnote.
+
+            A real button, not a `title` attribute (#842). Native tooltips are
+            DISMISSED on click, so clicking to read the reason could never work,
+            and they never appear on touch at all. This opens on hover, on
+            focus, and on click (which pins it until clicked again or Escape). */}
         {locked && (
-          <span
-            role="status"
-            title={t("lock.tooltip")}
+          <button
+            type="button"
+            onClick={() => setHintPinned((v) => !v)}
+            onMouseEnter={() => setHintHovered(true)}
+            onMouseLeave={() => setHintHovered(false)}
+            onFocus={() => setHintHovered(true)}
+            onBlur={() => setHintHovered(false)}
+            aria-expanded={hintVisible}
+            aria-controls="ai-lock-hint"
             aria-label={`${countdown} — ${t("lock.tooltip")}`}
-            className="flex shrink-0 cursor-help items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-bold tabular-nums text-text [background:var(--input)]"
+            className="flex shrink-0 cursor-help items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-bold tabular-nums text-text [background:var(--input)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <Lock
               size={16}
@@ -155,10 +182,25 @@ export function AiPartnerPane({
               className="shrink-0 text-text-3"
               aria-hidden="true"
             />
-            {countdown}
-          </span>
+            {/* The ticking value keeps its own live region: the button carries
+                the control semantics, this span carries the status. */}
+            <span role="status">{countdown}</span>
+          </button>
         )}
       </div>
+
+      {/* Rendered INLINE rather than as a floating popover: the pane root is
+          `overflow-hidden`, which would clip an absolutely-positioned panel —
+          most visibly when the pane is collapsed to just this header. */}
+      {locked && hintVisible && (
+        <p
+          id="ai-lock-hint"
+          role="note"
+          className="shrink-0 border-b border-border px-4 py-2 text-xs text-text-3 [background:var(--input)]"
+        >
+          {t("lock.tooltip")}
+        </p>
+      )}
 
       {/* Empty state stays COMPACT (#770): the prompt and the Hint button sit
           together in a short block — no reserved conversation area. The pane

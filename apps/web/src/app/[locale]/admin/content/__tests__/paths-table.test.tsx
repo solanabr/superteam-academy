@@ -2,16 +2,18 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { createTranslator } from "next-intl";
-import { PathsTable } from "../paths-table";
 import type { AdminLearningPathWithRefs } from "@/lib/content/queries";
 import messages from "@/messages/en.json";
+import { PathsTable } from "../paths-table";
 
 // Real ICU-aware translator (supports the `danglingCount` plural rule),
 // rather than a raw key lookup — `next-intl/server`'s `getTranslations` needs
 // a request context this test environment doesn't have.
 vi.mock("next-intl/server", () => ({
   getTranslations: async (
-    namespace: Parameters<typeof createTranslator<typeof messages>>[0]["namespace"]
+    namespace: Parameters<
+      typeof createTranslator<typeof messages>
+    >[0]["namespace"]
   ) => createTranslator({ locale: "en", messages, namespace }),
 }));
 

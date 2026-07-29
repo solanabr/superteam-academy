@@ -125,17 +125,24 @@ describe("AiPartnerPane — think-first lock (#770)", () => {
   });
 
   it("shows the lock countdown chip and disables the actions while locked", () => {
-    // Post-#791 the locked state is announced by a header chip (role="status")
-    // rather than a body banner: it shows a tabular m:ss countdown (~2:59/3:00
-    // depending on the sub-ms gap to the pane's own Date.now()) with the
-    // think-first messaging in its aria-label/title. Assert the chip, not the
-    // retired `lock.body` text.
+    // Post-#791 the locked state is announced by a header chip rather than a
+    // body banner: a tabular m:ss countdown (~2:59/3:00 depending on the
+    // sub-ms gap to the pane's own Date.now()). Since #842 the chip is a
+    // BUTTON that discloses the think-first reason, wrapping a role="status"
+    // span for the ticking value — the reason lives in its aria-label and in
+    // the disclosed note, never in a `title` (browsers dismiss those on click,
+    // which is the bug #842 fixed). Assert the chip, not the retired
+    // `lock.body` text.
     renderPane({ unlockAt: Date.now() + THREE_MIN });
 
     const chip = screen.getByRole("status");
     expect(chip).toHaveTextContent(/^\d:\d\d$/);
-    expect(chip).toHaveAttribute("title", lockTooltip);
-    const ariaLabel = chip.getAttribute("aria-label") ?? "";
+
+    const chipButton = screen.getByRole("button", {
+      name: new RegExp(lockTooltip.slice(0, 24)),
+    });
+    expect(chipButton).not.toHaveAttribute("title");
+    const ariaLabel = chipButton.getAttribute("aria-label") ?? "";
     expect(ariaLabel).toMatch(/^\d:\d\d — /);
     expect(ariaLabel).toContain(lockTooltip);
 
