@@ -69,7 +69,7 @@ export function AiPartnerPane({
 
   // Lock-reason disclosure (#842). Hover/focus reveals it transiently; a click
   // pins it so it survives the pointer leaving — the thing a native `title`
-  // tooltip cannot do, since browsers dismiss those on click.
+  // tooltip cannot do, since browsers dismiss those on pointer-down.
   const [hintPinned, setHintPinned] = useState(false);
   const [hintHovered, setHintHovered] = useState(false);
   const hintVisible = hintPinned || hintHovered;
@@ -112,20 +112,19 @@ export function AiPartnerPane({
       )}
     >
       {/* Collapsible (#770): the whole pane folds to its header so the reading
-          column can be reclaimed. Starts open. */}
-      {/* The countdown is a SIBLING of the toggle, not a child (#842). Inside
-          the button, its tooltip was unreadable: any click to inspect it
-          toggled the pane, moving it out from under the pointer. Two controls
-          must not share pixels — so the row splits into [toggle][badge]. */}
-      <div className="flex shrink-0 items-start gap-2 border-b border-border px-4 py-3">
+          column can be reclaimed. Starts open. The countdown chip is a SIBLING
+          of the toggle, not a child (#842): nested inside the button, every
+          chip click toggled the pane out from under the pointer and dismissed
+          the tooltip before it could be read. */}
+      <div className="flex shrink-0 items-start border-b border-border">
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
           aria-controls="ai-partner-body"
-          className="flex min-w-0 flex-1 flex-col gap-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="flex min-w-0 flex-1 flex-col gap-2 px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <div className="flex items-center gap-2">
+          <div className="flex w-full items-center gap-2">
             <Robot
               size={18}
               weight="duotone"
@@ -156,13 +155,14 @@ export function AiPartnerPane({
           <AssistMeter freeHintsUsed={freeHintsUsed} paidUsed={paidUsed} />
         </button>
 
-        {/* Think-first countdown (#770): prominent, in the header's right rail,
-            so the wait is the first thing read — not a footnote.
+        {/* Think-first countdown (#770): prominent, in the header's right
+            rail, so the wait is the first thing read — not a footnote.
 
-            A real button, not a `title` attribute (#842). Native tooltips are
-            DISMISSED on click, so clicking to read the reason could never work,
-            and they never appear on touch at all. This opens on hover, on
-            focus, and on click (which pins it until clicked again or Escape). */}
+            Outside the toggle's hit area (#842) AND a real button rather than
+            a `title` attribute: browsers DISMISS native tooltips on
+            pointer-down, so clicking the chip to read the reason could never
+            work, and `title` never appears on touch at all. Hover and focus
+            reveal it; a click pins it. */}
         {locked && (
           <button
             type="button"
@@ -174,7 +174,7 @@ export function AiPartnerPane({
             aria-expanded={hintVisible}
             aria-controls="ai-lock-hint"
             aria-label={`${countdown} — ${t("lock.tooltip")}`}
-            className="flex shrink-0 cursor-help items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-bold tabular-nums text-text [background:var(--input)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="mr-4 mt-3 flex shrink-0 cursor-help items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-bold tabular-nums text-text [background:var(--input)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <Lock
               size={16}

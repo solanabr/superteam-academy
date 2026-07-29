@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import type { Json } from "@/lib/supabase/types";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { WalletNameGenerator } from "@/components/profile/wallet-name-generator";
-import type { Json } from "@/lib/supabase/types";
 
 interface NameRevealDialogProps {
   isLoading: boolean;
@@ -13,11 +13,7 @@ interface NameRevealDialogProps {
   nameRerollsUsed: number;
 }
 
-/** The durable "this learner has finished the name reveal" marker (#843). */
-export const NAME_REVEAL_PREF_KEY = "nameRevealSeen";
-/** Per-browser fast path; never authoritative on its own. */
-const LOCAL_KEY = "nameRevealSeen";
-
+/** Narrows the untyped prefs blob to a plain object for reading/merging. */
 function toPrefsObject(prefs: unknown): Record<string, unknown> {
   return prefs && typeof prefs === "object" && !Array.isArray(prefs)
     ? (prefs as Record<string, unknown>)
@@ -25,22 +21,13 @@ function toPrefsObject(prefs: unknown): Record<string, unknown> {
 }
 
 /**
- * Name reveal modal — shown once, to learners who have never completed it.
+ * Name reveal modal — shown once per learner, on first login.
  *
- * "Completed" is recorded in `profiles.prefs.nameRevealSeen` (#843). It used to
- * rest on two signals that both fail for the most common path — a learner who
- * accepts the generated name without rerolling:
- *
- *   - `name_rerolls_used === 0` never advances for them, so the server keeps
- *     reading "never seen" forever; and
- *   - `localStorage` is per-browser, so another device, a cleared profile or a
- *     private window all re-prompted.
- *
- * `prefs` is the learner-owned JSONB store (own-row UPDATE RLS, bounded by
- * `chk_profiles_prefs_object` / `chk_profiles_prefs_size`) already used for
- * `prefs.nextLesson`. `name_rerolls_used` is deliberately NOT reused as the
- * marker: confirming without rerolling would have to increment it, silently
- * spending one of the learner's rerolls to record an unrelated fact.
+ * "Already seen" is decided by `profiles.prefs.nameRevealSeen` (#843) — the
+ * durable, cross-device record (learner-owned JSONB, same store as
+ * `prefs.nextLesson`). localStorage is only an offline fast path, and
+ * `name_rerolls_used === 0` alone proves nothing: accepting the first
+ * generated name leaves rerolls at 0 forever.
  */
 export function NameRevealDialog({
   isLoading,
@@ -50,13 +37,12 @@ export function NameRevealDialog({
 }: NameRevealDialogProps) {
   const [showNameReveal, setShowNameReveal] = useState(false);
   const [dashboardUsername, setDashboardUsername] = useState(username);
-  const [prefs, setPrefs] = useState<Record<string, unknown>>({});
 
   useEffect(() => {
-    if (isLoading || !userId) return;
-    // The local flag alone can suppress, never reveal — it is the offline fast
-    // path for a learner who already confirmed in THIS browser.
-    if (localStorage.getItem(LOCAL_KEY)) return;
+    // rerolls > 0 means the learner has been through the reveal already.
+    if (isLoading || !userId || nameRerollsUsed !== 0) return;
+    // Fast path: this browser already recorded a confirmation.
+    if (localStorage.getItem("nameRevealSeen")) return;
 
     let cancelled = false;
     (async () => {
@@ -67,26 +53,20 @@ export function NameRevealDialog({
         .eq("id", userId)
         .maybeSingle();
       if (cancelled) return;
-
-      const prefsObj = toPrefsObject(data?.prefs);
-      setPrefs(prefsObj);
-
-      // Fail CLOSED on a read error: showing a stranger's name picker to
-      // someone who already named themselves is the bug being fixed, and a
-      // learner who never sees it can still rename from Settings.
-      if (error) return;
-      if (prefsObj[NAME_REVEAL_PREF_KEY] === true) {
-        localStorage.setItem(LOCAL_KEY, "1");
+      // Fail closed: if the prefs read errors we cannot prove "never seen",
+      // so don't prompt — a genuinely new learner just sees it next visit.
+      if (error || !data) return;
+      if (toPrefsObject(data.prefs).nameRevealSeen) {
+        // Confirmed on another device — backfill the local fast path.
+        localStorage.setItem("nameRevealSeen", "1");
         return;
       }
-      if (nameRerollsUsed !== 0) return;
       setShowNameReveal(true);
     })();
-
     return () => {
       cancelled = true;
     };
-  }, [isLoading, nameRerollsUsed, userId]);
+  }, [isLoading, userId, nameRerollsUsed]);
 
   // Keep username in sync
   useEffect(() => {
@@ -106,23 +86,49 @@ export function NameRevealDialog({
     return !error;
   };
 
+  /** Real confirmation ("Ship it!") — record it durably, cross-device. */
   const handleNameConfirm = () => {
-    localStorage.setItem(LOCAL_KEY, "1");
+    localStorage.setItem("nameRevealSeen", "1");
     setShowNameReveal(false);
+    // Durable record (#843): re-read prefs and merge so sibling keys (e.g.
+    // prefs.nextLesson) are not clobbered. Best-effort — localStorage already
+    // covers this browser if the write fails.
+    void (async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("prefs")
+        .eq("id", userId)
+        .maybeSingle();
+      // Fail closed, mirroring the gating read: without a good read we cannot
+      // merge, and writing anyway would clobber sibling prefs keys. Skip the
+      // durable write — the localStorage fast path already covers this
+      // browser, and another device simply re-prompts.
+      if (error) return;
+      const prefs = { ...toPrefsObject(data?.prefs), nameRevealSeen: true };
+      await supabase
+        .from("profiles")
+        // A plain JSON object; the merged record lacks the index signature the
+        // generated Json type wants, so cast at the boundary.
+        .update({ prefs: prefs as unknown as Json })
+        .eq("id", userId);
+    })();
+  };
 
-    // Merge, never replace — `prefs` also carries `nextLesson`. Best-effort:
-    // the local flag already closed it for this browser, and a failed write
-    // just means the modal is re-evaluated on the next device.
-    const nextPrefs = { ...prefs, [NAME_REVEAL_PREF_KEY]: true };
-    setPrefs(nextPrefs);
-    void createClient()
-      .from("profiles")
-      .update({ prefs: nextPrefs as unknown as Json })
-      .eq("id", userId);
+  /**
+   * Bare dismissal (Escape / overlay / X) — NOT a confirmation. Keep only the
+   * pre-#843 per-browser localStorage record so this browser stops nagging,
+   * but skip the durable write: an accidental Escape must not permanently
+   * bury the reveal on every other device.
+   */
+  const handleDismiss = (open: boolean) => {
+    if (open) return;
+    localStorage.setItem("nameRevealSeen", "1");
+    setShowNameReveal(false);
   };
 
   return (
-    <Dialog open={showNameReveal} onOpenChange={handleNameConfirm}>
+    <Dialog open={showNameReveal} onOpenChange={handleDismiss}>
       <DialogContent className="sm:max-w-md">
         <div className="py-4">
           <WalletNameGenerator

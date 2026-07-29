@@ -1,0 +1,132 @@
+Object.defineProperty(__vite_ssr_exports__, "EarnHandoffCard", { enumerable: true, configurable: true, get(){ try { return EarnHandoffCard } catch {} }});
+const __vite_ssr_import_0__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/react@18.3.1/node_modules/react/jsx-dev-runtime.js", {"importedNames":["jsxDEV"]});const __vite_ssr_import_1__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/react@18.3.1/node_modules/react/index.js", {"importedNames":["useId"]});const __vite_ssr_import_2__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/next-intl@3.26.5_next@14.2.35_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-dom@18._697453d2ab77c379c3345831fabc794f/node_modules/next-intl/dist/index.react-client.js", {"importedNames":["useTranslations"]});const __vite_ssr_import_3__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/@phosphor-icons+react@2.1.10_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/@phosphor-icons/react/dist/index.es.js", {"importedNames":["ArrowUpRight","Coins"]});const __vite_ssr_import_4__ = await __vite_ssr_import__("/src/lib/analytics/index.ts", {"importedNames":["trackEvent"]});"use client";
+
+
+
+
+
+const EARN_CATEGORIES = [
+  {
+    key: "development",
+    href: "https://superteam.fun/earn/category/development/"
+  },
+  { key: "content", href: "https://superteam.fun/earn/category/content/" },
+  { key: "grants", href: "https://superteam.fun/earn/grants/" }
+];
+function EarnHandoffCard({ source, courseId }) {
+  const t = (0,__vite_ssr_import_2__.useTranslations)("earnHandoff");
+  const titleId = (0,__vite_ssr_import_1__.useId)();
+  function handleClick(category) {
+    (0,__vite_ssr_import_4__.trackEvent)("earn_handoff_click", {
+      category,
+      source,
+      ...courseId ? { courseId } : {}
+    });
+  }
+  return /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)(
+    "section",
+    {
+      "aria-labelledby": titleId,
+      className: "rounded-xl bg-cert-gradient p-[1.5px] shadow-[var(--shadow-card)]",
+      children: /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("div", { className: "rounded-[11px] bg-card px-5 py-4", children: [
+        /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("div", { className: "flex items-center gap-2", children: [
+          /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)(
+            (0,__vite_ssr_import_3__.Coins),
+            {
+              size: 20,
+              weight: "duotone",
+              className: "shrink-0 text-secondary",
+              "aria-hidden": "true"
+            },
+            void 0,
+            false,
+            {
+              fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/certificates/earn-handoff-card.tsx",
+              lineNumber: 56,
+              columnNumber: 11
+            },
+            this
+          ),
+          /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("h2", { id: titleId, className: "font-display text-sm font-bold text-text", children: t("title") }, void 0, false, {
+            fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/certificates/earn-handoff-card.tsx",
+            lineNumber: 62,
+            columnNumber: 11
+          }, this)
+        ] }, void 0, true, {
+          fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/certificates/earn-handoff-card.tsx",
+          lineNumber: 55,
+          columnNumber: 9
+        }, this),
+        /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("p", { className: "mt-2 text-xs leading-relaxed text-text-2", children: t("description") }, void 0, false, {
+          fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/certificates/earn-handoff-card.tsx",
+          lineNumber: 66,
+          columnNumber: 9
+        }, this),
+        /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("p", { className: "mt-1.5 text-xs leading-relaxed text-text-3", children: t("grantNote") }, void 0, false, {
+          fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/certificates/earn-handoff-card.tsx",
+          lineNumber: 69,
+          columnNumber: 9
+        }, this),
+        /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("ul", { className: "mt-3 flex flex-wrap gap-2", "aria-label": t("linksLabel"), children: EARN_CATEGORIES.map(({ key, href }, index) => /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("li", { children: /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)(
+          "a",
+          {
+            href,
+            target: "_blank",
+            rel: "noopener noreferrer",
+            onClick: () => handleClick(key),
+            className: index === 0 ? "inline-flex items-center gap-1 rounded-md bg-primary px-3.5 py-1.5 font-display text-xs font-bold text-white shadow-push transition-all duration-100 hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:translate-y-[3px] active:shadow-push-active" : "inline-flex items-center gap-1 rounded-md border border-border bg-bg px-3.5 py-1.5 font-display text-xs font-bold text-text transition-colors hover:border-primary hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+            children: [
+              t(key),
+              /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)((0,__vite_ssr_import_3__.ArrowUpRight), { size: 12, weight: "bold", "aria-hidden": "true" }, void 0, false, {
+                fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/certificates/earn-handoff-card.tsx",
+                lineNumber: 87,
+                columnNumber: 17
+              }, this),
+              /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("span", { className: "sr-only", children: [
+                "(",
+                t("opensInNewTab"),
+                ")"
+              ] }, void 0, true, {
+                fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/certificates/earn-handoff-card.tsx",
+                lineNumber: 88,
+                columnNumber: 17
+              }, this)
+            ]
+          },
+          void 0,
+          true,
+          {
+            fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/certificates/earn-handoff-card.tsx",
+            lineNumber: 75,
+            columnNumber: 15
+          },
+          this
+        ) }, key, false, {
+          fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/certificates/earn-handoff-card.tsx",
+          lineNumber: 74,
+          columnNumber: 13
+        }, this)) }, void 0, false, {
+          fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/certificates/earn-handoff-card.tsx",
+          lineNumber: 72,
+          columnNumber: 9
+        }, this)
+      ] }, void 0, true, {
+        fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/certificates/earn-handoff-card.tsx",
+        lineNumber: 54,
+        columnNumber: 7
+      }, this)
+    },
+    void 0,
+    false,
+    {
+      fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/certificates/earn-handoff-card.tsx",
+      lineNumber: 50,
+      columnNumber: 5
+    },
+    this
+  );
+}
+//# sourceMappingSource=vite-generated
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJtYXBwaW5ncyI6IkFBQUEsQ0FBQTtBQXVEVSxzTkFyRFYsMk1BQ0EsdVZBQ0EsOFNBQ0E7Ozs7OztBQVlBLE1BQU0sa0JBQWtCO0FBQUEsRUFDdEI7QUFBQSxJQUNFLEtBQUs7QUFBQSxJQUNMLE1BQU07QUFBQSxFQUNSO0FBQUEsRUFDQSxFQUFFLEtBQUssV0FBVyxNQUFNLCtDQUErQztBQUFBLEVBQ3ZFLEVBQUUsS0FBSyxVQUFVLE1BQU0scUNBQXFDO0FBQzlEO0FBVU8sU0FBUyxnQkFBZ0IsRUFBRSxRQUFRLFNBQVMsR0FBeUI7QUFDMUUsUUFBTSxPQUFJLHVDQUFnQixhQUFhO0FBR3ZDLFFBQU0sYUFBVSw2QkFBTTtBQUV0QixXQUFTLFlBQVksVUFBOEI7QUFDakQseUNBQVcsc0JBQXNCO0FBQUEsTUFDL0I7QUFBQSxNQUNBO0FBQUEsTUFDQSxHQUFJLFdBQVcsRUFBRSxTQUFTLElBQUksQ0FBQztBQUFBLElBQ2pDLENBQUM7QUFBQSxFQUNIO0FBRUEsU0FDRTtBQUFBLElBQUM7QUFBQTtBQUFBLE1BQ0MsbUJBQWlCO0FBQUEsTUFDakIsV0FBVTtBQUFBLE1BRVYsMkRBQUMsU0FBSSxXQUFVLG9DQUNiO0FBQUEseURBQUMsU0FBSSxXQUFVLDJCQUNiO0FBQUE7QUFBQSxlQUFDO0FBQUE7QUFBQSxjQUNDLE1BQU07QUFBQSxjQUNOLFFBQU87QUFBQSxjQUNQLFdBQVU7QUFBQSxjQUNWLGVBQVk7QUFBQTtBQUFBLFlBSmQ7QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUFBLFVBS0E7QUFBQSxVQUNBLGlEQUFDLFFBQUcsSUFBSSxTQUFTLFdBQVUsNENBQ3hCLFlBQUUsT0FBTyxLQURaO0FBQUE7QUFBQTtBQUFBO0FBQUEsaUJBRUE7QUFBQSxhQVRGO0FBQUE7QUFBQTtBQUFBO0FBQUEsZUFVQTtBQUFBLFFBQ0EsaURBQUMsT0FBRSxXQUFVLDRDQUNWLFlBQUUsYUFBYSxLQURsQjtBQUFBO0FBQUE7QUFBQTtBQUFBLGVBRUE7QUFBQSxRQUNBLGlEQUFDLE9BQUUsV0FBVSw4Q0FDVixZQUFFLFdBQVcsS0FEaEI7QUFBQTtBQUFBO0FBQUE7QUFBQSxlQUVBO0FBQUEsUUFDQSxpREFBQyxRQUFHLFdBQVUsNkJBQTRCLGNBQVksRUFBRSxZQUFZLEdBQ2pFLDBCQUFnQixJQUFJLENBQUMsRUFBRSxLQUFLLEtBQUssR0FBRyxVQUNuQyxpREFBQyxRQUNDO0FBQUEsVUFBQztBQUFBO0FBQUEsWUFDQztBQUFBLFlBQ0EsUUFBTztBQUFBLFlBQ1AsS0FBSTtBQUFBLFlBQ0osU0FBUyxNQUFNLFlBQVksR0FBRztBQUFBLFlBQzlCLFdBQ0UsVUFBVSxJQUNOLHdUQUNBO0FBQUEsWUFHTDtBQUFBLGdCQUFFLEdBQUc7QUFBQSxjQUNOLG9EQUFDLHVDQUFhLE1BQU0sSUFBSSxRQUFPLFFBQU8sZUFBWSxVQUFsRDtBQUFBO0FBQUE7QUFBQTtBQUFBLHFCQUF5RDtBQUFBLGNBQ3pELGlEQUFDLFVBQUssV0FBVSxXQUFVO0FBQUE7QUFBQSxnQkFBRSxFQUFFLGVBQWU7QUFBQSxnQkFBRTtBQUFBLG1CQUEvQztBQUFBO0FBQUE7QUFBQTtBQUFBLHFCQUFnRDtBQUFBO0FBQUE7QUFBQSxVQWJsRDtBQUFBO0FBQUE7QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUFBO0FBQUEsUUFjQSxLQWZPLEtBQVQ7QUFBQTtBQUFBO0FBQUE7QUFBQSxlQWdCQSxDQUNELEtBbkJIO0FBQUE7QUFBQTtBQUFBO0FBQUEsZUFvQkE7QUFBQSxXQXRDRjtBQUFBO0FBQUE7QUFBQTtBQUFBLGFBdUNBO0FBQUE7QUFBQSxJQTNDRjtBQUFBO0FBQUE7QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUFBO0FBQUEsRUE0Q0E7QUFFSiIsIm5hbWVzIjpbXSwiaWdub3JlTGlzdCI6W10sInNvdXJjZXMiOlsiZWFybi1oYW5kb2ZmLWNhcmQudHN4Il0sInNvdXJjZXNDb250ZW50IjpbIlwidXNlIGNsaWVudFwiO1xuXG5pbXBvcnQgeyB1c2VJZCB9IGZyb20gXCJyZWFjdFwiO1xuaW1wb3J0IHsgdXNlVHJhbnNsYXRpb25zIH0gZnJvbSBcIm5leHQtaW50bFwiO1xuaW1wb3J0IHsgQXJyb3dVcFJpZ2h0LCBDb2lucyB9IGZyb20gXCJAcGhvc3Bob3ItaWNvbnMvcmVhY3RcIjtcbmltcG9ydCB7IHRyYWNrRXZlbnQgfSBmcm9tIFwiQC9saWIvYW5hbHl0aWNzXCI7XG5cbi8qKlxuICogRWFybiBoYW5kb2ZmIGNhcmQg4oCUIHRoZSBicmlkZ2UgZnJvbSBhIGZyZXNobHkgbWludGVkIGNyZWRlbnRpYWwgdG8gcGFpZFxuICogd29yayBvbiBTdXBlcnRlYW0gRWFybiAoTFgtRTQpLlxuICpcbiAqIEN1cmF0ZWQgQ0FURUdPUlkgbGlua3Mgb25seTogYm91bnR5IGxpc3RpbmdzIGFyZSBlcGhlbWVyYWwsIHNvIHRoaXMgY2FyZFxuICogbXVzdCBuZXZlciBkZWVwLWxpbmsgYSBzcGVjaWZpYyBib3VudHkuIEZpcmVzIHRoZSBgZWFybl9oYW5kb2ZmX2NsaWNrYFxuICogYW5hbHl0aWNzIGV2ZW50IChtZXRyaWMgRTgpIG9uIGV2ZXJ5IGNsaWNrLXRocm91Z2gsIGNhcnJ5aW5nIHRoZSBjYXRlZ29yeSxcbiAqIHRoZSBzdXJmYWNlIGl0IHdhcyBjbGlja2VkIGZyb20sIGFuZCB0aGUgY291cnNlIGlkIHdoZW4ga25vd24uXG4gKi9cblxuY29uc3QgRUFSTl9DQVRFR09SSUVTID0gW1xuICB7XG4gICAga2V5OiBcImRldmVsb3BtZW50XCIsXG4gICAgaHJlZjogXCJodHRwczovL3N1cGVydGVhbS5mdW4vZWFybi9jYXRlZ29yeS9kZXZlbG9wbWVudC9cIixcbiAgfSxcbiAgeyBrZXk6IFwiY29udGVudFwiLCBocmVmOiBcImh0dHBzOi8vc3VwZXJ0ZWFtLmZ1bi9lYXJuL2NhdGVnb3J5L2NvbnRlbnQvXCIgfSxcbiAgeyBrZXk6IFwiZ3JhbnRzXCIsIGhyZWY6IFwiaHR0cHM6Ly9zdXBlcnRlYW0uZnVuL2Vhcm4vZ3JhbnRzL1wiIH0sXG5dIGFzIGNvbnN0O1xuXG50eXBlIEVhcm5DYXRlZ29yeSA9ICh0eXBlb2YgRUFSTl9DQVRFR09SSUVTKVtudW1iZXJdW1wia2V5XCJdO1xuXG5pbnRlcmZhY2UgRWFybkhhbmRvZmZDYXJkUHJvcHMge1xuICAvKiogU3VyZmFjZSB0aGUgY2FyZCBpcyByZW5kZXJlZCBvbiDigJQgcmVjb3JkZWQgb24gdGhlIEU4IGV2ZW50LiAqL1xuICBzb3VyY2U6IFwibWludF9zdWNjZXNzXCIgfCBcImNlcnRpZmljYXRlX3BhZ2VcIjtcbiAgY291cnNlSWQ/OiBzdHJpbmc7XG59XG5cbmV4cG9ydCBmdW5jdGlvbiBFYXJuSGFuZG9mZkNhcmQoeyBzb3VyY2UsIGNvdXJzZUlkIH06IEVhcm5IYW5kb2ZmQ2FyZFByb3BzKSB7XG4gIGNvbnN0IHQgPSB1c2VUcmFuc2xhdGlvbnMoXCJlYXJuSGFuZG9mZlwiKTtcbiAgLy8gVW5pcXVlIHBlciBpbnN0YW5jZSDigJQgdGhlIGNhcmQgY2FuIHJlbmRlciBtdWx0aXBsZSB0aW1lcyBvbiBvbmUgcGFnZVxuICAvLyAoZS5nLiBDb3Vyc2VDb21wbGV0aW9uTWludCBpcyBtYXBwZWQgcGVyIGVucm9sbGVkIGNvdXJzZSBvbiB0aGUgZGFzaGJvYXJkKVxuICBjb25zdCB0aXRsZUlkID0gdXNlSWQoKTtcblxuICBmdW5jdGlvbiBoYW5kbGVDbGljayhjYXRlZ29yeTogRWFybkNhdGVnb3J5KTogdm9pZCB7XG4gICAgdHJhY2tFdmVudChcImVhcm5faGFuZG9mZl9jbGlja1wiLCB7XG4gICAgICBjYXRlZ29yeSxcbiAgICAgIHNvdXJjZSxcbiAgICAgIC4uLihjb3Vyc2VJZCA/IHsgY291cnNlSWQgfSA6IHt9KSxcbiAgICB9KTtcbiAgfVxuXG4gIHJldHVybiAoXG4gICAgPHNlY3Rpb25cbiAgICAgIGFyaWEtbGFiZWxsZWRieT17dGl0bGVJZH1cbiAgICAgIGNsYXNzTmFtZT1cInJvdW5kZWQteGwgYmctY2VydC1ncmFkaWVudCBwLVsxLjVweF0gc2hhZG93LVt2YXIoLS1zaGFkb3ctY2FyZCldXCJcbiAgICA+XG4gICAgICA8ZGl2IGNsYXNzTmFtZT1cInJvdW5kZWQtWzExcHhdIGJnLWNhcmQgcHgtNSBweS00XCI+XG4gICAgICAgIDxkaXYgY2xhc3NOYW1lPVwiZmxleCBpdGVtcy1jZW50ZXIgZ2FwLTJcIj5cbiAgICAgICAgICA8Q29pbnNcbiAgICAgICAgICAgIHNpemU9ezIwfVxuICAgICAgICAgICAgd2VpZ2h0PVwiZHVvdG9uZVwiXG4gICAgICAgICAgICBjbGFzc05hbWU9XCJzaHJpbmstMCB0ZXh0LXNlY29uZGFyeVwiXG4gICAgICAgICAgICBhcmlhLWhpZGRlbj1cInRydWVcIlxuICAgICAgICAgIC8+XG4gICAgICAgICAgPGgyIGlkPXt0aXRsZUlkfSBjbGFzc05hbWU9XCJmb250LWRpc3BsYXkgdGV4dC1zbSBmb250LWJvbGQgdGV4dC10ZXh0XCI+XG4gICAgICAgICAgICB7dChcInRpdGxlXCIpfVxuICAgICAgICAgIDwvaDI+XG4gICAgICAgIDwvZGl2PlxuICAgICAgICA8cCBjbGFzc05hbWU9XCJtdC0yIHRleHQteHMgbGVhZGluZy1yZWxheGVkIHRleHQtdGV4dC0yXCI+XG4gICAgICAgICAge3QoXCJkZXNjcmlwdGlvblwiKX1cbiAgICAgICAgPC9wPlxuICAgICAgICA8cCBjbGFzc05hbWU9XCJtdC0xLjUgdGV4dC14cyBsZWFkaW5nLXJlbGF4ZWQgdGV4dC10ZXh0LTNcIj5cbiAgICAgICAgICB7dChcImdyYW50Tm90ZVwiKX1cbiAgICAgICAgPC9wPlxuICAgICAgICA8dWwgY2xhc3NOYW1lPVwibXQtMyBmbGV4IGZsZXgtd3JhcCBnYXAtMlwiIGFyaWEtbGFiZWw9e3QoXCJsaW5rc0xhYmVsXCIpfT5cbiAgICAgICAgICB7RUFSTl9DQVRFR09SSUVTLm1hcCgoeyBrZXksIGhyZWYgfSwgaW5kZXgpID0+IChcbiAgICAgICAgICAgIDxsaSBrZXk9e2tleX0+XG4gICAgICAgICAgICAgIDxhXG4gICAgICAgICAgICAgICAgaHJlZj17aHJlZn1cbiAgICAgICAgICAgICAgICB0YXJnZXQ9XCJfYmxhbmtcIlxuICAgICAgICAgICAgICAgIHJlbD1cIm5vb3BlbmVyIG5vcmVmZXJyZXJcIlxuICAgICAgICAgICAgICAgIG9uQ2xpY2s9eygpID0+IGhhbmRsZUNsaWNrKGtleSl9XG4gICAgICAgICAgICAgICAgY2xhc3NOYW1lPXtcbiAgICAgICAgICAgICAgICAgIGluZGV4ID09PSAwXG4gICAgICAgICAgICAgICAgICAgID8gXCJpbmxpbmUtZmxleCBpdGVtcy1jZW50ZXIgZ2FwLTEgcm91bmRlZC1tZCBiZy1wcmltYXJ5IHB4LTMuNSBweS0xLjUgZm9udC1kaXNwbGF5IHRleHQteHMgZm9udC1ib2xkIHRleHQtd2hpdGUgc2hhZG93LXB1c2ggdHJhbnNpdGlvbi1hbGwgZHVyYXRpb24tMTAwIGhvdmVyOmJnLXByaW1hcnktaG92ZXIgZm9jdXMtdmlzaWJsZTpvdXRsaW5lLTIgZm9jdXMtdmlzaWJsZTpvdXRsaW5lLW9mZnNldC0yIGZvY3VzLXZpc2libGU6b3V0bGluZS1wcmltYXJ5IGFjdGl2ZTp0cmFuc2xhdGUteS1bM3B4XSBhY3RpdmU6c2hhZG93LXB1c2gtYWN0aXZlXCJcbiAgICAgICAgICAgICAgICAgICAgOiBcImlubGluZS1mbGV4IGl0ZW1zLWNlbnRlciBnYXAtMSByb3VuZGVkLW1kIGJvcmRlciBib3JkZXItYm9yZGVyIGJnLWJnIHB4LTMuNSBweS0xLjUgZm9udC1kaXNwbGF5IHRleHQteHMgZm9udC1ib2xkIHRleHQtdGV4dCB0cmFuc2l0aW9uLWNvbG9ycyBob3Zlcjpib3JkZXItcHJpbWFyeSBob3Zlcjp0ZXh0LXByaW1hcnkgZm9jdXMtdmlzaWJsZTpvdXRsaW5lLTIgZm9jdXMtdmlzaWJsZTpvdXRsaW5lLW9mZnNldC0yIGZvY3VzLXZpc2libGU6b3V0bGluZS1wcmltYXJ5XCJcbiAgICAgICAgICAgICAgICB9XG4gICAgICAgICAgICAgID5cbiAgICAgICAgICAgICAgICB7dChrZXkpfVxuICAgICAgICAgICAgICAgIDxBcnJvd1VwUmlnaHQgc2l6ZT17MTJ9IHdlaWdodD1cImJvbGRcIiBhcmlhLWhpZGRlbj1cInRydWVcIiAvPlxuICAgICAgICAgICAgICAgIDxzcGFuIGNsYXNzTmFtZT1cInNyLW9ubHlcIj4oe3QoXCJvcGVuc0luTmV3VGFiXCIpfSk8L3NwYW4+XG4gICAgICAgICAgICAgIDwvYT5cbiAgICAgICAgICAgIDwvbGk+XG4gICAgICAgICAgKSl9XG4gICAgICAgIDwvdWw+XG4gICAgICA8L2Rpdj5cbiAgICA8L3NlY3Rpb24+XG4gICk7XG59XG4iXSwiZmlsZSI6Ii9zcmMvY29tcG9uZW50cy9jZXJ0aWZpY2F0ZXMvZWFybi1oYW5kb2ZmLWNhcmQudHN4In0=
+
+//# vitestCache=W3siZmlsZSI6IjEiLCJpZCI6IjEiLCJ1cmwiOiIyIiwiaW1wb3J0ZWRVcmxzIjoiMyIsIm1hcHBpbmdzIjpmYWxzZX0sIi9Vc2Vycy9kYXZpZC9Eb2N1bWVudHMva21pbm8vc29sL3N1cGVydGVhbS1hY2FkZW15L2FwcHMvd2ViL3NyYy9jb21wb25lbnRzL2NlcnRpZmljYXRlcy9lYXJuLWhhbmRvZmYtY2FyZC50c3giLCIvc3JjL2NvbXBvbmVudHMvY2VydGlmaWNhdGVzL2Vhcm4taGFuZG9mZi1jYXJkLnRzeCIsW11d
