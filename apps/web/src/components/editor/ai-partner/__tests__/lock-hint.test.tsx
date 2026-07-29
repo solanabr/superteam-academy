@@ -98,4 +98,25 @@ describe("AI lock hint (#842)", () => {
     const toggle = screen.getByRole("button", { expanded: true });
     expect(toggle.contains(badge())).toBe(false);
   });
+
+  // The third bug: an in-flow hint grew the pane, which pushed the chip out
+  // from under the cursor, which fired mouseleave and closed the hint. It must
+  // take no layout space in the pane at all.
+  it("renders outside the pane, so showing it cannot move the chip", () => {
+    const { container } = renderLocked();
+    fireEvent.mouseEnter(badge());
+
+    const note = screen.getByRole("note");
+    expect(container.contains(note)).toBe(false);
+    // Tailwind's `fixed`; jsdom loads no CSS, so assert the class, not the
+    // computed style.
+    expect(note).toHaveClass("fixed");
+  });
+
+  // A bubble under the pointer would trade one hover loop for another.
+  it("is inert to the pointer", () => {
+    renderLocked();
+    fireEvent.mouseEnter(badge());
+    expect(screen.getByRole("note")).toHaveClass("pointer-events-none");
+  });
 });
