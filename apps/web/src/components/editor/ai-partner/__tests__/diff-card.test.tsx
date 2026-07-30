@@ -1,11 +1,14 @@
 // @vitest-environment jsdom
 import type { ReactElement } from "react";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/messages/en.json";
 import type { CodeEdit } from "@/lib/ai/partner-types";
 import { DiffCard } from "../diff-card";
+
+const { trackEvent } = vi.hoisted(() => ({ trackEvent: vi.fn() }));
+vi.mock("@/lib/analytics/index", () => ({ trackEvent }));
 
 const check = {
   question: "Why?",
@@ -240,5 +243,200 @@ describe("DiffCard additional behavior", () => {
       screen.getByRole("button", { name: /dismiss/i })
     ).toBeInTheDocument();
     expect(onAccept).not.toHaveBeenCalled();
+  });
+});
+
+// ── comprehension_check_answered (#866) ───────────────────────────────
+// THE primary AI harm metric: first-attempt accuracy on the check that gates
+// applying an AI-proposed patch. Asserted through the analytics facade so the
+// payload shape (`trackComprehensionCheckAnswered` → `trackEvent`) is covered
+// end to end, not just the helper call.
+
+const EVENT_CTX = {
+  lessonId: "lesson-anchor-pda",
+  courseId: "course-solana-201",
+  challengeKind: "rust" as const,
+};
+
+describe("comprehension_check_answered", () => {
+  beforeEach(() => {
+    trackEvent.mockClear();
+  });
+
+  it("fires attempt 1 with the wrong verdict, then attempt 2 on the retry", async () => {
+    const onVerify = vi
+      .fn()
+      .mockResolvedValueOnce({ correct: false, explanation: "because B" })
+      .mockResolvedValueOnce({ correct: true, explanation: "because B" });
+
+    renderWithIntl(
+      <DiffCard
+        current="a"
+        edits={ADD_B}
+        rationale="adds b"
+        check={check}
+        checkToken="tok"
+        onVerify={onVerify}
+        onAccept={() => {}}
+        onReject={() => {}}
+        stale={false}
+        eventCtx={EVENT_CTX}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "A" }));
+    await waitFor(() =>
+      expect(trackEvent).toHaveBeenCalledWith("comprehension_check_answered", {
+        lessonId: "lesson-anchor-pda",
+        courseId: "course-solana-201",
+        correct: false,
+        attempt: 1,
+      })
+    );
+
+    // Retries are free and unlimited: the second answer still fires, carrying
+    // the running counter so remediation depth is measurable.
+    fireEvent.click(screen.getByRole("button", { name: "B" }));
+    await waitFor(() =>
+      expect(trackEvent).toHaveBeenCalledWith("comprehension_check_answered", {
+        lessonId: "lesson-anchor-pda",
+        courseId: "course-solana-201",
+        correct: true,
+        attempt: 2,
+      })
+    );
+    expect(trackEvent).toHaveBeenCalledTimes(2);
+  });
+
+  it("fires attempt 1 with correct:true when the first answer is right", async () => {
+    const onVerify = vi
+      .fn()
+      .mockResolvedValue({ correct: true, explanation: "yes" });
+
+    renderWithIntl(
+      <DiffCard
+        current="a"
+        edits={ADD_B}
+        rationale="adds b"
+        check={check}
+        checkToken="tok"
+        onVerify={onVerify}
+        onAccept={() => {}}
+        onReject={() => {}}
+        stale={false}
+        eventCtx={EVENT_CTX}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "B" }));
+    await waitFor(() =>
+      expect(trackEvent).toHaveBeenCalledWith("comprehension_check_answered", {
+        lessonId: "lesson-anchor-pda",
+        courseId: "course-solana-201",
+        correct: true,
+        attempt: 1,
+      })
+    );
+  });
+
+  it("restarts the attempt counter for a NEW check instance (new seal token)", async () => {
+    const onVerify = vi
+      .fn()
+      .mockResolvedValue({ correct: false, explanation: "nope" });
+
+    const card = (token: string) => (
+      <DiffCard
+        current="a"
+        edits={ADD_B}
+        rationale="adds b"
+        check={check}
+        checkToken={token}
+        onVerify={onVerify}
+        onAccept={() => {}}
+        onReject={() => {}}
+        stale={false}
+        eventCtx={EVENT_CTX}
+      />
+    );
+
+    const { rerender } = renderWithIntl(card("tok-1"));
+    fireEvent.click(screen.getByRole("button", { name: "A" }));
+    await waitFor(() => expect(trackEvent).toHaveBeenCalledTimes(1));
+    expect(trackEvent).toHaveBeenLastCalledWith(
+      "comprehension_check_answered",
+      expect.objectContaining({ attempt: 1 })
+    );
+
+    // A new proposed patch mints a new seal — a different check, so the
+    // first-attempt denominator must count it as attempt 1, not attempt 2.
+    rerender(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        {card("tok-2")}
+      </NextIntlClientProvider>
+    );
+    fireEvent.click(screen.getByRole("button", { name: "A" }));
+    await waitFor(() => expect(trackEvent).toHaveBeenCalledTimes(2));
+    expect(trackEvent).toHaveBeenLastCalledWith(
+      "comprehension_check_answered",
+      expect.objectContaining({ attempt: 1 })
+    );
+  });
+
+  it("does not fire when no check is rendered (the edit did not apply)", async () => {
+    renderWithIntl(
+      <DiffCard
+        current="totally different buffer"
+        edits={[{ search: "NOT_IN_BUFFER", replace: "x" }]}
+        rationale="adds a guard"
+        check={check}
+        checkToken="tok"
+        onVerify={vi.fn()}
+        onAccept={() => {}}
+        onReject={() => {}}
+        stale={false}
+        eventCtx={EVENT_CTX}
+      />
+    );
+
+    expect(screen.queryByText(check.question)).not.toBeInTheDocument();
+    expect(trackEvent).not.toHaveBeenCalled();
+  });
+
+  it("does not count a failed verify round trip as a wrong answer", async () => {
+    const onVerify = vi
+      .fn()
+      .mockResolvedValueOnce({ correct: false, explanation: "", failed: true })
+      .mockResolvedValueOnce({ correct: false, explanation: "because B" });
+
+    renderWithIntl(
+      <DiffCard
+        current="a"
+        edits={ADD_B}
+        rationale="adds b"
+        check={check}
+        checkToken="tok"
+        onVerify={onVerify}
+        onAccept={() => {}}
+        onReject={() => {}}
+        stale={false}
+        eventCtx={EVENT_CTX}
+      />
+    );
+
+    // Transport failure: no verdict, so no event and no attempt consumed.
+    fireEvent.click(screen.getByRole("button", { name: "A" }));
+    await waitFor(() => expect(onVerify).toHaveBeenCalledTimes(1));
+    expect(trackEvent).not.toHaveBeenCalled();
+
+    // The learner's next real answer is still their FIRST attempt.
+    fireEvent.click(screen.getByRole("button", { name: "A" }));
+    await waitFor(() =>
+      expect(trackEvent).toHaveBeenCalledWith("comprehension_check_answered", {
+        lessonId: "lesson-anchor-pda",
+        courseId: "course-solana-201",
+        correct: false,
+        attempt: 1,
+      })
+    );
   });
 });

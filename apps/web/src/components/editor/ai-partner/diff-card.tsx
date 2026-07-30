@@ -1,12 +1,18 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Check, X, Sparkle, WarningCircle } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { applyEdits } from "@/lib/ai/apply-edits";
-import type { CodeEdit, ProposeResponse } from "@/lib/ai/partner-types";
+import { trackComprehensionCheckAnswered } from "@/lib/analytics/events";
+import type { ChallengeEventContext } from "@/lib/analytics/events";
+import type {
+  CodeEdit,
+  ProposeResponse,
+  VerifyOutcome,
+} from "@/lib/ai/partner-types";
 
 type DiffLine =
   | { kind: "unchanged"; text: string }
@@ -73,10 +79,13 @@ interface DiffCardProps {
   onVerify: (
     checkToken: string,
     pickedIndex: 0 | 1 | 2
-  ) => Promise<{ correct: boolean; explanation: string }>;
+  ) => Promise<VerifyOutcome>;
   onAccept: (proposed: string) => void;
   onReject: () => void;
   stale: boolean;
+  /** Content-id context for `comprehension_check_answered` (#866). Optional:
+   *  without it the event simply doesn't fire — never a render difference. */
+  eventCtx?: ChallengeEventContext;
   className?: string;
 }
 
@@ -90,6 +99,7 @@ export function DiffCard({
   onAccept,
   onReject,
   stale,
+  eventCtx,
   className,
 }: DiffCardProps) {
   const t = useTranslations("aiPartner");
@@ -98,6 +108,18 @@ export function DiffCard({
   const [wrongExplanation, setWrongExplanation] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
   const [accepted, setAccepted] = useState(false);
+
+  // Attempt counter for `comprehension_check_answered` (#866). Keyed by
+  // `checkToken` — ONE seal is minted per proposed patch, so the token is the
+  // identity of a check INSTANCE. A new proposal (new token) restarts at 1,
+  // which is what makes attempt=1 mean "first try at THIS check" rather than
+  // "first check of the lesson". Keyed rather than mount-scoped because a card
+  // can be re-rendered in place; a ref rather than state because the count
+  // never affects the rendered output.
+  const attemptRef = useRef<{ token: string; count: number }>({
+    token: checkToken,
+    count: 0,
+  });
 
   // Reconstruct the proposed buffer by applying the search/replace edits to the
   // learner's live code. A clean apply drives the usual diff + earned-Accept
@@ -122,8 +144,27 @@ export function DiffCard({
     setChecking(true);
     setWrongPick(null);
     setWrongExplanation(null);
+    if (attemptRef.current.token !== checkToken) {
+      attemptRef.current = { token: checkToken, count: 0 };
+    }
+    const attempt = attemptRef.current.count + 1;
     try {
       const result = await onVerify(checkToken, index);
+      // Only a real server verdict counts as an attempt. A failed round trip
+      // (`failed: true`, or the throw handled below) is not a wrong answer —
+      // counting it would inflate the primary metric's error rate with network
+      // noise. The UI still treats it as not-correct, so Accept stays locked.
+      if (!result.failed) {
+        attemptRef.current.count = attempt;
+      }
+      if (eventCtx && !result.failed) {
+        trackComprehensionCheckAnswered({
+          lessonId: eventCtx.lessonId,
+          courseId: eventCtx.courseId,
+          correct: result.correct,
+          attempt,
+        });
+      }
       if (result.correct) {
         setCorrectPick(index);
         return;
