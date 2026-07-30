@@ -61,13 +61,21 @@ afterEach(() => {
 });
 
 describe("maybeGenerateReflectionReply", () => {
-  it("returns null and never calls the model when the flag is off", async () => {
-    delete process.env.OPENENDED_AI_REPLY;
+  it("returns null and never calls the model when explicitly disabled (=0)", async () => {
+    process.env.OPENENDED_AI_REPLY = "0";
     const fetchMock = stubGeminiFetch("should not run");
     const { maybeGenerateReflectionReply } =
       await import("../reflection-reply");
     expect(await maybeGenerateReflectionReply(INPUT)).toBeNull();
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("is ON by default — replies with the flag unset (#848)", async () => {
+    delete process.env.OPENENDED_AI_REPLY;
+    stubGeminiFetch("Default-on reply");
+    const { maybeGenerateReflectionReply } =
+      await import("../reflection-reply");
+    expect(await maybeGenerateReflectionReply(INPUT)).toBe("Default-on reply");
   });
 
   it("returns null when GEMINI_API_KEY is unset", async () => {

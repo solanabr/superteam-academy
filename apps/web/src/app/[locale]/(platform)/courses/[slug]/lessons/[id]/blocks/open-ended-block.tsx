@@ -4,8 +4,8 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { CheckCircle } from "@phosphor-icons/react";
 import type { OpenEndedBlockData } from "@superteam-lms/types";
-import type { BlockRenderProps } from "./types";
 import { Button } from "@/components/ui/button";
+import type { BlockRenderProps } from "./types";
 
 interface ReflectResponse {
   seal: string;
@@ -32,7 +32,11 @@ export function OpenEndedBlock({ block, ctx }: BlockRenderProps) {
   const words = text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
   const maxWords = b.maxWords ?? 200;
   const overLimit = words > maxWords;
-  const canSubmit = words > 0 && !overLimit && status !== "submitting";
+  // One round only (#848): once the seal is recorded (status "done"), the
+  // submit affordance stays disabled — the AI reply is a single round of
+  // feedback, not a chat. Errors still allow a retry.
+  const canSubmit =
+    words > 0 && !overLimit && (status === "idle" || status === "error");
 
   const submit = async () => {
     if (!canSubmit) return;
