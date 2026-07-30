@@ -48,6 +48,7 @@ const nudgedLessons = new Set<string>();
 const attemptNudgeShownLessons = new Set<string>();
 const attemptNudgeOverriddenLessons = new Set<string>();
 const revealedSolutionLessons = new Set<string>();
+const socraticEnteredLessons = new Set<string>();
 let onboardingStartedFired = false;
 
 /** Test-only: clears the session-scoped event dedupe state. */
@@ -58,6 +59,7 @@ export function resetAnalyticsEventDedupeForTests(): void {
   attemptNudgeShownLessons.clear();
   attemptNudgeOverriddenLessons.clear();
   revealedSolutionLessons.clear();
+  socraticEnteredLessons.clear();
   onboardingStartedFired = false;
 }
 
@@ -261,6 +263,28 @@ export function trackSolutionRevealed(ctx: ChallengeEventContext): void {
   if (revealedSolutionLessons.has(ctx.lessonId)) return;
   revealedSolutionLessons.add(ctx.lessonId);
   trackEvent("solution_revealed", challengePayload(ctx));
+}
+
+/**
+ * `socratic_mode_entered` — the assist ladder (#864) moved this (learner,
+ * lesson) onto the Socratic tier (the lighter, questions-first tutor). The
+ * economics doc names Socratic-tier entry rate a tracked metric (§9). Deduped
+ * per lesson per session so re-renders and subsequent Socratic turns don't
+ * re-fire; the durable per-turn record is the server-side ladder counter.
+ */
+export function trackSocraticModeEntered(ctx: ChallengeEventContext): void {
+  if (socraticEnteredLessons.has(ctx.lessonId)) return;
+  socraticEnteredLessons.add(ctx.lessonId);
+  trackEvent("socratic_mode_entered", challengePayload(ctx));
+}
+
+/**
+ * `assist_reset_used` — the learner spent their ONE self-serve per-lesson
+ * assist reset (#864, P2-5/D-8). Fired only on a server-confirmed reset
+ * (`allowed: true`), never on a denied attempt, so it counts real resets.
+ */
+export function trackAssistResetUsed(ctx: ChallengeEventContext): void {
+  trackEvent("assist_reset_used", challengePayload(ctx));
 }
 
 /** Closed-set weekday id for the LX-A6 plan — never a free-text day name. */

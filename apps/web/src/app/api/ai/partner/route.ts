@@ -4,8 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { getLessonBySlug } from "@/lib/content/queries";
 import {
-  spendAssist,
-  refundAssist,
+  spendAssistTurn,
+  refundAssistTurn,
   recordBilledAssist,
   appendAssistLog,
 } from "@/lib/ai/assist-budget";
@@ -368,14 +368,23 @@ export async function POST(request: NextRequest) {
   // cost lever) rather than refusing. "Degrade first, then stop" (owner).
   const degraded = spendGate.decision === "degraded";
 
-  // Every request that reaches this route is a PAID action — free authored
-  // hints are served client-side from the block's `hints` ladder and never
-  // hit this route. Spend atomically before calling Gemini so a denied budget
-  // never triggers a model call. Budget is keyed by the lesson id.
-  const spend = await spendAssist(user.id, lesson._id);
+  // Every request that reaches this route is a METERED AI turn — free authored
+  // hints are served client-side from the block's `hints` ladder and never hit
+  // this route. Spend one assist-LADDER turn atomically before calling Gemini
+  // (#864): the SECURITY DEFINER RPC resolves the tier server-side (2 free →
+  // 8 metered → 20 Socratic, per (user, lesson)) and reports which tier this
+  // turn landed in. A denial means the whole ladder is spent — the community
+  // handoff (spec §4.2 turn 31): the client degrades to the forum link, never
+  // a paywall shape. Budget is keyed by the lesson id.
+  const spend = await spendAssistTurn(user.id, lesson._id);
   if (!spend.allowed) {
-    return NextResponse.json({ budgetExhausted: true, used: spend.used });
+    return NextResponse.json({ budgetExhausted: true, counts: spend.counts });
   }
+  // Socratic tier (§4.4): flip the default contract for hint/ask to ONE
+  // diagnostic question (prompt suffix below) at a hint-sized output cap.
+  // `propose` keeps its full diff contract at every tier — the §4.2 ruling —
+  // and `review` is post-pass and unaffected.
+  const socratic = spend.tier === "socratic";
 
   // Whether Gemini has BILLED us for this request. Flips true the instant the
   // model returns a 2xx (`response.ok`) — a non-2xx or a network throw means it
@@ -428,14 +437,17 @@ export async function POST(request: NextRequest) {
       tutorNotes,
       language: codeBlock.language,
     });
-    const suffix = buildDynamicSuffix({
-      lessonSlug,
-      courseSlug,
-      action,
-      message,
-      code,
-      testSummary,
-    });
+    const suffix = buildDynamicSuffix(
+      {
+        lessonSlug,
+        courseSlug,
+        action,
+        message,
+        code,
+        testSummary,
+      },
+      { socratic }
+    );
 
     const response = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
       method: "POST",
@@ -451,9 +463,11 @@ export async function POST(request: NextRequest) {
           temperature: 0.3,
           // Degrade-first (#591): past a soft spend cap, halve the output budget
           // (floored to stay usable) to cut the dominant cost before any refusal.
+          // Socratic hint/ask turns run at the hint-sized cap (one diagnostic
+          // question); propose keeps its full budget at every tier.
           maxOutputTokens: degraded
-            ? degradedMaxTokens(maxTokensFor(action))
-            : maxTokensFor(action),
+            ? degradedMaxTokens(maxTokensFor(action, { socratic }))
+            : maxTokensFor(action, { socratic }),
           // gemini-3.5-flash is a thinking model and thinking tokens share the
           // maxOutputTokens budget; disable it so the full budget goes to the
           // structured response (and to cut latency/cost).
@@ -468,9 +482,9 @@ export async function POST(request: NextRequest) {
       const errorText = await response.text();
       console.error("Gemini partner API error:", response.status, errorText);
       // A spend already happened above (spend.allowed was true to reach
-      // here) but Gemini never ran — refund so a failed call doesn't burn
-      // one of the user's 4 paid assists.
-      await refundAssist(user.id, lesson._id);
+      // here) but Gemini never ran — refund exactly the ladder tier the spend
+      // landed in so a failed call doesn't burn one of the learner's turns.
+      await refundAssistTurn(user.id, lesson._id, spend.tier);
       // Surface the upstream status (not Gemini's raw body) so a config-side
       // failure (403 API-not-enabled / key-restricted, 404 model, 429 quota)
       // is diagnosable from the Network tab, not just the server logs.
@@ -615,7 +629,7 @@ export async function POST(request: NextRequest) {
     // appendAssistLog, so the old unconditional refund handed back a fully
     // billed success (the AIE-10 line-411 correction).
     if (!billed) {
-      await refundAssist(user.id, lesson._id);
+      await refundAssistTurn(user.id, lesson._id, spend.tier);
     }
     return NextResponse.json(
       { error: "Failed to get response" },

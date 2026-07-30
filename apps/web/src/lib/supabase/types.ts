@@ -1268,10 +1268,41 @@ export type Database = {
         };
         Returns: number;
       };
+      // #864 guarded self-serve reset: once-flag + 7-day cooldown enforced
+      // INSIDE the RPC (R-6); returns the verdict instead of void.
       reset_challenge_assists: {
         Args: {
           p_user_id: string;
           p_lesson_id: string;
+        };
+        Returns: {
+          allowed: boolean;
+          reason: string;
+          available_at: string | null;
+        }[];
+      };
+      // #864 assist ladder: atomic tier-resolving spend + tier-aware refund.
+      spend_assist_ladder_turn: {
+        Args: {
+          p_user_id: string;
+          p_lesson_id: string;
+          p_free_max: number;
+          p_metered_max: number;
+          p_socratic_max: number;
+        };
+        Returns: {
+          allowed: boolean;
+          tier: string;
+          free_turns: number;
+          metered_turns: number;
+          socratic_turns: number;
+        }[];
+      };
+      refund_assist_ladder_turn: {
+        Args: {
+          p_user_id: string;
+          p_lesson_id: string;
+          p_tier: string;
         };
         Returns: undefined;
       };
@@ -1303,7 +1334,11 @@ export type Database = {
           p_lesson_id: string;
         };
         Returns: {
-          assists_used: number;
+          free_turns: number;
+          metered_turns: number;
+          socratic_turns: number;
+          reset_state: string;
+          reset_available_at: string | null;
           chat_log: Json;
         }[];
       };

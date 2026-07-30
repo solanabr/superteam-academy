@@ -1,15 +1,22 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { useFormatter, useTranslations } from "next-intl";
 import {
   Robot,
   MagnifyingGlass,
   CaretDown,
   Lightbulb,
   Play,
+  UsersThree,
 } from "@phosphor-icons/react";
 import { useAiPartner } from "@/lib/ai/use-ai-partner";
+import {
+  trackAssistResetUsed,
+  trackSocraticModeEntered,
+} from "@/lib/analytics/events";
+import type { ChallengeEventContext } from "@/lib/analytics/events";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { AssistMeter } from "./assist-meter";
@@ -42,6 +49,9 @@ interface AiPartnerPaneProps {
   onNudgeShown?: () => void;
   /** The learner took the free override (analytics; deduped upstream). */
   onNudgeOverride?: () => void;
+  /** Content-id context for the ladder analytics events (#864) — Socratic
+   * entry + reset-used. Optional: without it the events simply don't fire. */
+  eventCtx?: ChallengeEventContext;
   className?: string;
 }
 
@@ -58,10 +68,12 @@ export function AiPartnerPane({
   onFocusRun,
   onNudgeShown,
   onNudgeOverride,
+  eventCtx,
   className,
 }: AiPartnerPaneProps) {
   const t = useTranslations("aiPartner");
   const tLesson = useTranslations("lesson");
+  const format = useFormatter();
   const [open, setOpen] = useState(true);
 
   // Attempt-gate nudge (#865, replaces the #770 hard think-first lock): AI
@@ -111,14 +123,17 @@ export function AiPartnerPane({
 
   const {
     messages,
-    freeHintsUsed,
-    paidUsed,
+    counts,
+    tier,
     budgetExhausted,
     spendCapped,
+    resetState,
+    resetAvailableAt,
     loading,
     error,
     requestHint,
     review,
+    requestReset,
     verifyCheck,
   } = useAiPartner({ lessonSlug, courseSlug, hints, getCode, getTestSummary });
 
@@ -126,6 +141,29 @@ export function AiPartnerPane({
     () => guardAction(requestHint),
     [guardAction, requestHint]
   );
+
+  // Socratic-entry analytics (#864): fire once per lesson when the ladder
+  // lands on the Socratic tier (the helper session-dedupes as well).
+  useEffect(() => {
+    if (tier === "socratic" && eventCtx) trackSocraticModeEntered(eventCtx);
+  }, [tier, eventCtx]);
+
+  // Self-serve reset (#864 P2-5): relays the server verdict — the once+cooldown
+  // guards live inside the SECURITY DEFINER RPC, this only reports honestly.
+  const [resetting, setResetting] = useState(false);
+  const [resetFailed, setResetFailed] = useState(false);
+  const handleReset = useCallback(async () => {
+    setResetting(true);
+    setResetFailed(false);
+    const outcome = await requestReset();
+    setResetting(false);
+    if (outcome.allowed) {
+      if (eventCtx) trackAssistResetUsed(eventCtx);
+    } else if (outcome.reason === "error") {
+      setResetFailed(true);
+    }
+  }, [requestReset, eventCtx]);
+
 
   return (
     <div
@@ -168,7 +206,7 @@ export function AiPartnerPane({
           <p className="text-xs text-text-3">
             {disabled ? t("completed") : t("subtitle")}
           </p>
-          <AssistMeter freeHintsUsed={freeHintsUsed} paidUsed={paidUsed} />
+          <AssistMeter tier={tier} counts={counts} />
         </button>
       </div>
 
@@ -240,6 +278,73 @@ export function AiPartnerPane({
           onVerify={verifyCheck}
           className="min-h-0 flex-1"
         />
+      )}
+
+      {/* Socratic tier (#864 §4.4): the lighter tutor announces itself once —
+          honest, warm, and never a wall. Hidden again at exhaustion, where the
+          community-handoff block below takes over. */}
+      {open && tier === "socratic" && (
+        <div className="shrink-0 border-t border-border px-4 py-2">
+          <p className="text-xs text-text-3">{t("socratic.entered")}</p>
+        </div>
+      )}
+
+      {/* True exhaustion (#864, turn 31): the tutor hands off to the community
+          — it does not go silent and it never shows a paywall shape. No
+          padlock iconography; the reset affordance states its once+cooldown
+          guards honestly. */}
+      {open && budgetExhausted && (
+        <div className="shrink-0 space-y-2 border-t border-border px-4 py-3">
+          <p className="text-sm font-bold text-text">{t("exhausted.title")}</p>
+          <p className="text-xs text-text-3">{t("exhausted.body")}</p>
+          <Button
+            asChild
+            variant="secondary"
+            size="sm"
+            className="w-full gap-1.5"
+          >
+            <Link href="/community/help">
+              <UsersThree size={14} weight="duotone" aria-hidden="true" />
+              {t("exhausted.communityCta")}
+            </Link>
+          </Button>
+          {resetState === "available" && (
+            <div className="space-y-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleReset}
+                disabled={resetting}
+                className="w-full"
+              >
+                {t("exhausted.resetCta")}
+              </Button>
+              <p className="text-[11px] text-text-3">
+                {t("exhausted.resetReady")}
+              </p>
+              {resetFailed && (
+                <p className="text-[11px] text-danger">
+                  {t("exhausted.resetError")}
+                </p>
+              )}
+            </div>
+          )}
+          {resetState === "cooldown" && resetAvailableAt != null && (
+            <p className="text-[11px] text-text-3">
+              {t("exhausted.resetCooldown", {
+                date: format.dateTime(new Date(resetAvailableAt), {
+                  dateStyle: "medium",
+                }),
+              })}
+            </p>
+          )}
+          {resetState === "used" && (
+            <p className="text-[11px] text-text-3">
+              {t("exhausted.resetUsed")}
+            </p>
+          )}
+        </div>
       )}
 
       {open && spendCapped && (

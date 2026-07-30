@@ -40,6 +40,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
   }
 
-  const { paidUsed, log } = await getAssistState(user.id, lesson._id);
-  return NextResponse.json({ log, paidUsed });
+  const { counts, resetState, resetAvailableAt, log } = await getAssistState(
+    user.id,
+    lesson._id
+  );
+  return NextResponse.json({ log, counts, resetState, resetAvailableAt });
 }
