@@ -82,6 +82,7 @@ export function ChallengeInterface({
   onEnroll,
   onComplete,
   aiSuppressed = false,
+  capstoneAiOff = false,
   className,
 }: ChallengeInterfaceProps) {
   const t = useTranslations("lesson");
@@ -187,7 +188,10 @@ export function ChallengeInterface({
   // internally and that sentinel could never intersect — the tutor was simply
   // unreachable. `aiSuppressed` (an unanswered quiz block, LX-C1/F18) still
   // hides it.
-  const aiVisible = !aiSuppressed;
+  // `capstoneAiOff` (#867) beats `aiSuppressed`: the capstone never gets a
+  // tutor, so the pane is not mounted at all — and unlike quiz suppression the
+  // slot is not left empty, it carries the explanation rendered below.
+  const aiVisible = !aiSuppressed && !capstoneAiOff;
 
   // Attempt-gate signal (#865, replaces the #770 hard think-first lock): the
   // AI Partner is never locked, but until the learner has run the tests at
@@ -453,6 +457,26 @@ export function ChallengeInterface({
             and collapsible. Now it grows with the conversation and caps out,
             scrolling internally past the cap. Hidden outright when suppressed so
             no invisible controls sit in the tab order (WCAG 4.1.2). */}
+        {/* Capstone AI-free notice (#867) — replaces the pane, never sits
+            alongside it. Static text, no controls, so nothing enters the tab
+            order; role="note" announces it as context rather than a status
+            change or an error. */}
+        {capstoneAiOff && (
+          <div
+            role="note"
+            className="order-4 px-3 pb-4 pt-2 lg:order-none lg:shrink-0"
+          >
+            <div className="rounded-lg border border-border bg-card px-4 py-3">
+              <p className="text-sm font-bold text-text">
+                {t("capstoneAiOffTitle")}
+              </p>
+              <p className="mt-1 text-xs text-text-3">
+                {t("capstoneAiOffBody")}
+              </p>
+            </div>
+          </div>
+        )}
+
         <div
           className={cn(
             "order-4 px-3 pb-4 pt-2 lg:order-none lg:shrink-0",

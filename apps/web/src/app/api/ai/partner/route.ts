@@ -35,6 +35,10 @@ import type {
   ReviewResponse,
   CodeEdit,
 } from "@/lib/ai/partner-types";
+import {
+  isCapstoneLesson,
+  CAPSTONE_AI_OFF_CODE,
+} from "@/lib/credentials/capstone-identity";
 import { serverEnv } from "@/lib/env.server";
 
 const GEMINI_API_KEY = serverEnv.GEMINI_API_KEY;
@@ -340,6 +344,34 @@ export async function POST(request: NextRequest) {
   // §10.2). getLessonBySlug applies the normal catalog gate — a lesson not yet
   // live has no partner surface either.
   const lesson = await getLessonBySlug(courseSlug, lessonSlug);
+
+  // AI HARD-OFF ON THE CAPSTONE (#867, unified spec item 33). The capstone
+  // credential attests that the learner shipped the program themselves (the
+  // deploy gate, item 14) — so it certifies nothing if a tutor could have
+  // written it. This is the SERVER leg, keyed off the SAME constant as that
+  // gate (`lib/credentials/capstone-identity`), so the two can never drift:
+  // re-shaping the capstone lesson cannot silently re-open the AI path.
+  //
+  // Placement is load-bearing on two counts:
+  //   • BEFORE any spend — no assist turn, no ledger entry, no Gemini call. A
+  //     refusal here costs the learner nothing (it is not a failure, it is the
+  //     design), so it must not consume a turn.
+  //   • BEFORE the `codeBlock` 404 — the capstone hosts no `code` block today,
+  //     so a structural 404 is what happens by accident. This returns the
+  //     TYPED reason instead, which is the whole point of the issue: the
+  //     refusal must be intentional and observable, not incidental.
+  // The copy is neutral, not an error: this is a permanent, explained state.
+  if (lesson && isCapstoneLesson(lesson._id)) {
+    return NextResponse.json(
+      {
+        error: "AI Partner is off for the capstone",
+        code: CAPSTONE_AI_OFF_CODE,
+        capstoneAiOff: true,
+      },
+      { status: 403 }
+    );
+  }
+
   const codeBlock = lesson?.blocks.find(
     (b): b is CodeBlockData => b._type === "code"
   );

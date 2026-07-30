@@ -103,6 +103,15 @@ export interface ChallengeInterfaceProps {
    * close cannot be delegated to the tutor.
    */
   aiSuppressed?: boolean;
+  /**
+   * THE graded capstone (#867). Derived from `lib/credentials/capstone-identity`
+   * — the same constant that gates the credential — never a lesson id compared
+   * inline. The AI Partner is not merely hidden here: the pane's slot renders a
+   * short AI-free explanation, because this state is permanent and deliberate
+   * and the learner deserves the reason. Enforcement is server-side
+   * (`/api/ai/partner` refuses with `capstone_ai_off`); this is the honest UI.
+   */
+  capstoneAiOff?: boolean;
   className?: string;
 }
 

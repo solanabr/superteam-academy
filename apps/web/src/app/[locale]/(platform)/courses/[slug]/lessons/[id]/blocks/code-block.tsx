@@ -56,6 +56,7 @@ export function CodeBlock({ block, ctx }: BlockRenderProps) {
           isEnrolled={ctx.isEnrolled}
           onEnroll={ctx.onEnroll}
           aiSuppressed={ctx.aiSuppressed}
+          capstoneAiOff={ctx.capstoneAiOff}
           className="h-full"
         />
       </div>

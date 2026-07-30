@@ -280,6 +280,8 @@
     "encouragementBody": "Cada ejecución fallida descarta posibilidades. Revisa las pistas o pídele una mano al compañero de IA — estás más cerca de lo que parece.",
     "encouragementBodyHintsOnly": "Cada ejecución fallida descarta posibilidades. Muestra una pista abajo — estás más cerca de lo que parece.",
     "encouragementBodyNeutral": "Cada ejecución fallida descarta posibilidades. Relee el enunciado e intenta un paso más pequeño — estás más cerca de lo que parece.",
+    "capstoneAiOffTitle": "Esta parte es solo tuya.",
+    "capstoneAiOffBody": "El capstone se completa sin el AI Partner — eso es lo que hace que la credencial sea tuya.",
     "stuckNudgeAction": "Mostrar una pista",
     "stuckNudgeNextAction": "Mostrar otra pista",
     "stuckNudgeHintLabel": "Pista {number}",
