@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   challengeKindFor,
   resetAnalyticsEventDedupeForTests,
+  trackAttemptGateNudgeShown,
+  trackAttemptGateOverridden,
   trackChallengeFailed,
   trackChallengeRun,
   trackChallengeSolved,
@@ -135,6 +137,37 @@ describe("stuck-nudge events (LX-C4)", () => {
       courseId: "course-solana-201",
       hintIndex: 1,
     });
+  });
+});
+
+describe("attempt-gate nudge events (#865)", () => {
+  const payload = {
+    lessonId: "lesson-anchor-pda",
+    challengeKind: "rust",
+    courseId: "course-solana-201",
+  };
+
+  it("attempt_gate_nudge_shown dedupes per lesson per session", () => {
+    trackAttemptGateNudgeShown(ctx);
+    trackAttemptGateNudgeShown(ctx);
+    expect(trackEvent).toHaveBeenCalledTimes(1);
+    expect(trackEvent).toHaveBeenCalledWith(
+      "attempt_gate_nudge_shown",
+      payload
+    );
+
+    trackAttemptGateNudgeShown({ ...ctx, lessonId: "another-lesson" });
+    expect(trackEvent).toHaveBeenCalledTimes(2);
+  });
+
+  it("attempt_gate_overridden fires exactly once per challenge", () => {
+    trackAttemptGateOverridden(ctx);
+    trackAttemptGateOverridden(ctx);
+    expect(trackEvent).toHaveBeenCalledTimes(1);
+    expect(trackEvent).toHaveBeenCalledWith("attempt_gate_overridden", payload);
+
+    trackAttemptGateOverridden({ ...ctx, lessonId: "another-lesson" });
+    expect(trackEvent).toHaveBeenCalledTimes(2);
   });
 });
 

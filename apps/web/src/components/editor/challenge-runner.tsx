@@ -789,6 +789,7 @@ export function ChallengeRunner({
   onSubmit,
   isComplete,
   xpReward,
+  runButtonRef,
   className,
 }: ChallengeRunnerProps) {
   const t = useTranslations("lesson");
@@ -869,6 +870,7 @@ export function ChallengeRunner({
   return (
     <div className={cn("flex items-center gap-2", className)}>
       <Button
+        ref={runButtonRef}
         onClick={handleRun}
         disabled={isRunning}
         size="sm"

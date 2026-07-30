@@ -5,8 +5,8 @@
 // enforced one level up in ChallengeInterface, which does not mount this pane
 // at all while suppressed (see challenge-interface-ai-gate.test.tsx), so a
 // suppressed lesson can never surface this button.
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, act } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/messages/en.json";
 import { AiPartnerPane } from "../ai-partner-pane";
@@ -36,7 +36,10 @@ function renderPane(
   props: {
     solutionPassed?: boolean;
     disabled?: boolean;
-    unlockAt?: number | null;
+    hasRunTests?: boolean;
+    onFocusRun?: () => void;
+    onNudgeShown?: () => void;
+    onNudgeOverride?: () => void;
   } = {}
 ) {
   return render(
@@ -58,6 +61,7 @@ const reviewLabel = messages.aiPartner.actions.review;
 
 beforeEach(() => {
   review.mockReset();
+  hookState.requestHint.mockReset();
   hookState.budgetExhausted = false;
   hookState.spendCapped = false;
   hookState.loading = false;
@@ -114,100 +118,102 @@ describe("AiPartnerPane — post-pass review button (LX-C9)", () => {
   });
 });
 
-describe("AiPartnerPane — think-first lock (#770)", () => {
-  const lockTitle = messages.aiPartner.lock.title;
-  const lockTooltip = messages.aiPartner.lock.tooltip;
+describe("AiPartnerPane — attempt-gate nudge (#865, replaces the #770 lock)", () => {
+  const nudgeTitle = messages.aiPartner.attemptNudge.title;
+  const runLabel = messages.aiPartner.attemptNudge.run;
+  const overrideLabel = messages.aiPartner.attemptNudge.override;
   const hintLabel = messages.aiPartner.actions.hint;
-  const THREE_MIN = 3 * 60 * 1000;
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it("shows the lock countdown chip and disables the actions while locked", () => {
-    // Post-#791 the locked state is announced by a header chip rather than a
-    // body banner: a tabular m:ss countdown (~2:59/3:00 depending on the
-    // sub-ms gap to the pane's own Date.now()). Since #842 the chip is a
-    // BUTTON that discloses the think-first reason, wrapping a role="status"
-    // span for the ticking value — the reason lives in its aria-label and in
-    // the disclosed note, never in a `title` (browsers dismiss those on click,
-    // which is the bug #842 fixed). Assert the chip, not the retired
-    // `lock.body` text.
-    renderPane({ unlockAt: Date.now() + THREE_MIN });
-
-    const chip = screen.getByRole("status");
-    expect(chip).toHaveTextContent(/^\d:\d\d$/);
-
-    const chipButton = screen.getByRole("button", {
-      name: new RegExp(lockTooltip.slice(0, 24)),
-    });
-    expect(chipButton).not.toHaveAttribute("title");
-    const ariaLabel = chipButton.getAttribute("aria-label") ?? "";
-    expect(ariaLabel).toMatch(/^\d:\d\d — /);
-    expect(ariaLabel).toContain(lockTooltip);
-
-    // Subtitle switches to the think-first prompt while locked.
-    expect(screen.getByText(lockTitle)).toBeInTheDocument();
-
-    // Actions stay hard-disabled while locked (must NOT weaken).
-    expect(screen.getByRole("button", { name: hintLabel })).toBeDisabled();
-  });
-
-  it("does not lock when unlockAt is null (completed lesson / no lock)", () => {
-    renderPane({ unlockAt: null });
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
-    expect(screen.queryByText(lockTitle)).not.toBeInTheDocument();
+  it("keeps AI actions ENABLED pre-run — no lock, no countdown, no padlock", () => {
+    renderPane({ hasRunTests: false });
+    // The forbidden #770 shape is gone: nothing time-based, nothing disabled.
     expect(screen.getByRole("button", { name: hintLabel })).toBeEnabled();
+    expect(screen.queryByText(nudgeTitle)).not.toBeInTheDocument();
   });
 
-  it("does not lock when unlockAt is already in the past", () => {
-    renderPane({ unlockAt: Date.now() - 1000 });
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
-    expect(screen.queryByText(lockTitle)).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: hintLabel })).toBeEnabled();
-  });
+  it("surfaces the nudge on the first pre-run AI use instead of executing", () => {
+    const onNudgeShown = vi.fn();
+    renderPane({ hasRunTests: false, onNudgeShown });
 
-  it("renders the countdown chip OUTSIDE the collapse toggle; clicking it does not toggle (#842)", () => {
-    renderPane({ unlockAt: Date.now() + THREE_MIN });
+    fireEvent.click(screen.getByRole("button", { name: hintLabel }));
 
-    const chip = screen.getByRole("status");
-    const toggle = screen.getByRole("button", { expanded: true });
-
-    // The chip must not live inside the toggle: nested, its clicks bubbled to
-    // the toggle and the pane collapsed out from under the tooltip (#842).
-    expect(toggle.contains(chip)).toBe(false);
-
-    // Clicking the countdown does nothing — pane stays open.
-    fireEvent.click(chip);
-    expect(toggle).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByRole("button", { name: hintLabel })).toBeInTheDocument();
-
-    // The toggle itself still collapses and re-expands the pane.
-    fireEvent.click(toggle);
-    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    // The hint request is HELD, not refused and not executed.
+    expect(hookState.requestHint).not.toHaveBeenCalled();
+    expect(screen.getByText(nudgeTitle)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: runLabel })).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: hintLabel })
-    ).not.toBeInTheDocument();
-    // The chip survives the collapse — the wait stays visible in the header.
-    expect(screen.getByRole("status")).toBeInTheDocument();
-    fireEvent.click(toggle);
-    expect(toggle).toHaveAttribute("aria-expanded", "true");
+      screen.getByRole("button", { name: overrideLabel })
+    ).toBeInTheDocument();
+    expect(onNudgeShown).toHaveBeenCalledTimes(1);
   });
 
-  it("counts down and unlocks once the window elapses", () => {
-    vi.useFakeTimers();
-    const start = Date.now();
-    renderPane({ unlockAt: start + 2000 });
-    // Chip present + actions disabled while locked.
-    expect(screen.getByRole("status")).toBeInTheDocument();
+  it("[Run the tests] dismisses the nudge and shifts focus to the run button", () => {
+    const onFocusRun = vi.fn();
+    renderPane({ hasRunTests: false, onFocusRun });
+
+    fireEvent.click(screen.getByRole("button", { name: hintLabel }));
+    fireEvent.click(screen.getByRole("button", { name: runLabel }));
+
+    expect(onFocusRun).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText(nudgeTitle)).not.toBeInTheDocument();
+    // Taking the suggestion does NOT silently spend the held hint.
+    expect(hookState.requestHint).not.toHaveBeenCalled();
+  });
+
+  it("the free one-tap override proceeds with the original action immediately", () => {
+    const onNudgeOverride = vi.fn();
+    renderPane({ hasRunTests: false, onNudgeOverride });
+
+    fireEvent.click(screen.getByRole("button", { name: hintLabel }));
+    fireEvent.click(screen.getByRole("button", { name: overrideLabel }));
+
+    // One tap: nudge gone AND the held hint request executed — no extra step,
+    // no penalty.
+    expect(hookState.requestHint).toHaveBeenCalledTimes(1);
+    expect(onNudgeOverride).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText(nudgeTitle)).not.toBeInTheDocument();
+
+    // The override is sticky: further pre-run AI use is never re-nudged.
+    fireEvent.click(screen.getByRole("button", { name: hintLabel }));
+    expect(hookState.requestHint).toHaveBeenCalledTimes(2);
+    expect(screen.queryByText(nudgeTitle)).not.toBeInTheDocument();
+  });
+
+  it("never nudges after the first test run — actions execute directly", () => {
+    const onNudgeShown = vi.fn();
+    renderPane({ hasRunTests: true, onNudgeShown });
+
+    fireEvent.click(screen.getByRole("button", { name: hintLabel }));
+
+    expect(hookState.requestHint).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText(nudgeTitle)).not.toBeInTheDocument();
+    expect(onNudgeShown).not.toHaveBeenCalled();
+  });
+
+  it("a run mid-nudge hides it (hasRunTests flips true)", () => {
+    const { rerender } = renderPane({ hasRunTests: false });
+    fireEvent.click(screen.getByRole("button", { name: hintLabel }));
+    expect(screen.getByText(nudgeTitle)).toBeInTheDocument();
+
+    rerender(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <AiPartnerPane
+          lessonSlug="l"
+          courseSlug="c"
+          hints={[]}
+          getCode={() => "code"}
+          getTestSummary={() => "3/3 passing"}
+          onApply={() => {}}
+          hasRunTests={true}
+        />
+      </NextIntlClientProvider>
+    );
+    expect(screen.queryByText(nudgeTitle)).not.toBeInTheDocument();
+  });
+
+  it("never nudges a completed lesson (actions are disabled outright)", () => {
+    renderPane({ hasRunTests: false, disabled: true });
     expect(screen.getByRole("button", { name: hintLabel })).toBeDisabled();
-
-    act(() => {
-      vi.advanceTimersByTime(2000);
-    });
-
-    // Chip gone + actions re-enabled once the window elapses.
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: hintLabel })).toBeEnabled();
+    expect(screen.queryByText(nudgeTitle)).not.toBeInTheDocument();
   });
 });

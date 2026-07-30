@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ReactNode, Ref } from "react";
 import type { TestCase, BuildType } from "@superteam-lms/types";
 import type { editor } from "monaco-editor";
 
@@ -63,6 +63,9 @@ export interface ChallengeRunnerProps {
   onSubmit: () => void;
   isComplete: boolean;
   xpReward: number;
+  /** Ref to the Run/Build button, so the AI Partner's attempt-gate nudge
+   * (#865) can shift focus to it. */
+  runButtonRef?: Ref<HTMLButtonElement>;
   className?: string;
 }
 
