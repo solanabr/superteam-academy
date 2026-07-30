@@ -65,6 +65,37 @@
     },
     "version": 1
   },
+  "course-solana-for-evm-devs": {
+    "next": 9,
+    "retired": [],
+    "slots": {
+      "lesson-sfe-approve-to-delegate": 7,
+      "lesson-sfe-declared-accounts": 5,
+      "lesson-sfe-erc20-to-spl": 6,
+      "lesson-sfe-gas-to-compute-units": 4,
+      "lesson-sfe-mappings-to-pdas": 2,
+      "lesson-sfe-msg-sender-to-signers": 3,
+      "lesson-sfe-rent-and-space": 1,
+      "lesson-sfe-storage-to-accounts": 0,
+      "lesson-sfe-what-changes": 8
+    },
+    "version": 1
+  },
+  "course-solana-for-web-devs": {
+    "next": 8,
+    "retired": [],
+    "slots": {
+      "lesson-sfwd-accounts-are-just-bytes": 1,
+      "lesson-sfwd-anatomy-of-a-transaction": 3,
+      "lesson-sfwd-connect-fund-and-send": 5,
+      "lesson-sfwd-derive-the-vault-pda": 2,
+      "lesson-sfwd-kit-or-legacy": 4,
+      "lesson-sfwd-see-a-live-vault": 0,
+      "lesson-sfwd-ship-the-inspector": 6,
+      "lesson-sfwd-what-you-built": 7
+    },
+    "version": 1
+  },
   "course-stablecoin-payments": {
     "next": 9,
     "retired": [],

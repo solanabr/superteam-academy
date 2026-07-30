@@ -38,7 +38,17 @@
     "lesson-sap-payment-rails-decision-map",
     "lesson-sap-recurring-delegation-paid-tier",
     "lesson-sap-subscription-authority-and-allowance",
-    "lesson-sap-token-or-token-2022"
+    "lesson-sap-token-or-token-2022",
+    "lesson-sfe-erc20-to-spl",
+    "lesson-sfe-gas-to-compute-units",
+    "lesson-sfe-mappings-to-pdas",
+    "lesson-sfe-rent-and-space",
+    "lesson-sfwd-accounts-are-just-bytes",
+    "lesson-sfwd-anatomy-of-a-transaction",
+    "lesson-sfwd-connect-fund-and-send",
+    "lesson-sfwd-derive-the-vault-pda",
+    "lesson-sfwd-kit-or-legacy",
+    "lesson-sfwd-ship-the-inspector"
   ],
   "moduleLessonMap": [
     {
@@ -158,6 +168,53 @@
       "lessonIds": [
         "lesson-sap-write-the-deep-dive",
         "lesson-sap-submit-and-what-you-built"
+      ]
+    },
+    {
+      "_id": "course-solana-for-evm-devs:sfe-state",
+      "lessonIds": [
+        "lesson-sfe-storage-to-accounts",
+        "lesson-sfe-rent-and-space",
+        "lesson-sfe-mappings-to-pdas"
+      ]
+    },
+    {
+      "_id": "course-solana-for-evm-devs:sfe-execution",
+      "lessonIds": [
+        "lesson-sfe-msg-sender-to-signers",
+        "lesson-sfe-gas-to-compute-units",
+        "lesson-sfe-declared-accounts"
+      ]
+    },
+    {
+      "_id": "course-solana-for-evm-devs:sfe-tokens",
+      "lessonIds": [
+        "lesson-sfe-erc20-to-spl",
+        "lesson-sfe-approve-to-delegate",
+        "lesson-sfe-what-changes"
+      ]
+    },
+    {
+      "_id": "course-solana-for-web-devs:sfwd-read-the-chain",
+      "lessonIds": [
+        "lesson-sfwd-see-a-live-vault",
+        "lesson-sfwd-accounts-are-just-bytes",
+        "lesson-sfwd-derive-the-vault-pda"
+      ]
+    },
+    {
+      "_id": "course-solana-for-web-devs:sfwd-sign-your-own-transaction",
+      "lessonIds": [
+        "lesson-sfwd-anatomy-of-a-transaction",
+        "lesson-sfwd-kit-or-legacy",
+        "lesson-sfwd-connect-fund-and-send"
+      ]
+    },
+    {
+      "_id": "course-solana-for-web-devs:sfwd-publish-the-inspector",
+      "lessonIds": [
+        "lesson-sfwd-ship-the-inspector",
+        "lesson-sfwd-what-you-built"
       ]
     }
   ],

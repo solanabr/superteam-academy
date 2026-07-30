@@ -53,7 +53,7 @@
     "_id": "achievement-course-completer",
     "_type": "achievement",
     "award": {
-      "course": "course-rust-for-program-devs",
+      "course": "course-solana-for-web-devs",
       "kind": "course-completed"
     },
     "category": "progress",
@@ -108,7 +108,7 @@
       "path": "path-zero-to-deployed"
     },
     "category": "skills",
-    "description": "Complete all courses in the Solana Developer Path",
+    "description": "Complete every course in the Zero to Deployed path",
     "glyph": "◎",
     "icon": "layers",
     "maxSupply": 0,

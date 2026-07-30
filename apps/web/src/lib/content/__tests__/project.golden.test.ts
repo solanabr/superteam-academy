@@ -88,6 +88,26 @@ vi.mock("server-only", () => ({}));
 //    course-completer -> C2 pending C1 (#673)). courses/lessons/paths/summaries/
 //    quests-raw-derived regenerated; achievements-raw patched for the 3
 //    retargets only (rest stays the prod-Sanity capture).
+//  - C1 + EVM elective wave (bump to courses-academy @c5c625e0, PRs #22/#23/
+//    #24/#25/#26/#27): +2 courses / +17 lessons — C1 `course-solana-for-web-devs`
+//    (8 lessons, trackLevel 1) and the off-ladder elective
+//    `course-solana-for-evm-devs` (9 lessons, trackId 0). Bundle is now 6
+//    courses / 66 lessons; BOTH new courses are staged-only (no on-chain
+//    create, no deployment row) so the catalog gate keeps them invisible.
+//    Flip-wave edits: `path-zero-to-deployed` gains C1 in the FRONT slot (the
+//    ladder is now C1→C2→C3→C4→C5); `path-solana-core` order 1 -> 8 (order-1
+//    collision, #23); `achievement-course-completer` retargeted C2 -> C1,
+//    closing the #673 placeholder; `achievement-full-stack-solana` description
+//    reworded to name the Zero to Deployed path. Comprehension reflections
+//    (#848 / courses-academy #26) rewrite 4 openEnded prompts across C4/C5
+//    (3 dsk milestones widen 60 -> 120 words; C5's terminus block re-keys
+//    `submit` -> `reflect` and widens 200 -> 250) so no prompt is URL-only.
+//    C4 code stand-ins fixed for inverted deposit account order (#22), which
+//    also touches lesson-dsk-idl-to-typed-client / -wrap-the-generated-client.
+//    courses/lessons/paths/summaries/quests-raw-derived regenerated from the
+//    bundle through the real projectors (existing doc order preserved, new
+//    docs appended, raw quest docs untouched); achievements-raw patched for
+//    the course-completer retarget + the full-stack description only.
 const deps = { lessonsById };
 
 function bundleCourse(id: string): CourseDoc {

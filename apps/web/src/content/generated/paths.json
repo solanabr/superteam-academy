@@ -78,7 +78,7 @@
     "description": "The complete path from zero to Solana developer. Start with the fundamentals, understand how the network works, and build your first on-chain program.",
     "difficulty": "beginner",
     "draft": true,
-    "order": 1,
+    "order": 8,
     "slug": "solana-core",
     "tag": "Foundation",
     "title": "Solana Core"
@@ -87,6 +87,12 @@
     "_id": "path-zero-to-deployed",
     "_type": "learningPath",
     "courses": [
+      {
+        "_key": "course-solana-for-web-devs",
+        "_ref": "course-solana-for-web-devs",
+        "_type": "reference",
+        "_weak": true
+      },
       {
         "_key": "course-rust-for-program-devs",
         "_ref": "course-rust-for-program-devs",

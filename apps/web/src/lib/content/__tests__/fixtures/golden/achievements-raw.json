@@ -60,7 +60,7 @@
     {
       "_id": "achievement-course-completer",
       "award": {
-        "course": "course-rust-for-program-devs",
+        "course": "course-solana-for-web-devs",
         "days": null,
         "gte": null,
         "kind": "course-completed",
@@ -126,7 +126,7 @@
         "stat": null
       },
       "category": "skills",
-      "description": "Complete all courses in the Solana Developer Path",
+      "description": "Complete every course in the Zero to Deployed path",
       "glyph": "◎",
       "icon": "layers",
       "name": "Full Stack Solana",
@@ -274,7 +274,7 @@
     {
       "_id": "achievement-course-completer",
       "award": {
-        "course": "course-rust-for-program-devs",
+        "course": "course-solana-for-web-devs",
         "days": null,
         "gte": null,
         "kind": "course-completed",
@@ -340,7 +340,7 @@
         "stat": null
       },
       "category": "skills",
-      "description": "Complete all courses in the Solana Developer Path",
+      "description": "Complete every course in the Zero to Deployed path",
       "glyph": "◎",
       "icon": "layers",
       "name": "Full Stack Solana",
