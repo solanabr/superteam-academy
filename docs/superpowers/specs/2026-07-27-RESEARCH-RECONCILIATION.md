@@ -20,20 +20,31 @@ re-verified by hand (all held). Per-item statuses live in the machine-readable a
 
 | Doc                                      | items   | DONE    | PARTIAL | NOT-DONE | SUPERSEDED | OWNER-PARKED | UNVERIFIED |
 | ---------------------------------------- | ------- | ------- | ------- | -------- | ---------- | ------------ | ---------- |
-| UNIFIED-LAUNCH-SPEC (plan of record)     | 142     | 81      | 48      | 8        | —          | 4            | 1          |
+| UNIFIED-LAUNCH-SPEC (plan of record)     | 142     | 83      | 48      | 5        | 1          | 4            | 1          |
 | launch-experience master spec            | 121     | 98      | 11      | 1        | 7          | 4            | —          |
 | catalog-redesign spec                    | 150     | 100     | 34      | 10       | 3          | 3            | —          |
 | learning-experience research (PED-\*)    | 64      | 44      | 15      | 3        | 2          | —            | —          |
 | learning-uiux research (UIU-\*)          | 88      | 47      | 37      | 2        | 2          | —            | —          |
 | personalization-launch research (MAS-\*) | 85      | 42      | 21      | 1        | 19         | 1            | 1          |
 | ai-tutor-economics                       | 92      | 67      | 9       | 10       | 1          | 5            | —          |
-| **Total**                                | **742** | **479** | **175** | **35**   | **34**     | **17**       | **2**      |
+| **Total**                                | **742** | **481** | **175** | **32**   | **35**     | **17**       | **2**      |
 
 Reading: **65% of everything the research program asked for is verifiably done with cited
-evidence** (479/742), and most PARTIALs are single missing legs of shipped features, not absent
+evidence** (481/742), and most PARTIALs are single missing legs of shipped features, not absent
 features. The UNVERIFIED column is now just the 2 structurally UNVERIFIABLE items — the
 session-limit gap of the first pass (114 items) was **closed by the 2026-07-28 completion pass
 (§8)**; this table reflects the completed audit.
+
+> **Correction log — 2026-07-30 (#883).** The §8 completion addendum (2026-07-28) resolved three
+> rows that were never folded back into this appendix, so the narrative and the TSV had drifted
+> apart. Folded in now: `unified-curls` and `unified-embargo` NOT-DONE → **DONE** (the AIE-04/05
+> curls ran — §8.1), and `unified-18` NOT-DONE → **SUPERSEDED** (an ordering constraint that
+> #552/#553 already foreclosed — not an actionable item). Two of the four
+> `NOT-DONE / launch-critical` rows were therefore stale: half of the most-urgent bucket. The counts
+> above reflect the corrections. **Not** corrected: the kit-6-vs-kit-7 contradiction
+> (`catalog-tc-2` vs `catalog-c5-deps`) — both rows are accurate as captured and the contradiction
+> is real, so it needs the owner ratify-or-repin of §3.1, not a ledger edit; the two rows now
+> cross-reference each other.
 
 ---
 
@@ -191,8 +202,11 @@ tap-only screens, no self-rating, static cold-start routing, delayed signup with
 test-out as offer-not-gate, path page with one start-here card. Three PARTIALs are each one
 missing leg: screen 3 shipped as interest chips, not the value-relevance reflection (no
 locale-gated A/B); screen 4's daily goal and the implementation-intention prompt both lack the
-**notification channel** that was their second half (no send channel exists at all — this is the
-common root). The five retired-course content items are SUPERSEDED by the catalog rebuild, each
+**notification channel** that was their second half — the common root. _(Corrected 2026-07-30,
+#883: the send channel has since landed — `apps/web/src/lib/email/` carries `resend.ts`,
+`campaign.ts` and `templates.ts` via #769/#779. Only the re-engagement/reminder TEMPLATES are
+missing, which is what §4 already says; the original 'no send channel exists at all' no longer
+holds.)_ The five retired-course content items are SUPERSEDED by the catalog rebuild, each
 with its job traced to where it moved (C5 exceeded B-5's module-level ask by becoming a course).
 
 **8.3 Fresh-eyes gap hunt (the cut lenses).** One genuine novel miss in the entire corpus: the
