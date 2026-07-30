@@ -27,10 +27,10 @@ import { diag, type Diagnostic } from "../diagnostics";
  *                `earn-submission`), which emit nothing. A registry slug applied
  *                to NO lesson is also a warning (dead vocabulary entry).
  *                WARNING tier for now — the reuse bar guards the Wave 3 review
- *                queue, which cannot collect its benefit before the 5-course
- *                catalog (C1–C4) exists; erroring today would block correct
- *                content for a benefit that isn't yet reachable. Flip to error
- *                once the catalog lands — see the TODO at the 19b loop (#676).
+ *                queue. The 5-course catalog has landed, but the paired
+ *                skills.yaml sweep has not, so erroring today would redden
+ *                content CI on main. Flip to error right after that sweep —
+ *                see the TODO at the 19b loop (#676).
  *  19c (warning) interleaving-pair vocabulary: both members of each
  *                REVIEW_INTERLEAVING_PAIRS pair exist in `skills.yaml` and
  *                are applied to ≥2 lessons each. WARNING tier for now: the
@@ -150,16 +150,21 @@ export function gate19Check(model: RepoModel): Diagnostic[] {
 
   // 19b — minimum reuse bar over the registry.
   //
-  // TODO(#676): flip the single-lesson case below from `warning` to `error`
-  // once the 5-course catalog (C1–C4) has landed. The bar exists to guard the
-  // Wave 3 spaced-review queue — a slug behind one lesson can only re-serve
-  // that lesson, never generate a genuine review item. That benefit is
-  // unreachable until the catalog exists, so until then a hard error would
-  // block correct, in-progress content for nothing (course 5's tags are
-  // legitimately single-use *today* and gain a second lesson as C1–C4 fill in).
-  // Warning tier surfaces every under-applied slug honestly on each run without
-  // reddening content CI; `reviewExempt` still silences the by-design
-  // singletons, which is what makes the eventual error-flip clean.
+  // TODO(#676): flip the single-lesson case below from `warning` to `error`.
+  // The bar exists to guard the Wave 3 spaced-review queue — a slug behind one
+  // lesson can only re-serve that lesson, never generate a genuine review item.
+  //
+  // The catalog precondition is now MET: C1–C5 all exist (courses-academy main
+  // c5c625e, 2026-07-30). The remaining blocker is the *sweep* the flip issue
+  // pairs with the tier change, and it lands in the CONTENT repo, not here — an
+  // audit of that commit still reports 30 gate-19b findings (23 single-use
+  // slugs, 7 dead vocabulary entries), so flipping the tier in isolation would
+  // redden content CI on main. Order of operations: land the skills.yaml sweep
+  // in courses-academy (`reviewExempt: true` for the by-design singletons, a
+  // second lesson or consolidation for the rest, delete the dead entries), then
+  // flip this tier. Warning tier surfaces every under-applied slug honestly on
+  // each run in the meantime; `reviewExempt` already silences the by-design
+  // singletons, which is what makes the eventual flip clean.
   for (const entry of registry) {
     const { slug } = entry;
     const uses = lessonsBySlug.get(slug) ?? [];
@@ -182,7 +187,7 @@ export function gate19Check(model: RepoModel): Diagnostic[] {
           "gate-19b",
           "warning",
           SKILLS_FILE,
-          `skill "${slug}" is applied to only 1 lesson (${uses[0]}) — the minimum reuse bar is 2; tag a second lesson, drop the slug, or mark it "reviewExempt: true" in skills.yaml if it is single-use by design. Becomes an error once the 5-course catalog lands (#676)`
+          `skill "${slug}" is applied to only 1 lesson (${uses[0]}) — the minimum reuse bar is 2; tag a second lesson, drop the slug, or mark it "reviewExempt: true" in skills.yaml if it is single-use by design. Becomes an error once the skills.yaml sweep lands (#676)`
         )
       );
     }

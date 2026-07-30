@@ -129,7 +129,7 @@ describe("gate 19b — minimum reuse bar", () => {
     expect(g[0]?.severity).toBe("warning");
     expect(g[0]?.message).toContain('"staking"');
     expect(g[0]?.message).toContain("courses/x/lessons/a/lesson.yaml");
-    // Warning tier until the 5-course catalog lands (#676) — never fails CI.
+    // Warning tier until the skills.yaml sweep lands (#676) — never fails CI.
     expect(g[0]?.message).toContain("#676");
     expect(r.ok).toBe(true);
   });

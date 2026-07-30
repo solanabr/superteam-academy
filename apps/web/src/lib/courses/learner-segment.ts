@@ -64,21 +64,21 @@ export const SEGMENT_PATH_MODALITY: Record<
  * `resolveEntryLessonHref` sync gate keeps that from 404-ing, but the deep-link
  * into flagship lesson 1 goes dead — the regression this table fixes.
  *
- *   1 — CORE web2 (ships JS/TS, new to Solana) → C2 rust-for-program-devs (†)
+ *   1 — CORE web2 (ships JS/TS, new to Solana) → C1 solana-for-web-devs (†)
  *   2 — web3 dev (already ships on-chain)       → C3 building-your-first-solana-program (segment 2 "enters here", skips the on-ramp)
- *   3 — beginner (new to programming)           → C2 rust-for-program-devs (†) (shares segment 1's entry)
+ *   3 — beginner (new to programming)           → C1 solana-for-web-devs (†) (shares segment 1's entry)
  *
- * (†) TODO(#599/#673): segments 1 and 3 should enter at C1
- * `course-solana-for-web-devs` (the JS/TS on-ramp) once it lands on-chain — it
- * is not in the committed bundle yet, so today they enter at the live entry
- * rung C2. When C1 lands, only these two lines move. Segment 3 stays out of
- * scope this wave (CATALOG §1) but still routes to the live on-ramp rather than
- * a dead course.
+ * (†) FLIPPED 2026-07-30 (#599/#673): segments 1 and 3 now enter at C1
+ * `course-solana-for-web-devs`, the JS/TS on-ramp. C1 is authored, in the
+ * committed bundle, and live on-chain (created + synced + active), so the
+ * placeholder entry at C2 `course-rust-for-program-devs` — which existed only
+ * because C1 did not yet exist — is retired. Segment 2 is unchanged: it still
+ * "enters here" at C3 and skips the on-ramp.
  */
 export const SEGMENT_ENTRY_COURSE: Record<LearnerSegment, string> = {
-  1: "course-rust-for-program-devs",
+  1: "course-solana-for-web-devs",
   2: "course-building-first-program",
-  3: "course-rust-for-program-devs",
+  3: "course-solana-for-web-devs",
 };
 
 export function entryCourseForSegment(segment: LearnerSegment): string {
