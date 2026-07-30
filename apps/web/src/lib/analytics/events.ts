@@ -249,6 +249,26 @@ export function trackNextLessonPlanCommitted(opts: { day: PlanWeekday }): void {
   trackEvent("next_lesson_plan_committed", { day: opts.day });
 }
 
+/**
+ * `review_completed` — every gradable item in a spaced-review session has been
+ * graded (LX-B5, #873). Fires ONCE per session: the review surface is a single
+ * client component whose `graded` set only grows, so the caller latches on the
+ * transition into the all-done state rather than on every subsequent render.
+ *
+ * `gradable` counts only items with an authored quiz — a due lesson with no
+ * quiz renders as a revisit link and can never be "graded", so counting it
+ * would make the denominator unreachable and the event would never fire.
+ */
+export function trackReviewCompleted(opts: {
+  gradable: number;
+  itemsShown: number;
+}): void {
+  trackEvent("review_completed", {
+    gradable: opts.gradable,
+    itemsShown: opts.itemsShown,
+  });
+}
+
 export type CredentialMintObservationSource = "manual_mint" | "realtime";
 
 /**
