@@ -66,7 +66,7 @@ fails the boot loudly rather than degrading silently.
 | `SOLANA_RPC_URL`                | **Server-only** | Server RPC — **this** is the one that may carry the Helius key. Required at boot so a misconfig fails loudly instead of falling back to public devnet                                                                                                            |
 | `NEXT_PUBLIC_SOLANA_NETWORK`    | Public          | `devnet`                                                                                                                                                                                                                                                         |
 | `NEXT_PUBLIC_APP_URL`           | Public          | Your Vercel URL (e.g., `https://superteam-academy-web.vercel.app`)                                                                                                                                                                                               |
-| `NEXT_PUBLIC_PROGRAM_ID`        | Public          | Program ID from `solana program deploy` (see [DEPLOY-PROGRAM.md](./DEPLOY-PROGRAM.md))                                                                                                                                                                                   |
+| `NEXT_PUBLIC_PROGRAM_ID`        | Public          | Program ID from `solana program deploy` (see [DEPLOY-PROGRAM.md](./DEPLOY-PROGRAM.md))                                                                                                                                                                           |
 | `NEXT_PUBLIC_XP_MINT_ADDRESS`   | Public          | XP mint pubkey from the `initialize` output                                                                                                                                                                                                                      |
 | `BUILD_SERVER_URL`              | **Server-only** | Cloud Run service URL (e.g., `https://academy-build-server-HASH.a.run.app`)                                                                                                                                                                                      |
 | `BUILD_SERVER_API_KEY`          | **Server-only** | Same value as `ACADEMY_API_KEY` on Cloud Run                                                                                                                                                                                                                     |
@@ -278,6 +278,58 @@ PR link. It holds **no write token** and performs no repo write. See
 
 > New courses are still **invisible to learners** until they are deployed on-chain
 > from `/admin/courses` — compiling the bundle is necessary but not sufficient.
+
+### Slot-activation checklist (adding or reordering lessons)
+
+Run this **before** bumping `content.lock` for any course that is already
+deployed. It exists because of one fact:
+
+> **A learner's on-chain progress bit is the lesson's ARRAY POSITION, not its
+> slot id.** (#741; the incident it caused is #740.)
+
+`Enrollment.lesson_flags` is a `[u64; 4]` bitmap. Bit _n_ means "the lesson at
+index _n_ of this course's lesson array is complete". `slots.lock.json` records
+the intended slot per lesson id, but **nothing at runtime reads it** — no client,
+no API route, no on-chain instruction. It is a bookkeeping file for authors.
+
+So inserting a lesson anywhere except the end, removing one, or reordering a
+module silently **remaps every learner's completed bits** to different lessons.
+Nothing errors. Progress just becomes wrong.
+
+**Safe (no remap):**
+
+- [ ] Appending a lesson to the **end** of the last module.
+- [ ] Editing an existing lesson's content, title, prose, tests or hints.
+- [ ] Adding a whole new module **after** all existing ones.
+
+**Unsafe (remaps learner progress) — needs the retire path below:**
+
+- [ ] Inserting a lesson anywhere but the end.
+- [ ] Deleting a lesson.
+- [ ] Reordering lessons or modules.
+
+**Before the `content.lock` bump:**
+
+1. [ ] Diff the lesson arrays old-vs-new, in render order, across every module:
+       `git -C <courses-academy> diff <pinned-sha>..HEAD -- courses/<slug>/course.yaml`
+2. [ ] Confirm every pre-existing lesson id sits at the **same index** as before.
+       If any index moved, stop — this is the unsafe path.
+3. [ ] Check whether the course is deployed at all
+       (`/admin/courses`, or `is_active` on its `Course` PDA). An **undeployed**
+       course has no learners and no bitmap, so any reshape is free.
+4. [ ] Confirm `slots.lock.json` was regenerated, not hand-edited — CI compares
+       a fresh generation against the committed file.
+
+**To retire a lesson without remapping:** clear its bit in the course's
+`active_lessons` mask via `update_course` (the admin sync does this from the
+committed lockfile) and leave the array position occupied. Retiring a slot is
+a mask edit; it is not an array edit. The completion gate is a subset test over
+the live mask, so a retired slot never blocks anyone — see
+`isCourseComplete` in `apps/web/src/lib/solana/bitmap.ts`.
+
+**After the bump:** the `content.lock` bump and the regenerated bundle must be
+committed together (see [Publishing new content](#publishing-new-content) above);
+CI recompiles and byte-compares.
 
 ---
 
