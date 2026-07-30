@@ -280,6 +280,8 @@
     "encouragementBody": "Cada execução que falha elimina possibilidades. Dê uma olhada nas dicas ou peça uma força ao parceiro de IA — você está mais perto do que parece.",
     "encouragementBodyHintsOnly": "Cada execução que falha elimina possibilidades. Revele uma dica abaixo — você está mais perto do que parece.",
     "encouragementBodyNeutral": "Cada execução que falha elimina possibilidades. Releia o enunciado e tente um passo menor — você está mais perto do que parece.",
+    "capstoneAiOffTitle": "Esta etapa é só sua.",
+    "capstoneAiOffBody": "O capstone é concluído sem o AI Partner — é isso que torna a credencial sua.",
     "stuckNudgeAction": "Ver uma dica",
     "stuckNudgeNextAction": "Ver outra dica",
     "stuckNudgeHintLabel": "Dica {number}",

@@ -18,6 +18,7 @@ import { AuthModal } from "@/components/auth/auth-modal";
 import { trackEvent } from "@/lib/analytics";
 import { completionErrorKey } from "@/lib/lessons/completion-error";
 import { createClient } from "@/lib/supabase/client";
+import { isCapstoneLesson } from "@/lib/credentials/capstone-identity";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { useOnChainEnroll } from "@/hooks/use-on-chain-enroll";
 import { bankCompletion, removeBanked } from "@/lib/lessons/progress-bank";
@@ -223,6 +224,16 @@ export function LessonPageClient({
       prev[blockKey] === answered ? prev : { ...prev, [blockKey]: answered }
     );
   }, []);
+  // AI hard-off on the capstone (#867) — the CLIENT leg of the server refusal
+  // in /api/ai/partner, derived from the same `capstone-identity` constant as
+  // the credential gate (never a second hardcoded id). Distinct from
+  // `aiSuppressed`: quiz suppression is temporary (answer the quiz and the
+  // tutor returns) and simply HIDES the pane, whereas this is permanent and
+  // must be EXPLAINED — the pane renders the AI-free rationale in place of its
+  // actions, so a learner who expected a tutor learns why there isn't one
+  // rather than finding a blank column.
+  const capstoneAiOff = isCapstoneLesson(lesson._id);
+
   const aiSuppressed =
     hasQuizBlock &&
     !isCompleted &&
@@ -401,6 +412,7 @@ export function LessonPageClient({
       setProof,
       setQuizAnswered,
       aiSuppressed,
+      capstoneAiOff,
       buildUuid,
       programKeypairSecret,
       resetBuild,
@@ -418,6 +430,7 @@ export function LessonPageClient({
       setProof,
       setQuizAnswered,
       aiSuppressed,
+      capstoneAiOff,
       buildUuid,
       programKeypairSecret,
       resetBuild,

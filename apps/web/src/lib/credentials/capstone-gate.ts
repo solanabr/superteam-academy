@@ -1,8 +1,20 @@
 import "server-only";
 
 import type { createAdminClient } from "@/lib/supabase/admin";
+import { CAPSTONE_CREDENTIAL, isCapstoneCourse } from "./capstone-identity";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
+
+// The capstone identity itself lives in `./capstone-identity` — a
+// non-`server-only` module, so the lesson client can render the AI hard-off
+// (#867) from the SAME constant instead of a forked string. Re-exported here so
+// every existing `@/lib/credentials/capstone-gate` importer is unchanged; this
+// file remains the home of the gate's database logic.
+export {
+  CAPSTONE_CREDENTIAL,
+  isCapstoneCourse,
+  isCapstoneLesson,
+} from "./capstone-identity";
 
 // ---------------------------------------------------------------------------
 // LX-E2 — Capstone-gated credential (owner decision O-2)
@@ -21,9 +33,9 @@ type AdminClient = ReturnType<typeof createAdminClient>;
 // linked wallet (#620 / LX-E1). A row therefore means a real, attributable
 // deploy — not a self-reported claim.
 //
-// Identity is an app-side constant for launch; a content-schema flag comes
-// later. The values below MUST match what the deploy panel writes to
-// `deployed_programs`:
+// Identity is an app-side constant for launch (see `./capstone-identity`); a
+// content-schema flag comes later. Those values MUST match what the deploy
+// panel writes to `deployed_programs`:
 //   - courseId       = the page-level course `_id`   (courseInfo._id)
 //   - deployLessonId = the lesson hosting the `deployed-program-card` block
 //                      (ctx.lesson._id)
@@ -36,16 +48,6 @@ type AdminClient = ReturnType<typeof createAdminClient>;
 // existing `certificates` row) BEFORE reaching the gate, so pre-gate devnet
 // certificates minted without a recorded deploy stay valid and are never
 // re-evaluated.
-
-export const CAPSTONE_CREDENTIAL = {
-  courseId: "course-building-first-program",
-  deployLessonId: "lesson-bfsp-m4-capstone",
-} as const;
-
-/** Whether a course's credential is subject to the capstone deploy gate. */
-export function isCapstoneCourse(courseId: string): boolean {
-  return courseId === CAPSTONE_CREDENTIAL.courseId;
-}
 
 export type CapstoneGateResult =
   // The course is not the capstone — the deploy gate does not apply; issue as usual.

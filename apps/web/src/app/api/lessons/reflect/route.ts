@@ -5,6 +5,7 @@ import { getLessonByIdForGrading } from "@/lib/content/queries";
 import { sealAttestation } from "@/lib/ai/check-seal";
 import { maybeGenerateReflectionReply } from "@/lib/ai/reflection-reply";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
+import { isCapstoneLesson } from "@/lib/credentials/capstone-identity";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 import { serverEnv } from "@/lib/env.server";
@@ -168,18 +169,35 @@ export async function POST(request: NextRequest) {
     // and resolves to null on failure/disabled/rate-limit; the extra try/catch
     // keeps the receipt-first guarantee LOCAL — the seal is returned even if the
     // reply path ever throws, rather than relying on the helper's discipline.
+    //
+    // CAPSTONE RULING (#867, unified spec item 33): on the capstone lesson the
+    // reply is NOT generated. The capstone credential attests unaided work, and
+    // "AI-free" is only checkable if it means *no AI turn on that lesson* —
+    // not "no AI turn that I judged to be help". The capstone's `openEnded`
+    // block is a write-up of a deploy that already happened, so this reply is
+    // enrichment rather than assistance; suppressing it therefore costs the
+    // learner nothing and buys a flat, greppable invariant keyed off the same
+    // constant as the credential gate.
+    //
+    // Receipt-first is UNTOUCHED: the seal is already computed above and is
+    // returned unconditionally. Skipping the reply cannot block completion,
+    // XP, or the credential — only the optional paragraph of feedback.
+    const capstoneAiOff = isCapstoneLesson(lessonId);
+
     let reply: string | null = null;
-    try {
-      reply = await maybeGenerateReflectionReply({
-        userId: user.id,
-        // Per-IP spend dimension (#724): the reply is metered under the #591
-        // ledger, which needs the actor's IP, not just the user id.
-        ip: getClientIp(request.headers),
-        prompt: (block as OpenEndedBlockData).prompt,
-        reflection: text,
-      });
-    } catch {
-      reply = null;
+    if (!capstoneAiOff) {
+      try {
+        reply = await maybeGenerateReflectionReply({
+          userId: user.id,
+          // Per-IP spend dimension (#724): the reply is metered under the #591
+          // ledger, which needs the actor's IP, not just the user id.
+          ip: getClientIp(request.headers),
+          prompt: (block as OpenEndedBlockData).prompt,
+          reflection: text,
+        });
+      } catch {
+        reply = null;
+      }
     }
 
     return NextResponse.json({ seal, reply });

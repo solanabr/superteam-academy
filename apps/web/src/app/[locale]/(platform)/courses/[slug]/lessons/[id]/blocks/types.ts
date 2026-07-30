@@ -30,6 +30,15 @@ export interface BlockContext {
    * block threads it to ChallengeInterface, which keeps the AI Partner hidden.
    */
   aiSuppressed: boolean;
+  /**
+   * True on THE graded capstone lesson (#867) — derived from
+   * `lib/credentials/capstone-identity`, the same constant the credential gate
+   * uses. Unlike `aiSuppressed` this is permanent and explained: the code block
+   * threads it to ChallengeInterface, which renders the AI-free rationale where
+   * the AI Partner would sit. The server refuses independently
+   * (`/api/ai/partner`) — this is presentation, not the enforcement.
+   */
+  capstoneAiOff: boolean;
   /** Latest successful build (for deployable code + the deployed-program card). */
   buildUuid: string | null;
   programKeypairSecret: number[] | null;
