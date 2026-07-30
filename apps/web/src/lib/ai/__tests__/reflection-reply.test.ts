@@ -70,6 +70,28 @@ describe("maybeGenerateReflectionReply", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("calls the CHEAP routed model, not the old 3.5-flash pin (#868)", async () => {
+    const fetchMock = stubGeminiFetch("Nice work");
+    const { maybeGenerateReflectionReply } =
+      await import("../reflection-reply");
+    await maybeGenerateReflectionReply(INPUT);
+    const url = String((fetchMock.mock.calls[0] as unknown[])[0]);
+    expect(url).toContain("models/gemini-3.5-flash-lite:generateContent");
+    expect(url).not.toContain("models/gemini-3.5-flash:");
+  });
+
+  it("honours AI_MODEL_REFLECTION when it names a priced model", async () => {
+    process.env.AI_MODEL_REFLECTION = "gemini-3.6-flash";
+    const fetchMock = stubGeminiFetch("Nice work");
+    const { maybeGenerateReflectionReply } =
+      await import("../reflection-reply");
+    await maybeGenerateReflectionReply(INPUT);
+    expect(String((fetchMock.mock.calls[0] as unknown[])[0])).toContain(
+      "models/gemini-3.6-flash:generateContent"
+    );
+    delete process.env.AI_MODEL_REFLECTION;
+  });
+
   it("is ON by default — replies with the flag unset (#848)", async () => {
     delete process.env.OPENENDED_AI_REPLY;
     stubGeminiFetch("Default-on reply");
@@ -195,6 +217,7 @@ describe("maybeGenerateReflectionReply", () => {
     expect(recordAiSpend).toHaveBeenCalledWith(
       "user-1",
       "203.0.113.7",
+      "gemini-3.5-flash-lite",
       usageMetadata,
       { promptTokens: 3000, outputTokens: 512 }
     );
@@ -210,6 +233,7 @@ describe("maybeGenerateReflectionReply", () => {
     expect(recordAiSpend).toHaveBeenCalledWith(
       "user-1",
       "203.0.113.7",
+      "gemini-3.5-flash-lite",
       undefined,
       { promptTokens: 3000, outputTokens: 512 }
     );

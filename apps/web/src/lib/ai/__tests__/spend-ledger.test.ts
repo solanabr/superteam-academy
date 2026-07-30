@@ -13,12 +13,18 @@ import {
   degradedMaxTokens,
   checkAiSpend,
   recordAiSpend,
+  ratesFor,
   getAiSpendToday,
 } from "../spend-ledger";
+import { MODEL_RATES } from "../models";
 
-// The wrapper reads caps/rates from serverEnv, which in tests takes the
-// env.server defaults (O-1 numbers): account soft/hard $0.50/$1.50, IP $2/$5,
-// global $14/$25; rates $0.30 input, $2.50 output per Mtok. Micro-USD = USD×1e6.
+// The wrapper reads caps from serverEnv, which in tests takes the env.server
+// defaults (O-1 numbers): account soft/hard $0.50/$1.50, IP $2/$5, global
+// $14/$25. Micro-USD = USD×1e6. Rates are PER MODEL since #868; the pre-existing
+// cases below were written against $0.30/$2.50, which is exactly flash-lite's
+// sheet, so they pin the cheap tier explicitly.
+const LITE = "gemini-3.5-flash-lite" as const;
+const FLASH_36 = "gemini-3.6-flash" as const;
 const RATES = { inputUsdPerMTok: 0.3, outputUsdPerMTok: 2.5 };
 
 beforeEach(() => {
@@ -182,11 +188,70 @@ describe("checkAiSpend", () => {
   });
 });
 
+describe("ratesFor (per-model pricing, #868)", () => {
+  it("prices each routed model from its own sheet (economics doc §2.1)", () => {
+    expect(ratesFor("gemini-3.6-flash")).toEqual({
+      inputUsdPerMTok: 1.5,
+      outputUsdPerMTok: 7.5,
+    });
+    expect(ratesFor("gemini-3.5-flash-lite")).toEqual({
+      inputUsdPerMTok: 0.3,
+      outputUsdPerMTok: 2.5,
+    });
+    // Kept as the documented fallback pin — and what pre-#868 traffic cost.
+    expect(ratesFor("gemini-3.5-flash")).toEqual({
+      inputUsdPerMTok: 1.5,
+      outputUsdPerMTok: 9.0,
+    });
+  });
+
+  it("matches MODEL_RATES exactly when no env override is set", () => {
+    for (const [model, sheet] of Object.entries(MODEL_RATES)) {
+      expect(ratesFor(model as keyof typeof MODEL_RATES)).toEqual(sheet);
+    }
+  });
+});
+
 describe("recordAiSpend", () => {
+  it("bills the SAME usage differently per routed model", async () => {
+    // Red at main: `recordAiSpend` took no model there and priced every call at
+    // one global rate pair, so a 3.6-flash turn was booked at flash-lite prices
+    // (under-reporting the sponsor's burn ~3×).
+    rpc.mockResolvedValue({ data: null, error: null });
+    const usage = { promptTokenCount: 1000, candidatesTokenCount: 500 };
+
+    await recordAiSpend("u", "1.2.3.4", FLASH_36, usage);
+    // 1000×1.50 = 1500 input; 500×7.50 = 3750 output → 5250 micro-USD.
+    expect(rpc).toHaveBeenLastCalledWith(
+      "record_ai_spend",
+      expect.objectContaining({ p_micro_usd: 5250 })
+    );
+
+    await recordAiSpend("u", "1.2.3.4", LITE, usage);
+    // Same tokens on the cheap tier: 1000×0.30 + 500×2.50 = 1550.
+    expect(rpc).toHaveBeenLastCalledWith(
+      "record_ai_spend",
+      expect.objectContaining({ p_micro_usd: 1550 })
+    );
+  });
+
+  it("prices the conservative fallback at the routed model's rates too", async () => {
+    rpc.mockResolvedValue({ data: null, error: null });
+    // No usageMetadata on a billed 3.6-flash call: 3000×1.50 + 512×7.50 = 8340.
+    await recordAiSpend("u", "1.2.3.4", FLASH_36, undefined, {
+      promptTokens: 3000,
+      outputTokens: 512,
+    });
+    expect(rpc).toHaveBeenLastCalledWith(
+      "record_ai_spend",
+      expect.objectContaining({ p_micro_usd: 8340 })
+    );
+  });
+
   it("books the computed micro-USD via record_ai_spend", async () => {
     rpc.mockResolvedValue({ data: null, error: null });
 
-    await recordAiSpend("u", "1.2.3.4", {
+    await recordAiSpend("u", "1.2.3.4", LITE, {
       promptTokenCount: 1000,
       candidatesTokenCount: 500,
     });
@@ -201,14 +266,14 @@ describe("recordAiSpend", () => {
   it("never throws when the record RPC errors (best-effort audit)", async () => {
     rpc.mockResolvedValue({ data: null, error: { message: "down" } });
     await expect(
-      recordAiSpend("u", "1.2.3.4", { promptTokenCount: 10 })
+      recordAiSpend("u", "1.2.3.4", LITE, { promptTokenCount: 10 })
     ).resolves.toBeUndefined();
   });
 
   it("never throws when the record RPC rejects", async () => {
     rpc.mockRejectedValue(new Error("network"));
     await expect(
-      recordAiSpend("u", "1.2.3.4", { promptTokenCount: 10 })
+      recordAiSpend("u", "1.2.3.4", LITE, { promptTokenCount: 10 })
     ).resolves.toBeUndefined();
   });
 
@@ -216,7 +281,7 @@ describe("recordAiSpend", () => {
     rpc.mockResolvedValue({ data: null, error: null });
     // usage undefined → metered estimate is 0 → fall back to the caller's shape.
     // 3000 input × 0.30 = 900; 512 output × 2.50 = 1280; total 2180 micro.
-    await recordAiSpend("u", "1.2.3.4", undefined, {
+    await recordAiSpend("u", "1.2.3.4", LITE, undefined, {
       promptTokens: 3000,
       outputTokens: 512,
     });
@@ -233,6 +298,7 @@ describe("recordAiSpend", () => {
     await recordAiSpend(
       "u",
       "1.2.3.4",
+      LITE,
       { promptTokenCount: 1000, candidatesTokenCount: 500 },
       { promptTokens: 9999, outputTokens: 9999 }
     );
@@ -247,6 +313,7 @@ describe("recordAiSpend", () => {
     await recordAiSpend(
       "u",
       "1.2.3.4",
+      LITE,
       {},
       {
         promptTokens: 3000,

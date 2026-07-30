@@ -7,6 +7,7 @@ import {
   degradedMaxTokens,
 } from "@/lib/ai/spend-ledger";
 import type { GeminiUsageMetadata } from "@/lib/ai/spend-ledger";
+import { modelForReflectionReply, geminiUrl } from "@/lib/ai/models";
 
 // Best-effort AI feedback for an `openEnded` reflection. NEVER blocks the seal:
 // the attestation route computes and returns the receipt independently, then
@@ -27,11 +28,16 @@ import type { GeminiUsageMetadata } from "@/lib/ai/spend-ledger";
 // (spendAssist/refundAssist): the reflection reply is not a code-challenge
 // assist and must not draw from that per-lesson quota.
 
-const GEMINI_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent";
+// Model: routed, not pinned (#868). This reply is the textbook cheap-tier case
+// — ONE unstructured note, hard-capped at 512 output tokens, best-effort, and
+// discarded entirely on any failure because the seal ships regardless. Nothing
+// here needs 3.6-flash's headroom, and the #724 constraints in the header
+// (capped, low-latency, ledger-gated) point the same way, so it routes to
+// gemini-3.5-flash-lite (economics doc §2.1: $0.30/$2.50 per M vs $1.50/$9.00
+// on the old pin — ~5× cheaper on output for the same 512-token ceiling).
 
 // A short feedback note, not an essay. Kept small so an enabled reply is cheap
-// and low-latency; gemini-3.5-flash is a thinking model, so thinking is disabled
+// and low-latency; the routed model is a thinking model, so thinking is disabled
 // to spend the whole budget on the visible response.
 const MAX_OUTPUT_TOKENS = 512;
 
@@ -114,10 +120,11 @@ export async function maybeGenerateReflectionReply({
     outputTokens = degradedMaxTokens(MAX_OUTPUT_TOKENS);
   }
 
+  const model = modelForReflectionReply();
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REPLY_TIMEOUT_MS);
   try {
-    const response = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
+    const response = await fetch(`${geminiUrl(model)}?key=${apiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       signal: controller.signal,
@@ -155,7 +162,7 @@ export async function maybeGenerateReflectionReply({
     } catch {
       data = undefined;
     }
-    await recordAiSpend(userId, ip, data?.usageMetadata, {
+    await recordAiSpend(userId, ip, model, data?.usageMetadata, {
       promptTokens: SPEND_FALLBACK_PROMPT_TOKENS,
       outputTokens: MAX_OUTPUT_TOKENS,
     });
