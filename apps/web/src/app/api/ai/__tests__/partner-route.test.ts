@@ -8,13 +8,13 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: async () => ({ auth: { getUser } }),
 }));
 
-const spendAssist = vi.fn();
-const refundAssist = vi.fn();
+const spendAssistTurn = vi.fn();
+const refundAssistTurn = vi.fn();
 const recordBilledAssist = vi.fn();
 const appendAssistLog = vi.fn();
 vi.mock("@/lib/ai/assist-budget", () => ({
-  spendAssist,
-  refundAssist,
+  spendAssistTurn,
+  refundAssistTurn,
   recordBilledAssist,
   appendAssistLog,
   MAX_PAID_ASSISTS: 4,
@@ -154,8 +154,8 @@ beforeEach(() => {
   // secret chain, so give it one.
   process.env.AI_PARTNER_SEAL_SECRET = "test-seal-secret";
   getUser.mockReset();
-  spendAssist.mockReset();
-  refundAssist.mockReset();
+  spendAssistTurn.mockReset();
+  refundAssistTurn.mockReset();
   recordBilledAssist.mockReset();
   appendAssistLog.mockReset();
   isRateLimited.mockReset();
@@ -167,8 +167,12 @@ beforeEach(() => {
   getUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
   isRateLimited.mockResolvedValue(false);
   getLessonBySlug.mockResolvedValue(LESSON);
-  spendAssist.mockResolvedValue({ allowed: true, used: 1 });
-  refundAssist.mockResolvedValue(undefined);
+  spendAssistTurn.mockResolvedValue({
+    allowed: true,
+    tier: "free",
+    counts: { free: 1, metered: 0, socratic: 0 },
+  });
+  refundAssistTurn.mockResolvedValue(undefined);
   recordBilledAssist.mockResolvedValue(undefined);
   appendAssistLog.mockResolvedValue(undefined);
   // Under every spend cap by default → serve at full budget.
@@ -192,7 +196,7 @@ describe("POST /api/ai/partner", () => {
     const res = await POST(makeRequest(VALID_BODY));
 
     expect(res.status).toBe(401);
-    expect(spendAssist).not.toHaveBeenCalled();
+    expect(spendAssistTurn).not.toHaveBeenCalled();
   });
 
   it("returns 503 when GEMINI_API_KEY is missing", async () => {
@@ -204,8 +208,12 @@ describe("POST /api/ai/partner", () => {
     expect(res.status).toBe(503);
   });
 
-  it("returns budgetExhausted:true as HTTP 200 when spendAssist denies", async () => {
-    spendAssist.mockResolvedValue({ allowed: false, used: 4 });
+  it("returns budgetExhausted:true as HTTP 200 when the ladder spend denies", async () => {
+    spendAssistTurn.mockResolvedValue({
+      allowed: false,
+      tier: "exhausted",
+      counts: { free: 2, metered: 8, socratic: 20 },
+    });
     stubGeminiFetch(PROPOSE_GEMINI_TEXT);
 
     const { POST } = await import("../partner/route");
@@ -213,7 +221,10 @@ describe("POST /api/ai/partner", () => {
     const json = await res.json();
 
     expect(res.status).toBe(200);
-    expect(json).toMatchObject({ budgetExhausted: true, used: 4 });
+    expect(json).toMatchObject({
+      budgetExhausted: true,
+      counts: { free: 2, metered: 8, socratic: 20 },
+    });
   });
 
   it("passes through a well-formed propose response, sealed and validated", async () => {
@@ -257,24 +268,24 @@ describe("POST /api/ai/partner", () => {
     expect(serialized).not.toContain("B is correct because");
   });
 
-  it("calls spendAssist exactly once on a successful paid call", async () => {
+  it("calls the ladder spend exactly once on a successful paid call", async () => {
     stubGeminiFetch(PROPOSE_GEMINI_TEXT);
 
     const { POST } = await import("../partner/route");
     await POST(makeRequest(VALID_BODY));
 
-    expect(spendAssist).toHaveBeenCalledTimes(1);
-    expect(spendAssist).toHaveBeenCalledWith("user-1", "lesson-1");
+    expect(spendAssistTurn).toHaveBeenCalledTimes(1);
+    expect(spendAssistTurn).toHaveBeenCalledWith("user-1", "lesson-1");
   });
 
-  it("does NOT call refundAssist on a successful paid call", async () => {
+  it("does NOT call refundAssistTurn on a successful paid call", async () => {
     stubGeminiFetch(PROPOSE_GEMINI_TEXT);
 
     const { POST } = await import("../partner/route");
     const res = await POST(makeRequest(VALID_BODY));
 
     expect(res.status).toBe(200);
-    expect(refundAssist).not.toHaveBeenCalled();
+    expect(refundAssistTurn).not.toHaveBeenCalled();
   });
 
   it("records a billed assist exactly once on a successful paid call", async () => {
@@ -298,7 +309,7 @@ describe("POST /api/ai/partner", () => {
     const res = await POST(makeRequest(VALID_BODY));
 
     expect(res.status).toBe(500);
-    expect(refundAssist).not.toHaveBeenCalled();
+    expect(refundAssistTurn).not.toHaveBeenCalled();
     expect(recordBilledAssist).toHaveBeenCalledTimes(1);
   });
 
@@ -328,29 +339,33 @@ describe("POST /api/ai/partner", () => {
     const res = await POST(makeRequest(VALID_BODY));
 
     expect(res.status).toBe(502);
-    expect(refundAssist).toHaveBeenCalledTimes(1);
+    expect(refundAssistTurn).toHaveBeenCalledTimes(1);
     expect(appendAssistLog).not.toHaveBeenCalled();
   });
 
-  it("does NOT call refundAssist when the budget is already exhausted (no spend happened)", async () => {
-    spendAssist.mockResolvedValue({ allowed: false, used: 4 });
+  it("does NOT call refundAssistTurn when the budget is already exhausted (no spend happened)", async () => {
+    spendAssistTurn.mockResolvedValue({
+      allowed: false,
+      tier: "exhausted",
+      counts: { free: 2, metered: 8, socratic: 20 },
+    });
     stubGeminiFetch(PROPOSE_GEMINI_TEXT);
 
     const { POST } = await import("../partner/route");
     await POST(makeRequest(VALID_BODY));
 
-    expect(refundAssist).not.toHaveBeenCalled();
+    expect(refundAssistTurn).not.toHaveBeenCalled();
   });
 
-  it("calls refundAssist when the Gemini fetch itself returns !ok (502)", async () => {
+  it("calls refundAssistTurn when the Gemini fetch itself returns !ok (502)", async () => {
     stubGeminiFetch("", { ok: false });
 
     const { POST } = await import("../partner/route");
     const res = await POST(makeRequest(VALID_BODY));
 
     expect(res.status).toBe(502);
-    expect(refundAssist).toHaveBeenCalledTimes(1);
-    expect(refundAssist).toHaveBeenCalledWith("user-1", "lesson-1");
+    expect(refundAssistTurn).toHaveBeenCalledTimes(1);
+    expect(refundAssistTurn).toHaveBeenCalledWith("user-1", "lesson-1", "free");
   });
 
   it("does NOT refund an empty candidate text — it was billed (502)", async () => {
@@ -362,7 +377,7 @@ describe("POST /api/ai/partner", () => {
     const res = await POST(makeRequest(VALID_BODY));
 
     expect(res.status).toBe(502);
-    expect(refundAssist).not.toHaveBeenCalled();
+    expect(refundAssistTurn).not.toHaveBeenCalled();
     expect(recordBilledAssist).toHaveBeenCalledTimes(1);
     expect(recordBilledAssist).toHaveBeenCalledWith("user-1", "lesson-1");
   });
@@ -374,7 +389,7 @@ describe("POST /api/ai/partner", () => {
     const res = await POST(makeRequest(VALID_BODY));
 
     expect(res.status).toBe(502);
-    expect(refundAssist).not.toHaveBeenCalled();
+    expect(refundAssistTurn).not.toHaveBeenCalled();
     expect(recordBilledAssist).toHaveBeenCalledTimes(1);
   });
 
@@ -390,7 +405,7 @@ describe("POST /api/ai/partner", () => {
     const res = await POST(makeRequest(VALID_BODY));
 
     expect(res.status).toBe(502);
-    expect(refundAssist).not.toHaveBeenCalled();
+    expect(refundAssistTurn).not.toHaveBeenCalled();
     expect(recordBilledAssist).toHaveBeenCalledTimes(1);
   });
 
@@ -403,11 +418,11 @@ describe("POST /api/ai/partner", () => {
     const res = await POST(makeRequest(VALID_BODY));
 
     expect(res.status).toBe(502);
-    expect(refundAssist).not.toHaveBeenCalled();
+    expect(refundAssistTurn).not.toHaveBeenCalled();
     expect(recordBilledAssist).toHaveBeenCalledTimes(1);
   });
 
-  it("calls refundAssist when an unexpected error is thrown after spend (500)", async () => {
+  it("calls refundAssistTurn when an unexpected error is thrown after spend (500)", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(() => {
@@ -419,8 +434,8 @@ describe("POST /api/ai/partner", () => {
     const res = await POST(makeRequest(VALID_BODY));
 
     expect(res.status).toBe(500);
-    expect(refundAssist).toHaveBeenCalledTimes(1);
-    expect(refundAssist).toHaveBeenCalledWith("user-1", "lesson-1");
+    expect(refundAssistTurn).toHaveBeenCalledTimes(1);
+    expect(refundAssistTurn).toHaveBeenCalledWith("user-1", "lesson-1", "free");
   });
 
   it("refunds a PRE-billing throw during prompt building (billed still false)", async () => {
@@ -438,8 +453,8 @@ describe("POST /api/ai/partner", () => {
     const res = await POST(makeRequest(VALID_BODY));
 
     expect(res.status).toBe(500);
-    expect(refundAssist).toHaveBeenCalledTimes(1);
-    expect(refundAssist).toHaveBeenCalledWith("user-1", "lesson-1");
+    expect(refundAssistTurn).toHaveBeenCalledTimes(1);
+    expect(refundAssistTurn).toHaveBeenCalledWith("user-1", "lesson-1", "free");
     expect(recordBilledAssist).not.toHaveBeenCalled();
   });
 
@@ -451,7 +466,7 @@ describe("POST /api/ai/partner", () => {
     const res = await POST(makeRequest(VALID_BODY));
 
     expect(res.status).toBe(429);
-    expect(spendAssist).not.toHaveBeenCalled();
+    expect(spendAssistTurn).not.toHaveBeenCalled();
   });
 
   it("trips the per-IP ceiling independently of the per-user bucket (429)", async () => {
@@ -467,7 +482,7 @@ describe("POST /api/ai/partner", () => {
     const res = await POST(makeRequest(VALID_BODY));
 
     expect(res.status).toBe(429);
-    expect(spendAssist).not.toHaveBeenCalled();
+    expect(spendAssistTurn).not.toHaveBeenCalled();
     // Both dimensions were consulted, and BOTH opt into failClosed — a limiter
     // outage must not wave either through unmetered on the platform-funded key.
     const namespaces = isRateLimited.mock.calls.map((c) => c[0]);
@@ -536,7 +551,7 @@ describe("POST /api/ai/partner", () => {
     const res = await POST(makeRequest(VALID_BODY));
 
     expect(res.status).toBe(404);
-    expect(spendAssist).not.toHaveBeenCalled();
+    expect(spendAssistTurn).not.toHaveBeenCalled();
   });
 
   it("returns 404 when the lesson record is not found", async () => {
@@ -546,7 +561,7 @@ describe("POST /api/ai/partner", () => {
     const res = await POST(makeRequest(VALID_BODY));
 
     expect(res.status).toBe(404);
-    expect(spendAssist).not.toHaveBeenCalled();
+    expect(spendAssistTurn).not.toHaveBeenCalled();
   });
 
   it("feeds the code block's public tests + solution + prose task to Gemini", async () => {
@@ -816,7 +831,7 @@ describe("POST /api/ai/partner", () => {
     const res = await POST(makeRequest(VALID_BODY));
 
     expect(res.status).toBe(502);
-    expect(refundAssist).not.toHaveBeenCalled();
+    expect(refundAssistTurn).not.toHaveBeenCalled();
     expect(recordBilledAssist).toHaveBeenCalledTimes(1);
   });
 
@@ -931,14 +946,18 @@ describe("POST /api/ai/partner", () => {
     expect(res.status).toBe(200);
     // The review rides the same billed, fail-closed, assist-metered path as
     // every other action — never an unmetered generation.
-    expect(spendAssist).toHaveBeenCalledTimes(1);
-    expect(spendAssist).toHaveBeenCalledWith("user-1", "lesson-1");
+    expect(spendAssistTurn).toHaveBeenCalledTimes(1);
+    expect(spendAssistTurn).toHaveBeenCalledWith("user-1", "lesson-1");
     expect(recordBilledAssist).toHaveBeenCalledTimes(1);
-    expect(refundAssist).not.toHaveBeenCalled();
+    expect(refundAssistTurn).not.toHaveBeenCalled();
   });
 
   it("returns budgetExhausted for review when the assist budget is spent", async () => {
-    spendAssist.mockResolvedValue({ allowed: false, used: 4 });
+    spendAssistTurn.mockResolvedValue({
+      allowed: false,
+      tier: "exhausted",
+      counts: { free: 2, metered: 8, socratic: 20 },
+    });
     stubGeminiFetch(REVIEW_GEMINI_TEXT);
 
     const { POST } = await import("../partner/route");
@@ -946,7 +965,10 @@ describe("POST /api/ai/partner", () => {
     const json = await res.json();
 
     expect(res.status).toBe(200);
-    expect(json).toMatchObject({ budgetExhausted: true, used: 4 });
+    expect(json).toMatchObject({
+      budgetExhausted: true,
+      counts: { free: 2, metered: 8, socratic: 20 },
+    });
   });
 
   it("caps review output below propose and uses the summary+notes schema", async () => {
@@ -991,7 +1013,7 @@ describe("POST /api/ai/partner", () => {
     const res = await POST(makeRequest(REVIEW_BODY));
 
     expect(res.status).toBe(502);
-    expect(refundAssist).not.toHaveBeenCalled();
+    expect(refundAssistTurn).not.toHaveBeenCalled();
     expect(recordBilledAssist).toHaveBeenCalledTimes(1);
   });
 
@@ -1126,7 +1148,7 @@ describe("POST /api/ai/partner", () => {
       { promptTokens: 6000, outputTokens: 2048 }
     );
     // Not refunded — Gemini billed us.
-    expect(refundAssist).not.toHaveBeenCalled();
+    expect(refundAssistTurn).not.toHaveBeenCalled();
   });
 
   it("soft cap: DEGRADES to a shorter output budget but still serves (200)", async () => {
@@ -1155,7 +1177,7 @@ describe("POST /api/ai/partner", () => {
     };
     expect(sent.generationConfig.maxOutputTokens).toBe(1024);
     // A degraded call is still a real paid, billed, booked call.
-    expect(spendAssist).toHaveBeenCalledTimes(1);
+    expect(spendAssistTurn).toHaveBeenCalledTimes(1);
     expect(recordAiSpend).toHaveBeenCalledTimes(1);
   });
 
@@ -1174,7 +1196,7 @@ describe("POST /api/ai/partner", () => {
     expect(res.status).toBe(503);
     expect(json).toMatchObject({ spendCapped: true, reason: "spend_cap" });
     // No assist burned, no model call, no spend recorded — the gate is before spend.
-    expect(spendAssist).not.toHaveBeenCalled();
+    expect(spendAssistTurn).not.toHaveBeenCalled();
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(recordAiSpend).not.toHaveBeenCalled();
   });
@@ -1197,7 +1219,7 @@ describe("POST /api/ai/partner", () => {
       spendCapped: true,
       reason: "ledger_unavailable",
     });
-    expect(spendAssist).not.toHaveBeenCalled();
+    expect(spendAssistTurn).not.toHaveBeenCalled();
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
@@ -1213,5 +1235,104 @@ describe("POST /api/ai/partner", () => {
     const json = await res.json();
 
     expect(JSON.stringify(json)).not.toContain("the answer");
+  });
+});
+
+describe("POST /api/ai/partner — Socratic tier (#864)", () => {
+  const HINT_TEXT = JSON.stringify({
+    type: "hint",
+    text: "What does the loop bound reach?",
+  });
+
+  function socraticSpend() {
+    spendAssistTurn.mockResolvedValue({
+      allowed: true,
+      tier: "socratic",
+      counts: { free: 2, metered: 8, socratic: 1 },
+    });
+  }
+
+  function captureGemini(text: string) {
+    const fetchSpy = vi.fn(async (_url: string, init: { body: string }) => {
+      void init;
+      return {
+        ok: true,
+        text: async () => "",
+        json: async () => ({
+          candidates: [{ content: { parts: [{ text }] } }],
+          usageMetadata: { cachedContentTokenCount: 0 },
+        }),
+      };
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+    return fetchSpy;
+  }
+
+  it("hint on the Socratic tier gets the questions-first contract + the 512 cap", async () => {
+    socraticSpend();
+    const fetchSpy = captureGemini(HINT_TEXT);
+
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest({ ...VALID_BODY, action: "hint" }));
+
+    expect(res.status).toBe(200);
+    const [, init] = fetchSpy.mock.calls[0]!;
+    const sent = JSON.parse(init.body) as {
+      contents: { parts: { text: string }[] }[];
+      generationConfig: { maxOutputTokens: number };
+    };
+    expect(sent.contents[0]!.parts[0]!.text).toContain(
+      "[SOCRATIC_INSTRUCTIONS]"
+    );
+    expect(sent.generationConfig.maxOutputTokens).toBe(512);
+  });
+
+  it("propose STAYS a full diff at the Socratic tier — no Socratic contract, full budget (§4.2)", async () => {
+    socraticSpend();
+    const fetchSpy = captureGemini(PROPOSE_GEMINI_TEXT);
+
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest(VALID_BODY)); // action: propose
+
+    expect(res.status).toBe(200);
+    const [, init] = fetchSpy.mock.calls[0]!;
+    const sent = JSON.parse(init.body) as {
+      contents: { parts: { text: string }[] }[];
+      generationConfig: { maxOutputTokens: number };
+    };
+    expect(sent.contents[0]!.parts[0]!.text).not.toContain(
+      "[SOCRATIC_INSTRUCTIONS]"
+    );
+    expect(sent.generationConfig.maxOutputTokens).toBe(2048);
+  });
+
+  it("below the Socratic tier the hint prompt carries no Socratic contract", async () => {
+    const fetchSpy = captureGemini(HINT_TEXT);
+
+    const { POST } = await import("../partner/route");
+    await POST(makeRequest({ ...VALID_BODY, action: "hint" }));
+
+    const [, init] = fetchSpy.mock.calls[0]!;
+    const sent = JSON.parse(init.body) as {
+      contents: { parts: { text: string }[] }[];
+    };
+    expect(sent.contents[0]!.parts[0]!.text).not.toContain(
+      "[SOCRATIC_INSTRUCTIONS]"
+    );
+  });
+
+  it("a Socratic-tier refund hands back the Socratic turn (tier-aware)", async () => {
+    socraticSpend();
+    stubGeminiFetch("", { ok: false });
+
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest({ ...VALID_BODY, action: "hint" }));
+
+    expect(res.status).toBe(502);
+    expect(refundAssistTurn).toHaveBeenCalledWith(
+      "user-1",
+      "lesson-1",
+      "socratic"
+    );
   });
 });

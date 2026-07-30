@@ -15,16 +15,23 @@ const review = vi.fn();
 const hookState = {
   messages: [] as unknown[],
   freeHintsUsed: 0,
-  paidUsed: 0,
-  paidRemaining: 4,
+  counts: { free: 0, metered: 0, socratic: 0 },
+  tier: "free" as const,
   budgetExhausted: false,
   spendCapped: false,
+  resetState: "none" as const,
+  resetAvailableAt: null as number | null,
   loading: false,
   error: null as string | null,
   requestHint: vi.fn(),
   proposeFix: vi.fn(),
   ask: vi.fn(),
   review,
+  requestReset: vi.fn(async () => ({
+    allowed: false,
+    reason: "error",
+    availableAt: null,
+  })),
   verifyCheck: vi.fn(),
 };
 

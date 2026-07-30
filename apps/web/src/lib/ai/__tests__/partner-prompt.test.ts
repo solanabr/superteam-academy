@@ -125,6 +125,48 @@ describe("partner-prompt", () => {
     }
   });
 
+  it("Socratic mode flips hint/ask to the questions-first contract but NEVER propose (#864 §4.2)", () => {
+    const base = {
+      lessonSlug: "l",
+      courseSlug: "c",
+      code: "let x = 1;",
+      testSummary: "1/2 passing",
+    };
+
+    for (const action of ["hint", "ask"] as const) {
+      const socratic = buildDynamicSuffix(
+        { ...base, action },
+        { socratic: true }
+      );
+      expect(socratic).toContain("[SOCRATIC_INSTRUCTIONS]");
+      expect(socratic).toContain("ONE short diagnostic question");
+      // Off the Socratic tier the suffix is byte-identical to today's.
+      expect(buildDynamicSuffix({ ...base, action })).not.toContain(
+        "[SOCRATIC_INSTRUCTIONS]"
+      );
+    }
+
+    // The §4.2 ruling: propose keeps its full diff contract at EVERY tier —
+    // Socratic changes the default contract, not the escape hatch. Review is
+    // post-pass and equally untouched.
+    for (const action of ["propose", "review"] as const) {
+      expect(
+        buildDynamicSuffix({ ...base, action }, { socratic: true })
+      ).not.toContain("[SOCRATIC_INSTRUCTIONS]");
+    }
+  });
+
+  it("Socratic hint/ask inherit the hint-sized output cap; propose keeps its full budget", () => {
+    expect(maxTokensFor("hint", { socratic: true })).toBe(512);
+    expect(maxTokensFor("ask", { socratic: true })).toBe(512);
+    expect(maxTokensFor("propose", { socratic: true })).toBe(
+      maxTokensFor("propose")
+    );
+    expect(maxTokensFor("review", { socratic: true })).toBe(
+      maxTokensFor("review")
+    );
+  });
+
   it("static prefix is byte-identical regardless of action (review adds nothing to the cache)", () => {
     // The review instructions live in the suffix, so the cached static prefix —
     // task, tests, solution, persona — is untouched: pre-pass behavior is

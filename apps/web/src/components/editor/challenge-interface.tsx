@@ -485,6 +485,7 @@ export function ChallengeInterface({
                   challengeKind,
                 })
               }
+              eventCtx={{ lessonId, courseId, challengeKind }}
               className="max-h-[560px]"
             />
           )}

@@ -2164,6 +2164,13 @@ CREATE TABLE IF NOT EXISTS challenge_assists (
   -- returning learner can review past AI notes without spending another paid
   -- assist. Bounded in practice by MAX_PAID_ASSISTS successful paid actions.
   chat_log    JSONB NOT NULL DEFAULT '[]'::jsonb,
+  -- Assist-ladder tiers (#864, economics spec §4.2): free_used counts the 2
+  -- hidden free turns, assists_used (above) counts the 8 metered turns, and
+  -- socratic_used counts the 20 Socratic turns. reset_used_at stamps the
+  -- once-per-(user, lesson) self-serve reset (NULL = never used).
+  free_used     INTEGER NOT NULL DEFAULT 0,
+  socratic_used INTEGER NOT NULL DEFAULT 0,
+  reset_used_at TIMESTAMPTZ,
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (user_id, lesson_id)
 );
@@ -2175,6 +2182,14 @@ ALTER TABLE challenge_assists
 -- Idempotent add for DBs created before the non-refundable billed counter.
 ALTER TABLE challenge_assists
   ADD COLUMN IF NOT EXISTS billed_assists INTEGER NOT NULL DEFAULT 0;
+
+-- Idempotent adds for DBs created before the assist ladder (#864).
+ALTER TABLE challenge_assists
+  ADD COLUMN IF NOT EXISTS free_used INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE challenge_assists
+  ADD COLUMN IF NOT EXISTS socratic_used INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE challenge_assists
+  ADD COLUMN IF NOT EXISTS reset_used_at TIMESTAMPTZ;
 
 ALTER TABLE challenge_assists ENABLE ROW LEVEL SECURITY;
 -- No policies: reached only through SECURITY DEFINER RPCs called by service_role.
@@ -2232,18 +2247,139 @@ $$;
 REVOKE ALL ON FUNCTION get_challenge_assists(UUID, TEXT) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION get_challenge_assists(UUID, TEXT) TO service_role;
 
-CREATE OR REPLACE FUNCTION reset_challenge_assists(p_user_id UUID, p_lesson_id TEXT)
-RETURNS VOID
-LANGUAGE sql
+-- Guarded self-serve reset (#864, P2-5 / owner D-8). BOTH guards live INSIDE
+-- this SECURITY DEFINER body (rule R-6), never in the client:
+--   * once per (user, lesson): reset_used_at must be NULL;
+--   * 7-day rolling cooldown since the lesson's last assist activity
+--     (updated_at — frozen at the last ALLOWED spend; denials don't touch it).
+-- A successful reset zeroes the three tier counters and stamps reset_used_at;
+-- chat_log and billed_assists are preserved (paid-for record / spend audit).
+DROP FUNCTION IF EXISTS reset_challenge_assists(UUID, TEXT);
+CREATE FUNCTION reset_challenge_assists(p_user_id UUID, p_lesson_id TEXT)
+RETURNS TABLE (allowed BOOLEAN, reason TEXT, available_at TIMESTAMPTZ)
+LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = ''
 AS $$
-  DELETE FROM public.challenge_assists
-  WHERE user_id = p_user_id AND lesson_id = p_lesson_id;
+DECLARE
+  v RECORD;
+BEGIN
+  SELECT ca.reset_used_at, ca.updated_at
+    INTO v
+    FROM public.challenge_assists ca
+    WHERE ca.user_id = p_user_id AND ca.lesson_id = p_lesson_id
+    FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RETURN QUERY SELECT false, 'nothing_to_reset'::TEXT, NULL::TIMESTAMPTZ;
+    RETURN;
+  END IF;
+
+  IF v.reset_used_at IS NOT NULL THEN
+    RETURN QUERY SELECT false, 'already_used'::TEXT, NULL::TIMESTAMPTZ;
+    RETURN;
+  END IF;
+
+  IF now() < v.updated_at + interval '7 days' THEN
+    RETURN QUERY SELECT false, 'cooldown'::TEXT, v.updated_at + interval '7 days';
+    RETURN;
+  END IF;
+
+  UPDATE public.challenge_assists ca
+    SET free_used = 0,
+        assists_used = 0,
+        socratic_used = 0,
+        reset_used_at = now(),
+        updated_at = now()
+    WHERE ca.user_id = p_user_id AND ca.lesson_id = p_lesson_id;
+
+  RETURN QUERY SELECT true, 'reset'::TEXT, NULL::TIMESTAMPTZ;
+END;
 $$;
 
 REVOKE ALL ON FUNCTION reset_challenge_assists(UUID, TEXT) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION reset_challenge_assists(UUID, TEXT) TO service_role;
+
+-- Atomically spend one assist-LADDER turn (#864, spec §4.2): resolves the tier
+-- from the stored counts (free → metered → Socratic, in order), increments
+-- exactly one counter, and reports which tier the turn landed in — or denies
+-- with tier 'exhausted' once every turn is gone (the community handoff). Row-
+-- locked so concurrent requests can't both land in a tier's last slot. Denials
+-- deliberately do NOT touch updated_at (the reset cooldown anchor).
+CREATE OR REPLACE FUNCTION spend_assist_ladder_turn(
+  p_user_id      UUID,
+  p_lesson_id    TEXT,
+  p_free_max     INT,
+  p_metered_max  INT,
+  p_socratic_max INT
+) RETURNS TABLE (allowed BOOLEAN, tier TEXT, free_turns INT, metered_turns INT, socratic_turns INT)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v RECORD;
+BEGIN
+  INSERT INTO public.challenge_assists (user_id, lesson_id)
+  VALUES (p_user_id, p_lesson_id)
+  ON CONFLICT (user_id, lesson_id) DO NOTHING;
+
+  SELECT ca.free_used, ca.assists_used, ca.socratic_used
+    INTO v
+    FROM public.challenge_assists ca
+    WHERE ca.user_id = p_user_id AND ca.lesson_id = p_lesson_id
+    FOR UPDATE;
+
+  IF v.free_used < p_free_max THEN
+    UPDATE public.challenge_assists ca
+      SET free_used = ca.free_used + 1, updated_at = now()
+      WHERE ca.user_id = p_user_id AND ca.lesson_id = p_lesson_id;
+    RETURN QUERY SELECT true, 'free'::TEXT, v.free_used + 1, v.assists_used, v.socratic_used;
+  ELSIF v.assists_used < p_metered_max THEN
+    UPDATE public.challenge_assists ca
+      SET assists_used = ca.assists_used + 1, updated_at = now()
+      WHERE ca.user_id = p_user_id AND ca.lesson_id = p_lesson_id;
+    RETURN QUERY SELECT true, 'metered'::TEXT, v.free_used, v.assists_used + 1, v.socratic_used;
+  ELSIF v.socratic_used < p_socratic_max THEN
+    UPDATE public.challenge_assists ca
+      SET socratic_used = ca.socratic_used + 1, updated_at = now()
+      WHERE ca.user_id = p_user_id AND ca.lesson_id = p_lesson_id;
+    RETURN QUERY SELECT true, 'socratic'::TEXT, v.free_used, v.assists_used, v.socratic_used + 1;
+  ELSE
+    RETURN QUERY SELECT false, 'exhausted'::TEXT, v.free_used, v.assists_used, v.socratic_used;
+  END IF;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION spend_assist_ladder_turn(UUID, TEXT, INT, INT, INT) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION spend_assist_ladder_turn(UUID, TEXT, INT, INT, INT) TO service_role;
+
+-- Tier-aware decrement-by-one refund (floor 0) for a ladder turn that was
+-- spent but never delivered (Gemini never billed) — the ladder sibling of
+-- refund_challenge_assist. The route passes the tier the spend landed in.
+CREATE OR REPLACE FUNCTION refund_assist_ladder_turn(
+  p_user_id   UUID,
+  p_lesson_id TEXT,
+  p_tier      TEXT
+) RETURNS VOID
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  UPDATE public.challenge_assists
+    SET
+      free_used     = CASE WHEN p_tier = 'free'     THEN GREATEST(free_used - 1, 0)     ELSE free_used END,
+      assists_used  = CASE WHEN p_tier = 'metered'  THEN GREATEST(assists_used - 1, 0)  ELSE assists_used END,
+      socratic_used = CASE WHEN p_tier = 'socratic' THEN GREATEST(socratic_used - 1, 0) ELSE socratic_used END,
+      updated_at = now()
+    WHERE user_id = p_user_id AND lesson_id = p_lesson_id
+      -- Unrecognized tier: touch NOTHING — an all-ELSE update would still bump
+      -- updated_at and silently extend the reset cooldown.
+      AND p_tier IN ('free', 'metered', 'socratic');
+$$;
+
+REVOKE ALL ON FUNCTION refund_assist_ladder_turn(UUID, TEXT, TEXT) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION refund_assist_ladder_turn(UUID, TEXT, TEXT) TO service_role;
 
 -- Decrement-by-one, floor 0. Refunds a single paid assist that was spent but
 -- never delivered (e.g. the Gemini call failed after spend_challenge_assist
@@ -2317,18 +2453,44 @@ $$;
 REVOKE ALL ON FUNCTION append_challenge_assist_log(UUID, TEXT, JSONB) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION append_challenge_assist_log(UUID, TEXT, JSONB) TO service_role;
 
--- Read a learner's per-lesson assist count + chat log for pane rehydration
+-- Read a learner's per-lesson LADDER state + chat log for pane rehydration
 -- (so returning to a lesson restores past AI notes without a paid model call).
-CREATE OR REPLACE FUNCTION get_challenge_assist_state(p_user_id UUID, p_lesson_id TEXT)
-RETURNS TABLE (assists_used INT, chat_log JSONB)
+-- reset_state mirrors — for DISPLAY only — the same rules the reset RPC
+-- enforces; enforcement never leaves reset_challenge_assists.
+DROP FUNCTION IF EXISTS get_challenge_assist_state(UUID, TEXT);
+CREATE FUNCTION get_challenge_assist_state(p_user_id UUID, p_lesson_id TEXT)
+RETURNS TABLE (
+  free_turns INT,
+  metered_turns INT,
+  socratic_turns INT,
+  reset_state TEXT,
+  reset_available_at TIMESTAMPTZ,
+  chat_log JSONB
+)
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
 SET search_path = ''
 AS $$
-  SELECT assists_used, chat_log
-  FROM public.challenge_assists
-  WHERE user_id = p_user_id AND lesson_id = p_lesson_id;
+  SELECT
+    ca.free_used,
+    ca.assists_used,
+    ca.socratic_used,
+    CASE
+      WHEN ca.reset_used_at IS NOT NULL THEN 'used'
+      WHEN now() < ca.updated_at + interval '7 days' THEN 'cooldown'
+      ELSE 'available'
+    END,
+    -- Reported ONLY while the cooldown is actually running: once the reset is
+    -- available (or spent) this is NULL, never a stale past timestamp.
+    CASE
+      WHEN ca.reset_used_at IS NULL AND now() < ca.updated_at + interval '7 days'
+        THEN ca.updated_at + interval '7 days'
+      ELSE NULL
+    END,
+    ca.chat_log
+  FROM public.challenge_assists ca
+  WHERE ca.user_id = p_user_id AND ca.lesson_id = p_lesson_id;
 $$;
 
 REVOKE ALL ON FUNCTION get_challenge_assist_state(UUID, TEXT) FROM PUBLIC, anon, authenticated;

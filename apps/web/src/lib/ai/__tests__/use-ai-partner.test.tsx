@@ -54,13 +54,18 @@ async function renderPartner(
 }
 
 describe("useAiPartner", () => {
-  it("rehydrates the persisted chat log + paidUsed on mount (no paid call)", async () => {
+  it("rehydrates the persisted chat log + ladder counts on mount (no paid call)", async () => {
     const stored = [
       { role: "user", text: "why does this fail?" },
       { role: "ai", response: { type: "answer", text: "off-by-one." } },
     ];
     vi.mocked(global.fetch).mockResolvedValue(
-      jsonResponse({ log: stored, paidUsed: 2 })
+      jsonResponse({
+        log: stored,
+        counts: { free: 2, metered: 3, socratic: 0 },
+        resetState: "cooldown",
+        resetAvailableAt: 1_700_000_000_000,
+      })
     );
 
     const { result } = renderHook(() => useAiPartner(baseProps()));
@@ -73,7 +78,10 @@ describe("useAiPartner", () => {
       role: "user",
       text: "why does this fail?",
     });
-    expect(result.current.paidUsed).toBe(2);
+    expect(result.current.counts).toEqual({ free: 2, metered: 3, socratic: 0 });
+    expect(result.current.tier).toBe("metered");
+    expect(result.current.resetState).toBe("cooldown");
+    expect(result.current.resetAvailableAt).toBe(1_700_000_000_000);
   });
 
   it("serves the first two requestHint() calls from authored hints with no fetch", async () => {
@@ -143,7 +151,7 @@ describe("useAiPartner", () => {
     expect(sentBody).not.toHaveProperty("messages");
     expect(sentBody).not.toHaveProperty("history");
 
-    expect(result.current.paidUsed).toBe(1);
+    expect(result.current.counts).toEqual({ free: 1, metered: 0, socratic: 0 });
     expect(result.current.messages).toHaveLength(3);
     expect(result.current.messages[2]).toMatchObject({
       role: "ai",
@@ -151,9 +159,12 @@ describe("useAiPartner", () => {
     });
   });
 
-  it("flips budgetExhausted and zeroes paidRemaining when the route reports the budget spent", async () => {
+  it("flips budgetExhausted and syncs counts when the route reports the ladder spent", async () => {
     vi.mocked(global.fetch).mockResolvedValue(
-      jsonResponse({ budgetExhausted: true, used: 4 })
+      jsonResponse({
+        budgetExhausted: true,
+        counts: { free: 2, metered: 8, socratic: 20 },
+      })
     );
 
     // no authored hints -> requestHint always pays
@@ -164,8 +175,12 @@ describe("useAiPartner", () => {
     });
 
     expect(result.current.budgetExhausted).toBe(true);
-    expect(result.current.paidUsed).toBe(4);
-    expect(result.current.paidRemaining).toBe(0);
+    expect(result.current.tier).toBe("exhausted");
+    expect(result.current.counts).toEqual({
+      free: 2,
+      metered: 8,
+      socratic: 20,
+    });
   });
 
   it("proposeFix() POSTs action:propose and pushes the structured response", async () => {
@@ -190,7 +205,7 @@ describe("useAiPartner", () => {
     const [, init] = vi.mocked(global.fetch).mock.calls[0]!;
     const sentBody = JSON.parse((init as RequestInit).body as string);
     expect(sentBody.action).toBe("propose");
-    expect(result.current.paidUsed).toBe(1);
+    expect(result.current.counts).toEqual({ free: 1, metered: 0, socratic: 0 });
     expect(result.current.messages).toHaveLength(1);
     expect(result.current.messages[0]).toMatchObject({
       role: "ai",
@@ -248,7 +263,7 @@ describe("useAiPartner", () => {
     const sentBody = JSON.parse((init as RequestInit).body as string);
     expect(sentBody.action).toBe("review");
     // review carries no local user turn — only the AI reply lands in the chat.
-    expect(result.current.paidUsed).toBe(1);
+    expect(result.current.counts).toEqual({ free: 1, metered: 0, socratic: 0 });
     expect(result.current.messages).toHaveLength(1);
     expect(result.current.messages[0]).toMatchObject({ role: "ai", response });
   });
@@ -290,7 +305,7 @@ describe("useAiPartner", () => {
     });
 
     expect(result.current.error).toBeTruthy();
-    expect(result.current.paidUsed).toBe(0);
+    expect(result.current.counts).toEqual({ free: 0, metered: 0, socratic: 0 });
     expect(result.current.loading).toBe(false);
   });
 
@@ -309,7 +324,7 @@ describe("useAiPartner", () => {
 
     expect(result.current.spendCapped).toBe(true);
     expect(result.current.error).toBeNull();
-    expect(result.current.paidUsed).toBe(0);
+    expect(result.current.counts).toEqual({ free: 0, metered: 0, socratic: 0 });
   });
 
   it("shows the generic error (not spendCapped) on a 503 that is not a spend cap", async () => {
@@ -349,6 +364,111 @@ describe("useAiPartner", () => {
     expect(JSON.parse((init as RequestInit).body as string).action).toBe(
       "hint"
     );
+  });
+
+  it("advances counts in ladder order: free -> metered -> socratic (tier boundaries at turns 3 and 11)", async () => {
+    vi.mocked(global.fetch).mockResolvedValue(
+      jsonResponse({ type: "answer", text: "ok" })
+    );
+
+    const { result } = await renderPartner(baseProps({ hints: [] }));
+
+    // Turns 1-2 land in the hidden free tier.
+    for (let i = 0; i < 2; i++) {
+      await act(async () => {
+        await result.current.requestHint();
+      });
+    }
+    expect(result.current.counts).toEqual({ free: 2, metered: 0, socratic: 0 });
+    expect(result.current.tier).toBe("metered"); // NEXT turn is metered (turn 3)
+
+    // Turns 3-10 land in the metered tier.
+    for (let i = 0; i < 8; i++) {
+      await act(async () => {
+        await result.current.requestHint();
+      });
+    }
+    expect(result.current.counts).toEqual({ free: 2, metered: 8, socratic: 0 });
+    expect(result.current.tier).toBe("socratic"); // NEXT turn is Socratic (turn 11)
+
+    // Turns 11-30 land in the Socratic tier; turn 31 would be the handoff.
+    for (let i = 0; i < 20; i++) {
+      await act(async () => {
+        await result.current.requestHint();
+      });
+    }
+    expect(result.current.counts).toEqual({
+      free: 2,
+      metered: 8,
+      socratic: 20,
+    });
+    expect(result.current.tier).toBe("exhausted");
+    expect(result.current.budgetExhausted).toBe(true);
+  });
+
+  describe("requestReset", () => {
+    it("POSTs to the reset route and zeroes the local ladder on an allowed reset", async () => {
+      vi.mocked(global.fetch).mockResolvedValue(
+        jsonResponse({ allowed: true, reason: "reset", availableAt: null })
+      );
+
+      const { result } = await renderPartner(baseProps({ hints: [] }));
+
+      const outcome = await act(async () => result.current.requestReset());
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/ai/partner/reset",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ courseSlug: "c-slug", lessonSlug: "l-slug" }),
+        })
+      );
+      expect(outcome).toEqual({
+        allowed: true,
+        reason: "reset",
+        availableAt: null,
+      });
+      expect(result.current.counts).toEqual({
+        free: 0,
+        metered: 0,
+        socratic: 0,
+      });
+      expect(result.current.budgetExhausted).toBe(false);
+      // Honest state: the one-time reset is now spent.
+      expect(result.current.resetState).toBe("used");
+    });
+
+    it("relays a cooldown denial (with availableAt) without touching counts", async () => {
+      vi.mocked(global.fetch).mockResolvedValue(
+        jsonResponse({
+          allowed: false,
+          reason: "cooldown",
+          availableAt: 1_700_000_000_000,
+        })
+      );
+
+      const { result } = await renderPartner(baseProps({ hints: [] }));
+
+      const outcome = await act(async () => result.current.requestReset());
+
+      expect(outcome.allowed).toBe(false);
+      expect(outcome.reason).toBe("cooldown");
+      expect(result.current.resetState).toBe("cooldown");
+      expect(result.current.resetAvailableAt).toBe(1_700_000_000_000);
+    });
+
+    it("fails safe (denied) when the fetch throws", async () => {
+      vi.mocked(global.fetch).mockRejectedValue(new Error("network down"));
+
+      const { result } = await renderPartner(baseProps({ hints: [] }));
+
+      const outcome = await act(async () => result.current.requestReset());
+      expect(outcome).toEqual({
+        allowed: false,
+        reason: "error",
+        availableAt: null,
+      });
+    });
   });
 
   describe("verifyCheck", () => {

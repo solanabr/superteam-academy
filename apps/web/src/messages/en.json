@@ -974,7 +974,8 @@
       "approachPrompt": "What are the first steps and key concepts I need to solve this challenge?"
     },
     "meter": {
-      "label": "{used} hints used"
+      "metered": "{used} of {max} assists used",
+      "socratic": "{used} of {max} guiding turns used"
     },
     "messages": {
       "empty": "Ask for a hint to get started.",
@@ -990,8 +991,7 @@
       "askPlaceholder": "Ask a question about this challenge...",
       "askSend": "Send",
       "review": "Review my solution",
-      "reviewHint": "Get idiomatic feedback on your passing solution — this doesn't change your XP.",
-      "budgetExhausted": "You've used all {max} paid assists for this challenge."
+      "reviewHint": "Get idiomatic feedback on your passing solution — this doesn't change your XP."
     },
     "diff": {
       "current": "Current",
@@ -1014,6 +1014,20 @@
     "a11y": {
       "assistMeter": "AI assist usage",
       "diffCard": "Proposed code change"
+    },
+    "socratic": {
+      "chip": "Lighter tutor",
+      "entered": "You're on the lighter tutor for this challenge. It leads with guiding questions so the fix is yours to find — and it can still propose a change when you need to see one."
+    },
+    "exhausted": {
+      "title": "This challenge's tutor turns are used up",
+      "body": "The tutor is taking a break on this challenge — the community is great at getting people unstuck. Your authored hints and tests are still right here.",
+      "communityCta": "Ask the community",
+      "resetCta": "Start this challenge's assists fresh",
+      "resetReady": "One time only for this challenge — there's no second refresh.",
+      "resetCooldown": "A one-time refresh of this challenge's assists becomes available on {date}.",
+      "resetUsed": "You've already used this challenge's one-time refresh.",
+      "resetError": "That didn't work just now. Try again in a moment."
     }
   },
   "adminContentSync": {

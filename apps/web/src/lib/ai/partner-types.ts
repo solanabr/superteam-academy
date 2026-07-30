@@ -114,9 +114,53 @@ export interface VerifyResponse {
   explanation: string;
 }
 
+// ── Assist ladder (#864, AI-tutor-economics spec §4.2) ─────────────────────
+// Per-(learner, challenge) AI-turn budget, resolved in strict order:
+//   free (2, counter hidden) → metered (8, meter visible) → Socratic (20,
+//   questions-first contract, `propose` still alive) → community handoff.
+// All catalog-bounded; no calendar refills. Single source of truth, imported
+// by the server budget (`assist-budget.ts`), the route, and the client hook.
+// Plain constants — this module is not `server-only`.
+
+/** Free AI turns per challenge (turns 1–2). Full tutor; the UI shows no meter. */
+export const FREE_ASSIST_TURNS = 2;
+
 /**
- * Max PAID AI assists per (learner, challenge). Single source of truth,
- * imported by both the server budget (`assist-budget.ts`) and the client hook
- * (`use-ai-partner.ts`). Plain constant — this module is not `server-only`.
+ * Total free + metered AI turns per (learner, challenge) — the spec's
+ * "`MAX_PAID_ASSISTS` goes 4 → 10 with the first 2 invisible". The metered
+ * tier itself is `METERED_ASSIST_TURNS` (turns 3–10).
  */
-export const MAX_PAID_ASSISTS = 4;
+export const MAX_PAID_ASSISTS = 10;
+
+/** Metered AI turns per challenge (turns 3–10; meter visible). */
+export const METERED_ASSIST_TURNS = MAX_PAID_ASSISTS - FREE_ASSIST_TURNS;
+
+/**
+ * Socratic-tier turns per challenge (turns 11–30). Metered, never framed as
+ * "unlimited" (owner D-5): a lighter, questions-first tutor — not a wall.
+ */
+export const SOCRATIC_ASSIST_TURNS = 20;
+
+/** Which rung of the ladder a (learner, challenge) is on. */
+export type AssistTier = "free" | "metered" | "socratic" | "exhausted";
+
+export interface AssistTurnCounts {
+  free: number;
+  metered: number;
+  socratic: number;
+}
+
+/**
+ * Resolves the tier the NEXT turn would land in from the per-tier counts —
+ * the same strict free → metered → Socratic order the `spend_assist_ladder_turn`
+ * RPC enforces (the RPC is authoritative; this mirrors it for display).
+ */
+export function assistTierFor(counts: AssistTurnCounts): AssistTier {
+  if (counts.free < FREE_ASSIST_TURNS) return "free";
+  if (counts.metered < METERED_ASSIST_TURNS) return "metered";
+  if (counts.socratic < SOCRATIC_ASSIST_TURNS) return "socratic";
+  return "exhausted";
+}
+
+/** Self-serve reset availability, as reported by the state/reset RPCs. */
+export type AssistResetState = "available" | "cooldown" | "used" | "none";

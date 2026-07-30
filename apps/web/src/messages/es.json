@@ -974,7 +974,8 @@
       "approachPrompt": "¿Cuáles son los primeros pasos y los conceptos clave que necesito para resolver este reto?"
     },
     "meter": {
-      "label": "{used} pistas usadas"
+      "metered": "{used} de {max} asistencias usadas",
+      "socratic": "{used} de {max} turnos de guía usados"
     },
     "messages": {
       "empty": "Pide una pista para empezar.",
@@ -990,8 +991,7 @@
       "askPlaceholder": "Haz una pregunta sobre este desafío...",
       "askSend": "Enviar",
       "review": "Revisar mi solución",
-      "reviewHint": "Recibe comentarios idiomáticos sobre tu solución ya resuelta — esto no cambia tu XP.",
-      "budgetExhausted": "Ya usaste las {max} asistencias pagas de este desafío."
+      "reviewHint": "Recibe comentarios idiomáticos sobre tu solución ya resuelta — esto no cambia tu XP."
     },
     "diff": {
       "current": "Actual",
@@ -1014,6 +1014,20 @@
     "a11y": {
       "assistMeter": "Uso de asistencia de IA",
       "diffCard": "Cambio de código propuesto"
+    },
+    "socratic": {
+      "chip": "Tutor ligero",
+      "entered": "Estás con el tutor ligero en este desafío. Te guía con preguntas para que encuentres la solución — y aún puede proponerte un cambio cuando necesites verlo."
+    },
+    "exhausted": {
+      "title": "Se usaron los turnos del tutor en este desafío",
+      "body": "El tutor descansa en este desafío — la comunidad es excelente para destrabarte. Tus pistas y tests siguen aquí.",
+      "communityCta": "Pregunta a la comunidad",
+      "resetCta": "Reiniciar las asistencias de este desafío",
+      "resetReady": "Solo una vez por desafío — no hay segundo reinicio.",
+      "resetCooldown": "Un reinicio único de las asistencias de este desafío estará disponible el {date}.",
+      "resetUsed": "Ya usaste el reinicio único de este desafío.",
+      "resetError": "No funcionó en este momento. Inténtalo de nuevo en un momento."
     }
   },
   "adminContentSync": {
