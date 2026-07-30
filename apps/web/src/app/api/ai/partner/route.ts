@@ -16,6 +16,7 @@ import {
 } from "@/lib/ai/spend-ledger";
 import type { GeminiUsageMetadata } from "@/lib/ai/spend-ledger";
 import { sealCheck } from "@/lib/ai/check-seal";
+import { modelForAction, geminiUrl } from "@/lib/ai/models";
 import {
   buildStaticPrefix,
   buildDynamicSuffix,
@@ -66,14 +67,25 @@ interface GeminiEnvelope {
   usageMetadata?: GeminiUsageMetadata & { cachedContentTokenCount?: number };
 }
 
-// Model history: gemini-2.5-flash(-lite) are gated for new keys (404 "not
-// available to new users") and gemini-2.0-flash is now fully retired (404 "no
-// longer available"). gemini-3.5-flash is available and supports structured
-// output. NOTE it's a *thinking* model — thinking tokens draw from the
-// maxOutputTokens budget — so thinking is disabled in generationConfig
-// (thinkingBudget: 0) to keep the whole budget for the structured response.
-const GEMINI_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent";
+// Model selection is PER ACTION (#868) and lives in lib/ai/models — this route
+// no longer pins one URL. hint → gemini-3.5-flash-lite; ask/propose/review →
+// gemini-3.6-flash; any Socratic-tier hint/ask turn → flash-lite regardless of
+// the base mapping.
+//
+// The old comment here claimed the 2.5 family was gated for new keys ("not
+// available to new users"). That is STALE: the 2026-07-28 reachability curls on
+// the prod key (#838 comment, AIE-04) returned HTTP 200 for 3.5-flash,
+// 3.5-flash-lite and 3.6-flash, and 2.5-flash/-lite appear in this key's model
+// list; the 404s that produced the folklore were a first-connection artifact
+// (empty-bodied, gone on retry). Same record, AIE-05: `thinkingBudget: 0` is
+// verified honored — every routed model here is a thinking model whose thinking
+// tokens would draw from maxOutputTokens and bill at the output rate, so the
+// flag stays on for all of them.
+//
+// A model that 404s FAILS CLOSED: the !response.ok branch below refunds the
+// assist and 502s. There is deliberately no silent fallback to another model —
+// that would bill the learner's turn against a model the ledger wasn't told
+// about.
 
 const VALID_ACTIONS: readonly PartnerAction[] = [
   "hint",
@@ -386,6 +398,10 @@ export async function POST(request: NextRequest) {
   // and `review` is post-pass and unaffected.
   const socratic = spend.tier === "socratic";
 
+  // Resolve the model for THIS turn once: the same value drives the endpoint,
+  // the failure logs, and the ledger's pricing, so they can't disagree.
+  const model = modelForAction(action, { socratic });
+
   // Whether Gemini has BILLED us for this request. Flips true the instant the
   // model returns a 2xx (`response.ok`) — a non-2xx or a network throw means it
   // never ran. This gates the refund: we hand the assist back ONLY when we were
@@ -449,7 +465,7 @@ export async function POST(request: NextRequest) {
       { socratic }
     );
 
-    const response = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
+    const response = await fetch(`${geminiUrl(model)}?key=${GEMINI_API_KEY}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -468,9 +484,10 @@ export async function POST(request: NextRequest) {
           maxOutputTokens: degraded
             ? degradedMaxTokens(maxTokensFor(action, { socratic }))
             : maxTokensFor(action, { socratic }),
-          // gemini-3.5-flash is a thinking model and thinking tokens share the
-          // maxOutputTokens budget; disable it so the full budget goes to the
-          // structured response (and to cut latency/cost).
+          // Every routed model is a thinking model and thinking tokens share the
+          // maxOutputTokens budget (and bill at the output rate); disable it so
+          // the full budget goes to the structured response (and to cut
+          // latency/cost). Verified honored per model — #838 AIE-05.
           thinkingConfig: { thinkingBudget: 0 },
           responseMimeType: "application/json",
           responseSchema: responseSchemaFor(action),
@@ -480,7 +497,12 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Gemini partner API error:", response.status, errorText);
+      console.error(
+        "Gemini partner API error:",
+        model,
+        response.status,
+        errorText
+      );
       // A spend already happened above (spend.allowed was true to reach
       // here) but Gemini never ran — refund exactly the ladder tier the spend
       // landed in so a failed call doesn't burn one of the learner's turns.
@@ -524,7 +546,7 @@ export async function POST(request: NextRequest) {
     // + a generous input estimate — instead of $0, so an unmeasurable-but-billed
     // call is never under-reported. Awaited for the same Vercel-freeze reason as
     // recordBilledAssist. Never throws.
-    await recordAiSpend(user.id, clientIp, data?.usageMetadata, {
+    await recordAiSpend(user.id, clientIp, model, data?.usageMetadata, {
       promptTokens: SPEND_FALLBACK_PROMPT_TOKENS,
       outputTokens: maxTokensFor(action),
     });
@@ -547,7 +569,11 @@ export async function POST(request: NextRequest) {
       // spent before any visible output. NOT refunded: Gemini billed the tokens.
       // Log the reason so maxTokensFor(action) can be tuned; diff-propose +
       // MAX_CODE_CHARS 8k (item 3a, this change) is what makes this hard to hit.
-      console.error("[ai/partner] empty output", { action, finishReason });
+      console.error("[ai/partner] empty output", {
+        action,
+        model,
+        finishReason,
+      });
       return NextResponse.json(
         { error: "AI could not generate a response" },
         { status: 502 }

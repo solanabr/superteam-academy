@@ -24,6 +24,14 @@ const usdNum = (fallback: number) =>
     z.coerce.number().min(0)
   );
 
+// An OPTIONAL non-negative USD amount: unset or blank leaves it `undefined` so
+// the caller can fall back to a code-side default (the per-model price sheet),
+// while a set-to-garbage or negative value still fails loudly at boot.
+const usdNumOpt = z.preprocess(
+  (v) => (v === "" || v === undefined ? undefined : v),
+  z.coerce.number().min(0).optional()
+);
+
 // A HARD-cap dollar amount. Identical to usdNum but rejects 0: a hard cap of $0
 // denies every request (self-DoS). Fail-closed makes that "safe" but silent —
 // so reject it loudly at boot instead of letting a fat-fingered `=0` take the
@@ -119,11 +127,14 @@ const serverEnvSchema = z.object({
   AI_SPEND_ACCOUNT_HARD_USD: usdNumHard(1.5), // a single account ≤ ~9% of the envelope
   AI_SPEND_IP_SOFT_USD: usdNum(2), // survives a NAT'd classroom
   AI_SPEND_IP_HARD_USD: usdNumHard(5), // caps a single-IP farm at ~30% of the envelope
-  // Gemini price sheet (USD per 1M tokens) used to turn usageMetadata token
-  // counts into micro-USD. Thinking tokens bill at the OUTPUT rate (#591). These
-  // move with the provider's pricing, not the sponsor commitment.
-  AI_SPEND_INPUT_USD_PER_MTOK: usdNum(0.3),
-  AI_SPEND_OUTPUT_USD_PER_MTOK: usdNum(2.5),
+  // Gemini price sheet OVERRIDE (USD per 1M tokens). Since #868 the ledger
+  // prices each billed call at its ROUTED model's rates (MODEL_RATES in
+  // lib/ai/models) — a single global rate pair would misprice every action that
+  // isn't the pinned model. These two stay as an emergency, all-models override
+  // for a provider price move that can't wait for a deploy; UNSET by default so
+  // the per-model sheet is what bills. Thinking tokens bill at the OUTPUT rate.
+  AI_SPEND_INPUT_USD_PER_MTOK: usdNumOpt,
+  AI_SPEND_OUTPUT_USD_PER_MTOK: usdNumOpt,
 });
 
 const parsed = serverEnvSchema.safeParse({

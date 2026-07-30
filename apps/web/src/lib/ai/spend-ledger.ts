@@ -1,6 +1,8 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { serverEnv } from "@/lib/env.server";
+import { MODEL_RATES } from "@/lib/ai/models";
+import type { GeminiModel, ModelRates } from "@/lib/ai/models";
 
 // AI tutor spend ledger (#591). The AI Partner spends a Superteam-sponsored
 // Gemini key; `challenge_assists` counts turns, not cost. This module gates and
@@ -38,10 +40,10 @@ interface SpendCapsMicroUsd {
   globalHard: number;
 }
 
-interface SpendRates {
-  inputUsdPerMTok: number;
-  outputUsdPerMTok: number;
-}
+// Pricing is PER MODEL (#868): the route bills different models per action, so
+// one global rate pair would misprice every call that isn't the pinned model.
+// `ModelRates` is the shared shape; `MODEL_RATES` (lib/ai/models) is the sheet.
+export type SpendRates = ModelRates;
 
 // The Gemini token accounting we bill against. Thinking tokens
 // (`thoughtsTokenCount`) bill at the OUTPUT rate (#591), so they are summed with
@@ -68,10 +70,21 @@ function capsMicroUsd(): SpendCapsMicroUsd {
   };
 }
 
-function rates(): SpendRates {
+/**
+ * The rates one billed generation is priced at. Base is the per-model price
+ * sheet (economics doc §2.1). `AI_SPEND_{INPUT,OUTPUT}_USD_PER_MTOK` remain as
+ * an EMERGENCY override applied across all models — a provider price move can
+ * be answered from the dashboard before a deploy — but they are now unset by
+ * default, so the ledger prices each model correctly out of the box instead of
+ * billing every call at one model's rates.
+ */
+export function ratesFor(model: GeminiModel): SpendRates {
+  const base = MODEL_RATES[model];
   return {
-    inputUsdPerMTok: serverEnv.AI_SPEND_INPUT_USD_PER_MTOK,
-    outputUsdPerMTok: serverEnv.AI_SPEND_OUTPUT_USD_PER_MTOK,
+    inputUsdPerMTok:
+      serverEnv.AI_SPEND_INPUT_USD_PER_MTOK ?? base.inputUsdPerMTok,
+    outputUsdPerMTok:
+      serverEnv.AI_SPEND_OUTPUT_USD_PER_MTOK ?? base.outputUsdPerMTok,
   };
 }
 
@@ -102,10 +115,12 @@ export function estimateSpendMicroUsd(
 
 /**
  * The degraded output-token budget: half the normal budget, floored so the
- * reply stays usable. Degrade is a SHORTER OUTPUT (the dominant cost lever), not
- * a model swap — gemini's cheaper flash-lite tier is gated for new keys (the
- * route documents the 404), so shrinking the output budget is the real,
- * always-available degrade.
+ * reply stays usable. Degrade remains a SHORTER OUTPUT, not a model swap —
+ * per-action routing (#868) already spends each action on its cheapest adequate
+ * model, so there is no cheaper tier left to fall to at degrade time without
+ * changing what the action can do. (The old note here claimed flash-lite was
+ * gated for new keys; the 2026-07-28 curl record disproved that — flash-lite is
+ * now the *default* for hint and Socratic turns.)
  */
 export function degradedMaxTokens(base: number): number {
   return Math.max(256, Math.floor(base / 2));
@@ -167,7 +182,9 @@ export async function checkAiSpend(
 
 /**
  * Record the actual micro-USD cost of a billed generation into all three daily
- * buckets. Best-effort: called only after Gemini has billed us, on the paid
+ * buckets, priced at the ROUTED MODEL's rates (#868) — the caller passes the
+ * model it actually called, so a flash-lite Socratic turn is not billed at
+ * 3.6-flash prices (or vice versa). Best-effort: called only after Gemini has billed us, on the paid
  * path, and must never break the reply the learner is owed, so it never throws.
  * A recording failure loses one data point of audit, not correctness — the CAP
  * is enforced by `checkAiSpend`, which fails closed on its own.
@@ -182,10 +199,11 @@ export async function checkAiSpend(
 export async function recordAiSpend(
   userId: string,
   ip: string,
+  model: GeminiModel,
   usage: GeminiUsageMetadata | undefined,
   fallback?: { promptTokens: number; outputTokens: number }
 ): Promise<void> {
-  const r = rates();
+  const r = ratesFor(model);
   let microUsd = estimateSpendMicroUsd(usage, r);
   if (microUsd <= 0 && fallback) {
     microUsd = estimateSpendMicroUsd(

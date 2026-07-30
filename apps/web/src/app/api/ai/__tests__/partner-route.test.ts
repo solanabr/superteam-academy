@@ -1108,6 +1108,7 @@ describe("POST /api/ai/partner", () => {
     expect(recordAiSpend).toHaveBeenCalledWith(
       "user-1",
       "203.0.113.9",
+      "gemini-3.6-flash",
       {
         promptTokenCount: 1000,
         candidatesTokenCount: 500,
@@ -1144,6 +1145,7 @@ describe("POST /api/ai/partner", () => {
     expect(recordAiSpend).toHaveBeenCalledWith(
       "user-1",
       "203.0.113.9",
+      "gemini-3.6-flash",
       undefined,
       { promptTokens: 6000, outputTokens: 2048 }
     );
@@ -1321,6 +1323,43 @@ describe("POST /api/ai/partner — Socratic tier (#864)", () => {
     );
   });
 
+  it("a Socratic-tier hint/ask turn is routed to flash-lite, and its spend billed there (#868)", async () => {
+    socraticSpend();
+    const fetchSpy = captureGemini(HINT_TEXT);
+
+    const { POST } = await import("../partner/route");
+    await POST(makeRequest({ ...VALID_BODY, action: "hint" }));
+
+    expect(String(fetchSpy.mock.calls[0]![0])).toContain(
+      "models/gemini-3.5-flash-lite:generateContent"
+    );
+    expect(recordAiSpend).toHaveBeenCalledWith(
+      "user-1",
+      "203.0.113.9",
+      "gemini-3.5-flash-lite",
+      expect.anything(),
+      expect.anything()
+    );
+  });
+
+  it("Socratic OVERRIDES ask's 3.6-flash mapping, but not propose's (§4.2)", async () => {
+    socraticSpend();
+    const askSpy = captureGemini(
+      JSON.stringify({ type: "answer", text: "Consider the bound." })
+    );
+    const { POST } = await import("../partner/route");
+    await POST(makeRequest({ ...VALID_BODY, action: "ask", message: "why?" }));
+    expect(String(askSpy.mock.calls[0]![0])).toContain(
+      "models/gemini-3.5-flash-lite:"
+    );
+
+    const proposeSpy = captureGemini(PROPOSE_GEMINI_TEXT);
+    await POST(makeRequest(VALID_BODY)); // action: propose
+    expect(String(proposeSpy.mock.calls[0]![0])).toContain(
+      "models/gemini-3.6-flash:"
+    );
+  });
+
   it("a Socratic-tier refund hands back the Socratic turn (tier-aware)", async () => {
     socraticSpend();
     stubGeminiFetch("", { ok: false });
@@ -1334,5 +1373,96 @@ describe("POST /api/ai/partner — Socratic tier (#864)", () => {
       "lesson-1",
       "socratic"
     );
+  });
+});
+
+describe("POST /api/ai/partner — per-action model routing (#868)", () => {
+  function captureGemini(text: string) {
+    const fetchSpy = vi.fn(async (_url: string, init: { body: string }) => {
+      void init;
+      return {
+        ok: true,
+        text: async () => "",
+        json: async () => ({
+          candidates: [{ content: { parts: [{ text }] } }],
+          usageMetadata: { cachedContentTokenCount: 0 },
+        }),
+      };
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+    return fetchSpy;
+  }
+
+  const HINT_TEXT = JSON.stringify({ type: "hint", text: "Check the bound." });
+  const ANSWER_TEXT = JSON.stringify({ type: "answer", text: "Because." });
+
+  it("hint hits flash-lite and books its spend at flash-lite rates", async () => {
+    const fetchSpy = captureGemini(HINT_TEXT);
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest({ ...VALID_BODY, action: "hint" }));
+
+    expect(res.status).toBe(200);
+    expect(String(fetchSpy.mock.calls[0]![0])).toContain(
+      "models/gemini-3.5-flash-lite:generateContent"
+    );
+    expect(recordAiSpend).toHaveBeenCalledWith(
+      "user-1",
+      "203.0.113.9",
+      "gemini-3.5-flash-lite",
+      expect.anything(),
+      expect.anything()
+    );
+  });
+
+  it("ask and propose hit 3.6-flash", async () => {
+    const { POST } = await import("../partner/route");
+
+    const askSpy = captureGemini(ANSWER_TEXT);
+    await POST(makeRequest({ ...VALID_BODY, action: "ask", message: "why?" }));
+    expect(String(askSpy.mock.calls[0]![0])).toContain(
+      "models/gemini-3.6-flash:generateContent"
+    );
+
+    const proposeSpy = captureGemini(PROPOSE_GEMINI_TEXT);
+    await POST(makeRequest(VALID_BODY));
+    expect(String(proposeSpy.mock.calls[0]![0])).toContain(
+      "models/gemini-3.6-flash:generateContent"
+    );
+  });
+
+  it("no action still calls the old pinned gemini-3.5-flash URL", async () => {
+    const { POST } = await import("../partner/route");
+    for (const action of ["hint", "ask", "propose"] as const) {
+      const spy = captureGemini(
+        action === "propose"
+          ? PROPOSE_GEMINI_TEXT
+          : action === "hint"
+            ? HINT_TEXT
+            : ANSWER_TEXT
+      );
+      await POST(makeRequest({ ...VALID_BODY, action, message: "why?" }));
+      expect(String(spy.mock.calls[0]![0])).not.toContain(
+        "models/gemini-3.5-flash:generateContent"
+      );
+    }
+  });
+
+  it("a routed model that 404s FAILS CLOSED — no silent fallback model call", async () => {
+    const fetchSpy = vi.fn(async () => ({
+      ok: false,
+      status: 404,
+      text: async () => "model not found",
+      json: async () => ({}),
+    }));
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest({ ...VALID_BODY, action: "hint" }));
+
+    expect(res.status).toBe(502);
+    // Exactly one upstream attempt: no retry against a different model.
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(recordAiSpend).not.toHaveBeenCalled();
+    expect(refundAssistTurn).toHaveBeenCalledTimes(1);
   });
 });

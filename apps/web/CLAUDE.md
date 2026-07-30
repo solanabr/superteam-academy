@@ -91,8 +91,25 @@ AI_SPEND_ACCOUNT_SOFT_USD=         # Per-account degrade           (default 0.5)
 AI_SPEND_ACCOUNT_HARD_USD=         # Per-account hard deny         (default 1.5)
 AI_SPEND_IP_SOFT_USD=              # Per-IP degrade                (default 2)
 AI_SPEND_IP_HARD_USD=              # Per-IP hard deny              (default 5)
-AI_SPEND_INPUT_USD_PER_MTOK=       # Gemini input price  $/1M tok  (default 0.3)
-AI_SPEND_OUTPUT_USD_PER_MTOK=      # Gemini output price $/1M tok  (default 2.5; thinking bills here)
+AI_SPEND_INPUT_USD_PER_MTOK=       # EMERGENCY all-models price override, $/1M tok input.
+AI_SPEND_OUTPUT_USD_PER_MTOK=      # …and output (thinking bills here). UNSET by default:
+                                    # since #868 the ledger prices each call at its ROUTED
+                                    # model's rates (MODEL_RATES in lib/ai/models). Set these
+                                    # only to answer a provider price move before a deploy.
+
+# Optional — per-action Gemini model routing (#868). Defaults live in code
+# (lib/ai/models): hint → gemini-3.5-flash-lite; ask/propose/review →
+# gemini-3.6-flash; any Socratic-tier hint/ask turn → gemini-3.5-flash-lite; the
+# openEnded reflection reply → gemini-3.5-flash-lite. These vars are an escape
+# hatch for a price move or a model deprecation. A value outside the priced model
+# set (gemini-3.6-flash | gemini-3.5-flash-lite | gemini-3.5-flash) is IGNORED
+# with a warning — routing to an unpriced model would break the ledger's billing.
+AI_MODEL_HINT=                     # Override the `hint` action's model
+AI_MODEL_ASK=                      # Override the `ask` action's model
+AI_MODEL_PROPOSE=                  # Override the `propose` action's model
+AI_MODEL_REVIEW=                   # Override the `review` action's model
+AI_MODEL_SOCRATIC=                 # Override the Socratic-tier hint/ask model
+AI_MODEL_REFLECTION=               # Override the openEnded reflection-reply model
 OPENENDED_AI_REPLY=                # Best-effort AI reply on /api/lessons/reflect (openEnded
                                     # reflections). Default ON since #848 — set to "0" to disable.
                                     # The reflection SEAL is always returned regardless; the reply
