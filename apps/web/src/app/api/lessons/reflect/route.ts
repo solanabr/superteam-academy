@@ -15,8 +15,9 @@ import { serverEnv } from "@/lib/env.server";
 // forever. This route is that caller.
 //
 // Receipt-first ruling: a valid submission returns the seal UNCONDITIONALLY. The
-// AI reply is best-effort enrichment (`maybeGenerateReflectionReply`, default
-// off) that may fail, be rate-limited, or be disabled without ever blocking the
+// AI reply is best-effort enrichment (`maybeGenerateReflectionReply`, ON by
+// default since #848; kill switch OPENENDED_AI_REPLY=0) that may fail, be
+// rate-limited, or be disabled without ever blocking the
 // seal. The lesson must always be completable (AIE-21 — degrade never block).
 
 const MAX_BODY_CHARS = 20_000;
