@@ -960,10 +960,11 @@
     "title": "Parceiro de IA",
     "subtitle": "Travado? Peça uma dica.",
     "completed": "Desafio concluído — mandou bem!",
-    "lock": {
-      "title": "Tente de verdade primeiro",
-      "body": "O Parceiro de IA desbloqueia em {time}. Tente resolver o desafio sozinho antes de pedir ajuda.",
-      "tooltip": "Resolver sozinho primeiro é o que fixa o aprendizado — o AI Partner está aqui para quando você travar de verdade."
+    "attemptNudge": {
+      "title": "Rode os testes uma vez primeiro.",
+      "body": "Ver os testes falharem mostra exatamente o que o desafio pede — normalmente é o caminho mais rápido. Se preferir perguntar agora, tudo bem também.",
+      "run": "Rodar os testes",
+      "override": "Estou travado antes mesmo de rodar"
     },
     "start": {
       "greeting": "Como posso te ajudar a construir isto?",

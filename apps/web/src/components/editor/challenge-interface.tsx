@@ -16,6 +16,8 @@ import {
   trackChallengeRun,
   trackChallengeSolved,
   trackChallengeStarted,
+  trackAttemptGateNudgeShown,
+  trackAttemptGateOverridden,
   trackSolutionRevealed,
   trackStuckNudgeAccepted,
   trackStuckNudgeShown,
@@ -36,9 +38,6 @@ import type {
 
 const LESSON_COMPLETE_EVENT = "superteam:lesson-complete";
 
-// Think-first lock (#770): how long the AI Partner stays locked after a
-// challenge is first opened, so learners attempt it before asking for help.
-const AI_LOCK_MS = 3 * 60 * 1000;
 // Carries the passing code to lesson-client WITHOUT driving a completion, so an
 // anonymous learner's submission can be banked before they enroll (LX-A4c).
 const CHALLENGE_PROOF_EVENT = "superteam:challenge-proof";
@@ -186,38 +185,17 @@ export function ChallengeInterface({
   // mounted (#770). It used to reveal only once a scroll sentinel hit the
   // viewport, but in the compact full-height layout the left column scrolls
   // internally and that sentinel could never intersect — the tutor was simply
-  // unreachable. Discoverability is not the gate: the think-first timer below
-  // is. `aiSuppressed` (an unanswered quiz block, LX-C1/F18) still hides it.
+  // unreachable. `aiSuppressed` (an unanswered quiz block, LX-C1/F18) still
+  // hides it.
   const aiVisible = !aiSuppressed;
 
-  // AI Partner think-first lock (#770): the tutor stays locked for AI_LOCK_MS
-  // after a challenge is first opened. The open timestamp is persisted per
-  // lesson so a reload can't reset the timer; already-complete lessons are
-  // exempt (aiUnlockAt = null).
-  const [aiUnlockAt, setAiUnlockAt] = useState<number | null>(null);
-  useEffect(() => {
-    if (isComplete || typeof window === "undefined") {
-      setAiUnlockAt(null);
-      return;
-    }
-    const key = `challenge:ai-open:${lessonId}`;
-    const stored = Number(window.localStorage.getItem(key));
-    // A valid past timestamp is the real open moment. But a stored value in the
-    // FUTURE (a wrong device clock when it was written, or tampering) must never
-    // lock the tutor beyond the 3-min window, so clamp to now — remaining stays
-    // ≤ AI_LOCK_MS. The clamp also self-heals the stored value below.
-    const now = Date.now();
-    const openedAt =
-      Number.isFinite(stored) && stored > 0 ? Math.min(stored, now) : now;
-    if (openedAt !== stored) {
-      try {
-        window.localStorage.setItem(key, String(openedAt));
-      } catch {
-        // Private-mode / quota — fall back to a session-only timer.
-      }
-    }
-    setAiUnlockAt(openedAt + AI_LOCK_MS);
-  }, [lessonId, isComplete]);
+  // Attempt-gate signal (#865, replaces the #770 hard think-first lock): the
+  // AI Partner is never locked, but until the learner has run the tests at
+  // least once on this challenge, its first use surfaces a soft nudge with a
+  // free one-tap override. Session-scoped by design — the nudge is a gentle
+  // per-visit suggestion, not a persisted gate, so nothing is stored.
+  const [hasRunTests, setHasRunTests] = useState(false);
+  const runButtonRef = useRef<HTMLButtonElement>(null);
 
   const handleCodeChange = useCallback((newCode: string) => {
     setCode(newCode);
@@ -231,6 +209,9 @@ export function ChallengeInterface({
         status: result.success ? "success" : "error",
         executionResult: result,
       }));
+      // Any run result — pass or fail — counts as an attempt: seeing the
+      // tests fail is exactly what the attempt-gate nudge asks for (#865).
+      setHasRunTests(true);
       // Lifecycle events (LX-F1): a run reaching a result IS an interaction,
       // so run-first learners get their challenge_started here (deduped).
       const ctx = { lessonId, courseId, challengeKind };
@@ -488,7 +469,22 @@ export function ChallengeInterface({
               onApply={(proposed) => setCode(proposed)}
               disabled={isComplete}
               solutionPassed={challengeState.status === "success"}
-              unlockAt={aiUnlockAt}
+              hasRunTests={hasRunTests || isComplete}
+              onFocusRun={() => runButtonRef.current?.focus()}
+              onNudgeShown={() =>
+                trackAttemptGateNudgeShown({
+                  lessonId,
+                  courseId,
+                  challengeKind,
+                })
+              }
+              onNudgeOverride={() =>
+                trackAttemptGateOverridden({
+                  lessonId,
+                  courseId,
+                  challengeKind,
+                })
+              }
               className="max-h-[560px]"
             />
           )}
@@ -517,6 +513,7 @@ export function ChallengeInterface({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <ChallengeRunner
+                  runButtonRef={runButtonRef}
                   code={code}
                   tests={tests}
                   language={language}

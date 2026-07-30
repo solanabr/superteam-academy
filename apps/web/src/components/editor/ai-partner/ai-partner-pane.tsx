@@ -1,14 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useCallback, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   Robot,
   MagnifyingGlass,
-  Lock,
   CaretDown,
   Lightbulb,
+  Play,
 } from "@phosphor-icons/react";
 import { useAiPartner } from "@/lib/ai/use-ai-partner";
 import { cn } from "@/lib/utils";
@@ -32,10 +31,17 @@ interface AiPartnerPaneProps {
    * never automatically and never pre-pass. Independent of `disabled` — a
    * post-pass review is valid (and most natural) once the challenge is solved. */
   solutionPassed?: boolean;
-  /** Epoch-ms moment the tutor unlocks, or null when there is no lock (already
-   * complete, or the think-first window has passed). While `Date.now()` is
-   * before this, every AI action is locked and a countdown is shown (#770). */
-  unlockAt?: number | null;
+  /** True once the learner has run the tests at least once on this challenge.
+   * Before that, the first AI action surfaces the attempt-gate nudge (#865) —
+   * a soft "run the tests first" suggestion with a free one-tap override,
+   * never a lock. After the first run the nudge never appears. */
+  hasRunTests?: boolean;
+  /** Shift focus to the Run-tests button — the nudge's primary action. */
+  onFocusRun?: () => void;
+  /** The attempt-gate nudge surfaced (analytics; deduped upstream). */
+  onNudgeShown?: () => void;
+  /** The learner took the free override (analytics; deduped upstream). */
+  onNudgeOverride?: () => void;
   className?: string;
 }
 
@@ -48,88 +54,60 @@ export function AiPartnerPane({
   onApply,
   disabled = false,
   solutionPassed = false,
-  unlockAt = null,
+  hasRunTests = false,
+  onFocusRun,
+  onNudgeShown,
+  onNudgeOverride,
   className,
 }: AiPartnerPaneProps) {
   const t = useTranslations("aiPartner");
   const tLesson = useTranslations("lesson");
   const [open, setOpen] = useState(true);
 
-  // Think-first lock (#770): the tutor is held for the first few minutes after
-  // a challenge is opened so learners attempt it before asking for help. Tick
-  // once a second while the window is open; stop as soon as it elapses.
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    if (unlockAt == null || Date.now() >= unlockAt) return;
-    const id = setInterval(() => {
-      setNow(Date.now());
-      if (Date.now() >= unlockAt) clearInterval(id);
-    }, 1000);
-    return () => clearInterval(id);
-  }, [unlockAt]);
-
-  // Lock-reason disclosure (#842). Hover/focus reveals it transiently; a click
-  // pins it so it survives the pointer leaving — the thing a native `title`
-  // tooltip cannot do, since browsers dismiss those on pointer-down.
-  //
-  // It renders as a FLOATING bubble (portal + position:fixed), never in flow.
-  // An in-flow hint grew the pane, which pushed the chip out from under the
-  // cursor, which fired mouseleave and closed the hint — a feedback loop that
-  // made the text unreadable. A portal also escapes the pane's `overflow-hidden`,
-  // which would otherwise clip an absolutely-positioned bubble.
-  const [hintPinned, setHintPinned] = useState(false);
-  const [hintHovered, setHintHovered] = useState(false);
-  const [hintAt, setHintAt] = useState<{ top: number; left: number } | null>(
-    null
+  // Attempt-gate nudge (#865, replaces the #770 hard think-first lock): AI
+  // actions are always ENABLED, but the first use before any test run surfaces
+  // a soft nudge instead of executing. "shown" holds the requested action until
+  // the learner either goes to run the tests or takes the free override;
+  // "overridden" is sticky for the rest of the mount, so the nudge appears at
+  // most once and the override is never re-asked (and never penalized).
+  const [nudgeState, setNudgeState] = useState<"idle" | "shown" | "overridden">(
+    "idle"
   );
-  const chipRef = useRef<HTMLButtonElement>(null);
-  const hintVisible = hintPinned || hintHovered;
+  const pendingActionRef = useRef<(() => void) | null>(null);
+  const nudgeEligible =
+    !disabled && !hasRunTests && nudgeState !== "overridden";
+  const nudgeVisible = nudgeEligible && nudgeState === "shown";
 
-  // Portals need `document`; only render the bubble after mount so SSR and the
-  // first client render agree.
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  /** Anchor under the chip rather than to the raw cursor: no jitter as the
-   *  pointer moves, and the bubble cannot land under the cursor itself. */
-  const placeHint = useCallback(() => {
-    const rect = chipRef.current?.getBoundingClientRect();
-    if (rect) setHintAt({ top: rect.bottom + 8, left: rect.right });
-  }, []);
-
-  const openHint = useCallback(() => {
-    placeHint();
-    setHintHovered(true);
-  }, [placeHint]);
-
-  useEffect(() => {
-    if (!hintVisible) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setHintPinned(false);
-        setHintHovered(false);
+  /** Route an AI action through the attempt gate: pre-first-run it is held and
+   *  the nudge shown; otherwise it executes immediately. */
+  const guardAction = useCallback(
+    (action: () => void) => {
+      if (nudgeEligible) {
+        pendingActionRef.current = action;
+        if (nudgeState !== "shown") {
+          setNudgeState("shown");
+          onNudgeShown?.();
+        }
+        return;
       }
-    };
-    // `position: fixed` does not follow an ancestor's scroll, so re-anchor
-    // while the bubble is up (capture: the pane's own column scrolls, not just
-    // the window).
-    window.addEventListener("keydown", onKey);
-    window.addEventListener("scroll", placeHint, true);
-    window.addEventListener("resize", placeHint);
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      window.removeEventListener("scroll", placeHint, true);
-      window.removeEventListener("resize", placeHint);
-    };
-  }, [hintVisible, placeHint]);
+      action();
+    },
+    [nudgeEligible, nudgeState, onNudgeShown]
+  );
 
-  const locked = unlockAt != null && now < unlockAt;
-  const remainingMs = locked ? unlockAt - now : 0;
-  const countdown = `${Math.floor(remainingMs / 60000)}:${String(
-    Math.floor((remainingMs % 60000) / 1000)
-  ).padStart(2, "0")}`;
-  // Locked OR complete both hard-disable the billed/free actions below.
-  const actionsBlocked = disabled || locked;
+  const handleNudgeRunTests = useCallback(() => {
+    pendingActionRef.current = null;
+    setNudgeState("idle");
+    onFocusRun?.();
+  }, [onFocusRun]);
+
+  const handleNudgeOverride = useCallback(() => {
+    setNudgeState("overridden");
+    onNudgeOverride?.();
+    const action = pendingActionRef.current;
+    pendingActionRef.current = null;
+    action?.();
+  }, [onNudgeOverride]);
 
   const {
     messages,
@@ -144,6 +122,11 @@ export function AiPartnerPane({
     verifyCheck,
   } = useAiPartner({ lessonSlug, courseSlug, hints, getCode, getTestSummary });
 
+  const requestHintGuarded = useCallback(
+    () => guardAction(requestHint),
+    [guardAction, requestHint]
+  );
+
   return (
     <div
       className={cn(
@@ -152,10 +135,7 @@ export function AiPartnerPane({
       )}
     >
       {/* Collapsible (#770): the whole pane folds to its header so the reading
-          column can be reclaimed. Starts open. The countdown chip is a SIBLING
-          of the toggle, not a child (#842): nested inside the button, every
-          chip click toggled the pane out from under the pointer and dismissed
-          the tooltip before it could be read. */}
+          column can be reclaimed. Starts open. */}
       <div className="flex shrink-0 items-start border-b border-border">
         <button
           type="button"
@@ -186,77 +166,52 @@ export function AiPartnerPane({
             <span className="sr-only">{tLesson("toggleSection")}</span>
           </div>
           <p className="text-xs text-text-3">
-            {disabled
-              ? t("completed")
-              : locked
-                ? t("lock.title")
-                : t("subtitle")}
+            {disabled ? t("completed") : t("subtitle")}
           </p>
           <AssistMeter freeHintsUsed={freeHintsUsed} paidUsed={paidUsed} />
         </button>
-
-        {/* Think-first countdown (#770): prominent, in the header's right
-            rail, so the wait is the first thing read — not a footnote.
-
-            Outside the toggle's hit area (#842) AND a real button rather than
-            a `title` attribute: browsers DISMISS native tooltips on
-            pointer-down, so clicking the chip to read the reason could never
-            work, and `title` never appears on touch at all. Hover and focus
-            reveal it; a click pins it. */}
-        {locked && (
-          <button
-            ref={chipRef}
-            type="button"
-            onClick={() => {
-              placeHint();
-              setHintPinned((v) => !v);
-            }}
-            onMouseEnter={openHint}
-            onMouseLeave={() => setHintHovered(false)}
-            onFocus={openHint}
-            onBlur={() => setHintHovered(false)}
-            aria-expanded={hintVisible}
-            aria-controls="ai-lock-hint"
-            aria-label={`${countdown} — ${t("lock.tooltip")}`}
-            className="mr-4 mt-3 flex shrink-0 cursor-help items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-bold tabular-nums text-text [background:var(--input)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <Lock
-              size={16}
-              weight="duotone"
-              className="shrink-0 text-text-3"
-              aria-hidden="true"
-            />
-            {/* The ticking value keeps its own live region: the button carries
-                the control semantics, this span carries the status. */}
-            <span role="status">{countdown}</span>
-          </button>
-        )}
       </div>
 
-      {/* Floating bubble, portalled to <body> and `position: fixed`, so it
-          takes NO layout space (the in-flow version grew the pane, pushed the
-          chip off the cursor and closed itself) and escapes the pane's
-          `overflow-hidden`. `pointer-events-none` guarantees the bubble can
-          never itself steal or block the hover that is keeping it open. */}
-      {mounted &&
-        locked &&
-        hintVisible &&
-        hintAt &&
-        createPortal(
-          <div
-            id="ai-lock-hint"
-            role="note"
-            style={{
-              top: hintAt.top,
-              left: hintAt.left,
-              transform: "translateX(-100%)",
-            }}
-            className="pointer-events-none fixed z-50 max-w-[16rem] rounded-md border border-border px-3 py-2 text-xs leading-relaxed text-text shadow-card [background:var(--card)]"
-          >
-            {t("lock.tooltip")}
-          </div>,
-          document.body
-        )}
+      {/* Attempt-gate nudge (#865): shown only when an AI action was invoked
+          before the first test run. Soft by design — no lock, no countdown, no
+          padlock. [Run the tests] dismisses and shifts focus to the Run button;
+          the override is a single free tap that proceeds with the original
+          request immediately. role="status" announces it politely without
+          stealing focus. */}
+      {open && nudgeVisible && (
+        <div
+          role="status"
+          className="flex shrink-0 flex-col gap-2.5 border-b border-border px-4 py-3 [background:var(--accent-bg)]"
+        >
+          <p className="text-xs text-text-3">
+            <span className="font-bold text-text">
+              {t("attemptNudge.title")}
+            </span>{" "}
+            {t("attemptNudge.body")}
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="push"
+              size="sm"
+              onClick={handleNudgeRunTests}
+              className="gap-1.5 text-xs"
+            >
+              <Play size={14} weight="duotone" aria-hidden="true" />
+              {t("attemptNudge.run")}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleNudgeOverride}
+              className="text-xs"
+            >
+              {t("attemptNudge.override")}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Empty state stays COMPACT (#770): the prompt and the Hint button sit
           together in a short block — no reserved conversation area. The pane
@@ -269,8 +224,8 @@ export function AiPartnerPane({
             type="button"
             variant="secondary"
             size="sm"
-            onClick={requestHint}
-            disabled={loading || actionsBlocked}
+            onClick={requestHintGuarded}
+            disabled={loading || disabled}
             className="w-full gap-1.5"
           >
             <Lightbulb size={14} weight="duotone" aria-hidden="true" />
@@ -316,7 +271,8 @@ export function AiPartnerPane({
           it hard-disables on budgetExhausted. It is intentionally NOT gated by
           `disabled` (lesson complete) — reviewing the solution you just passed
           is the whole point. Suppression is handled upstream: this pane is not
-          mounted at all while a quiz block is unanswered (LX-C1/F18). */}
+          mounted at all while a quiz block is unanswered (LX-C1/F18). It needs
+          no attempt-gate guard either: a passing run implies the tests ran. */}
       {open && solutionPassed && (
         <div className="shrink-0 border-t border-border px-3 pt-3">
           <Button
@@ -324,7 +280,7 @@ export function AiPartnerPane({
             variant="secondary"
             size="sm"
             onClick={() => review()}
-            disabled={loading || budgetExhausted || locked}
+            disabled={loading || budgetExhausted}
             className="w-full gap-1.5"
           >
             <MagnifyingGlass size={14} weight="duotone" aria-hidden="true" />
@@ -338,8 +294,8 @@ export function AiPartnerPane({
 
       {open && messages.length > 0 && (
         <QuickActions
-          onHint={requestHint}
-          disabled={loading || actionsBlocked}
+          onHint={requestHintGuarded}
+          disabled={loading || disabled}
           budgetExhausted={budgetExhausted}
         />
       )}

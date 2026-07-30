@@ -960,10 +960,11 @@
     "title": "AI Partner",
     "subtitle": "Stuck? Get a hint.",
     "completed": "Challenge complete — nice work!",
-    "lock": {
-      "title": "Give it a real try first",
-      "body": "The AI Partner unlocks in {time}. Attempt the challenge yourself before asking for help.",
-      "tooltip": "Working through it yourself first is what makes it stick — the AI Partner is here for when you're truly stuck."
+    "attemptNudge": {
+      "title": "Run the tests once first.",
+      "body": "Seeing them fail shows you exactly what the challenge wants — that's usually the fastest way in. If you'd rather ask now, that's fine too.",
+      "run": "Run the tests",
+      "override": "I'm stuck before I can run it"
     },
     "start": {
       "greeting": "How can I help you build this?",
