@@ -59,6 +59,18 @@ vi.mock("@/lib/content/deployments", async (importActual) => {
 const SEGMENTS: LearnerSegment[] = [1, 2, 3];
 const LESSON_HREF = /^\/en\/courses\/[^/]+\/lessons\/[^/]+$/;
 
+/**
+ * The post-C1-flip routing table (#673, 2026-07-30). Duplicated here on purpose
+ * — asserting the resolver against a literal expectation is what makes an
+ * unintended table edit red. Segments 1/3 enter at C1 (the JS/TS on-ramp, live
+ * on-chain since the flip wave); segment 2 still skips it and enters at C3.
+ */
+const EXPECTED_ENTRY: Record<LearnerSegment, string> = {
+  1: "course-solana-for-web-devs",
+  2: "course-building-first-program",
+  3: "course-solana-for-web-devs",
+};
+
 // The 5 courses CATALOG §3 retires (deactivated on-chain). No segment may enter
 // at one of these — this is the exact class that broke the /start deep-link.
 const RETIRED_COURSE_IDS = new Set([
@@ -70,6 +82,15 @@ const RETIRED_COURSE_IDS = new Set([
 ]);
 
 describe("SEGMENT_ENTRY_COURSE — live-ladder routing", () => {
+  it("segments 1 and 3 enter at C1, segment 2 at C3", () => {
+    for (const segment of SEGMENTS) {
+      expect(
+        entryCourseForSegment(segment),
+        `segment ${segment} entry course`
+      ).toBe(EXPECTED_ENTRY[segment]);
+    }
+  });
+
   it("no segment enters at a retired course", () => {
     for (const segment of SEGMENTS) {
       const id = entryCourseForSegment(segment);
