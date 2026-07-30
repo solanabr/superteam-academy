@@ -4,6 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { CheckCircle, XCircle, ArrowClockwise } from "@phosphor-icons/react";
+import {
+  trackTestOutStarted,
+  trackTestOutGraded,
+} from "@/lib/analytics/events";
 import { Button } from "@/components/ui/button";
 
 interface ChallengeQuestion {
@@ -70,6 +74,10 @@ export function TestOutChallenge({ courseId, locale }: TestOutChallengeProps) {
       const data = (await res.json()) as ChallengePayload;
       setChallenge(data);
       setPhase("answering");
+      // Fires on a successful LOAD, not on mount: a failed fetch leaves the
+      // learner on an error card with nothing to attempt, and counting that as
+      // a start would understate the pass rate (#871).
+      trackTestOutStarted({ courseId });
     } catch {
       setPhase("error");
     }
@@ -112,6 +120,12 @@ export function TestOutChallenge({ courseId, locale }: TestOutChallengeProps) {
       const data = (await res.json()) as SubmitResult;
       setResult(data);
       setPhase("graded");
+      trackTestOutGraded({
+        courseId,
+        passed: data.passed,
+        correct: data.correct,
+        total: data.total,
+      });
       if (data.passed) {
         // The server has already completed the lessons; send the learner onward.
         router.push(data.next);

@@ -269,6 +269,68 @@ export function trackReviewCompleted(opts: {
   });
 }
 
+/** Which target the dashboard Continue card resolved to (#871, LX-B2). */
+export type ContinueCardKind = "lesson" | "nextCourse" | "catalog";
+
+/**
+ * `continue_card_shown` — the card rendered, with the target it resolved to.
+ *
+ * Shown is the DENOMINATOR for the click-through rate, so it must fire once per
+ * render of the dashboard, not once per session: a learner who returns twice
+ * and clicks once is 1/2, not 1/1.
+ */
+export function trackContinueCardShown(opts: {
+  kind: ContinueCardKind;
+  courseSlug?: string;
+}): void {
+  trackEvent("continue_card_shown", {
+    kind: opts.kind,
+    ...(opts.courseSlug ? { courseSlug: opts.courseSlug } : {}),
+  });
+}
+
+/** `continue_card_click` — the numerator for the same rate. */
+export function trackContinueCardClick(opts: {
+  kind: ContinueCardKind;
+  courseSlug?: string;
+}): void {
+  trackEvent("continue_card_click", {
+    kind: opts.kind,
+    ...(opts.courseSlug ? { courseSlug: opts.courseSlug } : {}),
+  });
+}
+
+/**
+ * `test_out_started` — the learner opened a course's test-out challenge and it
+ * loaded (#871, #578). Paired with `test_out_graded` below.
+ */
+export function trackTestOutStarted(opts: { courseId: string }): void {
+  trackEvent("test_out_started", { courseId: opts.courseId });
+}
+
+/**
+ * `test_out_graded` — one graded submission, with the score behind the verdict.
+ *
+ * Deliberately does NOT carry a lessons-credited count: the grading response
+ * (`PassResult`) returns `correct`/`total`/`next` and no lesson tally, so the
+ * size of the skip is not knowable client-side. Reporting it would mean
+ * inventing a number. Join to the course's lesson count server-side if the
+ * skip size is ever needed.
+ */
+export function trackTestOutGraded(opts: {
+  courseId: string;
+  passed: boolean;
+  correct: number;
+  total: number;
+}): void {
+  trackEvent("test_out_graded", {
+    courseId: opts.courseId,
+    passed: opts.passed,
+    correct: opts.correct,
+    total: opts.total,
+  });
+}
+
 export type CredentialMintObservationSource = "manual_mint" | "realtime";
 
 /**
