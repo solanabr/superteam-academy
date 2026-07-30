@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
 import { CheckCircle, ArrowRight, Sparkle } from "@phosphor-icons/react";
 import type { ReviewSessionItem } from "@/lib/review/interleave";
+import { trackReviewCompleted } from "@/lib/analytics/events";
 import { ReviewQuizItem } from "./review-quiz-item";
 
 interface ReviewSessionProps {
@@ -32,6 +33,24 @@ export function ReviewSession({ items }: ReviewSessionProps) {
     });
   }, []);
 
+  // Counted before the empty-session early return below, so the completion
+  // effect stays unconditional (rules of hooks).
+  const gradableTotal = items.filter((i) => i.quiz.length > 0).length;
+  const gradableDone = items.filter(
+    (i) => i.quiz.length > 0 && graded.has(i.itemKey)
+  ).length;
+  const allDone = gradableTotal > 0 && gradableDone === gradableTotal;
+
+  // `review_completed` fires ONCE per session (#873). `graded` only ever grows,
+  // so latch on the transition into all-done — without the ref every later
+  // render would re-fire it and inflate the very metric this event measures.
+  const completedFired = useRef(false);
+  useEffect(() => {
+    if (!allDone || completedFired.current) return;
+    completedFired.current = true;
+    trackReviewCompleted({ gradable: gradableTotal, itemsShown: items.length });
+  }, [allDone, gradableTotal, items.length]);
+
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 rounded-[var(--r-lg)] border border-border bg-card px-6 py-16 text-center">
@@ -55,12 +74,6 @@ export function ReviewSession({ items }: ReviewSessionProps) {
       </div>
     );
   }
-
-  const gradableTotal = items.filter((i) => i.quiz.length > 0).length;
-  const gradableDone = items.filter(
-    (i) => i.quiz.length > 0 && graded.has(i.itemKey)
-  ).length;
-  const allDone = gradableTotal > 0 && gradableDone === gradableTotal;
 
   return (
     <div className="space-y-5">
