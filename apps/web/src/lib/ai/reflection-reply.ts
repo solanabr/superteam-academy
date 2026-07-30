@@ -14,7 +14,11 @@ import type { GeminiUsageMetadata } from "@/lib/ai/spend-ledger";
 // key, or spend-cap denial resolves to `null` and the seal is issued regardless
 // (spec §3 item 6 — "degrade never block", AIE-21).
 //
-// Default OFF behind OPENENDED_AI_REPLY. When enabled, this reply spends the
+// Default ON since #848 (opt out with OPENENDED_AI_REPLY=0): the reply is
+// fail-safe by design — ledger-gated, rate-limited, never blocks the seal —
+// and a dark default meant the comprehension-reflection feedback loop never
+// fired in prod. Still requires GEMINI_API_KEY; unset key keeps it dark.
+// When live, this reply spends the
 // SAME sponsored GEMINI_API_KEY as the AI Partner, so — per #724 — it now runs
 // UNDER the #591 spend ledger: the same fail-closed checkAiSpend gate and
 // recordAiSpend booking (account + IP + global caps), and a fail-CLOSED reply
@@ -71,7 +75,10 @@ export async function maybeGenerateReflectionReply({
   prompt,
   reflection,
 }: ReflectionReplyInput): Promise<string | null> {
-  if (process.env.OPENENDED_AI_REPLY !== "1") return null;
+  // Default ON (#848); "0" is the explicit kill switch. Any other value —
+  // unset, "1", garbage — leaves the reply enabled; GEMINI_API_KEY remains the
+  // hard prerequisite below.
+  if (process.env.OPENENDED_AI_REPLY === "0") return null;
 
   const apiKey = serverEnv.GEMINI_API_KEY;
   if (!apiKey) return null;

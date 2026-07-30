@@ -93,11 +93,11 @@ AI_SPEND_IP_SOFT_USD=              # Per-IP degrade                (default 2)
 AI_SPEND_IP_HARD_USD=              # Per-IP hard deny              (default 5)
 AI_SPEND_INPUT_USD_PER_MTOK=       # Gemini input price  $/1M tok  (default 0.3)
 AI_SPEND_OUTPUT_USD_PER_MTOK=      # Gemini output price $/1M tok  (default 2.5; thinking bills here)
-OPENENDED_AI_REPLY=                # Set to "1" to enable the best-effort AI reply on
-                                    # /api/lessons/reflect (openEnded reflections). Default OFF:
-                                    # the reflection SEAL is always returned regardless; the reply
-                                    # is enrichment only and is a metered cost path whose accounting
-                                    # is owned by #590. Requires GEMINI_API_KEY when enabled.
+OPENENDED_AI_REPLY=                # Best-effort AI reply on /api/lessons/reflect (openEnded
+                                    # reflections). Default ON since #848 — set to "0" to disable.
+                                    # The reflection SEAL is always returned regardless; the reply
+                                    # is enrichment only (rate-limited, #591 spend-ledger gated,
+                                    # never blocks). Requires GEMINI_API_KEY — unset key = no reply.
 
 # Optional — Teacher course preview (#828), server-only
 #                                  # Needs no GITHUB_TOKEN: courses-academy is public, so the
