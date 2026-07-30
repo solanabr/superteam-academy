@@ -279,57 +279,69 @@ PR link. It holds **no write token** and performs no repo write. See
 > New courses are still **invisible to learners** until they are deployed on-chain
 > from `/admin/courses` — compiling the bundle is necessary but not sufficient.
 
-### Slot-activation checklist (adding or reordering lessons)
+### Slot activation — what is automated, and the one step that is not
 
-Run this **before** bumping `content.lock` for any course that is already
-deployed. It exists because of one fact:
+Reordering or retiring lessons in a **deployed** course is safe by machinery,
+not by care. The mechanism is worth knowing because the failure it prevents
+(#740/#741) is silent when it happens.
 
-> **A learner's on-chain progress bit is the lesson's ARRAY POSITION, not its
-> slot id.** (#741; the incident it caused is #740.)
+**A learner's on-chain progress bit is the lesson's SLOT, from
+`slots.lock.json` — never its position in `course.yaml`.**
 
-`Enrollment.lesson_flags` is a `[u64; 4]` bitmap. Bit _n_ means "the lesson at
-index _n_ of this course's lesson array is complete". `slots.lock.json` records
-the intended slot per lesson id, but **nothing at runtime reads it** — no client,
-no API route, no on-chain instruction. It is a bookkeeping file for authors.
+- `getLessonSlot()` (`apps/web/src/lib/courses/lesson-slot.ts`) resolves the slot
+  from the committed lock at request time. It is what
+  `/api/lessons/complete` sends to `complete_lesson`, what it tests the
+  enrollment bitmap against, and what it writes to `user_progress.lesson_index`.
+  It **fails closed** — an unslotted lesson id throws rather than guessing.
+- `findLessonIndex()` (`lesson-index.ts`) is the array position and is
+  **display-only**. Conflating the two _was_ the #741 bug; it is fixed.
+- `deriveActiveMask()` (`lib/github/content-commit.ts`) builds the on-chain
+  `active_lessons` mask from the same lock, so the chain's live-lesson set and
+  the authored lock cannot disagree.
 
-So inserting a lesson anywhere except the end, removing one, or reordering a
-module silently **remaps every learner's completed bits** to different lessons.
-Nothing errors. Progress just becomes wrong.
+Slots are assigned once, never renumbered, never reused, and `next` only grows.
+**CI gate-3** (`packages/content-lint/src/checks/gate3-slots.ts`) diffs the lock
+against the merge base on every courses-academy PR and fails the build if a
+surviving lesson's slot moved, a retired slot was reused, or `next` went
+backwards. That gate — not a hand diff of `course.yaml` — is the safety net.
+`course.yaml` order is decoupled from slot assignment by design, so reordering
+it is not by itself a hazard.
 
-**Safe (no remap):**
+> Do **not** hand-diff lesson arrays to decide whether a reshape is safe: a
+> `course.yaml`-only diff both flags safe reorders and misses real lock
+> violations. Read gate-3's verdict instead.
 
-- [ ] Appending a lesson to the **end** of the last module.
-- [ ] Editing an existing lesson's content, title, prose, tests or hints.
-- [ ] Adding a whole new module **after** all existing ones.
+#### The residual step: push the mask after retiring a lesson
 
-**Unsafe (remaps learner progress) — needs the retire path below:**
+The one thing no gate does for you is **update the on-chain mask**. Bumping
+`content.lock` ships new content to the app; it does not touch the chain. The
+mask goes out through the admin course sync (`/admin/courses` → the
+content-hash commit, which sends `newActiveLessons` derived from the lockfile).
 
-- [ ] Inserting a lesson anywhere but the end.
-- [ ] Deleting a lesson.
-- [ ] Reordering lessons or modules.
+This matters in one direction. `finalize_course` is a **subset test** — it
+requires `flags & active == active` (see `isCourseComplete` in
+`lib/solana/bitmap.ts`). So:
 
-**Before the `content.lock` bump:**
+- **Retiring a lesson without syncing the mask blocks completion.** The chain
+  still lists the retired slot as active, so every learner who had not already
+  completed that now-deleted lesson can never satisfy the gate. They cannot
+  complete it either — it is gone from the bundle.
+- Adding a lesson without syncing is benign by comparison: the new slot is
+  simply not yet required.
 
-1. [ ] Diff the lesson arrays old-vs-new, in render order, across every module:
-       `git -C <courses-academy> diff <pinned-sha>..HEAD -- courses/<slug>/course.yaml`
-2. [ ] Confirm every pre-existing lesson id sits at the **same index** as before.
-       If any index moved, stop — this is the unsafe path.
-3. [ ] Check whether the course is deployed at all
-       (`/admin/courses`, or `is_active` on its `Course` PDA). An **undeployed**
-       course has no learners and no bitmap, so any reshape is free.
-4. [ ] Confirm `slots.lock.json` was regenerated, not hand-edited — CI compares
-       a fresh generation against the committed file.
+**After any bump that retires a slot:**
 
-**To retire a lesson without remapping:** clear its bit in the course's
-`active_lessons` mask via `update_course` (the admin sync does this from the
-committed lockfile) and leave the array position occupied. Retiring a slot is
-a mask edit; it is not an array edit. The completion gate is a subset test over
-the live mask, so a retired slot never blocks anyone — see
-`isCourseComplete` in `apps/web/src/lib/solana/bitmap.ts`.
+1. [ ] Bump `content.lock` and commit the regenerated bundle together (see
+       [Publishing new content](#publishing-new-content); CI byte-compares).
+2. [ ] Run the course sync from `/admin/courses` so `active_lessons` matches the
+       lockfile. `assertMaskMatchesLockfile` guards the signed mask against a
+       mismatch, so a wrong mask is refused rather than written.
+3. [ ] Spot-check a learner mid-course can still finalize.
 
-**After the bump:** the `content.lock` bump and the regenerated bundle must be
-committed together (see [Publishing new content](#publishing-new-content) above);
-CI recompiles and byte-compares.
+**Symptom to recognize:** completion 500s citing an unslotted lesson mean the
+bundle carries a lesson the lock does not — `getLessonSlot` refusing to guess.
+Regenerate the lock rather than adding a fallback; the fail-closed behaviour is
+deliberate, because a wrong slot corrupts on-chain state.
 
 ---
 
