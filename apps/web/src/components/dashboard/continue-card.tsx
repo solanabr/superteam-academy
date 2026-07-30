@@ -1,8 +1,13 @@
 "use client";
 
+import { useEffect } from "react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Play, ArrowRight, Confetti } from "@phosphor-icons/react";
+import {
+  trackContinueCardShown,
+  trackContinueCardClick,
+} from "@/lib/analytics/events";
 
 /**
  * What the dashboard hero's Continue card points at (LX-B2, issue #551):
@@ -36,6 +41,17 @@ interface ContinueCardProps {
 export function ContinueCard({ target, locale }: ContinueCardProps) {
   const t = useTranslations("dashboard");
 
+  // `catalog` carries no course; the other two do (#871).
+  const courseSlug = target.kind === "catalog" ? undefined : target.courseSlug;
+
+  // Shown is the click-through DENOMINATOR, so it fires per render of the
+  // dashboard rather than once per session — a learner who returns twice and
+  // clicks once is 1/2. Keyed on the resolved target so a re-render with the
+  // same target (e.g. a parent state change) does not double-count.
+  useEffect(() => {
+    trackContinueCardShown({ kind: target.kind, courseSlug });
+  }, [target.kind, courseSlug]);
+
   const href =
     target.kind === "lesson"
       ? `/${locale}/courses/${target.courseSlug}/lessons/${target.lessonSlug}`
@@ -57,6 +73,7 @@ export function ContinueCard({ target, locale }: ContinueCardProps) {
     <Link
       href={href}
       aria-label={ariaLabel}
+      onClick={() => trackContinueCardClick({ kind: target.kind, courseSlug })}
       className="group block rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     >
       <div className="rounded-xl p-[2.5px] shadow-card [background:linear-gradient(135deg,#9945FF,#14F195)]">
