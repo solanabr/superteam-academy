@@ -474,6 +474,234 @@
     "xpReward": 800
   },
   {
+    "_id": "course-solana-for-evm-devs",
+    "_type": "course",
+    "creator": "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF",
+    "creatorRewardXp": 30,
+    "description": "You already ship on the EVM. You know why `msg.sender` is trustworthy, what a `mapping` costs you, and how a revert unwinds state. None of that knowledge is wasted here — but almost all of it is filed in the wrong drawer. This course re-files it. Storage becomes accounts you allocate and pay rent for. A `mapping` becomes a program-derived address you compute off-chain before you ever send a transaction. `msg.sender` becomes a list of signers the runtime verified before your code ran. Gas becomes a compute budget you can measure and a priority fee you set separately. `approve` becomes a delegate that can be revoked. You finish able to read a Solana transaction and say what it touches, what it costs, and who authorized it — without translating it back into Solidity first. Version stamp — `@solana/kit` 7.0.0 · `@solana-program/compute-budget` 0.17.0 · `@solana-program/token` 0.15.0 · `anchor-lang` 1.1.2 · authored 2026-07-30.",
+    "difficulty": "intermediate",
+    "duration": 6,
+    "minCompletionsForReward": 10,
+    "modules": [
+      {
+        "_key": "sfe-state",
+        "_type": "courseModule",
+        "description": "The single largest mental move: a Solana program owns no storage. Code and state are different accounts, state is allocated with a size you choose and paid for with rent, and the `mapping` you would have reached for becomes an address you derive. Get this module wrong and everything after it reads as arbitrary.",
+        "key": "sfe-state",
+        "lessons": [
+          {
+            "_key": "lesson-sfe-storage-to-accounts",
+            "_ref": "lesson-sfe-storage-to-accounts",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-sfe-rent-and-space",
+            "_ref": "lesson-sfe-rent-and-space",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-sfe-mappings-to-pdas",
+            "_ref": "lesson-sfe-mappings-to-pdas",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "State Lives in Accounts"
+      },
+      {
+        "_key": "sfe-execution",
+        "_type": "courseModule",
+        "description": "Who authorized this, what will it touch, and what does it cost — three questions the EVM answers implicitly and Solana makes you answer up front. `msg.sender` becomes a verified signer list, gas becomes a compute budget priced separately from priority, and the account list you must declare in advance is the reason transactions can run in parallel.",
+        "key": "sfe-execution",
+        "lessons": [
+          {
+            "_key": "lesson-sfe-msg-sender-to-signers",
+            "_ref": "lesson-sfe-msg-sender-to-signers",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-sfe-gas-to-compute-units",
+            "_ref": "lesson-sfe-gas-to-compute-units",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-sfe-declared-accounts",
+            "_ref": "lesson-sfe-declared-accounts",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Execution, Signers, and Fees"
+      },
+      {
+        "_key": "sfe-tokens",
+        "_type": "courseModule",
+        "description": "ERC-20 is a contract you deploy; SPL Token is one program everybody shares, and your balance is an account it owns on your behalf. That inversion changes what a transfer is, where `approve` lives, and why composing two protocols is a CPI rather than an external call into unknown code.",
+        "key": "sfe-tokens",
+        "lessons": [
+          {
+            "_key": "lesson-sfe-erc20-to-spl",
+            "_ref": "lesson-sfe-erc20-to-spl",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-sfe-approve-to-delegate",
+            "_ref": "lesson-sfe-approve-to-delegate",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-sfe-what-changes",
+            "_ref": "lesson-sfe-what-changes",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Tokens and Composability"
+      }
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "solana-for-evm-devs"
+    },
+    "tags": [
+      "account-layout",
+      "account-model",
+      "compute-budget",
+      "pdas",
+      "priority-fees",
+      "program-security",
+      "rent-and-space",
+      "signers",
+      "solana-fundamentals",
+      "spl-tokens",
+      "transaction-fees",
+      "transactions",
+      "typescript"
+    ],
+    "title": "Solana for EVM Developers",
+    "trackId": 0,
+    "trackLevel": 0,
+    "xpPerLesson": 20,
+    "xpReward": 500
+  },
+  {
+    "_id": "course-solana-for-web-devs",
+    "_type": "course",
+    "creator": "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF",
+    "creatorRewardXp": 30,
+    "description": "You already write JavaScript or TypeScript. That is the whole prerequisite — no blockchain, no cryptography, no Rust, nothing installed. This course runs entirely in your browser against a real, frozen program on Solana's devnet. You start by reading its live vault account in an explorer, then decode its 49 raw bytes by hand — discriminator, owner, balance, bump — then reproduce its address from seeds, so an on-chain account stops being a mystery and becomes a byte layout you own. Then you sign: transaction anatomy with the exact fee arithmetic, a funded devnet wallet of your own, and a real deposit into the vault, confirmed on-chain with the signature to prove it. You finish by assembling everything into a working account inspector — paste any devnet address, get type, SOL, owner, rent-exemption, and decoded vault fields with every failure path handled. Everything is taught against `@solana/kit` 7.0.0, the current stack; one lesson maps it against the legacy web3.js v1 code you will still meet in the wild, with dates and download counts, so you can read old codebases without writing like them. Version stamp — kit 7.0.0, devnet, authored 2026-07-28.",
+    "difficulty": "beginner",
+    "duration": 6,
+    "minCompletionsForReward": 10,
+    "modules": [
+      {
+        "_key": "sfwd-read-the-chain",
+        "_type": "courseModule",
+        "description": "Point at a real devnet program and take its state apart. You read the live vault in an explorer without writing a line of code, then fetch the same account over RPC and decode its 49 bytes by hand — 8-byte discriminator, 32-byte owner, little-endian u64 balance, bump — and then reproduce the vault's address from its seeds and watch a wrong seed order produce a different address. You end holding a working `decodeVault` you wrote yourself, over bytes recorded from the real account. That decoder is the core of the inspector you ship in module 3, and the exact layout that becomes a Rust struct in Course 2.",
+        "key": "sfwd-read-the-chain",
+        "lessons": [
+          {
+            "_key": "lesson-sfwd-see-a-live-vault",
+            "_ref": "lesson-sfwd-see-a-live-vault",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-sfwd-accounts-are-just-bytes",
+            "_ref": "lesson-sfwd-accounts-are-just-bytes",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-sfwd-derive-the-vault-pda",
+            "_ref": "lesson-sfwd-derive-the-vault-pda",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Read the Chain"
+      },
+      {
+        "_key": "sfwd-sign-your-own-transaction",
+        "_type": "courseModule",
+        "description": "Stop reading and start writing. You take a complete Kit transaction apart and predict its exact cost before it runs — 5,000 lamports per signature plus price times the REQUESTED compute-unit limit — then map the current stack against the legacy web3.js v1 code that still floods npm and every old codebase, so you can read the wild without importing it. Then the real thing: connect a wallet through Wallet Standard, fund it on devnet, and sign a deposit into the very vault you spent module 1 decoding — accounts in IDL order, discriminator plus little-endian amount, confirmed on-chain with an explorer signature on your profile.",
+        "key": "sfwd-sign-your-own-transaction",
+        "lessons": [
+          {
+            "_key": "lesson-sfwd-anatomy-of-a-transaction",
+            "_ref": "lesson-sfwd-anatomy-of-a-transaction",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-sfwd-kit-or-legacy",
+            "_ref": "lesson-sfwd-kit-or-legacy",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-sfwd-connect-fund-and-send",
+            "_ref": "lesson-sfwd-connect-fund-and-send",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Sign Your Own Transaction"
+      },
+      {
+        "_key": "sfwd-publish-the-inspector",
+        "_type": "courseModule",
+        "description": "Assemble RPC read, byte decode, and PDA derivation into one working inspector: give it any devnet address and it answers — account type, SOL, owner, rent-exemption, and decoded vault fields when the owner and discriminator check out. The grade lives in the failure paths: accounts that do not exist, accounts with no data, accounts that only look like vaults. Two graded rungs — first complete the branch table, then write the decode path unaided against fixtures recorded from real devnet accounts. Close by naming every artifact you built and exactly which one Course 2 picks up.",
+        "key": "sfwd-publish-the-inspector",
+        "lessons": [
+          {
+            "_key": "lesson-sfwd-ship-the-inspector",
+            "_ref": "lesson-sfwd-ship-the-inspector",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-sfwd-what-you-built",
+            "_ref": "lesson-sfwd-what-you-built",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Publish the Inspector"
+      }
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "solana-for-web-devs"
+    },
+    "tags": [
+      "account-model",
+      "api-currency",
+      "borsh-serialization",
+      "compute-budget",
+      "confirmation",
+      "error-handling",
+      "explorer-reading",
+      "pdas",
+      "rpc",
+      "solana-kit",
+      "transaction-fees",
+      "transactions",
+      "wallet-standard"
+    ],
+    "title": "Solana for Web Devs",
+    "trackId": 1,
+    "trackLevel": 1,
+    "xpPerLesson": 10,
+    "xpReward": 500
+  },
+  {
     "_id": "course-stablecoin-payments",
     "_type": "course",
     "creator": "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF",

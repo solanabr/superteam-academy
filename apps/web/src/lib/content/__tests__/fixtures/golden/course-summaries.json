@@ -100,6 +100,54 @@
       "learningPath": "Zero to Deployed"
     },
     {
+      "_id": "course-solana-for-evm-devs",
+      "title": "Solana for EVM Developers",
+      "slug": "solana-for-evm-devs",
+      "thumbnail": null,
+      "tags": [
+        "account-layout",
+        "account-model",
+        "compute-budget",
+        "pdas",
+        "priority-fees",
+        "program-security",
+        "rent-and-space",
+        "signers",
+        "solana-fundamentals",
+        "spl-tokens",
+        "transaction-fees",
+        "transactions",
+        "typescript"
+      ],
+      "difficulty": "intermediate",
+      "totalLessons": 9,
+      "learningPath": null
+    },
+    {
+      "_id": "course-solana-for-web-devs",
+      "title": "Solana for Web Devs",
+      "slug": "solana-for-web-devs",
+      "thumbnail": null,
+      "tags": [
+        "account-model",
+        "api-currency",
+        "borsh-serialization",
+        "compute-budget",
+        "confirmation",
+        "error-handling",
+        "explorer-reading",
+        "pdas",
+        "rpc",
+        "solana-kit",
+        "transaction-fees",
+        "transactions",
+        "wallet-standard"
+      ],
+      "difficulty": "beginner",
+      "totalLessons": 8,
+      "learningPath": "Zero to Deployed"
+    },
+    {
       "_id": "course-stablecoin-payments",
       "title": "Getting Paid: Stablecoin & Agentic Payments",
       "slug": "stablecoin-agentic-payments",
@@ -250,6 +298,66 @@
       "learningPath": "Zero to Deployed"
     },
     {
+      "_id": "course-solana-for-evm-devs",
+      "title": "Solana for EVM Developers",
+      "slug": "solana-for-evm-devs",
+      "description": "You already ship on the EVM. You know why `msg.sender` is trustworthy, what a `mapping` costs you, and how a revert unwinds state. None of that knowledge is wasted here — but almost all of it is filed in the wrong drawer. This course re-files it. Storage becomes accounts you allocate and pay rent for. A `mapping` becomes a program-derived address you compute off-chain before you ever send a transaction. `msg.sender` becomes a list of signers the runtime verified before your code ran. Gas becomes a compute budget you can measure and a priority fee you set separately. `approve` becomes a delegate that can be revoked. You finish able to read a Solana transaction and say what it touches, what it costs, and who authorized it — without translating it back into Solidity first. Version stamp — `@solana/kit` 7.0.0 · `@solana-program/compute-budget` 0.17.0 · `@solana-program/token` 0.15.0 · `anchor-lang` 1.1.2 · authored 2026-07-30.",
+      "difficulty": "intermediate",
+      "duration": 6,
+      "thumbnail": null,
+      "creator": "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF",
+      "tags": [
+        "account-layout",
+        "account-model",
+        "compute-budget",
+        "pdas",
+        "priority-fees",
+        "program-security",
+        "rent-and-space",
+        "signers",
+        "solana-fundamentals",
+        "spl-tokens",
+        "transaction-fees",
+        "transactions",
+        "typescript"
+      ],
+      "xpReward": 500,
+      "totalLessons": 9,
+      "trackId": 0,
+      "trackLevel": 0,
+      "learningPath": null
+    },
+    {
+      "_id": "course-solana-for-web-devs",
+      "title": "Solana for Web Devs",
+      "slug": "solana-for-web-devs",
+      "description": "You already write JavaScript or TypeScript. That is the whole prerequisite — no blockchain, no cryptography, no Rust, nothing installed. This course runs entirely in your browser against a real, frozen program on Solana's devnet. You start by reading its live vault account in an explorer, then decode its 49 raw bytes by hand — discriminator, owner, balance, bump — then reproduce its address from seeds, so an on-chain account stops being a mystery and becomes a byte layout you own. Then you sign: transaction anatomy with the exact fee arithmetic, a funded devnet wallet of your own, and a real deposit into the vault, confirmed on-chain with the signature to prove it. You finish by assembling everything into a working account inspector — paste any devnet address, get type, SOL, owner, rent-exemption, and decoded vault fields with every failure path handled. Everything is taught against `@solana/kit` 7.0.0, the current stack; one lesson maps it against the legacy web3.js v1 code you will still meet in the wild, with dates and download counts, so you can read old codebases without writing like them. Version stamp — kit 7.0.0, devnet, authored 2026-07-28.",
+      "difficulty": "beginner",
+      "duration": 6,
+      "thumbnail": null,
+      "creator": "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF",
+      "tags": [
+        "account-model",
+        "api-currency",
+        "borsh-serialization",
+        "compute-budget",
+        "confirmation",
+        "error-handling",
+        "explorer-reading",
+        "pdas",
+        "rpc",
+        "solana-kit",
+        "transaction-fees",
+        "transactions",
+        "wallet-standard"
+      ],
+      "xpReward": 500,
+      "totalLessons": 8,
+      "trackId": 1,
+      "trackLevel": 1,
+      "learningPath": "Zero to Deployed"
+    },
+    {
       "_id": "course-stablecoin-payments",
       "title": "Getting Paid: Stablecoin & Agentic Payments",
       "slug": "stablecoin-agentic-payments",
@@ -299,6 +407,14 @@
     {
       "_id": "course-rust-for-program-devs",
       "totalLessons": 14
+    },
+    {
+      "_id": "course-solana-for-evm-devs",
+      "totalLessons": 9
+    },
+    {
+      "_id": "course-solana-for-web-devs",
+      "totalLessons": 8
     },
     {
       "_id": "course-stablecoin-payments",

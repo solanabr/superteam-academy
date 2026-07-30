@@ -6,6 +6,7 @@ import {
   type AwardT,
 } from "@superteam-lms/content-schema";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getActiveDeployments, isSynced } from "@/lib/content/deployments";
 import {
   getAllAchievements,
   getAllCourseLessonCounts,
@@ -115,6 +116,7 @@ export async function buildUserState(
     { data: userProfile },
     courseLessonCounts,
     learningPaths,
+    deployments,
   ] = await Promise.all([
     admin
       .from("user_xp")
@@ -134,6 +136,7 @@ export async function buildUserState(
     admin.from("profiles").select("created_at").eq("id", userId).single(),
     getAllCourseLessonCounts(),
     getLearningPathsForAdmin(),
+    getActiveDeployments(),
   ]);
 
   // Per-course completed-lesson counts.
@@ -160,11 +163,28 @@ export async function buildUserState(
 
   // A path is complete when every course it references is complete (real
   // learningPath membership — replaces the hardcoded SOLANA_DEV_PATH_COURSES).
+  //
+  // Membership is gated through the SAME `isSynced` chokepoint the catalog and
+  // `getAllLearningPaths` use (queries.ts): `getLearningPathsForAdmin` returns
+  // RAW `courseIds` (the admin panel needs the full list), but a learner can
+  // only ever complete a course that is synced+active — `completedCourseIds` is
+  // derived from `getAllCourseLessonCounts`, which is synced+active-only. Left
+  // ungated, staging an unsynced course into an already-live path would make
+  // that path's `path-completed` achievement permanently unsatisfiable until
+  // the course ships on-chain, retroactively breaking learners who already
+  // finished every live member (found on the C1 wave, PR #892; the trap re-arms
+  // on every future wave that adds a member to a live path).
+  //
+  // A path whose synced membership is EMPTY must not count as completed — the
+  // `length > 0` guard keeps `.every()` from being vacuously true.
   const completedPathIds = new Set<string>();
   for (const path of learningPaths) {
+    const syncedCourseIds = path.courseIds.filter((cid) =>
+      isSynced(deployments.get(cid))
+    );
     if (
-      path.courseIds.length > 0 &&
-      path.courseIds.every((cid) => completedCourseIds.has(cid))
+      syncedCourseIds.length > 0 &&
+      syncedCourseIds.every((cid) => completedCourseIds.has(cid))
     ) {
       completedPathIds.add(path._id);
     }

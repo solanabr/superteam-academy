@@ -324,5 +324,13 @@
   {
     "label": "Confirmation & Commitment",
     "slug": "confirmation"
+  },
+  {
+    "label": "Explorer Reading",
+    "slug": "explorer-reading"
+  },
+  {
+    "label": "API Currency",
+    "slug": "api-currency"
   }
 ]

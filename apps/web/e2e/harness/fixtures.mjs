@@ -34,9 +34,13 @@ export const LEARNER = {
 //   • synced + is_active:false  → ABSENT  (a DEACTIVATED course — the #711 leak)
 //   • no row                    → ABSENT  (fail-closed)
 // content_id values are real bundle course ids; the catalog renders their slugs.
-// The bundle is the live 4-course ladder (C2/C3/C4/C5). Three rows are
-// synced+active; one live bundle course is marked is_active:false so the spec
-// keeps its two-directional assertion (present set AND a deactivated absentee).
+// The bundle carries 6 courses: the on-chain ladder (C2/C3/C4/C5) plus C1
+// `course-solana-for-web-devs` and the elective `course-solana-for-evm-devs`,
+// which are STAGED ONLY — no deployment row, so they fall in the "no row →
+// ABSENT" bucket and need no fixture entry until their on-chain create. Three
+// rows are synced+active; one live bundle course is marked is_active:false so
+// the spec keeps its two-directional assertion (present set AND a deactivated
+// absentee).
 export const DEPLOYMENTS = [
   {
     content_id: "course-building-first-program",
