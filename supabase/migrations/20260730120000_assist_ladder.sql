@@ -22,6 +22,43 @@
 -- get_challenge_assists, refund_challenge_assist) are left in place untouched;
 -- the route now spends through spend_assist_ladder_turn.
 
+-- 0. PROD-DRIFT GUARD (#708 ledger): 20260715160000_ai_partner_chat_log.sql
+--    was NEVER applied to prod — it is absent from schema_migrations and from
+--    docs/DB-MIGRATION-LEDGER.md — so prod's challenge_assists has NO chat_log
+--    column and NO append_challenge_assist_log function. The widened
+--    get_challenge_assist_state below is LANGUAGE sql (body validated at
+--    CREATE), so without this block the whole apply errors and rolls back on
+--    prod. Fold the chat-log migration in idempotently here: a no-op on any DB
+--    that already ran it, the missing prerequisite on prod. Copied verbatim
+--    from 20260715160000_ai_partner_chat_log.sql.
+ALTER TABLE challenge_assists
+  ADD COLUMN IF NOT EXISTS chat_log JSONB NOT NULL DEFAULT '[]'::jsonb;
+
+CREATE OR REPLACE FUNCTION append_challenge_assist_log(
+  p_user_id   UUID,
+  p_lesson_id TEXT,
+  p_entries   JSONB
+) RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+BEGIN
+  IF p_entries IS NULL OR jsonb_typeof(p_entries) <> 'array' THEN
+    RETURN;
+  END IF;
+  INSERT INTO public.challenge_assists (user_id, lesson_id, chat_log, updated_at)
+  VALUES (p_user_id, p_lesson_id, p_entries, now())
+  ON CONFLICT (user_id, lesson_id)
+  DO UPDATE SET
+    chat_log = public.challenge_assists.chat_log || EXCLUDED.chat_log,
+    updated_at = now();
+END;
+$$;
+
+REVOKE ALL ON FUNCTION append_challenge_assist_log(UUID, TEXT, JSONB) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION append_challenge_assist_log(UUID, TEXT, JSONB) TO service_role;
+
 -- 1. Ladder counters + reset bookkeeping. assists_used (existing) becomes the
 --    METERED-tier counter; free/Socratic turns get their own columns so a
 --    refund can hand back exactly the tier that was spent.
@@ -108,7 +145,10 @@ AS $$
       assists_used  = CASE WHEN p_tier = 'metered'  THEN GREATEST(assists_used - 1, 0)  ELSE assists_used END,
       socratic_used = CASE WHEN p_tier = 'socratic' THEN GREATEST(socratic_used - 1, 0) ELSE socratic_used END,
       updated_at = now()
-    WHERE user_id = p_user_id AND lesson_id = p_lesson_id;
+    WHERE user_id = p_user_id AND lesson_id = p_lesson_id
+      -- Unrecognized tier: touch NOTHING — an all-ELSE update would still bump
+      -- updated_at and silently extend the reset cooldown.
+      AND p_tier IN ('free', 'metered', 'socratic');
 $$;
 
 REVOKE ALL ON FUNCTION refund_assist_ladder_turn(UUID, TEXT, TEXT) FROM PUBLIC, anon, authenticated;
@@ -199,8 +239,11 @@ AS $$
       WHEN now() < ca.updated_at + interval '7 days' THEN 'cooldown'
       ELSE 'available'
     END,
+    -- Reported ONLY while the cooldown is actually running: once the reset is
+    -- available (or spent) this is NULL, never a stale past timestamp.
     CASE
-      WHEN ca.reset_used_at IS NULL THEN ca.updated_at + interval '7 days'
+      WHEN ca.reset_used_at IS NULL AND now() < ca.updated_at + interval '7 days'
+        THEN ca.updated_at + interval '7 days'
       ELSE NULL
     END,
     ca.chat_log

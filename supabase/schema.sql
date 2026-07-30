@@ -2372,7 +2372,10 @@ AS $$
       assists_used  = CASE WHEN p_tier = 'metered'  THEN GREATEST(assists_used - 1, 0)  ELSE assists_used END,
       socratic_used = CASE WHEN p_tier = 'socratic' THEN GREATEST(socratic_used - 1, 0) ELSE socratic_used END,
       updated_at = now()
-    WHERE user_id = p_user_id AND lesson_id = p_lesson_id;
+    WHERE user_id = p_user_id AND lesson_id = p_lesson_id
+      -- Unrecognized tier: touch NOTHING — an all-ELSE update would still bump
+      -- updated_at and silently extend the reset cooldown.
+      AND p_tier IN ('free', 'metered', 'socratic');
 $$;
 
 REVOKE ALL ON FUNCTION refund_assist_ladder_turn(UUID, TEXT, TEXT) FROM PUBLIC, anon, authenticated;
@@ -2478,8 +2481,11 @@ AS $$
       WHEN now() < ca.updated_at + interval '7 days' THEN 'cooldown'
       ELSE 'available'
     END,
+    -- Reported ONLY while the cooldown is actually running: once the reset is
+    -- available (or spent) this is NULL, never a stale past timestamp.
     CASE
-      WHEN ca.reset_used_at IS NULL THEN ca.updated_at + interval '7 days'
+      WHEN ca.reset_used_at IS NULL AND now() < ca.updated_at + interval '7 days'
+        THEN ca.updated_at + interval '7 days'
       ELSE NULL
     END,
     ca.chat_log

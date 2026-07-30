@@ -95,6 +95,72 @@ function firstRow<T>(rows: readonly T[]): T {
   return rows[0] as T;
 }
 
+// PROD-lineage guard (#887 gate finding B1/B3): prod's schema_migrations has
+// NEVER received 20260715160000_ai_partner_chat_log.sql (absent from the #708
+// ledger), so prod's challenge_assists has no chat_log column and no
+// append_challenge_assist_log function. A ladder migration that assumes them
+// errors at CREATE (LANGUAGE sql bodies are validated then) and rolls back the
+// whole apply. This describe applies ONLY what prod actually has — base +
+// billed_assists_counter + the ladder file, WITHOUT the chat-log migration —
+// so the ladder file must be self-sufficient. Red-proven: at the pre-fix head
+// this failed with `column ca.chat_log does not exist`.
+describe("#864 ladder migration applies on the PROD lineage (no chat-log migration)", () => {
+  let db: PGlite;
+
+  beforeEach(async () => {
+    db = await PGlite.create();
+    await db.exec(STUB_SETUP);
+    await db.exec(baseMigration);
+    await db.exec(billedMigration);
+    // Deliberately NOT chatLogMigration — prod never got it.
+    await db.exec(ladderMigration);
+    await db.exec(`INSERT INTO public.profiles(id) VALUES ('${UID}')`);
+  });
+
+  afterEach(async () => {
+    await db.close();
+  });
+
+  it("applies cleanly and the full RPC surface works end-to-end", async () => {
+    // Spend one turn, log a chat entry, read the widened state back.
+    const { rows: spendRows } = await db.query<SpendRow>(
+      "SELECT * FROM public.spend_assist_ladder_turn($1, $2, $3, $4, $5)",
+      [
+        UID,
+        LESSON,
+        FREE_ASSIST_TURNS,
+        METERED_ASSIST_TURNS,
+        SOCRATIC_ASSIST_TURNS,
+      ]
+    );
+    expect(firstRow(spendRows)).toMatchObject({ allowed: true, tier: "free" });
+
+    await db.query(
+      "SELECT public.append_challenge_assist_log($1, $2, $3::jsonb)",
+      [UID, LESSON, JSON.stringify([{ role: "user", text: "hi" }])]
+    );
+
+    const { rows: stateRows } = await db.query<{
+      free_turns: number;
+      reset_state: string;
+      chat_log: unknown;
+    }>("SELECT * FROM public.get_challenge_assist_state($1, $2)", [
+      UID,
+      LESSON,
+    ]);
+    const state = firstRow(stateRows);
+    expect(state.free_turns).toBe(1);
+    expect(state.reset_state).toBe("cooldown");
+    expect(state.chat_log).toEqual([{ role: "user", text: "hi" }]);
+
+    const { rows: resetRows } = await db.query<ResetRow>(
+      "SELECT * FROM public.reset_challenge_assists($1, $2)",
+      [UID, LESSON]
+    );
+    expect(firstRow(resetRows).reason).toBe("cooldown");
+  });
+});
+
 describe("#864 assist-ladder RPCs execute correctly", () => {
   let db: PGlite;
 
