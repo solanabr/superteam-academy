@@ -279,6 +279,43 @@ export function trackSocraticModeEntered(ctx: ChallengeEventContext): void {
 }
 
 /**
+ * `comprehension_check_answered` — one answer to the comprehension check that
+ * gates applying an AI-proposed patch (`components/editor/ai-partner/diff-card.tsx`).
+ * THE primary AI harm metric: **first-attempt accuracy** = the share of
+ * `attempt: 1` events with `correct: true`. If AI assistance were producing
+ * understanding-free copy-paste, this is where it shows up first.
+ *
+ * Deliberately NOT deduped — every answer is signal. Retries are free and
+ * unlimited by design, so later attempts fire too with the running counter,
+ * making remediation depth (how many tries to get there) measurable; PostHog
+ * filters `attempt = 1` for the headline metric.
+ *
+ * `attempt` is per CHECK INSTANCE, not per lesson lifetime: the counter is keyed
+ * by the check's seal token (one seal per proposed patch), so a fresh proposal
+ * restarts at 1. Per-lesson-lifetime numbering would make attempt=1 mean "the
+ * first check the learner ever saw in this lesson" and silently drop every
+ * later patch out of the first-attempt denominator.
+ *
+ * `correct` is the SERVER's verdict (/api/ai/partner/verify against the sealed
+ * token) — the browser never holds the answer key, so this metric is not
+ * client-forgeable. Callers must not fire it for a failed verify round trip: a
+ * network error is not a wrong answer.
+ */
+export function trackComprehensionCheckAnswered(opts: {
+  lessonId: string;
+  courseId?: string;
+  correct: boolean;
+  attempt: number;
+}): void {
+  trackEvent("comprehension_check_answered", {
+    lessonId: opts.lessonId,
+    correct: opts.correct,
+    attempt: opts.attempt,
+    ...(opts.courseId ? { courseId: opts.courseId } : {}),
+  });
+}
+
+/**
  * `assist_reset_used` — the learner spent their ONE self-serve per-lesson
  * assist reset (#864, P2-5/D-8). Fired only on a server-confirmed reset
  * (`allowed: true`), never on a denied attempt, so it counts real resets.

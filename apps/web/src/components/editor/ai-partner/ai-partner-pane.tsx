@@ -164,7 +164,6 @@ export function AiPartnerPane({
     }
   }, [requestReset, eventCtx]);
 
-
   return (
     <div
       className={cn(
@@ -276,6 +275,7 @@ export function AiPartnerPane({
           onApply={onApply}
           getCode={getCode}
           onVerify={verifyCheck}
+          eventCtx={eventCtx}
           className="min-h-0 flex-1"
         />
       )}

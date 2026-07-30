@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { User, Sparkle, Lightbulb } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
+import type { ChallengeEventContext } from "@/lib/analytics/events";
+import type { VerifyOutcome } from "@/lib/ai/partner-types";
 import type { PartnerMessage } from "@/lib/ai/use-ai-partner";
 import { DiffCard } from "./diff-card";
 
@@ -16,7 +18,10 @@ interface MessageListProps {
   onVerify: (
     checkToken: string,
     pickedIndex: 0 | 1 | 2
-  ) => Promise<{ correct: boolean; explanation: string }>;
+  ) => Promise<VerifyOutcome>;
+  /** Content-id context for the comprehension-check event (#866); threaded to
+   *  each DiffCard. Optional — without it the event simply doesn't fire. */
+  eventCtx?: ChallengeEventContext;
   className?: string;
 }
 
@@ -69,6 +74,7 @@ export function MessageList({
   onApply,
   getCode,
   onVerify,
+  eventCtx,
   className,
 }: MessageListProps) {
   const t = useTranslations("aiPartner");
@@ -165,6 +171,7 @@ export function MessageList({
                   setDismissed((prev) => new Set(prev).add(index))
                 }
                 stale={index !== lastProposeIndex}
+                eventCtx={eventCtx}
                 className="w-full"
               />
             </MessageBubble>

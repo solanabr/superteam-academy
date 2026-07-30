@@ -114,6 +114,17 @@ export interface VerifyResponse {
   explanation: string;
 }
 
+/**
+ * Client-side outcome of a verify round trip: the wire `VerifyResponse` plus a
+ * transport marker. `failed: true` means "no server verdict" — the UI still
+ * fails SAFE (`correct: false`, Accept stays locked), but analytics MUST NOT
+ * count it as a wrong answer: a dropped request is not a comprehension failure,
+ * and `comprehension_check_answered` is the primary AI harm metric (#866).
+ */
+export interface VerifyOutcome extends VerifyResponse {
+  failed?: boolean;
+}
+
 // ── Assist ladder (#864, AI-tutor-economics spec §4.2) ─────────────────────
 // Per-(learner, challenge) AI-turn budget, resolved in strict order:
 //   free (2, counter hidden) → metered (8, meter visible) → Socratic (20,

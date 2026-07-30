@@ -8,6 +8,7 @@ import {
   trackChallengeRun,
   trackChallengeSolved,
   trackChallengeStarted,
+  trackComprehensionCheckAnswered,
   trackCredentialMinted,
   trackNextLessonPlanCommitted,
   trackSolutionRevealed,
@@ -236,5 +237,57 @@ describe("credential_minted dedupe (one mint = one event)", () => {
     resetAnalyticsEventDedupeForTests();
     trackCredentialMinted("course-a", "manual_mint");
     expect(trackEvent).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("trackComprehensionCheckAnswered", () => {
+  it("carries correctness + the per-check attempt number, never deduped", () => {
+    trackComprehensionCheckAnswered({
+      lessonId: ctx.lessonId,
+      courseId: ctx.courseId,
+      correct: false,
+      attempt: 1,
+    });
+    trackComprehensionCheckAnswered({
+      lessonId: ctx.lessonId,
+      courseId: ctx.courseId,
+      correct: true,
+      attempt: 2,
+    });
+
+    // Every answer is signal — the same lesson firing twice is the point.
+    expect(trackEvent).toHaveBeenNthCalledWith(
+      1,
+      "comprehension_check_answered",
+      {
+        lessonId: ctx.lessonId,
+        courseId: ctx.courseId,
+        correct: false,
+        attempt: 1,
+      }
+    );
+    expect(trackEvent).toHaveBeenNthCalledWith(
+      2,
+      "comprehension_check_answered",
+      {
+        lessonId: ctx.lessonId,
+        courseId: ctx.courseId,
+        correct: true,
+        attempt: 2,
+      }
+    );
+  });
+
+  it("omits courseId when the surface does not know it", () => {
+    trackComprehensionCheckAnswered({
+      lessonId: ctx.lessonId,
+      correct: true,
+      attempt: 1,
+    });
+    expect(trackEvent).toHaveBeenCalledWith("comprehension_check_answered", {
+      lessonId: ctx.lessonId,
+      correct: true,
+      attempt: 1,
+    });
   });
 });

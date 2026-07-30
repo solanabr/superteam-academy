@@ -9,6 +9,7 @@ import type {
   PartnerAction,
   PartnerMessage,
   PartnerResponse,
+  VerifyOutcome,
   VerifyResponse,
 } from "./partner-types";
 
@@ -71,7 +72,7 @@ interface UseAiPartnerResult {
   verifyCheck: (
     checkToken: string,
     pickedIndex: 0 | 1 | 2
-  ) => Promise<VerifyResponse>;
+  ) => Promise<VerifyOutcome>;
 }
 
 type PartnerRouteReply =
@@ -332,7 +333,7 @@ export function useAiPartner({
     async (
       checkToken: string,
       pickedIndex: 0 | 1 | 2
-    ): Promise<VerifyResponse> => {
+    ): Promise<VerifyOutcome> => {
       try {
         const res = await fetch(VERIFY_ROUTE, {
           method: "POST",
@@ -340,11 +341,11 @@ export function useAiPartner({
           body: JSON.stringify({ checkToken, pickedIndex }),
         });
         if (!res.ok) {
-          return { correct: false, explanation: "" };
+          return { correct: false, explanation: "", failed: true };
         }
         return (await res.json()) as VerifyResponse;
       } catch {
-        return { correct: false, explanation: "" };
+        return { correct: false, explanation: "", failed: true };
       }
     },
     []

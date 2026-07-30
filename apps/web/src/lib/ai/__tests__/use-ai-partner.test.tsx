@@ -491,6 +491,8 @@ describe("useAiPartner", () => {
       expect(verdict).toEqual({ correct: true, explanation: "because B" });
     });
 
+    // `failed: true` marks "no server verdict": the UI still fails safe, but
+    // analytics must not count a dropped request as a wrong answer (#866).
     it("fails SAFE (correct:false) on a non-ok response, never auto-accepting", async () => {
       vi.mocked(global.fetch).mockResolvedValue({
         ok: false,
@@ -501,7 +503,11 @@ describe("useAiPartner", () => {
 
       const verdict = await result.current.verifyCheck("tok", 1);
 
-      expect(verdict).toEqual({ correct: false, explanation: "" });
+      expect(verdict).toEqual({
+        correct: false,
+        explanation: "",
+        failed: true,
+      });
     });
 
     it("fails SAFE (correct:false) when the fetch itself throws", async () => {
@@ -511,7 +517,11 @@ describe("useAiPartner", () => {
 
       const verdict = await result.current.verifyCheck("tok", 0);
 
-      expect(verdict).toEqual({ correct: false, explanation: "" });
+      expect(verdict).toEqual({
+        correct: false,
+        explanation: "",
+        failed: true,
+      });
     });
   });
 });
