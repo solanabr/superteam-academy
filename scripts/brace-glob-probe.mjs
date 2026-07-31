@@ -9,14 +9,30 @@
  * `glob.sync('*.{json,md}')` throw `TypeError: expand is not a function`.
  *
  * This script is the detector that caught it: it drives real brace patterns
- * through every installed minimatch / glob / test-exclude / brace-expansion
- * copy in the pnpm store, plus the ESLint config-resolution path, and reports
- * pass/fail per consumer. Run it before AND after any change to the
+ * through every minimatch / glob / test-exclude / brace-expansion copy that is
+ * REACHABLE IN THE RESOLUTION GRAPH, plus the ESLint config-resolution path,
+ * and reports pass/fail per consumer. Run it before AND after any change to the
  * brace-expansion or minimatch overrides in the root package.json.
  *
  *   node scripts/brace-glob-probe.mjs
  *
  * Exit code 0 = every reachable consumer expands braces correctly.
+ *
+ * Resolution-awareness (#905)
+ * ---------------------------
+ * The first cut of this probe enumerated copies by walking `node_modules/.pnpm`
+ * DIRECTORIES. A pnpm store accumulates orphans: a dir left behind by an earlier
+ * install that nothing resolves to any more. Those orphans are never loaded by
+ * anything, but the directory walk still probed them — on main after #900 that
+ * produced 9 VULNERABLE lines for brace-expansion 1.1.12/1.1.16 and minimatch
+ * 2.0.2/2.1.2 while `pnpm why` resolved nothing to them and the lockfile pinned
+ * only patched versions. Noise that loud hides a real regression.
+ *
+ * So the set of versions to ASSERT on now comes from the lockfile's resolution
+ * graph (`pnpm-lock.yaml` -> `snapshots:`, which is exactly what `pnpm why`
+ * reads), and the directory walk is demoted to "where do I find the bytes for a
+ * resolved version". On-disk copies that are not in the graph are still listed,
+ * as a non-failing INFO section, so a genuinely surprising store stays visible.
  */
 
 import { createRequire } from 'node:module';
@@ -28,32 +44,240 @@ import path from 'node:path';
 const require = createRequire(import.meta.url);
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const pnpmDir = path.join(repoRoot, 'node_modules', '.pnpm');
+const lockfile = path.join(repoRoot, 'pnpm-lock.yaml');
 
 const results = [];
 const record = (consumer, check, ok, detail) => {
   results.push({ consumer, check, ok, detail });
 };
 
-/** Every installed copy of `name` in the pnpm store, as [version, dir] pairs. */
-function installedCopies(name) {
-  if (!existsSync(pnpmDir)) return [];
-  const encoded = name.replace('/', '+');
-  return readdirSync(pnpmDir)
-    .filter((d) => d.startsWith(`${encoded}@`) && /@\d/.test(d.slice(encoded.length)))
-    .map((d) => {
+/** Non-failing observations: orphaned store dirs, skipped override specs, … */
+const info = [];
+const note = (scope, detail) => {
+  info.push({ scope, detail });
+};
+
+// ---------------------------------------------------------------------------
+// Resolution graph
+// ---------------------------------------------------------------------------
+
+const cmpVersion = (a, b) => a[0].localeCompare(b[0], undefined, { numeric: true });
+
+/**
+ * A snapshot entry key at exactly 2 spaces of indent.
+ *
+ * pnpm lockfile v9 writes an entry in one of TWO shapes, and both must match:
+ *
+ *   block  ->  `  minimatch@9.0.9:`            (has a nested `dependencies:` map)
+ *   leaf   ->  `  picomatch@2.3.2: {}`         (dependency-less, INLINE FLOW MAP)
+ *
+ * Missing the leaf form is not a cosmetic gap: it drops 34% of this lockfile's
+ * entries, and — because an unmatched key means "not in the graph" — it silently
+ * downgrades a REACHABLE vulnerable copy to a benign orphan INFO. That is a
+ * false negative strictly worse than the directory-walking bug this replaces,
+ * so the trailing `{}` is part of the pattern, not an afterthought.
+ *
+ * Keys are also optionally single-quoted (`'@babel/core@7.29.6'`) and may carry
+ * a peer suffix (`foo@1.2.3(bar@4.5.6)`); the peer hash is dropped because it
+ * does not change which bytes land on disk for that version.
+ */
+const SNAPSHOT_KEY =
+  /^ {2}'?((?:@[^/'\s]+\/)?[^@'\s][^'\s]*?)@([^('\s]+)(?:\([^']*\))?'?:(\s*\{\s*\})?\s*$/;
+
+/**
+ * `name -> Set(version)` for everything in the lockfile's resolution graph.
+ *
+ * Parsed straight out of the `snapshots:` block of pnpm lockfile v9 — the same
+ * structure `pnpm why` walks — rather than shelling out to `pnpm why` per
+ * package (seconds per call, and it needs a resolved store to answer at all).
+ */
+function parseSnapshots(text) {
+  const graph = new Map();
+  let inSnapshots = false;
+  for (const line of text.split('\n')) {
+    if (/^[a-zA-Z]/.test(line)) {
+      inSnapshots = line.startsWith('snapshots:');
+      continue;
+    }
+    if (!inSnapshots) continue;
+    const m = SNAPSHOT_KEY.exec(line);
+    if (!m) continue;
+    const [, name, version] = m;
+    if (!/^\d/.test(version)) continue; // links / aliases, not a real version
+    if (!graph.has(name)) graph.set(name, new Set());
+    graph.get(name).add(version);
+  }
+  return graph;
+}
+
+// --- Parser self-check (regression fixture for the leaf-form defect) --------
+// Runs on every invocation, asserted like any other check: a parser that stops
+// seeing `foo@1.0.0: {}` turns real failures into INFO lines, so it must fail
+// the build loudly rather than quietly shrink the probe's coverage.
+{
+  const fixture = [
+    'packages:',
+    '  ignored-outside-snapshots@9.9.9: {}',
+    'snapshots:',
+    '  leaf@1.0.0: {}',
+    '  leaf-spaced@1.0.1: {  }',
+    '  block@2.0.0:',
+    '    dependencies:',
+    '      leaf: 1.0.0',
+    "  '@scoped/leaf@3.0.0': {}",
+    "  '@scoped/block@3.1.0':",
+    '    dependencies:',
+    '      leaf: 1.0.0',
+    '  peered@4.0.0(leaf@1.0.0): {}',
+    "  'peered-quoted@4.1.0(leaf@1.0.0)': {}",
+    '  aliased@link:../local: {}',
+    '',
+  ].join('\n');
+  const got = parseSnapshots(fixture);
+  const flat = [...got].flatMap(([n, vs]) => [...vs].map((v) => `${n}@${v}`)).sort();
+  const want = [
+    '@scoped/block@3.1.0',
+    '@scoped/leaf@3.0.0',
+    'block@2.0.0',
+    'leaf-spaced@1.0.1',
+    'leaf@1.0.0',
+    'peered-quoted@4.1.0',
+    'peered@4.0.0',
+  ];
+  record(
+    'parser self-check',
+    'snapshot keys: leaf `{}` + block + scoped + peer-suffixed',
+    JSON.stringify(flat) === JSON.stringify(want),
+    JSON.stringify(flat),
+  );
+}
+
+const graph = existsSync(lockfile) ? parseSnapshots(readFileSync(lockfile, 'utf8')) : null;
+if (graph && !graph.size) {
+  console.error('brace-glob-probe: pnpm-lock.yaml has an empty `snapshots:` block.');
+  process.exit(2);
+}
+if (!graph) {
+  console.error(
+    'brace-glob-probe: could not read the resolution graph from pnpm-lock.yaml — ' +
+      'refusing to fall back to a directory walk (that is the #905 false-positive mode).',
+  );
+  process.exit(2);
+}
+
+/**
+ * Copies of `name` to probe.
+ *
+ * Enumerates the pnpm store for the bytes, then partitions by whether the
+ * version appears in the resolution graph. Only `reachable` is asserted on.
+ */
+function copies(name) {
+  const resolved = graph.get(name) ?? new Set();
+  const reachable = [];
+  const orphaned = [];
+  const seen = new Set();
+
+  if (existsSync(pnpmDir)) {
+    const encoded = name.replace('/', '+');
+    for (const d of readdirSync(pnpmDir)) {
+      if (!d.startsWith(`${encoded}@`) || !/@\d/.test(d.slice(encoded.length))) continue;
       const dir = path.join(pnpmDir, d, 'node_modules', ...name.split('/'));
-      if (!existsSync(dir)) return null;
+      if (!existsSync(path.join(dir, 'package.json'))) continue;
       const version = JSON.parse(readFileSync(path.join(dir, 'package.json'), 'utf8')).version;
-      return [version, dir];
-    })
-    .filter(Boolean)
-    .sort((a, b) => a[0].localeCompare(b[0], undefined, { numeric: true }));
+      if (resolved.has(version)) {
+        if (seen.has(version)) continue; // same version, different peer hash
+        seen.add(version);
+        reachable.push([version, dir]);
+      } else {
+        orphaned.push([version, d]);
+      }
+    }
+  }
+
+  for (const [version, d] of orphaned.sort(cmpVersion)) {
+    note(name, `${name}@${version} on disk (.pnpm/${d}) but NOT in the resolution graph — not probed`);
+  }
+
+  // A version the graph resolves but that has no bytes on disk means the probe
+  // silently covers less than it claims to — that is a failure, not an INFO.
+  for (const version of [...resolved].sort()) {
+    if (!seen.has(version)) {
+      record(`${name}@${version}`, 'resolved copy is installed', false, 'in pnpm-lock.yaml but no copy under node_modules/.pnpm — run `pnpm install`');
+    }
+  }
+
+  return reachable.sort(cmpVersion);
+}
+
+// ---------------------------------------------------------------------------
+// 0. Override conformance — every resolved version honors the root pin
+// ---------------------------------------------------------------------------
+// The CVE bounds only stay in the tree because root package.json pins patched
+// ranges per major. A dependency bump that drags in an unpinned major (a new
+// `minimatch@10`, say) would resolve to something this probe has no pin for,
+// so surface it here rather than discovering it as a runtime failure later.
+const PINNED = ['brace-expansion', 'minimatch', 'picomatch'];
+const overrides = JSON.parse(readFileSync(path.join(repoRoot, 'package.json'), 'utf8')).pnpm
+  ?.overrides ?? {};
+
+// Coverage floor. Every check below is "for each resolved version of X" — which
+// asserts NOTHING when X resolves to nothing. A parser regression, a rename, or
+// a genuine drop-out of the tree would all shrink the probe silently (the
+// leaf-form defect above cut it 49 -> 44 checks with no red anywhere). A pinned
+// name that vanishes from the graph is therefore a failure in its own right.
+for (const name of PINNED) {
+  const n = graph.get(name)?.size ?? 0;
+  record(name, 'resolves to >=1 version (coverage floor)', n > 0, `${n} version(s) in the resolution graph`);
+}
+
+/** Enough semver for the range forms the overrides actually use. */
+function satisfies(version, range) {
+  const parse = (v) => v.split('-')[0].split('.').map(Number);
+  const [vMaj, vMin, vPat] = parse(version);
+  const op = /^[\^~]/.test(range) ? range[0] : '=';
+  const [rMaj, rMin, rPat] = parse(range.replace(/^[\^~]/, ''));
+  if ([vMaj, vMin, vPat, rMaj, rMin, rPat].some(Number.isNaN)) return null; // unsupported form
+  const gte =
+    vMaj > rMaj ||
+    (vMaj === rMaj && (vMin > rMin || (vMin === rMin && vPat >= rPat)));
+  if (op === '=') return vMaj === rMaj && vMin === rMin && vPat === rPat;
+  if (op === '^') return vMaj === rMaj && gte;
+  return vMaj === rMaj && vMin === rMin && gte;
+}
+
+for (const name of PINNED) {
+  const specs = Object.entries(overrides)
+    .filter(([k]) => k === name || k.startsWith(`${name}@`))
+    .map(([k, v]) => [k.includes('@') ? k.slice(name.length + 1) : null, v]);
+  for (const version of [...(graph.get(name) ?? [])].sort()) {
+    const major = version.split('.')[0];
+    const hit = specs.find(([m]) => m === null || m === major);
+    if (!hit) {
+      record(`${name}@${version}`, 'covered by a root override pin', false, `no override for major ${major} in package.json pnpm.overrides`);
+      continue;
+    }
+    const ok = satisfies(version, hit[1]);
+    if (ok === null) {
+      // The PIN is repo-authored. A form this probe can't evaluate (`>=9.0.7`,
+      // `9.x`, a range union) means the pin is going UNVERIFIED — indistinguish-
+      // able, from here, from a real pin gap. Fail and make someone either teach
+      // `satisfies()` the form or simplify the pin; never quietly skip it.
+      record(
+        `${name}@${version}`,
+        'covered by a root override pin',
+        false,
+        `pin ${name}@${major} = '${hit[1]}' is not a form this probe can evaluate — pin left UNVERIFIED`,
+      );
+      continue;
+    }
+    record(`${name}@${version}`, 'covered by a root override pin', ok, `pin ${name}@${major} = ${hit[1]}`);
+  }
 }
 
 // ---------------------------------------------------------------------------
 // 1. brace-expansion — export shape + expansion + the CVE-2026-14257 bound
 // ---------------------------------------------------------------------------
-for (const [version, dir] of installedCopies('brace-expansion')) {
+for (const [version, dir] of copies('brace-expansion')) {
   const tag = `brace-expansion@${version}`;
   let mod;
   try {
@@ -121,7 +345,7 @@ for (const [version, dir] of installedCopies('brace-expansion')) {
 // ---------------------------------------------------------------------------
 // 2. minimatch — every installed major, through its real callable API
 // ---------------------------------------------------------------------------
-for (const [version, dir] of installedCopies('minimatch')) {
+for (const [version, dir] of copies('minimatch')) {
   const tag = `minimatch@${version}`;
   let mm;
   try {
@@ -169,7 +393,7 @@ for (const [version, dir] of installedCopies('minimatch')) {
 // ---------------------------------------------------------------------------
 // 3. glob — the #820 smoke, run against real files, per installed major
 // ---------------------------------------------------------------------------
-for (const [version, dir] of installedCopies('glob')) {
+for (const [version, dir] of copies('glob')) {
   const tag = `glob@${version}`;
   let g;
   try {
@@ -196,7 +420,7 @@ for (const [version, dir] of installedCopies('glob')) {
 // ---------------------------------------------------------------------------
 // 4. test-exclude — istanbul/jest coverage globs (minimatch consumer)
 // ---------------------------------------------------------------------------
-for (const [version, dir] of installedCopies('test-exclude')) {
+for (const [version, dir] of copies('test-exclude')) {
   const tag = `test-exclude@${version}`;
   try {
     const TestExclude = require(dir);
@@ -305,6 +529,14 @@ for (const r of results) {
 }
 const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} checks passed.`);
+
+// Informational only — never affects the exit code. Orphaned store dirs are
+// bytes nothing resolves to; probing them was the #905 false-positive source.
+if (info.length) {
+  console.log(`\nINFO (not asserted, does not affect exit code) — ${info.length} item(s):`);
+  for (const i of info) console.log(`  ${i.scope} :: ${i.detail}`);
+}
+
 if (failed.length) {
   console.log('FAILURES:');
   for (const f of failed) console.log(`  ${f.consumer} :: ${f.check} :: ${f.detail}`);

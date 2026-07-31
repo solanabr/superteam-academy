@@ -73,6 +73,10 @@ jobs:
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
               - 'tsconfig*.json'
+              # The brace-glob probe runs inside this job (#905). Any edit to it
+              # must re-run it, and `package.json` / `pnpm-lock.yaml` above are
+              # already the inputs it guards (the pnpm.overrides pins).
+              - 'scripts/brace-glob-probe.mjs'
               - '.github/workflows/ci.yml'
             onchain:
               - 'onchain-academy/**'
@@ -106,6 +110,22 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Brace-glob probe (minimatch / brace-expansion resolution)
+        # #905. The ONLY detector for a regression class the green suites
+        # provably miss: #820's `brace-expansion: ^5` override passed 2354 tests
+        # and 6/6 typechecks while breaking every brace glob at runtime, because
+        # non-brace patterns short-circuit before expansion is ever called. This
+        # step drives real brace patterns through every minimatch /
+        # brace-expansion / glob / test-exclude copy the lockfile RESOLVES to
+        # (orphaned store dirs are reported as INFO and never fail the build),
+        # asserts the CVE-2026-14257 bound holds in each, and checks every
+        # resolved version still satisfies its root `pnpm.overrides` pin.
+        #
+        # Hard gate on purpose — a dependency change that reintroduces a
+        # vulnerable or incompatible copy must fail the build, not become tribal
+        # knowledge. Runs right after install so it fails before the slow steps.
+        run: pnpm probe:brace-glob
 
       - name: Prettier
         # RATCHET: report-only until the repo is prettier-clean. Run `pnpm format`
