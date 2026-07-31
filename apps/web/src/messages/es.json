@@ -1008,7 +1008,9 @@
     },
     "lessonContext": "De la lección",
     "filterCourseQuestions": "Preguntas del curso",
-    "composerHeading": "Pregunta a la comunidad"
+    "composerHeading": "Pregunta a la comunidad",
+    "answersCount": "Respuestas ({count})",
+    "sortBy": "Ordenar por"
   },
   "aiPartner": {
     "title": "Compañero de IA",

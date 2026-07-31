@@ -43,18 +43,21 @@ export function AnswerEditor({ threadId, onAnswerPosted }: AnswerEditorProps) {
   };
 
   return (
-    <div>
-      <h3 className="mb-2 font-display font-bold text-[var(--text)]">
-        {t("yourAnswer")}
-      </h3>
+    // ONE composer block: the editor and its submit share a single frame, with
+    // the button bottom-right inside it. No "Your Answer" heading — the
+    // section's "Answers (N)" header above already says where you are.
+    <div className="rounded-lg border border-[var(--border-default)] bg-[var(--card)]">
       <MarkdownEditor
         value={body}
         onChange={setBody}
         placeholder={t("writeAnswer")}
-        minHeight="150px"
+        minHeight="110px"
+        flush
       />
-      {error && <p className="mt-2 text-sm text-[var(--danger)]">{error}</p>}
-      <div className="mt-3 flex justify-end">
+      {error && (
+        <p className="px-3 pt-2 text-sm text-[var(--danger)]">{error}</p>
+      )}
+      <div className="flex justify-end border-t border-[var(--border-default)] px-3 py-2">
         <Button
           variant="primary"
           onClick={handleSubmit}

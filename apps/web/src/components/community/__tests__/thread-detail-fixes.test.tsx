@@ -225,6 +225,81 @@ describe("ThreadDetailClient — provenance chip", () => {
   });
 });
 
+describe("Answers section — LeetCode comment-thread anatomy", () => {
+  it("puts the composer ABOVE the answer list", async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => makeThread({ answers: [makeAnswer("a1", "Body.")] }),
+    });
+    const { container } = renderWithIntl(<ThreadDetailClient shortId="abc" />);
+    await screen.findByText("Body.");
+
+    const composer = screen.getByPlaceholderText(
+      messages.community.writeAnswer
+    );
+    const answer = screen.getByText("Body.");
+    // Replying must not be a scroll hunt past N answers.
+    expect(
+      composer.compareDocumentPosition(answer) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(container.textContent).toContain("Answers (1)");
+    expect(container.textContent).toContain(messages.community.sortBy);
+  });
+
+  it("renders answers flat — no per-item border, radius, or fill", async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => makeThread({ answers: [makeAnswer("a1", "Body.")] }),
+    });
+    const { container } = renderWithIntl(<ThreadDetailClient shortId="abc" />);
+    await screen.findByText("Body.");
+
+    const item = container.querySelector("article");
+    expect(item).not.toBeNull();
+    const cls = item!.className;
+    // A comment, not a card.
+    expect(cls).not.toMatch(/\brounded/);
+    expect(cls).not.toMatch(/\bbg-/);
+    expect(cls).not.toMatch(/\bborder-\[var\(--border-default\)\]/);
+    // Separation comes from the list's hairline divider alone.
+    expect(item!.parentElement?.className).toContain("divide-y");
+  });
+
+  it("marks the accepted answer with a left rule, not a box", async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        ...makeThread({ answers: [makeAnswer("a1", "Body.", true)] }),
+      }),
+    });
+    const { container } = renderWithIntl(<ThreadDetailClient shortId="abc" />);
+    await screen.findByText("Body.");
+
+    const item = container.querySelector("article")!;
+    expect(item.className).toContain("border-l-2");
+    expect(item.className).toContain("border-l-[var(--success)]");
+    expect(item.className).not.toMatch(/\brounded/);
+    expect(
+      screen.getByText(messages.community.acceptedAnswer, { selector: "span" })
+    ).toBeInTheDocument();
+  });
+
+  it("shows no sort line or list when there are no answers", async () => {
+    fetchMock.mockResolvedValue({ ok: true, json: async () => makeThread() });
+    const { container } = renderWithIntl(<ThreadDetailClient shortId="abc" />);
+    await screen.findByRole("heading", { name: /Why is my PDA seed wrong/ });
+
+    expect(container.textContent).toContain("Answers (0)");
+    expect(container.textContent).not.toContain(messages.community.sortBy);
+    expect(container.querySelector("article")).toBeNull();
+    // The composer is still there — that is the whole point of an empty state.
+    expect(
+      screen.getByPlaceholderText(messages.community.writeAnswer)
+    ).toBeInTheDocument();
+  });
+});
+
 describe("AnswerCard — accept control", () => {
   function renderCard(opts: {
     isThreadAuthor: boolean;

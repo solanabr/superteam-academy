@@ -1008,7 +1008,9 @@
     },
     "lessonContext": "From lesson",
     "filterCourseQuestions": "Course questions",
-    "composerHeading": "Ask the community"
+    "composerHeading": "Ask the community",
+    "answersCount": "Answers ({count})",
+    "sortBy": "Sort by"
   },
   "aiPartner": {
     "title": "AI Partner",

@@ -13,6 +13,8 @@ interface MarkdownEditorProps {
   maxLength?: number;
   placeholder?: string;
   minHeight?: string;
+  /** Render without the outer border/radius so the caller can frame it. */
+  flush?: boolean;
 }
 
 export function MarkdownEditor({
@@ -21,13 +23,22 @@ export function MarkdownEditor({
   maxLength = 10000,
   placeholder = "Write your content using Markdown...",
   minHeight = "200px",
+  flush = false,
 }: MarkdownEditorProps) {
   const t = useTranslations("community");
   const [tab, setTab] = useState<"write" | "preview">("write");
   const charPercent = value.length / maxLength;
 
   return (
-    <div className="overflow-hidden rounded-lg border border-[var(--border-default)]">
+    <div
+      className={cn(
+        "overflow-hidden",
+        // `flush` drops the frame so a caller can own it — the answer composer
+        // wraps the editor AND its submit button in one block, and two nested
+        // frames read as two controls.
+        !flush && "rounded-lg border border-[var(--border-default)]"
+      )}
+    >
       {/* Tabs */}
       <div className="flex border-b border-[var(--border-default)] bg-[var(--surface)]">
         <button
