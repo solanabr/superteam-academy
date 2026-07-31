@@ -704,7 +704,8 @@
     "codeOfConduct": "Code of Conduct",
     "builtWith": "Built with Solana",
     "allRightsReserved": "All rights reserved.",
-    "languages": "Available in English, Portuguese, and Spanish."
+    "languages": "Available in English, Portuguese, and Spanish.",
+    "poweredBy": "Powered by"
   },
   "notFound": {
     "title": "Page Not Found",

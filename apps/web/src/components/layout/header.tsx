@@ -207,18 +207,23 @@ export function Header() {
             href={`/${locale}`}
             className="relative z-10 mr-auto hidden shrink-0 lg:flex"
           >
+            {/* Academy lockup is the primary mark (brand guide §02). h-6 renders
+                it ~126px wide — above the 110px minimum, so the lockup (not the
+                mark) is the correct variant here. */}
             <Image
-              src="/ST-DARK-GREEN-HORIZONTAL.png"
-              alt="Superteam Brasil"
-              width={160}
-              height={32}
+              src="/brand/academy-lockup-ink.svg"
+              alt="Superteam Academy"
+              width={157}
+              height={30}
+              priority
               className="h-6 w-auto dark:hidden"
             />
             <Image
-              src="/ST-YELLOW-HORIZONTAL.png"
-              alt="Superteam Brasil"
-              width={160}
-              height={32}
+              src="/brand/academy-lockup-white.svg"
+              alt="Superteam Academy"
+              width={157}
+              height={30}
+              priority
               className="hidden h-6 w-auto dark:block"
             />
           </Link>
@@ -350,17 +355,19 @@ export function Header() {
               className="flex min-h-[44px] items-center"
             >
               <Image
-                src="/ST-DARK-GREEN-HORIZONTAL.png"
-                alt="Superteam Brasil"
-                width={160}
-                height={32}
+                src="/brand/academy-lockup-ink.svg"
+                alt="Superteam Academy"
+                width={157}
+                height={30}
+                priority
                 className="h-6 w-auto dark:hidden"
               />
               <Image
-                src="/ST-YELLOW-HORIZONTAL.png"
-                alt="Superteam Brasil"
-                width={160}
-                height={32}
+                src="/brand/academy-lockup-white.svg"
+                alt="Superteam Academy"
+                width={157}
+                height={30}
+                priority
                 className="hidden h-6 w-auto dark:block"
               />
             </Link>
