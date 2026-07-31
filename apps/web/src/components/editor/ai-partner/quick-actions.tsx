@@ -20,8 +20,9 @@ interface QuickActionsProps {
  * ladder (#864 — free → metered → Socratic → community handoff, tier-exact
  * billing) and the attempt-gate nudge (#865) constrain *how* the tutor answers
  * and *how much*, which is what hints-only was really protecting. So the ask is
- * back next to the hint, spending the same ladder. Propose-a-fix remains
- * unexposed (the AI offers a diff on its own terms).
+ * back next to the hint, spending the same ladder — and since #947 the composer
+ * also carries the quieter "Show me a change" action (propose), offered only
+ * after a failing run and still gated behind the earned-Accept check.
  *
  * At full ladder exhaustion (#864) the hint button simply disables — the pane's
  * community-handoff block carries the copy, so no wall-shaped message here.

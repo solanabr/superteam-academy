@@ -316,6 +316,21 @@ export function trackComprehensionCheckAnswered(opts: {
 }
 
 /**
+ * `propose_accepted` — the learner passed the earned-Accept comprehension check
+ * and applied an AI-proposed patch to their editor buffer (#947). Pairs with
+ * `comprehension_check_answered`: that one measures whether understanding was
+ * demonstrated, this one measures how often a demonstrated-understanding patch
+ * actually lands in the code.
+ *
+ * Deliberately NOT deduped per lesson — a lesson can hold several proposals and
+ * each accepted one is a distinct application. Exactly-once per accepted patch
+ * is guaranteed by the diff card, which latches after its single Accept.
+ */
+export function trackProposeAccepted(ctx: ChallengeEventContext): void {
+  trackEvent("propose_accepted", challengePayload(ctx));
+}
+
+/**
  * `assist_reset_used` — the learner spent their ONE self-serve per-lesson
  * assist reset (#864, P2-5/D-8). Fired only on a server-confirmed reset
  * (`allowed: true`), never on a denied attempt, so it counts real resets.

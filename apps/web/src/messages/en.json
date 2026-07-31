@@ -1035,7 +1035,8 @@
     },
     "actions": {
       "hint": "Hint",
-      "propose": "Propose fix",
+      "propose": "Show me a change",
+      "proposeCost": "uses 1 turn",
       "askPlaceholder": "Ask a question about this challenge...",
       "askLabel": "Ask the AI Partner about this challenge",
       "askSend": "Send",

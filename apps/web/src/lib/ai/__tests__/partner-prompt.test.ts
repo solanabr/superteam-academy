@@ -154,6 +154,22 @@ describe("partner-prompt", () => {
         buildDynamicSuffix({ ...base, action }, { socratic: true })
       ).not.toContain("[SOCRATIC_INSTRUCTIONS]");
     }
+
+    // #947 exposed propose in the composer, where the learner's draft can ride
+    // along as `message`. A Socratic-tier propose carrying learner text must
+    // STILL be a clean diff request — the draft is data, never a route into the
+    // questions-first contract.
+    const proposeWithDraft = buildDynamicSuffix(
+      {
+        ...base,
+        action: "propose",
+        message: "why is my loop off by one?",
+      },
+      { socratic: true }
+    );
+    expect(proposeWithDraft).not.toContain("[SOCRATIC_INSTRUCTIONS]");
+    expect(proposeWithDraft).toContain("[LEARNER_MESSAGE]");
+    expect(proposeWithDraft).toContain("[ACTION]\npropose");
   });
 
   it("Socratic hint/ask inherit the hint-sized output cap; propose keeps its full budget", () => {

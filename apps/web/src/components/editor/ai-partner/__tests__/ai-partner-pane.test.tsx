@@ -9,6 +9,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/messages/en.json";
+import ptBR from "@/messages/pt-BR.json";
+import es from "@/messages/es.json";
+import type { AssistTier } from "@/lib/ai/partner-types";
 import { AiPartnerPane } from "../ai-partner-pane";
 
 const review = vi.fn();
@@ -16,7 +19,7 @@ const hookState = {
   messages: [] as unknown[],
   freeHintsUsed: 0,
   counts: { free: 0, metered: 0, socratic: 0 },
-  tier: "free" as const,
+  tier: "free" as AssistTier,
   budgetExhausted: false,
   spendCapped: false,
   resetState: "none" as const,
@@ -44,6 +47,7 @@ function renderPane(
     solutionPassed?: boolean;
     disabled?: boolean;
     hasRunTests?: boolean;
+    hasFailedRun?: boolean;
     onFocusRun?: () => void;
     onNudgeShown?: () => void;
     onNudgeOverride?: () => void;
@@ -72,7 +76,9 @@ beforeEach(() => {
   review.mockReset();
   hookState.requestHint.mockReset();
   hookState.ask.mockReset();
+  hookState.proposeFix.mockReset();
   hookState.messages = [];
+  hookState.tier = "free";
   hookState.budgetExhausted = false;
   hookState.spendCapped = false;
   hookState.loading = false;
@@ -225,5 +231,140 @@ describe("AiPartnerPane — free-text composer (#944)", () => {
   it("disables the composer once the lesson is complete", () => {
     renderPane({ hasRunTests: true, disabled: true });
     expect(screen.getByLabelText(askLabel)).toBeDisabled();
+  });
+
+  // M1 (#947 gate addendum): the route 413s past 4,000 chars and the hook can
+  // only render that as a generic error, so the box refuses to exceed it and
+  // shows the learner where they stand.
+  it("caps the question at 4000 characters and shows a live counter", () => {
+    renderPane({ hasRunTests: true });
+    const box = screen.getByLabelText(askLabel);
+
+    expect(box).toHaveAttribute("maxlength", "4000");
+    expect(screen.getByText("0/4000")).toBeInTheDocument();
+
+    fireEvent.change(box, { target: { value: "abcde" } });
+    expect(screen.getByText("5/4000")).toBeInTheDocument();
+
+    // A paste past the cap is truncated, never sent whole into a 413.
+    fireEvent.change(box, { target: { value: "x".repeat(4200) } });
+    expect(box).toHaveValue("x".repeat(4000));
+    expect(screen.getByText("4000/4000")).toBeInTheDocument();
+  });
+});
+
+describe("AiPartnerPane — 'Show me a change' propose action (#947)", () => {
+  const proposeName = new RegExp(messages.aiPartner.actions.propose, "i");
+  const proposeButton = () =>
+    screen.queryByRole("button", { name: proposeName });
+
+  it("is hidden until a run has actually FAILED", () => {
+    renderPane({ hasRunTests: true, hasFailedRun: false });
+    expect(proposeButton()).not.toBeInTheDocument();
+  });
+
+  it("appears once a run has failed, labelled with its turn cost", () => {
+    renderPane({ hasRunTests: true, hasFailedRun: true });
+    const button = proposeButton();
+    expect(button).toBeInTheDocument();
+    expect(button).toBeEnabled();
+    expect(button?.tagName).toBe("BUTTON");
+    expect(button).toHaveTextContent(messages.aiPartner.actions.proposeCost);
+  });
+
+  it("stays available on the Socratic tier (#864 §4.2 — the escape hatch survives)", () => {
+    hookState.tier = "socratic";
+    renderPane({ hasRunTests: true, hasFailedRun: true });
+    expect(
+      screen.getByText(messages.aiPartner.socratic.entered)
+    ).toBeInTheDocument();
+    expect(proposeButton()).toBeEnabled();
+  });
+
+  it("is withdrawn again at full exhaustion — the community handoff takes over", () => {
+    hookState.budgetExhausted = true;
+    renderPane({ hasRunTests: true, hasFailedRun: true });
+    expect(proposeButton()).not.toBeInTheDocument();
+    expect(
+      screen.getByText(messages.aiPartner.exhausted.title)
+    ).toBeInTheDocument();
+  });
+
+  it("spends a turn through the hook and leaves the typed draft alone", () => {
+    renderPane({ hasRunTests: true, hasFailedRun: true });
+    const box = screen.getByLabelText(askLabel);
+    fireEvent.change(box, { target: { value: "why is my loop off by one?" } });
+
+    fireEvent.click(proposeButton()!);
+
+    expect(hookState.proposeFix).toHaveBeenCalledTimes(1);
+    expect(hookState.proposeFix).toHaveBeenCalledWith(
+      "why is my loop off by one?"
+    );
+    // The draft survives — propose does not consume the question box.
+    expect(box).toHaveValue("why is my loop off by one?");
+    // …and it is never sent as an ask.
+    expect(hookState.ask).not.toHaveBeenCalled();
+  });
+
+  it("needs no free text at all", () => {
+    renderPane({ hasRunTests: true, hasFailedRun: true });
+    fireEvent.click(proposeButton()!);
+    expect(hookState.proposeFix).toHaveBeenCalledWith(undefined);
+  });
+
+  it("disables (not hides) while a request is in flight, with aria-busy", () => {
+    hookState.loading = true;
+    renderPane({ hasRunTests: true, hasFailedRun: true });
+    const button = proposeButton();
+    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute("aria-busy", "true");
+  });
+
+  it("holds a pre-run propose behind the attempt gate (one-line notice, no buttons)", () => {
+    renderPane({ hasRunTests: false, hasFailedRun: true });
+    fireEvent.click(proposeButton()!);
+
+    expect(hookState.proposeFix).not.toHaveBeenCalled();
+    expect(
+      screen.getByText(messages.aiPartner.attemptNudge.title)
+    ).toBeInTheDocument();
+  });
+
+  it("propose executes directly once tests have run", () => {
+    renderPane({ hasRunTests: true, hasFailedRun: true });
+    fireEvent.click(proposeButton()!);
+    expect(hookState.proposeFix).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders the returned diff card through the existing message-list path", () => {
+    hookState.messages = [
+      {
+        role: "ai",
+        response: {
+          type: "propose",
+          rationale: "off-by-one in the loop bound",
+          edits: [{ search: "code", replace: "code2" }],
+          check: { question: "Why?", options: ["A", "B", "C"] },
+          checkToken: "tok",
+        },
+      },
+    ];
+    renderPane({ hasRunTests: true, hasFailedRun: true });
+    expect(
+      screen.getByText("off-by-one in the loop bound")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("group", { name: messages.aiPartner.a11y.diffCard })
+    ).toBeInTheDocument();
+  });
+
+  it("keeps all three locales in step on the propose keys", () => {
+    for (const catalog of [messages, ptBR, es]) {
+      expect(typeof catalog.aiPartner.actions.propose).toBe("string");
+      expect(catalog.aiPartner.actions.propose.length).toBeGreaterThan(0);
+      expect(typeof catalog.aiPartner.actions.proposeCost).toBe("string");
+      expect(catalog.aiPartner.actions.proposeCost.length).toBeGreaterThan(0);
+    }
   });
 });

@@ -1035,7 +1035,8 @@
     },
     "actions": {
       "hint": "Dica",
-      "propose": "Propor correção",
+      "propose": "Me mostre uma mudança",
+      "proposeCost": "usa 1 turno",
       "askPlaceholder": "Faça uma pergunta sobre este desafio...",
       "askLabel": "Pergunte ao Parceiro de IA sobre este desafio",
       "askSend": "Enviar",
