@@ -19,7 +19,6 @@ import {
   trackAttemptGateNudgeShown,
   trackAttemptGateOverridden,
   trackSolutionRevealed,
-  trackStuckNudgeAccepted,
   trackStuckNudgeShown,
 } from "@/lib/analytics/events";
 import { Button } from "@/components/ui/button";
@@ -68,6 +67,7 @@ export function ChallengeInterface({
   courseSlug,
   lessonSlug,
   taskSlot,
+  sectionsSlot,
   initialCode,
   language,
   buildType,
@@ -113,7 +113,6 @@ export function ChallengeInterface({
   // a time in-editor (the free authored-hint channel, never the AI chat). A
   // passing run resets the reveal. `nudgeShownRef` records whether the nudge was
   // ever surfaced this attempt so the eventual solve can be tagged postNudge.
-  const [revealedHintCount, setRevealedHintCount] = useState(0);
   const nudgeShownRef = useRef(false);
 
   // Solution-reveal soft-gate (LX-C6). The reference solution already ships in
@@ -227,7 +226,6 @@ export function ChallengeInterface({
         nudgeShownRef.current = false;
         setConsecutiveFails(0);
         setEncouragementDismissed(false);
-        setRevealedHintCount(0);
       } else {
         failStreakRef.current += 1;
         trackChallengeFailed(ctx, failStreakRef.current);
@@ -259,14 +257,6 @@ export function ChallengeInterface({
       consecutiveFails
     );
   }, [hintNudgeVisible, consecutiveFails, lessonId, courseId, challengeKind]);
-
-  const handleRevealHint = useCallback(() => {
-    setRevealedHintCount((count) => {
-      if (count >= hints.length) return count;
-      trackStuckNudgeAccepted({ lessonId, courseId, challengeKind }, count);
-      return count + 1;
-    });
-  }, [hints.length, lessonId, courseId, challengeKind]);
 
   const hasSolution =
     typeof solution === "string" && solution.trim().length > 0;
@@ -516,6 +506,14 @@ export function ChallengeInterface({
             />
           )}
         </div>
+
+        {/* Disclosure sections (Topics / Hints / Discussion) — under the AI
+            pane per the owner's reading-flow ordering (#942). */}
+        {sectionsSlot && (
+          <div className="order-5 px-3 pb-4 lg:order-none lg:shrink-0">
+            {sectionsSlot}
+          </div>
+        )}
       </div>
 
       {/* Text/editor split resizer — lg+ only; drag right to widen the text. */}
@@ -807,29 +805,6 @@ export function ChallengeInterface({
               </button>
             </div>
 
-            {hasHints && (
-              <div className="flex flex-col gap-1.5 pl-6">
-                {hints.slice(0, revealedHintCount).map((hint, i) => (
-                  <p key={i} className="text-xs text-text-2">
-                    <span className="font-semibold text-text">
-                      {t("stuckNudgeHintLabel", { number: i + 1 })}
-                    </span>{" "}
-                    {hint}
-                  </p>
-                ))}
-                {revealedHintCount < hints.length && (
-                  <button
-                    type="button"
-                    onClick={handleRevealHint}
-                    className="self-start rounded-md border border-border px-2.5 py-1 text-xs font-medium text-text transition-colors hover:border-primary hover:[background:var(--accent-bg)]"
-                  >
-                    {revealedHintCount === 0
-                      ? t("stuckNudgeAction")
-                      : t("stuckNudgeNextAction")}
-                  </button>
-                )}
-              </div>
-            )}
           </div>
         )}
 

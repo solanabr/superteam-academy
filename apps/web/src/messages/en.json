@@ -228,7 +228,6 @@
     "startDiscussion": "Start a Discussion",
     "moduleLabel": "Module {number}",
     "upNext": "Up next",
-    "startHere": "Start here",
     "browseAllCourses": "Browse all courses",
     "skipAhead": "Skip ahead",
     "pathGuidanceFixed": "Follow the path in order — each course builds on the last.",
@@ -1003,10 +1002,7 @@
     "subtitle": "Stuck? Ask a question or get a hint.",
     "completed": "Challenge complete — nice work!",
     "attemptNudge": {
-      "title": "Run the tests once first.",
-      "body": "Seeing them fail shows you exactly what the challenge wants — that's usually the fastest way in. If you'd rather ask now, that's fine too.",
-      "run": "Run the tests",
-      "override": "I'm stuck before I can run it"
+      "title": "Run the code first."
     },
     "start": {
       "greeting": "How can I help you build this?",

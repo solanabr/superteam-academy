@@ -45,6 +45,7 @@ export function CodeBlock({ block, ctx }: BlockRenderProps) {
           courseSlug={ctx.courseSlug}
           lessonSlug={ctx.lesson.slug}
           taskSlot={taskSlot}
+          sectionsSlot={ctx.sectionsSlot}
           initialCode={b.starter}
           language={b.language === "rust" ? "rust" : "typescript"}
           buildType={b.buildType ?? undefined}

@@ -7,7 +7,6 @@ import {
   Lightning,
   CheckCircle,
   ArrowLeft,
-  ChatCircle,
   CaretLeft,
   CaretRight,
 } from "@phosphor-icons/react";
@@ -30,6 +29,8 @@ import { RENDERERS, type BlockContext } from "./blocks";
 
 /** Anchor for the toolbar's jump-to-discussion affordance (#942). */
 const DISCUSSION_ANCHOR_ID = "lesson-discussion";
+const TOPICS_ANCHOR_ID = "lesson-topics";
+const HINTS_ANCHOR_ID = "lesson-hints";
 
 interface LessonPageClientProps {
   lesson: Lesson;
@@ -139,16 +140,6 @@ export function LessonPageClient({
   const [threadCount, setThreadCount] = useState<string | null>(null);
   const handleThreadCount = useCallback((count: number, hasMore: boolean) => {
     setThreadCount(hasMore ? `${count}+` : String(count));
-  }, []);
-  // Toolbar affordance on challenge pages: open the inline section and scroll
-  // the rail to it, instead of the old modal (#942).
-  const jumpToDiscussion = useCallback(() => {
-    setIsDiscussionListOpen(true);
-    requestAnimationFrame(() => {
-      document
-        .getElementById(DISCUSSION_ANCHOR_ID)
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
   }, []);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [buildUuid, setBuildUuid] = useState<string | null>(null);
@@ -490,16 +481,8 @@ export function LessonPageClient({
   );
   const paneSections = (
     <div className="mt-2">
-      {authoredHints.map((hint, i) => (
-        <LessonSection
-          key={`hint-${i}`}
-          title={t("stuckNudgeHintLabel", { number: i + 1 })}
-        >
-          <p className="text-sm leading-relaxed text-text-2">{hint}</p>
-        </LessonSection>
-      ))}
       {skills.length > 0 && (
-        <LessonSection title={t("topics")}>
+        <LessonSection id={TOPICS_ANCHOR_ID} title={t("topics")}>
           <div className="flex flex-wrap gap-2">
             {skills.map((skill) => (
               <span
@@ -512,6 +495,15 @@ export function LessonPageClient({
           </div>
         </LessonSection>
       )}
+      {authoredHints.map((hint, i) => (
+        <LessonSection
+          key={`hint-${i}`}
+          id={i === 0 ? HINTS_ANCHOR_ID : undefined}
+          title={t("stuckNudgeHintLabel", { number: i + 1 })}
+        >
+          <p className="text-sm leading-relaxed text-text-2">{hint}</p>
+        </LessonSection>
+      ))}
       <LessonSection
         id={DISCUSSION_ANCHOR_ID}
         title={t("discussion")}
@@ -521,12 +513,14 @@ export function LessonPageClient({
         keepMounted
       >
         <div className="mb-3 flex justify-end">{askAction}</div>
-        <ThreadList
+        <div className="text-sm [&_button]:px-2.5 [&_button]:py-1 [&_button]:text-xs">
+          <ThreadList
           scope={{ courseId, lessonId: lesson._id }}
           showFilters
           emptyMessage={tCommunity("empty.lesson")}
-          onCountChange={handleThreadCount}
-        />
+            onCountChange={handleThreadCount}
+          />
+        </div>
       </LessonSection>
     </div>
   );
@@ -537,10 +531,13 @@ export function LessonPageClient({
         const Renderer = RENDERERS[block._type];
         return <Renderer key={block.key} block={block} ctx={ctx} />;
       })}
-      {paneSections}
     </div>
   ) : null;
-  const codeCtx: BlockContext = { ...ctx, instructionsSlot };
+  const codeCtx: BlockContext = {
+    ...ctx,
+    instructionsSlot,
+    sectionsSlot: paneSections,
+  };
 
   return (
     <div
@@ -630,19 +627,6 @@ export function LessonPageClient({
         )}
 
         <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3">
-          {hasCodeBlock && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={jumpToDiscussion}
-              aria-label={t("discussion")}
-              title={t("discussion")}
-              className="h-8 shrink-0 gap-1.5 px-2 text-xs"
-            >
-              <ChatCircle size={16} weight="duotone" aria-hidden="true" />
-              <span className="hidden lg:inline">{t("discussion")}</span>
-            </Button>
-          )}
           <span className="flex shrink-0 items-center gap-1 font-display text-sm font-black text-xp">
             <Lightning size={14} weight="fill" />+
             {earnedXp ?? courseXpPerLesson} XP

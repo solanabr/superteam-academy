@@ -228,7 +228,6 @@
     "startDiscussion": "Iniciar uma Discussão",
     "moduleLabel": "Módulo {number}",
     "upNext": "A seguir",
-    "startHere": "Comece aqui",
     "browseAllCourses": "Ver todos os cursos",
     "skipAhead": "Pular adiante",
     "pathGuidanceFixed": "Siga a trilha na ordem — cada curso se apoia no anterior.",
@@ -1003,10 +1002,7 @@
     "subtitle": "Travado? Faça uma pergunta ou peça uma dica.",
     "completed": "Desafio concluído — mandou bem!",
     "attemptNudge": {
-      "title": "Rode os testes uma vez primeiro.",
-      "body": "Ver os testes falharem mostra exatamente o que o desafio pede — normalmente é o caminho mais rápido. Se preferir perguntar agora, tudo bem também.",
-      "run": "Rodar os testes",
-      "override": "Estou travado antes mesmo de rodar"
+      "title": "Rode o código primeiro."
     },
     "start": {
       "greeting": "Como posso te ajudar a construir isto?",

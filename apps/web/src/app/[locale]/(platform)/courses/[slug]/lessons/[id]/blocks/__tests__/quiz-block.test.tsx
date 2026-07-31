@@ -89,6 +89,12 @@ function renderWithIntl(ui: ReactElement) {
 }
 
 /** The Check button of the CURRENT card (stepper shows one question at a time). */
+function answerQ1Correctly(): void {
+  fireEvent.click(screen.getByLabelText("A program-derived address"));
+  fireEvent.click(checkButton());
+  fireEvent.click(nextButton());
+}
+
 function checkButton(): HTMLElement {
   return screen.getByRole("button", { name: "Check answer" });
 }
@@ -103,6 +109,7 @@ function prevButton(): HTMLElement {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  window.localStorage.clear();
 });
 
 describe("QuizBlock — Check interaction (LX-C1)", () => {
@@ -151,7 +158,7 @@ describe("QuizBlock — Check interaction (LX-C1)", () => {
 
   it("multi-select correctness is set equality, not subset", () => {
     renderWithIntl(<QuizBlock block={quizBlock} ctx={makeCtx()} />);
-    fireEvent.click(nextButton()); // q2 is the multi-select question
+    answerQ1Correctly(); // q2 is the multi-select question
 
     // Subset of the correct set → incorrect.
     fireEvent.click(screen.getByLabelText("XP tokens"));
@@ -254,7 +261,11 @@ describe("QuizBlock — interaction states (#943)", () => {
 
     expect(correctOption).toBeDisabled();
     expect(screen.getByLabelText("A private key")).toBeDisabled();
-    expect(checkButton()).toBeDisabled();
+    // The morphing action slot (owner 2026-07-31): Check is gone, primary Next takes its place.
+    expect(
+      screen.queryByRole("button", { name: "Check answer" })
+    ).not.toBeInTheDocument();
+    expect(nextButton().className).toContain("bg-primary");
     // Correct-state styling + explanation survive the lock.
     expect(screen.getByText("Correct!")).toBeInTheDocument();
     expect(
@@ -287,8 +298,10 @@ describe("QuizBlock — interaction states (#943)", () => {
 
   it("emphasizes Next only once the current question is correct", () => {
     renderWithIntl(<QuizBlock block={quizBlock} ctx={makeCtx()} />);
-    expect(nextButton().className).toContain("bg-transparent");
-    expect(nextButton().className).not.toContain("bg-primary");
+    // Unattempted: no Next at all — Check owns the action slot.
+    expect(
+      screen.queryByRole("button", { name: "Next question" })
+    ).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByLabelText("A program-derived address"));
     fireEvent.click(checkButton());
@@ -356,13 +369,20 @@ describe("QuizBlock — stepper (#849)", () => {
     expect(screen.getByText("What is a PDA?")).toBeInTheDocument();
     expect(screen.queryByText("Which are soulbound?")).not.toBeInTheDocument();
     expect(prevButton()).toBeDisabled();
+
+    // Attempting (even wrongly) surfaces the subdued skip-Next.
+    fireEvent.click(screen.getByLabelText("A private key"));
+    fireEvent.click(checkButton());
     expect(nextButton()).toBeEnabled();
 
     fireEvent.click(nextButton());
     expect(screen.getByText("Which are soulbound?")).toBeInTheDocument();
     expect(screen.queryByText("What is a PDA?")).not.toBeInTheDocument();
     expect(prevButton()).toBeEnabled();
-    expect(nextButton()).toBeDisabled();
+    // Unattempted last question: the action slot holds Check, no Next at all.
+    expect(
+      screen.queryByRole("button", { name: "Next question" })
+    ).not.toBeInTheDocument();
 
     fireEvent.click(prevButton());
     expect(screen.getByText("What is a PDA?")).toBeInTheDocument();
@@ -370,13 +390,16 @@ describe("QuizBlock — stepper (#849)", () => {
 
   it("displays the position alongside the correct-count and announces it via aria-live", () => {
     renderWithIntl(<QuizBlock block={quizBlock} ctx={makeCtx()} />);
-    // Twice: the visible header chip + the sr-only live announcer.
-    expect(screen.getAllByText("Question 1 of 2")).toHaveLength(2);
+    // Once: the sr-only live announcer (the visible chip was dropped — owner
+    // 2026-07-31; the score chip alone carries the header).
+    expect(screen.getAllByText("Question 1 of 2")).toHaveLength(1);
     expect(screen.getByText("0/2 correct")).toBeInTheDocument();
 
+    fireEvent.click(screen.getByLabelText("A private key"));
+    fireEvent.click(checkButton());
     fireEvent.click(nextButton());
     const announcements = screen.getAllByText("Question 2 of 2");
-    expect(announcements).toHaveLength(2);
+    expect(announcements).toHaveLength(1);
     expect(
       announcements.some((el) => el.getAttribute("aria-live") === "polite")
     ).toBe(true);
@@ -463,6 +486,8 @@ describe("QuizBlock — stepper (#849)", () => {
 
   it("moves focus to the question heading when the card changes", () => {
     renderWithIntl(<QuizBlock block={quizBlock} ctx={makeCtx()} />);
+    fireEvent.click(screen.getByLabelText("A private key"));
+    fireEvent.click(checkButton());
     fireEvent.click(nextButton());
     expect(document.activeElement).toBe(
       screen.getByText("Which are soulbound?")

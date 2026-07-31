@@ -113,16 +113,10 @@ describe("ChallengeInterface — stuck-nudge (LX-C4)", () => {
     // Two fails: below the threshold, no nudge.
     act(() => h.runnerProps?.onResult(fail));
     act(() => h.runnerProps?.onResult(fail));
-    expect(
-      screen.queryByRole("button", { name: /show a hint/i })
-    ).not.toBeInTheDocument();
     expect(eventsNamed("stuck_nudge_shown")).toHaveLength(0);
 
     // Third fail crosses the threshold.
     act(() => h.runnerProps?.onResult(fail));
-    expect(
-      screen.getByRole("button", { name: /show a hint/i })
-    ).toBeInTheDocument();
     expect(eventsNamed("stuck_nudge_shown")).toHaveLength(1);
     expect(h.trackEvent).toHaveBeenCalledWith("stuck_nudge_shown", {
       lessonId: "lesson-1",
@@ -139,37 +133,6 @@ describe("ChallengeInterface — stuck-nudge (LX-C4)", () => {
     act(() => h.runnerProps?.onResult(fail));
     act(() => h.runnerProps?.onResult(fail));
     expect(eventsNamed("stuck_nudge_shown")).toHaveLength(1);
-  });
-
-  it("reveals authored hints one at a time, each firing stuck_nudge_accepted", () => {
-    renderChallenge();
-    act(() => h.runnerProps?.onResult(fail));
-    act(() => h.runnerProps?.onResult(fail));
-    act(() => h.runnerProps?.onResult(fail));
-
-    fireEvent.click(screen.getByRole("button", { name: /show a hint/i }));
-    expect(screen.getByText(HINTS[0]!)).toBeInTheDocument();
-    expect(screen.queryByText(HINTS[1]!)).not.toBeInTheDocument();
-    expect(h.trackEvent).toHaveBeenCalledWith("stuck_nudge_accepted", {
-      lessonId: "lesson-1",
-      challengeKind: "js",
-      courseId: "course-1",
-      hintIndex: 0,
-    });
-
-    fireEvent.click(screen.getByRole("button", { name: /show another hint/i }));
-    expect(screen.getByText(HINTS[1]!)).toBeInTheDocument();
-    expect(h.trackEvent).toHaveBeenCalledWith("stuck_nudge_accepted", {
-      lessonId: "lesson-1",
-      challengeKind: "js",
-      courseId: "course-1",
-      hintIndex: 1,
-    });
-
-    // All hints revealed — the reveal button retires.
-    expect(
-      screen.queryByRole("button", { name: /show (a|another) hint/i })
-    ).not.toBeInTheDocument();
   });
 
   it("tags the post-nudge solve and resets on a pass", () => {
@@ -214,26 +177,6 @@ describe("ChallengeInterface — stuck-nudge (LX-C4)", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("still reveals authored hints while the AI pane is suppressed (#631)", () => {
-    renderChallenge({ aiSuppressed: true });
-    // AI pane must stay unmounted under suppression.
-    expect(screen.queryByTestId("ai-pane")).not.toBeInTheDocument();
-
-    act(() => h.runnerProps?.onResult(fail));
-    act(() => h.runnerProps?.onResult(fail));
-    act(() => h.runnerProps?.onResult(fail));
-
-    // Hints-only copy, and the authored-hint reveal is still offered — the
-    // static hint channel is safe while the tutor is gated.
-    expect(
-      screen.getByText(messages.lesson.encouragementBodyHintsOnly)
-    ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /show a hint/i }));
-    expect(screen.getByText(HINTS[0]!)).toBeInTheDocument();
-    // Revealing a hint never mounts the suppressed AI pane.
-    expect(screen.queryByTestId("ai-pane")).not.toBeInTheDocument();
-  });
-
   it("suppressed with no hints shows neutral copy — no tutor, no hint UI", () => {
     renderChallenge({ aiSuppressed: true, hints: [] });
     expect(screen.queryByTestId("ai-pane")).not.toBeInTheDocument();
@@ -250,9 +193,6 @@ describe("ChallengeInterface — stuck-nudge (LX-C4)", () => {
     expect(
       screen.queryByText(messages.lesson.encouragementBodyHintsOnly)
     ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: /show a hint/i })
-    ).not.toBeInTheDocument();
     expect(eventsNamed("stuck_nudge_shown")).toHaveLength(0);
   });
 
@@ -265,9 +205,6 @@ describe("ChallengeInterface — stuck-nudge (LX-C4)", () => {
     expect(
       screen.getByText(messages.lesson.encouragementTitle)
     ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: /show a hint/i })
-    ).not.toBeInTheDocument();
     expect(eventsNamed("stuck_nudge_shown")).toHaveLength(0);
   });
 });

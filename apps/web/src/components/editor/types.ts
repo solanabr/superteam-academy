@@ -79,6 +79,8 @@ export interface ChallengeInterfaceProps {
   lessonSlug: string;
   /** Task-brief content rendered in the right rail's top panel (lg+) / first in reading order (below lg). */
   taskSlot?: ReactNode;
+  /** Rendered under the AI pane in the reading column (#942). */
+  sectionsSlot?: ReactNode;
   initialCode: string;
   language: EditorLanguage;
   buildType?: BuildType;

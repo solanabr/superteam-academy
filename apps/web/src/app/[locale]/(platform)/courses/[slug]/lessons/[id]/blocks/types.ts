@@ -51,6 +51,8 @@ export interface BlockContext {
    * rather than stacked full-width above a squeezed editor.
    */
   instructionsSlot?: ReactNode;
+  /** Disclosure sections (Topics/Hints/Discussion) rendered BELOW the AI pane (#942). */
+  sectionsSlot?: ReactNode;
 }
 
 export interface BlockRenderProps {

@@ -7,7 +7,6 @@ import {
   Robot,
   MagnifyingGlass,
   CaretDown,
-  Play,
   UsersThree,
 } from "@phosphor-icons/react";
 import { useAiPartner } from "@/lib/ai/use-ai-partner";
@@ -21,7 +20,6 @@ import { Button } from "@/components/ui/button";
 import { AssistMeter } from "./assist-meter";
 import { Composer } from "./composer";
 import { MessageList } from "./message-list";
-import { QuickActions } from "./quick-actions";
 
 interface AiPartnerPaneProps {
   lessonSlug: string;
@@ -65,9 +63,7 @@ export function AiPartnerPane({
   disabled = false,
   solutionPassed = false,
   hasRunTests = false,
-  onFocusRun,
   onNudgeShown,
-  onNudgeOverride,
   eventCtx,
   className,
 }: AiPartnerPaneProps) {
@@ -107,20 +103,6 @@ export function AiPartnerPane({
     [nudgeEligible, nudgeState, onNudgeShown]
   );
 
-  const handleNudgeRunTests = useCallback(() => {
-    pendingActionRef.current = null;
-    setNudgeState("idle");
-    onFocusRun?.();
-  }, [onFocusRun]);
-
-  const handleNudgeOverride = useCallback(() => {
-    setNudgeState("overridden");
-    onNudgeOverride?.();
-    const action = pendingActionRef.current;
-    pendingActionRef.current = null;
-    action?.();
-  }, [onNudgeOverride]);
-
   const {
     messages,
     counts,
@@ -131,17 +113,11 @@ export function AiPartnerPane({
     resetAvailableAt,
     loading,
     error,
-    requestHint,
     ask,
     review,
     requestReset,
     verifyCheck,
   } = useAiPartner({ lessonSlug, courseSlug, hints, getCode, getTestSummary });
-
-  const requestHintGuarded = useCallback(
-    () => guardAction(requestHint),
-    [guardAction, requestHint]
-  );
 
   // The free-text ask (#944) goes through the SAME attempt gate as the hint:
   // pre-first-run the question is held (captured here) and the nudge shown, and
@@ -219,44 +195,15 @@ export function AiPartnerPane({
         </button>
       </div>
 
-      {/* Attempt-gate nudge (#865): shown only when an AI action was invoked
-          before the first test run. Soft by design — no lock, no countdown, no
-          padlock. [Run the tests] dismisses and shifts focus to the Run button;
-          the override is a single free tap that proceeds with the original
-          request immediately. role="status" announces it politely without
-          stealing focus. */}
+      {/* Attempt-gate notice (#865, tightened 2026-07-31): one direct line, no
+          buttons — the learner runs the tests with the main Run button and asks
+          again. role="status" announces it politely without stealing focus. */}
       {open && nudgeVisible && (
         <div
           role="status"
-          className="flex shrink-0 flex-col gap-2.5 border-b border-border px-4 py-3 [background:var(--accent-bg)]"
+          className="flex shrink-0 items-center gap-2 border-b border-border px-4 py-2.5 [background:var(--accent-bg)]"
         >
-          <p className="text-xs text-text-3">
-            <span className="font-bold text-text">
-              {t("attemptNudge.title")}
-            </span>{" "}
-            {t("attemptNudge.body")}
-          </p>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              variant="push"
-              size="sm"
-              onClick={handleNudgeRunTests}
-              className="gap-1.5 text-xs"
-            >
-              <Play size={14} weight="duotone" aria-hidden="true" />
-              {t("attemptNudge.run")}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={handleNudgeOverride}
-              className="text-xs"
-            >
-              {t("attemptNudge.override")}
-            </Button>
-          </div>
+          <p className="text-xs font-bold text-text">{t("attemptNudge.title")}</p>
         </div>
       )}
 
@@ -402,11 +349,6 @@ export function AiPartnerPane({
           {messages.length === 0 && (
             <p className="text-sm text-text-3">{t("composer.empty")}</p>
           )}
-          <QuickActions
-            onHint={requestHintGuarded}
-            disabled={loading || disabled}
-            budgetExhausted={budgetExhausted}
-          />
           <Composer
             onSend={askGuarded}
             disabled={loading || disabled}

@@ -228,7 +228,6 @@
     "startDiscussion": "Iniciar una Discusión",
     "moduleLabel": "Módulo {number}",
     "upNext": "A continuación",
-    "startHere": "Empieza aquí",
     "browseAllCourses": "Ver todos los cursos",
     "skipAhead": "Saltar adelante",
     "pathGuidanceFixed": "Sigue la ruta en orden — cada curso se apoya en el anterior.",
@@ -1003,10 +1002,7 @@
     "subtitle": "¿Atascado? Haz una pregunta o pide una pista.",
     "completed": "Reto completado — ¡bien hecho!",
     "attemptNudge": {
-      "title": "Ejecuta las pruebas una vez primero.",
-      "body": "Verlas fallar te muestra exactamente qué pide el reto — suele ser el camino más rápido. Si prefieres preguntar ahora, también está bien.",
-      "run": "Ejecutar las pruebas",
-      "override": "Estoy atascado antes de poder ejecutarlas"
+      "title": "Ejecuta el código primero."
     },
     "start": {
       "greeting": "¿Cómo puedo ayudarte a construir esto?",
