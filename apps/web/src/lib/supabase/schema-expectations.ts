@@ -73,6 +73,22 @@ export const SCHEMA_EXPECTATIONS: readonly SchemaExpectation[] = [
     description:
       "AI-tutor spend ceiling (#720) — a missing fn fails the tutor closed",
   },
+  {
+    kind: "column",
+    table: "email_subscriptions",
+    column: "reminder_opt_in",
+    migration: "20260731120000_reminder_consent.sql",
+    description:
+      "reminder consent flag (#869) — its absence 400s the settings email panel",
+  },
+  {
+    kind: "rpc",
+    rpc: "claim_due_session_reminders",
+    args: { p_weekday: "mon" },
+    migration: "20260731120000_reminder_consent.sql",
+    description:
+      "session-plan reminder claim (#869) — a missing fn silently sends nothing",
+  },
 ];
 
 // PostgREST "not found in schema cache" + Postgres undefined-object SQLSTATEs.

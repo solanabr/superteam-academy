@@ -71,3 +71,50 @@ describe("POST /api/email/unsubscribe (one-click RFC 8058)", () => {
     expect(rpc).not.toHaveBeenCalled();
   });
 });
+
+// #869 — the link is consent-TYPED. Reminder links carry `kind=reminders` and
+// must clear ONLY reminder consent; anything else (including every link minted
+// before #869, which has no kind at all) stays on the marketing RPC.
+describe("consent kind routing", () => {
+  it("GET kind=reminders uses the reminder RPC and says so on the page", async () => {
+    const res = await get(
+      `https://app.test/api/email/unsubscribe?token=${VALID}&kind=reminders`
+    );
+    expect(res.status).toBe(200);
+    expect(rpc).toHaveBeenCalledWith("unsubscribe_reminders_by_token", {
+      p_token: VALID,
+    });
+    expect(rpc).not.toHaveBeenCalledWith("unsubscribe_by_token", {
+      p_token: VALID,
+    });
+    const body = await res.text();
+    expect(body).toContain("study-plan reminders");
+    expect(body).toContain("product-news preference is unchanged");
+  });
+
+  it("POST kind=reminders uses the reminder RPC", async () => {
+    const res = await post(
+      `https://app.test/api/email/unsubscribe?token=${VALID}&kind=reminders`
+    );
+    expect(res.status).toBe(200);
+    expect(rpc).toHaveBeenCalledWith("unsubscribe_reminders_by_token", {
+      p_token: VALID,
+    });
+  });
+
+  it("a legacy link with NO kind still clears MARKETING consent", async () => {
+    await get(`https://app.test/api/email/unsubscribe?token=${VALID}`);
+    expect(rpc).toHaveBeenCalledWith("unsubscribe_by_token", {
+      p_token: VALID,
+    });
+  });
+
+  it("an unknown kind falls back to marketing, never to reminders", async () => {
+    await get(
+      `https://app.test/api/email/unsubscribe?token=${VALID}&kind=everything`
+    );
+    expect(rpc).toHaveBeenCalledWith("unsubscribe_by_token", {
+      p_token: VALID,
+    });
+  });
+});

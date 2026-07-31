@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 // Session-end if-then plan (LX-A6, #582): "when's your next lesson?" — an
 // implementation-intention prompt stored in profiles.prefs and shown back on
-// return. v1 is display-only; committing fires next_lesson_plan_committed (whose
-// return effect is a pre-registered NULL) and merges into any other prefs keys.
+// return. Committing fires next_lesson_plan_committed (whose return effect is a
+// pre-registered NULL), merges into any other prefs keys, and — since #869 —
+// records the disclosed, default-ON reminder consent through set_reminder_opt_in.
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
@@ -12,18 +13,24 @@ import { NextLessonPlan } from "../next-lesson-plan";
 const h = vi.hoisted(() => ({
   trackEvent: vi.fn(),
   profileRow: { prefs: {} as Record<string, unknown> },
+  /** #869 consent row; null = no decision recorded yet. */
+  subRow: null as { reminder_opt_in: boolean } | null,
   updatePayloads: [] as Array<Record<string, unknown>>,
+  rpc: vi.fn(),
 }));
 
 vi.mock("@/lib/analytics", () => ({ trackEvent: h.trackEvent }));
 
 vi.mock("@/lib/supabase/client", () => ({
   createClient: () => ({
-    from: () => ({
+    from: (table: string) => ({
       select: () => ({
         eq: () => ({
           maybeSingle: () =>
-            Promise.resolve({ data: h.profileRow, error: null }),
+            Promise.resolve({
+              data: table === "email_subscriptions" ? h.subRow : h.profileRow,
+              error: null,
+            }),
         }),
       }),
       update: (payload: Record<string, unknown>) => {
@@ -31,13 +38,19 @@ vi.mock("@/lib/supabase/client", () => ({
         return { eq: () => Promise.resolve({ error: null }) };
       },
     }),
+    rpc: (...args: unknown[]) => {
+      h.rpc(...args);
+      return Promise.resolve({ data: null, error: null });
+    },
   }),
 }));
 
 beforeEach(() => {
   h.trackEvent.mockClear();
   h.profileRow = { prefs: {} };
+  h.subRow = null;
   h.updatePayloads = [];
+  h.rpc.mockClear();
 });
 
 function renderPlan(userId: string | null = "user-1") {
@@ -115,5 +128,55 @@ describe("NextLessonPlan (LX-A6)", () => {
     expect(h.trackEvent).toHaveBeenCalledWith("next_lesson_plan_committed", {
       day: "wed",
     });
+  });
+});
+
+// #869 — the plan card is the consent-capture surface for the session-plan
+// reminder email. Default ON is the "derived from the commitment" default, but
+// it is only ever WRITTEN by this explicit save.
+describe("NextLessonPlan — reminder consent (#869)", () => {
+  const remindLabel = messages.dashboard.nextLessonRemindMe;
+
+  async function openPicker() {
+    renderPlan();
+    await screen.findByText(messages.dashboard.nextLessonPrompt);
+  }
+
+  it("offers the disclosed reminder checkbox, checked by default", async () => {
+    await openPicker();
+    const box = screen.getByLabelText(remindLabel) as HTMLInputElement;
+    expect(box.checked).toBe(true);
+  });
+
+  it("records consent on save, with the learner's locale", async () => {
+    await openPicker();
+    fireEvent.click(
+      screen.getByRole("button", { name: messages.dashboard.nextLessonSave })
+    );
+    await waitFor(() => expect(h.rpc).toHaveBeenCalled());
+    expect(h.rpc).toHaveBeenCalledWith("set_reminder_opt_in", {
+      p_opt_in: true,
+      p_locale: "en",
+    });
+  });
+
+  it("records an explicit opt-OUT when the learner unchecks it", async () => {
+    await openPicker();
+    fireEvent.click(screen.getByLabelText(remindLabel));
+    fireEvent.click(
+      screen.getByRole("button", { name: messages.dashboard.nextLessonSave })
+    );
+    await waitFor(() => expect(h.rpc).toHaveBeenCalled());
+    expect(h.rpc).toHaveBeenCalledWith("set_reminder_opt_in", {
+      p_opt_in: false,
+      p_locale: "en",
+    });
+  });
+
+  it("respects a previously recorded opt-out instead of re-defaulting to ON", async () => {
+    h.subRow = { reminder_opt_in: false };
+    await openPicker();
+    const box = screen.getByLabelText(remindLabel) as HTMLInputElement;
+    expect(box.checked).toBe(false);
   });
 });

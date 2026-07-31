@@ -105,6 +105,11 @@ const serverEnvSchema = z.object({
   // an 'unconfigured' result and NOTHING is sent (lib/email/resend.ts). The
   // owner sets this once a Resend sending domain (DKIM/SPF/DMARC) is verified.
   RESEND_API_KEY: optStr,
+  // Shared secret for Vercel Cron (#869). Vercel sends it as
+  // `Authorization: Bearer $CRON_SECRET` on every scheduled invocation. Optional
+  // at boot, but /api/cron/* FAILS CLOSED without it (503, nothing sent) — an
+  // unset secret must never leave a mail trigger open to the internet.
+  CRON_SECRET: optStr,
   // The verified From identity for marketing mail, e.g.
   // "Superteam Academy <news@st.academy>". Optional — falls back to
   // DEFAULT_EMAIL_FROM (lib/email/resend.ts) when unset.
@@ -153,6 +158,7 @@ const parsed = serverEnvSchema.safeParse({
   ARWEAVE_UPLOADER_SECRET: process.env.ARWEAVE_UPLOADER_SECRET,
   HELIUS_API_KEY: process.env.HELIUS_API_KEY,
   RESEND_API_KEY: process.env.RESEND_API_KEY,
+  CRON_SECRET: process.env.CRON_SECRET,
   EMAIL_FROM: process.env.EMAIL_FROM,
   AI_PARTNER_SEAL_SECRET: process.env.AI_PARTNER_SEAL_SECRET,
   AI_SPEND_GLOBAL_SOFT_USD: process.env.AI_SPEND_GLOBAL_SOFT_USD,

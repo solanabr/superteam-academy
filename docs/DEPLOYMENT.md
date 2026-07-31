@@ -87,12 +87,32 @@ fails the boot loudly rather than degrading silently.
 | `ARWEAVE_UPLOADER_SECRET`        | **Server-only** | Funds Irys uploads that pin credential metadata to Arweave at mint. A **Solana** keypair (JSON array of 64 bytes), not an Arweave JWK. Unset → mint falls back to `/api/certificates/metadata`. Required (funded on mainnet-beta) for permanent mainnet credentials. |
 | `MODERATION_WEBHOOK_URL`         | **Server-only** | Slack/Discord-compatible incoming webhook. When set, the first flag on a community post pings it. Unset → no notification (the `/admin/moderation` queue still fills).                                                                                               |
 | `RUST_PLAYGROUND_URL`            | **Server-only** | `/api/rust/execute` upstream (default: play.rust-lang.org)                                                                                                                                                                                                           |
+| `RESEND_API_KEY`                 | **Server-only** | Resend key for outbound email (announcements #769, session-plan reminders #869). The mail pipeline is **fail-closed**: unset ⇒ nothing is ever sent. Set only once a Resend sending domain (DKIM/SPF/DMARC) is verified.                                             |
+| `EMAIL_FROM`                     | **Server-only** | Verified From identity, e.g. `Superteam Academy <news@st.academy>`. Unset → `DEFAULT_EMAIL_FROM` in `lib/email/resend.ts`.                                                                                                                                           |
+| `CRON_SECRET`                    | **Server-only** | Shared secret for Vercel Cron (#869). Vercel sends it as `Authorization: Bearer $CRON_SECRET` to every `/api/cron/*` route. **Unset ⇒ the cron route 503s and no reminder is sent** — an unauthenticated mail trigger must never be reachable.                       |
 | `NEXT_PUBLIC_GA4_MEASUREMENT_ID` | Public          | Google Analytics 4                                                                                                                                                                                                                                                   |
 | `NEXT_PUBLIC_POSTHOG_KEY`        | Public          | PostHog project key                                                                                                                                                                                                                                                  |
 | `NEXT_PUBLIC_POSTHOG_HOST`       | Public          | PostHog instance URL                                                                                                                                                                                                                                                 |
 | `NEXT_PUBLIC_SENTRY_DSN`         | Public          | Sentry error tracking (DSN is safe to expose)                                                                                                                                                                                                                        |
 
 > **Tip**: Variables prefixed with `NEXT_PUBLIC_` are bundled into the client-side JavaScript bundle. All others are server-only and only accessible in API routes and server components.
+
+#### Scheduled jobs (Vercel Cron)
+
+`apps/web/vercel.json` (the Vercel **Root Directory** is `apps/web`) declares
+every scheduled job:
+
+| Path                          | Schedule (UTC) | Local time              | What it does                                                                                     |
+| ----------------------------- | -------------- | ----------------------- | ------------------------------------------------------------------------------------------------ |
+| `/api/cron/session-reminders` | `0 11 * * *`   | 08:00 America/Sao_Paulo | Sends the session-plan reminder to learners who committed to studying today AND opted in (#869). |
+
+Brazil has had no DST since 2019, so `11:00Z` is a stable 08:00 São Paulo — the
+learner gets the nudge in the morning, ahead of the hour they picked.
+
+Set `CRON_SECRET` in Vercel; it authenticates every invocation. The job is safe
+to trigger manually (`curl -H "Authorization: Bearer $CRON_SECRET" …`): the
+send is claimed per learner per São Paulo day in Postgres, so a second run the
+same day sends nothing.
 
 > **No content-write secret exists.** The app cannot mutate course content at
 > runtime under any credential. Content is a committed bundle; publishing is a
