@@ -82,6 +82,14 @@ export const SCHEMA_EXPECTATIONS: readonly SchemaExpectation[] = [
       "reminder consent flag (#869) — its absence 400s the settings email panel",
   },
   {
+    kind: "column",
+    table: "email_subscriptions",
+    column: "reminder_unsubscribe_token",
+    migration: "20260731150000_kind_scoped_unsubscribe.sql",
+    description:
+      "kind-scoped unsubscribe secret (#896) — its absence means reminder links still carry the MARKETING token, so one token revokes either consent",
+  },
+  {
     kind: "rpc",
     // ⚠️ SIDE-EFFECTFUL IF EVER CALLABLE. Unlike the other probes, this
     // function's body WRITES: it claims (and thereby consumes) today's reminder

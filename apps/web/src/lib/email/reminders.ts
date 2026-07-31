@@ -52,6 +52,11 @@ export interface ReminderRunResult {
 interface DueReminder {
   user_id: string;
   email: string;
+  /**
+   * REMINDER-scoped unsubscribe secret (#896). The RPC's OUT column keeps the
+   * name `unsubscribe_token`, but since #896 it is sourced from
+   * `email_subscriptions.reminder_unsubscribe_token` — NOT the marketing token.
+   */
   unsubscribe_token: string;
   locale: string | null;
   plan_time: string;
@@ -170,7 +175,10 @@ export async function sendSessionPlanReminders(params: {
     const chunk = recipients.slice(i, i + RESEND_MAX_BATCH);
     const messages: EmailMessage[] = chunk.map((r) => {
       // `kind=reminders` clears REMINDER consent only — product news is a
-      // separate consent and must survive this unsubscribe.
+      // separate consent and must survive this unsubscribe. #896: the token is
+      // reminder-scoped too (`claim_due_session_reminders` returns
+      // `email_subscriptions.reminder_unsubscribe_token`), so this link cannot
+      // touch marketing consent even with the `kind` stripped.
       const unsubscribeUrl = `${params.appUrl}/api/email/unsubscribe?token=${r.unsubscribe_token}&kind=reminders`;
       const locale = r.locale ?? params.locale;
       const rendered = sessionPlanReminderEmail({

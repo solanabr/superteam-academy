@@ -109,6 +109,20 @@ describe("consent kind routing", () => {
     });
   });
 
+  // #896: marketing links now state their kind explicitly (the token is
+  // kind-scoped in the DB either way).
+  it("GET kind=marketing uses the marketing RPC", async () => {
+    await get(
+      `https://app.test/api/email/unsubscribe?token=${VALID}&kind=marketing`
+    );
+    expect(rpc).toHaveBeenCalledWith("unsubscribe_by_token", {
+      p_token: VALID,
+    });
+    expect(rpc).not.toHaveBeenCalledWith("unsubscribe_reminders_by_token", {
+      p_token: VALID,
+    });
+  });
+
   it("an unknown kind falls back to marketing, never to reminders", async () => {
     await get(
       `https://app.test/api/email/unsubscribe?token=${VALID}&kind=everything`

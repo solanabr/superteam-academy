@@ -3065,7 +3065,18 @@ CREATE TABLE IF NOT EXISTS email_subscriptions (
   reminder_consent_at      TIMESTAMPTZ,
   reminder_unsubscribed_at TIMESTAMPTZ,
   reminder_locale          TEXT,
+  -- KIND-SCOPED unsubscribe secret (#896). Marketing and reminder consent used
+  -- to SHARE `unsubscribe_token`, so the caller-supplied `kind` decided which
+  -- consent a token revoked (cross-kind flip). Each kind now has its OWN secret
+  -- and each unsubscribe RPC matches only its own column. Mirror of
+  -- 20260731150000_kind_scoped_unsubscribe.sql.
+  reminder_unsubscribe_token UUID NOT NULL DEFAULT gen_random_uuid(),
   CONSTRAINT email_subscriptions_token_unique UNIQUE (unsubscribe_token),
+  CONSTRAINT email_subscriptions_reminder_token_unique UNIQUE (reminder_unsubscribe_token),
+  -- The two consents must NEVER share a secret — a table invariant, so no future
+  -- backfill or restore can quietly re-merge them (#896).
+  CONSTRAINT chk_email_subscriptions_distinct_tokens
+    CHECK (reminder_unsubscribe_token <> unsubscribe_token),
   CONSTRAINT chk_email_subscriptions_reminder_locale
     CHECK (reminder_locale IS NULL OR reminder_locale IN ('en', 'pt-BR', 'es'))
 );
@@ -3151,6 +3162,9 @@ DECLARE
 BEGIN
   UPDATE public.email_subscriptions
   SET opt_in = false, unsubscribed_at = now(), updated_at = now()
+  -- #896: the MARKETING secret ONLY. Grandfathered — every marketing link ever
+  -- minted carries this value and keeps working. A reminder token lives in the
+  -- other column and can never match here.
   WHERE unsubscribe_token = p_token;
   GET DIAGNOSTICS v_matched = ROW_COUNT;
   RETURN v_matched > 0;
@@ -3267,7 +3281,9 @@ BEGIN
     SELECT
       es.user_id                                     AS uid,
       u.email::text                                  AS mail,
-      es.unsubscribe_token                           AS tok,
+      -- #896: the reminder-scoped secret. A reminder email must never carry the
+      -- marketing token (the OUT column keeps its name — signature unchanged).
+      es.reminder_unsubscribe_token                  AS tok,
       es.reminder_locale                             AS loc,
       COALESCE(p.prefs -> 'nextLesson' ->> 'time', '') AS ptime
     FROM public.email_subscriptions es
@@ -3342,7 +3358,9 @@ BEGIN
   SET reminder_opt_in = false,
       reminder_unsubscribed_at = now(),
       updated_at = now()
-  WHERE unsubscribe_token = p_token;
+  -- #896: the REMINDER secret, not the shared one. Do NOT add an OR on
+  -- `unsubscribe_token` "for old links" — that is the vulnerability.
+  WHERE reminder_unsubscribe_token = p_token;
   GET DIAGNOSTICS v_matched = ROW_COUNT;
   RETURN v_matched > 0;
 END;
