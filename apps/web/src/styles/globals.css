@@ -318,7 +318,7 @@
     font-family: var(--font-sans, var(--font-b));
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    font-size: 14px;
+    font-size: 15px;
     line-height: 1.6;
   }
 
@@ -355,7 +355,7 @@
     transition: all 0.1s ease;
   }
   .btn-push:active {
-    transform: translateY(3px);
+    transform: translateY(2px);
   }
 
   /* ── Chunky Card ── */
@@ -367,7 +367,7 @@
     transition: all 0.15s ease;
   }
   .card-chunky:hover {
-    transform: translateY(-2px);
+    transform: translateY(-3px);
     box-shadow: var(--shadow-card-hover);
     border-color: var(--border-hover);
   }
@@ -920,7 +920,7 @@
     rgba(255, 255, 255, 0.12) 75%,
     transparent 100%
   );
-  animation: shimmer 2.4s ease-in-out infinite;
+  animation: shimmer 2.2s ease-in-out infinite;
 }
 
 /* ── V9 shimmer — sweeping white aura on progress bars ── */
@@ -968,7 +968,7 @@
     rgba(255, 255, 255, 0.08) 75%,
     transparent 100%
   );
-  animation: shimmer 2.4s ease-in-out infinite;
+  animation: shimmer 2.2s ease-in-out infinite;
 }
 /* Inner 3D highlight — white ridge near top */
 .prog-fill::before {
@@ -1020,7 +1020,7 @@
     rgba(255, 255, 255, 0.1) 75%,
     transparent 100%
   );
-  animation: shimmer 2.4s ease-in-out infinite;
+  animation: shimmer 2.2s ease-in-out infinite;
 }
 
 /* Progress header layout */
@@ -1072,7 +1072,7 @@
     rgba(255, 255, 255, 0.08) 75%,
     transparent 100%
   );
-  animation: shimmer 2.4s ease-in-out infinite;
+  animation: shimmer 2.2s ease-in-out infinite;
 }
 .progress-fat-fill::before {
   content: "";
@@ -2193,7 +2193,7 @@
     rgba(255, 255, 255, 0.1) 75%,
     transparent 100%
   );
-  animation: path-shimmer 2.4s ease-in-out infinite;
+  animation: path-shimmer 2.2s ease-in-out infinite;
 }
 @keyframes path-shimmer {
   0% {
@@ -2493,7 +2493,7 @@ a.path-step-card:hover .path-step-thumb img {
     rgba(255, 255, 255, 0.35) 50%,
     transparent 100%
   );
-  animation: shimmer 2.4s ease-in-out infinite;
+  animation: shimmer 2.2s ease-in-out infinite;
 }
 
 /* ── Staggered reveal ── */
@@ -2960,11 +2960,14 @@ a.path-step-card:hover .path-step-badge.skip {
 }
 .toast.info {
   background: var(--primary-dim);
-  border-color: rgba(46, 204, 142, 0.2);
+  /* Light is the :root baseline (next-themes sets data-theme; there is no
+     `.light` class), so the deep-emerald border belongs here and the brighter
+     dark-mode emerald is the override. */
+  border-color: rgba(10, 112, 85, 0.2);
   color: var(--primary);
 }
-.light .toast.info {
-  border-color: rgba(10, 112, 85, 0.2);
+[data-theme="dark"] .toast.info {
+  border-color: rgba(46, 204, 142, 0.2);
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -3591,7 +3594,7 @@ a.path-step-card:hover .path-step-badge.skip {
     rgba(255, 255, 255, 0.08)
   );
 }
-:is([data-theme="light"], .light) .cert-divider {
+[data-theme="light"] .cert-divider {
   background: linear-gradient(
     90deg,
     rgba(0, 0, 0, 0.06),
@@ -3616,7 +3619,7 @@ a.path-step-card:hover .path-step-badge.skip {
   border-top: 1px solid rgba(255, 255, 255, 0.07);
   margin-top: auto;
 }
-:is([data-theme="light"], .light) .cert-foot {
+[data-theme="light"] .cert-foot {
   border-top-color: rgba(0, 0, 0, 0.08);
 }
 .cert-network {
@@ -3800,7 +3803,12 @@ a.path-step-card:hover .path-step-badge.skip {
   overflow: hidden;
   min-width: 0;
 }
-.dash-panel::before {
+/* Gradient accent hairline — 1px, emerald→amber, 60% opacity, across the top
+   edge of a major panel (brand guide §9.3). `.accent-hairline` is the reusable
+   form for panels that are not the dashboard identity panel; both need the
+   host to be `position: relative` with `overflow: hidden`. */
+.dash-panel::before,
+.accent-hairline::before {
   content: "";
   position: absolute;
   top: 0;
@@ -3970,7 +3978,7 @@ a.path-step-card:hover .path-step-badge.skip {
     rgba(255, 255, 255, 0.1) 75%,
     transparent 100%
   );
-  animation: shimmer 2.4s ease-in-out infinite;
+  animation: shimmer 2.2s ease-in-out infinite;
 }
 .dash-ach {
   padding: 18px 16px;
@@ -5333,88 +5341,6 @@ a.path-step-card:hover .path-step-title {
   color: var(--text-3);
   min-width: 3ch;
   text-align: center;
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   PILLS & BADGES — v9 spec lines 311-351
-   ═══════════════════════════════════════════════════════════════ */
-.pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 12px;
-  border-radius: var(--r-full);
-  font-family: var(--font-display, var(--font-d));
-  font-weight: 700;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  border: 1px solid;
-}
-.pill-primary,
-.pill-beg {
-  background: var(--primary-dim);
-  color: var(--primary);
-  border-color: rgba(46, 204, 142, 0.22);
-}
-.light .pill-primary,
-.light .pill-beg {
-  border-color: rgba(10, 112, 85, 0.2);
-}
-.pill-int {
-  background: rgba(10, 112, 85, 0.12);
-  color: var(--primary-dark);
-  border-color: rgba(10, 112, 85, 0.2);
-}
-[data-theme="dark"] .pill-int {
-  color: var(--primary);
-}
-.pill-adv {
-  background: var(--streak-dim);
-  color: var(--streak);
-  border-color: rgba(249, 115, 22, 0.22);
-}
-.light .pill-adv {
-  border-color: rgba(234, 88, 12, 0.2);
-}
-.pill-xp {
-  background: var(--xp-dim);
-  color: var(--xp);
-  border-color: rgba(245, 166, 35, 0.22);
-}
-.light .pill-xp {
-  border-color: rgba(245, 158, 11, 0.2);
-}
-.pill-streak {
-  background: var(--streak-dim);
-  color: var(--streak);
-  border-color: rgba(249, 115, 22, 0.22);
-}
-.light .pill-streak {
-  border-color: rgba(234, 88, 12, 0.2);
-}
-.pill-level {
-  background: var(--level-dim);
-  color: var(--level);
-  border-color: rgba(167, 139, 250, 0.22);
-}
-.light .pill-level {
-  color: var(--level);
-  border-color: rgba(124, 58, 237, 0.2);
-}
-.pill-sol {
-  background: rgba(153, 69, 255, 0.08);
-  color: #c4b5fd;
-  border-color: rgba(153, 69, 255, 0.2);
-}
-.pill-done {
-  background: rgba(63, 185, 80, 0.1);
-  color: var(--success);
-  border-color: rgba(63, 185, 80, 0.22);
-}
-.light .pill-done {
-  color: var(--success);
-  border-color: rgba(22, 163, 74, 0.2);
 }
 
 /* ═══════════════════════════════════════════════════════════════

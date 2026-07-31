@@ -36,7 +36,8 @@ interface ContinueCardProps {
 
 /**
  * Dashboard hero Continue card — one focusable deep link straight back into
- * the learning loop, wrapped in the Solana brand gradient.
+ * the learning loop, in the standard card treatment with the emerald→amber
+ * accent hairline.
  */
 export function ContinueCard({ target, locale }: ContinueCardProps) {
   const t = useTranslations("dashboard");
@@ -76,79 +77,80 @@ export function ContinueCard({ target, locale }: ContinueCardProps) {
       onClick={() => trackContinueCardClick({ kind: target.kind, courseSlug })}
       className="group block rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     >
-      <div className="rounded-xl p-[2.5px] shadow-card [background:linear-gradient(135deg,#9945FF,#14F195)]">
-        <div className="relative flex items-center gap-4 overflow-hidden rounded-[10px] bg-card p-5 md:p-6">
-          {/* sheen sweep on hover */}
-          <div
-            className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/[0.06] to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
-            aria-hidden="true"
-          />
+      {/* Standard card treatment + the gradient accent hairline. Deliberately
+          NOT the Solana gradient frame: that is reserved for credentials and
+          NFTs (brand guide §10), and this card is a navigation affordance. */}
+      <div className="accent-hairline relative flex items-center gap-4 overflow-hidden rounded-xl border border-border bg-card p-5 shadow-card md:p-6">
+        {/* sheen sweep on hover */}
+        <div
+          className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/[0.06] to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
+          aria-hidden="true"
+        />
 
-          <span
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white [background:linear-gradient(135deg,#9945FF,#14F195)]"
-            aria-hidden="true"
-          >
-            {target.kind === "lesson" ? (
-              <Play size={20} weight="fill" />
-            ) : (
-              <Confetti size={20} weight="fill" />
-            )}
-          </span>
+        <span
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-white"
+          aria-hidden="true"
+        >
+          {target.kind === "lesson" ? (
+            <Play size={20} weight="fill" />
+          ) : (
+            <Confetti size={20} weight="fill" />
+          )}
+        </span>
 
-          <div className="min-w-0 flex-1">
-            <p className="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
-              {target.kind === "lesson"
-                ? t("continueLearning")
-                : t("allCaughtUp")}
+        <div className="min-w-0 flex-1">
+          <p className="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
+            {target.kind === "lesson"
+              ? t("continueLearning")
+              : t("allCaughtUp")}
+          </p>
+          {target.kind === "lesson" ? (
+            <p className="mt-1 truncate font-display text-base font-black tracking-[-0.25px] md:text-lg">
+              {target.courseTitle}
+              <span className="mx-2 text-text-3" aria-hidden="true">
+                &middot;
+              </span>
+              <span className="text-text-2">{target.lessonTitle}</span>
             </p>
-            {target.kind === "lesson" ? (
-              <p className="mt-1 truncate font-display text-base font-black tracking-[-0.25px] md:text-lg">
-                {target.courseTitle}
-                <span className="mx-2 text-text-3" aria-hidden="true">
-                  &middot;
-                </span>
-                <span className="text-text-2">{target.lessonTitle}</span>
-              </p>
-            ) : target.kind === "nextCourse" ? (
-              <p className="mt-1 truncate font-display text-base font-black tracking-[-0.25px] md:text-lg">
-                {t("startNextCourse")}
-                <span className="mx-2 text-text-3" aria-hidden="true">
-                  &middot;
-                </span>
-                <span className="text-text-2">{target.courseTitle}</span>
-              </p>
-            ) : (
-              <p className="mt-1 truncate font-display text-base font-black tracking-[-0.25px] md:text-lg">
-                {t("browseCourses")}
-              </p>
-            )}
-            {target.kind === "lesson" && (
-              <p className="mt-1 text-xs text-text-3">
-                {t("lessonsDone", {
-                  completed: target.completedLessons,
-                  total: target.totalLessons,
-                })}
-              </p>
-            )}
-            {target.kind !== "lesson" && (
-              <p className="mt-1 text-xs text-text-3">{t("allCaughtUpHint")}</p>
-            )}
-          </div>
-
-          <span
-            className="flex shrink-0 items-center gap-1.5 font-display text-sm font-extrabold text-primary transition-transform duration-200 group-hover:translate-x-0.5"
-            aria-hidden="true"
-          >
-            <span className="hidden sm:inline">
-              {target.kind === "lesson"
-                ? t("resumeLesson")
-                : target.kind === "nextCourse"
-                  ? t("startLearning")
-                  : t("browseCourses")}
-            </span>
-            <ArrowRight size={16} weight="bold" />
-          </span>
+          ) : target.kind === "nextCourse" ? (
+            <p className="mt-1 truncate font-display text-base font-black tracking-[-0.25px] md:text-lg">
+              {t("startNextCourse")}
+              <span className="mx-2 text-text-3" aria-hidden="true">
+                &middot;
+              </span>
+              <span className="text-text-2">{target.courseTitle}</span>
+            </p>
+          ) : (
+            <p className="mt-1 truncate font-display text-base font-black tracking-[-0.25px] md:text-lg">
+              {t("browseCourses")}
+            </p>
+          )}
+          {target.kind === "lesson" && (
+            <p className="mt-1 text-xs text-text-3">
+              {t("lessonsDone", {
+                completed: target.completedLessons,
+                total: target.totalLessons,
+              })}
+            </p>
+          )}
+          {target.kind !== "lesson" && (
+            <p className="mt-1 text-xs text-text-3">{t("allCaughtUpHint")}</p>
+          )}
         </div>
+
+        <span
+          className="flex shrink-0 items-center gap-1.5 font-display text-sm font-extrabold text-primary transition-transform duration-200 group-hover:translate-x-0.5"
+          aria-hidden="true"
+        >
+          <span className="hidden sm:inline">
+            {target.kind === "lesson"
+              ? t("resumeLesson")
+              : target.kind === "nextCourse"
+                ? t("startLearning")
+                : t("browseCourses")}
+          </span>
+          <ArrowRight size={16} weight="bold" />
+        </span>
       </div>
     </Link>
   );
