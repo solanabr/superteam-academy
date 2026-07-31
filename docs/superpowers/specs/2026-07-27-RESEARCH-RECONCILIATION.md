@@ -84,8 +84,15 @@ step 0), and do not quote AI costs externally until the curls are recorded.
 2. **All four new courses repeat the immutable-creator mistake** (PB-7): every
    `course.yaml` carries `creator: B7o8Nf…` — the platform authority — despite the catalog spec's
    explicit "do not repeat this" warning. Survivable on devnet (recreate-before-mainnet), but the
-   recreate wave must now include creator swaps to real instructor wallets, and `teachers.yaml`
-   is still read by nothing.
+   recreate wave must now include creator swaps to real instructor wallets. ~~and `teachers.yaml`
+   is still read by nothing.~~ **AMENDED 2026-07-31 (#863): the `teachers.yaml` clause is
+   retired, not fixed.** The owner ruled on 2026-07-28 (#840) that `course.yaml`'s immutable
+   on-chain `creator` wallet **is** the teacher pointer, resolving to the teacher's platform
+   account via `profiles.wallet_address` — there is no registry file in the model. "Read by
+   nothing" was therefore by design, not a defect; the file has been deleted from
+   `solanabr/courses-academy`. **The creator half of this finding stands unchanged**: every new
+   `course.yaml` still carries the platform authority, and the recreate wave still owes real
+   instructor wallets at on-chain creation time (PB-7).
 3. **C5's course description still opens with the false-for-standalone claim** "You have a
    deployed vault app…" — unified item 27(1) required rewriting it before merge; it merged as-is.
 4. **The C3-at-trackLevel-3 devnet recreate (catalog chain-2) never executed** and its natural
