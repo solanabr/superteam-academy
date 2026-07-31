@@ -552,12 +552,6 @@
     "grants": "Grants",
     "opensInNewTab": "abre em uma nova aba"
   },
-  "mastery": {
-    "title": "Domínio de habilidades",
-    "caption": "Seu progresso nas habilidades que você praticou",
-    "lessonsRatio": "{completed}/{total} lições",
-    "progressLabel": "{skill}: {completed} de {total} lições concluídas"
-  },
   "profile": {
     "editProfile": "Editar Perfil",
     "skills": "Habilidades",

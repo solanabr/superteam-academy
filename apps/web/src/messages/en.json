@@ -552,12 +552,6 @@
     "grants": "Grants",
     "opensInNewTab": "opens in a new tab"
   },
-  "mastery": {
-    "title": "Skill mastery",
-    "caption": "Your progress across the skills you've practiced",
-    "lessonsRatio": "{completed}/{total} lessons",
-    "progressLabel": "{skill}: {completed} of {total} lessons complete"
-  },
   "profile": {
     "editProfile": "Edit Profile",
     "skills": "Skills",
