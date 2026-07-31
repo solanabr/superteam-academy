@@ -1,6 +1,7 @@
 import type { ReactNode, Ref } from "react";
 import type { TestCase, BuildType } from "@superteam-lms/types";
 import type { editor } from "monaco-editor";
+import type { FormatStatus } from "@/lib/editor/format-code";
 
 export type EditorLanguage = "typescript" | "rust" | "json";
 
@@ -120,10 +121,10 @@ export interface ChallengeInterfaceProps {
 export interface CodeEditorHandle {
   getEditor: () => editor.IStandaloneCodeEditor | null;
   /**
-   * Runs Monaco's built-in `editor.action.formatDocument`. Resolves `false`
-   * when the editor is not mounted yet or the current language has no
-   * registered formatting provider (Monaco ships one for TS/JS/JSON only), so
-   * the caller can hide the affordance rather than offer a no-op.
+   * Reformats the buffer with Prettier (see `lib/editor/format-code` for why
+   * not Monaco's built-in formatter). The status is deliberately reported
+   * rather than swallowed, so the caller can tell the learner WHY nothing
+   * changed instead of leaving the button looking broken.
    */
-  format: () => Promise<boolean>;
+  format: () => Promise<FormatStatus>;
 }

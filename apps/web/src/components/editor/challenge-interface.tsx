@@ -299,12 +299,34 @@ export function ChallengeInterface({
     }));
   }, []);
 
-  // Monaco owns the formatting — the handle just runs its built-in action, and
-  // the button is only offered for languages Monaco actually formats.
+  // The button is only offered for languages we can actually format.
   const canFormat = canFormatLanguage(language);
-  const handleFormat = useCallback(() => {
-    void editorHandle.current?.format();
-  }, []);
+  // A formatter that does nothing must SAY so. Success is silent — the
+  // reformatted buffer is its own feedback — but every other outcome gets a
+  // short localized note, which is what the original silent no-op lacked.
+  const [formatNote, setFormatNote] = useState<string | null>(null);
+  const handleFormat = useCallback(async () => {
+    const status = await editorHandle.current?.format();
+    setFormatNote(
+      !status || status === "formatted"
+        ? null
+        : t(
+            status === "syntax-error"
+              ? "formatSyntaxError"
+              : status === "unchanged"
+                ? "formatUnchanged"
+                : "formatUnsupported"
+          )
+    );
+  }, [t]);
+
+  // The note is transient — it explains one click, and must not linger over
+  // the next edit.
+  useEffect(() => {
+    if (!formatNote) return;
+    const id = setTimeout(() => setFormatNote(null), 5000);
+    return () => clearTimeout(id);
+  }, [formatNote]);
 
   const handleReset = useCallback(() => {
     setCode(initialCode);
@@ -576,7 +598,7 @@ export function ChallengeInterface({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={handleFormat}
+                    onClick={() => void handleFormat()}
                     className="gap-1 text-xs"
                     aria-label={t("formatCode")}
                   >
@@ -624,6 +646,15 @@ export function ChallengeInterface({
                 </Button>
               </div>
             </div>
+
+            {/* Why Format did nothing. Its own line rather than a squeeze into
+                the button row, so the reason is readable at any width.
+                role="status" announces it politely without stealing focus. */}
+            {formatNote && (
+              <p role="status" className="mt-1.5 text-xs text-text-3">
+                {formatNote}
+              </p>
+            )}
           </div>
 
           {/* Solution-reveal soft-gate panel (LX-C6). Confirming step is a

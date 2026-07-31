@@ -296,33 +296,47 @@ export function ThreadDetailClient({ shortId }: ThreadDetailClientProps) {
         </div>
       </div>
 
-      {/* Answers */}
+      {/* Answers — comment-thread order: header, composer, sort line, then the
+          flat list. The composer sits at the TOP because that is where you act;
+          burying it under N answers made replying a scroll hunt. */}
       <div className="mt-8 border-t border-[var(--border-default)] pt-6">
-        <h2 className="mb-4 font-display text-lg font-bold text-[var(--text)]">
-          {t("answers", { count: thread.answers.length })}
+        <h2 className="mb-3 font-display text-lg font-bold text-[var(--text)]">
+          {t("answersCount", { count: thread.answers.length })}
         </h2>
 
-        <div className="space-y-4">
-          {thread.answers.map((answer) => (
-            <VotableAnswerCard
-              key={answer.id}
-              answer={answer}
-              isThreadAuthor={user?.id === thread.author_id}
-              currentUserId={user?.id}
-              onAccept={() => handleAccept(answer.id)}
-              onDelete={() => fetchThread()}
-            />
-          ))}
-        </div>
-
-        {/* Answer editor */}
         {user && !thread.is_locked && (
-          <div className="mt-6">
-            <AnswerEditor
-              threadId={thread.id}
-              onAnswerPosted={handleAnswerPosted}
-            />
-          </div>
+          <AnswerEditor
+            threadId={thread.id}
+            onAnswerPosted={handleAnswerPosted}
+          />
+        )}
+
+        {thread.answers.length > 0 && (
+          <>
+            {/* Sort is a fixed "Latest" for v1 — answers already come back
+                accepted-first, then by score. Wired to real state when the
+                answers list gets its own sort control. */}
+            <p className="mt-4 text-xs text-[var(--text-2)]">
+              {t("sortBy")}{" "}
+              <span className="font-semibold text-[var(--text)]">
+                {t("sortLatest")}
+              </span>
+            </p>
+
+            {/* Flat list: no per-item frame, hairline dividers only. */}
+            <div className="mt-1 divide-y divide-[var(--border-default)]">
+              {thread.answers.map((answer) => (
+                <VotableAnswerCard
+                  key={answer.id}
+                  answer={answer}
+                  isThreadAuthor={user?.id === thread.author_id}
+                  currentUserId={user?.id}
+                  onAccept={() => handleAccept(answer.id)}
+                  onDelete={() => fetchThread(true)}
+                />
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>

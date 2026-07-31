@@ -371,7 +371,10 @@
     "stopwatchPause": "Pausar",
     "stopwatchReset": "Zerar",
     "hints": "Dicas",
-    "lessonNumberTitle": "{number}. {title}"
+    "lessonNumberTitle": "{number}. {title}",
+    "formatSyntaxError": "Nada para formatar — corrija os erros de sintaxe primeiro.",
+    "formatUnchanged": "Já está formatado.",
+    "formatUnsupported": "A formatação não está disponível para esta linguagem."
   },
   "dashboard": {
     "allCaughtUp": "Tudo em dia!",
@@ -1005,7 +1008,9 @@
     },
     "lessonContext": "Da lição",
     "filterCourseQuestions": "Perguntas de curso",
-    "composerHeading": "Pergunte à comunidade"
+    "composerHeading": "Pergunte à comunidade",
+    "answersCount": "Respostas ({count})",
+    "sortBy": "Ordenar por"
   },
   "aiPartner": {
     "title": "Parceiro de IA",

@@ -68,75 +68,87 @@ export function AnswerCard({
   const t = useTranslations("community");
 
   return (
-    <div
+    // A comment, not a card: flat on the page background, no border, no
+    // radius, no fill. Separation between answers comes from the list's
+    // `divide-y` hairline alone.
+    <article
       className={cn(
-        "rounded-md border px-4 py-3",
-        answer.is_accepted
-          ? "border-[var(--primary)] bg-[var(--primary-dim)]"
-          : "border-[var(--border-default)] bg-[var(--card)]"
+        "py-4",
+        // The accepted answer has no LeetCode equivalent, so it gets the
+        // quietest possible distinction: a 2px accent rule down the left edge.
+        // `border-l-<color>` is a longhand, so it cannot fight the list's
+        // divider colour the way a `border-<color>` shorthand would.
+        answer.is_accepted && "border-l-2 border-l-[var(--success)] pl-4"
       )}
     >
       {answer.is_accepted && (
-        <span className="mb-1.5 inline-flex items-center text-xs font-semibold text-[var(--primary)]">
+        <span className="mb-1 inline-flex items-center text-xs font-semibold text-[var(--success)]">
           {t("acceptedAnswer")}
         </span>
       )}
 
-      {/* Comment anatomy: WHO (identity header) → WHAT (body) → ACTIONS. */}
-      <div className="flex items-center gap-1.5 text-xs text-[var(--text-2)]">
+      {/* WHO → WHAT → ACTIONS. The avatar is its own column; everything else
+          aligns to the NAME, not the avatar. */}
+      <div className="flex gap-3">
         {answer.author.avatar_url ? (
           <Image
             src={answer.author.avatar_url}
             alt=""
-            width={18}
-            height={18}
-            className="h-[18px] w-[18px] rounded-full"
+            width={28}
+            height={28}
+            className="h-7 w-7 shrink-0 rounded-full"
           />
         ) : (
-          <div className="h-[18px] w-[18px] rounded-full bg-[var(--primary-dim)]" />
+          <div className="h-7 w-7 shrink-0 rounded-full bg-[var(--primary-dim)]" />
         )}
-        <span className="font-semibold text-[var(--text)]">
-          {answer.author.username || t("anonymous")}
-        </span>
-        {answer.author.level > 0 && (
-          <LevelBadge level={answer.author.level} size="xs" />
-        )}
-        <span aria-hidden="true">·</span>
-        <span>{timeAgo(answer.created_at, t)}</span>
-      </div>
 
-      {/* Headings step DOWN explicitly: `prose-sm` scales body copy but still
-          renders an authored `#`/`##` larger than the question title above. */}
-      <div className="prose prose-sm mt-1.5 max-w-none text-[var(--text)] dark:prose-invert prose-headings:font-display prose-headings:font-bold prose-h1:text-base prose-h2:text-[15px] prose-h3:text-sm prose-h4:text-sm">
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          rehypePlugins={[rehypeHighlight]}
-        >
-          {answer.body}
-        </ReactMarkdown>
-      </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-sm font-semibold text-[var(--text)]">
+              {answer.author.username || t("anonymous")}
+            </span>
+            {answer.author.level > 0 && (
+              <LevelBadge level={answer.author.level} size="xs" />
+            )}
+          </div>
+          <div className="text-xs text-[var(--text-2)]">
+            {timeAgo(answer.created_at, t)}
+          </div>
 
-      {/* Action row: vote cluster + quiet actions, accept last. */}
-      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--text-2)]">
-        <VoteButton
-          score={answer.vote_score}
-          userVote={answer.userVote}
-          onVote={onVote}
-          disabled={disabled}
-          layout="horizontal"
-        />
-        <FlagButton answerId={answer.id} />
-        {isAuthor && onDelete && (
-          <DeleteButton answerId={answer.id} onDeleted={onDelete} />
-        )}
-        {/* Thread author only, and never on their own answer. */}
-        {isThreadAuthor && answer.author_id !== currentUserId && (
-          <AcceptAnswerButton
-            isAccepted={answer.is_accepted}
-            onAccept={onAccept}
-          />
-        )}
+          {/* Headings step DOWN explicitly: `prose-sm` scales body copy but
+              still renders an authored `#`/`##` larger than the question
+              title above. */}
+          <div className="prose prose-sm mt-2 max-w-none text-[var(--text)] dark:prose-invert prose-headings:font-display prose-headings:font-bold prose-h1:text-base prose-h2:text-[15px] prose-h3:text-sm prose-h4:text-sm">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeHighlight]}
+            >
+              {answer.body}
+            </ReactMarkdown>
+          </div>
+
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--text-2)]">
+            <VoteButton
+              score={answer.vote_score}
+              userVote={answer.userVote}
+              onVote={onVote}
+              disabled={disabled}
+              layout="horizontal"
+            />
+            <FlagButton answerId={answer.id} />
+            {isAuthor && onDelete && (
+              <DeleteButton answerId={answer.id} onDeleted={onDelete} />
+            )}
+            {/* Thread author only, and never on their own answer. */}
+            {isThreadAuthor && answer.author_id !== currentUserId && (
+              <AcceptAnswerButton
+                isAccepted={answer.is_accepted}
+                onAccept={onAccept}
+              />
+            )}
+          </div>
+        </div>
       </div>
-    </div>
+    </article>
   );
 }

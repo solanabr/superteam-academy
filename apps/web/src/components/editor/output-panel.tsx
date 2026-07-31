@@ -395,7 +395,6 @@ export function OutputPanel({
             <p className="text-sm text-text-3">{t("testCasesPrompt")}</p>
           )}
         </TabsContent>
-
       </Tabs>
     </div>
   );

@@ -19,6 +19,7 @@ import type {
   CodeEditorHandle,
   EditorLanguage,
 } from "./types";
+import { formatCode } from "@/lib/editor/format-code";
 import { cn } from "@/lib/utils";
 import { tabFocusModeChord } from "@/lib/utils/keyboard";
 
@@ -90,18 +91,25 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
       () => ({
         getEditor: () => editorRef.current,
         format: async () => {
-          const action = editorRef.current?.getAction(
-            "editor.action.formatDocument"
-          );
-          // Monaco keeps the action registered but unsupported when no
-          // formatting provider is installed for the model's language; running
-          // it then silently does nothing.
-          if (!action || action.isSupported() === false) return false;
-          await action.run();
-          return true;
+          const editorInstance = editorRef.current;
+          const model = editorInstance?.getModel();
+          if (!editorInstance || !model) return "unsupported";
+
+          const source = model.getValue();
+          const result = await formatCode(source, language);
+          if (result.status !== "formatted") return result.status;
+
+          // executeEdits (not setValue) so the reformat is a single undoable
+          // step — setValue resets the undo stack, losing everything the
+          // learner typed before clicking Format.
+          editorInstance.executeEdits("format-document", [
+            { range: model.getFullModelRange(), text: result.code },
+          ]);
+          editorInstance.pushUndoStop();
+          return "formatted";
         },
       }),
-      []
+      [language]
     );
 
     const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
