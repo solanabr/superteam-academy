@@ -98,6 +98,9 @@ function lessonYaml(withImage: boolean): string {
     id: "lesson-accounts",
     slug: "accounts",
     title: "Accounts",
+    // Required since #466 C3; each slug must exist in the root skills.yaml the
+    // tarball below carries, or `validateTree` rejects the whole fixture.
+    skills: ["pdas"],
     blocks: [{ key: "intro", type: "prose", src: "intro.md" }],
   });
 }
@@ -119,6 +122,7 @@ export function makeCourseTarball(
     ? "# Accounts\n\nSee ![pixel](assets/pixel.png) here.\n"
     : "# Accounts\n";
   const files: Record<string, string | Uint8Array> = {
+    [`${top}/skills.yaml`]: "- slug: pdas\n  label: PDAs\n",
     [`${top}/courses/demo/course.yaml`]: courseYaml,
     [`${top}/courses/demo/slots.lock.json`]: slotsLockJson,
     [`${lessonDir}/lesson.yaml`]: lessonYaml(opts.withImage ?? false),
