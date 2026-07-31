@@ -5,9 +5,12 @@
  * Never hardcode colors, typography, or shadows in components.
  *
  * Colors are driven by CSS custom properties defined in globals.css,
- * mapped through tailwind.config.ts. Toggle light/dark via `.dark` class.
+ * mapped through tailwind.config.ts. Dark mode is the [data-theme="dark"]
+ * attribute on <html> (next-themes attribute="data-theme") — there is no
+ * `.dark` class.
  *
  * Source of truth: apps/web/src/styles/globals.css + tailwind.config.ts
+ * Rendered reference: docs/design-system.html (pnpm docs:design-system)
  */
 
 // ─── Utility ────────────────────────────────────────────────────────────────

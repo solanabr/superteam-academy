@@ -11,7 +11,8 @@
    SOLARIUM DESIGN SYSTEM v9 — CSS Custom Properties
    Light mode: :root (default baseline)
    Dark mode:  [data-theme="dark"] (next-themes data attribute)
-   Source of truth: docs/design-system.html
+   These blocks are the SOURCE OF TRUTH for every colour in the app.
+   docs/design-system.html is GENERATED from them (pnpm docs:design-system).
    ============================================================ */
 
 @layer base {
@@ -3827,7 +3828,7 @@ a.path-step-card:hover .path-step-badge.skip {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   DASHBOARD IDENTITY PANEL — v9 spec lines 438-670
+   DASHBOARD IDENTITY PANEL
    ═══════════════════════════════════════════════════════════════ */
 .dash-panel {
   background: var(--card);
@@ -5374,7 +5375,7 @@ a.path-step-card:hover .path-step-title {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   PILLS & BADGES — v9 spec lines 311-351
+   PILLS & BADGES — rendered in docs/design-system.html#components
    ═══════════════════════════════════════════════════════════════ */
 .pill {
   display: inline-flex;
@@ -5456,7 +5457,7 @@ a.path-step-card:hover .path-step-title {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   FORMS — v9 spec lines 1107-1114
+   FORMS
    ═══════════════════════════════════════════════════════════════ */
 .form-label {
   font-family: var(--font-display, var(--font-d));

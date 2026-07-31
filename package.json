@@ -10,6 +10,8 @@
     "typecheck": "turbo typecheck",
     "test:scripts": "./apps/web/node_modules/.bin/vitest run --config vitest.config.ts",
     "probe:brace-glob": "node scripts/brace-glob-probe.mjs",
+    "docs:design-system": "node scripts/gen-design-system-doc.mjs",
+    "docs:design-system:check": "node scripts/gen-design-system-doc.mjs --check",
     "clean": "turbo clean",
     "prepare": "husky"
   },

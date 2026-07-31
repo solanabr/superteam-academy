@@ -1,4 +1,4 @@
-> Last synced: 2026-03-02
+> Last synced: 2026-07-31
 
 # Customization Guide
 
@@ -6,189 +6,218 @@ How to customize and extend Superteam Academy for your own needs.
 
 ## Theme Customization
 
+> **Rendered reference:** `docs/design-system.html` — every token, both themes, live
+> swatches, and the component variant matrices. It is **generated** from the files
+> described below (`pnpm docs:design-system`); regenerate it after any token change
+> and commit the diff. `pnpm docs:design-system:check` fails if it is stale.
+
+### The pipeline
+
+Styling flows in exactly one direction. Work at the highest layer that can express
+what you need, and never skip a layer downwards.
+
+```
+apps/web/src/styles/globals.css        ← CSS custom properties (the ONLY place a raw hex lives)
+  :root                                ← light values (baseline)
+  [data-theme="dark"]                  ← dark overrides
+        ↓
+apps/web/tailwind.config.ts            ← semantic mapping: bg-primary, text-text-2, shadow-card, …
+        ↓
+apps/web/src/components/ui/*.tsx       ← cva primitives (Button is the model)
+apps/web/src/lib/styles/styleClasses.ts← shared multi-class recipes
+        ↓
+component markup                       ← named tokens only
+```
+
 ### CSS Custom Properties
 
-The design system is built on CSS custom properties defined in `apps/web/src/styles/globals.css`. These control all colors across both light and dark modes. Values are plain hex or rgba.
+Tokens live in `apps/web/src/styles/globals.css`. Both blocks are name-for-name
+identical — **105 variables each** — so every token has a defined value in both
+themes:
 
-**Light Mode** (`:root`):
+- `:root` — light mode (the baseline)
+- `[data-theme="dark"]` — dark mode overrides
+
+There is **no `.dark` class and no `.light` class.** next-themes is configured with
+`attribute="data-theme"`, so it writes `data-theme="dark"` / `data-theme="light"` on
+`<html>`. A selector such as `.dark .card` or `.light .pill` will never match.
+
+A representative slice (see the generated reference for all 105):
 
 ```css
 :root {
-  /* -- Primary: Deep Teal -- */
-  --primary: #0d9488;
-  --primary-hover: #0b7e73;
-  --primary-dark: #087068;
-  --primary-light: #ccfbf1;
-  --primary-bg: #f0fdfa;
+  /* Primary — Forest Emerald (dark enough for a light background) */
+  --primary: #0a7055;
+  --primary-hover: #08604a;
+  --primary-dark: #065c44;
+  --primary-dim: rgba(10, 112, 85, 0.09);
 
-  /* -- Accent: Warm Amber -- */
+  /* XP — Warm Amber (aliased as --accent-*) */
+  --xp: #f59e0b;
+  --xp-dark: #b45309;
   --accent: #f59e0b;
-  --accent-hover: #d97706;
-  --accent-dark: #b45309;
-  --accent-light: #fef3c7;
-  --accent-bg: #fffbeb;
 
-  /* -- Secondary: Ink Teal -- */
-  --secondary: #0f2f2d;
-  --secondary-light: #134e4a;
-  --secondary-bg: #e6fffb;
-
-  /* -- Success: Botanical Green -- */
+  --streak: #ea580c; /* Flame orange */
+  --freeze: #0284c7; /* Streak-freeze blue */
+  --level: #7c3aed; /* Level purple */
   --success: #16a34a;
-  --success-dark: #15803d;
-  --success-light: #dcfce7;
-  --success-bg: #f0fdf4;
+  --danger: #dc2626;
 
-  /* -- Streak: Flame Orange -- */
-  --streak: #ea580c;
-  --streak-light: #fff7ed;
-
-  /* -- Danger: Warm Coral -- */
-  --danger: #e11d48;
-  --danger-light: #ffe4e6;
-
-  /* -- Solana Nod (used sparingly) -- */
-  --solana-purple: #9945ff;
-  --solana-green: #14f195;
-
-  /* -- Neutrals: warm cream -- */
+  /* Neutrals — warm cream */
   --bg: #fafaf7;
   --card: #ffffff;
-  --subtle: #f5f3ee;
-  --warm: #fdf8f0;
-  --border: #e7e4dd;
-  --border-hover: #d4d0c7;
+  --border: rgba(0, 0, 0, 0.08);
+  --border-default: rgba(0, 0, 0, 0.13);
+  --border-strong: rgba(0, 0, 0, 0.22);
   --text: #1c1917;
   --text-2: #57534e;
   --text-3: #a8a29e;
 
-  /* -- Radii -- */
-  --r-sm: 10px;
-  --r-md: 14px;
-  --r-lg: 18px;
-  --r-xl: 24px;
+  /* Radii */
+  --r-xs: 4px;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 22px;
+  --r-full: 999px;
+  --radius: 12px;
+}
+
+[data-theme="dark"] {
+  --primary: #2ecc8e; /* lifted for dark backgrounds */
+  --primary-hover: #27bd82;
+  --primary-dark: #0a7055; /* the light-mode primary becomes the dark shade */
+
+  --xp: #f5a623;
+  --streak: #f97316;
+  --freeze: #38bdf8;
+  --level: #a78bfa;
+  --success: #3fb950;
+  --danger: #f85149;
+
+  --bg: #0e1117;
+  --card: #161b27;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-default: rgba(255, 255, 255, 0.11);
+  --border-strong: rgba(255, 255, 255, 0.2);
+  --text: #e6edf3;
+  --text-2: #8b949e;
+  --text-3: #78838f;
 }
 ```
 
-**Dark Mode** (`.dark`):
+Token families: backgrounds/surfaces (10), borders (4), primary/secondary (12),
+XP + accent + gold (12), streak + freeze (7), level (3), Solana brand (6), status
+(13), text (4), difficulty-track gradients (3), activity heatmap (6), shadows (11),
+radii (7), typography (3), misc (4).
 
-```css
-.dark {
-  /* -- Neutrals: Soft Neutral Dark -- */
-  --bg: #343431;
-  --card: #3d3c38;
-  --subtle: #46443f;
-  --warm: #4a4843;
-  --border: #57534e;
-  --border-hover: #6a655e;
-  --text: #f5f1ea;
-  --text-2: #d4cec3;
-  --text-3: #a79f93;
+### Changing the primary colour
 
-  /* -- Primary: lifted for dark readability -- */
-  --primary: #2dd4bf;
-  --primary-hover: #22c7b3;
-  --primary-dark: #0b7e73;
-  --primary-light: rgba(45, 212, 191, 0.15);
-  --primary-bg: rgba(45, 212, 191, 0.1);
+1. Edit the `--primary-*` family in **both** `:root` and `[data-theme="dark"]`.
+   Keep the relationship intact: in light mode `--primary-dark` is a deeper shade
+   used for the button push shadow; in dark mode the light-mode primary becomes
+   `--primary-dark`.
+2. `--secondary` and `--ring` currently alias the primary — update them together.
+3. Derived alpha tokens (`--primary-dim`, `--primary-light`, `--primary-bg`,
+   `--primary-border`, `--primary-glow`, `--shadow-glow-primary`) carry the same
+   RGB channel triple and must be recomputed by hand.
+4. `--track-beg` / `--track-int` and `--sg-1..--sg-4` (the activity heatmap ramp)
+   are built from the primary hue — restate them or the dashboard will clash.
+5. No Tailwind change is needed: the config references the variables.
+6. Regenerate `docs/design-system.html` and eyeball both theme columns.
 
-  /* -- Accent: lifted -- */
-  --accent: #fbbf24;
-  --accent-hover: #f59e0b;
-  --accent-dark: #b45309;
-  --accent-light: rgba(251, 191, 36, 0.18);
-  --accent-bg: rgba(251, 191, 36, 0.1);
+### Tailwind configuration
 
-  /* etc. -- see globals.css for the full set */
-}
-```
-
-To change the color scheme, update the hex/rgba values in `globals.css`. All components reference these properties through Tailwind classes like `bg-primary`, `text-text`, `border-border`, etc.
-
-### Changing the Primary Color Scheme
-
-To rebrand from Deep Teal to a different primary color:
-
-1. Update the `--primary-*` variables in both `:root` (light) and `.dark` blocks in `globals.css`
-2. Update the `--accent-*` variables if desired
-3. The Tailwind config (`apps/web/tailwind.config.ts`) references these CSS variables, so no Tailwind changes are needed
-4. Confetti colors in `apps/web/src/components/gamification/level-up-overlay.tsx` use hardcoded hex values -- update those to match
-
-### Tailwind Configuration
-
-Extended theme values are defined in `apps/web/tailwind.config.ts`. Colors reference CSS variables so they respond to light/dark mode automatically.
-
-**Color System:**
-
-The Tailwind config maps semantic color names to CSS custom properties:
+`apps/web/tailwind.config.ts` maps CSS variables to semantic class names, so a
+component never names a colour, only a role:
 
 ```typescript
+darkMode: ["selector", "[data-theme='dark']"],
 colors: {
-  primary: {
-    DEFAULT: "var(--primary)",
-    hover: "var(--primary-hover)",
-    dark: "var(--primary-dark)",
-    light: "var(--primary-light)",
-    bg: "var(--primary-bg)",
-    foreground: "#FFFFFF",
-  },
-  accent: {
-    DEFAULT: "var(--accent)",
-    hover: "var(--accent-hover)",
-    dark: "var(--accent-dark)",
-    light: "var(--accent-light)",
-    bg: "var(--accent-bg)",
-    foreground: "#FFFFFF",
-  },
-  secondary: {
-    DEFAULT: "var(--secondary)",
-    light: "var(--secondary-light)",
-    bg: "var(--secondary-bg)",
-    foreground: "#FFFFFF",
-  },
-  success: {
-    DEFAULT: "var(--success)",
-    dark: "var(--success-dark)",
-    light: "var(--success-light)",
-    bg: "var(--success-bg)",
-  },
-  streak: {
-    DEFAULT: "var(--streak)",
-    light: "var(--streak-light)",
-  },
-  danger: {
-    DEFAULT: "var(--danger)",
-    light: "var(--danger-light)",
-  },
-  solana: {
-    purple: "var(--solana-purple)",
-    green: "var(--solana-green)",
-  },
-  /* Neutrals */
+  primary: { DEFAULT: "var(--primary)", hover: …, dark: …, light: …, bg: …, foreground: "#FFFFFF" },
+  accent:  { DEFAULT: "var(--accent)",  hover: …, dark: …, light: …, bg: …, foreground: "#FFFFFF" },
+  secondary: { DEFAULT: "var(--secondary)", light: …, bg: …, foreground: "#FFFFFF" },
+  success: { DEFAULT: "var(--success)", dark: …, light: …, bg: … },
+  streak:  { DEFAULT: "var(--streak)",  light: … },
+  freeze:  { DEFAULT: "var(--freeze)",  fg: "var(--freeze-fg)", bg: "var(--freeze-bg)" },
+  danger:  { DEFAULT: "var(--danger)",  dark: …, light: … },
+  solana:  { purple: "var(--solana-purple)", green: "var(--solana-green)" },
+  xp:      { DEFAULT: "var(--xp)", dim: "var(--xp-dim)", dark: "var(--xp-dark)" },
+  gold:    { hi: "var(--gold-hi)", ink: "var(--gold-ink)" },
+  level:   { DEFAULT: "var(--level)", dim: "var(--level-dim)" },
+  sg:      { 0: "var(--sg-0)", 1: …, 2: …, 3: …, 4: …, today: "var(--sg-today)" },
   bg: "var(--bg)",
   card: { DEFAULT: "var(--card)", foreground: "var(--text)" },
   subtle: "var(--subtle)",
   warm: "var(--warm)",
-  border: { DEFAULT: "var(--border)", hover: "var(--border-hover)" },
+  border: { DEFAULT: "var(--border)", hover: "var(--border-hover)", strong: "var(--border-strong)" },
   text: { DEFAULT: "var(--text)", 2: "var(--text-2)", 3: "var(--text-3)" },
+  /* legacy shadcn aliases */
+  background, foreground, destructive, muted, popover, input, ring
 }
 ```
 
-To add a new color group, define the CSS variables in `globals.css` (both `:root` and `.dark` blocks), then add the Tailwind mapping in `tailwind.config.ts`.
+`darkMode: ["selector", "[data-theme='dark']"]` is what makes `dark:` variants key
+off the same data attribute the CSS variables use — the two mechanisms can never
+disagree.
 
-**Legacy shadcn Compatibility:**
+**Named token vs. arbitrary value.** Prefer `bg-primary` over
+`bg-[var(--primary)]`: identical pixels, but the named form keeps the token
+greppable and forces new colours through the config. Arbitrary `var()` escapes are
+legitimate only for the 43 variables the config deliberately does not map —
+`--card-glass`, `--border-default`, `--r-xs`, `--shadow`, `--primary-dim`, and
+friends. The generated reference marks exactly which rows those are.
 
-The config also includes compatibility aliases for shadcn/ui components:
+To add a colour: define it in **both** theme blocks, then add the mapping in
+`tailwind.config.ts`, then regenerate the reference.
 
-- `background` -> `var(--bg)`
-- `foreground` -> `var(--text)`
-- `destructive` -> `var(--danger)` (with white foreground)
-- `muted` -> `var(--subtle)` (with `--text-3` foreground)
-- `popover` -> `var(--card)` (with `--text` foreground)
-- `input` -> `var(--border)`
-- `ring` -> `var(--primary)`
+**Legacy shadcn compatibility aliases:**
 
-**Certificate Gradient:**
+- `background` → `var(--bg)`
+- `foreground` → `var(--text)`
+- `destructive` → `var(--danger)` (white foreground)
+- `muted` → `var(--subtle)` (with `--text-3` foreground)
+- `popover` → `var(--card)` (with `--text` foreground)
+- `input` → `var(--border)`
+- `ring` → `var(--primary)`
+
+**Border radius** (`--r-*` are theme-invariant):
+
+```typescript
+borderRadius: {
+  sm: "var(--r-sm)",   //  8px
+  md: "var(--r-md)",   // 12px
+  lg: "var(--r-lg)",   // 16px
+  xl: "var(--r-xl)",   // 22px
+}
+```
+
+`--r-xs` (4px), `--r-full` (999px) and `--radius` (12px, the shadcn alias) have no
+Tailwind mapping — use `rounded-[var(--r-full)]` or `rounded-full`.
+
+**Custom shadows** (all theme-aware — the dark values are softer glows, the light
+values are the chunky offset stack):
+
+```typescript
+boxShadow: {
+  push: "0 4px 0 0 var(--shadow-push-color)",
+  "push-sm": "0 2px 0 0 var(--shadow-push-color)",
+  "push-active": "0 1px 0 0 var(--shadow-push-color)",
+  card: "var(--shadow-card)",
+  "card-hover": "var(--shadow-card-hover)",
+  glow: "var(--shadow-glow)",
+  "glow-xp": "var(--shadow-glow-xp)",
+  cert: "var(--shadow-cert)",
+  "cert-hover": "var(--shadow-cert-hover)",
+  "cert-lg": "var(--shadow-cert-lg)",
+}
+```
+
+**The Solana gradient.** `--sol-grad`
+(`linear-gradient(135deg, #9945ff 0%, #00c2ff 50%, #14f195 100%)`) and its low-alpha
+sibling `--sol-subtle` are the brand accent. The Tailwind `bg-cert-gradient`
+utility and the matching `.bg-cert-gradient` class in `globals.css` are the
+two-stop purple→green variant:
 
 ```typescript
 backgroundImage: {
@@ -197,90 +226,110 @@ backgroundImage: {
 }
 ```
 
-The Solana gradient is used sparingly (certificates only). A matching `.bg-cert-gradient` utility class is also available in `globals.css`.
+It is **not certificate-only**: it also drives the mastery bar, the deploy CTAs,
+the Earn hand-off card, several landing surfaces, and a dozen rules in
+`globals.css`. The rule is qualitative, not exclusive — use it for brand moments,
+never behind body text.
 
-**Border Radius:**
+**Custom animations** (from `tailwind.config.ts`):
 
-```typescript
-borderRadius: {
-  sm: "var(--r-sm)",   // 10px
-  md: "var(--r-md)",   // 14px
-  lg: "var(--r-lg)",   // 18px
-  xl: "var(--r-xl)",   // 24px
-}
-```
+| Name              | Duration / timing                       | Purpose                               |
+| ----------------- | --------------------------------------- | ------------------------------------- |
+| `accordion-down`  | 0.2s ease-out                           | Radix accordion open                  |
+| `accordion-up`    | 0.2s ease-out                           | Radix accordion close                 |
+| `xp-pop`          | 2s ease-out forwards                    | XP gain: scale, float, fade           |
+| `shimmer`         | 2.2s infinite                           | Skeleton shimmer                      |
+| `breathe`         | 2s infinite alternate ease-in-out       | Gentle pulsing scale                  |
+| `pop`             | 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)  | Bounce-in entry                       |
+| `pop-spring`      | 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)  | XP / achievement / certificate popups |
+| `pulse-ring`      | 2s infinite                             | Pulsing ring on CTAs                  |
+| `bounce-in`       | 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)  | Quick elastic scale-in                |
+| `dash-amb-a`      | 14s ease-in-out infinite alternate      | Dashboard ambient drift A             |
+| `dash-amb-b`      | 11s ease-in-out infinite alternate      | Dashboard ambient drift B             |
+| `dm-in`           | 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) | Dashboard medal entry                 |
+| `dm-glow`         | 3.5s ease-in-out infinite               | Amber medal glow                      |
+| `dm-sol`          | 3.5s ease-in-out infinite               | Solana medal glow                     |
+| `today-cell`      | 2s ease-in-out infinite                 | Heatmap "today" marker                |
+| `col-breathe`     | 2.5s ease-in-out infinite               | Hero column breathing                 |
+| `flicker`         | 1.5s ease-in-out infinite alternate     | Streak flame                          |
+| `lv-canopy-pulse` | 3s ease-in-out infinite                 | Level badge (canopy tier)             |
+| `lv-legend-pulse` | 3s ease-in-out infinite                 | Level badge (legend tier, Lv 50+)     |
 
-**Custom Shadows:**
+Additional transition utilities: `duration-600` (600ms) and `ease-smooth`
+(`cubic-bezier(0.4, 0, 0.2, 1)`).
 
-```typescript
-boxShadow: {
-  push: "0 4px 0 0 var(--shadow-push-color)",        // 3D push button
-  "push-sm": "0 2px 0 0 var(--shadow-push-color)",   // Small push button
-  "push-active": "0 1px 0 0 var(--shadow-push-color)", // Pressed push button
-  card: "var(--shadow-card)",                          // Chunky card
-  "card-hover": "var(--shadow-card-hover)",            // Card hover lift
-  glow: "var(--shadow-glow)",                          // Dark-mode glow
-  cert: "var(--shadow-cert)",                          // Certificate cards
-  "cert-hover": "var(--shadow-cert-hover)",            // Certificate hover
-  "cert-lg": "var(--shadow-cert-lg)",                  // Large certificate
-}
-```
+**Tailwind plugins:** `tailwindcss-animate`, `@tailwindcss/typography`.
 
-**Custom Animations:**
+### Component primitives
 
-| Name             | Duration / Timing                      | Purpose                                     |
-| ---------------- | -------------------------------------- | ------------------------------------------- |
-| `accordion-down` | 0.2s ease-out                          | Radix accordion open transition             |
-| `accordion-up`   | 0.2s ease-out                          | Radix accordion close transition            |
-| `xp-pop`         | 2s ease-out (forwards)                 | XP gain popup: scale up, float up, fade out |
-| `shimmer`        | 2s infinite                            | Loading skeleton shimmer effect             |
-| `breathe`        | 2s infinite alternate ease-in-out      | Gentle pulsing scale for emphasis           |
-| `pop`            | 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) | Bounce-in entry for popups                  |
-| `pulse-ring`     | 2s infinite                            | Pulsing glow ring on CTAs                   |
-| `bounce-in`      | 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) | Quick elastic scale-in                      |
+- `apps/web/src/components/ui/button.tsx` is the model cva primitive: three core
+  variants (`primary`, `secondary`, `accent`), utility variants (`ghost`, `link`,
+  `destructive`, `destructiveOutline`), backward-compat aliases (`default`, `push`,
+  `pushSuccess`, `outline`, `pushOutline`, `pushAccent`), and four sizes
+  (`default`, `sm`, `lg`, `icon`). Add a variant rather than restyling a call site.
+- `Card` is intentionally static (`--r-lg` radius, `--border-default` border,
+  `--card` background, `--shadow-card`); interactive cards opt into the hover lift
+  through `styleClasses`.
+- Pills/badges are plain CSS classes in `globals.css` (`.pill` + `.pill-beg`,
+  `.pill-int`, `.pill-adv`, `.pill-xp`, `.pill-streak`, `.pill-level`, `.pill-sol`,
+  `.pill-done`), not a cva primitive.
+- `apps/web/src/lib/styles/styleClasses.ts` holds shared recipes (transitions,
+  spacing, card and interactive-state class strings).
 
-**Additional transition utilities:**
+### Outside the token pipeline
 
-- `duration-600`: 600ms transition duration
-- `ease-smooth`: `cubic-bezier(0.4, 0, 0.2, 1)` timing function
-
-**CSS Utility Classes (in globals.css):**
-
-Beyond Tailwind's generated classes, `globals.css` provides additional utilities:
-
-- `.btn-push` / `.btn-push:active`: 3D push-button press effect
-- `.card-chunky` / `.card-chunky:hover`: Bordered card with shadow lift on hover
-- `.progress-fat` / `.progress-fat-fill`: Thick progress bar with inner highlight
-- `.progress-fill-teal` / `.progress-fill-amber` / `.progress-fill-green`: Progress bar color variants
-- `.banner-beginner` / `.banner-intermediate` / `.banner-advanced`: Difficulty-based gradient banners (with dark mode variants)
-- `.font-display` / `.font-body`: Font family shortcuts
-
-**Tailwind Plugins:**
-
-- `tailwindcss-animate`: Animation utility classes
-- `@tailwindcss/typography`: Prose styling for Markdown content
+Four surfaces use literal colours on purpose and must be updated by hand when
+retheming: the Monaco editor themes (`components/editor/themes.ts`), transactional
+email templates (`lib/email/templates.ts` — mail clients do not support custom
+properties), third-party brand marks (`components/icons/*`), and a few canvas/SVG
+literals in landing and dashboard components.
 
 ### Fonts
 
-Three font families are configured in `apps/web/src/app/layout.tsx`:
+Three families are loaded with `next/font/google` in `apps/web/src/app/layout.tsx`
+and self-hosted (no runtime request to `fonts.googleapis.com`, which is why the CSP
+does not allow it):
 
-| Variable         | Font              | Usage                  |
-| ---------------- | ----------------- | ---------------------- |
-| `--font-sans`    | Plus Jakarta Sans | Body text, UI elements |
-| `--font-display` | Nunito            | Headings, display text |
-| `--font-mono`    | JetBrains Mono    | Code blocks, editor    |
+| CSS variable     | Font              | Weights            | Tailwind                  | Usage                                    |
+| ---------------- | ----------------- | ------------------ | ------------------------- | ---------------------------------------- |
+| `--font-sans`    | Plus Jakarta Sans | 400, 500, 600, 700 | `font-sans` / `font-body` | Body text, UI — already set on `<body>`  |
+| `--font-display` | Nunito            | 600, 700, 800, 900 | `font-display`            | Headings, numerals, buttons, pills       |
+| `--font-mono`    | JetBrains Mono    | (default)          | `font-mono`               | Code, addresses, hashes, tabular figures |
 
-To change fonts, update the `next/font/google` imports in `layout.tsx`. The CSS variables are set automatically via Next.js's `variable` option, so `globals.css` and `tailwind.config.ts` need no changes.
+`globals.css` also declares `--font-d` / `--font-b` / `--font-m` as fallbacks used
+in raw CSS rules (`font-family: var(--font-display, var(--font-d))`), so a rule
+still renders if the next/font variable is missing.
 
-### Dark/Light Mode Toggle
+To change a font, edit the `next/font/google` import in `layout.tsx`. The `variable`
+option sets the CSS custom property, so neither `globals.css` nor
+`tailwind.config.ts` needs a change.
+
+### Dark/Light mode toggle
 
 Theme switching is handled by `next-themes`:
 
-- `ThemeProvider` in `components/layout/theme-provider.tsx` wraps the app
-- `ThemeToggle` in `components/layout/theme-toggle.tsx` provides the UI toggle
-- `darkMode: "class"` in `tailwind.config.ts` enables class-based dark mode
+- `ThemeProvider` (`components/layout/theme-provider.tsx`) wraps the app in
+  `app/[locale]/layout.tsx` with:
+  ```tsx
+  <ThemeProvider
+    attribute="data-theme"
+    defaultTheme="dark"
+    enableSystem
+    disableTransitionOnChange
+    nonce={nonce}
+  >
+  ```
+  The `nonce` comes from the CSP middleware (`lib/csp.ts`) and lets next-themes'
+  inline anti-flash script run under the policy.
+- `ThemeToggle` (`components/layout/theme-toggle.tsx`) flips between `"light"` and
+  `"dark"`.
+- The Monaco editor reads `resolvedTheme` directly to pick its own theme
+  (`components/editor/code-editor.tsx`, `components/editor/monaco-field.tsx`).
 
-All color tokens have separate light and dark values. Components use `dark:` Tailwind variants or the CSS variable system (which switches automatically based on the `.dark` class on `<html>`).
+Because every token is defined in both blocks, components normally need **no**
+`dark:` variants at all — using `bg-card text-text border-border` is automatically
+correct in both themes. Reach for a `dark:` variant only when the _structure_ of a
+style changes between themes, not merely its colour.
 
 ## Adding New Languages (i18n)
 
