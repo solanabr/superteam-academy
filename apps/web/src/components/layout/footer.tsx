@@ -20,14 +20,14 @@ export function Footer() {
                 credit below it (brand guide §03 co-branding). */}
             <Link href={`/${locale}`} className="flex items-center gap-2">
               <Image
-                src="/brand/academy-lockup-ink.svg"
+                src="/brand/academy-lockup-forest.svg"
                 alt="Superteam Academy"
                 width={157}
                 height={30}
                 className="h-6 w-auto dark:hidden"
               />
               <Image
-                src="/brand/academy-lockup-white.svg"
+                src="/brand/academy-lockup-yellow.svg"
                 alt="Superteam Academy"
                 width={157}
                 height={30}

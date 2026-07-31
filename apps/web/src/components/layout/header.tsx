@@ -211,7 +211,7 @@ export function Header() {
                 it ~126px wide — above the 110px minimum, so the lockup (not the
                 mark) is the correct variant here. */}
             <Image
-              src="/brand/academy-lockup-ink.svg"
+              src="/brand/academy-lockup-forest.svg"
               alt="Superteam Academy"
               width={157}
               height={30}
@@ -219,7 +219,7 @@ export function Header() {
               className="h-6 w-auto dark:hidden"
             />
             <Image
-              src="/brand/academy-lockup-white.svg"
+              src="/brand/academy-lockup-yellow.svg"
               alt="Superteam Academy"
               width={157}
               height={30}
@@ -355,7 +355,7 @@ export function Header() {
               className="flex min-h-[44px] items-center"
             >
               <Image
-                src="/brand/academy-lockup-ink.svg"
+                src="/brand/academy-lockup-forest.svg"
                 alt="Superteam Academy"
                 width={157}
                 height={30}
@@ -363,7 +363,7 @@ export function Header() {
                 className="h-6 w-auto dark:hidden"
               />
               <Image
-                src="/brand/academy-lockup-white.svg"
+                src="/brand/academy-lockup-yellow.svg"
                 alt="Superteam Academy"
                 width={157}
                 height={30}
