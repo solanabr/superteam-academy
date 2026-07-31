@@ -59,6 +59,13 @@ export function Footer() {
               >
                 {tNav("leaderboard")}
               </Link>
+              {/* #876 — the public dated roadmap, reachable from every page. */}
+              <Link
+                href={`/${locale}/roadmap`}
+                className="inline-flex min-h-[44px] items-center px-3 text-text-3 transition-colors hover:text-text"
+              >
+                {t("roadmap")}
+              </Link>
             </nav>
 
             {/* Social icons */}

@@ -129,6 +129,13 @@
     "statCourses": "Cursos Ativos",
     "statInstructions": "Instruções On-Chain",
     "statTests": "Testes Passando",
+    "payComment": "// onde o dinheiro já circula",
+    "payTitle": "Stablecoins são como o Brasil realmente usa cripto",
+    "payStatValue": "≈90%",
+    "payStatLabel": "do volume cripto brasileiro está em stablecoins",
+    "payStatSource": "Banco Central do Brasil, citado no relatório da Chainalysis sobre a América Latina (2025)",
+    "payBody": "É essa a habilidade que o mercado local paga, e é onde esta trilha termina de propósito. O último curso constrói trilhos de pagamento de verdade na Solana — Solana Pay, transferências Token-2022, endpoints medidos, agentes com orçamento limitado — e fecha com uma submissão no Superteam Earn.",
+    "payCta": "Começar o curso de pagamentos",
     "pathsTitle": "Escolha Seu Caminho",
     "pathsComment": "// trilhas de aprendizado",
     "pathCourses": "{count, plural, one {# curso} other {# cursos}}",
@@ -142,9 +149,55 @@
     "ctaExploreCourses": "Explorar Cursos",
     "ctaAuthMethods": "Entre com sua carteira, Google ou GitHub"
   },
+  "roadmap": {
+    "title": "Roadmap",
+    "subtitle": "O que já foi entregue, quando foi entregue e o que vem a seguir. As datas à esquerda são os dias em que o trabalho entrou — dá para conferir cada uma no histórico open source.",
+    "shippedTitle": "Entregue",
+    "nextTitle": "A seguir",
+    "nextNote": "Ainda sem datas. A gente publica uma data quando tem confiança nela, não antes.",
+    "repoLink": "Conferir o histórico no GitHub",
+    "items": {
+      "credentials": {
+        "title": "On-chain desde o primeiro dia",
+        "body": "Matrícula, XP soulbound como mint Token-2022 e NFTs de credencial emitidos direto na carteira de quem aprende — verificáveis por qualquer pessoa, de mais ninguém."
+      },
+      "forum": {
+        "title": "Fórum da comunidade",
+        "body": "Perguntar, responder, votar e aceitar — com XP para quem ajuda. Aprendizado entre pares ao lado das aulas, não em outro lugar."
+      },
+      "leagues": {
+        "title": "Ligas por cohort",
+        "body": "Ligas semanais no ranking, com uma faixa mostrando as três pessoas acima e abaixo de você, para medir progresso contra colegas e não contra o topo histórico."
+      },
+      "ladder": {
+        "title": "A trilha de cinco cursos está completa",
+        "body": "\"Solana para Devs Web\" entrou na trilha, então o Zero to Deployed vai do início ao fim: cliente e transações, Rust, seu primeiro programa, um SDK e dApp publicados e receber em stablecoins."
+      },
+      "aiTutor": {
+        "title": "Tutor de IA com limites visíveis",
+        "body": "Uma cota gratuita de ajudas por aula, um modo socrático que continua quando ela acaba, encaminhamento para o fórum e contadores que mostram exatamente onde você está. Nada é vendido e nada fica escondido."
+      },
+      "reminders": {
+        "title": "Lembretes de estudo por e-mail",
+        "body": "Lembretes opcionais construídos em torno da meta diária que você define no começo. Desligados por padrão, um botão para parar."
+      },
+      "evm": {
+        "title": "Eletiva \"Solana para Devs EVM\"",
+        "body": "Escrita e já no pacote de conteúdo, para quem chega do Ethereum. Entra no ar assim que for ativada on-chain."
+      },
+      "notifications": {
+        "title": "Notificações além do e-mail",
+        "body": "Notificações no app para o que você realmente pediu para acompanhar — respostas às suas perguntas, credenciais emitidas, missões prestes a reiniciar."
+      }
+    }
+  },
   "courses": {
     "catalog": "Catálogo de Cursos",
     "catalogSubtitle": "Explore nossos cursos e comece a construir na Solana",
+    "prereqTitle": "Um pré-requisito: JavaScript na prática",
+    "prereqBody": "Todo curso aqui parte do princípio de que você já escreve JavaScript ou TypeScript. Esse é o único requisito — não é preciso ter experiência com blockchain, criptografia ou Rust. Cada página de curso diz o que espera além disso.",
+    "prereqNewToCode": "Está aprendendo a programar do zero? O currículo gratuito de JavaScript do freeCodeCamp é o melhor lugar para começar. Volte quando o JavaScript estiver confortável — esta trilha vai continuar aqui.",
+    "prereqFccLink": "Currículo de JavaScript do freeCodeCamp",
     "allCourses": "Todos os Cursos",
     "learningPaths": "Trilhas de Aprendizado",
     "difficulty": "Dificuldade",
@@ -659,6 +712,7 @@
     "documentation": "Documentação",
     "apiReference": "Referência da API",
     "changelog": "Changelog",
+    "roadmap": "Roadmap",
     "discord": "Discord",
     "twitter": "X",
     "github": "GitHub",
@@ -1458,6 +1512,11 @@
         "label": "Ainda não programei profissionalmente",
         "desc": "Comece do zero, uma lição de cada vez."
       }
+    },
+    "referral": {
+      "title": "Um aviso honesto",
+      "body": "Todo curso aqui parte do princípio de que você já escreve JavaScript. Ainda não ensinamos programação do zero — o freeCodeCamp ensina, e ensina bem. Volte quando o JavaScript estiver confortável; enquanto isso, fique à vontade para explorar.",
+      "link": "Comece pelo currículo de JavaScript do freeCodeCamp"
     },
     "screen2": {
       "title": "O que você veio fazer?",

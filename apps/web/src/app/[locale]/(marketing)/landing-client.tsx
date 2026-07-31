@@ -253,6 +253,12 @@ interface LandingPageProps {
    * anonymous access already works; auth is deferred to the completion attempt.
    */
   flagshipLessonHref: string;
+  /**
+   * #874: deep-link for the payments wedge — lesson 1 of the "Getting Paid"
+   * course (C5), sync-gated to `/{locale}/courses` by the same resolver as the
+   * flagship link, so an unsynced C5 never sends the wedge CTA to a 404.
+   */
+  paymentsCourseHref: string;
 }
 
 // Community stats stay hidden until seeding gives them weight (GTM cold-start:
@@ -285,6 +291,7 @@ export function LandingPageClient({
   learningPaths,
   achievements,
   flagshipLessonHref,
+  paymentsCourseHref,
 }: LandingPageProps) {
   const t = useTranslations("landing");
   const tCommon = useTranslations("common");
@@ -579,6 +586,55 @@ export function LandingPageClient({
                     label={t("statCourses")}
                     color="text-text"
                   />
+                </div>
+              </div>
+            </Reveal>
+          </div>
+        </section>
+
+        {/* ── The Brazil payments wedge (#874) ──
+            Sits alongside the AI wedge in the hero, never replacing it. The
+            stablecoin share is the only claim here and it is attributed and
+            dated (personalization research D7); no earnings totals, no
+            remittance framing (MAS-24 / BCB-561 copy bounds). */}
+        <section className="py-4 sm:py-8">
+          <div className="container px-4">
+            <Reveal>
+              <div className="card-chunky grid gap-8 p-6 sm:p-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)] md:gap-12">
+                <div className="min-w-0">
+                  <div className="mb-3 font-mono text-xs font-medium text-text-3">
+                    {t("payComment")}
+                  </div>
+                  <p className="font-mono text-4xl font-black leading-none tracking-tight text-primary sm:text-5xl">
+                    {t("payStatValue")}
+                  </p>
+                  <p className="mt-3 text-sm font-bold leading-snug text-text">
+                    {t("payStatLabel")}
+                  </p>
+                  <p className="mt-2 text-xs leading-relaxed text-text-3">
+                    <a
+                      href="https://www.chainalysis.com/blog/latin-america-crypto-adoption-2025/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline decoration-dotted underline-offset-2 transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                    >
+                      {t("payStatSource")} {"↗"}
+                    </a>
+                  </p>
+                </div>
+
+                <div className="min-w-0">
+                  <h2 className="font-display text-2xl font-black tracking-[-0.5px] sm:text-3xl">
+                    {t("payTitle")}
+                  </h2>
+                  <p className="mt-3 text-base leading-relaxed text-text-2">
+                    {t("payBody")}
+                  </p>
+                  <Button variant="outline" size="lg" className="mt-6" asChild>
+                    <Link href={paymentsCourseHref}>
+                      {t("payCta")} {"→"}
+                    </Link>
+                  </Button>
                 </div>
               </div>
             </Reveal>
