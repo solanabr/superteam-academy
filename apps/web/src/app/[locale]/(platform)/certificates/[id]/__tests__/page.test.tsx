@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import CertificateViewPage from "../page";
 import messages from "@/messages/en.json";
+import CertificateViewPage from "../page";
 
 vi.mock("next/navigation", () => ({
   useParams: () => ({ id: "cert-1" }),
@@ -167,6 +167,45 @@ describe("certificate verify page — network label from env", () => {
     expect(
       explorerLinks().some((href) => href.endsWith("?cluster=mainnet"))
     ).toBe(false);
+  });
+});
+
+// LX-F1 (#873): the mint_success surface is covered by the share-nudge and
+// earn-card component tests; this closes the second surface — the certificate
+// page — so both `source` values of each click event are pinned by a test.
+describe("certificate verify page — share + Earn instrumentation (LX-F1)", () => {
+  it("fires credential_share_click once per share click, tagged certificate_page", async () => {
+    renderPage();
+
+    fireEvent.click(
+      await screen.findByText(messages.certificates.addToLinkedIn)
+    );
+    expect(trackEvent).toHaveBeenCalledTimes(1);
+    expect(trackEvent).toHaveBeenLastCalledWith("credential_share_click", {
+      channel: "linkedin_add",
+      source: "certificate_page",
+      courseId: "solana-101",
+    });
+
+    fireEvent.click(screen.getByText(messages.certificates.share));
+    expect(trackEvent).toHaveBeenCalledTimes(2);
+    expect(trackEvent).toHaveBeenLastCalledWith("credential_share_click", {
+      channel: "x",
+      source: "certificate_page",
+      courseId: "solana-101",
+    });
+  });
+
+  it("fires earn_handoff_click once, tagged certificate_page", async () => {
+    renderPage();
+
+    fireEvent.click(await screen.findByText(messages.earnHandoff.development));
+    expect(trackEvent).toHaveBeenCalledTimes(1);
+    expect(trackEvent).toHaveBeenCalledWith("earn_handoff_click", {
+      category: "development",
+      source: "certificate_page",
+      courseId: "solana-101",
+    });
   });
 });
 

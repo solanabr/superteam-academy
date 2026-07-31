@@ -112,6 +112,86 @@ goal — never free text (the intake is tap-only).
 | `onboarding_route_accepted` | `{ accepted: boolean, recommendedCourseId }` | `trackOnboardingRouteAccepted()` — E7: recommended entry taken vs "Browse all" override                                                      |
 | `onboarding_completed`      | `{ experience, goal, dailyGoal }`            | `trackOnboardingCompleted()` — intake finished; closed-set ids + daily-goal int, never free text                                             |
 
+## Derived metrics
+
+Metrics that are not events but are **computed from** them. Each entry states
+its numerator, denominator, window, and the exact PostHog recipe, so the insight
+can be rebuilt from this file alone. Every one of them is still subject to the
+10–12 week rule above.
+
+### P0D-4 · 14-day post-mint activity (the post-credential-cliff baseline)
+
+The research documents a cliff: learners mint a credential and go inactive. This
+is the baseline that cliff is measured against, and the number the Earn handoff
+(LX-E4) has to move. Master spec LX-F2; pedagogy #4; RESEARCH-RECONCILIATION §4.
+
+- **Denominator** — distinct users with a `credential_minted` event in the
+  cohort period.
+- **Numerator** — of those, the users with **at least one activity event**
+  strictly after their _first_ `credential_minted` and within 14×24 h of it.
+- **Activity** is the closed set `$pageview`, `lesson_completed`,
+  `challenge_run`, `review_completed`. Deliberately narrow: it is the smallest
+  set that means "came back and did something", and each member already exists
+  in the inventory above. `credential_minted` itself is excluded (a second mint
+  is a different funnel), and so are the share/Earn clicks — those fire in the
+  same session as the mint and would score the cliff as survived.
+- **Window anchor** — the `credential_minted` event's own timestamp, per user.
+  Not a calendar cohort: the 14 days run from each learner's mint moment.
+- **Read as** — `numerator / denominator`, reported per cohort week. The healthy
+  direction is up; a value near zero _is_ the cliff.
+
+**PostHog recipe** (dashboard config is owner territory per LX-F2, so this is
+the recipe to click through, not a checked-in dashboard):
+
+1. New insight → **Retention**.
+2. Cohortizing event: `credential_minted`. Returning event: `$pageview`
+   (repeat the insight once per activity event above, or use "Any event" minus
+   the exclusions if the cliff needs a single headline tile).
+3. Retention type: **first time** (anchors on the learner's first mint).
+4. Granularity **Day**, period **14 days**. Day 0 is the mint itself and is
+   always 100% — the metric is "any of days 1–14", i.e. the union of the
+   non-zero columns, not day 14 alone.
+5. Breakdown by the event property `courseId` to see which credential's holders
+   fall off; breakdown by `source` only to audit coverage (below), never as a
+   learner-facing cut.
+6. Pin the tile with the "do not evaluate before week 10" note.
+
+**Substrate audit** (issue #872): no event changes were needed.
+
+- `credential_minted` already carries everything the insight consumes —
+  the mint moment (event timestamp), the person (PostHog `distinct_id` from
+  `identifyUser()`), and `courseId` for the breakdown.
+- The mint address / certificate id is **deliberately not added**. It buys the
+  insight nothing — the retention anchor is the timestamp, not the asset — while
+  a wallet-adjacent on-chain identifier in a payload cuts against the zero-PII
+  rule above. Join `certificates.mint_address` server-side if a specific
+  credential ever has to be identified.
+- The activity side needs no new events either: all four members of the set
+  above already fire.
+
+**Coverage caveat.** `credential_minted` is a client event, but the mint itself
+is server-side and lands in `certificates` from four paths (the mint route, the
+on-chain retry queue, the Helius webhook handler, admin resync). The client only
+observes two of them — the manual-mint success and the Supabase Realtime
+`certificates` INSERT — so a mint that completes while the learner has no
+subscribed page mounted produces a row with no event, and the PostHog
+denominator can undercount. Reconcile periodically against
+`count(certificates.minted_at)` for the same period; if the gap is material,
+the fix is a server-side capture at the write sites, not a bigger client
+payload. Until then, PostHog is the trend and `certificates` is the truth.
+
 ## Planned (not reserved-blocked, just future)
 
 - `review_completed` — SHIPPED (#873). See the inventory table above.
+
+## LX-F1 event pass — complete (#873)
+
+Every event on the master spec's LX-F1 list now fires and is covered by a test.
+One naming divergence is intentional and should not be re-filed as missing: the
+spec's **`linkedin_share_click` shipped as `credential_share_click` with
+`channel: "linkedin_add"`**. Per the owner decision on #552, LinkedIn is a
+profile-entry action (Add-to-Profile), not a share-post, and X is the actual
+social channel — so one event with a `channel` property is the honest shape,
+and a separate LinkedIn-only event would have split the same surface in two.
+Both click events fire from both surfaces (`mint_success` and
+`certificate_page`) and each surface is pinned by a test.
