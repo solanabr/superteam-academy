@@ -371,7 +371,10 @@
     "stopwatchPause": "Pausar",
     "stopwatchReset": "Reiniciar",
     "hints": "Pistas",
-    "lessonNumberTitle": "{number}. {title}"
+    "lessonNumberTitle": "{number}. {title}",
+    "formatSyntaxError": "Nada que formatear — corrige primero los errores de sintaxis.",
+    "formatUnchanged": "Ya está formateado.",
+    "formatUnsupported": "El formateo no está disponible para este lenguaje."
   },
   "dashboard": {
     "allCaughtUp": "¡Todo al día!",

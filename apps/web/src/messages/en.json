@@ -371,7 +371,10 @@
     "stopwatchPause": "Pause",
     "stopwatchReset": "Reset",
     "hints": "Hints",
-    "lessonNumberTitle": "{number}. {title}"
+    "lessonNumberTitle": "{number}. {title}",
+    "formatSyntaxError": "Nothing to format — fix the syntax errors first.",
+    "formatUnchanged": "Already formatted.",
+    "formatUnsupported": "Formatting isn't available for this language."
   },
   "dashboard": {
     "allCaughtUp": "All caught up!",
