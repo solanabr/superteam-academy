@@ -153,25 +153,11 @@ describe("marketing copy bounds (MAS-24 / BCB-561)", () => {
       });
     }
 
-    it(`${locale} attributes and dates the stablecoin-share stat`, () => {
-      const landing = (catalog as typeof en).landing;
-      // The share is the claim; it must carry a source with a year (D7 dating rule).
-      expect(landing.payStatValue).toMatch(/90\s*%/);
-      expect(landing.payStatSource).toMatch(/\b(19|20)\d{2}\b/);
-      expect(landing.payStatSource.length).toBeGreaterThan(20);
-    });
-
-    // #875 — the catalog spec's audience scope: every course gates on working
-    // JavaScript, segment 3 is out of scope for this wave, and copy must not
-    // imply beginners-welcome. The prerequisite and the refer-out are required
-    // in every locale, and no-experience-needed claims are forbidden.
-    it(`${locale} states the JS prerequisite and refers segment 3 out`, () => {
-      const c = (catalog as typeof en).courses;
+    // The /start intake keeps the segment-3 refer-out (freeCodeCamp); the
+    // catalog banner and landing stat block were removed by owner call
+    // (2026-07-31) — only the /start referral copy remains load-bearing.
+    it(`${locale} keeps the /start segment-3 refer-out`, () => {
       const s = (catalog as typeof en).start;
-      expect(c.prereqTitle.length).toBeGreaterThan(0);
-      expect(c.prereqBody).toMatch(/javascript/i);
-      expect(c.prereqNewToCode).toMatch(/freecodecamp/i);
-      expect(c.prereqFccLink).toMatch(/freecodecamp/i);
       expect(s.referral.body).toMatch(/(javascript)/i);
       expect(s.referral.link).toMatch(/freecodecamp/i);
     });

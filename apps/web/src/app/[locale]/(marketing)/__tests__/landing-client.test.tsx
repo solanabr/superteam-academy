@@ -71,7 +71,6 @@ beforeEach(() => {
 });
 
 const FLAGSHIP_HREF = "/en/courses/course-solana-fundamentals/lessons/intro";
-const PAYMENTS_HREF = "/en/courses/stablecoin-agentic-payments/lessons/why";
 
 function renderLanding(href = FLAGSHIP_HREF): ReturnType<typeof render> {
   const ui: ReactElement = (
@@ -84,7 +83,6 @@ function renderLanding(href = FLAGSHIP_HREF): ReturnType<typeof render> {
         learningPaths={[]}
         achievements={[]}
         flagshipLessonHref={href}
-        paymentsCourseHref={PAYMENTS_HREF}
       />
     </NextIntlClientProvider>
   );
@@ -117,18 +115,11 @@ describe("LandingPageClient — LX-A1 deep-link CTAs", () => {
     expect(within(modals[0]!).getByText(/sign up/i)).toBeInTheDocument();
   });
 
-  it("keeps the payments wedge alongside the AI wedge, CTA deep-linked", () => {
+  it("keeps the AI wedge as the hero line", () => {
     renderLanding();
-    // The AI wedge is still the hero line (#874: add, never replace).
     expect(
       screen.getAllByText(/AI writes the code/i).length
     ).toBeGreaterThanOrEqual(1);
-    // The payments wedge and its dated, attributed source.
-    expect(screen.getByText(messages.landing.payTitle)).toBeInTheDocument();
-    expect(screen.getByText(messages.landing.payStatValue)).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: new RegExp(messages.landing.payCta) })
-    ).toHaveAttribute("href", PAYMENTS_HREF);
   });
 
   it("renders the deep-link href verbatim under a non-default locale prefix", () => {
