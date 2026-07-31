@@ -149,6 +149,48 @@
     "ctaExploreCourses": "Explore Courses",
     "ctaAuthMethods": "Sign in with your wallet, Google, or GitHub"
   },
+  "roadmap": {
+    "title": "Roadmap",
+    "subtitle": "What shipped, when it shipped, and what we're building next. Dates on the left are the days the work landed — you can check every one of them in the open-source history.",
+    "shippedTitle": "Shipped",
+    "nextTitle": "Next up",
+    "nextNote": "No dates on these yet. We publish a date once we're confident of it, not before.",
+    "repoLink": "Check the history on GitHub",
+    "items": {
+      "credentials": {
+        "title": "On-chain from day one",
+        "body": "Enrolment, soulbound XP as a Token-2022 mint, and credential NFTs issued straight to the learner's wallet — verifiable by anyone, owned by nobody else."
+      },
+      "forum": {
+        "title": "Community forum",
+        "body": "Ask, answer, vote and accept — with XP for the people who help. Peer learning next to the lessons instead of somewhere else."
+      },
+      "leagues": {
+        "title": "Cohort leagues",
+        "body": "Weekly leagues on the leaderboard, plus a strip showing the three learners either side of you, so progress is measured against peers rather than against the all-time top."
+      },
+      "ladder": {
+        "title": "The five-course ladder is complete",
+        "body": "\"Solana for Web Developers\" joined the path, so Zero to Deployed now runs end to end: client and transactions, Rust, your first program, a published SDK and dApp, and getting paid in stablecoins."
+      },
+      "aiTutor": {
+        "title": "AI tutor with limits you can see",
+        "body": "A free tier of assists per lesson, a Socratic mode that keeps going when they run out, a handoff to the forum, and counters that tell you exactly where you stand. Nothing is for sale and nothing is hidden."
+      },
+      "reminders": {
+        "title": "Study reminders by email",
+        "body": "Opt-in reminders built around the daily goal you set at sign-up. Off by default, one toggle to stop."
+      },
+      "evm": {
+        "title": "\"Solana for EVM Developers\" elective",
+        "body": "Written and sitting in the content bundle for developers arriving from Ethereum. It goes live once it's activated on-chain."
+      },
+      "notifications": {
+        "title": "Notifications beyond email",
+        "body": "In-app notifications for the things you actually asked to hear about — answers to your questions, credentials minted, quests about to reset."
+      }
+    }
+  },
   "courses": {
     "catalog": "Course Catalog",
     "catalogSubtitle": "Explore our courses and start building on Solana",
@@ -670,6 +712,7 @@
     "documentation": "Documentation",
     "apiReference": "API Reference",
     "changelog": "Changelog",
+    "roadmap": "Roadmap",
     "discord": "Discord",
     "twitter": "X",
     "github": "GitHub",

@@ -7,7 +7,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "https://superteam-academy-web.vercel.app";
   const locales = ["en", "pt-BR", "es"];
 
-  const publicRoutes = ["", "/courses", "/leaderboard"];
+  const publicRoutes = ["", "/courses", "/leaderboard", "/roadmap"];
   const staticEntries = locales.flatMap((locale) =>
     publicRoutes.map((route) => ({
       url: `${baseUrl}/${locale}${route}`,

@@ -149,6 +149,48 @@
     "ctaExploreCourses": "Explorar Cursos",
     "ctaAuthMethods": "Inicia sesión con tu wallet, Google o GitHub"
   },
+  "roadmap": {
+    "title": "Roadmap",
+    "subtitle": "Qué se entregó, cuándo se entregó y qué viene después. Las fechas de la izquierda son los días en que el trabajo entró — puedes verificar cada una en el historial de código abierto.",
+    "shippedTitle": "Entregado",
+    "nextTitle": "Lo que viene",
+    "nextNote": "Todavía sin fechas. Publicamos una fecha cuando tenemos confianza en ella, no antes.",
+    "repoLink": "Ver el historial en GitHub",
+    "items": {
+      "credentials": {
+        "title": "On-chain desde el primer día",
+        "body": "Inscripción, XP soulbound como mint Token-2022 y NFTs de credencial emitidos directo a la billetera de quien aprende — verificables por cualquiera, de nadie más."
+      },
+      "forum": {
+        "title": "Foro de la comunidad",
+        "body": "Preguntar, responder, votar y aceptar — con XP para quienes ayudan. Aprendizaje entre pares junto a las lecciones, no en otro lado."
+      },
+      "leagues": {
+        "title": "Ligas por cohorte",
+        "body": "Ligas semanales en la tabla, más una franja con las tres personas por encima y por debajo de ti, para medir el progreso contra pares y no contra el récord histórico."
+      },
+      "ladder": {
+        "title": "La ruta de cinco cursos está completa",
+        "body": "\"Solana para Devs Web\" se sumó a la ruta, así que Zero to Deployed va de punta a punta: cliente y transacciones, Rust, tu primer programa, un SDK y dApp publicados y cobrar en stablecoins."
+      },
+      "aiTutor": {
+        "title": "Tutor de IA con límites visibles",
+        "body": "Una cuota gratuita de ayudas por lección, un modo socrático que sigue cuando se acaba, derivación al foro y contadores que muestran exactamente dónde estás. Nada está a la venta y nada está oculto."
+      },
+      "reminders": {
+        "title": "Recordatorios de estudio por correo",
+        "body": "Recordatorios opcionales armados alrededor de la meta diaria que eliges al empezar. Apagados por defecto, un botón para detenerlos."
+      },
+      "evm": {
+        "title": "Electiva \"Solana para Devs EVM\"",
+        "body": "Escrita y ya en el paquete de contenido, para quienes llegan desde Ethereum. Sale cuando se active on-chain."
+      },
+      "notifications": {
+        "title": "Notificaciones más allá del correo",
+        "body": "Notificaciones en la app para lo que realmente pediste seguir — respuestas a tus preguntas, credenciales emitidas, misiones a punto de reiniciarse."
+      }
+    }
+  },
   "courses": {
     "catalog": "Catálogo de Cursos",
     "catalogSubtitle": "Explora nuestros cursos y empieza a construir en Solana",
@@ -670,6 +712,7 @@
     "documentation": "Documentación",
     "apiReference": "Referencia de API",
     "changelog": "Changelog",
+    "roadmap": "Roadmap",
     "discord": "Discord",
     "twitter": "X",
     "github": "GitHub",
