@@ -18,7 +18,6 @@ import { CohortStrip } from "@/components/dashboard/cohort-strip";
 import { MasteryPanel } from "@/components/dashboard/mastery-panel";
 import { NameRevealDialog } from "@/components/dashboard/name-reveal-dialog";
 import { NextLessonPlan } from "@/components/dashboard/next-lesson-plan";
-import { RecommendedCoursesSection } from "@/components/dashboard/recommended-courses-section";
 
 /**
  * Dashboard composition root (LX-B1). Data flows from `useDashboardData`;
@@ -141,9 +140,6 @@ export default function DashboardPage() {
 
       {/* ═══ Activity ═══ */}
       <ActivitySection recentActivity={data.recentActivity} />
-
-      {/* Recommended Courses */}
-      <RecommendedCoursesSection recommendedCourses={data.recommendedCourses} />
 
       {/* Name reveal modal — shown on first login */}
       <NameRevealDialog

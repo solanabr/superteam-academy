@@ -48,7 +48,7 @@ the boundary (never the full `Lesson` `blocks[]`, which carries solutions/tests)
 | `/api/content/courses`           | GET    | None | Course summaries by id (dashboard/profile/certificates)                       |
 | `/api/content/course-lessons`    | GET    | None | Ordered `{_id,title,slug}` lesson summaries per course (Continue card, LX-B2) |
 | `/api/content/lessons-summary`   | GET    | None | Lesson summaries by id — `{_id,title,slug}` only (recent-activity titles)     |
-| `/api/content/recommended`       | GET    | None | Recommended-course summaries (dashboard); optional `exclude`                  |
+| `/api/content/recommended`       | GET    | None | Next-course candidates for the Continue card; optional `exclude`              |
 | `/api/content/achievements`      | GET    | None | Achievement catalog (name/icon/award rule/xp); statically cached, hourly      |
 | `/api/content/tags`              | GET    | None | Course tags (profile skill radar); statically cached, hourly                  |
 | `/api/content/lesson-skills`     | GET    | None | Per-lesson skill tags (profile Skills radar, #466 C3); cached, hourly         |

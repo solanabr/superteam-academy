@@ -401,7 +401,6 @@
     "noActivityHint": "Complete a lesson to see your progress here",
     "progressOverview": "Progress Overview",
     "recentActivity": "Activity",
-    "recommendedCourses": "Recommended For You",
     "removeCourse": "Remove course",
     "unenrollSuccess": "Successfully unenrolled from course",
     "unenrollSyncFailed": "Unenrollment confirmed on-chain but sync failed. Please refresh.",

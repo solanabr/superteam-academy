@@ -2931,44 +2931,6 @@ a.path-step-card:hover .path-step-badge.skip {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   RECOMMENDED COURSES CAROUSEL — swipeable on mobile, grid on lg+
-   ══════════════════════════════════════════════════════════════ */
-.recommended-carousel {
-  display: flex;
-  gap: 16px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none; /* Firefox */
-  padding-bottom: 4px;
-}
-.recommended-carousel::-webkit-scrollbar {
-  display: none;
-}
-.recommended-carousel-item {
-  flex: 0 0 85%;
-  max-width: 340px;
-  scroll-snap-align: start;
-}
-@media (min-width: 640px) {
-  .recommended-carousel-item {
-    flex: 0 0 48%;
-    max-width: none;
-  }
-}
-@media (min-width: 1024px) {
-  .recommended-carousel {
-    display: grid;
-    overflow: visible;
-    scroll-snap-type: none;
-  }
-  .recommended-carousel-item {
-    flex: none;
-    max-width: none;
-  }
-}
-
-/* ══════════════════════════════════════════════════════════════
    TOASTS — v9 semantic color system
    ══════════════════════════════════════════════════════════════ */
 .toast {
