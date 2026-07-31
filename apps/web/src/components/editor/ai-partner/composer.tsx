@@ -6,6 +6,11 @@ import { PaperPlaneRight, GitDiff } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
+/** Mirrors MAX_MESSAGE_CHARS in /api/ai/partner: the route 413s past this, so
+ *  the box stops accepting text at exactly the same boundary rather than letting
+ *  the learner write a message that can only come back as a generic error. */
+const MAX_MESSAGE_CHARS = 4000;
+
 interface ComposerProps {
   /** Send a free-text question. The caller routes it through the attempt gate
    *  (#865) and the assist ladder (#864) — this component only collects text. */
@@ -51,8 +56,10 @@ export function Composer({
   const t = useTranslations("aiPartner");
   const [value, setValue] = useState("");
   const inputId = useId();
+  const counterId = useId();
   const inert = disabled || budgetExhausted;
   const canSend = !inert && value.trim().length > 0;
+  const nearLimit = value.length / MAX_MESSAGE_CHARS > 0.9;
 
   const submit = useCallback(() => {
     const message = value.trim();
@@ -75,7 +82,7 @@ export function Composer({
       <textarea
         id={inputId}
         value={value}
-        onChange={(e) => setValue(e.target.value)}
+        onChange={(e) => setValue(e.target.value.slice(0, MAX_MESSAGE_CHARS))}
         onKeyDown={(e) => {
           // Enter sends, Shift+Enter keeps the newline — the chat convention.
           if (e.key === "Enter" && !e.shiftKey) {
@@ -84,6 +91,8 @@ export function Composer({
           }
         }}
         rows={2}
+        maxLength={MAX_MESSAGE_CHARS}
+        aria-describedby={counterId}
         disabled={inert}
         placeholder={t("actions.askPlaceholder")}
         className="w-full resize-none rounded-md border border-border p-2 text-sm [background:var(--input)] placeholder:text-text-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
@@ -107,6 +116,15 @@ export function Composer({
           </Button>
         )}
         <div className="ml-auto flex items-center gap-3">
+          <span
+            id={counterId}
+            className={cn(
+              "text-[11px]",
+              nearLimit ? "text-danger" : "text-text-3"
+            )}
+          >
+            {value.length}/{MAX_MESSAGE_CHARS}
+          </span>
           <Button
             type="submit"
             variant="push"

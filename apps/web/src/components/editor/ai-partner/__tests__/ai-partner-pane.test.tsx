@@ -324,6 +324,25 @@ describe("AiPartnerPane — free-text composer (#944)", () => {
       screen.getByRole("button", { name: messages.aiPartner.actions.hint })
     ).toBeDisabled();
   });
+
+  // M1 (#947 gate addendum): the route 413s past 4,000 chars and the hook can
+  // only render that as a generic error, so the box refuses to exceed it and
+  // shows the learner where they stand.
+  it("caps the question at 4000 characters and shows a live counter", () => {
+    renderPane({ hasRunTests: true });
+    const box = screen.getByLabelText(askLabel);
+
+    expect(box).toHaveAttribute("maxlength", "4000");
+    expect(screen.getByText("0/4000")).toBeInTheDocument();
+
+    fireEvent.change(box, { target: { value: "abcde" } });
+    expect(screen.getByText("5/4000")).toBeInTheDocument();
+
+    // A paste past the cap is truncated, never sent whole into a 413.
+    fireEvent.change(box, { target: { value: "x".repeat(4200) } });
+    expect(box).toHaveValue("x".repeat(4000));
+    expect(screen.getByText("4000/4000")).toBeInTheDocument();
+  });
 });
 
 describe("AiPartnerPane — 'Show me a change' propose action (#947)", () => {
