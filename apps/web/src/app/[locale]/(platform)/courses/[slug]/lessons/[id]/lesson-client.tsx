@@ -560,7 +560,7 @@ export function LessonPageClient({
             comment box). A modal over a lesson hid the code the learner was
             asking about, which is the one thing they need while writing. */}
         {isComposerOpen ? (
-          <div className="mb-4 rounded-lg border border-border bg-subtle p-3">
+          <div className="mb-4 rounded-lg border border-border bg-card p-3">
             <h4 className="mb-3 font-display text-sm font-bold text-text">
               {tCommunity("composerHeading")}
             </h4>
