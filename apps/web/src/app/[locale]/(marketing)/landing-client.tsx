@@ -766,7 +766,7 @@ export function LandingPageClient({
               {/* LX-A1: bottom "Get Started" deep-links into flagship lesson 1
                   instead of opening the auth modal. */}
               {!isLoggedIn && (
-                <Button variant="pushAccent" size="lg" asChild>
+                <Button variant="push" size="lg" asChild>
                   <Link href={flagshipLessonHref}>
                     {tCommon("getStarted")} {"\u2192"}
                   </Link>
@@ -775,7 +775,7 @@ export function LandingPageClient({
               <Button
                 variant="push"
                 size="lg"
-                className="border-none bg-white text-[var(--secondary)] shadow-[0_4px_0_0_rgba(0,0,0,0.12)] hover:bg-white/95 active:shadow-[0_1px_0_0_rgba(0,0,0,0.12)]"
+                className="border-none bg-white text-[var(--secondary)] shadow-[0_4px_0_0_var(--shadow-push-color)] hover:bg-white/95 active:shadow-[0_1px_0_0_var(--shadow-push-color)]"
                 asChild
               >
                 <Link href={`/${locale}/courses`}>
