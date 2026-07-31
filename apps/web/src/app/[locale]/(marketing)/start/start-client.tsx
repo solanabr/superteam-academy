@@ -237,14 +237,16 @@ export function StartIntakeClient({
           <p className="mt-1 text-sm leading-relaxed text-text-2">
             {t("referral.body")}
           </p>
+          {/* Inline, not inline-flex: the pt-BR label is long enough to wrap
+              at 375px, and a flex arrow detaches to the far right when it does
+              (#877). A text glyph wraps with the label. */}
           <a
             href={FREECODECAMP_JS_CURRICULUM_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-primary underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            className="mt-2 inline-block text-sm font-semibold text-primary underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
-            {t("referral.link")}
-            <ArrowRight size={14} weight="bold" aria-hidden="true" />
+            {t("referral.link")} {"↗"}
           </a>
         </aside>
       )}
