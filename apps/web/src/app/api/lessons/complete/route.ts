@@ -24,6 +24,7 @@ import { isLessonComplete } from "@/lib/solana/bitmap";
 import { getLessonSlot } from "@/lib/courses/lesson-slot";
 import { serverEnv } from "@/lib/env.server";
 import { isCourseInMaintenance } from "@/lib/content/deployments";
+import { scheduleQuestEvaluation } from "@/lib/gamification/quest-evaluation";
 import { isPlatformFrozen } from "@/lib/platform/freeze";
 import { platformFrozenResponse } from "@/lib/platform/freeze-http";
 
@@ -506,6 +507,12 @@ export async function POST(request: NextRequest) {
             },
           });
         }
+        // The recovery upsert above can be the write that makes a daily quest's
+        // target reachable (a lesson the webhook never mirrored), so this path
+        // evaluates too. Post-response, and the RPC is idempotent, so the extra
+        // call costs the learner nothing and can never double-award.
+        scheduleQuestEvaluation(user.id);
+
         return NextResponse.json({
           success: true,
           alreadyCompleted: true,
@@ -599,6 +606,17 @@ export async function POST(request: NextRequest) {
           },
         });
       }
+
+      // ── Daily-quest evaluation at the moment of the action ───────────────
+      // The lesson/lesson_batch/challenge/module quests all count TODAY's
+      // user_progress rows, which the upsert above just changed. Evaluating
+      // here is what stops quest XP from waiting on a dashboard visit that may
+      // never come. It runs in Next's after() continuation, so it adds ZERO
+      // latency to this response (the hot completion path), and it is scheduled
+      // rather than fire-and-forget so the platform still owns the work; any
+      // failure is logged, and an unevaluated quest is simply picked up by the
+      // next action / poll / login sweep (the award itself is never lost).
+      scheduleQuestEvaluation(user.id);
 
       return NextResponse.json({ success: true, signature });
     } finally {

@@ -7,6 +7,7 @@ import { LevelUpPopup } from "@/components/gamification/level-up-popup";
 import { useGamificationEvents } from "@/hooks/use-gamification-events";
 import { ToastContainer } from "@/components/ui/toast-container";
 import { SurpriseBonusToastListener } from "@/components/gamification/surprise-bonus-toast";
+import { QuestRewardToastListener } from "@/components/gamification/quest-reward-toast";
 import { BankedProgressReplay } from "@/components/lessons/banked-progress-replay";
 import { SegmentSync } from "@/components/onboarding/segment-sync";
 
@@ -22,6 +23,9 @@ export function GamificationOverlays() {
       <ToastContainer />
       {/* Localizes + shows the LX-B15 surprise-bonus toast (informational tier) */}
       <SurpriseBonusToastListener />
+      {/* Localizes + celebrates a granted daily-quest reward, from wherever in
+          the app the learner earned it (poll path or Realtime path). */}
+      <QuestRewardToastListener />
       {/* Replays anonymously-banked completions once signed in (LX-A4c). */}
       <BankedProgressReplay />
       {/* Copies the anonymous /start intake into the profile on sign-in (LX-A3). */}

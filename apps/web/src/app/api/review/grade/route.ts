@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveReviewItems } from "@/lib/content/queries";
 import { gradeQuiz } from "@/lib/grading/graders/quiz";
+import { scheduleQuestEvaluation } from "@/lib/gamification/quest-evaluation";
 import { serverEnv } from "@/lib/env.server";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
@@ -132,6 +133,12 @@ export async function POST(request: NextRequest) {
         { status: 404 }
       );
     }
+
+    // A CLEARED review advances the `review` daily quest (which counts
+    // review_items passed today), so evaluate it at the moment of the pass
+    // instead of waiting for a dashboard visit. A miss resets the box and is
+    // not a clear — nothing to evaluate. Post-response; never blocks this one.
+    if (passed) scheduleQuestEvaluation(user.id);
 
     return NextResponse.json({ passed, box: row.box, dueAt: row.due_at });
   } catch (err: unknown) {

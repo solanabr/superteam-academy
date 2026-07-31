@@ -27,9 +27,11 @@ import {
   pickQuestRewardToasts,
   pickSurpriseBonusToasts,
 } from "@/lib/gamification/server-xp-feedback";
+import { questPeriodUtc } from "@/lib/gamification/daily-reset";
+import { questDisplayName } from "@/lib/gamification/quest-name";
 import { dispatchXpGain } from "@/hooks/use-gamification-events";
 import { dispatchSurpriseBonus } from "@/components/gamification/surprise-bonus-toast";
-import { dispatchToast } from "@/components/ui/toast-container";
+import { dispatchQuestReward } from "@/components/gamification/quest-reward-toast";
 import { celebrate } from "@/lib/gamification/celebration";
 
 // Default streak for unauthenticated or on error
@@ -103,7 +105,6 @@ export function useDashboardData(
   authLoading: boolean
 ): DashboardData {
   const tDash = useTranslations("dashboard");
-  const tGam = useTranslations("gamification");
   const [data, setData] = useState<DashboardData>({
     xp: 0,
     level: 0,
@@ -189,17 +190,29 @@ export function useDashboardData(
         // surprise bonuses from the transactions above. Both are deduped
         // session-wide (see server-xp-feedback), so a re-poll never re-toasts,
         // and the surprise-bonus dedupe is shared with the Realtime path.
-        const questPeriod = new Date().toISOString().split("T")[0] as string;
+        //
+        // The period is the SERVER's (the route echoes the UTC day its RPC keyed
+        // on) — never the browser's local date, which for a São Paulo evening is
+        // already the previous UTC day and would key this claim differently from
+        // the Realtime channel's, letting one award toast twice.
+        const questPeriod =
+          typeof questsResult.questPeriod === "string" &&
+          questsResult.questPeriod
+            ? questsResult.questPeriod
+            : questPeriodUtc();
         for (const reward of pickQuestRewardToasts(
           (questsResult.quests ?? []) as DailyQuest[],
           questPeriod,
           authUserId
         )) {
           dispatchXpGain(reward.xpReward);
-          dispatchToast(
-            tGam("questReward", { name: reward.name, amount: reward.xpReward }),
-            "success"
-          );
+          // Same celebration the Realtime path fires — one component, one look,
+          // wherever the learner happens to be standing.
+          dispatchQuestReward({
+            questId: reward.questId,
+            name: reward.name,
+            xpReward: reward.xpReward,
+          });
         }
         for (const amount of pickSurpriseBonusToasts(
           transactions ?? [],
@@ -508,10 +521,9 @@ export function useDashboardData(
             });
           } else if (dailyQuestPattern.exec(tx.reason)?.[1]) {
             const questId = tx.reason.match(dailyQuestPattern)![1]!;
-            const questName = questId
-              .replace(/^quest-/, "")
-              .replace(/[-_]/g, " ")
-              .replace(/\b\w/g, (c: string) => c.toUpperCase());
+            // Shared with the Realtime toast's fallback naming (quest-name.ts)
+            // so the feed and the celebration never spell a quest differently.
+            const questName = questDisplayName(questId);
             raw.push({
               type: "xp_other",
               action: tDash("dailyQuest", { name: questName }),
@@ -645,7 +657,7 @@ export function useDashboardData(
     }
 
     fetchData();
-  }, [authUserId, authLoading, tDash, tGam]);
+  }, [authUserId, authLoading, tDash]);
 
   return data;
 }

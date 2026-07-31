@@ -51,6 +51,11 @@ describe("celebrationTierFor — the LX-B11 tier map", () => {
     "level-up": "popup",
     "credential-mint": "full",
     "surprise-bonus": "none",
+    // A daily-quest reward is celebrated through the house system, but at the
+    // popup tier — a daily-cadence reward with confetti is exactly the routine-
+    // reward pattern LX-B11 tiering exists to prevent (the assertion below
+    // keeps confetti pinned to deploy + credential mint).
+    "daily-quest": "popup",
   };
 
   for (const [event, tier] of Object.entries(expected)) {

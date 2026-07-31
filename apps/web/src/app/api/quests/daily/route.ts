@@ -4,7 +4,14 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getAllQuests } from "@/lib/content/queries";
 import { retryQuestXpForUser } from "@/lib/solana/onchain-queue";
-import { nextMidnightUtc } from "@/lib/gamification/daily-reset";
+import {
+  nextMidnightUtc,
+  questPeriodUtc,
+} from "@/lib/gamification/daily-reset";
+import {
+  evaluateQuests,
+  type QuestProgressRow,
+} from "@/lib/gamification/quest-evaluation";
 import { serverEnv } from "@/lib/env.server";
 
 // Auth/cookie + per-request DB access — never statically prerender (DYNAMIC_SERVER_USAGE).
@@ -32,61 +39,40 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // 1. Fetch quest definitions + auxiliary data from the content bundle (single round trip)
+    // 1. Quest definitions from the content bundle. This route needs the
+    //    DISPLAY fields (name/description/icon) that the shared evaluator does
+    //    not return; both read the same cached bundle.
     const questData = await getAllQuests();
 
     if (questData.quests.length === 0) {
       return NextResponse.json({
         quests: [],
         nextResetTime: nextMidnightUtc(),
+        questPeriod: questPeriodUtc(),
       });
     }
 
-    // 2. Normalize quest definitions into the shape expected by the SQL function
-    const questDefs = questData.quests.map((q) => ({
-      id: q.id,
-      type: q.type,
-      xpReward: q.xpReward,
-      targetValue: q.targetValue,
-      resetType: q.resetType,
-    }));
-
-    // 3. Build module lesson map as { id, lessonIds }[]
-    const moduleLessonMap = questData.moduleLessonMap.map((m) => ({
-      id: m.id,
-      lessonIds: m.lessonIds,
-    }));
-
-    // 4. Call the SQL function via admin client
+    // 2. Evaluate + award through the SHARED implementation
+    //    (lib/gamification/quest-evaluation) — byte-identical to what the
+    //    lesson-complete / review-grade / test-out paths now run after a
+    //    quest-relevant action, so the panel and the action paths can never
+    //    drift apart. The RPC's own xp_granted guard makes the overlap safe.
     const admin = createAdminClient();
-    const { data: progressData, error: rpcError } = await admin.rpc(
-      "get_daily_quest_state",
-      {
-        p_user_id: user.id,
-        p_quest_definitions: questDefs,
-        p_challenge_ids: questData.challengeLessonIds,
-        p_module_lesson_map: moduleLessonMap,
-      }
-    );
-
-    if (rpcError) {
-      console.error("[api/quests/daily] RPC error:", rpcError.message);
+    let progressRows: QuestProgressRow[];
+    try {
+      progressRows = await evaluateQuests(admin, user.id);
+    } catch (err) {
+      console.error(
+        "[api/quests/daily] RPC error:",
+        err instanceof Error ? err.message : String(err)
+      );
       return NextResponse.json(
         { error: "Failed to load quest progress" },
         { status: 500 }
       );
     }
 
-    // 5. Merge Sanity display fields with Supabase progress
-    const progressRows =
-      (progressData as Array<{
-        questId: string;
-        currentValue: number;
-        completed: boolean;
-        justAwarded: boolean;
-        xpReward: number;
-      }>) ?? [];
-
+    // 3. Merge content display fields with the evaluated progress
     const progressMap = new Map<
       string,
       { currentValue: number; completed: boolean; justAwarded: boolean }
@@ -117,13 +103,13 @@ export async function GET() {
       };
     });
 
-    // 6. XP delivery is durable by construction: get_daily_quest_state writes
+    // 4. XP delivery is durable by construction: get_daily_quest_state writes
     // the pending_onchain_actions row in the SAME transaction that flips
     // xp_granted=true, so a quest is never marked granted without a durable
     // pending row. Nothing to enqueue here — doing it in the route would leave
     // a window where xp_granted stands without a row.
     //
-    // 7. Deliver this user's pending quest_xp credits NOW. The auth-time
+    // 5. Deliver this user's pending quest_xp credits NOW. The auth-time
     // retryPendingOnchainActions() only runs on re-auth, so a permanently
     // logged-in session would otherwise never get its enqueued rows swept.
     // Idempotent (award_xp keyed on reference_id), DB-only, so awaiting is
@@ -138,6 +124,12 @@ export async function GET() {
     return NextResponse.json({
       quests,
       nextResetTime: nextMidnightUtc(),
+      // The SERVER's name for today's quest period (UTC, matching the DB's
+      // CURRENT_DATE). The client uses it as the toast dedupe key, so the poll
+      // path and the Realtime path agree on the period even when the learner's
+      // LOCAL date differs from UTC (a São Paulo evening is already tomorrow in
+      // UTC) — a client-derived date would silently break the shared dedupe.
+      questPeriod: questPeriodUtc(),
     });
   } catch (err) {
     console.error("[api/quests/daily] Unexpected error:", err);

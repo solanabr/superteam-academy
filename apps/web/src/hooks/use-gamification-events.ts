@@ -6,7 +6,11 @@ import { trackCredentialMinted } from "@/lib/analytics/events";
 import { createClient } from "@/lib/supabase/client";
 import { celebrate } from "@/lib/gamification/celebration";
 import { isSurpriseBonusReason } from "@/lib/gamification/surprise-bonus";
-import { claimSurpriseBonus } from "@/lib/gamification/server-xp-feedback";
+import {
+  claimSurpriseBonus,
+  claimQuestRewardFromCredit,
+  QUEST_XP_REASON_PREFIX,
+} from "@/lib/gamification/server-xp-feedback";
 import {
   dispatchAchievementUnlock,
   dispatchAchievementXp,
@@ -14,6 +18,7 @@ import {
 import { dispatchCertificateMinted } from "@/components/gamification/certificate-popup";
 import { dispatchLevelUp } from "@/components/gamification/level-up-popup";
 import { dispatchSurpriseBonus } from "@/components/gamification/surprise-bonus-toast";
+import { dispatchQuestReward } from "@/components/gamification/quest-reward-toast";
 
 let xpEventCounter = 0;
 
@@ -140,6 +145,7 @@ export function useGamificationEvents(userId: string | undefined) {
               reason?: string;
               tx_signature?: string;
               idempotency_key?: string;
+              created_at?: string;
             };
 
             // Deduplicate by row id (primary defence) or tx_signature (fallback)
@@ -163,8 +169,35 @@ export function useGamificationEvents(userId: string | undefined) {
               return;
             }
 
-            // Daily quest XP → suppress popup (quests panel already shows the reward)
-            if (row.reason?.startsWith("daily_quest:")) return;
+            // Daily quest XP → celebrate wherever the learner is.
+            //
+            // This used to be suppressed ("the quests panel already shows the
+            // reward"), which held only while quests were awarded exclusively
+            // by the dashboard's own poll. Quest evaluation now runs from the
+            // ACTION paths (lesson complete, review grade, test-out, the
+            // completion webhook), so the award routinely lands while the
+            // learner is on a lesson page and would otherwise be silent.
+            //
+            // claimQuestRewardFromCredit is the SAME session-wide seen-set the
+            // poll path claims through (keyed questId + period, with the period
+            // read off the queue row's idempotency_key), so whichever channel
+            // observes the award first toasts and the other is a no-op — the
+            // two can never double-toast one reward.
+            if (row.reason?.startsWith(QUEST_XP_REASON_PREFIX)) {
+              const questId = claimQuestRewardFromCredit(row, userId);
+              if (questId) {
+                dispatchQuestReward({ questId, xpReward: amount });
+                // The counter bump belongs to the channel that WON the claim,
+                // never to both. The header's optimistic XP is a monotonic
+                // `Math.max(supabaseXp, prev + amount)` that never pulls back
+                // down, so dispatching here when the poll path already counted
+                // this same credit would permanently inflate the displayed XP
+                // for the session. The poll path mirrors this: it only bumps
+                // for entries pickQuestRewardToasts actually claimed.
+                dispatchXpGain(amount);
+              }
+              return;
+            }
 
             // Surprise bonus (LX-B15) → informational toast (never confetti). The
             // reward only surfaces here, AFTER it is granted server-side — there
