@@ -23,14 +23,34 @@ import { useOnChainEnroll } from "@/hooks/use-on-chain-enroll";
 import { bankCompletion, removeBanked } from "@/lib/lessons/progress-bank";
 import { REPLAY_BANKED_EVENT } from "@/components/lessons/banked-progress-replay";
 import { ThreadList } from "@/components/community/thread-list";
-import { CreateThreadModal } from "@/components/community/create-thread-modal";
+import { ThreadComposer } from "@/components/community/thread-composer";
 import { LessonSection } from "@/components/lessons/lesson-section";
+import {
+  LessonJumpChips,
+  type JumpChip,
+} from "@/components/lessons/lesson-jump-chips";
 import { RENDERERS, type BlockContext } from "./blocks";
 
 /** Anchor for the toolbar's jump-to-discussion affordance (#942). */
 const DISCUSSION_ANCHOR_ID = "lesson-discussion";
 const TOPICS_ANCHOR_ID = "lesson-topics";
 const HINTS_ANCHOR_ID = "lesson-hints";
+
+/**
+ * Opens a disclosure section and scrolls it into view. The scroll waits a frame
+ * so it targets the section's post-expansion position, not the collapsed one.
+ */
+function jumpToSection(
+  anchorId: string,
+  setOpen: (open: boolean) => void
+): void {
+  setOpen(true);
+  requestAnimationFrame(() => {
+    document
+      .getElementById(anchorId)
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+}
 
 interface LessonPageClientProps {
   lesson: Lesson;
@@ -131,12 +151,20 @@ export function LessonPageClient({
   const [earnedXp, setEarnedXp] = useState<number | null>(null);
   const [isEnrolled, setIsEnrolled] = useState(false);
   const hasLinkedWallet = authProfile ? !!authProfile.wallet_address : null;
-  const [isDiscussionOpen, setIsDiscussionOpen] = useState(false);
+  // Inline "Ask a question" composer inside the Discussion section (replaces
+  // the create-thread MODAL on the lesson page entirely).
+  const [isComposerOpen, setIsComposerOpen] = useState(false);
+  const [threadsRefreshToken, setThreadsRefreshToken] = useState(0);
   // Discussion is an inline collapsible section at the bottom of the lesson
   // pane on every lesson type (#942) — it used to be a modal on challenges
   // (#770). This is the section's disclosure state (distinct from the
   // create-thread modal above); the toolbar button jumps to it and opens it.
   const [isDiscussionListOpen, setIsDiscussionListOpen] = useState(false);
+  // Topics / first-Hint disclosures are controlled too, so the jump chips under
+  // the h1 can open the section they scroll to (the rows stay independently
+  // clickable — this only adds a second way in).
+  const [isTopicsOpen, setIsTopicsOpen] = useState(false);
+  const [isHintsOpen, setIsHintsOpen] = useState(false);
   const [threadCount, setThreadCount] = useState<string | null>(null);
   const handleThreadCount = useCallback((count: number, hasMore: boolean) => {
     setThreadCount(hasMore ? `${count}+` : String(count));
@@ -277,6 +305,10 @@ export function LessonPageClient({
   }, [authLoading, userId, lesson._id, courseId]);
 
   const currentIndex = allLessons.findIndex((l) => l._id === lesson._id);
+  // The ordinal shown on the h1 and in the top bar is this SAME index — the
+  // course's flattened module→lesson order that prev/next already walks. A
+  // lesson missing from that list (teacher preview) simply has no number.
+  const lessonNumber = currentIndex >= 0 ? currentIndex + 1 : null;
   const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;
   const nextLesson =
     currentIndex < allLessons.length - 1 ? allLessons[currentIndex + 1] : null;
@@ -417,6 +449,7 @@ export function LessonPageClient({
       locale,
       isEnrolled,
       isCompleted,
+      lessonNumber,
       xpReward: courseXpPerLesson,
       earnedXp,
       onEnroll: handleEnroll,
@@ -435,6 +468,7 @@ export function LessonPageClient({
       locale,
       isEnrolled,
       isCompleted,
+      lessonNumber,
       courseXpPerLesson,
       earnedXp,
       handleEnroll,
@@ -466,7 +500,7 @@ export function LessonPageClient({
     <Button
       variant="pushOutline"
       size="sm"
-      onClick={() => setIsDiscussionOpen(true)}
+      onClick={() => setIsComposerOpen(true)}
     >
       {t("askQuestion")}
     </Button>
@@ -482,7 +516,12 @@ export function LessonPageClient({
   const paneSections = (
     <div className="mt-2">
       {skills.length > 0 && (
-        <LessonSection id={TOPICS_ANCHOR_ID} title={t("topics")}>
+        <LessonSection
+          id={TOPICS_ANCHOR_ID}
+          title={t("topics")}
+          open={isTopicsOpen}
+          onOpenChange={setIsTopicsOpen}
+        >
           <div className="flex flex-wrap gap-2">
             {skills.map((skill) => (
               <span
@@ -500,6 +539,11 @@ export function LessonPageClient({
           key={`hint-${i}`}
           id={i === 0 ? HINTS_ANCHOR_ID : undefined}
           title={t("stuckNudgeHintLabel", { number: i + 1 })}
+          // Only the FIRST hint is the chip's jump target, so only it is
+          // controlled — the rest stay independently uncontrolled, preserving
+          // the one-at-a-time reveal.
+          open={i === 0 ? isHintsOpen : undefined}
+          onOpenChange={i === 0 ? setIsHintsOpen : undefined}
         >
           <p className="text-sm leading-relaxed text-text-2">{hint}</p>
         </LessonSection>
@@ -512,24 +556,82 @@ export function LessonPageClient({
         onOpenChange={setIsDiscussionListOpen}
         keepMounted
       >
-        <div className="mb-3 flex justify-end">{askAction}</div>
+        {/* Composing happens INLINE at the top of the section (LeetCode's
+            comment box). A modal over a lesson hid the code the learner was
+            asking about, which is the one thing they need while writing. */}
+        {isComposerOpen ? (
+          <div className="mb-4 rounded-lg border border-border bg-subtle p-3">
+            <h4 className="mb-3 font-display text-sm font-bold text-text">
+              {tCommunity("composerHeading")}
+            </h4>
+            <ThreadComposer
+              defaultScope={{ courseId, lessonId: lesson._id }}
+              onCancel={() => setIsComposerOpen(false)}
+              // Staying put is the point: the new thread appears in the list
+              // below instead of navigating away from the lesson.
+              onCreated={() => {
+                setIsComposerOpen(false);
+                setThreadsRefreshToken((n) => n + 1);
+              }}
+            />
+          </div>
+        ) : (
+          <div className="mb-3 flex justify-end">{askAction}</div>
+        )}
         <div className="text-sm [&_button]:px-2.5 [&_button]:py-1 [&_button]:text-xs">
           <ThreadList
-          scope={{ courseId, lessonId: lesson._id }}
-          showFilters
-          emptyMessage={tCommunity("empty.lesson")}
+            scope={{ courseId, lessonId: lesson._id }}
+            showFilters
+            emptyMessage={tCommunity("empty.lesson")}
             onCountChange={handleThreadCount}
+            refreshToken={threadsRefreshToken}
           />
         </div>
       </LessonSection>
     </div>
   );
 
+  // Jump chips (#942 follow-up) — LeetCode's Topics/Hints row under the h1.
+  // Each opens its disclosure section and scrolls to it; a section that has no
+  // content (no skills, no authored hints) contributes no chip.
+  const jumpChips: JumpChip[] = [];
+  if (skills.length > 0) {
+    jumpChips.push({
+      kind: "topics",
+      label: t("topics"),
+      targetId: TOPICS_ANCHOR_ID,
+      onActivate: () => jumpToSection(TOPICS_ANCHOR_ID, setIsTopicsOpen),
+    });
+  }
+  if (authoredHints.length > 0) {
+    jumpChips.push({
+      kind: "hints",
+      label: t("hints"),
+      targetId: HINTS_ANCHOR_ID,
+      onActivate: () => jumpToSection(HINTS_ANCHOR_ID, setIsHintsOpen),
+    });
+  }
+  jumpChips.push({
+    kind: "discussion",
+    label: t("discussion"),
+    count: threadCount,
+    targetId: DISCUSSION_ANCHOR_ID,
+    onActivate: () =>
+      jumpToSection(DISCUSSION_ANCHOR_ID, setIsDiscussionListOpen),
+  });
+  const chipsRow = <LessonJumpChips chips={jumpChips} className="my-4" />;
+
   const instructionsSlot = hasCodeBlock ? (
     <div className="space-y-6">
-      {instructionBlocks.map((block) => {
+      {instructionBlocks.map((block, i) => {
         const Renderer = RENDERERS[block._type];
-        return <Renderer key={block.key} block={block} ctx={ctx} />;
+        return (
+          <div key={block.key}>
+            <Renderer block={block} ctx={ctx} />
+            {/* Directly under the title block, per LeetCode's chip row. */}
+            {i === 0 && chipsRow}
+          </div>
+        );
       })}
     </div>
   ) : null;
@@ -668,9 +770,14 @@ export function LessonPageClient({
         </div>
       ) : (
         <div className="space-y-6">
-          {lesson.blocks.map((block) => {
+          {lesson.blocks.map((block, i) => {
             const Renderer = RENDERERS[block._type];
-            return <Renderer key={block.key} block={block} ctx={ctx} />;
+            return (
+              <div key={block.key}>
+                <Renderer block={block} ctx={ctx} />
+                {i === 0 && chipsRow}
+              </div>
+            );
           })}
         </div>
       )}
@@ -844,11 +951,6 @@ export function LessonPageClient({
           below the prose. Discussion is the same inline section on both, never
           a modal. */}
       {!hasCodeBlock && paneSections}
-      <CreateThreadModal
-        open={isDiscussionOpen}
-        onOpenChange={setIsDiscussionOpen}
-        defaultScope={{ courseId, lessonId: lesson._id }}
-      />
     </div>
   );
 }

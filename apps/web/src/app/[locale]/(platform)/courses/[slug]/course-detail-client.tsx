@@ -401,7 +401,9 @@ export function CourseDetailClient({
             </Button>
           )}
         </div>
-        <ThreadList scope={{ courseId: course._id }} showFilters />
+        {/* Context chips stay on here: every thread shares the course, but the
+            chip names the LESSON, which is the disambiguating part. */}
+        <ThreadList scope={{ courseId: course._id }} showFilters showContext />
         {userId && (
           <CreateThreadModal
             open={discussionModalOpen}

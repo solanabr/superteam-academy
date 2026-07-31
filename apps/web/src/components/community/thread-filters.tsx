@@ -9,6 +9,14 @@ interface ThreadFiltersProps {
   type: string | undefined;
   onTypeChange: (type: string | undefined) => void;
   showTypeFilter?: boolean;
+  /**
+   * "Course questions" — threads that carry a course scope. A separate axis
+   * from the type pills (a course question is still a question), so it toggles
+   * independently rather than joining TYPE_OPTIONS.
+   */
+  courseOnly?: boolean;
+  onCourseOnlyChange?: (courseOnly: boolean) => void;
+  showCourseFilter?: boolean;
 }
 
 const SORT_OPTIONS = [
@@ -29,6 +37,9 @@ export function ThreadFilters({
   type,
   onTypeChange,
   showTypeFilter = true,
+  courseOnly = false,
+  onCourseOnlyChange,
+  showCourseFilter = false,
 }: ThreadFiltersProps) {
   const t = useTranslations("community");
 
@@ -71,6 +82,21 @@ export function ThreadFilters({
               {t(opt.labelKey)}
             </button>
           ))}
+          {showCourseFilter && onCourseOnlyChange && (
+            <button
+              type="button"
+              aria-pressed={courseOnly}
+              onClick={() => onCourseOnlyChange(!courseOnly)}
+              className={cn(
+                "whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                courseOnly
+                  ? "font-bold text-[var(--primary)]"
+                  : "text-[var(--text-2)] hover:text-[var(--text)]"
+              )}
+            >
+              {t("filterCourseQuestions")}
+            </button>
+          )}
         </div>
       )}
     </div>

@@ -119,4 +119,11 @@ export interface ChallengeInterfaceProps {
 
 export interface CodeEditorHandle {
   getEditor: () => editor.IStandaloneCodeEditor | null;
+  /**
+   * Runs Monaco's built-in `editor.action.formatDocument`. Resolves `false`
+   * when the editor is not mounted yet or the current language has no
+   * registered formatting provider (Monaco ships one for TS/JS/JSON only), so
+   * the caller can hide the affordance rather than offer a no-op.
+   */
+  format: () => Promise<boolean>;
 }

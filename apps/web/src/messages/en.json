@@ -364,7 +364,14 @@
     "quizNext": "Next question",
     "quizUnlocksAssistant": "AI Partner unlocks after the quiz — {answered}/{total} answered",
     "quizCompleteChip": "Complete",
-    "quizAllCorrect": "All {total} questions answered correctly."
+    "quizAllCorrect": "All {total} questions answered correctly.",
+    "formatCode": "Format",
+    "stopwatch": "Stopwatch",
+    "stopwatchStart": "Start",
+    "stopwatchPause": "Pause",
+    "stopwatchReset": "Reset",
+    "hints": "Hints",
+    "lessonNumberTitle": "{number}. {title}"
   },
   "dashboard": {
     "allCaughtUp": "All caught up!",
@@ -995,7 +1002,14 @@
       "category": "No threads in this category yet.",
       "course": "No discussions about this course yet.",
       "lesson": "No questions about this lesson yet. Ask one!"
-    }
+    },
+    "lessonContext": "From lesson",
+    "filterCourseQuestions": "Course questions",
+    "askInline": "Ask a question",
+    "composerHeading": "Ask the community",
+    "questionHeading": "Question",
+    "answersHeading": "Answers",
+    "noAnswersYet": "No answers yet - be the first to help."
   },
   "aiPartner": {
     "title": "AI Partner",

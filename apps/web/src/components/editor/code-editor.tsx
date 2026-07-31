@@ -89,6 +89,17 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
       ref,
       () => ({
         getEditor: () => editorRef.current,
+        format: async () => {
+          const action = editorRef.current?.getAction(
+            "editor.action.formatDocument"
+          );
+          // Monaco keeps the action registered but unsupported when no
+          // formatting provider is installed for the model's language; running
+          // it then silently does nothing.
+          if (!action || action.isSupported() === false) return false;
+          await action.run();
+          return true;
+        },
       }),
       []
     );

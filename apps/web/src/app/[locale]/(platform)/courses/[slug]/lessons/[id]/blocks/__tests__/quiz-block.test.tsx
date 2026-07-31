@@ -66,6 +66,7 @@ function makeCtx(overrides: Partial<BlockContext> = {}): BlockContext {
     locale: "en",
     isEnrolled: true,
     isCompleted: false,
+    lessonNumber: null,
     xpReward: 30,
     earnedXp: null,
     onEnroll: vi.fn(),

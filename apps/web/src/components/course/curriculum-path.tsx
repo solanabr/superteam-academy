@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { CheckCircle, Play, Code, Article } from "@phosphor-icons/react";
+import { courseWideOrdinals } from "@/lib/courses/lesson-ordinals";
 import { cn } from "@/lib/utils";
 
 interface PathLesson {
@@ -57,6 +58,10 @@ export function CurriculumPath({
   const t = useTranslations("courses");
   const tLesson = useTranslations("lesson");
   const completedSet = new Set(completedLessons);
+  // Lessons are numbered across the WHOLE course (the flattened module→lesson
+  // order the lesson page and prev/next use), not restarted per module — so the
+  // "2." here is the same "2." the lesson's own h1 shows.
+  const courseOrdinals = courseWideOrdinals(modules);
 
   return (
     <ol className="space-y-4">
@@ -162,7 +167,7 @@ export function CurriculumPath({
 
                       <span className="flex min-w-0 flex-1 items-center gap-2">
                         <span className="text-text-3/60 font-mono text-xs tabular-nums">
-                          {lessonIdx + 1}.
+                          {courseOrdinals.get(lesson._id) ?? lessonIdx + 1}.
                         </span>
                         <span className="truncate">
                           {lesson.isChallenge && (
