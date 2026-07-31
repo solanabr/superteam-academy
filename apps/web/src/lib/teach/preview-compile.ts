@@ -26,6 +26,9 @@ import { changedCourseDirs, changedCourseIds } from "./pr-files";
 
 const API = "https://api.github.com";
 
+/** Ceiling on the tarball fetch + body read. Matches lib/content/prior-content. */
+const TARBALL_TIMEOUT_MS = 30_000;
+
 // Derived from the projector's own signature so this file needs no new exports
 // from `lib/content/project` — the doc shapes stay private to that module.
 type CourseDocT = Parameters<typeof projectCourse>[0];
@@ -67,13 +70,17 @@ function rateLimitError(res: Response): GitHubUnavailableError | null {
   return null;
 }
 
-async function ghFetch(path: string, accept?: string): Promise<Response> {
+async function ghFetch(
+  path: string,
+  accept?: string,
+  signal?: AbortSignal
+): Promise<Response> {
   const headers = ghHeaders();
   if (accept) headers.Accept = accept;
 
   let res: Response;
   try {
-    res = await fetch(`${API}${path}`, { headers, cache: "no-store" });
+    res = await fetch(`${API}${path}`, { headers, cache: "no-store", signal });
   } catch (e) {
     throw new GitHubUnavailableError(
       e instanceof Error ? e.message : String(e)
@@ -208,16 +215,28 @@ export async function compilePrPreview(
   const head = await (opts.fetchHead ?? fetchPrHead)(number);
 
   // `tarball/<sha>` 302-redirects to codeload; fetch follows redirects.
-  const res = await ghFetch(
-    `/repos/${CONTENT_REPO}/tarball/${head.sha}`,
-    "application/vnd.github+json"
-  );
-  if (!res.ok) {
-    throw new GitHubUnavailableError(
-      `GitHub tarball/${head.sha.slice(0, 7)} → ${res.status}`
+  // Bounded by an abort signal, mirroring the identical tarball fetch in
+  // lib/content/prior-content.ts: aborting the fetch aborts the response STREAM
+  // too, so a codeload connection that stalls mid-body cannot hang the preview
+  // request until the platform's own timeout kills it.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TARBALL_TIMEOUT_MS);
+  let tree: Map<string, Uint8Array>;
+  try {
+    const res = await ghFetch(
+      `/repos/${CONTENT_REPO}/tarball/${head.sha}`,
+      "application/vnd.github+json",
+      controller.signal
     );
+    if (!res.ok) {
+      throw new GitHubUnavailableError(
+        `GitHub tarball/${head.sha.slice(0, 7)} → ${res.status}`
+      );
+    }
+    tree = await extractTarball(new Uint8Array(await res.arrayBuffer()));
+  } finally {
+    clearTimeout(timer);
   }
-  const tree = await extractTarball(new Uint8Array(await res.arrayBuffer()));
 
   // `compiledAt: null` — the preview is not a reproducible bundle and must never
   // stamp a wall-clock time that would differ from a real compile of this SHA.

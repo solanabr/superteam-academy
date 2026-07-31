@@ -188,9 +188,12 @@ const CHECK_SCHEMA = {
     },
     correctIndex: {
       type: "integer",
-      // NOTE: no `minimum`/`maximum` — Gemini's structured-output schema dialect
-      // rejects those with a 400. The 0–2 range is enforced at runtime in
-      // `validatePartnerResponse`.
+      // The 0–2 range is enforced at runtime in `validatePartnerResponse` — the
+      // model is asked for it in `description`, never trusted for it. (A stale
+      // note here claimed Gemini's structured-output dialect rejects
+      // `minimum`/`maximum` with a 400; the current docs list both as supported.
+      // The runtime clamp stays regardless: schema constraints are the model's
+      // best effort, not a validation boundary.)
       description: "Index (0-2) of the single correct option.",
     },
     explanation: { type: "string" },

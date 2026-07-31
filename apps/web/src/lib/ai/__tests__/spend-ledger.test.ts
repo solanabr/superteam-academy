@@ -25,7 +25,11 @@ import { MODEL_RATES } from "../models";
 // sheet, so they pin the cheap tier explicitly.
 const LITE = "gemini-3.5-flash-lite" as const;
 const FLASH_36 = "gemini-3.6-flash" as const;
-const RATES = { inputUsdPerMTok: 0.3, outputUsdPerMTok: 2.5 };
+const RATES = {
+  inputUsdPerMTok: 0.3,
+  outputUsdPerMTok: 2.5,
+  cachedInputUsdPerMTok: 0.03,
+};
 
 beforeEach(() => {
   rpc.mockReset();
@@ -68,6 +72,92 @@ describe("estimateSpendMicroUsd", () => {
         RATES
       )
     ).toBe(0);
+  });
+});
+
+// Gemini's `promptTokenCount` INCLUDES `cachedContentTokenCount` — the cached
+// tokens are a SUBSET, not an addition. Red at main: the ledger billed the whole
+// prompt at the full input rate, over-reporting every cache hit by up to 10× and
+// tripping the #591 caps early.
+describe("estimateSpendMicroUsd — cached prompt tokens (cached-input discount)", () => {
+  it("splits the prompt: (prompt − cached) at input, cached at cached-input", () => {
+    // 1000 prompt of which 800 cached → 200×0.30 = 60; 800×0.03 = 24; input 84.
+    // Output 500×2.50 = 1250. Total 1334.
+    expect(
+      estimateSpendMicroUsd(
+        {
+          promptTokenCount: 1000,
+          cachedContentTokenCount: 800,
+          candidatesTokenCount: 500,
+        },
+        RATES
+      )
+    ).toBe(1334);
+  });
+
+  it("never ADDS cached to prompt (they are not two separate token pools)", () => {
+    // If cached were added, this would price 1800 prompt tokens. It must not:
+    // the fully-cached prompt costs 1000×0.03 = 30, plus 1250 output = 1280.
+    expect(
+      estimateSpendMicroUsd(
+        {
+          promptTokenCount: 1000,
+          cachedContentTokenCount: 1000,
+          candidatesTokenCount: 500,
+        },
+        RATES
+      )
+    ).toBe(1280);
+  });
+
+  it("is unchanged from the pre-cache math when cached is absent or zero", () => {
+    const base = estimateSpendMicroUsd(
+      { promptTokenCount: 1000, candidatesTokenCount: 500 },
+      RATES
+    );
+    expect(base).toBe(1550);
+    expect(
+      estimateSpendMicroUsd(
+        {
+          promptTokenCount: 1000,
+          cachedContentTokenCount: 0,
+          candidatesTokenCount: 500,
+        },
+        RATES
+      )
+    ).toBe(base);
+  });
+
+  it("CLAMPS a malformed cached > prompt, billing the whole prompt at input rate", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    // cached 5000 > prompt 1000 is impossible. Discard the discount rather than
+    // let a shape we don't understand produce a negative uncached remainder
+    // (which would UNDER-bill, the dangerous direction on a sponsored key).
+    expect(
+      estimateSpendMicroUsd(
+        {
+          promptTokenCount: 1000,
+          cachedContentTokenCount: 5000,
+          candidatesTokenCount: 500,
+        },
+        RATES
+      )
+    ).toBe(1550); // identical to no-cache: 1000×0.30 + 500×2.50
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it("ignores a negative cached count (nonNegInt) — no free credit", () => {
+    expect(
+      estimateSpendMicroUsd(
+        {
+          promptTokenCount: 1000,
+          cachedContentTokenCount: -900,
+          candidatesTokenCount: 500,
+        },
+        RATES
+      )
+    ).toBe(1550);
   });
 });
 
@@ -193,16 +283,29 @@ describe("ratesFor (per-model pricing, #868)", () => {
     expect(ratesFor("gemini-3.6-flash")).toEqual({
       inputUsdPerMTok: 1.5,
       outputUsdPerMTok: 7.5,
+      cachedInputUsdPerMTok: 0.15,
     });
     expect(ratesFor("gemini-3.5-flash-lite")).toEqual({
       inputUsdPerMTok: 0.3,
       outputUsdPerMTok: 2.5,
+      cachedInputUsdPerMTok: 0.03,
     });
     // Kept as the documented fallback pin — and what pre-#868 traffic cost.
     expect(ratesFor("gemini-3.5-flash")).toEqual({
       inputUsdPerMTok: 1.5,
       outputUsdPerMTok: 9.0,
+      cachedInputUsdPerMTok: 0.15,
     });
+  });
+
+  it("carries a cached-input rate for EVERY routed model (ledger cannot bill without one)", () => {
+    for (const model of Object.keys(
+      MODEL_RATES
+    ) as (keyof typeof MODEL_RATES)[]) {
+      const r = ratesFor(model);
+      expect(r.cachedInputUsdPerMTok).toBeGreaterThan(0);
+      expect(r.cachedInputUsdPerMTok).toBeLessThan(r.inputUsdPerMTok);
+    }
   });
 
   it("matches MODEL_RATES exactly when no env override is set", () => {
@@ -232,6 +335,22 @@ describe("recordAiSpend", () => {
     expect(rpc).toHaveBeenLastCalledWith(
       "record_ai_spend",
       expect.objectContaining({ p_micro_usd: 1550 })
+    );
+  });
+
+  it("books the cached-input discount end-to-end at the routed model's rates", async () => {
+    rpc.mockResolvedValue({ data: null, error: null });
+    // 3.6-flash: 4000 prompt of which 3500 cached → 500×1.50 = 750;
+    // 3500×0.15 = 525; output 200×7.50 = 1500. Total 2775 (vs 7500 if the
+    // cached slice were billed at the full input rate).
+    await recordAiSpend("u", "1.2.3.4", FLASH_36, {
+      promptTokenCount: 4000,
+      cachedContentTokenCount: 3500,
+      candidatesTokenCount: 200,
+    });
+    expect(rpc).toHaveBeenLastCalledWith(
+      "record_ai_spend",
+      expect.objectContaining({ p_micro_usd: 2775 })
     );
   });
 

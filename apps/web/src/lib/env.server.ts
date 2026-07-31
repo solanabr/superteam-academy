@@ -96,9 +96,12 @@ const serverEnvSchema = z.object({
   // (lib/solana/arweave.ts). Unset → mint falls back to the app-served
   // metadata URL.
   ARWEAVE_UPLOADER_SECRET: optStr,
-  // Helius key for webhook management + DAS API (lib/helius). Server-only and
-  // UNRESTRICTED — never NEXT_PUBLIC_, and not the same key as the domain-
-  // restricted one behind NEXT_PUBLIC_SOLANA_RPC_URL.
+  // Helius key for WEBHOOK MANAGEMENT only (lib/helius/webhook-config) — the
+  // registration/list calls against Helius's REST API. No DAS API call exists
+  // anywhere in this codebase; the old "+ DAS API" note here described an
+  // integration that was never built. Server-only and UNRESTRICTED — never
+  // NEXT_PUBLIC_, and not the same key as the domain-restricted one behind
+  // NEXT_PUBLIC_SOLANA_RPC_URL.
   HELIUS_API_KEY: optStr,
   // Resend API key for marketing/announcement email (#769). Server-only.
   // Optional at boot — the email pipeline is FAIL-CLOSED: unset ⇒ send() returns
