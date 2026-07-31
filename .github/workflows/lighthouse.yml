@@ -29,6 +29,9 @@ env:
   NEXT_PUBLIC_SOLANA_RPC_URL: "https://api.devnet.solana.com"
   NEXT_PUBLIC_SOLANA_NETWORK: "devnet"
   NEXT_PUBLIC_PROGRAM_ID: "7NeJaSRyb4Wxay3Tcd9bdpD7T3GWYUQSFyrhG8SgwE8V"
+  # Required by lib/env.ts; `next build` runs as NODE_ENV=production, where the
+  # schema refuses to default it.
+  NEXT_PUBLIC_APP_URL: "http://localhost:3000"
 
 jobs:
   lighthouse:

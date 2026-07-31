@@ -87,6 +87,59 @@ describe("checkSchemaExpectations (#731)", () => {
     ).toBe(true);
   });
 
+  // #864 assist ladder: the exact #945-class gap this check exists to close —
+  // spendAssistTurn fails CLOSED, so a missing RPC denies every AI tutor turn
+  // while nothing else reports a problem.
+  it("a missing spend_assist_ladder_turn is reported (the AI-tutor fail-closed gap)", async () => {
+    const result = await checkSchemaExpectations(
+      makeClient({
+        rpcErrors: {
+          spend_assist_ladder_turn: {
+            code: "PGRST202",
+            message:
+              "Could not find the function public.spend_assist_ladder_turn",
+          },
+        },
+      })
+    );
+    expect(result.ok).toBe(false);
+    const miss = result.missing.find(
+      (m) => m.object === "function spend_assist_ladder_turn"
+    );
+    expect(miss?.migration).toBe("20260730120000_assist_ladder.sql");
+  });
+
+  it("a missing challenge_assists.chat_log column is reported", async () => {
+    const result = await checkSchemaExpectations(
+      makeClient({
+        tableErrors: {
+          challenge_assists: {
+            code: "42703",
+            message: "column challenge_assists.chat_log does not exist",
+          },
+        },
+      })
+    );
+    expect(result.ok).toBe(false);
+    const miss = result.missing.find((m) => m.object.includes("chat_log"));
+    expect(miss?.migration).toBe("20260730120000_assist_ladder.sql");
+  });
+
+  // Every write-side RPC probe is safe ONLY because the anon client lacks
+  // EXECUTE. Guard the invariant that each such probe carries inert arguments,
+  // so a future GRANT never turns a health check into a real mutation.
+  it("the assist-ladder spend probe passes zero tier maxima (inert even if it ran)", () => {
+    const spend = SCHEMA_EXPECTATIONS.find(
+      (e) => e.kind === "rpc" && e.rpc === "spend_assist_ladder_turn"
+    );
+    expect(spend).toBeDefined();
+    expect(spend?.kind === "rpc" ? spend.args : {}).toMatchObject({
+      p_free_max: 0,
+      p_metered_max: 0,
+      p_socratic_max: 0,
+    });
+  });
+
   it("permission-denied on an rpc means PRESENT (exists, just not callable by anon)", async () => {
     const result = await checkSchemaExpectations(
       makeClient({
