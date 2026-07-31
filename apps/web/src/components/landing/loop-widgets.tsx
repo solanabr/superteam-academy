@@ -405,7 +405,7 @@ export function ProveWidget({ flipLabel }: { flipLabel: string }) {
       >
         {/* ── Front: the certificate ── */}
         <div
-          className="absolute inset-0 overflow-hidden rounded-xl p-[2.5px] shadow-card [background:linear-gradient(135deg,#9945FF,#14F195)]"
+          className="absolute inset-0 overflow-hidden rounded-xl bg-cert-gradient p-[2.5px] shadow-card"
           style={{ backfaceVisibility: "hidden" }}
         >
           <div className="relative flex h-full flex-col justify-between overflow-hidden rounded-[9px] bg-card p-5 sm:p-6">
@@ -443,7 +443,7 @@ export function ProveWidget({ flipLabel }: { flipLabel: string }) {
 
         {/* ── Back: the NFT details ── */}
         <div
-          className="absolute inset-0 overflow-hidden rounded-xl p-[2.5px] shadow-card [background:linear-gradient(315deg,#9945FF,#14F195)]"
+          className="absolute inset-0 overflow-hidden rounded-xl p-[2.5px] shadow-card [background:linear-gradient(315deg,var(--sol-purple),var(--sol-green))]"
           style={{
             backfaceVisibility: "hidden",
             transform: "rotateY(180deg)",

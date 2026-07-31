@@ -48,7 +48,9 @@ describe("celebrationTierFor — the LX-B11 tier map", () => {
     "lesson-complete": "none",
     "challenge-pass": "none",
     "deploy-success": "medium",
-    "level-up": "popup",
+    // The three-popup rule bans a level-up popup outright, so the level-up
+    // tier celebrates nothing — the dashboard panel updating is the moment.
+    "level-up": "none",
     "credential-mint": "full",
     "surprise-bonus": "none",
     // A daily-quest reward is celebrated through the house system, but at the
@@ -107,7 +109,7 @@ describe("celebrate — confetti firing per tier", () => {
     expect(confettiMock).not.toHaveBeenCalled();
   });
 
-  it("never fires for level-up — the popup itself is the medium moment", () => {
+  it("never fires for level-up — the dashboard panel updating is the moment", () => {
     celebrate("level-up");
     vi.advanceTimersByTime(1000);
     expect(confettiMock).not.toHaveBeenCalled();
