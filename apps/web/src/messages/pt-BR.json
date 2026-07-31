@@ -1005,11 +1005,7 @@
     },
     "lessonContext": "Da lição",
     "filterCourseQuestions": "Perguntas de curso",
-    "askInline": "Faça uma pergunta",
-    "composerHeading": "Pergunte à comunidade",
-    "questionHeading": "Pergunta",
-    "answersHeading": "Respostas",
-    "noAnswersYet": "Ainda sem respostas - seja o primeiro a ajudar."
+    "composerHeading": "Pergunte à comunidade"
   },
   "aiPartner": {
     "title": "Parceiro de IA",

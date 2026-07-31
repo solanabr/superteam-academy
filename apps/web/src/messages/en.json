@@ -1005,11 +1005,7 @@
     },
     "lessonContext": "From lesson",
     "filterCourseQuestions": "Course questions",
-    "askInline": "Ask a question",
-    "composerHeading": "Ask the community",
-    "questionHeading": "Question",
-    "answersHeading": "Answers",
-    "noAnswersYet": "No answers yet - be the first to help."
+    "composerHeading": "Ask the community"
   },
   "aiPartner": {
     "title": "AI Partner",

@@ -11,10 +11,8 @@ import { ArrowLeft } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { useVote } from "@/hooks/use-vote";
-import { useThreadContexts } from "@/hooks/use-thread-contexts";
 import { VoteButton } from "@/components/community/vote-button";
 import { ThreadStatusBadge } from "@/components/community/thread-status-badge";
-import { LessonContextChip } from "@/components/community/lesson-context-chip";
 import { AnswerCard } from "@/components/community/answer-card";
 import { AnswerEditor } from "@/components/community/answer-editor";
 import { FlagButton } from "@/components/community/flag-button";
@@ -52,8 +50,6 @@ interface ThreadData {
   author_id: string;
   author: Author;
   category: { id: string; name: string; slug: string } | null;
-  course_id: string | null;
-  lesson_id: string | null;
   userVote: 1 | -1 | null;
   answers: Answer[];
   created_at: string;
@@ -146,10 +142,6 @@ export function ThreadDetailClient({ shortId }: ThreadDetailClientProps) {
     initialUserVote: thread?.userVote ?? null,
   });
 
-  // Same provenance resolution the feed uses — one thread instead of a page.
-  const contexts = useThreadContexts(thread ? [thread] : []);
-  const context = thread ? contexts.get(thread.id) : undefined;
-
   const handleAccept = async (answerId: string) => {
     const res = await fetch(`/api/community/answers/${answerId}/accept`, {
       method: "POST",
@@ -178,7 +170,7 @@ export function ThreadDetailClient({ shortId }: ThreadDetailClientProps) {
 
   if (error || !thread) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-20 text-center">
+      <div className="mx-auto max-w-4xl px-4 py-20 text-center">
         <p className="text-[var(--text-2)]">{error || t("noResults")}</p>
         <Link
           href="/community"
@@ -191,135 +183,114 @@ export function ThreadDetailClient({ shortId }: ThreadDetailClientProps) {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
+    <div className="mx-auto max-w-4xl px-4 py-8">
       {/* Breadcrumb */}
       <Link
         href={
           thread.category ? `/community/${thread.category.slug}` : "/community"
         }
-        className="inline-flex items-center gap-1 font-mono text-xs text-[var(--text-2)] transition-colors hover:text-[var(--primary)]"
+        className="mb-4 inline-flex items-center gap-1 text-sm text-[var(--text-2)] transition-colors hover:text-[var(--primary)]"
       >
-        <ArrowLeft size={13} aria-hidden="true" />
+        <ArrowLeft size={14} />
         {thread.category?.name || t("title")}
       </Link>
 
-      {/* Question card — the thing being read gets the generous treatment; the
-          lists that point at it are dense. Vote rail is aligned to the card's
-          content, not floating beside the page. */}
-      <article className="rounded-xl border border-[var(--border-default)] bg-[var(--card)] p-5 sm:p-6">
-        <div className="flex gap-4 sm:gap-5">
-          <div className="shrink-0">
-            <VoteButton
-              score={threadVote.score}
-              userVote={threadVote.userVote}
-              onVote={threadVote.handleVote}
-              disabled={!user || threadVote.isVoting}
-              size="sm"
-            />
+      {/* Thread */}
+      <div className="flex gap-4">
+        <VoteButton
+          score={threadVote.score}
+          userVote={threadVote.userVote}
+          onVote={threadVote.handleVote}
+          disabled={!user || threadVote.isVoting}
+        />
+
+        <div className="min-w-0 flex-1">
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            <h1 className="font-display text-2xl font-extrabold text-[var(--text)]">
+              {thread.title}
+            </h1>
+            <ThreadStatusBadge type={thread.type} isSolved={thread.is_solved} />
           </div>
 
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="font-display text-xl font-extrabold leading-tight text-[var(--text)] sm:text-2xl">
-                {thread.title}
-              </h1>
-              <ThreadStatusBadge
-                type={thread.type}
-                isSolved={thread.is_solved}
-              />
-            </div>
-
-            {context && (
-              <div className="mt-2">
-                <LessonContextChip context={context} />
-              </div>
-            )}
-
-            {/* Meta — mono/muted so it never competes with the title. */}
-            <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px] text-[var(--text-2)]">
-              <span className="flex items-center gap-1.5">
-                {thread.author.avatar_url ? (
-                  <Image
-                    src={thread.author.avatar_url}
-                    alt=""
-                    width={16}
-                    height={16}
-                    className="h-4 w-4 rounded-full"
-                  />
-                ) : (
-                  <div className="h-4 w-4 rounded-full bg-[var(--primary-dim)]" />
-                )}
-                <span>{thread.author.username || t("anonymous")}</span>
-                {thread.author.level > 0 && (
-                  <LevelBadge level={thread.author.level} size="xs" />
-                )}
-              </span>
-              <span>{timeAgo(thread.created_at, t)}</span>
-              <span>{t("views", { count: thread.view_count })}</span>
-              {user && <FlagButton threadId={thread.id} />}
-              {user?.id === thread.author_id && (
-                <DeleteButton
-                  threadId={thread.id}
-                  onDeleted={() =>
-                    router.push(
-                      thread.category
-                        ? `/community/${thread.category.slug}`
-                        : "/community"
-                    )
-                  }
+          {/* Meta */}
+          <div className="mb-4 flex items-center gap-3 text-sm text-[var(--text-2)]">
+            <span className="flex items-center gap-1.5">
+              {thread.author.avatar_url ? (
+                <Image
+                  src={thread.author.avatar_url}
+                  alt=""
+                  width={20}
+                  height={20}
+                  className="h-5 w-5 rounded-full"
                 />
+              ) : (
+                <div className="h-5 w-5 rounded-full bg-[var(--primary-dim)]" />
               )}
-            </div>
+              <span className="font-medium">
+                {thread.author.username || t("anonymous")}
+              </span>
+              {thread.author.level > 0 && (
+                <LevelBadge level={thread.author.level} size="xs" />
+              )}
+            </span>
+            <span>{timeAgo(thread.created_at, t)}</span>
+            <span>{t("views", { count: thread.view_count })}</span>
+            {user && <FlagButton threadId={thread.id} />}
+            {user?.id === thread.author_id && (
+              <DeleteButton
+                threadId={thread.id}
+                onDeleted={() =>
+                  router.push(
+                    thread.category
+                      ? `/community/${thread.category.slug}`
+                      : "/community"
+                  )
+                }
+              />
+            )}
+          </div>
 
-            {/* Body — prose type is scoped DOWN inside the card so an authored
-                `##` in the markdown cannot out-shout the page h1 above it. */}
-            <div className="prose prose-sm mt-4 max-w-none text-[var(--text)] dark:prose-invert prose-headings:font-display prose-h1:text-base prose-h2:text-base prose-h3:text-sm">
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeHighlight]}
-              >
-                {thread.body}
-              </ReactMarkdown>
-            </div>
+          {/* Body */}
+          <div className="prose prose-sm max-w-none text-[var(--text)] dark:prose-invert">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeHighlight]}
+            >
+              {thread.body}
+            </ReactMarkdown>
           </div>
         </div>
-      </article>
+      </div>
 
       {/* Answers */}
-      <section className="space-y-3">
-        <h2 className="font-display text-lg font-bold text-[var(--text)]">
+      <div className="mt-8 border-t border-[var(--border-default)] pt-6">
+        <h2 className="mb-4 font-display text-lg font-bold text-[var(--text)]">
           {t("answers", { count: thread.answers.length })}
         </h2>
 
-        {thread.answers.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-[var(--border-default)] px-4 py-8 text-center text-sm text-[var(--text-2)]">
-            {t("noAnswersYet")}
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {thread.answers.map((answer) => (
-              <VotableAnswerCard
-                key={answer.id}
-                answer={answer}
-                isThreadAuthor={user?.id === thread.author_id}
-                currentUserId={user?.id}
-                onAccept={() => handleAccept(answer.id)}
-                onDelete={() => fetchThread()}
-              />
-            ))}
+        <div className="space-y-4">
+          {thread.answers.map((answer) => (
+            <VotableAnswerCard
+              key={answer.id}
+              answer={answer}
+              isThreadAuthor={user?.id === thread.author_id}
+              currentUserId={user?.id}
+              onAccept={() => handleAccept(answer.id)}
+              onDelete={() => fetchThread()}
+            />
+          ))}
+        </div>
+
+        {/* Answer editor */}
+        {user && !thread.is_locked && (
+          <div className="mt-6">
+            <AnswerEditor
+              threadId={thread.id}
+              onAnswerPosted={handleAnswerPosted}
+            />
           </div>
         )}
-      </section>
-
-      {/* Your Answer — a card of its own, matching the question's frame. */}
-      {user && !thread.is_locked && (
-        <section className="rounded-xl border border-[var(--border-default)] bg-[var(--card)] p-5">
-          <AnswerEditor
-            threadId={thread.id}
-            onAnswerPosted={handleAnswerPosted}
-          />
-        </section>
-      )}
+      </div>
     </div>
   );
 }

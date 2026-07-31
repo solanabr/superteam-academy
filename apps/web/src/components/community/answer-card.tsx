@@ -70,11 +70,9 @@ export function AnswerCard({
   return (
     <div
       className={cn(
-        "flex gap-4 rounded-xl border p-4 sm:p-5",
-        // The accepted answer is elevated, not merely tinted: brand-primary
-        // ring + a soft wash, so it reads as the resolution at a glance.
+        "flex gap-4 rounded-lg border p-4",
         answer.is_accepted
-          ? "border-[var(--primary)] bg-[var(--primary-dim)] ring-1 ring-[var(--primary)]"
+          ? "border-[var(--primary)] bg-[var(--primary-dim)]"
           : "border-[var(--border-default)] bg-[var(--card)]"
       )}
     >
@@ -101,9 +99,7 @@ export function AnswerCard({
           </span>
         )}
 
-        {/* Body headings are scoped down so an authored `##` inside an answer
-            cannot compete with the page's question title. */}
-        <div className="prose prose-sm max-w-none text-[var(--text)] dark:prose-invert prose-headings:font-display prose-h1:text-base prose-h2:text-base prose-h3:text-sm">
+        <div className="prose prose-sm max-w-none text-[var(--text)] dark:prose-invert">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             rehypePlugins={[rehypeHighlight]}
@@ -112,7 +108,7 @@ export function AnswerCard({
           </ReactMarkdown>
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px] text-[var(--text-2)]">
+        <div className="mt-3 flex items-center gap-3 text-xs text-[var(--text-2)]">
           <span className="flex items-center gap-1.5">
             {answer.author.avatar_url ? (
               <Image
