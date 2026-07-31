@@ -44,7 +44,7 @@ export function AnswerEditor({ threadId, onAnswerPosted }: AnswerEditorProps) {
 
   return (
     <div>
-      <h3 className="mb-3 font-display text-base font-bold text-[var(--text)]">
+      <h3 className="mb-2 font-display font-bold text-[var(--text)]">
         {t("yourAnswer")}
       </h3>
       <MarkdownEditor

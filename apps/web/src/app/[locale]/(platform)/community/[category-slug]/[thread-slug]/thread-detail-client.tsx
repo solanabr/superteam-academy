@@ -11,7 +11,9 @@ import { ArrowLeft } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { useVote } from "@/hooks/use-vote";
+import { useThreadContexts } from "@/hooks/use-thread-contexts";
 import { VoteButton } from "@/components/community/vote-button";
+import { LessonContextChip } from "@/components/community/lesson-context-chip";
 import { ThreadStatusBadge } from "@/components/community/thread-status-badge";
 import { AnswerCard } from "@/components/community/answer-card";
 import { AnswerEditor } from "@/components/community/answer-editor";
@@ -50,6 +52,10 @@ interface ThreadData {
   author_id: string;
   author: Author;
   category: { id: string; name: string; slug: string } | null;
+  /** Scope the thread was created under — drives the provenance chip. The
+   * route selects `*`, so these already ride the existing payload. */
+  course_id: string | null;
+  lesson_id: string | null;
   userVote: 1 | -1 | null;
   answers: Answer[];
   created_at: string;
@@ -117,19 +123,36 @@ export function ThreadDetailClient({ shortId }: ThreadDetailClientProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchThread = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const res = await fetch(`/api/community/threads/${shortId}`);
-      if (!res.ok) throw new Error("Thread not found");
-      const data = await res.json();
-      setThread(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load thread");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [shortId]);
+  // Same provenance resolution the feed uses, for a single thread.
+  const contexts = useThreadContexts(thread ? [thread] : []);
+  const context = thread ? contexts.get(thread.id) : undefined;
+
+  /**
+   * `silent` refetches in place, without dropping the page back to the
+   * full-screen spinner. Used after posting or accepting an answer: the
+   * learner stays where they are and the list simply grows.
+   */
+  const fetchThread = useCallback(
+    async (silent = false) => {
+      if (!silent) setIsLoading(true);
+      try {
+        // A freshly posted answer must be in this response. Without
+        // `no-store` the browser can serve the pre-post copy of the GET, and
+        // the answer appears not to have been saved at all.
+        const res = await fetch(`/api/community/threads/${shortId}`, {
+          cache: "no-store",
+        });
+        if (!res.ok) throw new Error("Thread not found");
+        const data = await res.json();
+        setThread(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load thread");
+      } finally {
+        if (!silent) setIsLoading(false);
+      }
+    },
+    [shortId]
+  );
 
   useEffect(() => {
     fetchThread();
@@ -153,11 +176,11 @@ export function ThreadDetailClient({ shortId }: ThreadDetailClientProps) {
         data?.error || res.statusText
       );
     }
-    fetchThread();
+    fetchThread(true);
   };
 
   const handleAnswerPosted = () => {
-    fetchThread();
+    fetchThread(true);
   };
 
   if (isLoading) {
@@ -212,6 +235,14 @@ export function ThreadDetailClient({ shortId }: ThreadDetailClientProps) {
             <ThreadStatusBadge type={thread.type} isSolved={thread.is_solved} />
           </div>
 
+          {/* Provenance — one chip row under the title, linking back to the
+              lesson the question came from. Nothing else moves. */}
+          {context && (
+            <div className="mb-2">
+              <LessonContextChip context={context} />
+            </div>
+          )}
+
           {/* Meta */}
           <div className="mb-4 flex items-center gap-3 text-sm text-[var(--text-2)]">
             <span className="flex items-center gap-1.5">
@@ -250,8 +281,11 @@ export function ThreadDetailClient({ shortId }: ThreadDetailClientProps) {
             )}
           </div>
 
-          {/* Body */}
-          <div className="prose prose-sm max-w-none text-[var(--text)] dark:prose-invert">
+          {/* Body — heading sizes are stepped DOWN explicitly. `prose-sm`
+              scales the body copy but still renders an authored `#`/`##`
+              larger than the page h1 above, so the question's own markdown
+              could out-shout the question's title. */}
+          <div className="prose prose-sm max-w-none text-[var(--text)] dark:prose-invert prose-headings:font-display prose-headings:font-bold prose-h1:text-base prose-h2:text-[15px] prose-h3:text-sm prose-h4:text-sm">
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               rehypePlugins={[rehypeHighlight]}

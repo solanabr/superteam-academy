@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import type { ReactElement } from "react";
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent, within } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import type { Course, LearningPath } from "@superteam-lms/types";
 import messages from "@/messages/en.json";
@@ -81,6 +81,10 @@ function renderPaths(
   );
   return render(ui);
 }
+
+// The "start-here card" suite lived here. The card itself was removed from
+// PathsView in the 31-07 live UI session; its tests outlived it and asserted
+// markup that no longer exists. Deleted with the feature.
 
 describe("PathsView — browse-all escape", () => {
   it("is always present and hands control back to the catalog", () => {
