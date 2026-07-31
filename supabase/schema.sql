@@ -3192,8 +3192,16 @@ CREATE TABLE IF NOT EXISTS email_reminder_log (
   sent_on DATE NOT NULL,
   sent_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (user_id, kind, sent_on),
-  CONSTRAINT chk_email_reminder_log_kind CHECK (kind IN ('session_plan'))
+  -- Widened by #899 to take the two re-engagement families. Mirror of
+  -- 20260731170000_reengagement_pipeline.sql.
+  CONSTRAINT chk_email_reminder_log_kind
+    CHECK (kind IN ('session_plan', 'reengagement_7d', 'course_nudge'))
 );
+
+-- The re-engagement frequency cap probes recent rows per learner over a SET of
+-- kinds and a date RANGE (#899).
+CREATE INDEX IF NOT EXISTS idx_email_reminder_log_user_sent_on
+  ON email_reminder_log (user_id, sent_on DESC);
 
 -- Service-role-only bookkeeping: RLS on, NO policies ⇒ anon/authenticated are
 -- denied every operation. service_role bypasses RLS and is the only writer.
@@ -3368,3 +3376,245 @@ $$;
 
 REVOKE ALL ON FUNCTION unsubscribe_reminders_by_token(UUID) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION unsubscribe_reminders_by_token(UUID) TO service_role;
+
+
+-- ============================================================================
+-- RE-ENGAGEMENT SEND PIPELINE (#899)
+-- Mirror of supabase/migrations/20260731170000_reengagement_pipeline.sql. The
+-- ledger CHECK widening and the ledger index are mirrored at the
+-- `email_reminder_log` definition above.
+--
+-- The frequency cap (at most one re-engagement-class email per learner per N
+-- days, ACROSS both kinds) lives INSIDE the claim RPC, so it is a database
+-- invariant rather than an app convention. `session_plan` is deliberately NOT
+-- in the capped set: a self-scheduled session reminder neither consumes the
+-- re-engagement budget nor is suppressed by it.
+-- ============================================================================
+
+-- Supporting indexes for the last-activity and lessons-remaining clauses.
+CREATE INDEX IF NOT EXISTS idx_user_progress_user_completed_at
+  ON user_progress (user_id, completed_at DESC);
+CREATE INDEX IF NOT EXISTS idx_user_progress_user_course_completed
+  ON user_progress (user_id, course_id) WHERE completed;
+
+-- ── 3. claim_due_reengagement — atomic claim + cap + recipient read ─────────
+-- Returns a learner iff ALL of these hold:
+--   * reminder_opt_in = true          (REMINDER consent — never the marketing
+--                                      opt-in; LGPD consent is purpose-bound)
+--   * a real email on file            (never a wallet-auth placeholder)
+--   * last seen ≥ p_inactive_days ago (see the header's signal enumeration)
+--   * NO re-engagement-kind row in the last p_cap_days   ← THE FREQUENCY CAP
+--   * for 'course_nudge': an enrolled, uncertified, incomplete course with
+--     between 1 and p_max_remaining lessons left
+--   * no row for (user, p_kind, today) — and the claim row is INSERTed in the
+--     SAME statement, so a concurrent run gets nothing back.
+--
+-- `completed_lesson_ids` is returned for the course-nudge kind so the caller can
+-- resolve the next incomplete lesson against the content bundle
+-- (`findNextIncompleteLesson`) without an N+1 read per recipient. It is empty
+-- for the generic kind, whose CTA is the dashboard.
+CREATE OR REPLACE FUNCTION claim_due_reengagement(
+  p_kind          TEXT,
+  p_inactive_days INTEGER DEFAULT 7,
+  p_cap_days      INTEGER DEFAULT 14,
+  p_max_remaining INTEGER DEFAULT 1,
+  p_course_totals JSONB   DEFAULT '{}'::jsonb
+)
+RETURNS TABLE (
+  user_id              UUID,
+  email                TEXT,
+  unsubscribe_token    UUID,
+  locale               TEXT,
+  streak_days          INTEGER,
+  days_inactive        INTEGER,
+  course_id            TEXT,
+  completed_lesson_ids TEXT[]
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+#variable_conflict use_column
+DECLARE
+  v_today DATE := (now() AT TIME ZONE 'America/Sao_Paulo')::date;
+  -- Kinds that CONSUME and are BLOCKED BY the cap. 'session_plan' is absent on
+  -- purpose — see the header. One place to widen if the policy ever changes.
+  v_capped_kinds TEXT[] := ARRAY['reengagement_7d', 'course_nudge'];
+BEGIN
+  -- Reject anything outside the re-engagement family, so this RPC can never be
+  -- used to mint (or, via the release twin, delete) a session_plan ledger row.
+  IF p_kind IS NULL OR NOT (p_kind = ANY(v_capped_kinds)) THEN
+    RAISE EXCEPTION 'unsupported re-engagement kind: %', p_kind;
+  END IF;
+  -- A zero/negative window would make the gate vacuous — fail loudly rather
+  -- than quietly nudge everyone daily.
+  IF p_inactive_days IS NULL OR p_inactive_days < 1 THEN
+    RAISE EXCEPTION 'p_inactive_days must be >= 1';
+  END IF;
+  IF p_cap_days IS NULL OR p_cap_days < 1 THEN
+    RAISE EXCEPTION 'p_cap_days must be >= 1';
+  END IF;
+  IF p_max_remaining IS NULL OR p_max_remaining < 1 THEN
+    RAISE EXCEPTION 'p_max_remaining must be >= 1';
+  END IF;
+
+  -- Serialise re-engagement claims so the CROSS-KIND cap holds under
+  -- concurrency (see the header). Transaction-scoped: released on commit.
+  PERFORM pg_catalog.pg_advisory_xact_lock(
+    pg_catalog.hashtext('claim_due_reengagement')
+  );
+
+  RETURN QUERY
+  WITH consenting AS (
+    SELECT
+      es.user_id                        AS uid,
+      u.email::text                     AS mail,
+      -- #896: the REMINDER-scoped secret. Re-engagement rides on reminder
+      -- consent, so it must never carry the marketing token.
+      es.reminder_unsubscribe_token     AS tok,
+      es.reminder_locale                AS loc,
+      COALESCE(ux.longest_streak, 0)::int AS streak,
+      GREATEST(
+        ux.last_activity_date,
+        (SELECT max(up.completed_at)
+           FROM public.user_progress up
+          WHERE up.user_id = es.user_id AND up.completed)::date,
+        (SELECT max(e.enrolled_at)
+           FROM public.enrollments e
+          WHERE e.user_id = es.user_id)::date,
+        p.created_at::date
+      ) AS last_seen
+    FROM public.email_subscriptions es
+    JOIN auth.users u      ON u.id = es.user_id
+    JOIN public.profiles p ON p.id = es.user_id
+    LEFT JOIN public.user_xp ux ON ux.user_id = es.user_id
+    WHERE es.reminder_opt_in = true
+      AND u.email IS NOT NULL
+      AND u.email <> ''
+      -- Synthetic wallet-auth addresses are not inboxes (see #779).
+      AND u.email NOT LIKE '%@wallet.superteam-lms.local'
+  ),
+  lapsed AS (
+    SELECT c.*, (v_today - c.last_seen)::int AS inactive_days
+    FROM consenting c
+    WHERE c.last_seen IS NOT NULL
+      AND c.last_seen <= v_today - p_inactive_days
+      -- THE FREQUENCY CAP. `sent_on > v_today - p_cap_days` is a half-open
+      -- window that INCLUDES today, so the row a sibling pass wrote minutes ago
+      -- blocks this one, and tomorrow's run is blocked by today's row.
+      AND NOT EXISTS (
+        SELECT 1 FROM public.email_reminder_log l
+        WHERE l.user_id = c.uid
+          AND l.kind = ANY(v_capped_kinds)
+          AND l.sent_on > v_today - p_cap_days
+      )
+  ),
+  -- Nearest-to-done enrolled course per lapsed learner. DISTINCT ON keeps one
+  -- course per learner, deterministically (fewest remaining, then course id).
+  nearly AS (
+    SELECT DISTINCT ON (e.user_id)
+      e.user_id   AS uid,
+      e.course_id AS cid
+    FROM public.enrollments e
+    JOIN lapsed l ON l.uid = e.user_id
+    CROSS JOIN LATERAL (
+      SELECT (p_course_totals ->> e.course_id)::int AS total
+    ) t
+    LEFT JOIN LATERAL (
+      SELECT count(*)::int AS done
+      FROM public.user_progress up
+      WHERE up.user_id = e.user_id
+        AND up.course_id = e.course_id
+        AND up.completed
+    ) pr ON true
+    WHERE p_kind = 'course_nudge'
+      -- A course the bundle does not list (unsynced/retired) is never nudged.
+      AND t.total IS NOT NULL
+      AND e.completed_at IS NULL
+      -- Already credentialed ⇒ nothing to finish.
+      AND NOT EXISTS (
+        SELECT 1 FROM public.certificates ct
+        WHERE ct.user_id = e.user_id AND ct.course_id = e.course_id
+      )
+      AND (t.total - COALESCE(pr.done, 0)) BETWEEN 1 AND p_max_remaining
+    ORDER BY e.user_id, (t.total - COALESCE(pr.done, 0)), e.course_id
+  ),
+  due AS (
+    -- course_nudge: only learners with a nearly-done course, carrying it.
+    SELECT
+      l.uid, l.mail, l.tok, l.loc, l.streak, l.inactive_days,
+      n.cid AS cid,
+      COALESCE(
+        (SELECT array_agg(up.lesson_id ORDER BY up.lesson_id)
+           FROM public.user_progress up
+          WHERE up.user_id = l.uid
+            AND up.course_id = n.cid
+            AND up.completed),
+        ARRAY[]::text[]
+      ) AS done_ids
+    FROM lapsed l
+    JOIN nearly n ON n.uid = l.uid
+    WHERE p_kind = 'course_nudge'
+    UNION ALL
+    -- reengagement_7d: no course context AT ALL. Not merely unused — returning
+    -- one would let the caller render a course nudge under the generic ledger
+    -- kind, breaking the template→return instrumentation.
+    SELECT
+      l.uid, l.mail, l.tok, l.loc, l.streak, l.inactive_days,
+      NULL::text, ARRAY[]::text[]
+    FROM lapsed l
+    WHERE p_kind = 'reengagement_7d'
+  ),
+  claimed AS (
+    INSERT INTO public.email_reminder_log (user_id, kind, sent_on)
+    SELECT due.uid, p_kind, v_today FROM due
+    ON CONFLICT (user_id, kind, sent_on) DO NOTHING
+    RETURNING email_reminder_log.user_id AS uid
+  )
+  SELECT d.uid, d.mail, d.tok, d.loc, d.streak, d.inactive_days, d.cid, d.done_ids
+  FROM due d
+  JOIN claimed c ON c.uid = d.uid
+  -- Deterministic order so the pipeline's chunk boundaries — and therefore its
+  -- Resend idempotency keys — are reproducible across a retry.
+  ORDER BY d.uid;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION claim_due_reengagement(TEXT, INTEGER, INTEGER, INTEGER, JSONB)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION claim_due_reengagement(TEXT, INTEGER, INTEGER, INTEGER, JSONB)
+  TO service_role;
+
+-- ── 4. release_reengagement_claims — undo a failed batch (service_role) ─────
+-- Deletes TODAY's claim rows of ONE re-engagement kind for the given users, so a
+-- send that PROVABLY never left the building can be retried. Restricted to the
+-- re-engagement kinds: a session-plan claim is not this pipeline's to release.
+CREATE OR REPLACE FUNCTION release_reengagement_claims(
+  p_kind     TEXT,
+  p_user_ids UUID[]
+)
+RETURNS INTEGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_today   DATE := (now() AT TIME ZONE 'America/Sao_Paulo')::date;
+  v_deleted INTEGER;
+BEGIN
+  IF p_kind IS NULL OR p_kind NOT IN ('reengagement_7d', 'course_nudge') THEN
+    RAISE EXCEPTION 'unsupported re-engagement kind: %', p_kind;
+  END IF;
+
+  DELETE FROM public.email_reminder_log
+  WHERE kind = p_kind
+    AND sent_on = v_today
+    AND user_id = ANY(p_user_ids);
+  GET DIAGNOSTICS v_deleted = ROW_COUNT;
+  RETURN v_deleted;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION release_reengagement_claims(TEXT, UUID[])
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION release_reengagement_claims(TEXT, UUID[]) TO service_role;

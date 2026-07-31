@@ -105,6 +105,19 @@ export const SCHEMA_EXPECTATIONS: readonly SchemaExpectation[] = [
     description:
       "session-plan reminder claim (#869) — a missing fn silently sends nothing",
   },
+  {
+    kind: "rpc",
+    // ⚠️ SIDE-EFFECTFUL IF EVER CALLABLE, same as the probe above — and safe for
+    // the same reason (REVOKEd from anon/authenticated, so PostgREST answers
+    // 42501 without executing the body). Belt AND braces here: the args below
+    // ask for learners inactive for ~274 years, so even a body that somehow ran
+    // would claim zero rows and consume nobody's cap window.
+    rpc: "claim_due_reengagement",
+    args: { p_kind: "reengagement_7d", p_inactive_days: 100000 },
+    migration: "20260731170000_reengagement_pipeline.sql",
+    description:
+      "re-engagement claim + frequency cap (#899) — a missing fn silently sends nothing",
+  },
 ];
 
 // PostgREST "not found in schema cache" + Postgres undefined-object SQLSTATEs.

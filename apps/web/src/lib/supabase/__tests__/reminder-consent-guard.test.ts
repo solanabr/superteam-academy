@@ -55,7 +55,11 @@ for (const [label, sql] of [
       expect(sql).toContain(
         "ALTER TABLE email_reminder_log ENABLE ROW LEVEL SECURITY"
       );
-      expect(sql).not.toContain("ON email_reminder_log");
+      // Match a POLICY on the table, not the bare words — #899 adds an INDEX
+      // `... ON email_reminder_log (...)`, which grants nobody anything. The
+      // invariant this guards is "zero RLS policies", so assert exactly that.
+      expect(sql).not.toMatch(/CREATE POLICY[^;]*ON email_reminder_log/);
+      expect(sql).not.toMatch(/ON email_reminder_log FOR /);
     });
 
     it("makes one-per-day a PRIMARY KEY, not a code convention", () => {
