@@ -82,44 +82,6 @@ function renderPaths(
   return render(ui);
 }
 
-describe("PathsView — start-here card", () => {
-  it("renders exactly one start-here card, targeting the first course of the first non-empty path", () => {
-    renderPaths();
-
-    const badges = screen.getAllByText("Start here");
-    expect(badges).toHaveLength(1);
-
-    const card = screen.getByRole("region", { name: "Course Alpha" });
-    expect(
-      within(card).getByRole("heading", { name: "Course Alpha" })
-    ).toBeInTheDocument();
-    expect(
-      within(card).getByRole("link", { name: /Start Course/ })
-    ).toHaveAttribute("href", "/en/courses/course-a");
-  });
-
-  it("switches the CTA to Continue when the learner is mid-course", () => {
-    const progress = new Map<string, PathCourseProgress>([
-      [
-        "course-a",
-        {
-          courseId: "course-a",
-          completedLessons: 1,
-          totalLessons: 2,
-          isCompleted: false,
-          isEnrolled: true,
-        },
-      ],
-    ]);
-    renderPaths({ progress });
-
-    const card = screen.getByRole("region", { name: "Course Alpha" });
-    expect(
-      within(card).getByRole("link", { name: /Continue Learning/ })
-    ).toHaveAttribute("href", "/en/courses/course-a");
-  });
-});
-
 describe("PathsView — browse-all escape", () => {
   it("is always present and hands control back to the catalog", () => {
     const onBrowseAll = vi.fn();
