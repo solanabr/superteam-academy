@@ -1265,6 +1265,11 @@ export type Database = {
           unsubscribe_token: string;
         }[];
       };
+      /**
+       * Marketing unsubscribe. #896: matches ONLY
+       * `email_subscriptions.unsubscribe_token` — a reminder token returns
+       * false and writes nothing.
+       */
       unsubscribe_by_token: {
         Args: { p_token: string };
         Returns: boolean;
@@ -1280,6 +1285,12 @@ export type Database = {
         Returns: {
           user_id: string;
           email: string;
+          /**
+           * #896: reminder-scoped secret
+           * (`email_subscriptions.reminder_unsubscribe_token`). The OUT column
+           * name is unchanged for signature stability; only its source column
+           * moved. Valid ONLY for `unsubscribe_reminders_by_token`.
+           */
           unsubscribe_token: string;
           locale: string | null;
           plan_time: string;
@@ -1289,6 +1300,11 @@ export type Database = {
         Args: { p_user_ids: string[] };
         Returns: number;
       };
+      /**
+       * Reminder unsubscribe. #896: matches ONLY
+       * `email_subscriptions.reminder_unsubscribe_token` — a marketing token
+       * (including every reminder link minted before #896) returns false.
+       */
       unsubscribe_reminders_by_token: {
         Args: { p_token: string };
         Returns: boolean;

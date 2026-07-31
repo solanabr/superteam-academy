@@ -86,7 +86,12 @@ export interface ReengagementCandidate {
   nearlyDone: NearlyDoneCourse | null;
   /** Absolute app origin — emails need absolute links. No trailing slash. */
   appUrl: string;
-  /** Per-recipient unsubscribe token (`email_subscriptions.unsubscribe_token`). */
+  /**
+   * Per-recipient REMINDER unsubscribe token
+   * (`email_subscriptions.reminder_unsubscribe_token`, #896). Must NOT be the
+   * marketing token: re-engagement rides on reminder consent, and a
+   * marketing-scoped token no longer matches the reminder RPC at all.
+   */
   unsubscribeToken: string;
 }
 
@@ -215,6 +220,9 @@ export function reengagementHeaders(
  *           incomplete in some enrolled, non-certified course
  *       ORDER BY user_id, so chunk boundaries — and therefore Resend idempotency
  *       keys — are reproducible across a retry.
+ *       It MUST return `es.reminder_unsubscribe_token`, never
+ *       `es.unsubscribe_token` (#896): the two consents have separate secrets,
+ *       and a re-engagement mail rides on REMINDER consent.
  *    c. `release_reengagement_claims(p_kind TEXT, p_user_ids UUID[])`.
  *
  * 2. FREQUENCY CAP (R17's no-repeat-within-N-days). The per-day PK is not
