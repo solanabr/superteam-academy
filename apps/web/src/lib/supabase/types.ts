@@ -1154,6 +1154,9 @@ export type Database = {
           reminder_consent_at: string | null;
           reminder_unsubscribed_at: string | null;
           reminder_locale: string | null;
+          // #896 — reminder-scoped unsubscribe secret. NEVER equal to
+          // `unsubscribe_token` (DB CHECK): each consent kind has its own.
+          reminder_unsubscribe_token: string;
         };
         Insert: {
           user_id: string;
@@ -1166,6 +1169,7 @@ export type Database = {
           reminder_consent_at?: string | null;
           reminder_unsubscribed_at?: string | null;
           reminder_locale?: string | null;
+          reminder_unsubscribe_token?: string;
         };
         Update: {
           user_id?: string;
@@ -1178,6 +1182,7 @@ export type Database = {
           reminder_consent_at?: string | null;
           reminder_unsubscribed_at?: string | null;
           reminder_locale?: string | null;
+          reminder_unsubscribe_token?: string;
         };
         Relationships: [];
       };
