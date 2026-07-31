@@ -114,6 +114,12 @@ const serverEnvSchema = z.object({
   // "Superteam Academy <news@st.academy>". Optional — falls back to
   // DEFAULT_EMAIL_FROM (lib/email/resend.ts) when unset.
   EMAIL_FROM: optStr,
+  // Shared password for the read-only teacher course preview (#828). Optional
+  // at boot and FAIL-CLOSED: unset ⇒ /api/teach/preview/auth 503s and the
+  // preview is disabled (lib/teach/preview-auth.ts). There is no default —
+  // the old literal "123" fallback meant every deployment that forgot this var
+  // shipped a guessable gate.
+  TEACH_PREVIEW_PASSWORD: optStr,
   // Optional dedicated key for sealing the AI Partner's comprehension-check /
   // attestation tokens (lib/ai/check-seal.ts). Falls back to
   // SUPABASE_SERVICE_ROLE_KEY when unset.
@@ -160,6 +166,7 @@ const parsed = serverEnvSchema.safeParse({
   RESEND_API_KEY: process.env.RESEND_API_KEY,
   CRON_SECRET: process.env.CRON_SECRET,
   EMAIL_FROM: process.env.EMAIL_FROM,
+  TEACH_PREVIEW_PASSWORD: process.env.TEACH_PREVIEW_PASSWORD,
   AI_PARTNER_SEAL_SECRET: process.env.AI_PARTNER_SEAL_SECRET,
   AI_SPEND_GLOBAL_SOFT_USD: process.env.AI_SPEND_GLOBAL_SOFT_USD,
   AI_SPEND_GLOBAL_HARD_USD: process.env.AI_SPEND_GLOBAL_HARD_USD,

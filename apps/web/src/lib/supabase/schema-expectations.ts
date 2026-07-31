@@ -118,6 +118,57 @@ export const SCHEMA_EXPECTATIONS: readonly SchemaExpectation[] = [
     description:
       "re-engagement claim + frequency cap (#899) — a missing fn silently sends nothing",
   },
+  {
+    kind: "rpc",
+    // ⚠️ SIDE-EFFECTFUL IF EVER CALLABLE (it upserts the (user, lesson) row and
+    // bumps a tier counter) — safe here for the same reason as the two probes
+    // above: REVOKEd from PUBLIC/anon/authenticated, so the ANON client gets
+    // 42501 and the body never runs. Belt AND braces: every tier max below is
+    // 0, so a body that somehow ran would fall straight through to the
+    // 'exhausted' branch, which increments nothing and (deliberately) does not
+    // even touch updated_at.
+    rpc: "spend_assist_ladder_turn",
+    args: {
+      p_user_id: NIL_UUID,
+      p_lesson_id: "",
+      p_free_max: 0,
+      p_metered_max: 0,
+      p_socratic_max: 0,
+    },
+    migration: "20260730120000_assist_ladder.sql",
+    description:
+      "AI assist ladder spend (#864) — spendAssistTurn fails CLOSED on any RPC error, so a missing fn denies EVERY AI tutor turn while /api/health/schema still returns 200 (the #945 class of prod-down)",
+  },
+  {
+    kind: "rpc",
+    // Read-only (LANGUAGE sql STABLE) — no side effect even if it ran, which it
+    // does not (REVOKEd from anon, same as above).
+    rpc: "get_challenge_assist_state",
+    args: { p_user_id: NIL_UUID, p_lesson_id: "" },
+    migration: "20260730120000_assist_ladder.sql",
+    description:
+      "assist-pane rehydration (#864) — the same migration DROPs the old signature, so a stale prod has NEITHER version and the pane loads with empty counts",
+  },
+  {
+    kind: "column",
+    table: "challenge_assists",
+    column: "chat_log",
+    migration: "20260730120000_assist_ladder.sql",
+    description:
+      "persisted AI Partner chat log — folded into the ladder migration because 20260715160000_ai_partner_chat_log.sql was never applied to prod (#708 ledger); its absence silently drops every learner's chat history",
+  },
+  {
+    kind: "rpc",
+    // ⚠️ SIDE-EFFECTFUL IF EVER CALLABLE (advances/resets a Leitner box) — safe
+    // for the usual reason (REVOKEd from anon → 42501, body never runs), and
+    // the item key below matches no row, so a body that ran would return zero
+    // rows and mutate nothing.
+    rpc: "record_review_result",
+    args: { p_user_id: NIL_UUID, p_item_key: "", p_passed: false },
+    migration: "20260726140000_review_items_spaced_repetition.sql",
+    description:
+      "spaced-repetition grading (#569) — /api/review/grade rethrows the RPC error, so a missing fn 500s every review submission",
+  },
 ];
 
 // PostgREST "not found in schema cache" + Postgres undefined-object SQLSTATEs.

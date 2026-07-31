@@ -18,6 +18,7 @@ import { fileURLToPath } from "node:url";
 import net from "node:net";
 import {
   APP_PORT,
+  APP_BASE_URL,
   MOCK_PORT,
   MOCK_SUPABASE_URL,
   ANON_KEY,
@@ -70,6 +71,10 @@ const appEnv = {
   // shape-valid devnet program id — never used to send a real tx here.
   NEXT_PUBLIC_PROGRAM_ID: "7NeJaSRyb4Wxay3Tcd9bdpD7T3GWYUQSFyrhG8SgwE8V",
   NEXT_PUBLIC_SOLANA_NETWORK: "devnet",
+  // Required by lib/env.ts. The harness runs with NODE_ENV=production, where
+  // the schema deliberately refuses to default it (an unset value would mint a
+  // relative on-chain metadata URI in prod), so state the app's own origin.
+  NEXT_PUBLIC_APP_URL: APP_BASE_URL,
   SUPABASE_SERVICE_ROLE_KEY: "e2e-service-role-not-a-secret",
   SOLANA_RPC_URL: "https://api.devnet.solana.com",
   // Trust the mock's self-signed cert for server-side (undici) fetches.

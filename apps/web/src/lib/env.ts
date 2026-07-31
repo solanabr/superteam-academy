@@ -46,6 +46,31 @@ const publicEnvSchema = z.object({
   // is unrestricted, and server calls send no browser Origin — sharing one key
   // and origin-restricting it would break every server-side RPC/DAS read.
   NEXT_PUBLIC_SOLANA_RPC_URL: z.url(),
+  // The app's own absolute origin. REQUIRED — not cosmetic: several server
+  // paths interpolate it into strings that get PINNED ON-CHAIN or mailed out
+  // (certificate `external_url` + metadata URI in api/certificates/mint,
+  // lib/solana/onchain-queue, lib/helius/event-handlers, api/admin/courses/sync
+  // and api/admin/achievements/sync). Those sites keep a `?? ""` fallback as
+  // defense in depth, but with an unset var that fallback mints a RELATIVE URI
+  // ("/api/certificates/metadata?id=…") into an immutable Metaplex Core asset —
+  // unfixable after the fact. Validating here makes that state unreachable:
+  // boot/build fails loudly instead.
+  //
+  // Dev/test default to http://localhost:3000 (the documented local origin, see
+  // .env.example) so `pnpm dev` and the suites need no extra setup; in
+  // production the value must be supplied explicitly — no default can be right
+  // there, and a silently-wrong origin is exactly the failure we are closing.
+  NEXT_PUBLIC_APP_URL: z.preprocess(
+    (value) =>
+      value === "" || value === undefined
+        ? process.env.NODE_ENV === "production"
+          ? undefined
+          : "http://localhost:3000"
+        : value,
+    z.url({
+      error: "must be an absolute URL, e.g. https://academy.example.com",
+    })
+  ),
   // Optional Sentry DSN (public/safe to expose). Unset disables Sentry.
   NEXT_PUBLIC_SENTRY_DSN: z.url().optional().or(z.literal("")),
 });
@@ -54,6 +79,7 @@ const parsed = publicEnvSchema.safeParse({
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   NEXT_PUBLIC_SOLANA_RPC_URL: process.env.NEXT_PUBLIC_SOLANA_RPC_URL,
+  NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
 });
 

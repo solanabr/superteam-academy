@@ -177,6 +177,7 @@ jobs:
           NEXT_PUBLIC_SOLANA_RPC_URL: https://api.devnet.solana.com
           NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: test-anon-key
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
         run: pnpm -r test
 
   # ── E2E: Playwright, the 3 critical learner paths (#781) ────────────────────
