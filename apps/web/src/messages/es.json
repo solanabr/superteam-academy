@@ -361,7 +361,9 @@
     "quizPosition": "Pregunta {current} de {total}",
     "quizPrev": "Pregunta anterior",
     "quizNext": "Siguiente pregunta",
-    "quizUnlocksAssistant": "Responde todas las preguntas para desbloquear el AI Partner en esta lección."
+    "quizUnlocksAssistant": "El AI Partner se desbloquea después del cuestionario — {answered}/{total} respondidas",
+    "quizCompleteChip": "Completado",
+    "quizAllCorrect": "Las {total} preguntas respondidas correctamente."
   },
   "dashboard": {
     "allCaughtUp": "¡Todo al día!",

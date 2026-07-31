@@ -51,6 +51,12 @@ function isChoiceCorrect(q: QuizQuestionData, chosen: string[]): boolean {
  * All per-question state lives in maps keyed by question id, so answers,
  * verdicts, and feedback survive navigating away and back. Single-question
  * quizzes render without any stepper chrome.
+ *
+ * Interaction states (#943): a question that has been checked CORRECT locks —
+ * its inputs and its Check button disable, while the correct styling and the
+ * explanation stay on screen. Next lights up once the current question is
+ * correct, and a clean sweep renders an in-block completion state (no popup,
+ * per the three-popup rule).
  */
 export function QuizBlock({ block, ctx }: BlockRenderProps) {
   const b = block as QuizBlockData;
@@ -72,7 +78,8 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
     ctx.setProof(b.key, { selections });
   }, [selections, b.key, ctx]);
 
-  const allChecked = b.questions.every((q) => checkedEver[q.id]);
+  const answeredCount = b.questions.filter((q) => checkedEver[q.id]).length;
+  const allChecked = answeredCount === b.questions.length;
   useEffect(() => {
     ctx.setQuizAnswered(b.key, allChecked);
   }, [allChecked, b.key, ctx]);
@@ -101,8 +108,8 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
   );
 
   const check = useCallback(
-    (q: QuizQuestionData, chosen: string[]) => {
-      if (chosen.length === 0) return;
+    (q: QuizQuestionData, chosen: string[], locked: boolean) => {
+      if (chosen.length === 0 || locked) return;
       const correct = isChoiceCorrect(q, chosen);
       setResults((prev) => ({
         ...prev,
@@ -142,6 +149,23 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
     promptRef.current?.focus();
   }, [current]);
 
+  // Collapsed summary (#770): how many questions are currently answered
+  // correctly. Turns green only at a clean sweep, so the badge doubles as the
+  // "done" signal when the section is folded away.
+  const correctCount = b.questions.filter((q) => results[q.id]?.correct).length;
+  const allCorrect = total > 0 && correctCount === total;
+
+  const multi = q?.multiSelect ?? false;
+  const chosen = q ? (selections[q.id] ?? []) : [];
+  const result: CheckResult | undefined = q ? results[q.id] : undefined;
+  const chosenWithFeedback =
+    q && result
+      ? q.options.filter((o) => result.chosen.includes(o.id) && o.feedback)
+      : [];
+  // A correct verdict freezes the question (#943): nothing left to change, so
+  // inputs and Check disable while the verdict + explanation stay visible.
+  const locked = result?.correct ?? false;
+
   const onBodyKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
     if (!q) return;
     const tag = (event.target as HTMLElement).tagName;
@@ -150,9 +174,9 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
       // else in the card, Enter checks the current question.
       if (tag === "BUTTON" || tag === "A" || tag === "TEXTAREA") return;
       const chosen = selections[q.id] ?? [];
-      if (chosen.length === 0) return;
+      if (chosen.length === 0 || locked) return;
       event.preventDefault();
-      check(q, chosen);
+      check(q, chosen, locked);
       return;
     }
     if (!stepper) return;
@@ -167,20 +191,6 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
       goTo(current - 1);
     }
   };
-
-  // Collapsed summary (#770): how many questions are currently answered
-  // correctly. Turns green only at a clean sweep, so the badge doubles as the
-  // "done" signal when the section is folded away.
-  const correctCount = b.questions.filter((q) => results[q.id]?.correct).length;
-  const allCorrect = correctCount === total;
-
-  const multi = q?.multiSelect ?? false;
-  const chosen = q ? (selections[q.id] ?? []) : [];
-  const result: CheckResult | undefined = q ? results[q.id] : undefined;
-  const chosenWithFeedback =
-    q && result
-      ? q.options.filter((o) => result.chosen.includes(o.id) && o.feedback)
-      : [];
 
   return (
     <div className="rounded-[var(--r-lg)] border-[2.5px] border-border bg-card shadow-card">
@@ -211,6 +221,12 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
             total,
           })}
         </span>
+        {allCorrect && (
+          <span className="flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold text-success [background:var(--success-light)]">
+            <CheckCircle size={12} weight="bold" aria-hidden="true" />
+            {t("quizCompleteChip")}
+          </span>
+        )}
         <CaretDown
           size={14}
           weight="bold"
@@ -249,13 +265,17 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
                 return (
                   <label
                     key={o.id}
-                    className={`flex cursor-pointer items-center gap-2 rounded-md border p-2 text-sm transition-colors hover:bg-subtle ${
+                    className={cn(
+                      "flex items-center gap-2 rounded-md border p-2 text-sm transition-colors",
+                      locked
+                        ? "cursor-default"
+                        : "cursor-pointer hover:bg-subtle",
                       judged
                         ? o.correct
                           ? "border-success"
                           : "border-danger"
                         : "border-border"
-                    }`}
+                    )}
                   >
                     <input
                       type={multi ? "checkbox" : "radio"}
@@ -263,6 +283,7 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
                       value={o.id}
                       checked={chosen.includes(o.id)}
                       onChange={() => toggle(q.id, o.id, multi)}
+                      disabled={locked}
                       className="accent-primary"
                     />
                     <span>{o.label}</span>
@@ -274,9 +295,9 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
               <Button
                 variant="pushSuccess"
                 size="sm"
-                onClick={() => check(q, chosen)}
-                disabled={chosen.length === 0}
-                aria-disabled={chosen.length === 0}
+                onClick={() => check(q, chosen, locked)}
+                disabled={chosen.length === 0 || locked}
+                aria-disabled={chosen.length === 0 || locked}
               >
                 {t("quizCheck")}
               </Button>
@@ -334,7 +355,9 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
               {t("quizPrev")}
             </Button>
             <Button
-              variant="secondary"
+              /* Emphasized once this question is correct — the learner is done
+                 here and Next is the only move left (#943). */
+              variant={locked ? "primary" : "secondary"}
               size="sm"
               onClick={() => goTo(current + 1)}
               disabled={current === total - 1}
@@ -346,9 +369,21 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
           </div>
         )}
 
+        {/* Completion state (#943): a clean sweep is acknowledged in-block —
+            no popup, per the three-popup rule. Always-mounted live region so
+            the sweep is announced when it happens. */}
+        <div aria-live="polite">
+          {allCorrect && (
+            <p className="flex items-center gap-2 rounded-md border border-success p-3 text-sm font-medium text-success [background:var(--success-light)]">
+              <CheckCircle size={16} weight="bold" aria-hidden="true" />
+              {t("quizAllCorrect", { total })}
+            </p>
+          )}
+        </div>
+
         {/* The AI Partner is suppressed while any question is unchecked
-            (LX-C1/F18) — retrieval stays AI-free. Say so, so its absence reads
-            as a rule rather than a missing feature (#770). */}
+            (LX-C1/F18) — retrieval stays AI-free. The gate is unchanged; the
+            line states it explicitly and counts down (#770, #943). */}
         {!allChecked && (
           <p className="flex items-start gap-2 rounded-md border border-border p-3 text-xs text-text-3 [background:var(--input)]">
             <Robot
@@ -357,7 +392,7 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
               className="mt-px shrink-0 text-primary"
               aria-hidden="true"
             />
-            {t("quizUnlocksAssistant")}
+            {t("quizUnlocksAssistant", { answered: answeredCount, total })}
           </p>
         )}
       </div>
