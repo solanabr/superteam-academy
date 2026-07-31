@@ -216,7 +216,7 @@ export function Header() {
               width={157}
               height={30}
               priority
-              className="h-6 w-auto dark:hidden"
+              className="h-8 w-auto dark:hidden"
             />
             <Image
               src="/brand/academy-lockup-yellow.svg"
@@ -224,7 +224,7 @@ export function Header() {
               width={157}
               height={30}
               priority
-              className="hidden h-6 w-auto dark:block"
+              className="hidden h-8 w-auto dark:block"
             />
           </Link>
 
@@ -360,7 +360,7 @@ export function Header() {
                 width={157}
                 height={30}
                 priority
-                className="h-6 w-auto dark:hidden"
+                className="h-8 w-auto dark:hidden"
               />
               <Image
                 src="/brand/academy-lockup-yellow.svg"
@@ -368,7 +368,7 @@ export function Header() {
                 width={157}
                 height={30}
                 priority
-                className="hidden h-6 w-auto dark:block"
+                className="hidden h-8 w-auto dark:block"
               />
             </Link>
 
