@@ -255,7 +255,7 @@ export const GALLERY = [
       "pill-sol",
       "pill-done",
     ],
-    note: "Three parallel badge systems exist. <code>.pill-*</code> is the globals.css family; <code>DifficultyBadge</code> is the Tailwind-token one used on course detail pages; <code>AdminBadge</code> is admin-only. The bespoke course card carries its own <code>.course-card-diff</code> chip instead of <code>DifficultyBadge</code> — see the Course card section.",
+    note: 'Four parallel badge systems exist. <strong>The <code>.pill-*</code> family shown first is defined in <code>globals.css</code> but applied by no component</strong> — every reference to it in TypeScript is a comment (its Tailwind mirror, <code>PILL_STYLES</code> in <code>styleClasses.ts</code>, has no importers either). It is drawn here because it is still ~80 lines of shipped CSS, not because anything renders it. The live systems are <code>DifficultyBadge</code> (course pages), <code>AdminBadge</code>/<code>StatusBadge</code> (admin), <code>ThreadStatusBadge</code> (forum) — and the course card carries its own <code>.course-card-diff</code> chip instead of <code>DifficultyBadge</code>.',
     html: `
       <div class="gx-row">
         <span class="pill pill-beg">Beginner</span>
@@ -1007,6 +1007,28 @@ export const DEAD_CLASSES = [
     cls: "hover:bg-subtle/60",
     where: "apps/web/src/components/landing/paths-explorer.tsx:112",
     why: "same alpha-modifier limitation — the idle path tab has no hover background.",
+  },
+];
+
+/**
+ * Shipped CSS / style constants that nothing applies. Verified by grepping
+ * apps/web/src for each name outside comments and the definition itself.
+ */
+export const UNUSED = [
+  {
+    what: ".pill, .pill-beg/-int/-adv/-xp/-streak/-level/-sol/-done",
+    where: "apps/web/src/styles/globals.css:5379-5453",
+    why: "no component applies them; the only TypeScript hits are comments in <code>difficulty-badge.tsx</code> and <code>styleClasses.ts</code>. The eight <code>.light .pill-*</code> overrides below them are doubly dead — <code>.light</code> is never a class either.",
+  },
+  {
+    what: "PILL_STYLES, BADGE_STYLES, BUTTON_STYLES, CARD_STYLES, PROGRESS_STYLES, INTERACTIVE_STATES",
+    where: "apps/web/src/lib/styles/styleClasses.ts",
+    why: 'only <code>CERTIFICATE_STYLES</code> and <code>TOAST_STYLES</code> have importers (6 files). The <code>@/lib/styles</code> barrel has none at all, despite the file header saying "All components MUST import styles from this file".',
+  },
+  {
+    what: ".progress-fat, .progress-fill-teal/-amber/-green",
+    where: "apps/web/src/styles/globals.css:1049-1097",
+    why: "reachable only through the unused <code>PROGRESS_STYLES</code> map; the live bars are <code>.prog-track</code>/<code>.prog-fill</code>.",
   },
 ];
 

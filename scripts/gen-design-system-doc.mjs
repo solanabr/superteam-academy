@@ -30,6 +30,7 @@ import {
   GALLERY,
   DEAD_CLASSES,
   MISSING_RULES,
+  UNUSED,
 } from "./design-system-gallery.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -641,7 +642,7 @@ ul.rules, .stamp ul { list-style: disc; padding-left: 22px; }
   <li><strong>CSS custom properties</strong> — <code>${SRC.css}</code>. Light values live on <code>:root</code>; dark values override on <code>[data-theme="dark"]</code>. This is the only place a raw hex/rgba belongs.</li>
   <li><strong>Tailwind semantic mapping</strong> — <code>${SRC.tw}</code> maps those variables to named tokens (<code>bg-primary</code>, <code>text-text-2</code>, <code>border-border-strong</code>, <code>shadow-card</code>, <code>rounded-lg</code>, <code>font-display</code>…). Dark mode is <code>darkMode: ${esc(darkModeStrategy)}</code>, so <code>dark:</code> variants key off the same data attribute.</li>
   <li><strong>cva primitives</strong> — <code>apps/web/src/components/ui/*</code>. <code>button.tsx</code> is the model: every visual decision is a named variant, and consumers pick a variant rather than restyling.</li>
-  <li><strong>Shared class constants</strong> — <code>apps/web/src/lib/styles/styleClasses.ts</code> for repeated multi-class recipes (card padding, transitions, interactive states).</li>
+  <li><strong>Shared class constants</strong> — <code>apps/web/src/lib/styles/styleClasses.ts</code> for repeated multi-class recipes. Note that only <code>CERTIFICATE_STYLES</code> and <code>TOAST_STYLES</code> currently have importers — see “Shipped but unapplied”.</li>
   <li><strong>Component-local classes</strong> — last resort, and only from tokens.</li>
 </ol>
 
@@ -728,6 +729,15 @@ ${DEAD_CLASSES.map(
 ${MISSING_RULES.map(
   (d) =>
     `<tr><td class="tok">.${esc(d.cls)}</td><td class="val">${esc(d.where)}</td><td>bespoke class with no rule in <code>${SRC.css}</code>.</td></tr>`
+).join("\n")}
+</tbody></table></div>
+<h3>Shipped but unapplied</h3>
+<p>CSS and style constants that exist, ship, and are never used. Verified by grepping <code>apps/web/src</code> for each name outside its own definition and comments.</p>
+<div class="tablewrap"><table class="tokens gx-dead">
+<thead><tr><th>What</th><th>Where</th><th>Evidence</th></tr></thead><tbody>
+${UNUSED.map(
+  (u) =>
+    `<tr><td class="tok">${esc(u.what)}</td><td class="val">${esc(u.where)}</td><td>${u.why}</td></tr>`
 ).join("\n")}
 </tbody></table></div>
 

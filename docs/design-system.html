@@ -4266,7 +4266,7 @@ ul.rules, .stamp ul { list-style: disc; padding-left: 22px; }
   <li><strong>CSS custom properties</strong> — <code>apps/web/src/styles/globals.css</code>. Light values live on <code>:root</code>; dark values override on <code>[data-theme="dark"]</code>. This is the only place a raw hex/rgba belongs.</li>
   <li><strong>Tailwind semantic mapping</strong> — <code>apps/web/tailwind.config.ts</code> maps those variables to named tokens (<code>bg-primary</code>, <code>text-text-2</code>, <code>border-border-strong</code>, <code>shadow-card</code>, <code>rounded-lg</code>, <code>font-display</code>…). Dark mode is <code>darkMode: [&quot;selector&quot;, &quot;[data-theme='dark']</code>, so <code>dark:</code> variants key off the same data attribute.</li>
   <li><strong>cva primitives</strong> — <code>apps/web/src/components/ui/*</code>. <code>button.tsx</code> is the model: every visual decision is a named variant, and consumers pick a variant rather than restyling.</li>
-  <li><strong>Shared class constants</strong> — <code>apps/web/src/lib/styles/styleClasses.ts</code> for repeated multi-class recipes (card padding, transitions, interactive states).</li>
+  <li><strong>Shared class constants</strong> — <code>apps/web/src/lib/styles/styleClasses.ts</code> for repeated multi-class recipes. Note that only <code>CERTIFICATE_STYLES</code> and <code>TOAST_STYLES</code> currently have importers — see “Shipped but unapplied”.</li>
   <li><strong>Component-local classes</strong> — last resort, and only from tokens.</li>
 </ol>
 
@@ -5495,7 +5495,7 @@ ul.rules, .stamp ul { list-style: disc; padding-left: 22px; }
 
 <h3 id="gx-pills">Pills &amp;amp; badges</h3>
 <p class="gx-src">Source: <code>apps/web/src/styles/globals.css (.pill family)</code> · <code>apps/web/src/components/course/difficulty-badge.tsx</code> · <code>apps/web/src/components/admin/admin-badge.tsx</code> · <code>apps/web/src/components/admin/status-badge.tsx</code> · <code>apps/web/src/components/community/thread-status-badge.tsx</code> · bespoke CSS inlined from <code>apps/web/src/styles/globals.css</code>: <code>.pill</code> <code>.pill-primary</code> <code>.pill-beg</code> <code>.pill-int</code> <code>.pill-adv</code> <code>.pill-xp</code> <code>.pill-streak</code> <code>.pill-level</code> <code>.pill-sol</code> <code>.pill-done</code></p>
-<p class="gx-note">Three parallel badge systems exist. <code>.pill-*</code> is the globals.css family; <code>DifficultyBadge</code> is the Tailwind-token one used on course detail pages; <code>AdminBadge</code> is admin-only. The bespoke course card carries its own <code>.course-card-diff</code> chip instead of <code>DifficultyBadge</code> — see the Course card section.</p>
+<p class="gx-note">Four parallel badge systems exist. <strong>The <code>.pill-*</code> family shown first is defined in <code>globals.css</code> but applied by no component</strong> — every reference to it in TypeScript is a comment (its Tailwind mirror, <code>PILL_STYLES</code> in <code>styleClasses.ts</code>, has no importers either). It is drawn here because it is still ~80 lines of shipped CSS, not because anything renders it. The live systems are <code>DifficultyBadge</code> (course pages), <code>AdminBadge</code>/<code>StatusBadge</code> (admin), <code>ThreadStatusBadge</code> (forum) — and the course card carries its own <code>.course-card-diff</code> chip instead of <code>DifficultyBadge</code>.</p>
 <div class="gx-grid">
   <div class="gx-panel ctx-light" data-theme="light">
     <div class="gx-label">light</div>
@@ -6648,6 +6648,14 @@ ul.rules, .stamp ul { list-style: disc; padding-left: 22px; }
 <tr><td class="tok">hover:bg-subtle/60</td><td class="val">apps/web/src/components/landing/paths-explorer.tsx:112</td><td>same alpha-modifier limitation — the idle path tab has no hover background.</td></tr>
 <tr><td class="tok">.lb-header</td><td class="val">apps/web/src/app/[locale]/(platform)/leaderboard/leaderboard-client.tsx:386</td><td>bespoke class with no rule in <code>apps/web/src/styles/globals.css</code>.</td></tr>
 <tr><td class="tok">.sidebar-prog</td><td class="val">apps/web/src/components/layout/sidebar.tsx:248</td><td>bespoke class with no rule in <code>apps/web/src/styles/globals.css</code>.</td></tr>
+</tbody></table></div>
+<h3>Shipped but unapplied</h3>
+<p>CSS and style constants that exist, ship, and are never used. Verified by grepping <code>apps/web/src</code> for each name outside its own definition and comments.</p>
+<div class="tablewrap"><table class="tokens gx-dead">
+<thead><tr><th>What</th><th>Where</th><th>Evidence</th></tr></thead><tbody>
+<tr><td class="tok">.pill, .pill-beg/-int/-adv/-xp/-streak/-level/-sol/-done</td><td class="val">apps/web/src/styles/globals.css:5379-5453</td><td>no component applies them; the only TypeScript hits are comments in <code>difficulty-badge.tsx</code> and <code>styleClasses.ts</code>. The eight <code>.light .pill-*</code> overrides below them are doubly dead — <code>.light</code> is never a class either.</td></tr>
+<tr><td class="tok">PILL_STYLES, BADGE_STYLES, BUTTON_STYLES, CARD_STYLES, PROGRESS_STYLES, INTERACTIVE_STATES</td><td class="val">apps/web/src/lib/styles/styleClasses.ts</td><td>only <code>CERTIFICATE_STYLES</code> and <code>TOAST_STYLES</code> have importers (6 files). The <code>@/lib/styles</code> barrel has none at all, despite the file header saying "All components MUST import styles from this file".</td></tr>
+<tr><td class="tok">.progress-fat, .progress-fill-teal/-amber/-green</td><td class="val">apps/web/src/styles/globals.css:1049-1097</td><td>reachable only through the unused <code>PROGRESS_STYLES</code> map; the live bars are <code>.prog-track</code>/<code>.prog-fill</code>.</td></tr>
 </tbody></table></div>
 
 <h2 id="theming">8. Retheming checklist</h2>
