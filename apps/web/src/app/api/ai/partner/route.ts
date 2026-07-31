@@ -88,9 +88,10 @@ interface GeminiEnvelope {
 // (empty-bodied, gone on retry). AIE-05 CORRECTION (2026-07-31): the 3.x
 // models reject the 2.5-era `thinkingBudget: 0` with 400 INVALID_ARGUMENT —
 // this broke every partner turn from the #890 model swap until this fix. The
-// 3.x floor is `thinkingLevel: "low"` (MINIMAL_THINKING_CONFIG in
-// lib/ai/models); thinking tokens still draw from maxOutputTokens and bill at
-// the output rate, so the floor stays on for all of them.
+// 3.x floor is `thinkingLevel: "minimal"` (MINIMAL_THINKING_CONFIG in
+// lib/ai/models — round-2 correction: "low" burns hundreds of output-rate
+// thinking tokens and truncates 512-cap turns); thinking tokens draw from
+// maxOutputTokens and bill at the output rate, so the floor stays on.
 //
 // A model that 404s FAILS CLOSED: the !response.ok branch below refunds the
 // assist and 502s. There is deliberately no silent fallback to another model —
@@ -525,8 +526,9 @@ export async function POST(request: NextRequest) {
           // Every routed model is a thinking model and thinking tokens share
           // the maxOutputTokens budget (and bill at the output rate); keep
           // thinking at the model's floor. NOTE the 3.x API rejects the 2.5-era
-          // `thinkingBudget: 0` with a 400 — "low" is the minimum thinkingLevel
-          // (AIE-05 correction, 2026-07-31; see lib/ai/models.ts).
+          // `thinkingBudget: 0` with a 400, and the enum floor is "minimal" —
+          // NOT "low", which burns real thinking tokens and truncates small
+          // budgets (AIE-05 round-2 correction; see lib/ai/models.ts).
           thinkingConfig: MINIMAL_THINKING_CONFIG,
           responseMimeType: "application/json",
           responseSchema: responseSchemaFor(action),

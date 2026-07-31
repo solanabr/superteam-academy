@@ -15,15 +15,17 @@ import type { PartnerAction } from "@/lib/ai/partner-types";
 // — so any future "this model 404s for our key" claim must be re-tested twice
 // before it is believed (or written down).
 //
-// AIE-05 correction (2026-07-31, supersedes the 2026-07-28 record): the 3.x
-// models now REJECT `thinkingConfig: { thinkingBudget: 0 }` with a 400
-// INVALID_ARGUMENT — `thinkingBudget` is the 2.5-era field. The 3.x field is
-// `thinkingLevel`, whose MINIMUM is "low" ("none" is not a valid enum value;
-// probed empirically on both routed models). Every generateContent caller must
-// send MINIMAL_THINKING_CONFIG below; thinking tokens still bill at the OUTPUT
-// rate and share maxOutputTokens, so keeping thinking minimal remains a real
-// cost lever. Probed at "low" with the hint schema: zero thinking tokens on a
-// trivial prompt, valid JSON, finish STOP.
+// AIE-05 correction, round 2 (2026-07-31 evening — supersedes BOTH earlier
+// records, including this morning's #945 note): the 3.x models REJECT the
+// 2.5-era `thinkingBudget: 0` (400 INVALID_ARGUMENT), and the `thinkingLevel`
+// enum is minimal | low | medium | high — "none" is invalid AND "minimal" sits
+// BELOW "low". The #945 fix probed only "none" and "low" and wrongly wrote
+// "low is the floor"; a follow-up probe on both routed models with a real
+// prompt showed `low` burns ~470-490 thinking tokens (output rate) and
+// TRUNCATES inside a 512 budget (finish MAX_TOKENS), while `minimal` spends 0
+// thinking tokens and finishes STOP. Every generateContent caller must send
+// MINIMAL_THINKING_CONFIG below. Meta-lesson, twice paid: probe the FULL enum
+// space before writing "X is the floor" into a comment.
 
 export const GEMINI_MODELS = [
   "gemini-3.6-flash",
@@ -154,10 +156,11 @@ export function geminiUrl(model: GeminiModel): string {
 
 /**
  * The minimal thinking configuration accepted by every routed (3.x) model.
- * `thinkingLevel: "low"` is the FLOOR — `"none"` is not a valid enum value, and
- * the 2.5-era `thinkingBudget: 0` is rejected outright with a 400
- * INVALID_ARGUMENT (see the AIE-05 correction in the header). All
- * generateContent callers must spread this rather than hand-rolling a
- * thinkingConfig, so a future API change is a one-line fix here.
+ * `thinkingLevel: "minimal"` is the true floor (enum: minimal|low|medium|high;
+ * "none" is invalid, and the 2.5-era `thinkingBudget: 0` 400s — see the AIE-05
+ * round-2 correction in the header; `low` measurably burns hundreds of
+ * output-rate thinking tokens and truncates 512-cap turns). All generateContent
+ * callers must spread this rather than hand-rolling a thinkingConfig, so a
+ * future API change is a one-line fix here.
  */
-export const MINIMAL_THINKING_CONFIG = { thinkingLevel: "low" } as const;
+export const MINIMAL_THINKING_CONFIG = { thinkingLevel: "minimal" } as const;
