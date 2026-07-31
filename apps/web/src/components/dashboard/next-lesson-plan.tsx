@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { CalendarCheck } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import type { Json } from "@/lib/supabase/types";
@@ -15,11 +15,18 @@ import {
 /**
  * LX-A6 — session-end if-then plan ("when's your next lesson?"). An
  * implementation-intention prompt: committing to a day + time makes a return
- * markedly more likely (Gollwitzer). v1 is DISPLAY-ONLY — the plan is stored in
- * `profiles.prefs.nextLesson` and shown back here on the next visit; there is no
- * notification channel yet, so nothing delivers a reminder. The plan-completion
- * event's effect on return is a pre-registered NULL in the experiment registry
- * (see `experiment-registry.ts`, id `planning-prompt`).
+ * markedly more likely (Gollwitzer). The plan is stored in
+ * `profiles.prefs.nextLesson` and shown back here on the next visit. The plan-
+ * completion event's effect on return is a pre-registered NULL in the experiment
+ * registry (see `experiment-registry.ts`, id `planning-prompt`).
+ *
+ * #869 turned the committed day into a real morning email. This card is the
+ * CONSENT CAPTURE for it: a disclosed, default-ON checkbox that writes reminder
+ * consent through `set_reminder_opt_in` when the learner saves the plan. Default
+ * ON is the "derived from the commitment" default — but it is still only ever
+ * WRITTEN by this explicit save, never inferred by the server, and it is
+ * independent of the #769 marketing consent in both directions. Unchecking it
+ * records an explicit opt-OUT.
  *
  * Self-contained slot (LX-B1 additive-slot ethos): it reads and writes its own
  * prefs via the self-service profiles RLS policy (no route, no service role),
@@ -79,6 +86,7 @@ interface NextLessonPlanProps {
 
 export function NextLessonPlan({ userId }: NextLessonPlanProps) {
   const t = useTranslations("dashboard");
+  const locale = useLocale();
 
   const [prefs, setPrefs] = useState<Record<string, unknown>>({});
   const [plan, setPlan] = useState<NextLessonPref | null>(null);
@@ -86,6 +94,9 @@ export function NextLessonPlan({ userId }: NextLessonPlanProps) {
   const [editing, setEditing] = useState(false);
   const [draftDay, setDraftDay] = useState<PlanWeekday>(DEFAULT_DAY);
   const [draftTime, setDraftTime] = useState(DEFAULT_TIME);
+  // Reminder consent, default ON for a learner who is committing to a day. The
+  // stored value wins once a decision exists.
+  const [draftRemind, setDraftRemind] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -93,15 +104,35 @@ export function NextLessonPlan({ userId }: NextLessonPlanProps) {
     let cancelled = false;
     (async () => {
       const supabase = createClient();
-      const { data } = await supabase
-        .from("profiles")
-        .select("prefs")
-        .eq("id", userId)
-        .maybeSingle();
+      const [{ data }, { data: sub }] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("prefs")
+          .eq("id", userId)
+          .maybeSingle(),
+        supabase
+          .from("email_subscriptions")
+          .select(
+            "reminder_opt_in, reminder_consent_at, reminder_unsubscribed_at"
+          )
+          .eq("user_id", userId)
+          .maybeSingle(),
+      ]);
       if (cancelled) return;
       const prefsObj = toPrefsObject(data?.prefs);
       setPrefs(prefsObj);
       setPlan(parseNextLesson(prefsObj));
+      // A recorded decision wins over the default-ON suggestion. "Recorded" is a
+      // TIMESTAMP test, not row existence (review F2): a #779 marketing-only
+      // subscriber already has a row with reminder_opt_in = false and no
+      // reminder timestamps, and must still get the default-ON offer.
+      if (
+        sub &&
+        (sub.reminder_consent_at !== null ||
+          sub.reminder_unsubscribed_at !== null)
+      ) {
+        setDraftRemind(sub.reminder_opt_in ?? false);
+      }
       setLoaded(true);
     })();
     return () => {
@@ -132,8 +163,21 @@ export function NextLessonPlan({ userId }: NextLessonPlanProps) {
     setPrefs(nextPrefs);
     setPlan(nextLesson);
     setEditing(false);
+    // Record the reminder decision the learner just saw and confirmed. Failure
+    // here leaves consent unchanged (fail-closed: no consent ⇒ no email); the
+    // plan itself is already saved, so we do not undo it.
+    const { error: consentError } = await supabase.rpc("set_reminder_opt_in", {
+      p_opt_in: draftRemind,
+      p_locale: locale,
+    });
+    if (consentError) {
+      console.error(
+        "[NextLessonPlan] reminder consent failed:",
+        consentError.message
+      );
+    }
     trackNextLessonPlanCommitted({ day: draftDay });
-  }, [userId, draftDay, draftTime, prefs]);
+  }, [userId, draftDay, draftTime, prefs, draftRemind, locale]);
 
   // Authenticated dashboard only; nothing to show before the prefs read resolves.
   if (!userId || !loaded) return null;
@@ -213,6 +257,15 @@ export function NextLessonPlan({ userId }: NextLessonPlanProps) {
                 </Button>
               )}
             </div>
+            <label className="flex items-start gap-2 text-sm text-text-3">
+              <input
+                type="checkbox"
+                checked={draftRemind}
+                onChange={(e) => setDraftRemind(e.target.checked)}
+                className="mt-0.5 size-4 shrink-0 accent-[var(--primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              />
+              <span>{t("nextLessonRemindMe")}</span>
+            </label>
           </>
         ) : (
           <div className="flex flex-wrap items-center justify-between gap-3">

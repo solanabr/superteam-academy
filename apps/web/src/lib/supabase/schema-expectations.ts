@@ -73,6 +73,30 @@ export const SCHEMA_EXPECTATIONS: readonly SchemaExpectation[] = [
     description:
       "AI-tutor spend ceiling (#720) — a missing fn fails the tutor closed",
   },
+  {
+    kind: "column",
+    table: "email_subscriptions",
+    column: "reminder_opt_in",
+    migration: "20260731120000_reminder_consent.sql",
+    description:
+      "reminder consent flag (#869) — its absence 400s the settings email panel",
+  },
+  {
+    kind: "rpc",
+    // ⚠️ SIDE-EFFECTFUL IF EVER CALLABLE. Unlike the other probes, this
+    // function's body WRITES: it claims (and thereby consumes) today's reminder
+    // slot for every learner it returns. The probe is safe ONLY because
+    // claim_due_session_reminders is REVOKEd from anon/authenticated and this
+    // check runs on the ANON client — PostgREST answers 42501 without executing
+    // the body. NEVER grant this function to anon or authenticated: doing so
+    // turns every health check into a silent "already sent" for the planners of
+    // whatever weekday is hardcoded below.
+    rpc: "claim_due_session_reminders",
+    args: { p_weekday: "mon" },
+    migration: "20260731120000_reminder_consent.sql",
+    description:
+      "session-plan reminder claim (#869) — a missing fn silently sends nothing",
+  },
 ];
 
 // PostgREST "not found in schema cache" + Postgres undefined-object SQLSTATEs.

@@ -1149,6 +1149,11 @@ export type Database = {
           unsubscribed_at: string | null;
           unsubscribe_token: string;
           updated_at: string;
+          // #869 — reminder consent, independent of `opt_in` above.
+          reminder_opt_in: boolean;
+          reminder_consent_at: string | null;
+          reminder_unsubscribed_at: string | null;
+          reminder_locale: string | null;
         };
         Insert: {
           user_id: string;
@@ -1157,6 +1162,10 @@ export type Database = {
           unsubscribed_at?: string | null;
           unsubscribe_token?: string;
           updated_at?: string;
+          reminder_opt_in?: boolean;
+          reminder_consent_at?: string | null;
+          reminder_unsubscribed_at?: string | null;
+          reminder_locale?: string | null;
         };
         Update: {
           user_id?: string;
@@ -1165,6 +1174,33 @@ export type Database = {
           unsubscribed_at?: string | null;
           unsubscribe_token?: string;
           updated_at?: string;
+          reminder_opt_in?: boolean;
+          reminder_consent_at?: string | null;
+          reminder_unsubscribed_at?: string | null;
+          reminder_locale?: string | null;
+        };
+        Relationships: [];
+      };
+      email_reminder_log: {
+        // #869: service-role-only send ledger. RLS on with NO policies — the
+        // client never reads or writes it; the claim/release RPCs do.
+        Row: {
+          user_id: string;
+          kind: string;
+          sent_on: string;
+          sent_at: string;
+        };
+        Insert: {
+          user_id: string;
+          kind: string;
+          sent_on: string;
+          sent_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          kind?: string;
+          sent_on?: string;
+          sent_at?: string;
         };
         Relationships: [];
       };
@@ -1230,6 +1266,30 @@ export type Database = {
         }[];
       };
       unsubscribe_by_token: {
+        Args: { p_token: string };
+        Returns: boolean;
+      };
+      // #869 session-plan reminder consent + send RPCs. Reminder consent is a
+      // SEPARATE consent type from marketing consent above.
+      set_reminder_opt_in: {
+        Args: { p_opt_in: boolean; p_locale?: string | null };
+        Returns: undefined;
+      };
+      claim_due_session_reminders: {
+        Args: { p_weekday?: string };
+        Returns: {
+          user_id: string;
+          email: string;
+          unsubscribe_token: string;
+          locale: string | null;
+          plan_time: string;
+        }[];
+      };
+      release_session_reminder_claims: {
+        Args: { p_user_ids: string[] };
+        Returns: number;
+      };
+      unsubscribe_reminders_by_token: {
         Args: { p_token: string };
         Returns: boolean;
       };

@@ -99,14 +99,18 @@ into `/api/admin/status`; the publish card reads `/api/admin/publish/pin`. There
 is no separate drift route — one existed, was never wired to a UI, and was
 deleted in #444.
 
-## Email (#769)
+## Email (#769, #869)
 
-Marketing-consent model (opt-in defaults OFF; LGPD/GDPR/CAN-SPAM). The admin
-send trigger lives in the Admin table (`/api/admin/email/announce-course`).
+TWO independent consents, both opt-in-OFF by default (LGPD/GDPR/CAN-SPAM), both
+written only through SECURITY DEFINER RPCs: **marketing** (`opt_in`, #769) and
+**session-plan reminders** (`reminder_opt_in`, #869). Neither is ever inferred
+from the other. The marketing send trigger is the Admin table's
+`/api/admin/email/announce-course`; the reminder send is the cron route below.
 
-| Route                    | Method   | Auth  | Purpose                                                                                                                                                   |
-| ------------------------ | -------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/api/email/unsubscribe` | GET/POST | Token | One-click List-Unsubscribe by per-user token (GET renders a confirmation page; POST is the RFC 8058 one-click). No session — the email link carries none. |
+| Route                         | Method   | Auth          | Purpose                                                                                                                                                                                                                                                                                                                     |
+| ----------------------------- | -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/api/email/unsubscribe`      | GET/POST | Token         | One-click List-Unsubscribe by per-user token (GET renders a confirmation page; POST is the RFC 8058 one-click). No session — the email link carries none. `?kind=reminders` clears reminder consent only; anything else (incl. legacy no-kind links) clears marketing consent only.                                         |
+| `/api/cron/session-reminders` | GET      | `CRON_SECRET` | Daily session-plan reminder send (#869). `Authorization: Bearer $CRON_SECRET`, timing-safe; **fails closed with 503 when `CRON_SECRET` is unset**. Schedule lives in `apps/web/vercel.json` (`0 11 * * *` = 08:00 America/Sao_Paulo). Idempotent per learner per São Paulo day — the claim RPC, not the route, enforces it. |
 
 ## Health
 

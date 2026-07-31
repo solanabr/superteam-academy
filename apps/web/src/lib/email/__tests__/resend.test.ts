@@ -118,3 +118,75 @@ describe("sendEmailBatch (configured)", () => {
     });
   });
 });
+
+// #869 review F3 — a failed batch must say whether anything could POSSIBLY have
+// been accepted. Callers that undo bookkeeping on failure (the reminder
+// pipeline releases per-day send claims) may only act on `rejected`; treating an
+// ambiguous failure as rejected is what re-sends a delivered email.
+describe("failure classification (delivery)", () => {
+  beforeEach(() => {
+    env.RESEND_API_KEY = "re_x";
+  });
+
+  const failFetch = (err: unknown) =>
+    vi.fn().mockRejectedValue(err) as unknown as typeof fetch;
+  const status = (code: number) =>
+    vi.fn().mockResolvedValue({
+      ok: false,
+      status: code,
+      text: async () => "err",
+    }) as unknown as typeof fetch;
+
+  it("marks a 4xx REJECTED — Resend refused the batch outright", async () => {
+    const r = await sendEmailBatch([msg("a@b.com")], {
+      fetchImpl: status(422),
+    });
+    expect(r).toMatchObject({ ok: false, status: 422, delivery: "rejected" });
+  });
+
+  it("marks a 5xx UNKNOWN — it may have been accepted first", async () => {
+    const r = await sendEmailBatch([msg("a@b.com")], {
+      fetchImpl: status(503),
+    });
+    expect(r).toMatchObject({ ok: false, status: 503, delivery: "unknown" });
+  });
+
+  it("marks connection-refused / DNS failures REJECTED (never transmitted)", async () => {
+    for (const code of ["ECONNREFUSED", "ENOTFOUND", "EAI_AGAIN"]) {
+      const err = Object.assign(new TypeError("fetch failed"), {
+        cause: { code },
+      });
+      const r = await sendEmailBatch([msg("a@b.com")], {
+        fetchImpl: failFetch(err),
+      });
+      expect(r, code).toMatchObject({ ok: false, delivery: "rejected" });
+    }
+  });
+
+  it("marks an abort/timeout or mid-flight reset UNKNOWN", async () => {
+    for (const err of [
+      Object.assign(new Error("The operation was aborted"), {
+        name: "AbortError",
+      }),
+      Object.assign(new TypeError("fetch failed"), {
+        cause: { code: "ECONNRESET" },
+      }),
+      new Error("socket hang up"),
+    ]) {
+      const r = await sendEmailBatch([msg("a@b.com")], {
+        fetchImpl: failFetch(err),
+      });
+      expect(r).toMatchObject({ ok: false, delivery: "unknown" });
+    }
+  });
+
+  it("marks the local over-size guard REJECTED (the request is never made)", async () => {
+    const fetchImpl = vi.fn() as unknown as typeof fetch;
+    const tooMany = Array.from({ length: RESEND_MAX_BATCH + 1 }, (_, i) =>
+      msg(`u${i}@b.com`)
+    );
+    const r = await sendEmailBatch(tooMany, { fetchImpl });
+    expect(r).toMatchObject({ ok: false, delivery: "rejected" });
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+});
