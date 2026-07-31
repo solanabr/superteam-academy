@@ -7,7 +7,6 @@ import {
   Robot,
   MagnifyingGlass,
   CaretDown,
-  Lightbulb,
   Play,
   UsersThree,
 } from "@phosphor-icons/react";
@@ -20,6 +19,7 @@ import type { ChallengeEventContext } from "@/lib/analytics/events";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { AssistMeter } from "./assist-meter";
+import { Composer } from "./composer";
 import { MessageList } from "./message-list";
 import { QuickActions } from "./quick-actions";
 
@@ -132,6 +132,7 @@ export function AiPartnerPane({
     loading,
     error,
     requestHint,
+    ask,
     review,
     requestReset,
     verifyCheck,
@@ -140,6 +141,15 @@ export function AiPartnerPane({
   const requestHintGuarded = useCallback(
     () => guardAction(requestHint),
     [guardAction, requestHint]
+  );
+
+  // The free-text ask (#944) goes through the SAME attempt gate as the hint:
+  // pre-first-run the question is held (captured here) and the nudge shown, and
+  // the free override sends it unchanged. It spends a ladder turn like any other
+  // AI action — the composer disables itself at exhaustion.
+  const askGuarded = useCallback(
+    (message: string) => guardAction(() => void ask(message)),
+    [guardAction, ask]
   );
 
   // Socratic-entry analytics (#864): fire once per lesson when the ladder
@@ -250,26 +260,11 @@ export function AiPartnerPane({
         </div>
       )}
 
-      {/* Empty state stays COMPACT (#770): the prompt and the Hint button sit
-          together in a short block — no reserved conversation area. The pane
-          only grows (and the button drops to the bottom) once there are
-          messages to show. */}
-      {!open ? null : messages.length === 0 ? (
-        <div className="flex flex-col gap-3 px-4 py-4">
-          <p className="text-sm text-text-3">{t("messages.empty")}</p>
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={requestHintGuarded}
-            disabled={loading || disabled}
-            className="w-full gap-1.5"
-          >
-            <Lightbulb size={14} weight="duotone" aria-hidden="true" />
-            {t("actions.hint")}
-          </Button>
-        </div>
-      ) : (
+      {/* The empty state is now the composer itself (#944): the invitation line
+          sits directly above the question box in the footer, so there is still
+          no reserved conversation area (the #770 compactness holds). The pane
+          only grows once there are messages to show. */}
+      {open && messages.length > 0 && (
         <MessageList
           messages={messages}
           onApply={onApply}
@@ -397,12 +392,27 @@ export function AiPartnerPane({
         </div>
       )}
 
-      {open && messages.length > 0 && (
-        <QuickActions
-          onHint={requestHintGuarded}
-          disabled={loading || disabled}
-          budgetExhausted={budgetExhausted}
-        />
+      {/* Composer footer (#944): Hint above, free-text ask below, one framed
+          block at the bottom of the pane. Both spend the same ladder and both
+          route through the attempt gate, so the guards of #864/#865 apply to
+          the question box exactly as they do to the hint. When the chat is
+          still empty this block doubles as the empty state. */}
+      {open && (
+        <div className="shrink-0 space-y-2.5 border-t border-border p-3">
+          {messages.length === 0 && (
+            <p className="text-sm text-text-3">{t("composer.empty")}</p>
+          )}
+          <QuickActions
+            onHint={requestHintGuarded}
+            disabled={loading || disabled}
+            budgetExhausted={budgetExhausted}
+          />
+          <Composer
+            onSend={askGuarded}
+            disabled={loading || disabled}
+            budgetExhausted={budgetExhausted}
+          />
+        </div>
       )}
     </div>
   );
