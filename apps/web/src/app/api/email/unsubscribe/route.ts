@@ -14,6 +14,13 @@ const UUID_RE =
  * stops the study reminders has NOT asked to stop product news, and vice versa,
  * so each kind maps to its own RPC touching only its own columns. Absent/unknown
  * `kind` means marketing — every link minted before #869 carried no kind.
+ *
+ * #896: `kind` is no longer the ONLY thing keeping the two consents apart. The
+ * token itself is now kind-scoped in the database — marketing links carry
+ * `email_subscriptions.unsubscribe_token`, reminder links carry
+ * `reminder_unsubscribe_token`, and each RPC matches only its own column. So a
+ * token whose `kind` is stripped, swapped, or guessed simply matches no row in
+ * the other kind's RPC: the routing below is a convenience, not the boundary.
  */
 type UnsubscribeKind = "marketing" | "reminders";
 

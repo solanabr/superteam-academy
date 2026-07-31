@@ -103,7 +103,13 @@ export async function sendNewCourseAnnouncement(params: {
   for (let i = 0; i < recipients.length; i += RESEND_MAX_BATCH) {
     const chunk = recipients.slice(i, i + RESEND_MAX_BATCH);
     const messages: EmailMessage[] = chunk.map((r) => {
-      const unsubscribeUrl = `${params.appUrl}/api/email/unsubscribe?token=${r.unsubscribe_token}`;
+      // #896: the link carries its kind explicitly, and the token itself is
+      // kind-scoped — `list_marketing_recipients` hands out
+      // `email_subscriptions.unsubscribe_token`, which ONLY
+      // `unsubscribe_by_token` matches. It cannot revoke reminder consent even
+      // if the `kind` is stripped. (Legacy links without `kind` still resolve to
+      // marketing, so nothing already in an inbox breaks.)
+      const unsubscribeUrl = `${params.appUrl}/api/email/unsubscribe?token=${r.unsubscribe_token}&kind=marketing`;
       const rendered = newCourseAnnouncementEmail({
         courseTitle: params.courseTitle,
         courseUrl: params.courseUrl,

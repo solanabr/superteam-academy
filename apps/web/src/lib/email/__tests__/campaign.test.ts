@@ -83,14 +83,16 @@ describe("sendNewCourseAnnouncement — consent gating", () => {
       Array<{ headers: Record<string, string>; html: string }>,
       { idempotencyKey: string },
     ];
+    // #896: the link states its kind, and the token it carries is the
+    // marketing-scoped one — it cannot revoke reminder consent.
     expect(messages[0]!.headers["List-Unsubscribe"]).toBe(
-      "<https://app.test/api/email/unsubscribe?token=tok-a>"
+      "<https://app.test/api/email/unsubscribe?token=tok-a&kind=marketing>"
     );
     expect(messages[0]!.headers["List-Unsubscribe-Post"]).toBe(
       "List-Unsubscribe=One-Click"
     );
     expect(messages[0]!.html).toContain(
-      "https://app.test/api/email/unsubscribe?token=tok-a"
+      "https://app.test/api/email/unsubscribe?token=tok-a&amp;kind=marketing"
     );
     // Idempotency key is derived from the chunk's member ids (#779), namespaced
     // by course — a stable 16-hex digest, not the array index.
