@@ -4,9 +4,9 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import type { Course, LearningPath } from "@superteam-lms/types";
+import messages from "@/messages/en.json";
 import type { PathCourseProgress } from "../learning-path-section";
 import { PathsView } from "../paths-view";
-import messages from "@/messages/en.json";
 
 function makeCourse(id: string, title: string): Course {
   return {
@@ -217,6 +217,27 @@ describe("PathsView — content-agnostic rendering", () => {
 
     expect(screen.getByText("Zero to Deployed")).toBeInTheDocument();
     expect(screen.getByText("Second Path")).toBeInTheDocument();
+    expect(screen.queryByText("Empty Path")).not.toBeInTheDocument();
+  });
+
+  // #627 — `draft` and `retired` are authoring/lint lifecycle flags, not runtime
+  // switches. The compiler spreads a path doc verbatim into the bundle, so both
+  // fields ride along, but LearningPath declares neither and no consumer reads
+  // them: visibility is decided by `courses.length` alone. This pins that a
+  // `retired` path is hidden for exactly the same reason a `draft` one is —
+  // it is empty — and that a flagged-but-populated path still renders.
+  it("ignores the draft/retired lifecycle flags — visibility is courses-only", () => {
+    const withFlags = (p: LearningPath, flags: Record<string, boolean>) =>
+      ({ ...p, ...flags }) as LearningPath;
+
+    renderPaths({
+      learningPaths: [
+        withFlags(emptyPath, { retired: true }),
+        withFlags(mainPath, { draft: true, retired: true }),
+      ],
+    });
+
+    expect(screen.getByText("Zero to Deployed")).toBeInTheDocument();
     expect(screen.queryByText("Empty Path")).not.toBeInTheDocument();
   });
 });

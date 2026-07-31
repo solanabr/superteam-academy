@@ -68,9 +68,12 @@ export function PathsView({
     [learningPaths]
   );
 
-  // One clear start (UIU-07): the first course of the first non-draft path by
-  // the bundle's ordering conventions (order asc, title asc; drafts never ship
-  // in the bundle). Content-agnostic — recomputes when paths change.
+  // One clear start (UIU-07): the first course of the first populated path by
+  // the bundle's ordering conventions (order asc, title asc). A path's `draft`
+  // / `retired` flags are authoring metadata that the bundle carries but no
+  // consumer reads (#627) — emptiness is the only visibility rule, which is why
+  // filtering on `courses.length` above is sufficient here.
+  // Content-agnostic — recomputes when paths change.
   const startCourse = nonEmptyPaths[0]?.courses[0];
   const startProgress = startCourse ? progress.get(startCourse._id) : undefined;
   const startCtaLabel =

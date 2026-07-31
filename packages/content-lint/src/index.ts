@@ -7,6 +7,7 @@ export * from "./checks/gate2-ids";
 export * from "./checks/gate3-slots";
 export * from "./checks/gate4-refs";
 export * from "./checks/gate4a-award-refs";
+export * from "./checks/gate4b-path-lifecycle";
 export * from "./checks/gate5-orphans";
 export * from "./checks/gate5a-xp";
 export * from "./checks/gate6-executor";

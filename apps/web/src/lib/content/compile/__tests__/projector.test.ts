@@ -225,3 +225,36 @@ describe("projectContent", () => {
     expect(course.tags).toEqual([]);
   });
 });
+
+describe("projectContent — path lifecycle flags (#627)", () => {
+  it("carries retired/draft into the bundle verbatim, with no courses", () => {
+    const f = fixture();
+    f.paths = [
+      {
+        id: "path-retired",
+        slug: "retired",
+        title: "Retired",
+        difficulty: "beginner",
+        order: 9,
+        draft: false,
+        retired: true,
+        courses: [],
+      },
+    ] as never;
+    const { docs } = projectContent(f, "sha1", noAsset, () => []);
+    const path = docs.find((d) => d._type === "learningPath") as unknown as {
+      _id: string;
+      retired: boolean;
+      draft: boolean;
+      courses: unknown[];
+    };
+    // The projector spreads the doc, so a retired path reaches the app exactly
+    // like a drafted one did: flag present, courses empty. Nothing downstream
+    // reads either flag (LearningPath declares neither) — the empty `courses`
+    // is what hides the shelf. See paths-view.test.tsx for the render proof.
+    expect(path._id).toBe("path-retired");
+    expect(path.retired).toBe(true);
+    expect(path.draft).toBe(false);
+    expect(path.courses).toEqual([]);
+  });
+});
