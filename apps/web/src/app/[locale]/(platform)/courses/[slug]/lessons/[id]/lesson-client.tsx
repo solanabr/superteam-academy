@@ -575,9 +575,7 @@ export function LessonPageClient({
               }}
             />
           </div>
-        ) : (
-          <div className="mb-3 flex justify-end">{askAction}</div>
-        )}
+        ) : null}
         <div className="text-sm [&_button]:px-2.5 [&_button]:py-1 [&_button]:text-xs">
           <ThreadList
             scope={{ courseId, lessonId: lesson._id }}
@@ -585,6 +583,9 @@ export function LessonPageClient({
             emptyMessage={tCommunity("empty.lesson")}
             onCountChange={handleThreadCount}
             refreshToken={threadsRefreshToken}
+            // Ask shares the filters row instead of claiming one of its own —
+            // in a one-thread embed the chrome otherwise dwarfs the list.
+            actionSlot={isComposerOpen ? undefined : askAction}
           />
         </div>
       </LessonSection>

@@ -76,21 +76,17 @@ export function AnswerCard({
           : "border-[var(--border-default)] bg-[var(--card)]"
       )}
     >
-      <div className="flex flex-col items-center gap-1">
-        <VoteButton
-          score={answer.vote_score}
-          userVote={answer.userVote}
-          onVote={onVote}
-          disabled={disabled}
-          size="sm"
-        />
-        {isThreadAuthor && answer.author_id !== currentUserId && (
-          <AcceptAnswerButton
-            isAccepted={answer.is_accepted}
-            onAccept={onAccept}
-          />
-        )}
-      </div>
+      {/* Vote rail only. The accept control used to hang below it as a bare
+          floating checkmark with no visible label — it now lives in the meta
+          row as a proper labeled button, which also stops the rail from
+          out-growing a short answer and leaving dead space beside it. */}
+      <VoteButton
+        score={answer.vote_score}
+        userVote={answer.userVote}
+        onVote={onVote}
+        disabled={disabled}
+        size="sm"
+      />
 
       <div className="min-w-0 flex-1">
         {answer.is_accepted && (
@@ -99,7 +95,10 @@ export function AnswerCard({
           </span>
         )}
 
-        <div className="prose prose-sm max-w-none text-[var(--text)] dark:prose-invert">
+        {/* Headings step DOWN explicitly — `prose-sm` scales body copy but
+            still renders an authored `#`/`##` larger than the question title
+            above it. */}
+        <div className="prose prose-sm max-w-none text-[var(--text)] dark:prose-invert prose-headings:font-display prose-headings:font-bold prose-h1:text-base prose-h2:text-[15px] prose-h3:text-sm prose-h4:text-sm">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             rehypePlugins={[rehypeHighlight]}
@@ -108,7 +107,7 @@ export function AnswerCard({
           </ReactMarkdown>
         </div>
 
-        <div className="mt-3 flex items-center gap-3 text-xs text-[var(--text-2)]">
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--text-2)]">
           <span className="flex items-center gap-1.5">
             {answer.author.avatar_url ? (
               <Image
@@ -130,6 +129,14 @@ export function AnswerCard({
           <FlagButton answerId={answer.id} />
           {isAuthor && onDelete && (
             <DeleteButton answerId={answer.id} onDeleted={onDelete} />
+          )}
+          {/* Thread author only, and never on their own answer — same rule as
+              before, just no longer an unlabeled floating glyph. */}
+          {isThreadAuthor && answer.author_id !== currentUserId && (
+            <AcceptAnswerButton
+              isAccepted={answer.is_accepted}
+              onAccept={onAccept}
+            />
           )}
         </div>
       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { useThreads } from "@/hooks/use-threads";
 import { useThreadContexts } from "@/hooks/use-thread-contexts";
@@ -37,6 +37,11 @@ interface ThreadListProps {
    * would repeat the page you are already on.
    */
   showContext?: boolean;
+  /**
+   * Primary action rendered on the RIGHT of the filters row rather than in a
+   * row of its own — keeps the chrome from dwarfing a short list.
+   */
+  actionSlot?: ReactNode;
 }
 
 interface ListThread {
@@ -102,6 +107,7 @@ export function ThreadList({
   onCountChange,
   refreshToken,
   showContext = false,
+  actionSlot,
 }: ThreadListProps) {
   const t = useTranslations("community");
   const [sort, setSort] = useState("latest");
@@ -136,7 +142,12 @@ export function ThreadList({
           courseOnly={courseOnly}
           onCourseOnlyChange={setCourseOnly}
           showCourseFilter={showContext}
+          actionSlot={actionSlot}
         />
+      )}
+      {/* Without filters the action still needs a home. */}
+      {!showFilters && actionSlot && (
+        <div className="flex justify-end">{actionSlot}</div>
       )}
 
       {error && (

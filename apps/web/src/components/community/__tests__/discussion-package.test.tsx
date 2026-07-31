@@ -10,10 +10,10 @@ import {
 } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/messages/en.json";
+import { useThreadContexts } from "@/hooks/use-thread-contexts";
 import { ThreadCard } from "../thread-card";
 import { ThreadFilters } from "../thread-filters";
 import { ThreadComposer } from "../thread-composer";
-import { useThreadContexts } from "@/hooks/use-thread-contexts";
 
 const push = vi.fn();
 vi.mock("next/navigation", () => ({

@@ -79,24 +79,31 @@ export function ThreadCard({
     : `/community/general/${slug}`;
 
   return (
-    <div className="flex items-start gap-3 border-b border-[var(--border-default)] px-2 py-2.5 transition-colors last:border-b-0 hover:bg-[var(--card-hover)]">
+    // A row in a flat list: no per-row radius, no per-row card. The divider is
+    // a hairline and the whole row tints on hover. ~10px vertical padding keeps
+    // the row under 40px tall on desktop.
+    <div className="flex items-center gap-2.5 border-b border-[var(--border-default)] px-3 py-2.5 transition-colors last:border-b-0 hover:bg-[var(--card-hover)]">
+      {/* One compact horizontal vote cluster — caret beside the count, never a
+          caret stacked above it (that rail is what made rows tall). */}
       <button
         type="button"
         onClick={() => onVote(userVote === 1 ? 0 : 1)}
         aria-label={t("upvote")}
         aria-pressed={userVote === 1}
         className={cn(
-          "mt-0.5 flex shrink-0 items-center gap-0.5 rounded-md px-1.5 py-1 text-xs font-bold tabular-nums transition-colors hover:bg-[var(--primary-dim)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]",
+          "flex shrink-0 items-center gap-0.5 rounded px-1 py-0.5 text-[11px] font-bold tabular-nums transition-colors hover:bg-[var(--primary-dim)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]",
           userVote === 1
             ? "text-[var(--primary)]"
             : "text-[var(--text-2)] hover:text-[var(--primary)]"
         )}
       >
-        <CaretUp size={12} weight={userVote === 1 ? "fill" : "bold"} />
+        <CaretUp size={11} weight={userVote === 1 ? "fill" : "bold"} />
         {voteScore}
       </button>
 
-      <div className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-x-3 gap-y-1">
+      {/* Title takes the slack and truncates; meta is a fixed compact cluster
+          pinned right, so there is no ocean of space between them. */}
+      <div className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-x-3 gap-y-0.5">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           {isPinned && (
             <PushPin
@@ -116,7 +123,7 @@ export function ThreadCard({
           {context && <LessonContextChip context={context} />}
         </div>
 
-        <div className="flex shrink-0 items-center gap-2.5 font-mono text-[11px] text-[var(--text-2)]">
+        <div className="flex shrink-0 items-center gap-2 font-mono text-[11px] leading-none text-[var(--text-2)]">
           <span className="flex items-center gap-1">
             {author.avatar_url ? (
               <Image
