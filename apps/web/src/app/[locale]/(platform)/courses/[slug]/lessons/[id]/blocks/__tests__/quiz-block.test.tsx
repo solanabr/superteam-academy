@@ -245,6 +245,111 @@ describe("QuizBlock — proofs and answered reporting", () => {
   });
 });
 
+describe("QuizBlock — interaction states (#943)", () => {
+  it("locks the question and disables Check after a CORRECT check", () => {
+    renderWithIntl(<QuizBlock block={quizBlock} ctx={makeCtx()} />);
+    const correctOption = screen.getByLabelText("A program-derived address");
+    fireEvent.click(correctOption);
+    fireEvent.click(checkButton());
+
+    expect(correctOption).toBeDisabled();
+    expect(screen.getByLabelText("A private key")).toBeDisabled();
+    expect(checkButton()).toBeDisabled();
+    // Correct-state styling + explanation survive the lock.
+    expect(screen.getByText("Correct!")).toBeInTheDocument();
+    expect(
+      screen.getByText("PDAs are derived from seeds and the program id.")
+    ).toBeInTheDocument();
+    expect(correctOption.closest("label")?.className).toContain(
+      "border-success"
+    );
+  });
+
+  it("leaves the question re-checkable after an INCORRECT check", () => {
+    renderWithIntl(<QuizBlock block={quizBlock} ctx={makeCtx()} />);
+    fireEvent.click(screen.getByLabelText("A private key"));
+    fireEvent.click(checkButton());
+
+    expect(screen.getByLabelText("A private key")).toBeEnabled();
+    expect(checkButton()).toBeEnabled();
+  });
+
+  it("Enter cannot re-check a locked question", () => {
+    const ctx = makeCtx();
+    renderWithIntl(<QuizBlock block={quizBlock} ctx={ctx} />);
+    const correctOption = screen.getByLabelText("A program-derived address");
+    fireEvent.click(correctOption);
+    fireEvent.click(checkButton());
+    // Still exactly one verdict — Enter is a no-op once locked.
+    fireEvent.keyDown(correctOption, { key: "Enter" });
+    expect(screen.getAllByText("Correct!")).toHaveLength(1);
+  });
+
+  it("emphasizes Next only once the current question is correct", () => {
+    renderWithIntl(<QuizBlock block={quizBlock} ctx={makeCtx()} />);
+    expect(nextButton().className).toContain("bg-transparent");
+    expect(nextButton().className).not.toContain("bg-primary");
+
+    fireEvent.click(screen.getByLabelText("A program-derived address"));
+    fireEvent.click(checkButton());
+    expect(nextButton().className).toContain("bg-primary");
+  });
+
+  it("keeps Next subdued when the current answer is wrong", () => {
+    renderWithIntl(<QuizBlock block={quizBlock} ctx={makeCtx()} />);
+    fireEvent.click(screen.getByLabelText("A private key"));
+    fireEvent.click(checkButton());
+    expect(nextButton().className).not.toContain("bg-primary");
+  });
+
+  it("shows an in-block completion state only when EVERY question is correct", () => {
+    renderWithIntl(<QuizBlock block={quizBlock} ctx={makeCtx()} />);
+    expect(screen.queryByText("Complete")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("All 2 questions answered correctly.")
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText("A program-derived address"));
+    fireEvent.click(checkButton());
+    // One of two — not a sweep yet.
+    expect(
+      screen.queryByText("All 2 questions answered correctly.")
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(nextButton());
+    fireEvent.click(screen.getByLabelText("XP tokens"));
+    fireEvent.click(screen.getByLabelText("Credentials"));
+    fireEvent.click(checkButton());
+
+    expect(screen.getByText("Complete")).toBeInTheDocument();
+    const summary = screen.getByText("All 2 questions answered correctly.");
+    expect(summary).toBeInTheDocument();
+    expect(summary.closest('[aria-live="polite"]')).not.toBeNull();
+    expect(screen.getByText("2/2 correct")).toBeInTheDocument();
+  });
+
+  it("states the AI gate with a live N/M answered counter", () => {
+    renderWithIntl(<QuizBlock block={quizBlock} ctx={makeCtx()} />);
+    expect(
+      screen.getByText("AI Partner unlocks after the quiz — 0/2 answered")
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText("A private key")); // wrong still counts
+    fireEvent.click(checkButton());
+    expect(
+      screen.getByText("AI Partner unlocks after the quiz — 1/2 answered")
+    ).toBeInTheDocument();
+
+    fireEvent.click(nextButton());
+    fireEvent.click(screen.getByLabelText("SOL"));
+    fireEvent.click(checkButton());
+    // Gate satisfied — the note retires entirely.
+    expect(
+      screen.queryByText(/AI Partner unlocks after the quiz/)
+    ).not.toBeInTheDocument();
+  });
+});
+
 describe("QuizBlock — stepper (#849)", () => {
   it("shows one question per card and navigates with next/prev", () => {
     renderWithIntl(<QuizBlock block={quizBlock} ctx={makeCtx()} />);
