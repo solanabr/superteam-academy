@@ -1,10 +1,11 @@
 import { notFound } from "next/navigation";
-import { LessonPageClient } from "./lesson-client";
 import {
   getLessonBySlug,
   getCourseLessons,
   getCourseIdBySlug,
+  getLessonSkills,
 } from "@/lib/content/queries";
+import { LessonPageClient } from "./lesson-client";
 
 interface LessonPageProps {
   params: Promise<{ locale: string; slug: string; id: string }>;
@@ -21,9 +22,12 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
   if (!lesson) notFound();
 
+  const skills = await getLessonSkills(lesson._id);
+
   return (
     <LessonPageClient
       lesson={lesson}
+      skills={skills}
       allLessons={(allLessons ?? []).filter(Boolean)}
       locale={locale}
       courseSlug={slug}
