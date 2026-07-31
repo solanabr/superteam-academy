@@ -15,7 +15,6 @@ import {
 import { CurrentCoursesSection } from "@/components/dashboard/current-courses-section";
 import { ReviewStrip } from "@/components/dashboard/review-strip";
 import { CohortStrip } from "@/components/dashboard/cohort-strip";
-import { MasteryPanel } from "@/components/dashboard/mastery-panel";
 import { NameRevealDialog } from "@/components/dashboard/name-reveal-dialog";
 import { NextLessonPlan } from "@/components/dashboard/next-lesson-plan";
 
@@ -134,9 +133,6 @@ export default function DashboardPage() {
         currentCourses={data.currentCourses}
         userId={data.userId}
       />
-
-      {/* ═══ Skill Mastery (LX-B16) ═══ */}
-      <MasteryPanel skills={data.masterySkills} />
 
       {/* ═══ Activity ═══ */}
       <ActivitySection recentActivity={data.recentActivity} />
