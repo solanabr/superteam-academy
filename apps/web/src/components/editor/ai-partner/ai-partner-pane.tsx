@@ -43,6 +43,11 @@ interface AiPartnerPaneProps {
    * a soft "run the tests first" suggestion with a free one-tap override,
    * never a lock. After the first run the nudge never appears. */
   hasRunTests?: boolean;
+  /** True once at least one test run on this challenge FAILED. Gates the
+   * secondary "Show me a change" action (#947): a concrete diff is offered only
+   * once the learner has a failure in front of them, never as the opening move.
+   * Sticky for the visit — a later passing run does not retract it. */
+  hasFailedRun?: boolean;
   /** Shift focus to the Run-tests button — the nudge's primary action. */
   onFocusRun?: () => void;
   /** The attempt-gate nudge surfaced (analytics; deduped upstream). */
@@ -65,6 +70,7 @@ export function AiPartnerPane({
   disabled = false,
   solutionPassed = false,
   hasRunTests = false,
+  hasFailedRun = false,
   onFocusRun,
   onNudgeShown,
   onNudgeOverride,
@@ -133,6 +139,7 @@ export function AiPartnerPane({
     error,
     requestHint,
     ask,
+    proposeFix,
     review,
     requestReset,
     verifyCheck,
@@ -150,6 +157,17 @@ export function AiPartnerPane({
   const askGuarded = useCallback(
     (message: string) => guardAction(() => void ask(message)),
     [guardAction, ask]
+  );
+
+  // "Show me a change" (#947) is an assist like any other: same attempt gate,
+  // same ladder turn, same in-flight/exhaustion disabling. It stays available on
+  // the Socratic tier by design (#864 §4.2 — Socratic changes the tutor's
+  // default contract, it does not remove the escape hatch), and what it returns
+  // is still gated behind the earned-Accept comprehension check before any code
+  // moves. The learner's draft (if any) rides along and is left in the box.
+  const proposeGuarded = useCallback(
+    (message?: string) => guardAction(() => void proposeFix(message)),
+    [guardAction, proposeFix]
   );
 
   // Socratic-entry analytics (#864): fire once per lesson when the ladder
@@ -409,7 +427,15 @@ export function AiPartnerPane({
           />
           <Composer
             onSend={askGuarded}
+            // Offered only once a run has actually FAILED, and withdrawn again
+            // at exhaustion where the community handoff takes over. (The
+            // Composer also hard-disables it on `budgetExhausted`, so it can
+            // never fire even if it were rendered in that state.)
+            onPropose={
+              hasFailedRun && !budgetExhausted ? proposeGuarded : undefined
+            }
             disabled={loading || disabled}
+            pending={loading}
             budgetExhausted={budgetExhausted}
           />
         </div>

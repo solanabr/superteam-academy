@@ -1030,7 +1030,8 @@
     },
     "actions": {
       "hint": "Pista",
-      "propose": "Proponer corrección",
+      "propose": "Muéstrame un cambio",
+      "proposeCost": "usa 1 turno",
       "askPlaceholder": "Haz una pregunta sobre este desafío...",
       "askLabel": "Pregúntale al Compañero de IA sobre este reto",
       "askSend": "Enviar",
