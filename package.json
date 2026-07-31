@@ -9,6 +9,7 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "typecheck": "turbo typecheck",
     "test:scripts": "./apps/web/node_modules/.bin/vitest run --config vitest.config.ts",
+    "probe:brace-glob": "node scripts/brace-glob-probe.mjs",
     "clean": "turbo clean",
     "prepare": "husky"
   },
