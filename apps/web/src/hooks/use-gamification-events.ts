@@ -187,8 +187,15 @@ export function useGamificationEvents(userId: string | undefined) {
               const questId = claimQuestRewardFromCredit(row, userId);
               if (questId) {
                 dispatchQuestReward({ questId, xpReward: amount });
+                // The counter bump belongs to the channel that WON the claim,
+                // never to both. The header's optimistic XP is a monotonic
+                // `Math.max(supabaseXp, prev + amount)` that never pulls back
+                // down, so dispatching here when the poll path already counted
+                // this same credit would permanently inflate the displayed XP
+                // for the session. The poll path mirrors this: it only bumps
+                // for entries pickQuestRewardToasts actually claimed.
+                dispatchXpGain(amount);
               }
-              dispatchXpGain(amount);
               return;
             }
 

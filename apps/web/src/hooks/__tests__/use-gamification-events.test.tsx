@@ -1,12 +1,14 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
+import type { DailyQuest } from "@superteam-lms/types";
 import {
   resetAnalyticsEventDedupeForTests,
   trackCredentialMinted,
 } from "@/lib/analytics/events";
 import {
   pickSurpriseBonusToasts,
+  pickQuestRewardToasts,
   __resetServerXpFeedbackForTests,
 } from "@/lib/gamification/server-xp-feedback";
 import { useGamificationEvents } from "../use-gamification-events";
@@ -18,6 +20,7 @@ const h = vi.hoisted(() => ({
   trackEvent: vi.fn(),
   dispatchCertificateMinted: vi.fn(),
   dispatchSurpriseBonus: vi.fn(),
+  dispatchQuestReward: vi.fn(),
   handlers: new Map<string, (payload: unknown) => void>(),
   // Realtime auth plumbing (#800)
   getSession: vi.fn(),
@@ -43,6 +46,9 @@ vi.mock("@/components/gamification/level-up-popup", () => ({
 }));
 vi.mock("@/components/gamification/surprise-bonus-toast", () => ({
   dispatchSurpriseBonus: h.dispatchSurpriseBonus,
+}));
+vi.mock("@/components/gamification/quest-reward-toast", () => ({
+  dispatchQuestReward: h.dispatchQuestReward,
 }));
 
 vi.mock("@/lib/supabase/client", () => ({
@@ -123,6 +129,7 @@ beforeEach(() => {
   h.trackEvent.mockClear();
   h.dispatchCertificateMinted.mockClear();
   h.dispatchSurpriseBonus.mockClear();
+  h.dispatchQuestReward.mockClear();
   h.setAuth.mockClear();
   h.authUnsubscribe.mockClear();
   h.getSession.mockReset();
@@ -323,5 +330,101 @@ describe("useGamificationEvents — surprise bonus no-double-toast invariant", (
     );
     expect(pollToasts).toEqual([]);
     expect(h.dispatchSurpriseBonus).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("useGamificationEvents — daily-quest reward: one toast, one XP bump", () => {
+  const PERIOD = new Date().toISOString().slice(0, 10);
+
+  const questCredit = () => ({
+    new: {
+      id: "xtx-q1",
+      amount: 25,
+      reason: "daily_quest:quest-complete-lesson",
+      idempotency_key: `quest-complete-lesson:${PERIOD}`,
+      created_at: new Date().toISOString(),
+    },
+  });
+
+  const pollQuest = (): DailyQuest => ({
+    id: "quest-complete-lesson",
+    type: "lesson",
+    name: "Complete a Lesson",
+    description: "",
+    icon: "BookOpen",
+    xpReward: 25,
+    targetValue: 1,
+    currentValue: 1,
+    completed: true,
+    resetType: "daily",
+    justAwarded: true,
+  });
+
+  /** Counts the `xp-gain` CustomEvents dispatchXpGain puts on the window. */
+  function countXpGains(): { count: () => number; stop: () => void } {
+    let n = 0;
+    const onGain = () => {
+      n += 1;
+    };
+    window.addEventListener("xp-gain", onGain);
+    return {
+      count: () => n,
+      stop: () => window.removeEventListener("xp-gain", onGain),
+    };
+  }
+
+  it("Realtime alone (no dashboard open) celebrates and bumps XP exactly once", async () => {
+    const gains = countXpGains();
+    await mountHook();
+    const onXpInsert = await waitForHandler("xp_transactions:INSERT");
+
+    act(() => onXpInsert(questCredit()));
+
+    expect(h.dispatchQuestReward).toHaveBeenCalledTimes(1);
+    expect(h.dispatchQuestReward).toHaveBeenCalledWith({
+      questId: "quest-complete-lesson",
+      xpReward: 25,
+    });
+    expect(gains.count()).toBe(1);
+    gains.stop();
+  });
+
+  it("poll first, then Realtime: ONE toast and ONE xp-gain for the same award", async () => {
+    const gains = countXpGains();
+    await mountHook();
+    const onXpInsert = await waitForHandler("xp_transactions:INSERT");
+
+    // The dashboard poll wins the claim (it evaluated and saw justAwarded) and
+    // does its own dispatchXpGain — modelled here by the single claim below.
+    expect(pickQuestRewardToasts([pollQuest()], PERIOD, "user-1")).toHaveLength(
+      1
+    );
+
+    // The queued credit then lands and Realtime observes the SAME award. It
+    // must neither toast NOR bump the counter: the header's optimistic XP is
+    // monotonic (never pulls back down), so a second bump here would inflate
+    // the displayed balance for the rest of the session.
+    act(() => onXpInsert(questCredit()));
+
+    expect(h.dispatchQuestReward).not.toHaveBeenCalled();
+    expect(gains.count()).toBe(0);
+    gains.stop();
+  });
+
+  it("Realtime first, then poll: the poll claims nothing (no second bump)", async () => {
+    const gains = countXpGains();
+    await mountHook();
+    const onXpInsert = await waitForHandler("xp_transactions:INSERT");
+
+    act(() => onXpInsert(questCredit()));
+    expect(h.dispatchQuestReward).toHaveBeenCalledTimes(1);
+    expect(gains.count()).toBe(1);
+
+    // The learner opens the dashboard afterwards — the shared seen-set makes
+    // the poll a no-op, so it dispatches neither a toast nor an XP bump.
+    expect(pickQuestRewardToasts([pollQuest()], PERIOD, "user-1")).toEqual([]);
+    expect(h.dispatchQuestReward).toHaveBeenCalledTimes(1);
+    expect(gains.count()).toBe(1);
+    gains.stop();
   });
 });
