@@ -108,6 +108,29 @@ vi.mock("server-only", () => ({}));
 //    bundle through the real projectors (existing doc order preserved, new
 //    docs appended, raw quest docs untouched); achievements-raw patched for
 //    the course-completer retarget + the full-stack description only.
+//  - skills sweep + defect batch (bump to courses-academy @23e4d1bf,
+//    PRs #28/#29): an EDITS-ONLY wave — counts are UNCHANGED (6 courses / 66
+//    lessons / 8 paths / 10 achievements / 5 quests), no doc added, removed or
+//    re-keyed, no slot movement. The `skills.yaml` registry shrinks 83 -> 74
+//    (7 dead entries deleted, `defi`+`amm`+`lending`+`staking`+`oracles`
+//    consolidated away, `transfer-hook`/`wallet-adapter`/`siws`/`ci` dropped,
+//    `rpc` RENAMED to `rpc-reads` including 2 C1 lesson retags) and 19 second-
+//    use tags are added, which takes gate-19b to zero warnings and lets the
+//    lint tier flip to error (#676). Note the lessons golden is UNAFFECTED by
+//    retagging: `projectLesson` projects `_id/title/slug/blocks[]` only —
+//    `skills` reaches the app through `getAllLessonSkills`, not this projector.
+//    So of the 20 edited lesson docs only 6 move the golden (the ones whose
+//    BLOCKS changed): C3 `lesson-bfsp-adding-instructions` gains a new
+//    3-question quiz, C2 `lesson-rpd-what-you-built` grows its recap quiz
+//    7 -> 25 questions, plus C4/C5 defect fixes (npm-stat repulls, pricing,
+//    the payment-rails decision map and the terminus block). Course `tags` are
+//    DERIVED from lesson skills, so 5 of 6 courses shift tags (C2's union is
+//    unchanged — its recap picked up slugs already present on sibling lessons,
+//    which is exactly what a second-use sweep produces); C5 also gets an opener
+//    rewrite, its only non-tag course-field change. courses/lessons/
+//    course-by-slug/paths/summaries regenerated through the real projectors;
+//    quests-raw is byte-unchanged (no code block gained or lost) and
+//    achievements-raw is untouched.
 const deps = { lessonsById };
 
 function bundleCourse(id: string): CourseDoc {

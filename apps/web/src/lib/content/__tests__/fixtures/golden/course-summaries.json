@@ -8,6 +8,7 @@
       "tags": [
         "account-model",
         "anchor",
+        "build-server",
         "checked-arithmetic",
         "cpi",
         "debugging",
@@ -23,6 +24,7 @@
         "solana-explorer",
         "solana-programs",
         "technical-writing",
+        "toolchain-versions",
         "transactions"
       ],
       "difficulty": "intermediate",
@@ -37,7 +39,6 @@
       "tags": [
         "account-model",
         "api-design",
-        "ci",
         "client-codegen",
         "codama",
         "compute-budget",
@@ -115,6 +116,7 @@
         "signers",
         "solana-fundamentals",
         "spl-tokens",
+        "token-2022",
         "transaction-fees",
         "transactions",
         "typescript"
@@ -136,8 +138,9 @@
         "confirmation",
         "error-handling",
         "explorer-reading",
+        "keypairs-wallets",
         "pdas",
-        "rpc",
+        "rpc-reads",
         "solana-kit",
         "transaction-fees",
         "transactions",
@@ -170,7 +173,6 @@
         "subscriptions-program",
         "technical-writing",
         "token-2022",
-        "transfer-hook",
         "version-pinning",
         "x402-protocol"
       ],
@@ -192,6 +194,7 @@
       "tags": [
         "account-model",
         "anchor",
+        "build-server",
         "checked-arithmetic",
         "cpi",
         "debugging",
@@ -207,6 +210,7 @@
         "solana-explorer",
         "solana-programs",
         "technical-writing",
+        "toolchain-versions",
         "transactions"
       ],
       "xpReward": 850,
@@ -227,7 +231,6 @@
       "tags": [
         "account-model",
         "api-design",
-        "ci",
         "client-codegen",
         "codama",
         "compute-budget",
@@ -317,6 +320,7 @@
         "signers",
         "solana-fundamentals",
         "spl-tokens",
+        "token-2022",
         "transaction-fees",
         "transactions",
         "typescript"
@@ -344,8 +348,9 @@
         "confirmation",
         "error-handling",
         "explorer-reading",
+        "keypairs-wallets",
         "pdas",
-        "rpc",
+        "rpc-reads",
         "solana-kit",
         "transaction-fees",
         "transactions",
@@ -361,7 +366,7 @@
       "_id": "course-stablecoin-payments",
       "title": "Getting Paid: Stablecoin & Agentic Payments",
       "slug": "stablecoin-agentic-payments",
-      "description": "You have a deployed vault app that earns nothing. Put a price on it. Open a Subscription Authority and a Recurring Delegation so the app has a real paid tier, meter a route with an x402 v2 challenge, and give an autonomous agent a wallet that can say no — an on-chain spend cap instead of an unlimited keypair. TypeScript only, no Rust and no local toolchain. You finish by publishing a version-pinned deep dive and submitting one live Superteam Earn listing. Scope is what BCB Resolution 561 leaves open to Brazilian builders from 2026-10-01, domestic merchant acceptance, contractor payouts, subscriptions and agent budgets.",
+      "description": "Put a price on an app that earns nothing. If you came through Course 4 that app is the vault you deployed and published a client for; if you are starting here, this is the segment's entry point and a frozen reference deployment stands in for it. Open a Subscription Authority and a Recurring Delegation so the app has a real paid tier, meter a route with an x402 v2 challenge, and give an autonomous agent a wallet that can say no — an on-chain spend cap instead of an unlimited keypair. TypeScript only, no Rust and no local toolchain. You finish by publishing a version-pinned deep dive and submitting one live Superteam Earn listing. Scope is what BCB Resolution 561 leaves open to Brazilian builders from 2026-10-01, domestic merchant acceptance, contractor payouts, subscriptions and agent budgets.",
       "difficulty": "intermediate",
       "duration": 10,
       "thumbnail": null,
@@ -384,7 +389,6 @@
         "subscriptions-program",
         "technical-writing",
         "token-2022",
-        "transfer-hook",
         "version-pinning",
         "x402-protocol"
       ],

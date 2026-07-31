@@ -442,6 +442,124 @@
           "They order pool A wrong; the block-opening line ends in `{`, the closing line is `}`, and the body runs top to bottom with the returned value last.",
           "They swap the two pool-B attributes; `#[account]` describes the bytes inside one account, `#[derive(Accounts)]` describes the account list an instruction touches, and `Context<VaultInfo>` needs the second."
         ]
+      },
+      {
+        "key": "check",
+        "_type": "quiz",
+        "produces": null,
+        "consumes": null,
+        "src": null,
+        "url": null,
+        "language": null,
+        "buildType": null,
+        "deployable": null,
+        "starter": null,
+        "solution": null,
+        "tests": null,
+        "hints": null,
+        "questions": [
+          {
+            "id": "q1",
+            "prompt": "You paste pool B's second error enum — `#[error_code] pub enum InfoError { #[msg(\"no vault at that address\")] NoVault }` — into a file that already carries `VaultError`. Predict what the build server reports, and what it costs you.",
+            "multiSelect": false,
+            "options": [
+              {
+                "id": "a",
+                "label": "Green, and that is the problem: both enums number from `ERROR_CODE_OFFSET` = 6000, so `VaultError::Overflow` and `InfoError::NoVault` are both code 6000 and no client can tell the two failures apart.",
+                "correct": true,
+                "feedback": null
+              },
+              {
+                "id": "b",
+                "label": "Red — Anchor rejects a second `#[error_code]` enum in one program, which is why the rule exists.",
+                "correct": false,
+                "feedback": "Nothing rejects it. Two `#[error_code]` enums are legal Anchor and the CLI would accept them too. The rule is enforced by consequences on the wire, not by the compiler — which is exactly what makes it worth meeting deliberately."
+              },
+              {
+                "id": "c",
+                "label": "Green, and harmless: Anchor assigns the second enum the next free block of codes because it can see both at expansion time.",
+                "correct": false,
+                "feedback": "`#[error_code]` expands one enum at a time and nothing coordinates across them. Each generates `From<Self> for u32` as `variant_index + 6000`, independently. There is no allocator."
+              },
+              {
+                "id": "d",
+                "label": "Red at the client, not the build: the IDL generator refuses to emit two error tables.",
+                "correct": false,
+                "feedback": "The IDL is a Course-3 deploy-time artifact and it is not what catches this. The collision is already baked into the compiled program before any IDL is written."
+              }
+            ],
+            "explanation": "`#[error_code]` generates `impl From<YourEnum> for u32` as `variant_index + ERROR_CODE_OFFSET`, and `ERROR_CODE_OFFSET` is 6000 for every enum that does not override it. Two enums therefore both start at 6000. The correct move is to add a variant to `VaultError` (one namespace, monotonic numbering); `#[error_code(offset = 7000)]` exists if you genuinely need a second enum, and reaching for it is usually a sign the first option was right. This is the lesson's live example of a green build proving compilation and nothing more."
+          },
+          {
+            "id": "q2",
+            "prompt": "You put `#[account]` on `VaultInfo` instead of `#[derive(Accounts)]`. Which error comes back, and why does it name what it names?",
+            "multiSelect": false,
+            "options": [
+              {
+                "id": "a",
+                "label": "`the trait bound VaultInfo: Bumps is not satisfied` — `Context<T>` requires `Bumps`, which the `Accounts` derive generates and `#[account]` does not.",
+                "correct": true,
+                "feedback": null
+              },
+              {
+                "id": "b",
+                "label": "`error: expected #[derive(Accounts)]` — the macro checks the attribute it was given and names the one it wanted.",
+                "correct": false,
+                "feedback": "Macros expand; they do not audit which attribute you chose. What fails is a later trait-bound check against the code the wrong macro produced, so the message is about a missing trait, not a missing attribute."
+              },
+              {
+                "id": "c",
+                "label": "No error — `#[account]` is a superset of `#[derive(Accounts)]`, so it satisfies `Context<T>` as well.",
+                "correct": false,
+                "feedback": "They are unrelated. `#[account]` describes the bytes stored inside one program-owned account; `#[derive(Accounts)]` describes the list of accounts an instruction may touch, and generates the deserialization and validation."
+              },
+              {
+                "id": "d",
+                "label": "`error[E0425]: cannot find value ID in the crate root`, because `#[account]` expands to an `Owner` impl reading `crate::ID`.",
+                "correct": false,
+                "feedback": "That is a real `#[account]` failure — you met it in Course 2 — but only when `declare_id!` is missing. This file has one, so the build gets past it and fails on the `Bumps` bound instead."
+              }
+            ],
+            "explanation": "`#[account]` goes on a state struct and generates serialization plus the 8-byte type discriminator. `#[derive(Accounts)]` goes on an account list and generates deserialization, every validation check, and the `Bumps` trait that `Context<T>` requires. The error message names the missing trait rather than the missing attribute because the failure lands where the generated code is *used*, not where you wrote the attribute — the same displacement that makes macro errors worth meeting once on purpose."
+          },
+          {
+            "id": "q3",
+            "prompt": "`vault_info` ships. A month later you rename it to `vault_details` and upgrade the program. Which of these are true?",
+            "multiSelect": true,
+            "options": [
+              {
+                "id": "a",
+                "label": "Adding `vault_info` in the first place broke nothing, because an instruction is selected by an 8-byte discriminator derived from its name and existing callers' discriminators still resolve.",
+                "correct": true,
+                "feedback": null
+              },
+              {
+                "id": "b",
+                "label": "The rename is a breaking change for the same reason: the discriminator is derived from the name, so every caller still sending the old one now hits an instruction that no longer exists.",
+                "correct": true,
+                "feedback": null
+              },
+              {
+                "id": "c",
+                "label": "Nobody is told. The upgrade is in place, the program address does not change, and clients discover the break by failing.",
+                "correct": true,
+                "feedback": null
+              },
+              {
+                "id": "d",
+                "label": "Clients that pinned the IDL are safe, since the IDL maps names to discriminators at call time.",
+                "correct": false,
+                "feedback": "A pinned IDL pins the *old* discriminator, which is precisely the one that stopped resolving. Pinning makes the break reproducible, not survivable."
+              }
+            ],
+            "explanation": "Instruction dispatch is by discriminator, and the discriminator is derived from the instruction's name — so adding is additive and renaming or removing is breaking. Solana upgrades happen in place: same address, no notification, no version negotiation. That combination is your entire version-compatibility surface, and it is why `vault_info` is cheap to add today and expensive to rename tomorrow."
+          }
+        ],
+        "prompt": null,
+        "maxWords": null,
+        "amount": null,
+        "network": null,
+        "idl": null
       }
     ]
   },
@@ -2369,7 +2487,7 @@
         "_type": "prose",
         "produces": null,
         "consumes": null,
-        "src": "# Which Rail, and Is It Legal Where You Are\n\n> **Version stamp — checked 2026-07-25.** `@solana/kit@7.0.0` · `@solana/subscriptions@0.4.0` (exact) · `@x402/core`, `@x402/svm`, `@x402/express`, `@x402/fetch` all `2.19.0`. Subscriptions Delegation Program: `De1egAFMkMWZSN5rYXRj9CAdheBamobVNubTsi9avR44`. This course is TypeScript only — no Rust, no local toolchain.\n\nYou finished Course 4 with a deployed app and a published client. It earns nothing.\n\nNothing in it charges anybody. There is no subscription, no metered route, no allowance, no invoice. This module fixes exactly that, and the first decision is not a line of code — it is which payment rail your requirement actually needs, because picking the wrong one costs you a rewrite three lessons later.\n\nThere are three rails worth knowing on Solana today, and one legal boundary that decides whether a requirement is even buildable from Brazil.\n\n## Rail 1 — the Subscriptions Delegation Program\n\nProgram id `De1egAFMkMWZSN5rYXRj9CAdheBamobVNubTsi9avR44`. Audited, shared (you do not deploy it — you call it), live on mainnet since 2026-06-02. It exists because of a limitation in the SPL token model that you will hit the moment you try to build a paid tier by hand:\n\n**A token account can have exactly one approved delegate.**\n\nApprove your subscription contract as the delegate for the user's USDC account and you have burned the only slot. That user can now never hold an allowance for an agent, or a merchant agreement, or a second subscription, on the same mint. The Subscriptions program's answer is a program-controlled **Subscription Authority** PDA per `(user, mint)` pair: the user approves the authority once, and the authority then hands out as many independently-capped delegations as the user wants. One approval, many budgets. That is lesson 3.\n\nOn top of that authority the program offers three models:\n\n| Model                    | Cap behaviour                                              | Use it for                                            |\n| ------------------------ | ---------------------------------------------------------- | ----------------------------------------------------- |\n| **Fixed delegation**     | One capped **total**. Draws down and does not refill.      | An allowance. An agent's budget. A prepaid balance.   |\n| **Recurring delegation** | Cap **resets every period**. Unused periods do not stack.  | Payroll, contractor payouts, a monthly paid tier.     |\n| **Subscription plan**    | Merchant publishes terms; approved pullers collect.        | A published price list many customers subscribe to.   |\n\nYou build a fixed delegation in lesson 3 and a recurring delegation in lesson 4. The fixed delegation from lesson 3 is the same object that becomes your agent's spending cap in lesson 7 — it is not a throwaway exercise.\n\n## Rail 2 — Solana Pay\n\nA human, a QR code, one payment, done. Point-of-sale and checkout. It carries no cap, no schedule and no delegation, because there is nothing to authorise ahead of time: the payer is standing there approving the transfer.\n\n**You will not install it in this course, and that is a deliberate decision, not an omission.**\n\n`@solana/kit@7.0.0` shipped on 2026-06-30. Most of the payments ecosystem has not caught up yet, and the peer ranges are worth reading rather than guessing. Off the published manifests on 2026-07-25:\n\n| Package | Peer range on `@solana/kit` | Admits 7.0.0? |\n| --- | --- | --- |\n| `@x402/svm@2.19.0` | `>=5.1.0` | yes |\n| `@solana/subscriptions@0.4.0` | `^6.4.0` | no |\n| `@solana/pay@1.0.23` | `^6.9.0` | no |\n\nSo the honest position is not \"Solana Pay is broken and the others are fine\". Two of the three rails declare a kit-6 peer, and pinning `@solana/kit@7.0.0` means carrying a **documented peer-dependency override** for the Subscriptions half. We take that override because Subscriptions is load-bearing for this entire module — you cannot build a paid tier without it. We do not take a second one for a rail we only need as a *decision*, especially when `@solana/pay` also peers `@solana-program/token ^0.12.0` against `@x402/svm`'s `^0.9.0` — disjoint ranges, and peers are yours to satisfy.\n\nName the seam. Pin the versions. Write down which override you took and why. That habit is worth more than the rail.\n\nSolana Pay is on your decision map as an **answer**; it is not on your `package.json`.\n\nRead the current reference at `solana.com/docs/payments`. Do **not** use `solana.com/developers/payments` — at time of writing it still quotes USDC statistics dated 1/31/22 and a Shopify integration that has moved on.\n\n## Rail 3 — x402\n\nAn HTTP status code turned into a payment protocol. The client calls your route, the server answers `402 Payment Required` with a machine-readable challenge naming the network, the asset and the address to pay, the client pays and retries with a payment header, the server settles and serves the response. Stateless, per request, no account relationship at all.\n\nThat property is exactly what makes it the agent rail: an autonomous caller with no login and no card can discover a price and satisfy it inside one request cycle. Module 2 is x402 end to end.\n\n## The legal boundary — BCB Resolution 561\n\nIf you are building from Brazil, this is the constraint no English-language Solana course is going to tell you about.\n\n**Banco Central do Brasil Resolution 561** was published 2026-04-30 and takes effect **2026-10-01**. Its practical rule for our purposes:\n\n> A regulated eFX provider may **not** take reais, convert them to USDT / USDC / BTC, and settle the resulting obligation abroad on-chain.\n\nThat closes a specific pattern — using stablecoins as the cross-border settlement leg of a foreign-exchange operation — for regulated operators. It does **not** close crypto in Brazil. Individuals may still buy, sell, hold and transfer through authorised VASPs.\n\nWhat stays open, and what this whole course is scoped to:\n\n- **Domestic merchant acceptance** — a Brazilian business charging a Brazilian customer.\n- **Contractor payouts.**\n- **Subscriptions** — the paid tier you build in this module.\n- **Agent budgets** — the allowance you cap in module 2.\n\nEvery example in this course sits inside that box. If a requirement's settlement leg is a regulated cross-border FX conversion, the correct engineering answer is **not a rail** — it is \"this is out of scope for the entity as regulated,\" and you route it to compliance before you route it to a program id.\n\n**Which is why the compliance check runs first.** A decision function that reaches \"recurring delegation\" and only afterwards asks \"wait, is this allowed?\" has already told a product manager to build the wrong thing. Compliance is a gate, not a fallback branch.\n\n## The worked example\n\nBelow is the full decision map, annotated. Read it, then make exactly one change.\n\nThe function takes a requirement described by three facts and returns a rail name:\n\n| Parameter                 | Values                                                          |\n| ------------------------- | --------------------------------------------------------------- |\n| `cadence`                 | `one-off` · `per-request` · `periodic` · `capped-total`          |\n| `settlement`              | `domestic-br` · `cross-border-fx` · `n-a`                        |\n| `merchantPublishesTerms`  | `true` when the merchant publishes a plan customers subscribe to |\n\nand the rail names it can return:\n\n- `blocked-by-bcb-561` — the compliance stop\n- `solana-pay` — human, one-off, standing there\n- `x402` — priced per request\n- `subscription-plan` — published terms, approved pullers collect\n- `recurring-delegation` — cap resets per period\n- `fixed-delegation` — one capped total, drawn down\n- `unsupported` — a cadence the map does not model; fail loudly rather than guess\n\nThe starter is complete and correct except for one thing: **the compliance guard is at the bottom instead of the top.** Every requirement with `settlement === \"cross-border-fx\"` and a cadence the map understands will be answered with a rail before the guard is ever reached. Move the guard so it runs before any rail is chosen. That is the whole edit.\n",
+        "src": "# Which Rail, and Is It Legal Where You Are\n\n> **Version stamp — checked 2026-07-25.** `@solana/kit@7.0.0` · `@solana/subscriptions@0.4.0` (exact) · `@x402/core`, `@x402/svm`, `@x402/express`, `@x402/fetch` all `2.19.0`. Subscriptions Delegation Program: `De1egAFMkMWZSN5rYXRj9CAdheBamobVNubTsi9avR44`. This course is TypeScript only — no Rust, no local toolchain.\n\nIf you came through Course 4 you finished it with a deployed app and a published client. Either way, the app this course starts from earns nothing.\n\nNothing in it charges anybody. There is no subscription, no metered route, no allowance, no invoice. This module fixes exactly that, and the first decision is not a line of code — it is which payment rail your requirement actually needs, because picking the wrong one costs you a rewrite three lessons later.\n\n## Starting here, with no Course 4 behind you\n\nThis course is a deliberate entry point. If you write TypeScript, have never touched Rust and want the payments material on its own, start here — nothing below needs a program you wrote, and every exercise in this course runs against fixtures rather than against your own deployment.\n\nWhat normally arrives from Course 4 is a pair of artifacts: a **deployed app** and a **published client** for it. Here is what stands in for each:\n\n- **The deployed app** — the frozen devnet reference vault, program `D7ZFoWvEG5NBnkJy6iC98rhwj2qhgq8xhSD42cdTRAQd`, vault PDA `FY86s1fAwUiFQTjVFYprsiV6fwNH7e955MSUBo73FP4j`. Its upgrade authority is revoked, so the address and the byte layout will not move under you. It is the thing you are putting a price on when a lesson says \"your app\".\n- **The published client** — there is no npm package to install, and you do not need one. The IDL is committed at [`onchain-academy/reference-vault/vault_program.idl.json`](https://github.com/solanabr/superteam-academy/blob/main/onchain-academy/reference-vault/vault_program.idl.json), which is everything a generated client is built from; and the exercises in this course exercise the *payment* side — subscription authorities, delegations, x402 challenges — never the vault's own instructions. If you want the typed client anyway, generating it from that IDL is Course 4's lesson 1.\n\nThe rails, the caps, the 402 handshake and the compliance boundary are all the same either way. The one thing the fallback does not do is earn the credential: that still requires **your own** artifact, the app and client you built, not a reference someone else deployed.\n\nThere are three rails worth knowing on Solana today, and one legal boundary that decides whether a requirement is even buildable from Brazil.\n\n## Rail 1 — the Subscriptions Delegation Program\n\nProgram id `De1egAFMkMWZSN5rYXRj9CAdheBamobVNubTsi9avR44`. Audited, shared (you do not deploy it — you call it), live on mainnet since 2026-06-02. It exists because of a limitation in the SPL token model that you will hit the moment you try to build a paid tier by hand:\n\n**A token account can have exactly one approved delegate.**\n\nApprove your subscription contract as the delegate for the user's USDC account and you have burned the only slot. That user can now never hold an allowance for an agent, or a merchant agreement, or a second subscription, on the same mint. The Subscriptions program's answer is a program-controlled **Subscription Authority** PDA per `(user, mint)` pair: the user approves the authority once, and the authority then hands out as many independently-capped delegations as the user wants. One approval, many budgets. That is lesson 3.\n\nOn top of that authority the program offers three models:\n\n| Model                    | Cap behaviour                                              | Use it for                                            |\n| ------------------------ | ---------------------------------------------------------- | ----------------------------------------------------- |\n| **Fixed delegation**     | One capped **total**. Draws down and does not refill.      | An allowance. An agent's budget. A prepaid balance.   |\n| **Recurring delegation** | Cap **resets every period**. Unused periods do not stack.  | Payroll, contractor payouts, a monthly paid tier.     |\n| **Subscription plan**    | Merchant publishes terms; approved pullers collect.        | A published price list many customers subscribe to.   |\n\nYou build a fixed delegation in lesson 3 and a recurring delegation in lesson 4. The fixed delegation from lesson 3 is the same object that becomes your agent's spending cap in lesson 7 — it is not a throwaway exercise.\n\n## Rail 2 — Solana Pay\n\nA human, a QR code, one payment, done. Point-of-sale and checkout. It carries no cap, no schedule and no delegation, because there is nothing to authorise ahead of time: the payer is standing there approving the transfer.\n\n**You will not install it in this course, and that is a deliberate decision, not an omission.**\n\n`@solana/kit@7.0.0` shipped on 2026-06-30. Most of the payments ecosystem has not caught up yet, and the peer ranges are worth reading rather than guessing. Off the published manifests on 2026-07-25:\n\n| Package | Peer range on `@solana/kit` | Admits 7.0.0? |\n| --- | --- | --- |\n| `@x402/svm@2.19.0` | `>=5.1.0` | yes |\n| `@solana/subscriptions@0.4.0` | `^6.4.0` | no |\n| `@solana/pay@1.0.23` | `^6.9.0` | no |\n\nSo the honest position is not \"Solana Pay is broken and the others are fine\". Two of the three rails declare a kit-6 peer, and pinning `@solana/kit@7.0.0` means carrying a **documented peer-dependency override** for the Subscriptions half. We take that override because Subscriptions is load-bearing for this entire module — you cannot build a paid tier without it. We do not take a second one for a rail we only need as a *decision*, especially when `@solana/pay` also peers `@solana-program/token ^0.12.0` against `@x402/svm`'s `^0.9.0` — disjoint ranges, and peers are yours to satisfy.\n\nName the seam. Pin the versions. Write down which override you took and why. That habit is worth more than the rail.\n\nSolana Pay is on your decision map as an **answer**; it is not on your `package.json`.\n\nRead the current reference at `solana.com/docs/payments`. Do **not** use `solana.com/developers/payments` — as of 2026-07 it still quotes USDC statistics dated 1/31/22 and a Shopify integration that has moved on.\n\n## Rail 3 — x402\n\nAn HTTP status code turned into a payment protocol. The client calls your route, the server answers `402 Payment Required` with a machine-readable challenge naming the network, the asset and the address to pay, the client pays and retries with a payment header, the server settles and serves the response. Stateless, per request, no account relationship at all.\n\nThat property is exactly what makes it the agent rail: an autonomous caller with no login and no card can discover a price and satisfy it inside one request cycle. Module 2 is x402 end to end.\n\n## The legal boundary — BCB Resolution 561\n\nIf you are building from Brazil, this is the constraint no English-language Solana course is going to tell you about.\n\n**Banco Central do Brasil Resolution 561** was published 2026-04-30 and takes effect **2026-10-01**. Its practical rule for our purposes:\n\n> A regulated eFX provider may **not** take reais, convert them to USDT / USDC / BTC, and settle the resulting obligation abroad on-chain.\n\nThat closes a specific pattern — using stablecoins as the cross-border settlement leg of a foreign-exchange operation — for regulated operators. It does **not** close crypto in Brazil. Individuals may still buy, sell, hold and transfer through authorised VASPs.\n\nWhat stays open, and what this whole course is scoped to:\n\n- **Domestic merchant acceptance** — a Brazilian business charging a Brazilian customer.\n- **Contractor payouts.**\n- **Subscriptions** — the paid tier you build in this module.\n- **Agent budgets** — the allowance you cap in module 2.\n\nEvery example in this course sits inside that box. If a requirement's settlement leg is a regulated cross-border FX conversion, the correct engineering answer is **not a rail** — it is \"this is out of scope for the entity as regulated,\" and you route it to compliance before you route it to a program id.\n\n**Which is why the compliance check runs first.** A decision function that reaches \"recurring delegation\" and only afterwards asks \"wait, is this allowed?\" has already told a product manager to build the wrong thing. Compliance is a gate, not a fallback branch.\n\n## The worked example\n\nBelow is the full decision map, annotated. Read it, then make exactly one change.\n\nThe function takes a requirement described by three facts and returns a rail name:\n\n| Parameter                 | Values                                                          |\n| ------------------------- | --------------------------------------------------------------- |\n| `cadence`                 | `one-off` · `per-request` · `periodic` · `capped-total`          |\n| `settlement`              | `domestic-br` · `cross-border-fx` · `n-a`                        |\n| `merchantPublishesTerms`  | `true` when the merchant publishes a plan customers subscribe to |\n\nand the rail names it can return:\n\n- `blocked-by-bcb-561` — the compliance stop\n- `solana-pay` — human, one-off, standing there\n- `x402` — priced per request\n- `subscription-plan` — published terms, approved pullers collect\n- `recurring-delegation` — cap resets per period\n- `fixed-delegation` — one capped total, drawn down\n- `unsupported` — a cadence the map does not model; fail loudly rather than guess\n\nThe starter is complete and correct except for one thing: **the compliance guard is at the bottom instead of the top.** Every requirement with `settlement === \"cross-border-fx\"` and a cadence the map understands will be answered with a rail before the guard is ever reached. Move the guard so it runs before any rail is chosen. That is the whole edit.\n",
         "url": null,
         "language": null,
         "buildType": null,
@@ -4538,7 +4656,7 @@
         "_type": "prose",
         "produces": null,
         "consumes": null,
-        "src": "# Submit It — and What You Built\n\nOne artifact. Five courses. Name every layer of it.\n\n## The through-line\n\nNothing you built restarted. Each course added a layer to the same object.\n\n**Course 1 — you signed something.** Your own transaction, built and sent from your own key, confirmed on devnet, and an account inspector that reads state back off the chain rather than off a screenshot. The first time the chain answered you specifically.\n\n**Course 2 — the vault got a core.** Rust that models the vault's state and its rules, compiled green against the real toolchain on the build server. No local install, no version roulette.\n\n**Course 3 — your program went live.** Deposit and withdraw, hardened, deployed to devnet. You own a program id, and a credential NFT that says you do.\n\n**Course 4 — it became something other people can use.** A typed client generated from your own IDL, wrapped in an API you would actually import, published to npm with a semver policy you wrote down — and a deployed app at a public URL that installs that package from the registry and signs a real deposit through it.\n\n**Course 5 — it started earning.** A Subscription Authority and a Recurring Delegation gave the app a paid tier that charges once per period and correctly refuses to charge twice. An x402 route returns a real 402 challenge naming the network, the asset and the payTo address. An agent calls that route on a loop, pays for each call out of a Fixed Delegation, and halts cleanly when the allowance says no.\n\nSay the sentence out loud, because it is true and you will need it in a proposal:\n\n> You started as a web2 JavaScript developer, and you now own a monetized on-chain product.\n\nIf you entered here — at C5 lesson 1, on the reference app, because you wanted payments and not Anchor — the same sentence applies to the payments layer you built. The credential still requires your own artifact, not the reference one.\n\n## What is in scope, and what is not\n\nThe rails you learned are the ones open to you. From 2026-10-01, BCB Resolution 561 forbids a regulated eFX provider from taking reais, converting to a stablecoin, and settling the obligation abroad on-chain. That is a live constraint on a business model, not on you personally: individuals may still buy, sell, hold and transfer through authorized VASPs.\n\nWhat this course built sits entirely inside what the resolution leaves open: **domestic merchant acceptance, contractor payouts, subscriptions, and agent budgets.** Every one of those is a real product surface, and every one of them is something an Earn listing has asked for. When you write a proposal, name the use case in those terms — a reviewer in Brazil reads the difference immediately, and it is a signal that you understand the market and not just the SDK.\n\n## Pick a rail before you pick a package\n\nThe decision you now make without looking it up:\n\n- **Fixed delegation** — a capped total that never refills. An allowance. This is what an autonomous agent holds, because the on-chain cap is what makes the autonomy safe.\n- **Recurring delegation** — a cap that resets each period. Payroll, contractors, subscriptions. Skipped periods are lost.\n- **Subscription plan** — a merchant publishes terms and approved pullers collect against them.\n- **Solana Pay** — a human paying once, at a checkout. A decision, not an install: `@solana/pay@1.0.23` peer-depends on `@solana/kit ^6.9.0`, which does not admit the `@solana/kit@7.0.0` this course pins everywhere else.\n- **x402** — stateless per-request metering. No delegation, no relationship, one call.\n\nThat list is the most portable thing you learned. Packages will move; the shape of the requirement will not.\n\n## Submit one listing\n\nNow the part most people skip.\n\n**The calibration, honestly.** What this path realistically opens is **your first $500 to $5,000** of paid on-chain work. It is not a job offer, and anyone telling you a course makes you hireable as a Solana developer is selling something. The $5,000 frontend listing drew 731 submissions. The odds live somewhere else.\n\n**Where they live.** Two termini this course specifically unlocks:\n\n1. **Payments technical demos** — around $100 of reward per competitor, second only to Rust listings on that measure. You have a metered endpoint and a paid tier already running.\n2. **Educational modules** — $2,500–$3,000, typically closing near 10 submissions. Your deep dive from the last lesson is most of one.\n\n**How to read a listing, which is a skill in itself.** Competition is a function of **time-to-deadline**, not of category. The Zeroclaw listing sat at twelve submissions or fewer for most of its run and closed at 52 as the deadline approached. A submission count you read today tells you where that listing is in its life, not how contested it is. So: **never quote a single-day count as a competition rate.** Filter for **newly-opened development listings** and compare medians across listings that have actually closed.\n\n**Then submit.** One listing, this week, with a real artifact attached. Not a plan to submit. The bar is lower than it looks — most listings are decided among a handful of complete, reproducible submissions, and you now have the two things most submissions lack: something that runs, and a write-up that says which versions it ran against.\n\n## One more door\n\nTurbin3 runs cohort-based Solana builder programs, and its prerequisites are the kind of thing C1–C4 already satisfy: your own deployed program, a published client, a deployed app. If you want structure and a cohort after this, that is where to look. Bring the program id and the package URL.\n\nThat is the course. Submit the listing.\n",
+        "src": "# Submit It — and What You Built\n\nOne artifact. Five courses. Name every layer of it.\n\n## The through-line\n\nNothing you built restarted. Each course added a layer to the same object.\n\n**Course 1 — you signed something.** Your own transaction, built and sent from your own key, confirmed on devnet, and an account inspector that reads state back off the chain rather than off a screenshot. The first time the chain answered you specifically.\n\n**Course 2 — the vault got a core.** Rust that models the vault's state and its rules, compiled green against the real toolchain on the build server. No local install, no version roulette.\n\n**Course 3 — your program went live.** Deposit and withdraw, hardened, deployed to devnet. You own a program id, and a credential NFT that says you do.\n\n**Course 4 — it became something other people can use.** A typed client generated from your own IDL, wrapped in an API you would actually import, published to npm with a semver policy you wrote down — and a deployed app at a public URL that installs that package from the registry and signs a real deposit through it.\n\n**Course 5 — it started earning.** A Subscription Authority and a Recurring Delegation gave the app a paid tier that charges once per period and correctly refuses to charge twice. An x402 route returns a real 402 challenge naming the network, the asset and the payTo address. An agent calls that route on a loop, pays for each call out of a Fixed Delegation, and halts cleanly when the allowance says no.\n\nSay the sentence out loud, because it is true and you will need it in a proposal:\n\n> You started as a web2 JavaScript developer, and you now own a monetized on-chain product.\n\nIf you entered here — at C5 lesson 1, on the reference app, because you wanted payments and not Anchor — the same sentence applies to the payments layer you built. The credential still requires your own artifact, not the reference one.\n\n## What is in scope, and what is not\n\nThe rails you learned are the ones open to you. From 2026-10-01, BCB Resolution 561 forbids a regulated eFX provider from taking reais, converting to a stablecoin, and settling the obligation abroad on-chain. That is a live constraint on a business model, not on you personally: individuals may still buy, sell, hold and transfer through authorized VASPs.\n\nWhat this course built sits entirely inside what the resolution leaves open: **domestic merchant acceptance, contractor payouts, subscriptions, and agent budgets.** Every one of those is a real product surface, and every one of them is something an Earn listing has asked for. When you write a proposal, name the use case in those terms — a reviewer in Brazil reads the difference immediately, and it is a signal that you understand the market and not just the SDK.\n\n## Pick a rail before you pick a package\n\nThe decision you now make without looking it up:\n\n- **Fixed delegation** — a capped total that never refills. An allowance. This is what an autonomous agent holds, because the on-chain cap is what makes the autonomy safe.\n- **Recurring delegation** — a cap that resets each period. Payroll, contractors, subscriptions. Skipped periods are lost.\n- **Subscription plan** — a merchant publishes terms and approved pullers collect against them.\n- **Solana Pay** — a human paying once, at a checkout. A decision, not an install: `@solana/pay@1.0.23` peer-depends on `@solana/kit ^6.9.0`, which does not admit the `@solana/kit@7.0.0` this course pins everywhere else.\n- **x402** — stateless per-request metering. No delegation, no relationship, one call.\n\nThat list is the most portable thing you learned. Packages will move; the shape of the requirement will not.\n\n## Submit one listing\n\nNow the part most people skip.\n\n**The calibration, honestly.** What this path realistically opens is **your first $500 to $5,000** of paid on-chain work. It is not a job offer, and anyone telling you a course makes you hireable as a Solana developer is selling something. The $5,000 frontend listing drew 731 submissions. The odds live somewhere else.\n\n**Where they live.** Two termini this course specifically unlocks:\n\n1. **Payments technical demos** — the two Superteam Canada listings paid $2,750 each and drew 44 submissions (the code sample) and 31 (the deep dive): **$62.5 and $88.7 of reward per competitor**, second only to Rust listings on that measure. You have a metered endpoint and a paid tier already running.\n2. **Educational modules** — $2,500–$3,000, typically closing near 10 submissions. Your deep dive from the last lesson is most of one.\n\n**How to read a listing, which is a skill in itself.** Competition is a function of **time-to-deadline**, not of category. The Zeroclaw listing sat at twelve submissions or fewer for most of its run and closed at 52 as the deadline approached. A submission count you read today tells you where that listing is in its life, not how contested it is. So: **never quote a single-day count as a competition rate.** Filter for **newly-opened development listings** and compare medians across listings that have actually closed.\n\n**Then submit.** One listing, this week, with a real artifact attached. Not a plan to submit. The bar is lower than it looks — most listings are decided among a handful of complete, reproducible submissions, and you now have the two things most submissions lack: something that runs, and a write-up that says which versions it ran against.\n\n## One more door\n\nTurbin3 runs cohort-based Solana builder programs, and its prerequisites are the kind of thing C1–C4 already satisfy: your own deployed program, a published client, a deployed app. If you want structure and a cohort after this, that is where to look. Bring the program id and the package URL.\n\nThat is the course. Submit the listing.\n",
         "url": null,
         "language": null,
         "buildType": null,
@@ -8142,6 +8260,582 @@
               }
             ],
             "explanation": "Exhaustiveness is the one property in this course the compiler genuinely verifies, and a wildcard is what you trade it away for. Two match sites with no wildcard gave you a to-do list in lesson 11; the same thing happens across a course boundary here."
+          },
+          {
+            "id": "q8",
+            "prompt": "You index a byte slice with a `u64` you already have in hand: `data[offset]` where `offset: u64`. On the SBF target `usize` is also 8 bytes wide. Predict the build.",
+            "multiSelect": false,
+            "options": [
+              {
+                "id": "a",
+                "label": "Red, `E0308` — indexing wants `usize`, and Rust performs no implicit numeric conversion, not even between two types of identical width. You write `offset as usize`, or take the parameter as `usize` in the first place.",
+                "correct": true,
+                "feedback": null
+              },
+              {
+                "id": "b",
+                "label": "Green — on this target `usize` and `u64` are 64 bits, so they are the same type.",
+                "correct": false,
+                "feedback": "Same width, different types. That equal width is exactly why treating them as interchangeable is a habit that survives here and breaks the first time something is not 64-bit."
+              },
+              {
+                "id": "c",
+                "label": "Green, with a warning about a lossy conversion.",
+                "correct": false,
+                "feedback": "No conversion is attempted, so there is nothing to warn about. Rust converts nothing for you — not even the lossless direction."
+              },
+              {
+                "id": "d",
+                "label": "Red in a debug build only; a release build coerces numeric types.",
+                "correct": false,
+                "feedback": "No profile makes Rust insert a numeric conversion. The one arithmetic behaviour the profile controls is `overflow-checks`, and that changes what happens at run time, not what typechecks."
+              }
+            ],
+            "explanation": "\"Rust converts nothing for you\" is the rule with the widest reach in lesson 2, and `usize` is where it bites people who have already internalised it for `u8` → `u64`. `usize` is the index type; on SBF it happens to be 8 bytes, which makes the conflation invisible until it isn't."
+          },
+          {
+            "id": "q9",
+            "prompt": "`fn min_balance(a: u64, b: u64) -> u64 { if a < b { a; } else { b; } }` — predict the exact shape of the failure.",
+            "multiSelect": false,
+            "options": [
+              {
+                "id": "a",
+                "label": "`E0308`, reported twice — once per arm. A semicolon discards the value, so `{ a; }` evaluates to `()` while the signature promises `u64`, and the `help:` says \"remove this semicolon to return this value\".",
+                "correct": true,
+                "feedback": null
+              },
+              {
+                "id": "b",
+                "label": "`E0308` once, at the function's closing brace, since that is where the missing value shows up.",
+                "correct": false,
+                "feedback": "The compiler checks each arm against the expectation the return type created, so it reports per arm and puts the caret on the discarded expression — which is what makes the `help:` actionable."
+              },
+              {
+                "id": "c",
+                "label": "Green — a trailing semicolon inside a block is a style choice.",
+                "correct": false,
+                "feedback": "It is the whole rule, not a style: `{ a }` is `a`, `{ a; }` is `()`. A semicolon turns an expression into a statement whose value is nothing useful."
+              },
+              {
+                "id": "d",
+                "label": "Red with `E0004`, non-exhaustive patterns — the `if` does not cover every case.",
+                "correct": false,
+                "feedback": "An `if`/`else` covers both branches by construction, and `E0004` is a `match`-arm coverage error. There is no `match` here."
+              }
+            ],
+            "explanation": "`if` is an expression in Rust — which is why the language has no ternary — and a function's value is its tail expression, the last one with no semicolon. Both facts collapse into one character, and this is the error JavaScript developers hit in their first week."
+          },
+          {
+            "id": "q10",
+            "prompt": "Lesson 1's whole file was `pub fn vault_core_banner() -> Result<()> { msg!(…); Ok(()) }`. Which of these are true?",
+            "multiSelect": true,
+            "options": [
+              {
+                "id": "a",
+                "label": "`()` is the unit type — a real type with exactly one value — which is why it can be put inside `Ok(...)` like anything else.",
+                "correct": true,
+                "feedback": null
+              },
+              {
+                "id": "b",
+                "label": "`Ok(())` carries no semicolon because it is the function's tail expression: the value the function evaluates to.",
+                "correct": true,
+                "feedback": null
+              },
+              {
+                "id": "c",
+                "label": "A Solana program signals failure by returning an `Err`, not by unwinding. There is no `throw`; failure is a value you return.",
+                "correct": true,
+                "feedback": null
+              },
+              {
+                "id": "d",
+                "label": "`()` is Rust's `null`, so `Ok(())` is how you say \"nothing was found\".",
+                "correct": false,
+                "feedback": "`()` is \"no meaningful value\", not \"absence of a value\". Absence is `Option::None` — a different type, with a different job, and the compiler will not let you confuse them. That is lesson 4."
+              }
+            ],
+            "explanation": "Three of Rust's smallest facts, all visible in an eight-line file: everything is an expression, nothing is in scope you did not import, and errors are values. The last one is why `Result<()>` is a program's standard return shape and why `.unwrap()` never appears in this course's code."
+          },
+          {
+            "id": "q11",
+            "prompt": "`let new_balance = balance - amount;` with `balance = 5` and `amount = 7`, compiled by *this* course's build server. What happens, and what does the caller see?",
+            "multiSelect": false,
+            "options": [
+              {
+                "id": "a",
+                "label": "It panics — the build crate sets `overflow-checks = true` in `[profile.release]`. The instruction aborts with no error code and no message, so the caller cannot tell \"you asked for too much\" from \"the program has a bug\".",
+                "correct": true,
+                "feedback": null
+              },
+              {
+                "id": "b",
+                "label": "It wraps to 18 446 744 073 709 551 614 and the vault believes it holds eighteen quintillion lamports.",
+                "correct": false,
+                "feedback": "That is a release build with overflow checks **off**. This crate turns them on, which converts a silent corruption into a loud crash — strictly better, and still not an error you can return."
+              },
+              {
+                "id": "c",
+                "label": "It returns `None`, which is why the caller has to handle the failure before touching a number.",
+                "correct": false,
+                "feedback": "Only `checked_sub` returns `None`. Plain `-` has type `u64`; there is no `None` for it to hand back."
+              },
+              {
+                "id": "d",
+                "label": "It saturates at 0, since `u64` is unsigned.",
+                "correct": false,
+                "feedback": "`saturating_sub` does that, and you have to ask for it by name. Nothing in Rust saturates by default."
+              }
+            ],
+            "explanation": "Three answers depending on how the program was compiled — panic, wrap, or `None` — and only the third is a value you can return. That the profile flag saves you here is exactly the trap: code whose correctness depends on a `[profile.release]` setting is one `Cargo.toml` edit away from being wrong."
+          },
+          {
+            "id": "q12",
+            "prompt": "Lesson 4's `sub_lamports` is a `const fn` and uses `match`, not `?`. Why was `?` unavailable, and what would `.unwrap()` have done there?",
+            "multiSelect": false,
+            "options": [
+              {
+                "id": "a",
+                "label": "`?` desugars to calls into the `Try` machinery, which are not `const fn` — you get `E0015`. And a `.unwrap()` on `None` reached during const evaluation fails the *build*, not the program: it fails at your keyboard.",
+                "correct": true,
+                "feedback": null
+              },
+              {
+                "id": "b",
+                "label": "`?` only works on `Result`, never on `Option`.",
+                "correct": false,
+                "feedback": "`?` works on `Option` too — it returns `None` early. The constraint here is const-evaluation, not the type."
+              },
+              {
+                "id": "c",
+                "label": "`?` needs a declared error type, which `Option` has no equivalent of; `.unwrap()` would have panicked on-chain at run time.",
+                "correct": false,
+                "feedback": "The run-time half is the mistake. This function is called from a `const _: () = assert!(…)`, so it is evaluated while the file compiles — a panic there is a compile error."
+              },
+              {
+                "id": "d",
+                "label": "Nothing prevented `?`; `match` was a style choice the lesson spec made.",
+                "correct": false,
+                "feedback": "`E0015` is a hard error: \"`?` is not allowed on `Option<u64>` in constant functions\". The spec said `match` because `?` does not compile there."
+              }
+            ],
+            "explanation": "`Option<u64>` and `u64` are different types, so the `None` case cannot be deferred to run time the way a null dereference can. `const fn` is what turned that into a *graded* property: ten `const _: () = assert!` lines make a `sub_lamports` that quietly calls `checked_add` go red, which a compile-only grader could not otherwise catch."
+          },
+          {
+            "id": "q13",
+            "prompt": "Bug 4 in lesson 7 returned `&owned[..8]`, where `owned` is a `Vec<u8>` created inside the function. Predict the error and the fix.",
+            "multiSelect": false,
+            "options": [
+              {
+                "id": "a",
+                "label": "`E0515` — `owned` is dropped when the function returns, so the reference would point at freed memory. Every returned reference has to borrow from something that outlives the call: a parameter does, a local does not.",
+                "correct": true,
+                "feedback": null
+              },
+              {
+                "id": "b",
+                "label": "`E0106`, missing lifetime specifier — the signature does not say which input the return borrows from.",
+                "correct": false,
+                "feedback": "That is the *next* lesson's error, and it needs two input references. Here there is one candidate and elision already filled it in; the problem is that the data is local, not that it is ambiguous."
+              },
+              {
+                "id": "c",
+                "label": "Green — `&[u8]` is just an address plus a length, 16 bytes, so returning it copies the view out and nothing dangles.",
+                "correct": false,
+                "feedback": "Copying the view copies the address. The buffer it points into is still dropped at the closing brace, which is the entire failure."
+              },
+              {
+                "id": "d",
+                "label": "Green — `Vec<u8>` allocates on the heap, so its buffer survives the stack frame.",
+                "correct": false,
+                "feedback": "The heap buffer is *owned* by the `Vec`, and dropping the `Vec` frees it. Ownership decides when a value dies, not where it lives."
+              }
+            ],
+            "explanation": "`Vec<u8>` owns its buffer; `&[u8]` looks at one. That distinction is the whole of bug 4, and the question it forces — *which* input does the returned reference borrow from? — is the question lifetime annotations exist to answer."
+          },
+          {
+            "id": "q14",
+            "prompt": "`E0502`, from lesson 7: `let before = &v.balance;` then `credit(v, shortfall);` then `*before`. The caret is on the mutable borrow. What is actually wrong, and what is the fix?",
+            "multiSelect": false,
+            "options": [
+              {
+                "id": "a",
+                "label": "The third span is the problem — the shared borrow is *used again afterwards*, which is what keeps it alive across the mutation. Take the `u64` by value instead; it is `Copy`, and a copied number cannot conflict with anything.",
+                "correct": true,
+                "feedback": null
+              },
+              {
+                "id": "b",
+                "label": "The mutable borrow is too early; move `credit(v, …)` below the final use of `before`.",
+                "correct": false,
+                "feedback": "Later is not the axis — overlap is. Reordering without dropping the shared borrow's last use just relocates the same overlap."
+              },
+              {
+                "id": "c",
+                "label": "Wrap `v` in a `RefCell` so the two borrows are checked at run time instead of at compile time.",
+                "correct": false,
+                "feedback": "That trades a compile error for a run-time panic, and the lesson warns about it by name: if you have talked yourself into a `RefCell`, re-read the error first."
+              },
+              {
+                "id": "d",
+                "label": "Split `balance` and `bump` into separate variables — two mutable borrows of one struct are never allowed.",
+                "correct": false,
+                "feedback": "Two mutable borrows of *different fields* coexist happily; the checker tracks each field as its own place. The error that is about the same place twice is `E0499`, and this is not it."
+              }
+            ],
+            "explanation": "Borrow errors name three spans and the last one usually carries the fix. The mutable borrow gets the caret because that is where the rule was violated, but what created the violation is the shared borrow still being live — so the move is to stop holding it, not to reshuffle the mutation."
+          },
+          {
+            "id": "q15",
+            "prompt": "`E0382: use of moved value: vault` — `consume_and_log(vault);` then `vault.balance`. Which reading leads to the right fix?",
+            "multiSelect": false,
+            "options": [
+              {
+                "id": "a",
+                "label": "The dashes mark where you lost the value, the caret where you used it afterwards. The question is never \"how do I get it back\" but \"did that function need to own it at all?\" — usually not, and the fix is a borrow.",
+                "correct": true,
+                "feedback": null
+              },
+              {
+                "id": "b",
+                "label": "Reassign `vault` after the call so the binding is valid again.",
+                "correct": false,
+                "feedback": "You would be binding a different value. The compiler's objection is not that the name is empty; it is that the value it named now belongs to someone else."
+              },
+              {
+                "id": "c",
+                "label": "`#[derive(Clone)]` and clone at the call site — the canonical fix.",
+                "correct": false,
+                "feedback": "It compiles, and it is the fallback rather than the first move. Clone when the callee genuinely needs ownership; a `&` costs nothing and is usually what was meant."
+              },
+              {
+                "id": "d",
+                "label": "It would not happen if `VaultState`'s fields were `pub`.",
+                "correct": false,
+                "feedback": "Visibility controls who can *name* a field, never who owns the value — the same distinction as `pub` versus `mut` in lesson 2."
+              }
+            ],
+            "explanation": "In JavaScript `const b = a` gives two names for one object; in Rust it gives one owner and one dead name. Reading `E0382` bottom-up — used here, lost there — turns it from an arbitrary rejection into a question about the callee's signature, which is where the fix lives."
+          },
+          {
+            "id": "q16",
+            "prompt": "Lesson 13 writes `mod vault { … }` inline rather than putting it in a `vault.rs`. What in the crate forces that?",
+            "multiSelect": false,
+            "options": [
+              {
+                "id": "a",
+                "label": "The manifest says `path = \"src/lib.rs\"`, and the editor's file *is* `src/lib.rs` — one starter, one file, one crate. `mod vault;` would send the compiler looking for `src/vault.rs`, which does not exist.",
+                "correct": true,
+                "feedback": null
+              },
+              {
+                "id": "b",
+                "label": "Anchor requires every program module to be inline.",
+                "correct": false,
+                "feedback": "It does not; real Anchor programs are split across files freely. The constraint is this platform's one-file submission, not the framework."
+              },
+              {
+                "id": "c",
+                "label": "Only inline modules can be `pub`.",
+                "correct": false,
+                "feedback": "Both kinds can be `pub`. `mod x;` and `mod x { }` differ in where the source lives, not in visibility."
+              },
+              {
+                "id": "d",
+                "label": "`crate-type = [\"cdylib\", \"lib\"]` disallows file modules.",
+                "correct": false,
+                "feedback": "`crate-type` picks the output artifacts — the shared object the chain loads, plus an ordinary Rust library that something could import. It says nothing about where modules live."
+              }
+            ],
+            "explanation": "The `Cargo.toml` you never see decides what your code is allowed to say. Reading it once explains the inline module, the `overflow-checks` behaviour of lesson 4, the edition ceiling, and why `borsh = \"1.5.7\"` compiles as 1.8.0."
+          },
+          {
+            "id": "q17",
+            "prompt": "`#[derive(InitSpace)]` computes `INIT_SPACE` from the field types. Which of these are true?",
+            "multiSelect": true,
+            "options": [
+              {
+                "id": "a",
+                "label": "A `String` capped at 16 characters costs `4 + 16 = 20` bytes — the borsh length prefix is 4 bytes, not 1 and not zero. Forgetting it is the classic under-allocation.",
+                "correct": true,
+                "feedback": null
+              },
+              {
+                "id": "b",
+                "label": "`Option<T>` costs a 1-byte present/absent tag *plus* the size of `T`, even when the value is `None` — borsh writes a fixed layout, with no \"absent field\" on the wire.",
+                "correct": true,
+                "feedback": null
+              },
+              {
+                "id": "c",
+                "label": "`INIT_SPACE` is 41 for `VaultState` and excludes the 8-byte discriminator, which is why allocation is written `space = 8 + VaultState::INIT_SPACE`.",
+                "correct": true,
+                "feedback": null
+              },
+              {
+                "id": "d",
+                "label": "A `String` with no `max_len` gets a sensible default so the derive can still compute a size.",
+                "correct": false,
+                "feedback": "`InitSpace` refuses to guess — `error: Expected max_len attribute.` A `String` has no size until you name one, and an account has to have a size. Refusing is the correct behaviour."
+              }
+            ],
+            "explanation": "Borsh encodes fields back to back, little-endian, with no padding and no field names on the wire — so the struct *is* the layout, and the derive is doing arithmetic you could do by hand. The `8 +` is on you every single time; hardcoding the total instead of deriving it from the const is what under-allocates."
+          },
+          {
+            "id": "q18",
+            "prompt": "Why is unchecked arithmetic an *exploit* class in on-chain programs rather than a robustness nit — and where does `.unwrap()` sit in the same argument?",
+            "multiSelect": false,
+            "options": [
+              {
+                "id": "a",
+                "label": "Because with overflow checks off a release build wraps **silently** — no panic, no log, no signal of any kind — so the program acts on a wrong balance and the next line commits it. `.unwrap()` is banned for the mirror reason: it turns a case you could have returned into an abort the caller cannot read.",
+                "correct": true,
+                "feedback": null
+              },
+              {
+                "id": "b",
+                "label": "Because the overflow is a lint the attacker suppresses with an `#[allow]` attribute.",
+                "correct": false,
+                "feedback": "There is no lint to suppress. Wrapping is *defined* release behaviour, which is precisely what makes it silent and what makes it exploitable."
+              },
+              {
+                "id": "c",
+                "label": "It is not one — `overflow-checks = true` in the build profile closes it.",
+                "correct": false,
+                "feedback": "That flag converts silent corruption into a loud crash, which is strictly better and still not an error you can return. It is also a property of the profile rather than of your code."
+              },
+              {
+                "id": "d",
+                "label": "Because `u64` underflow is undefined behaviour in Rust, as it is in C.",
+                "correct": false,
+                "feedback": "Rust defines both outcomes: panic with checks on, two's-complement wrap with them off. Defined and wrong is the point — undefined it is not."
+              }
+            ],
+            "explanation": "`checked_sub` + `ok_or` is the only shape that produces something a client can act on: a code and a `#[msg]` string you wrote. A panic tells the caller that something went wrong; the checked path tells them what. That is lesson 4's argument, restated at the manifest level in lesson 13 and enforced by your own `VaultError` variants."
+          },
+          {
+            "id": "q19",
+            "prompt": "Your build comes back with nine errors. Which of these are true about how to read them?",
+            "multiSelect": true,
+            "options": [
+              {
+                "id": "a",
+                "label": "Fix the **first** error and rebuild. One real mistake often produces a wall, because everything downstream is being checked against a type the compiler had to guess at.",
+                "correct": true,
+                "feedback": null
+              },
+              {
+                "id": "b",
+                "label": "\"expected … found …\" reads in that order: expected is what the surrounding code demands, found is what you gave it.",
+                "correct": true,
+                "feedback": null
+              },
+              {
+                "id": "c",
+                "label": "The numbered code — `E0308` — is stable and documented, with a page and a minimal example per code. Search the code, not the message.",
+                "correct": true,
+                "feedback": null
+              },
+              {
+                "id": "d",
+                "label": "`rustc` stops at the first error the way a JavaScript runtime stops at the first exception, so one build can only ever reveal one bug.",
+                "correct": false,
+                "feedback": "The opposite: `rustc` keeps going and reports every *independent* error in one pass. Four unrelated mistakes give four errors in one build — one round-trip per batch of work, not one per bug."
+              }
+            ],
+            "explanation": "Both halves are true at once, which is what makes the reading rule non-obvious: the compiler reports independent errors in parallel, and *dependent* ones cascade from a single cause. Fixing the first and rebuilding is how you tell the two apart cheaply."
+          },
+          {
+            "id": "q20",
+            "prompt": "A file compiles green and contains `warning: unreachable pattern`. What do you see, and what does the green tell you?",
+            "multiSelect": false,
+            "options": [
+              {
+                "id": "a",
+                "label": "Nothing — the runner reports success and discards the log, so a green file with warnings is indistinguishable from one with none. And green means it compiled against the real Anchor toolchain: more than a linter can say, and one bit.",
+                "correct": true,
+                "feedback": null
+              },
+              {
+                "id": "b",
+                "label": "The warnings, without the error output — warnings always print, they just do not fail the build.",
+                "correct": false,
+                "feedback": "They do not fail the build, and on this platform you never see them on a pass. Read \"this only produces a warning\" as \"nothing here will tell you\"."
+              },
+              {
+                "id": "c",
+                "label": "Nothing by default, but you can raise the log level in the editor to surface warnings on a passing build.",
+                "correct": false,
+                "feedback": "There is no such control. It is a real limitation of the platform, worth knowing rather than working around."
+              },
+              {
+                "id": "d",
+                "label": "Nothing, and that is fine: a green build against the pinned toolchain does prove the file is correct.",
+                "correct": false,
+                "feedback": "It proves the file *compiled*. Lesson 4's `const _: () = assert!` lines exist precisely because compiling is not correctness — a `sub_lamports` that calls `checked_add` compiles perfectly."
+              }
+            ],
+            "explanation": "The build log is the **failure** interface: a failing build hands you the compiler's whole output, a passing one hands you a line and a build id. Everything you know about debugging here follows from that one platform fact, including why `unreachable_patterns` — one of Rust's highest-value warnings — is invisible to you on a pass."
+          },
+          {
+            "id": "q21",
+            "prompt": "Your first build took 70 seconds; the next one came back in three. What was the first one doing, and what does \"compiled for SBF\" mean here?",
+            "multiSelect": false,
+            "options": [
+              {
+                "id": "a",
+                "label": "Compiling Anchor and its whole dependency tree, not your eight lines — later builds reuse that work. SBF is the bytecode format validators execute, which is why nothing is installed on your machine and no `.so` is uploaded from it.",
+                "correct": true,
+                "feedback": null
+              },
+              {
+                "id": "b",
+                "label": "Provisioning a fresh container per build; SBF is the name of the build server's queue.",
+                "correct": false,
+                "feedback": "SBF is Solana's bytecode target — `cargo-build-sbf` is the command that produces it. The first-build cost is a cold dependency cache."
+              },
+              {
+                "id": "c",
+                "label": "Running your program's tests; SBF is a packaging step after compilation.",
+                "correct": false,
+                "feedback": "Nothing runs your code. Grading on the Rust path is a compilation check, which is exactly why lessons 4 and 8 smuggle behaviour checks in as compile-time assertions."
+              },
+              {
+                "id": "d",
+                "label": "Downloading rustup and the platform toolchain into your browser session.",
+                "correct": false,
+                "feedback": "Nothing is installed anywhere near you. The server already has the toolchain — that is the entire point of the loop, and it is the same loop for Course 3."
+              }
+            ],
+            "explanation": "One file goes to a server that already has the Solana platform toolchain, it compiles for SBF, and the result comes back. No `rustup`, no toolchain to keep in sync with a tutorial, and no upload of a built artifact from your machine."
+          },
+          {
+            "id": "q22",
+            "prompt": "The version stamps say `anchor-lang 1.1.2`, `borsh 1.5.7 declared / 1.8.0 resolved`, and a pinned `rustc` from platform-tools v1.54. Which of these follow?",
+            "multiSelect": true,
+            "options": [
+              {
+                "id": "a",
+                "label": "The pinned `rustc` is a **ceiling**: any language feature stabilised after it does not exist for you, whatever the release notes say and however new the Rust on your laptop is.",
+                "correct": true,
+                "feedback": null
+              },
+              {
+                "id": "b",
+                "label": "`borsh = \"1.5.7\"` is a range — `>=1.5.7, <2.0.0` — which is why 1.8.0 is what actually compiles. `=1.5.7` is the exact pin.",
+                "correct": true,
+                "feedback": null
+              },
+              {
+                "id": "c",
+                "label": "`CpiContext::new(ctx.accounts.system_program.to_account_info(), …)` is the Anchor 0.x shape and does not compile against 1.1.2, where it is `CpiContext::new(System::id(), …)`.",
+                "correct": true,
+                "feedback": null
+              },
+              {
+                "id": "d",
+                "label": "You can check the stamp against the build log, which prints the `rustc` version and the target triple.",
+                "correct": false,
+                "feedback": "`cargo-build-sbf` prints neither. That absence is exactly why every lesson carries a version stamp — the stamp is the source of truth, and there is no banner to check it against."
+              }
+            ],
+            "explanation": "Anchor 1.0 was a breaking major release, so most Anchor material on the internet by volume was written against 0.2x or 0.3x. \"Rust from 2024\" is not a version: when you copy code from anywhere, the first question is what it was written against."
+          },
+          {
+            "id": "q23",
+            "prompt": "In JavaScript, `const backup = vault; backup.balance = 0n;` mutates the original. Give the Rust reading of `let backup = vault;` — first where `vault` is a `VaultState`, then where it is a `u64`.",
+            "multiSelect": false,
+            "options": [
+              {
+                "id": "a",
+                "label": "`VaultState` **moves**: `vault` is no longer usable and touching it is `E0382`. A `u64` **copies**: it is `Copy`, small enough to sit in a register, so both bindings stay valid and independent.",
+                "correct": true,
+                "feedback": null
+              },
+              {
+                "id": "b",
+                "label": "Both move; `Copy` only changes whether the compiler emits a memcpy.",
+                "correct": false,
+                "feedback": "`Copy` changes whether the original stays usable, which is its entire observable meaning. A `u64` you \"moved from\" is still there."
+              },
+              {
+                "id": "c",
+                "label": "Both copy — Rust deep-copies on assignment, which is why it needs no garbage collector.",
+                "correct": false,
+                "feedback": "Rust never deep-copies implicitly; `Clone` is opt-in and explicit. Moves are what remove the need for a collector."
+              },
+              {
+                "id": "d",
+                "label": "`VaultState` gets a shallow copy: two names, one buffer, exactly like JavaScript.",
+                "correct": false,
+                "feedback": "That aliasing is the thing Rust exists to prevent. After a move there is exactly one owner, and the old name is not it."
+              }
+            ],
+            "explanation": "Every value you touched in the first four lessons was a number small enough to duplicate for free, which is why ownership never argued with you until lesson 5. The moment a value owns something — a `Vec<u8>`, a struct of your own — assignment stops meaning what it means in JavaScript."
+          },
+          {
+            "id": "q24",
+            "prompt": "`#[derive(Default)]` on `VaultState`. Which of these are true?",
+            "multiSelect": true,
+            "options": [
+              {
+                "id": "a",
+                "label": "It is a macro: at compile time it reads your fields and writes out an `impl Default for VaultState`, then hands that block to the compiler. No runtime reflection — by the time the program is bytes on-chain the field names are gone.",
+                "correct": true,
+                "feedback": null
+              },
+              {
+                "id": "b",
+                "label": "`VaultState::new` exists only because you wrote it (an inherent impl); `VaultState::default()` exists because `Default` is a standard trait, which is what lets generic code — including much of Anchor — call it without knowing your type.",
+                "correct": true,
+                "feedback": null
+              },
+              {
+                "id": "c",
+                "label": "You can implement a trait for a type long after it was defined, in a different block and even a different crate, as long as either the trait or the type is yours.",
+                "correct": true,
+                "feedback": null
+              },
+              {
+                "id": "d",
+                "label": "A trait implementation is declared inside the type, the way `class Vault implements Serializable` declares it in TypeScript.",
+                "correct": false,
+                "feedback": "That is the TypeScript shape. In Rust the struct is one block and each promise is another — and that separation is the entire explanation of what `#[derive]` is able to do."
+              }
+            ],
+            "explanation": "An `impl` block is just some code that sits next to your struct, and a derive is a macro that writes one for you. Writing the `Default` impl by hand once is what stops `#[derive]` being magic; there is nothing to learn the second time."
+          },
+          {
+            "id": "q25",
+            "prompt": "`#[account]` on `VaultState`. What does it generate, and why does deleting `declare_id!` produce an error whose caret lands on `#[account]`?",
+            "multiSelect": false,
+            "options": [
+              {
+                "id": "a",
+                "label": "It generates `AnchorSerialize`/`AnchorDeserialize`/`Clone`, `AccountSerialize`, `AccountDeserialize`, `Discriminator` and `impl Owner` — and the `Owner` impl's body reads `crate::ID`, which `declare_id!` defines. Remove it and you get `E0425: cannot find value ID in the crate root`, pointing at the expansion site.",
+                "correct": true,
+                "feedback": null
+              },
+              {
+                "id": "b",
+                "label": "It generates the account-validation checks the instruction runs before your handler body.",
+                "correct": false,
+                "feedback": "That is `#[derive(Accounts)]`, which goes on an account *list*. `#[account]` describes the bytes stored inside one program-owned account. Course 3 makes you tell them apart under time pressure."
+              },
+              {
+                "id": "c",
+                "label": "It generates `INIT_SPACE`, which is why the struct knows its own size.",
+                "correct": false,
+                "feedback": "That is `#[derive(InitSpace)]`, a separate derive — and it excludes the 8-byte discriminator, which is the `8 +` you owe on every allocation."
+              },
+              {
+                "id": "d",
+                "label": "Nothing at run time: the discriminator is computed by the client from the type name and sent along with the call.",
+                "correct": false,
+                "feedback": "The discriminator is a `const` inside your program — the first 8 bytes of `sha256(\"account:VaultState\")` — and `try_deserialize` compares against it *before* decoding anything. That comparison is the type safety."
+              }
+            ],
+            "explanation": "Macro-generated code fails where the expansion happened, not where you made the mistake, which is why this is worth meeting here rather than in Course 3 with forty lines of your own to suspect. And `try_deserialize`'s discriminator check is what turns a bag of bytes into a typed account: hand a program somebody else's account and you get `AccountDiscriminatorMismatch`, not a plausible-looking balance."
           }
         ],
         "prompt": null,
@@ -9405,7 +10099,7 @@
         "_type": "prose",
         "produces": null,
         "consumes": null,
-        "src": "# From IDL to a Typed Client\n\nYou finished Course 3 holding two things: a program id on devnet, and an Anchor 1.x IDL — a JSON description of every instruction, account and error your vault exposes. Those two artifacts are the entire input to this course. Nobody who installs your client will read your Rust; they will read the IDL you already have, through a generated TypeScript client.\n\n> **Version stamp — kit 7.0.0, @codama/renderers-js 2.3.0, checked 2026-07-27.** This is the most version-fragile course in the catalog: it sits on sub-1.0 Kit plugins. Every version below is pinned at authoring and verified against the live registry. A kit-8 release (an `8.0.0-canary` was published 2026-07-24) would invalidate these stamps first — check the date before trusting them.\n\n## What Codama does\n\n[Codama](https://github.com/codama-idl/codama) reads an IDL and generates a client: typed instruction builders, account decoders, PDA helpers and a decoded error map. Its config lives at your repo root:\n\n```json\n{\n  \"idl\": \"program/idl.json\",\n  \"scripts\": { \"js\": { \"from\": \"@codama/renderers-js\", \"args\": [\"src/generated/vault\"] } }\n}\n```\n\n`npx codama run js` writes a tree like this:\n\n```\nsrc/generated/vault/\n  accounts/       fetchVault, fetchMaybeVault, getVaultDecoder\n  instructions/   getDepositInstruction, getWithdrawInstruction\n  types/          the argument and account types\n  errors/         a decoded map of your VaultError codes\n  programs/       a Kit program plugin\n```\n\nThe types are **Kit types**, not the old web3.js ones: an account address is an `Address`, not a `PublicKey`, and a lamport amount is a `bigint`, not a `number`. That difference runs through the whole course.\n\n## Why you read the output here instead of generating it now\n\nThe documented `renderVisitor` writes files to disk, and this lesson's runner is a sandbox with no filesystem — so codegen does not run here. It runs later, in your CI workflow (lesson 4), which is also where it belongs: the client is regenerated from the IDL on every publish, never edited by hand. In this lesson you read the shape of what it produces and call a builder the way the generated code does, so the structure is familiar before you depend on it.\n\nAnchor 1.x can run this same generation itself — `anchor codama generate -l js -p clients` — if you would rather not add a Codama config. Either way the output is the same shape.\n\n## Two things this course will never do\n\n- It will **never** teach `new Program(idl, provider)`. That is the old Anchor TypeScript client; the Kit path is a generated client plus your own wrapper.\n- It will **never** fetch the IDL from the chain with the old `anchor idl` instructions. Your IDL is the build artifact from Course 3 — a file you already have.\n\n## The worked example\n\nBelow is a hand-written stand-in for one generated instruction builder — `buildDepositInstruction` — assembled exactly the way `getDepositInstruction` assembles it: a program address, an ordered account list with roles, and a data payload carrying the instruction discriminator and the argument. Run it, read the returned object, and notice three things: the accounts are ordered and role-tagged, the amount is a `bigint`, and nothing in the shape mentions your Rust. That object is what every later lesson sends.\n",
+        "src": "# From IDL to a Typed Client\n\nYou finished Course 3 holding two things: a program id on devnet, and an Anchor 1.x IDL — a JSON description of every instruction, account and error your vault exposes. Those two artifacts are the entire input to this course. Nobody who installs your client will read your Rust; they will read the IDL you already have, through a generated TypeScript client.\n\n> **Version stamp — kit 7.0.0, @codama/renderers-js 2.3.0, checked 2026-07-27.** This is the most version-fragile course in the catalog: it sits on sub-1.0 Kit plugins. Every version below is pinned at authoring and verified against the live registry. A kit-8 release (an `8.0.0-canary` was published 2026-07-24) would invalidate these stamps first — check the date before trusting them.\n\n## If you don't have your own program from Course 3\n\nSkipped C3, lost the program id, or have a deploy that will not come back? You can still follow every lesson in this course. There is a **frozen devnet reference vault** — a permanent deployment of exactly the program C3 builds, with its upgrade authority revoked, so it will never move or change:\n\n- **Program id** — `D7ZFoWvEG5NBnkJy6iC98rhwj2qhgq8xhSD42cdTRAQd` (devnet)\n- **Vault PDA** — `FY86s1fAwUiFQTjVFYprsiV6fwNH7e955MSUBo73FP4j`, derived from seeds `[\"vault\", owner]`\n- **IDL** — [`onchain-academy/reference-vault/vault_program.idl.json`](https://github.com/solanabr/superteam-academy/blob/main/onchain-academy/reference-vault/vault_program.idl.json), field-identical to the IDL published on-chain against that program id\n\nPoint your Codama config's `idl` at that file instead of your own and every generated builder in this course comes out the same shape. One detail the IDL fixes and you must not \"fix\" back: `deposit` and `withdraw` take their accounts in the order `[vault, user, system_program]` — **vault first**.\n\nRead this as a way to keep moving, not as a substitute. The credential for this course is earned against **your own** artifact — your deployed program and the client you publish from it. The reference vault gets you through the lessons; it does not get you the credential.\n\n## What Codama does\n\n[Codama](https://github.com/codama-idl/codama) reads an IDL and generates a client: typed instruction builders, account decoders, PDA helpers and a decoded error map. Its config lives at your repo root:\n\n```json\n{\n  \"idl\": \"program/idl.json\",\n  \"scripts\": { \"js\": { \"from\": \"@codama/renderers-js\", \"args\": [\"src/generated/vault\"] } }\n}\n```\n\n`npx codama run js` writes a tree like this:\n\n```\nsrc/generated/vault/\n  accounts/       fetchVault, fetchMaybeVault, getVaultDecoder\n  instructions/   getDepositInstruction, getWithdrawInstruction\n  types/          the argument and account types\n  errors/         a decoded map of your VaultError codes\n  programs/       a Kit program plugin\n```\n\nThe types are **Kit types**, not the old web3.js ones: an account address is an `Address`, not a `PublicKey`, and a lamport amount is a `bigint`, not a `number`. That difference runs through the whole course.\n\n## Why you read the output here instead of generating it now\n\nThe documented `renderVisitor` writes files to disk, and this lesson's runner is a sandbox with no filesystem — so codegen does not run here. It runs later, in your CI workflow (lesson 4), which is also where it belongs: the client is regenerated from the IDL on every publish, never edited by hand. In this lesson you read the shape of what it produces and call a builder the way the generated code does, so the structure is familiar before you depend on it.\n\nAnchor 1.x can run this same generation itself — `anchor codama generate -l js -p clients` — if you would rather not add a Codama config. Either way the output is the same shape.\n\n## Two things this course will never do\n\n- It will **never** teach `new Program(idl, provider)`. That is the old Anchor TypeScript client; the Kit path is a generated client plus your own wrapper.\n- It will **never** fetch the IDL from the chain with the old `anchor idl` instructions. Your IDL is the build artifact from Course 3 — a file you already have.\n\n## The worked example\n\nBelow is a hand-written stand-in for one generated instruction builder — `buildDepositInstruction` — assembled exactly the way `getDepositInstruction` assembles it: a program address, an ordered account list with roles, and a data payload carrying the instruction discriminator and the argument. Run it, read the returned object, and notice three things: the accounts are ordered and role-tagged, the amount is a `bigint`, and nothing in the shape mentions your Rust. That object is what every later lesson sends.\n",
         "url": null,
         "language": null,
         "buildType": null,
@@ -10146,7 +10840,7 @@
         "_type": "prose",
         "produces": null,
         "consumes": null,
-        "src": "# Which Signer, and Why\n\nA Wallet Standard wallet advertises what it can do as a list of **features**. Your job is to pick the right signer for the feature the wallet actually offers — and to know who broadcasts the transaction once it is signed, because that changes what your app is responsible for.\n\n## The taxonomy\n\nFrom `@solana/wallet-account-signer` (React equivalents in `@solana/react`):\n\n| Advertised feature | Signer factory | Result | Who broadcasts |\n| --- | --- | --- | --- |\n| `solana:signTransaction` | `createTransactionSignerFromWalletAccount` | a `TransactionModifyingSigner` | **your app** — you get the signed bytes and send them |\n| `solana:signAndSendTransaction` | `createTransactionSendingSignerFromWalletAccount` | a sending signer | **the wallet** — you never see the signed bytes |\n| `solana:signMessage` | `createMessageSignerFromWalletAccount` | a message signer | nobody — you cannot send a transaction with only this |\n\n`createSignerFromWalletAccount` inspects the features at call time and throws if neither transaction feature exists.\n\n## The rule for *this* app\n\nWhen a wallet advertises both transaction features, this app prefers `solana:signTransaction` — the one where **your app broadcasts**. That is not the universal default; it is the right call here because module 3 simulates the transaction, sizes its compute budget, and prices a priority fee, all of which have to happen to a transaction *you* still hold before it goes out. A sending signer hands broadcast to the wallet and takes that control away. Prefer the modifying signer; fall back to the sending signer only when the wallet offers nothing else.\n\n## Chains are literal, and a wallet can say no\n\nChain ids are strings: `'solana:devnet'`, `'solana:mainnet'`. A connected account can **refuse** a chain — you ask it to sign for `solana:devnet` and it throws because it is a mainnet-only account. That is a real runtime error worth handling, not an edge case.\n\n## The seam — read it, don't write it\n\nThe old stack has not gone away. `@solana/web3.js` v1 still holds npm's `latest` tag and out-downloads Kit (roughly 2.1M vs 1.65M weekly at the time of writing), and `@solana/wallet-adapter-react` is around 810k/week with a repo that is still maintained. \"Canonical\" and \"what you will be paid to touch\" have diverged: you will open codebases that use `useWallet()`, `publicKey` and `sendTransaction`, and you need to read them fluently — map `useWallet()` to Wallet Standard discovery, `publicKey` to the connected account's `address`, `sendTransaction` to a sending signer. Learn to read it. Do not learn to write it; this app does not.\n\n## The exercise\n\n`selectSigner` receives a pipe-joined list of the features a wallet advertises and returns `{ signer, broadcaster }`. Every branch is present in the starter but scrambled, with one decoy. Order them so this app's preference — a modifying signer when it can get one — comes out right.\n",
+        "src": "# Which Signer, and Why\n\nA Wallet Standard wallet advertises what it can do as a list of **features**. Your job is to pick the right signer for the feature the wallet actually offers — and to know who broadcasts the transaction once it is signed, because that changes what your app is responsible for.\n\n## The taxonomy\n\nFrom `@solana/wallet-account-signer` (React equivalents in `@solana/react`):\n\n| Advertised feature | Signer factory | Result | Who broadcasts |\n| --- | --- | --- | --- |\n| `solana:signTransaction` | `createTransactionSignerFromWalletAccount` | a `TransactionModifyingSigner` | **your app** — you get the signed bytes and send them |\n| `solana:signAndSendTransaction` | `createTransactionSendingSignerFromWalletAccount` | a sending signer | **the wallet** — you never see the signed bytes |\n| `solana:signMessage` | `createMessageSignerFromWalletAccount` | a message signer | nobody — you cannot send a transaction with only this |\n\n`createSignerFromWalletAccount` inspects the features at call time and throws if neither transaction feature exists.\n\n## The rule for *this* app\n\nWhen a wallet advertises both transaction features, this app prefers `solana:signTransaction` — the one where **your app broadcasts**. That is not the universal default; it is the right call here because module 3 simulates the transaction, sizes its compute budget, and prices a priority fee, all of which have to happen to a transaction *you* still hold before it goes out. A sending signer hands broadcast to the wallet and takes that control away. Prefer the modifying signer; fall back to the sending signer only when the wallet offers nothing else.\n\n## Chains are literal, and a wallet can say no\n\nChain ids are strings: `'solana:devnet'`, `'solana:mainnet'`. A connected account can **refuse** a chain — you ask it to sign for `solana:devnet` and it throws because it is a mainnet-only account. That is a real runtime error worth handling, not an edge case.\n\n## The seam — read it, don't write it\n\nThe old stack has not gone away. `@solana/web3.js` v1 still holds npm's `latest` tag (1.98.4) and out-downloads Kit — 2.08M vs 1.60M weekly downloads as of 2026-07-30 — and `@solana/wallet-adapter-react` is at 749k/week with a repo that is still maintained. Re-pull those numbers before you quote them; they are a snapshot, not a constant. \"Canonical\" and \"what you will be paid to touch\" have diverged: you will open codebases that use `useWallet()`, `publicKey` and `sendTransaction`, and you need to read them fluently — map `useWallet()` to Wallet Standard discovery, `publicKey` to the connected account's `address`, `sendTransaction` to a sending signer. Learn to read it. Do not learn to write it; this app does not.\n\n## The exercise\n\n`selectSigner` receives a pipe-joined list of the features a wallet advertises and returns `{ signer, broadcaster }`. Every branch is present in the starter but scrambled, with one decoy. Order them so this app's preference — a modifying signer when it can get one — comes out right.\n",
         "url": null,
         "language": null,
         "buildType": null,

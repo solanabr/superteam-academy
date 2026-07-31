@@ -10,6 +10,7 @@
   "tags": [
     "account-model",
     "anchor",
+    "build-server",
     "checked-arithmetic",
     "cpi",
     "debugging",
@@ -25,6 +26,7 @@
     "solana-explorer",
     "solana-programs",
     "technical-writing",
+    "toolchain-versions",
     "transactions"
   ],
   "xpReward": 850,
@@ -475,6 +477,124 @@
                 "They order pool A wrong; the block-opening line ends in `{`, the closing line is `}`, and the body runs top to bottom with the returned value last.",
                 "They swap the two pool-B attributes; `#[account]` describes the bytes inside one account, `#[derive(Accounts)]` describes the account list an instruction touches, and `Context<VaultInfo>` needs the second."
               ]
+            },
+            {
+              "key": "check",
+              "_type": "quiz",
+              "produces": null,
+              "consumes": null,
+              "src": null,
+              "url": null,
+              "language": null,
+              "buildType": null,
+              "deployable": null,
+              "starter": null,
+              "solution": null,
+              "tests": null,
+              "hints": null,
+              "questions": [
+                {
+                  "id": "q1",
+                  "prompt": "You paste pool B's second error enum — `#[error_code] pub enum InfoError { #[msg(\"no vault at that address\")] NoVault }` — into a file that already carries `VaultError`. Predict what the build server reports, and what it costs you.",
+                  "multiSelect": false,
+                  "options": [
+                    {
+                      "id": "a",
+                      "label": "Green, and that is the problem: both enums number from `ERROR_CODE_OFFSET` = 6000, so `VaultError::Overflow` and `InfoError::NoVault` are both code 6000 and no client can tell the two failures apart.",
+                      "correct": true,
+                      "feedback": null
+                    },
+                    {
+                      "id": "b",
+                      "label": "Red — Anchor rejects a second `#[error_code]` enum in one program, which is why the rule exists.",
+                      "correct": false,
+                      "feedback": "Nothing rejects it. Two `#[error_code]` enums are legal Anchor and the CLI would accept them too. The rule is enforced by consequences on the wire, not by the compiler — which is exactly what makes it worth meeting deliberately."
+                    },
+                    {
+                      "id": "c",
+                      "label": "Green, and harmless: Anchor assigns the second enum the next free block of codes because it can see both at expansion time.",
+                      "correct": false,
+                      "feedback": "`#[error_code]` expands one enum at a time and nothing coordinates across them. Each generates `From<Self> for u32` as `variant_index + 6000`, independently. There is no allocator."
+                    },
+                    {
+                      "id": "d",
+                      "label": "Red at the client, not the build: the IDL generator refuses to emit two error tables.",
+                      "correct": false,
+                      "feedback": "The IDL is a Course-3 deploy-time artifact and it is not what catches this. The collision is already baked into the compiled program before any IDL is written."
+                    }
+                  ],
+                  "explanation": "`#[error_code]` generates `impl From<YourEnum> for u32` as `variant_index + ERROR_CODE_OFFSET`, and `ERROR_CODE_OFFSET` is 6000 for every enum that does not override it. Two enums therefore both start at 6000. The correct move is to add a variant to `VaultError` (one namespace, monotonic numbering); `#[error_code(offset = 7000)]` exists if you genuinely need a second enum, and reaching for it is usually a sign the first option was right. This is the lesson's live example of a green build proving compilation and nothing more."
+                },
+                {
+                  "id": "q2",
+                  "prompt": "You put `#[account]` on `VaultInfo` instead of `#[derive(Accounts)]`. Which error comes back, and why does it name what it names?",
+                  "multiSelect": false,
+                  "options": [
+                    {
+                      "id": "a",
+                      "label": "`the trait bound VaultInfo: Bumps is not satisfied` — `Context<T>` requires `Bumps`, which the `Accounts` derive generates and `#[account]` does not.",
+                      "correct": true,
+                      "feedback": null
+                    },
+                    {
+                      "id": "b",
+                      "label": "`error: expected #[derive(Accounts)]` — the macro checks the attribute it was given and names the one it wanted.",
+                      "correct": false,
+                      "feedback": "Macros expand; they do not audit which attribute you chose. What fails is a later trait-bound check against the code the wrong macro produced, so the message is about a missing trait, not a missing attribute."
+                    },
+                    {
+                      "id": "c",
+                      "label": "No error — `#[account]` is a superset of `#[derive(Accounts)]`, so it satisfies `Context<T>` as well.",
+                      "correct": false,
+                      "feedback": "They are unrelated. `#[account]` describes the bytes stored inside one program-owned account; `#[derive(Accounts)]` describes the list of accounts an instruction may touch, and generates the deserialization and validation."
+                    },
+                    {
+                      "id": "d",
+                      "label": "`error[E0425]: cannot find value ID in the crate root`, because `#[account]` expands to an `Owner` impl reading `crate::ID`.",
+                      "correct": false,
+                      "feedback": "That is a real `#[account]` failure — you met it in Course 2 — but only when `declare_id!` is missing. This file has one, so the build gets past it and fails on the `Bumps` bound instead."
+                    }
+                  ],
+                  "explanation": "`#[account]` goes on a state struct and generates serialization plus the 8-byte type discriminator. `#[derive(Accounts)]` goes on an account list and generates deserialization, every validation check, and the `Bumps` trait that `Context<T>` requires. The error message names the missing trait rather than the missing attribute because the failure lands where the generated code is *used*, not where you wrote the attribute — the same displacement that makes macro errors worth meeting once on purpose."
+                },
+                {
+                  "id": "q3",
+                  "prompt": "`vault_info` ships. A month later you rename it to `vault_details` and upgrade the program. Which of these are true?",
+                  "multiSelect": true,
+                  "options": [
+                    {
+                      "id": "a",
+                      "label": "Adding `vault_info` in the first place broke nothing, because an instruction is selected by an 8-byte discriminator derived from its name and existing callers' discriminators still resolve.",
+                      "correct": true,
+                      "feedback": null
+                    },
+                    {
+                      "id": "b",
+                      "label": "The rename is a breaking change for the same reason: the discriminator is derived from the name, so every caller still sending the old one now hits an instruction that no longer exists.",
+                      "correct": true,
+                      "feedback": null
+                    },
+                    {
+                      "id": "c",
+                      "label": "Nobody is told. The upgrade is in place, the program address does not change, and clients discover the break by failing.",
+                      "correct": true,
+                      "feedback": null
+                    },
+                    {
+                      "id": "d",
+                      "label": "Clients that pinned the IDL are safe, since the IDL maps names to discriminators at call time.",
+                      "correct": false,
+                      "feedback": "A pinned IDL pins the *old* discriminator, which is precisely the one that stopped resolving. Pinning makes the break reproducible, not survivable."
+                    }
+                  ],
+                  "explanation": "Instruction dispatch is by discriminator, and the discriminator is derived from the instruction's name — so adding is additive and renaming or removing is breaking. Solana upgrades happen in place: same address, no notification, no version negotiation. That combination is your entire version-compatibility surface, and it is why `vault_info` is cheap to add today and expensive to rename tomorrow."
+                }
+              ],
+              "prompt": null,
+              "maxWords": null,
+              "amount": null,
+              "network": null,
+              "idl": null
             }
           ]
         }

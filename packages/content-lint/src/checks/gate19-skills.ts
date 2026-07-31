@@ -20,17 +20,16 @@ import { diag, type Diagnostic } from "../diagnostics";
  *                `skills.yaml` registry. This is the check that today only
  *                runs at SYNC time (`checkSkillVocabulary`) — an invented
  *                slug must fail the content PR, not the sync.
- *  19b (warning) minimum reuse bar: every registry slug applied to at least
- *                one lesson should be applied to ≥2, except slugs marked
+ *  19b (error)   minimum reuse bar: every registry slug applied to at least
+ *                one lesson must be applied to ≥2, except slugs marked
  *                `reviewExempt: true` in `skills.yaml` (single-use by design,
  *                catalog spec §5 policy 4 — e.g. `brazil-compliance`,
  *                `earn-submission`), which emit nothing. A registry slug applied
- *                to NO lesson is also a warning (dead vocabulary entry).
- *                WARNING tier for now — the reuse bar guards the Wave 3 review
- *                queue. The 5-course catalog has landed, but the paired
- *                skills.yaml sweep has not, so erroring today would redden
- *                content CI on main. Flip to error right after that sweep —
- *                see the TODO at the 19b loop (#676).
+ *                to NO lesson is also an error (dead vocabulary entry).
+ *                Was WARNING tier until BOTH preconditions landed: the 5-course
+ *                catalog, and the paired skills.yaml sweep (courses-academy
+ *                #28). Both are in, the flip was verified a no-op against the
+ *                locked pin, and #676 is closed — see the 19b loop.
  *  19c (warning) interleaving-pair vocabulary: both members of each
  *                REVIEW_INTERLEAVING_PAIRS pair exist in `skills.yaml` and
  *                are applied to ≥2 lessons each. WARNING tier for now: the
@@ -148,23 +147,23 @@ export function gate19Check(model: RepoModel): Diagnostic[] {
     }
   }
 
-  // 19b — minimum reuse bar over the registry.
+  // 19b — minimum reuse bar over the registry. ERROR tier (#676, closed).
   //
-  // TODO(#676): flip the single-lesson case below from `warning` to `error`.
   // The bar exists to guard the Wave 3 spaced-review queue — a slug behind one
-  // lesson can only re-serve that lesson, never generate a genuine review item.
+  // lesson can only re-serve that lesson, never generate a genuine review item;
+  // a slug behind no lesson is dead vocabulary that can never serve anything.
   //
-  // The catalog precondition is now MET: C1–C5 all exist (courses-academy main
-  // c5c625e, 2026-07-30). The remaining blocker is the *sweep* the flip issue
-  // pairs with the tier change, and it lands in the CONTENT repo, not here — an
-  // audit of that commit still reports 30 gate-19b findings (23 single-use
-  // slugs, 7 dead vocabulary entries), so flipping the tier in isolation would
-  // redden content CI on main. Order of operations: land the skills.yaml sweep
-  // in courses-academy (`reviewExempt: true` for the by-design singletons, a
-  // second lesson or consolidation for the rest, delete the dead entries), then
-  // flip this tier. Warning tier surfaces every under-applied slug honestly on
-  // each run in the meantime; `reviewExempt` already silences the by-design
-  // singletons, which is what makes the eventual flip clean.
+  // Both preconditions the warning tier was waiting on are now MET:
+  //   1. the catalog — C1–C5 all exist (courses-academy @c5c625e, 2026-07-30);
+  //   2. the sweep — courses-academy #28 shrank skills.yaml 83 -> 74 (dead
+  //      entries deleted, consolidations, `rpc` -> `rpc-reads`) and added 19
+  //      second-use tags, taking gate-19b to ZERO findings at the pin this
+  //      monorepo now locks (verified by running the CLI the CI way against
+  //      @23e4d1bf: 0 errors, 0 warnings, 28 notices).
+  // The tier change is therefore a proven no-op on today's content and only
+  // constrains future PRs. `reviewExempt: true` remains the escape hatch for
+  // by-design singletons; the dead-entry case has none on purpose — an unused
+  // slug should be deleted, not exempted.
   for (const entry of registry) {
     const { slug } = entry;
     const uses = lessonsBySlug.get(slug) ?? [];
@@ -172,22 +171,22 @@ export function gate19Check(model: RepoModel): Diagnostic[] {
       out.push(
         diag(
           "gate-19b",
-          "warning",
+          "error",
           SKILLS_FILE,
-          `skill "${slug}" is in skills.yaml but applied to no lesson (dead vocabulary entry)`
+          `skill "${slug}" is in skills.yaml but applied to no lesson (dead vocabulary entry) — delete it, or tag ≥2 lessons with it`
         )
       );
     } else if (uses.length === 1) {
       // A slug marked `reviewExempt: true` is single-use by design (catalog
       // spec §5 policy 4) — no diagnostic at all. Every other single-lesson
-      // slug warns (see the TODO above for why this is not yet an error).
+      // slug is an error.
       if (entry.reviewExempt) continue;
       out.push(
         diag(
           "gate-19b",
-          "warning",
+          "error",
           SKILLS_FILE,
-          `skill "${slug}" is applied to only 1 lesson (${uses[0]}) — the minimum reuse bar is 2; tag a second lesson, drop the slug, or mark it "reviewExempt: true" in skills.yaml if it is single-use by design. Becomes an error once the skills.yaml sweep lands (#676)`
+          `skill "${slug}" is applied to only 1 lesson (${uses[0]}) — the minimum reuse bar is 2; tag a second lesson, drop the slug, or mark it "reviewExempt: true" in skills.yaml if it is single-use by design`
         )
       );
     }

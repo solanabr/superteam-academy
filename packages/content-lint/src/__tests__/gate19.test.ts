@@ -116,7 +116,10 @@ describe("gate 19a — registry resolution", () => {
 });
 
 describe("gate 19b — minimum reuse bar", () => {
-  it("warns (does not error) when a slug is applied to only one lesson, and names the lone lesson", async () => {
+  // ERROR tier since #676 — both preconditions (the 5-course catalog and the
+  // courses-academy #28 skills.yaml sweep) landed, and the flip was verified a
+  // no-op against the locked pin before it was made.
+  it("ERRORS when a slug is applied to only one lesson, and names the lone lesson", async () => {
     const r = await runLint(
       makeTempRepo({
         ...registry(["pdas", "staking"]),
@@ -126,17 +129,17 @@ describe("gate 19b — minimum reuse bar", () => {
     );
     const g = of(r, "gate-19b");
     expect(g).toHaveLength(1);
-    expect(g[0]?.severity).toBe("warning");
+    expect(g[0]?.severity).toBe("error");
     expect(g[0]?.message).toContain('"staking"');
     expect(g[0]?.message).toContain("courses/x/lessons/a/lesson.yaml");
-    // Warning tier until the skills.yaml sweep lands (#676) — never fails CI.
-    expect(g[0]?.message).toContain("#676");
-    expect(r.ok).toBe(true);
+    // The message no longer promises a future flip — it already happened.
+    expect(g[0]?.message).not.toContain("#676");
+    expect(r.ok).toBe(false);
   });
 
-  it("has no code-side grandfather escape hatch — every unmarked singleton warns uniformly", async () => {
-    // `oracles` used to be special-cased; now it warns exactly like any other
-    // single-lesson slug (the reuse bar is warning-tier for all of them).
+  it("has no code-side grandfather escape hatch — every unmarked singleton errors uniformly", async () => {
+    // `oracles` used to be special-cased; now it errors exactly like any other
+    // single-lesson slug (the reuse bar is error-tier for all of them).
     const r = await runLint(
       makeTempRepo({
         ...registry(["pdas", "oracles"]),
@@ -146,10 +149,10 @@ describe("gate 19b — minimum reuse bar", () => {
     );
     const g = of(r, "gate-19b");
     expect(g).toHaveLength(1);
-    expect(g[0]?.severity).toBe("warning");
+    expect(g[0]?.severity).toBe("error");
     expect(g[0]?.message).toContain('"oracles"');
     expect(g[0]?.message).not.toContain("#559");
-    expect(r.ok).toBe(true);
+    expect(r.ok).toBe(false);
   });
 
   it("allows a `reviewExempt: true` singleton at one lesson", async () => {
@@ -168,9 +171,9 @@ describe("gate 19b — minimum reuse bar", () => {
     expect(r.ok).toBe(true);
   });
 
-  it("warns (not silences) a single-use slug NOT marked reviewExempt — the exemption is the declarative marker, not the slug name", async () => {
+  it("errors (not silences) a single-use slug NOT marked reviewExempt — the exemption is the declarative marker, not the slug name", async () => {
     // brazil-compliance / earn-submission are spec examples, but the exemption
-    // comes from the skills.yaml marker — an unmarked entry still warns.
+    // comes from the skills.yaml marker — an unmarked entry still errors.
     const r = await runLint(
       makeTempRepo({
         ...registry(["pdas", "brazil-compliance"]),
@@ -180,10 +183,10 @@ describe("gate 19b — minimum reuse bar", () => {
     );
     const g = of(r, "gate-19b");
     expect(g).toHaveLength(1);
-    expect(g[0]?.severity).toBe("warning");
+    expect(g[0]?.severity).toBe("error");
     expect(g[0]?.message).toContain('"brazil-compliance"');
     expect(g[0]?.message).toContain("reviewExempt");
-    expect(r.ok).toBe(true);
+    expect(r.ok).toBe(false);
   });
 
   it("honours reviewExempt for any slug, not just the spec's named examples", async () => {
@@ -198,7 +201,7 @@ describe("gate 19b — minimum reuse bar", () => {
     expect(r.ok).toBe(true);
   });
 
-  it("warns (not errors) on a registry slug applied to no lesson", async () => {
+  it("ERRORS on a registry slug applied to no lesson (dead vocabulary, no exemption)", async () => {
     const r = await runLint(
       makeTempRepo({
         ...registry(["pdas", "dead-entry"]),
@@ -208,9 +211,26 @@ describe("gate 19b — minimum reuse bar", () => {
     );
     const g = of(r, "gate-19b");
     expect(g).toHaveLength(1);
-    expect(g[0]?.severity).toBe("warning");
+    expect(g[0]?.severity).toBe("error");
     expect(g[0]?.message).toContain('"dead-entry"');
-    expect(r.ok).toBe(true);
+    expect(r.ok).toBe(false);
+  });
+
+  it("reviewExempt does NOT rescue a dead entry — the marker only covers singletons", async () => {
+    // The escape hatch is scoped on purpose: an unused slug should be deleted,
+    // not exempted, so `reviewExempt` must not silence the zero-lesson case.
+    const r = await runLint(
+      makeTempRepo({
+        ...registry(["pdas", { slug: "dead-entry", reviewExempt: true }]),
+        ...lesson("a", ["pdas"]),
+        ...lesson("b", ["pdas"]),
+      })
+    );
+    const g = of(r, "gate-19b");
+    expect(g).toHaveLength(1);
+    expect(g[0]?.severity).toBe("error");
+    expect(g[0]?.message).toContain('"dead-entry"');
+    expect(r.ok).toBe(false);
   });
 
   it("counts a slug repeated within one lesson as a single application", async () => {
@@ -222,7 +242,7 @@ describe("gate 19b — minimum reuse bar", () => {
     );
     const g = of(r, "gate-19b");
     expect(g).toHaveLength(1);
-    expect(g[0]?.severity).toBe("warning");
+    expect(g[0]?.severity).toBe("error");
     expect(g[0]?.message).toContain('"pdas"');
   });
 });
@@ -325,11 +345,11 @@ describe("gate 19 — `courses/_template` lessons are excluded from reuse counts
     );
     const g = of(r, "gate-19b");
     expect(g).toHaveLength(1);
-    expect(g[0]?.severity).toBe("warning");
+    expect(g[0]?.severity).toBe("error");
     expect(g[0]?.message).toContain('"staking"');
     // Named lesson is the real one, never the template.
     expect(g[0]?.message).toContain("courses/x/lessons/a/lesson.yaml");
-    expect(r.ok).toBe(true);
+    expect(r.ok).toBe(false);
   });
 });
 
