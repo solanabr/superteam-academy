@@ -3,10 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { PushPin, ChatCircle } from "@phosphor-icons/react";
-import { VoteButton } from "./vote-button";
-import { ThreadStatusBadge } from "./thread-status-badge";
+import { CaretUp, ChatCircle, PushPin } from "@phosphor-icons/react";
 import { LevelBadge } from "@/components/gamification/level-badge";
+import { cn } from "@/lib/utils";
+import { ThreadStatusBadge } from "./thread-status-badge";
+import { LessonContextChip, type ThreadContext } from "./lesson-context-chip";
 
 interface ThreadCardAuthor {
   username: string | null;
@@ -28,6 +29,8 @@ interface ThreadCardProps {
   author: ThreadCardAuthor;
   categorySlug?: string;
   createdAt: string;
+  /** Resolved course/lesson provenance, when the thread was started from one. */
+  context?: ThreadContext | null;
   onVote: (value: 0 | 1 | -1) => void;
 }
 
@@ -47,6 +50,14 @@ function timeAgo(
   return t("monthsAgo", { count: months });
 }
 
+/**
+ * A single dense row in a thread list — HN/LeetCode density rather than the
+ * tall card this used to be (a full-height card with a stacked ▲/score/▼ rail
+ * turned a ten-thread feed into a page of air).
+ *
+ * Voting collapses to one ▲ + count toggle; the full up/down rail belongs to
+ * the thread detail page, where there is room to read before you judge.
+ */
 export function ThreadCard({
   title,
   slug,
@@ -59,6 +70,7 @@ export function ThreadCard({
   author,
   categorySlug,
   createdAt,
+  context,
   onVote,
 }: ThreadCardProps) {
   const t = useTranslations("community");
@@ -67,51 +79,64 @@ export function ThreadCard({
     : `/community/general/${slug}`;
 
   return (
-    <div className="flex gap-4 rounded-lg border border-[var(--border-default)] bg-[var(--card)] p-4 transition-colors hover:bg-[var(--card-hover)]">
-      <VoteButton
-        score={voteScore}
-        userVote={userVote}
-        onVote={onVote}
-        size="sm"
-      />
+    <div className="flex items-start gap-3 border-b border-[var(--border-default)] px-2 py-2.5 transition-colors last:border-b-0 hover:bg-[var(--card-hover)]">
+      <button
+        type="button"
+        onClick={() => onVote(userVote === 1 ? 0 : 1)}
+        aria-label={t("upvote")}
+        aria-pressed={userVote === 1}
+        className={cn(
+          "mt-0.5 flex shrink-0 items-center gap-0.5 rounded-md px-1.5 py-1 text-xs font-bold tabular-nums transition-colors hover:bg-[var(--primary-dim)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]",
+          userVote === 1
+            ? "text-[var(--primary)]"
+            : "text-[var(--text-2)] hover:text-[var(--primary)]"
+        )}
+      >
+        <CaretUp size={12} weight={userVote === 1 ? "fill" : "bold"} />
+        {voteScore}
+      </button>
 
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-x-3 gap-y-1">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           {isPinned && (
             <PushPin
-              size={14}
+              size={12}
               weight="fill"
               className="shrink-0 text-[var(--primary)]"
+              aria-hidden="true"
             />
           )}
           <Link
             href={href}
-            className="line-clamp-1 font-display font-bold text-[var(--text)] transition-colors hover:text-[var(--primary)]"
+            className="truncate font-display text-sm font-bold text-[var(--text)] transition-colors hover:text-[var(--primary)]"
           >
             {title}
           </Link>
           <ThreadStatusBadge type={type} isSolved={isSolved} />
+          {context && <LessonContextChip context={context} />}
         </div>
 
-        <div className="mt-1.5 flex items-center gap-3 text-xs text-[var(--text-2)]">
-          <span className="flex items-center gap-1.5">
+        <div className="flex shrink-0 items-center gap-2.5 font-mono text-[11px] text-[var(--text-2)]">
+          <span className="flex items-center gap-1">
             {author.avatar_url ? (
               <Image
                 src={author.avatar_url}
                 alt=""
-                width={16}
-                height={16}
-                className="h-4 w-4 rounded-full"
+                width={14}
+                height={14}
+                className="h-3.5 w-3.5 rounded-full"
               />
             ) : (
-              <div className="h-4 w-4 rounded-full bg-[var(--primary-dim)]" />
+              <div className="h-3.5 w-3.5 rounded-full bg-[var(--primary-dim)]" />
             )}
-            <span>{author.username || t("anonymous")}</span>
+            <span className="max-w-[10rem] truncate">
+              {author.username || t("anonymous")}
+            </span>
             {author.level > 0 && <LevelBadge level={author.level} size="xs" />}
           </span>
           <span>{timeAgo(createdAt, t)}</span>
           <span className="flex items-center gap-1">
-            <ChatCircle size={12} />
+            <ChatCircle size={11} aria-hidden="true" />
             {answerCount}
           </span>
         </div>

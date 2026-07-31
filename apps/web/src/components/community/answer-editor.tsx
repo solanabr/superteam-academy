@@ -44,7 +44,7 @@ export function AnswerEditor({ threadId, onAnswerPosted }: AnswerEditorProps) {
 
   return (
     <div>
-      <h3 className="mb-2 font-display font-bold text-[var(--text)]">
+      <h3 className="mb-3 font-display text-base font-bold text-[var(--text)]">
         {t("yourAnswer")}
       </h3>
       <MarkdownEditor
@@ -62,7 +62,7 @@ export function AnswerEditor({ threadId, onAnswerPosted }: AnswerEditorProps) {
         >
           {isSubmitting && (
             <div
-              className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
+              className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
               aria-hidden="true"
             />
           )}

@@ -13,6 +13,10 @@ interface UseThreadsParams {
   sort?: string;
   type?: string;
   limit?: number;
+  /** Only threads that carry a course scope ("Course questions" filter). */
+  courseOnly?: boolean;
+  /** Bump to refetch from the top (e.g. after posting inline). */
+  refreshToken?: number;
 }
 
 interface ThreadData {
@@ -29,6 +33,9 @@ interface ThreadData {
   created_at: string;
   last_activity_at: string;
   author_id: string;
+  /** Scope the thread was created under — drives the feed's context chip. */
+  course_id: string | null;
+  lesson_id: string | null;
   category: { id: string; name: string; slug: string } | null;
   author: { username: string | null; avatar_url: string | null; level: number };
   userVote: 1 | -1 | null;
@@ -47,6 +54,8 @@ export function useThreads({
   sort = "latest",
   type,
   limit = 20,
+  courseOnly = false,
+  refreshToken = 0,
 }: UseThreadsParams = {}): UseThreadsReturn {
   const [threads, setThreads] = useState<ThreadData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -63,6 +72,7 @@ export function useThreads({
       if (scope?.categorySlug) params.set("category", scope.categorySlug);
       if (scope?.courseId) params.set("courseId", scope.courseId);
       if (scope?.lessonId) params.set("lessonId", scope.lessonId);
+      if (courseOnly) params.set("hasCourse", "1");
       params.set("sort", sort);
       if (type) params.set("type", type);
       params.set("limit", String(limit));
@@ -88,13 +98,23 @@ export function useThreads({
         setIsLoading(false);
       }
     },
-    [scope?.categorySlug, scope?.courseId, scope?.lessonId, sort, type, limit]
+    [
+      scope?.categorySlug,
+      scope?.courseId,
+      scope?.lessonId,
+      sort,
+      type,
+      limit,
+      courseOnly,
+    ]
   );
 
   useEffect(() => {
     setCursor(null);
     fetchThreads(null);
-  }, [fetchThreads]);
+    // `refreshToken` carries no data — bumping it is the caller's way of asking
+    // for a refetch from the top (e.g. after posting inline).
+  }, [fetchThreads, refreshToken]);
 
   const loadMore = useCallback(() => {
     if (cursor && !isLoading) {

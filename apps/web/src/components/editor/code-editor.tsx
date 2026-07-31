@@ -39,16 +39,6 @@ function getMonacoLanguage(language: EditorLanguage): string {
   }
 }
 
-/**
- * Whether Monaco ships a document-formatting provider for this language.
- * The TS worker formats TypeScript/JavaScript and the JSON worker formats
- * JSON; Rust is highlight-only, so the Format button hides there rather than
- * offering a control that does nothing (`format()` is the runtime backstop).
- */
-export function canFormatLanguage(language: EditorLanguage): boolean {
-  return language === "typescript" || language === "json";
-}
-
 function EditorSkeleton() {
   return (
     <div className="flex h-full w-full flex-col gap-2 bg-[var(--surface)] p-4">

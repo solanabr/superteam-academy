@@ -23,7 +23,7 @@ import { useOnChainEnroll } from "@/hooks/use-on-chain-enroll";
 import { bankCompletion, removeBanked } from "@/lib/lessons/progress-bank";
 import { REPLAY_BANKED_EVENT } from "@/components/lessons/banked-progress-replay";
 import { ThreadList } from "@/components/community/thread-list";
-import { CreateThreadModal } from "@/components/community/create-thread-modal";
+import { ThreadComposer } from "@/components/community/thread-composer";
 import { LessonSection } from "@/components/lessons/lesson-section";
 import {
   LessonJumpChips,
@@ -151,7 +151,10 @@ export function LessonPageClient({
   const [earnedXp, setEarnedXp] = useState<number | null>(null);
   const [isEnrolled, setIsEnrolled] = useState(false);
   const hasLinkedWallet = authProfile ? !!authProfile.wallet_address : null;
-  const [isDiscussionOpen, setIsDiscussionOpen] = useState(false);
+  // Inline "Ask a question" composer inside the Discussion section (replaces
+  // the create-thread MODAL on the lesson page entirely).
+  const [isComposerOpen, setIsComposerOpen] = useState(false);
+  const [threadsRefreshToken, setThreadsRefreshToken] = useState(0);
   // Discussion is an inline collapsible section at the bottom of the lesson
   // pane on every lesson type (#942) — it used to be a modal on challenges
   // (#770). This is the section's disclosure state (distinct from the
@@ -497,7 +500,7 @@ export function LessonPageClient({
     <Button
       variant="pushOutline"
       size="sm"
-      onClick={() => setIsDiscussionOpen(true)}
+      onClick={() => setIsComposerOpen(true)}
     >
       {t("askQuestion")}
     </Button>
@@ -553,13 +556,35 @@ export function LessonPageClient({
         onOpenChange={setIsDiscussionListOpen}
         keepMounted
       >
-        <div className="mb-3 flex justify-end">{askAction}</div>
+        {/* Composing happens INLINE at the top of the section (LeetCode's
+            comment box). A modal over a lesson hid the code the learner was
+            asking about, which is the one thing they need while writing. */}
+        {isComposerOpen ? (
+          <div className="mb-4 rounded-lg border border-border bg-subtle p-3">
+            <h4 className="mb-3 font-display text-sm font-bold text-text">
+              {tCommunity("composerHeading")}
+            </h4>
+            <ThreadComposer
+              defaultScope={{ courseId, lessonId: lesson._id }}
+              onCancel={() => setIsComposerOpen(false)}
+              // Staying put is the point: the new thread appears in the list
+              // below instead of navigating away from the lesson.
+              onCreated={() => {
+                setIsComposerOpen(false);
+                setThreadsRefreshToken((n) => n + 1);
+              }}
+            />
+          </div>
+        ) : (
+          <div className="mb-3 flex justify-end">{askAction}</div>
+        )}
         <div className="text-sm [&_button]:px-2.5 [&_button]:py-1 [&_button]:text-xs">
           <ThreadList
             scope={{ courseId, lessonId: lesson._id }}
             showFilters
             emptyMessage={tCommunity("empty.lesson")}
             onCountChange={handleThreadCount}
+            refreshToken={threadsRefreshToken}
           />
         </div>
       </LessonSection>
@@ -926,11 +951,6 @@ export function LessonPageClient({
           below the prose. Discussion is the same inline section on both, never
           a modal. */}
       {!hasCodeBlock && paneSections}
-      <CreateThreadModal
-        open={isDiscussionOpen}
-        onOpenChange={setIsDiscussionOpen}
-        defaultScope={{ courseId, lessonId: lesson._id }}
-      />
     </div>
   );
 }

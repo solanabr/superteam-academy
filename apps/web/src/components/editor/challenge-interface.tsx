@@ -25,11 +25,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { shouldShowEncouragement } from "@/lib/gamification/celebration";
-import {
-  CodeEditor,
-  canFormatLanguage,
-  resetEditorStorage,
-} from "./code-editor";
+import { CodeEditor, resetEditorStorage } from "./code-editor";
+import { canFormatLanguage } from "./formatting";
 import { Stopwatch } from "./stopwatch";
 import { OutputPanel } from "./output-panel";
 import { ChallengeRunner } from "./challenge-runner";
