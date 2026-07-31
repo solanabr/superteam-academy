@@ -70,44 +70,39 @@ export function AnswerCard({
   return (
     <div
       className={cn(
-        "flex gap-4 rounded-lg border p-4",
+        "rounded-md border px-4 py-3",
         answer.is_accepted
           ? "border-[var(--primary)] bg-[var(--primary-dim)]"
           : "border-[var(--border-default)] bg-[var(--card)]"
       )}
     >
-      {/* Vote rail only. The accept control used to hang below it as a bare
-          floating checkmark with no visible label — it now lives in the meta
-          row as a proper labeled button, which also stops the rail from
-          out-growing a short answer and leaving dead space beside it. */}
-      <VoteButton
-        score={answer.vote_score}
-        userVote={answer.userVote}
-        onVote={onVote}
-        disabled={disabled}
-        size="sm"
-      />
+      {answer.is_accepted && (
+        <span className="mb-1.5 inline-flex items-center text-xs font-semibold text-[var(--primary)]">
+          {t("acceptedAnswer")}
+        </span>
+      )}
 
-      <div className="min-w-0 flex-1">
-        {answer.is_accepted && (
-          <span className="mb-2 inline-flex items-center text-xs font-semibold text-[var(--primary)]">
-            {t("acceptedAnswer")}
-          </span>
-        )}
+      {/* Body first, full width — no side rail eating height. Headings step
+          DOWN explicitly: `prose-sm` scales body copy but still renders an
+          authored `#`/`##` larger than the question title above it. */}
+      <div className="prose prose-sm max-w-none text-[var(--text)] dark:prose-invert prose-headings:font-display prose-headings:font-bold prose-h1:text-base prose-h2:text-[15px] prose-h3:text-sm prose-h4:text-sm">
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeHighlight]}
+        >
+          {answer.body}
+        </ReactMarkdown>
+      </div>
 
-        {/* Headings step DOWN explicitly — `prose-sm` scales body copy but
-            still renders an authored `#`/`##` larger than the question title
-            above it. */}
-        <div className="prose prose-sm max-w-none text-[var(--text)] dark:prose-invert prose-headings:font-display prose-headings:font-bold prose-h1:text-base prose-h2:text-[15px] prose-h3:text-sm prose-h4:text-sm">
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            rehypePlugins={[rehypeHighlight]}
-          >
-            {answer.body}
-          </ReactMarkdown>
-        </div>
-
-        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--text-2)]">
+      {/* One dense meta line: inline vote cluster + author + time + actions. */}
+      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--text-2)]">
+        <VoteButton
+          score={answer.vote_score}
+          userVote={answer.userVote}
+          onVote={onVote}
+          disabled={disabled}
+          layout="horizontal"
+        />
           <span className="flex items-center gap-1.5">
             {answer.author.avatar_url ? (
               <Image
@@ -138,7 +133,6 @@ export function AnswerCard({
               onAccept={onAccept}
             />
           )}
-        </div>
       </div>
     </div>
   );
