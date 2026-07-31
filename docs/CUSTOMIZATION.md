@@ -6,10 +6,18 @@ How to customize and extend Superteam Academy for your own needs.
 
 ## Theme Customization
 
-> **Rendered reference:** `docs/design-system.html` — every token, both themes, live
-> swatches, and the component variant matrices. It is **generated** from the files
-> described below (`pnpm docs:design-system`); regenerate it after any token change
-> and commit the diff. `pnpm docs:design-system:check` fails if it is stale.
+> **Rendered reference:** `docs/design-system.html` — every token in both themes with
+> live swatches, plus a component gallery (buttons, toasts, popups, dialogs, pills,
+> level badges, cards, certificates, leaderboard, navigation, forms, quiz, progress,
+> editor chrome, empty states) rendered side by side in light and dark. It is
+> **generated** from the files described below (`pnpm docs:design-system`); regenerate
+> it after any token or component change and commit the diff.
+> `pnpm docs:design-system:check` fails if it is stale.
+>
+> The gallery markup lives in `scripts/design-system-gallery.mjs`. Its Tailwind
+> classes are compiled by the app's own Tailwind build and its bespoke classes are
+> lifted verbatim out of `globals.css`, so the page cannot drift silently: the
+> generator refuses to build if a class string does not exist in `apps/web/src`.
 
 ### The pipeline
 

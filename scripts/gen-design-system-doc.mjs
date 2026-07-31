@@ -14,9 +14,23 @@
  * The output is deterministic (no timestamps) so a regeneration is byte-stable.
  */
 
-import { readFileSync, writeFileSync } from "node:fs";
+import {
+  readFileSync,
+  writeFileSync,
+  mkdtempSync,
+  rmSync,
+  readdirSync,
+  statSync,
+} from "node:fs";
+import { execFileSync } from "node:child_process";
+import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import {
+  GALLERY,
+  DEAD_CLASSES,
+  MISSING_RULES,
+} from "./design-system-gallery.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SRC = {
@@ -81,6 +95,113 @@ function pushDecl(map, raw) {
 const css = read(SRC.css);
 const light = parseVars(blockBody(css, "\n  :root {"));
 const dark = parseVars(blockBody(css, '[data-theme="dark"] {'));
+
+/* ── bespoke-rule extraction ─────────────────────────────────────────────────
+   The gallery reproduces components that style themselves with hand-written
+   classes in globals.css (.pill, .course-card, .nav-link…). Those rules are
+   lifted VERBATIM, with their source line, so the page renders standalone
+   without anyone retyping (and mistyping) a declaration.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+const lineOf = (text, index) => text.slice(0, index).split("\n").length;
+
+/** Walks top-level rules, descending into @media/@layer/@supports. */
+function* walkRules(source, offset = 0, wrappers = []) {
+  let i = 0;
+  let prelude = "";
+  while (i < source.length) {
+    const ch = source[i];
+    if (ch === "{") {
+      let depth = 0;
+      let end = i;
+      for (let j = i; j < source.length; j++) {
+        if (source[j] === "{") depth++;
+        else if (source[j] === "}" && --depth === 0) {
+          end = j;
+          break;
+        }
+      }
+      const body = source.slice(i + 1, end);
+      const sel = prelude.trim();
+      if (/^@(media|layer|supports|scope)/.test(sel)) {
+        yield* walkRules(
+          body,
+          offset + i + 1,
+          sel.startsWith("@layer") ? wrappers : [...wrappers, sel]
+        );
+      } else if (sel && !sel.startsWith("@")) {
+        yield {
+          selector: sel,
+          body,
+          wrappers,
+          index: offset + i - prelude.length,
+        };
+      }
+      prelude = "";
+      i = end + 1;
+      continue;
+    }
+    if (ch === ";" && prelude.trim().startsWith("@")) prelude = "";
+    else prelude += ch;
+    i++;
+  }
+}
+
+const rules = [...walkRules(stripComments(css))];
+/* stripComments preserves neither offsets nor line numbers, so line lookups run
+   against a comment-stripped copy that keeps newlines. */
+const cssNoComments = css.replace(/\/\*[\s\S]*?\*\//g, (m) =>
+  m.replace(/[^\n]/g, " ")
+);
+const rulesForLines = [...walkRules(cssNoComments)];
+
+const classToken = (name) =>
+  new RegExp(`\\.${name.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")}(?![\\w-])`);
+
+/**
+ * Returns the verbatim CSS for every rule whose selector uses one of `names`,
+ * each preceded by a `globals.css:<line>` comment.
+ */
+function extractGlobalRules(names) {
+  const tests = names.map((n) => [n, classToken(n)]);
+  const out = [];
+  const seen = new Set();
+  rulesForLines.forEach((rule, i) => {
+    /* one rule can serve several names (`.pill-primary, .pill-beg { … }`) */
+    const hits = tests.filter(([, re]) => re.test(rule.selector)).map(([n]) => n);
+    if (!hits.length) return;
+    const key = `${rule.selector}::${i}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    const line = lineOf(cssNoComments, rule.index);
+    const text = `${rule.selector} {${rules[i]?.body ?? rule.body}}`;
+    out.push({
+      names: hits,
+      line,
+      wrappers: rule.wrappers,
+      css: rule.wrappers.length
+        ? rule.wrappers.map((w) => `${w} {`).join("\n") +
+          `\n${text}\n` +
+          rule.wrappers.map(() => "}").join("\n")
+        : text,
+    });
+  });
+  const missing = names.filter((n) => !out.some((r) => r.names.includes(n)));
+  if (missing.length)
+    throw new Error(
+      `bespoke class(es) not found in ${SRC.css}: ${missing.join(", ")}`
+    );
+  return out;
+}
+
+/* Authoring aid: `node scripts/gen-design-system-doc.mjs --extract=pill,nav-link`
+   prints the rules the gallery would inline for those classes. */
+const extractArg = process.argv.find((a) => a.startsWith("--extract="));
+if (extractArg) {
+  for (const r of extractGlobalRules(extractArg.slice(10).split(",")))
+    console.log(`/* ${SRC.css}:${r.line} */\n${r.css}\n`);
+  process.exit(0);
+}
 
 /* ── tailwind.config.ts parsing ──────────────────────────────────────────── */
 
@@ -174,6 +295,76 @@ const fonts = [
   .filter((f) => f.variable);
 
 const bodyClass = layout.match(/className=\{`([^`]*)`\}/)?.[1] ?? "";
+
+/* ── Tailwind compilation ────────────────────────────────────────────────────
+   The gallery uses the components' real Tailwind class strings, so the page
+   needs the real utilities. Rather than retyping them (which is exactly how the
+   previous doc went stale) the generator runs the app's own Tailwind build over
+   the generated markup and inlines the result. Every declaration on this page
+   therefore comes out of apps/web/tailwind.config.ts.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+function compileTailwind(markup) {
+  const bin = join(ROOT, "apps/web/node_modules/.bin/tailwindcss");
+  const dir = mkdtempSync(join(tmpdir(), "ds-doc-"));
+  try {
+    const htmlPath = join(dir, "gallery.html");
+    const inPath = join(dir, "in.css");
+    const outPath = join(dir, "out.css");
+    writeFileSync(htmlPath, markup);
+    writeFileSync(inPath, "@tailwind base;\n@tailwind utilities;\n");
+    execFileSync(
+      bin,
+      ["-c", join(ROOT, SRC.tw), "-i", inPath, "--content", htmlPath, "-o", outPath],
+      { stdio: ["ignore", "ignore", "pipe"] }
+    );
+    return readFileSync(outPath, "utf8").trim();
+  } catch (err) {
+    throw new Error(
+      `Tailwind build failed — run \`pnpm install\` first.\n${err.stderr ?? err}`
+    );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+/* ── class-string verification ───────────────────────────────────────────────
+   Accuracy gate: every class token the gallery uses must exist in the app
+   source. Nothing on this page may be invented.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+function appSourceCorpus() {
+  const roots = [join(ROOT, "apps/web/src")];
+  const files = [];
+  while (roots.length) {
+    const dir = roots.pop();
+    for (const entry of readdirSync(dir)) {
+      const p = join(dir, entry);
+      if (statSync(p).isDirectory()) {
+        if (entry !== "node_modules" && entry !== "generated") roots.push(p);
+      } else if (/\.(tsx?|css)$/.test(entry)) files.push(p);
+    }
+  }
+  return files.map((f) => readFileSync(f, "utf8")).join("\n");
+}
+
+/** Layout-only helpers this page adds. Prefixed so they cannot shadow app classes. */
+const GALLERY_OWN_PREFIX = /^(gx-|ctx-|sw|tok|val|cls|na|b-|b$|demo|type-|uicard|rules|ok|no|note|stamp|count|tablewrap|tokens|wrap|f-)/;
+
+function verifyClassTokens(markup) {
+  const corpus = appSourceCorpus();
+  const used = new Set();
+  for (const m of markup.matchAll(/class="([^"]*)"/g))
+    for (const tok of m[1].split(/\s+/).filter(Boolean)) used.add(tok);
+  const unknown = [...used]
+    .filter((t) => !GALLERY_OWN_PREFIX.test(t))
+    .filter((t) => !corpus.includes(t));
+  if (unknown.length)
+    throw new Error(
+      `gallery uses class token(s) that exist nowhere in apps/web/src:\n  ${unknown.join("\n  ")}`
+    );
+  return used.size;
+}
 
 /* ── token grouping ──────────────────────────────────────────────────────── */
 
@@ -301,48 +492,30 @@ const BUTTON_SIZES = [
   ["icon", "h-10 w-10 p-0"],
 ];
 
-const demoButtons = (theme) => `
-<div class="ctx-${theme} demo">
-  <div class="demo-label">${theme}</div>
-  <div class="demo-row">
-    <button class="b b-primary">Primary</button>
-    <button class="b b-secondary">Secondary</button>
-    <button class="b b-accent">Accent</button>
-    <button class="b b-ghost">Ghost</button>
-    <button class="b b-link">Link</button>
-    <button class="b b-destructive">Destructive</button>
-    <button class="b b-destructive-outline">Destructive outline</button>
-  </div>
-  <div class="demo-row">
-    <button class="b b-primary b-sm">Small</button>
-    <button class="b b-primary">Default</button>
-    <button class="b b-primary b-lg">Large</button>
-    <button class="b b-primary b-icon">★</button>
-    <button class="b b-primary" disabled>Disabled</button>
-  </div>
-  <div class="demo-row">
-    <span class="pill pill-beg">Beginner</span>
-    <span class="pill pill-int">Intermediate</span>
-    <span class="pill pill-adv">Advanced</span>
-    <span class="pill pill-xp">1,250 XP</span>
-    <span class="pill pill-streak">7 day</span>
-    <span class="pill pill-level">Lv 12</span>
-    <span class="pill pill-sol">Solana</span>
-    <span class="pill pill-done">Done</span>
-  </div>
-  <div class="demo-row">
-    <div class="uicard">
-      <div class="uicard-head">
-        <div class="uicard-title">Card title</div>
-        <div class="uicard-desc">CardDescription — text-sm text-text-2</div>
-      </div>
-      <div class="uicard-body">CardContent — p-6 pt-0</div>
-    </div>
-    <div class="uicard uicard-chunky">
-      <div class="uicard-body"><strong>.card-chunky</strong> — 2.5px border, shadow-card</div>
-    </div>
-  </div>
-</div>`;
+/* ── COMPONENT GALLERY ───────────────────────────────────────────────────────
+   Hand-authored markup, but every class string is copied verbatim out of the
+   component named in `sources`, and the generator refuses to build if a class
+   token does not exist in apps/web/src (see verifyClassTokens). `bespoke` lists
+   the globals.css classes whose rules get inlined verbatim, with line numbers.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+const galleryPanel = (section, theme) => `
+  <div class="gx-panel ctx-${theme}" data-theme="${theme}">
+    <div class="gx-label">${theme}</div>
+    ${section.html}
+  </div>`;
+
+const gallerySection = (s) => `
+<h3 id="gx-${s.id}">${esc(s.title)}</h3>
+<p class="gx-src">Source: ${s.sources.map((x) => `<code>${esc(x)}</code>`).join(" · ")}${
+  s.bespoke?.length
+    ? ` · bespoke CSS inlined from <code>${SRC.css}</code>: ${s.bespoke
+        .map((b) => `<code>.${esc(b)}</code>`)
+        .join(" ")}`
+    : ""
+}</p>
+${s.note ? `<p class="gx-note">${s.note}</p>` : ""}
+<div class="gx-grid">${galleryPanel(s, "light")}${galleryPanel(s, "dark")}</div>`;
 
 const html = `<!doctype html>
 <html lang="en">
@@ -352,6 +525,12 @@ const html = `<!doctype html>
 <title>Superteam Academy — Design System Reference (generated)</title>
 <style>
 /* ══ GENERATED FILE — do not hand-edit. See the stamp at the top of the page. ══ */
+
+/* ── Tailwind, compiled from apps/web/tailwind.config.ts over this page's markup ── */
+__TAILWIND_CSS__
+
+/* ── Bespoke component rules, lifted verbatim from apps/web/src/styles/globals.css ── */
+__BESPOKE_CSS__
 
 /* Light-mode token context — verbatim from ${SRC.css} :root */
 .ctx-light {
@@ -401,59 +580,31 @@ td.ctx-dark { background: #0e1117; }
 td.ctx-light .sw-box { background: #ffffff; }
 td.ctx-dark .sw-box { background: #161b27; }
 
-/* ── Rendered component contexts ── */
-.demo { border: 1px solid var(--line); border-radius: 12px; padding: 18px; background: var(--bg); color: var(--text); }
-.demo + .demo { margin-top: 14px; }
-.demo-label { font-family: ui-monospace, monospace; font-size: 10px; text-transform: uppercase;
+/* ── Gallery chrome (this page only; gx- prefix keeps it out of the app namespace) ── */
+.gx-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+@media (min-width: 900px) { .gx-grid { grid-template-columns: 1fr 1fr; } }
+.gx-panel { border: 1px solid var(--line); border-radius: 12px; padding: 18px; overflow: hidden;
+  background: var(--bg); color: var(--text);
+  font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif; font-size: 14px; line-height: 1.6; }
+.gx-label { font-family: ui-monospace, monospace; font-size: 10px; text-transform: uppercase;
   letter-spacing: 1px; color: var(--text-3); margin-bottom: 12px; }
-.demo-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
-.demo-row:last-child { margin-bottom: 0; }
-
-/* button.tsx cva, transcribed */
-.b { display: inline-flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap;
-  font-family: "Nunito", ui-sans-serif, system-ui, sans-serif; font-weight: 800; border: none; cursor: pointer;
-  text-decoration: none; transition: all 120ms ease; border-radius: var(--r-md); font-size: 14px; padding: 11px 22px; }
-.b:disabled { pointer-events: none; opacity: .5; }
-.b-sm { padding: 7px 14px; font-size: 12px; border-radius: var(--r-sm); }
-.b-lg { padding: 14px 30px; font-size: 16px; }
-.b-icon { height: 40px; width: 40px; padding: 0; }
-.b-primary { background: var(--primary); color: #fff; box-shadow: 0 4px 0 0 var(--primary-dark); }
-.b-secondary { background: transparent; color: var(--text); border: 1.5px solid var(--border-strong); }
-.b-accent { background: var(--xp); color: #fff; box-shadow: 0 4px 0 0 var(--xp-dark); }
-.b-ghost { background: transparent; color: var(--text-2); box-shadow: none; }
-.b-link { background: transparent; color: var(--primary); box-shadow: none; text-decoration: underline; text-underline-offset: 4px; }
-.b-destructive { background: var(--danger); color: #fff; box-shadow: 0 4px 0 0 var(--danger-dark); }
-.b-destructive-outline { background: transparent; color: var(--danger); border: 1.5px solid var(--danger-border); }
-
-/* .pill — transcribed from globals.css */
-.pill { display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; border-radius: var(--r-full);
-  font-family: "Nunito", ui-sans-serif, system-ui, sans-serif; font-weight: 700; font-size: 11px;
-  text-transform: uppercase; letter-spacing: .4px; border: 1px solid; }
-.pill-beg { background: var(--primary-dim); color: var(--primary); border-color: rgba(46,204,142,0.22); }
-.pill-int { background: rgba(10,112,85,0.12); color: var(--primary-dark); border-color: rgba(10,112,85,0.2); }
-.ctx-dark .pill-int { color: var(--primary); }
-.pill-adv { background: var(--streak-dim); color: var(--streak); border-color: rgba(249,115,22,0.22); }
-.pill-xp { background: var(--xp-dim); color: var(--xp); border-color: rgba(245,166,35,0.22); }
-.pill-streak { background: var(--streak-dim); color: var(--streak); border-color: rgba(249,115,22,0.22); }
-.pill-level { background: var(--level-dim); color: var(--level); border-color: rgba(167,139,250,0.22); }
-.pill-sol { background: rgba(153,69,255,0.08); color: #c4b5fd; border-color: rgba(153,69,255,0.2); }
-.pill-done { background: rgba(63,185,80,0.1); color: var(--success); border-color: rgba(63,185,80,0.22); }
-
-/* card.tsx, transcribed */
-.uicard { border-radius: var(--r-lg); border: 1px solid var(--border-default); background: var(--card);
-  color: var(--text); box-shadow: var(--shadow-card); max-width: 320px; }
-.uicard-head { padding: 24px; }
-.uicard-title { font-family: "Nunito", ui-sans-serif, system-ui, sans-serif; font-weight: 800; font-size: 24px; line-height: 1; letter-spacing: -.02em; }
-.uicard-desc { font-size: 14px; color: var(--text-2); margin-top: 6px; }
-.uicard-body { padding: 24px; padding-top: 0; color: var(--text-2); font-size: 14px; }
-.uicard-chunky { border: 2.5px solid var(--border); }
-.uicard-chunky .uicard-body { padding-top: 24px; }
+.gx-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
+.gx-row:last-child { margin-bottom: 0; }
+.gx-stack { display: flex; flex-direction: column; gap: 12px; }
+.gx-caption { font-family: ui-monospace, monospace; font-size: 10px; text-transform: uppercase;
+  letter-spacing: .8px; color: var(--text-3); margin: 6px 0 2px; }
+.gx-mt { margin-top: 10px; }
+.gx-src { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; color: var(--ink2); margin: 0 0 6px; max-width: none; }
+.gx-note { margin: 0 0 10px; }
+.gx-dead code { white-space: nowrap; }
 
 .type-sample { border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; margin-bottom: 10px; }
 .type-meta { font-family: ui-monospace, monospace; font-size: 10.5px; text-transform: uppercase; letter-spacing: .8px; color: var(--ink2); margin-bottom: 8px; }
 .f-sans { font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif; }
 .f-display { font-family: "Nunito", ui-sans-serif, system-ui, sans-serif; }
 .f-mono { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; }
+ol.rules { list-style: decimal; padding-left: 22px; }
+ul.rules, .stamp ul { list-style: disc; padding-left: 22px; }
 .rules li { margin-bottom: 10px; color: var(--ink2); }
 .rules strong { color: var(--ink); }
 .ok { color: #0a7055; font-weight: 700; }
@@ -543,12 +694,12 @@ ${[...radiusMap, ...shadowMap]
 </tbody></table></div>
 <p><code>shadow-push</code> / <code>shadow-push-sm</code> / <code>shadow-push-active</code> compose <code>--shadow-push-color</code> into the 3D press effect used by the button primitive; the pressed state is <code>active:translate-y-[2px]</code> plus the shorter shadow.</p>
 
-<h2 id="components">6. Component matrices</h2>
-<p>Rendered below in both theme contexts, using the real token values. These are static mirrors of the cva definitions — the authority remains the component file.</p>
-${demoButtons("light")}
-${demoButtons("dark")}
+<h2 id="components">6. Component gallery</h2>
+<p>Every family below is rendered twice — once in each theme context — from the components' own class strings. Both panels share identical markup: the only difference is which token block the surrounding context carries, which is the whole point of the pipeline. Tailwind utilities on this page are compiled by the app's own Tailwind build; bespoke classes are lifted verbatim out of <code>${SRC.css}</code> with their source line.</p>
+<p class="gx-note">Caveats that apply throughout: Phosphor icon components render as text glyphs, <code>next/image</code> thumbnails as token-coloured boxes, and entry animations / <code>position: fixed</code> are neutralised so the page stays legible. Everything else is the real thing.</p>
+${GALLERY.map(gallerySection).join("\n")}
 
-<h3>Button — variants (<code>${SRC.button}</code>)</h3>
+<h3>Button — the full cva matrix (<code>${SRC.button}</code>)</h3>
 <div class="tablewrap"><table class="tokens">
 <thead><tr><th>variant</th><th>Kind</th><th>Key classes</th></tr></thead><tbody>
 ${BUTTON_VARIANTS.map(
@@ -557,8 +708,6 @@ ${BUTTON_VARIANTS.map(
 ).join("\n")}
 </tbody></table></div>
 <p>Base classes applied to every variant: <code>${esc(BUTTON_BASE)}</code></p>
-
-<h3>Button — sizes</h3>
 <div class="tablewrap"><table class="tokens">
 <thead><tr><th>size</th><th>Classes</th></tr></thead><tbody>
 ${BUTTON_SIZES.map(
@@ -568,13 +717,21 @@ ${BUTTON_SIZES.map(
 </tbody></table></div>
 <p>Defaults: <code>variant="primary"</code>, <code>size="default"</code>.</p>
 
-<h3>Card (<code>${SRC.card}</code>)</h3>
-<p><code>Card</code> is static by design — <code>rounded-[var(--r-lg)] border border-[var(--border-default)] bg-[var(--card)] text-[var(--text)] shadow-[var(--shadow-card)]</code>. Interactive cards opt into the hover lift via <code>styleClasses</code> (<code>CARD_STYLES.containerHover</code> / <code>INTERACTIVE_STATES.hoverLift</code>). <code>CardHeader</code>/<code>CardContent</code>/<code>CardFooter</code> are <code>p-6</code> (content and footer <code>pt-0</code>); <code>CardTitle</code> is <code>font-display text-2xl font-extrabold</code>; <code>CardDescription</code> is <code>text-sm text-text-2</code>. The chunkier <code>.card-chunky</code> class in <code>globals.css</code> is the marketing/dashboard variant.</p>
+<h2 id="dead">7. Class strings that do nothing</h2>
+<p>Found while building this page and verified on every regeneration: these strings are written in components but compile to no CSS under <code>${SRC.tw}</code>, or name a bespoke class that <code>${SRC.css}</code> never defines. They are listed here as documentation of the current state — fixing them is a code change, not a docs change.</p>
+<div class="tablewrap"><table class="tokens gx-dead">
+<thead><tr><th>Class</th><th>Used at</th><th>Why it produces nothing</th></tr></thead><tbody>
+${DEAD_CLASSES.map(
+  (d) =>
+    `<tr><td class="tok">${esc(d.cls)}</td><td class="val">${esc(d.where)}</td><td>${d.why}</td></tr>`
+).join("\n")}
+${MISSING_RULES.map(
+  (d) =>
+    `<tr><td class="tok">.${esc(d.cls)}</td><td class="val">${esc(d.where)}</td><td>bespoke class with no rule in <code>${SRC.css}</code>.</td></tr>`
+).join("\n")}
+</tbody></table></div>
 
-<h3>Pills (<code>globals.css</code>)</h3>
-<p>Pills are plain CSS classes, not a cva primitive: <code>.pill</code> plus one of <code>.pill-beg</code> <code>.pill-int</code> <code>.pill-adv</code> <code>.pill-xp</code> <code>.pill-streak</code> <code>.pill-level</code> <code>.pill-sol</code> <code>.pill-done</code> (<code>.pill-primary</code> aliases <code>.pill-beg</code>). Base geometry: <code>4px 12px</code> padding, <code>var(--r-full)</code>, display font, 700 weight, 11px, uppercase, 0.4px tracking, 1px border.</p>
-
-<h2 id="theming">7. Retheming checklist</h2>
+<h2 id="theming">8. Retheming checklist</h2>
 <ol class="rules">
   <li>Edit the hex/rgba in <code>:root</code> <em>and</em> <code>[data-theme="dark"]</code> in <code>${SRC.css}</code>. Both blocks must stay name-for-name identical.</li>
   <li>Only add to <code>${SRC.tw}</code> if you introduced a new variable that deserves a semantic class.</li>
@@ -587,10 +744,46 @@ ${BUTTON_SIZES.map(
 </html>
 `;
 
+/* ── verification + late-bound CSS ───────────────────────────────────────── */
+
+/* 1. every class token in the page must exist in the app source */
+const tokenCount = verifyClassTokens(html);
+
+/* 2. the "does nothing" table must stay true: these must emit no CSS */
+const deadProbe = compileTailwind(
+  `<div class="${DEAD_CLASSES.map((d) => d.cls).join(" ")}"></div>`
+);
+const resurrected = DEAD_CLASSES.filter((d) =>
+  deadProbe.includes(`.${d.cls.replace(/([/:])/g, "\\$1")}`)
+);
+if (resurrected.length)
+  throw new Error(
+    `these classes now compile — remove them from DEAD_CLASSES: ${resurrected
+      .map((d) => d.cls)
+      .join(", ")}`
+  );
+
+/* 3. bespoke rules, lifted verbatim, in globals.css order */
+const bespokeNames = [
+  ...new Set(GALLERY.flatMap((s) => s.bespoke ?? [])),
+];
+const bespokeCss = extractGlobalRules(bespokeNames)
+  .map((r) => `/* ${SRC.css}:${r.line} */\n${r.css}`)
+  .join("\n");
+if (/@apply/.test(bespokeCss))
+  throw new Error("a lifted rule uses @apply — it will not render standalone");
+
+/* 4. Tailwind, compiled by the app's own build over this exact markup */
+const tailwindCss = compileTailwind(html);
+
+const finalHtml = html
+  .replace("__TAILWIND_CSS__", tailwindCss)
+  .replace("__BESPOKE_CSS__", bespokeCss);
+
 const outPath = join(ROOT, OUT);
 if (process.argv.includes("--check")) {
   const current = readFileSync(outPath, "utf8");
-  if (current !== html) {
+  if (current !== finalHtml) {
     console.error(
       `${OUT} is stale — run \`pnpm docs:design-system\` and commit the result.`
     );
@@ -598,8 +791,10 @@ if (process.argv.includes("--check")) {
   }
   console.log(`${OUT} is up to date.`);
 } else {
-  writeFileSync(outPath, html);
+  writeFileSync(outPath, finalHtml);
   console.log(
-    `${OUT} written — ${light.size} light tokens, ${dark.size} dark tokens, ${allNames.length} distinct names.`
+    `${OUT} written — ${light.size} light / ${dark.size} dark tokens (${allNames.length} names), ` +
+      `${GALLERY.length} gallery sections, ${tokenCount} distinct class tokens verified, ` +
+      `${bespokeNames.length} bespoke classes inlined.`
   );
 }
