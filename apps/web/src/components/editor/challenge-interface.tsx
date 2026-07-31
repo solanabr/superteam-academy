@@ -7,6 +7,7 @@ import {
   CheckCircle,
   Eye,
   Lightbulb,
+  MagicWand,
   Trophy,
   X,
 } from "@phosphor-icons/react";
@@ -24,7 +25,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { shouldShowEncouragement } from "@/lib/gamification/celebration";
-import { CodeEditor, resetEditorStorage } from "./code-editor";
+import {
+  CodeEditor,
+  canFormatLanguage,
+  resetEditorStorage,
+} from "./code-editor";
+import { Stopwatch } from "./stopwatch";
 import { OutputPanel } from "./output-panel";
 import { ChallengeRunner } from "./challenge-runner";
 import { AiPartnerPane } from "./ai-partner/ai-partner-pane";
@@ -290,6 +296,13 @@ export function ChallengeInterface({
     }));
   }, []);
 
+  // Monaco owns the formatting — the handle just runs its built-in action, and
+  // the button is only offered for languages Monaco actually formats.
+  const canFormat = canFormatLanguage(language);
+  const handleFormat = useCallback(() => {
+    void editorHandle.current?.format();
+  }, []);
+
   const handleReset = useCallback(() => {
     setCode(initialCode);
     resetEditorStorage(lessonId);
@@ -552,6 +565,21 @@ export function ChallengeInterface({
               </div>
 
               <div className="flex items-center gap-1">
+                {/* Personal stopwatch (#942 follow-up) — client-only, per
+                    lesson, never wired to XP or grading. */}
+                <Stopwatch lessonId={lessonId} />
+                {canFormat && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleFormat}
+                    className="gap-1 text-xs"
+                    aria-label={t("formatCode")}
+                  >
+                    <MagicWand size={16} weight="duotone" aria-hidden="true" />
+                    <span className="hidden sm:inline">{t("formatCode")}</span>
+                  </Button>
+                )}
                 {/* Reference solution is a post-completion reward, not a crutch:
                     the button only appears once the challenge is verified
                     complete, and reveals directly. The LX-C6 confirm step +
@@ -804,7 +832,6 @@ export function ChallengeInterface({
                 <X size={14} weight="bold" aria-hidden="true" />
               </button>
             </div>
-
           </div>
         )}
 

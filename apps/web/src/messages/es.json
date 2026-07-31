@@ -364,7 +364,14 @@
     "quizNext": "Siguiente pregunta",
     "quizUnlocksAssistant": "El AI Partner se desbloquea después del cuestionario — {answered}/{total} respondidas",
     "quizCompleteChip": "Completado",
-    "quizAllCorrect": "Las {total} preguntas respondidas correctamente."
+    "quizAllCorrect": "Las {total} preguntas respondidas correctamente.",
+    "formatCode": "Formatear",
+    "stopwatch": "Cronómetro",
+    "stopwatchStart": "Iniciar",
+    "stopwatchPause": "Pausar",
+    "stopwatchReset": "Reiniciar",
+    "hints": "Pistas",
+    "lessonNumberTitle": "{number}. {title}"
   },
   "dashboard": {
     "allCaughtUp": "¡Todo al día!",
@@ -995,7 +1002,14 @@
       "category": "No hay temas en esta categoría aún.",
       "course": "No hay discusiones sobre este curso aún.",
       "lesson": "No hay preguntas sobre esta lección aún. ¡Haz una!"
-    }
+    },
+    "lessonContext": "De la lección",
+    "filterCourseQuestions": "Preguntas del curso",
+    "askInline": "Haz una pregunta",
+    "composerHeading": "Pregunta a la comunidad",
+    "questionHeading": "Pregunta",
+    "answersHeading": "Respuestas",
+    "noAnswersYet": "Aún no hay respuestas - sé el primero en ayudar."
   },
   "aiPartner": {
     "title": "Compañero de IA",
