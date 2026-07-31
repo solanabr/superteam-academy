@@ -1305,6 +1305,38 @@ export type Database = {
         Args: { p_user_ids: string[] };
         Returns: number;
       };
+      // #899 re-engagement send pipeline. Same ledger, same REMINDER consent;
+      // what differs is the FREQUENCY CAP (`p_cap_days`), which the RPC enforces
+      // in SQL across BOTH re-engagement kinds so a permanently lapsed learner
+      // cannot be nudged daily. `session_plan` is outside that cap.
+      claim_due_reengagement: {
+        Args: {
+          /** 'reengagement_7d' | 'course_nudge'; anything else RAISEs. */
+          p_kind: string;
+          p_inactive_days?: number;
+          p_cap_days?: number;
+          p_max_remaining?: number;
+          /** `{ [courseId]: totalLessons }` from the content bundle. */
+          p_course_totals?: Record<string, number>;
+        };
+        Returns: {
+          user_id: string;
+          email: string;
+          /** #896 reminder-scoped secret — never the marketing token. */
+          unsubscribe_token: string;
+          locale: string | null;
+          streak_days: number;
+          days_inactive: number;
+          /** Nearly-done course; null for `reengagement_7d`. */
+          course_id: string | null;
+          /** Completed lessons in that course; empty for `reengagement_7d`. */
+          completed_lesson_ids: string[];
+        }[];
+      };
+      release_reengagement_claims: {
+        Args: { p_kind: string; p_user_ids: string[] };
+        Returns: number;
+      };
       /**
        * Reminder unsubscribe. #896: matches ONLY
        * `email_subscriptions.reminder_unsubscribe_token` — a marketing token

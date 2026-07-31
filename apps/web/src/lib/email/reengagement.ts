@@ -7,9 +7,8 @@
  * nothing server-only, and is therefore unit-testable and reusable by whatever
  * drives the send.
  *
- * NOT IN THIS MODULE (and not in this PR) — the send pipeline. See the
- * SEND-PIPELINE TODO at the bottom: the trigger needs new ledger kinds and claim
- * RPCs, i.e. a migration, and splitting it out keeps this change migration-free.
+ * NOT IN THIS MODULE — the send pipeline (DB + cron). It shipped separately in
+ * #899; see the pointer at the bottom of this file.
  *
  * CONSENT — reminder, not marketing. Both templates here are gated on
  * `email_subscriptions.reminder_opt_in` (unsubscribe `kind=reminders`), the
@@ -34,8 +33,8 @@ import {
  * Ledger kinds for `email_reminder_log.kind`. The #869 ledger was built to take
  * more families ("Extensible … each family gets its own once-per-day slot"), so
  * re-engagement adds two kinds rather than a second table. These exact strings
- * are the contract the follow-up migration must use in its
- * `chk_email_reminder_log_kind` CHECK and in its claim RPCs.
+ * are the contract `20260731170000_reengagement_pipeline.sql` uses in its
+ * widened `chk_email_reminder_log_kind` CHECK and in its claim RPCs.
  */
 export const REENGAGEMENT_LEDGER_KINDS = {
   /** (a) N days with no activity anywhere on the platform. */
@@ -53,6 +52,23 @@ export type ReengagementKind =
  * a week is the shortest gap that reads as "a break" rather than "yesterday".
  */
 export const INACTIVITY_THRESHOLD_DAYS = 7;
+
+/**
+ * FREQUENCY CAP (#899) — at most one re-engagement-class email per learner per
+ * N days, across BOTH kinds. R17's no-repeat rule; the owner default is 14.
+ *
+ * This constant is the caller's default, but it is NOT where the rule lives:
+ * `claim_due_reengagement` enforces it in SQL (a NOT EXISTS over
+ * `email_reminder_log` on the two kinds above), so a second caller, a manual
+ * trigger or a future route cannot forget it. The #869 per-day PK alone is not
+ * enough — a permanently lapsed learner satisfies "inactive ≥ 7 days" every day
+ * forever and would be nudged DAILY.
+ *
+ * Session-plan reminders are deliberately OUTSIDE this cap in both directions:
+ * they are a self-scheduled appointment the learner set up, so they neither
+ * consume the re-engagement budget nor get suppressed by it.
+ */
+export const REENGAGEMENT_CAP_DAYS = 14;
 
 /**
  * How many incomplete lessons still counts as "you were close". v1 is strictly
@@ -195,57 +211,19 @@ export function reengagementHeaders(
 
 /*
  * ─────────────────────────────────────────────────────────────────────────────
- * TODO — SEND PIPELINE (follow-up issue; intentionally NOT in #870)
+ * SEND PIPELINE — SHIPPED in #899, not here.
  *
- * Templates are pure code; the trigger is DB + cron. Shipping the trigger here
- * would drag a migration into a change that otherwise needs none, so #870 stops
- * at selection and the pipeline lands separately. The design below is
- * migration-ready — every name it uses is fixed by this file.
- *
- * 1. MIGRATION
- *    a. Widen `chk_email_reminder_log_kind` (20260731120000_reminder_consent.sql)
- *       to CHECK (kind IN ('session_plan', 'reengagement_7d', 'course_nudge')).
- *       The PK (user_id, kind, sent_on) then gives each family its own
- *       once-per-São-Paulo-day slot for free.
- *    b. `claim_due_reengagement(p_kind TEXT, p_days INT)` — SECURITY DEFINER,
- *       search_path '', service_role only, modeled exactly on
- *       claim_due_session_reminders: ONE statement that reads the recipient set
- *       and INSERTs its claim rows (ON CONFLICT DO NOTHING RETURNING), so two
- *       overlapping cron runs cannot both claim a learner. Gate clauses:
- *         * es.reminder_opt_in = true            ← the consent gate, in SQL
- *         * real email (NOT LIKE '%@wallet.superteam-lms.local')
- *         * last activity older than p_days (max(user_progress.completed_at),
- *           which needs an index on (user_id, completed_at DESC))
- *         * for 'course_nudge': exactly COURSE_NUDGE_MAX_REMAINING lessons
- *           incomplete in some enrolled, non-certified course
- *       ORDER BY user_id, so chunk boundaries — and therefore Resend idempotency
- *       keys — are reproducible across a retry.
- *       It MUST return `es.reminder_unsubscribe_token`, never
- *       `es.unsubscribe_token` (#896): the two consents have separate secrets,
- *       and a re-engagement mail rides on REMINDER consent.
- *    c. `release_reengagement_claims(p_kind TEXT, p_user_ids UUID[])`.
- *
- * 2. FREQUENCY CAP (R17's no-repeat-within-N-days). The per-day PK is not
- *    enough: a permanently lapsed learner would get a nudge every single day.
- *    The claim must additionally exclude anyone with a re-engagement row in the
- *    last N days (N ≈ 14) — a NOT EXISTS over email_reminder_log on the two
- *    re-engagement kinds. Decide N with the owner before building.
- *
- * 3. PIPELINE (`sendReengagementEmails`) — copy lib/email/reminders.ts
- *    wholesale: isEmailConfigured() fail-closed BEFORE the claim; batch by
- *    RESEND_MAX_BATCH; per-chunk idempotency key over the day + member ids;
- *    release a claim ONLY on a provably-rejected batch and HOLD it on an
- *    ambiguous 5xx/timeout (releasing an ambiguous claim is how a delivered
- *    email gets sent twice). Selection + render come from
- *    selectReengagementEmail(); headers from reengagementHeaders().
- *
- * 4. CRON — one daily route under app/api/cron/, CRON_SECRET-guarded like
- *    api/cron/session-reminders, running the course nudge first, then the
- *    generic one (a learner claimed by the nudge is skipped by the second pass
- *    via the §2 cap).
- *
- * 5. INSTRUMENTATION — R17 requires logging template → return from day one:
- *    persist the sent `kind` (already the ledger PK) and attribute a return
- *    visit within 72h, so the rotation can be evaluated rather than guessed.
+ * This module stays pure (no I/O, no server-only imports). The trigger is DB +
+ * cron and lives in:
+ *   * supabase/migrations/20260731170000_reengagement_pipeline.sql
+ *     — widens `chk_email_reminder_log_kind` to the two kinds above, and adds
+ *       `claim_due_reengagement` / `release_reengagement_claims`. The consent
+ *       gate, the once-per-day claim and the {@link REENGAGEMENT_CAP_DAYS}
+ *       frequency cap are all DATABASE invariants there, not app conventions.
+ *   * lib/email/reengagement-send.ts — `sendReengagementEmails`, which renders
+ *     via {@link selectReengagementEmail} and {@link reengagementHeaders}.
+ *   * app/api/cron/reengagement/route.ts — the single daily trigger, running
+ *     the course nudge pass BEFORE the generic one so the cap gives
+ *     course_nudge precedence for free.
  * ─────────────────────────────────────────────────────────────────────────────
  */
