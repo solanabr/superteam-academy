@@ -82,10 +82,32 @@ export function AnswerCard({
         </span>
       )}
 
-      {/* Body first, full width — no side rail eating height. Headings step
-          DOWN explicitly: `prose-sm` scales body copy but still renders an
-          authored `#`/`##` larger than the question title above it. */}
-      <div className="prose prose-sm max-w-none text-[var(--text)] dark:prose-invert prose-headings:font-display prose-headings:font-bold prose-h1:text-base prose-h2:text-[15px] prose-h3:text-sm prose-h4:text-sm">
+      {/* Comment anatomy: WHO (identity header) → WHAT (body) → ACTIONS. */}
+      <div className="flex items-center gap-1.5 text-xs text-[var(--text-2)]">
+        {answer.author.avatar_url ? (
+          <Image
+            src={answer.author.avatar_url}
+            alt=""
+            width={18}
+            height={18}
+            className="h-[18px] w-[18px] rounded-full"
+          />
+        ) : (
+          <div className="h-[18px] w-[18px] rounded-full bg-[var(--primary-dim)]" />
+        )}
+        <span className="font-semibold text-[var(--text)]">
+          {answer.author.username || t("anonymous")}
+        </span>
+        {answer.author.level > 0 && (
+          <LevelBadge level={answer.author.level} size="xs" />
+        )}
+        <span aria-hidden="true">·</span>
+        <span>{timeAgo(answer.created_at, t)}</span>
+      </div>
+
+      {/* Headings step DOWN explicitly: `prose-sm` scales body copy but still
+          renders an authored `#`/`##` larger than the question title above. */}
+      <div className="prose prose-sm mt-1.5 max-w-none text-[var(--text)] dark:prose-invert prose-headings:font-display prose-headings:font-bold prose-h1:text-base prose-h2:text-[15px] prose-h3:text-sm prose-h4:text-sm">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeHighlight]}
@@ -94,7 +116,7 @@ export function AnswerCard({
         </ReactMarkdown>
       </div>
 
-      {/* One dense meta line: inline vote cluster + author + time + actions. */}
+      {/* Action row: vote cluster + quiet actions, accept last. */}
       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--text-2)]">
         <VoteButton
           score={answer.vote_score}
@@ -103,36 +125,17 @@ export function AnswerCard({
           disabled={disabled}
           layout="horizontal"
         />
-          <span className="flex items-center gap-1.5">
-            {answer.author.avatar_url ? (
-              <Image
-                src={answer.author.avatar_url}
-                alt=""
-                width={16}
-                height={16}
-                className="h-4 w-4 rounded-full"
-              />
-            ) : (
-              <div className="h-4 w-4 rounded-full bg-[var(--primary-dim)]" />
-            )}
-            <span>{answer.author.username || t("anonymous")}</span>
-            {answer.author.level > 0 && (
-              <LevelBadge level={answer.author.level} size="xs" />
-            )}
-          </span>
-          <span>{timeAgo(answer.created_at, t)}</span>
-          <FlagButton answerId={answer.id} />
-          {isAuthor && onDelete && (
-            <DeleteButton answerId={answer.id} onDeleted={onDelete} />
-          )}
-          {/* Thread author only, and never on their own answer — same rule as
-              before, just no longer an unlabeled floating glyph. */}
-          {isThreadAuthor && answer.author_id !== currentUserId && (
-            <AcceptAnswerButton
-              isAccepted={answer.is_accepted}
-              onAccept={onAccept}
-            />
-          )}
+        <FlagButton answerId={answer.id} />
+        {isAuthor && onDelete && (
+          <DeleteButton answerId={answer.id} onDeleted={onDelete} />
+        )}
+        {/* Thread author only, and never on their own answer. */}
+        {isThreadAuthor && answer.author_id !== currentUserId && (
+          <AcceptAnswerButton
+            isAccepted={answer.is_accepted}
+            onAccept={onAccept}
+          />
+        )}
       </div>
     </div>
   );
