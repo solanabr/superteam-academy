@@ -152,6 +152,10 @@
   "courses": {
     "catalog": "Course Catalog",
     "catalogSubtitle": "Explore our courses and start building on Solana",
+    "prereqTitle": "One prerequisite: working JavaScript",
+    "prereqBody": "Every course here assumes you already write JavaScript or TypeScript. That is the only gate — no blockchain, cryptography or Rust experience required. Each course page states what it expects on top of that.",
+    "prereqNewToCode": "Learning to program from scratch? freeCodeCamp's free JavaScript curriculum is the best place to start. Come back when JavaScript feels comfortable — this ladder will still be here.",
+    "prereqFccLink": "freeCodeCamp JavaScript curriculum",
     "allCourses": "All Courses",
     "learningPaths": "Learning Paths",
     "difficulty": "Difficulty",
@@ -1465,6 +1469,11 @@
         "label": "I haven't written code professionally yet",
         "desc": "Start from the ground up, one lesson at a time."
       }
+    },
+    "referral": {
+      "title": "One honest heads-up",
+      "body": "Every course here assumes you already write JavaScript. We do not teach programming from scratch yet — freeCodeCamp does, and does it well. Come back when JavaScript feels comfortable; you are welcome to look around in the meantime.",
+      "link": "Start with freeCodeCamp's JavaScript curriculum"
     },
     "screen2": {
       "title": "What are you here to do?",

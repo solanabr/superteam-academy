@@ -70,5 +70,40 @@ describe("marketing copy bounds (MAS-24 / BCB-561)", () => {
       expect(landing.payStatSource).toMatch(/\b(19|20)\d{2}\b/);
       expect(landing.payStatSource.length).toBeGreaterThan(20);
     });
+
+    // #875 — the catalog spec's audience scope: every course gates on working
+    // JavaScript, segment 3 is out of scope for this wave, and copy must not
+    // imply beginners-welcome. The prerequisite and the refer-out are required
+    // in every locale, and no-experience-needed claims are forbidden.
+    it(`${locale} states the JS prerequisite and refers segment 3 out`, () => {
+      const c = (catalog as typeof en).courses;
+      const s = (catalog as typeof en).start;
+      expect(c.prereqTitle.length).toBeGreaterThan(0);
+      expect(c.prereqBody).toMatch(/javascript/i);
+      expect(c.prereqNewToCode).toMatch(/freecodecamp/i);
+      expect(c.prereqFccLink).toMatch(/freecodecamp/i);
+      expect(s.referral.body).toMatch(/(javascript)/i);
+      expect(s.referral.link).toMatch(/freecodecamp/i);
+    });
+
+    it(`${locale} never claims no experience is needed`, () => {
+      const entries = [
+        ...flatten((catalog as Record<string, unknown>).courses, "courses"),
+        ...flatten((catalog as Record<string, unknown>).landing, "landing"),
+        ...flatten((catalog as Record<string, unknown>).start, "start"),
+      ];
+      const claims: RegExp[] = [
+        /\bno (?:prior |previous )?experience (?:needed|required)\b/i,
+        /\bno prerequisites?\b/i,
+        /\bsem (?:qualquer )?experi[êe]ncia\b/i,
+        /\bsem pr[ée]-?requisitos?\b/i,
+        /\bsin (?:ninguna )?experiencia\b/i,
+        /\bsin requisitos\b/i,
+      ];
+      const hits = entries.flatMap(([path, value]) =>
+        claims.filter((re) => re.test(value)).map(() => `${path}: "${value}"`)
+      );
+      expect(hits).toEqual([]);
+    });
   }
 });

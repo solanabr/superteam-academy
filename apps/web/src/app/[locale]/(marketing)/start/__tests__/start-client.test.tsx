@@ -165,6 +165,39 @@ describe("/start intake — E7 route override + a11y", () => {
     expect(events.trackOnboardingCompleted).not.toHaveBeenCalled();
   });
 
+  it("refers segment 3 out to freeCodeCamp without dead-ending the flow", () => {
+    renderStart();
+    // Nothing shown before the learner self-IDs.
+    expect(screen.queryByText(messages.start.referral.title)).toBeNull();
+
+    tap(/haven't written code professionally/i);
+
+    // Shown from the moment they self-ID, with a real external link…
+    expect(screen.getByText(messages.start.referral.title)).toBeInTheDocument();
+    const link = screen.getByRole("link", {
+      name: new RegExp(messages.start.referral.link),
+    });
+    expect(link).toHaveAttribute(
+      "href",
+      expect.stringContaining("freecodecamp.org")
+    );
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", expect.stringContaining("noopener"));
+
+    // …and it is a referral, not a wall: the intake still completes.
+    tap(/understand how solana works/i);
+    expect(screen.getByText(messages.start.referral.title)).toBeInTheDocument();
+    tap(/skip/i);
+    tap(/1 lesson a day/i);
+    expect(push).toHaveBeenCalledWith(ROUTES[3].href);
+  });
+
+  it("does not show the freeCodeCamp referral to segments 1 and 2", () => {
+    renderStart();
+    tap(/shipped apps with javascript/i);
+    expect(screen.queryByText(messages.start.referral.title)).toBeNull();
+  });
+
   it("exposes a progressbar and a back affordance after step 1", () => {
     renderStart();
     expect(screen.getByRole("progressbar")).toHaveAttribute(

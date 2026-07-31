@@ -7,6 +7,7 @@ import type { Course, LearningPath } from "@superteam-lms/types";
 import { CourseCard } from "@/components/course/course-card";
 import { type PathCourseProgress } from "@/components/course/learning-path-section";
 import { PathsView } from "@/components/course/paths-view";
+import { FREECODECAMP_JS_CURRICULUM_URL } from "@/lib/marketing/external-links";
 import { useSegmentState } from "@/lib/onboarding/use-segment-state";
 import { createClient } from "@/lib/supabase/client";
 
@@ -182,6 +183,36 @@ export function CourseCatalogClient({
         </h1>
         <p className="mt-1 text-text-3">{t("catalogSubtitle")}</p>
       </div>
+
+      {/* #875 — the prerequisite stated plainly, and the segment-3 refer-out.
+          The catalog spec puts every course behind working JavaScript and
+          rules segment 3 (learning to program) out of scope for this wave;
+          copy must not imply beginners-welcome, and the branch must not dead-end. */}
+      <section
+        aria-labelledby="catalog-prereq-title"
+        className="card-chunky flex flex-col gap-2 p-5"
+      >
+        <h2
+          id="catalog-prereq-title"
+          className="font-display text-base font-black"
+        >
+          {t("prereqTitle")}
+        </h2>
+        <p className="max-w-3xl text-sm leading-relaxed text-text-2">
+          {t("prereqBody")}
+        </p>
+        <p className="max-w-3xl text-sm leading-relaxed text-text-3">
+          {t("prereqNewToCode")}{" "}
+          <a
+            href={FREECODECAMP_JS_CURRICULUM_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold text-primary underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            {t("prereqFccLink")} {"↗"}
+          </a>
+        </p>
+      </section>
 
       {/* Tabs */}
       <div className="catalog-tabs">

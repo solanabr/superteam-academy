@@ -23,6 +23,7 @@ import {
   type Icon,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
+import { FREECODECAMP_JS_CURRICULUM_URL } from "@/lib/marketing/external-links";
 import {
   EXPERIENCE_OPTIONS,
   EXPERIENCE_TO_SEGMENT,
@@ -221,6 +222,31 @@ export function StartIntakeClient({
             ))}
           </div>
         </Screen>
+      )}
+
+      {/* #875 — segment-3 refer-out. A learner who self-IDs as "haven't
+          written code professionally yet" is out of scope for this wave (every
+          course gates on working JavaScript), and O-5's third branch used to
+          route them into the ladder with nothing said. Shown from the moment
+          they self-ID, without blocking them: the flow still completes. */}
+      {segment === 3 && step > 1 && (
+        <aside className="mb-6 rounded-xl border-[1.5px] border-border bg-subtle p-4">
+          <p className="text-text-1 font-display text-sm font-bold">
+            {t("referral.title")}
+          </p>
+          <p className="mt-1 text-sm leading-relaxed text-text-2">
+            {t("referral.body")}
+          </p>
+          <a
+            href={FREECODECAMP_JS_CURRICULUM_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-primary underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            {t("referral.link")}
+            <ArrowRight size={14} weight="bold" aria-hidden="true" />
+          </a>
+        </aside>
       )}
 
       {/* Screen 2 — goal */}

@@ -152,6 +152,10 @@
   "courses": {
     "catalog": "Catálogo de Cursos",
     "catalogSubtitle": "Explore nossos cursos e comece a construir na Solana",
+    "prereqTitle": "Um pré-requisito: JavaScript na prática",
+    "prereqBody": "Todo curso aqui parte do princípio de que você já escreve JavaScript ou TypeScript. Esse é o único requisito — não é preciso ter experiência com blockchain, criptografia ou Rust. Cada página de curso diz o que espera além disso.",
+    "prereqNewToCode": "Está aprendendo a programar do zero? O currículo gratuito de JavaScript do freeCodeCamp é o melhor lugar para começar. Volte quando o JavaScript estiver confortável — esta trilha vai continuar aqui.",
+    "prereqFccLink": "Currículo de JavaScript do freeCodeCamp",
     "allCourses": "Todos os Cursos",
     "learningPaths": "Trilhas de Aprendizado",
     "difficulty": "Dificuldade",
@@ -1465,6 +1469,11 @@
         "label": "Ainda não programei profissionalmente",
         "desc": "Comece do zero, uma lição de cada vez."
       }
+    },
+    "referral": {
+      "title": "Um aviso honesto",
+      "body": "Todo curso aqui parte do princípio de que você já escreve JavaScript. Ainda não ensinamos programação do zero — o freeCodeCamp ensina, e ensina bem. Volte quando o JavaScript estiver confortável; enquanto isso, fique à vontade para explorar.",
+      "link": "Comece pelo currículo de JavaScript do freeCodeCamp"
     },
     "screen2": {
       "title": "O que você veio fazer?",
