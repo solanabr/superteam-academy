@@ -1,8 +1,8 @@
 # Superteam Academy — brand asset pack
 
 Everything here is derived from the official Superteam Academy logo vector and the
-shipping product's design tokens. Read `../readme.md` for the full system, or
-`../brand-guide/Superteam Academy Brand Guide.html` for the printable guide.
+shipping product's design tokens. Read [`../design-system.html`](../design-system.html) — the canonical brand guide
+(byte-identical copy of `Superteam-Academy-Brand-Guide-standalone.html` here).
 
 ## logo/ — master vectors
 
