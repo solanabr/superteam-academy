@@ -61,7 +61,11 @@ const DELAY_BETWEEN_BATCHES_MS = 600;
 
 export interface ReengagementPassResult {
   kind: ReengagementKind;
-  status: "sent" | "unconfigured" | "no_recipients";
+  /**
+   * `failed` = the pass threw somewhere unexpected. Its claims were released as
+   * far as they were provably un-transmitted, and the OTHER pass still ran.
+   */
+  status: "sent" | "unconfigured" | "no_recipients" | "failed";
   /** Learners claimed by this pass. */
   recipients: number;
   /** Messages Resend accepted. */
@@ -252,15 +256,11 @@ async function runPass(
     }
   };
 
-  const courses = await loadCourseContext(
-    kind === REENGAGEMENT_LEDGER_KINDS.courseNudge
-      ? [
-          ...new Set(
-            claimed.map((r) => r.course_id).filter((c): c is string => !!c)
-          ),
-        ]
-      : []
-  );
+  // EVERY id the RPC handed back is already claimed in the ledger. From here on
+  // this pass OWNS those rows: any path that ends without a send attempt must
+  // release them — including an unexpected throw (gate F1). An unreleased claim
+  // mutes the learner for the FULL cap window with no ledger trace of why.
+  const claimedIds = claimed.map((r) => r.user_id);
 
   // Every row the RPC returned is ALREADY claimed. Anything dropped below is a
   // claim we will never send against — release it, or the learner is silently
@@ -268,139 +268,202 @@ async function runPass(
   const dropped: { userId: string; why: string }[] = [];
   const messages: { userId: string; message: EmailMessage }[] = [];
 
-  for (const row of claimed) {
-    if (!isValidEmail(row.email)) {
-      dropped.push({ userId: row.user_id, why: "invalid address" });
-      continue;
-    }
+  // ── BUILD PHASE ───────────────────────────────────────────────────────────
+  // Nothing has been transmitted yet, so ANY throw in here is provably
+  // pre-transmission and a blanket release is correct. The realistic source is
+  // `loadCourseContext` — the content-bundle read runs AFTER the claim, so a
+  // throw there used to strand every claim it had just taken (gate F1).
+  try {
+    const courses = await loadCourseContext(
+      kind === REENGAGEMENT_LEDGER_KINDS.courseNudge
+        ? [
+            ...new Set(
+              claimed.map((r) => r.course_id).filter((c): c is string => !!c)
+            ),
+          ]
+        : []
+    );
 
-    let nearlyDone = null as Parameters<
-      typeof selectReengagementEmail
-    >[0]["nearlyDone"];
-
-    if (kind === REENGAGEMENT_LEDGER_KINDS.courseNudge) {
-      const course = row.course_id ? courses.get(row.course_id) : undefined;
-      if (!course) {
-        dropped.push({ userId: row.user_id, why: "course not in bundle" });
+    for (const row of claimed) {
+      if (!isValidEmail(row.email)) {
+        dropped.push({ userId: row.user_id, why: "invalid address" });
         continue;
       }
-      const done = new Set(row.completed_lesson_ids ?? []);
-      const next = findNextIncompleteLesson(course.lessons, done);
-      if (!next) {
-        // The bundle says the course is finished even though the SQL count said
-        // otherwise (a lesson was renamed/removed between the two reads). Send
-        // nothing rather than a wrong "one lesson left".
-        dropped.push({ userId: row.user_id, why: "no incomplete lesson" });
-        continue;
+
+      let nearlyDone = null as Parameters<
+        typeof selectReengagementEmail
+      >[0]["nearlyDone"];
+
+      if (kind === REENGAGEMENT_LEDGER_KINDS.courseNudge) {
+        const course = row.course_id ? courses.get(row.course_id) : undefined;
+        if (!course) {
+          dropped.push({ userId: row.user_id, why: "course not in bundle" });
+          continue;
+        }
+        const done = new Set(row.completed_lesson_ids ?? []);
+        const next = findNextIncompleteLesson(course.lessons, done);
+        if (!next) {
+          // The bundle says the course is finished even though the SQL count said
+          // otherwise (a lesson was renamed/removed between the two reads). Send
+          // nothing rather than a wrong "one lesson left".
+          dropped.push({ userId: row.user_id, why: "no incomplete lesson" });
+          continue;
+        }
+        nearlyDone = {
+          courseTitle: course.title,
+          courseSlug: course.slug,
+          lessonTitle: next.title,
+          lessonSlug: next.slug,
+          // Measured against the BUNDLE, so a stale progress row for a removed
+          // lesson cannot inflate it past the template's singular/plural copy.
+          lessonsRemaining: course.lessons.filter((l) => !done.has(l._id))
+            .length,
+        };
       }
-      nearlyDone = {
-        courseTitle: course.title,
-        courseSlug: course.slug,
-        lessonTitle: next.title,
-        lessonSlug: next.slug,
-        // Measured against the BUNDLE, so a stale progress row for a removed
-        // lesson cannot inflate it past the template's singular/plural copy.
-        lessonsRemaining: course.lessons.filter((l) => !done.has(l._id)).length,
-      };
-    }
 
-    const selection = selectReengagementEmail({
-      reminderOptIn: true, // the RPC's SQL gate is the authority; re-asserted here
-      daysInactive: row.days_inactive,
-      locale: row.locale,
-      streakDays: row.streak_days,
-      nearlyDone,
-      appUrl: params.appUrl,
-      unsubscribeToken: row.unsubscribe_token,
-    });
-
-    // Fail closed on any disagreement between the SQL selection and the pure
-    // one: sending under the wrong ledger kind would corrupt the R17
-    // template→return attribution the whole rotation is evaluated on.
-    if (!selection || selection.kind !== kind) {
-      dropped.push({
-        userId: row.user_id,
-        why: selection
-          ? `kind mismatch (${selection.kind})`
-          : "selection declined",
+      const selection = selectReengagementEmail({
+        reminderOptIn: true, // the RPC's SQL gate is the authority; re-asserted here
+        daysInactive: row.days_inactive,
+        locale: row.locale,
+        streakDays: row.streak_days,
+        nearlyDone,
+        appUrl: params.appUrl,
+        unsubscribeToken: row.unsubscribe_token,
       });
-      continue;
+
+      // Fail closed on any disagreement between the SQL selection and the pure
+      // one: sending under the wrong ledger kind would corrupt the R17
+      // template→return attribution the whole rotation is evaluated on.
+      if (!selection || selection.kind !== kind) {
+        dropped.push({
+          userId: row.user_id,
+          why: selection
+            ? `kind mismatch (${selection.kind})`
+            : "selection declined",
+        });
+        continue;
+      }
+
+      messages.push({
+        userId: row.user_id,
+        message: {
+          to: row.email,
+          subject: selection.email.subject,
+          html: selection.email.html,
+          text: selection.email.text,
+          // RFC 8058 one-click unsubscribe — mandatory on every send.
+          headers: reengagementHeaders(selection.unsubscribeUrl),
+        },
+      });
     }
 
-    messages.push({
-      userId: row.user_id,
-      message: {
-        to: row.email,
-        subject: selection.email.subject,
-        html: selection.email.html,
-        text: selection.email.text,
-        // RFC 8058 one-click unsubscribe — mandatory on every send.
-        headers: reengagementHeaders(selection.unsubscribeUrl),
-      },
-    });
-  }
-
-  if (dropped.length > 0) {
-    skipped = dropped.length;
+    if (dropped.length > 0) {
+      skipped = dropped.length;
+      console.error(
+        `[email:reengagement:${kind}] releasing ${dropped.length} claim(s) dropped pre-send: ${[
+          ...new Set(dropped.map((d) => d.why)),
+        ].join(", ")}`
+      );
+      await release(
+        dropped.map((d) => d.userId),
+        "dropped pre-send"
+      );
+    }
+  } catch (err) {
     console.error(
-      `[email:reengagement:${kind}] releasing ${dropped.length} claim(s) dropped pre-send: ${[
-        ...new Set(dropped.map((d) => d.why)),
-      ].join(", ")}`
+      `[email:reengagement:${kind}] UNEXPECTED failure before any send: ${errText(
+        err
+      )}; releasing all ${claimedIds.length} claim(s)`
     );
-    await release(
-      dropped.map((d) => d.userId),
-      "dropped pre-send"
-    );
+    await release(claimedIds, "unexpected pre-send failure");
+    return { ...base, status: "failed", failedBatches: 1, released };
   }
 
   if (messages.length === 0) {
     return { ...base, status: "no_recipients", released, skipped };
   }
 
+  // ── SEND PHASE ────────────────────────────────────────────────────────────
+  // A throw here canNOT release everything: some chunks may already be on the
+  // wire. Two cursors keep the hold-on-ambiguous rule intact across a throw —
+  // `resolvedThrough` is one past the last chunk whose outcome is KNOWN, and
+  // `inFlightEnd` is one past the chunk currently being attempted (0 when none).
+  // Whatever lies at or beyond max(the two) was never attempted, so releasing it
+  // is provably safe; the in-flight chunk is held, exactly as an ambiguous 5xx is.
   const day = saoPauloDay();
-  for (let i = 0; i < messages.length; i += RESEND_MAX_BATCH) {
-    const chunk = messages.slice(i, i + RESEND_MAX_BATCH);
-    const result = await sendEmailBatch(
-      chunk.map((c) => c.message),
-      {
-        idempotencyKey: chunkIdempotencyKey(
-          kind,
-          day,
-          chunk.map((c) => c.userId)
-        ),
-      }
-    );
-
-    if (result.ok) {
-      sent += result.sent;
-    } else {
-      failedBatches += 1;
-      console.error(
-        `[email:reengagement:${kind}] batch ${i / RESEND_MAX_BATCH} failed: ${
-          result.reason === "error" ? result.message : result.reason
-        }`
+  let resolvedThrough = 0;
+  let inFlightEnd = 0;
+  try {
+    for (let i = 0; i < messages.length; i += RESEND_MAX_BATCH) {
+      const chunk = messages.slice(i, i + RESEND_MAX_BATCH);
+      inFlightEnd = i + chunk.length;
+      const result = await sendEmailBatch(
+        chunk.map((c) => c.message),
+        {
+          idempotencyKey: chunkIdempotencyKey(
+            kind,
+            day,
+            chunk.map((c) => c.userId)
+          ),
+        }
       );
-      // Release ONLY when the failure PROVES nothing was accepted. A 5xx or a
-      // timeout is ambiguous — Resend may have accepted and delivered before the
-      // wire broke, and releasing there lets a same-day retry send a SECOND copy
-      // (the batch key changes with chunk membership, so Resend's own dedupe
-      // would not catch it). Holding an ambiguous claim costs at most one missed
-      // nudge; releasing it costs a duplicate.
-      if (result.reason === "error" && result.delivery === "rejected") {
-        await release(
-          chunk.map((c) => c.userId),
-          "batch rejected before transmission"
-        );
+      resolvedThrough = inFlightEnd;
+      inFlightEnd = 0;
+
+      if (result.ok) {
+        sent += result.sent;
       } else {
+        failedBatches += 1;
         console.error(
-          `[email:reengagement:${kind}] batch ${i / RESEND_MAX_BATCH} outcome AMBIGUOUS; holding ${chunk.length} claim(s) to avoid a duplicate send`
+          `[email:reengagement:${kind}] batch ${i / RESEND_MAX_BATCH} failed: ${
+            result.reason === "error" ? result.message : result.reason
+          }`
         );
+        // Release ONLY when the failure PROVES nothing was accepted. A 5xx or a
+        // timeout is ambiguous — Resend may have accepted and delivered before the
+        // wire broke, and releasing there lets a same-day retry send a SECOND copy
+        // (the batch key changes with chunk membership, so Resend's own dedupe
+        // would not catch it). Holding an ambiguous claim costs at most one missed
+        // nudge; releasing it costs a duplicate.
+        if (result.reason === "error" && result.delivery === "rejected") {
+          await release(
+            chunk.map((c) => c.userId),
+            "batch rejected before transmission"
+          );
+        } else {
+          console.error(
+            `[email:reengagement:${kind}] batch ${i / RESEND_MAX_BATCH} outcome AMBIGUOUS; holding ${chunk.length} claim(s) to avoid a duplicate send`
+          );
+        }
+      }
+
+      if (i + RESEND_MAX_BATCH < messages.length) {
+        await sleep(DELAY_BETWEEN_BATCHES_MS);
       }
     }
-
-    if (i + RESEND_MAX_BATCH < messages.length) {
-      await sleep(DELAY_BETWEEN_BATCHES_MS);
-    }
+  } catch (err) {
+    failedBatches += 1;
+    const unattempted = messages.slice(Math.max(resolvedThrough, inFlightEnd));
+    console.error(
+      `[email:reengagement:${kind}] UNEXPECTED failure mid-send: ${errText(err)}; ` +
+        `releasing ${unattempted.length} never-attempted claim(s)` +
+        (inFlightEnd > 0
+          ? `, HOLDING the in-flight batch (outcome ambiguous)`
+          : "")
+    );
+    await release(
+      unattempted.map((m) => m.userId),
+      "never attempted"
+    );
+    return {
+      kind,
+      status: "failed",
+      recipients: messages.length,
+      sent,
+      failedBatches,
+      released,
+      skipped,
+    };
   }
 
   return {
@@ -412,6 +475,11 @@ async function runPass(
     released,
     skipped,
   };
+}
+
+/** Message text of an unknown thrown value, without leaking a stack. */
+function errText(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
 }
 
 /**
@@ -444,7 +512,26 @@ export async function sendReengagementEmails(params: {
     REENGAGEMENT_LEDGER_KINDS.courseNudge,
     REENGAGEMENT_LEDGER_KINDS.inactive,
   ] as const) {
-    passes.push(await runPass(kind, opts));
+    // Each pass is ISOLATED (gate F1). `runPass` already releases its own claims
+    // on an unexpected throw, but a bug that escapes it must still not abort the
+    // sibling pass: an exception in the course nudge used to mean the generic
+    // pass never ran at all, silently halving the day's send. Log and continue.
+    try {
+      passes.push(await runPass(kind, opts));
+    } catch (err) {
+      console.error(
+        `[email:reengagement:${kind}] pass ABORTED: ${errText(err)}; continuing with the remaining pass(es)`
+      );
+      passes.push({
+        kind,
+        status: "failed",
+        recipients: 0,
+        sent: 0,
+        failedBatches: 1,
+        released: 0,
+        skipped: 0,
+      });
+    }
   }
 
   const sent = passes.reduce((n, p) => n + p.sent, 0);

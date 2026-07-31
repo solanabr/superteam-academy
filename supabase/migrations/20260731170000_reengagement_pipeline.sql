@@ -200,6 +200,17 @@ BEGIN
 
   -- Serialise re-engagement claims so the CROSS-KIND cap holds under
   -- concurrency (see the header). Transaction-scoped: released on commit.
+  --
+  -- ISOLATION-LEVEL CAVEAT (gate F2, informational). This is correct under READ
+  -- COMMITTED — the default, and what PostgREST/Supabase uses: the RETURN QUERY
+  -- below takes a FRESH snapshot after the lock is granted, so it sees the rows
+  -- the previous holder committed. Under REPEATABLE READ (or SERIALIZABLE) the
+  -- snapshot is fixed at the transaction's first statement, i.e. BEFORE the lock
+  -- is acquired, so a waiter would read a pre-lock view of email_reminder_log and
+  -- the cap could be evaluated against stale rows. Re-evaluate this lock (and
+  -- prefer a serialization-failure retry) if this function is ever called on a
+  -- connection that raises the isolation level.
+
   PERFORM pg_catalog.pg_advisory_xact_lock(
     pg_catalog.hashtext('claim_due_reengagement')
   );

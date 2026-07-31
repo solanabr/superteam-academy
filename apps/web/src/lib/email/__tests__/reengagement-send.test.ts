@@ -11,10 +11,14 @@ vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({ rpc }),
 }));
 
+/** Lets a test make the post-claim content-bundle read blow up (gate F1). */
+const bundle = vi.hoisted(() => ({ throws: null as string | null }));
+
 vi.mock("@/lib/content/queries", () => ({
   getAllCourseLessonCounts: async () => [{ _id: "course-a", totalLessons: 3 }],
-  getCoursesByIds: async (ids: string[]) =>
-    ids.includes("course-a")
+  getCoursesByIds: async (ids: string[]) => {
+    if (bundle.throws) throw new Error(bundle.throws);
+    return ids.includes("course-a")
       ? [
           {
             _id: "course-a",
@@ -23,9 +27,11 @@ vi.mock("@/lib/content/queries", () => ({
             totalLessons: 3,
           },
         ]
-      : [],
-  getCourseLessonOrders: async (ids: string[]) =>
-    ids.includes("course-a")
+      : [];
+  },
+  getCourseLessonOrders: async (ids: string[]) => {
+    if (bundle.throws) throw new Error(bundle.throws);
+    return ids.includes("course-a")
       ? [
           {
             _id: "course-a",
@@ -37,7 +43,8 @@ vi.mock("@/lib/content/queries", () => ({
             ],
           },
         ]
-      : [],
+      : [];
+  },
 }));
 
 const emailMocks = vi.hoisted(() => ({
@@ -109,6 +116,7 @@ const releaseCalls = () =>
 
 beforeEach(() => {
   rpc.mockReset();
+  bundle.throws = null;
   emailMocks.configured = true;
   emailMocks.sendBatch.mockReset();
   emailMocks.sendBatch.mockImplementation(async (messages: unknown[]) => ({
@@ -271,6 +279,103 @@ describe("sendReengagementEmails — a claim is never held without a send", () =
       p_kind: "reengagement_7d",
       p_user_ids: ["u2"],
     });
+  });
+});
+
+// ── Gate F1: an unexpected throw AFTER the claim ────────────────────────────
+// RED (pre-fix): `loadCourseContext` runs after `claim_due_reengagement` has
+// already inserted the ledger rows. A throw there left every claim stranded —
+// the learner muted for the FULL 14-day window with no trace — and propagated
+// out of `sendReengagementEmails`, so the generic pass never ran at all.
+describe("sendReengagementEmails — F1: post-claim throw", () => {
+  it("RELEASES every claim when the content-bundle read throws", async () => {
+    claims({ course_nudge: [nudgeRow("u1"), nudgeRow("u2")] });
+    bundle.throws = "bundle unavailable";
+
+    const r = await sendReengagementEmails(params);
+
+    expect(emailMocks.sendBatch).not.toHaveBeenCalled();
+    // Nothing was transmitted, so a blanket release is provably safe — and
+    // mandatory, or these two are silently muted for the whole cap window.
+    const nudgeReleases = releaseCalls().filter(
+      (c) => c[1].p_kind === "course_nudge"
+    );
+    expect(nudgeReleases).toHaveLength(1);
+    expect(nudgeReleases[0]![1].p_user_ids).toEqual(["u1", "u2"]);
+    expect(r.passes[0]).toMatchObject({ status: "failed", sent: 0 });
+  });
+
+  it("does NOT abort the second pass when the first one throws", async () => {
+    claims({
+      course_nudge: [nudgeRow("u1")],
+      reengagement_7d: [genericRow("u2")],
+    });
+    bundle.throws = "bundle unavailable";
+
+    const r = await sendReengagementEmails(params);
+
+    // The generic pass reads no bundle, so it must still run and still send.
+    const kinds = rpc.mock.calls
+      .filter((c) => c[0] === "claim_due_reengagement")
+      .map((c) => c[1].p_kind);
+    expect(kinds).toEqual(["course_nudge", "reengagement_7d"]);
+    expect(r.passes[1]).toMatchObject({
+      kind: "reengagement_7d",
+      status: "sent",
+      sent: 1,
+    });
+    expect(r.sent).toBe(1);
+  });
+
+  it("survives a pass that throws OUTSIDE runPass's own handling", async () => {
+    // Belt and braces for the isolation layer: make the very first RPC of the
+    // course-nudge pass throw (not return an error), which escapes every
+    // in-pass catch. The generic pass must still run.
+    rpc.mockImplementation(
+      async (fn: string, args: Record<string, unknown>) => {
+        if (fn === "claim_due_reengagement") {
+          if (args.p_kind === "course_nudge")
+            throw new Error("connection lost");
+          return { data: [genericRow("u2")], error: null };
+        }
+        return { data: 0, error: null };
+      }
+    );
+
+    const r = await sendReengagementEmails(params);
+
+    expect(r.passes[0]).toMatchObject({
+      kind: "course_nudge",
+      status: "failed",
+    });
+    expect(r.passes[1]).toMatchObject({ kind: "reengagement_7d", sent: 1 });
+  });
+
+  it("HOLDS the in-flight batch but releases the never-attempted ones", async () => {
+    // Chunking is 100/batch, so force two batches by claiming 150 recipients.
+    const rows = Array.from({ length: 150 }, (_, i) =>
+      genericRow(`u${String(i).padStart(3, "0")}`)
+    );
+    claims({ reengagement_7d: rows });
+    // First batch succeeds, the second THROWS (ambiguous — it may have landed).
+    emailMocks.sendBatch
+      .mockImplementationOnce(async (m: unknown[]) => ({
+        ok: true,
+        sent: (m as unknown[]).length,
+      }))
+      .mockImplementationOnce(async () => {
+        throw new Error("socket hang up");
+      });
+
+    const r = await sendReengagementEmails(params);
+
+    expect(r.passes[1]).toMatchObject({ status: "failed", sent: 100 });
+    // Batch 1 delivered, batch 2 in-flight and ambiguous ⇒ NOTHING to release:
+    // releasing the in-flight 50 is exactly how a delivered mail is sent twice.
+    const genericReleases = releaseCalls().filter(
+      (c) => c[1].p_kind === "reengagement_7d"
+    );
+    expect(genericReleases).toHaveLength(0);
   });
 });
 
