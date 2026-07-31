@@ -23,6 +23,7 @@ import {
 } from "@/lib/gamification/achievements";
 import { getCourseById, getDeployedAchievements } from "@/lib/content/queries";
 import { maybeAwardSurpriseBonus } from "@/lib/gamification/surprise-bonus";
+import { scheduleQuestEvaluation } from "@/lib/gamification/quest-evaluation";
 import { isCourseInMaintenance } from "@/lib/content/deployments";
 import { isPlatformFrozen } from "@/lib/platform/freeze";
 import { checkCapstoneCredentialGate } from "@/lib/credentials/capstone-gate";
@@ -192,6 +193,14 @@ export async function handleLessonCompleted(
         },
       });
     }
+
+    // The webhook is the on-chain-authoritative mirror of a completion — a
+    // learner can reach it without the app's own /api/lessons/complete path
+    // (webhook-only replay, a completion landing after the request ended). Give
+    // it the same at-the-moment quest evaluation so quest XP never waits for a
+    // dashboard visit. Idempotent RPC, so overlapping with the route's own
+    // scheduled evaluation cannot double-award.
+    scheduleQuestEvaluation(userId);
   }
 
   // 2. Award XP via SECURITY DEFINER function

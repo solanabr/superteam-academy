@@ -4,6 +4,7 @@ import {
   pickQuestRewardToasts,
   pickSurpriseBonusToasts,
   claimSurpriseBonus,
+  claimQuestRewardFromCredit,
   __resetServerXpFeedbackForTests,
 } from "../server-xp-feedback";
 
@@ -59,6 +60,86 @@ describe("pickQuestRewardToasts (#790)", () => {
     expect(pickQuestRewardToasts(q, "2026-07-27")).toHaveLength(1);
     expect(pickQuestRewardToasts(q, "2026-07-27")).toHaveLength(0);
     expect(pickQuestRewardToasts(q, "2026-07-28")).toHaveLength(1);
+  });
+});
+
+// Owner-reported (2026-07-31): with quest evaluation now firing from the ACTION
+// paths, one award can be observed by BOTH channels moments apart — the
+// dashboard poll's `justAwarded` and the Realtime xp_transactions INSERT. These
+// pin the extended (#790) session dedupe that makes a double toast impossible in
+// either arrival order.
+describe("claimQuestRewardFromCredit — poll ↔ Realtime dedupe", () => {
+  const credit = (
+    over: Partial<Parameters<typeof claimQuestRewardFromCredit>[0]> = {}
+  ) => ({
+    reason: `daily_quest:q1`,
+    idempotency_key: `q1:${PERIOD}`,
+    created_at: `${PERIOD}T12:00:00Z`,
+    ...over,
+  });
+
+  it("claims a credit once, then never again", () => {
+    expect(claimQuestRewardFromCredit(credit())).toBe("q1");
+    expect(claimQuestRewardFromCredit(credit())).toBeNull();
+  });
+
+  it("does not toast when the DASHBOARD POLL already claimed the same award", () => {
+    // Poll wins the race (it evaluated, saw justAwarded, toasted)…
+    expect(
+      pickQuestRewardToasts([quest({ id: "q1", justAwarded: true })], PERIOD)
+    ).toHaveLength(1);
+    // …then the queued credit lands and Realtime observes it → no second toast.
+    expect(claimQuestRewardFromCredit(credit())).toBeNull();
+  });
+
+  it("does not toast when REALTIME already claimed the same award", () => {
+    // Reverse order: the credit is swept + observed first (the learner was on a
+    // lesson page), then they open the dashboard on the same session.
+    expect(claimQuestRewardFromCredit(credit())).toBe("q1");
+    expect(
+      pickQuestRewardToasts([quest({ id: "q1", justAwarded: true })], PERIOD)
+    ).toEqual([]);
+  });
+
+  it("derives the period from the queue reference_id, not the local clock", () => {
+    // A São Paulo learner at 22:00 local is already on the NEXT UTC day. The
+    // idempotency_key names the server's period, so the two channels agree.
+    expect(
+      claimQuestRewardFromCredit(credit({ idempotency_key: "q1:2026-07-28" }))
+    ).toBe("q1");
+    expect(
+      pickQuestRewardToasts(
+        [quest({ id: "q1", justAwarded: true })],
+        "2026-07-28"
+      )
+    ).toEqual([]);
+    // …and the PREVIOUS day's award is a genuinely different reward.
+    expect(
+      pickQuestRewardToasts([quest({ id: "q1", justAwarded: true })], PERIOD)
+    ).toHaveLength(1);
+  });
+
+  it("falls back to the credit's created_at date when the key is absent", () => {
+    expect(claimQuestRewardFromCredit(credit({ idempotency_key: null }))).toBe(
+      "q1"
+    );
+    expect(
+      pickQuestRewardToasts([quest({ id: "q1", justAwarded: true })], PERIOD)
+    ).toEqual([]);
+  });
+
+  it("ignores non-quest XP credits", () => {
+    expect(
+      claimQuestRewardFromCredit({ reason: "Completed lesson: lesson-1" })
+    ).toBeNull();
+    expect(claimQuestRewardFromCredit({ reason: "daily_quest:" })).toBeNull();
+    expect(claimQuestRewardFromCredit({ reason: null })).toBeNull();
+  });
+
+  it("namespaces the claim per user (same-tab account switch)", () => {
+    expect(claimQuestRewardFromCredit(credit(), "user-a")).toBe("q1");
+    expect(claimQuestRewardFromCredit(credit(), "user-a")).toBeNull();
+    expect(claimQuestRewardFromCredit(credit(), "user-b")).toBe("q1");
   });
 });
 

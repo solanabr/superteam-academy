@@ -32,6 +32,7 @@ import {
   batchCompleteCourse,
   BatchCompleteError,
 } from "@/lib/lessons/batch-complete";
+import { scheduleQuestEvaluation } from "@/lib/gamification/quest-evaluation";
 
 type ChallengeResolution =
   | { ok: true; course: Course; selected: PooledQuestion[] }
@@ -300,6 +301,12 @@ export async function POST(request: NextRequest) {
         courseId,
         wallet: new PublicKey(profile.wallet_address),
       });
+
+      // A test-out writes a whole course's worth of user_progress rows in one
+      // shot — the single biggest quest-progress jump the platform can make.
+      // Evaluate now (post-response) rather than on the learner's next
+      // dashboard visit.
+      scheduleQuestEvaluation(user.id);
 
       const nextCourseId = await nextCourseAfter(courseId);
       const next = nextCourseId

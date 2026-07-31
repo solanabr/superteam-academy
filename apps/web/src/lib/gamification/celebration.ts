@@ -21,7 +21,8 @@ export type CelebrationEvent =
   | "deploy-success"
   | "level-up"
   | "credential-mint"
-  | "surprise-bonus";
+  | "surprise-bonus"
+  | "daily-quest";
 
 export type CelebrationTier = "none" | "popup" | "medium" | "full";
 
@@ -34,6 +35,16 @@ export const CELEBRATION_TIERS: Record<CelebrationEvent, CelebrationTier> = {
   // A surprise bonus (LX-B15) is an informational moment — a calm toast, never
   // confetti. Its delight is the unexpectedness of the reward, not spectacle.
   "surprise-bonus": "none",
+  // A completed daily quest is a real earned moment, so it goes through the
+  // house celebration system rather than a bare toast — but at the POPUP tier,
+  // NOT confetti. Every peer moment a learner meets this often is popup-or-
+  // quieter (level-up: popup; achievement: popup; surprise bonus: none);
+  // confetti is reserved by LX-B11 for deploy + credential mint precisely
+  // because a daily-cadence reward is the routine-reward pattern the tiering
+  // exists to avoid. The pop-spring celebration toast IS the moment. Flip this
+  // one constant to "medium" if the owner wants a confetti burst instead — the
+  // call site already routes through celebrate().
+  "daily-quest": "popup",
 } as const;
 
 export function celebrationTierFor(event: CelebrationEvent): CelebrationTier {
