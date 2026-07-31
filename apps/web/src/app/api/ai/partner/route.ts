@@ -16,7 +16,11 @@ import {
 } from "@/lib/ai/spend-ledger";
 import type { GeminiUsageMetadata } from "@/lib/ai/spend-ledger";
 import { sealCheck } from "@/lib/ai/check-seal";
-import { modelForAction, geminiUrl } from "@/lib/ai/models";
+import {
+  modelForAction,
+  geminiUrl,
+  MINIMAL_THINKING_CONFIG,
+} from "@/lib/ai/models";
 import {
   buildStaticPrefix,
   buildDynamicSuffix,
@@ -81,10 +85,12 @@ interface GeminiEnvelope {
 // the prod key (#838 comment, AIE-04) returned HTTP 200 for 3.5-flash,
 // 3.5-flash-lite and 3.6-flash, and 2.5-flash/-lite appear in this key's model
 // list; the 404s that produced the folklore were a first-connection artifact
-// (empty-bodied, gone on retry). Same record, AIE-05: `thinkingBudget: 0` is
-// verified honored — every routed model here is a thinking model whose thinking
-// tokens would draw from maxOutputTokens and bill at the output rate, so the
-// flag stays on for all of them.
+// (empty-bodied, gone on retry). AIE-05 CORRECTION (2026-07-31): the 3.x
+// models reject the 2.5-era `thinkingBudget: 0` with 400 INVALID_ARGUMENT —
+// this broke every partner turn from the #890 model swap until this fix. The
+// 3.x floor is `thinkingLevel: "low"` (MINIMAL_THINKING_CONFIG in
+// lib/ai/models); thinking tokens still draw from maxOutputTokens and bill at
+// the output rate, so the floor stays on for all of them.
 //
 // A model that 404s FAILS CLOSED: the !response.ok branch below refunds the
 // assist and 502s. There is deliberately no silent fallback to another model —
@@ -516,11 +522,12 @@ export async function POST(request: NextRequest) {
           maxOutputTokens: degraded
             ? degradedMaxTokens(maxTokensFor(action, { socratic }))
             : maxTokensFor(action, { socratic }),
-          // Every routed model is a thinking model and thinking tokens share the
-          // maxOutputTokens budget (and bill at the output rate); disable it so
-          // the full budget goes to the structured response (and to cut
-          // latency/cost). Verified honored per model — #838 AIE-05.
-          thinkingConfig: { thinkingBudget: 0 },
+          // Every routed model is a thinking model and thinking tokens share
+          // the maxOutputTokens budget (and bill at the output rate); keep
+          // thinking at the model's floor. NOTE the 3.x API rejects the 2.5-era
+          // `thinkingBudget: 0` with a 400 — "low" is the minimum thinkingLevel
+          // (AIE-05 correction, 2026-07-31; see lib/ai/models.ts).
+          thinkingConfig: MINIMAL_THINKING_CONFIG,
           responseMimeType: "application/json",
           responseSchema: responseSchemaFor(action),
         },
