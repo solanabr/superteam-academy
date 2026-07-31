@@ -437,7 +437,7 @@ export function TeachPreviewClient() {
           )}
 
           <a
-            href={`https://github.com/solanabr/courses-academy/commit/${result.head.sha}`}
+            href={`https://github.com/solanabr/academy-courses/commit/${result.head.sha}`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-xs text-text-3 underline-offset-2 hover:text-text hover:underline"

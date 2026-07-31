@@ -140,7 +140,7 @@ jobs:
         # Recompile the committed content bundle from the SHA in content.lock and
         # fail if it drifts from what is checked in — a hand-edit of the generated
         # files or a stale bundle after a lock bump is caught here. Fetches the
-        # public courses-academy tarball; GITHUB_TOKEN only raises the rate limit.
+        # public academy-courses tarball; GITHUB_TOKEN only raises the rate limit.
         # If GitHub is unreachable the step fails loudly (acceptable — deploys read
         # the committed bundle, not this fetch).
         #

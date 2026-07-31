@@ -1,0 +1,178 @@
+Object.defineProperty(__vite_ssr_exports__, "SolanaLogo", { enumerable: true, configurable: true, get(){ try { return SolanaLogo } catch {} }});
+const __vite_ssr_import_0__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/react@18.3.1/node_modules/react/jsx-dev-runtime.js", {"importedNames":["jsxDEV"]});
+const __vite_ssr_import_1__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/react@18.3.1/node_modules/react/index.js", {"importedNames":["useId"]});
+function SolanaLogo({
+  className,
+  variant = "official"
+}) {
+  const id = (0,__vite_ssr_import_1__.useId)();
+  const g1 = `${id}-g1`;
+  const g2 = `${id}-g2`;
+  const g3 = `${id}-g3`;
+  const startColor = variant === "brand" ? "#9945FF" : "#00FFA3";
+  const endColor = variant === "brand" ? "#14F195" : "#DC1FFF";
+  return /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)(
+    "svg",
+    {
+      className,
+      viewBox: "0 0 397.7 311.7",
+      "aria-hidden": "true",
+      fill: "none",
+      children: [
+        /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)(
+          "linearGradient",
+          {
+            id: g1,
+            x1: "360.879",
+            x2: "141.213",
+            y1: "351.455",
+            y2: "-69.294",
+            gradientTransform: "matrix(1 0 0 -1 0 314)",
+            gradientUnits: "userSpaceOnUse",
+            children: [
+              /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("stop", { offset: "0", stopColor: startColor }, void 0, false, {
+                fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/icons/solana-logo.tsx",
+                lineNumber: 37,
+                columnNumber: 9
+              }, this),
+              /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("stop", { offset: "1", stopColor: endColor }, void 0, false, {
+                fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/icons/solana-logo.tsx",
+                lineNumber: 38,
+                columnNumber: 9
+              }, this)
+            ]
+          },
+          void 0,
+          true,
+          {
+            fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/icons/solana-logo.tsx",
+            lineNumber: 28,
+            columnNumber: 7
+          },
+          this
+        ),
+        /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)(
+          "path",
+          {
+            d: "M64.6 237.9c2.4-2.4 5.7-3.8 9.2-3.8h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1l62.7-62.7z",
+            fill: `url(#${g1})`
+          },
+          void 0,
+          false,
+          {
+            fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/icons/solana-logo.tsx",
+            lineNumber: 40,
+            columnNumber: 7
+          },
+          this
+        ),
+        /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)(
+          "linearGradient",
+          {
+            id: g2,
+            x1: "264.829",
+            x2: "45.163",
+            y1: "401.601",
+            y2: "-19.148",
+            gradientTransform: "matrix(1 0 0 -1 0 314)",
+            gradientUnits: "userSpaceOnUse",
+            children: [
+              /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("stop", { offset: "0", stopColor: startColor }, void 0, false, {
+                fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/icons/solana-logo.tsx",
+                lineNumber: 53,
+                columnNumber: 9
+              }, this),
+              /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("stop", { offset: "1", stopColor: endColor }, void 0, false, {
+                fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/icons/solana-logo.tsx",
+                lineNumber: 54,
+                columnNumber: 9
+              }, this)
+            ]
+          },
+          void 0,
+          true,
+          {
+            fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/icons/solana-logo.tsx",
+            lineNumber: 44,
+            columnNumber: 7
+          },
+          this
+        ),
+        /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)(
+          "path",
+          {
+            d: "M64.6 3.8C67.1 1.4 70.4 0 73.8 0h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 3.8z",
+            fill: `url(#${g2})`
+          },
+          void 0,
+          false,
+          {
+            fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/icons/solana-logo.tsx",
+            lineNumber: 56,
+            columnNumber: 7
+          },
+          this
+        ),
+        /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)(
+          "linearGradient",
+          {
+            id: g3,
+            x1: "312.548",
+            x2: "92.882",
+            y1: "376.688",
+            y2: "-44.061",
+            gradientTransform: "matrix(1 0 0 -1 0 314)",
+            gradientUnits: "userSpaceOnUse",
+            children: [
+              /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("stop", { offset: "0", stopColor: startColor }, void 0, false, {
+                fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/icons/solana-logo.tsx",
+                lineNumber: 69,
+                columnNumber: 9
+              }, this),
+              /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("stop", { offset: "1", stopColor: endColor }, void 0, false, {
+                fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/icons/solana-logo.tsx",
+                lineNumber: 70,
+                columnNumber: 9
+              }, this)
+            ]
+          },
+          void 0,
+          true,
+          {
+            fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/icons/solana-logo.tsx",
+            lineNumber: 60,
+            columnNumber: 7
+          },
+          this
+        ),
+        /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)(
+          "path",
+          {
+            d: "M333.1 120.1c-2.4-2.4-5.7-3.8-9.2-3.8H6.5c-5.8 0-8.7 7-4.6 11.1l62.7 62.7c2.4 2.4 5.7 3.8 9.2 3.8h317.4c5.8 0 8.7-7 4.6-11.1l-62.7-62.7z",
+            fill: `url(#${g3})`
+          },
+          void 0,
+          false,
+          {
+            fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/icons/solana-logo.tsx",
+            lineNumber: 72,
+            columnNumber: 7
+          },
+          this
+        )
+      ]
+    },
+    void 0,
+    true,
+    {
+      fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/icons/solana-logo.tsx",
+      lineNumber: 22,
+      columnNumber: 5
+    },
+    this
+  );
+}
+//# sourceMappingSource=vite-generated
+//# sourceMappingURL=data:application/json;base64,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QUFBQTtBQUFBO0FBQUEsRUFzREE7QUFFSiIsIm5hbWVzIjpbXSwiaWdub3JlTGlzdCI6W10sInNvdXJjZXMiOlsic29sYW5hLWxvZ28udHN4Il0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IHVzZUlkIH0gZnJvbSBcInJlYWN0XCI7XG5cbmludGVyZmFjZSBTb2xhbmFMb2dvUHJvcHMge1xuICBjbGFzc05hbWU/OiBzdHJpbmc7XG4gIC8qKiBcIm9mZmljaWFsXCIgdXNlcyBTb2xhbmEncyBncmVlbuKGknB1cnBsZSwgXCJicmFuZFwiIHVzZXMgU3VwZXJ0ZWFtIEFjYWRlbXkncyBwdXJwbGXihpJ0ZWFsICovXG4gIHZhcmlhbnQ/OiBcIm9mZmljaWFsXCIgfCBcImJyYW5kXCI7XG59XG5cbmV4cG9ydCBmdW5jdGlvbiBTb2xhbmFMb2dvKHtcbiAgY2xhc3NOYW1lLFxuICB2YXJpYW50ID0gXCJvZmZpY2lhbFwiLFxufTogU29sYW5hTG9nb1Byb3BzKSB7XG4gIGNvbnN0IGlkID0gdXNlSWQoKTtcbiAgY29uc3QgZzEgPSBgJHtpZH0tZzFgO1xuICBjb25zdCBnMiA9IGAke2lkfS1nMmA7XG4gIGNvbnN0IGczID0gYCR7aWR9LWczYDtcblxuICBjb25zdCBzdGFydENvbG9yID0gdmFyaWFudCA9PT0gXCJicmFuZFwiID8gXCIjOTk0NUZGXCIgOiBcIiMwMEZGQTNcIjtcbiAgY29uc3QgZW5kQ29sb3IgPSB2YXJpYW50ID09PSBcImJyYW5kXCIgPyBcIiMxNEYxOTVcIiA6IFwiI0RDMUZGRlwiO1xuXG4gIHJldHVybiAoXG4gICAgPHN2Z1xuICAgICAgY2xhc3NOYW1lPXtjbGFzc05hbWV9XG4gICAgICB2aWV3Qm94PVwiMCAwIDM5Ny43IDMxMS43XCJcbiAgICAgIGFyaWEtaGlkZGVuPVwidHJ1ZVwiXG4gICAgICBmaWxsPVwibm9uZVwiXG4gICAgPlxuICAgICAgPGxpbmVhckdyYWRpZW50XG4gICAgICAgIGlkPXtnMX1cbiAgICAgICAgeDE9XCIzNjAuODc5XCJcbiAgICAgICAgeDI9XCIxNDEuMjEzXCJcbiAgICAgICAgeTE9XCIzNTEuNDU1XCJcbiAgICAgICAgeTI9XCItNjkuMjk0XCJcbiAgICAgICAgZ3JhZGllbnRUcmFuc2Zvcm09XCJtYXRyaXgoMSAwIDAgLTEgMCAzMTQpXCJcbiAgICAgICAgZ3JhZGllbnRVbml0cz1cInVzZXJTcGFjZU9uVXNlXCJcbiAgICAgID5cbiAgICAgICAgPHN0b3Agb2Zmc2V0PVwiMFwiIHN0b3BDb2xvcj17c3RhcnRDb2xvcn0gLz5cbiAgICAgICAgPHN0b3Agb2Zmc2V0PVwiMVwiIHN0b3BDb2xvcj17ZW5kQ29sb3J9IC8+XG4gICAgICA8L2xpbmVhckdyYWRpZW50PlxuICAgICAgPHBhdGhcbiAgICAgICAgZD1cIk02NC42IDIzNy45YzIuNC0yLjQgNS43LTMuOCA5LjItMy44aDMxNy40YzUuOCAwIDguNyA3IDQuNiAxMS4xbC02Mi43IDYyLjdjLTIuNCAyLjQtNS43IDMuOC05LjIgMy44SDYuNWMtNS44IDAtOC43LTctNC42LTExLjFsNjIuNy02Mi43elwiXG4gICAgICAgIGZpbGw9e2B1cmwoIyR7ZzF9KWB9XG4gICAgICAvPlxuICAgICAgPGxpbmVhckdyYWRpZW50XG4gICAgICAgIGlkPXtnMn1cbiAgICAgICAgeDE9XCIyNjQuODI5XCJcbiAgICAgICAgeDI9XCI0NS4xNjNcIlxuICAgICAgICB5MT1cIjQwMS42MDFcIlxuICAgICAgICB5Mj1cIi0xOS4xNDhcIlxuICAgICAgICBncmFkaWVudFRyYW5zZm9ybT1cIm1hdHJpeCgxIDAgMCAtMSAwIDMxNClcIlxuICAgICAgICBncmFkaWVudFVuaXRzPVwidXNlclNwYWNlT25Vc2VcIlxuICAgICAgPlxuICAgICAgICA8c3RvcCBvZmZzZXQ9XCIwXCIgc3RvcENvbG9yPXtzdGFydENvbG9yfSAvPlxuICAgICAgICA8c3RvcCBvZmZzZXQ9XCIxXCIgc3RvcENvbG9yPXtlbmRDb2xvcn0gLz5cbiAgICAgIDwvbGluZWFyR3JhZGllbnQ+XG4gICAgICA8cGF0aFxuICAgICAgICBkPVwiTTY0LjYgMy44QzY3LjEgMS40IDcwLjQgMCA3My44IDBoMzE3LjRjNS44IDAgOC43IDcgNC42IDExLjFsLTYyLjcgNjIuN2MtMi40IDIuNC01LjcgMy44LTkuMiAzLjhINi41Yy01LjggMC04LjctNy00LjYtMTEuMUw2NC42IDMuOHpcIlxuICAgICAgICBmaWxsPXtgdXJsKCMke2cyfSlgfVxuICAgICAgLz5cbiAgICAgIDxsaW5lYXJHcmFkaWVudFxuICAgICAgICBpZD17ZzN9XG4gICAgICAgIHgxPVwiMzEyLjU0OFwiXG4gICAgICAgIHgyPVwiOTIuODgyXCJcbiAgICAgICAgeTE9XCIzNzYuNjg4XCJcbiAgICAgICAgeTI9XCItNDQuMDYxXCJcbiAgICAgICAgZ3JhZGllbnRUcmFuc2Zvcm09XCJtYXRyaXgoMSAwIDAgLTEgMCAzMTQpXCJcbiAgICAgICAgZ3JhZGllbnRVbml0cz1cInVzZXJTcGFjZU9uVXNlXCJcbiAgICAgID5cbiAgICAgICAgPHN0b3Agb2Zmc2V0PVwiMFwiIHN0b3BDb2xvcj17c3RhcnRDb2xvcn0gLz5cbiAgICAgICAgPHN0b3Agb2Zmc2V0PVwiMVwiIHN0b3BDb2xvcj17ZW5kQ29sb3J9IC8+XG4gICAgICA8L2xpbmVhckdyYWRpZW50PlxuICAgICAgPHBhdGhcbiAgICAgICAgZD1cIk0zMzMuMSAxMjAuMWMtMi40LTIuNC01LjctMy44LTkuMi0zLjhINi41Yy01LjggMC04LjcgNy00LjYgMTEuMWw2Mi43IDYyLjdjMi40IDIuNCA1LjcgMy44IDkuMiAzLjhoMzE3LjRjNS44IDAgOC43LTcgNC42LTExLjFsLTYyLjctNjIuN3pcIlxuICAgICAgICBmaWxsPXtgdXJsKCMke2czfSlgfVxuICAgICAgLz5cbiAgICA8L3N2Zz5cbiAgKTtcbn1cbiJdLCJmaWxlIjoiL3NyYy9jb21wb25lbnRzL2ljb25zL3NvbGFuYS1sb2dvLnRzeCJ9
+
+//# vitestCache=W3siZmlsZSI6IjEiLCJpZCI6IjEiLCJ1cmwiOiIyIiwiaW1wb3J0ZWRVcmxzIjoiMyIsIm1hcHBpbmdzIjpmYWxzZX0sIi9Vc2Vycy9kYXZpZC9Eb2N1bWVudHMva21pbm8vc29sL3N1cGVydGVhbS1hY2FkZW15L2FwcHMvd2ViL3NyYy9jb21wb25lbnRzL2ljb25zL3NvbGFuYS1sb2dvLnRzeCIsIi9zcmMvY29tcG9uZW50cy9pY29ucy9zb2xhbmEtbG9nby50c3giLFtdXQ==

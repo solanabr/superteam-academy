@@ -589,7 +589,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       const contentCommitted = updateParams.contentTxId !== undefined;
       // #757 — a removed lesson is gone from the CURRENT bundle, so its id/title
       // can only come from the PRIOR content revision. Resolve those from the
-      // pre-update on-chain content_tx_id (a padded courses-academy sha) ONLY
+      // pre-update on-chain content_tx_id (a padded academy-courses sha) ONLY
       // when this update actually retires a slot. Best-effort: any failure
       // leaves `priorRemoved` empty and the removed entry records slot-only.
       let priorRemoved:

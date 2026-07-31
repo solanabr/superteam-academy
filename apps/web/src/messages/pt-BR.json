@@ -1151,7 +1151,7 @@
       "intro": {
         "lede": "Levar um curso até os alunos exige duas etapas separadas, nesta ordem. Esta tela reúne as duas: publicação em cima, implantação embaixo.",
         "step1Title": "1. Publicar — o app já tem este curso?",
-        "step1Body": "O conteúdo dos cursos vive no repositório courses-academy. O app distribui uma cópia compilada dele, fixada em um único commit no content.lock. Publicar é um pull request humano que atualiza esse pin e reconstrói o pacote; assim que ele é mesclado, a Vercel faz o redeploy e o conteúdo passa a estar no app. Esta tela não escreve nada — ela mostra a divergência e entrega um PR pré-preenchido.",
+        "step1Body": "O conteúdo dos cursos vive no repositório academy-courses. O app distribui uma cópia compilada dele, fixada em um único commit no content.lock. Publicar é um pull request humano que atualiza esse pin e reconstrói o pacote; assim que ele é mesclado, a Vercel faz o redeploy e o conteúdo passa a estar no app. Esta tela não escreve nada — ela mostra a divergência e entrega um PR pré-preenchido.",
         "step2Title": "2. Implantar — o curso está on-chain e visível para os alunos?",
         "step2Body": "O conteúdo que está no pacote permanece invisível até o curso ter uma conta on-chain e estar ativo. Implantar cria ou atualiza essa conta. Só os campos on-chain importam aqui: XP por lição, recompensa do criador, mínimo de conclusões, número de lições e o conjunto imutável (criador, dificuldade, trilha, nível da trilha, pré-requisito).",
         "contentOnlyNote": "Editar o conteúdo de uma lição — texto, código, quizzes, o título, as tags — não é on-chain. Essas edições entram no ar só com a publicação e, corretamente, não aparecem como nada a implantar abaixo. Um curso continuar marcado como \"Sincronizado\" depois de você reescrever uma lição não é um bug."
@@ -1177,14 +1177,14 @@
     },
     "publishPin": {
       "title": "Pin de conteúdo",
-      "description": "O pacote de conteúdo versionado está fixado em um commit do courses-academy no content.lock. Publicar novo conteúdo é um PR humano de uma linha que atualiza o pin e reconstrói o pacote — nenhuma escrita no servidor acontece aqui.",
+      "description": "O pacote de conteúdo versionado está fixado em um commit do academy-courses no content.lock. Publicar novo conteúdo é um PR humano de uma linha que atualiza o pin e reconstrói o pacote — nenhuma escrita no servidor acontece aqui.",
       "refresh": "Atualizar",
       "loading": "Verificando o pin de conteúdo…",
       "unavailable": "Divergência indisponível — não foi possível acessar o GitHub. Tente novamente em instantes.",
       "pinnedSha": "Commit fixado",
       "headSha": "HEAD do repositório",
       "drift": "Divergência",
-      "upToDate": "Atualizado — o pin corresponde ao HEAD do courses-academy.",
+      "upToDate": "Atualizado — o pin corresponde ao HEAD do academy-courses.",
       "behind": "{count, plural, one {# commit atrás do HEAD} other {# commits atrás do HEAD}}",
       "behindUnknown": "Atrás do HEAD (contagem de commits indisponível).",
       "counts": "Pacote: {courses} cursos, {lessons} aulas.",
@@ -1262,7 +1262,7 @@
         "drifted": "Conteúdo desatualizado",
         "blocked": "Conteúdo bloqueado",
         "unknown": "Divergência desconhecida",
-        "driftedHint": "Há conteúdo de curso mais recente no repositório courses-academy. A correção é um PR de publicação que atualiza o content.lock e commita o pacote reconstruído — não uma reimplantação.",
+        "driftedHint": "Há conteúdo de curso mais recente no repositório academy-courses. A correção é um PR de publicação que atualiza o content.lock e commita o pacote reconstruído — não uma reimplantação.",
         "blockedHint": "O conteúdo do repositório mudou, mas a CI está vermelha — ainda não é possível sincronizar.",
         "unknownHint": "Não foi possível acessar o GitHub para verificar a divergência de conteúdo."
       },
@@ -1285,7 +1285,7 @@
         "creatorEmphasis": "Divergência de criador: o destinatário de recompensas on-chain não corresponde à carteira do instrutor. Course.creator é definido uma única vez no deploy e nunca pode ser alterado — toda recompensa futura de criador pagaria a carteira errada. Recriar o curso é a única correção.",
         "onChainLabel": "on-chain",
         "bundleLabel": "pacote",
-        "remediation": "\"{title}\" tem campos on-chain imutáveis que diferem do pacote de conteúdo; update_course não pode aplicá-los. Opções: 1. Corrija o valor no repositório courses-academy e publique um novo PR de pacote, ou 2. Desative este curso e implante uma nova versão."
+        "remediation": "\"{title}\" tem campos on-chain imutáveis que diferem do pacote de conteúdo; update_course não pode aplicá-los. Opções: 1. Corrija o valor no repositório academy-courses e publique um novo PR de pacote, ou 2. Desative este curso e implante uma nova versão."
       },
       "recreate": {
         "summaryPill": "Divergência imutável — {count, plural, one {# campo} other {# campos}}",
@@ -1618,7 +1618,7 @@
       "invalid": "Senha inválida"
     },
     "form": {
-      "placeholder": "https://github.com/solanabr/courses-academy/pull/42",
+      "placeholder": "https://github.com/solanabr/academy-courses/pull/42",
       "submit": "Visualizar",
       "loading": "Compilando…"
     },

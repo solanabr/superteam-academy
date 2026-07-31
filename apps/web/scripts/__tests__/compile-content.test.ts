@@ -12,7 +12,7 @@ const enc = (s: string): Uint8Array => new TextEncoder().encode(s);
 /** 1x1-ish placeholder bytes — only the extension/size matter to the pipeline. */
 const bin = (n = 8): Uint8Array => new Uint8Array(n).fill(0x89);
 
-/** A minimal, schema-valid courses-academy tree: one of every managed type. */
+/** A minimal, schema-valid academy-courses tree: one of every managed type. */
 function validTree(): RepoTree {
   const tree: RepoTree = new Map();
   tree.set(

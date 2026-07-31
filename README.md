@@ -80,7 +80,7 @@ Superteam Academy is an open-source learning management system built on Solana. 
 | Layer            | Technology                                                            |
 | ---------------- | --------------------------------------------------------------------- |
 | Frontend         | Next.js 14 (App Router), React 18, Tailwind CSS, shadcn/ui + Radix UI |
-| Content          | Committed bundle compiled from the `courses-academy` git repo         |
+| Content          | Committed bundle compiled from the `academy-courses` git repo         |
 | Database / Auth  | Supabase (Postgres, RLS, Auth)                                        |
 | On-Chain Program | Solana, Pinocchio 0.11 (Rust, `cargo build-sbf`)                      |
 | XP Tokens        | Token-2022 (NonTransferable + PermanentDelegate)                      |
@@ -138,7 +138,7 @@ cp .env.example apps/web/.env.local
 
 # 4. Content — nothing to import.
 # Course content is a COMMITTED bundle (apps/web/src/content/generated/), compiled
-# from solanabr/courses-academy at the SHA pinned in apps/web/content.lock.
+# from solanabr/academy-courses at the SHA pinned in apps/web/content.lock.
 # It is already in the repo. To recompile it after a pin bump:
 #   pnpm --filter web compile-content
 
@@ -182,7 +182,7 @@ superteam-academy/
 │   │   ├── src/components/     #   UI components (auth, editor, gamification, layout)
 │   │   ├── src/lib/            #   Utilities (supabase, content, github, solana, analytics)
 │   │   ├── src/content/generated/  # COMMITTED content bundle (do not hand-edit)
-│   │   ├── content.lock        #   The courses-academy commit the bundle is pinned to
+│   │   ├── content.lock        #   The academy-courses commit the bundle is pinned to
 │   │   ├── scripts/            #   compile-content.ts (repo → committed bundle)
 │   │   └── src/messages/       #   i18n translation files (en, pt-BR, es)
 │   └── build-server/           # Rust/Axum build server (GCP Cloud Run)
@@ -192,7 +192,7 @@ superteam-academy/
 ├── packages/
 │   ├── types/                  # Shared TypeScript interfaces
 │   ├── content-schema/         # Zod schemas for the content standard
-│   ├── content-lint/           # Content linter (runs in courses-academy CI)
+│   ├── content-lint/           # Content linter (runs in academy-courses CI)
 │   ├── challenge-executor/     # Sandboxed challenge runner (QuickJS)
 │   ├── deploy/                 # Browser-based Solana program deployment library
 │   └── config/                 # Shared ESLint, TS, Tailwind configs
@@ -203,7 +203,7 @@ superteam-academy/
 ```
 
 Course **content** lives in a separate repo:
-[`solanabr/courses-academy`](https://github.com/solanabr/courses-academy).
+[`solanabr/academy-courses`](https://github.com/solanabr/academy-courses).
 
 ## Environment Variables
 
@@ -241,7 +241,7 @@ only used to poll the content repo's HEAD/CI state for the admin Publish screen.
 | `BACKEND_SIGNER_SECRET`    | Server | JSON array of backend signer keypair bytes. On devnet, same as `PROGRAM_AUTHORITY_SECRET`.                                                 |
 | `XP_MINT_AUTHORITY_SECRET` | Server | JSON array of XP mint authority keypair bytes. Signs XP token mints; omit to disable XP minting.                                           |
 | `ADMIN_SECRET`             | Server | Admin console secret (min 32 chars, random) — also the HMAC key signing the `admin_session` cookie                                         |
-| `GITHUB_TOKEN`             | Server | Fine-grained **read** token for `solanabr/courses-academy`. Powers the admin Publish screen. Unset → those routes 503. **No write scope.** |
+| `GITHUB_TOKEN`             | Server | Fine-grained **read** token for `solanabr/academy-courses`. Powers the admin Publish screen. Unset → those routes 503. **No write scope.** |
 
 ### Build Server (Optional -- for code compilation features)
 
@@ -312,7 +312,7 @@ For system architecture, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 Four screens:
 
-- **Publish** (`/admin/publish`): shows the pinned content SHA vs `courses-academy` HEAD and hands you a prefilled PR link. Publishing is a **pull request** that bumps `content.lock` + commits the regenerated bundle — the console holds no write token and cannot mutate content.
+- **Publish** (`/admin/publish`): shows the pinned content SHA vs `academy-courses` HEAD and hands you a prefilled PR link. Publishing is a **pull request** that bumps `content.lock` + commits the regenerated bundle — the console holds no write token and cannot mutate content.
 - **Deploy** (`/admin/deploy`): deploy courses and achievements on-chain (Course PDA + Metaplex Core collection), and deactivate/reactivate courses. Recorded in the Supabase `onchain_deployments` table, which **is** the learner-visibility gate.
 - **Moderation** (`/admin/moderation`): the pending community-flag queue.
 - **Status** (`/admin/status`): program liveness, authority match, deploy counts, and on-chain → Supabase resync.

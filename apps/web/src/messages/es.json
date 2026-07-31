@@ -1151,7 +1151,7 @@
       "intro": {
         "lede": "Llevar un curso hasta los estudiantes requiere dos pasos separados, en este orden. Esta pantalla reúne los dos: publicación arriba, despliegue abajo.",
         "step1Title": "1. Publicar — ¿la app ya tiene este curso?",
-        "step1Body": "El contenido de los cursos vive en el repositorio courses-academy. La app distribuye una copia compilada de él, fijada a un único commit en content.lock. Publicar es un pull request humano que actualiza esa fijación y reconstruye el paquete; en cuanto se fusiona, Vercel vuelve a desplegar y el contenido queda en la app. Esta pantalla no escribe nada: muestra la divergencia y te entrega un PR ya rellenado.",
+        "step1Body": "El contenido de los cursos vive en el repositorio academy-courses. La app distribuye una copia compilada de él, fijada a un único commit en content.lock. Publicar es un pull request humano que actualiza esa fijación y reconstruye el paquete; en cuanto se fusiona, Vercel vuelve a desplegar y el contenido queda en la app. Esta pantalla no escribe nada: muestra la divergencia y te entrega un PR ya rellenado.",
         "step2Title": "2. Desplegar — ¿el curso está on-chain y pueden verlo los estudiantes?",
         "step2Body": "El contenido que está en el paquete permanece invisible hasta que el curso tenga una cuenta on-chain y esté activo. Desplegar crea o actualiza esa cuenta. Aquí solo importan los campos on-chain: XP por lección, recompensa del creador, mínimo de finalizaciones, número de lecciones y el conjunto inmutable (creador, dificultad, ruta, nivel de la ruta, prerrequisito).",
         "contentOnlyNote": "Editar el contenido de una lección —texto, código, cuestionarios, el título, las etiquetas— no es on-chain. Esas ediciones se publican solo con el PR de publicación y, correctamente, no aparecen como nada que desplegar abajo. Que un curso siga marcado como «Sincronizado» después de reescribir una lección no es un error."
@@ -1177,14 +1177,14 @@
     },
     "publishPin": {
       "title": "Fijación de contenido",
-      "description": "El paquete de contenido versionado está fijado a un commit de courses-academy en content.lock. Publicar contenido nuevo es un PR humano de una línea que actualiza la fijación y reconstruye el paquete — aquí no ocurre ninguna escritura en el servidor.",
+      "description": "El paquete de contenido versionado está fijado a un commit de academy-courses en content.lock. Publicar contenido nuevo es un PR humano de una línea que actualiza la fijación y reconstruye el paquete — aquí no ocurre ninguna escritura en el servidor.",
       "refresh": "Actualizar",
       "loading": "Comprobando la fijación de contenido…",
       "unavailable": "Desfase no disponible — no se pudo contactar con GitHub. Inténtalo de nuevo en un momento.",
       "pinnedSha": "Commit fijado",
       "headSha": "HEAD del repositorio",
       "drift": "Desfase",
-      "upToDate": "Al día — la fijación coincide con el HEAD de courses-academy.",
+      "upToDate": "Al día — la fijación coincide con el HEAD de academy-courses.",
       "behind": "{count, plural, one {# commit por detrás del HEAD} other {# commits por detrás del HEAD}}",
       "behindUnknown": "Por detrás del HEAD (recuento de commits no disponible).",
       "counts": "Paquete: {courses} cursos, {lessons} lecciones.",
@@ -1262,7 +1262,7 @@
         "drifted": "Contenido desactualizado",
         "blocked": "Contenido bloqueado",
         "unknown": "Divergencia desconocida",
-        "driftedHint": "Hay contenido de curso más reciente en el repositorio courses-academy. La solución es un PR de publicación que actualiza content.lock y commitea el paquete reconstruido — no un redespliegue.",
+        "driftedHint": "Hay contenido de curso más reciente en el repositorio academy-courses. La solución es un PR de publicación que actualiza content.lock y commitea el paquete reconstruido — no un redespliegue.",
         "blockedHint": "El contenido del repositorio cambió pero su CI está en rojo — aún no se puede sincronizar.",
         "unknownHint": "No se pudo acceder a GitHub para comprobar la divergencia de contenido."
       },
@@ -1285,7 +1285,7 @@
         "creatorEmphasis": "Divergencia de creador: el destinatario de recompensas on-chain no coincide con la billetera del instructor. Course.creator se define una sola vez en el despliegue y nunca puede cambiarse — toda recompensa futura de creador pagaría a la billetera equivocada. Recrear el curso es la única solución.",
         "onChainLabel": "on-chain",
         "bundleLabel": "paquete",
-        "remediation": "\"{title}\" tiene campos on-chain inmutables que difieren del paquete de contenido; update_course no puede aplicarlos. Opciones: 1. Corrige el valor en el repositorio courses-academy y publica un nuevo PR de paquete, o 2. Desactiva este curso y despliega una nueva versión."
+        "remediation": "\"{title}\" tiene campos on-chain inmutables que difieren del paquete de contenido; update_course no puede aplicarlos. Opciones: 1. Corrige el valor en el repositorio academy-courses y publica un nuevo PR de paquete, o 2. Desactiva este curso y despliega una nueva versión."
       },
       "recreate": {
         "summaryPill": "Discrepancia inmutable — {count, plural, one {# campo} other {# campos}}",
@@ -1618,7 +1618,7 @@
       "invalid": "Contraseña inválida"
     },
     "form": {
-      "placeholder": "https://github.com/solanabr/courses-academy/pull/42",
+      "placeholder": "https://github.com/solanabr/academy-courses/pull/42",
       "submit": "Previsualizar",
       "loading": "Compilando…"
     },

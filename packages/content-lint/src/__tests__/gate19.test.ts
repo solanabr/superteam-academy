@@ -117,7 +117,7 @@ describe("gate 19a — registry resolution", () => {
 
 describe("gate 19b — minimum reuse bar", () => {
   // ERROR tier since #676 — both preconditions (the 5-course catalog and the
-  // courses-academy #28 skills.yaml sweep) landed, and the flip was verified a
+  // academy-courses #28 skills.yaml sweep) landed, and the flip was verified a
   // no-op against the locked pin before it was made.
   it("ERRORS when a slug is applied to only one lesson, and names the lone lesson", async () => {
     const r = await runLint(

@@ -74,7 +74,7 @@ Then, exactly as in [`docs/DEPLOYMENT.md`](./DEPLOYMENT.md) §Supabase Setup:
 
 ## 2. Content: nothing to provision
 
-Content is a **committed bundle** compiled from `solanabr/courses-academy` and
+Content is a **committed bundle** compiled from `solanabr/academy-courses` and
 pinned by `apps/web/content.lock`. It ships with the code, so staging serves
 exactly the content the deployed branch pins — there is no separate content
 service, dataset, CORS origin, or token to configure.

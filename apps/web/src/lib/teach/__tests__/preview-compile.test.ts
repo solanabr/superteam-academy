@@ -44,7 +44,7 @@ afterEach(() => {
 });
 
 describe("fetchPrHead auth behaviour (#830)", () => {
-  it("works with NO token — courses-academy is public", async () => {
+  it("works with NO token — academy-courses is public", async () => {
     const fetchMock = vi.fn().mockResolvedValue(jsonRes(PR_BODY));
     vi.stubGlobal("fetch", fetchMock);
 

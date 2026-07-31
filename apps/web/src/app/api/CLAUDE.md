@@ -90,11 +90,11 @@ the boundary (never the full `Lesson` `blocks[]`, which carries solutions/tests)
 | `/api/admin/resync`                     | POST     | ADMIN_SECRET | Resync on-chain state to Supabase                                    |
 | `/api/admin/flags`                      | GET      | ADMIN_SECRET | Pending community flags for the moderation queue                     |
 | `/api/admin/freeze`                     | GET/POST | ADMIN_SECRET | Read/set the global deploy-window freeze (reset wave B2)             |
-| `/api/admin/publish/pin`                | GET      | ADMIN_SECRET | Content pin: pinned bundle SHA + counts vs courses-academy HEAD      |
+| `/api/admin/publish/pin`                | GET      | ADMIN_SECRET | Content pin: pinned bundle SHA + counts vs academy-courses HEAD      |
 | `/api/admin/capstone-funnel`            | GET      | ADMIN_SECRET | Capstone credential funnel counters (#725)                           |
 | `/api/admin/email/announce-course`      | POST     | ADMIN_SECRET | Send "new course available" email to marketing-opted-in users (#769) |
 
-Content drift (bundle SHA vs `courses-academy` HEAD) and chain drift are folded
+Content drift (bundle SHA vs `academy-courses` HEAD) and chain drift are folded
 into `/api/admin/status`; the publish card reads `/api/admin/publish/pin`. There
 is no separate drift route — one existed, was never wired to a UI, and was
 deleted in #444.

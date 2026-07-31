@@ -4,31 +4,31 @@ import { parsePrUrl } from "../pr-url";
 describe("parsePrUrl", () => {
   it("parses a canonical PR url", () => {
     expect(
-      parsePrUrl("https://github.com/solanabr/courses-academy/pull/42")
+      parsePrUrl("https://github.com/solanabr/academy-courses/pull/42")
     ).toEqual({
       ok: true,
       owner: "solanabr",
-      repo: "courses-academy",
+      repo: "academy-courses",
       number: 42,
     });
   });
 
   it("tolerates a trailing slash — the paste that hid every preview link (#831)", () => {
     expect(
-      parsePrUrl("https://github.com/solanabr/courses-academy/pull/24/")
+      parsePrUrl("https://github.com/solanabr/academy-courses/pull/24/")
     ).toMatchObject({ ok: true, number: 24 });
   });
 
   it("ignores trailing segments and fragments", () => {
     const parsed = parsePrUrl(
-      "https://github.com/solanabr/courses-academy/pull/7/files#diff-abc"
+      "https://github.com/solanabr/academy-courses/pull/7/files#diff-abc"
     );
     expect(parsed).toMatchObject({ ok: true, number: 7 });
   });
 
   it("tolerates a missing scheme and www", () => {
     expect(
-      parsePrUrl("www.github.com/solanabr/courses-academy/pull/3")
+      parsePrUrl("www.github.com/solanabr/academy-courses/pull/3")
     ).toMatchObject({ ok: true, number: 3 });
   });
 
@@ -52,19 +52,19 @@ describe("parsePrUrl", () => {
 
   it("rejects other hosts", () => {
     expect(
-      parsePrUrl("https://gitlab.com/solanabr/courses-academy/pull/1")
+      parsePrUrl("https://gitlab.com/solanabr/academy-courses/pull/1")
     ).toEqual({ ok: false, error: "wrong_host" });
   });
 
   it("rejects non-PR paths in the right repo", () => {
     expect(
-      parsePrUrl("https://github.com/solanabr/courses-academy/issues/12")
+      parsePrUrl("https://github.com/solanabr/academy-courses/issues/12")
     ).toEqual({ ok: false, error: "not_a_pull_request" });
   });
 
   it("rejects a non-numeric PR number", () => {
     expect(
-      parsePrUrl("https://github.com/solanabr/courses-academy/pull/abc")
+      parsePrUrl("https://github.com/solanabr/academy-courses/pull/abc")
     ).toEqual({ ok: false, error: "not_a_pull_request" });
   });
 

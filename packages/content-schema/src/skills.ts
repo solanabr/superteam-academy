@@ -31,7 +31,7 @@ export const SkillDef = z.object({
 export type SkillDefT = z.infer<typeof SkillDef>;
 
 /**
- * Shape of courses-academy's repo-root `skills.yaml` — the canonical skill
+ * Shape of academy-courses's repo-root `skills.yaml` — the canonical skill
  * vocabulary. Unlike `course.yaml`/`lesson.yaml`/etc. this is a single file at
  * the content repo root, not one-per-course or one-per-item, so it parses to a
  * flat list rather than a per-doc object.

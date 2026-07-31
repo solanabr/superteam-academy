@@ -7,7 +7,7 @@ import type { QuestType } from "@superteam-lms/types";
  * behavior of every quest div).
  *
  * `review` → `/review` (LX-B5). Sequencing (LX-B7 deps LX-B5): a review quest
- * only renders once its content YAML is authored in courses-academy AND
+ * only renders once its content YAML is authored in academy-courses AND
  * activated by a monorepo content.lock bump, and that activation lands after
  * the /review page ships — so this href can never resolve to a dead route from
  * this code change alone.

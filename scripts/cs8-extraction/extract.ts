@@ -3,7 +3,7 @@
  *
  * READ-ONLY on every live system. Reads the public Sanity dataset over
  * unauthenticated GROQ and writes the content-standard tree into a local
- * `courses-academy` checkout. Writes NOTHING to Sanity, Supabase, or chain.
+ * `academy-courses` checkout. Writes NOTHING to Sanity, Supabase, or chain.
  *
  * Slots are frozen from the LIVE flattened `modules[].lessons[]` order, which is
  * the order `findLessonIndex` used to set every `Enrollment.lesson_flags` bit.
@@ -12,7 +12,7 @@
  *
  * Run (resolves `yaml` + content-schema from content-lint's node_modules):
  *   pnpm --filter @superteam-lms/content-lint exec tsx \
- *     "$(pwd)/scripts/cs8-extraction/extract.ts" ~/Documents/STBR/courses-academy
+ *     "$(pwd)/scripts/cs8-extraction/extract.ts" ~/Documents/STBR/academy-courses
  *
  * Then gate it:
  *   pnpm --filter @superteam-lms/content-lint exec tsx src/cli.ts <out>
@@ -164,7 +164,7 @@ function compact<T extends Record<string, unknown>>(o: T): T {
 
 async function main(): Promise<void> {
   const out = process.argv[2];
-  if (!out) throw new Error("usage: extract.ts <courses-academy checkout>");
+  if (!out) throw new Error("usage: extract.ts <academy-courses checkout>");
 
   const docs = await exportLive();
   const byId = new Map(docs.map((d) => [d._id, d]));

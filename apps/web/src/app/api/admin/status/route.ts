@@ -44,7 +44,7 @@ export const dynamic = "force-dynamic";
 
 /**
  * Repo-wide content drift (SP3-C): the committed bundle's pinned SHA
- * (`content.lock` → `SYNCED_SHA`) vs courses-academy HEAD, folded into every
+ * (`content.lock` → `SYNCED_SHA`) vs academy-courses HEAD, folded into every
  * course record so a deployed-but-content-drifted course reads distinctly from
  * an in-sync one.
  *

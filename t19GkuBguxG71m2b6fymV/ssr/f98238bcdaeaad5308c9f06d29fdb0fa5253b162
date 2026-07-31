@@ -1,0 +1,36 @@
+Object.defineProperty(__vite_ssr_exports__, "Lesson", { enumerable: true, configurable: true, get(){ try { return Lesson } catch {} }});
+const __vite_ssr_import_0__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/zod@4.4.3/node_modules/zod/index.js", {"importedNames":["z"]});
+const __vite_ssr_import_1__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/packages/content-schema/src/ids.ts", {"importedNames":["LessonId"]});
+const __vite_ssr_import_2__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/packages/content-schema/src/blocks/index.ts", {"importedNames":["Block"]});
+const __vite_ssr_import_3__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/packages/content-schema/src/skills.ts", {"importedNames":["SkillTag"]});
+const __vite_ssr_import_4__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/packages/content-schema/src/version-stamp.ts", {"importedNames":["VersionStamp"]});
+const unique = (xs) => new Set(xs).size === xs.length;
+const Lesson = __vite_ssr_import_0__.z.object({
+  id: __vite_ssr_import_1__.LessonId,
+  slug: __vite_ssr_import_0__.z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  title: __vite_ssr_import_0__.z.string().min(1),
+  blocks: __vite_ssr_import_0__.z.array((0,__vite_ssr_import_2__.Block)).min(1),
+  /**
+   * Per-lesson skill tags (slugs). Required, non-empty — every lesson
+   * carries at least one skill (#466 C3). Membership against the canonical
+   * vocabulary (`skills.yaml`, see `skills.ts`) is enforced by the compiler
+   * via `checkSkillVocabulary`, not by this Zod schema (slug shape only).
+   */
+  skills: __vite_ssr_import_0__.z.array((0,__vite_ssr_import_3__.SkillTag)).min(1),
+  /**
+   * Optional version stamp (unified launch spec §3 item 8): the exact package
+   * versions this lesson was authored against + the date the pin was last
+   * verified. Absent leaves the lesson exactly as today — the field is opt-in
+   * (like `tutorNotes`/`failureMessage`), so today's content validates
+   * unchanged and stamps land via content PRs. When present, content-lint
+   * gate 21 warns on drift from the registry's `latest`. See version-stamp.ts.
+   */
+  versionStamp: __vite_ssr_import_4__.VersionStamp.optional()
+}).refine((l) => unique(l.blocks.map((b) => b.key)), {
+  message: "block keys must be unique within a lesson",
+  path: ["blocks"]
+});
+//# sourceMappingSource=vite-generated
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJtYXBwaW5ncyI6IkFBQUEsQ0FBQTtBQUFBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFFQSxNQUFNLFNBQVMsQ0FBSSxPQUFxQixJQUFJLElBQUksRUFBRSxFQUFFLFNBQVMsR0FBRztBQVl6RCxNQUFNLFNBQVMsd0JBQ25CLE9BQU87QUFBQSxFQUNOLElBQUk7QUFBQSxFQUNKLE1BQU0sd0JBQUUsT0FBTyxFQUFFLE1BQU0sNEJBQTRCO0FBQUEsRUFDbkQsT0FBTyx3QkFBRSxPQUFPLEVBQUUsSUFBSSxDQUFDO0FBQUEsRUFDdkIsUUFBUSx3QkFBRSxTQUFNLDRCQUFLLEVBQUUsSUFBSSxDQUFDO0FBQUE7QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUFBO0FBQUEsRUFPNUIsUUFBUSx3QkFBRSxTQUFNLCtCQUFRLEVBQUUsSUFBSSxDQUFDO0FBQUE7QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUFBLEVBUy9CLGNBQWMsbUNBQWEsU0FBUztBQUN0QyxDQUFDLEVBQ0EsT0FBTyxDQUFDLE1BQU0sT0FBTyxFQUFFLE9BQU8sSUFBSSxDQUFDLE1BQU0sRUFBRSxHQUFHLENBQUMsR0FBRztBQUFBLEVBQ2pELFNBQVM7QUFBQSxFQUNULE1BQU0sQ0FBQyxRQUFRO0FBQ2pCLENBQUMiLCJuYW1lcyI6W10sImlnbm9yZUxpc3QiOltdLCJzb3VyY2VzIjpbImxlc3Nvbi50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyB6IH0gZnJvbSBcInpvZFwiO1xuaW1wb3J0IHsgTGVzc29uSWQgfSBmcm9tIFwiLi9pZHNcIjtcbmltcG9ydCB7IEJsb2NrIH0gZnJvbSBcIi4vYmxvY2tzXCI7XG5pbXBvcnQgeyBTa2lsbFRhZyB9IGZyb20gXCIuL3NraWxsc1wiO1xuaW1wb3J0IHsgVmVyc2lvblN0YW1wIH0gZnJvbSBcIi4vdmVyc2lvbi1zdGFtcFwiO1xuXG5jb25zdCB1bmlxdWUgPSA8VD4oeHM6IHJlYWRvbmx5IFRbXSkgPT4gbmV3IFNldCh4cykuc2l6ZSA9PT0geHMubGVuZ3RoO1xuXG4vKipcbiAqIFRoZSBsZXNzb24gaXMgdGhlIGF0b21pYyBjb21wbGV0YWJsZSB1bml0OiBgY29tcGxldGVfbGVzc29uYCBmbGlwcyBvbmUgYml0IG9mXG4gKiB0aGUgb24tY2hhaW4gYml0bWFwLiBCbG9ja3MgYXJlIG9yZGVyZWQ7IGJsb2NrIHJlc3VsdHMgYXJlIHRyYW5zaWVudCBhbmQgbmV2ZXJcbiAqIHBlcnNpc3RlZCBwZXItYmxvY2suXG4gKlxuICogVGhlcmUgaXMgbm8gYHhwUmV3YXJkYC4gUGVyLWxlc3NvbiBYUCBpcyBgY291cnNlLnhwUGVyTGVzc29uYCwgaGVsZCBpbiB0aGVcbiAqIENvdXJzZSBQREEuIFpvZCBzdHJpcHMgdW5rbm93biBrZXlzLCBzbyBhIHN0cmF5IGB4cFJld2FyZDpgIGlzIGRyb3BwZWQgcmF0aGVyXG4gKiB0aGFuIGhvbm91cmVkIOKAlCA3NiBzZWVkIGxlc3NvbnMgY2Fycnkgb25lIHRvZGF5IGFuZCBub3RoaW5nIHJlYWRzIGl0LiBUaGVcbiAqIGxpbnRlciAoUGxhbiAyKSByZXBvcnRzIHN0cmlwcGVkIGtleXMgYXMgd2FybmluZ3Mgc28gYXV0aG9ycyBhcmUgbm90IGNvbmZ1c2VkLlxuICovXG5leHBvcnQgY29uc3QgTGVzc29uID0gelxuICAub2JqZWN0KHtcbiAgICBpZDogTGVzc29uSWQsXG4gICAgc2x1Zzogei5zdHJpbmcoKS5yZWdleCgvXlthLXowLTldKyg/Oi1bYS16MC05XSspKiQvKSxcbiAgICB0aXRsZTogei5zdHJpbmcoKS5taW4oMSksXG4gICAgYmxvY2tzOiB6LmFycmF5KEJsb2NrKS5taW4oMSksXG4gICAgLyoqXG4gICAgICogUGVyLWxlc3NvbiBza2lsbCB0YWdzIChzbHVncykuIFJlcXVpcmVkLCBub24tZW1wdHkg4oCUIGV2ZXJ5IGxlc3NvblxuICAgICAqIGNhcnJpZXMgYXQgbGVhc3Qgb25lIHNraWxsICgjNDY2IEMzKS4gTWVtYmVyc2hpcCBhZ2FpbnN0IHRoZSBjYW5vbmljYWxcbiAgICAgKiB2b2NhYnVsYXJ5IChgc2tpbGxzLnlhbWxgLCBzZWUgYHNraWxscy50c2ApIGlzIGVuZm9yY2VkIGJ5IHRoZSBjb21waWxlclxuICAgICAqIHZpYSBgY2hlY2tTa2lsbFZvY2FidWxhcnlgLCBub3QgYnkgdGhpcyBab2Qgc2NoZW1hIChzbHVnIHNoYXBlIG9ubHkpLlxuICAgICAqL1xuICAgIHNraWxsczogei5hcnJheShTa2lsbFRhZykubWluKDEpLFxuICAgIC8qKlxuICAgICAqIE9wdGlvbmFsIHZlcnNpb24gc3RhbXAgKHVuaWZpZWQgbGF1bmNoIHNwZWMgwqczIGl0ZW0gOCk6IHRoZSBleGFjdCBwYWNrYWdlXG4gICAgICogdmVyc2lvbnMgdGhpcyBsZXNzb24gd2FzIGF1dGhvcmVkIGFnYWluc3QgKyB0aGUgZGF0ZSB0aGUgcGluIHdhcyBsYXN0XG4gICAgICogdmVyaWZpZWQuIEFic2VudCBsZWF2ZXMgdGhlIGxlc3NvbiBleGFjdGx5IGFzIHRvZGF5IOKAlCB0aGUgZmllbGQgaXMgb3B0LWluXG4gICAgICogKGxpa2UgYHR1dG9yTm90ZXNgL2BmYWlsdXJlTWVzc2FnZWApLCBzbyB0b2RheSdzIGNvbnRlbnQgdmFsaWRhdGVzXG4gICAgICogdW5jaGFuZ2VkIGFuZCBzdGFtcHMgbGFuZCB2aWEgY29udGVudCBQUnMuIFdoZW4gcHJlc2VudCwgY29udGVudC1saW50XG4gICAgICogZ2F0ZSAyMSB3YXJucyBvbiBkcmlmdCBmcm9tIHRoZSByZWdpc3RyeSdzIGBsYXRlc3RgLiBTZWUgdmVyc2lvbi1zdGFtcC50cy5cbiAgICAgKi9cbiAgICB2ZXJzaW9uU3RhbXA6IFZlcnNpb25TdGFtcC5vcHRpb25hbCgpLFxuICB9KVxuICAucmVmaW5lKChsKSA9PiB1bmlxdWUobC5ibG9ja3MubWFwKChiKSA9PiBiLmtleSkpLCB7XG4gICAgbWVzc2FnZTogXCJibG9jayBrZXlzIG11c3QgYmUgdW5pcXVlIHdpdGhpbiBhIGxlc3NvblwiLFxuICAgIHBhdGg6IFtcImJsb2Nrc1wiXSxcbiAgfSk7XG5cbmV4cG9ydCB0eXBlIExlc3NvblQgPSB6LmluZmVyPHR5cGVvZiBMZXNzb24+O1xuIl0sImZpbGUiOiIvQGZzL1VzZXJzL2RhdmlkL0RvY3VtZW50cy9rbWluby9zb2wvc3VwZXJ0ZWFtLWFjYWRlbXkvcGFja2FnZXMvY29udGVudC1zY2hlbWEvc3JjL2xlc3Nvbi50cyJ9
+
+//# vitestCache=W3siZmlsZSI6IjEiLCJpZCI6IjEiLCJ1cmwiOiIyIiwiaW1wb3J0ZWRVcmxzIjoiMyIsIm1hcHBpbmdzIjpmYWxzZX0sIi9Vc2Vycy9kYXZpZC9Eb2N1bWVudHMva21pbm8vc29sL3N1cGVydGVhbS1hY2FkZW15L3BhY2thZ2VzL2NvbnRlbnQtc2NoZW1hL3NyYy9sZXNzb24udHMiLCIvQGZzL1VzZXJzL2RhdmlkL0RvY3VtZW50cy9rbWluby9zb2wvc3VwZXJ0ZWFtLWFjYWRlbXkvcGFja2FnZXMvY29udGVudC1zY2hlbWEvc3JjL2xlc3Nvbi50cyIsW11d

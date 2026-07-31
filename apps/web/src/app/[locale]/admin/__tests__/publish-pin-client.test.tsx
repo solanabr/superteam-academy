@@ -3,8 +3,8 @@ import type { ReactElement } from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import { PublishPinClient } from "../courses/publish-pin-client";
 import messages from "@/messages/en.json";
+import { PublishPinClient } from "../courses/publish-pin-client";
 
 interface PinResponse {
   pin: { sha: string; counts: Record<string, number>; compiledAt?: string };
@@ -31,7 +31,7 @@ const upToDate: PinResponse = {
     warnRedHead: false,
   },
   repos: {
-    content: "solanabr/courses-academy",
+    content: "solanabr/academy-courses",
     app: "solanabr/superteam-academy",
   },
 };
@@ -46,7 +46,7 @@ const drifted: PinResponse = {
     warnRedHead: false,
   },
   repos: {
-    content: "solanabr/courses-academy",
+    content: "solanabr/academy-courses",
     app: "solanabr/superteam-academy",
   },
 };

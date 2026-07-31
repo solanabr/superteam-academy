@@ -5,7 +5,7 @@
 Production deployment guide for Superteam Academy on Vercel + Supabase + GCP.
 
 There is **no CMS to deploy**. Course content ships as a committed bundle
-compiled from the `solanabr/courses-academy` git repo — see
+compiled from the `solanabr/academy-courses` git repo — see
 [Content Bundle](#content-bundle).
 
 ---
@@ -76,7 +76,7 @@ fails the boot loudly rather than degrading silently.
 | `ADMIN_SECRET`                  | **Server-only** | Admin console password **and** the HMAC key signing the `admin_session` cookie (min 32 chars). Required to access `/{locale}/admin`                                                                                                                              |
 | `HELIUS_WEBHOOK_SECRET`         | **Server-only** | Shared secret for Helius webhook signature verification (`/api/webhooks/helius`)                                                                                                                                                                                 |
 | `XP_MINT_AUTHORITY_SECRET`      | **Server-only** | XP mint authority keypair — required for the wallet link/unlink XP transfers                                                                                                                                                                                     |
-| `GITHUB_TOKEN`                  | **Server-only** | Fine-grained **read** token for `solanabr/courses-academy`. Powers the admin **Publish** screen (HEAD polling + CI checks). Optional at boot, but the admin content routes 503 without it. **Read scope only — no route in the app holds a GitHub write token.** |
+| `GITHUB_TOKEN`                  | **Server-only** | Fine-grained **read** token for `solanabr/academy-courses`. Powers the admin **Publish** screen (HEAD polling + CI checks). Optional at boot, but the admin content routes 503 without it. **Read scope only — no route in the app holds a GitHub write token.** |
 
 #### Optional Variables
 
@@ -126,7 +126,7 @@ second run the same day finds nothing to claim.
 > **No content-write secret exists.** The app cannot mutate course content at
 > runtime under any credential. Content is a committed bundle; publishing is a
 > pull request (see [Content Bundle](#content-bundle)). `GITHUB_TOKEN` is
-> read-only and is used solely to poll `courses-academy` HEAD and its CI state.
+> read-only and is used solely to poll `academy-courses` HEAD and its CI state.
 
 ### 4. Deploy
 
@@ -242,7 +242,7 @@ repo**, so a deploy is entirely self-contained.
 ### How it works
 
 ```
-solanabr/courses-academy   ← git repo, the single source of truth for content
+solanabr/academy-courses   ← git repo, the single source of truth for content
         │
         │  pinned to ONE commit by apps/web/content.lock
         ▼
@@ -258,7 +258,7 @@ apps/web/public/content-assets/*        ← COMMITTED
 
 ```json
 {
-  "repo": "solanabr/courses-academy",
+  "repo": "solanabr/academy-courses",
   "sha": "<40-char commit sha>"
 }
 ```
@@ -295,7 +295,7 @@ This catches both failure modes:
 
 Publishing is a **pull request**, not a deploy step and not a button:
 
-1. Merge the content change into `solanabr/courses-academy` (its own CI gates it).
+1. Merge the content change into `solanabr/academy-courses` (its own CI gates it).
 2. In this repo: bump `"sha"` in `apps/web/content.lock`.
 3. Run `pnpm --filter web compile-content`.
 4. Commit `content.lock` **and** the regenerated bundle together.
@@ -330,7 +330,7 @@ not by care. The mechanism is worth knowing because the failure it prevents
 
 Slots are assigned once, never renumbered, never reused, and `next` only grows.
 **CI gate-3** (`packages/content-lint/src/checks/gate3-slots.ts`) diffs the lock
-against the merge base on every courses-academy PR and fails the build if a
+against the merge base on every academy-courses PR and fails the build if a
 surviving lesson's slot moved, a retired slot was reused, or `next` went
 backwards. That gate — not a hand diff of `course.yaml` — is the safety net.
 `course.yaml` order is decoupled from slot assignment by design, so reordering

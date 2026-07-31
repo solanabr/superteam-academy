@@ -11,7 +11,7 @@ import metaJson from "@/content/generated/meta.json";
  * the rest of the store.
  */
 export interface ContentMeta {
-  /** The courses-academy commit `content.lock` pins (mirrored by the compiler). */
+  /** The academy-courses commit `content.lock` pins (mirrored by the compiler). */
   sha: string;
   /** Per-type document counts in the bundle (courses, lessons, …). */
   counts: Record<string, number>;

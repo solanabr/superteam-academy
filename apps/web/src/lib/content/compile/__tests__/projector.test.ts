@@ -74,6 +74,10 @@ describe("projectContent", () => {
   it("stamps the sync marker with the sha on every managed doc", () => {
     const { docs } = projectContent(fixture(), "sha1", noAsset, () => []);
     for (const d of docs) {
+      // NOT renamed with the repo (#917): `source` is a persisted data
+      // marker written into every managed doc, not a repo label. Changing it
+      // would orphan every existing marked doc from the prune filter — a
+      // data migration, not a rename. Tracks prune.ts SOURCE, left as-is.
       expect(d.sync).toEqual({ source: "courses-academy", rev: "sha1" });
     }
   });

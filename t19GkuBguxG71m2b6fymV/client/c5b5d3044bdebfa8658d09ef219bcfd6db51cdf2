@@ -1,0 +1,58 @@
+Object.defineProperty(__vite_ssr_exports__, "ContentTabs", { enumerable: true, configurable: true, get(){ try { return ContentTabs } catch {} }});
+const __vite_ssr_import_0__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/react@18.3.1/node_modules/react/jsx-dev-runtime.js", {"importedNames":["jsxDEV"]});const __vite_ssr_import_1__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/next-intl@3.26.5_next@14.2.35_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-dom@18._697453d2ab77c379c3345831fabc794f/node_modules/next-intl/dist/index.react-client.js", {"importedNames":["useTranslations"]});const __vite_ssr_import_2__ = await __vite_ssr_import__("/src/components/ui/tabs.tsx", {"importedNames":["Tabs","TabsContent","TabsList","TabsTrigger"]});"use client";
+
+
+
+function ContentTabs({
+  questsSlot,
+  achievementsSlot,
+  pathsSlot
+}) {
+  const t = (0,__vite_ssr_import_1__.useTranslations)("admin.contentScreen.tabs");
+  return /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)((0,__vite_ssr_import_2__.Tabs), { defaultValue: "achievements", children: [
+    /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)((0,__vite_ssr_import_2__.TabsList), { children: [
+      /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)((0,__vite_ssr_import_2__.TabsTrigger), { value: "quests", children: t("quests") }, void 0, false, {
+        fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/app/[locale]/admin/content/content-tabs.tsx",
+        lineNumber: 36,
+        columnNumber: 9
+      }, this),
+      /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)((0,__vite_ssr_import_2__.TabsTrigger), { value: "achievements", children: t("achievements") }, void 0, false, {
+        fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/app/[locale]/admin/content/content-tabs.tsx",
+        lineNumber: 37,
+        columnNumber: 9
+      }, this),
+      /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)((0,__vite_ssr_import_2__.TabsTrigger), { value: "paths", children: t("paths") }, void 0, false, {
+        fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/app/[locale]/admin/content/content-tabs.tsx",
+        lineNumber: 38,
+        columnNumber: 9
+      }, this)
+    ] }, void 0, true, {
+      fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/app/[locale]/admin/content/content-tabs.tsx",
+      lineNumber: 35,
+      columnNumber: 7
+    }, this),
+    /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)((0,__vite_ssr_import_2__.TabsContent), { value: "quests", children: questsSlot }, void 0, false, {
+      fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/app/[locale]/admin/content/content-tabs.tsx",
+      lineNumber: 40,
+      columnNumber: 7
+    }, this),
+    /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)((0,__vite_ssr_import_2__.TabsContent), { value: "achievements", children: achievementsSlot }, void 0, false, {
+      fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/app/[locale]/admin/content/content-tabs.tsx",
+      lineNumber: 41,
+      columnNumber: 7
+    }, this),
+    /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)((0,__vite_ssr_import_2__.TabsContent), { value: "paths", children: pathsSlot }, void 0, false, {
+      fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/app/[locale]/admin/content/content-tabs.tsx",
+      lineNumber: 42,
+      columnNumber: 7
+    }, this)
+  ] }, void 0, true, {
+    fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/app/[locale]/admin/content/content-tabs.tsx",
+    lineNumber: 34,
+    columnNumber: 5
+  }, this);
+}
+//# sourceMappingSource=vite-generated
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJtYXBwaW5ncyI6IkFBQUEsQ0FBQTtBQW1DUSxzTkFoQ1IsdVZBQ0E7Ozs7QUFxQk8sU0FBUyxZQUFZO0FBQUEsRUFDMUI7QUFBQSxFQUNBO0FBQUEsRUFDQTtBQUNGLEdBQXFCO0FBQ25CLFFBQU0sT0FBSSx1Q0FBZ0IsMEJBQTBCO0FBRXBELFNBQ0Usb0RBQUMsK0JBQUssY0FBYSxnQkFDakI7QUFBQSx3REFBQyxtQ0FDQztBQUFBLDBEQUFDLHNDQUFZLE9BQU0sVUFBVSxZQUFFLFFBQVEsS0FBdkM7QUFBQTtBQUFBO0FBQUE7QUFBQSxhQUF5QztBQUFBLE1BQ3pDLG9EQUFDLHNDQUFZLE9BQU0sZ0JBQWdCLFlBQUUsY0FBYyxLQUFuRDtBQUFBO0FBQUE7QUFBQTtBQUFBLGFBQXFEO0FBQUEsTUFDckQsb0RBQUMsc0NBQVksT0FBTSxTQUFTLFlBQUUsT0FBTyxLQUFyQztBQUFBO0FBQUE7QUFBQTtBQUFBLGFBQXVDO0FBQUEsU0FIekM7QUFBQTtBQUFBO0FBQUE7QUFBQSxXQUlBO0FBQUEsSUFDQSxvREFBQyxzQ0FBWSxPQUFNLFVBQVUsd0JBQTdCO0FBQUE7QUFBQTtBQUFBO0FBQUEsV0FBd0M7QUFBQSxJQUN4QyxvREFBQyxzQ0FBWSxPQUFNLGdCQUFnQiw4QkFBbkM7QUFBQTtBQUFBO0FBQUE7QUFBQSxXQUFvRDtBQUFBLElBQ3BELG9EQUFDLHNDQUFZLE9BQU0sU0FBUyx1QkFBNUI7QUFBQTtBQUFBO0FBQUE7QUFBQSxXQUFzQztBQUFBLE9BUnhDO0FBQUE7QUFBQTtBQUFBO0FBQUEsU0FTQTtBQUVKIiwibmFtZXMiOltdLCJpZ25vcmVMaXN0IjpbXSwic291cmNlcyI6WyJjb250ZW50LXRhYnMudHN4Il0sInNvdXJjZXNDb250ZW50IjpbIlwidXNlIGNsaWVudFwiO1xuXG5pbXBvcnQgdHlwZSB7IFJlYWN0Tm9kZSB9IGZyb20gXCJyZWFjdFwiO1xuaW1wb3J0IHsgdXNlVHJhbnNsYXRpb25zIH0gZnJvbSBcIm5leHQtaW50bFwiO1xuaW1wb3J0IHsgVGFicywgVGFic0NvbnRlbnQsIFRhYnNMaXN0LCBUYWJzVHJpZ2dlciB9IGZyb20gXCJAL2NvbXBvbmVudHMvdWkvdGFic1wiO1xuXG5pbnRlcmZhY2UgQ29udGVudFRhYnNQcm9wcyB7XG4gIHF1ZXN0c1Nsb3Q6IFJlYWN0Tm9kZTtcbiAgYWNoaWV2ZW1lbnRzU2xvdDogUmVhY3ROb2RlO1xuICBwYXRoc1Nsb3Q6IFJlYWN0Tm9kZTtcbn1cblxuLyoqXG4gKiBTdWItdmlldyBzd2l0Y2ggZm9yIHRoZSBhZG1pbiBDb250ZW50IHRhYiAoIzUxMyBXUy1DKTogUXVlc3RzIC8gQWNoaWV2ZW1lbnRzXG4gKiAvIFBhdGhzIHNoYXJlIE9ORSBcIkNvbnRlbnRcIiBuYXYgZW50cnkgcmF0aGVyIHRoYW4gdGhyZWUgdG9wLWxldmVsIHNlY3Rpb25zIOKAlFxuICogbm9uZSBoYXMgQ291cnNlcy1zY2FsZSB3cml0ZSBzdXJmYWNlIChwbGFuIGRlY2lzaW9uKS4gQnVpbHQgb24gdGhlIGV4aXN0aW5nXG4gKiBSYWRpeC1iYWNrZWQgYFRhYnNgIHByaW1pdGl2ZSAoYGNvbXBvbmVudHMvdWkvdGFicy50c3hgKSBpbnN0ZWFkIG9mXG4gKiBoYW5kLXJvbGxlZCB0YWIgbWFya3VwLCBzbyBrZXlib2FyZCBuYXYgKGFycm93IGtleXMpIGFuZCB0aGUgZnVsbCBBUklBXG4gKiB0YWJsaXN0L3RhYi90YWJwYW5lbCB3aXJpbmcgY29tZSBmb3IgZnJlZS5cbiAqXG4gKiBFYWNoIHN1Yi12aWV3IGlzIHJlbmRlcmVkIGJ5IHRoZSBzZXJ2ZXItY29tcG9uZW50IHBhcmVudCAoYHBhZ2UudHN4YCkg4oCUXG4gKiBRdWVzdHMvUGF0aHMgYXJlIHBsYWluIHNlcnZlciBjb21wb25lbnRzLCBBY2hpZXZlbWVudHMgaXMgYSBjbGllbnRcbiAqIGNvbXBvbmVudCB0aGF0IG5lZWRzIGB1c2VBZG1pblN0YXR1cygpYCDigJQgYW5kIGhhbmRlZCBpbiBhcyBhIHNsb3Q7IHRoaXNcbiAqIGNvbXBvbmVudCBvbmx5IGFycmFuZ2VzIHRoZW0gaW50byB0YWJzLlxuICovXG5leHBvcnQgZnVuY3Rpb24gQ29udGVudFRhYnMoe1xuICBxdWVzdHNTbG90LFxuICBhY2hpZXZlbWVudHNTbG90LFxuICBwYXRoc1Nsb3QsXG59OiBDb250ZW50VGFic1Byb3BzKSB7XG4gIGNvbnN0IHQgPSB1c2VUcmFuc2xhdGlvbnMoXCJhZG1pbi5jb250ZW50U2NyZWVuLnRhYnNcIik7XG5cbiAgcmV0dXJuIChcbiAgICA8VGFicyBkZWZhdWx0VmFsdWU9XCJhY2hpZXZlbWVudHNcIj5cbiAgICAgIDxUYWJzTGlzdD5cbiAgICAgICAgPFRhYnNUcmlnZ2VyIHZhbHVlPVwicXVlc3RzXCI+e3QoXCJxdWVzdHNcIil9PC9UYWJzVHJpZ2dlcj5cbiAgICAgICAgPFRhYnNUcmlnZ2VyIHZhbHVlPVwiYWNoaWV2ZW1lbnRzXCI+e3QoXCJhY2hpZXZlbWVudHNcIil9PC9UYWJzVHJpZ2dlcj5cbiAgICAgICAgPFRhYnNUcmlnZ2VyIHZhbHVlPVwicGF0aHNcIj57dChcInBhdGhzXCIpfTwvVGFic1RyaWdnZXI+XG4gICAgICA8L1RhYnNMaXN0PlxuICAgICAgPFRhYnNDb250ZW50IHZhbHVlPVwicXVlc3RzXCI+e3F1ZXN0c1Nsb3R9PC9UYWJzQ29udGVudD5cbiAgICAgIDxUYWJzQ29udGVudCB2YWx1ZT1cImFjaGlldmVtZW50c1wiPnthY2hpZXZlbWVudHNTbG90fTwvVGFic0NvbnRlbnQ+XG4gICAgICA8VGFic0NvbnRlbnQgdmFsdWU9XCJwYXRoc1wiPntwYXRoc1Nsb3R9PC9UYWJzQ29udGVudD5cbiAgICA8L1RhYnM+XG4gICk7XG59XG4iXSwiZmlsZSI6Ii9zcmMvYXBwL1tsb2NhbGVdL2FkbWluL2NvbnRlbnQvY29udGVudC10YWJzLnRzeCJ9
+
+//# vitestCache=W3siZmlsZSI6IjEiLCJpZCI6IjEiLCJ1cmwiOiIyIiwiaW1wb3J0ZWRVcmxzIjoiMyIsIm1hcHBpbmdzIjpmYWxzZX0sIi9Vc2Vycy9kYXZpZC9Eb2N1bWVudHMva21pbm8vc29sL3N1cGVydGVhbS1hY2FkZW15L2FwcHMvd2ViL3NyYy9hcHAvW2xvY2FsZV0vYWRtaW4vY29udGVudC9jb250ZW50LXRhYnMudHN4IiwiL3NyYy9hcHAvW2xvY2FsZV0vYWRtaW4vY29udGVudC9jb250ZW50LXRhYnMudHN4IixbXV0=

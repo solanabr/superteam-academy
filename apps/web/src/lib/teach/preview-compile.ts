@@ -12,7 +12,7 @@ import { CONTENT_REPO } from "./pr-url";
 import { changedCourseDirs, changedCourseIds } from "./pr-files";
 
 /**
- * Compiles a courses-academy PR into the same JSON modules the live site reads
+ * Compiles an academy-courses PR into the same JSON modules the live site reads
  * (#828), so a teacher's preview cannot drift from what actually ships.
  *
  * The pipeline is exactly the production one — `extractTarball` +
@@ -32,7 +32,7 @@ type LessonDocT =
     : never;
 
 /**
- * `courses-academy` is PUBLIC, so every read here works unauthenticated (#830).
+ * `academy-courses` is PUBLIC, so every read here works unauthenticated (#830).
  * The token is used when configured — unauthenticated GitHub is 60 req/hr per
  * IP and shared egress like Vercel burns that quickly — but it is never
  * required, so a fresh checkout with no `GITHUB_TOKEN` can still preview.

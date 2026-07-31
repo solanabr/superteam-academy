@@ -18,7 +18,7 @@ import {
  * routes a synthetic `course-x`, so it passes no matter what real id
  * SEGMENT_ENTRY_COURSE holds — which is exactly how a table pointing at a
  * deactivated course (`solana-fundamentals` / `anchor-framework`, retired per
- * courses-academy CATALOG §3) shipped while every existing test stayed green.
+ * academy-courses CATALOG §3) shipped while every existing test stayed green.
  *
  * This suite instead runs the REAL resolver against the REAL committed content
  * bundle, mocking ONLY the on-chain sync gate so the courses read as

@@ -15,7 +15,7 @@ import {
 const syncedCourse: ManagedDoc = {
   _id: "course-anchor-framework",
   _type: "course",
-  sync: { source: "courses-academy" },
+  sync: { source: "academy-courses" },
   onChainStatus: {
     status: "synced",
     coursePda: "PDA_COURSE",
@@ -29,7 +29,7 @@ const syncedCourse: ManagedDoc = {
 const achievementWithPda: ManagedDoc = {
   _id: "achievement-first-steps",
   _type: "achievement",
-  sync: { source: "courses-academy" },
+  sync: { source: "academy-courses" },
   onChainStatus: {
     status: "synced",
     achievementPda: "PDA_ACH",
@@ -92,7 +92,7 @@ describe("selectBackfillDocs — synced courses + PDA achievements only", () => 
     const noPda: ManagedDoc = {
       _id: "achievement-nopda",
       _type: "achievement",
-      sync: { source: "courses-academy" },
+      sync: { source: "academy-courses" },
       onChainStatus: { status: "pending", achievementPda: null },
     };
     expect(selectBackfillDocs([noPda])).toEqual([]);

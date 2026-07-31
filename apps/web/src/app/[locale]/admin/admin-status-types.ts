@@ -37,7 +37,7 @@ export interface CourseStatus {
   coursePda: string | null;
   differences: DiffEntry[];
   // Repo-wide content drift (SP3-C): the committed bundle's pinned SHA vs
-  // courses-academy HEAD, or "unknown" when HEAD couldn't be fetched. Same value
+  // academy-courses HEAD, or "unknown" when HEAD couldn't be fetched. Same value
   // for every course; the badge only surfaces it on a deployed row.
   contentDrift: CourseContentDrift;
   // Per-course chain drift (SP3-C Task 2): the deployed Course.content_tx_id

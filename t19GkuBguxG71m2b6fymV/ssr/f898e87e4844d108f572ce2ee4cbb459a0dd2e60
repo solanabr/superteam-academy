@@ -1,0 +1,84 @@
+Object.defineProperty(__vite_ssr_exports__, "CourseModule", { enumerable: true, configurable: true, get(){ try { return CourseModule } catch {} }});
+Object.defineProperty(__vite_ssr_exports__, "Course", { enumerable: true, configurable: true, get(){ try { return Course } catch {} }});
+const __vite_ssr_import_0__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/zod@4.4.3/node_modules/zod/index.js", {"importedNames":["z"]});
+const __vite_ssr_import_1__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/packages/content-schema/src/ids.ts", {"importedNames":["CourseId","LessonId","ModuleKey"]});
+const __vite_ssr_import_2__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/packages/content-schema/src/constants.ts", {"importedNames":["DIFFICULTIES","MAX_LESSON_SLOTS","MAX_XP_PER_MINT"]});
+const __vite_ssr_import_3__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/packages/content-schema/src/wallet.ts", {"importedNames":["SolanaAddress"]});
+const unique = (xs) => new Set(xs).size === xs.length;
+const CourseModule = __vite_ssr_import_0__.z.object({
+  key: __vite_ssr_import_1__.ModuleKey,
+  title: __vite_ssr_import_0__.z.string().min(1),
+  description: __vite_ssr_import_0__.z.string().optional(),
+  lessons: __vite_ssr_import_0__.z.array((0,__vite_ssr_import_1__.LessonId)).min(1)
+});
+const Course = __vite_ssr_import_0__.z.object({
+  id: __vite_ssr_import_1__.CourseId,
+  slug: __vite_ssr_import_0__.z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  title: __vite_ssr_import_0__.z.string().min(1),
+  description: __vite_ssr_import_0__.z.string().optional(),
+  difficulty: __vite_ssr_import_0__.z.enum((0,__vite_ssr_import_2__.DIFFICULTIES)),
+  duration: __vite_ssr_import_0__.z.number().nonnegative(),
+  /**
+   * Stored in the Course PDA. On-chain, `create_course` does NOT bound this;
+   * the only chain ceiling is `complete_lesson.rs:30` (xp_per_lesson ≤ 5000).
+   * This 1..100 range is a product policy the Zod schema alone enforces —
+   * plus the finalize-invariant refine below (xpPerLesson × lessonCount ≤ 10000).
+   */
+  xpPerLesson: __vite_ssr_import_0__.z.number().int().min(1).max(100),
+  /** Completion bonus is derived on-chain; this is the catalogue display value. */
+  xpReward: __vite_ssr_import_0__.z.number().int().min(0).max((0,__vite_ssr_import_2__.MAX_XP_PER_MINT)),
+  creatorRewardXp: __vite_ssr_import_0__.z.number().int().min(0).max((0,__vite_ssr_import_2__.MAX_XP_PER_MINT)).default(0),
+  minCompletionsForReward: __vite_ssr_import_0__.z.number().int().min(0).default(0),
+  trackId: __vite_ssr_import_0__.z.number().int().min(0).default(0),
+  trackLevel: __vite_ssr_import_0__.z.number().int().min(0).default(0),
+  /**
+   * The course's on-chain `Course.creator` (the creator XP recipient) —
+   * authored directly on the course as a wallet, no longer resolved through a
+   * separate instructor document (issue #478). OPTIONAL for now: today's
+   * content predates this field (it still carries the retired `instructor`
+   * ref, which this schema no longer recognizes and Zod silently strips). A
+   * later activation PR tightens this to required once content is migrated —
+   * until then, the sync rejects a course with no creator wallet at deploy
+   * time, not at schema validation.
+   */
+  creator: __vite_ssr_import_3__.SolanaAddress.optional(),
+  /**
+   * Repo-relative path to the course's catalogue thumbnail (e.g.
+   * `assets/thumbnail.png`), resolved against the course folder. Optional in
+   * the schema; the compiler verifies the file exists when set (SP2 — images
+   * are git-sourced, no external image host).
+   */
+  thumbnail: __vite_ssr_import_0__.z.string().min(1).optional(),
+  prerequisiteCourse: __vite_ssr_import_1__.CourseId.optional(),
+  modules: __vite_ssr_import_0__.z.array(CourseModule).min(1)
+  // No authored `tags` field (#466 C3): a course's catalogue tags are
+  // DERIVED — the compiler's projector computes them as the sorted,
+  // deduplicated union of its lessons' `skills` (see
+  // apps/web/src/lib/content/compile/projector.ts). Authoring a `tags:` key
+  // on a course.yaml is silently stripped, not an error.
+}).refine((c) => unique(c.modules.map((m) => m.key)), {
+  message: "module keys must be unique within a course",
+  path: ["modules"]
+}).refine((c) => unique(c.modules.flatMap((m) => m.lessons)), {
+  message: "a lesson may appear in only one module",
+  path: ["modules"]
+}).refine(
+  (c) => c.modules.flatMap((m) => m.lessons).length <= __vite_ssr_import_2__.MAX_LESSON_SLOTS,
+  {
+    message: `a course may hold at most ${__vite_ssr_import_2__.MAX_LESSON_SLOTS} lessons (Enrollment.lesson_flags is [u64; 4])`,
+    path: ["modules"]
+  }
+).refine(
+  (c) => c.xpPerLesson * c.modules.flatMap((m) => m.lessons).length <= 2 * __vite_ssr_import_2__.MAX_XP_PER_MINT,
+  {
+    message: `xpPerLesson × lessonCount must be ≤ ${2 * __vite_ssr_import_2__.MAX_XP_PER_MINT} (finalize_course bonus ≤ MAX_XP_PER_MINT); above it, no learner can finalize`,
+    path: ["xpPerLesson"]
+  }
+).refine((c) => c.prerequisiteCourse !== c.id, {
+  message: "a course cannot be its own prerequisite",
+  path: ["prerequisiteCourse"]
+});
+//# sourceMappingSource=vite-generated
+//# sourceMappingURL=data:application/json;base64,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LGFBQWE7QUFBQSxFQUN0QjtBQUNGLEVBQ0MsT0FBTyxDQUFDLE1BQU0sRUFBRSx1QkFBdUIsRUFBRSxJQUFJO0FBQUEsRUFDNUMsU0FBUztBQUFBLEVBQ1QsTUFBTSxDQUFDLG9CQUFvQjtBQUM3QixDQUFDIiwibmFtZXMiOltdLCJpZ25vcmVMaXN0IjpbXSwic291cmNlcyI6WyJjb3Vyc2UudHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgeiB9IGZyb20gXCJ6b2RcIjtcbmltcG9ydCB7IENvdXJzZUlkLCBMZXNzb25JZCwgTW9kdWxlS2V5IH0gZnJvbSBcIi4vaWRzXCI7XG5pbXBvcnQgeyBESUZGSUNVTFRJRVMsIE1BWF9MRVNTT05fU0xPVFMsIE1BWF9YUF9QRVJfTUlOVCB9IGZyb20gXCIuL2NvbnN0YW50c1wiO1xuaW1wb3J0IHsgU29sYW5hQWRkcmVzcyB9IGZyb20gXCIuL3dhbGxldFwiO1xuXG5jb25zdCB1bmlxdWUgPSA8VD4oeHM6IHJlYWRvbmx5IFRbXSkgPT4gbmV3IFNldCh4cykuc2l6ZSA9PT0geHMubGVuZ3RoO1xuXG4vKiogSW5saW5lIG9iamVjdCwgbm90IGEgZG9jdW1lbnQg4oCUIG1vZHVsZXMgYXJlIG5ldmVyIHJldXNlZCBhY3Jvc3MgY291cnNlcy4gKi9cbmV4cG9ydCBjb25zdCBDb3Vyc2VNb2R1bGUgPSB6Lm9iamVjdCh7XG4gIGtleTogTW9kdWxlS2V5LFxuICB0aXRsZTogei5zdHJpbmcoKS5taW4oMSksXG4gIGRlc2NyaXB0aW9uOiB6LnN0cmluZygpLm9wdGlvbmFsKCksXG4gIGxlc3NvbnM6IHouYXJyYXkoTGVzc29uSWQpLm1pbigxKSxcbn0pO1xuXG5leHBvcnQgY29uc3QgQ291cnNlID0gelxuICAub2JqZWN0KHtcbiAgICBpZDogQ291cnNlSWQsXG4gICAgc2x1Zzogei5zdHJpbmcoKS5yZWdleCgvXlthLXowLTldKyg/Oi1bYS16MC05XSspKiQvKSxcbiAgICB0aXRsZTogei5zdHJpbmcoKS5taW4oMSksXG4gICAgZGVzY3JpcHRpb246IHouc3RyaW5nKCkub3B0aW9uYWwoKSxcbiAgICBkaWZmaWN1bHR5OiB6LmVudW0oRElGRklDVUxUSUVTKSxcbiAgICBkdXJhdGlvbjogei5udW1iZXIoKS5ub25uZWdhdGl2ZSgpLFxuICAgIC8qKlxuICAgICAqIFN0b3JlZCBpbiB0aGUgQ291cnNlIFBEQS4gT24tY2hhaW4sIGBjcmVhdGVfY291cnNlYCBkb2VzIE5PVCBib3VuZCB0aGlzO1xuICAgICAqIHRoZSBvbmx5IGNoYWluIGNlaWxpbmcgaXMgYGNvbXBsZXRlX2xlc3Nvbi5yczozMGAgKHhwX3Blcl9sZXNzb24g4omkIDUwMDApLlxuICAgICAqIFRoaXMgMS4uMTAwIHJhbmdlIGlzIGEgcHJvZHVjdCBwb2xpY3kgdGhlIFpvZCBzY2hlbWEgYWxvbmUgZW5mb3JjZXMg4oCUXG4gICAgICogcGx1cyB0aGUgZmluYWxpemUtaW52YXJpYW50IHJlZmluZSBiZWxvdyAoeHBQZXJMZXNzb24gw5cgbGVzc29uQ291bnQg4omkIDEwMDAwKS5cbiAgICAgKi9cbiAgICB4cFBlckxlc3Nvbjogei5udW1iZXIoKS5pbnQoKS5taW4oMSkubWF4KDEwMCksXG4gICAgLyoqIENvbXBsZXRpb24gYm9udXMgaXMgZGVyaXZlZCBvbi1jaGFpbjsgdGhpcyBpcyB0aGUgY2F0YWxvZ3VlIGRpc3BsYXkgdmFsdWUuICovXG4gICAgeHBSZXdhcmQ6IHoubnVtYmVyKCkuaW50KCkubWluKDApLm1heChNQVhfWFBfUEVSX01JTlQpLFxuICAgIGNyZWF0b3JSZXdhcmRYcDogei5udW1iZXIoKS5pbnQoKS5taW4oMCkubWF4KE1BWF9YUF9QRVJfTUlOVCkuZGVmYXVsdCgwKSxcbiAgICBtaW5Db21wbGV0aW9uc0ZvclJld2FyZDogei5udW1iZXIoKS5pbnQoKS5taW4oMCkuZGVmYXVsdCgwKSxcbiAgICB0cmFja0lkOiB6Lm51bWJlcigpLmludCgpLm1pbigwKS5kZWZhdWx0KDApLFxuICAgIHRyYWNrTGV2ZWw6IHoubnVtYmVyKCkuaW50KCkubWluKDApLmRlZmF1bHQoMCksXG4gICAgLyoqXG4gICAgICogVGhlIGNvdXJzZSdzIG9uLWNoYWluIGBDb3Vyc2UuY3JlYXRvcmAgKHRoZSBjcmVhdG9yIFhQIHJlY2lwaWVudCkg4oCUXG4gICAgICogYXV0aG9yZWQgZGlyZWN0bHkgb24gdGhlIGNvdXJzZSBhcyBhIHdhbGxldCwgbm8gbG9uZ2VyIHJlc29sdmVkIHRocm91Z2ggYVxuICAgICAqIHNlcGFyYXRlIGluc3RydWN0b3IgZG9jdW1lbnQgKGlzc3VlICM0NzgpLiBPUFRJT05BTCBmb3Igbm93OiB0b2RheSdzXG4gICAgICogY29udGVudCBwcmVkYXRlcyB0aGlzIGZpZWxkIChpdCBzdGlsbCBjYXJyaWVzIHRoZSByZXRpcmVkIGBpbnN0cnVjdG9yYFxuICAgICAqIHJlZiwgd2hpY2ggdGhpcyBzY2hlbWEgbm8gbG9uZ2VyIHJlY29nbml6ZXMgYW5kIFpvZCBzaWxlbnRseSBzdHJpcHMpLiBBXG4gICAgICogbGF0ZXIgYWN0aXZhdGlvbiBQUiB0aWdodGVucyB0aGlzIHRvIHJlcXVpcmVkIG9uY2UgY29udGVudCBpcyBtaWdyYXRlZCDigJRcbiAgICAgKiB1bnRpbCB0aGVuLCB0aGUgc3luYyByZWplY3RzIGEgY291cnNlIHdpdGggbm8gY3JlYXRvciB3YWxsZXQgYXQgZGVwbG95XG4gICAgICogdGltZSwgbm90IGF0IHNjaGVtYSB2YWxpZGF0aW9uLlxuICAgICAqL1xuICAgIGNyZWF0b3I6IFNvbGFuYUFkZHJlc3Mub3B0aW9uYWwoKSxcbiAgICAvKipcbiAgICAgKiBSZXBvLXJlbGF0aXZlIHBhdGggdG8gdGhlIGNvdXJzZSdzIGNhdGFsb2d1ZSB0aHVtYm5haWwgKGUuZy5cbiAgICAgKiBgYXNzZXRzL3RodW1ibmFpbC5wbmdgKSwgcmVzb2x2ZWQgYWdhaW5zdCB0aGUgY291cnNlIGZvbGRlci4gT3B0aW9uYWwgaW5cbiAgICAgKiB0aGUgc2NoZW1hOyB0aGUgY29tcGlsZXIgdmVyaWZpZXMgdGhlIGZpbGUgZXhpc3RzIHdoZW4gc2V0IChTUDIg4oCUIGltYWdlc1xuICAgICAqIGFyZSBnaXQtc291cmNlZCwgbm8gZXh0ZXJuYWwgaW1hZ2UgaG9zdCkuXG4gICAgICovXG4gICAgdGh1bWJuYWlsOiB6LnN0cmluZygpLm1pbigxKS5vcHRpb25hbCgpLFxuICAgIHByZXJlcXVpc2l0ZUNvdXJzZTogQ291cnNlSWQub3B0aW9uYWwoKSxcbiAgICBtb2R1bGVzOiB6LmFycmF5KENvdXJzZU1vZHVsZSkubWluKDEpLFxuICAgIC8vIE5vIGF1dGhvcmVkIGB0YWdzYCBmaWVsZCAoIzQ2NiBDMyk6IGEgY291cnNlJ3MgY2F0YWxvZ3VlIHRhZ3MgYXJlXG4gICAgLy8gREVSSVZFRCDigJQgdGhlIGNvbXBpbGVyJ3MgcHJvamVjdG9yIGNvbXB1dGVzIHRoZW0gYXMgdGhlIHNvcnRlZCxcbiAgICAvLyBkZWR1cGxpY2F0ZWQgdW5pb24gb2YgaXRzIGxlc3NvbnMnIGBza2lsbHNgIChzZWVcbiAgICAvLyBhcHBzL3dlYi9zcmMvbGliL2NvbnRlbnQvY29tcGlsZS9wcm9qZWN0b3IudHMpLiBBdXRob3JpbmcgYSBgdGFnczpgIGtleVxuICAgIC8vIG9uIGEgY291cnNlLnlhbWwgaXMgc2lsZW50bHkgc3RyaXBwZWQsIG5vdCBhbiBlcnJvci5cbiAgfSlcbiAgLnJlZmluZSgoYykgPT4gdW5pcXVlKGMubW9kdWxlcy5tYXAoKG0pID0+IG0ua2V5KSksIHtcbiAgICBtZXNzYWdlOiBcIm1vZHVsZSBrZXlzIG11c3QgYmUgdW5pcXVlIHdpdGhpbiBhIGNvdXJzZVwiLFxuICAgIHBhdGg6IFtcIm1vZHVsZXNcIl0sXG4gIH0pXG4gIC5yZWZpbmUoKGMpID0+IHVuaXF1ZShjLm1vZHVsZXMuZmxhdE1hcCgobSkgPT4gbS5sZXNzb25zKSksIHtcbiAgICBtZXNzYWdlOiBcImEgbGVzc29uIG1heSBhcHBlYXIgaW4gb25seSBvbmUgbW9kdWxlXCIsXG4gICAgcGF0aDogW1wibW9kdWxlc1wiXSxcbiAgfSlcbiAgLnJlZmluZShcbiAgICAoYykgPT4gYy5tb2R1bGVzLmZsYXRNYXAoKG0pID0+IG0ubGVzc29ucykubGVuZ3RoIDw9IE1BWF9MRVNTT05fU0xPVFMsXG4gICAge1xuICAgICAgbWVzc2FnZTogYGEgY291cnNlIG1heSBob2xkIGF0IG1vc3QgJHtNQVhfTEVTU09OX1NMT1RTfSBsZXNzb25zIChFbnJvbGxtZW50Lmxlc3Nvbl9mbGFncyBpcyBbdTY0OyA0XSlgLFxuICAgICAgcGF0aDogW1wibW9kdWxlc1wiXSxcbiAgICB9XG4gIClcbiAgLy8gVGhlIGZpbmFsaXplIFhQIGludmFyaWFudCAoc3BlYyDCpzUuMiAvIGdhdGUgNWEpOiBmaW5hbGl6ZV9jb3Vyc2UucnMgY29tcHV0ZXNcbiAgLy8gYm9udXMgPSB4cF9wZXJfbGVzc29uICogbGl2ZUxlc3NvbkNvdW50IC8gMiBhbmQgcmV2ZXJ0cyBpZiBib251cyA+IDUwMDAsIHNvXG4gIC8vIHhwUGVyTGVzc29uICogbGVzc29uQ291bnQgbXVzdCBiZSA8PSAyICogTUFYX1hQX1BFUl9NSU5UICgxMDAwMCkuIFZpb2xhdGUgaXRcbiAgLy8gYW5kIEVWRVJZIGxlYXJuZXIncyBmaW5hbGl6ZSByZXZlcnRzIGZvcmV2ZXIg4oCUIG5vIGJvbnVzLCBubyBjcmVkZW50aWFsLFxuICAvLyB0b3RhbF9jb21wbGV0aW9ucyBmcm96ZW4sIGNyZWF0b3IgcmV3YXJkcyBkZWFkLlxuICAucmVmaW5lKFxuICAgIChjKSA9PlxuICAgICAgYy54cFBlckxlc3NvbiAqIGMubW9kdWxlcy5mbGF0TWFwKChtKSA9PiBtLmxlc3NvbnMpLmxlbmd0aCA8PVxuICAgICAgMiAqIE1BWF9YUF9QRVJfTUlOVCxcbiAgICB7XG4gICAgICBtZXNzYWdlOiBgeHBQZXJMZXNzb24gw5cgbGVzc29uQ291bnQgbXVzdCBiZSDiiaQgJHsyICogTUFYX1hQX1BFUl9NSU5UfSAoZmluYWxpemVfY291cnNlIGJvbnVzIOKJpCBNQVhfWFBfUEVSX01JTlQpOyBhYm92ZSBpdCwgbm8gbGVhcm5lciBjYW4gZmluYWxpemVgLFxuICAgICAgcGF0aDogW1wieHBQZXJMZXNzb25cIl0sXG4gICAgfVxuICApXG4gIC5yZWZpbmUoKGMpID0+IGMucHJlcmVxdWlzaXRlQ291cnNlICE9PSBjLmlkLCB7XG4gICAgbWVzc2FnZTogXCJhIGNvdXJzZSBjYW5ub3QgYmUgaXRzIG93biBwcmVyZXF1aXNpdGVcIixcbiAgICBwYXRoOiBbXCJwcmVyZXF1aXNpdGVDb3Vyc2VcIl0sXG4gIH0pO1xuXG5leHBvcnQgdHlwZSBDb3Vyc2VUID0gei5pbmZlcjx0eXBlb2YgQ291cnNlPjtcbmV4cG9ydCB0eXBlIENvdXJzZU1vZHVsZVQgPSB6LmluZmVyPHR5cGVvZiBDb3Vyc2VNb2R1bGU+O1xuIl0sImZpbGUiOiIvQGZzL1VzZXJzL2RhdmlkL0RvY3VtZW50cy9rbWluby9zb2wvc3VwZXJ0ZWFtLWFjYWRlbXkvcGFja2FnZXMvY29udGVudC1zY2hlbWEvc3JjL2NvdXJzZS50cyJ9
+
+//# vitestCache=W3siZmlsZSI6IjEiLCJpZCI6IjEiLCJ1cmwiOiIyIiwiaW1wb3J0ZWRVcmxzIjoiMyIsIm1hcHBpbmdzIjpmYWxzZX0sIi9Vc2Vycy9kYXZpZC9Eb2N1bWVudHMva21pbm8vc29sL3N1cGVydGVhbS1hY2FkZW15L3BhY2thZ2VzL2NvbnRlbnQtc2NoZW1hL3NyYy9jb3Vyc2UudHMiLCIvQGZzL1VzZXJzL2RhdmlkL0RvY3VtZW50cy9rbWluby9zb2wvc3VwZXJ0ZWFtLWFjYWRlbXkvcGFja2FnZXMvY29udGVudC1zY2hlbWEvc3JjL2NvdXJzZS50cyIsW11d

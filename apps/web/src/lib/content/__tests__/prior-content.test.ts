@@ -25,7 +25,7 @@ import {
 
 const enc = (s: string) => new TextEncoder().encode(s);
 
-/** A prior repo tree: the target course + a decoy, in courses-academy layout. */
+/** A prior repo tree: the target course + a decoy, in academy-courses layout. */
 function priorTree(): Map<string, Uint8Array> {
   return new Map<string, Uint8Array>([
     // Decoy course — must NOT be matched (proves id-match, not path-guess).

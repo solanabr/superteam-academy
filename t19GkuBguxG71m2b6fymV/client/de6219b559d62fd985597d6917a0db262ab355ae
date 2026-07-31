@@ -1,0 +1,98 @@
+const __vite_ssr_import_0__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/react@18.3.1/node_modules/react/jsx-dev-runtime.js", {"importedNames":["jsxDEV"]});
+const __vite_ssr_import_1__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/vitest@4.1.10_@opentelemetry+api@1.9.0_@types+node@22.19.9_jsdom@29.1.1_@noble+hashes@1_e967ad44039d475cab0701f50434d5d0/node_modules/vitest/dist/index.js", {"importedNames":["describe","it","expect"]});
+const __vite_ssr_import_2__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/@testing-library+react@14.3.1_@types+react@18.3.28_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/@testing-library/react/dist/index.js", {"importedNames":["render","screen"]});
+const __vite_ssr_import_3__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/next-intl@3.26.5_next@14.2.35_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-dom@18._697453d2ab77c379c3345831fabc794f/node_modules/next-intl/dist/index.react-client.js", {"importedNames":["NextIntlClientProvider"]});
+const __vite_ssr_import_4__ = await __vite_ssr_import__("/src/components/course/instructor-card.tsx", {"importedNames":["InstructorCard"]});
+const __vite_ssr_import_5__ = await __vite_ssr_import__("/src/lib/utils.ts", {"importedNames":["truncateAddress"]});
+const __vite_ssr_import_6__ = await __vite_ssr_import__("/src/messages/en.json?import", {"importedNames":["default"]});
+const WALLET = "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF";
+function renderWithIntl(ui) {
+  return (0,__vite_ssr_import_2__.render)(
+    /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)((0,__vite_ssr_import_3__.NextIntlClientProvider), { locale: "en", messages: __vite_ssr_import_6__.default, children: ui }, void 0, false, {
+      fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/course/__tests__/instructor-card.test.tsx",
+      lineNumber: 14,
+      columnNumber: 5
+    }, this)
+  );
+}
+(0,__vite_ssr_import_1__.describe)("InstructorCard — no public profile", () => {
+  (0,__vite_ssr_import_1__.it)("renders a truncated-wallet fallback, never a blank instructor section", () => {
+    renderWithIntl(/* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)((0,__vite_ssr_import_4__.InstructorCard), { creatorWallet: WALLET, profile: null }, void 0, false, {
+      fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/course/__tests__/instructor-card.test.tsx",
+      lineNumber: 22,
+      columnNumber: 20
+    }, this));
+    (0,__vite_ssr_import_1__.expect)(__vite_ssr_import_2__.screen.getByText((0,__vite_ssr_import_5__.truncateAddress)(WALLET))).toBeInTheDocument();
+    (0,__vite_ssr_import_1__.expect)(__vite_ssr_import_2__.screen.queryByRole("link")).not.toBeInTheDocument();
+  });
+});
+(0,__vite_ssr_import_1__.describe)("InstructorCard — resolved public profile", () => {
+  (0,__vite_ssr_import_1__.it)("renders username (linked to the public profile), bio, and socials — not the raw wallet", () => {
+    renderWithIntl(
+      /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)(
+        (0,__vite_ssr_import_4__.InstructorCard),
+        {
+          creatorWallet: WALLET,
+          profile: {
+            username: "alice",
+            avatarUrl: "https://example.com/a.png",
+            bio: "Rust developer",
+            socialLinks: { twitter: "alice_dev", github: "alice" }
+          }
+        },
+        void 0,
+        false,
+        {
+          fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/course/__tests__/instructor-card.test.tsx",
+          lineNumber: 31,
+          columnNumber: 7
+        },
+        this
+      )
+    );
+    const nameLink = __vite_ssr_import_2__.screen.getByRole("link", { name: "alice" });
+    (0,__vite_ssr_import_1__.expect)(nameLink).toHaveAttribute("href", "/en/profile/alice");
+    (0,__vite_ssr_import_1__.expect)(__vite_ssr_import_2__.screen.getByText("Rust developer")).toBeInTheDocument();
+    (0,__vite_ssr_import_1__.expect)(__vite_ssr_import_2__.screen.getByRole("link", { name: /X$/ })).toHaveAttribute(
+      "href",
+      "https://x.com/alice_dev"
+    );
+    (0,__vite_ssr_import_1__.expect)(__vite_ssr_import_2__.screen.getByRole("link", { name: /GitHub/ })).toHaveAttribute(
+      "href",
+      "https://github.com/alice"
+    );
+    (0,__vite_ssr_import_1__.expect)(__vite_ssr_import_2__.screen.queryByText((0,__vite_ssr_import_5__.truncateAddress)(WALLET))).not.toBeInTheDocument();
+  });
+  (0,__vite_ssr_import_1__.it)("omits the bio line and socials row when the profile has neither", () => {
+    renderWithIntl(
+      /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)(
+        (0,__vite_ssr_import_4__.InstructorCard),
+        {
+          creatorWallet: WALLET,
+          profile: {
+            username: "bob",
+            avatarUrl: null,
+            bio: null,
+            socialLinks: null
+          }
+        },
+        void 0,
+        false,
+        {
+          fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/course/__tests__/instructor-card.test.tsx",
+          lineNumber: 58,
+          columnNumber: 7
+        },
+        this
+      )
+    );
+    (0,__vite_ssr_import_1__.expect)(__vite_ssr_import_2__.screen.getByRole("link", { name: "bob" })).toBeInTheDocument();
+    (0,__vite_ssr_import_1__.expect)(
+      __vite_ssr_import_2__.screen.queryByRole("link", { name: /GitHub/ })
+    ).not.toBeInTheDocument();
+  });
+});
+//# sourceMappingSource=vite-generated
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJtYXBwaW5ncyI6IkFBYUk7QUFYSjtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFFQSxNQUFNLFNBQVM7QUFFZixTQUFTLGVBQWUsSUFBa0I7QUFDeEMsWUFBTztBQUFBLElBQ0wsb0RBQUMsaURBQXVCLFFBQU8sTUFBSyx5Q0FDakMsZ0JBREg7QUFBQTtBQUFBO0FBQUE7QUFBQSxXQUVBO0FBQUEsRUFDRjtBQUNGO0dBRUEsZ0NBQVMsc0NBQXNDLE1BQU07QUFDbkQsK0JBQUcseUVBQXlFLE1BQU07QUFDaEYsbUJBQWUsb0RBQUMseUNBQWUsZUFBZSxRQUFRLFNBQVMsUUFBaEQ7QUFBQTtBQUFBO0FBQUE7QUFBQSxXQUFzRCxDQUFFO0FBQ3ZFLHFDQUFPLDZCQUFPLGFBQVUsdUNBQWdCLE1BQU0sQ0FBQyxDQUFDLEVBQUUsa0JBQWtCO0FBQ3BFLHFDQUFPLDZCQUFPLFlBQVksTUFBTSxDQUFDLEVBQUUsSUFBSSxrQkFBa0I7QUFBQSxFQUMzRCxDQUFDO0FBQ0gsQ0FBQztHQUVELGdDQUFTLDRDQUE0QyxNQUFNO0FBQ3pELCtCQUFHLDBGQUEwRixNQUFNO0FBQ2pHO0FBQUEsTUFDRTtBQUFBLFdBQUM7QUFBQTtBQUFBLFVBQ0MsZUFBZTtBQUFBLFVBQ2YsU0FBUztBQUFBLFlBQ1AsVUFBVTtBQUFBLFlBQ1YsV0FBVztBQUFBLFlBQ1gsS0FBSztBQUFBLFlBQ0wsYUFBYSxFQUFFLFNBQVMsYUFBYSxRQUFRLFFBQVE7QUFBQSxVQUN2RDtBQUFBO0FBQUEsUUFQRjtBQUFBO0FBQUE7QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUFBO0FBQUEsTUFRQTtBQUFBLElBQ0Y7QUFFQSxVQUFNLFdBQVcsNkJBQU8sVUFBVSxRQUFRLEVBQUUsTUFBTSxRQUFRLENBQUM7QUFDM0QscUNBQU8sUUFBUSxFQUFFLGdCQUFnQixRQUFRLG1CQUFtQjtBQUM1RCxxQ0FBTyw2QkFBTyxVQUFVLGdCQUFnQixDQUFDLEVBQUUsa0JBQWtCO0FBQzdELHFDQUFPLDZCQUFPLFVBQVUsUUFBUSxFQUFFLE1BQU0sS0FBSyxDQUFDLENBQUMsRUFBRTtBQUFBLE1BQy9DO0FBQUEsTUFDQTtBQUFBLElBQ0Y7QUFDQSxxQ0FBTyw2QkFBTyxVQUFVLFFBQVEsRUFBRSxNQUFNLFNBQVMsQ0FBQyxDQUFDLEVBQUU7QUFBQSxNQUNuRDtBQUFBLE1BQ0E7QUFBQSxJQUNGO0FBQ0EscUNBQU8sNkJBQU8sZUFBWSx1Q0FBZ0IsTUFBTSxDQUFDLENBQUMsRUFBRSxJQUFJLGtCQUFrQjtBQUFBLEVBQzVFLENBQUM7QUFFRCwrQkFBRyxtRUFBbUUsTUFBTTtBQUMxRTtBQUFBLE1BQ0U7QUFBQSxXQUFDO0FBQUE7QUFBQSxVQUNDLGVBQWU7QUFBQSxVQUNmLFNBQVM7QUFBQSxZQUNQLFVBQVU7QUFBQSxZQUNWLFdBQVc7QUFBQSxZQUNYLEtBQUs7QUFBQSxZQUNMLGFBQWE7QUFBQSxVQUNmO0FBQUE7QUFBQSxRQVBGO0FBQUE7QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUFBO0FBQUE7QUFBQSxNQVFBO0FBQUEsSUFDRjtBQUNBLHFDQUFPLDZCQUFPLFVBQVUsUUFBUSxFQUFFLE1BQU0sTUFBTSxDQUFDLENBQUMsRUFBRSxrQkFBa0I7QUFDcEU7QUFBQSxNQUNFLDZCQUFPLFlBQVksUUFBUSxFQUFFLE1BQU0sU0FBUyxDQUFDO0FBQUEsSUFDL0MsRUFBRSxJQUFJLGtCQUFrQjtBQUFBLEVBQzFCLENBQUM7QUFDSCxDQUFDIiwibmFtZXMiOltdLCJpZ25vcmVMaXN0IjpbXSwic291cmNlcyI6WyJpbnN0cnVjdG9yLWNhcmQudGVzdC50c3giXSwic291cmNlc0NvbnRlbnQiOlsiLy8gQHZpdGVzdC1lbnZpcm9ubWVudCBqc2RvbVxuaW1wb3J0IHR5cGUgeyBSZWFjdEVsZW1lbnQgfSBmcm9tIFwicmVhY3RcIjtcbmltcG9ydCB7IGRlc2NyaWJlLCBpdCwgZXhwZWN0IH0gZnJvbSBcInZpdGVzdFwiO1xuaW1wb3J0IHsgcmVuZGVyLCBzY3JlZW4gfSBmcm9tIFwiQHRlc3RpbmctbGlicmFyeS9yZWFjdFwiO1xuaW1wb3J0IHsgTmV4dEludGxDbGllbnRQcm92aWRlciB9IGZyb20gXCJuZXh0LWludGxcIjtcbmltcG9ydCB7IEluc3RydWN0b3JDYXJkIH0gZnJvbSBcIi4uL2luc3RydWN0b3ItY2FyZFwiO1xuaW1wb3J0IHsgdHJ1bmNhdGVBZGRyZXNzIH0gZnJvbSBcIkAvbGliL3V0aWxzXCI7XG5pbXBvcnQgbWVzc2FnZXMgZnJvbSBcIkAvbWVzc2FnZXMvZW4uanNvblwiO1xuXG5jb25zdCBXQUxMRVQgPSBcIkI3bzhOZlY4MUh6anVaRldRVFR4M1hkdmg3N0Rxb2Fqd2liM2tXRW52ekpGXCI7XG5cbmZ1bmN0aW9uIHJlbmRlcldpdGhJbnRsKHVpOiBSZWFjdEVsZW1lbnQpIHtcbiAgcmV0dXJuIHJlbmRlcihcbiAgICA8TmV4dEludGxDbGllbnRQcm92aWRlciBsb2NhbGU9XCJlblwiIG1lc3NhZ2VzPXttZXNzYWdlc30+XG4gICAgICB7dWl9XG4gICAgPC9OZXh0SW50bENsaWVudFByb3ZpZGVyPlxuICApO1xufVxuXG5kZXNjcmliZShcIkluc3RydWN0b3JDYXJkIOKAlCBubyBwdWJsaWMgcHJvZmlsZVwiLCAoKSA9PiB7XG4gIGl0KFwicmVuZGVycyBhIHRydW5jYXRlZC13YWxsZXQgZmFsbGJhY2ssIG5ldmVyIGEgYmxhbmsgaW5zdHJ1Y3RvciBzZWN0aW9uXCIsICgpID0+IHtcbiAgICByZW5kZXJXaXRoSW50bCg8SW5zdHJ1Y3RvckNhcmQgY3JlYXRvcldhbGxldD17V0FMTEVUfSBwcm9maWxlPXtudWxsfSAvPik7XG4gICAgZXhwZWN0KHNjcmVlbi5nZXRCeVRleHQodHJ1bmNhdGVBZGRyZXNzKFdBTExFVCkpKS50b0JlSW5UaGVEb2N1bWVudCgpO1xuICAgIGV4cGVjdChzY3JlZW4ucXVlcnlCeVJvbGUoXCJsaW5rXCIpKS5ub3QudG9CZUluVGhlRG9jdW1lbnQoKTtcbiAgfSk7XG59KTtcblxuZGVzY3JpYmUoXCJJbnN0cnVjdG9yQ2FyZCDigJQgcmVzb2x2ZWQgcHVibGljIHByb2ZpbGVcIiwgKCkgPT4ge1xuICBpdChcInJlbmRlcnMgdXNlcm5hbWUgKGxpbmtlZCB0byB0aGUgcHVibGljIHByb2ZpbGUpLCBiaW8sIGFuZCBzb2NpYWxzIOKAlCBub3QgdGhlIHJhdyB3YWxsZXRcIiwgKCkgPT4ge1xuICAgIHJlbmRlcldpdGhJbnRsKFxuICAgICAgPEluc3RydWN0b3JDYXJkXG4gICAgICAgIGNyZWF0b3JXYWxsZXQ9e1dBTExFVH1cbiAgICAgICAgcHJvZmlsZT17e1xuICAgICAgICAgIHVzZXJuYW1lOiBcImFsaWNlXCIsXG4gICAgICAgICAgYXZhdGFyVXJsOiBcImh0dHBzOi8vZXhhbXBsZS5jb20vYS5wbmdcIixcbiAgICAgICAgICBiaW86IFwiUnVzdCBkZXZlbG9wZXJcIixcbiAgICAgICAgICBzb2NpYWxMaW5rczogeyB0d2l0dGVyOiBcImFsaWNlX2RldlwiLCBnaXRodWI6IFwiYWxpY2VcIiB9LFxuICAgICAgICB9fVxuICAgICAgLz5cbiAgICApO1xuXG4gICAgY29uc3QgbmFtZUxpbmsgPSBzY3JlZW4uZ2V0QnlSb2xlKFwibGlua1wiLCB7IG5hbWU6IFwiYWxpY2VcIiB9KTtcbiAgICBleHBlY3QobmFtZUxpbmspLnRvSGF2ZUF0dHJpYnV0ZShcImhyZWZcIiwgXCIvZW4vcHJvZmlsZS9hbGljZVwiKTtcbiAgICBleHBlY3Qoc2NyZWVuLmdldEJ5VGV4dChcIlJ1c3QgZGV2ZWxvcGVyXCIpKS50b0JlSW5UaGVEb2N1bWVudCgpO1xuICAgIGV4cGVjdChzY3JlZW4uZ2V0QnlSb2xlKFwibGlua1wiLCB7IG5hbWU6IC9YJC8gfSkpLnRvSGF2ZUF0dHJpYnV0ZShcbiAgICAgIFwiaHJlZlwiLFxuICAgICAgXCJodHRwczovL3guY29tL2FsaWNlX2RldlwiXG4gICAgKTtcbiAgICBleHBlY3Qoc2NyZWVuLmdldEJ5Um9sZShcImxpbmtcIiwgeyBuYW1lOiAvR2l0SHViLyB9KSkudG9IYXZlQXR0cmlidXRlKFxuICAgICAgXCJocmVmXCIsXG4gICAgICBcImh0dHBzOi8vZ2l0aHViLmNvbS9hbGljZVwiXG4gICAgKTtcbiAgICBleHBlY3Qoc2NyZWVuLnF1ZXJ5QnlUZXh0KHRydW5jYXRlQWRkcmVzcyhXQUxMRVQpKSkubm90LnRvQmVJblRoZURvY3VtZW50KCk7XG4gIH0pO1xuXG4gIGl0KFwib21pdHMgdGhlIGJpbyBsaW5lIGFuZCBzb2NpYWxzIHJvdyB3aGVuIHRoZSBwcm9maWxlIGhhcyBuZWl0aGVyXCIsICgpID0+IHtcbiAgICByZW5kZXJXaXRoSW50bChcbiAgICAgIDxJbnN0cnVjdG9yQ2FyZFxuICAgICAgICBjcmVhdG9yV2FsbGV0PXtXQUxMRVR9XG4gICAgICAgIHByb2ZpbGU9e3tcbiAgICAgICAgICB1c2VybmFtZTogXCJib2JcIixcbiAgICAgICAgICBhdmF0YXJVcmw6IG51bGwsXG4gICAgICAgICAgYmlvOiBudWxsLFxuICAgICAgICAgIHNvY2lhbExpbmtzOiBudWxsLFxuICAgICAgICB9fVxuICAgICAgLz5cbiAgICApO1xuICAgIGV4cGVjdChzY3JlZW4uZ2V0QnlSb2xlKFwibGlua1wiLCB7IG5hbWU6IFwiYm9iXCIgfSkpLnRvQmVJblRoZURvY3VtZW50KCk7XG4gICAgZXhwZWN0KFxuICAgICAgc2NyZWVuLnF1ZXJ5QnlSb2xlKFwibGlua1wiLCB7IG5hbWU6IC9HaXRIdWIvIH0pXG4gICAgKS5ub3QudG9CZUluVGhlRG9jdW1lbnQoKTtcbiAgfSk7XG59KTtcbiJdLCJmaWxlIjoiL3NyYy9jb21wb25lbnRzL2NvdXJzZS9fX3Rlc3RzX18vaW5zdHJ1Y3Rvci1jYXJkLnRlc3QudHN4In0=
+
+//# vitestCache=W3siZmlsZSI6IjEiLCJpZCI6IjEiLCJ1cmwiOiIyIiwiaW1wb3J0ZWRVcmxzIjoiMyIsIm1hcHBpbmdzIjpmYWxzZX0sIi9Vc2Vycy9kYXZpZC9Eb2N1bWVudHMva21pbm8vc29sL3N1cGVydGVhbS1hY2FkZW15L2FwcHMvd2ViL3NyYy9jb21wb25lbnRzL2NvdXJzZS9fX3Rlc3RzX18vaW5zdHJ1Y3Rvci1jYXJkLnRlc3QudHN4IiwiL3NyYy9jb21wb25lbnRzL2NvdXJzZS9fX3Rlc3RzX18vaW5zdHJ1Y3Rvci1jYXJkLnRlc3QudHN4IixbXV0=

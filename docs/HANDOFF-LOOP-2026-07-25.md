@@ -109,7 +109,7 @@ This cost two commits on 2026-07-26 (recovered in #618) — the deny-egress comm
 - **Production DB migrations** beyond the dry-run stage.
 - **The devnet on-chain window** (#606/#607) — batched, after the track-ladder decision.
 - **`course.creator`, `trackId`, `trackLevel`** — immutable after on-chain creation.
-- **courses-academy PRs #5 and #6** — CI green, awaiting owner merge.
+- **academy-courses PRs #5 and #6** — CI green, awaiting owner merge.
 
 ## Owner decisions already made (do not relitigate)
 
@@ -137,7 +137,7 @@ Then **#595** (launch-breaking), **#590** (live cost leak), **#598** (blocks a m
 
 `MEMORY.md` loads automatically and carries the expensive ones. The three that bite hardest:
 deploy on-chain **only** via Helius RPC; `gh pr edit --add-label` fails on these repos (use the REST
-API); and pushing to `courses-academy` needs the gh token — the ambient git credential is read-only.
+API); and pushing to `academy-courses` needs the gh token — the ambient git credential is read-only.
 
 ## Two agents, one backlog, one file tree (added 2026-07-26)
 

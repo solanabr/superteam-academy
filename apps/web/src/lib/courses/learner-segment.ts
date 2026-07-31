@@ -51,7 +51,7 @@ export const SEGMENT_PATH_MODALITY: Record<
  * path-schema metadata to avoid the two-repo content-staging cycle, so routing
  * changes ship with a code deploy, not a content.lock bump.
  *
- * Grounded in the new 5-course "Zero to Deployed" ladder (courses-academy
+ * Grounded in the new 5-course "Zero to Deployed" ladder (academy-courses
  * CATALOG.md §2, one sequential path — trackId 1, trackLevel 1→5):
  *
  *   C1 solana-for-web-devs → C2 rust-for-program-devs →

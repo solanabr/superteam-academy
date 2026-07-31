@@ -37,7 +37,7 @@ The middleware (`src/middleware.ts`) chains two concerns:
 
 ### Achievements
 
-The curated set (currently 10) lives in `solanabr/courses-academy` under `achievements/` — git is the source of truth; do not enumerate them here.
+The curated set (currently 10) lives in `solanabr/academy-courses` under `achievements/` — git is the source of truth; do not enumerate them here.
 
 **Unlock logic is declarative, not a per-achievement map.** Each achievement doc carries an `award` rule (a discriminated union of `AwardKind`); `lib/gamification/achievements.ts` holds `PREDICATES satisfies Record<AwardKind, Predicate>` — one predicate per _kind_, so adding a kind without a predicate is a compile error, and no course/path id is ever hardcoded. Adding an achievement means adding a content doc, not code.
 
@@ -60,7 +60,7 @@ NEXT_PUBLIC_XP_MINT_ADDRESS=       # XP mint pubkey (from initialize.ts output)
 ADMIN_SECRET=                      # Admin panel authentication secret (HMAC-signed cookies)
 BUILD_SERVER_URL=                  # Cloud Run build server URL (server-only, proxied via /api)
 BUILD_SERVER_API_KEY=              # Build server authentication key
-GITHUB_TOKEN=                      # Fine-grained READ token for solanabr/courses-academy (public repo,
+GITHUB_TOKEN=                      # Fine-grained READ token for solanabr/academy-courses (public repo,
                                    # but the token is still required — unauthenticated GitHub is
                                    # 60 req/hr per IP and flakes on Vercel). Server-only. Powers
                                    # the publish-pin card (HEAD polling + ahead-by) and the
@@ -117,7 +117,7 @@ OPENENDED_AI_REPLY=                # Best-effort AI reply on /api/lessons/reflec
                                     # never blocks). Requires GEMINI_API_KEY — unset key = no reply.
 
 # Optional — Teacher course preview (#828), server-only
-#                                  # Needs no GITHUB_TOKEN: courses-academy is public, so the
+#                                  # Needs no GITHUB_TOKEN: academy-courses is public, so the
 #                                  # preview reads it anonymously (#830). A token is used when
 #                                  # set, purely to lift the 60 req/hr anonymous rate limit.
 TEACH_PREVIEW_PASSWORD=            # Shared password for /teach/preview. Defaults to "123" —
@@ -162,7 +162,7 @@ cd apps/web && pnpm dev
 ## Content Bundle (compile-content)
 
 Course content ships as a **committed** bundle, not a live fetch. `scripts/compile-content.ts`
-compiles the `solanabr/courses-academy` repo — pinned to the SHA in `apps/web/content.lock` —
+compiles the `solanabr/academy-courses` repo — pinned to the SHA in `apps/web/content.lock` —
 into typed JSON under `src/content/generated/` plus assets under `public/content-assets/`.
 
 ```bash
