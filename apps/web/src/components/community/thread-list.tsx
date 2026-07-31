@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { ThreadFilters } from "./thread-filters";
-import { ThreadCard } from "./thread-card";
 import { useThreads } from "@/hooks/use-threads";
 import { useVote } from "@/hooks/use-vote";
 import { Button } from "@/components/ui/button";
+import { ThreadCard } from "./thread-card";
+import { ThreadFilters } from "./thread-filters";
 
 interface ThreadScope {
   categorySlug?: string;
@@ -18,6 +18,12 @@ interface ThreadListProps {
   scope?: ThreadScope;
   showFilters?: boolean;
   emptyMessage?: string;
+  /**
+   * Reports how many threads are currently loaded so a caller can label a
+   * collapsed section header (#942). `hasMore` is true when the page is
+   * capped, so the label can render "20+" instead of a wrong exact total.
+   */
+  onCountChange?: (count: number, hasMore: boolean) => void;
 }
 
 /** Wrapper that gives each ThreadCard its own optimistic vote state. */
@@ -74,6 +80,7 @@ export function ThreadList({
   scope,
   showFilters = true,
   emptyMessage,
+  onCountChange,
 }: ThreadListProps) {
   const t = useTranslations("community");
   const [sort, setSort] = useState("latest");
@@ -84,6 +91,11 @@ export function ThreadList({
     sort,
     type,
   });
+
+  useEffect(() => {
+    if (isLoading) return;
+    onCountChange?.(threads.length, hasMore);
+  }, [isLoading, threads.length, hasMore, onCountChange]);
 
   return (
     <div className="space-y-4">

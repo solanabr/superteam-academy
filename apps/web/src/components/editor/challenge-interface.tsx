@@ -443,7 +443,9 @@ export function ChallengeInterface({
       <div
         ref={leftColRef}
         className={cn(
-          "contents lg:flex lg:min-w-0 lg:flex-col lg:overflow-auto",
+          // #942 item 4: a bordered card at lg (page background shows in the
+          // gutter around and between the panes).
+          "contents lg:flex lg:min-w-0 lg:flex-col lg:overflow-auto lg:rounded-[var(--r-lg)] lg:border lg:border-border lg:bg-card",
           leftWidth === null ? "lg:flex-1" : "lg:shrink-0"
         )}
         style={leftWidth !== null ? { width: leftWidth } : undefined}
@@ -518,7 +520,7 @@ export function ChallengeInterface({
 
       {/* Text/editor split resizer — lg+ only; drag right to widen the text. */}
       <div
-        className="group hidden w-1.5 shrink-0 cursor-col-resize border-x border-border transition-colors [background:var(--resizer-bg)] hover:[background:var(--primary-dim)] lg:relative lg:block"
+        className="group hidden w-2 shrink-0 cursor-col-resize bg-transparent lg:relative lg:block"
         onMouseDown={handleSplitResizeStart}
         role="separator"
         aria-orientation="vertical"
@@ -531,7 +533,7 @@ export function ChallengeInterface({
       {/* RIGHT: code editor + output — full height. Below lg, `contents`
           flattens this so the editor (order-2) and output (order-3) slot
           between the text (order-1) and the AI Partner (order-4). */}
-      <div className="contents lg:flex lg:min-w-0 lg:flex-1 lg:flex-col lg:overflow-hidden">
+      <div className="contents lg:flex lg:min-w-0 lg:flex-1 lg:flex-col lg:overflow-hidden lg:rounded-[var(--r-lg)] lg:border lg:border-border lg:bg-card">
         <div className="order-2 flex min-h-0 flex-col overflow-hidden lg:order-none lg:flex-1">
           {/* Toolbar */}
           <div className="shrink-0 border-b border-border bg-card px-3 py-2.5">

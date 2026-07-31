@@ -466,6 +466,16 @@ export async function getAllLessonSkills(): Promise<
   return out;
 }
 
+/**
+ * The skill tags authored on ONE lesson — the "Topics" chips in the lesson
+ * pane (#942). Bundle-only and ungated: the lesson page has already resolved
+ * (and gated) the lesson itself, so this is a pure presentation read.
+ */
+export async function getLessonSkills(lessonId: string): Promise<string[]> {
+  const lesson = lessonsById.get(lessonId);
+  return lesson ? strArr(lesson.skills) : [];
+}
+
 export async function getAllCourseLessonCounts(): Promise<
   { _id: string; totalLessons: number }[]
 > {
