@@ -105,6 +105,63 @@ describe("GitHubClient", () => {
     expect(await client.fetchChecksState("s")).toBe("success");
   });
 
+  it("requests the check-runs page explicitly (filter=latest, per_page=100)", async () => {
+    // The endpoint PAGINATES at 30 by default. Red at main: the request carried
+    // no query, so runs past the first page were invisible to the fold.
+    const fetchImpl = vi.fn(async (_url: string, _init?: RequestInit) =>
+      okJson({ total_count: 1, check_runs: [{ conclusion: "success" }] })
+    );
+    const client = createGitHubClient({
+      token: "t",
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+    await client.fetchChecksState("s");
+    const url = fetchImpl.mock.calls[0]![0];
+    expect(url).toContain("/commits/s/check-runs");
+    expect(url).toContain("filter=latest");
+    expect(url).toContain("per_page=100");
+  });
+
+  it("returns UNKNOWN when total_count exceeds the runs returned (invisible runs)", async () => {
+    // A page that hides runs must never fold to `success` — a failing invisible
+    // run would then be waved past the sync gate.
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const client = createGitHubClient({
+      token: "t",
+      fetchImpl: (async () =>
+        okJson({
+          total_count: 140,
+          check_runs: [{ conclusion: "success" }, { conclusion: "success" }],
+        })) as unknown as typeof fetch,
+    });
+    expect(await client.fetchChecksState("s")).toBe("unknown");
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it("folds normally when total_count matches the page", async () => {
+    const client = createGitHubClient({
+      token: "t",
+      fetchImpl: (async () =>
+        okJson({
+          total_count: 2,
+          check_runs: [{ conclusion: "success" }, { conclusion: "success" }],
+        })) as unknown as typeof fetch,
+    });
+    expect(await client.fetchChecksState("s")).toBe("success");
+  });
+
+  it("still folds when total_count is absent (older/partial responses)", async () => {
+    const client = createGitHubClient({
+      token: "t",
+      fetchImpl: (async () =>
+        okJson({
+          check_runs: [{ conclusion: "success" }],
+        })) as unknown as typeof fetch,
+    });
+    expect(await client.fetchChecksState("s")).toBe("success");
+  });
+
   it("throws GitHubUnavailableError without a token", async () => {
     const client = createGitHubClient({
       token: undefined,

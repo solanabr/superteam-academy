@@ -60,7 +60,11 @@ describe("sendEmailBatch (configured)", () => {
   it("POSTs the batch with auth + idempotency, and reports sent count", async () => {
     const fetchImpl = vi.fn(
       (_url: string | URL | Request, _init?: RequestInit) =>
-        Promise.resolve(new Response("{}", { status: 200 }))
+        Promise.resolve(
+          new Response(JSON.stringify({ data: [{ id: "1" }, { id: "2" }] }), {
+            status: 200,
+          })
+        )
     );
     const r = await sendEmailBatch([msg("a@b.com"), msg("c@d.com")], {
       idempotencyKey: "new-course:course-x:0",
@@ -72,6 +76,10 @@ describe("sendEmailBatch (configured)", () => {
     const headers = init!.headers as Record<string, string>;
     expect(headers.Authorization).toBe("Bearer re_test");
     expect(headers["Idempotency-Key"]).toBe("new-course:course-x:0");
+    // The claim-release invariant (4xx ⇒ nothing accepted) only holds under
+    // STRICT batch validation, which is an undocumented default upstream. Pin it
+    // on the wire so a server-side default flip can't silently break it.
+    expect(headers["x-batch-validation"]).toBe("strict");
     const body = JSON.parse(init!.body as string) as Array<
       Record<string, unknown>
     >;
@@ -188,5 +196,141 @@ describe("failure classification (delivery)", () => {
     const r = await sendEmailBatch(tooMany, { fetchImpl });
     expect(r).toMatchObject({ ok: false, delivery: "rejected" });
     expect(fetchImpl).not.toHaveBeenCalled();
+  });
+});
+
+// `sent` must report what Resend says it ACCEPTED (`{ data: [{ id }, ...] }`),
+// not what we asked it to send. Red at main: `sent` was hardcoded to
+// messages.length, so a partial acceptance reported as a full send.
+describe("sent count is derived from the response body", () => {
+  beforeEach(() => {
+    env.RESEND_API_KEY = "re_x";
+  });
+
+  const ok = (body: unknown) =>
+    vi.fn(
+      async () => new Response(JSON.stringify(body), { status: 200 })
+    ) as unknown as typeof fetch;
+
+  it("reports data.length, not the requested count", async () => {
+    const r = await sendEmailBatch([msg("a@b.com"), msg("c@d.com")], {
+      fetchImpl: ok({ data: [{ id: "1" }, { id: "2" }] }),
+    });
+    expect(r).toEqual({ ok: true, sent: 2 });
+  });
+
+  it("logs LOUDLY and reports the real count when the 2xx accepted fewer (tripwire)", async () => {
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    // Impossible under strict validation — if it ever happens, the all-or-nothing
+    // assumption behind claim release has stopped holding and must be visible.
+    const r = await sendEmailBatch([msg("a@b.com"), msg("c@d.com")], {
+      fetchImpl: ok({ data: [{ id: "1" }] }),
+    });
+    expect(r).toEqual({ ok: true, sent: 1 });
+    expect(err).toHaveBeenCalledWith(
+      expect.stringContaining("accepted 1 of 2")
+    );
+    err.mockRestore();
+  });
+
+  it("logs and falls back to the requested count when the 2xx body has no data array", async () => {
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    const r = await sendEmailBatch([msg("a@b.com")], {
+      fetchImpl: ok({}),
+    });
+    expect(r).toEqual({ ok: true, sent: 1 });
+    expect(err).toHaveBeenCalled();
+    err.mockRestore();
+  });
+
+  it("does not throw on a 2xx with a non-JSON body", async () => {
+    const fetchImpl = vi.fn(
+      async () => new Response("not json", { status: 200 })
+    ) as unknown as typeof fetch;
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    await expect(
+      sendEmailBatch([msg("a@b.com")], { fetchImpl })
+    ).resolves.toEqual({ ok: true, sent: 1 });
+    err.mockRestore();
+  });
+});
+
+// A 409 is an IDEMPOTENCY conflict, and the two conflict types differ in
+// whether anything could have been sent. Red at main: both fell into the
+// generic 4xx branch as `rejected`, so a concurrent in-flight request released
+// the per-day claims and a retry could deliver a SECOND copy.
+describe("409 idempotency conflicts", () => {
+  beforeEach(() => {
+    env.RESEND_API_KEY = "re_x";
+  });
+
+  const conflict = (name: string) =>
+    vi.fn().mockResolvedValue({
+      ok: false,
+      status: 409,
+      text: async () =>
+        JSON.stringify({ statusCode: 409, name, message: "conflict" }),
+    }) as unknown as typeof fetch;
+
+  it("concurrent_idempotent_requests → UNKNOWN (hold the claims, never release)", async () => {
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    const r = await sendEmailBatch([msg("a@b.com")], {
+      idempotencyKey: "k",
+      fetchImpl: conflict("concurrent_idempotent_requests"),
+    });
+    // `delivery: "unknown"` is exactly the ambiguous outcome the callers already
+    // handle for 5xx — they HOLD the claims rather than release them.
+    expect(r).toMatchObject({
+      ok: false,
+      status: 409,
+      delivery: "unknown",
+    });
+    expect(err).toHaveBeenCalledWith(
+      expect.stringContaining("concurrent_idempotent_requests")
+    );
+    err.mockRestore();
+  });
+
+  it("invalid_idempotent_request → REJECTED, with its own distinct log", async () => {
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    const r = await sendEmailBatch([msg("a@b.com")], {
+      idempotencyKey: "k",
+      fetchImpl: conflict("invalid_idempotent_request"),
+    });
+    expect(r).toMatchObject({
+      ok: false,
+      status: 409,
+      delivery: "rejected",
+    });
+    // Names the permanent same-day stall + the 24h TTL that ends it.
+    const line = err.mock.calls[0]![0] as string;
+    expect(line).toContain("invalid_idempotent_request");
+    expect(line).toContain("24h");
+    err.mockRestore();
+  });
+
+  it("an unrecognised 409 body stays REJECTED (the conservative 4xx default)", async () => {
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    const r = await sendEmailBatch([msg("a@b.com")], {
+      fetchImpl: conflict("some_future_conflict"),
+    });
+    expect(r).toMatchObject({ ok: false, status: 409, delivery: "rejected" });
+    expect(err).toHaveBeenCalledWith(
+      expect.stringContaining("unrecognised type")
+    );
+    err.mockRestore();
+  });
+
+  it("a non-JSON 409 body does not throw", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 409,
+      text: async () => "<html>gateway</html>",
+    }) as unknown as typeof fetch;
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    await expect(
+      sendEmailBatch([msg("a@b.com")], { fetchImpl })
+    ).resolves.toMatchObject({ ok: false, status: 409, delivery: "rejected" });
+    err.mockRestore();
   });
 });

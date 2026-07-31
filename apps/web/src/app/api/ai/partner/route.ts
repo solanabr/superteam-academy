@@ -72,7 +72,11 @@ interface GeminiEnvelope {
     finishReason?: string;
     content?: { parts?: Array<{ text?: string }> };
   }>;
-  usageMetadata?: GeminiUsageMetadata & { cachedContentTokenCount?: number };
+  // `cachedContentTokenCount` is part of GeminiUsageMetadata itself now — it is
+  // BILLING input (cached prompt tokens carry the cached-input discount), not
+  // just the debug counter it was when this route widened the type locally.
+  // Keeping it on the shared shape is what makes it reach recordAiSpend below.
+  usageMetadata?: GeminiUsageMetadata;
 }
 
 // Model selection is PER ACTION (#868) and lives in lib/ai/models — this route
@@ -581,7 +585,8 @@ export async function POST(request: NextRequest) {
     }
     // Record the ACTUAL cost of this billed generation into the spend ledger
     // (#591) from usageMetadata — prompt + candidate + thinking tokens, thinking
-    // billed at the output rate. Runs on EVERY billed path (empty / non-JSON /
+    // billed at the output rate and the cached slice of the prompt billed at the
+    // cached-input rate. Runs on EVERY billed path (empty / non-JSON /
     // truncated all still cost tokens). When usageMetadata is ABSENT (e.g. a
     // non-JSON 200) the ledger books a CONSERVATIVE fallback — full output budget
     // + a generous input estimate — instead of $0, so an unmeasurable-but-billed
