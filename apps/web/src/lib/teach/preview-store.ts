@@ -22,6 +22,8 @@ export interface PreviewBundle {
   courses: Course[];
   lessonsByCourse: Record<string, Lesson[]>;
   xpPerLessonById: Record<string, number>;
+  /** Asset bytes by public rel path — served by the preview asset route (#923). */
+  assets: Map<string, Uint8Array>;
 }
 
 interface Entry {
@@ -61,6 +63,7 @@ export async function getPreviewBundle(
     courses: r.courses as unknown as Course[],
     lessonsByCourse: r.lessonsByCourse as unknown as Record<string, Lesson[]>,
     xpPerLessonById: r.xpPerLessonById,
+    assets: r.assets,
   }));
 
   cache.set(prNumber, { at: Date.now(), value });

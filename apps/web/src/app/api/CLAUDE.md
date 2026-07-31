@@ -112,6 +112,19 @@ from the other. The marketing send trigger is the Admin table's
 | `/api/email/unsubscribe`      | GET/POST | Token         | One-click List-Unsubscribe by per-user token (GET renders a confirmation page; POST is the RFC 8058 one-click). No session — the email link carries none. `?kind=reminders` clears reminder consent only; anything else (incl. legacy no-kind links) clears marketing consent only.                                         |
 | `/api/cron/session-reminders` | GET      | `CRON_SECRET` | Daily session-plan reminder send (#869). `Authorization: Bearer $CRON_SECRET`, timing-safe; **fails closed with 503 when `CRON_SECRET` is unset**. Schedule lives in `apps/web/vercel.json` (`0 11 * * *` = 08:00 America/Sao_Paulo). Idempotent per learner per São Paulo day — the claim RPC, not the route, enforces it. |
 
+## Teacher preview (#828, #831)
+
+Password-gated (`teach_preview_session` cookie, distinct from `admin_session`) preview of an
+unpublished course from a `academy-courses` PR. Read-only: compiles the PR's head commit in
+memory and renders it with the real course/lesson components. Nothing is written to the bundle,
+`content.lock`, or the chain.
+
+| Route                                      | Method   | Auth            | Purpose                                                                                                                                                                                                 |
+| ------------------------------------------ | -------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/api/teach/preview/auth`                  | GET/POST | Shared password | `GET` probes the session; `POST` exchanges `TEACH_PREVIEW_PASSWORD` for an HMAC-signed cookie. Per-IP rate limited.                                                                                     |
+| `/api/teach/preview`                       | POST     | Preview cookie  | `{ prUrl }` → compiled courses/lessons, or 422 with the content-lint issues CI would report.                                                                                                            |
+| `/api/teach/preview/[pr]/assets/[...path]` | GET      | Preview cookie  | Serves a previewed PR's images from the in-memory bundle (#923). A previewed course's assets exist nowhere on disk; the compiled refs are rewritten to this route. Map lookup, never a filesystem read. |
+
 ## Health
 
 | Route                | Method | Auth | Purpose                                                                                                                                                                                                                                                                                         |

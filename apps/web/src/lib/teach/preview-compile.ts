@@ -4,7 +4,10 @@ import type { Course, Lesson } from "@superteam-lms/types";
 import { serverEnv } from "@/lib/env.server";
 import { GitHubUnavailableError } from "@/lib/github/types";
 import { extractTarball } from "@/lib/content/compile/tarball";
-import { compileContent } from "@/lib/content/compile/compile-bundle";
+import {
+  compileBundle,
+  ASSET_PUBLIC_PREFIX,
+} from "@/lib/content/compile/compile-bundle";
 import { ContentValidationError } from "@/lib/content/compile/types";
 import { projectCourse } from "@/lib/content/project";
 import type { CourseProjectionDeps } from "@/lib/content/project";
@@ -168,6 +171,12 @@ export interface PreviewResult {
    */
   xpPerLessonById: Record<string, number>;
   /**
+   * Asset bytes keyed by the compiler's public rel path
+   * (`<courseSlug>/<lessonSlug>/<file>`). Served by the preview asset route —
+   * a previewed PR's images exist nowhere on disk (#923).
+   */
+  assets: Map<string, Uint8Array>;
+  /**
    * Ids of the courses this PR adds or modifies — what the teacher came to
    * see. EMPTY means "show everything": the PR touches no course dir, or a
    * touched dir could not be matched to a compiled course (fail open, #831).
@@ -212,7 +221,28 @@ export async function compilePrPreview(
 
   // `compiledAt: null` — the preview is not a reproducible bundle and must never
   // stamp a wall-clock time that would differ from a real compile of this SHA.
-  const files = compileContent(tree, { sha: head.sha, compiledAt: null });
+  //
+  // compileBundle, NOT compileContent (#923): the modules-only view discards
+  // `assets`, and the compiler has already rewritten every image reference to
+  // `/content-assets/…`. Those paths only exist on disk for the PUBLISHED
+  // bundle, so a previewed PR rendered every image broken.
+  const bundle = compileBundle(tree, { sha: head.sha, compiledAt: null });
+  const assets = bundle.assets;
+
+  // Point the rewritten refs at the preview's own asset route instead of the
+  // published `/content-assets/` tree. Done on the raw module text before
+  // parsing so it covers every carrier (prose bodies, course thumbnails)
+  // without needing to know which fields hold URLs.
+  const files = new Map<string, string>();
+  for (const [name, contents] of bundle.files) {
+    files.set(
+      name,
+      contents.replaceAll(
+        `/${ASSET_PUBLIC_PREFIX}/`,
+        `/api/teach/preview/${number}/assets/`
+      )
+    );
+  }
 
   // Courses reference their lessons (`_ref`), so hydration runs through the
   // projector rather than a field on the lesson — lessons carry no back-pointer.
@@ -262,6 +292,7 @@ export async function compilePrPreview(
   return {
     head,
     courses,
+    assets,
     lessonsByCourse,
     xpPerLessonById,
     changedCourseIds: changed,
