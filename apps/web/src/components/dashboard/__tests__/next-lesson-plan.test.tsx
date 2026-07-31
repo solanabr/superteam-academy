@@ -13,8 +13,12 @@ import { NextLessonPlan } from "../next-lesson-plan";
 const h = vi.hoisted(() => ({
   trackEvent: vi.fn(),
   profileRow: { prefs: {} as Record<string, unknown> },
-  /** #869 consent row; null = no decision recorded yet. */
-  subRow: null as { reminder_opt_in: boolean } | null,
+  /** #869 consent row; null = no row at all. */
+  subRow: null as {
+    reminder_opt_in: boolean;
+    reminder_consent_at: string | null;
+    reminder_unsubscribed_at: string | null;
+  } | null,
   updatePayloads: [] as Array<Record<string, unknown>>,
   rpc: vi.fn(),
 }));
@@ -174,9 +178,38 @@ describe("NextLessonPlan — reminder consent (#869)", () => {
   });
 
   it("respects a previously recorded opt-out instead of re-defaulting to ON", async () => {
-    h.subRow = { reminder_opt_in: false };
+    h.subRow = {
+      reminder_opt_in: false,
+      reminder_consent_at: null,
+      reminder_unsubscribed_at: "2026-07-30T00:00:00Z",
+    };
     await openPicker();
     const box = screen.getByLabelText(remindLabel) as HTMLInputElement;
     expect(box.checked).toBe(false);
+  });
+
+  // Review F2 — a #779 marketing subscriber already HAS a row carrying
+  // reminder_opt_in=false with no reminder timestamps. Reading row existence as
+  // "decided" silently denied those learners the default-ON offer.
+  it("treats a MARKETING-ONLY row as undecided and still offers the default ON", async () => {
+    h.subRow = {
+      reminder_opt_in: false,
+      reminder_consent_at: null,
+      reminder_unsubscribed_at: null,
+    };
+    await openPicker();
+    const box = screen.getByLabelText(remindLabel) as HTMLInputElement;
+    expect(box.checked).toBe(true);
+  });
+
+  it("respects a recorded opt-IN (consent timestamp present)", async () => {
+    h.subRow = {
+      reminder_opt_in: true,
+      reminder_consent_at: "2026-07-30T00:00:00Z",
+      reminder_unsubscribed_at: null,
+    };
+    await openPicker();
+    const box = screen.getByLabelText(remindLabel) as HTMLInputElement;
+    expect(box.checked).toBe(true);
   });
 });

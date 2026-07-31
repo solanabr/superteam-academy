@@ -23,6 +23,18 @@ import { createClient } from "@/lib/supabase/client";
  * gates on the stored `reminder_opt_in` alone, so nothing goes out until the
  * learner actually confirms it here (or at the plan-commit prompt, which shows
  * the same disclosure).
+ *
+ * "NO REMINDER DECISION YET" IS A TIMESTAMP TEST, NOT ROW ABSENCE (review F2).
+ * A #779 marketing subscriber already HAS an `email_subscriptions` row with
+ * `reminder_opt_in = false` and no reminder timestamps — treating the row's
+ * existence as a decision would deny those learners the derived default. The
+ * row is "undecided" iff BOTH `reminder_consent_at` and
+ * `reminder_unsubscribed_at` are NULL, which only the reminder RPC ever sets.
+ *
+ * A SUGGESTION MUST BE CONFIRMABLE (review F1). While the switch is showing a
+ * derived ON, toggling it is the OFF action — so there would be no way to store
+ * the ON the learner is looking at. An explicit confirm button is rendered
+ * alongside it in exactly that state; it writes the DISPLAYED value.
  */
 export function EmailPreferences() {
   const t = useTranslations("settings");
@@ -50,7 +62,9 @@ export function EmailPreferences() {
         const [{ data: sub }, { data: profile }] = await Promise.all([
           supabase
             .from("email_subscriptions")
-            .select("opt_in, reminder_opt_in")
+            .select(
+              "opt_in, reminder_opt_in, reminder_consent_at, reminder_unsubscribed_at"
+            )
             .eq("user_id", user.id)
             .maybeSingle(),
           supabase
@@ -61,10 +75,12 @@ export function EmailPreferences() {
         ]);
         if (!active) return;
         setOptIn(sub?.opt_in ?? false);
-        if (sub) {
+        if (sub && hasReminderDecision(sub)) {
           setReminderOptIn(sub.reminder_opt_in ?? false);
         } else {
-          // No decision recorded: suggest ON iff a plan day is committed.
+          // No reminder decision recorded — including for a marketing-only
+          // subscriber whose row predates any reminder choice. Suggest ON iff a
+          // plan day is committed.
           setReminderDerived(true);
           setReminderOptIn(hasCommittedPlan(profile?.prefs));
         }
@@ -98,9 +114,8 @@ export function EmailPreferences() {
     }
   };
 
-  const handleReminderToggle = async () => {
+  const writeReminderConsent = async (next: boolean) => {
     if (saving) return;
-    const next = !reminderOptIn;
     setReminderOptIn(next); // optimistic
     setSaving(true);
     try {
@@ -123,6 +138,11 @@ export function EmailPreferences() {
     }
   };
 
+  // Toggling always writes the FLIPPED value…
+  const handleReminderToggle = () => writeReminderConsent(!reminderOptIn);
+  // …so a derived ON needs its own affordance to store the value on screen.
+  const handleReminderConfirm = () => writeReminderConsent(reminderOptIn);
+
   return (
     <div className="border-t border-border pt-4">
       <p className="font-medium">{t("emailNotifications")}</p>
@@ -142,8 +162,31 @@ export function EmailPreferences() {
         checked={reminderOptIn}
         disabled={!loaded || saving}
         onToggle={handleReminderToggle}
+        confirm={
+          reminderDerived && reminderOptIn
+            ? {
+                label: t("reminderEmailsConfirm"),
+                onConfirm: handleReminderConfirm,
+              }
+            : undefined
+        }
       />
     </div>
+  );
+}
+
+/**
+ * True when the learner has actually DECIDED about reminders. Only
+ * `set_reminder_opt_in` / `unsubscribe_reminders_by_token` write these
+ * timestamps, so both NULL means "never chose" even on a row created by the
+ * #779 marketing toggle (review F2).
+ */
+function hasReminderDecision(sub: {
+  reminder_consent_at: string | null;
+  reminder_unsubscribed_at: string | null;
+}): boolean {
+  return (
+    sub.reminder_consent_at !== null || sub.reminder_unsubscribed_at !== null
   );
 }
 
@@ -160,6 +203,8 @@ interface ToggleRowProps {
   description: string;
   /** Extra disclosure shown under the description (e.g. a derived default). */
   note?: string;
+  /** Action that STORES the currently displayed value (a derived suggestion). */
+  confirm?: { label: string; onConfirm: () => void };
   checked: boolean;
   disabled: boolean;
   onToggle: () => void;
@@ -169,6 +214,7 @@ function ToggleRow({
   label,
   description,
   note,
+  confirm,
   checked,
   disabled,
   onToggle,
@@ -179,6 +225,16 @@ function ToggleRow({
         <p className="text-sm font-medium">{label}</p>
         <p className="text-sm text-text-3">{description}</p>
         {note && <p className="mt-1 text-xs text-text-3">{note}</p>}
+        {confirm && (
+          <button
+            type="button"
+            onClick={confirm.onConfirm}
+            disabled={disabled}
+            className="mt-1.5 rounded-md border border-border px-2.5 py-1 text-xs font-semibold transition-colors hover:bg-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50"
+          >
+            {confirm.label}
+          </button>
+        )}
       </div>
       <button
         type="button"

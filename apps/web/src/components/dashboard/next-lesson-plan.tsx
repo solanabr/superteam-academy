@@ -112,7 +112,9 @@ export function NextLessonPlan({ userId }: NextLessonPlanProps) {
           .maybeSingle(),
         supabase
           .from("email_subscriptions")
-          .select("reminder_opt_in")
+          .select(
+            "reminder_opt_in, reminder_consent_at, reminder_unsubscribed_at"
+          )
           .eq("user_id", userId)
           .maybeSingle(),
       ]);
@@ -120,8 +122,17 @@ export function NextLessonPlan({ userId }: NextLessonPlanProps) {
       const prefsObj = toPrefsObject(data?.prefs);
       setPrefs(prefsObj);
       setPlan(parseNextLesson(prefsObj));
-      // No row ⇒ no decision recorded ⇒ keep the default-ON suggestion.
-      if (sub) setDraftRemind(sub.reminder_opt_in ?? false);
+      // A recorded decision wins over the default-ON suggestion. "Recorded" is a
+      // TIMESTAMP test, not row existence (review F2): a #779 marketing-only
+      // subscriber already has a row with reminder_opt_in = false and no
+      // reminder timestamps, and must still get the default-ON offer.
+      if (
+        sub &&
+        (sub.reminder_consent_at !== null ||
+          sub.reminder_unsubscribed_at !== null)
+      ) {
+        setDraftRemind(sub.reminder_opt_in ?? false);
+      }
       setLoaded(true);
     })();
     return () => {

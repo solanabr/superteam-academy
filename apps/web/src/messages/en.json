@@ -566,6 +566,7 @@
     "reminderEmails": "Study-plan reminders",
     "reminderEmailsDesc": "A morning email on the day you planned your next lesson. Separate from product news.",
     "reminderEmailsDerived": "On by default because you scheduled a session. Nothing is sent until you confirm this setting.",
+    "reminderEmailsConfirm": "Confirm and turn on",
     "exportData": "Export My Data",
     "profileVisibility": "Profile Visibility",
     "displayName": "Display Name",

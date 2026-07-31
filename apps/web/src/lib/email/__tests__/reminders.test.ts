@@ -96,6 +96,41 @@ describe("sendSessionPlanReminders — consent gating", () => {
     const messages = emailMocks.sendBatch.mock.calls[0]![0] as Msg[];
     expect(messages.map((m) => m.to)).toEqual(["ok@b.com"]);
   });
+
+  // Review F4: the claim RPC already claimed the filtered-out learner. Leaving
+  // that claim in place locks them out of today's reminder forever, silently.
+  it("RELEASES the claim of an address it filtered out", async () => {
+    rpc.mockImplementation(async (fn: string) =>
+      fn === "claim_due_session_reminders"
+        ? {
+            data: [due("u1", "not-an-email"), due("u2", "ok@b.com")],
+            error: null,
+          }
+        : { data: 1, error: null }
+    );
+    const r = await sendSessionPlanReminders(params);
+    expect(rpc).toHaveBeenCalledWith("release_session_reminder_claims", {
+      p_user_ids: ["u1"],
+    });
+    expect(r.released).toBe(1);
+    // The valid recipient still went out.
+    expect(r.sent).toBe(1);
+  });
+
+  it("releases claims even when EVERY claimed address is unusable", async () => {
+    rpc.mockImplementation(async (fn: string) =>
+      fn === "claim_due_session_reminders"
+        ? { data: [due("u1", "bogus"), due("u2", "also-bogus")], error: null }
+        : { data: 2, error: null }
+    );
+    const r = await sendSessionPlanReminders(params);
+    expect(r.status).toBe("no_recipients");
+    expect(rpc).toHaveBeenCalledWith("release_session_reminder_claims", {
+      p_user_ids: ["u1", "u2"],
+    });
+    expect(r.released).toBe(2);
+    expect(emailMocks.sendBatch).not.toHaveBeenCalled();
+  });
 });
 
 describe("sendSessionPlanReminders — idempotency", () => {
@@ -135,23 +170,62 @@ describe("sendSessionPlanReminders — idempotency", () => {
     expect(opts2.idempotencyKey).not.toBe(opts.idempotencyKey);
   });
 
-  it("releases the claims of a FAILED batch so the day stays retryable", async () => {
+  // Review F3: releasing an AMBIGUOUS failure is how a delivered email gets
+  // sent twice — Resend may have accepted the batch before the wire broke, and
+  // a same-day manual retry re-sends it under a fresh idempotency key.
+  const failWith = (result: Record<string, unknown>) => {
     rpc.mockImplementation(async (fn: string) =>
       fn === "claim_due_session_reminders"
         ? { data: [due("u1", "a@b.com")], error: null }
         : { data: 1, error: null }
     );
-    emailMocks.sendBatch.mockResolvedValue({
+    emailMocks.sendBatch.mockResolvedValue(result);
+  };
+
+  it("releases a batch REJECTED before transmission (4xx) — retryable", async () => {
+    failWith({
       ok: false,
       reason: "error",
-      message: "resend 500",
+      status: 422,
+      message: "validation_error",
+      delivery: "rejected",
     });
-
     const r = await sendSessionPlanReminders(params);
     expect(r).toMatchObject({ failedBatches: 1, sent: 0, released: 1 });
     expect(rpc).toHaveBeenCalledWith("release_session_reminder_claims", {
       p_user_ids: ["u1"],
     });
+  });
+
+  it("HOLDS the claims of a 5xx batch (it may already have been delivered)", async () => {
+    failWith({
+      ok: false,
+      reason: "error",
+      status: 502,
+      message: "bad gateway",
+      delivery: "unknown",
+    });
+    const r = await sendSessionPlanReminders(params);
+    expect(r).toMatchObject({ failedBatches: 1, sent: 0, released: 0 });
+    expect(rpc).not.toHaveBeenCalledWith(
+      "release_session_reminder_claims",
+      expect.anything()
+    );
+  });
+
+  it("HOLDS the claims of a timed-out / dropped batch", async () => {
+    failWith({
+      ok: false,
+      reason: "error",
+      message: "The operation was aborted",
+      delivery: "unknown",
+    });
+    const r = await sendSessionPlanReminders(params);
+    expect(r.released).toBe(0);
+    expect(rpc).not.toHaveBeenCalledWith(
+      "release_session_reminder_claims",
+      expect.anything()
+    );
   });
 
   it("does NOT release the claims of a batch that sent fine", async () => {

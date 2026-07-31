@@ -566,6 +566,7 @@
     "reminderEmails": "Lembretes do plano de estudo",
     "reminderEmailsDesc": "Um e-mail pela manhã no dia em que você planejou sua próxima lição. Separado das novidades do produto.",
     "reminderEmailsDerived": "Ativado por padrão porque você agendou uma sessão. Nada é enviado até você confirmar esta opção.",
+    "reminderEmailsConfirm": "Confirmar e ativar",
     "exportData": "Exportar Meus Dados",
     "profileVisibility": "Visibilidade do Perfil",
     "displayName": "Nome de Exibição",

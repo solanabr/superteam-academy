@@ -23,8 +23,9 @@ import { sessionPlanReminderEmail } from "./templates";
  * `email_reminder_log` row in the same statement (PK on user+kind+day, ON
  * CONFLICT DO NOTHING). A second run on the same São Paulo day — a retried cron,
  * an overlapping invocation, a manual trigger — claims zero rows and sends
- * nothing. A batch that fails to send releases its claims so the day stays
- * retryable.
+ * nothing. A batch that fails is released ONLY when the failure proves nothing
+ * was accepted; an ambiguous failure (5xx, timeout) HOLDS its claims, because a
+ * released claim plus a same-day retry is how a delivered email gets sent twice.
  *
  * FAIL-CLOSED: with no Resend key the pipeline returns `unconfigured` and reads
  * (and therefore claims) nothing — same contract as the marketing campaign.
@@ -38,9 +39,13 @@ export interface ReminderRunResult {
   recipients: number;
   /** Messages Resend accepted. */
   sent: number;
-  /** Batches that failed; their claims were released for retry. */
+  /** Batches that failed (whether or not their claims were released). */
   failedBatches: number;
-  /** Claim rows released after a failed batch. */
+  /**
+   * Claim rows released back for a same-day retry — from batches PROVABLY not
+   * transmitted, plus recipients dropped by the address check. Ambiguous
+   * failures are deliberately NOT counted here: their claims are still held.
+   */
   released: number;
 }
 
@@ -116,15 +121,50 @@ export async function sendSessionPlanReminders(params: {
     return { status: "no_recipients", ...empty };
   }
 
-  const recipients = ((data ?? []) as DueReminder[]).filter((r) =>
-    isValidEmail(r.email)
-  );
-  if (recipients.length === 0) return { status: "no_recipients", ...empty };
+  const claimed = (data ?? []) as DueReminder[];
+  const recipients = claimed.filter((r) => isValidEmail(r.email));
 
   const day = saoPauloDay();
   let sent = 0;
   let failedBatches = 0;
   let released = 0;
+
+  /**
+   * Release claims we hold but will not send against. Best-effort: a failed
+   * release only costs today's reminder for those learners, never a duplicate.
+   */
+  const release = async (userIds: string[], why: string): Promise<void> => {
+    if (userIds.length === 0) return;
+    const { data: freed, error: releaseError } = await admin.rpc(
+      "release_session_reminder_claims",
+      { p_user_ids: userIds }
+    );
+    if (releaseError) {
+      console.error(
+        `[email:reminders] claim release (${why}) failed: ${releaseError.message}`
+      );
+    } else if (typeof freed === "number") {
+      released += freed;
+    }
+  };
+
+  // The claim RPC already claimed EVERY row it returned. Anything this filter
+  // drops is a claim we will never send against — release it, or that learner
+  // is silently locked out for the day with nothing in the logs (review F4).
+  const filteredOut = claimed.filter((r) => !isValidEmail(r.email));
+  if (filteredOut.length > 0) {
+    console.error(
+      `[email:reminders] ${filteredOut.length} claimed recipient(s) failed the address check; releasing their claims`
+    );
+    await release(
+      filteredOut.map((r) => r.user_id),
+      "invalid address"
+    );
+  }
+
+  if (recipients.length === 0) {
+    return { status: "no_recipients", ...empty, released };
+  }
 
   for (let i = 0; i < recipients.length; i += RESEND_MAX_BATCH) {
     const chunk = recipients.slice(i, i + RESEND_MAX_BATCH);
@@ -168,19 +208,22 @@ export async function sendSessionPlanReminders(params: {
           result.reason === "error" ? result.message : result.reason
         }`
       );
-      // Release the claim so the day is retryable. Best-effort: if the release
-      // itself fails the learner simply misses today's reminder — never a
-      // duplicate, which is the direction we want to fail in.
-      const { data: freed, error: releaseError } = await admin.rpc(
-        "release_session_reminder_claims",
-        { p_user_ids: chunk.map((r) => r.user_id) }
-      );
-      if (releaseError) {
-        console.error(
-          `[email:reminders] claim release failed: ${releaseError.message}`
+      // Release the claim ONLY when the failure PROVES nothing was accepted
+      // (review F3). A 5xx or a timeout is ambiguous — Resend may have accepted
+      // and delivered the batch before the wire broke, and releasing there lets
+      // a same-day manual retry send a SECOND copy to a learner who already got
+      // one (the batch's idempotency key changes with chunk membership, so
+      // Resend's own dedupe would not catch it). Holding an ambiguous claim
+      // costs at most one missed reminder; releasing it costs a duplicate.
+      if (result.reason === "error" && result.delivery === "rejected") {
+        await release(
+          chunk.map((r) => r.user_id),
+          "batch rejected before transmission"
         );
-      } else if (typeof freed === "number") {
-        released += freed;
+      } else {
+        console.error(
+          `[email:reminders] batch ${i / RESEND_MAX_BATCH} outcome AMBIGUOUS; holding ${chunk.length} claim(s) to avoid a duplicate send`
+        );
       }
     }
 

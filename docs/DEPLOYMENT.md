@@ -109,10 +109,19 @@ every scheduled job:
 Brazil has had no DST since 2019, so `11:00Z` is a stable 08:00 São Paulo — the
 learner gets the nudge in the morning, ahead of the hour they picked.
 
-Set `CRON_SECRET` in Vercel; it authenticates every invocation. The job is safe
-to trigger manually (`curl -H "Authorization: Bearer $CRON_SECRET" …`): the
-send is claimed per learner per São Paulo day in Postgres, so a second run the
-same day sends nothing.
+Set `CRON_SECRET` in Vercel; it authenticates every invocation. A manual
+re-trigger (`curl -H "Authorization: Bearer $CRON_SECRET" …`) is normally a
+no-op: each learner's send is claimed for the São Paulo day in Postgres, so a
+second run the same day finds nothing to claim.
+
+> **One caveat before re-triggering after a failure.** Claims are released for
+> retry only when the batch was PROVABLY not transmitted (a 4xx from Resend, a
+> DNS/connection failure). A batch that failed ambiguously — a 5xx, a timeout, a
+> connection dropped mid-flight — may already have been delivered, so its claims
+> are deliberately HELD and those learners are skipped for the day. Do not clear
+> `email_reminder_log` rows by hand to "fix" a failed run: that is precisely how
+> a delivered reminder gets sent twice. Check the run's `released` count in the
+> route's JSON response — it counts only claims that are genuinely retryable.
 
 > **No content-write secret exists.** The app cannot mutate course content at
 > runtime under any credential. Content is a committed bundle; publishing is a
