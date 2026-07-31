@@ -84,7 +84,7 @@ describe("maybeGenerateReflectionReply", () => {
       )
     ) as { generationConfig: { thinkingConfig: Record<string, unknown> } };
     expect(body.generationConfig.thinkingConfig).toEqual({
-      thinkingLevel: "low",
+      thinkingLevel: "minimal",
     });
     expect(body.generationConfig.thinkingConfig).not.toHaveProperty(
       "thinkingBudget"

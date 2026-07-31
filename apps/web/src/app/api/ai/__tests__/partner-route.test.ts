@@ -806,7 +806,7 @@ describe("POST /api/ai/partner", () => {
     expect(
       (sent.generationConfig as { thinkingConfig?: Record<string, unknown> })
         .thinkingConfig
-    ).toEqual({ thinkingLevel: "low" });
+    ).toEqual({ thinkingLevel: "minimal" });
     // The propose schema requests an `edits` array and NO whole-file field.
     const schema = sent.generationConfig.responseSchema;
     expect(schema.properties).toHaveProperty("edits");
