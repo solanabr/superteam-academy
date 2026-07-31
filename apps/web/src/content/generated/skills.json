@@ -16,8 +16,8 @@
     "slug": "keypairs-wallets"
   },
   {
-    "label": "RPC & Networking",
-    "slug": "rpc"
+    "label": "RPC Reads",
+    "slug": "rpc-reads"
   },
   {
     "label": "Rust",
@@ -56,40 +56,13 @@
     "slug": "spl-tokens"
   },
   {
-    "label": "DeFi",
-    "slug": "defi"
-  },
-  {
-    "label": "Automated Market Makers",
-    "slug": "amm"
-  },
-  {
-    "label": "Lending & Borrowing",
-    "slug": "lending"
-  },
-  {
-    "label": "Staking",
-    "slug": "staking"
-  },
-  {
-    "label": "Oracles",
-    "slug": "oracles"
-  },
-  {
-    "label": "Wallet Adapter",
-    "slug": "wallet-adapter"
-  },
-  {
     "label": "React",
+    "reviewExempt": true,
     "slug": "react"
   },
   {
     "label": "Web3 Frontend",
     "slug": "web3-frontend"
-  },
-  {
-    "label": "Sign-In With Solana",
-    "slug": "siws"
   },
   {
     "label": "TypeScript",
@@ -102,10 +75,6 @@
   {
     "label": "Token-2022",
     "slug": "token-2022"
-  },
-  {
-    "label": "Transfer Hook",
-    "slug": "transfer-hook"
   },
   {
     "label": "Error Handling",
@@ -219,6 +188,7 @@
   },
   {
     "label": "Modules & Visibility",
+    "reviewExempt": true,
     "slug": "rust-modules"
   },
   {
@@ -288,10 +258,6 @@
   {
     "label": "Semantic Versioning",
     "slug": "semver"
-  },
-  {
-    "label": "Continuous Integration",
-    "slug": "ci"
   },
   {
     "label": "Deployment",
