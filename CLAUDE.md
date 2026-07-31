@@ -62,7 +62,7 @@ Full annotated tree: `structure.md` in the `superteam-academy-dev` skill.
 | **Testing**      | Mollusk, LiteSVM, ts-mocha/Chai                                              |
 | **Client**       | TypeScript, @coral-xyz/anchor, @solana/web3.js                               |
 | **Frontend**     | Next.js 14, React, Tailwind CSS, shadcn/ui + Radix                           |
-| **Content**      | Committed bundle compiled from `solanabr/courses-academy` (content.lock pin) |
+| **Content**      | Committed bundle compiled from `solanabr/academy-courses` (content.lock pin) |
 | **Backend/DB**   | Supabase (Postgres, RLS, auth helpers)                                       |
 | **Auth**         | Solana Wallet Adapter (SIWS) + Google OAuth                                  |
 | **Code Editor**  | Monaco Editor (JS/TS syntax, challenge runner)                               |

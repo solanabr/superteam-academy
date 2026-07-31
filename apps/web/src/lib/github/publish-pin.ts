@@ -9,7 +9,7 @@ import type { ChecksState } from "./types";
  */
 
 /** The content source repo `apps/web/content.lock` pins (a courses commit). */
-export const CONTENT_REPO = "solanabr/courses-academy";
+export const CONTENT_REPO = "solanabr/academy-courses";
 /** The app repo the one-line `content.lock` bump PR is opened against. */
 export const APP_REPO = "solanabr/superteam-academy";
 /** Repo-relative path of the pin file the bump edits. */

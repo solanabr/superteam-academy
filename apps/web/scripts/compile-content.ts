@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * compile-content.ts — compile the courses-academy content repo (pinned in
+ * compile-content.ts — compile the academy-courses content repo (pinned in
  * content.lock) into a committed, typed JSON bundle under src/content/generated.
  *
  * Pipeline: fetch tarball at the locked SHA → extract → delegate to the pure
@@ -13,7 +13,7 @@
  *
  * The executor gate (§6.2a: solution passes / starter fails) is NOT re-run here.
  * It requires the live QuickJS/rust/build runners, was already enforced by the
- * courses-academy CI gate that made this SHA mergeable, and the sync itself
+ * academy-courses CI gate that made this SHA mergeable, and the sync itself
  * defers rust/buildable. Compile is a projection step, not a re-certification.
  *
  *   Run from apps/web:  pnpm compile-content   (or: pnpm tsx scripts/compile-content.ts)

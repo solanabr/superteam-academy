@@ -84,7 +84,7 @@ function CopyButton({
 /**
  * The publish half of `/admin/courses` (step 1) — the SP3-B "Content pin"
  * card, unchanged from the retired `/admin/publish` screen apart from this
- * move. Shows the pinned courses-academy SHA (from the
+ * move. Shows the pinned academy-courses SHA (from the
  * committed bundle) vs repo HEAD, HEAD's CI state, a drift verdict, and — when
  * drifted — the exact one-line `content.lock` diff, the local rebuild command,
  * and a prefilled PR link. The bump is a one-line HUMAN PR: this card performs

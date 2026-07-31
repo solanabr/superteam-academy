@@ -66,7 +66,7 @@ const serverEnvSchema = z.object({
   // restricted key behind NEXT_PUBLIC_SOLANA_RPC_URL. Server requests carry no
   // browser Origin, so an origin-restricted key would 4xx on every call.
   SOLANA_RPC_URL: z.url(),
-  // Fine-grained READ token for solanabr/courses-academy. Server-only. Needed by
+  // Fine-grained READ token for solanabr/academy-courses. Server-only. Needed by
   // the drift UI (HEAD polling) and the Checks API (blocked state). Optional at
   // boot; the content routes 503 when unset. Unauthenticated GitHub is 60 req/hr
   // per IP and flakes on Vercel.

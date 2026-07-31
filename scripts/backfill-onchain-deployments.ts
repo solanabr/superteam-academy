@@ -16,7 +16,7 @@
  * NOT shipped in the app.
  *
  * Managed-doc criterion mirrors `apps/web/src/lib/content/compile/prune.ts`:
- * `sync.source == "courses-academy"`, drafts excluded. Of those, a row is
+ * `sync.source == "academy-courses"`, drafts excluded. Of those, a row is
  * emitted per SYNCED course (`onChainStatus.status == "synced"`) and per
  * achievement that carries a PDA (`defined(onChainStatus.achievementPda)`).
  *
@@ -29,7 +29,7 @@
 import { realpathSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-export const SANITY_SOURCE = "courses-academy";
+export const SANITY_SOURCE = "academy-courses";
 const SANITY_PROJECT_ID =
   process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ?? "4e3i2wwc";
 const SANITY_DATASET = process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production";

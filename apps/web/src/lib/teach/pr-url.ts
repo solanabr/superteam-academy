@@ -9,7 +9,7 @@
  */
 
 export const CONTENT_REPO_OWNER = "solanabr";
-export const CONTENT_REPO_NAME = "courses-academy";
+export const CONTENT_REPO_NAME = "academy-courses";
 export const CONTENT_REPO = `${CONTENT_REPO_OWNER}/${CONTENT_REPO_NAME}`;
 
 export type PrUrlError =
@@ -29,9 +29,9 @@ function isGitHubHost(host: string): boolean {
 }
 
 /**
- * Parses a courses-academy PR URL into its components.
+ * Parses an academy-courses PR URL into its components.
  *
- * Accepted:  https://github.com/solanabr/courses-academy/pull/42
+ * Accepted:  https://github.com/solanabr/academy-courses/pull/42
  *            (trailing segments like `/files` or `#discussion` are ignored)
  * Rejected:  other hosts, other repos, issue URLs, non-numeric PR numbers.
  *

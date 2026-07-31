@@ -1,6 +1,6 @@
 # cs8-extraction
 
-One-shot, **read-only** migration tool that extracts the live Sanity dataset into the `solanabr/courses-academy` content-standard tree (CS-8, spec §15, plan #388).
+One-shot, **read-only** migration tool that extracts the live Sanity dataset into the `solanabr/academy-courses` content-standard tree (CS-8, spec §15, plan #388).
 
 It writes nothing to Sanity, Supabase, or chain. The only writes are files in the target checkout.
 
@@ -8,7 +8,7 @@ It writes nothing to Sanity, Supabase, or chain. The only writes are files in th
 
 ```bash
 pnpm --filter @superteam-lms/content-lint exec tsx \
-  "$(pwd)/scripts/cs8-extraction/extract.ts" ~/Documents/STBR/courses-academy
+  "$(pwd)/scripts/cs8-extraction/extract.ts" ~/Documents/STBR/academy-courses
 ```
 
 It is invoked through `content-lint`'s package so `yaml` and `@superteam-lms/content-schema` resolve. It lives outside `packages/` on purpose: it is a throwaway tool, not shipped, and not in the web typecheck scope.
@@ -17,7 +17,7 @@ It is invoked through `content-lint`'s package so `yaml` and `@superteam-lms/con
 
 ```bash
 # 1. every gate, zero errors (Rust/buildable blocks emit notices — tolerated)
-pnpm --filter @superteam-lms/content-lint exec tsx src/cli.ts ~/Documents/STBR/courses-academy
+pnpm --filter @superteam-lms/content-lint exec tsx src/cli.ts ~/Documents/STBR/academy-courses
 
 # 2. §15.3 bit-verification — slots must reproduce every on-chain completion bit
 cd apps/web && pnpm exec tsx scripts/cs8-verify-bits.ts

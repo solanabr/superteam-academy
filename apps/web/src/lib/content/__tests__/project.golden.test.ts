@@ -41,7 +41,7 @@ vi.mock("server-only", () => ({}));
 //    content: it's the sorted, deduplicated union of the course's lessons'
 //    `skills`. The fixtures carry the DERIVED tags computed from each course's
 //    real lesson `skills`, not the original authored (now-retired) tag list.
-//  - launch-catalog activation (issue #559): the bump to courses-academy
+//  - launch-catalog activation (issue #559): the bump to academy-courses
 //    @012cd03d adds course 5 (`course-stablecoin-payments`, 9 lessons / 3
 //    modules) and retargets `achievement-full-stack-solana` from
 //    `path-solana-core` to `path-zero-to-deployed`, and course 4's capstone
@@ -50,36 +50,36 @@ vi.mock("server-only", () => ({}));
 //    Sanity capture, so for these docs the golden = the projected bundle (the
 //    committed bundle is the post-SP2 source of truth); every pre-existing
 //    doc still matches the original prod-Sanity capture unchanged.
-//  - launch-content wave 2 (bump to courses-academy @e1190680): retrieval
-//    closes across the flagship spine (courses-academy #11, 28 quiz blocks
+//  - launch-content wave 2 (bump to academy-courses @e1190680): retrieval
+//    closes across the flagship spine (academy-courses #11, 28 quiz blocks
 //    keyed `retrieval-close`), item-52b factual fixes (#9: faucet rate-limit
 //    mechanism, Token-2022 maturity row deleted), challenge tutorNotes (#10),
 //    and reviewExempt skill markers (#8). lessons.json and course-by-slug.json
 //    were regenerated from the bundle through the real projectors for the
 //    affected docs; all other fixtures untouched.
-//  - launch-content wave 3 (bump to courses-academy @1b74e4a6): C2
-//    `rust-for-program-devs` lands (courses-academy #12: +1 course, +14
+//  - launch-content wave 3 (bump to academy-courses @1b74e4a6): C2
+//    `rust-for-program-devs` lands (academy-courses #12: +1 course, +14
 //    lessons, new challenge/module entries in quests-raw's derived fields —
 //    staged, not on-chain, so it stays hidden until owner course-creation),
 //    tutorNotes on the two CARRY deploy-path challenges (#14), C5 + template
 //    quiz explanations (#15). courses.json, lessons.json and quests-raw.json's
 //    challengeLessonIds/moduleLessonMap regenerated from the bundle through
 //    the real projectors (order preserved, raw quest docs untouched).
-//  - launch-content wave 4 RE-LAND (bump to courses-academy @7a49747): C3
+//  - launch-content wave 4 RE-LAND (bump to academy-courses @7a49747): C3
 //    transform of the LIVE flagship course (16 -> 15 lessons; retired slots
 //    0/2/11/14 burned, new slots 16-18; SPARSE slot map). First attempt #740
 //    was reverted (#744) because the completion path derived bitmap indices
 //    from array position; re-landed only after #751 made every on-chain path
 //    slot-aware. courses/lessons/quests-raw-derived/paths/course-summaries
 //    regenerated through the real projectors.
-//  - launch-content wave 5 (bump to courses-academy @6d352db): C4
-//    `dapp-and-sdk-with-kit` lands (courses-academy #18: +1 course, +11 dense
+//  - launch-content wave 5 (bump to academy-courses @6d352db): C4
+//    `dapp-and-sdk-with-kit` lands (academy-courses #18: +1 course, +11 dense
 //    lessons at slots 0-10, trackLevel 4 — completing the track-1 ladder 1..5;
 //    staged, not on-chain, hidden until owner course-creation). courses.json,
 //    lessons.json and quests-raw's challengeLessonIds/moduleLessonMap
 //    regenerated from the bundle through the real projectors (existing doc
 //    order preserved, raw quest docs untouched).
-//  - catalog finalization (courses-academy #21, wave 5): the 5 superseded
+//  - catalog finalization (academy-courses #21, wave 5): the 5 superseded
 //    courses DELETED from content (already deactivated on-chain) — bundle is
 //    now the live 4-course ladder (C2/C3/C4/C5, 49 lessons); zero-to-deployed
 //    rewired to that ladder; frontend path retired (draft/empty); the
@@ -88,7 +88,7 @@ vi.mock("server-only", () => ({}));
 //    course-completer -> C2 pending C1 (#673)). courses/lessons/paths/summaries/
 //    quests-raw-derived regenerated; achievements-raw patched for the 3
 //    retargets only (rest stays the prod-Sanity capture).
-//  - C1 + EVM elective wave (bump to courses-academy @c5c625e0, PRs #22/#23/
+//  - C1 + EVM elective wave (bump to academy-courses @c5c625e0, PRs #22/#23/
 //    #24/#25/#26/#27): +2 courses / +17 lessons — C1 `course-solana-for-web-devs`
 //    (8 lessons, trackLevel 1) and the off-ladder elective
 //    `course-solana-for-evm-devs` (9 lessons, trackId 0). Bundle is now 6
@@ -99,7 +99,7 @@ vi.mock("server-only", () => ({}));
 //    collision, #23); `achievement-course-completer` retargeted C2 -> C1,
 //    closing the #673 placeholder; `achievement-full-stack-solana` description
 //    reworded to name the Zero to Deployed path. Comprehension reflections
-//    (#848 / courses-academy #26) rewrite 4 openEnded prompts across C4/C5
+//    (#848 / academy-courses #26) rewrite 4 openEnded prompts across C4/C5
 //    (3 dsk milestones widen 60 -> 120 words; C5's terminus block re-keys
 //    `submit` -> `reflect` and widens 200 -> 250) so no prompt is URL-only.
 //    C4 code stand-ins fixed for inverted deposit account order (#22), which
@@ -108,7 +108,7 @@ vi.mock("server-only", () => ({}));
 //    bundle through the real projectors (existing doc order preserved, new
 //    docs appended, raw quest docs untouched); achievements-raw patched for
 //    the course-completer retarget + the full-stack description only.
-//  - skills sweep + defect batch (bump to courses-academy @23e4d1bf,
+//  - skills sweep + defect batch (bump to academy-courses @23e4d1bf,
 //    PRs #28/#29): an EDITS-ONLY wave — counts are UNCHANGED (6 courses / 66
 //    lessons / 8 paths / 10 achievements / 5 quests), no doc added, removed or
 //    re-keyed, no slot movement. The `skills.yaml` registry shrinks 83 -> 74
@@ -286,7 +286,7 @@ describe("projectAchievement — mapAchievement over the bundle", () => {
     expect(anchor.award).toEqual({
       kind: "course-completed",
       // Retargeted from course-anchor-framework in the catalog finalization
-      // (courses-academy #21): the Anchor prose merged into C3.
+      // (academy-courses #21): the Anchor prose merged into C3.
       course: "course-building-first-program",
     });
     expect(anchor.glyph).toBe("⬡");

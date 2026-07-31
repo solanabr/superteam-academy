@@ -1,6 +1,6 @@
+import type { SyncStatus } from "@/lib/admin/sync-diff";
 import { type ChecksState, BlockedCommitError } from "./types";
 import { contentTxIdMatchesHead } from "./content-commit";
-import type { SyncStatus } from "@/lib/admin/sync-diff";
 
 export type ContentDriftState =
   | "up_to_date"
@@ -10,7 +10,7 @@ export type ContentDriftState =
 
 /**
  * The per-course content-drift field carried by `/api/admin/status`: the
- * repo-wide `ContentDriftState`, or `"unknown"` when courses-academy HEAD could
+ * repo-wide `ContentDriftState`, or `"unknown"` when academy-courses HEAD could
  * not be fetched (missing `GITHUB_TOKEN`, rate limit, network). The status route
  * degrades to `"unknown"` rather than 503-ing — its program/on-chain status is
  * independent of GitHub, so a drift lookup must never sink the whole route.

@@ -430,11 +430,11 @@ Identity baked at compile time by `--features fresh-id`, verified by the
 `config_pda_consts` host test and `tests/differential/tests/fresh_id_smoke.rs`
 (in-SVM initialize + byte-checked Config before any devnet SOL is spent):
 
-| What                  | Value                                                                                                           |
-| --------------------- | --------------------------------------------------------------------------------------------------------------- |
-| Program id            | `Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u`                                                                  |
-| Program keypair       | `onchain-academy/wallets/pinocchio-program-devnet-v2.json` (gitignored)                                         |
-| Config PDA (bump 254) | `E9GVGKbyoWNSf9B1iR8gNVecwDwqnzNbUxcBzVCVSXan`                                                                  |
+| What                  | Value                                                                                                                |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Program id            | `Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u`                                                                       |
+| Program keypair       | `onchain-academy/wallets/pinocchio-program-devnet-v2.json` (gitignored)                                              |
+| Config PDA (bump 254) | `E9GVGKbyoWNSf9B1iR8gNVecwDwqnzNbUxcBzVCVSXan`                                                                       |
 | XP mint               | `BUk5izZcRompFe2da1yv9BLcMLBEEyg7JCvS8nQYoHHd` (keypair: `onchain-academy/wallets/xp-mint-keypair.json`, gitignored) |
 
 ```bash

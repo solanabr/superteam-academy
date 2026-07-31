@@ -28,7 +28,7 @@ runtime. See [§3 Data Flow](#3-data-flow).
 │                                                                      │
 │  ┌────────────────────────────────────────────────────────────────┐  │
 │  │  COMMITTED CONTENT BUNDLE  (src/content/generated/*.json)      │  │
-│  │  compiled from solanabr/courses-academy @ content.lock sha     │  │
+│  │  compiled from solanabr/academy-courses @ content.lock sha     │  │
 │  │  statically imported — no runtime content fetch, no CMS        │  │
 │  └────────────────────────────────────────────────────────────────┘  │
 │                                                                      │
@@ -50,7 +50,7 @@ runtime. See [§3 Data Flow](#3-data-flow).
 Build-time only (not a runtime dependency):
 
 ```
-solanabr/courses-academy ──► compile-content.ts ──► committed bundle
+solanabr/academy-courses ──► compile-content.ts ──► committed bundle
       (git = source of truth)      (pinned by apps/web/content.lock)
 ```
 
@@ -63,14 +63,14 @@ solanabr/courses-academy ──► compile-content.ts ──► committed bundle
 | `onchain-academy/`             | On-chain program workspace (Pinocchio implementation, IDL, tests)                       |
 | `packages/types/`              | Shared TypeScript interfaces (`Course`, `Lesson`, `LessonBlock`, …)                     |
 | `packages/content-schema/`     | Zod schemas for the content standard (course, lesson, blocks, achievement, quest, path) |
-| `packages/content-lint/`       | The content linter — runs in `courses-academy` CI, gating what is publishable           |
+| `packages/content-lint/`       | The content linter — runs in `academy-courses` CI, gating what is publishable           |
 | `packages/challenge-executor/` | Challenge runner (QuickJS sandbox) shared by the app and the linter's executor gate     |
 | `packages/deploy/`             | Browser-based Solana program deployment library                                         |
 | `packages/config/`             | Shared ESLint, TypeScript, Tailwind configs                                             |
 | `supabase/`                    | Postgres schema + migrations (21 tables, indexes, RLS, functions, views)                |
 
 Content itself lives **outside** this repo, in
-[`solanabr/courses-academy`](https://github.com/solanabr/courses-academy).
+[`solanabr/academy-courses`](https://github.com/solanabr/academy-courses).
 
 ### Deployment Model
 
@@ -111,7 +111,7 @@ RootLayout (app/layout.tsx)
        │
        └── admin/                 ← Admin console (signed admin_session cookie required)
             ├── courses/          ← Default screen. Step 1 publish (content pin: bundle
-            │                       SHA vs courses-academy HEAD) + step 2 deploy (course
+            │                       SHA vs academy-courses HEAD) + step 2 deploy (course
             │                       & achievement on-chain tables), with a state legend
             ├── publish/          ← Redirect → courses/ (retired screen, kept for bookmarks)
             ├── deploy/           ← Redirect → courses/ (retired screen, kept for bookmarks)
@@ -167,7 +167,7 @@ Content is **compiled ahead of time and committed**. Nothing fetches it at
 request time.
 
 ```
-solanabr/courses-academy         ← git repo: course.yaml, lesson.yaml,
+solanabr/academy-courses         ← git repo: course.yaml, lesson.yaml,
         │                          achievements/, quests/, paths/, instructors/
         │  pinned to ONE commit by apps/web/content.lock
         ▼
@@ -622,7 +622,6 @@ Mirror writes are non-fatal: if a Supabase write fails after an on-chain TX succ
 
 <!-- Table count corrected 19 → 20 per #645: schema.sql defines 20 tables; the 20th is `challenge_assists` (the AI-assist ledger). The per-table matrices below enumerate a subset for the RLS-policy summary and are not a full inventory. -->
 
-
 #### Core Tables
 
 | Table               | SELECT                            | INSERT | UPDATE | DELETE |
@@ -820,7 +819,7 @@ Handled entirely in the `award_xp()` SQL function:
 ### Achievements
 
 **Unlock logic is content, not TypeScript.** Each achievement doc in
-`courses-academy` carries a declarative `award` rule (a Zod discriminated union,
+`academy-courses` carries a declarative `award` rule (a Zod discriminated union,
 `packages/content-schema/src/achievement.ts`). The app holds one predicate per
 award _kind_ — not per achievement — in `PREDICATES`
 (`lib/gamification/achievements.ts`):
@@ -951,7 +950,7 @@ client-side route for a full lesson read.
 | ------------------------------- | -------- | ----- | --------------------------------------------------------------------------- |
 | `/api/admin/auth`               | POST     | None  | Exchange `ADMIN_SECRET` for the signed `admin_session` cookie               |
 | `/api/admin/status`             | GET      | Admin | Program liveness, authority match, per-item deploy state (drives 2 screens) |
-| `/api/admin/publish/pin`        | GET      | Admin | Pinned bundle SHA vs `courses-academy` HEAD + CI checks + drift verdict     |
+| `/api/admin/publish/pin`        | GET      | Admin | Pinned bundle SHA vs `academy-courses` HEAD + CI checks + drift verdict     |
 | `/api/admin/courses/sync`       | POST     | Admin | Deploy course PDA + track collection on-chain, record it in Supabase        |
 | `/api/admin/courses/deactivate` | POST     | Admin | Set course `is_active = false` (hides it from learners)                     |
 | `/api/admin/courses/reactivate` | POST     | Admin | Set course `is_active = true`                                               |
@@ -1101,7 +1100,7 @@ The backend server holds a rotatable keypair (`BACKEND_SIGNER_SECRET`, stored in
 
 ### Content as a Committed Artifact (no CMS)
 
-Course content is authored in git (`solanabr/courses-academy`), compiled by
+Course content is authored in git (`solanabr/academy-courses`), compiled by
 `compile-content.ts` at a SHA pinned in `apps/web/content.lock`, and **committed**
 to this repo as typed JSON. The app never fetches content at runtime.
 

@@ -437,7 +437,7 @@ each achievement carries a declarative `award` rule, and the app holds one
 predicate **per award kind** — not per achievement. Adding a normal achievement
 therefore requires **no app code change at all**.
 
-#### 1. Add the achievement doc (in `solanabr/courses-academy`)
+#### 1. Add the achievement doc (in `solanabr/academy-courses`)
 
 Create `achievements/<slug>.yaml`:
 
@@ -477,7 +477,7 @@ content docs and are validated by the linter.
 
 #### 2. Publish it
 
-Merge in `courses-academy`, then bump `apps/web/content.lock` and recompile the
+Merge in `academy-courses`, then bump `apps/web/content.lock` and recompile the
 bundle (see [ADMIN.md](./ADMIN.md)). The achievement now exists in the app.
 
 #### 3. Deploy on-chain
@@ -533,7 +533,7 @@ export const STREAK_MILESTONES = [
 ] as const;
 ```
 
-Then add a matching achievement doc in `courses-academy` with
+Then add a matching achievement doc in `academy-courses` with
 `award: { kind: streak, days: 365 }`. No predicate change is needed — `streak` is
 already a supported kind.
 
@@ -669,6 +669,6 @@ compile time or fails closed at runtime.
 ### 6. Lint + publish
 
 The content linter (`packages/content-lint`) validates every block in
-`courses-academy` CI. Once your block ships in a released version of the schema,
+`academy-courses` CI. Once your block ships in a released version of the schema,
 content authors can use it; the change reaches the app via a `content.lock` bump
 (see [ADMIN.md](./ADMIN.md)).

@@ -25,13 +25,13 @@ const URL_ERROR_MESSAGE: Record<PrUrlError, string> = {
   malformed: "That does not look like a GitHub pull-request link.",
   wrong_host: "Only github.com links are supported.",
   wrong_repo:
-    "Only pull requests in solanabr/courses-academy can be previewed.",
+    "Only pull requests in solanabr/academy-courses can be previewed.",
   not_a_pull_request:
     "That link points to something other than a pull request.",
 };
 
 /**
- * Compiles a courses-academy PR and returns its courses/lessons for preview
+ * Compiles an academy-courses PR and returns its courses/lessons for preview
  * (#828). Read-only: nothing is written to the bundle and nothing touches
  * on-chain state.
  */

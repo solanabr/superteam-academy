@@ -27,7 +27,7 @@ import { diag, type Diagnostic } from "../diagnostics";
  *                `earn-submission`), which emit nothing. A registry slug applied
  *                to NO lesson is also an error (dead vocabulary entry).
  *                Was WARNING tier until BOTH preconditions landed: the 5-course
- *                catalog, and the paired skills.yaml sweep (courses-academy
+ *                catalog, and the paired skills.yaml sweep (academy-courses
  *                #28). Both are in, the flip was verified a no-op against the
  *                locked pin, and #676 is closed — see the 19b loop.
  *  19c (warning) interleaving-pair vocabulary: both members of each
@@ -154,8 +154,8 @@ export function gate19Check(model: RepoModel): Diagnostic[] {
   // a slug behind no lesson is dead vocabulary that can never serve anything.
   //
   // Both preconditions the warning tier was waiting on are now MET:
-  //   1. the catalog — C1–C5 all exist (courses-academy @c5c625e, 2026-07-30);
-  //   2. the sweep — courses-academy #28 shrank skills.yaml 83 -> 74 (dead
+  //   1. the catalog — C1–C5 all exist (academy-courses @c5c625e, 2026-07-30);
+  //   2. the sweep — academy-courses #28 shrank skills.yaml 83 -> 74 (dead
   //      entries deleted, consolidations, `rpc` -> `rpc-reads`) and added 19
   //      second-use tags, taking gate-19b to ZERO findings at the pin this
   //      monorepo now locks (verified by running the CLI the CI way against

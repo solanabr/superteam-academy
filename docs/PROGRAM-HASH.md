@@ -21,7 +21,7 @@ The **build** is the guarantee; the **hash** is the comparable artifact.
 
 > **PENDING FIRST CI RUN.** No canonical hash has been published yet. This seed
 > was committed with a placeholder rather than a locally-produced hash on purpose:
-> a hash is only meaningful if it comes from the *pinned* toolchain the CI job uses
+> a hash is only meaningful if it comes from the _pinned_ toolchain the CI job uses
 > (Solana `3.1.10` + platform-tools `v1.54` on Ubuntu). A build from any other
 > toolchain would not match the deployed program and must not be recorded here.
 > The first push to `main` after this lands publishes the real values to the
@@ -29,20 +29,21 @@ The **build** is the guarantee; the **hash** is the comparable artifact.
 
 <!-- The line below is the machine-readable checksum, in `sha256sum` format
      (`<64-hex>  <filename>`). CI regenerates it; tooling greps `^[0-9a-f]{64}`. -->
+
 ```
 0000000000000000000000000000000000000000000000000000000000000000  onchain_academy_pinocchio.so
 ```
 
-| Field | Value |
-| --- | --- |
-| Artifact | `onchain_academy_pinocchio.so` |
-| Size (bytes) | _pending first CI run_ |
-| SHA-256 | _pending first CI run_ |
-| Program ID | `7NeJaSRyb4Wxay3Tcd9bdpD7T3GWYUQSFyrhG8SgwE8V` |
-| Solana | `3.1.10` |
-| platform-tools | `v1.54` |
-| Source commit | _pending first CI run_ |
-| Build date | _pending first CI run_ |
+| Field          | Value                                          |
+| -------------- | ---------------------------------------------- |
+| Artifact       | `onchain_academy_pinocchio.so`                 |
+| Size (bytes)   | _pending first CI run_                         |
+| SHA-256        | _pending first CI run_                         |
+| Program ID     | `7NeJaSRyb4Wxay3Tcd9bdpD7T3GWYUQSFyrhG8SgwE8V` |
+| Solana         | `3.1.10`                                       |
+| platform-tools | `v1.54`                                        |
+| Source commit  | _pending first CI run_                         |
+| Build date     | _pending first CI run_                         |
 
 ## Where the live record lives
 

@@ -1,0 +1,49 @@
+const __vite_ssr_import_0__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/react@18.3.1/node_modules/react/jsx-dev-runtime.js", {"importedNames":["jsxDEV"]});
+const __vite_ssr_import_1__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/vitest@4.1.10_@opentelemetry+api@1.9.0_@types+node@22.19.9_jsdom@29.1.1_@noble+hashes@1_e967ad44039d475cab0701f50434d5d0/node_modules/vitest/dist/index.js", {"importedNames":["describe","it","expect"]});
+const __vite_ssr_import_2__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/@testing-library+react@14.3.1_@types+react@18.3.28_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/@testing-library/react/dist/index.js", {"importedNames":["render","screen","fireEvent"]});
+const __vite_ssr_import_3__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/next-intl@3.26.5_next@14.2.35_@babel+core@7.29.0_@opentelemetry+api@1.9.0_react-dom@18._697453d2ab77c379c3345831fabc794f/node_modules/next-intl/dist/index.react-client.js", {"importedNames":["NextIntlClientProvider"]});
+const __vite_ssr_import_4__ = await __vite_ssr_import__("/src/app/[locale]/admin/courses/deploy-legend.tsx", {"importedNames":["DeployLegend"]});
+const __vite_ssr_import_5__ = await __vite_ssr_import__("/src/messages/en.json?import", {"importedNames":["default"]});
+function renderWithIntl(ui) {
+  return (0,__vite_ssr_import_2__.render)(
+    /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)((0,__vite_ssr_import_3__.NextIntlClientProvider), { locale: "en", messages: __vite_ssr_import_5__.default, children: ui }, void 0, false, {
+      fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/app/[locale]/admin/__tests__/deploy-legend.test.tsx",
+      lineNumber: 11,
+      columnNumber: 5
+    }, this)
+  );
+}
+const legend = __vite_ssr_import_5__.default.admin.coursesScreen.legend;
+(0,__vite_ssr_import_1__.describe)("DeployLegend disclosure", () => {
+  (0,__vite_ssr_import_1__.it)("renders collapsed by default: title trigger shown, body hidden", () => {
+    renderWithIntl(/* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)((0,__vite_ssr_import_4__.DeployLegend), {}, void 0, false, {
+      fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/app/[locale]/admin/__tests__/deploy-legend.test.tsx",
+      lineNumber: 21,
+      columnNumber: 20
+    }, this));
+    const trigger = __vite_ssr_import_2__.screen.getByRole("button", { name: legend.title });
+    (0,__vite_ssr_import_1__.expect)(trigger).toHaveAttribute("aria-expanded", "false");
+    (0,__vite_ssr_import_1__.expect)(__vite_ssr_import_2__.screen.queryByText(legend.onChainHeading)).not.toBeInTheDocument();
+    (0,__vite_ssr_import_1__.expect)(__vite_ssr_import_2__.screen.queryByText(legend.description)).not.toBeInTheDocument();
+  });
+  (0,__vite_ssr_import_1__.it)("reveals the legend body and flips aria-expanded on toggle", () => {
+    renderWithIntl(/* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)((0,__vite_ssr_import_4__.DeployLegend), {}, void 0, false, {
+      fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/app/[locale]/admin/__tests__/deploy-legend.test.tsx",
+      lineNumber: 30,
+      columnNumber: 20
+    }, this));
+    const trigger = __vite_ssr_import_2__.screen.getByRole("button", { name: legend.title });
+    __vite_ssr_import_2__.fireEvent.click(trigger);
+    (0,__vite_ssr_import_1__.expect)(trigger).toHaveAttribute("aria-expanded", "true");
+    (0,__vite_ssr_import_1__.expect)(__vite_ssr_import_2__.screen.getByText(legend.onChainHeading)).toBeInTheDocument();
+    (0,__vite_ssr_import_1__.expect)(__vite_ssr_import_2__.screen.getByText(legend.driftHeading)).toBeInTheDocument();
+    (0,__vite_ssr_import_1__.expect)(__vite_ssr_import_2__.screen.getByText(legend.immutableTitle)).toBeInTheDocument();
+    __vite_ssr_import_2__.fireEvent.click(trigger);
+    (0,__vite_ssr_import_1__.expect)(trigger).toHaveAttribute("aria-expanded", "false");
+    (0,__vite_ssr_import_1__.expect)(__vite_ssr_import_2__.screen.queryByText(legend.onChainHeading)).not.toBeInTheDocument();
+  });
+});
+//# sourceMappingSource=vite-generated
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJtYXBwaW5ncyI6IkFBVUk7QUFSSjtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBRUEsU0FBUyxlQUFlLElBQWtCO0FBQ3hDLFlBQU87QUFBQSxJQUNMLG9EQUFDLGlEQUF1QixRQUFPLE1BQUsseUNBQ2pDLGdCQURIO0FBQUE7QUFBQTtBQUFBO0FBQUEsV0FFQTtBQUFBLEVBQ0Y7QUFDRjtBQUVBLE1BQU0sU0FBUyw4QkFBUyxNQUFNLGNBQWM7R0FFNUMsZ0NBQVMsMkJBQTJCLE1BQU07QUFDeEMsK0JBQUcsa0VBQWtFLE1BQU07QUFDekUsbUJBQWUsb0RBQUMseUNBQUQ7QUFBQTtBQUFBO0FBQUE7QUFBQSxXQUFjLENBQUU7QUFDL0IsVUFBTSxVQUFVLDZCQUFPLFVBQVUsVUFBVSxFQUFFLE1BQU0sT0FBTyxNQUFNLENBQUM7QUFDakUscUNBQU8sT0FBTyxFQUFFLGdCQUFnQixpQkFBaUIsT0FBTztBQUV4RCxxQ0FBTyw2QkFBTyxZQUFZLE9BQU8sY0FBYyxDQUFDLEVBQUUsSUFBSSxrQkFBa0I7QUFDeEUscUNBQU8sNkJBQU8sWUFBWSxPQUFPLFdBQVcsQ0FBQyxFQUFFLElBQUksa0JBQWtCO0FBQUEsRUFDdkUsQ0FBQztBQUVELCtCQUFHLDZEQUE2RCxNQUFNO0FBQ3BFLG1CQUFlLG9EQUFDLHlDQUFEO0FBQUE7QUFBQTtBQUFBO0FBQUEsV0FBYyxDQUFFO0FBQy9CLFVBQU0sVUFBVSw2QkFBTyxVQUFVLFVBQVUsRUFBRSxNQUFNLE9BQU8sTUFBTSxDQUFDO0FBRWpFLG9DQUFVLE1BQU0sT0FBTztBQUN2QixxQ0FBTyxPQUFPLEVBQUUsZ0JBQWdCLGlCQUFpQixNQUFNO0FBQ3ZELHFDQUFPLDZCQUFPLFVBQVUsT0FBTyxjQUFjLENBQUMsRUFBRSxrQkFBa0I7QUFDbEUscUNBQU8sNkJBQU8sVUFBVSxPQUFPLFlBQVksQ0FBQyxFQUFFLGtCQUFrQjtBQUNoRSxxQ0FBTyw2QkFBTyxVQUFVLE9BQU8sY0FBYyxDQUFDLEVBQUUsa0JBQWtCO0FBRWxFLG9DQUFVLE1BQU0sT0FBTztBQUN2QixxQ0FBTyxPQUFPLEVBQUUsZ0JBQWdCLGlCQUFpQixPQUFPO0FBQ3hELHFDQUFPLDZCQUFPLFlBQVksT0FBTyxjQUFjLENBQUMsRUFBRSxJQUFJLGtCQUFrQjtBQUFBLEVBQzFFLENBQUM7QUFDSCxDQUFDIiwibmFtZXMiOltdLCJpZ25vcmVMaXN0IjpbXSwic291cmNlcyI6WyJkZXBsb3ktbGVnZW5kLnRlc3QudHN4Il0sInNvdXJjZXNDb250ZW50IjpbIi8vIEB2aXRlc3QtZW52aXJvbm1lbnQganNkb21cbmltcG9ydCB0eXBlIHsgUmVhY3RFbGVtZW50IH0gZnJvbSBcInJlYWN0XCI7XG5pbXBvcnQgeyBkZXNjcmliZSwgaXQsIGV4cGVjdCB9IGZyb20gXCJ2aXRlc3RcIjtcbmltcG9ydCB7IHJlbmRlciwgc2NyZWVuLCBmaXJlRXZlbnQgfSBmcm9tIFwiQHRlc3RpbmctbGlicmFyeS9yZWFjdFwiO1xuaW1wb3J0IHsgTmV4dEludGxDbGllbnRQcm92aWRlciB9IGZyb20gXCJuZXh0LWludGxcIjtcbmltcG9ydCB7IERlcGxveUxlZ2VuZCB9IGZyb20gXCIuLi9jb3Vyc2VzL2RlcGxveS1sZWdlbmRcIjtcbmltcG9ydCBtZXNzYWdlcyBmcm9tIFwiQC9tZXNzYWdlcy9lbi5qc29uXCI7XG5cbmZ1bmN0aW9uIHJlbmRlcldpdGhJbnRsKHVpOiBSZWFjdEVsZW1lbnQpIHtcbiAgcmV0dXJuIHJlbmRlcihcbiAgICA8TmV4dEludGxDbGllbnRQcm92aWRlciBsb2NhbGU9XCJlblwiIG1lc3NhZ2VzPXttZXNzYWdlc30+XG4gICAgICB7dWl9XG4gICAgPC9OZXh0SW50bENsaWVudFByb3ZpZGVyPlxuICApO1xufVxuXG5jb25zdCBsZWdlbmQgPSBtZXNzYWdlcy5hZG1pbi5jb3Vyc2VzU2NyZWVuLmxlZ2VuZDtcblxuZGVzY3JpYmUoXCJEZXBsb3lMZWdlbmQgZGlzY2xvc3VyZVwiLCAoKSA9PiB7XG4gIGl0KFwicmVuZGVycyBjb2xsYXBzZWQgYnkgZGVmYXVsdDogdGl0bGUgdHJpZ2dlciBzaG93biwgYm9keSBoaWRkZW5cIiwgKCkgPT4ge1xuICAgIHJlbmRlcldpdGhJbnRsKDxEZXBsb3lMZWdlbmQgLz4pO1xuICAgIGNvbnN0IHRyaWdnZXIgPSBzY3JlZW4uZ2V0QnlSb2xlKFwiYnV0dG9uXCIsIHsgbmFtZTogbGVnZW5kLnRpdGxlIH0pO1xuICAgIGV4cGVjdCh0cmlnZ2VyKS50b0hhdmVBdHRyaWJ1dGUoXCJhcmlhLWV4cGFuZGVkXCIsIFwiZmFsc2VcIik7XG4gICAgLy8gVGhlIHJlZmVyZW5jZSBib2R5IChoZWFkaW5ncywgcGVyLXN0YXRlIGNvcHkpIGlzIG5vdCBtb3VudGVkIHdoaWxlIGNvbGxhcHNlZC5cbiAgICBleHBlY3Qoc2NyZWVuLnF1ZXJ5QnlUZXh0KGxlZ2VuZC5vbkNoYWluSGVhZGluZykpLm5vdC50b0JlSW5UaGVEb2N1bWVudCgpO1xuICAgIGV4cGVjdChzY3JlZW4ucXVlcnlCeVRleHQobGVnZW5kLmRlc2NyaXB0aW9uKSkubm90LnRvQmVJblRoZURvY3VtZW50KCk7XG4gIH0pO1xuXG4gIGl0KFwicmV2ZWFscyB0aGUgbGVnZW5kIGJvZHkgYW5kIGZsaXBzIGFyaWEtZXhwYW5kZWQgb24gdG9nZ2xlXCIsICgpID0+IHtcbiAgICByZW5kZXJXaXRoSW50bCg8RGVwbG95TGVnZW5kIC8+KTtcbiAgICBjb25zdCB0cmlnZ2VyID0gc2NyZWVuLmdldEJ5Um9sZShcImJ1dHRvblwiLCB7IG5hbWU6IGxlZ2VuZC50aXRsZSB9KTtcblxuICAgIGZpcmVFdmVudC5jbGljayh0cmlnZ2VyKTtcbiAgICBleHBlY3QodHJpZ2dlcikudG9IYXZlQXR0cmlidXRlKFwiYXJpYS1leHBhbmRlZFwiLCBcInRydWVcIik7XG4gICAgZXhwZWN0KHNjcmVlbi5nZXRCeVRleHQobGVnZW5kLm9uQ2hhaW5IZWFkaW5nKSkudG9CZUluVGhlRG9jdW1lbnQoKTtcbiAgICBleHBlY3Qoc2NyZWVuLmdldEJ5VGV4dChsZWdlbmQuZHJpZnRIZWFkaW5nKSkudG9CZUluVGhlRG9jdW1lbnQoKTtcbiAgICBleHBlY3Qoc2NyZWVuLmdldEJ5VGV4dChsZWdlbmQuaW1tdXRhYmxlVGl0bGUpKS50b0JlSW5UaGVEb2N1bWVudCgpO1xuXG4gICAgZmlyZUV2ZW50LmNsaWNrKHRyaWdnZXIpO1xuICAgIGV4cGVjdCh0cmlnZ2VyKS50b0hhdmVBdHRyaWJ1dGUoXCJhcmlhLWV4cGFuZGVkXCIsIFwiZmFsc2VcIik7XG4gICAgZXhwZWN0KHNjcmVlbi5xdWVyeUJ5VGV4dChsZWdlbmQub25DaGFpbkhlYWRpbmcpKS5ub3QudG9CZUluVGhlRG9jdW1lbnQoKTtcbiAgfSk7XG59KTtcbiJdLCJmaWxlIjoiL3NyYy9hcHAvW2xvY2FsZV0vYWRtaW4vX190ZXN0c19fL2RlcGxveS1sZWdlbmQudGVzdC50c3gifQ==
+
+//# vitestCache=W3siZmlsZSI6IjEiLCJpZCI6IjEiLCJ1cmwiOiIyIiwiaW1wb3J0ZWRVcmxzIjoiMyIsIm1hcHBpbmdzIjpmYWxzZX0sIi9Vc2Vycy9kYXZpZC9Eb2N1bWVudHMva21pbm8vc29sL3N1cGVydGVhbS1hY2FkZW15L2FwcHMvd2ViL3NyYy9hcHAvW2xvY2FsZV0vYWRtaW4vX190ZXN0c19fL2RlcGxveS1sZWdlbmQudGVzdC50c3giLCIvc3JjL2FwcC9bbG9jYWxlXS9hZG1pbi9fX3Rlc3RzX18vZGVwbG95LWxlZ2VuZC50ZXN0LnRzeCIsW11d

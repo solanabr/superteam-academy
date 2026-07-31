@@ -81,7 +81,7 @@ For each code block a PR adds or changes:
    the "adapted from Neodyme but attributed to LiteSVM" case.
 3. **Tick the originality checkbox** only when both hold.
 
-## Follow-up: content-repo PR template (courses-academy)
+## Follow-up: content-repo PR template (academy-courses)
 
 The originality checkbox lives in the **content repo's** PR template, which is a
 separate repository from this monorepo. Add the following to

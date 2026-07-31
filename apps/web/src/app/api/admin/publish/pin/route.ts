@@ -18,7 +18,7 @@ import { contentMeta } from "@/lib/content/meta";
  * GET /api/admin/publish/pin — the SP3-B "Content pin" data source.
  *
  * Returns the pinned SHA + counts (from the committed bundle's `meta.json`,
- * which the compiler writes from `content.lock`), courses-academy HEAD + its CI
+ * which the compiler writes from `content.lock`), academy-courses HEAD + its CI
  * checks, and a drift verdict. This route holds NO GitHub write token and never
  * writes the repo — the pin bump is a one-line human PR (spec rev-2, locked).
  * GitHub unreachable is a 503 so the card shows "drift unavailable" instead of

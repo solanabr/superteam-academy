@@ -12,7 +12,7 @@ import { extractTarball } from "@/lib/content/compile/tarball";
  * bundle — resolving it against the current bundle yields `{id:null,title:null}`
  * (the observed prod bug on the C3 sync, tx 5T1jeJ68GF3D). The faithful source
  * is the PRIOR content revision: `Course.content_tx_id` (read off-chain before
- * the update) is a padded courses-academy git SHA, and at that SHA the removed
+ * the update) is a padded academy-courses git SHA, and at that SHA the removed
  * lessons were still live — their `courses/<dir>/slots.lock.json` still maps
  * their id→slot, and their `lesson.yaml` still carries the title.
  *
@@ -76,7 +76,7 @@ function parseYamlDoc(bytes: Uint8Array): Record<string, unknown> | null {
 }
 
 /**
- * Resolve removed slots → `{id, title}` from the prior courses-academy revision
+ * Resolve removed slots → `{id, title}` from the prior academy-courses revision
  * at `priorSha`. Best-effort: returns an empty map on any failure, and omits any
  * individual slot it can't resolve (the caller keeps the slot-only fallback for
  * those). Never throws.

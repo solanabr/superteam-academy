@@ -563,7 +563,7 @@ fallback** — a missing or invalid creator wallet fails the deploy loudly.
       confirmed creator wallet is linked to a public academy profile, so course
       and certificate pages show a real instructor identity rather than the
       truncated-wallet fallback.
-- [ ] courses-academy contributor docs (CLAUDE.md / CONTRIBUTING) describe the
+- [ ] academy-courses contributor docs (CLAUDE.md / CONTRIBUTING) describe the
       real wallet→instructor flow — no reference to a nonexistent `instructors/`
       directory (LX-D6 docs-drift fix; that fix lands in the separate content repo).
 

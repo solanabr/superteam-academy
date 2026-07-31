@@ -7,7 +7,7 @@ The admin console is a three-screen panel for operating the platform: the
 screen), **Moderation** of the community forum, and platform **Status**.
 
 It is **not** a CMS. Course content is authored in the
-[`solanabr/courses-academy`](https://github.com/solanabr/courses-academy) git
+[`solanabr/academy-courses`](https://github.com/solanabr/academy-courses) git
 repo and ships to the app as a **committed, compiled bundle**. The console holds
 **no content-write token** and cannot mutate content — publishing is a pull
 request. See [Publishing content](#1-publish--pin-the-content-bundle).
@@ -36,7 +36,7 @@ cookie**, and `/admin` redirects to `/admin/courses` (the default screen).
 | `BACKEND_SIGNER_SECRET`     | The keypair registered in `Config.backend_signer`. Signs lesson/credential instructions from the learner-facing API routes.                                                                          |
 | `SOLANA_RPC_URL`            | Server-only RPC (may carry the Helius key). Required at boot — every admin screen reads chain state through it.                                                                                      |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service-role writes to `onchain_deployments` (deploy status) and reads of the moderation queue.                                                                                                      |
-| `GITHUB_TOKEN`              | Fine-grained **read** token for `solanabr/courses-academy`. Powers the publish card's HEAD polling + CI-checks lookup. Unset → Publish shows "drift unavailable" (503); everything else still works. |
+| `GITHUB_TOKEN`              | Fine-grained **read** token for `solanabr/academy-courses`. Powers the publish card's HEAD polling + CI-checks lookup. Unset → Publish shows "drift unavailable" (503); everything else still works. |
 
 `GITHUB_TOKEN` is read-only by design. **No admin route holds a GitHub write
 token** — nothing in the app can push a commit or open a PR on your behalf.
@@ -62,7 +62,7 @@ one screen and both old routes redirect to `/admin/courses`.
 Getting a course to learners takes **two** steps, in order:
 
 1. **Publish — does the app _have_ this course?** Content lives in
-   `solanabr/courses-academy`; the app ships a compiled bundle pinned to one
+   `solanabr/academy-courses`; the app ships a compiled bundle pinned to one
    commit in `apps/web/content.lock`. Publishing is a **human PR** that bumps
    the pin and commits the rebuilt bundle. The screen writes nothing — it shows
    pin-vs-HEAD drift and hands you a prefilled PR link (no GitHub write token,
@@ -86,7 +86,7 @@ side. The screen carries a legend for every badge state.
 ### How content actually ships
 
 ```
-solanabr/courses-academy  (git = source of truth: course.yaml, lesson.yaml, achievements/, …)
+solanabr/academy-courses  (git = source of truth: course.yaml, lesson.yaml, achievements/, …)
         │
         │  pinned to ONE commit by apps/web/content.lock
         ▼
@@ -108,7 +108,7 @@ hand you the exact diff.
 
 `GET /api/admin/publish/pin` returns the pinned SHA (read from the committed
 bundle's `meta.json`, which the compiler writes from `content.lock`), the
-`courses-academy` HEAD SHA, HEAD's combined CI state, and a drift verdict:
+`academy-courses` HEAD SHA, HEAD's combined CI state, and a drift verdict:
 
 | Verdict      | Meaning                                                                 |
 | ------------ | ----------------------------------------------------------------------- |
@@ -118,7 +118,7 @@ bundle's `meta.json`, which the compiler writes from `content.lock`), the
 
 When drifted **and HEAD's CI is not green**, the card raises `warnRedHead` and
 discourages the bump. Bumping to a red HEAD is possible but is a bad idea: the
-`courses-academy` CI gate (the content linter + executor gate) is what certifies
+`academy-courses` CI gate (the content linter + executor gate) is what certifies
 that a tree is publishable, and `compile-content` does **not** re-run the
 executor gate.
 
@@ -257,7 +257,7 @@ on-chain transaction. On-chain is the source of truth; the mirror is rebuildable
 | **"Unauthorized" / 401 on every admin route** | `ADMIN_SECRET` unset, or the `admin_session` cookie expired — log in again. Cross-origin requests are rejected by design.                |
 | **Publish card says "drift unavailable"**     | `GITHUB_TOKEN` unset or GitHub unreachable. The route 503s rather than crashing. Unauthenticated GitHub is 60 req/hr per IP.             |
 | **Course not visible to learners**            | Its `onchain_deployments` row must be `status = "synced"` and `is_active` not `false`. Deploy it from `/admin/courses`.                  |
-| **New lesson not showing up**                 | The bundle is pinned. Bump `content.lock` and recompile — merging content to `courses-academy` alone changes nothing in the app.         |
+| **New lesson not showing up**                 | The bundle is pinned. Bump `content.lock` and recompile — merging content to `academy-courses` alone changes nothing in the app.         |
 | **"Transaction failed" on Deploy**            | Verify `PROGRAM_AUTHORITY_SECRET` is the real `Config.authority` (the Status screen's authority match tells you) and is funded with SOL. |
 | **CI fails with "Content bundle is stale"**   | You bumped `content.lock` without recompiling, or hand-edited the generated bundle. Run `pnpm --filter web compile-content` and commit.  |
 

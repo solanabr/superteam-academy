@@ -1,0 +1,64 @@
+const __vite_ssr_import_0__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/react@18.3.1/node_modules/react/jsx-dev-runtime.js", {"importedNames":["jsxDEV"]});
+const __vite_ssr_import_1__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/vitest@4.1.10_@opentelemetry+api@1.9.0_@types+node@22.19.9_jsdom@29.1.1_@noble+hashes@1_e967ad44039d475cab0701f50434d5d0/node_modules/vitest/dist/index.js", {"importedNames":["describe","it","expect"]});
+const __vite_ssr_import_2__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/@testing-library+react@14.3.1_@types+react@18.3.28_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/@testing-library/react/dist/index.js", {"importedNames":["render","screen","fireEvent"]});
+const __vite_ssr_import_3__ = await __vite_ssr_import__("/src/components/admin/admin-disclosure.tsx", {"importedNames":["AdminDisclosure"]});
+(0,__vite_ssr_import_1__.describe)("AdminDisclosure", () => {
+  (0,__vite_ssr_import_1__.it)("is collapsed by default: children unmounted, aria-expanded false", () => {
+    (0,__vite_ssr_import_2__.render)(
+      /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)((0,__vite_ssr_import_3__.AdminDisclosure), { summary: "More", children: /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("p", { children: "revealed body" }, void 0, false, {
+        fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/admin/__tests__/admin-disclosure.test.tsx",
+        lineNumber: 10,
+        columnNumber: 9
+      }, this) }, void 0, false, {
+        fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/admin/__tests__/admin-disclosure.test.tsx",
+        lineNumber: 9,
+        columnNumber: 7
+      }, this)
+    );
+    const trigger = __vite_ssr_import_2__.screen.getByRole("button", { name: "More" });
+    (0,__vite_ssr_import_1__.expect)(trigger).toHaveAttribute("aria-expanded", "false");
+    (0,__vite_ssr_import_1__.expect)(__vite_ssr_import_2__.screen.queryByText("revealed body")).not.toBeInTheDocument();
+  });
+  (0,__vite_ssr_import_1__.it)("toggles aria-expanded and reveals/hides the children on click", () => {
+    (0,__vite_ssr_import_2__.render)(
+      /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)((0,__vite_ssr_import_3__.AdminDisclosure), { summary: "More", children: /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("p", { children: "revealed body" }, void 0, false, {
+        fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/admin/__tests__/admin-disclosure.test.tsx",
+        lineNumber: 21,
+        columnNumber: 9
+      }, this) }, void 0, false, {
+        fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/admin/__tests__/admin-disclosure.test.tsx",
+        lineNumber: 20,
+        columnNumber: 7
+      }, this)
+    );
+    const trigger = __vite_ssr_import_2__.screen.getByRole("button", { name: "More" });
+    __vite_ssr_import_2__.fireEvent.click(trigger);
+    (0,__vite_ssr_import_1__.expect)(trigger).toHaveAttribute("aria-expanded", "true");
+    (0,__vite_ssr_import_1__.expect)(__vite_ssr_import_2__.screen.getByText("revealed body")).toBeInTheDocument();
+    (0,__vite_ssr_import_1__.expect)(trigger).toHaveAttribute("aria-controls");
+    __vite_ssr_import_2__.fireEvent.click(trigger);
+    (0,__vite_ssr_import_1__.expect)(trigger).toHaveAttribute("aria-expanded", "false");
+    (0,__vite_ssr_import_1__.expect)(__vite_ssr_import_2__.screen.queryByText("revealed body")).not.toBeInTheDocument();
+  });
+  (0,__vite_ssr_import_1__.it)("honours defaultOpen and wraps the trigger in the requested heading level", () => {
+    (0,__vite_ssr_import_2__.render)(
+      /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)((0,__vite_ssr_import_3__.AdminDisclosure), { summary: "Legend", defaultOpen: true, headingLevel: 3, children: /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("p", { children: "revealed body" }, void 0, false, {
+        fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/admin/__tests__/admin-disclosure.test.tsx",
+        lineNumber: 40,
+        columnNumber: 9
+      }, this) }, void 0, false, {
+        fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/admin/__tests__/admin-disclosure.test.tsx",
+        lineNumber: 39,
+        columnNumber: 7
+      }, this)
+    );
+    const trigger = __vite_ssr_import_2__.screen.getByRole("button", { name: "Legend" });
+    (0,__vite_ssr_import_1__.expect)(trigger).toHaveAttribute("aria-expanded", "true");
+    (0,__vite_ssr_import_1__.expect)(__vite_ssr_import_2__.screen.getByText("revealed body")).toBeInTheDocument();
+    (0,__vite_ssr_import_1__.expect)(__vite_ssr_import_2__.screen.getByRole("heading", { level: 3 })).toContainElement(trigger);
+  });
+});
+//# sourceMappingSource=vite-generated
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJtYXBwaW5ncyI6IkFBU1E7QUFSUjtBQUNBO0FBQ0E7R0FFQSxnQ0FBUyxtQkFBbUIsTUFBTTtBQUNoQywrQkFBRyxvRUFBb0UsTUFBTTtBQUMzRTtBQUFBLE1BQ0Usb0RBQUMsMENBQWdCLFNBQVEsUUFDdkIsMkRBQUMsT0FBRSw2QkFBSDtBQUFBO0FBQUE7QUFBQTtBQUFBLGFBQWdCLEtBRGxCO0FBQUE7QUFBQTtBQUFBO0FBQUEsYUFFQTtBQUFBLElBQ0Y7QUFDQSxVQUFNLFVBQVUsNkJBQU8sVUFBVSxVQUFVLEVBQUUsTUFBTSxPQUFPLENBQUM7QUFDM0QscUNBQU8sT0FBTyxFQUFFLGdCQUFnQixpQkFBaUIsT0FBTztBQUN4RCxxQ0FBTyw2QkFBTyxZQUFZLGVBQWUsQ0FBQyxFQUFFLElBQUksa0JBQWtCO0FBQUEsRUFDcEUsQ0FBQztBQUVELCtCQUFHLGlFQUFpRSxNQUFNO0FBQ3hFO0FBQUEsTUFDRSxvREFBQywwQ0FBZ0IsU0FBUSxRQUN2QiwyREFBQyxPQUFFLDZCQUFIO0FBQUE7QUFBQTtBQUFBO0FBQUEsYUFBZ0IsS0FEbEI7QUFBQTtBQUFBO0FBQUE7QUFBQSxhQUVBO0FBQUEsSUFDRjtBQUNBLFVBQU0sVUFBVSw2QkFBTyxVQUFVLFVBQVUsRUFBRSxNQUFNLE9BQU8sQ0FBQztBQUUzRCxvQ0FBVSxNQUFNLE9BQU87QUFDdkIscUNBQU8sT0FBTyxFQUFFLGdCQUFnQixpQkFBaUIsTUFBTTtBQUN2RCxxQ0FBTyw2QkFBTyxVQUFVLGVBQWUsQ0FBQyxFQUFFLGtCQUFrQjtBQUU1RCxxQ0FBTyxPQUFPLEVBQUUsZ0JBQWdCLGVBQWU7QUFFL0Msb0NBQVUsTUFBTSxPQUFPO0FBQ3ZCLHFDQUFPLE9BQU8sRUFBRSxnQkFBZ0IsaUJBQWlCLE9BQU87QUFDeEQscUNBQU8sNkJBQU8sWUFBWSxlQUFlLENBQUMsRUFBRSxJQUFJLGtCQUFrQjtBQUFBLEVBQ3BFLENBQUM7QUFFRCwrQkFBRyw0RUFBNEUsTUFBTTtBQUNuRjtBQUFBLE1BQ0Usb0RBQUMsMENBQWdCLFNBQVEsVUFBUyxhQUFXLE1BQUMsY0FBYyxHQUMxRCwyREFBQyxPQUFFLDZCQUFIO0FBQUE7QUFBQTtBQUFBO0FBQUEsYUFBZ0IsS0FEbEI7QUFBQTtBQUFBO0FBQUE7QUFBQSxhQUVBO0FBQUEsSUFDRjtBQUNBLFVBQU0sVUFBVSw2QkFBTyxVQUFVLFVBQVUsRUFBRSxNQUFNLFNBQVMsQ0FBQztBQUM3RCxxQ0FBTyxPQUFPLEVBQUUsZ0JBQWdCLGlCQUFpQixNQUFNO0FBQ3ZELHFDQUFPLDZCQUFPLFVBQVUsZUFBZSxDQUFDLEVBQUUsa0JBQWtCO0FBRTVELHFDQUFPLDZCQUFPLFVBQVUsV0FBVyxFQUFFLE9BQU8sRUFBRSxDQUFDLENBQUMsRUFBRSxpQkFBaUIsT0FBTztBQUFBLEVBQzVFLENBQUM7QUFDSCxDQUFDIiwibmFtZXMiOltdLCJpZ25vcmVMaXN0IjpbXSwic291cmNlcyI6WyJhZG1pbi1kaXNjbG9zdXJlLnRlc3QudHN4Il0sInNvdXJjZXNDb250ZW50IjpbIi8vIEB2aXRlc3QtZW52aXJvbm1lbnQganNkb21cbmltcG9ydCB7IGRlc2NyaWJlLCBpdCwgZXhwZWN0IH0gZnJvbSBcInZpdGVzdFwiO1xuaW1wb3J0IHsgcmVuZGVyLCBzY3JlZW4sIGZpcmVFdmVudCB9IGZyb20gXCJAdGVzdGluZy1saWJyYXJ5L3JlYWN0XCI7XG5pbXBvcnQgeyBBZG1pbkRpc2Nsb3N1cmUgfSBmcm9tIFwiLi4vYWRtaW4tZGlzY2xvc3VyZVwiO1xuXG5kZXNjcmliZShcIkFkbWluRGlzY2xvc3VyZVwiLCAoKSA9PiB7XG4gIGl0KFwiaXMgY29sbGFwc2VkIGJ5IGRlZmF1bHQ6IGNoaWxkcmVuIHVubW91bnRlZCwgYXJpYS1leHBhbmRlZCBmYWxzZVwiLCAoKSA9PiB7XG4gICAgcmVuZGVyKFxuICAgICAgPEFkbWluRGlzY2xvc3VyZSBzdW1tYXJ5PVwiTW9yZVwiPlxuICAgICAgICA8cD5yZXZlYWxlZCBib2R5PC9wPlxuICAgICAgPC9BZG1pbkRpc2Nsb3N1cmU+XG4gICAgKTtcbiAgICBjb25zdCB0cmlnZ2VyID0gc2NyZWVuLmdldEJ5Um9sZShcImJ1dHRvblwiLCB7IG5hbWU6IFwiTW9yZVwiIH0pO1xuICAgIGV4cGVjdCh0cmlnZ2VyKS50b0hhdmVBdHRyaWJ1dGUoXCJhcmlhLWV4cGFuZGVkXCIsIFwiZmFsc2VcIik7XG4gICAgZXhwZWN0KHNjcmVlbi5xdWVyeUJ5VGV4dChcInJldmVhbGVkIGJvZHlcIikpLm5vdC50b0JlSW5UaGVEb2N1bWVudCgpO1xuICB9KTtcblxuICBpdChcInRvZ2dsZXMgYXJpYS1leHBhbmRlZCBhbmQgcmV2ZWFscy9oaWRlcyB0aGUgY2hpbGRyZW4gb24gY2xpY2tcIiwgKCkgPT4ge1xuICAgIHJlbmRlcihcbiAgICAgIDxBZG1pbkRpc2Nsb3N1cmUgc3VtbWFyeT1cIk1vcmVcIj5cbiAgICAgICAgPHA+cmV2ZWFsZWQgYm9keTwvcD5cbiAgICAgIDwvQWRtaW5EaXNjbG9zdXJlPlxuICAgICk7XG4gICAgY29uc3QgdHJpZ2dlciA9IHNjcmVlbi5nZXRCeVJvbGUoXCJidXR0b25cIiwgeyBuYW1lOiBcIk1vcmVcIiB9KTtcblxuICAgIGZpcmVFdmVudC5jbGljayh0cmlnZ2VyKTtcbiAgICBleHBlY3QodHJpZ2dlcikudG9IYXZlQXR0cmlidXRlKFwiYXJpYS1leHBhbmRlZFwiLCBcInRydWVcIik7XG4gICAgZXhwZWN0KHNjcmVlbi5nZXRCeVRleHQoXCJyZXZlYWxlZCBib2R5XCIpKS50b0JlSW5UaGVEb2N1bWVudCgpO1xuICAgIC8vIFRoZSB0cmlnZ2VyIGNvbnRyb2xzIHRoZSByZXZlYWxlZCByZWdpb24uXG4gICAgZXhwZWN0KHRyaWdnZXIpLnRvSGF2ZUF0dHJpYnV0ZShcImFyaWEtY29udHJvbHNcIik7XG5cbiAgICBmaXJlRXZlbnQuY2xpY2sodHJpZ2dlcik7XG4gICAgZXhwZWN0KHRyaWdnZXIpLnRvSGF2ZUF0dHJpYnV0ZShcImFyaWEtZXhwYW5kZWRcIiwgXCJmYWxzZVwiKTtcbiAgICBleHBlY3Qoc2NyZWVuLnF1ZXJ5QnlUZXh0KFwicmV2ZWFsZWQgYm9keVwiKSkubm90LnRvQmVJblRoZURvY3VtZW50KCk7XG4gIH0pO1xuXG4gIGl0KFwiaG9ub3VycyBkZWZhdWx0T3BlbiBhbmQgd3JhcHMgdGhlIHRyaWdnZXIgaW4gdGhlIHJlcXVlc3RlZCBoZWFkaW5nIGxldmVsXCIsICgpID0+IHtcbiAgICByZW5kZXIoXG4gICAgICA8QWRtaW5EaXNjbG9zdXJlIHN1bW1hcnk9XCJMZWdlbmRcIiBkZWZhdWx0T3BlbiBoZWFkaW5nTGV2ZWw9ezN9PlxuICAgICAgICA8cD5yZXZlYWxlZCBib2R5PC9wPlxuICAgICAgPC9BZG1pbkRpc2Nsb3N1cmU+XG4gICAgKTtcbiAgICBjb25zdCB0cmlnZ2VyID0gc2NyZWVuLmdldEJ5Um9sZShcImJ1dHRvblwiLCB7IG5hbWU6IFwiTGVnZW5kXCIgfSk7XG4gICAgZXhwZWN0KHRyaWdnZXIpLnRvSGF2ZUF0dHJpYnV0ZShcImFyaWEtZXhwYW5kZWRcIiwgXCJ0cnVlXCIpO1xuICAgIGV4cGVjdChzY3JlZW4uZ2V0QnlUZXh0KFwicmV2ZWFsZWQgYm9keVwiKSkudG9CZUluVGhlRG9jdW1lbnQoKTtcbiAgICAvLyBBUklBIGFjY29yZGlvbiBwYXR0ZXJuOiA8aDM+PGJ1dHRvbj7igKY8L2J1dHRvbj48L2gzPi5cbiAgICBleHBlY3Qoc2NyZWVuLmdldEJ5Um9sZShcImhlYWRpbmdcIiwgeyBsZXZlbDogMyB9KSkudG9Db250YWluRWxlbWVudCh0cmlnZ2VyKTtcbiAgfSk7XG59KTtcbiJdLCJmaWxlIjoiL3NyYy9jb21wb25lbnRzL2FkbWluL19fdGVzdHNfXy9hZG1pbi1kaXNjbG9zdXJlLnRlc3QudHN4In0=
+
+//# vitestCache=W3siZmlsZSI6IjEiLCJpZCI6IjEiLCJ1cmwiOiIyIiwiaW1wb3J0ZWRVcmxzIjoiMyIsIm1hcHBpbmdzIjpmYWxzZX0sIi9Vc2Vycy9kYXZpZC9Eb2N1bWVudHMva21pbm8vc29sL3N1cGVydGVhbS1hY2FkZW15L2FwcHMvd2ViL3NyYy9jb21wb25lbnRzL2FkbWluL19fdGVzdHNfXy9hZG1pbi1kaXNjbG9zdXJlLnRlc3QudHN4IiwiL3NyYy9jb21wb25lbnRzL2FkbWluL19fdGVzdHNfXy9hZG1pbi1kaXNjbG9zdXJlLnRlc3QudHN4IixbXV0=

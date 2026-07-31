@@ -1,0 +1,65 @@
+Object.defineProperty(__vite_ssr_exports__, "AdminTableShell", { enumerable: true, configurable: true, get(){ try { return AdminTableShell } catch {} }});
+const __vite_ssr_import_0__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/react@18.3.1/node_modules/react/jsx-dev-runtime.js", {"importedNames":["jsxDEV"]});
+const __vite_ssr_import_1__ = await __vite_ssr_import__("/src/lib/utils.ts", {"importedNames":["cn"]});
+const ALIGN = {
+  left: "text-left",
+  center: "text-center",
+  right: "text-right"
+};
+function AdminTableShell({
+  columns,
+  children,
+  className
+}) {
+  return /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("div", { className: "overflow-x-auto", children: /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("table", { className: (0,__vite_ssr_import_1__.cn)("w-full text-sm", className), children: [
+    /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("thead", { children: /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("tr", { className: "border-b border-border text-left text-xs uppercase tracking-wider text-text-3", children: columns.map((col) => /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)(
+      "th",
+      {
+        scope: "col",
+        className: (0,__vite_ssr_import_1__.cn)(
+          "pb-2 align-bottom font-medium",
+          ALIGN[col.align ?? "left"],
+          col.headClassName
+        ),
+        children: col.srOnly ? /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("span", { className: "sr-only", children: col.label }, void 0, false, {
+          fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/admin/admin-table-shell.tsx",
+          lineNumber: 58,
+          columnNumber: 19
+        }, this) : col.label
+      },
+      col.key,
+      false,
+      {
+        fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/admin/admin-table-shell.tsx",
+        lineNumber: 48,
+        columnNumber: 15
+      },
+      this
+    )) }, void 0, false, {
+      fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/admin/admin-table-shell.tsx",
+      lineNumber: 46,
+      columnNumber: 11
+    }, this) }, void 0, false, {
+      fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/admin/admin-table-shell.tsx",
+      lineNumber: 45,
+      columnNumber: 9
+    }, this),
+    /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("tbody", { className: "divide-y divide-border", children }, void 0, false, {
+      fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/admin/admin-table-shell.tsx",
+      lineNumber: 66,
+      columnNumber: 9
+    }, this)
+  ] }, void 0, true, {
+    fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/admin/admin-table-shell.tsx",
+    lineNumber: 44,
+    columnNumber: 7
+  }, this) }, void 0, false, {
+    fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/admin/admin-table-shell.tsx",
+    lineNumber: 43,
+    columnNumber: 5
+  }, this);
+}
+//# sourceMappingSource=vite-generated
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJtYXBwaW5ncyI6IkFBQUEsQ0FBQTtBQXlEa0I7QUF4RGxCO0FBc0JBLE1BQU0sUUFBZ0U7QUFBQSxFQUNwRSxNQUFNO0FBQUEsRUFDTixRQUFRO0FBQUEsRUFDUixPQUFPO0FBQ1Q7QUFTTyxTQUFTLGdCQUFnQjtBQUFBLEVBQzlCO0FBQUEsRUFDQTtBQUFBLEVBQ0E7QUFDRixHQUF5QjtBQUN2QixTQUNFLGlEQUFDLFNBQUksV0FBVSxtQkFDYiwyREFBQyxXQUFNLGNBQVcsMEJBQUcsa0JBQWtCLFNBQVMsR0FDOUM7QUFBQSxxREFBQyxXQUNDLDJEQUFDLFFBQUcsV0FBVSxpRkFDWCxrQkFBUSxJQUFJLENBQUMsUUFDWjtBQUFBLE1BQUM7QUFBQTtBQUFBLFFBRUMsT0FBTTtBQUFBLFFBQ04sY0FBVztBQUFBLFVBQ1Q7QUFBQSxVQUNBLE1BQU0sSUFBSSxTQUFTLE1BQU07QUFBQSxVQUN6QixJQUFJO0FBQUEsUUFDTjtBQUFBLFFBRUMsY0FBSSxTQUNILGlEQUFDLFVBQUssV0FBVSxXQUFXLGNBQUksU0FBL0I7QUFBQTtBQUFBO0FBQUE7QUFBQSxlQUFxQyxJQUVyQyxJQUFJO0FBQUE7QUFBQSxNQVhELElBQUk7QUFBQSxNQURYO0FBQUE7QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUFBO0FBQUEsSUFjQSxDQUNELEtBakJIO0FBQUE7QUFBQTtBQUFBO0FBQUEsV0FrQkEsS0FuQkY7QUFBQTtBQUFBO0FBQUE7QUFBQSxXQW9CQTtBQUFBLElBQ0EsaURBQUMsV0FBTSxXQUFVLDBCQUEwQixZQUEzQztBQUFBO0FBQUE7QUFBQTtBQUFBLFdBQW9EO0FBQUEsT0F0QnREO0FBQUE7QUFBQTtBQUFBO0FBQUEsU0F1QkEsS0F4QkY7QUFBQTtBQUFBO0FBQUE7QUFBQSxTQXlCQTtBQUVKIiwibmFtZXMiOltdLCJpZ25vcmVMaXN0IjpbXSwic291cmNlcyI6WyJhZG1pbi10YWJsZS1zaGVsbC50c3giXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHR5cGUgeyBSZWFjdE5vZGUgfSBmcm9tIFwicmVhY3RcIjtcbmltcG9ydCB7IGNuIH0gZnJvbSBcIkAvbGliL3V0aWxzXCI7XG5cbmV4cG9ydCBpbnRlcmZhY2UgQWRtaW5UYWJsZUNvbHVtbiB7XG4gIC8qKiBTdGFibGUgUmVhY3Qga2V5ICsgY29sdW1uIGlkZW50aXR5LiAqL1xuICBrZXk6IHN0cmluZztcbiAgLyoqIEhlYWRlciBjb250ZW50IChhbHJlYWR5IGxvY2FsaXplZCBieSB0aGUgY2FsbGVyKS4gKi9cbiAgbGFiZWw6IFJlYWN0Tm9kZTtcbiAgYWxpZ24/OiBcImxlZnRcIiB8IFwiY2VudGVyXCIgfCBcInJpZ2h0XCI7XG4gIC8qKiBFeHRyYSBgPHRoPmAgY2xhc3NlcyDigJQgY29sdW1uIHdpZHRoLCByaWdodC1wYWRkaW5nLCBldGMuICovXG4gIGhlYWRDbGFzc05hbWU/OiBzdHJpbmc7XG4gIC8qKiBWaXN1YWxseSBoaWRlIHRoZSBoZWFkZXIgbGFiZWwgKHN0aWxsIHJlYWQgYnkgYXNzaXN0aXZlIHRlY2gpLiAqL1xuICBzck9ubHk/OiBib29sZWFuO1xufVxuXG5pbnRlcmZhY2UgQWRtaW5UYWJsZVNoZWxsUHJvcHMge1xuICBjb2x1bW5zOiBBZG1pblRhYmxlQ29sdW1uW107XG4gIC8qKiBgPHRyPmAgcm93cy4gR2l2ZSBldmVyeSBgPHRkPmAgYGFsaWduLXRvcGAgc28gYSB0YWxsIHJvdyBuZXZlciBkcmFncyBpdHNcbiAgICogIHNpYmxpbmdzJyBjZWxscyB0byB2ZXJ0aWNhbC1jZW50ZXIuICovXG4gIGNoaWxkcmVuOiBSZWFjdE5vZGU7XG4gIGNsYXNzTmFtZT86IHN0cmluZztcbn1cblxuY29uc3QgQUxJR046IFJlY29yZDxOb25OdWxsYWJsZTxBZG1pblRhYmxlQ29sdW1uW1wiYWxpZ25cIl0+LCBzdHJpbmc+ID0ge1xuICBsZWZ0OiBcInRleHQtbGVmdFwiLFxuICBjZW50ZXI6IFwidGV4dC1jZW50ZXJcIixcbiAgcmlnaHQ6IFwidGV4dC1yaWdodFwiLFxufTtcblxuLyoqXG4gKiBTaGFyZWQgYWRtaW4gdGFibGUgY2hyb21lOiBhIGhvcml6b250YWxseS1zY3JvbGxhYmxlIHdyYXBwZXIgKHdpZGUgcm93cyBzY3JvbGxcbiAqIGluc2lkZSB0aGVpciBvd24gYm94IGluc3RlYWQgb2YgcHVzaGluZyB0aGUgcGFnZSksIHRoZSB1cHBlcmNhc2UgaGVhZGVyIHJvdyxcbiAqIGFuZCBhIGBkaXZpZGUteWAgYm9keS4gUm93cyBhcmUgdGhlIGNhbGxlcidzIHJlc3BvbnNpYmlsaXR5IOKAlCB0aGUgc2hlbGwgb25seVxuICogb3ducyB0aGUgZnJhbWUgc28gV1MtQSdzIGNvdXJzZXMgdGFibGUgYW5kIFdTLUMncyByZWFkLW9ubHkgdGFibGVzIHJlbmRlciBhc1xuICogb25lIHN5c3RlbS5cbiAqL1xuZXhwb3J0IGZ1bmN0aW9uIEFkbWluVGFibGVTaGVsbCh7XG4gIGNvbHVtbnMsXG4gIGNoaWxkcmVuLFxuICBjbGFzc05hbWUsXG59OiBBZG1pblRhYmxlU2hlbGxQcm9wcykge1xuICByZXR1cm4gKFxuICAgIDxkaXYgY2xhc3NOYW1lPVwib3ZlcmZsb3cteC1hdXRvXCI+XG4gICAgICA8dGFibGUgY2xhc3NOYW1lPXtjbihcInctZnVsbCB0ZXh0LXNtXCIsIGNsYXNzTmFtZSl9PlxuICAgICAgICA8dGhlYWQ+XG4gICAgICAgICAgPHRyIGNsYXNzTmFtZT1cImJvcmRlci1iIGJvcmRlci1ib3JkZXIgdGV4dC1sZWZ0IHRleHQteHMgdXBwZXJjYXNlIHRyYWNraW5nLXdpZGVyIHRleHQtdGV4dC0zXCI+XG4gICAgICAgICAgICB7Y29sdW1ucy5tYXAoKGNvbCkgPT4gKFxuICAgICAgICAgICAgICA8dGhcbiAgICAgICAgICAgICAgICBrZXk9e2NvbC5rZXl9XG4gICAgICAgICAgICAgICAgc2NvcGU9XCJjb2xcIlxuICAgICAgICAgICAgICAgIGNsYXNzTmFtZT17Y24oXG4gICAgICAgICAgICAgICAgICBcInBiLTIgYWxpZ24tYm90dG9tIGZvbnQtbWVkaXVtXCIsXG4gICAgICAgICAgICAgICAgICBBTElHTltjb2wuYWxpZ24gPz8gXCJsZWZ0XCJdLFxuICAgICAgICAgICAgICAgICAgY29sLmhlYWRDbGFzc05hbWVcbiAgICAgICAgICAgICAgICApfVxuICAgICAgICAgICAgICA+XG4gICAgICAgICAgICAgICAge2NvbC5zck9ubHkgPyAoXG4gICAgICAgICAgICAgICAgICA8c3BhbiBjbGFzc05hbWU9XCJzci1vbmx5XCI+e2NvbC5sYWJlbH08L3NwYW4+XG4gICAgICAgICAgICAgICAgKSA6IChcbiAgICAgICAgICAgICAgICAgIGNvbC5sYWJlbFxuICAgICAgICAgICAgICAgICl9XG4gICAgICAgICAgICAgIDwvdGg+XG4gICAgICAgICAgICApKX1cbiAgICAgICAgICA8L3RyPlxuICAgICAgICA8L3RoZWFkPlxuICAgICAgICA8dGJvZHkgY2xhc3NOYW1lPVwiZGl2aWRlLXkgZGl2aWRlLWJvcmRlclwiPntjaGlsZHJlbn08L3Rib2R5PlxuICAgICAgPC90YWJsZT5cbiAgICA8L2Rpdj5cbiAgKTtcbn1cbiJdLCJmaWxlIjoiL3NyYy9jb21wb25lbnRzL2FkbWluL2FkbWluLXRhYmxlLXNoZWxsLnRzeCJ9
+
+//# vitestCache=W3siZmlsZSI6IjEiLCJpZCI6IjEiLCJ1cmwiOiIyIiwiaW1wb3J0ZWRVcmxzIjoiMyIsIm1hcHBpbmdzIjpmYWxzZX0sIi9Vc2Vycy9kYXZpZC9Eb2N1bWVudHMva21pbm8vc29sL3N1cGVydGVhbS1hY2FkZW15L2FwcHMvd2ViL3NyYy9jb21wb25lbnRzL2FkbWluL2FkbWluLXRhYmxlLXNoZWxsLnRzeCIsIi9zcmMvY29tcG9uZW50cy9hZG1pbi9hZG1pbi10YWJsZS1zaGVsbC50c3giLFtdXQ==
