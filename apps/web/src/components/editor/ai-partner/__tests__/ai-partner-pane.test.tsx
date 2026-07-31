@@ -65,10 +65,14 @@ function renderPane(
 }
 
 const reviewLabel = messages.aiPartner.actions.review;
+const askLabel = messages.aiPartner.actions.askLabel;
+const sendLabel = messages.aiPartner.actions.askSend;
 
 beforeEach(() => {
   review.mockReset();
   hookState.requestHint.mockReset();
+  hookState.ask.mockReset();
+  hookState.messages = [];
   hookState.budgetExhausted = false;
   hookState.spendCapped = false;
   hookState.loading = false;
@@ -222,5 +226,96 @@ describe("AiPartnerPane — attempt-gate nudge (#865, replaces the #770 lock)", 
     renderPane({ hasRunTests: false, disabled: true });
     expect(screen.getByRole("button", { name: hintLabel })).toBeDisabled();
     expect(screen.queryByText(nudgeTitle)).not.toBeInTheDocument();
+  });
+
+  it("holds a pre-run ASK behind the same gate, then sends it on override", () => {
+    renderPane({ hasRunTests: false });
+
+    const box = screen.getByLabelText(askLabel);
+    fireEvent.change(box, { target: { value: "why does this fail?" } });
+    fireEvent.click(screen.getByRole("button", { name: sendLabel }));
+
+    // Held, not sent — same soft nudge the hint gets.
+    expect(hookState.ask).not.toHaveBeenCalled();
+    expect(screen.getByText(nudgeTitle)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: overrideLabel }));
+    expect(hookState.ask).toHaveBeenCalledWith("why does this fail?");
+  });
+});
+
+describe("AiPartnerPane — free-text composer (#944)", () => {
+  it("renders the composer as the empty state, with the hint button beside it", () => {
+    renderPane({ hasRunTests: true });
+    expect(screen.getByLabelText(askLabel)).toBeEnabled();
+    expect(
+      screen.getByText(messages.aiPartner.composer.empty)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: messages.aiPartner.actions.hint })
+    ).toBeInTheDocument();
+  });
+
+  it("sends the question through the hook and clears the box", () => {
+    renderPane({ hasRunTests: true });
+    const box = screen.getByLabelText(askLabel);
+
+    fireEvent.change(box, { target: { value: "  what is a PDA?  " } });
+    fireEvent.click(screen.getByRole("button", { name: sendLabel }));
+
+    expect(hookState.ask).toHaveBeenCalledWith("what is a PDA?");
+    expect(box).toHaveValue("");
+  });
+
+  it("Enter sends, Shift+Enter does not", () => {
+    renderPane({ hasRunTests: true });
+    const box = screen.getByLabelText(askLabel);
+
+    fireEvent.change(box, { target: { value: "line one" } });
+    fireEvent.keyDown(box, { key: "Enter", shiftKey: true });
+    expect(hookState.ask).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(box, { key: "Enter" });
+    expect(hookState.ask).toHaveBeenCalledWith("line one");
+  });
+
+  it("never sends an empty question", () => {
+    renderPane({ hasRunTests: true });
+    const box = screen.getByLabelText(askLabel);
+
+    expect(screen.getByRole("button", { name: sendLabel })).toBeDisabled();
+    fireEvent.change(box, { target: { value: "   " } });
+    fireEvent.keyDown(box, { key: "Enter" });
+    expect(hookState.ask).not.toHaveBeenCalled();
+  });
+
+  it("disables the composer once the ladder is exhausted (#864 handoff state)", () => {
+    hookState.budgetExhausted = true;
+    renderPane({ hasRunTests: true });
+
+    const box = screen.getByLabelText(askLabel);
+    expect(box).toBeDisabled();
+    fireEvent.change(box, { target: { value: "still stuck" } });
+    fireEvent.keyDown(box, { key: "Enter" });
+    expect(hookState.ask).not.toHaveBeenCalled();
+    // The community handoff carries the copy — no wall inside the composer.
+    expect(
+      screen.getByText(messages.aiPartner.exhausted.title)
+    ).toBeInTheDocument();
+  });
+
+  it("disables the composer while a request is in flight", () => {
+    hookState.loading = true;
+    renderPane({ hasRunTests: true });
+    expect(screen.getByLabelText(askLabel)).toBeDisabled();
+    expect(screen.getByRole("button", { name: sendLabel })).toBeDisabled();
+  });
+
+  it("disables the composer once the lesson is complete, like the hint", () => {
+    renderPane({ hasRunTests: true, disabled: true });
+    expect(screen.getByLabelText(askLabel)).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: messages.aiPartner.actions.hint })
+    ).toBeDisabled();
   });
 });

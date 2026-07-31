@@ -996,7 +996,7 @@
   },
   "aiPartner": {
     "title": "Compañero de IA",
-    "subtitle": "¿Atascado? Pide una pista.",
+    "subtitle": "¿Atascado? Haz una pregunta o pide una pista.",
     "completed": "Reto completado — ¡bien hecho!",
     "attemptNudge": {
       "title": "Ejecuta las pruebas una vez primero.",
@@ -1027,9 +1027,13 @@
       "hint": "Pista",
       "propose": "Proponer corrección",
       "askPlaceholder": "Haz una pregunta sobre este desafío...",
+      "askLabel": "Pregúntale al Compañero de IA sobre este reto",
       "askSend": "Enviar",
       "review": "Revisar mi solución",
       "reviewHint": "Recibe comentarios idiomáticos sobre tu solución ya resuelta — esto no cambia tu XP."
+    },
+    "composer": {
+      "empty": "Pregunta lo que quieras sobre este reto, o pide una pista."
     },
     "diff": {
       "current": "Actual",
