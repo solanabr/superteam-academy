@@ -16,19 +16,21 @@ export function Footer() {
       <div className="container px-4 py-10 sm:px-8 md:py-12">
         <div className="flex flex-col items-center gap-6 md:flex-row md:justify-between">
           <div className="flex flex-col items-center gap-3 md:items-start">
+            {/* Academy lockup leads; Superteam Brasil is the "Powered by"
+                credit below it (brand guide §03 co-branding). */}
             <Link href={`/${locale}`} className="flex items-center gap-2">
               <Image
-                src="/ST-DARK-GREEN-HORIZONTAL.png"
-                alt="Superteam Brasil"
-                width={160}
-                height={32}
+                src="/brand/academy-lockup-forest.svg"
+                alt="Superteam Academy"
+                width={157}
+                height={30}
                 className="h-6 w-auto dark:hidden"
               />
               <Image
-                src="/ST-YELLOW-HORIZONTAL.png"
-                alt="Superteam Brasil"
-                width={160}
-                height={32}
+                src="/brand/academy-lockup-yellow.svg"
+                alt="Superteam Academy"
+                width={157}
+                height={30}
                 className="hidden h-6 w-auto dark:block"
               />
             </Link>
@@ -36,6 +38,25 @@ export function Footer() {
               {t("tagline")}
             </p>
             <p className="text-xs text-text-3">{t("languages")}</p>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-3">
+                {t("poweredBy")}
+              </span>
+              <Image
+                src="/ST-DARK-GREEN-HORIZONTAL.png"
+                alt="Superteam Brasil"
+                width={120}
+                height={24}
+                className="h-[15px] w-auto dark:hidden"
+              />
+              <Image
+                src="/ST-YELLOW-HORIZONTAL.png"
+                alt="Superteam Brasil"
+                width={120}
+                height={24}
+                className="hidden h-[15px] w-auto dark:block"
+              />
+            </div>
           </div>
 
           <div className="flex flex-col items-center gap-4 md:items-end">
