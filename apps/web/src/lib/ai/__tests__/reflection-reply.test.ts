@@ -70,6 +70,27 @@ describe("maybeGenerateReflectionReply", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("sends the 3.x thinkingLevel floor, never the 2.5-era thinkingBudget", async () => {
+    // The 3.x models 400 INVALID_ARGUMENT on `thinkingBudget` — this exact
+    // regression silently broke every AI turn after the #890 model swap.
+    const fetchMock = stubGeminiFetch("Nice work");
+    const { maybeGenerateReflectionReply } =
+      await import("../reflection-reply");
+    await maybeGenerateReflectionReply(INPUT);
+    const body = JSON.parse(
+      String(
+        (fetchMock.mock.calls[0] as unknown[])[1] &&
+          ((fetchMock.mock.calls[0] as unknown[])[1] as RequestInit).body
+      )
+    ) as { generationConfig: { thinkingConfig: Record<string, unknown> } };
+    expect(body.generationConfig.thinkingConfig).toEqual({
+      thinkingLevel: "low",
+    });
+    expect(body.generationConfig.thinkingConfig).not.toHaveProperty(
+      "thinkingBudget"
+    );
+  });
+
   it("calls the CHEAP routed model, not the old 3.5-flash pin (#868)", async () => {
     const fetchMock = stubGeminiFetch("Nice work");
     const { maybeGenerateReflectionReply } =

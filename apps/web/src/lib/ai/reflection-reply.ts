@@ -7,7 +7,11 @@ import {
   degradedMaxTokens,
 } from "@/lib/ai/spend-ledger";
 import type { GeminiUsageMetadata } from "@/lib/ai/spend-ledger";
-import { modelForReflectionReply, geminiUrl } from "@/lib/ai/models";
+import {
+  modelForReflectionReply,
+  geminiUrl,
+  MINIMAL_THINKING_CONFIG,
+} from "@/lib/ai/models";
 
 // Best-effort AI feedback for an `openEnded` reflection. NEVER blocks the seal:
 // the attestation route computes and returns the receipt independently, then
@@ -145,7 +149,8 @@ export async function maybeGenerateReflectionReply({
         generationConfig: {
           temperature: 0.4,
           maxOutputTokens: outputTokens,
-          thinkingConfig: { thinkingBudget: 0 },
+          // 3.x floor — the 2.5-era `thinkingBudget: 0` 400s (see models.ts).
+          thinkingConfig: MINIMAL_THINKING_CONFIG,
         },
       }),
     });

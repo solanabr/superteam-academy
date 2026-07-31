@@ -15,10 +15,15 @@ import type { PartnerAction } from "@/lib/ai/partner-types";
 // — so any future "this model 404s for our key" claim must be re-tested twice
 // before it is believed (or written down).
 //
-// AIE-05 from the same record: `thinkingConfig: { thinkingBudget: 0 }` is
-// VERIFIED HONORED (no `thoughtsTokenCount` under budget-0; 146 thinking tokens
-// on the no-config control). Callers keep sending it — thinking tokens bill at
-// the OUTPUT rate, so it is a real cost lever, not a formality.
+// AIE-05 correction (2026-07-31, supersedes the 2026-07-28 record): the 3.x
+// models now REJECT `thinkingConfig: { thinkingBudget: 0 }` with a 400
+// INVALID_ARGUMENT — `thinkingBudget` is the 2.5-era field. The 3.x field is
+// `thinkingLevel`, whose MINIMUM is "low" ("none" is not a valid enum value;
+// probed empirically on both routed models). Every generateContent caller must
+// send MINIMAL_THINKING_CONFIG below; thinking tokens still bill at the OUTPUT
+// rate and share maxOutputTokens, so keeping thinking minimal remains a real
+// cost lever. Probed at "low" with the hint schema: zero thinking tokens on a
+// trivial prompt, valid JSON, finish STOP.
 
 export const GEMINI_MODELS = [
   "gemini-3.6-flash",
@@ -146,3 +151,13 @@ export function modelForReflectionReply(): GeminiModel {
 export function geminiUrl(model: GeminiModel): string {
   return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 }
+
+/**
+ * The minimal thinking configuration accepted by every routed (3.x) model.
+ * `thinkingLevel: "low"` is the FLOOR — `"none"` is not a valid enum value, and
+ * the 2.5-era `thinkingBudget: 0` is rejected outright with a 400
+ * INVALID_ARGUMENT (see the AIE-05 correction in the header). All
+ * generateContent callers must spread this rather than hand-rolling a
+ * thinkingConfig, so a future API change is a one-line fix here.
+ */
+export const MINIMAL_THINKING_CONFIG = { thinkingLevel: "low" } as const;
