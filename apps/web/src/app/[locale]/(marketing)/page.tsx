@@ -3,19 +3,9 @@ import {
   getAllLearningPaths,
   getDeployedAchievements,
 } from "@/lib/content/queries";
-import {
-  resolveEntryLessonHref,
-  resolveFlagshipLessonHref,
-} from "@/lib/courses/entry-lesson";
+import { resolveFlagshipLessonHref } from "@/lib/courses/entry-lesson";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { LandingPageClient } from "./landing-client";
-
-/**
- * The "Getting Paid: Stablecoin & Agentic Payments" course (C5) — the terminus
- * the #874 payments wedge points at. Content id, not slug: the deep-link
- * resolver reads the bundle by id (the on-chain ID convention).
- */
-const PAYMENTS_COURSE_ID = "course-stablecoin-payments";
 
 // The landing shows live platform stats (courses, enrolled builders, credentials,
 // XP). Without revalidation it renders fully static and freezes at build time —
@@ -29,22 +19,15 @@ export default async function LandingPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const [
-    courses,
-    learningPaths,
-    achievements,
-    flagshipLessonHref,
-    paymentsCourseHref,
-  ] = await Promise.all([
-    getAllCourses(),
-    getAllLearningPaths(),
-    getDeployedAchievements(),
-    // LX-A1: the anonymous-first deep-link target — flagship lesson 1, or the
-    // catalog when that course isn't synced (resolveFlagshipLessonHref gate).
-    resolveFlagshipLessonHref(locale),
-    // #874: the payments-wedge CTA — C5 lesson 1, same sync gate.
-    resolveEntryLessonHref(locale, PAYMENTS_COURSE_ID),
-  ]);
+  const [courses, learningPaths, achievements, flagshipLessonHref] =
+    await Promise.all([
+      getAllCourses(),
+      getAllLearningPaths(),
+      getDeployedAchievements(),
+      // LX-A1: the anonymous-first deep-link target — flagship lesson 1, or the
+      // catalog when that course isn't synced (resolveFlagshipLessonHref gate).
+      resolveFlagshipLessonHref(locale),
+    ]);
 
   // Fetch on-chain stats from Supabase
   let totalXpMinted = 0;
@@ -84,7 +67,6 @@ export default async function LandingPage({
       learningPaths={learningPaths}
       achievements={achievements}
       flagshipLessonHref={flagshipLessonHref}
-      paymentsCourseHref={paymentsCourseHref}
     />
   );
 }
