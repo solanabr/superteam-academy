@@ -38,6 +38,10 @@
       "default": false,
       "type": "boolean"
     },
+    "retired": {
+      "default": false,
+      "type": "boolean"
+    },
     "courses": {
       "default": [],
       "type": "array",

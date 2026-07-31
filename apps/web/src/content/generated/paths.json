@@ -7,6 +7,7 @@
     "difficulty": "intermediate",
     "draft": true,
     "order": 6,
+    "retired": false,
     "slug": "ai-solana",
     "tag": "AI Agents",
     "title": "AI x Solana"
@@ -19,6 +20,7 @@
     "difficulty": "advanced",
     "draft": true,
     "order": 4,
+    "retired": false,
     "slug": "defi",
     "tag": "DeFi",
     "title": "DeFi"
@@ -31,6 +33,7 @@
     "difficulty": "intermediate",
     "draft": true,
     "order": 3,
+    "retired": false,
     "slug": "frontend",
     "tag": "UI/UX",
     "title": "Frontend"
@@ -43,6 +46,7 @@
     "difficulty": "advanced",
     "draft": true,
     "order": 5,
+    "retired": false,
     "slug": "infrastructure",
     "tag": "Infra",
     "title": "Infrastructure"
@@ -55,6 +59,7 @@
     "difficulty": "intermediate",
     "draft": true,
     "order": 2,
+    "retired": false,
     "slug": "rust-programs",
     "tag": "Builder",
     "title": "Rust & Programs"
@@ -67,6 +72,7 @@
     "difficulty": "advanced",
     "draft": true,
     "order": 7,
+    "retired": false,
     "slug": "security",
     "tag": "Security",
     "title": "Security & Auditing"
@@ -79,6 +85,7 @@
     "difficulty": "beginner",
     "draft": true,
     "order": 8,
+    "retired": false,
     "slug": "solana-core",
     "tag": "Foundation",
     "title": "Solana Core"
@@ -122,6 +129,7 @@
     "difficulty": "beginner",
     "draft": false,
     "order": 1,
+    "retired": false,
     "slug": "zero-to-deployed",
     "tag": "Foundation",
     "title": "Zero to Deployed"
