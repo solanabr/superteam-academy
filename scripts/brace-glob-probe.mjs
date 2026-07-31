@@ -61,39 +61,102 @@ const note = (scope, detail) => {
 // Resolution graph
 // ---------------------------------------------------------------------------
 
+const cmpVersion = (a, b) => a[0].localeCompare(b[0], undefined, { numeric: true });
+
+/**
+ * A snapshot entry key at exactly 2 spaces of indent.
+ *
+ * pnpm lockfile v9 writes an entry in one of TWO shapes, and both must match:
+ *
+ *   block  ->  `  minimatch@9.0.9:`            (has a nested `dependencies:` map)
+ *   leaf   ->  `  picomatch@2.3.2: {}`         (dependency-less, INLINE FLOW MAP)
+ *
+ * Missing the leaf form is not a cosmetic gap: it drops 34% of this lockfile's
+ * entries, and — because an unmatched key means "not in the graph" — it silently
+ * downgrades a REACHABLE vulnerable copy to a benign orphan INFO. That is a
+ * false negative strictly worse than the directory-walking bug this replaces,
+ * so the trailing `{}` is part of the pattern, not an afterthought.
+ *
+ * Keys are also optionally single-quoted (`'@babel/core@7.29.6'`) and may carry
+ * a peer suffix (`foo@1.2.3(bar@4.5.6)`); the peer hash is dropped because it
+ * does not change which bytes land on disk for that version.
+ */
+const SNAPSHOT_KEY =
+  /^ {2}'?((?:@[^/'\s]+\/)?[^@'\s][^'\s]*?)@([^('\s]+)(?:\([^']*\))?'?:(\s*\{\s*\})?\s*$/;
+
 /**
  * `name -> Set(version)` for everything in the lockfile's resolution graph.
  *
  * Parsed straight out of the `snapshots:` block of pnpm lockfile v9 — the same
  * structure `pnpm why` walks — rather than shelling out to `pnpm why` per
  * package (seconds per call, and it needs a resolved store to answer at all).
- * Keys look like `minimatch@9.0.9`, `'@babel/core@7.29.6'`, or
- * `foo@1.2.3(bar@4.5.6)` when peers are involved; the peer suffix is dropped
- * because it does not change which bytes are on disk for that version.
  */
-function resolvedGraph() {
+function parseSnapshots(text) {
   const graph = new Map();
-  if (!existsSync(lockfile)) return null;
-  const lines = readFileSync(lockfile, 'utf8').split('\n');
   let inSnapshots = false;
-  for (const line of lines) {
+  for (const line of text.split('\n')) {
     if (/^[a-zA-Z]/.test(line)) {
       inSnapshots = line.startsWith('snapshots:');
       continue;
     }
     if (!inSnapshots) continue;
-    // Entry keys sit at exactly 2 spaces of indent and end in `:`.
-    const m = /^ {2}'?((?:@[^/'\s]+\/)?[^@'\s][^'\s]*?)@([^('\s]+)(?:\([^']*\))?'?:\s*$/.exec(line);
+    const m = SNAPSHOT_KEY.exec(line);
     if (!m) continue;
     const [, name, version] = m;
     if (!/^\d/.test(version)) continue; // links / aliases, not a real version
     if (!graph.has(name)) graph.set(name, new Set());
     graph.get(name).add(version);
   }
-  return graph.size ? graph : null;
+  return graph;
 }
 
-const graph = resolvedGraph();
+// --- Parser self-check (regression fixture for the leaf-form defect) --------
+// Runs on every invocation, asserted like any other check: a parser that stops
+// seeing `foo@1.0.0: {}` turns real failures into INFO lines, so it must fail
+// the build loudly rather than quietly shrink the probe's coverage.
+{
+  const fixture = [
+    'packages:',
+    '  ignored-outside-snapshots@9.9.9: {}',
+    'snapshots:',
+    '  leaf@1.0.0: {}',
+    '  leaf-spaced@1.0.1: {  }',
+    '  block@2.0.0:',
+    '    dependencies:',
+    '      leaf: 1.0.0',
+    "  '@scoped/leaf@3.0.0': {}",
+    "  '@scoped/block@3.1.0':",
+    '    dependencies:',
+    '      leaf: 1.0.0',
+    '  peered@4.0.0(leaf@1.0.0): {}',
+    "  'peered-quoted@4.1.0(leaf@1.0.0)': {}",
+    '  aliased@link:../local: {}',
+    '',
+  ].join('\n');
+  const got = parseSnapshots(fixture);
+  const flat = [...got].flatMap(([n, vs]) => [...vs].map((v) => `${n}@${v}`)).sort();
+  const want = [
+    '@scoped/block@3.1.0',
+    '@scoped/leaf@3.0.0',
+    'block@2.0.0',
+    'leaf-spaced@1.0.1',
+    'leaf@1.0.0',
+    'peered-quoted@4.1.0',
+    'peered@4.0.0',
+  ];
+  record(
+    'parser self-check',
+    'snapshot keys: leaf `{}` + block + scoped + peer-suffixed',
+    JSON.stringify(flat) === JSON.stringify(want),
+    JSON.stringify(flat),
+  );
+}
+
+const graph = existsSync(lockfile) ? parseSnapshots(readFileSync(lockfile, 'utf8')) : null;
+if (graph && !graph.size) {
+  console.error('brace-glob-probe: pnpm-lock.yaml has an empty `snapshots:` block.');
+  process.exit(2);
+}
 if (!graph) {
   console.error(
     'brace-glob-probe: could not read the resolution graph from pnpm-lock.yaml — ' +
@@ -146,8 +209,6 @@ function copies(name) {
   return reachable.sort(cmpVersion);
 }
 
-const cmpVersion = (a, b) => a[0].localeCompare(b[0], undefined, { numeric: true });
-
 // ---------------------------------------------------------------------------
 // 0. Override conformance — every resolved version honors the root pin
 // ---------------------------------------------------------------------------
@@ -158,6 +219,16 @@ const cmpVersion = (a, b) => a[0].localeCompare(b[0], undefined, { numeric: true
 const PINNED = ['brace-expansion', 'minimatch', 'picomatch'];
 const overrides = JSON.parse(readFileSync(path.join(repoRoot, 'package.json'), 'utf8')).pnpm
   ?.overrides ?? {};
+
+// Coverage floor. Every check below is "for each resolved version of X" — which
+// asserts NOTHING when X resolves to nothing. A parser regression, a rename, or
+// a genuine drop-out of the tree would all shrink the probe silently (the
+// leaf-form defect above cut it 49 -> 44 checks with no red anywhere). A pinned
+// name that vanishes from the graph is therefore a failure in its own right.
+for (const name of PINNED) {
+  const n = graph.get(name)?.size ?? 0;
+  record(name, 'resolves to >=1 version (coverage floor)', n > 0, `${n} version(s) in the resolution graph`);
+}
 
 /** Enough semver for the range forms the overrides actually use. */
 function satisfies(version, range) {
@@ -187,7 +258,16 @@ for (const name of PINNED) {
     }
     const ok = satisfies(version, hit[1]);
     if (ok === null) {
-      note(name, `override spec '${hit[1]}' is not a form this probe can evaluate — skipped`);
+      // The PIN is repo-authored. A form this probe can't evaluate (`>=9.0.7`,
+      // `9.x`, a range union) means the pin is going UNVERIFIED — indistinguish-
+      // able, from here, from a real pin gap. Fail and make someone either teach
+      // `satisfies()` the form or simplify the pin; never quietly skip it.
+      record(
+        `${name}@${version}`,
+        'covered by a root override pin',
+        false,
+        `pin ${name}@${major} = '${hit[1]}' is not a form this probe can evaluate — pin left UNVERIFIED`,
+      );
       continue;
     }
     record(`${name}@${version}`, 'covered by a root override pin', ok, `pin ${name}@${major} = ${hit[1]}`);
