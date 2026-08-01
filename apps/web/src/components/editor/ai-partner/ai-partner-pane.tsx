@@ -246,7 +246,7 @@ export function AiPartnerPane({
           getCode={getCode}
           onVerify={verifyCheck}
           eventCtx={eventCtx}
-          className="h-72 max-h-[70vh] min-h-36 resize-y overflow-y-auto"
+          className="h-96 min-h-36 resize-y overflow-y-auto"
         />
       )}
 
