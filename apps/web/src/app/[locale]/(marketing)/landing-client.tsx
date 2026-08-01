@@ -11,7 +11,6 @@ import {
   Wallet,
   GoogleLogo,
 } from "@phosphor-icons/react";
-import type { LearningPath } from "@superteam-lms/types";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
 import { AuthModal } from "@/components/auth/auth-modal";
@@ -22,7 +21,6 @@ import {
   EarnWidget,
   ProveWidget,
 } from "@/components/landing/loop-widgets";
-import { PathsExplorer } from "@/components/landing/paths-explorer";
 import { createClient } from "@/lib/supabase/client";
 import type { DeployedAchievement } from "@/lib/content/queries";
 
@@ -244,7 +242,6 @@ interface LandingPageProps {
   totalXpMinted: number;
   enrolledBuilders: number;
   credentialsIssued: number;
-  learningPaths: LearningPath[];
   achievements: DeployedAchievement[];
   /**
    * LX-A1: anonymous-first deep-link into the flagship path's lesson 1
@@ -259,9 +256,7 @@ interface LandingPageProps {
 // "9 builders enrolled" markets against us). Until the floors are met, the two
 // weakest cells swap to verifiable platform facts.
 const STAT_FLOOR_BUILDERS = 50;
-const STAT_FLOOR_CREDENTIALS = 25;
 const ONCHAIN_INSTRUCTION_COUNT = 18;
-const TEST_COUNT = 139; // 62 TS integration + 77 Rust unit
 
 // Explorer receipts: "on-chain" is a claim you can click.
 const SOLANA_NETWORK = process.env.NEXT_PUBLIC_SOLANA_NETWORK ?? "devnet";
@@ -282,7 +277,6 @@ export function LandingPageClient({
   totalXpMinted,
   enrolledBuilders,
   credentialsIssued,
-  learningPaths,
   achievements,
   flagshipLessonHref,
 }: LandingPageProps) {
@@ -418,7 +412,7 @@ export function LandingPageClient({
           </div>
 
           <div className="container px-4 pb-10 pt-8 sm:pb-12 sm:pt-10 md:pb-14 md:pt-14">
-            <div className="grid items-center gap-12 md:grid-cols-2 md:gap-16">
+            <div className="mx-auto grid max-w-6xl items-center gap-12 md:grid-cols-2 md:gap-16">
               <div>
                 <div
                   className="hero-seq mb-6 inline-flex items-center gap-2 rounded-md border-[2.5px] border-border bg-card px-3 py-2 shadow-card"
@@ -560,20 +554,12 @@ export function LandingPageClient({
                       href={PROGRAM_EXPLORER}
                     />
                   )}
-                  {credentialsIssued >= STAT_FLOOR_CREDENTIALS ? (
-                    <CountUpStat
-                      target={credentialsIssued}
-                      label={t("statCredentials")}
-                      color="text-text"
-                      href={PROGRAM_EXPLORER}
-                    />
-                  ) : (
-                    <CountUpStat
-                      target={TEST_COUNT}
-                      label={t("statTests")}
-                      color="text-text"
-                    />
-                  )}
+                  <CountUpStat
+                    target={credentialsIssued}
+                    label={t("statCredentials")}
+                    color="text-text"
+                    href={PROGRAM_EXPLORER}
+                  />
                   <CountUpStat
                     target={courseCount}
                     label={t("statCourses")}
@@ -584,33 +570,6 @@ export function LandingPageClient({
             </Reveal>
           </div>
         </section>
-
-        {/* ── Learning Paths — track-select console ── */}
-        {learningPaths.length > 0 && (
-          <section className="py-12 sm:py-20 md:py-28">
-            <div className="container px-4">
-              <Reveal>
-                <div className="mb-8 flex items-end justify-between sm:mb-14">
-                  <h2 className="font-display text-2xl font-black tracking-[-0.5px] sm:text-3xl md:text-4xl">
-                    {t("pathsTitle")}
-                  </h2>
-                  <div className="hidden text-sm font-medium text-text-3 md:block">
-                    {t("pathsComment")}
-                  </div>
-                </div>
-              </Reveal>
-
-              <Reveal>
-                <PathsExplorer
-                  paths={learningPaths.filter(
-                    (p) => (p.courses?.length ?? 0) > 0
-                  )}
-                  locale={locale}
-                />
-              </Reveal>
-            </div>
-          </section>
-        )}
 
         {/* ── How it works: build → earn → prove ── */}
         <section className="border-y-[2.5px] border-border bg-subtle">
