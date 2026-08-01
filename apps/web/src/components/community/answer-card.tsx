@@ -107,7 +107,7 @@ export function AnswerCard({
           <div className="flex flex-wrap items-center gap-1.5">
             {answer.author.username ? (
               <Link
-                href={`/profile/${answer.author.username}`}
+                href={`/profile/${encodeURIComponent(answer.author.username)}`}
                 className="text-sm font-semibold text-[var(--text)] transition-colors hover:text-[var(--primary)]"
               >
                 {answer.author.username}

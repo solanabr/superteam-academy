@@ -125,7 +125,7 @@ export function ThreadCard({
           {/* Named authors link to their public profile; anonymous stays text. */}
           {author.username ? (
             <Link
-              href={`/profile/${author.username}`}
+              href={`/profile/${encodeURIComponent(author.username)}`}
               className="flex items-center gap-1 transition-colors hover:text-[var(--primary)]"
             >
               {author.avatar_url ? (
@@ -140,9 +140,6 @@ export function ThreadCard({
                 <div className="h-3.5 w-3.5 rounded-full bg-[var(--primary-dim)]" />
               )}
               <span className="max-w-[10rem] truncate">{author.username}</span>
-              {author.level > 0 && (
-                <LevelBadge level={author.level} size="xs" />
-              )}
             </Link>
           ) : (
             <span className="flex items-center gap-1">
@@ -150,6 +147,7 @@ export function ThreadCard({
               <span className="max-w-[10rem] truncate">{t("anonymous")}</span>
             </span>
           )}
+          {author.level > 0 && <LevelBadge level={author.level} size="xs" />}
           <span>{timeAgo(createdAt, t)}</span>
           <span className="flex items-center gap-1">
             <ChatCircle size={11} aria-hidden="true" />
