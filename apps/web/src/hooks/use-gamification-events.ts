@@ -35,8 +35,10 @@ export function dispatchXpGain(amount: number): void {
  * Subscribe to Supabase Realtime for gamification events.
  * Dispatches browser CustomEvents that the existing popup components listen to.
  *
- * There is deliberately no level-up subscription: a level-up is shown by the
- * dashboard identity panel updating, never by a popup (brand guide §10).
+ * There is deliberately no level-up subscription: a level-up shows as the
+ * header level badge recomputing from the live XP counter on xp-gain, never a
+ * popup (brand guide §10). The dashboard identity panel is server-rendered and
+ * does NOT live-update — it reflects the new level on next navigation.
  */
 export function useGamificationEvents(userId: string | undefined) {
   // Deduplicate Realtime events — Supabase may deliver the same row multiple

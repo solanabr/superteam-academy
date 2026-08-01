@@ -62,36 +62,42 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
   const b = block as QuizBlockData;
   const t = useTranslations("lesson");
   // Device-scoped persistence (owner 2026-07-31): a refresh must not lose the
-  // quiz. Same pattern as the editor draft — localStorage, keyed by block.
-  const storageKey = `quiz-state:${b.key}`;
-  const restored = (() => {
-    if (typeof window === "undefined") return null;
-    try {
-      const raw = window.localStorage.getItem(storageKey);
-      return raw
-        ? (JSON.parse(raw) as {
-            selections?: Record<string, string[]>;
-            results?: Record<string, CheckResult>;
-            checkedEver?: Record<string, boolean>;
-          })
-        : null;
-    } catch {
-      return null;
-    }
-  })();
-  const [selections, setSelections] = useState<Record<string, string[]>>(
-    restored?.selections ?? {}
-  );
-  const [results, setResults] = useState<Record<string, CheckResult>>(
-    restored?.results ?? {}
-  );
+  // quiz. localStorage, hydrated in an effect — reading it during render would
+  // desync the first paint from SSR (hydration mismatch), same rule as the
+  // stopwatch. Keyed by lesson AND block: block keys are only stable WITHIN a
+  // lesson (packages/types course.ts), so a bare block key can collide across
+  // lessons.
+  const storageKey = `quiz-state:${ctx.lesson._id}:${b.key}`;
+  const [selections, setSelections] = useState<Record<string, string[]>>({});
+  const [results, setResults] = useState<Record<string, CheckResult>>({});
   // Sticky "has been checked at least once" — once feedback + explanation have
   // been revealed, the AI pane has nothing left to spoil (F18 gate below).
-  const [checkedEver, setCheckedEver] = useState<Record<string, boolean>>(
-    restored?.checkedEver ?? {}
-  );
+  const [checkedEver, setCheckedEver] = useState<Record<string, boolean>>({});
+  // False until the post-mount restore has run; the save effect must not write
+  // before then or the first (empty) render would wipe the stored state.
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      if (raw) {
+        const restored = JSON.parse(raw) as {
+          selections?: Record<string, string[]>;
+          results?: Record<string, CheckResult>;
+          checkedEver?: Record<string, boolean>;
+        };
+        setSelections(restored.selections ?? {});
+        setResults(restored.results ?? {});
+        setCheckedEver(restored.checkedEver ?? {});
+      }
+    } catch {
+      /* corrupt/blocked storage — start fresh */
+    }
+    setHydrated(true);
+  }, [storageKey]);
+
+  useEffect(() => {
+    if (!hydrated) return;
     try {
       window.localStorage.setItem(
         storageKey,
@@ -100,7 +106,7 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
     } catch {
       /* storage full/blocked — persistence is best-effort */
     }
-  }, [storageKey, selections, results, checkedEver]);
+  }, [hydrated, storageKey, selections, results, checkedEver]);
   // Section starts open (#770); collapsing leaves the score badge as the recap.
   const [open, setOpen] = useState(true);
   const [index, setIndex] = useState(0);

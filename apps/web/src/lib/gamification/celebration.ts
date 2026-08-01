@@ -8,7 +8,7 @@ import confetti from "canvas-confetti";
  * Lesson/challenge completion gets a calm checkmark acknowledgment; a
  * level-up celebrates nothing at all — the brand guide's three-popup rule
  * reserves popups for XP reward, Achievement Unlocked and Certificate Minted,
- * and a level-up is shown by the dashboard identity panel updating; a
+ * and a level-up is visible in the header level badge, which recomputes from the live XP counter on every xp-gain event (the dashboard identity panel is server-rendered and does NOT live-update); a
  * successful devnet deploy gets a single confetti burst; a credential mint
  * gets the full-screen celebration.
  *
@@ -32,7 +32,7 @@ export const CELEBRATION_TIERS: Record<CelebrationEvent, CelebrationTier> = {
   "deploy-success": "medium",
   // No popup, no confetti: the brand guide's three-popup rule (XP reward,
   // Achievement Unlocked, Certificate Minted) leaves no room for a level-up
-  // popup — the dashboard identity panel updating IS the level-up moment.
+  // popup — the header level badge recomputing on xp-gain (the identity panel is server-rendered, not live) IS the level-up moment.
   "level-up": "none",
   "credential-mint": "full",
   // A surprise bonus (LX-B15) is an informational moment — a calm toast, never

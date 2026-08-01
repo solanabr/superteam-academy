@@ -33,7 +33,7 @@ export function GamificationOverlays() {
         /* Single stacking container for the three celebrating popups —
            XP reward, Achievement Unlocked, Certificate Minted. Nothing else
            gets a popup (brand guide §10, the three-popup rule); a level-up is
-           shown by the dashboard identity panel updating. */
+           visible in the header level badge, which recomputes from the live XP counter on every xp-gain event (the dashboard identity panel is server-rendered and does NOT live-update). */
         <div className="pointer-events-none fixed bottom-4 right-3 z-50 flex flex-col items-end gap-2 sm:bottom-6 sm:right-6">
           <CertificatePopup className="pointer-events-auto" />
           <AchievementPopup className="pointer-events-auto" />

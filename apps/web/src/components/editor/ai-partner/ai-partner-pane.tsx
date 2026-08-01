@@ -109,6 +109,18 @@ export function AiPartnerPane({
     [nudgeEligible, nudgeState, onNudgeShown]
   );
 
+  // A question typed before the first run is parked above (the composer has
+  // already cleared its textarea by then) — replay it the moment the gate
+  // opens, so pressing Enter pre-run never silently discards the learner's
+  // text. The ref is cleared first so a re-render can't double-fire.
+  useEffect(() => {
+    if (hasRunTests && pendingActionRef.current) {
+      const parked = pendingActionRef.current;
+      pendingActionRef.current = null;
+      parked();
+    }
+  }, [hasRunTests]);
+
   const {
     messages,
     counts,
@@ -225,7 +237,9 @@ export function AiPartnerPane({
           role="status"
           className="flex shrink-0 items-center gap-2 border-b border-border px-4 py-2.5 [background:var(--accent-bg)]"
         >
-          <p className="text-xs font-bold text-text">{t("attemptNudge.title")}</p>
+          <p className="text-xs font-bold text-text">
+            {t("attemptNudge.title")}
+          </p>
         </div>
       )}
 
@@ -240,7 +254,7 @@ export function AiPartnerPane({
           getCode={getCode}
           onVerify={verifyCheck}
           eventCtx={eventCtx}
-          className="h-72 min-h-36 max-h-[70vh] resize-y overflow-y-auto"
+          className="h-72 max-h-[70vh] min-h-36 resize-y overflow-y-auto"
         />
       )}
 

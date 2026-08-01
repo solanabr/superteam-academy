@@ -162,6 +162,31 @@ describe("AiPartnerPane — attempt-gate notice (#865, tightened: one line, no b
     expect(hookState.ask).toHaveBeenCalledWith("why does subgoal 2 fail?");
     expect(screen.queryByText(nudgeTitle)).not.toBeInTheDocument();
   });
+
+  it("REPLAYS a held question when the gate opens — typed text is never lost", () => {
+    // The composer clears its textarea before onSend, so the parked closure is
+    // the only copy of the learner's question. When hasRunTests flips, the
+    // pane must replay it — not silently drop it (gate finding M2 on #955).
+    const view = renderPane({ hasRunTests: false });
+    sendAsk("why does subgoal 2 fail?");
+    expect(hookState.ask).not.toHaveBeenCalled();
+
+    view.rerender(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <AiPartnerPane
+          lessonSlug="l"
+          courseSlug="c"
+          hints={[]}
+          getCode={() => "code"}
+          getTestSummary={() => "3/3 passing"}
+          onApply={() => {}}
+          hasRunTests={true}
+        />
+      </NextIntlClientProvider>
+    );
+    expect(hookState.ask).toHaveBeenCalledTimes(1);
+    expect(hookState.ask).toHaveBeenCalledWith("why does subgoal 2 fail?");
+  });
 });
 
 describe("AiPartnerPane — free-text composer (#944)", () => {
