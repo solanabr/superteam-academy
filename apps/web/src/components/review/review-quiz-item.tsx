@@ -128,7 +128,7 @@ export function ReviewQuizItem({ item, onGraded }: ReviewQuizItemProps) {
                 return (
                   <label
                     key={o.id}
-                    className={`flex cursor-pointer items-center gap-2 rounded-md border p-2 text-sm transition-colors hover:bg-subtle ${border} ${
+                    className={`flex cursor-pointer items-center gap-2 rounded-md border p-2 text-sm transition-colors hover:bg-inset ${border} ${
                       graded ? "cursor-default" : ""
                     }`}
                   >
@@ -147,7 +147,7 @@ export function ReviewQuizItem({ item, onGraded }: ReviewQuizItemProps) {
               })}
             </div>
             {graded && q.explanation && (
-              <div className="space-y-1 rounded-md border border-border bg-subtle p-3">
+              <div className="space-y-1 rounded-md border border-border bg-inset p-3">
                 <p className="font-display text-xs font-bold uppercase tracking-wide text-text-3">
                   {t("explanationLabel")}
                 </p>

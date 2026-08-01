@@ -402,10 +402,16 @@ export const CHIP_STYLES = {
   base: "inline-flex items-center gap-1 px-3 py-1 rounded-full font-display font-bold text-[11px] uppercase tracking-wide border",
   /** pill-primary — emerald teal */
   primary: "bg-primary-bg [border-color:rgba(46,204,142,0.22)] text-primary",
-  /** pill-xp — warm amber for XP rewards */
-  xp: "bg-xp-dim [border-color:rgba(245,166,35,0.22)] text-xp",
-  /** pill-streak — flame orange */
-  streak: "bg-streak-light [border-color:rgba(249,115,22,0.22)] text-streak",
+  /**
+   * pill-xp — warm amber for XP rewards.
+   * Container comes from --xp-chip-*: on the warm-paper light theme that is an
+   * inverted dark charcoal chip so the brand amber keeps its contrast; in dark
+   * it resolves to the same amber-dim wash it has always been.
+   */
+  xp: "bg-xp-chip-bg [border-color:rgba(245,166,35,0.22)] text-xp-chip-fg",
+  /** pill-streak — flame orange, same inverted-container treatment as xp */
+  streak:
+    "bg-streak-chip-bg [border-color:rgba(249,115,22,0.22)] text-streak-chip-fg",
   /** pill-level — purple */
   level:
     "[background:var(--level-dim)] border-[rgba(167,139,250,0.22)] text-[var(--level)]",

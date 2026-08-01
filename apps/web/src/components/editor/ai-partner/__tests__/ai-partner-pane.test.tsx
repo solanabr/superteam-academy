@@ -275,9 +275,6 @@ describe("AiPartnerPane — 'Show me a change' propose action (#947)", () => {
   it("stays available on the Socratic tier (#864 §4.2 — the escape hatch survives)", () => {
     hookState.tier = "socratic";
     renderPane({ hasRunTests: true, hasFailedRun: true });
-    expect(
-      screen.getByText(messages.aiPartner.socratic.entered)
-    ).toBeInTheDocument();
     expect(proposeButton()).toBeEnabled();
   });
 

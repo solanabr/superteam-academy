@@ -101,7 +101,7 @@ export function Composer({
         {onPropose && (
           <Button
             type="button"
-            variant="ghost"
+            variant="secondary"
             size="sm"
             onClick={() => onPropose(value.trim() || undefined)}
             disabled={inert}
@@ -109,7 +109,7 @@ export function Composer({
             className="gap-1.5 text-xs"
           >
             <GitDiff size={14} weight="duotone" aria-hidden="true" />
-            {t("actions.propose")}
+            <span className="text-primary">{t("actions.propose")}</span>
             <span className="font-normal text-text-3">
               {t("actions.proposeCost")}
             </span>

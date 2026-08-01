@@ -253,7 +253,7 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
             "rounded-full px-2 py-0.5 text-xs font-bold tabular-nums",
             allCorrect
               ? "text-success [background:var(--success-light)]"
-              : "text-text-3 [background:var(--input)]"
+              : "text-text-3 [background:var(--inset)]"
           )}
         >
           {t("quizScore", {
@@ -309,7 +309,7 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
                       "flex items-center gap-2 rounded-md border p-2 text-sm transition-colors",
                       locked
                         ? "cursor-default"
-                        : "cursor-pointer hover:bg-subtle",
+                        : "cursor-pointer hover:bg-inset",
                       judged
                         ? o.correct
                           ? "border-success"
@@ -358,7 +358,7 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
                     </p>
                   ))}
                   {q.explanation && (
-                    <div className="space-y-1 rounded-md border border-border bg-subtle p-3">
+                    <div className="space-y-1 rounded-md border border-border bg-inset p-3">
                       <p className="font-display text-xs font-bold uppercase tracking-wide text-text-3">
                         {t("quizExplanationLabel")}
                       </p>
@@ -447,7 +447,7 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
             (LX-C1/F18) — retrieval stays AI-free. The gate is unchanged; the
             line states it explicitly and counts down (#770, #943). */}
         {!allChecked && (
-          <p className="flex items-start gap-2 rounded-md border border-border p-3 text-xs text-text-3 [background:var(--input)]">
+          <p className="flex items-start gap-2 rounded-md border border-border p-3 text-xs text-text-3 [background:var(--inset)]">
             <Robot
               size={16}
               weight="duotone"

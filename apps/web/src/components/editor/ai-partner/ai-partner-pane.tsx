@@ -240,14 +240,9 @@ export function AiPartnerPane({
         />
       )}
 
-      {/* Socratic tier (#864 §4.4): the lighter tutor announces itself once —
-          honest, warm, and never a wall. Hidden again at exhaustion, where the
-          community-handoff block below takes over. */}
-      {open && tier === "socratic" && (
-        <div className="shrink-0 border-t border-border px-4 py-2">
-          <p className="text-xs text-text-3">{t("socratic.entered")}</p>
-        </div>
-      )}
+      {/* Socratic banner removed (owner 2026-07-31): the tier shift shows in
+          the assist meter; the sentence crowded the thinking indicator. The
+          Socratic behavior itself (#864 §4.4) is unchanged. */}
 
       {/* True exhaustion (#864, turn 31): the tutor hands off to the community
           — it does not go silent and it never shows a paywall shape. No

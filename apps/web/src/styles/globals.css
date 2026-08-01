@@ -26,6 +26,19 @@
     --card-glass-blur: rgba(255, 255, 255, 0.7);
     --card-alt: rgba(0, 0, 0, 0.02);
     --input: #f3f1ec;
+    /* ── O&H keepers (owner 2026-07-31): third surface step, green avatar
+       identity, guide-tinted stat chips, navy code islands ── */
+    --inset: #edeae2;
+    --avatar-bg: #0a6b4d;
+    --avatar-fg: #fdf9ef;
+    --avatar-ring: rgba(0, 0, 0, 0.13);
+    --xp-chip-bg: rgba(245, 158, 11, 0.14);
+    --xp-chip-fg: #b45309;
+    --streak-chip-bg: rgba(234, 88, 12, 0.12);
+    --streak-chip-fg: #ea580c;
+    --code-bg: #161b27;
+    --code-fg: #e6edf3;
+    --code-border: rgba(0, 0, 0, 0.13);
 
     /* ── Borders ── */
     --border: rgba(0, 0, 0, 0.08);
@@ -179,6 +192,18 @@
     --card-glass-blur: rgba(22, 27, 39, 0.7);
     --card-alt: rgba(255, 255, 255, 0.02);
     --input: #1c2333;
+    /* ── O&H keepers — dark values match existing rendered surfaces ── */
+    --inset: #1c2333;
+    --avatar-bg: #116b48;
+    --avatar-fg: #e9fbf3;
+    --avatar-ring: rgba(255, 255, 255, 0.11);
+    --xp-chip-bg: rgba(245, 166, 35, 0.14);
+    --xp-chip-fg: #f5a623;
+    --streak-chip-bg: rgba(249, 115, 22, 0.12);
+    --streak-chip-fg: #f97316;
+    --code-bg: rgb(0 0 0 / 50%);
+    --code-fg: #cbd5e1;
+    --code-border: rgba(255, 255, 255, 0.11);
 
     --border: rgba(255, 255, 255, 0.07);
     --border-default: rgba(255, 255, 255, 0.11);
@@ -871,14 +896,22 @@
 /* ═══════════════════════════════════════════════════════════════
    GRID BACKGROUND TEXTURE — subtle dot pattern from design system
 ═══════════════════════════════════════════════════════════════ */
+/* Paper grain in BOTH themes (owner 2026-07-31: no ruled squares in dark).
+   One 160px fractal-noise tile, rasterised once — feTurbulence does not
+   re-run on scroll or resize. Light bakes strength into rect opacity; dark
+   uses a fainter white-speck variant so it reads as texture, not artifacts. */
 .grid-bg {
-  background-image: radial-gradient(
-    circle,
-    color-mix(in srgb, var(--border-default) 70%, transparent) 1px,
-    transparent 1px
-  );
-  background-size: 22px 22px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)' opacity='0.35'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
 }
+
+[data-theme="dark"] .grid-bg {
+  /* Dark grain v2: coarser noise, whisper-faint white — texture you sense,
+     not specks you see. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.55' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.045 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23g)'/%3E%3C/svg%3E");
+  background-size: 220px 220px;
+}
+
 
 /* ═══════════════════════════════════════════════════════════════
    SIDEBAR — hidden scrollbar (scroll without chrome)
@@ -3250,7 +3283,10 @@ a.path-step-card:hover .path-step-badge.skip {
   font-family: var(--font-display, var(--font-d));
   font-weight: 700;
   font-size: 12px;
-  color: #fff;
+  /* The initials chip carries no surface of its own; on a pale page a
+     hardcoded white glyph disappeared into the row. */
+  color: var(--avatar-fg);
+  background-color: var(--avatar-bg);
   background-size: cover;
 }
 
@@ -5330,6 +5366,17 @@ a.path-step-card:hover .path-step-title {
 }
 .hljs-strong {
   font-weight: 700;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PROSE CODE SLAB — light only
+   The typography plugin ships a slate-800 <pre>, which on warm paper reads
+   as a transplant from another design. Re-hue it to the warm charcoal in
+   --code-*. Dark keeps the plugin's invert defaults untouched.
+═══════════════════════════════════════════════════════════════ */
+:root:not([data-theme="dark"]) .prose {
+  --tw-prose-pre-bg: var(--code-bg);
+  --tw-prose-pre-code: var(--code-fg);
 }
 
 /* ═══════════════════════════════════════════════════════════════
