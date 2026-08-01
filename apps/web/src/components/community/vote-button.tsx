@@ -33,6 +33,7 @@ export function VoteButton({
           type="button"
           disabled={disabled}
           onClick={() => onVote(userVote === 1 ? 0 : 1)}
+          aria-pressed={userVote === 1}
           className={cn(
             "flex items-center justify-center rounded p-1 transition-colors hover:bg-[var(--primary-dim)]",
             "disabled:cursor-not-allowed disabled:opacity-50",
@@ -58,6 +59,7 @@ export function VoteButton({
           type="button"
           disabled={disabled}
           onClick={() => onVote(userVote === -1 ? 0 : -1)}
+          aria-pressed={userVote === -1}
           className={cn(
             "flex items-center justify-center rounded p-1 transition-colors hover:bg-[var(--danger-light)]",
             "disabled:cursor-not-allowed disabled:opacity-50",
@@ -82,6 +84,7 @@ export function VoteButton({
         type="button"
         disabled={disabled}
         onClick={() => onVote(userVote === 1 ? 0 : 1)}
+        aria-pressed={userVote === 1}
         className={cn(
           "flex items-center justify-center rounded-md p-2 transition-colors hover:bg-[var(--primary-dim)]",
           "disabled:cursor-not-allowed disabled:opacity-50",
@@ -110,6 +113,7 @@ export function VoteButton({
         type="button"
         disabled={disabled}
         onClick={() => onVote(userVote === -1 ? 0 : -1)}
+        aria-pressed={userVote === -1}
         className={cn(
           "flex items-center justify-center rounded-md p-2 transition-colors hover:bg-[var(--danger-light)]",
           "disabled:cursor-not-allowed disabled:opacity-50",

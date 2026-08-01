@@ -12,6 +12,7 @@ import { NextIntlClientProvider } from "next-intl";
 import messages from "@/messages/en.json";
 import { ThreadDetailClient } from "@/app/[locale]/(platform)/community/[category-slug]/[thread-slug]/thread-detail-client";
 import { AnswerCard } from "../answer-card";
+import { AnswerEditor } from "../answer-editor";
 
 const push = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
@@ -225,6 +226,60 @@ describe("ThreadDetailClient — provenance chip", () => {
   });
 });
 
+/** The answer rows live inside the list's `divide-y` container; the question
+ *  itself is now also an <article>, so "the first article" is no longer the
+ *  first answer. */
+function answerArticles(container: HTMLElement): HTMLElement[] {
+  return Array.from(
+    container.querySelectorAll<HTMLElement>(".divide-y > article")
+  );
+}
+
+describe("ThreadDetailClient — flat header anatomy (no vote rail)", () => {
+  it("puts thread voting in the inline action row, not a floating column", async () => {
+    fetchMock.mockResolvedValue({ ok: true, json: async () => makeThread() });
+    const { container } = renderWithIntl(<ThreadDetailClient shortId="abc" />);
+    await screen.findByRole("heading", { name: /Why is my PDA seed wrong/ });
+
+    const upvote = screen.getByRole("button", {
+      name: messages.community.upvote,
+    });
+    // The horizontal cluster is the answers' idiom; the vertical rail is gone.
+    expect(upvote.parentElement?.className).toContain("inline-flex");
+    expect(upvote.parentElement?.className).not.toContain("flex-col");
+    // The vote control follows the body, it does not sit beside the title.
+    const title = screen.getByRole("heading", {
+      name: /Why is my PDA seed wrong/,
+    });
+    expect(
+      title.compareDocumentPosition(upvote) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(container.querySelector(".prose")).not.toBeNull();
+  });
+
+  it("labels vote state for assistive tech", async () => {
+    fetchMock.mockResolvedValue({ ok: true, json: async () => makeThread() });
+    renderWithIntl(<ThreadDetailClient shortId="abc" />);
+    await screen.findByRole("heading", { name: /Why is my PDA seed wrong/ });
+
+    expect(
+      screen.getAllByRole("button", { name: messages.community.upvote })[0]
+    ).toHaveAttribute("aria-pressed", "false");
+    expect(
+      screen.getAllByRole("button", { name: messages.community.downvote })[0]
+    ).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("renders one content column — the header is not split into a rail", async () => {
+    fetchMock.mockResolvedValue({ ok: true, json: async () => makeThread() });
+    const { container } = renderWithIntl(<ThreadDetailClient shortId="abc" />);
+    await screen.findByRole("heading", { name: /Why is my PDA seed wrong/ });
+
+    const column = container.firstElementChild as HTMLElement;
+    expect(column.className).toContain("max-w-3xl");
+  });
+});
+
 describe("Answers section — LeetCode comment-thread anatomy", () => {
   it("puts the composer ABOVE the answer list", async () => {
     fetchMock.mockResolvedValue({
@@ -255,15 +310,15 @@ describe("Answers section — LeetCode comment-thread anatomy", () => {
     const { container } = renderWithIntl(<ThreadDetailClient shortId="abc" />);
     await screen.findByText("Body.");
 
-    const item = container.querySelector("article");
-    expect(item).not.toBeNull();
-    const cls = item!.className;
+    const item = answerArticles(container)[0]!;
+    expect(item).toBeDefined();
+    const cls = item.className;
     // A comment, not a card.
     expect(cls).not.toMatch(/\brounded/);
     expect(cls).not.toMatch(/\bbg-/);
     expect(cls).not.toMatch(/\bborder-\[var\(--border-default\)\]/);
     // Separation comes from the list's hairline divider alone.
-    expect(item!.parentElement?.className).toContain("divide-y");
+    expect(item.parentElement?.className).toContain("divide-y");
   });
 
   it("marks the accepted answer with a left rule, not a box", async () => {
@@ -276,7 +331,7 @@ describe("Answers section — LeetCode comment-thread anatomy", () => {
     const { container } = renderWithIntl(<ThreadDetailClient shortId="abc" />);
     await screen.findByText("Body.");
 
-    const item = container.querySelector("article")!;
+    const item = answerArticles(container)[0]!;
     expect(item.className).toContain("border-l-2");
     expect(item.className).toContain("border-l-[var(--success)]");
     expect(item.className).not.toMatch(/\brounded/);
@@ -292,11 +347,133 @@ describe("Answers section — LeetCode comment-thread anatomy", () => {
 
     expect(container.textContent).toContain("Answers (0)");
     expect(container.textContent).not.toContain(messages.community.sortBy);
-    expect(container.querySelector("article")).toBeNull();
+    expect(answerArticles(container)).toHaveLength(0);
     // The composer is still there — that is the whole point of an empty state.
     expect(
       screen.getByPlaceholderText(messages.community.writeAnswer)
     ).toBeInTheDocument();
+  });
+});
+
+describe("AnswerEditor — inline compact composer", () => {
+  function renderEditor(onPosted = vi.fn()) {
+    renderWithIntl(<AnswerEditor threadId="t1" onAnswerPosted={onPosted} />);
+    return onPosted;
+  }
+
+  it("is a single growable field, not a boxed Write/Preview tab bar", () => {
+    renderEditor();
+    const field = screen.getByPlaceholderText(messages.community.writeAnswer);
+    expect(field.tagName).toBe("TEXTAREA");
+    expect(field.className).toContain("min-h-[44px]");
+    expect(field.className).toContain("resize-y");
+    // Preview is a quiet text-button; "Write" only appears once previewing.
+    expect(
+      screen.queryByRole("button", { name: messages.community.write })
+    ).toBeNull();
+    expect(field).toHaveAttribute("maxLength", "10000");
+  });
+
+  it("toggles a lightweight preview that renders markdown", () => {
+    renderEditor();
+    fireEvent.change(
+      screen.getByPlaceholderText(messages.community.writeAnswer),
+      { target: { value: "Use **checked_add** here." } }
+    );
+
+    const toggle = screen.getByRole("button", {
+      name: messages.community.preview,
+    });
+    expect(toggle).toHaveAttribute("aria-pressed", "false");
+    fireEvent.click(toggle);
+
+    expect(screen.getByText("checked_add").tagName).toBe("STRONG");
+    expect(
+      screen.getByRole("button", { name: messages.community.write })
+    ).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("keeps the counter inline and flags the 10k boundary", () => {
+    renderEditor();
+    const field = screen.getByPlaceholderText(messages.community.writeAnswer);
+    expect(screen.getByText("0/10000")).toBeInTheDocument();
+
+    fireEvent.change(field, { target: { value: "x".repeat(9500) } });
+    expect(screen.getByText("9500/10000").className).toContain("--danger");
+  });
+
+  it("disables Post until there is text, and while a post is in flight", async () => {
+    let resolvePost: (value: unknown) => void = () => {};
+    fetchMock.mockImplementation(
+      () => new Promise((resolve) => (resolvePost = resolve))
+    );
+    renderEditor();
+
+    const post = screen.getByRole("button", {
+      name: messages.community.postAnswer,
+    });
+    expect(post).toBeDisabled();
+
+    fireEvent.change(
+      screen.getByPlaceholderText(messages.community.writeAnswer),
+      { target: { value: "An answer." } }
+    );
+    expect(post).toBeEnabled();
+
+    fireEvent.click(post);
+    await waitFor(() => expect(post).toBeDisabled());
+    expect(post).toHaveAttribute("aria-busy", "true");
+
+    resolvePost({ ok: true, json: async () => ({ id: "a1" }) });
+  });
+
+  it("cannot double-post: a second submit in the same tick is dropped", async () => {
+    let resolvePost: (value: unknown) => void = () => {};
+    fetchMock.mockImplementation(
+      () => new Promise((resolve) => (resolvePost = resolve))
+    );
+    const onPosted = renderEditor();
+
+    fireEvent.change(
+      screen.getByPlaceholderText(messages.community.writeAnswer),
+      { target: { value: "An answer." } }
+    );
+    // Submitting the FORM bypasses the button's `disabled` entirely (Enter,
+    // a stale handler, an assistive-tech submit) — only the re-entrancy guard
+    // stops the second POST.
+    const form = screen
+      .getByRole("button", { name: messages.community.postAnswer })
+      .closest("form")!;
+    fireEvent.submit(form);
+    fireEvent.submit(form);
+
+    expect(
+      fetchMock.mock.calls.filter((c) => c[1]?.method === "POST")
+    ).toHaveLength(1);
+
+    resolvePost({ ok: true, json: async () => ({ id: "a1" }) });
+    await waitFor(() => expect(onPosted).toHaveBeenCalledTimes(1));
+  });
+
+  it("surfaces a post failure without losing the draft", async () => {
+    fetchMock.mockResolvedValue({
+      ok: false,
+      json: async () => ({ error: "Rate limited" }),
+    });
+    renderEditor();
+
+    fireEvent.change(
+      screen.getByPlaceholderText(messages.community.writeAnswer),
+      { target: { value: "An answer." } }
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: messages.community.postAnswer })
+    );
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Rate limited");
+    expect(
+      screen.getByPlaceholderText(messages.community.writeAnswer)
+    ).toHaveValue("An answer.");
   });
 });
 
