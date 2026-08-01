@@ -195,21 +195,25 @@ export function AiPartnerPane({
             <h2 className="font-display text-sm font-extrabold text-text">
               {t("title")}
             </h2>
-            <CaretDown
-              size={14}
-              weight="bold"
-              aria-hidden="true"
-              className={cn(
-                "ml-auto text-text-3 transition-transform",
-                !open && "-rotate-90"
-              )}
-            />
+            {/* Meter lives at the row's right edge (owner 2026-07-31): the
+                text/chat column keeps the width. */}
+            <span className="ml-auto flex items-center gap-2">
+              <AssistMeter tier={tier} counts={counts} />
+              <CaretDown
+                size={14}
+                weight="bold"
+                aria-hidden="true"
+                className={cn(
+                  "text-text-3 transition-transform",
+                  !open && "-rotate-90"
+                )}
+              />
+            </span>
             <span className="sr-only">{tLesson("toggleSection")}</span>
           </div>
           <p className="text-xs text-text-3">
             {disabled ? t("completed") : t("subtitle")}
           </p>
-          <AssistMeter tier={tier} counts={counts} />
         </button>
       </div>
 
