@@ -925,6 +925,7 @@
     "cancel": "Cancelar",
     "post": "Publicar",
     "postAnswer": "Responder",
+    "answerLabel": "Tu respuesta",
     "writeAnswer": "Escribe tu respuesta usando Markdown...",
     "write": "Escribir",
     "preview": "Vista Previa",

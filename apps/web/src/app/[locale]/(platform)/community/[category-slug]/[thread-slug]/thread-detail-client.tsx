@@ -193,7 +193,7 @@ export function ThreadDetailClient({ shortId }: ThreadDetailClientProps) {
 
   if (error || !thread) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-20 text-center">
+      <div className="mx-auto max-w-3xl px-4 py-20 text-center">
         <p className="text-[var(--text-2)]">{error || t("noResults")}</p>
         <Link
           href="/community"
@@ -206,7 +206,7 @@ export function ThreadDetailClient({ shortId }: ThreadDetailClientProps) {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
+    <div className="mx-auto max-w-3xl px-4 py-8">
       {/* Breadcrumb */}
       <Link
         href={
@@ -218,88 +218,93 @@ export function ThreadDetailClient({ shortId }: ThreadDetailClientProps) {
         {thread.category?.name || t("title")}
       </Link>
 
-      {/* Thread */}
-      <div className="flex gap-4">
-        <VoteButton
-          score={threadVote.score}
-          userVote={threadVote.userVote}
-          onVote={threadVote.handleVote}
-          disabled={!user || threadVote.isVoting}
-        />
-
-        <div className="min-w-0 flex-1">
-          <div className="mb-2 flex flex-wrap items-center gap-2">
-            <h1 className="font-display text-2xl font-extrabold text-[var(--text)]">
-              {thread.title}
-            </h1>
-            <ThreadStatusBadge type={thread.type} isSolved={thread.is_solved} />
-          </div>
-
-          {/* Provenance — one chip row under the title, linking back to the
-              lesson the question came from. Nothing else moves. */}
-          {context && (
-            <div className="mb-2">
-              <LessonContextChip context={context} />
-            </div>
-          )}
-
-          {/* Meta */}
-          <div className="mb-4 flex items-center gap-3 text-sm text-[var(--text-2)]">
-            <span className="flex items-center gap-1.5">
-              {thread.author.avatar_url ? (
-                <Image
-                  src={thread.author.avatar_url}
-                  alt=""
-                  width={20}
-                  height={20}
-                  className="h-5 w-5 rounded-full"
-                />
-              ) : (
-                <div className="h-5 w-5 rounded-full bg-[var(--primary-dim)]" />
-              )}
-              <span className="font-medium">
-                {thread.author.username || t("anonymous")}
-              </span>
-              {thread.author.level > 0 && (
-                <LevelBadge level={thread.author.level} size="xs" />
-              )}
-            </span>
-            <span>{timeAgo(thread.created_at, t)}</span>
-            <span>{t("views", { count: thread.view_count })}</span>
-            {user && <FlagButton threadId={thread.id} />}
-            {user?.id === thread.author_id && (
-              <DeleteButton
-                threadId={thread.id}
-                onDeleted={() =>
-                  router.push(
-                    thread.category
-                      ? `/community/${thread.category.slug}`
-                      : "/community"
-                  )
-                }
-              />
-            )}
-          </div>
-
-          {/* Body — heading sizes are stepped DOWN explicitly. `prose-sm`
-              scales the body copy but still renders an authored `#`/`##`
-              larger than the page h1 above, so the question's own markdown
-              could out-shout the question's title. */}
-          <div className="prose prose-sm max-w-none text-[var(--text)] dark:prose-invert prose-headings:font-display prose-headings:font-bold prose-h1:text-base prose-h2:text-[15px] prose-h3:text-sm prose-h4:text-sm">
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeHighlight]}
-            >
-              {thread.body}
-            </ReactMarkdown>
-          </div>
+      {/* The question, in the same anatomy as an answer: WHO → WHAT →
+          ACTIONS, one column, no rail. The floating vote column used to sit
+          apart from everything it belonged to; thread voting now lives in the
+          inline action row, exactly like the answers below. */}
+      <article>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="font-display text-2xl font-extrabold text-[var(--text)]">
+            {thread.title}
+          </h1>
+          <ThreadStatusBadge type={thread.type} isSolved={thread.is_solved} />
         </div>
-      </div>
+
+        {/* Provenance — one chip row under the title, linking back to the
+            lesson the question came from. */}
+        {context && (
+          <div className="mt-2">
+            <LessonContextChip context={context} />
+          </div>
+        )}
+
+        {/* Meta — author, reputation, time, views on one tight line. */}
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--text-2)]">
+          <span className="flex items-center gap-1.5">
+            {thread.author.avatar_url ? (
+              <Image
+                src={thread.author.avatar_url}
+                alt=""
+                width={20}
+                height={20}
+                className="h-5 w-5 rounded-full"
+              />
+            ) : (
+              <div className="h-5 w-5 rounded-full bg-[var(--primary-dim)]" />
+            )}
+            <span className="text-sm font-semibold text-[var(--text)]">
+              {thread.author.username || t("anonymous")}
+            </span>
+            {thread.author.level > 0 && (
+              <LevelBadge level={thread.author.level} size="xs" />
+            )}
+          </span>
+          <span>{timeAgo(thread.created_at, t)}</span>
+          <span>{t("views", { count: thread.view_count })}</span>
+        </div>
+
+        {/* Body — heading sizes are stepped DOWN explicitly. `prose-sm`
+            scales the body copy but still renders an authored `#`/`##`
+            larger than the page h1 above, so the question's own markdown
+            could out-shout the question's title. */}
+        <div className="prose prose-sm mt-3 max-w-none text-[var(--text)] dark:prose-invert prose-headings:font-display prose-headings:font-bold prose-h1:text-base prose-h2:text-[15px] prose-h3:text-sm prose-h4:text-sm">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeHighlight]}
+          >
+            {thread.body}
+          </ReactMarkdown>
+        </div>
+
+        {/* Action row — the answers' idiom, applied to the question. */}
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--text-2)]">
+          <VoteButton
+            score={threadVote.score}
+            userVote={threadVote.userVote}
+            onVote={threadVote.handleVote}
+            disabled={!user || threadVote.isVoting}
+            layout="horizontal"
+          />
+          {user && <FlagButton threadId={thread.id} />}
+          {user?.id === thread.author_id && (
+            <DeleteButton
+              threadId={thread.id}
+              onDeleted={() =>
+                router.push(
+                  thread.category
+                    ? `/community/${thread.category.slug}`
+                    : "/community"
+                )
+              }
+            />
+          )}
+        </div>
+      </article>
 
       {/* Answers — comment-thread order: header, composer, sort line, then the
           flat list. The composer sits at the TOP because that is where you act;
           burying it under N answers made replying a scroll hunt. */}
-      <div className="mt-8 border-t border-[var(--border-default)] pt-6">
+      <div className="mt-6 border-t border-[var(--border-default)] pt-6">
         <h2 className="mb-3 font-display text-lg font-bold text-[var(--text)]">
           {t("answersCount", { count: thread.answers.length })}
         </h2>
