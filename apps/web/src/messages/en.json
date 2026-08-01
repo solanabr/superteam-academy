@@ -362,7 +362,6 @@
     "quizPosition": "Question {current} of {total}",
     "quizPrev": "Previous question",
     "quizNext": "Next question",
-<<<<<<< HEAD
     "quizUnlocksAssistant": "AI Partner unlocks after the quiz — {answered}/{total} answered",
     "quizCompleteChip": "Complete",
     "quizAllCorrect": "All {total} questions answered correctly.",
@@ -376,13 +375,6 @@
     "formatSyntaxError": "Nothing to format — fix the syntax errors first.",
     "formatUnchanged": "Already formatted.",
     "formatUnsupported": "Formatting isn't available for this language."
-||||||| ad469fab
-    "quizUnlocksAssistant": "Answer every question to unlock the AI Partner for this lesson."
-=======
-    "quizUnlocksAssistant": "AI Partner unlocks after the quiz — {answered}/{total} answered",
-    "quizCompleteChip": "Complete",
-    "quizAllCorrect": "All {total} questions answered correctly."
->>>>>>> origin/main
   },
   "dashboard": {
     "allCaughtUp": "All caught up!",
