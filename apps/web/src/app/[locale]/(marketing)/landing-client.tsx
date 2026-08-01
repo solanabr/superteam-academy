@@ -417,7 +417,7 @@ export function LandingPageClient({
             />
           </div>
 
-          <div className="container px-4 pb-16 pt-12 sm:pb-20 sm:pt-16 md:pb-28 md:pt-28">
+          <div className="container px-4 pb-10 pt-8 sm:pb-12 sm:pt-10 md:pb-14 md:pt-14">
             <div className="grid items-center gap-12 md:grid-cols-2 md:gap-16">
               <div>
                 <div
@@ -506,7 +506,7 @@ export function LandingPageClient({
         </section>
 
         {/* ── On-Chain Stats ── */}
-        <section className="py-12 md:py-16">
+        <section className="pb-12 pt-4 md:pb-16 md:pt-6">
           <div className="container px-4">
             <div className="mb-6 flex items-end justify-end">
               <div className="hidden text-sm font-medium text-text-3 md:block">
