@@ -53,7 +53,6 @@ vi.mock("../ai-partner/ai-partner-pane", async () => {
     AiPartnerPane: (props: {
       hasRunTests?: boolean;
       onNudgeShown?: () => void;
-      onNudgeOverride?: () => void;
     }) =>
       createElement(
         "div",
@@ -64,10 +63,6 @@ vi.mock("../ai-partner/ai-partner-pane", async () => {
         createElement("button", {
           "data-testid": "fire-shown",
           onClick: props.onNudgeShown,
-        }),
-        createElement("button", {
-          "data-testid": "fire-override",
-          onClick: props.onNudgeOverride,
         })
       ),
   };
@@ -136,28 +131,30 @@ describe("ChallengeInterface — attempt-gate signal (#865)", () => {
     expect(readHasRunTests()).toBe(true);
   });
 
-  it("fires attempt_gate_nudge_shown and attempt_gate_overridden exactly once per challenge", () => {
+  it("fires attempt_gate_nudge_shown exactly once per challenge", () => {
     renderInterface();
 
     fireEvent.click(screen.getByTestId("fire-shown"));
     fireEvent.click(screen.getByTestId("fire-shown"));
-    fireEvent.click(screen.getByTestId("fire-override"));
-    fireEvent.click(screen.getByTestId("fire-override"));
 
-    const payload = {
-      lessonId: LESSON_ID,
-      courseId: "course-1",
-      challengeKind: "js",
-    };
     const shown = h.trackEvent.mock.calls.filter(
       ([name]) => name === "attempt_gate_nudge_shown"
     );
-    const overridden = h.trackEvent.mock.calls.filter(
-      ([name]) => name === "attempt_gate_overridden"
-    );
     expect(shown).toHaveLength(1);
-    expect(shown[0]?.[1]).toEqual(payload);
-    expect(overridden).toHaveLength(1);
-    expect(overridden[0]?.[1]).toEqual(payload);
+    expect(shown[0]?.[1]).toEqual({
+      lessonId: LESSON_ID,
+      courseId: "course-1",
+      challengeKind: "js",
+    });
+  });
+
+  it("has no override event to fire — the gate is one line with no buttons", () => {
+    renderInterface();
+    fireEvent.click(screen.getByTestId("fire-shown"));
+    expect(
+      h.trackEvent.mock.calls.filter(
+        ([name]) => name === "attempt_gate_overridden"
+      )
+    ).toHaveLength(0);
   });
 });

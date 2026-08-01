@@ -4,7 +4,7 @@ import { describe, it, expect, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 import type { DeploymentStatus } from "@/lib/content/deployments";
 import {
-  entryCourseForSegment,
+  SEGMENT_ENTRY_COURSE,
   type LearnerSegment,
 } from "@/lib/courses/learner-segment";
 import {
@@ -85,7 +85,7 @@ describe("SEGMENT_ENTRY_COURSE — live-ladder routing", () => {
   it("segments 1 and 3 enter at C1, segment 2 at C3", () => {
     for (const segment of SEGMENTS) {
       expect(
-        entryCourseForSegment(segment),
+        SEGMENT_ENTRY_COURSE[segment],
         `segment ${segment} entry course`
       ).toBe(EXPECTED_ENTRY[segment]);
     }
@@ -93,7 +93,7 @@ describe("SEGMENT_ENTRY_COURSE — live-ladder routing", () => {
 
   it("no segment enters at a retired course", () => {
     for (const segment of SEGMENTS) {
-      const id = entryCourseForSegment(segment);
+      const id = SEGMENT_ENTRY_COURSE[segment];
       expect(
         RETIRED_COURSE_IDS.has(id),
         `segment ${segment} entry "${id}" is a retired course`
@@ -103,7 +103,7 @@ describe("SEGMENT_ENTRY_COURSE — live-ladder routing", () => {
 
   it("every segment entry deep-links to a real bundle lesson (not the catalog fallback)", async () => {
     for (const segment of SEGMENTS) {
-      const id = entryCourseForSegment(segment);
+      const id = SEGMENT_ENTRY_COURSE[segment];
       const href = await resolveEntryLessonHref("en", id);
       expect(
         href,

@@ -31,8 +31,8 @@ export interface EmailMessage {
 }
 
 /**
- * Whether a failed batch is KNOWN not to have been transmitted/accepted (#869
- * review F3). A caller that undoes bookkeeping on failure — the reminder
+ * Whether a failed batch is KNOWN not to have been transmitted/accepted
+ * (#869). A caller that undoes bookkeeping on failure — the reminder
  * pipeline releases its per-day send claims — may only do so on `rejected`.
  *
  *   * `rejected` — provably nothing was accepted: the request never left this

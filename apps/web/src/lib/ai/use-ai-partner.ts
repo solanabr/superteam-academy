@@ -15,11 +15,6 @@ import type {
 
 export type { PartnerMessage };
 
-// Free authored hints are served locally from the lesson's `hints` ladder —
-// they never hit the network. Once this many have been shown, `requestHint()`
-// falls through to the AI route (design resolution, Task 3 -> progress.md).
-const FREE_HINT_LIMIT = 2;
-
 // The ladder constants live in partner-types.ts (single source of truth,
 // shared with the server budget). The SERVER enforces every boundary via the
 // spend_assist_ladder_turn RPC; this hook only mirrors the counts for display
@@ -34,7 +29,6 @@ const RESET_ROUTE = "/api/ai/partner/reset";
 interface UseAiPartnerOptions {
   lessonSlug: string;
   courseSlug: string;
-  hints: string[];
   getCode: () => string;
   getTestSummary: () => string;
 }
@@ -47,7 +41,6 @@ export interface ResetOutcome {
 
 interface UseAiPartnerResult {
   messages: PartnerMessage[];
-  freeHintsUsed: number;
   /** Per-tier AI-turn counts for this (learner, lesson) — display mirror of the server ladder. */
   counts: AssistTurnCounts;
   /** The rung the NEXT AI turn would land on (free | metered | socratic | exhausted). */
@@ -63,7 +56,6 @@ interface UseAiPartnerResult {
   resetAvailableAt: number | null;
   loading: boolean;
   error: string | null;
-  requestHint: () => Promise<void>;
   /** Ask for a concrete change. Optionally carries the learner's composer draft. */
   proposeFix: (message?: string) => Promise<void>;
   ask: (message: string) => Promise<void>;
@@ -108,12 +100,10 @@ function advanceCounts(prev: AssistTurnCounts): AssistTurnCounts {
 export function useAiPartner({
   lessonSlug,
   courseSlug,
-  hints,
   getCode,
   getTestSummary,
 }: UseAiPartnerOptions): UseAiPartnerResult {
   const [messages, setMessages] = useState<PartnerMessage[]>([]);
-  const [freeHintsUsed, setFreeHintsUsed] = useState(0);
   const [counts, setCounts] = useState<AssistTurnCounts>({
     free: 0,
     metered: 0,
@@ -185,9 +175,10 @@ export function useAiPartner({
     };
   }, [courseSlug, lessonSlug]);
 
-  // Every call to the route spends one ladder turn (free authored hints never
-  // reach here) — stateless by design, so only the current code/testSummary
-  // are sent, never prior chat turns.
+  // Every call to the route spends one ladder turn — stateless by design, so
+  // only the current code/testSummary are sent, never prior chat turns. The
+  // authored hint ladder is not routed through here at all: those hints render
+  // as lesson-pane disclosures straight from the content bundle.
   const callPartnerRoute = useCallback(
     async (action: PartnerAction, message?: string) => {
       setLoading(true);
@@ -251,16 +242,6 @@ export function useAiPartner({
     },
     [lessonSlug, courseSlug, getCode, getTestSummary]
   );
-
-  const requestHint = useCallback(async () => {
-    if (freeHintsUsed < FREE_HINT_LIMIT && freeHintsUsed < hints.length) {
-      const text = hints[freeHintsUsed]!;
-      setMessages((prev) => [...prev, { role: "ai", kind: "hint", text }]);
-      setFreeHintsUsed((prev) => prev + 1);
-      return;
-    }
-    await callPartnerRoute("hint");
-  }, [freeHintsUsed, hints, callPartnerRoute]);
 
   // "Show me a change" (#947). The learner's composer draft, if any, rides along
   // as the optional `message` so the diff answers the question they were already
@@ -361,7 +342,6 @@ export function useAiPartner({
 
   return {
     messages,
-    freeHintsUsed,
     counts,
     tier: budgetExhausted ? "exhausted" : tier,
     budgetExhausted,
@@ -370,7 +350,6 @@ export function useAiPartner({
     resetAvailableAt,
     loading,
     error,
-    requestHint,
     proposeFix,
     ask,
     review,

@@ -45,12 +45,7 @@ afterEach(() => {
 
 describe("celebrationTierFor — the LX-B11 tier map", () => {
   const expected: Record<CelebrationEvent, string> = {
-    "lesson-complete": "none",
-    "challenge-pass": "none",
     "deploy-success": "medium",
-    // The three-popup rule bans a level-up popup outright, so the level-up
-    // tier celebrates nothing — the dashboard panel updating is the moment.
-    "level-up": "none",
     "credential-mint": "full",
     "surprise-bonus": "none",
     // A daily-quest reward is celebrated through the house system, but at the
@@ -103,16 +98,16 @@ describe("isDuplicateFullCelebration — mint double-fire dedupe", () => {
 });
 
 describe("celebrate — confetti firing per tier", () => {
-  it("never fires for lesson completion or challenge pass", () => {
-    celebrate("lesson-complete");
-    celebrate("challenge-pass");
-    expect(confettiMock).not.toHaveBeenCalled();
-  });
-
-  it("never fires for level-up — the dashboard panel updating is the moment", () => {
-    celebrate("level-up");
-    vi.advanceTimersByTime(1000);
-    expect(confettiMock).not.toHaveBeenCalled();
+  it("has no event for lesson completion, challenge pass or level-up", () => {
+    // Those moments are routine (or, for a level-up, covered by the header
+    // level badge), so they are not members of CelebrationEvent at all —
+    // there is no tier to look up and nothing that could fire confetti.
+    const events: CelebrationEvent[] = Object.keys(
+      CELEBRATION_TIERS
+    ) as CelebrationEvent[];
+    expect(events).not.toContain("lesson-complete" as CelebrationEvent);
+    expect(events).not.toContain("challenge-pass" as CelebrationEvent);
+    expect(events).not.toContain("level-up" as CelebrationEvent);
   });
 
   it("fires a single medium burst for deploy success", () => {

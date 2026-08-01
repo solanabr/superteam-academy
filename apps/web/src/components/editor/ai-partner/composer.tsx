@@ -38,7 +38,7 @@ interface ComposerProps {
  * assist ladder (#864 — tiered budget, Socratic contract, tier-exact billing)
  * plus the attempt-gate nudge (#865), which stop answer-dumping at the source
  * instead of removing the question box. Every turn — ask or propose — spends
- * from the same ladder as a hint, so neither is a free bypass, and a proposed
+ * from the same assist ladder, so neither is a free bypass, and a proposed
  * diff is still gated behind the earned-Accept comprehension check before it can
  * touch the buffer.
  *

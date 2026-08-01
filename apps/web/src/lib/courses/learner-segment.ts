@@ -81,10 +81,6 @@ export const SEGMENT_ENTRY_COURSE: Record<LearnerSegment, string> = {
   3: "course-solana-for-web-devs",
 };
 
-export function entryCourseForSegment(segment: LearnerSegment): string {
-  return SEGMENT_ENTRY_COURSE[segment];
-}
-
 /**
  * Learner goal from /start screen 2. Consumed as path-page framing copy
  * (GOAL_FRAMING_KEY) — never as routing or as anything reward-bearing.

@@ -127,7 +127,7 @@ describe("sendEmailBatch (configured)", () => {
   });
 });
 
-// #869 review F3 — a failed batch must say whether anything could POSSIBLY have
+// #869 — a failed batch must say whether anything could POSSIBLY have
 // been accepted. Callers that undo bookkeeping on failure (the reminder
 // pipeline releases per-day send claims) may only act on `rejected`; treating an
 // ambiguous failure as rejected is what re-sends a delivered email.

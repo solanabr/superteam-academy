@@ -78,7 +78,7 @@ superteam-academy/
 │   │   │   │   ├── solana/         # wallet-provider, academy-program, academy-reads,
 │   │   │   │   │                   # admin-signer, pda, bitmap, instructions, onchain-queue,
 │   │   │   │   │                   # xp-mint, parse-program-error, account-resolver, IDL
-│   │   │   │   ├── helius/         # event-decoder, event-handlers, resolvers, webhook-config
+│   │   │   │   ├── helius/         # event-decoder, event-handlers, resolvers
 │   │   │   │   ├── analytics/      # ga4.ts, posthog.ts, sentry.ts, index.ts (facade)
 │   │   │   │   ├── gamification/   # xp.ts, achievements.ts, streaks.ts
 │   │   │   │   ├── services/       # hybrid-progress-service.ts, index.ts

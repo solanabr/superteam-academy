@@ -81,10 +81,8 @@ function VotableThreadCard({
 
   return (
     <ThreadCard
-      id={thread.id}
       title={thread.title}
       slug={thread.slug}
-      shortId={thread.short_id}
       type={thread.type as "question" | "discussion"}
       isSolved={thread.is_solved}
       isPinned={thread.is_pinned}

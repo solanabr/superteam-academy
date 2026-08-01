@@ -1,4 +1,5 @@
 import confetti from "canvas-confetti";
+import { prefersReducedMotion } from "@/lib/reduced-motion";
 
 /**
  * Celebration re-tiering (LX-B11, PED-10 overjustification).
@@ -8,18 +9,26 @@ import confetti from "canvas-confetti";
  * Lesson/challenge completion gets a calm checkmark acknowledgment; a
  * level-up celebrates nothing at all — the brand guide's three-popup rule
  * reserves popups for XP reward, Achievement Unlocked and Certificate Minted,
- * and a level-up is visible in the header level badge, which recomputes from the live XP counter on every xp-gain event (the dashboard identity panel is server-rendered and does NOT live-update); a
- * successful devnet deploy gets a single confetti burst; a credential mint
- * gets the full-screen celebration.
+ * and a level-up gets no celebration of its own — it is visible in the header
+ * level badge, which recomputes from the live XP counter on every xp-gain event
+ * (the dashboard identity panel is server-rendered and does NOT live-update); a
+ * successful devnet deploy gets a single confetti burst; a credential mint gets
+ * the full-screen celebration.
+ *
+ * Lesson completion and a passing challenge run are deliberately absent from
+ * `CelebrationEvent`: they are routine and get no celebration, so there is no
+ * tier to look up.
  *
  * All visual celebration respects `prefers-reduced-motion`.
  */
 
+// Re-exported so the celebration module stays the single import for callers
+// that both celebrate and need the motion preference (the helper itself is
+// generic — lib/reduced-motion.ts).
+export { prefersReducedMotion };
+
 export type CelebrationEvent =
-  | "lesson-complete"
-  | "challenge-pass"
   | "deploy-success"
-  | "level-up"
   | "credential-mint"
   | "surprise-bonus"
   | "daily-quest";
@@ -27,13 +36,7 @@ export type CelebrationEvent =
 export type CelebrationTier = "none" | "popup" | "medium" | "full";
 
 export const CELEBRATION_TIERS: Record<CelebrationEvent, CelebrationTier> = {
-  "lesson-complete": "none",
-  "challenge-pass": "none",
   "deploy-success": "medium",
-  // No popup, no confetti: the brand guide's three-popup rule (XP reward,
-  // Achievement Unlocked, Certificate Minted) leaves no room for a level-up
-  // popup — the header level badge recomputing on xp-gain (the identity panel is server-rendered, not live) IS the level-up moment.
-  "level-up": "none",
   "credential-mint": "full",
   // A surprise bonus (LX-B15) is an informational moment — a calm toast, never
   // confetti. Its delight is the unexpectedness of the reward, not spectacle.
@@ -41,7 +44,9 @@ export const CELEBRATION_TIERS: Record<CelebrationEvent, CelebrationTier> = {
   // A completed daily quest is a real earned moment, so it goes through the
   // house celebration system rather than a bare toast — but at the POPUP tier,
   // NOT confetti. Every peer moment a learner meets this often is popup-or-
-  // quieter (level-up: popup; achievement: popup; surprise bonus: none);
+  // quieter (achievement: popup; surprise bonus: none; a level-up gets no
+  // celebration at all — it shows in the header level badge, which recomputes
+  // from the live XP counter on every xp-gain event);
   // confetti is reserved by LX-B11 for deploy + credential mint precisely
   // because a daily-cadence reward is the routine-reward pattern the tiering
   // exists to avoid. The pop-spring celebration toast IS the moment. Flip this
@@ -65,12 +70,6 @@ export function shouldShowEncouragement(
   consecutiveFailedRuns: number
 ): boolean {
   return consecutiveFailedRuns >= ENCOURAGEMENT_THRESHOLD;
-}
-
-export function prefersReducedMotion(): boolean {
-  if (typeof window === "undefined" || typeof window.matchMedia !== "function")
-    return false;
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
 /**

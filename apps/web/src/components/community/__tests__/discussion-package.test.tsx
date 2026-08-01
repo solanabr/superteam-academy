@@ -51,10 +51,8 @@ function renderCard(
 ) {
   renderWithIntl(
     <ThreadCard
-      id="t1"
       title="Why is my PDA seed wrong?"
       slug="why-pda"
-      shortId="abc123"
       type="question"
       isSolved={false}
       isPinned={false}
@@ -366,7 +364,7 @@ describe("ThreadComposer — inline vs modal submit (#6, #5)", () => {
     release({ ok: true, json: async () => ({ slug: "s" }) });
   });
 
-  it("surfaces the server error and re-enables the button", async () => {
+  it("surfaces a LOCALIZED failure line and re-enables the button", async () => {
     fetchMock.mockResolvedValue({
       ok: false,
       json: async () => ({ error: "Rate limited" }),
@@ -380,7 +378,11 @@ describe("ThreadComposer — inline vs modal submit (#6, #5)", () => {
       screen.getByRole("button", { name: messages.community.post })
     );
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Rate limited");
+    // The route's English `error` is deliberately NOT shown — a pt-BR/es
+    // learner hits this composer inline in a lesson.
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent(messages.community.createThreadFailed);
+    expect(alert).not.toHaveTextContent("Rate limited");
     expect(
       screen.getByRole("button", { name: messages.community.post })
     ).toBeEnabled();

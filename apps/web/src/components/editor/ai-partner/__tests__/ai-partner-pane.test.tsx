@@ -17,7 +17,6 @@ import { AiPartnerPane } from "../ai-partner-pane";
 const review = vi.fn();
 const hookState = {
   messages: [] as unknown[],
-  freeHintsUsed: 0,
   counts: { free: 0, metered: 0, socratic: 0 },
   tier: "free" as AssistTier,
   budgetExhausted: false,
@@ -26,7 +25,6 @@ const hookState = {
   resetAvailableAt: null as number | null,
   loading: false,
   error: null as string | null,
-  requestHint: vi.fn(),
   proposeFix: vi.fn(),
   ask: vi.fn(),
   review,
@@ -48,9 +46,7 @@ function renderPane(
     disabled?: boolean;
     hasRunTests?: boolean;
     hasFailedRun?: boolean;
-    onFocusRun?: () => void;
     onNudgeShown?: () => void;
-    onNudgeOverride?: () => void;
   } = {}
 ) {
   return render(
@@ -58,7 +54,6 @@ function renderPane(
       <AiPartnerPane
         lessonSlug="l"
         courseSlug="c"
-        hints={[]}
         getCode={() => "code"}
         getTestSummary={() => "3/3 passing"}
         onApply={() => {}}
@@ -74,7 +69,6 @@ const sendLabel = messages.aiPartner.actions.askSend;
 
 beforeEach(() => {
   review.mockReset();
-  hookState.requestHint.mockReset();
   hookState.ask.mockReset();
   hookState.proposeFix.mockReset();
   hookState.messages = [];
@@ -176,7 +170,6 @@ describe("AiPartnerPane — attempt-gate notice (#865, tightened: one line, no b
         <AiPartnerPane
           lessonSlug="l"
           courseSlug="c"
-          hints={[]}
           getCode={() => "code"}
           getTestSummary={() => "3/3 passing"}
           onApply={() => {}}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Lightning, CheckCircle, Circle } from "@phosphor-icons/react";
+import { prefersReducedMotion } from "@/lib/reduced-motion";
 
 /* ────────────────────────────────────────────────────────────────────
    Landing "loop" widgets — the product loop rebuilt as live miniatures
@@ -10,10 +11,6 @@ import { Lightning, CheckCircle, Circle } from "@phosphor-icons/react";
    the visitor can poke. Code-artifact strings (test names, cert fields)
    stay in English like the hero terminal; UI labels arrive via props.
    ──────────────────────────────────────────────────────────────────── */
-
-function prefersReducedMotion(): boolean {
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
 
 /** Fire once when the element scrolls into view. */
 function useInViewOnce(threshold = 0.35) {

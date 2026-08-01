@@ -96,8 +96,10 @@ const serverEnvSchema = z.object({
   // (lib/solana/arweave.ts). Unset → mint falls back to the app-served
   // metadata URL.
   ARWEAVE_UPLOADER_SECRET: optStr,
-  // Helius key for WEBHOOK MANAGEMENT only (lib/helius/webhook-config) — the
-  // registration/list calls against Helius's REST API. No DAS API call exists
+  // Helius key for WEBHOOK MANAGEMENT only — the registration/list calls
+  // against Helius's REST API, which live in the operator tool
+  // scripts/helius-webhook-config.ts (run by hand; nothing in the app imports
+  // it). The app itself only VERIFIES inbound webhook deliveries. No DAS API call exists
   // anywhere in this codebase; the old "+ DAS API" note here described an
   // integration that was never built. Server-only and UNRESTRICTED — never
   // NEXT_PUBLIC_, and not the same key as the domain-restricted one behind

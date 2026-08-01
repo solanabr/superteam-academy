@@ -29,6 +29,7 @@ import {
   LessonJumpChips,
   type JumpChip,
 } from "@/components/lessons/lesson-jump-chips";
+import { scrollBehavior } from "@/lib/reduced-motion";
 import { RENDERERS, type BlockContext } from "./blocks";
 
 /** Anchor for the toolbar's jump-to-discussion affordance (#942). */
@@ -36,9 +37,17 @@ const DISCUSSION_ANCHOR_ID = "lesson-discussion";
 const TOPICS_ANCHOR_ID = "lesson-topics";
 const HINTS_ANCHOR_ID = "lesson-hints";
 
+/** Panel id for a section anchor — shared by the section header and its chip. */
+const panelIdFor = (anchorId: string) => `${anchorId}-panel`;
+
 /**
  * Opens a disclosure section and scrolls it into view. The scroll waits a frame
  * so it targets the section's post-expansion position, not the collapsed one.
+ *
+ * The behavior comes from `scrollBehavior()` rather than a literal "smooth":
+ * globals.css's reduced-motion block sets `scroll-behavior: auto !important`,
+ * but an explicit ScrollOptions behavior overrides the computed property, so a
+ * hardcoded "smooth" would animate for a visitor who asked it not to.
  */
 function jumpToSection(
   anchorId: string,
@@ -63,10 +72,10 @@ function jumpToSection(
           pane.getBoundingClientRect().top +
           pane.scrollTop -
           12,
-        behavior: "smooth",
+        behavior: scrollBehavior(),
       });
     } else {
-      el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      el.scrollIntoView({ behavior: scrollBehavior(), block: "nearest" });
     }
   });
 }
@@ -537,6 +546,7 @@ export function LessonPageClient({
       {skills.length > 0 && (
         <LessonSection
           id={TOPICS_ANCHOR_ID}
+          panelId={panelIdFor(TOPICS_ANCHOR_ID)}
           title={t("topics")}
           open={isTopicsOpen}
           onOpenChange={setIsTopicsOpen}
@@ -557,6 +567,7 @@ export function LessonPageClient({
         <LessonSection
           key={`hint-${i}`}
           id={i === 0 ? HINTS_ANCHOR_ID : undefined}
+          panelId={i === 0 ? panelIdFor(HINTS_ANCHOR_ID) : undefined}
           title={t("stuckNudgeHintLabel", { number: i + 1 })}
           // Only the FIRST hint is the chip's jump target, so only it is
           // controlled — the rest stay independently uncontrolled, preserving
@@ -569,6 +580,7 @@ export function LessonPageClient({
       ))}
       <LessonSection
         id={DISCUSSION_ANCHOR_ID}
+        panelId={panelIdFor(DISCUSSION_ANCHOR_ID)}
         title={t("discussion")}
         count={threadCount}
         open={isDiscussionListOpen}
@@ -620,6 +632,8 @@ export function LessonPageClient({
       kind: "topics",
       label: t("topics"),
       targetId: TOPICS_ANCHOR_ID,
+      panelId: panelIdFor(TOPICS_ANCHOR_ID),
+      expanded: isTopicsOpen,
       onActivate: () => jumpToSection(TOPICS_ANCHOR_ID, setIsTopicsOpen),
     });
   }
@@ -628,6 +642,8 @@ export function LessonPageClient({
       kind: "hints",
       label: t("hints"),
       targetId: HINTS_ANCHOR_ID,
+      panelId: panelIdFor(HINTS_ANCHOR_ID),
+      expanded: isHintsOpen,
       onActivate: () => jumpToSection(HINTS_ANCHOR_ID, setIsHintsOpen),
     });
   }
@@ -636,6 +652,8 @@ export function LessonPageClient({
     label: t("discussion"),
     count: threadCount,
     targetId: DISCUSSION_ANCHOR_ID,
+    panelId: panelIdFor(DISCUSSION_ANCHOR_ID),
+    expanded: isDiscussionListOpen,
     onActivate: () =>
       jumpToSection(DISCUSSION_ANCHOR_ID, setIsDiscussionListOpen),
   });

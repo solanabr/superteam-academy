@@ -229,7 +229,11 @@ async function runPass(
     return { ...base, status: "no_recipients" };
   }
 
-  const claimed = ((data as ClaimResponse) ?? []) satisfies ClaimedRow[];
+  // An assertion, not a check: the RPC payload is untyped, so this only tells
+  // the compiler what claim_due_reengagement is contracted to return. (A
+  // trailing `satisfies ClaimedRow[]` used to sit here and read as validation —
+  // it checked the assertion against itself and could never fail.)
+  const claimed = (data as ClaimResponse) ?? [];
   if (claimed.length === 0) return { ...base, status: "no_recipients" };
 
   let sent = 0;
@@ -258,13 +262,13 @@ async function runPass(
 
   // EVERY id the RPC handed back is already claimed in the ledger. From here on
   // this pass OWNS those rows: any path that ends without a send attempt must
-  // release them — including an unexpected throw (gate F1). An unreleased claim
+  // release them — including an unexpected throw. An unreleased claim
   // mutes the learner for the FULL cap window with no ledger trace of why.
   const claimedIds = claimed.map((r) => r.user_id);
 
   // Every row the RPC returned is ALREADY claimed. Anything dropped below is a
   // claim we will never send against — release it, or the learner is silently
-  // muted for the whole cap window with nothing in the logs (#895 review F4).
+  // muted for the whole cap window with nothing in the logs (#895).
   const dropped: { userId: string; why: string }[] = [];
   const messages: { userId: string; message: EmailMessage }[] = [];
 
@@ -272,7 +276,7 @@ async function runPass(
   // Nothing has been transmitted yet, so ANY throw in here is provably
   // pre-transmission and a blanket release is correct. The realistic source is
   // `loadCourseContext` — the content-bundle read runs AFTER the claim, so a
-  // throw there used to strand every claim it had just taken (gate F1).
+  // throw there used to strand every claim it had just taken.
   try {
     const courses = await loadCourseContext(
       kind === REENGAGEMENT_LEDGER_KINDS.courseNudge
@@ -512,7 +516,7 @@ export async function sendReengagementEmails(params: {
     REENGAGEMENT_LEDGER_KINDS.courseNudge,
     REENGAGEMENT_LEDGER_KINDS.inactive,
   ] as const) {
-    // Each pass is ISOLATED (gate F1). `runPass` already releases its own claims
+    // Each pass is ISOLATED. `runPass` already releases its own claims
     // on an unexpected throw, but a bug that escapes it must still not abort the
     // sibling pass: an exception in the course nudge used to mean the generic
     // pass never ran at all, silently halving the day's send. Log and continue.

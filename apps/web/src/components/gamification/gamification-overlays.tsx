@@ -30,10 +30,14 @@ export function GamificationOverlays() {
       {/* Copies the anonymous /start intake into the profile on sign-in (LX-A3). */}
       <SegmentSync />
       {!userId ? null : (
-        /* Single stacking container for the three celebrating popups —
-           XP reward, Achievement Unlocked, Certificate Minted. Nothing else
-           gets a popup (brand guide §10, the three-popup rule); a level-up is
-           visible in the header level badge, which recomputes from the live XP counter on every xp-gain event (the dashboard identity panel is server-rendered and does NOT live-update). */
+        /* Single stacking container for the celebrating popups mounted here —
+           Certificate Minted and Achievement Unlocked. (The brand guide's
+           three-popup rule also allows an XP-reward popup; the XP reward ships
+           as the quest-reward toast instead, mounted outside this container.)
+           Nothing else gets a popup: a level-up is visible in the header level
+           badge, which recomputes from the live XP counter on every xp-gain
+           event (the dashboard identity panel is server-rendered and does NOT
+           live-update). */
         <div className="pointer-events-none fixed bottom-4 right-3 z-50 flex flex-col items-end gap-2 sm:bottom-6 sm:right-6">
           <CertificatePopup className="pointer-events-auto" />
           <AchievementPopup className="pointer-events-auto" />

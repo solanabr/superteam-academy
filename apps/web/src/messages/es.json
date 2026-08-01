@@ -91,7 +91,7 @@
     "progressSavedLocally": "Sin prisa: tu progreso permanece guardado en este dispositivo."
   },
   "landing": {
-    "poweredBy": "Powered by",
+    "poweredBy": "Con el apoyo de",
     "heroTitle": "Aprende Solana <hl>construyendo</hl>.",
     "heroWedge": "La IA escribe el código. Entenderlo es cosa tuya.",
     "heroSubtitle": "Código real en tu navegador. XP por cada lección. Una credencial que vive en tu wallet.",
@@ -200,7 +200,6 @@
     "enrolled": "Inscrito",
     "completed": "Completado",
     "inProgress": "En Progreso",
-    "startCourse": "Iniciar Curso",
     "continueCourse": "Continuar Aprendiendo",
     "enrollNow": "Inscribirse",
     "linkWalletToEnroll": "Vincular Wallet para Inscribirse",
@@ -263,11 +262,9 @@
     "runCode": "Ejecutar Código",
     "submitSolution": "Enviar Solución",
     "resetCode": "Reiniciar Código",
-    "showHint": "Mostrar Pista",
     "testsPassed": "¡Todas las pruebas pasaron!",
     "testsFailed": "Algunas pruebas fallaron. ¡Inténtalo de nuevo!",
     "testCases": "Casos de Prueba",
-    "examples": "Ejemplos",
     "output": "Salida",
     "expected": "Esperado",
     "passed": "Aprobado",
@@ -323,8 +320,6 @@
     "encouragementBodyNeutral": "Cada ejecución fallida descarta posibilidades. Relee el enunciado e intenta un paso más pequeño — estás más cerca de lo que parece.",
     "capstoneAiOffTitle": "Esta parte es solo tuya.",
     "capstoneAiOffBody": "El capstone se completa sin el AI Partner — eso es lo que hace que la credencial sea tuya.",
-    "stuckNudgeAction": "Mostrar una pista",
-    "stuckNudgeNextAction": "Mostrar otra pista",
     "stuckNudgeHintLabel": "Pista {number}",
     "viewSolution": "Ver solución de referencia",
     "solutionGateTitle": "¿Mirar la solución?",
@@ -444,8 +439,6 @@
   "gamification": {
     "xp": "XP",
     "level": "Nivel",
-    "streak": "Racha",
-    "streakDays": "Racha de {count} días",
     "activity": "Actividad de aprendizaje",
     "achievements": "Logros",
     "yourAchievements": "Tus Logros",
@@ -472,11 +465,6 @@
     "category_community": "Comunidad",
     "category_special": "Especial",
     "noEntries": "Sin ranking aún. Completa lecciones para ganar XP y aparecer aquí.",
-    "streakKeepGoing": "¡Aprende hoy para mantener la racha!",
-    "streakFrozenDay": "Racha salvada con una congelación",
-    "streakUnavailable": "—",
-    "streakUnavailableLabel": "Racha no disponible",
-    "streakFreezesRemaining": "{count, plural, one {# congelación} other {# congelaciones}}",
     "noAchievements": "Completa una lección para ganar tu primer logro",
     "showLocked": "Mostrar bloqueados",
     "viewOnExplorer": "Ver en Explorer",
@@ -486,6 +474,13 @@
     "xpTooltip": "{xp} {xpLabel} para {levelLabel} {level}",
     "surpriseBonus": "¡Bono sorpresa! +{amount} XP",
     "questReward": "Misión completada: {name} +{amount} XP",
+    "questNames": {
+      "quest-challenge": "Completa un reto",
+      "quest-complete-lesson": "Completa una lección",
+      "quest-complete-module": "Completa un módulo",
+      "quest-lesson-batch": "Completa 3 lecciones",
+      "quest-login-streak": "Entra 3 días seguidos"
+    },
     "league": "Liga",
     "global": "Global",
     "leagueSubtitle": "Tu grupo de la semana — la clasificación actual",
@@ -712,7 +707,7 @@
     "builtWith": "Construido con Solana",
     "allRightsReserved": "Todos los derechos reservados.",
     "languages": "Disponible en inglés, portugués y español.",
-    "poweredBy": "Powered by"
+    "poweredBy": "Con el apoyo de"
   },
   "notFound": {
     "title": "Página No Encontrada",
@@ -905,7 +900,6 @@
     "recentThreads": "Temas Recientes",
     "yourStats": "Tus Estadísticas",
     "allThreads": "Todos los Temas",
-    "answers": "{count, plural, zero {Sin respuestas} one {# Respuesta} other {# Respuestas}}",
     "views": "{count, plural, one {# vista} other {# vistas}}",
     "accepted": "Respuesta Aceptada",
     "acceptedAnswer": "Respuesta Aceptada",
@@ -937,9 +931,7 @@
     "cancel": "Cancelar",
     "post": "Publicar",
     "postAnswer": "Responder",
-    "yourAnswer": "Tu Respuesta",
     "writeAnswer": "Escribe tu respuesta usando Markdown...",
-    "acceptAnswer": "Aceptar Respuesta",
     "write": "Escribir",
     "preview": "Vista Previa",
     "nothingToPreview": "Nada para previsualizar",
@@ -1010,7 +1002,8 @@
     "filterCourseQuestions": "Preguntas del curso",
     "composerHeading": "Pregunta a la comunidad",
     "answersCount": "Respuestas ({count})",
-    "sortBy": "Ordenar por"
+    "sortBy": "Ordenar por",
+    "createThreadFailed": "No se pudo iniciar la conversación. Inténtalo de nuevo."
   },
   "aiPartner": {
     "title": "Compañero de IA",
@@ -1039,7 +1032,6 @@
       "spendCapped": "El Compañero de IA alcanzó el límite de uso de hoy. Volverá mañana; mientras tanto, las pistas y las pruebas siguen disponibles para ayudarte."
     },
     "actions": {
-      "hint": "Pista",
       "propose": "Muéstrame un cambio",
       "proposeCost": "usa 1 turno",
       "askPlaceholder": "Haz una pregunta sobre este desafío...",
@@ -1049,7 +1041,7 @@
       "reviewHint": "Recibe comentarios idiomáticos sobre tu solución ya resuelta — esto no cambia tu XP."
     },
     "composer": {
-      "empty": "Pregunta lo que quieras sobre este reto, o pide una pista."
+      "empty": "Pregunta lo que quieras sobre este reto. Las pistas escritas para esta lección están en la sección Pistas de arriba."
     },
     "diff": {
       "current": "Actual",
@@ -1074,8 +1066,7 @@
       "diffCard": "Cambio de código propuesto"
     },
     "socratic": {
-      "chip": "Tutor ligero",
-      "entered": "Estás con el tutor ligero en este desafío. Te guía con preguntas para que encuentres la solución — y aún puede proponerte un cambio cuando necesites verlo."
+      "chip": "Tutor ligero"
     },
     "exhausted": {
       "title": "Se usaron los turnos del tutor en este desafío",

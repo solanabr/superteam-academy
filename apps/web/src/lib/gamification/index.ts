@@ -6,7 +6,6 @@ export {
   calculateLevel,
   xpForLevel,
   xpToNextLevel,
-  detectLevelUp,
 } from "./xp";
 
 export {

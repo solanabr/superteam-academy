@@ -15,11 +15,17 @@ interface LessonSectionProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   /**
-   * Keep the panel in the DOM while collapsed (hidden). Used by Discussion so
-   * its thread count is known before the learner opens the row; `hidden`
-   * keeps the collapsed content out of the a11y tree and the tab order.
+   * Keep the panel's CHILDREN mounted while collapsed. Used by Discussion so
+   * its thread count is known before the learner opens the row. The panel
+   * element itself is always in the DOM either way (see below).
    */
   keepMounted?: boolean;
+  /**
+   * Id for the disclosure PANEL. Supply it when something outside this
+   * component references the panel (the lesson jump chips' `aria-controls`),
+   * so the chip and the row agree on one id; otherwise it is minted locally.
+   */
+  panelId?: string;
   id?: string;
   className?: string;
   children: ReactNode;
@@ -38,6 +44,7 @@ export function LessonSection({
   open: controlledOpen,
   onOpenChange,
   keepMounted = false,
+  panelId: panelIdProp,
   id,
   className,
   children,
@@ -45,7 +52,8 @@ export function LessonSection({
   const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen);
   const isControlled = controlledOpen !== undefined;
   const isOpen = isControlled ? controlledOpen : uncontrolledOpen;
-  const panelId = `${useId()}-panel`;
+  const generatedPanelId = `${useId()}-panel`;
+  const panelId = panelIdProp ?? generatedPanelId;
 
   const toggle = () => {
     const next = !isOpen;
@@ -75,11 +83,15 @@ export function LessonSection({
           </span>
         ) : null}
       </button>
-      {(isOpen || keepMounted) && (
-        <div id={panelId} hidden={!isOpen} className="pb-4">
-          {children}
-        </div>
-      )}
+      {/* The panel element is ALWAYS rendered so the header button's (and the
+          jump chip's) `aria-controls` never points at a missing id; `hidden`
+          keeps a collapsed panel out of the a11y tree and the tab order.
+          `keepMounted` still controls whether the CHILDREN are mounted — the
+          Discussion row needs its thread count before it is opened, the rest
+          should not fetch or render until asked for. */}
+      <div id={panelId} hidden={!isOpen} className="pb-4">
+        {(isOpen || keepMounted) && children}
+      </div>
     </div>
   );
 }

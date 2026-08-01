@@ -123,7 +123,7 @@ export function NextLessonPlan({ userId }: NextLessonPlanProps) {
       setPrefs(prefsObj);
       setPlan(parseNextLesson(prefsObj));
       // A recorded decision wins over the default-ON suggestion. "Recorded" is a
-      // TIMESTAMP test, not row existence (review F2): a #779 marketing-only
+      // TIMESTAMP test, not row existence: a #779 marketing-only
       // subscriber already has a row with reminder_opt_in = false and no
       // reminder timestamps, and must still get the default-ON offer.
       if (

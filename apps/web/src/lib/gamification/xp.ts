@@ -58,16 +58,3 @@ export function xpToNextLevel(totalXp: number): {
     progressPercent,
   };
 }
-
-export function detectLevelUp(
-  xpBefore: number,
-  xpAfter: number
-): { leveled: boolean; oldLevel: number; newLevel: number } {
-  const oldLevel = calculateLevel(xpBefore);
-  const newLevel = calculateLevel(xpAfter);
-  return {
-    leveled: newLevel > oldLevel,
-    oldLevel,
-    newLevel,
-  };
-}
