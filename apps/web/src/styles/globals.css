@@ -11,7 +11,7 @@
    SOLARIUM DESIGN SYSTEM v9 — CSS Custom Properties
    Light mode: :root (default baseline)
    Dark mode:  [data-theme="dark"] (next-themes data attribute)
-   Source of truth: docs/design-system.html
+   Source of truth: docs/design-system.html (the Superteam Academy Brand Guide)
    ============================================================ */
 
 @layer base {
@@ -2734,7 +2734,7 @@ a.path-step-card:hover .path-step-badge.skip {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   POPUPS — v9 spec: pop-spring animation
+   POPUPS — brand guide spec: pop-spring animation
    .popup-xp       : pill-shaped XP gain notification
    .popup-grad     : gradient-border wrapper for achievement/cert
    ══════════════════════════════════════════════════════════════ */
@@ -3792,7 +3792,7 @@ a.path-step-card:hover .path-step-badge.skip {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   DASHBOARD IDENTITY PANEL — v9 spec lines 438-670
+   DASHBOARD IDENTITY PANEL — brand guide spec
    ═══════════════════════════════════════════════════════════════ */
 .dash-panel {
   background: var(--card);
@@ -5344,7 +5344,7 @@ a.path-step-card:hover .path-step-title {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   FORMS — v9 spec lines 1107-1114
+   FORMS — brand guide spec
    ═══════════════════════════════════════════════════════════════ */
 .form-label {
   font-family: var(--font-display, var(--font-d));

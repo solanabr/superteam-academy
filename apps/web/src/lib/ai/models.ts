@@ -15,10 +15,17 @@ import type { PartnerAction } from "@/lib/ai/partner-types";
 // — so any future "this model 404s for our key" claim must be re-tested twice
 // before it is believed (or written down).
 //
-// AIE-05 from the same record: `thinkingConfig: { thinkingBudget: 0 }` is
-// VERIFIED HONORED (no `thoughtsTokenCount` under budget-0; 146 thinking tokens
-// on the no-config control). Callers keep sending it — thinking tokens bill at
-// the OUTPUT rate, so it is a real cost lever, not a formality.
+// AIE-05 correction, round 2 (2026-07-31 evening — supersedes BOTH earlier
+// records, including this morning's #945 note): the 3.x models REJECT the
+// 2.5-era `thinkingBudget: 0` (400 INVALID_ARGUMENT), and the `thinkingLevel`
+// enum is minimal | low | medium | high — "none" is invalid AND "minimal" sits
+// BELOW "low". The #945 fix probed only "none" and "low" and wrongly wrote
+// "low is the floor"; a follow-up probe on both routed models with a real
+// prompt showed `low` burns ~470-490 thinking tokens (output rate) and
+// TRUNCATES inside a 512 budget (finish MAX_TOKENS), while `minimal` spends 0
+// thinking tokens and finishes STOP. Every generateContent caller must send
+// MINIMAL_THINKING_CONFIG below. Meta-lesson, twice paid: probe the FULL enum
+// space before writing "X is the floor" into a comment.
 
 export const GEMINI_MODELS = [
   "gemini-3.6-flash",
@@ -31,23 +38,50 @@ export type GeminiModel = (typeof GEMINI_MODELS)[number];
 export interface ModelRates {
   inputUsdPerMTok: number;
   outputUsdPerMTok: number;
+  /**
+   * Cached-input rate: what the portion of `promptTokenCount` that was served
+   * from context cache (`cachedContentTokenCount`) actually costs. An order of
+   * magnitude below the input rate, which is the whole point of the
+   * cache-shaped prompt prefix — billing those tokens at the full input rate
+   * OVER-reports the sponsor's burn and would trip the caps early.
+   */
+  cachedInputUsdPerMTok: number;
 }
 
 /**
  * Gemini price sheet, USD per 1M tokens — economics doc §2.1 table (source:
- * https://ai.google.dev/gemini-api/docs/pricing). Thinking tokens bill at the
- * OUTPUT rate (#591). This is the ledger's billing truth: a model with no entry
- * here cannot be routed to, which is deliberate — routing to an unpriced model
- * would make the #591 spend ledger under-report the sponsor's burn.
+ * https://ai.google.dev/gemini-api/docs/pricing, standard tier, re-fetched and
+ * verified 2026-07-31; the cached-input column was added in that same fetch).
+ * Thinking tokens bill at the OUTPUT rate (#591). This is the ledger's billing
+ * truth: a model with no entry here cannot be routed to, which is deliberate —
+ * routing to an unpriced model would make the #591 spend ledger under-report
+ * the sponsor's burn.
+ *
+ * NOT modelled: the cache STORAGE component ($1.00 per 1M tokens per hour). The
+ * app never creates explicit cached content — it relies on implicit caching,
+ * which carries no storage charge — so there is nothing per-request to bill it
+ * against. Revisit if explicit `cachedContent` is ever created.
  *
  * `gemini-3.5-flash` is no longer routed by default; it stays in the table as
  * the documented fallback pin (and because its rates are what the pre-#868
  * traffic actually cost).
  */
 export const MODEL_RATES: Record<GeminiModel, ModelRates> = {
-  "gemini-3.6-flash": { inputUsdPerMTok: 1.5, outputUsdPerMTok: 7.5 },
-  "gemini-3.5-flash-lite": { inputUsdPerMTok: 0.3, outputUsdPerMTok: 2.5 },
-  "gemini-3.5-flash": { inputUsdPerMTok: 1.5, outputUsdPerMTok: 9.0 },
+  "gemini-3.6-flash": {
+    inputUsdPerMTok: 1.5,
+    outputUsdPerMTok: 7.5,
+    cachedInputUsdPerMTok: 0.15,
+  },
+  "gemini-3.5-flash-lite": {
+    inputUsdPerMTok: 0.3,
+    outputUsdPerMTok: 2.5,
+    cachedInputUsdPerMTok: 0.03,
+  },
+  "gemini-3.5-flash": {
+    inputUsdPerMTok: 1.5,
+    outputUsdPerMTok: 9.0,
+    cachedInputUsdPerMTok: 0.15,
+  },
 };
 
 /** The cheap tier: short, bounded, low-stakes generations. */
@@ -146,3 +180,14 @@ export function modelForReflectionReply(): GeminiModel {
 export function geminiUrl(model: GeminiModel): string {
   return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 }
+
+/**
+ * The minimal thinking configuration accepted by every routed (3.x) model.
+ * `thinkingLevel: "minimal"` is the true floor (enum: minimal|low|medium|high;
+ * "none" is invalid, and the 2.5-era `thinkingBudget: 0` 400s — see the AIE-05
+ * round-2 correction in the header; `low` measurably burns hundreds of
+ * output-rate thinking tokens and truncates 512-cap turns). All generateContent
+ * callers must spread this rather than hand-rolling a thinkingConfig, so a
+ * future API change is a one-line fix here.
+ */
+export const MINIMAL_THINKING_CONFIG = { thinkingLevel: "minimal" } as const;

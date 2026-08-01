@@ -30,12 +30,14 @@ export function CodeBlock({ block, ctx }: BlockRenderProps) {
   ) : undefined;
 
   return (
-    // Edge-to-edge IDE (#770): no card rounding/shadow/side border — the split
-    // sits flush against the viewport and the top bar (top border marks the
-    // seam). `bg-card` so any empty strip (resizer, editor tail, the Monaco a11y
-    // hint) matches the IDE instead of the page's dotted grid. At lg the wrapper
+    // #942 item 4: at lg the two panes are separate rounded cards (styled
+    // inside ChallengeInterface) floating on the page background, LeetCode
+    // style — so this wrapper contributes only the gutter padding and NO
+    // bg/border of its own. Below lg the panes stack full-bleed as before,
+    // where `bg-card` keeps any empty strip (editor tail, Monaco a11y hint)
+    // matching the IDE instead of the page's dotted grid. At lg the wrapper
     // flex-fills the viewport-height column in lesson-client (no page scroll).
-    <div className="overflow-hidden border-t border-border bg-card lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
+    <div className="overflow-hidden border-t border-border bg-card lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:border-t-0 lg:bg-transparent lg:p-2">
       <div className="flex w-full flex-col overflow-hidden lg:min-h-0 lg:flex-1">
         <ChallengeInterface
           lessonId={ctx.lesson._id}

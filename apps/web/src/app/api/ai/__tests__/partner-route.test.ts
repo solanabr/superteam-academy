@@ -801,6 +801,12 @@ describe("POST /api/ai/partner", () => {
     };
     // Output budget dropped 8192 -> 2048 (AIE-15; closes AIE-11's inflation lever).
     expect(sent.generationConfig.maxOutputTokens).toBe(2048);
+    // 3.x thinking floor — the 2.5-era `thinkingBudget` 400s on every routed
+    // model (AIE-05 correction, 2026-07-31); this broke all turns post-#890.
+    expect(
+      (sent.generationConfig as { thinkingConfig?: Record<string, unknown> })
+        .thinkingConfig
+    ).toEqual({ thinkingLevel: "minimal" });
     // The propose schema requests an `edits` array and NO whole-file field.
     const schema = sent.generationConfig.responseSchema;
     expect(schema.properties).toHaveProperty("edits");

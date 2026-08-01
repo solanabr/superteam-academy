@@ -348,6 +348,8 @@
     "linkWalletToEarnXp": "Vincula tu wallet para ganar XP on-chain.",
     "linkWalletSettings": "Ir a Configuración →",
     "discussion": "Discusión",
+    "topics": "Temas",
+    "versionStamp": "Registro de versión",
     "askQuestion": "Hacer una Pregunta",
     "signInToAsk": "Inicia sesión para hacer una pregunta",
     "dismissSuggestion": "Descartar",
@@ -361,7 +363,9 @@
     "quizPosition": "Pregunta {current} de {total}",
     "quizPrev": "Pregunta anterior",
     "quizNext": "Siguiente pregunta",
-    "quizUnlocksAssistant": "Responde todas las preguntas para desbloquear el AI Partner en esta lección."
+    "quizUnlocksAssistant": "El AI Partner se desbloquea después del cuestionario — {answered}/{total} respondidas",
+    "quizCompleteChip": "Completado",
+    "quizAllCorrect": "Las {total} preguntas respondidas correctamente."
   },
   "dashboard": {
     "allCaughtUp": "¡Todo al día!",

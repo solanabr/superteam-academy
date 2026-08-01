@@ -5,6 +5,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 
 import {
+  isPreviewConfigured,
   isValidPreviewPassword,
   isValidPreviewSession,
   mintPreviewSession,
@@ -26,21 +27,29 @@ describe("preview password", () => {
     delete process.env.TEACH_PREVIEW_PASSWORD;
   });
 
-  it("accepts the documented interim default", () => {
-    expect(isValidPreviewPassword("123")).toBe(true);
-  });
-
-  it("rejects a wrong password and non-strings", () => {
-    expect(isValidPreviewPassword("1234")).toBe(false);
+  // The old literal "123" default shipped a guessable gate to every deployment
+  // that forgot the env var. Unset now means DISABLED, not "weak".
+  it("unset ⇒ the gate is closed: nothing satisfies it, including the old default", () => {
+    delete process.env.TEACH_PREVIEW_PASSWORD;
+    expect(isPreviewConfigured()).toBe(false);
+    expect(isValidPreviewPassword("123")).toBe(false);
     expect(isValidPreviewPassword("")).toBe(false);
     expect(isValidPreviewPassword(undefined)).toBe(false);
-    expect(isValidPreviewPassword(123)).toBe(false);
   });
 
-  it("honours the env override instead of the default", () => {
+  it("blank ⇒ treated as unset (a Vercel placeholder does not open the gate)", () => {
+    process.env.TEACH_PREVIEW_PASSWORD = "";
+    expect(isPreviewConfigured()).toBe(false);
+    expect(isValidPreviewPassword("")).toBe(false);
+  });
+
+  it("accepts only the configured password", () => {
     process.env.TEACH_PREVIEW_PASSWORD = "s3cret";
+    expect(isPreviewConfigured()).toBe(true);
     expect(isValidPreviewPassword("s3cret")).toBe(true);
     expect(isValidPreviewPassword("123")).toBe(false);
+    expect(isValidPreviewPassword("s3cre")).toBe(false);
+    expect(isValidPreviewPassword(123)).toBe(false);
   });
 });
 

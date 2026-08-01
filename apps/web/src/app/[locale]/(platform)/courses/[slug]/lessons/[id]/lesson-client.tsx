@@ -11,7 +11,7 @@ import {
   CaretLeft,
   CaretRight,
 } from "@phosphor-icons/react";
-import type { Lesson } from "@superteam-lms/types";
+import type { CodeBlockData, Lesson } from "@superteam-lms/types";
 import { Button } from "@/components/ui/button";
 import { ProgressBar } from "@/components/course/progress-bar";
 import { AuthModal } from "@/components/auth/auth-modal";
@@ -25,17 +25,21 @@ import { bankCompletion, removeBanked } from "@/lib/lessons/progress-bank";
 import { REPLAY_BANKED_EVENT } from "@/components/lessons/banked-progress-replay";
 import { ThreadList } from "@/components/community/thread-list";
 import { CreateThreadModal } from "@/components/community/create-thread-modal";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { LessonSection } from "@/components/lessons/lesson-section";
 import { RENDERERS, type BlockContext } from "./blocks";
+
+/** Anchor for the toolbar's jump-to-discussion affordance (#942). */
+const DISCUSSION_ANCHOR_ID = "lesson-discussion";
 
 interface LessonPageClientProps {
   lesson: Lesson;
   allLessons: Pick<Lesson, "_id" | "title" | "slug">[];
+  /**
+   * Authored skill tags for this lesson — rendered as the "Topics" disclosure
+   * chips (#942). Optional: the teacher preview bundle has no skills
+   * projection, and an absent/empty list simply omits the section.
+   */
+  skills?: string[];
   locale: string;
   courseSlug: string;
   courseId: string;
@@ -103,6 +107,7 @@ async function completeLessonAPI(
 export function LessonPageClient({
   lesson,
   allLessons,
+  skills = [],
   locale,
   courseSlug,
   courseId,
@@ -126,10 +131,25 @@ export function LessonPageClient({
   const [isEnrolled, setIsEnrolled] = useState(false);
   const hasLinkedWallet = authProfile ? !!authProfile.wallet_address : null;
   const [isDiscussionOpen, setIsDiscussionOpen] = useState(false);
-  // Challenge pages surface discussion in a modal (#770) to keep the page
-  // focused on the code; this controls that modal (distinct from the
-  // create-thread modal above).
+  // Discussion is an inline collapsible section at the bottom of the lesson
+  // pane on every lesson type (#942) — it used to be a modal on challenges
+  // (#770). This is the section's disclosure state (distinct from the
+  // create-thread modal above); the toolbar button jumps to it and opens it.
   const [isDiscussionListOpen, setIsDiscussionListOpen] = useState(false);
+  const [threadCount, setThreadCount] = useState<string | null>(null);
+  const handleThreadCount = useCallback((count: number, hasMore: boolean) => {
+    setThreadCount(hasMore ? `${count}+` : String(count));
+  }, []);
+  // Toolbar affordance on challenge pages: open the inline section and scroll
+  // the rail to it, instead of the old modal (#942).
+  const jumpToDiscussion = useCallback(() => {
+    setIsDiscussionListOpen(true);
+    requestAnimationFrame(() => {
+      document
+        .getElementById(DISCUSSION_ANCHOR_ID)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, []);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [buildUuid, setBuildUuid] = useState<string | null>(null);
   const [programKeypairSecret, setProgramKeypairSecret] = useState<
@@ -443,12 +463,81 @@ export function LessonPageClient({
   // dedicated coding-challenge experience the unified block renderer flattened.
   const instructionBlocks = lesson.blocks.filter((b) => b._type !== "code");
   const codeBlocks = lesson.blocks.filter((b) => b._type === "code");
+
+  // LeetCode-style disclosure rows below the prose (#942): the authored hints
+  // (each openable on demand — the 3-failed-runs auto-reveal inside the editor
+  // is untouched), the lesson's skill tags as Topics chips, and Discussion
+  // inline with its thread count.
+  const authoredHints = codeBlocks.flatMap(
+    (b) => (b as CodeBlockData).hints ?? []
+  );
+  const askAction = userId ? (
+    <Button
+      variant="pushOutline"
+      size="sm"
+      onClick={() => setIsDiscussionOpen(true)}
+    >
+      {t("askQuestion")}
+    </Button>
+  ) : (
+    <AuthModal
+      trigger={
+        <Button variant="pushOutline" size="sm">
+          {t("signInToAsk")}
+        </Button>
+      }
+    />
+  );
+  const paneSections = (
+    <div className="mt-2">
+      {authoredHints.map((hint, i) => (
+        <LessonSection
+          key={`hint-${i}`}
+          title={t("stuckNudgeHintLabel", { number: i + 1 })}
+        >
+          <p className="text-sm leading-relaxed text-text-2">{hint}</p>
+        </LessonSection>
+      ))}
+      {skills.length > 0 && (
+        <LessonSection title={t("topics")}>
+          <div className="flex flex-wrap gap-2">
+            {skills.map((skill) => (
+              <span
+                key={skill}
+                className="rounded-full border border-border bg-subtle px-2.5 py-1 font-mono text-xs text-text-2"
+              >
+                {skill}
+              </span>
+            ))}
+          </div>
+        </LessonSection>
+      )}
+      <LessonSection
+        id={DISCUSSION_ANCHOR_ID}
+        title={t("discussion")}
+        count={threadCount}
+        open={isDiscussionListOpen}
+        onOpenChange={setIsDiscussionListOpen}
+        keepMounted
+      >
+        <div className="mb-3 flex justify-end">{askAction}</div>
+        <ThreadList
+          scope={{ courseId, lessonId: lesson._id }}
+          showFilters
+          emptyMessage={tCommunity("empty.lesson")}
+          onCountChange={handleThreadCount}
+        />
+      </LessonSection>
+    </div>
+  );
+
   const instructionsSlot = hasCodeBlock ? (
     <div className="space-y-6">
       {instructionBlocks.map((block) => {
         const Renderer = RENDERERS[block._type];
         return <Renderer key={block.key} block={block} ctx={ctx} />;
       })}
+      {paneSections}
     </div>
   ) : null;
   const codeCtx: BlockContext = { ...ctx, instructionsSlot };
@@ -468,9 +557,11 @@ export function LessonPageClient({
     >
       {/* Lesson top bar — full-bleed on challenges so its bottom border and
           content line up with the edge-to-edge editor split below. Three
-          columns: back+title (left), Prev/Next (center, challenge pages),
-          discussion+XP+progress (right). lg:shrink-0 so it never eats the
-          IDE's flex height. */}
+          columns: back (left), Prev/Next (center, challenge pages),
+          discussion+XP+progress (right). The lesson TITLE deliberately does
+          not live here (#942): the prose h1 immediately below owns document
+          identity, and printing it twice was pure duplication. lg:shrink-0 so
+          it never eats the IDE's flex height. */}
       <div
         className={`flex items-center gap-2 border-b border-border py-2 sm:gap-3 lg:shrink-0 ${
           hasCodeBlock ? "mx-[calc(50%_-_50vw)] w-screen px-3 sm:px-4" : ""
@@ -484,9 +575,6 @@ export function LessonPageClient({
             <ArrowLeft size={16} weight="bold" />
             <span className="hidden sm:inline">{tCommon("back")}</span>
           </Link>
-          <h1 className="min-w-0 truncate font-display text-base font-black text-text sm:text-lg">
-            {lesson.title}
-          </h1>
         </div>
 
         {/* Prev/Next centered on challenge pages (#770) — labeled + visible. */}
@@ -546,7 +634,7 @@ export function LessonPageClient({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setIsDiscussionListOpen(true)}
+              onClick={jumpToDiscussion}
               aria-label={t("discussion")}
               title={t("discussion")}
               className="h-8 shrink-0 gap-1.5 px-2 text-xs"
@@ -766,63 +854,12 @@ export function LessonPageClient({
         />
       )}
 
-      {/* Discussion — a focused modal on challenge pages (#770, opened from the
-          top-bar button) to keep the page on the code; inline on reading
-          lessons where there's room. The ask-question header is shared. */}
-      {(() => {
-        const askAction = userId ? (
-          <Button
-            variant="pushOutline"
-            size="sm"
-            onClick={() => setIsDiscussionOpen(true)}
-          >
-            {t("askQuestion")}
-          </Button>
-        ) : (
-          <AuthModal
-            trigger={
-              <Button variant="pushOutline" size="sm">
-                {t("signInToAsk")}
-              </Button>
-            }
-          />
-        );
-        const threads = (
-          <ThreadList
-            scope={{ courseId, lessonId: lesson._id }}
-            showFilters
-            emptyMessage={tCommunity("empty.lesson")}
-          />
-        );
-        return hasCodeBlock ? (
-          <Dialog
-            open={isDiscussionListOpen}
-            onOpenChange={setIsDiscussionListOpen}
-          >
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <ChatCircle size={20} weight="duotone" />
-                  {t("discussion")}
-                </DialogTitle>
-              </DialogHeader>
-              <div className="mb-1 flex justify-end">{askAction}</div>
-              <div className="max-h-[60vh] overflow-auto">{threads}</div>
-            </DialogContent>
-          </Dialog>
-        ) : (
-          <div className="border-t border-border pt-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="flex items-center gap-2 font-display text-lg font-bold text-text">
-                <ChatCircle size={20} weight="duotone" />
-                {t("discussion")}
-              </h3>
-              {askAction}
-            </div>
-            {threads}
-          </div>
-        );
-      })()}
+      {/* Hints / Topics / Discussion — inline collapsible sections at the
+          bottom of the LESSON PANE (#942). Challenge lessons render them inside
+          the IDE rail via `instructionsSlot`; reading lessons render them here,
+          below the prose. Discussion is the same inline section on both, never
+          a modal. */}
+      {!hasCodeBlock && paneSections}
       <CreateThreadModal
         open={isDiscussionOpen}
         onOpenChange={setIsDiscussionOpen}
