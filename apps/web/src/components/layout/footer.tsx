@@ -61,7 +61,7 @@ export function Footer() {
 
           <div className="flex flex-col items-center gap-4 md:items-end">
             {/* Quick links */}
-            <nav className="flex flex-wrap items-center gap-1 text-sm font-medium">
+            <nav className="grid w-full grid-cols-2 justify-items-center gap-1 text-sm font-medium md:flex md:w-auto md:flex-wrap md:items-center md:justify-end">
               <Link
                 href={`/${locale}/courses`}
                 className="inline-flex min-h-[44px] items-center px-3 text-text-3 transition-colors hover:text-text"

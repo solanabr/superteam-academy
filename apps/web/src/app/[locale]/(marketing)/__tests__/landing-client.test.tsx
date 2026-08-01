@@ -80,7 +80,6 @@ function renderLanding(href = FLAGSHIP_HREF): ReturnType<typeof render> {
         totalXpMinted={0}
         enrolledBuilders={0}
         credentialsIssued={0}
-        learningPaths={[]}
         achievements={[]}
         flagshipLessonHref={href}
       />
@@ -115,10 +114,10 @@ describe("LandingPageClient — LX-A1 deep-link CTAs", () => {
     expect(within(modals[0]!).getByText(/sign up/i)).toBeInTheDocument();
   });
 
-  it("keeps the AI wedge as the hero line", () => {
+  it("keeps the accuracy-corrected wedge as the hero line (owner 2026-08-01: the learner writes the code, AI explains)", () => {
     renderLanding();
     expect(
-      screen.getAllByText(/AI writes the code/i).length
+      screen.getAllByText(/You write the code/i).length
     ).toBeGreaterThanOrEqual(1);
   });
 

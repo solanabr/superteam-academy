@@ -1,8 +1,4 @@
-import {
-  getAllCourses,
-  getAllLearningPaths,
-  getDeployedAchievements,
-} from "@/lib/content/queries";
+import { getAllCourses, getDeployedAchievements } from "@/lib/content/queries";
 import { resolveFlagshipLessonHref } from "@/lib/courses/entry-lesson";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { LandingPageClient } from "./landing-client";
@@ -19,15 +15,13 @@ export default async function LandingPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const [courses, learningPaths, achievements, flagshipLessonHref] =
-    await Promise.all([
-      getAllCourses(),
-      getAllLearningPaths(),
-      getDeployedAchievements(),
-      // LX-A1: the anonymous-first deep-link target — flagship lesson 1, or the
-      // catalog when that course isn't synced (resolveFlagshipLessonHref gate).
-      resolveFlagshipLessonHref(locale),
-    ]);
+  const [courses, achievements, flagshipLessonHref] = await Promise.all([
+    getAllCourses(),
+    getDeployedAchievements(),
+    // LX-A1: the anonymous-first deep-link target — flagship lesson 1, or the
+    // catalog when that course isn't synced (resolveFlagshipLessonHref gate).
+    resolveFlagshipLessonHref(locale),
+  ]);
 
   // Fetch on-chain stats from Supabase
   let totalXpMinted = 0;
@@ -64,7 +58,6 @@ export default async function LandingPage({
       totalXpMinted={totalXpMinted}
       enrolledBuilders={enrolledBuilders}
       credentialsIssued={credentialsIssued}
-      learningPaths={learningPaths}
       achievements={achievements}
       flagshipLessonHref={flagshipLessonHref}
     />
