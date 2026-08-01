@@ -134,51 +134,54 @@ export function useDashboardData(
 
         const supabase = createClient();
 
-        // Evaluate quests FIRST — this may trigger on-chain XP mints.
-        // Awaiting before XP read avoids showing a stale balance.
-        const questsResult = await fetch("/api/quests/daily")
-          .then((res) =>
-            res.ok ? res.json() : { quests: [], nextResetTime: "" }
-          )
-          .catch(() => ({ quests: [], nextResetTime: "" }));
-
-        // Fetch XP + streak via service layer (on-chain first, Supabase fallback)
+        // One concurrent burst, not a waterfall. The old shape awaited quests
+        // FIRST ("may trigger on-chain XP mints") and then ran five more reads
+        // back-to-back — 6+ serial round trips incl. a browser→Solana RPC read,
+        // which is what made the dashboard feel slow. Since #925 quest awards
+        // happen at the ACTION (lesson complete / review / test-out), the
+        // dashboard evaluation almost never mints, and when it does the
+        // Realtime xp-gain listener corrects the header within a beat — a
+        // possibly-one-render-stale balance is the right trade for a fast
+        // first paint. The two profiles selects also collapse into one.
         const service = getProgressService(supabase);
-        const [totalXp, streakData] = await Promise.all([
+        const [
+          questsResult,
+          totalXp,
+          streakData,
+          profileResult,
+          achievementsResult,
+          transactionsResult,
+        ] = await Promise.all([
+          fetch("/api/quests/daily")
+            .then((res) =>
+              res.ok ? res.json() : { quests: [], nextResetTime: "" }
+            )
+            .catch(() => ({ quests: [], nextResetTime: "" })),
           service.getXP(authUserId),
           service.getStreak(authUserId),
+          supabase
+            .from("profiles")
+            .select("username, name_rerolls_used")
+            .eq("id", authUserId)
+            .single(),
+          supabase
+            .from("user_achievements")
+            .select("id", { count: "exact", head: true })
+            .eq("user_id", authUserId),
+          // Bounded: the feed shows a handful of recent items and this set only
+          // drives recent-activity lookups — an unbounded fetch grew with every
+          // lesson a user ever completed.
+          supabase
+            .from("xp_transactions")
+            .select("amount, reason, created_at, tx_signature, idempotency_key")
+            .eq("user_id", authUserId)
+            .order("created_at", { ascending: false })
+            .limit(100),
         ]);
-
-        // Fetch profile — separate name_rerolls_used to avoid breaking the
-        // whole query if the column hasn't been migrated yet
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("username")
-          .eq("id", authUserId)
-          .single();
-
-        const { data: rerollData } = await supabase
-          .from("profiles")
-          .select("name_rerolls_used")
-          .eq("id", authUserId)
-          .single();
-
-        // Fetch achievements count
-        const { count: achievementsCount } = await supabase
-          .from("user_achievements")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", authUserId);
-
-        // Fetch recent XP transactions for the activity feed + recent-course
-        // resolution. Bounded: the feed shows a handful of recent items and this
-        // set only drives recent-activity lookups — an unbounded fetch grew with
-        // every lesson a user ever completed.
-        const { data: transactions } = await supabase
-          .from("xp_transactions")
-          .select("amount, reason, created_at, tx_signature, idempotency_key")
-          .eq("user_id", authUserId)
-          .order("created_at", { ascending: false })
-          .limit(100);
+        const profile = profileResult.data;
+        const rerollData = profileResult.data;
+        const achievementsCount = achievementsResult.count;
+        const transactions = transactionsResult.data;
 
         // #790: server-granted XP (daily-quest rewards + surprise bonuses) has
         // no synchronous UI cause. Toast it ONCE from the poll the dashboard

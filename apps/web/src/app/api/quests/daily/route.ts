@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import type { DailyQuest } from "@superteam-lms/types";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -115,11 +115,16 @@ export async function GET() {
     // Idempotent (award_xp keyed on reference_id), DB-only, so awaiting is
     // cheap. Errors never fail the endpoint — rows stay durable for the next
     // sweep.
-    try {
-      await retryQuestXpForUser(admin, user.id);
-    } catch (err) {
-      console.error("[api/quests/daily] quest_xp sweep failed:", err);
-    }
+    // Off the response path (dashboard-latency fix, 2026-08-01): the sweep is
+    // idempotent and durable, so the response never needs to wait for it. It
+    // still runs on every GET — just after the reply is flushed.
+    after(async () => {
+      try {
+        await retryQuestXpForUser(admin, user.id);
+      } catch (err) {
+        console.error("[api/quests/daily] quest_xp sweep failed:", err);
+      }
+    });
 
     return NextResponse.json({
       quests,
