@@ -19,6 +19,10 @@ import { useGamificationEvents } from "../use-gamification-events";
 const h = vi.hoisted(() => ({
   trackEvent: vi.fn(),
   dispatchCertificateMinted: vi.fn(),
+  dispatchLevelUp: vi.fn(),
+  // Level seeded by the hook's `user_xp` select; null = no row (ref stays null,
+  // so the first UPDATE cannot false-trigger).
+  seedLevel: null as number | null,
   dispatchSurpriseBonus: vi.fn(),
   dispatchQuestReward: vi.fn(),
   handlers: new Map<string, (payload: unknown) => void>(),
@@ -40,6 +44,9 @@ vi.mock("@/components/gamification/achievement-popup", () => ({
 }));
 vi.mock("@/components/gamification/certificate-popup", () => ({
   dispatchCertificateMinted: h.dispatchCertificateMinted,
+}));
+vi.mock("@/components/gamification/level-up-popup", () => ({
+  dispatchLevelUp: h.dispatchLevelUp,
 }));
 vi.mock("@/components/gamification/surprise-bonus-toast", () => ({
   dispatchSurpriseBonus: h.dispatchSurpriseBonus,
@@ -68,7 +75,10 @@ vi.mock("@/lib/supabase/client", () => ({
       from: () => ({
         select: () => ({
           eq: () => ({
-            maybeSingle: () => Promise.resolve({ data: null }),
+            maybeSingle: () =>
+              Promise.resolve({
+                data: h.seedLevel === null ? null : { level: h.seedLevel },
+              }),
           }),
         }),
       }),
@@ -125,6 +135,8 @@ async function waitForHandler(
 beforeEach(() => {
   h.trackEvent.mockClear();
   h.dispatchCertificateMinted.mockClear();
+  h.dispatchLevelUp.mockClear();
+  h.seedLevel = null;
   h.dispatchSurpriseBonus.mockClear();
   h.dispatchQuestReward.mockClear();
   h.setAuth.mockClear();
@@ -281,6 +293,85 @@ describe("useGamificationEvents — credential_minted (Realtime INSERT path)", (
     });
     // The popup still shows — only the analytics event is deduped.
     expect(h.dispatchCertificateMinted).toHaveBeenCalledWith("cert-1");
+  });
+});
+
+describe("useGamificationEvents — level-up popup (restored 2026-08-01)", () => {
+  /**
+   * Mounts with `level` as the established last-known level and returns the
+   * user_xp handler. The seed select supplies it, and the same-level UPDATE
+   * below pins the ref to it regardless of seed timing (every UPDATE writes the
+   * ref) — so these tests never race the seed query.
+   */
+  async function mountSeeded(level: number) {
+    h.seedLevel = level;
+    await mountHook();
+    const onXpUpdate = await waitForHandler("user_xp:UPDATE");
+    act(() => onXpUpdate({ new: { level } }));
+    h.dispatchLevelUp.mockClear();
+    return onXpUpdate;
+  }
+
+  it("seeds the ref from user_xp so the FIRST UPDATE after sign-in can level up", async () => {
+    // No priming UPDATE here: the seed query is the only thing that could have
+    // set the baseline, so this asserts the seed path itself.
+    h.seedLevel = 3;
+    await mountHook();
+    const onXpUpdate = await waitForHandler("user_xp:UPDATE");
+
+    act(() => onXpUpdate({ new: { level: 4 } }));
+
+    expect(h.dispatchLevelUp).toHaveBeenCalledTimes(1);
+    expect(h.dispatchLevelUp).toHaveBeenCalledWith(4);
+  });
+
+  it("dispatches exactly ONE level-up when an xp UPDATE crosses a level boundary", async () => {
+    const onXpUpdate = await mountSeeded(3);
+
+    act(() => onXpUpdate({ new: { level: 4 } }));
+
+    expect(h.dispatchLevelUp).toHaveBeenCalledTimes(1);
+    expect(h.dispatchLevelUp).toHaveBeenCalledWith(4);
+  });
+
+  it("dispatches nothing for an xp UPDATE that stays on the same level", async () => {
+    const onXpUpdate = await mountSeeded(3);
+
+    // XP moved (most lesson completions do this) but the level did not.
+    act(() => onXpUpdate({ new: { level: 3 } }));
+    act(() => onXpUpdate({ new: { level: 3 } }));
+
+    expect(h.dispatchLevelUp).not.toHaveBeenCalled();
+  });
+
+  it("dedupes per level: a replayed UPDATE at the new level is silent", async () => {
+    const onXpUpdate = await mountSeeded(3);
+
+    act(() => onXpUpdate({ new: { level: 4 } }));
+    // Realtime replay / reconnection redelivery of the same row.
+    act(() => onXpUpdate({ new: { level: 4 } }));
+
+    expect(h.dispatchLevelUp).toHaveBeenCalledTimes(1);
+  });
+
+  it("never fires on mount before the seed resolves (no false level-up on refresh)", async () => {
+    // No user_xp row → the ref stays null, so the very first UPDATE observed
+    // cannot be read as an increase from an unknown baseline.
+    h.seedLevel = null;
+    await mountHook();
+    const onXpUpdate = await waitForHandler("user_xp:UPDATE");
+
+    act(() => onXpUpdate({ new: { level: 7 } }));
+
+    expect(h.dispatchLevelUp).not.toHaveBeenCalled();
+  });
+
+  it("does not dispatch on a level DECREASE (admin correction / rollback)", async () => {
+    const onXpUpdate = await mountSeeded(5);
+
+    act(() => onXpUpdate({ new: { level: 4 } }));
+
+    expect(h.dispatchLevelUp).not.toHaveBeenCalled();
   });
 });
 
