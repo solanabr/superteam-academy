@@ -240,25 +240,37 @@ export function ThreadDetailClient({ shortId }: ThreadDetailClientProps) {
 
         {/* Meta — author, reputation, time, views on one tight line. */}
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--text-2)]">
-          <span className="flex items-center gap-1.5">
-            {thread.author.avatar_url ? (
-              <Image
-                src={thread.author.avatar_url}
-                alt=""
-                width={20}
-                height={20}
-                className="h-5 w-5 rounded-full"
-              />
-            ) : (
+          {thread.author.username ? (
+            <Link
+              href={`/profile/${thread.author.username}`}
+              className="flex items-center gap-1.5 transition-colors hover:text-[var(--primary)]"
+            >
+              {thread.author.avatar_url ? (
+                <Image
+                  src={thread.author.avatar_url}
+                  alt=""
+                  width={20}
+                  height={20}
+                  className="h-5 w-5 rounded-full"
+                />
+              ) : (
+                <div className="h-5 w-5 rounded-full bg-[var(--primary-dim)]" />
+              )}
+              <span className="text-sm font-semibold text-[var(--text)]">
+                {thread.author.username}
+              </span>
+              {thread.author.level > 0 && (
+                <LevelBadge level={thread.author.level} size="xs" />
+              )}
+            </Link>
+          ) : (
+            <span className="flex items-center gap-1.5">
               <div className="h-5 w-5 rounded-full bg-[var(--primary-dim)]" />
-            )}
-            <span className="text-sm font-semibold text-[var(--text)]">
-              {thread.author.username || t("anonymous")}
+              <span className="text-sm font-semibold text-[var(--text)]">
+                {t("anonymous")}
+              </span>
             </span>
-            {thread.author.level > 0 && (
-              <LevelBadge level={thread.author.level} size="xs" />
-            )}
-          </span>
+          )}
           <span>{timeAgo(thread.created_at, t)}</span>
           <span>{t("views", { count: thread.view_count })}</span>
         </div>

@@ -1,16 +1,17 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
+import { LevelBadge } from "@/components/gamification/level-badge";
+import { cn } from "@/lib/utils";
 import { VoteButton } from "./vote-button";
 import { AcceptAnswerButton } from "./accept-answer-button";
 import { FlagButton } from "./flag-button";
 import { DeleteButton } from "./delete-button";
-import { LevelBadge } from "@/components/gamification/level-badge";
-import { cn } from "@/lib/utils";
 
 interface Author {
   username: string | null;
@@ -104,9 +105,18 @@ export function AnswerCard({
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-sm font-semibold text-[var(--text)]">
-              {answer.author.username || t("anonymous")}
-            </span>
+            {answer.author.username ? (
+              <Link
+                href={`/profile/${answer.author.username}`}
+                className="text-sm font-semibold text-[var(--text)] transition-colors hover:text-[var(--primary)]"
+              >
+                {answer.author.username}
+              </Link>
+            ) : (
+              <span className="text-sm font-semibold text-[var(--text)]">
+                {t("anonymous")}
+              </span>
+            )}
             {answer.author.level > 0 && (
               <LevelBadge level={answer.author.level} size="xs" />
             )}
