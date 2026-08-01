@@ -1,6 +1,6 @@
 "use client";
 
-const QUEST_REWARD_EVENT = "superteam:quest-reward";
+export const QUEST_REWARD_EVENT = "superteam:quest-reward";
 
 export interface QuestRewardDetail {
   questId: string;

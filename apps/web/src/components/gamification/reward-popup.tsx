@@ -29,10 +29,9 @@ import { cn } from "@/lib/utils";
  * head of the queue only and advances on a timer — each reward gets its own
  * beat. Dismissing early advances immediately.
  */
-
-const LEVEL_UP_EVENT = "superteam:level-up";
-const QUEST_REWARD_EVENT = "superteam:quest-reward";
-const SURPRISE_BONUS_EVENT = "superteam:surprise-bonus";
+import { LEVEL_UP_EVENT } from "./level-up-popup";
+import { QUEST_REWARD_EVENT } from "./quest-reward-toast";
+import { SURPRISE_BONUS_EVENT } from "./surprise-bonus-toast";
 
 /** How long one reward holds the stage before the queue advances. */
 export const REWARD_POPUP_DURATION_MS = 5000;

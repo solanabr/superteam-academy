@@ -1,6 +1,6 @@
 "use client";
 
-const LEVEL_UP_EVENT = "superteam:level-up";
+export const LEVEL_UP_EVENT = "superteam:level-up";
 
 /**
  * Announce a level-up. Fired from the Realtime gamification hook's `user_xp`

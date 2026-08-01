@@ -1,6 +1,6 @@
 "use client";
 
-const SURPRISE_BONUS_EVENT = "superteam:surprise-bonus";
+export const SURPRISE_BONUS_EVENT = "superteam:surprise-bonus";
 
 /**
  * Announce a granted surprise XP bonus (LX-B15). Fired from the Realtime

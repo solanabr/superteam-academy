@@ -4,7 +4,6 @@ import { useEffect, useRef } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { trackCredentialMinted } from "@/lib/analytics/events";
 import { createClient } from "@/lib/supabase/client";
-import { celebrate } from "@/lib/gamification/celebration";
 import { isSurpriseBonusReason } from "@/lib/gamification/surprise-bonus";
 import {
   claimSurpriseBonus,
@@ -224,7 +223,9 @@ export function useGamificationEvents(userId: string | undefined) {
                   userId
                 )
               ) {
-                celebrate("surprise-bonus");
+                // celebrate() runs in RewardPopupQueue when the popup renders
+                // — a direct call here would double-fire confetti if the tier
+                // is ever bumped past "popup".
                 dispatchSurpriseBonus(amount);
               }
               dispatchXpGain(amount);
