@@ -96,9 +96,12 @@ const serverEnvSchema = z.object({
   // (lib/solana/arweave.ts). Unset → mint falls back to the app-served
   // metadata URL.
   ARWEAVE_UPLOADER_SECRET: optStr,
-  // Helius key for webhook management + DAS API (lib/helius). Server-only and
-  // UNRESTRICTED — never NEXT_PUBLIC_, and not the same key as the domain-
-  // restricted one behind NEXT_PUBLIC_SOLANA_RPC_URL.
+  // Helius key for WEBHOOK MANAGEMENT only (lib/helius/webhook-config) — the
+  // registration/list calls against Helius's REST API. No DAS API call exists
+  // anywhere in this codebase; the old "+ DAS API" note here described an
+  // integration that was never built. Server-only and UNRESTRICTED — never
+  // NEXT_PUBLIC_, and not the same key as the domain-restricted one behind
+  // NEXT_PUBLIC_SOLANA_RPC_URL.
   HELIUS_API_KEY: optStr,
   // Resend API key for marketing/announcement email (#769). Server-only.
   // Optional at boot — the email pipeline is FAIL-CLOSED: unset ⇒ send() returns
@@ -114,6 +117,12 @@ const serverEnvSchema = z.object({
   // "Superteam Academy <news@st.academy>". Optional — falls back to
   // DEFAULT_EMAIL_FROM (lib/email/resend.ts) when unset.
   EMAIL_FROM: optStr,
+  // Shared password for the read-only teacher course preview (#828). Optional
+  // at boot and FAIL-CLOSED: unset ⇒ /api/teach/preview/auth 503s and the
+  // preview is disabled (lib/teach/preview-auth.ts). There is no default —
+  // the old literal "123" fallback meant every deployment that forgot this var
+  // shipped a guessable gate.
+  TEACH_PREVIEW_PASSWORD: optStr,
   // Optional dedicated key for sealing the AI Partner's comprehension-check /
   // attestation tokens (lib/ai/check-seal.ts). Falls back to
   // SUPABASE_SERVICE_ROLE_KEY when unset.
@@ -160,6 +169,7 @@ const parsed = serverEnvSchema.safeParse({
   RESEND_API_KEY: process.env.RESEND_API_KEY,
   CRON_SECRET: process.env.CRON_SECRET,
   EMAIL_FROM: process.env.EMAIL_FROM,
+  TEACH_PREVIEW_PASSWORD: process.env.TEACH_PREVIEW_PASSWORD,
   AI_PARTNER_SEAL_SECRET: process.env.AI_PARTNER_SEAL_SECRET,
   AI_SPEND_GLOBAL_SOFT_USD: process.env.AI_SPEND_GLOBAL_SOFT_USD,
   AI_SPEND_GLOBAL_HARD_USD: process.env.AI_SPEND_GLOBAL_HARD_USD,

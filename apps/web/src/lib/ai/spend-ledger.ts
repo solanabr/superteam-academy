@@ -53,6 +53,16 @@ export interface GeminiUsageMetadata {
   promptTokenCount?: number;
   candidatesTokenCount?: number;
   thoughtsTokenCount?: number;
+  /**
+   * Prompt tokens served from context cache. CRITICAL shape detail (verified
+   * against the Gemini API docs 2026-07-31): this is a SUBSET of
+   * `promptTokenCount`, not an addition to it — the cached tokens are already
+   * counted there. Billing therefore splits the prompt into
+   * (prompt − cached) at the input rate + cached at the cached-input rate;
+   * adding them would double-count, and ignoring the field bills cache hits at
+   * up to 10× their real price.
+   */
+  cachedContentTokenCount?: number;
 }
 
 function capsMicroUsd(): SpendCapsMicroUsd {
@@ -76,7 +86,9 @@ function capsMicroUsd(): SpendCapsMicroUsd {
  * an EMERGENCY override applied across all models — a provider price move can
  * be answered from the dashboard before a deploy — but they are now unset by
  * default, so the ledger prices each model correctly out of the box instead of
- * billing every call at one model's rates.
+ * billing every call at one model's rates. There is deliberately NO cached-input
+ * override: the cached rate always comes from the sheet, so an emergency input
+ * override cannot accidentally reprice cache hits.
  */
 export function ratesFor(model: GeminiModel): SpendRates {
   const base = MODEL_RATES[model];
@@ -85,6 +97,7 @@ export function ratesFor(model: GeminiModel): SpendRates {
       serverEnv.AI_SPEND_INPUT_USD_PER_MTOK ?? base.inputUsdPerMTok,
     outputUsdPerMTok:
       serverEnv.AI_SPEND_OUTPUT_USD_PER_MTOK ?? base.outputUsdPerMTok,
+    cachedInputUsdPerMTok: base.cachedInputUsdPerMTok,
   };
 }
 
@@ -99,6 +112,10 @@ function nonNegInt(value: unknown): number {
  * env-free (rates are injected) so it is unit-testable. Since cost_usd =
  * tokens/1e6 × usdPerMTok, micro_usd (= cost_usd × 1e6) = tokens × usdPerMTok.
  * Thinking tokens are billed at the output rate.
+ *
+ * Prompt tokens are SPLIT: `cachedContentTokenCount` is a subset of
+ * `promptTokenCount`, so the uncached remainder bills at the input rate and the
+ * cached part at the (much cheaper) cached-input rate.
  */
 export function estimateSpendMicroUsd(
   usage: GeminiUsageMetadata | undefined,
@@ -108,7 +125,19 @@ export function estimateSpendMicroUsd(
   const prompt = nonNegInt(usage.promptTokenCount);
   const output = nonNegInt(usage.candidatesTokenCount);
   const thinking = nonNegInt(usage.thoughtsTokenCount);
-  const inputMicro = prompt * r.inputUsdPerMTok;
+  let cached = nonNegInt(usage.cachedContentTokenCount);
+  if (cached > prompt) {
+    // Malformed: cached tokens are by definition a subset of the prompt. Rather
+    // than trust the discount on a shape we don't understand, discard it and
+    // bill the whole prompt at the full input rate — the conservative direction
+    // for a platform-funded key.
+    console.warn(
+      `[spend-ledger] cachedContentTokenCount ${cached} > promptTokenCount ${prompt} — malformed usage; billing the whole prompt at the input rate`
+    );
+    cached = 0;
+  }
+  const inputMicro =
+    (prompt - cached) * r.inputUsdPerMTok + cached * r.cachedInputUsdPerMTok;
   const outputMicro = (output + thinking) * r.outputUsdPerMTok;
   return Math.max(0, Math.round(inputMicro + outputMicro));
 }

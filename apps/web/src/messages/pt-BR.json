@@ -362,6 +362,7 @@
     "quizPosition": "Pergunta {current} de {total}",
     "quizPrev": "Pergunta anterior",
     "quizNext": "Próxima pergunta",
+<<<<<<< HEAD
     "quizUnlocksAssistant": "O AI Partner é liberado depois do quiz — {answered}/{total} respondidas",
     "quizCompleteChip": "Concluído",
     "quizAllCorrect": "Todas as {total} perguntas respondidas corretamente.",
@@ -375,6 +376,13 @@
     "formatSyntaxError": "Nada para formatar — corrija os erros de sintaxe primeiro.",
     "formatUnchanged": "Já está formatado.",
     "formatUnsupported": "A formatação não está disponível para esta linguagem."
+||||||| ad469fab
+    "quizUnlocksAssistant": "Responda todas as perguntas para desbloquear o AI Partner nesta lição."
+=======
+    "quizUnlocksAssistant": "O AI Partner é liberado depois do quiz — {answered}/{total} respondidas",
+    "quizCompleteChip": "Concluído",
+    "quizAllCorrect": "Todas as {total} perguntas respondidas corretamente."
+>>>>>>> origin/main
   },
   "dashboard": {
     "allCaughtUp": "Tudo em dia!",

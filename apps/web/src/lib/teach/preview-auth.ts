@@ -22,29 +22,38 @@ export const TEACH_PREVIEW_COOKIE = "teach_preview_session";
 export const TEACH_PREVIEW_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 /**
- * Interim shared password. `TEACH_PREVIEW_PASSWORD` overrides it; the default
- * is intentionally trivial because this gate protects unpublished course drafts
- * (already destined to be public), never funds, secrets, or writes. Swap the
- * env var before this is useful to anyone outside the team.
+ * The shared preview password, or `null` when `TEACH_PREVIEW_PASSWORD` is
+ * unset/blank. There is deliberately NO fallback: the previous literal default
+ * ("123") shipped a guessable gate to every deployment that forgot to set the
+ * var. Unset now means the preview is DISABLED — the auth endpoint fails closed
+ * rather than accepting a well-known password.
  */
-const DEFAULT_PASSWORD = "123";
-
-export function getPreviewPassword(): string {
+export function getPreviewPassword(): string | null {
   const configured = process.env.TEACH_PREVIEW_PASSWORD;
-  return configured && configured.length > 0 ? configured : DEFAULT_PASSWORD;
+  return configured && configured.length > 0 ? configured : null;
+}
+
+/** True when a preview password is configured, i.e. the gate can be opened. */
+export function isPreviewConfigured(): boolean {
+  return getPreviewPassword() !== null;
 }
 
 /**
  * The HMAC key for session cookies. Prefers a real server secret so cookies
  * can't be forged by anyone who guesses the (weak, shared) password; falls back
  * to the password itself when no secret is configured, which still binds the
- * cookie to the current password.
+ * cookie to the current password. With none of the three set there is nothing
+ * to sign with — and nothing to protect either, since the gate is disabled — so
+ * the last resort is a random per-process key: every cookie it verifies fails.
  */
+const EPHEMERAL_SECRET = crypto.randomBytes(32).toString("hex");
+
 function sessionSecret(): string {
   return (
     process.env.SUPABASE_SERVICE_ROLE_KEY ??
     process.env.ADMIN_SECRET ??
-    getPreviewPassword()
+    getPreviewPassword() ??
+    EPHEMERAL_SECRET
   );
 }
 
@@ -57,8 +66,11 @@ function safeEqual(a: string, b: string): boolean {
 }
 
 export function isValidPreviewPassword(candidate: unknown): boolean {
+  const expected = getPreviewPassword();
+  // Unset password ⇒ the gate is disabled: nothing can satisfy it, not even "".
+  if (expected === null) return false;
   if (typeof candidate !== "string") return false;
-  return safeEqual(candidate, getPreviewPassword());
+  return safeEqual(candidate, expected);
 }
 
 export function mintPreviewSession(): string {

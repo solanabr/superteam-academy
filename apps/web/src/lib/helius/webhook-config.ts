@@ -15,10 +15,33 @@ interface HeliusWebhookResponse {
   webhookType: string;
 }
 
+/**
+ * DORMANT registration code. The live webhook was registered out-of-band and is
+ * not managed from here; nothing in the request path calls this module. Fixes
+ * below are correctness-of-shape, not a behaviour change in production.
+ *
+ * DOC AMBIGUITY (left as-is deliberately): Helius documents the webhook REST
+ * API under the single host `api.helius.xyz`, with the network selected by the
+ * API KEY's own cluster rather than by hostname; the per-cluster
+ * `api-{mainnet,devnet}.helius-rpc.com` hosts below are what this code has
+ * always used and what the out-of-band registration was done against. Changing
+ * the host is a separate, testable change — the enum fix is not.
+ */
 function getHeliusBaseUrl(): string {
   return NETWORK === "mainnet-beta"
     ? "https://api-mainnet.helius-rpc.com"
     : "https://api-devnet.helius-rpc.com";
+}
+
+/**
+ * `webhookType` is a documented ENUM, and devnet is a distinct VALUE — not a
+ * property of the host or the key. Registering with "raw" while targeting
+ * devnet is the classic silent-drift failure: the call succeeds and the webhook
+ * simply never fires. ("enhanced"/"enhancedDevnet" are the parsed-payload
+ * variants; the decoder here consumes RAW transactions.)
+ */
+function rawWebhookType(): "raw" | "rawDevnet" {
+  return NETWORK === "mainnet-beta" ? "raw" : "rawDevnet";
 }
 
 export async function registerWebhook(
@@ -39,9 +62,12 @@ export async function registerWebhook(
         webhookURL: webhookUrl,
         transactionTypes: ["ANY"],
         accountAddresses: [PROGRAM_ID],
-        webhookType: "raw",
+        webhookType: rawWebhookType(),
         authHeader: `Bearer ${WEBHOOK_SECRET}`,
-        txnStatus: "success",
+        // No `txnStatus`: it is not a documented field of this API, so it was
+        // being silently ignored while reading as if failed transactions were
+        // filtered upstream. They are filtered where it is actually verified —
+        // the event decoder drops any transaction with a non-null `meta.err`.
       }),
     }
   );
@@ -60,5 +86,20 @@ export async function listWebhooks(): Promise<HeliusWebhookResponse[]> {
   const res = await fetch(
     `${getHeliusBaseUrl()}/v0/webhooks?api-key=${HELIUS_API_KEY}`
   );
-  return (await res.json()) as HeliusWebhookResponse[];
+  // Without this, a 401/429/5xx body (an error OBJECT, not an array) was cast
+  // straight to `HeliusWebhookResponse[]` — so an auth failure surfaced far
+  // away as "no webhooks registered" rather than as an error.
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(
+      `Failed to list webhooks: ${res.status} ${body.slice(0, 300)}`
+    );
+  }
+  const parsed: unknown = await res.json();
+  if (!Array.isArray(parsed)) {
+    throw new Error(
+      `Unexpected webhook list shape: expected an array, got ${typeof parsed}`
+    );
+  }
+  return parsed as HeliusWebhookResponse[];
 }

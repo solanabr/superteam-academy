@@ -102,9 +102,10 @@ fails the boot loudly rather than degrading silently.
 `apps/web/vercel.json` (the Vercel **Root Directory** is `apps/web`) declares
 every scheduled job:
 
-| Path                          | Schedule (UTC) | Local time              | What it does                                                                                     |
-| ----------------------------- | -------------- | ----------------------- | ------------------------------------------------------------------------------------------------ |
-| `/api/cron/session-reminders` | `0 11 * * *`   | 08:00 America/Sao_Paulo | Sends the session-plan reminder to learners who committed to studying today AND opted in (#869). |
+| Path                          | Schedule (UTC) | Local time              | What it does                                                                                                                    |
+| ----------------------------- | -------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `/api/cron/session-reminders` | `0 11 * * *`   | 08:00 America/Sao_Paulo | Sends the session-plan reminder to learners who committed to studying today AND opted in (#869).                                |
+| `/api/cron/reengagement`      | `0 13 * * *`   | 10:00 America/Sao_Paulo | Sends the win-back nudge to opted-in learners inactive past the threshold, frequency-capped by `claim_due_reengagement` (#899). |
 
 Brazil has had no DST since 2019, so `11:00Z` is a stable 08:00 São Paulo — the
 learner gets the nudge in the morning, ahead of the hour they picked.

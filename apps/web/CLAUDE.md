@@ -1,4 +1,4 @@
-# apps/web — Next.js 14 App Router
+# apps/web — Next.js 15 App Router
 
 API route reference lives in `src/app/api/CLAUDE.md` (loads when you work on routes).
 
@@ -120,8 +120,8 @@ OPENENDED_AI_REPLY=                # Best-effort AI reply on /api/lessons/reflec
 #                                  # Needs no GITHUB_TOKEN: academy-courses is public, so the
 #                                  # preview reads it anonymously (#830). A token is used when
 #                                  # set, purely to lift the 60 req/hr anonymous rate limit.
-TEACH_PREVIEW_PASSWORD=            # Shared password for /teach/preview. Defaults to "123" —
-                                   # an INTERIM value; set a real one before sharing the URL.
+TEACH_PREVIEW_PASSWORD=            # Shared password for /teach/preview. NO default —
+                                   # unset = preview disabled (/api/teach/preview/auth 503s).
                                    # Gates read-only rendering of unpublished course PRs only:
                                    # never on-chain writes, never the admin surface (separate
                                    # cookie from admin_session, so it cannot satisfy admin auth).
@@ -149,7 +149,10 @@ SENTRY_ORG=                        # Build-time source-map upload (CI/Vercel onl
 SENTRY_PROJECT=
 SENTRY_AUTH_TOKEN=
 
-# Optional — App URL (for sitemap, OG tags)
+# Required — App URL (sitemap, OG tags, email links, on-chain metadata URIs).
+# Validated in lib/env.ts: dev/test default to http://localhost:3000, a
+# PRODUCTION build with it unset fails at boot — an empty value would pin a
+# RELATIVE metadata URI into an immutable credential NFT (unfixable after mint).
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
