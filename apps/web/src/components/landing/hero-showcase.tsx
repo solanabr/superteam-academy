@@ -153,7 +153,7 @@ function IdCard({
       }`}
       style={interactive ? { transformStyle: "preserve-3d" } : undefined}
     >
-      <div className="group relative overflow-hidden rounded-[10px] bg-card p-6">
+      <div className="group relative overflow-hidden rounded-[calc(var(--r-xl)-2.5px)] bg-card p-6">
         {/* sheen sweep on hover */}
         <div
           className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/[0.06] to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"

@@ -405,7 +405,7 @@ export function ProveWidget({ flipLabel }: { flipLabel: string }) {
           className="absolute inset-0 overflow-hidden rounded-xl bg-cert-gradient p-[2.5px] shadow-card"
           style={{ backfaceVisibility: "hidden" }}
         >
-          <div className="relative flex h-full flex-col justify-between overflow-hidden rounded-[9px] bg-card p-5 sm:p-6">
+          <div className="relative flex h-full flex-col justify-between overflow-hidden rounded-[calc(var(--r-xl)-2.5px)] bg-card p-5 sm:p-6">
             {/* sheen sweep on hover */}
             <div
               className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/[0.07] to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
@@ -446,7 +446,7 @@ export function ProveWidget({ flipLabel }: { flipLabel: string }) {
             transform: "rotateY(180deg)",
           }}
         >
-          <div className="flex h-full flex-col justify-between rounded-[9px] bg-card p-5 sm:p-6">
+          <div className="flex h-full flex-col justify-between rounded-[calc(var(--r-xl)-2.5px)] bg-card p-5 sm:p-6">
             <div>
               <div className="mb-3 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
                 NFT Details
