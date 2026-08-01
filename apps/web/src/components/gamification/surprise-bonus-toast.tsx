@@ -1,40 +1,21 @@
 "use client";
 
-import { useEffect } from "react";
-import { useTranslations } from "next-intl";
-import { dispatchToast } from "@/components/ui/toast-container";
-
 const SURPRISE_BONUS_EVENT = "superteam:surprise-bonus";
 
 /**
  * Announce a granted surprise XP bonus (LX-B15). Fired from the Realtime
  * gamification hook AFTER the bonus lands server-side — never before, so the
- * reward stays genuinely unexpected. Localization lives in the mounted
- * listener below, keeping the hook itself provider-free.
+ * reward stays genuinely unexpected. Localization lives in the presentation
+ * layer, keeping the hook itself provider-free.
+ *
+ * Presentation moved from a success toast to the reward popup queue on
+ * 2026-08-01 (owner: toasts read as too cheap for the moment) — see
+ * components/gamification/reward-popup.tsx. Only the rendering changed: this
+ * dispatcher and the claimSurpriseBonus dedupe both sides share are untouched.
  */
 export function dispatchSurpriseBonus(amount: number): void {
   if (typeof window === "undefined") return;
   window.dispatchEvent(
     new CustomEvent(SURPRISE_BONUS_EVENT, { detail: { amount } })
   );
-}
-
-/**
- * Renders nothing; listens for surprise-bonus events and shows an informational
- * toast (the LX-B15 "none" celebration tier — a calm success toast, never
- * confetti). Mount once inside the intl provider.
- */
-export function SurpriseBonusToastListener() {
-  const t = useTranslations("gamification");
-
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const { amount } = (e as CustomEvent<{ amount: number }>).detail;
-      dispatchToast(t("surpriseBonus", { amount }), "success");
-    };
-    window.addEventListener(SURPRISE_BONUS_EVENT, handler);
-    return () => window.removeEventListener(SURPRISE_BONUS_EVENT, handler);
-  }, [t]);
-
-  return null;
 }

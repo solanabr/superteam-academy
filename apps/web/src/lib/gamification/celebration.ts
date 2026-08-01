@@ -7,13 +7,29 @@ import { prefersReducedMotion } from "@/lib/reduced-motion";
  * Routine per-lesson rewards undermine intrinsic motivation, so per the
  * LX-B11 acceptance line, confetti fires ONLY at deploy + credential mint.
  * Lesson/challenge completion gets a calm checkmark acknowledgment; a
- * level-up celebrates nothing at all — the brand guide's three-popup rule
- * reserves popups for XP reward, Achievement Unlocked and Certificate Minted,
- * and a level-up gets no celebration of its own — it is visible in the header
- * level badge, which recomputes from the live XP counter on every xp-gain event
- * (the dashboard identity panel is server-rendered and does NOT live-update); a
+ * level-up gets a popup-only medium moment — with Level = floor(sqrt(XP/100))
+ * early level-ups arrive every few lessons, and confetti that frequent would
+ * recreate the routine-reward pattern this tiering exists to kill; a
  * successful devnet deploy gets a single confetti burst; a credential mint gets
  * the full-screen celebration.
+ *
+ * OWNER REVERSAL 2026-08-01 — READ BEFORE "FIXING" THIS MAP BACK.
+ * The brand wave (#955) removed the level-up popup on a strict three-popup
+ * reading of the brand guide, and #957 deleted its plumbing. The owner reversed
+ * that: "the popups were so cool", and of the small success toasts the
+ * recurring rewards had been demoted to, "those toasts are so cheap". So
+ * level-up, daily-quest completion and the surprise bonus all sit at the POPUP
+ * tier and render through the shared reward popup queue
+ * (components/gamification/reward-popup.tsx). This supersedes the PED-10
+ * minimal-celebration reading for THESE THREE events — it is a deliberate
+ * product decision, not drift.
+ *
+ * What the reversal did NOT change, and what an audit should still enforce:
+ * confetti stays reserved for deploy + credential mint (LX-B11). "popup" is
+ * confetti-free by construction — celebrate() returns before ever reaching
+ * canvas-confetti for that tier. Frequent confetti is the routine-reward
+ * pattern the tiering exists to kill, and early level-ups arrive every few
+ * lessons (Level = floor(sqrt(XP/100))).
  *
  * Lesson completion and a passing challenge run are deliberately absent from
  * `CelebrationEvent`: they are routine and get no celebration, so there is no
@@ -29,6 +45,7 @@ export { prefersReducedMotion };
 
 export type CelebrationEvent =
   | "deploy-success"
+  | "level-up"
   | "credential-mint"
   | "surprise-bonus"
   | "daily-quest";
@@ -37,21 +54,22 @@ export type CelebrationTier = "none" | "popup" | "medium" | "full";
 
 export const CELEBRATION_TIERS: Record<CelebrationEvent, CelebrationTier> = {
   "deploy-success": "medium",
+  "level-up": "popup",
   "credential-mint": "full",
-  // A surprise bonus (LX-B15) is an informational moment — a calm toast, never
-  // confetti. Its delight is the unexpectedness of the reward, not spectacle.
-  "surprise-bonus": "none",
+  // A surprise bonus (LX-B15) was "none" — a calm success toast — until the
+  // 2026-08-01 reversal. It is a real granted reward, so it now gets the popup
+  // card like its peers. Still never confetti: its delight is the
+  // unexpectedness of the reward, not spectacle.
+  "surprise-bonus": "popup",
   // A completed daily quest is a real earned moment, so it goes through the
-  // house celebration system rather than a bare toast — but at the POPUP tier,
-  // NOT confetti. Every peer moment a learner meets this often is popup-or-
-  // quieter (achievement: popup; surprise bonus: none; a level-up gets no
-  // celebration at all — it shows in the header level badge, which recomputes
-  // from the live XP counter on every xp-gain event);
-  // confetti is reserved by LX-B11 for deploy + credential mint precisely
-  // because a daily-cadence reward is the routine-reward pattern the tiering
-  // exists to avoid. The pop-spring celebration toast IS the moment. Flip this
-  // one constant to "medium" if the owner wants a confetti burst instead — the
-  // call site already routes through celebrate().
+  // house celebration system — at the POPUP tier, NOT confetti. Every peer
+  // moment a learner meets this often is popup-or-quieter (level-up: popup;
+  // achievement: popup; surprise bonus: popup); confetti is reserved by LX-B11
+  // for deploy + credential mint precisely because a daily-cadence reward is
+  // the routine-reward pattern the tiering exists to avoid. The pop-spring
+  // popup card IS the moment. Flip this one constant to "medium" if the owner
+  // wants a confetti burst instead — the call site already routes through
+  // celebrate().
   "daily-quest": "popup",
 } as const;
 
@@ -97,8 +115,8 @@ export function resetCelebrationThrottleForTests(): void {
  * Fire the visual celebration for an event according to its tier.
  * `none` renders nothing — the calm acknowledgment lives in the calling UI.
  * `popup` also fires NO confetti — the animated popup rendered by the calling
- * UI (e.g. the quest-reward toast's pop-spring card) IS the medium moment;
- * only the `medium` and `full` tiers ever reach canvas-confetti.
+ * UI (the reward popup queue's pop-spring card) IS the medium moment; only the
+ * `medium` and `full` tiers ever reach canvas-confetti.
  */
 export function celebrate(event: CelebrationEvent): void {
   const tier = celebrationTierFor(event);

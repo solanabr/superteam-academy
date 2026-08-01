@@ -46,12 +46,16 @@ afterEach(() => {
 describe("celebrationTierFor — the LX-B11 tier map", () => {
   const expected: Record<CelebrationEvent, string> = {
     "deploy-success": "medium",
+    // Restored 2026-08-01 (owner reversal of #955/#957). POPUP, never confetti:
+    // early level-ups arrive every few lessons.
+    "level-up": "popup",
     "credential-mint": "full",
-    "surprise-bonus": "none",
-    // A daily-quest reward is celebrated through the house system, but at the
-    // popup tier — a daily-cadence reward with confetti is exactly the routine-
-    // reward pattern LX-B11 tiering exists to prevent (the assertion below
-    // keeps confetti pinned to deploy + credential mint).
+    // Owner reversal 2026-08-01: the recurring reward moments render popup
+    // cards, not the small success toasts they had been demoted to. A
+    // daily-cadence reward with CONFETTI would still be the routine-reward
+    // pattern LX-B11 exists to prevent — the assertion below keeps confetti
+    // pinned to deploy + credential mint.
+    "surprise-bonus": "popup",
     "daily-quest": "popup",
   };
 
@@ -98,16 +102,22 @@ describe("isDuplicateFullCelebration — mint double-fire dedupe", () => {
 });
 
 describe("celebrate — confetti firing per tier", () => {
-  it("has no event for lesson completion, challenge pass or level-up", () => {
-    // Those moments are routine (or, for a level-up, covered by the header
-    // level badge), so they are not members of CelebrationEvent at all —
-    // there is no tier to look up and nothing that could fire confetti.
+  it("has no event for lesson completion or challenge pass", () => {
+    // Those moments are routine, so they are not members of CelebrationEvent
+    // at all — there is no tier to look up and nothing that could fire confetti.
     const events: CelebrationEvent[] = Object.keys(
       CELEBRATION_TIERS
     ) as CelebrationEvent[];
     expect(events).not.toContain("lesson-complete" as CelebrationEvent);
     expect(events).not.toContain("challenge-pass" as CelebrationEvent);
-    expect(events).not.toContain("level-up" as CelebrationEvent);
+  });
+
+  it("fires NO confetti for any popup-tier reward — the popup card IS the moment", () => {
+    celebrate("level-up");
+    celebrate("daily-quest");
+    celebrate("surprise-bonus");
+    vi.advanceTimersByTime(1000);
+    expect(confettiMock).not.toHaveBeenCalled();
   });
 
   it("fires a single medium burst for deploy success", () => {

@@ -16,6 +16,7 @@ import {
   dispatchAchievementXp,
 } from "@/components/gamification/achievement-popup";
 import { dispatchCertificateMinted } from "@/components/gamification/certificate-popup";
+import { dispatchLevelUp } from "@/components/gamification/level-up-popup";
 import { dispatchSurpriseBonus } from "@/components/gamification/surprise-bonus-toast";
 import { dispatchQuestReward } from "@/components/gamification/quest-reward-toast";
 
@@ -35,12 +36,17 @@ export function dispatchXpGain(amount: number): void {
  * Subscribe to Supabase Realtime for gamification events.
  * Dispatches browser CustomEvents that the existing popup components listen to.
  *
- * There is deliberately no level-up subscription: a level-up shows as the
- * header level badge recomputing from the live XP counter on xp-gain, never a
- * popup (brand guide §10). The dashboard identity panel is server-rendered and
- * does NOT live-update — it reflects the new level on next navigation.
+ * Level-up detection uses a local ref instead of payload.old because Supabase
+ * Realtime UPDATE events only include old PK columns without REPLICA IDENTITY FULL.
+ * The ref comparison is also what dedupes the popup per level: only a strict
+ * increase dispatches, so repeated UPDATEs at the same level (and a remount or
+ * page refresh, which re-seeds the ref from the CURRENT level) are silent.
+ *
+ * The header's optimistic level badge also moves on xp-gain. Both signals
+ * firing is intended: the badge is ambient, the popup is the moment.
  */
 export function useGamificationEvents(userId: string | undefined) {
+  const lastKnownLevelRef = useRef<number | null>(null);
   // Deduplicate Realtime events — Supabase may deliver the same row multiple
   // times (e.g. React Strict Mode double-mount, reconnection replays).
   const seenIdsRef = useRef(new Set<string>());
@@ -55,6 +61,20 @@ export function useGamificationEvents(userId: string | undefined) {
     // is assigned only once the socket is authed and subscribed.
     let cancelled = false;
     let channel: RealtimeChannel | null = null;
+
+    // Seed the ref with the current level so the first UPDATE doesn't false-trigger.
+    // Guard: only write the seed if no Realtime event has already set the ref —
+    // a stale seed overwriting a newer Realtime value causes false level-ups.
+    supabase
+      .from("user_xp")
+      .select("level")
+      .eq("user_id", userId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data && lastKnownLevelRef.current === null) {
+          lastKnownLevelRef.current = data.level ?? 0;
+        }
+      });
 
     // Monotonic guard against a stale-token race: bumped every time a token is
     // pushed to the socket. If a TOKEN_REFRESHED lands while connect()'s
@@ -95,6 +115,26 @@ export function useGamificationEvents(userId: string | undefined) {
 
       channel = supabase
         .channel(`gamification:${userId}`)
+        // XP changes → detect level-up via local ref comparison
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "user_xp",
+            filter: `user_id=eq.${userId}`,
+          },
+          (payload) => {
+            const newLevel = (payload.new as { level?: number }).level ?? 0;
+            const previousLevel = lastKnownLevelRef.current;
+            // Only celebrate a genuine increase — the ref starts null until the
+            // seed query resolves, so the first UPDATE can't false-trigger.
+            if (previousLevel !== null && newLevel > previousLevel) {
+              dispatchLevelUp(newLevel);
+            }
+            lastKnownLevelRef.current = newLevel;
+          }
+        )
         // New XP transactions → XP popup (or enrich achievement popup)
         .on(
           "postgres_changes",
@@ -166,7 +206,7 @@ export function useGamificationEvents(userId: string | undefined) {
             // Surprise bonus (LX-B15) → informational toast (never confetti). The
             // reward only surfaces here, AFTER it is granted server-side — there
             // is no pre-announcement anywhere in the UI. Localization happens in
-            // the mounted SurpriseBonusToastListener (inside the intl provider).
+            // the mounted RewardPopupQueue (inside the intl provider).
             // #790: the dashboard poll also detects surprise bonuses (for sessions
             // where Realtime isn't delivering); claimSurpriseBonus is a session
             // dedupe SHARED with that path, so whichever fires first wins and the
