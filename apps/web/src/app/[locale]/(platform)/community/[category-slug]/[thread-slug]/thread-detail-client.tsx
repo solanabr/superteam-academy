@@ -242,7 +242,7 @@ export function ThreadDetailClient({ shortId }: ThreadDetailClientProps) {
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--text-2)]">
           {thread.author.username ? (
             <Link
-              href={`/profile/${thread.author.username}`}
+              href={`/profile/${encodeURIComponent(thread.author.username)}`}
               className="flex items-center gap-1.5 transition-colors hover:text-[var(--primary)]"
             >
               {thread.author.avatar_url ? (
@@ -259,9 +259,6 @@ export function ThreadDetailClient({ shortId }: ThreadDetailClientProps) {
               <span className="text-sm font-semibold text-[var(--text)]">
                 {thread.author.username}
               </span>
-              {thread.author.level > 0 && (
-                <LevelBadge level={thread.author.level} size="xs" />
-              )}
             </Link>
           ) : (
             <span className="flex items-center gap-1.5">
@@ -270,6 +267,9 @@ export function ThreadDetailClient({ shortId }: ThreadDetailClientProps) {
                 {t("anonymous")}
               </span>
             </span>
+          )}
+          {thread.author.level > 0 && (
+            <LevelBadge level={thread.author.level} size="xs" />
           )}
           <span>{timeAgo(thread.created_at, t)}</span>
           <span>{t("views", { count: thread.view_count })}</span>
