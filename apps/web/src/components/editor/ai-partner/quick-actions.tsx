@@ -13,11 +13,22 @@ interface QuickActionsProps {
 }
 
 /**
- * Hints only (#770). The free-text "ask" field and the propose-a-fix action are
- * intentionally not offered: the tutor's role here is to nudge, not to answer.
- * The underlying ask/propose plumbing still exists in the hook and route.
+ * The one-tap hint, sitting above the free-text composer (#944).
+ *
+ * #770 made this surface hints-only ("the tutor's role is to nudge, not to
+ * answer") by deleting the ask field. That stance is superseded: the assist
+ * ladder (#864 — free → metered → Socratic → community handoff, tier-exact
+ * billing) and the attempt-gate nudge (#865) constrain *how* the tutor answers
+ * and *how much*, which is what hints-only was really protecting. So the ask is
+ * back next to the hint, spending the same ladder — and since #947 the composer
+ * also carries the quieter "Show me a change" action (propose), offered only
+ * after a failing run and still gated behind the earned-Accept check.
+ *
  * At full ladder exhaustion (#864) the hint button simply disables — the pane's
  * community-handoff block carries the copy, so no wall-shaped message here.
+ *
+ * The footer border/padding belong to the pane's composer block, which frames
+ * this button and the textarea as one unit.
  */
 export function QuickActions({
   onHint,
@@ -28,7 +39,7 @@ export function QuickActions({
   const t = useTranslations("aiPartner");
 
   return (
-    <div className={cn("space-y-2.5 border-t border-border p-3", className)}>
+    <div className={cn("space-y-2.5", className)}>
       <Button
         type="button"
         variant="secondary"

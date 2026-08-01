@@ -1005,7 +1005,7 @@
   },
   "aiPartner": {
     "title": "AI Partner",
-    "subtitle": "Stuck? Get a hint.",
+    "subtitle": "Stuck? Ask a question or get a hint.",
     "completed": "Challenge complete — nice work!",
     "attemptNudge": {
       "title": "Run the tests once first.",
@@ -1034,11 +1034,16 @@
     },
     "actions": {
       "hint": "Hint",
-      "propose": "Propose fix",
+      "propose": "Show me a change",
+      "proposeCost": "uses 1 turn",
       "askPlaceholder": "Ask a question about this challenge...",
+      "askLabel": "Ask the AI Partner about this challenge",
       "askSend": "Send",
       "review": "Review my solution",
       "reviewHint": "Get idiomatic feedback on your passing solution — this doesn't change your XP."
+    },
+    "composer": {
+      "empty": "Ask anything about this challenge, or grab a hint."
     },
     "diff": {
       "current": "Current",

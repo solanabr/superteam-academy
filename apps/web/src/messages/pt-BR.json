@@ -1005,7 +1005,7 @@
   },
   "aiPartner": {
     "title": "Parceiro de IA",
-    "subtitle": "Travado? Peça uma dica.",
+    "subtitle": "Travado? Faça uma pergunta ou peça uma dica.",
     "completed": "Desafio concluído — mandou bem!",
     "attemptNudge": {
       "title": "Rode os testes uma vez primeiro.",
@@ -1034,11 +1034,16 @@
     },
     "actions": {
       "hint": "Dica",
-      "propose": "Propor correção",
+      "propose": "Me mostre uma mudança",
+      "proposeCost": "usa 1 turno",
       "askPlaceholder": "Faça uma pergunta sobre este desafio...",
+      "askLabel": "Pergunte ao Parceiro de IA sobre este desafio",
       "askSend": "Enviar",
       "review": "Revisar minha solução",
       "reviewHint": "Receba comentários idiomáticos sobre a solução que você já concluiu — isto não altera seu XP."
+    },
+    "composer": {
+      "empty": "Pergunte o que quiser sobre este desafio, ou peça uma dica."
     },
     "diff": {
       "current": "Atual",

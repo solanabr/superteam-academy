@@ -64,7 +64,8 @@ interface UseAiPartnerResult {
   loading: boolean;
   error: string | null;
   requestHint: () => Promise<void>;
-  proposeFix: () => Promise<void>;
+  /** Ask for a concrete change. Optionally carries the learner's composer draft. */
+  proposeFix: (message?: string) => Promise<void>;
   ask: (message: string) => Promise<void>;
   review: () => Promise<void>;
   /** Spend the one guarded per-lesson reset. Resolves with the server verdict. */
@@ -261,9 +262,16 @@ export function useAiPartner({
     await callPartnerRoute("hint");
   }, [freeHintsUsed, hints, callPartnerRoute]);
 
-  const proposeFix = useCallback(async () => {
-    await callPartnerRoute("propose");
-  }, [callPartnerRoute]);
+  // "Show me a change" (#947). The learner's composer draft, if any, rides along
+  // as the optional `message` so the diff answers the question they were already
+  // typing — the draft is NOT consumed (the composer keeps it) and no user bubble
+  // is appended, because propose is answered by the diff card, not by a reply.
+  const proposeFix = useCallback(
+    async (message?: string) => {
+      await callPartnerRoute("propose", message);
+    },
+    [callPartnerRoute]
+  );
 
   // Post-pass idiomatic review (LX-C9). A paid action like propose/ask — it
   // spends an assist and appends the AI review to the chat. The caller gates

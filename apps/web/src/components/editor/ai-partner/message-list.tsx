@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { User, Sparkle, Lightbulb } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
+import { trackProposeAccepted } from "@/lib/analytics/events";
 import type { ChallengeEventContext } from "@/lib/analytics/events";
 import type { VerifyOutcome } from "@/lib/ai/partner-types";
 import type { PartnerMessage } from "@/lib/ai/use-ai-partner";
@@ -166,7 +167,14 @@ export function MessageList({
                 check={response.check}
                 checkToken={response.checkToken}
                 onVerify={onVerify}
-                onAccept={onApply}
+                // `propose_accepted` (#947) fires here rather than inside the
+                // card so the card's behavior is untouched. Exactly once per
+                // accepted patch: the card latches after its single Accept, and
+                // Accept is unreachable until the comprehension check passes.
+                onAccept={(proposed) => {
+                  if (eventCtx) trackProposeAccepted(eventCtx);
+                  onApply(proposed);
+                }}
                 onReject={() =>
                   setDismissed((prev) => new Set(prev).add(index))
                 }

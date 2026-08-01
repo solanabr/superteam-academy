@@ -199,6 +199,11 @@ export function ChallengeInterface({
   // free one-tap override. Session-scoped by design — the nudge is a gentle
   // per-visit suggestion, not a persisted gate, so nothing is stored.
   const [hasRunTests, setHasRunTests] = useState(false);
+  // Propose-visibility signal (#947): the AI Partner offers "Show me a change"
+  // only once the learner has seen a run FAIL — a concrete diff is never the
+  // opening move. Sticky for the visit (a later pass does not retract it) and,
+  // like `hasRunTests`, session-scoped rather than persisted.
+  const [hasFailedRun, setHasFailedRun] = useState(false);
   const runButtonRef = useRef<HTMLButtonElement>(null);
 
   const handleCodeChange = useCallback((newCode: string) => {
@@ -232,6 +237,7 @@ export function ChallengeInterface({
         failStreakRef.current += 1;
         trackChallengeFailed(ctx, failStreakRef.current);
         setConsecutiveFails((prev) => prev + 1);
+        setHasFailedRun(true);
       }
     },
     [lessonId, courseId, challengeKind]
@@ -496,6 +502,7 @@ export function ChallengeInterface({
               disabled={isComplete}
               solutionPassed={challengeState.status === "success"}
               hasRunTests={hasRunTests || isComplete}
+              hasFailedRun={hasFailedRun}
               onFocusRun={() => runButtonRef.current?.focus()}
               onNudgeShown={() =>
                 trackAttemptGateNudgeShown({

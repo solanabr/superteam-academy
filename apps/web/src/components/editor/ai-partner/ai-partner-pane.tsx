@@ -7,7 +7,6 @@ import {
   Robot,
   MagnifyingGlass,
   CaretDown,
-  Lightbulb,
   Play,
   UsersThree,
 } from "@phosphor-icons/react";
@@ -20,6 +19,7 @@ import type { ChallengeEventContext } from "@/lib/analytics/events";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { AssistMeter } from "./assist-meter";
+import { Composer } from "./composer";
 import { MessageList } from "./message-list";
 import { QuickActions } from "./quick-actions";
 
@@ -43,6 +43,11 @@ interface AiPartnerPaneProps {
    * a soft "run the tests first" suggestion with a free one-tap override,
    * never a lock. After the first run the nudge never appears. */
   hasRunTests?: boolean;
+  /** True once at least one test run on this challenge FAILED. Gates the
+   * secondary "Show me a change" action (#947): a concrete diff is offered only
+   * once the learner has a failure in front of them, never as the opening move.
+   * Sticky for the visit — a later passing run does not retract it. */
+  hasFailedRun?: boolean;
   /** Shift focus to the Run-tests button — the nudge's primary action. */
   onFocusRun?: () => void;
   /** The attempt-gate nudge surfaced (analytics; deduped upstream). */
@@ -65,6 +70,7 @@ export function AiPartnerPane({
   disabled = false,
   solutionPassed = false,
   hasRunTests = false,
+  hasFailedRun = false,
   onFocusRun,
   onNudgeShown,
   onNudgeOverride,
@@ -132,6 +138,8 @@ export function AiPartnerPane({
     loading,
     error,
     requestHint,
+    ask,
+    proposeFix,
     review,
     requestReset,
     verifyCheck,
@@ -140,6 +148,26 @@ export function AiPartnerPane({
   const requestHintGuarded = useCallback(
     () => guardAction(requestHint),
     [guardAction, requestHint]
+  );
+
+  // The free-text ask (#944) goes through the SAME attempt gate as the hint:
+  // pre-first-run the question is held (captured here) and the nudge shown, and
+  // the free override sends it unchanged. It spends a ladder turn like any other
+  // AI action — the composer disables itself at exhaustion.
+  const askGuarded = useCallback(
+    (message: string) => guardAction(() => void ask(message)),
+    [guardAction, ask]
+  );
+
+  // "Show me a change" (#947) is an assist like any other: same attempt gate,
+  // same ladder turn, same in-flight/exhaustion disabling. It stays available on
+  // the Socratic tier by design (#864 §4.2 — Socratic changes the tutor's
+  // default contract, it does not remove the escape hatch), and what it returns
+  // is still gated behind the earned-Accept comprehension check before any code
+  // moves. The learner's draft (if any) rides along and is left in the box.
+  const proposeGuarded = useCallback(
+    (message?: string) => guardAction(() => void proposeFix(message)),
+    [guardAction, proposeFix]
   );
 
   // Socratic-entry analytics (#864): fire once per lesson when the ladder
@@ -250,26 +278,11 @@ export function AiPartnerPane({
         </div>
       )}
 
-      {/* Empty state stays COMPACT (#770): the prompt and the Hint button sit
-          together in a short block — no reserved conversation area. The pane
-          only grows (and the button drops to the bottom) once there are
-          messages to show. */}
-      {!open ? null : messages.length === 0 ? (
-        <div className="flex flex-col gap-3 px-4 py-4">
-          <p className="text-sm text-text-3">{t("messages.empty")}</p>
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={requestHintGuarded}
-            disabled={loading || disabled}
-            className="w-full gap-1.5"
-          >
-            <Lightbulb size={14} weight="duotone" aria-hidden="true" />
-            {t("actions.hint")}
-          </Button>
-        </div>
-      ) : (
+      {/* The empty state is now the composer itself (#944): the invitation line
+          sits directly above the question box in the footer, so there is still
+          no reserved conversation area (the #770 compactness holds). The pane
+          only grows once there are messages to show. */}
+      {open && messages.length > 0 && (
         <MessageList
           messages={messages}
           onApply={onApply}
@@ -397,12 +410,35 @@ export function AiPartnerPane({
         </div>
       )}
 
-      {open && messages.length > 0 && (
-        <QuickActions
-          onHint={requestHintGuarded}
-          disabled={loading || disabled}
-          budgetExhausted={budgetExhausted}
-        />
+      {/* Composer footer (#944): Hint above, free-text ask below, one framed
+          block at the bottom of the pane. Both spend the same ladder and both
+          route through the attempt gate, so the guards of #864/#865 apply to
+          the question box exactly as they do to the hint. When the chat is
+          still empty this block doubles as the empty state. */}
+      {open && (
+        <div className="shrink-0 space-y-2.5 border-t border-border p-3">
+          {messages.length === 0 && (
+            <p className="text-sm text-text-3">{t("composer.empty")}</p>
+          )}
+          <QuickActions
+            onHint={requestHintGuarded}
+            disabled={loading || disabled}
+            budgetExhausted={budgetExhausted}
+          />
+          <Composer
+            onSend={askGuarded}
+            // Offered only once a run has actually FAILED, and withdrawn again
+            // at exhaustion where the community handoff takes over. (The
+            // Composer also hard-disables it on `budgetExhausted`, so it can
+            // never fire even if it were rendered in that state.)
+            onPropose={
+              hasFailedRun && !budgetExhausted ? proposeGuarded : undefined
+            }
+            disabled={loading || disabled}
+            pending={loading}
+            budgetExhausted={budgetExhausted}
+          />
+        </div>
       )}
     </div>
   );
