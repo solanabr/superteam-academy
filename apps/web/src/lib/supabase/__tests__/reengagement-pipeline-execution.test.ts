@@ -143,12 +143,12 @@ const SEED = `
     ('${CERTIFIED}',        true,  now(), NULL);
 
   INSERT INTO public.user_xp(user_id, longest_streak, last_activity_date) VALUES
-    ('${LAPSED}',           9, (now() - interval '30 days')::date),
-    ('${LAPSED_NO_COURSE}', 3, (now() - interval '30 days')::date),
-    ('${NO_CONSENT}',       0, (now() - interval '30 days')::date),
-    ('${WALLET}',           0, (now() - interval '30 days')::date),
-    ('${ACTIVE}',           4, (now() - interval '1 day')::date),
-    ('${CERTIFIED}',        7, (now() - interval '30 days')::date);
+    ('${LAPSED}',           9, ((now() AT TIME ZONE 'America/Sao_Paulo')::date - 30)),
+    ('${LAPSED_NO_COURSE}', 3, ((now() AT TIME ZONE 'America/Sao_Paulo')::date - 30)),
+    ('${NO_CONSENT}',       0, ((now() AT TIME ZONE 'America/Sao_Paulo')::date - 30)),
+    ('${WALLET}',           0, ((now() AT TIME ZONE 'America/Sao_Paulo')::date - 30)),
+    ('${ACTIVE}',           4, ((now() AT TIME ZONE 'America/Sao_Paulo')::date - 1)),
+    ('${CERTIFIED}',        7, ((now() AT TIME ZONE 'America/Sao_Paulo')::date - 30));
 
   INSERT INTO public.enrollments(user_id, course_id, enrolled_at) VALUES
     ('${LAPSED}',           'course-a', now() - interval '60 days'),
