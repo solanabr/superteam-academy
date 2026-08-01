@@ -16,6 +16,7 @@ import {
 } from "@/lib/ai/spend-ledger";
 import type { GeminiUsageMetadata } from "@/lib/ai/spend-ledger";
 import { sealCheck } from "@/lib/ai/check-seal";
+import { applyEdits } from "@/lib/ai/apply-edits";
 import {
   modelForAction,
   geminiUrl,
@@ -657,6 +658,26 @@ export async function POST(request: NextRequest) {
 
     let clientResponse: PartnerResponse;
     if (validated.type === "propose") {
+      // Owner-reported 2026-08-01: the model can emit edits whose `search`
+      // text never occurred in the learner's buffer (it invents "candidate"
+      // rewrites of its own earlier output), and the client then fail-closes
+      // into the "couldn't be applied automatically" card — a dead deliverable
+      // the learner still paid a turn for. The request CARRIES the buffer, so
+      // verify applicability server-side: every search must occur in the code
+      // the learner sent. A miss is a malformed payload (502; billed, same as
+      // the structural cases above). The client's own fail-closed apply stays
+      // as the guard for post-request buffer drift, which remains legitimate.
+      // applyEdits is the exact sequential-replace the diff card runs, so the
+      // server verdict and the client verdict can never disagree.
+      if (!applyEdits(code, validated.edits).ok) {
+        console.error(
+          "Gemini propose edits do not apply to the learner buffer"
+        );
+        return NextResponse.json(
+          { error: "AI returned an invalid response" },
+          { status: 502 }
+        );
+      }
       // Seal the answer server-side — the client only ever sees
       // {question, options} + an opaque checkToken. Never spread `validated`
       // here: that would leak `correctIndex`/`explanation` into the response.

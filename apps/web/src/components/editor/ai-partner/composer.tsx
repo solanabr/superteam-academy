@@ -90,12 +90,12 @@ export function Composer({
             submit();
           }
         }}
-        rows={2}
+        rows={1}
         maxLength={MAX_MESSAGE_CHARS}
         aria-describedby={counterId}
         disabled={inert}
         placeholder={t("actions.askPlaceholder")}
-        className="min-h-[72px] w-full resize-none rounded-md border border-border p-2 text-sm [background:var(--input)] placeholder:text-text-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+        className="min-h-[44px] w-full resize-y rounded-md border border-border p-2 text-sm [background:var(--input)] placeholder:text-text-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
       />
       <div className="flex flex-wrap items-center gap-2">
         {onPropose && (

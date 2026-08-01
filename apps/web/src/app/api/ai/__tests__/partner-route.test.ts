@@ -227,6 +227,28 @@ describe("POST /api/ai/partner", () => {
     });
   });
 
+  it("502s a propose whose edits cannot apply to the submitted buffer (owner-reported dead card)", async () => {
+    // The model invented a search block that never occurred in the learner's
+    // code — pre-fix the client rendered the "couldn't be applied
+    // automatically" dead card for a turn the learner already paid.
+    stubGeminiFetch(
+      JSON.stringify({
+        type: "propose",
+        rationale: "Rewrite the accounting.",
+        edits: [{ search: "text that is not in the buffer", replace: "x" }],
+        check: {
+          question: "Why?",
+          options: ["A", "B", "C"],
+          correctIndex: 0,
+          explanation: "Because.",
+        },
+      })
+    );
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest(VALID_BODY));
+    expect(res.status).toBe(502);
+  });
+
   it("passes through a well-formed propose response, sealed and validated", async () => {
     stubGeminiFetch(PROPOSE_GEMINI_TEXT);
 
@@ -524,7 +546,10 @@ describe("POST /api/ai/partner", () => {
 
     const { POST } = await import("../partner/route");
     const res = await POST(
-      makeRequest({ ...VALID_BODY, code: "x".repeat(8_000) })
+      makeRequest({
+        ...VALID_BODY,
+        code: ("let x = 1;" + "x".repeat(8_000)).slice(0, 8_000),
+      })
     );
 
     // At the cap (not over) the request is served, not 413'd.
