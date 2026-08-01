@@ -200,7 +200,6 @@
     "enrolled": "Enrolled",
     "completed": "Completed",
     "inProgress": "In Progress",
-    "startCourse": "Start Course",
     "continueCourse": "Continue Learning",
     "enrollNow": "Enroll Now",
     "linkWalletToEnroll": "Link Wallet to Enroll",
@@ -263,11 +262,9 @@
     "runCode": "Run Code",
     "submitSolution": "Submit Solution",
     "resetCode": "Reset Code",
-    "showHint": "Show Hint",
     "testsPassed": "All tests passed!",
     "testsFailed": "Some tests failed. Try again!",
     "testCases": "Test Cases",
-    "examples": "Examples",
     "output": "Output",
     "expected": "Expected",
     "passed": "Passed",
@@ -323,8 +320,6 @@
     "encouragementBodyNeutral": "Every failed run narrows things down. Re-read the task and try a smaller step — you're closer than it feels.",
     "capstoneAiOffTitle": "This one's all you.",
     "capstoneAiOffBody": "The capstone is completed without the AI Partner — that's what makes the credential yours.",
-    "stuckNudgeAction": "Show a hint",
-    "stuckNudgeNextAction": "Show another hint",
     "stuckNudgeHintLabel": "Hint {number}",
     "viewSolution": "View reference solution",
     "solutionGateTitle": "Peek at the solution?",
@@ -444,8 +439,6 @@
   "gamification": {
     "xp": "XP",
     "level": "Level",
-    "streak": "Streak",
-    "streakDays": "{count} day streak",
     "activity": "Learning activity",
     "achievements": "Achievements",
     "yourAchievements": "Your Achievements",
@@ -472,11 +465,6 @@
     "category_community": "Community",
     "category_special": "Special",
     "noEntries": "No rankings yet. Complete lessons to earn XP and appear here.",
-    "streakKeepGoing": "Learn today to keep it going!",
-    "streakFrozenDay": "Streak saved with a freeze",
-    "streakUnavailable": "—",
-    "streakUnavailableLabel": "Streak unavailable",
-    "streakFreezesRemaining": "{count, plural, one {# freeze} other {# freezes}}",
     "noAchievements": "Complete a lesson to earn your first achievement",
     "showLocked": "Show locked",
     "viewOnExplorer": "View on Explorer",
@@ -486,6 +474,13 @@
     "xpTooltip": "{xp} {xpLabel} to {levelLabel} {level}",
     "surpriseBonus": "Surprise bonus! +{amount} XP",
     "questReward": "Quest complete: {name} +{amount} XP",
+    "questNames": {
+      "quest-challenge": "Complete a Challenge",
+      "quest-complete-lesson": "Complete a Lesson",
+      "quest-complete-module": "Complete a Module",
+      "quest-lesson-batch": "Complete 3 Lessons",
+      "quest-login-streak": "Log in 3 Days in a Row"
+    },
     "league": "League",
     "global": "Global",
     "leagueSubtitle": "Your weekly cohort — live standings",
@@ -905,7 +900,6 @@
     "recentThreads": "Recent Threads",
     "yourStats": "Your Stats",
     "allThreads": "All Threads",
-    "answers": "{count, plural, zero {No answers yet} one {# Answer} other {# Answers}}",
     "views": "{count, plural, one {# view} other {# views}}",
     "accepted": "Accepted Answer",
     "acceptedAnswer": "Accepted Answer",
@@ -937,9 +931,7 @@
     "cancel": "Cancel",
     "post": "Post",
     "postAnswer": "Post Answer",
-    "yourAnswer": "Your Answer",
     "writeAnswer": "Write your answer using Markdown...",
-    "acceptAnswer": "Accept Answer",
     "write": "Write",
     "preview": "Preview",
     "nothingToPreview": "Nothing to preview",
@@ -1010,7 +1002,8 @@
     "filterCourseQuestions": "Course questions",
     "composerHeading": "Ask the community",
     "answersCount": "Answers ({count})",
-    "sortBy": "Sort by"
+    "sortBy": "Sort by",
+    "createThreadFailed": "Could not start the discussion. Try again."
   },
   "aiPartner": {
     "title": "AI Partner",
@@ -1039,7 +1032,6 @@
       "spendCapped": "The AI Partner has reached today's usage limit. It'll be back tomorrow — meanwhile, the authored hints and tests are still here to help."
     },
     "actions": {
-      "hint": "Hint",
       "propose": "Show me a change",
       "proposeCost": "uses 1 turn",
       "askPlaceholder": "Ask a question about this challenge...",
@@ -1049,7 +1041,7 @@
       "reviewHint": "Get idiomatic feedback on your passing solution — this doesn't change your XP."
     },
     "composer": {
-      "empty": "Ask anything about this challenge, or grab a hint."
+      "empty": "Ask anything about this challenge. Authored hints for this lesson live in the Hints section above."
     },
     "diff": {
       "current": "Current",
@@ -1074,8 +1066,7 @@
       "diffCard": "Proposed code change"
     },
     "socratic": {
-      "chip": "Lighter tutor",
-      "entered": "You're on the lighter tutor for this challenge. It leads with guiding questions so the fix is yours to find — and it can still propose a change when you need to see one."
+      "chip": "Lighter tutor"
     },
     "exhausted": {
       "title": "This challenge's tutor turns are used up",

@@ -57,7 +57,7 @@ const decided = (row: { opt_in: boolean; reminder_opt_in: boolean }) => ({
 
 /**
  * A #779 MARKETING-ONLY row: it exists, but no reminder decision was ever made
- * (both reminder timestamps NULL). Review F2 — row existence is not a decision.
+ * (both reminder timestamps NULL) — row existence is not a decision.
  */
 const marketingOnly = (optIn: boolean) => ({
   opt_in: optIn,
@@ -157,7 +157,7 @@ describe("EmailPreferences — derived reminder default (#582)", () => {
     expect(screen.queryByText(CONFIRM)).not.toBeInTheDocument();
   });
 
-  // Review F2 — a #779 marketing subscriber ALREADY has a row. Reading row
+  // A #779 marketing subscriber ALREADY has a row. Reading row
   // existence as "decided" pinned those learners to a hard OFF and denied them
   // the derived default entirely.
   it("a MARKETING-ONLY row is not a reminder decision: derived default applies", async () => {
@@ -182,7 +182,7 @@ describe("EmailPreferences — derived reminder default (#582)", () => {
   });
 });
 
-// Review F1 — while the switch shows a DERIVED ON, toggling it is the OFF
+// While the switch shows a DERIVED ON, toggling it is the OFF
 // action, so without a confirm affordance a learner who wants the ON they are
 // looking at has no way to store it, and the disclosure invites an action that
 // does the opposite.

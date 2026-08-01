@@ -188,7 +188,7 @@ describe("NextLessonPlan — reminder consent (#869)", () => {
     expect(box.checked).toBe(false);
   });
 
-  // Review F2 — a #779 marketing subscriber already HAS a row carrying
+  // A #779 marketing subscriber already HAS a row carrying
   // reminder_opt_in=false with no reminder timestamps. Reading row existence as
   // "decided" silently denied those learners the default-ON offer.
   it("treats a MARKETING-ONLY row as undecided and still offers the default ON", async () => {

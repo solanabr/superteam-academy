@@ -285,6 +285,21 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
         <span className="sr-only">{t("toggleSection")}</span>
       </button>
 
+      {/* Completion state (#943): a clean sweep is acknowledged in-block — no
+          popup, per the three-popup rule. It sits OUTSIDE the collapsible body
+          on purpose: the same sweep auto-collapses the quiz, and a live-region
+          insertion inside a subtree that goes `hidden` in the same frame is
+          neither seen nor reliably announced. Always mounted so the region
+          exists before the text arrives. */}
+      <div aria-live="polite" className="px-5 pb-5 empty:hidden">
+        {allCorrect && (
+          <p className="flex items-center gap-2 rounded-md border border-success p-3 text-sm font-medium text-success [background:var(--success-light)]">
+            <CheckCircle size={16} weight="bold" aria-hidden="true" />
+            {t("quizAllCorrect", { total })}
+          </p>
+        )}
+      </div>
+
       <div
         className={cn("space-y-6 px-5 pb-5", !open && "hidden")}
         onKeyDown={onBodyKeyDown}
@@ -434,18 +449,6 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
                 </Button>
               )}
             </div>
-          )}
-        </div>
-
-        {/* Completion state (#943): a clean sweep is acknowledged in-block —
-            no popup, per the three-popup rule. Always-mounted live region so
-            the sweep is announced when it happens. */}
-        <div aria-live="polite">
-          {allCorrect && (
-            <p className="flex items-center gap-2 rounded-md border border-success p-3 text-sm font-medium text-success [background:var(--success-light)]">
-              <CheckCircle size={16} weight="bold" aria-hidden="true" />
-              {t("quizAllCorrect", { total })}
-            </p>
           )}
         </div>
 

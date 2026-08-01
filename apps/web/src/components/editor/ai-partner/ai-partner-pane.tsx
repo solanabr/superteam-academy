@@ -24,7 +24,6 @@ import { MessageList } from "./message-list";
 interface AiPartnerPaneProps {
   lessonSlug: string;
   courseSlug: string;
-  hints: string[];
   getCode: () => string;
   getTestSummary: () => string;
   onApply: (proposedCode: string) => void;
@@ -38,20 +37,17 @@ interface AiPartnerPaneProps {
   solutionPassed?: boolean;
   /** True once the learner has run the tests at least once on this challenge.
    * Before that, the first AI action surfaces the attempt-gate nudge (#865) —
-   * a soft "run the tests first" suggestion with a free one-tap override,
-   * never a lock. After the first run the nudge never appears. */
+   * a soft "run the tests first" line, never a lock, and the requested action is
+   * parked and replayed once the gate opens. After the first run the nudge never
+   * appears. */
   hasRunTests?: boolean;
   /** True once at least one test run on this challenge FAILED. Gates the
    * secondary "Show me a change" action (#947): a concrete diff is offered only
    * once the learner has a failure in front of them, never as the opening move.
    * Sticky for the visit — a later passing run does not retract it. */
   hasFailedRun?: boolean;
-  /** Shift focus to the Run-tests button — the nudge's primary action. */
-  onFocusRun?: () => void;
   /** The attempt-gate nudge surfaced (analytics; deduped upstream). */
   onNudgeShown?: () => void;
-  /** The learner took the free override (analytics; deduped upstream). */
-  onNudgeOverride?: () => void;
   /** Content-id context for the ladder analytics events (#864) — Socratic
    * entry + reset-used. Optional: without it the events simply don't fire. */
   eventCtx?: ChallengeEventContext;
@@ -61,7 +57,6 @@ interface AiPartnerPaneProps {
 export function AiPartnerPane({
   lessonSlug,
   courseSlug,
-  hints,
   getCode,
   getTestSummary,
   onApply,
@@ -81,15 +76,12 @@ export function AiPartnerPane({
   // Attempt-gate nudge (#865, replaces the #770 hard think-first lock): AI
   // actions are always ENABLED, but the first use before any test run surfaces
   // a soft nudge instead of executing. "shown" holds the requested action until
-  // the learner either goes to run the tests or takes the free override;
-  // "overridden" is sticky for the rest of the mount, so the nudge appears at
-  // most once and the override is never re-asked (and never penalized).
-  const [nudgeState, setNudgeState] = useState<"idle" | "shown" | "overridden">(
-    "idle"
-  );
+  // the learner runs the tests, at which point it is replayed. There is no
+  // override affordance — the gate is one line and the only way past it is a
+  // run — so the state never advances past "shown".
+  const [nudgeState, setNudgeState] = useState<"idle" | "shown">("idle");
   const pendingActionRef = useRef<(() => void) | null>(null);
-  const nudgeEligible =
-    !disabled && !hasRunTests && nudgeState !== "overridden";
+  const nudgeEligible = !disabled && !hasRunTests;
   const nudgeVisible = nudgeEligible && nudgeState === "shown";
 
   /** Route an AI action through the attempt gate: pre-first-run it is held and
@@ -136,12 +128,12 @@ export function AiPartnerPane({
     review,
     requestReset,
     verifyCheck,
-  } = useAiPartner({ lessonSlug, courseSlug, hints, getCode, getTestSummary });
+  } = useAiPartner({ lessonSlug, courseSlug, getCode, getTestSummary });
 
-  // The free-text ask (#944) goes through the SAME attempt gate as the hint:
-  // pre-first-run the question is held (captured here) and the nudge shown, and
-  // the free override sends it unchanged. It spends a ladder turn like any other
-  // AI action — the composer disables itself at exhaustion.
+  // The free-text ask (#944) goes through the attempt gate: pre-first-run the
+  // question is held (captured here) and the nudge shown, then replayed
+  // unchanged once the learner runs the tests. It spends a ladder turn like any
+  // other AI action — the composer disables itself at exhaustion.
   const askGuarded = useCallback(
     (message: string) => guardAction(() => void ask(message)),
     [guardAction, ask]
@@ -370,11 +362,11 @@ export function AiPartnerPane({
         </div>
       )}
 
-      {/* Composer footer (#944): Hint above, free-text ask below, one framed
-          block at the bottom of the pane. Both spend the same ladder and both
-          route through the attempt gate, so the guards of #864/#865 apply to
-          the question box exactly as they do to the hint. When the chat is
-          still empty this block doubles as the empty state. */}
+      {/* Composer footer (#944): the free-text ask, plus the conditional
+          "show me a change" action, in one framed block at the bottom of the
+          pane. Both spend the same ladder and both route through the attempt
+          gate, so the guards of #864/#865 apply to the question box. When the
+          chat is still empty this block doubles as the empty state. */}
       {open && (
         <div className="shrink-0 space-y-2.5 border-t border-border p-3">
           {messages.length === 0 && (

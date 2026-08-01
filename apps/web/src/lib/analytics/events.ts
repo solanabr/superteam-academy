@@ -46,7 +46,6 @@ const startedLessons = new Set<string>();
 const mintedCourses = new Set<string>();
 const nudgedLessons = new Set<string>();
 const attemptNudgeShownLessons = new Set<string>();
-const attemptNudgeOverriddenLessons = new Set<string>();
 const revealedSolutionLessons = new Set<string>();
 const socraticEnteredLessons = new Set<string>();
 let onboardingStartedFired = false;
@@ -57,7 +56,6 @@ export function resetAnalyticsEventDedupeForTests(): void {
   mintedCourses.clear();
   nudgedLessons.clear();
   attemptNudgeShownLessons.clear();
-  attemptNudgeOverriddenLessons.clear();
   revealedSolutionLessons.clear();
   socraticEnteredLessons.clear();
   onboardingStartedFired = false;
@@ -132,44 +130,15 @@ export function trackStuckNudgeShown(
 }
 
 /**
- * `stuck_nudge_accepted` — the learner revealed an authored hint from the
- * stuck-nudge. `hintIndex` is the zero-based position in the authored-hint
- * list (content ids only, never the hint text — that is authored content, but
- * payloads stay lean and PII-free regardless).
- */
-export function trackStuckNudgeAccepted(
-  ctx: ChallengeEventContext,
-  hintIndex: number
-): void {
-  trackEvent("stuck_nudge_accepted", {
-    ...challengePayload(ctx),
-    hintIndex,
-  });
-}
-
-/**
  * `attempt_gate_nudge_shown` — the AI Partner's attempt-gate nudge (#865)
  * surfaced: the learner invoked an AI action before running the tests even
- * once on this challenge. Deduped per lesson per session so the override rate
- * (`attempt_gate_overridden` / this event) has a stable denominator.
+ * once on this challenge. Deduped per lesson per session, so one nudge per
+ * challenge is counted however many AI actions the learner tries.
  */
 export function trackAttemptGateNudgeShown(ctx: ChallengeEventContext): void {
   if (attemptNudgeShownLessons.has(ctx.lessonId)) return;
   attemptNudgeShownLessons.add(ctx.lessonId);
   trackEvent("attempt_gate_nudge_shown", challengePayload(ctx));
-}
-
-/**
- * `attempt_gate_overridden` — the learner took the free one-tap override on
- * the attempt-gate nudge ("I'm stuck before I can run it"). NEVER a penalty:
- * this is purely a content-quality signal — a challenge where most learners
- * override likely has a starter-code problem. Deduped per lesson per session
- * (exactly one per challenge), mirroring the shown event's denominator.
- */
-export function trackAttemptGateOverridden(ctx: ChallengeEventContext): void {
-  if (attemptNudgeOverriddenLessons.has(ctx.lessonId)) return;
-  attemptNudgeOverriddenLessons.add(ctx.lessonId);
-  trackEvent("attempt_gate_overridden", challengePayload(ctx));
 }
 
 // ── Onboarding funnel (E2/E7, LX-A2/LX-F1) ───────────────────

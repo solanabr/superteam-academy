@@ -70,7 +70,9 @@ describe("#864 aiPartner copy is never paywall-shaped", () => {
         }
       ).aiPartner;
       expect(Object.keys(ai.meter).sort()).toEqual(["metered", "socratic"]);
-      expect(Object.keys(ai.socratic).sort()).toEqual(["chip", "entered"]);
+      // `entered` is gone with the Socratic banner (owner 2026-07-31): the tier
+      // shift is announced by the meter chip alone.
+      expect(Object.keys(ai.socratic).sort()).toEqual(["chip"]);
       expect(Object.keys(ai.exhausted).sort()).toEqual([
         "body",
         "communityCta",

@@ -1,9 +1,20 @@
-import "server-only";
-import { serverEnv } from "@/lib/env.server";
-
-const HELIUS_API_KEY = serverEnv.HELIUS_API_KEY;
+/**
+ * OPERATOR TOOL — dormant registration tooling for the Helius program webhook.
+ * The live webhook was registered out-of-band and is not managed from the app;
+ * this module is kept as ops tooling for re-registration (a cluster move, a
+ * rotated secret, a new deployment URL), with zero app imports BY DESIGN. It
+ * lives under scripts/ precisely because an unimported file is the norm here.
+ *
+ * Standalone: plain `process.env` + Node's built-in `fetch`, no `@/` aliases and
+ * no `server-only`, so it runs under `npx tsx` outside the Next build.
+ *
+ *   HELIUS_API_KEY=... HELIUS_WEBHOOK_SECRET=... NEXT_PUBLIC_PROGRAM_ID=... \
+ *   NEXT_PUBLIC_SOLANA_NETWORK=devnet npx tsx -e \
+ *     "import('./scripts/helius-webhook-config.ts').then(m => m.listWebhooks()).then(console.log)"
+ */
+const HELIUS_API_KEY = process.env.HELIUS_API_KEY;
 const PROGRAM_ID = process.env.NEXT_PUBLIC_PROGRAM_ID;
-const WEBHOOK_SECRET = serverEnv.HELIUS_WEBHOOK_SECRET;
+const WEBHOOK_SECRET = process.env.HELIUS_WEBHOOK_SECRET;
 const NETWORK = process.env.NEXT_PUBLIC_SOLANA_NETWORK ?? "devnet";
 
 interface HeliusWebhookResponse {
@@ -16,10 +27,6 @@ interface HeliusWebhookResponse {
 }
 
 /**
- * DORMANT registration code. The live webhook was registered out-of-band and is
- * not managed from here; nothing in the request path calls this module. Fixes
- * below are correctness-of-shape, not a behaviour change in production.
- *
  * DOC AMBIGUITY (left as-is deliberately): Helius documents the webhook REST
  * API under the single host `api.helius.xyz`, with the network selected by the
  * API KEY's own cluster rather than by hostname; the per-cluster

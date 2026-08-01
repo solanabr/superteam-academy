@@ -94,8 +94,10 @@ export function ThreadComposer({
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to create thread");
+        // The route's `error` is an English server string, so it is not shown:
+        // the learner gets one localized failure line and the detail stays in
+        // the network tab where it is actually useful.
+        throw new Error("create-thread-failed");
       }
 
       const thread = await res.json();
@@ -116,8 +118,8 @@ export function ThreadComposer({
       router.push(
         `/community/${isCourseScoped ? "general" : catSlug}/${thread.slug}`
       );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create thread");
+    } catch {
+      setError(t("createThreadFailed"));
     } finally {
       setIsSubmitting(false);
     }

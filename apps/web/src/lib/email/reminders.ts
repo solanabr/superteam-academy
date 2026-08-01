@@ -155,7 +155,7 @@ export async function sendSessionPlanReminders(params: {
 
   // The claim RPC already claimed EVERY row it returned. Anything this filter
   // drops is a claim we will never send against — release it, or that learner
-  // is silently locked out for the day with nothing in the logs (review F4).
+  // is silently locked out for the day with nothing in the logs.
   const filteredOut = claimed.filter((r) => !isValidEmail(r.email));
   if (filteredOut.length > 0) {
     console.error(
@@ -216,8 +216,8 @@ export async function sendSessionPlanReminders(params: {
           result.reason === "error" ? result.message : result.reason
         }`
       );
-      // Release the claim ONLY when the failure PROVES nothing was accepted
-      // (review F3). A 5xx or a timeout is ambiguous — Resend may have accepted
+      // Release the claim ONLY when the failure PROVES nothing was accepted.
+      // A 5xx or a timeout is ambiguous — Resend may have accepted
       // and delivered the batch before the wire broke, and releasing there lets
       // a same-day manual retry send a SECOND copy to a learner who already got
       // one (the batch's idempotency key changes with chunk membership, so

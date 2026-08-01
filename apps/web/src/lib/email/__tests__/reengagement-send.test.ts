@@ -11,7 +11,7 @@ vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({ rpc }),
 }));
 
-/** Lets a test make the post-claim content-bundle read blow up (gate F1). */
+/** Lets a test make the post-claim content-bundle read blow up. */
 const bundle = vi.hoisted(() => ({ throws: null as string | null }));
 
 vi.mock("@/lib/content/queries", () => ({

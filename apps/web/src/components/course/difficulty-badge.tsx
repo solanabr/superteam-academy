@@ -7,7 +7,7 @@ interface DifficultyBadgeProps {
 }
 
 /**
- * v9 difficulty chip styles — pill-beg / pill-int / pill-adv pattern.
+ * v9 difficulty chip styles — one tone per difficulty tier.
  * Uses CSS var() for backgrounds not yet mapped in Tailwind config.
  */
 const difficultyStyles = {

@@ -24,14 +24,14 @@ import { createClient } from "@/lib/supabase/client";
  * learner actually confirms it here (or at the plan-commit prompt, which shows
  * the same disclosure).
  *
- * "NO REMINDER DECISION YET" IS A TIMESTAMP TEST, NOT ROW ABSENCE (review F2).
+ * "NO REMINDER DECISION YET" IS A TIMESTAMP TEST, NOT ROW ABSENCE.
  * A #779 marketing subscriber already HAS an `email_subscriptions` row with
  * `reminder_opt_in = false` and no reminder timestamps — treating the row's
  * existence as a decision would deny those learners the derived default. The
  * row is "undecided" iff BOTH `reminder_consent_at` and
  * `reminder_unsubscribed_at` are NULL, which only the reminder RPC ever sets.
  *
- * A SUGGESTION MUST BE CONFIRMABLE (review F1). While the switch is showing a
+ * A SUGGESTION MUST BE CONFIRMABLE. While the switch is showing a
  * derived ON, toggling it is the OFF action — so there would be no way to store
  * the ON the learner is looking at. An explicit confirm button is rendered
  * alongside it in exactly that state; it writes the DISPLAYED value.
@@ -179,7 +179,7 @@ export function EmailPreferences() {
  * True when the learner has actually DECIDED about reminders. Only
  * `set_reminder_opt_in` / `unsubscribe_reminders_by_token` write these
  * timestamps, so both NULL means "never chose" even on a row created by the
- * #779 marketing toggle (review F2).
+ * #779 marketing toggle.
  */
 function hasReminderDecision(sub: {
   reminder_consent_at: string | null;

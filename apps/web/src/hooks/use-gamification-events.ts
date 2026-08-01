@@ -137,12 +137,10 @@ export function useGamificationEvents(userId: string | undefined) {
 
             // Daily quest XP → celebrate wherever the learner is.
             //
-            // This used to be suppressed ("the quests panel already shows the
-            // reward"), which held only while quests were awarded exclusively
-            // by the dashboard's own poll. Quest evaluation now runs from the
-            // ACTION paths (lesson complete, review grade, test-out, the
-            // completion webhook), so the award routinely lands while the
-            // learner is on a lesson page and would otherwise be silent.
+            // Quest evaluation runs from the ACTION paths (lesson complete,
+            // review grade, test-out, the completion webhook), so the award
+            // routinely lands while the learner is on a lesson page — deferring
+            // to the dashboard's quests panel would make it silent there.
             //
             // claimQuestRewardFromCredit is the SAME session-wide seen-set the
             // poll path claims through (keyed questId + period, with the period

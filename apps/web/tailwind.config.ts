@@ -82,12 +82,6 @@ const config: Config = {
         avatar: {
           bg: "var(--avatar-bg)",
           fg: "var(--avatar-fg)",
-          ring: "var(--avatar-ring)",
-        },
-        code: {
-          bg: "var(--code-bg)",
-          fg: "var(--code-fg)",
-          border: "var(--code-border)",
         },
         /* ── Gold metallic (medal/badge gradients) ── */
         gold: {

@@ -114,10 +114,8 @@ export function CommunitySearch() {
               {results.map((thread) => (
                 <ThreadCard
                   key={thread.id}
-                  id={thread.id}
                   title={thread.title}
                   slug={thread.slug}
-                  shortId={thread.short_id}
                   type={thread.type}
                   isSolved={thread.is_solved}
                   isPinned={thread.is_pinned}

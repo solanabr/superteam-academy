@@ -286,17 +286,17 @@ const PILL_BASE =
 
 export const DIFFICULTY_STYLES = {
   base: PILL_BASE,
-  /** pill-beg — emerald teal */
+  /** Emerald teal. */
   beginner: cx(
     PILL_BASE,
     "bg-primary-bg border-primary text-primary-dark dark:text-primary"
   ),
-  /** pill-int — warm amber (v9: XP color for intermediate) */
+  /** Warm amber — the XP color, reused for the intermediate tier. */
   intermediate: cx(
     PILL_BASE,
     "bg-xp-dim [border-color:var(--accent-border)] text-xp-dark dark:text-xp"
   ),
-  /** pill-adv — streak orange */
+  /** Streak orange. */
   advanced: cx(
     PILL_BASE,
     "bg-streak-light border-streak text-streak dark:[background:var(--streak-dim)]"
@@ -394,30 +394,26 @@ export const MODAL_STYLES = {
 // ─── CHIPS / BADGES ─────────────────────────────────────────────────────────
 
 export const CHIP_STYLES = {
-  /**
-   * Base chip — v9 pill spec.
-   * font-family: var(--font-d), font-weight: 700, font-size: 11px,
-   * text-transform: uppercase, letter-spacing: 0.4px, border: 1px solid.
-   */
+  /** Base chip: display font, bold, 11px uppercase, hairline border. */
   base: "inline-flex items-center gap-1 px-3 py-1 rounded-full font-display font-bold text-[11px] uppercase tracking-wide border",
-  /** pill-primary — emerald teal */
+  /** Emerald teal. */
   primary: "bg-primary-bg [border-color:rgba(46,204,142,0.22)] text-primary",
   /**
-   * pill-xp — warm amber for XP rewards.
+   * Warm amber, for XP rewards.
    * Container comes from --xp-chip-*: on the warm-paper light theme that is an
    * inverted dark charcoal chip so the brand amber keeps its contrast; in dark
    * it resolves to the same amber-dim wash it has always been.
    */
   xp: "bg-xp-chip-bg [border-color:rgba(245,166,35,0.22)] text-xp-chip-fg",
-  /** pill-streak — flame orange, same inverted-container treatment as xp */
+  /** Flame orange — same inverted-container treatment as xp. */
   streak:
     "bg-streak-chip-bg [border-color:rgba(249,115,22,0.22)] text-streak-chip-fg",
-  /** pill-level — purple */
+  /** Purple. */
   level:
     "[background:var(--level-dim)] border-[rgba(167,139,250,0.22)] text-[var(--level)]",
-  /** pill-sol — Solana purple/teal (NFT/on-chain only) */
+  /** Solana purple/teal — NFT / on-chain only. */
   sol: "bg-[rgba(153,69,255,0.08)] border-[rgba(153,69,255,0.20)] text-[#C4B5FD]",
-  /** pill-done — success green */
+  /** Success green. */
   success:
     "bg-success-bg [border-color:rgba(63,185,80,0.22)] text-success-dark dark:text-success",
   /** Muted chip */

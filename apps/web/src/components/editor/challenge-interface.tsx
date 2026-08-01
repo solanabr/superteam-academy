@@ -18,7 +18,6 @@ import {
   trackChallengeSolved,
   trackChallengeStarted,
   trackAttemptGateNudgeShown,
-  trackAttemptGateOverridden,
   trackSolutionRevealed,
   trackStuckNudgeShown,
 } from "@/lib/analytics/events";
@@ -517,7 +516,6 @@ export function ChallengeInterface({
             <AiPartnerPane
               lessonSlug={lessonSlug}
               courseSlug={courseSlug}
-              hints={hints}
               getCode={() => code}
               getTestSummary={() => summarize(challengeState.executionResult)}
               onApply={(proposed) => setCode(proposed)}
@@ -525,16 +523,8 @@ export function ChallengeInterface({
               solutionPassed={challengeState.status === "success"}
               hasRunTests={hasRunTests || isComplete}
               hasFailedRun={hasFailedRun}
-              onFocusRun={() => runButtonRef.current?.focus()}
               onNudgeShown={() =>
                 trackAttemptGateNudgeShown({
-                  lessonId,
-                  courseId,
-                  challengeKind,
-                })
-              }
-              onNudgeOverride={() =>
-                trackAttemptGateOverridden({
                   lessonId,
                   courseId,
                   challengeKind,

@@ -167,6 +167,8 @@ describe("LessonJumpChips", () => {
         kind: "topics",
         label: "Topics",
         targetId: "lesson-topics",
+        panelId: "lesson-topics-panel",
+        expanded: false,
         onActivate: vi.fn(),
       },
       {
@@ -174,6 +176,8 @@ describe("LessonJumpChips", () => {
         label: "Discussion",
         count: "3",
         targetId: "lesson-discussion",
+        panelId: "lesson-discussion-panel",
+        expanded: false,
         onActivate: vi.fn(),
       },
     ];
@@ -185,15 +189,37 @@ describe("LessonJumpChips", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("points each chip at its section and shows the discussion count", () => {
+  it("points each chip at its section's PANEL and shows the discussion count", () => {
     renderWithIntl(<LessonJumpChips chips={chips()} />);
+    // aria-controls targets the disclosure PANEL (which LessonSection always
+    // renders), not the section wrapper — a chip is a second control for the
+    // same disclosure, so it advertises the same target as the section header.
     expect(screen.getByRole("button", { name: /Topics/ })).toHaveAttribute(
       "aria-controls",
-      "lesson-topics"
+      "lesson-topics-panel"
     );
     const discussion = screen.getByRole("button", { name: /Discussion/ });
-    expect(discussion).toHaveAttribute("aria-controls", "lesson-discussion");
+    expect(discussion).toHaveAttribute(
+      "aria-controls",
+      "lesson-discussion-panel"
+    );
     expect(discussion).toHaveTextContent("(3)");
+  });
+
+  it("carries aria-expanded mirroring its section's open state", () => {
+    renderWithIntl(
+      <LessonJumpChips
+        chips={chips([{ expanded: true }, { expanded: false }])}
+      />
+    );
+    expect(screen.getByRole("button", { name: /Topics/ })).toHaveAttribute(
+      "aria-expanded",
+      "true"
+    );
+    expect(screen.getByRole("button", { name: /Discussion/ })).toHaveAttribute(
+      "aria-expanded",
+      "false"
+    );
   });
 
   it("activates the section on click", () => {

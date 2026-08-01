@@ -26,7 +26,7 @@ import {
   pickSurpriseBonusToasts,
 } from "@/lib/gamification/server-xp-feedback";
 import { questPeriodUtc } from "@/lib/gamification/daily-reset";
-import { questDisplayName } from "@/lib/gamification/quest-name";
+import { useQuestName } from "@/lib/gamification/use-quest-name";
 import { dispatchXpGain } from "@/hooks/use-gamification-events";
 import { dispatchSurpriseBonus } from "@/components/gamification/surprise-bonus-toast";
 import { dispatchQuestReward } from "@/components/gamification/quest-reward-toast";
@@ -101,6 +101,7 @@ export function useDashboardData(
   authLoading: boolean
 ): DashboardData {
   const tDash = useTranslations("dashboard");
+  const localizedQuestName = useQuestName();
   const [data, setData] = useState<DashboardData>({
     xp: 0,
     level: 0,
@@ -205,7 +206,6 @@ export function useDashboardData(
           // wherever the learner happens to be standing.
           dispatchQuestReward({
             questId: reward.questId,
-            name: reward.name,
             xpReward: reward.xpReward,
           });
         }
@@ -504,9 +504,9 @@ export function useDashboardData(
             });
           } else if (dailyQuestPattern.exec(tx.reason)?.[1]) {
             const questId = tx.reason.match(dailyQuestPattern)![1]!;
-            // Shared with the Realtime toast's fallback naming (quest-name.ts)
-            // so the feed and the celebration never spell a quest differently.
-            const questName = questDisplayName(questId);
+            // Shared with the Realtime toast's naming (use-quest-name.ts) so
+            // the feed and the celebration never spell a quest differently.
+            const questName = localizedQuestName(questId);
             raw.push({
               type: "xp_other",
               action: tDash("dailyQuest", { name: questName }),
@@ -639,7 +639,7 @@ export function useDashboardData(
     }
 
     fetchData();
-  }, [authUserId, authLoading, tDash]);
+  }, [authUserId, authLoading, tDash, localizedQuestName]);
 
   return data;
 }

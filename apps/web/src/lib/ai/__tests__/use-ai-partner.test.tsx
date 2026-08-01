@@ -4,8 +4,6 @@ import { renderHook, act, waitFor } from "@testing-library/react";
 import { useAiPartner } from "../use-ai-partner";
 import type { PartnerResponse } from "../partner-types";
 
-const HINTS = ["Check your loop bound.", "Off-by-one on the last index."];
-
 function jsonResponse(body: unknown) {
   return {
     ok: true,
@@ -19,7 +17,6 @@ function baseProps(
   return {
     lessonSlug: "l-slug",
     courseSlug: "c-slug",
-    hints: HINTS,
     getCode: () => "let x = 1;",
     getTestSummary: () => "1/2 passing",
     ...overrides,
@@ -84,81 +81,6 @@ describe("useAiPartner", () => {
     expect(result.current.resetAvailableAt).toBe(1_700_000_000_000);
   });
 
-  it("serves the first two requestHint() calls from authored hints with no fetch", async () => {
-    const { result } = await renderPartner();
-
-    await act(async () => {
-      result.current.requestHint();
-    });
-    expect(result.current.freeHintsUsed).toBe(1);
-    expect(result.current.messages).toHaveLength(1);
-    expect(result.current.messages[0]).toMatchObject({
-      role: "ai",
-      kind: "hint",
-      text: HINTS[0],
-    });
-
-    await act(async () => {
-      result.current.requestHint();
-    });
-    expect(result.current.freeHintsUsed).toBe(2);
-    expect(result.current.messages).toHaveLength(2);
-    expect(result.current.messages[1]).toMatchObject({
-      role: "ai",
-      kind: "hint",
-      text: HINTS[1],
-    });
-
-    expect(global.fetch).not.toHaveBeenCalled();
-  });
-
-  it("calls fetch with action:hint once authored hints are exhausted", async () => {
-    const response: PartnerResponse = {
-      type: "hint",
-      text: "Server-generated hint.",
-    };
-    vi.mocked(global.fetch).mockResolvedValue(jsonResponse(response));
-
-    const { result } = await renderPartner();
-
-    // Drain the two free hints first (no network).
-    await act(async () => {
-      result.current.requestHint();
-    });
-    await act(async () => {
-      result.current.requestHint();
-    });
-    expect(global.fetch).not.toHaveBeenCalled();
-
-    // Third call must hit the network.
-    await act(async () => {
-      await result.current.requestHint();
-    });
-
-    expect(global.fetch).toHaveBeenCalledTimes(1);
-    const [url, init] = vi.mocked(global.fetch).mock.calls[0]!;
-    expect(url).toBe("/api/ai/partner");
-    expect(init).toMatchObject({ method: "POST" });
-    const sentBody = JSON.parse((init as RequestInit).body as string);
-    expect(sentBody).toMatchObject({
-      lessonSlug: "l-slug",
-      courseSlug: "c-slug",
-      action: "hint",
-      code: "let x = 1;",
-      testSummary: "1/2 passing",
-    });
-    // Stateless: no chat-history field is sent.
-    expect(sentBody).not.toHaveProperty("messages");
-    expect(sentBody).not.toHaveProperty("history");
-
-    expect(result.current.counts).toEqual({ free: 1, metered: 0, socratic: 0 });
-    expect(result.current.messages).toHaveLength(3);
-    expect(result.current.messages[2]).toMatchObject({
-      role: "ai",
-      response: { type: "hint", text: "Server-generated hint." },
-    });
-  });
-
   it("flips budgetExhausted and syncs counts when the route reports the ladder spent", async () => {
     vi.mocked(global.fetch).mockResolvedValue(
       jsonResponse({
@@ -167,11 +89,10 @@ describe("useAiPartner", () => {
       })
     );
 
-    // no authored hints -> requestHint always pays
-    const { result } = await renderPartner(baseProps({ hints: [] }));
+    const { result } = await renderPartner(baseProps());
 
     await act(async () => {
-      await result.current.requestHint();
+      await result.current.review();
     });
 
     expect(result.current.budgetExhausted).toBe(true);
@@ -316,10 +237,10 @@ describe("useAiPartner", () => {
       json: async () => ({ spendCapped: true, reason: "spend_cap" }),
     } as Response);
 
-    const { result } = await renderPartner(baseProps({ hints: [] }));
+    const { result } = await renderPartner(baseProps());
 
     await act(async () => {
-      await result.current.requestHint();
+      await result.current.review();
     });
 
     expect(result.current.spendCapped).toBe(true);
@@ -334,36 +255,14 @@ describe("useAiPartner", () => {
       json: async () => ({ error: "AI partner not configured" }),
     } as Response);
 
-    const { result } = await renderPartner(baseProps({ hints: [] }));
+    const { result } = await renderPartner(baseProps());
 
     await act(async () => {
-      await result.current.requestHint();
+      await result.current.review();
     });
 
     expect(result.current.spendCapped).toBe(false);
     expect(result.current.error).toBeTruthy();
-  });
-
-  it("requestHint() pays immediately when hints ladder is shorter than 2", async () => {
-    const response: PartnerResponse = { type: "hint", text: "paid hint" };
-    vi.mocked(global.fetch).mockResolvedValue(jsonResponse(response));
-
-    const { result } = await renderPartner(baseProps({ hints: [HINTS[0]!] }));
-
-    await act(async () => {
-      result.current.requestHint();
-    });
-    expect(result.current.freeHintsUsed).toBe(1);
-    expect(global.fetch).not.toHaveBeenCalled();
-
-    await act(async () => {
-      await result.current.requestHint();
-    });
-    expect(global.fetch).toHaveBeenCalledTimes(1);
-    const [, init] = vi.mocked(global.fetch).mock.calls[0]!;
-    expect(JSON.parse((init as RequestInit).body as string).action).toBe(
-      "hint"
-    );
   });
 
   it("advances counts in ladder order: free -> metered -> socratic (tier boundaries at turns 3 and 11)", async () => {
@@ -371,12 +270,12 @@ describe("useAiPartner", () => {
       jsonResponse({ type: "answer", text: "ok" })
     );
 
-    const { result } = await renderPartner(baseProps({ hints: [] }));
+    const { result } = await renderPartner(baseProps());
 
     // Turns 1-2 land in the hidden free tier.
     for (let i = 0; i < 2; i++) {
       await act(async () => {
-        await result.current.requestHint();
+        await result.current.review();
       });
     }
     expect(result.current.counts).toEqual({ free: 2, metered: 0, socratic: 0 });
@@ -385,7 +284,7 @@ describe("useAiPartner", () => {
     // Turns 3-10 land in the metered tier.
     for (let i = 0; i < 8; i++) {
       await act(async () => {
-        await result.current.requestHint();
+        await result.current.review();
       });
     }
     expect(result.current.counts).toEqual({ free: 2, metered: 8, socratic: 0 });
@@ -394,7 +293,7 @@ describe("useAiPartner", () => {
     // Turns 11-30 land in the Socratic tier; turn 31 would be the handoff.
     for (let i = 0; i < 20; i++) {
       await act(async () => {
-        await result.current.requestHint();
+        await result.current.review();
       });
     }
     expect(result.current.counts).toEqual({
@@ -412,7 +311,7 @@ describe("useAiPartner", () => {
         jsonResponse({ allowed: true, reason: "reset", availableAt: null })
       );
 
-      const { result } = await renderPartner(baseProps({ hints: [] }));
+      const { result } = await renderPartner(baseProps());
 
       const outcome = await act(async () => result.current.requestReset());
 
@@ -447,7 +346,7 @@ describe("useAiPartner", () => {
         })
       );
 
-      const { result } = await renderPartner(baseProps({ hints: [] }));
+      const { result } = await renderPartner(baseProps());
 
       const outcome = await act(async () => result.current.requestReset());
 
@@ -460,7 +359,7 @@ describe("useAiPartner", () => {
     it("fails safe (denied) when the fetch throws", async () => {
       vi.mocked(global.fetch).mockRejectedValue(new Error("network down"));
 
-      const { result } = await renderPartner(baseProps({ hints: [] }));
+      const { result } = await renderPartner(baseProps());
 
       const outcome = await act(async () => result.current.requestReset());
       expect(outcome).toEqual({

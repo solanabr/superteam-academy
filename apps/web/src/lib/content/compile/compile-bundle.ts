@@ -234,9 +234,6 @@ const MAX_ASSET_BYTES = 1024 * 1024;
 /** Copied under public/<PREFIX>; the rewritten url is `/<PREFIX>/...`. */
 export const ASSET_PUBLIC_PREFIX = "content-assets";
 
-/** Repo-relative (under apps/web) dir the JSON modules + README are written to. */
-export const GENERATED_DIR = "src/content/generated";
-
 /**
  * The README written verbatim into the generated dir. Lives here (not in
  * `scripts/compile-content.ts`) so BOTH the disk writer (`writeBundle`) and the

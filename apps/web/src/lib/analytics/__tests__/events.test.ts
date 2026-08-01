@@ -3,7 +3,6 @@ import {
   challengeKindFor,
   resetAnalyticsEventDedupeForTests,
   trackAttemptGateNudgeShown,
-  trackAttemptGateOverridden,
   trackChallengeFailed,
   trackChallengeRun,
   trackChallengeSolved,
@@ -12,7 +11,6 @@ import {
   trackCredentialMinted,
   trackNextLessonPlanCommitted,
   trackSolutionRevealed,
-  trackStuckNudgeAccepted,
   trackStuckNudgeShown,
 } from "../events";
 
@@ -128,17 +126,6 @@ describe("stuck-nudge events (LX-C4)", () => {
     trackStuckNudgeShown({ ...ctx, lessonId: "another-lesson" }, 3);
     expect(trackEvent).toHaveBeenCalledTimes(2);
   });
-
-  it("stuck_nudge_accepted carries the zero-based hint index, never text", () => {
-    trackStuckNudgeAccepted(ctx, 0);
-    trackStuckNudgeAccepted(ctx, 1);
-    expect(trackEvent).toHaveBeenNthCalledWith(2, "stuck_nudge_accepted", {
-      lessonId: "lesson-anchor-pda",
-      challengeKind: "rust",
-      courseId: "course-solana-201",
-      hintIndex: 1,
-    });
-  });
 });
 
 describe("attempt-gate nudge events (#865)", () => {
@@ -158,16 +145,6 @@ describe("attempt-gate nudge events (#865)", () => {
     );
 
     trackAttemptGateNudgeShown({ ...ctx, lessonId: "another-lesson" });
-    expect(trackEvent).toHaveBeenCalledTimes(2);
-  });
-
-  it("attempt_gate_overridden fires exactly once per challenge", () => {
-    trackAttemptGateOverridden(ctx);
-    trackAttemptGateOverridden(ctx);
-    expect(trackEvent).toHaveBeenCalledTimes(1);
-    expect(trackEvent).toHaveBeenCalledWith("attempt_gate_overridden", payload);
-
-    trackAttemptGateOverridden({ ...ctx, lessonId: "another-lesson" });
     expect(trackEvent).toHaveBeenCalledTimes(2);
   });
 });

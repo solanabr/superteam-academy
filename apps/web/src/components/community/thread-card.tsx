@@ -16,10 +16,8 @@ interface ThreadCardAuthor {
 }
 
 interface ThreadCardProps {
-  id: string;
   title: string;
   slug: string;
-  shortId: string;
   type: "question" | "discussion";
   isSolved: boolean;
   isPinned: boolean;

@@ -97,7 +97,7 @@ describe("sendSessionPlanReminders — consent gating", () => {
     expect(messages.map((m) => m.to)).toEqual(["ok@b.com"]);
   });
 
-  // Review F4: the claim RPC already claimed the filtered-out learner. Leaving
+  // The claim RPC already claimed the filtered-out learner. Leaving
   // that claim in place locks them out of today's reminder forever, silently.
   it("RELEASES the claim of an address it filtered out", async () => {
     rpc.mockImplementation(async (fn: string) =>
@@ -170,7 +170,7 @@ describe("sendSessionPlanReminders — idempotency", () => {
     expect(opts2.idempotencyKey).not.toBe(opts.idempotencyKey);
   });
 
-  // Review F3: releasing an AMBIGUOUS failure is how a delivered email gets
+  // Releasing an AMBIGUOUS failure is how a delivered email gets
   // sent twice — Resend may have accepted the batch before the wire broke, and
   // a same-day manual retry re-sends it under a fresh idempotency key.
   const failWith = (result: Record<string, unknown>) => {

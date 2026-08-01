@@ -22,7 +22,6 @@
     --surface: #ffffff;
     --card: #ffffff;
     --card-hover: #f7f5f0;
-    --card-glass: rgba(255, 255, 255, 0.95);
     --card-glass-blur: rgba(255, 255, 255, 0.7);
     --card-alt: rgba(0, 0, 0, 0.02);
     --input: #f3f1ec;
@@ -31,14 +30,12 @@
     --inset: #edeae2;
     --avatar-bg: #0a6b4d;
     --avatar-fg: #fdf9ef;
-    --avatar-ring: rgba(0, 0, 0, 0.13);
     --xp-chip-bg: rgba(245, 158, 11, 0.14);
     --xp-chip-fg: #b45309;
     --streak-chip-bg: rgba(234, 88, 12, 0.12);
     --streak-chip-fg: #ea580c;
     --code-bg: #161b27;
     --code-fg: #e6edf3;
-    --code-border: rgba(0, 0, 0, 0.13);
 
     /* ── Borders ── */
     --border: rgba(0, 0, 0, 0.08);
@@ -51,7 +48,6 @@
     --primary-hover: #08604a;
     --primary-dark: #065c44;
     --primary-dim: rgba(10, 112, 85, 0.09);
-    --primary-glow: 0 0 20px rgba(10, 112, 85, 0.15);
     --primary-light: rgba(10, 112, 85, 0.15);
     --primary-bg: rgba(10, 112, 85, 0.09);
     --primary-border: rgba(10, 112, 85, 0.4);
@@ -85,7 +81,6 @@
     /* ── Level ── */
     --level: #7c3aed;
     --level-dim: rgba(124, 58, 237, 0.1);
-    --level-border: rgba(124, 58, 237, 0.4);
 
     /* ── Solana — unchanged ── */
     --sol-grad: linear-gradient(135deg, #9945ff 0%, #00c2ff 50%, #14f195 100%);
@@ -126,9 +121,6 @@
     --text-disabled: #c4beb8;
 
     /* ── Difficulty track gradients ── */
-    --track-beg: linear-gradient(90deg, #0a7055, #34d399);
-    --track-int: linear-gradient(90deg, #065c44, #0a7055);
-    --track-adv: linear-gradient(90deg, #ea580c, #f59e0b);
 
     /* ── Activity streak grid levels ── */
     --sg-0: #edede8;
@@ -144,19 +136,15 @@
     --font-m: "JetBrains Mono", monospace;
 
     /* ── Radii (theme-invariant) ── */
-    --r-xs: 4px;
     --r-sm: 8px;
     --r-md: 12px;
     --r-lg: 16px;
     --r-xl: 22px;
     --r-full: 999px;
-    --radius: 12px;
 
     /* ── Shadows ── */
     --shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 2px 0 0 rgba(0, 0, 0, 0.06);
     --shadow-hover: 0 4px 0 0 rgba(0, 0, 0, 0.08);
-    --shadow-glow-primary:
-      0 0 0 1px rgba(10, 112, 85, 0.2), 0 4px 20px rgba(10, 112, 85, 0.08);
     --shadow-push-color: rgba(0, 0, 0, 0.12);
     --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06), 0 2px 0 0 rgba(0, 0, 0, 0.06);
     --shadow-card-hover: 0 4px 0 0 rgba(0, 0, 0, 0.08);
@@ -175,9 +163,6 @@
     --secondary-bg: rgba(10, 112, 85, 0.09);
 
     /* ── Misc compat ── */
-    --bw: 1px;
-    --prog-h: 4px;
-    --ring: var(--primary);
   }
 
   /* ── Dark mode ──
@@ -188,7 +173,6 @@
     --surface: #131920;
     --card: #161b27;
     --card-hover: #1c2333;
-    --card-glass: rgba(22, 27, 39, 0.95);
     --card-glass-blur: rgba(22, 27, 39, 0.7);
     --card-alt: rgba(255, 255, 255, 0.02);
     --input: #1c2333;
@@ -196,14 +180,12 @@
     --inset: #1c2333;
     --avatar-bg: #116b48;
     --avatar-fg: #e9fbf3;
-    --avatar-ring: rgba(255, 255, 255, 0.11);
     --xp-chip-bg: rgba(245, 166, 35, 0.14);
     --xp-chip-fg: #f5a623;
     --streak-chip-bg: rgba(249, 115, 22, 0.12);
     --streak-chip-fg: #f97316;
     --code-bg: rgb(0 0 0 / 50%);
     --code-fg: #cbd5e1;
-    --code-border: rgba(255, 255, 255, 0.11);
 
     --border: rgba(255, 255, 255, 0.07);
     --border-default: rgba(255, 255, 255, 0.11);
@@ -214,7 +196,6 @@
     --primary-hover: #27bd82;
     --primary-dark: #0a7055;
     --primary-dim: rgba(46, 204, 142, 0.13);
-    --primary-glow: 0 0 20px rgba(46, 204, 142, 0.22);
     --primary-light: rgba(46, 204, 142, 0.15);
     --primary-bg: rgba(46, 204, 142, 0.1);
     --primary-border: rgba(46, 204, 142, 0.4);
@@ -243,7 +224,6 @@
 
     --level: #a78bfa;
     --level-dim: rgba(167, 139, 250, 0.13);
-    --level-border: rgba(167, 139, 250, 0.4);
 
     --sol-grad: linear-gradient(135deg, #9945ff 0%, #00c2ff 50%, #14f195 100%);
     --sol-subtle: linear-gradient(
@@ -279,10 +259,6 @@
     --text-3: #78838f;
     --text-disabled: #484f5a;
 
-    --track-beg: linear-gradient(90deg, #2ecc8e, #34d399);
-    --track-int: linear-gradient(90deg, #0a7055, #2ecc8e);
-    --track-adv: linear-gradient(90deg, #f97316, #fbbf24);
-
     --sg-0: #1c2333;
     --sg-1: #0d4a32;
     --sg-2: #116b48;
@@ -292,8 +268,6 @@
 
     --shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 4px 16px rgba(0, 0, 0, 0.35);
     --shadow-hover: 0 4px 24px rgba(0, 0, 0, 0.5);
-    --shadow-glow-primary:
-      0 0 0 1px rgba(46, 204, 142, 0.25), 0 4px 20px rgba(46, 204, 142, 0.12);
     --shadow-push-color: rgba(0, 0, 0, 0.5);
     --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.5), 0 4px 16px rgba(0, 0, 0, 0.35);
     --shadow-card-hover: 0 4px 24px rgba(0, 0, 0, 0.5);
@@ -316,18 +290,13 @@
     --font-m: "JetBrains Mono", monospace;
 
     /* ── Radii ── */
-    --r-xs: 4px;
     --r-sm: 8px;
     --r-md: 12px;
     --r-lg: 16px;
     --r-xl: 22px;
     --r-full: 999px;
-    --radius: 12px;
 
     /* ── Misc compat ── */
-    --bw: 1px;
-    --prog-h: 4px;
-    --ring: var(--primary);
   }
 }
 
@@ -911,7 +880,6 @@
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.55' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.045 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23g)'/%3E%3C/svg%3E");
   background-size: 220px 220px;
 }
-
 
 /* ═══════════════════════════════════════════════════════════════
    SIDEBAR — hidden scrollbar (scroll without chrome)
@@ -2631,10 +2599,6 @@ a.path-step-card:hover .path-step-badge.skip {
 .path-browse-all.prominent:hover {
   color: var(--primary);
   border-color: var(--primary);
-}
-
-/* One highlighted start card — gradient border, not a grid tile */
-@media (max-width: 640px) {
 }
 
 /* ── Mobile responsive ── */
