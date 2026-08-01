@@ -51,6 +51,8 @@ const config: Config = {
         streak: {
           DEFAULT: "var(--streak)",
           light: "var(--streak-light)",
+          "chip-bg": "var(--streak-chip-bg)",
+          "chip-fg": "var(--streak-chip-fg)",
         },
         /* ── Streak freeze — Cool Blue (LX-B8) ── */
         freeze: {
@@ -74,6 +76,18 @@ const config: Config = {
           DEFAULT: "var(--xp)",
           dim: "var(--xp-dim)",
           dark: "var(--xp-dark)",
+          "chip-bg": "var(--xp-chip-bg)",
+          "chip-fg": "var(--xp-chip-fg)",
+        },
+        avatar: {
+          bg: "var(--avatar-bg)",
+          fg: "var(--avatar-fg)",
+          ring: "var(--avatar-ring)",
+        },
+        code: {
+          bg: "var(--code-bg)",
+          fg: "var(--code-fg)",
+          border: "var(--code-border)",
         },
         /* ── Gold metallic (medal/badge gradients) ── */
         gold: {
@@ -96,6 +110,7 @@ const config: Config = {
         },
         /* ── Neutrals ── */
         bg: "var(--bg)",
+        inset: "var(--inset)",
         card: {
           DEFAULT: "var(--card)",
           foreground: "var(--text)",
