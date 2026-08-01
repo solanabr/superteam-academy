@@ -193,16 +193,22 @@ export function ThreadComposer({
         >
           {t("titleLabel")}
         </label>
-        <input
-          id="thread-composer-title"
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder={t("titlePlaceholder")}
-          maxLength={200}
-          className="w-full rounded-md border border-[var(--border-default)] bg-[var(--input)] px-3 py-2 text-sm text-[var(--text)] placeholder:text-[var(--text-2)] focus:outline-none"
-        />
-        <p className="mt-1 text-xs text-[var(--text-2)]">{title.length}/200</p>
+        {/* One frame, one interior colour — counter lives inside, matching
+            the markdown editor's treatment. */}
+        <div className="overflow-hidden rounded-md border border-[var(--border-default)] bg-[var(--input)] focus-within:border-[var(--primary)]">
+          <input
+            id="thread-composer-title"
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder={t("titlePlaceholder")}
+            maxLength={200}
+            className="w-full bg-transparent px-3 py-2 text-sm text-[var(--text)] placeholder:text-[var(--text-2)] focus:outline-none"
+          />
+          <p className="px-3 pb-1.5 text-right text-xs text-[var(--text-2)]">
+            {title.length}/200
+          </p>
+        </div>
       </div>
 
       {/* Body */}

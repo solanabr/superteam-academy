@@ -40,7 +40,7 @@ export function MarkdownEditor({
       )}
     >
       {/* Tabs */}
-      <div className="flex border-b border-[var(--border-default)] bg-[var(--surface)]">
+      <div className="flex bg-[var(--input)]">
         <button
           type="button"
           onClick={() => setTab("write")}
@@ -85,7 +85,7 @@ export function MarkdownEditor({
         />
       ) : (
         <div
-          className="prose prose-sm max-w-none bg-[var(--surface)] p-4 text-[var(--text)] dark:prose-invert"
+          className="prose prose-sm max-w-none bg-[var(--input)] p-4 text-[var(--text)] dark:prose-invert"
           style={{ minHeight }}
         >
           {value ? (
@@ -104,7 +104,7 @@ export function MarkdownEditor({
       )}
 
       {/* Character counter */}
-      <div className="flex justify-end border-t border-[var(--border-default)] bg-[var(--surface)] px-4 py-1.5">
+      <div className="flex justify-end bg-[var(--input)] px-4 py-1.5">
         <span
           className={cn(
             "text-xs",

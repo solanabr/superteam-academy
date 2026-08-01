@@ -46,9 +46,28 @@ function jumpToSection(
 ): void {
   setOpen(true);
   requestAnimationFrame(() => {
-    document
-      .getElementById(anchorId)
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const el = document.getElementById(anchorId);
+    if (!el) return;
+    // Scroll the nearest scrollable ancestor ONLY — scrollIntoView walks every
+    // ancestor and drags the app shell along, collapsing the split layout.
+    let pane: HTMLElement | null = el.parentElement;
+    while (pane && pane !== document.body) {
+      const oy = getComputedStyle(pane).overflowY;
+      if (oy === "auto" || oy === "scroll") break;
+      pane = pane.parentElement;
+    }
+    if (pane && pane !== document.body) {
+      pane.scrollTo({
+        top:
+          el.getBoundingClientRect().top -
+          pane.getBoundingClientRect().top +
+          pane.scrollTop -
+          12,
+        behavior: "smooth",
+      });
+    } else {
+      el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
   });
 }
 
@@ -624,15 +643,10 @@ export function LessonPageClient({
 
   const instructionsSlot = hasCodeBlock ? (
     <div className="space-y-6">
-      {instructionBlocks.map((block, i) => {
+      {chipsRow}
+      {instructionBlocks.map((block) => {
         const Renderer = RENDERERS[block._type];
-        return (
-          <div key={block.key}>
-            <Renderer block={block} ctx={ctx} />
-            {/* Directly under the title block, per LeetCode's chip row. */}
-            {i === 0 && chipsRow}
-          </div>
-        );
+        return <Renderer key={block.key} block={block} ctx={ctx} />;
       })}
     </div>
   ) : null;
@@ -771,14 +785,10 @@ export function LessonPageClient({
         </div>
       ) : (
         <div className="space-y-6">
-          {lesson.blocks.map((block, i) => {
+          {chipsRow}
+          {lesson.blocks.map((block) => {
             const Renderer = RENDERERS[block._type];
-            return (
-              <div key={block.key}>
-                <Renderer block={block} ctx={ctx} />
-                {i === 0 && chipsRow}
-              </div>
-            );
+            return <Renderer key={block.key} block={block} ctx={ctx} />;
           })}
         </div>
       )}
