@@ -513,6 +513,18 @@ export const INTERACTIVE_STATES = {
 // v9 spec: cert-wrap → cert-inner → cert-body → eyebrow, course, subtitle,
 // divider, meta-row, footer with proof-pill + network label.
 // CSS classes (.cert-wrap, .cert-inner, etc.) live in globals.css.
+//
+// The border is drawn with the "padding trick": a wrapper paints the gradient,
+// an opaque inner element covers the middle, and what shows through is the
+// frame. The two radii MUST stay concentric:
+//
+//     inner radius = outer radius − padding
+//
+// Derive it (`rounded-[calc(var(--r-xl)-2.5px)]`), never hardcode a px value.
+// A hardcoded inner radius silently desyncs when the radius token moves, and
+// once it exceeds `outer − padding` the inner corner overhangs the wrapper's
+// arc and ERASES the gradient at all four corners — the border degrades into
+// four disconnected straight segments (#967).
 
 export const CERTIFICATE_STYLES = {
   /** Solana gradient background — ONLY certificates */
