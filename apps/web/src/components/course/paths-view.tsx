@@ -1,9 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { useTranslations, useLocale } from "next-intl";
-import Link from "next/link";
-import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { ArrowRight, BookOpen } from "@phosphor-icons/react";
 import type { LearningPath } from "@superteam-lms/types";
 import {
@@ -60,7 +58,6 @@ export function PathsView({
   goal,
 }: PathsViewProps) {
   const t = useTranslations("courses");
-  const locale = useLocale();
   const modality = SEGMENT_PATH_MODALITY[segment];
 
   const nonEmptyPaths = useMemo(
@@ -75,12 +72,6 @@ export function PathsView({
   // filtering on `courses.length` above is sufficient here.
   // Content-agnostic — recomputes when paths change.
   const startCourse = nonEmptyPaths[0]?.courses[0];
-  const startProgress = startCourse ? progress.get(startCourse._id) : undefined;
-  const startCtaLabel =
-    startProgress?.isEnrolled && !startProgress.isCompleted
-      ? t("continueCourse")
-      : t("startCourse");
-
   if (nonEmptyPaths.length === 0 || !startCourse) {
     return (
       <div className="py-16 text-center">
@@ -92,12 +83,6 @@ export function PathsView({
       </div>
     );
   }
-
-  const startLessonCount =
-    startCourse.modules?.reduce(
-      (sum, m) => sum + (m.lessons?.length ?? 0),
-      0
-    ) ?? 0;
 
   return (
     <div className="space-y-6">
@@ -118,48 +103,6 @@ export function PathsView({
           <ArrowRight size={13} weight="bold" aria-hidden="true" />
         </button>
       </div>
-
-      {/* The one highlighted start-here card */}
-      <section aria-labelledby="path-start-title" className="path-start-card">
-        <span className="path-start-badge">{t("startHere")}</span>
-        <div className="path-start-inner">
-          <div className="path-start-thumb" aria-hidden="true">
-            <Image
-              src={startCourse.thumbnail || "/cover.png"}
-              alt=""
-              width={224}
-              height={126}
-            />
-          </div>
-          <div className="path-start-content">
-            <h2 id="path-start-title" className="path-start-title">
-              {startCourse.title}
-            </h2>
-            <p className="path-start-desc">{startCourse.description}</p>
-            <div className="path-start-meta">
-              <span>
-                {startLessonCount} {t("lessons")}
-              </span>
-              <span aria-hidden="true">·</span>
-              <span>
-                {startCourse.duration} {t("hours")}
-              </span>
-              <span aria-hidden="true">·</span>
-              <span>{t(startCourse.difficulty)}</span>
-              <span className="path-start-meta-xp">
-                {"\u26A1"} {startCourse.xpReward}
-              </span>
-            </div>
-            <Link
-              href={`/${locale}/courses/${startCourse.slug}`}
-              className="path-start-cta"
-            >
-              {startCtaLabel}
-              <ArrowRight size={14} weight="bold" aria-hidden="true" />
-            </Link>
-          </div>
-        </div>
-      </section>
 
       {/* Sequenced path lists */}
       <div className="space-y-8">

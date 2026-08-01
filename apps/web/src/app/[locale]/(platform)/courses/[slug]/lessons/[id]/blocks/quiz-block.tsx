@@ -61,11 +61,52 @@ function isChoiceCorrect(q: QuizQuestionData, chosen: string[]): boolean {
 export function QuizBlock({ block, ctx }: BlockRenderProps) {
   const b = block as QuizBlockData;
   const t = useTranslations("lesson");
+  // Device-scoped persistence (owner 2026-07-31): a refresh must not lose the
+  // quiz. localStorage, hydrated in an effect — reading it during render would
+  // desync the first paint from SSR (hydration mismatch), same rule as the
+  // stopwatch. Keyed by lesson AND block: block keys are only stable WITHIN a
+  // lesson (packages/types course.ts), so a bare block key can collide across
+  // lessons.
+  const storageKey = `quiz-state:${ctx.lesson._id}:${b.key}`;
   const [selections, setSelections] = useState<Record<string, string[]>>({});
   const [results, setResults] = useState<Record<string, CheckResult>>({});
   // Sticky "has been checked at least once" — once feedback + explanation have
   // been revealed, the AI pane has nothing left to spoil (F18 gate below).
   const [checkedEver, setCheckedEver] = useState<Record<string, boolean>>({});
+  // False until the post-mount restore has run; the save effect must not write
+  // before then or the first (empty) render would wipe the stored state.
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      if (raw) {
+        const restored = JSON.parse(raw) as {
+          selections?: Record<string, string[]>;
+          results?: Record<string, CheckResult>;
+          checkedEver?: Record<string, boolean>;
+        };
+        setSelections(restored.selections ?? {});
+        setResults(restored.results ?? {});
+        setCheckedEver(restored.checkedEver ?? {});
+      }
+    } catch {
+      /* corrupt/blocked storage — start fresh */
+    }
+    setHydrated(true);
+  }, [storageKey]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      window.localStorage.setItem(
+        storageKey,
+        JSON.stringify({ selections, results, checkedEver })
+      );
+    } catch {
+      /* storage full/blocked — persistence is best-effort */
+    }
+  }, [hydrated, storageKey, selections, results, checkedEver]);
   // Section starts open (#770); collapsing leaves the score badge as the recap.
   const [open, setOpen] = useState(true);
   const [index, setIndex] = useState(0);
@@ -155,6 +196,16 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
   const correctCount = b.questions.filter((q) => results[q.id]?.correct).length;
   const allCorrect = total > 0 && correctCount === total;
 
+  // Owner call (2026-07-31): once every question is answered correctly the
+  // quiz folds itself — the header chips carry the recap and the AI Partner
+  // sits directly underneath. Fires once on the transition, so the learner can
+  // still reopen the section manually afterwards.
+  const prevAllCorrect = useRef(false);
+  useEffect(() => {
+    if (allCorrect && !prevAllCorrect.current) setOpen(false);
+    prevAllCorrect.current = allCorrect;
+  }, [allCorrect]);
+
   const multi = q?.multiSelect ?? false;
   const chosen = q ? (selections[q.id] ?? []) : [];
   const result: CheckResult | undefined = q ? results[q.id] : undefined;
@@ -203,17 +254,12 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
         <h3 className="font-display text-sm font-extrabold uppercase text-text-3">
           {t("quiz")}
         </h3>
-        {stepper && (
-          <span className="rounded-full px-2 py-0.5 text-xs font-bold tabular-nums text-text-3 [background:var(--input)]">
-            {t("quizPosition", { current: current + 1, total })}
-          </span>
-        )}
         <span
           className={cn(
             "rounded-full px-2 py-0.5 text-xs font-bold tabular-nums",
             allCorrect
               ? "text-success [background:var(--success-light)]"
-              : "text-text-3 [background:var(--input)]"
+              : "text-text-3 [background:var(--inset)]"
           )}
         >
           {t("quizScore", {
@@ -269,7 +315,7 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
                       "flex items-center gap-2 rounded-md border p-2 text-sm transition-colors",
                       locked
                         ? "cursor-default"
-                        : "cursor-pointer hover:bg-subtle",
+                        : "cursor-pointer hover:bg-inset",
                       judged
                         ? o.correct
                           ? "border-success"
@@ -290,17 +336,6 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
                   </label>
                 );
               })}
-            </div>
-            <div>
-              <Button
-                variant="pushSuccess"
-                size="sm"
-                onClick={() => check(q, chosen, locked)}
-                disabled={chosen.length === 0 || locked}
-                aria-disabled={chosen.length === 0 || locked}
-              >
-                {t("quizCheck")}
-              </Button>
             </div>
             {/* Always-mounted live region: the verdict + authored feedback are
                 announced when they appear. Focus stays on the Check button —
@@ -329,7 +364,7 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
                     </p>
                   ))}
                   {q.explanation && (
-                    <div className="space-y-1 rounded-md border border-border bg-subtle p-3">
+                    <div className="space-y-1 rounded-md border border-border bg-inset p-3">
                       <p className="font-display text-xs font-bold uppercase tracking-wide text-text-3">
                         {t("quizExplanationLabel")}
                       </p>
@@ -342,8 +377,11 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
           </fieldset>
         )}
 
-        {stepper && (
-          <div className="flex items-center justify-between gap-2">
+        {/* One action row: Check answer lives in the Next slot and morphs into
+            the emphasized Next once the question is correct (owner, 2026-07-31).
+            Non-stepper quizzes get the same morphing slot without Prev/Next. */}
+        <div className="flex items-center justify-between gap-2">
+          {stepper ? (
             <Button
               variant="secondary"
               size="sm"
@@ -354,10 +392,12 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
               <CaretLeft size={14} weight="bold" aria-hidden="true" />
               {t("quizPrev")}
             </Button>
+          ) : (
+            <span />
+          )}
+          {locked && stepper && (
             <Button
-              /* Emphasized once this question is correct — the learner is done
-                 here and Next is the only move left (#943). */
-              variant={locked ? "primary" : "secondary"}
+              variant="primary"
               size="sm"
               onClick={() => goTo(current + 1)}
               disabled={current === total - 1}
@@ -366,8 +406,36 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
               {t("quizNext")}
               <CaretRight size={14} weight="bold" aria-hidden="true" />
             </Button>
-          </div>
-        )}
+          )}
+          {!locked && q && (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="pushSuccess"
+                size="sm"
+                onClick={() => check(q, chosen, locked)}
+                disabled={chosen.length === 0}
+                aria-disabled={chosen.length === 0}
+              >
+                {t("quizCheck")}
+              </Button>
+              {/* A wrong-but-attempted question can be skipped (subdued Next):
+                  the AI gate counts attempts, and nobody dead-ends on a hard
+                  question. The primary Next appears only on correct. */}
+              {stepper && checkedEver[q.id] && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => goTo(current + 1)}
+                  disabled={current === total - 1}
+                  aria-disabled={current === total - 1}
+                >
+                  {t("quizNext")}
+                  <CaretRight size={14} weight="bold" aria-hidden="true" />
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Completion state (#943): a clean sweep is acknowledged in-block —
             no popup, per the three-popup rule. Always-mounted live region so
@@ -385,7 +453,7 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
             (LX-C1/F18) — retrieval stays AI-free. The gate is unchanged; the
             line states it explicitly and counts down (#770, #943). */}
         {!allChecked && (
-          <p className="flex items-start gap-2 rounded-md border border-border p-3 text-xs text-text-3 [background:var(--input)]">
+          <p className="flex items-start gap-2 rounded-md border border-border p-3 text-xs text-text-3 [background:var(--inset)]">
             <Robot
               size={16}
               weight="duotone"

@@ -7,6 +7,7 @@ import {
   CheckCircle,
   Eye,
   Lightbulb,
+  MagicWand,
   Trophy,
   X,
 } from "@phosphor-icons/react";
@@ -19,13 +20,14 @@ import {
   trackAttemptGateNudgeShown,
   trackAttemptGateOverridden,
   trackSolutionRevealed,
-  trackStuckNudgeAccepted,
   trackStuckNudgeShown,
 } from "@/lib/analytics/events";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { shouldShowEncouragement } from "@/lib/gamification/celebration";
 import { CodeEditor, resetEditorStorage } from "./code-editor";
+import { canFormatLanguage } from "./formatting";
+import { Stopwatch } from "./stopwatch";
 import { OutputPanel } from "./output-panel";
 import { ChallengeRunner } from "./challenge-runner";
 import { AiPartnerPane } from "./ai-partner/ai-partner-pane";
@@ -68,6 +70,7 @@ export function ChallengeInterface({
   courseSlug,
   lessonSlug,
   taskSlot,
+  sectionsSlot,
   initialCode,
   language,
   buildType,
@@ -113,7 +116,6 @@ export function ChallengeInterface({
   // a time in-editor (the free authored-hint channel, never the AI chat). A
   // passing run resets the reveal. `nudgeShownRef` records whether the nudge was
   // ever surfaced this attempt so the eventual solve can be tagged postNudge.
-  const [revealedHintCount, setRevealedHintCount] = useState(0);
   const nudgeShownRef = useRef(false);
 
   // Solution-reveal soft-gate (LX-C6). The reference solution already ships in
@@ -232,7 +234,6 @@ export function ChallengeInterface({
         nudgeShownRef.current = false;
         setConsecutiveFails(0);
         setEncouragementDismissed(false);
-        setRevealedHintCount(0);
       } else {
         failStreakRef.current += 1;
         trackChallengeFailed(ctx, failStreakRef.current);
@@ -266,14 +267,6 @@ export function ChallengeInterface({
     );
   }, [hintNudgeVisible, consecutiveFails, lessonId, courseId, challengeKind]);
 
-  const handleRevealHint = useCallback(() => {
-    setRevealedHintCount((count) => {
-      if (count >= hints.length) return count;
-      trackStuckNudgeAccepted({ lessonId, courseId, challengeKind }, count);
-      return count + 1;
-    });
-  }, [hints.length, lessonId, courseId, challengeKind]);
-
   const hasSolution =
     typeof solution === "string" && solution.trim().length > 0;
 
@@ -305,6 +298,35 @@ export function ChallengeInterface({
       executionResult: null,
     }));
   }, []);
+
+  // The button is only offered for languages we can actually format.
+  const canFormat = canFormatLanguage(language);
+  // A formatter that does nothing must SAY so. Success is silent — the
+  // reformatted buffer is its own feedback — but every other outcome gets a
+  // short localized note, which is what the original silent no-op lacked.
+  const [formatNote, setFormatNote] = useState<string | null>(null);
+  const handleFormat = useCallback(async () => {
+    const status = await editorHandle.current?.format();
+    setFormatNote(
+      !status || status === "formatted"
+        ? null
+        : t(
+            status === "syntax-error"
+              ? "formatSyntaxError"
+              : status === "unchanged"
+                ? "formatUnchanged"
+                : "formatUnsupported"
+          )
+    );
+  }, [t]);
+
+  // The note is transient — it explains one click, and must not linger over
+  // the next edit.
+  useEffect(() => {
+    if (!formatNote) return;
+    const id = setTimeout(() => setFormatNote(null), 5000);
+    return () => clearTimeout(id);
+  }, [formatNote]);
 
   const handleReset = useCallback(() => {
     setCode(initialCode);
@@ -523,6 +545,14 @@ export function ChallengeInterface({
             />
           )}
         </div>
+
+        {/* Disclosure sections (Topics / Hints / Discussion) — under the AI
+            pane per the owner's reading-flow ordering (#942). */}
+        {sectionsSlot && (
+          <div className="order-5 px-3 pb-4 lg:order-none lg:shrink-0">
+            {sectionsSlot}
+          </div>
+        )}
       </div>
 
       {/* Text/editor split resizer — lg+ only; drag right to widen the text. */}
@@ -561,6 +591,21 @@ export function ChallengeInterface({
               </div>
 
               <div className="flex items-center gap-1">
+                {/* Personal stopwatch (#942 follow-up) — client-only, per
+                    lesson, never wired to XP or grading. */}
+                <Stopwatch lessonId={lessonId} />
+                {canFormat && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => void handleFormat()}
+                    className="gap-1 text-xs"
+                    aria-label={t("formatCode")}
+                  >
+                    <MagicWand size={16} weight="duotone" aria-hidden="true" />
+                    <span className="hidden sm:inline">{t("formatCode")}</span>
+                  </Button>
+                )}
                 {/* Reference solution is a post-completion reward, not a crutch:
                     the button only appears once the challenge is verified
                     complete, and reveals directly. The LX-C6 confirm step +
@@ -601,6 +646,15 @@ export function ChallengeInterface({
                 </Button>
               </div>
             </div>
+
+            {/* Why Format did nothing. Its own line rather than a squeeze into
+                the button row, so the reason is readable at any width.
+                role="status" announces it politely without stealing focus. */}
+            {formatNote && (
+              <p role="status" className="mt-1.5 text-xs text-text-3">
+                {formatNote}
+              </p>
+            )}
           </div>
 
           {/* Solution-reveal soft-gate panel (LX-C6). Confirming step is a
@@ -813,30 +867,6 @@ export function ChallengeInterface({
                 <X size={14} weight="bold" aria-hidden="true" />
               </button>
             </div>
-
-            {hasHints && (
-              <div className="flex flex-col gap-1.5 pl-6">
-                {hints.slice(0, revealedHintCount).map((hint, i) => (
-                  <p key={i} className="text-xs text-text-2">
-                    <span className="font-semibold text-text">
-                      {t("stuckNudgeHintLabel", { number: i + 1 })}
-                    </span>{" "}
-                    {hint}
-                  </p>
-                ))}
-                {revealedHintCount < hints.length && (
-                  <button
-                    type="button"
-                    onClick={handleRevealHint}
-                    className="self-start rounded-md border border-border px-2.5 py-1 text-xs font-medium text-text transition-colors hover:border-primary hover:[background:var(--accent-bg)]"
-                  >
-                    {revealedHintCount === 0
-                      ? t("stuckNudgeAction")
-                      : t("stuckNudgeNextAction")}
-                  </button>
-                )}
-              </div>
-            )}
           </div>
         )}
 

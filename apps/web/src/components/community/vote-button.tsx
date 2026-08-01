@@ -10,6 +10,9 @@ interface VoteButtonProps {
   onVote: (value: 0 | 1 | -1) => void;
   disabled?: boolean;
   size?: "sm" | "default";
+  /** "horizontal" = the dense inline cluster (▲ n ▼) used in compact
+   * surfaces like answer meta rows; "vertical" keeps the classic rail. */
+  layout?: "vertical" | "horizontal";
 }
 
 export function VoteButton({
@@ -18,9 +21,60 @@ export function VoteButton({
   onVote,
   disabled = false,
   size = "default",
+  layout = "vertical",
 }: VoteButtonProps) {
   const t = useTranslations("community");
-  const iconSize = size === "sm" ? 18 : 22;
+  const iconSize = layout === "horizontal" ? 14 : size === "sm" ? 18 : 22;
+
+  if (layout === "horizontal") {
+    return (
+      <span className="inline-flex items-center gap-0.5">
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => onVote(userVote === 1 ? 0 : 1)}
+          className={cn(
+            "flex items-center justify-center rounded p-1 transition-colors hover:bg-[var(--primary-dim)]",
+            "disabled:cursor-not-allowed disabled:opacity-50",
+            userVote === 1
+              ? "text-[var(--primary)]"
+              : "text-[var(--text-2)] hover:text-[var(--primary)]"
+          )}
+          aria-label={t("upvote")}
+        >
+          <CaretUp size={iconSize} weight={userVote === 1 ? "fill" : "bold"} />
+        </button>
+        <span
+          className={cn(
+            "font-display text-xs font-bold tabular-nums",
+            score > 0 && "text-[var(--primary)]",
+            score < 0 && "text-[var(--danger)]",
+            score === 0 && "text-[var(--text-2)]"
+          )}
+        >
+          {score}
+        </span>
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => onVote(userVote === -1 ? 0 : -1)}
+          className={cn(
+            "flex items-center justify-center rounded p-1 transition-colors hover:bg-[var(--danger-light)]",
+            "disabled:cursor-not-allowed disabled:opacity-50",
+            userVote === -1
+              ? "text-[var(--danger)]"
+              : "text-[var(--text-2)] hover:text-[var(--danger)]"
+          )}
+          aria-label={t("downvote")}
+        >
+          <CaretDown
+            size={iconSize}
+            weight={userVote === -1 ? "fill" : "bold"}
+          />
+        </button>
+      </span>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center gap-0.5">

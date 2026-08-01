@@ -57,6 +57,7 @@ export function CategoryPageClient({ category }: CategoryPageClientProps) {
       <ThreadList
         scope={{ categorySlug: category.slug }}
         showFilters
+        showContext
         emptyMessage={`No threads in ${category.name} yet. Be the first to start a discussion!`}
       />
 

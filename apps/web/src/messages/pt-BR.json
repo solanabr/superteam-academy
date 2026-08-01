@@ -228,7 +228,6 @@
     "startDiscussion": "Iniciar uma Discussão",
     "moduleLabel": "Módulo {number}",
     "upNext": "A seguir",
-    "startHere": "Comece aqui",
     "browseAllCourses": "Ver todos os cursos",
     "skipAhead": "Pular adiante",
     "pathGuidanceFixed": "Siga a trilha na ordem — cada curso se apoia no anterior.",
@@ -365,7 +364,17 @@
     "quizNext": "Próxima pergunta",
     "quizUnlocksAssistant": "O AI Partner é liberado depois do quiz — {answered}/{total} respondidas",
     "quizCompleteChip": "Concluído",
-    "quizAllCorrect": "Todas as {total} perguntas respondidas corretamente."
+    "quizAllCorrect": "Todas as {total} perguntas respondidas corretamente.",
+    "formatCode": "Formatar",
+    "stopwatch": "Cronômetro",
+    "stopwatchStart": "Iniciar",
+    "stopwatchPause": "Pausar",
+    "stopwatchReset": "Zerar",
+    "hints": "Dicas",
+    "lessonNumberTitle": "{number}. {title}",
+    "formatSyntaxError": "Nada para formatar — corrija os erros de sintaxe primeiro.",
+    "formatUnchanged": "Já está formatado.",
+    "formatUnsupported": "A formatação não está disponível para esta linguagem."
   },
   "dashboard": {
     "allCaughtUp": "Tudo em dia!",
@@ -448,8 +457,6 @@
     "weekly": "Semanal",
     "monthly": "Mensal",
     "allTime": "Geral",
-    "levelUp": "Subiu de Nível!",
-    "levelUpMessage": "Você alcançou o nível {level}!",
     "newAchievement": "Conquista Desbloqueada!",
     "viewAchievements": "Ver Conquistas",
     "certificateMinted": "Certificado Conquistado!",
@@ -472,10 +479,6 @@
     "streakFreezesRemaining": "{count, plural, one {# congelamento} other {# congelamentos}}",
     "noAchievements": "Complete uma lição para ganhar sua primeira conquista",
     "showLocked": "Mostrar bloqueados",
-    "tier_seed": "Semente",
-    "tier_sprout": "Broto",
-    "tier_sapling": "Muda",
-    "tier_canopy": "Copa",
     "viewOnExplorer": "Ver no Explorer",
     "onChain": "on-chain",
     "you": "Você",
@@ -1002,17 +1005,19 @@
       "category": "Nenhum tópico nesta categoria ainda.",
       "course": "Nenhuma discussão sobre este curso ainda.",
       "lesson": "Nenhuma pergunta sobre esta aula ainda. Faça uma!"
-    }
+    },
+    "lessonContext": "Da lição",
+    "filterCourseQuestions": "Perguntas de curso",
+    "composerHeading": "Pergunte à comunidade",
+    "answersCount": "Respostas ({count})",
+    "sortBy": "Ordenar por"
   },
   "aiPartner": {
     "title": "Parceiro de IA",
     "subtitle": "Travado? Faça uma pergunta ou peça uma dica.",
     "completed": "Desafio concluído — mandou bem!",
     "attemptNudge": {
-      "title": "Rode os testes uma vez primeiro.",
-      "body": "Ver os testes falharem mostra exatamente o que o desafio pede — normalmente é o caminho mais rápido. Se preferir perguntar agora, tudo bem também.",
-      "run": "Rodar os testes",
-      "override": "Estou travado antes mesmo de rodar"
+      "title": "Rode o código primeiro."
     },
     "start": {
       "greeting": "Como posso te ajudar a construir isto?",

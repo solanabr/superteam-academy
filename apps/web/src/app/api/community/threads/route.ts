@@ -19,6 +19,8 @@ export async function GET(request: NextRequest) {
     const categorySlug = searchParams.get("category");
     const courseId = searchParams.get("courseId");
     const lessonId = searchParams.get("lessonId");
+    // "Course questions" feed filter — any thread carrying a course scope.
+    const hasCourse = searchParams.get("hasCourse") === "1";
     const sort = searchParams.get("sort") || "latest";
     const type = searchParams.get("type"); // 'question' | 'discussion' | null
     const cursor = searchParams.get("cursor"); // 'timestamp|uuid'
@@ -60,6 +62,7 @@ export async function GET(request: NextRequest) {
     }
     if (courseId) query = query.eq("course_id", courseId);
     if (lessonId) query = query.eq("lesson_id", lessonId);
+    if (hasCourse) query = query.not("course_id", "is", null);
     if (type) query = query.eq("type", type);
 
     // Sort

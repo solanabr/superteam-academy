@@ -3,6 +3,7 @@
 import {
   isValidElement,
   useCallback,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -97,14 +98,47 @@ const markdownComponents = {
   blockquote: ProseBlockquote,
 };
 
-export function ProseBlock({ block }: BlockRenderProps) {
+/** Case/whitespace-insensitive comparison, so a stray trailing space in the
+ * authored heading doesn't cost the lesson its number. */
+function sameHeading(a: string, b: string): boolean {
+  return a.trim().toLowerCase() === b.trim().toLowerCase();
+}
+
+export function ProseBlock({ block, ctx }: BlockRenderProps) {
   const b = block as ProseBlockData;
+  const t = useTranslations("lesson");
+
+  // The lesson's ordinal prefixes the title h1 at RENDER time — the authored
+  // markdown never carries a number, so reordering a course can't strand a
+  // stale one. Only the heading that IS the lesson title is prefixed: an
+  // unrelated h1 deeper in the prose keeps its own text.
+  const components = useMemo(() => {
+    const { lessonNumber, lesson } = ctx;
+    if (lessonNumber === null) return markdownComponents;
+    return {
+      ...markdownComponents,
+      h1: ({
+        children,
+        ...props
+      }: React.HTMLAttributes<HTMLHeadingElement>) => (
+        <h1 {...props}>
+          {sameHeading(textOf(children), lesson.title)
+            ? t("lessonNumberTitle", {
+                number: lessonNumber,
+                title: lesson.title,
+              })
+            : children}
+        </h1>
+      ),
+    };
+  }, [ctx, t]);
+
   return (
     <div className="prose max-w-3xl dark:prose-invert">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw, rehypeHighlight]}
-        components={markdownComponents}
+        components={components}
       >
         {b.src}
       </ReactMarkdown>

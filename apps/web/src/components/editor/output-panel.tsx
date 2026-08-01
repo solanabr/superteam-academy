@@ -282,14 +282,6 @@ export function OutputPanel({
                 </span>
               )}
             </TabsTrigger>
-            {hasSpec && (
-              <TabsTrigger
-                value="examples"
-                className="h-7 rounded-sm px-2 text-xs data-[state=active]:[background:var(--input)]"
-              >
-                {t("examples")}
-              </TabsTrigger>
-            )}
           </TabsList>
           <Button
             variant="ghost"
@@ -377,18 +369,10 @@ export function OutputPanel({
                 />
               ))}
             </div>
-          ) : (
-            <p className="text-sm text-text-3">{t("testCasesPrompt")}</p>
-          )}
-        </TabsContent>
-
-        {/* Authored spec (#770) — the examples that used to sit under the
-            instructions. Static: always available, never tied to a run. */}
-        {hasSpec && (
-          <TabsContent
-            value="examples"
-            className="m-0 flex-1 overflow-auto p-3"
-          >
+          ) : hasSpec ? (
+            /* Pre-run the tab carries the authored spec (#942: the old
+               Examples tab merged here) — the open-book contract stays
+               visible in the same rows that will grade it. */
             <div className="space-y-1.5">
               {tests?.map((tc) => (
                 <div
@@ -407,8 +391,10 @@ export function OutputPanel({
                 </div>
               ))}
             </div>
-          </TabsContent>
-        )}
+          ) : (
+            <p className="text-sm text-text-3">{t("testCasesPrompt")}</p>
+          )}
+        </TabsContent>
       </Tabs>
     </div>
   );

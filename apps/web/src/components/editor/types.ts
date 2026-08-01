@@ -1,6 +1,7 @@
 import type { ReactNode, Ref } from "react";
 import type { TestCase, BuildType } from "@superteam-lms/types";
 import type { editor } from "monaco-editor";
+import type { FormatStatus } from "@/lib/editor/format-code";
 
 export type EditorLanguage = "typescript" | "rust" | "json";
 
@@ -79,6 +80,8 @@ export interface ChallengeInterfaceProps {
   lessonSlug: string;
   /** Task-brief content rendered in the right rail's top panel (lg+) / first in reading order (below lg). */
   taskSlot?: ReactNode;
+  /** Rendered under the AI pane in the reading column (#942). */
+  sectionsSlot?: ReactNode;
   initialCode: string;
   language: EditorLanguage;
   buildType?: BuildType;
@@ -117,4 +120,11 @@ export interface ChallengeInterfaceProps {
 
 export interface CodeEditorHandle {
   getEditor: () => editor.IStandaloneCodeEditor | null;
+  /**
+   * Reformats the buffer with Prettier (see `lib/editor/format-code` for why
+   * not Monaco's built-in formatter). The status is deliberately reported
+   * rather than swallowed, so the caller can tell the learner WHY nothing
+   * changed instead of leaving the button looking broken.
+   */
+  format: () => Promise<FormatStatus>;
 }

@@ -13,6 +13,8 @@ interface MarkdownEditorProps {
   maxLength?: number;
   placeholder?: string;
   minHeight?: string;
+  /** Render without the outer border/radius so the caller can frame it. */
+  flush?: boolean;
 }
 
 export function MarkdownEditor({
@@ -21,15 +23,24 @@ export function MarkdownEditor({
   maxLength = 10000,
   placeholder = "Write your content using Markdown...",
   minHeight = "200px",
+  flush = false,
 }: MarkdownEditorProps) {
   const t = useTranslations("community");
   const [tab, setTab] = useState<"write" | "preview">("write");
   const charPercent = value.length / maxLength;
 
   return (
-    <div className="overflow-hidden rounded-lg border border-[var(--border-default)]">
+    <div
+      className={cn(
+        "overflow-hidden",
+        // `flush` drops the frame so a caller can own it — the answer composer
+        // wraps the editor AND its submit button in one block, and two nested
+        // frames read as two controls.
+        !flush && "rounded-lg border border-[var(--border-default)]"
+      )}
+    >
       {/* Tabs */}
-      <div className="flex border-b border-[var(--border-default)] bg-[var(--surface)]">
+      <div className="flex bg-[var(--input)]">
         <button
           type="button"
           onClick={() => setTab("write")}
@@ -74,7 +85,7 @@ export function MarkdownEditor({
         />
       ) : (
         <div
-          className="prose prose-sm max-w-none bg-[var(--surface)] p-4 text-[var(--text)] dark:prose-invert"
+          className="prose prose-sm max-w-none bg-[var(--input)] p-4 text-[var(--text)] dark:prose-invert"
           style={{ minHeight }}
         >
           {value ? (
@@ -93,7 +104,7 @@ export function MarkdownEditor({
       )}
 
       {/* Character counter */}
-      <div className="flex justify-end border-t border-[var(--border-default)] bg-[var(--surface)] px-4 py-1.5">
+      <div className="flex justify-end bg-[var(--input)] px-4 py-1.5">
         <span
           className={cn(
             "text-xs",

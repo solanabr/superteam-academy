@@ -41,9 +41,6 @@ vi.mock("@/components/gamification/achievement-popup", () => ({
 vi.mock("@/components/gamification/certificate-popup", () => ({
   dispatchCertificateMinted: h.dispatchCertificateMinted,
 }));
-vi.mock("@/components/gamification/level-up-popup", () => ({
-  dispatchLevelUp: vi.fn(),
-}));
 vi.mock("@/components/gamification/surprise-bonus-toast", () => ({
   dispatchSurpriseBonus: h.dispatchSurpriseBonus,
 }));

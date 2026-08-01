@@ -26,6 +26,19 @@
     --card-glass-blur: rgba(255, 255, 255, 0.7);
     --card-alt: rgba(0, 0, 0, 0.02);
     --input: #f3f1ec;
+    /* ── O&H keepers (owner 2026-07-31): third surface step, green avatar
+       identity, guide-tinted stat chips, navy code islands ── */
+    --inset: #edeae2;
+    --avatar-bg: #0a6b4d;
+    --avatar-fg: #fdf9ef;
+    --avatar-ring: rgba(0, 0, 0, 0.13);
+    --xp-chip-bg: rgba(245, 158, 11, 0.14);
+    --xp-chip-fg: #b45309;
+    --streak-chip-bg: rgba(234, 88, 12, 0.12);
+    --streak-chip-fg: #ea580c;
+    --code-bg: #161b27;
+    --code-fg: #e6edf3;
+    --code-border: rgba(0, 0, 0, 0.13);
 
     /* ── Borders ── */
     --border: rgba(0, 0, 0, 0.08);
@@ -179,6 +192,18 @@
     --card-glass-blur: rgba(22, 27, 39, 0.7);
     --card-alt: rgba(255, 255, 255, 0.02);
     --input: #1c2333;
+    /* ── O&H keepers — dark values match existing rendered surfaces ── */
+    --inset: #1c2333;
+    --avatar-bg: #116b48;
+    --avatar-fg: #e9fbf3;
+    --avatar-ring: rgba(255, 255, 255, 0.11);
+    --xp-chip-bg: rgba(245, 166, 35, 0.14);
+    --xp-chip-fg: #f5a623;
+    --streak-chip-bg: rgba(249, 115, 22, 0.12);
+    --streak-chip-fg: #f97316;
+    --code-bg: rgb(0 0 0 / 50%);
+    --code-fg: #cbd5e1;
+    --code-border: rgba(255, 255, 255, 0.11);
 
     --border: rgba(255, 255, 255, 0.07);
     --border-default: rgba(255, 255, 255, 0.11);
@@ -318,7 +343,7 @@
     font-family: var(--font-sans, var(--font-b));
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    font-size: 14px;
+    font-size: 15px;
     line-height: 1.6;
   }
 
@@ -355,7 +380,7 @@
     transition: all 0.1s ease;
   }
   .btn-push:active {
-    transform: translateY(3px);
+    transform: translateY(2px);
   }
 
   /* ── Chunky Card ── */
@@ -367,7 +392,7 @@
     transition: all 0.15s ease;
   }
   .card-chunky:hover {
-    transform: translateY(-2px);
+    transform: translateY(-3px);
     box-shadow: var(--shadow-card-hover);
     border-color: var(--border-hover);
   }
@@ -871,14 +896,22 @@
 /* ═══════════════════════════════════════════════════════════════
    GRID BACKGROUND TEXTURE — subtle dot pattern from design system
 ═══════════════════════════════════════════════════════════════ */
+/* Paper grain in BOTH themes (owner 2026-07-31: no ruled squares in dark).
+   One 160px fractal-noise tile, rasterised once — feTurbulence does not
+   re-run on scroll or resize. Light bakes strength into rect opacity; dark
+   uses a fainter white-speck variant so it reads as texture, not artifacts. */
 .grid-bg {
-  background-image: radial-gradient(
-    circle,
-    color-mix(in srgb, var(--border-default) 70%, transparent) 1px,
-    transparent 1px
-  );
-  background-size: 22px 22px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)' opacity='0.35'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
 }
+
+[data-theme="dark"] .grid-bg {
+  /* Dark grain v2: coarser noise, whisper-faint white — texture you sense,
+     not specks you see. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.55' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.045 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23g)'/%3E%3C/svg%3E");
+  background-size: 220px 220px;
+}
+
 
 /* ═══════════════════════════════════════════════════════════════
    SIDEBAR — hidden scrollbar (scroll without chrome)
@@ -920,7 +953,7 @@
     rgba(255, 255, 255, 0.12) 75%,
     transparent 100%
   );
-  animation: shimmer 2.4s ease-in-out infinite;
+  animation: shimmer 2.2s ease-in-out infinite;
 }
 
 /* ── V9 shimmer — sweeping white aura on progress bars ── */
@@ -968,7 +1001,7 @@
     rgba(255, 255, 255, 0.08) 75%,
     transparent 100%
   );
-  animation: shimmer 2.4s ease-in-out infinite;
+  animation: shimmer 2.2s ease-in-out infinite;
 }
 /* Inner 3D highlight — white ridge near top */
 .prog-fill::before {
@@ -1020,7 +1053,7 @@
     rgba(255, 255, 255, 0.1) 75%,
     transparent 100%
   );
-  animation: shimmer 2.4s ease-in-out infinite;
+  animation: shimmer 2.2s ease-in-out infinite;
 }
 
 /* Progress header layout */
@@ -1072,7 +1105,7 @@
     rgba(255, 255, 255, 0.08) 75%,
     transparent 100%
   );
-  animation: shimmer 2.4s ease-in-out infinite;
+  animation: shimmer 2.2s ease-in-out infinite;
 }
 .progress-fat-fill::before {
   content: "";
@@ -2193,7 +2226,7 @@
     rgba(255, 255, 255, 0.1) 75%,
     transparent 100%
   );
-  animation: path-shimmer 2.4s ease-in-out infinite;
+  animation: path-shimmer 2.2s ease-in-out infinite;
 }
 @keyframes path-shimmer {
   0% {
@@ -2493,7 +2526,7 @@ a.path-step-card:hover .path-step-thumb img {
     rgba(255, 255, 255, 0.35) 50%,
     transparent 100%
   );
-  animation: shimmer 2.4s ease-in-out infinite;
+  animation: shimmer 2.2s ease-in-out infinite;
 }
 
 /* ── Staggered reveal ── */
@@ -2601,119 +2634,7 @@ a.path-step-card:hover .path-step-badge.skip {
 }
 
 /* One highlighted start card — gradient border, not a grid tile */
-.path-start-card {
-  position: relative;
-  border: 2.5px solid transparent;
-  border-radius: var(--r-lg);
-  background:
-    linear-gradient(var(--card), var(--card)) padding-box,
-    var(--sol-grad) border-box;
-  box-shadow: var(--shadow);
-  padding: 18px;
-}
-.path-start-badge {
-  position: absolute;
-  top: -11px;
-  left: 16px;
-  display: inline-flex;
-  align-items: center;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #fff;
-  background: var(--sol-grad);
-  border-radius: 99px;
-  padding: 3px 10px;
-}
-.path-start-inner {
-  display: flex;
-  gap: 16px;
-  align-items: flex-start;
-}
-.path-start-thumb {
-  flex-shrink: 0;
-  width: 224px;
-  border-radius: var(--r-md);
-  overflow: hidden;
-  border: 2px solid var(--border);
-}
-.path-start-thumb img {
-  display: block;
-  width: 100%;
-  height: auto;
-  object-fit: cover;
-}
-.path-start-content {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.path-start-title {
-  font-family: var(--font-display, var(--font-d));
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: -0.3px;
-  margin: 0;
-}
-.path-start-desc {
-  font-size: 13px;
-  color: var(--text-3);
-  margin: 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.path-start-meta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  color: var(--text-3);
-  flex-wrap: wrap;
-}
-.path-start-meta-xp {
-  color: var(--xp);
-  font-weight: 700;
-}
-.path-start-cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  align-self: flex-start;
-  margin-top: 4px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #fff;
-  background: var(--primary);
-  border-radius: var(--r-md);
-  padding: 8px 16px;
-  text-decoration: none;
-  transition:
-    transform 0.15s ease,
-    filter 0.15s ease;
-}
-.path-start-cta:hover {
-  filter: brightness(1.08);
-  transform: translateY(-1px);
-}
-.path-start-cta:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
-}
 @media (max-width: 640px) {
-  .path-start-inner {
-    flex-direction: column;
-  }
-  .path-start-thumb {
-    width: 100%;
-  }
-  .path-start-cta {
-    align-self: stretch;
-    justify-content: center;
-  }
 }
 
 /* ── Mobile responsive ── */
@@ -2960,11 +2881,14 @@ a.path-step-card:hover .path-step-badge.skip {
 }
 .toast.info {
   background: var(--primary-dim);
-  border-color: rgba(46, 204, 142, 0.2);
+  /* Light is the :root baseline (next-themes sets data-theme; there is no
+     `.light` class), so the deep-emerald border belongs here and the brighter
+     dark-mode emerald is the override. */
+  border-color: rgba(10, 112, 85, 0.2);
   color: var(--primary);
 }
-.light .toast.info {
-  border-color: rgba(10, 112, 85, 0.2);
+[data-theme="dark"] .toast.info {
+  border-color: rgba(46, 204, 142, 0.2);
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -3359,7 +3283,10 @@ a.path-step-card:hover .path-step-badge.skip {
   font-family: var(--font-display, var(--font-d));
   font-weight: 700;
   font-size: 12px;
-  color: #fff;
+  /* The initials chip carries no surface of its own; on a pale page a
+     hardcoded white glyph disappeared into the row. */
+  color: var(--avatar-fg);
+  background-color: var(--avatar-bg);
   background-size: cover;
 }
 
@@ -3591,7 +3518,7 @@ a.path-step-card:hover .path-step-badge.skip {
     rgba(255, 255, 255, 0.08)
   );
 }
-:is([data-theme="light"], .light) .cert-divider {
+[data-theme="light"] .cert-divider {
   background: linear-gradient(
     90deg,
     rgba(0, 0, 0, 0.06),
@@ -3616,7 +3543,7 @@ a.path-step-card:hover .path-step-badge.skip {
   border-top: 1px solid rgba(255, 255, 255, 0.07);
   margin-top: auto;
 }
-:is([data-theme="light"], .light) .cert-foot {
+[data-theme="light"] .cert-foot {
   border-top-color: rgba(0, 0, 0, 0.08);
 }
 .cert-network {
@@ -3800,7 +3727,12 @@ a.path-step-card:hover .path-step-badge.skip {
   overflow: hidden;
   min-width: 0;
 }
-.dash-panel::before {
+/* Gradient accent hairline — 1px, emerald→amber, 60% opacity, across the top
+   edge of a major panel (brand guide §9.3). `.accent-hairline` is the reusable
+   form for panels that are not the dashboard identity panel; both need the
+   host to be `position: relative` with `overflow: hidden`. */
+.dash-panel::before,
+.accent-hairline::before {
   content: "";
   position: absolute;
   top: 0;
@@ -3970,7 +3902,7 @@ a.path-step-card:hover .path-step-badge.skip {
     rgba(255, 255, 255, 0.1) 75%,
     transparent 100%
   );
-  animation: shimmer 2.4s ease-in-out infinite;
+  animation: shimmer 2.2s ease-in-out infinite;
 }
 .dash-ach {
   padding: 18px 16px;
@@ -5336,88 +5268,6 @@ a.path-step-card:hover .path-step-title {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   PILLS & BADGES — brand guide spec
-   ═══════════════════════════════════════════════════════════════ */
-.pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 12px;
-  border-radius: var(--r-full);
-  font-family: var(--font-display, var(--font-d));
-  font-weight: 700;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  border: 1px solid;
-}
-.pill-primary,
-.pill-beg {
-  background: var(--primary-dim);
-  color: var(--primary);
-  border-color: rgba(46, 204, 142, 0.22);
-}
-.light .pill-primary,
-.light .pill-beg {
-  border-color: rgba(10, 112, 85, 0.2);
-}
-.pill-int {
-  background: rgba(10, 112, 85, 0.12);
-  color: var(--primary-dark);
-  border-color: rgba(10, 112, 85, 0.2);
-}
-[data-theme="dark"] .pill-int {
-  color: var(--primary);
-}
-.pill-adv {
-  background: var(--streak-dim);
-  color: var(--streak);
-  border-color: rgba(249, 115, 22, 0.22);
-}
-.light .pill-adv {
-  border-color: rgba(234, 88, 12, 0.2);
-}
-.pill-xp {
-  background: var(--xp-dim);
-  color: var(--xp);
-  border-color: rgba(245, 166, 35, 0.22);
-}
-.light .pill-xp {
-  border-color: rgba(245, 158, 11, 0.2);
-}
-.pill-streak {
-  background: var(--streak-dim);
-  color: var(--streak);
-  border-color: rgba(249, 115, 22, 0.22);
-}
-.light .pill-streak {
-  border-color: rgba(234, 88, 12, 0.2);
-}
-.pill-level {
-  background: var(--level-dim);
-  color: var(--level);
-  border-color: rgba(167, 139, 250, 0.22);
-}
-.light .pill-level {
-  color: var(--level);
-  border-color: rgba(124, 58, 237, 0.2);
-}
-.pill-sol {
-  background: rgba(153, 69, 255, 0.08);
-  color: #c4b5fd;
-  border-color: rgba(153, 69, 255, 0.2);
-}
-.pill-done {
-  background: rgba(63, 185, 80, 0.1);
-  color: var(--success);
-  border-color: rgba(63, 185, 80, 0.22);
-}
-.light .pill-done {
-  color: var(--success);
-  border-color: rgba(22, 163, 74, 0.2);
-}
-
-/* ═══════════════════════════════════════════════════════════════
    FORMS — brand guide spec
    ═══════════════════════════════════════════════════════════════ */
 .form-label {
@@ -5516,6 +5366,17 @@ a.path-step-card:hover .path-step-title {
 }
 .hljs-strong {
   font-weight: 700;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PROSE CODE SLAB — light only
+   The typography plugin ships a slate-800 <pre>, which on warm paper reads
+   as a transplant from another design. Re-hue it to the warm charcoal in
+   --code-*. Dark keeps the plugin's invert defaults untouched.
+═══════════════════════════════════════════════════════════════ */
+:root:not([data-theme="dark"]) .prose {
+  --tw-prose-pre-bg: var(--code-bg);
+  --tw-prose-pre-code: var(--code-fg);
 }
 
 /* ═══════════════════════════════════════════════════════════════

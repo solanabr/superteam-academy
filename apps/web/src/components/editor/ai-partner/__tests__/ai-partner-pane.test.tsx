@@ -135,84 +135,43 @@ describe("AiPartnerPane — post-pass review button (LX-C9)", () => {
   });
 });
 
-describe("AiPartnerPane — attempt-gate nudge (#865, replaces the #770 lock)", () => {
+describe("AiPartnerPane — attempt-gate notice (#865, tightened: one line, no buttons)", () => {
   const nudgeTitle = messages.aiPartner.attemptNudge.title;
-  const runLabel = messages.aiPartner.attemptNudge.run;
-  const overrideLabel = messages.aiPartner.attemptNudge.override;
-  const hintLabel = messages.aiPartner.actions.hint;
+  const askBox = () =>
+    screen.getByRole("textbox", { name: messages.aiPartner.actions.askLabel });
+  const sendAsk = (text: string) => {
+    fireEvent.change(askBox(), { target: { value: text } });
+    fireEvent.keyDown(askBox(), { key: "Enter" });
+  };
 
-  it("keeps AI actions ENABLED pre-run — no lock, no countdown, no padlock", () => {
+  it("holds a pre-run ask and shows the one-line notice instead of executing", () => {
     renderPane({ hasRunTests: false });
-    // The forbidden #770 shape is gone: nothing time-based, nothing disabled.
-    expect(screen.getByRole("button", { name: hintLabel })).toBeEnabled();
     expect(screen.queryByText(nudgeTitle)).not.toBeInTheDocument();
-  });
-
-  it("surfaces the nudge on the first pre-run AI use instead of executing", () => {
-    const onNudgeShown = vi.fn();
-    renderPane({ hasRunTests: false, onNudgeShown });
-
-    fireEvent.click(screen.getByRole("button", { name: hintLabel }));
-
-    // The hint request is HELD, not refused and not executed.
-    expect(hookState.requestHint).not.toHaveBeenCalled();
+    sendAsk("why does subgoal 2 fail?");
     expect(screen.getByText(nudgeTitle)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: runLabel })).toBeInTheDocument();
+    expect(hookState.ask).not.toHaveBeenCalled();
+    // No action buttons in the notice — it is a plain status line.
     expect(
-      screen.getByRole("button", { name: overrideLabel })
-    ).toBeInTheDocument();
-    expect(onNudgeShown).toHaveBeenCalledTimes(1);
+      screen.queryByRole("button", { name: /run the tests/i })
+    ).not.toBeInTheDocument();
   });
 
-  it("[Run the tests] dismisses the nudge and shifts focus to the run button", () => {
-    const onFocusRun = vi.fn();
-    renderPane({ hasRunTests: false, onFocusRun });
-
-    fireEvent.click(screen.getByRole("button", { name: hintLabel }));
-    fireEvent.click(screen.getByRole("button", { name: runLabel }));
-
-    expect(onFocusRun).toHaveBeenCalledTimes(1);
-    expect(screen.queryByText(nudgeTitle)).not.toBeInTheDocument();
-    // Taking the suggestion does NOT silently spend the held hint.
-    expect(hookState.requestHint).not.toHaveBeenCalled();
-  });
-
-  it("the free one-tap override proceeds with the original action immediately", () => {
-    const onNudgeOverride = vi.fn();
-    renderPane({ hasRunTests: false, onNudgeOverride });
-
-    fireEvent.click(screen.getByRole("button", { name: hintLabel }));
-    fireEvent.click(screen.getByRole("button", { name: overrideLabel }));
-
-    // One tap: nudge gone AND the held hint request executed — no extra step,
-    // no penalty.
-    expect(hookState.requestHint).toHaveBeenCalledTimes(1);
-    expect(onNudgeOverride).toHaveBeenCalledTimes(1);
-    expect(screen.queryByText(nudgeTitle)).not.toBeInTheDocument();
-
-    // The override is sticky: further pre-run AI use is never re-nudged.
-    fireEvent.click(screen.getByRole("button", { name: hintLabel }));
-    expect(hookState.requestHint).toHaveBeenCalledTimes(2);
+  it("never notices after the first test run — actions execute directly", () => {
+    renderPane({ hasRunTests: true });
+    sendAsk("why does subgoal 2 fail?");
+    expect(hookState.ask).toHaveBeenCalledWith("why does subgoal 2 fail?");
     expect(screen.queryByText(nudgeTitle)).not.toBeInTheDocument();
   });
 
-  it("never nudges after the first test run — actions execute directly", () => {
-    const onNudgeShown = vi.fn();
-    renderPane({ hasRunTests: true, onNudgeShown });
+  it("REPLAYS a held question when the gate opens — typed text is never lost", () => {
+    // The composer clears its textarea before onSend, so the parked closure is
+    // the only copy of the learner's question. When hasRunTests flips, the
+    // pane must replay it — not silently drop it (gate finding M2 on #955).
+    const view = renderPane({ hasRunTests: false });
+    sendAsk("why does subgoal 2 fail?");
+    expect(hookState.ask).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole("button", { name: hintLabel }));
-
-    expect(hookState.requestHint).toHaveBeenCalledTimes(1);
-    expect(screen.queryByText(nudgeTitle)).not.toBeInTheDocument();
-    expect(onNudgeShown).not.toHaveBeenCalled();
-  });
-
-  it("a run mid-nudge hides it (hasRunTests flips true)", () => {
-    const { rerender } = renderPane({ hasRunTests: false });
-    fireEvent.click(screen.getByRole("button", { name: hintLabel }));
-    expect(screen.getByText(nudgeTitle)).toBeInTheDocument();
-
-    rerender(
+    view.rerender(
       <NextIntlClientProvider locale="en" messages={messages}>
         <AiPartnerPane
           lessonSlug="l"
@@ -225,40 +184,17 @@ describe("AiPartnerPane — attempt-gate nudge (#865, replaces the #770 lock)", 
         />
       </NextIntlClientProvider>
     );
-    expect(screen.queryByText(nudgeTitle)).not.toBeInTheDocument();
-  });
-
-  it("never nudges a completed lesson (actions are disabled outright)", () => {
-    renderPane({ hasRunTests: false, disabled: true });
-    expect(screen.getByRole("button", { name: hintLabel })).toBeDisabled();
-    expect(screen.queryByText(nudgeTitle)).not.toBeInTheDocument();
-  });
-
-  it("holds a pre-run ASK behind the same gate, then sends it on override", () => {
-    renderPane({ hasRunTests: false });
-
-    const box = screen.getByLabelText(askLabel);
-    fireEvent.change(box, { target: { value: "why does this fail?" } });
-    fireEvent.click(screen.getByRole("button", { name: sendLabel }));
-
-    // Held, not sent — same soft nudge the hint gets.
-    expect(hookState.ask).not.toHaveBeenCalled();
-    expect(screen.getByText(nudgeTitle)).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: overrideLabel }));
-    expect(hookState.ask).toHaveBeenCalledWith("why does this fail?");
+    expect(hookState.ask).toHaveBeenCalledTimes(1);
+    expect(hookState.ask).toHaveBeenCalledWith("why does subgoal 2 fail?");
   });
 });
 
 describe("AiPartnerPane — free-text composer (#944)", () => {
-  it("renders the composer as the empty state, with the hint button beside it", () => {
+  it("renders the composer as the empty state", () => {
     renderPane({ hasRunTests: true });
     expect(screen.getByLabelText(askLabel)).toBeEnabled();
     expect(
       screen.getByText(messages.aiPartner.composer.empty)
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: messages.aiPartner.actions.hint })
     ).toBeInTheDocument();
   });
 
@@ -317,12 +253,9 @@ describe("AiPartnerPane — free-text composer (#944)", () => {
     expect(screen.getByRole("button", { name: sendLabel })).toBeDisabled();
   });
 
-  it("disables the composer once the lesson is complete, like the hint", () => {
+  it("disables the composer once the lesson is complete", () => {
     renderPane({ hasRunTests: true, disabled: true });
     expect(screen.getByLabelText(askLabel)).toBeDisabled();
-    expect(
-      screen.getByRole("button", { name: messages.aiPartner.actions.hint })
-    ).toBeDisabled();
   });
 
   // M1 (#947 gate addendum): the route 413s past 4,000 chars and the hook can
@@ -367,9 +300,6 @@ describe("AiPartnerPane — 'Show me a change' propose action (#947)", () => {
   it("stays available on the Socratic tier (#864 §4.2 — the escape hatch survives)", () => {
     hookState.tier = "socratic";
     renderPane({ hasRunTests: true, hasFailedRun: true });
-    expect(
-      screen.getByText(messages.aiPartner.socratic.entered)
-    ).toBeInTheDocument();
     expect(proposeButton()).toBeEnabled();
   });
 
@@ -413,7 +343,7 @@ describe("AiPartnerPane — 'Show me a change' propose action (#947)", () => {
     expect(button).toHaveAttribute("aria-busy", "true");
   });
 
-  it("routes a pre-first-run propose through the same attempt gate (#865)", () => {
+  it("holds a pre-run propose behind the attempt gate (one-line notice, no buttons)", () => {
     renderPane({ hasRunTests: false, hasFailedRun: true });
     fireEvent.click(proposeButton()!);
 
@@ -421,12 +351,11 @@ describe("AiPartnerPane — 'Show me a change' propose action (#947)", () => {
     expect(
       screen.getByText(messages.aiPartner.attemptNudge.title)
     ).toBeInTheDocument();
+  });
 
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: messages.aiPartner.attemptNudge.override,
-      })
-    );
+  it("propose executes directly once tests have run", () => {
+    renderPane({ hasRunTests: true, hasFailedRun: true });
+    fireEvent.click(proposeButton()!);
     expect(hookState.proposeFix).toHaveBeenCalledTimes(1);
   });
 

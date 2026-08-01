@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { CaretDown, CheckCircle, Article, Code } from "@phosphor-icons/react";
+import { courseWideOrdinals } from "@/lib/courses/lesson-ordinals";
 import { cn } from "@/lib/utils";
 
 interface LessonItem {
@@ -59,6 +60,10 @@ export function CurriculumAccordion({
       return next;
     });
   }
+
+  // Course-wide lesson numbering (see curriculum-path): the ordinal must match
+  // the one the lesson page prints on its h1, so it never restarts per module.
+  const courseOrdinals = courseWideOrdinals(modules);
 
   return (
     <div className="space-y-3">
@@ -137,7 +142,7 @@ export function CurriculumAccordion({
                       </span>
                       <span className="flex min-w-0 flex-1 items-center gap-2">
                         <span className="text-text-3/60 font-mono text-xs tabular-nums">
-                          {lessonIdx + 1}.
+                          {courseOrdinals.get(lesson._id) ?? lessonIdx + 1}.
                         </span>
                         <span className="truncate">
                           {isChallenge && (

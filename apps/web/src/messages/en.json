@@ -228,7 +228,6 @@
     "startDiscussion": "Start a Discussion",
     "moduleLabel": "Module {number}",
     "upNext": "Up next",
-    "startHere": "Start here",
     "browseAllCourses": "Browse all courses",
     "skipAhead": "Skip ahead",
     "pathGuidanceFixed": "Follow the path in order — each course builds on the last.",
@@ -365,7 +364,17 @@
     "quizNext": "Next question",
     "quizUnlocksAssistant": "AI Partner unlocks after the quiz — {answered}/{total} answered",
     "quizCompleteChip": "Complete",
-    "quizAllCorrect": "All {total} questions answered correctly."
+    "quizAllCorrect": "All {total} questions answered correctly.",
+    "formatCode": "Format",
+    "stopwatch": "Stopwatch",
+    "stopwatchStart": "Start",
+    "stopwatchPause": "Pause",
+    "stopwatchReset": "Reset",
+    "hints": "Hints",
+    "lessonNumberTitle": "{number}. {title}",
+    "formatSyntaxError": "Nothing to format — fix the syntax errors first.",
+    "formatUnchanged": "Already formatted.",
+    "formatUnsupported": "Formatting isn't available for this language."
   },
   "dashboard": {
     "allCaughtUp": "All caught up!",
@@ -448,8 +457,6 @@
     "weekly": "Weekly",
     "monthly": "Monthly",
     "allTime": "All Time",
-    "levelUp": "Level Up!",
-    "levelUpMessage": "You reached level {level}!",
     "newAchievement": "Achievement Unlocked!",
     "viewAchievements": "View Achievements",
     "certificateMinted": "Certificate Earned!",
@@ -472,10 +479,6 @@
     "streakFreezesRemaining": "{count, plural, one {# freeze} other {# freezes}}",
     "noAchievements": "Complete a lesson to earn your first achievement",
     "showLocked": "Show locked",
-    "tier_seed": "Seed",
-    "tier_sprout": "Sprout",
-    "tier_sapling": "Sapling",
-    "tier_canopy": "Canopy",
     "viewOnExplorer": "View on Explorer",
     "onChain": "on-chain",
     "you": "You",
@@ -1002,17 +1005,19 @@
       "category": "No threads in this category yet.",
       "course": "No discussions about this course yet.",
       "lesson": "No questions about this lesson yet. Ask one!"
-    }
+    },
+    "lessonContext": "From lesson",
+    "filterCourseQuestions": "Course questions",
+    "composerHeading": "Ask the community",
+    "answersCount": "Answers ({count})",
+    "sortBy": "Sort by"
   },
   "aiPartner": {
     "title": "AI Partner",
     "subtitle": "Stuck? Ask a question or get a hint.",
     "completed": "Challenge complete — nice work!",
     "attemptNudge": {
-      "title": "Run the tests once first.",
-      "body": "Seeing them fail shows you exactly what the challenge wants — that's usually the fastest way in. If you'd rather ask now, that's fine too.",
-      "run": "Run the tests",
-      "override": "I'm stuck before I can run it"
+      "title": "Run the code first."
     },
     "start": {
       "greeting": "How can I help you build this?",

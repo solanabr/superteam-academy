@@ -6,9 +6,9 @@ import confetti from "canvas-confetti";
  * Routine per-lesson rewards undermine intrinsic motivation, so per the
  * LX-B11 acceptance line, confetti fires ONLY at deploy + credential mint.
  * Lesson/challenge completion gets a calm checkmark acknowledgment; a
- * level-up gets a popup-only medium moment — with Level = floor(sqrt(XP/100))
- * early level-ups arrive every few lessons, and confetti that frequent would
- * recreate the routine-reward pattern this tiering exists to kill; a
+ * level-up celebrates nothing at all — the brand guide's three-popup rule
+ * reserves popups for XP reward, Achievement Unlocked and Certificate Minted,
+ * and a level-up is visible in the header level badge, which recomputes from the live XP counter on every xp-gain event (the dashboard identity panel is server-rendered and does NOT live-update); a
  * successful devnet deploy gets a single confetti burst; a credential mint
  * gets the full-screen celebration.
  *
@@ -30,7 +30,10 @@ export const CELEBRATION_TIERS: Record<CelebrationEvent, CelebrationTier> = {
   "lesson-complete": "none",
   "challenge-pass": "none",
   "deploy-success": "medium",
-  "level-up": "popup",
+  // No popup, no confetti: the brand guide's three-popup rule (XP reward,
+  // Achievement Unlocked, Certificate Minted) leaves no room for a level-up
+  // popup — the header level badge recomputing on xp-gain (the identity panel is server-rendered, not live) IS the level-up moment.
+  "level-up": "none",
   "credential-mint": "full",
   // A surprise bonus (LX-B15) is an informational moment — a calm toast, never
   // confetti. Its delight is the unexpectedness of the reward, not spectacle.
@@ -95,8 +98,8 @@ export function resetCelebrationThrottleForTests(): void {
  * Fire the visual celebration for an event according to its tier.
  * `none` renders nothing — the calm acknowledgment lives in the calling UI.
  * `popup` also fires NO confetti — the animated popup rendered by the calling
- * UI (e.g. LevelUpPopup's pop-spring card) IS the medium moment; only the
- * `medium` and `full` tiers ever reach canvas-confetti.
+ * UI (e.g. the quest-reward toast's pop-spring card) IS the medium moment;
+ * only the `medium` and `full` tiers ever reach canvas-confetti.
  */
 export function celebrate(event: CelebrationEvent): void {
   const tier = celebrationTierFor(event);

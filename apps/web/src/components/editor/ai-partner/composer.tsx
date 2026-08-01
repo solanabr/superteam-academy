@@ -95,13 +95,13 @@ export function Composer({
         aria-describedby={counterId}
         disabled={inert}
         placeholder={t("actions.askPlaceholder")}
-        className="w-full resize-none rounded-md border border-border p-2 text-sm [background:var(--input)] placeholder:text-text-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+        className="min-h-[72px] w-full resize-none rounded-md border border-border p-2 text-sm [background:var(--input)] placeholder:text-text-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
       />
       <div className="flex flex-wrap items-center gap-2">
         {onPropose && (
           <Button
             type="button"
-            variant="ghost"
+            variant="secondary"
             size="sm"
             onClick={() => onPropose(value.trim() || undefined)}
             disabled={inert}
@@ -109,7 +109,7 @@ export function Composer({
             className="gap-1.5 text-xs"
           >
             <GitDiff size={14} weight="duotone" aria-hidden="true" />
-            {t("actions.propose")}
+            <span className="text-primary">{t("actions.propose")}</span>
             <span className="font-normal text-text-3">
               {t("actions.proposeCost")}
             </span>

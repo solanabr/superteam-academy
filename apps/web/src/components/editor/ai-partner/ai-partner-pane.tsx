@@ -7,7 +7,6 @@ import {
   Robot,
   MagnifyingGlass,
   CaretDown,
-  Play,
   UsersThree,
 } from "@phosphor-icons/react";
 import { useAiPartner } from "@/lib/ai/use-ai-partner";
@@ -21,7 +20,6 @@ import { Button } from "@/components/ui/button";
 import { AssistMeter } from "./assist-meter";
 import { Composer } from "./composer";
 import { MessageList } from "./message-list";
-import { QuickActions } from "./quick-actions";
 
 interface AiPartnerPaneProps {
   lessonSlug: string;
@@ -71,9 +69,7 @@ export function AiPartnerPane({
   solutionPassed = false,
   hasRunTests = false,
   hasFailedRun = false,
-  onFocusRun,
   onNudgeShown,
-  onNudgeOverride,
   eventCtx,
   className,
 }: AiPartnerPaneProps) {
@@ -113,19 +109,17 @@ export function AiPartnerPane({
     [nudgeEligible, nudgeState, onNudgeShown]
   );
 
-  const handleNudgeRunTests = useCallback(() => {
-    pendingActionRef.current = null;
-    setNudgeState("idle");
-    onFocusRun?.();
-  }, [onFocusRun]);
-
-  const handleNudgeOverride = useCallback(() => {
-    setNudgeState("overridden");
-    onNudgeOverride?.();
-    const action = pendingActionRef.current;
-    pendingActionRef.current = null;
-    action?.();
-  }, [onNudgeOverride]);
+  // A question typed before the first run is parked above (the composer has
+  // already cleared its textarea by then) — replay it the moment the gate
+  // opens, so pressing Enter pre-run never silently discards the learner's
+  // text. The ref is cleared first so a re-render can't double-fire.
+  useEffect(() => {
+    if (hasRunTests && pendingActionRef.current) {
+      const parked = pendingActionRef.current;
+      pendingActionRef.current = null;
+      parked();
+    }
+  }, [hasRunTests]);
 
   const {
     messages,
@@ -137,18 +131,12 @@ export function AiPartnerPane({
     resetAvailableAt,
     loading,
     error,
-    requestHint,
     ask,
     proposeFix,
     review,
     requestReset,
     verifyCheck,
   } = useAiPartner({ lessonSlug, courseSlug, hints, getCode, getTestSummary });
-
-  const requestHintGuarded = useCallback(
-    () => guardAction(requestHint),
-    [guardAction, requestHint]
-  );
 
   // The free-text ask (#944) goes through the SAME attempt gate as the hint:
   // pre-first-run the question is held (captured here) and the nudge shown, and
@@ -219,62 +207,39 @@ export function AiPartnerPane({
             <h2 className="font-display text-sm font-extrabold text-text">
               {t("title")}
             </h2>
-            <CaretDown
-              size={14}
-              weight="bold"
-              aria-hidden="true"
-              className={cn(
-                "ml-auto text-text-3 transition-transform",
-                !open && "-rotate-90"
-              )}
-            />
+            {/* Meter lives at the row's right edge (owner 2026-07-31): the
+                text/chat column keeps the width. */}
+            <span className="ml-auto flex items-center gap-2">
+              <AssistMeter tier={tier} counts={counts} />
+              <CaretDown
+                size={14}
+                weight="bold"
+                aria-hidden="true"
+                className={cn(
+                  "text-text-3 transition-transform",
+                  !open && "-rotate-90"
+                )}
+              />
+            </span>
             <span className="sr-only">{tLesson("toggleSection")}</span>
           </div>
           <p className="text-xs text-text-3">
             {disabled ? t("completed") : t("subtitle")}
           </p>
-          <AssistMeter tier={tier} counts={counts} />
         </button>
       </div>
 
-      {/* Attempt-gate nudge (#865): shown only when an AI action was invoked
-          before the first test run. Soft by design — no lock, no countdown, no
-          padlock. [Run the tests] dismisses and shifts focus to the Run button;
-          the override is a single free tap that proceeds with the original
-          request immediately. role="status" announces it politely without
-          stealing focus. */}
+      {/* Attempt-gate notice (#865, tightened 2026-07-31): one direct line, no
+          buttons — the learner runs the tests with the main Run button and asks
+          again. role="status" announces it politely without stealing focus. */}
       {open && nudgeVisible && (
         <div
           role="status"
-          className="flex shrink-0 flex-col gap-2.5 border-b border-border px-4 py-3 [background:var(--accent-bg)]"
+          className="flex shrink-0 items-center gap-2 border-b border-border px-4 py-2.5 [background:var(--accent-bg)]"
         >
-          <p className="text-xs text-text-3">
-            <span className="font-bold text-text">
-              {t("attemptNudge.title")}
-            </span>{" "}
-            {t("attemptNudge.body")}
+          <p className="text-xs font-bold text-text">
+            {t("attemptNudge.title")}
           </p>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              variant="push"
-              size="sm"
-              onClick={handleNudgeRunTests}
-              className="gap-1.5 text-xs"
-            >
-              <Play size={14} weight="duotone" aria-hidden="true" />
-              {t("attemptNudge.run")}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={handleNudgeOverride}
-              className="text-xs"
-            >
-              {t("attemptNudge.override")}
-            </Button>
-          </div>
         </div>
       )}
 
@@ -289,18 +254,13 @@ export function AiPartnerPane({
           getCode={getCode}
           onVerify={verifyCheck}
           eventCtx={eventCtx}
-          className="min-h-0 flex-1"
+          className="h-72 max-h-[70vh] min-h-36 resize-y overflow-y-auto"
         />
       )}
 
-      {/* Socratic tier (#864 §4.4): the lighter tutor announces itself once —
-          honest, warm, and never a wall. Hidden again at exhaustion, where the
-          community-handoff block below takes over. */}
-      {open && tier === "socratic" && (
-        <div className="shrink-0 border-t border-border px-4 py-2">
-          <p className="text-xs text-text-3">{t("socratic.entered")}</p>
-        </div>
-      )}
+      {/* Socratic banner removed (owner 2026-07-31): the tier shift shows in
+          the assist meter; the sentence crowded the thinking indicator. The
+          Socratic behavior itself (#864 §4.4) is unchanged. */}
 
       {/* True exhaustion (#864, turn 31): the tutor hands off to the community
           — it does not go silent and it never shows a paywall shape. No
@@ -420,11 +380,6 @@ export function AiPartnerPane({
           {messages.length === 0 && (
             <p className="text-sm text-text-3">{t("composer.empty")}</p>
           )}
-          <QuickActions
-            onHint={requestHintGuarded}
-            disabled={loading || disabled}
-            budgetExhausted={budgetExhausted}
-          />
           <Composer
             onSend={askGuarded}
             // Offered only once a run has actually FAILED, and withdrawn again

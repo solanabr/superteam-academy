@@ -14,6 +14,13 @@ export interface BlockContext {
   locale: string;
   isEnrolled: boolean;
   isCompleted: boolean;
+  /**
+   * 1-based position of this lesson in the course's flattened module→lesson
+   * order — the SAME order `getCourseLessons` returns and prev/next navigates,
+   * never a second numbering source. `null` when the lesson is not in that list
+   * (e.g. the teacher preview). Rendered as the "2. " prefix on the prose h1.
+   */
+  lessonNumber: number | null;
   xpReward: number;
   earnedXp: number | null;
   onEnroll: () => void;
@@ -51,6 +58,8 @@ export interface BlockContext {
    * rather than stacked full-width above a squeezed editor.
    */
   instructionsSlot?: ReactNode;
+  /** Disclosure sections (Topics/Hints/Discussion) rendered BELOW the AI pane (#942). */
+  sectionsSlot?: ReactNode;
 }
 
 export interface BlockRenderProps {

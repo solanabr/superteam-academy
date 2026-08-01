@@ -146,7 +146,7 @@ function IdCard({
   return (
     <div
       ref={cardRef}
-      className={`rounded-xl p-[2.5px] shadow-card [background:linear-gradient(135deg,#9945FF,#14F195)] ${
+      className={`rounded-xl bg-cert-gradient p-[2.5px] shadow-card ${
         interactive
           ? "hero-card-idle transition-transform duration-200 ease-out will-change-transform"
           : ""

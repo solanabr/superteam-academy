@@ -3,7 +3,6 @@
 import { useAuth } from "@/lib/auth/auth-provider";
 import { AchievementPopup } from "@/components/gamification/achievement-popup";
 import { CertificatePopup } from "@/components/gamification/certificate-popup";
-import { LevelUpPopup } from "@/components/gamification/level-up-popup";
 import { useGamificationEvents } from "@/hooks/use-gamification-events";
 import { ToastContainer } from "@/components/ui/toast-container";
 import { SurpriseBonusToastListener } from "@/components/gamification/surprise-bonus-toast";
@@ -31,10 +30,12 @@ export function GamificationOverlays() {
       {/* Copies the anonymous /start intake into the profile on sign-in (LX-A3). */}
       <SegmentSync />
       {!userId ? null : (
-        /* Single stacking container for all bottom-right popups */
+        /* Single stacking container for the three celebrating popups —
+           XP reward, Achievement Unlocked, Certificate Minted. Nothing else
+           gets a popup (brand guide §10, the three-popup rule); a level-up is
+           visible in the header level badge, which recomputes from the live XP counter on every xp-gain event (the dashboard identity panel is server-rendered and does NOT live-update). */
         <div className="pointer-events-none fixed bottom-4 right-3 z-50 flex flex-col items-end gap-2 sm:bottom-6 sm:right-6">
           <CertificatePopup className="pointer-events-auto" />
-          <LevelUpPopup className="pointer-events-auto" />
           <AchievementPopup className="pointer-events-auto" />
         </div>
       )}
