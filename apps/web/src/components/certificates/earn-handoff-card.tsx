@@ -51,7 +51,7 @@ export function EarnHandoffCard({ source, courseId }: EarnHandoffCardProps) {
       aria-labelledby={titleId}
       className="rounded-xl bg-cert-gradient p-[1.5px] shadow-[var(--shadow-card)]"
     >
-      <div className="rounded-[11px] bg-card px-5 py-4">
+      <div className="rounded-[calc(var(--r-xl)-1.5px)] bg-card px-5 py-4">
         <div className="flex items-center gap-2">
           <Coins
             size={20}
