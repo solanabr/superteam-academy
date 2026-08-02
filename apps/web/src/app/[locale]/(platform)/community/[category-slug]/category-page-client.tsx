@@ -51,7 +51,7 @@ export function CategoryPageClient({ category }: CategoryPageClientProps) {
         {user && (
           <Button variant="primary" onClick={() => setCreateOpen(true)}>
             <Plus size={18} />
-            {t("newThread")}
+            {t("askQuestion")}
           </Button>
         )}
       </div>

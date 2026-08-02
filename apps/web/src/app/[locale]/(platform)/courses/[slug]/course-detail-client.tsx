@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   Clock,
   BookOpen,
+  Plus,
   Lightning,
   Wallet,
   ChatCircleDots,
@@ -450,7 +451,8 @@ export function CourseDetailClient({
                 size="sm"
                 onClick={() => setIsComposerOpen(true)}
               >
-                {t("startDiscussion")}
+                <Plus size={14} weight="bold" aria-hidden="true" />
+                {tCommunity("askQuestion")}
               </Button>
             ) : undefined
           }

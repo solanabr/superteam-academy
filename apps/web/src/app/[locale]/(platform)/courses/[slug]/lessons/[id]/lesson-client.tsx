@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import {
   Lightning,
+  Plus,
   CheckCircle,
   ArrowLeft,
   CaretLeft,
@@ -546,11 +547,8 @@ export function LessonPageClient({
     (b) => (b as CodeBlockData).hints ?? []
   );
   const askAction = userId ? (
-    <Button
-      variant="pushOutline"
-      size="sm"
-      onClick={() => setIsComposerOpen(true)}
-    >
+    <Button variant="push" size="sm" onClick={() => setIsComposerOpen(true)}>
+      <Plus size={14} weight="bold" aria-hidden="true" />
       {t("askQuestion")}
     </Button>
   ) : (
