@@ -72,6 +72,7 @@ function makeCtx(overrides: Partial<BlockContext> = {}): BlockContext {
     onEnroll: vi.fn(),
     setProof: vi.fn(),
     setQuizAnswered: vi.fn(),
+    setBlockDone: vi.fn(),
     aiSuppressed: true,
     capstoneAiOff: false,
     buildUuid: null,

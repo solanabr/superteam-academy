@@ -291,6 +291,22 @@ export function LessonPageClient({
       prev[blockKey] === answered ? prev : { ...prev, [blockKey]: answered }
     );
   }, []);
+
+  // Client-side completion gate (owner 2026-08-02): every gateable block
+  // (quiz, reflection) must report done before Mark Complete enables. The
+  // server's inverted gate re-grades regardless — this is honest UI, not the
+  // enforcement.
+  const [doneBlocks, setDoneBlocks] = useState<Record<string, boolean>>({});
+  const setBlockDone = useCallback((blockKey: string, done: boolean) => {
+    setDoneBlocks((prev) =>
+      prev[blockKey] === done ? prev : { ...prev, [blockKey]: done }
+    );
+  }, []);
+  const gateBlocks = lesson.blocks.filter(
+    (b) => b._type === "quiz" || b._type === "openEnded"
+  );
+  const gateReady =
+    isCompleted || gateBlocks.every((b) => doneBlocks[b.key] === true);
   // AI hard-off on the capstone (#867) — the CLIENT leg of the server refusal
   // in /api/ai/partner, derived from the same `capstone-identity` constant as
   // the credential gate (never a second hardcoded id). Distinct from
@@ -483,6 +499,7 @@ export function LessonPageClient({
       onEnroll: handleEnroll,
       setProof,
       setQuizAnswered,
+      setBlockDone,
       aiSuppressed,
       capstoneAiOff,
       buildUuid,
@@ -502,6 +519,7 @@ export function LessonPageClient({
       handleEnroll,
       setProof,
       setQuizAnswered,
+      setBlockDone,
       aiSuppressed,
       capstoneAiOff,
       buildUuid,
@@ -831,6 +849,10 @@ export function LessonPageClient({
               {completionError}
             </div>
           )}
+          {/* Topics / Discussion live ABOVE the nav (owner 2026-08-02): the
+            lesson ends on its actions, not on chrome below them. */}
+          {!hasCodeBlock && paneSections}
+
           {/* Bottom nav hidden on challenge pages (#770): Prev/Next live in the
             top bar and code lessons complete via the ChallengeInterface submit. */}
           {!hasCodeBlock && (
@@ -851,41 +873,52 @@ export function LessonPageClient({
               )}
 
               {/* Code lessons complete via the ChallengeInterface submit; other
-              lessons complete via this explicit button. */}
+              lessons complete via this explicit button. Once completed the
+              button gives way to a quiet status pill — a disabled button
+              duplicating the nav CTA's label read as two dead actions. */}
               {!hasCodeBlock &&
                 (userId ? (
                   isEnrolled ? (
-                    <Button
-                      variant={isCompleted ? "outline" : "pushSuccess"}
-                      size="lg"
-                      disabled={
-                        isCompleted || isCompleting || hasLinkedWallet === false
-                      }
-                      onClick={() => handleComplete()}
-                      className="w-full gap-2 sm:w-auto"
-                    >
-                      {isCompleting ? (
-                        <>
-                          <div
-                            className="h-5 w-5 animate-spin rounded-full border-[3px] border-white/30 border-t-white"
-                            aria-hidden="true"
-                          />
-                          <span className="sr-only">{tCommon("loading")}</span>
-                        </>
-                      ) : isCompleted ? (
+                    isCompleted ? (
+                      <span className="border-success/40 bg-success/10 inline-flex h-10 items-center justify-center gap-1.5 rounded-full border px-4 font-display text-sm font-bold text-success">
                         <CheckCircle
-                          size={20}
-                          weight="duotone"
-                          className="text-success"
+                          size={16}
+                          weight="fill"
                           aria-hidden="true"
                         />
-                      ) : null}
-                      {isCompleted ? t("lessonComplete") : t("markComplete")}
-                    </Button>
+                        {t("lessonComplete")}
+                      </span>
+                    ) : (
+                      <Button
+                        variant="pushSuccess"
+                        size="default"
+                        disabled={
+                          isCompleting ||
+                          hasLinkedWallet === false ||
+                          !gateReady
+                        }
+                        onClick={() => handleComplete()}
+                        title={!gateReady ? t("completeGateHint") : undefined}
+                        className="w-full gap-2 sm:w-auto"
+                      >
+                        {isCompleting && (
+                          <>
+                            <div
+                              className="h-5 w-5 animate-spin rounded-full border-[3px] border-white/30 border-t-white"
+                              aria-hidden="true"
+                            />
+                            <span className="sr-only">
+                              {tCommon("loading")}
+                            </span>
+                          </>
+                        )}
+                        {t("markComplete")}
+                      </Button>
+                    )
                   ) : (
                     <Button
                       variant="push"
-                      size="lg"
+                      size="default"
                       disabled={isEnrolling}
                       onClick={handleEnroll}
                       className="gap-2"
@@ -908,7 +941,7 @@ export function LessonPageClient({
                   // rendered once below.
                   <Button
                     variant="push"
-                    size="lg"
+                    size="default"
                     className="gap-2"
                     onClick={openClaimAuth}
                   >
@@ -930,6 +963,9 @@ export function LessonPageClient({
                   </Link>
                 </Button>
               ) : (
+                // Last lesson: the forward CTA returns to the course page
+                // (progress, credential) — labelled as that journey, not a
+                // duplicate of the completion status.
                 <Button
                   variant={isCompleted ? "push" : "pushOutline"}
                   size="default"
@@ -937,10 +973,20 @@ export function LessonPageClient({
                   className="w-full justify-center sm:w-auto sm:min-w-[120px]"
                 >
                   <Link href={`${linkBase}/${courseSlug}`}>
-                    {t("lessonComplete")}
+                    {t("finishCourse")} &rarr;
                   </Link>
                 </Button>
               )}
+              {/* Why the button is off — never a silently dead control */}
+              {!gateReady &&
+                gateBlocks.length > 0 &&
+                userId &&
+                isEnrolled &&
+                !isCompleted && (
+                  <p className="w-full text-center text-xs text-text-3">
+                    {t("completeGateHint")}
+                  </p>
+                )}
             </div>
           )}
           {enrollError && (
@@ -980,7 +1026,6 @@ export function LessonPageClient({
           the IDE rail via `instructionsSlot`; reading lessons render them here,
           below the prose. Discussion is the same inline section on both, never
           a modal. */}
-      {!hasCodeBlock && paneSections}
     </div>
   );
 }

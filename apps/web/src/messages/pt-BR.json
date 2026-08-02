@@ -360,7 +360,9 @@
     "lessonNumberTitle": "{number}. {title}",
     "formatSyntaxError": "Nada para formatar — corrija os erros de sintaxe primeiro.",
     "formatUnchanged": "Já está formatado.",
-    "formatUnsupported": "A formatação não está disponível para esta linguagem."
+    "formatUnsupported": "A formatação não está disponível para esta linguagem.",
+    "finishCourse": "Concluir curso",
+    "completeGateHint": "Conclua o quiz e a reflexão acima para habilitar"
   },
   "dashboard": {
     "allCaughtUp": "Tudo em dia!",

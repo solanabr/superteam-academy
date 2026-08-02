@@ -119,6 +119,16 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
     ctx.setProof(b.key, { selections });
   }, [selections, b.key, ctx]);
 
+  const doneCorrectCount = b.questions.filter(
+    (q) => results[q.id]?.correct
+  ).length;
+  // Completion gate: this quiz is "done" only when every answer is CORRECT —
+  // matching the server's set-equality grading, so the enabled button never
+  // lies about what the POST will accept.
+  useEffect(() => {
+    ctx.setBlockDone(b.key, doneCorrectCount === b.questions.length);
+  }, [doneCorrectCount, b.questions.length, b.key, ctx]);
+
   const answeredCount = b.questions.filter((q) => checkedEver[q.id]).length;
   const allChecked = answeredCount === b.questions.length;
   useEffect(() => {
