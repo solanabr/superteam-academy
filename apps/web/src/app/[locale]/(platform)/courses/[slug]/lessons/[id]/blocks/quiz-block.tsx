@@ -264,21 +264,16 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
         <h3 className="font-display text-sm font-extrabold uppercase text-text-3">
           {t("quiz")}
         </h3>
-        <span
-          className={cn(
-            "rounded-full px-2 py-0.5 text-xs font-bold tabular-nums",
-            allCorrect
-              ? "text-success [background:var(--success-light)]"
-              : "text-text-3 [background:var(--inset)]"
-          )}
-        >
+        {/* Count = neutral data chip; state = the ONE colored chip. Both went
+            success-green on a sweep and read as duplicate twins. */}
+        <span className="rounded-full px-2 py-0.5 text-xs font-bold tabular-nums text-text-3 [background:var(--inset)]">
           {t("quizScore", {
             correct: correctCount,
             total,
           })}
         </span>
         {allCorrect && (
-          <span className="flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold text-success [background:var(--success-light)]">
+          <span className="flex items-center gap-1 rounded-full border border-[var(--primary-border)] bg-[var(--primary-dim)] px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.4px] text-primary">
             <CheckCircle size={12} weight="bold" aria-hidden="true" />
             {t("quizCompleteChip")}
           </span>

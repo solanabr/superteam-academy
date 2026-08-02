@@ -255,6 +255,7 @@ export function LessonPageClient({
   });
 
   const hasCodeBlock = lesson.blocks.some((b) => b._type === "code");
+  const codeBlockCount = lesson.blocks.filter((b) => b._type === "code").length;
   const hasQuizBlock = lesson.blocks.some((b) => b._type === "quiz");
 
   // Challenge pages are viewport-locked: the IDE column is sized to the screen,
@@ -265,7 +266,9 @@ export function LessonPageClient({
   // scrollbar from the full-bleed `w-screen` children (100vw counts the
   // scrollbar gutter). Desktop only; below lg the page scrolls normally.
   useEffect(() => {
-    if (!hasCodeBlock) return;
+    // Viewport lock is a ONE-editor design: with several stacked editors the
+    // page must scroll or everything past the first is unreachable (#457).
+    if (!hasCodeBlock || codeBlockCount > 1) return;
     const mq = window.matchMedia("(min-width: 1024px)");
     const apply = () => {
       document.body.style.overflow = mq.matches ? "hidden" : "";
@@ -276,7 +279,7 @@ export function LessonPageClient({
       mq.removeEventListener("change", apply);
       document.body.style.overflow = "";
     };
-  }, [hasCodeBlock]);
+  }, [hasCodeBlock, codeBlockCount]);
 
   // F18 (#564): retrieval stays AI-free. Each QuizBlock reports whether all of
   // its questions have been checked; while any quiz block in the lesson is
@@ -880,7 +883,7 @@ export function LessonPageClient({
                 (userId ? (
                   isEnrolled ? (
                     isCompleted ? (
-                      <span className="border-success/40 bg-success/10 inline-flex h-10 items-center justify-center gap-1.5 rounded-full border px-4 font-display text-sm font-bold text-success">
+                      <span className="inline-flex h-10 items-center justify-center gap-1.5 rounded-full border border-[var(--primary-border)] bg-[var(--primary-dim)] px-4 font-display text-[11px] font-bold uppercase tracking-[0.4px] text-primary">
                         <CheckCircle
                           size={16}
                           weight="fill"

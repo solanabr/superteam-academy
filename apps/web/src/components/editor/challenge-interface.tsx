@@ -466,96 +466,109 @@ export function ChallengeInterface({
           Partner lives at the very bottom and stays hidden until the learner
           scrolls to the end of the description, then slides in (LeetCode-style
           reading pane). Below lg, `contents` flattens this so the text
-          (order-1) and AI (order-4) bracket the editor/output (order-2/3). */}
-      <div
-        ref={leftColRef}
-        className={cn(
-          // #942 item 4: a bordered card at lg (page background shows in the
-          // gutter around and between the panes).
-          "contents lg:flex lg:min-w-0 lg:flex-col lg:overflow-auto lg:rounded-[var(--r-lg)] lg:border lg:border-border lg:bg-card",
-          leftWidth === null ? "lg:flex-1" : "lg:shrink-0"
-        )}
-        style={leftWidth !== null ? { width: leftWidth } : undefined}
-      >
-        {/* Instructions + test cases */}
-        <div className="order-1 lg:order-none lg:shrink-0">{taskSlot}</div>
+          (order-1) and AI (order-4) bracket the editor/output (order-2/3).
+          Hidden entirely when it would be EMPTY — the non-first editor of a
+          multi-challenge lesson has no instructions, no sections, and often a
+          suppressed AI pane, which rendered as a blank white card (#457). */}
+      {(taskSlot || capstoneAiOff || aiVisible || sectionsSlot) && (
+        <div
+          ref={leftColRef}
+          className={cn(
+            // #942 item 4: a bordered card at lg (page background shows in the
+            // gutter around and between the panes).
+            "contents lg:flex lg:min-w-0 lg:flex-col lg:overflow-auto lg:rounded-[var(--r-lg)] lg:border lg:border-border lg:bg-card",
+            leftWidth === null ? "lg:flex-1" : "lg:shrink-0"
+          )}
+          style={leftWidth !== null ? { width: leftWidth } : undefined}
+        >
+          {/* Instructions + test cases. A lesson with several code blocks
+            threads instructions into the FIRST editor only — later editors
+            must not render an empty white rail card (#457 arrived with C1
+            lesson 7's two-challenge layout). */}
+          {taskSlot ? (
+            <div className="order-1 lg:order-none lg:shrink-0">{taskSlot}</div>
+          ) : null}
 
-        {/* AI Partner — sized to its CONTENT, never a fixed box (#770). It used
+          {/* AI Partner — sized to its CONTENT, never a fixed box (#770). It used
             to force h-[600px] inside a max-h-[760px] envelope, which reserved a
             huge empty region below the rail once the pane became always-mounted
             and collapsible. Now it grows with the conversation and caps out,
             scrolling internally past the cap. Hidden outright when suppressed so
             no invisible controls sit in the tab order (WCAG 4.1.2). */}
-        {/* Capstone AI-free notice (#867) — replaces the pane, never sits
+          {/* Capstone AI-free notice (#867) — replaces the pane, never sits
             alongside it. Static text, no controls, so nothing enters the tab
             order; role="note" announces it as context rather than a status
             change or an error. */}
-        {capstoneAiOff && (
-          <div
-            role="note"
-            className="order-4 px-3 pb-4 pt-2 lg:order-none lg:shrink-0"
-          >
-            <div className="rounded-lg border border-border bg-card px-4 py-3">
-              <p className="text-sm font-bold text-text">
-                {t("capstoneAiOffTitle")}
-              </p>
-              <p className="mt-1 text-xs text-text-3">
-                {t("capstoneAiOffBody")}
-              </p>
+          {capstoneAiOff && (
+            <div
+              role="note"
+              className="order-4 px-3 pb-4 pt-2 lg:order-none lg:shrink-0"
+            >
+              <div className="rounded-lg border border-border bg-card px-4 py-3">
+                <p className="text-sm font-bold text-text">
+                  {t("capstoneAiOffTitle")}
+                </p>
+                <p className="mt-1 text-xs text-text-3">
+                  {t("capstoneAiOffBody")}
+                </p>
+              </div>
             </div>
-          </div>
-        )}
-
-        <div
-          className={cn(
-            "order-4 px-3 pb-4 pt-2 lg:order-none lg:shrink-0",
-            !aiVisible && "hidden"
           )}
-        >
-          {aiVisible && (
-            <AiPartnerPane
-              lessonSlug={lessonSlug}
-              courseSlug={courseSlug}
-              getCode={() => code}
-              getTestSummary={() => summarize(challengeState.executionResult)}
-              onApply={(proposed) => setCode(proposed)}
-              disabled={isComplete}
-              solutionPassed={challengeState.status === "success"}
-              hasRunTests={hasRunTests || isComplete}
-              hasFailedRun={hasFailedRun}
-              onNudgeShown={() =>
-                trackAttemptGateNudgeShown({
-                  lessonId,
-                  courseId,
-                  challengeKind,
-                })
-              }
-              eventCtx={{ lessonId, courseId, challengeKind }}
-              className="max-h-[560px]"
-            />
+
+          <div
+            className={cn(
+              "order-4 px-3 pb-4 pt-2 lg:order-none lg:shrink-0",
+              !aiVisible && "hidden"
+            )}
+          >
+            {aiVisible && (
+              <AiPartnerPane
+                lessonSlug={lessonSlug}
+                courseSlug={courseSlug}
+                getCode={() => code}
+                getTestSummary={() => summarize(challengeState.executionResult)}
+                onApply={(proposed) => setCode(proposed)}
+                disabled={isComplete}
+                solutionPassed={challengeState.status === "success"}
+                hasRunTests={hasRunTests || isComplete}
+                hasFailedRun={hasFailedRun}
+                onNudgeShown={() =>
+                  trackAttemptGateNudgeShown({
+                    lessonId,
+                    courseId,
+                    challengeKind,
+                  })
+                }
+                eventCtx={{ lessonId, courseId, challengeKind }}
+                className="max-h-[560px]"
+              />
+            )}
+          </div>
+
+          {/* Disclosure sections (Topics / Hints / Discussion) — under the AI
+            pane per the owner's reading-flow ordering (#942). */}
+          {sectionsSlot && (
+            <div className="order-5 px-3 pb-4 lg:order-none lg:shrink-0">
+              {sectionsSlot}
+            </div>
           )}
         </div>
+      )}
 
-        {/* Disclosure sections (Topics / Hints / Discussion) — under the AI
-            pane per the owner's reading-flow ordering (#942). */}
-        {sectionsSlot && (
-          <div className="order-5 px-3 pb-4 lg:order-none lg:shrink-0">
-            {sectionsSlot}
-          </div>
-        )}
-      </div>
-
-      {/* Text/editor split resizer — lg+ only; drag right to widen the text. */}
-      <div
-        className="group hidden w-2 shrink-0 cursor-col-resize bg-transparent lg:relative lg:block"
-        onMouseDown={handleSplitResizeStart}
-        role="separator"
-        aria-orientation="vertical"
-        aria-label={tA11y("resizeRailPanel")}
-        tabIndex={0}
-      >
-        <div className="absolute left-1/2 top-1/2 h-8 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full transition-colors [background:var(--resizer-handle)] group-hover:[background:var(--primary)]" />
-      </div>
+      {/* Text/editor split resizer — lg+ only; drag right to widen the text.
+          Pointless without a left column to resize. */}
+      {(taskSlot || capstoneAiOff || aiVisible || sectionsSlot) && (
+        <div
+          className="group hidden w-2 shrink-0 cursor-col-resize bg-transparent lg:relative lg:block"
+          onMouseDown={handleSplitResizeStart}
+          role="separator"
+          aria-orientation="vertical"
+          aria-label={tA11y("resizeRailPanel")}
+          tabIndex={0}
+        >
+          <div className="absolute left-1/2 top-1/2 h-8 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full transition-colors [background:var(--resizer-handle)] group-hover:[background:var(--primary)]" />
+        </div>
+      )}
 
       {/* RIGHT: code editor + output — full height. Below lg, `contents`
           flattens this so the editor (order-2) and output (order-3) slot

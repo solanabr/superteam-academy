@@ -135,7 +135,7 @@ export function OpenEndedBlock({ block, ctx }: BlockRenderProps) {
           {words}/{maxWords}
         </p>
         {isDone ? (
-          <span className="border-success/40 bg-success/10 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-display text-xs font-bold text-success">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--primary-border)] bg-[var(--primary-dim)] px-3 py-1.5 font-display text-[11px] font-bold uppercase tracking-[0.4px] text-primary">
             <CheckCircle size={14} weight="fill" aria-hidden="true" />
             {t("reflectionSubmitted")}
           </span>
