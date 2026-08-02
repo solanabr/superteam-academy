@@ -1,5 +1,7 @@
 import "server-only";
 import { isRateLimited } from "@/lib/rate-limit";
+import { logError } from "@/lib/logging";
+import { ERROR_IDS } from "@/constants/errorIds";
 import { serverEnv } from "@/lib/env.server";
 import {
   checkAiSpend,
@@ -155,7 +157,23 @@ export async function maybeGenerateReflectionReply({
       }),
     });
 
-    if (!response.ok) return null;
+    if (!response.ok) {
+      // A skipped reply is by design invisible to the learner — but the WHY
+      // must reach the logs. A billing/dunning 403 on the sponsored key looked
+      // identical to "feature not built" until this line existed (2026-08-02).
+      let detail = "";
+      try {
+        detail = (await response.text()).slice(0, 300);
+      } catch {
+        /* body unavailable — status alone still logs */
+      }
+      logError({
+        errorId: ERROR_IDS.LESSON_REFLECT_FAILED,
+        error: new Error(`Gemini reply HTTP ${response.status}`),
+        context: { model, detail },
+      });
+      return null;
+    }
 
     // Billed past here (2xx). Parse DEFENSIVELY so a non-JSON 200 can't throw
     // past the spend booking, then record the cost on the SAME ledger — with a

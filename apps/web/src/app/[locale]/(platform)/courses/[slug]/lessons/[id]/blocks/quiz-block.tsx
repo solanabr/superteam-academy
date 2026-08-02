@@ -459,8 +459,10 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
 
         {/* The AI Partner is suppressed while any question is unchecked
             (LX-C1/F18) — retrieval stays AI-free. The gate is unchanged; the
-            line states it explicitly and counts down (#770, #943). */}
-        {!allChecked && (
+            line states it explicitly and counts down (#770, #943). Only on
+            lessons that HAVE an AI Partner (a code block) — a prose+quiz
+            lesson has no assistant to unlock (owner 2026-08-02). */}
+        {!allChecked && ctx.lesson.blocks.some((lb) => lb._type === "code") && (
           <p className="flex items-start gap-2 rounded-md border border-border p-3 text-xs text-text-3 [background:var(--inset)]">
             <Robot
               size={16}
