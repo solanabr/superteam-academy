@@ -272,7 +272,7 @@ export function CourseDetailClient({
 
           {/* Action rail — XP, progress and the CTA in one place */}
           <div className="mt-6 md:mt-0">
-            <div className="bg-subtle/60 rounded-[var(--r-md)] border-[1.5px] border-border p-5">
+            <div className="rounded-[var(--r-md)] border-[1.5px] border-border p-5 [background:color-mix(in_srgb,var(--subtle)_60%,transparent)]">
               <span className="inline-flex items-center gap-1.5 font-display text-lg font-black text-xp">
                 <Lightning size={20} weight="fill" className="text-xp" />
                 {course.xpReward} {t("xpReward")}

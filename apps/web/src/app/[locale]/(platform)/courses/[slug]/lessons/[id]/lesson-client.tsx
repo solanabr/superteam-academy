@@ -881,7 +881,10 @@ export function LessonPageClient({
                 (userId ? (
                   isEnrolled ? (
                     isCompleted ? (
-                      <span className="inline-flex h-10 items-center justify-center gap-1.5 rounded-full border border-[var(--primary-border)] bg-[var(--primary-dim)] px-4 font-display text-[11px] font-bold uppercase tracking-[0.4px] text-primary">
+                      <span
+                        role="status"
+                        className="inline-flex h-10 items-center justify-center gap-1.5 rounded-full border border-[var(--primary-border)] bg-[var(--primary-dim)] px-4 font-display text-[11px] font-bold uppercase tracking-[0.4px] text-primary"
+                      >
                         <CheckCircle
                           size={16}
                           weight="fill"

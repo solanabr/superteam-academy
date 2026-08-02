@@ -98,8 +98,7 @@
     /* ── Semantic status ── */
     /* ONE green (owner 2026-08-02): success states resolve to the primary
        forest identity — the mint #16a34a family is retired. Defined by
-       REFERENCE so a future primary change carries success with it.
-       (Brand-guide "Semantic" table still lists the mint — pending amendment.) */
+       REFERENCE so a future primary change carries success with it. */
     --success: var(--primary);
     --success-dark: var(--primary-dark);
     --success-light: color-mix(in srgb, var(--primary) 15%, transparent);
@@ -1936,42 +1935,6 @@
   transform: translateY(2px);
 }
 
-/* ── Path filter pills ── */
-.path-pill {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--font-display, var(--font-d));
-  font-weight: 700;
-  font-size: 12px;
-  padding: 8px 14px;
-  min-height: 44px;
-  border: 2.5px solid var(--border);
-  border-radius: 99px;
-  cursor: pointer;
-  background: var(--card);
-  color: var(--text-2);
-  box-shadow: 0 2px 0 0 var(--border);
-  transition: all 0.15s;
-  user-select: none;
-  white-space: nowrap;
-}
-.path-pill:hover {
-  border-color: var(--border-hover, var(--border));
-  color: var(--text);
-}
-.path-pill:active {
-  transform: translateY(2px);
-  box-shadow: none;
-}
-.path-pill.active {
-  box-shadow: none;
-  transform: translateY(2px);
-  background: var(--primary-bg, var(--primary-dim));
-  border-color: var(--primary);
-  color: var(--primary);
-}
-
 /* ── Learning Path sections — premium redesign ── */
 .path-section {
   margin-bottom: 28px;
@@ -2542,9 +2505,6 @@ a.path-step-card:hover .path-step-badge.skip {
   }
   .path-name {
     font-size: 17px;
-  }
-  .path-step-thumb {
-    width: 48px;
   }
   .path-foot-xp {
     font-size: 12px;
