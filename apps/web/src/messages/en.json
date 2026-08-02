@@ -999,7 +999,8 @@
     "composerHeading": "Ask the community",
     "answersCount": "Answers ({count})",
     "sortBy": "Sort by",
-    "createThreadFailed": "Could not start the discussion. Try again."
+    "createThreadFailed": "Could not start the discussion. Try again.",
+    "threadType": "Thread type"
   },
   "aiPartner": {
     "title": "AI Partner",

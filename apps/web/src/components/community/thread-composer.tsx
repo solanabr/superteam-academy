@@ -32,6 +32,11 @@ interface ThreadComposerProps {
    */
   onCreated?: (thread: { slug: string }) => void;
   className?: string;
+  /**
+   * Dense rendering for narrow embeds (the lesson pane): smaller toggle
+   * segments and sm footer buttons, so the form doesn't dwarf its host.
+   */
+  compact?: boolean;
 }
 
 /**
@@ -48,6 +53,7 @@ export function ThreadComposer({
   onCancel,
   onCreated,
   className,
+  compact = false,
 }: ThreadComposerProps) {
   const router = useRouter();
   const t = useTranslations("community");
@@ -135,32 +141,31 @@ export function ThreadComposer({
 
   return (
     <div className={cn("space-y-4", className)}>
-      {/* Type toggle */}
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={() => setType("question")}
-          className={cn(
-            "rounded-md px-4 py-2 text-sm font-medium transition-colors",
-            type === "question"
-              ? "bg-[var(--primary)] text-white"
-              : "border border-[var(--border-default)] bg-[var(--surface)] text-[var(--text-2)]"
-          )}
-        >
-          {t("question")}
-        </button>
-        <button
-          type="button"
-          onClick={() => setType("discussion")}
-          className={cn(
-            "rounded-md px-4 py-2 text-sm font-medium transition-colors",
-            type === "discussion"
-              ? "bg-[var(--primary)] text-white"
-              : "border border-[var(--border-default)] bg-[var(--surface)] text-[var(--text-2)]"
-          )}
-        >
-          {t("discussion")}
-        </button>
+      {/* Type toggle — segmented control, same anatomy as the sort tabs and
+          type filters (it selects a mode; it is not an action button) */}
+      <div
+        role="radiogroup"
+        aria-label={t("threadType")}
+        className="inline-flex gap-1 rounded-lg border border-[var(--border-default)] bg-[var(--surface)] p-0.5"
+      >
+        {(["question", "discussion"] as const).map((value) => (
+          <button
+            key={value}
+            type="button"
+            role="radio"
+            aria-checked={type === value}
+            onClick={() => setType(value)}
+            className={cn(
+              "whitespace-nowrap rounded-md font-medium transition-colors",
+              compact ? "px-2.5 py-1 text-xs" : "px-3 py-1.5 text-[13px]",
+              type === value
+                ? "bg-[var(--primary)] text-white"
+                : "text-[var(--text-2)] hover:bg-[var(--card-hover)] hover:text-[var(--text)]"
+            )}
+          >
+            {t(value)}
+          </button>
+        ))}
       </div>
 
       {/* Category selector (hidden for course-scoped threads) */}
@@ -168,7 +173,10 @@ export function ThreadComposer({
         <div>
           <label
             htmlFor="thread-composer-category"
-            className="mb-1 block text-sm font-medium text-[var(--text)]"
+            className={cn(
+              "mb-1 block font-medium text-[var(--text)]",
+              compact ? "text-xs" : "text-sm"
+            )}
           >
             {t("category")}
           </label>
@@ -176,7 +184,10 @@ export function ThreadComposer({
             id="thread-composer-category"
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
-            className="w-full rounded-md border border-[var(--border-default)] bg-[var(--input)] px-3 py-2 text-sm text-[var(--text)] focus:outline-none"
+            className={cn(
+              "w-full rounded-md border border-[var(--border-default)] bg-[var(--input)] px-3 py-2 text-[var(--text)] focus:outline-none",
+              compact ? "text-[13px]" : "text-sm"
+            )}
           >
             <option value="">{t("selectCategory")}</option>
             {categories.map((cat) => (
@@ -192,7 +203,10 @@ export function ThreadComposer({
       <div>
         <label
           htmlFor="thread-composer-title"
-          className="mb-1 block text-sm font-medium text-[var(--text)]"
+          className={cn(
+            "mb-1 block font-medium text-[var(--text)]",
+            compact ? "text-xs" : "text-sm"
+          )}
         >
           {t("titleLabel")}
         </label>
@@ -206,7 +220,10 @@ export function ThreadComposer({
             onChange={(e) => setTitle(e.target.value)}
             placeholder={t("titlePlaceholder")}
             maxLength={200}
-            className="w-full bg-transparent px-3 py-2 text-sm text-[var(--text)] placeholder:text-[var(--text-2)] focus:outline-none"
+            className={cn(
+              "w-full bg-transparent px-3 py-2 text-[var(--text)] placeholder:text-[var(--text-2)] focus:outline-none",
+              compact ? "text-[13px]" : "text-sm"
+            )}
           />
           <p className="px-3 pb-1.5 text-right text-xs text-[var(--text-2)]">
             {title.length}/200
@@ -216,14 +233,20 @@ export function ThreadComposer({
 
       {/* Body */}
       <div>
-        <label className="mb-1 block text-sm font-medium text-[var(--text)]">
+        <label
+          className={cn(
+            "mb-1 block font-medium text-[var(--text)]",
+            compact ? "text-xs" : "text-sm"
+          )}
+        >
           {t("detailsLabel")}
         </label>
         <MarkdownEditor
           value={body}
           onChange={setBody}
           placeholder={t("detailsPlaceholder")}
-          minHeight="160px"
+          minHeight={compact ? "120px" : "160px"}
+          compact={compact}
         />
       </div>
 
@@ -233,12 +256,15 @@ export function ThreadComposer({
         </p>
       )}
 
+      {/* Footer actions stay sm on every surface — the default size read as
+          oversized against the form's 13px chrome (owner 2026-08-02) */}
       <div className="flex justify-end gap-2">
-        <Button variant="secondary" onClick={onCancel}>
+        <Button variant="secondary" size="sm" onClick={onCancel}>
           {t("cancel")}
         </Button>
         <Button
           variant="primary"
+          size="sm"
           onClick={handleSubmit}
           disabled={!isValid || isSubmitting}
         >

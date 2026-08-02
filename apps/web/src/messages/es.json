@@ -999,7 +999,8 @@
     "composerHeading": "Pregunta a la comunidad",
     "answersCount": "Respuestas ({count})",
     "sortBy": "Ordenar por",
-    "createThreadFailed": "No se pudo iniciar la conversación. Inténtalo de nuevo."
+    "createThreadFailed": "No se pudo iniciar la conversación. Inténtalo de nuevo.",
+    "threadType": "Tipo de tema"
   },
   "aiPartner": {
     "title": "Compañero de IA",

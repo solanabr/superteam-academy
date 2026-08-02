@@ -15,6 +15,8 @@ interface MarkdownEditorProps {
   minHeight?: string;
   /** Render without the outer border/radius so the caller can frame it. */
   flush?: boolean;
+  /** Dense rendering for narrow embeds — 13px type, tighter tabs. */
+  compact?: boolean;
 }
 
 export function MarkdownEditor({
@@ -24,6 +26,7 @@ export function MarkdownEditor({
   placeholder = "Write your content using Markdown...",
   minHeight = "200px",
   flush = false,
+  compact = false,
 }: MarkdownEditorProps) {
   const t = useTranslations("community");
   const [tab, setTab] = useState<"write" | "preview">("write");
@@ -45,7 +48,8 @@ export function MarkdownEditor({
           type="button"
           onClick={() => setTab("write")}
           className={cn(
-            "px-4 py-2 text-sm font-medium transition-colors",
+            "font-medium transition-colors",
+            compact ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-sm",
             tab === "write"
               ? "border-b-2 border-[var(--primary)] text-[var(--primary)]"
               : "text-[var(--text-2)] hover:text-[var(--text)]"
@@ -57,7 +61,8 @@ export function MarkdownEditor({
           type="button"
           onClick={() => setTab("preview")}
           className={cn(
-            "px-4 py-2 text-sm font-medium transition-colors",
+            "font-medium transition-colors",
+            compact ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-sm",
             tab === "preview"
               ? "border-b-2 border-[var(--primary)] text-[var(--primary)]"
               : "text-[var(--text-2)] hover:text-[var(--text)]"
@@ -78,7 +83,10 @@ export function MarkdownEditor({
           }}
           placeholder={placeholder}
           className={cn(
-            "w-full resize-y bg-[var(--input)] p-4 font-mono text-sm text-[var(--text)]",
+            // Sans, not mono: the guide reserves mono for data — prose the
+            // learner is writing is body copy (code renders mono in Preview).
+            "w-full resize-y bg-[var(--input)] p-4 text-[var(--text)]",
+            compact ? "text-[13px]" : "text-sm",
             "placeholder:text-[var(--text-2)] focus:outline-none"
           )}
           style={{ minHeight }}

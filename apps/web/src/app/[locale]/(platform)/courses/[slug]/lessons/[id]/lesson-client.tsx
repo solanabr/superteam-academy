@@ -596,6 +596,7 @@ export function LessonPageClient({
               {tCommunity("composerHeading")}
             </h4>
             <ThreadComposer
+              compact
               defaultScope={{ courseId, lessonId: lesson._id }}
               onCancel={() => setIsComposerOpen(false)}
               // Staying put is the point: the new thread appears in the list
