@@ -46,7 +46,7 @@ export const DeploySaveStatus = forwardRef<
       <div
         role="status"
         aria-live="polite"
-        className="flex items-center gap-2 text-xs font-medium text-green-500"
+        className="flex items-center gap-2 text-xs font-medium text-success"
       >
         <svg
           className="h-3.5 w-3.5 shrink-0"

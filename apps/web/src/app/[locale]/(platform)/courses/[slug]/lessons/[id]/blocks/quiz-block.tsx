@@ -298,7 +298,7 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
           exists before the text arrives. */}
       <div aria-live="polite" className="px-5 pb-5 empty:hidden">
         {allCorrect && (
-          <p className="flex items-center gap-2 rounded-md border border-success p-3 text-sm font-medium text-success [background:var(--success-light)]">
+          <p className="flex items-center gap-2 rounded-md border border-[var(--primary-border)] bg-[var(--primary-dim)] p-3 text-sm font-medium text-primary">
             <CheckCircle size={16} weight="bold" aria-hidden="true" />
             {t("quizAllCorrect", { total })}
           </p>

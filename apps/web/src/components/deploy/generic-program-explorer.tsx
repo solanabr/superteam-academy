@@ -724,7 +724,7 @@ export function GenericProgramExplorer({
         </CardTitle>
         <p className="font-mono text-xs text-muted-foreground">
           {truncateAddress(programId)}
-          <span className="ml-2 rounded bg-green-500/10 px-1.5 py-0.5 text-[10px] text-green-500">
+          <span className="ml-2 rounded bg-[var(--success-bg)] px-1.5 py-0.5 text-[10px] text-success">
             devnet
           </span>
         </p>
@@ -824,7 +824,7 @@ export function GenericProgramExplorer({
                                 className={cn(
                                   "rounded-md px-3 py-1 text-xs font-medium",
                                   currentVal === "true"
-                                    ? "bg-green-500/20 text-green-400"
+                                    ? "bg-[var(--success-light)] text-success"
                                     : "bg-muted text-muted-foreground"
                                 )}
                               >
@@ -1065,7 +1065,7 @@ export function GenericProgramExplorer({
                     <span
                       className={cn(
                         "text-[10px] font-medium",
-                        entry.success ? "text-green-500" : "text-red-500"
+                        entry.success ? "text-success" : "text-red-500"
                       )}
                     >
                       {entry.success ? t("confirmed") : t("failed")}
