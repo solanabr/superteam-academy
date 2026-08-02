@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import type { ReactElement } from "react";
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
+import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import type { Course, LearningPath } from "@superteam-lms/types";
 import messages from "@/messages/en.json";
@@ -74,7 +74,6 @@ function renderPaths(
       <PathsView
         learningPaths={ALL_PATHS}
         progress={new Map<string, PathCourseProgress>()}
-        onBrowseAll={() => undefined}
         {...props}
       />
     </NextIntlClientProvider>
@@ -82,31 +81,18 @@ function renderPaths(
   return render(ui);
 }
 
-// The "start-here card" suite lived here. The card itself was removed from
-// PathsView in the 31-07 live UI session; its tests outlived it and asserted
-// markup that no longer exists. Deleted with the feature.
-
-describe("PathsView — browse-all escape", () => {
-  it("is always present and hands control back to the catalog", () => {
-    const onBrowseAll = vi.fn();
-    renderPaths({ onBrowseAll });
-
-    const button = screen.getByRole("button", { name: /Browse all courses/ });
-    fireEvent.click(button);
-    expect(onBrowseAll).toHaveBeenCalledTimes(1);
-  });
-});
+// The "start-here card" and "browse-all escape" suites lived here. Both
+// features were removed in live UI sessions (31-07 and 02-08); the All Courses
+// tab itself is the catalog escape now.
 
 describe("PathsView — per-segment guidance modality", () => {
   it("defaults to the segment-1 presentation: sequenced steps stay clickable with a visible skip-ahead hint", () => {
     renderPaths();
 
-    expect(
-      screen.getByText(/recommended order — skip ahead/)
-    ).toBeInTheDocument();
-    // Courses B and C follow an incomplete predecessor → skip-ahead hints;
-    // course D opens its own path (index 0) → no hint.
-    expect(screen.getAllByText("Skip ahead")).toHaveLength(2);
+    // Courses B and C both follow an incomplete predecessor, but the hint is
+    // deduped to the FIRST ahead course per path (owner 2026-08-02); course D
+    // opens its own path (index 0) → no hint.
+    expect(screen.getAllByText("Skip ahead")).toHaveLength(1);
     // Still links — nothing is hard-locked for segment 1.
     expect(
       screen.getByRole("link", { name: /Course Beta/ })
@@ -119,7 +105,6 @@ describe("PathsView — per-segment guidance modality", () => {
   it("segment 3 (beginner) renders the fixed-path modality: later courses lock until the previous completes", () => {
     renderPaths({ segment: 3 });
 
-    expect(screen.getByText(/Follow the path in order/)).toBeInTheDocument();
     expect(screen.queryByText("Skip ahead")).not.toBeInTheDocument();
     // Locked steps are not links.
     expect(
@@ -157,7 +142,6 @@ describe("PathsView — per-segment guidance modality", () => {
   it("segment 2 (web3 dev) renders open access: every course is a link, no locks, no skip hints", () => {
     renderPaths({ segment: 2 });
 
-    expect(screen.getByText(/order is a recommendation/)).toBeInTheDocument();
     expect(screen.queryByText("Skip ahead")).not.toBeInTheDocument();
     for (const name of [
       /Course Alpha/,

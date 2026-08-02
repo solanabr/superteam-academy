@@ -35,7 +35,8 @@ interface ThreadComposerProps {
 }
 
 /**
- * The shared create-a-thread form. Extracted from `create-thread-modal` so the
+ * The shared create-a-thread form. Originally extracted from the (since
+ * deleted) create-thread-modal so the
  * lesson Discussion section can compose inline (LeetCode's comment box) while
  * the community page keeps its modal — one submit path, one validation rule.
  *

@@ -221,11 +221,7 @@
     "startDiscussion": "Iniciar una Discusión",
     "moduleLabel": "Módulo {number}",
     "upNext": "A continuación",
-    "browseAllCourses": "Ver todos los cursos",
     "skipAhead": "Saltar adelante",
-    "pathGuidanceFixed": "Sigue la ruta en orden — cada curso se apoya en el anterior.",
-    "pathGuidanceGuided": "Los cursos siguen un orden recomendado — salta adelante cuando quieras.",
-    "pathGuidanceOpen": "Entra en cualquier curso — el orden es una recomendación, no un requisito.",
     "pathGoalJob": "Tu camino hacia un puesto de desarrollador Solana empieza aquí.",
     "pathGoalBuild": "Todo lo que necesitas para lanzar tu propio proyecto en Solana.",
     "pathGoalExplore": "Explora cómo funciona Solana, un curso a la vez.",
@@ -248,7 +244,8 @@
     "changelogReactivated": "Curso reactivado",
     "changelogReactivatedDetail": "Este curso vuelve a estar disponible.",
     "changelogRecreated": "Curso reconstruido on-chain",
-    "changelogRecreatedDetail": "La cuenta on-chain del curso se recreó. Tu progreso y XP se conservaron."
+    "changelogRecreatedDetail": "La cuenta on-chain del curso se recreó. Tu progreso y XP se conservaron.",
+    "continue": "Continuar"
   },
   "lesson": {
     "content": "Contenido",

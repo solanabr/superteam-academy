@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { ArrowRight, BookOpen } from "@phosphor-icons/react";
+import { BookOpen } from "@phosphor-icons/react";
 import type { LearningPath } from "@superteam-lms/types";
 import {
   DEFAULT_SEGMENT,
@@ -10,9 +10,7 @@ import {
   SEGMENT_PATH_MODALITY,
   type GoalId,
   type LearnerSegment,
-  type PathGuidanceModality,
 } from "@/lib/courses/learner-segment";
-import { cn } from "@/lib/utils";
 import {
   LearningPathSection,
   type PathCourseProgress,
@@ -21,8 +19,6 @@ import {
 interface PathsViewProps {
   learningPaths: LearningPath[];
   progress: Map<string, PathCourseProgress>;
-  /** Always-available escape back to the full catalog (S9: don't punish experts). */
-  onBrowseAll: () => void;
   /**
    * Learner segment from the /start intake (LX-A3, #566). Until segment state
    * exists callers omit this and the view renders the segment-1 presentation
@@ -38,22 +34,15 @@ interface PathsViewProps {
   goal?: GoalId;
 }
 
-const GUIDANCE_KEY: Record<PathGuidanceModality, string> = {
-  fixed: "pathGuidanceFixed",
-  "guided-skip": "pathGuidanceGuided",
-  open: "pathGuidanceOpen",
-};
-
 /**
  * Path-page presentation (LX-A7): a sequenced list per path with exactly one
- * highlighted "start here" card and a secondary "Browse all courses" escape —
- * NOT a catalog grid. Per-segment modality changes guidance copy/prominence
- * only; the content and sequence are identical for every segment.
+ * highlighted "continue here" card — NOT a catalog grid. The All Courses tab
+ * is the browse-all escape (S9). Per-segment modality changes lock/skip
+ * affordances only; the content and sequence are identical for every segment.
  */
 export function PathsView({
   learningPaths,
   progress,
-  onBrowseAll,
   segment = DEFAULT_SEGMENT,
   goal,
 }: PathsViewProps) {
@@ -91,20 +80,8 @@ export function PathsView({
         <p className="path-goal-framing">{t(GOAL_FRAMING_KEY[goal])}</p>
       ) : null}
 
-      {/* Guidance line + browse-all escape */}
-      <div className="path-guidance-row">
-        <p className="path-guidance">{t(GUIDANCE_KEY[modality])}</p>
-        <button
-          type="button"
-          className={cn("path-browse-all", modality === "open" && "prominent")}
-          onClick={onBrowseAll}
-        >
-          {t("browseAllCourses")}
-          <ArrowRight size={13} weight="bold" aria-hidden="true" />
-        </button>
-      </div>
-
-      {/* Sequenced path lists */}
+      {/* Sequenced path lists — the All Courses tab itself is the browse-all
+          escape (guidance row removed, owner 2026-08-02) */}
       <div className="space-y-8">
         {nonEmptyPaths.map((path, idx) => (
           <LearningPathSection

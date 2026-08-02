@@ -74,9 +74,10 @@ export function ThreadFilters({
         ))}
       </div>
 
-      {/* Type filter */}
+      {/* Type filter — same segmented-control anatomy as the sort tabs so the
+          two groups read as sibling controls */}
       {showTypeFilter && (
-        <div className="flex gap-1">
+        <div className="flex gap-1 overflow-x-auto rounded-lg border border-[var(--border-default)] bg-[var(--surface)] p-0.5">
           {TYPE_OPTIONS.map((opt) => (
             <button
               key={opt.labelKey}
@@ -85,29 +86,32 @@ export function ThreadFilters({
               className={cn(
                 "whitespace-nowrap rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-colors",
                 type === opt.value
-                  ? "font-bold text-[var(--primary)]"
-                  : "text-[var(--text-2)] hover:text-[var(--text)]"
+                  ? "bg-[var(--primary)] text-white"
+                  : "text-[var(--text-2)] hover:bg-[var(--card-hover)] hover:text-[var(--text)]"
               )}
             >
               {t(opt.labelKey)}
             </button>
           ))}
-          {showCourseFilter && onCourseOnlyChange && (
-            <button
-              type="button"
-              aria-pressed={courseOnly}
-              onClick={() => onCourseOnlyChange(!courseOnly)}
-              className={cn(
-                "whitespace-nowrap rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-colors",
-                courseOnly
-                  ? "font-bold text-[var(--primary)]"
-                  : "text-[var(--text-2)] hover:text-[var(--text)]"
-              )}
-            >
-              {t("filterCourseQuestions")}
-            </button>
-          )}
         </div>
+      )}
+
+      {/* "Course questions" — an independent scope TOGGLE (a course question
+          is still a question), so it renders as a chip, not a segment */}
+      {showTypeFilter && showCourseFilter && onCourseOnlyChange && (
+        <button
+          type="button"
+          aria-pressed={courseOnly}
+          onClick={() => onCourseOnlyChange(!courseOnly)}
+          className={cn(
+            "whitespace-nowrap rounded-full border px-3 py-1.5 text-[13px] font-medium transition-colors",
+            courseOnly
+              ? "border-[var(--primary-border)] bg-[var(--primary-dim)] font-bold text-[var(--primary)]"
+              : "border-[var(--border-default)] text-[var(--text-2)] hover:text-[var(--text)]"
+          )}
+        >
+          {t("filterCourseQuestions")}
+        </button>
       )}
 
       {actionSlot && <div className="ml-auto shrink-0">{actionSlot}</div>}

@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/auth/auth-provider";
 import { ThreadList } from "@/components/community/thread-list";
 import { CommunityStats } from "@/components/community/community-stats";
 import { CategoryCard } from "@/components/community/category-card";
-import { CreateThreadModal } from "@/components/community/create-thread-modal";
+import { ThreadComposer } from "@/components/community/thread-composer";
 import { Button } from "@/components/ui/button";
 
 const CATEGORIES = [
@@ -37,7 +37,10 @@ export default function CommunityPage() {
   const { user } = useAuth();
   const t = useTranslations("community");
 
+  // Inline composer (no modal) — opens at the top of the thread list, the
+  // freshly posted thread appears in place via refreshToken.
   const [createOpen, setCreateOpen] = useState(false);
+  const [refreshToken, setRefreshToken] = useState(0);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
@@ -80,7 +83,26 @@ export default function CommunityPage() {
           <h2 className="mb-4 font-display text-xl font-bold text-[var(--text)]">
             {t("recentThreads")}
           </h2>
-          <ThreadList showFilters showContext />
+          {createOpen && user ? (
+            <div className="mb-4 rounded-lg border border-[var(--border-default)] bg-[var(--card)] p-3">
+              <h4 className="mb-3 font-display text-sm font-bold text-[var(--text)]">
+                {t("composerHeading")}
+              </h4>
+              <ThreadComposer
+                onCancel={() => setCreateOpen(false)}
+                onCreated={() => {
+                  setCreateOpen(false);
+                  setRefreshToken((n) => n + 1);
+                }}
+              />
+            </div>
+          ) : null}
+          <ThreadList
+            showFilters
+            showContext
+            showCourseFilter
+            refreshToken={refreshToken}
+          />
         </div>
 
         {/* Sidebar */}
@@ -93,8 +115,6 @@ export default function CommunityPage() {
           </aside>
         )}
       </div>
-
-      <CreateThreadModal open={createOpen} onOpenChange={setCreateOpen} />
     </div>
   );
 }

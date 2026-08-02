@@ -14,8 +14,6 @@ interface CourseCardProps {
   lessonCount?: number;
   completedLessons?: number;
   xpReward: number;
-  pathLabel?: string;
-  trackLevel?: number;
   thumbnail?: string | null;
   status?: "enrolled" | "completed";
   style?: React.CSSProperties;
@@ -30,8 +28,6 @@ export function CourseCard({
   lessonCount,
   completedLessons,
   xpReward,
-  pathLabel,
-  trackLevel,
   thumbnail,
   status,
   style,
@@ -46,49 +42,39 @@ export function CourseCard({
       aria-label={title}
       style={style}
     >
-      {/* Thumbnail */}
-      <div className="course-card-thumb" aria-hidden="true">
+      {/* Thumbnail — enrollment status overlays the cover so the card body
+          stays uniform across enrolled and un-enrolled cards */}
+      <div className="course-card-thumb">
         <Image
           src={thumbnail || "/cover.png"}
           alt=""
           width={400}
           height={225}
           loading="lazy"
+          aria-hidden="true"
         />
-        {/* Ghost background number — trackLevel within path */}
-        {trackLevel !== undefined && (
-          <span className="course-num">
-            {String(trackLevel).padStart(2, "0")}
+        {status === "completed" && (
+          <span
+            className="course-card-status completed"
+            aria-label={t("completed")}
+          >
+            <CheckCircle size={11} weight="fill" aria-hidden="true" />
+            {t("completed")}
           </span>
         )}
+        {status === "enrolled" &&
+          completedLessons !== undefined &&
+          lessonCount !== undefined && (
+            <span
+              className="course-card-status enrolled"
+              aria-label={`${completedLessons}/${lessonCount} ${t("lessons")}`}
+            >
+              {completedLessons}/{lessonCount} {t("lessons")}
+            </span>
+          )}
       </div>
 
       <div className="course-card-body">
-        {/* Top row: path badge + status badge */}
-        <div className="course-card-top">
-          {pathLabel && <span className="course-card-path">{pathLabel}</span>}
-
-          {status === "completed" && (
-            <span
-              className="course-card-status completed"
-              aria-label={t("completed")}
-            >
-              <CheckCircle size={11} weight="fill" aria-hidden="true" />
-              {t("completed")}
-            </span>
-          )}
-          {status === "enrolled" &&
-            completedLessons !== undefined &&
-            lessonCount !== undefined && (
-              <span
-                className="course-card-status enrolled"
-                aria-label={`${completedLessons}/${lessonCount} ${t("lessons")}`}
-              >
-                {completedLessons}/{lessonCount} {t("lessons")}
-              </span>
-            )}
-        </div>
-
         {/* Title */}
         <h3 className="course-card-title">{title}</h3>
 
