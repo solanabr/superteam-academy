@@ -206,7 +206,6 @@
     "noCoursesDescription": "Check back soon for new learning content.",
     "signInToEnroll": "Sign In to Enroll",
     "enrollFailed": "Enrollment failed. Please try again.",
-    "allPaths": "All Paths",
     "pathCore": "Solana Core",
     "pathRust": "Rust & Programs",
     "pathAnchor": "Anchor",
@@ -218,14 +217,9 @@
     "ofXp": "of {total} XP",
     "coursesCount": "{count} of {total} done",
     "discussions": "Course Discussions",
-    "startDiscussion": "Start a Discussion",
     "moduleLabel": "Module {number}",
     "upNext": "Up next",
-    "browseAllCourses": "Browse all courses",
     "skipAhead": "Skip ahead",
-    "pathGuidanceFixed": "Follow the path in order — each course builds on the last.",
-    "pathGuidanceGuided": "Courses are in a recommended order — skip ahead whenever you're ready.",
-    "pathGuidanceOpen": "Jump into any course — the order is a recommendation, not a requirement.",
     "pathGoalJob": "Your path to a Solana developer role starts here.",
     "pathGoalBuild": "Everything you need to ship your own Solana project.",
     "pathGoalExplore": "Explore how Solana works, one course at a time.",
@@ -248,7 +242,8 @@
     "changelogReactivated": "Course reactivated",
     "changelogReactivatedDetail": "This course is available again.",
     "changelogRecreated": "Course rebuilt on-chain",
-    "changelogRecreatedDetail": "The on-chain course account was recreated. Your progress and XP were preserved."
+    "changelogRecreatedDetail": "The on-chain course account was recreated. Your progress and XP were preserved.",
+    "continue": "Continue"
   },
   "lesson": {
     "content": "Content",
@@ -363,7 +358,9 @@
     "lessonNumberTitle": "{number}. {title}",
     "formatSyntaxError": "Nothing to format — fix the syntax errors first.",
     "formatUnchanged": "Already formatted.",
-    "formatUnsupported": "Formatting isn't available for this language."
+    "formatUnsupported": "Formatting isn't available for this language.",
+    "finishCourse": "Finish course",
+    "completeGateHint": "Finish the quiz and reflection above to enable"
   },
   "dashboard": {
     "allCaughtUp": "All caught up!",
@@ -893,8 +890,6 @@
     "subtitle": "Discuss, ask questions, and share with fellow learners",
     "description": "Discuss, ask questions, and share with fellow learners",
     "askQuestion": "Ask a Question",
-    "newThread": "Start a Discussion",
-    "startDiscussion": "Start a Discussion",
     "recentThreads": "Recent Threads",
     "yourStats": "Your Stats",
     "allThreads": "All Threads",
@@ -1002,7 +997,8 @@
     "composerHeading": "Ask the community",
     "answersCount": "Answers ({count})",
     "sortBy": "Sort by",
-    "createThreadFailed": "Could not start the discussion. Try again."
+    "createThreadFailed": "Could not start the discussion. Try again.",
+    "threadType": "Thread type"
   },
   "aiPartner": {
     "title": "AI Partner",

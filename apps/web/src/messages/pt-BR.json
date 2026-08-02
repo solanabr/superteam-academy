@@ -206,7 +206,6 @@
     "noCoursesDescription": "Volte em breve para novos conteúdos de aprendizado.",
     "signInToEnroll": "Entrar para Matricular-se",
     "enrollFailed": "Falha na matrícula. Tente novamente.",
-    "allPaths": "Todos os Caminhos",
     "pathCore": "Solana Core",
     "pathRust": "Rust & Programas",
     "pathAnchor": "Anchor",
@@ -218,14 +217,9 @@
     "ofXp": "de {total} XP",
     "coursesCount": "{count} de {total} concluídos",
     "discussions": "Discussões do Curso",
-    "startDiscussion": "Iniciar uma Discussão",
     "moduleLabel": "Módulo {number}",
     "upNext": "A seguir",
-    "browseAllCourses": "Ver todos os cursos",
     "skipAhead": "Pular adiante",
-    "pathGuidanceFixed": "Siga a trilha na ordem — cada curso se apoia no anterior.",
-    "pathGuidanceGuided": "Os cursos seguem uma ordem recomendada — pule adiante quando quiser.",
-    "pathGuidanceOpen": "Entre em qualquer curso — a ordem é uma recomendação, não uma exigência.",
     "pathGoalJob": "Sua trilha rumo a uma vaga de dev Solana começa aqui.",
     "pathGoalBuild": "Tudo o que você precisa para lançar seu próprio projeto Solana.",
     "pathGoalExplore": "Explore como a Solana funciona, um curso de cada vez.",
@@ -248,7 +242,8 @@
     "changelogReactivated": "Curso reativado",
     "changelogReactivatedDetail": "Este curso está disponível novamente.",
     "changelogRecreated": "Curso reconstruído on-chain",
-    "changelogRecreatedDetail": "A conta on-chain do curso foi recriada. Seu progresso e XP foram preservados."
+    "changelogRecreatedDetail": "A conta on-chain do curso foi recriada. Seu progresso e XP foram preservados.",
+    "continue": "Continuar"
   },
   "lesson": {
     "content": "Conteúdo",
@@ -363,7 +358,9 @@
     "lessonNumberTitle": "{number}. {title}",
     "formatSyntaxError": "Nada para formatar — corrija os erros de sintaxe primeiro.",
     "formatUnchanged": "Já está formatado.",
-    "formatUnsupported": "A formatação não está disponível para esta linguagem."
+    "formatUnsupported": "A formatação não está disponível para esta linguagem.",
+    "finishCourse": "Concluir curso",
+    "completeGateHint": "Conclua o quiz e a reflexão acima para habilitar"
   },
   "dashboard": {
     "allCaughtUp": "Tudo em dia!",
@@ -893,8 +890,6 @@
     "subtitle": "Discuta, tire dúvidas e compartilhe com outros estudantes",
     "description": "Discuta, tire dúvidas e compartilhe com outros estudantes",
     "askQuestion": "Fazer uma Pergunta",
-    "newThread": "Iniciar uma Discussão",
-    "startDiscussion": "Iniciar uma Discussão",
     "recentThreads": "Tópicos Recentes",
     "yourStats": "Suas Estatísticas",
     "allThreads": "Todos os Tópicos",
@@ -1002,7 +997,8 @@
     "composerHeading": "Pergunte à comunidade",
     "answersCount": "Respostas ({count})",
     "sortBy": "Ordenar por",
-    "createThreadFailed": "Não foi possível iniciar a discussão. Tente de novo."
+    "createThreadFailed": "Não foi possível iniciar a discussão. Tente de novo.",
+    "threadType": "Tipo de tópico"
   },
   "aiPartner": {
     "title": "Parceiro de IA",

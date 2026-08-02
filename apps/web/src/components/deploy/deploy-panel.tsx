@@ -565,9 +565,9 @@ export function DeployPanel({
   // -------------------------------------------------------------------------
   if (panelState === "success" && result) {
     return (
-      <Card className="border-green-500/30 bg-green-500/5">
+      <Card className="border-[var(--success-border)] bg-[var(--success-bg)]">
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg text-green-500">
+          <CardTitle className="flex items-center gap-2 text-lg text-success">
             {/* Checkmark icon */}
             <svg
               className="h-5 w-5"
@@ -715,8 +715,7 @@ export function DeployPanel({
                     <div
                       className={cn(
                         "flex h-7 w-7 items-center justify-center rounded-full border-2 text-xs font-bold transition-all",
-                        isComplete &&
-                          "border-green-500 bg-green-500 text-white",
+                        isComplete && "border-success bg-success text-white",
                         isCurrent &&
                           "border-primary bg-gradient-to-r from-solana-purple to-solana-green text-white",
                         !isComplete &&
@@ -764,7 +763,7 @@ export function DeployPanel({
                     <div
                       className={cn(
                         "mb-5 h-0.5 flex-1",
-                        isComplete ? "bg-green-500" : "bg-muted-foreground/20"
+                        isComplete ? "bg-success" : "bg-muted-foreground/20"
                       )}
                     />
                   )}

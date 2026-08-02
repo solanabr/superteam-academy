@@ -154,7 +154,7 @@ export function WalletFundingCard() {
           <div
             className={`text-sm ${
               message.type === "success"
-                ? "text-green-500"
+                ? "text-success"
                 : message.type === "warning"
                   ? "text-yellow-500"
                   : "text-red-500"

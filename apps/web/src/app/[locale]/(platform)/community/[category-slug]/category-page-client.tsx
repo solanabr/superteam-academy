@@ -6,7 +6,7 @@ import { Plus, ArrowLeft } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { ThreadList } from "@/components/community/thread-list";
-import { CreateThreadModal } from "@/components/community/create-thread-modal";
+import { ThreadComposer } from "@/components/community/thread-composer";
 import { Button } from "@/components/ui/button";
 
 interface CategoryPageClientProps {
@@ -22,7 +22,10 @@ export function CategoryPageClient({ category }: CategoryPageClientProps) {
   const { user } = useAuth();
   const t = useTranslations("community");
 
+  // Inline composer (no modal) — same pattern as the community index,
+  // course and lesson embeds.
   const [createOpen, setCreateOpen] = useState(false);
+  const [refreshToken, setRefreshToken] = useState(0);
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
@@ -48,23 +51,34 @@ export function CategoryPageClient({ category }: CategoryPageClientProps) {
         {user && (
           <Button variant="primary" onClick={() => setCreateOpen(true)}>
             <Plus size={18} />
-            {t("newThread")}
+            {t("askQuestion")}
           </Button>
         )}
       </div>
+
+      {createOpen && user ? (
+        <div className="mb-4 rounded-lg border border-[var(--border-default)] bg-[var(--card)] p-3">
+          <h4 className="mb-3 font-display text-sm font-bold text-[var(--text)]">
+            {t("composerHeading")}
+          </h4>
+          <ThreadComposer
+            defaultScope={{ categoryId: category.id }}
+            onCancel={() => setCreateOpen(false)}
+            onCreated={() => {
+              setCreateOpen(false);
+              setRefreshToken((n) => n + 1);
+            }}
+          />
+        </div>
+      ) : null}
 
       {/* Thread list filtered by category */}
       <ThreadList
         scope={{ categorySlug: category.slug }}
         showFilters
         showContext
+        refreshToken={refreshToken}
         emptyMessage={`No threads in ${category.name} yet. Be the first to start a discussion!`}
-      />
-
-      <CreateThreadModal
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        defaultScope={{ categoryId: category.id }}
       />
     </div>
   );

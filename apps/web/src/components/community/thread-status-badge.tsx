@@ -15,10 +15,12 @@ export function ThreadStatusBadge({ type, isSolved }: ThreadStatusBadgeProps) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold",
+        // Guide pill spec: display 700 · caps · 11px · +0.4px. Unanswered is
+        // NEUTRAL — amber is the reward currency, not a question state.
+        "inline-flex items-center rounded-full px-2 py-0.5 font-display text-[11px] font-bold uppercase tracking-[0.4px]",
         isSolved
           ? "bg-[var(--primary-dim)] text-[var(--primary)]"
-          : "bg-[var(--xp-dim)] text-[var(--xp)]"
+          : "bg-[var(--inset)] text-[var(--text-2)]"
       )}
     >
       {isSolved ? t("solved") : t("unanswered")}

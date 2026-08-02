@@ -206,7 +206,6 @@
     "noCoursesDescription": "Vuelve pronto para nuevos contenidos de aprendizaje.",
     "signInToEnroll": "Iniciar Sesión para Inscribirse",
     "enrollFailed": "Error al inscribirse. Inténtalo de nuevo.",
-    "allPaths": "Todas las Rutas",
     "pathCore": "Solana Core",
     "pathRust": "Rust & Programas",
     "pathAnchor": "Anchor",
@@ -218,14 +217,9 @@
     "ofXp": "de {total} XP",
     "coursesCount": "{count} de {total} completados",
     "discussions": "Discusiones del Curso",
-    "startDiscussion": "Iniciar una Discusión",
     "moduleLabel": "Módulo {number}",
     "upNext": "A continuación",
-    "browseAllCourses": "Ver todos los cursos",
     "skipAhead": "Saltar adelante",
-    "pathGuidanceFixed": "Sigue la ruta en orden — cada curso se apoya en el anterior.",
-    "pathGuidanceGuided": "Los cursos siguen un orden recomendado — salta adelante cuando quieras.",
-    "pathGuidanceOpen": "Entra en cualquier curso — el orden es una recomendación, no un requisito.",
     "pathGoalJob": "Tu camino hacia un puesto de desarrollador Solana empieza aquí.",
     "pathGoalBuild": "Todo lo que necesitas para lanzar tu propio proyecto en Solana.",
     "pathGoalExplore": "Explora cómo funciona Solana, un curso a la vez.",
@@ -248,7 +242,8 @@
     "changelogReactivated": "Curso reactivado",
     "changelogReactivatedDetail": "Este curso vuelve a estar disponible.",
     "changelogRecreated": "Curso reconstruido on-chain",
-    "changelogRecreatedDetail": "La cuenta on-chain del curso se recreó. Tu progreso y XP se conservaron."
+    "changelogRecreatedDetail": "La cuenta on-chain del curso se recreó. Tu progreso y XP se conservaron.",
+    "continue": "Continuar"
   },
   "lesson": {
     "content": "Contenido",
@@ -363,7 +358,9 @@
     "lessonNumberTitle": "{number}. {title}",
     "formatSyntaxError": "Nada que formatear — corrige primero los errores de sintaxis.",
     "formatUnchanged": "Ya está formateado.",
-    "formatUnsupported": "El formateo no está disponible para este lenguaje."
+    "formatUnsupported": "El formateo no está disponible para este lenguaje.",
+    "finishCourse": "Finalizar curso",
+    "completeGateHint": "Completa el quiz y la reflexión de arriba para habilitar"
   },
   "dashboard": {
     "allCaughtUp": "¡Todo al día!",
@@ -893,8 +890,6 @@
     "subtitle": "Discute, haz preguntas y comparte con otros estudiantes",
     "description": "Discute, haz preguntas y comparte con otros estudiantes",
     "askQuestion": "Hacer una Pregunta",
-    "newThread": "Iniciar una Discusión",
-    "startDiscussion": "Iniciar una Discusión",
     "recentThreads": "Temas Recientes",
     "yourStats": "Tus Estadísticas",
     "allThreads": "Todos los Temas",
@@ -1002,7 +997,8 @@
     "composerHeading": "Pregunta a la comunidad",
     "answersCount": "Respuestas ({count})",
     "sortBy": "Ordenar por",
-    "createThreadFailed": "No se pudo iniciar la conversación. Inténtalo de nuevo."
+    "createThreadFailed": "No se pudo iniciar la conversación. Inténtalo de nuevo.",
+    "threadType": "Tipo de tema"
   },
   "aiPartner": {
     "title": "Compañero de IA",

@@ -99,48 +99,42 @@ export function CourseChangelog({ entries, enrolledAt }: CourseChangelogProps) {
       {entries.length === 0 ? (
         <p className="text-sm text-text-3">{t("changelogEmpty")}</p>
       ) : (
-        <ol className="space-y-3">
+        // One quiet container, slim rows — a log, not a stack of cards.
+        <ol className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-card">
           {entries.map((entry) => {
             const Icon = iconFor(entry.kind);
             const isNew =
               !Number.isNaN(enrolledAtMs) &&
               Date.parse(entry.createdAt) > enrolledAtMs;
             return (
-              <li
-                key={entry.id}
-                className={`rounded-xl border-[2px] bg-card p-4 shadow-card ${
-                  isNew ? "border-primary/50" : "border-border"
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  <Icon
-                    size={22}
-                    weight="duotone"
-                    className="mt-0.5 shrink-0 text-primary"
-                    aria-hidden="true"
-                  />
-                  <div className="min-w-0 flex-1 space-y-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-display text-sm font-bold text-text">
-                        <ChangelogTitle entry={entry} t={t} />
+              <li key={entry.id} className="flex items-start gap-3 px-4 py-3">
+                <Icon
+                  size={16}
+                  weight="duotone"
+                  className="mt-0.5 shrink-0 text-primary"
+                  aria-hidden="true"
+                />
+                <div className="min-w-0 flex-1 space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-display text-[13px] font-bold text-text">
+                      <ChangelogTitle entry={entry} t={t} />
+                    </span>
+                    {isNew && (
+                      <span className="rounded-full bg-primary px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-primary-foreground">
+                        {t("changelogNew")}
                       </span>
-                      {isNew && (
-                        <span className="rounded-full bg-primary px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-primary-foreground">
-                          {t("changelogNew")}
-                        </span>
-                      )}
-                    </div>
-                    <ChangelogBody entry={entry} t={t} />
-                    <div className="flex flex-wrap items-center gap-2 pt-0.5 text-xs text-text-3">
-                      <time dateTime={entry.createdAt}>
-                        {dateFmt.format(new Date(entry.createdAt))}
-                      </time>
-                      <span aria-hidden="true">&middot;</span>
-                      <span className="font-mono">
-                        {t("changelogVersion", { version: entry.version })}
-                      </span>
-                    </div>
+                    )}
                   </div>
+                  <ChangelogBody entry={entry} t={t} />
+                </div>
+                <div className="shrink-0 whitespace-nowrap pt-0.5 text-right text-xs text-text-3">
+                  <time dateTime={entry.createdAt}>
+                    {dateFmt.format(new Date(entry.createdAt))}
+                  </time>
+                  <span aria-hidden="true"> &middot; </span>
+                  <span className="font-mono">
+                    {t("changelogVersion", { version: entry.version })}
+                  </span>
                 </div>
               </li>
             );
@@ -202,7 +196,7 @@ function ChangelogBody({
   switch (entry.kind) {
     case "deployed":
       return (
-        <p className="text-sm text-text-2">
+        <p className="text-[13px] text-text-2">
           {t("changelogDeployedDetail", { count: entry.detail.lessonCount })}
         </p>
       );
@@ -222,7 +216,7 @@ function ChangelogBody({
       );
     case "xp_changed":
       return (
-        <p className="text-sm text-text-2">
+        <p className="text-[13px] text-text-2">
           {t("changelogXpChangedDetail", {
             from: entry.detail.from,
             to: entry.detail.to,
@@ -231,21 +225,27 @@ function ChangelogBody({
       );
     case "content_updated":
       return (
-        <p className="text-sm text-text-2">
+        <p className="text-[13px] text-text-2">
           {t("changelogContentUpdatedDetail")}
         </p>
       );
     case "deactivated":
       return (
-        <p className="text-sm text-text-2">{t("changelogDeactivatedDetail")}</p>
+        <p className="text-[13px] text-text-2">
+          {t("changelogDeactivatedDetail")}
+        </p>
       );
     case "reactivated":
       return (
-        <p className="text-sm text-text-2">{t("changelogReactivatedDetail")}</p>
+        <p className="text-[13px] text-text-2">
+          {t("changelogReactivatedDetail")}
+        </p>
       );
     case "recreated":
       return (
-        <p className="text-sm text-text-2">{t("changelogRecreatedDetail")}</p>
+        <p className="text-[13px] text-text-2">
+          {t("changelogRecreatedDetail")}
+        </p>
       );
   }
 }

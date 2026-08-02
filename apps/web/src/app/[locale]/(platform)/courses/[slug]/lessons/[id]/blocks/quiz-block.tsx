@@ -119,6 +119,16 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
     ctx.setProof(b.key, { selections });
   }, [selections, b.key, ctx]);
 
+  const doneCorrectCount = b.questions.filter(
+    (q) => results[q.id]?.correct
+  ).length;
+  // Completion gate: this quiz is "done" only when every answer is CORRECT —
+  // matching the server's set-equality grading, so the enabled button never
+  // lies about what the POST will accept.
+  useEffect(() => {
+    ctx.setBlockDone(b.key, doneCorrectCount === b.questions.length);
+  }, [doneCorrectCount, b.questions.length, b.key, ctx]);
+
   const answeredCount = b.questions.filter((q) => checkedEver[q.id]).length;
   const allChecked = answeredCount === b.questions.length;
   useEffect(() => {
@@ -254,21 +264,16 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
         <h3 className="font-display text-sm font-extrabold uppercase text-text-3">
           {t("quiz")}
         </h3>
-        <span
-          className={cn(
-            "rounded-full px-2 py-0.5 text-xs font-bold tabular-nums",
-            allCorrect
-              ? "text-success [background:var(--success-light)]"
-              : "text-text-3 [background:var(--inset)]"
-          )}
-        >
+        {/* Count = neutral data chip; state = the ONE colored chip. Both went
+            success-green on a sweep and read as duplicate twins. */}
+        <span className="rounded-full px-2 py-0.5 text-xs font-bold tabular-nums text-text-3 [background:var(--inset)]">
           {t("quizScore", {
             correct: correctCount,
             total,
           })}
         </span>
         {allCorrect && (
-          <span className="flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold text-success [background:var(--success-light)]">
+          <span className="flex items-center gap-1 rounded-full border border-[var(--primary-border)] bg-[var(--primary-dim)] px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.4px] text-primary">
             <CheckCircle size={12} weight="bold" aria-hidden="true" />
             {t("quizCompleteChip")}
           </span>
@@ -293,7 +298,7 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
           exists before the text arrives. */}
       <div aria-live="polite" className="px-5 pb-5 empty:hidden">
         {allCorrect && (
-          <p className="flex items-center gap-2 rounded-md border border-success p-3 text-sm font-medium text-success [background:var(--success-light)]">
+          <p className="flex items-center gap-2 rounded-md border border-[var(--primary-border)] bg-[var(--primary-dim)] p-3 text-sm font-medium text-primary">
             <CheckCircle size={16} weight="bold" aria-hidden="true" />
             {t("quizAllCorrect", { total })}
           </p>
@@ -454,8 +459,10 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
 
         {/* The AI Partner is suppressed while any question is unchecked
             (LX-C1/F18) — retrieval stays AI-free. The gate is unchanged; the
-            line states it explicitly and counts down (#770, #943). */}
-        {!allChecked && (
+            line states it explicitly and counts down (#770, #943). Only on
+            lessons that HAVE an AI Partner (a code block) — a prose+quiz
+            lesson has no assistant to unlock (owner 2026-08-02). */}
+        {!allChecked && ctx.lesson.blocks.some((lb) => lb._type === "code") && (
           <p className="flex items-start gap-2 rounded-md border border-border p-3 text-xs text-text-3 [background:var(--inset)]">
             <Robot
               size={16}

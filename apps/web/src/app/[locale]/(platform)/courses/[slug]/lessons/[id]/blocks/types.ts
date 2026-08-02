@@ -33,6 +33,13 @@ export interface BlockContext {
    */
   setQuizAnswered: (blockKey: string, answered: boolean) => void;
   /**
+   * Report whether this block's REQUIRED work is done (quiz: every answer
+   * correct; reflection: submission sealed). Drives the client-side completion
+   * gate — Mark Complete stays disabled until every gateable block reports
+   * done (owner 2026-08-02). The server's inverted gate still re-grades.
+   */
+  setBlockDone: (blockKey: string, done: boolean) => void;
+  /**
    * True while any quiz block in this lesson is still unanswered — the code
    * block threads it to ChallengeInterface, which keeps the AI Partner hidden.
    */

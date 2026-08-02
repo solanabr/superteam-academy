@@ -96,12 +96,15 @@
     --solana-green: #14f195;
 
     /* ── Semantic status ── */
-    --success: #16a34a;
-    --success-dark: #15803d;
-    --success-light: rgba(22, 163, 74, 0.15);
-    --success-bg: rgba(22, 163, 74, 0.09);
-    --success-border: rgba(22, 163, 74, 0.3);
-    --success-border-s: rgba(22, 163, 74, 0.4);
+    /* ONE green (owner 2026-08-02): success states resolve to the primary
+       forest identity — the mint #16a34a family is retired. Defined by
+       REFERENCE so a future primary change carries success with it. */
+    --success: var(--primary);
+    --success-dark: var(--primary-dark);
+    --success-light: color-mix(in srgb, var(--primary) 15%, transparent);
+    --success-bg: color-mix(in srgb, var(--primary) 9%, transparent);
+    --success-border: color-mix(in srgb, var(--primary) 30%, transparent);
+    --success-border-s: color-mix(in srgb, var(--primary) 40%, transparent);
     --error: #dc2626;
     --danger: #dc2626;
     --danger-dark: #b91c1c;
@@ -237,12 +240,13 @@
     --solana-purple: #9945ff;
     --solana-green: #14f195;
 
-    --success: #3fb950;
-    --success-dark: #28a745;
-    --success-light: rgba(63, 185, 80, 0.15);
-    --success-bg: rgba(63, 185, 80, 0.1);
-    --success-border: rgba(63, 185, 80, 0.3);
-    --success-border-s: rgba(63, 185, 80, 0.4);
+    /* ONE green — same reference rule as light (owner 2026-08-02). */
+    --success: var(--primary);
+    --success-dark: var(--primary-dark);
+    --success-light: color-mix(in srgb, var(--primary) 18%, transparent);
+    --success-bg: color-mix(in srgb, var(--primary) 10%, transparent);
+    --success-border: color-mix(in srgb, var(--primary) 30%, transparent);
+    --success-border-s: color-mix(in srgb, var(--primary) 40%, transparent);
     --error: #f85149;
     --danger: #f85149;
     --danger-dark: #b91c1c;
@@ -991,7 +995,7 @@
   background: linear-gradient(90deg, var(--xp-dark), var(--xp));
 }
 .pf-success {
-  background: linear-gradient(90deg, #16803d, var(--success));
+  background: linear-gradient(90deg, var(--primary-dark), var(--success));
 }
 
 /* V9 thin progress bar — 4px (sidebar / dashboard XP) */
@@ -1093,7 +1097,7 @@
   background: linear-gradient(90deg, var(--xp-dark), var(--xp));
 }
 .progress-fill-green {
-  background: linear-gradient(90deg, #16803d, var(--success));
+  background: linear-gradient(90deg, var(--primary-dark), var(--success));
 }
 
 /* ── Achievement medal keyframes (outside @layer for animation compat) ── */
@@ -1732,7 +1736,7 @@
   /* ── Thumbnail area ── */
   .course-card-thumb {
     position: relative;
-    aspect-ratio: 16 / 7;
+    aspect-ratio: 16 / 5.5;
     overflow: hidden;
     background: var(--subtle);
     border-bottom: 1.5px solid var(--border);
@@ -1748,33 +1752,9 @@
     transform: scale(1.05);
   }
 
-  /* ── Ghost track number — overlaid on thumbnail ── */
-  .course-num {
-    position: absolute;
-    right: 6px;
-    bottom: -12px;
-    font-family: var(--font-mono, var(--font-m));
-    font-weight: 700;
-    font-size: 80px;
-    line-height: 1;
-    letter-spacing: -5px;
-    color: var(--text);
-    pointer-events: none;
-    user-select: none;
-    z-index: 1;
-    opacity: 0.1;
-    transition:
-      opacity 0.3s ease,
-      transform 0.3s ease;
-  }
-  .course-card:hover .course-num {
-    opacity: 0.2;
-    transform: translateX(-3px) translateY(-4px) scale(1.03);
-  }
-
   /* ── Card body ── */
   .course-card-body {
-    padding: 22px 22px 18px 18px;
+    padding: 16px 16px 14px 16px;
     position: relative;
     z-index: 1;
     flex: 1;
@@ -1792,24 +1772,14 @@
     margin-bottom: 7px;
   }
 
-  /* 2. Top row: path badge left, progress badge right */
-  .course-card-top {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    margin-bottom: 10px;
-    position: relative;
-    z-index: 1;
-  }
-
-  /* 3. Description — 3-line clamp, readable */
+  /* 3. Description — 2-line clamp, readable */
   .course-card-desc {
     font-size: 13px;
     color: var(--text-2);
     line-height: 1.6;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
     display: -webkit-box;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
@@ -1821,7 +1791,7 @@
     justify-content: space-between;
     margin-top: auto;
     border-top: 1.5px solid var(--border);
-    padding-top: 14px;
+    padding-top: 11px;
   }
   .course-card-stat {
     font-size: 12px;
@@ -1841,19 +1811,6 @@
     gap: 3px;
   }
 
-  /* Path tag — simple text label */
-  .course-card-path {
-    font-family: var(--font-mono, var(--font-m));
-    font-weight: 600;
-    font-size: 10px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--text-3);
-    padding: 2px 8px;
-    border-radius: 99px;
-    border: 1.5px solid var(--border);
-  }
-
   /* Difficulty pill */
   .course-card-diff {
     font-family: var(--font-display, var(--font-d));
@@ -1867,32 +1824,36 @@
 
   /* Status badge — corner pill */
   .course-card-status {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
     display: inline-flex;
     align-items: center;
     gap: 4px;
     width: fit-content;
-    margin-left: auto;
     padding: 3px 10px;
     border-radius: 999px;
     border: 2px solid currentColor;
+    /* Brand guide pill spec: Nunito 700 · caps · 11px · +0.4px · tabular */
     font-family: var(--font-display, var(--font-d));
     font-size: 11px;
-    font-weight: 800;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
+  /* Solid card-colored fill — these sit on top of the (dark) cover image */
   .course-card-status.completed {
     color: var(--success, #22c55e);
     border-color: color-mix(in srgb, var(--success, #22c55e) 35%, transparent);
-    background: color-mix(in srgb, var(--success, #22c55e) 8%, transparent);
+    background: color-mix(in srgb, var(--success, #22c55e) 10%, var(--card));
   }
   .course-card-status.enrolled {
     color: var(--primary);
     border-color: color-mix(in srgb, var(--primary) 35%, transparent);
-    background: color-mix(in srgb, var(--primary) 8%, transparent);
-    font-family: var(--font-mono, var(--font-m));
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
+    background: color-mix(in srgb, var(--primary) 10%, var(--card));
   }
 }
 
@@ -1972,42 +1933,6 @@
   color: var(--primary);
   box-shadow: none;
   transform: translateY(2px);
-}
-
-/* ── Path filter pills ── */
-.path-pill {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--font-display, var(--font-d));
-  font-weight: 700;
-  font-size: 12px;
-  padding: 8px 14px;
-  min-height: 44px;
-  border: 2.5px solid var(--border);
-  border-radius: 99px;
-  cursor: pointer;
-  background: var(--card);
-  color: var(--text-2);
-  box-shadow: 0 2px 0 0 var(--border);
-  transition: all 0.15s;
-  user-select: none;
-  white-space: nowrap;
-}
-.path-pill:hover {
-  border-color: var(--border-hover, var(--border));
-  color: var(--text);
-}
-.path-pill:active {
-  transform: translateY(2px);
-  box-shadow: none;
-}
-.path-pill.active {
-  box-shadow: none;
-  transform: translateY(2px);
-  background: var(--primary-bg, var(--primary-dim));
-  border-color: var(--primary);
-  color: var(--primary);
 }
 
 /* ── Learning Path sections — premium redesign ── */
@@ -2241,7 +2166,6 @@
   position: relative;
   padding: 8px 0 4px;
   margin-top: 6px;
-  max-width: 680px;
 }
 .path-section.open .path-timeline {
   display: flex;
@@ -2376,24 +2300,6 @@ a.path-step-card:active {
   align-items: stretch;
 }
 
-/* Small thumbnail */
-.path-step-thumb {
-  width: 64px;
-  flex-shrink: 0;
-  overflow: hidden;
-  background: var(--subtle);
-}
-.path-step-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  transition: transform 0.3s ease;
-}
-a.path-step-card:hover .path-step-thumb img {
-  transform: scale(1.06);
-}
-
 /* Content area */
 .path-step-content {
   flex: 1;
@@ -2408,9 +2314,19 @@ a.path-step-card:hover .path-step-thumb img {
 .path-step-top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 10px;
   margin-bottom: 2px;
+}
+.path-step-top .path-step-title {
+  flex: 1;
+  min-width: 0;
+}
+
+/* The active course is the page's one emphasized card (LX-A7: one clear
+   "continue here") — primary ring, everything else stays quiet */
+.path-step.active .path-step-card {
+  border-color: var(--primary-border, var(--primary));
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 10%, transparent);
 }
 
 .path-step-title {
@@ -2430,8 +2346,13 @@ a.path-step-card:hover .path-step-thumb img {
   display: inline-flex;
   align-items: center;
   gap: 3px;
+  /* Brand guide pill spec: Nunito 700 · caps · +0.4px · tabular */
+  font-family: var(--font-display, var(--font-d));
   font-size: 10px;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-variant-numeric: tabular-nums;
   border-radius: 99px;
   padding: 2px 8px;
   border: 1.5px solid;
@@ -2443,11 +2364,32 @@ a.path-step-card:hover .path-step-thumb img {
   background: color-mix(in srgb, var(--success, #22c55e) 8%, transparent);
 }
 .path-step-badge.active {
-  color: var(--xp);
-  border-color: color-mix(in srgb, var(--xp) 30%, transparent);
-  background: color-mix(in srgb, var(--xp) 8%, transparent);
-  font-family: var(--font-mono, var(--font-m));
-  letter-spacing: -0.02em;
+  color: var(--primary);
+  border-color: color-mix(in srgb, var(--primary) 30%, transparent);
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+}
+
+/* Continue chip — the one filled action on the timeline (active row only) */
+.path-step-continue {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  padding: 4px 12px;
+  border-radius: 99px;
+  background: var(--primary);
+  color: #fff;
+  font-family: var(--font-display, var(--font-d));
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+a.path-step-card:hover .path-step-continue {
+  background: var(--primary-hover, var(--primary));
 }
 
 .path-step-lock {
@@ -2547,18 +2489,6 @@ a.path-step-card:hover .path-step-badge.skip {
 }
 
 /* ═══ PATHS VIEW — guidance row + start-here card (LX-A7) ═══ */
-.path-guidance-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-.path-guidance {
-  font-size: 13px;
-  color: var(--text-3);
-  margin: 0;
-}
 /* Goal framing line from the /start intake (LX-A2: goal→path-page framing). */
 .path-goal-framing {
   font-family: var(--font-display, inherit);
@@ -2567,40 +2497,6 @@ a.path-step-card:hover .path-step-badge.skip {
   color: var(--text-1, var(--text-2));
   margin: 0;
 }
-.path-browse-all {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  flex-shrink: 0;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-2, var(--text-3));
-  background: none;
-  border: none;
-  padding: 4px 2px;
-  cursor: pointer;
-  border-radius: 6px;
-  transition: color 0.15s ease;
-}
-.path-browse-all:hover {
-  color: var(--text);
-}
-.path-browse-all:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
-}
-.path-browse-all.prominent {
-  color: var(--primary);
-  border: 2px solid color-mix(in srgb, var(--primary) 35%, transparent);
-  background: color-mix(in srgb, var(--primary) 8%, transparent);
-  padding: 6px 12px;
-  border-radius: var(--r-md);
-}
-.path-browse-all.prominent:hover {
-  color: var(--primary);
-  border-color: var(--primary);
-}
-
 /* ── Mobile responsive ── */
 @media (max-width: 640px) {
   .path-header {
@@ -2609,9 +2505,6 @@ a.path-step-card:hover .path-step-badge.skip {
   }
   .path-name {
     font-size: 17px;
-  }
-  .path-step-thumb {
-    width: 48px;
   }
   .path-foot-xp {
     font-size: 12px;

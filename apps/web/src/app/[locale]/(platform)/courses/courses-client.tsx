@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { MagnifyingGlass, X } from "@phosphor-icons/react";
 import type { Course, LearningPath } from "@superteam-lms/types";
@@ -121,45 +121,10 @@ export function CourseCatalogClient({
   const [activeDifficulty, setActiveDifficulty] = useState<Difficulty | null>(
     null
   );
-  const [activePath, setActivePath] = useState<string | null>(null);
   const { statuses, progress } = useCourseProgress(courses);
   // Segment/goal from the /start intake (LX-A3): drives the path-page modality
   // and the goal framing line. Absent for learners who never ran the intake.
   const { segment, goal } = useSegmentState();
-
-  // Build reverse lookup: courseId → first learning path title (for course cards)
-  const coursePathLabel = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const path of learningPaths) {
-      for (const course of path.courses ?? []) {
-        if (!course) continue;
-        if (!map.has(course._id)) {
-          map.set(course._id, path.title);
-        }
-      }
-    }
-    return map;
-  }, [learningPaths]);
-
-  // Build reverse lookup: courseId → set of path slugs (for filtering)
-  const coursePathSlugs = useMemo(() => {
-    const map = new Map<string, Set<string>>();
-    for (const path of learningPaths) {
-      for (const course of path.courses ?? []) {
-        if (!course) continue;
-        const set = map.get(course._id) ?? new Set();
-        set.add(path.slug);
-        map.set(course._id, set);
-      }
-    }
-    return map;
-  }, [learningPaths]);
-
-  // Only show paths that have courses for the filter pills
-  const pathsWithCourses = useMemo(
-    () => learningPaths.filter((p) => (p.courses?.length ?? 0) > 0),
-    [learningPaths]
-  );
 
   const filteredCourses = courses.filter((course) => {
     const matchesSearch =
@@ -168,10 +133,7 @@ export function CourseCatalogClient({
       course.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesDifficulty =
       !activeDifficulty || course.difficulty === activeDifficulty;
-    const matchesPath =
-      !activePath ||
-      (coursePathSlugs.get(course._id)?.has(activePath) ?? false);
-    return matchesSearch && matchesDifficulty && matchesPath;
+    return matchesSearch && matchesDifficulty;
   });
 
   return (
@@ -258,29 +220,6 @@ export function CourseCatalogClient({
             </div>
           </div>
 
-          {/* Row 2: Path pills */}
-          <div className="filter-row">
-            <div className="filter-pills">
-              <button
-                className={`path-pill ${!activePath ? "active" : ""}`}
-                onClick={() => setActivePath(null)}
-              >
-                {t("allPaths")}
-              </button>
-              {pathsWithCourses.map((path) => (
-                <button
-                  key={path.slug}
-                  className={`path-pill ${activePath === path.slug ? "active" : ""}`}
-                  onClick={() =>
-                    setActivePath(activePath === path.slug ? null : path.slug)
-                  }
-                >
-                  {path.title}
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Course Grid */}
           {filteredCourses.length > 0 ? (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -300,8 +239,6 @@ export function CourseCatalogClient({
                     )}
                     completedLessons={p?.completedLessons ?? 0}
                     xpReward={course.xpReward}
-                    pathLabel={coursePathLabel.get(course._id)}
-                    trackLevel={course.trackLevel}
                     thumbnail={course.thumbnail}
                     status={statuses.get(course._id)}
                     style={{ "--i": i } as React.CSSProperties}
@@ -332,7 +269,6 @@ export function CourseCatalogClient({
         <PathsView
           learningPaths={learningPaths}
           progress={progress}
-          onBrowseAll={() => setActiveTab("all")}
           segment={segment}
           goal={goal}
         />

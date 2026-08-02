@@ -109,6 +109,7 @@ describe("ProseBlock — numbered lesson h1", () => {
       onEnroll: vi.fn(),
       setProof: vi.fn(),
       setQuizAnswered: vi.fn(),
+      setBlockDone: vi.fn(),
       aiSuppressed: false,
       capstoneAiOff: false,
       buildUuid: null,

@@ -36,6 +36,7 @@ function makeCtx(overrides: Partial<BlockContext> = {}): BlockContext {
     onEnroll: vi.fn(),
     setProof: vi.fn(),
     setQuizAnswered: vi.fn(),
+    setBlockDone: vi.fn(),
     aiSuppressed: true,
     capstoneAiOff: false,
     buildUuid: null,
@@ -72,6 +73,9 @@ function stubReflectFetch(reply: string | null, ok = true) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // The block persists sealed submissions per lesson+block key — clear so one
+  // test's seal can't restore "done" state into the next test's mount.
+  window.localStorage.clear();
 });
 
 afterEach(() => {
@@ -161,9 +165,11 @@ describe("OpenEndedBlock — seal + one-round AI reply", () => {
     await waitFor(() =>
       expect(screen.getByText("One round of feedback.")).toBeInTheDocument()
     );
-    const done = screen.getByRole("button", { name: /Reflection recorded/ });
-    expect(done).toBeDisabled();
-    fireEvent.click(done);
+    // Done state: the submit button is GONE (a status pill replaces it), and
+    // the textarea is read-only — there is no control left to start round two.
+    expect(screen.getByText("Reflection recorded")).toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(textarea()).toHaveAttribute("readonly");
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 

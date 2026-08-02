@@ -72,6 +72,7 @@ function makeCtx(overrides: Partial<BlockContext> = {}): BlockContext {
     onEnroll: vi.fn(),
     setProof: vi.fn(),
     setQuizAnswered: vi.fn(),
+    setBlockDone: vi.fn(),
     aiSuppressed: true,
     capstoneAiOff: false,
     buildUuid: null,
@@ -383,8 +384,25 @@ describe("QuizBlock — interaction states (#943)", () => {
     expect(screen.getByText("2/2 correct")).toBeInTheDocument();
   });
 
-  it("states the AI gate with a live N/M answered counter", () => {
+  it("hides the AI gate line on lessons without a code block — there is no assistant to unlock", () => {
     renderWithIntl(<QuizBlock block={quizBlock} ctx={makeCtx()} />);
+    expect(
+      screen.queryByText(/AI Partner unlocks after the quiz/)
+    ).not.toBeInTheDocument();
+  });
+
+  it("states the AI gate with a live N/M answered counter", () => {
+    // The gate line only exists where the AI Partner does — a code lesson.
+    const codeLesson: Lesson = {
+      ...lesson,
+      blocks: [
+        quizBlock,
+        { _type: "code", key: "c1" } as unknown as Lesson["blocks"][number],
+      ],
+    };
+    renderWithIntl(
+      <QuizBlock block={quizBlock} ctx={makeCtx({ lesson: codeLesson })} />
+    );
     expect(
       screen.getByText("AI Partner unlocks after the quiz — 0/2 answered")
     ).toBeInTheDocument();

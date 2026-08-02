@@ -59,10 +59,11 @@ test.describe("learn loop", () => {
     await expect(completeButton).toBeEnabled();
     await completeButton.click();
 
-    // Completed state: the button flips to "Lesson Complete!". This is the
-    // durable UI signal handleComplete sets on a successful POST.
+    // Completed state: the CTA is replaced by a non-interactive status pill
+    // (a disabled button duplicating the nav CTA read as two dead actions).
+    // This is the durable UI signal handleComplete sets on a successful POST.
     await expect(
-      page.getByRole("button", { name: "Lesson Complete!" })
+      page.getByRole("status").filter({ hasText: "Lesson Complete!" })
     ).toBeVisible();
 
     // And the browser sent the right request across the seam we own.

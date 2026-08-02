@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import {
   Lightning,
+  Plus,
   CheckCircle,
   ArrowLeft,
   CaretLeft,
@@ -255,6 +256,7 @@ export function LessonPageClient({
   });
 
   const hasCodeBlock = lesson.blocks.some((b) => b._type === "code");
+  const codeBlockCount = lesson.blocks.filter((b) => b._type === "code").length;
   const hasQuizBlock = lesson.blocks.some((b) => b._type === "quiz");
 
   // Challenge pages are viewport-locked: the IDE column is sized to the screen,
@@ -265,7 +267,9 @@ export function LessonPageClient({
   // scrollbar from the full-bleed `w-screen` children (100vw counts the
   // scrollbar gutter). Desktop only; below lg the page scrolls normally.
   useEffect(() => {
-    if (!hasCodeBlock) return;
+    // Viewport lock is a ONE-editor design: with several stacked editors the
+    // page must scroll or everything past the first is unreachable (#457).
+    if (!hasCodeBlock || codeBlockCount > 1) return;
     const mq = window.matchMedia("(min-width: 1024px)");
     const apply = () => {
       document.body.style.overflow = mq.matches ? "hidden" : "";
@@ -276,7 +280,7 @@ export function LessonPageClient({
       mq.removeEventListener("change", apply);
       document.body.style.overflow = "";
     };
-  }, [hasCodeBlock]);
+  }, [hasCodeBlock, codeBlockCount]);
 
   // F18 (#564): retrieval stays AI-free. Each QuizBlock reports whether all of
   // its questions have been checked; while any quiz block in the lesson is
@@ -291,6 +295,22 @@ export function LessonPageClient({
       prev[blockKey] === answered ? prev : { ...prev, [blockKey]: answered }
     );
   }, []);
+
+  // Client-side completion gate (owner 2026-08-02): every gateable block
+  // (quiz, reflection) must report done before Mark Complete enables. The
+  // server's inverted gate re-grades regardless — this is honest UI, not the
+  // enforcement.
+  const [doneBlocks, setDoneBlocks] = useState<Record<string, boolean>>({});
+  const setBlockDone = useCallback((blockKey: string, done: boolean) => {
+    setDoneBlocks((prev) =>
+      prev[blockKey] === done ? prev : { ...prev, [blockKey]: done }
+    );
+  }, []);
+  const gateBlocks = lesson.blocks.filter(
+    (b) => b._type === "quiz" || b._type === "openEnded"
+  );
+  const gateReady =
+    isCompleted || gateBlocks.every((b) => doneBlocks[b.key] === true);
   // AI hard-off on the capstone (#867) — the CLIENT leg of the server refusal
   // in /api/ai/partner, derived from the same `capstone-identity` constant as
   // the credential gate (never a second hardcoded id). Distinct from
@@ -483,6 +503,7 @@ export function LessonPageClient({
       onEnroll: handleEnroll,
       setProof,
       setQuizAnswered,
+      setBlockDone,
       aiSuppressed,
       capstoneAiOff,
       buildUuid,
@@ -502,6 +523,7 @@ export function LessonPageClient({
       handleEnroll,
       setProof,
       setQuizAnswered,
+      setBlockDone,
       aiSuppressed,
       capstoneAiOff,
       buildUuid,
@@ -525,11 +547,8 @@ export function LessonPageClient({
     (b) => (b as CodeBlockData).hints ?? []
   );
   const askAction = userId ? (
-    <Button
-      variant="pushOutline"
-      size="sm"
-      onClick={() => setIsComposerOpen(true)}
-    >
+    <Button variant="push" size="sm" onClick={() => setIsComposerOpen(true)}>
+      <Plus size={14} weight="bold" aria-hidden="true" />
       {t("askQuestion")}
     </Button>
   ) : (
@@ -596,6 +615,7 @@ export function LessonPageClient({
               {tCommunity("composerHeading")}
             </h4>
             <ThreadComposer
+              compact
               defaultScope={{ courseId, lessonId: lesson._id }}
               onCancel={() => setIsComposerOpen(false)}
               // Staying put is the point: the new thread appears in the list
@@ -830,6 +850,10 @@ export function LessonPageClient({
               {completionError}
             </div>
           )}
+          {/* Topics / Discussion live ABOVE the nav (owner 2026-08-02): the
+            lesson ends on its actions, not on chrome below them. */}
+          {!hasCodeBlock && paneSections}
+
           {/* Bottom nav hidden on challenge pages (#770): Prev/Next live in the
             top bar and code lessons complete via the ChallengeInterface submit. */}
           {!hasCodeBlock && (
@@ -850,41 +874,55 @@ export function LessonPageClient({
               )}
 
               {/* Code lessons complete via the ChallengeInterface submit; other
-              lessons complete via this explicit button. */}
+              lessons complete via this explicit button. Once completed the
+              button gives way to a quiet status pill — a disabled button
+              duplicating the nav CTA's label read as two dead actions. */}
               {!hasCodeBlock &&
                 (userId ? (
                   isEnrolled ? (
-                    <Button
-                      variant={isCompleted ? "outline" : "pushSuccess"}
-                      size="lg"
-                      disabled={
-                        isCompleted || isCompleting || hasLinkedWallet === false
-                      }
-                      onClick={() => handleComplete()}
-                      className="w-full gap-2 sm:w-auto"
-                    >
-                      {isCompleting ? (
-                        <>
-                          <div
-                            className="h-5 w-5 animate-spin rounded-full border-[3px] border-white/30 border-t-white"
-                            aria-hidden="true"
-                          />
-                          <span className="sr-only">{tCommon("loading")}</span>
-                        </>
-                      ) : isCompleted ? (
+                    isCompleted ? (
+                      <span
+                        role="status"
+                        className="inline-flex h-10 items-center justify-center gap-1.5 rounded-full border border-[var(--primary-border)] bg-[var(--primary-dim)] px-4 font-display text-[11px] font-bold uppercase tracking-[0.4px] text-primary"
+                      >
                         <CheckCircle
-                          size={20}
-                          weight="duotone"
-                          className="text-success"
+                          size={16}
+                          weight="fill"
                           aria-hidden="true"
                         />
-                      ) : null}
-                      {isCompleted ? t("lessonComplete") : t("markComplete")}
-                    </Button>
+                        {t("lessonComplete")}
+                      </span>
+                    ) : (
+                      <Button
+                        variant="pushSuccess"
+                        size="default"
+                        disabled={
+                          isCompleting ||
+                          hasLinkedWallet === false ||
+                          !gateReady
+                        }
+                        onClick={() => handleComplete()}
+                        title={!gateReady ? t("completeGateHint") : undefined}
+                        className="w-full gap-2 sm:w-auto"
+                      >
+                        {isCompleting && (
+                          <>
+                            <div
+                              className="h-5 w-5 animate-spin rounded-full border-[3px] border-white/30 border-t-white"
+                              aria-hidden="true"
+                            />
+                            <span className="sr-only">
+                              {tCommon("loading")}
+                            </span>
+                          </>
+                        )}
+                        {t("markComplete")}
+                      </Button>
+                    )
                   ) : (
                     <Button
                       variant="push"
-                      size="lg"
+                      size="default"
                       disabled={isEnrolling}
                       onClick={handleEnroll}
                       className="gap-2"
@@ -907,7 +945,7 @@ export function LessonPageClient({
                   // rendered once below.
                   <Button
                     variant="push"
-                    size="lg"
+                    size="default"
                     className="gap-2"
                     onClick={openClaimAuth}
                   >
@@ -929,6 +967,9 @@ export function LessonPageClient({
                   </Link>
                 </Button>
               ) : (
+                // Last lesson: the forward CTA returns to the course page
+                // (progress, credential) — labelled as that journey, not a
+                // duplicate of the completion status.
                 <Button
                   variant={isCompleted ? "push" : "pushOutline"}
                   size="default"
@@ -936,10 +977,20 @@ export function LessonPageClient({
                   className="w-full justify-center sm:w-auto sm:min-w-[120px]"
                 >
                   <Link href={`${linkBase}/${courseSlug}`}>
-                    {t("lessonComplete")}
+                    {t("finishCourse")} &rarr;
                   </Link>
                 </Button>
               )}
+              {/* Why the button is off — never a silently dead control */}
+              {!gateReady &&
+                gateBlocks.length > 0 &&
+                userId &&
+                isEnrolled &&
+                !isCompleted && (
+                  <p className="w-full text-center text-xs text-text-3">
+                    {t("completeGateHint")}
+                  </p>
+                )}
             </div>
           )}
           {enrollError && (
@@ -979,7 +1030,6 @@ export function LessonPageClient({
           the IDE rail via `instructionsSlot`; reading lessons render them here,
           below the prose. Discussion is the same inline section on both, never
           a modal. */}
-      {!hasCodeBlock && paneSections}
     </div>
   );
 }

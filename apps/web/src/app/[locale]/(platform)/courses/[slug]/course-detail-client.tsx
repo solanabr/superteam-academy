@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   Clock,
   BookOpen,
+  Plus,
   Lightning,
   Wallet,
   ChatCircleDots,
@@ -25,7 +26,7 @@ import { useAuth } from "@/lib/auth/auth-provider";
 import { useOnChainEnroll } from "@/hooks/use-on-chain-enroll";
 import { findEnrollmentPDA } from "@/lib/solana/pda";
 import { ThreadList } from "@/components/community/thread-list";
-import { CreateThreadModal } from "@/components/community/create-thread-modal";
+import { ThreadComposer } from "@/components/community/thread-composer";
 import { CourseChangelog } from "@/components/course/course-changelog";
 import type { PublicProfile } from "@/lib/profiles/public-profile";
 import type { CourseChangelogEntry } from "@/lib/courses/changelog-types";
@@ -67,12 +68,15 @@ export function CourseDetailClient({
 }: CourseDetailClientProps) {
   const t = useTranslations("courses");
   const tCommon = useTranslations("common");
+  const tCommunity = useTranslations("community");
   const locale = useLocale();
   const { connection } = useConnection();
   const { publicKey } = useWallet();
 
   const modules = course.modules ?? [];
   const tags = course.tags ?? [];
+  const [showAllTags, setShowAllTags] = useState(false);
+  const MAX_VISIBLE_TAGS = 6;
 
   // Live catalogue unless a caller overrides it (#831 teacher preview).
   const linkBase = hrefBase ?? `/${locale}/courses`;
@@ -104,7 +108,10 @@ export function CourseDetailClient({
   const [enrolledAt, setEnrolledAt] = useState<string | null>(null);
   const [completedLessons, setCompletedLessons] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [discussionModalOpen, setDiscussionModalOpen] = useState(false);
+  // Inline composer (no modal — matches the lesson embed and Community):
+  // writing happens at the top of the list, the new thread appears below.
+  const [isComposerOpen, setIsComposerOpen] = useState(false);
+  const [threadsRefreshToken, setThreadsRefreshToken] = useState(0);
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
   const fetchEnrollmentAndProgress = useCallback(async () => {
@@ -199,153 +206,174 @@ export function CourseDetailClient({
         {tCommon("back")}
       </Link>
 
-      {/* Course Header Card */}
+      {/* Course Header Card — two-column hero: content left, action rail
+          right so the CTA sits above the fold instead of under the prose */}
       <div className="rounded-xl border-[2.5px] border-border bg-card p-6 shadow-card md:p-8">
-        {/* Metadata row */}
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="course-card-diff">{t(course.difficulty)}</span>
-          <span className="flex items-center gap-1.5 text-sm text-text-3">
-            <Clock size={16} weight="duotone" />
-            {course.duration} {t("hours")}
-          </span>
-          <span className="flex items-center gap-1.5 text-sm text-text-3">
-            <BookOpen size={16} weight="duotone" className="text-primary" />
-            {totalLessons} {t("lessons")}
-          </span>
-        </div>
-
-        <h1 className="mt-4 font-display text-3xl font-black tracking-[-0.5px] md:text-4xl">
-          {course.title}
-        </h1>
-
-        <div className="mt-4 space-y-4">
-          <p className="max-w-2xl text-[15px] leading-relaxed text-text-2">
-            {course.description}
-          </p>
-
-          {/* Instructor identity (issue #478) — resolved public profile, or a
-              truncated-wallet fallback (B4). */}
-          {course.creator && (
-            <InstructorCard
-              creatorWallet={course.creator}
-              profile={instructorProfile}
-            />
-          )}
-
-          {/* XP + Tags row */}
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="inline-flex items-center gap-1.5 font-display text-lg font-black text-xp">
-              <Lightning size={20} weight="fill" className="text-xp" />
-              {course.xpReward} {t("xpReward")}
-            </span>
-            {tags.length > 0 && (
-              <>
-                <span className="text-border" aria-hidden="true">
-                  |
-                </span>
-                {tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="rounded-full border border-border bg-subtle px-3 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-wider text-text-3"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* CTA + Progress */}
-        <div className="mt-6 border-t border-border pt-5">
-          {/* Progress bar (if enrolled) */}
-          {isEnrolled && (
-            <div className="mb-5 space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-display text-[13px] font-bold text-text-2">
-                  {completedCount} / {totalLessons} {t("lessons")}
-                </span>
-                <span className="font-display text-[13px] font-bold text-text-3">
-                  {isComplete ? t("completed") : t("inProgress")}
-                </span>
-              </div>
-              <ProgressBar
-                value={completedCount}
-                max={totalLessons}
-                showLabel
-              />
+        <div className="md:grid md:grid-cols-[minmax(0,1fr)_300px] md:gap-10">
+          <div>
+            {/* Metadata row */}
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="course-card-diff">{t(course.difficulty)}</span>
+              <span className="flex items-center gap-1.5 text-sm text-text-3">
+                <Clock size={16} weight="duotone" />
+                {course.duration} {t("hours")}
+              </span>
+              <span className="flex items-center gap-1.5 text-sm text-text-3">
+                <BookOpen size={16} weight="duotone" className="text-primary" />
+                {totalLessons} {t("lessons")}
+              </span>
             </div>
-          )}
 
-          {/* CTA button */}
-          {!isLoading && userId ? (
-            <>
-              {!isEnrolled && !publicKey && !walletAddress ? (
-                <Button
-                  variant="push"
-                  size="lg"
-                  className="w-full font-semibold md:w-auto"
-                  asChild
-                >
-                  <Link href={`/${locale}/settings?tab=account`}>
-                    <Wallet
-                      size={16}
-                      weight="duotone"
-                      className="mr-2"
-                      aria-hidden="true"
+            <h1 className="mt-4 font-display text-3xl font-black tracking-[-0.5px] md:text-4xl">
+              {course.title}
+            </h1>
+
+            <div className="mt-4 space-y-4">
+              <p className="text-[15px] leading-relaxed text-text-2">
+                {course.description}
+              </p>
+
+              {/* Instructor identity (issue #478) — resolved public profile, or a
+              truncated-wallet fallback (B4). */}
+              {course.creator && (
+                <InstructorCard
+                  creatorWallet={course.creator}
+                  profile={instructorProfile}
+                />
+              )}
+
+              {/* Skill tags — capped so the header stays scannable */}
+              {tags.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2">
+                  {(showAllTags ? tags : tags.slice(0, MAX_VISIBLE_TAGS)).map(
+                    (tag) => (
+                      <span
+                        key={tag}
+                        className="rounded-full border border-border bg-subtle px-3 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-wider text-text-3"
+                      >
+                        {tag}
+                      </span>
+                    )
+                  )}
+                  {tags.length > MAX_VISIBLE_TAGS && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllTags((s) => !s)}
+                      aria-expanded={showAllTags}
+                      className="rounded-full border border-border px-3 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-wider text-text-2 transition-colors hover:border-border-hover hover:text-text"
+                    >
+                      {showAllTags ? "−" : `+${tags.length - MAX_VISIBLE_TAGS}`}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Action rail — XP, progress and the CTA in one place */}
+          <div className="mt-6 md:mt-0">
+            <div className="rounded-[var(--r-md)] border-[1.5px] border-border p-5 [background:color-mix(in_srgb,var(--subtle)_60%,transparent)]">
+              <span className="inline-flex items-center gap-1.5 font-display text-lg font-black text-xp">
+                <Lightning size={20} weight="fill" className="text-xp" />
+                {course.xpReward} {t("xpReward")}
+              </span>
+
+              <div className="mt-4 border-t border-border pt-4">
+                {/* Progress bar (if enrolled) */}
+                {isEnrolled && (
+                  <div className="mb-5 space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-display text-[13px] font-bold text-text-2">
+                        {completedCount} / {totalLessons} {t("lessons")}
+                      </span>
+                      <span className="font-display text-[13px] font-bold text-text-3">
+                        {isComplete ? t("completed") : t("inProgress")}
+                      </span>
+                    </div>
+                    <ProgressBar
+                      value={completedCount}
+                      max={totalLessons}
+                      showLabel
                     />
-                    {t("linkWalletToEnroll")}
-                  </Link>
-                </Button>
-              ) : (
-                <Button
-                  variant="push"
-                  size="lg"
-                  className="w-full font-semibold md:w-auto"
-                  onClick={isEnrolled || readOnly ? undefined : handleEnroll}
-                  disabled={isEnrolling}
-                  asChild={isEnrolled || readOnly ? true : undefined}
-                >
-                  {/* readOnly (#831): a previewed course has no on-chain
+                  </div>
+                )}
+
+                {/* CTA button */}
+                {!isLoading && userId ? (
+                  <>
+                    {!isEnrolled && !publicKey && !walletAddress ? (
+                      <Button
+                        variant="push"
+                        size="lg"
+                        className="w-full font-semibold"
+                        asChild
+                      >
+                        <Link href={`/${locale}/settings?tab=account`}>
+                          <Wallet
+                            size={16}
+                            weight="duotone"
+                            className="mr-2"
+                            aria-hidden="true"
+                          />
+                          {t("linkWalletToEnroll")}
+                        </Link>
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="push"
+                        size="lg"
+                        className="w-full font-semibold"
+                        onClick={
+                          isEnrolled || readOnly ? undefined : handleEnroll
+                        }
+                        disabled={isEnrolling}
+                        asChild={isEnrolled || readOnly ? true : undefined}
+                      >
+                        {/* readOnly (#831): a previewed course has no on-chain
                       enrolment to make, so the CTA opens the first lesson
                       instead of prompting a wallet. */}
-                  {isEnrolled || readOnly ? (
-                    <a
-                      href={`${linkBase}/${course.slug}/lessons/${ctaLessonSlug}`}
-                    >
-                      {t("continueCourse")}
-                    </a>
-                  ) : (
-                    <>
-                      {isEnrolling && (
-                        <>
-                          <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-                          <span className="sr-only">{tCommon("loading")}</span>
-                        </>
-                      )}
-                      {t("enrollNow")}
-                    </>
-                  )}
-                </Button>
-              )}
-            </>
-          ) : !isLoading ? (
-            <AuthModal
-              open={authModalOpen}
-              onOpenChange={setAuthModalOpen}
-              trigger={
-                <Button
-                  variant="push"
-                  size="lg"
-                  className="w-full font-semibold md:w-auto"
-                >
-                  {t("signInToEnroll")}
-                </Button>
-              }
-            />
-          ) : (
-            <div className="h-11 w-40 animate-pulse rounded-[var(--r-md)] bg-[var(--input)]" />
-          )}
+                        {isEnrolled || readOnly ? (
+                          <a
+                            href={`${linkBase}/${course.slug}/lessons/${ctaLessonSlug}`}
+                          >
+                            {t("continueCourse")}
+                          </a>
+                        ) : (
+                          <>
+                            {isEnrolling && (
+                              <>
+                                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                                <span className="sr-only">
+                                  {tCommon("loading")}
+                                </span>
+                              </>
+                            )}
+                            {t("enrollNow")}
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </>
+                ) : !isLoading ? (
+                  <AuthModal
+                    open={authModalOpen}
+                    onOpenChange={setAuthModalOpen}
+                    trigger={
+                      <Button
+                        variant="push"
+                        size="lg"
+                        className="w-full font-semibold"
+                      >
+                        {t("signInToEnroll")}
+                      </Button>
+                    }
+                  />
+                ) : (
+                  <div className="h-11 w-full animate-pulse rounded-[var(--r-md)] bg-[var(--input)]" />
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -391,26 +419,44 @@ export function CourseDetailClient({
             />
             {t("discussions")}
           </h2>
-          {userId && (
-            <Button
-              variant="push"
-              size="sm"
-              onClick={() => setDiscussionModalOpen(true)}
-            >
-              {t("startDiscussion")}
-            </Button>
-          )}
         </div>
+        {/* Composing happens INLINE at the top of the list (same as the
+            lesson embed and Community) — no modal over the page. */}
+        {isComposerOpen && userId ? (
+          <div className="rounded-lg border border-border bg-card p-3">
+            <h4 className="mb-3 font-display text-sm font-bold text-text">
+              {tCommunity("composerHeading")}
+            </h4>
+            <ThreadComposer
+              defaultScope={{ courseId: course._id }}
+              onCancel={() => setIsComposerOpen(false)}
+              onCreated={() => {
+                setIsComposerOpen(false);
+                setThreadsRefreshToken((n) => n + 1);
+              }}
+            />
+          </div>
+        ) : null}
         {/* Context chips stay on here: every thread shares the course, but the
             chip names the LESSON, which is the disambiguating part. */}
-        <ThreadList scope={{ courseId: course._id }} showFilters showContext />
-        {userId && (
-          <CreateThreadModal
-            open={discussionModalOpen}
-            onOpenChange={setDiscussionModalOpen}
-            defaultScope={{ courseId: course._id }}
-          />
-        )}
+        <ThreadList
+          scope={{ courseId: course._id }}
+          showFilters
+          showContext
+          refreshToken={threadsRefreshToken}
+          actionSlot={
+            userId && !isComposerOpen ? (
+              <Button
+                variant="push"
+                size="sm"
+                onClick={() => setIsComposerOpen(true)}
+              >
+                <Plus size={14} weight="bold" aria-hidden="true" />
+                {tCommunity("askQuestion")}
+              </Button>
+            ) : undefined
+          }
+        />
       </div>
 
       {/* Changelog (issue #654) — how the course has evolved since deployment. */}

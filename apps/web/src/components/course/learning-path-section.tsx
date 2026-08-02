@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
-import Image from "next/image";
 import {
   CaretDoubleRight,
   CaretDown,
@@ -85,6 +84,10 @@ export function LearningPathSection({
     return !progress.get(prevCourse._id)?.isCompleted;
   }
 
+  // The skip-ahead affordance reads identically on every gated row — show the
+  // pill once, on the first ahead course; later rows stay clickable regardless.
+  const firstAheadIdx = courses.findIndex((_, i) => isAhead(i));
+
   const toggle = () => setIsOpen((o) => !o);
 
   return (
@@ -151,7 +154,8 @@ export function LearningPathSection({
           const p = progress.get(course._id);
           const ahead = isAhead(idx);
           const locked = modality === "fixed" && ahead;
-          const skipAhead = modality === "guided-skip" && ahead;
+          const skipAhead =
+            modality === "guided-skip" && ahead && idx === firstAheadIdx;
           const isComplete = p?.isCompleted ?? false;
           const isActive = (p?.isEnrolled && !p?.isCompleted) ?? false;
           const percent =
@@ -176,16 +180,6 @@ export function LearningPathSection({
 
           const cardContent = (
             <div className="path-step-inner">
-              {/* Small thumbnail */}
-              <div className="path-step-thumb" aria-hidden="true">
-                <Image
-                  src={course.thumbnail || "/cover.png"}
-                  alt=""
-                  width={80}
-                  height={45}
-                  loading="lazy"
-                />
-              </div>
               <div className="path-step-content">
                 {/* Row 1: title + badge */}
                 <div className="path-step-top">
@@ -196,9 +190,15 @@ export function LearningPathSection({
                     </span>
                   )}
                   {isActive && (
-                    <span className="path-step-badge active">
-                      {completedLessons}/{lessonCount}
-                    </span>
+                    <>
+                      <span className="path-step-badge active">
+                        {completedLessons}/{lessonCount}
+                      </span>
+                      <span className="path-step-continue">
+                        {t("continue")}
+                        <CaretDoubleRight size={11} weight="bold" />
+                      </span>
+                    </>
                   )}
                   {skipAhead && (
                     <span className="path-step-badge skip">

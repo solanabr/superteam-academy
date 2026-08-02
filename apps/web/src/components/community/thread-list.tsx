@@ -38,6 +38,12 @@ interface ThreadListProps {
    */
   showContext?: boolean;
   /**
+   * Offer the "Course questions" scope pill. Only meaningful on the GLOBAL
+   * community surface — inside a course/lesson embed every thread is already
+   * course-scoped and the pill would be a no-op (owner 2026-08-02).
+   */
+  showCourseFilter?: boolean;
+  /**
    * Primary action rendered on the RIGHT of the filters row rather than in a
    * row of its own — keeps the chrome from dwarfing a short list.
    */
@@ -105,6 +111,7 @@ export function ThreadList({
   onCountChange,
   refreshToken,
   showContext = false,
+  showCourseFilter = false,
   actionSlot,
 }: ThreadListProps) {
   const t = useTranslations("community");
@@ -139,7 +146,7 @@ export function ThreadList({
           onTypeChange={setType}
           courseOnly={courseOnly}
           onCourseOnlyChange={setCourseOnly}
-          showCourseFilter={showContext}
+          showCourseFilter={showCourseFilter}
           actionSlot={actionSlot}
         />
       )}
