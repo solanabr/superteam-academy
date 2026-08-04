@@ -57,7 +57,7 @@ export function ProfileBody({
       {/* ─── Skills Radar ─── */}
       {content.skills.length > 0 && (
         <section>
-          <h2 className="mb-4 font-display text-[22px] font-extrabold">
+          <h2 className="mb-4 font-display text-lg font-black tracking-[-0.25px]">
             {t("skills")}
           </h2>
           <SkillRadar
@@ -76,7 +76,7 @@ export function ProfileBody({
       {/* ─── Certificates — compact on-chain proof cards ─── */}
       {content.certificates.length > 0 && (
         <section>
-          <h2 className="mb-4 font-display text-[22px] font-extrabold">
+          <h2 className="mb-4 font-display text-lg font-black tracking-[-0.25px]">
             {tCerts("title")}
           </h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -116,7 +116,7 @@ export function ProfileBody({
 
       {content.certificates.length === 0 && (
         <section>
-          <h2 className="mb-4 font-display text-[22px] font-extrabold">
+          <h2 className="mb-4 font-display text-lg font-black tracking-[-0.25px]">
             {tCerts("title")}
           </h2>
           <div className="flex flex-col items-center justify-center gap-4 py-12">

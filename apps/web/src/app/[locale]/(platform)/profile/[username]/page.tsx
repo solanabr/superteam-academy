@@ -37,8 +37,8 @@ export default async function PublicProfilePage(props: {
   }
 
   return (
-    <div className="space-y-10">
-      <ProfileBackButton />
+    <div>
+      <ProfileBackButton className="mb-6" />
       <ProfileBody
         user={profile.user}
         stats={profile.stats}
