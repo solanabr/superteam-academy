@@ -8,6 +8,7 @@ import {
   LearningPath,
   SkillsTaxonomy,
   checkSkillVocabulary,
+  isExcludedContentPath,
   type CourseT,
   type LessonT,
   type SlotsLockT,
@@ -79,6 +80,10 @@ export async function parseAndValidateTree(
   };
 
   for (const [path, bytes] of tree) {
+    // #973: mirrors compile-bundle.ts's validateTree — excluded paths never
+    // reach classification, so a tree not built by `extractTarball` cannot
+    // slip a parked (`_draft/`) doc past this validator.
+    if (isExcludedContentPath(path)) continue;
     if (path === "skills.yaml") {
       // The only content type at the repo root, not nested under a course/
       // collection dir — a single canonical skill vocabulary, not one doc per

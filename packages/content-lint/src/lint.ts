@@ -1,4 +1,4 @@
-import { discover } from "./loader";
+import { discover, unclassifiedContentFiles } from "./loader";
 import { emptyModel, type RepoModel } from "./model";
 import {
   diag,
@@ -49,6 +49,12 @@ export async function runLint(
       );
     }
   }
+
+  // #973: a content file NO gate can see is worse than a failing one — it looks
+  // linted and is not. Warning-tier: the near-miss cases (a doc at the wrong
+  // depth, a typo'd `_drafts/`) must be visible without breaking a repo that
+  // legitimately carries an unrecognised yaml.
+  diagnostics.push(...unclassifiedContentFiles(root));
 
   const model = schemaCheck ? schemaCheck(root, diagnostics) : emptyModel(root);
 

@@ -1,4 +1,5 @@
 export * from "./constants";
+export * from "./repo-paths";
 export * from "./ids";
 export * from "./wallet";
 export * from "./capabilities";

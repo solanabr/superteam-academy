@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { symlinkSync, mkdtempSync, writeFileSync, mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { discover, walkFiles } from "../loader";
+import { discover, walkFiles, unclassifiedContentFiles } from "../loader";
 import { runLint } from "../lint";
 import { makeTempRepo } from "./helpers";
 
@@ -43,6 +43,93 @@ describe("discover", () => {
     });
     const doc = discover(root).find((d) => d.kind === "achievement");
     expect(doc?.parseError).toBeTruthy();
+  });
+});
+
+describe("discover — parked content (#973)", () => {
+  it("skips every _draft/ file, in any collection", () => {
+    const root = makeTempRepo({
+      "courses/live/course.yaml": "id: course-live\n",
+      "courses/_draft/parked/course.yaml": "id: course-parked\n",
+      "courses/_draft/parked/lessons/x/lesson.yaml": "id: lesson-parked\n",
+      "paths/live.yaml": "id: path-live\n",
+      "paths/_draft/parked.yaml": "id: path-parked\n",
+      "achievements/_draft/parked.yaml": "id: achievement-parked\n",
+      "quests/_draft/parked.yaml": "id: quest-parked\n",
+    });
+    expect(
+      discover(root)
+        .map((d) => d.path)
+        .sort()
+    ).toEqual(["courses/live/course.yaml", "paths/live.yaml"]);
+  });
+
+  it("still lints the `courses/_template/` scaffold (unchanged by #973)", () => {
+    const root = makeTempRepo({
+      "courses/_template/course.yaml": "id: course-template\n",
+    });
+    expect(discover(root).map((d) => d.path)).toEqual([
+      "courses/_template/course.yaml",
+    ]);
+  });
+
+  it("does not warn about parked or scaffold files it cannot classify", () => {
+    const root = makeTempRepo({
+      "courses/_draft/parked/notes.yaml": "a: 1\n",
+      "courses/_template/lessons/x/notes.yaml": "a: 1\n",
+    });
+    expect(unclassifiedContentFiles(root)).toEqual([]);
+  });
+});
+
+describe("unclassifiedContentFiles (#973)", () => {
+  it("warns on a typo'd parking directory that no gate can see", () => {
+    const root = makeTempRepo({
+      "courses/_drafts/parked/course.yaml": "id: course-parked\n",
+      "courses/live/course.yaml": "id: course-live\n",
+    });
+
+    const diags = unclassifiedContentFiles(root);
+    expect(diags).toHaveLength(1);
+    expect(diags[0]).toMatchObject({
+      gate: "loader",
+      severity: "warning",
+      file: "courses/_drafts/parked/course.yaml",
+    });
+    expect(diags[0]!.message).toContain("unclassified content file");
+  });
+
+  it("warns on a collection yaml at the wrong depth", () => {
+    const root = makeTempRepo({
+      "paths/archive/old.yaml": "id: path-old\n",
+      "courses/live/lessons/x/notes.yaml": "note: not a lesson\n",
+    });
+    expect(
+      unclassifiedContentFiles(root)
+        .map((d) => d.file)
+        .sort()
+    ).toEqual(["courses/live/lessons/x/notes.yaml", "paths/archive/old.yaml"]);
+  });
+
+  it("ignores yaml outside the content collections", () => {
+    const root = makeTempRepo({
+      "skills.yaml": "- slug: pdas\n  label: PDAs\n",
+      "docs/notes.yaml": "a: 1\n",
+    });
+    expect(unclassifiedContentFiles(root)).toEqual([]);
+  });
+
+  it("surfaces the warning through runLint without failing the run", async () => {
+    const root = makeTempRepo({
+      "courses/_drafts/parked/course.yaml": "id: course-parked\n",
+    });
+    const result = await runLint(root);
+    expect(result.ok).toBe(true);
+    expect(
+      result.diagnostics.filter(
+        (d) => d.gate === "loader" && d.severity === "warning"
+      )
+    ).toHaveLength(1);
   });
 });
 
