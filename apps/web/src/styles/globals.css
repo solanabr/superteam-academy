@@ -4109,6 +4109,28 @@ a.path-step-card:hover .path-step-badge.skip {
   font-size: 12px;
 }
 
+/* Profile rail achievements: dashboard tokens in a 4-col grid, names on. */
+.ach-rail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 10px;
+}
+.ach-rail-grid .dm-oct {
+  width: 44px;
+  height: 44px;
+}
+.ach-rail-grid .dm-oct.locked .dm-face {
+  width: 36px;
+  height: 36px;
+}
+.ach-rail-grid .dm-glyph {
+  font-size: 14px;
+}
+.ach-rail-grid .dm-name {
+  font-size: 10px;
+  line-height: 1.2;
+}
+
 /* Profile certificate shelf: the section heading names them once — per-card
    eyebrows off, body tightened (04-08). */
 .cert-slim .cert-eyebrow {

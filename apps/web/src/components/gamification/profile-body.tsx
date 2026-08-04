@@ -1,12 +1,14 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import { GraduationCap } from "@phosphor-icons/react";
+import * as Tooltip from "@radix-ui/react-tooltip";
 import { CertificateCard } from "@/components/certificates/certificate-card";
 import { ProfileHeroPanel } from "@/components/gamification/profile-hero-panel";
 import { SkillRadar } from "@/components/gamification/skill-radar";
-import { AchievementGrid } from "@/components/gamification/achievement-grid";
+import { AchievementToken } from "@/components/gamification/dashboard-identity-panel";
 import type {
   ProfileContent,
   ProfileStats,
@@ -24,11 +26,13 @@ interface ProfileBodyProps {
 }
 
 /**
- * Shared profile presentation (LX / #533). Data is fetched server-side and
- * passed in as serializable props; this component is a thin client island only
- * because its whole subtree — the hero panel, skill radar, and achievement grid
- * — is already interactive. The public and own-profile pages differ only in the
- * hero's streak/visibility props and the surrounding page chrome.
+ * Shared profile presentation (LX / #533, recomposed 04-08). Data is fetched
+ * server-side and passed in as serializable props; this stays a client island
+ * because the hero panel, radar, and tooltip tokens are interactive.
+ *
+ * Composition: hero band → [Skills | Achievements rail] → full-width
+ * certificate shelf. When a learner has no skills yet, the two-column grid
+ * collapses and achievements render full-width so the rail never floats alone.
  */
 export function ProfileBody({
   user,
@@ -42,27 +46,86 @@ export function ProfileBody({
   const tCerts = useTranslations("certificates");
   const locale = useLocale();
 
+  const unlockedSet = useMemo(
+    () => new Set(content.achievements.map((a) => a.id)),
+    [content.achievements]
+  );
+  const sortedAchievements = useMemo(
+    () =>
+      [...content.deployedAchievements].sort((a, b) => {
+        const ae = unlockedSet.has(a.id) ? 0 : 1;
+        const be = unlockedSet.has(b.id) ? 0 : 1;
+        return ae - be;
+      }),
+    [content.deployedAchievements, unlockedSet]
+  );
+
+  // Tap-to-show tooltip state (mobile touch), same as the dashboard strip.
+  const [openTip, setOpenTip] = useState<string | null>(null);
+  useEffect(() => {
+    if (!openTip) return;
+    const timer = setTimeout(() => setOpenTip(null), 3000);
+    return () => clearTimeout(timer);
+  }, [openTip]);
+
+  const hasSkills = content.skills.length > 0;
+
+  /* Achievements — dashboard tokens with the dashboard tooltip (description
+     on hover/tap). The hero strip no longer carries an achievements stat, so
+     the heading's count chip is the single source of that number. */
+  const achievementsSection = (
+    <section aria-label={tGam("achievements")}>
+      <div className="mb-4 flex items-center gap-3">
+        <h2 className="font-display text-lg font-black tracking-[-0.25px]">
+          {tGam("achievements")}
+        </h2>
+        <span className="cc-section-count">
+          {content.achievements.length}/{content.deployedAchievements.length}
+        </span>
+      </div>
+      <div className="rounded-xl border border-border bg-card p-4 shadow-card">
+        <Tooltip.Provider delayDuration={0} skipDelayDuration={150}>
+          <div className="ach-rail-grid">
+            {sortedAchievements.map((ach) => {
+              const earned = unlockedSet.has(ach.id);
+              const isSol = earned && ach.solTier;
+              const tipId = `prof-${ach.id}`;
+              return (
+                <AchievementToken
+                  key={ach.id}
+                  glyph={ach.glyph}
+                  name={ach.name}
+                  hint={ach.description}
+                  state={earned ? (isSol ? "sol" : "earned") : "locked"}
+                  isOpen={openTip === tipId}
+                  onTap={() =>
+                    setOpenTip((prev) => (prev === tipId ? null : tipId))
+                  }
+                  onOpenChange={(open) => setOpenTip(open ? tipId : null)}
+                />
+              );
+            })}
+          </div>
+        </Tooltip.Provider>
+      </div>
+    </section>
+  );
+
   return (
     <div className="space-y-8">
       {/* ─── Profile Hero Panel (dash-panel) — the page anchor ─── */}
       <ProfileHeroPanel
         user={user}
         stats={stats}
-        achievements={content.achievements}
-        deployedAchievements={content.deployedAchievements}
         showVisibilityBadge={showVisibilityBadge}
         streak={streak}
       />
 
-      {/* Main column + rail — the dashboard composition (04-08): long-form
-          proof (skills, certificates) left, glanceable achievements right.
-          Sections are cards with mono kickers, not floating page headings. */}
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-8">
-        <div className="min-w-0 space-y-8">
-          {/* ─── Skills — the radar (owner keeper) under the standard
-              page-section heading; card gives it a frame, 560px cap kills the
-              old whitespace ocean. ─── */}
-          {content.skills.length > 0 && (
+      {hasSkills ? (
+        /* Main column + rail — the dashboard composition. */
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-8">
+          <div className="min-w-0 space-y-8">
+            {/* ─── Skills — the radar (owner keeper). ─── */}
             <section aria-label={t("skills")}>
               <div className="mb-4 flex items-center gap-3">
                 <h2 className="font-display text-lg font-black tracking-[-0.25px]">
@@ -80,38 +143,20 @@ export function ProfileBody({
                 />
               </div>
             </section>
-          )}
+          </div>
+
+          <aside className="space-y-6">{achievementsSection}</aside>
         </div>
+      ) : (
+        /* No skills yet: achievements own the full width — a 340px rail with
+           nothing beside it read as a broken layout. */
+        achievementsSection
+      )}
 
-        {/* ─── Rail: achievements, full catalog, no filter chrome ─── */}
-        <aside className="space-y-6">
-          <section aria-label={tGam("achievements")}>
-            {/* Same heading block as Skills so both columns top-align. */}
-            <div className="mb-4 flex items-center gap-3">
-              <h2 className="font-display text-lg font-black tracking-[-0.25px]">
-                {tGam("achievements")}
-              </h2>
-              <span className="cc-section-count">
-                {content.achievements.length}/
-                {content.deployedAchievements.length}
-              </span>
-            </div>
-            <div className="rounded-xl border border-border bg-card p-4 shadow-card">
-              <AchievementGrid
-                unlockedAchievements={content.achievements}
-                catalog={content.deployedAchievements}
-                compact
-              />
-            </div>
-          </section>
-        </aside>
-      </div>
-
-      {/* ─── Certificates — full-width shelf below the working area. Slim
-          diploma cards (shared CertificateCard, per-card eyebrow hidden — the
-          section heading already says it). Stretched-link keeps the explorer
-          pill's own anchor legal (no <a> nesting). ─── */}
-      {content.certificates.length > 0 && (
+      {/* ─── Certificates — full-width shelf. Slim diploma cards (shared
+          CertificateCard, per-card eyebrow hidden); stretched-link keeps the
+          explorer pill's own anchor legal (no <a> nesting). ─── */}
+      {content.certificates.length > 0 ? (
         <section aria-label={tCerts("title")}>
           <div className="mb-4 flex items-center gap-3">
             <h2 className="font-display text-lg font-black tracking-[-0.25px]">
@@ -138,9 +183,7 @@ export function ProfileBody({
             ))}
           </div>
         </section>
-      )}
-
-      {content.certificates.length === 0 && (
+      ) : (
         <section aria-label={tCerts("title")}>
           <h2 className="mb-4 font-display text-lg font-black tracking-[-0.25px]">
             {tCerts("title")}
