@@ -32,6 +32,26 @@ describe("extractTarball", () => {
     expect([...tree.keys()]).toEqual(["courses/real/course.yaml"]);
   });
 
+  it("excludes every _draft/ directory, in any collection (#973)", async () => {
+    const tar = makeTar({
+      "r-abc/courses/_draft/parked/course.yaml": "id: course-parked\n",
+      "r-abc/courses/_draft/parked/lessons/x/lesson.yaml":
+        "id: lesson-parked\n",
+      "r-abc/paths/_draft/parked.yaml": "id: path-parked\n",
+      "r-abc/achievements/_draft/parked.yaml": "id: achievement-parked\n",
+      "r-abc/quests/_draft/parked.yaml": "id: quest-parked\n",
+      "r-abc/courses/real/course.yaml": "id: course-real\n",
+      // a directory NAMED like the convention but not it — stays visible, so
+      // content-lint's unclassified-file diagnostic can flag the typo.
+      "r-abc/courses/_drafts/typo/course.yaml": "id: course-typo\n",
+    });
+    const tree = await extractTarball(gzipSync(Buffer.from(tar)));
+    expect([...tree.keys()].sort()).toEqual([
+      "courses/_drafts/typo/course.yaml",
+      "courses/real/course.yaml",
+    ]);
+  });
+
   it("reconstructs a path longer than 100 bytes from the ustar prefix field", async () => {
     // The generated `owner-repo-<40-char-sha>/` top dir alone is 65 bytes, so any
     // real repo path overflows the 100-byte name field; git archive splits it

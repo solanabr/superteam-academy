@@ -1,6 +1,12 @@
 import { readFileSync, readdirSync, lstatSync } from "node:fs";
 import { join, relative } from "node:path";
 import { parse as parseYaml } from "yaml";
+import {
+  isCompilerContentDoc,
+  isDraftPath,
+  isExcludedContentPath,
+} from "@superteam-lms/content-schema";
+import { diag, type Diagnostic } from "./diagnostics";
 
 export type DocKind =
   | "course"
@@ -51,8 +57,14 @@ export function walkFiles(root: string, dir = root): string[] {
   return out;
 }
 
-/** Path-pattern classification. Returns null for files we do not lint directly. */
-function classify(path: string): DocKind | null {
+/**
+ * Path-pattern classification. Returns null for files we do not lint directly.
+ *
+ * ANCHORED and fixed-depth, unlike the compiler's unanchored `endsWith` chain
+ * (`isCompilerContentDoc`). Exported so the agreement between the two can be
+ * asserted directly — see loader.test.ts's compiler ⊆ lint property.
+ */
+export function classify(path: string): DocKind | null {
   if (/^courses\/[^/]+\/course\.yaml$/.test(path)) return "course";
   if (/^courses\/[^/]+\/slots\.lock\.json$/.test(path)) return "slots";
   if (/^courses\/[^/]+\/lessons\/[^/]+\/lesson\.yaml$/.test(path)) {
@@ -75,10 +87,65 @@ function parseByKind(abs: string, kind: DocKind): unknown {
   return parseYaml(text, { version: "1.2" });
 }
 
+/**
+ * Top-level content collections. A `.yaml` under one of these that classify()
+ * does not claim is a mistake worth naming (see {@link unclassifiedContentFiles}).
+ */
+const COLLECTION_DIRS = ["courses/", "paths/", "achievements/", "quests/"];
+
+/**
+ * `.yaml` files inside a content collection that no classifier claims and that
+ * are not parked — a typo'd parking dir (`courses/_drafts/x/course.yaml`), a
+ * doc at the wrong depth, an unrecognised collection subdir. Each is content
+ * the author believes is linted and is not, replacing `loader.ts`'s old bare
+ * `if (!kind) continue;`.
+ *
+ * Severity splits on whether the COMPILER would still claim the file:
+ *
+ *   - ERROR when it would (`isCompilerContentDoc`). That is the #973 invariant
+ *     itself — the file ships into the bundle with no gate having seen it. A
+ *     single mistyped directory (`courses/_drafts/`) otherwise re-opens the
+ *     whole hole: lint exits 0 while the compiler emits the parked docs, ids
+ *     and all. A warning does not enforce an invariant; an error does.
+ *   - WARNING otherwise. Nothing ships, but the author still probably meant it
+ *     to be linted, so it must not be silent.
+ */
+export function unclassifiedContentFiles(root: string): Diagnostic[] {
+  const out: Diagnostic[] = [];
+  for (const path of walkFiles(root)) {
+    if (!path.endsWith(".yaml")) continue;
+    if (classify(path) !== null) continue;
+    if (isExcludedContentPath(path)) continue;
+    if (!COLLECTION_DIRS.some((d) => path.startsWith(d))) continue;
+    const shipped = isCompilerContentDoc(path);
+    out.push(
+      diag(
+        "loader",
+        shipped ? "error" : "warning",
+        path,
+        shipped
+          ? "unclassified content file the COMPILER STILL SHIPS — wrong depth or directory name? " +
+              "no gate can see it, so it would reach the bundle unlinted " +
+              "(park a file deliberately by moving it under a `_draft/` directory)"
+          : "unclassified content file — wrong depth or directory name? it is NOT linted by any gate " +
+              "(park a file deliberately by moving it under a `_draft/` directory)"
+      )
+    );
+  }
+  return out;
+}
+
 /** Discover + parse every lintable file. Parse failures become `parseError`, never throws. */
 export function discover(root: string): RawDoc[] {
   const docs: RawDoc[] = [];
   for (const path of walkFiles(root)) {
+    // Parked content (`_draft/`) is out of the catalog and out of the bundle, so
+    // it is not linted either. #973: this skip used to be an EMERGENT property of
+    // classify()'s anchored fixed-depth regexes — load-bearing, untested,
+    // invisible — while the bundle compiler shipped the very same files. Now it
+    // is a named concept, shared with the compiler. `courses/_template/**` is
+    // deliberately NOT skipped here: the scaffold stays linted.
+    if (isDraftPath(path)) continue;
     const kind = classify(path);
     if (!kind) continue;
     const abs = join(root, path);

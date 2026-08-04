@@ -29,6 +29,7 @@ import {
   LearningPath,
   SkillsTaxonomy,
   checkSkillVocabulary,
+  isExcludedContentPath,
   type SlotsLockT,
 } from "@superteam-lms/content-schema";
 import type { RepoTree } from "@/lib/github/types";
@@ -117,6 +118,10 @@ function validateTree(tree: RepoTree): CompileInput {
   };
 
   for (const [p, bytes] of tree) {
+    // #973: the tree normally arrives pre-filtered from `extractTarball`, but
+    // classification below is unanchored (`endsWith("/course.yaml")`), so a tree
+    // built anywhere else would compile parked docs into the shipped bundle.
+    if (isExcludedContentPath(p)) continue;
     if (p === "skills.yaml") {
       // The only content type at the repo root, not nested under a course/
       // collection dir — a single canonical skill vocabulary, not one doc per
