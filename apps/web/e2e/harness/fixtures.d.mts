@@ -24,4 +24,6 @@ export const LEARN_LOOP: {
   courseSlug: string;
   lessonId: string;
   lessonSlug: string;
+  /** [questionId, correctOptionId] pairs, in the quiz's own order. */
+  answers: ReadonlyArray<readonly [string, string]>;
 };

@@ -1,830 +1,238 @@
 [
   {
-    "_id": "course-building-first-program",
+    "_id": "course-btc-to-sol-evolution",
     "_type": "course",
-    "creator": "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF",
-    "creatorRewardXp": 30,
-    "description": "You arrive holding `vault_core.rs` — a `VaultState` and checked `deposit`/`withdraw` that compile, with no `#[program]` and no `#[derive(Accounts)]`. This course adds exactly that. You wrap your own Rust core in Anchor 1.x, create a per-user vault PDA with the space arithmetic derived rather than copied, and move real lamports: deposit through a System Program CPI, withdraw by debiting the program-owned vault directly above an enforced rent floor — and you learn why signer seeds are not the answer there. Then you write the account constraints that stop three named attacks, read the LiteSVM test that would catch what compiling cannot, deploy from a browser tab, publish the IDL on-chain, and call your own live program. Nothing is installed locally. You finish with a devnet program id, a fetchable IDL, and a build write-up.",
-    "difficulty": "intermediate",
-    "duration": 12,
-    "minCompletionsForReward": 10,
+    "creator": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
+    "creatorRewardXp": 0,
+    "description": "Run, script, and explain every generation of blockchain from Bitcoin to Solana, then ship a personal ops bot that manages wallets and agents on both.",
+    "difficulty": "beginner",
+    "duration": 15,
+    "minCompletionsForReward": 0,
     "modules": [
       {
-        "_key": "bfsp-build-pipeline",
+        "_key": "crypto",
         "_type": "courseModule",
-        "description": "Wrap your own C2 vault core in Anchor, name the four parts of every Anchor program, and extend it yourself — a green build from a browser tab.",
-        "key": "bfsp-build-pipeline",
+        "key": "crypto",
         "lessons": [
           {
-            "_key": "lesson-bfsp-your-first-build",
-            "_ref": "lesson-bfsp-your-first-build",
+            "_key": "lesson-b2s-the-trust-machine",
+            "_ref": "lesson-b2s-the-trust-machine",
             "_type": "reference",
             "_weak": true
           },
           {
-            "_key": "lesson-bfsp-add-instruction",
-            "_ref": "lesson-bfsp-add-instruction",
+            "_key": "lesson-b2s-hash-everything",
+            "_ref": "lesson-b2s-hash-everything",
             "_type": "reference",
             "_weak": true
           },
           {
-            "_key": "lesson-bfsp-adding-instructions",
-            "_ref": "lesson-bfsp-adding-instructions",
+            "_key": "lesson-b2s-sign-and-verify",
+            "_ref": "lesson-b2s-sign-and-verify",
             "_type": "reference",
             "_weak": true
           }
         ],
-        "title": "The Build Pipeline"
+        "title": "Trust math, not people"
       },
       {
-        "_key": "bfsp-state-vault-pda",
+        "_key": "bitcoin-core",
         "_type": "courseModule",
-        "description": "Derive the byte size of the vault account, derive its address from seeds, store the canonical bump, and wire up initialize by reading a real compile error.",
-        "key": "bfsp-state-vault-pda",
+        "key": "bitcoin-core",
         "lessons": [
           {
-            "_key": "lesson-bfsp-on-chain-state",
-            "_ref": "lesson-bfsp-on-chain-state",
+            "_key": "lesson-b2s-mine-your-own-chain",
+            "_ref": "lesson-b2s-mine-your-own-chain",
             "_type": "reference",
             "_weak": true
           },
           {
-            "_key": "lesson-bfsp-pdas-vault",
-            "_ref": "lesson-bfsp-pdas-vault",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-bfsp-define-counter",
-            "_ref": "lesson-bfsp-define-counter",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-bfsp-wire-up-initialize",
-            "_ref": "lesson-bfsp-wire-up-initialize",
+            "_key": "lesson-b2s-spend-a-utxo",
+            "_ref": "lesson-b2s-spend-a-utxo",
             "_type": "reference",
             "_weak": true
           }
         ],
-        "title": "State and the Vault PDA"
+        "title": "A ledger nobody owns"
       },
       {
-        "_key": "bfsp-deposit-withdraw-harden",
+        "_key": "bitcoin-infra",
         "_type": "courseModule",
-        "description": "Move real lamports — deposit through a System Program CPI, withdraw by debiting the program-owned vault directly above a rent floor — find out why the PDA does not sign its own withdrawal, surface your checked arithmetic as typed Anchor errors, and write the constraints that stop the obvious attacks.",
-        "key": "bfsp-deposit-withdraw-harden",
+        "key": "bitcoin-infra",
         "lessons": [
           {
-            "_key": "lesson-bfsp-cpi-lamports",
-            "_ref": "lesson-bfsp-cpi-lamports",
+            "_key": "lesson-b2s-speak-rpc",
+            "_ref": "lesson-b2s-speak-rpc",
             "_type": "reference",
             "_weak": true
           },
           {
-            "_key": "lesson-bfsp-build-increment",
-            "_ref": "lesson-bfsp-build-increment",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-bfsp-complete-counter",
-            "_ref": "lesson-bfsp-complete-counter",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-bfsp-account-constraints",
-            "_ref": "lesson-bfsp-account-constraints",
+            "_key": "lesson-b2s-watch-the-mempool",
+            "_ref": "lesson-b2s-watch-the-mempool",
             "_type": "reference",
             "_weak": true
           }
         ],
-        "title": "Deposit, Withdraw, Harden"
+        "title": "Talking to chains the way software does"
       },
       {
-        "_key": "bfsp-ship-it",
+        "_key": "blockchain-20",
         "_type": "courseModule",
-        "description": "Prove the program behaves before you spend devnet SOL, fund the deploy wallet, deploy from the browser, publish the IDL on-chain, and write up what you built.",
-        "key": "bfsp-ship-it",
+        "key": "blockchain-20",
         "lessons": [
           {
-            "_key": "lesson-bfsp-pre-flight-check",
-            "_ref": "lesson-bfsp-pre-flight-check",
+            "_key": "lesson-b2s-state-lives-in-the-contract",
+            "_ref": "lesson-b2s-state-lives-in-the-contract",
             "_type": "reference",
             "_weak": true
           },
           {
-            "_key": "lesson-bfsp-m4-airdrop",
-            "_ref": "lesson-bfsp-m4-airdrop",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-bfsp-m4-deploy",
-            "_ref": "lesson-bfsp-m4-deploy",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-bfsp-m4-capstone",
-            "_ref": "lesson-bfsp-m4-capstone",
+            "_key": "lesson-b2s-a-market-with-no-marketmaker",
+            "_ref": "lesson-b2s-a-market-with-no-marketmaker",
             "_type": "reference",
             "_weak": true
           }
         ],
-        "title": "Ship It"
+        "title": "Programmable money"
+      },
+      {
+        "_key": "solana-core",
+        "_type": "courseModule",
+        "key": "solana-core",
+        "lessons": [
+          {
+            "_key": "lesson-b2s-your-first-solana-program",
+            "_ref": "lesson-b2s-your-first-solana-program",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-b2s-the-throughput-bet",
+            "_ref": "lesson-b2s-the-throughput-bet",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "The throughput bet"
+      },
+      {
+        "_key": "solana-advanced",
+        "_type": "courseModule",
+        "key": "solana-advanced",
+        "lessons": [
+          {
+            "_key": "lesson-b2s-an-anchor-vault",
+            "_ref": "lesson-b2s-an-anchor-vault",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-b2s-wire-a-bot-and-a-face",
+            "_ref": "lesson-b2s-wire-a-bot-and-a-face",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Compose, don't fork"
+      },
+      {
+        "_key": "capstone",
+        "_type": "courseModule",
+        "key": "capstone",
+        "lessons": [
+          {
+            "_key": "lesson-b2s-the-crosschain-ops-bot",
+            "_ref": "lesson-b2s-the-crosschain-ops-bot",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-b2s-where-you-go-from-here",
+            "_ref": "lesson-b2s-where-you-go-from-here",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Your bot, both chains"
       }
     ],
     "slug": {
       "_type": "slug",
-      "current": "building-your-first-solana-program"
+      "current": "btc-to-sol-evolution"
     },
     "tags": [
       "account-model",
       "anchor",
-      "build-server",
-      "checked-arithmetic",
-      "cpi",
-      "debugging",
-      "idl",
       "keypairs-wallets",
-      "pdas",
-      "program-build",
-      "program-deployment",
-      "program-errors",
-      "program-security",
-      "program-testing",
-      "rent-and-space",
-      "solana-explorer",
+      "rpc-reads",
+      "solana-fundamentals",
+      "solana-kit",
       "solana-programs",
-      "technical-writing",
-      "toolchain-versions",
       "transactions"
     ],
-    "title": "Building Your First Solana Program",
-    "trackId": 1,
-    "trackLevel": 3,
-    "xpPerLesson": 20,
-    "xpReward": 850
-  },
-  {
-    "_id": "course-dapp-sdk-kit",
-    "_type": "course",
-    "creator": "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF",
-    "creatorRewardXp": 30,
-    "description": "You arrive holding a deployed vault program — a devnet program id and an Anchor 1.x IDL from Course 3. This course turns that program into two things a bounty reviewer will pay for: a published npm client anyone can install, and a deployed dApp that consumes it. You generate a typed Kit client from your own IDL with Codama, wrap it in the ergonomic API a stranger would actually import, write a README and a semver policy, and publish to npm from CI with build provenance. Then you build the app — connect a Wallet Standard wallet with no wallet-adapter, choose the right signer for what each wallet advertises, and send your first real devnet deposit from a public URL using the package you just published. You finish by making it correct, cheap and honest: a simulated and tightly-sized compute budget, a network-priced priority fee, and a UI driven by real confirmation commitment and decoded program errors. TypeScript and the browser only — nothing is installed locally. Version stamp — kit 7.0.0, @codama/renderers-js 2.3.0, checked 2026-07-27.",
-    "difficulty": "intermediate",
-    "duration": 11,
-    "minCompletionsForReward": 10,
-    "modules": [
-      {
-        "_key": "dsk-package",
-        "_type": "courseModule",
-        "description": "Turn your Course 3 IDL into an installable client. Generate a Kit-compatible TypeScript client with Codama, wrap the generated output in an ergonomic API, assemble a package.json and README with a written semver policy, and publish to npm from CI with build provenance. You end holding a real, versioned package a stranger can install.",
-        "key": "dsk-package",
-        "lessons": [
-          {
-            "_key": "lesson-dsk-idl-to-typed-client",
-            "_ref": "lesson-dsk-idl-to-typed-client",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-dsk-wrap-the-generated-client",
-            "_ref": "lesson-dsk-wrap-the-generated-client",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-dsk-package-surface-and-readme",
-            "_ref": "lesson-dsk-package-surface-and-readme",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-dsk-publish-the-package",
-            "_ref": "lesson-dsk-publish-the-package",
-            "_type": "reference",
-            "_weak": true
-          }
-        ],
-        "title": "Your Program, as a Package Someone Can Install"
-      },
-      {
-        "_key": "dsk-app",
-        "_type": "courseModule",
-        "description": "Build the app around the package you published. Discover and connect a Wallet Standard wallet with no wallet-adapter, choose the correct signer from the feature a wallet advertises, and send one real devnet deposit to your own vault from a deployed public URL — installing your client from the registry, not a local path.",
-        "key": "dsk-app",
-        "lessons": [
-          {
-            "_key": "lesson-dsk-connect-with-wallet-standard",
-            "_ref": "lesson-dsk-connect-with-wallet-standard",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-dsk-signers-chains-and-the-legacy-seam",
-            "_ref": "lesson-dsk-signers-chains-and-the-legacy-seam",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-dsk-first-signed-deposit",
-            "_ref": "lesson-dsk-first-signed-deposit",
-            "_type": "reference",
-            "_weak": true
-          }
-        ],
-        "title": "A Real Wallet, on a Real URL"
-      },
-      {
-        "_key": "dsk-correct-cheap-honest",
-        "_type": "courseModule",
-        "description": "Finish the vault app. Simulate the transaction and size its compute budget so you stop overpaying the default, price the priority fee from fees the network actually observed, and drive the UI from real confirmation commitment and decoded program errors — then name every layer of what you shipped.",
-        "key": "dsk-correct-cheap-honest",
-        "lessons": [
-          {
-            "_key": "lesson-dsk-simulate-before-you-send",
-            "_ref": "lesson-dsk-simulate-before-you-send",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-dsk-price-the-priority-fee",
-            "_ref": "lesson-dsk-price-the-priority-fee",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-dsk-states-errors-and-reads",
-            "_ref": "lesson-dsk-states-errors-and-reads",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-dsk-what-you-shipped",
-            "_ref": "lesson-dsk-what-you-shipped",
-            "_type": "reference",
-            "_weak": true
-          }
-        ],
-        "title": "Make It Correct, Cheap, and Honest"
-      }
-    ],
-    "slug": {
-      "_type": "slug",
-      "current": "dapp-and-sdk-with-kit"
-    },
-    "tags": [
-      "account-model",
-      "api-design",
-      "client-codegen",
-      "codama",
-      "compute-budget",
-      "confirmation",
-      "deployment",
-      "error-handling",
-      "idl",
-      "npm-publishing",
-      "pdas",
-      "priority-fees",
-      "react",
-      "semver",
-      "signers",
-      "simulation",
-      "solana-kit",
-      "technical-writing",
-      "transaction-fees",
-      "transactions",
-      "wallet-standard",
-      "web3-frontend"
-    ],
-    "title": "Full-Stack Solana: Publish the SDK, Ship the dApp",
-    "trackId": 1,
-    "trackLevel": 4,
-    "xpPerLesson": 20,
-    "xpReward": 850
-  },
-  {
-    "_id": "course-rust-for-program-devs",
-    "_type": "course",
-    "creator": "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF",
-    "creatorRewardXp": 30,
-    "description": "You can read a Solana account's bytes. You cannot yet write the struct those bytes came from. You finish this course holding `vault_core.rs` — a `VaultState` with `owner`, `balance` and `bump`, `deposit` and `withdraw` built on `checked_add`/`checked_sub` so a `u64` can never silently wrap, a `VaultError` enum with four named variants, and not one `unwrap()` — compiled green against the real Anchor 1.x toolchain on our build server. Nothing is installed locally — no rustup, no cargo, no `.so` upload. Ownership, borrowing and lifetimes are taught here rather than deferred, because `Account<'info, Vault>` is unreadable without them. Your file deliberately carries no `#[program]` and no `#[derive(Accounts)]` — that omission is the handoff, and Course 3 is what wraps around it.",
-    "difficulty": "intermediate",
-    "duration": 12,
-    "minCompletionsForReward": 10,
-    "modules": [
-      {
-        "_key": "rpd-rust-that-compiles",
-        "_type": "courseModule",
-        "description": "Get a green build before learning any syntax, then meet exactly the types the vault needs — `u64` lamports, `u8` bump, `i64` timestamps — and the compiler's opinions about mutability, tail expressions and the missing `return`. You end holding a file of your own — two `const fn` helpers that add and subtract lamports and return `None` on overflow or underflow instead of wrapping or panicking, verified by compile-time assertions. That arithmetic becomes `VaultState::withdraw` nine lessons later.",
-        "key": "rpd-rust-that-compiles",
-        "lessons": [
-          {
-            "_key": "lesson-rpd-your-first-rust-build",
-            "_ref": "lesson-rpd-your-first-rust-build",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-rpd-types-and-mutability",
-            "_ref": "lesson-rpd-types-and-mutability",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-rpd-functions-and-control-flow",
-            "_ref": "lesson-rpd-functions-and-control-flow",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-rpd-checked-lamport-math",
-            "_ref": "lesson-rpd-checked-lamport-math",
-            "_type": "reference",
-            "_weak": true
-          }
-        ],
-        "title": "Rust That Compiles"
-      },
-      {
-        "_key": "rpd-ownership-borrowing-lifetimes",
-        "_type": "courseModule",
-        "description": "Moves, `Copy`, `.clone()`, shared versus mutable borrows, and lifetimes — taught against account-shaped signatures instead of toy strings, and with the compiler as the teacher. You read four real borrow-checker errors (E0382, E0502, E0499, and a reference outliving its local) and repair each one. You leave with three functions compiling in your own file — `balance_of(&VaultLike) -> u64`, `credit(&mut VaultLike, u64)` and `discriminator(&[u8]) -> Option<&[u8]>`, a real borrowed reader over Anchor's 8-byte discriminator. The first two are the exact method receivers you write in module 4, and the `'info` in `Account<'info, Vault>` stops being noise.",
-        "key": "rpd-ownership-borrowing-lifetimes",
-        "lessons": [
-          {
-            "_key": "lesson-rpd-moves-copy-and-clone",
-            "_ref": "lesson-rpd-moves-copy-and-clone",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-rpd-borrowing-shared-vs-mutable",
-            "_ref": "lesson-rpd-borrowing-shared-vs-mutable",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-rpd-fix-the-borrow-checker",
-            "_ref": "lesson-rpd-fix-the-borrow-checker",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-rpd-lifetimes-and-slices",
-            "_ref": "lesson-rpd-lifetimes-and-slices",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-rpd-ownership-checkpoint",
-            "_ref": "lesson-rpd-ownership-checkpoint",
-            "_type": "reference",
-            "_weak": true
-          }
-        ],
-        "title": "Ownership, Borrowing, Lifetimes"
-      },
-      {
-        "_key": "rpd-modeling-state",
-        "_type": "courseModule",
-        "description": "The vault's data model, compiling. Define `VaultState` and hand-write one of the traits `#[derive]` would have generated, so the macro stops being magic and the byte layout stops being a mystery. Define `VaultError`, then add a fifth variant just to watch the compiler enumerate every site you failed to handle. Finally, replace panics with `Result` and let `?` carry errors up a chain of fallible functions, converting between error types on the way through.",
-        "key": "rpd-modeling-state",
-        "lessons": [
-          {
-            "_key": "lesson-rpd-structs-traits-and-derives",
-            "_ref": "lesson-rpd-structs-traits-and-derives",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-rpd-enums-option-result",
-            "_ref": "lesson-rpd-enums-option-result",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-rpd-error-plumbing",
-            "_ref": "lesson-rpd-error-plumbing",
-            "_type": "reference",
-            "_weak": true
-          }
-        ],
-        "title": "Modeling State: Structs, Enums, Result"
-      },
-      {
-        "_key": "rpd-the-vault-core",
-        "_type": "courseModule",
-        "description": "Write the whole core — `VaultState`, checked `deposit` and `withdraw`, `VaultError`, an inline `mod` and its `use` — first by completing a given skeleton, then from signatures alone against a fixed verification harness you are not allowed to edit. You close by rereading your own file line by line, mapping each line back to the lesson that produced it, and copying it out. `vault_core.rs` is the named input to Course 3.",
-        "key": "rpd-the-vault-core",
-        "lessons": [
-          {
-            "_key": "lesson-rpd-build-the-vault-core",
-            "_ref": "lesson-rpd-build-the-vault-core",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-rpd-what-you-built",
-            "_ref": "lesson-rpd-what-you-built",
-            "_type": "reference",
-            "_weak": true
-          }
-        ],
-        "title": "The Vault Core"
-      }
-    ],
-    "slug": {
-      "_type": "slug",
-      "current": "rust-for-program-devs"
-    },
-    "tags": [
-      "account-layout",
-      "anchor",
-      "borsh-serialization",
-      "build-server",
-      "checked-arithmetic",
-      "compiler-errors",
-      "debugging",
-      "error-handling",
-      "pdas",
-      "program-security",
-      "rust",
-      "rust-borrowing",
-      "rust-control-flow",
-      "rust-enums",
-      "rust-lifetimes",
-      "rust-modules",
-      "rust-move-semantics",
-      "rust-option",
-      "rust-ownership",
-      "rust-result",
-      "rust-slices",
-      "rust-structs",
-      "rust-traits",
-      "rust-types",
-      "toolchain-versions"
-    ],
-    "title": "Rust for Program Developers",
-    "trackId": 1,
-    "trackLevel": 2,
-    "xpPerLesson": 20,
-    "xpReward": 800
-  },
-  {
-    "_id": "course-solana-for-evm-devs",
-    "_type": "course",
-    "creator": "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF",
-    "creatorRewardXp": 30,
-    "description": "You already ship on the EVM. You know why `msg.sender` is trustworthy, what a `mapping` costs you, and how a revert unwinds state. None of that knowledge is wasted here — but almost all of it is filed in the wrong drawer. This course re-files it. Storage becomes accounts you allocate and pay rent for. A `mapping` becomes a program-derived address you compute off-chain before you ever send a transaction. `msg.sender` becomes a list of signers the runtime verified before your code ran. Gas becomes a compute budget you can measure and a priority fee you set separately. `approve` becomes a delegate that can be revoked. You finish able to read a Solana transaction and say what it touches, what it costs, and who authorized it — without translating it back into Solidity first. Version stamp — `@solana/kit` 7.0.0 · `@solana-program/compute-budget` 0.17.0 · `@solana-program/token` 0.15.0 · `anchor-lang` 1.1.2 · authored 2026-07-30.",
-    "difficulty": "intermediate",
-    "duration": 6,
-    "minCompletionsForReward": 10,
-    "modules": [
-      {
-        "_key": "sfe-state",
-        "_type": "courseModule",
-        "description": "The single largest mental move: a Solana program owns no storage. Code and state are different accounts, state is allocated with a size you choose and paid for with rent, and the `mapping` you would have reached for becomes an address you derive. Get this module wrong and everything after it reads as arbitrary.",
-        "key": "sfe-state",
-        "lessons": [
-          {
-            "_key": "lesson-sfe-storage-to-accounts",
-            "_ref": "lesson-sfe-storage-to-accounts",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-sfe-rent-and-space",
-            "_ref": "lesson-sfe-rent-and-space",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-sfe-mappings-to-pdas",
-            "_ref": "lesson-sfe-mappings-to-pdas",
-            "_type": "reference",
-            "_weak": true
-          }
-        ],
-        "title": "State Lives in Accounts"
-      },
-      {
-        "_key": "sfe-execution",
-        "_type": "courseModule",
-        "description": "Who authorized this, what will it touch, and what does it cost — three questions the EVM answers implicitly and Solana makes you answer up front. `msg.sender` becomes a verified signer list, gas becomes a compute budget priced separately from priority, and the account list you must declare in advance is the reason transactions can run in parallel.",
-        "key": "sfe-execution",
-        "lessons": [
-          {
-            "_key": "lesson-sfe-msg-sender-to-signers",
-            "_ref": "lesson-sfe-msg-sender-to-signers",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-sfe-gas-to-compute-units",
-            "_ref": "lesson-sfe-gas-to-compute-units",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-sfe-declared-accounts",
-            "_ref": "lesson-sfe-declared-accounts",
-            "_type": "reference",
-            "_weak": true
-          }
-        ],
-        "title": "Execution, Signers, and Fees"
-      },
-      {
-        "_key": "sfe-tokens",
-        "_type": "courseModule",
-        "description": "ERC-20 is a contract you deploy; SPL Token is one program everybody shares, and your balance is an account it owns on your behalf. That inversion changes what a transfer is, where `approve` lives, and why composing two protocols is a CPI rather than an external call into unknown code.",
-        "key": "sfe-tokens",
-        "lessons": [
-          {
-            "_key": "lesson-sfe-erc20-to-spl",
-            "_ref": "lesson-sfe-erc20-to-spl",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-sfe-approve-to-delegate",
-            "_ref": "lesson-sfe-approve-to-delegate",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-sfe-what-changes",
-            "_ref": "lesson-sfe-what-changes",
-            "_type": "reference",
-            "_weak": true
-          }
-        ],
-        "title": "Tokens and Composability"
-      }
-    ],
-    "slug": {
-      "_type": "slug",
-      "current": "solana-for-evm-devs"
-    },
-    "tags": [
-      "account-layout",
-      "account-model",
-      "compute-budget",
-      "pdas",
-      "priority-fees",
-      "program-security",
-      "rent-and-space",
-      "signers",
-      "solana-fundamentals",
-      "spl-tokens",
-      "token-2022",
-      "transaction-fees",
-      "transactions",
-      "typescript"
-    ],
-    "title": "Solana for EVM Developers",
+    "title": "From Bitcoin to Solana: The Evolution of Blockchain Technology",
     "trackId": 0,
     "trackLevel": 0,
     "xpPerLesson": 20,
-    "xpReward": 500
+    "xpReward": 300
   },
   {
-    "_id": "course-solana-for-web-devs",
+    "_id": "course-solana-speedrun",
     "_type": "course",
-    "creator": "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF",
-    "creatorRewardXp": 30,
-    "description": "You already write JavaScript or TypeScript. That is the whole prerequisite — no blockchain, no cryptography, no Rust, nothing installed. This course runs entirely in your browser against a real, frozen program on Solana's devnet. You start by reading its live vault account in an explorer, then decode its 49 raw bytes by hand — discriminator, owner, balance, bump — then reproduce its address from seeds, so an on-chain account stops being a mystery and becomes a byte layout you own. Then you sign: transaction anatomy with the exact fee arithmetic, a funded devnet wallet of your own, and a real deposit into the vault, confirmed on-chain with the signature to prove it. You finish by assembling everything into a working account inspector — paste any devnet address, get type, SOL, owner, rent-exemption, and decoded vault fields with every failure path handled. Everything is taught against `@solana/kit` 7.0.0, the current stack; one lesson maps it against the legacy web3.js v1 code you will still meet in the wild, with dates and download counts, so you can read old codebases without writing like them. Version stamp — kit 7.0.0, devnet, authored 2026-07-28.",
+    "creator": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
+    "creatorRewardXp": 0,
+    "description": "Por que o sistema financeiro está migrando para a Solana, como a tecnologia funciona de verdade, e seu primeiro ativo na mainnet — em menos de 10 minutos.",
     "difficulty": "beginner",
-    "duration": 6,
-    "minCompletionsForReward": 10,
+    "duration": 4,
+    "minCompletionsForReward": 0,
     "modules": [
       {
-        "_key": "sfwd-read-the-chain",
+        "_key": "speedrun",
         "_type": "courseModule",
-        "description": "Point at a real devnet program and take its state apart. You read the live vault in an explorer without writing a line of code, then fetch the same account over RPC and decode its 49 bytes by hand — 8-byte discriminator, 32-byte owner, little-endian u64 balance, bump — and then reproduce the vault's address from its seeds and watch a wrong seed order produce a different address. You end holding a working `decodeVault` you wrote yourself, over bytes recorded from the real account. That decoder is the core of the inspector you ship in module 3, and the exact layout that becomes a Rust struct in Course 2.",
-        "key": "sfwd-read-the-chain",
+        "key": "speedrun",
         "lessons": [
           {
-            "_key": "lesson-sfwd-see-a-live-vault",
-            "_ref": "lesson-sfwd-see-a-live-vault",
+            "_key": "lesson-ssr-por-que-solana",
+            "_ref": "lesson-ssr-por-que-solana",
             "_type": "reference",
             "_weak": true
           },
           {
-            "_key": "lesson-sfwd-accounts-are-just-bytes",
-            "_ref": "lesson-sfwd-accounts-are-just-bytes",
+            "_key": "lesson-ssr-como-funciona",
+            "_ref": "lesson-ssr-como-funciona",
             "_type": "reference",
             "_weak": true
           },
           {
-            "_key": "lesson-sfwd-derive-the-vault-pda",
-            "_ref": "lesson-sfwd-derive-the-vault-pda",
+            "_key": "lesson-ssr-superteam-porta-de-entrada",
+            "_ref": "lesson-ssr-superteam-porta-de-entrada",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-ssr-seu-momento-onchain",
+            "_ref": "lesson-ssr-seu-momento-onchain",
             "_type": "reference",
             "_weak": true
           }
         ],
-        "title": "Read the Chain"
-      },
-      {
-        "_key": "sfwd-sign-your-own-transaction",
-        "_type": "courseModule",
-        "description": "Stop reading and start writing. You take a complete Kit transaction apart and predict its exact cost before it runs — 5,000 lamports per signature plus price times the REQUESTED compute-unit limit — then map the current stack against the legacy web3.js v1 code that still floods npm and every old codebase, so you can read the wild without importing it. Then the real thing: connect a wallet through Wallet Standard, fund it on devnet, and sign a deposit into the very vault you spent module 1 decoding — accounts in IDL order, discriminator plus little-endian amount, confirmed on-chain with an explorer signature on your profile.",
-        "key": "sfwd-sign-your-own-transaction",
-        "lessons": [
-          {
-            "_key": "lesson-sfwd-anatomy-of-a-transaction",
-            "_ref": "lesson-sfwd-anatomy-of-a-transaction",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-sfwd-kit-or-legacy",
-            "_ref": "lesson-sfwd-kit-or-legacy",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-sfwd-connect-fund-and-send",
-            "_ref": "lesson-sfwd-connect-fund-and-send",
-            "_type": "reference",
-            "_weak": true
-          }
-        ],
-        "title": "Sign Your Own Transaction"
-      },
-      {
-        "_key": "sfwd-publish-the-inspector",
-        "_type": "courseModule",
-        "description": "Assemble RPC read, byte decode, and PDA derivation into one working inspector: give it any devnet address and it answers — account type, SOL, owner, rent-exemption, and decoded vault fields when the owner and discriminator check out. The grade lives in the failure paths: accounts that do not exist, accounts with no data, accounts that only look like vaults. Two graded rungs — first complete the branch table, then write the decode path unaided against fixtures recorded from real devnet accounts. Close by naming every artifact you built and exactly which one Course 2 picks up.",
-        "key": "sfwd-publish-the-inspector",
-        "lessons": [
-          {
-            "_key": "lesson-sfwd-ship-the-inspector",
-            "_ref": "lesson-sfwd-ship-the-inspector",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-sfwd-what-you-built",
-            "_ref": "lesson-sfwd-what-you-built",
-            "_type": "reference",
-            "_weak": true
-          }
-        ],
-        "title": "Publish the Inspector"
+        "title": "Speedrun: da tese ao seu primeiro ativo onchain"
       }
     ],
     "slug": {
       "_type": "slug",
-      "current": "solana-for-web-devs"
+      "current": "solana-speedrun"
     },
     "tags": [
       "account-model",
-      "api-currency",
-      "borsh-serialization",
-      "compute-budget",
-      "confirmation",
-      "error-handling",
-      "explorer-reading",
       "keypairs-wallets",
-      "pdas",
-      "rpc-reads",
-      "solana-kit",
-      "transaction-fees",
-      "transactions",
-      "wallet-standard"
+      "solana-fundamentals",
+      "transactions"
     ],
-    "title": "Solana for Web Devs",
-    "trackId": 1,
-    "trackLevel": 1,
-    "xpPerLesson": 10,
-    "xpReward": 500
-  },
-  {
-    "_id": "course-stablecoin-payments",
-    "_type": "course",
-    "creator": "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF",
-    "creatorRewardXp": 30,
-    "description": "Put a price on an app that earns nothing. If you came through Course 4 that app is the vault you deployed and published a client for; if you are starting here, this is the segment's entry point and a frozen reference deployment stands in for it. Open a Subscription Authority and a Recurring Delegation so the app has a real paid tier, meter a route with an x402 v2 challenge, and give an autonomous agent a wallet that can say no — an on-chain spend cap instead of an unlimited keypair. TypeScript only, no Rust and no local toolchain. You finish by publishing a version-pinned deep dive and submitting one live Superteam Earn listing. Scope is what BCB Resolution 561 leaves open to Brazilian builders from 2026-10-01, domestic merchant acceptance, contractor payouts, subscriptions and agent budgets.",
-    "difficulty": "intermediate",
-    "duration": 10,
-    "minCompletionsForReward": 10,
-    "modules": [
-      {
-        "_key": "sap-paid-tier",
-        "_type": "courseModule",
-        "description": "Pick the rail your requirement actually needs, decide between Token and Token-2022 for the payment mint, then open a Subscription Authority and a Recurring Delegation on devnet. You end holding a delegation PDA and a settlement signature for a charge that correctly refuses to run a second time inside the same period.",
-        "key": "sap-paid-tier",
-        "lessons": [
-          {
-            "_key": "lesson-sap-payment-rails-decision-map",
-            "_ref": "lesson-sap-payment-rails-decision-map",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-sap-token-or-token-2022",
-            "_ref": "lesson-sap-token-or-token-2022",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-sap-subscription-authority-and-allowance",
-            "_ref": "lesson-sap-subscription-authority-and-allowance",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-sap-recurring-delegation-paid-tier",
-            "_ref": "lesson-sap-recurring-delegation-paid-tier",
-            "_type": "reference",
-            "_weak": true
-          }
-        ],
-        "title": "The Paid Tier"
-      },
-      {
-        "_key": "sap-metered-agentic",
-        "_type": "courseModule",
-        "description": "Price one route so it returns a real 402 challenge, read a challenge and pay it programmatically across both live protocol versions, then wire a call loop that spends only from a Fixed Delegation and halts cleanly when the allowance refuses the next payment.",
-        "key": "sap-metered-agentic",
-        "lessons": [
-          {
-            "_key": "lesson-sap-meter-an-endpoint-with-x402",
-            "_ref": "lesson-sap-meter-an-endpoint-with-x402",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-sap-pay-the-402-programmatically",
-            "_ref": "lesson-sap-pay-the-402-programmatically",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-sap-budgeted-agent-with-a-hard-cap",
-            "_ref": "lesson-sap-budgeted-agent-with-a-hard-cap",
-            "_type": "reference",
-            "_weak": true
-          }
-        ],
-        "title": "Metered & Agentic"
-      },
-      {
-        "_key": "sap-get-paid",
-        "_type": "courseModule",
-        "description": "Publish a technical deep dive in the shape Superteam chapters pay for — dated, version-pinned, reproducible — then submit one live Earn listing and name every layer of the artifact you built, from your first signed transaction to a metered endpoint an agent pays for.",
-        "key": "sap-get-paid",
-        "lessons": [
-          {
-            "_key": "lesson-sap-write-the-deep-dive",
-            "_ref": "lesson-sap-write-the-deep-dive",
-            "_type": "reference",
-            "_weak": true
-          },
-          {
-            "_key": "lesson-sap-submit-and-what-you-built",
-            "_ref": "lesson-sap-submit-and-what-you-built",
-            "_type": "reference",
-            "_weak": true
-          }
-        ],
-        "title": "Get Paid"
-      }
-    ],
-    "slug": {
-      "_type": "slug",
-      "current": "stablecoin-agentic-payments"
-    },
-    "tags": [
-      "agent-budgets",
-      "api-monetization",
-      "brazil-compliance",
-      "earn-submission",
-      "error-handling",
-      "fixed-delegation",
-      "payment-model-selection",
-      "pdas",
-      "protocol-versioning",
-      "recurring-delegation",
-      "solana-kit",
-      "solana-pay",
-      "spl-tokens",
-      "subscription-authority",
-      "subscriptions-program",
-      "technical-writing",
-      "token-2022",
-      "version-pinning",
-      "x402-protocol"
-    ],
-    "title": "Getting Paid: Stablecoin & Agentic Payments",
-    "trackId": 1,
-    "trackLevel": 5,
-    "xpPerLesson": 25,
-    "xpReward": 750
+    "title": "Solana Speedrun: Inicie sua jornada onchain em minutos",
+    "trackId": 0,
+    "trackLevel": 0,
+    "xpPerLesson": 20,
+    "xpReward": 80
   }
 ]

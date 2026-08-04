@@ -34,30 +34,17 @@ export const LEARNER = {
 //   • synced + is_active:false  → ABSENT  (a DEACTIVATED course — the #711 leak)
 //   • no row                    → ABSENT  (fail-closed)
 // content_id values are real bundle course ids; the catalog renders their slugs.
-// The bundle carries 6 courses: the on-chain ladder (C2/C3/C4/C5) plus C1
-// `course-solana-for-web-devs` and the elective `course-solana-for-evm-devs`,
-// which are STAGED ONLY — no deployment row, so they fall in the "no row →
-// ABSENT" bucket and need no fixture entry until their on-chain create. Three
-// rows are synced+active; one live bundle course is marked is_active:false so
-// the spec keeps its two-directional assertion (present set AND a deactivated
-// absentee).
+// The public-alpha bundle carries exactly 2 courses (the track-1 ladder is
+// parked under `_draft/` in academy-courses), so the fixture is one of each
+// bucket: the flagship synced+active, the speedrun synced+is_active:false. That
+// is the minimum that keeps the spec's two-directional assertion — a present set
+// AND a deactivated absentee — and both rows are real live bundle courses, so
+// neither side can pass because the id simply does not exist. (Nothing filters
+// the catalog by language, so the PT-BR speedrun is absent for the is_active
+// reason and no other.)
 export const DEPLOYMENTS = [
   {
-    content_id: "course-building-first-program",
-    kind: "course",
-    status: "synced",
-    is_active: true,
-    achievement_pda: null,
-  },
-  {
-    content_id: "course-rust-for-program-devs",
-    kind: "course",
-    status: "synced",
-    is_active: true,
-    achievement_pda: null,
-  },
-  {
-    content_id: "course-dapp-sdk-kit",
+    content_id: "course-btc-to-sol-evolution",
     kind: "course",
     status: "synced",
     is_active: true,
@@ -67,7 +54,7 @@ export const DEPLOYMENTS = [
   // permanent guard that a deactivated course can never leak back in. It is a
   // real live bundle course, gated out only by is_active:false.
   {
-    content_id: "course-stablecoin-payments",
+    content_id: "course-solana-speedrun",
     kind: "course",
     status: "synced",
     is_active: false,
@@ -77,17 +64,21 @@ export const DEPLOYMENTS = [
 
 // Slugs the specs assert on (kept next to the ids they map to, so a bundle rename
 // is caught here rather than silently passing).
-export const ACTIVE_COURSE_SLUGS = [
-  "building-your-first-solana-program",
-  "rust-for-program-devs",
-  "dapp-and-sdk-with-kit",
-];
-export const DEACTIVATED_COURSE_SLUG = "stablecoin-agentic-payments";
+export const ACTIVE_COURSE_SLUGS = ["btc-to-sol-evolution"];
+export const DEACTIVATED_COURSE_SLUG = "solana-speedrun";
 
-// The learn-loop target (spec 1): a quiz-only lesson with a known answer key.
+// The learn-loop target (specs 1 and 4): a quiz-only lesson (prose + quiz, no
+// code block) in the active flagship. `answers` is the real answer key read off
+// the compiled bundle — the correct option differs per question, so the stepper
+// helper takes the pairs rather than one option letter for the whole quiz.
 export const LEARN_LOOP = {
-  courseId: "course-building-first-program",
-  courseSlug: "building-your-first-solana-program",
-  lessonId: "lesson-bfsp-on-chain-state",
-  lessonSlug: "accounts-are-just-bytes",
+  courseId: "course-btc-to-sol-evolution",
+  courseSlug: "btc-to-sol-evolution",
+  lessonId: "lesson-b2s-hash-everything",
+  lessonSlug: "hash-everything",
+  answers: [
+    ["q1", "b"],
+    ["q2", "a"],
+    ["q3", "c"],
+  ],
 };

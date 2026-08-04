@@ -8,6 +8,22 @@ vi.mock("@/lib/content/queries", () => ({
   getCourseLessons: vi.fn(),
 }));
 
+// The routing TABLE is mocked with three DISTINCT synthetic entries; this suite
+// is about `resolveSegmentRoutes` — that each segment resolves independently and
+// that one dead entry degrades only its own segment. Proving that needs entries
+// that differ, and for the public alpha the real table points every segment at
+// the one live flagship (see the TODO in learner-segment.ts), which would make
+// the per-segment cases below indistinguishable. The REAL table is asserted
+// against the REAL bundle in lib/courses/__tests__/entry-course-live.test.ts —
+// that is where a bad entry id is caught, not here.
+vi.mock("@/lib/courses/learner-segment", () => ({
+  SEGMENT_ENTRY_COURSE: {
+    1: "course-seg1-entry",
+    2: "course-seg2-entry",
+    3: "course-seg3-entry",
+  },
+}));
+
 const byId = vi.mocked(getCourseById);
 const lessonsOf = vi.mocked(getCourseLessons);
 

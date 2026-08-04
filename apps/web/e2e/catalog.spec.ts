@@ -8,7 +8,7 @@ import {
 //
 // Anonymous `/en/courses` must render EXACTLY the active-course set. The gate
 // (lib/content/deployments.isSynced) is fed by the mock's fixed
-// `public_onchain_deployments` fixture: three courses synced+active, one
+// `public_onchain_deployments` fixture: one course synced+active, one
 // synced+is_active:false. This spec is the standing proof that a DEACTIVATED
 // course can never leak back into the catalog — the shape of the #711 bug.
 //

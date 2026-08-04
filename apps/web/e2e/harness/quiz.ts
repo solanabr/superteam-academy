@@ -12,18 +12,24 @@ const { quizCheck, quizNext } = messages.lesson;
  * Exercises the real QuizBlock: selection drives ctx.setProof, Check drives
  * the per-question verdict, and checking every question flips the block's
  * answered gate.
+ *
+ * `answers` is [questionId, optionId] pairs in the quiz's own order. Per-question
+ * rather than one option letter for the whole quiz: real authored quizzes vary
+ * which option is correct, and answering CORRECTLY is what keeps the loop
+ * faithful — a wrong-but-checked answer would still flip the gate and quietly
+ * stop testing the graded path.
  */
 export async function answerQuizStepper(
   page: Page,
-  questionIds: readonly string[],
-  optionValue = "a"
+  answers: ReadonlyArray<readonly [string, string]>
 ): Promise<void> {
-  for (let i = 0; i < questionIds.length; i++) {
+  for (let i = 0; i < answers.length; i++) {
+    const [questionId, optionId] = answers[i]!;
     await page
-      .locator(`input[name="${questionIds[i]}"][value="${optionValue}"]`)
+      .locator(`input[name="${questionId}"][value="${optionId}"]`)
       .check();
     await page.getByRole("button", { name: quizCheck }).click();
-    if (i < questionIds.length - 1) {
+    if (i < answers.length - 1) {
       await page.getByRole("button", { name: quizNext }).click();
     }
   }

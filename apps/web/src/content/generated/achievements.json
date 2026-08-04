@@ -1,22 +1,5 @@
 [
   {
-    "_id": "achievement-anchor-expert",
-    "_type": "achievement",
-    "award": {
-      "course": "course-building-first-program",
-      "kind": "course-completed"
-    },
-    "category": "skills",
-    "description": "Complete all Anchor framework lessons",
-    "glyph": "⬡",
-    "icon": "anchor",
-    "maxSupply": 0,
-    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-anchor-expert",
-    "name": "Anchor Expert",
-    "solTier": false,
-    "xpReward": 300
-  },
-  {
     "_id": "achievement-bug-hunter",
     "_type": "achievement",
     "award": {
@@ -53,7 +36,7 @@
     "_id": "achievement-course-completer",
     "_type": "achievement",
     "award": {
-      "course": "course-solana-for-web-devs",
+      "course": "course-btc-to-sol-evolution",
       "kind": "course-completed"
     },
     "category": "progress",
@@ -101,23 +84,6 @@
     "xpReward": 50
   },
   {
-    "_id": "achievement-full-stack-solana",
-    "_type": "achievement",
-    "award": {
-      "kind": "path-completed",
-      "path": "path-zero-to-deployed"
-    },
-    "category": "skills",
-    "description": "Complete every course in the Zero to Deployed path",
-    "glyph": "◎",
-    "icon": "layers",
-    "maxSupply": 0,
-    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-full-stack-solana",
-    "name": "Full Stack Solana",
-    "solTier": true,
-    "xpReward": 500
-  },
-  {
     "_id": "achievement-monthly-master",
     "_type": "achievement",
     "award": {
@@ -133,24 +99,6 @@
     "name": "Monthly Master",
     "solTier": false,
     "xpReward": 300
-  },
-  {
-    "_id": "achievement-rust-rookie",
-    "_type": "achievement",
-    "award": {
-      "course": "course-rust-for-program-devs",
-      "gte": 1,
-      "kind": "lessons-completed-in-course"
-    },
-    "category": "skills",
-    "description": "Complete your first Rust challenge",
-    "glyph": "Rs",
-    "icon": "code",
-    "maxSupply": 0,
-    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-rust-rookie",
-    "name": "Rust Rookie",
-    "solTier": false,
-    "xpReward": 150
   },
   {
     "_id": "achievement-week-warrior",

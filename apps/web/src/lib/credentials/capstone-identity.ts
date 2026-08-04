@@ -30,6 +30,25 @@
 // becoming membership tests. Every consumer already goes through those two
 // predicates rather than comparing the constant inline, so that change is local
 // to this file. Do NOT pre-build a registry for one entry.
+//
+// DORMANT until track-1 restores (public alpha, 2026-08-04). C3 is parked under
+// `_draft/` in academy-courses, so neither id below is in the compiled bundle
+// and the alpha catalog hosts no `deployed-program-card` block at all. The
+// constant stays PINNED to C3 on purpose rather than being retargeted or
+// emptied:
+//   - pinned, both predicates answer `false` for every live course/lesson, so
+//     the alpha catalog issues credentials ungated (correct — nothing in it is
+//     a graded deploy) and every alpha lesson keeps its AI partner;
+//   - the parked C3 id still answers `true`, so if a stale on-chain finalize
+//     for C3 reaches a credential path it hits `deploy_required` and is
+//     withheld, which is the fail-closed direction;
+//   - retargeting it at an alpha course would gate that course's credential on
+//     a deploy lesson that does not exist — permanently un-mintable — and would
+//     switch AI off on a lesson that is not graded.
+// Every credential path is independently fail-closed on a non-bundle course
+// (mint route 404s, the webhook returns without issuing, the retry queue
+// throws), and `capstone-funnel` reports `dormant` instead of a misleading
+// `idle`. Asserted in `__tests__/capstone-gate.test.ts`.
 
 export const CAPSTONE_CREDENTIAL = {
   courseId: "course-building-first-program",
