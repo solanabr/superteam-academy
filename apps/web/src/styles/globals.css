@@ -4140,7 +4140,18 @@ a.path-step-card:hover .path-step-badge.skip {
 .cert-slim .cert-body {
   display: flex;
   flex-direction: column;
-  min-height: 150px;
+  min-height: 170px;
+}
+/* Meta stacks RECIPIENT over COMPLETED on the left; MINT holds the right
+   column — squarer 4-up cards read top-down (owner, 04-08). */
+.cert-slim .cert-meta-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px 16px;
+}
+.cert-slim .cert-meta-item:nth-child(3) {
+  grid-column: 2;
+  grid-row: 1 / span 2;
 }
 .cert-slim .cert-divider {
   margin-top: auto;
