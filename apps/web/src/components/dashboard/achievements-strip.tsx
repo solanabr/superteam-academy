@@ -1,8 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import Link from "next/link";
-import { useTranslations, useLocale } from "next-intl";
+import { useTranslations } from "next-intl";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { AchievementToken } from "@/components/gamification/dashboard-identity-panel";
 import type { AchievementDefinition } from "@/lib/gamification";
@@ -28,7 +27,6 @@ export function AchievementsStrip({
   catalog,
 }: AchievementsStripProps) {
   const t = useTranslations("gamification");
-  const locale = useLocale();
   const unlockedSet = useMemo(
     () => new Set(unlockedAchievementIds),
     [unlockedAchievementIds]
@@ -59,15 +57,12 @@ export function AchievementsStrip({
           <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
             {t("yourAchievements")}
           </p>
-          <Link
-            href={`/${locale}/profile`}
-            className="font-mono text-[10px] uppercase tracking-[1px] text-text-3 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-          >
+          <span className="font-mono text-[10px] uppercase tracking-[1px] text-text-3">
             {t("ofUnlocked", {
               count: achievementsCount,
               total: catalog.length,
             })}
-          </Link>
+          </span>
         </div>
         <Tooltip.Provider delayDuration={0} skipDelayDuration={150}>
           <div className="ach-strip-row">
