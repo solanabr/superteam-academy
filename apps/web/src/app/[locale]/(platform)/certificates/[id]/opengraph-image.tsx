@@ -122,6 +122,9 @@ export default async function Image(props: {
                   "linear-gradient(90deg, rgba(10,112,85,0.35), rgba(10,112,85,0))",
               }}
             />
+            <span style={{ fontSize: 24, fontWeight: 800, color: GREEN }}>
+              Superteam Academy
+            </span>
           </div>
 
           <span
@@ -190,17 +193,6 @@ export default async function Image(props: {
                 </span>
               </div>
             ) : null}
-            <div style={{ display: "flex", flex: 1 }} />
-            <div
-              style={{
-                display: "flex",
-                alignItems: "flex-end",
-              }}
-            >
-              <span style={{ fontSize: 26, fontWeight: 800, color: GREEN }}>
-                Superteam Academy
-              </span>
-            </div>
           </div>
         </div>
       </div>
