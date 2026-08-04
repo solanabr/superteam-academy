@@ -4069,7 +4069,7 @@ a.path-step-card:hover .path-step-badge.skip {
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--border-default) transparent;
-  gap: 10px;
+  gap: 5px;
 }
 .lb-list-mini .lb-row {
   padding: 6px 10px;

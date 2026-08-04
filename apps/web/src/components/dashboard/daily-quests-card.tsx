@@ -74,7 +74,7 @@ export function DailyQuestsCard({
       {/* The rail shows the whole set — no drag-scroll viewport like the old
           panel slot needed; the list is three-ish rows tall. */}
       <Tooltip.Provider delayDuration={150} skipDelayDuration={150}>
-        <div className="flex flex-col gap-2.5">
+        <div className="flex flex-col gap-[5px]">
           {quests.map((quest) => {
             const IconComp = getQuestIcon(quest.icon);
             const href = questHref(quest.type, locale);
