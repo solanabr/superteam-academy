@@ -46,12 +46,15 @@ export function ReviewStrip({ userId }: ReviewStripProps) {
         const lessons = await getLessonsByIds(due.map((d) => d.item_key));
         if (!active) return;
         const byId = new Map(lessons.map((l) => [l._id, l.title]));
-        setTitles(
-          due
-            .map((d) => byId.get(d.item_key))
-            .filter((x): x is string => Boolean(x))
-        );
-        setCount(due.length);
+        // Count only items the bundle can actually name (and the session can
+        // actually serve) — orphaned keys from retired courses (#977) would
+        // otherwise inflate the badge into an unexplainable number. Nothing
+        // resolvable → no card at all.
+        const resolved = due
+          .map((d) => byId.get(d.item_key))
+          .filter((x): x is string => Boolean(x));
+        setTitles(resolved);
+        setCount(resolved.length);
       } catch {
         if (active) {
           setCount(0);

@@ -4050,6 +4050,33 @@ a.path-step-card:hover .path-step-badge.skip {
 }
 
 /* Bottom row — heatmap bigger, quests smaller (flipped from top) */
+/* Dashboard league card: mini rows, at most ~6 visible, scroll beyond. */
+.lb-list-mini {
+  max-height: 248px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-default) transparent;
+}
+.lb-list-mini .lb-row {
+  padding: 5px 10px;
+  gap: 9px;
+  border-width: 1.5px;
+  box-shadow: none;
+}
+.lb-list-mini .lb-av {
+  width: 26px;
+  height: 26px;
+}
+.lb-list-mini .lb-name {
+  font-size: 13px;
+}
+.lb-list-mini .lb-rank {
+  font-size: 11px;
+}
+.lb-list-mini .lb-xp {
+  font-size: 12px;
+}
+
 /* Achievements strip: earned + next goals on one line, names in tooltips.
    No wrapping — overflow scrolls horizontally (owner call 04-08). */
 .ach-strip-row {
@@ -4099,8 +4126,25 @@ a.path-step-card:hover .path-step-badge.skip {
   .dash-split {
     grid-template-columns: minmax(0, 290px) minmax(0, 1fr);
   }
+  /* Soft divider: a hairline that fades at both ends — a full-height rule
+     read too hard against the panel's ambient softness (owner, 04-08). */
   .dash-split .dash-identity {
-    border-right: 1px solid var(--border);
+    position: relative;
+  }
+  .dash-split .dash-identity::after {
+    content: "";
+    position: absolute;
+    top: 14%;
+    bottom: 14%;
+    right: 0;
+    width: 1px;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      var(--border) 30%,
+      var(--border) 70%,
+      transparent
+    );
   }
 }
 @media (max-width: 899px) {

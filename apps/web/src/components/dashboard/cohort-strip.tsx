@@ -112,7 +112,7 @@ export function CohortStrip({ userId }: CohortStripProps) {
         </Link>
       </div>
 
-      <div className="lb-list lb-list-compact">
+      <div className="lb-list lb-list-compact lb-list-mini">
         {league.entries.map((entry, i) => (
           <CohortRow
             key={entry.rank}
