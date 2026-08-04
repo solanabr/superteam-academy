@@ -26,6 +26,7 @@ interface ProfileHeroPanelProps {
     level: number;
     coursesCompleted: number;
     certificatesCount: number;
+    lessonsCompleted: number;
   };
   achievements: Achievement[];
   deployedAchievements: DeployedAchievement[];
@@ -159,8 +160,8 @@ export function ProfileHeroPanel({
           <div className="prof-stat-key">{t("coursesCompleted")}</div>
         </div>
         <div className="prof-stat">
-          <div className="prof-stat-val">{stats.certificatesCount}</div>
-          <div className="prof-stat-key">{t("certificatesEarned")}</div>
+          <div className="prof-stat-val">{stats.lessonsCompleted}</div>
+          <div className="prof-stat-key">{t("lessonsCompleted")}</div>
         </div>
         <div className="prof-stat">
           <div className="prof-stat-val">

@@ -94,32 +94,23 @@ export function ProfileBody({
                   <Link
                     key={cert.id}
                     href={`/${locale}/certificates/${cert.id}`}
-                    className="group"
+                    className="hover:border-primary/40 block rounded-xl border border-border bg-card p-4 shadow-card transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                   >
-                    <div className={CS.gradCard || "grad-card"}>
-                      <div className={CS.gradCardInner || "grad-card-inner"}>
-                        <div className={CS.gradCardBody || "grad-card-body"}>
-                          <p className="font-display text-[15px] font-extrabold leading-snug text-text">
-                            {cert.courseTitle}
-                          </p>
-                          <p className="mt-1 font-body text-[13px] text-text-2">
-                            {user.username}
-                            <span className="mx-1.5 text-text-3">&middot;</span>
-                            {cert.mintedAt.toLocaleDateString()}
-                          </p>
-                          <div className="mt-3">
-                            <span className={CS.proofPill}>
-                              <span
-                                className={CS.proofDot}
-                                aria-hidden="true"
-                              />
-                              {cert.mintAddress
-                                ? truncateAddress(cert.mintAddress)
-                                : tCerts("onChain")}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
+                    <div className="flex items-baseline justify-between gap-3">
+                      <p className="min-w-0 truncate font-display text-[13px] font-extrabold text-text">
+                        {cert.courseTitle}
+                      </p>
+                      <span className="shrink-0 font-mono text-[10px] uppercase tracking-[1px] text-text-3">
+                        {cert.mintedAt.toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div className="mt-2.5">
+                      <span className={CS.proofPill}>
+                        <span className={CS.proofDot} aria-hidden="true" />
+                        {cert.mintAddress
+                          ? truncateAddress(cert.mintAddress)
+                          : tCerts("onChain")}
+                      </span>
                     </div>
                   </Link>
                 ))}

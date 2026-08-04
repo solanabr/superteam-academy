@@ -33,6 +33,9 @@ export interface ProfileStats {
   level: number;
   coursesCompleted: number;
   certificatesCount: number;
+  /** Completed lessons — the always-meaningful volume stat (04-08); the
+   *  certificates count lives with the certificates section instead. */
+  lessonsCompleted: number;
 }
 
 export interface ProfileSkillItem {
@@ -203,6 +206,7 @@ function statsFrom(
     level,
     coursesCompleted: content.completedCourses.length,
     certificatesCount: content.certificates.length,
+    lessonsCompleted: content.totalLessons,
   };
 }
 

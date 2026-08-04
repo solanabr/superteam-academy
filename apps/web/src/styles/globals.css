@@ -4109,6 +4109,13 @@ a.path-step-card:hover .path-step-badge.skip {
   font-size: 12px;
 }
 
+/* Rail-card variant of the achievement wall (profile 04-08): three columns
+   inside the 340px rail — the page-level 6-column grid overflowed the card. */
+.ach-grid--compact {
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 12px !important;
+}
+
 /* Achievements strip: earned + next goals on one line, names in tooltips.
    No wrapping — overflow scrolls horizontally (owner call 04-08). */
 .ach-strip-row {
@@ -4604,9 +4611,26 @@ a.path-step-card:hover .path-step-badge.skip {
   }
 }
 @media (min-width: 768px) {
+  /* Faded hairline, same as the dashboard identity band — a full-height rule
+     read too hard against the panel's ambient softness (owner, 04-08). */
   .prof-identity {
     border-bottom: none;
-    border-right: 1px solid var(--border);
+    position: relative;
+  }
+  .prof-identity::after {
+    content: "";
+    position: absolute;
+    top: 14%;
+    bottom: 14%;
+    right: 0;
+    width: 1px;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      var(--border) 30%,
+      var(--border) 70%,
+      transparent
+    );
   }
 }
 .prof-xp {

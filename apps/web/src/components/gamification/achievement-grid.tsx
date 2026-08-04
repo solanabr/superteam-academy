@@ -165,7 +165,7 @@ export function AchievementGrid({
 
       {/* Badge wall */}
       {sorted.length > 0 ? (
-        <div className="ach-grid">
+        <div className={cn("ach-grid", compact && "ach-grid--compact")}>
           {sorted.map((def) => (
             <AchievementCard
               key={def.id}
