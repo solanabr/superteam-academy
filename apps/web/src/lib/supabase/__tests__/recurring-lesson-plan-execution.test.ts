@@ -420,6 +420,38 @@ describe("recurring plans GREEN — claim gates on `days[]` alone", () => {
     }
   });
 
+  it("the DOCUMENTED lenient shapes match, and still send only once", async () => {
+    // `?` is "key OR element exists", so beyond an array of strings it also
+    // matches a top-level scalar string and an object's KEYS. Neither shape is
+    // written by the app; both are accepted (they still name weekdays) and
+    // neither can beat the per-day PK. Pinned so the leniency is a decision,
+    // not a discovery.
+    const lenient = [
+      // scalar string — behaves like the one day it names
+      `{"nextLesson":{"days":"${TODAY}","time":"09:00"}}`,
+      // object keyed by weekday — behaves like the array of its keys
+      `{"nextLesson":{"days":{"${TODAY}":1},"time":"09:00"}}`,
+    ];
+    for (const prefs of lenient) {
+      await db.exec(RESET);
+      await db.exec(
+        `UPDATE public.profiles SET prefs = '${prefs}'::jsonb WHERE id = '${MULTI_TODAY}'`
+      );
+      expect(ids(await claim(db))).toContain(MULTI_TODAY);
+      // …once: the second claim of the day returns nothing for them.
+      expect(ids(await claim(db))).not.toContain(MULTI_TODAY);
+      const { rows } = await db.query<{ n: number }>(
+        "SELECT count(*)::int AS n FROM public.email_reminder_log WHERE user_id = $1",
+        [MULTI_TODAY]
+      );
+      expect(rows[0]!.n).toBe(1);
+
+      // …and they are NOT due on a day they do not name.
+      await db.exec(RESET);
+      expect(ids(await claim(db, OTHER_A))).not.toContain(MULTI_TODAY);
+    }
+  });
+
   it("yesterday's ledger row does not block a daily planner today", async () => {
     // #956: anchored on the São Paulo date, NOT on (now() - interval)::date.
     await db.exec(

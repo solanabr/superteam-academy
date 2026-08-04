@@ -32,10 +32,19 @@
 -- ordering assumption. `?` yields NULL when the left side is NULL (no
 -- `nextLesson`, or no `days` inside it) and FALSE for an empty array or an array
 -- of non-strings, so a malformed/absent plan is never due — the same fail-closed
--- direction the single-day gate had. (One lenient case: Postgres's `?` also
--- matches a top-level scalar string, so a stray `"days": "tue"` behaves like the
--- one day it names. Bounded to a single day, still capped by the per-day claim,
--- so it is left alone rather than rejected.)
+-- direction the single-day gate had.
+--
+-- TWO LENIENT CASES, because `?` is "key OR element exists", not "array element
+-- exists". Both are accepted rather than rejected: each still names weekdays,
+-- and neither can produce more than the one reminder per learner per day the
+-- claim's PK allows.
+--   * a top-level scalar STRING — `"days": "tue"` matches on Tuesday, i.e. it
+--     behaves exactly like the single day it names;
+--   * a jsonb OBJECT — `"days": {"tue": 1}` matches on Tuesday, because `?`
+--     tests an object's KEYS. So an object keyed by weekday behaves like the
+--     array of its keys.
+-- Neither shape is ever written by the app; they are documented so that a
+-- reader (or a future writer) knows they are matched, not silently dropped.
 --
 -- NOT CHANGED (re-stated because CREATE OR REPLACE silently carries a body
 -- forward while a reviewer assumes otherwise):
