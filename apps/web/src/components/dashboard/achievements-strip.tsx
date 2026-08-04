@@ -12,10 +12,6 @@ interface AchievementsStripProps {
   catalog: AchievementDefinition[];
 }
 
-/** Locked tokens shown after the earned ones — the next goals, not the whole
- *  grey wall. The full set lives on the profile (the count links there). */
-const NEXT_LOCKED = 2;
-
 /**
  * Achievements as a slim main-column strip under the identity panel (04-08):
  * earned tokens first, then the next couple of locked ones as a pull. No
@@ -31,10 +27,11 @@ export function AchievementsStrip({
     () => new Set(unlockedAchievementIds),
     [unlockedAchievementIds]
   );
+  // Full catalog, earned first — the row scrolls horizontally when tight.
   const shown = useMemo(() => {
     const earned = catalog.filter((a) => unlockedSet.has(a.id));
     const locked = catalog.filter((a) => !unlockedSet.has(a.id));
-    return [...earned, ...locked.slice(0, NEXT_LOCKED)];
+    return [...earned, ...locked];
   }, [catalog, unlockedSet]);
 
   // Tap-to-show tooltip state (mobile touch support).
