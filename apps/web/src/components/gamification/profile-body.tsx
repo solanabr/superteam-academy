@@ -120,82 +120,83 @@ export function ProfileBody({
               </div>
             </section>
           )}
-
-          {/* ─── Certificates — the on-chain proof; keeps the Solana-gradient
-              frame (the one deliberate brand-gradient surface). ─── */}
-          {content.certificates.length > 0 && (
-            <section aria-label={tCerts("title")}>
-              {/* Page-level section → dashboard heading idiom (display 18px +
-                  count chip); kickers stay inside cards. */}
-              <div className="mb-4 flex items-center gap-3">
-                <h2 className="font-display text-lg font-black tracking-[-0.25px]">
-                  {tCerts("title")}
-                </h2>
-                <span className="cc-section-count">
-                  {content.certificates.length}
-                </span>
-              </div>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {content.certificates.map((cert) => (
-                  <Link
-                    key={cert.id}
-                    href={`/${locale}/certificates/${cert.id}`}
-                    className="block focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                  >
-                    <CertificateCard
-                      certificate={cert}
-                      recipientName={user.username}
-                      variant="compact"
-                    />
-                  </Link>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {content.certificates.length === 0 && (
-            <section aria-label={tCerts("title")}>
-              <h2 className="mb-4 font-display text-lg font-black tracking-[-0.25px]">
-                {tCerts("title")}
-              </h2>
-              <div className="flex flex-col items-center justify-center gap-3 py-10">
-                <GraduationCap
-                  size={44}
-                  weight="duotone"
-                  className="text-accent"
-                  aria-hidden="true"
-                />
-                <p className="text-center font-body text-text-3">
-                  {tCerts("noCertificates")}
-                </p>
-              </div>
-            </section>
-          )}
         </div>
 
         {/* ─── Rail: achievements, full catalog, no filter chrome ─── */}
         <aside className="space-y-6">
-          <section
-            aria-label={tGam("achievements")}
-            className="rounded-xl border border-border bg-card p-4 shadow-card"
-          >
-            <div className="mb-3 flex items-baseline justify-between gap-2">
-              <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-text-3">
+          <section aria-label={tGam("achievements")}>
+            {/* Same heading block as Skills so both columns top-align. */}
+            <div className="mb-4 flex items-center gap-3">
+              <h2 className="font-display text-lg font-black tracking-[-0.25px]">
                 {tGam("achievements")}
-              </p>
-              <span className="font-mono text-[10px] uppercase tracking-[1px] text-text-3">
+              </h2>
+              <span className="cc-section-count">
                 {content.achievements.length}/
                 {content.deployedAchievements.length}
               </span>
             </div>
-            <AchievementGrid
-              unlockedAchievements={content.achievements}
-              catalog={content.deployedAchievements}
-              compact
-            />
+            <div className="rounded-xl border border-border bg-card p-4 shadow-card">
+              <AchievementGrid
+                unlockedAchievements={content.achievements}
+                catalog={content.deployedAchievements}
+                compact
+              />
+            </div>
           </section>
         </aside>
       </div>
+
+      {/* ─── Certificates — full-width shelf below the working area. Slim
+          diploma cards (shared CertificateCard, per-card eyebrow hidden — the
+          section heading already says it). Stretched-link keeps the explorer
+          pill's own anchor legal (no <a> nesting). ─── */}
+      {content.certificates.length > 0 && (
+        <section aria-label={tCerts("title")}>
+          <div className="mb-4 flex items-center gap-3">
+            <h2 className="font-display text-lg font-black tracking-[-0.25px]">
+              {tCerts("title")}
+            </h2>
+            <span className="cc-section-count">
+              {content.certificates.length}
+            </span>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {content.certificates.map((cert) => (
+              <div key={cert.id} className="cert-slim relative">
+                <Link
+                  href={`/${locale}/certificates/${cert.id}`}
+                  aria-label={cert.courseTitle}
+                  className="absolute inset-0 z-[1] rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                />
+                <CertificateCard
+                  certificate={cert}
+                  recipientName={user.username}
+                  variant="compact"
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {content.certificates.length === 0 && (
+        <section aria-label={tCerts("title")}>
+          <h2 className="mb-4 font-display text-lg font-black tracking-[-0.25px]">
+            {tCerts("title")}
+          </h2>
+          <div className="flex flex-col items-center justify-center gap-3 py-10">
+            <GraduationCap
+              size={44}
+              weight="duotone"
+              className="text-accent"
+              aria-hidden="true"
+            />
+            <p className="text-center font-body text-text-3">
+              {tCerts("noCertificates")}
+            </p>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

@@ -4109,6 +4109,15 @@ a.path-step-card:hover .path-step-badge.skip {
   font-size: 12px;
 }
 
+/* Profile certificate shelf: the section heading names them once — per-card
+   eyebrows off, body tightened (04-08). */
+.cert-slim .cert-eyebrow {
+  display: none;
+}
+.cert-slim .cert-inner {
+  padding: 16px 18px;
+}
+
 /* Rail-card variant of the achievement wall (profile 04-08): dashboard-token
    density — 44px medals, four per row, names tiny, no mint pills, no "Locked"
    labels. The rail is a glance surface; proof lives on the tokens' pages. */
