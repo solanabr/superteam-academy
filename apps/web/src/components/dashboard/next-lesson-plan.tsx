@@ -246,7 +246,7 @@ export function NextLessonPlan({ userId }: NextLessonPlanProps) {
                 <div
                   role="group"
                   aria-labelledby="next-lesson-days-label"
-                  className="flex flex-wrap gap-1.5"
+                  className="grid grid-cols-7 gap-1"
                 >
                   {WEEKDAYS.map((day) => {
                     const on = draftDays.includes(day);
