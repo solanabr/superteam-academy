@@ -2,23 +2,14 @@
 import { describe, it, expect } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import type { DailyQuest, StreakData } from "@superteam-lms/types";
+import type { DailyQuest } from "@superteam-lms/types";
 import messages from "@/messages/en.json";
-import { DashboardIdentityPanel } from "../dashboard-identity-panel";
+import { DailyQuestsCard } from "../daily-quests-card";
 
-// #572 (LX-B7): quest cards become per-type deep-links. The review quest deep-
+// #572 (LX-B7): quest cards become per-type deep-links (now rendered by the
+// standalone DailyQuestsCard rail card). The review quest deep-
 // links into /review (locale-prefixed); quest kinds with no destination surface
 // keep rendering as plain, non-interactive cards (the prior behavior).
-
-const STREAK: StreakData = {
-  available: true,
-  currentStreak: 0,
-  longestStreak: 0,
-  lastActivityDate: "",
-  streakHistory: {},
-  frozenDays: [],
-  freezesRemaining: 0,
-};
 
 function quest(overrides: Partial<DailyQuest>): DailyQuest {
   return {
@@ -39,13 +30,7 @@ function quest(overrides: Partial<DailyQuest>): DailyQuest {
 function renderPanel(quests: DailyQuest[]) {
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
-      <DashboardIdentityPanel
-        xp={100}
-        level={1}
-        streak={STREAK}
-        achievementsCount={0}
-        unlockedAchievementIds={[]}
-        catalog={[]}
+      <DailyQuestsCard
         quests={quests}
         questsResetTime={new Date(Date.now() + 3_600_000).toISOString()}
       />
@@ -53,7 +38,7 @@ function renderPanel(quests: DailyQuest[]) {
   );
 }
 
-describe("DashboardIdentityPanel quest deep-links", () => {
+describe("DailyQuestsCard quest deep-links", () => {
   it("renders the review quest as a locale-prefixed link to /review", () => {
     renderPanel([
       quest({

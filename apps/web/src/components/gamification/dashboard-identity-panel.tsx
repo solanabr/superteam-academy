@@ -1,25 +1,12 @@
 "use client";
 
-import { useMemo, useRef, useCallback, useState, useEffect } from "react";
-import Link from "next/link";
-import { useTranslations, useLocale } from "next-intl";
-import {
-  Lock,
-  CheckCircle,
-  BookOpen,
-  Code,
-  Lightning,
-  Trophy,
-  Scroll,
-  CircleDashed,
-} from "@phosphor-icons/react";
-import type { Icon } from "@phosphor-icons/react";
+import { useMemo, useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
+import { Lock, CheckCircle } from "@phosphor-icons/react";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import type { StreakData, DailyQuest } from "@superteam-lms/types";
+import type { StreakData } from "@superteam-lms/types";
 import { LevelBadge } from "@/components/gamification/level-badge";
-import type { AchievementDefinition } from "@/lib/gamification";
 import { xpToNextLevel } from "@/lib/gamification/xp";
-import { questHref } from "@/lib/gamification/quest-links";
 import { cn } from "@/lib/utils";
 
 /* ---------------------------------------------------------------
@@ -184,7 +171,7 @@ function buildHeatmapData(
 /* ---------------------------------------------------------------
    ACHIEVEMENT TOKEN (V9 octagonal .dm-oct)
 --------------------------------------------------------------- */
-function AchievementToken({
+export function AchievementToken({
   glyph,
   name,
   hint,
@@ -254,27 +241,6 @@ function AchievementToken({
 const DAY_LABELS = ["", "Mon", "", "Wed", "", "Fri", ""];
 
 /* ---------------------------------------------------------------
-   QUEST ICON MAP — maps Sanity icon strings to Phosphor components
---------------------------------------------------------------- */
-const QUEST_ICONS: Record<string, Icon> = {
-  BookOpen,
-  Code,
-  Lightning,
-  Trophy,
-  Scroll,
-};
-
-function getQuestIcon(iconName: string): Icon {
-  return QUEST_ICONS[iconName] ?? CircleDashed;
-}
-
-function getHoursUntilReset(resetTime: string): number {
-  if (!resetTime) return 0;
-  const diff = new Date(resetTime).getTime() - Date.now();
-  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60)));
-}
-
-/* ---------------------------------------------------------------
    DASHBOARD IDENTITY PANEL (V9 .dash-panel)
    Uses CSS classes from globals.css — no inline styles.
 --------------------------------------------------------------- */
@@ -282,12 +248,6 @@ export interface DashboardIdentityPanelProps {
   xp: number;
   level: number;
   streak: StreakData;
-  achievementsCount: number;
-  unlockedAchievementIds: string[];
-  /** Sanity achievement catalog — single source of truth for total count + token list */
-  catalog: AchievementDefinition[];
-  quests: DailyQuest[];
-  questsResetTime: string;
   className?: string;
 }
 
@@ -295,104 +255,13 @@ export function DashboardIdentityPanel({
   xp,
   level,
   streak,
-  achievementsCount,
-  unlockedAchievementIds,
-  catalog,
-  quests,
-  questsResetTime,
   className,
 }: DashboardIdentityPanelProps) {
   const t = useTranslations("gamification");
   const tDash = useTranslations("dashboard");
-  const locale = useLocale();
 
   const { xpInCurrentLevel, xpRequiredForNext, progressPercent } =
     xpToNextLevel(xp);
-
-  const unlockedSet = useMemo(
-    () => new Set(unlockedAchievementIds),
-    [unlockedAchievementIds]
-  );
-
-  // Sort achievements: earned first, then locked
-  const sortedAchievements = useMemo(
-    () =>
-      [...catalog].sort((a, b) => {
-        const aEarned = unlockedSet.has(a.id) ? 0 : 1;
-        const bEarned = unlockedSet.has(b.id) ? 0 : 1;
-        return aEarned - bEarned;
-      }),
-    [catalog, unlockedSet]
-  );
-
-  // Achievement slider — horizontal drag-to-scroll
-  const achRef = useRef<HTMLDivElement>(null);
-  const achDrag = useRef({
-    isDown: false,
-    startX: 0,
-    scrollLeft: 0,
-    wasDrag: false,
-  });
-
-  const onAchDown = useCallback((e: React.PointerEvent) => {
-    const el = achRef.current;
-    if (!el) return;
-    achDrag.current = {
-      isDown: true,
-      startX: e.clientX,
-      scrollLeft: el.scrollLeft,
-      wasDrag: false,
-    };
-    el.setPointerCapture(e.pointerId);
-    el.style.cursor = "grabbing";
-  }, []);
-  const onAchMove = useCallback((e: React.PointerEvent) => {
-    if (!achDrag.current.isDown) return;
-    const el = achRef.current;
-    if (!el) return;
-    if (Math.abs(e.clientX - achDrag.current.startX) > 5) {
-      achDrag.current.wasDrag = true;
-    }
-    el.scrollLeft =
-      achDrag.current.scrollLeft - (e.clientX - achDrag.current.startX);
-  }, []);
-  const onAchUp = useCallback((e: React.PointerEvent) => {
-    achDrag.current.isDown = false;
-    const el = achRef.current;
-    if (!el) return;
-    el.releasePointerCapture(e.pointerId);
-    el.style.cursor = "";
-  }, []);
-
-  // Daily quests — vertical drag-to-scroll
-  const questsRef = useRef<HTMLDivElement>(null);
-  const questsDrag = useRef({ isDown: false, startY: 0, scrollTop: 0 });
-
-  const onQuestsDown = useCallback((e: React.PointerEvent) => {
-    const el = questsRef.current;
-    if (!el) return;
-    questsDrag.current = {
-      isDown: true,
-      startY: e.clientY,
-      scrollTop: el.scrollTop,
-    };
-    el.setPointerCapture(e.pointerId);
-    el.style.cursor = "grabbing";
-  }, []);
-  const onQuestsMove = useCallback((e: React.PointerEvent) => {
-    if (!questsDrag.current.isDown) return;
-    const el = questsRef.current;
-    if (!el) return;
-    el.scrollTop =
-      questsDrag.current.scrollTop - (e.clientY - questsDrag.current.startY);
-  }, []);
-  const onQuestsUp = useCallback((e: React.PointerEvent) => {
-    questsDrag.current.isDown = false;
-    const el = questsRef.current;
-    if (!el) return;
-    el.releasePointerCapture(e.pointerId);
-    el.style.cursor = "";
-  }, []);
 
   const heatmap = useMemo(
     () => buildHeatmapData(streak.streakHistory, streak.frozenDays),
@@ -414,9 +283,9 @@ export function DashboardIdentityPanel({
       {/* Ambient glow blobs — ::before (green) and ::after (amber) */}
       <div className="dash-panel-amb" aria-hidden="true" />
 
-      {/* ---- TWO-COLUMN TOP ---- */}
-      <div className="dash-top">
-        {/* ---- LEFT: Level badge + XP ---- */}
+      {/* Level + XP | learning-activity heatmap, one band (owner call 04-08).
+          Achievements render in their own strip below the panel. */}
+      <div className="dash-split">
         <div className="dash-identity">
           <LevelBadge level={level} size="xl" />
 
@@ -443,54 +312,7 @@ export function DashboardIdentityPanel({
           </div>
         </div>
 
-        {/* ---- RIGHT: Achievement tokens slider ---- */}
-        <div className="dash-ach">
-          <div className="dash-ach-head">
-            <span className="dash-ach-title">{t("yourAchievements")}</span>
-            <span className="dash-ach-count">
-              {t("ofUnlocked", {
-                count: achievementsCount,
-                total: catalog.length,
-              })}
-            </span>
-          </div>
-          <Tooltip.Provider delayDuration={0} skipDelayDuration={150}>
-            <div
-              ref={achRef}
-              className="dash-ach-row"
-              onPointerDown={onAchDown}
-              onPointerMove={onAchMove}
-              onPointerUp={onAchUp}
-              onPointerCancel={onAchUp}
-            >
-              {sortedAchievements.map((ach) => {
-                const earned = unlockedSet.has(ach.id);
-                const isSol = earned && ach.solTier;
-                const tipId = `ach-${ach.id}`;
-                return (
-                  <AchievementToken
-                    key={ach.id}
-                    glyph={ach.glyph}
-                    name={ach.name}
-                    hint={ach.description}
-                    state={earned ? (isSol ? "sol" : "earned") : "locked"}
-                    isOpen={openTip === tipId}
-                    onTap={() =>
-                      setOpenTip((prev) => (prev === tipId ? null : tipId))
-                    }
-                    onOpenChange={(open) => setOpenTip(open ? tipId : null)}
-                    wasDrag={() => achDrag.current.wasDrag}
-                  />
-                );
-              })}
-            </div>
-          </Tooltip.Provider>
-        </div>
-      </div>
-
-      {/* ---- BOTTOM: Heatmap + Daily Quests ---- */}
-      <div className="dash-bottom">
-        {/* ---- LEFT: Activity Grid (heatmap) ---- */}
+        {/* Heatmap — right pane of the band. */}
         <div className="dash-grid">
           {/* ::before left-edge green glow is handled by CSS */}
 
@@ -629,70 +451,6 @@ export function DashboardIdentityPanel({
               />
               <span>{tDash("todayLabel")}</span>
             </span>
-          </div>
-        </div>
-
-        {/* ---- RIGHT: Daily Quests ---- */}
-        <div className="dash-quests">
-          <div className="dash-quests-head">
-            <span className="dash-quests-title">{tDash("dailyQuests")}</span>
-            <span className="dash-quests-reset">
-              {tDash("resetsIn", {
-                hours: getHoursUntilReset(questsResetTime),
-              })}
-            </span>
-          </div>
-
-          <div
-            ref={questsRef}
-            className="dash-quests-list"
-            onPointerDown={onQuestsDown}
-            onPointerMove={onQuestsMove}
-            onPointerUp={onQuestsUp}
-            onPointerCancel={onQuestsUp}
-          >
-            {quests.map((quest) => {
-              const IconComp = getQuestIcon(quest.icon);
-              const href = questHref(quest.type, locale);
-              const inner = (
-                <>
-                  <div className="dq-icon">
-                    <IconComp size={16} weight="duotone" />
-                  </div>
-                  <div className="dq-info">
-                    <span className="dq-name">{quest.name}</span>
-                    <span className="dq-desc">{quest.description}</span>
-                  </div>
-                  <div className="dq-reward">
-                    <Lightning size={12} weight="fill" />+{quest.xpReward}{" "}
-                    {t("xp")}
-                  </div>
-                  {quest.completed ? (
-                    <div className="dq-check">
-                      <CheckCircle size={18} weight="fill" />
-                    </div>
-                  ) : (
-                    <span className="dq-progress-lbl">
-                      {quest.currentValue}/{quest.targetValue}
-                    </span>
-                  )}
-                </>
-              );
-              const className = cn(
-                "dq",
-                quest.completed && "done",
-                href && "dq-link"
-              );
-              return href ? (
-                <Link key={quest.id} href={href} className={className}>
-                  {inner}
-                </Link>
-              ) : (
-                <div key={quest.id} className={className}>
-                  {inner}
-                </div>
-              );
-            })}
           </div>
         </div>
       </div>

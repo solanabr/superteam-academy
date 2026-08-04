@@ -87,11 +87,14 @@ describe("NextLessonPlan (LX-A6)", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows the committed if-then plan on a return visit", async () => {
+  it("shows the committed plan (calendar tile) on a return visit", async () => {
+    // Legacy single-day shape: the transition read (#980 gate F1) must still
+    // display it until the prod migration converts stored rows.
     h.profileRow = { prefs: { nextLesson: { day: "tue", time: "19:00" } } };
     renderPlan();
-    // The committed sentence interpolates the localized weekday + stored time.
-    expect(await screen.findByText(/Tuesday.*19:00/)).toBeInTheDocument();
+    // Tile anatomy: 3-letter day strip + stored time; no sentence copy.
+    expect(await screen.findByText("Tue")).toBeInTheDocument();
+    expect(screen.getByText("19:00")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: messages.dashboard.nextLessonEdit })
     ).toBeInTheDocument();
@@ -106,11 +109,10 @@ describe("NextLessonPlan (LX-A6)", () => {
     renderPlan();
     await screen.findByText(messages.dashboard.nextLessonPrompt);
 
-    fireEvent.change(
-      screen.getByLabelText(messages.dashboard.nextLessonDayLabel),
-      {
-        target: { value: "wed" },
-      }
+    // Chips: deselect the default Tuesday, select Wednesday.
+    fireEvent.click(screen.getByRole("button", { name: "Tue", pressed: true }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Wed", pressed: false })
     );
     fireEvent.change(
       screen.getByLabelText(messages.dashboard.nextLessonTimeLabel),
@@ -125,7 +127,7 @@ describe("NextLessonPlan (LX-A6)", () => {
     expect(h.updatePayloads[0]).toEqual({
       prefs: {
         theme: "dark",
-        nextLesson: { day: "wed", time: "08:30" },
+        nextLesson: { days: ["wed"], time: "08:30" },
       },
     });
     // Only the closed-set weekday id travels in the event — never the exact time.
