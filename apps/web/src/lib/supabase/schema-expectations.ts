@@ -101,7 +101,10 @@ export const SCHEMA_EXPECTATIONS: readonly SchemaExpectation[] = [
     // whatever weekday is hardcoded below.
     rpc: "claim_due_session_reminders",
     args: { p_weekday: "mon" },
-    migration: "20260731120000_reminder_consent.sql",
+    // Attribution = the LAST migration to define this function (#869 created it,
+    // #896 re-scoped its token, recurring_lesson_plan made it gate on `days[]`).
+    // A health-check failure should point at the definition to re-apply.
+    migration: "20260804120000_recurring_lesson_plan.sql",
     description:
       "session-plan reminder claim (#869) — a missing fn silently sends nothing",
   },
