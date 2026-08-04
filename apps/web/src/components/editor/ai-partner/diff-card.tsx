@@ -30,7 +30,7 @@ const HUNK_CONTEXT = 2;
  * "⋯ N unchanged" gap row. The learner reviews the CHANGE, not the whole file
  * (owner call, 04-08) — Monaco still holds the full buffer.
  */
-function toHunkRows(lines: DiffLine[]): DiffRow[] {
+export function toHunkRows(lines: DiffLine[]): DiffRow[] {
   const keep = new Array<boolean>(lines.length).fill(false);
   lines.forEach((line, i) => {
     if (line.kind === "unchanged") return;
@@ -314,19 +314,23 @@ export function DiffCard({
 
       <div className="overflow-x-auto rounded-md border border-border [background:var(--input)]">
         <pre className="whitespace-pre p-3 font-mono text-xs leading-relaxed">
-          {lines.map((line, index) =>
-            line.kind === "gap" ? (
-              <div
-                key={index}
-                className="select-none px-1 text-text-3"
-                aria-label={t("diff.unchangedCollapsed", {
-                  count: line.count,
-                })}
-              >
-                {"\u22EF "}
-                {t("diff.unchangedCollapsed", { count: line.count })}
-              </div>
-            ) : (
+          {lines.map((line, index) => {
+            if (line.kind === "gap") {
+              const label = t("diff.unchangedCollapsed", {
+                count: line.count,
+              });
+              return (
+                <div
+                  key={index}
+                  className="select-none px-1 text-text-3"
+                  aria-label={label}
+                >
+                  {"\u22EF "}
+                  {label}
+                </div>
+              );
+            }
+            return (
               <div
                 key={index}
                 className={cn(
@@ -362,8 +366,8 @@ export function DiffCard({
                 )}
                 <span>{line.text}</span>
               </div>
-            )
-          )}
+            );
+          })}
         </pre>
       </div>
 
