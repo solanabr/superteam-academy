@@ -8,6 +8,7 @@ import { SolanaWalletProvider } from "@/lib/solana/wallet-provider";
 import { AnalyticsProvider } from "@/components/analytics/analytics-provider";
 import { AuthProvider } from "@/lib/auth/auth-provider";
 import { PhantomConnectProvider } from "@/components/auth/phantom-connect-provider";
+import { PhantomAuthHandler } from "@/components/auth/phantom-auth-handler";
 import { Header } from "@/components/layout/header";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { GamificationOverlays } from "@/components/gamification/gamification-overlays";
@@ -45,6 +46,9 @@ export default async function LocaleLayout(props: LocaleLayoutProps) {
       <NextIntlClientProvider messages={messages}>
         <SolanaWalletProvider>
           <PhantomConnectProvider>
+            {/* Turns a connected embedded wallet into a Supabase session (#986),
+                mirroring WalletAuthHandler for wallet-adapter wallets. */}
+            <PhantomAuthHandler />
             <AuthProvider>
               <AnalyticsProvider>
                 <div className="grid-bg flex min-h-screen flex-col bg-[var(--bg)]">

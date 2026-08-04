@@ -91,7 +91,9 @@
     "progressSavedLocally": "Sem pressa — seu progresso continua salvo neste dispositivo.",
     "continueWithPhantom": "Continuar com Phantom",
     "phantomSubtitle": "Entre com o Google — criamos sua carteira",
-    "phantomSignInFailed": "Falha ao entrar com a Phantom. Tente novamente."
+    "phantomSignInFailed": "Falha ao entrar com a Phantom. Tente novamente.",
+    "phantomAccountHasWallet": "Esta conta já tem uma carteira conectada. Você continuará usando ela.",
+    "phantomWalletTaken": "Essa carteira já está vinculada a outra conta."
   },
   "landing": {
     "poweredBy": "Com apoio de",
