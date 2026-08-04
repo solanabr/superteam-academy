@@ -3,7 +3,7 @@ import type { DailyQuest } from "@superteam-lms/types";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getAllQuests } from "@/lib/content/queries";
-import { retryQuestXpForUser } from "@/lib/solana/onchain-queue";
+import { retryQuestXpForUser } from "@/lib/gamification/xp-queue-settlement";
 import {
   nextMidnightUtc,
   questPeriodUtc,

@@ -22,7 +22,9 @@ const { getAllQuests, rpc, retryQuestXpForUser, logError, after } = vi.hoisted(
 vi.mock("next/server", () => ({ after }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => ({ rpc }) }));
 vi.mock("@/lib/content/queries", () => ({ getAllQuests }));
-vi.mock("@/lib/solana/onchain-queue", () => ({ retryQuestXpForUser }));
+vi.mock("@/lib/gamification/xp-queue-settlement", () => ({
+  retryQuestXpForUser,
+}));
 vi.mock("@/lib/logging", () => ({ logError }));
 
 import {
