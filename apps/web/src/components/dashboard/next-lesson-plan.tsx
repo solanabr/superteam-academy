@@ -52,14 +52,25 @@ interface NextLessonPref {
   time: string;
 }
 
-/** Narrows an untyped prefs blob to a valid stored plan, or null. The legacy
- *  single-`day` shape is not read — the #980 migration converts stored rows,
- *  and this component only ever writes `days`. */
+/** Narrows an untyped prefs blob to a valid stored plan, or null.
+ *
+ *  TRANSITION READ (#980 gate F1): until the days[] migration has applied on
+ *  prod, stored rows may still carry the legacy `{day}` shape. Read it as
+ *  `{days:[day]}` for DISPLAY only — this component always writes `days`, so
+ *  the next save upgrades the row. Remove the legacy branch after the
+ *  migration is applied + ledgered. */
 function parseNextLesson(prefs: unknown): NextLessonPref | null {
   if (!prefs || typeof prefs !== "object") return null;
   const nl = (prefs as Record<string, unknown>).nextLesson;
   if (!nl || typeof nl !== "object") return null;
-  const days = (nl as Record<string, unknown>).days;
+  const legacyDay = (nl as Record<string, unknown>).day;
+  const rawDays = (nl as Record<string, unknown>).days;
+  const days =
+    rawDays === undefined &&
+    typeof legacyDay === "string" &&
+    WEEKDAYS.includes(legacyDay as PlanWeekday)
+      ? [legacyDay]
+      : rawDays;
   const time = (nl as Record<string, unknown>).time;
   if (
     !Array.isArray(days) ||
