@@ -362,7 +362,7 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
                 nothing is unmounted from under the keyboard user. */}
             <div aria-live="polite" className="space-y-2">
               {result && (
-                <>
+                <div className="reveal-in space-y-2">
                   <p
                     className={`flex items-center gap-1.5 text-sm font-medium ${
                       result.correct ? "text-success" : "text-danger"
@@ -391,7 +391,7 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
                       <p className="text-sm text-text">{q.explanation}</p>
                     </div>
                   )}
-                </>
+                </div>
               )}
             </div>
           </fieldset>
