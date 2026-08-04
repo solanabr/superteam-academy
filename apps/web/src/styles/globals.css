@@ -4078,6 +4078,15 @@ a.path-step-card:hover .path-step-badge.skip {
   color: var(--text-3);
 }
 
+/* Daily quests list: ~5 rows visible, scroll beyond — the same cap idiom as
+   the league card (owner, 04-08). */
+.dq-list-capped {
+  max-height: 224px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-default) transparent;
+}
+
 /* Dashboard league card: mini rows sized EXACTLY like the quest rows
    (.dq: 6px 10px pad, 9px gap, 1px border, 10px list gap) so the two rail
    cards read as one list system. ~6 rows visible, scroll beyond. */
