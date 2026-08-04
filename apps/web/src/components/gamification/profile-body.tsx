@@ -3,11 +3,10 @@
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import { GraduationCap } from "@phosphor-icons/react";
+import { CertificateCard } from "@/components/certificates/certificate-card";
 import { ProfileHeroPanel } from "@/components/gamification/profile-hero-panel";
 import { SkillRadar } from "@/components/gamification/skill-radar";
 import { AchievementGrid } from "@/components/gamification/achievement-grid";
-import { CERTIFICATE_STYLES as CS } from "@/lib/styles/styleClasses";
-import { truncateAddress } from "@/lib/utils";
 import type {
   ProfileContent,
   ProfileStats,
@@ -73,12 +72,51 @@ export function ProfileBody({
                   {content.skills.length}
                 </span>
               </div>
+              {/* Radar (keeper) + per-skill legend fill the card together —
+                  the radar alone left an ocean of whitespace either side. */}
               <div className="rounded-xl border border-border bg-card p-5 shadow-card">
-                <SkillRadar
-                  skills={content.skills}
-                  totalLessons={content.totalLessons}
-                  className="mx-auto max-w-[560px] !border-0 !bg-transparent !p-0 !shadow-none"
-                />
+                <div className="grid items-center gap-8 md:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
+                  <SkillRadar
+                    skills={content.skills}
+                    totalLessons={content.totalLessons}
+                    className="mx-auto w-full max-w-[420px] !border-0 !bg-transparent !p-0 !shadow-none"
+                  />
+                  <div className="space-y-3">
+                    {[...content.skills]
+                      .sort((a, b) => b.lessonCount - a.lessonCount)
+                      .map((skill) => {
+                        const max = Math.max(
+                          1,
+                          ...content.skills.map((sk) => sk.lessonCount)
+                        );
+                        return (
+                          <div key={skill.label}>
+                            <div className="flex items-baseline justify-between gap-3">
+                              <span className="min-w-0 truncate text-[13px] font-semibold text-text">
+                                {skill.label}
+                              </span>
+                              <span className="shrink-0 font-mono text-[10px] uppercase tracking-[1px] text-text-3">
+                                {t("lessonsCount", {
+                                  count: skill.lessonCount,
+                                })}
+                              </span>
+                            </div>
+                            <div
+                              className="path-bar-track mt-1.5"
+                              aria-hidden="true"
+                            >
+                              <div
+                                className="path-bar-fill"
+                                style={{
+                                  width: `${Math.round((skill.lessonCount / max) * 100)}%`,
+                                }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
               </div>
             </section>
           )}
@@ -102,31 +140,13 @@ export function ProfileBody({
                   <Link
                     key={cert.id}
                     href={`/${locale}/certificates/${cert.id}`}
-                    className="accent-hairline hover:border-primary/40 relative block overflow-hidden rounded-xl border border-border bg-card p-4 shadow-card transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                    className="block focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                   >
-                    <div className="flex items-center gap-3">
-                      {/* Credential seal — same tile idiom as the rail cards. */}
-                      <span
-                        className="bg-primary-dim flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-primary"
-                        aria-hidden="true"
-                      >
-                        <GraduationCap size={20} weight="duotone" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate font-display text-sm font-extrabold text-text">
-                          {cert.courseTitle}
-                        </p>
-                        <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[1px] text-text-3">
-                          {cert.mintedAt.toLocaleDateString()}
-                        </p>
-                      </div>
-                      <span className={CS.proofPill}>
-                        <span className={CS.proofDot} aria-hidden="true" />
-                        {cert.mintAddress
-                          ? truncateAddress(cert.mintAddress)
-                          : tCerts("onChain")}
-                      </span>
-                    </div>
+                    <CertificateCard
+                      certificate={cert}
+                      recipientName={user.username}
+                      variant="compact"
+                    />
                   </Link>
                 ))}
               </div>

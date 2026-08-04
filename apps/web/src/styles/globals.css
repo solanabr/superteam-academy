@@ -4109,11 +4109,31 @@ a.path-step-card:hover .path-step-badge.skip {
   font-size: 12px;
 }
 
-/* Rail-card variant of the achievement wall (profile 04-08): three columns
-   inside the 340px rail — the page-level 6-column grid overflowed the card. */
+/* Rail-card variant of the achievement wall (profile 04-08): dashboard-token
+   density — 44px medals, four per row, names tiny, no mint pills, no "Locked"
+   labels. The rail is a glance surface; proof lives on the tokens' pages. */
 .ach-grid--compact {
-  grid-template-columns: repeat(3, 1fr) !important;
-  gap: 12px !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 10px !important;
+}
+.ach-grid--compact .ach-medal {
+  width: 44px !important;
+  height: 44px !important;
+}
+.ach-grid--compact .ach-face {
+  width: 36px !important;
+  height: 36px !important;
+}
+.ach-grid--compact .ach-glyph {
+  font-size: 14px !important;
+}
+.ach-grid--compact .ach-name {
+  font-size: 10px;
+  line-height: 1.2;
+}
+.ach-grid--compact .ach-proof,
+.ach-grid--compact .ach-info > p[style] {
+  display: none;
 }
 
 /* Achievements strip: earned + next goals on one line, names in tooltips.
