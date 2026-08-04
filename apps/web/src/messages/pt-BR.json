@@ -492,6 +492,7 @@
     "cohortStripAria": "Sua posição na liga",
     "cohortViewAll": "Ver liga",
     "leagueThisWeek": "Esta semana",
+    "cohortSoloHint": "Sua liga se preenche conforme mais pessoas entram nesta semana. Ganhe XP agora para começar na frente.",
     "leagueScoreAria": "{score} XP ganhos esta semana",
     "leagueScoringInfoLabel": "Sobre a pontuação da liga",
     "leagueScoringInfo": "A pontuação da liga conta o XP de aprendizado ganho esta semana — aulas, desafios, cursos concluídos, missões e conquistas. Bônus e XP da comunidade não contam."

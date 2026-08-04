@@ -492,6 +492,7 @@
     "cohortStripAria": "Your league standing",
     "cohortViewAll": "View league",
     "leagueThisWeek": "This week",
+    "cohortSoloHint": "Your league fills as more learners join this week. Earn XP now to start ahead.",
     "leagueScoreAria": "{score} XP earned this week",
     "leagueScoringInfoLabel": "About league scoring",
     "leagueScoringInfo": "League scores count learning XP earned this week — lessons, challenges, course completions, quests, and achievements. Bonuses and community XP don't count."

@@ -50,8 +50,39 @@ export function CohortStrip({ userId }: CohortStripProps) {
     };
   }, [userId]);
 
-  // Hidden until there is a cohort with at least one neighbor besides the viewer.
-  if (!league || league.entries.length < 2) return null;
+  // Hidden until the viewer has been assigned a weekly cohort at all.
+  if (!league) return null;
+
+  // Solo cohort — the viewer is the first learner placed this week. The old
+  // behavior hid the strip entirely, which made the league invisible exactly
+  // when a learner is new; show a quiet waiting state instead (still never a
+  // hero rank metric, per LX-B13 — no rank, no score comparison).
+  if (league.entries.length < 2) {
+    return (
+      <section
+        aria-label={t("cohortStripAria")}
+        className="rounded-xl border border-border bg-card p-4 shadow-card"
+      >
+        <div className="flex items-center gap-3">
+          <span
+            className="bg-primary-dim flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-primary"
+            aria-hidden="true"
+          >
+            <UsersThree size={18} weight="fill" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+              {t("cohortStripTitle")}
+            </p>
+            <p className="text-sm font-semibold text-text-2">
+              {tierName(t, league.tier)} · {t("leagueThisWeek")}
+            </p>
+          </div>
+        </div>
+        <p className="mt-3 text-sm text-text-3">{t("cohortSoloHint")}</p>
+      </section>
+    );
+  }
 
   return (
     <section

@@ -4049,16 +4049,13 @@ a.path-step-card:hover .path-step-badge.skip {
 }
 
 /* Bottom row — heatmap bigger, quests smaller (flipped from top) */
+/* Single column since the quests slot moved to the dashboard rail card
+   (daily-quests-card.tsx) — the heatmap now owns the full bottom row. */
 .dash-bottom {
   display: grid;
   grid-template-columns: 1fr;
   position: relative;
   z-index: 1;
-}
-@media (min-width: 768px) {
-  .dash-bottom {
-    grid-template-columns: 1fr 1fr;
-  }
 }
 
 /* Activity grid section */

@@ -13,6 +13,7 @@ import {
   type ContinueCardTarget,
 } from "@/components/dashboard/continue-card";
 import { CurrentCoursesSection } from "@/components/dashboard/current-courses-section";
+import { DailyQuestsCard } from "@/components/dashboard/daily-quests-card";
 import { ReviewStrip } from "@/components/dashboard/review-strip";
 import { CohortStrip } from "@/components/dashboard/cohort-strip";
 import { NameRevealDialog } from "@/components/dashboard/name-reveal-dialog";
@@ -98,44 +99,60 @@ export default function DashboardPage() {
         {t("title")}
       </h1>
 
-      {/* Hero Continue card — deep link to the next incomplete lesson (LX-B2) */}
+      {/* Hero Continue card — deep link to the next incomplete lesson (LX-B2).
+          The ONE hero: everything below drops into the two-column working
+          area so no other surface competes with it at full width. */}
       {continueCardTarget && (
         <ContinueCard target={continueCardTarget} locale={locale} />
       )}
 
-      {/* Due-review strip — additive hero slot under Continue (LX-B6); renders
-          nothing when the review queue is empty. */}
-      <ReviewStrip userId={data.userId} />
+      {/* Main column + right rail. The rail carries the day's actionable,
+          glanceable surfaces (review queue, quests, league, session plan);
+          the main column keeps the identity panel and the long sections.
+          Single column below lg — rail slots stack right after the hero so
+          "do this now" stays above the fold on mobile too. */}
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-8">
+        <aside className="order-1 space-y-6 lg:order-2">
+          {/* Due-review strip (LX-B6); renders nothing when the queue is empty. */}
+          <ReviewStrip userId={data.userId} />
 
-      {/* Cohort league "you ±3" strip — additive slot (LX-B9b); renders nothing
-          until the viewer has a weekly cohort with at least one neighbor. */}
-      <CohortStrip userId={data.userId} />
+          {/* Daily quests — extracted from the identity panel into its own
+              rail card so the day's actions sit together. */}
+          <DailyQuestsCard
+            quests={data.quests}
+            questsResetTime={data.questsResetTime}
+          />
 
-      {/* V9 Dashboard Identity Panel — Level+XP | Medals | Activity Grid */}
-      <DashboardIdentityPanel
-        xp={data.xp}
-        level={data.level}
-        streak={data.streak}
-        achievementsCount={data.achievementsCount}
-        unlockedAchievementIds={data.unlockedAchievementIds}
-        catalog={data.achievementCatalog}
-        quests={data.quests}
-        questsResetTime={data.questsResetTime}
-      />
+          {/* Cohort league "you ±3" (LX-B9b) — shows a quiet solo state while
+              this week's cohort is still filling. */}
+          <CohortStrip userId={data.userId} />
 
-      {/* Session-end if-then plan — "when's your next lesson?" (LX-A6). A
-          return-cadence surface, so it sits beside the streak/quest identity
-          panel. Display-only in v1: stored in profiles.prefs, shown on return. */}
-      <NextLessonPlan userId={data.userId} />
+          {/* Session-end if-then plan — "when's your next lesson?" (LX-A6).
+              Display-only in v1: stored in profiles.prefs, shown on return. */}
+          <NextLessonPlan userId={data.userId} />
+        </aside>
 
-      {/* ═══ Current Courses ═══ */}
-      <CurrentCoursesSection
-        currentCourses={data.currentCourses}
-        userId={data.userId}
-      />
+        <div className="order-2 min-w-0 space-y-8 lg:order-1">
+          {/* V9 Dashboard Identity Panel — Level+XP | Medals | Activity Grid */}
+          <DashboardIdentityPanel
+            xp={data.xp}
+            level={data.level}
+            streak={data.streak}
+            achievementsCount={data.achievementsCount}
+            unlockedAchievementIds={data.unlockedAchievementIds}
+            catalog={data.achievementCatalog}
+          />
 
-      {/* ═══ Activity ═══ */}
-      <ActivitySection recentActivity={data.recentActivity} />
+          {/* ═══ Current Courses ═══ */}
+          <CurrentCoursesSection
+            currentCourses={data.currentCourses}
+            userId={data.userId}
+          />
+
+          {/* ═══ Activity ═══ */}
+          <ActivitySection recentActivity={data.recentActivity} />
+        </div>
+      </div>
 
       {/* Name reveal modal — shown on first login */}
       <NameRevealDialog
