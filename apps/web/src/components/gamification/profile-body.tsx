@@ -81,11 +81,13 @@ export function ProfileBody({
               frame (the one deliberate brand-gradient surface). ─── */}
           {content.certificates.length > 0 && (
             <section aria-label={tCerts("title")}>
-              <div className="mb-3 flex items-baseline gap-2">
-                <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+              {/* Page-level section → dashboard heading idiom (display 18px +
+                  count chip); kickers stay inside cards. */}
+              <div className="mb-4 flex items-center gap-3">
+                <h2 className="font-display text-lg font-black tracking-[-0.25px]">
                   {tCerts("title")}
-                </p>
-                <span className="font-mono text-[10px] uppercase tracking-[1px] text-text-3">
+                </h2>
+                <span className="cc-section-count">
                   {content.certificates.length}
                 </span>
               </div>
@@ -120,9 +122,9 @@ export function ProfileBody({
 
           {content.certificates.length === 0 && (
             <section aria-label={tCerts("title")}>
-              <p className="mb-3 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+              <h2 className="mb-4 font-display text-lg font-black tracking-[-0.25px]">
                 {tCerts("title")}
-              </p>
+              </h2>
               <div className="flex flex-col items-center justify-center gap-3 py-10">
                 <GraduationCap
                   size={44}
