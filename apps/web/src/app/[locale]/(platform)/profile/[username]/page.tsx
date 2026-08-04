@@ -3,7 +3,7 @@ import { UserCircle } from "@phosphor-icons/react/dist/ssr";
 import { createClient } from "@/lib/supabase/server";
 import { fetchPublicProfile } from "@/lib/profile/profile-data";
 import { ProfileBody } from "@/components/gamification/profile-body";
-import { ProfileBackButton } from "./profile-back-button";
+import { ProfileBackButton } from "@/components/profile/profile-back-button";
 
 export default async function PublicProfilePage(props: {
   params: Promise<{ username: string }>;

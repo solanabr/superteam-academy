@@ -3,6 +3,7 @@ import { UserCircle } from "@phosphor-icons/react/dist/ssr";
 import { createClient } from "@/lib/supabase/server";
 import { fetchOwnProfile } from "@/lib/profile/profile-data";
 import { ProfileBody } from "@/components/gamification/profile-body";
+import { ProfileBackButton } from "@/components/profile/profile-back-button";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -31,12 +32,15 @@ export default async function ProfilePage() {
   }
 
   return (
-    <ProfileBody
-      user={profile.user}
-      stats={profile.stats}
-      content={profile.content}
-      showVisibilityBadge
-      streak={profile.streak}
-    />
+    <div>
+      <ProfileBackButton className="mb-6" />
+      <ProfileBody
+        user={profile.user}
+        stats={profile.stats}
+        content={profile.content}
+        showVisibilityBadge
+        streak={profile.streak}
+      />
+    </div>
   );
 }
