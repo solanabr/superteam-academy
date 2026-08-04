@@ -4,7 +4,6 @@ import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import { GraduationCap } from "@phosphor-icons/react";
 import { ProfileHeroPanel } from "@/components/gamification/profile-hero-panel";
-import { SkillRadar } from "@/components/gamification/skill-radar";
 import { AchievementGrid } from "@/components/gamification/achievement-grid";
 import { CERTIFICATE_STYLES as CS } from "@/lib/styles/styleClasses";
 import { truncateAddress } from "@/lib/utils";
@@ -60,20 +59,50 @@ export function ProfileBody({
           Sections are cards with mono kickers, not floating page headings. */}
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-8">
         <div className="min-w-0 space-y-8">
-          {/* ─── Skills radar card ─── */}
+          {/* ─── Skills — bar list, the dashboard's progress idiom. A radar
+              needs 8+ axes to read; lesson counts per skill are bars. ─── */}
           {content.skills.length > 0 && (
-            <section
-              aria-label={t("skills")}
-              className="rounded-xl border border-border bg-card p-5 shadow-card"
-            >
-              <p className="mb-3 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
-                {t("skills")}
-              </p>
-              <SkillRadar
-                skills={content.skills}
-                totalLessons={content.totalLessons}
-                className="mx-auto max-w-[560px] !border-0 !bg-transparent !p-0 !shadow-none"
-              />
+            <section aria-label={t("skills")}>
+              <div className="mb-4 flex items-center gap-3">
+                <h2 className="font-display text-lg font-black tracking-[-0.25px]">
+                  {t("skills")}
+                </h2>
+                <span className="cc-section-count">
+                  {content.skills.length}
+                </span>
+              </div>
+              <div className="space-y-3 rounded-xl border border-border bg-card p-5 shadow-card">
+                {[...content.skills]
+                  .sort((a, b) => b.value - a.value)
+                  .map((skill) => {
+                    const max = Math.max(
+                      ...content.skills.map((sk) => sk.value)
+                    );
+                    return (
+                      <div key={skill.label}>
+                        <div className="flex items-baseline justify-between gap-3">
+                          <span className="min-w-0 truncate text-[13px] font-semibold text-text">
+                            {skill.label}
+                          </span>
+                          <span className="shrink-0 font-mono text-[10px] uppercase tracking-[1px] text-text-3">
+                            {t("lessonsCount", { count: skill.value })}
+                          </span>
+                        </div>
+                        <div
+                          className="path-bar-track mt-1.5"
+                          aria-hidden="true"
+                        >
+                          <div
+                            className="path-bar-fill"
+                            style={{
+                              width: `${Math.round((skill.value / max) * 100)}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
             </section>
           )}
 
@@ -154,7 +183,7 @@ export function ProfileBody({
             className="rounded-xl border border-border bg-card p-4 shadow-card"
           >
             <div className="mb-3 flex items-baseline justify-between gap-2">
-              <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+              <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-text-3">
                 {tGam("achievements")}
               </p>
               <span className="font-mono text-[10px] uppercase tracking-[1px] text-text-3">
