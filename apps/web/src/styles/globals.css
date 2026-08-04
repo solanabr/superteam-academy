@@ -3721,7 +3721,7 @@ a.path-step-card:hover .path-step-badge.skip {
 }
 .dash-xp-to {
   font-family: var(--font-mono, var(--font-m));
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-2);
   margin-bottom: 10px;
   font-variant-numeric: tabular-nums; /* F37 */
@@ -4464,7 +4464,7 @@ a.path-step-card:hover .path-step-badge.skip {
   min-width: 0;
 }
 .dq-name {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--text);
   white-space: nowrap;
@@ -4808,7 +4808,7 @@ a.path-step-card:hover .path-step-badge.skip {
 
 .cc-card .cc-title {
   font-family: var(--font-display, var(--font-d));
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
   line-height: 1.35;
   color: var(--text);

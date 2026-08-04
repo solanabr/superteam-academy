@@ -74,7 +74,7 @@ export function CohortStrip({ userId }: CohortStripProps) {
             <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
               {t("cohortStripTitle")}
             </p>
-            <p className="text-sm font-semibold text-text-2">
+            <p className="text-[13px] font-semibold text-text-2">
               {tierName(t, league.tier)}
             </p>
           </div>
@@ -99,7 +99,7 @@ export function CohortStrip({ userId }: CohortStripProps) {
           <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
             {t("cohortStripTitle")}
           </p>
-          <p className="truncate text-sm font-semibold text-text-2">
+          <p className="truncate text-[13px] font-semibold text-text-2">
             {tierName(t, league.tier)}
           </p>
         </div>
