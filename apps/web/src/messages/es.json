@@ -425,7 +425,6 @@
     "reviewDueTitle": "{count} para repasar",
     "reviewDueAria": "{count} elementos para repasar, abrir repaso",
     "reviewMore": "+{count} más",
-    "reviewExplainer": "Preguntas rápidas de repaso espaciado de las lecciones que completaste — unos minutos las mantienen frescas.",
     "reviewNow": "Repasar ahora"
   },
   "gamification": {
@@ -493,7 +492,6 @@
     "cohortStripAria": "Tu posición en la liga",
     "cohortViewAll": "Ver liga",
     "leagueThisWeek": "Esta semana",
-    "cohortSoloHint": "Tu liga se llena a medida que más personas se unen esta semana. Gana XP ahora para empezar con ventaja.",
     "leagueScoreAria": "{score} XP ganados esta semana",
     "leagueScoringInfoLabel": "Sobre la puntuación de la liga",
     "leagueScoringInfo": "La puntuación de la liga cuenta el XP de aprendizaje ganado esta semana — lecciones, desafíos, cursos completados, misiones y logros. Las bonificaciones y el XP de la comunidad no cuentan."

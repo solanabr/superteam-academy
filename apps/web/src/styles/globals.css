@@ -4667,20 +4667,6 @@ a.path-step-card:hover .path-step-badge.skip {
   align-items: center;
   gap: 12px;
 }
-/* ── Activity feed date groups ── */
-.act-group + .act-group {
-  margin-top: 14px;
-}
-.act-group-label {
-  font-family: var(--font-mono, var(--font-m));
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--text-3);
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  padding: 2px 12px 6px;
-}
-
 /* ── Next-lesson plan: mini calendar tile ── */
 .nlp-cal {
   flex-shrink: 0;

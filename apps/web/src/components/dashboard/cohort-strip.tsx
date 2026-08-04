@@ -75,11 +75,10 @@ export function CohortStrip({ userId }: CohortStripProps) {
               {t("cohortStripTitle")}
             </p>
             <p className="text-sm font-semibold text-text-2">
-              {tierName(t, league.tier)} · {t("leagueThisWeek")}
+              {tierName(t, league.tier)}
             </p>
           </div>
         </div>
-        <p className="mt-3 text-sm text-text-3">{t("cohortSoloHint")}</p>
       </section>
     );
   }
@@ -100,10 +99,8 @@ export function CohortStrip({ userId }: CohortStripProps) {
           <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
             {t("cohortStripTitle")}
           </p>
-          {/* Weekly qualifier so the card's "+X XP" rows read as this week's
-              league score, not the lifetime header total (#789). */}
           <p className="truncate text-sm font-semibold text-text-2">
-            {tierName(t, league.tier)} · {t("leagueThisWeek")}
+            {tierName(t, league.tier)}
           </p>
         </div>
         <Link

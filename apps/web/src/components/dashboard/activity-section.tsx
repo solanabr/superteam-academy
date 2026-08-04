@@ -103,79 +103,68 @@ export function ActivitySection({ recentActivity }: ActivitySectionProps) {
         <div className="act-panel">
           <div className="act-panel-amb" aria-hidden="true" />
           <div className="act-feed">
-            {/* Date-grouped: mono day headers (Today / Yesterday / Mar 4), the
-                same history idiom as the heatmap. The per-row relative time
-                only appears inside Today — elsewhere the group label already
-                says when, and repeating "3 days ago" on every row was noise. */}
-            {activityDateGroups.map((group) => (
-              <div key={group.date} className="act-group">
-                <p className="act-group-label">{group.label}</p>
-                {group.items.map((activity) => {
-                  const iconMap = {
-                    lesson: Lightning,
-                    challenge: Lightning,
-                    course_complete: GraduationCap,
-                    achievement: Medal,
-                    certificate: Scroll,
-                    enrollment: BookOpen,
-                    community: ChatCircle,
-                    xp_other: Lightning,
-                  };
-                  const ActivityIcon = iconMap[activity.type] ?? Lightning;
+            {activityPageItems.map((activity) => {
+              const iconMap = {
+                lesson: Lightning,
+                challenge: Lightning,
+                course_complete: GraduationCap,
+                achievement: Medal,
+                certificate: Scroll,
+                enrollment: BookOpen,
+                community: ChatCircle,
+                xp_other: Lightning,
+              };
+              const ActivityIcon = iconMap[activity.type] ?? Lightning;
 
-                  const inner = (
-                    <>
-                      <div className="act-left">
-                        <div className={`act-icon ${activity.type}`}>
-                          <ActivityIcon
-                            size={16}
-                            weight="duotone"
-                            aria-hidden="true"
-                          />
-                        </div>
-                        <span className="act-text">{activity.action}</span>
-                      </div>
-                      <div className="act-right">
-                        {activity.xp > 0 && (
-                          <span className="act-xp">+{activity.xp} XP</span>
-                        )}
-                        {group.date === todayDateStr && (
-                          <span className="act-time">
-                            {formatTimeAgo(activity.time)}
-                          </span>
-                        )}
-                        {activity.txSignature && (
-                          <ArrowSquareOut
-                            size={14}
-                            className="act-tx"
-                            aria-hidden="true"
-                          />
-                        )}
-                      </div>
-                    </>
-                  );
-
-                  return activity.txSignature ? (
-                    <a
-                      key={`${activity.type}-${activity.time}`}
-                      href={explorerTxUrl(activity.txSignature)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="act-row"
-                    >
-                      {inner}
-                    </a>
-                  ) : (
-                    <div
-                      key={`${activity.type}-${activity.time}`}
-                      className="act-row"
-                    >
-                      {inner}
+              const inner = (
+                <>
+                  <div className="act-left">
+                    <div className={`act-icon ${activity.type}`}>
+                      <ActivityIcon
+                        size={16}
+                        weight="duotone"
+                        aria-hidden="true"
+                      />
                     </div>
-                  );
-                })}
-              </div>
-            ))}
+                    <span className="act-text">{activity.action}</span>
+                  </div>
+                  <div className="act-right">
+                    {activity.xp > 0 && (
+                      <span className="act-xp">+{activity.xp} XP</span>
+                    )}
+                    <span className="act-time">
+                      {formatTimeAgo(activity.time)}
+                    </span>
+                    {activity.txSignature && (
+                      <ArrowSquareOut
+                        size={14}
+                        className="act-tx"
+                        aria-hidden="true"
+                      />
+                    )}
+                  </div>
+                </>
+              );
+
+              return activity.txSignature ? (
+                <a
+                  key={`${activity.type}-${activity.time}`}
+                  href={explorerTxUrl(activity.txSignature)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="act-row"
+                >
+                  {inner}
+                </a>
+              ) : (
+                <div
+                  key={`${activity.type}-${activity.time}`}
+                  className="act-row"
+                >
+                  {inner}
+                </div>
+              );
+            })}
           </div>
           {totalActivityPages > 1 && (
             <div className="act-pager">

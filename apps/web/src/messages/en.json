@@ -425,7 +425,6 @@
     "reviewDueTitle": "{count} due for review",
     "reviewDueAria": "{count} items due for review, open review",
     "reviewMore": "+{count} more",
-    "reviewExplainer": "Quick spaced-practice questions from lessons you finished — a few minutes keeps them fresh.",
     "reviewNow": "Review now"
   },
   "gamification": {
@@ -493,7 +492,6 @@
     "cohortStripAria": "Your league standing",
     "cohortViewAll": "View league",
     "leagueThisWeek": "This week",
-    "cohortSoloHint": "Your league fills as more learners join this week. Earn XP now to start ahead.",
     "leagueScoreAria": "{score} XP earned this week",
     "leagueScoringInfoLabel": "About league scoring",
     "leagueScoringInfo": "League scores count learning XP earned this week — lessons, challenges, course completions, quests, and achievements. Bonuses and community XP don't count."

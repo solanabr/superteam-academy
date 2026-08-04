@@ -88,12 +88,7 @@ export function ReviewStrip({ userId }: ReviewStripProps) {
       </div>
 
       {/* Name what is actually due — a bare count is a chore, named lessons
-          are a plan. When no item_key resolves to a title (e.g. items from
-          retired courses, see the orphaned-review-items issue), fall back to
-          a one-line explainer so the card never reads as an unlabeled count. */}
-      {shown.length === 0 && (
-        <p className="mt-2 text-sm text-text-3">{t("reviewExplainer")}</p>
-      )}
+          are a plan. Hidden when no item_key resolves (orphaned items, #977). */}
       {shown.length > 0 && (
         <ul className="mt-3 space-y-1.5">
           {shown.map((title) => (
