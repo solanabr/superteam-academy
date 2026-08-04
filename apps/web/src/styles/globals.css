@@ -4131,13 +4131,22 @@ a.path-step-card:hover .path-step-badge.skip {
   line-height: 1.2;
 }
 
-/* Profile certificate shelf: the section heading names them once — per-card
-   eyebrows off, body tightened (04-08). */
-.cert-slim .cert-eyebrow {
-  display: none;
-}
+/* Profile certificate shelf (owner reference, 04-08): the design-system
+   diploma — gradient frame, eyebrow, open middle, RECIPIENT/COMPLETED/MINT
+   anchored to the bottom edge, proof pill only (no network line). */
 .cert-slim .cert-inner {
-  padding: 16px 18px;
+  padding: 20px 22px;
+}
+.cert-slim .cert-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 240px;
+}
+.cert-slim .cert-divider {
+  margin-top: auto;
+}
+.cert-slim .cert-network {
+  display: none;
 }
 
 /* Rail-card variant of the achievement wall (profile 04-08): dashboard-token
