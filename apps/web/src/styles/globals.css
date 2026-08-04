@@ -4061,18 +4061,22 @@ a.path-step-card:hover .path-step-badge.skip {
   color: var(--text-3);
 }
 
-/* Dashboard league card: mini rows, at most ~6 visible, scroll beyond. */
+/* Dashboard league card: mini rows sized EXACTLY like the quest rows
+   (.dq: 6px 10px pad, 9px gap, 1px border, 10px list gap) so the two rail
+   cards read as one list system. ~6 rows visible, scroll beyond. */
 .lb-list-mini {
-  max-height: 248px;
+  max-height: 264px;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--border-default) transparent;
+  gap: 10px;
 }
 .lb-list-mini .lb-row {
-  padding: 5px 10px;
+  padding: 6px 10px;
   gap: 9px;
-  border-width: 1.5px;
+  border-width: 1px;
   box-shadow: none;
+  border-radius: var(--r-md);
 }
 .lb-list-mini .lb-av {
   width: 26px;
