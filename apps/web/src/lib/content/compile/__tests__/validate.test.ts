@@ -236,4 +236,55 @@ describe("parseAndValidateTree", () => {
       ContentValidationError
     );
   });
+
+  /**
+   * #973 — the admin-sync validator has its own copy of the classification
+   * chain, so it needs its own exclusion guard. Without it the parked twins
+   * below validate into `v.courses` / `v.lessons` / `v.paths` alongside the live
+   * docs. The tree here is NOT built by `extractTarball`, which is the whole
+   * point: the pre-filter cannot be relied on as the only defence.
+   */
+  it("excludes _draft/ docs from the validated content", async () => {
+    const parkedCourse = stringify({
+      id: "course-parked",
+      slug: "parked",
+      title: "Parked",
+      description: "d",
+      difficulty: "beginner",
+      duration: 1,
+      xpPerLesson: 10,
+      xpReward: 100,
+      modules: [{ key: "m", title: "M", lessons: ["lesson-parked"] }],
+    });
+    const parkedLesson = stringify({
+      id: "lesson-parked",
+      slug: "parked",
+      title: "Parked",
+      skills: ["pdas"],
+      blocks: [{ key: "intro", type: "prose", src: "intro.md" }],
+    });
+    const t = tree({
+      "courses/demo/course.yaml": courseYaml,
+      "courses/demo/lessons/accounts/lesson.yaml": lessonYaml,
+      "courses/demo/lessons/accounts/intro.md": "# Accounts",
+      "skills.yaml": skillsYaml,
+      "courses/_draft/parked/course.yaml": parkedCourse,
+      "courses/_draft/parked/lessons/parked/lesson.yaml": parkedLesson,
+      "paths/_draft/parked.yaml": stringify({
+        id: "path-parked",
+        slug: "parked",
+        title: "Parked",
+        difficulty: "beginner",
+        courses: ["course-parked"],
+      }),
+    });
+
+    const v = await parseAndValidateTree(t, passGraders);
+
+    expect(v.courses.map((c) => c.id)).toEqual(["course-demo"]);
+    expect(v.lessons.map(({ lesson }) => lesson.id)).toEqual([
+      "lesson-accounts",
+    ]);
+    expect(v.paths).toEqual([]);
+  });
 });

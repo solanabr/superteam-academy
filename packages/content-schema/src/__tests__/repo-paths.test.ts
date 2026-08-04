@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { isDraftPath, isExcludedContentPath } from "../repo-paths";
+import {
+  isCompilerContentDoc,
+  isDraftPath,
+  isExcludedContentPath,
+} from "../repo-paths";
 
 /**
  * #973 — one rule, two consumers: the bundle compiler (apps/web) and
@@ -43,6 +47,43 @@ describe("isDraftPath", () => {
       "courses/_template/course.yaml",
     ]) {
       expect(isDraftPath(p), p).toBe(false);
+    }
+  });
+});
+
+describe("isCompilerContentDoc", () => {
+  it("is depth-blind, exactly like the compiler's unanchored chain", () => {
+    for (const p of [
+      "courses/live/course.yaml",
+      "courses/a/b/c/course.yaml",
+      "courses/live/lessons/x/lesson.yaml",
+      "courses/live/modules/m1/lessons/x/lesson.yaml",
+      "paths/p.yaml",
+      "paths/archive/old.yaml",
+      "achievements/a.yaml",
+      "achievements/season1/a.yaml",
+      "quests/q.yaml",
+      "quests/nested/q.yaml",
+    ]) {
+      expect(isCompilerContentDoc(p), p).toBe(true);
+    }
+  });
+
+  it("does not claim prose, code, assets, or non-collection yaml", () => {
+    for (const p of [
+      "skills.yaml",
+      "courses/live/README.md",
+      "courses/live/lessons/x/intro.md",
+      "courses/live/lessons/x/exercise/solution.ts",
+      "courses/live/lessons/x/assets/pixel.png",
+      "courses/live/lessons/x/notes.yaml",
+      "courses/live/meta.yaml",
+      "docs/notes.yaml",
+      // The quiz shorthand is a lint-only doc kind; the compiler reads quizzes
+      // out of the lesson's blocks, not as standalone files.
+      "courses/live/lessons/x/check.quiz.yaml",
+    ]) {
+      expect(isCompilerContentDoc(p), p).toBe(false);
     }
   });
 });

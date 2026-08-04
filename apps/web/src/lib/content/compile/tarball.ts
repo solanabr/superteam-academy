@@ -50,7 +50,8 @@ function parsePaxPath(data: Uint8Array): string | null {
  * GitHub wraps every entry under one generated dir (`owner-repo-<sha>/`); we
  * strip the first path segment so keys match the repo layout. Directory entries
  * (typeflag '5', trailing slash) and every excluded path (`courses/_template/**`,
- * anything under a `_draft/` dir — see `excluded.ts`) are dropped.
+ * anything under a `_draft/` dir — see content-schema's `repo-paths.ts`) are
+ * dropped.
  *
  * Long paths (repo paths routinely exceed the 100-byte tar `name` field once the
  * generated top dir is prepended) are reconstructed from the ustar `prefix`

@@ -41,9 +41,38 @@ export function isDraftPath(relPath: string): boolean {
  *
  * Note the asymmetry with {@link isDraftPath}: content-lint deliberately LINTS
  * `courses/_template/**` (the scaffold must stay valid — see the `good` fixture
- * and gate 19's own narrower `TEMPLATE_LESSON_PREFIX`) while the compiler never
- * ships it. Parked content is excluded from both.
+ * and gate 19's template-scoped exclusion) while the compiler never ships it.
+ * Parked content is excluded from both.
  */
 export function isExcludedContentPath(relPath: string): boolean {
   return relPath.startsWith(TEMPLATE_PREFIX) || isDraftPath(relPath);
+}
+
+/** Collections whose `.yaml` files the compiler treats as documents, by prefix. */
+const COMPILER_COLLECTION_PREFIXES = ["achievements/", "quests/", "paths/"];
+
+/**
+ * True when the bundle compiler would classify this path as a content DOCUMENT
+ * and emit it — mirroring `validateTree`'s unanchored chain in
+ * `apps/web/src/lib/content/compile/compile-bundle.ts` (and the identical chain
+ * in `validate.ts`). Deliberately UNANCHORED and depth-blind, exactly like the
+ * compiler: `courses/a/b/c/course.yaml` is a course to it.
+ *
+ * That is the whole asymmetry #973 turned on. content-lint's `classify()` is
+ * anchored and fixed-depth, so a doc can be compiler-visible and lint-invisible.
+ * Whenever that happens the file ships unlinted, so content-lint escalates such
+ * a file to an ERROR rather than a warning (`unclassifiedContentFiles`).
+ *
+ * KNOWN GAP (follow-up, deliberately out of #973's scope): `slots.lock.json` is
+ * also compiler-claimed but is `.json`, and the loader's unclassified scan only
+ * walks `.yaml`. Same for `.yml`.
+ */
+export function isCompilerContentDoc(relPath: string): boolean {
+  if (relPath.endsWith("/course.yaml") || relPath.endsWith("/lesson.yaml")) {
+    return true;
+  }
+  return (
+    relPath.endsWith(".yaml") &&
+    COMPILER_COLLECTION_PREFIXES.some((p) => relPath.startsWith(p))
+  );
 }

@@ -51,9 +51,9 @@ export async function runLint(
   }
 
   // #973: a content file NO gate can see is worse than a failing one — it looks
-  // linted and is not. Warning-tier: the near-miss cases (a doc at the wrong
-  // depth, a typo'd `_drafts/`) must be visible without breaking a repo that
-  // legitimately carries an unrecognised yaml.
+  // linted and is not. Error when the compiler would still ship it (the
+  // invariant), warning when nothing ships but the author likely meant it to be
+  // linted. See `unclassifiedContentFiles`.
   diagnostics.push(...unclassifiedContentFiles(root));
 
   const model = schemaCheck ? schemaCheck(root, diagnostics) : emptyModel(root);

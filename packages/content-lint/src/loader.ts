@@ -2,6 +2,7 @@ import { readFileSync, readdirSync, lstatSync } from "node:fs";
 import { join, relative } from "node:path";
 import { parse as parseYaml } from "yaml";
 import {
+  isCompilerContentDoc,
   isDraftPath,
   isExcludedContentPath,
 } from "@superteam-lms/content-schema";
@@ -56,8 +57,14 @@ export function walkFiles(root: string, dir = root): string[] {
   return out;
 }
 
-/** Path-pattern classification. Returns null for files we do not lint directly. */
-function classify(path: string): DocKind | null {
+/**
+ * Path-pattern classification. Returns null for files we do not lint directly.
+ *
+ * ANCHORED and fixed-depth, unlike the compiler's unanchored `endsWith` chain
+ * (`isCompilerContentDoc`). Exported so the agreement between the two can be
+ * asserted directly — see loader.test.ts's compiler ⊆ lint property.
+ */
+export function classify(path: string): DocKind | null {
   if (/^courses\/[^/]+\/course\.yaml$/.test(path)) return "course";
   if (/^courses\/[^/]+\/slots\.lock\.json$/.test(path)) return "slots";
   if (/^courses\/[^/]+\/lessons\/[^/]+\/lesson\.yaml$/.test(path)) {
@@ -90,8 +97,18 @@ const COLLECTION_DIRS = ["courses/", "paths/", "achievements/", "quests/"];
  * `.yaml` files inside a content collection that no classifier claims and that
  * are not parked — a typo'd parking dir (`courses/_drafts/x/course.yaml`), a
  * doc at the wrong depth, an unrecognised collection subdir. Each is content
- * the author believes is linted and is not, so it gets a warning rather than
- * `loader.ts`'s old bare `if (!kind) continue;`.
+ * the author believes is linted and is not, replacing `loader.ts`'s old bare
+ * `if (!kind) continue;`.
+ *
+ * Severity splits on whether the COMPILER would still claim the file:
+ *
+ *   - ERROR when it would (`isCompilerContentDoc`). That is the #973 invariant
+ *     itself — the file ships into the bundle with no gate having seen it. A
+ *     single mistyped directory (`courses/_drafts/`) otherwise re-opens the
+ *     whole hole: lint exits 0 while the compiler emits the parked docs, ids
+ *     and all. A warning does not enforce an invariant; an error does.
+ *   - WARNING otherwise. Nothing ships, but the author still probably meant it
+ *     to be linted, so it must not be silent.
  */
 export function unclassifiedContentFiles(root: string): Diagnostic[] {
   const out: Diagnostic[] = [];
@@ -100,13 +117,18 @@ export function unclassifiedContentFiles(root: string): Diagnostic[] {
     if (classify(path) !== null) continue;
     if (isExcludedContentPath(path)) continue;
     if (!COLLECTION_DIRS.some((d) => path.startsWith(d))) continue;
+    const shipped = isCompilerContentDoc(path);
     out.push(
       diag(
         "loader",
-        "warning",
+        shipped ? "error" : "warning",
         path,
-        "unclassified content file — wrong depth or directory name? it is NOT linted by any gate " +
-          "(park a file deliberately by moving it under a `_draft/` directory)"
+        shipped
+          ? "unclassified content file the COMPILER STILL SHIPS — wrong depth or directory name? " +
+              "no gate can see it, so it would reach the bundle unlinted " +
+              "(park a file deliberately by moving it under a `_draft/` directory)"
+          : "unclassified content file — wrong depth or directory name? it is NOT linted by any gate " +
+              "(park a file deliberately by moving it under a `_draft/` directory)"
       )
     );
   }
