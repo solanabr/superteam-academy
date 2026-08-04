@@ -425,6 +425,7 @@
     "reviewDueTitle": "{count} due for review",
     "reviewDueAria": "{count} items due for review, open review",
     "reviewMore": "+{count} more",
+    "reviewExplainer": "Quick spaced-practice questions from lessons you finished — a few minutes keeps them fresh.",
     "reviewNow": "Review now"
   },
   "gamification": {

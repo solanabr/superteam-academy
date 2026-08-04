@@ -187,17 +187,19 @@ export function NextLessonPlan({ userId }: NextLessonPlanProps) {
   return (
     <Card>
       <CardContent className="flex flex-col gap-3 p-5">
-        <div className="flex items-center gap-2">
-          <CalendarCheck
-            size={20}
-            weight="duotone"
-            className="shrink-0 text-primary"
-            aria-hidden="true"
-          />
-          <h2 className="font-display text-base font-black tracking-[-0.25px]">
-            {t("nextLessonTitle")}
-          </h2>
-        </div>
+        {showPicker && (
+          <div className="flex items-center gap-2">
+            <CalendarCheck
+              size={20}
+              weight="duotone"
+              className="shrink-0 text-primary"
+              aria-hidden="true"
+            />
+            <h2 className="font-display text-base font-black tracking-[-0.25px]">
+              {t("nextLessonTitle")}
+            </h2>
+          </div>
+        )}
 
         {showPicker ? (
           <>
@@ -268,16 +270,32 @@ export function NextLessonPlan({ userId }: NextLessonPlanProps) {
             </label>
           </>
         ) : (
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-text-2">
-              {t("nextLessonPlanned", {
-                day: t(weekdayKey(plan.day)),
-                time: plan.time,
-              })}
-            </p>
-            <Button variant="ghost" size="sm" onClick={openEditor}>
-              {t("nextLessonEdit")}
-            </Button>
+          <div className="flex items-center gap-3.5">
+            {/* Mini calendar tile — the plan at a glance. */}
+            <span className="nlp-cal" aria-hidden="true">
+              <span className="nlp-cal-day">
+                {t(weekdayKey(plan.day)).slice(0, 3)}
+              </span>
+              <span className="nlp-cal-time">{plan.time}</span>
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+                {t("nextLessonTitle")}
+              </p>
+              <p className="mt-0.5 text-sm text-text-2">
+                {t("nextLessonPlanned", {
+                  day: t(weekdayKey(plan.day)),
+                  time: plan.time,
+                })}
+              </p>
+              <button
+                type="button"
+                onClick={openEditor}
+                className="mt-1.5 text-xs font-semibold text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              >
+                {t("nextLessonEdit")}
+              </button>
+            </div>
           </div>
         )}
       </CardContent>

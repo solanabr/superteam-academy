@@ -425,6 +425,7 @@
     "reviewDueTitle": "{count} para revisar",
     "reviewDueAria": "{count} itens para revisar, abrir revisão",
     "reviewMore": "+{count} mais",
+    "reviewExplainer": "Perguntas rápidas de revisão espaçada das lições que você concluiu — alguns minutos as mantêm frescas.",
     "reviewNow": "Revisar agora"
   },
   "gamification": {

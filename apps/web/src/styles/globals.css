@@ -4221,12 +4221,13 @@ a.path-step-card:hover .path-step-badge.skip {
   background: var(--sg-today);
   animation: today-cell 2s ease-in-out infinite;
 }
-/* Streak-freeze day (LX-B8): an inactive day a freeze saved. Rendered in the
-   cool --freeze blue so it reads as "preserved", distinct from the green
-   activity ramp and the amber today marker. */
+/* Streak-freeze day (LX-B8): an inactive day a freeze saved. Stays on the
+   green palette (owner call, 04-08): a neutral cell with a green ring reads
+   as "held, not earned" — no third hue competing with the activity ramp and
+   the amber today marker. */
 .cday.frozen {
-  background: var(--freeze);
-  box-shadow: inset 0 0 0 1px var(--card);
+  background: var(--sg-0);
+  box-shadow: inset 0 0 0 1.5px var(--sg-2);
 }
 .contrib-legend {
   display: flex;
@@ -4666,17 +4667,38 @@ a.path-step-card:hover .path-step-badge.skip {
   align-items: center;
   gap: 12px;
 }
-.cc-glyph {
+/* ── Next-lesson plan: mini calendar tile ── */
+.nlp-cal {
   flex-shrink: 0;
-  width: 38px;
-  height: 38px;
+  width: 56px;
   border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--primary-dim);
-  color: var(--primary);
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  text-align: center;
+  box-shadow: var(--shadow);
 }
+.nlp-cal-day {
+  display: block;
+  background: var(--primary);
+  color: var(--primary-foreground, #fff);
+  font-family: var(--font-mono, var(--font-m));
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  padding: 3px 0 2px;
+}
+.nlp-cal-time {
+  display: block;
+  background: var(--card);
+  color: var(--text);
+  font-family: var(--font-display, var(--font-d));
+  font-size: 14px;
+  font-weight: 800;
+  padding: 6px 0 7px;
+  letter-spacing: 0.3px;
+}
+
 .cc-card .cc-title {
   font-family: var(--font-display, var(--font-d));
   font-size: 14px;

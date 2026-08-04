@@ -425,6 +425,7 @@
     "reviewDueTitle": "{count} para repasar",
     "reviewDueAria": "{count} elementos para repasar, abrir repaso",
     "reviewMore": "+{count} más",
+    "reviewExplainer": "Preguntas rápidas de repaso espaciado de las lecciones que completaste — unos minutos las mantienen frescas.",
     "reviewNow": "Repasar ahora"
   },
   "gamification": {

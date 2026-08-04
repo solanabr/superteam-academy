@@ -156,14 +156,8 @@ export function CurrentCoursesSection({
 
                 <Link href={`/${locale}/courses/${course.slug}`}>
                   <div className="cc-body">
-                    <span className="cc-glyph" aria-hidden="true">
-                      <BookOpen size={18} weight="duotone" />
-                    </span>
                     <div className="cc-meta">
                       <div className="cc-title">{course.title}</div>
-                      <span className="cc-sub">
-                        {course.learningPath ?? tCourses(course.difficulty)}
-                      </span>
                     </div>
                     <span
                       className="cc-progress"

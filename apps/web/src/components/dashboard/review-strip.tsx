@@ -7,6 +7,7 @@ import { Brain, ArrowRight } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { getDueReviewItems } from "@/lib/review/due-items";
 import { getLessonsByIds } from "@/lib/content/client-queries";
+import { Button } from "@/components/ui/button";
 
 interface ReviewStripProps {
   /** Authenticated user id, or null before auth resolves. */
@@ -70,40 +71,57 @@ export function ReviewStrip({ userId }: ReviewStripProps) {
   const overflow = count - shown.length;
 
   return (
-    <Link
-      href={`/${locale}/review`}
+    <section
       aria-label={t("reviewDueAria", { count })}
-      className="hover:border-primary/40 group flex items-center gap-4 rounded-xl border border-border bg-card p-4 shadow-card transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      className="rounded-xl border border-border bg-card p-4 shadow-card"
     >
-      <span
-        className="bg-primary-dim flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-primary"
-        aria-hidden="true"
-      >
-        <Brain size={20} weight="fill" />
-      </span>
-      <div className="min-w-0 flex-1">
+      <div className="flex items-center gap-3">
+        <span
+          className="bg-primary-dim flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-primary"
+          aria-hidden="true"
+        >
+          <Brain size={18} weight="fill" />
+        </span>
         <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
           {t("reviewDueTitle", { count })}
         </p>
-        {shown.length > 0 && (
-          <p className="mt-0.5 truncate text-sm text-text-2">
-            {shown.join(" · ")}
-            {overflow > 0 && (
-              <span className="text-text-3">
-                {" "}
-                {t("reviewMore", { count: overflow })}
-              </span>
-            )}
-          </p>
-        )}
       </div>
-      <span
-        className="flex shrink-0 items-center gap-1.5 font-display text-sm font-extrabold text-primary transition-transform duration-200 group-hover:translate-x-0.5"
-        aria-hidden="true"
-      >
-        <span className="hidden sm:inline">{t("reviewNow")}</span>
-        <ArrowRight size={15} weight="bold" />
-      </span>
-    </Link>
+
+      {/* Name what is actually due — a bare count is a chore, named lessons
+          are a plan. When no item_key resolves to a title (e.g. items from
+          retired courses, see the orphaned-review-items issue), fall back to
+          a one-line explainer so the card never reads as an unlabeled count. */}
+      {shown.length === 0 && (
+        <p className="mt-2 text-sm text-text-3">{t("reviewExplainer")}</p>
+      )}
+      {shown.length > 0 && (
+        <ul className="mt-3 space-y-1.5">
+          {shown.map((title) => (
+            <li
+              key={title}
+              className="flex items-baseline gap-2 text-sm text-text-2"
+            >
+              <span
+                className="size-1.5 shrink-0 translate-y-[-1px] rounded-full bg-primary"
+                aria-hidden="true"
+              />
+              <span className="truncate">{title}</span>
+            </li>
+          ))}
+          {overflow > 0 && (
+            <li className="pl-3.5 text-xs text-text-3">
+              {t("reviewMore", { count: overflow })}
+            </li>
+          )}
+        </ul>
+      )}
+
+      <Button asChild variant="push" size="sm" className="mt-3.5 w-full">
+        <Link href={`/${locale}/review`}>
+          {t("reviewNow")}
+          <ArrowRight size={15} weight="bold" aria-hidden="true" />
+        </Link>
+      </Button>
+    </section>
   );
 }
