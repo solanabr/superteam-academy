@@ -45,22 +45,19 @@ export function AchievementsStrip({
   if (catalog.length === 0) return null;
 
   return (
-    <section
-      aria-label={t("yourAchievements")}
-      className="rounded-xl border border-border bg-card px-5 py-4 shadow-card"
-    >
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
-        <div className="flex min-w-0 flex-col gap-0.5">
-          <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
-            {t("yourAchievements")}
-          </p>
-          <span className="font-mono text-[10px] uppercase tracking-[1px] text-text-3">
-            {t("ofUnlocked", {
-              count: achievementsCount,
-              total: catalog.length,
-            })}
-          </span>
-        </div>
+    <section aria-label={t("yourAchievements")}>
+      <div className="mb-4 flex items-baseline justify-between gap-3">
+        <h2 className="font-display text-lg font-black tracking-[-0.25px]">
+          {t("yourAchievements")}
+        </h2>
+        <span className="font-mono text-[10px] uppercase tracking-[1px] text-text-3">
+          {t("ofUnlocked", {
+            count: achievementsCount,
+            total: catalog.length,
+          })}
+        </span>
+      </div>
+      <div className="rounded-xl border border-border bg-card px-5 py-4 shadow-card">
         <Tooltip.Provider delayDuration={0} skipDelayDuration={150}>
           <div className="ach-strip-row">
             {shown.map((ach) => {

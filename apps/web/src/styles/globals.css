@@ -4140,12 +4140,12 @@ a.path-step-card:hover .path-step-badge.skip {
 .cert-slim .cert-body {
   display: flex;
   flex-direction: column;
-  min-height: 240px;
+  min-height: 150px;
 }
 .cert-slim .cert-divider {
   margin-top: auto;
 }
-.cert-slim .cert-network {
+.cert-slim .cert-foot {
   display: none;
 }
 

@@ -60,78 +60,78 @@ export function DailyQuestsCard({
   if (quests.length === 0) return null;
 
   return (
-    <section
-      aria-label={tDash("dailyQuests")}
-      className="rounded-xl border border-border bg-card p-4 shadow-card"
-    >
-      <div className="dash-quests-head mb-3">
-        <span className="dash-quests-title">{tDash("dailyQuests")}</span>
+    <section aria-label={tDash("dailyQuests")}>
+      <div className="mb-4 flex items-baseline justify-between gap-3">
+        <h2 className="font-display text-lg font-black tracking-[-0.25px]">
+          {tDash("dailyQuests")}
+        </h2>
         <span className="dash-quests-reset">
           {tDash("resetsIn", { hours: getHoursUntilReset(questsResetTime) })}
         </span>
       </div>
-
-      {/* The rail shows the whole set — no drag-scroll viewport like the old
+      <div className="rounded-xl border border-border bg-card p-4 shadow-card">
+        {/* The rail shows the whole set — no drag-scroll viewport like the old
           panel slot needed; the list is three-ish rows tall. */}
-      <Tooltip.Provider delayDuration={150} skipDelayDuration={150}>
-        <div className="flex flex-col gap-[5px]">
-          {quests.map((quest) => {
-            const IconComp = getQuestIcon(quest.icon);
-            const href = questHref(quest.type, locale);
-            const inner = (
-              <>
-                <div className="dq-icon">
-                  <IconComp size={16} weight="duotone" />
-                </div>
-                <div className="dq-info">
-                  <span className="dq-name">{quest.name}</span>
-                </div>
-                <div className="dq-reward">
-                  <Lightning size={12} weight="fill" />+{quest.xpReward}{" "}
-                  {t("xp")}
-                </div>
-                {quest.completed ? (
-                  <div className="dq-check">
-                    <CheckCircle size={18} weight="fill" />
+        <Tooltip.Provider delayDuration={150} skipDelayDuration={150}>
+          <div className="flex flex-col gap-[5px]">
+            {quests.map((quest) => {
+              const IconComp = getQuestIcon(quest.icon);
+              const href = questHref(quest.type, locale);
+              const inner = (
+                <>
+                  <div className="dq-icon">
+                    <IconComp size={16} weight="duotone" />
                   </div>
-                ) : (
-                  <span className="dq-progress-lbl">
-                    {quest.currentValue}/{quest.targetValue}
-                  </span>
-                )}
-              </>
-            );
-            const className = cn(
-              "dq",
-              quest.completed && "done",
-              href && "dq-link"
-            );
-            const row = href ? (
-              <Link href={href} className={className}>
-                {inner}
-              </Link>
-            ) : (
-              <div className={className}>{inner}</div>
-            );
-            return (
-              <Tooltip.Root key={quest.id}>
-                <Tooltip.Trigger asChild>{row}</Tooltip.Trigger>
-                <Tooltip.Portal>
-                  <Tooltip.Content
-                    className="heatmap-tooltip"
-                    sideOffset={6}
-                    side="top"
-                    collisionPadding={12}
-                  >
-                    <span className="ach-tip">{quest.description}</span>
-                    <Tooltip.Arrow className="fill-[var(--card)]" />
-                  </Tooltip.Content>
-                </Tooltip.Portal>
-              </Tooltip.Root>
-            );
-          })}
-        </div>
-      </Tooltip.Provider>
+                  <div className="dq-info">
+                    <span className="dq-name">{quest.name}</span>
+                  </div>
+                  <div className="dq-reward">
+                    <Lightning size={12} weight="fill" />+{quest.xpReward}{" "}
+                    {t("xp")}
+                  </div>
+                  {quest.completed ? (
+                    <div className="dq-check">
+                      <CheckCircle size={18} weight="fill" />
+                    </div>
+                  ) : (
+                    <span className="dq-progress-lbl">
+                      {quest.currentValue}/{quest.targetValue}
+                    </span>
+                  )}
+                </>
+              );
+              const className = cn(
+                "dq",
+                quest.completed && "done",
+                href && "dq-link"
+              );
+              const row = href ? (
+                <Link href={href} className={className}>
+                  {inner}
+                </Link>
+              ) : (
+                <div className={className}>{inner}</div>
+              );
+              return (
+                <Tooltip.Root key={quest.id}>
+                  <Tooltip.Trigger asChild>{row}</Tooltip.Trigger>
+                  <Tooltip.Portal>
+                    <Tooltip.Content
+                      className="heatmap-tooltip"
+                      sideOffset={6}
+                      side="top"
+                      collisionPadding={12}
+                    >
+                      <span className="ach-tip">{quest.description}</span>
+                      <Tooltip.Arrow className="fill-[var(--card)]" />
+                    </Tooltip.Content>
+                  </Tooltip.Portal>
+                </Tooltip.Root>
+              );
+            })}
+          </div>
+        </Tooltip.Provider>
+      </div>
     </section>
   );
 }
