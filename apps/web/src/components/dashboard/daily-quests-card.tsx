@@ -12,6 +12,7 @@ import {
   CheckCircle,
 } from "@phosphor-icons/react";
 import type { Icon } from "@phosphor-icons/react";
+import * as Tooltip from "@radix-ui/react-tooltip";
 import type { DailyQuest } from "@superteam-lms/types";
 import { questHref } from "@/lib/gamification/quest-links";
 import { cn } from "@/lib/utils";
@@ -72,49 +73,65 @@ export function DailyQuestsCard({
 
       {/* The rail shows the whole set — no drag-scroll viewport like the old
           panel slot needed; the list is three-ish rows tall. */}
-      <div className="flex flex-col gap-2.5">
-        {quests.map((quest) => {
-          const IconComp = getQuestIcon(quest.icon);
-          const href = questHref(quest.type, locale);
-          const inner = (
-            <>
-              <div className="dq-icon">
-                <IconComp size={16} weight="duotone" />
-              </div>
-              <div className="dq-info">
-                <span className="dq-name">{quest.name}</span>
-                <span className="dq-desc">{quest.description}</span>
-              </div>
-              <div className="dq-reward">
-                <Lightning size={12} weight="fill" />+{quest.xpReward} {t("xp")}
-              </div>
-              {quest.completed ? (
-                <div className="dq-check">
-                  <CheckCircle size={18} weight="fill" />
+      <Tooltip.Provider delayDuration={150} skipDelayDuration={150}>
+        <div className="flex flex-col gap-2.5">
+          {quests.map((quest) => {
+            const IconComp = getQuestIcon(quest.icon);
+            const href = questHref(quest.type, locale);
+            const inner = (
+              <>
+                <div className="dq-icon">
+                  <IconComp size={16} weight="duotone" />
                 </div>
-              ) : (
-                <span className="dq-progress-lbl">
-                  {quest.currentValue}/{quest.targetValue}
-                </span>
-              )}
-            </>
-          );
-          const className = cn(
-            "dq",
-            quest.completed && "done",
-            href && "dq-link"
-          );
-          return href ? (
-            <Link key={quest.id} href={href} className={className}>
-              {inner}
-            </Link>
-          ) : (
-            <div key={quest.id} className={className}>
-              {inner}
-            </div>
-          );
-        })}
-      </div>
+                <div className="dq-info">
+                  <span className="dq-name">{quest.name}</span>
+                </div>
+                <div className="dq-reward">
+                  <Lightning size={12} weight="fill" />+{quest.xpReward}{" "}
+                  {t("xp")}
+                </div>
+                {quest.completed ? (
+                  <div className="dq-check">
+                    <CheckCircle size={18} weight="fill" />
+                  </div>
+                ) : (
+                  <span className="dq-progress-lbl">
+                    {quest.currentValue}/{quest.targetValue}
+                  </span>
+                )}
+              </>
+            );
+            const className = cn(
+              "dq",
+              quest.completed && "done",
+              href && "dq-link"
+            );
+            const row = href ? (
+              <Link href={href} className={className}>
+                {inner}
+              </Link>
+            ) : (
+              <div className={className}>{inner}</div>
+            );
+            return (
+              <Tooltip.Root key={quest.id}>
+                <Tooltip.Trigger asChild>{row}</Tooltip.Trigger>
+                <Tooltip.Portal>
+                  <Tooltip.Content
+                    className="heatmap-tooltip"
+                    sideOffset={6}
+                    side="top"
+                    collisionPadding={12}
+                  >
+                    <span className="ach-tip">{quest.description}</span>
+                    <Tooltip.Arrow className="fill-[var(--card)]" />
+                  </Tooltip.Content>
+                </Tooltip.Portal>
+              </Tooltip.Root>
+            );
+          })}
+        </div>
+      </Tooltip.Provider>
     </section>
   );
 }
