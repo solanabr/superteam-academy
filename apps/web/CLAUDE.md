@@ -126,6 +126,18 @@ TEACH_PREVIEW_PASSWORD=            # Shared password for /teach/preview. NO defa
                                    # never on-chain writes, never the admin surface (separate
                                    # cookie from admin_session, so it cannot satisfy admin auth).
 
+# Optional — Phantom Connect embedded wallets (#983/#984)
+# Public, domain-bound client id from Phantom Portal (https://phantom.com/portal/).
+# It ships in the client bundle by design; Portal's allowed-domains list is what
+# scopes it, so it is configuration, not a secret. Unset = embedded wallets OFF,
+# exactly like the analytics keys — SIWS stays the guaranteed way in, and no
+# build or page render may depend on this being present.
+# Portal must list the production origin AND http://localhost:3000 for dev.
+# Read ONLY through lib/phantom/config.ts (isPhantomConnectEnabled/getPhantomAppId).
+# NOTE: we integrate via @phantom/browser-sdk, not @phantom/react-sdk — the
+# latter needs React >=19.0.1 and this app is on React 18.3.1 (#989).
+NEXT_PUBLIC_PHANTOM_APP_ID=
+
 # Optional — Rust playground proxy (server-only)
 RUST_PLAYGROUND_URL=               # /api/rust/execute upstream (default: play.rust-lang.org/execute)
 
