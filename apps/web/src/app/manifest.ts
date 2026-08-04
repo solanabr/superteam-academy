@@ -8,9 +8,10 @@ export default function manifest(): MetadataRoute.Manifest {
       "The definitive learning platform for Solana developers. Interactive courses, on-chain credentials, and a community of builders.",
     start_url: "/",
     display: "standalone",
-    // Brand navy — the dark theme's page colour, which is what the app boots into.
-    background_color: "#0E1117",
-    theme_color: "#0E1117",
+    // Light-theme page colour (cream) — light is the default theme since 04-08,
+    // so the PWA splash/chrome must boot the same way the app does.
+    background_color: "#FAFAF7",
+    theme_color: "#FAFAF7",
     icons: [
       { src: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
       { src: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
