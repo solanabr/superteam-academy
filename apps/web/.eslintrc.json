@@ -40,6 +40,26 @@
       "rules": {
         "no-restricted-imports": "off"
       }
+    },
+    {
+      "files": ["src/lib/gamification/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@/content/generated/*", "**/content/generated/*"],
+                "message": "The generated content bundle holds quiz answers, code solutions and hidden tests. Import it ONLY through src/lib/content/store.ts (server-only) — never directly, or those secrets leak into the client bundle."
+              },
+              {
+                "group": ["@/lib/solana/*", "**/lib/solana/*"],
+                "message": "lib/gamification must stay chain-free: importing the Solana client graph here drags @solana/web3.js + @coral-xyz/anchor into every quest/XP route (dev-compile and cold-start cost). Pass chain clients in as parameters instead."
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }

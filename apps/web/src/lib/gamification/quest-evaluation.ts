@@ -1,7 +1,7 @@
 import { after } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getAllQuests } from "@/lib/content/queries";
-import { retryQuestXpForUser } from "@/lib/solana/onchain-queue";
+import { retryQuestXpForUser } from "@/lib/gamification/xp-queue-settlement";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 
