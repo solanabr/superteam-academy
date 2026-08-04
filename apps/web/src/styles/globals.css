@@ -4050,6 +4050,11 @@ a.path-step-card:hover .path-step-badge.skip {
 }
 
 /* Bottom row — heatmap bigger, quests smaller (flipped from top) */
+/* A zero weekly score is not a reward — muted until points land. */
+.lb-xp--zero {
+  color: var(--text-3);
+}
+
 /* Dashboard league card: mini rows, at most ~6 visible, scroll beyond. */
 .lb-list-mini {
   max-height: 248px;

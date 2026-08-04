@@ -726,8 +726,8 @@
   },
   "timeAgo": {
     "justNow": "Ahora mismo",
-    "hours": "Hace {count} horas",
-    "days": "Hace {count} días",
+    "hours": "{count, plural, one {Hace # hora} other {Hace # horas}}",
+    "days": "{count, plural, one {Hace # día} other {Hace # días}}",
     "today": "Hoy",
     "yesterday": "Ayer"
   },

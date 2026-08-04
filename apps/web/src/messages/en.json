@@ -726,8 +726,8 @@
   },
   "timeAgo": {
     "justNow": "Just now",
-    "hours": "{count} hours ago",
-    "days": "{count} days ago",
+    "hours": "{count, plural, one {# hour ago} other {# hours ago}}",
+    "days": "{count, plural, one {# day ago} other {# days ago}}",
     "today": "Today",
     "yesterday": "Yesterday"
   },
