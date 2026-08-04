@@ -20,15 +20,15 @@ vi.mock("@/lib/content/deployments", async (importOriginal) => {
 
 import { buildUserState } from "../achievements";
 
-/** The live path this wave touches, and its real bundle membership. */
-const PATH = "path-zero-to-deployed";
-const C1 = "course-solana-for-web-devs";
-const LIVE_MEMBERS = [
-  "course-rust-for-program-devs",
-  "course-building-first-program",
-  "course-dapp-sdk-kit",
-  "course-stablecoin-payments",
-];
+/**
+ * The live path and its real bundle membership. Retargeted to the alpha
+ * catalog's only path (`path-first-steps`, 2 members) when the track-1 ladder
+ * was parked; `UNSYNCED` plays the role C1 did — a member that is in the path
+ * but has no on-chain deployment row.
+ */
+const PATH = "path-first-steps";
+const UNSYNCED = "course-solana-speedrun";
+const LIVE_MEMBERS = ["course-btc-to-sol-evolution"];
 
 function sync(...courseIds: string[]) {
   deployments.clear();
@@ -81,15 +81,15 @@ beforeEach(() => deployments.clear());
 
 describe("buildUserState — path completion is gated by the sync set (#892)", () => {
   it("an UNSYNCED member does not block the path for a learner who finished every live member", async () => {
-    // The exact shape this content wave introduces: C1 is staged into the live
-    // path but has no on-chain deployment row. RED before the fix — the raw
-    // `path.courseIds.every(...)` required C1, which can never enter
+    // The shape the #892 content wave introduced: a member is staged into the
+    // live path but has no on-chain deployment row. RED before the fix — the
+    // raw `path.courseIds.every(...)` required it, and it can never enter
     // `completedCourseIds` (that set is synced+active-only), so the path — and
-    // `achievement-full-stack-solana` with it — became unsatisfiable.
+    // the path-completed achievement with it — became unsatisfiable.
     sync(...LIVE_MEMBERS);
     const state = await buildUserState(makeAdmin(LIVE_MEMBERS), "user-1");
 
-    expect(state.completedCourseIds.has(C1)).toBe(false);
+    expect(state.completedCourseIds.has(UNSYNCED)).toBe(false);
     expect(state.completedPathIds.has(PATH)).toBe(true);
   });
 
@@ -99,7 +99,7 @@ describe("buildUserState — path completion is gated by the sync set (#892)", (
     // for a learner credited with every course in it.
     sync();
     const state = await buildUserState(
-      makeAdmin([C1, ...LIVE_MEMBERS]),
+      makeAdmin([UNSYNCED, ...LIVE_MEMBERS]),
       "user-2"
     );
 
@@ -108,7 +108,7 @@ describe("buildUserState — path completion is gated by the sync set (#892)", (
 
   it("a SYNCED member that is unfinished still blocks the path", async () => {
     // The gate loosens membership, never the completion requirement.
-    sync(C1, ...LIVE_MEMBERS);
+    sync(UNSYNCED, ...LIVE_MEMBERS);
     const state = await buildUserState(makeAdmin(LIVE_MEMBERS), "user-3");
 
     expect(state.completedPathIds.has(PATH)).toBe(false);

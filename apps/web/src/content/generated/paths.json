@@ -1,137 +1,28 @@
 [
   {
-    "_id": "path-ai-solana",
-    "_type": "learningPath",
-    "courses": [],
-    "description": "Explore the intersection of artificial intelligence and Solana. Build AI agents that interact with on-chain data and execute transactions.",
-    "difficulty": "intermediate",
-    "draft": true,
-    "order": 6,
-    "retired": false,
-    "slug": "ai-solana",
-    "tag": "AI Agents",
-    "title": "AI x Solana"
-  },
-  {
-    "_id": "path-defi",
-    "_type": "learningPath",
-    "courses": [],
-    "description": "Specialize in decentralized finance on Solana. Understand AMMs, lending protocols, token mechanics, and create DeFi primitives.",
-    "difficulty": "advanced",
-    "draft": true,
-    "order": 4,
-    "retired": false,
-    "slug": "defi",
-    "tag": "DeFi",
-    "title": "DeFi"
-  },
-  {
-    "_id": "path-frontend",
-    "_type": "learningPath",
-    "courses": [],
-    "description": "Build production-ready Solana dApp frontends. Master wallet integration, on-chain data reading, and interactive transaction UIs.",
-    "difficulty": "intermediate",
-    "draft": true,
-    "order": 3,
-    "retired": false,
-    "slug": "frontend",
-    "tag": "UI/UX",
-    "title": "Frontend"
-  },
-  {
-    "_id": "path-infrastructure",
-    "_type": "learningPath",
-    "courses": [],
-    "description": "Learn to build and maintain Solana infrastructure — validators, RPCs, indexers, and developer tooling.",
-    "difficulty": "advanced",
-    "draft": true,
-    "order": 5,
-    "retired": false,
-    "slug": "infrastructure",
-    "tag": "Infra",
-    "title": "Infrastructure"
-  },
-  {
-    "_id": "path-rust-programs",
-    "_type": "learningPath",
-    "courses": [],
-    "description": "Master Rust for blockchain and the Anchor framework. Write, test, and deploy production-ready Solana programs.",
-    "difficulty": "intermediate",
-    "draft": true,
-    "order": 2,
-    "retired": false,
-    "slug": "rust-programs",
-    "tag": "Builder",
-    "title": "Rust & Programs"
-  },
-  {
-    "_id": "path-security",
-    "_type": "learningPath",
-    "courses": [],
-    "description": "Learn to audit Solana programs for vulnerabilities. Understand common exploit patterns, best practices, and security testing methodologies.",
-    "difficulty": "advanced",
-    "draft": true,
-    "order": 7,
-    "retired": false,
-    "slug": "security",
-    "tag": "Security",
-    "title": "Security & Auditing"
-  },
-  {
-    "_id": "path-solana-core",
-    "_type": "learningPath",
-    "courses": [],
-    "description": "The complete path from zero to Solana developer. Start with the fundamentals, understand how the network works, and build your first on-chain program.",
-    "difficulty": "beginner",
-    "draft": true,
-    "order": 8,
-    "retired": false,
-    "slug": "solana-core",
-    "tag": "Foundation",
-    "title": "Solana Core"
-  },
-  {
-    "_id": "path-zero-to-deployed",
+    "_id": "path-first-steps",
     "_type": "learningPath",
     "courses": [
       {
-        "_key": "course-solana-for-web-devs",
-        "_ref": "course-solana-for-web-devs",
+        "_key": "course-btc-to-sol-evolution",
+        "_ref": "course-btc-to-sol-evolution",
         "_type": "reference",
         "_weak": true
       },
       {
-        "_key": "course-rust-for-program-devs",
-        "_ref": "course-rust-for-program-devs",
-        "_type": "reference",
-        "_weak": true
-      },
-      {
-        "_key": "course-building-first-program",
-        "_ref": "course-building-first-program",
-        "_type": "reference",
-        "_weak": true
-      },
-      {
-        "_key": "course-dapp-sdk-kit",
-        "_ref": "course-dapp-sdk-kit",
-        "_type": "reference",
-        "_weak": true
-      },
-      {
-        "_key": "course-stablecoin-payments",
-        "_ref": "course-stablecoin-payments",
+        "_key": "course-solana-speedrun",
+        "_ref": "course-solana-speedrun",
         "_type": "reference",
         "_weak": true
       }
     ],
-    "description": "The complete path from zero to your first deployed Solana program. Learn how the network works, master Rust and Anchor, then write, build, and ship a real program to Devnet.",
+    "description": "Your first steps onchain. Understand how blockchains evolved from Bitcoin to Solana, then go hands-on and make your first moves on the network in minutes.",
     "difficulty": "beginner",
     "draft": false,
     "order": 1,
     "retired": false,
-    "slug": "zero-to-deployed",
+    "slug": "first-steps",
     "tag": "Foundation",
-    "title": "Zero to Deployed"
+    "title": "First Steps"
   }
 ]

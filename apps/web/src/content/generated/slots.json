@@ -1,114 +1,34 @@
 {
-  "course-building-first-program": {
-    "next": 19,
-    "retired": [
-      0,
-      2,
-      11,
-      14
-    ],
+  "course-btc-to-sol-evolution": {
+    "next": 15,
+    "retired": [],
     "slots": {
-      "lesson-bfsp-account-constraints": 6,
-      "lesson-bfsp-add-instruction": 3,
-      "lesson-bfsp-adding-instructions": 8,
-      "lesson-bfsp-build-increment": 9,
-      "lesson-bfsp-complete-counter": 10,
-      "lesson-bfsp-cpi-lamports": 17,
-      "lesson-bfsp-define-counter": 5,
-      "lesson-bfsp-m4-airdrop": 12,
-      "lesson-bfsp-m4-capstone": 15,
-      "lesson-bfsp-m4-deploy": 13,
-      "lesson-bfsp-on-chain-state": 4,
-      "lesson-bfsp-pdas-vault": 16,
-      "lesson-bfsp-pre-flight-check": 18,
-      "lesson-bfsp-wire-up-initialize": 7,
-      "lesson-bfsp-your-first-build": 1
+      "lesson-b2s-a-market-with-no-marketmaker": 8,
+      "lesson-b2s-an-anchor-vault": 11,
+      "lesson-b2s-hash-everything": 1,
+      "lesson-b2s-mine-your-own-chain": 3,
+      "lesson-b2s-sign-and-verify": 2,
+      "lesson-b2s-speak-rpc": 5,
+      "lesson-b2s-spend-a-utxo": 4,
+      "lesson-b2s-state-lives-in-the-contract": 7,
+      "lesson-b2s-the-crosschain-ops-bot": 13,
+      "lesson-b2s-the-throughput-bet": 10,
+      "lesson-b2s-the-trust-machine": 0,
+      "lesson-b2s-watch-the-mempool": 6,
+      "lesson-b2s-where-you-go-from-here": 14,
+      "lesson-b2s-wire-a-bot-and-a-face": 12,
+      "lesson-b2s-your-first-solana-program": 9
     },
     "version": 1
   },
-  "course-dapp-sdk-kit": {
-    "next": 11,
+  "course-solana-speedrun": {
+    "next": 4,
     "retired": [],
     "slots": {
-      "lesson-dsk-connect-with-wallet-standard": 4,
-      "lesson-dsk-first-signed-deposit": 6,
-      "lesson-dsk-idl-to-typed-client": 0,
-      "lesson-dsk-package-surface-and-readme": 2,
-      "lesson-dsk-price-the-priority-fee": 8,
-      "lesson-dsk-publish-the-package": 3,
-      "lesson-dsk-signers-chains-and-the-legacy-seam": 5,
-      "lesson-dsk-simulate-before-you-send": 7,
-      "lesson-dsk-states-errors-and-reads": 9,
-      "lesson-dsk-what-you-shipped": 10,
-      "lesson-dsk-wrap-the-generated-client": 1
-    },
-    "version": 1
-  },
-  "course-rust-for-program-devs": {
-    "next": 14,
-    "retired": [],
-    "slots": {
-      "lesson-rpd-borrowing-shared-vs-mutable": 5,
-      "lesson-rpd-build-the-vault-core": 12,
-      "lesson-rpd-checked-lamport-math": 3,
-      "lesson-rpd-enums-option-result": 10,
-      "lesson-rpd-error-plumbing": 11,
-      "lesson-rpd-fix-the-borrow-checker": 6,
-      "lesson-rpd-functions-and-control-flow": 2,
-      "lesson-rpd-lifetimes-and-slices": 7,
-      "lesson-rpd-moves-copy-and-clone": 4,
-      "lesson-rpd-ownership-checkpoint": 8,
-      "lesson-rpd-structs-traits-and-derives": 9,
-      "lesson-rpd-types-and-mutability": 1,
-      "lesson-rpd-what-you-built": 13,
-      "lesson-rpd-your-first-rust-build": 0
-    },
-    "version": 1
-  },
-  "course-solana-for-evm-devs": {
-    "next": 9,
-    "retired": [],
-    "slots": {
-      "lesson-sfe-approve-to-delegate": 7,
-      "lesson-sfe-declared-accounts": 5,
-      "lesson-sfe-erc20-to-spl": 6,
-      "lesson-sfe-gas-to-compute-units": 4,
-      "lesson-sfe-mappings-to-pdas": 2,
-      "lesson-sfe-msg-sender-to-signers": 3,
-      "lesson-sfe-rent-and-space": 1,
-      "lesson-sfe-storage-to-accounts": 0,
-      "lesson-sfe-what-changes": 8
-    },
-    "version": 1
-  },
-  "course-solana-for-web-devs": {
-    "next": 8,
-    "retired": [],
-    "slots": {
-      "lesson-sfwd-accounts-are-just-bytes": 1,
-      "lesson-sfwd-anatomy-of-a-transaction": 3,
-      "lesson-sfwd-connect-fund-and-send": 5,
-      "lesson-sfwd-derive-the-vault-pda": 2,
-      "lesson-sfwd-kit-or-legacy": 4,
-      "lesson-sfwd-see-a-live-vault": 0,
-      "lesson-sfwd-ship-the-inspector": 6,
-      "lesson-sfwd-what-you-built": 7
-    },
-    "version": 1
-  },
-  "course-stablecoin-payments": {
-    "next": 9,
-    "retired": [],
-    "slots": {
-      "lesson-sap-budgeted-agent-with-a-hard-cap": 6,
-      "lesson-sap-meter-an-endpoint-with-x402": 4,
-      "lesson-sap-pay-the-402-programmatically": 5,
-      "lesson-sap-payment-rails-decision-map": 0,
-      "lesson-sap-recurring-delegation-paid-tier": 3,
-      "lesson-sap-submit-and-what-you-built": 8,
-      "lesson-sap-subscription-authority-and-allowance": 2,
-      "lesson-sap-token-or-token-2022": 1,
-      "lesson-sap-write-the-deep-dive": 7
+      "lesson-ssr-como-funciona": 1,
+      "lesson-ssr-por-que-solana": 0,
+      "lesson-ssr-seu-momento-onchain": 3,
+      "lesson-ssr-superteam-porta-de-entrada": 2
     },
     "version": 1
   }

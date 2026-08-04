@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { createAdminClient } from "@/lib/supabase/admin";
+import { coursesById } from "@/lib/content/store";
 import { CAPSTONE_CREDENTIAL } from "./capstone-gate";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
@@ -37,6 +38,11 @@ type AdminClient = ReturnType<typeof createAdminClient>;
 // to eyeball four numbers.
 
 export type CapstoneFunnelVerdict =
+  // The capstone course is not in the compiled content bundle — the whole
+  // funnel is dormant, not merely quiet. Distinct from `idle` on purpose: idle
+  // says "nobody has reached the deploy lesson yet", which would be a lie while
+  // the course is parked (see the dormancy note in capstone-identity.ts).
+  | "dormant"
   // No learner has reached the deploy lesson yet — nothing to conclude.
   | "idle"
   // Deploy rows are landing (deploys > 0) — the write path demonstrably works.
@@ -93,6 +99,22 @@ export async function getCapstoneFunnel(
   adminClient: AdminClient
 ): Promise<CapstoneFunnel> {
   const { courseId, deployLessonId } = CAPSTONE_CREDENTIAL;
+
+  // Dormant until track-1 restores: with the capstone course out of the bundle
+  // no learner can reach the deploy lesson, so the four counts are structurally
+  // zero and reading them would only dress that up as `idle`. Report the real
+  // reason and skip the round-trips.
+  if (!coursesById.has(courseId)) {
+    return {
+      courseId,
+      deployLessonId,
+      completions: 0,
+      deploys: 0,
+      deferrals: 0,
+      certificates: 0,
+      verdict: "dormant",
+    };
+  }
 
   const [completionsRes, deploysRes, deferralsRes, certificatesRes] =
     await Promise.all([

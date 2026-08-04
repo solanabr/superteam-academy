@@ -60,18 +60,18 @@ describe("slot lock ↔ array-index equivalence (current bundle) — #741", () =
     expect(checkedLessons).toBeGreaterThan(0);
   });
 
-  // Relaxed per this test's own design note when the C3 restructure bump
-  // re-landed (#740 → reverted #744 → prerequisite #751 merged → re-land):
-  // `course-building-first-program` is now legitimately SPARSE (retired slots
-  // 0/2/11/14, new slots 16-18). The dense⟹equivalence test above and the
-  // sparse-fixture tests in slot-aware.test.ts / lesson-slot.test.ts are the
-  // real guarantees; this test now pins the EXACT expected sparse set so any
-  // FUTURE course going sparse is still a deliberate, reviewed event.
-  it("only the C3-restructured course is sparse; every other course stays dense", () => {
+  // Pins the EXACT expected sparse set so any course going sparse stays a
+  // deliberate, reviewed event. The one sparse course this used to allow —
+  // `course-building-first-program`, restructured in #740/#751 — is parked out
+  // of the alpha bundle, so the alpha catalog is fully dense and the set is
+  // empty. The dense⟹equivalence test above and the sparse-fixture tests in
+  // slot-aware.test.ts / lesson-slot.test.ts remain the real guarantees; an
+  // empty set here does NOT mean the sparse path is untested.
+  it("no course is sparse in the alpha catalog", () => {
     const sparse = [...slotsByCourseId.entries()]
       .filter(([, lock]) => !isDense(lock))
       .map(([id]) => id)
       .sort();
-    expect(sparse).toEqual(["course-building-first-program"]);
+    expect(sparse).toEqual([]);
   });
 });

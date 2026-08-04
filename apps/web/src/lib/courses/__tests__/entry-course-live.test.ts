@@ -24,7 +24,9 @@ import {
  * bundle, mocking ONLY the on-chain sync gate so the courses read as
  * synced+active. If an entry id is absent from the bundle or has no lessons,
  * `resolveEntryLessonHref` yields the `/courses` fallback and these assertions
- * fail — the deep-link-is-dead signal the /start funnel needs.
+ * fail — the deep-link-is-dead signal the /start funnel needs. It did exactly
+ * that mid-way through the alpha bump (bundle swapped, table still on C1),
+ * which is what the retarget below resolves.
  */
 
 // Mark every course synced+active (the resolver only ever queries the entry
@@ -60,29 +62,38 @@ const SEGMENTS: LearnerSegment[] = [1, 2, 3];
 const LESSON_HREF = /^\/en\/courses\/[^/]+\/lessons\/[^/]+$/;
 
 /**
- * The post-C1-flip routing table (#673, 2026-07-30). Duplicated here on purpose
- * — asserting the resolver against a literal expectation is what makes an
- * unintended table edit red. Segments 1/3 enter at C1 (the JS/TS on-ramp, live
- * on-chain since the flip wave); segment 2 still skips it and enters at C3.
+ * The public-alpha routing table (2026-08-04). Duplicated here on purpose —
+ * asserting the resolver against a literal expectation is what makes an
+ * unintended table edit red. Every segment enters at the alpha flagship: the
+ * track-1 ladder that segmentation used to route across is parked, so there is
+ * nothing to differentiate across today (see the TODO in learner-segment.ts).
  */
 const EXPECTED_ENTRY: Record<LearnerSegment, string> = {
-  1: "course-solana-for-web-devs",
-  2: "course-building-first-program",
-  3: "course-solana-for-web-devs",
+  1: "course-btc-to-sol-evolution",
+  2: "course-btc-to-sol-evolution",
+  3: "course-btc-to-sol-evolution",
 };
 
-// The 5 courses CATALOG §3 retires (deactivated on-chain). No segment may enter
-// at one of these — this is the exact class that broke the /start deep-link.
+// Courses no longer in the bundle: the 5 CATALOG §3 retires (deactivated
+// on-chain) plus the track-1 ladder + EVM elective parked under `_draft/` in
+// the alpha wave. No segment may enter at one of these — this is the exact
+// class that broke the /start deep-link.
 const RETIRED_COURSE_IDS = new Set([
   "course-solana-fundamentals",
   "course-rust-for-solana",
   "course-anchor-framework",
   "course-solana-frontend",
   "course-defi-on-solana",
+  "course-solana-for-web-devs",
+  "course-rust-for-program-devs",
+  "course-building-first-program",
+  "course-dapp-sdk-kit",
+  "course-stablecoin-payments",
+  "course-solana-for-evm-devs",
 ]);
 
 describe("SEGMENT_ENTRY_COURSE — live-ladder routing", () => {
-  it("segments 1 and 3 enter at C1, segment 2 at C3", () => {
+  it("every segment enters at the alpha flagship", () => {
     for (const segment of SEGMENTS) {
       expect(
         SEGMENT_ENTRY_COURSE[segment],

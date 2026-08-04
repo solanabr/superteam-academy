@@ -1,220 +1,68 @@
 {
   "challengeLessonIds": [
-    "lesson-bfsp-account-constraints",
-    "lesson-bfsp-add-instruction",
-    "lesson-bfsp-adding-instructions",
-    "lesson-bfsp-build-increment",
-    "lesson-bfsp-complete-counter",
-    "lesson-bfsp-cpi-lamports",
-    "lesson-bfsp-define-counter",
-    "lesson-bfsp-m4-deploy",
-    "lesson-bfsp-pdas-vault",
-    "lesson-bfsp-wire-up-initialize",
-    "lesson-bfsp-your-first-build",
-    "lesson-dsk-first-signed-deposit",
-    "lesson-dsk-idl-to-typed-client",
-    "lesson-dsk-package-surface-and-readme",
-    "lesson-dsk-price-the-priority-fee",
-    "lesson-dsk-publish-the-package",
-    "lesson-dsk-signers-chains-and-the-legacy-seam",
-    "lesson-dsk-simulate-before-you-send",
-    "lesson-dsk-states-errors-and-reads",
-    "lesson-dsk-wrap-the-generated-client",
-    "lesson-rpd-borrowing-shared-vs-mutable",
-    "lesson-rpd-build-the-vault-core",
-    "lesson-rpd-checked-lamport-math",
-    "lesson-rpd-enums-option-result",
-    "lesson-rpd-error-plumbing",
-    "lesson-rpd-fix-the-borrow-checker",
-    "lesson-rpd-functions-and-control-flow",
-    "lesson-rpd-lifetimes-and-slices",
-    "lesson-rpd-moves-copy-and-clone",
-    "lesson-rpd-structs-traits-and-derives",
-    "lesson-rpd-types-and-mutability",
-    "lesson-rpd-your-first-rust-build",
-    "lesson-sap-budgeted-agent-with-a-hard-cap",
-    "lesson-sap-meter-an-endpoint-with-x402",
-    "lesson-sap-pay-the-402-programmatically",
-    "lesson-sap-payment-rails-decision-map",
-    "lesson-sap-recurring-delegation-paid-tier",
-    "lesson-sap-subscription-authority-and-allowance",
-    "lesson-sap-token-or-token-2022",
-    "lesson-sfe-erc20-to-spl",
-    "lesson-sfe-gas-to-compute-units",
-    "lesson-sfe-mappings-to-pdas",
-    "lesson-sfe-rent-and-space",
-    "lesson-sfwd-accounts-are-just-bytes",
-    "lesson-sfwd-anatomy-of-a-transaction",
-    "lesson-sfwd-connect-fund-and-send",
-    "lesson-sfwd-derive-the-vault-pda",
-    "lesson-sfwd-kit-or-legacy",
-    "lesson-sfwd-ship-the-inspector"
+    "lesson-b2s-an-anchor-vault",
+    "lesson-b2s-the-crosschain-ops-bot",
+    "lesson-b2s-wire-a-bot-and-a-face",
+    "lesson-b2s-your-first-solana-program"
   ],
   "moduleLessonMap": [
     {
-      "_id": "course-building-first-program:bfsp-build-pipeline",
+      "_id": "course-btc-to-sol-evolution:crypto",
       "lessonIds": [
-        "lesson-bfsp-your-first-build",
-        "lesson-bfsp-add-instruction",
-        "lesson-bfsp-adding-instructions"
+        "lesson-b2s-the-trust-machine",
+        "lesson-b2s-hash-everything",
+        "lesson-b2s-sign-and-verify"
       ]
     },
     {
-      "_id": "course-building-first-program:bfsp-state-vault-pda",
+      "_id": "course-btc-to-sol-evolution:bitcoin-core",
       "lessonIds": [
-        "lesson-bfsp-on-chain-state",
-        "lesson-bfsp-pdas-vault",
-        "lesson-bfsp-define-counter",
-        "lesson-bfsp-wire-up-initialize"
+        "lesson-b2s-mine-your-own-chain",
+        "lesson-b2s-spend-a-utxo"
       ]
     },
     {
-      "_id": "course-building-first-program:bfsp-deposit-withdraw-harden",
+      "_id": "course-btc-to-sol-evolution:bitcoin-infra",
       "lessonIds": [
-        "lesson-bfsp-cpi-lamports",
-        "lesson-bfsp-build-increment",
-        "lesson-bfsp-complete-counter",
-        "lesson-bfsp-account-constraints"
+        "lesson-b2s-speak-rpc",
+        "lesson-b2s-watch-the-mempool"
       ]
     },
     {
-      "_id": "course-building-first-program:bfsp-ship-it",
+      "_id": "course-btc-to-sol-evolution:blockchain-20",
       "lessonIds": [
-        "lesson-bfsp-pre-flight-check",
-        "lesson-bfsp-m4-airdrop",
-        "lesson-bfsp-m4-deploy",
-        "lesson-bfsp-m4-capstone"
+        "lesson-b2s-state-lives-in-the-contract",
+        "lesson-b2s-a-market-with-no-marketmaker"
       ]
     },
     {
-      "_id": "course-dapp-sdk-kit:dsk-package",
+      "_id": "course-btc-to-sol-evolution:solana-core",
       "lessonIds": [
-        "lesson-dsk-idl-to-typed-client",
-        "lesson-dsk-wrap-the-generated-client",
-        "lesson-dsk-package-surface-and-readme",
-        "lesson-dsk-publish-the-package"
+        "lesson-b2s-your-first-solana-program",
+        "lesson-b2s-the-throughput-bet"
       ]
     },
     {
-      "_id": "course-dapp-sdk-kit:dsk-app",
+      "_id": "course-btc-to-sol-evolution:solana-advanced",
       "lessonIds": [
-        "lesson-dsk-connect-with-wallet-standard",
-        "lesson-dsk-signers-chains-and-the-legacy-seam",
-        "lesson-dsk-first-signed-deposit"
+        "lesson-b2s-an-anchor-vault",
+        "lesson-b2s-wire-a-bot-and-a-face"
       ]
     },
     {
-      "_id": "course-dapp-sdk-kit:dsk-correct-cheap-honest",
+      "_id": "course-btc-to-sol-evolution:capstone",
       "lessonIds": [
-        "lesson-dsk-simulate-before-you-send",
-        "lesson-dsk-price-the-priority-fee",
-        "lesson-dsk-states-errors-and-reads",
-        "lesson-dsk-what-you-shipped"
+        "lesson-b2s-the-crosschain-ops-bot",
+        "lesson-b2s-where-you-go-from-here"
       ]
     },
     {
-      "_id": "course-rust-for-program-devs:rpd-rust-that-compiles",
+      "_id": "course-solana-speedrun:speedrun",
       "lessonIds": [
-        "lesson-rpd-your-first-rust-build",
-        "lesson-rpd-types-and-mutability",
-        "lesson-rpd-functions-and-control-flow",
-        "lesson-rpd-checked-lamport-math"
-      ]
-    },
-    {
-      "_id": "course-rust-for-program-devs:rpd-ownership-borrowing-lifetimes",
-      "lessonIds": [
-        "lesson-rpd-moves-copy-and-clone",
-        "lesson-rpd-borrowing-shared-vs-mutable",
-        "lesson-rpd-fix-the-borrow-checker",
-        "lesson-rpd-lifetimes-and-slices",
-        "lesson-rpd-ownership-checkpoint"
-      ]
-    },
-    {
-      "_id": "course-rust-for-program-devs:rpd-modeling-state",
-      "lessonIds": [
-        "lesson-rpd-structs-traits-and-derives",
-        "lesson-rpd-enums-option-result",
-        "lesson-rpd-error-plumbing"
-      ]
-    },
-    {
-      "_id": "course-rust-for-program-devs:rpd-the-vault-core",
-      "lessonIds": [
-        "lesson-rpd-build-the-vault-core",
-        "lesson-rpd-what-you-built"
-      ]
-    },
-    {
-      "_id": "course-stablecoin-payments:sap-paid-tier",
-      "lessonIds": [
-        "lesson-sap-payment-rails-decision-map",
-        "lesson-sap-token-or-token-2022",
-        "lesson-sap-subscription-authority-and-allowance",
-        "lesson-sap-recurring-delegation-paid-tier"
-      ]
-    },
-    {
-      "_id": "course-stablecoin-payments:sap-metered-agentic",
-      "lessonIds": [
-        "lesson-sap-meter-an-endpoint-with-x402",
-        "lesson-sap-pay-the-402-programmatically",
-        "lesson-sap-budgeted-agent-with-a-hard-cap"
-      ]
-    },
-    {
-      "_id": "course-stablecoin-payments:sap-get-paid",
-      "lessonIds": [
-        "lesson-sap-write-the-deep-dive",
-        "lesson-sap-submit-and-what-you-built"
-      ]
-    },
-    {
-      "_id": "course-solana-for-evm-devs:sfe-state",
-      "lessonIds": [
-        "lesson-sfe-storage-to-accounts",
-        "lesson-sfe-rent-and-space",
-        "lesson-sfe-mappings-to-pdas"
-      ]
-    },
-    {
-      "_id": "course-solana-for-evm-devs:sfe-execution",
-      "lessonIds": [
-        "lesson-sfe-msg-sender-to-signers",
-        "lesson-sfe-gas-to-compute-units",
-        "lesson-sfe-declared-accounts"
-      ]
-    },
-    {
-      "_id": "course-solana-for-evm-devs:sfe-tokens",
-      "lessonIds": [
-        "lesson-sfe-erc20-to-spl",
-        "lesson-sfe-approve-to-delegate",
-        "lesson-sfe-what-changes"
-      ]
-    },
-    {
-      "_id": "course-solana-for-web-devs:sfwd-read-the-chain",
-      "lessonIds": [
-        "lesson-sfwd-see-a-live-vault",
-        "lesson-sfwd-accounts-are-just-bytes",
-        "lesson-sfwd-derive-the-vault-pda"
-      ]
-    },
-    {
-      "_id": "course-solana-for-web-devs:sfwd-sign-your-own-transaction",
-      "lessonIds": [
-        "lesson-sfwd-anatomy-of-a-transaction",
-        "lesson-sfwd-kit-or-legacy",
-        "lesson-sfwd-connect-fund-and-send"
-      ]
-    },
-    {
-      "_id": "course-solana-for-web-devs:sfwd-publish-the-inspector",
-      "lessonIds": [
-        "lesson-sfwd-ship-the-inspector",
-        "lesson-sfwd-what-you-built"
+        "lesson-ssr-por-que-solana",
+        "lesson-ssr-como-funciona",
+        "lesson-ssr-superteam-porta-de-entrada",
+        "lesson-ssr-seu-momento-onchain"
       ]
     }
   ],

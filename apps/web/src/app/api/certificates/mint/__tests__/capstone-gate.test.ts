@@ -149,3 +149,36 @@ describe("POST /api/certificates/mint — capstone gate (LX-E2)", () => {
     expect(getCourseById).toHaveBeenCalledWith("course-solana-fundamentals");
   });
 });
+
+// Public-alpha dormancy (2026-08-04): the capstone course and the rest of the
+// track-1 ladder are parked out of the compiled bundle. Nothing about that may
+// make a credential mintable — the route must refuse on BOTH arms of the gate,
+// whichever one a parked id lands on, and must never reach `issueCredential`.
+// (`getCourseById` returning null IS "absent from the bundle" — that is what
+// the route sees for any parked course.)
+describe("POST /api/certificates/mint — parked courses cannot mint", () => {
+  it("refuses the parked capstone (gate arm: deploy_required)", async () => {
+    // What the real, still-pinned gate returns for the parked capstone: it is a
+    // capstone course with no verified deploy row and no way to earn one.
+    checkCapstoneCredentialGate.mockResolvedValue({
+      status: "deploy_required",
+    });
+
+    const res = await POST(req({ courseId: CAPSTONE }));
+
+    expect(res.status).toBeGreaterThanOrEqual(400);
+    expect(res.status).toBeLessThan(500);
+    expect(issueCredential).not.toHaveBeenCalled();
+  });
+
+  it("refuses a parked non-capstone course (gate arm: not_capstone)", async () => {
+    // The rest of the parked ladder is not the capstone, so it sails past the
+    // gate — the absent-from-bundle 404 is the only thing stopping it.
+    checkCapstoneCredentialGate.mockResolvedValue({ status: "not_capstone" });
+
+    const res = await POST(req({ courseId: "course-rust-for-program-devs" }));
+
+    expect(res.status).toBe(404);
+    expect(issueCredential).not.toHaveBeenCalled();
+  });
+});

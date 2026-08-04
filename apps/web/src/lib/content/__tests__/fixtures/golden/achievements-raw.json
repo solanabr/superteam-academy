@@ -1,25 +1,6 @@
 {
   "all": [
     {
-      "_id": "achievement-anchor-expert",
-      "award": {
-        "course": "course-building-first-program",
-        "days": null,
-        "gte": null,
-        "kind": "course-completed",
-        "lte": null,
-        "path": null,
-        "stat": null
-      },
-      "category": "skills",
-      "description": "Complete all Anchor framework lessons",
-      "glyph": "⬡",
-      "icon": "anchor",
-      "name": "Anchor Expert",
-      "solTier": false,
-      "xpReward": 300
-    },
-    {
       "_id": "achievement-bug-hunter",
       "award": {
         "course": null,
@@ -60,7 +41,7 @@
     {
       "_id": "achievement-course-completer",
       "award": {
-        "course": "course-solana-for-web-devs",
+        "course": "course-btc-to-sol-evolution",
         "days": null,
         "gte": null,
         "kind": "course-completed",
@@ -115,25 +96,6 @@
       "xpReward": 50
     },
     {
-      "_id": "achievement-full-stack-solana",
-      "award": {
-        "course": null,
-        "days": null,
-        "gte": null,
-        "kind": "path-completed",
-        "lte": null,
-        "path": "path-zero-to-deployed",
-        "stat": null
-      },
-      "category": "skills",
-      "description": "Complete every course in the Zero to Deployed path",
-      "glyph": "◎",
-      "icon": "layers",
-      "name": "Full Stack Solana",
-      "solTier": true,
-      "xpReward": 500
-    },
-    {
       "_id": "achievement-monthly-master",
       "award": {
         "course": null,
@@ -151,47 +113,6 @@
       "name": "Monthly Master",
       "solTier": false,
       "xpReward": 300
-    },
-    {
-      "_id": "achievement-perfect-score",
-      "award": null,
-      "category": "special",
-      "description": "Complete all challenges in a course with no wrong attempts",
-      "glyph": "A+",
-      "icon": "star",
-      "name": "Perfect Score",
-      "solTier": false,
-      "xpReward": 100
-    },
-    {
-      "_id": "achievement-rust-rookie",
-      "award": {
-        "course": "course-rust-for-program-devs",
-        "days": null,
-        "gte": 1,
-        "kind": "lessons-completed-in-course",
-        "lte": null,
-        "path": null,
-        "stat": null
-      },
-      "category": "skills",
-      "description": "Complete your first Rust challenge",
-      "glyph": "Rs",
-      "icon": "code",
-      "name": "Rust Rookie",
-      "solTier": false,
-      "xpReward": 150
-    },
-    {
-      "_id": "achievement-speed-runner",
-      "award": null,
-      "category": "progress",
-      "description": "Complete a course in under 24 hours",
-      "glyph": "»",
-      "icon": "zap",
-      "name": "Speed Runner",
-      "solTier": false,
-      "xpReward": 150
     },
     {
       "_id": "achievement-week-warrior",
@@ -215,25 +136,6 @@
   ],
   "deployed": [
     {
-      "_id": "achievement-anchor-expert",
-      "award": {
-        "course": "course-building-first-program",
-        "days": null,
-        "gte": null,
-        "kind": "course-completed",
-        "lte": null,
-        "path": null,
-        "stat": null
-      },
-      "category": "skills",
-      "description": "Complete all Anchor framework lessons",
-      "glyph": "⬡",
-      "icon": "anchor",
-      "name": "Anchor Expert",
-      "solTier": false,
-      "xpReward": 300
-    },
-    {
       "_id": "achievement-bug-hunter",
       "award": {
         "course": null,
@@ -274,7 +176,7 @@
     {
       "_id": "achievement-course-completer",
       "award": {
-        "course": "course-solana-for-web-devs",
+        "course": "course-btc-to-sol-evolution",
         "days": null,
         "gte": null,
         "kind": "course-completed",
@@ -329,25 +231,6 @@
       "xpReward": 50
     },
     {
-      "_id": "achievement-full-stack-solana",
-      "award": {
-        "course": null,
-        "days": null,
-        "gte": null,
-        "kind": "path-completed",
-        "lte": null,
-        "path": "path-solana-core",
-        "stat": null
-      },
-      "category": "skills",
-      "description": "Complete every course in the Zero to Deployed path",
-      "glyph": "◎",
-      "icon": "layers",
-      "name": "Full Stack Solana",
-      "solTier": true,
-      "xpReward": 500
-    },
-    {
       "_id": "achievement-monthly-master",
       "award": {
         "course": null,
@@ -365,47 +248,6 @@
       "name": "Monthly Master",
       "solTier": false,
       "xpReward": 300
-    },
-    {
-      "_id": "achievement-perfect-score",
-      "award": null,
-      "category": "special",
-      "description": "Complete all challenges in a course with no wrong attempts",
-      "glyph": "A+",
-      "icon": "star",
-      "name": "Perfect Score",
-      "solTier": false,
-      "xpReward": 100
-    },
-    {
-      "_id": "achievement-rust-rookie",
-      "award": {
-        "course": "course-rust-for-program-devs",
-        "days": null,
-        "gte": 1,
-        "kind": "lessons-completed-in-course",
-        "lte": null,
-        "path": null,
-        "stat": null
-      },
-      "category": "skills",
-      "description": "Complete your first Rust challenge",
-      "glyph": "Rs",
-      "icon": "code",
-      "name": "Rust Rookie",
-      "solTier": false,
-      "xpReward": 150
-    },
-    {
-      "_id": "achievement-speed-runner",
-      "award": null,
-      "category": "progress",
-      "description": "Complete a course in under 24 hours",
-      "glyph": "»",
-      "icon": "zap",
-      "name": "Speed Runner",
-      "solTier": false,
-      "xpReward": 150
     },
     {
       "_id": "achievement-week-warrior",
