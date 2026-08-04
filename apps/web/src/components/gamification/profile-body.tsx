@@ -96,17 +96,24 @@ export function ProfileBody({
                   <Link
                     key={cert.id}
                     href={`/${locale}/certificates/${cert.id}`}
-                    className="hover:border-primary/40 block rounded-xl border border-border bg-card p-4 shadow-card transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                    className="accent-hairline hover:border-primary/40 relative block overflow-hidden rounded-xl border border-border bg-card p-4 shadow-card transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                   >
-                    <div className="flex items-baseline justify-between gap-3">
-                      <p className="min-w-0 truncate font-display text-[13px] font-extrabold text-text">
-                        {cert.courseTitle}
-                      </p>
-                      <span className="shrink-0 font-mono text-[10px] uppercase tracking-[1px] text-text-3">
-                        {cert.mintedAt.toLocaleDateString()}
+                    <div className="flex items-center gap-3">
+                      {/* Credential seal — same tile idiom as the rail cards. */}
+                      <span
+                        className="bg-primary-dim flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-primary"
+                        aria-hidden="true"
+                      >
+                        <GraduationCap size={20} weight="duotone" />
                       </span>
-                    </div>
-                    <div className="mt-2.5">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-display text-sm font-extrabold text-text">
+                          {cert.courseTitle}
+                        </p>
+                        <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[1px] text-text-3">
+                          {cert.mintedAt.toLocaleDateString()}
+                        </p>
+                      </div>
                       <span className={CS.proofPill}>
                         <span className={CS.proofDot} aria-hidden="true" />
                         {cert.mintAddress
