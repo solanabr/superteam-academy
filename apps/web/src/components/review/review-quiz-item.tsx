@@ -147,7 +147,7 @@ export function ReviewQuizItem({ item, onGraded }: ReviewQuizItemProps) {
               })}
             </div>
             {graded && q.explanation && (
-              <div className="space-y-1 rounded-md border border-border bg-inset p-3">
+              <div className="reveal-in space-y-1 rounded-md border border-border bg-inset p-3">
                 <p className="font-display text-xs font-bold uppercase tracking-wide text-text-3">
                   {t("explanationLabel")}
                 </p>
@@ -160,7 +160,7 @@ export function ReviewQuizItem({ item, onGraded }: ReviewQuizItemProps) {
 
       <div aria-live="polite" className="space-y-2">
         {phase === "graded" && result && (
-          <div className="space-y-1">
+          <div className="reveal-in space-y-1">
             <p
               className={`flex items-center gap-1.5 text-sm font-medium ${
                 result.passed ? "text-success" : "text-danger"
