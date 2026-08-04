@@ -260,7 +260,7 @@
 
     --text: #e6edf3;
     --text-2: #8b949e;
-    --text-3: #78838f;
+    --text-3: #8b96a3; /* ≥4.5:1 on --card at 10-12px (owner contrast pass, 04-08) */
     --text-disabled: #484f5a;
 
     --sg-0: #1c2333;
@@ -4050,6 +4050,12 @@ a.path-step-card:hover .path-step-badge.skip {
 }
 
 /* Bottom row — heatmap bigger, quests smaller (flipped from top) */
+/* Dark: the amber ambient blob sat directly behind the heatmap labels and
+   dragged their contrast below AA — halve it there (owner pass, 04-08). */
+[data-theme="dark"] .dash-panel-amb::after {
+  opacity: 0.5;
+}
+
 /* A zero weekly score is not a reward — muted until points land. */
 .lb-xp--zero {
   color: var(--text-3);
