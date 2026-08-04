@@ -121,27 +121,35 @@ export function ProfileBody({
         streak={streak}
       />
 
-      {/* ─── Skills — full-width, open like every other section. ─── */}
-      {hasSkills && (
-        <section aria-label={t("skills")}>
-          <div className="mb-4 flex items-center gap-3">
-            <h2 className="font-display text-lg font-black tracking-[-0.25px]">
-              {t("skills")}
-            </h2>
-            <span className="cc-section-count">{content.skills.length}</span>
+      {hasSkills ? (
+        /* Skills | Achievements rail — the side-by-side the owner keeps. */
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-8">
+          <div className="min-w-0 space-y-8">
+            <section aria-label={t("skills")}>
+              <div className="mb-4 flex items-center gap-3">
+                <h2 className="font-display text-lg font-black tracking-[-0.25px]">
+                  {t("skills")}
+                </h2>
+                <span className="cc-section-count">
+                  {content.skills.length}
+                </span>
+              </div>
+              <div className="rounded-xl border border-border bg-card p-4 shadow-card">
+                <SkillRadar
+                  skills={content.skills}
+                  totalLessons={content.totalLessons}
+                  className="mx-auto w-full max-w-[520px] !border-0 !bg-transparent !p-0 !shadow-none"
+                />
+              </div>
+            </section>
           </div>
-          <div className="rounded-xl border border-border bg-card p-4 shadow-card">
-            <SkillRadar
-              skills={content.skills}
-              totalLessons={content.totalLessons}
-              className="mx-auto w-full max-w-[520px] !border-0 !bg-transparent !p-0 !shadow-none"
-            />
-          </div>
-        </section>
-      )}
 
-      {/* ─── Achievements — full-width token row. ─── */}
-      {achievementsSection}
+          <aside className="space-y-6">{achievementsSection}</aside>
+        </div>
+      ) : (
+        /* No skills yet: achievements own the full width. */
+        achievementsSection
+      )}
 
       {/* ─── Certificates — full-width shelf. Slim diploma cards (shared
           CertificateCard, per-card eyebrow hidden); stretched-link keeps the
