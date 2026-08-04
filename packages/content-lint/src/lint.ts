@@ -1,4 +1,4 @@
-import { discover } from "./loader";
+import { discover, unclassifiedContentFiles } from "./loader";
 import { emptyModel, type RepoModel } from "./model";
 import {
   diag,
@@ -49,6 +49,12 @@ export async function runLint(
       );
     }
   }
+
+  // #973: a content file NO gate can see is worse than a failing one — it looks
+  // linted and is not. Error when the compiler would still ship it (the
+  // invariant), warning when nothing ships but the author likely meant it to be
+  // linted. See `unclassifiedContentFiles`.
+  diagnostics.push(...unclassifiedContentFiles(root));
 
   const model = schemaCheck ? schemaCheck(root, diagnostics) : emptyModel(root);
 

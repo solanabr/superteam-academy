@@ -5,6 +5,7 @@ import {
   SkillsTaxonomy,
   NON_REVIEW_ELIGIBLE_SKILLS,
   REVIEW_INTERLEAVING_PAIRS,
+  TEMPLATE_PREFIX,
   type SkillsTaxonomyT,
 } from "@superteam-lms/content-schema";
 import { registerCheck } from "../lint";
@@ -43,15 +44,6 @@ import { diag, type Diagnostic } from "../diagnostics";
  */
 
 const SKILLS_FILE = "skills.yaml";
-
-/**
- * `courses/_template/**` holds scaffolding, not shippable content. Its lessons
- * are excluded from gate 19 so a template tag never contributes to (or hides) a
- * reuse-bar result — e.g. a template lesson sharing a real slug would otherwise
- * lift that slug's count from 1 to 2 and suppress a legitimate singleton error.
- * Scoped to gate 19 only; other gates keep their current view of `_template`.
- */
-const TEMPLATE_LESSON_PREFIX = "courses/_template/";
 
 function loadRegistry(root: string, out: Diagnostic[]): SkillsTaxonomyT | null {
   let text: string;
@@ -127,7 +119,13 @@ export function gate19Check(model: RepoModel): Diagnostic[] {
   // Distinct-lesson count per slug (a slug repeated within one lesson counts once).
   const lessonsBySlug = new Map<string, string[]>();
   for (const entry of model.lessons) {
-    if (entry.file.startsWith(TEMPLATE_LESSON_PREFIX)) continue;
+    // `courses/_template/**` holds scaffolding, not shippable content. Its
+    // lessons are excluded from gate 19 so a template tag never contributes to
+    // (or hides) a reuse-bar result — e.g. a template lesson sharing a real slug
+    // would otherwise lift that slug's count from 1 to 2 and suppress a
+    // legitimate singleton error. Scoped to gate 19 only; other gates keep their
+    // current view of `_template`. The prefix itself is content-schema's.
+    if (entry.file.startsWith(TEMPLATE_PREFIX)) continue;
     for (const slug of new Set(entry.lesson.skills)) {
       // 19a — registry resolution.
       if (!known.has(slug)) {

@@ -1,8 +1,6 @@
 import { gunzipSync } from "node:zlib";
+import { isExcludedContentPath } from "@superteam-lms/content-schema";
 import type { RepoTree } from "@/lib/github/types";
-
-/** Repo path prefix that is excluded from sync (spec §4.1, §12). */
-const EXCLUDED = "courses/_template/";
 
 /**
  * Decompression bounds against a malicious/corrupt tarball (a gzip bomb inflates
@@ -51,7 +49,9 @@ function parsePaxPath(data: Uint8Array): string | null {
  * Gunzip + untar a GitHub tarball into a repo-relative path → bytes map.
  * GitHub wraps every entry under one generated dir (`owner-repo-<sha>/`); we
  * strip the first path segment so keys match the repo layout. Directory entries
- * (typeflag '5', trailing slash) and `courses/_template/**` are dropped.
+ * (typeflag '5', trailing slash) and every excluded path (`courses/_template/**`,
+ * anything under a `_draft/` dir — see content-schema's `repo-paths.ts`) are
+ * dropped.
  *
  * Long paths (repo paths routinely exceed the 100-byte tar `name` field once the
  * generated top dir is prepended) are reconstructed from the ustar `prefix`
@@ -124,7 +124,7 @@ export async function extractTarball(
     const slash = fullName.indexOf("/");
     if (slash === -1) continue;
     const relPath = fullName.slice(slash + 1);
-    if (relPath === "" || relPath.startsWith(EXCLUDED)) continue;
+    if (relPath === "" || isExcludedContentPath(relPath)) continue;
 
     tree.set(relPath, new Uint8Array(data));
   }
