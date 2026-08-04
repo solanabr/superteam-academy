@@ -88,7 +88,10 @@
     "keepProgressTitle": "Salve seu progresso",
     "keepProgressSubtitle": "Entre para manter o que você acabou de fazer. Fica salvo neste dispositivo até lá.",
     "later": "Depois",
-    "progressSavedLocally": "Sem pressa — seu progresso continua salvo neste dispositivo."
+    "progressSavedLocally": "Sem pressa — seu progresso continua salvo neste dispositivo.",
+    "continueWithPhantom": "Continuar com Phantom",
+    "phantomSubtitle": "Entre com o Google — criamos sua carteira",
+    "phantomSignInFailed": "Falha ao entrar com a Phantom. Tente novamente."
   },
   "landing": {
     "poweredBy": "Com apoio de",

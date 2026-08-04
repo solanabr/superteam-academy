@@ -88,7 +88,10 @@
     "keepProgressTitle": "Save your progress",
     "keepProgressSubtitle": "Sign in to keep the work you just did. It's saved on this device until you do.",
     "later": "Later",
-    "progressSavedLocally": "No rush — your progress stays saved on this device."
+    "progressSavedLocally": "No rush — your progress stays saved on this device.",
+    "continueWithPhantom": "Continue with Phantom",
+    "phantomSubtitle": "Sign in with Google — we'll set up your wallet",
+    "phantomSignInFailed": "Phantom sign-in failed. Please try again."
   },
   "landing": {
     "poweredBy": "Powered by",
