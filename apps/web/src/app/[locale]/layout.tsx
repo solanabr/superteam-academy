@@ -36,7 +36,7 @@ export default async function LocaleLayout(props: LocaleLayoutProps) {
   return (
     <ThemeProvider
       attribute="data-theme"
-      defaultTheme="dark"
+      defaultTheme="light"
       enableSystem
       disableTransitionOnChange
       nonce={nonce}

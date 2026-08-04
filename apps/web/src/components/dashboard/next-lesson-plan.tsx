@@ -282,12 +282,6 @@ export function NextLessonPlan({ userId }: NextLessonPlanProps) {
               <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
                 {t("nextLessonTitle")}
               </p>
-              <p className="mt-0.5 text-sm text-text-2">
-                {t("nextLessonPlanned", {
-                  day: t(weekdayKey(plan.day)),
-                  time: plan.time,
-                })}
-              </p>
               <button
                 type="button"
                 onClick={openEditor}
