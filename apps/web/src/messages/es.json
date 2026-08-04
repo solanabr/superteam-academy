@@ -88,7 +88,10 @@
     "keepProgressTitle": "Guarda tu progreso",
     "keepProgressSubtitle": "Inicia sesión para conservar lo que acabas de hacer. Se guarda en este dispositivo hasta entonces.",
     "later": "Más tarde",
-    "progressSavedLocally": "Sin prisa: tu progreso permanece guardado en este dispositivo."
+    "progressSavedLocally": "Sin prisa: tu progreso permanece guardado en este dispositivo.",
+    "continueWithPhantom": "Continuar con Phantom",
+    "phantomSubtitle": "Inicia sesión con Google — creamos tu billetera",
+    "phantomSignInFailed": "Error al iniciar sesión con Phantom. Inténtalo de nuevo."
   },
   "landing": {
     "poweredBy": "Con el apoyo de",

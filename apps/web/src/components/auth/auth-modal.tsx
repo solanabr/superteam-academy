@@ -18,6 +18,8 @@ import { SolanaLogo } from "@/components/icons/solana-logo";
 import { createClient } from "@/lib/supabase/client";
 import { buildOAuthRedirect } from "@/lib/auth/oauth-redirect";
 import { trackEvent } from "@/lib/analytics";
+import { usePhantomConnect } from "@/components/auth/phantom-connect-provider";
+import { PhantomLogo } from "@/components/icons/phantom-logo";
 
 interface AuthModalProps {
   trigger?: React.ReactNode;
@@ -54,10 +56,12 @@ export function AuthModal({
     if (!isControlled) setInternalOpen(v);
     onOpenChange?.(v);
   };
-  const [loading, setLoading] = useState<"solana" | "google" | "github" | null>(
-    null
-  );
+  const [loading, setLoading] = useState<
+    "solana" | "google" | "github" | "phantom" | null
+  >(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { enabled: phantomEnabled, connect: phantomConnect } =
+    usePhantomConnect();
   const { setVisible } = useWalletModal();
 
   // Return the learner to the page they signed in from (#619 review): the OAuth
@@ -101,6 +105,29 @@ export function AuthModal({
         err instanceof Error ? err.message : t("githubSignInFailed");
       console.error("[AuthModal] GitHub sign-in error:", message);
       setErrorMessage(t("githubSignInFailed"));
+      setLoading(null);
+    }
+  };
+
+  /**
+   * Phantom Connect (#985) — the no-wallet path. The learner signs in with
+   * Google and Phantom provisions a real wallet for them, so this is offered
+   * FIRST: it is the only option that asks nothing of someone with no wallet.
+   *
+   * `connect` redirects, so on success this tab is navigating away and there is
+   * no post-connect state to set here.
+   */
+  const handleConnectPhantom = async () => {
+    setLoading("phantom");
+    setErrorMessage(null);
+    trackEvent("auth_method_selected", { method: "phantom" });
+    try {
+      await phantomConnect("google");
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : t("phantomSignInFailed");
+      console.error("[AuthModal] Phantom sign-in error:", message);
+      setErrorMessage(t("phantomSignInFailed"));
       setLoading(null);
     }
   };
@@ -156,6 +183,31 @@ export function AuthModal({
           </DialogDescription>
         </DialogHeader>
         <div className="mt-6 space-y-3">
+          {/* First: the only option that asks nothing of a learner with no
+              wallet. Hidden entirely when no app id is configured (#984). */}
+          {phantomEnabled && (
+            <div className="space-y-1.5">
+              <Button
+                variant="push"
+                className="h-12 w-full gap-3 text-sm font-medium"
+                onClick={handleConnectPhantom}
+                disabled={loading !== null}
+              >
+                {loading === "phantom" ? (
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                ) : (
+                  <PhantomLogo className="h-5 w-5 shrink-0 rounded-[5px]" />
+                )}
+                {loading === "phantom"
+                  ? t("connecting")
+                  : t("continueWithPhantom")}
+              </Button>
+              <p className="text-center text-xs text-text-3">
+                {t("phantomSubtitle")}
+              </p>
+            </div>
+          )}
+
           <Button
             variant="outline"
             className="h-12 w-full gap-3 text-sm font-medium"
