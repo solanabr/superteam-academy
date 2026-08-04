@@ -4777,7 +4777,8 @@ a.path-step-card:hover .path-step-badge.skip {
 /* ── Next-lesson plan: mini calendar tile ── */
 .nlp-cal {
   flex-shrink: 0;
-  width: 56px;
+  min-width: 56px;
+  max-width: 96px;
   border-radius: 10px;
   overflow: hidden;
   border: 1px solid var(--border-strong);
@@ -4786,6 +4787,11 @@ a.path-step-card:hover .path-step-badge.skip {
 }
 .nlp-cal-day {
   display: block;
+  padding-left: 6px;
+  padding-right: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   background: var(--primary);
   color: var(--primary-foreground, #fff);
   font-family: var(--font-mono, var(--font-m));

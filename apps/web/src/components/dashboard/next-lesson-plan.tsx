@@ -47,26 +47,34 @@ const DEFAULT_DAY: PlanWeekday = "tue";
 const DEFAULT_TIME = "19:00";
 
 interface NextLessonPref {
-  day: PlanWeekday;
+  /** Selected weekdays, ordered mon→sun; all 7 = a daily plan (#980). */
+  days: PlanWeekday[];
   time: string;
 }
 
-/** Narrows an untyped prefs blob to a valid stored plan, or null. */
+/** Narrows an untyped prefs blob to a valid stored plan, or null. The legacy
+ *  single-`day` shape is not read — the #980 migration converts stored rows,
+ *  and this component only ever writes `days`. */
 function parseNextLesson(prefs: unknown): NextLessonPref | null {
   if (!prefs || typeof prefs !== "object") return null;
   const nl = (prefs as Record<string, unknown>).nextLesson;
   if (!nl || typeof nl !== "object") return null;
-  const day = (nl as Record<string, unknown>).day;
+  const days = (nl as Record<string, unknown>).days;
   const time = (nl as Record<string, unknown>).time;
   if (
-    typeof day !== "string" ||
-    !WEEKDAYS.includes(day as PlanWeekday) ||
+    !Array.isArray(days) ||
+    days.length === 0 ||
+    !days.every(
+      (d): d is PlanWeekday =>
+        typeof d === "string" && WEEKDAYS.includes(d as PlanWeekday)
+    ) ||
     typeof time !== "string" ||
     !/^\d{2}:\d{2}$/.test(time)
   ) {
     return null;
   }
-  return { day: day as PlanWeekday, time };
+  const ordered = WEEKDAYS.filter((d) => (days as PlanWeekday[]).includes(d));
+  return { days: ordered, time };
 }
 
 function toPrefsObject(prefs: unknown): Record<string, unknown> {
@@ -92,7 +100,7 @@ export function NextLessonPlan({ userId }: NextLessonPlanProps) {
   const [plan, setPlan] = useState<NextLessonPref | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [draftDay, setDraftDay] = useState<PlanWeekday>(DEFAULT_DAY);
+  const [draftDays, setDraftDays] = useState<PlanWeekday[]>([DEFAULT_DAY]);
   const [draftTime, setDraftTime] = useState(DEFAULT_TIME);
   // Reminder consent, default ON for a learner who is committing to a day. The
   // stored value wins once a decision exists.
@@ -141,15 +149,23 @@ export function NextLessonPlan({ userId }: NextLessonPlanProps) {
   }, [userId]);
 
   const openEditor = useCallback(() => {
-    setDraftDay(plan?.day ?? DEFAULT_DAY);
+    setDraftDays(plan?.days ?? [DEFAULT_DAY]);
     setDraftTime(plan?.time ?? DEFAULT_TIME);
     setEditing(true);
   }, [plan]);
 
+  const toggleDay = useCallback((day: PlanWeekday) => {
+    setDraftDays((prev) =>
+      prev.includes(day)
+        ? prev.filter((d) => d !== day)
+        : WEEKDAYS.filter((d) => prev.includes(d) || d === day)
+    );
+  }, []);
+
   const handleSave = useCallback(async () => {
     if (!userId) return;
     setSaving(true);
-    const nextLesson: NextLessonPref = { day: draftDay, time: draftTime };
+    const nextLesson: NextLessonPref = { days: draftDays, time: draftTime };
     const nextPrefs = { ...prefs, nextLesson };
     const supabase = createClient();
     const { error } = await supabase
@@ -176,8 +192,10 @@ export function NextLessonPlan({ userId }: NextLessonPlanProps) {
         consentError.message
       );
     }
-    trackNextLessonPlanCommitted({ day: draftDay });
-  }, [userId, draftDay, draftTime, prefs, draftRemind, locale]);
+    // The analytics event predates multi-day plans; report the first selected
+    // day so the funnel keeps a stable shape.
+    trackNextLessonPlanCommitted({ day: draftDays[0] ?? DEFAULT_DAY });
+  }, [userId, draftDays, draftTime, prefs, draftRemind, locale]);
 
   // Authenticated dashboard only; nothing to show before the prefs read resolves.
   if (!userId || !loaded) return null;
@@ -206,24 +224,38 @@ export function NextLessonPlan({ userId }: NextLessonPlanProps) {
             <p className="text-sm text-text-3">{t("nextLessonPrompt")}</p>
             <div className="flex flex-wrap items-end gap-3">
               <div className="flex flex-col gap-1">
-                <label
-                  htmlFor="next-lesson-day"
+                <span
+                  id="next-lesson-days-label"
                   className="text-xs font-semibold text-text-3"
                 >
                   {t("nextLessonDayLabel")}
-                </label>
-                <select
-                  id="next-lesson-day"
-                  value={draftDay}
-                  onChange={(e) => setDraftDay(e.target.value as PlanWeekday)}
-                  className="rounded-md border border-border px-2.5 py-1.5 text-sm [background:var(--input)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                </span>
+                {/* Recurring by construction: one day, several, or all seven
+                    (= daily). The reminder fires on every selected day (#980). */}
+                <div
+                  role="group"
+                  aria-labelledby="next-lesson-days-label"
+                  className="flex flex-wrap gap-1.5"
                 >
-                  {WEEKDAYS.map((day) => (
-                    <option key={day} value={day}>
-                      {t(weekdayKey(day))}
-                    </option>
-                  ))}
-                </select>
+                  {WEEKDAYS.map((day) => {
+                    const on = draftDays.includes(day);
+                    return (
+                      <button
+                        key={day}
+                        type="button"
+                        aria-pressed={on}
+                        onClick={() => toggleDay(day)}
+                        className={
+                          on
+                            ? "rounded-md border border-primary bg-primary px-2 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[1px] text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                            : "hover:border-primary/50 rounded-md border border-border px-2 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[1px] text-text-3 [background:var(--input)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                        }
+                      >
+                        {t(weekdayKey(day)).slice(0, 3)}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
               <div className="flex flex-col gap-1">
                 <label
@@ -256,7 +288,7 @@ export function NextLessonPlan({ userId }: NextLessonPlanProps) {
                 variant="push"
                 size="sm"
                 onClick={handleSave}
-                disabled={saving}
+                disabled={saving || draftDays.length === 0}
                 className={plan ? undefined : "ml-auto"}
               >
                 {t("nextLessonSave")}
@@ -277,7 +309,13 @@ export function NextLessonPlan({ userId }: NextLessonPlanProps) {
             {/* Mini calendar tile — the plan at a glance. */}
             <span className="nlp-cal" aria-hidden="true">
               <span className="nlp-cal-day">
-                {t(weekdayKey(plan.day)).slice(0, 3)}
+                {plan.days.length === 7
+                  ? t("nextLessonDaily")
+                  : plan.days.length <= 3
+                    ? plan.days
+                        .map((d) => t(weekdayKey(d)).slice(0, 3))
+                        .join("\u00B7")
+                    : `${plan.days.length}/7`}
               </span>
               <span className="nlp-cal-time">{plan.time}</span>
             </span>

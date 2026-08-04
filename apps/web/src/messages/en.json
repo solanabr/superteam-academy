@@ -372,6 +372,7 @@
     "lessonsDone": "{completed} of {total} lessons completed",
     "nextLessonTitle": "Plan your next lesson",
     "nextLessonPrompt": "Deciding when you'll come back makes it far more likely you will. When's your next lesson?",
+    "nextLessonDaily": "Daily",
     "nextLessonDayLabel": "Day",
     "nextLessonTimeLabel": "Time",
     "nextLessonSave": "Save plan",
