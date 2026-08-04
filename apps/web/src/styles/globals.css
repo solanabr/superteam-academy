@@ -4696,6 +4696,8 @@ a.path-step-card:hover .path-step-badge.skip {
 
 .skill-chart-svg {
   width: 100%;
+  /* The radar reads at ~640px; past that the card is mostly whitespace. */
+  max-width: 640px;
   max-width: 520px;
   height: auto;
   overflow: visible;
