@@ -511,6 +511,7 @@ export type Database = {
           daily_goal: number | null;
           deleted_at: string | null;
           deletion_requested_at: string | null;
+          display_name: string | null;
           github_id: string | null;
           goal: string | null;
           google_id: string | null;
@@ -521,6 +522,7 @@ export type Database = {
           segment: number | null;
           social_links: Json | null;
           username: string;
+          verified: boolean;
           wallet_address: string | null;
           wallet_xp_synced_at: string | null;
         };
@@ -531,6 +533,7 @@ export type Database = {
           daily_goal?: number | null;
           deleted_at?: string | null;
           deletion_requested_at?: string | null;
+          display_name?: string | null;
           github_id?: string | null;
           goal?: string | null;
           google_id?: string | null;
@@ -541,6 +544,7 @@ export type Database = {
           segment?: number | null;
           social_links?: Json | null;
           username: string;
+          verified?: boolean;
           wallet_address?: string | null;
           wallet_xp_synced_at?: string | null;
         };
@@ -551,6 +555,7 @@ export type Database = {
           daily_goal?: number | null;
           deleted_at?: string | null;
           deletion_requested_at?: string | null;
+          display_name?: string | null;
           github_id?: string | null;
           goal?: string | null;
           google_id?: string | null;
@@ -561,6 +566,7 @@ export type Database = {
           segment?: number | null;
           social_links?: Json | null;
           username?: string;
+          verified?: boolean;
           wallet_address?: string | null;
           wallet_xp_synced_at?: string | null;
         };
@@ -1236,9 +1242,11 @@ export type Database = {
           avatar_url: string | null;
           bio: string | null;
           created_at: string | null;
+          display_name: string | null;
           id: string | null;
           social_links: Json | null;
           username: string | null;
+          verified: boolean | null;
           wallet_address: string | null;
         };
         Relationships: [];

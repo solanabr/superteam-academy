@@ -577,7 +577,8 @@
     "lessonsCompleted": "Lessons Completed",
     "lessonsCount": "{count} lessons",
     "totalLabel": "Total",
-    "xpToLevel": "XP to Lv. {level}"
+    "xpToLevel": "XP to Lv. {level}",
+    "verifiedTeacher": "Verified teacher"
   },
   "settings": {
     "title": "Settings",

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { resolvePublicProfileByWallet } from "../public-profile";
 import type { Database } from "@/lib/supabase/types";
+import { resolvePublicProfileByWallet } from "../public-profile";
 
 const WALLET = "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF";
 
@@ -32,11 +32,13 @@ describe("resolvePublicProfileByWallet", () => {
 
     expect(from).toHaveBeenCalledWith("public_profiles");
     expect(select).toHaveBeenCalledWith(
-      "username, avatar_url, bio, social_links"
+      "username, display_name, verified, avatar_url, bio, social_links"
     );
     expect(eq).toHaveBeenCalledWith("wallet_address", WALLET);
     expect(profile).toEqual({
       username: "alice",
+      displayName: null,
+      verified: false,
       avatarUrl: "https://example.com/a.png",
       bio: "Rust developer",
       socialLinks: { twitter: "alice_dev" },
@@ -59,6 +61,10 @@ describe("resolvePublicProfileByWallet", () => {
     const profile = await resolvePublicProfileByWallet(client, WALLET);
     expect(profile).toEqual({
       username: "bob",
+      displayName: null,
+      // A NULL `verified` from the view must normalise to false, never leak
+      // through as nullish — an unverified teacher must not render badged.
+      verified: false,
       avatarUrl: null,
       bio: null,
       socialLinks: null,

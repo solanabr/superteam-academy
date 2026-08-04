@@ -577,7 +577,8 @@
     "lessonsCompleted": "Aulas Concluídas",
     "lessonsCount": "{count} aulas",
     "totalLabel": "Total",
-    "xpToLevel": "XP para Nv. {level}"
+    "xpToLevel": "XP para Nv. {level}",
+    "verifiedTeacher": "Professor verificado"
   },
   "settings": {
     "title": "Configurações",

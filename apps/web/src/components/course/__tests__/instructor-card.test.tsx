@@ -3,9 +3,9 @@ import type { ReactElement } from "react";
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import { InstructorCard } from "../instructor-card";
 import { truncateAddress } from "@/lib/utils";
 import messages from "@/messages/en.json";
+import { InstructorCard } from "../instructor-card";
 
 const WALLET = "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF";
 
@@ -32,6 +32,8 @@ describe("InstructorCard — resolved public profile", () => {
         creatorWallet={WALLET}
         profile={{
           username: "alice",
+          displayName: null,
+          verified: false,
           avatarUrl: "https://example.com/a.png",
           bio: "Rust developer",
           socialLinks: { twitter: "alice_dev", github: "alice" },
@@ -59,6 +61,8 @@ describe("InstructorCard — resolved public profile", () => {
         creatorWallet={WALLET}
         profile={{
           username: "bob",
+          displayName: null,
+          verified: false,
           avatarUrl: null,
           bio: null,
           socialLinks: null,
@@ -69,5 +73,66 @@ describe("InstructorCard — resolved public profile", () => {
     expect(
       screen.queryByRole("link", { name: /GitHub/ })
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("InstructorCard — teacher identity (#997)", () => {
+  const base = {
+    username: "brave-anchor-9000",
+    displayName: null as string | null,
+    verified: false,
+    avatarUrl: null,
+    bio: null,
+    socialLinks: null,
+  };
+
+  it("shows the admin-set display name instead of the generated username", () => {
+    renderWithIntl(
+      <InstructorCard
+        creatorWallet={WALLET}
+        profile={{ ...base, displayName: "Ana Souza" }}
+      />
+    );
+
+    expect(screen.getByText("Ana Souza")).toBeInTheDocument();
+    expect(screen.queryByText("brave-anchor-9000")).not.toBeInTheDocument();
+  });
+
+  it("still links by USERNAME — display names are not unique or route-safe", () => {
+    renderWithIntl(
+      <InstructorCard
+        creatorWallet={WALLET}
+        profile={{ ...base, displayName: "Ana Souza" }}
+      />
+    );
+
+    expect(screen.getByRole("link", { name: "Ana Souza" })).toHaveAttribute(
+      "href",
+      "/en/profile/brave-anchor-9000"
+    );
+  });
+
+  it("falls back to the username when no display name is set", () => {
+    renderWithIntl(<InstructorCard creatorWallet={WALLET} profile={base} />);
+    expect(screen.getByText("brave-anchor-9000")).toBeInTheDocument();
+  });
+
+  it("renders the verified badge with an accessible label, not an unlabelled icon", () => {
+    renderWithIntl(
+      <InstructorCard
+        creatorWallet={WALLET}
+        profile={{ ...base, verified: true }}
+      />
+    );
+
+    // "Verified" is a trust claim — a screen-reader user must receive it too.
+    expect(
+      screen.getByRole("img", { name: /verified teacher/i })
+    ).toBeInTheDocument();
+  });
+
+  it("shows NO badge for an unverified teacher", () => {
+    renderWithIntl(<InstructorCard creatorWallet={WALLET} profile={base} />);
+    expect(screen.queryByRole("img", { name: /verified/i })).toBeNull();
   });
 });

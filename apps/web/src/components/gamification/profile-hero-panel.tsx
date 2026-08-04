@@ -5,12 +5,17 @@ import { GithubLogo, TwitterLogo, DiscordLogo } from "@phosphor-icons/react";
 import type { Achievement } from "@superteam-lms/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LevelBadge } from "@/components/gamification/level-badge";
+import { VerifiedBadge } from "@/components/profile/verified-badge";
 import { xpToNextLevel } from "@/lib/gamification/xp";
 import type { DeployedAchievement } from "@/lib/content/queries";
 
 interface ProfileHeroPanelProps {
   user: {
     username: string;
+    /** Admin-set editorial name shown instead of `username` (#997). */
+    displayName?: string | null;
+    /** Admin-granted verified-teacher badge (#997). */
+    verified?: boolean;
     bio: string;
     avatarUrl: string;
     joinedAt: Date;
@@ -50,6 +55,8 @@ export function ProfileHeroPanel({
   const t = useTranslations("profile");
   const { xpInCurrentLevel, xpRequiredForNext, progressPercent } =
     xpToNextLevel(stats.totalXp);
+  // Editorial name when an admin has set one (#997), generated one otherwise.
+  const displayName = user.displayName?.trim() || user.username;
 
   return (
     <div className="dash-panel">
@@ -61,17 +68,18 @@ export function ProfileHeroPanel({
         <div className="prof-identity">
           <Avatar className="h-[80px] w-[80px] shrink-0 border-[3px] border-border">
             {user.avatarUrl && (
-              <AvatarImage src={user.avatarUrl} alt={user.username} />
+              <AvatarImage src={user.avatarUrl} alt={displayName} />
             )}
             <AvatarFallback className="font-display text-2xl font-black">
-              {user.username.slice(0, 2).toUpperCase()}
+              {displayName.slice(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
 
           <div className="min-w-0 flex-1 space-y-2">
             <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="font-display text-[24px] font-black leading-tight tracking-[-0.5px]">
-                {user.username}
+              <h1 className="flex items-center gap-1.5 font-display text-[24px] font-black leading-tight tracking-[-0.5px]">
+                {displayName}
+                {user.verified && <VerifiedBadge className="h-5 w-5" />}
               </h1>
               {showVisibilityBadge && (
                 <span className="inline-flex items-center gap-1 rounded-full border border-success px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-success [background:var(--success-bg)]">
