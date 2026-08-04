@@ -4658,11 +4658,24 @@ a.path-step-card:hover .path-step-badge.skip {
 }
 
 /* ── Card body ── */
+/* Cover-less since the dashboard pass: the card IS the body row — progress
+   anatomy (glyph | title/path | ring), not catalog marketing covers. */
 .cc-card .cc-body {
-  padding: 12px 14px;
+  padding: 14px 16px;
   display: flex;
-  align-items: flex-end;
-  gap: 10px;
+  align-items: center;
+  gap: 12px;
+}
+.cc-glyph {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-dim);
+  color: var(--primary);
 }
 .cc-card .cc-title {
   font-family: var(--font-display, var(--font-d));

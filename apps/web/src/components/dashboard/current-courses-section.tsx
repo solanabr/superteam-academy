@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
-import Image from "next/image";
 import { Transaction } from "@solana/web3.js";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
@@ -156,16 +155,10 @@ export function CurrentCoursesSection({
                 )}
 
                 <Link href={`/${locale}/courses/${course.slug}`}>
-                  <div className="cc-thumb" aria-hidden="true">
-                    <Image
-                      src={course.thumbnail || "/cover.png"}
-                      alt=""
-                      width={400}
-                      height={225}
-                      loading="lazy"
-                    />
-                  </div>
                   <div className="cc-body">
+                    <span className="cc-glyph" aria-hidden="true">
+                      <BookOpen size={18} weight="duotone" />
+                    </span>
                     <div className="cc-meta">
                       <div className="cc-title">{course.title}</div>
                       <span className="cc-sub">
