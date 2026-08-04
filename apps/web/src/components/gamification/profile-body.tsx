@@ -72,51 +72,12 @@ export function ProfileBody({
                   {content.skills.length}
                 </span>
               </div>
-              {/* Radar (keeper) + per-skill legend fill the card together —
-                  the radar alone left an ocean of whitespace either side. */}
-              <div className="rounded-xl border border-border bg-card p-5 shadow-card">
-                <div className="grid items-center gap-8 md:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
-                  <SkillRadar
-                    skills={content.skills}
-                    totalLessons={content.totalLessons}
-                    className="mx-auto w-full max-w-[420px] !border-0 !bg-transparent !p-0 !shadow-none"
-                  />
-                  <div className="space-y-3">
-                    {[...content.skills]
-                      .sort((a, b) => b.lessonCount - a.lessonCount)
-                      .map((skill) => {
-                        const max = Math.max(
-                          1,
-                          ...content.skills.map((sk) => sk.lessonCount)
-                        );
-                        return (
-                          <div key={skill.label}>
-                            <div className="flex items-baseline justify-between gap-3">
-                              <span className="min-w-0 truncate text-[13px] font-semibold text-text">
-                                {skill.label}
-                              </span>
-                              <span className="shrink-0 font-mono text-[10px] uppercase tracking-[1px] text-text-3">
-                                {t("lessonsCount", {
-                                  count: skill.lessonCount,
-                                })}
-                              </span>
-                            </div>
-                            <div
-                              className="path-bar-track mt-1.5"
-                              aria-hidden="true"
-                            >
-                              <div
-                                className="path-bar-fill"
-                                style={{
-                                  width: `${Math.round((skill.lessonCount / max) * 100)}%`,
-                                }}
-                              />
-                            </div>
-                          </div>
-                        );
-                      })}
-                  </div>
-                </div>
+              <div className="rounded-xl border border-border bg-card p-4 shadow-card">
+                <SkillRadar
+                  skills={content.skills}
+                  totalLessons={content.totalLessons}
+                  className="mx-auto w-full max-w-[520px] !border-0 !bg-transparent !p-0 !shadow-none"
+                />
               </div>
             </section>
           )}
