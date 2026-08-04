@@ -4412,10 +4412,10 @@ a.path-step-card:hover .path-step-badge.skip {
 /* Individual quest row */
 .dq {
   display: grid;
-  grid-template-columns: 28px 1fr auto auto;
+  grid-template-columns: 26px 1fr auto auto;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
+  gap: 9px;
+  padding: 6px 10px;
   border-radius: var(--r-md);
   background: var(--card-alt, rgba(255, 255, 255, 0.02));
   border: 1px solid var(--border);
@@ -4444,8 +4444,8 @@ a.path-step-card:hover .path-step-badge.skip {
   outline-offset: 2px;
 }
 .dq-icon {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: var(--r-sm);
   background: var(--primary-dim);
   display: flex;
