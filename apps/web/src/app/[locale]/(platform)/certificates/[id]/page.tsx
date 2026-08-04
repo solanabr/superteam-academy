@@ -7,7 +7,6 @@ import { Copy, Check } from "@phosphor-icons/react";
 import type { Certificate } from "@superteam-lms/types";
 import { Button } from "@/components/ui/button";
 import { CertificateCard } from "@/components/certificates/certificate-card";
-import { EarnHandoffCard } from "@/components/certificates/earn-handoff-card";
 import { createClient } from "@/lib/supabase/client";
 import { getCoursesByIds } from "@/lib/content/client-queries";
 import { fetchCourseVersion } from "@/lib/credentials/metadata";
@@ -30,6 +29,8 @@ interface CertDetail {
   metadataUri: string;
   /** #497 Course Version stamp from the credential metadata; null pre-#497. */
   courseVersion: number | null;
+  /** Viewer owns this credential — share actions are theirs alone (04-08). */
+  isOwner: boolean;
 }
 
 function useCertificateData(certId: string) {
@@ -40,6 +41,10 @@ function useCertificateData(certId: string) {
     async function fetchData() {
       try {
         const supabase = createClient();
+
+        const {
+          data: { user: viewer },
+        } = await supabase.auth.getUser();
 
         const { data: cert } = await supabase
           .from("certificates")
@@ -92,6 +97,7 @@ function useCertificateData(certId: string) {
           mintAddress: cert.mint_address ?? "",
           metadataUri: cert.metadata_uri ?? "",
           courseVersion,
+          isOwner: viewer?.id === cert.user_id,
         });
       } catch {
         setNotFound(true);
@@ -163,7 +169,8 @@ export default function CertificateViewPage() {
     );
   }
 
-  const { cert, subtitle, mintAddress, metadataUri, courseVersion } = data;
+  const { cert, subtitle, mintAddress, metadataUri, courseVersion, isOwner } =
+    data;
   const recipientName = data.recipientName ?? t("recipientFallback");
   const { cluster, label: networkLabel } = resolveSolanaNetwork();
   const explorerUrl = mintAddress
@@ -192,10 +199,6 @@ export default function CertificateViewPage() {
       })
     : "";
 
-  async function handleCopyLink() {
-    await navigator.clipboard.writeText(window.location.href);
-  }
-
   return (
     <div className={v.page}>
       <h1 className={v.pageTitle}>{t("title")}</h1>
@@ -219,7 +222,7 @@ export default function CertificateViewPage() {
             </a>
           </Button>
         )}
-        {linkedInAddUrl && (
+        {isOwner && linkedInAddUrl && (
           <Button variant="outline" size="sm" asChild>
             <a
               href={linkedInAddUrl}
@@ -238,7 +241,7 @@ export default function CertificateViewPage() {
             </a>
           </Button>
         )}
-        {xShareUrl && (
+        {isOwner && xShareUrl && (
           <Button variant="outline" size="sm" asChild>
             <a
               href={xShareUrl}
@@ -257,14 +260,6 @@ export default function CertificateViewPage() {
             </a>
           </Button>
         )}
-        <Button variant="outline" size="sm" onClick={handleCopyLink}>
-          {t("copyLink")}
-        </Button>
-      </div>
-
-      {/* Bridge from credential to paid work on Superteam Earn (LX-E4) */}
-      <div className="mt-6">
-        <EarnHandoffCard source="certificate_page" courseId={cert.courseId} />
       </div>
 
       {/* NFT Details card — credential anatomy (F35): issuer, unique ID
