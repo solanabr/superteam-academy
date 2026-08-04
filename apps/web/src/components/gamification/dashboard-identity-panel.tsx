@@ -1,12 +1,11 @@
 "use client";
 
-import { useMemo, useRef, useCallback, useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Lock, CheckCircle } from "@phosphor-icons/react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import type { StreakData } from "@superteam-lms/types";
 import { LevelBadge } from "@/components/gamification/level-badge";
-import type { AchievementDefinition } from "@/lib/gamification";
 import { xpToNextLevel } from "@/lib/gamification/xp";
 import { cn } from "@/lib/utils";
 
@@ -172,7 +171,7 @@ function buildHeatmapData(
 /* ---------------------------------------------------------------
    ACHIEVEMENT TOKEN (V9 octagonal .dm-oct)
 --------------------------------------------------------------- */
-function AchievementToken({
+export function AchievementToken({
   glyph,
   name,
   hint,
@@ -249,10 +248,6 @@ export interface DashboardIdentityPanelProps {
   xp: number;
   level: number;
   streak: StreakData;
-  achievementsCount: number;
-  unlockedAchievementIds: string[];
-  /** Sanity achievement catalog — single source of truth for total count + token list */
-  catalog: AchievementDefinition[];
   className?: string;
 }
 
@@ -260,9 +255,6 @@ export function DashboardIdentityPanel({
   xp,
   level,
   streak,
-  achievementsCount,
-  unlockedAchievementIds,
-  catalog,
   className,
 }: DashboardIdentityPanelProps) {
   const t = useTranslations("gamification");
@@ -270,61 +262,6 @@ export function DashboardIdentityPanel({
 
   const { xpInCurrentLevel, xpRequiredForNext, progressPercent } =
     xpToNextLevel(xp);
-
-  const unlockedSet = useMemo(
-    () => new Set(unlockedAchievementIds),
-    [unlockedAchievementIds]
-  );
-
-  // Sort achievements: earned first, then locked
-  const sortedAchievements = useMemo(
-    () =>
-      [...catalog].sort((a, b) => {
-        const aEarned = unlockedSet.has(a.id) ? 0 : 1;
-        const bEarned = unlockedSet.has(b.id) ? 0 : 1;
-        return aEarned - bEarned;
-      }),
-    [catalog, unlockedSet]
-  );
-
-  // Achievement slider — horizontal drag-to-scroll
-  const achRef = useRef<HTMLDivElement>(null);
-  const achDrag = useRef({
-    isDown: false,
-    startX: 0,
-    scrollLeft: 0,
-    wasDrag: false,
-  });
-
-  const onAchDown = useCallback((e: React.PointerEvent) => {
-    const el = achRef.current;
-    if (!el) return;
-    achDrag.current = {
-      isDown: true,
-      startX: e.clientX,
-      scrollLeft: el.scrollLeft,
-      wasDrag: false,
-    };
-    el.setPointerCapture(e.pointerId);
-    el.style.cursor = "grabbing";
-  }, []);
-  const onAchMove = useCallback((e: React.PointerEvent) => {
-    if (!achDrag.current.isDown) return;
-    const el = achRef.current;
-    if (!el) return;
-    if (Math.abs(e.clientX - achDrag.current.startX) > 5) {
-      achDrag.current.wasDrag = true;
-    }
-    el.scrollLeft =
-      achDrag.current.scrollLeft - (e.clientX - achDrag.current.startX);
-  }, []);
-  const onAchUp = useCallback((e: React.PointerEvent) => {
-    achDrag.current.isDown = false;
-    const el = achRef.current;
-    if (!el) return;
-    el.releasePointerCapture(e.pointerId);
-    el.style.cursor = "";
-  }, []);
 
   const heatmap = useMemo(
     () => buildHeatmapData(streak.streakHistory, streak.frozenDays),
@@ -346,9 +283,9 @@ export function DashboardIdentityPanel({
       {/* Ambient glow blobs — ::before (green) and ::after (amber) */}
       <div className="dash-panel-amb" aria-hidden="true" />
 
-      {/* ---- TWO-COLUMN TOP ---- */}
-      <div className="dash-top">
-        {/* ---- LEFT: Level badge + XP ---- */}
+      {/* Level + XP | learning-activity heatmap, one band (owner call 04-08).
+          Achievements render in their own strip below the panel. */}
+      <div className="dash-split">
         <div className="dash-identity">
           <LevelBadge level={level} size="xl" />
 
@@ -375,54 +312,7 @@ export function DashboardIdentityPanel({
           </div>
         </div>
 
-        {/* ---- RIGHT: Achievement tokens slider ---- */}
-        <div className="dash-ach">
-          <div className="dash-ach-head">
-            <span className="dash-ach-title">{t("yourAchievements")}</span>
-            <span className="dash-ach-count">
-              {t("ofUnlocked", {
-                count: achievementsCount,
-                total: catalog.length,
-              })}
-            </span>
-          </div>
-          <Tooltip.Provider delayDuration={0} skipDelayDuration={150}>
-            <div
-              ref={achRef}
-              className="dash-ach-row"
-              onPointerDown={onAchDown}
-              onPointerMove={onAchMove}
-              onPointerUp={onAchUp}
-              onPointerCancel={onAchUp}
-            >
-              {sortedAchievements.map((ach) => {
-                const earned = unlockedSet.has(ach.id);
-                const isSol = earned && ach.solTier;
-                const tipId = `ach-${ach.id}`;
-                return (
-                  <AchievementToken
-                    key={ach.id}
-                    glyph={ach.glyph}
-                    name={ach.name}
-                    hint={ach.description}
-                    state={earned ? (isSol ? "sol" : "earned") : "locked"}
-                    isOpen={openTip === tipId}
-                    onTap={() =>
-                      setOpenTip((prev) => (prev === tipId ? null : tipId))
-                    }
-                    onOpenChange={(open) => setOpenTip(open ? tipId : null)}
-                    wasDrag={() => achDrag.current.wasDrag}
-                  />
-                );
-              })}
-            </div>
-          </Tooltip.Provider>
-        </div>
-      </div>
-
-      {/* ---- BOTTOM: Heatmap + Daily Quests ---- */}
-      <div className="dash-bottom">
-        {/* ---- LEFT: Activity Grid (heatmap) ---- */}
+        {/* Heatmap — right pane of the band. */}
         <div className="dash-grid">
           {/* ::before left-edge green glow is handled by CSS */}
 

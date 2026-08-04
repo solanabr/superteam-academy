@@ -3725,6 +3725,7 @@ a.path-step-card:hover .path-step-badge.skip {
   color: var(--text-2);
   margin-bottom: 10px;
   font-variant-numeric: tabular-nums; /* F37 */
+  white-space: nowrap; /* "339 XP to Level 4" must not break mid-phrase in the split band */
 }
 .dash-xp-to em {
   color: var(--xp);
@@ -4049,6 +4050,47 @@ a.path-step-card:hover .path-step-badge.skip {
 }
 
 /* Bottom row — heatmap bigger, quests smaller (flipped from top) */
+/* Achievements strip: earned + next goals on one line, names in tooltips. */
+.ach-strip-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+.ach-strip-row .dm-name {
+  display: none;
+}
+.ach-strip-row .dm-oct {
+  width: 44px;
+  height: 44px;
+}
+.ach-strip-row .dm-glyph {
+  font-size: 16px;
+}
+
+/* Identity | heatmap split band (04-08): level+XP left, activity right. */
+.dash-split {
+  display: grid;
+  grid-template-columns: 1fr;
+  position: relative;
+  z-index: 1;
+}
+@media (min-width: 900px) {
+  .dash-split {
+    grid-template-columns: minmax(0, 290px) minmax(0, 1fr);
+  }
+  .dash-split .dash-identity {
+    border-right: 1px solid var(--border);
+  }
+}
+@media (max-width: 899px) {
+  .dash-split .dash-grid {
+    border-top: 1px solid var(--border);
+  }
+}
+
 /* Single column since the quests slot moved to the dashboard rail card
    (daily-quests-card.tsx) — the heatmap now owns the full bottom row. */
 .dash-bottom {

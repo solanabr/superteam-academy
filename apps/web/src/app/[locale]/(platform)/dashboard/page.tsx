@@ -7,6 +7,7 @@ import { useDashboardData } from "@/hooks/use-dashboard-data";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DashboardIdentityPanel } from "@/components/gamification/dashboard-identity-panel";
+import { AchievementsStrip } from "@/components/dashboard/achievements-strip";
 import { ActivitySection } from "@/components/dashboard/activity-section";
 import {
   ContinueCard,
@@ -133,11 +134,16 @@ export default function DashboardPage() {
         </aside>
 
         <div className="order-2 min-w-0 space-y-8 lg:order-1">
-          {/* V9 Dashboard Identity Panel — Level+XP | Medals | Activity Grid */}
+          {/* Identity panel — Level+XP | learning-activity heatmap, one band. */}
           <DashboardIdentityPanel
             xp={data.xp}
             level={data.level}
             streak={data.streak}
+          />
+
+          {/* Achievements — earned + the next couple of goals; count links to
+              the full set on the profile. */}
+          <AchievementsStrip
             achievementsCount={data.achievementsCount}
             unlockedAchievementIds={data.unlockedAchievementIds}
             catalog={data.achievementCatalog}
