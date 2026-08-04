@@ -190,12 +190,12 @@ export function NextLessonPlan({ userId }: NextLessonPlanProps) {
         {showPicker && (
           <div className="flex items-center gap-2">
             <CalendarCheck
-              size={20}
+              size={16}
               weight="duotone"
               className="shrink-0 text-primary"
               aria-hidden="true"
             />
-            <h2 className="font-display text-base font-black tracking-[-0.25px]">
+            <h2 className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
               {t("nextLessonTitle")}
             </h2>
           </div>
@@ -285,13 +285,14 @@ export function NextLessonPlan({ userId }: NextLessonPlanProps) {
               <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
                 {t("nextLessonTitle")}
               </p>
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={openEditor}
-                className="mt-1.5 text-xs font-semibold text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                className="-ml-2.5 mt-1"
               >
                 {t("nextLessonEdit")}
-              </button>
+              </Button>
             </div>
           </div>
         )}

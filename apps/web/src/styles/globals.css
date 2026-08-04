@@ -4083,11 +4083,15 @@ a.path-step-card:hover .path-step-badge.skip {
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
+  justify-content: flex-end;
   gap: 10px;
   min-width: 0;
   flex: 1;
   overflow-x: auto;
-  padding-bottom: 2px;
+  /* Vertical padding, not tight cropping: with overflow-x auto the row also
+     clips vertically, and browser zoom / hover-scale was cutting the token
+     tops (owner, 04-08). */
+  padding: 6px 2px 8px;
   scrollbar-width: thin;
   scrollbar-color: var(--border-default) transparent;
 }
@@ -4197,10 +4201,10 @@ a.path-step-card:hover .path-step-badge.skip {
 .dash-grid-title {
   font-family: var(--font-mono, var(--font-m));
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 700;
   color: var(--text-3);
   text-transform: uppercase;
-  letter-spacing: 1.5px;
+  letter-spacing: 1.8px;
 }
 .dash-grid-stats {
   display: flex;
@@ -4380,10 +4384,10 @@ a.path-step-card:hover .path-step-badge.skip {
 .dash-quests-title {
   font-family: var(--font-mono, var(--font-m));
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 700;
   color: var(--text-3);
   text-transform: uppercase;
-  letter-spacing: 1.5px;
+  letter-spacing: 1.8px;
 }
 .dash-quests-reset {
   font-family: var(--font-mono, var(--font-m));
@@ -4459,17 +4463,15 @@ a.path-step-card:hover .path-step-badge.skip {
   min-width: 0;
 }
 .dq-name {
-  font-family: var(--font-mono, var(--font-m));
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 700;
   color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .dq-desc {
-  font-family: var(--font-mono, var(--font-m));
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-3);
   white-space: nowrap;
   overflow: hidden;
