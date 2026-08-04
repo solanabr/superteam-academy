@@ -19,6 +19,47 @@ type DiffLine =
   | { kind: "removed"; text: string }
   | { kind: "added"; text: string };
 
+type DiffRow = DiffLine | { kind: "gap"; count: number };
+
+/** Context lines kept around each change; longer unchanged runs collapse. */
+const HUNK_CONTEXT = 2;
+
+/**
+ * Collapse the full line diff to hunks: every changed line plus HUNK_CONTEXT
+ * unchanged lines on each side; anything further from a change becomes one
+ * "⋯ N unchanged" gap row. The learner reviews the CHANGE, not the whole file
+ * (owner call, 04-08) — Monaco still holds the full buffer.
+ */
+export function toHunkRows(lines: DiffLine[]): DiffRow[] {
+  const keep = new Array<boolean>(lines.length).fill(false);
+  lines.forEach((line, i) => {
+    if (line.kind === "unchanged") return;
+    for (
+      let j = Math.max(0, i - HUNK_CONTEXT);
+      j <= Math.min(lines.length - 1, i + HUNK_CONTEXT);
+      j++
+    ) {
+      keep[j] = true;
+    }
+  });
+  const rows: DiffRow[] = [];
+  let gap = 0;
+  const flush = () => {
+    if (gap > 0) rows.push({ kind: "gap", count: gap });
+    gap = 0;
+  };
+  lines.forEach((line, i) => {
+    if (keep[i]) {
+      flush();
+      rows.push(line);
+    } else {
+      gap++;
+    }
+  });
+  flush();
+  return rows;
+}
+
 /**
  * Line-by-line diff via LCS (longest common subsequence). Files here are
  * small (a single lesson's editor buffer), so the O(n*m) DP table is cheap —
@@ -129,7 +170,7 @@ export function DiffCard({
   const applied = useMemo(() => applyEdits(current, edits), [current, edits]);
 
   const lines = useMemo(
-    () => (applied.ok ? diffLines(current, applied.proposed) : []),
+    () => (applied.ok ? toHunkRows(diffLines(current, applied.proposed)) : []),
     [current, applied]
   );
 
@@ -273,43 +314,60 @@ export function DiffCard({
 
       <div className="overflow-x-auto rounded-md border border-border [background:var(--input)]">
         <pre className="whitespace-pre p-3 font-mono text-xs leading-relaxed">
-          {lines.map((line, index) => (
-            <div
-              key={index}
-              className={cn(
-                "flex gap-2 px-1",
-                line.kind === "added" &&
-                  "text-success [background:var(--success-light)]",
-                line.kind === "removed" &&
-                  "text-danger [background:var(--danger-light)]"
-              )}
-            >
-              <span
-                aria-hidden="true"
+          {lines.map((line, index) => {
+            if (line.kind === "gap") {
+              const label = t("diff.unchangedCollapsed", {
+                count: line.count,
+              });
+              return (
+                <div
+                  key={index}
+                  className="select-none px-1 text-text-3"
+                  aria-label={label}
+                >
+                  {"\u22EF "}
+                  {label}
+                </div>
+              );
+            }
+            return (
+              <div
+                key={index}
                 className={cn(
-                  "w-3 shrink-0 select-none",
-                  line.kind === "added" && "text-success",
-                  line.kind === "removed" && "text-danger",
-                  line.kind === "unchanged" && "text-text-3"
+                  "flex gap-2 px-1",
+                  line.kind === "added" &&
+                    "text-success [background:var(--success-light)]",
+                  line.kind === "removed" &&
+                    "text-danger [background:var(--danger-light)]"
                 )}
               >
-                {line.kind === "added"
-                  ? "+"
-                  : line.kind === "removed"
-                    ? "-"
-                    : " "}
-              </span>
-              {line.kind !== "unchanged" && (
-                <span className="sr-only">
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "w-3 shrink-0 select-none",
+                    line.kind === "added" && "text-success",
+                    line.kind === "removed" && "text-danger",
+                    line.kind === "unchanged" && "text-text-3"
+                  )}
+                >
                   {line.kind === "added"
-                    ? t("diff.lineAdded")
-                    : t("diff.lineRemoved")}
-                  :
+                    ? "+"
+                    : line.kind === "removed"
+                      ? "-"
+                      : " "}
                 </span>
-              )}
-              <span>{line.text}</span>
-            </div>
-          ))}
+                {line.kind !== "unchanged" && (
+                  <span className="sr-only">
+                    {line.kind === "added"
+                      ? t("diff.lineAdded")
+                      : t("diff.lineRemoved")}
+                    :
+                  </span>
+                )}
+                <span>{line.text}</span>
+              </div>
+            );
+          })}
         </pre>
       </div>
 
@@ -326,42 +384,66 @@ export function DiffCard({
       )}
 
       {!stale && !accepted && (
-        <div className="space-y-2 rounded-md border-[2px] p-3 [background:var(--accent-bg)] [border-color:var(--accent-border-s)]">
-          <p className="text-xs font-semibold text-text">
+        <div className="space-y-2 rounded-md border border-border bg-card p-3">
+          {/* Same anatomy as the lesson quiz (quiz-block.tsx): display-font
+              question label, option rows that judge via border color. */}
+          <p className="font-display text-xs font-extrabold uppercase text-text-3">
             {t("diff.checkPrompt")}
           </p>
-          <p className="text-sm text-text">{check.question}</p>
-          <div className="flex flex-col gap-2">
-            {check.options.map((option, index) => (
-              <Button
-                key={index}
-                type="button"
-                variant={
-                  correctPick === index
-                    ? "primary"
-                    : wrongPick === index
-                      ? "destructiveOutline"
-                      : "secondary"
-                }
-                size="sm"
-                disabled={checking || correctPick !== null}
-                onClick={() => void handlePick(index as 0 | 1 | 2)}
-                className="h-auto justify-start gap-1.5 whitespace-normal py-2 text-left"
-              >
-                {correctPick === index && (
-                  <Check size={14} weight="bold" aria-hidden="true" />
-                )}
-                {option}
-              </Button>
-            ))}
+          <p className="font-display text-sm font-bold text-text">
+            {check.question}
+          </p>
+          <div className="space-y-1.5">
+            {check.options.map((option, index) => {
+              const isCorrectPick = correctPick === index;
+              const isWrongPick = wrongPick === index;
+              return (
+                <button
+                  key={index}
+                  type="button"
+                  disabled={checking || correctPick !== null}
+                  onClick={() => void handlePick(index as 0 | 1 | 2)}
+                  className={cn(
+                    "flex w-full items-center gap-2 rounded-md border p-2 text-left text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+                    correctPick !== null
+                      ? "cursor-default"
+                      : "cursor-pointer hover:bg-inset",
+                    isCorrectPick
+                      ? "border-success"
+                      : isWrongPick
+                        ? "border-danger"
+                        : "border-border"
+                  )}
+                >
+                  {isCorrectPick && (
+                    <Check
+                      size={14}
+                      weight="bold"
+                      className="shrink-0 text-success"
+                      aria-hidden="true"
+                    />
+                  )}
+                  {isWrongPick && (
+                    <X
+                      size={14}
+                      weight="bold"
+                      className="shrink-0 text-danger"
+                      aria-hidden="true"
+                    />
+                  )}
+                  <span>{option}</span>
+                </button>
+              );
+            })}
           </div>
           {correctPick !== null && (
-            <p className="text-xs font-semibold text-success">
+            <p className="flex items-center gap-1.5 text-sm font-medium text-success">
+              <Check size={14} weight="bold" aria-hidden="true" />
               {t("diff.checkCorrect")}
             </p>
           )}
           {wrongPick !== null && wrongExplanation !== null && (
-            <div className="flex items-start gap-2 text-xs text-danger">
+            <div className="flex items-start gap-2 text-sm font-medium text-danger">
               <WarningCircle
                 size={14}
                 weight="duotone"

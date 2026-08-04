@@ -1053,6 +1053,7 @@
       "checkCorrect": "Correcto — ya puedes aplicar el cambio.",
       "acceptLocked": "Responde correctamente para aplicar este cambio.",
       "applied": "Aplicado a tu código",
+      "unchangedCollapsed": "{count, plural, one {# línea sin cambios} other {# líneas sin cambios}}",
       "lineAdded": "Añadido",
       "lineRemoved": "Eliminado"
     },
