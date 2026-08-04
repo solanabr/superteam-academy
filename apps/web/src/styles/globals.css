@@ -4128,7 +4128,8 @@ a.path-step-card:hover .path-step-badge.skip {
 }
 @media (min-width: 900px) {
   .dash-split {
-    grid-template-columns: minmax(0, 290px) minmax(0, 1fr);
+    /* Proportional 1/3 | 2/3 (owner call 04-08), not a fixed identity column. */
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
   }
   /* Soft divider: a hairline that fades at both ends — a full-height rule
      read too hard against the panel's ambient softness (owner, 04-08). */
