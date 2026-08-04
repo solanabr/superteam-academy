@@ -6,8 +6,8 @@ import { answerQuizStepper } from "./harness/quiz";
 // Spec 1 — Learn loop.
 //
 // Signed-in learner opens an enrolled course, works a quiz-only lesson
-// (`lesson-bfsp-on-chain-state`, answer key: option "a" for every question),
-// clicks Mark as Complete, and the UI reaches the completed state.
+// (`lesson-b2s-hash-everything`; the answer key lives with the fixture), clicks
+// Mark as Complete, and the UI reaches the completed state.
 //
 // Mock boundaries (see e2e/README.md for the full map):
 //   • Session: a locally-minted Supabase cookie (no network, no secret).
@@ -44,11 +44,11 @@ test.describe("learn loop", () => {
       `/en/courses/${LEARN_LOOP.courseSlug}/lessons/${LEARN_LOOP.lessonSlug}`
     );
 
-    // Work the retrieval quiz: option "a" is correct for every question. Grading
-    // is server-side (mocked here); answering exercises the real quiz UI so the
-    // "learn loop" is faithful, not a bare button click. Since #849 the quiz is
-    // a stepper — answer → check → next, one question at a time.
-    await answerQuizStepper(page, ["q1", "q2", "q3", "q4"]);
+    // Work the retrieval quiz with its real answer key. Grading is server-side
+    // (mocked here); answering exercises the real quiz UI so the "learn loop" is
+    // faithful, not a bare button click. Since #849 the quiz is a stepper —
+    // answer → check → next, one question at a time.
+    await answerQuizStepper(page, LEARN_LOOP.answers);
 
     // The complete button only renders for a signed-in, enrolled learner — its
     // presence is itself the "enrolled course" assertion. Auto-waits for the

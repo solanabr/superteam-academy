@@ -98,11 +98,11 @@ test.describe("O-4 journey (anonymous → sign in → banked replay)", () => {
     );
 
     // ── 2. Do the graded work while signed out ───────────────────────────────
-    // Answer the retrieval quiz (option "a" is the key for every question) and
-    // check each one, exercising the real QuizBlock — since #849 a stepper:
-    // answer → check → next, one question at a time. Selecting the options is
-    // what drives ctx.setProof → the proofs the bank will carry.
-    await answerQuizStepper(page, ["q1", "q2", "q3", "q4"]);
+    // Answer the retrieval quiz with its real answer key and check each one,
+    // exercising the real QuizBlock — since #849 a stepper: answer → check →
+    // next, one question at a time. Selecting the options is what drives
+    // ctx.setProof → the proofs the bank will carry.
+    await answerQuizStepper(page, LEARN_LOOP.answers);
 
     // Nothing has hit the completion route yet — an anonymous learner cannot
     // complete on-chain; the work only lives locally at this point.

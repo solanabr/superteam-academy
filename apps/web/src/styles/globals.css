@@ -1235,6 +1235,23 @@
 }
 
 /* ── Staggered card entrance animation ── */
+/* Small entrance for judged content (quiz verdicts, explanations, feedback):
+   a 4px rise + fade over 180ms — content arrives, never pops (owner, 04-08).
+   The global prefers-reduced-motion blanket disables it like every animation. */
+@keyframes reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.reveal-in {
+  animation: reveal-in 0.18s ease-out both;
+}
+
 @keyframes card-in {
   from {
     opacity: 0;
