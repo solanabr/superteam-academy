@@ -39,12 +39,13 @@ export function ProfileBody({
   streak,
 }: ProfileBodyProps) {
   const t = useTranslations("profile");
+  const tGam = useTranslations("gamification");
   const tCerts = useTranslations("certificates");
   const locale = useLocale();
 
   return (
-    <div className="space-y-10">
-      {/* ─── Profile Hero Panel (dash-panel) ─── */}
+    <div className="space-y-8">
+      {/* ─── Profile Hero Panel (dash-panel) — the page anchor ─── */}
       <ProfileHeroPanel
         user={user}
         stats={stats}
@@ -54,84 +55,121 @@ export function ProfileBody({
         streak={streak}
       />
 
-      {/* ─── Skills Radar ─── */}
-      {content.skills.length > 0 && (
-        <section>
-          <h2 className="mb-4 font-display text-lg font-black tracking-[-0.25px]">
-            {t("skills")}
-          </h2>
-          <SkillRadar
-            skills={content.skills}
-            totalLessons={content.totalLessons}
-          />
-        </section>
-      )}
+      {/* Main column + rail — the dashboard composition (04-08): long-form
+          proof (skills, certificates) left, glanceable achievements right.
+          Sections are cards with mono kickers, not floating page headings. */}
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-8">
+        <div className="min-w-0 space-y-8">
+          {/* ─── Skills radar card ─── */}
+          {content.skills.length > 0 && (
+            <section
+              aria-label={t("skills")}
+              className="rounded-xl border border-border bg-card p-5 shadow-card"
+            >
+              <p className="mb-3 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+                {t("skills")}
+              </p>
+              <SkillRadar
+                skills={content.skills}
+                totalLessons={content.totalLessons}
+                className="mx-auto max-w-[560px] !border-0 !bg-transparent !p-0 !shadow-none"
+              />
+            </section>
+          )}
 
-      {/* ─── Achievements ─── */}
-      <AchievementGrid
-        unlockedAchievements={content.achievements}
-        catalog={content.deployedAchievements}
-      />
-
-      {/* ─── Certificates — compact on-chain proof cards ─── */}
-      {content.certificates.length > 0 && (
-        <section>
-          <h2 className="mb-4 font-display text-lg font-black tracking-[-0.25px]">
-            {tCerts("title")}
-          </h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {content.certificates.map((cert) => (
-              <Link
-                key={cert.id}
-                href={`/${locale}/certificates/${cert.id}`}
-                className="group"
-              >
-                <div className={CS.gradCard || "grad-card"}>
-                  <div className={CS.gradCardInner || "grad-card-inner"}>
-                    <div className={CS.gradCardBody || "grad-card-body"}>
-                      <p className="font-display text-[15px] font-extrabold leading-snug text-text">
-                        {cert.courseTitle}
-                      </p>
-                      <p className="mt-1 font-body text-[13px] text-text-2">
-                        {user.username}
-                        <span className="mx-1.5 text-text-3">&middot;</span>
-                        {cert.mintedAt.toLocaleDateString()}
-                      </p>
-                      <div className="mt-3">
-                        <span className={CS.proofPill}>
-                          <span className={CS.proofDot} aria-hidden="true" />
-                          {cert.mintAddress
-                            ? truncateAddress(cert.mintAddress)
-                            : tCerts("onChain")}
-                        </span>
+          {/* ─── Certificates — the on-chain proof; keeps the Solana-gradient
+              frame (the one deliberate brand-gradient surface). ─── */}
+          {content.certificates.length > 0 && (
+            <section aria-label={tCerts("title")}>
+              <div className="mb-3 flex items-baseline gap-2">
+                <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+                  {tCerts("title")}
+                </p>
+                <span className="font-mono text-[10px] uppercase tracking-[1px] text-text-3">
+                  {content.certificates.length}
+                </span>
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {content.certificates.map((cert) => (
+                  <Link
+                    key={cert.id}
+                    href={`/${locale}/certificates/${cert.id}`}
+                    className="group"
+                  >
+                    <div className={CS.gradCard || "grad-card"}>
+                      <div className={CS.gradCardInner || "grad-card-inner"}>
+                        <div className={CS.gradCardBody || "grad-card-body"}>
+                          <p className="font-display text-[15px] font-extrabold leading-snug text-text">
+                            {cert.courseTitle}
+                          </p>
+                          <p className="mt-1 font-body text-[13px] text-text-2">
+                            {user.username}
+                            <span className="mx-1.5 text-text-3">&middot;</span>
+                            {cert.mintedAt.toLocaleDateString()}
+                          </p>
+                          <div className="mt-3">
+                            <span className={CS.proofPill}>
+                              <span
+                                className={CS.proofDot}
+                                aria-hidden="true"
+                              />
+                              {cert.mintAddress
+                                ? truncateAddress(cert.mintAddress)
+                                : tCerts("onChain")}
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
 
-      {content.certificates.length === 0 && (
-        <section>
-          <h2 className="mb-4 font-display text-lg font-black tracking-[-0.25px]">
-            {tCerts("title")}
-          </h2>
-          <div className="flex flex-col items-center justify-center gap-4 py-12">
-            <GraduationCap
-              size={48}
-              weight="duotone"
-              className="text-accent"
-              aria-hidden="true"
+          {content.certificates.length === 0 && (
+            <section aria-label={tCerts("title")}>
+              <p className="mb-3 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+                {tCerts("title")}
+              </p>
+              <div className="flex flex-col items-center justify-center gap-3 py-10">
+                <GraduationCap
+                  size={44}
+                  weight="duotone"
+                  className="text-accent"
+                  aria-hidden="true"
+                />
+                <p className="text-center font-body text-text-3">
+                  {tCerts("noCertificates")}
+                </p>
+              </div>
+            </section>
+          )}
+        </div>
+
+        {/* ─── Rail: achievements, full catalog, no filter chrome ─── */}
+        <aside className="space-y-6">
+          <section
+            aria-label={tGam("achievements")}
+            className="rounded-xl border border-border bg-card p-4 shadow-card"
+          >
+            <div className="mb-3 flex items-baseline justify-between gap-2">
+              <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+                {tGam("achievements")}
+              </p>
+              <span className="font-mono text-[10px] uppercase tracking-[1px] text-text-3">
+                {content.achievements.length}/
+                {content.deployedAchievements.length}
+              </span>
+            </div>
+            <AchievementGrid
+              unlockedAchievements={content.achievements}
+              catalog={content.deployedAchievements}
+              compact
             />
-            <p className="text-center font-body text-text-3">
-              {tCerts("noCertificates")}
-            </p>
-          </div>
-        </section>
-      )}
+          </section>
+        </aside>
+      </div>
     </div>
   );
 }
