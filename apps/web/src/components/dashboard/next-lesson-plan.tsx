@@ -240,24 +240,27 @@ export function NextLessonPlan({ userId }: NextLessonPlanProps) {
                   className="rounded-md border border-border px-2.5 py-1.5 text-sm [background:var(--input)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 />
               </div>
-              <Button
-                variant="push"
-                size="sm"
-                onClick={handleSave}
-                disabled={saving}
-              >
-                {t("nextLessonSave")}
-              </Button>
+              {/* Actions pinned to the row's right edge (owner call 04-08). */}
               {plan && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setEditing(false)}
                   disabled={saving}
+                  className="ml-auto"
                 >
                   {t("nextLessonCancel")}
                 </Button>
               )}
+              <Button
+                variant="push"
+                size="sm"
+                onClick={handleSave}
+                disabled={saving}
+                className={plan ? undefined : "ml-auto"}
+              >
+                {t("nextLessonSave")}
+              </Button>
             </div>
             <label className="flex items-start gap-2 text-sm text-text-3">
               <input
