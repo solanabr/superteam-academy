@@ -305,7 +305,7 @@ export function NextLessonPlan({ userId }: NextLessonPlanProps) {
               </label>
             </>
           ) : (
-            <div className="flex items-center gap-3.5">
+            <div className="flex items-center justify-center gap-3.5">
               {/* Mini calendar tile — the plan at a glance. */}
               <span className="nlp-cal" aria-hidden="true">
                 <span className="nlp-cal-day">
