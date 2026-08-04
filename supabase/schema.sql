@@ -3261,7 +3261,10 @@ GRANT EXECUTE ON FUNCTION set_reminder_opt_in(BOOLEAN, TEXT) TO authenticated;
 -- iff ALL of these hold:
 --   * reminder_opt_in = true                      (explicit consent for THIS purpose)
 --   * a real email on file                        (never a wallet-auth placeholder)
---   * prefs.nextLesson.day = today's São Paulo weekday   (they planned TODAY)
+--   * today's São Paulo weekday is a member of `prefs.nextLesson.days` — the
+--     committed plan list (up to all seven = daily). The pre-#582-successor
+--     single `day` string is gone: 20260804120000_recurring_lesson_plan.sql
+--     converted every stored one to a one-element `days` array.
 --   * no email_reminder_log row for (user, 'session_plan', today) — and the claim
 --     row is INSERTed in the same statement, so a concurrent/second run gets
 --     nothing back.
@@ -3302,7 +3305,10 @@ BEGIN
       AND u.email <> ''
       -- Synthetic wallet-auth addresses are not inboxes (see #779).
       AND u.email NOT LIKE '%@wallet.superteam-lms.local'
-      AND p.prefs -> 'nextLesson' ->> 'day' = v_weekday
+      -- Multi-day plans: membership of the committed `days` list
+      -- (`jsonb ? text` = element exists). All seven entries = daily. The claim
+      -- below still caps a learner at ONE reminder per São Paulo day.
+      AND (p.prefs -> 'nextLesson' -> 'days') ? v_weekday
   ),
   claimed AS (
     INSERT INTO public.email_reminder_log (user_id, kind, sent_on)
