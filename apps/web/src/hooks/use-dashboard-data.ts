@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { StreakData, DailyQuest } from "@superteam-lms/types";
 import { createClient } from "@/lib/supabase/client";
@@ -102,6 +102,14 @@ export function useDashboardData(
 ): DashboardData {
   const tDash = useTranslations("dashboard");
   const localizedQuestName = useQuestName();
+  // The i18n functions cross the RSC boundary via the messages object, whose
+  // identity changes on any RSC refresh — keeping them in the effect's deps
+  // refired the whole fetch burst every time. Hold them in refs and read
+  // `.current` inside the effect so the deps stay [authUserId, authLoading].
+  const tDashRef = useRef(tDash);
+  tDashRef.current = tDash;
+  const localizedQuestNameRef = useRef(localizedQuestName);
+  localizedQuestNameRef.current = localizedQuestName;
   const [data, setData] = useState<DashboardData>({
     xp: 0,
     level: 0,
@@ -124,6 +132,7 @@ export function useDashboardData(
 
   useEffect(() => {
     if (authLoading) return;
+    let active = true;
 
     async function fetchData() {
       try {
@@ -134,16 +143,22 @@ export function useDashboardData(
 
         const supabase = createClient();
 
-        // One concurrent burst, not a waterfall. The old shape awaited quests
-        // FIRST ("may trigger on-chain XP mints") and then ran five more reads
-        // back-to-back — 6+ serial round trips incl. a browser→Solana RPC read,
-        // which is what made the dashboard feel slow. Since #925 quest awards
-        // happen at the ACTION (lesson complete / review / test-out), the
-        // dashboard evaluation almost never mints, and when it does the
-        // Realtime xp-gain listener corrects the header within a beat — a
-        // possibly-one-render-stale balance is the right trade for a fast
-        // first paint. The two profiles selects also collapse into one.
+        // TWO concurrent bursts, not a waterfall. Burst A is everything keyed
+        // on authUserId alone; burst B is the content-bundle lookups that need
+        // burst A's ids. The old shape awaited quests FIRST ("may trigger
+        // on-chain XP mints") and then ran the rest in five serial phases —
+        // round trips that had no data dependency on each other, which is what
+        // made the dashboard feel slow. Since #925 quest awards happen at the
+        // ACTION (lesson complete / review / test-out), the dashboard
+        // evaluation almost never mints, and when it does the Realtime xp-gain
+        // listener corrects the header within a beat — a possibly-one-render-
+        // stale balance is the right trade for a fast first paint. The two
+        // profiles selects also collapse into one.
         const service = getProgressService(supabase);
+        // Activity heatmap window (last 270 days) — computed before the burst
+        // so the query can join it.
+        const oneYearAgo = new Date();
+        oneYearAgo.setDate(oneYearAgo.getDate() - 270);
         const [
           questsResult,
           totalXp,
@@ -151,6 +166,11 @@ export function useDashboardData(
           profileResult,
           achievementsResult,
           transactionsResult,
+          activityRowsResult,
+          { data: enrollments },
+          { data: progressRows },
+          { data: certRows },
+          { data: achievementRows },
         ] = await Promise.all([
           fetch("/api/quests/daily")
             .then((res) =>
@@ -177,6 +197,31 @@ export function useDashboardData(
             .eq("user_id", authUserId)
             .order("created_at", { ascending: false })
             .limit(100),
+          // Activity dates for the streak heatmap (last 270 days)
+          supabase
+            .from("xp_transactions")
+            .select("created_at")
+            .eq("user_id", authUserId)
+            .gte("created_at", oneYearAgo.toISOString()),
+          supabase
+            .from("enrollments")
+            .select("course_id, enrolled_at, tx_signature")
+            .eq("user_id", authUserId),
+          supabase
+            .from("user_progress")
+            .select("course_id, lesson_id, completed, completed_at")
+            .eq("user_id", authUserId)
+            .eq("completed", true),
+          supabase
+            .from("certificates")
+            .select("course_id, course_title, minted_at, tx_signature")
+            .eq("user_id", authUserId),
+          supabase
+            .from("user_achievements")
+            .select("achievement_id, unlocked_at, tx_signature")
+            .eq("user_id", authUserId)
+            .order("unlocked_at", { ascending: false })
+            .limit(10),
         ]);
         const profile = profileResult.data;
         const rerollData = profileResult.data;
@@ -221,48 +266,13 @@ export function useDashboardData(
           dispatchSurpriseBonus(amount);
         }
 
-        // Fetch activity dates for streak heatmap (last 270 days)
-        const oneYearAgo = new Date();
-        oneYearAgo.setDate(oneYearAgo.getDate() - 270);
-        const { data: activityRows } = await supabase
-          .from("xp_transactions")
-          .select("created_at")
-          .eq("user_id", authUserId)
-          .gte("created_at", oneYearAgo.toISOString());
+        const activityRows = activityRowsResult.data;
 
         const streakHistory: Record<string, number> = {};
         for (const row of activityRows ?? []) {
           const dateStr = (row.created_at ?? "").split("T")[0] as string;
           streakHistory[dateStr] = (streakHistory[dateStr] ?? 0) + 1;
         }
-
-        // Fetch enrollments, progress, certificates, and achievements in parallel
-        const [
-          { data: enrollments },
-          { data: progressRows },
-          { data: certRows },
-          { data: achievementRows },
-        ] = await Promise.all([
-          supabase
-            .from("enrollments")
-            .select("course_id, enrolled_at, tx_signature")
-            .eq("user_id", authUserId),
-          supabase
-            .from("user_progress")
-            .select("course_id, lesson_id, completed, completed_at")
-            .eq("user_id", authUserId)
-            .eq("completed", true),
-          supabase
-            .from("certificates")
-            .select("course_id, course_title, minted_at, tx_signature")
-            .eq("user_id", authUserId),
-          supabase
-            .from("user_achievements")
-            .select("achievement_id, unlocked_at, tx_signature")
-            .eq("user_id", authUserId)
-            .order("unlocked_at", { ascending: false })
-            .limit(10),
-        ]);
 
         // Courses with minted certificates should not appear in "Current Courses"
         const mintedCourseIds = new Set(
@@ -306,13 +316,7 @@ export function useDashboardData(
           if (bonusMatch?.[1]) courseCompleteIdsFromTx.push(bonusMatch[1]);
         }
 
-        // Fetch lesson titles/slugs from the content bundle
         const uniqueLessonIds = [...new Set(lessonIdsFromTx)];
-        const lessonSummaries =
-          uniqueLessonIds.length > 0
-            ? await getLessonsByIds(uniqueLessonIds)
-            : [];
-        const lessonMap = new Map(lessonSummaries.map((l) => [l._id, l]));
 
         // Map lesson_id -> course_id from progress rows
         const lessonToCourse = new Map<string, string>();
@@ -343,20 +347,32 @@ export function useDashboardData(
         const excludeFromRecommended = [
           ...new Set([...allEnrolledIds, ...mintedCourseIds]),
         ];
-        const [courseSummaries, recommended, achievementCatalog, lessonOrders] =
-          await Promise.all([
-            allCourseIdsToFetch.length > 0
-              ? getCoursesByIds(allCourseIdsToFetch)
-              : Promise.resolve([]),
-            getRecommendedCourses(excludeFromRecommended),
-            getAllAchievements(),
-            allEnrolledIds.length > 0
-              ? getCourseLessonOrders(allEnrolledIds)
-              : Promise.resolve([]),
-          ]);
+        // Burst B — every content-bundle lookup that needed burst A's ids,
+        // including the lesson titles/slugs (only consumed by the activity-feed
+        // loop further down, so it rides along instead of blocking).
+        const [
+          courseSummaries,
+          recommended,
+          achievementCatalog,
+          lessonOrders,
+          lessonSummaries,
+        ] = await Promise.all([
+          allCourseIdsToFetch.length > 0
+            ? getCoursesByIds(allCourseIdsToFetch)
+            : Promise.resolve([]),
+          getRecommendedCourses(excludeFromRecommended),
+          getAllAchievements(),
+          allEnrolledIds.length > 0
+            ? getCourseLessonOrders(allEnrolledIds)
+            : Promise.resolve([]),
+          uniqueLessonIds.length > 0
+            ? getLessonsByIds(uniqueLessonIds)
+            : Promise.resolve([]),
+        ]);
 
         // Build a lookup map: course _id -> Sanity data
         const courseMap = new Map(courseSummaries.map((c) => [c._id, c]));
+        const lessonMap = new Map(lessonSummaries.map((l) => [l._id, l]));
 
         // Only surface enrolled courses that still resolve from the content bundle. A
         // deactivated (or unpublished) course is filtered out by getCoursesByIds
@@ -509,10 +525,10 @@ export function useDashboardData(
             const questId = tx.reason.match(dailyQuestPattern)![1]!;
             // Shared with the Realtime toast's naming (use-quest-name.ts) so
             // the feed and the celebration never spell a quest differently.
-            const questName = localizedQuestName(questId);
+            const questName = localizedQuestNameRef.current(questId);
             raw.push({
               type: "xp_other",
-              action: tDash("dailyQuest", { name: questName }),
+              action: tDashRef.current("dailyQuest", { name: questName }),
               xp: tx.amount,
               time: tx.created_at ?? new Date().toISOString(),
               txSignature: tx.tx_signature ?? null,
@@ -523,7 +539,7 @@ export function useDashboardData(
             const i18nKey = `communityActivity_${suffix}` as const;
             raw.push({
               type: "community",
-              action: tDash(i18nKey),
+              action: tDashRef.current(i18nKey),
               xp: tx.amount,
               time: tx.created_at ?? new Date().toISOString(),
               txSignature: tx.tx_signature ?? null,
@@ -532,7 +548,7 @@ export function useDashboardData(
           } else if (surpriseBonusPattern.exec(tx.reason)?.[1]) {
             raw.push({
               type: "xp_other",
-              action: tDash("surpriseBonus"),
+              action: tDashRef.current("surpriseBonus"),
               xp: tx.amount,
               time: tx.created_at ?? new Date().toISOString(),
               txSignature: tx.tx_signature ?? null,
@@ -609,6 +625,7 @@ export function useDashboardData(
           txSignature: item.txSignature,
         }));
 
+        if (!active) return;
         setData({
           xp: totalXp,
           level: calculateLevel(totalXp),
@@ -633,6 +650,7 @@ export function useDashboardData(
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "Unknown error";
         console.error("[Dashboard] Data fetch failed:", message);
+        if (!active) return;
         setData((prev) => ({
           ...prev,
           isLoading: false,
@@ -642,7 +660,12 @@ export function useDashboardData(
     }
 
     fetchData();
-  }, [authUserId, authLoading, tDash, localizedQuestName]);
+    // A stale run must not write state over a newer one; in-flight requests are
+    // deliberately not aborted (keep it simple) — their results are dropped.
+    return () => {
+      active = false;
+    };
+  }, [authUserId, authLoading]);
 
   return data;
 }
