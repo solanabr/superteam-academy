@@ -38,7 +38,7 @@ export function ActivitySection({ recentActivity }: ActivitySectionProps) {
   const tTime = useTranslations("timeAgo");
   const locale = useLocale();
   const [activityPage, setActivityPage] = useState(0);
-  const ACTIVITY_PAGE_SIZE = 6;
+  const ACTIVITY_PAGE_SIZE = 8;
 
   // Reset to page 1 when the activity list changes (e.g., after quest completion)
   const activityCount = recentActivity.length;

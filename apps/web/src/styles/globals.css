@@ -5075,8 +5075,8 @@ a.path-step-card:hover .path-step-title {
 .act-row {
   display: flex;
   align-items: center;
-  padding: 9px 22px;
-  gap: 12px;
+  padding: 7px 22px;
+  gap: 10px;
   transition: background 0.15s;
   text-decoration: none;
   color: inherit;
@@ -5105,8 +5105,8 @@ a.path-step-card:hover .path-step-title {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: var(--r-md, 8px);
   flex-shrink: 0;
   border: 1.5px solid;
