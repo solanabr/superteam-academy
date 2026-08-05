@@ -243,7 +243,10 @@
     "changelogReactivatedDetail": "Este curso está disponível novamente.",
     "changelogRecreated": "Curso reconstruído on-chain",
     "changelogRecreatedDetail": "A conta on-chain do curso foi recriada. Seu progresso e XP foram preservados.",
-    "continue": "Continuar"
+    "continue": "Continuar",
+    "comingSoon": "Em breve",
+    "pathsComingSoonTitle": "As trilhas de aprendizado estão chegando",
+    "pathsComingSoonDescription": "Estamos montando roteiros guiados pelo catálogo. Enquanto isso, veja todos os cursos na aba Todos os Cursos."
   },
   "lesson": {
     "content": "Conteúdo",

@@ -243,7 +243,10 @@
     "changelogReactivatedDetail": "This course is available again.",
     "changelogRecreated": "Course rebuilt on-chain",
     "changelogRecreatedDetail": "The on-chain course account was recreated. Your progress and XP were preserved.",
-    "continue": "Continue"
+    "continue": "Continue",
+    "comingSoon": "Coming soon",
+    "pathsComingSoonTitle": "Learning paths are on the way",
+    "pathsComingSoonDescription": "We're building guided routes through the catalogue. In the meantime, browse every course in the All Courses tab."
   },
   "lesson": {
     "content": "Content",
