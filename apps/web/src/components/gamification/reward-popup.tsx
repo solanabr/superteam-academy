@@ -2,9 +2,14 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
+import { Lightning } from "@phosphor-icons/react";
 import { celebrate } from "@/lib/gamification/celebration";
 import { useQuestName } from "@/lib/gamification/use-quest-name";
+import { LevelBadge } from "@/components/gamification/level-badge";
 import { cn } from "@/lib/utils";
+import { LEVEL_UP_EVENT } from "./level-up-popup";
+import { QUEST_REWARD_EVENT } from "./quest-reward-toast";
+import { SURPRISE_BONUS_EVENT } from "./surprise-bonus-toast";
 
 /**
  * The reward popup queue — the single presentation surface for the recurring
@@ -14,10 +19,15 @@ import { cn } from "@/lib/utils";
  * Owner reversal 2026-08-01: these three shipped as small success toasts (the
  * level-up got nothing at all after #955/#957 removed its popup). The owner
  * found that too cheap for what the moments represent — "the popups were so
- * cool", "those toasts are so cheap" — so all three now render the pop-spring
- * `.popup-grad` card the achievement and certificate popups use. This
- * supersedes the earlier PED-10 minimal-celebration reading; see the tier map
- * in lib/gamification/celebration.ts.
+ * cool", "those toasts are so cheap" — so all three render pop-spring popup
+ * cards. This supersedes the earlier PED-10 minimal-celebration reading; see
+ * the tier map in lib/gamification/celebration.ts.
+ *
+ * Rework 05-08 (owner-approved via mock): the cards moved off the Solana
+ * gradient onto the house `.rw-card` — the gradient is reserved for the
+ * certificate popup (on-chain artifact). A level-up shows the actual
+ * LevelBadge at its new tier; quest and bonus keep their emoji in the gold
+ * metallic ring; XP rides the dq-reward-style lightning chip.
  *
  * What did NOT change: confetti is still reserved by LX-B11 for deploy +
  * credential mint. Every event routed here resolves to the "popup" tier, which
@@ -29,9 +39,6 @@ import { cn } from "@/lib/utils";
  * head of the queue only and advances on a timer — each reward gets its own
  * beat. Dismissing early advances immediately.
  */
-import { LEVEL_UP_EVENT } from "./level-up-popup";
-import { QUEST_REWARD_EVENT } from "./quest-reward-toast";
-import { SURPRISE_BONUS_EVENT } from "./surprise-bonus-toast";
 
 /** How long one reward holds the stage before the queue advances. */
 export const REWARD_POPUP_DURATION_MS = 5000;
@@ -104,7 +111,7 @@ export function RewardPopupQueue({ className }: { className?: string }) {
 
   /** Per-kind copy. The switch is exhaustive — a new kind is a compile error. */
   function describe(item: RewardItem): {
-    icon: string;
+    emoji: string | null;
     label: string;
     name: string;
     xp: number | null;
@@ -112,21 +119,21 @@ export function RewardPopupQueue({ className }: { className?: string }) {
     switch (item.kind) {
       case "level-up":
         return {
-          icon: "↑",
+          emoji: null,
           label: t("levelUp"),
           name: t("levelUpMessage", { level: item.level }),
           xp: null,
         };
       case "daily-quest":
         return {
-          icon: "🎯",
+          emoji: "🎯",
           label: t("questComplete"),
           name: questName(item.questId),
           xp: item.xpReward,
         };
       case "surprise-bonus":
         return {
-          icon: "✨",
+          emoji: "✨",
           label: t("surpriseBonusTitle"),
           name: t("surpriseBonusMessage"),
           xp: item.amount,
@@ -139,7 +146,7 @@ export function RewardPopupQueue({ className }: { className?: string }) {
   const dismiss = () =>
     setQueue((prev) => prev.filter((item) => item.uid !== current.uid));
 
-  const { icon, label, name, xp } = describe(current);
+  const { emoji, label, name, xp } = describe(current);
 
   return (
     <div
@@ -147,35 +154,41 @@ export function RewardPopupQueue({ className }: { className?: string }) {
       aria-live="polite"
       aria-label={label}
     >
-      {/* v9 .popup-grad — Solana gradient border, pop-spring animation */}
-      <div key={current.uid} className="popup-grad achievement">
-        <div className="popup-grad-inner">
-          {/* v9 .popup-icon-ring — 44px circle, Solana gradient, 2.5px padding */}
-          <div className="popup-icon-ring">
-            <div className="popup-icon-inner" aria-hidden="true">
-              {icon}
-            </div>
+      {/* Rework 05-08: house card, per-moment accent. A level-up shows the
+          actual LevelBadge (the same object the header updates); quest and
+          bonus keep their emoji in the gold metallic ring. */}
+      <div
+        key={current.uid}
+        className={cn(
+          "rw-card",
+          current.kind === "level-up" ? "level" : "gold"
+        )}
+      >
+        {current.kind === "level-up" ? (
+          <LevelBadge level={current.level} size="md" />
+        ) : (
+          <div className="rw-ring" aria-hidden="true">
+            <div className="rw-ring-in">{emoji}</div>
           </div>
-          <div className="flex-1">
-            {/* v9 .popup-label — mono 10px uppercase primary */}
-            <div className="popup-label">{label}</div>
-            {/* v9 .popup-name — Nunito 800, 15px */}
-            <div className="popup-name">{name}</div>
-          </div>
-          {xp !== null && xp > 0 && (
-            <div className="popup-xp ml-2 !animate-none">
-              <span className="popup-xp-amount">+{xp} XP</span>
-            </div>
-          )}
-          <button
-            type="button"
-            onClick={dismiss}
-            aria-label={t("dismissReward")}
-            className="ml-1 shrink-0 rounded-md px-1.5 py-0.5 text-sm leading-none opacity-60 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          >
-            ✕
-          </button>
+        )}
+        <div className="flex-1">
+          <div className="rw-kicker">{label}</div>
+          <div className="rw-name">{name}</div>
         </div>
+        {xp !== null && xp > 0 && (
+          <div className="rw-xp">
+            <Lightning size={12} weight="fill" aria-hidden="true" />+{xp}{" "}
+            {t("xp")}
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={dismiss}
+          aria-label={t("dismissReward")}
+          className="ml-1 shrink-0 rounded-md px-1.5 py-0.5 text-sm leading-none opacity-60 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          ✕
+        </button>
       </div>
     </div>
   );

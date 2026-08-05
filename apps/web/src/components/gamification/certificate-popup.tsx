@@ -76,17 +76,18 @@ export function CertificatePopup({ className }: { className?: string }) {
           aria-label={t("certificateMinted")}
         >
           <div className="popup-grad-inner">
-            {/* v9 .popup-icon-ring — 44px circle, Solana gradient, 2.5px padding */}
-            <div className="popup-icon-ring">
-              <div className="popup-icon-inner" aria-hidden="true">
-                ◎
+            {/* Rework 05-08: the icon is the certificate artifact in
+                miniature — gradient frame, seal, text lines. */}
+            <div className="rw-diploma" aria-hidden="true">
+              <div className="rw-diploma-in">
+                <span>◎</span>
+                <i />
+                <i />
               </div>
             </div>
             <div>
-              {/* v9 .popup-label — mono 10px uppercase primary */}
-              <div className="popup-label">{t("certificateMinted")}</div>
-              {/* v9 .popup-name — Nunito 800, 15px */}
-              <div className="popup-name">{t("viewCertificate")} →</div>
+              <div className="rw-kicker">{t("certificateMinted")}</div>
+              <div className="rw-name">{t("viewCertificate")} →</div>
             </div>
           </div>
         </button>

@@ -27,7 +27,7 @@ function renderQueue() {
 
 /** Every popup card on screen right now. */
 function cards(): Element[] {
-  return Array.from(document.querySelectorAll(".popup-grad"));
+  return Array.from(document.querySelectorAll(".rw-card"));
 }
 
 beforeEach(() => {
@@ -44,7 +44,7 @@ describe("RewardPopupQueue — rendering each reward kind", () => {
     renderQueue();
     act(() => dispatchLevelUp(4));
 
-    expect(screen.getByText("Level Up!")).toBeDefined();
+    expect(screen.getByText("Level Up")).toBeDefined();
     expect(screen.getByText("You reached level 4!")).toBeDefined();
     expect(cards()).toHaveLength(1);
   });
@@ -55,7 +55,7 @@ describe("RewardPopupQueue — rendering each reward kind", () => {
       dispatchQuestReward({ questId: "quest-complete-lesson", xpReward: 25 })
     );
 
-    expect(screen.getByText("Quest Complete!")).toBeDefined();
+    expect(screen.getByText("Quest Complete")).toBeDefined();
     expect(screen.getByText("+25 XP")).toBeDefined();
   });
 
@@ -63,7 +63,7 @@ describe("RewardPopupQueue — rendering each reward kind", () => {
     renderQueue();
     act(() => dispatchSurpriseBonus(30));
 
-    expect(screen.getByText("Surprise Bonus!")).toBeDefined();
+    expect(screen.getByText("Surprise Bonus")).toBeDefined();
     expect(screen.getByText("+30 XP")).toBeDefined();
   });
 
@@ -92,14 +92,14 @@ describe("RewardPopupQueue — queueing, never stacking", () => {
 
     // Only the first is on screen — the second waits its turn.
     expect(cards()).toHaveLength(1);
-    expect(screen.getByText("Level Up!")).toBeDefined();
-    expect(screen.queryByText("Quest Complete!")).toBeNull();
+    expect(screen.getByText("Level Up")).toBeDefined();
+    expect(screen.queryByText("Quest Complete")).toBeNull();
 
     // The first holds the full beat, then the second takes the stage alone.
     act(() => vi.advanceTimersByTime(REWARD_POPUP_DURATION_MS));
     expect(cards()).toHaveLength(1);
-    expect(screen.queryByText("Level Up!")).toBeNull();
-    expect(screen.getByText("Quest Complete!")).toBeDefined();
+    expect(screen.queryByText("Level Up")).toBeNull();
+    expect(screen.getByText("Quest Complete")).toBeDefined();
 
     // And the queue empties.
     act(() => vi.advanceTimersByTime(REWARD_POPUP_DURATION_MS));
@@ -113,13 +113,13 @@ describe("RewardPopupQueue — queueing, never stacking", () => {
     // A surprise bonus lands most of the way through the level-up's beat.
     act(() => vi.advanceTimersByTime(REWARD_POPUP_DURATION_MS - 100));
     act(() => dispatchSurpriseBonus(30));
-    expect(screen.getByText("Level Up!")).toBeDefined();
+    expect(screen.getByText("Level Up")).toBeDefined();
 
     // The level-up finishes its own beat, then the bonus starts a fresh one.
     act(() => vi.advanceTimersByTime(100));
-    expect(screen.getByText("Surprise Bonus!")).toBeDefined();
+    expect(screen.getByText("Surprise Bonus")).toBeDefined();
     act(() => vi.advanceTimersByTime(REWARD_POPUP_DURATION_MS - 100));
-    expect(screen.getByText("Surprise Bonus!")).toBeDefined();
+    expect(screen.getByText("Surprise Bonus")).toBeDefined();
     act(() => vi.advanceTimersByTime(100));
     expect(cards()).toHaveLength(0);
   });
@@ -132,7 +132,7 @@ describe("RewardPopupQueue — queueing, never stacking", () => {
       dispatchSurpriseBonus(30);
     });
 
-    for (const label of ["Level Up!", "Quest Complete!", "Surprise Bonus!"]) {
+    for (const label of ["Level Up", "Quest Complete", "Surprise Bonus"]) {
       expect(cards()).toHaveLength(1);
       expect(screen.getByText(label)).toBeDefined();
       act(() => vi.advanceTimersByTime(REWARD_POPUP_DURATION_MS));
@@ -151,8 +151,8 @@ describe("RewardPopupQueue — dismissal and a11y", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Dismiss" }));
 
-    expect(screen.queryByText("Level Up!")).toBeNull();
-    expect(screen.getByText("Surprise Bonus!")).toBeDefined();
+    expect(screen.queryByText("Level Up")).toBeNull();
+    expect(screen.getByText("Surprise Bonus")).toBeDefined();
     expect(cards()).toHaveLength(1);
   });
 
@@ -171,7 +171,7 @@ describe("RewardPopupQueue — dismissal and a11y", () => {
 
     const live = document.querySelector('[aria-live="polite"]');
     expect(live).not.toBeNull();
-    expect(live?.getAttribute("aria-label")).toBe("Level Up!");
+    expect(live?.getAttribute("aria-label")).toBe("Level Up");
   });
 
   it("renders nothing at rest", () => {
