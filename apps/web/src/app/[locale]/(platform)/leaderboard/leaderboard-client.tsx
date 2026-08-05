@@ -4,14 +4,7 @@ import { useState, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import Image from "next/image";
-import {
-  Trophy,
-  Crown,
-  Lightning,
-  Medal,
-  UsersThree,
-  Info,
-} from "@phosphor-icons/react";
+import { Trophy, UsersThree, Info } from "@phosphor-icons/react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import type { LeaderboardEntry, CohortLeague } from "@superteam-lms/types";
 import { LevelBadge } from "@/components/gamification/level-badge";
@@ -61,14 +54,9 @@ function PodiumCard({
           isCurrentUser && "me"
         )}
       >
-        <div className="podium-rank-icon">
-          {rank === 1 ? (
-            <Crown size={20} weight="fill" />
-          ) : rank === 2 ? (
-            <Medal size={20} weight="fill" />
-          ) : (
-            <Lightning size={20} weight="fill" />
-          )}
+        {/* Metallic rank coin — numeral, level-badge family (05-08). */}
+        <div className="podium-rank-icon" aria-label={`Rank ${rank}`}>
+          {rank}
         </div>
 
         <div className={cn("podium-avatar", rank === 1 && "gold")}>
@@ -93,7 +81,9 @@ function PodiumCard({
 
         <div className="podium-xp">{entry.totalXp.toLocaleString()} XP</div>
 
-        <LevelBadge level={entry.level} size="sm" />
+        {/* Level = floor(sqrt(XP/100)) legitimately yields 0 early on — a
+            "0" coin reads as broken, so the badge waits for level 1. */}
+        {entry.level >= 1 && <LevelBadge level={entry.level} size="sm" />}
       </div>
     </Link>
   );
@@ -150,7 +140,7 @@ function RankedRow({
         </div>
 
         <div className="lb-right">
-          <LevelBadge level={entry.level} size="sm" />
+          {entry.level >= 1 && <LevelBadge level={entry.level} size="sm" />}
           <span className="lb-xp">{entry.totalXp.toLocaleString()} XP</span>
         </div>
       </div>
@@ -187,7 +177,12 @@ function LeagueBoard({ cohort }: { cohort: CohortLeague | null }) {
           <UsersThree size={22} weight="fill" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="lb-league-tier">{tierName(t, cohort.tier)}</p>
+          {/* The ⓘ sits beside the tier name it explains — parked at the far
+              end of a full-width line it read as unrelated (05-08). */}
+          <p className="lb-league-tier">
+            {tierName(t, cohort.tier)}
+            <LeagueScoringInfo />
+          </p>
           {/* "This week" leads the subtitle so the league values read as weekly,
               not lifetime (#789). */}
           <p className="lb-league-sub">
@@ -196,7 +191,6 @@ function LeagueBoard({ cohort }: { cohort: CohortLeague | null }) {
             {t("leagueResets")}
           </p>
         </div>
-        <LeagueScoringInfo />
       </div>
 
       <div className="lb-list">

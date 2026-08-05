@@ -2916,29 +2916,41 @@ a.path-step-card:hover .path-step-badge.skip {
    ══════════════════════════════════════════════════════════════ */
 
 /* ── Page wrapper ── */
+/* Contained single-column surface (05-08 alignment pass): full-viewport rows
+   put the rank a screen away from the XP — cap and center the board. */
 .lb-page {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  max-width: 720px;
+  margin-inline: auto;
 }
 
-/* ── Timeframe tabs — underline style ── */
+/* ── Timeframe switch — same segmented-pill family as the board switch
+   (05-08: two switcher idioms two rows apart read as two systems), one
+   size down because it's the secondary control. ── */
 .lb-timeframe-tabs {
   display: flex;
   gap: 4px;
+  padding: 3px;
+  background: var(--card);
+  border: 2px solid var(--border);
+  border-radius: var(--r-md);
+  width: fit-content;
+  max-width: 100%;
   overflow-x: auto;
 }
 .lb-tf-tab {
   font-family: var(--font-display, var(--font-d));
   font-weight: 800;
-  font-size: 14px;
-  padding: 12px 20px;
-  min-height: 44px;
+  font-size: 13px;
+  padding: 6px 14px;
+  min-height: 34px;
   border: none;
+  border-radius: var(--r-sm, 8px);
   background: none;
   color: var(--text-3);
   cursor: pointer;
-  border-bottom: 3px solid transparent;
   transition: all 0.15s;
   white-space: nowrap;
 }
@@ -2947,7 +2959,7 @@ a.path-step-card:hover .path-step-badge.skip {
 }
 .lb-tf-tab.active {
   color: var(--primary);
-  border-bottom-color: var(--primary);
+  background: var(--primary-dim);
 }
 
 /* ── Primary board switch — League (cohort) vs Global (LX-B9b) ── */
@@ -3005,9 +3017,13 @@ a.path-step-card:hover .path-step-badge.skip {
   color: var(--primary);
 }
 .lb-league-tier {
+  display: flex;
+  align-items: center;
+  gap: 2px;
   font-family: var(--font-display, var(--font-d));
   font-weight: 900;
   font-size: 18px;
+  letter-spacing: -0.25px;
   color: var(--text);
 }
 .lb-league-sub {
@@ -3020,8 +3036,8 @@ a.path-step-card:hover .path-step-badge.skip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
   flex-shrink: 0;
   border-radius: 999px;
   border: none;
@@ -3129,6 +3145,8 @@ a.path-step-card:hover .path-step-badge.skip {
 
 /* Rank-specific accent borders & backgrounds */
 .podium-card.gold {
+  /* #1 stands taller — the grid bottom-aligns, so extra padding lifts it. */
+  padding: 28px 12px 22px;
   border-color: rgba(245, 166, 35, 0.4);
   background:
     radial-gradient(
@@ -3166,10 +3184,11 @@ a.path-step-card:hover .path-step-badge.skip {
   outline-offset: -1px;
 }
 
-/* Rank icon (crown / medal / lightning) */
+/* Rank coin — metallic numeral in the level-badge family (05-08: the
+   crown/medal/lightning trio was three metaphors for one idea). */
 .podium-rank-icon {
   position: absolute;
-  top: -12px;
+  top: -14px;
   left: 50%;
   transform: translateX(-50%);
   width: 28px;
@@ -3178,24 +3197,45 @@ a.path-step-card:hover .path-step-badge.skip {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-family: var(--font-display, var(--font-d));
+  font-weight: 900;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
   border: 2.5px solid;
 }
 .podium-card.gold .podium-rank-icon {
-  background: linear-gradient(145deg, #f5a623, #fde68a);
-  border-color: rgba(245, 166, 35, 0.5);
-  color: #78350f;
+  background: linear-gradient(
+    145deg,
+    #92400e,
+    #b45309 30%,
+    #f5a623 70%,
+    #fde68a
+  );
+  border-color: #f5a623;
+  color: #fffbeb;
   box-shadow: 0 0 12px rgba(245, 166, 35, 0.4);
 }
 .podium-card.silver .podium-rank-icon {
-  background: linear-gradient(145deg, #94a3b8, #cbd5e1);
-  border-color: rgba(148, 163, 184, 0.5);
-  color: #334155;
+  background: linear-gradient(
+    145deg,
+    #475569,
+    #64748b 30%,
+    #94a3b8 70%,
+    #e2e8f0
+  );
+  border-color: #94a3b8;
+  color: #f8fafc;
 }
 .podium-card.bronze .podium-rank-icon {
-  background: linear-gradient(145deg, #b45309, #f59e0b);
-  border-color: rgba(180, 83, 9, 0.4);
-  color: #fff;
+  background: linear-gradient(
+    145deg,
+    #7c2d12,
+    #9a3412 30%,
+    #c2410c 70%,
+    #fdba74
+  );
+  border-color: #c2410c;
+  color: #fff7ed;
 }
 
 /* Podium avatar */
@@ -3278,7 +3318,7 @@ a.path-step-card:hover .path-step-badge.skip {
 .lb-row.me {
   border-color: var(--primary);
   background: var(--primary-dim);
-  box-shadow: 0 2px 0 0 rgba(46, 204, 142, 0.2);
+  box-shadow: 0 2px 0 0 var(--primary-light);
 }
 
 .lb-rank {
@@ -3327,7 +3367,7 @@ a.path-step-card:hover .path-step-badge.skip {
   font-weight: 800;
   background: var(--primary-dim);
   color: var(--primary);
-  border: 1px solid rgba(46, 204, 142, 0.2);
+  border: 1px solid var(--primary-light);
   padding: 1px 6px;
   border-radius: var(--r-full);
 }
