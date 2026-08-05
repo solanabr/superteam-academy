@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import * as Tooltip from "@radix-ui/react-tooltip";
+import { useDragScroll } from "@/hooks/use-drag-scroll";
 import { AchievementToken } from "@/components/gamification/dashboard-identity-panel";
 import type { AchievementDefinition } from "@/lib/gamification";
 
@@ -34,6 +35,13 @@ export function AchievementsStrip({
     return [...earned, ...locked];
   }, [catalog, unlockedSet]);
 
+  // Grab-and-drag scrolling for the token row (05-08).
+  const {
+    ref: rowRef,
+    wasDrag,
+    dragHandlers,
+  } = useDragScroll<HTMLDivElement>();
+
   // Tap-to-show tooltip state (mobile touch support).
   const [openTip, setOpenTip] = useState<string | null>(null);
   useEffect(() => {
@@ -59,7 +67,7 @@ export function AchievementsStrip({
       </div>
       <div className="rounded-xl border border-border bg-card px-5 py-4 shadow-card">
         <Tooltip.Provider delayDuration={0} skipDelayDuration={150}>
-          <div className="ach-strip-row">
+          <div className="ach-strip-row" ref={rowRef} {...dragHandlers}>
             {shown.map((ach) => {
               const earned = unlockedSet.has(ach.id);
               const isSol = earned && ach.solTier;
@@ -76,6 +84,7 @@ export function AchievementsStrip({
                     setOpenTip((prev) => (prev === tipId ? null : tipId))
                   }
                   onOpenChange={(open) => setOpenTip(open ? tipId : null)}
+                  wasDrag={wasDrag}
                 />
               );
             })}

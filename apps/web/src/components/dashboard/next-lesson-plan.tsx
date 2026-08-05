@@ -319,16 +319,11 @@ export function NextLessonPlan({ userId }: NextLessonPlanProps) {
                 </span>
                 <span className="nlp-cal-time">{plan.time}</span>
               </span>
-              <div className="min-w-0 flex-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={openEditor}
-                  className="-ml-2.5 mt-1"
-                >
-                  {t("nextLessonEdit")}
-                </Button>
-              </div>
+              {/* No flex-1 here: a growing wrapper ate the free space and
+                  pushed the pair off-centre despite justify-center. */}
+              <Button variant="ghost" size="sm" onClick={openEditor}>
+                {t("nextLessonEdit")}
+              </Button>
             </div>
           )}
         </CardContent>

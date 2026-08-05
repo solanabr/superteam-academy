@@ -609,7 +609,7 @@
     "uploadingAvatar": "Uploading...",
     "avatarUpdated": "Profile photo updated",
     "avatarRemoved": "Profile photo removed",
-    "avatarTooLarge": "Image must be under 1 MB",
+    "avatarTooLarge": "Image must be under 12 MB",
     "avatarInvalidType": "Only JPG, PNG, and WebP images are allowed",
     "twitter": "X",
     "github": "GitHub",
@@ -655,7 +655,11 @@
     "deleteAccountConfirmButton": "Permanently delete",
     "deleteAccountCancel": "Cancel",
     "deleteAccountDeleting": "Deleting…",
-    "deleteAccountFailed": "Could not delete your account. Please try again."
+    "deleteAccountFailed": "Could not delete your account. Please try again.",
+    "cropTitle": "Frame your photo",
+    "cropHint": "Drag to move, pinch or use the slider to zoom.",
+    "cropZoom": "Zoom",
+    "cropApply": "Use photo"
   },
   "a11y": {
     "dismiss": "Dismiss",
@@ -683,7 +687,7 @@
     "skipToContent": "Skip to main content"
   },
   "footer": {
-    "tagline": "The open-source learning platform for Solana developers in Latin America and beyond.",
+    "tagline": "The open-source learning platform for Solana developers.",
     "platform": "Platform",
     "resources": "Resources",
     "community": "Community",

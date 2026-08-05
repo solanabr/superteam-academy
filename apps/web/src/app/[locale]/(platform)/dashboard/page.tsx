@@ -109,10 +109,11 @@ export default function DashboardPage() {
       {/* Main column + right rail. The rail carries the day's actionable,
           glanceable surfaces (review queue, quests, league, session plan);
           the main column keeps the identity panel and the long sections.
-          Single column below lg — rail slots stack right after the hero so
-          "do this now" stays above the fold on mobile too. */}
+          Single column below lg. The rail used to lead on mobile; the owner
+          wants progress first (05-08) — level, achievements and courses —
+          with the day's rail slots below them. */}
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-8">
-        <aside className="order-1 space-y-6 lg:order-2">
+        <aside className="order-2 space-y-6">
           {/* Due-review strip (LX-B6); renders nothing when the queue is empty. */}
           <ReviewStrip userId={data.userId} />
 
@@ -132,7 +133,7 @@ export default function DashboardPage() {
           <NextLessonPlan userId={data.userId} />
         </aside>
 
-        <div className="order-2 min-w-0 space-y-8 lg:order-1">
+        <div className="order-1 min-w-0 space-y-8">
           {/* Identity panel — Level+XP | learning-activity heatmap, one band. */}
           <DashboardIdentityPanel
             xp={data.xp}

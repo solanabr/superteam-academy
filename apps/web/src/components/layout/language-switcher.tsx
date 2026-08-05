@@ -26,10 +26,10 @@ export function LanguageSwitcher() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          className="inline-flex h-11 w-11 items-center justify-center rounded-md border-[2.5px] border-border bg-card text-text-2 transition-colors hover:bg-subtle hover:text-text md:h-9 md:w-9"
+          className="relative inline-flex h-9 w-9 items-center justify-center rounded-md border-[2.5px] border-border bg-card text-text-2 transition-colors after:absolute after:-inset-1 after:content-[''] hover:bg-subtle hover:text-text md:after:hidden"
           aria-label={`Language: ${localeNames[locale as Locale]}`}
         >
-          <GlobeSimple size={18} weight="bold" />
+          <GlobeSimple size={16} weight="bold" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="z-[201]">
