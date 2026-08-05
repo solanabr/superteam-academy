@@ -494,7 +494,8 @@
     "leagueThisWeek": "This week",
     "leagueScoreAria": "{score} XP earned this week",
     "leagueScoringInfoLabel": "About league scoring",
-    "leagueScoringInfo": "League scores count learning XP earned this week — lessons, challenges, course completions, quests, and achievements. Bonuses and community XP don't count."
+    "leagueScoringInfo": "League scores count learning XP earned this week — lessons, challenges, course completions, quests, and achievements. Bonuses and community XP don't count.",
+    "rankLabel": "Rank {rank}"
   },
   "certificates": {
     "title": "Certificate of Completion",
@@ -571,13 +572,13 @@
     "userNotFound": "User not found",
     "userNotFoundDescription": "This user doesn't exist or may have changed their username.",
     "profileIsPrivate": "This profile is private",
-    "backToLeaderboard": "Back",
     "loading": "Loading profile...",
     "viewProfile": "View Profile",
     "lessonsCompleted": "Lessons Completed",
     "lessonsCount": "{count} lessons",
     "totalLabel": "Total",
-    "xpToLevel": "XP to Lv. {level}"
+    "xpToLevel": "XP to Lv. {level}",
+    "back": "Back"
   },
   "settings": {
     "title": "Settings",

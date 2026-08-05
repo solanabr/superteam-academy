@@ -494,7 +494,8 @@
     "leagueThisWeek": "Esta semana",
     "leagueScoreAria": "{score} XP ganhos esta semana",
     "leagueScoringInfoLabel": "Sobre a pontuação da liga",
-    "leagueScoringInfo": "A pontuação da liga conta o XP de aprendizado ganho esta semana — aulas, desafios, cursos concluídos, missões e conquistas. Bônus e XP da comunidade não contam."
+    "leagueScoringInfo": "A pontuação da liga conta o XP de aprendizado ganho esta semana — aulas, desafios, cursos concluídos, missões e conquistas. Bônus e XP da comunidade não contam.",
+    "rankLabel": "Posição {rank}"
   },
   "certificates": {
     "title": "Certificado de Conclusão",
@@ -571,13 +572,13 @@
     "userNotFound": "Usuário não encontrado",
     "userNotFoundDescription": "Este usuário não existe ou pode ter alterado o nome de usuário.",
     "profileIsPrivate": "Este perfil é privado",
-    "backToLeaderboard": "Voltar",
     "loading": "Carregando perfil...",
     "viewProfile": "Ver Perfil",
     "lessonsCompleted": "Aulas Concluídas",
     "lessonsCount": "{count} aulas",
     "totalLabel": "Total",
-    "xpToLevel": "XP para Nv. {level}"
+    "xpToLevel": "XP para Nv. {level}",
+    "back": "Voltar"
   },
   "settings": {
     "title": "Configurações",

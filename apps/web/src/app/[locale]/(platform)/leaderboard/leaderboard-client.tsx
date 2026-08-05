@@ -55,7 +55,7 @@ function PodiumCard({
         )}
       >
         {/* Metallic rank coin — numeral, level-badge family (05-08). */}
-        <div className="podium-rank-icon" aria-label={`Rank ${rank}`}>
+        <div className="podium-rank-icon" aria-label={t("rankLabel", { rank })}>
           {rank}
         </div>
 
@@ -110,7 +110,10 @@ function RankedRow({
       className="block no-underline"
     >
       <div className={cn("lb-row", isCurrentUser && "me")} style={style}>
-        <span className="lb-rank" aria-label={`Rank ${entry.rank}`}>
+        <span
+          className="lb-rank"
+          aria-label={t("rankLabel", { rank: entry.rank })}
+        >
           {entry.rank}
         </span>
 

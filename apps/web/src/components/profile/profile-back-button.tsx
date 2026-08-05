@@ -19,7 +19,7 @@ export function ProfileBackButton({ className }: { className?: string }) {
       )}
     >
       <ArrowLeft size={14} weight="bold" />
-      {t("backToLeaderboard")}
+      {t("back")}
     </button>
   );
 }
