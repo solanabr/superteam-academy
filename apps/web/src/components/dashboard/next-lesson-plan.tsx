@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { CalendarCheck } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import type { Json } from "@/lib/supabase/types";
 import { Button } from "@/components/ui/button";
@@ -214,138 +213,121 @@ export function NextLessonPlan({ userId }: NextLessonPlanProps) {
   const showPicker = editing || !plan;
 
   return (
-    <Card>
-      <CardContent className="flex flex-col gap-3 p-5">
-        {showPicker && (
-          <div className="flex items-center gap-2">
-            <CalendarCheck
-              size={16}
-              weight="duotone"
-              className="shrink-0 text-primary"
-              aria-hidden="true"
-            />
-            <h2 className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
-              {t("nextLessonTitle")}
-            </h2>
-          </div>
-        )}
-
-        {showPicker ? (
-          <>
-            <p className="text-sm text-text-3">{t("nextLessonPrompt")}</p>
-            <div className="flex flex-wrap items-end gap-3">
-              <div className="flex flex-col gap-1">
-                <span
-                  id="next-lesson-days-label"
-                  className="text-xs font-semibold text-text-3"
-                >
-                  {t("nextLessonDayLabel")}
-                </span>
-                {/* Recurring by construction: one day, several, or all seven
+    <section aria-label={t("nextLessonTitle")}>
+      <h2 className="mb-4 font-display text-lg font-black tracking-[-0.25px]">
+        {t("nextLessonTitle")}
+      </h2>
+      <Card>
+        <CardContent className="flex flex-col gap-3 p-5">
+          {showPicker ? (
+            <>
+              <p className="text-sm text-text-3">{t("nextLessonPrompt")}</p>
+              <div className="flex flex-wrap items-end gap-3">
+                <div className="flex flex-col gap-1">
+                  <span
+                    id="next-lesson-days-label"
+                    className="text-xs font-semibold text-text-3"
+                  >
+                    {t("nextLessonDayLabel")}
+                  </span>
+                  {/* Recurring by construction: one day, several, or all seven
                     (= daily). The reminder fires on every selected day (#980). */}
-                <div
-                  role="group"
-                  aria-labelledby="next-lesson-days-label"
-                  className="grid grid-cols-7 gap-1"
-                >
-                  {WEEKDAYS.map((day) => {
-                    const on = draftDays.includes(day);
-                    return (
-                      <button
-                        key={day}
-                        type="button"
-                        aria-pressed={on}
-                        onClick={() => toggleDay(day)}
-                        className={
-                          on
-                            ? "rounded-md border border-primary bg-primary px-2 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[1px] text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                            : "hover:border-primary/50 rounded-md border border-border px-2 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[1px] text-text-3 [background:var(--input)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                        }
-                      >
-                        {t(weekdayKey(day)).slice(0, 3)}
-                      </button>
-                    );
-                  })}
+                  <div
+                    role="group"
+                    aria-labelledby="next-lesson-days-label"
+                    className="grid grid-cols-7 gap-1"
+                  >
+                    {WEEKDAYS.map((day) => {
+                      const on = draftDays.includes(day);
+                      return (
+                        <button
+                          key={day}
+                          type="button"
+                          aria-pressed={on}
+                          onClick={() => toggleDay(day)}
+                          className={
+                            on
+                              ? "rounded-md border border-primary bg-primary px-2 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[1px] text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                              : "hover:border-primary/50 rounded-md border border-border px-2 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[1px] text-text-3 [background:var(--input)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                          }
+                        >
+                          {t(weekdayKey(day)).slice(0, 3)}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-              <div className="flex flex-col gap-1">
-                <label
-                  htmlFor="next-lesson-time"
-                  className="text-xs font-semibold text-text-3"
-                >
-                  {t("nextLessonTimeLabel")}
-                </label>
-                <input
-                  id="next-lesson-time"
-                  type="time"
-                  value={draftTime}
-                  onChange={(e) => setDraftTime(e.target.value)}
-                  className="rounded-md border border-border px-2.5 py-1.5 text-sm [background:var(--input)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                />
-              </div>
-              {/* Actions pinned to the row's right edge (owner call 04-08). */}
-              {plan && (
+                <div className="flex flex-col gap-1">
+                  <label
+                    htmlFor="next-lesson-time"
+                    className="text-xs font-semibold text-text-3"
+                  >
+                    {t("nextLessonTimeLabel")}
+                  </label>
+                  <input
+                    id="next-lesson-time"
+                    type="time"
+                    value={draftTime}
+                    onChange={(e) => setDraftTime(e.target.value)}
+                    className="rounded-md border border-border px-2.5 py-1.5 text-sm [background:var(--input)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  />
+                </div>
+                {/* Actions pinned to the row's right edge (owner call 04-08). */}
+                {plan && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setEditing(false)}
+                    disabled={saving}
+                    className="ml-auto"
+                  >
+                    {t("nextLessonCancel")}
+                  </Button>
+                )}
                 <Button
-                  variant="ghost"
+                  variant="push"
                   size="sm"
-                  onClick={() => setEditing(false)}
-                  disabled={saving}
-                  className="ml-auto"
+                  onClick={handleSave}
+                  disabled={saving || draftDays.length === 0}
+                  className={plan ? undefined : "ml-auto"}
                 >
-                  {t("nextLessonCancel")}
+                  {t("nextLessonSave")}
                 </Button>
-              )}
-              <Button
-                variant="push"
-                size="sm"
-                onClick={handleSave}
-                disabled={saving || draftDays.length === 0}
-                className={plan ? undefined : "ml-auto"}
-              >
-                {t("nextLessonSave")}
-              </Button>
-            </div>
-            <label className="flex items-start gap-2 text-sm text-text-3">
-              <input
-                type="checkbox"
-                checked={draftRemind}
-                onChange={(e) => setDraftRemind(e.target.checked)}
-                className="mt-0.5 size-4 shrink-0 accent-[var(--primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-              />
-              <span>{t("nextLessonRemindMe")}</span>
-            </label>
-          </>
-        ) : (
-          <div className="flex items-center gap-3.5">
-            {/* Mini calendar tile — the plan at a glance. */}
-            <span className="nlp-cal" aria-hidden="true">
-              <span className="nlp-cal-day">
-                {plan.days.length === 7
-                  ? t("nextLessonDaily")
-                  : plan.days.length <= 3
-                    ? plan.days
-                        .map((d) => t(weekdayKey(d)).slice(0, 3))
-                        .join("\u00B7")
-                    : `${plan.days.length}/7`}
+              </div>
+              <label className="flex items-start gap-2 text-sm text-text-3">
+                <input
+                  type="checkbox"
+                  checked={draftRemind}
+                  onChange={(e) => setDraftRemind(e.target.checked)}
+                  className="mt-0.5 size-4 shrink-0 accent-[var(--primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                />
+                <span>{t("nextLessonRemindMe")}</span>
+              </label>
+            </>
+          ) : (
+            <div className="flex items-center justify-center gap-3.5">
+              {/* Mini calendar tile — the plan at a glance. */}
+              <span className="nlp-cal" aria-hidden="true">
+                <span className="nlp-cal-day">
+                  {plan.days.length === 7
+                    ? t("nextLessonDaily")
+                    : plan.days.length <= 3
+                      ? plan.days
+                          .map((d) => t(weekdayKey(d)).slice(0, 3))
+                          .join("\u00B7")
+                      : `${plan.days.length}/7`}
+                </span>
+                <span className="nlp-cal-time">{plan.time}</span>
               </span>
-              <span className="nlp-cal-time">{plan.time}</span>
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
-                {t("nextLessonTitle")}
-              </p>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={openEditor}
-                className="-ml-2.5 mt-1"
-              >
+              {/* No flex-1 here: a growing wrapper ate the free space and
+                  pushed the pair off-centre despite justify-center. */}
+              <Button variant="ghost" size="sm" onClick={openEditor}>
                 {t("nextLessonEdit")}
               </Button>
             </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          )}
+        </CardContent>
+      </Card>
+    </section>
   );
 }

@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { Lightning } from "@phosphor-icons/react";
+import { getAllAchievements } from "@/lib/content/client-queries";
 import { cn } from "@/lib/utils";
 
 interface AchievementEvent {
@@ -37,6 +39,12 @@ export function dispatchAchievementXp(
   );
 }
 
+interface TokenInfo {
+  glyph: string;
+  name: string;
+  solTier: boolean;
+}
+
 export function AchievementPopup({ className }: { className?: string }) {
   const t = useTranslations("gamification");
   const router = useRouter();
@@ -44,6 +52,31 @@ export function AchievementPopup({ className }: { className?: string }) {
   const locale = typeof params.locale === "string" ? params.locale : "en";
 
   const [events, setEvents] = useState<AchievementEvent[]>([]);
+
+  // Content catalog by id — the popup renders the achievement's REAL octagon
+  // token (glyph + tier), and the content name beats the id-derived fallback
+  // the Realtime handler sends. Fetched lazily on the first unlock; a failed
+  // fetch just leaves the fallback name and a starter glyph.
+  const [catalog, setCatalog] = useState<Map<string, TokenInfo> | null>(null);
+  const catalogRequested = useRef(false);
+  useEffect(() => {
+    if (events.length === 0 || catalogRequested.current) return;
+    catalogRequested.current = true;
+    getAllAchievements()
+      .then((all) => {
+        setCatalog(
+          new Map(
+            all.map((a) => [
+              a.id,
+              { glyph: a.glyph, name: a.name, solTier: a.solTier },
+            ])
+          )
+        );
+      })
+      .catch(() => {
+        // Fallback path renders without content data.
+      });
+  }, [events.length]);
 
   const handleUnlock = useCallback((e: Event) => {
     const detail = (e as CustomEvent<AchievementEvent>).detail;
@@ -87,35 +120,36 @@ export function AchievementPopup({ className }: { className?: string }) {
       aria-live="polite"
       aria-label={t("achievements")}
     >
-      {events.map((ev) => (
-        /* v9 .popup-grad.achievement — Solana gradient border, pop-spring animation */
-        <button
-          key={ev.uid}
-          onClick={() => handleClick(ev.uid)}
-          className="popup-grad achievement cursor-pointer border-none bg-transparent p-0 text-left transition-opacity hover:opacity-90"
-          aria-label={`${t("newAchievement")}: ${ev.name}`}
-        >
-          <div className="popup-grad-inner">
-            {/* v9 .popup-icon-ring — 44px circle, Solana gradient, 2.5px padding */}
-            <div className="popup-icon-ring">
-              <div className="popup-icon-inner" aria-hidden="true">
-                🏆
+      {events.map((ev) => {
+        const info = catalog?.get(ev.id);
+        return (
+          /* Rework 05-08: house card, gold accent — the icon is the earned
+             dm-oct token itself, the same one lighting up on the dashboard. */
+          <button
+            key={ev.uid}
+            onClick={() => handleClick(ev.uid)}
+            className="rw-card gold cursor-pointer text-left transition-opacity hover:opacity-90"
+            aria-label={`${t("newAchievement")}: ${info?.name ?? ev.name}`}
+          >
+            <div className="rw-oct" aria-hidden="true">
+              <div className={cn("dm-oct", info?.solTier ? "sol" : "earned")}>
+                <div className="dm-face" />
+                <span className="dm-glyph">{info?.glyph ?? "★"}</span>
               </div>
             </div>
             <div className="flex-1">
-              {/* v9 .popup-label — mono 10px uppercase primary */}
-              <div className="popup-label">{t("newAchievement")}</div>
-              {/* v9 .popup-name — Nunito 800, 15px */}
-              <div className="popup-name">{ev.name}</div>
+              <div className="rw-kicker">{t("newAchievement")}</div>
+              <div className="rw-name">{info?.name ?? ev.name}</div>
             </div>
             {ev.xpReward > 0 && (
-              <div className="popup-xp ml-2 !animate-none">
-                <span className="popup-xp-amount">+{ev.xpReward} XP</span>
+              <div className="rw-xp">
+                <Lightning size={12} weight="fill" aria-hidden="true" />+
+                {ev.xpReward} {t("xp")}
               </div>
             )}
-          </div>
-        </button>
-      ))}
+          </button>
+        );
+      })}
     </div>
   );
 }

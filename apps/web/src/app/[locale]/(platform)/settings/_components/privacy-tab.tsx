@@ -123,25 +123,20 @@ export function PrivacyTab({ isPublic, onPublicChange }: PrivacyTabProps) {
   return (
     <Card>
       <CardContent className="space-y-6 p-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="font-medium">{t("profileVisibility")}</p>
-            <p className="text-sm text-text-3">{t("profilePublic")}</p>
+            <p className="set-row-name">{t("profileVisibility")}</p>
+            <p className="set-row-meta">{t("profilePublic")}</p>
           </div>
           <button
+            type="button"
             onClick={handleToggleVisibility}
-            className={`relative h-6 w-11 rounded-full transition-colors ${
-              isPublic ? "bg-primary" : "bg-subtle"
-            }`}
+            className="set-switch"
             role="switch"
             aria-checked={isPublic}
             aria-label={t("profileVisibility")}
           >
-            <span
-              className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
-                isPublic ? "translate-x-5" : "translate-x-0"
-              }`}
-            />
+            <span />
           </button>
         </div>
 

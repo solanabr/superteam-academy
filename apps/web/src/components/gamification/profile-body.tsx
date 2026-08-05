@@ -1,13 +1,14 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import { GraduationCap } from "@phosphor-icons/react";
+import * as Tooltip from "@radix-ui/react-tooltip";
+import { CertificateCard } from "@/components/certificates/certificate-card";
 import { ProfileHeroPanel } from "@/components/gamification/profile-hero-panel";
 import { SkillRadar } from "@/components/gamification/skill-radar";
-import { AchievementGrid } from "@/components/gamification/achievement-grid";
-import { CERTIFICATE_STYLES as CS } from "@/lib/styles/styleClasses";
-import { truncateAddress } from "@/lib/utils";
+import { AchievementToken } from "@/components/gamification/dashboard-identity-panel";
 import type {
   ProfileContent,
   ProfileStats,
@@ -25,11 +26,13 @@ interface ProfileBodyProps {
 }
 
 /**
- * Shared profile presentation (LX / #533). Data is fetched server-side and
- * passed in as serializable props; this component is a thin client island only
- * because its whole subtree — the hero panel, skill radar, and achievement grid
- * — is already interactive. The public and own-profile pages differ only in the
- * hero's streak/visibility props and the surrounding page chrome.
+ * Shared profile presentation (LX / #533, recomposed 04-08). Data is fetched
+ * server-side and passed in as serializable props; this stays a client island
+ * because the hero panel, radar, and tooltip tokens are interactive.
+ *
+ * Composition: hero band → [Skills | Achievements rail] → full-width
+ * certificate shelf. When a learner has no skills yet, the two-column grid
+ * collapses and achievements render full-width so the rail never floats alone.
  */
 export function ProfileBody({
   user,
@@ -39,89 +42,153 @@ export function ProfileBody({
   streak,
 }: ProfileBodyProps) {
   const t = useTranslations("profile");
+  const tGam = useTranslations("gamification");
   const tCerts = useTranslations("certificates");
   const locale = useLocale();
 
+  const unlockedSet = useMemo(
+    () => new Set(content.achievements.map((a) => a.id)),
+    [content.achievements]
+  );
+  const sortedAchievements = useMemo(
+    () =>
+      [...content.deployedAchievements].sort((a, b) => {
+        const ae = unlockedSet.has(a.id) ? 0 : 1;
+        const be = unlockedSet.has(b.id) ? 0 : 1;
+        return ae - be;
+      }),
+    [content.deployedAchievements, unlockedSet]
+  );
+
+  // Tap-to-show tooltip state (mobile touch), same as the dashboard strip.
+  const [openTip, setOpenTip] = useState<string | null>(null);
+  useEffect(() => {
+    if (!openTip) return;
+    const timer = setTimeout(() => setOpenTip(null), 3000);
+    return () => clearTimeout(timer);
+  }, [openTip]);
+
+  const hasSkills = content.skills.length > 0;
+
+  /* Achievements — dashboard tokens with the dashboard tooltip (description
+     on hover/tap). The hero strip no longer carries an achievements stat, so
+     the heading's count chip is the single source of that number. */
+  const achievementsSection = (
+    <section aria-label={tGam("achievements")}>
+      <div className="mb-4 flex items-center gap-3">
+        <h2 className="font-display text-lg font-black tracking-[-0.25px]">
+          {tGam("achievements")}
+        </h2>
+        <span className="cc-section-count">
+          {content.achievements.length}/{content.deployedAchievements.length}
+        </span>
+      </div>
+      <div className="rounded-xl border border-border bg-card p-4 shadow-card">
+        <Tooltip.Provider delayDuration={0} skipDelayDuration={150}>
+          <div className="ach-rail-grid">
+            {sortedAchievements.map((ach) => {
+              const earned = unlockedSet.has(ach.id);
+              const isSol = earned && ach.solTier;
+              const tipId = `prof-${ach.id}`;
+              return (
+                <AchievementToken
+                  key={ach.id}
+                  glyph={ach.glyph}
+                  name={ach.name}
+                  hint={ach.description}
+                  state={earned ? (isSol ? "sol" : "earned") : "locked"}
+                  isOpen={openTip === tipId}
+                  onTap={() =>
+                    setOpenTip((prev) => (prev === tipId ? null : tipId))
+                  }
+                  onOpenChange={(open) => setOpenTip(open ? tipId : null)}
+                />
+              );
+            })}
+          </div>
+        </Tooltip.Provider>
+      </div>
+    </section>
+  );
+
   return (
-    <div className="space-y-10">
-      {/* ─── Profile Hero Panel (dash-panel) ─── */}
+    <div className="space-y-8">
+      {/* ─── Profile Hero Panel (dash-panel) — the page anchor ─── */}
       <ProfileHeroPanel
         user={user}
         stats={stats}
-        achievements={content.achievements}
-        deployedAchievements={content.deployedAchievements}
         showVisibilityBadge={showVisibilityBadge}
         streak={streak}
       />
 
-      {/* ─── Skills Radar ─── */}
-      {content.skills.length > 0 && (
-        <section>
-          <h2 className="mb-4 font-display text-[22px] font-extrabold">
-            {t("skills")}
-          </h2>
-          <SkillRadar
-            skills={content.skills}
-            totalLessons={content.totalLessons}
-          />
-        </section>
+      {hasSkills ? (
+        /* Skills | Achievements rail — the side-by-side the owner keeps. */
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-8">
+          <div className="min-w-0 space-y-8">
+            <section aria-label={t("skills")}>
+              <div className="mb-4 flex items-center gap-3">
+                <h2 className="font-display text-lg font-black tracking-[-0.25px]">
+                  {t("skills")}
+                </h2>
+                <span className="cc-section-count">
+                  {content.skills.length}
+                </span>
+              </div>
+              <div className="rounded-xl border border-border bg-card p-4 shadow-card">
+                <SkillRadar
+                  skills={content.skills}
+                  totalLessons={content.totalLessons}
+                  className="mx-auto w-full max-w-[520px] !border-0 !bg-transparent !p-0 !shadow-none"
+                />
+              </div>
+            </section>
+          </div>
+
+          <aside className="space-y-6">{achievementsSection}</aside>
+        </div>
+      ) : (
+        /* No skills yet: achievements own the full width. */
+        achievementsSection
       )}
 
-      {/* ─── Achievements ─── */}
-      <AchievementGrid
-        unlockedAchievements={content.achievements}
-        catalog={content.deployedAchievements}
-      />
-
-      {/* ─── Certificates — compact on-chain proof cards ─── */}
-      {content.certificates.length > 0 && (
-        <section>
-          <h2 className="mb-4 font-display text-[22px] font-extrabold">
-            {tCerts("title")}
-          </h2>
+      {/* ─── Certificates — full-width shelf. Slim diploma cards (shared
+          CertificateCard, per-card eyebrow hidden); stretched-link keeps the
+          explorer pill's own anchor legal (no <a> nesting). ─── */}
+      {content.certificates.length > 0 ? (
+        <section aria-label={tCerts("title")}>
+          <div className="mb-4 flex items-center gap-3">
+            <h2 className="font-display text-lg font-black tracking-[-0.25px]">
+              {tCerts("title")}
+            </h2>
+            <span className="cc-section-count">
+              {content.certificates.length}
+            </span>
+          </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {content.certificates.map((cert) => (
-              <Link
-                key={cert.id}
-                href={`/${locale}/certificates/${cert.id}`}
-                className="group"
-              >
-                <div className={CS.gradCard || "grad-card"}>
-                  <div className={CS.gradCardInner || "grad-card-inner"}>
-                    <div className={CS.gradCardBody || "grad-card-body"}>
-                      <p className="font-display text-[15px] font-extrabold leading-snug text-text">
-                        {cert.courseTitle}
-                      </p>
-                      <p className="mt-1 font-body text-[13px] text-text-2">
-                        {user.username}
-                        <span className="mx-1.5 text-text-3">&middot;</span>
-                        {cert.mintedAt.toLocaleDateString()}
-                      </p>
-                      <div className="mt-3">
-                        <span className={CS.proofPill}>
-                          <span className={CS.proofDot} aria-hidden="true" />
-                          {cert.mintAddress
-                            ? truncateAddress(cert.mintAddress)
-                            : tCerts("onChain")}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Link>
+              <div key={cert.id} className="cert-slim relative">
+                <Link
+                  href={`/${locale}/certificates/${cert.id}`}
+                  aria-label={cert.courseTitle}
+                  className="absolute inset-0 z-[1] rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                />
+                <CertificateCard
+                  certificate={cert}
+                  recipientName={user.username}
+                  variant="compact"
+                />
+              </div>
             ))}
           </div>
         </section>
-      )}
-
-      {content.certificates.length === 0 && (
-        <section>
-          <h2 className="mb-4 font-display text-[22px] font-extrabold">
+      ) : (
+        <section aria-label={tCerts("title")}>
+          <h2 className="mb-4 font-display text-lg font-black tracking-[-0.25px]">
             {tCerts("title")}
           </h2>
-          <div className="flex flex-col items-center justify-center gap-4 py-12">
+          <div className="flex flex-col items-center justify-center gap-3 py-10">
             <GraduationCap
-              size={48}
+              size={44}
               weight="duotone"
               className="text-accent"
               aria-hidden="true"

@@ -2,11 +2,9 @@
 
 import { useTranslations } from "next-intl";
 import { GithubLogo, TwitterLogo, DiscordLogo } from "@phosphor-icons/react";
-import type { Achievement } from "@superteam-lms/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LevelBadge } from "@/components/gamification/level-badge";
 import { xpToNextLevel } from "@/lib/gamification/xp";
-import type { DeployedAchievement } from "@/lib/content/queries";
 
 interface ProfileHeroPanelProps {
   user: {
@@ -26,9 +24,8 @@ interface ProfileHeroPanelProps {
     level: number;
     coursesCompleted: number;
     certificatesCount: number;
+    lessonsCompleted: number;
   };
-  achievements: Achievement[];
-  deployedAchievements: DeployedAchievement[];
   /** Show public/private badge (only on own profile) */
   showVisibilityBadge?: boolean;
   /**
@@ -42,8 +39,6 @@ interface ProfileHeroPanelProps {
 export function ProfileHeroPanel({
   user,
   stats,
-  achievements,
-  deployedAchievements,
   showVisibilityBadge = false,
   streak,
 }: ProfileHeroPanelProps) {
@@ -159,17 +154,8 @@ export function ProfileHeroPanel({
           <div className="prof-stat-key">{t("coursesCompleted")}</div>
         </div>
         <div className="prof-stat">
-          <div className="prof-stat-val">{stats.certificatesCount}</div>
-          <div className="prof-stat-key">{t("certificatesEarned")}</div>
-        </div>
-        <div className="prof-stat">
-          <div className="prof-stat-val">
-            {achievements.length}
-            <span className="text-[16px] font-bold text-text-3">
-              /{deployedAchievements.length}
-            </span>
-          </div>
-          <div className="prof-stat-key">{t("achievementsUnlocked")}</div>
+          <div className="prof-stat-val">{stats.lessonsCompleted}</div>
+          <div className="prof-stat-key">{t("lessonsCompleted")}</div>
         </div>
         {streak && (
           <div className="prof-stat">
