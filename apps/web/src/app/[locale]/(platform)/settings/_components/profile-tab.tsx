@@ -259,7 +259,7 @@ export function ProfileTab({
             )}
           </div>
           <div className="space-y-2">
-            <p className="text-sm font-medium">{t("avatar")}</p>
+            <p className="set-label !mb-0">{t("avatar")}</p>
             <div className="flex gap-2">
               <Button
                 variant="outline"
@@ -292,8 +292,8 @@ export function ProfileTab({
         </div>
 
         {/* Display Name + Re-roll */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium" htmlFor="username">
+        <div>
+          <label className="set-label" htmlFor="username">
             {t("displayName")}
           </label>
           <div className="flex items-center gap-3">
@@ -303,7 +303,7 @@ export function ProfileTab({
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               maxLength={30}
-              className="h-10 w-full flex-1 rounded-md border-[2.5px] border-border bg-card px-3 font-mono text-sm text-text outline-none transition-all duration-150 placeholder:text-text-3 focus:border-primary focus:shadow-[0_0_0_3px_var(--primary-dim)]"
+              className="set-input flex-1"
             />
             {nameRerollsUsed < MAX_REROLLS && (
               <Button
@@ -327,8 +327,8 @@ export function ProfileTab({
           </div>
         </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium" htmlFor="bio">
+        <div>
+          <label className="set-label" htmlFor="bio">
             {t("bio")}
           </label>
           <textarea
@@ -336,13 +336,13 @@ export function ProfileTab({
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             rows={3}
-            className="w-full resize-y rounded-md border-[2.5px] border-border bg-card px-3 py-2 font-body text-sm text-text outline-none transition-all duration-150 placeholder:text-text-3 focus:border-primary focus:shadow-[0_0_0_3px_var(--primary-dim)]"
+            className="set-input"
           />
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="twitter">
+          <div>
+            <label className="set-label" htmlFor="twitter">
               {t("twitter")}
             </label>
             <input
@@ -351,11 +351,11 @@ export function ProfileTab({
               placeholder={t("twitterPlaceholder")}
               value={twitter}
               onChange={(e) => setTwitter(e.target.value)}
-              className="h-10 w-full rounded-md border-[2.5px] border-border bg-card px-3 font-body text-sm text-text outline-none transition-all duration-150 placeholder:text-text-3 focus:border-primary focus:shadow-[0_0_0_3px_var(--primary-dim)]"
+              className="set-input"
             />
           </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="github">
+          <div>
+            <label className="set-label" htmlFor="github">
               {t("github")}
             </label>
             <input
@@ -364,11 +364,11 @@ export function ProfileTab({
               placeholder={t("githubPlaceholder")}
               value={github}
               onChange={(e) => setGithub(e.target.value)}
-              className="h-10 w-full rounded-md border-[2.5px] border-border bg-card px-3 font-body text-sm text-text outline-none transition-all duration-150 placeholder:text-text-3 focus:border-primary focus:shadow-[0_0_0_3px_var(--primary-dim)]"
+              className="set-input"
             />
           </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="discord">
+          <div>
+            <label className="set-label" htmlFor="discord">
               {t("discord")}
             </label>
             <input
@@ -377,7 +377,7 @@ export function ProfileTab({
               placeholder={t("discordPlaceholder")}
               value={discord}
               onChange={(e) => setDiscord(e.target.value)}
-              className="h-10 w-full rounded-md border-[2.5px] border-border bg-card px-3 font-body text-sm text-text outline-none transition-all duration-150 placeholder:text-text-3 focus:border-primary focus:shadow-[0_0_0_3px_var(--primary-dim)]"
+              className="set-input"
             />
           </div>
         </div>

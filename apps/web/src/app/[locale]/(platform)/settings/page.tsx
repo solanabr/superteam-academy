@@ -3,13 +3,13 @@
 import { useEffect, useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import type { UserIdentity } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase/client";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ProfileTab } from "./_components/profile-tab";
 import { AccountTab } from "./_components/account-tab";
 import { PrivacyTab } from "./_components/privacy-tab";
 import { DangerTab } from "./_components/danger-tab";
-import { createClient } from "@/lib/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 // ── Shared data shape returned by fetchProfile ────────────────────
 interface ProfileData {
@@ -157,7 +157,7 @@ export default function SettingsPage() {
   }, []);
 
   return (
-    <div className="space-y-8">
+    <div className="set-page space-y-8">
       <div>
         <h1 className="font-display text-2xl font-black tracking-[-0.5px] sm:text-3xl">
           {t("title")}
@@ -169,11 +169,21 @@ export default function SettingsPage() {
         onValueChange={setActiveTab}
         className="space-y-6"
       >
-        <TabsList className="w-full overflow-x-auto sm:w-auto">
-          <TabsTrigger value="profile">{t("profileSettings")}</TabsTrigger>
-          <TabsTrigger value="account">{t("accountSettings")}</TabsTrigger>
-          <TabsTrigger value="privacy">{t("privacy")}</TabsTrigger>
-          <TabsTrigger value="danger">{t("dangerZone")}</TabsTrigger>
+        {/* House segmented control (05-08) — the same switch the leaderboard
+            uses, replacing the stock shadcn tab strip. */}
+        <TabsList className="seg-tabs h-auto p-1 text-inherit">
+          <TabsTrigger className="seg-tab" value="profile">
+            {t("profileSettings")}
+          </TabsTrigger>
+          <TabsTrigger className="seg-tab" value="account">
+            {t("accountSettings")}
+          </TabsTrigger>
+          <TabsTrigger className="seg-tab" value="privacy">
+            {t("privacy")}
+          </TabsTrigger>
+          <TabsTrigger className="seg-tab" value="danger">
+            {t("dangerZone")}
+          </TabsTrigger>
         </TabsList>
 
         {/* Profile Tab */}

@@ -81,7 +81,7 @@ export function DangerTab() {
             aria-hidden="true"
           />
           <div className="space-y-1">
-            <h3 className="font-display font-black text-danger">
+            <h3 className="set-group-title text-danger">
               {t("deleteAccountTitle")}
             </h3>
             <p className="text-sm text-text-2">
