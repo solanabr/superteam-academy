@@ -17,7 +17,6 @@ import { CurrentCoursesSection } from "@/components/dashboard/current-courses-se
 import { DailyQuestsCard } from "@/components/dashboard/daily-quests-card";
 import { ReviewStrip } from "@/components/dashboard/review-strip";
 import { CohortStrip } from "@/components/dashboard/cohort-strip";
-import { NameRevealDialog } from "@/components/dashboard/name-reveal-dialog";
 import { NextLessonPlan } from "@/components/dashboard/next-lesson-plan";
 
 /**
@@ -159,14 +158,6 @@ export default function DashboardPage() {
           <ActivitySection recentActivity={data.recentActivity} />
         </div>
       </div>
-
-      {/* Name reveal modal — shown on first login */}
-      <NameRevealDialog
-        isLoading={data.isLoading}
-        userId={data.userId}
-        username={data.username}
-        nameRerollsUsed={data.nameRerollsUsed}
-      />
     </div>
   );
 }
