@@ -71,7 +71,11 @@ function renderPaths(
 ): ReturnType<typeof render> {
   const ui: ReactElement = (
     <NextIntlClientProvider locale="en" messages={messages}>
+      {/* comingSoon={false}: this suite covers the path rendering that
+          resumes once the #998 hold is lifted. The hold itself is pinned
+          separately in paths-view-coming-soon.test.tsx. */}
       <PathsView
+        comingSoon={false}
         learningPaths={ALL_PATHS}
         progress={new Map<string, PathCourseProgress>()}
         {...props}

@@ -6,6 +6,7 @@ import { Shuffle } from "@phosphor-icons/react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AvatarCropDialog } from "@/components/settings/avatar-crop-dialog";
 import { createClient } from "@/lib/supabase/client";
 import { generateWalletName } from "@/lib/utils/generate-wallet-name";
 
@@ -28,7 +29,9 @@ interface ProfileTabProps {
 
 // ── Constants ─────────────────────────────────────────────────────
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const MAX_SIZE = 1 * 1024 * 1024; // 1 MB
+// Source cap. Generous because the crop step re-encodes to a 512px JPEG —
+// what reaches storage is tens of KB regardless of what the camera produced.
+const MAX_SIZE = 12 * 1024 * 1024; // 12 MB
 const MAX_REROLLS = 3;
 
 export function ProfileTab({
@@ -55,15 +58,19 @@ export function ProfileTab({
   const [isRerollingName, setIsRerollingName] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  // The picked file waits here while the learner frames it in the crop dialog.
+  const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
   const [saveMessage, setSaveMessage] = useState<{
     type: "success" | "error";
     text: string;
   } | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
-  // ── Avatar upload ─────────────────────────────────────────────
-  const handleAvatarChange = async (e: ChangeEvent<HTMLInputElement>) => {
+  // ── Avatar: pick → frame → upload ─────────────────────────────
+  const handleAvatarPick = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    // Reset immediately so re-picking the same file still fires onChange.
+    e.target.value = "";
     if (!file) return;
 
     if (!ALLOWED_TYPES.includes(file.type)) {
@@ -75,6 +82,13 @@ export function ProfileTab({
       return;
     }
 
+    setSaveMessage(null);
+    setPendingAvatarFile(file);
+  };
+
+  /** Receives the framed circle from the crop dialog and stores it. */
+  const handleCropped = async (blob: Blob) => {
+    setPendingAvatarFile(null);
     setIsUploadingAvatar(true);
     setSaveMessage(null);
 
@@ -85,12 +99,13 @@ export function ProfileTab({
       } = await supabase.auth.getUser();
       if (!user) return;
 
-      const ext = file.name.split(".").pop() ?? "jpg";
-      const path = `${user.id}/avatar.${ext}`;
+      // The crop always outputs JPEG, so the stored object has one extension —
+      // no stale avatar.png left behind when someone switches formats.
+      const path = `${user.id}/avatar.jpg`;
 
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(path, file, { upsert: true });
+        .upload(path, blob, { upsert: true, contentType: "image/jpeg" });
 
       if (uploadError) {
         setSaveMessage({ type: "error", text: uploadError.message });
@@ -120,8 +135,6 @@ export function ProfileTab({
       setSaveMessage({ type: "error", text: tCommon("error") });
     } finally {
       setIsUploadingAvatar(false);
-      // Reset input so re-selecting the same file triggers onChange
-      if (avatarInputRef.current) avatarInputRef.current.value = "";
     }
   };
 
@@ -259,7 +272,7 @@ export function ProfileTab({
             )}
           </div>
           <div className="space-y-2">
-            <p className="text-sm font-medium">{t("avatar")}</p>
+            <p className="set-label !mb-0">{t("avatar")}</p>
             <div className="flex gap-2">
               <Button
                 variant="outline"
@@ -285,15 +298,15 @@ export function ProfileTab({
               type="file"
               accept="image/jpeg,image/png,image/webp"
               className="hidden"
-              onChange={handleAvatarChange}
+              onChange={handleAvatarPick}
               aria-label={t("changeAvatar")}
             />
           </div>
         </div>
 
         {/* Display Name + Re-roll */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium" htmlFor="username">
+        <div>
+          <label className="set-label" htmlFor="username">
             {t("displayName")}
           </label>
           <div className="flex items-center gap-3">
@@ -303,7 +316,7 @@ export function ProfileTab({
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               maxLength={30}
-              className="h-10 w-full flex-1 rounded-md border-[2.5px] border-border bg-card px-3 font-mono text-sm text-text outline-none transition-all duration-150 placeholder:text-text-3 focus:border-primary focus:shadow-[0_0_0_3px_var(--primary-dim)]"
+              className="set-input flex-1"
             />
             {nameRerollsUsed < MAX_REROLLS && (
               <Button
@@ -327,8 +340,8 @@ export function ProfileTab({
           </div>
         </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium" htmlFor="bio">
+        <div>
+          <label className="set-label" htmlFor="bio">
             {t("bio")}
           </label>
           <textarea
@@ -336,13 +349,13 @@ export function ProfileTab({
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             rows={3}
-            className="w-full resize-y rounded-md border-[2.5px] border-border bg-card px-3 py-2 font-body text-sm text-text outline-none transition-all duration-150 placeholder:text-text-3 focus:border-primary focus:shadow-[0_0_0_3px_var(--primary-dim)]"
+            className="set-input"
           />
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="twitter">
+          <div>
+            <label className="set-label" htmlFor="twitter">
               {t("twitter")}
             </label>
             <input
@@ -351,11 +364,11 @@ export function ProfileTab({
               placeholder={t("twitterPlaceholder")}
               value={twitter}
               onChange={(e) => setTwitter(e.target.value)}
-              className="h-10 w-full rounded-md border-[2.5px] border-border bg-card px-3 font-body text-sm text-text outline-none transition-all duration-150 placeholder:text-text-3 focus:border-primary focus:shadow-[0_0_0_3px_var(--primary-dim)]"
+              className="set-input"
             />
           </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="github">
+          <div>
+            <label className="set-label" htmlFor="github">
               {t("github")}
             </label>
             <input
@@ -364,11 +377,11 @@ export function ProfileTab({
               placeholder={t("githubPlaceholder")}
               value={github}
               onChange={(e) => setGithub(e.target.value)}
-              className="h-10 w-full rounded-md border-[2.5px] border-border bg-card px-3 font-body text-sm text-text outline-none transition-all duration-150 placeholder:text-text-3 focus:border-primary focus:shadow-[0_0_0_3px_var(--primary-dim)]"
+              className="set-input"
             />
           </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="discord">
+          <div>
+            <label className="set-label" htmlFor="discord">
               {t("discord")}
             </label>
             <input
@@ -377,7 +390,7 @@ export function ProfileTab({
               placeholder={t("discordPlaceholder")}
               value={discord}
               onChange={(e) => setDiscord(e.target.value)}
-              className="h-10 w-full rounded-md border-[2.5px] border-border bg-card px-3 font-body text-sm text-text outline-none transition-all duration-150 placeholder:text-text-3 focus:border-primary focus:shadow-[0_0_0_3px_var(--primary-dim)]"
+              className="set-input"
             />
           </div>
         </div>
@@ -400,6 +413,12 @@ export function ProfileTab({
           )}
         </div>
       </CardContent>
+
+      <AvatarCropDialog
+        file={pendingAvatarFile}
+        onCancel={() => setPendingAvatarFile(null)}
+        onCropped={handleCropped}
+      />
     </Card>
   );
 }

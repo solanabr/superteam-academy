@@ -25,7 +25,9 @@ const AvatarImage = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AvatarPrimitive.Image
     ref={ref}
-    className={cn("aspect-square h-full w-full", className)}
+    /* object-cover, else a non-square source is STRETCHED to the square box
+       rather than filled — visible on every OAuth/imported avatar. */
+    className={cn("aspect-square h-full w-full object-cover", className)}
     {...props}
   />
 ));

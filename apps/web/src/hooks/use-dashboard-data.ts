@@ -91,7 +91,6 @@ export interface DashboardData {
   recentActivity: ActivityItem[];
   username: string;
   userId: string;
-  nameRerollsUsed: number;
   isLoading: boolean;
   fetchError: boolean;
 }
@@ -125,7 +124,6 @@ export function useDashboardData(
     recentActivity: [],
     username: "Builder",
     userId: "",
-    nameRerollsUsed: -1,
     isLoading: true,
     fetchError: false,
   });
@@ -181,7 +179,7 @@ export function useDashboardData(
           service.getStreak(authUserId),
           supabase
             .from("profiles")
-            .select("username, name_rerolls_used")
+            .select("username")
             .eq("id", authUserId)
             .single(),
           supabase
@@ -224,7 +222,6 @@ export function useDashboardData(
             .limit(10),
         ]);
         const profile = profileResult.data;
-        const rerollData = profileResult.data;
         const achievementsCount = achievementsResult.count;
         const transactions = transactionsResult.data;
 
@@ -643,7 +640,6 @@ export function useDashboardData(
           recentActivity,
           username: profile?.username ?? "Builder",
           userId: authUserId,
-          nameRerollsUsed: rerollData?.name_rerolls_used ?? -1,
           isLoading: false,
           fetchError: false,
         });

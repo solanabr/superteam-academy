@@ -23,6 +23,10 @@ const db = vi.hoisted(() => ({
 
 vi.mock("@/lib/supabase/client", () => ({
   createClient: () => ({
+    // Owner-gated share actions (04-08): the suite's viewer IS the recipient.
+    auth: {
+      getUser: async () => ({ data: { user: { id: "user-1" } } }),
+    },
     from: (table: string) => {
       db.tables.push(table);
       return {
@@ -173,7 +177,7 @@ describe("certificate verify page — network label from env", () => {
 // LX-F1 (#873): the mint_success surface is covered by the share-nudge and
 // earn-card component tests; this closes the second surface — the certificate
 // page — so both `source` values of each click event are pinned by a test.
-describe("certificate verify page — share + Earn instrumentation (LX-F1)", () => {
+describe("certificate verify page — share instrumentation (LX-F1)", () => {
   it("fires credential_share_click once per share click, tagged certificate_page", async () => {
     renderPage();
 
@@ -196,17 +200,8 @@ describe("certificate verify page — share + Earn instrumentation (LX-F1)", () 
     });
   });
 
-  it("fires earn_handoff_click once, tagged certificate_page", async () => {
-    renderPage();
-
-    fireEvent.click(await screen.findByText(messages.earnHandoff.development));
-    expect(trackEvent).toHaveBeenCalledTimes(1);
-    expect(trackEvent).toHaveBeenCalledWith("earn_handoff_click", {
-      category: "development",
-      source: "certificate_page",
-      courseId: "solana-101",
-    });
-  });
+  // The Earn handoff card was removed from this page (owner call, 04-08) —
+  // its instrumentation test went with it.
 });
 
 describe("certificate verify page — localized recipient fallback", () => {

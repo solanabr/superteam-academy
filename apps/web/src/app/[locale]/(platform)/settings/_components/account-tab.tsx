@@ -457,7 +457,7 @@ export function AccountTab({
   return (
     <Card>
       <CardContent className="space-y-6 p-6">
-        <h3 className="font-display font-black">{t("connectedAccounts")}</h3>
+        <h3 className="set-group-title">{t("connectedAccounts")}</h3>
 
         {/* Feedback banner */}
         {linkMessage && (
@@ -473,22 +473,20 @@ export function AccountTab({
         )}
 
         {/* Wallet row */}
-        <div className="flex items-center justify-between rounded-lg border-[2.5px] border-border p-4">
+        <div className="set-row">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-bg">
+            <div className="set-row-icon">
               <SolanaLogo className="h-5 w-5" />
             </div>
             <div>
-              <p className="font-medium">{t("walletAddress")}</p>
-              <p className="text-sm text-text-3">
+              <p className="set-row-name">{t("walletAddress")}</p>
+              <p className="set-row-meta font-mono">
                 {walletAddress
                   ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`
                   : t("notLinked")}
               </p>
               {walletAddress && (
-                <p className="mt-0.5 text-xs text-text-3">
-                  {t("walletPermanent")}
-                </p>
+                <p className="set-row-meta">{t("walletPermanent")}</p>
               )}
             </div>
           </div>
@@ -508,16 +506,14 @@ export function AccountTab({
         </div>
 
         {/* Google row */}
-        <div className="flex items-center justify-between rounded-lg border-[2.5px] border-border p-4">
+        <div className="set-row">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-subtle">
+            <div className="set-row-icon">
               <GoogleLogo className="h-5 w-5" />
             </div>
             <div>
-              <p className="font-medium">{t("googleAccount")}</p>
-              <p className="text-sm text-text-3">
-                {googleEmail ?? t("notLinked")}
-              </p>
+              <p className="set-row-name">{t("googleAccount")}</p>
+              <p className="set-row-meta">{googleEmail ?? t("notLinked")}</p>
             </div>
           </div>
           {googleIdentity ? (
@@ -546,16 +542,14 @@ export function AccountTab({
         </div>
 
         {/* GitHub row */}
-        <div className="flex items-center justify-between rounded-lg border-[2.5px] border-border p-4">
+        <div className="set-row">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-subtle">
+            <div className="set-row-icon">
               <GithubLogo className="h-5 w-5" weight="fill" />
             </div>
             <div>
-              <p className="font-medium">{t("githubAccount")}</p>
-              <p className="text-sm text-text-3">
-                {gitHubEmail ?? t("notLinked")}
-              </p>
+              <p className="set-row-name">{t("githubAccount")}</p>
+              <p className="set-row-meta">{gitHubEmail ?? t("notLinked")}</p>
             </div>
           </div>
           {gitHubIdentity ? (
