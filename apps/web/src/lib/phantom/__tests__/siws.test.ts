@@ -98,9 +98,13 @@ describe("runPhantomSiws — failures", () => {
     expect(out).toEqual({ ok: false, reason: "declined", mode: "signIn" });
   });
 
-  // One server key, two situations a learner must be able to tell apart —
-  // `mode` is what lets the caller pick the right wording.
-  it("carries walletAlreadyLinked through with the mode that disambiguates it", async () => {
+  // The mocks below mirror the REAL route contracts (#994 review — an earlier
+  // version of this test mocked both routes returning "walletAlreadyLinked",
+  // a contract /api/auth/wallet never had, which let an inverted copy mapping
+  // ship green). link-wallet 409s with `walletAlreadyLinked` when the wallet
+  // belongs to another account; both routes 409 with `differentWalletLinked`
+  // when the caller's own account already has a different wallet.
+  it("passes the cross-account key through verbatim from link-wallet", async () => {
     mockFetch((url) =>
       url === "/api/auth/nonce"
         ? okJson(NONCE)
@@ -116,10 +120,24 @@ describe("runPhantomSiws — failures", () => {
       reason: "walletAlreadyLinked",
       mode: "link",
     });
+  });
+
+  it("passes the own-account key through verbatim from the sign-in route", async () => {
+    mockFetch((url) =>
+      url === "/api/auth/nonce"
+        ? okJson(NONCE)
+        : new Response(JSON.stringify({ error: "differentWalletLinked" }), {
+            status: 409,
+            headers: { "content-type": "application/json" },
+          })
+    );
 
     const signingIn = await runPhantomSiws(signerThatSigns(), ADDRESS, false);
-    expect(signingIn.ok).toBe(false);
-    expect(signingIn).toMatchObject({ mode: "signIn" });
+    expect(signingIn).toEqual({
+      ok: false,
+      reason: "differentWalletLinked",
+      mode: "signIn",
+    });
   });
 
   it("fails with a generic key when the nonce cannot be fetched", async () => {

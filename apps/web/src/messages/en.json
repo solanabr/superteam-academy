@@ -93,7 +93,8 @@
     "phantomSubtitle": "Sign in with Google — we'll set up your wallet",
     "phantomSignInFailed": "Phantom sign-in failed. Please try again.",
     "phantomAccountHasWallet": "This account already has a wallet connected. You'll keep using it.",
-    "phantomWalletTaken": "That wallet is already linked to another account."
+    "phantomWalletTaken": "That wallet is already linked to another account.",
+    "differentWalletLinked": "A wallet is already linked to this account. Wallet links are permanent."
   },
   "landing": {
     "poweredBy": "Powered by",

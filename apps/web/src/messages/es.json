@@ -93,7 +93,8 @@
     "phantomSubtitle": "Inicia sesión con Google — creamos tu billetera",
     "phantomSignInFailed": "Error al iniciar sesión con Phantom. Inténtalo de nuevo.",
     "phantomAccountHasWallet": "Esta cuenta ya tiene una billetera conectada. Seguirás usándola.",
-    "phantomWalletTaken": "Esa billetera ya está vinculada a otra cuenta."
+    "phantomWalletTaken": "Esa billetera ya está vinculada a otra cuenta.",
+    "differentWalletLinked": "Ya hay una billetera vinculada a esta cuenta. Los vínculos de billetera son permanentes."
   },
   "landing": {
     "poweredBy": "Con el apoyo de",

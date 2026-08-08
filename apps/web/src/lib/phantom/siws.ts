@@ -31,9 +31,13 @@ export interface MessageSigner {
 export type SiwsOutcome =
   | { ok: true; mode: "signedIn" | "linked" }
   /**
-   * `reason` is a MESSAGE KEY, never server prose — the caller localises it.
-   * `walletAlreadyLinked` covers two different situations the learner needs
-   * told apart, so the caller decides the wording from `mode`.
+   * `reason` is a stable SITUATION KEY from the server, never prose — the
+   * caller localises it. The two 409 keys name the situation directly
+   * (#994 review — an earlier design inferred it from `mode`, and shipped
+   * inverted, because the route called is a bad proxy for what went wrong):
+   *   `walletAlreadyLinked`   — this wallet belongs to ANOTHER account
+   *   `differentWalletLinked` — THIS account already has a different wallet
+   * `mode` records which route ran, for logging/tests only — never copy.
    */
   | { ok: false; reason: string; mode: "signIn" | "link" };
 
@@ -76,6 +80,14 @@ export async function runPhantomSiws(
   } catch {
     // Declining the signature prompt is an ordinary choice, not a failure to
     // report: the caller resets quietly and the learner can try again.
+    //
+    // DELIBERATE (#994 review, confirmed not just code reuse): a transient
+    // SDK/network error during signing lands here too and gets the same silent
+    // treatment. That is intended parity with WalletAuthHandler's catch around
+    // signIn/signMessage — wallet SDKs don't reliably distinguish "user closed
+    // the prompt" from "prompt failed to open", so treating the union as a
+    // quiet retry beats mislabelling a decline as an error. The retry path
+    // stays open either way (the handler clears its address guard on failure).
     return { ok: false, reason: "declined", mode };
   }
 

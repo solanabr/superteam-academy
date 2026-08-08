@@ -64,17 +64,27 @@ export function PhantomAuthHandler() {
         return;
       }
 
+      // Every failure clears the ref (#994 review): it exists to stop the SAME
+      // successful address being bridged twice (autoConnect + the connect
+      // event), not to make failure permanent. Without this, a declined
+      // signature blocked every retry until a full page reload — the effect
+      // deps don't change on a retry click, and even when they did, the stale
+      // ref swallowed it.
+      handledAddress.current = null;
+
       if (outcome.reason === "declined") return; // Ordinary choice, stay quiet.
 
-      // Same server key, two very different situations — a learner whose wallet
-      // belongs to someone else needs different advice from one who simply
-      // already has a wallet on this account.
+      // Copy is picked from the SITUATION KEY the server returns, never from
+      // which route was called (#994 review — the mode-based ternary shipped
+      // inverted precisely because the route is a bad proxy for the situation):
+      //   walletAlreadyLinked  → this wallet belongs to ANOTHER account
+      //   differentWalletLinked → THIS account already has a different wallet
       if (outcome.reason === "walletAlreadyLinked") {
-        setError(
-          outcome.mode === "link"
-            ? t("phantomAccountHasWallet")
-            : t("phantomWalletTaken")
-        );
+        setError(t("phantomWalletTaken"));
+        return;
+      }
+      if (outcome.reason === "differentWalletLinked") {
+        setError(t("phantomAccountHasWallet"));
         return;
       }
       setError(

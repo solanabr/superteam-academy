@@ -110,8 +110,13 @@ export async function POST(request: NextRequest) {
       ownProfile?.wallet_address &&
       ownProfile.wallet_address !== body.publicKey
     ) {
+      // DISTINCT key from the cross-account 409 above (#994 review): the two
+      // situations need different advice — "your account already has a wallet"
+      // vs "that wallet belongs to someone else" — and only the server knows
+      // which one happened. The settings account tab has handled this key
+      // since before any route emitted it.
       return NextResponse.json(
-        { error: "walletAlreadyLinked" },
+        { error: "differentWalletLinked" },
         { status: 409 }
       );
     }
