@@ -1,0 +1,27 @@
+Object.defineProperty(__vite_ssr_exports__, "cn", { enumerable: true, configurable: true, get(){ try { return cn } catch {} }});
+Object.defineProperty(__vite_ssr_exports__, "getNow", { enumerable: true, configurable: true, get(){ try { return getNow } catch {} }});
+Object.defineProperty(__vite_ssr_exports__, "nowISO", { enumerable: true, configurable: true, get(){ try { return nowISO } catch {} }});
+Object.defineProperty(__vite_ssr_exports__, "todayDateString", { enumerable: true, configurable: true, get(){ try { return todayDateString } catch {} }});
+Object.defineProperty(__vite_ssr_exports__, "truncateAddress", { enumerable: true, configurable: true, get(){ try { return truncateAddress } catch {} }});
+const __vite_ssr_import_0__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/clsx@2.1.1/node_modules/clsx/dist/clsx.mjs", {"importedNames":["clsx"]});
+const __vite_ssr_import_1__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/tailwind-merge@2.6.1/node_modules/tailwind-merge/dist/bundle-mjs.mjs", {"importedNames":["twMerge"]});
+function cn(...inputs) {
+  return (0,__vite_ssr_import_1__.twMerge)((0,__vite_ssr_import_0__.clsx)(inputs));
+};
+function getNow() {
+  return /* @__PURE__ */ new Date();
+};
+function nowISO() {
+  return (/* @__PURE__ */ new Date()).toISOString();
+};
+function todayDateString() {
+  return (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+};
+function truncateAddress(address, prefixLen = 6, suffixLen = 4) {
+  if (address.length <= prefixLen + suffixLen + 3) return address;
+  return `${address.slice(0, prefixLen)}...${address.slice(-suffixLen)}`;
+}
+//# sourceMappingSource=vite-generated
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJtYXBwaW5ncyI6IkFBQUEsQ0FBQTs7Ozs7QUFBQTtBQUNBO0FBRU8sU0FBUyxNQUFNLFFBQXNCO0FBQzFDLFlBQU8sa0NBQVEsNEJBQUssTUFBTSxDQUFDO0FBQzdCO0FBR08sU0FBUyxTQUFlO0FBQzdCLFNBQU8sb0JBQUksS0FBSztBQUNsQjtBQUdPLFNBQVMsU0FBaUI7QUFDL0IsVUFBTyxvQkFBSSxLQUFLLEdBQUUsWUFBWTtBQUNoQztBQUdPLFNBQVMsa0JBQTBCO0FBQ3hDLFVBQU8sb0JBQUksS0FBSyxHQUFFLFlBQVksRUFBRSxNQUFNLEdBQUcsRUFBRSxDQUFDO0FBQzlDO0FBR08sU0FBUyxnQkFDZCxTQUNBLFlBQVksR0FDWixZQUFZLEdBQ0o7QUFDUixNQUFJLFFBQVEsVUFBVSxZQUFZLFlBQVksRUFBRyxRQUFPO0FBQ3hELFNBQU8sR0FBRyxRQUFRLE1BQU0sR0FBRyxTQUFTLENBQUMsTUFBTSxRQUFRLE1BQU0sQ0FBQyxTQUFTLENBQUM7QUFDdEUiLCJuYW1lcyI6W10sImlnbm9yZUxpc3QiOltdLCJzb3VyY2VzIjpbInV0aWxzLnRzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IHR5cGUgQ2xhc3NWYWx1ZSwgY2xzeCB9IGZyb20gXCJjbHN4XCI7XG5pbXBvcnQgeyB0d01lcmdlIH0gZnJvbSBcInRhaWx3aW5kLW1lcmdlXCI7XG5cbmV4cG9ydCBmdW5jdGlvbiBjbiguLi5pbnB1dHM6IENsYXNzVmFsdWVbXSkge1xuICByZXR1cm4gdHdNZXJnZShjbHN4KGlucHV0cykpO1xufVxuXG4vKiogQ2VudHJhbGl6ZWQgRGF0ZS5ub3cgd3JhcHBlciDigJQgb3ZlcnJpZGUgaW4gdGVzdHMgdmlhIGB2aS5zcHlPbmAuICovXG5leHBvcnQgZnVuY3Rpb24gZ2V0Tm93KCk6IERhdGUge1xuICByZXR1cm4gbmV3IERhdGUoKTtcbn1cblxuLyoqIFNob3J0aGFuZCBmb3IgSVNPIHN0cmluZyBvZiBjdXJyZW50IHRpbWUuICovXG5leHBvcnQgZnVuY3Rpb24gbm93SVNPKCk6IHN0cmluZyB7XG4gIHJldHVybiBuZXcgRGF0ZSgpLnRvSVNPU3RyaW5nKCk7XG59XG5cbi8qKiBUb2RheSBhcyBZWVlZLU1NLURELiAqL1xuZXhwb3J0IGZ1bmN0aW9uIHRvZGF5RGF0ZVN0cmluZygpOiBzdHJpbmcge1xuICByZXR1cm4gbmV3IERhdGUoKS50b0lTT1N0cmluZygpLnNwbGl0KFwiVFwiKVswXSBhcyBzdHJpbmc7XG59XG5cbi8qKiBUcnVuY2F0ZSBhIFNvbGFuYSBhZGRyZXNzIG9yIFVSSSBmb3IgZGlzcGxheTogXCJBYkNkLi4ueFl6MVwiLiAqL1xuZXhwb3J0IGZ1bmN0aW9uIHRydW5jYXRlQWRkcmVzcyhcbiAgYWRkcmVzczogc3RyaW5nLFxuICBwcmVmaXhMZW4gPSA2LFxuICBzdWZmaXhMZW4gPSA0XG4pOiBzdHJpbmcge1xuICBpZiAoYWRkcmVzcy5sZW5ndGggPD0gcHJlZml4TGVuICsgc3VmZml4TGVuICsgMykgcmV0dXJuIGFkZHJlc3M7XG4gIHJldHVybiBgJHthZGRyZXNzLnNsaWNlKDAsIHByZWZpeExlbil9Li4uJHthZGRyZXNzLnNsaWNlKC1zdWZmaXhMZW4pfWA7XG59XG4iXSwiZmlsZSI6Ii9zcmMvbGliL3V0aWxzLnRzIn0=
+
+//# vitestCache=W3siZmlsZSI6IjEiLCJpZCI6IjEiLCJ1cmwiOiIyIiwiaW1wb3J0ZWRVcmxzIjoiMyIsIm1hcHBpbmdzIjpmYWxzZX0sIi9Vc2Vycy9kYXZpZC9Eb2N1bWVudHMva21pbm8vc29sL3N1cGVydGVhbS1hY2FkZW15L2FwcHMvd2ViL3NyYy9saWIvdXRpbHMudHMiLCIvc3JjL2xpYi91dGlscy50cyIsW11d

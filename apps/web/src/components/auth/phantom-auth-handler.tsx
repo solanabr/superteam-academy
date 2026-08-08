@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
+import type { Json } from "@/lib/supabase/types";
 import { runPhantomSiws } from "@/lib/phantom/siws";
 import { usePhantomConnect } from "@/components/auth/phantom-connect-provider";
 
@@ -58,6 +59,12 @@ export function PhantomAuthHandler() {
       );
 
       if (outcome.ok) {
+        // Provenance for the graduation card (#987): mark that THIS account's
+        // wallet came from Phantom Connect. Deferred via localStorage because
+        // on the fresh sign-in path the browser client has no session until
+        // after the reload — a prefs UPDATE here would fail RLS. The marker is
+        // flushed into prefs.walletProvider by the mount effect below.
+        localStorage.setItem("phantomEmbeddedPending", "1");
         // Hard reload so the Supabase client re-initialises with the cookies the
         // route just set — a soft navigation keeps the anonymous client.
         window.location.reload();
@@ -102,6 +109,48 @@ export function PhantomAuthHandler() {
     handledAddress.current = address;
     void bridge(address);
   }, [enabled, status, address, bridge]);
+
+  // Flush the deferred provenance marker (#987) into prefs.walletProvider once
+  // a session exists. Merge-write so sibling prefs keys (nextLesson,
+  // nameRevealSeen, …) survive; the marker is cleared only after a successful
+  // write, so a failed flush simply retries on the next page load.
+  useEffect(() => {
+    if (localStorage.getItem("phantomEmbeddedPending") !== "1") return;
+    let cancelled = false;
+    void (async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user || cancelled) return;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("prefs")
+        .eq("id", user.id)
+        .maybeSingle();
+      // Without a good read we cannot merge, and a blind write would clobber
+      // sibling prefs keys — skip; the marker keeps it retrying.
+      if (error || cancelled) return;
+      const prior = data?.prefs;
+      const prefs = {
+        ...(typeof prior === "object" && prior !== null && !Array.isArray(prior)
+          ? (prior as Record<string, unknown>)
+          : {}),
+        walletProvider: "phantom-embedded",
+      };
+      const { error: writeError } = await supabase
+        .from("profiles")
+        // Plain JSON object; the merged record lacks the index signature the
+        // generated Json type wants, so cast at the boundary (same idiom as
+        // name-reveal-dialog's prefs write).
+        .update({ prefs: prefs as unknown as Json })
+        .eq("id", user.id);
+      if (!writeError) localStorage.removeItem("phantomEmbeddedPending");
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   if (!error) return null;
 

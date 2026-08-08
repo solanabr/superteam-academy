@@ -1,0 +1,240 @@
+Object.defineProperty(__vite_ssr_exports__, "default", { enumerable: true, configurable: true, get(){ try { return __vite_ssr_export_default__ } catch {} }});
+const __vite_ssr_export_default__ = [
+	{
+		_id: "course-btc-to-sol-evolution",
+		_type: "course",
+		creator: "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
+		creatorRewardXp: 0,
+		description: "Run, script, and explain every generation of blockchain from Bitcoin to Solana, then ship a personal ops bot that manages wallets and agents on both.",
+		difficulty: "beginner",
+		duration: 15,
+		minCompletionsForReward: 0,
+		modules: [
+			{
+				_key: "crypto",
+				_type: "courseModule",
+				key: "crypto",
+				lessons: [
+					{
+						_key: "lesson-b2s-the-trust-machine",
+						_ref: "lesson-b2s-the-trust-machine",
+						_type: "reference",
+						_weak: true
+					},
+					{
+						_key: "lesson-b2s-hash-everything",
+						_ref: "lesson-b2s-hash-everything",
+						_type: "reference",
+						_weak: true
+					},
+					{
+						_key: "lesson-b2s-sign-and-verify",
+						_ref: "lesson-b2s-sign-and-verify",
+						_type: "reference",
+						_weak: true
+					}
+				],
+				title: "Trust math, not people"
+			},
+			{
+				_key: "bitcoin-core",
+				_type: "courseModule",
+				key: "bitcoin-core",
+				lessons: [
+					{
+						_key: "lesson-b2s-mine-your-own-chain",
+						_ref: "lesson-b2s-mine-your-own-chain",
+						_type: "reference",
+						_weak: true
+					},
+					{
+						_key: "lesson-b2s-spend-a-utxo",
+						_ref: "lesson-b2s-spend-a-utxo",
+						_type: "reference",
+						_weak: true
+					}
+				],
+				title: "A ledger nobody owns"
+			},
+			{
+				_key: "bitcoin-infra",
+				_type: "courseModule",
+				key: "bitcoin-infra",
+				lessons: [
+					{
+						_key: "lesson-b2s-speak-rpc",
+						_ref: "lesson-b2s-speak-rpc",
+						_type: "reference",
+						_weak: true
+					},
+					{
+						_key: "lesson-b2s-watch-the-mempool",
+						_ref: "lesson-b2s-watch-the-mempool",
+						_type: "reference",
+						_weak: true
+					}
+				],
+				title: "Talking to chains the way software does"
+			},
+			{
+				_key: "blockchain-20",
+				_type: "courseModule",
+				key: "blockchain-20",
+				lessons: [
+					{
+						_key: "lesson-b2s-state-lives-in-the-contract",
+						_ref: "lesson-b2s-state-lives-in-the-contract",
+						_type: "reference",
+						_weak: true
+					},
+					{
+						_key: "lesson-b2s-a-market-with-no-marketmaker",
+						_ref: "lesson-b2s-a-market-with-no-marketmaker",
+						_type: "reference",
+						_weak: true
+					}
+				],
+				title: "Programmable money"
+			},
+			{
+				_key: "solana-core",
+				_type: "courseModule",
+				key: "solana-core",
+				lessons: [
+					{
+						_key: "lesson-b2s-your-first-solana-program",
+						_ref: "lesson-b2s-your-first-solana-program",
+						_type: "reference",
+						_weak: true
+					},
+					{
+						_key: "lesson-b2s-the-throughput-bet",
+						_ref: "lesson-b2s-the-throughput-bet",
+						_type: "reference",
+						_weak: true
+					}
+				],
+				title: "The throughput bet"
+			},
+			{
+				_key: "solana-advanced",
+				_type: "courseModule",
+				key: "solana-advanced",
+				lessons: [
+					{
+						_key: "lesson-b2s-an-anchor-vault",
+						_ref: "lesson-b2s-an-anchor-vault",
+						_type: "reference",
+						_weak: true
+					},
+					{
+						_key: "lesson-b2s-wire-a-bot-and-a-face",
+						_ref: "lesson-b2s-wire-a-bot-and-a-face",
+						_type: "reference",
+						_weak: true
+					}
+				],
+				title: "Compose, don't fork"
+			},
+			{
+				_key: "capstone",
+				_type: "courseModule",
+				key: "capstone",
+				lessons: [
+					{
+						_key: "lesson-b2s-the-crosschain-ops-bot",
+						_ref: "lesson-b2s-the-crosschain-ops-bot",
+						_type: "reference",
+						_weak: true
+					},
+					{
+						_key: "lesson-b2s-where-you-go-from-here",
+						_ref: "lesson-b2s-where-you-go-from-here",
+						_type: "reference",
+						_weak: true
+					}
+				],
+				title: "Your bot, both chains"
+			}
+		],
+		slug: {
+			_type: "slug",
+			current: "btc-to-sol-evolution"
+		},
+		tags: [
+			"account-model",
+			"anchor",
+			"keypairs-wallets",
+			"rpc-reads",
+			"solana-fundamentals",
+			"solana-kit",
+			"solana-programs",
+			"transactions"
+		],
+		title: "From Bitcoin to Solana: The Evolution of Blockchain Technology",
+		trackId: 0,
+		trackLevel: 0,
+		xpPerLesson: 20,
+		xpReward: 300
+	},
+	{
+		_id: "course-solana-speedrun",
+		_type: "course",
+		creator: "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
+		creatorRewardXp: 0,
+		description: "Por que o sistema financeiro está migrando para a Solana, como a tecnologia funciona de verdade, e seu primeiro ativo na mainnet — em menos de 10 minutos.",
+		difficulty: "beginner",
+		duration: 4,
+		minCompletionsForReward: 0,
+		modules: [
+			{
+				_key: "speedrun",
+				_type: "courseModule",
+				key: "speedrun",
+				lessons: [
+					{
+						_key: "lesson-ssr-por-que-solana",
+						_ref: "lesson-ssr-por-que-solana",
+						_type: "reference",
+						_weak: true
+					},
+					{
+						_key: "lesson-ssr-como-funciona",
+						_ref: "lesson-ssr-como-funciona",
+						_type: "reference",
+						_weak: true
+					},
+					{
+						_key: "lesson-ssr-superteam-porta-de-entrada",
+						_ref: "lesson-ssr-superteam-porta-de-entrada",
+						_type: "reference",
+						_weak: true
+					},
+					{
+						_key: "lesson-ssr-seu-momento-onchain",
+						_ref: "lesson-ssr-seu-momento-onchain",
+						_type: "reference",
+						_weak: true
+					}
+				],
+				title: "Speedrun: da tese ao seu primeiro ativo onchain"
+			}
+		],
+		slug: {
+			_type: "slug",
+			current: "solana-speedrun"
+		},
+		tags: [
+			"account-model",
+			"keypairs-wallets",
+			"solana-fundamentals",
+			"transactions"
+		],
+		title: "Solana Speedrun: Inicie sua jornada onchain em minutos",
+		trackId: 0,
+		trackLevel: 0,
+		xpPerLesson: 20,
+		xpReward: 80
+	}
+];
+//# vitestCache=W3siZmlsZSI6IjEiLCJpZCI6IjEiLCJ1cmwiOiIyIiwiaW1wb3J0ZWRVcmxzIjoiMyIsIm1hcHBpbmdzIjpmYWxzZX0sIi9Vc2Vycy9kYXZpZC9Eb2N1bWVudHMva21pbm8vc29sL3N1cGVydGVhbS1hY2FkZW15L2FwcHMvd2ViL3NyYy9jb250ZW50L2dlbmVyYXRlZC9jb3Vyc2VzLmpzb24iLCIvc3JjL2NvbnRlbnQvZ2VuZXJhdGVkL2NvdXJzZXMuanNvbiIsW11d
