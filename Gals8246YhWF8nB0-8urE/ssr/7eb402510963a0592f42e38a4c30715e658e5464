@@ -1,7 +1,0 @@
-Object.defineProperty(__vite_ssr_exports__, "default", { enumerable: true, configurable: true, get(){ try { return __vite_ssr_export_default__ } catch {} }});
-const __vite_ssr_export_default__ = {
-  "course-btc-to-sol-evolution": {"next":15,"retired":[],"slots":{"lesson-b2s-a-market-with-no-marketmaker":8,"lesson-b2s-an-anchor-vault":11,"lesson-b2s-hash-everything":1,"lesson-b2s-mine-your-own-chain":3,"lesson-b2s-sign-and-verify":2,"lesson-b2s-speak-rpc":5,"lesson-b2s-spend-a-utxo":4,"lesson-b2s-state-lives-in-the-contract":7,"lesson-b2s-the-crosschain-ops-bot":13,"lesson-b2s-the-throughput-bet":10,"lesson-b2s-the-trust-machine":0,"lesson-b2s-watch-the-mempool":6,"lesson-b2s-where-you-go-from-here":14,"lesson-b2s-wire-a-bot-and-a-face":12,"lesson-b2s-your-first-solana-program":9},"version":1},
-  "course-solana-speedrun": {"next":4,"retired":[],"slots":{"lesson-ssr-como-funciona":1,"lesson-ssr-por-que-solana":0,"lesson-ssr-seu-momento-onchain":3,"lesson-ssr-superteam-porta-de-entrada":2},"version":1},
-};
-
-//# vitestCache=W3siZmlsZSI6IjEiLCJpZCI6IjEiLCJ1cmwiOiIyIiwiaW1wb3J0ZWRVcmxzIjoiMyIsIm1hcHBpbmdzIjpmYWxzZX0sIi9Vc2Vycy9kYXZpZC9Eb2N1bWVudHMva21pbm8vc29sL3N1cGVydGVhbS1hY2FkZW15L2FwcHMvd2ViL3NyYy9jb250ZW50L2dlbmVyYXRlZC9zbG90cy5qc29uIiwiL3NyYy9jb250ZW50L2dlbmVyYXRlZC9zbG90cy5qc29uIixbXV0=
