@@ -670,7 +670,13 @@
     "cropTitle": "Encuadra tu foto",
     "cropHint": "Arrastra para mover, usa el control para acercar.",
     "cropZoom": "Zoom",
-    "cropApply": "Usar foto"
+    "cropApply": "Usar foto",
+    "phantomGraduationTitle": "Lleva tu billetera contigo",
+    "phantomGraduationSubtitle": "Tu billetera es una billetera Phantom real — también funciona en la app de Phantom.",
+    "phantomGraduationStep1": "Descarga la app de Phantom o la extensión del navegador.",
+    "phantomGraduationStep2": "Elige \"Continuar con Google\" con la misma cuenta de Google — NO toques \"Crear nueva billetera\".",
+    "phantomGraduationStep3": "Comprueba que es la misma billetera — la dirección debe mostrar",
+    "phantomGraduationHelp": "Cómo funciona el acceso con Google (ayuda de Phantom)"
   },
   "a11y": {
     "dismiss": "Descartar",
