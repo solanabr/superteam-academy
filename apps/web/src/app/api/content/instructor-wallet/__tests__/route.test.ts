@@ -50,6 +50,8 @@ describe("GET /api/content/instructor-wallet", () => {
     expect(await res.json()).toEqual({
       profile: {
         username: "alice",
+        displayName: null,
+        verified: false,
         avatarUrl: "https://example.com/a.png",
         bio: "Rust developer",
         socialLinks: { twitter: "alice_dev" },

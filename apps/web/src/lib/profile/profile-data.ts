@@ -17,6 +17,10 @@ type DB = SupabaseClient<Database>;
 export interface ProfileUser {
   id: string;
   username: string;
+  /** Admin-set editorial name shown instead of `username` (#997), or null. */
+  displayName: string | null;
+  /** Admin-granted verified-teacher badge (#997). */
+  verified: boolean;
   bio: string;
   avatarUrl: string;
   joinedAt: Date;
@@ -231,7 +235,9 @@ export async function fetchPublicProfile(
 ): Promise<PublicProfileResult | null> {
   const { data: profile, error: profileError } = await supabase
     .from("public_profiles")
-    .select("id, username, bio, avatar_url, social_links, created_at")
+    .select(
+      "id, username, display_name, verified, bio, avatar_url, social_links, created_at"
+    )
     .eq("username", username)
     .single();
 
@@ -279,6 +285,10 @@ export async function fetchPublicProfile(
   const user: ProfileUser = {
     id: profile.id,
     username: profile.username ?? username,
+    displayName: profile.display_name ?? null,
+    // Default false, never a nullable passthrough: wrongly badging an
+    // unverified teacher is worse than briefly missing a badge.
+    verified: profile.verified ?? false,
     bio: profile.bio ?? "",
     avatarUrl: profile.avatar_url ?? "",
     joinedAt: new Date(profile.created_at ?? Date.now()),
@@ -358,6 +368,8 @@ export async function fetchOwnProfile(
   const user: ProfileUser = {
     id: profile.id,
     username: profile.username,
+    displayName: profile.display_name ?? null,
+    verified: profile.verified ?? false,
     bio: profile.bio ?? "",
     avatarUrl: profile.avatar_url ?? "",
     joinedAt: new Date(profile.created_at ?? Date.now()),

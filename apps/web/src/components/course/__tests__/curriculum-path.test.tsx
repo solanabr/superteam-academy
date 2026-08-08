@@ -3,9 +3,9 @@ import type { ReactElement } from "react";
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import { CurriculumPath } from "../curriculum-path";
 import { findNextIncompleteLesson } from "@/lib/courses/continue-learning";
 import messages from "@/messages/en.json";
+import { CurriculumPath } from "../curriculum-path";
 
 const modules = [
   {
