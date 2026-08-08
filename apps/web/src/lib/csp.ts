@@ -133,6 +133,14 @@ export function buildCsp(nonce: string): string {
       "https://accounts.google.com https://*.googleapis.com",
       "https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://stats.g.doubleclick.net",
       "https://*.posthog.com https://*.sentry.io https://*.ingest.sentry.io",
+      // Phantom Connect (#985/#992 review): the browser-sdk XHRs these three —
+      // auth.phantom.app (session/auth API), api.phantom.app (wallet API),
+      // time.phantom.app (clock sync) — origins read from the SDK dist, pinned
+      // exactly rather than *.phantom.app. Without them every enabled-state
+      // attempt dies as a CSP violation before the redirect. The redirect
+      // itself (connect.phantom.app) is a top-level navigation, which CSP does
+      // not govern, and the SDK creates no iframes — so frame-src is untouched.
+      "https://auth.phantom.app https://api.phantom.app https://time.phantom.app",
     ].join(" "),
 
     // Frames: Google OAuth may use frames; lesson videos embed the YouTube and

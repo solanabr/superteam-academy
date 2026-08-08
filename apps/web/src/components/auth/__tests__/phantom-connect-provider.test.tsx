@@ -146,3 +146,46 @@ describe("PhantomConnectProvider (#985)", () => {
     expect(screen.getByTestId("enabled")).toHaveTextContent("true");
   });
 });
+
+describe("PhantomConnectProvider — connect() rejection (#992 review)", () => {
+  function ConnectProbe() {
+    const { status, connect } = usePhantomConnect();
+    return (
+      <div>
+        <span data-testid="status2">{status}</span>
+        <button
+          onClick={() => {
+            // Swallow here the way a caller's catch would — the assertion is
+            // that the rejection REACHES this handler at all.
+            void connect("google").catch(() => {
+              document.title = "caller-saw-rejection";
+            });
+          }}
+        >
+          go
+        </button>
+      </div>
+    );
+  }
+
+  it("rethrows to the caller AND records error status — never swallows", async () => {
+    sdkMock.connect.mockRejectedValueOnce(new Error("popup closed"));
+
+    render(
+      <PhantomConnectProvider>
+        <ConnectProbe />
+      </PhantomConnectProvider>
+    );
+    await waitFor(() => expect(sdkMock.autoConnect).toHaveBeenCalled());
+
+    screen.getByRole("button", { name: "go" }).click();
+
+    // Both halves of the contract: hook consumers see `status: "error"`, and
+    // imperative callers get the rejection they need to reset their own UI
+    // (the AuthModal's loading flag — a swallowed error left it stuck forever).
+    await waitFor(() =>
+      expect(screen.getByTestId("status2")).toHaveTextContent("error")
+    );
+    await waitFor(() => expect(document.title).toBe("caller-saw-rejection"));
+  });
+});

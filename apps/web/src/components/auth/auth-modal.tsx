@@ -115,7 +115,14 @@ export function AuthModal({
    * FIRST: it is the only option that asks nothing of someone with no wallet.
    *
    * `connect` redirects, so on success this tab is navigating away and there is
-   * no post-connect state to set here.
+   * no post-connect state to set here. On FAILURE the provider rethrows after
+   * recording its own status — the catch below is what unsticks this modal
+   * (resets `loading`, which the Dialog's close guard keys off), so it must
+   * stay live code (PR #992 review).
+   *
+   * `"google"` is the one entry point by design; the client config also
+   * provisions `apple` and `injected` (lib/phantom/client.ts) for future
+   * buttons — provisioned ahead, not dead config.
    */
   const handleConnectPhantom = async () => {
     setLoading("phantom");
