@@ -1,0 +1,227 @@
+Object.defineProperty(__vite_ssr_exports__, "ThreadCard", { enumerable: true, configurable: true, get(){ try { return ThreadCard } catch {} }});
+const __vite_ssr_import_0__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/react@18.3.1/node_modules/react/jsx-dev-runtime.js", {"importedNames":["jsxDEV"]});const __vite_ssr_import_1__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/next@15.5.22_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.59.1_react-_19b537a435e1a44239c9fa952ee5d1b0/node_modules/next/image.js", {"importedNames":["default"]});const __vite_ssr_import_2__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/next@15.5.22_@babel+core@7.29.7_@opentelemetry+api@1.9.0_@playwright+test@1.59.1_react-_19b537a435e1a44239c9fa952ee5d1b0/node_modules/next/link.js", {"importedNames":["default"]});const __vite_ssr_import_3__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/next-intl@4.13.4_@swc+helpers@0.5.18_next@15.5.22_@babel+core@7.29.7_@opentelemetry+api_c195dd5a0acf86b5fabbbd2eb30b5576/node_modules/next-intl/dist/esm/development/index.react-client.js", {"importedNames":["useTranslations"]});const __vite_ssr_import_4__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/@phosphor-icons+react@2.1.10_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/@phosphor-icons/react/dist/index.es.js", {"importedNames":["CaretUp","ChatCircle","PushPin"]});const __vite_ssr_import_5__ = await __vite_ssr_import__("/src/components/gamification/level-badge.tsx", {"importedNames":["LevelBadge"]});const __vite_ssr_import_6__ = await __vite_ssr_import__("/src/lib/utils.ts", {"importedNames":["cn"]});const __vite_ssr_import_7__ = await __vite_ssr_import__("/src/components/community/thread-status-badge.tsx", {"importedNames":["ThreadStatusBadge"]});const __vite_ssr_import_8__ = await __vite_ssr_import__("/src/components/community/lesson-context-chip.tsx", {"importedNames":["LessonContextChip"]});"use client";
+
+
+
+
+
+
+
+
+
+function timeAgo(dateStr, t) {
+  const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1e3);
+  if (seconds < 60) return t("justNow");
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return t("minutesAgo", { count: minutes });
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return t("hoursAgo", { count: hours });
+  const days = Math.floor(hours / 24);
+  if (days < 30) return t("daysAgo", { count: days });
+  const months = Math.floor(days / 30);
+  return t("monthsAgo", { count: months });
+}
+function ThreadCard({
+  title,
+  slug,
+  type,
+  isSolved,
+  isPinned,
+  voteScore,
+  userVote,
+  answerCount,
+  author,
+  categorySlug,
+  createdAt,
+  context,
+  onVote
+}) {
+  const t = (0,__vite_ssr_import_3__.useTranslations)("community");
+  const href = categorySlug ? `/community/${categorySlug}/${slug}` : `/community/general/${slug}`;
+  return (
+    // A row in a flat list: no per-row radius, no per-row card. The divider is
+    // a hairline and the whole row tints on hover. ~10px vertical padding keeps
+    // the row under 40px tall on desktop.
+    /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("div", { className: "flex items-center gap-2.5 border-b border-[var(--border-default)] px-3 py-2.5 transition-colors last:border-b-0 hover:bg-[var(--card-hover)]", children: [
+      /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)(
+        "button",
+        {
+          type: "button",
+          onClick: () => onVote(userVote === 1 ? 0 : 1),
+          "aria-label": t("upvote"),
+          "aria-pressed": userVote === 1,
+          className: (0,__vite_ssr_import_6__.cn)(
+            "flex shrink-0 items-center gap-0.5 rounded px-1 py-0.5 text-[11px] font-bold tabular-nums transition-colors hover:bg-[var(--primary-dim)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]",
+            userVote === 1 ? "text-[var(--primary)]" : "text-[var(--text-2)] hover:text-[var(--primary)]"
+          ),
+          children: [
+            /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)((0,__vite_ssr_import_4__.CaretUp), { size: 11, weight: userVote === 1 ? "fill" : "bold" }, void 0, false, {
+              fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/thread-card.tsx",
+              lineNumber: 98,
+              columnNumber: 9
+            }, this),
+            voteScore
+          ]
+        },
+        void 0,
+        true,
+        {
+          fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/thread-card.tsx",
+          lineNumber: 86,
+          columnNumber: 7
+        },
+        this
+      ),
+      /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("div", { className: "flex min-w-0 flex-1 flex-wrap items-center justify-between gap-x-3 gap-y-0.5", children: [
+        /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("div", { className: "flex min-w-0 flex-1 items-center gap-2", children: [
+          isPinned && /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)(
+            (0,__vite_ssr_import_4__.PushPin),
+            {
+              size: 12,
+              weight: "fill",
+              className: "shrink-0 text-[var(--primary)]",
+              "aria-hidden": "true"
+            },
+            void 0,
+            false,
+            {
+              fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/thread-card.tsx",
+              lineNumber: 107,
+              columnNumber: 13
+            },
+            this
+          ),
+          /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)(
+            (0,__vite_ssr_import_2__.default),
+            {
+              href,
+              className: "truncate font-display text-sm font-bold text-[var(--text)] transition-colors hover:text-[var(--primary)]",
+              children: title
+            },
+            void 0,
+            false,
+            {
+              fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/thread-card.tsx",
+              lineNumber: 114,
+              columnNumber: 11
+            },
+            this
+          ),
+          /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)((0,__vite_ssr_import_7__.ThreadStatusBadge), { type, isSolved }, void 0, false, {
+            fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/thread-card.tsx",
+            lineNumber: 120,
+            columnNumber: 11
+          }, this),
+          context && /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)((0,__vite_ssr_import_8__.LessonContextChip), { context }, void 0, false, {
+            fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/thread-card.tsx",
+            lineNumber: 121,
+            columnNumber: 23
+          }, this)
+        ] }, void 0, true, {
+          fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/thread-card.tsx",
+          lineNumber: 105,
+          columnNumber: 9
+        }, this),
+        /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("div", { className: "flex shrink-0 items-center gap-2 font-mono text-[11px] leading-none text-[var(--text-2)]", children: [
+          author.username ? /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)(
+            (0,__vite_ssr_import_2__.default),
+            {
+              href: `/profile/${encodeURIComponent(author.username)}`,
+              className: "flex items-center gap-1 transition-colors hover:text-[var(--primary)]",
+              children: [
+                author.avatar_url ? /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)(
+                  (0,__vite_ssr_import_1__.default),
+                  {
+                    src: author.avatar_url,
+                    alt: "",
+                    width: 14,
+                    height: 14,
+                    className: "h-3.5 w-3.5 rounded-full"
+                  },
+                  void 0,
+                  false,
+                  {
+                    fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/thread-card.tsx",
+                    lineNumber: 132,
+                    columnNumber: 17
+                  },
+                  this
+                ) : /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("div", { className: "h-3.5 w-3.5 rounded-full bg-[var(--primary-dim)]" }, void 0, false, {
+                  fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/thread-card.tsx",
+                  lineNumber: 140,
+                  columnNumber: 17
+                }, this),
+                /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("span", { className: "max-w-[10rem] truncate", children: author.username }, void 0, false, {
+                  fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/thread-card.tsx",
+                  lineNumber: 142,
+                  columnNumber: 15
+                }, this)
+              ]
+            },
+            void 0,
+            true,
+            {
+              fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/thread-card.tsx",
+              lineNumber: 127,
+              columnNumber: 13
+            },
+            this
+          ) : /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("span", { className: "flex items-center gap-1", children: [
+            /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("div", { className: "h-3.5 w-3.5 rounded-full bg-[var(--primary-dim)]" }, void 0, false, {
+              fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/thread-card.tsx",
+              lineNumber: 146,
+              columnNumber: 15
+            }, this),
+            /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("span", { className: "max-w-[10rem] truncate", children: t("anonymous") }, void 0, false, {
+              fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/thread-card.tsx",
+              lineNumber: 147,
+              columnNumber: 15
+            }, this)
+          ] }, void 0, true, {
+            fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/thread-card.tsx",
+            lineNumber: 145,
+            columnNumber: 13
+          }, this),
+          author.level > 0 && /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)((0,__vite_ssr_import_5__.LevelBadge), { level: author.level, size: "xs" }, void 0, false, {
+            fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/thread-card.tsx",
+            lineNumber: 150,
+            columnNumber: 32
+          }, this),
+          /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("span", { children: timeAgo(createdAt, t) }, void 0, false, {
+            fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/thread-card.tsx",
+            lineNumber: 151,
+            columnNumber: 11
+          }, this),
+          /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("span", { className: "flex items-center gap-1", children: [
+            /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)((0,__vite_ssr_import_4__.ChatCircle), { size: 11, "aria-hidden": "true" }, void 0, false, {
+              fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/thread-card.tsx",
+              lineNumber: 153,
+              columnNumber: 13
+            }, this),
+            answerCount
+          ] }, void 0, true, {
+            fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/thread-card.tsx",
+            lineNumber: 152,
+            columnNumber: 11
+          }, this)
+        ] }, void 0, true, {
+          fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/thread-card.tsx",
+          lineNumber: 124,
+          columnNumber: 9
+        }, this)
+      ] }, void 0, true, {
+        fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/thread-card.tsx",
+        lineNumber: 104,
+        columnNumber: 7
+      }, this)
+    ] }, void 0, true, {
+      fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/thread-card.tsx",
+      lineNumber: 83,
+      columnNumber: 5
+    }, this)
+  );
+}
+//# sourceMappingSource=vite-generated
+//# sourceMappingURL=data:application/json;base64,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Q3hDO0FBQUEsZUFGSDtBQUFBO0FBQUE7QUFBQTtBQUFBLGlCQUdBO0FBQUEsYUEvQkY7QUFBQTtBQUFBO0FBQUE7QUFBQSxlQWdDQTtBQUFBLFdBcERGO0FBQUE7QUFBQTtBQUFBO0FBQUEsYUFxREE7QUFBQSxTQTFFRjtBQUFBO0FBQUE7QUFBQTtBQUFBLFdBMkVBO0FBQUE7QUFFSiIsIm5hbWVzIjpbXSwiaWdub3JlTGlzdCI6W10sInNvdXJjZXMiOlsidGhyZWFkLWNhcmQudHN4Il0sInNvdXJjZXNDb250ZW50IjpbIlwidXNlIGNsaWVudFwiO1xuXG5pbXBvcnQgSW1hZ2UgZnJvbSBcIm5leHQvaW1hZ2VcIjtcbmltcG9ydCBMaW5rIGZyb20gXCJuZXh0L2xpbmtcIjtcbmltcG9ydCB7IHVzZVRyYW5zbGF0aW9ucyB9IGZyb20gXCJuZXh0LWludGxcIjtcbmltcG9ydCB7IENhcmV0VXAsIENoYXRDaXJjbGUsIFB1c2hQaW4gfSBmcm9tIFwiQHBob3NwaG9yLWljb25zL3JlYWN0XCI7XG5pbXBvcnQgeyBMZXZlbEJhZGdlIH0gZnJvbSBcIkAvY29tcG9uZW50cy9nYW1pZmljYXRpb24vbGV2ZWwtYmFkZ2VcIjtcbmltcG9ydCB7IGNuIH0gZnJvbSBcIkAvbGliL3V0aWxzXCI7XG5pbXBvcnQgeyBUaHJlYWRTdGF0dXNCYWRnZSB9IGZyb20gXCIuL3RocmVhZC1zdGF0dXMtYmFkZ2VcIjtcbmltcG9ydCB7IExlc3NvbkNvbnRleHRDaGlwLCB0eXBlIFRocmVhZENvbnRleHQgfSBmcm9tIFwiLi9sZXNzb24tY29udGV4dC1jaGlwXCI7XG5cbmludGVyZmFjZSBUaHJlYWRDYXJkQXV0aG9yIHtcbiAgdXNlcm5hbWU6IHN0cmluZyB8IG51bGw7XG4gIGF2YXRhcl91cmw6IHN0cmluZyB8IG51bGw7XG4gIGxldmVsOiBudW1iZXI7XG59XG5cbmludGVyZmFjZSBUaHJlYWRDYXJkUHJvcHMge1xuICB0aXRsZTogc3RyaW5nO1xuICBzbHVnOiBzdHJpbmc7XG4gIHR5cGU6IFwicXVlc3Rpb25cIiB8IFwiZGlzY3Vzc2lvblwiO1xuICBpc1NvbHZlZDogYm9vbGVhbjtcbiAgaXNQaW5uZWQ6IGJvb2xlYW47XG4gIHZvdGVTY29yZTogbnVtYmVyO1xuICB1c2VyVm90ZTogMSB8IC0xIHwgbnVsbDtcbiAgYW5zd2VyQ291bnQ6IG51bWJlcjtcbiAgYXV0aG9yOiBUaHJlYWRDYXJkQXV0aG9yO1xuICBjYXRlZ29yeVNsdWc/OiBzdHJpbmc7XG4gIGNyZWF0ZWRBdDogc3RyaW5nO1xuICAvKiogUmVzb2x2ZWQgY291cnNlL2xlc3NvbiBwcm92ZW5hbmNlLCB3aGVuIHRoZSB0aHJlYWQgd2FzIHN0YXJ0ZWQgZnJvbSBvbmUuICovXG4gIGNvbnRleHQ/OiBUaHJlYWRDb250ZXh0IHwgbnVsbDtcbiAgb25Wb3RlOiAodmFsdWU6IDAgfCAxIHwgLTEpID0+IHZvaWQ7XG59XG5cbmZ1bmN0aW9uIHRpbWVBZ28oXG4gIGRhdGVTdHI6IHN0cmluZyxcbiAgdDogKGtleTogc3RyaW5nLCB2YWx1ZXM/OiBSZWNvcmQ8c3RyaW5nLCBudW1iZXI+KSA9PiBzdHJpbmdcbik6IHN0cmluZyB7XG4gIGNvbnN0IHNlY29uZHMgPSBNYXRoLmZsb29yKChEYXRlLm5vdygpIC0gbmV3IERhdGUoZGF0ZVN0cikuZ2V0VGltZSgpKSAvIDEwMDApO1xuICBpZiAoc2Vjb25kcyA8IDYwKSByZXR1cm4gdChcImp1c3ROb3dcIik7XG4gIGNvbnN0IG1pbnV0ZXMgPSBNYXRoLmZsb29yKHNlY29uZHMgLyA2MCk7XG4gIGlmIChtaW51dGVzIDwgNjApIHJldHVybiB0KFwibWludXRlc0Fnb1wiLCB7IGNvdW50OiBtaW51dGVzIH0pO1xuICBjb25zdCBob3VycyA9IE1hdGguZmxvb3IobWludXRlcyAvIDYwKTtcbiAgaWYgKGhvdXJzIDwgMjQpIHJldHVybiB0KFwiaG91cnNBZ29cIiwgeyBjb3VudDogaG91cnMgfSk7XG4gIGNvbnN0IGRheXMgPSBNYXRoLmZsb29yKGhvdXJzIC8gMjQpO1xuICBpZiAoZGF5cyA8IDMwKSByZXR1cm4gdChcImRheXNBZ29cIiwgeyBjb3VudDogZGF5cyB9KTtcbiAgY29uc3QgbW9udGhzID0gTWF0aC5mbG9vcihkYXlzIC8gMzApO1xuICByZXR1cm4gdChcIm1vbnRoc0Fnb1wiLCB7IGNvdW50OiBtb250aHMgfSk7XG59XG5cbi8qKlxuICogQSBzaW5nbGUgZGVuc2Ugcm93IGluIGEgdGhyZWFkIGxpc3Qg4oCUIEhOL0xlZXRDb2RlIGRlbnNpdHkgcmF0aGVyIHRoYW4gdGhlXG4gKiB0YWxsIGNhcmQgdGhpcyB1c2VkIHRvIGJlIChhIGZ1bGwtaGVpZ2h0IGNhcmQgd2l0aCBhIHN0YWNrZWQg4payL3Njb3JlL+KWvCByYWlsXG4gKiB0dXJuZWQgYSB0ZW4tdGhyZWFkIGZlZWQgaW50byBhIHBhZ2Ugb2YgYWlyKS5cbiAqXG4gKiBWb3RpbmcgY29sbGFwc2VzIHRvIG9uZSDilrIgKyBjb3VudCB0b2dnbGU7IHRoZSBmdWxsIHVwL2Rvd24gcmFpbCBiZWxvbmdzIHRvXG4gKiB0aGUgdGhyZWFkIGRldGFpbCBwYWdlLCB3aGVyZSB0aGVyZSBpcyByb29tIHRvIHJlYWQgYmVmb3JlIHlvdSBqdWRnZS5cbiAqL1xuZXhwb3J0IGZ1bmN0aW9uIFRocmVhZENhcmQoe1xuICB0aXRsZSxcbiAgc2x1ZyxcbiAgdHlwZSxcbiAgaXNTb2x2ZWQsXG4gIGlzUGlubmVkLFxuICB2b3RlU2NvcmUsXG4gIHVzZXJWb3RlLFxuICBhbnN3ZXJDb3VudCxcbiAgYXV0aG9yLFxuICBjYXRlZ29yeVNsdWcsXG4gIGNyZWF0ZWRBdCxcbiAgY29udGV4dCxcbiAgb25Wb3RlLFxufTogVGhyZWFkQ2FyZFByb3BzKSB7XG4gIGNvbnN0IHQgPSB1c2VUcmFuc2xhdGlvbnMoXCJjb21tdW5pdHlcIik7XG4gIGNvbnN0IGhyZWYgPSBjYXRlZ29yeVNsdWdcbiAgICA/IGAvY29tbXVuaXR5LyR7Y2F0ZWdvcnlTbHVnfS8ke3NsdWd9YFxuICAgIDogYC9jb21tdW5pdHkvZ2VuZXJhbC8ke3NsdWd9YDtcblxuICByZXR1cm4gKFxuICAgIC8vIEEgcm93IGluIGEgZmxhdCBsaXN0OiBubyBwZXItcm93IHJhZGl1cywgbm8gcGVyLXJvdyBjYXJkLiBUaGUgZGl2aWRlciBpc1xuICAgIC8vIGEgaGFpcmxpbmUgYW5kIHRoZSB3aG9sZSByb3cgdGludHMgb24gaG92ZXIuIH4xMHB4IHZlcnRpY2FsIHBhZGRpbmcga2VlcHNcbiAgICAvLyB0aGUgcm93IHVuZGVyIDQwcHggdGFsbCBvbiBkZXNrdG9wLlxuICAgIDxkaXYgY2xhc3NOYW1lPVwiZmxleCBpdGVtcy1jZW50ZXIgZ2FwLTIuNSBib3JkZXItYiBib3JkZXItW3ZhcigtLWJvcmRlci1kZWZhdWx0KV0gcHgtMyBweS0yLjUgdHJhbnNpdGlvbi1jb2xvcnMgbGFzdDpib3JkZXItYi0wIGhvdmVyOmJnLVt2YXIoLS1jYXJkLWhvdmVyKV1cIj5cbiAgICAgIHsvKiBPbmUgY29tcGFjdCBob3Jpem9udGFsIHZvdGUgY2x1c3RlciDigJQgY2FyZXQgYmVzaWRlIHRoZSBjb3VudCwgbmV2ZXIgYVxuICAgICAgICAgIGNhcmV0IHN0YWNrZWQgYWJvdmUgaXQgKHRoYXQgcmFpbCBpcyB3aGF0IG1hZGUgcm93cyB0YWxsKS4gKi99XG4gICAgICA8YnV0dG9uXG4gICAgICAgIHR5cGU9XCJidXR0b25cIlxuICAgICAgICBvbkNsaWNrPXsoKSA9PiBvblZvdGUodXNlclZvdGUgPT09IDEgPyAwIDogMSl9XG4gICAgICAgIGFyaWEtbGFiZWw9e3QoXCJ1cHZvdGVcIil9XG4gICAgICAgIGFyaWEtcHJlc3NlZD17dXNlclZvdGUgPT09IDF9XG4gICAgICAgIGNsYXNzTmFtZT17Y24oXG4gICAgICAgICAgXCJmbGV4IHNocmluay0wIGl0ZW1zLWNlbnRlciBnYXAtMC41IHJvdW5kZWQgcHgtMSBweS0wLjUgdGV4dC1bMTFweF0gZm9udC1ib2xkIHRhYnVsYXItbnVtcyB0cmFuc2l0aW9uLWNvbG9ycyBob3ZlcjpiZy1bdmFyKC0tcHJpbWFyeS1kaW0pXSBmb2N1cy12aXNpYmxlOm91dGxpbmUtbm9uZSBmb2N1cy12aXNpYmxlOnJpbmctMiBmb2N1cy12aXNpYmxlOnJpbmctW3ZhcigtLXByaW1hcnkpXVwiLFxuICAgICAgICAgIHVzZXJWb3RlID09PSAxXG4gICAgICAgICAgICA/IFwidGV4dC1bdmFyKC0tcHJpbWFyeSldXCJcbiAgICAgICAgICAgIDogXCJ0ZXh0LVt2YXIoLS10ZXh0LTIpXSBob3Zlcjp0ZXh0LVt2YXIoLS1wcmltYXJ5KV1cIlxuICAgICAgICApfVxuICAgICAgPlxuICAgICAgICA8Q2FyZXRVcCBzaXplPXsxMX0gd2VpZ2h0PXt1c2VyVm90ZSA9PT0gMSA/IFwiZmlsbFwiIDogXCJib2xkXCJ9IC8+XG4gICAgICAgIHt2b3RlU2NvcmV9XG4gICAgICA8L2J1dHRvbj5cblxuICAgICAgey8qIFRpdGxlIHRha2VzIHRoZSBzbGFjayBhbmQgdHJ1bmNhdGVzOyBtZXRhIGlzIGEgZml4ZWQgY29tcGFjdCBjbHVzdGVyXG4gICAgICAgICAgcGlubmVkIHJpZ2h0LCBzbyB0aGVyZSBpcyBubyBvY2VhbiBvZiBzcGFjZSBiZXR3ZWVuIHRoZW0uICovfVxuICAgICAgPGRpdiBjbGFzc05hbWU9XCJmbGV4IG1pbi13LTAgZmxleC0xIGZsZXgtd3JhcCBpdGVtcy1jZW50ZXIganVzdGlmeS1iZXR3ZWVuIGdhcC14LTMgZ2FwLXktMC41XCI+XG4gICAgICAgIDxkaXYgY2xhc3NOYW1lPVwiZmxleCBtaW4tdy0wIGZsZXgtMSBpdGVtcy1jZW50ZXIgZ2FwLTJcIj5cbiAgICAgICAgICB7aXNQaW5uZWQgJiYgKFxuICAgICAgICAgICAgPFB1c2hQaW5cbiAgICAgICAgICAgICAgc2l6ZT17MTJ9XG4gICAgICAgICAgICAgIHdlaWdodD1cImZpbGxcIlxuICAgICAgICAgICAgICBjbGFzc05hbWU9XCJzaHJpbmstMCB0ZXh0LVt2YXIoLS1wcmltYXJ5KV1cIlxuICAgICAgICAgICAgICBhcmlhLWhpZGRlbj1cInRydWVcIlxuICAgICAgICAgICAgLz5cbiAgICAgICAgICApfVxuICAgICAgICAgIDxMaW5rXG4gICAgICAgICAgICBocmVmPXtocmVmfVxuICAgICAgICAgICAgY2xhc3NOYW1lPVwidHJ1bmNhdGUgZm9udC1kaXNwbGF5IHRleHQtc20gZm9udC1ib2xkIHRleHQtW3ZhcigtLXRleHQpXSB0cmFuc2l0aW9uLWNvbG9ycyBob3Zlcjp0ZXh0LVt2YXIoLS1wcmltYXJ5KV1cIlxuICAgICAgICAgID5cbiAgICAgICAgICAgIHt0aXRsZX1cbiAgICAgICAgICA8L0xpbms+XG4gICAgICAgICAgPFRocmVhZFN0YXR1c0JhZGdlIHR5cGU9e3R5cGV9IGlzU29sdmVkPXtpc1NvbHZlZH0gLz5cbiAgICAgICAgICB7Y29udGV4dCAmJiA8TGVzc29uQ29udGV4dENoaXAgY29udGV4dD17Y29udGV4dH0gLz59XG4gICAgICAgIDwvZGl2PlxuXG4gICAgICAgIDxkaXYgY2xhc3NOYW1lPVwiZmxleCBzaHJpbmstMCBpdGVtcy1jZW50ZXIgZ2FwLTIgZm9udC1tb25vIHRleHQtWzExcHhdIGxlYWRpbmctbm9uZSB0ZXh0LVt2YXIoLS10ZXh0LTIpXVwiPlxuICAgICAgICAgIHsvKiBOYW1lZCBhdXRob3JzIGxpbmsgdG8gdGhlaXIgcHVibGljIHByb2ZpbGU7IGFub255bW91cyBzdGF5cyB0ZXh0LiAqL31cbiAgICAgICAgICB7YXV0aG9yLnVzZXJuYW1lID8gKFxuICAgICAgICAgICAgPExpbmtcbiAgICAgICAgICAgICAgaHJlZj17YC9wcm9maWxlLyR7ZW5jb2RlVVJJQ29tcG9uZW50KGF1dGhvci51c2VybmFtZSl9YH1cbiAgICAgICAgICAgICAgY2xhc3NOYW1lPVwiZmxleCBpdGVtcy1jZW50ZXIgZ2FwLTEgdHJhbnNpdGlvbi1jb2xvcnMgaG92ZXI6dGV4dC1bdmFyKC0tcHJpbWFyeSldXCJcbiAgICAgICAgICAgID5cbiAgICAgICAgICAgICAge2F1dGhvci5hdmF0YXJfdXJsID8gKFxuICAgICAgICAgICAgICAgIDxJbWFnZVxuICAgICAgICAgICAgICAgICAgc3JjPXthdXRob3IuYXZhdGFyX3VybH1cbiAgICAgICAgICAgICAgICAgIGFsdD1cIlwiXG4gICAgICAgICAgICAgICAgICB3aWR0aD17MTR9XG4gICAgICAgICAgICAgICAgICBoZWlnaHQ9ezE0fVxuICAgICAgICAgICAgICAgICAgY2xhc3NOYW1lPVwiaC0zLjUgdy0zLjUgcm91bmRlZC1mdWxsXCJcbiAgICAgICAgICAgICAgICAvPlxuICAgICAgICAgICAgICApIDogKFxuICAgICAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPVwiaC0zLjUgdy0zLjUgcm91bmRlZC1mdWxsIGJnLVt2YXIoLS1wcmltYXJ5LWRpbSldXCIgLz5cbiAgICAgICAgICAgICAgKX1cbiAgICAgICAgICAgICAgPHNwYW4gY2xhc3NOYW1lPVwibWF4LXctWzEwcmVtXSB0cnVuY2F0ZVwiPnthdXRob3IudXNlcm5hbWV9PC9zcGFuPlxuICAgICAgICAgICAgPC9MaW5rPlxuICAgICAgICAgICkgOiAoXG4gICAgICAgICAgICA8c3BhbiBjbGFzc05hbWU9XCJmbGV4IGl0ZW1zLWNlbnRlciBnYXAtMVwiPlxuICAgICAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT1cImgtMy41IHctMy41IHJvdW5kZWQtZnVsbCBiZy1bdmFyKC0tcHJpbWFyeS1kaW0pXVwiIC8+XG4gICAgICAgICAgICAgIDxzcGFuIGNsYXNzTmFtZT1cIm1heC13LVsxMHJlbV0gdHJ1bmNhdGVcIj57dChcImFub255bW91c1wiKX08L3NwYW4+XG4gICAgICAgICAgICA8L3NwYW4+XG4gICAgICAgICAgKX1cbiAgICAgICAgICB7YXV0aG9yLmxldmVsID4gMCAmJiA8TGV2ZWxCYWRnZSBsZXZlbD17YXV0aG9yLmxldmVsfSBzaXplPVwieHNcIiAvPn1cbiAgICAgICAgICA8c3Bhbj57dGltZUFnbyhjcmVhdGVkQXQsIHQpfTwvc3Bhbj5cbiAgICAgICAgICA8c3BhbiBjbGFzc05hbWU9XCJmbGV4IGl0ZW1zLWNlbnRlciBnYXAtMVwiPlxuICAgICAgICAgICAgPENoYXRDaXJjbGUgc2l6ZT17MTF9IGFyaWEtaGlkZGVuPVwidHJ1ZVwiIC8+XG4gICAgICAgICAgICB7YW5zd2VyQ291bnR9XG4gICAgICAgICAgPC9zcGFuPlxuICAgICAgICA8L2Rpdj5cbiAgICAgIDwvZGl2PlxuICAgIDwvZGl2PlxuICApO1xufVxuIl0sImZpbGUiOiIvc3JjL2NvbXBvbmVudHMvY29tbXVuaXR5L3RocmVhZC1jYXJkLnRzeCJ9
+
+//# vitestCache=W3siZmlsZSI6IjEiLCJpZCI6IjEiLCJ1cmwiOiIyIiwiaW1wb3J0ZWRVcmxzIjoiMyIsIm1hcHBpbmdzIjpmYWxzZX0sIi9Vc2Vycy9kYXZpZC9Eb2N1bWVudHMva21pbm8vc29sL3N1cGVydGVhbS1hY2FkZW15L2FwcHMvd2ViL3NyYy9jb21wb25lbnRzL2NvbW11bml0eS90aHJlYWQtY2FyZC50c3giLCIvc3JjL2NvbXBvbmVudHMvY29tbXVuaXR5L3RocmVhZC1jYXJkLnRzeCIsW11d

@@ -1,0 +1,30 @@
+Object.defineProperty(__vite_ssr_exports__, "default", { enumerable: true, configurable: true, get(){ try { return __vite_ssr_export_default__ } catch {} }});
+const __vite_ssr_export_default__ = [
+	{
+		_id: "path-first-steps",
+		_type: "learningPath",
+		courses: [
+			{
+				_key: "course-btc-to-sol-evolution",
+				_ref: "course-btc-to-sol-evolution",
+				_type: "reference",
+				_weak: true
+			},
+			{
+				_key: "course-solana-speedrun",
+				_ref: "course-solana-speedrun",
+				_type: "reference",
+				_weak: true
+			}
+		],
+		description: "Your first steps onchain. Understand how blockchains evolved from Bitcoin to Solana, then go hands-on and make your first moves on the network in minutes.",
+		difficulty: "beginner",
+		draft: false,
+		order: 1,
+		retired: false,
+		slug: "first-steps",
+		tag: "Foundation",
+		title: "First Steps"
+	}
+];
+//# vitestCache=W3siZmlsZSI6IjEiLCJpZCI6IjEiLCJ1cmwiOiIyIiwiaW1wb3J0ZWRVcmxzIjoiMyIsIm1hcHBpbmdzIjpmYWxzZX0sIi9Vc2Vycy9kYXZpZC9Eb2N1bWVudHMva21pbm8vc29sL3N1cGVydGVhbS1hY2FkZW15L2FwcHMvd2ViL3NyYy9jb250ZW50L2dlbmVyYXRlZC9wYXRocy5qc29uIiwiL3NyYy9jb250ZW50L2dlbmVyYXRlZC9wYXRocy5qc29uIixbXV0=

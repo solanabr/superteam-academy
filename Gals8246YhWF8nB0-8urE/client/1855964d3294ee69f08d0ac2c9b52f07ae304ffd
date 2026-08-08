@@ -1,0 +1,198 @@
+Object.defineProperty(__vite_ssr_exports__, "VoteButton", { enumerable: true, configurable: true, get(){ try { return VoteButton } catch {} }});
+const __vite_ssr_import_0__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/react@18.3.1/node_modules/react/jsx-dev-runtime.js", {"importedNames":["jsxDEV"]});const __vite_ssr_import_1__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/next-intl@4.13.4_@swc+helpers@0.5.18_next@15.5.22_@babel+core@7.29.7_@opentelemetry+api_c195dd5a0acf86b5fabbbd2eb30b5576/node_modules/next-intl/dist/esm/development/index.react-client.js", {"importedNames":["useTranslations"]});const __vite_ssr_import_2__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/@phosphor-icons+react@2.1.10_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/@phosphor-icons/react/dist/index.es.js", {"importedNames":["CaretUp","CaretDown"]});const __vite_ssr_import_3__ = await __vite_ssr_import__("/src/lib/utils.ts", {"importedNames":["cn"]});"use client";
+
+
+
+
+function VoteButton({
+  score,
+  userVote,
+  onVote,
+  disabled = false,
+  size = "default",
+  layout = "vertical"
+}) {
+  const t = (0,__vite_ssr_import_1__.useTranslations)("community");
+  const iconSize = layout === "horizontal" ? 14 : size === "sm" ? 18 : 22;
+  if (layout === "horizontal") {
+    return /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("span", { className: "inline-flex items-center gap-0.5", children: [
+      /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)(
+        "button",
+        {
+          type: "button",
+          disabled,
+          onClick: () => onVote(userVote === 1 ? 0 : 1),
+          "aria-pressed": userVote === 1,
+          className: (0,__vite_ssr_import_3__.cn)(
+            "flex items-center justify-center rounded p-1 transition-colors hover:bg-[var(--primary-dim)]",
+            "disabled:cursor-not-allowed disabled:opacity-50",
+            userVote === 1 ? "text-[var(--primary)]" : "text-[var(--text-2)] hover:text-[var(--primary)]"
+          ),
+          "aria-label": t("upvote"),
+          children: /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)((0,__vite_ssr_import_2__.CaretUp), { size: iconSize, weight: userVote === 1 ? "fill" : "bold" }, void 0, false, {
+            fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/vote-button.tsx",
+            lineNumber: 46,
+            columnNumber: 11
+          }, this)
+        },
+        void 0,
+        false,
+        {
+          fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/vote-button.tsx",
+          lineNumber: 32,
+          columnNumber: 9
+        },
+        this
+      ),
+      /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)(
+        "span",
+        {
+          className: (0,__vite_ssr_import_3__.cn)(
+            "font-display text-xs font-bold tabular-nums",
+            score > 0 && "text-[var(--primary)]",
+            score < 0 && "text-[var(--danger)]",
+            score === 0 && "text-[var(--text-2)]"
+          ),
+          children: score
+        },
+        void 0,
+        false,
+        {
+          fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/vote-button.tsx",
+          lineNumber: 48,
+          columnNumber: 9
+        },
+        this
+      ),
+      /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)(
+        "button",
+        {
+          type: "button",
+          disabled,
+          onClick: () => onVote(userVote === -1 ? 0 : -1),
+          "aria-pressed": userVote === -1,
+          className: (0,__vite_ssr_import_3__.cn)(
+            "flex items-center justify-center rounded p-1 transition-colors hover:bg-[var(--danger-light)]",
+            "disabled:cursor-not-allowed disabled:opacity-50",
+            userVote === -1 ? "text-[var(--danger)]" : "text-[var(--text-2)] hover:text-[var(--danger)]"
+          ),
+          "aria-label": t("downvote"),
+          children: /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)(
+            (0,__vite_ssr_import_2__.CaretDown),
+            {
+              size: iconSize,
+              weight: userVote === -1 ? "fill" : "bold"
+            },
+            void 0,
+            false,
+            {
+              fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/vote-button.tsx",
+              lineNumber: 72,
+              columnNumber: 11
+            },
+            this
+          )
+        },
+        void 0,
+        false,
+        {
+          fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/vote-button.tsx",
+          lineNumber: 58,
+          columnNumber: 9
+        },
+        this
+      )
+    ] }, void 0, true, {
+      fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/vote-button.tsx",
+      lineNumber: 31,
+      columnNumber: 7
+    }, this);
+  };
+  return /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)("div", { className: "flex flex-col items-center gap-0.5", children: [
+    /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)(
+      "button",
+      {
+        type: "button",
+        disabled,
+        onClick: () => onVote(userVote === 1 ? 0 : 1),
+        "aria-pressed": userVote === 1,
+        className: (0,__vite_ssr_import_3__.cn)(
+          "flex items-center justify-center rounded-md p-2 transition-colors hover:bg-[var(--primary-dim)]",
+          "disabled:cursor-not-allowed disabled:opacity-50",
+          userVote === 1 ? "text-[var(--primary)]" : "text-[var(--text-2)] hover:text-[var(--primary)]"
+        ),
+        "aria-label": t("upvote"),
+        children: /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)((0,__vite_ssr_import_2__.CaretUp), { size: iconSize, weight: userVote === 1 ? "fill" : "bold" }, void 0, false, {
+          fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/vote-button.tsx",
+          lineNumber: 97,
+          columnNumber: 9
+        }, this)
+      },
+      void 0,
+      false,
+      {
+        fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/vote-button.tsx",
+        lineNumber: 83,
+        columnNumber: 7
+      },
+      this
+    ),
+    /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)(
+      "span",
+      {
+        className: (0,__vite_ssr_import_3__.cn)(
+          "font-display font-bold tabular-nums",
+          size === "sm" ? "text-sm" : "text-base",
+          score > 0 && "text-[var(--primary)]",
+          score < 0 && "text-[var(--danger)]",
+          score === 0 && "text-[var(--text-2)]"
+        ),
+        children: score
+      },
+      void 0,
+      false,
+      {
+        fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/vote-button.tsx",
+        lineNumber: 100,
+        columnNumber: 7
+      },
+      this
+    ),
+    /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)(
+      "button",
+      {
+        type: "button",
+        disabled,
+        onClick: () => onVote(userVote === -1 ? 0 : -1),
+        "aria-pressed": userVote === -1,
+        className: (0,__vite_ssr_import_3__.cn)(
+          "flex items-center justify-center rounded-md p-2 transition-colors hover:bg-[var(--danger-light)]",
+          "disabled:cursor-not-allowed disabled:opacity-50",
+          userVote === -1 ? "text-[var(--danger)]" : "text-[var(--text-2)] hover:text-[var(--danger)]"
+        ),
+        "aria-label": t("downvote"),
+        children: /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)((0,__vite_ssr_import_2__.CaretDown), { size: iconSize, weight: userVote === -1 ? "fill" : "bold" }, void 0, false, {
+          fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/vote-button.tsx",
+          lineNumber: 126,
+          columnNumber: 9
+        }, this)
+      },
+      void 0,
+      false,
+      {
+        fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/vote-button.tsx",
+        lineNumber: 112,
+        columnNumber: 7
+      },
+      this
+    )
+  ] }, void 0, true, {
+    fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/vote-button.tsx",
+    lineNumber: 82,
+    columnNumber: 5
+  }, this);
+}
+//# sourceMappingSource=vite-generated
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJtYXBwaW5ncyI6IkFBQUEsQ0FBQTtBQTZDVSxzTkEzQ1YsdVdBQ0EsNlNBQ0E7Ozs7O0FBYU8sU0FBUyxXQUFXO0FBQUEsRUFDekI7QUFBQSxFQUNBO0FBQUEsRUFDQTtBQUFBLEVBQ0EsV0FBVztBQUFBLEVBQ1gsT0FBTztBQUFBLEVBQ1AsU0FBUztBQUNYLEdBQW9CO0FBQ2xCLFFBQU0sT0FBSSx1Q0FBZ0IsV0FBVztBQUNyQyxRQUFNLFdBQVcsV0FBVyxlQUFlLEtBQUssU0FBUyxPQUFPLEtBQUs7QUFFckUsTUFBSSxXQUFXLGNBQWM7QUFDM0IsV0FDRSxpREFBQyxVQUFLLFdBQVUsb0NBQ2Q7QUFBQTtBQUFBLFFBQUM7QUFBQTtBQUFBLFVBQ0MsTUFBSztBQUFBLFVBQ0w7QUFBQSxVQUNBLFNBQVMsTUFBTSxPQUFPLGFBQWEsSUFBSSxJQUFJLENBQUM7QUFBQSxVQUM1QyxnQkFBYyxhQUFhO0FBQUEsVUFDM0IsY0FBVztBQUFBLFlBQ1Q7QUFBQSxZQUNBO0FBQUEsWUFDQSxhQUFhLElBQ1QsMEJBQ0E7QUFBQSxVQUNOO0FBQUEsVUFDQSxjQUFZLEVBQUUsUUFBUTtBQUFBLFVBRXRCLDhEQUFDLGtDQUFRLE1BQU0sVUFBVSxRQUFRLGFBQWEsSUFBSSxTQUFTLFVBQTNEO0FBQUE7QUFBQTtBQUFBO0FBQUEsaUJBQW1FO0FBQUE7QUFBQSxRQWRyRTtBQUFBO0FBQUE7QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUFBO0FBQUEsTUFlQTtBQUFBLE1BQ0E7QUFBQSxRQUFDO0FBQUE7QUFBQSxVQUNDLGNBQVc7QUFBQSxZQUNUO0FBQUEsWUFDQSxRQUFRLEtBQUs7QUFBQSxZQUNiLFFBQVEsS0FBSztBQUFBLFlBQ2IsVUFBVSxLQUFLO0FBQUEsVUFDakI7QUFBQSxVQUVDO0FBQUE7QUFBQSxRQVJIO0FBQUE7QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUFBO0FBQUE7QUFBQSxNQVNBO0FBQUEsTUFDQTtBQUFBLFFBQUM7QUFBQTtBQUFBLFVBQ0MsTUFBSztBQUFBLFVBQ0w7QUFBQSxVQUNBLFNBQVMsTUFBTSxPQUFPLGFBQWEsS0FBSyxJQUFJLEVBQUU7QUFBQSxVQUM5QyxnQkFBYyxhQUFhO0FBQUEsVUFDM0IsY0FBVztBQUFBLFlBQ1Q7QUFBQSxZQUNBO0FBQUEsWUFDQSxhQUFhLEtBQ1QseUJBQ0E7QUFBQSxVQUNOO0FBQUEsVUFDQSxjQUFZLEVBQUUsVUFBVTtBQUFBLFVBRXhCO0FBQUEsZUFBQztBQUFBO0FBQUEsY0FDQyxNQUFNO0FBQUEsY0FDTixRQUFRLGFBQWEsS0FBSyxTQUFTO0FBQUE7QUFBQSxZQUZyQztBQUFBO0FBQUE7QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUFBO0FBQUEsVUFHQTtBQUFBO0FBQUEsUUFqQkY7QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUFBLE1Ba0JBO0FBQUEsU0E3Q0Y7QUFBQTtBQUFBO0FBQUE7QUFBQSxXQThDQTtBQUFBLEVBRUo7QUFFQSxTQUNFLGlEQUFDLFNBQUksV0FBVSxzQ0FDYjtBQUFBO0FBQUEsTUFBQztBQUFBO0FBQUEsUUFDQyxNQUFLO0FBQUEsUUFDTDtBQUFBLFFBQ0EsU0FBUyxNQUFNLE9BQU8sYUFBYSxJQUFJLElBQUksQ0FBQztBQUFBLFFBQzVDLGdCQUFjLGFBQWE7QUFBQSxRQUMzQixjQUFXO0FBQUEsVUFDVDtBQUFBLFVBQ0E7QUFBQSxVQUNBLGFBQWEsSUFDVCwwQkFDQTtBQUFBLFFBQ047QUFBQSxRQUNBLGNBQVksRUFBRSxRQUFRO0FBQUEsUUFFdEIsOERBQUMsa0NBQVEsTUFBTSxVQUFVLFFBQVEsYUFBYSxJQUFJLFNBQVMsVUFBM0Q7QUFBQTtBQUFBO0FBQUE7QUFBQSxlQUFtRTtBQUFBO0FBQUEsTUFkckU7QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUFBLElBZUE7QUFBQSxJQUVBO0FBQUEsTUFBQztBQUFBO0FBQUEsUUFDQyxjQUFXO0FBQUEsVUFDVDtBQUFBLFVBQ0EsU0FBUyxPQUFPLFlBQVk7QUFBQSxVQUM1QixRQUFRLEtBQUs7QUFBQSxVQUNiLFFBQVEsS0FBSztBQUFBLFVBQ2IsVUFBVSxLQUFLO0FBQUEsUUFDakI7QUFBQSxRQUVDO0FBQUE7QUFBQSxNQVRIO0FBQUE7QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUFBO0FBQUE7QUFBQSxJQVVBO0FBQUEsSUFFQTtBQUFBLE1BQUM7QUFBQTtBQUFBLFFBQ0MsTUFBSztBQUFBLFFBQ0w7QUFBQSxRQUNBLFNBQVMsTUFBTSxPQUFPLGFBQWEsS0FBSyxJQUFJLEVBQUU7QUFBQSxRQUM5QyxnQkFBYyxhQUFhO0FBQUEsUUFDM0IsY0FBVztBQUFBLFVBQ1Q7QUFBQSxVQUNBO0FBQUEsVUFDQSxhQUFhLEtBQ1QseUJBQ0E7QUFBQSxRQUNOO0FBQUEsUUFDQSxjQUFZLEVBQUUsVUFBVTtBQUFBLFFBRXhCLDhEQUFDLG9DQUFVLE1BQU0sVUFBVSxRQUFRLGFBQWEsS0FBSyxTQUFTLFVBQTlEO0FBQUE7QUFBQTtBQUFBO0FBQUEsZUFBc0U7QUFBQTtBQUFBLE1BZHhFO0FBQUE7QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUFBO0FBQUE7QUFBQSxJQWVBO0FBQUEsT0E3Q0Y7QUFBQTtBQUFBO0FBQUE7QUFBQSxTQThDQTtBQUVKIiwibmFtZXMiOltdLCJpZ25vcmVMaXN0IjpbXSwic291cmNlcyI6WyJ2b3RlLWJ1dHRvbi50c3giXSwic291cmNlc0NvbnRlbnQiOlsiXCJ1c2UgY2xpZW50XCI7XG5cbmltcG9ydCB7IHVzZVRyYW5zbGF0aW9ucyB9IGZyb20gXCJuZXh0LWludGxcIjtcbmltcG9ydCB7IENhcmV0VXAsIENhcmV0RG93biB9IGZyb20gXCJAcGhvc3Bob3ItaWNvbnMvcmVhY3RcIjtcbmltcG9ydCB7IGNuIH0gZnJvbSBcIkAvbGliL3V0aWxzXCI7XG5cbmludGVyZmFjZSBWb3RlQnV0dG9uUHJvcHMge1xuICBzY29yZTogbnVtYmVyO1xuICB1c2VyVm90ZTogMSB8IC0xIHwgbnVsbDtcbiAgb25Wb3RlOiAodmFsdWU6IDAgfCAxIHwgLTEpID0+IHZvaWQ7XG4gIGRpc2FibGVkPzogYm9vbGVhbjtcbiAgc2l6ZT86IFwic21cIiB8IFwiZGVmYXVsdFwiO1xuICAvKiogXCJob3Jpem9udGFsXCIgPSB0aGUgZGVuc2UgaW5saW5lIGNsdXN0ZXIgKOKWsiBuIOKWvCkgdXNlZCBpbiBjb21wYWN0XG4gICAqIHN1cmZhY2VzIGxpa2UgYW5zd2VyIG1ldGEgcm93czsgXCJ2ZXJ0aWNhbFwiIGtlZXBzIHRoZSBjbGFzc2ljIHJhaWwuICovXG4gIGxheW91dD86IFwidmVydGljYWxcIiB8IFwiaG9yaXpvbnRhbFwiO1xufVxuXG5leHBvcnQgZnVuY3Rpb24gVm90ZUJ1dHRvbih7XG4gIHNjb3JlLFxuICB1c2VyVm90ZSxcbiAgb25Wb3RlLFxuICBkaXNhYmxlZCA9IGZhbHNlLFxuICBzaXplID0gXCJkZWZhdWx0XCIsXG4gIGxheW91dCA9IFwidmVydGljYWxcIixcbn06IFZvdGVCdXR0b25Qcm9wcykge1xuICBjb25zdCB0ID0gdXNlVHJhbnNsYXRpb25zKFwiY29tbXVuaXR5XCIpO1xuICBjb25zdCBpY29uU2l6ZSA9IGxheW91dCA9PT0gXCJob3Jpem9udGFsXCIgPyAxNCA6IHNpemUgPT09IFwic21cIiA/IDE4IDogMjI7XG5cbiAgaWYgKGxheW91dCA9PT0gXCJob3Jpem9udGFsXCIpIHtcbiAgICByZXR1cm4gKFxuICAgICAgPHNwYW4gY2xhc3NOYW1lPVwiaW5saW5lLWZsZXggaXRlbXMtY2VudGVyIGdhcC0wLjVcIj5cbiAgICAgICAgPGJ1dHRvblxuICAgICAgICAgIHR5cGU9XCJidXR0b25cIlxuICAgICAgICAgIGRpc2FibGVkPXtkaXNhYmxlZH1cbiAgICAgICAgICBvbkNsaWNrPXsoKSA9PiBvblZvdGUodXNlclZvdGUgPT09IDEgPyAwIDogMSl9XG4gICAgICAgICAgYXJpYS1wcmVzc2VkPXt1c2VyVm90ZSA9PT0gMX1cbiAgICAgICAgICBjbGFzc05hbWU9e2NuKFxuICAgICAgICAgICAgXCJmbGV4IGl0ZW1zLWNlbnRlciBqdXN0aWZ5LWNlbnRlciByb3VuZGVkIHAtMSB0cmFuc2l0aW9uLWNvbG9ycyBob3ZlcjpiZy1bdmFyKC0tcHJpbWFyeS1kaW0pXVwiLFxuICAgICAgICAgICAgXCJkaXNhYmxlZDpjdXJzb3Itbm90LWFsbG93ZWQgZGlzYWJsZWQ6b3BhY2l0eS01MFwiLFxuICAgICAgICAgICAgdXNlclZvdGUgPT09IDFcbiAgICAgICAgICAgICAgPyBcInRleHQtW3ZhcigtLXByaW1hcnkpXVwiXG4gICAgICAgICAgICAgIDogXCJ0ZXh0LVt2YXIoLS10ZXh0LTIpXSBob3Zlcjp0ZXh0LVt2YXIoLS1wcmltYXJ5KV1cIlxuICAgICAgICAgICl9XG4gICAgICAgICAgYXJpYS1sYWJlbD17dChcInVwdm90ZVwiKX1cbiAgICAgICAgPlxuICAgICAgICAgIDxDYXJldFVwIHNpemU9e2ljb25TaXplfSB3ZWlnaHQ9e3VzZXJWb3RlID09PSAxID8gXCJmaWxsXCIgOiBcImJvbGRcIn0gLz5cbiAgICAgICAgPC9idXR0b24+XG4gICAgICAgIDxzcGFuXG4gICAgICAgICAgY2xhc3NOYW1lPXtjbihcbiAgICAgICAgICAgIFwiZm9udC1kaXNwbGF5IHRleHQteHMgZm9udC1ib2xkIHRhYnVsYXItbnVtc1wiLFxuICAgICAgICAgICAgc2NvcmUgPiAwICYmIFwidGV4dC1bdmFyKC0tcHJpbWFyeSldXCIsXG4gICAgICAgICAgICBzY29yZSA8IDAgJiYgXCJ0ZXh0LVt2YXIoLS1kYW5nZXIpXVwiLFxuICAgICAgICAgICAgc2NvcmUgPT09IDAgJiYgXCJ0ZXh0LVt2YXIoLS10ZXh0LTIpXVwiXG4gICAgICAgICAgKX1cbiAgICAgICAgPlxuICAgICAgICAgIHtzY29yZX1cbiAgICAgICAgPC9zcGFuPlxuICAgICAgICA8YnV0dG9uXG4gICAgICAgICAgdHlwZT1cImJ1dHRvblwiXG4gICAgICAgICAgZGlzYWJsZWQ9e2Rpc2FibGVkfVxuICAgICAgICAgIG9uQ2xpY2s9eygpID0+IG9uVm90ZSh1c2VyVm90ZSA9PT0gLTEgPyAwIDogLTEpfVxuICAgICAgICAgIGFyaWEtcHJlc3NlZD17dXNlclZvdGUgPT09IC0xfVxuICAgICAgICAgIGNsYXNzTmFtZT17Y24oXG4gICAgICAgICAgICBcImZsZXggaXRlbXMtY2VudGVyIGp1c3RpZnktY2VudGVyIHJvdW5kZWQgcC0xIHRyYW5zaXRpb24tY29sb3JzIGhvdmVyOmJnLVt2YXIoLS1kYW5nZXItbGlnaHQpXVwiLFxuICAgICAgICAgICAgXCJkaXNhYmxlZDpjdXJzb3Itbm90LWFsbG93ZWQgZGlzYWJsZWQ6b3BhY2l0eS01MFwiLFxuICAgICAgICAgICAgdXNlclZvdGUgPT09IC0xXG4gICAgICAgICAgICAgID8gXCJ0ZXh0LVt2YXIoLS1kYW5nZXIpXVwiXG4gICAgICAgICAgICAgIDogXCJ0ZXh0LVt2YXIoLS10ZXh0LTIpXSBob3Zlcjp0ZXh0LVt2YXIoLS1kYW5nZXIpXVwiXG4gICAgICAgICAgKX1cbiAgICAgICAgICBhcmlhLWxhYmVsPXt0KFwiZG93bnZvdGVcIil9XG4gICAgICAgID5cbiAgICAgICAgICA8Q2FyZXREb3duXG4gICAgICAgICAgICBzaXplPXtpY29uU2l6ZX1cbiAgICAgICAgICAgIHdlaWdodD17dXNlclZvdGUgPT09IC0xID8gXCJmaWxsXCIgOiBcImJvbGRcIn1cbiAgICAgICAgICAvPlxuICAgICAgICA8L2J1dHRvbj5cbiAgICAgIDwvc3Bhbj5cbiAgICApO1xuICB9XG5cbiAgcmV0dXJuIChcbiAgICA8ZGl2IGNsYXNzTmFtZT1cImZsZXggZmxleC1jb2wgaXRlbXMtY2VudGVyIGdhcC0wLjVcIj5cbiAgICAgIDxidXR0b25cbiAgICAgICAgdHlwZT1cImJ1dHRvblwiXG4gICAgICAgIGRpc2FibGVkPXtkaXNhYmxlZH1cbiAgICAgICAgb25DbGljaz17KCkgPT4gb25Wb3RlKHVzZXJWb3RlID09PSAxID8gMCA6IDEpfVxuICAgICAgICBhcmlhLXByZXNzZWQ9e3VzZXJWb3RlID09PSAxfVxuICAgICAgICBjbGFzc05hbWU9e2NuKFxuICAgICAgICAgIFwiZmxleCBpdGVtcy1jZW50ZXIganVzdGlmeS1jZW50ZXIgcm91bmRlZC1tZCBwLTIgdHJhbnNpdGlvbi1jb2xvcnMgaG92ZXI6YmctW3ZhcigtLXByaW1hcnktZGltKV1cIixcbiAgICAgICAgICBcImRpc2FibGVkOmN1cnNvci1ub3QtYWxsb3dlZCBkaXNhYmxlZDpvcGFjaXR5LTUwXCIsXG4gICAgICAgICAgdXNlclZvdGUgPT09IDFcbiAgICAgICAgICAgID8gXCJ0ZXh0LVt2YXIoLS1wcmltYXJ5KV1cIlxuICAgICAgICAgICAgOiBcInRleHQtW3ZhcigtLXRleHQtMildIGhvdmVyOnRleHQtW3ZhcigtLXByaW1hcnkpXVwiXG4gICAgICAgICl9XG4gICAgICAgIGFyaWEtbGFiZWw9e3QoXCJ1cHZvdGVcIil9XG4gICAgICA+XG4gICAgICAgIDxDYXJldFVwIHNpemU9e2ljb25TaXplfSB3ZWlnaHQ9e3VzZXJWb3RlID09PSAxID8gXCJmaWxsXCIgOiBcImJvbGRcIn0gLz5cbiAgICAgIDwvYnV0dG9uPlxuXG4gICAgICA8c3BhblxuICAgICAgICBjbGFzc05hbWU9e2NuKFxuICAgICAgICAgIFwiZm9udC1kaXNwbGF5IGZvbnQtYm9sZCB0YWJ1bGFyLW51bXNcIixcbiAgICAgICAgICBzaXplID09PSBcInNtXCIgPyBcInRleHQtc21cIiA6IFwidGV4dC1iYXNlXCIsXG4gICAgICAgICAgc2NvcmUgPiAwICYmIFwidGV4dC1bdmFyKC0tcHJpbWFyeSldXCIsXG4gICAgICAgICAgc2NvcmUgPCAwICYmIFwidGV4dC1bdmFyKC0tZGFuZ2VyKV1cIixcbiAgICAgICAgICBzY29yZSA9PT0gMCAmJiBcInRleHQtW3ZhcigtLXRleHQtMildXCJcbiAgICAgICAgKX1cbiAgICAgID5cbiAgICAgICAge3Njb3JlfVxuICAgICAgPC9zcGFuPlxuXG4gICAgICA8YnV0dG9uXG4gICAgICAgIHR5cGU9XCJidXR0b25cIlxuICAgICAgICBkaXNhYmxlZD17ZGlzYWJsZWR9XG4gICAgICAgIG9uQ2xpY2s9eygpID0+IG9uVm90ZSh1c2VyVm90ZSA9PT0gLTEgPyAwIDogLTEpfVxuICAgICAgICBhcmlhLXByZXNzZWQ9e3VzZXJWb3RlID09PSAtMX1cbiAgICAgICAgY2xhc3NOYW1lPXtjbihcbiAgICAgICAgICBcImZsZXggaXRlbXMtY2VudGVyIGp1c3RpZnktY2VudGVyIHJvdW5kZWQtbWQgcC0yIHRyYW5zaXRpb24tY29sb3JzIGhvdmVyOmJnLVt2YXIoLS1kYW5nZXItbGlnaHQpXVwiLFxuICAgICAgICAgIFwiZGlzYWJsZWQ6Y3Vyc29yLW5vdC1hbGxvd2VkIGRpc2FibGVkOm9wYWNpdHktNTBcIixcbiAgICAgICAgICB1c2VyVm90ZSA9PT0gLTFcbiAgICAgICAgICAgID8gXCJ0ZXh0LVt2YXIoLS1kYW5nZXIpXVwiXG4gICAgICAgICAgICA6IFwidGV4dC1bdmFyKC0tdGV4dC0yKV0gaG92ZXI6dGV4dC1bdmFyKC0tZGFuZ2VyKV1cIlxuICAgICAgICApfVxuICAgICAgICBhcmlhLWxhYmVsPXt0KFwiZG93bnZvdGVcIil9XG4gICAgICA+XG4gICAgICAgIDxDYXJldERvd24gc2l6ZT17aWNvblNpemV9IHdlaWdodD17dXNlclZvdGUgPT09IC0xID8gXCJmaWxsXCIgOiBcImJvbGRcIn0gLz5cbiAgICAgIDwvYnV0dG9uPlxuICAgIDwvZGl2PlxuICApO1xufVxuIl0sImZpbGUiOiIvc3JjL2NvbXBvbmVudHMvY29tbXVuaXR5L3ZvdGUtYnV0dG9uLnRzeCJ9
+
+//# vitestCache=W3siZmlsZSI6IjEiLCJpZCI6IjEiLCJ1cmwiOiIyIiwiaW1wb3J0ZWRVcmxzIjoiMyIsIm1hcHBpbmdzIjpmYWxzZX0sIi9Vc2Vycy9kYXZpZC9Eb2N1bWVudHMva21pbm8vc29sL3N1cGVydGVhbS1hY2FkZW15L2FwcHMvd2ViL3NyYy9jb21wb25lbnRzL2NvbW11bml0eS92b3RlLWJ1dHRvbi50c3giLCIvc3JjL2NvbXBvbmVudHMvY29tbXVuaXR5L3ZvdGUtYnV0dG9uLnRzeCIsW11d

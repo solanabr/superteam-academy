@@ -1,0 +1,57 @@
+Object.defineProperty(__vite_ssr_exports__, "AcceptAnswerButton", { enumerable: true, configurable: true, get(){ try { return AcceptAnswerButton } catch {} }});
+const __vite_ssr_import_0__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/react@18.3.1/node_modules/react/jsx-dev-runtime.js", {"importedNames":["jsxDEV"]});const __vite_ssr_import_1__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/next-intl@4.13.4_@swc+helpers@0.5.18_next@15.5.22_@babel+core@7.29.7_@opentelemetry+api_c195dd5a0acf86b5fabbbd2eb30b5576/node_modules/next-intl/dist/esm/development/index.react-client.js", {"importedNames":["useTranslations"]});const __vite_ssr_import_2__ = await __vite_ssr_import__("/@fs/Users/david/Documents/kmino/sol/superteam-academy/node_modules/.pnpm/@phosphor-icons+react@2.1.10_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/@phosphor-icons/react/dist/index.es.js", {"importedNames":["Check"]});const __vite_ssr_import_3__ = await __vite_ssr_import__("/src/lib/utils.ts", {"importedNames":["cn"]});"use client";
+
+
+
+
+function AcceptAnswerButton({
+  isAccepted,
+  onAccept
+}) {
+  const t = (0,__vite_ssr_import_1__.useTranslations)("community");
+  const label = isAccepted ? t("acceptedAnswer") : t("acceptThisAnswer");
+  return /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)(
+    "button",
+    {
+      type: "button",
+      onClick: onAccept,
+      "aria-pressed": isAccepted,
+      className: (0,__vite_ssr_import_3__.cn)(
+        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold transition-colors",
+        isAccepted ? "bg-[var(--primary-dim)] text-[var(--primary)]" : "text-[var(--text-2)] hover:bg-[var(--primary-dim)] hover:text-[var(--primary)]"
+      ),
+      title: label,
+      children: [
+        /* @__PURE__ */ (0,__vite_ssr_import_0__.jsxDEV)(
+          (0,__vite_ssr_import_2__.Check),
+          {
+            size: 13,
+            weight: isAccepted ? "fill" : "bold",
+            "aria-hidden": "true"
+          },
+          void 0,
+          false,
+          {
+            fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/accept-answer-button.tsx",
+            lineNumber: 36,
+            columnNumber: 7
+          },
+          this
+        ),
+        label
+      ]
+    },
+    void 0,
+    true,
+    {
+      fileName: "/Users/david/Documents/kmino/sol/superteam-academy/apps/web/src/components/community/accept-answer-button.tsx",
+      lineNumber: 21,
+      columnNumber: 5
+    },
+    this
+  );
+}
+//# sourceMappingSource=vite-generated
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJtYXBwaW5ncyI6IkFBQUEsQ0FBQTtBQW1DTSxzTkFqQ04sdVdBQ0EsK1JBQ0E7Ozs7O0FBT08sU0FBUyxtQkFBbUI7QUFBQSxFQUNqQztBQUFBLEVBQ0E7QUFDRixHQUE0QjtBQUMxQixRQUFNLE9BQUksdUNBQWdCLFdBQVc7QUFFckMsUUFBTSxRQUFRLGFBQWEsRUFBRSxnQkFBZ0IsSUFBSSxFQUFFLGtCQUFrQjtBQUVyRSxTQUNFO0FBQUEsSUFBQztBQUFBO0FBQUEsTUFDQyxNQUFLO0FBQUEsTUFDTCxTQUFTO0FBQUEsTUFDVCxnQkFBYztBQUFBLE1BSWQsY0FBVztBQUFBLFFBQ1Q7QUFBQSxRQUNBLGFBQ0ksa0RBQ0E7QUFBQSxNQUNOO0FBQUEsTUFDQSxPQUFPO0FBQUEsTUFFUDtBQUFBO0FBQUEsYUFBQztBQUFBO0FBQUEsWUFDQyxNQUFNO0FBQUEsWUFDTixRQUFRLGFBQWEsU0FBUztBQUFBLFlBQzlCLGVBQVk7QUFBQTtBQUFBLFVBSGQ7QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUFBLFFBSUE7QUFBQSxRQUNDO0FBQUE7QUFBQTtBQUFBLElBcEJIO0FBQUE7QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUFBO0FBQUE7QUFBQSxFQXFCQTtBQUVKIiwibmFtZXMiOltdLCJpZ25vcmVMaXN0IjpbXSwic291cmNlcyI6WyJhY2NlcHQtYW5zd2VyLWJ1dHRvbi50c3giXSwic291cmNlc0NvbnRlbnQiOlsiXCJ1c2UgY2xpZW50XCI7XG5cbmltcG9ydCB7IHVzZVRyYW5zbGF0aW9ucyB9IGZyb20gXCJuZXh0LWludGxcIjtcbmltcG9ydCB7IENoZWNrIH0gZnJvbSBcIkBwaG9zcGhvci1pY29ucy9yZWFjdFwiO1xuaW1wb3J0IHsgY24gfSBmcm9tIFwiQC9saWIvdXRpbHNcIjtcblxuaW50ZXJmYWNlIEFjY2VwdEFuc3dlckJ1dHRvblByb3BzIHtcbiAgaXNBY2NlcHRlZDogYm9vbGVhbjtcbiAgb25BY2NlcHQ6ICgpID0+IHZvaWQ7XG59XG5cbmV4cG9ydCBmdW5jdGlvbiBBY2NlcHRBbnN3ZXJCdXR0b24oe1xuICBpc0FjY2VwdGVkLFxuICBvbkFjY2VwdCxcbn06IEFjY2VwdEFuc3dlckJ1dHRvblByb3BzKSB7XG4gIGNvbnN0IHQgPSB1c2VUcmFuc2xhdGlvbnMoXCJjb21tdW5pdHlcIik7XG5cbiAgY29uc3QgbGFiZWwgPSBpc0FjY2VwdGVkID8gdChcImFjY2VwdGVkQW5zd2VyXCIpIDogdChcImFjY2VwdFRoaXNBbnN3ZXJcIik7XG5cbiAgcmV0dXJuIChcbiAgICA8YnV0dG9uXG4gICAgICB0eXBlPVwiYnV0dG9uXCJcbiAgICAgIG9uQ2xpY2s9e29uQWNjZXB0fVxuICAgICAgYXJpYS1wcmVzc2VkPXtpc0FjY2VwdGVkfVxuICAgICAgLy8gVGhlIGxhYmVsIGlzIFZJU0lCTEUsIG5vdCBqdXN0IGFuIGFyaWEtbGFiZWw6IGFzIGEgYmFyZSBjaGVja21hcmsgdGhpc1xuICAgICAgLy8gcmVhZCBhcyBhbiBvcnBoYW4gZ2x5cGggZmxvYXRpbmcgaW4gdGhlIGNhcmQgd2l0aCBubyB3YXkgdG8ga25vdyB3aGF0XG4gICAgICAvLyBpdCBkaWQgd2l0aG91dCBob3ZlcmluZy5cbiAgICAgIGNsYXNzTmFtZT17Y24oXG4gICAgICAgIFwiaW5saW5lLWZsZXggaXRlbXMtY2VudGVyIGdhcC0xIHJvdW5kZWQtZnVsbCBweC0yIHB5LTAuNSB0ZXh0LXhzIGZvbnQtc2VtaWJvbGQgdHJhbnNpdGlvbi1jb2xvcnNcIixcbiAgICAgICAgaXNBY2NlcHRlZFxuICAgICAgICAgID8gXCJiZy1bdmFyKC0tcHJpbWFyeS1kaW0pXSB0ZXh0LVt2YXIoLS1wcmltYXJ5KV1cIlxuICAgICAgICAgIDogXCJ0ZXh0LVt2YXIoLS10ZXh0LTIpXSBob3ZlcjpiZy1bdmFyKC0tcHJpbWFyeS1kaW0pXSBob3Zlcjp0ZXh0LVt2YXIoLS1wcmltYXJ5KV1cIlxuICAgICAgKX1cbiAgICAgIHRpdGxlPXtsYWJlbH1cbiAgICA+XG4gICAgICA8Q2hlY2tcbiAgICAgICAgc2l6ZT17MTN9XG4gICAgICAgIHdlaWdodD17aXNBY2NlcHRlZCA/IFwiZmlsbFwiIDogXCJib2xkXCJ9XG4gICAgICAgIGFyaWEtaGlkZGVuPVwidHJ1ZVwiXG4gICAgICAvPlxuICAgICAge2xhYmVsfVxuICAgIDwvYnV0dG9uPlxuICApO1xufVxuIl0sImZpbGUiOiIvc3JjL2NvbXBvbmVudHMvY29tbXVuaXR5L2FjY2VwdC1hbnN3ZXItYnV0dG9uLnRzeCJ9
+
+//# vitestCache=W3siZmlsZSI6IjEiLCJpZCI6IjEiLCJ1cmwiOiIyIiwiaW1wb3J0ZWRVcmxzIjoiMyIsIm1hcHBpbmdzIjpmYWxzZX0sIi9Vc2Vycy9kYXZpZC9Eb2N1bWVudHMva21pbm8vc29sL3N1cGVydGVhbS1hY2FkZW15L2FwcHMvd2ViL3NyYy9jb21wb25lbnRzL2NvbW11bml0eS9hY2NlcHQtYW5zd2VyLWJ1dHRvbi50c3giLCIvc3JjL2NvbXBvbmVudHMvY29tbXVuaXR5L2FjY2VwdC1hbnN3ZXItYnV0dG9uLnRzeCIsW11d
