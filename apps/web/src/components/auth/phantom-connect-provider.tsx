@@ -112,11 +112,18 @@ export function PhantomConnectProvider({
       setAddress(solanaAddressOf(sdk));
       setStatus("connected");
     } catch (err) {
-      // Includes the learner closing the Phantom window — an ordinary outcome,
-      // so this resets to a retryable state instead of surfacing a hard failure.
-      console.error("[PhantomConnect] connect failed:", err);
+      // A failure BEFORE the redirect fires — closed Google popup, network
+      // blip, Phantom outage — is entirely possible: connect() only truly stops
+      // resolving once the tab actually navigates away.
       setAddress(null);
       setStatus("error");
+      // RETHROW after recording state (PR #992 review). Swallowing here made
+      // the AuthModal's catch dead code: its `loading` flag never reset, and
+      // since the Dialog only closes when !loading, one pre-redirect failure
+      // left the modal permanently stuck with every sign-in option disabled.
+      // The provider keeps `status` for hook consumers; imperative callers get
+      // the rejection they need to reset their own UI.
+      throw err;
     }
   }, []);
 
