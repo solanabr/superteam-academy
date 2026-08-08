@@ -120,6 +120,12 @@ export function WalletAuthHandler() {
           if (body.error === "accountDeleted") {
             errorMsg = t("accountDeleted");
             canRetry = false;
+          } else if (body.error === "differentWalletLinked") {
+            // #994 review: this 409 used to arrive as raw English prose. It is
+            // now a stable key (wallet links are permanent; this account has a
+            // different one), translated here rather than shown verbatim.
+            errorMsg = t("differentWalletLinked");
+            canRetry = false;
           } else if (body.error) {
             errorMsg = body.error;
           }
