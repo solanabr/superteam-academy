@@ -10,7 +10,11 @@ import {
 } from "@phosphor-icons/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { truncateAddress } from "@/lib/utils";
-import type { PublicProfile } from "@/lib/profiles/public-profile";
+import {
+  profileDisplayName,
+  type PublicProfile,
+} from "@/lib/profiles/public-profile";
+import { VerifiedBadge } from "@/components/profile/verified-badge";
 
 interface InstructorCardProps {
   /** The course's on-chain `Course.creator` wallet (issue #478). */
@@ -36,6 +40,8 @@ export function InstructorCard({
   const t = useTranslations("courses");
   const locale = useLocale();
   const socials = profile?.socialLinks;
+  // Editorial name when an admin has set one, generated username otherwise.
+  const name = profile ? profileDisplayName(profile) : null;
   const hasSocials = Boolean(
     socials && (socials.twitter || socials.github || socials.discord)
   );
@@ -43,12 +49,12 @@ export function InstructorCard({
   return (
     <div className="flex items-start gap-3">
       <Avatar className="h-9 w-9 shrink-0 border border-border">
-        {profile?.avatarUrl && (
-          <AvatarImage src={profile.avatarUrl} alt={profile.username} />
+        {profile?.avatarUrl && name && (
+          <AvatarImage src={profile.avatarUrl} alt={name} />
         )}
         <AvatarFallback className="text-xs font-bold">
-          {profile ? (
-            profile.username.slice(0, 2).toUpperCase()
+          {name ? (
+            name.slice(0, 2).toUpperCase()
           ) : (
             <User
               size={18}
@@ -62,13 +68,18 @@ export function InstructorCard({
       <div className="min-w-0">
         <p className="font-display text-[13px] font-bold">
           {t("courseBy")}{" "}
-          {profile ? (
-            <Link
-              href={`/${locale}/profile/${encodeURIComponent(profile.username)}`}
-              className="text-text underline-offset-2 hover:underline"
-            >
-              {profile.username}
-            </Link>
+          {profile && name ? (
+            <>
+              {/* The LINK still uses `username`: it is unique and route-safe,
+                  which a free-text display name is not. */}
+              <Link
+                href={`/${locale}/profile/${encodeURIComponent(profile.username)}`}
+                className="text-text underline-offset-2 hover:underline"
+              >
+                {name}
+              </Link>
+              {profile.verified && <VerifiedBadge className="ml-1" />}
+            </>
           ) : (
             <span className="font-mono text-text-3">
               {truncateAddress(creatorWallet)}

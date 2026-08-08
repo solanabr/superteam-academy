@@ -260,7 +260,7 @@
 
     --text: #e6edf3;
     --text-2: #8b949e;
-    --text-3: #78838f;
+    --text-3: #8b96a3; /* ≥4.5:1 on --card at 10-12px (owner contrast pass, 04-08) */
     --text-disabled: #484f5a;
 
     --sg-0: #1c2333;
@@ -1235,6 +1235,23 @@
 }
 
 /* ── Staggered card entrance animation ── */
+/* Small entrance for judged content (quiz verdicts, explanations, feedback):
+   a 4px rise + fade over 180ms — content arrives, never pops (owner, 04-08).
+   The global prefers-reduced-motion blanket disables it like every animation. */
+@keyframes reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.reveal-in {
+  animation: reveal-in 0.18s ease-out both;
+}
+
 @keyframes card-in {
   from {
     opacity: 0;
@@ -2661,6 +2678,152 @@ a.path-step-card:hover .path-step-badge.skip {
   }
 }
 
+/* ── Reward popup rework (owner-approved 05-08) ──
+   House card + per-moment accent; the icon is the real component (LevelBadge,
+   earned dm-oct token, mini diploma). The Solana gradient stays certificate-
+   only — every other card is a bordered house card. */
+.rw-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--card);
+  border: 2px solid var(--border-strong);
+  border-radius: var(--r-lg);
+  padding: 12px 18px 12px 12px;
+  box-shadow: var(--shadow);
+  animation: pop-spring 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.rw-card.level {
+  border-color: var(--level);
+  box-shadow:
+    var(--shadow),
+    0 0 20px var(--level-dim);
+}
+.rw-card.gold {
+  border-color: var(--xp);
+  box-shadow:
+    var(--shadow),
+    0 0 20px var(--xp-dim);
+}
+.rw-kicker {
+  font-family: var(--font-mono, var(--font-m));
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.8px;
+  margin-bottom: 3px;
+  color: var(--primary);
+}
+.rw-card.level .rw-kicker {
+  color: var(--level);
+}
+.rw-card.gold .rw-kicker {
+  color: var(--xp-chip-fg);
+}
+.rw-name {
+  font-family: var(--font-display, var(--font-d));
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--text);
+}
+/* XP amount — the dq-reward lightning-chip idiom, not a nested pill. */
+.rw-xp {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 10px;
+  font-family: var(--font-display, var(--font-d));
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--xp);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+/* Gold metallic emoji ring (quest 🎯 / surprise bonus ✨). */
+.rw-ring {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  padding: 4px;
+  flex-shrink: 0;
+  background: linear-gradient(
+    145deg,
+    #7a3e00 0%,
+    #b45309 25%,
+    #f5a623 55%,
+    #fde68a 75%,
+    #b45309 100%
+  );
+  box-shadow: 0 0 16px rgba(245, 166, 35, 0.4);
+}
+.rw-ring-in {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+/* Popup-sized dm-oct (base token is 52px; the card row wants 44). */
+.rw-oct .dm-oct {
+  width: 44px;
+  height: 44px;
+}
+.rw-oct .dm-face {
+  width: 35px;
+  height: 35px;
+}
+.rw-oct .dm-glyph {
+  font-size: 12px;
+}
+/* Mini diploma — the certificate artifact in miniature. */
+.rw-diploma {
+  width: 34px;
+  height: 42px;
+  border-radius: 7px;
+  padding: 2px;
+  background: var(--sol-grad);
+  flex-shrink: 0;
+  box-shadow: 0 0 14px rgba(153, 69, 255, 0.3);
+}
+.rw-diploma-in {
+  width: 100%;
+  height: 100%;
+  border-radius: 5px;
+  background: var(--card);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+.rw-diploma-in span {
+  font-size: 13px;
+  line-height: 1;
+}
+.rw-diploma-in i {
+  display: block;
+  width: 16px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--border-strong);
+}
+.rw-diploma-in i + i {
+  width: 10px;
+}
+@media (max-width: 480px) {
+  .rw-card {
+    max-width: calc(100vw - 48px);
+    padding: 10px 14px 10px 10px;
+    gap: 10px;
+  }
+  .rw-name {
+    font-size: 13px;
+  }
+}
+
 /* ══════════════════════════════════════════════════════════════
    MOBILE BOTTOM NAV — fixed tab bar for < lg screens
    ══════════════════════════════════════════════════════════════ */
@@ -2753,29 +2916,41 @@ a.path-step-card:hover .path-step-badge.skip {
    ══════════════════════════════════════════════════════════════ */
 
 /* ── Page wrapper ── */
+/* Contained single-column surface (05-08 alignment pass): full-viewport rows
+   put the rank a screen away from the XP — cap and center the board. */
 .lb-page {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  max-width: 720px;
+  margin-inline: auto;
 }
 
-/* ── Timeframe tabs — underline style ── */
+/* ── Timeframe switch — same segmented-pill family as the board switch
+   (05-08: two switcher idioms two rows apart read as two systems), one
+   size down because it's the secondary control. ── */
 .lb-timeframe-tabs {
   display: flex;
   gap: 4px;
+  padding: 3px;
+  background: var(--card);
+  border: 2px solid var(--border);
+  border-radius: var(--r-md);
+  width: fit-content;
+  max-width: 100%;
   overflow-x: auto;
 }
 .lb-tf-tab {
   font-family: var(--font-display, var(--font-d));
   font-weight: 800;
-  font-size: 14px;
-  padding: 12px 20px;
-  min-height: 44px;
+  font-size: 13px;
+  padding: 6px 14px;
+  min-height: 34px;
   border: none;
+  border-radius: var(--r-sm, 8px);
   background: none;
   color: var(--text-3);
   cursor: pointer;
-  border-bottom: 3px solid transparent;
   transition: all 0.15s;
   white-space: nowrap;
 }
@@ -2784,10 +2959,13 @@ a.path-step-card:hover .path-step-badge.skip {
 }
 .lb-tf-tab.active {
   color: var(--primary);
-  border-bottom-color: var(--primary);
+  background: var(--primary-dim);
 }
 
-/* ── Primary board switch — League (cohort) vs Global (LX-B9b) ── */
+/* ── Segmented control — the house tab switch (leaderboard board switch,
+   settings tabs). One idiom everywhere: card surface, strong border, display
+   800, primary-dim active pill. ── */
+.seg-tabs,
 .lb-board-tabs {
   display: flex;
   gap: 4px;
@@ -2799,6 +2977,8 @@ a.path-step-card:hover .path-step-badge.skip {
   max-width: 100%;
   overflow-x: auto;
 }
+/* Compound selectors so these win over the Radix trigger's own utilities. */
+.seg-tabs .seg-tab,
 .lb-board-tab {
   display: inline-flex;
   align-items: center;
@@ -2816,12 +2996,15 @@ a.path-step-card:hover .path-step-badge.skip {
   white-space: nowrap;
   transition: all 0.15s;
 }
+.seg-tabs .seg-tab:hover,
 .lb-board-tab:hover {
   color: var(--text);
 }
+.seg-tabs .seg-tab[data-state="active"],
 .lb-board-tab.active {
   color: var(--primary);
   background: var(--primary-dim);
+  box-shadow: none;
 }
 
 /* ── League header — tier name + cohort meta ── */
@@ -2842,9 +3025,13 @@ a.path-step-card:hover .path-step-badge.skip {
   color: var(--primary);
 }
 .lb-league-tier {
+  display: flex;
+  align-items: center;
+  gap: 2px;
   font-family: var(--font-display, var(--font-d));
   font-weight: 900;
   font-size: 18px;
+  letter-spacing: -0.25px;
   color: var(--text);
 }
 .lb-league-sub {
@@ -2857,8 +3044,8 @@ a.path-step-card:hover .path-step-badge.skip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
   flex-shrink: 0;
   border-radius: 999px;
   border: none;
@@ -2966,6 +3153,8 @@ a.path-step-card:hover .path-step-badge.skip {
 
 /* Rank-specific accent borders & backgrounds */
 .podium-card.gold {
+  /* #1 stands taller — the grid bottom-aligns, so extra padding lifts it. */
+  padding: 28px 12px 22px;
   border-color: rgba(245, 166, 35, 0.4);
   background:
     radial-gradient(
@@ -3003,10 +3192,11 @@ a.path-step-card:hover .path-step-badge.skip {
   outline-offset: -1px;
 }
 
-/* Rank icon (crown / medal / lightning) */
+/* Rank coin — metallic numeral in the level-badge family (05-08: the
+   crown/medal/lightning trio was three metaphors for one idea). */
 .podium-rank-icon {
   position: absolute;
-  top: -12px;
+  top: -14px;
   left: 50%;
   transform: translateX(-50%);
   width: 28px;
@@ -3015,24 +3205,45 @@ a.path-step-card:hover .path-step-badge.skip {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-family: var(--font-display, var(--font-d));
+  font-weight: 900;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
   border: 2.5px solid;
 }
 .podium-card.gold .podium-rank-icon {
-  background: linear-gradient(145deg, #f5a623, #fde68a);
-  border-color: rgba(245, 166, 35, 0.5);
-  color: #78350f;
+  background: linear-gradient(
+    145deg,
+    #92400e,
+    #b45309 30%,
+    #f5a623 70%,
+    #fde68a
+  );
+  border-color: #f5a623;
+  color: #fffbeb;
   box-shadow: 0 0 12px rgba(245, 166, 35, 0.4);
 }
 .podium-card.silver .podium-rank-icon {
-  background: linear-gradient(145deg, #94a3b8, #cbd5e1);
-  border-color: rgba(148, 163, 184, 0.5);
-  color: #334155;
+  background: linear-gradient(
+    145deg,
+    #475569,
+    #64748b 30%,
+    #94a3b8 70%,
+    #e2e8f0
+  );
+  border-color: #94a3b8;
+  color: #f8fafc;
 }
 .podium-card.bronze .podium-rank-icon {
-  background: linear-gradient(145deg, #b45309, #f59e0b);
-  border-color: rgba(180, 83, 9, 0.4);
-  color: #fff;
+  background: linear-gradient(
+    145deg,
+    #7c2d12,
+    #9a3412 30%,
+    #c2410c 70%,
+    #fdba74
+  );
+  border-color: #c2410c;
+  color: #fff7ed;
 }
 
 /* Podium avatar */
@@ -3115,7 +3326,7 @@ a.path-step-card:hover .path-step-badge.skip {
 .lb-row.me {
   border-color: var(--primary);
   background: var(--primary-dim);
-  box-shadow: 0 2px 0 0 rgba(46, 204, 142, 0.2);
+  box-shadow: 0 2px 0 0 var(--primary-light);
 }
 
 .lb-rank {
@@ -3164,7 +3375,7 @@ a.path-step-card:hover .path-step-badge.skip {
   font-weight: 800;
   background: var(--primary-dim);
   color: var(--primary);
-  border: 1px solid rgba(46, 204, 142, 0.2);
+  border: 1px solid var(--primary-light);
   padding: 1px 6px;
   border-radius: var(--r-full);
 }
@@ -3721,10 +3932,11 @@ a.path-step-card:hover .path-step-badge.skip {
 }
 .dash-xp-to {
   font-family: var(--font-mono, var(--font-m));
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-2);
   margin-bottom: 10px;
   font-variant-numeric: tabular-nums; /* F37 */
+  white-space: nowrap; /* "339 XP to Level 4" must not break mid-phrase in the split band */
 }
 .dash-xp-to em {
   color: var(--xp);
@@ -4049,16 +4261,231 @@ a.path-step-card:hover .path-step-badge.skip {
 }
 
 /* Bottom row — heatmap bigger, quests smaller (flipped from top) */
-.dash-bottom {
+/* Dark: the amber ambient blob sat directly behind the heatmap labels and
+   dragged their contrast below AA — halve it there (owner pass, 04-08). */
+[data-theme="dark"] .dash-panel-amb::after {
+  opacity: 0.5;
+}
+
+/* A zero weekly score is not a reward — muted until points land. */
+.lb-xp--zero {
+  color: var(--text-3);
+}
+
+/* Daily quests list: ~5 rows visible, scroll beyond — the same cap idiom as
+   the league card (owner, 04-08). */
+.dq-list-capped {
+  max-height: 224px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-default) transparent;
+}
+
+/* Dashboard league card: mini rows sized EXACTLY like the quest rows
+   (.dq: 6px 10px pad, 9px gap, 1px border, 10px list gap) so the two rail
+   cards read as one list system. ~6 rows visible, scroll beyond. */
+.lb-list-mini {
+  max-height: 264px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-default) transparent;
+  gap: 5px;
+}
+.lb-list-mini .lb-row {
+  padding: 6px 10px;
+  gap: 9px;
+  border-width: 1px;
+  box-shadow: none;
+  border-radius: var(--r-md);
+}
+.lb-list-mini .lb-av {
+  width: 26px;
+  height: 26px;
+}
+.lb-list-mini .lb-name {
+  font-size: 13px;
+}
+.lb-list-mini .lb-rank {
+  font-size: 11px;
+}
+.lb-list-mini .lb-xp {
+  font-size: 12px;
+}
+
+/* Profile rail achievements: dashboard tokens in a 4-col grid, names on. */
+.ach-rail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 10px;
+}
+.ach-rail-grid .dm-oct {
+  width: 44px;
+  height: 44px;
+}
+.ach-rail-grid .dm-oct.locked .dm-face {
+  width: 36px;
+  height: 36px;
+}
+.ach-rail-grid .dm-glyph {
+  font-size: 14px;
+}
+.ach-rail-grid .dm-name {
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+/* Profile certificate shelf (owner reference, 04-08): the design-system
+   diploma — gradient frame, eyebrow, open middle, RECIPIENT/COMPLETED/MINT
+   anchored to the bottom edge, proof pill only (no network line). */
+.cert-slim .cert-inner {
+  padding: 20px 22px;
+}
+.cert-slim .cert-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 170px;
+}
+/* Meta stacks RECIPIENT over COMPLETED on the left; MINT holds the right
+   column — squarer 4-up cards read top-down (owner, 04-08). */
+.cert-slim .cert-meta-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px 16px;
+}
+.cert-slim .cert-meta-item:nth-child(3) {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+.cert-slim .cert-divider {
+  margin-top: auto;
+}
+.cert-slim .cert-foot {
+  display: none;
+}
+
+/* Rail-card variant of the achievement wall (profile 04-08): dashboard-token
+   density — 44px medals, four per row, names tiny, no mint pills, no "Locked"
+   labels. The rail is a glance surface; proof lives on the tokens' pages. */
+.ach-grid--compact {
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 10px !important;
+}
+.ach-grid--compact .ach-medal {
+  width: 44px !important;
+  height: 44px !important;
+}
+.ach-grid--compact .ach-face {
+  width: 36px !important;
+  height: 36px !important;
+}
+.ach-grid--compact .ach-glyph {
+  font-size: 14px !important;
+}
+.ach-grid--compact .ach-name {
+  font-size: 10px;
+  line-height: 1.2;
+}
+.ach-grid--compact .ach-proof,
+.ach-grid--compact .ach-info > p[style] {
+  display: none;
+}
+
+/* Achievements strip: earned + next goals on one line, names in tooltips.
+   No wrapping — overflow scrolls horizontally (owner call 04-08). */
+.ach-strip-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  /* `safe` so an overflowing row falls back to flex-start — with plain
+     flex-end the leading tokens scroll off and cannot be reached. */
+  justify-content: safe flex-end;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+  overflow-x: auto;
+  /* Grab-and-drag (05-08); the pointer handlers live in useDragScroll. */
+  cursor: grab;
+  touch-action: pan-x;
+  /* Vertical padding, not tight cropping: with overflow-x auto the row also
+     clips vertically, and browser zoom / hover-scale was cutting the token
+     tops (owner, 04-08). */
+  padding: 6px 2px 8px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-default) transparent;
+}
+.ach-strip-row:active {
+  cursor: grabbing;
+}
+.ach-strip-row .dm {
+  flex-shrink: 0;
+}
+.ach-strip-row .dm-name {
+  display: none;
+}
+.ach-strip-row .dm-oct {
+  width: 44px;
+  height: 44px;
+}
+/* The base locked face is a fixed 46px — larger than this strip's 44px tile,
+   which blanked the whole octagon. Size it to the tile and keep locked tokens
+   readable as "next goals", not ghosts. */
+.ach-strip-row .dm-oct.locked {
+  opacity: 0.6;
+}
+.ach-strip-row .dm-oct.locked .dm-face {
+  width: 38px;
+  height: 38px;
+}
+.ach-strip-row .dm-glyph {
+  font-size: 16px;
+}
+
+/* Identity | heatmap split band (04-08): level+XP left, activity right. */
+.dash-split {
   display: grid;
   grid-template-columns: 1fr;
   position: relative;
   z-index: 1;
 }
-@media (min-width: 768px) {
-  .dash-bottom {
-    grid-template-columns: 1fr 1fr;
+@media (min-width: 900px) {
+  .dash-split {
+    /* Proportional 1/3 | 2/3 (owner call 04-08), not a fixed identity column. */
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
   }
+  /* Soft divider: a hairline that fades at both ends — a full-height rule
+     read too hard against the panel's ambient softness (owner, 04-08). */
+  .dash-split .dash-identity {
+    position: relative;
+  }
+  .dash-split .dash-identity::after {
+    content: "";
+    position: absolute;
+    top: 14%;
+    bottom: 14%;
+    right: 0;
+    width: 1px;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      var(--border) 30%,
+      var(--border) 70%,
+      transparent
+    );
+  }
+}
+@media (max-width: 899px) {
+  .dash-split .dash-grid {
+    border-top: 1px solid var(--border);
+  }
+}
+
+/* Single column since the quests slot moved to the dashboard rail card
+   (daily-quests-card.tsx) — the heatmap now owns the full bottom row. */
+.dash-bottom {
+  display: grid;
+  grid-template-columns: 1fr;
+  position: relative;
+  z-index: 1;
 }
 
 /* Activity grid section */
@@ -4096,10 +4523,10 @@ a.path-step-card:hover .path-step-badge.skip {
 .dash-grid-title {
   font-family: var(--font-mono, var(--font-m));
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 700;
   color: var(--text-3);
   text-transform: uppercase;
-  letter-spacing: 1.5px;
+  letter-spacing: 1.8px;
 }
 .dash-grid-stats {
   display: flex;
@@ -4224,12 +4651,13 @@ a.path-step-card:hover .path-step-badge.skip {
   background: var(--sg-today);
   animation: today-cell 2s ease-in-out infinite;
 }
-/* Streak-freeze day (LX-B8): an inactive day a freeze saved. Rendered in the
-   cool --freeze blue so it reads as "preserved", distinct from the green
-   activity ramp and the amber today marker. */
+/* Streak-freeze day (LX-B8): an inactive day a freeze saved. Stays on the
+   green palette (owner call, 04-08): a neutral cell with a green ring reads
+   as "held, not earned" — no third hue competing with the activity ramp and
+   the amber today marker. */
 .cday.frozen {
-  background: var(--freeze);
-  box-shadow: inset 0 0 0 1px var(--card);
+  background: var(--sg-0);
+  box-shadow: inset 0 0 0 1.5px var(--sg-2);
 }
 .contrib-legend {
   display: flex;
@@ -4278,10 +4706,10 @@ a.path-step-card:hover .path-step-badge.skip {
 .dash-quests-title {
   font-family: var(--font-mono, var(--font-m));
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 700;
   color: var(--text-3);
   text-transform: uppercase;
-  letter-spacing: 1.5px;
+  letter-spacing: 1.8px;
 }
 .dash-quests-reset {
   font-family: var(--font-mono, var(--font-m));
@@ -4305,10 +4733,10 @@ a.path-step-card:hover .path-step-badge.skip {
 /* Individual quest row */
 .dq {
   display: grid;
-  grid-template-columns: 28px 1fr auto auto;
+  grid-template-columns: 26px 1fr auto auto;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
+  gap: 9px;
+  padding: 6px 10px;
   border-radius: var(--r-md);
   background: var(--card-alt, rgba(255, 255, 255, 0.02));
   border: 1px solid var(--border);
@@ -4337,8 +4765,8 @@ a.path-step-card:hover .path-step-badge.skip {
   outline-offset: 2px;
 }
 .dq-icon {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: var(--r-sm);
   background: var(--primary-dim);
   display: flex;
@@ -4357,17 +4785,15 @@ a.path-step-card:hover .path-step-badge.skip {
   min-width: 0;
 }
 .dq-name {
-  font-family: var(--font-mono, var(--font-m));
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 700;
   color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .dq-desc {
-  font-family: var(--font-mono, var(--font-m));
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-3);
   white-space: nowrap;
   overflow: hidden;
@@ -4467,9 +4893,26 @@ a.path-step-card:hover .path-step-badge.skip {
   }
 }
 @media (min-width: 768px) {
+  /* Faded hairline, same as the dashboard identity band — a full-height rule
+     read too hard against the panel's ambient softness (owner, 04-08). */
   .prof-identity {
     border-bottom: none;
-    border-right: 1px solid var(--border);
+    position: relative;
+  }
+  .prof-identity::after {
+    content: "";
+    position: absolute;
+    top: 14%;
+    bottom: 14%;
+    right: 0;
+    width: 1px;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      var(--border) 30%,
+      var(--border) 70%,
+      transparent
+    );
   }
 }
 .prof-xp {
@@ -4487,15 +4930,20 @@ a.path-step-card:hover .path-step-badge.skip {
     gap: 22px;
   }
 }
+/* One row, as many equal columns as there are stats — the own profile's 4th
+   cell (day streak) sits beside the others instead of wrapping (04-08). */
 .prof-stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
   position: relative;
   z-index: 1;
 }
 @media (max-width: 480px) {
   .prof-stats {
-    grid-template-columns: 1fr;
+    grid-auto-flow: row;
+    grid-auto-columns: unset;
+    grid-template-columns: 1fr 1fr;
   }
 }
 .prof-stat {
@@ -4554,6 +5002,8 @@ a.path-step-card:hover .path-step-badge.skip {
 
 .skill-chart-svg {
   width: 100%;
+  /* The radar reads at ~640px; past that the card is mostly whitespace. */
+  max-width: 640px;
   max-width: 520px;
   height: auto;
   overflow: visible;
@@ -4600,6 +5050,8 @@ a.path-step-card:hover .path-step-badge.skip {
     grid-template-columns: repeat(3, 1fr);
   }
 }
+/* Bare empty state — same idiom as the certificates section (icon + muted
+   line, no card chrome), owner call 04-08. */
 .cc-empty {
   display: flex;
   flex-direction: column;
@@ -4607,10 +5059,6 @@ a.path-step-card:hover .path-step-badge.skip {
   justify-content: center;
   gap: 10px;
   padding: 48px 24px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--r-xl);
-  box-shadow: var(--shadow);
 }
 .cc-empty p {
   font-family: var(--font-display, var(--font-d));
@@ -4661,15 +5109,55 @@ a.path-step-card:hover .path-step-badge.skip {
 }
 
 /* ── Card body ── */
+/* Cover-less since the dashboard pass: the card IS the body row — progress
+   anatomy (glyph | title/path | ring), not catalog marketing covers. */
 .cc-card .cc-body {
-  padding: 12px 14px;
+  padding: 14px 16px;
   display: flex;
-  align-items: flex-end;
-  gap: 10px;
+  align-items: center;
+  gap: 12px;
 }
-.cc-card .cc-title {
+/* ── Next-lesson plan: mini calendar tile ── */
+.nlp-cal {
+  flex-shrink: 0;
+  min-width: 56px;
+  max-width: 96px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+.nlp-cal-day {
+  display: block;
+  padding-left: 6px;
+  padding-right: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: var(--primary);
+  color: var(--primary-foreground, #fff);
+  font-family: var(--font-mono, var(--font-m));
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  padding: 3px 0 2px;
+}
+.nlp-cal-time {
+  display: block;
+  background: var(--card);
+  color: var(--text);
   font-family: var(--font-display, var(--font-d));
   font-size: 14px;
+  font-weight: 800;
+  padding: 6px 0 7px;
+  letter-spacing: 0.3px;
+}
+
+.cc-card .cc-title {
+  font-family: var(--font-display, var(--font-d));
+  font-size: 13px;
   font-weight: 800;
   line-height: 1.35;
   color: var(--text);
@@ -4936,8 +5424,8 @@ a.path-step-card:hover .path-step-title {
 .act-row {
   display: flex;
   align-items: center;
-  padding: 9px 22px;
-  gap: 12px;
+  padding: 7px 22px;
+  gap: 10px;
   transition: background 0.15s;
   text-decoration: none;
   color: inherit;
@@ -4966,8 +5454,8 @@ a.path-step-card:hover .path-step-title {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: var(--r-md, 8px);
   flex-shrink: 0;
   border: 1.5px solid;
@@ -5352,4 +5840,195 @@ a.path-step-card:hover .path-step-title {
 }
 .ai-inline-info {
   color: var(--primary);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SETTINGS — form anatomy (05-08 alignment pass)
+   Field labels were 14px sans; the house label idiom is the mono kicker
+   (same as the certificate meta and every in-card label). Inputs, rows and
+   toggles were re-declared inline in four tab files with drifting values —
+   they share these classes now.
+   ══════════════════════════════════════════════════════════════ */
+.set-page {
+  max-width: 760px;
+  margin-inline: auto;
+}
+.set-label {
+  display: block;
+  font-family: var(--font-mono, var(--font-m));
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.8px;
+  color: var(--text-3);
+  margin-bottom: 7px;
+}
+/* In-card group heading (Connected accounts, Email notifications). */
+.set-group-title {
+  font-family: var(--font-display, var(--font-d));
+  font-weight: 900;
+  font-size: 15px;
+  letter-spacing: -0.2px;
+  color: var(--text);
+}
+.set-input {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  background: var(--card);
+  border: 2px solid var(--border-default);
+  border-radius: var(--r-sm);
+  font-family: var(--font-body, var(--font-b));
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+  transition: all 0.15s;
+}
+textarea.set-input {
+  height: auto;
+  padding: 9px 12px;
+  line-height: 1.55;
+  resize: vertical;
+}
+.set-input::placeholder {
+  color: var(--text-3);
+}
+.set-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-dim);
+}
+/* Connected-account / settings list row. */
+.set-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  background: var(--card);
+  border: 2px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+.set-row-name {
+  font-family: var(--font-display, var(--font-d));
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--text);
+}
+.set-row-meta {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 2px;
+}
+.set-row-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--subtle);
+}
+/* Switch — one implementation for the privacy and email toggles. */
+.set-switch {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: var(--r-full);
+  background: var(--inset);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.set-switch[aria-checked="true"] {
+  background: var(--primary);
+}
+.set-switch:disabled {
+  opacity: 0.5;
+}
+.set-switch:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.set-switch span {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.set-switch[aria-checked="true"] span {
+  transform: translateX(18px);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   AVATAR CROP — pan/zoom stage with a circular window (05-08)
+   ══════════════════════════════════════════════════════════════ */
+.avatar-crop-stage {
+  position: relative;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--inset);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.avatar-crop-stage:active {
+  cursor: grabbing;
+}
+.avatar-crop-stage:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+.avatar-crop-img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  max-width: none;
+  pointer-events: none;
+}
+/* Ring drawn over the photo so the exported circle is unmistakable. */
+.avatar-crop-mask {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 3px var(--card);
+  border: 2px solid var(--border-strong);
+}
+.avatar-crop-zoom {
+  flex: 1;
+  height: 4px;
+  appearance: none;
+  border-radius: var(--r-full);
+  background: var(--inset);
+  cursor: pointer;
+}
+.avatar-crop-zoom::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 2.5px solid var(--card);
+  box-shadow: var(--shadow);
+  cursor: grab;
+}
+.avatar-crop-zoom::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid var(--card);
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: var(--shadow);
+  cursor: grab;
+}
+.avatar-crop-zoom:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
 }

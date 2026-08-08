@@ -7,7 +7,6 @@ import { GraduationCap } from "@phosphor-icons/react";
 import type { Certificate } from "@superteam-lms/types";
 import { createClient } from "@/lib/supabase/client";
 import { CertificateCard } from "@/components/certificates/certificate-card";
-import { getCoursesByIds } from "@/lib/content/client-queries";
 import { CERTIFICATE_STYLES as CS } from "@/lib/styles/styleClasses";
 
 export default function CertificatesPage() {
@@ -15,9 +14,6 @@ export default function CertificatesPage() {
   const tCommon = useTranslations("common");
   const locale = useLocale();
   const [certificates, setCertificates] = useState<Certificate[]>([]);
-  const [subtitleMap, setSubtitleMap] = useState<Map<string, string>>(
-    new Map()
-  );
   const [isLoading, setIsLoading] = useState(true);
   const [recipientName, setRecipientName] = useState<string>("");
 
@@ -62,25 +58,6 @@ export default function CertificatesPage() {
             mintedAt: new Date(cert.minted_at ?? Date.now()),
           }));
           setCertificates(mapped);
-
-          // Fetch course data from the content bundle for learning path + difficulty
-          const courseIds = [...new Set(mapped.map((c) => c.courseId))];
-          const courses = await getCoursesByIds(courseIds);
-          const sMap = new Map<string, string>();
-          for (const course of courses) {
-            const parts: string[] = [];
-            if (course.learningPath) parts.push(course.learningPath);
-            if (course.difficulty) {
-              parts.push(
-                course.difficulty.charAt(0).toUpperCase() +
-                  course.difficulty.slice(1)
-              );
-            }
-            if (parts.length > 0) {
-              sMap.set(course._id, parts.join(" · "));
-            }
-          }
-          setSubtitleMap(sMap);
         }
 
         setIsLoading(false);
@@ -134,7 +111,6 @@ export default function CertificatesPage() {
               <CertificateCard
                 certificate={cert}
                 recipientName={recipientName}
-                subtitle={subtitleMap.get(cert.courseId)}
                 variant="full"
               />
             </Link>

@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
-import Image from "next/image";
 import { Transaction } from "@solana/web3.js";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
@@ -16,6 +15,7 @@ import {
 import type { CurrentCourse } from "@/hooks/use-dashboard-data";
 import { deriveEndowedProgress } from "@/lib/courses/endowed-progress";
 import { CourseCompletionMint } from "@/components/certificates/course-completion-mint";
+import { Button } from "@/components/ui/button";
 import { dispatchToast } from "@/components/ui/toast-container";
 
 interface CurrentCoursesSectionProps {
@@ -156,21 +156,9 @@ export function CurrentCoursesSection({
                 )}
 
                 <Link href={`/${locale}/courses/${course.slug}`}>
-                  <div className="cc-thumb" aria-hidden="true">
-                    <Image
-                      src={course.thumbnail || "/cover.png"}
-                      alt=""
-                      width={400}
-                      height={225}
-                      loading="lazy"
-                    />
-                  </div>
                   <div className="cc-body">
                     <div className="cc-meta">
                       <div className="cc-title">{course.title}</div>
-                      <span className="cc-sub">
-                        {course.learningPath ?? tCourses(course.difficulty)}
-                      </span>
                     </div>
                     <span
                       className="cc-progress"
@@ -244,12 +232,9 @@ export function CurrentCoursesSection({
             aria-hidden="true"
           />
           <p className="text-text-3">{t("noCourses")}</p>
-          <Link
-            href={`/${locale}/courses`}
-            className="mt-2 inline-flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:[background:var(--primary-hover)]"
-          >
-            {t("browseCourses")}
-          </Link>
+          <Button asChild variant="push" size="sm" className="mt-2">
+            <Link href={`/${locale}/courses`}>{t("browseCourses")}</Link>
+          </Button>
         </div>
       )}
     </section>

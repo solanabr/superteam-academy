@@ -19,7 +19,10 @@ CREATE TABLE profiles (
   avatar_url TEXT,
   social_links JSONB DEFAULT '{}',
   -- Learner-owned UI preferences (LX-A6, #582). First consumer: the session-end
-  -- if-then plan { "nextLesson": { "day": "tue", "time": "19:00" } }. Non-PII,
+  -- if-then plan { "nextLesson": { "days": ["tue","thu"], "time": "19:00" } } —
+  -- a LIST of weekdays, up to all seven (= daily). The original single-`day`
+  -- string was converted to a one-element `days` array by
+  -- 20260804120000_recurring_lesson_plan.sql and is no longer read. Non-PII,
   -- not in public_profiles; written self-service via the own-row profiles UPDATE
   -- RLS policy. No column on profiles is privilege-bearing, so the shape+size
   -- CHECKs below (chk_profiles_prefs_object / chk_profiles_prefs_size) are the
@@ -3261,7 +3264,10 @@ GRANT EXECUTE ON FUNCTION set_reminder_opt_in(BOOLEAN, TEXT) TO authenticated;
 -- iff ALL of these hold:
 --   * reminder_opt_in = true                      (explicit consent for THIS purpose)
 --   * a real email on file                        (never a wallet-auth placeholder)
---   * prefs.nextLesson.day = today's São Paulo weekday   (they planned TODAY)
+--   * today's São Paulo weekday is a member of `prefs.nextLesson.days` — the
+--     committed plan list (up to all seven = daily). The pre-#582-successor
+--     single `day` string is gone: 20260804120000_recurring_lesson_plan.sql
+--     converted every stored one to a one-element `days` array.
 --   * no email_reminder_log row for (user, 'session_plan', today) — and the claim
 --     row is INSERTed in the same statement, so a concurrent/second run gets
 --     nothing back.
@@ -3277,8 +3283,8 @@ AS $$
 DECLARE
   v_today   DATE := (now() AT TIME ZONE 'America/Sao_Paulo')::date;
   -- to_char(..., 'dy') is the lowercase English abbreviation (mon…sun) — exactly
-  -- the token the plan picker stores in prefs.nextLesson.day. No TM prefix, so
-  -- it is NOT affected by the server's lc_time.
+  -- the token the plan picker stores in every element of prefs.nextLesson.days.
+  -- No TM prefix, so it is NOT affected by the server's lc_time.
   v_weekday TEXT := COALESCE(
     p_weekday,
     trim(to_char((now() AT TIME ZONE 'America/Sao_Paulo'), 'dy'))
@@ -3302,7 +3308,10 @@ BEGIN
       AND u.email <> ''
       -- Synthetic wallet-auth addresses are not inboxes (see #779).
       AND u.email NOT LIKE '%@wallet.superteam-lms.local'
-      AND p.prefs -> 'nextLesson' ->> 'day' = v_weekday
+      -- Multi-day plans: membership of the committed `days` list
+      -- (`jsonb ? text` = element exists). All seven entries = daily. The claim
+      -- below still caps a learner at ONE reminder per São Paulo day.
+      AND (p.prefs -> 'nextLesson' -> 'days') ? v_weekday
   ),
   claimed AS (
     INSERT INTO public.email_reminder_log (user_id, kind, sent_on)

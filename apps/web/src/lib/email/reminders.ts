@@ -15,9 +15,15 @@ import { sessionPlanReminderEmail } from "./templates";
  *
  * CONSENT GATE: recipients come ONLY from the `claim_due_session_reminders` RPC.
  * Its SQL is the single gate: reminder consent (its OWN opt-in, never the
- * marketing one), a real email on file, and a `prefs.nextLesson.day` equal to
- * today's São Paulo weekday. This module never scans a table, so a learner
- * without reminder consent can never enter the recipient set here.
+ * marketing one), a real email on file, and a committed plan whose
+ * `prefs.nextLesson.days` array contains today's São Paulo weekday. `days` is
+ * the ONLY plan shape (up to all seven entries, i.e. daily); the earlier single
+ * `prefs.nextLesson.day` string was converted to a one-element array by
+ * `20260804120000_recurring_lesson_plan.sql` and is no longer read anywhere.
+ * The RPC owns that predicate — this module never reads `prefs`. Widening the
+ * days a learner is due never widens the sends per day: the claim below is still
+ * one per learner per São Paulo day. This module never scans a table, so a
+ * learner without reminder consent can never enter the recipient set here.
  *
  * IDEMPOTENCY: that same RPC CLAIMS each recipient by inserting an
  * `email_reminder_log` row in the same statement (PK on user+kind+day, ON

@@ -59,7 +59,10 @@ describe("ReviewStrip (LX-B6 dashboard due-review slot)", () => {
     const link = await screen.findByRole("link");
     expect(link).toHaveAttribute("href", "/en/review");
     expect(screen.getByText("3 due for review")).toBeInTheDocument();
-    expect(screen.getByText("PDAs · CPIs · Signers")).toBeInTheDocument();
+    // Titles render as individual list rows now, not a joined line.
+    for (const title of ["PDAs", "CPIs", "Signers"]) {
+      expect(screen.getByText(title)).toBeInTheDocument();
+    }
   });
 
   it("collapses overflow past the first three titles", async () => {

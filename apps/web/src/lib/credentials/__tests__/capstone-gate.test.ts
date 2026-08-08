@@ -56,47 +56,39 @@ function adminClientWith(result: {
   };
 }
 
-describe("capstone-gate — constants match the committed content bundle", () => {
-  // If the capstone course or its deploy lesson is renamed in content without
-  // updating CAPSTONE_CREDENTIAL, the gate would query a non-existent row and
-  // deny EVERY legitimate capstone credential. These assertions fail loudly at
-  // that moment instead.
-  it("the capstone course id exists in courses.json", () => {
-    const ids = coursesJson.map((c) => c._id);
-    expect(ids).toContain(CAPSTONE_CREDENTIAL.courseId);
+describe("capstone-gate — dormant while the capstone course is parked", () => {
+  // The capstone system is DORMANT for the public alpha: C3 is parked under
+  // `_draft/` in academy-courses, so neither constant resolves against the
+  // bundle (see the dormancy note in capstone-identity.ts). What must hold is
+  // that dormancy is total and fails closed — the alpha catalog must contain
+  // NO gated course and NO deploy panel, so nothing is half-gated. When
+  // track-1 restores, these flip back into the constants-match-the-bundle
+  // assertions this block replaced (course present, deploy lesson present and
+  // hosting the panel, lesson belongs to the course, exactly one panel).
+  const bundleCourseIds = coursesJson.map((c) => c._id);
+  const deployPanelLessons = lessonsJson.filter((l) =>
+    (l.blocks ?? []).some((b) => b._type === "deployed-program-card")
+  );
+
+  it("the capstone course is absent from the bundle (dormant)", () => {
+    expect(bundleCourseIds).not.toContain(CAPSTONE_CREDENTIAL.courseId);
   });
 
-  it("the deploy lesson exists and hosts the deployed-program-card block", () => {
+  it("the capstone deploy lesson is absent from the bundle (dormant)", () => {
     const lesson = lessonsJson.find(
       (l) => l._id === CAPSTONE_CREDENTIAL.deployLessonId
     );
-    expect(lesson, "capstone deploy lesson must exist").toBeDefined();
-    const hasDeployPanel = (lesson?.blocks ?? []).some(
-      (b) => b._type === "deployed-program-card"
-    );
-    expect(
-      hasDeployPanel,
-      "capstone deploy lesson must host the deploy panel block"
-    ).toBe(true);
+    expect(lesson).toBeUndefined();
   });
 
-  it("the deploy lesson belongs to the capstone course", () => {
-    const course = coursesJson.find(
-      (c) => c._id === CAPSTONE_CREDENTIAL.courseId
-    );
-    const lessonIds = (course?.modules ?? []).flatMap((m) =>
-      (m.lessons ?? []).map((l) => l._ref)
-    );
-    expect(lessonIds).toContain(CAPSTONE_CREDENTIAL.deployLessonId);
+  it("no live course is subject to the deploy gate", () => {
+    for (const id of bundleCourseIds) {
+      expect(isCapstoneCourse(id), `"${id}" must not be gated`).toBe(false);
+    }
   });
 
-  it("exactly one lesson in the bundle hosts a deploy panel (the capstone)", () => {
-    const deployLessons = lessonsJson.filter((l) =>
-      (l.blocks ?? []).some((b) => b._type === "deployed-program-card")
-    );
-    expect(deployLessons.map((l) => l._id)).toEqual([
-      CAPSTONE_CREDENTIAL.deployLessonId,
-    ]);
+  it("no live lesson hosts a deploy panel", () => {
+    expect(deployPanelLessons.map((l) => l._id)).toEqual([]);
   });
 });
 

@@ -131,6 +131,25 @@ vi.mock("server-only", () => ({}));
 //    course-by-slug/paths/summaries regenerated through the real projectors;
 //    quests-raw is byte-unchanged (no code block gained or lost) and
 //    achievements-raw is untouched.
+//  - public-alpha activation (bump to academy-courses @7c5ab3a7): the LARGEST
+//    removal wave so far. The whole track-1 catalog (C1-C5, the EVM elective,
+//    `path-zero-to-deployed` and the six unpopulated legacy paths) moves to
+//    `_draft/`, which the compiler excludes (#978), and the alpha catalog takes
+//    its place: 2 courses (`course-btc-to-sol-evolution` EN 15 lessons,
+//    `course-solana-speedrun` PT-BR 4 lessons), 1 path (`path-first-steps`,
+//    those 2 as members), 19 lessons, 7 achievements, 5 quests, 8 skills.
+//    courses/course-by-slug/lessons/paths/summaries/quests-raw-derived were
+//    REGENERATED through the real projectors over the new bundle; the
+//    full-blocks course-by-slug fixture retargeted C3 -> the alpha flagship
+//    `course-btc-to-sol-evolution`. achievements-raw was PATCHED, not
+//    regenerated: `all`/`deployed` keep only the 7 live docs and
+//    `achievement-course-completer` retargets C1 -> the alpha flagship. That
+//    patch also drops the last two docs of the original prod-Sanity capture
+//    that never existed in the bundle (`achievement-perfect-score`,
+//    `achievement-speed-runner`), so the fixture is now an exact
+//    both-directions cover of the bundle and the KNOWN_ABSENT divergence
+//    ledger retires with them. anchor-expert is parked, so the award-shape
+//    assertion moved to a live `course-completed` achievement.
 const deps = { lessonsById };
 
 function bundleCourse(id: string): CourseDoc {
@@ -152,9 +171,13 @@ describe("projectCourse — getAllCourses shape (summary module lessons)", () =>
   });
 
   it("creator is a real wallet (#399/B3); thumbnail is null (documented deltas)", () => {
-    const c = projectCourse(bundleCourse(goldenCourses[0]!._id), deps);
-    expect(c.creator).toBe("B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF");
-    expect(c.thumbnail).toBeNull();
+    // The alpha catalog is authored under its own creator wallet, not the
+    // platform authority the track-1 courses carried.
+    for (const golden of goldenCourses) {
+      const c = projectCourse(bundleCourse(golden._id), deps);
+      expect(c.creator).toBe("3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ");
+      expect(c.thumbnail).toBeNull();
+    }
   });
 });
 
@@ -248,26 +271,19 @@ describe("projectLesson — full blocks[] projection", () => {
 });
 
 describe("projectAchievement — mapAchievement over the bundle", () => {
-  // Prod Sanity carries 12 achievements; the locked bundle carries 10. The two
-  // extra prod docs (award:null / admin-granted) are absent from the bundle.
-  // Documented divergence — see report. Every SHARED achievement must project
-  // identically (bundle doc == prod GROQ doc through the real projector).
-  const KNOWN_ABSENT = new Set([
-    "achievement-perfect-score",
-    "achievement-speed-runner",
-  ]);
-
-  it("bundle covers exactly the shared 10; prod's extra 2 are the known set", () => {
-    const bundleIds = new Set(achievementsById.keys());
-    const missing = goldenAch.all
-      .map((a) => a._id)
-      .filter((id) => !bundleIds.has(id));
-    expect(new Set(missing)).toEqual(KNOWN_ABSENT);
+  // The alpha wave trimmed the fixture to exactly the bundle's live docs (see
+  // the header note), so coverage is now an equality in BOTH directions: no
+  // golden without a bundle doc, no bundle doc without a golden. Every doc must
+  // then project identically (bundle doc == prod GROQ doc through the real
+  // projector).
+  it("bundle and golden cover exactly the same achievements", () => {
+    expect(new Set(achievementsById.keys())).toEqual(
+      new Set(goldenAch.all.map((a) => a._id))
+    );
   });
 
   it("projects each shared achievement identically to prod", () => {
     for (const raw of goldenAch.all) {
-      if (KNOWN_ABSENT.has(raw._id)) continue;
       const doc = achievementsById.get(raw._id);
       expect(doc, `bundle missing achievement ${raw._id}`).toBeDefined();
       // Project the bundle doc AND the prod GROQ raw doc through the same
@@ -279,18 +295,18 @@ describe("projectAchievement — mapAchievement over the bundle", () => {
     }
   });
 
-  it("award is validated + stripped; anchor-expert = course-completed", () => {
-    const anchor = projectAchievement(
-      achievementsById.get("achievement-anchor-expert")!
+  it("award is validated + stripped; course-completer = course-completed", () => {
+    // Was anchor-expert until the alpha wave parked it; course-completer is now
+    // the bundle's only `course-completed` award, retargeted to the flagship.
+    const completer = projectAchievement(
+      achievementsById.get("achievement-course-completer")!
     );
-    expect(anchor.award).toEqual({
+    expect(completer.award).toEqual({
       kind: "course-completed",
-      // Retargeted from course-anchor-framework in the catalog finalization
-      // (academy-courses #21): the Anchor prose merged into C3.
-      course: "course-building-first-program",
+      course: "course-btc-to-sol-evolution",
     });
-    expect(anchor.glyph).toBe("⬡");
-    expect(anchor.solTier).toBe(false);
+    expect(completer.glyph).toBe("✦");
+    expect(completer.solTier).toBe(false);
   });
 });
 

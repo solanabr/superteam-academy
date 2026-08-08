@@ -65,7 +65,8 @@ export function CohortRow({ entry, style }: CohortRowProps) {
             as points earned this period, distinct from the lifetime header
             total; the surface subtitle + this aria-label carry "this week". */}
         <span
-          className="lb-xp"
+          // Zero is not a reward: amber only once there are points this week.
+          className={entry.score > 0 ? "lb-xp" : "lb-xp lb-xp--zero"}
           aria-label={t("leagueScoreAria", {
             score: entry.score.toLocaleString(),
           })}

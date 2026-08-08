@@ -249,7 +249,10 @@
     "changelogReactivatedDetail": "This course is available again.",
     "changelogRecreated": "Course rebuilt on-chain",
     "changelogRecreatedDetail": "The on-chain course account was recreated. Your progress and XP were preserved.",
-    "continue": "Continue"
+    "continue": "Continue",
+    "comingSoon": "Coming soon",
+    "pathsComingSoonTitle": "Learning paths are on the way",
+    "pathsComingSoonDescription": "We're building guided routes through the catalogue. In the meantime, browse every course in the All Courses tab."
   },
   "lesson": {
     "content": "Content",
@@ -378,13 +381,13 @@
     "lessonsDone": "{completed} of {total} lessons completed",
     "nextLessonTitle": "Plan your next lesson",
     "nextLessonPrompt": "Deciding when you'll come back makes it far more likely you will. When's your next lesson?",
-    "nextLessonDayLabel": "Day",
+    "nextLessonDaily": "Daily",
+    "nextLessonDayLabel": "Days",
     "nextLessonTimeLabel": "Time",
     "nextLessonSave": "Save plan",
     "nextLessonCancel": "Cancel",
     "nextLessonEdit": "Change",
     "nextLessonRemindMe": "Email me a reminder that morning. You can turn this off anytime in Settings.",
-    "nextLessonPlanned": "When it's {day} at {time}, you'll sit down to learn.",
     "weekdayMon": "Monday",
     "weekdayTue": "Tuesday",
     "weekdayWed": "Wednesday",
@@ -447,15 +450,15 @@
     "weekly": "Weekly",
     "monthly": "Monthly",
     "allTime": "All Time",
-    "levelUp": "Level Up!",
+    "levelUp": "Level Up",
     "levelUpMessage": "You reached level {level}!",
-    "questComplete": "Quest Complete!",
-    "surpriseBonusTitle": "Surprise Bonus!",
+    "questComplete": "Quest Complete",
+    "surpriseBonusTitle": "Surprise Bonus",
     "surpriseBonusMessage": "An unexpected reward, just for you.",
     "dismissReward": "Dismiss",
-    "newAchievement": "Achievement Unlocked!",
+    "newAchievement": "Achievement Unlocked",
     "viewAchievements": "View Achievements",
-    "certificateMinted": "Certificate Earned!",
+    "certificateMinted": "Certificate Earned",
     "viewCertificate": "View Certificate",
     "yourRank": "Your Rank",
     "active": "Active",
@@ -500,7 +503,8 @@
     "leagueThisWeek": "This week",
     "leagueScoreAria": "{score} XP earned this week",
     "leagueScoringInfoLabel": "About league scoring",
-    "leagueScoringInfo": "League scores count learning XP earned this week — lessons, challenges, course completions, quests, and achievements. Bonuses and community XP don't count."
+    "leagueScoringInfo": "League scores count learning XP earned this week — lessons, challenges, course completions, quests, and achievements. Bonuses and community XP don't count.",
+    "rankLabel": "Rank {rank}"
   },
   "certificates": {
     "title": "Certificate of Completion",
@@ -577,13 +581,14 @@
     "userNotFound": "User not found",
     "userNotFoundDescription": "This user doesn't exist or may have changed their username.",
     "profileIsPrivate": "This profile is private",
-    "backToLeaderboard": "Back",
     "loading": "Loading profile...",
     "viewProfile": "View Profile",
     "lessonsCompleted": "Lessons Completed",
     "lessonsCount": "{count} lessons",
     "totalLabel": "Total",
-    "xpToLevel": "XP to Lv. {level}"
+    "xpToLevel": "XP to Lv. {level}",
+    "verifiedTeacher": "Verified teacher",
+    "back": "Back"
   },
   "settings": {
     "title": "Settings",
@@ -615,7 +620,7 @@
     "uploadingAvatar": "Uploading...",
     "avatarUpdated": "Profile photo updated",
     "avatarRemoved": "Profile photo removed",
-    "avatarTooLarge": "Image must be under 1 MB",
+    "avatarTooLarge": "Image must be under 12 MB",
     "avatarInvalidType": "Only JPG, PNG, and WebP images are allowed",
     "twitter": "X",
     "github": "GitHub",
@@ -661,7 +666,11 @@
     "deleteAccountConfirmButton": "Permanently delete",
     "deleteAccountCancel": "Cancel",
     "deleteAccountDeleting": "Deleting…",
-    "deleteAccountFailed": "Could not delete your account. Please try again."
+    "deleteAccountFailed": "Could not delete your account. Please try again.",
+    "cropTitle": "Frame your photo",
+    "cropHint": "Drag to move, pinch or use the slider to zoom.",
+    "cropZoom": "Zoom",
+    "cropApply": "Use photo"
   },
   "a11y": {
     "dismiss": "Dismiss",
@@ -689,7 +698,7 @@
     "skipToContent": "Skip to main content"
   },
   "footer": {
-    "tagline": "The open-source learning platform for Solana developers in Latin America and beyond.",
+    "tagline": "The open-source learning platform for Solana developers.",
     "platform": "Platform",
     "resources": "Resources",
     "community": "Community",
@@ -731,8 +740,8 @@
   },
   "timeAgo": {
     "justNow": "Just now",
-    "hours": "{count} hours ago",
-    "days": "{count} days ago",
+    "hours": "{count, plural, one {# hour ago} other {# hours ago}}",
+    "days": "{count, plural, one {# day ago} other {# days ago}}",
     "today": "Today",
     "yesterday": "Yesterday"
   },
@@ -1059,6 +1068,7 @@
       "checkCorrect": "Correct — you can apply the change now.",
       "acceptLocked": "Answer the check correctly to apply this change.",
       "applied": "Applied to your code",
+      "unchangedCollapsed": "{count, plural, one {# unchanged line} other {# unchanged lines}}",
       "lineAdded": "Added",
       "lineRemoved": "Removed"
     },

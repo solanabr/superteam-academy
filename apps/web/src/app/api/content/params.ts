@@ -9,7 +9,7 @@ import { NextResponse } from "next/server";
  * All params are bounded and shape-checked — no unbounded fan-out.
  */
 
-/** Sanity `_id`s are slug-like (`course-rust-for-program-devs`). */
+/** Content `_id`s are slug-like (`course-btc-to-sol-evolution`). */
 const ID_PATTERN = /^[A-Za-z0-9._-]{1,128}$/;
 
 /** Base58 Solana pubkey. */

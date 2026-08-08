@@ -144,8 +144,8 @@ export function EmailPreferences() {
   const handleReminderConfirm = () => writeReminderConsent(reminderOptIn);
 
   return (
-    <div className="border-t border-border pt-4">
-      <p className="font-medium">{t("emailNotifications")}</p>
+    <div className="border-t border-border pt-5">
+      <p className="set-group-title">{t("emailNotifications")}</p>
 
       <ToggleRow
         label={t("marketingEmails")}
@@ -220,11 +220,11 @@ function ToggleRow({
   onToggle,
 }: ToggleRowProps) {
   return (
-    <div className="mt-3 flex items-center justify-between gap-4">
+    <div className="mt-3.5 flex items-center justify-between gap-4">
       <div>
-        <p className="text-sm font-medium">{label}</p>
-        <p className="text-sm text-text-3">{description}</p>
-        {note && <p className="mt-1 text-xs text-text-3">{note}</p>}
+        <p className="set-row-name">{label}</p>
+        <p className="set-row-meta">{description}</p>
+        {note && <p className="set-row-meta">{note}</p>}
         {confirm && (
           <button
             type="button"
@@ -240,18 +240,12 @@ function ToggleRow({
         type="button"
         onClick={onToggle}
         disabled={disabled}
-        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-50 ${
-          checked ? "bg-primary" : "bg-subtle"
-        }`}
+        className="set-switch"
         role="switch"
         aria-checked={checked}
         aria-label={label}
       >
-        <span
-          className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
-            checked ? "translate-x-5" : "translate-x-0"
-          }`}
-        />
+        <span />
       </button>
     </div>
   );

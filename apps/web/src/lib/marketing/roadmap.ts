@@ -46,9 +46,15 @@ export const ROADMAP_SHIPPED: readonly ShippedEntry[] = [
 
 /**
  * Next up — deliberately undated. Both are real, in-flight work:
- * `evm` is authored and sits in the content bundle
- * (`course-solana-for-evm-devs`) awaiting activation; `notifications` extends
- * the email reminders that shipped on 2026-07-31.
+ * `evm` is authored but PARKED under `_draft/` in academy-courses as of the
+ * public-alpha bump (2026-08-04), so it is no longer in the compiled bundle —
+ * still "next up", now further out; `notifications` extends the email reminders
+ * that shipped on 2026-07-31.
+ *
+ * Both these entries and the shipped `ladder` entry above describe the parked
+ * track-1 catalog. They are marketing claims, not content reads, so the alpha
+ * bump left them for an editorial pass rather than silently rewriting the
+ * public roadmap.
  */
 export const ROADMAP_NEXT: readonly RoadmapEntry[] = [
   { id: "evm" },

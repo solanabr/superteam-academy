@@ -249,7 +249,10 @@
     "changelogReactivatedDetail": "Este curso vuelve a estar disponible.",
     "changelogRecreated": "Curso reconstruido on-chain",
     "changelogRecreatedDetail": "La cuenta on-chain del curso se recreó. Tu progreso y XP se conservaron.",
-    "continue": "Continuar"
+    "continue": "Continuar",
+    "comingSoon": "Muy pronto",
+    "pathsComingSoonTitle": "Las rutas de aprendizaje están en camino",
+    "pathsComingSoonDescription": "Estamos creando recorridos guiados por el catálogo. Mientras tanto, explora todos los cursos en la pestaña Todos los Cursos."
   },
   "lesson": {
     "content": "Contenido",
@@ -378,13 +381,13 @@
     "lessonsDone": "{completed} de {total} lecciones completadas",
     "nextLessonTitle": "Planifica tu próxima lección",
     "nextLessonPrompt": "Decidir cuándo volverás hace mucho más probable que lo hagas. ¿Cuándo es tu próxima lección?",
-    "nextLessonDayLabel": "Día",
+    "nextLessonDaily": "Diario",
+    "nextLessonDayLabel": "Días",
     "nextLessonTimeLabel": "Hora",
     "nextLessonSave": "Guardar plan",
     "nextLessonCancel": "Cancelar",
     "nextLessonEdit": "Cambiar",
     "nextLessonRemindMe": "Envíenme un recordatorio por correo esa mañana. Puedes desactivarlo cuando quieras en Configuración.",
-    "nextLessonPlanned": "Cuando sea {day} a las {time}, te sentarás a aprender.",
     "weekdayMon": "Lunes",
     "weekdayTue": "Martes",
     "weekdayWed": "Miércoles",
@@ -447,15 +450,15 @@
     "weekly": "Semanal",
     "monthly": "Mensual",
     "allTime": "General",
-    "levelUp": "¡Subiste de Nivel!",
+    "levelUp": "Subiste de Nivel",
     "levelUpMessage": "¡Alcanzaste el nivel {level}!",
-    "questComplete": "¡Misión Completada!",
-    "surpriseBonusTitle": "¡Bonus Sorpresa!",
+    "questComplete": "Misión Completada",
+    "surpriseBonusTitle": "Bonus Sorpresa",
     "surpriseBonusMessage": "Una recompensa inesperada, solo para ti.",
     "dismissReward": "Descartar",
-    "newAchievement": "¡Logro Desbloqueado!",
+    "newAchievement": "Logro Desbloqueado",
     "viewAchievements": "Ver Logros",
-    "certificateMinted": "¡Certificado Ganado!",
+    "certificateMinted": "Certificado Ganado",
     "viewCertificate": "Ver Certificado",
     "yourRank": "Tu Posición",
     "active": "Activo",
@@ -500,7 +503,8 @@
     "leagueThisWeek": "Esta semana",
     "leagueScoreAria": "{score} XP ganados esta semana",
     "leagueScoringInfoLabel": "Sobre la puntuación de la liga",
-    "leagueScoringInfo": "La puntuación de la liga cuenta el XP de aprendizaje ganado esta semana — lecciones, desafíos, cursos completados, misiones y logros. Las bonificaciones y el XP de la comunidad no cuentan."
+    "leagueScoringInfo": "La puntuación de la liga cuenta el XP de aprendizaje ganado esta semana — lecciones, desafíos, cursos completados, misiones y logros. Las bonificaciones y el XP de la comunidad no cuentan.",
+    "rankLabel": "Posición {rank}"
   },
   "certificates": {
     "title": "Certificado de Finalización",
@@ -577,13 +581,14 @@
     "userNotFound": "Usuario no encontrado",
     "userNotFoundDescription": "Este usuario no existe o puede haber cambiado su nombre de usuario.",
     "profileIsPrivate": "Este perfil es privado",
-    "backToLeaderboard": "Volver",
     "loading": "Cargando perfil...",
     "viewProfile": "Ver Perfil",
     "lessonsCompleted": "Lecciones Completadas",
     "lessonsCount": "{count} lecciones",
     "totalLabel": "Total",
-    "xpToLevel": "XP para Nv. {level}"
+    "xpToLevel": "XP para Nv. {level}",
+    "verifiedTeacher": "Profesor verificado",
+    "back": "Volver"
   },
   "settings": {
     "title": "Configuración",
@@ -615,7 +620,7 @@
     "uploadingAvatar": "Subiendo...",
     "avatarUpdated": "Foto de perfil actualizada",
     "avatarRemoved": "Foto de perfil eliminada",
-    "avatarTooLarge": "La imagen debe ser menor de 1 MB",
+    "avatarTooLarge": "La imagen debe pesar menos de 12 MB",
     "avatarInvalidType": "Solo se permiten imágenes JPG, PNG y WebP",
     "twitter": "X",
     "github": "GitHub",
@@ -661,7 +666,11 @@
     "deleteAccountConfirmButton": "Eliminar permanentemente",
     "deleteAccountCancel": "Cancelar",
     "deleteAccountDeleting": "Eliminando…",
-    "deleteAccountFailed": "No se pudo eliminar tu cuenta. Inténtalo de nuevo."
+    "deleteAccountFailed": "No se pudo eliminar tu cuenta. Inténtalo de nuevo.",
+    "cropTitle": "Encuadra tu foto",
+    "cropHint": "Arrastra para mover, usa el control para acercar.",
+    "cropZoom": "Zoom",
+    "cropApply": "Usar foto"
   },
   "a11y": {
     "dismiss": "Descartar",
@@ -689,7 +698,7 @@
     "skipToContent": "Saltar al contenido principal"
   },
   "footer": {
-    "tagline": "La plataforma de aprendizaje open-source para desarrolladores Solana en Latinoamérica y más allá.",
+    "tagline": "La plataforma de aprendizaje open-source para desarrolladores Solana.",
     "platform": "Plataforma",
     "resources": "Recursos",
     "community": "Comunidad",
@@ -731,8 +740,8 @@
   },
   "timeAgo": {
     "justNow": "Ahora mismo",
-    "hours": "Hace {count} horas",
-    "days": "Hace {count} días",
+    "hours": "{count, plural, one {Hace # hora} other {Hace # horas}}",
+    "days": "{count, plural, one {Hace # día} other {Hace # días}}",
     "today": "Hoy",
     "yesterday": "Ayer"
   },
@@ -1059,6 +1068,7 @@
       "checkCorrect": "Correcto — ya puedes aplicar el cambio.",
       "acceptLocked": "Responde correctamente para aplicar este cambio.",
       "applied": "Aplicado a tu código",
+      "unchangedCollapsed": "{count, plural, one {# línea sin cambios} other {# líneas sin cambios}}",
       "lineAdded": "Añadido",
       "lineRemoved": "Eliminado"
     },

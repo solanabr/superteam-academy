@@ -53,6 +53,22 @@ export type SchemaExpectation =
 export const SCHEMA_EXPECTATIONS: readonly SchemaExpectation[] = [
   {
     kind: "column",
+    table: "public_profiles",
+    column: "display_name",
+    migration: "20260805120000_teacher_display_name_and_verified.sql",
+    description:
+      "teacher display name (#997) — read by every course page and public profile; its absence 400s both",
+  },
+  {
+    kind: "column",
+    table: "public_profiles",
+    column: "verified",
+    migration: "20260805120000_teacher_display_name_and_verified.sql",
+    description:
+      "verified-teacher badge (#997) — read alongside display_name; same 400 on absence",
+  },
+  {
+    kind: "column",
     table: "user_xp",
     column: "streak_freezes",
     migration: "20260726190000_streak_forgiveness.sql",
@@ -101,7 +117,10 @@ export const SCHEMA_EXPECTATIONS: readonly SchemaExpectation[] = [
     // whatever weekday is hardcoded below.
     rpc: "claim_due_session_reminders",
     args: { p_weekday: "mon" },
-    migration: "20260731120000_reminder_consent.sql",
+    // Attribution = the LAST migration to define this function (#869 created it,
+    // #896 re-scoped its token, recurring_lesson_plan made it gate on `days[]`).
+    // A health-check failure should point at the definition to re-apply.
+    migration: "20260804120000_recurring_lesson_plan.sql",
     description:
       "session-plan reminder claim (#869) — a missing fn silently sends nothing",
   },

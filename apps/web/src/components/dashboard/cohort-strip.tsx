@@ -50,31 +50,39 @@ export function CohortStrip({ userId }: CohortStripProps) {
     };
   }, [userId]);
 
-  // Hidden until there is a cohort with at least one neighbor besides the viewer.
-  if (!league || league.entries.length < 2) return null;
+  // Hidden until the viewer has been assigned a weekly cohort at all.
+  if (!league) return null;
+
+  // Solo cohort — quiet waiting state (LX-B13: never a hero rank metric).
+  if (league.entries.length < 2) {
+    return (
+      <section aria-label={t("cohortStripAria")}>
+        <h2 className="mb-4 font-display text-lg font-black tracking-[-0.25px]">
+          {t("cohortStripTitle")}
+        </h2>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-card">
+          <div className="flex items-center gap-3">
+            <span
+              className="bg-primary-dim flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-primary"
+              aria-hidden="true"
+            >
+              <UsersThree size={18} weight="fill" />
+            </span>
+            <p className="text-[13px] font-semibold text-text-2">
+              {tierName(t, league.tier)}
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
-    <section
-      aria-label={t("cohortStripAria")}
-      className="rounded-xl border border-border bg-card p-4 shadow-card"
-    >
-      <div className="mb-3 flex items-center gap-3">
-        <span
-          className="bg-primary-dim flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-primary"
-          aria-hidden="true"
-        >
-          <UsersThree size={18} weight="fill" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
-            {t("cohortStripTitle")}
-          </p>
-          {/* Weekly qualifier so the card's "+X XP" rows read as this week's
-              league score, not the lifetime header total (#789). */}
-          <p className="truncate text-sm font-semibold text-text-2">
-            {tierName(t, league.tier)} · {t("leagueThisWeek")}
-          </p>
-        </div>
+    <section aria-label={t("cohortStripAria")}>
+      <div className="mb-4 flex items-baseline justify-between gap-3">
+        <h2 className="font-display text-lg font-black tracking-[-0.25px]">
+          {t("cohortStripTitle")}
+        </h2>
         <Link
           href={`/${locale}/leaderboard`}
           className="flex shrink-0 items-center gap-1.5 font-display text-sm font-extrabold text-primary transition-transform duration-200 hover:translate-x-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
@@ -83,15 +91,19 @@ export function CohortStrip({ userId }: CohortStripProps) {
           <ArrowRight size={15} weight="bold" aria-hidden="true" />
         </Link>
       </div>
-
-      <div className="lb-list lb-list-compact">
-        {league.entries.map((entry, i) => (
-          <CohortRow
-            key={entry.rank}
-            entry={entry}
-            style={{ "--i": i } as React.CSSProperties}
-          />
-        ))}
+      <div className="rounded-xl border border-border bg-card p-4 shadow-card">
+        <p className="mb-2.5 truncate text-[13px] font-semibold text-text-2">
+          {tierName(t, league.tier)}
+        </p>
+        <div className="lb-list lb-list-compact lb-list-mini">
+          {league.entries.map((entry, i) => (
+            <CohortRow
+              key={entry.rank}
+              entry={entry}
+              style={{ "--i": i } as React.CSSProperties}
+            />
+          ))}
+        </div>
       </div>
     </section>
   );

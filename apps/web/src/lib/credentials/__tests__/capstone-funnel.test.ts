@@ -1,8 +1,19 @@
 /* eslint-disable import/order -- vi.mock('server-only') must be hoisted above
    the module import so the `server-only` graph loads under vitest. */
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("server-only", () => ({}));
+
+// Bundle membership decides dormancy. Mocked with a mutable id set so the
+// counter/verdict cases below keep exercising the real DB path even while the
+// capstone course is parked out of the live bundle — and so the dormant case
+// is asserted deliberately rather than as a side effect of today's catalog.
+// (The live bundle genuinely lacking the course is asserted in
+// capstone-gate.test.ts, not restated here.)
+const bundleCourseIds = new Set<string>();
+vi.mock("@/lib/content/store", () => ({
+  coursesById: { has: (id: string) => bundleCourseIds.has(id) },
+}));
 
 import { getCapstoneFunnel } from "../capstone-funnel";
 import { CAPSTONE_CREDENTIAL } from "../capstone-gate";
@@ -44,6 +55,33 @@ function adminClientWith(responses: Record<string, CountResponse>) {
 }
 
 const { courseId, deployLessonId } = CAPSTONE_CREDENTIAL;
+
+beforeEach(() => {
+  bundleCourseIds.clear();
+  bundleCourseIds.add(courseId);
+});
+
+describe("getCapstoneFunnel — dormant when the capstone course is parked", () => {
+  it("reports dormant (not idle) and issues no query", async () => {
+    bundleCourseIds.clear();
+    const { client, from } = adminClientWith({});
+
+    const funnel = await getCapstoneFunnel(client);
+
+    // `idle` would claim "nobody has reached the deploy lesson yet"; while the
+    // course is parked nobody CAN, and the distinction is the whole point.
+    expect(funnel.verdict).toBe("dormant");
+    expect(funnel).toMatchObject({
+      courseId,
+      deployLessonId,
+      completions: 0,
+      deploys: 0,
+      deferrals: 0,
+      certificates: 0,
+    });
+    expect(from).not.toHaveBeenCalled();
+  });
+});
 
 describe("getCapstoneFunnel — counters and scoping", () => {
   it("scopes each count to the capstone course + deploy lesson", async () => {

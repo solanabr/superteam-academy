@@ -17,9 +17,23 @@ export interface SocialLinks {
  */
 export interface PublicProfile {
   username: string;
+  /**
+   * Editorial name shown INSTEAD of `username` (#997). Admin-set, so it is safe
+   * to present as the author's real identity. `null` falls back to `username`.
+   * Never used for routing — usernames are unique and route-safe, display names
+   * are neither.
+   */
+  displayName: string | null;
+  /** Admin-granted verified-teacher badge (#997). */
+  verified: boolean;
   avatarUrl: string | null;
   bio: string | null;
   socialLinks: SocialLinks | null;
+}
+
+/** The name to show for a profile: editorial name first, generated one second. */
+export function profileDisplayName(profile: PublicProfile): string {
+  return profile.displayName?.trim() || profile.username;
 }
 
 /**
@@ -42,7 +56,7 @@ export async function resolvePublicProfileByWallet(
 ): Promise<PublicProfile | null> {
   const { data } = await supabase
     .from("public_profiles")
-    .select("username, avatar_url, bio, social_links")
+    .select("username, display_name, verified, avatar_url, bio, social_links")
     .eq("wallet_address", wallet)
     .maybeSingle();
 
@@ -50,6 +64,12 @@ export async function resolvePublicProfileByWallet(
 
   return {
     username: data.username,
+    // `?? null`, not a bare passthrough: an absent column reads as `undefined`,
+    // which would make PublicProfile's `string | null` a lie for consumers.
+    displayName: data.display_name ?? null,
+    // Default false rather than trusting a nullable read: an unverified teacher
+    // wrongly badged is worse than a verified one briefly unbadged.
+    verified: data.verified ?? false,
     avatarUrl: data.avatar_url,
     bio: data.bio,
     socialLinks: (data.social_links as SocialLinks | null) ?? null,

@@ -51,34 +51,31 @@ export const SEGMENT_PATH_MODALITY: Record<
  * path-schema metadata to avoid the two-repo content-staging cycle, so routing
  * changes ship with a code deploy, not a content.lock bump.
  *
- * Grounded in the new 5-course "Zero to Deployed" ladder (academy-courses
- * CATALOG.md §2, one sequential path — trackId 1, trackLevel 1→5):
- *
- *   C1 solana-for-web-devs → C2 rust-for-program-devs →
- *   C3 building-your-first-solana-program → C4 dapp-and-sdk-with-kit →
- *   C5 stablecoin-agentic-payments
- *
- * The previous entries (solana-fundamentals, anchor-framework) are RETIRED
- * (CATALOG §3) and deactivated on-chain. Routing to a deactivated course sends
- * the /start funnel + landing deep-link to the catalog fallback: the
+ * Routing to a course that is absent from the bundle or deactivated on-chain
+ * sends the /start funnel + landing deep-link to the catalog fallback: the
  * `resolveEntryLessonHref` sync gate keeps that from 404-ing, but the deep-link
- * into flagship lesson 1 goes dead — the regression this table fixes.
+ * into flagship lesson 1 goes dead — the regression this table exists to
+ * prevent. `entry-course-live.test.ts` runs the real resolver against the real
+ * bundle, so an entry that stops resolving is red, not silent.
  *
- *   1 — CORE web2 (ships JS/TS, new to Solana) → C1 solana-for-web-devs (†)
- *   2 — web3 dev (already ships on-chain)       → C3 building-your-first-solana-program (segment 2 "enters here", skips the on-ramp)
- *   3 — beginner (new to programming)           → C1 solana-for-web-devs (†) (shares segment 1's entry)
- *
- * (†) FLIPPED 2026-07-30 (#599/#673): segments 1 and 3 now enter at C1
- * `course-solana-for-web-devs`, the JS/TS on-ramp. C1 is authored, in the
- * committed bundle, and live on-chain (created + synced + active), so the
- * placeholder entry at C2 `course-rust-for-program-devs` — which existed only
- * because C1 did not yet exist — is retired. Segment 2 is unchanged: it still
- * "enters here" at C3 and skips the on-ramp.
+ * TODO (public alpha, 2026-08-04): all three segments enter at the alpha
+ * flagship `course-btc-to-sol-evolution` — an ALPHA STAND-IN, not the intended
+ * segmentation. The 5-course "Zero to Deployed" ladder this table used to route
+ * across (C1 solana-for-web-devs → C2 rust-for-program-devs → C3
+ * building-your-first-solana-program → C4 dapp-and-sdk-with-kit → C5
+ * stablecoin-payments) is parked under `_draft/` in academy-courses and is no
+ * longer compiled into the bundle, so every previous entry id resolves to
+ * nothing. The alpha catalog is two courses with no ladder to differentiate
+ * across, which makes a per-segment entry meaningless today. Revisit when
+ * track-1 restores: segments 1/3 back to the JS/TS on-ramp, segment 2 back to
+ * the "enters here" rung that skips it.
  */
+const ALPHA_ENTRY_COURSE = "course-btc-to-sol-evolution";
+
 export const SEGMENT_ENTRY_COURSE: Record<LearnerSegment, string> = {
-  1: "course-solana-for-web-devs",
-  2: "course-building-first-program",
-  3: "course-solana-for-web-devs",
+  1: ALPHA_ENTRY_COURSE,
+  2: ALPHA_ENTRY_COURSE,
+  3: ALPHA_ENTRY_COURSE,
 };
 
 /**
