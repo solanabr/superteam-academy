@@ -112,11 +112,21 @@ test-results/
 # Node compile cache (accidentally committed once in #791)
 node-compile-cache/
 
-# Generated SSR/client chunk cache written to the REPO ROOT under a random
-# nanoid-style directory name (`<id>/client/`, `<id>/ssr/`, hashed filenames
-# containing __vite_ssr_exports__). Swept into git by a `git add -A` in #879.
-# gitignore has no regex quantifiers, so a random name cannot be matched
-# generically. Listed explicitly rather than as `*/client/` + `*/ssr/`, which
-# would also shadow a future real package such as `packages/client/`.
+# Generated SSR/client chunk cache that USED to land in the REPO ROOT under a
+# random nanoid-style directory (`<id>/client/`, `<id>/ssr/`, hashed filenames
+# containing __vite_ssr_exports__), swept in by `git add -A` three times
+# (#879, #1003).
+#
+# THE REAL FIX IS NOT HERE: apps/web/vitest.config.ts now pins `cacheDir` to an
+# absolute path under node_modules, so the cache cannot reach the repo root
+# regardless of the nanoid or the cwd vitest runs from. This list is a belt-and
+# -braces leftover, kept because a stale checkout may still have these on disk.
+#
+# It was never sufficient on its own, and failed in BOTH directions: a random
+# name cannot be matched generically (gitignore has no regex quantifiers), and
+# listing one here never untracked it — BgslqnjILApu8jL_vIFuC was listed AND
+# still committed until #1005. Prefer the cacheDir pin plus the top-level
+# directory guard in .github/workflows over adding a fourth entry here.
 /sco5yHj4dsqv45Yc8yrM5/
 /BgslqnjILApu8jL_vIFuC/
+/t19GkuBguxG71m2b6fymV/

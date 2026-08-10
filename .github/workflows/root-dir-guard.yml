@@ -1,0 +1,49 @@
+name: Root directory guard
+
+# #1005 (after the third recurrence in #1003) — reject any TRACKED top-level
+# directory that is not on the allowlist in scripts/check-root-dirs.sh.
+#
+# Vitest/Vite wrote its transformed-module cache to the repo ROOT under a random
+# nanoid directory three times, and a `git add -A` swept hundreds of files in
+# each time. .gitignore cannot prevent it (the name is a fresh nanoid, and
+# gitignore never untracks what is already in the index — one dump sat on main
+# for months while LISTED in .gitignore). An allowlist inverts the default:
+# anything new is refused until a human adds a line.
+#
+# Standalone rather than a job in ci.yml, matching action-pin-guard.yml: keeps
+# the diff off the sensitive ci.yml and lets this be registered as its own
+# required check.
+#
+# NO `on.paths` FILTER, deliberately — same reasoning as the action pin guard: a
+# workflow gated by workflow-level `on.paths` leaves a required check stuck
+# "pending" and blocks merges that do not touch the filtered paths. This job is
+# a second of bash on every PR, far cheaper than the 18MB it exists to prevent.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: root-dir-guard-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    name: Top-level directory allowlist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # Prove the guard rejects a cache dump and accepts a clean tree before
+      # trusting its verdict (#662 / #614 "don't ship an unexercised guard").
+      # This caught a real bug on first run: the guard used `mapfile` (bash 4+),
+      # which aborts on macOS's bash 3.2 — and the reject cases passed for the
+      # wrong reason, erroring rather than detecting.
+      - name: Self-test the guard against fixtures
+        run: ./scripts/__tests__/check-root-dirs.test.sh
+      - name: Assert no unexpected tracked top-level directories
+        run: ./scripts/check-root-dirs.sh
