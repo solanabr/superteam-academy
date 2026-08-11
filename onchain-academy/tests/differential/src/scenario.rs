@@ -74,10 +74,36 @@ impl Ctx {
         self.h.run_ok("create_ata", &[ix], &payer, &[]);
     }
 
+    /// A learner holding ZERO SOL — what Phantom Connect actually hands a
+    /// learner who signs up with Google (#1004). Its XP ATA is created by the
+    /// authority, as it is in production, so the only thing it cannot do is pay
+    /// rent for its own Enrollment PDA.
+    pub fn new_broke_learner(&mut self) -> Keypair {
+        let learner = Keypair::new();
+        self.create_xp_ata(&learner.pubkey());
+        learner
+    }
+
+    pub fn balance(&self, key: &Pubkey) -> u64 {
+        self.h.svm.get_balance(key).unwrap_or(0)
+    }
+
     pub fn enroll(&mut self, learner: &Keypair, course_id: &str) {
         let ix = ixs::enroll(&learner.pubkey(), course_id, None);
         self.h
             .run_ok(&format!("enroll {course_id}"), &[ix], learner, &[]);
+    }
+
+    /// Sponsored enrolment: `sponsor` is both the fee payer and the rent payer,
+    /// `learner` only signs. This is the shape the backend signer uses.
+    pub fn enroll_sponsored(&mut self, learner: &Keypair, sponsor: &Keypair, course_id: &str) {
+        let ix = ixs::enroll_with_payer(&learner.pubkey(), &sponsor.pubkey(), course_id, None);
+        self.h.run_ok(
+            &format!("enroll_sponsored {course_id}"),
+            &[ix],
+            sponsor,
+            &[learner],
+        );
     }
 
     pub fn complete_lessons(&mut self, learner: &Keypair, course_id: &str, count: u8) {

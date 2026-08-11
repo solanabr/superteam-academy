@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { Transaction } from "@solana/web3.js";
+import type { Connection, PublicKey } from "@solana/web3.js";
 import { buildEnrollInstruction } from "@/lib/solana/instructions";
 import { trackEvent } from "@/lib/analytics";
 import {
@@ -13,6 +14,52 @@ import {
 import { dispatchToast } from "@/components/ui/toast-container";
 
 const TX_TIMEOUT_MS = 30_000;
+
+/**
+ * Prefer a platform-sponsored enrolment (#1004), fall back to self-paid.
+ *
+ * A Phantom Connect embedded wallet arrives with zero SOL, so the self-paid
+ * path fails for precisely the learners embedded wallets exist to serve. The
+ * sponsored route hands back a transaction the backend has already signed and
+ * will pay the fee and PDA rent for; the learner's wallet only adds its own
+ * signature.
+ *
+ * Any failure falls through to the original path, so a funded wallet can still
+ * enrol if sponsorship is down or unconfigured — this adds a cheaper route in,
+ * not a new way to fail.
+ */
+async function buildEnrollTransaction(
+  courseId: string,
+  learner: PublicKey,
+  connection: Connection
+): Promise<Transaction> {
+  try {
+    const res = await fetch("/api/enroll/sponsor", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ courseId }),
+    });
+    if (res.ok) {
+      const data = (await res.json()) as { transaction?: string };
+      if (data.transaction) {
+        // Decoded without Buffer: this runs in the browser, where Next does not
+        // guarantee a Buffer polyfill in the App Router.
+        const bytes = Uint8Array.from(atob(data.transaction), (c) =>
+          c.charCodeAt(0)
+        );
+        // Deliberately NOT preflighted — preflightTransaction assigns the
+        // learner as fee payer, which would undo the sponsorship.
+        return Transaction.from(bytes);
+      }
+    }
+  } catch {
+    // Fall through to self-pay.
+  }
+
+  const tx = new Transaction().add(buildEnrollInstruction(courseId, learner));
+  await preflightTransaction(tx, connection, learner);
+  return tx;
+}
 
 function withTimeout<T>(
   promise: Promise<T>,
@@ -82,9 +129,11 @@ export function useOnChainEnroll({
       let onChainSignature: string;
 
       try {
-        const ix = buildEnrollInstruction(courseId, publicKey);
-        const tx = new Transaction().add(ix);
-        await preflightTransaction(tx, connection, publicKey);
+        const tx = await buildEnrollTransaction(
+          courseId,
+          publicKey,
+          connection
+        );
         onChainSignature = await withTimeout(
           sendTransaction(tx, connection, { skipPreflight: true }),
           TX_TIMEOUT_MS,

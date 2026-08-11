@@ -10,10 +10,24 @@ import { findCoursePDA, findEnrollmentPDA, getProgramId } from "./pda";
 
 const coder = new BorshCoder(IDL as unknown as Idl);
 
+/**
+ * `enroll` (#1004).
+ *
+ * `payer` funds the Enrollment PDA rent and defaults to the learner, so an
+ * existing caller that omits it keeps the old self-paid behaviour exactly.
+ * Passing a different payer is what lets a Phantom Connect embedded wallet —
+ * which arrives holding zero SOL — enrol at all. The learner still signs: their
+ * address seeds the Enrollment PDA and their signature is the consent.
+ *
+ * BOTH accounts are signers. When they are the same address web3.js merges the
+ * duplicate metas and takes the union of the flags, so the learner ends up
+ * signer + writable and the self-pay path is byte-identical to before.
+ */
 export function buildEnrollInstruction(
   courseId: string,
   learner: PublicKey,
-  programId: PublicKey = getProgramId()
+  programId: PublicKey = getProgramId(),
+  payer: PublicKey = learner
 ): TransactionInstruction {
   const [coursePDA] = findCoursePDA(courseId, programId);
   const [enrollmentPDA] = findEnrollmentPDA(courseId, learner, programId);
@@ -25,7 +39,8 @@ export function buildEnrollInstruction(
     keys: [
       { pubkey: coursePDA, isSigner: false, isWritable: true },
       { pubkey: enrollmentPDA, isSigner: false, isWritable: true },
-      { pubkey: learner, isSigner: true, isWritable: true },
+      { pubkey: learner, isSigner: true, isWritable: false },
+      { pubkey: payer, isSigner: true, isWritable: true },
       { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
     ],
     programId,

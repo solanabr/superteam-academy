@@ -507,7 +507,7 @@ Source of truth: `onchain-academy/programs/onchain-academy/src/instructions/`.
 | `create_course`               | `deployCoursePda()` in `admin-signer.ts`            | Authority         |
 | `update_course`               | `updateCoursePda()` in `admin-signer.ts`            | Authority         |
 | `close_course`                | -- (admin CLI)                                      | Authority         |
-| `enroll`                      | Client-side via `instructions.ts`                   | Learner wallet    |
+| `enroll`                      | `/api/enroll/sponsor` → client co-signs             | Learner + payer   |
 | `complete_lesson`             | `completeLesson()` in `academy-program.ts`          | Backend signer    |
 | `finalize_course`             | `finalizeCourse()` in `academy-program.ts`          | Backend signer    |
 | `close_enrollment`            | Client-side via `instructions.ts`                   | Learner wallet    |

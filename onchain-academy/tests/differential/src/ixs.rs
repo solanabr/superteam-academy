@@ -309,11 +309,29 @@ pub fn close_course(authority: &Pubkey, course_id: &str) -> Instruction {
     }
 }
 
+/// Self-paid enrolment — the learner funds their own Enrollment PDA.
+///
+/// Kept as the default so every existing call site reads unchanged; it is now
+/// just the `payer == learner` case of [`enroll_with_payer`].
 pub fn enroll(learner: &Pubkey, course_id: &str, prereq: Option<(&str, &Pubkey)>) -> Instruction {
+    enroll_with_payer(learner, learner, course_id, prereq)
+}
+
+/// Sponsored enrolment (#1004) — `payer` funds the Enrollment PDA rent while
+/// `learner` only signs and seeds the PDA, so a zero-SOL embedded wallet can
+/// enrol. Passing the same address twice degrades to plain self-pay: the
+/// runtime merges duplicate account metas, taking the union of the flags.
+pub fn enroll_with_payer(
+    learner: &Pubkey,
+    payer: &Pubkey,
+    course_id: &str,
+    prereq: Option<(&str, &Pubkey)>,
+) -> Instruction {
     let mut accounts = vec![
         AccountMeta::new(course_pda(course_id), false),
         AccountMeta::new(enrollment_pda(course_id, learner), false),
-        AccountMeta::new(*learner, true),
+        AccountMeta::new_readonly(*learner, true),
+        AccountMeta::new(*payer, true),
         AccountMeta::new_readonly(system_program_id(), false),
     ];
     if let Some((prereq_course_id, prereq_learner)) = prereq {
