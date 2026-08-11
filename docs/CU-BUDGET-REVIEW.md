@@ -54,7 +54,7 @@ instructions.
 | `register_minter`             |  4,323 |             2.16% |   97.84% |
 | `update_minter`               |  2,604 |             1.30% |   98.70% |
 | `revoke_minter`               |  2,628 |             1.31% |   98.69% |
-| `enroll`                      |  8,984 |             4.49% |   95.51% |
+| `enroll`                      |  8,996 |             4.50% |   95.50% |
 | `complete_lesson`             |  7,703 |             3.85% |   96.15% |
 | `finalize_course`             |  8,436 |             4.22% |   95.78% |
 | `reward_xp`                   |  6,103 |             3.05% |   96.95% |
@@ -90,6 +90,22 @@ their cost concentrates:
 These are the instructions to watch, because their cost is dominated by a
 callee we do not control. Even so, the heaviest leaves **81.50% headroom**, so
 there is no action to take today.
+
+### Accepted drift
+
+| When       | Instruction | Change                 | Why                                                                                                                                                                            |
+| ---------- | ----------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-08-11 | `enroll`    | 8,984 → 8,996 CU (+12) | #1004 split `payer` out of `learner` so the platform can fund a zero-SOL learner's Enrollment PDA. The cost is one extra account to load plus one extra `expect_signer` check. |
+
++12 CU is 0.006% of the ceiling and leaves `enroll` at 4.50% — the ruling above
+is unaffected. Worth recording rather than silently regenerating, because the
+gate exists precisely so that an account-list change cannot pass unnoticed.
+
+Note for whoever regenerates next: the baseline is **CI's** numbers, not a
+laptop's. Regenerating locally here shifted all 19 rows (`initialize`
+15,662 → 15,722) and reported `enroll +53` where CI measured `+12` — a local
+`cargo build-sbf` can differ from the runner's platform-tools. Take the numbers
+from the failing CI job's drift table rather than committing a local regen.
 
 ### When to re-review
 

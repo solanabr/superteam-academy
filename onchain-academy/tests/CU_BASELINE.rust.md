@@ -16,7 +16,7 @@ Regenerate: `CU_BASELINE_REGEN=1 cargo test --manifest-path tests/differential/C
 | register_minter             |  4323 |
 | update_minter               |  2604 |
 | revoke_minter               |  2628 |
-| enroll                      |  8984 |
+| enroll                      |  8996 |
 | complete_lesson             |  7703 |
 | finalize_course             |  8436 |
 | reward_xp                   |  6103 |
