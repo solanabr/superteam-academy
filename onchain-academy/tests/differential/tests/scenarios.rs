@@ -293,6 +293,106 @@ fn enroll_paths() {
         .run_expect_custom("enroll inactive", &[ix], &learner2, &[], 6001);
 }
 
+/// #1004 — the platform funds the Enrollment PDA so a learner holding zero SOL
+/// can enrol. This is what makes a Phantom Connect email sign-up usable: the
+/// embedded wallet arrives empty, and `enroll` was the only instruction the
+/// learner had to fund.
+#[test]
+fn sponsored_enroll_from_a_zero_sol_learner() {
+    let mut ctx = Ctx::new();
+    let authority = ctx.authority.insecure_clone();
+    ctx.create_course(&CourseParams::simple("sponsored", authority.pubkey(), 3));
+
+    let learner = ctx.new_broke_learner();
+    let sponsor = ctx.authority.insecure_clone();
+    assert_eq!(
+        ctx.balance(&learner.pubkey()),
+        0,
+        "the learner must genuinely hold nothing, or this proves nothing"
+    );
+    let sponsor_before = ctx.balance(&sponsor.pubkey());
+
+    ctx.enroll_sponsored(&learner, &sponsor, "sponsored");
+
+    assert_eq!(
+        ctx.balance(&learner.pubkey()),
+        0,
+        "learner was debited — enrolment is not actually sponsored"
+    );
+    assert!(
+        ctx.balance(&sponsor.pubkey()) < sponsor_before,
+        "sponsor was not debited — rent came from somewhere else"
+    );
+
+    // The PDA must still be seeded by the LEARNER. If sponsorship moved the
+    // seed to the payer, every sponsored learner would collide on one account
+    // and progress would be written against the sponsor.
+    let learner_pda = ixs::enrollment_pda("sponsored", &learner.pubkey());
+    let acct = ctx
+        .h
+        .svm
+        .get_account(&learner_pda)
+        .expect("enrollment PDA seeded by the learner must exist");
+    assert!(acct.lamports > 0 && !acct.data.is_empty());
+    assert!(
+        ctx.h
+            .svm
+            .get_account(&ixs::enrollment_pda("sponsored", &sponsor.pubkey()))
+            .map(|a| a.data.is_empty())
+            .unwrap_or(true),
+        "an enrollment was seeded by the PAYER — the seed must be the learner"
+    );
+}
+
+/// The payer slot is the one new place the program will spend someone else's
+/// lamports, so both signatures are load-bearing.
+#[test]
+fn sponsored_enroll_requires_both_signatures() {
+    let mut ctx = Ctx::new();
+    let authority = ctx.authority.insecure_clone();
+    ctx.create_course(&CourseParams::simple("sponsorsec", authority.pubkey(), 3));
+
+    // Both hostile cases have to CLEAR the is_signer meta rather than just omit
+    // the keypair: `Transaction` refuses to build a tx whose metas demand a
+    // signature it does not hold, so omitting the key panics client-side and
+    // never exercises the program at all. Clearing the flag is also the honest
+    // model of the attack — a hand-rolled client can send exactly this.
+    const LEARNER_IX_ACCOUNT: usize = 2;
+    const PAYER_IX_ACCOUNT: usize = 3;
+
+    // A funded bystander must not be nameable as payer without signing —
+    // otherwise anyone could drain any funded account one enrolment at a time.
+    let victim = Keypair::new();
+    ctx.h.airdrop(&victim.pubkey(), 10 * SOL);
+    let victim_before = ctx.balance(&victim.pubkey());
+    let thief = ctx.new_broke_learner();
+    let mut ix = ixs::enroll_with_payer(&thief.pubkey(), &victim.pubkey(), "sponsorsec", None);
+    ix.accounts[PAYER_IX_ACCOUNT].is_signer = false;
+    ctx.h
+        .run_expect_err("unsigned payer", &[ix], &authority, &[&thief]);
+    assert_eq!(
+        ctx.balance(&victim.pubkey()),
+        victim_before,
+        "an unsigned payer was debited"
+    );
+
+    // And a sponsor cannot enrol somebody who never consented.
+    let bystander = ctx.new_broke_learner();
+    let mut ix =
+        ixs::enroll_with_payer(&bystander.pubkey(), &authority.pubkey(), "sponsorsec", None);
+    ix.accounts[LEARNER_IX_ACCOUNT].is_signer = false;
+    ctx.h
+        .run_expect_err("learner did not sign", &[ix], &authority, &[]);
+    assert!(
+        ctx.h
+            .svm
+            .get_account(&ixs::enrollment_pda("sponsorsec", &bystander.pubkey()))
+            .map(|a| a.data.is_empty())
+            .unwrap_or(true),
+        "an enrollment was created for a learner who never signed"
+    );
+}
+
 #[test]
 fn prerequisite_enroll() {
     let mut ctx = Ctx::new();

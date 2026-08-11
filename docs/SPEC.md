@@ -357,13 +357,22 @@ untouched. **Event**: `CourseClosed`.
 
 **Args**: `course_id: String`.
 
-| #   | Account                          | Access | Checks                                                                |
-| --- | -------------------------------- | ------ | --------------------------------------------------------------------- |
-| 0   | course                           | w      | PDA over the ARG course_id (stored bump) @ 2006                       |
-| 1   | enrollment                       | w      | init at `["enrollment", course_id, learner]` (payer = learner, 127 B) |
-| 2   | learner                          | w,s    |                                                                       |
-| 3   | system_program                   |        |                                                                       |
-| 4,5 | prereq Course, prereq Enrollment |        | _remaining accounts, required iff the course has a prerequisite_      |
+| #   | Account                          | Access | Checks                                                              |
+| --- | -------------------------------- | ------ | ------------------------------------------------------------------- |
+| 0   | course                           | w      | PDA over the ARG course_id (stored bump) @ 2006                     |
+| 1   | enrollment                       | w      | init at `["enrollment", course_id, learner]` (payer = payer, 127 B) |
+| 2   | learner                          | s      | consent + PDA seed; never debited (#1004)                           |
+| 3   | payer                            | w,s    | funds the Enrollment PDA rent; ANY signer                           |
+| 4   | system_program                   |        |                                                                     |
+| 5,6 | prereq Course, prereq Enrollment |        | _remaining accounts, required iff the course has a prerequisite_    |
+
+`learner` and `payer` are separate slots so the platform can sponsor enrolment
+(#1004): a Phantom Connect embedded wallet holds zero SOL, and this was the only
+instruction a learner had to fund. `payer` is deliberately NOT pinned to
+`config.backend_signer` — a funded learner can pass their own address into both
+slots and self-pay, and sponsorship can move to a dedicated treasury wallet
+without a program upgrade. Its signer requirement is the safety property: an
+arbitrary funded account cannot be named as payer without its own signature.
 
 **Effects**: creates the enrollment PDA (re-enrolling on a live PDA fails in
 the system program — the intended double-enroll guard); requires

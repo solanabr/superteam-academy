@@ -544,6 +544,10 @@ export type OnchainAcademy = {
         },
         {
           name: "learner";
+          signer: true;
+        },
+        {
+          name: "payer";
           writable: true;
           signer: true;
         },
