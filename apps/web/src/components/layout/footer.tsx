@@ -27,7 +27,7 @@ export function Footer() {
                 className="h-6 w-auto dark:hidden"
               />
               <Image
-                src="/brand/academy-lockup-yellow.svg"
+                src="/brand/academy-lockup-green.svg"
                 alt="Superteam Academy"
                 width={157}
                 height={30}
