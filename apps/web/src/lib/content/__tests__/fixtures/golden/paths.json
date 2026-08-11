@@ -14,8 +14,8 @@
         "slug": "btc-to-sol-evolution",
         "description": "Run, script, and explain every generation of blockchain from Bitcoin to Solana, then ship a personal ops bot that manages wallets and agents on both.",
         "difficulty": "beginner",
-        "duration": 15,
-        "thumbnail": null,
+        "duration": 18,
+        "thumbnail": "/content-assets/btc-to-sol-evolution/banner.webp",
         "creator": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
         "tags": [
           "account-model",
@@ -163,8 +163,8 @@
         "slug": "solana-speedrun",
         "description": "Por que o sistema financeiro está migrando para a Solana, como a tecnologia funciona de verdade, e seu primeiro ativo na mainnet — em menos de 10 minutos.",
         "difficulty": "beginner",
-        "duration": 4,
-        "thumbnail": null,
+        "duration": 0.25,
+        "thumbnail": "/content-assets/solana-speedrun/banner.webp",
         "creator": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
         "tags": [
           "account-model",
