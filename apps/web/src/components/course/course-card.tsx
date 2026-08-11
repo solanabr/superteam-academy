@@ -75,8 +75,9 @@ export function CourseCard({
       </div>
 
       <div className="course-card-body">
-        {/* Title */}
-        <h3 className="course-card-title">{title}</h3>
+        {/* Banner art already carries the title — real thumbnails skip the
+            heading; the /cover.png fallback keeps it; aria-label covers a11y. */}
+        {!thumbnail && <h3 className="course-card-title">{title}</h3>}
 
         {/* Description */}
         <p className="course-card-desc">{description}</p>
