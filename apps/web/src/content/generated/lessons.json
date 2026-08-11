@@ -1273,7 +1273,7 @@
         "_key": "ping-program",
         "_type": "code",
         "buildType": "buildable",
-        "deployable": false,
+        "deployable": true,
         "hints": [
           "The verification harness at the bottom already names both missing pieces — build first and read which names it can't find.",
           "`Context<Ping>` needs `Ping` to carry #[derive(Accounts)] (that derive supplies the Bumps impl), not #[account]."
