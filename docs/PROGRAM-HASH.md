@@ -11,19 +11,19 @@ SHA-256 of the toolchain-reproducible `onchain_academy_pinocchio.so`,
 published by CI so the deployed bytes can be independently verified.
 
 ```
-00f677df54fbb40285acbb0e0c61be47c0cd2a1aae84fdf39f91f2a8b3beb28b  onchain_academy_pinocchio.so
+b199a9c7b89a37c45e2ddc44c011e870392abbedaa343edee67b1080cf56a81f  onchain_academy_pinocchio.so
 ```
 
 | Field | Value |
 | --- | --- |
 | Artifact | `onchain_academy_pinocchio.so` |
-| Size (bytes) | `210464` |
-| SHA-256 | `00f677df54fbb40285acbb0e0c61be47c0cd2a1aae84fdf39f91f2a8b3beb28b` |
+| Size (bytes) | `210480` |
+| SHA-256 | `b199a9c7b89a37c45e2ddc44c011e870392abbedaa343edee67b1080cf56a81f` |
 | Program ID | `7NeJaSRyb4Wxay3Tcd9bdpD7T3GWYUQSFyrhG8SgwE8V` |
 | Solana | `3.1.10` |
 | platform-tools | `v1.54` |
-| Source commit | `766be344e71a3f2c71880f7f1ce3f31231c5711a` |
-| Build date | `2026-07-27T18:11:44-03:00` |
+| Source commit | `1ad6ae4df1cf215df7fca8a88a24e3e9756b38ee` |
+| Build date | `2026-08-11T16:05:45-03:00` |
 
 ## Reproduce
 
