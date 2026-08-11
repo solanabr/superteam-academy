@@ -37,6 +37,11 @@ vi.mock("server-only", () => ({}));
 //    longer exists. RESOLVED by #399/B3 — every course now carries a real
 //    `creator` wallet (see below), so the fixtures carry that wallet too, not
 //    the original `null` placeholder.
+//  - deploy-quest flag (academy-courses#36, 2026-08-11): the b2s
+//    `your-first-solana-program` ping-program code block gains
+//    `deployable: true` — the lesson promises a devnet deploy and shipped
+//    without the flag, so the deploy panel never mounted. Fixtures carry the
+//    flipped flag in course-by-slug.json and lessons.json.
 //  - authored → derived `tags` (#466 C3): course `tags` is no longer authored
 //    content: it's the sorted, deduplicated union of the course's lessons'
 //    `skills`. The fixtures carry the DERIVED tags computed from each course's
