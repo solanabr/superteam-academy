@@ -101,11 +101,14 @@ there is no action to take today.
 is unaffected. Worth recording rather than silently regenerating, because the
 gate exists precisely so that an account-list change cannot pass unnoticed.
 
-Note for whoever regenerates next: the baseline is **CI's** numbers, not a
-laptop's. Regenerating locally here shifted all 19 rows (`initialize`
-15,662 → 15,722) and reported `enroll +53` where CI measured `+12` — a local
-`cargo build-sbf` can differ from the runner's platform-tools. Take the numbers
-from the failing CI job's drift table rather than committing a local regen.
+Note for whoever regenerates next: regenerate against the **pinned** toolchain,
+or not at all. A bare `cargo build-sbf` (no `--tools-version v1.54`, i.e. not
+via `pnpm build:pinocchio` as the procedure below specifies) measured all 19
+rows differently — `initialize` 15,662 → 15,722, and `enroll +53` where CI
+measured `+12`. Committing that would have rewritten every instruction's
+baseline to a machine-specific figure and quietly destroyed the gate. If the
+toolchain is not certainly identical, lift the numbers from the failing CI
+job's drift table instead and let CI confirm +0.
 
 ### When to re-review
 
