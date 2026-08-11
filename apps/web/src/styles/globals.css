@@ -1751,17 +1751,25 @@
   }
 
   /* ── Thumbnail area ──
-     Course banners are 16:9 with the headline and the metadata pills baked
-     into the LOWER half of the art (public/content-assets/<slug>/banner.webp).
-     The slot is wider than 16:9, so `cover` always has to discard some image
-     height; the only real choice is which end pays for it. A centred crop
-     split the loss evenly and sliced the last line of the headline off every
-     card (#1007), so the slot is a little taller than it was (16/5.5 -> 16/6.5,
-     ~39% of the art cropped -> ~28%) and what remains is spent on the sky
-     rather than the text. */
+     Course banners are 16:9 (public/content-assets/<slug>/banner.webp) and
+     carry three bands: the kicker + Superteam lockup across the top, the
+     headline through the middle, and a strip of metadata pills along the
+     bottom. The slot is wider than 16:9, so `cover` must discard some image
+     height and the only real question is which band pays.
+
+     The pills do: the card already prints those exact facts as real text
+     directly underneath (difficulty, lesson count, duration, XP), so keeping
+     them in the art duplicates the row for no gain, whereas the lockup and the
+     headline appear nowhere else in the crop. Hence a TOP anchor.
+
+     The ratio is what makes the cut land cleanly. It has to fall in the gap
+     between the headline and the pills — too short re-clips the headline (the
+     original 16/5.5 centred crop did exactly that, #1007), too tall lets the
+     pills back in. 16/7.7 shows source y 0-770 of 900: lockup ~40-100 and
+     headline ~490-745 are in, pills start ~785 and stay out. */
   .course-card-thumb {
     position: relative;
-    aspect-ratio: 16 / 6.5;
+    aspect-ratio: 16 / 7.7;
     overflow: hidden;
     background: var(--subtle);
     border-bottom: 1.5px solid var(--border);
@@ -1770,11 +1778,11 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center bottom;
+    object-position: center top;
     /* Matches object-position: with the default centre origin the hover zoom
-       pushes the bottom of the art out of the slot, re-clipping the pills the
-       bottom anchor exists to protect. */
-    transform-origin: center bottom;
+       lifts the top of the art out of the slot, cutting into the lockup the
+       top anchor exists to protect. */
+    transform-origin: center top;
     display: block;
     transition: transform 0.35s ease;
   }
