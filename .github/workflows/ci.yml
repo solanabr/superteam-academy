@@ -423,7 +423,7 @@ jobs:
       # Prebuilt binary (taiki-e/install-action) instead of `cargo install
       # cargo-audit` from source — saves the ~1-2 min compile every run.
       - name: Install cargo-audit
-        uses: taiki-e/install-action@41049aa56687c35e0afa74eed4f09cec4f9afabf # v2.85.2
+        uses: taiki-e/install-action@6c6fd71fe4fb72c3697d269963d0e15df8adedad # v2.85.10
         with:
           tool: cargo-audit
 
