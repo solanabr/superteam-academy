@@ -6,7 +6,7 @@
     "creatorRewardXp": 0,
     "description": "Run, script, and explain every generation of blockchain from Bitcoin to Solana, then ship a personal ops bot that manages wallets and agents on both.",
     "difficulty": "beginner",
-    "duration": 15,
+    "duration": 18,
     "minCompletionsForReward": 0,
     "modules": [
       {
@@ -170,6 +170,7 @@
       "solana-programs",
       "transactions"
     ],
+    "thumbnail": "/content-assets/btc-to-sol-evolution/banner.webp",
     "title": "From Bitcoin to Solana: The Evolution of Blockchain Technology",
     "trackId": 0,
     "trackLevel": 0,
@@ -183,7 +184,7 @@
     "creatorRewardXp": 0,
     "description": "Por que o sistema financeiro está migrando para a Solana, como a tecnologia funciona de verdade, e seu primeiro ativo na mainnet — em menos de 10 minutos.",
     "difficulty": "beginner",
-    "duration": 4,
+    "duration": 0.25,
     "minCompletionsForReward": 0,
     "modules": [
       {
@@ -229,6 +230,7 @@
       "solana-fundamentals",
       "transactions"
     ],
+    "thumbnail": "/content-assets/solana-speedrun/banner.webp",
     "title": "Solana Speedrun: Inicie sua jornada onchain em minutos",
     "trackId": 0,
     "trackLevel": 0,

@@ -150,6 +150,17 @@ vi.mock("server-only", () => ({}));
 //    both-directions cover of the bundle and the KNOWN_ABSENT divergence
 //    ledger retires with them. anchor-expert is parked, so the award-shape
 //    assertion moved to a live `course-completed` achievement.
+//  - course banners (bump to academy-courses @94b2b89, academy-courses #35):
+//    both alpha courses gain a course-level `assets/banner.webp` referenced by
+//    the `thumbnail:` key the schema has always accepted, so `thumbnail` stops
+//    projecting as null and the catalogue card stops falling back to
+//    /cover.png (#1007). The same upstream commit corrects `duration` to its
+//    documented unit (hours): btc-to-sol 15 -> 18 (15 was the lesson count),
+//    speedrun 4 -> 0.25 (~15 min). An EDITS-ONLY wave otherwise — counts,
+//    slots, ids and blocks are all unchanged. courses/course-by-slug/paths/
+//    summaries regenerated through the real projectors; lessons.json,
+//    quests-raw.json and achievements-raw.json are byte-unchanged (no lesson,
+//    block or award moved).
 const deps = { lessonsById };
 
 function bundleCourse(id: string): CourseDoc {
@@ -170,13 +181,20 @@ describe("projectCourse — getAllCourses shape (summary module lessons)", () =>
     }
   });
 
-  it("creator is a real wallet (#399/B3); thumbnail is null (documented deltas)", () => {
+  it("creator is a real wallet (#399/B3); thumbnail is a compiled banner url", () => {
     // The alpha catalog is authored under its own creator wallet, not the
     // platform authority the track-1 courses carried.
+    //
+    // `thumbnail` was null for every course until the banner wave (#1007) —
+    // not by projector design, but because no pinned content had ever set the
+    // field. It is asserted positively now so the catalogue cannot silently
+    // regress to the /cover.png placeholder: a null here means the pinned
+    // content lost its artwork, which is invisible in a byte-identical
+    // comparison against a golden that was regenerated from that same content.
     for (const golden of goldenCourses) {
       const c = projectCourse(bundleCourse(golden._id), deps);
       expect(c.creator).toBe("3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ");
-      expect(c.thumbnail).toBeNull();
+      expect(c.thumbnail).toMatch(/^\/content-assets\/[\w-]+\/[\w.-]+$/);
     }
   });
 });
