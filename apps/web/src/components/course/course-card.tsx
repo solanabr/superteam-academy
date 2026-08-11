@@ -75,8 +75,11 @@ export function CourseCard({
       </div>
 
       <div className="course-card-body">
-        {/* Title */}
-        <h3 className="course-card-title">{title}</h3>
+        {/* The banner artwork already carries the title, so a real thumbnail
+            drops the text heading (owner, 11-08). The /cover.png fallback has
+            no title baked in — those cards keep the h3 or they'd be unnamed.
+            Screen readers always get the title via the Link's aria-label. */}
+        {!thumbnail && <h3 className="course-card-title">{title}</h3>}
 
         {/* Description */}
         <p className="course-card-desc">{description}</p>
