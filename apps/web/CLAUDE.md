@@ -126,17 +126,23 @@ TEACH_PREVIEW_PASSWORD=            # Shared password for /teach/preview. NO defa
                                    # never on-chain writes, never the admin surface (separate
                                    # cookie from admin_session, so it cannot satisfy admin auth).
 
-# Optional — Phantom Connect embedded wallets (#983/#984)
-# Public, domain-bound client id from Phantom Portal (https://phantom.com/portal/).
-# It ships in the client bundle by design; Portal's allowed-domains list is what
-# scopes it, so it is configuration, not a secret. Unset = embedded wallets OFF,
-# exactly like the analytics keys — SIWS stays the guaranteed way in, and no
-# build or page render may depend on this being present.
-# Portal must list the production origin AND http://localhost:3000 for dev.
-# Read ONLY through lib/phantom/config.ts (isPhantomConnectEnabled/getPhantomAppId).
-# NOTE: we integrate via @phantom/browser-sdk, not @phantom/react-sdk — the
-# latter needs React >=19.0.1 and this app is on React 18.3.1 (#989).
-NEXT_PUBLIC_PHANTOM_APP_ID=
+# Optional — Dynamic embedded wallets (replaced Phantom Connect, which Portal
+# never approved — #1017). Public environment id from the Dynamic dashboard
+# (https://app.dynamic.xyz). It ships in the client bundle by design; the
+# dashboard's allowed-origins list is what scopes it, so it is configuration,
+# not a secret. Unset = embedded wallets OFF, exactly like the analytics keys —
+# SIWS with an external wallet stays the guaranteed way in, and no build or
+# page render may depend on this being present.
+# Read ONLY through lib/dynamic/config.ts (isDynamicEnabled/getDynamicEnvironmentId).
+#
+# DEPLOY WARNING: NEXT_PUBLIC_* is inlined at BUILD time. Changing this value
+# requires a redeploy with "Use existing Build Cache" DISABLED — a cache-reusing
+# redeploy silently keeps the old value baked into the served chunks. That
+# exact trap caused a live incident when Phantom was being disabled: the env
+# var was removed, the dashboard looked right, and the dead button kept
+# shipping. Verify by grepping the served /_next/static chunks, not the
+# dashboard.
+NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID=
 
 # Optional — Rust playground proxy (server-only)
 RUST_PLAYGROUND_URL=               # /api/rust/execute upstream (default: play.rust-lang.org/execute)

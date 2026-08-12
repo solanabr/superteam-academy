@@ -3,6 +3,7 @@
 import { DynamicContextProvider } from "@dynamic-labs/sdk-react-core";
 import { SolanaWalletConnectors } from "@dynamic-labs/solana";
 import { getDynamicEnvironmentId } from "@/lib/dynamic/config";
+import { DynamicAuthHandler } from "@/components/auth/dynamic-auth-handler";
 
 /**
  * Dynamic embedded wallets for the whole app.
@@ -38,6 +39,11 @@ export function DynamicWalletProvider({
         walletConnectors: [SolanaWalletConnectors],
       }}
     >
+      {/* Mounted INSIDE the provider, never beside it. The handler calls
+          `useDynamicContext()`, which throws on the client when no provider is
+          present — as a sibling it would crash every page in a build with no
+          environment id, and only on hydration, so the build would look fine. */}
+      <DynamicAuthHandler />
       {children}
     </DynamicContextProvider>
   );

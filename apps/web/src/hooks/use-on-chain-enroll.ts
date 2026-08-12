@@ -18,7 +18,7 @@ const TX_TIMEOUT_MS = 30_000;
 /**
  * Prefer a platform-sponsored enrolment (#1004), fall back to self-paid.
  *
- * A Phantom Connect embedded wallet arrives with zero SOL, so the self-paid
+ * An embedded wallet (Dynamic) arrives with zero SOL, so the self-paid
  * path fails for precisely the learners embedded wallets exist to serve. The
  * sponsored route hands back a transaction the backend has already signed and
  * will pay the fee and PDA rent for; the learner's wallet only adds its own

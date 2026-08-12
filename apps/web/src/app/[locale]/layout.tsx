@@ -8,7 +8,6 @@ import { SolanaWalletProvider } from "@/lib/solana/wallet-provider";
 import { AnalyticsProvider } from "@/components/analytics/analytics-provider";
 import { AuthProvider } from "@/lib/auth/auth-provider";
 import { DynamicWalletProvider } from "@/components/auth/dynamic-wallet-provider";
-import { DynamicAuthHandler } from "@/components/auth/dynamic-auth-handler";
 import { Header } from "@/components/layout/header";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { GamificationOverlays } from "@/components/gamification/gamification-overlays";
@@ -45,12 +44,10 @@ export default async function LocaleLayout(props: LocaleLayoutProps) {
     >
       <NextIntlClientProvider messages={messages}>
         <SolanaWalletProvider>
+          {/* DynamicAuthHandler is mounted by the provider itself, not here:
+              its hook throws outside a DynamicContextProvider, so it must never
+              be a sibling. */}
           <DynamicWalletProvider>
-            {/* Turns a connected Dynamic wallet into a Supabase session,
-                mirroring WalletAuthHandler for wallet-adapter wallets. Both
-                land on the same account model — the two ways in differ only in
-                where the wallet comes from. */}
-            <DynamicAuthHandler />
             <AuthProvider>
               <AnalyticsProvider>
                 <div className="grid-bg flex min-h-screen flex-col bg-[var(--bg)]">

@@ -77,13 +77,10 @@ const publicEnvSchema = z.object({
   // identifier from Phantom Portal — it ships in the client bundle by design,
   // and Portal's allowed-domains list is what actually scopes it.
   //
-  // Optional on purpose, like the analytics keys: unset means embedded wallets
-  // are simply off. A build must never fail for want of it, and no code path may
-  // assume a wallet is available — the existing SIWS login stays the only
-  // guaranteed route in.
-  NEXT_PUBLIC_PHANTOM_APP_ID: z.string().optional().or(z.literal("")),
-  // Dynamic embedded wallets — same contract as above: optional, unset means
-  // off, and nothing may depend on it being present.
+  // Dynamic embedded wallets. Optional on purpose, like the analytics keys:
+  // unset means embedded wallets are simply off. A build must never fail for
+  // want of it, and no code path may assume a wallet is available — SIWS with
+  // an external wallet stays the only guaranteed route in.
   NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID: z.string().optional().or(z.literal("")),
 });
 
@@ -93,7 +90,6 @@ const parsed = publicEnvSchema.safeParse({
   NEXT_PUBLIC_SOLANA_RPC_URL: process.env.NEXT_PUBLIC_SOLANA_RPC_URL,
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
-  NEXT_PUBLIC_PHANTOM_APP_ID: process.env.NEXT_PUBLIC_PHANTOM_APP_ID,
   NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID:
     process.env.NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID,
 });

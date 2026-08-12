@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { GithubLogo, Envelope } from "@phosphor-icons/react";
-import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
+import { GithubLogo } from "@phosphor-icons/react";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +19,7 @@ import { createClient } from "@/lib/supabase/client";
 import { buildOAuthRedirect } from "@/lib/auth/oauth-redirect";
 import { trackEvent } from "@/lib/analytics";
 import { isDynamicEnabled } from "@/lib/dynamic/config";
+import { DynamicSignInButton } from "@/components/auth/dynamic-sign-in-button";
 
 interface AuthModalProps {
   trigger?: React.ReactNode;
@@ -60,10 +60,12 @@ export function AuthModal({
     null
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  // `useDynamicContext` is safe to call unconditionally: with no environment id
-  // the provider renders children straight through, and the hook falls back to
-  // its default context rather than throwing.
-  const { setShowAuthFlow } = useDynamicContext();
+  // NOT a `useDynamicContext()` call. The hook throws on the client when no
+  // provider is mounted (it only falls back during SSR), so calling it here
+  // would server-render fine and then crash on hydration in any build without
+  // an environment id — breaking sign-in everywhere this modal renders. Hooks
+  // cannot be conditional, so the gate is a component boundary instead:
+  // DynamicSignInButton owns the hook and mounts only when Dynamic is enabled.
   const dynamicEnabled = isDynamicEnabled();
   const { setVisible } = useWalletModal();
 
@@ -110,25 +112,6 @@ export function AuthModal({
       setErrorMessage(t("githubSignInFailed"));
       setLoading(null);
     }
-  };
-
-  /**
-   * Dynamic — the no-wallet path, offered FIRST because it is the only option
-   * that asks nothing of a learner who has never held a wallet: they sign in
-   * with an email or social account and Dynamic provisions a real Solana wallet
-   * for them.
-   *
-   * This only OPENS Dynamic's auth flow. Everything after — the wallet
-   * appearing, the SIWS signature, the Supabase session — is handled by
-   * `DynamicAuthHandler` at the layout level, because the wallet can also
-   * arrive from a restored session with no modal involved. `loading` is reset
-   * as soon as the flow is open: leaving it set would keep the Dialog's close
-   * guard engaged and strand a learner who dismissed Dynamic's own modal.
-   */
-  const handleConnectDynamic = () => {
-    setErrorMessage(null);
-    trackEvent("auth_method_selected", { method: "dynamic" });
-    setShowAuthFlow(true);
   };
 
   const handleConnectGoogle = async () => {
@@ -185,20 +168,7 @@ export function AuthModal({
           {/* First: the only option that asks nothing of a learner with no
               wallet. Hidden entirely when no environment id is configured. */}
           {dynamicEnabled && (
-            <div className="space-y-1.5">
-              <Button
-                variant="push"
-                className="h-12 w-full gap-3 text-sm font-medium"
-                onClick={handleConnectDynamic}
-                disabled={loading !== null}
-              >
-                <Envelope size={20} weight="fill" aria-hidden="true" />
-                {t("continueWithEmail")}
-              </Button>
-              <p className="text-center text-xs text-text-3">
-                {t("emailWalletSubtitle")}
-              </p>
-            </div>
+            <DynamicSignInButton disabled={loading !== null} />
           )}
 
           <Button

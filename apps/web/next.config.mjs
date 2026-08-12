@@ -126,7 +126,17 @@ const nextConfig = {
     // Tree-shake the per-icon barrel so only the icons a client component
     // actually imports land in its bundle (55+ named-import sites across the
     // app). Named imports only — no namespace/dynamic imports of the package.
-    optimizePackageImports: ["@phosphor-icons/react"],
+    // The Dynamic packages are the same shape and a far worse offender:
+    // @dynamic-labs/sdk-react-core is ~11MB across 4,302 files behind a single
+    // barrel (its `exports` map only exposes "."), so importing
+    // DynamicContextProvider drags in every widget, the MoonPay onramp and the
+    // rest. Without this the production build OOMs outright — reproduced
+    // locally at a 4GB heap and on the Vercel builder.
+    optimizePackageImports: [
+      "@phosphor-icons/react",
+      "@dynamic-labs/sdk-react-core",
+      "@dynamic-labs/solana",
+    ],
   },
   // The server-side challenge executor (lib/challenge/executor.ts) runs learner
   // code in QuickJS-on-WASM. Keep these packages EXTERNAL so webpack does not
@@ -143,6 +153,21 @@ const nextConfig = {
     "@jitl/quickjs-singlefile-cjs-release-sync",
   ],
   transpilePackages: ["@superteam-lms/types"],
+  // WalletConnect (a transitive of @dynamic-labs/solana) ships `pino`, which
+  // dynamically requires its OPTIONAL pretty-printer — webpack resolves the
+  // require eagerly and hard-fails the build on the missing module. These are
+  // genuinely optional at runtime (dev-CLI conveniences), so the right fix is
+  // to leave them unresolved, not to install them: this is the canonical
+  // WalletConnect/Next.js recipe. `lokijs` and `encoding` are the same
+  // pattern one import deeper; webpack stops at the FIRST missing module, so
+  // they are included up front rather than discovered one failed build at a
+  // time. NOT related to serverExternalPackages above, which keeps packages
+  // out of the bundle for correctness — this keeps modules that do not exist
+  // from failing resolution.
+  webpack: (config) => {
+    config.externals.push("pino-pretty", "lokijs", "encoding");
+    return config;
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
