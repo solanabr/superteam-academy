@@ -11,6 +11,7 @@ const sdkMock = vi.hoisted(() => {
     autoConnect: vi.fn(async () => {}),
     connect: vi.fn(async () => {}),
     disconnect: vi.fn(async () => {}),
+    signTransaction: vi.fn(async (tx: unknown) => tx),
     addresses: [] as Array<{ addressType: string; address: string }>,
     emit(event: string) {
       listeners.get(event)?.forEach((cb) => cb());
@@ -21,6 +22,7 @@ const sdkMock = vi.hoisted(() => {
       this.autoConnect.mockClear();
       this.connect.mockClear();
       this.disconnect.mockClear();
+      this.signTransaction.mockClear();
     },
   };
 });
@@ -45,6 +47,7 @@ vi.mock("@/lib/phantom/client", () => ({
           off: (e: string, cb: () => void) => {
             sdkMock.listeners.get(e)?.delete(cb);
           },
+          solana: { signTransaction: sdkMock.signTransaction },
         },
 }));
 
@@ -144,6 +147,59 @@ describe("PhantomConnectProvider (#985)", () => {
     // options must still render rather than the UI showing an error.
     expect(screen.getByTestId("status")).toHaveTextContent("idle");
     expect(screen.getByTestId("enabled")).toHaveTextContent("true");
+  });
+});
+
+describe("PhantomConnectProvider — signTransaction (walletless enrolment)", () => {
+  function SignProbe() {
+    const { signTransaction } = usePhantomConnect();
+    return (
+      <button
+        onClick={() => {
+          void signTransaction({} as never).then(
+            () => {
+              document.title = "signed";
+            },
+            () => {
+              document.title = "sign-rejected";
+            }
+          );
+        }}
+      >
+        sign
+      </button>
+    );
+  }
+
+  it("rejects when no wallet is connected", async () => {
+    render(
+      <PhantomConnectProvider>
+        <SignProbe />
+      </PhantomConnectProvider>
+    );
+    await waitFor(() => expect(sdkMock.autoConnect).toHaveBeenCalled());
+
+    screen.getByRole("button", { name: "sign" }).click();
+
+    await waitFor(() => expect(document.title).toBe("sign-rejected"));
+    expect(sdkMock.signTransaction).not.toHaveBeenCalled();
+  });
+
+  it("delegates to the SDK's Solana chain once connected", async () => {
+    render(
+      <PhantomConnectProvider>
+        <SignProbe />
+      </PhantomConnectProvider>
+    );
+    await waitFor(() => expect(sdkMock.autoConnect).toHaveBeenCalled());
+
+    sdkMock.addresses = [{ addressType: "Solana", address: "SoLaNaAddr111" }];
+    act(() => sdkMock.emit("connect"));
+
+    screen.getByRole("button", { name: "sign" }).click();
+
+    await waitFor(() => expect(document.title).toBe("signed"));
+    expect(sdkMock.signTransaction).toHaveBeenCalledTimes(1);
   });
 });
 

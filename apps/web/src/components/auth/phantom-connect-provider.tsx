@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import { AddressType, type BrowserSDK } from "@phantom/browser-sdk";
+import type { Transaction, VersionedTransaction } from "@solana/web3.js";
 import { createPhantomClient } from "@/lib/phantom/client";
 
 /**
@@ -37,6 +38,15 @@ interface PhantomConnectValue {
   address: string | null;
   connect: (provider: PhantomAuthProvider) => Promise<void>;
   disconnect: () => Promise<void>;
+  /**
+   * Signs a transaction with the embedded wallet (#1004 follow-up). Sign-only
+   * by design: the app submits through its own RPC connection, so the SDK's
+   * network setting can never route a devnet transaction to mainnet or vice
+   * versa. Rejects when no wallet is connected.
+   */
+  signTransaction: (
+    transaction: Transaction
+  ) => Promise<Transaction | VersionedTransaction>;
 }
 
 const PhantomConnectContext = createContext<PhantomConnectValue>({
@@ -45,6 +55,9 @@ const PhantomConnectContext = createContext<PhantomConnectValue>({
   address: null,
   connect: async () => {},
   disconnect: async () => {},
+  signTransaction: async () => {
+    throw new Error("Phantom Connect is not available");
+  },
 });
 
 /** Picks the Solana address; we request no other type (see lib/phantom/client). */
@@ -127,6 +140,17 @@ export function PhantomConnectProvider({
     }
   }, []);
 
+  const signTransaction = useCallback(
+    async (transaction: Transaction) => {
+      const sdk = sdkRef.current;
+      if (!sdk || !address) {
+        throw new Error("Phantom wallet is not connected");
+      }
+      return sdk.solana.signTransaction(transaction);
+    },
+    [address]
+  );
+
   const disconnect = useCallback(async () => {
     const sdk = sdkRef.current;
     if (!sdk) return;
@@ -142,7 +166,7 @@ export function PhantomConnectProvider({
 
   return (
     <PhantomConnectContext.Provider
-      value={{ enabled, status, address, connect, disconnect }}
+      value={{ enabled, status, address, connect, disconnect, signTransaction }}
     >
       {children}
     </PhantomConnectContext.Provider>
