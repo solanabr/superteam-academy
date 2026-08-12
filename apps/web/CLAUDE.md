@@ -138,6 +138,20 @@ TEACH_PREVIEW_PASSWORD=            # Shared password for /teach/preview. NO defa
 # latter needs React >=19.0.1 and this app is on React 18.3.1 (#989).
 NEXT_PUBLIC_PHANTOM_APP_ID=
 
+# Optional — Custodial "Academy Wallet" (server-only, NEVER NEXT_PUBLIC_)
+# Master secret (>= 32 chars) from which per-account learner keypairs are
+# DERIVED (HKDF, lib/solana/custodial-wallet.ts) — nothing is stored in the DB.
+# Lets a Google/GitHub-only account enrol with zero wallet UX: the server
+# derives the account's keypair, binds it as profiles.wallet_address, and
+# signs `enroll` itself (/api/enroll/custodial). Custodial by design and
+# acceptable ONLY because these wallets hold nothing transferable (soulbound
+# XP + frozen credentials). Unset = feature OFF (route 503s), exactly like
+# NEXT_PUBLIC_PHANTOM_APP_ID.
+# ⚠ ROTATING THIS CHANGES EVERY DERIVED ADDRESS and orphans existing custodial
+# accounts' on-chain history — treat it like BACKEND_SIGNER_SECRET, not like a
+# password to cycle.
+CUSTODIAL_WALLET_SECRET=
+
 # Optional — Rust playground proxy (server-only)
 RUST_PLAYGROUND_URL=               # /api/rust/execute upstream (default: play.rust-lang.org/execute)
 

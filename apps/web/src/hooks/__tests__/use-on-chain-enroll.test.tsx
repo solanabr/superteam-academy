@@ -121,15 +121,46 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-/** Sponsored route responds with a (fake) base64 transaction. */
+/**
+ * Sponsored route responds with a (fake) base64 transaction; the custodial
+ * route responds "disabled" so walletless paths fall through as before.
+ */
 function stubSponsorRoute(learner = "EmbeddedAddr111"): void {
   vi.stubGlobal(
     "fetch",
-    vi.fn(async () => ({
-      ok: true,
-      json: async () => ({ transaction: btoa("tx-bytes"), learner }),
-    }))
+    vi.fn(async (url: string) =>
+      String(url).includes("/api/enroll/custodial")
+        ? {
+            ok: false,
+            status: 503,
+            json: async () => ({ error: "custodialDisabled" }),
+          }
+        : {
+            ok: true,
+            json: async () => ({ transaction: btoa("tx-bytes"), learner }),
+          }
+    )
   );
+}
+
+/** Custodial route enrolls server-side; nothing else should be fetched. */
+function stubCustodialRoute(): ReturnType<typeof vi.fn> {
+  const fetchMock = vi.fn(async (url: string) => {
+    if (String(url).includes("/api/enroll/custodial")) {
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          signature: "custodial-sig",
+          wallet: "CustodialAddr111",
+        }),
+      };
+    }
+    throw new Error(`unexpected fetch: ${String(url)}`);
+  });
+  vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
 }
 
 describe("useOnChainEnroll — anonymous visitor (#556)", () => {
@@ -209,6 +240,109 @@ describe("useOnChainEnroll — signed-in user (unchanged paths)", () => {
     expect(onSuccess).toHaveBeenCalledTimes(1);
     expect(onRequireAuth).not.toHaveBeenCalled();
     expect(result.current.enrollError).toBeNull();
+  });
+});
+
+describe("useOnChainEnroll — walletless learner, custodial Academy Wallet", () => {
+  it("enrolls entirely server-side: no wallet modal, no Phantom, no signature prompt", async () => {
+    const fetchMock = stubCustodialRoute();
+    const onSuccess = vi.fn();
+
+    const { result } = renderHook(() =>
+      useOnChainEnroll({
+        courseId: COURSE_ID,
+        userId: "user-1",
+        onRequireAuth: vi.fn(),
+        onSuccess,
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleEnroll();
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/enroll/custodial",
+      expect.objectContaining({ method: "POST" })
+    );
+    expect(onSuccess).toHaveBeenCalledTimes(1);
+    expect(wallet.setVisible).not.toHaveBeenCalled();
+    expect(phantom.connect).not.toHaveBeenCalled();
+    expect(wallet.sendTransaction).not.toHaveBeenCalled();
+    expect(result.current.enrollError).toBeNull();
+  });
+
+  it("falls through to the wallet modal when custodial is unavailable and Phantom is off", async () => {
+    stubSponsorRoute(); // custodial responds "custodialDisabled"
+
+    const { result } = renderHook(() =>
+      useOnChainEnroll({
+        courseId: COURSE_ID,
+        userId: "user-1",
+        onRequireAuth: vi.fn(),
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleEnroll();
+    });
+
+    expect(wallet.setVisible).toHaveBeenCalledWith(true);
+  });
+
+  it("surfaces a real custodial failure instead of silently falling through", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: false,
+        status: 500,
+        json: async () => ({ error: "Enrollment failed on-chain" }),
+      }))
+    );
+    const onError = vi.fn();
+
+    const { result } = renderHook(() =>
+      useOnChainEnroll({
+        courseId: COURSE_ID,
+        userId: "user-1",
+        onRequireAuth: vi.fn(),
+        onError,
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleEnroll();
+    });
+
+    expect(onError).toHaveBeenCalledWith("Enrollment failed on-chain");
+    expect(result.current.enrollError).toBe("Enrollment failed on-chain");
+    expect(wallet.setVisible).not.toHaveBeenCalled();
+  });
+
+  it("resumes a pending enrolment after a plain Google sign-in — no wallet needed", async () => {
+    const fetchMock = stubCustodialRoute();
+    const onSuccess = vi.fn();
+
+    sessionStorage.setItem(
+      "pendingEnrollCourseId",
+      JSON.stringify({ courseId: COURSE_ID, expiresAt: Date.now() + 60_000 })
+    );
+
+    renderHook(() =>
+      useOnChainEnroll({
+        courseId: COURSE_ID,
+        userId: "user-1",
+        onRequireAuth: vi.fn(),
+        onSuccess,
+      })
+    );
+
+    await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1));
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/enroll/custodial",
+      expect.anything()
+    );
+    expect(sessionStorage.getItem("pendingEnrollCourseId")).toBeNull();
   });
 });
 

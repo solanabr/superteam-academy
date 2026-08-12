@@ -111,6 +111,56 @@ async function fetchSponsoredEnrollTransaction(
   }
 }
 
+type CustodialOutcome =
+  | { status: "enrolled"; signature: string | null }
+  | { status: "unavailable" }
+  | { status: "failed"; message: string };
+
+/**
+ * Attempt a fully server-side enrolment via the custodial Academy Wallet
+ * route. "unavailable" means this path does not apply (feature off, or the
+ * account already has a real wallet) and the caller should fall through to
+ * the next option; "failed" is a real error worth surfacing.
+ */
+async function tryCustodialEnroll(courseId: string): Promise<CustodialOutcome> {
+  let res: Response;
+  try {
+    res = await fetch("/api/enroll/custodial", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ courseId }),
+    });
+  } catch {
+    return { status: "unavailable" };
+  }
+
+  if (res.ok) {
+    const data = (await res.json().catch(() => ({}))) as {
+      signature?: string | null;
+    };
+    return { status: "enrolled", signature: data.signature ?? null };
+  }
+
+  let errorKey: string | null = null;
+  try {
+    const data = (await res.json()) as { error?: string };
+    if (typeof data.error === "string") errorKey = data.error;
+  } catch {
+    // Unparseable body — fall through with errorKey null.
+  }
+
+  // Not-applicable cases, never worth an error message: the feature is off,
+  // or the account has a real linked wallet and must enrol through it.
+  if (errorKey === "custodialDisabled" || res.status === 409) {
+    return { status: "unavailable" };
+  }
+
+  return {
+    status: "failed",
+    message: errorKey ?? "Enrollment failed. Please try again.",
+  };
+}
+
 /**
  * Prefer a platform-sponsored enrolment (#1004), fall back to self-paid.
  *
@@ -214,6 +264,37 @@ export function useOnChainEnroll({
     const hasEmbeddedWallet = phantomEnabled && phantomAddress !== null;
 
     if (!publicKey && !hasEmbeddedWallet) {
+      // First choice for a walletless account: the custodial Academy Wallet —
+      // the whole enrolment happens server-side, so there is no redirect, no
+      // extension, and no signing prompt at all. The route itself refuses
+      // accounts that already linked a real wallet (409 → "unavailable"), so
+      // trying it first can never hijack an existing wallet's enrolments.
+      setEnrollError(null);
+      setIsEnrolling(true);
+      try {
+        const custodial = await tryCustodialEnroll(courseId);
+        if (custodial.status === "enrolled") {
+          trackEvent("enrollment_onchain", {
+            courseId,
+            signature: custodial.signature ?? "already-enrolled",
+            wallet: "custodial",
+          });
+          dispatchToast("Enrolled successfully!", "success");
+          onSuccess?.();
+          return;
+        }
+        if (custodial.status === "failed") {
+          setEnrollError(custodial.message);
+          dispatchToast(custodial.message, "warning");
+          onError?.(custodial.message);
+          return;
+        }
+        // "unavailable" — fall through to embedded-wallet provisioning or the
+        // extension-wallet modal below.
+      } finally {
+        setIsEnrolling(false);
+      }
+
       if (phantomEnabled) {
         // Provisioning is only right for an account with NO linked wallet:
         // PhantomAuthHandler deliberately refuses to link a second wallet, so
@@ -374,17 +455,23 @@ export function useOnChainEnroll({
   ]);
 
   // Resume an enrolment interrupted by an auth or wallet-provisioning
-  // redirect: fires once a signed-in user with a usable wallet lands back on
-  // the course they clicked Enroll for. The ref (not just the consumed
-  // marker) guards StrictMode's double effect-run — both runs see the marker
-  // before either removal lands.
+  // redirect: fires once a signed-in user lands back on the course they
+  // clicked Enroll for. Deliberately does NOT wait for a wallet — a plain
+  // Google sign-up has none, and handleEnroll's walletless path (custodial
+  // first, then embedded-wallet provisioning, then the wallet modal) is
+  // exactly the continuation their click asked for. The ref (not just the
+  // consumed marker) guards StrictMode's double effect-run — both runs see
+  // the marker before either removal lands.
   const resumedRef = useRef(false);
   useEffect(() => {
     if (resumedRef.current) return;
     if (!userId) return;
-    const walletReady =
-      publicKey !== null || (phantomEnabled && phantomAddress);
-    if (!walletReady) return;
+    // With Phantom Connect enabled, a return from ITS provisioning redirect
+    // has the session still rehydrating (autoConnect in flight) — resuming
+    // walletless here would race it into the wrong path. Wait for a wallet in
+    // that case; with Phantom off, resume immediately and let the custodial
+    // path finish the click.
+    if (phantomEnabled && !phantomAddress && publicKey === null) return;
     if (!takePendingEnroll(courseId)) return;
     resumedRef.current = true;
     void handleEnroll();
