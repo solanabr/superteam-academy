@@ -10,6 +10,12 @@ vi.mock("@solana/wallet-adapter-react-ui", () => ({
   useWalletModal: () => ({ setVisible: vi.fn() }),
 }));
 
+// The real SDK reaches for browser APIs jsdom does not provide, and this suite
+// is about the modal's own behaviour — only `setShowAuthFlow` is consumed.
+vi.mock("@dynamic-labs/sdk-react-core", () => ({
+  useDynamicContext: () => ({ setShowAuthFlow: vi.fn() }),
+}));
+
 vi.mock("@/lib/supabase/client", () => ({
   createClient: vi.fn(() => ({
     auth: { signInWithOAuth: vi.fn().mockResolvedValue({ error: null }) },

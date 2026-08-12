@@ -89,12 +89,9 @@
     "keepProgressSubtitle": "Entre para manter o que você acabou de fazer. Fica salvo neste dispositivo até lá.",
     "later": "Depois",
     "progressSavedLocally": "Sem pressa — seu progresso continua salvo neste dispositivo.",
-    "continueWithPhantom": "Continuar com Phantom",
-    "phantomSubtitle": "Entre com o Google — criamos sua carteira",
-    "phantomSignInFailed": "Falha ao entrar com a Phantom. Tente novamente.",
-    "phantomAccountHasWallet": "Esta conta já tem uma carteira conectada. Você continuará usando ela.",
-    "phantomWalletTaken": "Essa carteira já está vinculada a outra conta.",
-    "differentWalletLinked": "Já existe uma carteira vinculada a esta conta. Vínculos de carteira são permanentes."
+    "differentWalletLinked": "Já existe uma carteira vinculada a esta conta. Vínculos de carteira são permanentes.",
+    "continueWithEmail": "Continuar com e-mail",
+    "emailWalletSubtitle": "Sem carteira? Criamos uma para voce"
   },
   "landing": {
     "poweredBy": "Com apoio de",
@@ -670,13 +667,7 @@
     "cropTitle": "Enquadre sua foto",
     "cropHint": "Arraste para mover, use o controle para aproximar.",
     "cropZoom": "Zoom",
-    "cropApply": "Usar foto",
-    "phantomGraduationTitle": "Leve sua carteira com você",
-    "phantomGraduationSubtitle": "Sua carteira é uma carteira Phantom de verdade — ela funciona no app da Phantom também.",
-    "phantomGraduationStep1": "Baixe o app da Phantom ou a extensão do navegador.",
-    "phantomGraduationStep2": "Escolha \"Continuar com Google\" com a mesma conta Google — NÃO toque em \"Criar nova carteira\".",
-    "phantomGraduationStep3": "Confira se é a mesma carteira — o endereço deve mostrar",
-    "phantomGraduationHelp": "Como funciona o login com Google (ajuda da Phantom)"
+    "cropApply": "Usar foto"
   },
   "a11y": {
     "dismiss": "Dispensar",

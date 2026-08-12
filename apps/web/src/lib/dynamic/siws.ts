@@ -1,5 +1,5 @@
 import bs58 from "bs58";
-import type { MessageSigner } from "@/lib/phantom/siws";
+import type { MessageSigner } from "@/lib/wallet/siws";
 
 /**
  * Adapts a Dynamic Solana wallet to the `MessageSigner` our SIWS bridge expects.
@@ -18,7 +18,7 @@ import type { MessageSigner } from "@/lib/phantom/siws";
  *
  * `undefined` is Dynamic's "no signature" — a declined prompt, or a wallet that
  * failed to produce one. It must become a THROW rather than a silent empty
- * signature: `runPhantomSiws` treats a throw as a quiet, retryable decline,
+ * signature: `runWalletSiws` treats a throw as a quiet, retryable decline,
  * whereas an empty Uint8Array would sail on and fail server-side verification
  * as though the learner's signature were forged.
  */

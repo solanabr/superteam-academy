@@ -52,7 +52,7 @@ const STATEMENT = "Sign this message to verify your wallet ownership";
  * @param hasSession whether a Supabase session already exists — decides which
  *                   route runs, and therefore whether this signs in or links
  */
-export async function runPhantomSiws(
+export async function runWalletSiws(
   signer: MessageSigner,
   address: string,
   hasSession: boolean

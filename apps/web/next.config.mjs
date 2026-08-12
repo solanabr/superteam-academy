@@ -55,15 +55,16 @@ const cspDirectives = [
     "https://accounts.google.com https://*.googleapis.com",
     "https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://stats.g.doubleclick.net",
     "https://*.posthog.com https://*.sentry.io https://*.ingest.sentry.io",
-    // Phantom Connect (#985) — kept in sync with lib/csp.ts. Not strictly
+    // Dynamic embedded wallets — kept in sync with lib/csp.ts. Not strictly
     // needed on /api/* (the SDK only runs on app pages), but this fallback's
     // contract is "rough sync with the middleware CSP".
-    "https://auth.phantom.app https://api.phantom.app https://time.phantom.app",
+    "https://app.dynamicauth.com https://logs.dynamicauth.com",
   ].join(" "),
 
   // Frames: Google OAuth may use frames; lesson videos embed the YouTube and
-  // Vimeo players. Keep in sync with the per-request CSP in src/lib/csp.ts.
-  "frame-src 'self' https://accounts.google.com https://www.youtube.com https://player.vimeo.com",
+  // Vimeo players; webview.dynamicauth.com is Dynamic's embedded-wallet
+  // webview. Keep in sync with the per-request CSP in src/lib/csp.ts.
+  "frame-src 'self' https://accounts.google.com https://www.youtube.com https://player.vimeo.com https://webview.dynamicauth.com",
 
   // Workers: code sandbox + Monaco spawn workers from blob: URLs; Monaco also
   // loads its language workers (ts/json/css/html) directly from the jsdelivr CDN.

@@ -89,12 +89,9 @@
     "keepProgressSubtitle": "Inicia sesión para conservar lo que acabas de hacer. Se guarda en este dispositivo hasta entonces.",
     "later": "Más tarde",
     "progressSavedLocally": "Sin prisa: tu progreso permanece guardado en este dispositivo.",
-    "continueWithPhantom": "Continuar con Phantom",
-    "phantomSubtitle": "Inicia sesión con Google — creamos tu billetera",
-    "phantomSignInFailed": "Error al iniciar sesión con Phantom. Inténtalo de nuevo.",
-    "phantomAccountHasWallet": "Esta cuenta ya tiene una billetera conectada. Seguirás usándola.",
-    "phantomWalletTaken": "Esa billetera ya está vinculada a otra cuenta.",
-    "differentWalletLinked": "Ya hay una billetera vinculada a esta cuenta. Los vínculos de billetera son permanentes."
+    "differentWalletLinked": "Ya hay una billetera vinculada a esta cuenta. Los vínculos de billetera son permanentes.",
+    "continueWithEmail": "Continuar con correo",
+    "emailWalletSubtitle": "Sin billetera: creamos una para ti"
   },
   "landing": {
     "poweredBy": "Con el apoyo de",
@@ -670,13 +667,7 @@
     "cropTitle": "Encuadra tu foto",
     "cropHint": "Arrastra para mover, usa el control para acercar.",
     "cropZoom": "Zoom",
-    "cropApply": "Usar foto",
-    "phantomGraduationTitle": "Lleva tu billetera contigo",
-    "phantomGraduationSubtitle": "Tu billetera es una billetera Phantom real — también funciona en la app de Phantom.",
-    "phantomGraduationStep1": "Descarga la app de Phantom o la extensión del navegador.",
-    "phantomGraduationStep2": "Elige \"Continuar con Google\" con la misma cuenta de Google — NO toques \"Crear nueva billetera\".",
-    "phantomGraduationStep3": "Comprueba que es la misma billetera — la dirección debe mostrar",
-    "phantomGraduationHelp": "Cómo funciona el acceso con Google (ayuda de Phantom)"
+    "cropApply": "Usar foto"
   },
   "a11y": {
     "dismiss": "Descartar",

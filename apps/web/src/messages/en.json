@@ -89,12 +89,9 @@
     "keepProgressSubtitle": "Sign in to keep the work you just did. It's saved on this device until you do.",
     "later": "Later",
     "progressSavedLocally": "No rush — your progress stays saved on this device.",
-    "continueWithPhantom": "Continue with Phantom",
-    "phantomSubtitle": "Sign in with Google — we'll set up your wallet",
-    "phantomSignInFailed": "Phantom sign-in failed. Please try again.",
-    "phantomAccountHasWallet": "This account already has a wallet connected. You'll keep using it.",
-    "phantomWalletTaken": "That wallet is already linked to another account.",
-    "differentWalletLinked": "A wallet is already linked to this account. Wallet links are permanent."
+    "differentWalletLinked": "A wallet is already linked to this account. Wallet links are permanent.",
+    "continueWithEmail": "Continue with email",
+    "emailWalletSubtitle": "No wallet needed — we create one for you"
   },
   "landing": {
     "poweredBy": "Powered by",
@@ -670,13 +667,7 @@
     "cropTitle": "Frame your photo",
     "cropHint": "Drag to move, pinch or use the slider to zoom.",
     "cropZoom": "Zoom",
-    "cropApply": "Use photo",
-    "phantomGraduationTitle": "Take your wallet with you",
-    "phantomGraduationSubtitle": "Your wallet is a real Phantom wallet — it works in the Phantom app too.",
-    "phantomGraduationStep1": "Download the Phantom app or browser extension.",
-    "phantomGraduationStep2": "Choose \"Continue with Google\" with the same Google account — do NOT tap \"Create new wallet\".",
-    "phantomGraduationStep3": "Check it's the same wallet — the address should read",
-    "phantomGraduationHelp": "How signing in with Google works (Phantom help)"
+    "cropApply": "Use photo"
   },
   "a11y": {
     "dismiss": "Dismiss",

@@ -133,20 +133,21 @@ export function buildCsp(nonce: string): string {
       "https://accounts.google.com https://*.googleapis.com",
       "https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://stats.g.doubleclick.net",
       "https://*.posthog.com https://*.sentry.io https://*.ingest.sentry.io",
-      // Phantom Connect (#985/#992 review): the browser-sdk XHRs these three —
-      // auth.phantom.app (session/auth API), api.phantom.app (wallet API),
-      // time.phantom.app (clock sync) — origins read from the SDK dist, pinned
-      // exactly rather than *.phantom.app. Without them every enabled-state
-      // attempt dies as a CSP violation before the redirect. The redirect
-      // itself (connect.phantom.app) is a top-level navigation, which CSP does
-      // not govern, and the SDK creates no iframes — so frame-src is untouched.
-      "https://auth.phantom.app https://api.phantom.app https://time.phantom.app",
+      // Dynamic embedded wallets: app.dynamicauth.com is the SDK's API and
+      // logs.dynamicauth.com its telemetry. Both origins were read out of the
+      // installed SDK (4,165 files across 45 @dynamic-labs packages), not
+      // guessed, and are pinned exactly rather than *.dynamicauth.com. Without
+      // them the auth flow dies as a CSP violation before it can open.
+      "https://app.dynamicauth.com https://logs.dynamicauth.com",
     ].join(" "),
 
     // Frames: Google OAuth may use frames; lesson videos embed the YouTube and
     // Vimeo players (see getEmbedUrl in the lesson client). Without these
     // origins the iframe is blocked ("This content is blocked").
-    "frame-src 'self' https://accounts.google.com https://www.youtube.com https://player.vimeo.com",
+    //
+    // webview.dynamicauth.com is Dynamic's embedded-wallet webview — unlike the
+    // Phantom SDK this one DOES frame, so frame-src is no longer untouched.
+    "frame-src 'self' https://accounts.google.com https://www.youtube.com https://player.vimeo.com https://webview.dynamicauth.com",
 
     // Workers: code sandbox + Monaco spawn workers from blob: URLs; Monaco also
     // loads its language workers (ts/json/css/html) directly from jsdelivr.

@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { GithubLogo } from "@phosphor-icons/react";
+import { GithubLogo, Envelope } from "@phosphor-icons/react";
+import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import {
   Dialog,
   DialogContent,
@@ -18,8 +19,7 @@ import { SolanaLogo } from "@/components/icons/solana-logo";
 import { createClient } from "@/lib/supabase/client";
 import { buildOAuthRedirect } from "@/lib/auth/oauth-redirect";
 import { trackEvent } from "@/lib/analytics";
-import { usePhantomConnect } from "@/components/auth/phantom-connect-provider";
-import { PhantomLogo } from "@/components/icons/phantom-logo";
+import { isDynamicEnabled } from "@/lib/dynamic/config";
 
 interface AuthModalProps {
   trigger?: React.ReactNode;
@@ -56,12 +56,15 @@ export function AuthModal({
     if (!isControlled) setInternalOpen(v);
     onOpenChange?.(v);
   };
-  const [loading, setLoading] = useState<
-    "solana" | "google" | "github" | "phantom" | null
-  >(null);
+  const [loading, setLoading] = useState<"solana" | "google" | "github" | null>(
+    null
+  );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const { enabled: phantomEnabled, connect: phantomConnect } =
-    usePhantomConnect();
+  // `useDynamicContext` is safe to call unconditionally: with no environment id
+  // the provider renders children straight through, and the hook falls back to
+  // its default context rather than throwing.
+  const { setShowAuthFlow } = useDynamicContext();
+  const dynamicEnabled = isDynamicEnabled();
   const { setVisible } = useWalletModal();
 
   // Return the learner to the page they signed in from (#619 review): the OAuth
@@ -110,33 +113,22 @@ export function AuthModal({
   };
 
   /**
-   * Phantom Connect (#985) — the no-wallet path. The learner signs in with
-   * Google and Phantom provisions a real wallet for them, so this is offered
-   * FIRST: it is the only option that asks nothing of someone with no wallet.
+   * Dynamic — the no-wallet path, offered FIRST because it is the only option
+   * that asks nothing of a learner who has never held a wallet: they sign in
+   * with an email or social account and Dynamic provisions a real Solana wallet
+   * for them.
    *
-   * `connect` redirects, so on success this tab is navigating away and there is
-   * no post-connect state to set here. On FAILURE the provider rethrows after
-   * recording its own status — the catch below is what unsticks this modal
-   * (resets `loading`, which the Dialog's close guard keys off), so it must
-   * stay live code (PR #992 review).
-   *
-   * `"google"` is the one entry point by design; the client config also
-   * provisions `apple` and `injected` (lib/phantom/client.ts) for future
-   * buttons — provisioned ahead, not dead config.
+   * This only OPENS Dynamic's auth flow. Everything after — the wallet
+   * appearing, the SIWS signature, the Supabase session — is handled by
+   * `DynamicAuthHandler` at the layout level, because the wallet can also
+   * arrive from a restored session with no modal involved. `loading` is reset
+   * as soon as the flow is open: leaving it set would keep the Dialog's close
+   * guard engaged and strand a learner who dismissed Dynamic's own modal.
    */
-  const handleConnectPhantom = async () => {
-    setLoading("phantom");
+  const handleConnectDynamic = () => {
     setErrorMessage(null);
-    trackEvent("auth_method_selected", { method: "phantom" });
-    try {
-      await phantomConnect("google");
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : t("phantomSignInFailed");
-      console.error("[AuthModal] Phantom sign-in error:", message);
-      setErrorMessage(t("phantomSignInFailed"));
-      setLoading(null);
-    }
+    trackEvent("auth_method_selected", { method: "dynamic" });
+    setShowAuthFlow(true);
   };
 
   const handleConnectGoogle = async () => {
@@ -191,26 +183,20 @@ export function AuthModal({
         </DialogHeader>
         <div className="mt-6 space-y-3">
           {/* First: the only option that asks nothing of a learner with no
-              wallet. Hidden entirely when no app id is configured (#984). */}
-          {phantomEnabled && (
+              wallet. Hidden entirely when no environment id is configured. */}
+          {dynamicEnabled && (
             <div className="space-y-1.5">
               <Button
                 variant="push"
                 className="h-12 w-full gap-3 text-sm font-medium"
-                onClick={handleConnectPhantom}
+                onClick={handleConnectDynamic}
                 disabled={loading !== null}
               >
-                {loading === "phantom" ? (
-                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                ) : (
-                  <PhantomLogo className="h-5 w-5 shrink-0 rounded-[5px]" />
-                )}
-                {loading === "phantom"
-                  ? t("connecting")
-                  : t("continueWithPhantom")}
+                <Envelope size={20} weight="fill" aria-hidden="true" />
+                {t("continueWithEmail")}
               </Button>
               <p className="text-center text-xs text-text-3">
-                {t("phantomSubtitle")}
+                {t("emailWalletSubtitle")}
               </p>
             </div>
           )}

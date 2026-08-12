@@ -1,7 +1,7 @@
 /* eslint-disable import/order -- vi.mock factories are hoisted above imports. */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-import { runPhantomSiws, type MessageSigner } from "../siws";
+import { runWalletSiws, type MessageSigner } from "../siws";
 
 const NONCE = { nonce: "n0nce", domain: "st.academy" };
 const ADDRESS = "SoLaNaAddr111";
@@ -33,7 +33,7 @@ const okJson = (body: unknown) =>
 beforeEach(() => vi.clearAllMocks());
 afterEach(() => vi.unstubAllGlobals());
 
-describe("runPhantomSiws — routing (#986)", () => {
+describe("runWalletSiws — routing (#986)", () => {
   // The point of the whole design: a learner with no Supabase session must be
   // SIGNED IN by the wallet, not asked to authenticate a second time.
   it("signs a new learner IN via /api/auth/wallet — one login, not two", async () => {
@@ -41,7 +41,7 @@ describe("runPhantomSiws — routing (#986)", () => {
       url === "/api/auth/nonce" ? okJson(NONCE) : okJson({ ok: true })
     );
 
-    const out = await runPhantomSiws(signerThatSigns(), ADDRESS, false);
+    const out = await runWalletSiws(signerThatSigns(), ADDRESS, false);
 
     expect(out).toEqual({ ok: true, mode: "signedIn" });
     const urls = fetchMock.mock.calls.map((c) => c[0]);
@@ -54,7 +54,7 @@ describe("runPhantomSiws — routing (#986)", () => {
       url === "/api/auth/nonce" ? okJson(NONCE) : okJson({ ok: true })
     );
 
-    const out = await runPhantomSiws(signerThatSigns(), ADDRESS, true);
+    const out = await runWalletSiws(signerThatSigns(), ADDRESS, true);
 
     expect(out).toEqual({ ok: true, mode: "linked" });
     const urls = fetchMock.mock.calls.map((c) => c[0]);
@@ -63,14 +63,14 @@ describe("runPhantomSiws — routing (#986)", () => {
   });
 });
 
-describe("runPhantomSiws — the signed payload", () => {
+describe("runWalletSiws — the signed payload", () => {
   it("signs the SERVER-issued nonce, never a client-invented one", async () => {
     mockFetch((url) =>
       url === "/api/auth/nonce" ? okJson(NONCE) : okJson({ ok: true })
     );
     const signer = signerThatSigns();
 
-    await runPhantomSiws(signer, ADDRESS, false);
+    await runWalletSiws(signer, ADDRESS, false);
 
     const call = (signer.signMessage as ReturnType<typeof vi.fn>).mock.calls[0];
     if (!call) throw new Error("signMessage was never called");
@@ -83,7 +83,7 @@ describe("runPhantomSiws — the signed payload", () => {
   });
 });
 
-describe("runPhantomSiws — failures", () => {
+describe("runWalletSiws — failures", () => {
   it("treats a declined signature as an ordinary choice, not an error", async () => {
     mockFetch(() => okJson(NONCE));
     const signer: MessageSigner = {
@@ -92,7 +92,7 @@ describe("runPhantomSiws — failures", () => {
       }),
     };
 
-    const out = await runPhantomSiws(signer, ADDRESS, false);
+    const out = await runWalletSiws(signer, ADDRESS, false);
 
     // A distinct key so the caller can stay silent instead of showing an alert.
     expect(out).toEqual({ ok: false, reason: "declined", mode: "signIn" });
@@ -114,7 +114,7 @@ describe("runPhantomSiws — failures", () => {
           })
     );
 
-    const linking = await runPhantomSiws(signerThatSigns(), ADDRESS, true);
+    const linking = await runWalletSiws(signerThatSigns(), ADDRESS, true);
     expect(linking).toEqual({
       ok: false,
       reason: "walletAlreadyLinked",
@@ -132,7 +132,7 @@ describe("runPhantomSiws — failures", () => {
           })
     );
 
-    const signingIn = await runPhantomSiws(signerThatSigns(), ADDRESS, false);
+    const signingIn = await runWalletSiws(signerThatSigns(), ADDRESS, false);
     expect(signingIn).toEqual({
       ok: false,
       reason: "differentWalletLinked",
@@ -143,7 +143,7 @@ describe("runPhantomSiws — failures", () => {
   it("fails with a generic key when the nonce cannot be fetched", async () => {
     mockFetch(() => new Response("", { status: 500 }));
 
-    const out = await runPhantomSiws(signerThatSigns(), ADDRESS, false);
+    const out = await runWalletSiws(signerThatSigns(), ADDRESS, false);
 
     expect(out).toEqual({ ok: false, reason: "authFailed", mode: "signIn" });
   });
@@ -155,7 +155,7 @@ describe("runPhantomSiws — failures", () => {
         : new Response("<html>502</html>", { status: 502 })
     );
 
-    const out = await runPhantomSiws(signerThatSigns(), ADDRESS, false);
+    const out = await runWalletSiws(signerThatSigns(), ADDRESS, false);
 
     // Never surface raw server output to a learner.
     expect(out).toEqual({ ok: false, reason: "authFailed", mode: "signIn" });
