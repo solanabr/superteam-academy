@@ -82,6 +82,9 @@ const publicEnvSchema = z.object({
   // assume a wallet is available — the existing SIWS login stays the only
   // guaranteed route in.
   NEXT_PUBLIC_PHANTOM_APP_ID: z.string().optional().or(z.literal("")),
+  // Dynamic embedded wallets — same contract as above: optional, unset means
+  // off, and nothing may depend on it being present.
+  NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID: z.string().optional().or(z.literal("")),
 });
 
 const parsed = publicEnvSchema.safeParse({
@@ -91,6 +94,8 @@ const parsed = publicEnvSchema.safeParse({
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
   NEXT_PUBLIC_PHANTOM_APP_ID: process.env.NEXT_PUBLIC_PHANTOM_APP_ID,
+  NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID:
+    process.env.NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID,
 });
 
 if (!parsed.success) {

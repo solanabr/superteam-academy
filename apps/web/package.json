@@ -19,6 +19,8 @@
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.32.1",
+    "@dynamic-labs/sdk-react-core": "5.2.0",
+    "@dynamic-labs/solana": "5.2.0",
     "@jitl/quickjs-singlefile-cjs-release-sync": "^0.32.0",
     "@metaplex-foundation/mpl-core": "^1.7.0",
     "@metaplex-foundation/mpl-token-metadata": "^3.4.0",
