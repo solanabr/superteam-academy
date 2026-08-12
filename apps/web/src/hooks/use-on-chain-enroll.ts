@@ -6,6 +6,7 @@ import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { Transaction } from "@solana/web3.js";
 import type { Connection, PublicKey } from "@solana/web3.js";
 import { buildEnrollInstruction } from "@/lib/solana/instructions";
+import { isOfflineEnrollCourse } from "@/lib/events/offline-course";
 import { trackEvent } from "@/lib/analytics";
 import {
   parseProgramError,
@@ -118,6 +119,38 @@ export function useOnChainEnroll({
     }
 
     if (!publicKey) {
+      // Event mode: a course that may be taken with no wallet at all. Enrol in
+      // Supabase and let them start immediately — asking someone at an event to
+      // install a wallet app on their phone is where we lose the room. The
+      // course is replayed on-chain when they link a wallet later.
+      if (isOfflineEnrollCourse(courseId)) {
+        setEnrollError(null);
+        setIsEnrolling(true);
+        try {
+          const res = await fetch("/api/enroll/offline", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ courseId }),
+          });
+          if (!res.ok) {
+            const body = (await res.json().catch(() => ({}))) as {
+              error?: string;
+            };
+            throw new Error(body.error ?? "Could not enrol");
+          }
+          trackEvent("enrollment_offline", { courseId });
+          onSuccess?.();
+        } catch (err: unknown) {
+          const message =
+            err instanceof Error ? err.message : "Could not enrol";
+          setEnrollError(message);
+          onError?.(message);
+        } finally {
+          setIsEnrolling(false);
+        }
+        return;
+      }
+
       setWalletModalVisible(true);
       return;
     }

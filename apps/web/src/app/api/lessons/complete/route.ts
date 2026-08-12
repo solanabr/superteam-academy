@@ -22,6 +22,7 @@ import {
 import { fetchEnrollment, fetchCourse } from "@/lib/solana/academy-reads";
 import { isLessonComplete } from "@/lib/solana/bitmap";
 import { getLessonSlot } from "@/lib/courses/lesson-slot";
+import { isOfflineEnrollCourse } from "@/lib/events/offline-course";
 import { serverEnv } from "@/lib/env.server";
 import { isCourseInMaintenance } from "@/lib/content/deployments";
 import { scheduleQuestEvaluation } from "@/lib/gamification/quest-evaluation";
@@ -382,6 +383,75 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (!profile?.wallet_address) {
+        // ── Event mode: no wallet, record in Supabase only ─────────────────
+        // Reached only for a course in `lib/events/offline-course`, and only
+        // AFTER every grader and sealed attestation above has passed — this
+        // changes where a completion is recorded, never whether it was earned.
+        //
+        // Deliberately awards NO XP. DB XP is granted by the Helius webhook off
+        // the on-chain LessonCompleted event (lib/helius/event-handlers), so
+        // awarding here too would double-count the moment the backfill replays
+        // this lesson on-chain. The learner's XP arrives with the credential
+        // when they link a wallet, which is also the story we tell them.
+        if (isOfflineEnrollCourse(courseId)) {
+          const { data: dbEnrollment } = await supabaseAdmin
+            .from("enrollments")
+            .select("id")
+            .eq("user_id", user.id)
+            .eq("course_id", courseId)
+            .maybeSingle();
+
+          if (!dbEnrollment) {
+            return deny(
+              403,
+              "Enrol in the course first.",
+              "enrollment_missing"
+            );
+          }
+
+          // Same slot resolution as the on-chain path: the backfill replays
+          // these rows into the bitmap later, so a wrong slot now is a wrong
+          // lesson completed then. Throws for an unslotted lesson → 500, never
+          // a silently mis-slotted write.
+          const offlineSlot = getLessonSlot(courseId, lessonId);
+
+          const { error: offlineError } = await supabaseAdmin
+            .from("user_progress")
+            .upsert(
+              {
+                user_id: user.id,
+                course_id: courseId,
+                lesson_id: lessonId,
+                completed: true,
+                completed_at: new Date().toISOString(),
+                // NULL tx_signature IS the backfill's work list: a completed row
+                // with no signature is one that still owes an on-chain replay.
+                tx_signature: null,
+                lesson_index: offlineSlot,
+              },
+              { onConflict: "user_id,lesson_id", ignoreDuplicates: true }
+            );
+
+          if (offlineError) {
+            logError({
+              errorId: ERROR_IDS.OFFLINE_COMPLETE_FAILED,
+              error: new Error(offlineError.message),
+              context: { userId: user.id, courseId, lessonId },
+            });
+            return NextResponse.json(
+              { error: "Could not save your progress" },
+              { status: 500 }
+            );
+          }
+
+          return NextResponse.json({
+            success: true,
+            signature: null,
+            offline: true,
+            xpPending: true,
+          });
+        }
+
         return NextResponse.json(
           {
             error:

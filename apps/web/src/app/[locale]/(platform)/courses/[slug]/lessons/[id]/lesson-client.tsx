@@ -21,6 +21,7 @@ import { createClient } from "@/lib/supabase/client";
 import { isCapstoneLesson } from "@/lib/credentials/capstone-identity";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { useOnChainEnroll } from "@/hooks/use-on-chain-enroll";
+import { isOfflineEnrollCourse } from "@/lib/events/offline-course";
 import { bankCompletion, removeBanked } from "@/lib/lessons/progress-bank";
 import { REPLAY_BANKED_EVENT } from "@/components/lessons/banked-progress-replay";
 import { ThreadList } from "@/components/community/thread-list";
@@ -180,6 +181,11 @@ export function LessonPageClient({
   const [earnedXp, setEarnedXp] = useState<number | null>(null);
   const [isEnrolled, setIsEnrolled] = useState(false);
   const hasLinkedWallet = authProfile ? !!authProfile.wallet_address : null;
+  // Event mode: this course records progress in Supabase alone, so a missing
+  // wallet must not disable Mark Complete — that gate exists because the normal
+  // completion path signs an on-chain transaction, which this one does not.
+  const walletOptional = isOfflineEnrollCourse(courseId);
+  const walletBlocksCompletion = hasLinkedWallet === false && !walletOptional;
   // Inline "Ask a question" composer inside the Discussion section (replaces
   // the create-thread MODAL on the lesson page entirely).
   const [isComposerOpen, setIsComposerOpen] = useState(false);
@@ -366,7 +372,7 @@ export function LessonPageClient({
     // would POST an unknown lessonId. Refuse before the request is built.
     if (readOnly) return;
     if (isCompleted || isCompleting) return;
-    if (hasLinkedWallet === false) return;
+    if (walletBlocksCompletion) return;
     setIsCompleting(true);
     setCompletionError(null);
     try {
@@ -897,9 +903,7 @@ export function LessonPageClient({
                         variant="pushSuccess"
                         size="default"
                         disabled={
-                          isCompleting ||
-                          hasLinkedWallet === false ||
-                          !gateReady
+                          isCompleting || walletBlocksCompletion || !gateReady
                         }
                         onClick={() => handleComplete()}
                         title={!gateReady ? t("completeGateHint") : undefined}
