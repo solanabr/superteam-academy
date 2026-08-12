@@ -25,8 +25,9 @@ const TX_TIMEOUT_MS = 30_000;
  * the enrolment without a second click. sessionStorage on purpose — the
  * redirect returns to the same tab, and the intent must not leak to other tabs
  * or survive the browser closing. The TTL bounds how stale a click can be and
- * still enrol: past it, an abandoned attempt must not surprise-enrol the
- * learner days later.
+ * still enrol — within the window a wallet connected for any reason on the
+ * same course page will complete the pending enrolment (the click WAS consent
+ * to enrol in that course); past it, the attempt is dropped.
  */
 const PENDING_ENROLL_KEY = "pendingEnrollCourseId";
 const PENDING_ENROLL_TTL_MS = 15 * 60 * 1000;
@@ -66,13 +67,24 @@ function takePendingEnroll(courseId: string): boolean {
 }
 
 /**
+ * A sponsored `enroll` transaction plus the learner it was built FOR. The
+ * server reads the learner from `profiles.wallet_address`, never from the
+ * caller, so the transaction is only signable by that exact wallet — callers
+ * must check `learner` against the wallet they are about to sign with.
+ */
+interface SponsoredEnroll {
+  transaction: Transaction;
+  learner: string | null;
+}
+
+/**
  * Fetch a platform-sponsored `enroll` transaction (#1004): backend-signed,
  * backend pays the fee and PDA rent. Returns null when sponsorship is
  * unavailable so each caller can decide its own fallback.
  */
 async function fetchSponsoredEnrollTransaction(
   courseId: string
-): Promise<Transaction | null> {
+): Promise<SponsoredEnroll | null> {
   try {
     const res = await fetch("/api/enroll/sponsor", {
       method: "POST",
@@ -80,14 +92,20 @@ async function fetchSponsoredEnrollTransaction(
       body: JSON.stringify({ courseId }),
     });
     if (!res.ok) return null;
-    const data = (await res.json()) as { transaction?: string };
+    const data = (await res.json()) as {
+      transaction?: string;
+      learner?: string;
+    };
     if (!data.transaction) return null;
     // Decoded without Buffer: this runs in the browser, where Next does not
     // guarantee a Buffer polyfill in the App Router.
     const bytes = Uint8Array.from(atob(data.transaction), (c) =>
       c.charCodeAt(0)
     );
-    return Transaction.from(bytes);
+    return {
+      transaction: Transaction.from(bytes),
+      learner: typeof data.learner === "string" ? data.learner : null,
+    };
   } catch {
     return null;
   }
@@ -113,8 +131,15 @@ async function buildEnrollTransaction(
 ): Promise<Transaction> {
   const sponsored = await fetchSponsoredEnrollTransaction(courseId);
   // Deliberately NOT preflighted — preflightTransaction assigns the learner as
-  // fee payer, which would undo the sponsorship.
-  if (sponsored) return sponsored;
+  // fee payer, which would undo the sponsorship. Only usable when the linked
+  // wallet the server built it for IS the connected wallet; on a mismatch the
+  // self-paid path below still works, because it builds for `learner` directly.
+  if (
+    sponsored &&
+    (sponsored.learner === null || sponsored.learner === learner.toBase58())
+  ) {
+    return sponsored.transaction;
+  }
 
   const tx = new Transaction().add(buildEnrollInstruction(courseId, learner));
   await preflightTransaction(tx, connection, learner);
@@ -190,6 +215,31 @@ export function useOnChainEnroll({
 
     if (!publicKey && !hasEmbeddedWallet) {
       if (phantomEnabled) {
+        // Provisioning is only right for an account with NO linked wallet:
+        // PhantomAuthHandler deliberately refuses to link a second wallet, so
+        // a freshly provisioned one could never sign for the learner address
+        // the sponsor route builds for. An account whose linked wallet came
+        // from Phantom Connect reconnects the SAME wallet (user-wallet scoped
+        // to their Google account), so it may proceed; an extension-linked
+        // account is sent to connect that extension instead.
+        const { createClient } = await import("@/lib/supabase/client");
+        const { data: profile } = await createClient()
+          .from("profiles")
+          .select("wallet_address, prefs")
+          .eq("id", userId)
+          .maybeSingle();
+        const prefs = profile?.prefs;
+        const linkedIsEmbedded =
+          typeof prefs === "object" &&
+          prefs !== null &&
+          !Array.isArray(prefs) &&
+          (prefs as Record<string, unknown>).walletProvider ===
+            "phantom-embedded";
+        if (profile?.wallet_address && !linkedIsEmbedded) {
+          setWalletModalVisible(true);
+          return;
+        }
+
         // Signed in but walletless (Google/GitHub OAuth account). Instead of
         // sending them off to install an extension, provision an embedded
         // wallet on the spot: `connect` redirects, PhantomAuthHandler links
@@ -238,12 +288,28 @@ export function useOnChainEnroll({
           // Embedded wallet: sponsored ONLY — it holds zero SOL, so a
           // self-paid fallback could never succeed and would only surface a
           // confusing "insufficient funds" error.
-          const tx = await fetchSponsoredEnrollTransaction(courseId);
-          if (!tx) {
+          const sponsored = await fetchSponsoredEnrollTransaction(courseId);
+          if (!sponsored) {
             throw new Error("Enrollment sponsorship is unavailable");
           }
+          // The server built the transaction for the account's LINKED wallet;
+          // if the embedded wallet connected in this browser is a different
+          // one (e.g. a Phantom session from another Google account), its
+          // signature can never satisfy the transaction. Fail with the real
+          // reason instead of an opaque signature error at submission.
+          if (
+            sponsored.learner !== null &&
+            sponsored.learner !== phantomAddress
+          ) {
+            const msg =
+              "This account is linked to a different wallet. Connect that wallet to enroll.";
+            setEnrollError(msg);
+            dispatchToast(msg, "warning");
+            onError?.(msg);
+            return;
+          }
           const signed = await withTimeout(
-            phantomSignTransaction(tx),
+            phantomSignTransaction(sponsored.transaction),
             TX_TIMEOUT_MS,
             "Wallet signing"
           );

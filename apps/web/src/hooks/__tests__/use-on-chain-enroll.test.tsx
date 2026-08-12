@@ -65,6 +65,24 @@ vi.mock("@/lib/solana/program-errors", () => ({
 
 vi.mock("@/lib/analytics", () => ({ trackEvent: vi.fn() }));
 
+// The walletless branch reads the account's linked wallet before deciding
+// whether to provision. Own-row profile row, shaped per test.
+const db = vi.hoisted(() => ({
+  profile: null as { wallet_address: string | null; prefs: unknown } | null,
+}));
+
+vi.mock("@/lib/supabase/client", () => ({
+  createClient: () => ({
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          maybeSingle: async () => ({ data: db.profile, error: null }),
+        }),
+      }),
+    }),
+  }),
+}));
+
 vi.mock("@/components/ui/toast-container", () => ({ dispatchToast: vi.fn() }));
 
 // The hook wraps the instruction in a real web3.js Transaction; sendTransaction
@@ -95,6 +113,7 @@ beforeEach(() => {
   wallet.publicKey = null;
   phantom.enabled = false;
   phantom.address = null;
+  db.profile = null;
   sessionStorage.clear();
 });
 
@@ -103,12 +122,12 @@ afterEach(() => {
 });
 
 /** Sponsored route responds with a (fake) base64 transaction. */
-function stubSponsorRoute(): void {
+function stubSponsorRoute(learner = "EmbeddedAddr111"): void {
   vi.stubGlobal(
     "fetch",
     vi.fn(async () => ({
       ok: true,
-      json: async () => ({ transaction: btoa("tx-bytes") }),
+      json: async () => ({ transaction: btoa("tx-bytes"), learner }),
     }))
   );
 }
@@ -216,6 +235,84 @@ describe("useOnChainEnroll — walletless learner, Phantom Connect enabled", () 
     expect(sessionStorage.getItem("pendingEnrollCourseId")).toContain(
       COURSE_ID
     );
+  });
+
+  it("sends an extension-linked account to the wallet modal instead of provisioning a second wallet", async () => {
+    phantom.enabled = true;
+    // A linked wallet exists but is not connected in this browser. A newly
+    // provisioned embedded wallet could never be linked (PhantomAuthHandler
+    // refuses a second wallet) and so could never sign for this account.
+    db.profile = { wallet_address: "ExtensionAddr111", prefs: {} };
+
+    const { result } = renderHook(() =>
+      useOnChainEnroll({
+        courseId: COURSE_ID,
+        userId: "user-1",
+        onRequireAuth: vi.fn(),
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleEnroll();
+    });
+
+    expect(wallet.setVisible).toHaveBeenCalledWith(true);
+    expect(phantom.connect).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem("pendingEnrollCourseId")).toBeNull();
+  });
+
+  it("reconnects (not re-provisions) when the linked wallet is itself Phantom-embedded", async () => {
+    phantom.enabled = true;
+    // user-wallet scoping means connect("google") surfaces the SAME wallet,
+    // so proceeding is safe for an embedded-linked account.
+    db.profile = {
+      wallet_address: "EmbeddedAddr111",
+      prefs: { walletProvider: "phantom-embedded" },
+    };
+    phantom.connect.mockResolvedValue(undefined);
+
+    const { result } = renderHook(() =>
+      useOnChainEnroll({
+        courseId: COURSE_ID,
+        userId: "user-1",
+        onRequireAuth: vi.fn(),
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleEnroll();
+    });
+
+    expect(phantom.connect).toHaveBeenCalledWith("google");
+    expect(wallet.setVisible).not.toHaveBeenCalled();
+  });
+
+  it("refuses to sign when the sponsored transaction was built for a different linked wallet", async () => {
+    phantom.enabled = true;
+    phantom.address = "EmbeddedAddr111";
+    // Server builds for profiles.wallet_address — here, some other wallet.
+    stubSponsorRoute("OtherLinkedAddr222");
+    const onError = vi.fn();
+
+    const { result } = renderHook(() =>
+      useOnChainEnroll({
+        courseId: COURSE_ID,
+        userId: "user-1",
+        onRequireAuth: vi.fn(),
+        onError,
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleEnroll();
+    });
+
+    // The embedded key is not among the tx's required signers; failing here
+    // with the real reason beats an opaque signature error at submission.
+    expect(phantom.signTransaction).not.toHaveBeenCalled();
+    expect(wallet.sendRawTransaction).not.toHaveBeenCalled();
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(result.current.enrollError).toContain("different wallet");
   });
 
   it("clears the pending marker when the connect fails before the redirect", async () => {
