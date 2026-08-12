@@ -58,7 +58,7 @@ const cspDirectives = [
     // Dynamic embedded wallets — kept in sync with lib/csp.ts. Not strictly
     // needed on /api/* (the SDK only runs on app pages), but this fallback's
     // contract is "rough sync with the middleware CSP".
-    "https://app.dynamicauth.com https://logs.dynamicauth.com",
+    "https://app.dynamicauth.com https://logs.dynamicauth.com https://dynamic-static-assets.com https://iconic.dynamic-static-assets.com",
   ].join(" "),
 
   // Frames: Google OAuth may use frames; lesson videos embed the YouTube and

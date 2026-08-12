@@ -42,6 +42,15 @@ describe("page CSP (the one middleware actually serves)", () => {
     expect(connectSrc).toContain("https://logs.dynamicauth.com");
     expect(connectSrc).not.toContain("*.dynamicauth.com");
 
+    // Static assets, found EMPIRICALLY (the SDK builds these URLs at runtime,
+    // so no grep of the dist surfaces them): the wallet catalogue JSON from the
+    // apex, icon sprites from the iconic subdomain — the latter on img-src too.
+    expect(connectSrc).toContain("https://dynamic-static-assets.com");
+    expect(connectSrc).toContain("https://iconic.dynamic-static-assets.com");
+    expect(directive("img-src")).toContain(
+      "https://iconic.dynamic-static-assets.com"
+    );
+
     // frame-src: Dynamic's embedded-wallet webview. Unlike the Phantom SDK this
     // one DOES frame, so "frame-src is untouched" stopped being true here.
     expect(directive("frame-src")).toContain("https://webview.dynamicauth.com");

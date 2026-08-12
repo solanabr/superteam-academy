@@ -118,6 +118,9 @@ export function buildCsp(nonce: string): string {
       "https://arweave.net https://*.arweave.net",
       supabase.http,
       "https://stats.g.doubleclick.net",
+      // Dynamic's wallet icons (sprite + per-wallet art) — found empirically,
+      // like its connect-src entries below; the SDK builds the URLs at runtime.
+      "https://iconic.dynamic-static-assets.com https://dynamic-static-assets.com",
     ].join(" "),
 
     // Network: Supabase (REST + realtime wss, pinned to the project host),
@@ -134,11 +137,13 @@ export function buildCsp(nonce: string): string {
       "https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://stats.g.doubleclick.net",
       "https://*.posthog.com https://*.sentry.io https://*.ingest.sentry.io",
       // Dynamic embedded wallets: app.dynamicauth.com is the SDK's API and
-      // logs.dynamicauth.com its telemetry. Both origins were read out of the
-      // installed SDK (4,165 files across 45 @dynamic-labs packages), not
-      // guessed, and are pinned exactly rather than *.dynamicauth.com. Without
-      // them the auth flow dies as a CSP violation before it can open.
-      "https://app.dynamicauth.com https://logs.dynamicauth.com",
+      // logs.dynamicauth.com its telemetry — both read out of the installed
+      // SDK. The dynamic-static-assets.com pair was found EMPIRICALLY (the SDK
+      // builds those URLs at runtime, so no grep surfaces them): the wallet
+      // catalogue (wallet-book.json) from the apex, icon sprites from the
+      // iconic subdomain. All pinned exactly, never a wildcard. Without these
+      // the provider mount dies in CSP violations before the flow can open.
+      "https://app.dynamicauth.com https://logs.dynamicauth.com https://dynamic-static-assets.com https://iconic.dynamic-static-assets.com",
     ].join(" "),
 
     // Frames: Google OAuth may use frames; lesson videos embed the YouTube and
