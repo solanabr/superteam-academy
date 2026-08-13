@@ -62,16 +62,16 @@ const SEGMENTS: LearnerSegment[] = [1, 2, 3];
 const LESSON_HREF = /^\/en\/courses\/[^/]+\/lessons\/[^/]+$/;
 
 /**
- * The public-alpha routing table (2026-08-04). Duplicated here on purpose —
+ * The event routing table (2026-08-13). Duplicated here on purpose —
  * asserting the resolver against a literal expectation is what makes an
- * unintended table edit red. Every segment enters at the alpha flagship: the
- * track-1 ladder that segmentation used to route across is parked, so there is
- * nothing to differentiate across today (see the TODO in learner-segment.ts).
+ * unintended table edit red. Every segment enters at the Solana Speedrun for
+ * the Superteam Brasil in-person event (see the EVENT note in
+ * learner-segment.ts); revert alongside that constant when the event ends.
  */
 const EXPECTED_ENTRY: Record<LearnerSegment, string> = {
-  1: "course-btc-to-sol-evolution",
-  2: "course-btc-to-sol-evolution",
-  3: "course-btc-to-sol-evolution",
+  1: "course-solana-speedrun",
+  2: "course-solana-speedrun",
+  3: "course-solana-speedrun",
 };
 
 // Courses no longer in the bundle: the 5 CATALOG §3 retires (deactivated
@@ -93,7 +93,7 @@ const RETIRED_COURSE_IDS = new Set([
 ]);
 
 describe("SEGMENT_ENTRY_COURSE — live-ladder routing", () => {
-  it("every segment enters at the alpha flagship", () => {
+  it("every segment enters at the event speedrun course", () => {
     for (const segment of SEGMENTS) {
       expect(
         SEGMENT_ENTRY_COURSE[segment],

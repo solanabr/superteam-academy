@@ -58,9 +58,14 @@ export const SEGMENT_PATH_MODALITY: Record<
  * prevent. `entry-course-live.test.ts` runs the real resolver against the real
  * bundle, so an entry that stops resolving is red, not silent.
  *
- * TODO (public alpha, 2026-08-04): all three segments enter at the alpha
- * flagship `course-btc-to-sol-evolution` — an ALPHA STAND-IN, not the intended
- * segmentation. The 5-course "Zero to Deployed" ladder this table used to route
+ * EVENT (2026-08-13): all three segments enter at `course-solana-speedrun`
+ * for the Superteam Brasil in-person event — the landing deep-link was sending
+ * booth visitors into the BTC-evolution course instead of the speedrun built
+ * for the event. Revert to the alpha flagship (or the restored ladder) when
+ * the event ends.
+ *
+ * TODO (public alpha, 2026-08-04): the alpha flagship stand-in
+ * (`course-btc-to-sol-evolution`) is not the intended segmentation either. The 5-course "Zero to Deployed" ladder this table used to route
  * across (C1 solana-for-web-devs → C2 rust-for-program-devs → C3
  * building-your-first-solana-program → C4 dapp-and-sdk-with-kit → C5
  * stablecoin-payments) is parked under `_draft/` in academy-courses and is no
@@ -70,12 +75,12 @@ export const SEGMENT_PATH_MODALITY: Record<
  * track-1 restores: segments 1/3 back to the JS/TS on-ramp, segment 2 back to
  * the "enters here" rung that skips it.
  */
-const ALPHA_ENTRY_COURSE = "course-btc-to-sol-evolution";
+const EVENT_ENTRY_COURSE = "course-solana-speedrun";
 
 export const SEGMENT_ENTRY_COURSE: Record<LearnerSegment, string> = {
-  1: ALPHA_ENTRY_COURSE,
-  2: ALPHA_ENTRY_COURSE,
-  3: ALPHA_ENTRY_COURSE,
+  1: EVENT_ENTRY_COURSE,
+  2: EVENT_ENTRY_COURSE,
+  3: EVENT_ENTRY_COURSE,
 };
 
 /**

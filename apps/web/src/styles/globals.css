@@ -2848,6 +2848,12 @@ a.path-step-card:hover .path-step-badge.skip {
 /* ══════════════════════════════════════════════════════════════
    MOBILE BOTTOM NAV — fixed tab bar for < lg screens
    ══════════════════════════════════════════════════════════════ */
+:root {
+  /* Single source of truth for the bar's height — the landing-page spacer in
+     mobile-bottom-nav.tsx sizes itself with this same variable, so the two
+     can never silently desync (PR #1024 review). */
+  --mobile-nav-height: calc(60px + env(safe-area-inset-bottom, 0px));
+}
 .mobile-bottom-nav {
   position: fixed;
   bottom: 0;
@@ -2857,7 +2863,7 @@ a.path-step-card:hover .path-step-badge.skip {
   display: flex;
   align-items: stretch;
   justify-content: space-around;
-  height: calc(60px + env(safe-area-inset-bottom, 0px));
+  height: var(--mobile-nav-height);
   padding-bottom: env(safe-area-inset-bottom, 0px);
   background: var(--card-glass-blur);
   backdrop-filter: blur(16px);

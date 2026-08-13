@@ -49,10 +49,7 @@ export function MobileBottomNav() {
           in-flow spacer stops the last content (the footer) hiding behind
           the bar. Platform pages keep their own padding; no spacer there. */}
       {isLanding && (
-        <div
-          aria-hidden
-          className="h-[calc(60px+env(safe-area-inset-bottom,0px))] lg:hidden"
-        />
+        <div aria-hidden className="h-[var(--mobile-nav-height)] lg:hidden" />
       )}
       <nav
         className="mobile-bottom-nav lg:hidden"
