@@ -16,6 +16,8 @@ import messages from "@/messages/en.json";
 
 const {
   detectSocialRedirectUrl,
+  createWaasWalletAccounts,
+  getChainsMissingWaasWalletAccounts,
   completeSocialRedirect,
   clearSocialRedirectParams,
   bridgeDynamicSession,
@@ -32,6 +34,8 @@ const {
   getUser: vi.fn(),
   runWalletSiws: vi.fn(),
   reload: vi.fn(),
+  createWaasWalletAccounts: vi.fn(),
+  getChainsMissingWaasWalletAccounts: vi.fn(),
 }));
 
 vi.mock("@dynamic-labs-sdk/client", () => ({
@@ -44,11 +48,11 @@ vi.mock("@dynamic-labs-sdk/client", () => ({
   getDeviceRegistrationTokenFromUrl: vi.fn(),
 }));
 vi.mock("@dynamic-labs-sdk/client/waas", () => ({
-  createWaasWalletAccounts: vi.fn(),
-  getChainsMissingWaasWalletAccounts: vi.fn().mockReturnValue([]),
+  createWaasWalletAccounts,
+  getChainsMissingWaasWalletAccounts,
 }));
 vi.mock("@dynamic-labs-sdk/react-hooks", () => ({
-  useUser: () => ({ data: undefined }),
+  useUser: () => ({ data: { userId: "dynamic-user-1" } }),
   useGetWalletAccounts: () => ({
     data: [{ chain: "SOL", address: "So1anaAddre55" }],
   }),
@@ -78,6 +82,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   getUser.mockResolvedValue({ data: { user: null } });
   runWalletSiws.mockResolvedValue({ ok: true });
+  createWaasWalletAccounts.mockResolvedValue(undefined);
+  getChainsMissingWaasWalletAccounts.mockReturnValue(["SOL"]);
   Object.defineProperty(window, "location", {
     value: { ...window.location, reload },
     writable: true,
@@ -106,9 +112,12 @@ describe("DynamicAuthHandler — social redirect return (job 0)", () => {
     await renderFreshHandler();
 
     await waitFor(() => expect(bridgeDynamicSession).toHaveBeenCalled());
-    // Give job 3 every chance to sneak in behind the pending bridge.
+    // Give jobs 2 and 3 every chance to sneak in behind the pending bridge.
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(runWalletSiws).not.toHaveBeenCalled();
+    // The MPC keygen must not start either — the success path's hard reload
+    // would kill it mid-flight, stranding the learner with no wallet.
+    expect(createWaasWalletAccounts).not.toHaveBeenCalled();
   });
 
   it("releases job 3 on a plain page load so the SIWS bridge still runs", async () => {
@@ -117,6 +126,7 @@ describe("DynamicAuthHandler — social redirect return (job 0)", () => {
     await renderFreshHandler();
 
     await waitFor(() => expect(runWalletSiws).toHaveBeenCalled());
+    await waitFor(() => expect(createWaasWalletAccounts).toHaveBeenCalled());
     expect(completeSocialRedirect).not.toHaveBeenCalled();
     expect(bridgeDynamicSession).not.toHaveBeenCalled();
   });
