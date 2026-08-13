@@ -20,6 +20,7 @@ import { buildOAuthRedirect } from "@/lib/auth/oauth-redirect";
 import { trackEvent } from "@/lib/analytics";
 import { isDynamicEnabled } from "@/lib/dynamic/config";
 import { DynamicEmailSignIn } from "@/components/auth/dynamic-email-sign-in";
+import { DynamicGoogleSignIn } from "@/components/auth/dynamic-google-sign-in";
 
 interface AuthModalProps {
   trigger?: React.ReactNode;
@@ -191,19 +192,27 @@ export function AuthModal({
             </div>
           </div>
 
-          <Button
-            variant="outline"
-            className="h-12 w-full gap-3 text-sm font-medium"
-            onClick={handleConnectGoogle}
-            disabled={loading !== null}
-          >
-            {loading === "google" ? (
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
-            ) : (
-              <GoogleLogo className="h-5 w-5 shrink-0" />
-            )}
-            {loading === "google" ? t("connecting") : t("signInWithGoogle")}
-          </Button>
+          {/* Google goes through Dynamic when it is configured, so the learner
+              also walks away with an embedded wallet; the Supabase OAuth
+              button below is the fallback AND the kill switch — unsetting the
+              environment id restores it untouched. */}
+          {dynamicEnabled ? (
+            <DynamicGoogleSignIn disabled={loading !== null} />
+          ) : (
+            <Button
+              variant="outline"
+              className="h-12 w-full gap-3 text-sm font-medium"
+              onClick={handleConnectGoogle}
+              disabled={loading !== null}
+            >
+              {loading === "google" ? (
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              ) : (
+                <GoogleLogo className="h-5 w-5 shrink-0" />
+              )}
+              {loading === "google" ? t("connecting") : t("signInWithGoogle")}
+            </Button>
+          )}
 
           <Button
             variant="outline"

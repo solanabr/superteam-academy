@@ -1,10 +1,14 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
 import {
   signMessage,
+  clearSocialRedirectParams,
   completeDeviceRegistration,
+  completeSocialRedirect,
   detectDeviceRegistrationRedirect,
+  detectSocialRedirectUrl,
   getDeviceRegistrationTokenFromUrl,
 } from "@dynamic-labs-sdk/client";
 import {
@@ -15,13 +19,22 @@ import { useUser, useGetWalletAccounts } from "@dynamic-labs-sdk/react-hooks";
 import type { SolanaWalletAccount } from "@/lib/dynamic/solana";
 import { createClient } from "@/lib/supabase/client";
 import { runWalletSiws } from "@/lib/wallet/siws";
+import { logoutDynamic } from "@/lib/dynamic/client";
 import { toMessageSigner } from "@/lib/dynamic/siws";
+import { bridgeDynamicSession } from "@/lib/dynamic/social";
+import { dispatchToast } from "@/components/ui/toast-container";
 
 /**
  * Everything that has to happen around a Dynamic login, with no UI of its own.
  *
- * Three jobs, in the order they occur:
+ * Four jobs, in the order they occur:
  *
+ * 0. **The social redirect return.** Social sign-in on web is a full-page
+ *    navigation (there is no popup variant — see `lib/dynamic/social.ts`), so
+ *    the button that started it is long gone by the time Google redirects
+ *    back. Finishing the handshake and exchanging the resulting Dynamic JWT
+ *    for a Supabase session has to happen from something mounted on every
+ *    page, which is this.
  * 1. **Device registration.** OPTIONAL — off by default and only active when
  *    the dashboard toggle enables it (per Dynamic's docs; an earlier reading
  *    here claimed it was required). When it IS on, a returning learner on a
@@ -43,6 +56,7 @@ import { toMessageSigner } from "@/lib/dynamic/siws";
  * for wallet-adapter wallets.
  */
 export function DynamicAuthHandler() {
+  const t = useTranslations("auth");
   const { data: user } = useUser();
   const { data: walletAccounts = [] } = useGetWalletAccounts();
 
@@ -51,6 +65,71 @@ export function DynamicAuthHandler() {
   // sign the same nonce twice.
   const handledAddress = useRef<string | null>(null);
   const creatingWallet = useRef(false);
+  // Held for the whole social return, including the JWT bridge. Job 3 must not
+  // start while it is set: with no Supabase session visible yet it would take
+  // the "sign in with this wallet" branch and mint a SECOND, wallet-shaped
+  // account — the exact fork /api/auth/dynamic exists to prevent.
+  const bridgingSocial = useRef(false);
+
+  // 0. Social redirect return.
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    // Claimed synchronously, before the async detection can yield: job 3 runs
+    // on this same first pass, and a wallet account arriving in the gap would
+    // slip past the guard.
+    bridgingSocial.current = true;
+
+    void (async () => {
+      try {
+        if (!(await detectSocialRedirectUrl({ url }))) {
+          bridgingSocial.current = false;
+          return;
+        }
+
+        await completeSocialRedirect({ url });
+        // Before the params are stripped a refresh would replay the callback
+        // code, which Dynamic has already spent.
+        clearSocialRedirectParams();
+
+        // An existing Supabase session means this was a link, not a sign-in;
+        // minting a session here could land the learner in a different
+        // account than the one they are already using.
+        const supabase = createClient();
+        const {
+          data: { user: supabaseUser },
+        } = await supabase.auth.getUser();
+        if (supabaseUser) {
+          // Job 3 links the fresh embedded wallet to that account instead.
+          bridgingSocial.current = false;
+          return;
+        }
+
+        const outcome = await bridgeDynamicSession();
+        if (outcome.ok) {
+          // Same hard reload as the SIWS bridge: the Supabase client in this
+          // tab was built anonymous and only re-reads the cookies on boot.
+          // The guard stays CLAIMED — the reload is not instantaneous and job
+          // 3 must not get a turn in the interval.
+          window.location.reload();
+          return;
+        }
+
+        // Authenticated to Dynamic with no Supabase session is a dead end —
+        // every subsequent page load would retry a bridge that has already
+        // been refused. End the Dynamic session so the learner is plainly
+        // signed out and can pick another way in.
+        dispatchToast(t(outcome.errorKey), "error");
+        await logoutDynamic();
+        bridgingSocial.current = false;
+      } catch (err) {
+        console.error("[DynamicAuthHandler] social redirect failed:", err);
+        dispatchToast(t("googleBridgeFailed"), "error");
+        await logoutDynamic();
+        bridgingSocial.current = false;
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // 1. Device registration redirect.
   useEffect(() => {
@@ -93,6 +172,8 @@ export function DynamicAuthHandler() {
 
   // 3. Bridge the wallet to a Supabase account.
   useEffect(() => {
+    if (bridgingSocial.current) return;
+
     // A local predicate rather than the SDK's `isSolanaWalletAccount`: the
     // pnpm graph holds two client instances (differing peer sets), so the
     // SDK guard's parameter type and this hook's account type are nominally

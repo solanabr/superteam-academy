@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /* eslint-disable import/order -- vi.mock factories are hoisted above imports. */
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/messages/en.json";
 
@@ -29,10 +29,11 @@ import messages from "@/messages/en.json";
 vi.mock("@solana/wallet-adapter-react-ui", () => ({
   useWalletModal: () => ({ setVisible: vi.fn() }),
 }));
+const { signInWithOAuth } = vi.hoisted(() => ({
+  signInWithOAuth: vi.fn().mockResolvedValue({ error: null }),
+}));
 vi.mock("@/lib/supabase/client", () => ({
-  createClient: vi.fn(() => ({
-    auth: { signInWithOAuth: vi.fn().mockResolvedValue({ error: null }) },
-  })),
+  createClient: vi.fn(() => ({ auth: { signInWithOAuth } })),
 }));
 vi.mock("@/lib/analytics", () => ({ trackEvent: vi.fn() }));
 
@@ -64,5 +65,16 @@ describe("AuthModal with Dynamic disabled and no provider mounted", () => {
     expect(
       screen.queryByText(messages.auth.continueWithEmail)
     ).not.toBeInTheDocument();
+
+    // Google falls back to Supabase OAuth. This is the kill switch: unsetting
+    // the environment id must restore the pre-Dynamic button, and the button
+    // that renders here calls Supabase, not Dynamic — the Dynamic variant
+    // would have thrown `MissingProviderError` in this unmocked render.
+    fireEvent.click(
+      screen.getByRole("button", { name: messages.auth.signInWithGoogle })
+    );
+    expect(signInWithOAuth).toHaveBeenCalledWith(
+      expect.objectContaining({ provider: "google" })
+    );
   });
 });

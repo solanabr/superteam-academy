@@ -103,7 +103,9 @@
     "useDifferentEmail": "Use a different email",
     "verifyCode": "Verify",
     "walletConnected": "Wallet Connected",
-    "otpRateLimited": "Too many sign-ups from this network — wait a minute and try again."
+    "otpRateLimited": "Too many sign-ups from this network — wait a minute and try again.",
+    "googleBridgeFailed": "Signed in with Google, but we couldn't finish connecting your account. Please try again.",
+    "googleEmailUnmatched": "Google didn't share a verified email address, so we can't match your account. Try another sign-in method."
   },
   "landing": {
     "poweredBy": "Powered by",
