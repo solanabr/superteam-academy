@@ -14,6 +14,10 @@ const {
   verifyOtp,
   signOut,
   isAccountDeleted,
+  profileSingle,
+  profileUpdate,
+  retryPendingOnchainActions,
+  generateWalletName,
 } = vi.hoisted(() => ({
   getDynamicEnvironmentId: vi.fn<() => string | null>(),
   isRateLimited: vi.fn<() => Promise<boolean>>(),
@@ -23,17 +27,30 @@ const {
   verifyOtp: vi.fn(),
   signOut: vi.fn().mockResolvedValue({ error: null }),
   isAccountDeleted: vi.fn<(userId: string) => Promise<boolean>>(),
+  profileSingle: vi.fn(),
+  profileUpdate: vi.fn<(values: Record<string, unknown>) => Promise<unknown>>(),
+  retryPendingOnchainActions: vi.fn<(userId: string) => Promise<void>>(),
+  generateWalletName: vi.fn<() => string>(),
 }));
 
 vi.mock("@/lib/dynamic/config", () => ({ getDynamicEnvironmentId }));
 vi.mock("@/lib/rate-limit", () => ({ isRateLimited, getClientIp }));
 vi.mock("@/lib/auth/account-status", () => ({ isAccountDeleted }));
 vi.mock("@/lib/logging", () => ({ logError: vi.fn(), logEvent: vi.fn() }));
+vi.mock("@/lib/utils/generate-wallet-name", () => ({ generateWalletName }));
+vi.mock("@/lib/solana/onchain-queue", () => ({ retryPendingOnchainActions }));
 
-// Admin (service-role) client — user creation + magic-link minting.
+// Admin (service-role) client — user creation, magic-link minting, and the
+// post-login profile read/update (placeholder-username replacement).
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
     auth: { admin: { createUser, generateLink } },
+    from: () => ({
+      select: () => ({ eq: () => ({ single: profileSingle }) }),
+      update: (values: Record<string, unknown>) => ({
+        eq: () => profileUpdate(values),
+      }),
+    }),
   }),
 }));
 
@@ -174,6 +191,10 @@ beforeEach(() => {
   });
   signOut.mockResolvedValue({ error: null });
   isAccountDeleted.mockResolvedValue(false);
+  profileSingle.mockResolvedValue({ data: { username: "sol-surfer" } });
+  profileUpdate.mockResolvedValue({ error: null });
+  retryPendingOnchainActions.mockResolvedValue(undefined);
+  generateWalletName.mockReturnValue("brave-otter");
 });
 
 describe("POST /api/auth/dynamic — happy path", () => {
@@ -645,5 +666,60 @@ describe("POST /api/auth/dynamic — request gating", () => {
     expect(res.status).toBe(500);
     await expect(res.json()).resolves.toEqual({ error: "authFailed" });
     expect(generateLink).not.toHaveBeenCalled();
+  });
+});
+
+describe("POST /api/auth/dynamic — post-login parity with the other chokepoints", () => {
+  it("replaces a placeholder username with a generated one", async () => {
+    profileSingle.mockResolvedValue({ data: { username: "user_a1b2c3d4" } });
+
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await signDynamicJwt() })
+    );
+
+    expect(res.status).toBe(200);
+    expect(profileUpdate).toHaveBeenCalledWith({ username: "brave-otter" });
+  });
+
+  it("leaves an existing account's real username alone", async () => {
+    profileSingle.mockResolvedValue({ data: { username: "gabriel" } });
+
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await signDynamicJwt() })
+    );
+
+    expect(res.status).toBe(200);
+    expect(profileUpdate).not.toHaveBeenCalled();
+  });
+
+  it("drains the on-chain retry queue for the signed-in user", async () => {
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await signDynamicJwt() })
+    );
+
+    expect(res.status).toBe(200);
+    expect(retryPendingOnchainActions).toHaveBeenCalledWith("supabase-user-1");
+  });
+
+  it("still signs in when the queue drain rejects", async () => {
+    retryPendingOnchainActions.mockRejectedValue(new Error("rpc down"));
+
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await signDynamicJwt() })
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual({ success: true });
+  });
+
+  it("does not drain the queue for a tombstoned account", async () => {
+    isAccountDeleted.mockResolvedValue(true);
+
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await signDynamicJwt() })
+    );
+
+    expect(res.status).toBe(403);
+    expect(retryPendingOnchainActions).not.toHaveBeenCalled();
   });
 });

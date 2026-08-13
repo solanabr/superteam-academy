@@ -9,6 +9,8 @@ import { getDynamicEnvironmentId } from "@/lib/dynamic/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { isAccountDeleted } from "@/lib/auth/account-status";
+import { generateWalletName } from "@/lib/utils/generate-wallet-name";
+import { retryPendingOnchainActions } from "@/lib/solana/onchain-queue";
 import { logError, logEvent } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 import type { Database } from "@/lib/supabase/types";
@@ -485,6 +487,39 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       await supabaseAnon.auth.signOut();
       return NextResponse.json({ error: "accountDeleted" }, { status: 403 });
     }
+
+    // Parity with the other two login chokepoints (/api/auth/wallet,
+    // /api/auth/callback): a brand-new account arrives with a `user_xxxxxxxx`
+    // placeholder username the DB trigger assigned, so first-time Dynamic
+    // sign-ups would otherwise sit on the leaderboard as `user_…` forever.
+    // Existing matched accounts already have a real name and are left alone.
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("username")
+      .eq("id", userId)
+      .single();
+
+    if (profile?.username?.startsWith("user_")) {
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const { error: nameError } = await supabaseAdmin
+          .from("profiles")
+          .update({ username: generateWalletName() })
+          .eq("id", userId);
+        if (!nameError) break;
+      }
+    }
+
+    // The on-chain retry queue drains from the login routes, so this new
+    // chokepoint must drain it too — otherwise a learner who only ever signs in
+    // through Dynamic never gets their queued enrollments/XP/achievements
+    // retried. Fire-and-forget: a queue hiccup must not fail the sign-in.
+    retryPendingOnchainActions(userId).catch((err: unknown) =>
+      logError({
+        errorId: ERROR_IDS.DYNAMIC_AUTH_FAILED,
+        error: err instanceof Error ? err : new Error(String(err)),
+        context: { note: "retryPendingOnchainActions failed", userId },
+      })
+    );
 
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
