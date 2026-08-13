@@ -24,12 +24,46 @@ describe("page CSP (the one middleware actually serves)", () => {
     expect(directive("frame-ancestors")).toBe("frame-ancestors 'none'");
   });
 
-  it("still lets the app frame its own video embeds (frame-src is untouched)", () => {
+  it("still lets the app frame its own video embeds", () => {
     // frame-ancestors governs who may frame US; frame-src governs whom WE frame.
     // Conflating them would break every lesson video.
     const frameSrc = directive("frame-src");
     expect(frameSrc).toContain("https://www.youtube.com");
     expect(frameSrc).toContain("https://player.vimeo.com");
+  });
+
+  it("allows the Dynamic embedded-wallet origins (read from the SDK, not guessed)", () => {
+    // connect-src: the SDK's API + telemetry. Without these every sign-in dies
+    // as a CSP violation before Dynamic's flow can open — the same failure mode
+    // this file's header warns about: a change that lands only where it does
+    // nothing. Pinned exact hosts, never *.dynamicauth.com.
+    const connectSrc = directive("connect-src");
+    expect(connectSrc).toContain("https://app.dynamicauth.com");
+    expect(connectSrc).toContain("https://logs.dynamicauth.com");
+    // The WaaS MPC relay (headless SDK): wallet creation and signing traverse
+    // it, so dropping it lets a learner authenticate and then strands them
+    // walletless — read from DEFAULT_WAAS_BASE_MPC_RELAY_API_URL in the SDK.
+    expect(connectSrc).toContain("https://relay.dynamicauth.com");
+    expect(connectSrc).not.toContain("*.dynamicauth.com");
+
+    // Static assets, found EMPIRICALLY (the SDK builds these URLs at runtime,
+    // so no grep of the dist surfaces them): the wallet catalogue JSON from the
+    // apex, icon sprites from the iconic subdomain — the latter on img-src too.
+    expect(connectSrc).toContain("https://dynamic-static-assets.com");
+    expect(connectSrc).toContain("https://iconic.dynamic-static-assets.com");
+    expect(directive("img-src")).toContain(
+      "https://iconic.dynamic-static-assets.com"
+    );
+
+    // frame-src: Dynamic's embedded-wallet webview. Unlike the Phantom SDK this
+    // one DOES frame, so "frame-src is untouched" stopped being true here.
+    expect(directive("frame-src")).toContain("https://webview.dynamicauth.com");
+  });
+
+  it("carries no leftover Phantom origins", () => {
+    // The Phantom allowances died with the integration; a stale origin is
+    // silent attack surface that nothing exercises.
+    expect(csp).not.toContain("phantom.app");
   });
 
   it("keeps the other hardening directives", () => {

@@ -505,6 +505,11 @@ export function AccountTab({
           )}
         </div>
 
+        {/* The Phantom "take your wallet with you" card is gone with Phantom
+            Connect. Dynamic's embedded wallets are exportable from its own
+            account UI, so a bespoke graduation card here would duplicate — and
+            drift from — instructions the vendor already owns. */}
+
         {/* Google row */}
         <div className="set-row">
           <div className="flex items-center gap-3">

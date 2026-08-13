@@ -118,6 +118,9 @@ export function buildCsp(nonce: string): string {
       "https://arweave.net https://*.arweave.net",
       supabase.http,
       "https://stats.g.doubleclick.net",
+      // Dynamic's wallet icons (sprite + per-wallet art) — found empirically,
+      // like its connect-src entries below; the SDK builds the URLs at runtime.
+      "https://iconic.dynamic-static-assets.com https://dynamic-static-assets.com",
     ].join(" "),
 
     // Network: Supabase (REST + realtime wss, pinned to the project host),
@@ -133,12 +136,25 @@ export function buildCsp(nonce: string): string {
       "https://accounts.google.com https://*.googleapis.com",
       "https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://stats.g.doubleclick.net",
       "https://*.posthog.com https://*.sentry.io https://*.ingest.sentry.io",
+      // Dynamic embedded wallets: app.dynamicauth.com is the SDK's API,
+      // logs.dynamicauth.com its telemetry, and relay.dynamicauth.com the WaaS
+      // MPC relay — wallet CREATION and SIGNING go through the relay, so
+      // without it a learner authenticates and then wallet creation dies in a
+      // CSP violation. All three read out of the installed headless SDK
+      // (`DEFAULT_WAAS_BASE_MPC_RELAY_API_URL` in the client's waas module).
+      // The dynamic-static-assets.com pair was found EMPIRICALLY on the legacy
+      // SDK (runtime-built URLs) and is kept for the icon sprite the headless
+      // client still references. All pinned exactly, never a wildcard.
+      "https://app.dynamicauth.com https://logs.dynamicauth.com https://relay.dynamicauth.com https://dynamic-static-assets.com https://iconic.dynamic-static-assets.com",
     ].join(" "),
 
     // Frames: Google OAuth may use frames; lesson videos embed the YouTube and
     // Vimeo players (see getEmbedUrl in the lesson client). Without these
     // origins the iframe is blocked ("This content is blocked").
-    "frame-src 'self' https://accounts.google.com https://www.youtube.com https://player.vimeo.com",
+    //
+    // webview.dynamicauth.com is Dynamic's embedded-wallet webview — unlike the
+    // Phantom SDK this one DOES frame, so frame-src is no longer untouched.
+    "frame-src 'self' https://accounts.google.com https://www.youtube.com https://player.vimeo.com https://webview.dynamicauth.com",
 
     // Workers: code sandbox + Monaco spawn workers from blob: URLs; Monaco also
     // loads its language workers (ts/json/css/html) directly from jsdelivr.

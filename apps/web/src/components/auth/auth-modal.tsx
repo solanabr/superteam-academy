@@ -18,6 +18,8 @@ import { SolanaLogo } from "@/components/icons/solana-logo";
 import { createClient } from "@/lib/supabase/client";
 import { buildOAuthRedirect } from "@/lib/auth/oauth-redirect";
 import { trackEvent } from "@/lib/analytics";
+import { isDynamicEnabled } from "@/lib/dynamic/config";
+import { DynamicEmailSignIn } from "@/components/auth/dynamic-email-sign-in";
 
 interface AuthModalProps {
   trigger?: React.ReactNode;
@@ -58,6 +60,12 @@ export function AuthModal({
     null
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  // NOT a Dynamic hook call. Every hook in `@dynamic-labs-sdk/react-hooks`
+  // throws `MissingProviderError` when no provider is mounted, so calling one
+  // here would crash sign-in in any build without an environment id. Hooks
+  // cannot be conditional, so the gate is a component boundary instead:
+  // DynamicEmailSignIn owns the hooks and mounts only when Dynamic is enabled.
+  const dynamicEnabled = isDynamicEnabled();
   const { setVisible } = useWalletModal();
 
   // Return the learner to the page they signed in from (#619 review): the OAuth
@@ -156,6 +164,10 @@ export function AuthModal({
           </DialogDescription>
         </DialogHeader>
         <div className="mt-6 space-y-3">
+          {/* First: the only option that asks nothing of a learner with no
+              wallet. Hidden entirely when no environment id is configured. */}
+          {dynamicEnabled && <DynamicEmailSignIn disabled={loading !== null} />}
+
           <Button
             variant="outline"
             className="h-12 w-full gap-3 text-sm font-medium"
