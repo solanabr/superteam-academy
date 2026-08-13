@@ -98,6 +98,7 @@
     "signInTitle": "Bienvenido a Superteam Academy",
     "signInWithGitHub": "Iniciar sesión con GitHub",
     "signInWithGoogle": "Iniciar sesión con Google",
+    "tooManyAttempts": "Demasiados intentos. Espera unos minutos y solicita un código nuevo.",
     "useDifferentEmail": "Usar otro correo",
     "verifyCode": "Verificar",
     "walletConnected": "Billetera Conectada"

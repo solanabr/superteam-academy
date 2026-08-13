@@ -7,6 +7,7 @@ import {
   BaseError,
   isDeviceRegistrationRequired,
 } from "@dynamic-labs-sdk/client";
+import { APIError } from "@dynamic-labs-sdk/client/core";
 import { useSendEmailOTP, useVerifyOTP } from "@dynamic-labs-sdk/react-hooks";
 import { Button } from "@/components/ui/button";
 import { trackEvent } from "@/lib/analytics";
@@ -28,6 +29,26 @@ const WRONG_CODE_ERRORS = new Set([
   "wrong_email_verification_token",
   "email_verification_expired",
 ]);
+
+/**
+ * Whether a failure is the send/verify rate limit rather than a real error.
+ *
+ * Verified against the live API: the 4th send for one address inside 10
+ * minutes comes back HTTP 429 — and that response's body carries no `code`
+ * field, so the SDK labels it `unknown_error`. Matching on the STATUS is
+ * therefore the reliable signal; the code alone would misfile it under
+ * "something broke, try again", which is the exact opposite of the truth —
+ * trying again is the one thing that keeps the limit burning.
+ *
+ * `too_many_email_verification_attempts` is the verify-side sibling: three
+ * wrong codes burn the verification itself.
+ */
+function isRateLimited(err: unknown): boolean {
+  if (!(err instanceof APIError)) return false;
+  return (
+    err.status === 429 || err.code === "too_many_email_verification_attempts"
+  );
+}
 
 /**
  * Email sign-in, rendered by this app rather than by Dynamic.
@@ -132,7 +153,12 @@ export function DynamicEmailSignIn({ disabled }: { disabled: boolean }) {
             // handling — surfaces as itself, because relabelling those as a
             // typo sends a learner with a CORRECT code in circles.
             console.error("[dynamic] verifyOTP failed", err);
-            if (err instanceof BaseError && WRONG_CODE_ERRORS.has(err.code)) {
+            if (isRateLimited(err)) {
+              setError(t("tooManyAttempts"));
+            } else if (
+              err instanceof BaseError &&
+              WRONG_CODE_ERRORS.has(err.code)
+            ) {
               setError(t("otpInvalid"));
             } else {
               const detail =
@@ -200,13 +226,17 @@ export function DynamicEmailSignIn({ disabled }: { disabled: boolean }) {
           await sendEmailOTP({ email });
         } catch (err) {
           console.error("[dynamic] sendEmailOTP failed", err);
-          const detail =
-            err instanceof BaseError
-              ? err.code
-              : err instanceof Error
-                ? err.message
-                : String(err);
-          setError(`${t("emailSignInFailed")} (${detail})`);
+          if (isRateLimited(err)) {
+            setError(t("tooManyAttempts"));
+          } else {
+            const detail =
+              err instanceof BaseError
+                ? err.code
+                : err instanceof Error
+                  ? err.message
+                  : String(err);
+            setError(`${t("emailSignInFailed")} (${detail})`);
+          }
         }
       }}
     >
