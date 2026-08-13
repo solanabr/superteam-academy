@@ -367,7 +367,7 @@ untouched. **Event**: `CourseClosed`.
 | 5,6 | prereq Course, prereq Enrollment |        | _remaining accounts, required iff the course has a prerequisite_    |
 
 `learner` and `payer` are separate slots so the platform can sponsor enrolment
-(#1004): a Phantom Connect embedded wallet holds zero SOL, and this was the only
+(#1004): a freshly provisioned wallet holds zero SOL, and this was the only
 instruction a learner had to fund. `payer` is deliberately NOT pinned to
 `config.backend_signer` — a funded learner can pass their own address into both
 slots and self-pay, and sponsorship can move to a dedicated treasury wallet

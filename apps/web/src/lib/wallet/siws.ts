@@ -1,21 +1,22 @@
 /**
- * SIWS handshake for the Phantom embedded wallet (#986, epic #983).
+ * Provider-agnostic SIWS handshake for any wallet that can sign a message.
  *
- * Phantom Connect owns the *wallet* login; Supabase stays the *account*
+ * The wallet provider (today: Dynamic's embedded wallets; originally Phantom
+ * Connect, #986) owns the *wallet* login; Supabase stays the *account*
  * identity. This is the bridge between them, and it deliberately reuses the
  * routes the wallet-adapter path already uses rather than inventing a
- * Phantom-specific endpoint:
+ * provider-specific endpoint:
  *
  * - no Supabase session yet → `/api/auth/wallet` signs the learner IN, creating
- *   the account from the wallet. That keeps "Continue with Phantom" a SINGLE
- *   login rather than making someone authenticate to Google twice (once for
- *   Phantom, once for Supabase).
+ *   the account from the wallet — a SINGLE login, not two.
  * - already signed in, no wallet linked → `/api/auth/link-wallet` attaches this
  *   wallet to the existing profile and mints any accrued XP to it.
  *
- * The embedded wallet exposes `signMessage` but not the Wallet Standard
- * `signIn`, so this takes the same build-then-sign path `WalletAuthHandler`
- * falls back to for adapters without `signIn`.
+ * Everything provider-specific stays outside: callers hand in a `MessageSigner`
+ * (see lib/dynamic/siws.ts for the Dynamic adapter), so this module never
+ * imports a wallet SDK. Embedded wallets expose `signMessage` but not the
+ * Wallet Standard `signIn`, so this takes the same build-then-sign path
+ * `WalletAuthHandler` falls back to for adapters without `signIn`.
  */
 
 import { createSIWSMessage, formatSIWSMessage } from "@/lib/solana/wallet-auth";
@@ -52,7 +53,7 @@ const STATEMENT = "Sign this message to verify your wallet ownership";
  * @param hasSession whether a Supabase session already exists — decides which
  *                   route runs, and therefore whether this signs in or links
  */
-export async function runPhantomSiws(
+export async function runWalletSiws(
   signer: MessageSigner,
   address: string,
   hasSession: boolean

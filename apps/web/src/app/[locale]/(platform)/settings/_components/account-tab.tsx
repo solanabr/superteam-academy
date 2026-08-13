@@ -9,7 +9,6 @@ import type { UserIdentity } from "@supabase/supabase-js";
 import { GithubLogo } from "@phosphor-icons/react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PhantomGraduationCard } from "@/components/settings/phantom-graduation-card";
 import { GoogleLogo } from "@/components/icons/google-logo";
 import { SolanaLogo } from "@/components/icons/solana-logo";
 import { createClient } from "@/lib/supabase/client";
@@ -506,12 +505,10 @@ export function AccountTab({
           )}
         </div>
 
-        {/* "Take your wallet with you" (#987) — renders only for wallets
-            provisioned via Phantom Connect (provenance in prefs), so external
-            -wallet users are never told to download Phantom. */}
-        {walletAddress && (
-          <PhantomGraduationCard walletAddress={walletAddress} />
-        )}
+        {/* The Phantom "take your wallet with you" card is gone with Phantom
+            Connect. Dynamic's embedded wallets are exportable from its own
+            account UI, so a bespoke graduation card here would duplicate — and
+            drift from — instructions the vendor already owns. */}
 
         {/* Google row */}
         <div className="set-row">

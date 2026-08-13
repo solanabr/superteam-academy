@@ -15,8 +15,8 @@ const coder = new BorshCoder(IDL as unknown as Idl);
  *
  * `payer` funds the Enrollment PDA rent and defaults to the learner, so an
  * existing caller that omits it keeps the old self-paid behaviour exactly.
- * Passing a different payer is what lets a Phantom Connect embedded wallet —
- * which arrives holding zero SOL — enrol at all. The learner still signs: their
+ * Passing a different payer is what lets an embedded wallet — which arrives
+ * holding zero SOL — enrol at all. The learner still signs: their
  * address seeds the Enrollment PDA and their signature is the consent.
  *
  * BOTH accounts are signers. When they are the same address web3.js merges the
