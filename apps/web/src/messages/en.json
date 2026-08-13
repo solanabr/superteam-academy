@@ -93,6 +93,8 @@
     "sendCode": "Send code",
     "signFailed": "Could not sign the verification message. Please try again.",
     "signingIn": "Signing in with your wallet...",
+    "settingUpWallet": "Setting up your wallet…",
+    "settingUpWalletHint": "This can take a few seconds — keep this tab open.",
     "signingMessage": "Sign this message to verify your wallet ownership",
     "signInSubtitle": "Connect your wallet or sign in to start learning",
     "signInTitle": "Welcome to Superteam Academy",

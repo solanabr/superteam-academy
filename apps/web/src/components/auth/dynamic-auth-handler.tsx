@@ -12,6 +12,7 @@ import {
   getChainsMissingWaasWalletAccounts,
 } from "@dynamic-labs-sdk/client/waas";
 import { useUser, useGetWalletAccounts } from "@dynamic-labs-sdk/react-hooks";
+import type { SolanaWalletAccount } from "@/lib/dynamic/solana";
 import { createClient } from "@/lib/supabase/client";
 import { runWalletSiws } from "@/lib/wallet/siws";
 import { toMessageSigner } from "@/lib/dynamic/siws";
@@ -90,11 +91,14 @@ export function DynamicAuthHandler() {
 
   // 3. Bridge the wallet to a Supabase account.
   useEffect(() => {
-    // `SOL` rather than the `isSolanaWalletAccount` type guard on purpose: that
-    // guard lives in the Solana package's main entry, which also carries
-    // external-wallet discovery — importing it here would pull the wallet
-    // picker's machinery back into the bundle we removed it from.
-    const solanaAccount = walletAccounts.find((a) => a.chain === "SOL");
+    // A local predicate rather than the SDK's `isSolanaWalletAccount`: the
+    // pnpm graph holds two client instances (differing peer sets), so the
+    // SDK guard's parameter type and this hook's account type are nominally
+    // different and the guard does not compose with `find` here. The chain
+    // discriminant is the same check the guard performs.
+    const solanaAccount = walletAccounts.find(
+      (a): a is SolanaWalletAccount => a.chain === "SOL"
+    );
     if (!solanaAccount) return;
 
     const address = solanaAccount.address;

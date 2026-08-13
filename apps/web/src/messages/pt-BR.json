@@ -93,6 +93,8 @@
     "sendCode": "Enviar código",
     "signFailed": "Não foi possível assinar a mensagem de verificação. Tente novamente.",
     "signingIn": "Entrando com sua carteira...",
+    "settingUpWallet": "Preparando sua carteira…",
+    "settingUpWalletHint": "Isso pode levar alguns segundos — mantenha esta aba aberta.",
     "signingMessage": "Assine esta mensagem para verificar a propriedade da sua carteira",
     "signInSubtitle": "Conecte sua carteira ou entre para começar a aprender",
     "signInTitle": "Bem-vindo ao Superteam Academy",

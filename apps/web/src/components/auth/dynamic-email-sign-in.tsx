@@ -39,6 +39,7 @@ export function DynamicEmailSignIn({ disabled }: { disabled: boolean }) {
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [awaitingDevice, setAwaitingDevice] = useState(false);
+  const [finishing, setFinishing] = useState(false);
   const { data: dynamicUser } = useUser();
 
   const {
@@ -50,6 +51,27 @@ export function DynamicEmailSignIn({ disabled }: { disabled: boolean }) {
   const { mutateAsync: verifyOTP, isPending: verifying } = useVerifyOTP();
 
   const busy = disabled || sending || verifying;
+
+  // The code was right, and the slow part has only just begun: wallet creation
+  // over MPC, then the SIWS bridge, then a full reload — all driven by
+  // `DynamicAuthHandler`, none of it visible from here. Without this panel the
+  // form just sat still for several seconds and learners re-typed the code
+  // into a login that was already succeeding.
+  if (finishing) {
+    return (
+      <div
+        className="rounded-lg border border-border bg-subtle p-4 text-center"
+        role="status"
+      >
+        <div
+          className="mx-auto h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent"
+          aria-hidden="true"
+        />
+        <p className="mt-2 text-sm font-medium">{t("settingUpWallet")}</p>
+        <p className="mt-1 text-xs text-text-3">{t("settingUpWalletHint")}</p>
+      </div>
+    );
+  }
 
   // Dynamic mailed a "verify this device" link. Nothing more can happen in this
   // tab until the learner opens it; `DynamicAuthHandler` consumes the redirect.
@@ -106,6 +128,8 @@ export function DynamicEmailSignIn({ disabled }: { disabled: boolean }) {
             // showing a signed-in state that cannot do anything.
             if (response.user && isDeviceRegistrationRequired(response.user)) {
               setAwaitingDevice(true);
+            } else {
+              setFinishing(true);
             }
           } catch (err) {
             // The full error, because "code isn't right" is only the LIKELIEST
@@ -130,9 +154,15 @@ export function DynamicEmailSignIn({ disabled }: { disabled: boolean }) {
         <Button
           type="submit"
           variant="push"
-          className="h-12 w-full text-sm font-medium"
+          className="h-12 w-full gap-3 text-sm font-medium"
           disabled={busy || code.length === 0}
         >
+          {verifying && (
+            <div
+              className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent"
+              aria-hidden="true"
+            />
+          )}
           {verifying ? t("signingIn") : t("verifyCode")}
         </Button>
         <button
