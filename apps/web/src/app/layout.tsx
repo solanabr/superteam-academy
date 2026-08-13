@@ -1,24 +1,32 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Nunito, JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import { headers } from "next/headers";
 import "@/styles/globals.css";
 
-const fontSans = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+// Self-hosted (src/fonts): `next/font/google` downloads from fonts.gstatic.com
+// AT BUILD TIME, and an unreachable Google Fonts took down an otherwise-green
+// production deploy — three retries per file, then a hard webpack error. The
+// files are the exact latin variable woff2 subsets Google serves (Nunito
+// wght 200..1000, Plus Jakarta Sans wght 200..800, JetBrains Mono
+// wght 100..800), so rendering is identical; the build just no longer has a
+// network dependency that can fail it.
+const fontSans = localFont({
+  src: "../fonts/plus-jakarta-sans-latin-wght.woff2",
+  weight: "200 800",
   variable: "--font-sans",
   display: "swap",
 });
 
-const fontDisplay = Nunito({
-  subsets: ["latin"],
-  weight: ["600", "700", "800", "900"],
+const fontDisplay = localFont({
+  src: "../fonts/nunito-latin-wght.woff2",
+  weight: "200 1000",
   variable: "--font-display",
   display: "swap",
 });
 
-const fontMono = JetBrains_Mono({
-  subsets: ["latin"],
+const fontMono = localFont({
+  src: "../fonts/jetbrains-mono-latin-wght.woff2",
+  weight: "100 800",
   variable: "--font-mono",
 });
 
