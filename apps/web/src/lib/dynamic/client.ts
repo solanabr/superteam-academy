@@ -112,7 +112,14 @@ export function getDynamicClient(): DynamicClient | null {
 export async function logoutDynamic(): Promise<void> {
   if (!getDynamicClient()) return;
   try {
-    await logout();
+    // Race a deadline: on a flaky network a hung logout() would otherwise
+    // stall the whole sign-out (Supabase clear + redirect wait on this).
+    // Losing the race is fine — the redirect that follows reloads the app,
+    // and the next OTP send clears any straggler session anyway.
+    await Promise.race([
+      logout(),
+      new Promise<void>((resolve) => setTimeout(resolve, 2_500)),
+    ]);
   } catch {
     // Best-effort: an already-dead session must never block app sign-out.
   }
