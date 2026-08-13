@@ -21,12 +21,20 @@ import { createClient } from "@/lib/supabase/client";
 import { runWalletSiws } from "@/lib/wallet/siws";
 import { logoutDynamic } from "@/lib/dynamic/client";
 import { toMessageSigner } from "@/lib/dynamic/siws";
-import { bridgeDynamicSession } from "@/lib/dynamic/social";
+import {
+  bridgeDynamicSession,
+  setSocialReturnPending,
+} from "@/lib/dynamic/social";
 import { dispatchToast } from "@/components/ui/toast-container";
 
 /**
- * Everything that has to happen around a Dynamic login. Its only UI is the
- * social-return "signing in" overlay; otherwise it renders nothing.
+ * Everything that has to happen around a Dynamic login, with no UI of its
+ * own. During the social-return handshake it publishes a pending flag
+ * (`setSocialReturnPending`) that the sign-in buttons render as their loading
+ * state — the page would otherwise look signed-out with no cue for the whole
+ * exchange. Set only once a social return is POSITIVELY detected, so ordinary
+ * page loads never flash it; the success reload leaves it set on purpose (the
+ * flag dies with the page).
  *
  * Four jobs, in the order they occur:
  *
@@ -96,12 +104,6 @@ export function DynamicAuthHandler() {
   // while the guard was held would otherwise never get its SIWS turn until
   // some future reload.
   const [bridgingSocial, setBridgingSocial] = useState(true);
-  // The one piece of UI this handler owns: a full-screen "signing in" overlay
-  // for the social-return window. Between Google redirecting back and the
-  // post-bridge reload the page renders fully signed-OUT with no cue at all —
-  // several seconds of "did that work?". True only once a social return is
-  // POSITIVELY detected, so ordinary page loads never flash it.
-  const [finishingSocial, setFinishingSocial] = useState(false);
 
   // 0. Social redirect return.
   useEffect(() => {
@@ -114,7 +116,7 @@ export function DynamicAuthHandler() {
       socialReturnOutcome ??= (async (): Promise<"release" | "hold"> => {
         try {
           if (!(await detectSocialRedirectUrl({ url }))) return "release";
-          setFinishingSocial(true);
+          setSocialReturnPending(true);
 
           await completeSocialRedirect({ url });
           // Before the params are stripped a refresh would replay the callback
@@ -130,7 +132,7 @@ export function DynamicAuthHandler() {
             data: { user: supabaseUser },
           } = await supabase.auth.getUser();
           if (supabaseUser) {
-            setFinishingSocial(false);
+            setSocialReturnPending(false);
             return "release";
           }
 
@@ -150,13 +152,13 @@ export function DynamicAuthHandler() {
           // signed out and can pick another way in.
           dispatchToast(t(outcome.errorKey), "error");
           await logoutDynamic();
-          setFinishingSocial(false);
+          setSocialReturnPending(false);
           return "release";
         } catch (err) {
           console.error("[DynamicAuthHandler] social redirect failed:", err);
           dispatchToast(t("googleBridgeFailed"), "error");
           await logoutDynamic();
-          setFinishingSocial(false);
+          setSocialReturnPending(false);
           return "release";
         }
       })();
@@ -273,19 +275,5 @@ export function DynamicAuthHandler() {
     })();
   }, [walletAccounts, bridgingSocial]);
 
-  if (!finishingSocial) return null;
-  return (
-    <div
-      role="status"
-      className="bg-bg/90 fixed inset-0 z-[100] flex flex-col items-center justify-center gap-3 backdrop-blur-sm"
-    >
-      <div
-        className="h-8 w-8 animate-spin rounded-full border-2 border-current border-t-transparent text-text-3"
-        aria-hidden="true"
-      />
-      <p className="font-display text-sm font-semibold text-text-3">
-        {t("signingIn")}
-      </p>
-    </div>
-  );
+  return null;
 }

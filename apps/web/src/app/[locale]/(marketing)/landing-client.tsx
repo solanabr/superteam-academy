@@ -14,6 +14,7 @@ import {
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
 import { AuthModal } from "@/components/auth/auth-modal";
+import { useSocialReturnPending } from "@/hooks/use-social-return-pending";
 import { AuthErrorToast } from "@/components/auth/auth-error-toast";
 import { HeroShowcase } from "@/components/landing/hero-showcase";
 import {
@@ -282,6 +283,9 @@ export function LandingPageClient({
 }: LandingPageProps) {
   const t = useTranslations("landing");
   const tCommon = useTranslations("common");
+  const tAuth = useTranslations("auth");
+  // Sign-up trigger carries the Google-return loading state (see AuthModal).
+  const socialReturnPending = useSocialReturnPending();
   const locale = useLocale();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
@@ -474,8 +478,22 @@ export function LandingPageClient({
                   {!isLoggedIn && (
                     <AuthModal
                       trigger={
-                        <Button variant="outline" size="lg">
-                          {tCommon("signUp")}
+                        <Button
+                          variant="outline"
+                          size="lg"
+                          disabled={socialReturnPending}
+                        >
+                          {socialReturnPending ? (
+                            <span className="inline-flex items-center gap-2">
+                              <span
+                                className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+                                aria-hidden="true"
+                              />
+                              {tAuth("signingIn")}
+                            </span>
+                          ) : (
+                            tCommon("signUp")
+                          )}
                         </Button>
                       }
                     />
