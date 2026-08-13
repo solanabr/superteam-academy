@@ -102,7 +102,8 @@
     "signInWithGoogle": "Iniciar sesión con Google",
     "useDifferentEmail": "Usar otro correo",
     "verifyCode": "Verificar",
-    "walletConnected": "Billetera Conectada"
+    "walletConnected": "Billetera Conectada",
+    "otpRateLimited": "Demasiados registros desde esta red — espera un minuto e inténtalo de nuevo."
   },
   "landing": {
     "poweredBy": "Con el apoyo de",

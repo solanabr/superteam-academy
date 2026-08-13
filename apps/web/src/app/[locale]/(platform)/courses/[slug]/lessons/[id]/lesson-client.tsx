@@ -728,6 +728,9 @@ export function LessonPageClient({
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
           <Link
             href={`${linkBase}/${courseSlug}`}
+            // Below sm the text label is display:none, which drops it from the
+            // a11y tree — the aria-label keeps the link named on phones.
+            aria-label={tCommon("back")}
             className="inline-flex shrink-0 items-center gap-1.5 font-display text-sm font-semibold text-text-3 transition-colors hover:text-text"
           >
             <ArrowLeft size={16} weight="bold" />

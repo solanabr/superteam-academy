@@ -49,6 +49,7 @@
 import {
   createDynamicClient,
   initializeClient,
+  logout,
   type DynamicClient,
 } from "@dynamic-labs-sdk/client";
 import { addWaasSolanaExtension } from "@dynamic-labs-sdk/solana/waas";
@@ -95,4 +96,24 @@ export function getDynamicClient(): DynamicClient | null {
   }
 
   return client;
+}
+
+/**
+ * Ends the Dynamic session, if there is one. Safe to call unconditionally
+ * from app-level sign-out.
+ *
+ * WHY THIS MUST BE PART OF SIGN-OUT: the Dynamic session survives a Supabase
+ * sign-out on its own, `DynamicAuthHandler` is mounted on every page, and MPC
+ * message-signing needs no user prompt — so a surviving session would silently
+ * re-run the SIWS bridge on the next page load and sign the learner straight
+ * back in. On a shared or borrowed device that makes sign-out meaningless.
+ * Dynamic's docs name `logout()` as the required way to end the session.
+ */
+export async function logoutDynamic(): Promise<void> {
+  if (!getDynamicClient()) return;
+  try {
+    await logout();
+  } catch {
+    // Best-effort: an already-dead session must never block app sign-out.
+  }
 }

@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { createClient } from "@/lib/supabase/client";
+import { logoutDynamic } from "@/lib/dynamic/client";
 
 interface UserMenuProps {
   username: string;
@@ -49,6 +50,10 @@ export function UserMenu({
         // Wallet may already be disconnected — proceed with sign-out
       }
     }
+    // End the Dynamic session too — without this, promptless MPC signing lets
+    // the layout-level auth handler silently sign the learner back in on the
+    // next page load (see logoutDynamic).
+    await logoutDynamic();
     const supabase = createClient();
     await supabase.auth.signOut();
     window.location.href = `/${locale}`;

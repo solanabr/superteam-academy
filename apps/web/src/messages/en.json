@@ -102,7 +102,8 @@
     "signInWithGoogle": "Sign in with Google",
     "useDifferentEmail": "Use a different email",
     "verifyCode": "Verify",
-    "walletConnected": "Wallet Connected"
+    "walletConnected": "Wallet Connected",
+    "otpRateLimited": "Too many sign-ups from this network — wait a minute and try again."
   },
   "landing": {
     "poweredBy": "Powered by",

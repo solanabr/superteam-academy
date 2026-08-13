@@ -22,11 +22,13 @@ import { toMessageSigner } from "@/lib/dynamic/siws";
  *
  * Three jobs, in the order they occur:
  *
- * 1. **Device registration.** Completing the emailed link is not optional —
- *    Dynamic requires device registration for every headless integration, and
- *    a user who is mid-registration is blocked until the redirect is consumed.
- *    It runs first, and on every mount, because the learner arrives back on an
- *    arbitrary page with the token in the URL.
+ * 1. **Device registration.** OPTIONAL — off by default and only active when
+ *    the dashboard toggle enables it (per Dynamic's docs; an earlier reading
+ *    here claimed it was required). When it IS on, a returning learner on a
+ *    new device is blocked until the emailed link's redirect is consumed, so
+ *    the consumer runs first, on every mount — the learner arrives back on an
+ *    arbitrary page with the token in the URL. With the toggle off this
+ *    effect never matches and is inert.
  * 2. **Embedded wallet creation.** Unlike the legacy SDK's modal, the headless
  *    SDK does NOT create a wallet on sign-in; the account exists with no wallet
  *    until asked. Skipping this is why a learner would authenticate and then

@@ -12,6 +12,19 @@ import {
 import { Button } from "@/components/ui/button";
 import { trackEvent } from "@/lib/analytics";
 
+/**
+ * Dynamic's OTP endpoints are rate-limited PER IP (10 req/min) — one venue
+ * NAT at an in-person event trips it long before any individual does. The SDK
+ * surfaces it inconsistently (status code or message), so detect broadly and
+ * show copy that says "wait a minute", not "wrong code".
+ */
+function isRateLimitError(err: unknown): boolean {
+  const status = (err as { status?: number; statusCode?: number }) ?? {};
+  if (status.status === 429 || status.statusCode === 429) return true;
+  const message = err instanceof Error ? err.message : String(err);
+  return /\b429\b|rate.?limit|too many/i.test(message);
+}
+
 const INPUT_CLASS =
   "h-12 w-full rounded-md border border-border bg-subtle px-3 text-sm text-text placeholder:text-text-3 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50";
 
@@ -137,7 +150,9 @@ export function DynamicEmailSignIn({ disabled }: { disabled: boolean }) {
             // in a state we didn't predict, and this console line is the only
             // way to tell those apart in the field.
             console.error("[DynamicEmailSignIn] verifyOTP failed:", err);
-            setError(t("otpInvalid"));
+            setError(
+              t(isRateLimitError(err) ? "otpRateLimited" : "otpInvalid")
+            );
           }
         }}
       >
@@ -205,7 +220,9 @@ export function DynamicEmailSignIn({ disabled }: { disabled: boolean }) {
           await sendEmailOTP({ email });
         } catch (err) {
           console.error("[DynamicEmailSignIn] sendEmailOTP failed:", err);
-          setError(t("emailSignInFailed"));
+          setError(
+            t(isRateLimitError(err) ? "otpRateLimited" : "emailSignInFailed")
+          );
         }
       }}
     >
