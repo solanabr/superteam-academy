@@ -5,13 +5,14 @@
 
 ## Auth
 
-| Route                   | Method | Auth     | Purpose                                             |
-| ----------------------- | ------ | -------- | --------------------------------------------------- |
-| `/api/auth/nonce`       | GET    | None     | Generate SIWS nonce (stored in `siws_nonces` table) |
-| `/api/auth/wallet`      | POST   | None     | SIWS authentication (nonce + Ed25519 verification)  |
-| `/api/auth/callback`    | GET    | None     | Google/GitHub OAuth callback (code exchange)        |
-| `/api/auth/link-wallet` | POST   | Required | Link wallet to existing account                     |
-| `/api/auth/unlink`      | POST   | Required | Unlink auth method (wallet/Google/GitHub)           |
+| Route                   | Method | Auth     | Purpose                                                         |
+| ----------------------- | ------ | -------- | --------------------------------------------------------------- |
+| `/api/auth/nonce`       | GET    | None     | Generate SIWS nonce (stored in `siws_nonces` table)             |
+| `/api/auth/wallet`      | POST   | None     | SIWS authentication (nonce + Ed25519 verification)              |
+| `/api/auth/callback`    | GET    | None     | Google/GitHub OAuth callback (code exchange)                    |
+| `/api/auth/dynamic`     | POST   | None     | Dynamic social sign-in → session for the matching email account |
+| `/api/auth/link-wallet` | POST   | Required | Link wallet to existing account                                 |
+| `/api/auth/unlink`      | POST   | Required | Unlink auth method (wallet/Google/GitHub)                       |
 
 ## Core Platform
 

@@ -197,6 +197,9 @@ importers:
       isomorphic-dompurify:
         specifier: 2.36.0
         version: 2.36.0(@noble/hashes@1.8.0)
+      jose:
+        specifier: 6.2.8
+        version: 6.2.8
       next:
         specifier: ^15.5.22
         version: 15.5.22(@babel/core@7.29.7)(@opentelemetry/api@1.9.0)(@playwright/test@1.59.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -6043,6 +6046,9 @@ packages:
   jiti@2.6.1:
     resolution: {integrity: sha512-ekilCSN1jwRvIbgeg/57YFh8qQDNbwDb9xT/qu2DAHbFFZUicIl4ygVaAvzveMhMVr3LnpSKTNnwt8PoOfmKhQ==}
     hasBin: true
+
+  jose@6.2.8:
+    resolution: {integrity: sha512-Bsdjwm3Qsd/P0jR+BHDe3LytDfY7WBq2HmCCLIwuVRHMuEC9ae7/R474GIUdF1NgCyZjzVo/A9DOiOBtXq8ZoQ==}
 
   js-base64@3.7.8:
     resolution: {integrity: sha512-hNngCeKxIUQiEUN3GPJOkz4wF/YvdUdbNL9hsBcMQTkKzboD7T/q3OYOuuPZLUE6dBxSGpwhk5mwuDud7JVAow==}
@@ -15455,6 +15461,8 @@ snapshots:
 
   jiti@2.6.1:
     optional: true
+
+  jose@6.2.8: {}
 
   js-base64@3.7.8: {}
 
