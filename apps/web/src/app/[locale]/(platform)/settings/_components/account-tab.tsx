@@ -9,7 +9,6 @@ import type { UserIdentity } from "@supabase/supabase-js";
 import { GithubLogo } from "@phosphor-icons/react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PhantomGraduationCard } from "@/components/settings/phantom-graduation-card";
 import { GoogleLogo } from "@/components/icons/google-logo";
 import { SolanaLogo } from "@/components/icons/solana-logo";
 import { createClient } from "@/lib/supabase/client";
@@ -505,13 +504,6 @@ export function AccountTab({
             </Button>
           )}
         </div>
-
-        {/* "Take your wallet with you" (#987) — renders only for wallets
-            provisioned via Phantom Connect (provenance in prefs), so external
-            -wallet users are never told to download Phantom. */}
-        {walletAddress && (
-          <PhantomGraduationCard walletAddress={walletAddress} />
-        )}
 
         {/* Google row */}
         <div className="set-row">

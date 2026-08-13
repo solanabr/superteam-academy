@@ -55,10 +55,6 @@ const cspDirectives = [
     "https://accounts.google.com https://*.googleapis.com",
     "https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://stats.g.doubleclick.net",
     "https://*.posthog.com https://*.sentry.io https://*.ingest.sentry.io",
-    // Phantom Connect (#985) — kept in sync with lib/csp.ts. Not strictly
-    // needed on /api/* (the SDK only runs on app pages), but this fallback's
-    // contract is "rough sync with the middleware CSP".
-    "https://auth.phantom.app https://api.phantom.app https://time.phantom.app",
   ].join(" "),
 
   // Frames: Google OAuth may use frames; lesson videos embed the YouTube and

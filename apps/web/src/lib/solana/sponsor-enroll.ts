@@ -8,7 +8,7 @@ import { getProgramId } from "./pda";
 /**
  * Sponsored `enroll` (#1004).
  *
- * A Phantom Connect embedded wallet arrives holding zero SOL, and `enroll` is
+ * A freshly created wallet arrives holding zero SOL, and `enroll` is
  * the only instruction a learner has to fund — everything after it
  * (`complete_lesson`, `finalize_course`, `issue_credential`) is already paid for
  * by the backend. So without this, an email sign-up could get a wallet and then

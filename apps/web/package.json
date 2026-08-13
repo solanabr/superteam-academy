@@ -29,7 +29,6 @@
     "@metaplex-foundation/umi-web3js-adapters": "^1.5.1",
     "@monaco-editor/react": "^4.7.0",
     "@noble/hashes": "^1.8.0",
-    "@phantom/browser-sdk": "^2.0.2",
     "@phosphor-icons/react": "^2.1.10",
     "@radix-ui/react-avatar": "^1.1.0",
     "@radix-ui/react-dialog": "^1.1.0",

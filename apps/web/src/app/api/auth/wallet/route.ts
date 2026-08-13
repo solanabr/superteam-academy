@@ -194,7 +194,7 @@ export async function POST(request: NextRequest) {
       // Stable key, not prose (#994 review): route conventions say error keys,
       // and this route's prose was the one 409 in the auth surface that clients
       // could not match on. Same situation-key as link-wallet's own-account
-      // case; WalletAuthHandler and PhantomAuthHandler both translate it.
+      // case; WalletAuthHandler translates it.
       return NextResponse.json(
         { error: "differentWalletLinked" },
         { status: 409 }
