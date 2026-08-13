@@ -1,5 +1,5 @@
 import { getAllCourses, getDeployedAchievements } from "@/lib/content/queries";
-import { resolveFlagshipLessonHref } from "@/lib/courses/entry-lesson";
+import { resolveHeroHref } from "@/lib/courses/entry-lesson";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { LandingPageClient } from "./landing-client";
 
@@ -18,9 +18,9 @@ export default async function LandingPage({
   const [courses, achievements, flagshipLessonHref] = await Promise.all([
     getAllCourses(),
     getDeployedAchievements(),
-    // LX-A1: the anonymous-first deep-link target — flagship lesson 1, or the
-    // catalog when that course isn't synced (resolveFlagshipLessonHref gate).
-    resolveFlagshipLessonHref(locale),
+    // The event booth course page once it's synced; the LX-A1 flagship lesson
+    // deep-link (or catalog) until then — resolveHeroHref owns that gate.
+    resolveHeroHref(locale),
   ]);
 
   // Fetch on-chain stats from Supabase
