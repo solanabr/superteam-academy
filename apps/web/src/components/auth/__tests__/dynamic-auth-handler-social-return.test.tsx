@@ -63,7 +63,10 @@ vi.mock("@/lib/supabase/client", () => ({
 vi.mock("@/lib/wallet/siws", () => ({ runWalletSiws }));
 vi.mock("@/lib/dynamic/client", () => ({ logoutDynamic }));
 vi.mock("@/lib/dynamic/siws", () => ({ toMessageSigner: vi.fn() }));
-vi.mock("@/lib/dynamic/social", () => ({ bridgeDynamicSession }));
+vi.mock("@/lib/dynamic/social", () => ({
+  bridgeDynamicSession,
+  setSocialReturnPending: vi.fn(),
+}));
 vi.mock("@/components/ui/toast-container", () => ({ dispatchToast: vi.fn() }));
 
 async function renderFreshHandler() {

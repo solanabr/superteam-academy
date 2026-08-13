@@ -19,6 +19,7 @@ import { createClient } from "@/lib/supabase/client";
 import { buildOAuthRedirect } from "@/lib/auth/oauth-redirect";
 import { trackEvent } from "@/lib/analytics";
 import { isDynamicEnabled } from "@/lib/dynamic/config";
+import { useSocialReturnPending } from "@/hooks/use-social-return-pending";
 import { DynamicGoogleSignIn } from "@/components/auth/dynamic-google-sign-in";
 
 interface AuthModalProps {
@@ -66,6 +67,10 @@ export function AuthModal({
   // cannot be conditional, so the gate is a component boundary instead:
   // DynamicGoogleSignIn owns the hooks and mounts only when Dynamic is enabled.
   const dynamicEnabled = isDynamicEnabled();
+  // While the Google-return handshake runs, the trigger button carries the
+  // loading state — the alternative was a full-screen overlay, and the owner
+  // preferred the button.
+  const socialReturnPending = useSocialReturnPending();
   const { setVisible } = useWalletModal();
 
   // Return the learner to the page they signed in from (#619 review): the OAuth
@@ -151,7 +156,21 @@ export function AuthModal({
     >
       {(trigger !== undefined || !isControlled) && (
         <DialogTrigger asChild>
-          {trigger ?? <Button variant="push">{tCommon("signIn")}</Button>}
+          {trigger ?? (
+            <Button variant="push" disabled={socialReturnPending}>
+              {socialReturnPending ? (
+                <span className="inline-flex items-center gap-2">
+                  <span
+                    className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+                    aria-hidden="true"
+                  />
+                  {t("signingIn")}
+                </span>
+              ) : (
+                tCommon("signIn")
+              )}
+            </Button>
+          )}
         </DialogTrigger>
       )}
       <DialogContent className="sm:max-w-sm">

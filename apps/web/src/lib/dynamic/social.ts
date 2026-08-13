@@ -117,3 +117,30 @@ export async function bridgeDynamicSession(): Promise<DynamicBridgeOutcome> {
     return { ok: false, errorKey: "googleBridgeFailed" };
   }
 }
+
+/**
+ * Social-return pending state, published by `DynamicAuthHandler` while the
+ * redirect-return handshake runs and consumed by the sign-in buttons (via
+ * `useSocialReturnPending`) so THEY carry the loading state — the owner's
+ * call over a full-screen overlay. A module-level store because the handler
+ * and the header render in unrelated trees; threading a context through the
+ * layout for one boolean would be all ceremony.
+ */
+let socialReturnPending = false;
+const pendingListeners = new Set<() => void>();
+
+export function setSocialReturnPending(pending: boolean): void {
+  socialReturnPending = pending;
+  pendingListeners.forEach((listener) => listener());
+}
+
+export function subscribeSocialReturnPending(listener: () => void): () => void {
+  pendingListeners.add(listener);
+  return () => {
+    pendingListeners.delete(listener);
+  };
+}
+
+export function getSocialReturnPending(): boolean {
+  return socialReturnPending;
+}
