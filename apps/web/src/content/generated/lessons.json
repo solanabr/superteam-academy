@@ -1370,6 +1370,132 @@
     "title": "Push code you can never edit: your first program on devnet"
   },
   {
+    "_id": "lesson-psp-solana-em-2-minutos",
+    "_type": "lesson",
+    "blocks": [
+      {
+        "_key": "intro",
+        "_type": "prose",
+        "src": "# Solana em 2 minutos (e como ganhar dinheiro nela)\n\nVocê manda um PIX e o dinheiro cai antes de guardar o celular no bolso. Agora imagina essa mesma velocidade valendo pra qualquer ativo: dólar digital, ações americanas, ouro. Isso já existe e roda na Solana, uma rede aberta pra qualquer pessoa com um celular. Cada operação confirma em menos de meio segundo e custa menos de 1 centavo. Já são mais de 60 ações americanas negociadas assim, direto do celular.\n\n![Comparação em quatro linhas mostrando a Solana confirmando operações em menos de meio segundo e por menos de um centavo, à frente de PIX, TED e Ethereum.](/content-assets/pilula-solana-superteam/solana-em-2-minutos/v01-comparison.png)\n\nE não é aposta de nicho. Visa, BlackRock e PayPal já constroem na rede pública, com dinheiro de verdade. O caso mais forte é recente: em dezembro de 2025, a JPMorgan, o maior banco dos Estados Unidos, estruturou uma emissão de dívida de curto prazo nativa na Solana para a Galaxy Digital, liquidada em USDC, o dólar tokenizado. Não foi teste de laboratório: foi na própria rede pública.\n\n![Tabela resumindo os produtos que rodam na Solana (ações, ouro, crédito, cofres) e a lista de instituições que já construíram na rede, como Western Union, Visa, BlackRock e JPMorgan.](/content-assets/pilula-solana-superteam/solana-em-2-minutos/v02-table.png)\n\nO truque da velocidade é simples de sentir. A Solana é um computador global mantido por milhares de máquinas independentes: ninguém desliga, ninguém adultera. E o pulo do gato é que, em vez de uma fila única, ela abre vários caixas ao mesmo tempo, como num mercado. Transações que não têm nada a ver uma com a outra rodam em paralelo. Por isso a fila anda e a taxa fica em centavos.\n\n![Um fluxograma mostra transações independentes correndo em caixas paralelos ao mesmo tempo, enquanto as que disputam a mesma conta esperam na mesma fila.](/content-assets/pilula-solana-superteam/solana-em-2-minutos/v03-flowchart.png)\n\nE é aqui que você entra. A Superteam Brasil é a comunidade oficial da Solana no país, e aqui ninguém precisa comprar moeda pra participar: você ganha trabalhando. No Superteam Earn tem bounties, desafios abertos com prêmio em dólar, de código a design e conteúdo. Entregou bem, recebeu. Já saíram mais de US$ 650 mil por esse caminho. Tem também vagas, hackathons e aceleração pra quem quer abrir empresa: a BlindPay, por exemplo, venceu a trilha brasileira do hackathon e entrou num batch da Y Combinator.\n\n![Quatro portas lado a lado, de mesma altura, representam os caminhos da Superteam: bounties no Earn, vagas no ecossistema, hackathons da Colosseum e a aceleração com cheque de US$ 250 mil.](/content-assets/pilula-solana-superteam/solana-em-2-minutos/v04-diagram.png)\n\nAgora é com você. Responde o quiz aqui embaixo e passa no nosso estande pra retirar o brinde. É rápido, é de graça, e é o seu primeiro passo dentro da Solana.\n"
+      },
+      {
+        "_key": "check",
+        "_type": "quiz",
+        "questions": [
+          {
+            "explanation": "PIX é a âncora: a Solana traz essa mesma velocidade instantânea e quase gratuita, mas pra qualquer ativo, não só pra uma transferência.",
+            "id": "q1",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Ao contrário: boleto e TED levam horas ou dias. A âncora da lição é o PIX, instantâneo, e a Solana joga nesse time, com operação em menos de meio segundo.",
+                "id": "a",
+                "label": "Como um boleto, que compensa em dias"
+              },
+              {
+                "correct": true,
+                "id": "b",
+                "label": "Como o PIX: confirma em menos de meio segundo e custa menos de 1 centavo"
+              },
+              {
+                "correct": false,
+                "feedback": "A graça é justamente NÃO ser fila: a operação confirma quase na hora, como um PIX, e por menos de um centavo.",
+                "id": "c",
+                "label": "Como a fila do banco, que anda quando dá"
+              }
+            ],
+            "prompt": "A Solana é rápida como o quê, na comparação da pílula?"
+          },
+          {
+            "explanation": "Em vez de uma fila única, a Solana abre vários caixas ao mesmo tempo: transações que não se cruzam rodam em paralelo. Por isso a fila anda e a taxa fica em centavos.",
+            "id": "q2",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "id": "a",
+                "label": "Porque processa várias transações ao mesmo tempo, em paralelo, vários caixas abertos, não uma fila única"
+              },
+              {
+                "correct": false,
+                "feedback": "É o contrário: a Solana processa mais transações reais que todas as outras redes somadas. A velocidade vem da arquitetura, não de estar vazia.",
+                "id": "b",
+                "label": "Porque quase ninguém usa a rede ainda, então sobra espaço"
+              },
+              {
+                "correct": false,
+                "feedback": "Ninguém controla: são milhares de máquinas independentes agindo como uma só. O truque é o paralelismo, rodar juntas as transações que não se cruzam.",
+                "id": "c",
+                "label": "Porque um único banco central controla e coordena tudo"
+              }
+            ],
+            "prompt": "Por que a Solana consegue ser tão veloz?"
+          },
+          {
+            "explanation": "Dinheiro de verdade, na rede pública: em dez/2025 a JPMorgan estruturou uma emissão de commercial paper nativa na Solana pra Galaxy Digital, liquidada em USDC, ao lado de Visa, BlackRock e PayPal.",
+            "id": "q3",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Não são testes de laboratório: são produtos reais, com dinheiro real, na rede pública, hoje.",
+                "id": "a",
+                "label": "Só projetos de teste, ainda sem valor real em jogo"
+              },
+              {
+                "correct": false,
+                "feedback": "Gigantes já estão dentro: Visa, BlackRock, PayPal, e a JPMorgan, maior banco dos EUA, emitiu commercial paper nativo na rede em dezembro de 2025.",
+                "id": "b",
+                "label": "Ninguém grande ainda, só entusiastas de cripto"
+              },
+              {
+                "correct": true,
+                "id": "c",
+                "label": "Gigantes como Visa, BlackRock, PayPal e a JPMorgan, o maior banco dos EUA"
+              }
+            ],
+            "prompt": "Quem já constrói na Solana com dinheiro de verdade?"
+          },
+          {
+            "explanation": "Bounty é desafio aberto com prêmio em dólar: entregou bem, recebeu. Já saíram mais de US$ 650 mil por esse caminho, e ainda tem vagas, hackathons e aceleração.",
+            "id": "q4",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Não é sorte nem indicação: é trabalho. Você entrega um bounty, você recebe.",
+                "id": "a",
+                "label": "Num sorteio entre os membros da comunidade"
+              },
+              {
+                "correct": true,
+                "id": "b",
+                "label": "Entregando trabalho nos bounties abertos do Superteam Earn, de código a design e conteúdo"
+              },
+              {
+                "correct": false,
+                "feedback": "Isso é investir, não participar. O caminho da Superteam é ganhar por trabalho, sem depender do preço de nada, já saíram mais de US$ 650 mil por bounties.",
+                "id": "c",
+                "label": "Comprando SOL e esperando a moeda valorizar"
+              }
+            ],
+            "prompt": "Como se ganha dinheiro na Superteam Brasil?"
+          }
+        ]
+      }
+    ],
+    "skills": [
+      "solana-fundamentals",
+      "transactions"
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "solana-em-2-minutos"
+    },
+    "title": "Solana em 2 minutos (e como ganhar dinheiro nela)"
+  },
+  {
     "_id": "lesson-ssr-como-funciona",
     "_type": "lesson",
     "blocks": [

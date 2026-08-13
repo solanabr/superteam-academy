@@ -21,6 +21,14 @@
     },
     "version": 1
   },
+  "course-pilula-solana-superteam": {
+    "next": 1,
+    "retired": [],
+    "slots": {
+      "lesson-psp-solana-em-2-minutos": 0
+    },
+    "version": 1
+  },
   "course-solana-speedrun": {
     "next": 4,
     "retired": [],

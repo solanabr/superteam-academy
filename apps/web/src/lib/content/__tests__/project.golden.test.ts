@@ -166,6 +166,15 @@ vi.mock("server-only", () => ({}));
 //    summaries regenerated through the real projectors; lessons.json,
 //    quests-raw.json and achievements-raw.json are byte-unchanged (no lesson,
 //    block or award moved).
+//  - Pílula Solana & Superteam (bump to academy-courses @2c2241d1,
+//    academy-courses #37): a new PT-BR single-lesson booth elective
+//    (`course-pilula-solana-superteam`, 1 module `pilula`, lesson
+//    `lesson-psp-solana-em-2-minutos`, 4 prose beats + 4-question quiz,
+//    duration 0.03h). This content never existed in the pre-flip capture, so
+//    per the launch-catalog precedent its golden = the projected bundle:
+//    courses.json and lessons.json gained the projector-generated docs and
+//    quests-raw.json's moduleLessonMap gained the one-module entry. Every
+//    pre-existing doc is byte-unchanged.
 const deps = { lessonsById };
 
 function bundleCourse(id: string): CourseDoc {

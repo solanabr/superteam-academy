@@ -178,6 +178,46 @@
     "xpReward": 300
   },
   {
+    "_id": "course-pilula-solana-superteam",
+    "_type": "course",
+    "creator": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
+    "creatorRewardXp": 0,
+    "description": "A pílula de 2 minutos: por que o sistema financeiro está migrando pra Solana, o truque que a deixa rápida, e como você ganha dinheiro nela pela Superteam Brasil.",
+    "difficulty": "beginner",
+    "duration": 0.03,
+    "minCompletionsForReward": 0,
+    "modules": [
+      {
+        "_key": "pilula",
+        "_type": "courseModule",
+        "key": "pilula",
+        "lessons": [
+          {
+            "_key": "lesson-psp-solana-em-2-minutos",
+            "_ref": "lesson-psp-solana-em-2-minutos",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "A Pílula"
+      }
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "pilula-solana-superteam"
+    },
+    "tags": [
+      "solana-fundamentals",
+      "transactions"
+    ],
+    "thumbnail": "/content-assets/pilula-solana-superteam/banner.webp",
+    "title": "Pílula Solana & Superteam",
+    "trackId": 0,
+    "trackLevel": 0,
+    "xpPerLesson": 20,
+    "xpReward": 20
+  },
+  {
     "_id": "course-solana-speedrun",
     "_type": "course",
     "creator": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",

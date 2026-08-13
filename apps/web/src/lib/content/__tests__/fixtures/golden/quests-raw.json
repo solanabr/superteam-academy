@@ -64,6 +64,12 @@
         "lesson-ssr-superteam-porta-de-entrada",
         "lesson-ssr-seu-momento-onchain"
       ]
+    },
+    {
+      "_id": "course-pilula-solana-superteam:pilula",
+      "lessonIds": [
+        "lesson-psp-solana-em-2-minutos"
+      ]
     }
   ],
   "quests": [

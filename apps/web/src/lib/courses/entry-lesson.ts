@@ -1,4 +1,8 @@
-import { getCourseById, getCourseLessons } from "@/lib/content/queries";
+import {
+  getCourseById,
+  getCourseIdBySlug,
+  getCourseLessons,
+} from "@/lib/content/queries";
 import {
   DEFAULT_SEGMENT,
   SEGMENT_ENTRY_COURSE,
@@ -39,4 +43,21 @@ export async function resolveFlagshipLessonHref(
   locale: string
 ): Promise<string> {
   return resolveEntryLessonHref(locale, SEGMENT_ENTRY_COURSE[DEFAULT_SEGMENT]);
+}
+
+/** The event booth micro-course (academy-courses#37). */
+const HERO_COURSE_SLUG = "pilula-solana-superteam";
+
+/**
+ * The landing hero target: the Pílula COURSE page — the booth audience picks
+ * a course, they don't get dropped mid-lesson — but only once that course is
+ * deployed+synced (`getCourseIdBySlug` is the sync-gated read; the ungated
+ * `getCourseById` would happily link a course whose page 404s). Until the
+ * admin sync runs, the hero keeps the flagship lesson deep-link.
+ */
+export async function resolveHeroHref(locale: string): Promise<string> {
+  const synced = await getCourseIdBySlug(HERO_COURSE_SLUG);
+  return synced
+    ? `/${locale}/courses/${HERO_COURSE_SLUG}`
+    : resolveFlagshipLessonHref(locale);
 }
