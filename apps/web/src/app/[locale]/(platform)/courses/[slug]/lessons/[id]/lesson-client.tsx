@@ -714,8 +714,14 @@ export function LessonPageClient({
           not live here (#942): the prose h1 immediately below owns document
           identity, and printing it twice was pure duplication. lg:shrink-0 so
           it never eats the IDE's flex height. */}
+      {/* max-lg sticky: on a phone the whole bar — Back most of all — scrolled
+          out of view two paragraphs into a lesson, leaving no way out short of
+          scrolling back to the top. Pinned under the fixed 60px header with an
+          opaque background so content sliding beneath stays hidden. Desktop
+          (lg) keeps the in-flow bar: the viewport shows it anyway, and the
+          challenge layout's fixed-height column must not double-pin it. */}
       <div
-        className={`flex items-center gap-2 border-b border-border py-2 sm:gap-3 lg:shrink-0 ${
+        className={`flex items-center gap-2 border-b border-border py-2 max-lg:sticky max-lg:top-[60px] max-lg:z-40 max-lg:bg-[var(--bg)] sm:gap-3 lg:shrink-0 ${
           hasCodeBlock ? "mx-[calc(50%_-_50vw)] w-screen px-3 sm:px-4" : ""
         }`}
       >
