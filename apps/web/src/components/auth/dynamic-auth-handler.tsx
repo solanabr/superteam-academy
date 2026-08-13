@@ -188,6 +188,13 @@ export function DynamicAuthHandler() {
 
   // 2. Create the embedded Solana wallet once the learner is authenticated.
   useEffect(() => {
+    // Not during a social return: the Dynamic session lands mid-handshake, so
+    // this effect would start the multi-round MPC keygen exactly when job 0's
+    // success path is about to hard-reload — killing the keygen in flight and
+    // leaving the learner with no wallet (observed live at the event,
+    // 2026-08-13: sign-in fine, wallet missing). Post-reload the guard clears
+    // in milliseconds and the keygen runs with nothing racing it.
+    if (bridgingSocial) return;
     if (!user || creatingWallet.current) return;
 
     const missing = getChainsMissingWaasWalletAccounts();
@@ -203,7 +210,10 @@ export function DynamicAuthHandler() {
         // again, which remounts this handler.
       }
     })();
-  }, [user]);
+    // `bridgingSocial` is in the deps for the same reason it is in job 3's:
+    // the guard clearing must itself re-run this effect, or a `user` that
+    // hydrated while the guard was held would never get its wallet created.
+  }, [user, bridgingSocial]);
 
   // 3. Bridge the wallet to a Supabase account.
   useEffect(() => {
