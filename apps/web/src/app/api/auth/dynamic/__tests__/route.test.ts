@@ -87,14 +87,21 @@ let privateKey: CryptoKey;
 let ps256PrivateKey: CryptoKey;
 const fetchMock = vi.fn();
 
-/** The credential Dynamic emits for a completed Google sign-in. */
+/**
+ * The credential Dynamic emits for a completed Google sign-in, as observed in
+ * a LIVE sandbox token (2026-08-13): no `email` field — the address arrives
+ * only in `oauth_emails` (single element) and `oauth_username`. The SDK model
+ * claims `email` can be present; tests for that shape pass it explicitly.
+ */
 function googleCredential(overrides: Record<string, unknown> = {}) {
   return {
     id: GOOGLE_CREDENTIAL_ID,
     format: "oauth",
     oauth_provider: "google",
     oauth_account_id: "google-account-1",
-    email: EXISTING_EMAIL,
+    oauth_username: EXISTING_EMAIL,
+    oauth_display_name: "Existing User",
+    oauth_emails: [EXISTING_EMAIL],
     signInEnabled: true,
     ...overrides,
   };
@@ -486,10 +493,10 @@ describe("POST /api/auth/dynamic — email extraction", () => {
     expect(generateLink).not.toHaveBeenCalled();
   });
 
-  it("refuses an oauth credential carrying no email", async () => {
+  it("refuses an oauth credential carrying no email anywhere", async () => {
     const token = await signDynamicJwt({
       claims: {
-        verified_credentials: [googleCredential({ email: undefined })],
+        verified_credentials: [googleCredential({ oauth_emails: undefined })],
       },
     });
 
@@ -498,6 +505,24 @@ describe("POST /api/auth/dynamic — email extraction", () => {
     expect(res.status).toBe(403);
     await expect(res.json()).resolves.toEqual({
       error: "noVerifiedOauthEmail",
+    });
+  });
+
+  it("still accepts the SDK-model shape where the credential carries `email` itself", async () => {
+    const token = await signDynamicJwt({
+      claims: {
+        verified_credentials: [
+          googleCredential({ email: EXISTING_EMAIL, oauth_emails: undefined }),
+        ],
+      },
+    });
+
+    const res = await POST(dynamicRequest({ dynamicJwt: token }));
+
+    expect(res.status).toBe(200);
+    expect(generateLink).toHaveBeenCalledWith({
+      type: "magiclink",
+      email: EXISTING_EMAIL,
     });
   });
 
@@ -532,15 +557,37 @@ describe("POST /api/auth/dynamic — email extraction", () => {
     expect(generateLink).not.toHaveBeenCalled();
   });
 
-  it("ignores oauth_emails — only the credential's own email counts", async () => {
+  it("never matches on a github credential's oauth_emails", async () => {
     // GitHub lists addresses a user added but never verified. Matching on one
-    // would hand over whichever account that address belongs to.
+    // would hand over whichever account that address belongs to — the
+    // oauth_emails fallback is scoped to google, where the list can only hold
+    // the account's verified primary.
     const token = await signDynamicJwt({
       claims: {
         verified_credentials: [
           googleCredential({
-            email: undefined,
+            oauth_provider: "github",
             oauth_emails: ["victim@gmail.com"],
+          }),
+        ],
+      },
+    });
+
+    const res = await POST(dynamicRequest({ dynamicJwt: token }));
+
+    expect(res.status).toBe(403);
+    expect(generateLink).not.toHaveBeenCalled();
+  });
+
+  it("refuses a google oauth_emails list with more than one address", async () => {
+    // Exactly-one is the invariant Google's OAuth surface guarantees; a
+    // multi-element list means the shape assumption no longer holds, and
+    // guessing which entry is verified is how takeovers happen.
+    const token = await signDynamicJwt({
+      claims: {
+        verified_credentials: [
+          googleCredential({
+            oauth_emails: [EXISTING_EMAIL, "second@gmail.com"],
           }),
         ],
       },

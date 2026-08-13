@@ -103,7 +103,9 @@
     "useDifferentEmail": "Usar outro e-mail",
     "verifyCode": "Verificar",
     "walletConnected": "Carteira Conectada",
-    "otpRateLimited": "Muitos cadastros desta rede — aguarde um minuto e tente novamente."
+    "otpRateLimited": "Muitos cadastros desta rede — aguarde um minuto e tente novamente.",
+    "googleBridgeFailed": "Login com Google feito, mas não foi possível concluir a conexão da sua conta. Tente novamente.",
+    "googleEmailUnmatched": "O Google não forneceu um e-mail verificado, então não conseguimos identificar sua conta. Use outro método de login."
   },
   "landing": {
     "poweredBy": "Com apoio de",

@@ -136,6 +136,7 @@ interface DynamicVerifiedCredential {
   format?: unknown;
   email?: unknown;
   oauth_provider?: unknown;
+  oauth_emails?: unknown;
   signInEnabled?: unknown;
 }
 
@@ -218,26 +219,44 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  *   only meaningful when Dynamic actually sets it.
  * - a non-empty `email` string.
  *
- * The credential's `oauth_emails` array is NOT consulted, and that is a
- * deliberate v1 restriction. It is documented as "list of email addresses from
- * the OAuth provider" — for GitHub that list includes addresses the user added
- * but never verified, so an attacker could add a victim's address to their own
- * GitHub account and have this route hand them the victim's Superteam account.
- * The single `email` field is the address Dynamic settled on for the
- * credential, so it is the only one used.
+ * The email is taken from the credential's own `email` field when present. In
+ * practice Dynamic's LIVE google credential carries no `email` at all (the SDK
+ * model says it can; a real token from this environment says it doesn't) — the
+ * address arrives only in `oauth_emails` and `oauth_username`. So, for GOOGLE
+ * ONLY, a single-element `oauth_emails` is accepted as a fallback: Google's
+ * OAuth surface exposes exactly the account's verified primary address and
+ * nothing else, which is what makes that list trustworthy there.
+ *
+ * The same fallback is deliberately NOT extended to GitHub. GitHub's email
+ * list can include addresses the user added but never verified, so an attacker
+ * could add a victim's address to their own GitHub account and have this route
+ * hand them the victim's Superteam account. A github credential must carry the
+ * `email` field itself; extending the fallback to a new provider is a per-
+ * provider trust decision, not a refactor.
  */
 function matchableEmail(credential: unknown): string | null {
   if (!isRecord(credential)) return null;
-  const { format, oauth_provider, signInEnabled, email } =
+  const { format, oauth_provider, signInEnabled, email, oauth_emails } =
     credential as DynamicVerifiedCredential;
 
   if (format !== "oauth") return null;
   if (typeof oauth_provider !== "string") return null;
   if (!ALLOWED_OAUTH_PROVIDERS.has(oauth_provider)) return null;
   if (signInEnabled === false) return null;
-  if (typeof email !== "string") return null;
 
-  const normalized = normalizeEmail(email);
+  let candidate: string | null = typeof email === "string" ? email : null;
+  if (
+    candidate === null &&
+    oauth_provider === "google" &&
+    Array.isArray(oauth_emails) &&
+    oauth_emails.length === 1 &&
+    typeof oauth_emails[0] === "string"
+  ) {
+    candidate = oauth_emails[0];
+  }
+  if (candidate === null) return null;
+
+  const normalized = normalizeEmail(candidate);
   return normalized === "" ? null : normalized;
 }
 
