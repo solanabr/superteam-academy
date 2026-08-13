@@ -55,6 +55,19 @@ import { dispatchToast } from "@/components/ui/toast-container";
  * Mounted at the layout level alongside `WalletAuthHandler`, which does job 3
  * for wallet-adapter wallets.
  */
+/**
+ * The social-return handshake may run AT MOST ONCE per page load:
+ * `completeSocialRedirect` spends a one-time OAuth code, so a second
+ * invocation — StrictMode's dev double-effect, or any remount while the
+ * callback params are still in the URL — replays a spent code, throws, and
+ * the failure path then logs out the session the first invocation just
+ * established (observed live: a 200 bridge immediately followed by an aborted
+ * duplicate, leaving the learner "not signed in" until a second attempt).
+ * Module scope, not a ref: a ref dies with its fiber, and both success
+ * (hard reload) and failure (params stripped) end this page load's story.
+ */
+let socialReturnConsumed = false;
+
 export function DynamicAuthHandler() {
   const t = useTranslations("auth");
   const { data: user } = useUser();
@@ -82,6 +95,14 @@ export function DynamicAuthHandler() {
     const url = new URL(window.location.href);
 
     void (async () => {
+      // Checked and claimed synchronously (this async body runs sync until its
+      // first await), so a double-invoked effect cannot race past it.
+      if (socialReturnConsumed) {
+        setBridgingSocial(false);
+        return;
+      }
+      socialReturnConsumed = true;
+
       try {
         if (!(await detectSocialRedirectUrl({ url }))) {
           setBridgingSocial(false);
