@@ -14,6 +14,7 @@ vi.mock("@solana/wallet-adapter-react-ui", () => ({
 // is about the modal's own behaviour, not the email flow's.
 vi.mock("@dynamic-labs-sdk/client", () => ({
   isDeviceRegistrationRequired: () => false,
+  logout: vi.fn(),
 }));
 vi.mock("@dynamic-labs-sdk/react-hooks", () => ({
   useSendEmailOTP: () => ({
@@ -22,6 +23,7 @@ vi.mock("@dynamic-labs-sdk/react-hooks", () => ({
     isPending: false,
     reset: vi.fn(),
   }),
+  useUser: () => ({ data: undefined }),
   useVerifyOTP: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 

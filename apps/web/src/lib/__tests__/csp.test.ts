@@ -42,8 +42,12 @@ describe("page CSP (the one middleware actually serves)", () => {
     expect(connectSrc).toContain("https://logs.dynamicauth.com");
     // The WaaS MPC relay (headless SDK): wallet creation and signing traverse
     // it, so dropping it lets a learner authenticate and then strands them
-    // walletless — read from DEFAULT_WAAS_BASE_MPC_RELAY_API_URL in the SDK.
+    // walletless — read from MPC_RELAY_PROD_API_URL in the SDK dist. The
+    // key-share backup relay travels with it.
     expect(connectSrc).toContain("https://relay.dynamicauth.com");
+    expect(connectSrc).toContain(
+      "https://waas-keyshares-relay.dynamicauth.com"
+    );
     expect(connectSrc).not.toContain("*.dynamicauth.com");
 
     // Static assets, found EMPIRICALLY (the SDK builds these URLs at runtime,
@@ -55,8 +59,12 @@ describe("page CSP (the one middleware actually serves)", () => {
       "https://iconic.dynamic-static-assets.com"
     );
 
-    // frame-src: Dynamic's embedded-wallet webview. Unlike the Phantom SDK this
-    // one DOES frame, so "frame-src is untouched" stopped being true here.
+    // frame-src: Dynamic DOES frame, so "frame-src is untouched" stopped being
+    // true here. app.dynamicauth.com is the production WaaS secure-container
+    // iframe (IFRAME_DOMAIN_MAP in @dynamic-labs-wallet/core) — every MPC
+    // operation mounts it, so losing it strands a learner right after the OTP
+    // succeeds. webview.dynamicauth.com is the webview other flows use.
+    expect(directive("frame-src")).toContain("https://app.dynamicauth.com");
     expect(directive("frame-src")).toContain("https://webview.dynamicauth.com");
   });
 

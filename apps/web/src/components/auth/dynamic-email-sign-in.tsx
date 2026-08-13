@@ -3,8 +3,12 @@
 import { useState } from "react";
 import { Envelope } from "@phosphor-icons/react";
 import { useTranslations } from "next-intl";
-import { isDeviceRegistrationRequired } from "@dynamic-labs-sdk/client";
-import { useSendEmailOTP, useVerifyOTP } from "@dynamic-labs-sdk/react-hooks";
+import { isDeviceRegistrationRequired, logout } from "@dynamic-labs-sdk/client";
+import {
+  useSendEmailOTP,
+  useUser,
+  useVerifyOTP,
+} from "@dynamic-labs-sdk/react-hooks";
 import { Button } from "@/components/ui/button";
 import { trackEvent } from "@/lib/analytics";
 
@@ -35,6 +39,7 @@ export function DynamicEmailSignIn({ disabled }: { disabled: boolean }) {
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [awaitingDevice, setAwaitingDevice] = useState(false);
+  const { data: dynamicUser } = useUser();
 
   const {
     mutateAsync: sendEmailOTP,
@@ -102,7 +107,12 @@ export function DynamicEmailSignIn({ disabled }: { disabled: boolean }) {
             if (response.user && isDeviceRegistrationRequired(response.user)) {
               setAwaitingDevice(true);
             }
-          } catch {
+          } catch (err) {
+            // The full error, because "code isn't right" is only the LIKELIEST
+            // cause — verifyOTP can also fail on a network blip or a session
+            // in a state we didn't predict, and this console line is the only
+            // way to tell those apart in the field.
+            console.error("[DynamicEmailSignIn] verifyOTP failed:", err);
             setError(t("otpInvalid"));
           }
         }}
@@ -154,8 +164,17 @@ export function DynamicEmailSignIn({ disabled }: { disabled: boolean }) {
         e.preventDefault();
         setError(null);
         try {
+          // A leftover Dynamic session (an earlier sign-in attempt, another
+          // tab, the pre-headless integration) silently changes what the
+          // verify step MEANS: verifyOTP routes on `client.user`, and with a
+          // user present it becomes an email-change on that stale account —
+          // which the API rejects, surfacing here as an eternal "that code
+          // isn't right". This form is strictly sign-in, so a session that
+          // predates it is never worth keeping: clear it and start clean.
+          if (dynamicUser) await logout();
           await sendEmailOTP({ email });
-        } catch {
+        } catch (err) {
+          console.error("[DynamicEmailSignIn] sendEmailOTP failed:", err);
           setError(t("emailSignInFailed"));
         }
       }}
