@@ -10,6 +10,23 @@ vi.mock("@solana/wallet-adapter-react-ui", () => ({
   useWalletModal: () => ({ setVisible: vi.fn() }),
 }));
 
+// The real SDK reaches for browser APIs jsdom does not provide, and this suite
+// is about the modal's own behaviour, not the email flow's.
+vi.mock("@dynamic-labs-sdk/client", () => ({
+  isDeviceRegistrationRequired: () => false,
+  logout: vi.fn(),
+}));
+vi.mock("@dynamic-labs-sdk/react-hooks", () => ({
+  useSendEmailOTP: () => ({
+    mutateAsync: vi.fn(),
+    data: undefined,
+    isPending: false,
+    reset: vi.fn(),
+  }),
+  useUser: () => ({ data: undefined }),
+  useVerifyOTP: () => ({ mutateAsync: vi.fn(), isPending: false }),
+}));
+
 vi.mock("@/lib/supabase/client", () => ({
   createClient: vi.fn(() => ({
     auth: { signInWithOAuth: vi.fn().mockResolvedValue({ error: null }) },

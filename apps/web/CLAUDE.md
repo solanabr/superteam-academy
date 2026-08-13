@@ -126,6 +126,24 @@ TEACH_PREVIEW_PASSWORD=            # Shared password for /teach/preview. NO defa
                                    # never on-chain writes, never the admin surface (separate
                                    # cookie from admin_session, so it cannot satisfy admin auth).
 
+# Optional — Dynamic embedded wallets (replaced Phantom Connect, which Portal
+# never approved — #1017). Public environment id from the Dynamic dashboard
+# (https://app.dynamic.xyz). It ships in the client bundle by design; the
+# dashboard's allowed-origins list is what scopes it, so it is configuration,
+# not a secret. Unset = embedded wallets OFF, exactly like the analytics keys —
+# SIWS with an external wallet stays the guaranteed way in, and no build or
+# page render may depend on this being present.
+# Read ONLY through lib/dynamic/config.ts (isDynamicEnabled/getDynamicEnvironmentId).
+#
+# DEPLOY WARNING: NEXT_PUBLIC_* is inlined at BUILD time. Changing this value
+# requires a redeploy with "Use existing Build Cache" DISABLED — a cache-reusing
+# redeploy silently keeps the old value baked into the served chunks. That
+# exact trap caused a live incident when Phantom was being disabled: the env
+# var was removed, the dashboard looked right, and the dead button kept
+# shipping. Verify by grepping the served /_next/static chunks, not the
+# dashboard.
+NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID=
+
 # Optional — Rust playground proxy (server-only)
 RUST_PLAYGROUND_URL=               # /api/rust/execute upstream (default: play.rust-lang.org/execute)
 

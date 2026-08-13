@@ -55,11 +55,19 @@ const cspDirectives = [
     "https://accounts.google.com https://*.googleapis.com",
     "https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://stats.g.doubleclick.net",
     "https://*.posthog.com https://*.sentry.io https://*.ingest.sentry.io",
+    // Dynamic embedded wallets — kept in sync with lib/csp.ts. Not strictly
+    // needed on /api/* (the SDK only runs on app pages), but this fallback's
+    // contract is "rough sync with the middleware CSP". relay.dynamicauth.com
+    // is the WaaS MPC relay (wallet creation + signing);
+    // waas-keyshares-relay.dynamicauth.com the key-share backup relay.
+    "https://app.dynamicauth.com https://logs.dynamicauth.com https://relay.dynamicauth.com https://waas-keyshares-relay.dynamicauth.com https://dynamic-static-assets.com https://iconic.dynamic-static-assets.com",
   ].join(" "),
 
   // Frames: Google OAuth may use frames; lesson videos embed the YouTube and
-  // Vimeo players. Keep in sync with the per-request CSP in src/lib/csp.ts.
-  "frame-src 'self' https://accounts.google.com https://www.youtube.com https://player.vimeo.com",
+  // Vimeo players; app.dynamicauth.com is Dynamic's WaaS secure-container
+  // iframe (every MPC operation mounts it), webview.dynamicauth.com its
+  // webview. Keep in sync with the per-request CSP in src/lib/csp.ts.
+  "frame-src 'self' https://accounts.google.com https://www.youtube.com https://player.vimeo.com https://app.dynamicauth.com https://webview.dynamicauth.com",
 
   // Workers: code sandbox + Monaco spawn workers from blob: URLs; Monaco also
   // loads its language workers (ts/json/css/html) directly from the jsdelivr CDN.
@@ -121,6 +129,10 @@ const nextConfig = {
     // Tree-shake the per-icon barrel so only the icons a client component
     // actually imports land in its bundle (55+ named-import sites across the
     // app). Named imports only — no namespace/dynamic imports of the package.
+    // The legacy Dynamic SDK (~11MB behind one barrel) used to be listed here
+    // too, as a failed mitigation for the build OOM it caused; the headless
+    // `@dynamic-labs-sdk/*` packages are small and properly split, so they
+    // need no entry.
     optimizePackageImports: ["@phosphor-icons/react"],
   },
   // The server-side challenge executor (lib/challenge/executor.ts) runs learner
@@ -138,6 +150,21 @@ const nextConfig = {
     "@jitl/quickjs-singlefile-cjs-release-sync",
   ],
   transpilePackages: ["@superteam-lms/types"],
+  // WalletConnect (a transitive of the wallet stack) ships `pino`, which
+  // dynamically requires its OPTIONAL pretty-printer — webpack resolves the
+  // require eagerly and hard-fails the build on the missing module. These are
+  // genuinely optional at runtime (dev-CLI conveniences), so the right fix is
+  // to leave them unresolved, not to install them: this is the canonical
+  // WalletConnect/Next.js recipe. `lokijs` and `encoding` are the same
+  // pattern one import deeper; webpack stops at the FIRST missing module, so
+  // they are included up front rather than discovered one failed build at a
+  // time. NOT related to serverExternalPackages above, which keeps packages
+  // out of the bundle for correctness — this keeps modules that do not exist
+  // from failing resolution.
+  webpack: (config) => {
+    config.externals.push("pino-pretty", "lokijs", "encoding");
+    return config;
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "lh3.googleusercontent.com" },

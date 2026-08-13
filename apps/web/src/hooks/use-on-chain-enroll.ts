@@ -3,9 +3,13 @@
 import { useState, useCallback } from "react";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { Transaction } from "@solana/web3.js";
-import type { Connection, PublicKey } from "@solana/web3.js";
+import { PublicKey, Transaction } from "@solana/web3.js";
+import type { Connection } from "@solana/web3.js";
 import { buildEnrollInstruction } from "@/lib/solana/instructions";
+import {
+  getDynamicSolanaAccount,
+  signWithDynamicWallet,
+} from "@/lib/dynamic/solana";
 import { trackEvent } from "@/lib/analytics";
 import {
   parseProgramError,
@@ -18,8 +22,8 @@ const TX_TIMEOUT_MS = 30_000;
 /**
  * Prefer a platform-sponsored enrolment (#1004), fall back to self-paid.
  *
- * A freshly created wallet arrives with zero SOL, so the self-paid path fails
- * for precisely the learners sponsorship exists to serve. The
+ * An embedded wallet (Dynamic) arrives with zero SOL, so the self-paid
+ * path fails for precisely the learners embedded wallets exist to serve. The
  * sponsored route hands back a transaction the backend has already signed and
  * will pay the fee and PDA rent for; the learner's wallet only adds its own
  * signature.
@@ -117,7 +121,16 @@ export function useOnChainEnroll({
       return;
     }
 
-    if (!publicKey) {
+    // Prefer the wallet-adapter wallet; fall back to the Dynamic embedded
+    // wallet an email sign-up holds. Asking the learner to CONNECT a wallet is
+    // only the right answer when neither exists — an email sign-up already has
+    // one, and the connect modal was the exact dead end embedded wallets were
+    // brought in to remove.
+    const dynamicAccount = publicKey ? null : getDynamicSolanaAccount();
+    const learner =
+      publicKey ??
+      (dynamicAccount ? new PublicKey(dynamicAccount.address) : null);
+    if (!learner) {
       setWalletModalVisible(true);
       return;
     }
@@ -129,13 +142,21 @@ export function useOnChainEnroll({
       let onChainSignature: string;
 
       try {
-        const tx = await buildEnrollTransaction(
-          courseId,
-          publicKey,
-          connection
-        );
+        const tx = await buildEnrollTransaction(courseId, learner, connection);
+        // The embedded wallet signs via Dynamic's MPC service — no prompt, no
+        // wallet-adapter — and the signed bytes are submitted directly. The
+        // MPC signer attaches its signature to the existing transaction, so a
+        // sponsored enroll keeps the backend's signature.
+        const sendViaWallet = dynamicAccount
+          ? async () => {
+              const signed = await signWithDynamicWallet(tx, dynamicAccount);
+              return connection.sendRawTransaction(signed.serialize(), {
+                skipPreflight: true,
+              });
+            }
+          : () => sendTransaction(tx, connection, { skipPreflight: true });
         onChainSignature = await withTimeout(
-          sendTransaction(tx, connection, { skipPreflight: true }),
+          sendViaWallet(),
           TX_TIMEOUT_MS,
           "Wallet signing"
         );
