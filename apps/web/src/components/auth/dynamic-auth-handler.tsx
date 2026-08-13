@@ -1,40 +1,103 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
-import { isSolanaWallet } from "@dynamic-labs/solana";
+import {
+  signMessage,
+  completeDeviceRegistration,
+  detectDeviceRegistrationRedirect,
+  getDeviceRegistrationTokenFromUrl,
+} from "@dynamic-labs-sdk/client";
+import {
+  createWaasWalletAccounts,
+  getChainsMissingWaasWalletAccounts,
+} from "@dynamic-labs-sdk/client/waas";
+import { useUser, useGetWalletAccounts } from "@dynamic-labs-sdk/react-hooks";
 import { createClient } from "@/lib/supabase/client";
 import { runWalletSiws } from "@/lib/wallet/siws";
 import { toMessageSigner } from "@/lib/dynamic/siws";
 
 /**
- * Bridges a connected Dynamic wallet to a Supabase account.
+ * Everything that has to happen around a Dynamic login, with no UI of its own.
  *
- * Dynamic owns the *wallet* login (email or social); Supabase stays the
- * *account* identity. Once Dynamic hands us an address this signs a server-issued
- * SIWS nonce with it and exchanges that for either a session or a wallet link —
- * through the very same routes the wallet-adapter path uses, so both ways in
- * converge on one account model rather than two.
+ * Three jobs, in the order they occur:
  *
- * Mounted at the layout level alongside `WalletAuthHandler`, which does the same
- * job for wallet-adapter wallets.
+ * 1. **Device registration.** Completing the emailed link is not optional —
+ *    Dynamic requires device registration for every headless integration, and
+ *    a user who is mid-registration is blocked until the redirect is consumed.
+ *    It runs first, and on every mount, because the learner arrives back on an
+ *    arbitrary page with the token in the URL.
+ * 2. **Embedded wallet creation.** Unlike the legacy SDK's modal, the headless
+ *    SDK does NOT create a wallet on sign-in; the account exists with no wallet
+ *    until asked. Skipping this is why a learner would authenticate and then
+ *    have nothing to enrol with.
+ * 3. **The Supabase bridge.** Dynamic owns the *wallet* login; Supabase stays
+ *    the *account* identity. Once a Solana address exists this signs a
+ *    server-issued SIWS nonce with it and exchanges that for a session or a
+ *    wallet link — through the very same routes the wallet-adapter path uses,
+ *    so both ways in converge on one account model rather than two.
+ *
+ * Mounted at the layout level alongside `WalletAuthHandler`, which does job 3
+ * for wallet-adapter wallets.
  */
 export function DynamicAuthHandler() {
-  const { primaryWallet, sdkHasLoaded } = useDynamicContext();
+  const { data: user } = useUser();
+  const { data: walletAccounts = [] } = useGetWalletAccounts();
+
   // Survives re-renders AND the address arriving more than once (restored
-  // session, then a connect event) — without it a learner could be asked to
+  // session, then a create event) — without it a learner could be asked to
   // sign the same nonce twice.
   const handledAddress = useRef<string | null>(null);
+  const creatingWallet = useRef(false);
 
+  // 1. Device registration redirect.
   useEffect(() => {
-    if (!sdkHasLoaded) return;
+    const url = window.location.href;
+    if (!detectDeviceRegistrationRedirect({ url })) return;
 
-    const wallet = primaryWallet;
-    // Solana only: an EVM wallet has no address this platform can use, and
-    // `signMessage` would produce a signature `/api/auth/wallet` cannot verify.
-    if (!wallet || !isSolanaWallet(wallet)) return;
+    void (async () => {
+      try {
+        const deviceToken = getDeviceRegistrationTokenFromUrl({ url });
+        await completeDeviceRegistration({ deviceToken });
 
-    const address = wallet.address;
+        // Strip the token so a refresh, or a shared link, cannot replay it.
+        const clean = new URL(window.location.href);
+        clean.search = "";
+        window.history.replaceState({}, "", clean.toString());
+      } catch {
+        // Registration stays incomplete; the learner can retry from the email.
+      }
+    })();
+  }, []);
+
+  // 2. Create the embedded Solana wallet once the learner is authenticated.
+  useEffect(() => {
+    if (!user || creatingWallet.current) return;
+
+    const missing = getChainsMissingWaasWalletAccounts();
+    if (missing.length === 0) return;
+
+    creatingWallet.current = true;
+    void (async () => {
+      try {
+        await createWaasWalletAccounts({ chains: missing });
+      } catch {
+        // Leave the flag set: a failed creation that retries on every render
+        // would hammer the MPC service. The learner can retry by signing in
+        // again, which remounts this handler.
+      }
+    })();
+  }, [user]);
+
+  // 3. Bridge the wallet to a Supabase account.
+  useEffect(() => {
+    // `SOL` rather than the `isSolanaWalletAccount` type guard on purpose: that
+    // guard lives in the Solana package's main entry, which also carries
+    // external-wallet discovery — importing it here would pull the wallet
+    // picker's machinery back into the bundle we removed it from.
+    const solanaAccount = walletAccounts.find((a) => a.chain === "SOL");
+    if (!solanaAccount) return;
+
+    const address = solanaAccount.address;
     if (!address || handledAddress.current === address) return;
     handledAddress.current = address;
 
@@ -42,24 +105,24 @@ export function DynamicAuthHandler() {
       try {
         const supabase = createClient();
         const {
-          data: { user },
+          data: { user: supabaseUser },
         } = await supabase.auth.getUser();
 
         // Already linked: nothing to do. Re-running would re-prompt for a
         // signature on every page load.
-        if (user) {
+        if (supabaseUser) {
           const { data: profile } = await supabase
             .from("profiles")
             .select("wallet_address")
-            .eq("id", user.id)
+            .eq("id", supabaseUser.id)
             .maybeSingle();
           if (profile?.wallet_address) return;
         }
 
         const outcome = await runWalletSiws(
-          toMessageSigner(wallet),
+          toMessageSigner(solanaAccount, signMessage),
           address,
-          Boolean(user)
+          Boolean(supabaseUser)
         );
 
         if (outcome.ok) {
@@ -76,7 +139,7 @@ export function DynamicAuthHandler() {
         handledAddress.current = null;
       }
     })();
-  }, [sdkHasLoaded, primaryWallet]);
+  }, [walletAccounts]);
 
   return null;
 }

@@ -3,11 +3,14 @@
  *
  * Replaces Phantom Connect as the no-install wallet path. Phantom's Portal never
  * approved our app, so `Auth2 /login/start` 400'd for every learner and the
- * button was a dead end (#1017). Dynamic needs no per-app approval to work, and
- * unlike `@phantom/react-sdk` its React SDK supports React 18
- * (`"react": ">=18.0.0 <20.0.0"`), so we use the vendor's supported React
- * bindings instead of hand-wrapping a browser SDK — which is what #989 existed
- * to complain about.
+ * button was a dead end (#1017). Dynamic needs no per-app approval to work.
+ *
+ * The integration uses the HEADLESS JavaScript SDK
+ * (`@dynamic-labs-sdk/client` + `react-hooks` + `solana/waas`), not the legacy
+ * `@dynamic-labs/sdk-react-core`: the legacy SDK's built-in modal is a wallet
+ * picker that cannot be removed, which defeated the no-wallet-required flow
+ * entirely, and its ~11MB tree was the direct cause of the production build
+ * OOM. See lib/dynamic/client.ts for the full rationale.
  *
  * ## The gate
  *

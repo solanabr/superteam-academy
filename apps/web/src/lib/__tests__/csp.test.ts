@@ -40,6 +40,10 @@ describe("page CSP (the one middleware actually serves)", () => {
     const connectSrc = directive("connect-src");
     expect(connectSrc).toContain("https://app.dynamicauth.com");
     expect(connectSrc).toContain("https://logs.dynamicauth.com");
+    // The WaaS MPC relay (headless SDK): wallet creation and signing traverse
+    // it, so dropping it lets a learner authenticate and then strands them
+    // walletless — read from DEFAULT_WAAS_BASE_MPC_RELAY_API_URL in the SDK.
+    expect(connectSrc).toContain("https://relay.dynamicauth.com");
     expect(connectSrc).not.toContain("*.dynamicauth.com");
 
     // Static assets, found EMPIRICALLY (the SDK builds these URLs at runtime,

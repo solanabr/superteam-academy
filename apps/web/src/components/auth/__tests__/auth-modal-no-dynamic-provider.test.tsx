@@ -9,21 +9,21 @@ import messages from "@/messages/en.json";
  * The gate's core promise: with `NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID` unset the
  * sign-in modal degrades to "no email button", never to a crash.
  *
- * This deliberately does NOT mock `@dynamic-labs/sdk-react-core`. An earlier
- * revision called `useDynamicContext()` straight from AuthModal on the
- * assumption that it degraded to a default context outside a provider. It does
- * not — it throws on the client, falling back only during SSR:
+ * This deliberately does NOT mock the Dynamic SDK. An earlier revision called
+ * the SDK's context hook straight from AuthModal on the assumption that it
+ * degraded to a default context outside a provider. It does not: the legacy
+ * SDK threw on the client while falling back during SSR, so the page rendered
+ * fine on the server and crashed on hydration — a build log looked healthy
+ * while sign-in was broken for every learner.
  *
- *   const DynamicContext = createContext(undefined);
- *   if (context === undefined) {
- *     if (isSSR()) return SSR_SAFE_DYNAMIC_CONTEXT;
- *     throw new Error('Hook must be used within <DynamicContextProvider>.');
- *   }
+ * The headless SDK is stricter still: every hook in
+ * `@dynamic-labs-sdk/react-hooks` throws `MissingProviderError` outside a
+ * `DynamicProvider`, and they additionally require an enclosing
+ * `QueryClientProvider`. So the same class of bug is now possible in two ways,
+ * and the gate is still a component boundary — `DynamicEmailSignIn` owns the
+ * hooks and mounts only when Dynamic is enabled.
  *
- * That SSR fallback is what made it dangerous: the page rendered fine on the
- * server and crashed on hydration, so a build log looked healthy while sign-in
- * was broken for every learner. The sibling suite mocks the hook, so only an
- * UNMOCKED render can catch a regression here.
+ * The sibling suite mocks the SDK, so only an UNMOCKED render catches this.
  */
 
 vi.mock("@solana/wallet-adapter-react-ui", () => ({

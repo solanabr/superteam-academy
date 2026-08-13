@@ -136,14 +136,16 @@ export function buildCsp(nonce: string): string {
       "https://accounts.google.com https://*.googleapis.com",
       "https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://stats.g.doubleclick.net",
       "https://*.posthog.com https://*.sentry.io https://*.ingest.sentry.io",
-      // Dynamic embedded wallets: app.dynamicauth.com is the SDK's API and
-      // logs.dynamicauth.com its telemetry — both read out of the installed
-      // SDK. The dynamic-static-assets.com pair was found EMPIRICALLY (the SDK
-      // builds those URLs at runtime, so no grep surfaces them): the wallet
-      // catalogue (wallet-book.json) from the apex, icon sprites from the
-      // iconic subdomain. All pinned exactly, never a wildcard. Without these
-      // the provider mount dies in CSP violations before the flow can open.
-      "https://app.dynamicauth.com https://logs.dynamicauth.com https://dynamic-static-assets.com https://iconic.dynamic-static-assets.com",
+      // Dynamic embedded wallets: app.dynamicauth.com is the SDK's API,
+      // logs.dynamicauth.com its telemetry, and relay.dynamicauth.com the WaaS
+      // MPC relay — wallet CREATION and SIGNING go through the relay, so
+      // without it a learner authenticates and then wallet creation dies in a
+      // CSP violation. All three read out of the installed headless SDK
+      // (`DEFAULT_WAAS_BASE_MPC_RELAY_API_URL` in the client's waas module).
+      // The dynamic-static-assets.com pair was found EMPIRICALLY on the legacy
+      // SDK (runtime-built URLs) and is kept for the icon sprite the headless
+      // client still references. All pinned exactly, never a wildcard.
+      "https://app.dynamicauth.com https://logs.dynamicauth.com https://relay.dynamicauth.com https://dynamic-static-assets.com https://iconic.dynamic-static-assets.com",
     ].join(" "),
 
     // Frames: Google OAuth may use frames; lesson videos embed the YouTube and

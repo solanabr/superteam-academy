@@ -57,8 +57,9 @@ const cspDirectives = [
     "https://*.posthog.com https://*.sentry.io https://*.ingest.sentry.io",
     // Dynamic embedded wallets — kept in sync with lib/csp.ts. Not strictly
     // needed on /api/* (the SDK only runs on app pages), but this fallback's
-    // contract is "rough sync with the middleware CSP".
-    "https://app.dynamicauth.com https://logs.dynamicauth.com https://dynamic-static-assets.com https://iconic.dynamic-static-assets.com",
+    // contract is "rough sync with the middleware CSP". relay.dynamicauth.com
+    // is the WaaS MPC relay (wallet creation + signing).
+    "https://app.dynamicauth.com https://logs.dynamicauth.com https://relay.dynamicauth.com https://dynamic-static-assets.com https://iconic.dynamic-static-assets.com",
   ].join(" "),
 
   // Frames: Google OAuth may use frames; lesson videos embed the YouTube and
@@ -126,17 +127,11 @@ const nextConfig = {
     // Tree-shake the per-icon barrel so only the icons a client component
     // actually imports land in its bundle (55+ named-import sites across the
     // app). Named imports only — no namespace/dynamic imports of the package.
-    // The Dynamic packages are the same shape and a far worse offender:
-    // @dynamic-labs/sdk-react-core is ~11MB across 4,302 files behind a single
-    // barrel (its `exports` map only exposes "."), so importing
-    // DynamicContextProvider drags in every widget, the MoonPay onramp and the
-    // rest. Without this the production build OOMs outright — reproduced
-    // locally at a 4GB heap and on the Vercel builder.
-    optimizePackageImports: [
-      "@phosphor-icons/react",
-      "@dynamic-labs/sdk-react-core",
-      "@dynamic-labs/solana",
-    ],
+    // The legacy Dynamic SDK (~11MB behind one barrel) used to be listed here
+    // too, as a failed mitigation for the build OOM it caused; the headless
+    // `@dynamic-labs-sdk/*` packages are small and properly split, so they
+    // need no entry.
+    optimizePackageImports: ["@phosphor-icons/react"],
   },
   // The server-side challenge executor (lib/challenge/executor.ts) runs learner
   // code in QuickJS-on-WASM. Keep these packages EXTERNAL so webpack does not
@@ -153,7 +148,7 @@ const nextConfig = {
     "@jitl/quickjs-singlefile-cjs-release-sync",
   ],
   transpilePackages: ["@superteam-lms/types"],
-  // WalletConnect (a transitive of @dynamic-labs/solana) ships `pino`, which
+  // WalletConnect (a transitive of the wallet stack) ships `pino`, which
   // dynamically requires its OPTIONAL pretty-printer — webpack resolves the
   // require eagerly and hard-fails the build on the missing module. These are
   // genuinely optional at runtime (dev-CLI conveniences), so the right fix is
