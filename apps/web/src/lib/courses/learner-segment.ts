@@ -58,10 +58,10 @@ export const SEGMENT_PATH_MODALITY: Record<
  * prevent. `entry-course-live.test.ts` runs the real resolver against the real
  * bundle, so an entry that stops resolving is red, not silent.
  *
- * TODO (public alpha, 2026-08-04): all three segments enter at the alpha
- * flagship `course-btc-to-sol-evolution` — an ALPHA STAND-IN, not the intended
- * segmentation. The 5-course "Zero to Deployed" ladder this table used to route
- * across (C1 solana-for-web-devs → C2 rust-for-program-devs → C3
+ * TODO (public alpha, 2026-08-04): all three segments enter at one alpha
+ * flagship — an ALPHA STAND-IN, not the intended segmentation. The 5-course
+ * "Zero to Deployed" ladder this table used to route across (C1
+ * solana-for-web-devs → C2 rust-for-program-devs → C3
  * building-your-first-solana-program → C4 dapp-and-sdk-with-kit → C5
  * stablecoin-payments) is parked under `_draft/` in academy-courses and is no
  * longer compiled into the bundle, so every previous entry id resolves to
@@ -69,8 +69,13 @@ export const SEGMENT_PATH_MODALITY: Record<
  * across, which makes a per-segment entry meaningless today. Revisit when
  * track-1 restores: segments 1/3 back to the JS/TS on-ramp, segment 2 back to
  * the "enters here" rung that skips it.
+ *
+ * 2026-08-13: the flagship entry moved from `course-btc-to-sol-evolution` to
+ * the Solana Speedrun — the landing "Start building" CTA (and the /start
+ * funnel, which converges on the same lesson by design) should open the
+ * hands-on onchain course, not the blockchain-history one.
  */
-const ALPHA_ENTRY_COURSE = "course-btc-to-sol-evolution";
+const ALPHA_ENTRY_COURSE = "course-solana-speedrun";
 
 export const SEGMENT_ENTRY_COURSE: Record<LearnerSegment, string> = {
   1: ALPHA_ENTRY_COURSE,

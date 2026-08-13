@@ -69,9 +69,9 @@ const LESSON_HREF = /^\/en\/courses\/[^/]+\/lessons\/[^/]+$/;
  * nothing to differentiate across today (see the TODO in learner-segment.ts).
  */
 const EXPECTED_ENTRY: Record<LearnerSegment, string> = {
-  1: "course-btc-to-sol-evolution",
-  2: "course-btc-to-sol-evolution",
-  3: "course-btc-to-sol-evolution",
+  1: "course-solana-speedrun",
+  2: "course-solana-speedrun",
+  3: "course-solana-speedrun",
 };
 
 // Courses no longer in the bundle: the 5 CATALOG §3 retires (deactivated
