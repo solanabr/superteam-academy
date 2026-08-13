@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   signMessage,
@@ -66,23 +66,25 @@ export function DynamicAuthHandler() {
   const handledAddress = useRef<string | null>(null);
   const creatingWallet = useRef(false);
   // Held for the whole social return, including the JWT bridge. Job 3 must not
-  // start while it is set: with no Supabase session visible yet it would take
+  // start while it is held: with no Supabase session visible yet it would take
   // the "sign in with this wallet" branch and mint a SECOND, wallet-shaped
   // account — the exact fork /api/auth/dynamic exists to prevent.
-  const bridgingSocial = useRef(false);
+  //
+  // State, not a ref: initializing to `true` claims the guard from the very
+  // first render (before job 0's async detection can yield), and releasing it
+  // re-runs job 3 — a ref flip would not, so a wallet account that arrived
+  // while the guard was held would otherwise never get its SIWS turn until
+  // some future reload.
+  const [bridgingSocial, setBridgingSocial] = useState(true);
 
   // 0. Social redirect return.
   useEffect(() => {
     const url = new URL(window.location.href);
-    // Claimed synchronously, before the async detection can yield: job 3 runs
-    // on this same first pass, and a wallet account arriving in the gap would
-    // slip past the guard.
-    bridgingSocial.current = true;
 
     void (async () => {
       try {
         if (!(await detectSocialRedirectUrl({ url }))) {
-          bridgingSocial.current = false;
+          setBridgingSocial(false);
           return;
         }
 
@@ -100,7 +102,7 @@ export function DynamicAuthHandler() {
         } = await supabase.auth.getUser();
         if (supabaseUser) {
           // Job 3 links the fresh embedded wallet to that account instead.
-          bridgingSocial.current = false;
+          setBridgingSocial(false);
           return;
         }
 
@@ -120,12 +122,12 @@ export function DynamicAuthHandler() {
         // signed out and can pick another way in.
         dispatchToast(t(outcome.errorKey), "error");
         await logoutDynamic();
-        bridgingSocial.current = false;
+        setBridgingSocial(false);
       } catch (err) {
         console.error("[DynamicAuthHandler] social redirect failed:", err);
         dispatchToast(t("googleBridgeFailed"), "error");
         await logoutDynamic();
-        bridgingSocial.current = false;
+        setBridgingSocial(false);
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -172,7 +174,7 @@ export function DynamicAuthHandler() {
 
   // 3. Bridge the wallet to a Supabase account.
   useEffect(() => {
-    if (bridgingSocial.current) return;
+    if (bridgingSocial) return;
 
     // A local predicate rather than the SDK's `isSolanaWalletAccount`: the
     // pnpm graph holds two client instances (differing peer sets), so the
@@ -226,7 +228,7 @@ export function DynamicAuthHandler() {
         handledAddress.current = null;
       }
     })();
-  }, [walletAccounts]);
+  }, [walletAccounts, bridgingSocial]);
 
   return null;
 }
