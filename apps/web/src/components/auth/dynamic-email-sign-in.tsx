@@ -3,13 +3,31 @@
 import { useState } from "react";
 import { Envelope } from "@phosphor-icons/react";
 import { useTranslations } from "next-intl";
-import { isDeviceRegistrationRequired } from "@dynamic-labs-sdk/client";
+import {
+  BaseError,
+  isDeviceRegistrationRequired,
+} from "@dynamic-labs-sdk/client";
 import { useSendEmailOTP, useVerifyOTP } from "@dynamic-labs-sdk/react-hooks";
 import { Button } from "@/components/ui/button";
 import { trackEvent } from "@/lib/analytics";
 
 const INPUT_CLASS =
   "h-12 w-full rounded-md border border-border bg-subtle px-3 text-sm text-text placeholder:text-text-3 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50";
+
+/**
+ * The server codes that genuinely mean "the six digits were wrong (or stale)".
+ * Verified against the live API: a wrong code returns HTTP 422
+ * `wrong_email_verification_token`.
+ *
+ * Everything else must NOT be collapsed into "code isn't right" — that
+ * mislabel sent a real failure on a correct code round in circles, because the
+ * true error (whatever the server said) was invisible to both the learner and
+ * anyone debugging it.
+ */
+const WRONG_CODE_ERRORS = new Set([
+  "wrong_email_verification_token",
+  "email_verification_expired",
+]);
 
 /**
  * Email sign-in, rendered by this app rather than by Dynamic.
@@ -90,6 +108,11 @@ export function DynamicEmailSignIn({ disabled }: { disabled: boolean }) {
         className="space-y-2"
         onSubmit={async (e) => {
           e.preventDefault();
+          // `isPending` flips only on the next render, so a double-click can
+          // fire twice within one tick. Three wrong attempts BURN the
+          // verification server-side (`too_many_email_verification_attempts`),
+          // so accidental duplicates are not merely wasteful here.
+          if (busy) return;
           setError(null);
           try {
             const response = await verifyOTP({
@@ -102,8 +125,24 @@ export function DynamicEmailSignIn({ disabled }: { disabled: boolean }) {
             if (response.user && isDeviceRegistrationRequired(response.user)) {
               setAwaitingDevice(true);
             }
-          } catch {
-            setError(t("otpInvalid"));
+          } catch (err) {
+            // Only the codes that actually mean "wrong digits" get the
+            // wrong-digits message. Everything else — a captcha demand, an
+            // MFA requirement, a network failure, a bug in the post-verify
+            // handling — surfaces as itself, because relabelling those as a
+            // typo sends a learner with a CORRECT code in circles.
+            console.error("[dynamic] verifyOTP failed", err);
+            if (err instanceof BaseError && WRONG_CODE_ERRORS.has(err.code)) {
+              setError(t("otpInvalid"));
+            } else {
+              const detail =
+                err instanceof BaseError
+                  ? err.code
+                  : err instanceof Error
+                    ? err.message
+                    : String(err);
+              setError(`${t("emailSignInFailed")} (${detail})`);
+            }
           }
         }}
       >
@@ -152,11 +191,22 @@ export function DynamicEmailSignIn({ disabled }: { disabled: boolean }) {
       className="space-y-2"
       onSubmit={async (e) => {
         e.preventDefault();
+        // Sends are rate-limited to 3 per 10 minutes per address, so a
+        // double-fired send costs a third of the budget. Same guard as the
+        // verify form.
+        if (busy) return;
         setError(null);
         try {
           await sendEmailOTP({ email });
-        } catch {
-          setError(t("emailSignInFailed"));
+        } catch (err) {
+          console.error("[dynamic] sendEmailOTP failed", err);
+          const detail =
+            err instanceof BaseError
+              ? err.code
+              : err instanceof Error
+                ? err.message
+                : String(err);
+          setError(`${t("emailSignInFailed")} (${detail})`);
         }
       }}
     >
