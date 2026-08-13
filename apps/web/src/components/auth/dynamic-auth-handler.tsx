@@ -56,17 +56,23 @@ import { dispatchToast } from "@/components/ui/toast-container";
  * for wallet-adapter wallets.
  */
 /**
- * The social-return handshake may run AT MOST ONCE per page load:
+ * The social-return handshake runs AT MOST ONCE per page load:
  * `completeSocialRedirect` spends a one-time OAuth code, so a second
  * invocation — StrictMode's dev double-effect, or any remount while the
  * callback params are still in the URL — replays a spent code, throws, and
  * the failure path then logs out the session the first invocation just
  * established (observed live: a 200 bridge immediately followed by an aborted
  * duplicate, leaving the learner "not signed in" until a second attempt).
+ *
+ * A PROMISE, not a boolean: "claimed" and "resolved" are different states. A
+ * duplicate that treated claimed-as-resolved would release job 3's guard while
+ * the real handshake is still in flight — the fork race all over again. Every
+ * invocation awaits the SAME promise and applies its settled outcome;
+ * `"hold"` means a reload is imminent and the guard must stay up.
  * Module scope, not a ref: a ref dies with its fiber, and both success
  * (hard reload) and failure (params stripped) end this page load's story.
  */
-let socialReturnConsumed = false;
+let socialReturnOutcome: Promise<"release" | "hold"> | null = null;
 
 export function DynamicAuthHandler() {
   const t = useTranslations("auth");
@@ -95,61 +101,54 @@ export function DynamicAuthHandler() {
     const url = new URL(window.location.href);
 
     void (async () => {
-      // Checked and claimed synchronously (this async body runs sync until its
-      // first await), so a double-invoked effect cannot race past it.
-      if (socialReturnConsumed) {
-        setBridgingSocial(false);
-        return;
-      }
-      socialReturnConsumed = true;
+      // `??=` runs synchronously before this body's first await, so only the
+      // first invocation starts the handshake; StrictMode's duplicate and any
+      // later remount await the same promise instead of re-running it.
+      socialReturnOutcome ??= (async (): Promise<"release" | "hold"> => {
+        try {
+          if (!(await detectSocialRedirectUrl({ url }))) return "release";
 
-      try {
-        if (!(await detectSocialRedirectUrl({ url }))) {
-          setBridgingSocial(false);
-          return;
+          await completeSocialRedirect({ url });
+          // Before the params are stripped a refresh would replay the callback
+          // code, which Dynamic has already spent.
+          clearSocialRedirectParams();
+
+          // An existing Supabase session means this was a link, not a sign-in;
+          // minting a session here could land the learner in a different
+          // account than the one they are already using. Job 3 links the fresh
+          // embedded wallet to that account instead.
+          const supabase = createClient();
+          const {
+            data: { user: supabaseUser },
+          } = await supabase.auth.getUser();
+          if (supabaseUser) return "release";
+
+          const outcome = await bridgeDynamicSession();
+          if (outcome.ok) {
+            // Same hard reload as the SIWS bridge: the Supabase client in this
+            // tab was built anonymous and only re-reads the cookies on boot.
+            // The guard stays up — the reload is not instantaneous and job 3
+            // must not get a turn in the interval.
+            window.location.reload();
+            return "hold";
+          }
+
+          // Authenticated to Dynamic with no Supabase session is a dead end —
+          // every subsequent page load would retry a bridge that has already
+          // been refused. End the Dynamic session so the learner is plainly
+          // signed out and can pick another way in.
+          dispatchToast(t(outcome.errorKey), "error");
+          await logoutDynamic();
+          return "release";
+        } catch (err) {
+          console.error("[DynamicAuthHandler] social redirect failed:", err);
+          dispatchToast(t("googleBridgeFailed"), "error");
+          await logoutDynamic();
+          return "release";
         }
+      })();
 
-        await completeSocialRedirect({ url });
-        // Before the params are stripped a refresh would replay the callback
-        // code, which Dynamic has already spent.
-        clearSocialRedirectParams();
-
-        // An existing Supabase session means this was a link, not a sign-in;
-        // minting a session here could land the learner in a different
-        // account than the one they are already using.
-        const supabase = createClient();
-        const {
-          data: { user: supabaseUser },
-        } = await supabase.auth.getUser();
-        if (supabaseUser) {
-          // Job 3 links the fresh embedded wallet to that account instead.
-          setBridgingSocial(false);
-          return;
-        }
-
-        const outcome = await bridgeDynamicSession();
-        if (outcome.ok) {
-          // Same hard reload as the SIWS bridge: the Supabase client in this
-          // tab was built anonymous and only re-reads the cookies on boot.
-          // The guard stays CLAIMED — the reload is not instantaneous and job
-          // 3 must not get a turn in the interval.
-          window.location.reload();
-          return;
-        }
-
-        // Authenticated to Dynamic with no Supabase session is a dead end —
-        // every subsequent page load would retry a bridge that has already
-        // been refused. End the Dynamic session so the learner is plainly
-        // signed out and can pick another way in.
-        dispatchToast(t(outcome.errorKey), "error");
-        await logoutDynamic();
-        setBridgingSocial(false);
-      } catch (err) {
-        console.error("[DynamicAuthHandler] social redirect failed:", err);
-        dispatchToast(t("googleBridgeFailed"), "error");
-        await logoutDynamic();
-        setBridgingSocial(false);
-      }
+      if ((await socialReturnOutcome) === "release") setBridgingSocial(false);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
