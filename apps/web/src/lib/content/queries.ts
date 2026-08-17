@@ -304,17 +304,30 @@ export async function getAllLearningPaths(): Promise<LearningPath[]> {
 }
 
 /**
- * Fetch a course by its Sanity `_id`. UNGATED (API routes pass the raw `_id`).
- * `trackCollectionAddress` comes from the full Supabase deployment row via
- * `getDeploymentById` (service-role, uncached) — this is a reward-path read.
+ * Fetch a course by its Sanity `_id`. UNGATED (API routes pass the raw `_id`) —
+ * the deployment row supplies `trackCollectionAddress` only; it gates nothing,
+ * so a failed read cannot leak a hidden course.
+ *
+ * The read goes through `getDeploymentByIdSafe` (#931): `getDeploymentById`
+ * throws on any Supabase error, and callers on the render path — the landing
+ * page's `resolveFlagshipLessonHref` — sit outside a `try`, so one DB blip took
+ * the whole page to the root error boundary. Degrading to a null collection
+ * keeps every read-only caller alive.
+ *
+ * `deploymentReadFailed` carries the distinction the null erases: "never
+ * synced" vs "could not tell". Reward paths that refuse to mint without a
+ * collection MUST branch on it rather than reporting a transient outage as a
+ * missing sync (see the certificate case in lib/solana/onchain-queue.ts).
+ * Same contract, same field name, as `AdminCourse.deploymentReadFailed` (#436).
  */
 export async function getCourseById(id: string): Promise<Course | null> {
   const doc = coursesById.get(id);
   if (!doc) return null;
-  const dep = await getDeploymentById(id);
+  const { row, failed } = await getDeploymentByIdSafe(id);
   return projectCourse(doc, projectionDeps, {
     fullLessons: true,
-    trackCollectionAddress: dep?.track_collection_address ?? null,
+    trackCollectionAddress: row?.track_collection_address ?? null,
+    deploymentReadFailed: failed,
   });
 }
 

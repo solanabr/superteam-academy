@@ -203,6 +203,13 @@ export interface Course {
   xpReward: number;
   modules: Module[];
   trackCollectionAddress?: string | null;
+  /**
+   * True when the Supabase deployment-row read failed (#931), as opposed to a
+   * genuinely absent row — both read `trackCollectionAddress: null`. Set only
+   * by `getCourseById`. Reward paths must not report "not synced" when the
+   * truth is "could not tell". Mirrors `AdminCourse.deploymentReadFailed` (#436).
+   */
+  deploymentReadFailed?: boolean;
   trackId?: number;
   trackLevel?: number;
   /** Authoring workflow state (issue #263). Legacy/repo-synced docs may omit this. */
