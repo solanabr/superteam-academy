@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { getCourseById, getCourseLessons } from "@/lib/content/queries";
+import { getCourseLessons, getCourseSlugById } from "@/lib/content/queries";
 import { SEGMENT_ENTRY_COURSE } from "@/lib/courses/learner-segment";
 import { resolveSegmentRoutes } from "../routes";
 
 vi.mock("@/lib/content/queries", () => ({
-  getCourseById: vi.fn(),
+  getCourseSlugById: vi.fn(),
   getCourseLessons: vi.fn(),
 }));
 
@@ -24,7 +24,7 @@ vi.mock("@/lib/courses/learner-segment", () => ({
   },
 }));
 
-const byId = vi.mocked(getCourseById);
+const slugOf = vi.mocked(getCourseSlugById);
 const lessonsOf = vi.mocked(getCourseLessons);
 
 // Use each entry course's id as its slug for the fixtures (1:1, arbitrary).
@@ -32,13 +32,10 @@ const SEG1_ENTRY = SEGMENT_ENTRY_COURSE[1];
 const SEG2_ENTRY = SEGMENT_ENTRY_COURSE[2];
 
 beforeEach(() => {
-  byId.mockReset();
+  slugOf.mockReset();
   lessonsOf.mockReset();
   // Every entry course is present in the bundle (slug == id).
-  byId.mockImplementation(
-    async (id: string) =>
-      ({ slug: id }) as Awaited<ReturnType<typeof getCourseById>>
-  );
+  slugOf.mockImplementation((id: string) => id);
 });
 
 function lesson(slug: string) {
@@ -66,7 +63,7 @@ describe("resolveSegmentRoutes — F1 sync gating (funnel must never 404)", () =
   });
 
   it("falls back to /courses when the entry course is absent from the bundle", async () => {
-    byId.mockResolvedValue(null);
+    slugOf.mockReturnValue(null);
     lessonsOf.mockResolvedValue([]);
     const routes = await resolveSegmentRoutes("en");
     for (const seg of [1, 2, 3] as const) {

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { getCourseById, getCourseLessons } from "@/lib/content/queries";
+import { getCourseLessons, getCourseSlugById } from "@/lib/content/queries";
 import {
   DEFAULT_SEGMENT,
   SEGMENT_ENTRY_COURSE,
@@ -10,23 +10,20 @@ import {
 } from "../entry-lesson";
 
 vi.mock("@/lib/content/queries", () => ({
-  getCourseById: vi.fn(),
+  getCourseSlugById: vi.fn(),
   getCourseLessons: vi.fn(),
 }));
 
-const byId = vi.mocked(getCourseById);
+const slugOf = vi.mocked(getCourseSlugById);
 const lessonsOf = vi.mocked(getCourseLessons);
 
 const FLAGSHIP = SEGMENT_ENTRY_COURSE[DEFAULT_SEGMENT];
 
 beforeEach(() => {
-  byId.mockReset();
+  slugOf.mockReset();
   lessonsOf.mockReset();
   // Course present in the bundle; use its id as slug (1:1, arbitrary).
-  byId.mockImplementation(
-    async (id: string) =>
-      ({ slug: id }) as Awaited<ReturnType<typeof getCourseById>>
-  );
+  slugOf.mockImplementation((id: string) => id);
 });
 
 function lesson(slug: string) {
@@ -53,7 +50,7 @@ describe("resolveEntryLessonHref — F1 sync gating", () => {
   });
 
   it("falls back to the locale catalog when the course is ABSENT", async () => {
-    byId.mockResolvedValue(null);
+    slugOf.mockReturnValue(null);
     lessonsOf.mockResolvedValue([]);
     const href = await resolveEntryLessonHref("en", "course-x");
     expect(href).toBe("/en/courses");
@@ -66,7 +63,7 @@ describe("resolveFlagshipLessonHref — landing deep-link (LX-A1)", () => {
   it("targets the DEFAULT_SEGMENT entry course's first lesson", async () => {
     lessonsOf.mockResolvedValue([lesson("welcome")]);
     const href = await resolveFlagshipLessonHref("en");
-    expect(byId).toHaveBeenCalledWith(FLAGSHIP);
+    expect(slugOf).toHaveBeenCalledWith(FLAGSHIP);
     expect(href).toBe(`/en/courses/${FLAGSHIP}/lessons/welcome`);
   });
 
