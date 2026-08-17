@@ -4,9 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
 import { Brain, ArrowRight } from "@phosphor-icons/react";
-import { createClient } from "@/lib/supabase/client";
-import { getDueReviewItems } from "@/lib/review/due-items";
-import { getLessonsByIds } from "@/lib/content/client-queries";
 import { Button } from "@/components/ui/button";
 
 interface ReviewStripProps {
@@ -19,10 +16,10 @@ const MAX_TITLES = 3;
 
 /**
  * Dashboard due-review strip (LX-B6). A small additive slot under the Continue
- * card: it names a few due items and deep-links into /review. Reads the queue
- * through the SAME capped `getDueReviewItems` primitive as the page (never more
- * than `REVIEW_SESSION_CAP`), and renders nothing when the queue is empty — no
- * empty-state chrome on the dashboard.
+ * card: it names a few due items and deep-links into /review. Reads through
+ * `/api/review/due`, which runs the SAME capped `buildReviewSession` as the
+ * page (#977: count ≡ what the session serves), and renders nothing when the
+ * queue is empty — no empty-state chrome on the dashboard.
  */
 export function ReviewStrip({ userId }: ReviewStripProps) {
   const t = useTranslations("dashboard");
@@ -35,26 +32,25 @@ export function ReviewStrip({ userId }: ReviewStripProps) {
     let active = true;
     (async () => {
       try {
-        const supabase = createClient();
-        const due = await getDueReviewItems(supabase, userId);
+        // One authoritative read (#977): /api/review/due runs the SAME
+        // buildReviewSession the /review page renders, so this badge can
+        // never promise an item the session then drops. The previous
+        // client-side intersection with lessons-summary used a weaker rule
+        // (lesson-in-bundle, no owning-course check) and could over-count.
+        const response = await fetch("/api/review/due");
         if (!active) return;
-        if (due.length === 0) {
+        if (!response.ok) {
           setCount(0);
           setTitles([]);
           return;
         }
-        const lessons = await getLessonsByIds(due.map((d) => d.item_key));
+        const data = (await response.json()) as {
+          count?: number;
+          titles?: string[];
+        };
         if (!active) return;
-        const byId = new Map(lessons.map((l) => [l._id, l.title]));
-        // Count only items the bundle can actually name (and the session can
-        // actually serve) — orphaned keys from retired courses (#977) would
-        // otherwise inflate the badge into an unexplainable number. Nothing
-        // resolvable → no card at all.
-        const resolved = due
-          .map((d) => byId.get(d.item_key))
-          .filter((x): x is string => Boolean(x));
-        setTitles(resolved);
-        setCount(resolved.length);
+        setTitles(Array.isArray(data.titles) ? data.titles : []);
+        setCount(typeof data.count === "number" ? data.count : 0);
       } catch {
         if (active) {
           setCount(0);
