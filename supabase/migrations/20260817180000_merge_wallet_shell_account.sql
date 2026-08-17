@@ -120,7 +120,7 @@ BEGIN
   SELECT * INTO v_shell_xp FROM public.user_xp WHERE user_id = p_shell;
   IF FOUND THEN
     UPDATE public.user_xp t SET
-      total_xp           = t.total_xp + v_shell_xp.total_xp - v_dup_xp,
+      total_xp           = GREATEST(0, t.total_xp + v_shell_xp.total_xp - v_dup_xp),
       level              = floor(sqrt(GREATEST(0, t.total_xp + v_shell_xp.total_xp - v_dup_xp) / 100.0))::int,
       current_streak     = GREATEST(t.current_streak, v_shell_xp.current_streak),
       longest_streak     = GREATEST(t.longest_streak, v_shell_xp.longest_streak),
@@ -128,7 +128,15 @@ BEGIN
       streak_freezes     = LEAST(2, t.streak_freezes + v_shell_xp.streak_freezes)
     WHERE t.user_id = p_target;
     IF NOT FOUND THEN
-      UPDATE public.user_xp SET user_id = p_target WHERE user_id = p_shell;
+      -- v_dup_xp is necessarily 0 here today (both ledger writers upsert
+      -- user_xp in the same call), but that invariant is held by convention
+      -- across two functions — subtracting is free insurance against a future
+      -- writer breaking it.
+      UPDATE public.user_xp SET
+        user_id  = p_target,
+        total_xp = GREATEST(0, total_xp - v_dup_xp),
+        level    = floor(sqrt(GREATEST(0, total_xp - v_dup_xp) / 100.0))::int
+      WHERE user_id = p_shell;
     ELSE
       DELETE FROM public.user_xp WHERE user_id = p_shell;
     END IF;
@@ -362,12 +370,14 @@ BEGIN
     WHERE s.reporter_id = p_shell AND s.thread_id IS NOT NULL
       AND NOT EXISTS (SELECT 1 FROM public.flags x
                       WHERE x.reporter_id = p_target AND x.thread_id = s.thread_id);
+  GET DIAGNOSTICS v_count = ROW_COUNT;
+  v_moved := v_moved || jsonb_build_object('thread_flags', v_count);
   UPDATE public.flags s SET reporter_id = p_target
     WHERE s.reporter_id = p_shell AND s.answer_id IS NOT NULL
       AND NOT EXISTS (SELECT 1 FROM public.flags x
                       WHERE x.reporter_id = p_target AND x.answer_id = s.answer_id);
   GET DIAGNOSTICS v_count = ROW_COUNT;
-  v_moved := v_moved || jsonb_build_object('flags', v_count);
+  v_moved := v_moved || jsonb_build_object('answer_flags', v_count);
   DELETE FROM public.flags WHERE reporter_id = p_shell;
   UPDATE public.flags SET resolved_by = p_target WHERE resolved_by = p_shell;
 
