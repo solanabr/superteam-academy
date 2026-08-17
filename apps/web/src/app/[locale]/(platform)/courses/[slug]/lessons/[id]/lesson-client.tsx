@@ -604,7 +604,12 @@ export function LessonPageClient({
         count={threadCount}
         open={isDiscussionListOpen}
         onOpenChange={setIsDiscussionListOpen}
-        keepMounted
+        // Mount on first expand, not first paint: an unconditional keepMounted
+        // made useThreads fire an uncached /api/community/threads on EVERY
+        // lesson load purely to label this collapsed row (#952). The one state
+        // worth pinning across a collapse is a composer draft, so mount stays
+        // held only while the composer is open.
+        keepMounted={isComposerOpen}
       >
         {/* Composing happens INLINE at the top of the section (LeetCode's
             comment box). A modal over a lesson hid the code the learner was

@@ -7,6 +7,7 @@ import type {
   LearningPath,
   QuizBlockData,
 } from "@superteam-lms/types";
+import skillsJson from "@/content/generated/skills.json";
 import {
   getActiveDeployments,
   getDeploymentById,
@@ -470,11 +471,24 @@ export async function getAllLessonSkills(): Promise<
  * The skill tags authored on ONE lesson — the "Topics" chips in the lesson
  * pane (#942). Bundle-only and ungated: the lesson page has already resolved
  * (and gated) the lesson itself, so this is a pure presentation read.
+ *
+ * Returns DISPLAY labels from the skills.json vocabulary (#952) — the chips
+ * render these verbatim, and learners were seeing raw slugs like
+ * `account-model` in every locale. Unknown slugs fall back to the slug so a
+ * vocabulary gap degrades, not hides. (The radar's getAllLessonSkills keeps
+ * returning slugs: they are attribution KEYS there, not copy.)
  */
 export async function getLessonSkills(lessonId: string): Promise<string[]> {
   const lesson = lessonsById.get(lessonId);
-  return lesson ? strArr(lesson.skills) : [];
+  if (!lesson) return [];
+  return strArr(lesson.skills).map(
+    (slug) => skillLabelBySlug.get(slug) ?? slug
+  );
 }
+
+const skillLabelBySlug: ReadonlyMap<string, string> = new Map(
+  skillsJson.map((skill) => [skill.slug, skill.label])
+);
 
 export async function getAllCourseLessonCounts(): Promise<
   { _id: string; totalLessons: number }[]
