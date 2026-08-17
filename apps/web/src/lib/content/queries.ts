@@ -34,6 +34,7 @@ import {
   lessonsById,
   pathsById,
   questsById,
+  skillLabelBySlug,
 } from "./store";
 import type {
   AchievementDoc,
@@ -470,10 +471,24 @@ export async function getAllLessonSkills(): Promise<
  * The skill tags authored on ONE lesson — the "Topics" chips in the lesson
  * pane (#942). Bundle-only and ungated: the lesson page has already resolved
  * (and gated) the lesson itself, so this is a pure presentation read.
+ *
+ * Returns DISPLAY labels from the skills.json vocabulary (#952) — the chips
+ * render these verbatim, and learners were seeing raw slugs like
+ * `account-model` in every locale. Unknown slugs fall back to the slug so a
+ * vocabulary gap degrades, not hides. (The radar's getAllLessonSkills keeps
+ * returning slugs: they are attribution KEYS there, not copy.)
  */
 export async function getLessonSkills(lessonId: string): Promise<string[]> {
   const lesson = lessonsById.get(lessonId);
-  return lesson ? strArr(lesson.skills) : [];
+  if (!lesson) return [];
+  // Set-dedupe: slugs are unique by schema refinement, labels are not — two
+  // vocabulary entries sharing a label must not yield duplicate chips (and
+  // duplicate React keys) on one lesson.
+  return [
+    ...new Set(
+      strArr(lesson.skills).map((slug) => skillLabelBySlug.get(slug) ?? slug)
+    ),
+  ];
 }
 
 export async function getAllCourseLessonCounts(): Promise<
