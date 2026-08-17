@@ -1,7 +1,13 @@
 import "server-only";
 
 import type { SlotsLockT } from "@superteam-lms/content-schema";
-import { buildStore } from "./build-store";
+import achievementsJson from "@/content/generated/achievements.json";
+import coursesJson from "@/content/generated/courses.json";
+import lessonsJson from "@/content/generated/lessons.json";
+import pathsJson from "@/content/generated/paths.json";
+import questsJson from "@/content/generated/quests.json";
+import skillsJson from "@/content/generated/skills.json";
+import slotsJson from "@/content/generated/slots.json";
 import type {
   AchievementDoc,
   CourseDoc,
@@ -9,12 +15,7 @@ import type {
   LessonDoc,
   QuestDoc,
 } from "./types";
-import achievementsJson from "@/content/generated/achievements.json";
-import coursesJson from "@/content/generated/courses.json";
-import lessonsJson from "@/content/generated/lessons.json";
-import pathsJson from "@/content/generated/paths.json";
-import questsJson from "@/content/generated/quests.json";
-import slotsJson from "@/content/generated/slots.json";
+import { buildStore } from "./build-store";
 
 /**
  * SECURITY: this module value-imports the generated content bundle, which
@@ -53,3 +54,17 @@ export const {
   pathsById,
   slotsByCourseId,
 } = store;
+
+/**
+ * Display labels from the skills.json vocabulary (#952). The boundary
+ * assertion mirrors the others above, but against the SCHEMA's shape, not
+ * today's JSON literal: `label` is optional in the content-schema
+ * (skills.ts), and a bundle without skills.yaml compiles to `[]` — typing
+ * off the literal made both valid content states a TS build break here.
+ * Entries without a label simply don't map; consumers fall back to the slug.
+ */
+export const skillLabelBySlug: ReadonlyMap<string, string> = new Map(
+  (skillsJson as { slug: string; label?: string }[]).flatMap((skill) =>
+    skill.label ? [[skill.slug, skill.label] as const] : []
+  )
+);

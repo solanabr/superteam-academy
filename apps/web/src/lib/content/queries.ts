@@ -7,7 +7,6 @@ import type {
   LearningPath,
   QuizBlockData,
 } from "@superteam-lms/types";
-import skillsJson from "@/content/generated/skills.json";
 import {
   getActiveDeployments,
   getDeploymentById,
@@ -35,6 +34,7 @@ import {
   lessonsById,
   pathsById,
   questsById,
+  skillLabelBySlug,
 } from "./store";
 import type {
   AchievementDoc,
@@ -481,14 +481,15 @@ export async function getAllLessonSkills(): Promise<
 export async function getLessonSkills(lessonId: string): Promise<string[]> {
   const lesson = lessonsById.get(lessonId);
   if (!lesson) return [];
-  return strArr(lesson.skills).map(
-    (slug) => skillLabelBySlug.get(slug) ?? slug
-  );
+  // Set-dedupe: slugs are unique by schema refinement, labels are not — two
+  // vocabulary entries sharing a label must not yield duplicate chips (and
+  // duplicate React keys) on one lesson.
+  return [
+    ...new Set(
+      strArr(lesson.skills).map((slug) => skillLabelBySlug.get(slug) ?? slug)
+    ),
+  ];
 }
-
-const skillLabelBySlug: ReadonlyMap<string, string> = new Map(
-  skillsJson.map((skill) => [skill.slug, skill.label])
-);
 
 export async function getAllCourseLessonCounts(): Promise<
   { _id: string; totalLessons: number }[]

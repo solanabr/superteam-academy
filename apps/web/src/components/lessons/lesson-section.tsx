@@ -15,9 +15,11 @@ interface LessonSectionProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   /**
-   * Keep the panel's CHILDREN mounted while collapsed. Used by Discussion so
-   * its thread count is known before the learner opens the row. The panel
-   * element itself is always in the DOM either way (see below).
+   * Keep the panel's CHILDREN mounted while collapsed. Used by Discussion
+   * only while its composer holds a draft — collapsing must not destroy it
+   * (#952; the old unconditional keep fired an uncached threads fetch on
+   * every lesson first paint). The panel element itself is always in the DOM
+   * either way (see below).
    */
   keepMounted?: boolean;
   /**
@@ -86,9 +88,9 @@ export function LessonSection({
       {/* The panel element is ALWAYS rendered so the header button's (and the
           jump chip's) `aria-controls` never points at a missing id; `hidden`
           keeps a collapsed panel out of the a11y tree and the tab order.
-          `keepMounted` still controls whether the CHILDREN are mounted — the
-          Discussion row needs its thread count before it is opened, the rest
-          should not fetch or render until asked for. */}
+          `keepMounted` still controls whether the CHILDREN are mounted —
+          sections should not fetch or render until asked for; Discussion
+          pins its children only while a composer draft is live (#952). */}
       <div id={panelId} hidden={!isOpen} className="pb-4">
         {(isOpen || keepMounted) && children}
       </div>
