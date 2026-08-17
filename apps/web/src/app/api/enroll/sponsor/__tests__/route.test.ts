@@ -72,7 +72,7 @@ beforeEach(() => {
   h.isRateLimited.mockResolvedValue(false);
   h.isPlatformFrozen.mockResolvedValue(false);
   h.isCourseInMaintenance.mockResolvedValue(false);
-  h.getCourseById.mockReturnValue({ _id: "course-x" });
+  h.getCourseById.mockResolvedValue({ _id: "course-x" });
   h.buildSponsored.mockResolvedValue({
     transaction: "BASE64TX",
     sponsor: "SponsorPubkey111",
@@ -95,7 +95,7 @@ describe("POST /api/enroll/sponsor", () => {
   });
 
   it("refuses an unknown course before spending anything", async () => {
-    h.getCourseById.mockReturnValue(undefined);
+    h.getCourseById.mockResolvedValue(undefined);
     const res = await POST(post({ courseId: "nope" }));
     expect(res.status).toBe(404);
     expect(h.buildSponsored).not.toHaveBeenCalled();
