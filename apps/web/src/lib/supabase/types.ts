@@ -1265,6 +1265,17 @@ export type Database = {
         Args: { p_course_id: string };
         Returns: { lesson_id: string; completed_by: number }[];
       };
+      /**
+       * Account-fork auto-merge (AUTH-FLOWS.md §7): folds a wallet-shaped
+       * shell account into the socially-signed-in account whose Dynamic JWT
+       * proved ownership of the shell's wallet. service_role only; one
+       * transaction; re-validates shell-ness in SQL and RAISEs rather than
+       * merge on any doubt.
+       */
+      merge_wallet_shell_account: {
+        Args: { p_target: string; p_shell: string; p_wallet: string };
+        Returns: Record<string, unknown>;
+      };
       // #769 marketing-email consent RPCs.
       set_marketing_opt_in: {
         Args: { p_opt_in: boolean };

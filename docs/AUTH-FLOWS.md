@@ -288,11 +288,14 @@ end wallet-only.
   wallet-shaped account (synthetic email); the same person's Google login matches their
   real-email account — two accounts, XP split. This is why #1032 removed the email-OTP
   modal entry ("the hazard behind today's manual account merge", 2026-08-13 — one
-  production account pair was merged by hand). A planned auto-merge would use the
-  Dynamic JWT's `blockchain` credential as proof that the wallet-shaped account's
-  wallet belongs to the socially-signed-in user; **no code for it exists in this repo
-  yet** — until it does, the fork is prevented (no email-OTP entry, `bridgingSocial`
-  guard, `/api/auth/dynamic` matching) rather than healed.
+  production account pair was merged by hand). The fork is now both prevented (no
+  email-OTP entry, `bridgingSocial` guard, `/api/auth/dynamic` matching) and HEALED:
+  when a Dynamic sign-in's JWT carries a `blockchain` credential matching a shell
+  profile's `wallet_address`, `/api/auth/dynamic` calls
+  `merge_wallet_shell_account` (one service-role transaction: wallet + per-user rows
+  migrate, keep-target on unique collisions, XP summed, shell tombstoned, fail-closed
+  FK sweep). The JWT credential is the ownership proof; an email match alone never
+  merges. Route side is fail-open — any doubt skips the merge, sign-in proceeds.
 - **Kill switch.** Unset `NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID` → `isDynamicEnabled()`
   false → no provider, no SDK init, no Dynamic button; the Supabase-OAuth Google button
   renders instead and `/api/auth/dynamic` 503s. SIWS with an external wallet stays the
