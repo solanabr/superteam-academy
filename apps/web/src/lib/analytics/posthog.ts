@@ -33,10 +33,15 @@ export async function initPostHog(): Promise<void> {
   initAttempted = true;
 
   try {
-    // Dynamic import with variable to bypass TypeScript module resolution
-    // when posthog-js is not installed as a dependency
-    const moduleName = "posthog-js";
-    const imported = await import(/* webpackIgnore: true */ moduleName);
+    // A plain dynamic import: webpack bundles posthog-js into its own chunk,
+    // loaded only when analytics is configured. The previous
+    // `webpackIgnore: true` variant shipped a BARE-SPECIFIER import to the
+    // browser, which can never resolve — so this function silently no-opped
+    // on every visit ever (caught 2026-08-17 during the analytics-account
+    // migration: zero client events had ever reached PostHog). The silent
+    // catch below is for genuine load failures (adblock, network), not for
+    // "not installed" — posthog-js is a real dependency.
+    const imported = await import("posthog-js");
     const ph = imported.default as unknown as PostHogInstance;
 
     ph.init(POSTHOG_KEY, {
@@ -47,8 +52,11 @@ export async function initPostHog(): Promise<void> {
     });
 
     posthog = ph;
-  } catch {
-    // posthog-js is not installed or failed to load — degrade silently
+  } catch (err) {
+    // Degrade to no-op analytics, but never silently: a swallowed failure
+    // here is how a broken import shipped unnoticed for the platform's whole
+    // life. One warn per load is cheap; invisible data loss is not.
+    console.warn("[analytics] posthog-js failed to load:", err);
     posthog = null;
   }
 }
