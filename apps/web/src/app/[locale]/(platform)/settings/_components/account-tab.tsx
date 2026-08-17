@@ -58,6 +58,10 @@ export function AccountTab({
   const [isLinkingWallet, setIsLinkingWallet] = useState(false);
   const [isLinkingGoogle, setIsLinkingGoogle] = useState(false);
   const [isLinkingGitHub, setIsLinkingGitHub] = useState(false);
+  // Shared across BOTH unlink buttons (#1053 gate F2): firing google+github
+  // unlinks inside one round-trip let a synthetic-email account race past the
+  // sole-OAuth guard, since each request read pre-unlink state.
+  const [isUnlinking, setIsUnlinking] = useState(false);
   const [linkMessage, setLinkMessage] = useState<{
     type: "success" | "error";
     text: string;
@@ -404,6 +408,8 @@ export function AccountTab({
   };
 
   const handleUnlinkGoogle = async () => {
+    if (isUnlinking) return;
+    setIsUnlinking(true);
     setLinkMessage(null);
     try {
       const res = await fetch("/api/auth/unlink", {
@@ -430,10 +436,14 @@ export function AccountTab({
       setLinkMessage({ type: "success", text: t("googleUnlinked") });
     } catch {
       setLinkMessage({ type: "error", text: t("unlinkFailed") });
+    } finally {
+      setIsUnlinking(false);
     }
   };
 
   const handleUnlinkGitHub = async () => {
+    if (isUnlinking) return;
+    setIsUnlinking(true);
     setLinkMessage(null);
     try {
       const res = await fetch("/api/auth/unlink", {
@@ -460,6 +470,8 @@ export function AccountTab({
       setLinkMessage({ type: "success", text: t("githubUnlinked") });
     } catch {
       setLinkMessage({ type: "error", text: t("unlinkFailed") });
+    } finally {
+      setIsUnlinking(false);
     }
   };
 
@@ -564,7 +576,7 @@ export function AccountTab({
               variant="outline"
               size="sm"
               onClick={handleUnlinkGoogle}
-              disabled={!canUnlink || soleOauthLocked}
+              disabled={!canUnlink || soleOauthLocked || isUnlinking}
               title={
                 soleOauthLocked
                   ? t("cannotUnlinkOnlyRecoveryHint")
@@ -606,7 +618,7 @@ export function AccountTab({
               variant="outline"
               size="sm"
               onClick={handleUnlinkGitHub}
-              disabled={!canUnlink || soleOauthLocked}
+              disabled={!canUnlink || soleOauthLocked || isUnlinking}
               title={
                 soleOauthLocked
                   ? t("cannotUnlinkOnlyRecoveryHint")

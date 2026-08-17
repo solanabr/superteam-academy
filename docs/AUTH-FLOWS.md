@@ -15,7 +15,7 @@ never touch Dynamic: wallet-adapter SIWS (the wallet itself signs the proof) and
 Supabase OAuth (GitHub always; Google when Dynamic is unconfigured), where Supabase both
 proves and owns. The load-bearing halves hold everywhere: no client-side session
 minting, and Supabase user ids are the only identity every table and RLS policy hangs
-off. One soft bend: after an OAuth *link*, the settings page syncs `profiles.google_id`
+off. One soft bend: after an OAuth _link_, the settings page syncs `profiles.google_id`
 / `github_id` client-side under RLS (`src/app/[locale]/(platform)/settings/_components/account-tab.tsx`)
 — profile metadata, not session material.
 
@@ -70,12 +70,13 @@ wallet connect when no Supabase user exists:
    reads cookies on boot, so a soft navigation leaves the header logged-out.
 
 Server verification (`src/lib/solana/verify-siws.ts`), in order: parse fields → expiry
-+ issued-at age + expiration-window ≤ 5 min (the age/window checks run only when the
-message carries an `Issued At`; absent means they're skipped, `verify-siws.ts:172`) →
-nonce exists/pending/unexpired (checked
-BEFORE the signature so failed signatures don't burn nonces) → domain equals the `host`
-header → address in message equals `publicKey` → Ed25519 verify → atomically consume
-the nonce (`UPDATE … WHERE status='pending'`, so concurrent requests can't double-spend).
+
+- issued-at age + expiration-window ≤ 5 min (the age/window checks run only when the
+  message carries an `Issued At`; absent means they're skipped, `verify-siws.ts:172`) →
+  nonce exists/pending/unexpired (checked
+  BEFORE the signature so failed signatures don't burn nonces) → domain equals the `host`
+  header → address in message equals `publicKey` → Ed25519 verify → atomically consume
+  the nonce (`UPDATE … WHERE status='pending'`, so concurrent requests can't double-spend).
 
 ### Sign in with Google
 
@@ -113,7 +114,7 @@ page on hydration — the hooks throw outside a provider). No UI. Four jobs:
 0. **Social-redirect return.** The button that started sign-in is gone after the
    full-page round trip, so something mounted on every page must finish it:
    `detectSocialRedirectUrl` → `completeSocialRedirect` → strip callback params →
-   if a Supabase session already exists this was a *link*, stop (job 3 will attach the
+   if a Supabase session already exists this was a _link_, stop (job 3 will attach the
    wallet) → otherwise `bridgeDynamicSession()` → on success **hard reload**; on
    failure toast + `logoutDynamic()`, because "authenticated to Dynamic, refused by
    Supabase" is a dead end that would re-fail on every page load.
@@ -165,8 +166,8 @@ The guards, each of which closed a live incident:
 
 ## 3. POST /api/auth/dynamic — the verification ladder
 
-`src/app/api/auth/dynamic/route.ts`. One claim crosses this route: *an email the OAuth
-provider itself verified*. The ladder proves the claim is genuinely Dynamic's, for OUR
+`src/app/api/auth/dynamic/route.ts`. One claim crosses this route: _an email the OAuth
+provider itself verified_. The ladder proves the claim is genuinely Dynamic's, for OUR
 environment, and provider-verified rather than self-asserted:
 
 1. Environment id from OUR env (`getDynamicEnvironmentId()`, lowercased once) — unset =
@@ -178,10 +179,10 @@ environment, and provider-verified rather than self-asserted:
 4. `jwtVerify` against Dynamic's JWKS **for our environment id**
    (`app.dynamic.xyz/api/v0/sdk/{id}/.well-known/jwks`, cached via one
    `createRemoteJWKSet` per environment). Algorithm allowlist RS256/384/512 — kills
-   `alg:none` and HS* key-confusion before the key resolver ever runs. Issuer must be
+   `alg:none` and HS\* key-confusion before the key resolver ever runs. Issuer must be
    `app.dynamicauth.com/{id}` or `app.dynamic.xyz/{id}` — the id suffix is the tenant
    binding; both hosts serve byte-identical keys. `requiredClaims: exp, iat, sub,
-   environment_id` — `exp` is optional in JWS, so without requiring it a token minted
+environment_id` — `exp` is optional in JWS, so without requiring it a token minted
    without one verifies forever. All verification failures collapse to one opaque 401.
 5. `environment_id` claim equals ours (corroborates `iss`; survives Dynamic
    reformatting `iss`). `aud` is deliberately NOT pinned — it's the client origin and
@@ -242,15 +243,20 @@ mints the account's accrued Supabase XP to the wallet on-chain, guarded by
 `supabase.auth.unlinkIdentity` + nulling `profiles.google_id`/`github_id`. Refuses when
 only one method remains (`cannotUnlinkLast`). `provider: "wallet"` is always refused
 (`walletLinkPermanent`): on-chain enrollments/XP/credentials are bound to that pubkey.
-Note the wallet still counts toward the ≥2 rule, so wallet+Google can drop Google and
-end wallet-only.
+The wallet still counts toward the ≥2 rule, so a REAL-email account can drop Google and
+end wallet-only — recoverable, because the bridge matches by email. A SYNTHETIC-email
+account (`%@wallet.superteam-lms.local`) cannot drop its last OAuth identity
+(`cannotUnlinkOnlyRecovery`): its email is undeliverable, so that identity is its only
+path back in if wallet access is lost. Known seam: for Google-sole accounts that path is
+currently inert on Dynamic-enabled deployments (#1055 — `/api/auth/dynamic` resolves by
+email only).
 
 ## 5. Linking after signup — Settings › Account
 
 `src/app/[locale]/(platform)/settings/_components/account-tab.tsx`:
 
 - **Google/GitHub**: `supabase.auth.linkIdentity({provider, options: {redirectTo:
-  /api/auth/callback?next=/{locale}/settings?linked=google|github}})`. On return, the
+/api/auth/callback?next=/{locale}/settings?linked=google|github}})`. On return, the
   `?linked=` effect reads the fresh identity from `auth.getUser()`, writes
   `profiles.google_id`/`github_id` (unique-violation 23505 → "already linked to
   another account"), optionally adopts the provider avatar, then strips the param via
@@ -299,7 +305,7 @@ end wallet-only.
 - **Kill switch.** Unset `NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID` → `isDynamicEnabled()`
   false → no provider, no SDK init, no Dynamic button; the Supabase-OAuth Google button
   renders instead and `/api/auth/dynamic` 503s. SIWS with an external wallet stays the
-  guaranteed way in. NEXT_PUBLIC_ is build-time-inlined: flipping it needs a redeploy
+  guaranteed way in. NEXT*PUBLIC* is build-time-inlined: flipping it needs a redeploy
   with the build cache OFF, verified by grepping served chunks (a cache-reusing
   redeploy shipping the old value caused a live incident during the Phantom removal —
   `apps/web/CLAUDE.md`).
@@ -315,6 +321,6 @@ Every table keys on the Supabase user id and every RLS policy is `auth.uid()`-sh
 the SECURITY DEFINER XP/achievement functions and the admin client all assume it.
 Moving the root to Dynamic means migrating every user id across 19 tables plus
 on-chain linkage for no capability we lack, and puts identity behind a vendor whose
-useful guarantees (JWKS, scopes) we already consume as a *prover*. The current shape
+useful guarantees (JWKS, scopes) we already consume as a _prover_. The current shape
 keeps Dynamic removable — unset one env var and the platform still signs everyone in —
 which is exactly the property the Phantom Connect removal proved we need.
