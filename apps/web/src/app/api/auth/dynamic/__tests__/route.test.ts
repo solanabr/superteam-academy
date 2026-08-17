@@ -16,6 +16,9 @@ const {
   isAccountDeleted,
   profileSingle,
   profileUpdate,
+  shellLookup,
+  getUserById,
+  rpcMock,
   retryPendingOnchainActions,
   generateWalletName,
 } = vi.hoisted(() => ({
@@ -29,6 +32,9 @@ const {
   isAccountDeleted: vi.fn<(userId: string) => Promise<boolean>>(),
   profileSingle: vi.fn(),
   profileUpdate: vi.fn<(values: Record<string, unknown>) => Promise<unknown>>(),
+  shellLookup: vi.fn(),
+  getUserById: vi.fn(),
+  rpcMock: vi.fn(),
   retryPendingOnchainActions: vi.fn<(userId: string) => Promise<void>>(),
   generateWalletName: vi.fn<() => string>(),
 }));
@@ -44,9 +50,14 @@ vi.mock("@/lib/solana/onchain-queue", () => ({ retryPendingOnchainActions }));
 // post-login profile read/update (placeholder-username replacement).
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
-    auth: { admin: { createUser, generateLink } },
+    auth: { admin: { createUser, generateLink, getUserById } },
+    rpc: rpcMock,
     from: () => ({
-      select: () => ({ eq: () => ({ single: profileSingle }) }),
+      select: () => ({
+        eq: () => ({ single: profileSingle }),
+        // The shell-candidate lookup: .in(wallets).neq(id).is(deleted_at).
+        in: () => ({ neq: () => ({ is: shellLookup }) }),
+      }),
       update: (values: Record<string, unknown>) => ({
         eq: () => profileUpdate(values),
       }),
@@ -198,8 +209,15 @@ beforeEach(() => {
   });
   signOut.mockResolvedValue({ error: null });
   isAccountDeleted.mockResolvedValue(false);
-  profileSingle.mockResolvedValue({ data: { username: "sol-surfer" } });
+  // Default: an account that already owns a wallet, so the account-fork
+  // auto-merge never triggers unless a test opts in.
+  profileSingle.mockResolvedValue({
+    data: { username: "sol-surfer", wallet_address: "ExistingWallet1111" },
+  });
   profileUpdate.mockResolvedValue({ error: null });
+  shellLookup.mockResolvedValue({ data: [], error: null });
+  getUserById.mockResolvedValue({ data: { user: null }, error: null });
+  rpcMock.mockResolvedValue({ data: {}, error: null });
   retryPendingOnchainActions.mockResolvedValue(undefined);
   generateWalletName.mockReturnValue("brave-otter");
 });
@@ -768,5 +786,177 @@ describe("POST /api/auth/dynamic — post-login parity with the other chokepoint
 
     expect(res.status).toBe(403);
     expect(retryPendingOnchainActions).not.toHaveBeenCalled();
+  });
+});
+
+describe("POST /api/auth/dynamic — account-fork auto-merge", () => {
+  const SHELL_WALLET = "She11Wa11etAddre55Base58Looking111";
+  const SHELL_ID = "shell-user-1";
+
+  function blockchainCredential(overrides: Record<string, unknown> = {}) {
+    return {
+      id: "wallet-credential-1",
+      format: "blockchain",
+      address: SHELL_WALLET,
+      chain: "solana",
+      signInEnabled: true,
+      ...overrides,
+    };
+  }
+
+  /** A walletless target + one matching shell, unless a test overrides. */
+  function armMergeScenario() {
+    profileSingle.mockResolvedValue({
+      data: { username: "sol-surfer", wallet_address: null },
+    });
+    shellLookup.mockResolvedValue({
+      data: [{ id: SHELL_ID, wallet_address: SHELL_WALLET }],
+      error: null,
+    });
+    getUserById.mockResolvedValue({
+      data: {
+        user: {
+          email: `${SHELL_WALLET}@wallet.superteam-lms.local`,
+          identities: [{ provider: "email" }],
+        },
+      },
+      error: null,
+    });
+  }
+
+  const jwtWithWallet = () =>
+    signDynamicJwt({
+      claims: {
+        verified_credentials: [googleCredential(), blockchainCredential()],
+      },
+    });
+
+  it("merges the shell the JWT's blockchain credential proves ownership of", async () => {
+    armMergeScenario();
+
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await jwtWithWallet() })
+    );
+
+    expect(res.status).toBe(200);
+    expect(rpcMock).toHaveBeenCalledWith("merge_wallet_shell_account", {
+      p_target: "supabase-user-1",
+      p_shell: SHELL_ID,
+      p_wallet: SHELL_WALLET,
+    });
+  });
+
+  it("never merges on an email match alone — no blockchain credential, no merge", async () => {
+    armMergeScenario();
+
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await signDynamicJwt() })
+    );
+
+    expect(res.status).toBe(200);
+    expect(rpcMock).not.toHaveBeenCalled();
+  });
+
+  it("skips the merge when the signed-in account already has a wallet", async () => {
+    armMergeScenario();
+    profileSingle.mockResolvedValue({
+      data: { username: "sol-surfer", wallet_address: "AlreadyLinked111" },
+    });
+
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await jwtWithWallet() })
+    );
+
+    expect(res.status).toBe(200);
+    expect(rpcMock).not.toHaveBeenCalled();
+  });
+
+  it("refuses to merge an account whose email is not the synthetic wallet form", async () => {
+    armMergeScenario();
+    getUserById.mockResolvedValue({
+      data: {
+        user: {
+          email: "human@example.com",
+          identities: [{ provider: "email" }],
+        },
+      },
+      error: null,
+    });
+
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await jwtWithWallet() })
+    );
+
+    expect(res.status).toBe(200);
+    expect(rpcMock).not.toHaveBeenCalled();
+  });
+
+  it("refuses to merge an account that has a real OAuth identity", async () => {
+    armMergeScenario();
+    getUserById.mockResolvedValue({
+      data: {
+        user: {
+          email: `${SHELL_WALLET}@wallet.superteam-lms.local`,
+          identities: [{ provider: "email" }, { provider: "google" }],
+        },
+      },
+      error: null,
+    });
+
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await jwtWithWallet() })
+    );
+
+    expect(res.status).toBe(200);
+    expect(rpcMock).not.toHaveBeenCalled();
+  });
+
+  it("skips when two shells match — ambiguity never merges", async () => {
+    armMergeScenario();
+    shellLookup.mockResolvedValue({
+      data: [
+        { id: SHELL_ID, wallet_address: SHELL_WALLET },
+        { id: "shell-user-2", wallet_address: "OtherWallet222" },
+      ],
+      error: null,
+    });
+
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await jwtWithWallet() })
+    );
+
+    expect(res.status).toBe(200);
+    expect(rpcMock).not.toHaveBeenCalled();
+  });
+
+  it("still signs in when the merge RPC refuses", async () => {
+    armMergeScenario();
+    rpcMock.mockResolvedValue({
+      data: null,
+      error: { message: "merge refused: shell wallet does not match" },
+    });
+
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await jwtWithWallet() })
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual({ success: true });
+  });
+
+  it("runs the merge before the on-chain queue drain", async () => {
+    armMergeScenario();
+    const order: string[] = [];
+    rpcMock.mockImplementation(async () => {
+      order.push("merge");
+      return { data: {}, error: null };
+    });
+    retryPendingOnchainActions.mockImplementation(async () => {
+      order.push("drain");
+    });
+
+    await POST(dynamicRequest({ dynamicJwt: await jwtWithWallet() }));
+
+    expect(order).toEqual(["merge", "drain"]);
   });
 });

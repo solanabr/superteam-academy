@@ -312,6 +312,108 @@ function resolveVerifiedEmail(claims: DynamicJwtClaims): EmailResolution {
  */
 const MAX_BODY_BYTES = 16_000;
 
+/**
+ * Wallet addresses the JWT proves this Dynamic user controls.
+ *
+ * `blockchain` credentials are Dynamic-attested wallets (the embedded wallet
+ * it created for this user, plus any it verified). Their `address` is the
+ * ownership proof the account-fork auto-merge below rests on — the JWT is
+ * signed by Dynamic for THIS user, so a wallet listed here is theirs in a way
+ * an email match could never establish. No chain filter: a non-Solana address
+ * simply matches no `profiles.wallet_address`. Capped because the array is
+ * attacker-adjacent input even after signature verification.
+ */
+function blockchainAddresses(claims: DynamicJwtClaims): string[] {
+  const credentials = Array.isArray(claims.verified_credentials)
+    ? claims.verified_credentials
+    : [];
+  const addresses = new Set<string>();
+  for (const credential of credentials) {
+    if (!isRecord(credential)) continue;
+    if (credential.format !== "blockchain") continue;
+    const address = credential.address;
+    if (typeof address === "string" && address.trim() !== "") {
+      addresses.add(address.trim());
+    }
+  }
+  return [...addresses].slice(0, 10);
+}
+
+/**
+ * Heal the mixed-method account fork (AUTH-FLOWS.md §7): if this JWT proves
+ * the caller owns a wallet that keys a wallet-shaped SHELL account (synthetic
+ * `@wallet.superteam-lms.local` email, no OAuth identities), fold that shell —
+ * wallet, XP, enrollments, everything — into the account they just signed
+ * into. The `blockchain` credential is the proof; an email match alone never
+ * merges anything.
+ *
+ * Fail-open by design: any doubt (ambiguity, lookup error, RPC refusal) skips
+ * the merge and the sign-in proceeds unmerged — the fork is an annoyance, a
+ * wrong merge is an account takeover. The RPC re-validates shell-ness in SQL
+ * and runs the whole move in one transaction, so a half-merged state cannot
+ * exist.
+ */
+async function mergeWalletShellAccount(
+  supabaseAdmin: ReturnType<typeof createAdminClient>,
+  userId: string,
+  claims: DynamicJwtClaims
+): Promise<void> {
+  try {
+    const wallets = blockchainAddresses(claims);
+    if (wallets.length === 0) return;
+
+    const { data: shells, error: shellError } = await supabaseAdmin
+      .from("profiles")
+      .select("id, wallet_address")
+      .in("wallet_address", wallets)
+      .neq("id", userId)
+      .is("deleted_at", null);
+    if (shellError || !shells || shells.length === 0) return;
+    if (shells.length > 1) {
+      logEvent({
+        event: "dynamic-auth.shell-merge-ambiguous",
+        context: { userId, candidates: shells.length },
+      });
+      return;
+    }
+    const shell = shells[0]!;
+    if (!shell.wallet_address) return;
+
+    // Shell-ness, auth side: the synthetic email says the account was born
+    // from a wallet; the identities check says it never became anything more.
+    // An account with a real OAuth identity is somebody's account, not a
+    // shell — never merge it, whatever its email looks like. The RPC
+    // re-proves the profile side (google_id/github_id NULL, email pattern).
+    const { data: shellUser, error: userError } =
+      await supabaseAdmin.auth.admin.getUserById(shell.id);
+    if (userError || !shellUser?.user) return;
+    const shellEmail = shellUser.user.email ?? "";
+    if (!shellEmail.endsWith("@wallet.superteam-lms.local")) return;
+    const identities = shellUser.user.identities ?? [];
+    if (identities.some((identity) => identity.provider !== "email")) return;
+
+    const { data: merged, error: mergeError } = await supabaseAdmin.rpc(
+      "merge_wallet_shell_account",
+      { p_target: userId, p_shell: shell.id, p_wallet: shell.wallet_address }
+    );
+    if (mergeError) {
+      logError({
+        errorId: ERROR_IDS.DYNAMIC_AUTH_FAILED,
+        error: new Error(mergeError.message),
+        context: { note: "shell merge refused", userId, shellId: shell.id },
+      });
+      return;
+    }
+    logEvent({ event: "dynamic-auth.shell-merged", context: { merged } });
+  } catch (err: unknown) {
+    logError({
+      errorId: ERROR_IDS.DYNAMIC_AUTH_FAILED,
+      error: err instanceof Error ? err : new Error(String(err)),
+      context: { note: "shell merge failed", userId },
+    });
+  }
+}
+
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     // The environment id is the tenant binding for everything below, so an
@@ -514,9 +616,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Existing matched accounts already have a real name and are left alone.
     const { data: profile } = await supabaseAdmin
       .from("profiles")
-      .select("username")
+      .select("username, wallet_address")
       .eq("id", userId)
       .single();
+
+    // Account-fork auto-merge, only when this account has no wallet of its
+    // own to lose — and BEFORE the queue drain below, so pending on-chain
+    // actions inherited from the shell drain in this same sign-in.
+    if (!profile?.wallet_address) {
+      await mergeWalletShellAccount(supabaseAdmin, userId, claims);
+    }
 
     if (profile?.username?.startsWith("user_")) {
       for (let attempt = 0; attempt < 5; attempt++) {
