@@ -54,7 +54,7 @@ vi.mock("@/lib/content/deployments", async (importActual) => {
         >
     ),
     getDeploymentById: vi.fn(async () => null),
-    getDeploymentByIdSafe: vi.fn(async () => null),
+    getDeploymentByIdSafe: vi.fn(async () => ({ row: null, failed: false })),
   };
 });
 

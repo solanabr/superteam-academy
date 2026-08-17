@@ -368,6 +368,31 @@ describe("getCourseById — UNGATED, trackCollectionAddress from the full row", 
     const c = await q.getCourseById("course-zeta");
     expect(c).not.toBeNull();
     expect(c?.trackCollectionAddress).toBeNull();
+    expect(c?.deploymentReadFailed).toBeUndefined();
+  });
+
+  // #931: this call sits on the landing render path (resolveFlagshipLessonHref,
+  // outside page.tsx's try) — a throw here took the whole page to the root
+  // error boundary. It must degrade instead.
+  it("degrades to a null collection instead of throwing when the read fails", async () => {
+    const deployments = await import("../deployments");
+    vi.mocked(deployments.getDeploymentById).mockRejectedValueOnce(
+      new Error("connection refused")
+    );
+    const c = await q.getCourseById("course-off");
+    expect(c?._id).toBe("course-off");
+    expect(c?.trackCollectionAddress).toBeNull();
+  });
+
+  // The null above is ambiguous on its own — "never synced" reads identically.
+  // Reward paths branch on this flag, so it must not silently disappear.
+  it("marks a failed read so it is distinguishable from an absent row", async () => {
+    const deployments = await import("../deployments");
+    vi.mocked(deployments.getDeploymentById).mockRejectedValueOnce(
+      new Error("connection refused")
+    );
+    const c = await q.getCourseById("course-off");
+    expect(c?.deploymentReadFailed).toBe(true);
   });
 });
 

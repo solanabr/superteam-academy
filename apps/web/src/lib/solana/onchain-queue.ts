@@ -218,8 +218,14 @@ export async function retryPendingOnchainActions(
             | string
             | undefined;
           if (!trackCollectionAddress) {
+            // Since #931 getCourseById degrades a failed deployment read to a
+            // null collection instead of throwing, so "no collection" no longer
+            // implies "never synced" — say which, or an outage reads as an
+            // operator error nobody acts on.
             throw new Error(
-              `Course "${courseId}" has no trackCollectionAddress — sync the course first`
+              sanityCourse.deploymentReadFailed
+                ? `Course "${courseId}" deployment read failed — collection unknown, retrying`
+                : `Course "${courseId}" has no trackCollectionAddress — sync the course first`
             );
           }
 

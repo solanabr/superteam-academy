@@ -258,6 +258,9 @@ export interface CourseProjectionOptions {
   /** Attach `trackCollectionAddress` (getCourseById reward path only). Omitted
    *  from the object entirely when not provided, matching getCourseBySlug. */
   trackCollectionAddress?: string | null;
+  /** Attach `deploymentReadFailed` (#931) — only when the deployment read
+   *  actually failed, so the common path keeps its exact previous shape. */
+  deploymentReadFailed?: boolean;
 }
 
 /**
@@ -296,6 +299,7 @@ export function projectCourse(
     ...(opts.trackCollectionAddress !== undefined
       ? { trackCollectionAddress: opts.trackCollectionAddress }
       : {}),
+    ...(opts.deploymentReadFailed ? { deploymentReadFailed: true } : {}),
   };
 
   return projected as unknown as Course;
