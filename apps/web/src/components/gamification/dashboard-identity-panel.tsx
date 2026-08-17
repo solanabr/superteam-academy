@@ -176,6 +176,7 @@ export function AchievementToken({
   name,
   hint,
   state,
+  label,
   isOpen,
   onTap,
   onOpenChange,
@@ -185,6 +186,12 @@ export function AchievementToken({
   name: string;
   hint: string;
   state: "earned" | "sol" | "locked";
+  /**
+   * Full accessible name, translated by the caller (the token itself is
+   * rendered from several namespaces). Carries the earned/locked state, which
+   * is otherwise conveyed by colour alone.
+   */
+  label: string;
   isOpen?: boolean;
   onTap?: () => void;
   onOpenChange?: (open: boolean) => void;
@@ -195,23 +202,25 @@ export function AchievementToken({
   return (
     <Tooltip.Root open={isOpen} onOpenChange={onOpenChange}>
       <Tooltip.Trigger asChild>
-        <div
+        {/* A real button, not a div: this opens the achievement tooltip, and as
+            a div it was mouse-only — Radix gives the trigger no focus of its
+            own, so the hint was unreachable by keyboard (#933). */}
+        <button
+          type="button"
           className="dm"
+          aria-label={label}
           onClick={(e) => {
             if (wasDrag?.()) return;
             e.stopPropagation();
             onTap?.();
           }}
         >
-          <div
-            className={cn("dm-oct", state)}
-            aria-label={`${name} achievement — ${state}`}
-          >
+          <div className={cn("dm-oct", state)} aria-hidden="true">
             <div className="dm-face" />
             <span className="dm-glyph">{glyph}</span>
           </div>
           <span className="dm-name">{name}</span>
-        </div>
+        </button>
       </Tooltip.Trigger>
       <Tooltip.Portal>
         <Tooltip.Content
@@ -376,6 +385,13 @@ export function DashboardIdentityPanel({
                               setOpenTip(open ? cellTipId : null)
                             }
                           >
+                            {/* Stays a div on purpose (#933): the grid above is
+                                exposed as a single labelled image, so these
+                                ~365 11px cells are already presentational to
+                                assistive tech. Promoting each to a button
+                                would add 365 tab stops without exposing
+                                anything new. The click is a touch affordance —
+                                pointer devices get the same tooltip on hover. */}
                             <Tooltip.Trigger asChild>
                               <div
                                 className={cn(

@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import type { CodeBlockData } from "@superteam-lms/types";
+import { BlockSkeleton } from "./block-skeleton";
 import type { BlockRenderProps } from "./types";
 
 const ChallengeInterface = dynamic(
@@ -9,7 +10,7 @@ const ChallengeInterface = dynamic(
     import("@/components/editor/challenge-interface").then((mod) => ({
       default: mod.ChallengeInterface,
     })),
-  { ssr: false }
+  { ssr: false, loading: () => <BlockSkeleton height="32rem" /> }
 );
 
 /**

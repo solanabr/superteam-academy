@@ -4074,6 +4074,8 @@ a.path-step-card:hover .path-step-badge.skip {
 }
 
 /* Mini achievement tokens */
+/* A <button> since #933 — the reset keeps the token looking identical while
+   the element carries native focus and Enter/Space activation. */
 .dm {
   display: flex;
   flex-direction: column;
@@ -4082,6 +4084,12 @@ a.path-step-card:hover .path-step-badge.skip {
   cursor: default;
   flex-shrink: 0;
   animation: dm-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
 }
 .dm:nth-child(1) {
   animation-delay: 0.05s;

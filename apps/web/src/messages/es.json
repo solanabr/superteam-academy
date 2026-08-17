@@ -483,6 +483,7 @@
     "category_special": "Especial",
     "noEntries": "Sin ranking aún. Completa lecciones para ganar XP y aparecer aquí.",
     "noAchievements": "Completa una lección para ganar tu primer logro",
+    "achievementTokenLabel": "{name} — {state, select, earned {conseguido} sol {conseguido, nivel Solana} locked {bloqueado} other {bloqueado}}",
     "showLocked": "Mostrar bloqueados",
     "viewOnExplorer": "Ver en Explorer",
     "onChain": "on-chain",

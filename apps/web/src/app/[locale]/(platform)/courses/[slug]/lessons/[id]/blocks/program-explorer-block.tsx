@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import type { ProgramExplorerBlockData } from "@superteam-lms/types";
+import { BlockSkeleton } from "./block-skeleton";
 import type { BlockRenderProps } from "./types";
 
 const GenericProgramExplorer = dynamic(
@@ -9,7 +10,7 @@ const GenericProgramExplorer = dynamic(
     import("@/components/deploy/generic-program-explorer").then((mod) => ({
       default: mod.GenericProgramExplorer,
     })),
-  { ssr: false }
+  { ssr: false, loading: () => <BlockSkeleton height="24rem" /> }
 );
 
 export function ProgramExplorerBlock({ block, ctx }: BlockRenderProps) {

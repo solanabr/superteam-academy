@@ -483,6 +483,7 @@
     "category_special": "Especial",
     "noEntries": "Nenhum ranking ainda. Complete aulas para ganhar XP e aparecer aqui.",
     "noAchievements": "Complete uma lição para ganhar sua primeira conquista",
+    "achievementTokenLabel": "{name} — {state, select, earned {conquistada} sol {conquistada, nível Solana} locked {bloqueada} other {bloqueada}}",
     "showLocked": "Mostrar bloqueados",
     "viewOnExplorer": "Ver no Explorer",
     "onChain": "on-chain",
