@@ -929,6 +929,88 @@ describe("POST /api/auth/dynamic — account-fork auto-merge", () => {
     expect(rpcMock).not.toHaveBeenCalled();
   });
 
+  it("ignores a blockchain credential from a foreign chain", async () => {
+    armMergeScenario();
+
+    const res = await POST(
+      dynamicRequest({
+        dynamicJwt: await signDynamicJwt({
+          claims: {
+            verified_credentials: [
+              googleCredential(),
+              blockchainCredential({ chain: "EVM" }),
+            ],
+          },
+        }),
+      })
+    );
+
+    expect(res.status).toBe(200);
+    expect(rpcMock).not.toHaveBeenCalled();
+  });
+
+  it("ignores a blockchain credential Dynamic says cannot sign in", async () => {
+    armMergeScenario();
+
+    const res = await POST(
+      dynamicRequest({
+        dynamicJwt: await signDynamicJwt({
+          claims: {
+            verified_credentials: [
+              googleCredential(),
+              blockchainCredential({ signInEnabled: false }),
+            ],
+          },
+        }),
+      })
+    );
+
+    expect(res.status).toBe(200);
+    expect(rpcMock).not.toHaveBeenCalled();
+  });
+
+  it("still merges when the credential carries no chain field at all", async () => {
+    // `chain` is schema-optional; refusing on absence would silently dead the
+    // feature on a wire-shape change. Address equality still gates.
+    armMergeScenario();
+
+    const res = await POST(
+      dynamicRequest({
+        dynamicJwt: await signDynamicJwt({
+          claims: {
+            verified_credentials: [
+              googleCredential(),
+              blockchainCredential({ chain: undefined }),
+            ],
+          },
+        }),
+      })
+    );
+
+    expect(res.status).toBe(200);
+    expect(rpcMock).toHaveBeenCalled();
+  });
+
+  it("refuses a candidate with NO identities at all", async () => {
+    armMergeScenario();
+    getUserById.mockResolvedValue({
+      data: {
+        user: {
+          email: `${SHELL_WALLET}@wallet.superteam-lms.local`,
+          identities: [],
+        },
+      },
+      error: null,
+    });
+
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await jwtWithWallet() })
+    );
+
+    expect(res.status).toBe(200);
+    expect(rpcMock).not.toHaveBeenCalled();
+  });
+
   it("still signs in when the merge RPC refuses", async () => {
     armMergeScenario();
     rpcMock.mockResolvedValue({

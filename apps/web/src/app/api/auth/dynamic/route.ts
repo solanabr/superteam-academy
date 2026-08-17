@@ -315,12 +315,21 @@ const MAX_BODY_BYTES = 16_000;
 /**
  * Wallet addresses the JWT proves this Dynamic user controls.
  *
- * `blockchain` credentials are Dynamic-attested wallets (the embedded wallet
- * it created for this user, plus any it verified). Their `address` is the
- * ownership proof the account-fork auto-merge below rests on — the JWT is
- * signed by Dynamic for THIS user, so a wallet listed here is theirs in a way
- * an email match could never establish. No chain filter: a non-Solana address
- * simply matches no `profiles.wallet_address`. Capped because the array is
+ * `blockchain` credentials are Dynamic-attested wallets: per Dynamic's auth
+ * model a wallet only becomes a verified credential after the user SIGNS a
+ * message proving ownership (connect-without-signing makes a "visitor", who
+ * gets no JWT at all). Their `address` is the ownership proof the
+ * account-fork auto-merge below rests on — the JWT is signed by Dynamic for
+ * THIS user, so a wallet listed here is theirs in a way an email match could
+ * never establish.
+ *
+ * Same per-credential respect as `matchableEmail`: a credential Dynamic says
+ * cannot sign in must not merge an account either. The chain guard skips
+ * KNOWN-foreign chains (the SDK's ChainEnum stamps Solana as "SOL"; "solana"
+ * accepted in case the wire form differs) but tolerates an ABSENT chain — the
+ * field is schema-optional, and refusing on absence would silently dead the
+ * whole feature on a wire-shape surprise; address equality against
+ * `profiles.wallet_address` still gates. Capped because the array is
  * attacker-adjacent input even after signature verification.
  */
 function blockchainAddresses(claims: DynamicJwtClaims): string[] {
@@ -331,6 +340,12 @@ function blockchainAddresses(claims: DynamicJwtClaims): string[] {
   for (const credential of credentials) {
     if (!isRecord(credential)) continue;
     if (credential.format !== "blockchain") continue;
+    if (credential.signInEnabled === false) continue;
+    const chain =
+      typeof credential.chain === "string"
+        ? credential.chain.toLowerCase()
+        : null;
+    if (chain !== null && chain !== "sol" && chain !== "solana") continue;
     const address = credential.address;
     if (typeof address === "string" && address.trim() !== "") {
       addresses.add(address.trim());
@@ -389,7 +404,11 @@ async function mergeWalletShellAccount(
     if (userError || !shellUser?.user) return;
     const shellEmail = shellUser.user.email ?? "";
     if (!shellEmail.endsWith("@wallet.superteam-lms.local")) return;
+    // A real shell has exactly its synthetic email identity (from
+    // admin.createUser). Any non-email identity means it is somebody's
+    // account; NO identities means we don't know what it is — refuse both.
     const identities = shellUser.user.identities ?? [];
+    if (identities.length === 0) return;
     if (identities.some((identity) => identity.provider !== "email")) return;
 
     const { data: merged, error: mergeError } = await supabaseAdmin.rpc(

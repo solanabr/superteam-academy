@@ -121,6 +121,21 @@ BEGIN
   -- ── Keyed tables: move what does not collide, keep the target's row where
   -- it does, then drop the shell's leftovers. Keys mirror each table's
   -- UNIQUE/PK over user_id.
+  -- enrollments and user_progress carry ON-CHAIN truth (tx_signature, the
+  -- completed bit the program will refuse to re-set — LessonAlreadyCompleted),
+  -- and the SHELL is precisely the account that had the wallet, so on a
+  -- collision the shell's row is the on-chain one and the target's is the
+  -- empty social-only one. Plain keep-target here would strand the learner:
+  -- DB says incomplete, chain refuses to re-complete. So colliding target
+  -- rows are backfilled from the shell's before the shell's are dropped.
+  UPDATE public.enrollments t SET
+    tx_signature   = COALESCE(t.tx_signature, s.tx_signature),
+    wallet_address = COALESCE(t.wallet_address, s.wallet_address),
+    completed_at   = COALESCE(t.completed_at, s.completed_at),
+    enrolled_at    = LEAST(t.enrolled_at, s.enrolled_at)
+  FROM public.enrollments s
+  WHERE t.user_id = p_target AND s.user_id = p_shell
+    AND t.course_id = s.course_id;
   UPDATE public.enrollments s SET user_id = p_target
     WHERE s.user_id = p_shell
       AND NOT EXISTS (SELECT 1 FROM public.enrollments x
@@ -129,6 +144,14 @@ BEGIN
   v_moved := v_moved || jsonb_build_object('enrollments', v_count);
   DELETE FROM public.enrollments WHERE user_id = p_shell;
 
+  UPDATE public.user_progress t SET
+    completed    = COALESCE(t.completed, false) OR COALESCE(s.completed, false),
+    completed_at = COALESCE(t.completed_at, s.completed_at),
+    tx_signature = COALESCE(t.tx_signature, s.tx_signature),
+    lesson_index = COALESCE(t.lesson_index, s.lesson_index)
+  FROM public.user_progress s
+  WHERE t.user_id = p_target AND s.user_id = p_shell
+    AND t.lesson_id = s.lesson_id;
   UPDATE public.user_progress s SET user_id = p_target
     WHERE s.user_id = p_shell
       AND NOT EXISTS (SELECT 1 FROM public.user_progress x
@@ -286,17 +309,25 @@ BEGIN
   -- resolves it (wallet nulled) and isAccountDeleted refuses the rest.
   UPDATE public.profiles SET deleted_at = now() WHERE id = p_shell;
 
-  -- ── Fail-closed sweep: every FK into profiles/auth.users must be clean of
-  -- the shell. A table this function does not cover aborts the merge here and
-  -- rolls everything back.
+  -- ── Fail-closed sweep: every PUBLIC-schema FK into profiles/auth.users
+  -- must be clean of the shell. A table this function does not cover aborts
+  -- the merge here and rolls everything back. Scoped to the app's own schema
+  -- because the shell's auth.users row deliberately survives the merge, and
+  -- GoTrue's own tables (auth.identities, auth.sessions, auth.mfa_factors,
+  -- auth.one_time_tokens) all FK auth.users — sweeping them would abort every
+  -- real merge (adversarial review F1; a shell ALWAYS has an auth.identities
+  -- row from admin.createUser).
   FOR v_fk IN
     SELECT c.conrelid::regclass AS tbl, a.attname AS col
     FROM pg_constraint c
+    JOIN pg_class rel ON rel.oid = c.conrelid
+    JOIN pg_namespace ns ON ns.oid = rel.relnamespace
     JOIN LATERAL unnest(c.conkey) AS k(attnum) ON true
     JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = k.attnum
     WHERE c.contype = 'f'
       AND c.confrelid IN ('public.profiles'::regclass, 'auth.users'::regclass)
       AND c.conrelid <> 'public.profiles'::regclass
+      AND ns.nspname = 'public'
       AND a.atttypid = 'uuid'::regtype
   LOOP
     EXECUTE format('SELECT count(*) FROM %s WHERE %I = $1', v_fk.tbl, v_fk.col)

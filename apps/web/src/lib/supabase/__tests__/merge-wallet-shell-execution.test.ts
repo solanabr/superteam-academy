@@ -72,6 +72,19 @@ const STUB_SETUP = `
   CREATE ROLE service_role;
   CREATE SCHEMA IF NOT EXISTS auth;
   CREATE TABLE auth.users (id uuid PRIMARY KEY, email text UNIQUE);
+  -- GoTrue's own FK-to-auth.users tables. A shell ALWAYS has an identities
+  -- row (admin.createUser), and the shell's auth.users row survives the
+  -- merge — so if the FK sweep is not schema-scoped to public, every real
+  -- merge aborts here (adversarial review F1). These stubs keep that fixed.
+  CREATE TABLE auth.identities (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    provider text NOT NULL
+  );
+  CREATE TABLE auth.sessions (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE
+  );
 
   CREATE TABLE public.profiles (
     id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -89,7 +102,10 @@ const STUB_SETUP = `
     current_streak integer DEFAULT 0,
     longest_streak integer DEFAULT 0,
     last_activity_date date,
-    streak_freezes integer NOT NULL DEFAULT 0
+    streak_freezes integer NOT NULL DEFAULT 0,
+    CONSTRAINT chk_user_xp_longest_gte_current CHECK (longest_streak >= current_streak),
+    CONSTRAINT chk_user_xp_streak_freezes_bounds CHECK (streak_freezes BETWEEN 0 AND 2),
+    CONSTRAINT chk_user_xp_nonnegative CHECK (total_xp >= 0 AND current_streak >= 0 AND longest_streak >= 0)
   );
   CREATE TABLE public.xp_transactions (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -100,12 +116,21 @@ const STUB_SETUP = `
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     course_id text NOT NULL,
+    enrolled_at timestamptz DEFAULT now(),
+    completed_at timestamptz,
+    tx_signature text,
+    wallet_address text,
     UNIQUE(user_id, course_id)
   );
   CREATE TABLE public.user_progress (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    course_id text NOT NULL DEFAULT 'course-a',
     lesson_id text NOT NULL,
+    completed boolean DEFAULT false,
+    completed_at timestamptz,
+    tx_signature text,
+    lesson_index smallint,
     UNIQUE(user_id, lesson_id)
   );
   CREATE TABLE public.user_achievements (
@@ -241,6 +266,15 @@ describe("merge_wallet_shell_account", () => {
       `INSERT INTO auth.users(id, email) VALUES ($1, $2), ($3, $4)`,
       [TARGET, "learner@example.com", SHELL, shellEmail]
     );
+    // What GoTrue really holds for these accounts: an email identity each
+    // (admin.createUser always writes one) and a live session for the shell.
+    // These rows SURVIVE the merge — the F1 regression this suite pins: an
+    // unscoped FK sweep would see them and abort every real merge.
+    await db.query(
+      `INSERT INTO auth.identities(user_id, provider) VALUES ($1, 'google'), ($2, 'email')`,
+      [TARGET, SHELL]
+    );
+    await db.query(`INSERT INTO auth.sessions(user_id) VALUES ($1)`, [SHELL]);
     // service_role because the REAL wallet-write trigger is installed and
     // seeding a wallet is exactly the write it locks down.
     await db.exec("SET ROLE service_role;");
@@ -364,6 +398,51 @@ describe("merge_wallet_shell_account", () => {
       `SELECT count(*)::int AS n FROM public.xp_transactions WHERE user_id = '${TARGET}'`
     );
     expect((transactions[0] as { n: number }).n).toBe(2);
+  });
+
+  it("backfills on-chain enrollment and lesson progress into the target's colliding rows", async () => {
+    // The shell is the account that HAD the wallet, so on a collision the
+    // shell's row is the on-chain one (tx_signature set, completed bit the
+    // program refuses to re-set) and the target's is the empty social-only
+    // one. Blanket keep-target would strand the learner: DB says incomplete,
+    // chain says LessonAlreadyCompleted (adversarial review F2).
+    await seedAccounts();
+    await db.exec(`
+      INSERT INTO public.enrollments(user_id, course_id, tx_signature, wallet_address, completed_at)
+        VALUES ('${TARGET}', 'course-a', NULL, NULL, NULL),
+               ('${SHELL}', 'course-a', 'ONCHAIN_ENROLL_SIG', '${WALLET}', '2026-08-10T12:00:00Z');
+      INSERT INTO public.user_progress(user_id, lesson_id, completed, tx_signature, lesson_index)
+        VALUES ('${TARGET}', 'lesson-1', false, NULL, NULL),
+               ('${SHELL}', 'lesson-1', true, 'ONCHAIN_LESSON_SIG', 0);
+    `);
+
+    await merge();
+
+    const { rows: enrollments } = await db.query(
+      `SELECT user_id, tx_signature, wallet_address, completed_at IS NOT NULL AS completed
+       FROM public.enrollments WHERE course_id = 'course-a'`
+    );
+    expect(enrollments).toEqual([
+      {
+        user_id: TARGET,
+        tx_signature: "ONCHAIN_ENROLL_SIG",
+        wallet_address: WALLET,
+        completed: true,
+      },
+    ]);
+
+    const { rows: progress } = await db.query(
+      `SELECT user_id, completed, tx_signature, lesson_index
+       FROM public.user_progress WHERE lesson_id = 'lesson-1'`
+    );
+    expect(progress).toEqual([
+      {
+        user_id: TARGET,
+        completed: true,
+        tx_signature: "ONCHAIN_LESSON_SIG",
+        lesson_index: 0,
+      },
+    ]);
   });
 
   it("moves the shell's user_xp row whole when the target has none", async () => {
