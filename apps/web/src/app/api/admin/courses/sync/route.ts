@@ -248,9 +248,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // Honor exactly what the content sets (the content-schema and the projector
-    // both default these to 0), so the deploy value and the drift engine's
-    // comparison — which also treats absent as 0 — never disagree.
+    // creatorRewardXp: honor exactly what the content sets (the content-schema
+    // and the projector both default it to 0, and so does the drift engine).
+    //
+    // xpPerLesson's `?? 10` below is DEAD CODE, not policy: the
+    // getMissingCourseFields gate above already 400s on a null-or-≤0
+    // xpPerLesson, so the fallback can never fire. It stays 10 because that is
+    // what the drift engine (sync-diff.ts) and recreate-course.ts use for the
+    // same unreachable case — three agreeing dead fallbacks beat one divergent
+    // one. The #993 always-update came from the update arm below pushing XP
+    // fields unconditionally, not from this line.
     const creatorRewardXp = course.creatorRewardXp ?? 0;
 
     const result = await deployCoursePda({
@@ -385,10 +392,15 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       { status: 400 }
     );
   }
-  const onChainCollection = onChainCourse?.collection as
-    | string
-    | Uint8Array
-    | undefined;
+  // accountInfo existed above, so a null here means the account vanished
+  // between the two reads (close_course race) — abort rather than guess.
+  if (!onChainCourse) {
+    return NextResponse.json(
+      { error: "Course account disappeared mid-sync — re-run the sync" },
+      { status: 409 }
+    );
+  }
+  const onChainCollection = onChainCourse.collection;
   const boundCollection =
     onChainCollection == null
       ? null
@@ -498,11 +510,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     updatedFields.push("newActiveLessons");
   }
 
-  if (course.xpPerLesson !== null) {
+  // Only when the bundle value actually differs from what's on-chain (#993):
+  // unconditionally pushing these meant every sync issued an update_course
+  // and a freshly created course could never no-op.
+  if (
+    course.xpPerLesson !== null &&
+    course.xpPerLesson !== onChainCourse.xp_per_lesson
+  ) {
     updateParams.newXpPerLesson = course.xpPerLesson;
     updatedFields.push("newXpPerLesson");
   }
-  if (course.creatorRewardXp !== null) {
+  if (
+    course.creatorRewardXp !== null &&
+    course.creatorRewardXp !== onChainCourse.creator_reward_xp
+  ) {
     updateParams.newCreatorRewardXp = course.creatorRewardXp;
     updatedFields.push("newCreatorRewardXp");
   }

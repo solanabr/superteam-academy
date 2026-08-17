@@ -72,7 +72,12 @@ interface RawCourseV1 {
   is_active: boolean;
   created_at: BN;
   updated_at: BN;
-  collection: PublicKey;
+  // Declared as the union the raw BorshCoder is actually observed to
+  // produce (base58 string or raw bytes; PublicKey when it round-trips
+  // one) — every consumer normalizes (achievements/sync, courses/sync,
+  // recreate-course). Declaring bare PublicKey here forced casts at the
+  // use sites that hid the disagreement instead of resolving it.
+  collection: PublicKey | Uint8Array | string;
   _reserved: number[];
   bump: number;
 }
@@ -95,7 +100,12 @@ interface RawCourseVNext {
   is_active: boolean;
   created_at: BN;
   updated_at: BN;
-  collection: PublicKey;
+  // Declared as the union the raw BorshCoder is actually observed to
+  // produce (base58 string or raw bytes; PublicKey when it round-trips
+  // one) — every consumer normalizes (achievements/sync, courses/sync,
+  // recreate-course). Declaring bare PublicKey here forced casts at the
+  // use sites that hid the disagreement instead of resolving it.
+  collection: PublicKey | Uint8Array | string;
   _reserved: number[];
   bump: number;
 }
@@ -124,7 +134,12 @@ export interface DecodedCourse {
   is_active: boolean;
   created_at: BN;
   updated_at: BN;
-  collection: PublicKey;
+  // Declared as the union the raw BorshCoder is actually observed to
+  // produce (base58 string or raw bytes; PublicKey when it round-trips
+  // one) — every consumer normalizes (achievements/sync, courses/sync,
+  // recreate-course). Declaring bare PublicKey here forced casts at the
+  // use sites that hid the disagreement instead of resolving it.
+  collection: PublicKey | Uint8Array | string;
   _reserved: number[];
   bump: number;
   /** 256-bit live-lesson mask (4 u64 words), always populated, both versions. */
