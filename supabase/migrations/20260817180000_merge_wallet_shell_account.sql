@@ -35,6 +35,8 @@ DECLARE
   v_shell_xp       public.user_xp%ROWTYPE;
   v_moved          JSONB := '{}'::jsonb;
   v_count          BIGINT;
+  v_dup_xp         BIGINT := 0;
+  v_cert           public.certificates%ROWTYPE;
   v_fk             RECORD;
 BEGIN
   -- trg_enforce_profile_wallet_write only lets service_role touch
@@ -97,14 +99,29 @@ BEGIN
     RAISE EXCEPTION 'merge refused: shell email is not a synthetic wallet email';
   END IF;
 
-  -- ── user_xp: the one aggregate. Sum totals, recompute level with the app's
-  -- formula (floor(sqrt(xp/100))), keep the better streak, cap freezes at the
-  -- inventory bound the CHECK constraint enforces.
+  -- Shell ledger rows whose idempotency_key collides with a target row are
+  -- the SAME award seen from both accounts (daily-quest keys are
+  -- `<questId>:<period>`, identical for every user on the same day). They are
+  -- dropped below rather than moved — and their amounts are subtracted from
+  -- the XP fold here, so the ledger and the total stay consistent (decided
+  -- explicitly, adversarial round 2: the award is real once, not twice).
+  SELECT COALESCE(sum(s.amount), 0) INTO v_dup_xp
+  FROM public.xp_transactions s
+  WHERE s.user_id = p_shell
+    AND s.idempotency_key IS NOT NULL
+    AND EXISTS (SELECT 1 FROM public.xp_transactions x
+                WHERE x.user_id = p_target
+                  AND x.idempotency_key = s.idempotency_key);
+
+  -- ── user_xp: the one aggregate. Sum totals (minus the duplicate awards
+  -- above), recompute level with the app's formula (floor(sqrt(xp/100))),
+  -- keep the better streak, cap freezes at the inventory bound the CHECK
+  -- constraint enforces.
   SELECT * INTO v_shell_xp FROM public.user_xp WHERE user_id = p_shell;
   IF FOUND THEN
     UPDATE public.user_xp t SET
-      total_xp           = t.total_xp + v_shell_xp.total_xp,
-      level              = floor(sqrt((t.total_xp + v_shell_xp.total_xp) / 100.0))::int,
+      total_xp           = t.total_xp + v_shell_xp.total_xp - v_dup_xp,
+      level              = floor(sqrt(GREATEST(0, t.total_xp + v_shell_xp.total_xp - v_dup_xp) / 100.0))::int,
       current_streak     = GREATEST(t.current_streak, v_shell_xp.current_streak),
       longest_streak     = GREATEST(t.longest_streak, v_shell_xp.longest_streak),
       last_activity_date = GREATEST(t.last_activity_date, v_shell_xp.last_activity_date),
@@ -115,7 +132,7 @@ BEGIN
     ELSE
       DELETE FROM public.user_xp WHERE user_id = p_shell;
     END IF;
-    v_moved := v_moved || jsonb_build_object('user_xp', 1);
+    v_moved := v_moved || jsonb_build_object('user_xp', 1, 'duplicate_xp_dropped', v_dup_xp);
   END IF;
 
   -- ── Keyed tables: move what does not collide, keep the target's row where
@@ -160,6 +177,17 @@ BEGIN
   v_moved := v_moved || jsonb_build_object('user_progress', v_count);
   DELETE FROM public.user_progress WHERE user_id = p_shell;
 
+  -- user_achievements and certificates carry minted on-chain artifacts
+  -- (asset_address, mint_address, tx_signature) — same structural asymmetry
+  -- as enrollments: the shell's colliding row is the minted one. Backfill
+  -- before dropping (adversarial round 2, R5).
+  UPDATE public.user_achievements t SET
+    tx_signature  = COALESCE(t.tx_signature, s.tx_signature),
+    asset_address = COALESCE(t.asset_address, s.asset_address),
+    unlocked_at   = LEAST(t.unlocked_at, s.unlocked_at)
+  FROM public.user_achievements s
+  WHERE t.user_id = p_target AND s.user_id = p_shell
+    AND t.achievement_id = s.achievement_id;
   UPDATE public.user_achievements s SET user_id = p_target
     WHERE s.user_id = p_shell
       AND NOT EXISTS (SELECT 1 FROM public.user_achievements x
@@ -168,13 +196,32 @@ BEGIN
   v_moved := v_moved || jsonb_build_object('user_achievements', v_count);
   DELETE FROM public.user_achievements WHERE user_id = p_shell;
 
-  UPDATE public.certificates s SET user_id = p_target
-    WHERE s.user_id = p_shell
-      AND NOT EXISTS (SELECT 1 FROM public.certificates x
-                      WHERE x.user_id = p_target AND x.course_id = s.course_id);
+  -- Certificates: idx_certificates_tx_signature_unique is GLOBAL (one row per
+  -- signature, not per user), so copying the shell's signature while the
+  -- shell's row still exists would collide mid-statement. Delete the shell's
+  -- colliding rows FIRST, backfilling the target from each deleted row.
+  -- credential_type follows the mint: a target row that never minted adopts
+  -- the shell's type along with its mint (else 'core' regresses to the
+  -- target's default 'legacy').
+  FOR v_cert IN
+    DELETE FROM public.certificates s
+      WHERE s.user_id = p_shell
+        AND EXISTS (SELECT 1 FROM public.certificates x
+                    WHERE x.user_id = p_target AND x.course_id = s.course_id)
+      RETURNING *
+  LOOP
+    UPDATE public.certificates t SET
+      mint_address    = COALESCE(t.mint_address, v_cert.mint_address),
+      metadata_uri    = COALESCE(t.metadata_uri, v_cert.metadata_uri),
+      tx_signature    = COALESCE(t.tx_signature, v_cert.tx_signature),
+      minted_at       = LEAST(t.minted_at, v_cert.minted_at),
+      credential_type = CASE WHEN t.mint_address IS NULL AND v_cert.mint_address IS NOT NULL
+                             THEN v_cert.credential_type ELSE t.credential_type END
+    WHERE t.user_id = p_target AND t.course_id = v_cert.course_id;
+  END LOOP;
+  UPDATE public.certificates SET user_id = p_target WHERE user_id = p_shell;
   GET DIAGNOSTICS v_count = ROW_COUNT;
   v_moved := v_moved || jsonb_build_object('certificates', v_count);
-  DELETE FROM public.certificates WHERE user_id = p_shell;
 
   UPDATE public.streak_freezes_used s SET user_id = p_target
     WHERE s.user_id = p_shell
@@ -283,11 +330,23 @@ BEGIN
   v_moved := v_moved || jsonb_build_object('email_subscriptions', v_count);
   DELETE FROM public.email_subscriptions WHERE user_id = p_shell;
 
-  -- ── Unkeyed tables: plain moves, nothing can collide.
-  UPDATE public.xp_transactions SET user_id = p_target WHERE user_id = p_shell;
+  -- xp_transactions is keyed after all: idx_xp_transactions_idempotency is
+  -- UNIQUE (user_id, idempotency_key), and daily-quest keys
+  -- (`<questId>:<period>`) are identical across users — both accounts doing
+  -- the same quest on the same day WILL collide (adversarial round 2, R4).
+  -- The shell's duplicate is the same award already counted once; drop it
+  -- (its amount was subtracted from the XP fold above).
+  UPDATE public.xp_transactions s SET user_id = p_target
+    WHERE s.user_id = p_shell
+      AND (s.idempotency_key IS NULL
+           OR NOT EXISTS (SELECT 1 FROM public.xp_transactions x
+                          WHERE x.user_id = p_target
+                            AND x.idempotency_key = s.idempotency_key));
   GET DIAGNOSTICS v_count = ROW_COUNT;
   v_moved := v_moved || jsonb_build_object('xp_transactions', v_count);
+  DELETE FROM public.xp_transactions WHERE user_id = p_shell;
 
+  -- ── Unkeyed on author: plain moves, nothing can collide.
   UPDATE public.threads SET author_id = p_target WHERE author_id = p_shell;
   GET DIAGNOSTICS v_count = ROW_COUNT;
   v_moved := v_moved || jsonb_build_object('threads', v_count);
@@ -296,9 +355,20 @@ BEGIN
   GET DIAGNOSTICS v_count = ROW_COUNT;
   v_moved := v_moved || jsonb_build_object('answers', v_count);
 
-  UPDATE public.flags SET reporter_id = p_target WHERE reporter_id = p_shell;
+  -- Flags carry the same partial per-kind uniques as votes
+  -- (idx_flags_unique_thread / idx_flags_unique_answer) — keyed move per
+  -- kind, keep the target's flag on a collision (adversarial round 2, R6).
+  UPDATE public.flags s SET reporter_id = p_target
+    WHERE s.reporter_id = p_shell AND s.thread_id IS NOT NULL
+      AND NOT EXISTS (SELECT 1 FROM public.flags x
+                      WHERE x.reporter_id = p_target AND x.thread_id = s.thread_id);
+  UPDATE public.flags s SET reporter_id = p_target
+    WHERE s.reporter_id = p_shell AND s.answer_id IS NOT NULL
+      AND NOT EXISTS (SELECT 1 FROM public.flags x
+                      WHERE x.reporter_id = p_target AND x.answer_id = s.answer_id);
   GET DIAGNOSTICS v_count = ROW_COUNT;
   v_moved := v_moved || jsonb_build_object('flags', v_count);
+  DELETE FROM public.flags WHERE reporter_id = p_shell;
   UPDATE public.flags SET resolved_by = p_target WHERE resolved_by = p_shell;
 
   -- ── The wallet itself. Shell first (wallet_address is UNIQUE), then target.

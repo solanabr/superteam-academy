@@ -110,8 +110,14 @@ const STUB_SETUP = `
   CREATE TABLE public.xp_transactions (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-    amount integer NOT NULL
+    amount integer NOT NULL,
+    idempotency_key text
   );
+  -- The index that made "unkeyed" wrong (adversarial round 2, R4): daily-quest
+  -- keys are identical across users, so a plain move collides.
+  CREATE UNIQUE INDEX idx_xp_transactions_idempotency
+    ON public.xp_transactions (user_id, idempotency_key)
+    WHERE idempotency_key IS NOT NULL;
   CREATE TABLE public.enrollments (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -137,14 +143,27 @@ const STUB_SETUP = `
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     achievement_id text NOT NULL,
+    unlocked_at timestamptz DEFAULT now(),
+    tx_signature text,
+    asset_address text,
     UNIQUE(user_id, achievement_id)
   );
   CREATE TABLE public.certificates (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     course_id text NOT NULL,
+    mint_address text,
+    metadata_uri text,
+    minted_at timestamptz DEFAULT now(),
+    tx_signature text,
+    credential_type text DEFAULT 'legacy',
     UNIQUE(user_id, course_id)
   );
+  -- GLOBAL, not per-user (adversarial round 2, R5): the backfill must delete
+  -- the shell's row before the target can hold its signature.
+  CREATE UNIQUE INDEX idx_certificates_tx_signature_unique
+    ON public.certificates (tx_signature)
+    WHERE tx_signature IS NOT NULL;
   CREATE TABLE public.streak_freezes_used (
     user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     frozen_date date NOT NULL,
@@ -210,8 +229,14 @@ const STUB_SETUP = `
   CREATE TABLE public.flags (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     reporter_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    thread_id uuid REFERENCES public.threads(id) ON DELETE CASCADE,
+    answer_id uuid REFERENCES public.answers(id) ON DELETE CASCADE,
     resolved_by uuid REFERENCES public.profiles(id)
   );
+  CREATE UNIQUE INDEX idx_flags_unique_thread
+    ON public.flags (reporter_id, thread_id) WHERE thread_id IS NOT NULL;
+  CREATE UNIQUE INDEX idx_flags_unique_answer
+    ON public.flags (reporter_id, answer_id) WHERE answer_id IS NOT NULL;
   CREATE TABLE public.thread_views (
     user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     thread_id uuid NOT NULL REFERENCES public.threads(id) ON DELETE CASCADE,
@@ -443,6 +468,105 @@ describe("merge_wallet_shell_account", () => {
         lesson_index: 0,
       },
     ]);
+  });
+
+  it("drops duplicate daily-quest ledger rows and subtracts them from the fold", async () => {
+    // Same quest, same day, both accounts: byte-identical idempotency_key
+    // (`login_streak:2026-08-15`). A plain move collides on
+    // idx_xp_transactions_idempotency and aborted the whole merge
+    // (adversarial round 2, R4). The duplicate is the same award counted
+    // once — dropped, and its amount subtracted from the XP fold.
+    await seedAccounts();
+    await db.exec(`
+      INSERT INTO public.user_xp(user_id, total_xp, level)
+        VALUES ('${TARGET}', 100, 1), ('${SHELL}', 300, 1);
+      INSERT INTO public.xp_transactions(user_id, amount, idempotency_key)
+        VALUES ('${TARGET}', 10, 'login_streak:2026-08-15'),
+               ('${SHELL}', 10, 'login_streak:2026-08-15'),
+               ('${SHELL}', 50, 'first_lesson:2026-08-14'),
+               ('${SHELL}', 240, NULL);
+    `);
+
+    await merge();
+
+    const { rows: ledger } = await db.query(
+      `SELECT user_id, amount, idempotency_key FROM public.xp_transactions ORDER BY amount`
+    );
+    expect(ledger).toEqual([
+      {
+        user_id: TARGET,
+        amount: 10,
+        idempotency_key: "login_streak:2026-08-15",
+      },
+      {
+        user_id: TARGET,
+        amount: 50,
+        idempotency_key: "first_lesson:2026-08-14",
+      },
+      { user_id: TARGET, amount: 240, idempotency_key: null },
+    ]);
+
+    const { rows: xp } = await db.query(
+      `SELECT total_xp, level FROM public.user_xp WHERE user_id = '${TARGET}'`
+    );
+    // 100 + 300 minus the 10xp duplicate = 390, level floor(sqrt(3.9)) = 1.
+    expect(xp).toEqual([{ total_xp: 390, level: 1 }]);
+  });
+
+  it("backfills minted certificates and achievements, honoring the global signature unique", async () => {
+    // The shell's colliding row is the MINTED one (adversarial round 2, R5).
+    // idx_certificates_tx_signature_unique is global, so the backfill only
+    // works if the shell's row is deleted before the target adopts its
+    // signature. credential_type must follow the mint ('core' would otherwise
+    // regress to the target's 'legacy' default).
+    await seedAccounts();
+    await db.exec(`
+      INSERT INTO public.user_achievements(user_id, achievement_id, tx_signature, asset_address)
+        VALUES ('${TARGET}', 'achievement-first-steps', NULL, NULL),
+               ('${SHELL}', 'achievement-first-steps', 'ACH_SIG', 'ACH_ASSET');
+      INSERT INTO public.certificates(user_id, course_id, mint_address, metadata_uri, tx_signature, credential_type)
+        VALUES ('${TARGET}', 'course-a', NULL, NULL, NULL, 'legacy'),
+               ('${SHELL}', 'course-a', 'CERT_MINT', 'ar://cert-meta', 'CERT_SIG', 'core');
+    `);
+
+    await merge();
+
+    const { rows: achievements } = await db.query(
+      `SELECT user_id, tx_signature, asset_address FROM public.user_achievements`
+    );
+    expect(achievements).toEqual([
+      { user_id: TARGET, tx_signature: "ACH_SIG", asset_address: "ACH_ASSET" },
+    ]);
+
+    const { rows: certificates } = await db.query(
+      `SELECT user_id, mint_address, metadata_uri, tx_signature, credential_type
+       FROM public.certificates`
+    );
+    expect(certificates).toEqual([
+      {
+        user_id: TARGET,
+        mint_address: "CERT_MINT",
+        metadata_uri: "ar://cert-meta",
+        tx_signature: "CERT_SIG",
+        credential_type: "core",
+      },
+    ]);
+  });
+
+  it("keeps the target's flag when both accounts flagged the same thread", async () => {
+    await seedAccounts();
+    await db.exec(`
+      INSERT INTO public.threads(id, author_id)
+        VALUES ('99999999-9999-9999-9999-999999999999', '${TARGET}');
+      INSERT INTO public.flags(reporter_id, thread_id)
+        VALUES ('${TARGET}', '99999999-9999-9999-9999-999999999999'),
+               ('${SHELL}', '99999999-9999-9999-9999-999999999999');
+    `);
+
+    await merge();
+
+    const { rows } = await db.query(`SELECT reporter_id FROM public.flags`);
+    expect(rows).toEqual([{ reporter_id: TARGET }]);
   });
 
   it("moves the shell's user_xp row whole when the target has none", async () => {
