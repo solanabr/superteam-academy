@@ -241,26 +241,32 @@ export function useDashboardData(
           questsResult.questPeriod
             ? questsResult.questPeriod
             : questPeriodUtc();
-        for (const reward of pickQuestRewardToasts(
-          (questsResult.quests ?? []) as DailyQuest[],
-          questPeriod,
-          authUserId
-        )) {
-          dispatchXpGain(reward.xpReward);
-          // Same celebration the Realtime path fires — one component, one look,
-          // wherever the learner happens to be standing.
-          dispatchQuestReward({
-            questId: reward.questId,
-            xpReward: reward.xpReward,
-          });
-        }
-        for (const amount of pickSurpriseBonusToasts(
-          transactions ?? [],
-          authUserId
-        )) {
-          dispatchXpGain(amount);
-          celebrate("surprise-bonus");
-          dispatchSurpriseBonus(amount);
+        // Gated on `active` for consistency with every other post-await effect
+        // in this fetch (#976 finding 4) — the session-wide dedupe already
+        // prevents double-toasts, but an unmounted hook should not fire UI
+        // events at all.
+        if (active) {
+          for (const reward of pickQuestRewardToasts(
+            (questsResult.quests ?? []) as DailyQuest[],
+            questPeriod,
+            authUserId
+          )) {
+            dispatchXpGain(reward.xpReward);
+            // Same celebration the Realtime path fires — one component, one
+            // look, wherever the learner happens to be standing.
+            dispatchQuestReward({
+              questId: reward.questId,
+              xpReward: reward.xpReward,
+            });
+          }
+          for (const amount of pickSurpriseBonusToasts(
+            transactions ?? [],
+            authUserId
+          )) {
+            dispatchXpGain(amount);
+            celebrate("surprise-bonus");
+            dispatchSurpriseBonus(amount);
+          }
         }
 
         const activityRows = activityRowsResult.data;
