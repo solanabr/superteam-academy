@@ -97,6 +97,10 @@ export function ProfileBody({
                   name={ach.name}
                   hint={ach.description}
                   state={earned ? (isSol ? "sol" : "earned") : "locked"}
+                  label={tGam("achievementTokenLabel", {
+                    name: ach.name,
+                    state: earned ? (isSol ? "sol" : "earned") : "locked",
+                  })}
                   isOpen={openTip === tipId}
                   onTap={() =>
                     setOpenTip((prev) => (prev === tipId ? null : tipId))

@@ -483,6 +483,7 @@
     "category_special": "Special",
     "noEntries": "No rankings yet. Complete lessons to earn XP and appear here.",
     "noAchievements": "Complete a lesson to earn your first achievement",
+    "achievementTokenLabel": "{name} — {state, select, earned {earned} sol {earned, Solana tier} locked {locked} other {locked}}",
     "showLocked": "Show locked",
     "viewOnExplorer": "View on Explorer",
     "onChain": "on-chain",
