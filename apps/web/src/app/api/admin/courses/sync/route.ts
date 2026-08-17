@@ -250,14 +250,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     // Honor exactly what the content sets (the content-schema and the projector
     // both default these to 0), so the deploy value and the drift engine's
-    // comparison — which also treats absent as 0 — never disagree.
+    // comparison — which also treats absent as 0 — never disagree. The old
+    // `xpPerLesson ?? 10` here is what made every freshly created course need
+    // an immediate update_course to match the bundle (#993).
     const creatorRewardXp = course.creatorRewardXp ?? 0;
 
     const result = await deployCoursePda({
       courseId,
       lessonCount: course.lessonCount,
       difficulty: difficultyToNumber(course.difficulty),
-      xpPerLesson: course.xpPerLesson ?? 10,
+      xpPerLesson: course.xpPerLesson ?? 0,
       trackId: course.trackId ?? 0,
       trackLevel: course.trackLevel ?? 0,
       prerequisitePda,
@@ -385,7 +387,15 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       { status: 400 }
     );
   }
-  const onChainCollection = onChainCourse?.collection as
+  // accountInfo existed above, so a null here means the account vanished
+  // between the two reads (close_course race) — abort rather than guess.
+  if (!onChainCourse) {
+    return NextResponse.json(
+      { error: "Course account disappeared mid-sync — re-run the sync" },
+      { status: 409 }
+    );
+  }
+  const onChainCollection = onChainCourse.collection as unknown as
     | string
     | Uint8Array
     | undefined;
@@ -498,11 +508,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     updatedFields.push("newActiveLessons");
   }
 
-  if (course.xpPerLesson !== null) {
+  // Only when the bundle value actually differs from what's on-chain (#993):
+  // unconditionally pushing these meant every sync issued an update_course
+  // and a freshly created course could never no-op.
+  if (
+    course.xpPerLesson !== null &&
+    course.xpPerLesson !== onChainCourse.xp_per_lesson
+  ) {
     updateParams.newXpPerLesson = course.xpPerLesson;
     updatedFields.push("newXpPerLesson");
   }
-  if (course.creatorRewardXp !== null) {
+  if (
+    course.creatorRewardXp !== null &&
+    course.creatorRewardXp !== onChainCourse.creator_reward_xp
+  ) {
     updateParams.newCreatorRewardXp = course.creatorRewardXp;
     updatedFields.push("newCreatorRewardXp");
   }
