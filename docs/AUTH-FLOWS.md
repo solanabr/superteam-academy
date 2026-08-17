@@ -20,23 +20,24 @@ off. One soft bend: after an OAuth *link*, the settings page syncs `profiles.goo
 — profile metadata, not session material.
 
 ```
-  Connect Solana Wallet      Google (Dynamic on)          Google (Dynamic off) / GitHub
-        |                        |                                |
-  wallet-adapter modal     signInWithSocialRedirect         supabase.auth.signInWithOAuth
-        |                        | (full-page nav)                |
-  WalletAuthHandler        DynamicAuthHandler job 0        GET /api/auth/callback
-  SIWS sign → POST         completeSocialRedirect →        exchangeCodeForSession
-  /api/auth/wallet         POST /api/auth/dynamic (JWT)          |
-        |                        |                                |
-        +--------- Supabase session cookies, set server-side ----+
+  Connect Solana Wallet    Google (Dynamic on)       Embedded-wallet SIWS      Google (Dynamic off) / GitHub
+        |                      |                          |                          |
+  wallet-adapter modal   signInWithSocialRedirect   DynamicAuthHandler job 3   supabase.auth.signInWithOAuth
+        |                      | (full-page nav)     (restored Dynamic session,     |
+  WalletAuthHandler      DynamicAuthHandler job 0    no Supabase session)      GET /api/auth/callback
+  SIWS sign → POST       completeSocialRedirect →   SIWS sign → POST          exchangeCodeForSession
+  /api/auth/wallet       POST /api/auth/dynamic     /api/auth/wallet               |
+        |                      | (JWT)                   |                          |
+        +------------- Supabase session cookies, set server-side -----------------+
 ```
 
-All four server chokepoints (`/api/auth/wallet`, `/api/auth/dynamic`,
-`/api/auth/callback`, and the middleware backstop) share three post-login rituals:
-tombstone refusal (`src/lib/auth/account-status.ts`, `profiles.deleted_at`; fails OPEN
-on query error so a Supabase blip can't lock everyone out), replacement of the
-`user_xxxxxxxx` placeholder username, and a fire-and-forget
-`retryPendingOnchainActions` drain. Add a new way in, add all three.
+The three session-minting routes (`/api/auth/wallet`, `/api/auth/dynamic`,
+`/api/auth/callback`) share three post-login rituals: tombstone refusal
+(`src/lib/auth/account-status.ts`, `profiles.deleted_at`; fails OPEN on query error so
+a Supabase blip can't lock everyone out), replacement of the `user_xxxxxxxx`
+placeholder username, and a fire-and-forget `retryPendingOnchainActions` drain. Add a
+new way in, add all three. The middleware is not a fourth chokepoint — it mints
+nothing; it re-runs the tombstone check per request as a backstop, and that is all.
 
 ## 1. Ways in — the auth modal
 
@@ -62,12 +63,16 @@ wallet connect when no Supabase user exists:
    returns the exact bytes, which survives wallets that re-serialize SIWS messages
    (Backpack). Fall back to raw `signMessage` over a locally built message
    (`createSIWSMessage`/`formatSIWSMessage`).
-3. `POST /api/auth/wallet` with `{message, signature, publicKey}` (10KB body cap).
+3. `POST /api/auth/wallet` with `{message, signature, publicKey}` (10KB body cap —
+   like the dynamic route's 16KB, a decimal UTF-16 length check after the body is
+   fully read; a bound on processing, not on ingress).
 4. On success: **hard redirect** to `/dashboard` — the browser Supabase client only
    reads cookies on boot, so a soft navigation leaves the header logged-out.
 
 Server verification (`src/lib/solana/verify-siws.ts`), in order: parse fields → expiry
-+ issued-at age + expiration-window ≤ 5 min → nonce exists/pending/unexpired (checked
++ issued-at age + expiration-window ≤ 5 min (the age/window checks run only when the
+message carries an `Issued At`; absent means they're skipped, `verify-siws.ts:172`) →
+nonce exists/pending/unexpired (checked
 BEFORE the signature so failed signatures don't burn nonces) → domain equals the `host`
 header → address in message equals `publicKey` → Ed25519 verify → atomically consume
 the nonce (`UPDATE … WHERE status='pending'`, so concurrent requests can't double-spend).
@@ -95,8 +100,9 @@ Always Supabase OAuth (no Dynamic variant). Returns through
 `exchangeCodeForSession(code)`, cookies set on the redirect response, `next` param
 re-sanitized server-side (`sanitizeRedirect`: single leading slash, no `//`, no `\`,
 no `:` — kills protocol-relative, Windows-relative, and scheme injection). Also
-refreshes the Google avatar URL on each login (Google CDN URLs rotate) unless the
-stored avatar is a Supabase Storage upload.
+refreshes the avatar from any OAuth provider's `user_metadata.avatar_url` on each
+login (provider CDN URLs rotate) unless the stored avatar is a Supabase Storage
+upload — Google and GitHub alike, despite living in this callback.
 
 ## 2. DynamicAuthHandler
 
@@ -123,7 +129,10 @@ page on hydration — the hooks throw outside a provider). No UI. Four jobs:
    `runWalletSiws` (`src/lib/wallet/siws.ts`) signs a server nonce with the embedded
    wallet and calls `/api/auth/wallet` (no session → sign in) or
    `/api/auth/link-wallet` (session → link). Success hard-reloads; any failure clears
-   `handledAddress` so the learner can retry without reloading.
+   `handledAddress` so the learner can retry without reloading. For an already-linked
+   learner the thing that prevents a re-prompt across page loads is the
+   `profiles.wallet_address` early return (`dynamic-auth-handler.tsx:247-254`) —
+   `handledAddress` only dedupes within a single page load.
 
 The guards, each of which closed a live incident:
 
@@ -162,7 +171,8 @@ environment, and provider-verified rather than self-asserted:
 
 1. Environment id from OUR env (`getDynamicEnvironmentId()`, lowercased once) — unset =
    503, fail closed. Never taken from the request.
-2. Per-IP rate limit (10/min) — per-IP because no account exists yet.
+2. Per-IP rate limit (10/min) — per-IP because no account exists yet. Fails OPEN on
+   a rate-limit-store error (same deliberate availability bias as the tombstone).
 3. 16KB body cap (the full JWT carries `verified_credentials` and outgrows the wallet
    route's 10KB).
 4. `jwtVerify` against Dynamic's JWKS **for our environment id**
@@ -260,7 +270,8 @@ end wallet-only.
   every request carrying a session (covers SIWS sessions that never pass the OAuth
   callback), then next-intl, then auth-gating of `/dashboard`, `/settings`, `/teach`,
   `/review`, and exact `/profile`. `/api/*` is excluded from the matcher — API routes
-  do their own auth.
+  do their own auth. The middleware also gates `/admin` on a separate HMAC-signed
+  `admin_session` cookie; that is a parallel auth system, out of scope for this map.
 - **The Dynamic session is parallel state**, not the session of record. It survives a
   Supabase sign-out, `DynamicAuthHandler` mounts everywhere, and MPC signing is
   promptless — so an orphaned Dynamic session silently re-runs the SIWS bridge and
