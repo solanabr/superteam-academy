@@ -331,6 +331,20 @@ export async function getCourseById(id: string): Promise<Course | null> {
   });
 }
 
+/**
+ * A course's slug straight from the bundle — NO deployment read (#1050). For
+ * callers that only need to build a URL (the landing/funnel entry-lesson
+ * resolution): the sync gate on those paths lives in `getCourseLessons`
+ * (empty for unsynced), so paying a service-role Supabase round-trip here for
+ * a discarded `trackCollectionAddress` was pure liability — the read #931
+ * taught the landing to survive is one it never needed. UNGATED by design;
+ * do not use the returned slug to decide visibility.
+ */
+export function getCourseSlugById(id: string): string | null {
+  const doc = coursesById.get(id);
+  return doc?.slug?.current ?? null;
+}
+
 export async function getCourseIdBySlug(
   slug: string
 ): Promise<{ _id: string; xpPerLesson: number } | null> {

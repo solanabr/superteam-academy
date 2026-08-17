@@ -1,7 +1,7 @@
 import {
-  getCourseById,
   getCourseIdBySlug,
   getCourseLessons,
+  getCourseSlugById,
 } from "@/lib/content/queries";
 import {
   DEFAULT_SEGMENT,
@@ -24,8 +24,10 @@ export async function resolveEntryLessonHref(
   locale: string,
   courseId: string
 ): Promise<string> {
-  const course = await getCourseById(courseId);
-  const slug = course?.slug ?? null;
+  // Bundle-only slug read (#1050): the old getCourseById here paid a
+  // service-role deployment round-trip per landing render for a field this
+  // caller discards. The sync gate below (getCourseLessons) is unchanged.
+  const slug = getCourseSlugById(courseId);
   const lessons = slug ? await getCourseLessons(slug) : [];
   const firstLessonSlug = lessons[0]?.slug ?? null;
   return slug && firstLessonSlug
