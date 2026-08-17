@@ -248,18 +248,23 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // Honor exactly what the content sets (the content-schema and the projector
-    // both default these to 0), so the deploy value and the drift engine's
-    // comparison — which also treats absent as 0 — never disagree. The old
-    // `xpPerLesson ?? 10` here is what made every freshly created course need
-    // an immediate update_course to match the bundle (#993).
+    // creatorRewardXp: honor exactly what the content sets (the content-schema
+    // and the projector both default it to 0, and so does the drift engine).
+    //
+    // xpPerLesson's `?? 10` below is DEAD CODE, not policy: the
+    // getMissingCourseFields gate above already 400s on a null-or-≤0
+    // xpPerLesson, so the fallback can never fire. It stays 10 because that is
+    // what the drift engine (sync-diff.ts) and recreate-course.ts use for the
+    // same unreachable case — three agreeing dead fallbacks beat one divergent
+    // one. The #993 always-update came from the update arm below pushing XP
+    // fields unconditionally, not from this line.
     const creatorRewardXp = course.creatorRewardXp ?? 0;
 
     const result = await deployCoursePda({
       courseId,
       lessonCount: course.lessonCount,
       difficulty: difficultyToNumber(course.difficulty),
-      xpPerLesson: course.xpPerLesson ?? 0,
+      xpPerLesson: course.xpPerLesson ?? 10,
       trackId: course.trackId ?? 0,
       trackLevel: course.trackLevel ?? 0,
       prerequisitePda,
@@ -395,7 +400,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       { status: 409 }
     );
   }
-  const onChainCollection = onChainCourse.collection;
+  const onChainCollection = onChainCourse.collection as unknown as
+    | string
+    | Uint8Array
+    | undefined;
   const boundCollection =
     onChainCollection == null
       ? null
