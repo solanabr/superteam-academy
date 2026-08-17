@@ -92,6 +92,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "cannotUnlinkLast" }, { status: 403 });
     }
 
+    // A wallet-first account carries a synthetic, undeliverable email
+    // (`<pubkey>@wallet.superteam-lms.local`), so the email bridge can never
+    // recover it — and an EMBEDDED wallet's signing session itself rides on
+    // the OAuth login. Dropping the last OAuth identity from such an account
+    // is the one transition with no way back (owner decision 2026-08-17:
+    // 68 wallet-first accounts could walk into it, zero have — this keeps it
+    // at zero). Real-email accounts stay freely unlinkable: the bridge
+    // matches by email, identity-agnostic.
+    const syntheticEmail = (user.email ?? "").endsWith(
+      "@wallet.superteam-lms.local"
+    );
+    const unlinkingSoleOauth =
+      (provider === "google" && hasGoogle && !hasGitHub) ||
+      (provider === "github" && hasGitHub && !hasGoogle);
+    if (syntheticEmail && unlinkingSoleOauth) {
+      return NextResponse.json(
+        { error: "cannotUnlinkOnlyRecovery" },
+        { status: 403 }
+      );
+    }
+
     // Perform the unlink operation
     if (provider === "wallet") {
       // Wallet links are permanent — on-chain state (enrollments, XP, achievements)
