@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     // Reject unknown courses before building anything. The program would reject
     // them too, but only after the learner submitted — and a failed transaction
     // still costs the sponsor the fee.
-    if (!getCourseById(courseId)) {
+    if (!(await getCourseById(courseId))) {
       return NextResponse.json({ error: "Unknown course" }, { status: 404 });
     }
 
