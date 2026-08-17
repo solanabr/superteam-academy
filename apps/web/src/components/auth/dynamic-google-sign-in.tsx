@@ -20,9 +20,9 @@ import { trackEvent } from "@/lib/analytics";
  * by `DynamicAuthHandler`; there is no popup variant on web (see
  * `lib/dynamic/social.ts`).
  *
- * Split out for the same reason as `DynamicEmailSignIn`: `useUser` throws
- * `MissingProviderError` outside a `DynamicProvider`, and hooks cannot be
- * conditional, so the feature gate has to be a component boundary.
+ * Split out because `useUser` throws `MissingProviderError` outside a
+ * `DynamicProvider`, and hooks cannot be conditional, so the feature gate has
+ * to be a component boundary.
  */
 export function DynamicGoogleSignIn({ disabled }: { disabled: boolean }) {
   const t = useTranslations("auth");
