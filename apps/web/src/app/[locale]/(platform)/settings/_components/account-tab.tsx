@@ -18,6 +18,11 @@ import { createSIWSMessage, formatSIWSMessage } from "@/lib/solana/wallet-auth";
 
 // ── Types ─────────────────────────────────────────────────────────
 interface AccountTabProps {
+  /**
+   * The Supabase account email — synthetic (`@wallet.superteam-lms.local`)
+   * for wallet-first accounts. Drives the unlink recovery copy and guard.
+   */
+  accountEmail: string | null;
   initialWalletAddress: string | null;
   initialGoogleEmail: string | null;
   initialGoogleIdentity: UserIdentity | null;
@@ -28,6 +33,7 @@ interface AccountTabProps {
 }
 
 export function AccountTab({
+  accountEmail,
   initialWalletAddress,
   initialGoogleEmail,
   initialGoogleIdentity,
@@ -52,6 +58,10 @@ export function AccountTab({
   const [isLinkingWallet, setIsLinkingWallet] = useState(false);
   const [isLinkingGoogle, setIsLinkingGoogle] = useState(false);
   const [isLinkingGitHub, setIsLinkingGitHub] = useState(false);
+  // Shared across BOTH unlink buttons (#1053 gate F2): firing google+github
+  // unlinks inside one round-trip let a synthetic-email account race past the
+  // sole-OAuth guard, since each request read pre-unlink state.
+  const [isUnlinking, setIsUnlinking] = useState(false);
   const [linkMessage, setLinkMessage] = useState<{
     type: "success" | "error";
     text: string;
@@ -398,6 +408,8 @@ export function AccountTab({
   };
 
   const handleUnlinkGoogle = async () => {
+    if (isUnlinking) return;
+    setIsUnlinking(true);
     setLinkMessage(null);
     try {
       const res = await fetch("/api/auth/unlink", {
@@ -409,6 +421,11 @@ export function AccountTab({
       if (!res.ok) {
         if (data.error === "cannotUnlinkLast") {
           setLinkMessage({ type: "error", text: t("cannotUnlinkLastHint") });
+        } else if (data.error === "cannotUnlinkOnlyRecovery") {
+          setLinkMessage({
+            type: "error",
+            text: t("cannotUnlinkOnlyRecoveryHint"),
+          });
         } else {
           setLinkMessage({ type: "error", text: t("unlinkFailed") });
         }
@@ -419,10 +436,14 @@ export function AccountTab({
       setLinkMessage({ type: "success", text: t("googleUnlinked") });
     } catch {
       setLinkMessage({ type: "error", text: t("unlinkFailed") });
+    } finally {
+      setIsUnlinking(false);
     }
   };
 
   const handleUnlinkGitHub = async () => {
+    if (isUnlinking) return;
+    setIsUnlinking(true);
     setLinkMessage(null);
     try {
       const res = await fetch("/api/auth/unlink", {
@@ -434,6 +455,11 @@ export function AccountTab({
       if (!res.ok) {
         if (data.error === "cannotUnlinkLast") {
           setLinkMessage({ type: "error", text: t("cannotUnlinkLastHint") });
+        } else if (data.error === "cannotUnlinkOnlyRecovery") {
+          setLinkMessage({
+            type: "error",
+            text: t("cannotUnlinkOnlyRecoveryHint"),
+          });
         } else {
           setLinkMessage({ type: "error", text: t("unlinkFailed") });
         }
@@ -444,6 +470,8 @@ export function AccountTab({
       setLinkMessage({ type: "success", text: t("githubUnlinked") });
     } catch {
       setLinkMessage({ type: "error", text: t("unlinkFailed") });
+    } finally {
+      setIsUnlinking(false);
     }
   };
 
@@ -454,10 +482,32 @@ export function AccountTab({
     (gitHubIdentity ? 1 : 0);
   const canUnlink = linkedCount >= 2;
 
+  // Wallet-first accounts (synthetic email) cannot recover through the email
+  // bridge, so their last OAuth identity is their only path back in if wallet
+  // access is lost — the server refuses to unlink it and the button says why
+  // up front. Real-email accounts get the opposite message: unlinking is
+  // safe, the bridge matches by email.
+  const isSyntheticEmail =
+    accountEmail?.endsWith("@wallet.superteam-lms.local") ?? false;
+  const oauthCount = (googleIdentity ? 1 : 0) + (gitHubIdentity ? 1 : 0);
+  const soleOauthLocked = isSyntheticEmail && oauthCount === 1;
+
   return (
     <Card>
       <CardContent className="space-y-6 p-6">
         <h3 className="set-group-title">{t("connectedAccounts")}</h3>
+
+        {/* Recovery context (#unlink decision 2026-08-17): tell each account
+            shape what unlinking means BEFORE they click, not in an error. */}
+        {soleOauthLocked ? (
+          <p className="text-sm text-text-3">
+            {t("syntheticEmailRecoveryNote")}
+          </p>
+        ) : !isSyntheticEmail && accountEmail && oauthCount > 0 ? (
+          <p className="text-sm text-text-3">
+            {t("realEmailRecoveryNote", { email: accountEmail })}
+          </p>
+        ) : null}
 
         {/* Feedback banner */}
         {linkMessage && (
@@ -526,8 +576,14 @@ export function AccountTab({
               variant="outline"
               size="sm"
               onClick={handleUnlinkGoogle}
-              disabled={!canUnlink}
-              title={!canUnlink ? t("cannotUnlinkLastHint") : undefined}
+              disabled={!canUnlink || soleOauthLocked || isUnlinking}
+              title={
+                soleOauthLocked
+                  ? t("cannotUnlinkOnlyRecoveryHint")
+                  : !canUnlink
+                    ? t("cannotUnlinkLastHint")
+                    : undefined
+              }
             >
               {t("unlink")}
             </Button>
@@ -562,8 +618,14 @@ export function AccountTab({
               variant="outline"
               size="sm"
               onClick={handleUnlinkGitHub}
-              disabled={!canUnlink}
-              title={!canUnlink ? t("cannotUnlinkLastHint") : undefined}
+              disabled={!canUnlink || soleOauthLocked || isUnlinking}
+              title={
+                soleOauthLocked
+                  ? t("cannotUnlinkOnlyRecoveryHint")
+                  : !canUnlink
+                    ? t("cannotUnlinkLastHint")
+                    : undefined
+              }
             >
               {t("unlink")}
             </Button>

@@ -54,6 +54,7 @@ export default function SettingsPage() {
 
   // ── Account data (passed to AccountTab as initial values) ───────
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [accountEmail, setAccountEmail] = useState<string | null>(null);
   const [googleEmail, setGoogleEmail] = useState<string | null>(null);
   const [googleIdentity, setGoogleIdentity] = useState<UserIdentity | null>(
     null
@@ -75,6 +76,8 @@ export default function SettingsPage() {
         setIsLoadingProfile(false);
         return;
       }
+
+      setAccountEmail(user.email ?? null);
 
       // Profile data — query core fields first, name_rerolls_used separately
       // to avoid breaking the entire query if the column hasn't been migrated yet
@@ -209,6 +212,7 @@ export default function SettingsPage() {
         {/* Account Tab */}
         <TabsContent value="account">
           <AccountTab
+            accountEmail={accountEmail}
             initialWalletAddress={walletAddress}
             initialGoogleEmail={googleEmail}
             initialGoogleIdentity={googleIdentity}
