@@ -395,10 +395,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       { status: 409 }
     );
   }
-  const onChainCollection = onChainCourse.collection as unknown as
-    | string
-    | Uint8Array
-    | undefined;
+  const onChainCollection = onChainCourse.collection;
   const boundCollection =
     onChainCollection == null
       ? null
