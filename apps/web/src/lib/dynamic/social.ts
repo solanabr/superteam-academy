@@ -48,10 +48,10 @@ import { getDynamicClient } from "@/lib/dynamic/client";
  * so this module stays free of React and of the translation context.
  */
 export type DynamicBridgeErrorKey =
-  | "googleEmailUnmatched"
+  | "oauthEmailUnmatched"
   | "accountDeleted"
   | "otpRateLimited"
-  | "googleBridgeFailed";
+  | "socialBridgeFailed";
 
 export type DynamicBridgeOutcome =
   | { ok: true }
@@ -63,8 +63,8 @@ export type DynamicBridgeOutcome =
  * key, because the alternative is a blank toast.
  */
 const ERROR_KEYS: Record<string, DynamicBridgeErrorKey> = {
-  noVerifiedOauthEmail: "googleEmailUnmatched",
-  ambiguousVerifiedEmail: "googleEmailUnmatched",
+  noVerifiedOauthEmail: "oauthEmailUnmatched",
+  ambiguousVerifiedEmail: "oauthEmailUnmatched",
   accountDeleted: "accountDeleted",
   rateLimited: "otpRateLimited",
 };
@@ -88,7 +88,7 @@ export function getDynamicAuthToken(): string | null {
  */
 export async function bridgeDynamicSession(): Promise<DynamicBridgeOutcome> {
   const dynamicJwt = getDynamicAuthToken();
-  if (!dynamicJwt) return { ok: false, errorKey: "googleBridgeFailed" };
+  if (!dynamicJwt) return { ok: false, errorKey: "socialBridgeFailed" };
 
   try {
     const response = await fetch("/api/auth/dynamic", {
@@ -111,10 +111,10 @@ export async function bridgeDynamicSession(): Promise<DynamicBridgeOutcome> {
       ok: false,
       errorKey:
         (typeof error === "string" ? ERROR_KEYS[error] : undefined) ??
-        "googleBridgeFailed",
+        "socialBridgeFailed",
     };
   } catch {
-    return { ok: false, errorKey: "googleBridgeFailed" };
+    return { ok: false, errorKey: "socialBridgeFailed" };
   }
 }
 

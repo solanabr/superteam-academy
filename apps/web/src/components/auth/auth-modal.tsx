@@ -20,8 +20,7 @@ import { buildOAuthRedirect } from "@/lib/auth/oauth-redirect";
 import { trackEvent } from "@/lib/analytics";
 import { isDynamicEnabled } from "@/lib/dynamic/config";
 import { useSocialReturnPending } from "@/hooks/use-social-return-pending";
-import { DynamicGithubSignIn } from "@/components/auth/dynamic-github-sign-in";
-import { DynamicGoogleSignIn } from "@/components/auth/dynamic-google-sign-in";
+import { DynamicSocialSignIn } from "@/components/auth/dynamic-social-sign-in";
 
 interface AuthModalProps {
   trigger?: React.ReactNode;
@@ -66,7 +65,7 @@ export function AuthModal({
   // throws `MissingProviderError` when no provider is mounted, so calling one
   // here would crash sign-in in any build without an environment id. Hooks
   // cannot be conditional, so the gate is a component boundary instead:
-  // DynamicGoogleSignIn owns the hooks and mounts only when Dynamic is enabled.
+  // DynamicSocialSignIn owns the hooks and mounts only when Dynamic is enabled.
   const dynamicEnabled = isDynamicEnabled();
   // While the Google-return handshake runs, the trigger button carries the
   // loading state — the alternative was a full-screen overlay, and the owner
@@ -212,7 +211,10 @@ export function AuthModal({
               button below is the fallback AND the kill switch — unsetting the
               environment id restores it untouched. */}
           {dynamicEnabled ? (
-            <DynamicGoogleSignIn disabled={loading !== null} />
+            <DynamicSocialSignIn
+              provider="google"
+              disabled={loading !== null}
+            />
           ) : (
             <Button
               variant="outline"
@@ -234,7 +236,10 @@ export function AuthModal({
               button below is the fallback AND the kill switch — unsetting the
               environment id restores it untouched. */}
           {dynamicEnabled ? (
-            <DynamicGithubSignIn disabled={loading !== null} />
+            <DynamicSocialSignIn
+              provider="github"
+              disabled={loading !== null}
+            />
           ) : (
             <Button
               variant="outline"

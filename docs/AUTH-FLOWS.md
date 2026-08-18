@@ -12,15 +12,15 @@ The architecture invariant:
 
 The one-liner "Dynamic proves things" is true only for the Dynamic path. Two ways in
 never touch Dynamic: wallet-adapter SIWS (the wallet itself signs the proof) and
-Supabase OAuth (GitHub always; Google when Dynamic is unconfigured), where Supabase both
-proves and owns. The load-bearing halves hold everywhere: no client-side session
+Supabase OAuth (Google/GitHub when Dynamic is unconfigured — the fallback and kill
+switch), where Supabase both proves and owns. The load-bearing halves hold everywhere: no client-side session
 minting, and Supabase user ids are the only identity every table and RLS policy hangs
 off. One soft bend: after an OAuth _link_, the settings page syncs `profiles.google_id`
 / `github_id` client-side under RLS (`src/app/[locale]/(platform)/settings/_components/account-tab.tsx`)
 — profile metadata, not session material.
 
 ```
-  Connect Solana Wallet    Google (Dynamic on)       Embedded-wallet SIWS      Google (Dynamic off) / GitHub
+  Connect Solana Wallet    Google/GitHub (Dynamic on)  Embedded-wallet SIWS    Google/GitHub (Dynamic off)
         |                      |                          |                          |
   wallet-adapter modal   signInWithSocialRedirect   DynamicAuthHandler job 3   supabase.auth.signInWithOAuth
         |                      | (full-page nav)     (restored Dynamic session,     |
@@ -44,11 +44,11 @@ nothing; it re-runs the tombstone check per request as a backstop, and that is a
 `src/components/auth/auth-modal.tsx`. Three buttons. The modal deliberately calls no
 Dynamic hook itself: every hook in `@dynamic-labs-sdk/react-hooks` throws
 `MissingProviderError` without a provider, and hooks can't be conditional, so the
-feature gate is a component boundary — `DynamicGoogleSignIn` owns the hooks and mounts
-only when `isDynamicEnabled()` (`src/lib/dynamic/config.ts`). A fourth entry,
-email-OTP through Dynamic (`dynamic-email-sign-in.tsx`), was removed from the modal in
-#1032 because it mints a wallet-shaped account that forks from a later Google login;
-the component stays in-tree, unmounted.
+feature gate is a component boundary — `DynamicSocialSignIn` (one component, a
+`PROVIDERS` map per provider) owns the hooks and mounts only when
+`isDynamicEnabled()` (`src/lib/dynamic/config.ts`). A fourth entry, email-OTP through
+Dynamic, was removed from the modal in #1032 because it mints a wallet-shaped account
+that forks from a later Google login; the component itself was deleted in #1040.
 
 ### Connect Solana Wallet (wallet-adapter SIWS)
 
@@ -96,7 +96,12 @@ Two implementations behind one button slot:
 
 ### Sign in with GitHub
 
-Always Supabase OAuth (no Dynamic variant). Returns through
+Mirrors Google: **Dynamic on** routes through `signInWithSocialRedirect({provider:
+"github"})` and the same job-0 → `POST /api/auth/dynamic` return leg. The live GitHub
+credential carries no `email` field; its single-element `oauth_emails` is accepted
+ONLY when the same token holds a Dynamic-verified `email`-format credential for the
+identical address (the corroboration rule — GitHub's own list can carry unverified
+addresses). **Dynamic off** falls back to Supabase OAuth and returns through
 `GET /api/auth/callback` (`src/app/api/auth/callback/route.ts`):
 `exchangeCodeForSession(code)`, cookies set on the redirect response, `next` param
 re-sanitized server-side (`sanitizeRedirect`: single leading slash, no `//`, no `\`,

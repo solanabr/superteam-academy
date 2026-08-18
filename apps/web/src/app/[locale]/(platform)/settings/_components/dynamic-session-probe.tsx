@@ -23,7 +23,7 @@ export interface DynamicSessionInfo {
 /**
  * Reads the Dynamic session and reports it upward. Renders nothing.
  *
- * A separate component for the same reason `DynamicGoogleSignIn` is one: the
+ * A separate component for the same reason `DynamicSocialSignIn` is one: the
  * Dynamic hooks throw `MissingProviderError` outside a `DynamicProvider`, and
  * hooks cannot be conditional, so the `isDynamicEnabled()` gate has to be a
  * component boundary — the parent mounts this only when the feature is on,

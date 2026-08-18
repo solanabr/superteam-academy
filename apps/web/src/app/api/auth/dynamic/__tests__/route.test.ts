@@ -578,18 +578,106 @@ describe("POST /api/auth/dynamic — email extraction", () => {
     expect(generateLink).not.toHaveBeenCalled();
   });
 
-  it("never matches on a github credential's oauth_emails", async () => {
-    // GitHub lists addresses a user added but never verified. Matching on one
-    // would hand over whichever account that address belongs to — the
-    // oauth_emails fallback is scoped to google, where the list can only hold
-    // the account's verified primary.
+  it("refuses a github credential's oauth_emails without Dynamic corroboration", async () => {
+    // GitHub lists addresses a user added but never verified. An attacker adds
+    // a victim's address to their own GitHub account; without a Dynamic-verified
+    // email credential for that exact address in the same token, the fallback
+    // must not fire.
     const token = await signDynamicJwt({
       claims: {
         verified_credentials: [
           googleCredential({
             oauth_provider: "github",
+            oauth_account_id: "github-account-1",
             oauth_emails: ["victim@gmail.com"],
           }),
+        ],
+      },
+    });
+
+    const res = await POST(dynamicRequest({ dynamicJwt: token }));
+
+    expect(res.status).toBe(403);
+    expect(generateLink).not.toHaveBeenCalled();
+  });
+
+  it("accepts a github credential's oauth_emails when Dynamic verified the same address (live 2026-08-18 shape)", async () => {
+    // The real github credential carries no `email` field — the address lives
+    // in oauth_emails, and the same token holds Dynamic's own verified
+    // email-format credential for it. That pair is the trust rule.
+    const token = await signDynamicJwt({
+      claims: {
+        signin_credential_id: "cred-github",
+        verified_credentials: [
+          googleCredential({
+            id: "cred-github",
+            oauth_provider: "github",
+            oauth_account_id: "github-account-1",
+            oauth_emails: [EXISTING_EMAIL],
+          }),
+          {
+            id: EMAIL_CREDENTIAL_ID,
+            format: "email",
+            email: EXISTING_EMAIL,
+            signInEnabled: true,
+            verifiedAt: "2026-08-18T22:33:55.490Z",
+          },
+        ],
+      },
+    });
+
+    const res = await POST(dynamicRequest({ dynamicJwt: token }));
+
+    expect(res.status).toBe(200);
+    expect(generateLink).toHaveBeenCalledTimes(1);
+  });
+
+  it("refuses github oauth_emails when Dynamic's verified email is a different address", async () => {
+    const token = await signDynamicJwt({
+      claims: {
+        signin_credential_id: "cred-github",
+        verified_credentials: [
+          googleCredential({
+            id: "cred-github",
+            oauth_provider: "github",
+            oauth_account_id: "github-account-1",
+            oauth_emails: ["victim@gmail.com"],
+          }),
+          {
+            id: EMAIL_CREDENTIAL_ID,
+            format: "email",
+            email: EXISTING_EMAIL,
+            signInEnabled: true,
+            verifiedAt: "2026-08-18T22:33:55.490Z",
+          },
+        ],
+      },
+    });
+
+    const res = await POST(dynamicRequest({ dynamicJwt: token }));
+
+    expect(res.status).toBe(403);
+    expect(generateLink).not.toHaveBeenCalled();
+  });
+
+  it("refuses github oauth_emails when the email credential is unverified", async () => {
+    // verifiedAt absent = Dynamic never proved the inbox — no corroboration.
+    const token = await signDynamicJwt({
+      claims: {
+        signin_credential_id: "cred-github",
+        verified_credentials: [
+          googleCredential({
+            id: "cred-github",
+            oauth_provider: "github",
+            oauth_account_id: "github-account-1",
+            oauth_emails: [EXISTING_EMAIL],
+          }),
+          {
+            id: EMAIL_CREDENTIAL_ID,
+            format: "email",
+            email: EXISTING_EMAIL,
+            signInEnabled: true,
+          },
         ],
       },
     });

@@ -81,18 +81,18 @@ describe("bridgeDynamicSession", () => {
 
     await expect(bridgeDynamicSession()).resolves.toEqual({
       ok: false,
-      errorKey: "googleBridgeFailed",
+      errorKey: "socialBridgeFailed",
     });
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it.each([
-    ["noVerifiedOauthEmail", 403, "googleEmailUnmatched"],
-    ["ambiguousVerifiedEmail", 403, "googleEmailUnmatched"],
+    ["noVerifiedOauthEmail", 403, "oauthEmailUnmatched"],
+    ["ambiguousVerifiedEmail", 403, "oauthEmailUnmatched"],
     ["accountDeleted", 403, "accountDeleted"],
     ["rateLimited", 429, "otpRateLimited"],
-    ["invalidToken", 401, "googleBridgeFailed"],
-    ["internalError", 500, "googleBridgeFailed"],
+    ["invalidToken", 401, "socialBridgeFailed"],
+    ["internalError", 500, "socialBridgeFailed"],
   ])("maps %s (%d) to %s", async (error, status, errorKey) => {
     mockFetch(status, { error });
     await expect(bridgeDynamicSession()).resolves.toEqual({
@@ -105,7 +105,7 @@ describe("bridgeDynamicSession", () => {
     mockFetch(200, {});
     await expect(bridgeDynamicSession()).resolves.toEqual({
       ok: false,
-      errorKey: "googleBridgeFailed",
+      errorKey: "socialBridgeFailed",
     });
   });
 
@@ -113,7 +113,7 @@ describe("bridgeDynamicSession", () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
     await expect(bridgeDynamicSession()).resolves.toEqual({
       ok: false,
-      errorKey: "googleBridgeFailed",
+      errorKey: "socialBridgeFailed",
     });
   });
 });

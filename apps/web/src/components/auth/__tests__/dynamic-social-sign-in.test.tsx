@@ -9,8 +9,9 @@ import messages from "@/messages/en.json";
 /**
  * Sibling of the email form's stale-session suite, and the same failure with a
  * different shape: `processSocialCallback` branches on `client.user`, so with a
- * leftover Dynamic session the Google click becomes a credential LINK on that
- * account rather than a sign-in.
+ * leftover Dynamic session the click becomes a credential LINK on that account
+ * rather than a sign-in. One parameterized suite covers every provider the
+ * unified component serves.
  */
 
 const { logoutMock, redirectMock, userState } = vi.hoisted(() => ({
@@ -28,7 +29,7 @@ vi.mock("@dynamic-labs-sdk/react-hooks", () => ({
 }));
 vi.mock("@/lib/analytics", () => ({ trackEvent: vi.fn() }));
 
-import { DynamicGoogleSignIn } from "../dynamic-google-sign-in";
+import { DynamicSocialSignIn } from "../dynamic-social-sign-in";
 
 function renderWithIntl(ui: ReactElement) {
   return render(
@@ -43,16 +44,27 @@ beforeEach(() => {
   userState.current = undefined;
 });
 
-describe("DynamicGoogleSignIn", () => {
+describe.each([
+  {
+    provider: "google" as const,
+    label: messages.auth.signInWithGoogle,
+    failure: messages.auth.googleSignInFailed,
+  },
+  {
+    provider: "github" as const,
+    label: messages.auth.signInWithGitHub,
+    failure: messages.auth.githubSignInFailed,
+  },
+])("DynamicSocialSignIn ($provider)", ({ provider, label, failure }) => {
   it("starts the redirect flow back to the current page", async () => {
-    renderWithIntl(<DynamicGoogleSignIn disabled={false} />);
-    fireEvent.click(
-      screen.getByRole("button", { name: messages.auth.signInWithGoogle })
+    renderWithIntl(
+      <DynamicSocialSignIn provider={provider} disabled={false} />
     );
+    fireEvent.click(screen.getByRole("button", { name: label }));
 
     await waitFor(() =>
       expect(redirectMock).toHaveBeenCalledWith({
-        provider: "google",
+        provider,
         redirectUrl: window.location.href,
       })
     );
@@ -62,10 +74,10 @@ describe("DynamicGoogleSignIn", () => {
   it("clears a leftover Dynamic session BEFORE redirecting", async () => {
     userState.current = { userId: "stale-user" };
 
-    renderWithIntl(<DynamicGoogleSignIn disabled={false} />);
-    fireEvent.click(
-      screen.getByRole("button", { name: messages.auth.signInWithGoogle })
+    renderWithIntl(
+      <DynamicSocialSignIn provider={provider} disabled={false} />
     );
+    fireEvent.click(screen.getByRole("button", { name: label }));
 
     await waitFor(() => expect(redirectMock).toHaveBeenCalled());
     const [logoutOrder] = logoutMock.mock.invocationCallOrder;
@@ -77,13 +89,11 @@ describe("DynamicGoogleSignIn", () => {
     redirectMock.mockRejectedValueOnce(new Error("no project settings"));
     vi.spyOn(console, "error").mockImplementation(() => {});
 
-    renderWithIntl(<DynamicGoogleSignIn disabled={false} />);
-    fireEvent.click(
-      screen.getByRole("button", { name: messages.auth.signInWithGoogle })
+    renderWithIntl(
+      <DynamicSocialSignIn provider={provider} disabled={false} />
     );
+    fireEvent.click(screen.getByRole("button", { name: label }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      messages.auth.googleSignInFailed
-    );
+    expect(await screen.findByRole("alert")).toHaveTextContent(failure);
   });
 });

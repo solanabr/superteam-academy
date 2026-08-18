@@ -84,7 +84,7 @@ export default function SettingsPage() {
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select(
-          "username, bio, social_links, is_public, wallet_address, google_id, avatar_url"
+          "username, bio, social_links, is_public, wallet_address, avatar_url"
         )
         .eq("id", user.id)
         .single();

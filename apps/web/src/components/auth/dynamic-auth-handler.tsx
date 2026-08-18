@@ -156,7 +156,7 @@ export function DynamicAuthHandler() {
           return "release";
         } catch (err) {
           console.error("[DynamicAuthHandler] social redirect failed:", err);
-          dispatchToast(t("googleBridgeFailed"), "error");
+          dispatchToast(t("socialBridgeFailed"), "error");
           await logoutDynamic();
           setSocialReturnPending(false);
           return "release";

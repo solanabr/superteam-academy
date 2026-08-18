@@ -104,8 +104,8 @@
     "verifyCode": "Verificar",
     "walletConnected": "Billetera Conectada",
     "otpRateLimited": "Demasiados registros desde esta red — espera un minuto e inténtalo de nuevo.",
-    "googleBridgeFailed": "Iniciaste sesión, pero no pudimos terminar de conectar tu cuenta. Inténtalo de nuevo.",
-    "googleEmailUnmatched": "Google no compartió un correo verificado, así que no podemos identificar tu cuenta. Usa otro método de inicio de sesión."
+    "socialBridgeFailed": "Iniciaste sesión, pero no pudimos terminar de conectar tu cuenta. Inténtalo de nuevo.",
+    "oauthEmailUnmatched": "Tu proveedor de inicio de sesión no compartió un correo verificado, así que no podemos identificar tu cuenta. Usa otro método de inicio de sesión."
   },
   "landing": {
     "poweredBy": "Con el apoyo de",
