@@ -37,10 +37,11 @@ export function MobileBottomNav() {
   const isLessonPage = /\/courses\/[^/]+\/lessons\//.test(pathname);
   const stripLocale = pathname.replace(/^\/[a-z]{2}(-[A-Z]{2})?/, "");
   const isLanding = stripLocale === "" || stripLocale === "/";
-  // Landing: signed-out visitors keep the clean marketing page, but a
-  // SIGNED-IN learner landing on `/` on a phone had no way into the platform
-  // except the cramped header — show them the same tabs as everywhere else.
-  if (isLessonPage || (isLanding && !isLoggedIn)) return null;
+  // Landing renders the nav for everyone (#930): the header hides its link
+  // cluster below lg, so without this bar an anonymous phone visitor's only
+  // route to Courses/Community was the footer. Signed-out visitors get the
+  // public tabs; signed-in learners the full set.
+  if (isLessonPage) return null;
 
   return (
     <>
