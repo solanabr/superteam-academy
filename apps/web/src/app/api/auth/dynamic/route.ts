@@ -850,37 +850,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
     }
 
-    // Adopt/refresh the provider photo. Three-way rule:
-    // - no stored avatar → adopt (a bridge-only learner otherwise keeps the
-    //   placeholder forever);
-    // - stored avatar from the SAME provider host → refresh (Google's CDN
-    //   URLs rotate and go stale) — same-host only, or alternating
-    //   Google/GitHub logins ping-pong the learner's face on every sign-in;
-    // - custom Supabase-storage upload → never touched, it's the learner's
-    //   own choice. https-only enforcement happens at the credential boundary.
-    if (resolved.photo) {
-      const storageHost = new URL(env.NEXT_PUBLIC_SUPABASE_URL).host;
-      const storedAvatar = profile?.avatar_url ?? null;
-      const isCustomUpload =
-        storedAvatar !== null && storedAvatar.includes(storageHost);
-      const sameProviderHost = (() => {
-        if (storedAvatar === null) return false;
-        try {
-          return new URL(storedAvatar).host === new URL(resolved.photo).host;
-        } catch {
-          return false;
-        }
-      })();
-      const shouldWrite =
-        !isCustomUpload &&
-        storedAvatar !== resolved.photo &&
-        (storedAvatar === null || sameProviderHost);
-      if (shouldWrite) {
-        await supabaseAdmin
-          .from("profiles")
-          .update({ avatar_url: resolved.photo })
-          .eq("id", userId);
-      }
+    // Adopt the provider photo on FIRST login only (owner ruling 2026-08-18):
+    // once any avatar exists — provider photo or custom upload — no sign-in
+    // ever changes it. Alternating Google/GitHub logins were ping-ponging the
+    // learner's face; the cost is that a rotated provider CDN URL no longer
+    // self-heals (the learner replaces it in settings instead). https-only
+    // enforcement happens at the credential boundary.
+    if (resolved.photo && (profile?.avatar_url ?? null) === null) {
+      await supabaseAdmin
+        .from("profiles")
+        .update({ avatar_url: resolved.photo })
+        .eq("id", userId);
     }
 
     // The on-chain retry queue drains from the login routes, so this new

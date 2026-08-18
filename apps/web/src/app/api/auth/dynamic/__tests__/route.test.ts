@@ -1485,7 +1485,9 @@ describe("POST /api/auth/dynamic — avatar adoption on the bridge", () => {
     expect(avatarUpdates()).toEqual([{ avatar_url: PHOTO }]);
   });
 
-  it("refreshes a stale provider URL but never a custom Supabase upload", async () => {
+  it("never overwrites an existing avatar — same provider or custom upload alike", async () => {
+    // First-login-only (owner ruling 2026-08-18): an existing provider photo
+    // stays even when the same provider offers a fresher URL.
     profileSingle.mockResolvedValue({
       data: {
         username: "sol-surfer",
@@ -1497,7 +1499,7 @@ describe("POST /api/auth/dynamic — avatar adoption on the bridge", () => {
       dynamicRequest({ dynamicJwt: await jwtWithPhoto() })
     );
     expect(res.status).toBe(200);
-    expect(avatarUpdates()).toEqual([{ avatar_url: PHOTO }]);
+    expect(avatarUpdates()).toEqual([]);
 
     vi.clearAllMocks();
     getDynamicEnvironmentId.mockReturnValue(ENVIRONMENT_ID);

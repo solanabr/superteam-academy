@@ -132,36 +132,19 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Adopt/refresh the provider avatar — same three-way rule as the Dynamic
-    // bridge: adopt when empty; refresh only from the SAME provider host
-    // (Google CDN URLs rotate and go stale, but alternating providers must
-    // not ping-pong the learner's face); never touch a custom Supabase
-    // Storage upload (URL carries the project host).
+    // Adopt the provider avatar on FIRST login only (owner ruling 2026-08-18,
+    // same rule as the Dynamic bridge): once any avatar exists, no sign-in
+    // changes it — alternating providers were ping-ponging the learner's
+    // face. A rotated provider CDN URL no longer self-heals; the learner
+    // replaces it in settings instead.
     const freshProviderAvatar = sessionData.session.user.user_metadata
       ?.avatar_url as string | undefined;
 
-    if (freshProviderAvatar) {
-      const storageHost = new URL(url).host;
-      const storedAvatar = profile?.avatar_url ?? null;
-      const isCustomUpload =
-        storedAvatar !== null && storedAvatar.includes(storageHost);
-      const sameProviderHost = (() => {
-        if (storedAvatar === null) return false;
-        try {
-          return (
-            new URL(storedAvatar).host === new URL(freshProviderAvatar).host
-          );
-        } catch {
-          return false;
-        }
-      })();
-
-      if (!isCustomUpload && (storedAvatar === null || sameProviderHost)) {
-        await supabase
-          .from("profiles")
-          .update({ avatar_url: freshProviderAvatar })
-          .eq("id", userId);
-      }
+    if (freshProviderAvatar && (profile?.avatar_url ?? null) === null) {
+      await supabase
+        .from("profiles")
+        .update({ avatar_url: freshProviderAvatar })
+        .eq("id", userId);
     }
 
     retryPendingOnchainActions(userId).catch((err: unknown) =>
