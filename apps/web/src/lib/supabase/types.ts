@@ -1276,6 +1276,15 @@ export type Database = {
         Args: { p_target: string; p_shell: string; p_wallet: string };
         Returns: Record<string, unknown>;
       };
+      /**
+       * Subject rung of /api/auth/dynamic (#1055): auth.identities lookup by
+       * (provider, provider_id). service_role only; NULL when no identity or
+       * blank args.
+       */
+      find_user_by_oauth_identity: {
+        Args: { p_provider: string; p_subject: string };
+        Returns: string | null;
+      };
       // #769 marketing-email consent RPCs.
       set_marketing_opt_in: {
         Args: { p_opt_in: boolean };

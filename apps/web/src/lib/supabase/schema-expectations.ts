@@ -160,6 +160,16 @@ export const SCHEMA_EXPECTATIONS: readonly SchemaExpectation[] = [
   },
   {
     kind: "rpc",
+    // Read-only (LANGUAGE sql STABLE), REVOKEd from anon → 42501, body never
+    // runs; blank args would return NULL even if it did.
+    rpc: "find_user_by_oauth_identity",
+    args: { p_provider: "", p_subject: "" },
+    migration: "20260818120000_find_user_by_oauth_identity.sql",
+    description:
+      "OAuth-subject account lookup (#1055) — /api/auth/dynamic degrades to email-only matching without it, so a wallet-first account's Google recovery path silently stops working",
+  },
+  {
+    kind: "rpc",
     // Read-only (LANGUAGE sql STABLE) — no side effect even if it ran, which it
     // does not (REVOKEd from anon, same as above).
     rpc: "get_challenge_assist_state",
