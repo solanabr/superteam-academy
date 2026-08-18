@@ -788,6 +788,7 @@ export function ChallengeRunner({
   onResult,
   onSubmit,
   isComplete,
+  isJudging,
   xpReward,
   runButtonRef,
   className,
@@ -865,7 +866,7 @@ export function ChallengeRunner({
   }, [code, tests, language, buildType, onResult]);
 
   const showSubmit =
-    allPassed && !isComplete && (!isDeployable || deployComplete);
+    allPassed && !isComplete && !isJudging && (!isDeployable || deployComplete);
 
   return (
     <div className={cn("flex items-center gap-2", className)}>
