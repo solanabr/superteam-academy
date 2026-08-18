@@ -1429,12 +1429,14 @@ describe("POST /api/auth/dynamic — avatar adoption on the bridge", () => {
     rpcMock.mockResolvedValue({ data: [], error: null });
     profileUpdate.mockResolvedValue({ error: null });
     // Custom upload: URL carries the project storage host — never overwritten.
+    // Derived from the same env the route reads (CI sets a real URL, so a
+    // hardcoded host would silently stop matching there).
+    const storageHost = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).host;
     profileSingle.mockResolvedValue({
       data: {
         username: "sol-surfer",
         wallet_address: "ExistingWallet1111",
-        avatar_url:
-          "https://test.supabase.co/storage/v1/object/public/avatars/me.png",
+        avatar_url: `https://${storageHost}/storage/v1/object/public/avatars/me.png`,
       },
     });
     const res2 = await POST(
