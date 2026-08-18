@@ -53,6 +53,14 @@ export function CourseCard({
           loading="lazy"
           aria-hidden="true"
         />
+        {/* The card owns the title as an overlay — banner art ships text-free
+            so one image serves every locale and a retitle never needs a
+            re-render of the art. */}
+        {thumbnail && (
+          <h3 className="course-card-thumb-title">
+            <span>{title}</span>
+          </h3>
+        )}
         {status === "completed" && (
           <span
             className="course-card-status completed"

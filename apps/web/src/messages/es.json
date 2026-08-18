@@ -92,7 +92,7 @@
     "retry": "Reintentar",
     "sendCode": "Enviar código",
     "signFailed": "No se pudo firmar el mensaje de verificación. Inténtalo de nuevo.",
-    "signingIn": "Iniciando sesión con tu billetera...",
+    "signingIn": "Iniciando sesión...",
     "settingUpWallet": "Preparando tu billetera…",
     "settingUpWalletHint": "Esto puede tardar unos segundos — mantén esta pestaña abierta.",
     "signingMessage": "Firma este mensaje para verificar la propiedad de tu billetera",

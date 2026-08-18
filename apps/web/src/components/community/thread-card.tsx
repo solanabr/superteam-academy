@@ -102,7 +102,10 @@ export function ThreadCard({
       {/* Title takes the slack and truncates; meta is a fixed compact cluster
           pinned right, so there is no ocean of space between them. */}
       <div className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-x-3 gap-y-0.5">
-        <div className="flex min-w-0 flex-1 items-center gap-2">
+        {/* flex-basis 14rem: below that width the title stops shrinking and
+            the meta block wraps to its own row — a title crushed to zero was
+            exactly the mobile bug. */}
+        <div className="flex min-w-0 flex-[1_1_14rem] items-center gap-2">
           {isPinned && (
             <PushPin
               size={12}
@@ -139,12 +142,16 @@ export function ThreadCard({
               ) : (
                 <div className="h-3.5 w-3.5 rounded-full bg-[var(--primary-dim)]" />
               )}
-              <span className="max-w-[10rem] truncate">{author.username}</span>
+              <span className="max-w-[7rem] truncate sm:max-w-[10rem]">
+                {author.username}
+              </span>
             </Link>
           ) : (
             <span className="flex items-center gap-1">
               <div className="h-3.5 w-3.5 rounded-full bg-[var(--primary-dim)]" />
-              <span className="max-w-[10rem] truncate">{t("anonymous")}</span>
+              <span className="max-w-[7rem] truncate sm:max-w-[10rem]">
+                {t("anonymous")}
+              </span>
             </span>
           )}
           {author.level > 0 && <LevelBadge level={author.level} size="xs" />}
