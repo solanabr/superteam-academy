@@ -132,22 +132,34 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Refresh the Google avatar URL on every login. Google CDN URLs rotate, so
-    // the URL stored at signup can go stale. Only overwrite if the user hasn't
-    // set a custom uploaded avatar (Supabase Storage URLs contain the project host).
-    const freshGoogleAvatar = sessionData.session.user.user_metadata
+    // Adopt/refresh the provider avatar — same three-way rule as the Dynamic
+    // bridge: adopt when empty; refresh only from the SAME provider host
+    // (Google CDN URLs rotate and go stale, but alternating providers must
+    // not ping-pong the learner's face); never touch a custom Supabase
+    // Storage upload (URL carries the project host).
+    const freshProviderAvatar = sessionData.session.user.user_metadata
       ?.avatar_url as string | undefined;
 
-    if (freshGoogleAvatar) {
+    if (freshProviderAvatar) {
       const storageHost = new URL(url).host;
       const storedAvatar = profile?.avatar_url ?? null;
       const isCustomUpload =
         storedAvatar !== null && storedAvatar.includes(storageHost);
+      const sameProviderHost = (() => {
+        if (storedAvatar === null) return false;
+        try {
+          return (
+            new URL(storedAvatar).host === new URL(freshProviderAvatar).host
+          );
+        } catch {
+          return false;
+        }
+      })();
 
-      if (!isCustomUpload) {
+      if (!isCustomUpload && (storedAvatar === null || sameProviderHost)) {
         await supabase
           .from("profiles")
-          .update({ avatar_url: freshGoogleAvatar })
+          .update({ avatar_url: freshProviderAvatar })
           .eq("id", userId);
       }
     }

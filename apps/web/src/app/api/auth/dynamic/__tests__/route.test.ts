@@ -1534,6 +1534,26 @@ describe("POST /api/auth/dynamic — avatar adoption on the bridge", () => {
     expect(avatarUpdates()).toEqual([]);
   });
 
+  it("never ping-pongs: a different provider's photo does not replace the stored one", async () => {
+    // Stored = GitHub avatar; incoming = Google photo. Refresh is same-host
+    // only — alternating providers must not swap the learner's face on every
+    // sign-in. Adopt happens only when no avatar is stored at all.
+    profileSingle.mockResolvedValue({
+      data: {
+        username: "sol-surfer",
+        wallet_address: "ExistingWallet1111",
+        avatar_url: "https://avatars.githubusercontent.com/u/61333600?v=4",
+      },
+    });
+
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await jwtWithPhoto() })
+    );
+
+    expect(res.status).toBe(200);
+    expect(avatarUpdates()).toEqual([]);
+  });
+
   it("drops a non-https photo at the boundary", async () => {
     profileSingle.mockResolvedValue({
       data: {

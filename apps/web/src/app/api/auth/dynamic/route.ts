@@ -850,18 +850,32 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
     }
 
-    // Adopt/refresh the provider photo, mirroring the legacy callback's rule
-    // exactly: provider CDN URLs rotate, so refresh on every login — but a
-    // custom Supabase-storage upload (URL carries our project host) is the
-    // learner's own choice and is never overwritten. Without this, a learner
-    // whose only way in is the Dynamic bridge kept the placeholder avatar
-    // forever. https-only enforcement happens at the credential boundary.
+    // Adopt/refresh the provider photo. Three-way rule:
+    // - no stored avatar → adopt (a bridge-only learner otherwise keeps the
+    //   placeholder forever);
+    // - stored avatar from the SAME provider host → refresh (Google's CDN
+    //   URLs rotate and go stale) — same-host only, or alternating
+    //   Google/GitHub logins ping-pong the learner's face on every sign-in;
+    // - custom Supabase-storage upload → never touched, it's the learner's
+    //   own choice. https-only enforcement happens at the credential boundary.
     if (resolved.photo) {
       const storageHost = new URL(env.NEXT_PUBLIC_SUPABASE_URL).host;
       const storedAvatar = profile?.avatar_url ?? null;
       const isCustomUpload =
         storedAvatar !== null && storedAvatar.includes(storageHost);
-      if (!isCustomUpload && storedAvatar !== resolved.photo) {
+      const sameProviderHost = (() => {
+        if (storedAvatar === null) return false;
+        try {
+          return new URL(storedAvatar).host === new URL(resolved.photo).host;
+        } catch {
+          return false;
+        }
+      })();
+      const shouldWrite =
+        !isCustomUpload &&
+        storedAvatar !== resolved.photo &&
+        (storedAvatar === null || sameProviderHost);
+      if (shouldWrite) {
         await supabaseAdmin
           .from("profiles")
           .update({ avatar_url: resolved.photo })
