@@ -1824,6 +1824,13 @@
     line-height: 1.2;
     color: #fff;
     text-wrap: balance;
+    /* The thumb is overflow:hidden with a fixed aspect-ratio, so an unclamped
+       title hard-clips mid-line; two lines then ellipsis instead. */
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   /* 3. Description — 2-line clamp, readable */
