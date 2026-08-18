@@ -82,7 +82,7 @@ Server verification (`src/lib/solana/verify-siws.ts`), in order: parse fields â†
 
 Two implementations behind one button slot:
 
-- **Dynamic configured** (`src/components/auth/dynamic-google-sign-in.tsx`): clears any
+- **Dynamic configured** (`src/components/auth/dynamic-social-sign-in.tsx`): clears any
   stale Dynamic session first (a pre-existing `client.user` flips the SDK's callback
   processing from `oauthSignIn` to `oauthVerify` = link-to-wrong-user), then
   `signInWithSocialRedirect({provider: "google", redirectUrl: window.location.href})`.
