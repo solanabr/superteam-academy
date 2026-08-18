@@ -9,6 +9,7 @@ import { ERROR_IDS } from "@/constants/errorIds";
 import { retryPendingOnchainActions } from "@/lib/solana/onchain-queue";
 import { serverEnv } from "@/lib/env.server";
 import { isAccountDeleted } from "@/lib/auth/account-status";
+import { WALLET_PLACEHOLDER_EMAIL_DOMAIN } from "@/lib/auth/wallet-placeholder";
 import type { Database } from "@/lib/supabase/types";
 
 interface WalletAuthRequest {
@@ -18,7 +19,7 @@ interface WalletAuthRequest {
 }
 
 function walletEmail(publicKey: string): string {
-  return `${publicKey}@wallet.superteam-lms.local`;
+  return `${publicKey}${WALLET_PLACEHOLDER_EMAIL_DOMAIN}`;
 }
 
 export async function POST(request: NextRequest) {

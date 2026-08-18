@@ -9,6 +9,7 @@ import { getDynamicEnvironmentId } from "@/lib/dynamic/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { isAccountDeleted } from "@/lib/auth/account-status";
+import { isWalletPlaceholderEmail } from "@/lib/auth/wallet-placeholder";
 import { generateWalletName } from "@/lib/utils/generate-wallet-name";
 import { retryPendingOnchainActions } from "@/lib/solana/onchain-queue";
 import { logError, logEvent } from "@/lib/logging";
@@ -520,8 +521,10 @@ async function mergeWalletShellAccount(
     const { data: shellUser, error: userError } =
       await supabaseAdmin.auth.admin.getUserById(shell.id);
     if (userError || !shellUser?.user) return;
-    const shellEmail = shellUser.user.email ?? "";
-    if (!shellEmail.endsWith("@wallet.superteam-lms.local")) return;
+    // Case-insensitive (#921) — identical for anything GoTrue can store (it
+    // lowercases emails), and a hypothetical odd-cased shell still hits the
+    // RPC's own shell-ness re-proof, which refuses and leaves sign-in unmerged.
+    if (!isWalletPlaceholderEmail(shellUser.user.email)) return;
     // A real shell has exactly its synthetic email identity (from
     // admin.createUser). Any non-email identity means it is somebody's
     // account; NO identities means we don't know what it is — refuse both.

@@ -89,6 +89,20 @@ describe("POST /api/auth/unlink — recovery guard", () => {
     expect(unlinkIdentity).not.toHaveBeenCalled();
   });
 
+  it("refuses on a MIXED-CASE synthetic-email domain too (#921)", async () => {
+    getUser.mockResolvedValue(
+      sessionUser("Wa11etPubkey@Wallet.Superteam-LMS.LOCAL", ["google"])
+    );
+
+    const res = await POST(unlinkRequest("google"));
+
+    expect(res.status).toBe(403);
+    await expect(res.json()).resolves.toEqual({
+      error: "cannotUnlinkOnlyRecovery",
+    });
+    expect(unlinkIdentity).not.toHaveBeenCalled();
+  });
+
   it("lets a synthetic-email account with TWO OAuth identities drop one", async () => {
     getUser.mockResolvedValue(sessionUser(SYNTHETIC, ["google", "github"]));
 
