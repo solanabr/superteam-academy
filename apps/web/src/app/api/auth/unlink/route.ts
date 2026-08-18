@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { isWalletPlaceholderEmail } from "@/lib/auth/wallet-placeholder";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
@@ -100,9 +101,7 @@ export async function POST(request: NextRequest) {
     // 68 wallet-first accounts could walk into it, zero have — this keeps it
     // at zero). Real-email accounts stay freely unlinkable: the bridge
     // matches by email, identity-agnostic.
-    const syntheticEmail = (user.email ?? "").endsWith(
-      "@wallet.superteam-lms.local"
-    );
+    const syntheticEmail = isWalletPlaceholderEmail(user.email);
     const unlinkingSoleOauth =
       (provider === "google" && hasGoogle && !hasGitHub) ||
       (provider === "github" && hasGitHub && !hasGoogle);

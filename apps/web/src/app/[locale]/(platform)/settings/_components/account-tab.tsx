@@ -14,6 +14,7 @@ import { SolanaLogo } from "@/components/icons/solana-logo";
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/types";
 import { useAuth } from "@/lib/auth/auth-provider";
+import { isWalletPlaceholderEmail } from "@/lib/auth/wallet-placeholder";
 import { isDynamicEnabled } from "@/lib/dynamic/config";
 import { createSIWSMessage, formatSIWSMessage } from "@/lib/solana/wallet-auth";
 import {
@@ -498,8 +499,7 @@ export function AccountTab({
   // access is lost — the server refuses to unlink it and the button says why
   // up front. Real-email accounts get the opposite message: unlinking is
   // safe, the bridge matches by email.
-  const isSyntheticEmail =
-    accountEmail?.endsWith("@wallet.superteam-lms.local") ?? false;
+  const isSyntheticEmail = isWalletPlaceholderEmail(accountEmail);
   const oauthCount = (googleIdentity ? 1 : 0) + (gitHubIdentity ? 1 : 0);
   const soleOauthLocked = isSyntheticEmail && oauthCount === 1;
 
