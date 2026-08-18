@@ -1,12 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { MarkdownEditor } from "./markdown-editor";
+
+const THREAD_TYPES = ["question", "discussion"] as const;
+type ThreadType = (typeof THREAD_TYPES)[number];
 
 interface ForumCategory {
   id: string;
@@ -59,7 +62,8 @@ export function ThreadComposer({
   const t = useTranslations("community");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
-  const [type, setType] = useState<"question" | "discussion">("question");
+  const [type, setType] = useState<ThreadType>("question");
+  const typeRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [categoryId, setCategoryId] = useState(defaultScope?.categoryId || "");
   const [categories, setCategories] = useState<ForumCategory[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -132,6 +136,25 @@ export function ThreadComposer({
     }
   };
 
+  // WAI-ARIA radiogroup contract: the group is one tab stop (roving
+  // tabindex on the checked radio) and arrows move the selection.
+  const handleTypeKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    const current = THREAD_TYPES.indexOf(type);
+    let next: number;
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+      next = (current + 1) % THREAD_TYPES.length;
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+      next = (current - 1 + THREAD_TYPES.length) % THREAD_TYPES.length;
+    } else {
+      return;
+    }
+    e.preventDefault();
+    const nextValue = THREAD_TYPES[next];
+    if (!nextValue) return;
+    setType(nextValue);
+    typeRefs.current[next]?.focus();
+  };
+
   const isValid =
     title.length >= 5 &&
     title.length <= 200 &&
@@ -148,15 +171,20 @@ export function ThreadComposer({
         aria-label={t("threadType")}
         className="inline-flex gap-1 rounded-lg border border-[var(--border-default)] bg-[var(--surface)] p-0.5"
       >
-        {(["question", "discussion"] as const).map((value) => (
+        {THREAD_TYPES.map((value, index) => (
           <button
             key={value}
+            ref={(el) => {
+              typeRefs.current[index] = el;
+            }}
             type="button"
             role="radio"
             aria-checked={type === value}
+            tabIndex={type === value ? 0 : -1}
             onClick={() => setType(value)}
+            onKeyDown={handleTypeKeyDown}
             className={cn(
-              "whitespace-nowrap rounded-md font-medium transition-colors",
+              "whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]",
               compact ? "px-2.5 py-1 text-xs" : "px-3 py-1.5 text-[13px]",
               type === value
                 ? "bg-[var(--primary)] text-white"
