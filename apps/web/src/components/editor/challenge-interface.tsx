@@ -39,6 +39,24 @@ import type {
 
 const LESSON_COMPLETE_EVENT = "superteam:lesson-complete";
 
+// Submit verdict state machine (#942 PR A). `judging` renders while the
+// server-side save is in flight; `accepted`/`rejected` are the server's
+// verdict, driven by the existing event contract (isAlreadyCompleted flip /
+// superteam:lesson-complete-error) — the grading path itself is untouched.
+type Verdict = "idle" | "judging" | "accepted" | "rejected";
+
+// Duration of the accepted-flash on the editor card (green flash settling to
+// amber, brand-guide terminal-frame treatment). Mirrors the CSS animation.
+const VERDICT_FLASH_MS = 600;
+
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
+
 // Carries the passing code to lesson-client WITHOUT driving a completion, so an
 // anonymous learner's submission can be banked before they enroll (LX-A4c).
 const CHALLENGE_PROOF_EVENT = "superteam:challenge-proof";
@@ -100,10 +118,19 @@ export function ChallengeInterface({
     status: "idle",
     executionResult: null,
   });
-  const [isComplete, setIsComplete] = useState(isAlreadyCompleted ?? false);
   const [pendingSubmit, setPendingSubmit] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [serverError, setServerError] = useState<string | null>(null);
+
+  // Verdict state machine (#942 PR A). A lesson already completed on mount
+  // starts settled at `accepted` — no flash for a prior visit's verdict.
+  const [verdict, setVerdict] = useState<Verdict>(
+    isAlreadyCompleted ? "accepted" : "idle"
+  );
+  // True during the ~600ms green-flash on the editor card; the Accepted card
+  // appears once the flash settles to amber. Reduced motion skips the flash
+  // entirely (instant settle).
+  const [verdictFlash, setVerdictFlash] = useState(false);
+  const [rejectReason, setRejectReason] = useState<string | null>(null);
+  const isComplete = verdict === "accepted";
 
   // Struggling-encouragement state (LX-B11 / F11, R10): count consecutive
   // failed runs; a passing run resets the counter and the dismissal.
@@ -160,16 +187,26 @@ export function ChallengeInterface({
 
   // Sync when the async DB check resolves after mount.
   // Also fires when lesson-client sets isCompleted=true after API returns —
-  // this is when we show the calm completion acknowledgment. No confetti here:
-  // celebration is reserved for deploy + credential-mint milestones (LX-B11).
+  // that flip IS the acceptance verdict. The editor card plays the brand-guide
+  // green-flash-settling-to-amber treatment (skipped under reduced motion),
+  // then the Accepted card shows the earned XP. No confetti here: celebration
+  // is reserved for deploy + credential-mint milestones (LX-B11).
   const prevIsAlreadyCompleted = useRef(isAlreadyCompleted ?? false);
   useEffect(() => {
     if (isAlreadyCompleted && !prevIsAlreadyCompleted.current) {
-      setIsComplete(true);
-      setIsSaving(false);
+      setVerdict("accepted");
+      setRejectReason(null);
+      if (!prefersReducedMotion()) setVerdictFlash(true);
     }
     prevIsAlreadyCompleted.current = isAlreadyCompleted ?? false;
   }, [isAlreadyCompleted]);
+
+  // The flash is one-shot: settle to amber after the animation runs.
+  useEffect(() => {
+    if (!verdictFlash) return;
+    const id = setTimeout(() => setVerdictFlash(false), VERDICT_FLASH_MS);
+    return () => clearTimeout(id);
+  }, [verdictFlash]);
 
   const [panelHeight, setPanelHeight] = useState(120);
   // null = default 50/50 (both columns flex-1); a number = the user dragged the
@@ -209,7 +246,8 @@ export function ChallengeInterface({
 
   const handleCodeChange = useCallback((newCode: string) => {
     setCode(newCode);
-    setServerError(null);
+    // Editing after a rejection is the natural retry — clear the verdict.
+    setVerdict((v) => (v === "rejected" ? "idle" : v));
   }, []);
 
   const handleResult = useCallback(
@@ -338,8 +376,8 @@ export function ChallengeInterface({
 
   const completeLesson = useCallback(() => {
     setPendingSubmit(false);
-    setServerError(null);
-    setIsSaving(true);
+    setRejectReason(null);
+    setVerdict("judging");
     onComplete?.();
 
     // Emit custom event — lesson-client.tsx calls the API and sets
@@ -377,16 +415,15 @@ export function ChallengeInterface({
 
   // Server-side completion failed (e.g. a hidden test the browser never ran, or
   // a missing on-chain enrollment). lesson-client.tsx runs the completion API
-  // and fires this with a localized reason; clear the "saving" overlay and show
-  // it so the submit no longer fails silently.
+  // and fires this with a localized reason; that IS the rejection verdict.
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent<{ lessonId: string; message: string }>)
         .detail;
       if (detail.lessonId !== lessonId) return;
-      setIsSaving(false);
       setPendingSubmit(false);
-      setServerError(detail.message);
+      setVerdict("rejected");
+      setRejectReason(detail.message);
     };
     window.addEventListener("superteam:lesson-complete-error", handler);
     return () =>
@@ -574,7 +611,15 @@ export function ChallengeInterface({
           flattens this so the editor (order-2) and output (order-3) slot
           between the text (order-1) and the AI Partner (order-4). */}
       <div className="contents lg:flex lg:min-w-0 lg:flex-1 lg:flex-col lg:overflow-hidden lg:rounded-[var(--r-lg)] lg:border lg:border-border lg:bg-card">
-        <div className="order-2 flex min-h-0 flex-col overflow-hidden lg:order-none lg:flex-1">
+        {/* Verdict treatment target (#942 PR A): on acceptance the card
+            plays the brand-guide green flash and settles to an amber glow
+            (CSS: .verdict-card in globals.css; reduced motion collapses the
+            flash to an instant settle). */}
+        <div
+          className="verdict-card order-2 flex min-h-0 flex-col overflow-hidden lg:order-none lg:flex-1"
+          data-verdict={verdict}
+          data-verdict-flash={verdictFlash ? "" : undefined}
+        >
           {/* Toolbar */}
           <div className="shrink-0 border-b border-border bg-card px-3 py-2.5">
             <div className="flex items-center justify-between">
@@ -763,34 +808,50 @@ export function ChallengeInterface({
               </div>
             )}
 
-            {/* Saving overlay — shown while API call is in flight */}
-            {isSaving && !isComplete && (
-              <div className="pointer-events-none absolute inset-0 flex items-center justify-center backdrop-blur-sm [background:color-mix(in_srgb,var(--bg)_60%,transparent)]">
+            {/* Judging overlay — the server-side save/re-validation is in
+                flight. role="status" announces it politely. */}
+            {verdict === "judging" && (
+              <div
+                role="status"
+                className="pointer-events-none absolute inset-0 flex items-center justify-center backdrop-blur-sm [background:color-mix(in_srgb,var(--bg)_60%,transparent)]"
+              >
                 <div className="flex flex-col items-center gap-2 rounded-xl border-[2.5px] border-border bg-card p-6 shadow-card">
                   <div className="sol-spinner" aria-hidden="true" />
+                  <p className="font-display text-base font-black">
+                    {t("verdictJudging")}
+                  </p>
                   <p className="text-sm text-text-3">{t("savingProgress")}</p>
                 </div>
               </div>
             )}
 
-            {/* Failure overlay — the server rejected this submission */}
-            {serverError && !isSaving && !isComplete && (
+            {/* Rejected verdict — the server denied this submission. Shows the
+                localized deny reason with an explicit Retry. */}
+            {verdict === "rejected" && (
               <div
                 role="alert"
                 className="absolute inset-0 flex items-center justify-center backdrop-blur-sm [background:color-mix(in_srgb,var(--bg)_60%,transparent)]"
               >
-                <div className="mx-4 flex max-w-sm flex-col items-center gap-3 rounded-xl border-[2.5px] border-border bg-card p-6 text-center shadow-card">
+                <div className="mx-4 flex max-w-sm flex-col items-center gap-3 rounded-xl border-[2.5px] bg-card p-6 text-center shadow-card [border-color:var(--danger-border)]">
                   <X
                     size={28}
                     weight="bold"
                     className="text-danger"
                     aria-hidden="true"
                   />
-                  <p className="text-sm text-text-3">{serverError}</p>
+                  <p className="font-display text-lg font-black">
+                    {t("verdictRejected")}
+                  </p>
+                  <p className="text-sm text-text-3">
+                    {rejectReason ?? t("completionFailedGeneric")}
+                  </p>
                   <Button
                     variant="pushOutline"
                     size="default"
-                    onClick={() => setServerError(null)}
+                    onClick={() => {
+                      setVerdict("idle");
+                      setRejectReason(null);
+                    }}
                   >
                     {tCommon("retry")}
                   </Button>
@@ -798,10 +859,16 @@ export function ChallengeInterface({
               </div>
             )}
 
-            {/* Success overlay — calm checkmark acknowledgment (LX-B11) */}
-            {isComplete && (
-              <div className="pointer-events-none absolute inset-0 flex items-center justify-center backdrop-blur-sm [background:color-mix(in_srgb,var(--bg)_60%,transparent)]">
-                <div className="flex flex-col items-center gap-2 rounded-xl border-[2.5px] border-border bg-card p-6 shadow-card">
+            {/* Accepted verdict — appears once the card's green flash settles
+                to amber (immediately under reduced motion). Calm, no confetti:
+                celebration is reserved for deploy + credential-mint milestones
+                (LX-B11). */}
+            {verdict === "accepted" && !verdictFlash && (
+              <div
+                role="status"
+                className="pointer-events-none absolute inset-0 flex items-center justify-center backdrop-blur-sm [background:color-mix(in_srgb,var(--bg)_60%,transparent)]"
+              >
+                <div className="verdict-accepted-card flex flex-col items-center gap-2 rounded-xl border-[2.5px] p-6 shadow-card">
                   <CheckCircle
                     size={32}
                     weight="duotone"
@@ -809,7 +876,7 @@ export function ChallengeInterface({
                     aria-hidden="true"
                   />
                   <p className="font-display text-lg font-black">
-                    {t("lessonComplete")}
+                    {t("verdictAccepted")}
                   </p>
                   <p className="text-sm text-success">
                     {t("xpEarned", { amount: earnedXp ?? xpReward })}
