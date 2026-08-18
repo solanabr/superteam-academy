@@ -213,6 +213,37 @@ describe("ParsonsBlock — arrange interaction", () => {
   });
 });
 
+describe("ParsonsBlock — completion-gate report (#970)", () => {
+  it("reports done after a correct Check", () => {
+    const ctx = makeCtx();
+    renderWithIntl(<ParsonsBlock block={parsonsBlock} ctx={ctx} />);
+    expect(ctx.setBlockDone).toHaveBeenLastCalledWith("p-block", false);
+    buildCorrect();
+    fireEvent.click(screen.getByRole("button", { name: "Check order" }));
+    expect(ctx.setBlockDone).toHaveBeenLastCalledWith("p-block", true);
+  });
+
+  it("stays not-done after an incorrect Check", () => {
+    const ctx = makeCtx();
+    renderWithIntl(<ParsonsBlock block={parsonsBlock} ctx={ctx} />);
+    fireEvent.click(
+      screen.getByRole("button", { name: /Add line: function add/ })
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Check order" }));
+    expect(ctx.setBlockDone).toHaveBeenLastCalledWith("p-block", false);
+  });
+
+  it("editing after a correct Check retracts done (proof no longer judged)", () => {
+    const ctx = makeCtx();
+    renderWithIntl(<ParsonsBlock block={parsonsBlock} ctx={ctx} />);
+    buildCorrect();
+    fireEvent.click(screen.getByRole("button", { name: "Check order" }));
+    expect(ctx.setBlockDone).toHaveBeenLastCalledWith("p-block", true);
+    fireEvent.click(screen.getByRole("button", { name: /Remove line: \}/ }));
+    expect(ctx.setBlockDone).toHaveBeenLastCalledWith("p-block", false);
+  });
+});
+
 /** A block whose distractor `bad` is paired with the real line `ret` (F13). */
 const pairedBlock: ParsonsBlockData = {
   _type: "parsons",
