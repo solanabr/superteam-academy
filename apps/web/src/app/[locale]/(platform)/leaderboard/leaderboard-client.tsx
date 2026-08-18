@@ -4,15 +4,16 @@ import { useState, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import Image from "next/image";
-import { Trophy, UsersThree, Info } from "@phosphor-icons/react";
+import { Trophy, UsersThree, Info, Gift } from "@phosphor-icons/react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import type { LeaderboardEntry, CohortLeague } from "@superteam-lms/types";
 import { LevelBadge } from "@/components/gamification/level-badge";
 import { CohortRow } from "@/components/leaderboard/cohort-row";
+import { ReferralBoard } from "@/components/leaderboard/referral-board";
 import { cn } from "@/lib/utils";
 
 type Timeframe = "weekly" | "monthly" | "alltime";
-type Board = "league" | "global";
+type Board = "league" | "global" | "referrals";
 
 interface LeaderboardClientProps {
   initialGlobalEntries: LeaderboardEntry[];
@@ -375,6 +376,7 @@ export function LeaderboardClient({
   const BOARDS: { id: Board; label: string }[] = [
     { id: "league", label: t("league") },
     { id: "global", label: t("global") },
+    { id: "referrals", label: t("referrals") },
   ];
 
   return (
@@ -384,7 +386,11 @@ export function LeaderboardClient({
           {t("leaderboard")}
         </h1>
         <p className="mt-1 text-text-3">
-          {board === "league" ? t("leagueSubtitle") : t("globalSubtitle")}
+          {board === "league"
+            ? t("leagueSubtitle")
+            : board === "global"
+              ? t("globalSubtitle")
+              : t("referralSubtitle")}
         </p>
       </div>
 
@@ -404,8 +410,10 @@ export function LeaderboardClient({
           >
             {b.id === "league" ? (
               <UsersThree size={16} weight="bold" aria-hidden="true" />
-            ) : (
+            ) : b.id === "global" ? (
               <Trophy size={16} weight="bold" aria-hidden="true" />
+            ) : (
+              <Gift size={16} weight="bold" aria-hidden="true" />
             )}
             {b.label}
           </button>
@@ -414,7 +422,7 @@ export function LeaderboardClient({
 
       {board === "league" ? (
         <LeagueBoard cohort={initialCohort} />
-      ) : (
+      ) : board === "global" ? (
         <GlobalBoard
           entries={globalEntries}
           isLoading={isLoading}
@@ -423,6 +431,8 @@ export function LeaderboardClient({
           currentUserId={currentUserId}
           locale={locale}
         />
+      ) : (
+        <ReferralBoard currentUserId={currentUserId} />
       )}
     </div>
   );

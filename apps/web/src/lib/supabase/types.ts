@@ -519,6 +519,8 @@ export type Database = {
           is_public: boolean | null;
           name_rerolls_used: number | null;
           prefs: Json | null;
+          referral_code: string | null;
+          referred_by: string | null;
           segment: number | null;
           social_links: Json | null;
           username: string;
@@ -541,6 +543,8 @@ export type Database = {
           is_public?: boolean | null;
           name_rerolls_used?: number | null;
           prefs?: Json | null;
+          referral_code?: string | null;
+          referred_by?: string | null;
           segment?: number | null;
           social_links?: Json | null;
           username: string;
@@ -563,12 +567,62 @@ export type Database = {
           is_public?: boolean | null;
           name_rerolls_used?: number | null;
           prefs?: Json | null;
+          referral_code?: string | null;
+          referred_by?: string | null;
           segment?: number | null;
           social_links?: Json | null;
           username?: string;
           verified?: boolean;
           wallet_address?: string | null;
           wallet_xp_synced_at?: string | null;
+        };
+        Relationships: [];
+      };
+      referral_events: {
+        Row: {
+          course_id: string | null;
+          created_at: string;
+          id: string;
+          kind: string;
+          referred_id: string;
+          referrer_id: string;
+        };
+        Insert: {
+          course_id?: string | null;
+          created_at?: string;
+          id?: string;
+          kind: string;
+          referred_id: string;
+          referrer_id: string;
+        };
+        Update: {
+          course_id?: string | null;
+          created_at?: string;
+          id?: string;
+          kind?: string;
+          referred_id?: string;
+          referrer_id?: string;
+        };
+        Relationships: [];
+      };
+      referral_seasons: {
+        Row: {
+          created_at: string;
+          ends_at: string;
+          number: number;
+          starts_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          ends_at: string;
+          number: number;
+          starts_at: string;
+        };
+        Update: {
+          created_at?: string;
+          ends_at?: string;
+          number?: number;
+          starts_at?: string;
         };
         Relationships: [];
       };
@@ -1541,6 +1595,13 @@ export type Database = {
         };
         Returns: number;
       };
+      claim_referral: {
+        Args: {
+          p_code: string;
+          p_referred_id: string;
+        };
+        Returns: string;
+      };
       create_thread: {
         Args: {
           p_author_id: string;
@@ -1577,6 +1638,35 @@ export type Database = {
           user_id: string;
           username: string;
         }[];
+      };
+      get_or_create_referral_code: {
+        Args: {
+          p_user_id: string;
+        };
+        Returns: string;
+      };
+      get_referral_leaderboard: {
+        Args: {
+          p_season?: number;
+          p_limit?: number;
+        };
+        Returns: {
+          user_id: string;
+          username: string;
+          avatar_url: string | null;
+          points: number;
+          rank: number;
+          season_number: number;
+          season_starts_at: string;
+          season_ends_at: string;
+        }[];
+      };
+      record_referral_course_completion: {
+        Args: {
+          p_course_id: string;
+          p_user_id: string;
+        };
+        Returns: boolean;
       };
       get_cohort_leaderboard: {
         Args: { p_user_id: string };
