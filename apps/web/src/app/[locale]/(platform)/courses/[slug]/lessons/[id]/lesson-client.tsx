@@ -96,6 +96,18 @@ interface LessonPageClientProps {
   courseId: string;
   courseXpPerLesson: number;
   /**
+   * Course-level difficulty (#942 PR B) — the content bundle authors difficulty
+   * per COURSE, not per challenge, so every lesson in a course wears the same
+   * chip. Optional: the teacher preview does not thread it, and an absent or
+   * unknown value simply renders no chip.
+   */
+  courseDifficulty?: string | null;
+  /**
+   * How many builders completed this lesson (#942 PR B), server-fetched with a
+   * fail-to-0 helper. The chip renders only at/above the cold-start floor.
+   */
+  buildersCompleted?: number;
+  /**
    * Base path for in-lesson navigation (back, prev/next). Defaults to the live
    * catalogue (`/{locale}/courses`); the teacher preview (#831) points it at
    * itself so navigation never escapes into `/courses`, where an unpublished
@@ -163,6 +175,8 @@ export function LessonPageClient({
   courseSlug,
   courseId,
   courseXpPerLesson,
+  courseDifficulty = null,
+  buildersCompleted = 0,
   hrefBase,
   readOnly = false,
 }: LessonPageClientProps) {
@@ -683,7 +697,14 @@ export function LessonPageClient({
     onActivate: () =>
       jumpToSection(DISCUSSION_ANCHOR_ID, setIsDiscussionListOpen),
   });
-  const chipsRow = <LessonJumpChips chips={jumpChips} className="my-4" />;
+  const chipsRow = (
+    <LessonJumpChips
+      chips={jumpChips}
+      difficulty={courseDifficulty}
+      buildersCompleted={buildersCompleted}
+      className="my-4"
+    />
+  );
 
   const instructionsSlot = hasCodeBlock ? (
     <div className="space-y-6">

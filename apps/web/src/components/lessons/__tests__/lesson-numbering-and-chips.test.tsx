@@ -230,3 +230,68 @@ describe("LessonJumpChips", () => {
     expect(onActivate).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("LessonJumpChips — difficulty + builders-completed chips (#942 PR B)", () => {
+  function chip(): JumpChip[] {
+    return [
+      {
+        kind: "discussion",
+        label: "Discussion",
+        targetId: "lesson-discussion",
+        panelId: "lesson-discussion-panel",
+        expanded: false,
+        onActivate: vi.fn(),
+      },
+    ];
+  }
+
+  it("renders the course difficulty as a static, non-interactive chip", () => {
+    renderWithIntl(
+      <LessonJumpChips chips={chip()} difficulty="intermediate" />
+    );
+    const diff = screen.getByText("Intermediate");
+    expect(diff.closest("button")).toBeNull();
+  });
+
+  it("renders no difficulty chip for an unknown or absent difficulty", () => {
+    renderWithIntl(<LessonJumpChips chips={chip()} difficulty="expert" />);
+    expect(screen.queryByText(/expert/i)).toBeNull();
+    renderWithIntl(<LessonJumpChips chips={chip()} difficulty={null} />);
+    expect(screen.queryByText(/Beginner|Intermediate|Advanced/)).toBeNull();
+  });
+
+  it("hides the builders chip below the cold-start floor (0, 1, 2)", () => {
+    for (const count of [0, 1, 2]) {
+      const { unmount } = renderWithIntl(
+        <LessonJumpChips chips={chip()} buildersCompleted={count} />
+      );
+      expect(screen.queryByText(/completed this/)).toBeNull();
+      unmount();
+    }
+  });
+
+  it("shows the builders chip at the floor (3) and above, pluralized", () => {
+    const { unmount } = renderWithIntl(
+      <LessonJumpChips chips={chip()} buildersCompleted={3} />
+    );
+    expect(screen.getByText("3 builders completed this")).toBeInTheDocument();
+    unmount();
+    renderWithIntl(<LessonJumpChips chips={chip()} buildersCompleted={128} />);
+    expect(screen.getByText("128 builders completed this")).toBeInTheDocument();
+  });
+
+  it("still renders (statics only) when there is nothing to jump to", () => {
+    renderWithIntl(
+      <LessonJumpChips chips={[]} difficulty="beginner" buildersCompleted={5} />
+    );
+    expect(screen.getByText("Beginner")).toBeInTheDocument();
+    expect(screen.getByText("5 builders completed this")).toBeInTheDocument();
+  });
+
+  it("renders nothing at all with no chips, no difficulty, below the floor", () => {
+    const { container } = renderWithIntl(
+      <LessonJumpChips chips={[]} difficulty={null} buildersCompleted={2} />
+    );
+    expect(container).toBeEmptyDOMElement();
+  });
+});

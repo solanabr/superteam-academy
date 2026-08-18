@@ -5,6 +5,7 @@ import {
   getCourseIdBySlug,
   getLessonSkills,
 } from "@/lib/content/queries";
+import { getLessonCompletionCount } from "@/lib/lessons/completion-count";
 import { LessonPageClient } from "./lesson-client";
 
 interface LessonPageProps {
@@ -22,7 +23,14 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
   if (!lesson) notFound();
 
-  const skills = await getLessonSkills(lesson._id);
+  // buildersCompleted degrades to 0 on any failure (and 0 when the course is
+  // not synced yet) — the chip is enrichment and must never block the render.
+  const [skills, buildersCompleted] = await Promise.all([
+    getLessonSkills(lesson._id),
+    courseInfo
+      ? getLessonCompletionCount(courseInfo._id, lesson._id)
+      : Promise.resolve(0),
+  ]);
 
   return (
     <LessonPageClient
@@ -33,6 +41,8 @@ export default async function LessonPage({ params }: LessonPageProps) {
       courseSlug={slug}
       courseId={courseInfo?._id ?? slug}
       courseXpPerLesson={courseInfo?.xpPerLesson ?? 0}
+      courseDifficulty={courseInfo?.difficulty ?? null}
+      buildersCompleted={buildersCompleted}
     />
   );
 }
