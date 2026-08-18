@@ -1,0 +1,89 @@
+// @vitest-environment jsdom
+/* eslint-disable import/order -- vi.mock factories are hoisted above imports. */
+import type { ReactElement } from "react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
+
+/**
+ * Sibling of the Google button's suite, and the same failure with a different
+ * provider: `processSocialCallback` branches on `client.user`, so with a
+ * leftover Dynamic session the GitHub click becomes a credential LINK on that
+ * account rather than a sign-in.
+ */
+
+const { logoutMock, redirectMock, userState } = vi.hoisted(() => ({
+  logoutMock: vi.fn().mockResolvedValue(undefined),
+  redirectMock: vi.fn().mockResolvedValue(undefined),
+  userState: { current: undefined as { userId: string } | undefined },
+}));
+
+vi.mock("@dynamic-labs-sdk/client", () => ({
+  logout: logoutMock,
+  signInWithSocialRedirect: redirectMock,
+}));
+vi.mock("@dynamic-labs-sdk/react-hooks", () => ({
+  useUser: () => ({ data: userState.current }),
+}));
+vi.mock("@/lib/analytics", () => ({ trackEvent: vi.fn() }));
+
+import { DynamicGithubSignIn } from "../dynamic-github-sign-in";
+
+function renderWithIntl(ui: ReactElement) {
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      {ui}
+    </NextIntlClientProvider>
+  );
+}
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  userState.current = undefined;
+});
+
+describe("DynamicGithubSignIn", () => {
+  it("starts the redirect flow back to the current page", async () => {
+    renderWithIntl(<DynamicGithubSignIn disabled={false} />);
+    fireEvent.click(
+      screen.getByRole("button", { name: messages.auth.signInWithGitHub })
+    );
+
+    await waitFor(() =>
+      expect(redirectMock).toHaveBeenCalledWith({
+        provider: "github",
+        redirectUrl: window.location.href,
+      })
+    );
+    expect(logoutMock).not.toHaveBeenCalled();
+  });
+
+  it("clears a leftover Dynamic session BEFORE redirecting", async () => {
+    userState.current = { userId: "stale-user" };
+
+    renderWithIntl(<DynamicGithubSignIn disabled={false} />);
+    fireEvent.click(
+      screen.getByRole("button", { name: messages.auth.signInWithGitHub })
+    );
+
+    await waitFor(() => expect(redirectMock).toHaveBeenCalled());
+    const [logoutOrder] = logoutMock.mock.invocationCallOrder;
+    const [redirectOrder] = redirectMock.mock.invocationCallOrder;
+    expect(logoutOrder as number).toBeLessThan(redirectOrder as number);
+  });
+
+  it("surfaces a translated error when the redirect cannot start", async () => {
+    redirectMock.mockRejectedValueOnce(new Error("no project settings"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    renderWithIntl(<DynamicGithubSignIn disabled={false} />);
+    fireEvent.click(
+      screen.getByRole("button", { name: messages.auth.signInWithGitHub })
+    );
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      messages.auth.githubSignInFailed
+    );
+  });
+});

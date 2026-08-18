@@ -77,4 +77,22 @@ describe("AuthModal with Dynamic disabled and no provider mounted", () => {
       expect.objectContaining({ provider: "google" })
     );
   });
+
+  // A separate render: a click leaves every button disabled while the
+  // full-page OAuth navigation is presumed imminent, so the two kill-switch
+  // clicks cannot share one modal instance.
+  it("GitHub falls back to Supabase OAuth the same way", () => {
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <AuthModal open onOpenChange={() => {}} />
+      </NextIntlClientProvider>
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: messages.auth.signInWithGitHub })
+    );
+    expect(signInWithOAuth).toHaveBeenCalledWith(
+      expect.objectContaining({ provider: "github" })
+    );
+  });
 });
