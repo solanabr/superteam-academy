@@ -4447,9 +4447,8 @@ a.path-step-card:hover .path-step-badge.skip {
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
-  /* `safe` so an overflowing row falls back to flex-start — with plain
-     flex-end the leading tokens scroll off and cannot be reached. */
-  justify-content: safe flex-end;
+  /* Left-aligned (owner, 18-08); overflow scrolls rightward naturally. */
+  justify-content: flex-start;
   gap: 10px;
   min-width: 0;
   flex: 1;
