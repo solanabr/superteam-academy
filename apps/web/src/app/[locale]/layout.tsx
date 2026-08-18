@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/layout/theme-provider";
 import { SolanaWalletProvider } from "@/lib/solana/wallet-provider";
 import { AnalyticsProvider } from "@/components/analytics/analytics-provider";
 import { AuthProvider } from "@/lib/auth/auth-provider";
+import { ReferralCapture } from "@/components/referrals/referral-capture";
 import { DynamicWalletProvider } from "@/components/auth/dynamic-wallet-provider";
 import { Header } from "@/components/layout/header";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
@@ -49,6 +50,10 @@ export default async function LocaleLayout(props: LocaleLayoutProps) {
               be a sibling. */}
           <DynamicWalletProvider>
             <AuthProvider>
+              {/* Captures ?ref= codes on any page and claims them once a
+                  session exists — attribution without touching any of the
+                  four auth flows. No UI. */}
+              <ReferralCapture />
               <AnalyticsProvider>
                 <div className="grid-bg flex min-h-screen flex-col bg-[var(--bg)]">
                   <Header />
