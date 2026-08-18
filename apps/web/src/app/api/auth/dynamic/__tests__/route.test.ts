@@ -76,6 +76,7 @@ vi.mock("next/headers", () => ({
 }));
 
 import { POST } from "../route";
+import { logEvent } from "@/lib/logging";
 
 /** Shaped like a real Dynamic environment id: a lowercase UUID. */
 const ENVIRONMENT_ID = "fb6dd9d1-09f5-43c3-8a8c-eab6e44c37f9";
@@ -217,7 +218,9 @@ beforeEach(() => {
   profileUpdate.mockResolvedValue({ error: null });
   shellLookup.mockResolvedValue({ data: [], error: null });
   getUserById.mockResolvedValue({ data: { user: null }, error: null });
-  rpcMock.mockResolvedValue({ data: {}, error: null });
+  // `data: null` doubles as the subject rung's default no-match, so every
+  // pre-#1055 test keeps exercising the email rung unchanged.
+  rpcMock.mockResolvedValue({ data: null, error: null });
   retryPendingOnchainActions.mockResolvedValue(undefined);
   generateWalletName.mockReturnValue("brave-otter");
 });
@@ -854,7 +857,10 @@ describe("POST /api/auth/dynamic — account-fork auto-merge", () => {
     );
 
     expect(res.status).toBe(200);
-    expect(rpcMock).not.toHaveBeenCalled();
+    expect(rpcMock).not.toHaveBeenCalledWith(
+      "merge_wallet_shell_account",
+      expect.anything()
+    );
   });
 
   it("skips the merge when the signed-in account already has a wallet", async () => {
@@ -868,7 +874,10 @@ describe("POST /api/auth/dynamic — account-fork auto-merge", () => {
     );
 
     expect(res.status).toBe(200);
-    expect(rpcMock).not.toHaveBeenCalled();
+    expect(rpcMock).not.toHaveBeenCalledWith(
+      "merge_wallet_shell_account",
+      expect.anything()
+    );
   });
 
   it("refuses to merge an account whose email is not the synthetic wallet form", async () => {
@@ -888,7 +897,10 @@ describe("POST /api/auth/dynamic — account-fork auto-merge", () => {
     );
 
     expect(res.status).toBe(200);
-    expect(rpcMock).not.toHaveBeenCalled();
+    expect(rpcMock).not.toHaveBeenCalledWith(
+      "merge_wallet_shell_account",
+      expect.anything()
+    );
   });
 
   it("refuses to merge an account that has a real OAuth identity", async () => {
@@ -908,7 +920,10 @@ describe("POST /api/auth/dynamic — account-fork auto-merge", () => {
     );
 
     expect(res.status).toBe(200);
-    expect(rpcMock).not.toHaveBeenCalled();
+    expect(rpcMock).not.toHaveBeenCalledWith(
+      "merge_wallet_shell_account",
+      expect.anything()
+    );
   });
 
   it("skips when two shells match — ambiguity never merges", async () => {
@@ -926,7 +941,10 @@ describe("POST /api/auth/dynamic — account-fork auto-merge", () => {
     );
 
     expect(res.status).toBe(200);
-    expect(rpcMock).not.toHaveBeenCalled();
+    expect(rpcMock).not.toHaveBeenCalledWith(
+      "merge_wallet_shell_account",
+      expect.anything()
+    );
   });
 
   it("ignores a blockchain credential from a foreign chain", async () => {
@@ -946,7 +964,10 @@ describe("POST /api/auth/dynamic — account-fork auto-merge", () => {
     );
 
     expect(res.status).toBe(200);
-    expect(rpcMock).not.toHaveBeenCalled();
+    expect(rpcMock).not.toHaveBeenCalledWith(
+      "merge_wallet_shell_account",
+      expect.anything()
+    );
   });
 
   it("ignores a blockchain credential Dynamic says cannot sign in", async () => {
@@ -966,7 +987,10 @@ describe("POST /api/auth/dynamic — account-fork auto-merge", () => {
     );
 
     expect(res.status).toBe(200);
-    expect(rpcMock).not.toHaveBeenCalled();
+    expect(rpcMock).not.toHaveBeenCalledWith(
+      "merge_wallet_shell_account",
+      expect.anything()
+    );
   });
 
   it("still merges when the credential carries no chain field at all", async () => {
@@ -988,7 +1012,10 @@ describe("POST /api/auth/dynamic — account-fork auto-merge", () => {
     );
 
     expect(res.status).toBe(200);
-    expect(rpcMock).toHaveBeenCalled();
+    expect(rpcMock).toHaveBeenCalledWith(
+      "merge_wallet_shell_account",
+      expect.anything()
+    );
   });
 
   it("refuses a candidate with NO identities at all", async () => {
@@ -1008,7 +1035,10 @@ describe("POST /api/auth/dynamic — account-fork auto-merge", () => {
     );
 
     expect(res.status).toBe(200);
-    expect(rpcMock).not.toHaveBeenCalled();
+    expect(rpcMock).not.toHaveBeenCalledWith(
+      "merge_wallet_shell_account",
+      expect.anything()
+    );
   });
 
   it("still signs in when the merge RPC refuses", async () => {
@@ -1029,9 +1059,9 @@ describe("POST /api/auth/dynamic — account-fork auto-merge", () => {
   it("runs the merge before the on-chain queue drain", async () => {
     armMergeScenario();
     const order: string[] = [];
-    rpcMock.mockImplementation(async () => {
-      order.push("merge");
-      return { data: {}, error: null };
+    rpcMock.mockImplementation(async (fn: string) => {
+      if (fn === "merge_wallet_shell_account") order.push("merge");
+      return { data: null, error: null };
     });
     retryPendingOnchainActions.mockImplementation(async () => {
       order.push("drain");
@@ -1040,5 +1070,398 @@ describe("POST /api/auth/dynamic — account-fork auto-merge", () => {
     await POST(dynamicRequest({ dynamicJwt: await jwtWithWallet() }));
 
     expect(order).toEqual(["merge", "drain"]);
+  });
+});
+
+describe("POST /api/auth/dynamic — subject rung (#1055)", () => {
+  const MATCHED_ID = "wallet-first-user-1";
+  const SYNTHETIC_EMAIL = "So1WalletPubkey111@wallet.superteam-lms.local";
+
+  /** The token's Google identity is linked to an existing (wallet-first) account. */
+  function armSubjectMatch() {
+    rpcMock.mockImplementation(async (fn: string) =>
+      fn === "find_user_by_oauth_identity"
+        ? { data: MATCHED_ID, error: null }
+        : { data: null, error: null }
+    );
+    getUserById.mockResolvedValue({
+      data: { user: { id: MATCHED_ID, email: SYNTHETIC_EMAIL } },
+      error: null,
+    });
+  }
+
+  it("mints the session with the MATCHED user's own synthetic email and never calls createUser", async () => {
+    armSubjectMatch();
+
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await signDynamicJwt() })
+    );
+
+    expect(res.status).toBe(200);
+    expect(rpcMock).toHaveBeenCalledWith("find_user_by_oauth_identity", {
+      p_provider: "google",
+      p_subject: "google-account-1",
+    });
+    expect(getUserById).toHaveBeenCalledWith(MATCHED_ID);
+    // The whole point: the synthetic email an email match could never reach.
+    expect(generateLink).toHaveBeenCalledWith({
+      type: "magiclink",
+      email: SYNTHETIC_EMAIL,
+    });
+    expect(createUser).not.toHaveBeenCalled();
+  });
+
+  it("subject beats email when both would match — the linked account wins over the coincidental one", async () => {
+    armSubjectMatch();
+    // An account with the token's email ALSO exists; a fallen-through email
+    // rung would sign into it. The subject rung must make that unreachable.
+    createUser.mockResolvedValue({
+      error: {
+        message: "A user with this email address has already been registered",
+      },
+    });
+
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await signDynamicJwt() })
+    );
+
+    expect(res.status).toBe(200);
+    expect(generateLink).toHaveBeenCalledWith({
+      type: "magiclink",
+      email: SYNTHETIC_EMAIL,
+    });
+    expect(generateLink).not.toHaveBeenCalledWith({
+      type: "magiclink",
+      email: EXISTING_EMAIL,
+    });
+    expect(createUser).not.toHaveBeenCalled();
+  });
+
+  it("resolves through the signin-pinned credential's subject too", async () => {
+    armSubjectMatch();
+
+    const res = await POST(
+      dynamicRequest({
+        dynamicJwt: await signDynamicJwt({
+          claims: { signin_credential_id: GOOGLE_CREDENTIAL_ID },
+        }),
+      })
+    );
+
+    expect(res.status).toBe(200);
+    expect(rpcMock).toHaveBeenCalledWith("find_user_by_oauth_identity", {
+      p_provider: "google",
+      p_subject: "google-account-1",
+    });
+    expect(generateLink).toHaveBeenCalledWith({
+      type: "magiclink",
+      email: SYNTHETIC_EMAIL,
+    });
+  });
+
+  it("falls through to the email rung, exactly as before, when no identity matches", async () => {
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await signDynamicJwt() })
+    );
+
+    expect(res.status).toBe(200);
+    expect(createUser).toHaveBeenCalledWith({
+      email: EXISTING_EMAIL,
+      email_confirm: true,
+    });
+    expect(generateLink).toHaveBeenCalledWith({
+      type: "magiclink",
+      email: EXISTING_EMAIL,
+    });
+  });
+
+  it("403s when two credentials subject-match DIFFERENT users", async () => {
+    rpcMock.mockImplementation(
+      async (fn: string, args: Record<string, unknown>) => {
+        if (fn !== "find_user_by_oauth_identity")
+          return { data: null, error: null };
+        return {
+          data: args.p_provider === "google" ? "user-A" : "user-B",
+          error: null,
+        };
+      }
+    );
+    // Fallback path: both credentials agree on ONE email (so the email
+    // resolution passes) but their subjects belong to different accounts.
+    const token = await signDynamicJwt({
+      claims: {
+        verified_credentials: [
+          googleCredential(),
+          googleCredential({
+            id: "cred-github",
+            oauth_provider: "github",
+            oauth_account_id: "github-account-1",
+            email: EXISTING_EMAIL,
+          }),
+        ],
+      },
+    });
+
+    const res = await POST(dynamicRequest({ dynamicJwt: token }));
+
+    expect(res.status).toBe(403);
+    await expect(res.json()).resolves.toEqual({
+      error: "conflictingOauthIdentity",
+    });
+    expect(createUser).not.toHaveBeenCalled();
+    expect(generateLink).not.toHaveBeenCalled();
+  });
+
+  it("degrades to the email rung and logs when the lookup RPC errors (migration not landed)", async () => {
+    rpcMock.mockImplementation(async (fn: string) =>
+      fn === "find_user_by_oauth_identity"
+        ? {
+            data: null,
+            error: {
+              message:
+                "Could not find the function public.find_user_by_oauth_identity in the schema cache",
+            },
+          }
+        : { data: null, error: null }
+    );
+
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await signDynamicJwt() })
+    );
+
+    expect(res.status).toBe(200);
+    expect(createUser).toHaveBeenCalledWith({
+      email: EXISTING_EMAIL,
+      email_confirm: true,
+    });
+    expect(generateLink).toHaveBeenCalledWith({
+      type: "magiclink",
+      email: EXISTING_EMAIL,
+    });
+    expect(vi.mocked(logEvent)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: "dynamic-auth.subject-lookup-degraded",
+      })
+    );
+  });
+
+  it("skips the rung entirely when the credential carries no oauth_account_id", async () => {
+    armSubjectMatch();
+
+    const res = await POST(
+      dynamicRequest({
+        dynamicJwt: await signDynamicJwt({
+          claims: {
+            verified_credentials: [
+              googleCredential({ oauth_account_id: undefined }),
+            ],
+          },
+        }),
+      })
+    );
+
+    expect(res.status).toBe(200);
+    expect(rpcMock).not.toHaveBeenCalledWith(
+      "find_user_by_oauth_identity",
+      expect.anything()
+    );
+    expect(generateLink).toHaveBeenCalledWith({
+      type: "magiclink",
+      email: EXISTING_EMAIL,
+    });
+  });
+
+  it("treats an empty-string oauth_account_id as absent", async () => {
+    armSubjectMatch();
+
+    const res = await POST(
+      dynamicRequest({
+        dynamicJwt: await signDynamicJwt({
+          claims: {
+            verified_credentials: [googleCredential({ oauth_account_id: "" })],
+          },
+        }),
+      })
+    );
+
+    expect(res.status).toBe(200);
+    expect(rpcMock).not.toHaveBeenCalledWith(
+      "find_user_by_oauth_identity",
+      expect.anything()
+    );
+  });
+
+  it("degrades to the email rung when the matched user cannot be fetched", async () => {
+    armSubjectMatch();
+    getUserById.mockResolvedValue({
+      data: { user: null },
+      error: { message: "unexpected_failure" },
+    });
+
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await signDynamicJwt() })
+    );
+
+    expect(res.status).toBe(200);
+    expect(createUser).toHaveBeenCalledWith({
+      email: EXISTING_EMAIL,
+      email_confirm: true,
+    });
+    expect(generateLink).toHaveBeenCalledWith({
+      type: "magiclink",
+      email: EXISTING_EMAIL,
+    });
+  });
+
+  it("still refuses a subject-matched account that is tombstoned", async () => {
+    armSubjectMatch();
+    isAccountDeleted.mockResolvedValue(true);
+
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await signDynamicJwt() })
+    );
+
+    expect(res.status).toBe(403);
+    await expect(res.json()).resolves.toEqual({ error: "accountDeleted" });
+    expect(signOut).toHaveBeenCalledTimes(1);
+    expect(retryPendingOnchainActions).not.toHaveBeenCalled();
+  });
+
+  it("composes with the auto-merge: a subject-matched wallet-first account has a wallet, so no merge runs", async () => {
+    armSubjectMatch();
+    // The matched account's profile carries its wallet — the merge gate
+    // (`!profile.wallet_address`) closes before any shell lookup happens.
+    profileSingle.mockResolvedValue({
+      data: { username: "sol-surfer", wallet_address: "So1WalletPubkey111" },
+    });
+
+    const res = await POST(
+      dynamicRequest({
+        dynamicJwt: await signDynamicJwt({
+          claims: {
+            verified_credentials: [
+              googleCredential(),
+              {
+                id: "wallet-credential-1",
+                format: "blockchain",
+                address: "So1WalletPubkey111",
+                chain: "solana",
+                signInEnabled: true,
+              },
+            ],
+          },
+        }),
+      })
+    );
+
+    expect(res.status).toBe(200);
+    expect(rpcMock).not.toHaveBeenCalledWith(
+      "merge_wallet_shell_account",
+      expect.anything()
+    );
+  });
+});
+
+describe("POST /api/auth/dynamic — avatar adoption on the bridge", () => {
+  const PHOTO = "https://lh3.googleusercontent.com/a/photo=s96-c";
+
+  const jwtWithPhoto = (photo: unknown = PHOTO) =>
+    signDynamicJwt({
+      claims: {
+        verified_credentials: [
+          googleCredential({ oauth_account_photos: [photo] }),
+        ],
+      },
+    });
+
+  function avatarUpdates() {
+    return profileUpdate.mock.calls
+      .map(([values]) => values as Record<string, unknown>)
+      .filter((values) => "avatar_url" in values);
+  }
+
+  it("adopts the provider photo when the profile has no avatar", async () => {
+    profileSingle.mockResolvedValue({
+      data: {
+        username: "sol-surfer",
+        wallet_address: "ExistingWallet1111",
+        avatar_url: null,
+      },
+    });
+
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await jwtWithPhoto() })
+    );
+
+    expect(res.status).toBe(200);
+    expect(avatarUpdates()).toEqual([{ avatar_url: PHOTO }]);
+  });
+
+  it("refreshes a stale provider URL but never a custom Supabase upload", async () => {
+    profileSingle.mockResolvedValue({
+      data: {
+        username: "sol-surfer",
+        wallet_address: "ExistingWallet1111",
+        avatar_url: "https://lh3.googleusercontent.com/a/old-rotated-url",
+      },
+    });
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await jwtWithPhoto() })
+    );
+    expect(res.status).toBe(200);
+    expect(avatarUpdates()).toEqual([{ avatar_url: PHOTO }]);
+
+    vi.clearAllMocks();
+    getDynamicEnvironmentId.mockReturnValue(ENVIRONMENT_ID);
+    isRateLimited.mockResolvedValue(false);
+    getClientIp.mockReturnValue("203.0.113.7");
+    createUser.mockResolvedValue({ error: null });
+    generateLink.mockResolvedValue({
+      data: { properties: { hashed_token: "tok_123" } },
+      error: null,
+    });
+    verifyOtp.mockResolvedValue({
+      data: { session: { user: { id: "supabase-user-1" } } },
+      error: null,
+    });
+    isAccountDeleted.mockResolvedValue(false);
+    shellLookup.mockResolvedValue({ data: [], error: null });
+    rpcMock.mockResolvedValue({ data: [], error: null });
+    profileUpdate.mockResolvedValue({ error: null });
+    // Custom upload: URL carries the project storage host — never overwritten.
+    // Derived from the same env the route reads (CI sets a real URL, so a
+    // hardcoded host would silently stop matching there).
+    const storageHost = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).host;
+    profileSingle.mockResolvedValue({
+      data: {
+        username: "sol-surfer",
+        wallet_address: "ExistingWallet1111",
+        avatar_url: `https://${storageHost}/storage/v1/object/public/avatars/me.png`,
+      },
+    });
+    const res2 = await POST(
+      dynamicRequest({ dynamicJwt: await jwtWithPhoto() })
+    );
+    expect(res2.status).toBe(200);
+    expect(avatarUpdates()).toEqual([]);
+  });
+
+  it("drops a non-https photo at the boundary", async () => {
+    profileSingle.mockResolvedValue({
+      data: {
+        username: "sol-surfer",
+        wallet_address: "ExistingWallet1111",
+        avatar_url: null,
+      },
+    });
+
+    const res = await POST(
+      dynamicRequest({
+        dynamicJwt: await jwtWithPhoto("javascript:alert(1)"),
+      })
+    );
+
+    expect(res.status).toBe(200);
+    expect(avatarUpdates()).toEqual([]);
   });
 });

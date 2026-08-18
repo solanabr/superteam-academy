@@ -23,6 +23,7 @@ import {
 } from "@/lib/gamification/achievements";
 import { getCourseById, getDeployedAchievements } from "@/lib/content/queries";
 import { maybeAwardSurpriseBonus } from "@/lib/gamification/surprise-bonus";
+import { recordReferralCoursePoint } from "@/lib/referrals/server";
 import { scheduleQuestEvaluation } from "@/lib/gamification/quest-evaluation";
 import { isCourseInMaintenance } from "@/lib/content/deployments";
 import { isPlatformFrozen } from "@/lib/platform/freeze";
@@ -296,6 +297,13 @@ export async function handleCourseFinalized(
       },
     });
   }
+
+  // 1b. Referral point for the learner's referrer, if any. Every finalize path
+  // (auto-finalize, queue retry, resync) converges on this event, so this is
+  // THE course-completed moment; the DB's once-per-(learner,course) unique
+  // index makes webhook replays no-ops, and the helper never throws — referral
+  // bookkeeping must not fail the completed_at/XP writes around it.
+  await recordReferralCoursePoint(userId, courseId);
 
   // 2. Award bonus XP
   if (event.bonusXp > 0) {

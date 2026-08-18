@@ -25,10 +25,13 @@ import type { Database } from "@/lib/supabase/types";
  * stranded on the old row. Prod carries 108 google and 8 github identities, so
  * forking them is the failure this route exists to prevent.
  *
- * The bridge is one claim: an email that the OAuth provider itself verified.
- * Everything below is about making sure that claim is genuinely Dynamic's, is
- * genuinely for OUR Dynamic environment, and is genuinely provider-verified
- * rather than self-asserted.
+ * The bridge is one claim: an OAuth identity the provider itself verified —
+ * matched first by the provider's stable SUBJECT id against auth.identities
+ * (#1055, which is what signs a wallet-first synthetic-email account back in
+ * through its linked Google), then by verified email. Everything below is
+ * about making sure that claim is genuinely Dynamic's, is genuinely for OUR
+ * Dynamic environment, and is genuinely provider-verified rather than
+ * self-asserted.
  *
  * Sibling of `/api/auth/wallet`, and deliberately built on the same
  * session-minting mechanism (admin `generateLink` → cookie-bound `verifyOtp`)
@@ -136,7 +139,9 @@ interface DynamicVerifiedCredential {
   format?: unknown;
   email?: unknown;
   oauth_provider?: unknown;
+  oauth_account_id?: unknown;
   oauth_emails?: unknown;
+  oauth_account_photos?: unknown;
   signInEnabled?: unknown;
 }
 
@@ -233,11 +238,35 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * hand them the victim's Superteam account. A github credential must carry the
  * `email` field itself; extending the fallback to a new provider is a per-
  * provider trust decision, not a refactor.
+ *
+ * Alongside the email, the credential's `oauth_account_id` — the provider's
+ * own stable account id (Google's numeric subject) — is surfaced for the
+ * subject rung. It is optional in the SDK model, so non-string/empty is
+ * treated as absent, which merely skips the subject rung for that credential.
  */
-function matchableEmail(credential: unknown): string | null {
+interface MatchableCredential {
+  email: string;
+  provider: string;
+  /** Provider-stable account id (`oauth_account_id`), when the token carries one. */
+  subject: string | null;
+  /**
+   * The provider's profile photo (`oauth_account_photos[0]`), https-only —
+   * this lands in an <img src>, so anything else is dropped at the boundary.
+   */
+  photo: string | null;
+}
+
+function matchableCredential(credential: unknown): MatchableCredential | null {
   if (!isRecord(credential)) return null;
-  const { format, oauth_provider, signInEnabled, email, oauth_emails } =
-    credential as DynamicVerifiedCredential;
+  const {
+    format,
+    oauth_provider,
+    oauth_account_id,
+    oauth_account_photos,
+    signInEnabled,
+    email,
+    oauth_emails,
+  } = credential as DynamicVerifiedCredential;
 
   if (format !== "oauth") return null;
   if (typeof oauth_provider !== "string") return null;
@@ -257,11 +286,33 @@ function matchableEmail(credential: unknown): string | null {
   if (candidate === null) return null;
 
   const normalized = normalizeEmail(candidate);
-  return normalized === "" ? null : normalized;
+  if (normalized === "") return null;
+
+  const subject =
+    typeof oauth_account_id === "string" && oauth_account_id.trim() !== ""
+      ? oauth_account_id.trim()
+      : null;
+
+  const firstPhoto = Array.isArray(oauth_account_photos)
+    ? oauth_account_photos[0]
+    : null;
+  const photo =
+    typeof firstPhoto === "string" && firstPhoto.startsWith("https://")
+      ? firstPhoto
+      : null;
+
+  return { email: normalized, provider: oauth_provider, subject, photo };
 }
 
 type EmailResolution =
-  | { ok: true; email: string }
+  | {
+      ok: true;
+      email: string;
+      /** (provider, subject) pairs of the credential(s) that won resolution. */
+      subjects: ReadonlyArray<{ provider: string; subject: string }>;
+      /** The winning credential's profile photo, when it carries one. */
+      photo: string | null;
+    }
   | { ok: false; error: "noVerifiedOauthEmail" | "ambiguousVerifiedEmail" };
 
 /**
@@ -287,21 +338,88 @@ function resolveVerifiedEmail(claims: DynamicJwtClaims): EmailResolution {
     const signin = credentials.find(
       (credential) => isRecord(credential) && credential.id === signinId
     );
-    const email = matchableEmail(signin);
-    return email
-      ? { ok: true, email }
+    const matched = matchableCredential(signin);
+    return matched
+      ? {
+          ok: true,
+          email: matched.email,
+          subjects: matched.subject
+            ? [{ provider: matched.provider, subject: matched.subject }]
+            : [],
+          photo: matched.photo,
+        }
       : { ok: false, error: "noVerifiedOauthEmail" };
   }
 
-  const emails = new Set(
-    credentials
-      .map(matchableEmail)
-      .filter((email): email is string => email !== null)
-  );
+  const matched = credentials
+    .map(matchableCredential)
+    .filter(
+      (credential): credential is MatchableCredential => credential !== null
+    );
+  const emails = new Set(matched.map((credential) => credential.email));
 
   if (emails.size === 0) return { ok: false, error: "noVerifiedOauthEmail" };
   if (emails.size > 1) return { ok: false, error: "ambiguousVerifiedEmail" };
-  return { ok: true, email: [...emails][0]! };
+  return {
+    ok: true,
+    email: [...emails][0]!,
+    subjects: matched.flatMap((credential) =>
+      credential.subject
+        ? [{ provider: credential.provider, subject: credential.subject }]
+        : []
+    ),
+    photo:
+      matched.find((credential) => credential.photo !== null)?.photo ?? null,
+  };
+}
+
+/**
+ * Subject rung (#1055): map the winning credential(s) to a Supabase user by
+ * OAUTH SUBJECT — `auth.identities (provider, provider_id)` via a
+ * service-role-only SECURITY DEFINER lookup. This is what lets a wallet-first
+ * account (synthetic email, undeliverable) be recovered through its
+ * deliberately-linked Google: the identity row matches even though no email
+ * ever could.
+ *
+ * `auth.identities` is the truth here on purpose — `profiles.google_id` /
+ * `github_id` are client-written under RLS and must never resolve accounts.
+ *
+ * Fail modes are asymmetric by design:
+ * - Two credentials resolving DIFFERENT users is a conflict the caller must
+ *   refuse (403) — picking either one hands out somebody's account.
+ * - Any RPC error (including function-missing where the migration has not
+ *   landed) degrades the WHOLE rung to "none": the caller falls through to
+ *   the email rung exactly as pre-#1055, which can never mint for an account
+ *   the email match would not already have minted for. Degrading only the
+ *   erroring credential could mask a conflict, so the rung is all-or-nothing.
+ */
+type SubjectResolution =
+  | { status: "match"; userId: string }
+  | { status: "none" }
+  | { status: "conflict" };
+
+async function resolveUserByOauthSubject(
+  supabaseAdmin: ReturnType<typeof createAdminClient>,
+  subjects: ReadonlyArray<{ provider: string; subject: string }>
+): Promise<SubjectResolution> {
+  const userIds = new Set<string>();
+  for (const { provider, subject } of subjects) {
+    const { data, error } = await supabaseAdmin.rpc(
+      "find_user_by_oauth_identity",
+      { p_provider: provider, p_subject: subject }
+    );
+    if (error) {
+      logEvent({
+        event: "dynamic-auth.subject-lookup-degraded",
+        context: { provider, message: error.message },
+      });
+      return { status: "none" };
+    }
+    if (typeof data === "string" && data !== "") userIds.add(data);
+  }
+  if (userIds.size > 1) return { status: "conflict" };
+  const userId = [...userIds][0];
+  return userId ? { status: "match", userId } : { status: "none" };
 }
 
 /**
@@ -550,9 +668,49 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       });
       return NextResponse.json({ error: resolved.error }, { status: 403 });
     }
-    const email = resolved.email;
-
     const supabaseAdmin = createAdminClient();
+
+    // Subject before email — a deliberate settings-page link (an
+    // auth.identities row) beats an email coincidence. This is the recovery
+    // path for wallet-first accounts: their synthetic email can never match,
+    // but the Google identity they linked resolves them here, and the session
+    // is minted with THEIR email (synthetic included — generateLink is
+    // per-user-email, and the wallet route mints synthetic-email sessions
+    // every day). When both rungs would match different accounts, the subject
+    // account wins by construction: the email rung never runs.
+    let email = resolved.email;
+    let subjectMatched = false;
+    const subjectResolution = await resolveUserByOauthSubject(
+      supabaseAdmin,
+      resolved.subjects
+    );
+    if (subjectResolution.status === "conflict") {
+      // Same fail-closed posture as ambiguousVerifiedEmail: credentials
+      // pointing at different accounts must never let the caller pick one.
+      logEvent({
+        event: "dynamic-auth.conflicting-oauth-identity",
+        context: { sub: claims.sub },
+      });
+      return NextResponse.json(
+        { error: "conflictingOauthIdentity" },
+        { status: 403 }
+      );
+    }
+    if (subjectResolution.status === "match") {
+      const { data: matchedUser, error: matchedError } =
+        await supabaseAdmin.auth.admin.getUserById(subjectResolution.userId);
+      if (matchedError || !matchedUser?.user?.email) {
+        // The identity row named a user we cannot fetch — degrade to the
+        // email rung (pre-#1055 behavior) rather than block sign-in.
+        logEvent({
+          event: "dynamic-auth.subject-lookup-degraded",
+          context: { sub: claims.sub, step: "getUserById" },
+        });
+      } else {
+        email = matchedUser.user.email;
+        subjectMatched = true;
+      }
+    }
 
     // Create-then-link, exactly as /api/auth/wallet does, and for a stronger
     // reason here: the admin API has no lookup-by-email, only a paginated
@@ -562,21 +720,26 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // that exact row. Any OTHER createUser failure aborts rather than falling
     // through, because falling through on an ambiguous error is how you fork the
     // account this route exists to preserve.
-    const { error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      email_confirm: true,
-    });
-
-    if (
-      createError &&
-      !createError.message.includes("already been registered")
-    ) {
-      logError({
-        errorId: ERROR_IDS.DYNAMIC_AUTH_FAILED,
-        error: new Error(createError.message),
-        context: { step: "createUser" },
+    //
+    // A subject match skips this entirely: the account is known to exist, and
+    // probing createUser with its (possibly synthetic) email buys nothing.
+    if (!subjectMatched) {
+      const { error: createError } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        email_confirm: true,
       });
-      return NextResponse.json({ error: "authFailed" }, { status: 500 });
+
+      if (
+        createError &&
+        !createError.message.includes("already been registered")
+      ) {
+        logError({
+          errorId: ERROR_IDS.DYNAMIC_AUTH_FAILED,
+          error: new Error(createError.message),
+          context: { step: "createUser" },
+        });
+        return NextResponse.json({ error: "authFailed" }, { status: 500 });
+      }
     }
 
     const { data: linkData, error: linkError } =
@@ -635,7 +798,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Existing matched accounts already have a real name and are left alone.
     const { data: profile } = await supabaseAdmin
       .from("profiles")
-      .select("username, wallet_address")
+      .select("username, wallet_address, avatar_url")
       .eq("id", userId)
       .single();
 
@@ -653,6 +816,25 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           .update({ username: generateWalletName() })
           .eq("id", userId);
         if (!nameError) break;
+      }
+    }
+
+    // Adopt/refresh the provider photo, mirroring the legacy callback's rule
+    // exactly: provider CDN URLs rotate, so refresh on every login — but a
+    // custom Supabase-storage upload (URL carries our project host) is the
+    // learner's own choice and is never overwritten. Without this, a learner
+    // whose only way in is the Dynamic bridge kept the placeholder avatar
+    // forever. https-only enforcement happens at the credential boundary.
+    if (resolved.photo) {
+      const storageHost = new URL(env.NEXT_PUBLIC_SUPABASE_URL).host;
+      const storedAvatar = profile?.avatar_url ?? null;
+      const isCustomUpload =
+        storedAvatar !== null && storedAvatar.includes(storageHost);
+      if (!isCustomUpload && storedAvatar !== resolved.photo) {
+        await supabaseAdmin
+          .from("profiles")
+          .update({ avatar_url: resolved.photo })
+          .eq("id", userId);
       }
     }
 

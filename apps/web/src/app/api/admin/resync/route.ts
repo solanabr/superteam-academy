@@ -20,7 +20,10 @@ import {
 } from "@/lib/solana/academy-reads";
 import { isLessonComplete } from "@/lib/solana/bitmap";
 import { slotToLiveLessonId } from "@/lib/courses/lesson-slot";
-import { getAllCourses, getAllAchievements } from "@/lib/content/queries";
+import {
+  getAllCoursesIncludingUnlisted,
+  getAllAchievements,
+} from "@/lib/content/queries";
 import { calculateLevel } from "@/lib/gamification/xp";
 
 function isValidBase58(value: string): boolean {
@@ -128,8 +131,10 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // 2. Sync enrollments + lesson progress from on-chain Enrollment PDAs
-  const courses = await getAllCourses();
+  // 2. Sync enrollments + lesson progress from on-chain Enrollment PDAs.
+  // Unlisted included: a learner's on-chain enrolment in an unlisted course is
+  // just as real, and resync repairing everything BUT it would be a silent hole.
+  const courses = await getAllCoursesIncludingUnlisted();
 
   for (const course of courses) {
     try {

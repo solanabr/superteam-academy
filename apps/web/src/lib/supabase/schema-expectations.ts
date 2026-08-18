@@ -160,6 +160,16 @@ export const SCHEMA_EXPECTATIONS: readonly SchemaExpectation[] = [
   },
   {
     kind: "rpc",
+    // Read-only (LANGUAGE sql STABLE), REVOKEd from anon → 42501, body never
+    // runs; blank args would return NULL even if it did.
+    rpc: "find_user_by_oauth_identity",
+    args: { p_provider: "", p_subject: "" },
+    migration: "20260818120000_find_user_by_oauth_identity.sql",
+    description:
+      "OAuth-subject account lookup (#1055) — /api/auth/dynamic degrades to email-only matching without it, so a wallet-first account's Google recovery path silently stops working",
+  },
+  {
+    kind: "rpc",
     // Read-only (LANGUAGE sql STABLE) — no side effect even if it ran, which it
     // does not (REVOKEd from anon, same as above).
     rpc: "get_challenge_assist_state",
@@ -187,6 +197,45 @@ export const SCHEMA_EXPECTATIONS: readonly SchemaExpectation[] = [
     migration: "20260726140000_review_items_spaced_repetition.sql",
     description:
       "spaced-repetition grading (#569) — /api/review/grade rethrows the RPC error, so a missing fn 500s every review submission",
+  },
+  {
+    kind: "table",
+    table: "referral_seasons",
+    migration: "20260818150000_referral_program.sql",
+    description:
+      "referral season windows — their absence blanks the referrals leaderboard tab",
+  },
+  {
+    kind: "column",
+    table: "profiles",
+    column: "referral_code",
+    migration: "20260818150000_referral_program.sql",
+    description: "shareable referral code — its absence 400s /api/referrals/me",
+  },
+  {
+    kind: "rpc",
+    // ⚠️ SIDE-EFFECTFUL IF EVER CALLABLE (writes referred_by + mints a signup
+    // point) — safe for the usual reason (REVOKEd from anon/authenticated →
+    // 42501, body never runs). Belt AND braces: the nil-UUID referred account
+    // matches no profile, so a body that somehow ran returns 'invalidAccount'
+    // before any write.
+    rpc: "claim_referral",
+    args: { p_referred_id: NIL_UUID, p_code: "" },
+    migration: "20260818150000_referral_program.sql",
+    description:
+      "referral claim (signup point) — a missing fn silently drops every captured referral",
+  },
+  {
+    kind: "rpc",
+    // ⚠️ SIDE-EFFECTFUL IF EVER CALLABLE (mints a completion point) — safe for
+    // the usual reason (service_role-only → 42501). Belt AND braces: nil-UUID
+    // user has no referrer, so a body that ran would return false without
+    // inserting.
+    rpc: "record_referral_course_completion",
+    args: { p_user_id: NIL_UUID, p_course_id: "" },
+    migration: "20260818150000_referral_program.sql",
+    description:
+      "referral completion point — a missing fn silently under-counts every season score",
   },
 ];
 

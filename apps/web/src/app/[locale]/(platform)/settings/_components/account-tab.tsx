@@ -14,7 +14,12 @@ import { SolanaLogo } from "@/components/icons/solana-logo";
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/types";
 import { useAuth } from "@/lib/auth/auth-provider";
+import { isDynamicEnabled } from "@/lib/dynamic/config";
 import { createSIWSMessage, formatSIWSMessage } from "@/lib/solana/wallet-auth";
+import {
+  DynamicSessionProbe,
+  type DynamicSessionInfo,
+} from "./dynamic-session-probe";
 
 // ── Types ─────────────────────────────────────────────────────────
 interface AccountTabProps {
@@ -66,6 +71,12 @@ export function AccountTab({
     type: "success" | "error";
     text: string;
   } | null>(null);
+  // What the Dynamic session knows beyond Supabase's identity list — which
+  // social provider signed the learner in, and the embedded wallet it created.
+  // Null until the probe reports (and forever when Dynamic is off), which
+  // renders exactly the legacy rows.
+  const [dynamicSession, setDynamicSession] =
+    useState<DynamicSessionInfo | null>(null);
   const pendingWalletLink = useRef(false);
 
   // ── Post-Google-link handler ──────────────────────────────────
@@ -492,9 +503,21 @@ export function AccountTab({
   const oauthCount = (googleIdentity ? 1 : 0) + (gitHubIdentity ? 1 : 0);
   const soleOauthLocked = isSyntheticEmail && oauthCount === 1;
 
+  // The wallet row only claims "embedded" when the Dynamic session's Solana
+  // address IS the profile wallet — an external wallet linked by a learner who
+  // also has a Dynamic session must keep the plain permanent copy.
+  const isEmbeddedWallet =
+    walletAddress !== null && dynamicSession?.solanaAddress === walletAddress;
+
   return (
     <Card>
       <CardContent className="space-y-6 p-6">
+        {/* Hooks gate (see dynamic-session-probe.tsx): mounted only when the
+            feature is on, so a Dynamic-less build renders the legacy tab. */}
+        {isDynamicEnabled() && (
+          <DynamicSessionProbe onSession={setDynamicSession} />
+        )}
+
         <h3 className="set-group-title">{t("connectedAccounts")}</h3>
 
         {/* Recovery context (#unlink decision 2026-08-17): tell each account
@@ -536,7 +559,11 @@ export function AccountTab({
                   : t("notLinked")}
               </p>
               {walletAddress && (
-                <p className="set-row-meta">{t("walletPermanent")}</p>
+                <p className="set-row-meta">
+                  {isEmbeddedWallet
+                    ? t("walletEmbeddedDynamic")
+                    : t("walletPermanent")}
+                </p>
               )}
             </div>
           </div>
@@ -568,7 +595,20 @@ export function AccountTab({
             </div>
             <div>
               <p className="set-row-name">{t("googleAccount")}</p>
-              <p className="set-row-meta">{googleEmail ?? t("notLinked")}</p>
+              {/* A Dynamic Google sign-in leaves no Supabase identity, so
+                  without this branch the learner who just used Google reads
+                  "Not Linked" — the row states the Dynamic truth instead, and
+                  the Link button stays: linking adds direct sign-in and a
+                  recovery path. */}
+              <p className="set-row-meta">
+                {googleEmail ??
+                  (dynamicSession?.hasGoogle
+                    ? t("usedForSignInDynamic")
+                    : t("notLinked"))}
+              </p>
+              {!googleIdentity && dynamicSession?.hasGoogle && (
+                <p className="set-row-meta">{t("dynamicLinkHint")}</p>
+              )}
             </div>
           </div>
           {googleIdentity ? (
@@ -610,7 +650,15 @@ export function AccountTab({
             </div>
             <div>
               <p className="set-row-name">{t("githubAccount")}</p>
-              <p className="set-row-meta">{gitHubEmail ?? t("notLinked")}</p>
+              <p className="set-row-meta">
+                {gitHubEmail ??
+                  (dynamicSession?.hasGithub
+                    ? t("usedForSignInDynamic")
+                    : t("notLinked"))}
+              </p>
+              {!gitHubIdentity && dynamicSession?.hasGithub && (
+                <p className="set-row-meta">{t("dynamicLinkHint")}</p>
+              )}
             </div>
           </div>
           {gitHubIdentity ? (

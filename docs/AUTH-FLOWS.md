@@ -166,8 +166,9 @@ The guards, each of which closed a live incident:
 
 ## 3. POST /api/auth/dynamic — the verification ladder
 
-`src/app/api/auth/dynamic/route.ts`. One claim crosses this route: _an email the OAuth
-provider itself verified_. The ladder proves the claim is genuinely Dynamic's, for OUR
+`src/app/api/auth/dynamic/route.ts`. One claim crosses this route: _an OAuth identity
+the provider itself verified_ — matched by the provider's stable subject id first,
+then by email. The ladder proves the claim is genuinely Dynamic's, for OUR
 environment, and provider-verified rather than self-asserted:
 
 1. Environment id from OUR env (`getDynamicEnvironmentId()`, lowercased once) — unset =
@@ -202,15 +203,27 @@ environment_id` — `exp` is optional in JWS, so without requiring it a token mi
 8. `normalizeEmail` = trim + lowercase only. No gmail dot-stripping, no `+tag` removal:
    every clever transform maps distinct addresses onto one key, and this key decides
    which account the caller lands in.
-9. Create-then-link: `createUser({email, email_confirm: true})` where "already been
-   registered" IS the lookup (admin API has no lookup-by-email; uniqueness makes
-   createUser the probe). Any other createUser error aborts. Then
-   `generateLink(magiclink)` → cookie-bound `verifyOtp(token_hash)` mints the session —
-   the same mechanism as the wallet route, so both ways in converge on one account
-   model.
-10. Tombstone check after the session exists; sign out through the SAME cookie-bound
+9. **Subject rung** (#1055): the winning credential(s)' `oauth_account_id` — the
+   provider's stable subject — is looked up in `auth.identities (provider,
+provider_id)` via `find_user_by_oauth_identity` (SECURITY DEFINER,
+   service_role-only; `profiles.google_id`/`github_id` are client-written under RLS
+   and never resolve accounts). Exactly one match → the session is minted with THAT
+   user's own email, synthetic included — this is what signs a wallet-first account
+   back in through its linked Google. Subject beats email when both would match: a
+   deliberate settings-page link outranks an email coincidence. Two credentials
+   matching DIFFERENT users → 403 `conflictingOauthIdentity`, fail closed. Any RPC
+   error (including the migration not having landed) degrades the whole rung to the
+   email rung below — pre-#1055 behavior, never a sign-in outage.
+10. Email rung, create-then-link: `createUser({email, email_confirm: true})` where
+    "already been registered" IS the lookup (admin API has no lookup-by-email;
+    uniqueness makes createUser the probe). Any other createUser error aborts. A
+    subject match skips the probe (the account is known to exist). Then
+    `generateLink(magiclink)` → cookie-bound `verifyOtp(token_hash)` mints the session —
+    the same mechanism as the wallet route, so both ways in converge on one account
+    model.
+11. Tombstone check after the session exists; sign out through the SAME cookie-bound
     client so the clearing Set-Cookie overwrites what verifyOtp just queued.
-11. Post-login: placeholder-username replacement + on-chain queue drain (parity with
+12. Post-login: placeholder-username replacement + on-chain queue drain (parity with
     the other chokepoints).
 
 Client half (`src/lib/dynamic/social.ts`): the bridge must send **`legacyToken`** (the
@@ -247,9 +260,9 @@ The wallet still counts toward the ≥2 rule, so a REAL-email account can drop G
 end wallet-only — recoverable, because the bridge matches by email. A SYNTHETIC-email
 account (`%@wallet.superteam-lms.local`) cannot drop its last OAuth identity
 (`cannotUnlinkOnlyRecovery`): its email is undeliverable, so that identity is its only
-path back in if wallet access is lost. Known seam: for Google-sole accounts that path is
-currently inert on Dynamic-enabled deployments (#1055 — `/api/auth/dynamic` resolves by
-email only).
+path back in if wallet access is lost. Since #1055 that recovery path is real on
+Dynamic-enabled deployments too: `/api/auth/dynamic`'s subject rung (§3 step 9)
+resolves the account through its `auth.identities` row, synthetic email and all.
 
 ## 5. Linking after signup — Settings › Account
 
@@ -302,6 +315,12 @@ email only).
   migrate, keep-target on unique collisions, XP summed, shell tombstoned, fail-closed
   FK sweep). The JWT credential is the ownership proof; an email match alone never
   merges. Route side is fail-open — any doubt skips the merge, sign-in proceeds.
+  The remaining half of the seam — a wallet-first account whose ONLY OAuth identity
+  is Google could never be signed back in through Dynamic (email rung can't reach a
+  synthetic address) — closed with #1055's subject rung: the linked identity now
+  resolves the account directly, and the auto-merge naturally no-ops for it (a
+  subject-matched wallet-first account already has its wallet, which closes the
+  merge gate).
 - **Kill switch.** Unset `NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID` → `isDynamicEnabled()`
   false → no provider, no SDK init, no Dynamic button; the Supabase-OAuth Google button
   renders instead and `/api/auth/dynamic` 503s. SIWS with an external wallet stays the
