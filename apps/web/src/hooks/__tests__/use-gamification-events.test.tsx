@@ -132,6 +132,19 @@ async function waitForHandler(
   return cb as (payload: unknown) => void;
 }
 
+/** Counts the `xp-gain` CustomEvents dispatchXpGain puts on the window. */
+function countXpGains(): { count: () => number; stop: () => void } {
+  let n = 0;
+  const onGain = () => {
+    n += 1;
+  };
+  window.addEventListener("xp-gain", onGain);
+  return {
+    count: () => n,
+    stop: () => window.removeEventListener("xp-gain", onGain),
+  };
+}
+
 beforeEach(() => {
   h.trackEvent.mockClear();
   h.dispatchCertificateMinted.mockClear();
@@ -419,6 +432,61 @@ describe("useGamificationEvents — surprise bonus no-double-toast invariant", (
     expect(pollToasts).toEqual([]);
     expect(h.dispatchSurpriseBonus).toHaveBeenCalledTimes(1);
   });
+
+  const surpriseCredit = () => ({
+    new: {
+      id: "xtx-sb1",
+      amount: 25,
+      reason: "surprise_bonus:lesson-what-is-a-pda",
+      tx_signature: "sig-sb1",
+      idempotency_key: "sb-1",
+    },
+  });
+
+  const pollRow = () => ({
+    reason: "surprise_bonus:lesson-what-is-a-pda",
+    amount: 25,
+    tx_signature: "sig-sb1",
+    idempotency_key: "sb-1",
+    created_at: new Date().toISOString(),
+  });
+
+  it("Realtime first, then poll: ONE toast and ONE xp-gain for the same award", async () => {
+    pickSurpriseBonusToasts([], "user-1"); // seed the tab
+    const gains = countXpGains();
+    await mountHook();
+    const onXpInsert = await waitForHandler("xp_transactions:INSERT");
+
+    act(() => onXpInsert(surpriseCredit()));
+    expect(h.dispatchSurpriseBonus).toHaveBeenCalledTimes(1);
+    expect(gains.count()).toBe(1);
+
+    // The dashboard poll then sees the SAME award — the shared seen-set makes
+    // it a no-op, so it dispatches neither a toast nor an XP bump.
+    expect(pickSurpriseBonusToasts([pollRow()], "user-1")).toEqual([]);
+    expect(gains.count()).toBe(1);
+    gains.stop();
+  });
+
+  it("poll first, then Realtime: no second toast and NO second xp-gain (#926)", async () => {
+    pickSurpriseBonusToasts([], "user-1"); // seed the tab
+    const gains = countXpGains();
+    await mountHook();
+    const onXpInsert = await waitForHandler("xp_transactions:INSERT");
+
+    // The dashboard poll wins the claim and does its own dispatchXpGain —
+    // modelled here by the single claim below.
+    expect(pickSurpriseBonusToasts([pollRow()], "user-1")).toEqual([25]);
+
+    // Realtime then observes the SAME award. It must neither toast NOR bump
+    // the counter: the header's optimistic XP is monotonic (never pulls back
+    // down), so a second bump would inflate the displayed balance for the
+    // rest of the session.
+    act(() => onXpInsert(surpriseCredit()));
+    expect(h.dispatchSurpriseBonus).toHaveBeenCalledTimes(0);
+    expect(gains.count()).toBe(0);
+    gains.stop();
+  });
 });
 
 describe("useGamificationEvents — daily-quest reward: one toast, one XP bump", () => {
@@ -447,19 +515,6 @@ describe("useGamificationEvents — daily-quest reward: one toast, one XP bump",
     resetType: "daily",
     justAwarded: true,
   });
-
-  /** Counts the `xp-gain` CustomEvents dispatchXpGain puts on the window. */
-  function countXpGains(): { count: () => number; stop: () => void } {
-    let n = 0;
-    const onGain = () => {
-      n += 1;
-    };
-    window.addEventListener("xp-gain", onGain);
-    return {
-      count: () => n,
-      stop: () => window.removeEventListener("xp-gain", onGain),
-    };
-  }
 
   it("Realtime alone (no dashboard open) celebrates and bumps XP exactly once", async () => {
     const gains = countXpGains();

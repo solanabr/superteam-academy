@@ -227,8 +227,16 @@ export function useGamificationEvents(userId: string | undefined) {
                 // — a direct call here would double-fire confetti if the tier
                 // is ever bumped past "popup".
                 dispatchSurpriseBonus(amount);
+                // The counter bump belongs to the channel that WON the claim
+                // (#925's quest rule). The header's optimistic XP is a
+                // monotonic `Math.max(supabaseXp, prev + amount)` that never
+                // pulls back down, so an unconditional dispatch here when the
+                // #790 poll already counted this bonus would permanently
+                // inflate the displayed XP for the session. The poll path
+                // mirrors this: it only bumps for entries
+                // pickSurpriseBonusToasts actually claimed.
+                dispatchXpGain(amount);
               }
-              dispatchXpGain(amount);
               return;
             }
 
