@@ -233,12 +233,17 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * OAuth surface exposes exactly the account's verified primary address and
  * nothing else, which is what makes that list trustworthy there.
  *
- * The same fallback is deliberately NOT extended to GitHub. GitHub's email
- * list can include addresses the user added but never verified, so an attacker
- * could add a victim's address to their own GitHub account and have this route
- * hand them the victim's Superteam account. A github credential must carry the
- * `email` field itself; extending the fallback to a new provider is a per-
- * provider trust decision, not a refactor.
+ * GitHub's list is NOT trusted on its own — GitHub lets users add addresses
+ * they never verify, so an attacker could add a victim's address to their own
+ * GitHub account. For GITHUB the single-element fallback therefore requires
+ * CORROBORATION: the same token must carry a Dynamic-verified `email`-format
+ * credential (`verifiedAt` set) for the identical normalized address. Dynamic
+ * only mints that credential for addresses it has itself verified, and an
+ * attacker cannot attach one for a victim's inbox — so the pair (GitHub says
+ * this address + Dynamic separately proved this address) is as strong as the
+ * Google rule. Live evidence (2026-08-18): the real github credential carries
+ * no `email` field at all, exactly like Google's; extending the fallback to a
+ * further provider remains a per-provider trust decision, not a refactor.
  *
  * Alongside the email, the credential's `oauth_account_id` — the provider's
  * own stable account id (Google's numeric subject) — is surfaced for the
@@ -257,7 +262,10 @@ interface MatchableCredential {
   photo: string | null;
 }
 
-function matchableCredential(credential: unknown): MatchableCredential | null {
+function matchableCredential(
+  credential: unknown,
+  dynamicVerifiedEmails: ReadonlySet<string>
+): MatchableCredential | null {
   if (!isRecord(credential)) return null;
   const {
     format,
@@ -277,12 +285,19 @@ function matchableCredential(credential: unknown): MatchableCredential | null {
   let candidate: string | null = typeof email === "string" ? email : null;
   if (
     candidate === null &&
-    oauth_provider === "google" &&
     Array.isArray(oauth_emails) &&
     oauth_emails.length === 1 &&
     typeof oauth_emails[0] === "string"
   ) {
-    candidate = oauth_emails[0];
+    const fallback = oauth_emails[0];
+    if (oauth_provider === "google") {
+      candidate = fallback;
+    } else if (
+      oauth_provider === "github" &&
+      dynamicVerifiedEmails.has(normalizeEmail(fallback))
+    ) {
+      candidate = fallback;
+    }
   }
   if (candidate === null) return null;
 
@@ -334,12 +349,28 @@ function resolveVerifiedEmail(claims: DynamicJwtClaims): EmailResolution {
     ? claims.verified_credentials
     : [];
 
+  // Addresses Dynamic has itself verified (`email`-format credential with
+  // `verifiedAt`) — the corroboration the github oauth_emails fallback needs.
+  const dynamicVerifiedEmails: ReadonlySet<string> = new Set(
+    credentials.flatMap((credential) => {
+      if (!isRecord(credential)) return [];
+      const { format, email, verifiedAt, signInEnabled } =
+        credential as DynamicVerifiedCredential & { verifiedAt?: unknown };
+      if (format !== "email") return [];
+      if (typeof email !== "string") return [];
+      if (typeof verifiedAt !== "string" || verifiedAt === "") return [];
+      if (signInEnabled === false) return [];
+      const normalized = normalizeEmail(email);
+      return normalized === "" ? [] : [normalized];
+    })
+  );
+
   const signinId = claims.signin_credential_id;
   if (typeof signinId === "string" && signinId !== "") {
     const signin = credentials.find(
       (credential) => isRecord(credential) && credential.id === signinId
     );
-    const matched = matchableCredential(signin);
+    const matched = matchableCredential(signin, dynamicVerifiedEmails);
     return matched
       ? {
           ok: true,
@@ -353,7 +384,7 @@ function resolveVerifiedEmail(claims: DynamicJwtClaims): EmailResolution {
   }
 
   const matched = credentials
-    .map(matchableCredential)
+    .map((credential) => matchableCredential(credential, dynamicVerifiedEmails))
     .filter(
       (credential): credential is MatchableCredential => credential !== null
     );
@@ -822,23 +853,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
     }
 
-    // Adopt/refresh the provider photo, mirroring the legacy callback's rule
-    // exactly: provider CDN URLs rotate, so refresh on every login — but a
-    // custom Supabase-storage upload (URL carries our project host) is the
-    // learner's own choice and is never overwritten. Without this, a learner
-    // whose only way in is the Dynamic bridge kept the placeholder avatar
-    // forever. https-only enforcement happens at the credential boundary.
-    if (resolved.photo) {
-      const storageHost = new URL(env.NEXT_PUBLIC_SUPABASE_URL).host;
-      const storedAvatar = profile?.avatar_url ?? null;
-      const isCustomUpload =
-        storedAvatar !== null && storedAvatar.includes(storageHost);
-      if (!isCustomUpload && storedAvatar !== resolved.photo) {
-        await supabaseAdmin
-          .from("profiles")
-          .update({ avatar_url: resolved.photo })
-          .eq("id", userId);
-      }
+    // Adopt the provider photo on FIRST login only (owner ruling 2026-08-18):
+    // once any avatar exists — provider photo or custom upload — no sign-in
+    // ever changes it. Alternating Google/GitHub logins were ping-ponging the
+    // learner's face; the cost is that a rotated provider CDN URL no longer
+    // self-heals (the learner replaces it in settings instead). https-only
+    // enforcement happens at the credential boundary.
+    if (resolved.photo && (profile?.avatar_url ?? null) === null) {
+      await supabaseAdmin
+        .from("profiles")
+        .update({ avatar_url: resolved.photo })
+        .eq("id", userId);
     }
 
     // The on-chain retry queue drains from the login routes, so this new

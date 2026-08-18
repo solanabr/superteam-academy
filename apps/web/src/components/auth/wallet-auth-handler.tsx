@@ -115,8 +115,10 @@ export function WalletAuthHandler() {
         // matching the auth.accountDeleted message #461 already added) rather
         // than a raw server string, and can't be fixed by retrying.
         let canRetry = true;
+        let rawKey: string | undefined;
         try {
           const body = (await response.json()) as { error?: string };
+          rawKey = body.error;
           if (body.error === "accountDeleted") {
             errorMsg = t("accountDeleted");
             canRetry = false;
@@ -126,13 +128,16 @@ export function WalletAuthHandler() {
             // different one), translated here rather than shown verbatim.
             errorMsg = t("differentWalletLinked");
             canRetry = false;
-          } else if (body.error) {
-            errorMsg = body.error;
           }
+          // Any other key (rateLimited, invalidNonce, …) keeps the translated
+          // authFailed default — a raw server key is not user-facing copy.
         } catch {
           // Could not parse error body — use default message
         }
-        console.error("[WalletAuthHandler] Auth API error:", errorMsg);
+        console.error(
+          "[WalletAuthHandler] Auth API error:",
+          rawKey ?? errorMsg
+        );
         setOverlayState({
           status: "error",
           message: errorMsg,

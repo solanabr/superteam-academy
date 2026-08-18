@@ -578,18 +578,106 @@ describe("POST /api/auth/dynamic — email extraction", () => {
     expect(generateLink).not.toHaveBeenCalled();
   });
 
-  it("never matches on a github credential's oauth_emails", async () => {
-    // GitHub lists addresses a user added but never verified. Matching on one
-    // would hand over whichever account that address belongs to — the
-    // oauth_emails fallback is scoped to google, where the list can only hold
-    // the account's verified primary.
+  it("refuses a github credential's oauth_emails without Dynamic corroboration", async () => {
+    // GitHub lists addresses a user added but never verified. An attacker adds
+    // a victim's address to their own GitHub account; without a Dynamic-verified
+    // email credential for that exact address in the same token, the fallback
+    // must not fire.
     const token = await signDynamicJwt({
       claims: {
         verified_credentials: [
           googleCredential({
             oauth_provider: "github",
+            oauth_account_id: "github-account-1",
             oauth_emails: ["victim@gmail.com"],
           }),
+        ],
+      },
+    });
+
+    const res = await POST(dynamicRequest({ dynamicJwt: token }));
+
+    expect(res.status).toBe(403);
+    expect(generateLink).not.toHaveBeenCalled();
+  });
+
+  it("accepts a github credential's oauth_emails when Dynamic verified the same address (live 2026-08-18 shape)", async () => {
+    // The real github credential carries no `email` field — the address lives
+    // in oauth_emails, and the same token holds Dynamic's own verified
+    // email-format credential for it. That pair is the trust rule.
+    const token = await signDynamicJwt({
+      claims: {
+        signin_credential_id: "cred-github",
+        verified_credentials: [
+          googleCredential({
+            id: "cred-github",
+            oauth_provider: "github",
+            oauth_account_id: "github-account-1",
+            oauth_emails: [EXISTING_EMAIL],
+          }),
+          {
+            id: EMAIL_CREDENTIAL_ID,
+            format: "email",
+            email: EXISTING_EMAIL,
+            signInEnabled: true,
+            verifiedAt: "2026-08-18T22:33:55.490Z",
+          },
+        ],
+      },
+    });
+
+    const res = await POST(dynamicRequest({ dynamicJwt: token }));
+
+    expect(res.status).toBe(200);
+    expect(generateLink).toHaveBeenCalledTimes(1);
+  });
+
+  it("refuses github oauth_emails when Dynamic's verified email is a different address", async () => {
+    const token = await signDynamicJwt({
+      claims: {
+        signin_credential_id: "cred-github",
+        verified_credentials: [
+          googleCredential({
+            id: "cred-github",
+            oauth_provider: "github",
+            oauth_account_id: "github-account-1",
+            oauth_emails: ["victim@gmail.com"],
+          }),
+          {
+            id: EMAIL_CREDENTIAL_ID,
+            format: "email",
+            email: EXISTING_EMAIL,
+            signInEnabled: true,
+            verifiedAt: "2026-08-18T22:33:55.490Z",
+          },
+        ],
+      },
+    });
+
+    const res = await POST(dynamicRequest({ dynamicJwt: token }));
+
+    expect(res.status).toBe(403);
+    expect(generateLink).not.toHaveBeenCalled();
+  });
+
+  it("refuses github oauth_emails when the email credential is unverified", async () => {
+    // verifiedAt absent = Dynamic never proved the inbox — no corroboration.
+    const token = await signDynamicJwt({
+      claims: {
+        signin_credential_id: "cred-github",
+        verified_credentials: [
+          googleCredential({
+            id: "cred-github",
+            oauth_provider: "github",
+            oauth_account_id: "github-account-1",
+            oauth_emails: [EXISTING_EMAIL],
+          }),
+          {
+            id: EMAIL_CREDENTIAL_ID,
+            format: "email",
+            email: EXISTING_EMAIL,
+            signInEnabled: true,
+          },
         ],
       },
     });
@@ -1397,7 +1485,9 @@ describe("POST /api/auth/dynamic — avatar adoption on the bridge", () => {
     expect(avatarUpdates()).toEqual([{ avatar_url: PHOTO }]);
   });
 
-  it("refreshes a stale provider URL but never a custom Supabase upload", async () => {
+  it("never overwrites an existing avatar — same provider or custom upload alike", async () => {
+    // First-login-only (owner ruling 2026-08-18): an existing provider photo
+    // stays even when the same provider offers a fresher URL.
     profileSingle.mockResolvedValue({
       data: {
         username: "sol-surfer",
@@ -1409,7 +1499,7 @@ describe("POST /api/auth/dynamic — avatar adoption on the bridge", () => {
       dynamicRequest({ dynamicJwt: await jwtWithPhoto() })
     );
     expect(res.status).toBe(200);
-    expect(avatarUpdates()).toEqual([{ avatar_url: PHOTO }]);
+    expect(avatarUpdates()).toEqual([]);
 
     vi.clearAllMocks();
     getDynamicEnvironmentId.mockReturnValue(ENVIRONMENT_ID);
@@ -1443,6 +1533,26 @@ describe("POST /api/auth/dynamic — avatar adoption on the bridge", () => {
       dynamicRequest({ dynamicJwt: await jwtWithPhoto() })
     );
     expect(res2.status).toBe(200);
+    expect(avatarUpdates()).toEqual([]);
+  });
+
+  it("never ping-pongs: a different provider's photo does not replace the stored one", async () => {
+    // Stored = GitHub avatar; incoming = Google photo. Refresh is same-host
+    // only — alternating providers must not swap the learner's face on every
+    // sign-in. Adopt happens only when no avatar is stored at all.
+    profileSingle.mockResolvedValue({
+      data: {
+        username: "sol-surfer",
+        wallet_address: "ExistingWallet1111",
+        avatar_url: "https://avatars.githubusercontent.com/u/61333600?v=4",
+      },
+    });
+
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await jwtWithPhoto() })
+    );
+
+    expect(res.status).toBe(200);
     expect(avatarUpdates()).toEqual([]);
   });
 

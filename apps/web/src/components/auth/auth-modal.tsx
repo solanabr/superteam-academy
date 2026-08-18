@@ -20,7 +20,7 @@ import { buildOAuthRedirect } from "@/lib/auth/oauth-redirect";
 import { trackEvent } from "@/lib/analytics";
 import { isDynamicEnabled } from "@/lib/dynamic/config";
 import { useSocialReturnPending } from "@/hooks/use-social-return-pending";
-import { DynamicGoogleSignIn } from "@/components/auth/dynamic-google-sign-in";
+import { DynamicSocialSignIn } from "@/components/auth/dynamic-social-sign-in";
 
 interface AuthModalProps {
   trigger?: React.ReactNode;
@@ -65,7 +65,7 @@ export function AuthModal({
   // throws `MissingProviderError` when no provider is mounted, so calling one
   // here would crash sign-in in any build without an environment id. Hooks
   // cannot be conditional, so the gate is a component boundary instead:
-  // DynamicGoogleSignIn owns the hooks and mounts only when Dynamic is enabled.
+  // DynamicSocialSignIn owns the hooks and mounts only when Dynamic is enabled.
   const dynamicEnabled = isDynamicEnabled();
   // While the Google-return handshake runs, the trigger button carries the
   // loading state — the alternative was a full-screen overlay, and the owner
@@ -211,7 +211,10 @@ export function AuthModal({
               button below is the fallback AND the kill switch — unsetting the
               environment id restores it untouched. */}
           {dynamicEnabled ? (
-            <DynamicGoogleSignIn disabled={loading !== null} />
+            <DynamicSocialSignIn
+              provider="google"
+              disabled={loading !== null}
+            />
           ) : (
             <Button
               variant="outline"
@@ -228,19 +231,30 @@ export function AuthModal({
             </Button>
           )}
 
-          <Button
-            variant="outline"
-            className="h-12 w-full gap-3 text-sm font-medium"
-            onClick={handleConnectGitHub}
-            disabled={loading !== null}
-          >
-            {loading === "github" ? (
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
-            ) : (
-              <GithubLogo className="h-5 w-5 shrink-0" weight="fill" />
-            )}
-            {loading === "github" ? t("connecting") : t("signInWithGitHub")}
-          </Button>
+          {/* GitHub goes through Dynamic when it is configured, so the learner
+              also walks away with an embedded wallet; the Supabase OAuth
+              button below is the fallback AND the kill switch — unsetting the
+              environment id restores it untouched. */}
+          {dynamicEnabled ? (
+            <DynamicSocialSignIn
+              provider="github"
+              disabled={loading !== null}
+            />
+          ) : (
+            <Button
+              variant="outline"
+              className="h-12 w-full gap-3 text-sm font-medium"
+              onClick={handleConnectGitHub}
+              disabled={loading !== null}
+            >
+              {loading === "github" ? (
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              ) : (
+                <GithubLogo className="h-5 w-5 shrink-0" weight="fill" />
+              )}
+              {loading === "github" ? t("connecting") : t("signInWithGitHub")}
+            </Button>
+          )}
 
           {errorMessage && (
             <p className="text-center text-sm text-danger" role="alert">
