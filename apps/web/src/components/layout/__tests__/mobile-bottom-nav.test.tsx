@@ -42,10 +42,15 @@ describe("MobileBottomNav", () => {
     }
   });
 
-  it("keeps the landing page clean for signed-out visitors", () => {
+  it("shows the public tabs on the landing page for signed-out visitors", () => {
+    // #930: the header hides its links below lg, so the bottom nav is the only
+    // mobile route into Courses/Community from the landing page.
     state.pathname = "/en";
-    const { container } = render(<MobileBottomNav />);
-    expect(container).toBeEmptyDOMElement();
+    render(<MobileBottomNav />);
+    expect(screen.getByText("courses")).toBeInTheDocument();
+    expect(screen.getByText("community")).toBeInTheDocument();
+    expect(screen.queryByText("dashboard")).not.toBeInTheDocument();
+    expect(screen.queryByText("review")).not.toBeInTheDocument();
   });
 
   it("shows the nav on the landing page for a signed-in learner", () => {
