@@ -27,9 +27,6 @@ vi.mock("@/components/landing/loop-widgets", () => ({
   EarnWidget: () => <div />,
   ProveWidget: () => <div />,
 }));
-vi.mock("@/components/landing/paths-explorer", () => ({
-  PathsExplorer: () => <div />,
-}));
 // AuthModal renders its trigger inside a marker so a test can prove a given CTA
 // is (or is not) an auth-modal trigger.
 vi.mock("@/components/auth/auth-modal", () => ({
