@@ -633,7 +633,10 @@ export function ChallengeInterface({
                   isDeployable={isDeployable}
                   onResult={handleResult}
                   onSubmit={handleSubmit}
-                  isComplete={isComplete}
+                  // `judging` counts as complete for the runner: it hides
+                  // Submit while a submission is in flight (double-dispatch
+                  // guard — the server dedups, but the button shouldn't ask).
+                  isComplete={isComplete || verdict === "judging"}
                   xpReward={xpReward}
                 />
               </div>
