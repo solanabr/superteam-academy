@@ -17,6 +17,7 @@ import { ProgressBar } from "@/components/course/progress-bar";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { trackEvent } from "@/lib/analytics";
 import { completionErrorKey } from "@/lib/lessons/completion-error";
+import { isGateBlock } from "@/lib/lessons/gate-blocks";
 import { createClient } from "@/lib/supabase/client";
 import { isCapstoneLesson } from "@/lib/credentials/capstone-identity";
 import { useAuth } from "@/lib/auth/auth-provider";
@@ -296,19 +297,19 @@ export function LessonPageClient({
     );
   }, []);
 
-  // Client-side completion gate (owner 2026-08-02): every gateable block
-  // (quiz, reflection) must report done before Mark Complete enables. The
-  // server's inverted gate re-grades regardless — this is honest UI, not the
-  // enforcement.
+  // Client-side completion gate (owner 2026-08-02): every gateable block must
+  // report done before Mark Complete enables. Which types gate is derived from
+  // BLOCK_REGISTRY (via isGateBlock, #970) — the same registry the server's
+  // completion gate dispatches on — never a hardcoded type list, so the client
+  // can't show an enabled button the server would 403. The server's inverted
+  // gate re-grades regardless — this is honest UI, not the enforcement.
   const [doneBlocks, setDoneBlocks] = useState<Record<string, boolean>>({});
   const setBlockDone = useCallback((blockKey: string, done: boolean) => {
     setDoneBlocks((prev) =>
       prev[blockKey] === done ? prev : { ...prev, [blockKey]: done }
     );
   }, []);
-  const gateBlocks = lesson.blocks.filter(
-    (b) => b._type === "quiz" || b._type === "openEnded"
-  );
+  const gateBlocks = lesson.blocks.filter((b) => isGateBlock(b._type));
   const gateReady =
     isCompleted || gateBlocks.every((b) => doneBlocks[b.key] === true);
   // AI hard-off on the capstone (#867) — the CLIENT leg of the server refusal

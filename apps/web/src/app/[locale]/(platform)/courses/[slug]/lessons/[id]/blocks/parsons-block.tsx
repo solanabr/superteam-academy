@@ -137,6 +137,14 @@ export function ParsonsBlock({ block, ctx }: BlockRenderProps) {
     ctx.setProof(b.key, { order: solution });
   }, [solution, b.key, ctx]);
 
+  // Completion-gate report (#970): done only while the LAST Check judged the
+  // current arrangement correct. Any edit clears `result`, so a scrambled-after
+  // -checking solution re-disables Mark Complete instead of letting the server
+  // 403 a proof that no longer matches.
+  useEffect(() => {
+    ctx.setBlockDone(b.key, result?.correct === true);
+  }, [result, b.key, ctx]);
+
   // Any edit retires the last verdict — feedback always describes what is
   // currently arranged.
   const mutate = useCallback((next: (prev: string[]) => string[]) => {
