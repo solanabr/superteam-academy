@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import Image from "next/image";
-import { Copy, Check, Gift, Info } from "@phosphor-icons/react";
+import { Copy, Check, Gift, Info, XLogo } from "@phosphor-icons/react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { cn } from "@/lib/utils";
 
@@ -28,13 +28,58 @@ interface OwnReferralStats {
   referredSignups: number;
 }
 
-/* ── "Your link" card — the sharing surface, shown to signed-in learners ── */
+/* ── Copy affordance with its own "copied" feedback ── */
+function CopyButton({
+  value,
+  label,
+  copiedLabel,
+}: {
+  value: string;
+  label: string;
+  copiedLabel: string;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard denied — the surrounding inputs stay selectable by hand.
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={copy}
+      className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border border-border px-3 text-xs font-medium hover:bg-subtle"
+    >
+      {copied ? (
+        <Check size={14} weight="bold" aria-hidden="true" />
+      ) : (
+        <Copy size={14} weight="bold" aria-hidden="true" />
+      )}
+      {copied ? copiedLabel : label}
+    </button>
+  );
+}
+
+/**
+ * The sharing surface — a signed-in learner's link, code, and share actions.
+ *
+ * Rendered FIRST and INDEPENDENTLY of the standings fetch: the whole point of
+ * the board is that a learner leaves with their link, so a failed or empty
+ * standings read (season not yet provisioned, network blip) must never hide
+ * it. That failure mode shipped once — an unapplied migration blanked the
+ * entire tab, sharing surface included.
+ */
 function YourLinkCard() {
   const t = useTranslations("gamification");
   const locale = useLocale();
   const [stats, setStats] = useState<OwnReferralStats | null>(null);
   const [failed, setFailed] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -51,24 +96,29 @@ function YourLinkCard() {
     };
   }, []);
 
-  // Quietly absent on failure — the standings are the page's job; the card is
-  // an extra.
-  if (failed) return null;
+  if (failed) {
+    return (
+      <div className="lb-league-head">
+        <span className="lb-league-icon" aria-hidden="true">
+          <Gift size={22} weight="fill" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="lb-league-tier">{t("yourReferralLink")}</p>
+          <p className="lb-league-sub mt-1">{t("referralLinkUnavailable")}</p>
+        </div>
+      </div>
+    );
+  }
 
   const link = stats
     ? `${window.location.origin}/${locale}?ref=${stats.code}`
     : null;
-
-  const copy = async () => {
-    if (!link) return;
-    try {
-      await navigator.clipboard.writeText(link);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Clipboard denied — the input below stays selectable by hand.
-    }
-  };
+  const shareHref =
+    link !== null
+      ? `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+          t("referralShareText", { link })
+        )}`
+      : null;
 
   return (
     <div className="lb-league-head">
@@ -77,9 +127,10 @@ function YourLinkCard() {
       </span>
       <div className="min-w-0 flex-1">
         <p className="lb-league-tier">{t("yourReferralLink")}</p>
-        {stats && link ? (
+        {stats && link && shareHref ? (
           <>
-            <div className="mt-1 flex items-center gap-2">
+            {/* The full link — paste it anywhere (X, Discord, a QR code). */}
+            <div className="mt-1.5 flex items-center gap-2">
               <input
                 readOnly
                 value={link}
@@ -87,20 +138,34 @@ function YourLinkCard() {
                 className="h-9 min-w-0 flex-1 rounded-md border border-border bg-subtle px-2 text-xs text-text-2"
                 aria-label={t("yourReferralLink")}
               />
-              <button
-                type="button"
-                onClick={copy}
-                className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border border-border px-3 text-xs font-medium hover:bg-subtle"
-              >
-                {copied ? (
-                  <Check size={14} weight="bold" aria-hidden="true" />
-                ) : (
-                  <Copy size={14} weight="bold" aria-hidden="true" />
-                )}
-                {copied ? t("linkCopied") : t("copyLink")}
-              </button>
+              <CopyButton
+                value={link}
+                label={t("copyLink")}
+                copiedLabel={t("linkCopied")}
+              />
             </div>
-            <p className="lb-league-sub mt-1">
+            {/* The bare code, for surfaces where a URL is clumsy — plus a
+                one-tap X share with the link prefilled. */}
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span className="inline-flex h-9 items-center rounded-md border border-dashed border-border px-3 font-mono text-sm font-semibold tracking-[0.15em] text-text">
+                {stats.code}
+              </span>
+              <CopyButton
+                value={stats.code}
+                label={t("copyCode")}
+                copiedLabel={t("linkCopied")}
+              />
+              <a
+                href={shareHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border border-border px-3 text-xs font-medium no-underline hover:bg-subtle"
+              >
+                <XLogo size={14} weight="bold" aria-hidden="true" />
+                {t("shareOnX")}
+              </a>
+            </div>
+            <p className="lb-league-sub mt-2">
               {t("referralYourPoints", { points: stats.seasonPoints })} ·{" "}
               {t("referralYourSignups", { count: stats.referredSignups })}
             </p>
@@ -108,6 +173,22 @@ function YourLinkCard() {
         ) : (
           <p className="lb-league-sub mt-1">…</p>
         )}
+      </div>
+    </div>
+  );
+}
+
+/* ── Signed-out variant — say HOW to get a link instead of showing nothing ── */
+function SignInForLinkCard() {
+  const t = useTranslations("gamification");
+  return (
+    <div className="lb-league-head">
+      <span className="lb-league-icon" aria-hidden="true">
+        <Gift size={22} weight="fill" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="lb-league-tier">{t("yourReferralLink")}</p>
+        <p className="lb-league-sub mt-1">{t("referralSignIn")}</p>
       </div>
     </div>
   );
@@ -177,24 +258,6 @@ export function ReferralBoard({ currentUserId }: { currentUserId: string }) {
     };
   }, []);
 
-  if (failed) {
-    return (
-      <div className="lb-empty">
-        <Gift size={48} weight="duotone" aria-hidden="true" />
-        <p>{t("noEntries")}</p>
-      </div>
-    );
-  }
-
-  if (standings === null) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="sol-spinner" />
-        <span className="sr-only">{tCommon("loading")}</span>
-      </div>
-    );
-  }
-
   const seasonEnds = season
     ? new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(
         new Date(season.endsAt)
@@ -203,6 +266,9 @@ export function ReferralBoard({ currentUserId }: { currentUserId: string }) {
 
   return (
     <>
+      {/* The sharing surface leads, unconditionally — see YourLinkCard. */}
+      {currentUserId ? <YourLinkCard /> : <SignInForLinkCard />}
+
       {season && (
         <div className="lb-league-head">
           <span className="lb-league-icon" aria-hidden="true">
@@ -223,12 +289,15 @@ export function ReferralBoard({ currentUserId }: { currentUserId: string }) {
         </div>
       )}
 
-      {currentUserId && <YourLinkCard />}
-
-      {standings.length === 0 ? (
+      {failed || (standings !== null && standings.length === 0) ? (
         <div className="lb-empty">
           <Gift size={48} weight="duotone" aria-hidden="true" />
           <p>{t("referralNoEntries")}</p>
+        </div>
+      ) : standings === null ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="sol-spinner" />
+          <span className="sr-only">{tCommon("loading")}</span>
         </div>
       ) : (
         <div className="lb-list">
