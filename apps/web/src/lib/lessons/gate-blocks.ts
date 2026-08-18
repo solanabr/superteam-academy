@@ -8,6 +8,12 @@ import { BLOCK_REGISTRY, type BlockType } from "@superteam-lms/content-schema";
  * must gate on the same union or it shows an enabled button the server 403s
  * (the #969 gate finding: `parsons` is graded but the client only knew
  * quiz/openEnded).
+ *
+ * `code` is in the set but currently unused by the gate UI: lesson-client
+ * hides the Mark Complete button entirely for code lessons (they complete via
+ * the editor's submit path), and code-block never calls setBlockDone — lifting
+ * that restriction without wiring setBlockDone would ship a permanently
+ * disabled button.
  */
 export const GATE_BLOCK_TYPES: ReadonlySet<BlockType> = new Set(
   (Object.keys(BLOCK_REGISTRY) as BlockType[]).filter(
