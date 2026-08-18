@@ -10,6 +10,7 @@ import {
   getCourseBySlug,
   getRecommendedCourses,
 } from "../queries";
+import { resolveHeroHref } from "@/lib/courses/entry-lesson";
 
 /**
  * Unlisted = hidden from listings, reachable by direct link — asserted against
@@ -78,5 +79,15 @@ describe("unlisted courses — hidden from listings, live by direct link", () =>
   it("the direct link stays live — getCourseBySlug still resolves it", async () => {
     const course = await getCourseBySlug(PILULA_SLUG);
     expect(course?._id).toBe(PILULA_ID);
+  });
+
+  it("the landing hero does NOT promote it — it falls back to the flagship deep-link", async () => {
+    // The homepage CTA is the biggest discovery surface of all; promoting a
+    // course there while hiding it from the catalog would be the two halves
+    // of the site contradicting each other. The QR/direct link keeps working
+    // (previous test); only the hero PROMOTION falls back.
+    const href = await resolveHeroHref("en");
+    expect(href).not.toContain(PILULA_SLUG);
+    expect(href).toMatch(/^\/en\/courses\/[^/]+\/lessons\/[^/]+$/);
   });
 });
