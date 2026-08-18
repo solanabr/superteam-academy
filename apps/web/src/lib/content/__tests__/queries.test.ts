@@ -54,6 +54,7 @@ const h = vi.hoisted(() => {
       title: "Zeta",
       difficulty: "beginner",
       tags: ["z"],
+      trackLevel: 1,
       xpPerLesson: 20,
       creator: WALLET_A,
       modules: [{ key: "m1", title: "M1", lessons: [ref("lesson-live-1")] }],
@@ -257,10 +258,24 @@ import * as q from "../queries";
 
 beforeEach(() => vi.clearAllMocks());
 
-describe("gated catalog fns — synced+active only, order(title asc)", () => {
-  it("getAllCourses hides deactivated + not-synced, sorts by title", async () => {
+describe("gated catalog fns — synced+active only, trackLevel asc", () => {
+  // Zeta has trackLevel 1, Alpha has none (→ sorts last): trackLevel beats
+  // title order, unset trackLevel goes to the end (#929).
+  it("getAllCourses hides deactivated + not-synced, sorts by trackLevel then title", async () => {
     const res = await q.getAllCourses();
-    expect(res.map((c) => c._id)).toEqual(["course-alpha", "course-zeta"]);
+    expect(res.map((c) => c._id)).toEqual(["course-zeta", "course-alpha"]);
+  });
+
+  it("byTrackLevel tie-breaks equal levels by title, sends unset last", () => {
+    const beta = { trackLevel: 1, title: "Beta" };
+    const zeta = { trackLevel: 1, title: "Zeta" };
+    const unsetA = { title: "Aardvark" };
+    const unsetB = { title: "Bee" };
+    expect(q.byTrackLevel(beta, zeta)).toBeLessThan(0);
+    expect(q.byTrackLevel(zeta, beta)).toBeGreaterThan(0);
+    expect(q.byTrackLevel(unsetA, zeta)).toBeGreaterThan(0);
+    // Both unset: Infinity - Infinity is NaN (falsy) → title tie-break fires.
+    expect(q.byTrackLevel(unsetA, unsetB)).toBeLessThan(0);
   });
 
   it("getCourseBySlug admits synced+active, rejects deactivated", async () => {
@@ -318,6 +333,8 @@ describe("gated catalog fns — synced+active only, order(title asc)", () => {
   it("getRecommendedCourses excludes ids + gates + sorts", async () => {
     const res = await q.getRecommendedCourses(["course-zeta"]);
     expect(res.map((c) => c._id)).toEqual(["course-alpha"]);
+    const all = await q.getRecommendedCourses([]);
+    expect(all.map((c) => c._id)).toEqual(["course-zeta", "course-alpha"]);
   });
 
   it("getAllCourseTags / getAllCourseLessonCounts only synced+active", async () => {

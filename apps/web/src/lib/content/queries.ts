@@ -109,6 +109,23 @@ function byField<T>(pick: (x: T) => string | null) {
 const byTitle = byField<{ title: string | null }>((x) => x.title);
 const byName = byField<{ name: string | null }>((x) => x.name);
 
+/**
+ * Learner-facing catalog order (#929): `trackLevel` ascending (unset sorts
+ * last), title as tie-break — so the entry course renders first, not whichever
+ * title happens to sort first. Admin reads stay alphabetical.
+ */
+export function byTrackLevel(
+  a: { trackLevel?: number; title: string | null },
+  b: { trackLevel?: number; title: string | null }
+): number {
+  // Two unset levels subtract to NaN, which is falsy — so they fall through
+  // to the title tie-break rather than comparing as equal-and-stable.
+  return (
+    (a.trackLevel ?? Number.POSITIVE_INFINITY) -
+      (b.trackLevel ?? Number.POSITIVE_INFINITY) || byTitle(a, b)
+  );
+}
+
 const projectionDeps = { lessonsById };
 
 // --- store traversal helpers ---
@@ -193,7 +210,7 @@ export async function getAllCourses(): Promise<Course[]> {
   return courses
     .filter((c) => !isUnlistedCourse(c._id))
     .map((c) => projectCourse(c, projectionDeps))
-    .sort(byTitle);
+    .sort(byTrackLevel);
 }
 
 /**
@@ -481,7 +498,7 @@ export async function getRecommendedCourses(
         !isUnlistedCourse(c._id)
     )
     .map((c) => projectRecommended(c, learningPathTitleFor(c._id)))
-    .sort(byTitle);
+    .sort(byTrackLevel);
 }
 
 export async function getAllCourseTags(): Promise<
