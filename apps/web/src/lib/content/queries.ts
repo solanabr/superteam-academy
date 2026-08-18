@@ -7,6 +7,7 @@ import type {
   LearningPath,
   QuizBlockData,
 } from "@superteam-lms/types";
+import { isUnlistedCourse } from "@/lib/courses/unlisted";
 import {
   getActiveDeployments,
   getDeploymentById,
@@ -181,7 +182,26 @@ async function gatedCourses(): Promise<CourseDoc[]> {
 
 // --- Public / catalog queries (gated: synced + active) ---
 
+/**
+ * Catalog listing: synced+active AND listed. Unlisted courses
+ * (lib/courses/unlisted.ts) stay reachable by direct URL — getCourseBySlug /
+ * getLessonBySlug carry no listing filter — but never appear in the catalog,
+ * the landing count, the sitemap, or recommendations.
+ */
 export async function getAllCourses(): Promise<Course[]> {
+  const courses = await gatedCourses();
+  return courses
+    .filter((c) => !isUnlistedCourse(c._id))
+    .map((c) => projectCourse(c, projectionDeps))
+    .sort(byTitle);
+}
+
+/**
+ * Every synced+active course, unlisted included — for ADMIN surfaces only
+ * (resync must see an unlisted course or it could never be repaired). Public
+ * pages use {@link getAllCourses}.
+ */
+export async function getAllCoursesIncludingUnlisted(): Promise<Course[]> {
   const courses = await gatedCourses();
   return courses.map((c) => projectCourse(c, projectionDeps)).sort(byTitle);
 }
@@ -452,7 +472,14 @@ export async function getRecommendedCourses(
   const exclude = new Set(excludeIds);
   const map = await getActiveDeployments();
   return [...coursesById.values()]
-    .filter((c) => !exclude.has(c._id) && isSynced(map.get(c._id)))
+    .filter(
+      (c) =>
+        !exclude.has(c._id) &&
+        isSynced(map.get(c._id)) &&
+        // Recommendations are a listing surface — never surface an unlisted
+        // course, even to a learner who found it by direct link.
+        !isUnlistedCourse(c._id)
+    )
     .map((c) => projectRecommended(c, learningPathTitleFor(c._id)))
     .sort(byTitle);
 }
