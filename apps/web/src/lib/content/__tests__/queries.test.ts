@@ -293,10 +293,11 @@ describe("gated catalog fns — synced+active only, trackLevel asc", () => {
     });
   });
 
-  it("getCourseIdBySlug returns id + xpPerLesson when synced, else null", async () => {
+  it("getCourseIdBySlug returns id + xpPerLesson + difficulty when synced, else null", async () => {
     expect(await q.getCourseIdBySlug("zeta")).toEqual({
       _id: "course-zeta",
       xpPerLesson: 20,
+      difficulty: "beginner",
     });
     expect(await q.getCourseIdBySlug("off")).toBeNull();
   });

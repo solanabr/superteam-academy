@@ -375,6 +375,7 @@
     "stopwatchPause": "Pausar",
     "stopwatchReset": "Zerar",
     "hints": "Dicas",
+    "buildersCompleted": "{count, plural, one {# builder concluiu esta lição} other {# builders concluíram esta lição}}",
     "lessonNumberTitle": "{number}. {title}",
     "formatSyntaxError": "Nada para formatar — corrija os erros de sintaxe primeiro.",
     "formatUnchanged": "Já está formatado.",

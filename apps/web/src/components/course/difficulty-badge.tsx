@@ -9,8 +9,10 @@ interface DifficultyBadgeProps {
 /**
  * v9 difficulty chip styles — one tone per difficulty tier.
  * Uses CSS var() for backgrounds not yet mapped in Tailwind config.
+ * Exported so the lesson header's difficulty chip (#942) shares the exact
+ * per-tier palette instead of re-deriving it.
  */
-const difficultyStyles = {
+export const difficultyStyles = {
   beginner:
     "[border-color:var(--primary-border)] [background:var(--primary-dim)] text-primary-dark dark:text-primary",
   intermediate:

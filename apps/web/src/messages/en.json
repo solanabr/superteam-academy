@@ -375,6 +375,7 @@
     "stopwatchPause": "Pause",
     "stopwatchReset": "Reset",
     "hints": "Hints",
+    "buildersCompleted": "{count, plural, one {# builder completed this} other {# builders completed this}}",
     "lessonNumberTitle": "{number}. {title}",
     "formatSyntaxError": "Nothing to format — fix the syntax errors first.",
     "formatUnchanged": "Already formatted.",

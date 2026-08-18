@@ -382,14 +382,20 @@ export function getCourseSlugById(id: string): string | null {
   return doc?.slug?.current ?? null;
 }
 
-export async function getCourseIdBySlug(
-  slug: string
-): Promise<{ _id: string; xpPerLesson: number } | null> {
+export async function getCourseIdBySlug(slug: string): Promise<{
+  _id: string;
+  xpPerLesson: number;
+  difficulty: string | null;
+} | null> {
   const doc = coursesBySlug.get(slug);
   if (!doc) return null;
   const map = await getActiveDeployments();
   if (!isSynced(map.get(doc._id))) return null;
-  return { _id: doc._id, xpPerLesson: num(doc.xpPerLesson) ?? 0 };
+  return {
+    _id: doc._id,
+    xpPerLesson: num(doc.xpPerLesson) ?? 0,
+    difficulty: str(doc.difficulty),
+  };
 }
 
 export async function getCourseLessons(
