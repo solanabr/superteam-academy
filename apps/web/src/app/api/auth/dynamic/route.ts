@@ -141,6 +141,7 @@ interface DynamicVerifiedCredential {
   oauth_provider?: unknown;
   oauth_account_id?: unknown;
   oauth_emails?: unknown;
+  oauth_account_photos?: unknown;
   signInEnabled?: unknown;
 }
 
@@ -248,6 +249,11 @@ interface MatchableCredential {
   provider: string;
   /** Provider-stable account id (`oauth_account_id`), when the token carries one. */
   subject: string | null;
+  /**
+   * The provider's profile photo (`oauth_account_photos[0]`), https-only —
+   * this lands in an <img src>, so anything else is dropped at the boundary.
+   */
+  photo: string | null;
 }
 
 function matchableCredential(credential: unknown): MatchableCredential | null {
@@ -256,6 +262,7 @@ function matchableCredential(credential: unknown): MatchableCredential | null {
     format,
     oauth_provider,
     oauth_account_id,
+    oauth_account_photos,
     signInEnabled,
     email,
     oauth_emails,
@@ -286,7 +293,15 @@ function matchableCredential(credential: unknown): MatchableCredential | null {
       ? oauth_account_id.trim()
       : null;
 
-  return { email: normalized, provider: oauth_provider, subject };
+  const firstPhoto = Array.isArray(oauth_account_photos)
+    ? oauth_account_photos[0]
+    : null;
+  const photo =
+    typeof firstPhoto === "string" && firstPhoto.startsWith("https://")
+      ? firstPhoto
+      : null;
+
+  return { email: normalized, provider: oauth_provider, subject, photo };
 }
 
 type EmailResolution =
@@ -295,6 +310,8 @@ type EmailResolution =
       email: string;
       /** (provider, subject) pairs of the credential(s) that won resolution. */
       subjects: ReadonlyArray<{ provider: string; subject: string }>;
+      /** The winning credential's profile photo, when it carries one. */
+      photo: string | null;
     }
   | { ok: false; error: "noVerifiedOauthEmail" | "ambiguousVerifiedEmail" };
 
@@ -329,6 +346,7 @@ function resolveVerifiedEmail(claims: DynamicJwtClaims): EmailResolution {
           subjects: matched.subject
             ? [{ provider: matched.provider, subject: matched.subject }]
             : [],
+          photo: matched.photo,
         }
       : { ok: false, error: "noVerifiedOauthEmail" };
   }
@@ -350,6 +368,8 @@ function resolveVerifiedEmail(claims: DynamicJwtClaims): EmailResolution {
         ? [{ provider: credential.provider, subject: credential.subject }]
         : []
     ),
+    photo:
+      matched.find((credential) => credential.photo !== null)?.photo ?? null,
   };
 }
 
@@ -778,7 +798,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Existing matched accounts already have a real name and are left alone.
     const { data: profile } = await supabaseAdmin
       .from("profiles")
-      .select("username, wallet_address")
+      .select("username, wallet_address, avatar_url")
       .eq("id", userId)
       .single();
 
@@ -796,6 +816,25 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           .update({ username: generateWalletName() })
           .eq("id", userId);
         if (!nameError) break;
+      }
+    }
+
+    // Adopt/refresh the provider photo, mirroring the legacy callback's rule
+    // exactly: provider CDN URLs rotate, so refresh on every login — but a
+    // custom Supabase-storage upload (URL carries our project host) is the
+    // learner's own choice and is never overwritten. Without this, a learner
+    // whose only way in is the Dynamic bridge kept the placeholder avatar
+    // forever. https-only enforcement happens at the credential boundary.
+    if (resolved.photo) {
+      const storageHost = new URL(env.NEXT_PUBLIC_SUPABASE_URL).host;
+      const storedAvatar = profile?.avatar_url ?? null;
+      const isCustomUpload =
+        storedAvatar !== null && storedAvatar.includes(storageHost);
+      if (!isCustomUpload && storedAvatar !== resolved.photo) {
+        await supabaseAdmin
+          .from("profiles")
+          .update({ avatar_url: resolved.photo })
+          .eq("id", userId);
       }
     }
 

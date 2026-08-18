@@ -1361,3 +1361,105 @@ describe("POST /api/auth/dynamic — subject rung (#1055)", () => {
     );
   });
 });
+
+describe("POST /api/auth/dynamic — avatar adoption on the bridge", () => {
+  const PHOTO = "https://lh3.googleusercontent.com/a/photo=s96-c";
+
+  const jwtWithPhoto = (photo: unknown = PHOTO) =>
+    signDynamicJwt({
+      claims: {
+        verified_credentials: [
+          googleCredential({ oauth_account_photos: [photo] }),
+        ],
+      },
+    });
+
+  function avatarUpdates() {
+    return profileUpdate.mock.calls
+      .map(([values]) => values as Record<string, unknown>)
+      .filter((values) => "avatar_url" in values);
+  }
+
+  it("adopts the provider photo when the profile has no avatar", async () => {
+    profileSingle.mockResolvedValue({
+      data: {
+        username: "sol-surfer",
+        wallet_address: "ExistingWallet1111",
+        avatar_url: null,
+      },
+    });
+
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await jwtWithPhoto() })
+    );
+
+    expect(res.status).toBe(200);
+    expect(avatarUpdates()).toEqual([{ avatar_url: PHOTO }]);
+  });
+
+  it("refreshes a stale provider URL but never a custom Supabase upload", async () => {
+    profileSingle.mockResolvedValue({
+      data: {
+        username: "sol-surfer",
+        wallet_address: "ExistingWallet1111",
+        avatar_url: "https://lh3.googleusercontent.com/a/old-rotated-url",
+      },
+    });
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await jwtWithPhoto() })
+    );
+    expect(res.status).toBe(200);
+    expect(avatarUpdates()).toEqual([{ avatar_url: PHOTO }]);
+
+    vi.clearAllMocks();
+    getDynamicEnvironmentId.mockReturnValue(ENVIRONMENT_ID);
+    isRateLimited.mockResolvedValue(false);
+    getClientIp.mockReturnValue("203.0.113.7");
+    createUser.mockResolvedValue({ error: null });
+    generateLink.mockResolvedValue({
+      data: { properties: { hashed_token: "tok_123" } },
+      error: null,
+    });
+    verifyOtp.mockResolvedValue({
+      data: { session: { user: { id: "supabase-user-1" } } },
+      error: null,
+    });
+    isAccountDeleted.mockResolvedValue(false);
+    shellLookup.mockResolvedValue({ data: [], error: null });
+    rpcMock.mockResolvedValue({ data: [], error: null });
+    profileUpdate.mockResolvedValue({ error: null });
+    // Custom upload: URL carries the project storage host — never overwritten.
+    profileSingle.mockResolvedValue({
+      data: {
+        username: "sol-surfer",
+        wallet_address: "ExistingWallet1111",
+        avatar_url:
+          "https://test.supabase.co/storage/v1/object/public/avatars/me.png",
+      },
+    });
+    const res2 = await POST(
+      dynamicRequest({ dynamicJwt: await jwtWithPhoto() })
+    );
+    expect(res2.status).toBe(200);
+    expect(avatarUpdates()).toEqual([]);
+  });
+
+  it("drops a non-https photo at the boundary", async () => {
+    profileSingle.mockResolvedValue({
+      data: {
+        username: "sol-surfer",
+        wallet_address: "ExistingWallet1111",
+        avatar_url: null,
+      },
+    });
+
+    const res = await POST(
+      dynamicRequest({
+        dynamicJwt: await jwtWithPhoto("javascript:alert(1)"),
+      })
+    );
+
+    expect(res.status).toBe(200);
+    expect(avatarUpdates()).toEqual([]);
+  });
+});
