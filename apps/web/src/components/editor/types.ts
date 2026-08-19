@@ -63,6 +63,8 @@ export interface ChallengeRunnerProps {
   onResult: (result: ExecutionResult) => void;
   onSubmit: () => void;
   isComplete: boolean;
+  /** A submission is in flight — hides Submit without claiming completion. */
+  isJudging?: boolean;
   xpReward: number;
   /** Ref to the Run/Build button, so the AI Partner's attempt-gate nudge
    * (#865) can shift focus to it. */
