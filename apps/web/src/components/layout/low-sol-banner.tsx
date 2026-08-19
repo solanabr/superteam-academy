@@ -2,11 +2,17 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
-import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { useTranslations } from "next-intl";
 
+// Inlined so this layout-mounted component doesn't pull @solana/web3.js into
+// the shared client chunk for one plain constant (#1090).
+const LAMPORTS_PER_SOL = 1_000_000_000;
 const LOW_SOL_THRESHOLD = 0.001;
 const POLL_INTERVAL_MS = 30_000;
+
+const IS_DEVNET =
+  process.env.NEXT_PUBLIC_SOLANA_NETWORK === "devnet" ||
+  process.env.NEXT_PUBLIC_SOLANA_NETWORK === "testnet";
 
 export function LowSolBanner() {
   const t = useTranslations("nav");
@@ -14,10 +20,6 @@ export function LowSolBanner() {
   const { connection } = useConnection();
   const [balance, setBalance] = useState<number | null>(null);
   const [dismissed, setDismissed] = useState(false);
-
-  const isDevnet =
-    process.env.NEXT_PUBLIC_SOLANA_NETWORK === "devnet" ||
-    process.env.NEXT_PUBLIC_SOLANA_NETWORK === "testnet";
 
   const fetchBalance = useCallback(async () => {
     if (!publicKey || !connection) return;
@@ -30,17 +32,20 @@ export function LowSolBanner() {
   }, [publicKey, connection]);
 
   useEffect(() => {
+    // The banner only ever renders on devnet/testnet for a connected wallet —
+    // don't poll the RPC when it can't show (mainnet polled forever, #1090).
+    if (!IS_DEVNET || !publicKey) return;
     fetchBalance();
     const interval = setInterval(fetchBalance, POLL_INTERVAL_MS);
     return () => clearInterval(interval);
-  }, [fetchBalance]);
+  }, [publicKey, fetchBalance]);
 
   useEffect(() => {
     setDismissed(false);
   }, [publicKey]);
 
   if (
-    !isDevnet ||
+    !IS_DEVNET ||
     !publicKey ||
     balance === null ||
     balance >= LOW_SOL_THRESHOLD ||

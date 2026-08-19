@@ -18,7 +18,6 @@ import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { LevelBadge } from "@/components/gamification/level-badge";
 import { xpToNextLevel, calculateLevel } from "@/lib/gamification/xp";
-import { useXpTotal } from "@/lib/solana/hooks";
 
 const sidebarItems = [
   { key: "dashboard", icon: House, href: "/dashboard" },
@@ -52,9 +51,6 @@ export function Sidebar() {
   const prevLevelRef = useRef(0);
   const rafRef = useRef<number>(0);
 
-  // On-chain XP total as supplementary source
-  const { total: onChainXp } = useXpTotal();
-
   const fetchXp = useCallback(async () => {
     const supabase = createClient();
     const {
@@ -72,7 +68,8 @@ export function Sidebar() {
       .maybeSingle();
     if (data) {
       const supabaseXp = data.total_xp ?? 0;
-      // Preserve any higher on-chain value that was previously reconciled
+      // Never move the badge down: a refresh racing a just-awarded gain
+      // shouldn't undo the higher value already shown.
       const newXp = Math.max(supabaseXp, targetXpRef.current);
       const prevXp = targetXpRef.current;
       targetXpRef.current = newXp;
@@ -127,15 +124,6 @@ export function Sidebar() {
     });
     return () => subscription.unsubscribe();
   }, [fetchXp]);
-
-  // Reconcile on-chain XP: if on-chain balance is higher, update display
-  useEffect(() => {
-    if (onChainXp > 0 && onChainXp > targetXpRef.current) {
-      targetXpRef.current = onChainXp;
-      setDisplayedXp(onChainXp);
-      setLevel(calculateLevel(onChainXp));
-    }
-  }, [onChainXp]);
 
   // Refresh when XP is awarded (xp-gain event from lesson completion)
   useEffect(() => {
