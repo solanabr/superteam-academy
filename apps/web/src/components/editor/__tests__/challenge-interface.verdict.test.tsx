@@ -12,7 +12,10 @@ import { ChallengeInterface } from "../challenge-interface";
 import type { ChallengeRunnerProps } from "../types";
 
 const h = vi.hoisted(() => ({
-  runnerProps: null as Pick<ChallengeRunnerProps, "onSubmit"> | null,
+  runnerProps: null as Pick<
+    ChallengeRunnerProps,
+    "onSubmit" | "isComplete" | "isJudging"
+  > | null,
   reducedMotion: false,
 }));
 
@@ -32,7 +35,11 @@ vi.mock("../challenge-runner", async () => {
   const React = await import("react");
   return {
     ChallengeRunner: (props: ChallengeRunnerProps) => {
-      h.runnerProps = { onSubmit: props.onSubmit };
+      h.runnerProps = {
+        onSubmit: props.onSubmit,
+        isComplete: props.isComplete,
+        isJudging: props.isJudging,
+      };
       return React.createElement("div", { "data-testid": "runner" });
     },
   };
