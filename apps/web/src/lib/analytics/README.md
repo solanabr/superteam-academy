@@ -199,3 +199,12 @@ social channel — so one event with a `channel` property is the honest shape,
 and a separate LinkedIn-only event would have split the same surface in two.
 Both click events fire from both surfaces (`mint_success` and
 `certificate_page`) and each surface is pinned by a test.
+
+## PostHog pre-init buffering
+
+`posthog.ts` loads posthog-js asynchronously; capture/identify/reset calls made
+before the import resolves are buffered (cap 50, drop-oldest) and flushed in
+order once the SDK is up — the first pageview of every session used to be
+silently dropped by this race. If PostHog is unconfigured or the SDK failed to
+load, the first attempted capture logs a single console.warn and subsequent
+calls drop quietly. Debugging "my early event never arrived" starts here.
