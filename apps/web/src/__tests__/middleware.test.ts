@@ -100,3 +100,27 @@ describe("middleware — matcher (#1089 dotted page slugs)", () => {
     expect(matcher.test(path)).toBe(false);
   });
 });
+
+describe("middleware — /admin routes gated on the Supabase session", () => {
+  it("redirects a sessionless /admin request to the localized landing (not a login form)", async () => {
+    const res = await middleware(pageRequest("/en/admin"));
+
+    const url = new URL(res.headers.get("location")!);
+    expect(url.pathname).toBe("/en");
+  });
+
+  it("redirects sessionless /admin SUB-routes to the landing, preserving the locale", async () => {
+    const res = await middleware(pageRequest("/pt-BR/admin/courses"));
+
+    const url = new URL(res.headers.get("location")!);
+    expect(url.pathname).toBe("/pt-BR");
+  });
+
+  it("passes a session-holding request through — the admin_users check belongs to the server page, not the Edge", async () => {
+    getUser.mockResolvedValue({ data: { user: { id: "user-9" } } });
+
+    const res = await middleware(pageRequest("/en/admin/courses"));
+
+    expect(res.headers.get("location")).toBeNull();
+  });
+});

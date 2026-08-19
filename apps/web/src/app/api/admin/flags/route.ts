@@ -11,9 +11,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 // Reads the admin cookie + service-role DB — never statically prerender.
 export const dynamic = "force-dynamic";
 
-function guard(req: NextRequest): NextResponse | null {
+async function guard(req: NextRequest): Promise<NextResponse | null> {
   try {
-    requireAdminAuth(req);
+    await requireAdminAuth(req);
     return null;
   } catch (e) {
     if (e instanceof AdminAuthError) return adminUnauthorizedResponse();
@@ -39,7 +39,7 @@ export interface ModerationFlag {
  * rather than PostgREST embedding to keep the FK-hint surface simple.
  */
 export async function GET(req: NextRequest): Promise<NextResponse> {
-  const denied = guard(req);
+  const denied = await guard(req);
   if (denied) return denied;
 
   const admin = createAdminClient();
@@ -139,7 +139,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
 /** POST { flagId, action: "resolve" | "dismiss" } — action a pending flag. */
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  const denied = guard(req);
+  const denied = await guard(req);
   if (denied) return denied;
 
   let flagId: string;
@@ -165,8 +165,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   const admin = createAdminClient();
-  // resolved_by is left null: the admin_session cookie is not a Supabase user,
-  // so there's no profile id to attribute. status + resolved_at are enough.
+  // resolved_by is left null to keep the moderation write byte-identical to
+  // the pre-allowlist behavior. status + resolved_at are enough.
   const { error } = await admin
     .from("flags")
     .update({

@@ -31,9 +31,9 @@ function isValidBase58(value: string): boolean {
 }
 
 export async function POST(req: NextRequest) {
-  // Admin auth via signed admin_session cookie
+  // Admin auth via Supabase session + admin_users allowlist
   try {
-    requireAdminAuth(req);
+    await requireAdminAuth(req);
   } catch (e) {
     if (e instanceof AdminAuthError) return adminUnauthorizedResponse();
     throw e;

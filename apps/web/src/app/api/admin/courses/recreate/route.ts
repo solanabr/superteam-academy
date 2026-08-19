@@ -23,9 +23,10 @@ import { sanitizeReason } from "@/lib/admin/sanitize-reason";
  * lesson-count default, the maintenance gate, and the mainnet hard-refusal).
  *
  * Guards, in order:
- *   1. `requireAdminAuth` — the signed `admin_session` cookie AND the same-origin
- *      (CSRF) check that it applies to every state-changing method. No
- *      unauthenticated path to a destructive close.
+ *   1. `requireAdminAuth` — the caller's Supabase session must belong to a user
+ *      on the `admin_users` allowlist, AND the same-origin (CSRF) check applies
+ *      to every state-changing method. No unauthenticated path to a
+ *      destructive close.
  *   2. An explicit `confirm` field that must EQUAL the target `courseId`. A
  *      CSRF-ish or fat-fingered call that merely reaches this route cannot
  *      destroy a course without naming it exactly. Checked before any on-chain
@@ -45,8 +46,9 @@ import { sanitizeReason } from "@/lib/admin/sanitize-reason";
  * screen in a follow-up (WS-2).
  */
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  let adminUserId: string;
   try {
-    requireAdminAuth(req);
+    ({ userId: adminUserId } = await requireAdminAuth(req));
   } catch (e) {
     if (e instanceof AdminAuthError) return adminUnauthorizedResponse();
     throw e;
@@ -113,12 +115,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   if (allowUnusualCreator) {
     console.warn(
-      `[admin/courses/recreate] ${courseId}: allowUnusualCreator=true acknowledged — bypassing the creator-denylist guard for this recreate.`
+      `[admin/courses/recreate] ${courseId} (admin=${adminUserId}): allowUnusualCreator=true acknowledged — bypassing the creator-denylist guard for this recreate.`
     );
   }
 
   try {
     const result = await recreateCourse(courseId, allowUnusualCreator);
+    // Audit trail for the destructive path: who recreated what.
+    console.log(
+      `[admin/courses/recreate] ${courseId} (admin=${adminUserId}): recreate complete`
+    );
     // The course was closed and recreated — purge the catalog cache so the new
     // PDA / status is served immediately rather than after the 1h ISR window.
     revalidateTag(COURSES_CACHE_TAG);
@@ -132,7 +138,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       const status = e.phase === "preflight" ? 400 : 500;
       if (!e.courseIntact) {
         console.error(
-          `[admin/courses/recreate] ${courseId}: COURSE IS DOWN — ${e.message}`
+          `[admin/courses/recreate] ${courseId} (admin=${adminUserId}): COURSE IS DOWN — ${e.message}`
         );
         // The PDA is gone, so the catalog/admin reads must re-derive from chain.
         revalidateTag(COURSES_CACHE_TAG);
@@ -152,7 +158,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
     const message = e instanceof Error ? e.message : String(e);
-    console.error(`[admin/courses/recreate] ${courseId}: ${message}`);
+    console.error(
+      `[admin/courses/recreate] ${courseId} (admin=${adminUserId}): ${message}`
+    );
     return NextResponse.json(
       { error: sanitizeReason(message) },
       { status: 500 }

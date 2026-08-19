@@ -71,8 +71,6 @@ const serverEnvSchema = z.object({
   // boot; the content routes 503 when unset. Unauthenticated GitHub is 60 req/hr
   // per IP and flakes on Vercel.
   GITHUB_TOKEN: optStr,
-  // Admin panel HMAC cookie signing key.
-  ADMIN_SECRET: optStr,
   // Helius webhook HMAC verification secret.
   HELIUS_WEBHOOK_SECRET: optStr,
   // On-chain keypairs (JSON array of 64 bytes).
@@ -157,7 +155,6 @@ const parsed = serverEnvSchema.safeParse({
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
   SOLANA_RPC_URL: process.env.SOLANA_RPC_URL,
   GITHUB_TOKEN: process.env.GITHUB_TOKEN,
-  ADMIN_SECRET: process.env.ADMIN_SECRET,
   HELIUS_WEBHOOK_SECRET: process.env.HELIUS_WEBHOOK_SECRET,
   BACKEND_SIGNER_SECRET: process.env.BACKEND_SIGNER_SECRET,
   XP_MINT_AUTHORITY_SECRET: process.env.XP_MINT_AUTHORITY_SECRET,

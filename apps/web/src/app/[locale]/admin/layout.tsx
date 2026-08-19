@@ -1,30 +1,26 @@
-import { cookies } from "next/headers";
+import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
+import { requireAdmin } from "@/lib/admin/auth";
 import { AdminNav } from "./admin-nav";
-import { isValidAdminSession } from "@/lib/admin/auth";
 
 /**
- * Admin console shell. When the `admin_session` cookie validates, it renders
- * the console chrome (header + persistent `<AdminNav/>`) around the active
- * screen. Otherwise it renders `{children}` unwrapped so the root page's
- * `<AdminLoginForm/>` shows without nav.
+ * Admin console shell. The caller's Supabase session must belong to a user on
+ * the `admin_users` allowlist (`requireAdmin`, service-role checked, fail
+ * closed). A signed-in non-admin gets a 404 — the panel's existence is not
+ * revealed. An anonymous visitor never reaches this layout: the middleware
+ * redirects sessionless /admin requests to the localized landing.
  *
- * The session gate is intentionally duplicated here and in `page.tsx`: the
- * layout decides whether to show chrome, the page decides login-vs-redirect.
- * Neither introduces new auth logic — both reuse `isValidAdminSession`, the
- * same primitive the middleware and API routes use.
+ * The gate is intentionally duplicated here and in `page.tsx` — both reuse
+ * `requireAdmin`, the same primitive the API routes use, so neither introduces
+ * new auth logic.
  */
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("admin_session");
-
-  if (!isValidAdminSession(session?.value)) {
-    return <>{children}</>;
-  }
+  const admin = await requireAdmin();
+  if (!admin) notFound();
 
   const t = await getTranslations("admin");
 
