@@ -3,15 +3,17 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-const { getUser, signOut, update, eq, isRateLimited } = vi.hoisted(() => ({
-  getUser: vi.fn<() => Promise<unknown>>(),
-  signOut: vi.fn(),
-  // (table, payload) — the route now writes two tables, and WHICH table gets
-  // which payload is the property under test.
-  update: vi.fn<(table: string, payload: unknown) => void>(),
-  eq: vi.fn<() => Promise<{ error: unknown }>>(),
-  isRateLimited: vi.fn<() => Promise<boolean>>(),
-}));
+const { getUser, signOut, update, eq, isRateLimited, updateUserById } =
+  vi.hoisted(() => ({
+    getUser: vi.fn<() => Promise<unknown>>(),
+    signOut: vi.fn(),
+    updateUserById: vi.fn<() => Promise<{ error: unknown }>>(),
+    // (table, payload) — the route now writes two tables, and WHICH table gets
+    // which payload is the property under test.
+    update: vi.fn<(table: string, payload: unknown) => void>(),
+    eq: vi.fn<() => Promise<{ error: unknown }>>(),
+    isRateLimited: vi.fn<() => Promise<boolean>>(),
+  }));
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: async () => ({ auth: { getUser, signOut } }),
@@ -25,6 +27,7 @@ vi.mock("@/lib/supabase/admin", () => ({
         return { eq };
       },
     }),
+    auth: { admin: { updateUserById } },
   }),
 }));
 
@@ -42,6 +45,8 @@ beforeEach(() => {
   getUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
   eq.mockResolvedValue({ error: null });
   isRateLimited.mockResolvedValue(false);
+  signOut.mockResolvedValue({ error: null });
+  updateUserById.mockResolvedValue({ error: null });
 });
 
 describe("account deletion anonymises the profile", () => {
@@ -94,6 +99,30 @@ describe("account deletion anonymises the profile", () => {
     const res = await POST();
 
     expect(res.status).toBe(500);
+  });
+
+  // #1089 — middleware no longer kills tombstoned sessions per-request, so a
+  // failed revocation here would be an unbounded zombie session, not a
+  // cosmetic miss (adversarial review F1).
+  it("falls back to a permanent ban when signOut fails, and still succeeds", async () => {
+    signOut.mockResolvedValue({ error: { message: "gotrue down" } });
+
+    const res = await POST();
+
+    expect(res.status).toBe(200);
+    expect(updateUserById).toHaveBeenCalledWith("user-1", {
+      ban_duration: "876600h",
+    });
+  });
+
+  it("reports 500 when both signOut and the ban fallback fail", async () => {
+    signOut.mockResolvedValue({ error: { message: "gotrue down" } });
+    updateUserById.mockResolvedValue({ error: { message: "still down" } });
+
+    const res = await POST();
+
+    expect(res.status).toBe(500);
+    expect(updateUserById).toHaveBeenCalledTimes(3);
   });
 
   it("does not write when unauthenticated", async () => {

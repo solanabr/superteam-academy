@@ -5,8 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { dispatchToast } from "@/components/ui/toast-container";
 
-// Maps the `reason` query param that /api/auth/callback and middleware.ts
-// attach to a refused-login redirect (`?error=auth&reason=<x>`) to a message
+// Maps the `reason` query param that /api/auth/callback
+// attaches to a refused-login redirect (`?error=auth&reason=<x>`) to a message
 // key in the "auth" namespace. `account_deleted` is #461; the other three are
 // pre-existing OAuth-callback failure reasons that had translated strings but
 // no consumer — wiring them up here alongside #461 costs nothing extra and

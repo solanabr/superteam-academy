@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { UserCircle } from "@phosphor-icons/react/dist/ssr";
+import { getAuthClaims } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { fetchPublicProfile } from "@/lib/profile/profile-data";
 import { ProfileBody } from "@/components/gamification/profile-body";
@@ -11,14 +12,12 @@ export default async function PublicProfilePage(props: {
   const params = await props.params;
   const username = decodeURIComponent(params.username);
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const claims = await getAuthClaims();
 
   const profile = await fetchPublicProfile(
     supabase,
     username,
-    user?.id ?? null
+    claims?.sub ?? null
   );
 
   if (!profile) {

@@ -18,6 +18,7 @@ const {
   profileUpdate,
   shellLookup,
   getUserById,
+  updateUserById,
   rpcMock,
   retryPendingOnchainActions,
   generateWalletName,
@@ -34,6 +35,7 @@ const {
   profileUpdate: vi.fn<(values: Record<string, unknown>) => Promise<unknown>>(),
   shellLookup: vi.fn(),
   getUserById: vi.fn(),
+  updateUserById: vi.fn(),
   rpcMock: vi.fn(),
   retryPendingOnchainActions: vi.fn<(userId: string) => Promise<void>>(),
   generateWalletName: vi.fn<() => string>(),
@@ -50,7 +52,7 @@ vi.mock("@/lib/solana/onchain-queue", () => ({ retryPendingOnchainActions }));
 // post-login profile read/update (placeholder-username replacement).
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
-    auth: { admin: { createUser, generateLink, getUserById } },
+    auth: { admin: { createUser, generateLink, getUserById, updateUserById } },
     rpc: rpcMock,
     from: () => ({
       select: () => ({
@@ -218,6 +220,7 @@ beforeEach(() => {
   profileUpdate.mockResolvedValue({ error: null });
   shellLookup.mockResolvedValue({ data: [], error: null });
   getUserById.mockResolvedValue({ data: { user: null }, error: null });
+  updateUserById.mockResolvedValue({ data: { user: null }, error: null });
   // `data: null` doubles as the subject rung's default no-match, so every
   // pre-#1055 test keeps exercising the email rung unchanged.
   rpcMock.mockResolvedValue({ data: null, error: null });
@@ -935,6 +938,47 @@ describe("POST /api/auth/dynamic — account-fork auto-merge", () => {
       p_shell: SHELL_ID,
       p_wallet: SHELL_WALLET,
     });
+  });
+
+  it("revokes the shell's sessions (permanent ban) after a successful merge", async () => {
+    armMergeScenario();
+
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await jwtWithWallet() })
+    );
+
+    expect(res.status).toBe(200);
+    expect(updateUserById).toHaveBeenCalledWith(SHELL_ID, {
+      ban_duration: "876600h",
+    });
+  });
+
+  it("never bans anyone when the merge is refused", async () => {
+    armMergeScenario();
+    rpcMock.mockResolvedValue({ data: null, error: { message: "refused" } });
+
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await jwtWithWallet() })
+    );
+
+    expect(res.status).toBe(200);
+    expect(updateUserById).not.toHaveBeenCalled();
+  });
+
+  it("a failed ban is non-fatal — sign-in still succeeds", async () => {
+    armMergeScenario();
+    updateUserById.mockResolvedValue({
+      data: { user: null },
+      error: { message: "gotrue down" },
+    });
+
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await jwtWithWallet() })
+    );
+
+    expect(res.status).toBe(200);
+    // …but not silently: the ban is retried before giving up (review F2).
+    expect(updateUserById).toHaveBeenCalledTimes(3);
   });
 
   it("never merges on an email match alone — no blockchain credential, no merge", async () => {

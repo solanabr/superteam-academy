@@ -6,13 +6,15 @@ API route reference lives in `src/app/api/CLAUDE.md` (loads when you work on rou
 
 The middleware (`src/middleware.ts`) chains two concerns:
 
-1. **Supabase auth**: Creates server client, calls `getUser()` (may refresh tokens)
+1. **Supabase auth**: Creates server client, calls `getClaims()` — local JWT verify against cached JWKS (no network for asymmetric keys; falls back to `getUser()` on HS256), refreshing the session when needed. Only `claims.sub` is used. No per-request DB queries: soft-deleted accounts are refused at the login chokepoints (`/api/auth/callback`, `/api/auth/wallet`, `/api/auth/dynamic`), and every `profiles.deleted_at` writer pairs with session revocation, so a stale session dies at its next token refresh (bounded by access-token expiry).
 2. **next-intl**: Adds locale prefix to all routes (default: `en`)
+
+Server components share one per-request claims read via `getAuthClaims()` (`lib/auth/dal.ts`, React `cache()`); call `supabase.auth.getUser()` directly only when the full user object is needed.
 
 **Auth-gated routes** (redirect to landing if unauthenticated): `/dashboard`, `/settings`, `/profile` (exact — own profile only)
 **Public routes** (no auth required): `/` (landing), `/courses`, `/leaderboard`, `/community`, `/certificates`, `/profile/[username]`
 **Admin routes**: Checked against HMAC-signed `admin_session` cookie (separate from Supabase auth). Sub-routes redirect to `/admin` login form if cookie is absent or expired.
-**Excluded from middleware**: `/api/*`, `/_next`, `/_vercel`, static assets
+**Excluded from middleware**: `/api/*`, `/_next/static`, `/_next/image`, `/_vercel`, and asset-extension paths only — a dot in a page slug (e.g. `/en/courses/node.js-basics`) still runs middleware.
 
 ## i18n Notes
 

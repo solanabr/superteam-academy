@@ -1,7 +1,8 @@
 import { getTranslations } from "next-intl/server";
-import { InstructorCourses } from "./instructor-courses";
+import { getAuthClaims } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { getInstructorCourses } from "@/lib/content/queries";
+import { InstructorCourses } from "./instructor-courses";
 
 export const dynamic = "force-dynamic";
 
@@ -19,16 +20,14 @@ export const dynamic = "force-dynamic";
  */
 export default async function TeachPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const claims = await getAuthClaims();
 
   let wallet: string | null = null;
-  if (user) {
+  if (claims) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("wallet_address")
-      .eq("id", user.id)
+      .eq("id", claims.sub)
       .maybeSingle();
     wallet = profile?.wallet_address ?? null;
   }
