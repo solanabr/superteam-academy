@@ -1,18 +1,17 @@
 import type { CohortLeague } from "@superteam-lms/types";
 import { getAuthClaims } from "@/lib/auth/dal";
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getProgressService } from "@/lib/services";
 import { getCohortLeaderboard } from "@/lib/leaderboard/cohort";
+import { getCachedLeaderboard } from "@/lib/leaderboard/global";
 import { serverEnv } from "@/lib/env.server";
 import { LeaderboardClient } from "./leaderboard-client";
 
 export default async function LeaderboardPage() {
-  const supabase = await createClient();
-  const service = getProgressService(supabase);
-
+  // Global board via the shared unstable_cache'd cookieless read (60s, tag
+  // "leaderboard") — the same rows for every viewer, so no reason to re-run
+  // the RPC per request through the cookie-bound service.
   const [initialGlobalEntries, claims] = await Promise.all([
-    service.getLeaderboard("alltime"),
+    getCachedLeaderboard("alltime"),
     getAuthClaims(),
   ]);
 

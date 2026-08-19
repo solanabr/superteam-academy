@@ -50,6 +50,7 @@ export function CourseCard({
           alt=""
           width={400}
           height={225}
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           loading="lazy"
           aria-hidden="true"
         />

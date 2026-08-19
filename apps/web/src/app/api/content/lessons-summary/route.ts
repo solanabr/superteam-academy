@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { parseIds } from "../params";
 import { getLessonsByIds } from "@/lib/content/queries";
+import { parseIds, CONTENT_CACHE_HEADERS } from "../params";
 
 /**
  * Public lesson SUMMARIES by id — the client-side face of `getLessonsByIds`
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     const lessons = (await getLessonsByIds(ids)).map(
       ({ _id, title, slug }) => ({ _id, title, slug })
     );
-    return NextResponse.json({ lessons });
+    return NextResponse.json({ lessons }, { headers: CONTENT_CACHE_HEADERS });
   } catch {
     return NextResponse.json(
       { error: "Failed to fetch lessons" },

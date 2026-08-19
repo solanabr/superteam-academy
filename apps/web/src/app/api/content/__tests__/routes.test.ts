@@ -35,6 +35,14 @@ beforeEach(() => {
 
 const WALLET = "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF";
 
+const CDN_CACHE_VALUE = "public, s-maxage=300, stale-while-revalidate=3600";
+
+/** Param routes are CDN-cacheable: both headers on success (#1094). */
+function expectCdnCacheable(res: Response) {
+  expect(res.headers.get("Cache-Control")).toBe(CDN_CACHE_VALUE);
+  expect(res.headers.get("CDN-Cache-Control")).toBe(CDN_CACHE_VALUE);
+}
+
 describe("GET /api/content/courses", () => {
   it("passes validated ids through and wraps the result", async () => {
     fns.getCoursesByIds.mockResolvedValue([{ _id: "course-a" }]);
@@ -44,6 +52,7 @@ describe("GET /api/content/courses", () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ courses: [{ _id: "course-a" }] });
     expect(fns.getCoursesByIds).toHaveBeenCalledWith(["course-a", "course-b"]);
+    expectCdnCacheable(res);
   });
 
   it("400s on missing ids", async () => {
@@ -75,6 +84,7 @@ describe("GET /api/content/courses", () => {
     const res = await getCourses(req("/api/content/courses?ids=course-a"));
     expect(res.status).toBe(500);
     expect(JSON.stringify(await res.json())).not.toContain("secret detail");
+    expect(res.headers.get("CDN-Cache-Control")).toBeNull();
   });
 });
 
@@ -104,6 +114,7 @@ describe("GET /api/content/course-lessons", () => {
       "course-a",
       "course-b",
     ]);
+    expectCdnCacheable(res);
   });
 
   it("400s on missing or malformed ids", async () => {
@@ -167,6 +178,7 @@ describe("GET /api/content/lessons-summary", () => {
     expect(await res.json()).toEqual({
       lessons: [{ _id: "lesson-a", title: "A", slug: "a" }],
     });
+    expectCdnCacheable(res);
   });
 
   it("400s on missing ids", async () => {
@@ -191,6 +203,7 @@ describe("GET /api/content/recommended", () => {
     );
     expect(await res.json()).toEqual({ courses: [{ _id: "course-b" }] });
     expect(fns.getRecommendedCourses).toHaveBeenCalledWith(["course-a"]);
+    expectCdnCacheable(res);
   });
 
   it("400s on malformed exclude ids", async () => {
@@ -229,6 +242,7 @@ describe("GET /api/content/is-instructor", () => {
     );
     expect(await res.json()).toEqual({ isInstructor: true });
     expect(fns.isInstructorWallet).toHaveBeenCalledWith(WALLET);
+    expectCdnCacheable(res);
   });
 
   it("400s on a missing or non-base58 wallet", async () => {

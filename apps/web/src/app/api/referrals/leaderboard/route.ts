@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getReferralLeaderboard } from "@/lib/referrals/server";
 
-// Per-request DB access — never statically prerender (DYNAMIC_SERVER_USAGE).
-export const dynamic = "force-dynamic";
+// Public, same-for-everyone standings (the `get_referral_leaderboard` RPC reads
+// no auth.uid(); the client is the cookieless admin one) — CDN-cacheable.
+// `CDN-Cache-Control` mirror required: Vercel strips a bare `s-maxage`.
+const CACHE_HEADERS = {
+  "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+  "CDN-Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+};
 
 /**
  * Public season standings (mirrors /api/leaderboard). `?season=N` shows a past
@@ -24,7 +29,10 @@ export async function GET(request: NextRequest) {
       season,
       20
     );
-    return NextResponse.json({ season: seasonInfo, standings });
+    return NextResponse.json(
+      { season: seasonInfo, standings },
+      { headers: CACHE_HEADERS }
+    );
   } catch {
     return NextResponse.json(
       { error: "Failed to fetch referral leaderboard" },

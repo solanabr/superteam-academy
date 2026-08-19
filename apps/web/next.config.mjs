@@ -1,7 +1,22 @@
 import createNextIntlPlugin from "next-intl/plugin";
 import { withSentryConfig } from "@sentry/nextjs";
 
-const withNextIntl = createNextIntlPlugin("./src/lib/i18n/request.ts");
+const withNextIntl = createNextIntlPlugin({
+  requestConfig: "./src/lib/i18n/request.ts",
+  experimental: {
+    // Precompile ICU messages at build time (next-intl 4.13): message files are
+    // compiled by the catalog loader and the runtime formatter is swapped for
+    // the lighter format-only variant — smaller bundles, faster formatting.
+    // `format`/`path`/`locales` are required alongside `precompile` by the
+    // plugin's types (dist/types/plugin/types.d.ts).
+    messages: {
+      format: "json",
+      path: "./src/messages",
+      locales: "infer",
+      precompile: true,
+    },
+  },
+});
 
 /**
  * Static Content-Security-Policy FALLBACK for routes the middleware does not
@@ -166,6 +181,11 @@ const nextConfig = {
     return config;
   },
   images: {
+    // AVIF first, WebP fallback — smaller derivatives for the same sources.
+    formats: ["image/avif", "image/webp"],
+    // 30 days. Content assets are immutable per content.lock (a new publish is
+    // a new URL), and a short TTL multiplies Vercel image-optimization billing.
+    minimumCacheTTL: 2592000,
     remotePatterns: [
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
       { protocol: "https", hostname: "avatars.githubusercontent.com" },

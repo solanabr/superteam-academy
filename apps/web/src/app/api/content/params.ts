@@ -20,6 +20,18 @@ const WALLET_PATTERN = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 export const MAX_IDS = 200;
 
 /**
+ * CDN cache headers for the param-carrying `/api/content/*` routes. All of them
+ * serve public, same-for-everyone catalog data and touch no cookies, so the CDN
+ * may cache per-URL. `CDN-Cache-Control` mirror required: Vercel strips a bare
+ * `s-maxage` from responses it does not CDN-cache itself. Param-less routes
+ * (tags, achievements, lesson-skills) use segment `revalidate` instead.
+ */
+export const CONTENT_CACHE_HEADERS = {
+  "Cache-Control": "public, s-maxage=300, stale-while-revalidate=3600",
+  "CDN-Cache-Control": "public, s-maxage=300, stale-while-revalidate=3600",
+};
+
+/**
  * Parse + validate a comma-separated `ids`/`exclude` param. Returns the id
  * array, or a 400 response when the param is malformed. `allowEmpty` lets the
  * exclude-list route accept an absent param (exclude nothing).
