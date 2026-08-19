@@ -92,8 +92,22 @@ export function ChallengeSkeleton() {
             ))}
           </div>
         </div>
-        {/* Disclosure rows (Topics / Hints / Discussion) */}
-        <div className="order-5 px-3 pb-4 lg:order-none lg:mt-auto lg:shrink-0">
+        {/* AI Partner pane placeholder — the real component mounts AiPartnerPane
+            (order-4, up to max-h-[560px]) between the prose and the disclosure
+            rows; reserving a representative block keeps those rows from
+            shifting down when it appears. */}
+        <div className="order-4 px-4 pb-4 lg:order-none lg:shrink-0">
+          <div className="space-y-3 rounded-[var(--r-lg)] border border-border p-4">
+            <Bar className="h-4 w-32" />
+            <Bar className="h-3 w-full" />
+            <Bar className="h-3 w-4/5" />
+            <Bar className="h-9 w-full" />
+          </div>
+        </div>
+        {/* Disclosure rows (Topics / Hints / Discussion) — normal flow, same
+            as the real component (no mt-auto: bottom-pinning here would make
+            the rows jump up on mount whenever the content above is short). */}
+        <div className="order-5 px-3 pb-4 lg:order-none lg:shrink-0">
           {[24, 20, 28].map((labelWidth, i) => (
             <div
               key={i}
