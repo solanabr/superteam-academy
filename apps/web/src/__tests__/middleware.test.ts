@@ -117,7 +117,7 @@ describe("middleware — /admin routes gated on the Supabase session", () => {
   });
 
   it("passes a session-holding request through — the admin_users check belongs to the server page, not the Edge", async () => {
-    getUser.mockResolvedValue({ data: { user: { id: "user-9" } } });
+    getClaims.mockResolvedValue(sessionFor("user-9"));
 
     const res = await middleware(pageRequest("/en/admin/courses"));
 

@@ -110,7 +110,7 @@ export async function middleware(request: NextRequest) {
   // cannot make that call itself: the allowlist is service-role-only and the
   // Edge runtime must not hold the service key.
   if (isAdminRoute(request.nextUrl.pathname)) {
-    if (!user) {
+    if (!userId) {
       const locale =
         locales.find((l) => request.nextUrl.pathname.startsWith(`/${l}`)) ??
         defaultLocale;
