@@ -2,20 +2,18 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest, NextResponse } from "next/server";
 
-const { getUser, signOut, isAccountDeleted } = vi.hoisted(() => ({
-  getUser: vi.fn(),
-  signOut: vi.fn().mockResolvedValue({ error: null }),
-  isAccountDeleted: vi.fn<(userId: string) => Promise<boolean>>(),
+const { getClaims } = vi.hoisted(() => ({
+  getClaims: vi.fn(),
 }));
 
 vi.mock("@supabase/ssr", () => ({
   createServerClient: () => ({
-    auth: { getUser, signOut },
+    auth: { getClaims },
   }),
 }));
 
-// Pass-through stand-in — the deleted-account backstop under test runs BEFORE
-// next-intl, so its own locale-prefixing logic is irrelevant here.
+// Pass-through stand-in — the auth logic under test runs BEFORE next-intl,
+// so its own locale-prefixing logic is irrelevant here.
 vi.mock("next-intl/middleware", () => ({
   default:
     () =>
@@ -23,68 +21,77 @@ vi.mock("next-intl/middleware", () => ({
       NextResponse.next({ request }),
 }));
 
-// #461 — mocked directly so this test doesn't have to re-mock the admin
-// Supabase client; see lib/auth/__tests__/account-status.test.ts for that.
-vi.mock("@/lib/auth/account-status", () => ({
-  isAccountDeleted,
-  DELETED_ACCOUNT_REASON: "account_deleted",
-}));
-
-import { middleware } from "../middleware";
+import { middleware, config } from "../middleware";
 
 function pageRequest(path: string): NextRequest {
   return new NextRequest(`https://app.test${path}`);
 }
 
+function sessionFor(sub: string) {
+  return { data: { claims: { sub } }, error: null };
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
-  getUser.mockResolvedValue({ data: { user: null } });
-  isAccountDeleted.mockResolvedValue(false);
+  getClaims.mockResolvedValue({ data: null, error: null });
 });
 
-describe("middleware — #461 deleted-account backstop", () => {
-  it("never queries deletion status for anonymous requests (no DB round-trip)", async () => {
-    await middleware(pageRequest("/en/courses"));
-    expect(isAccountDeleted).not.toHaveBeenCalled();
-  });
-
-  it("passes a normal (non-deleted) authenticated user through exactly as before", async () => {
-    getUser.mockResolvedValue({ data: { user: { id: "user-1" } } });
-
-    const res = await middleware(pageRequest("/en/dashboard"));
-
-    expect(isAccountDeleted).toHaveBeenCalledWith("user-1");
-    expect(signOut).not.toHaveBeenCalled();
+describe("middleware — auth via getClaims (#1089)", () => {
+  it("passes an anonymous request through on a public route", async () => {
+    const res = await middleware(pageRequest("/en/courses"));
     expect(res.headers.get("location")).toBeNull();
   });
 
-  it("refuses a deleted user on a NON-protected route too: signs out and redirects to landing", async () => {
-    getUser.mockResolvedValue({ data: { user: { id: "user-2" } } });
-    isAccountDeleted.mockResolvedValue(true);
-
-    // /en/courses is public — proves the backstop isn't limited to
-    // isProtectedRoute() paths (needed for the SIWS/wallet path, which can
-    // land on any page after middleware.ts already holds the session cookie).
-    const res = await middleware(pageRequest("/en/courses"));
-
-    expect(isAccountDeleted).toHaveBeenCalledWith("user-2");
-    expect(signOut).toHaveBeenCalledTimes(1);
+  it("redirects an anonymous request on a protected route to the locale landing", async () => {
+    const res = await middleware(pageRequest("/pt-BR/dashboard"));
 
     const location = res.headers.get("location");
     expect(location).not.toBeNull();
-    const url = new URL(location!);
-    expect(url.pathname).toBe("/en");
-    expect(url.searchParams.get("error")).toBe("auth");
-    expect(url.searchParams.get("reason")).toBe("account_deleted");
+    expect(new URL(location!).pathname).toBe("/pt-BR");
   });
 
-  it("refuses a deleted user on a protected route with the same redirect (not the plain unauthenticated-redirect)", async () => {
-    getUser.mockResolvedValue({ data: { user: { id: "user-3" } } });
-    isAccountDeleted.mockResolvedValue(true);
+  it("passes an authenticated request through on a protected route", async () => {
+    getClaims.mockResolvedValue(sessionFor("user-1"));
 
     const res = await middleware(pageRequest("/en/dashboard"));
+    expect(res.headers.get("location")).toBeNull();
+  });
 
-    const url = new URL(res.headers.get("location")!);
-    expect(url.searchParams.get("reason")).toBe("account_deleted");
+  it("fails closed when getClaims returns no data (missing env, invalid JWT)", async () => {
+    getClaims.mockResolvedValue({ data: null, error: null });
+
+    const res = await middleware(pageRequest("/en/settings"));
+    expect(res.headers.get("location")).not.toBeNull();
+  });
+});
+
+describe("middleware — matcher (#1089 dotted page slugs)", () => {
+  // Next.js compiles config.matcher as a path-to-regexp pattern; for this
+  // shape it is equivalent to anchoring the inner regex. Testing the regex
+  // directly documents which paths run middleware.
+  const inner = config.matcher[0]!.replace(/^\/\((.*)\)$/, "$1");
+  const matcher = new RegExp(`^/${inner}$`);
+
+  it.each([
+    "/en/courses/node.js-basics",
+    "/en/courses/web3.0-intro",
+    "/en/dashboard",
+    "/pt-BR/leaderboard",
+  ])("runs middleware for page route %s", (path) => {
+    expect(matcher.test(path)).toBe(true);
+  });
+
+  it.each([
+    "/api/auth/callback",
+    "/_next/static/chunks/main.js",
+    "/_next/image",
+    "/_vercel/insights",
+    "/favicon.ico",
+    "/robots.txt",
+    "/sitemap.xml",
+    "/images/logo.png",
+    "/fonts/display.woff2",
+  ])("skips middleware for %s", (path) => {
+    expect(matcher.test(path)).toBe(false);
   });
 });

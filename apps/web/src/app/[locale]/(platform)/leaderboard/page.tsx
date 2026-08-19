@@ -1,4 +1,5 @@
 import type { CohortLeague } from "@superteam-lms/types";
+import { getAuthClaims } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getProgressService } from "@/lib/services";
@@ -10,14 +11,9 @@ export default async function LeaderboardPage() {
   const supabase = await createClient();
   const service = getProgressService(supabase);
 
-  const [
-    initialGlobalEntries,
-    {
-      data: { user },
-    },
-  ] = await Promise.all([
+  const [initialGlobalEntries, claims] = await Promise.all([
     service.getLeaderboard("alltime"),
-    supabase.auth.getUser(),
+    getAuthClaims(),
   ]);
 
   // Cohort league is the primary board (LX-B9b). It requires an authenticated
@@ -25,9 +21,12 @@ export default async function LeaderboardPage() {
   // demoted global board. A cohort read failure degrades to global, never 500s
   // the page.
   let initialCohort: CohortLeague | null = null;
-  if (user && serverEnv.SUPABASE_SERVICE_ROLE_KEY) {
+  if (claims && serverEnv.SUPABASE_SERVICE_ROLE_KEY) {
     try {
-      initialCohort = await getCohortLeaderboard(createAdminClient(), user.id);
+      initialCohort = await getCohortLeaderboard(
+        createAdminClient(),
+        claims.sub
+      );
     } catch {
       initialCohort = null;
     }
@@ -37,7 +36,7 @@ export default async function LeaderboardPage() {
     <LeaderboardClient
       initialGlobalEntries={initialGlobalEntries}
       initialCohort={initialCohort}
-      currentUserId={user?.id ?? ""}
+      currentUserId={claims?.sub ?? ""}
     />
   );
 }

@@ -6,10 +6,6 @@ import { locales, defaultLocale } from "@/lib/i18n/config";
 import { isAdminRoute, isAdminRootPath } from "@/lib/admin/routes";
 import { ADMIN_SESSION_MAX_AGE_MS } from "@/lib/admin/session-format";
 import { buildCsp, generateNonce } from "@/lib/csp";
-import {
-  isAccountDeleted,
-  DELETED_ACCOUNT_REASON,
-} from "@/lib/auth/account-status";
 
 // NOTE: This Edge-runtime `isValidAdminSession` (Web Crypto) must stay in sync
 // with the Node-runtime implementation in `lib/admin/auth.ts` (Node `crypto`).
@@ -130,38 +126,20 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // IMPORTANT: getUser() may trigger token refresh which calls setAll
-  // If Supabase env vars are missing, this will fail and user will be null
-  // which causes platform routes to redirect (fail-closed behavior)
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  // #461 — refuse a soft-deleted (tombstoned) account, on every request that
-  // carries a session, not just protected routes. This is the backstop for
-  // the SIWS/wallet login path (which never touches /api/auth/callback) and
-  // for any Supabase session cookie that outlived an account deletion. Cheap:
-  // a single primary-key lookup, gated on `user` already being non-null so
-  // anonymous requests never pay for it.
-  if (user && (await isAccountDeleted(user.id))) {
-    // Sign out via the SAME cookie-bound client used for getUser() above, so
-    // the clearing Set-Cookie headers land on supabaseResponse and get
-    // relayed onto the redirect below.
-    await supabase.auth.signOut();
-
-    const locale =
-      locales.find((l) => request.nextUrl.pathname.startsWith(`/${l}`)) ??
-      defaultLocale;
-    const redirectUrl = new URL(`/${locale}`, request.url);
-    redirectUrl.searchParams.set("error", "auth");
-    redirectUrl.searchParams.set("reason", DELETED_ACCOUNT_REASON);
-    const redirectResponse = NextResponse.redirect(redirectUrl);
-    redirectResponse.headers.set("Content-Security-Policy", csp);
-    supabaseResponse.cookies.getAll().forEach((cookie) => {
-      redirectResponse.cookies.set(cookie);
-    });
-    return redirectResponse;
-  }
+  // IMPORTANT: getClaims() verifies the JWT locally (WebCrypto against cached
+  // JWKS) for asymmetric signing keys — zero network calls on the hot path —
+  // and falls back to getUser() for HS256. Either way it refreshes an expired
+  // session first, which calls setAll above. If Supabase env vars are missing
+  // this fails and userId stays null, so platform routes redirect (fail-closed).
+  //
+  // The #461 per-request tombstone query used to live here. It's gone: every
+  // writer of profiles.deleted_at now pairs with session revocation (global
+  // signOut in /api/account/delete, admin ban in the shell merge), and the
+  // login chokepoints (/api/auth/callback, /api/auth/wallet, /api/auth/dynamic)
+  // still call isAccountDeleted. A revoked session dies at its next token
+  // refresh, so the residual window is bounded by the access-token expiry.
+  const { data } = await supabase.auth.getClaims();
+  const userId = data?.claims.sub ?? null;
 
   // Now run intl middleware (after Supabase may have modified request cookies).
   // next-intl forwards request.headers (incl. the nonce + CSP set above) to the
@@ -200,7 +178,7 @@ export async function middleware(request: NextRequest) {
 
   // For platform routes, check auth (fail-closed: no user = redirect)
   if (isProtectedRoute(request.nextUrl.pathname)) {
-    if (!user) {
+    if (!userId) {
       const locale =
         locales.find((l) => request.nextUrl.pathname.startsWith(`/${l}`)) ??
         defaultLocale;
@@ -219,5 +197,10 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next|_vercel|.*\\..*).*)"],
+  // Extension-anchored exclusion (not `.*\..*`): a dot anywhere in a page slug
+  // (e.g. /en/courses/node.js-basics) must still hit middleware — only real
+  // static-asset extensions are skipped.
+  matcher: [
+    "/((?!api|_next/static|_next/image|_vercel|favicon.ico|sitemap.xml|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|map|txt|xml|woff2?)$).*)",
+  ],
 };

@@ -577,6 +577,29 @@ async function mergeWalletShellAccount(
       return;
     }
     logEvent({ event: "dynamic-auth.shell-merged", context: { merged } });
+
+    // The merge tombstones the shell (profiles.deleted_at) inside the RPC, but
+    // a live shell session elsewhere (SIWS sign-in on another device) still
+    // holds refresh tokens. Middleware no longer checks tombstones per-request,
+    // so every deleted_at writer must pair with session revocation. supabase-js
+    // has no revoke-by-user-id, so a permanent ban does it: GoTrue refuses
+    // banned users at token refresh, leaving only the current access token's
+    // remaining lifetime — the same <= JWT-expiry bound as account deletion.
+    const { error: banError } = await supabaseAdmin.auth.admin.updateUserById(
+      shell.id,
+      { ban_duration: "876600h" }
+    );
+    if (banError) {
+      logError({
+        errorId: ERROR_IDS.DYNAMIC_AUTH_FAILED,
+        error: new Error(banError.message),
+        context: {
+          note: "shell session revocation (ban) failed",
+          userId,
+          shellId: shell.id,
+        },
+      });
+    }
   } catch (err: unknown) {
     logError({
       errorId: ERROR_IDS.DYNAMIC_AUTH_FAILED,
