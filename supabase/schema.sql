@@ -3997,3 +3997,27 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.get_referral_leaderboard(INT, INT) TO authenticated, anon;
+
+-- ─────────────────────────────────────────────
+-- PLATFORM STATS RPC (#1091)
+-- ─────────────────────────────────────────────
+-- Landing-page stats in one indexed call instead of a full public_user_xp scan
+-- summed in JS plus two head counts. Same sources as the old three queries.
+-- SECURITY DEFINER + service_role-only (mirrors get_leaderboard's pattern);
+-- called exclusively from the server-rendered landing via createAdminClient().
+
+CREATE OR REPLACE FUNCTION public.get_platform_stats()
+RETURNS TABLE (total_xp BIGINT, builders BIGINT, credentials BIGINT)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT
+    (SELECT COALESCE(SUM(pux.total_xp), 0)::BIGINT FROM public.public_user_xp pux),
+    (SELECT COUNT(*)::BIGINT FROM public.profiles),
+    (SELECT COUNT(*)::BIGINT FROM public.certificates);
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.get_platform_stats() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_platform_stats() TO service_role;
