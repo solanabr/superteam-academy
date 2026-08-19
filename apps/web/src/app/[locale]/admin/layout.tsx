@@ -13,6 +13,14 @@ import { AdminNav } from "./admin-nav";
  * The gate is intentionally duplicated here and in `page.tsx` — both reuse
  * `requireAdmin`, the same primitive the API routes use, so neither introduces
  * new auth logic.
+ *
+ * DEFENSE IN DEPTH: Next.js renders a layout and its page in PARALLEL, so this
+ * layout's notFound() hides a non-admin's OUTPUT but does not stop a sub-page
+ * from EXECUTING. Today's sub-pages only fetch client-side through the
+ * requireAdmin-gated /api/admin routes or read the public committed content
+ * bundle, so that is safe — but any future admin sub-page that does its own
+ * server-side fetching of non-public data MUST call requireAdmin() itself
+ * before touching that data.
  */
 export default async function AdminLayout({
   children,

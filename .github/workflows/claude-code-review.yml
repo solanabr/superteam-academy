@@ -92,7 +92,7 @@ jobs:
             - On-chain (onchain-academy/**): checked arithmetic only (no raw +,-,*), no
               unwrap()/expect()/panic!, stored canonical PDA bumps, validated account
               owner/signer/PDA, pinned CPI target program IDs.
-            - Secrets: nothing server-only (ADMIN_SECRET, service-role key, RPC/Helius keys)
+            - Secrets: nothing server-only (service-role key, RPC/Helius keys, signer keypairs)
               reaching a client bundle or a NEXT_PUBLIC_ var.
             - Trust boundaries: server is authoritative — no client-trusted validation
               (challenge "passed", XP amounts, completion flags) and no solutions/hidden tests
