@@ -81,6 +81,8 @@ export function trackEvent(
  * Track a page view across all configured providers.
  */
 export function trackPageView(url: string): void {
+  // Both providers want the full URL (GA4 page_location, PostHog
+  // $current_url) — trackGA4PageView reads it at capture time too.
   trackGA4PageView(url);
   // PostHog expects a FULL URL in $current_url (host filtering, session
   // replay linking); the bare pathname GA4 wants would register as a
