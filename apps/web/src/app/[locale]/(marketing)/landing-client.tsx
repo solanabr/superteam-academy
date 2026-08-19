@@ -687,24 +687,37 @@ export function LandingPageClient({
                 aria-hidden="true"
               />
 
-              <div className="landing-marquee flex w-max gap-3 py-2 sm:gap-4">
-                {[
-                  ...achievements,
-                  ...achievements,
-                  ...achievements,
-                  ...achievements,
-                ].map((ach, i) => (
-                  <div key={`${ach.id}-${i}`} className="ach-item">
-                    <div
-                      className={`ach-medal ${ach.solTier ? "sol" : "earned"}`}
-                      aria-hidden="true"
-                    >
-                      <div className="ach-face" />
-                      <span className="ach-glyph">{ach.glyph}</span>
-                    </div>
-                    <div className="ach-info">
-                      <p className="ach-name">{ach.name}</p>
-                    </div>
+              {/* Two IDENTICAL groups, each animating -100% of its own width:
+                  the loop is pixel-seamless at any viewport. A single strip
+                  sliding -25% left blank space on wide monitors before each
+                  reset. Each group repeats the set 4× so it outspans even
+                  ultra-wide viewports. */}
+              <div className="landing-marquee flex w-max py-2">
+                {[0, 1].map((group) => (
+                  <div
+                    key={group}
+                    className="landing-marquee-group"
+                    aria-hidden={group === 1 || undefined}
+                  >
+                    {[
+                      ...achievements,
+                      ...achievements,
+                      ...achievements,
+                      ...achievements,
+                    ].map((ach, i) => (
+                      <div key={`${group}-${ach.id}-${i}`} className="ach-item">
+                        <div
+                          className={`ach-medal ${ach.solTier ? "sol" : "earned"}`}
+                          aria-hidden="true"
+                        >
+                          <div className="ach-face" />
+                          <span className="ach-glyph">{ach.glyph}</span>
+                        </div>
+                        <div className="ach-info">
+                          <p className="ach-name">{ach.name}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 ))}
               </div>

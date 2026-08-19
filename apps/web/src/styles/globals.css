@@ -1263,13 +1263,16 @@
   }
 }
 
-/* Infinite horizontal scroll for achievement marquee */
+/* Infinite horizontal scroll for achievement marquee. Each GROUP slides
+   exactly its own width; two identical siblings make the wrap pixel-perfect
+   at any viewport (a single strip at -25% left blank space on wide monitors
+   before every reset). */
 @keyframes marquee {
   from {
     transform: translateX(0);
   }
   to {
-    transform: translateX(-25%);
+    transform: translateX(-100%);
   }
 }
 
@@ -1647,11 +1650,23 @@
   transform: none;
 }
 
-/* Marquee as a class so it can pause on hover */
-.landing-marquee {
+/* Marquee groups animate; the parent only hosts the hover-pause. */
+.landing-marquee-group {
+  display: flex;
+  flex: none;
+  gap: 0.75rem;
+  /* Trailing gap so group N's last item and group N+1's first item keep the
+     same rhythm — this is what makes -100% land seamlessly. */
+  padding-right: 0.75rem;
   animation: marquee 40s linear infinite;
 }
-.landing-marquee:hover {
+@media (min-width: 640px) {
+  .landing-marquee-group {
+    gap: 1rem;
+    padding-right: 1rem;
+  }
+}
+.landing-marquee:hover .landing-marquee-group {
   animation-play-state: paused;
 }
 
