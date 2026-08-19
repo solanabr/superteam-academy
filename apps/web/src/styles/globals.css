@@ -1658,7 +1658,8 @@
   /* Trailing gap so group N's last item and group N+1's first item keep the
      same rhythm — this is what makes -100% land seamlessly. */
   padding-right: 0.75rem;
-  animation: marquee 40s linear infinite;
+  /* 160s: one group is 4 set-widths, so this preserves the pre-#1088 px/s. */
+  animation: marquee 160s linear infinite;
 }
 @media (min-width: 640px) {
   .landing-marquee-group {
