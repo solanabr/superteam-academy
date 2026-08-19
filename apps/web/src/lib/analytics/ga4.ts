@@ -88,7 +88,12 @@ export function trackGA4Event(
  */
 export function trackGA4PageView(url: string): void {
   if (!isAvailable()) return;
+  // Google's manual-pageview contract wants the FULL URL in page_location
+  // (protocol included) plus page_title; page_path stays as a convenience
+  // dimension for existing reports.
   window.gtag("event", "page_view", {
+    page_location: typeof window !== "undefined" ? window.location.href : url,
+    page_title: typeof document !== "undefined" ? document.title : undefined,
     page_path: url,
   });
 }

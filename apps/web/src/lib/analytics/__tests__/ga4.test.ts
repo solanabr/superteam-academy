@@ -55,7 +55,13 @@ describe("initGA4 dataLayer contract", () => {
     expect(entries[0]![1]).toBe("lesson_completed");
     expect(entries[1]![0]).toBe("event");
     expect(entries[1]![1]).toBe("page_view");
-    expect(entries[1]![2]).toEqual({ page_path: "/en/courses" });
+    // Google's manual-pageview contract: full URL in page_location + title,
+    // page_path kept as a convenience dimension.
+    expect(entries[1]![2]).toMatchObject({
+      page_path: "/en/courses",
+      page_location: window.location.href,
+      page_title: document.title,
+    });
   });
 
   it("injects the script tag exactly once", async () => {
