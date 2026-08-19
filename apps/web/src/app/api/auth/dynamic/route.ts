@@ -10,6 +10,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { isAccountDeleted } from "@/lib/auth/account-status";
 import { shouldAdoptAvatar } from "@/lib/auth/avatar-adoption";
+import { revokeUserSessions } from "@/lib/auth/revoke-sessions";
 import { isWalletPlaceholderEmail } from "@/lib/auth/wallet-placeholder";
 import { generateWalletName } from "@/lib/utils/generate-wallet-name";
 import { retryPendingOnchainActions } from "@/lib/solana/onchain-queue";
@@ -581,20 +582,20 @@ async function mergeWalletShellAccount(
     // The merge tombstones the shell (profiles.deleted_at) inside the RPC, but
     // a live shell session elsewhere (SIWS sign-in on another device) still
     // holds refresh tokens. Middleware no longer checks tombstones per-request,
-    // so every deleted_at writer must pair with session revocation. supabase-js
-    // has no revoke-by-user-id, so a permanent ban does it: GoTrue refuses
-    // banned users at token refresh, leaving only the current access token's
-    // remaining lifetime — the same <= JWT-expiry bound as account deletion.
-    const { error: banError } = await supabaseAdmin.auth.admin.updateUserById(
-      shell.id,
-      { ban_duration: "876600h" }
-    );
-    if (banError) {
+    // so every deleted_at writer must pair with session revocation — a
+    // permanent ban here (with retries): GoTrue refuses banned users at token
+    // refresh, leaving only the current access token's remaining lifetime, the
+    // same <= JWT-expiry bound as account deletion. Non-fatal to the sign-in
+    // (the target account is fine either way), but a persistent failure is a
+    // zombie shell session, so it logs at error level for follow-up.
+    const revoked = await revokeUserSessions(supabaseAdmin, shell.id);
+    if (!revoked.ok) {
       logError({
         errorId: ERROR_IDS.DYNAMIC_AUTH_FAILED,
-        error: new Error(banError.message),
+        error:
+          revoked.error ?? new Error("shell session revocation (ban) failed"),
         context: {
-          note: "shell session revocation (ban) failed",
+          note: "shell session revocation (ban) failed after retries",
           userId,
           shellId: shell.id,
         },

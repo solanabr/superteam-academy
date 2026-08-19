@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isRateLimited } from "@/lib/rate-limit";
+import { revokeUserSessions } from "@/lib/auth/revoke-sessions";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 import type { Database } from "@/lib/supabase/types";
@@ -118,9 +119,27 @@ export async function POST(): Promise<NextResponse> {
       );
     }
 
-    // Clear the session (best-effort). Even if this fails the account is already
-    // anonymized; the client also drops its local session after the redirect.
-    await supabase.auth.signOut();
+    // Revoke every session. This is NOT best-effort: middleware no longer
+    // checks the tombstone per-request (#1089), so a deleted account whose
+    // revocation silently failed would keep refreshing forever. Global
+    // signOut first; on failure, fall back to a permanent ban (kills refresh
+    // the same way); if BOTH fail, report 500 so the client retries the
+    // deletion — the scrub is idempotent.
+    const { error: signOutError } = await supabase.auth.signOut();
+    if (signOutError) {
+      const revoked = await revokeUserSessions(admin, user.id);
+      if (!revoked.ok) {
+        logError({
+          errorId: ERROR_IDS.ACCOUNT_DELETE_FAILED,
+          error: revoked.error ?? new Error(signOutError.message),
+          context: { route: "/api/account/delete", stage: "revoke_sessions" },
+        });
+        return NextResponse.json(
+          { error: "Failed to process deletion" },
+          { status: 500 }
+        );
+      }
+    }
 
     return NextResponse.json({ success: true });
   } catch (err: unknown) {

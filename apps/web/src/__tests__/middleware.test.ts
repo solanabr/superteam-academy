@@ -75,6 +75,7 @@ describe("middleware — matcher (#1089 dotted page slugs)", () => {
   it.each([
     "/en/courses/node.js-basics",
     "/en/courses/web3.0-intro",
+    "/en/docs/v1.2-notes",
     "/en/dashboard",
     "/pt-BR/leaderboard",
   ])("runs middleware for page route %s", (path) => {
@@ -91,6 +92,10 @@ describe("middleware — matcher (#1089 dotted page slugs)", () => {
     "/sitemap.xml",
     "/images/logo.png",
     "/fonts/display.woff2",
+    // PWA manifest — served by app/manifest.ts; routing it through next-intl
+    // would 307 it to /en/manifest.webmanifest and 404 (adversarial review F3).
+    "/manifest.webmanifest",
+    "/icons/icon.avif",
   ])("skips middleware for %s", (path) => {
     expect(matcher.test(path)).toBe(false);
   });

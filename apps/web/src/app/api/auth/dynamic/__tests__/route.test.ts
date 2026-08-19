@@ -977,6 +977,8 @@ describe("POST /api/auth/dynamic — account-fork auto-merge", () => {
     );
 
     expect(res.status).toBe(200);
+    // …but not silently: the ban is retried before giving up (review F2).
+    expect(updateUserById).toHaveBeenCalledTimes(3);
   });
 
   it("never merges on an email match alone — no blockchain credential, no merge", async () => {

@@ -201,6 +201,6 @@ export const config = {
   // (e.g. /en/courses/node.js-basics) must still hit middleware — only real
   // static-asset extensions are skipped.
   matcher: [
-    "/((?!api|_next/static|_next/image|_vercel|favicon.ico|sitemap.xml|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|map|txt|xml|woff2?)$).*)",
+    "/((?!api|_next/static|_next/image|_vercel|favicon.ico|sitemap.xml|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|ico|css|js|mjs|map|txt|xml|json|pdf|mp4|ttf|otf|woff2?|webmanifest)$).*)",
   ],
 };
