@@ -5,7 +5,9 @@ import { createCookielessClient } from "@/lib/supabase/cookieless";
 // (attribute upgrades), so an unrecallable forever-cache would pin stale JSON.
 // `CDN-Cache-Control` mirror required: Vercel strips a bare `s-maxage`.
 const CACHE_HEADERS = {
-  "Cache-Control": "public, s-maxage=86400",
+  // max-age gives browsers an hour (s-maxage alone leaves them uncached);
+  // the CDN holds it for a day.
+  "Cache-Control": "public, max-age=3600, s-maxage=86400",
   "CDN-Cache-Control": "public, s-maxage=86400",
 };
 

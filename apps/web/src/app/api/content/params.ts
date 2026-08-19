@@ -33,8 +33,10 @@ export const CONTENT_CACHE_HEADERS = {
 
 /**
  * Parse + validate a comma-separated `ids`/`exclude` param. Returns the id
- * array, or a 400 response when the param is malformed. `allowEmpty` lets the
- * exclude-list route accept an absent param (exclude nothing).
+ * array — deduped and sorted, so permutations/repeats of the same id set
+ * resolve to one canonical query (and thus one CDN cache key) — or a 400
+ * response when the param is malformed. `allowEmpty` lets the exclude-list
+ * route accept an absent param (exclude nothing).
  */
 export function parseIds(
   raw: string | null,
@@ -55,7 +57,7 @@ export function parseIds(
       return NextResponse.json({ error: "Invalid id" }, { status: 400 });
     }
   }
-  return ids;
+  return [...new Set(ids)].sort();
 }
 
 /** Validate a `wallet` param. Returns the wallet, or a 400 response. */

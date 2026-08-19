@@ -18,8 +18,14 @@ export async function GET(request: NextRequest) {
   const seasonParam = request.nextUrl.searchParams.get("season");
   let season: number | null = null;
   if (seasonParam !== null) {
+    // Strict shape check BEFORE parseInt: '1a', '+1', '1.9', '01' all parse to
+    // a valid integer but would each mint a distinct CDN cache key against the
+    // service-role RPC. One canonical spelling per season.
+    if (!/^[1-9]\d{0,4}$/.test(seasonParam)) {
+      return NextResponse.json({ error: "Invalid season" }, { status: 400 });
+    }
     season = Number.parseInt(seasonParam, 10);
-    if (!Number.isInteger(season) || season < 1 || season > 10_000) {
+    if (season > 10_000) {
       return NextResponse.json({ error: "Invalid season" }, { status: 400 });
     }
   }

@@ -9,9 +9,11 @@ import { LeaderboardClient } from "./leaderboard-client";
 export default async function LeaderboardPage() {
   // Global board via the shared unstable_cache'd cookieless read (60s, tag
   // "leaderboard") — the same rows for every viewer, so no reason to re-run
-  // the RPC per request through the cookie-bound service.
+  // the RPC per request through the cookie-bound service. A read failure
+  // throws OUT of the cache (nothing stale gets written); degrade to an empty
+  // board here, outside it, so the page renders rather than 500s.
   const [initialGlobalEntries, claims] = await Promise.all([
-    getCachedLeaderboard("alltime"),
+    getCachedLeaderboard("alltime").catch(() => []),
     getAuthClaims(),
   ]);
 

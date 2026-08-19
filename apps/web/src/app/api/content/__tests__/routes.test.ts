@@ -55,6 +55,14 @@ describe("GET /api/content/courses", () => {
     expectCdnCacheable(res);
   });
 
+  it("dedupes + sorts ids — permutations of one id set share a cache key", async () => {
+    fns.getCoursesByIds.mockResolvedValue([]);
+    await getCourses(
+      req("/api/content/courses?ids=course-b,course-a,course-b")
+    );
+    expect(fns.getCoursesByIds).toHaveBeenCalledWith(["course-a", "course-b"]);
+  });
+
   it("400s on missing ids", async () => {
     expect((await getCourses(req("/api/content/courses"))).status).toBe(400);
     expect(fns.getCoursesByIds).not.toHaveBeenCalled();

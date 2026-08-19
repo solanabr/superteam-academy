@@ -3,7 +3,6 @@ import "server-only";
 import { unstable_cache } from "next/cache";
 import type { LeaderboardEntry } from "@superteam-lms/types";
 import { createCookielessClient } from "@/lib/supabase/cookieless";
-import { logError } from "@/lib/logging";
 
 export type LeaderboardTimeframe = "weekly" | "monthly" | "alltime";
 
@@ -18,8 +17,14 @@ export const LEADERBOARD_CACHE_TAG = "leaderboard";
  * entry per timeframe (60s, tag "leaderboard").
  *
  * Shape matches `HybridProgressService.getLeaderboard` exactly — same RPC, same
- * `p_limit`, same row mapping. A read failure degrades to `[]` (logged), also
- * matching the service.
+ * `p_limit`, same row mapping.
+ *
+ * Outage behaviour (mirrors `deployments.ts`): an RPC error THROWS inside the
+ * `unstable_cache` callback — nothing is written to the cache on a throw, so
+ * the next request retries instead of a transient failure being served as a
+ * cacheable empty board for the whole revalidate window. Callers degrade
+ * OUTSIDE the cache: the route returns an uncached 500, the page falls back
+ * to `[]`.
  */
 async function loadLeaderboard(
   timeframe: LeaderboardTimeframe
@@ -31,12 +36,7 @@ async function loadLeaderboard(
   });
 
   if (error) {
-    logError({
-      errorId: "getCachedLeaderboard.get_leaderboard",
-      error: new Error(error.message),
-      context: { note: "getCachedLeaderboard degraded to []", timeframe },
-    });
-    return [];
+    throw new Error(`Failed to load leaderboard (${timeframe})`);
   }
 
   return (data ?? []).map(
