@@ -33,6 +33,9 @@ vi.mock("@/components/auth/auth-modal", () => ({
   AuthModal: ({ trigger }: { trigger?: ReactNode }) => (
     <span data-testid="auth-modal">{trigger}</span>
   ),
+  // The landing hero reuses the modal's own trigger button since #1077 —
+  // stubbed to its label so CTA assertions keep working.
+  AuthTriggerButton: ({ label }: { label: string }) => <button>{label}</button>,
 }));
 vi.mock("@/lib/supabase/client", () => ({
   createClient: () => ({

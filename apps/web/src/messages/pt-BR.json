@@ -696,6 +696,7 @@
     "walletEmbeddedDynamic": "Carteira embutida (Dynamic) — criada com seu login social · Permanente",
     "usedForSignInDynamic": "Usada para entrar (via Dynamic)",
     "dynamicLinkHint": "Vincular também permite entrar diretamente e fortalece a recuperação da sua conta.",
+    "dynamicMethodCountNote": "Você precisa de pelo menos um método de login vinculado. Seu login social via Dynamic não conta como método vinculado até você vinculá-lo acima.",
     "dangerZone": "Zona de perigo",
     "deleteAccountTitle": "Excluir conta",
     "deleteAccountDescription": "Solicite a exclusão permanente da sua conta. Seu perfil é anonimizado e ocultado, e você é desconectado. Isso não pode ser desfeito.",

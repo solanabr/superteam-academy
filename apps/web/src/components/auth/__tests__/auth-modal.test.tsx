@@ -1,10 +1,19 @@
 // @vitest-environment jsdom
 import type { ReactElement } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/messages/en.json";
 import { AuthModal } from "../auth-modal";
+
+const dynamicState = vi.hoisted(() => ({
+  enabled: false,
+  redirectMock: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@/lib/dynamic/config", () => ({
+  isDynamicEnabled: () => dynamicState.enabled,
+}));
 
 vi.mock("@solana/wallet-adapter-react-ui", () => ({
   useWalletModal: () => ({ setVisible: vi.fn() }),
@@ -15,6 +24,8 @@ vi.mock("@solana/wallet-adapter-react-ui", () => ({
 vi.mock("@dynamic-labs-sdk/client", () => ({
   isDeviceRegistrationRequired: () => false,
   logout: vi.fn(),
+  signInWithSocialRedirect: (...args: unknown[]) =>
+    dynamicState.redirectMock(...args),
 }));
 vi.mock("@dynamic-labs-sdk/react-hooks", () => ({
   useSendEmailOTP: () => ({
@@ -48,6 +59,46 @@ const DEFAULT_TRIGGER = messages.common.signIn;
 
 beforeEach(() => {
   vi.clearAllMocks();
+  dynamicState.enabled = false;
+  dynamicState.redirectMock.mockResolvedValue(undefined);
+});
+
+describe("AuthModal — one error placement (#1077)", () => {
+  it("renders a Dynamic button failure at modal level, not inline under the button", async () => {
+    dynamicState.enabled = true;
+    dynamicState.redirectMock.mockRejectedValueOnce(new Error("no settings"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    renderWithIntl(<AuthModal open onOpenChange={() => {}} />);
+    fireEvent.click(
+      screen.getByRole("button", { name: messages.auth.signInWithGoogle })
+    );
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent(messages.auth.googleSignInFailed);
+    // Modal-level style (text-sm), the same channel Supabase fallbacks use.
+    expect(alert.className).toContain("text-sm");
+    expect(screen.getAllByRole("alert")).toHaveLength(1);
+  });
+
+  it("clears the modal-level error when a new Dynamic attempt starts", async () => {
+    dynamicState.enabled = true;
+    dynamicState.redirectMock.mockRejectedValueOnce(new Error("no settings"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    renderWithIntl(<AuthModal open onOpenChange={() => {}} />);
+    const googleButton = screen.getByRole("button", {
+      name: messages.auth.signInWithGoogle,
+    });
+    fireEvent.click(googleButton);
+    await screen.findByRole("alert");
+
+    // Next attempt resolves (never navigates in jsdom) — the stale error goes.
+    fireEvent.click(googleButton);
+    await waitFor(() =>
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+    );
+  });
 });
 
 describe("AuthModal — controlled mode (#556)", () => {

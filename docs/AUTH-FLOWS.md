@@ -32,11 +32,15 @@ off. One soft bend: after an OAuth _link_, the settings page syncs `profiles.goo
 ```
 
 The three session-minting routes (`/api/auth/wallet`, `/api/auth/dynamic`,
-`/api/auth/callback`) share three post-login rituals: tombstone refusal
+`/api/auth/callback`) share four post-login rituals: tombstone refusal
 (`src/lib/auth/account-status.ts`, `profiles.deleted_at`; fails OPEN on query error so
 a Supabase blip can't lock everyone out), replacement of the `user_xxxxxxxx`
-placeholder username, and a fire-and-forget `retryPendingOnchainActions` drain. Add a
-new way in, add all three. The middleware is not a fourth chokepoint — it mints
+placeholder username, a fire-and-forget `retryPendingOnchainActions` drain, and — on
+the two rails that carry a provider photo (`/api/auth/dynamic` and
+`/api/auth/callback`, #1063) — avatar adoption: the provider avatar is written on
+FIRST login only, when `profiles.avatar_url` is null (owner ruling 2026-08-19). Once
+any avatar exists — provider photo or custom upload — no sign-in overwrites it. Add a
+new way in, add all of them. The middleware is not another chokepoint — it mints
 nothing; it re-runs the tombstone check per request as a backstop, and that is all.
 
 ## 1. Ways in — the auth modal
@@ -106,9 +110,9 @@ addresses). **Dynamic off** falls back to Supabase OAuth and returns through
 `exchangeCodeForSession(code)`, cookies set on the redirect response, `next` param
 re-sanitized server-side (`sanitizeRedirect`: single leading slash, no `//`, no `\`,
 no `:` — kills protocol-relative, Windows-relative, and scheme injection). Also
-refreshes the avatar from any OAuth provider's `user_metadata.avatar_url` on each
-login (provider CDN URLs rotate) unless the stored avatar is a Supabase Storage
-upload — Google and GitHub alike, despite living in this callback.
+performs the avatar-adoption ritual (see the shared-rituals list above): adopts the
+provider's `user_metadata.avatar_url` on FIRST login only — Google and GitHub alike,
+despite living in this callback.
 
 ## 2. DynamicAuthHandler
 
