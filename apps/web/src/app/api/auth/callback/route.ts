@@ -9,6 +9,7 @@ import {
   isAccountDeleted,
   DELETED_ACCOUNT_REASON,
 } from "@/lib/auth/account-status";
+import { shouldAdoptAvatar } from "@/lib/auth/avatar-adoption";
 import type { Database } from "@/lib/supabase/types";
 
 function sanitizeRedirect(raw: string, fallback: string): string {
@@ -132,15 +133,12 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Adopt the provider avatar on FIRST login only (owner ruling 2026-08-18,
-    // same rule as the Dynamic bridge): once any avatar exists, no sign-in
-    // changes it — alternating providers were ping-ponging the learner's
-    // face. A rotated provider CDN URL no longer self-heals; the learner
-    // replaces it in settings instead.
+    // Adopt the provider avatar on FIRST login only (shared rule with the
+    // Dynamic bridge, see lib/auth/avatar-adoption.ts).
     const freshProviderAvatar = sessionData.session.user.user_metadata
       ?.avatar_url as string | undefined;
 
-    if (freshProviderAvatar && (profile?.avatar_url ?? null) === null) {
+    if (shouldAdoptAvatar(profile?.avatar_url ?? null, freshProviderAvatar)) {
       await supabase
         .from("profiles")
         .update({ avatar_url: freshProviderAvatar })

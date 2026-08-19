@@ -9,6 +9,7 @@ import { getDynamicEnvironmentId } from "@/lib/dynamic/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { isAccountDeleted } from "@/lib/auth/account-status";
+import { shouldAdoptAvatar } from "@/lib/auth/avatar-adoption";
 import { isWalletPlaceholderEmail } from "@/lib/auth/wallet-placeholder";
 import { generateWalletName } from "@/lib/utils/generate-wallet-name";
 import { retryPendingOnchainActions } from "@/lib/solana/onchain-queue";
@@ -853,13 +854,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
     }
 
-    // Adopt the provider photo on FIRST login only (owner ruling 2026-08-18):
-    // once any avatar exists — provider photo or custom upload — no sign-in
-    // ever changes it. Alternating Google/GitHub logins were ping-ponging the
-    // learner's face; the cost is that a rotated provider CDN URL no longer
-    // self-heals (the learner replaces it in settings instead). https-only
-    // enforcement happens at the credential boundary.
-    if (resolved.photo && (profile?.avatar_url ?? null) === null) {
+    // Adopt the provider photo on FIRST login only (shared rule, see
+    // lib/auth/avatar-adoption.ts). https-only enforcement happens at the
+    // credential boundary above, not here.
+    if (shouldAdoptAvatar(profile?.avatar_url ?? null, resolved.photo)) {
       await supabaseAdmin
         .from("profiles")
         .update({ avatar_url: resolved.photo })
