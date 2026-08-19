@@ -11,10 +11,12 @@ declare global {
   interface Window {
     gtag: (
       command: string,
-      targetOrEvent: string,
+      targetOrEvent: string | Date,
       params?: Record<string, unknown>
     ) => void;
-    dataLayer: Array<Record<string, unknown>>;
+    // gtag.js consumes the raw `arguments` objects pushed by the stub — the
+    // array must be typed to carry them, not plain records.
+    dataLayer: unknown[];
   }
 }
 
@@ -42,15 +44,17 @@ export function initGA4(): void {
   document.head.appendChild(script);
 
   window.dataLayer = window.dataLayer ?? [];
-  window.gtag = function gtag(
-    command: string,
-    targetOrEvent: string,
-    params?: Record<string, unknown>
-  ) {
-    window.dataLayer.push({ event: command, ...params, target: targetOrEvent });
+  // Google's snippet verbatim: gtag.js only recognizes commands pushed as the
+  // raw `arguments` object. Pushing a plain object instead is silently ignored
+  // by the library — config never registers, no hit is ever sent, and GA4
+  // shows "data collection isn't active" forever. That exact bug shipped at
+  // launch; do not "clean this up" into an object push.
+  window.gtag = function gtag() {
+    // eslint-disable-next-line prefer-rest-params
+    window.dataLayer.push(arguments);
   };
 
-  window.gtag("js", new Date().toISOString());
+  window.gtag("js", new Date());
   window.gtag("config", GA4_ID, {
     send_page_view: false, // we manage page views ourselves
   });
