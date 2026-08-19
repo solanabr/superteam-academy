@@ -1645,6 +1645,14 @@ export type Database = {
         };
         Returns: string;
       };
+      get_platform_stats: {
+        Args: Record<string, never>;
+        Returns: {
+          total_xp: number;
+          builders: number;
+          credentials: number;
+        }[];
+      };
       get_referral_leaderboard: {
         Args: {
           p_season?: number;
