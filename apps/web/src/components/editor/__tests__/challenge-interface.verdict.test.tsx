@@ -123,6 +123,11 @@ describe("ChallengeInterface — Submit verdict state machine (#942)", () => {
     act(() => h.runnerProps?.onSubmit());
     expect(verdictCard(view.container).dataset.verdict).toBe("judging");
     expect(screen.getByText("Judging your submission…")).toBeTruthy();
+    // Judging hides Submit without claiming completion: the runner sees
+    // isJudging, never a fake isComplete — no "Lesson Complete!" badge yet.
+    expect(h.runnerProps?.isComplete).toBe(false);
+    expect(h.runnerProps?.isJudging).toBe(true);
+    expect(screen.queryByText("Lesson Complete!")).toBeNull();
     expect(dispatched).toHaveLength(1);
     expect(dispatched[0]?.detail).toEqual({
       lessonId: "lesson-1",
