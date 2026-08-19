@@ -9,10 +9,12 @@
  */
 import * as Sentry from "@sentry/nextjs";
 
-const SENTRY_DSN = process.env.NEXT_PUBLIC_SENTRY_DSN ?? "";
-
 function isConfigured(): boolean {
-  return SENTRY_DSN.length > 0;
+  // Actual initialization, not raw env truthiness: a malformed DSN makes
+  // `Sentry.init` reject the client silently, and gating on the env var alone
+  // would ALSO suppress the dev-console fallback in captureError — the exact
+  // combination that hides a dead error pipeline.
+  return Sentry.isInitialized();
 }
 
 /**
@@ -53,4 +55,13 @@ export function captureError(
 export function setSentryUser(userId: string): void {
   if (!isConfigured()) return;
   Sentry.setUser({ id: userId });
+}
+
+/**
+ * Clear the Sentry user context (call on logout) so errors after sign-out are
+ * not attributed to the previous account.
+ */
+export function clearSentryUser(): void {
+  if (!isConfigured()) return;
+  Sentry.setUser(null);
 }

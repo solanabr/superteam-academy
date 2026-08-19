@@ -22,6 +22,12 @@ declare global {
 
 const GA4_ID = process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID ?? "";
 
+// Stub + config must run exactly once per page load, tracked here — NOT by
+// the presence of a googletagmanager script tag. A foreign tag (e.g. GTM
+// injected by an extension or an embedded widget) would otherwise make init
+// silently skip our own stub and config, and no hit would ever be sent.
+let ga4Configured = false;
+
 function isAvailable(): boolean {
   return (
     typeof window !== "undefined" &&
@@ -36,12 +42,18 @@ function isAvailable(): boolean {
  */
 export function initGA4(): void {
   if (typeof window === "undefined" || GA4_ID.length === 0) return;
-  if (document.querySelector(`script[src*="googletagmanager"]`)) return;
 
-  const script = document.createElement("script");
-  script.async = true;
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`;
-  document.head.appendChild(script);
+  // The selector only guards SCRIPT INJECTION (avoid loading gtag.js twice);
+  // stub + config below run regardless, gated by the module flag.
+  if (!document.querySelector(`script[src*="googletagmanager"]`)) {
+    const script = document.createElement("script");
+    script.async = true;
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`;
+    document.head.appendChild(script);
+  }
+
+  if (ga4Configured) return;
+  ga4Configured = true;
 
   window.dataLayer = window.dataLayer ?? [];
   // Google's snippet verbatim: gtag.js only recognizes commands pushed as the

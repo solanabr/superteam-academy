@@ -17,6 +17,15 @@ if (dsn) {
     // 100% of transactions in dev, 10% in production.
     tracesSampleRate: process.env.NODE_ENV === "development" ? 1.0 : 0.1,
   });
+
+  // A malformed DSN makes `init` bail without a client — and with `debug`
+  // statements stripped from production bundles, that failure is otherwise
+  // invisible. Shout, so a broken error pipeline is caught on first load.
+  if (!Sentry.getClient()) {
+    console.error(
+      "[sentry] DSN rejected — errors are NOT being reported (check NEXT_PUBLIC_SENTRY_DSN)"
+    );
+  }
 }
 
 // Instruments App Router navigations for tracing. Safe to export even when the
