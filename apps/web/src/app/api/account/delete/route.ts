@@ -121,19 +121,22 @@ export async function POST(): Promise<NextResponse> {
 
     // Revoke every session. This is NOT best-effort: middleware no longer
     // checks the tombstone per-request (#1089), so a deleted account whose
-    // revocation silently failed would keep refreshing forever. Global
-    // signOut first; on failure, fall back to a permanent ban (kills refresh
-    // the same way); if BOTH fail, report 500 so the client retries the
-    // deletion — the scrub is idempotent.
+    // revocation silently failed would keep refreshing forever. The ban runs
+    // UNCONDITIONALLY — GoTrue's signOut swallows 401/403 as success without
+    // revoking anything, and the ban is the one mechanism that provably kills
+    // refresh tokens (banning a deleted account is harmless). signOut still
+    // runs first to clear the caller's cookies. Only when BOTH mechanisms
+    // fail does the route report 500 so the client retries — the scrub is
+    // idempotent.
     const { error: signOutError } = await supabase.auth.signOut();
-    if (signOutError) {
-      const revoked = await revokeUserSessions(admin, user.id);
-      if (!revoked.ok) {
-        logError({
-          errorId: ERROR_IDS.ACCOUNT_DELETE_FAILED,
-          error: revoked.error ?? new Error(signOutError.message),
-          context: { route: "/api/account/delete", stage: "revoke_sessions" },
-        });
+    const revoked = await revokeUserSessions(admin, user.id);
+    if (!revoked.ok) {
+      logError({
+        errorId: ERROR_IDS.ACCOUNT_DELETE_FAILED,
+        error: revoked.error ?? new Error("session revocation (ban) failed"),
+        context: { route: "/api/account/delete", stage: "revoke_sessions" },
+      });
+      if (signOutError) {
         return NextResponse.json(
           { error: "Failed to process deletion" },
           { status: 500 }

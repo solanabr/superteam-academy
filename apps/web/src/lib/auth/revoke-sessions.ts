@@ -1,5 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/supabase/types";
 
 /**
  * Revoke every session of a user by permanently banning the account.
@@ -16,7 +17,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  * escalate loudly on false.
  */
 export async function revokeUserSessions(
-  admin: SupabaseClient,
+  admin: SupabaseClient<Database>,
   userId: string,
   attempts = 3
 ): Promise<{ ok: boolean; error: Error | null }> {

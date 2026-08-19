@@ -588,14 +588,30 @@ async function mergeWalletShellAccount(
     // same <= JWT-expiry bound as account deletion. Non-fatal to the sign-in
     // (the target account is fine either way), but a persistent failure is a
     // zombie shell session, so it logs at error level for follow-up.
-    const revoked = await revokeUserSessions(supabaseAdmin, shell.id);
-    if (!revoked.ok) {
+    // Own try/catch: the merge RPC already committed, so a throw here must
+    // not be logged as "shell merge failed" — the failure mode is a zombie
+    // shell session, not an unmerged account.
+    try {
+      const revoked = await revokeUserSessions(supabaseAdmin, shell.id);
+      if (!revoked.ok) {
+        logError({
+          errorId: ERROR_IDS.DYNAMIC_AUTH_FAILED,
+          error:
+            revoked.error ?? new Error("shell session revocation (ban) failed"),
+          context: {
+            note: "shell session revocation (ban) failed after retries",
+            userId,
+            shellId: shell.id,
+          },
+        });
+      }
+    } catch (revokeErr: unknown) {
       logError({
         errorId: ERROR_IDS.DYNAMIC_AUTH_FAILED,
         error:
-          revoked.error ?? new Error("shell session revocation (ban) failed"),
+          revokeErr instanceof Error ? revokeErr : new Error(String(revokeErr)),
         context: {
-          note: "shell session revocation (ban) failed after retries",
+          note: "shell session revocation threw (merge already committed)",
           userId,
           shellId: shell.id,
         },
