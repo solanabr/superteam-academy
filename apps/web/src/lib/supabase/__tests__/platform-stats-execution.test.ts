@@ -62,7 +62,8 @@ const STUB_SETUP = `
   CREATE ROLE service_role;
   CREATE TABLE public.profiles (
     id uuid PRIMARY KEY,
-    is_public boolean NOT NULL DEFAULT true
+    is_public boolean NOT NULL DEFAULT true,
+    deleted_at timestamptz
   );
   CREATE TABLE public.user_xp (
     user_id uuid PRIMARY KEY REFERENCES public.profiles(id),
@@ -78,6 +79,7 @@ const STUB_SETUP = `
 const PUBLIC_A = "11111111-1111-1111-1111-111111111111";
 const PUBLIC_B = "22222222-2222-2222-2222-222222222222";
 const PRIVATE_C = "33333333-3333-3333-3333-333333333333";
+const DELETED_D = "44444444-4444-4444-4444-444444444444";
 
 interface StatsRow {
   total_xp: number;
@@ -157,14 +159,16 @@ for (const copy of COPIES) {
 
     it("matches the old three-query computation on seeded rows", async () => {
       await db.exec(`
-        INSERT INTO public.profiles(id, is_public) VALUES
-          ('${PUBLIC_A}', true),
-          ('${PUBLIC_B}', true),
-          ('${PRIVATE_C}', false);
+        INSERT INTO public.profiles(id, is_public, deleted_at) VALUES
+          ('${PUBLIC_A}', true, NULL),
+          ('${PUBLIC_B}', true, NULL),
+          ('${PRIVATE_C}', false, NULL),
+          ('${DELETED_D}', true, now());
         INSERT INTO public.user_xp(user_id, total_xp, level) VALUES
           ('${PUBLIC_A}', 150, 1),
           ('${PUBLIC_B}', 275, 1),
-          ('${PRIVATE_C}', 9999, 9);
+          ('${PRIVATE_C}', 9999, 9),
+          ('${DELETED_D}', 500, 2);
         INSERT INTO public.certificates(user_id) VALUES
           ('${PUBLIC_A}'), ('${PUBLIC_A}'), ('${PRIVATE_C}');
       `);
@@ -173,8 +177,11 @@ for (const copy of COPIES) {
       expect(fresh).toEqual(await oldStats(db));
       // Pin the semantics, not just parity: private XP excluded (the view's
       // is_public filter), but private profiles/certs still counted — exactly
-      // what the old unfiltered head counts did.
-      expect(fresh).toEqual({ total_xp: 425, builders: 3, credentials: 3 });
+      // what the old unfiltered head counts did. The soft-deleted profile's XP
+      // is INCLUDED today because schema.sql's public_user_xp is stale (#1105
+      // — prod filters deleted_at IS NULL). When #1105 lands, total_xp here
+      // must drop to 425; builders stays 4 (the head count never filtered).
+      expect(fresh).toEqual({ total_xp: 925, builders: 4, credentials: 3 });
     });
 
     it("is not executable by anon or authenticated", async () => {
