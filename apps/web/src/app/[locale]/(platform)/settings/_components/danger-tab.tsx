@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { resetUser } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 
 // Danger zone: irreversible account-deletion request (readiness G6).
@@ -57,6 +58,9 @@ export function DangerTab() {
       // guarantees a clean reload with no stale authenticated state.
       const supabase = createClient();
       await supabase.auth.signOut();
+      // Sever the analytics identity — a deleted account must not keep
+      // tagging this browser's events.
+      resetUser();
       window.location.assign(`/${locale}`);
     } catch {
       setError(t("deleteAccountFailed"));

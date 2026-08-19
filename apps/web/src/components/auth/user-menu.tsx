@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { resetUser } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 import { logoutDynamic } from "@/lib/dynamic/client";
 
@@ -56,6 +57,9 @@ export function UserMenu({
     await logoutDynamic();
     const supabase = createClient();
     await supabase.auth.signOut();
+    // Sever the analytics identity so the next visitor on this browser is not
+    // attributed to the signed-out account.
+    resetUser();
     window.location.href = `/${locale}`;
   }, [locale, connected, disconnect]);
 

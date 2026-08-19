@@ -9,7 +9,8 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const initialized = useRef(false);
 
-  // Initialize analytics on mount
+  // Initialize analytics once. Ref-guarded on its own so the guard cannot
+  // take the auth subscription down with it (see next effect).
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
@@ -26,8 +27,14 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
         });
       }
     });
+  }, []);
 
-    // Listen for auth state changes
+  // Auth subscription: subscribe on EVERY mount, clean up on unmount. When
+  // this shared an effect with the ref-guarded init, a StrictMode/remount
+  // cycle ran the cleanup (unsubscribe) but the guard skipped the re-run —
+  // leaving no listener for the rest of the session.
+  useEffect(() => {
+    const supabase = createClient();
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {

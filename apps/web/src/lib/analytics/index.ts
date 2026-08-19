@@ -21,8 +21,13 @@
  */
 
 import { initGA4, trackGA4Event, trackGA4PageView } from "./ga4";
-import { initPostHog, trackPostHogEvent, identifyPostHogUser } from "./posthog";
-import { initSentry, setSentryUser } from "./sentry";
+import {
+  initPostHog,
+  trackPostHogEvent,
+  identifyPostHogUser,
+  resetPostHogUser,
+} from "./posthog";
+import { initSentry, setSentryUser, clearSentryUser } from "./sentry";
 
 // Re-export individual modules for granular access
 export { initGA4, trackGA4Event, trackGA4PageView } from "./ga4";
@@ -32,7 +37,12 @@ export {
   identifyPostHogUser,
   resetPostHogUser,
 } from "./posthog";
-export { initSentry, captureError, setSentryUser } from "./sentry";
+export {
+  initSentry,
+  captureError,
+  setSentryUser,
+  clearSentryUser,
+} from "./sentry";
 export {
   EVALUATION_WINDOW_WEEKS,
   EVALUATION_WINDOW_DAYS,
@@ -72,7 +82,12 @@ export function trackEvent(
  */
 export function trackPageView(url: string): void {
   trackGA4PageView(url);
-  trackPostHogEvent("$pageview", { $current_url: url });
+  // PostHog expects a FULL URL in $current_url (host filtering, session
+  // replay linking); the bare pathname GA4 wants would register as a
+  // malformed URL. Read it at capture time so buffered pre-init events keep
+  // the page they were fired on.
+  const currentUrl = typeof window !== "undefined" ? window.location.href : url;
+  trackPostHogEvent("$pageview", { $current_url: currentUrl });
 }
 
 /**
@@ -84,4 +99,13 @@ export function identifyUser(
 ): void {
   identifyPostHogUser(userId, traits);
   setSentryUser(userId);
+}
+
+/**
+ * Reset user identity across all configured providers. Call on sign-out so
+ * subsequent events and errors are not attributed to the previous account.
+ */
+export function resetUser(): void {
+  resetPostHogUser();
+  clearSentryUser();
 }
