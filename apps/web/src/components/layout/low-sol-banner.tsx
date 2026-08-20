@@ -16,6 +16,9 @@ const IS_DEVNET =
 
 export function LowSolBanner() {
   const t = useTranslations("nav");
+  // Mounted inside the (platform) provider stack since #1097 (it moved out of
+  // the global Header, which no longer has wallet providers above it), so
+  // these hooks always resolve against the live stack.
   const { publicKey } = useWallet();
   const { connection } = useConnection();
   const [balance, setBalance] = useState<number | null>(null);

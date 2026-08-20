@@ -5,7 +5,6 @@ import { AchievementPopup } from "@/components/gamification/achievement-popup";
 import { CertificatePopup } from "@/components/gamification/certificate-popup";
 import { RewardPopupQueue } from "@/components/gamification/reward-popup";
 import { useGamificationEvents } from "@/hooks/use-gamification-events";
-import { ToastContainer } from "@/components/ui/toast-container";
 import { BankedProgressReplay } from "@/components/lessons/banked-progress-replay";
 import { SegmentSync } from "@/components/onboarding/segment-sync";
 
@@ -17,8 +16,10 @@ export function GamificationOverlays() {
 
   return (
     <>
-      {/* Toast container always renders — works for auth and non-auth contexts */}
-      <ToastContainer />
+      {/* ToastContainer is NOT here (#1097): these overlays mount only on
+          (platform) routes, while marketing pages dispatch toasts too (e.g.
+          AuthErrorToast on the landing page), so the container renders
+          globally in [locale]/layout.tsx instead. */}
       {/* Replays anonymously-banked completions once signed in (LX-A4c). */}
       <BankedProgressReplay />
       {/* Copies the anonymous /start intake into the profile on sign-in (LX-A3). */}

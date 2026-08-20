@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { DynamicReturnCatcher } from "@/components/auth/dynamic-return-catcher";
 
 export const metadata: Metadata = {
   title: "Superteam Academy — Solana Developer Education",
@@ -11,5 +12,12 @@ export default function MarketingLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  // The catcher completes a Dynamic social/device redirect that lands on a
+  // marketing page, where the (platform) provider stack is absent (#1097).
+  return (
+    <>
+      <DynamicReturnCatcher />
+      {children}
+    </>
+  );
 }

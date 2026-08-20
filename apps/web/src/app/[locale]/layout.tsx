@@ -4,14 +4,12 @@ import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { locales, type Locale } from "@/lib/i18n/config";
 import { ThemeProvider } from "@/components/layout/theme-provider";
-import { SolanaWalletProvider } from "@/lib/solana/wallet-provider";
 import { AnalyticsProvider } from "@/components/analytics/analytics-provider";
 import { AuthProvider } from "@/lib/auth/auth-provider";
 import { ReferralCapture } from "@/components/referrals/referral-capture";
-import { DynamicWalletProvider } from "@/components/auth/dynamic-wallet-provider";
 import { Header } from "@/components/layout/header";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
-import { GamificationOverlays } from "@/components/gamification/gamification-overlays";
+import { ToastContainer } from "@/components/ui/toast-container";
 
 interface LocaleLayoutProps {
   children: React.ReactNode;
@@ -35,6 +33,12 @@ export default async function LocaleLayout(props: LocaleLayoutProps) {
   // inline theme-flash-prevention <script> so it satisfies the nonce policy.
   const nonce = (await headers()).get("x-nonce") ?? undefined;
 
+  // The wallet/Dynamic provider stack and the gamification overlays are NOT
+  // here (#1097): they mount in (platform)/layout.tsx, so marketing and admin
+  // first loads don't pay for wallet-adapter, the Dynamic SDK, or TanStack
+  // Query. Header children that touch the wallet degrade through
+  // useOptionalWallet, and the sign-in modal lazily mounts its own scoped
+  // stack when opened outside (platform).
   return (
     <ThemeProvider
       attribute="data-theme"
@@ -44,29 +48,25 @@ export default async function LocaleLayout(props: LocaleLayoutProps) {
       nonce={nonce}
     >
       <NextIntlClientProvider messages={messages}>
-        <SolanaWalletProvider>
-          {/* DynamicAuthHandler is mounted by the provider itself, not here:
-              its hook throws outside a DynamicContextProvider, so it must never
-              be a sibling. */}
-          <DynamicWalletProvider>
-            <AuthProvider>
-              {/* Captures ?ref= codes on any page and claims them once a
-                  session exists — attribution without touching any of the
-                  four auth flows. No UI. */}
-              <ReferralCapture />
-              <AnalyticsProvider>
-                <div className="grid-bg flex min-h-screen flex-col bg-[var(--bg)]">
-                  <Header />
-                  <main id="main-content" className="flex-1 pt-[60px]">
-                    {children}
-                  </main>
-                  <MobileBottomNav />
-                  <GamificationOverlays />
-                </div>
-              </AnalyticsProvider>
-            </AuthProvider>
-          </DynamicWalletProvider>
-        </SolanaWalletProvider>
+        <AuthProvider>
+          {/* Captures ?ref= codes on any page and claims them once a
+              session exists — attribution without touching any of the
+              four auth flows. No UI. */}
+          <ReferralCapture />
+          <AnalyticsProvider>
+            <div className="grid-bg flex min-h-screen flex-col bg-[var(--bg)]">
+              <Header />
+              <main id="main-content" className="flex-1 pt-[60px]">
+                {children}
+              </main>
+              <MobileBottomNav />
+              {/* Global on purpose: marketing pages dispatch toasts too
+                  (AuthErrorToast on refused logins), so the container cannot
+                  ride along with the (platform)-only overlays. */}
+              <ToastContainer />
+            </div>
+          </AnalyticsProvider>
+        </AuthProvider>
       </NextIntlClientProvider>
     </ThemeProvider>
   );

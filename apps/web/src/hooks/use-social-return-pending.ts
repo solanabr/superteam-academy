@@ -4,7 +4,7 @@ import { useSyncExternalStore } from "react";
 import {
   getSocialReturnPending,
   subscribeSocialReturnPending,
-} from "@/lib/dynamic/social";
+} from "@/lib/dynamic/social-return-pending";
 
 /**
  * Whether the Google-return handshake is running right now. Sign-in buttons

@@ -13,7 +13,7 @@ import {
   Trophy,
   UserCircle,
 } from "@phosphor-icons/react";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useAmbientWallet } from "@/lib/solana/ambient-wallet-store";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,7 +25,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { fetchIsAdmin } from "@/lib/admin/client";
 import { resetUser } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
-import { logoutDynamic } from "@/lib/dynamic/client";
+import { isDynamicEnabled } from "@/lib/dynamic/config";
 
 interface UserMenuProps {
   username: string;
@@ -42,7 +42,11 @@ export function UserMenu({
 }: UserMenuProps) {
   const tCommon = useTranslations("common");
   const tNav = useTranslations("nav");
-  const { disconnect, connected } = useWallet();
+  // The wallet surface published by whichever provider stack is live
+  // ((platform) layout or the modal's scoped stack, #1097) — UserMenu renders
+  // in the global Header ABOVE both, so context can't reach it and the module
+  // store can. Null when no stack is mounted.
+  const wallet = useAmbientWallet();
   const [copied, setCopied] = useState(false);
 
   // Cosmetic Admin entry: shown only when the server says the session is on
@@ -64,24 +68,39 @@ export function UserMenu({
   }, []);
 
   const handleSignOut = useCallback(async () => {
-    if (connected) {
+    if (wallet?.connected) {
       try {
-        await disconnect();
+        await wallet.disconnect();
       } catch {
         // Wallet may already be disconnected — proceed with sign-out
       }
     }
+    // Belt and braces for the no-stack case (signing out on a marketing
+    // page): wallet-adapter persists the selected wallet under `walletName`
+    // (WalletProvider's localStorageKey default) and silently reconnects it
+    // via autoConnect on the next provider mount — WalletAuthHandler would
+    // then SIWS the learner straight back into the account they just left.
+    // Clearing the key makes the next provider mount start signed out.
+    try {
+      window.localStorage.removeItem("walletName");
+    } catch {
+      // Storage unavailable (privacy mode) — nothing persisted to clear.
+    }
     // End the Dynamic session too — without this, promptless MPC signing lets
     // the layout-level auth handler silently sign the learner back in on the
-    // next page load (see logoutDynamic).
-    await logoutDynamic();
+    // next page load (see logoutDynamic). Imported on demand: the static
+    // import would put the Dynamic SDK back into the global header chunk.
+    if (isDynamicEnabled()) {
+      const { logoutDynamic } = await import("@/lib/dynamic/client");
+      await logoutDynamic();
+    }
     const supabase = createClient();
     await supabase.auth.signOut();
     // Sever the analytics identity so the next visitor on this browser is not
     // attributed to the signed-out account.
     resetUser();
     window.location.href = `/${locale}`;
-  }, [locale, connected, disconnect]);
+  }, [locale, wallet]);
 
   const handleCopyAddress = useCallback(
     (e: React.MouseEvent) => {
