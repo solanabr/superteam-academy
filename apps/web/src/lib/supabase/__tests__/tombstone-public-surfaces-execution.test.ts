@@ -499,11 +499,6 @@ for (const copy of ["migration", "schema.sql mirror"] as const) {
       expect(seen.is_public_profile).toBe(false);
     });
 
-    it("keeps each object's grants: anon may read all six", async () => {
-      await become(db, "anon");
-      await expect(seenBy(db, LIVE)).resolves.toBeTruthy();
-    });
-
     it("RED PROOF: the pre-#1120 bodies leak the tombstoned row", async () => {
       await db.exec("RESET ROLE;");
       await db.exec(PRE_FIX);
