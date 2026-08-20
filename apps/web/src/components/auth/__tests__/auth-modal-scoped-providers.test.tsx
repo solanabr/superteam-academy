@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import type { ReactElement } from "react";
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/messages/en.json";
 import {
@@ -151,6 +151,34 @@ describe("AuthModal scoped provider mounting (#1097)", () => {
     } finally {
       unregister();
     }
+  });
+
+  it("clears a stuck loading state when the dialog closes (#1126)", async () => {
+    // In the capture window no stack of ours will ever register, so the Solana
+    // click pins `loading` — which lives in the shell while the body's
+    // `awaitingStack` is a ref inside the lazy chunk. A body remount orphaned
+    // it permanently, and `onOpenChange` refuses to close while it is truthy.
+    setWalletReturnCaptureActive();
+    const controlled = (open: boolean) => (
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <AuthModal open={open} onOpenChange={() => {}} />
+      </NextIntlClientProvider>
+    );
+    const { rerender } = render(controlled(true));
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: CONNECT_WALLET })
+    );
+    expect(
+      await screen.findByRole("button", { name: messages.auth.connecting })
+    ).toBeDisabled();
+
+    rerender(controlled(false));
+    rerender(controlled(true));
+
+    expect(
+      await screen.findByRole("button", { name: CONNECT_WALLET })
+    ).toBeEnabled();
   });
 
   it("does not arm while the catcher's capture window is open (F4), then renders the body once that stack registers", async () => {

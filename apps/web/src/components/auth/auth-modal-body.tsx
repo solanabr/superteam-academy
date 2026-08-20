@@ -1,15 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { SolanaLogo } from "@/components/icons/solana-logo";
 import { trackEvent } from "@/lib/analytics";
 import { isDynamicEnabled } from "@/lib/dynamic/config";
-import {
-  getAmbientWallet,
-  useAmbientWalletLive,
-} from "@/lib/solana/ambient-wallet-store";
+import { useAmbientWalletLive } from "@/lib/solana/ambient-wallet-store";
 import { DynamicSocialSignIn } from "@/components/auth/dynamic-social-sign-in";
 import { OAuthFallbackButton } from "@/components/auth/oauth-fallback-button";
 import type { AuthLoadingMethod } from "@/components/auth/auth-modal-types";
@@ -26,6 +23,12 @@ export interface AuthModalBodyProps {
   walletStackFailed: boolean;
   /** Re-arms that chunk. The Solana button is its own retry affordance. */
   retryWalletStack: () => void;
+  /**
+   * Runs the timed close-then-open-the-wallet-picker sequence. Owned by the
+   * shell, not here: closing the dialog unmounts this body, so timers started
+   * here would be cleared exactly when the picker is due to open.
+   */
+  startWalletHandoff: () => void;
 }
 
 /**
@@ -54,6 +57,7 @@ export default function AuthModalBody({
   onLater,
   walletStackFailed,
   retryWalletStack,
+  startWalletHandoff,
 }: AuthModalBodyProps) {
   const t = useTranslations("auth");
   const dynamicEnabled = isDynamicEnabled();
@@ -62,22 +66,11 @@ export default function AuthModalBody({
   // effect below finishes the handoff as soon as one does.
   const awaitingStack = useRef(false);
 
-  const handOffToWalletModal = useCallback(() => {
-    // Brief loading state, then hand off to the wallet-select modal of
-    // whichever provider stack is live — read at call time from the store,
-    // since this body renders outside the stack's React tree.
-    setTimeout(() => {
-      setOpen(false);
-      setLoading(null);
-      setTimeout(() => getAmbientWallet()?.openWalletModal(), 200);
-    }, 400);
-  }, [setOpen, setLoading]);
-
   useEffect(() => {
     if (!awaitingStack.current) return;
     if (walletStackLive) {
       awaitingStack.current = false;
-      handOffToWalletModal();
+      startWalletHandoff();
     } else if (walletStackFailed) {
       // No stack is coming. Say so instead of spinning forever — the other
       // two methods on this screen still work.
@@ -88,7 +81,7 @@ export default function AuthModalBody({
   }, [
     walletStackLive,
     walletStackFailed,
-    handOffToWalletModal,
+    startWalletHandoff,
     setLoading,
     setErrorMessage,
     t,
@@ -99,7 +92,7 @@ export default function AuthModalBody({
     setErrorMessage(null);
     trackEvent("auth_method_selected", { method: "solana" });
     if (walletStackLive) {
-      handOffToWalletModal();
+      startWalletHandoff();
       return;
     }
     // No stack yet — wait for one. If a previous attempt's chunk died, this

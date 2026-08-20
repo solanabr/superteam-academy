@@ -6,6 +6,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
+import { setSiwsActive } from "@/lib/solana/ambient-wallet-store";
 import { createSIWSMessage, formatSIWSMessage } from "@/lib/solana/wallet-auth";
 
 type AuthOverlayState =
@@ -29,10 +30,15 @@ type AuthOverlayState =
  *
  * As a body child the overlay leaves the Header's stacking context, so it
  * needs the dialog layer (z-300) rather than the old z-100 — under the
- * Header's z-200 the nav would paint over the scrim and stay clickable. The
- * two never coexist: the sign-in dialog closes before the wallet-select
- * modal opens, and that modal (z-1040, its own stylesheet) closes on connect,
- * which is what triggers this overlay.
+ * Header's z-200 the nav would paint over the scrim and stay clickable.
+ *
+ * It CAN coexist with the sign-in dialog: opening that dialog is what mounts
+ * the scoped stack, and `autoConnect` reconnects a remembered wallet the
+ * instant it mounts, so SIWS can fire with the dialog still up. Radix marks
+ * the body `pointer-events: none` for a modal dialog and this portalled child
+ * inherits it, so the overlay raises `setSiwsActive` and AuthModal closes —
+ * the same handoff the manual path already does. `pointer-events-auto` covers
+ * the exit-animation window, and any other modal that might be open.
  */
 export function WalletAuthHandler() {
   const locale = useLocale();
@@ -50,6 +56,16 @@ export function WalletAuthHandler() {
   // appears once the async auth flow starts, long after mount.
   const [portalTarget, setPortalTarget] = useState<Element | null>(null);
   useEffect(() => setPortalTarget(document.body), []);
+
+  // Tells anything modal above us to get out of the way while the overlay is
+  // up — today that is AuthModal, which would otherwise leave the overlay's
+  // buttons inert under Radix's `pointer-events: none` body.
+  const overlayUp = overlayState.status !== "idle";
+  const siwsOwnerRef = useRef<object>({});
+  useEffect(() => {
+    if (!overlayUp) return;
+    return setSiwsActive(siwsOwnerRef.current);
+  }, [overlayUp]);
 
   const authenticate = useCallback(async () => {
     if (!publicKey || (!signIn && !signMessage) || isAuthenticating.current)
@@ -227,7 +243,7 @@ export function WalletAuthHandler() {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[300] flex items-center justify-center backdrop-blur-sm [background:color-mix(in_srgb,var(--bg)_80%,transparent)]"
+      className="pointer-events-auto fixed inset-0 z-[300] flex items-center justify-center backdrop-blur-sm [background:color-mix(in_srgb,var(--bg)_80%,transparent)]"
       role="status"
       aria-live="polite"
       data-testid="siws-overlay"

@@ -60,6 +60,7 @@
   "auth": {
     "accountDeleted": "Esta cuenta ha sido eliminada y no puede iniciar sesión.",
     "authFailed": "La autenticación de la billetera falló. Inténtalo de nuevo o usa otro método de inicio de sesión.",
+    "optionsLoadFailed": "Algunas opciones de inicio de sesión no se cargaron. Continúa con Google o GitHub, o inténtalo de nuevo.",
     "chooseWallet": "Elige una billetera",
     "connecting": "Conectando...",
     "connectSolanaWallet": "Conectar Billetera Solana",

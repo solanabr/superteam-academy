@@ -94,15 +94,21 @@ Two things stand a stack up on a provider-less route:
   raises a capture flag in the ambient store synchronously, before its chunk resolves,
   so the modal cannot arm a competing stack in that window.
 
-Only the Solana button depends on any of this. Google and GitHub through Supabase OAuth
-need nothing but the browser Supabase client, so they render from a statically imported
-module (`src/components/auth/oauth-fallback-button.tsx`) and stay reachable when either
-lazy chunk fails to load — a blocked CDN or a stale deploy costs the wallet path only.
-The Solana button alone waits for a registration, and reports `authFailed` rather than
-spinning forever if the stack chunk dies. `src/__tests__/provider-free-import-graph.test.ts`
-walks the static import graph from the Header, the modal, UserMenu, and the landing
-client and fails if any of the three package families becomes statically reachable
-again.
+Only the Solana button depends on any of this. On the happy path with Dynamic enabled —
+production — Google and GitHub are `DynamicSocialSignIn` inside the lazy body chunk,
+which still carries the SDK; the win is that the body and the stack now download in
+parallel instead of serially, and that the body no longer waits on a stack registration
+it never needed. With Dynamic unset, and on the failure path, the same two providers
+come from `src/components/auth/oauth-fallback-button.tsx`, a statically imported module
+that needs nothing but the browser Supabase client — so a dead body chunk (blocked CDN,
+stale deploy, offline) still leaves Google and GitHub reachable, and costs the wallet
+path only. The Solana button alone waits for a registration, and reports `authFailed`
+rather than spinning forever if the stack chunk dies.
+`src/__tests__/provider-free-import-graph.test.ts` walks the static import graph from
+`[locale]/layout.tsx`, the marketing layout, the Header, the modal, UserMenu, and the
+landing client, and fails if any of the three package families becomes statically
+reachable again. Bare `import "x"` counts — a side-effect import hides its whole subtree
+otherwise.
 
 ### Connect Solana Wallet (wallet-adapter SIWS)
 
@@ -130,6 +136,15 @@ portalled to `document.body`, like the wallet-select modal it follows. On a mark
 route the handler mounts under the Header, whose bar carries `backdrop-blur-md`, and a
 non-`none` `backdrop-filter` is a containing block for `position: fixed` descendants —
 in-tree, the overlay was clipped to the 57px nav strip.
+
+It can fire with the sign-in dialog still open: opening that dialog is what mounts the
+scoped stack, and `autoConnect` reconnects a remembered wallet the instant it mounts, so
+a returning signed-out learner gets SIWS without touching a button. Radix marks the body
+`pointer-events: none` for a modal dialog and the portalled overlay inherits it, which
+left Retry and Dismiss rendered but inert. So the handler raises `setSiwsActive` in the
+ambient store while the overlay is up and `AuthModal` closes — the same handoff the
+manual wallet path already does before opening the wallet-select modal. The overlay also
+carries `pointer-events-auto`, which covers the dialog's exit-animation window.
 
 Server verification (`src/lib/solana/verify-siws.ts`), in order: parse fields → expiry
 

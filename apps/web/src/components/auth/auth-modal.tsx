@@ -4,6 +4,7 @@ import {
   forwardRef,
   lazy,
   Suspense,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -23,8 +24,10 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
+  getAmbientWallet,
   useAmbientStackCount,
   useAmbientWalletLive,
+  useSiwsActive,
   useWalletReturnCaptureActive,
 } from "@/lib/solana/ambient-wallet-store";
 import { ChunkErrorBoundary } from "@/components/auth/chunk-error-boundary";
@@ -99,12 +102,39 @@ export function AuthModal({
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = controlledOpen !== undefined;
   const open = isControlled ? controlledOpen : internalOpen;
-  const setOpen = (v: boolean) => {
-    if (!isControlled) setInternalOpen(v);
-    onOpenChange?.(v);
-  };
+  // Stable, so the effects and the lazy body that take it as a dependency
+  // don't re-run on every parent render.
+  const setOpen = useCallback(
+    (v: boolean) => {
+      if (!isControlled) setInternalOpen(v);
+      onOpenChange?.(v);
+    },
+    [isControlled, onOpenChange]
+  );
   const [loading, setLoading] = useState<AuthLoadingMethod>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Every close resets, whichever path closed us. `loading` lives here while
+  // the body's `awaitingStack` is a ref inside the lazy chunk, so a body
+  // remount mid-load would otherwise orphan a truthy `loading` forever — and
+  // `onOpenChange` below refuses to close while it is truthy (#1126).
+  useEffect(() => {
+    if (open) return;
+    setLoading(null);
+    setErrorMessage(null);
+  }, [open]);
+
+  // The SIWS overlay has taken the screen (#1109 follow-up): since #1097 the
+  // dialog is what mounts the wallet stack, and `autoConnect` can reconnect a
+  // remembered wallet and fire SIWS while the dialog is still open. Radix
+  // marks the body `pointer-events: none` for a modal dialog, and the overlay
+  // portals into that body — leaving its Retry and Dismiss buttons visible
+  // but unclickable over a dialog the scrim covers. Close, exactly as the
+  // manual wallet path does before handing off to the wallet-select modal.
+  const siwsActive = useSiwsActive();
+  useEffect(() => {
+    if (siwsActive && open) setOpen(false);
+  }, [siwsActive, open, setOpen]);
 
   // Where the wallet/Dynamic providers come from (#1097): on (platform)
   // routes the layout's stack is registered in the ambient store; elsewhere
@@ -180,6 +210,9 @@ export function AuthModal({
   const retryBody = () => {
     setBodyFailed(false);
     setBodyAttempt((a) => a + 1);
+    // Or a retry that lands would show the previous failure under a fresh
+    // button set.
+    setErrorMessage(null);
   };
   const LazyBody = useMemo(() => {
     void bodyAttempt; // cache-buster: a new attempt makes a fresh lazy
@@ -191,6 +224,47 @@ export function AuthModal({
     void stackAttempt;
     return lazy(() => import("@/components/auth/scoped-auth-providers"));
   }, [stackAttempt]);
+
+  // The wallet handoff — brief loading state, close, then open the
+  // wallet-select modal of whichever stack is live. It lives here rather than
+  // in the body because closing the dialog UNMOUNTS the body: timers started
+  // there would be cleared exactly when the picker is due to open. AuthModal
+  // survives the close (it renders in the Header), and clears them if IT
+  // unmounts — the case that would otherwise pop the wallet picker open
+  // unbidden on whatever route the learner moved to.
+  const handoffTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  useEffect(() => {
+    const pending = handoffTimers.current;
+    return () => pending.forEach(clearTimeout);
+  }, []);
+  const startWalletHandoff = useCallback(() => {
+    const at = (fn: () => void, ms: number) => {
+      handoffTimers.current.push(setTimeout(fn, ms));
+    };
+    at(() => {
+      // Read the store BEFORE closing: a stack that unregistered during the
+      // wait has no modal to hand off to, and closing first would leave the
+      // learner on the page with the spinner gone and no error anywhere.
+      if (!getAmbientWallet()) {
+        setLoading(null);
+        setErrorMessage(t("authFailed"));
+        return;
+      }
+      setOpen(false);
+      setLoading(null);
+      at(() => {
+        const live = getAmbientWallet();
+        if (live) {
+          live.openWalletModal();
+          return;
+        }
+        // Vanished inside the close window — re-open with the failure rather
+        // than leave the click unanswered.
+        setOpen(true);
+        setErrorMessage(t("authFailed"));
+      }, 200);
+    }, 400);
+  }, [setOpen, t]);
 
   const spinner = (
     <div
@@ -217,10 +291,9 @@ export function AuthModal({
       <Dialog
         open={open}
         onOpenChange={(v) => {
-          if (!loading) {
-            setOpen(v);
-            if (!v) setErrorMessage(null);
-          }
+          // The close reset lives in the `open` effect above, so it covers
+          // every path in (Later, the wallet handoff, a controlled parent).
+          if (!loading) setOpen(v);
         }}
       >
         {(trigger !== undefined || !isControlled) && (
@@ -248,12 +321,15 @@ export function AuthModal({
             // blocked CDN or a stale deploy costs the wallet path only.
             <div className="mt-6 space-y-3">
               {/* One error placement (#1077): a later OAuth failure replaces
-                  the chunk message rather than stacking a second alert. */}
+                  the chunk message rather than stacking a second alert.
+                  Not `authFailed` — no wallet was involved and nothing was
+                  attempted, and this is what a screen reader announces the
+                  moment the modal opens. */}
               <p
                 className="mx-auto max-w-xs text-center text-sm font-medium text-danger"
                 role="alert"
               >
-                {errorMessage ?? t("authFailed")}
+                {errorMessage ?? t("optionsLoadFailed")}
               </p>
               <OAuthFallbackButton
                 provider="google"
@@ -268,7 +344,12 @@ export function AuthModal({
                 setErrorMessage={setErrorMessage}
               />
               <div className="flex justify-center pt-1">
-                <Button variant="ghost" size="sm" onClick={retryBody}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={retryBody}
+                  disabled={loading !== null}
+                >
                   {t("retry")}
                 </Button>
               </div>
@@ -289,6 +370,7 @@ export function AuthModal({
                   onLater={onLater}
                   walletStackFailed={stackFailed}
                   retryWalletStack={retryWalletStack}
+                  startWalletHandoff={startWalletHandoff}
                 />
               </Suspense>
             </ChunkErrorBoundary>
