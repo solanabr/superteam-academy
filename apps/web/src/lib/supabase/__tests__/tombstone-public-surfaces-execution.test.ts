@@ -396,6 +396,12 @@ for (const copy of ["migration", "schema.sql mirror"] as const) {
       db = new PGlite();
       await db.exec(STUB_SETUP);
       await db.exec(guarded);
+      // Install the PRE-fix bodies first, so `fixed` lands as an in-place
+      // upgrade of the shape that is actually deployed rather than onto a blank
+      // database. That is the only way CREATE OR REPLACE VIEW's "may append
+      // columns, never reorder or drop" rule gets exercised against the
+      // 20260624181348 community_stats that prod really has.
+      await db.exec(PRE_FIX);
       await db.exec(fixed);
       await db.exec(ENROLLMENTS_PUBLIC_POLICY);
     }, 60_000);
