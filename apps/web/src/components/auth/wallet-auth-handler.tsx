@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-  useCallback,
-} from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -49,11 +43,13 @@ export function WalletAuthHandler() {
   const [overlayState, setOverlayState] = useState<AuthOverlayState>({
     status: "idle",
   });
-  // Resolved in an effect, never at module scope or during render: the server
-  // has no `document`, and a portal on the first client render would not match
-  // the server's null output.
+  // Resolved in an effect, never at module scope or during render: this
+  // component is server-rendered on (platform) routes, where there is no
+  // `document`. A plain useEffect, not useLayoutEffect — the latter warns
+  // during SSR, and nothing here needs to beat a paint: the overlay only
+  // appears once the async auth flow starts, long after mount.
   const [portalTarget, setPortalTarget] = useState<Element | null>(null);
-  useLayoutEffect(() => setPortalTarget(document.body), []);
+  useEffect(() => setPortalTarget(document.body), []);
 
   const authenticate = useCallback(async () => {
     if (!publicKey || (!signIn && !signMessage) || isAuthenticating.current)
