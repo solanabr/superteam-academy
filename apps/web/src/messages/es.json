@@ -1261,7 +1261,8 @@
       "fetchError": "Error al obtener el estado",
       "networkError": "Error de red",
       "retry": "Reintentar",
-      "refresh": "Actualizar"
+      "refresh": "Actualizar",
+      "unavailable": "No se devolvió ningún estado."
     },
     "programBar": {
       "network": "Red",
@@ -1269,7 +1270,12 @@
       "config": "Config",
       "found": "Encontrada",
       "notInitialized": "No inicializada",
+      "networkUnknown": "desconocida",
       "authorityMismatch": "Discrepancia de autoridad — verifica PROGRAM_AUTHORITY_SECRET"
+    },
+    "statusScreen": {
+      "programHeading": "Programa",
+      "countsHeading": "Contenido desplegado on-chain"
     },
     "deployScreen": {
       "coursesHeading": "Cursos",

@@ -8,6 +8,7 @@
 import type { AwardT } from "@superteam-lms/content-schema";
 import type { DiffEntry } from "@/lib/admin/sync-diff";
 import type { ChainDriftState, CourseContentDrift } from "@/lib/github/drift";
+import type { RpcNetwork } from "@/lib/solana/network";
 
 // Re-exported so UI components share the diff engine's entry shape instead of
 // carrying duplicate local copies (SP3-C Task 2 consolidation).
@@ -86,6 +87,13 @@ export interface AchievementStatus {
 
 export interface AdminStatus {
   program: {
+    /**
+     * Which chain the server's own `SOLANA_RPC_URL` points at (#1140). Derived
+     * server-side because the client has no honest way to know: the status
+     * screen used to print the literal string "devnet", which would have kept
+     * saying "devnet" on mainnet.
+     */
+    network: RpcNetwork;
     deployed: boolean;
     programId: string;
     configPda: string | null;
