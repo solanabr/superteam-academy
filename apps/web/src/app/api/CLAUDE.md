@@ -22,11 +22,11 @@
 | `/api/lessons/reflect`            | POST     | Required | Seal an `openEnded` reflection submission (attestation for `/api/lessons/complete`); best-effort AI reply                                                                                                                                                               |
 | `/api/lessons/validate-challenge` | POST     | Required | Server-side challenge validation (UX pass/fail; completion gated in `/api/lessons/complete`)                                                                                                                                                                            |
 | `/api/enroll/sponsor`             | POST     | Required | Backend-signed `enroll` tx — platform pays the fee + Enrollment PDA rent so a zero-SOL embedded wallet can enrol (#1004). Returns a partially-signed tx; the learner's wallet co-signs and submits. **The learner is read from the session's profile, never the body.** |
-| `/api/leaderboard`                | GET      | None     | XP rankings (alltime/weekly/monthly)                                                                                                                                                                                                                                    |
-| `/api/referrals/leaderboard`      | GET      | None     | Referral season standings (`?season=N` for a past season's final board)                                                                                                                                                                                                 |
+| `/api/leaderboard`                | GET      | None     | XP rankings (alltime/weekly/monthly); CDN-cached (#1094)                                                                                                                                                                                                                |
+| `/api/referrals/leaderboard`      | GET      | None     | Referral season standings (`?season=N` for a past season's final board); CDN-cached (#1094)                                                                                                                                                                             |
 | `/api/referrals/me`               | GET      | Required | Own referral surface: share code (minted on first ask), season points, referred-signup count                                                                                                                                                                            |
 | `/api/referrals/claim`            | POST     | Required | Attach a captured `?ref=` code to the session's account (signup point); guards live in the `claim_referral` SECURITY DEFINER fn                                                                                                                                         |
-| `/api/certificates/metadata`      | GET      | None     | Serve NFT metadata JSON by UUID                                                                                                                                                                                                                                         |
+| `/api/certificates/metadata`      | GET      | None     | Serve NFT metadata JSON by UUID; CDN-cached (#1094)                                                                                                                                                                                                                     |
 | `/api/certificates/mint`          | POST     | Required | Manual credential mint with retry queue                                                                                                                                                                                                                                 |
 | `/api/build-program`              | POST     | Required | Proxy Anchor build to build server                                                                                                                                                                                                                                      |
 | `/api/deploy/save`                | POST     | Required | Save deployed program record                                                                                                                                                                                                                                            |
@@ -48,17 +48,17 @@ Public, read-only faces of the `server-only` content-bundle store (`lib/content/
 All gated server-side on synced+active deployments; only summary-safe shapes cross
 the boundary (never the full `Lesson` `blocks[]`, which carries solutions/tests).
 
-| Route                            | Method | Auth | Purpose                                                                       |
-| -------------------------------- | ------ | ---- | ----------------------------------------------------------------------------- |
-| `/api/content/courses`           | GET    | None | Course summaries by id (dashboard/profile/certificates)                       |
-| `/api/content/course-lessons`    | GET    | None | Ordered `{_id,title,slug}` lesson summaries per course (Continue card, LX-B2) |
-| `/api/content/lessons-summary`   | GET    | None | Lesson summaries by id — `{_id,title,slug}` only (recent-activity titles)     |
-| `/api/content/recommended`       | GET    | None | Next-course candidates for the Continue card; optional `exclude`              |
-| `/api/content/achievements`      | GET    | None | Achievement catalog (name/icon/award rule/xp); statically cached, hourly      |
-| `/api/content/tags`              | GET    | None | Course tags (profile skill radar); statically cached, hourly                  |
-| `/api/content/lesson-skills`     | GET    | None | Per-lesson skill tags (profile Skills radar, #466 C3); cached, hourly         |
-| `/api/content/is-instructor`     | GET    | None | Whether a wallet is a known instructor (header "Teach" nav gate)              |
-| `/api/content/instructor-wallet` | GET    | None | Wallet → public academy profile for display (#478 B4)                         |
+| Route                            | Method | Auth | Purpose                                                                                           |
+| -------------------------------- | ------ | ---- | ------------------------------------------------------------------------------------------------- |
+| `/api/content/courses`           | GET    | None | Course summaries by id (dashboard/profile/certificates); CDN-cached (#1094)                       |
+| `/api/content/course-lessons`    | GET    | None | Ordered `{_id,title,slug}` lesson summaries per course (Continue card, LX-B2); CDN-cached (#1094) |
+| `/api/content/lessons-summary`   | GET    | None | Lesson summaries by id — `{_id,title,slug}` only (recent-activity titles); CDN-cached (#1094)     |
+| `/api/content/recommended`       | GET    | None | Next-course candidates for the Continue card; optional `exclude`; CDN-cached (#1094)              |
+| `/api/content/achievements`      | GET    | None | Achievement catalog (name/icon/award rule/xp); statically cached, hourly                          |
+| `/api/content/tags`              | GET    | None | Course tags (profile skill radar); statically cached, hourly                                      |
+| `/api/content/lesson-skills`     | GET    | None | Per-lesson skill tags (profile Skills radar, #466 C3); cached, hourly                             |
+| `/api/content/is-instructor`     | GET    | None | Whether a wallet is a known instructor (header "Teach" nav gate); CDN-cached (#1094)              |
+| `/api/content/instructor-wallet` | GET    | None | Wallet → public academy profile for display (#478 B4); CDN-cached (#1094)                         |
 
 ## Community Forum
 
