@@ -1,9 +1,9 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useAdminStatus } from "../use-admin-status";
 import { AchievementSyncTable } from "@/components/admin/achievement-sync-table";
 import { AdminCard } from "@/components/admin/admin-card";
+import { useAdminStatus } from "../use-admin-status";
 
 interface AchievementsSubviewProps {
   /** `award.path` id → title, server-computed from `getLearningPathsForAdminWithRefs` (#513). */
@@ -11,11 +11,12 @@ interface AchievementsSubviewProps {
 }
 
 /**
- * The Achievements sub-view of the Content tab (#513 WS-C) — relocated from
- * the Courses screen's second section (`courses/deploy-client.tsx`). Reuses
- * `useAdminStatus()`, the SAME hook `DeployClient` uses, so the sync/sync-all
- * behavior and the `/api/admin/achievements/sync` contract are unchanged; only
- * where this renders moved. `courseTitleById` comes for free from the same
+ * The Achievements sub-view of the supporting-content step. It left the deploy
+ * section for the retired Content tab (#513 WS-C) and came back with it
+ * (#1136), one step further down the same screen. Reuses `useAdminStatus()`,
+ * the SAME hook `DeployClient` uses, so the sync/sync-all behavior and the
+ * `/api/admin/achievements/sync` contract are unchanged; only where this
+ * renders moved. `courseTitleById` comes for free from the same
  * response's `courses` array (no extra request) so the table can optionally
  * resolve an achievement's `award.course` ref.
  */
