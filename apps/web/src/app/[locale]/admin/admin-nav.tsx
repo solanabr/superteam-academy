@@ -6,38 +6,46 @@ import { usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import { cn } from "@/lib/utils";
 
-// "Courses" is the merged Publish + Deploy screen (the two used to be separate
-// entries, which hid the fact that they are two steps of one flow). "Content"
-// (#513 WS-C) is the read-only Quests/Achievements/Paths tab — appended, not
-// inserted, so it doesn't reshuffle the existing three.
-const SECTIONS = [
-  "courses",
-  "moderation",
-  "insights",
-  "status",
-  "content",
-] as const;
+// "Courses" is the merged Publish + Deploy + supporting-content screen. Each
+// of those used to be its own entry, which hid the fact that they are steps of
+// one flow — "Content" was the last to fold in (#1136).
+const SECTIONS = ["courses", "moderation", "insights", "status"] as const;
 
 /**
- * Best-effort pending-flags count for the "Moderation" nav badge. Reuses the
- * existing `GET /api/admin/flags` list route (no count-only sibling exists);
- * `.length` of the returned rows is the pending count. Purely additive to nav
- * render — it never throws into the tree, and a failed/zero fetch leaves the
- * badge hidden.
+ * Three states for the "Moderation" nav badge. `failed` exists because a
+ * hidden badge means "queue is clear", and before #1132 a dead endpoint got
+ * that same silent treatment — the nav then corroborated the panel's wrong
+ * all-clear.
  */
-function usePendingFlagCount(): number {
-  const [count, setCount] = useState(0);
+type PendingFlagState =
+  | { status: "loading" }
+  | { status: "ready"; count: number }
+  | { status: "failed" };
+
+/**
+ * Pending-flags count for the "Moderation" nav badge. Reuses the existing
+ * `GET /api/admin/flags` list route (no count-only sibling exists); `.length`
+ * of the returned rows is the pending count. Still purely additive to nav
+ * render — it never throws into the tree — but a failure is now reported as
+ * `failed` rather than collapsing into zero.
+ */
+function usePendingFlagCount(): PendingFlagState {
+  const [state, setState] = useState<PendingFlagState>({ status: "loading" });
 
   useEffect(() => {
     let active = true;
     void (async () => {
       try {
         const res = await fetch("/api/admin/flags");
-        if (!res.ok) return;
+        if (!res.ok) {
+          if (active) setState({ status: "failed" });
+          return;
+        }
         const body = (await res.json()) as { flags?: unknown[] };
-        if (active) setCount(body.flags?.length ?? 0);
+        if (active)
+          setState({ status: "ready", count: body.flags?.length ?? 0 });
       } catch {
-        // Non-critical at-a-glance count; leave the badge hidden on error.
+        if (active) setState({ status: "failed" });
       }
     })();
     return () => {
@@ -45,7 +53,7 @@ function usePendingFlagCount(): number {
     };
   }, []);
 
-  return count;
+  return state;
 }
 
 /**
@@ -67,7 +75,7 @@ export function AdminNav() {
         {SECTIONS.map((section) => {
           const href = `/${locale}/admin/${section}`;
           const isActive = pathname === href || pathname.startsWith(`${href}/`);
-          const showBadge = section === "moderation" && pendingFlags > 0;
+          const badge = section === "moderation" ? pendingFlags : null;
 
           return (
             <li key={section}>
@@ -83,12 +91,37 @@ export function AdminNav() {
                 )}
               >
                 <span>{t(`nav.${section}`)}</span>
-                {showBadge && (
+                {/* Muted placeholder while the count is in flight, so
+                    "not known yet" does not look like "queue is clear".
+                    Decorative: the moderation screen carries the accessible
+                    loading text, and a live region firing on every admin page
+                    load would be pure noise. */}
+                {badge?.status === "loading" && (
                   <span
-                    aria-label={t("nav.pendingFlags", { count: pendingFlags })}
+                    aria-hidden="true"
+                    className="inline-flex h-[1.125rem] w-5 animate-pulse rounded-full bg-subtle"
+                  />
+                )}
+                {/* Unknown, not zero. Neutral `streak` rather than `danger`,
+                    and deliberately not a live region — this nav renders on
+                    every admin screen, so an assertive announcement per
+                    transient blip costs more than it buys. Clicking it lands
+                    on Moderation, where the panel offers the real retry. */}
+                {badge?.status === "failed" && (
+                  <span
+                    aria-label={t("nav.pendingFlagsUnknown")}
+                    title={t("nav.pendingFlagsUnknown")}
+                    className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full border border-streak bg-streak-light px-1.5 py-0.5 text-xs font-bold leading-none text-streak"
+                  >
+                    ?
+                  </span>
+                )}
+                {badge?.status === "ready" && badge.count > 0 && (
+                  <span
+                    aria-label={t("nav.pendingFlags", { count: badge.count })}
                     className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-danger px-1.5 py-0.5 text-xs font-bold leading-none text-white"
                   >
-                    {pendingFlags}
+                    {badge.count}
                   </span>
                 )}
               </Link>

@@ -1,9 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Robot, ChartBar } from "@phosphor-icons/react";
 import type { PlatformInsights } from "@/lib/admin/insights";
+import {
+  InsightsChart,
+  BarCell,
+  fillDayWindow,
+} from "@/components/admin/insights-chart";
 
 function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
@@ -22,7 +27,7 @@ function DataTable({
   empty,
 }: {
   headers: string[];
-  rows: (string | number)[][];
+  rows: (string | number | React.ReactNode)[][];
   empty: string;
 }) {
   if (rows.length === 0) {
@@ -63,6 +68,25 @@ function DataTable({
   );
 }
 
+function Panel({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-xl border-[2.5px] border-border bg-card shadow-card">
+      <h3 className="border-b border-border px-4 py-2 text-xs font-bold uppercase text-text-3">
+        {title}
+      </h3>
+      {children}
+    </div>
+  );
+}
+
+const usd = (v: number): string => `$${v.toFixed(2)}`;
+
 export function InsightsClient() {
   const t = useTranslations("admin.insightsScreen");
 
@@ -84,6 +108,27 @@ export function InsightsClient() {
     };
   }, []);
 
+  // The RPC path already zero-fills both series in SQL; the JS fallback does
+  // not. Padding here makes the charts identical either way (#1135).
+  const endDay = data?.generatedAt.slice(0, 10) ?? "";
+  const completions = useMemo(
+    () =>
+      fillDayWindow(data?.learning.completionsByDay ?? [], endDay, (day) => ({
+        day,
+        count: 0,
+      })),
+    [data, endDay]
+  );
+  const spend = useMemo(
+    () =>
+      fillDayWindow(data?.ai.spendByDay ?? [], endDay, (day) => ({
+        day,
+        usd: 0,
+        requests: 0,
+      })),
+    [data, endDay]
+  );
+
   if (error) {
     return (
       <p role="alert" className="text-sm text-danger">
@@ -94,6 +139,15 @@ export function InsightsClient() {
   if (!data) {
     return <p className="text-sm text-text-3">{t("loading")}</p>;
   }
+
+  const maxCourseCompletions = Math.max(
+    1,
+    ...data.learning.perCourse.map((c) => c.completions)
+  );
+  const maxLessonAssists = Math.max(
+    1,
+    ...data.ai.topLessons.map((l) => l.assists)
+  );
 
   return (
     <div className="space-y-8">
@@ -128,36 +182,41 @@ export function InsightsClient() {
             value={data.learning.activeLearners30d}
           />
         </div>
-        <div className="grid gap-3 lg:grid-cols-2">
-          <div className="rounded-xl border-[2.5px] border-border bg-card shadow-card">
-            <h3 className="border-b border-border px-4 py-2 text-xs font-bold uppercase text-text-3">
-              {t("learning.perCourse")}
-            </h3>
-            <DataTable
-              headers={[
-                t("learning.course"),
-                t("learning.completions"),
-                t("learning.learnersCol"),
-              ]}
-              rows={data.learning.perCourse.map((c) => [
-                c.courseId,
-                c.completions,
-                c.learners,
-              ])}
-              empty={t("empty")}
-            />
-          </div>
-          <div className="rounded-xl border-[2.5px] border-border bg-card shadow-card">
-            <h3 className="border-b border-border px-4 py-2 text-xs font-bold uppercase text-text-3">
-              {t("learning.completionsByDay")}
-            </h3>
-            <DataTable
-              headers={[t("learning.day"), t("learning.completions")]}
-              rows={data.learning.completionsByDay.map((d) => [d.day, d.count])}
-              empty={t("empty")}
-            />
-          </div>
-        </div>
+        <p className="text-xs text-text-3">{t("learning.activityHint")}</p>
+
+        <Panel title={t("learning.completionsByDay")}>
+          <InsightsChart
+            variant="bar"
+            data={completions.map((d) => ({ day: d.day, value: d.count }))}
+            label={t("learning.completionsChartLabel")}
+            dayHeader={t("learning.day")}
+            valueHeader={t("learning.completions")}
+            empty={t("empty")}
+          />
+        </Panel>
+
+        <Panel title={t("learning.perCourse")}>
+          <DataTable
+            headers={[
+              t("learning.course"),
+              t("learning.completions"),
+              t("learning.learnersCol"),
+            ]}
+            rows={data.learning.perCourse.map((c) => [
+              c.courseId,
+              <BarCell
+                key="completions"
+                value={c.completions}
+                max={maxCourseCompletions}
+              />,
+              c.learners,
+            ])}
+            empty={t("empty")}
+          />
+          <p className="border-t border-border px-4 py-2 text-xs text-text-3">
+            {t("learning.perCourseHint")}
+          </p>
+        </Panel>
       </section>
 
       {/* AI tutor */}
@@ -169,56 +228,53 @@ export function InsightsClient() {
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard label={t("ai.learners")} value={data.ai.learnersUsingAi} />
           <StatCard label={t("ai.assists")} value={data.ai.totalAssists} />
-          <StatCard
-            label={t("ai.spend30d")}
-            value={`$${data.ai.spend30dUsd.toFixed(2)}`}
-          />
+          <StatCard label={t("ai.spend30d")} value={usd(data.ai.spend30dUsd)} />
           <StatCard label={t("ai.requests30d")} value={data.ai.requests30d} />
         </div>
-        <div className="grid gap-3 lg:grid-cols-2">
-          <div className="rounded-xl border-[2.5px] border-border bg-card shadow-card">
-            <h3 className="border-b border-border px-4 py-2 text-xs font-bold uppercase text-text-3">
-              {t("ai.topLessons")}
-            </h3>
-            <DataTable
-              headers={[
-                t("ai.lesson"),
-                t("ai.assistsCol"),
-                t("ai.learnersCol"),
-              ]}
-              rows={data.ai.topLessons.map((l) => [
-                l.lessonId,
-                l.assists,
-                l.learners,
-              ])}
-              empty={t("empty")}
-            />
-            <p className="border-t border-border px-4 py-2 text-xs text-text-3">
-              {t("ai.topLessonsHint")}
-            </p>
-          </div>
-          <div className="rounded-xl border-[2.5px] border-border bg-card shadow-card">
-            <h3 className="border-b border-border px-4 py-2 text-xs font-bold uppercase text-text-3">
-              {t("ai.spendByDay")}
-            </h3>
-            <DataTable
-              headers={[t("ai.day"), t("ai.usd"), t("ai.requests")]}
-              rows={data.ai.spendByDay.map((s) => [
-                s.day,
-                `$${s.usd.toFixed(2)}`,
-                s.requests,
-              ])}
-              empty={t("empty")}
-            />
-          </div>
-        </div>
-      </section>
 
-      {/* Quiz correctness lives in PostHog, not here — say so rather than
-          looking like a missing feature (#836). */}
-      <p className="rounded-md border border-border p-3 text-xs text-text-3 [background:var(--input)]">
-        {t("quizNote")}
-      </p>
+        <Panel title={t("ai.spendChart")}>
+          {/* Requests ride along in the tooltip and the screen-reader table
+              rather than a second axis — a crossing between two independently
+              scaled series means nothing. */}
+          <InsightsChart
+            variant="area"
+            data={spend.map((s) => ({ day: s.day, value: s.usd }))}
+            label={t("ai.spendChartLabel")}
+            dayHeader={t("ai.day")}
+            valueHeader={t("ai.usd")}
+            format={usd}
+            secondary={{
+              header: t("ai.requests"),
+              values: spend.map((s) => s.requests),
+            }}
+            empty={t("empty")}
+          />
+        </Panel>
+
+        <Panel title={t("ai.topLessons")}>
+          <DataTable
+            headers={[t("ai.lesson"), t("ai.assistsCol"), t("ai.learnersCol")]}
+            rows={data.ai.topLessons.map((l) => [
+              l.lessonId,
+              <BarCell
+                key="assists"
+                value={l.assists}
+                max={maxLessonAssists}
+              />,
+              l.learners,
+            ])}
+            empty={t("empty")}
+          />
+          <p className="border-t border-border px-4 py-2 text-xs text-text-3">
+            {t("ai.topLessonsHint")}
+          </p>
+          {/* Quiz correctness lives in PostHog, not here — say so next to the
+              lesson data rather than looking like a missing feature (#836). */}
+          <p className="border-t border-border px-4 py-2 text-xs text-text-3">
+            {t("quizNote")}
+          </p>
+        </Panel>
+      </section>
     </div>
   );
 }

@@ -110,12 +110,25 @@ function handleRest(table, req, res) {
   }
 }
 
-// auth-js calls POST /auth/v1/user (getUser, server-side in middleware) with the
-// session's bearer token. Return the learner for the fake token, else 401 — both
-// are handled gracefully by the middleware for the public routes the specs hit.
+// auth-js calls POST /auth/v1/user (getUser — the HS256 fallback getClaims takes
+// server-side, #1102) with the session's bearer token. The harness token is a
+// well-formed JWT (see session.ts buildFakeJwt), so match on its payload `sub`;
+// anything else is 401 — handled gracefully by the middleware for the public
+// routes the specs hit.
+function bearerSub(auth) {
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  const payload = token.split(".")[1];
+  if (!payload) return null;
+  try {
+    return JSON.parse(Buffer.from(payload, "base64url").toString("utf8")).sub;
+  } catch {
+    return null;
+  }
+}
+
 function handleAuthUser(req, res) {
   const auth = req.headers["authorization"] || "";
-  if (auth.includes(`Bearer ${LEARNER.id}.fake`)) {
+  if (bearerSub(auth) === LEARNER.id) {
     return sendJson(res, 200, {
       id: LEARNER.id,
       aud: "authenticated",

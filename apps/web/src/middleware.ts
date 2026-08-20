@@ -3,65 +3,8 @@ import { createServerClient } from "@supabase/ssr";
 import createIntlMiddleware from "next-intl/middleware";
 import { env } from "@/lib/env";
 import { locales, defaultLocale } from "@/lib/i18n/config";
-import { isAdminRoute, isAdminRootPath } from "@/lib/admin/routes";
-import { ADMIN_SESSION_MAX_AGE_MS } from "@/lib/admin/session-format";
+import { isAdminRoute } from "@/lib/admin/routes";
 import { buildCsp, generateNonce } from "@/lib/csp";
-import {
-  isAccountDeleted,
-  DELETED_ACCOUNT_REASON,
-} from "@/lib/auth/account-status";
-
-// NOTE: This Edge-runtime `isValidAdminSession` (Web Crypto) must stay in sync
-// with the Node-runtime implementation in `lib/admin/auth.ts` (Node `crypto`).
-// The shared cookie format + max-age live in `lib/admin/session-format.ts`.
-
-function hexEncode(buf: ArrayBuffer): string {
-  return Array.from(new Uint8Array(buf))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-function timingSafeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let mismatch = 0;
-  for (let i = 0; i < a.length; i++) {
-    mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  }
-  return mismatch === 0;
-}
-
-async function isValidAdminSession(
-  cookieValue: string | undefined
-): Promise<boolean> {
-  if (!cookieValue) return false;
-  const secret = process.env.ADMIN_SECRET;
-  if (!secret) return false;
-
-  const dotIndex = cookieValue.indexOf(".");
-  if (dotIndex === -1) return false;
-
-  const timestamp = cookieValue.slice(0, dotIndex);
-  const signature = cookieValue.slice(dotIndex + 1);
-
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(timestamp));
-  const expectedSig = hexEncode(sig);
-
-  if (!timingSafeEqual(signature, expectedSig)) return false;
-
-  const age = Date.now() - Number(timestamp);
-  if (Number.isNaN(age) || age < 0 || age > ADMIN_SESSION_MAX_AGE_MS)
-    return false;
-
-  return true;
-}
 
 const intlMiddleware = createIntlMiddleware({
   locales,
@@ -130,38 +73,20 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // IMPORTANT: getUser() may trigger token refresh which calls setAll
-  // If Supabase env vars are missing, this will fail and user will be null
-  // which causes platform routes to redirect (fail-closed behavior)
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  // #461 — refuse a soft-deleted (tombstoned) account, on every request that
-  // carries a session, not just protected routes. This is the backstop for
-  // the SIWS/wallet login path (which never touches /api/auth/callback) and
-  // for any Supabase session cookie that outlived an account deletion. Cheap:
-  // a single primary-key lookup, gated on `user` already being non-null so
-  // anonymous requests never pay for it.
-  if (user && (await isAccountDeleted(user.id))) {
-    // Sign out via the SAME cookie-bound client used for getUser() above, so
-    // the clearing Set-Cookie headers land on supabaseResponse and get
-    // relayed onto the redirect below.
-    await supabase.auth.signOut();
-
-    const locale =
-      locales.find((l) => request.nextUrl.pathname.startsWith(`/${l}`)) ??
-      defaultLocale;
-    const redirectUrl = new URL(`/${locale}`, request.url);
-    redirectUrl.searchParams.set("error", "auth");
-    redirectUrl.searchParams.set("reason", DELETED_ACCOUNT_REASON);
-    const redirectResponse = NextResponse.redirect(redirectUrl);
-    redirectResponse.headers.set("Content-Security-Policy", csp);
-    supabaseResponse.cookies.getAll().forEach((cookie) => {
-      redirectResponse.cookies.set(cookie);
-    });
-    return redirectResponse;
-  }
+  // IMPORTANT: getClaims() verifies the JWT locally (WebCrypto against cached
+  // JWKS) for asymmetric signing keys — zero network calls on the hot path —
+  // and falls back to getUser() for HS256. Either way it refreshes an expired
+  // session first, which calls setAll above. If Supabase env vars are missing
+  // this fails and userId stays null, so platform routes redirect (fail-closed).
+  //
+  // The #461 per-request tombstone query used to live here. It's gone: every
+  // writer of profiles.deleted_at now pairs with session revocation (global
+  // signOut in /api/account/delete, admin ban in the shell merge), and the
+  // login chokepoints (/api/auth/callback, /api/auth/wallet, /api/auth/dynamic)
+  // still call isAccountDeleted. A revoked session dies at its next token
+  // refresh, so the residual window is bounded by the access-token expiry.
+  const { data } = await supabase.auth.getClaims();
+  const userId = data?.claims.sub ?? null;
 
   // Now run intl middleware (after Supabase may have modified request cookies).
   // next-intl forwards request.headers (incl. the nonce + CSP set above) to the
@@ -177,30 +102,33 @@ export async function middleware(request: NextRequest) {
     intlResponse.cookies.set(cookie);
   });
 
-  // Admin routes: check admin_session cookie (separate from Supabase session)
-  // The /admin page renders its own login form when the cookie is absent,
-  // so sub-routes that need protection redirect back to /admin.
+  // Admin routes: gated on the SUPABASE session here, exactly like the other
+  // auth-gated routes — no session means a redirect to the localized landing.
+  // Whether the session's user is actually an admin (an `admin_users` row) is
+  // decided server-side by `requireAdmin()` in the /admin layout/page, which
+  // 404s non-admins so the panel's existence is not revealed. The middleware
+  // cannot make that call itself: the allowlist is service-role-only and the
+  // Edge runtime must not hold the service key.
   if (isAdminRoute(request.nextUrl.pathname)) {
-    const adminSession = request.cookies.get("admin_session");
-    const isAdminRoot = isAdminRootPath(request.nextUrl.pathname);
-    if (!(await isValidAdminSession(adminSession?.value))) {
-      if (!isAdminRoot) {
-        const locale =
-          locales.find((l) => request.nextUrl.pathname.startsWith(`/${l}`)) ??
-          defaultLocale;
-        const adminRedirect = NextResponse.redirect(
-          new URL(`/${locale}/admin`, request.url)
-        );
-        adminRedirect.headers.set("Content-Security-Policy", csp);
-        return adminRedirect;
-      }
+    if (!userId) {
+      const locale =
+        locales.find((l) => request.nextUrl.pathname.startsWith(`/${l}`)) ??
+        defaultLocale;
+      const adminRedirect = NextResponse.redirect(
+        new URL(`/${locale}`, request.url)
+      );
+      adminRedirect.headers.set("Content-Security-Policy", csp);
+      supabaseResponse.cookies.getAll().forEach((cookie) => {
+        adminRedirect.cookies.set(cookie);
+      });
+      return adminRedirect;
     }
     return intlResponse;
   }
 
   // For platform routes, check auth (fail-closed: no user = redirect)
   if (isProtectedRoute(request.nextUrl.pathname)) {
-    if (!user) {
+    if (!userId) {
       const locale =
         locales.find((l) => request.nextUrl.pathname.startsWith(`/${l}`)) ??
         defaultLocale;
@@ -219,5 +147,10 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next|_vercel|.*\\..*).*)"],
+  // Extension-anchored exclusion (not `.*\..*`): a dot anywhere in a page slug
+  // (e.g. /en/courses/node.js-basics) must still hit middleware — only real
+  // static-asset extensions are skipped.
+  matcher: [
+    "/((?!api|_next/static|_next/image|_vercel|favicon.ico|sitemap.xml|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|ico|css|js|mjs|map|txt|xml|json|pdf|mp4|ttf|otf|woff2?|webmanifest)$).*)",
+  ],
 };

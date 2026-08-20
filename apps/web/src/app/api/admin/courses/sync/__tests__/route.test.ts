@@ -31,7 +31,7 @@ vi.mock("@/lib/env.server", () => ({
   serverEnv: { SOLANA_RPC_URL: "http://localhost:8899" },
 }));
 vi.mock("@/lib/admin/auth", () => ({
-  requireAdminAuth: vi.fn(),
+  requireAdminAuth: vi.fn(() => ({ userId: "admin-user-1" })),
   adminUnauthorizedResponse: vi.fn(),
   AdminAuthError: class AdminAuthError extends Error {},
 }));

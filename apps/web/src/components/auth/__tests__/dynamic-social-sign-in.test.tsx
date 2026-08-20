@@ -24,8 +24,13 @@ vi.mock("@dynamic-labs-sdk/client", () => ({
   logout: logoutMock,
   signInWithSocialRedirect: redirectMock,
 }));
-vi.mock("@dynamic-labs-sdk/react-hooks", () => ({
-  useUser: () => ({ data: userState.current }),
+// Since #1097 the component reads the session imperatively (getCore over the
+// client singleton) instead of through the provider-bound useUser hook.
+vi.mock("@dynamic-labs-sdk/client/core", () => ({
+  getCore: () => ({ state: { get: () => ({ user: userState.current }) } }),
+}));
+vi.mock("@/lib/dynamic/client", () => ({
+  getDynamicClient: () => ({}),
 }));
 vi.mock("@/lib/analytics", () => ({ trackEvent: vi.fn() }));
 
@@ -58,7 +63,11 @@ describe.each([
 ])("DynamicSocialSignIn ($provider)", ({ provider, label, failure }) => {
   it("starts the redirect flow back to the current page", async () => {
     renderWithIntl(
-      <DynamicSocialSignIn provider={provider} disabled={false} />
+      <DynamicSocialSignIn
+        provider={provider}
+        disabled={false}
+        onError={vi.fn()}
+      />
     );
     fireEvent.click(screen.getByRole("button", { name: label }));
 
@@ -75,7 +84,11 @@ describe.each([
     userState.current = { userId: "stale-user" };
 
     renderWithIntl(
-      <DynamicSocialSignIn provider={provider} disabled={false} />
+      <DynamicSocialSignIn
+        provider={provider}
+        disabled={false}
+        onError={vi.fn()}
+      />
     );
     fireEvent.click(screen.getByRole("button", { name: label }));
 
@@ -85,15 +98,23 @@ describe.each([
     expect(logoutOrder as number).toBeLessThan(redirectOrder as number);
   });
 
-  it("surfaces a translated error when the redirect cannot start", async () => {
+  it("lifts a translated error to onError when the redirect cannot start (#1077: the parent owns the one error placement)", async () => {
     redirectMock.mockRejectedValueOnce(new Error("no project settings"));
     vi.spyOn(console, "error").mockImplementation(() => {});
+    const onError = vi.fn();
 
     renderWithIntl(
-      <DynamicSocialSignIn provider={provider} disabled={false} />
+      <DynamicSocialSignIn
+        provider={provider}
+        disabled={false}
+        onError={onError}
+      />
     );
     fireEvent.click(screen.getByRole("button", { name: label }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(failure);
+    // Cleared at click time, then the failure — and NO inline alert of its own.
+    expect(onError).toHaveBeenCalledWith(null);
+    await waitFor(() => expect(onError).toHaveBeenCalledWith(failure));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 });

@@ -1,8 +1,7 @@
 import "server-only";
-import crypto from "crypto";
 import { NextResponse } from "next/server";
-import { ADMIN_SESSION_MAX_AGE_MS } from "./session-format";
-import { serverEnv } from "@/lib/env.server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 
 export class AdminAuthError extends Error {
   constructor() {
@@ -10,30 +9,43 @@ export class AdminAuthError extends Error {
   }
 }
 
-const ADMIN_SESSION_COOKIE = "admin_session";
+/**
+ * Session-based admin check (replaces the retired ADMIN_SECRET/HMAC-cookie
+ * system). Reads the Supabase session from the request cookies, then checks
+ * the `admin_users` allowlist via the service-role client — the table has RLS
+ * on with ZERO policies and explicit REVOKEs, so no client role can read it.
+ *
+ * Fail closed on EVERYTHING: no session, expired session, DB error, missing
+ * env — all return null. Never trusts a client-supplied id; the user id comes
+ * exclusively from `supabase.auth.getUser()` (server-verified against the
+ * auth server, not just the cookie's claims).
+ */
+export async function requireAdmin(): Promise<{ userId: string } | null> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+    if (error || !user?.id) return null;
 
-function readAdminSessionCookie(req: Request): string | undefined {
-  const header = req.headers.get("cookie");
-  if (!header) return undefined;
-  for (const part of header.split(";")) {
-    const eq = part.indexOf("=");
-    if (eq === -1) continue;
-    if (part.slice(0, eq).trim() === ADMIN_SESSION_COOKIE) {
-      try {
-        return decodeURIComponent(part.slice(eq + 1).trim());
-      } catch {
-        // Malformed percent-encoding (URIError): treat as no session so the
-        // caller returns a clean 401 instead of a 500.
-        return undefined;
-      }
-    }
+    const admin = createAdminClient();
+    const { data, error: dbError } = await admin
+      .from("admin_users")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (dbError || !data) return null;
+
+    return { userId: user.id };
+  } catch {
+    return null;
   }
-  return undefined;
 }
 
 /**
  * Rejects state-changing requests that are not same-origin, as a CSRF defense
- * layered on top of the cookie's SameSite=Strict attribute.
+ * layered on top of the session cookie's SameSite attribute.
  *
  * Safe methods (GET/HEAD) are exempt — they must not mutate state, and skipping
  * the check keeps simple same-origin reads (and Origin-less navigations) working.
@@ -79,59 +91,34 @@ function isSameOriginRequest(req: Request): boolean {
 }
 
 /**
- * Authorizes an admin API request via the signed `admin_session` cookie.
- * The cookie is minted by POST /api/admin/auth once the secret is entered,
- * and sent automatically on same-origin fetches. The secret itself is never
- * held by the client, so it cannot leak into the page payload or be stolen
- * via XSS. Throws AdminAuthError if the cookie is missing/invalid/expired,
- * or if a state-changing request fails the same-origin (CSRF) check.
+ * Authorizes an admin API request via the caller's Supabase session and the
+ * `admin_users` allowlist (see {@link requireAdmin}). Throws AdminAuthError if
+ * the session is missing/invalid, the user is not on the allowlist, or a
+ * state-changing request fails the same-origin (CSRF) check. Returns the
+ * acting admin's user id so routes can attribute logged actions.
  */
-export function requireAdminAuth(req: Request): void {
+export async function requireAdminAuth(
+  req: Request
+): Promise<{ userId: string }> {
   if (!isSameOriginRequest(req)) {
     throw new AdminAuthError();
   }
-  if (!isValidAdminSession(readAdminSessionCookie(req))) {
+  const admin = await requireAdmin();
+  if (!admin) {
     throw new AdminAuthError();
   }
+  return admin;
 }
 
 /**
  * Returns a 401 NextResponse for use in catch blocks.
  *
  * Usage:
- *   try { requireAdminAuth(req) } catch (e) {
+ *   try { await requireAdminAuth(req) } catch (e) {
  *     if (e instanceof AdminAuthError) return adminUnauthorizedResponse();
  *     throw e;
  *   }
  */
 export function adminUnauthorizedResponse(): NextResponse {
   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-}
-
-export function isValidAdminSession(cookieValue: string | undefined): boolean {
-  if (!cookieValue) return false;
-  const secret = serverEnv.ADMIN_SECRET;
-  if (!secret) return false;
-
-  const dotIndex = cookieValue.indexOf(".");
-  if (dotIndex === -1) return false;
-
-  const timestamp = cookieValue.slice(0, dotIndex);
-  const signature = cookieValue.slice(dotIndex + 1);
-
-  const expectedSig = crypto
-    .createHmac("sha256", secret)
-    .update(timestamp)
-    .digest("hex");
-
-  const sigBuf = Buffer.from(signature);
-  const expectedBuf = Buffer.from(expectedSig);
-  if (sigBuf.length !== expectedBuf.length) return false;
-  if (!crypto.timingSafeEqual(sigBuf, expectedBuf)) return false;
-
-  const age = Date.now() - Number(timestamp);
-  if (Number.isNaN(age) || age < 0 || age > ADMIN_SESSION_MAX_AGE_MS)
-    return false;
-
-  return true;
 }

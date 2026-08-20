@@ -7,17 +7,50 @@ import {
   AdminAuthError,
 } from "@/lib/admin/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isRateLimited } from "@/lib/rate-limit";
+import { locales, defaultLocale } from "@/lib/i18n/config";
 
 // Reads the admin cookie + service-role DB — never statically prerender.
 export const dynamic = "force-dynamic";
 
-function guard(req: NextRequest): NextResponse | null {
+/**
+ * Admin gate. Returns the 401 response to send, or the acting admin's user id
+ * so the caller can attribute what it writes.
+ */
+async function guard(
+  req: NextRequest
+): Promise<{ denied: NextResponse } | { userId: string }> {
   try {
-    requireAdminAuth(req);
-    return null;
+    const { userId } = await requireAdminAuth(req);
+    return { userId };
   } catch (e) {
-    if (e instanceof AdminAuthError) return adminUnauthorizedResponse();
+    if (e instanceof AdminAuthError)
+      return { denied: adminUnauthorizedResponse() };
     throw e;
+  }
+}
+
+/**
+ * Locale for the links this route hands the panel. `localePrefix: "always"`
+ * means an unprefixed `/community/...` href is not a valid app path — it gets
+ * redirected by the intl middleware at best, and 404s inside the app router at
+ * worst — so the queue's "View" link was effectively broken.
+ *
+ * The locale comes from the Referer, because the only caller is the admin panel
+ * at `/{locale}/admin` and that is the locale the moderator is actually reading
+ * in. Anything unrecognised falls back to the default locale rather than
+ * emitting a prefix-less path.
+ */
+function localeFromReferer(req: NextRequest): string {
+  const referer = req.headers.get("referer");
+  if (!referer) return defaultLocale;
+  try {
+    const first = new URL(referer).pathname.split("/")[1] ?? "";
+    return (locales as readonly string[]).includes(first)
+      ? first
+      : defaultLocale;
+  } catch {
+    return defaultLocale;
   }
 }
 
@@ -29,6 +62,12 @@ export interface ModerationFlag {
   reporter: string | null;
   targetType: "thread" | "answer";
   preview: string;
+  /**
+   * The reported content in full (thread body or answer body). The card falls
+   * back to showing this when `url` is null — a moderator must never be asked to
+   * decide from a truncated preview with no way to read the post.
+   */
+  body: string;
   url: string | null;
 }
 
@@ -39,8 +78,8 @@ export interface ModerationFlag {
  * rather than PostgREST embedding to keep the FK-hint surface simple.
  */
 export async function GET(req: NextRequest): Promise<NextResponse> {
-  const denied = guard(req);
-  if (denied) return denied;
+  const auth = await guard(req);
+  if ("denied" in auth) return auth.denied;
 
   const admin = createAdminClient();
   const { data: flags, error } = await admin
@@ -80,7 +119,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     ? ((
         await admin
           .from("threads")
-          .select("id, title, slug, category_id")
+          .select("id, title, slug, category_id, body")
           .in("id", threadIds)
       ).data ?? [])
     : [];
@@ -112,6 +151,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     : [];
   const reporterName = new Map(reporters.map((r) => [r.id, r.username]));
 
+  const locale = localeFromReferer(req);
   const result: ModerationFlag[] = rows.map((f) => {
     const isThread = !!f.thread_id;
     const answer = f.answer_id ? answerMap.get(f.answer_id) : undefined;
@@ -121,7 +161,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const slug = thread?.category_id
       ? categorySlug.get(thread.category_id)
       : undefined;
-    const url = thread && slug ? `/community/${slug}/${thread.slug}` : null;
+    const url =
+      thread && slug ? `/${locale}/community/${slug}/${thread.slug}` : null;
     return {
       id: f.id,
       reason: f.reason,
@@ -130,6 +171,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       reporter: reporterName.get(f.reporter_id) ?? null,
       targetType: isThread ? "thread" : "answer",
       preview: preview.slice(0, 200),
+      body: isThread ? (thread?.body ?? "") : (answer?.body ?? ""),
       url,
     };
   });
@@ -137,13 +179,33 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   return NextResponse.json({ flags: result });
 }
 
-/** POST { flagId, action: "resolve" | "dismiss" } — action a pending flag. */
+type ModerationAction = "resolve" | "dismiss" | "remove" | "lock";
+
+const ACTIONS: readonly ModerationAction[] = [
+  "resolve",
+  "dismiss",
+  "remove",
+  "lock",
+];
+
+/**
+ * POST { flagId, action: "resolve" | "dismiss" | "remove" | "lock" }
+ *
+ * `remove` soft-deletes the reported content (and auto-resolves the flag);
+ * `lock` locks the reported thread and LEAVES the flag pending, because a lock
+ * stops the argument without settling the report — the moderator still resolves
+ * or dismisses it. `resolve` / `dismiss` are unchanged: they record a decision
+ * about the report only.
+ *
+ * Rate-limited per admin: these actions now destroy content, so a stuck client
+ * (or a stolen session) cannot loop them.
+ */
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  const denied = guard(req);
-  if (denied) return denied;
+  const auth = await guard(req);
+  if ("denied" in auth) return auth.denied;
 
   let flagId: string;
-  let action: "resolve" | "dismiss";
+  let action: ModerationAction;
   try {
     const body = (await req.json()) as { flagId?: unknown; action?: unknown };
     if (typeof body.flagId !== "string" || body.flagId.length === 0) {
@@ -152,31 +214,110 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         { status: 400 }
       );
     }
-    if (body.action !== "resolve" && body.action !== "dismiss") {
+    if (!ACTIONS.includes(body.action as ModerationAction)) {
       return NextResponse.json(
-        { error: "action must be 'resolve' or 'dismiss'" },
+        { error: `action must be one of ${ACTIONS.join(", ")}` },
         { status: 400 }
       );
     }
     flagId = body.flagId;
-    action = body.action;
+    action = body.action as ModerationAction;
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const admin = createAdminClient();
-  // resolved_by is left null: the admin_session cookie is not a Supabase user,
-  // so there's no profile id to attribute. status + resolved_at are enough.
-  const { error } = await admin
-    .from("flags")
-    .update({
-      status: action === "resolve" ? "resolved" : "dismissed",
-      resolved_at: new Date().toISOString(),
+  if (
+    await isRateLimited("admin-moderate", auth.userId, {
+      maxTokens: 60,
+      refillIntervalMs: 60_000,
     })
-    .eq("id", flagId);
-
-  if (error) {
-    return NextResponse.json({ error: "Update failed" }, { status: 500 });
+  ) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
+
+  const admin = createAdminClient();
+
+  // Only pending flags are actionable, and the target comes from the flag row,
+  // never from the request body — a client can name a flag, not a thread to
+  // delete. A non-pending or missing flag is a 404 (already handled, or gone).
+  const { data: flag, error: flagError } = await admin
+    .from("flags")
+    .select("id, thread_id, answer_id")
+    .eq("id", flagId)
+    .eq("status", "pending")
+    .maybeSingle();
+
+  if (flagError) {
+    return NextResponse.json({ error: "Lookup failed" }, { status: 500 });
+  }
+  if (!flag) {
+    return NextResponse.json(
+      { error: "Flag not found or already resolved" },
+      { status: 404 }
+    );
+  }
+
+  const threadId = flag.thread_id;
+  const answerId = flag.answer_id;
+
+  // Every branch is ONE RPC that commits the content change, the flag write, and
+  // the audit row in a single transaction — so a failure can never leave content
+  // removed with no audit trail, or a flag resolved with no record of who did it.
+  let rpcError: { message: string } | null;
+
+  if (action === "remove") {
+    if (threadId !== null) {
+      ({ error: rpcError } = await admin.rpc("moderate_soft_delete_thread", {
+        p_thread_id: threadId,
+        p_flag_id: flagId,
+        p_actor_id: auth.userId,
+      }));
+    } else if (answerId !== null) {
+      ({ error: rpcError } = await admin.rpc("moderate_soft_delete_answer", {
+        p_answer_id: answerId,
+        p_flag_id: flagId,
+        p_actor_id: auth.userId,
+      }));
+    } else {
+      // chk_flag_target_exclusive makes this unreachable; a flag with no target
+      // is corrupt data, not a request to remove nothing.
+      return NextResponse.json(
+        { error: "Flag has no target" },
+        { status: 500 }
+      );
+    }
+  } else if (action === "lock") {
+    if (threadId === null) {
+      return NextResponse.json(
+        { error: "lock applies to thread reports only" },
+        { status: 400 }
+      );
+    }
+    ({ error: rpcError } = await admin.rpc("moderate_lock_thread", {
+      p_thread_id: threadId,
+      p_flag_id: flagId,
+      p_actor_id: auth.userId,
+    }));
+  } else {
+    ({ error: rpcError } = await admin.rpc("moderate_resolve_flag", {
+      p_flag_id: flagId,
+      p_dismiss: action === "dismiss",
+      p_actor_id: auth.userId,
+    }));
+  }
+
+  if (rpcError) {
+    // The RPCs raise on a target that is missing or already tombstoned/handled.
+    // That is a conflict, not a server fault, and must not read as "try again".
+    const gone = /already removed|already resolved|not found/i.test(
+      rpcError.message ?? ""
+    );
+    console.error(`Admin moderation ${action} failed:`, rpcError.message);
+    return NextResponse.json(
+      { error: gone ? "Content already actioned" : "Action failed" },
+      { status: gone ? 409 : 500 }
+    );
+  }
+
   return NextResponse.json({ success: true });
 }

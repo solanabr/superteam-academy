@@ -24,9 +24,11 @@ CREATE TABLE profiles (
   -- string was converted to a one-element `days` array by
   -- 20260804120000_recurring_lesson_plan.sql and is no longer read. Non-PII,
   -- not in public_profiles; written self-service via the own-row profiles UPDATE
-  -- RLS policy. No column on profiles is privilege-bearing, so the shape+size
-  -- CHECKs below (chk_profiles_prefs_object / chk_profiles_prefs_size) are the
-  -- sole bound on this self-write. See 20260726160000_add_profiles_prefs.sql.
+  -- RLS policy. prefs itself is not privilege-bearing (unlike wallet_address,
+  -- deleted_at, and the referral columns, each of which carries a write-lock
+  -- trigger), so the shape+size CHECKs below (chk_profiles_prefs_object /
+  -- chk_profiles_prefs_size) are the sole bound on this self-write. See
+  -- 20260726160000_add_profiles_prefs.sql.
   prefs JSONB NOT NULL DEFAULT '{}',
   is_public BOOLEAN DEFAULT true,
   name_rerolls_used INTEGER DEFAULT 0,
@@ -34,14 +36,25 @@ CREATE TABLE profiles (
   -- NOTE: profiles.role was RETIRED by SP1 (migration 20260710120000, applied to
   -- prod as ledger 20260711152518). The column, its chk_profiles_role CHECK, and
   -- the enforce_profile_role_write lockdown trigger are all gone from prod, so
-  -- they are absent from this snapshot too (#699). Nothing privilege-bearing
-  -- remains on profiles — self-writes are bounded by the CHECK constraints alone.
+  -- they are absent from this snapshot too (#699). Authorization no longer lives
+  -- on a profiles column, but several columns are still privilege-bearing and
+  -- carry write-lock triggers rather than CHECKs: wallet_address (#408),
+  -- deleted_at (#1103), and the referral pair.
   -- /start intake state (LX-A3, #566). Self-writable via the own-row UPDATE
   -- policy: non-sensitive columns bounded only by the CHECKs below. NULL until a
   -- learner runs the intake. See migration 20260726150000_add_profiles_segment_state.sql.
   segment SMALLINT,
   goal TEXT,
   daily_goal SMALLINT,
+  -- Account-deletion tombstone (20260704140000_account_deletion.sql). We never
+  -- hard-delete a profile: on-chain XP and credential NFTs are immutable and
+  -- bound to the wallet, and DB history references them. POST /api/account/delete
+  -- stamps both and scrubs the PII instead. deleted_at is what every public read
+  -- and every login chokepoint keys on, so it is PRIVILEGE-BEARING and locked to
+  -- service_role by trg_enforce_profile_deleted_at_write below (#1103);
+  -- deletion_requested_at is the audit trail and is not gated.
+  deleted_at TIMESTAMPTZ,
+  deletion_requested_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -273,6 +286,11 @@ ALTER TABLE nft_metadata ENABLE ROW LEVEL SECURITY;
 -- anymore (the google_id/github_id deanonymization fix), that inline subquery
 -- would see only the caller's own row and break every cross-user read of those
 -- tables. Returning a bare boolean leaks no row or column.
+--
+-- #1120: the `deleted_at IS NULL` half of the header's "public, non-deleted"
+-- claim was missing from the body until 20260820140000. The four tables it
+-- gates each keep a separate own-row SELECT policy, so a tombstoned user still
+-- reads their own rows; only the cross-user path closes.
 CREATE OR REPLACE FUNCTION public.is_public_profile(p_user_id uuid)
 RETURNS boolean
 LANGUAGE sql
@@ -282,7 +300,7 @@ SET search_path = ''
 AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.profiles
-    WHERE id = p_user_id AND is_public = true
+    WHERE id = p_user_id AND is_public = true AND deleted_at IS NULL
   );
 $$;
 
@@ -829,6 +847,68 @@ CREATE TRIGGER trg_enforce_profile_wallet_write
 REVOKE EXECUTE ON FUNCTION public.enforce_profile_wallet_write() FROM PUBLIC, anon, authenticated;
 
 -- ─────────────────────────────────────────────
+-- 5a-ter. LOCK profiles.deleted_at WRITES TO service_role (#1103)
+-- ─────────────────────────────────────────────
+-- Same escalation class as the wallet lock above, on the account tombstone.
+-- deleted_at is what every public read and every login chokepoint keys on, and
+-- the column-agnostic self-service UPDATE policy let the tombstoned user clear
+-- it: `UPDATE profiles SET deleted_at = NULL, is_public = true` on their own row
+-- via PostgREST, using an access token that outlives the deletion, permanently
+-- resurrects the account. A SEPARATE trigger rather than a third column in
+-- enforce_profile_wallet_write, so replacing that function's body can never
+-- revert this guard (or vice versa) — the same shape the referral lock uses.
+-- Non-privileged UPDATEs that change it error in EITHER direction (self-delete
+-- must go through POST /api/account/delete, which also scrubs PII and revokes
+-- sessions); non-privileged INSERTs are coerced back to NULL (handle_new_user
+-- never sets it). See migration 20260819200000_deleted_at_write_lock.sql.
+CREATE OR REPLACE FUNCTION public.enforce_profile_deleted_at_write()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = ''
+AS $$
+DECLARE
+  jwt_role TEXT;
+  is_privileged BOOLEAN;
+BEGIN
+  jwt_role := NULLIF(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role';
+  is_privileged := COALESCE(current_user = 'service_role' OR jwt_role = 'service_role', false);
+
+  IF is_privileged THEN
+    RETURN NEW;
+  END IF;
+
+  IF TG_OP = 'UPDATE' THEN
+    IF NEW.deleted_at IS DISTINCT FROM OLD.deleted_at THEN
+      RAISE EXCEPTION
+        'permission denied: deleted_at may only be changed by service_role'
+        USING ERRCODE = 'insufficient_privilege';
+    END IF;
+  ELSIF TG_OP = 'INSERT' THEN
+    IF NEW.deleted_at IS NOT NULL THEN
+      NEW.deleted_at := NULL;
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.enforce_profile_deleted_at_write() FROM PUBLIC, anon, authenticated;
+
+DROP TRIGGER IF EXISTS trg_enforce_profile_deleted_at_write ON public.profiles;
+CREATE TRIGGER trg_enforce_profile_deleted_at_write
+  BEFORE INSERT OR UPDATE ON public.profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION public.enforce_profile_deleted_at_write();
+
+-- Partial index from 20260704140000_account_deletion.sql, live on prod but never
+-- mirrored here. Tombstones are a tiny minority of rows, so the partial form is
+-- what the deleted_at IS NULL reads want.
+CREATE INDEX IF NOT EXISTS idx_profiles_deleted_at
+  ON public.profiles(deleted_at) WHERE deleted_at IS NOT NULL;
+
+-- ─────────────────────────────────────────────
 -- 5b. LEADERBOARD RPC
 -- ─────────────────────────────────────────────
 
@@ -860,6 +940,7 @@ BEGIN
       JOIN public.profiles p ON p.id = ux.user_id
       WHERE ux.total_xp > 0
         AND p.is_public = true
+        AND p.deleted_at IS NULL
         AND p.username IS NOT NULL
         AND p.username <> ''
       ORDER BY ux.total_xp DESC
@@ -882,6 +963,7 @@ BEGIN
         FROM public.xp_transactions xt
         JOIN public.profiles p ON p.id = xt.user_id
         WHERE p.is_public = true
+          AND p.deleted_at IS NULL
           AND p.username IS NOT NULL
           AND p.username <> ''
           AND xt.created_at >= CASE
@@ -904,13 +986,17 @@ GRANT EXECUTE ON FUNCTION public.get_leaderboard(TEXT, INT) TO authenticated, an
 -- is_public filter is the access control. Used for public reads (marketing
 -- stats, public profiles, community author level badges) now that user_xp is
 -- own-row-only.
--- INVARIANT: the is_public filter is the SOLE access guard — removing it would
--- make every user's XP publicly readable. Do not remove it.
+-- INVARIANT: the is_public + deleted_at filters are the SOLE access guard —
+-- removing either would make soft-deleted or private users' XP publicly
+-- readable. Do not remove them. (#1105: the deleted_at half was added to prod by
+-- 20260704140000_account_deletion.sql and never mirrored here, so every DB
+-- rebuilt from this snapshot shipped without it.)
 CREATE OR REPLACE VIEW public_user_xp AS
   SELECT ux.user_id, ux.total_xp, ux.level
   FROM user_xp ux
   JOIN profiles p ON p.id = ux.user_id
-  WHERE p.is_public = true;
+  WHERE p.is_public = true
+    AND p.deleted_at IS NULL;
 
 REVOKE ALL ON public_user_xp FROM PUBLIC, anon, authenticated;
 GRANT SELECT ON public_user_xp TO anon, authenticated;
@@ -1441,6 +1527,29 @@ CREATE TABLE flags (
   )
 );
 
+-- Moderator decision audit (#1131). One row per action taken from the admin
+-- moderation queue. Service-role only: RLS on with ZERO policies + explicit
+-- REVOKEs. Content FKs are ON DELETE SET NULL so the record outlives the
+-- content it describes.
+CREATE TABLE moderation_actions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  action TEXT NOT NULL CHECK (action IN (
+    'removed_thread', 'removed_answer', 'locked_thread', 'resolved', 'dismissed'
+  )),
+  thread_id UUID REFERENCES threads(id) ON DELETE SET NULL,
+  answer_id UUID REFERENCES answers(id) ON DELETE SET NULL,
+  flag_id UUID REFERENCES flags(id) ON DELETE SET NULL,
+  actor_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_moderation_actions_created_at ON moderation_actions(created_at DESC);
+
+ALTER TABLE moderation_actions ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON moderation_actions FROM PUBLIC;
+REVOKE ALL ON moderation_actions FROM anon;
+REVOKE ALL ON moderation_actions FROM authenticated;
+
 -- ============================================================
 -- Community Forum: Indexes
 -- ============================================================
@@ -1938,6 +2047,177 @@ GRANT EXECUTE ON FUNCTION soft_delete_thread(UUID, UUID) TO service_role;
 REVOKE EXECUTE ON FUNCTION soft_delete_answer(UUID, UUID) FROM authenticated, anon, public;
 GRANT EXECUTE ON FUNCTION soft_delete_answer(UUID, UUID) TO service_role;
 
+-- Moderator soft-delete of a thread + flag-resolve + audit, in one transaction.
+-- Same cascade as soft_delete_thread (deleted_at on the thread and on its live
+-- answers), no ownership check.
+--
+-- XP CLAWBACK SCOPE (v1, deliberate): only the removed thread's own creation XP
+-- is revoked, via the existing idempotency key `thread:<id>`. Upvote XP on the
+-- thread and the creation XP of the answers this cascade tombstones are LEFT IN
+-- PLACE — reversing those means walking every vote row and every cascaded
+-- answer, and getting the accepted-answer bonus right, which is a bigger change
+-- than the moderation buttons this ships. Removing spam therefore still leaves
+-- the spammer any vote XP it earned.
+CREATE OR REPLACE FUNCTION public.moderate_soft_delete_thread(
+  p_thread_id UUID,
+  p_flag_id UUID,
+  p_actor_id UUID
+)
+RETURNS VOID
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+DECLARE
+  v_author_id UUID;
+BEGIN
+  SELECT author_id INTO v_author_id
+  FROM public.threads
+  WHERE id = p_thread_id AND deleted_at IS NULL;
+
+  IF v_author_id IS NULL THEN
+    RAISE EXCEPTION 'Thread not found or already removed';
+  END IF;
+
+  UPDATE public.threads SET deleted_at = NOW() WHERE id = p_thread_id;
+  UPDATE public.answers SET deleted_at = NOW()
+   WHERE thread_id = p_thread_id AND deleted_at IS NULL;
+
+  PERFORM public.revoke_community_xp(v_author_id, 'thread:' || p_thread_id::text);
+
+  -- Removal settles the report.
+  UPDATE public.flags
+     SET status = 'resolved', resolved_at = NOW(), resolved_by = p_actor_id
+   WHERE id = p_flag_id;
+
+  INSERT INTO public.moderation_actions(action, thread_id, flag_id, actor_id)
+  VALUES ('removed_thread', p_thread_id, p_flag_id, p_actor_id);
+END;
+$$;
+
+-- Moderator soft-delete of a single answer + flag-resolve + audit, in one
+-- transaction. Same bookkeeping as soft_delete_answer (answer_count decrement
+-- with a zero floor, un-accept if it was the accepted answer), no ownership
+-- check.
+--
+-- XP CLAWBACK SCOPE (v1, deliberate): only this answer's own creation XP
+-- (`answer:<id>`), for the same reason as above. In particular the
+-- accepted-answer bonus (`accept:<thread>:<answer>`) is NOT revoked when an
+-- accepted answer is removed.
+CREATE OR REPLACE FUNCTION public.moderate_soft_delete_answer(
+  p_answer_id UUID,
+  p_flag_id UUID,
+  p_actor_id UUID
+)
+RETURNS VOID
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+DECLARE
+  v_thread_id UUID;
+  v_author_id UUID;
+  v_was_accepted BOOLEAN;
+BEGIN
+  SELECT thread_id, author_id, is_accepted
+    INTO v_thread_id, v_author_id, v_was_accepted
+  FROM public.answers
+  WHERE id = p_answer_id AND deleted_at IS NULL;
+
+  IF v_thread_id IS NULL THEN
+    RAISE EXCEPTION 'Answer not found or already removed';
+  END IF;
+
+  UPDATE public.answers SET deleted_at = NOW() WHERE id = p_answer_id;
+  UPDATE public.threads SET answer_count = GREATEST(answer_count - 1, 0)
+   WHERE id = v_thread_id;
+
+  IF v_was_accepted THEN
+    UPDATE public.threads SET is_solved = FALSE, accepted_answer_id = NULL
+     WHERE id = v_thread_id;
+  END IF;
+
+  PERFORM public.revoke_community_xp(v_author_id, 'answer:' || p_answer_id::text);
+
+  UPDATE public.flags
+     SET status = 'resolved', resolved_at = NOW(), resolved_by = p_actor_id
+   WHERE id = p_flag_id;
+
+  INSERT INTO public.moderation_actions(action, answer_id, flag_id, actor_id)
+  VALUES ('removed_answer', p_answer_id, p_flag_id, p_actor_id);
+END;
+$$;
+
+-- Moderator lock of a thread + audit, in one transaction. A lock stops the
+-- argument without settling the report, so it deliberately does NOT resolve the
+-- flag — the moderator still resolves or dismisses it afterwards.
+--
+-- No-op tolerant: an already-locked thread still writes the audit row (the
+-- moderator did take the action) but skips the redundant UPDATE.
+CREATE OR REPLACE FUNCTION public.moderate_lock_thread(
+  p_thread_id UUID,
+  p_flag_id UUID,
+  p_actor_id UUID
+)
+RETURNS VOID
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+DECLARE
+  v_is_locked BOOLEAN;
+BEGIN
+  SELECT is_locked INTO v_is_locked
+  FROM public.threads
+  WHERE id = p_thread_id AND deleted_at IS NULL;
+
+  IF v_is_locked IS NULL THEN
+    RAISE EXCEPTION 'Thread not found or already removed';
+  END IF;
+
+  IF NOT v_is_locked THEN
+    UPDATE public.threads SET is_locked = TRUE WHERE id = p_thread_id;
+  END IF;
+
+  INSERT INTO public.moderation_actions(action, thread_id, flag_id, actor_id)
+  VALUES ('locked_thread', p_thread_id, p_flag_id, p_actor_id);
+END;
+$$;
+
+-- Resolve or dismiss a report with no content change (out-of-band handling) +
+-- audit, in one transaction. p_dismiss picks which: dismiss = the report is not
+-- valid, resolve = handled elsewhere. The target ids for the audit row are read
+-- from the flag itself so the caller cannot mis-pair them.
+CREATE OR REPLACE FUNCTION public.moderate_resolve_flag(
+  p_flag_id UUID,
+  p_dismiss BOOLEAN,
+  p_actor_id UUID
+)
+RETURNS VOID
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+DECLARE
+  v_thread_id UUID;
+  v_answer_id UUID;
+  v_status TEXT := CASE WHEN p_dismiss THEN 'dismissed' ELSE 'resolved' END;
+BEGIN
+  SELECT thread_id, answer_id INTO v_thread_id, v_answer_id
+  FROM public.flags
+  WHERE id = p_flag_id AND status = 'pending';
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Flag not found or already resolved';
+  END IF;
+
+  UPDATE public.flags
+     SET status = v_status, resolved_at = NOW(), resolved_by = p_actor_id
+   WHERE id = p_flag_id;
+
+  INSERT INTO public.moderation_actions(action, thread_id, answer_id, flag_id, actor_id)
+  VALUES (v_status, v_thread_id, v_answer_id, p_flag_id, p_actor_id);
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.moderate_soft_delete_thread(UUID, UUID, UUID) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.moderate_soft_delete_thread(UUID, UUID, UUID) TO service_role;
+REVOKE EXECUTE ON FUNCTION public.moderate_soft_delete_answer(UUID, UUID, UUID) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.moderate_soft_delete_answer(UUID, UUID, UUID) TO service_role;
+REVOKE EXECUTE ON FUNCTION public.moderate_lock_thread(UUID, UUID, UUID) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.moderate_lock_thread(UUID, UUID, UUID) TO service_role;
+REVOKE EXECUTE ON FUNCTION public.moderate_resolve_flag(UUID, BOOLEAN, UUID) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.moderate_resolve_flag(UUID, BOOLEAN, UUID) TO service_role;
+
+
 -- ============================================================
 -- Community Forum: RLS Policies
 -- ============================================================
@@ -2042,7 +2322,11 @@ CREATE POLICY "Authenticated users can create flags"
 -- except the caller's own. Running as owner restores the aggregate; the explicit
 -- "is_public OR own" guard below preserves the P0-B1 guarantee that anon cannot
 -- see aggregates for private profiles (and authenticated users still see their own).
-CREATE VIEW community_stats AS
+--
+-- #1120 (20260820140000): the tombstone filter sits on the PUBLIC branch only —
+-- `(is_public AND deleted_at IS NULL) OR own` — matching account_deletion's rule
+-- that public read paths gain the guard while own-row access is untouched.
+CREATE OR REPLACE VIEW community_stats AS
 SELECT
   p.id AS user_id,
   COUNT(DISTINCT t.id) AS total_threads,
@@ -2053,7 +2337,7 @@ FROM profiles p
 LEFT JOIN threads t ON t.author_id = p.id
 LEFT JOIN answers a ON a.author_id = p.id
 LEFT JOIN xp_transactions xt ON xt.user_id = p.id
-WHERE p.is_public = true OR p.id = auth.uid()
+WHERE (p.is_public = true AND p.deleted_at IS NULL) OR p.id = auth.uid()
 GROUP BY p.id;
 
 -- Explicit grants: publicly queryable, but the WHERE guard limits each caller
@@ -3303,11 +3587,17 @@ BEGIN
     FROM public.email_subscriptions es
     JOIN auth.users u ON u.id = es.user_id
     JOIN public.profiles p ON p.id = es.user_id
+    -- #1075: consent is asserted HERE, at claim time — the claim and the ledger
+    -- INSERT are one statement, so a flip between the learner scheduling and
+    -- the cron claiming excludes the row.
     WHERE es.reminder_opt_in = true
       AND u.email IS NOT NULL
       AND u.email <> ''
-      -- Synthetic wallet-auth addresses are not inboxes (see #779).
-      AND u.email NOT LIKE '%@wallet.superteam-lms.local'
+      -- Synthetic wallet-auth addresses are not inboxes (see #779). lower():
+      -- SQL mirror of isWalletPlaceholderEmail (#1074,
+      -- apps/web/src/lib/auth/wallet-placeholder.ts) — a differently-cased
+      -- placeholder must not slip past a byte-wise LIKE. Keep the two in step.
+      AND lower(u.email) NOT LIKE '%@wallet.superteam-lms.local'
       -- Multi-day plans: membership of the committed `days` list
       -- (`jsonb ? text` = element exists). All seven entries = daily. The claim
       -- below still caps a learner at ONE reminder per São Paulo day.
@@ -3508,11 +3798,17 @@ BEGIN
     JOIN auth.users u      ON u.id = es.user_id
     JOIN public.profiles p ON p.id = es.user_id
     LEFT JOIN public.user_xp ux ON ux.user_id = es.user_id
+    -- #1075: consent is asserted HERE, at claim time — the claim and the ledger
+    -- INSERT are one statement, so a flip between the learner becoming due and
+    -- the cron claiming excludes the row.
     WHERE es.reminder_opt_in = true
       AND u.email IS NOT NULL
       AND u.email <> ''
-      -- Synthetic wallet-auth addresses are not inboxes (see #779).
-      AND u.email NOT LIKE '%@wallet.superteam-lms.local'
+      -- Synthetic wallet-auth addresses are not inboxes (see #779). lower():
+      -- SQL mirror of isWalletPlaceholderEmail (#1074,
+      -- apps/web/src/lib/auth/wallet-placeholder.ts) — a differently-cased
+      -- placeholder must not slip past a byte-wise LIKE. Keep the two in step.
+      AND lower(u.email) NOT LIKE '%@wallet.superteam-lms.local'
   ),
   lapsed AS (
     SELECT c.*, (v_today - c.last_seen)::int AS inactive_days
@@ -3936,6 +4232,10 @@ GRANT EXECUTE ON FUNCTION public.record_referral_course_completion(UUID, TEXT) T
 -- mirroring get_leaderboard's shape and its is_public/username hygiene filters.
 -- p_season NULL = the season covering NOW() (falling back to the latest season,
 -- so the page still renders between seasons).
+--
+-- #1120 (20260820140000): it copied get_leaderboard's is_public/username filters
+-- but not its `deleted_at IS NULL` one, so a tombstoned referrer could resurface
+-- here by flipping is_public. The two boards now agree.
 CREATE OR REPLACE FUNCTION public.get_referral_leaderboard(
   p_season INT DEFAULT NULL,
   p_limit INT DEFAULT 20
@@ -3988,6 +4288,7 @@ BEGIN
     WHERE re.created_at >= v_season.starts_at
       AND re.created_at < v_season.ends_at
       AND p.is_public = true
+      AND p.deleted_at IS NULL
       AND p.username IS NOT NULL
       AND p.username <> ''
     GROUP BY re.referrer_id, p.username, p.avatar_url
@@ -3997,3 +4298,184 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.get_referral_leaderboard(INT, INT) TO authenticated, anon;
+
+-- ─────────────────────────────────────────────
+-- PLATFORM STATS RPC (#1091)
+-- ─────────────────────────────────────────────
+-- Landing-page stats in one indexed call instead of a full public_user_xp scan
+-- summed in JS plus two head counts. Same sources as the old three queries.
+-- SECURITY DEFINER + service_role-only (mirrors get_leaderboard's pattern);
+-- called exclusively from the server-rendered landing via createAdminClient().
+
+CREATE OR REPLACE FUNCTION public.get_platform_stats()
+RETURNS TABLE (total_xp BIGINT, builders BIGINT, credentials BIGINT)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT
+    (SELECT COALESCE(SUM(pux.total_xp), 0)::BIGINT FROM public.public_user_xp pux),
+    (SELECT COUNT(*)::BIGINT FROM public.profiles),
+    (SELECT COUNT(*)::BIGINT FROM public.certificates);
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.get_platform_stats() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_platform_stats() TO service_role;
+
+-- ─────────────────────────────────────────────
+-- ADMIN INSIGHTS RPC (#1135)
+-- ─────────────────────────────────────────────
+-- The whole /admin/insights fold in SQL instead of 50k-row-capped fetches
+-- folded in JS. Two load-bearing invariants: every per-user aggregate joins
+-- profiles ON deleted_at IS NULL (soft-deleted accounts keep their
+-- enrollments/user_progress/challenge_assists rows — the FK cascades never
+-- fire on a tombstone), and both day series are zero-filled over a 30-day
+-- generate_series so an idle day is a 0 bar, not a missing point.
+-- SECURITY DEFINER + service_role-only; reached only from the admin-authed
+-- /api/admin/insights route via createAdminClient(). Mirrors
+-- supabase/migrations/20260820170000_get_admin_insights.sql.
+
+CREATE OR REPLACE FUNCTION public.get_admin_insights()
+RETURNS jsonb
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+WITH
+-- Live learners only. Every CTE below joins through this.
+live AS (
+  SELECT p.id FROM public.profiles p WHERE p.deleted_at IS NULL
+),
+-- The 30 calendar days the charts draw, oldest first.
+window_days AS (
+  SELECT d::date AS day
+  FROM generate_series(current_date - 29, current_date, interval '1 day') AS d
+),
+
+-- ── AI tutor ────────────────────────────────────────────────────────────────
+-- A refunded row can sit at 0/0; it is not evidence anyone used the tutor.
+assists AS (
+  SELECT ca.user_id, ca.lesson_id, ca.assists_used, ca.billed_assists
+  FROM public.challenge_assists ca
+  JOIN live ON live.id = ca.user_id
+  WHERE ca.assists_used > 0 OR ca.billed_assists > 0
+),
+assist_totals AS (
+  SELECT
+    COUNT(DISTINCT a.user_id)::bigint         AS learners_using_ai,
+    COALESCE(SUM(a.assists_used), 0)::bigint  AS total_assists,
+    COALESCE(SUM(a.billed_assists), 0)::bigint AS billed_assists
+  FROM assists a
+),
+top_lessons AS (
+  SELECT
+    a.lesson_id,
+    SUM(a.assists_used)::bigint       AS assists,
+    COUNT(DISTINCT a.user_id)::bigint AS learners
+  FROM assists a
+  GROUP BY a.lesson_id
+  ORDER BY SUM(a.assists_used) DESC, a.lesson_id ASC
+  LIMIT 10
+),
+-- micro-USD → USD rounded to cents, matching microUsdToUsd():
+-- Math.round(micro / 10_000) / 100. micro_usd is clamped >= 0 on write, so
+-- Postgres' round-half-away-from-zero and JS' round-half-up agree.
+spend AS (
+  SELECT
+    wd.day,
+    ROUND(COALESCE(l.micro_usd, 0) / 10000.0) / 100.0 AS usd,
+    COALESCE(l.request_count, 0)::bigint              AS requests
+  FROM window_days wd
+  LEFT JOIN public.ai_spend_ledger l
+    -- scope_key is pinned, not just scope: every other global-scope read pins
+    -- both, and only convention (no constraint) keeps a second 'global' row
+    -- from fanning this join out and double-counting the day.
+    ON l.spend_day = wd.day AND l.scope = 'global' AND l.scope_key = ''
+  ORDER BY wd.day
+),
+
+-- ── Learning ────────────────────────────────────────────────────────────────
+-- One row per COMPLETED LESSON — user_progress is keyed (user_id, lesson_id).
+-- "completions" here is lessons finished, never courses finished; the panel
+-- labels it as such.
+progress AS (
+  SELECT up.user_id, up.course_id, up.completed_at
+  FROM public.user_progress up
+  JOIN live ON live.id = up.user_id
+  WHERE up.completed = true
+),
+per_course AS (
+  SELECT
+    pr.course_id,
+    COUNT(*)::bigint                   AS completions,
+    COUNT(DISTINCT pr.user_id)::bigint AS learners
+  FROM progress pr
+  GROUP BY pr.course_id
+  ORDER BY COUNT(*) DESC, pr.course_id ASC
+),
+completions_by_day AS (
+  SELECT wd.day, COUNT(pr.user_id)::bigint AS count
+  FROM window_days wd
+  LEFT JOIN progress pr
+    -- UTC day bucketing, matching the JS aggregation's ISO-string slice.
+    ON (pr.completed_at AT TIME ZONE 'UTC')::date = wd.day
+  GROUP BY wd.day
+  ORDER BY wd.day
+)
+
+SELECT jsonb_build_object(
+  'generatedAt', to_char(now() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
+  'ai', jsonb_build_object(
+    'learnersUsingAi', (SELECT learners_using_ai FROM assist_totals),
+    'totalAssists',    (SELECT total_assists     FROM assist_totals),
+    'billedAssists',   (SELECT billed_assists    FROM assist_totals),
+    'topLessons', COALESCE((
+      SELECT jsonb_agg(jsonb_build_object(
+               'lessonId', tl.lesson_id,
+               'assists',  tl.assists,
+               'learners', tl.learners)
+             ORDER BY tl.assists DESC, tl.lesson_id ASC)
+      FROM top_lessons tl
+    ), '[]'::jsonb),
+    'spendByDay', COALESCE((
+      SELECT jsonb_agg(jsonb_build_object(
+               'day',      to_char(s.day, 'YYYY-MM-DD'),
+               'usd',      s.usd,
+               'requests', s.requests)
+             ORDER BY s.day)
+      FROM spend s
+    ), '[]'::jsonb),
+    'spend30dUsd', COALESCE((SELECT ROUND(SUM(s.usd), 2) FROM spend s), 0),
+    'requests30d', COALESCE((SELECT SUM(s.requests)::bigint FROM spend s), 0)
+  ),
+  'learning', jsonb_build_object(
+    'totalLearners',    (SELECT COUNT(*)::bigint FROM live),
+    'totalEnrollments', (SELECT COUNT(*)::bigint FROM public.enrollments e
+                           JOIN live ON live.id = e.user_id),
+    'activeLearners7d', (SELECT COUNT(DISTINCT pr.user_id)::bigint FROM progress pr
+                           WHERE pr.completed_at >= now() - interval '7 days'),
+    'activeLearners30d', (SELECT COUNT(DISTINCT pr.user_id)::bigint FROM progress pr
+                           WHERE pr.completed_at >= now() - interval '30 days'),
+    'completionsByDay', COALESCE((
+      SELECT jsonb_agg(jsonb_build_object(
+               'day',   to_char(c.day, 'YYYY-MM-DD'),
+               'count', c.count)
+             ORDER BY c.day)
+      FROM completions_by_day c
+    ), '[]'::jsonb),
+    'perCourse', COALESCE((
+      SELECT jsonb_agg(jsonb_build_object(
+               'courseId',    pc.course_id,
+               'completions', pc.completions,
+               'learners',    pc.learners)
+             ORDER BY pc.completions DESC, pc.course_id ASC)
+      FROM per_course pc
+    ), '[]'::jsonb)
+  )
+);
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.get_admin_insights() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_admin_insights() TO service_role;

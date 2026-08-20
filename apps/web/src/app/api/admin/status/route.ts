@@ -18,6 +18,7 @@ import {
   getProgramId,
 } from "@/lib/solana/pda";
 import { decodeCourse, type DecodedCourse } from "@/lib/solana/academy-reads";
+import { networkFromRpcUrl } from "@/lib/solana/network";
 import {
   verifyAuthorityMatchesConfig,
   isAdminSignerReady,
@@ -95,7 +96,7 @@ function toOnChainCourse(courseId: string, raw: DecodedCourse): OnChainCourse {
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
-    requireAdminAuth(req);
+    await requireAdminAuth(req);
   } catch (e) {
     if (e instanceof AdminAuthError) return adminUnauthorizedResponse();
     throw e;
@@ -316,6 +317,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   return NextResponse.json({
     program: {
+      network: networkFromRpcUrl(serverEnv.SOLANA_RPC_URL),
       deployed: authorityCheck.matches,
       programId: getProgramId().toBase58(),
       configPda: authorityCheck.configAuthority ? "found" : null,

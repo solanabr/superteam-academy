@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
+import { setSiwsActive } from "@/lib/solana/ambient-wallet-store";
 import { createSIWSMessage, formatSIWSMessage } from "@/lib/solana/wallet-auth";
 
 type AuthOverlayState =
@@ -13,9 +15,30 @@ type AuthOverlayState =
   | { status: "error"; message: string; canRetry: boolean };
 
 /**
- * Mounts at the layout level (inside SolanaWalletProvider).
- * Listens for wallet connection and auto-triggers SIWS authentication.
- * Shows a full-screen loading overlay during the auth flow.
+ * Mounts inside SolanaWalletProvider — on (platform) routes via the layout,
+ * elsewhere via the sign-in modal's scoped stack. Listens for wallet
+ * connection and auto-triggers SIWS authentication, showing a full-screen
+ * overlay for the duration.
+ *
+ * The overlay goes through a PORTAL, like the wallet-select modal it follows
+ * (`WalletModal` in @solana/wallet-adapter-react-ui). Since #1097 the scoped
+ * stack mounts under the Header, whose bar carries `backdrop-blur-md` — a
+ * non-`none` backdrop-filter makes that element a containing block for
+ * `position: fixed` descendants, so an in-tree overlay is clipped to the
+ * 57px nav strip. Both the spinner and the error branch (the message a stuck
+ * learner most needs) were rendering inside it.
+ *
+ * As a body child the overlay leaves the Header's stacking context, so it
+ * needs the dialog layer (z-300) rather than the old z-100 — under the
+ * Header's z-200 the nav would paint over the scrim and stay clickable.
+ *
+ * It CAN coexist with the sign-in dialog: opening that dialog is what mounts
+ * the scoped stack, and `autoConnect` reconnects a remembered wallet the
+ * instant it mounts, so SIWS can fire with the dialog still up. Radix marks
+ * the body `pointer-events: none` for a modal dialog and this portalled child
+ * inherits it, so the overlay raises `setSiwsActive` and AuthModal closes —
+ * the same handoff the manual path already does. `pointer-events-auto` covers
+ * the exit-animation window, and any other modal that might be open.
  */
 export function WalletAuthHandler() {
   const locale = useLocale();
@@ -26,6 +49,23 @@ export function WalletAuthHandler() {
   const [overlayState, setOverlayState] = useState<AuthOverlayState>({
     status: "idle",
   });
+  // Resolved in an effect, never at module scope or during render: this
+  // component is server-rendered on (platform) routes, where there is no
+  // `document`. A plain useEffect, not useLayoutEffect — the latter warns
+  // during SSR, and nothing here needs to beat a paint: the overlay only
+  // appears once the async auth flow starts, long after mount.
+  const [portalTarget, setPortalTarget] = useState<Element | null>(null);
+  useEffect(() => setPortalTarget(document.body), []);
+
+  // Tells anything modal above us to get out of the way while the overlay is
+  // up — today that is AuthModal, which would otherwise leave the overlay's
+  // buttons inert under Radix's `pointer-events: none` body.
+  const overlayUp = overlayState.status !== "idle";
+  const siwsOwnerRef = useRef<object>({});
+  useEffect(() => {
+    if (!overlayUp) return;
+    return setSiwsActive(siwsOwnerRef.current);
+  }, [overlayUp]);
 
   const authenticate = useCallback(async () => {
     if (!publicKey || (!signIn && !signMessage) || isAuthenticating.current)
@@ -93,8 +133,21 @@ export function WalletAuthHandler() {
           return;
         }
       } catch {
-        // User intentionally declined signing — dismiss silently
-        setOverlayState({ status: "idle" });
+        // The learner declined the signature. This used to dismiss silently,
+        // which was fine while the sign-in dialog stayed up BEHIND the
+        // overlay — a decline left Google and GitHub in front of them. The
+        // dialog closes now (see the SIWS flag above), so silence would empty
+        // the screen: they clicked Sign in, a signature prompt they never
+        // asked for appeared, they refused it, and everything vanished.
+        //
+        // Retry is the escape hatch that matters here, because `hasTriedAuth`
+        // only resets on DISCONNECT — re-opening the modal and re-picking the
+        // same still-connected wallet would not re-fire SIWS.
+        setOverlayState({
+          status: "error",
+          message: t("signatureDeclined"),
+          canRetry: true,
+        });
         isAuthenticating.current = false;
         return;
       }
@@ -191,21 +244,31 @@ export function WalletAuthHandler() {
     }
   }, [connected, publicKey, signIn, signMessage, authenticate]);
 
-  // Reset when wallet disconnects
+  // Reset when wallet disconnects. Mid-signature is the exception: the dialog
+  // has already auto-closed for SIWS, so idling silently empties the screen.
+  // No Retry — authenticate() early-returns without a publicKey.
   useEffect(() => {
-    if (!connected) {
-      hasTriedAuth.current = false;
-      setOverlayState({ status: "idle" });
-    }
-  }, [connected]);
+    if (connected) return;
+    hasTriedAuth.current = false;
+    setOverlayState((prev) =>
+      prev.status === "authenticating"
+        ? {
+            status: "error",
+            message: t("walletDisconnected"),
+            canRetry: false,
+          }
+        : { status: "idle" }
+    );
+  }, [connected, t]);
 
-  if (overlayState.status === "idle") return null;
+  if (overlayState.status === "idle" || !portalTarget) return null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center backdrop-blur-sm [background:color-mix(in_srgb,var(--bg)_80%,transparent)]"
+      className="pointer-events-auto fixed inset-0 z-[300] flex items-center justify-center backdrop-blur-sm [background:color-mix(in_srgb,var(--bg)_80%,transparent)]"
       role="status"
       aria-live="polite"
+      data-testid="siws-overlay"
     >
       <div className="flex flex-col items-center gap-4">
         {overlayState.status === "authenticating" && (
@@ -238,6 +301,7 @@ export function WalletAuthHandler() {
           </>
         )}
       </div>
-    </div>
+    </div>,
+    portalTarget
   );
 }

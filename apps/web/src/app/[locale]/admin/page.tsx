@@ -1,16 +1,13 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import { isValidAdminSession } from "@/lib/admin/auth";
-import { AdminLoginForm } from "./admin-login-form";
+import { notFound, redirect } from "next/navigation";
+import { requireAdmin } from "@/lib/admin/auth";
 
 /**
- * `/admin` root. Unauthenticated → render `<AdminLoginForm/>` (the layout
- * leaves it unwrapped). Authenticated → redirect to the default console
- * screen, which is Courses: the console exists to get courses published and
- * deployed, so that is what it opens on. The session is checked here rather
- * than redirecting unconditionally: the middleware bounces unauthenticated
- * `/admin/*` sub-routes back to `/admin`, so an unconditional redirect would
- * loop (`/admin` → `/admin/courses` → middleware → `/admin` → …).
+ * `/admin` root. Admins land on the default console screen, which is Courses:
+ * the console exists to get courses published and deployed, so that is what it
+ * opens on. A signed-in non-admin gets a 404 (same contract as the layout);
+ * an anonymous visitor is redirected to the landing by the middleware before
+ * this page runs. There is no login form here anymore — admin access is the
+ * learner's own Supabase session plus an `admin_users` row.
  */
 export default async function AdminPage(props: {
   params: Promise<{ locale: string }>;
@@ -19,15 +16,8 @@ export default async function AdminPage(props: {
 
   const { locale } = params;
 
-  const cookieStore = await cookies();
-  const session = cookieStore.get("admin_session");
-
-  // Gate on the signed admin_session cookie only. The secret is never read
-  // here, so it cannot be serialized into the client payload (P0-B6).
-  // isValidAdminSession returns false when ADMIN_SECRET is unset.
-  if (!isValidAdminSession(session?.value)) {
-    return <AdminLoginForm />;
-  }
+  const admin = await requireAdmin();
+  if (!admin) notFound();
 
   redirect(`/${locale}/admin/courses`);
 }

@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { getProgressService } from "@/lib/services";
+import { logError } from "@/lib/logging";
+import { ERROR_IDS } from "@/constants/errorIds";
+import {
+  getCachedLeaderboard,
+  type LeaderboardTimeframe,
+} from "@/lib/leaderboard/global";
 
 const VALID_TIMEFRAMES = new Set(["weekly", "monthly", "alltime"]);
 
-// Auth/cookie + per-request DB access — never statically prerender (DYNAMIC_SERVER_USAGE).
-export const dynamic = "force-dynamic";
+// Public, same-for-everyone data via the cookieless anon client — no cookies,
+// no Set-Cookie, so the CDN may cache it. `CDN-Cache-Control` is required:
+// Vercel strips a bare `s-maxage` from responses it does not CDN-cache itself.
+const CACHE_HEADERS = {
+  "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+  "CDN-Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+};
 
 export async function GET(request: NextRequest) {
   const timeframe = request.nextUrl.searchParams.get("timeframe") ?? "weekly";
@@ -18,14 +27,16 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const supabase = await createClient();
-    const service = getProgressService(supabase);
-    const entries = await service.getLeaderboard(
-      timeframe as "weekly" | "monthly" | "alltime"
+    const entries = await getCachedLeaderboard(
+      timeframe as LeaderboardTimeframe
     );
-
-    return NextResponse.json({ entries });
-  } catch {
+    return NextResponse.json({ entries }, { headers: CACHE_HEADERS });
+  } catch (err: unknown) {
+    logError({
+      errorId: ERROR_IDS.LEADERBOARD_FETCH_FAILED,
+      error: err instanceof Error ? err : new Error(String(err)),
+      context: { route: "/api/leaderboard", timeframe },
+    });
     return NextResponse.json(
       { error: "Failed to fetch leaderboard" },
       { status: 500 }

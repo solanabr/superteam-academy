@@ -17,8 +17,8 @@ export interface UseAdminStatus {
 
 /**
  * Shared data layer for the `/admin/courses` and `/admin/status` screens: a
- * single `GET /api/admin/status` fetch (authorized via the httpOnly
- * `admin_session` cookie) with loading/error state and a `refetch`. Extracted
+ * single `GET /api/admin/status` fetch (authorized via the Supabase session +
+ * `admin_users` allowlist) with loading/error state and a `refetch`. Extracted
  * from the two clients, which held byte-identical copies of this block before
  * the SP3-A route split. Behavior is unchanged (same states, same refetch);
  * the failure is surfaced as a kind so each screen can localize the copy.

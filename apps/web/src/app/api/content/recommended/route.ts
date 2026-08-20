@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRecommendedCourses } from "@/lib/content/queries";
-import { parseIds } from "../params";
+import { parseIds, CONTENT_CACHE_HEADERS } from "../params";
 
 /**
  * Public recommended-course summaries — the client-side face of
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
   if (exclude instanceof NextResponse) return exclude;
   try {
     const courses = await getRecommendedCourses(exclude);
-    return NextResponse.json({ courses });
+    return NextResponse.json({ courses }, { headers: CONTENT_CACHE_HEADERS });
   } catch {
     return NextResponse.json(
       { error: "Failed to fetch recommendations" },

@@ -42,6 +42,7 @@
     "collapse": "Ocultar estatísticas"
   },
   "nav": {
+    "admin": "Admin",
     "home": "Início",
     "teach": "Ensinar",
     "courses": "Cursos",
@@ -51,14 +52,14 @@
     "profile": "Perfil",
     "settings": "Configurações",
     "certificates": "Certificados",
-    "lowSolBalance": "Saldo SOL baixo.",
-    "getDevnetSol": "Obter SOL devnet ->",
-    "dismissBanner": "Fechar",
     "review": "Revisão"
   },
   "auth": {
     "accountDeleted": "Esta conta foi excluída e não pode mais fazer login.",
     "authFailed": "A autenticação da carteira falhou. Tente novamente ou use outro método de login.",
+    "optionsLoadFailed": "Algumas opções de login não carregaram. Continue com Google ou GitHub, ou tente novamente.",
+    "signatureDeclined": "Assinatura recusada. Tente novamente ou use outro método de login.",
+    "walletDisconnected": "O login foi interrompido — sua carteira desconectou. Tente novamente ou use outro método de acesso.",
     "chooseWallet": "Escolha uma carteira",
     "connecting": "Conectando...",
     "connectSolanaWallet": "Conectar Carteira Solana",
@@ -696,6 +697,7 @@
     "walletEmbeddedDynamic": "Carteira embutida (Dynamic) — criada com seu login social · Permanente",
     "usedForSignInDynamic": "Usada para entrar (via Dynamic)",
     "dynamicLinkHint": "Vincular também permite entrar diretamente e fortalece a recuperação da sua conta.",
+    "dynamicMethodCountNote": "Você precisa de pelo menos um método de login vinculado. Seu login social via Dynamic não conta como método vinculado até você vinculá-lo acima.",
     "dangerZone": "Zona de perigo",
     "deleteAccountTitle": "Excluir conta",
     "deleteAccountDescription": "Solicite a exclusão permanente da sua conta. Seu perfil é anonimizado e ocultado, e você é desconectado. Isso não pode ser desfeito.",
@@ -990,6 +992,15 @@
     "report": "Denunciar",
     "reportContent": "Denunciar Conteúdo",
     "reportSubmitted": "Denúncia enviada. Obrigado.",
+    "reportWhatHappensNext": "Um moderador revisa cada denúncia manualmente. O conteúdo continua no ar até a decisão.",
+    "reportReasonLegend": "Por que você está denunciando isso?",
+    "reportDetailsRequired": "Explique o que está errado (obrigatório)",
+    "reportErrorSignedOut": "Entre na sua conta para denunciar conteúdo.",
+    "reportErrorRateLimited": "Você enviou denúncias demais. Tente mais tarde.",
+    "reportErrorAlreadyReported": "Você já denunciou isso. Um moderador está analisando.",
+    "reportErrorOwnContent": "Você não pode denunciar sua própria publicação.",
+    "reportErrorDetailsRequired": "Escreva ao menos uma frase explicando o que está errado.",
+    "reportErrorFailed": "A denúncia não foi enviada. Tente novamente.",
     "additionalDetails": "Detalhes adicionais (opcional)",
     "submitReport": "Enviar Denúncia",
     "reasonSpam": "Spam",
@@ -1016,14 +1027,6 @@
     "deleteAnswer": "Excluir Resposta",
     "confirmDelete": "Tem certeza que deseja excluir? Esta ação não pode ser desfeita.",
     "deleted": "Excluído com sucesso",
-    "flagContent": "Denunciar",
-    "flagReasons": {
-      "spam": "Spam",
-      "offensive": "Ofensivo",
-      "off-topic": "Fora do tópico",
-      "other": "Outro"
-    },
-    "flagSubmitted": "Denúncia enviada. Obrigado.",
     "threadCreated": "Tópico criado com sucesso",
     "answerPosted": "Resposta publicada",
     "stats": {
@@ -1131,38 +1134,6 @@
       "resetError": "Não funcionou agora. Tente novamente em instantes."
     }
   },
-  "adminContentSync": {
-    "description": "Sincronize o repositório academy-courses no Sanity em um commit específico e registre o hash de conteúdo on-chain.",
-    "loading": "Carregando divergência…",
-    "driftUnavailable": "Divergência indisponível — não foi possível acessar o GitHub. Verifique GITHUB_TOKEN e tente novamente.",
-    "retry": "Tentar novamente",
-    "state": {
-      "up_to_date": "O Sanity está atualizado com o HEAD do repositório.",
-      "behind": "O Sanity está atrás do HEAD — há novo conteúdo pronto para sincronizar.",
-      "never_synced": "O conteúdo nunca foi sincronizado — execute a primeira sincronização.",
-      "blocked": "A CI do HEAD está falhando — este commit não pode ser sincronizado."
-    },
-    "head": "HEAD {sha}",
-    "synced": "Sincronizado {sha}",
-    "ci": "CI {state}",
-    "syncButton": "Sincronizar conteúdo",
-    "syncing": "Sincronizando…",
-    "syncFailed": "Falha na sincronização de conteúdo.",
-    "syncSucceeded": "Sincronizado: {written} gravados, {pruned} removidos.",
-    "coursesHeading": "Divergência de conteúdo on-chain",
-    "noCourses": "Nenhum curso para exibir.",
-    "chain": {
-      "content_current": "O conteúdo on-chain corresponde ao HEAD.",
-      "content_stale": "O conteúdo on-chain está desatualizado — registre o novo hash.",
-      "not_deployed": "Ainda não implantado on-chain.",
-      "missing_fields": "Campos obrigatórios ausentes no Sanity.",
-      "awaiting_content_sync": "Aguardando a sincronização de conteúdo primeiro."
-    },
-    "chainSyncButton": "Registrar on-chain",
-    "chainSyncing": "Registrando…",
-    "chainSyncFailed": "Falha na sincronização on-chain.",
-    "chainSyncSucceeded": "{id} registrado on-chain."
-  },
   "admin": {
     "console": {
       "title": "Console de Administração",
@@ -1173,8 +1144,8 @@
       "courses": "Cursos",
       "moderation": "Moderação",
       "pendingFlags": "{count, plural, one {# denúncia pendente} other {# denúncias pendentes}}",
+      "pendingFlagsUnknown": "Contagem de denúncias pendentes indisponível",
       "status": "Status",
-      "content": "Conteúdo",
       "insights": "Métricas"
     },
     "counts": {
@@ -1184,11 +1155,11 @@
     "screens": {
       "courses": "Cursos",
       "moderation": "Moderação da comunidade",
-      "status": "Status do programa",
-      "content": "Conteúdo"
+      "status": "Status do programa"
     },
     "coursesScreen": {
       "intro": {
+        "summary": "Como funcionam a publicação e o deploy",
         "lede": "Levar um curso até os alunos exige duas etapas separadas, nesta ordem. Esta tela reúne as duas: publicação em cima, implantação embaixo.",
         "step1Title": "1. Publicar — o app já tem este curso?",
         "step1Body": "O conteúdo dos cursos vive no repositório academy-courses. O app distribui uma cópia compilada dele, fixada em um único commit no content.lock. Publicar é um pull request humano que atualiza esse pin e reconstrói o pacote; assim que ele é mesclado, a Vercel faz o redeploy e o conteúdo passa a estar no app. Esta tela não escreve nada — ela mostra a divergência e entrega um PR pré-preenchido.",
@@ -1198,6 +1169,7 @@
       },
       "step1Eyebrow": "Etapa 1 — Publicar: levar o conteúdo até o app",
       "step2Eyebrow": "Etapa 2 — Implantar: colocar o curso on-chain",
+      "step3Eyebrow": "Etapa 3 — Conteúdo de apoio: quests, conquistas e trilhas",
       "legend": {
         "title": "O que cada estado significa",
         "description": "Toda linha de curso carrega um estado on-chain e — uma vez implantado — um estado de divergência de conteúdo. Os dois são independentes.",
@@ -1256,7 +1228,8 @@
       "fetchError": "Falha ao buscar o status",
       "networkError": "Erro de rede",
       "retry": "Tentar novamente",
-      "refresh": "Atualizar"
+      "refresh": "Atualizar",
+      "unavailable": "Nenhum status foi retornado."
     },
     "programBar": {
       "network": "Rede",
@@ -1264,7 +1237,12 @@
       "config": "Config",
       "found": "Encontrada",
       "notInitialized": "Não inicializada",
+      "networkUnknown": "desconhecida",
       "authorityMismatch": "Divergência de autoridade — verifique PROGRAM_AUTHORITY_SECRET"
+    },
+    "statusScreen": {
+      "programHeading": "Programa",
+      "countsHeading": "Conteúdo publicado on-chain"
     },
     "deployScreen": {
       "coursesHeading": "Cursos",
@@ -1381,18 +1359,10 @@
       }
     },
     "contentScreen": {
-      "intro": "Visões somente leitura sobre o pacote de conteúdo: missões, conquistas e trilhas de aprendizagem. Conquistas é a única superfície aqui com uma ação de sincronização on-chain.",
       "tabs": {
         "quests": "Missões",
         "achievements": "Conquistas",
         "paths": "Trilhas"
-      },
-      "pin": {
-        "pinned": "Pacote fixado",
-        "drifted": "Pacote desatualizado",
-        "unknown": "Divergência desconhecida",
-        "unavailable": "Status do pin indisponível",
-        "behind": "{count, plural, one {# commit atrás} other {# commits atrás}}"
       },
       "quests": {
         "heading": "Missões",
@@ -1483,7 +1453,11 @@
     },
     "flags": {
       "description": "Publicações da comunidade denunciadas por usuários. Resolva depois de tratar o conteúdo ou descarte se a denúncia não for válida.",
+      "loading": "Carregando a fila de moderação...",
       "noPending": "Nenhuma denúncia pendente.",
+      "loadErrorFetch": "Não foi possível carregar a fila de moderação. O estado dela é desconhecido — pode haver denúncias aguardando.",
+      "loadErrorNetwork": "Erro de rede ao carregar a fila de moderação. O estado dela é desconhecido — pode haver denúncias aguardando.",
+      "loadErrorUnauthorized": "Sua sessão de administrador expirou, então a fila de moderação não pôde ser carregada. Entre novamente.",
       "reportedBy": "denunciado por @{reporter}",
       "unknownReporter": "desconhecido",
       "targetThread": "tópico",
@@ -1492,7 +1466,14 @@
       "resolve": "Resolver",
       "dismiss": "Descartar",
       "errorFetch": "Falha ao atualizar a denúncia. Tente novamente.",
-      "errorNetwork": "Erro de rede. Tente novamente."
+      "errorNetwork": "Erro de rede. Tente novamente.",
+      "remove": "Remover conteudo",
+      "lock": "Trancar topico",
+      "locked": "Topico trancado",
+      "showContent": "Mostrar o conteudo denunciado",
+      "contentUnavailable": "Nao foi possivel carregar o conteudo denunciado.",
+      "errorConflict": "Esse conteudo ja foi removido. Recarregue a fila.",
+      "errorRateLimited": "Acoes de moderacao demais em sequencia. Espere um minuto e tente de novo."
     },
     "insightsScreen": {
       "title": "Métricas",
@@ -1500,7 +1481,7 @@
       "loading": "Carregando…",
       "error": "Não foi possível carregar as métricas.",
       "empty": "Sem dados ainda.",
-      "quizNote": "O acerto nos quizzes é registrado como o evento de analytics quiz_checked (PostHog) — não é persistido no servidor, então aparece nos dashboards do PostHog e não aqui.",
+      "quizNote": "A correção dos quizzes não é persistida no servidor — ela fica no PostHog, no evento quiz_checked.",
       "ai": {
         "title": "Tutor de IA",
         "learners": "Alunos usando IA",
@@ -1512,10 +1493,11 @@
         "lesson": "Lição",
         "assistsCol": "Assistências",
         "learnersCol": "Alunos",
-        "spendByDay": "Gasto diário",
         "day": "Dia",
         "usd": "USD",
-        "requests": "Requisições"
+        "requests": "Requisições",
+        "spendChart": "Gasto diário de IA (30d)",
+        "spendChartLabel": "Gasto diário de IA em USD nos últimos 30 dias"
       },
       "learning": {
         "title": "Aprendizado",
@@ -1523,12 +1505,15 @@
         "enrollments": "Matrículas",
         "active7d": "Ativos (7d)",
         "active30d": "Ativos (30d)",
-        "perCourse": "Concluídas por curso",
+        "perCourse": "Lições concluídas por curso",
         "course": "Curso",
-        "completions": "Concluídas",
-        "learnersCol": "Alunos",
-        "completionsByDay": "Concluídas por dia (30d)",
-        "day": "Dia"
+        "completions": "Lições concluídas",
+        "learnersCol": "Pessoas alcançadas",
+        "completionsByDay": "Lições concluídas por dia (30d)",
+        "day": "Dia",
+        "completionsChartLabel": "Lições concluídas por dia nos últimos 30 dias",
+        "activityHint": "Ativos conta quem concluiu uma lição no período — não logins nem sessões.",
+        "perCourseHint": "Uma linha por lição concluída, então cada pessoa conta uma vez por lição. Pessoas alcançadas é quantas concluíram ao menos uma lição do curso."
       }
     }
   },

@@ -32,29 +32,91 @@ off. One soft bend: after an OAuth _link_, the settings page syncs `profiles.goo
 ```
 
 The three session-minting routes (`/api/auth/wallet`, `/api/auth/dynamic`,
-`/api/auth/callback`) share three post-login rituals: tombstone refusal
+`/api/auth/callback`) share four post-login rituals: tombstone refusal
 (`src/lib/auth/account-status.ts`, `profiles.deleted_at`; fails OPEN on query error so
 a Supabase blip can't lock everyone out), replacement of the `user_xxxxxxxx`
-placeholder username, and a fire-and-forget `retryPendingOnchainActions` drain. Add a
-new way in, add all three. The middleware is not a fourth chokepoint — it mints
+placeholder username, a fire-and-forget `retryPendingOnchainActions` drain, and — on
+the two rails that carry a provider photo (`/api/auth/dynamic` and
+`/api/auth/callback`, #1063) — avatar adoption: the provider avatar is written on
+FIRST login only, when `profiles.avatar_url` is null (owner ruling 2026-08-18). Once
+any avatar exists — provider photo or custom upload — no sign-in overwrites it. Add a
+new way in, add all of them. The middleware is not another chokepoint — it mints
 nothing; it re-runs the tombstone check per request as a backstop, and that is all.
 
 ## 1. Ways in — the auth modal
 
-`src/components/auth/auth-modal.tsx`. Three buttons. The modal deliberately calls no
-Dynamic hook itself: every hook in `@dynamic-labs-sdk/react-hooks` throws
-`MissingProviderError` without a provider, and hooks can't be conditional, so the
+`src/components/auth/auth-modal.tsx` is the dialog shell; the three buttons live in
+`src/components/auth/auth-modal-body.tsx`, which the shell loads through `React.lazy`
+(§1.1). Neither calls a Dynamic hook: every hook in `@dynamic-labs-sdk/react-hooks`
+throws `MissingProviderError` without a provider, and hooks can't be conditional, so the
 feature gate is a component boundary — `DynamicSocialSignIn` (one component, a
-`PROVIDERS` map per provider) owns the hooks and mounts only when
-`isDynamicEnabled()` (`src/lib/dynamic/config.ts`). A fourth entry, email-OTP through
+`PROVIDERS` map per provider) owns the SDK calls and mounts only when
+`isDynamicEnabled()` (`src/lib/dynamic/config.ts`). Since #1097 it renders outside any
+`DynamicProvider`, so it reads the Dynamic session imperatively through the SDK's
+`getCore` escape hatch rather than `useUser`. A fourth entry, email-OTP through
 Dynamic, was removed from the modal in #1032 because it mints a wallet-shaped account
 that forks from a later Google login; the component itself was deleted in #1040.
+
+### 1.1 Where the provider stack comes from (#1097)
+
+Marketing and admin first loads no longer carry wallet-adapter, the Dynamic SDK, or
+TanStack Query. The stack (`SolanaWalletProvider` wrapping `DynamicWalletProvider`)
+mounts in `src/app/[locale]/(platform)/layout.tsx` and nowhere else:
+
+| Route group                                                                                               | Provider stack  | GamificationOverlays | DynamicReturnCatcher    |
+| --------------------------------------------------------------------------------------------------------- | --------------- | -------------------- | ----------------------- |
+| `(platform)` — dashboard, courses, community, leaderboard, certificates, profile, review, settings, teach | at layout level | yes                  | not needed (stack live) |
+| `(marketing)` — landing, `/start`, roadmap                                                                | on demand only  | no                   | yes                     |
+| `admin`                                                                                                   | on demand only  | no                   | yes                     |
+
+The Header lives in `[locale]/layout.tsx`, ABOVE all of it, so its wallet consumers can
+never reach the providers through React context. They read
+`src/lib/solana/ambient-wallet-store.ts` instead: a deliberately SDK-free module-level
+store that the stack's inner registrar publishes into (`connected`, `publicKey`,
+`disconnect`, `openWalletModal`), consumed outside with `useSyncExternalStore`. UserMenu
+disconnects through it (plus a `walletName` localStorage clear, so sign-out sticks with
+no stack mounted); the modal's Solana button opens the wallet-select modal through it.
+
+Two things stand a stack up on a provider-less route:
+
+- **The sign-in modal.** Opening `AuthModal` with no live registration lazily mounts
+  `ScopedAuthProviders` as a SIBLING of the Dialog, and keeps it mounted after close —
+  the Solana path closes the dialog and hands off to the wallet-select modal, which
+  lives in that stack. It never arms beside a live one (a second `WalletProvider`
+  doubles `autoConnect`, listeners, and SIWS) and disarms itself when another stack
+  registers, e.g. navigating into `(platform)` with the dialog open.
+- **`DynamicReturnCatcher`** (`src/components/auth/dynamic-return-catcher.tsx`), mounted
+  by the marketing and admin layouts. A Dynamic social/device redirect returns to the
+  page the learner left, which may be provider-less; the catcher sniffs the SDK's
+  callback params off the URL (no SDK import — the param names are the stable contract)
+  and mounts the same scoped stack, whose `DynamicAuthHandler` then runs the real,
+  SDK-verified detection. On an ordinary page load it renders null and loads nothing. It
+  raises a capture flag in the ambient store synchronously, before its chunk resolves,
+  so the modal cannot arm a competing stack in that window.
+
+Only the Solana button depends on any of this. On the happy path with Dynamic enabled —
+production — Google and GitHub are `DynamicSocialSignIn` inside the lazy body chunk,
+which still carries the SDK; the win is that the body and the stack now download in
+parallel instead of serially, and that the body no longer waits on a stack registration
+it never needed. With Dynamic unset, and on the failure path, the same two providers
+come from `src/components/auth/oauth-fallback-button.tsx`, a statically imported module
+that needs nothing but the browser Supabase client — so a dead body chunk (blocked CDN,
+stale deploy, offline) still leaves Google and GitHub reachable, and costs the wallet
+path only. The Solana button alone waits for a registration, and reports `authFailed`
+rather than spinning forever if the stack chunk dies.
+`src/__tests__/provider-free-import-graph.test.ts` walks the static import graph from
+`[locale]/layout.tsx`, the marketing layout, the Header, the modal, UserMenu, and the
+landing client, and fails if any of the three package families becomes statically
+reachable again. Bare `import "x"` counts — a side-effect import hides its whole subtree
+otherwise.
 
 ### Connect Solana Wallet (wallet-adapter SIWS)
 
 Button hands off to the wallet-adapter modal; the actual auth is
-`src/components/auth/wallet-auth-handler.tsx`, mounted at layout level, which fires on
-wallet connect when no Supabase user exists:
+`src/components/auth/wallet-auth-handler.tsx`, mounted inside
+`SolanaWalletProvider` — so on `(platform)` routes it comes with the layout, and
+elsewhere with the modal's scoped stack. It fires on wallet connect when no Supabase
+user exists:
 
 1. `GET /api/auth/nonce` (`src/app/api/auth/nonce/route.ts`) — random nonce inserted
    into `siws_nonces` with `status='pending'`, 5-min TTL, max 10 pending per IP
@@ -68,6 +130,21 @@ wallet connect when no Supabase user exists:
    fully read; a bound on processing, not on ingress).
 4. On success: **hard redirect** to `/dashboard` — the browser Supabase client only
    reads cookies on boot, so a soft navigation leaves the header logged-out.
+
+Its full-screen overlay (the spinner, and the failure message with Retry/Dismiss) is
+portalled to `document.body`, like the wallet-select modal it follows. On a marketing
+route the handler mounts under the Header, whose bar carries `backdrop-blur-md`, and a
+non-`none` `backdrop-filter` is a containing block for `position: fixed` descendants —
+in-tree, the overlay was clipped to the 57px nav strip.
+
+It can fire with the sign-in dialog still open: opening that dialog is what mounts the
+scoped stack, and `autoConnect` reconnects a remembered wallet the instant it mounts, so
+a returning signed-out learner gets SIWS without touching a button. Radix marks the body
+`pointer-events: none` for a modal dialog and the portalled overlay inherits it, which
+left Retry and Dismiss rendered but inert. So the handler raises `setSiwsActive` in the
+ambient store while the overlay is up and `AuthModal` closes — the same handoff the
+manual wallet path already does before opening the wallet-select modal. The overlay also
+carries `pointer-events-auto`, which covers the dialog's exit-animation window.
 
 Server verification (`src/lib/solana/verify-siws.ts`), in order: parse fields → expiry
 
@@ -106,9 +183,9 @@ addresses). **Dynamic off** falls back to Supabase OAuth and returns through
 `exchangeCodeForSession(code)`, cookies set on the redirect response, `next` param
 re-sanitized server-side (`sanitizeRedirect`: single leading slash, no `//`, no `\`,
 no `:` — kills protocol-relative, Windows-relative, and scheme injection). Also
-refreshes the avatar from any OAuth provider's `user_metadata.avatar_url` on each
-login (provider CDN URLs rotate) unless the stored avatar is a Supabase Storage
-upload — Google and GitHub alike, despite living in this callback.
+performs the avatar-adoption ritual (see the shared-rituals list above): adopts the
+provider's `user_metadata.avatar_url` on FIRST login only — Google and GitHub alike,
+despite living in this callback.
 
 ## 2. DynamicAuthHandler
 
@@ -117,7 +194,9 @@ upload — Google and GitHub alike, despite living in this callback.
 page on hydration — the hooks throw outside a provider). No UI. Four jobs:
 
 0. **Social-redirect return.** The button that started sign-in is gone after the
-   full-page round trip, so something mounted on every page must finish it:
+   full-page round trip, so the return has to be finished by whatever the landing page
+   mounts: this handler on `(platform)` routes, and on marketing/admin routes the same
+   handler brought in by `DynamicReturnCatcher`'s scoped stack (§1.1).
    `detectSocialRedirectUrl` → `completeSocialRedirect` → strip callback params →
    if a Supabase session already exists this was a _link_, stop (job 3 will attach the
    wallet) → otherwise `bridgeDynamicSession()` → on success **hard reload**; on
@@ -294,13 +373,17 @@ resolves the account through its `auth.identities` row, synthetic email and all.
   every request carrying a session (covers SIWS sessions that never pass the OAuth
   callback), then next-intl, then auth-gating of `/dashboard`, `/settings`, `/teach`,
   `/review`, and exact `/profile`. `/api/*` is excluded from the matcher — API routes
-  do their own auth. The middleware also gates `/admin` on a separate HMAC-signed
-  `admin_session` cookie; that is a parallel auth system, out of scope for this map.
+  do their own auth. `/admin` is gated the same way — a sessionless request redirects to
+  the localized landing; whether that session is actually an admin is decided
+  server-side by `requireAdmin()` (the service-role-only `admin_users` allowlist) in the
+  admin layout and page, which 404 non-admins. There is no separate admin login.
 - **The Dynamic session is parallel state**, not the session of record. It survives a
-  Supabase sign-out, `DynamicAuthHandler` mounts everywhere, and MPC signing is
-  promptless — so an orphaned Dynamic session silently re-runs the SIWS bridge and
-  signs the learner straight back in on the next page load, making sign-out meaningless
-  on shared devices (#1027). Therefore `handleSignOut` in
+  Supabase sign-out, and MPC signing is promptless — so an orphaned Dynamic session
+  silently re-runs the SIWS bridge and signs the learner straight back in the next time
+  `DynamicAuthHandler` mounts, making sign-out meaningless on shared devices (#1027).
+  Since #1097 that is any `(platform)` route rather than any page at all, which delays
+  the re-sign-in but does not prevent it — the learner's next lesson is a platform
+  route. Therefore `handleSignOut` in
   `src/components/auth/user-menu.tsx` runs `logoutDynamic()` before
   `supabase.auth.signOut()`. `logoutDynamic` (`src/lib/dynamic/client.ts`) races
   Dynamic's `logout()` against a 2.5s deadline — a hung call must not stall sign-out;

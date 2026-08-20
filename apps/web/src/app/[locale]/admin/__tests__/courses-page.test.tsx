@@ -2,21 +2,86 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import AdminCoursesPage from "../courses/page";
+import type {
+  QuestData,
+  AdminLearningPathWithRefs,
+} from "@/lib/content/queries";
 import messages from "@/messages/en.json";
 
 /**
- * `/admin/courses` — the merged Publish + Deploy screen. Both moved components
- * fetch on mount and carry their own tests, so they are stubbed; what is under
- * test here is the composition (publish above deploy), the two-step teaching
- * copy, and the state legend.
+ * `/admin/courses` — the merged Publish + Deploy + supporting-content screen.
+ * Every moved component carries its own tests, so they are stubbed; what is
+ * under test here is the composition (publish, then deploy, then the content
+ * tables), the teaching copy, and the state legend.
  */
+const questData: QuestData = {
+  quests: [],
+  challengeLessonIds: [],
+  moduleLessonMap: [],
+};
+const paths: AdminLearningPathWithRefs[] = [
+  {
+    _id: "path-main",
+    title: "Main Path",
+    courseIds: [],
+    resolvedCourses: [],
+    danglingCourseIds: [],
+  },
+];
+
+const getAllQuestsMock = vi.fn(async () => questData);
+const getLearningPathsForAdminWithRefsMock = vi.fn(async () => paths);
+
+vi.mock("@/lib/content/queries", () => ({
+  getAllQuests: () => getAllQuestsMock(),
+  getLearningPathsForAdminWithRefs: () =>
+    getLearningPathsForAdminWithRefsMock(),
+}));
+
 vi.mock("../courses/publish-pin-client", () => ({
   PublishPinClient: () => <div data-testid="publish-pin-client" />,
 }));
 vi.mock("../courses/deploy-client", () => ({
   DeployClient: () => <div data-testid="deploy-client" />,
 }));
+vi.mock("../courses/content-tabs", () => ({
+  ContentTabs: ({
+    questsSlot,
+    achievementsSlot,
+    pathsSlot,
+  }: {
+    questsSlot: React.ReactNode;
+    achievementsSlot: React.ReactNode;
+    pathsSlot: React.ReactNode;
+  }) => (
+    <div data-testid="content-tabs">
+      <div>{questsSlot}</div>
+      <div>{achievementsSlot}</div>
+      <div>{pathsSlot}</div>
+    </div>
+  ),
+}));
+vi.mock("../courses/quests-table", () => ({
+  QuestsTable: () => <div data-testid="quests-table" />,
+}));
+vi.mock("../courses/achievements-subview", () => ({
+  AchievementsSubview: ({
+    pathTitleById,
+  }: {
+    pathTitleById: Record<string, string>;
+  }) => (
+    <div data-testid="achievements-subview">
+      {JSON.stringify(pathTitleById)}
+    </div>
+  ),
+}));
+vi.mock("../courses/paths-table", () => ({
+  PathsTable: () => <div data-testid="paths-table" />,
+}));
+
+// Imported after the mocks so the page's `@/lib/content/queries` fetches
+// resolve against the stubs above.
+const { default: AdminCoursesPage } = await import("../courses/page");
 
 vi.mock("next-intl/server", () => ({
   getTranslations: async (namespace: string) => (key: string) => {
@@ -60,6 +125,37 @@ describe("AdminCoursesPage", () => {
     expect(
       publish.compareDocumentPosition(deploy) & Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
+  });
+
+  // #1136: the Quests/Achievements/Paths tables came from the retired
+  // `/admin/content`, which was a third step of this same flow.
+  it("carries the supporting-content tables as a third labelled step", async () => {
+    await renderPage();
+
+    // Fetched server-side by the page, not by a client round trip.
+    expect(getAllQuestsMock).toHaveBeenCalled();
+    expect(getLearningPathsForAdminWithRefsMock).toHaveBeenCalled();
+
+    const region = screen.getByRole("region", {
+      name: admin.coursesScreen.step3Eyebrow,
+    });
+    expect(region).toContainElement(screen.getByTestId("content-tabs"));
+    expect(screen.getByTestId("quests-table")).toBeInTheDocument();
+    expect(screen.getByTestId("achievements-subview")).toBeInTheDocument();
+    expect(screen.getByTestId("paths-table")).toBeInTheDocument();
+
+    // Deploy stays above it — the tables are step 3, not a replacement.
+    const deploy = screen.getByTestId("deploy-client");
+    expect(
+      deploy.compareDocumentPosition(region) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
+  it("derives pathTitleById from the fetched paths for the Achievements sub-view", async () => {
+    await renderPage();
+    expect(screen.getByTestId("achievements-subview")).toHaveTextContent(
+      JSON.stringify({ "path-main": "Main Path" })
+    );
   });
 
   it("teaches the two steps and their distinct questions", async () => {

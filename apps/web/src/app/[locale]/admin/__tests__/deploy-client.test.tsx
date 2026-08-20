@@ -3,9 +3,9 @@ import type { ReactElement } from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import type { AdminStatus } from "../admin-status-types";
 import { DeployClient } from "../courses/deploy-client";
-import messages from "@/messages/en.json";
 
 function renderWithIntl(ui: ReactElement) {
   return render(
@@ -17,8 +17,8 @@ function renderWithIntl(ui: ReactElement) {
 
 // The sync table carries its own tests and fires on-chain sync requests, so
 // it is stubbed; the stub surfaces the props wiring under test. The
-// Achievements sync table used to render as a second section here (#513
-// WS-C relocated it into `admin/content/achievements-subview.tsx`).
+// Achievements sync table used to render as a second section here; it now
+// lives in `admin/courses/achievements-subview.tsx`.
 vi.mock("@/components/admin/course-sync-table", () => ({
   CourseSyncTable: ({ onRefresh }: { onRefresh: () => void }) => (
     <button data-testid="course-sync-table" onClick={onRefresh}>
@@ -29,6 +29,7 @@ vi.mock("@/components/admin/course-sync-table", () => ({
 
 const status: AdminStatus = {
   program: {
+    network: "devnet",
     deployed: true,
     programId: "AcademyProgram1111111111111111111111111111",
     configPda: "Config11111111111111111111111111111111111",

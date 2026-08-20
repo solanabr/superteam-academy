@@ -6,10 +6,10 @@ import { diag, type Diagnostic } from "../diagnostics";
  * Gate 4b — path lifecycle flags must say what an empty shelf means (#627,
  * owner ruling 2026-07-28).
  *
- * The app hides a path with zero courses and reads neither `draft` nor
- * `retired` (the bundle's LearningPath type carries neither field). So an
- * emptied path is invisible either way, and the flags exist purely to record
- * intent. Before this gate, "retired" was spelled `draft: true` + `courses: []`
+ * The app hides a path with zero courses, and since #1141 it also hides one
+ * flagged `draft` or `retired` — so an emptied path is invisible either way,
+ * and the flags additionally record WHICH kind of emptiness it is. Before this
+ * gate, "retired" was spelled `draft: true` + `courses: []`
  * — indistinguishable from "coming soon", which is how #559 nearly shipped a
  * permanently unearnable `path-completed` achievement: the path looked merely
  * unfinished, so nothing flagged that its last course had been removed for good.

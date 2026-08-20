@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { getAuthClaims } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { buildReviewSession } from "@/lib/review/session";
 import { ReviewSession } from "@/components/review/review-session";
@@ -12,12 +13,10 @@ import { ReviewSession } from "@/components/review/review-session";
  */
 export default async function ReviewPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const claims = await getAuthClaims();
   const t = await getTranslations("review");
 
-  if (!user) {
+  if (!claims) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <h1 className="mb-2 font-display text-xl font-black">
@@ -28,7 +27,7 @@ export default async function ReviewPage() {
     );
   }
 
-  const items = await buildReviewSession(supabase, user.id);
+  const items = await buildReviewSession(supabase, claims.sub);
 
   return (
     <div className="space-y-8">

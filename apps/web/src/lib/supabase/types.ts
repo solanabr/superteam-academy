@@ -14,6 +14,24 @@ export type Database = {
   };
   public: {
     Tables: {
+      admin_users: {
+        Row: {
+          user_id: string;
+          granted_at: string;
+          granted_by: string;
+        };
+        Insert: {
+          user_id: string;
+          granted_at?: string;
+          granted_by: string;
+        };
+        Update: {
+          user_id?: string;
+          granted_at?: string;
+          granted_by?: string;
+        };
+        Relationships: [];
+      };
       league_tiers: {
         Row: { tier: number; min_prior_week_xp: number };
         Insert: { tier: number; min_prior_week_xp: number };
@@ -321,6 +339,36 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      moderation_actions: {
+        Row: {
+          id: string;
+          action: string;
+          thread_id: string | null;
+          answer_id: string | null;
+          flag_id: string | null;
+          actor_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          action: string;
+          thread_id?: string | null;
+          answer_id?: string | null;
+          flag_id?: string | null;
+          actor_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          action?: string;
+          thread_id?: string | null;
+          answer_id?: string | null;
+          flag_id?: string | null;
+          actor_id?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
       };
       flags: {
         Row: {
@@ -1645,6 +1693,14 @@ export type Database = {
         };
         Returns: string;
       };
+      get_platform_stats: {
+        Args: Record<string, never>;
+        Returns: {
+          total_xp: number;
+          builders: number;
+          credentials: number;
+        }[];
+      };
       get_referral_leaderboard: {
         Args: {
           p_season?: number;
@@ -1691,6 +1747,22 @@ export type Database = {
       };
       increment_view_count: {
         Args: { p_thread_id: string; p_user_id?: string };
+        Returns: undefined;
+      };
+      moderate_soft_delete_thread: {
+        Args: { p_thread_id: string; p_flag_id: string; p_actor_id: string };
+        Returns: undefined;
+      };
+      moderate_soft_delete_answer: {
+        Args: { p_answer_id: string; p_flag_id: string; p_actor_id: string };
+        Returns: undefined;
+      };
+      moderate_lock_thread: {
+        Args: { p_thread_id: string; p_flag_id: string; p_actor_id: string };
+        Returns: undefined;
+      };
+      moderate_resolve_flag: {
+        Args: { p_flag_id: string; p_dismiss: boolean; p_actor_id: string };
         Returns: undefined;
       };
       soft_delete_thread: {

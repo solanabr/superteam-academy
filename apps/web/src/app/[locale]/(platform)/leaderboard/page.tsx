@@ -1,23 +1,20 @@
 import type { CohortLeague } from "@superteam-lms/types";
-import { createClient } from "@/lib/supabase/server";
+import { getAuthClaims } from "@/lib/auth/dal";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getProgressService } from "@/lib/services";
 import { getCohortLeaderboard } from "@/lib/leaderboard/cohort";
+import { getCachedLeaderboard } from "@/lib/leaderboard/global";
 import { serverEnv } from "@/lib/env.server";
 import { LeaderboardClient } from "./leaderboard-client";
 
 export default async function LeaderboardPage() {
-  const supabase = await createClient();
-  const service = getProgressService(supabase);
-
-  const [
-    initialGlobalEntries,
-    {
-      data: { user },
-    },
-  ] = await Promise.all([
-    service.getLeaderboard("alltime"),
-    supabase.auth.getUser(),
+  // Global board via the shared unstable_cache'd cookieless read (60s, tag
+  // "leaderboard") — the same rows for every viewer, so no reason to re-run
+  // the RPC per request through the cookie-bound service. A read failure
+  // throws OUT of the cache (nothing stale gets written); degrade to an empty
+  // board here, outside it, so the page renders rather than 500s.
+  const [initialGlobalEntries, claims] = await Promise.all([
+    getCachedLeaderboard("alltime").catch(() => []),
+    getAuthClaims(),
   ]);
 
   // Cohort league is the primary board (LX-B9b). It requires an authenticated
@@ -25,9 +22,12 @@ export default async function LeaderboardPage() {
   // demoted global board. A cohort read failure degrades to global, never 500s
   // the page.
   let initialCohort: CohortLeague | null = null;
-  if (user && serverEnv.SUPABASE_SERVICE_ROLE_KEY) {
+  if (claims && serverEnv.SUPABASE_SERVICE_ROLE_KEY) {
     try {
-      initialCohort = await getCohortLeaderboard(createAdminClient(), user.id);
+      initialCohort = await getCohortLeaderboard(
+        createAdminClient(),
+        claims.sub
+      );
     } catch {
       initialCohort = null;
     }
@@ -37,7 +37,7 @@ export default async function LeaderboardPage() {
     <LeaderboardClient
       initialGlobalEntries={initialGlobalEntries}
       initialCohort={initialCohort}
-      currentUserId={user?.id ?? ""}
+      currentUserId={claims?.sub ?? ""}
     />
   );
 }

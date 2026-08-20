@@ -6,6 +6,7 @@ import { useAdminStatus } from "../use-admin-status";
 
 const status: AdminStatus = {
   program: {
+    network: "devnet",
     deployed: true,
     programId: "AcademyProgram1111111111111111111111111111",
     configPda: "Config11111111111111111111111111111111111",

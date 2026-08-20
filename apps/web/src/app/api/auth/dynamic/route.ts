@@ -9,6 +9,8 @@ import { getDynamicEnvironmentId } from "@/lib/dynamic/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { isAccountDeleted } from "@/lib/auth/account-status";
+import { shouldAdoptAvatar } from "@/lib/auth/avatar-adoption";
+import { revokeUserSessions } from "@/lib/auth/revoke-sessions";
 import { isWalletPlaceholderEmail } from "@/lib/auth/wallet-placeholder";
 import { generateWalletName } from "@/lib/utils/generate-wallet-name";
 import { retryPendingOnchainActions } from "@/lib/solana/onchain-queue";
@@ -576,6 +578,45 @@ async function mergeWalletShellAccount(
       return;
     }
     logEvent({ event: "dynamic-auth.shell-merged", context: { merged } });
+
+    // The merge tombstones the shell (profiles.deleted_at) inside the RPC, but
+    // a live shell session elsewhere (SIWS sign-in on another device) still
+    // holds refresh tokens. Middleware no longer checks tombstones per-request,
+    // so every deleted_at writer must pair with session revocation — a
+    // permanent ban here (with retries): GoTrue refuses banned users at token
+    // refresh, leaving only the current access token's remaining lifetime, the
+    // same <= JWT-expiry bound as account deletion. Non-fatal to the sign-in
+    // (the target account is fine either way), but a persistent failure is a
+    // zombie shell session, so it logs at error level for follow-up.
+    // Own try/catch: the merge RPC already committed, so a throw here must
+    // not be logged as "shell merge failed" — the failure mode is a zombie
+    // shell session, not an unmerged account.
+    try {
+      const revoked = await revokeUserSessions(supabaseAdmin, shell.id);
+      if (!revoked.ok) {
+        logError({
+          errorId: ERROR_IDS.DYNAMIC_AUTH_FAILED,
+          error:
+            revoked.error ?? new Error("shell session revocation (ban) failed"),
+          context: {
+            note: "shell session revocation (ban) failed after retries",
+            userId,
+            shellId: shell.id,
+          },
+        });
+      }
+    } catch (revokeErr: unknown) {
+      logError({
+        errorId: ERROR_IDS.DYNAMIC_AUTH_FAILED,
+        error:
+          revokeErr instanceof Error ? revokeErr : new Error(String(revokeErr)),
+        context: {
+          note: "shell session revocation threw (merge already committed)",
+          userId,
+          shellId: shell.id,
+        },
+      });
+    }
   } catch (err: unknown) {
     logError({
       errorId: ERROR_IDS.DYNAMIC_AUTH_FAILED,
@@ -853,13 +894,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
     }
 
-    // Adopt the provider photo on FIRST login only (owner ruling 2026-08-18):
-    // once any avatar exists — provider photo or custom upload — no sign-in
-    // ever changes it. Alternating Google/GitHub logins were ping-ponging the
-    // learner's face; the cost is that a rotated provider CDN URL no longer
-    // self-heals (the learner replaces it in settings instead). https-only
-    // enforcement happens at the credential boundary.
-    if (resolved.photo && (profile?.avatar_url ?? null) === null) {
+    // Adopt the provider photo on FIRST login only (shared rule, see
+    // lib/auth/avatar-adoption.ts). https-only enforcement happens at the
+    // credential boundary above, not here.
+    if (shouldAdoptAvatar(profile?.avatar_url ?? null, resolved.photo)) {
       await supabaseAdmin
         .from("profiles")
         .update({ avatar_url: resolved.photo })

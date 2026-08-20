@@ -18,17 +18,44 @@ const LEARNER_ID = LEARNER.id;
 const STORAGE_KEY = `sb-${new URL(SUPABASE_URL).hostname.split(".")[0]}-auth-token`;
 
 /**
+ * A structurally valid (but unsigned-in-earnest) HS256 JWT for the learner.
+ *
+ * The middleware's `getClaims()` (#1102) DECODES the access token locally
+ * before deciding how to verify it: a non-JWT string throws inside auth-js and
+ * the session reads as anonymous — the old `<id>.fake.jwt` opaque token broke
+ * every signed-in spec that way. A well-formed HS256 token with no `kid` takes
+ * auth-js's documented fallback path instead: decode → alg is HS* → verify via
+ * `getUser(token)` → the mock's /auth/v1/user answers. This is also more
+ * faithful to prod, where the cookie always carries a real JWT. The signature
+ * segment is garbage on purpose — nothing verifies it locally.
+ */
+function buildFakeJwt(nowSec: number): string {
+  const b64 = (obj: object): string =>
+    Buffer.from(JSON.stringify(obj), "utf8").toString("base64url");
+  const header = { alg: "HS256", typ: "JWT" };
+  const payload = {
+    sub: LEARNER_ID,
+    aud: "authenticated",
+    role: "authenticated",
+    email: LEARNER.email,
+    exp: nowSec + 3600,
+    iat: nowSec,
+    session_id: "e2e-session",
+  };
+  return `${b64(header)}.${b64(payload)}.e2e-fake-signature`;
+}
+
+/**
  * Mint the cookie the browser Supabase client would have written on a real
  * sign-in. `getSession()` reads this locally (no network) and trusts the
- * embedded `expires_at`, so a non-JWT access_token with a future expiry is a
- * fully-working session for the client — no secret, no signing. The value is
- * `base64-` + base64url(JSON(session)), exactly the @supabase/ssr encoding.
+ * embedded `expires_at`. The value is `base64-` + base64url(JSON(session)),
+ * exactly the @supabase/ssr encoding.
  */
 function buildSessionCookieValue(): string {
   const nowSec = Math.floor(Date.now() / 1000);
   const session = {
-    // The mock's /auth/v1/user matches on `Bearer <id>.fake`; keep in sync.
-    access_token: `${LEARNER_ID}.fake.jwt`,
+    // The mock's /auth/v1/user matches on the JWT payload's `sub`; keep in sync.
+    access_token: buildFakeJwt(nowSec),
     refresh_token: "e2e-refresh-token",
     token_type: "bearer",
     expires_in: 3600,

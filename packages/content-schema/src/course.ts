@@ -53,6 +53,21 @@ export const Course = z
      */
     thumbnail: z.string().min(1).optional(),
     prerequisiteCourse: CourseId.optional(),
+    /**
+     * Listed nowhere, live by direct link (#1137). The course page, its
+     * lessons, enrolment and completion all keep working for anyone holding
+     * the URL; what goes away is discovery — the catalogue, the landing
+     * count, the sitemap, recommendations, the catalogue filter chips, and
+     * path membership. That is the distribution model for event/QR-booth
+     * courses.
+     *
+     * This is the ONLY listing-visibility control: it is read at runtime by
+     * lib/content/queries.ts, so hiding a course is a content decision, not
+     * an app-code constant. "Gone" is a different state and already modelled
+     * twice over — `_draft/` parking keeps a course out of the bundle, and
+     * the admin deactivate toggle takes a deployed one off-chain-active.
+     */
+    unlisted: z.boolean().default(false),
     modules: z.array(CourseModule).min(1),
     // No authored `tags` field (#466 C3): a course's catalogue tags are
     // DERIVED — the compiler's projector computes them as the sorted,

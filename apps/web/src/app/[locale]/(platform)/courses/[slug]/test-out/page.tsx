@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { getCourseBySlug } from "@/lib/content/queries";
-import { createClient } from "@/lib/supabase/server";
+import { getAuthClaims } from "@/lib/auth/dal";
 import {
   gatherCourseQuizQuestions,
   MIN_TEST_OUT_POOL,
@@ -33,10 +33,7 @@ export default async function TestOutPage({ params }: TestOutPageProps) {
     (await isCourseTestOutEligible(course._id)) &&
     gatherCourseQuizQuestions(course).length >= MIN_TEST_OUT_POOL;
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const claims = await getAuthClaims();
 
   return (
     <div className="space-y-8">
@@ -57,7 +54,7 @@ export default async function TestOutPage({ params }: TestOutPageProps) {
           </h2>
           <p className="text-sm text-text-3">{t("unavailableBody")}</p>
         </div>
-      ) : user ? (
+      ) : claims ? (
         <TestOutChallenge courseId={course._id} locale={locale} />
       ) : (
         <div className="rounded-[var(--r-lg)] border-[2.5px] border-border bg-card p-6">

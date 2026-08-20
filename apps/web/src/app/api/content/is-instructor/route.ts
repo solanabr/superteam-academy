@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { parseWallet } from "../params";
 import { isInstructorWallet } from "@/lib/content/queries";
+import { parseWallet, CONTENT_CACHE_HEADERS } from "../params";
 
 /**
  * Whether a wallet belongs to a known instructor — the client-side face of
@@ -20,7 +20,10 @@ export async function GET(request: NextRequest) {
   if (wallet instanceof NextResponse) return wallet;
   try {
     const isInstructor = await isInstructorWallet(wallet);
-    return NextResponse.json({ isInstructor });
+    return NextResponse.json(
+      { isInstructor },
+      { headers: CONTENT_CACHE_HEADERS }
+    );
   } catch {
     return NextResponse.json(
       { error: "Failed to check wallet" },

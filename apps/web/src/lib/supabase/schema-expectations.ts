@@ -237,6 +237,38 @@ export const SCHEMA_EXPECTATIONS: readonly SchemaExpectation[] = [
     description:
       "referral completion point — a missing fn silently under-counts every season score",
   },
+  {
+    kind: "rpc",
+    rpc: "moderate_soft_delete_thread",
+    args: { p_thread_id: NIL_UUID, p_flag_id: NIL_UUID, p_actor_id: NIL_UUID },
+    migration: "20260820160000_moderation_actions.sql",
+    description:
+      "moderator thread removal (#1131) — the Remove button's hot path; a missing fn 500s every thread removal",
+  },
+  {
+    kind: "rpc",
+    rpc: "moderate_soft_delete_answer",
+    args: { p_answer_id: NIL_UUID, p_flag_id: NIL_UUID, p_actor_id: NIL_UUID },
+    migration: "20260820160000_moderation_actions.sql",
+    description:
+      "moderator answer removal (#1131) — the Remove button's hot path for answer flags; a missing fn 500s it",
+  },
+  {
+    kind: "rpc",
+    rpc: "moderate_lock_thread",
+    args: { p_thread_id: NIL_UUID, p_flag_id: NIL_UUID, p_actor_id: NIL_UUID },
+    migration: "20260820160000_moderation_actions.sql",
+    description:
+      "moderator thread lock (#1131) — the Lock button's hot path; a missing fn 500s it",
+  },
+  {
+    kind: "rpc",
+    rpc: "moderate_resolve_flag",
+    args: { p_flag_id: NIL_UUID, p_dismiss: false, p_actor_id: NIL_UUID },
+    migration: "20260820160000_moderation_actions.sql",
+    description:
+      "moderator resolve/dismiss (#1131) — the Resolve and Dismiss buttons' hot path; a missing fn 500s both",
+  },
 ];
 
 // PostgREST "not found in schema cache" + Postgres undefined-object SQLSTATEs.

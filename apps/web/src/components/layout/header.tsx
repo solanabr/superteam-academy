@@ -15,9 +15,7 @@ import { AuthModal } from "@/components/auth/auth-modal";
 import { UserMenu } from "@/components/auth/user-menu";
 import { LevelBadge } from "@/components/gamification/level-badge";
 import { xpToNextLevel, calculateLevel } from "@/lib/gamification/xp";
-import { useXpTotal } from "@/lib/solana/hooks";
 import { createClient } from "@/lib/supabase/client";
-import { LowSolBanner } from "@/components/layout/low-sol-banner";
 
 // LX-B13 (#583): the leaderboard is intentionally NOT a primary nav CTA at
 // launch — it stays reachable via the user menu and the footer. Restore it
@@ -57,8 +55,6 @@ export function Header() {
   // arriving mid-animation snaps the counter up to the old target before
   // continuing — a visible jump.
   const displayedXpRef = useRef(0);
-
-  const { total: onChainXp } = useXpTotal();
 
   // Teacher authoring entry is UX-only; the real gate is the server-side
   // /teach viewer. Replaces the old `profiles.role` check — the role-removal
@@ -120,8 +116,8 @@ export function Header() {
   );
 
   // XP fetching — reconciles the badge with the source of truth. The target is
-  // the max of (Supabase user_xp, on-chain balance, current target), so the
-  // counter only ever climbs and can't undo an optimistic gain.
+  // the max of (Supabase user_xp, current target), so the counter only ever
+  // climbs and can't undo an optimistic gain.
   const fetchXp = useCallback(async () => {
     const supabase = createClient();
     const {
@@ -149,14 +145,6 @@ export function Header() {
     if (user) fetchXp();
     return () => cancelAnimationFrame(rafRef.current);
   }, [user, fetchXp]);
-
-  useEffect(() => {
-    if (onChainXp > 0 && onChainXp > targetXpRef.current) {
-      targetXpRef.current = onChainXp;
-      setDisplayed(onChainXp);
-      setLevel(calculateLevel(onChainXp));
-    }
-  }, [onChainXp, setDisplayed]);
 
   useEffect(() => {
     const handleXpGain = (e: Event) => {
@@ -200,7 +188,6 @@ export function Header() {
   return (
     <header className="fixed left-0 right-0 top-0 z-[200]">
       <div className="relative bg-transparent backdrop-blur-md">
-        <LowSolBanner />
         <div className="relative mx-auto flex h-[56px] max-w-[1600px] items-center px-[16px]">
           {/* Left: Logo (desktop lg+) */}
           <Link

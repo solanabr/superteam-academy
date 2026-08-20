@@ -22,11 +22,11 @@
 | `/api/lessons/reflect`            | POST     | Required | Seal an `openEnded` reflection submission (attestation for `/api/lessons/complete`); best-effort AI reply                                                                                                                                                               |
 | `/api/lessons/validate-challenge` | POST     | Required | Server-side challenge validation (UX pass/fail; completion gated in `/api/lessons/complete`)                                                                                                                                                                            |
 | `/api/enroll/sponsor`             | POST     | Required | Backend-signed `enroll` tx — platform pays the fee + Enrollment PDA rent so a zero-SOL embedded wallet can enrol (#1004). Returns a partially-signed tx; the learner's wallet co-signs and submits. **The learner is read from the session's profile, never the body.** |
-| `/api/leaderboard`                | GET      | None     | XP rankings (alltime/weekly/monthly)                                                                                                                                                                                                                                    |
-| `/api/referrals/leaderboard`      | GET      | None     | Referral season standings (`?season=N` for a past season's final board)                                                                                                                                                                                                 |
+| `/api/leaderboard`                | GET      | None     | XP rankings (alltime/weekly/monthly); CDN-cached (#1094)                                                                                                                                                                                                                |
+| `/api/referrals/leaderboard`      | GET      | None     | Referral season standings (`?season=N` for a past season's final board); CDN-cached (#1094)                                                                                                                                                                             |
 | `/api/referrals/me`               | GET      | Required | Own referral surface: share code (minted on first ask), season points, referred-signup count                                                                                                                                                                            |
 | `/api/referrals/claim`            | POST     | Required | Attach a captured `?ref=` code to the session's account (signup point); guards live in the `claim_referral` SECURITY DEFINER fn                                                                                                                                         |
-| `/api/certificates/metadata`      | GET      | None     | Serve NFT metadata JSON by UUID                                                                                                                                                                                                                                         |
+| `/api/certificates/metadata`      | GET      | None     | Serve NFT metadata JSON by UUID; CDN-cached (#1094)                                                                                                                                                                                                                     |
 | `/api/certificates/mint`          | POST     | Required | Manual credential mint with retry queue                                                                                                                                                                                                                                 |
 | `/api/build-program`              | POST     | Required | Proxy Anchor build to build server                                                                                                                                                                                                                                      |
 | `/api/deploy/save`                | POST     | Required | Save deployed program record                                                                                                                                                                                                                                            |
@@ -48,17 +48,17 @@ Public, read-only faces of the `server-only` content-bundle store (`lib/content/
 All gated server-side on synced+active deployments; only summary-safe shapes cross
 the boundary (never the full `Lesson` `blocks[]`, which carries solutions/tests).
 
-| Route                            | Method | Auth | Purpose                                                                       |
-| -------------------------------- | ------ | ---- | ----------------------------------------------------------------------------- |
-| `/api/content/courses`           | GET    | None | Course summaries by id (dashboard/profile/certificates)                       |
-| `/api/content/course-lessons`    | GET    | None | Ordered `{_id,title,slug}` lesson summaries per course (Continue card, LX-B2) |
-| `/api/content/lessons-summary`   | GET    | None | Lesson summaries by id — `{_id,title,slug}` only (recent-activity titles)     |
-| `/api/content/recommended`       | GET    | None | Next-course candidates for the Continue card; optional `exclude`              |
-| `/api/content/achievements`      | GET    | None | Achievement catalog (name/icon/award rule/xp); statically cached, hourly      |
-| `/api/content/tags`              | GET    | None | Course tags (profile skill radar); statically cached, hourly                  |
-| `/api/content/lesson-skills`     | GET    | None | Per-lesson skill tags (profile Skills radar, #466 C3); cached, hourly         |
-| `/api/content/is-instructor`     | GET    | None | Whether a wallet is a known instructor (header "Teach" nav gate)              |
-| `/api/content/instructor-wallet` | GET    | None | Wallet → public academy profile for display (#478 B4)                         |
+| Route                            | Method | Auth | Purpose                                                                                           |
+| -------------------------------- | ------ | ---- | ------------------------------------------------------------------------------------------------- |
+| `/api/content/courses`           | GET    | None | Course summaries by id (dashboard/profile/certificates); CDN-cached (#1094)                       |
+| `/api/content/course-lessons`    | GET    | None | Ordered `{_id,title,slug}` lesson summaries per course (Continue card, LX-B2); CDN-cached (#1094) |
+| `/api/content/lessons-summary`   | GET    | None | Lesson summaries by id — `{_id,title,slug}` only (recent-activity titles); CDN-cached (#1094)     |
+| `/api/content/recommended`       | GET    | None | Next-course candidates for the Continue card; optional `exclude`; CDN-cached (#1094)              |
+| `/api/content/achievements`      | GET    | None | Achievement catalog (name/icon/award rule/xp); statically cached, hourly                          |
+| `/api/content/tags`              | GET    | None | Course tags (profile skill radar); statically cached, hourly                                      |
+| `/api/content/lesson-skills`     | GET    | None | Per-lesson skill tags (profile Skills radar, #466 C3); cached, hourly                             |
+| `/api/content/is-instructor`     | GET    | None | Whether a wallet is a known instructor (header "Teach" nav gate); CDN-cached (#1094)              |
+| `/api/content/instructor-wallet` | GET    | None | Wallet → public academy profile for display (#478 B4); CDN-cached (#1094)                         |
 
 ## Community Forum
 
@@ -82,22 +82,27 @@ the boundary (never the full `Lesson` `blocks[]`, which carries solutions/tests)
 
 ## Admin
 
-| Route                                   | Method   | Auth         | Purpose                                                              |
-| --------------------------------------- | -------- | ------------ | -------------------------------------------------------------------- |
-| `/api/admin/auth`                       | POST     | ADMIN_SECRET | Admin authentication                                                 |
-| `/api/admin/status`                     | GET      | ADMIN_SECRET | Platform status (program liveness, authority match)                  |
-| `/api/admin/courses/sync`               | POST     | ADMIN_SECRET | Deploy course PDA + collection on-chain                              |
-| `/api/admin/courses/deactivate`         | POST     | ADMIN_SECRET | Set course `is_active = false`                                       |
-| `/api/admin/courses/reactivate`         | POST     | ADMIN_SECRET | Set course `is_active = true`                                        |
-| `/api/admin/courses/recreate`           | POST     | ADMIN_SECRET | **DESTRUCTIVE** — close + recreate course PDA (create-only fields)   |
-| `/api/admin/courses/recreate/preflight` | GET      | ADMIN_SECRET | Read-only preflight validation for the recreate execute route        |
-| `/api/admin/achievements/sync`          | POST     | ADMIN_SECRET | Deploy achievement type + collection on-chain                        |
-| `/api/admin/resync`                     | POST     | ADMIN_SECRET | Resync on-chain state to Supabase                                    |
-| `/api/admin/flags`                      | GET      | ADMIN_SECRET | Pending community flags for the moderation queue                     |
-| `/api/admin/freeze`                     | GET/POST | ADMIN_SECRET | Read/set the global deploy-window freeze (reset wave B2)             |
-| `/api/admin/publish/pin`                | GET      | ADMIN_SECRET | Content pin: pinned bundle SHA + counts vs academy-courses HEAD      |
-| `/api/admin/capstone-funnel`            | GET      | ADMIN_SECRET | Capstone credential funnel counters (#725)                           |
-| `/api/admin/email/announce-course`      | POST     | ADMIN_SECRET | Send "new course available" email to marketing-opted-in users (#769) |
+All admin routes authenticate the caller's Supabase session against the
+service-role-only `admin_users` allowlist (`requireAdmin()` in
+`lib/admin/auth.ts`, fail-closed). There is no admin password; the retired
+ADMIN_SECRET/HMAC-cookie system and its `/api/admin/auth` login route are gone.
+
+| Route                                   | Method   | Auth                        | Purpose                                                              |
+| --------------------------------------- | -------- | --------------------------- | -------------------------------------------------------------------- |
+| `/api/admin/me`                         | GET      | Session (never 401s)        | `{ admin: boolean }` for the current session (user-menu entry)       |
+| `/api/admin/status`                     | GET      | Admin session (admin_users) | Platform status (program liveness, authority match)                  |
+| `/api/admin/courses/sync`               | POST     | Admin session (admin_users) | Deploy course PDA + collection on-chain                              |
+| `/api/admin/courses/deactivate`         | POST     | Admin session (admin_users) | Set course `is_active = false`                                       |
+| `/api/admin/courses/reactivate`         | POST     | Admin session (admin_users) | Set course `is_active = true`                                        |
+| `/api/admin/courses/recreate`           | POST     | Admin session (admin_users) | **DESTRUCTIVE** — close + recreate course PDA (create-only fields)   |
+| `/api/admin/courses/recreate/preflight` | GET      | Admin session (admin_users) | Read-only preflight validation for the recreate execute route        |
+| `/api/admin/achievements/sync`          | POST     | Admin session (admin_users) | Deploy achievement type + collection on-chain                        |
+| `/api/admin/resync`                     | POST     | Admin session (admin_users) | Resync on-chain state to Supabase                                    |
+| `/api/admin/flags`                      | GET/POST | Admin session (admin_users) | Moderation queue; POST actions a flag (resolve/dismiss/remove/lock)  |
+| `/api/admin/freeze`                     | GET/POST | Admin session (admin_users) | Read/set the global deploy-window freeze (reset wave B2)             |
+| `/api/admin/publish/pin`                | GET      | Admin session (admin_users) | Content pin: pinned bundle SHA + counts vs academy-courses HEAD      |
+| `/api/admin/capstone-funnel`            | GET      | Admin session (admin_users) | Capstone credential funnel counters (#725)                           |
+| `/api/admin/email/announce-course`      | POST     | Admin session (admin_users) | Send "new course available" email to marketing-opted-in users (#769) |
 
 Content drift (bundle SHA vs `academy-courses` HEAD) and chain drift are folded
 into `/api/admin/status`; the publish card reads `/api/admin/publish/pin`. There
@@ -119,7 +124,7 @@ from the other. The marketing send trigger is the Admin table's
 
 ## Teacher preview (#828, #831)
 
-Password-gated (`teach_preview_session` cookie, distinct from `admin_session`) preview of an
+Password-gated (`teach_preview_session` cookie, unrelated to admin auth) preview of an
 unpublished course from a `academy-courses` PR. Read-only: compiles the PR's head commit in
 memory and renders it with the real course/lesson components. Nothing is written to the bundle,
 `content.lock`, or the chain.

@@ -12,7 +12,7 @@ import {
   parseProgramError,
   preflightTransaction,
 } from "@/lib/solana/program-errors";
-import type { CurrentCourse } from "@/hooks/use-dashboard-data";
+import type { CurrentCourse } from "@/lib/dashboard/types";
 import { deriveEndowedProgress } from "@/lib/courses/endowed-progress";
 import { CourseCompletionMint } from "@/components/certificates/course-completion-mint";
 import { Button } from "@/components/ui/button";

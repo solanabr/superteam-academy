@@ -5,10 +5,10 @@ import { NextResponse } from "next/server";
 /**
  * Password gate for the teacher course-preview page (#828).
  *
- * Deliberately SEPARATE from `lib/admin/auth.ts`: the admin secret authorizes
- * authority-signed on-chain writes, while this gates a read-only renderer. They
- * use different cookie names and different secrets, so a preview session can
- * never satisfy `requireAdminAuth` (and vice versa).
+ * Deliberately SEPARATE from `lib/admin/auth.ts`: admin auth (Supabase session
+ * + the `admin_users` allowlist) authorizes authority-signed on-chain writes,
+ * while this gates a read-only renderer. A preview session can never satisfy
+ * `requireAdminAuth` (and vice versa).
  */
 
 export class TeachPreviewAuthError extends Error {
@@ -42,7 +42,7 @@ export function isPreviewConfigured(): boolean {
  * The HMAC key for session cookies. Prefers a real server secret so cookies
  * can't be forged by anyone who guesses the (weak, shared) password; falls back
  * to the password itself when no secret is configured, which still binds the
- * cookie to the current password. With none of the three set there is nothing
+ * cookie to the current password. With neither set there is nothing
  * to sign with — and nothing to protect either, since the gate is disabled — so
  * the last resort is a random per-process key: every cookie it verifies fails.
  */
@@ -51,7 +51,6 @@ const EPHEMERAL_SECRET = crypto.randomBytes(32).toString("hex");
 function sessionSecret(): string {
   return (
     process.env.SUPABASE_SERVICE_ROLE_KEY ??
-    process.env.ADMIN_SECRET ??
     getPreviewPassword() ??
     EPHEMERAL_SECRET
   );

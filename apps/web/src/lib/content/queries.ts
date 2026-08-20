@@ -200,15 +200,27 @@ async function gatedCourses(): Promise<CourseDoc[]> {
 // --- Public / catalog queries (gated: synced + active) ---
 
 /**
- * Catalog listing: synced+active AND listed. Unlisted courses
- * (lib/courses/unlisted.ts) stay reachable by direct URL — getCourseBySlug /
- * getLessonBySlug carry no listing filter — but never appear in the catalog,
- * the landing count, the sitemap, or recommendations.
+ * Listing visibility (#1137): hidden from discovery because the CONTENT says
+ * so — `unlisted: true` on the course doc, carried through the projector into
+ * the bundle. Unlisted is a LISTING property, not an access gate: the course
+ * page, its lessons, enrolment and completion keep working for anyone holding
+ * the URL. What goes away is the catalog, the landing count, the sitemap,
+ * recommendations, the filter chips, and path membership.
+ *
+ * The second clause is the app-code constant this replaces
+ * (lib/courses/unlisted.ts), kept as a temporary fallback: the flag lives in
+ * the content repo, so today's one unlisted course can only set it once that
+ * content PR lands and `content.lock` bumps (Part 2 of #1137). Drop the
+ * clause — and unlisted.ts with it — at that bump.
  */
+function isCourseUnlisted(c: CourseDoc): boolean {
+  return c.unlisted === true || isUnlistedCourse(c._id);
+}
+
 export async function getAllCourses(): Promise<Course[]> {
   const courses = await gatedCourses();
   return courses
-    .filter((c) => !isUnlistedCourse(c._id))
+    .filter((c) => !isCourseUnlisted(c))
     .map((c) => projectCourse(c, projectionDeps))
     .sort(byTrackLevel);
 }
@@ -328,13 +340,23 @@ export async function resolveReviewItems(
 
 export async function getAllLearningPaths(): Promise<LearningPath[]> {
   const map = await getActiveDeployments();
-  const paths = [...pathsById.values()].sort(byPathOrder);
+  // `draft` and `retired` are the content repo's lifecycle flags
+  // (packages/content-schema/src/path.ts). They were defined but never read,
+  // so the only way to hide a path was to delete it — which is why the Paths
+  // tab ended up held behind a hardcoded constant instead. Honouring them here
+  // is what makes visibility a content decision rather than a code one.
+  const paths = [...pathsById.values()]
+    .filter((p) => !p.draft && !p.retired)
+    .sort(byPathOrder);
   return paths.map((p) => {
     const memberIds = new Set(pathCourseRefIds(p));
     // Iterate the store (doc order) so member ordering matches GROQ's
     // `*[_type=="course" && _id in ^.courses[]._ref && …]` document order.
+    // A path is a listing surface: an unlisted course must not surface through
+    // one, or the hiding would only hold on the catalog tab.
     const members = [...coursesById.values()].filter(
-      (c) => memberIds.has(c._id) && isSynced(map.get(c._id))
+      (c) =>
+        memberIds.has(c._id) && isSynced(map.get(c._id)) && !isCourseUnlisted(c)
     );
     return projectLearningPath(p, members, projectionDeps);
   });
@@ -501,7 +523,7 @@ export async function getRecommendedCourses(
         isSynced(map.get(c._id)) &&
         // Recommendations are a listing surface — never surface an unlisted
         // course, even to a learner who found it by direct link.
-        !isUnlistedCourse(c._id)
+        !isCourseUnlisted(c)
     )
     .map((c) => projectRecommended(c, learningPathTitleFor(c._id)))
     .sort(byTrackLevel);
@@ -511,14 +533,18 @@ export async function getAllCourseTags(): Promise<
   { _id: string; title: string; tags: string[]; totalLessons: number }[]
 > {
   const courses = await gatedCourses();
-  return courses
-    .filter((c) => Array.isArray(c.tags))
-    .map((c) => ({
-      _id: c._id,
-      title: str(c.title) as string,
-      tags: c.tags as string[],
-      totalLessons: countCourseLessons(c),
-    }));
+  return (
+    courses
+      // Filter chips are a listing surface too — an unlisted course's tags used
+      // to leak into the catalog filters, offering a chip that matched nothing.
+      .filter((c) => !isCourseUnlisted(c) && Array.isArray(c.tags))
+      .map((c) => ({
+        _id: c._id,
+        title: str(c.title) as string,
+        tags: c.tags as string[],
+        totalLessons: countCourseLessons(c),
+      }))
+  );
 }
 
 /**

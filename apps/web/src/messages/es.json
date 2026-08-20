@@ -42,6 +42,7 @@
     "collapse": "Ocultar estadísticas"
   },
   "nav": {
+    "admin": "Admin",
     "home": "Inicio",
     "teach": "Enseñar",
     "courses": "Cursos",
@@ -51,14 +52,14 @@
     "profile": "Perfil",
     "settings": "Configuración",
     "certificates": "Certificados",
-    "lowSolBalance": "Saldo SOL bajo.",
-    "getDevnetSol": "Obtener SOL devnet ->",
-    "dismissBanner": "Cerrar",
     "review": "Repaso"
   },
   "auth": {
     "accountDeleted": "Esta cuenta ha sido eliminada y no puede iniciar sesión.",
     "authFailed": "La autenticación de la billetera falló. Inténtalo de nuevo o usa otro método de inicio de sesión.",
+    "optionsLoadFailed": "Algunas opciones de inicio de sesión no se cargaron. Continúa con Google o GitHub, o inténtalo de nuevo.",
+    "signatureDeclined": "Firma rechazada. Inténtalo de nuevo o usa otro método de inicio de sesión.",
+    "walletDisconnected": "El inicio de sesión se interrumpió: tu billetera se desconectó. Inténtalo de nuevo o usa otro método.",
     "chooseWallet": "Elige una billetera",
     "connecting": "Conectando...",
     "connectSolanaWallet": "Conectar Billetera Solana",
@@ -696,6 +697,7 @@
     "walletEmbeddedDynamic": "Billetera integrada (Dynamic) — creada con tu inicio de sesión social · Permanente",
     "usedForSignInDynamic": "Usada para iniciar sesión (vía Dynamic)",
     "dynamicLinkHint": "Vincular también te permite iniciar sesión directamente y refuerza la recuperación de tu cuenta.",
+    "dynamicMethodCountNote": "Necesitas al menos un método de inicio de sesión vinculado. Tu inicio de sesión social vía Dynamic no cuenta como método vinculado hasta que lo vincules arriba.",
     "dangerZone": "Zona de peligro",
     "deleteAccountTitle": "Eliminar cuenta",
     "deleteAccountDescription": "Solicita la eliminación permanente de tu cuenta. Tu perfil se anonimiza y se oculta, y se cierra tu sesión. Esto no se puede deshacer.",
@@ -990,6 +992,15 @@
     "report": "Reportar",
     "reportContent": "Reportar Contenido",
     "reportSubmitted": "Reporte enviado. Gracias.",
+    "reportWhatHappensNext": "Un moderador revisa cada reporte a mano. El contenido sigue visible hasta que decida.",
+    "reportReasonLegend": "¿Por qué estás reportando esto?",
+    "reportDetailsRequired": "Explica qué está mal (obligatorio)",
+    "reportErrorSignedOut": "Inicia sesión para reportar contenido.",
+    "reportErrorRateLimited": "Enviaste demasiados reportes. Inténtalo más tarde.",
+    "reportErrorAlreadyReported": "Ya reportaste esto. Un moderador lo está revisando.",
+    "reportErrorOwnContent": "No puedes reportar tu propia publicación.",
+    "reportErrorDetailsRequired": "Escribe al menos una frase explicando qué está mal.",
+    "reportErrorFailed": "El reporte no se envió. Inténtalo de nuevo.",
     "additionalDetails": "Detalles adicionales (opcional)",
     "submitReport": "Enviar Reporte",
     "reasonSpam": "Spam",
@@ -1016,14 +1027,6 @@
     "deleteAnswer": "Eliminar Respuesta",
     "confirmDelete": "¿Estás seguro de que quieres eliminar esto? Esta acción no se puede deshacer.",
     "deleted": "Eliminado con éxito",
-    "flagContent": "Reportar",
-    "flagReasons": {
-      "spam": "Spam",
-      "offensive": "Ofensivo",
-      "off-topic": "Fuera de tema",
-      "other": "Otro"
-    },
-    "flagSubmitted": "Reporte enviado. Gracias.",
     "threadCreated": "Tema creado exitosamente",
     "answerPosted": "Respuesta publicada",
     "stats": {
@@ -1131,38 +1134,6 @@
       "resetError": "No funcionó en este momento. Inténtalo de nuevo en un momento."
     }
   },
-  "adminContentSync": {
-    "description": "Sincroniza el repositorio academy-courses en Sanity en un commit específico y registra el hash de contenido on-chain.",
-    "loading": "Cargando divergencia…",
-    "driftUnavailable": "Divergencia no disponible — no se pudo acceder a GitHub. Comprueba GITHUB_TOKEN e inténtalo de nuevo.",
-    "retry": "Reintentar",
-    "state": {
-      "up_to_date": "Sanity está al día con el HEAD del repositorio.",
-      "behind": "Sanity está por detrás del HEAD — hay contenido nuevo listo para sincronizar.",
-      "never_synced": "El contenido nunca se ha sincronizado — ejecuta la primera sincronización.",
-      "blocked": "La CI del HEAD está fallando — este commit no se puede sincronizar."
-    },
-    "head": "HEAD {sha}",
-    "synced": "Sincronizado {sha}",
-    "ci": "CI {state}",
-    "syncButton": "Sincronizar contenido",
-    "syncing": "Sincronizando…",
-    "syncFailed": "Error al sincronizar el contenido.",
-    "syncSucceeded": "Sincronizado: {written} escritos, {pruned} eliminados.",
-    "coursesHeading": "Divergencia de contenido on-chain",
-    "noCourses": "No hay cursos para mostrar.",
-    "chain": {
-      "content_current": "El contenido on-chain coincide con HEAD.",
-      "content_stale": "El contenido on-chain está desactualizado — registra el nuevo hash.",
-      "not_deployed": "Aún no desplegado on-chain.",
-      "missing_fields": "Faltan campos obligatorios en Sanity.",
-      "awaiting_content_sync": "Esperando a que se complete la sincronización de contenido."
-    },
-    "chainSyncButton": "Registrar on-chain",
-    "chainSyncing": "Registrando…",
-    "chainSyncFailed": "Error en la sincronización on-chain.",
-    "chainSyncSucceeded": "{id} registrado on-chain."
-  },
   "admin": {
     "console": {
       "title": "Consola de administración",
@@ -1173,8 +1144,8 @@
       "courses": "Cursos",
       "moderation": "Moderación",
       "pendingFlags": "{count, plural, one {# reporte pendiente} other {# reportes pendientes}}",
+      "pendingFlagsUnknown": "Recuento de reportes pendientes no disponible",
       "status": "Estado",
-      "content": "Contenido",
       "insights": "Métricas"
     },
     "counts": {
@@ -1184,11 +1155,11 @@
     "screens": {
       "courses": "Cursos",
       "moderation": "Moderación de la comunidad",
-      "status": "Estado del programa",
-      "content": "Contenido"
+      "status": "Estado del programa"
     },
     "coursesScreen": {
       "intro": {
+        "summary": "Cómo funcionan la publicación y el deploy",
         "lede": "Llevar un curso hasta los estudiantes requiere dos pasos separados, en este orden. Esta pantalla reúne los dos: publicación arriba, despliegue abajo.",
         "step1Title": "1. Publicar — ¿la app ya tiene este curso?",
         "step1Body": "El contenido de los cursos vive en el repositorio academy-courses. La app distribuye una copia compilada de él, fijada a un único commit en content.lock. Publicar es un pull request humano que actualiza esa fijación y reconstruye el paquete; en cuanto se fusiona, Vercel vuelve a desplegar y el contenido queda en la app. Esta pantalla no escribe nada: muestra la divergencia y te entrega un PR ya rellenado.",
@@ -1198,6 +1169,7 @@
       },
       "step1Eyebrow": "Paso 1 — Publicar: llevar el contenido a la app",
       "step2Eyebrow": "Paso 2 — Desplegar: poner el curso on-chain",
+      "step3Eyebrow": "Paso 3 — Contenido complementario: quests, logros y rutas",
       "legend": {
         "title": "Qué significa cada estado",
         "description": "Cada fila de curso lleva un estado on-chain y —una vez desplegado— un estado de divergencia de contenido. Son independientes.",
@@ -1256,7 +1228,8 @@
       "fetchError": "Error al obtener el estado",
       "networkError": "Error de red",
       "retry": "Reintentar",
-      "refresh": "Actualizar"
+      "refresh": "Actualizar",
+      "unavailable": "No se devolvió ningún estado."
     },
     "programBar": {
       "network": "Red",
@@ -1264,7 +1237,12 @@
       "config": "Config",
       "found": "Encontrada",
       "notInitialized": "No inicializada",
+      "networkUnknown": "desconocida",
       "authorityMismatch": "Discrepancia de autoridad — verifica PROGRAM_AUTHORITY_SECRET"
+    },
+    "statusScreen": {
+      "programHeading": "Programa",
+      "countsHeading": "Contenido desplegado on-chain"
     },
     "deployScreen": {
       "coursesHeading": "Cursos",
@@ -1381,18 +1359,10 @@
       }
     },
     "contentScreen": {
-      "intro": "Vistas de solo lectura sobre el paquete de contenido: misiones, logros y rutas de aprendizaje. Logros es la única superficie aquí con una acción de sincronización on-chain.",
       "tabs": {
         "quests": "Misiones",
         "achievements": "Logros",
         "paths": "Rutas"
-      },
-      "pin": {
-        "pinned": "Paquete fijado",
-        "drifted": "Paquete desactualizado",
-        "unknown": "Desfase desconocido",
-        "unavailable": "Estado de fijación no disponible",
-        "behind": "{count, plural, one {# commit por detrás} other {# commits por detrás}}"
       },
       "quests": {
         "heading": "Misiones",
@@ -1483,7 +1453,11 @@
     },
     "flags": {
       "description": "Publicaciones de la comunidad reportadas por usuarios. Resuelve una vez que hayas actuado sobre el contenido, o descarta si el reporte no es válido.",
+      "loading": "Cargando la cola de moderación...",
       "noPending": "No hay reportes pendientes.",
+      "loadErrorFetch": "No se pudo cargar la cola de moderación. Su estado es desconocido: puede haber reportes esperando.",
+      "loadErrorNetwork": "Error de red al cargar la cola de moderación. Su estado es desconocido: puede haber reportes esperando.",
+      "loadErrorUnauthorized": "Tu sesión de administrador expiró, por lo que no se pudo cargar la cola de moderación. Inicia sesión de nuevo.",
       "reportedBy": "reportado por @{reporter}",
       "unknownReporter": "desconocido",
       "targetThread": "hilo",
@@ -1492,7 +1466,14 @@
       "resolve": "Resolver",
       "dismiss": "Descartar",
       "errorFetch": "No se pudo actualizar el reporte. Inténtalo de nuevo.",
-      "errorNetwork": "Error de red. Inténtalo de nuevo."
+      "errorNetwork": "Error de red. Inténtalo de nuevo.",
+      "remove": "Eliminar contenido",
+      "lock": "Bloquear hilo",
+      "locked": "Hilo bloqueado",
+      "showContent": "Mostrar el contenido denunciado",
+      "contentUnavailable": "No se pudo cargar el contenido denunciado.",
+      "errorConflict": "Ese contenido ya fue eliminado. Recarga la cola.",
+      "errorRateLimited": "Demasiadas acciones de moderacion seguidas. Espera un minuto e intenta de nuevo."
     },
     "insightsScreen": {
       "title": "Métricas",
@@ -1500,7 +1481,7 @@
       "loading": "Cargando…",
       "error": "No se pudieron cargar las métricas.",
       "empty": "Aún sin datos.",
-      "quizNote": "El acierto en los quizzes se registra como el evento de analítica quiz_checked (PostHog) — no se persiste en el servidor, por lo que aparece en los tableros de PostHog y no aquí.",
+      "quizNote": "La corrección de los cuestionarios no se guarda en el servidor — vive en PostHog, en el evento quiz_checked.",
       "ai": {
         "title": "Tutor de IA",
         "learners": "Estudiantes que usan IA",
@@ -1512,10 +1493,11 @@
         "lesson": "Lección",
         "assistsCol": "Asistencias",
         "learnersCol": "Estudiantes",
-        "spendByDay": "Gasto diario",
         "day": "Día",
         "usd": "USD",
-        "requests": "Solicitudes"
+        "requests": "Solicitudes",
+        "spendChart": "Gasto diario de IA (30d)",
+        "spendChartLabel": "Gasto diario de IA en USD durante los últimos 30 días"
       },
       "learning": {
         "title": "Aprendizaje",
@@ -1523,12 +1505,15 @@
         "enrollments": "Inscripciones",
         "active7d": "Activos (7d)",
         "active30d": "Activos (30d)",
-        "perCourse": "Completadas por curso",
+        "perCourse": "Lecciones completadas por curso",
         "course": "Curso",
-        "completions": "Completadas",
-        "learnersCol": "Estudiantes",
-        "completionsByDay": "Completadas por día (30d)",
-        "day": "Día"
+        "completions": "Lecciones completadas",
+        "learnersCol": "Personas alcanzadas",
+        "completionsByDay": "Lecciones completadas por día (30d)",
+        "day": "Día",
+        "completionsChartLabel": "Lecciones completadas por día durante los últimos 30 días",
+        "activityHint": "Activos cuenta a quienes completaron una lección en el periodo — no inicios de sesión ni sesiones.",
+        "perCourseHint": "Una fila por lección completada, así que cada persona cuenta una vez por lección. Personas alcanzadas es cuántas completaron al menos una lección del curso."
       }
     }
   },

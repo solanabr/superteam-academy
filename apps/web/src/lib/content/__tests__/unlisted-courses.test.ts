@@ -6,20 +6,26 @@ import type { DeploymentStatus } from "../deployments";
 import { UNLISTED_COURSE_IDS, isUnlistedCourse } from "@/lib/courses/unlisted";
 import {
   getAllCourses,
+  getAllCourseTags,
   getAllCoursesIncludingUnlisted,
+  getAllLearningPaths,
   getCourseBySlug,
   getRecommendedCourses,
 } from "../queries";
-import { resolveHeroHref } from "@/lib/courses/entry-lesson";
 
 /**
- * Unlisted = hidden from listings, reachable by direct link — asserted against
- * the REAL committed bundle (the entry-course-live pattern), mocking only the
- * on-chain sync gate so every course reads as synced+active. A course that is
- * both in UNLISTED_COURSE_IDS and absent from getAllCourses here is proven
- * hidden on every surface that lists through it (catalog, landing count,
- * sitemap); getCourseBySlug still resolving is what keeps the direct link —
- * and the landing hero that uses it — alive.
+ * Course visibility is a CONTENT decision, not a code one (#1137).
+ *
+ * The predicate under test is `isCourseUnlisted` in ../queries.ts:
+ * `c.unlisted === true || isUnlistedCourse(c._id)`. The first clause is the
+ * new content flag (packages/content-schema/src/course.ts, carried through the
+ * projector); the second is the outgoing hardcoded id set, kept only until the
+ * content repo sets the flag and `content.lock` bumps (Part 2).
+ *
+ * Asserted against the REAL committed bundle (the entry-course-live pattern),
+ * mocking only the on-chain sync gate so every course reads as synced+active.
+ * Today's bundle carries no `unlisted: true` course, so the bundle exercises
+ * the fallback half; the flag half is proven on doc shapes.
  */
 
 vi.mock("@/lib/content/deployments", async (importActual) => {
@@ -50,19 +56,38 @@ vi.mock("@/lib/content/deployments", async (importActual) => {
 const PILULA_ID = "course-pilula-solana-superteam";
 const PILULA_SLUG = "pilula-solana-superteam";
 
-describe("unlisted courses — hidden from listings, live by direct link", () => {
-  it("the Pílula course is registered as unlisted", () => {
-    expect(isUnlistedCourse(PILULA_ID)).toBe(true);
+/** Mirrors `isCourseUnlisted` (lib/content/queries.ts), which is not exported. */
+const hidden = (c: { _id: string; unlisted?: unknown }) =>
+  c.unlisted === true || isUnlistedCourse(c._id);
+
+describe("the unlisted predicate — content flag OR the outgoing fallback", () => {
+  it("hides a course the CONTENT flags, with no entry in the id set", () => {
+    expect(hidden({ _id: "course-anything", unlisted: true })).toBe(true);
+    expect(isUnlistedCourse("course-anything")).toBe(false);
   });
 
-  it("every unlisted id exists in the bundle — a stale entry is dead config", async () => {
+  it("still hides the one course the outgoing constant covers", () => {
+    // The flag cannot be set until the content PR lands and content.lock
+    // bumps; without this clause the Pílula would pop back into the catalog
+    // the moment this PR deployed.
+    expect(hidden({ _id: PILULA_ID })).toBe(true);
+  });
+
+  it("leaves a listed course alone, flag absent or explicitly false", () => {
+    expect(hidden({ _id: "course-x" })).toBe(false);
+    expect(hidden({ _id: "course-x", unlisted: false })).toBe(false);
+  });
+
+  it("every fallback id exists in the bundle — a stale entry is dead config", async () => {
     const all = await getAllCoursesIncludingUnlisted();
     const ids = new Set(all.map((c) => c._id));
     for (const id of UNLISTED_COURSE_IDS) {
       expect(ids.has(id), `unlisted id "${id}" not in the bundle`).toBe(true);
     }
   });
+});
 
+describe("unlisted courses — hidden from every listing surface", () => {
   it("the catalog listing excludes it; the admin listing keeps it", async () => {
     const listed = await getAllCourses();
     expect(listed.some((c) => c._id === PILULA_ID)).toBe(false);
@@ -76,18 +101,32 @@ describe("unlisted courses — hidden from listings, live by direct link", () =>
     expect(recommended.some((c) => c._id === PILULA_ID)).toBe(false);
   });
 
+  it("the catalog filter chips never carry its tags", async () => {
+    // The #1137 leak: getAllCourseTags had no listing filter, so an unlisted
+    // course's skills became catalog filter chips — chips that then matched
+    // nothing, because the course behind them is filtered out of the results.
+    const tagged = await getAllCourseTags();
+    expect(tagged.some((c) => c._id === PILULA_ID)).toBe(false);
+  });
+
+  it("no learning path surfaces it as a member", async () => {
+    // A path is a listing surface too: hiding that held only on the catalog
+    // tab would not be hiding. Green either way today — the Pílula belongs to
+    // no path — so this is a guard for the day one joins, not a red-proof.
+    const paths = await getAllLearningPaths();
+    const members = paths.flatMap((p) => p.courses ?? []);
+    expect(members.some((c) => c._id === PILULA_ID)).toBe(false);
+  });
+});
+
+describe("unlisted is a listing property, not an access gate", () => {
   it("the direct link stays live — getCourseBySlug still resolves it", async () => {
     const course = await getCourseBySlug(PILULA_SLUG);
     expect(course?._id).toBe(PILULA_ID);
   });
 
-  it("the landing hero does NOT promote it — it falls back to the flagship deep-link", async () => {
-    // The homepage CTA is the biggest discovery surface of all; promoting a
-    // course there while hiding it from the catalog would be the two halves
-    // of the site contradicting each other. The QR/direct link keeps working
-    // (previous test); only the hero PROMOTION falls back.
-    const href = await resolveHeroHref("en");
-    expect(href).not.toContain(PILULA_SLUG);
-    expect(href).toMatch(/^\/en\/courses\/[^/]+\/lessons\/[^/]+$/);
+  it("admin surfaces see it — an unlisted course must stay repairable", async () => {
+    const admin = await getAllCoursesIncludingUnlisted();
+    expect(admin.some((c) => c._id === PILULA_ID)).toBe(true);
   });
 });

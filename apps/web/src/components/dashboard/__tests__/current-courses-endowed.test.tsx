@@ -3,7 +3,7 @@ import type { ReactElement } from "react";
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import type { CurrentCourse } from "@/hooks/use-dashboard-data";
+import type { CurrentCourse } from "@/lib/dashboard/types";
 import messages from "@/messages/en.json";
 
 // The section pulls in the wallet-adapter + on-chain unenroll flow, none of

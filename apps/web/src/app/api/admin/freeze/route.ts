@@ -20,8 +20,8 @@ export const dynamic = "force-dynamic";
  *   GET  → current freeze state (frozen / reason / updatedAt).
  *   POST → set or clear the freeze. Body: `{ frozen: boolean, reason?: string }`.
  *
- * Admin-gated exactly like the other admin routes (signed `admin_session`
- * cookie + the same-origin CSRF check that `requireAdminAuth` applies to every
+ * Admin-gated exactly like the other admin routes (Supabase session on the
+ * `admin_users` allowlist + the same-origin CSRF check that `requireAdminAuth` applies to every
  * state-changing method). The operator sets `frozen: true` at E1 and
  * `frozen: false` at E5.
  *
@@ -37,7 +37,7 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
-    requireAdminAuth(req);
+    await requireAdminAuth(req);
   } catch (e) {
     if (e instanceof AdminAuthError) return adminUnauthorizedResponse();
     throw e;
@@ -58,7 +58,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
-    requireAdminAuth(req);
+    await requireAdminAuth(req);
   } catch (e) {
     if (e instanceof AdminAuthError) return adminUnauthorizedResponse();
     throw e;

@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
 import { UsersThree, ArrowRight } from "@phosphor-icons/react";
@@ -8,8 +7,8 @@ import type { CohortLeague } from "@superteam-lms/types";
 import { CohortRow } from "@/components/leaderboard/cohort-row";
 
 interface CohortStripProps {
-  /** Authenticated user id, or null before auth resolves. */
-  userId: string | null;
+  /** Server-derived "you ±3" league window, or null when unassigned. */
+  league: CohortLeague | null;
 }
 
 /** Localized league tier name (1-based), clamped to the four seeded tiers. */
@@ -19,36 +18,16 @@ function tierName(t: (k: string) => string, tier: number): string {
 }
 
 /**
- * Dashboard "you ±3" league strip (LX-B9b). An additive slot that fetches the
- * viewer's nearby-rank window (server-derived over snapshot scores) and deep
- * links into the leaderboard's League tab. Renders nothing until there is a
- * cohort with at least one neighbor — a solo strip is not a league, and (per
- * LX-B13) nothing about it should read as a hero rank metric.
+ * Dashboard "you ±3" league strip (LX-B9b). An additive slot rendering the
+ * viewer's nearby-rank window (server-derived over snapshot scores by
+ * `loadCohortStrip`, #1096) that deep links into the leaderboard's League tab.
+ * Renders nothing until there is a cohort with at least one neighbor — a solo
+ * strip is not a league, and (per LX-B13) nothing about it should read as a
+ * hero rank metric.
  */
-export function CohortStrip({ userId }: CohortStripProps) {
+export function CohortStrip({ league }: CohortStripProps) {
   const t = useTranslations("gamification");
   const locale = useLocale();
-  const [league, setLeague] = useState<CohortLeague | null>(null);
-
-  useEffect(() => {
-    if (!userId) return;
-    let active = true;
-    (async () => {
-      try {
-        const res = await fetch("/api/leaderboard/cohort?window=strip");
-        if (!res.ok) return;
-        const { league: data } = (await res.json()) as {
-          league: CohortLeague | null;
-        };
-        if (active) setLeague(data);
-      } catch {
-        // Non-critical dashboard surface — stay hidden on failure.
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, [userId]);
 
   // Hidden until the viewer has been assigned a weekly cohort at all.
   if (!league) return null;

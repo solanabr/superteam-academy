@@ -1,5 +1,7 @@
 import "server-only";
 
+import { ERROR_IDS } from "@/constants/errorIds";
+import { logError } from "@/lib/logging";
 import type { createAdminClient } from "@/lib/supabase/admin";
 
 /**
@@ -241,7 +243,85 @@ interface RawDb {
   from(table: string): { select(columns: string): RawSelect };
 }
 
+/**
+ * Same untyped escape hatch for the RPC: `get_admin_insights` post-dates the
+ * generated `Database` types, and it returns a single jsonb document rather
+ * than the row set `.rpc()`'s generated overloads expect.
+ */
+interface RpcDb {
+  rpc(
+    fn: string
+  ): PromiseLike<{ data: unknown; error: { message: string } | null }>;
+}
+
+function isDayCount(value: unknown): value is { day: string; count: number } {
+  const v = value as { day?: unknown; count?: unknown } | null;
+  return (
+    typeof v === "object" &&
+    v !== null &&
+    typeof v.day === "string" &&
+    typeof v.count === "number"
+  );
+}
+
+/**
+ * Structural check on the RPC payload before it is trusted as
+ * `PlatformInsights`. A jsonb round-trip arrives as `unknown`, and a
+ * half-shaped payload rendering as blank cards is worse than falling back — so
+ * anything failing here takes the row path instead.
+ */
+function isPlatformInsights(value: unknown): value is PlatformInsights {
+  const v = value as PlatformInsights | null;
+  return (
+    typeof v === "object" &&
+    v !== null &&
+    typeof v.generatedAt === "string" &&
+    typeof v.ai === "object" &&
+    v.ai !== null &&
+    typeof v.ai.spend30dUsd === "number" &&
+    Array.isArray(v.ai.spendByDay) &&
+    Array.isArray(v.ai.topLessons) &&
+    typeof v.learning === "object" &&
+    v.learning !== null &&
+    typeof v.learning.totalLearners === "number" &&
+    Array.isArray(v.learning.perCourse) &&
+    Array.isArray(v.learning.completionsByDay) &&
+    v.learning.completionsByDay.every(isDayCount)
+  );
+}
+
+/**
+ * RPC-first (#1135): `get_admin_insights()` does the whole fold in SQL, so the
+ * 50k row caps below stop bounding the answer. The function and this code
+ * deploy independently (Vercel auto-deploys main), so an absent or failing RPC
+ * falls back to the row-fetch path rather than 500-ing the panel — the same
+ * arrangement `get_platform_stats` uses on the landing.
+ */
 export async function getPlatformInsights(
+  client: ReturnType<typeof createAdminClient>
+): Promise<PlatformInsights> {
+  const { data, error } = await (client as unknown as RpcDb).rpc(
+    "get_admin_insights"
+  );
+
+  if (!error && isPlatformInsights(data)) return data;
+
+  logError({
+    errorId: ERROR_IDS.ADMIN_INSIGHTS_RPC_FAILED,
+    error: new Error(
+      error?.message ?? "get_admin_insights returned no payload"
+    ),
+  });
+
+  return fetchInsightsFromRows(client);
+}
+
+/**
+ * The pre-#1135 path: pull the raw rows and fold them in JS. Kept as the
+ * fallback, and as the reference the pglite parity test measures the RPC
+ * against.
+ */
+async function fetchInsightsFromRows(
   client: ReturnType<typeof createAdminClient>
 ): Promise<PlatformInsights> {
   const now = new Date();
@@ -272,6 +352,9 @@ export async function getPlatformInsights(
         .from("ai_spend_ledger")
         .select("spend_day, micro_usd, request_count")
         .eq("scope", "global")
+        // scope_key is pinned too: only convention keeps a second 'global' row
+        // from existing, and a stray one would double-count the day.
+        .eq("scope_key", "")
         .gte("spend_day", cut30Day)
         .limit(100),
     ]);

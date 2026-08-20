@@ -2,9 +2,9 @@ import { getTranslations } from "next-intl/server";
 import { StatusClient } from "./status-client";
 
 /**
- * `/admin/status` — the console's default screen (the `/admin` root
- * redirects here on a valid session): program-status bar + deploy counts +
- * data resync, relocated from the stacked admin page (SP3-A Task 3).
+ * `/admin/status` — where the console stands: which chain it is pointed at,
+ * whether the program is initialized there, how much content is deployed, and
+ * the per-wallet data resync. The `/admin` root opens on Courses, not here.
  */
 export default async function AdminStatusPage() {
   const t = await getTranslations("admin");

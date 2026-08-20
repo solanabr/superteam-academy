@@ -42,6 +42,7 @@
     "collapse": "Hide stats"
   },
   "nav": {
+    "admin": "Admin",
     "home": "Home",
     "teach": "Teach",
     "courses": "Courses",
@@ -51,14 +52,14 @@
     "profile": "Profile",
     "settings": "Settings",
     "certificates": "Certificates",
-    "lowSolBalance": "Low SOL balance.",
-    "getDevnetSol": "Get devnet SOL ->",
-    "dismissBanner": "Dismiss",
     "review": "Review"
   },
   "auth": {
     "accountDeleted": "This account has been deleted and can't sign in.",
     "authFailed": "Wallet authentication failed. Please try again or use a different sign-in method.",
+    "optionsLoadFailed": "Some sign-in options couldn't load. Continue with Google or GitHub, or try again.",
+    "signatureDeclined": "Signature declined. Try again, or use another sign-in method.",
+    "walletDisconnected": "Sign-in was interrupted — your wallet disconnected. Try again, or use another sign-in method.",
     "chooseWallet": "Choose a wallet",
     "connecting": "Connecting...",
     "connectSolanaWallet": "Connect Solana Wallet",
@@ -696,6 +697,7 @@
     "walletEmbeddedDynamic": "Embedded wallet (Dynamic) — created with your social sign-in · Permanent",
     "usedForSignInDynamic": "Used for sign-in (via Dynamic)",
     "dynamicLinkHint": "Linking also lets you sign in directly and strengthens account recovery.",
+    "dynamicMethodCountNote": "You need at least one linked sign-in method. Your social sign-in via Dynamic doesn't count as a linked method until you link it above.",
     "dangerZone": "Danger zone",
     "deleteAccountTitle": "Delete account",
     "deleteAccountDescription": "Request permanent deletion of your account. Your profile is anonymized and hidden, and you are signed out. This cannot be undone.",
@@ -990,6 +992,15 @@
     "report": "Report",
     "reportContent": "Report Content",
     "reportSubmitted": "Report submitted. Thank you.",
+    "reportWhatHappensNext": "A moderator reviews every report by hand. The content stays up until they decide.",
+    "reportReasonLegend": "Why are you reporting this?",
+    "reportDetailsRequired": "Explain what's wrong (required)",
+    "reportErrorSignedOut": "Sign in to report content.",
+    "reportErrorRateLimited": "You've sent too many reports. Try again later.",
+    "reportErrorAlreadyReported": "You already reported this. A moderator is looking at it.",
+    "reportErrorOwnContent": "You can't report your own post.",
+    "reportErrorDetailsRequired": "Add at least a sentence explaining what's wrong.",
+    "reportErrorFailed": "The report didn't go through. Try again.",
     "additionalDetails": "Additional details (optional)",
     "submitReport": "Submit Report",
     "reasonSpam": "Spam",
@@ -1016,14 +1027,6 @@
     "deleteAnswer": "Delete Answer",
     "confirmDelete": "Are you sure you want to delete this? This action cannot be undone.",
     "deleted": "Deleted successfully",
-    "flagContent": "Report",
-    "flagReasons": {
-      "spam": "Spam",
-      "offensive": "Offensive",
-      "off-topic": "Off-topic",
-      "other": "Other"
-    },
-    "flagSubmitted": "Report submitted. Thank you.",
     "threadCreated": "Thread created successfully",
     "answerPosted": "Answer posted",
     "stats": {
@@ -1131,38 +1134,6 @@
       "resetError": "That didn't work just now. Try again in a moment."
     }
   },
-  "adminContentSync": {
-    "description": "Sync the academy-courses repository into Sanity at a specific commit, then commit the content hash on-chain.",
-    "loading": "Loading drift…",
-    "driftUnavailable": "Drift is unavailable — GitHub could not be reached. Check GITHUB_TOKEN and retry.",
-    "retry": "Retry",
-    "state": {
-      "up_to_date": "Sanity is up to date with the repository HEAD.",
-      "behind": "Sanity is behind HEAD — new content is ready to sync.",
-      "never_synced": "Content has never been synced — run the first sync.",
-      "blocked": "HEAD CI is failing — this commit cannot be synced."
-    },
-    "head": "HEAD {sha}",
-    "synced": "Synced {sha}",
-    "ci": "CI {state}",
-    "syncButton": "Sync content",
-    "syncing": "Syncing…",
-    "syncFailed": "Content sync failed.",
-    "syncSucceeded": "Synced: {written} written, {pruned} pruned.",
-    "coursesHeading": "On-chain content drift",
-    "noCourses": "No courses to show.",
-    "chain": {
-      "content_current": "On-chain content matches HEAD.",
-      "content_stale": "On-chain content is stale — commit the new hash.",
-      "not_deployed": "Not deployed on-chain yet.",
-      "missing_fields": "Missing required fields in Sanity.",
-      "awaiting_content_sync": "Waiting for content sync to land first."
-    },
-    "chainSyncButton": "Commit on-chain",
-    "chainSyncing": "Committing…",
-    "chainSyncFailed": "Chain sync failed.",
-    "chainSyncSucceeded": "Committed {id} on-chain."
-  },
   "admin": {
     "console": {
       "title": "Admin Console",
@@ -1173,8 +1144,8 @@
       "courses": "Courses",
       "moderation": "Moderation",
       "pendingFlags": "{count, plural, one {# pending flag} other {# pending flags}}",
+      "pendingFlagsUnknown": "Pending flag count unavailable",
       "status": "Status",
-      "content": "Content",
       "insights": "Insights"
     },
     "counts": {
@@ -1184,11 +1155,11 @@
     "screens": {
       "courses": "Courses",
       "moderation": "Community Moderation",
-      "status": "Program Status",
-      "content": "Content"
+      "status": "Program Status"
     },
     "coursesScreen": {
       "intro": {
+        "summary": "How publishing and deploying work",
         "lede": "Getting a course to learners takes two separate steps, in order. This screen holds both: publish on top, deploy below.",
         "step1Title": "1. Publish — does the app have this course?",
         "step1Body": "Course content lives in the academy-courses repo. The app ships a compiled copy of it, pinned to one commit in content.lock. Publishing is a human pull request that bumps that pin and rebuilds the bundle; once it merges, Vercel redeploys and the content is in the app. This screen writes nothing — it shows the drift and hands you a prefilled PR.",
@@ -1198,6 +1169,7 @@
       },
       "step1Eyebrow": "Step 1 — Publish: get the content into the app",
       "step2Eyebrow": "Step 2 — Deploy: put the course on chain",
+      "step3Eyebrow": "Step 3 — Supporting content: quests, achievements and paths",
       "legend": {
         "title": "What the states mean",
         "description": "Every course row carries an on-chain state, and — once deployed — a content-drift state. They are independent.",
@@ -1256,7 +1228,8 @@
       "fetchError": "Failed to fetch status",
       "networkError": "Network error",
       "retry": "Retry",
-      "refresh": "Refresh"
+      "refresh": "Refresh",
+      "unavailable": "No status was returned."
     },
     "programBar": {
       "network": "Network",
@@ -1264,7 +1237,12 @@
       "config": "Config",
       "found": "Found",
       "notInitialized": "Not initialized",
+      "networkUnknown": "unknown",
       "authorityMismatch": "Authority mismatch — check PROGRAM_AUTHORITY_SECRET"
+    },
+    "statusScreen": {
+      "programHeading": "Program",
+      "countsHeading": "Deployed content"
     },
     "deployScreen": {
       "coursesHeading": "Courses",
@@ -1381,18 +1359,10 @@
       }
     },
     "contentScreen": {
-      "intro": "Read-only views over the content bundle: quests, achievements, and learning paths. Achievements is the one surface here with an on-chain sync action.",
       "tabs": {
         "quests": "Quests",
         "achievements": "Achievements",
         "paths": "Paths"
-      },
-      "pin": {
-        "pinned": "Bundle pinned",
-        "drifted": "Bundle drifted",
-        "unknown": "Drift unknown",
-        "unavailable": "Pin status unavailable",
-        "behind": "{count, plural, one {# commit behind} other {# commits behind}}"
       },
       "quests": {
         "heading": "Quests",
@@ -1483,7 +1453,11 @@
     },
     "flags": {
       "description": "Community posts reported by users. Resolve once you've actioned the content, or dismiss if the report isn't valid.",
+      "loading": "Loading the moderation queue...",
       "noPending": "No pending flags.",
+      "loadErrorFetch": "Couldn't load the moderation queue. Its state is unknown — reports may be waiting.",
+      "loadErrorNetwork": "Network error loading the moderation queue. Its state is unknown — reports may be waiting.",
+      "loadErrorUnauthorized": "Your admin session has expired, so the moderation queue could not be loaded. Sign in again.",
       "reportedBy": "reported by @{reporter}",
       "unknownReporter": "unknown",
       "targetThread": "thread",
@@ -1492,7 +1466,14 @@
       "resolve": "Resolve",
       "dismiss": "Dismiss",
       "errorFetch": "Failed to update the flag. Please try again.",
-      "errorNetwork": "Network error. Please try again."
+      "errorNetwork": "Network error. Please try again.",
+      "remove": "Remove content",
+      "lock": "Lock thread",
+      "locked": "Thread locked",
+      "showContent": "Show the reported content",
+      "contentUnavailable": "The reported content could not be loaded.",
+      "errorConflict": "That content has already been removed. Reload the queue.",
+      "errorRateLimited": "Too many moderation actions in a row. Wait a minute and try again."
     },
     "insightsScreen": {
       "title": "Insights",
@@ -1500,7 +1481,7 @@
       "loading": "Loading…",
       "error": "Failed to load insights.",
       "empty": "No data yet.",
-      "quizNote": "Quiz correctness is tracked as the quiz_checked product-analytics event (PostHog) — it is not persisted server-side, so it appears in PostHog dashboards rather than here.",
+      "quizNote": "Quiz correctness is not persisted server-side — it lives in PostHog as the quiz_checked event.",
       "ai": {
         "title": "AI Tutor",
         "learners": "Learners using AI",
@@ -1512,10 +1493,11 @@
         "lesson": "Lesson",
         "assistsCol": "Assists",
         "learnersCol": "Learners",
-        "spendByDay": "Daily spend",
         "day": "Day",
         "usd": "USD",
-        "requests": "Requests"
+        "requests": "Requests",
+        "spendChart": "Daily AI spend (30d)",
+        "spendChartLabel": "Daily AI spend in USD over the last 30 days"
       },
       "learning": {
         "title": "Learning",
@@ -1523,12 +1505,15 @@
         "enrollments": "Enrollments",
         "active7d": "Active (7d)",
         "active30d": "Active (30d)",
-        "perCourse": "Completions by course",
+        "perCourse": "Lessons completed by course",
         "course": "Course",
-        "completions": "Completions",
-        "learnersCol": "Learners",
-        "completionsByDay": "Completions by day (30d)",
-        "day": "Day"
+        "completions": "Lessons completed",
+        "learnersCol": "Learners reached",
+        "completionsByDay": "Lessons completed by day (30d)",
+        "day": "Day",
+        "completionsChartLabel": "Lessons completed per day over the last 30 days",
+        "activityHint": "Active counts learners who completed a lesson in the window — not sign-ins or sessions.",
+        "perCourseHint": "One row per completed lesson, so a learner counts once per lesson. Learners reached is how many finished at least one lesson in the course."
       }
     }
   },

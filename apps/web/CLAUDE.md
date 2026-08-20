@@ -6,13 +6,15 @@ API route reference lives in `src/app/api/CLAUDE.md` (loads when you work on rou
 
 The middleware (`src/middleware.ts`) chains two concerns:
 
-1. **Supabase auth**: Creates server client, calls `getUser()` (may refresh tokens)
+1. **Supabase auth**: Creates server client, calls `getClaims()` — local JWT verify against cached JWKS (no network for asymmetric keys; falls back to `getUser()` on HS256), refreshing the session when needed. Only `claims.sub` is used. No per-request DB queries: soft-deleted accounts are refused at the login chokepoints (`/api/auth/callback`, `/api/auth/wallet`, `/api/auth/dynamic`), and every `profiles.deleted_at` writer pairs with session revocation, so a stale session dies at its next token refresh (bounded by access-token expiry).
 2. **next-intl**: Adds locale prefix to all routes (default: `en`)
+
+Server components share one per-request claims read via `getAuthClaims()` (`lib/auth/dal.ts`, React `cache()`); call `supabase.auth.getUser()` directly only when the full user object is needed.
 
 **Auth-gated routes** (redirect to landing if unauthenticated): `/dashboard`, `/settings`, `/profile` (exact — own profile only)
 **Public routes** (no auth required): `/` (landing), `/courses`, `/leaderboard`, `/community`, `/certificates`, `/profile/[username]`
-**Admin routes**: Checked against HMAC-signed `admin_session` cookie (separate from Supabase auth). Sub-routes redirect to `/admin` login form if cookie is absent or expired.
-**Excluded from middleware**: `/api/*`, `/_next`, `/_vercel`, static assets
+**Admin routes**: Gated on the Supabase session like other auth-gated routes — no session redirects to the localized landing. Whether the user is actually an admin (`admin_users` allowlist, service-role-only read) is decided by `requireAdmin()` (`lib/admin/auth.ts`) in the `/admin` layout/page, which 404s signed-in non-admins so the panel is not revealed. There is no admin password or login form.
+**Excluded from middleware**: `/api/*`, `/_next/static`, `/_next/image`, `/_vercel`, and asset-extension paths only — a dot in a page slug (e.g. `/en/courses/node.js-basics`) still runs middleware.
 
 ## i18n Notes
 
@@ -56,8 +58,10 @@ NEXT_PUBLIC_SOLANA_NETWORK=devnet
 NEXT_PUBLIC_PROGRAM_ID=            # Deployed program ID (used by webhook decoder + frontend)
 NEXT_PUBLIC_XP_MINT_ADDRESS=       # XP mint pubkey (from initialize.ts output)
 
-# Required — Admin & Backend (server-only, never NEXT_PUBLIC_)
-ADMIN_SECRET=                      # Admin panel authentication secret (HMAC-signed cookies)
+# Required — Backend (server-only, never NEXT_PUBLIC_)
+# (Admin panel auth needs NO env var: it is the caller's Supabase session
+#  checked against the service-role-only `admin_users` allowlist. The old
+#  ADMIN_SECRET is retired and can be deleted from Vercel.)
 BUILD_SERVER_URL=                  # Cloud Run build server URL (server-only, proxied via /api)
 BUILD_SERVER_API_KEY=              # Build server authentication key
 GITHUB_TOKEN=                      # Fine-grained READ token for solanabr/academy-courses (public repo,
@@ -123,8 +127,9 @@ OPENENDED_AI_REPLY=                # Best-effort AI reply on /api/lessons/reflec
 TEACH_PREVIEW_PASSWORD=            # Shared password for /teach/preview. NO default —
                                    # unset = preview disabled (/api/teach/preview/auth 503s).
                                    # Gates read-only rendering of unpublished course PRs only:
-                                   # never on-chain writes, never the admin surface (separate
-                                   # cookie from admin_session, so it cannot satisfy admin auth).
+                                   # never on-chain writes, never the admin surface (its own
+                                   # cookie; admin auth is the Supabase session + admin_users
+                                   # allowlist, which this can never satisfy).
 
 # Optional — Dynamic embedded wallets (replaced Phantom Connect, which Portal
 # never approved — #1017). Public environment id from the Dynamic dashboard
