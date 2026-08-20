@@ -286,6 +286,11 @@ ALTER TABLE nft_metadata ENABLE ROW LEVEL SECURITY;
 -- anymore (the google_id/github_id deanonymization fix), that inline subquery
 -- would see only the caller's own row and break every cross-user read of those
 -- tables. Returning a bare boolean leaks no row or column.
+--
+-- #1120: the `deleted_at IS NULL` half of the header's "public, non-deleted"
+-- claim was missing from the body until 20260820140000. The four tables it
+-- gates each keep a separate own-row SELECT policy, so a tombstoned user still
+-- reads their own rows; only the cross-user path closes.
 CREATE OR REPLACE FUNCTION public.is_public_profile(p_user_id uuid)
 RETURNS boolean
 LANGUAGE sql
@@ -295,7 +300,7 @@ SET search_path = ''
 AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.profiles
-    WHERE id = p_user_id AND is_public = true
+    WHERE id = p_user_id AND is_public = true AND deleted_at IS NULL
   );
 $$;
 
@@ -2123,7 +2128,11 @@ CREATE POLICY "Authenticated users can create flags"
 -- except the caller's own. Running as owner restores the aggregate; the explicit
 -- "is_public OR own" guard below preserves the P0-B1 guarantee that anon cannot
 -- see aggregates for private profiles (and authenticated users still see their own).
-CREATE VIEW community_stats AS
+--
+-- #1120 (20260820140000): the tombstone filter sits on the PUBLIC branch only —
+-- `(is_public AND deleted_at IS NULL) OR own` — matching account_deletion's rule
+-- that public read paths gain the guard while own-row access is untouched.
+CREATE OR REPLACE VIEW community_stats AS
 SELECT
   p.id AS user_id,
   COUNT(DISTINCT t.id) AS total_threads,
@@ -2134,7 +2143,7 @@ FROM profiles p
 LEFT JOIN threads t ON t.author_id = p.id
 LEFT JOIN answers a ON a.author_id = p.id
 LEFT JOIN xp_transactions xt ON xt.user_id = p.id
-WHERE p.is_public = true OR p.id = auth.uid()
+WHERE (p.is_public = true AND p.deleted_at IS NULL) OR p.id = auth.uid()
 GROUP BY p.id;
 
 -- Explicit grants: publicly queryable, but the WHERE guard limits each caller
@@ -4029,6 +4038,10 @@ GRANT EXECUTE ON FUNCTION public.record_referral_course_completion(UUID, TEXT) T
 -- mirroring get_leaderboard's shape and its is_public/username hygiene filters.
 -- p_season NULL = the season covering NOW() (falling back to the latest season,
 -- so the page still renders between seasons).
+--
+-- #1120 (20260820140000): it copied get_leaderboard's is_public/username filters
+-- but not its `deleted_at IS NULL` one, so a tombstoned referrer could resurface
+-- here by flipping is_public. The two boards now agree.
 CREATE OR REPLACE FUNCTION public.get_referral_leaderboard(
   p_season INT DEFAULT NULL,
   p_limit INT DEFAULT 20
@@ -4081,6 +4094,7 @@ BEGIN
     WHERE re.created_at >= v_season.starts_at
       AND re.created_at < v_season.ends_at
       AND p.is_public = true
+      AND p.deleted_at IS NULL
       AND p.username IS NOT NULL
       AND p.username <> ''
     GROUP BY re.referrer_id, p.username, p.avatar_url
