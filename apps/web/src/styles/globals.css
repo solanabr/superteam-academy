@@ -577,19 +577,22 @@
     transform: scale(1.12) translateY(-3px);
   }
 
-  /* Earned — golden metallic gradient */
+  /* Earned — brand-green metallic gradient (designer feedback 19-08: the gold
+     read as generic; the medal now carries the palette the rest of the app
+     wears). Stops are the brand greens — primary-dark → primary → a pale
+     highlight — arranged as the same 145° "metal" sweep the gold used. */
   .ach-medal.earned {
     background: linear-gradient(
       145deg,
-      #7a4500 0%,
-      #b45309 15%,
-      #f5a623 35%,
-      #fde68a 50%,
-      #f5a623 65%,
-      #b45309 85%,
-      #7a4500 100%
+      #04382a 0%,
+      #065c44 18%,
+      #2ecc8e 38%,
+      #a8f0d4 50%,
+      #2ecc8e 62%,
+      #065c44 84%,
+      #04382a 100%
     );
-    filter: drop-shadow(0 6px 18px rgba(245, 166, 35, 0.38));
+    filter: drop-shadow(0 6px 18px rgba(46, 204, 142, 0.38));
     animation: medal-pulse 3.5s ease-in-out infinite;
   }
 
@@ -655,10 +658,11 @@
     height: 56px;
   }
 
-  /* Glyph — monospace text, no emoji */
+  /* Glyph — display-font text, no emoji (designer feedback 19-08: the medal
+     face wears the brand's display face, not the code font). */
   .ach-glyph {
-    font-family: var(--font-mono), "JetBrains Mono", monospace;
-    font-weight: 600;
+    font-family: var(--font-display), "Nunito", sans-serif;
+    font-weight: 900;
     user-select: none;
     position: relative;
     z-index: 1;
@@ -1104,10 +1108,10 @@
 @keyframes medal-pulse {
   0%,
   100% {
-    filter: drop-shadow(0 6px 18px rgba(245, 166, 35, 0.32));
+    filter: drop-shadow(0 6px 18px rgba(46, 204, 142, 0.32));
   }
   50% {
-    filter: drop-shadow(0 8px 26px rgba(245, 166, 35, 0.58));
+    filter: drop-shadow(0 8px 26px rgba(46, 204, 142, 0.58));
   }
 }
 
@@ -1260,19 +1264,6 @@
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-/* Infinite horizontal scroll for achievement marquee. Each GROUP slides
-   exactly its own width; two identical siblings make the wrap pixel-perfect
-   at any viewport (a single strip at -25% left blank space on wide monitors
-   before every reset). */
-@keyframes marquee {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-100%);
   }
 }
 
@@ -1650,25 +1641,68 @@
   transform: none;
 }
 
-/* Marquee groups animate; the parent only hosts the hover-pause. */
-.landing-marquee-group {
-  display: flex;
-  flex: none;
-  gap: 0.75rem;
-  /* Trailing gap so group N's last item and group N+1's first item keep the
-     same rhythm — this is what makes -100% land seamlessly. */
-  padding-right: 0.75rem;
-  /* 160s: one group is 4 set-widths, so this preserves the pre-#1088 px/s. */
-  animation: marquee 160s linear infinite;
+/* ── CTA achievement ring (designer feedback 19-08) ─────────────────
+   The flat marquee became a 3D ring inside the closing CTA: items sit at
+   per-item --ring-a angles around a shared --ring-r radius, the whole ring
+   turns forever, and hover (or focus inside) pauses it. backface-visibility
+   culls the far half so labels never render mirrored. */
+.ach-ring-stage {
+  perspective: 1400px;
+  height: 220px;
+}
+.ach-ring {
+  --ring-r: 150px;
+  position: relative;
+  width: 96px;
+  height: 150px;
+  margin: 0 auto;
+  transform-style: preserve-3d;
+  animation: ach-ring-spin 36s linear infinite;
 }
 @media (min-width: 640px) {
-  .landing-marquee-group {
-    gap: 1rem;
-    padding-right: 1rem;
+  .ach-ring {
+    --ring-r: 230px;
   }
 }
-.landing-marquee:hover .landing-marquee-group {
+@media (min-width: 1024px) {
+  .ach-ring {
+    --ring-r: 300px;
+  }
+}
+.ach-ring-stage:hover .ach-ring,
+.ach-ring-stage:focus-within .ach-ring {
   animation-play-state: paused;
+}
+.ach-ring-item {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  transform: rotateY(var(--ring-a)) translateZ(var(--ring-r));
+  backface-visibility: hidden;
+}
+.ach-ring-name {
+  font-family: var(--font-display), "Nunito", sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.3;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.85);
+}
+@keyframes ach-ring-spin {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ach-ring {
+    animation: none;
+  }
 }
 
 /* ── Responsive achievement medals for marquee on small screens ── */

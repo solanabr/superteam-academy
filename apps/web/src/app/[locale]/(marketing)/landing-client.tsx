@@ -15,6 +15,7 @@ import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
 import { AuthModal, AuthTriggerButton } from "@/components/auth/auth-modal";
 import { AuthErrorToast } from "@/components/auth/auth-error-toast";
+import { AchievementRing } from "@/components/landing/achievement-ring";
 import { HeroShowcase } from "@/components/landing/hero-showcase";
 import {
   BuildWidget,
@@ -644,76 +645,9 @@ export function LandingPageClient({
           </div>
         </section>
 
-        {/* ── Gamification Showcase ── */}
-        {achievements.length > 0 && (
-          <section className="py-12 sm:py-20 md:py-28">
-            <div className="container px-4">
-              <Reveal>
-                <div className="mb-8 flex items-end justify-between sm:mb-14">
-                  <h2 className="font-display text-2xl font-black tracking-[-0.5px] sm:text-3xl md:text-4xl">
-                    {t("gamificationTitle")}
-                  </h2>
-                  <div className="hidden text-sm font-medium text-text-3 md:block">
-                    {t("gamificationComment")}
-                  </div>
-                </div>
-              </Reveal>
-            </div>
-
-            {/* Achievement Marquee — full-width auto-scroll */}
-            <div className="relative overflow-hidden">
-              <div
-                className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 bg-gradient-to-r from-[var(--bg)] to-transparent sm:w-20"
-                aria-hidden="true"
-              />
-              <div
-                className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-[var(--bg)] to-transparent sm:w-20"
-                aria-hidden="true"
-              />
-
-              {/* Two IDENTICAL groups, each animating -100% of its own width:
-                  the loop is pixel-seamless at any viewport. A single strip
-                  sliding -25% left blank space on wide monitors before each
-                  reset. Each group repeats the set 4× so it outspans even
-                  ultra-wide viewports. */}
-              <div className="landing-marquee flex w-max py-2">
-                {[0, 1].map((group) => (
-                  <div
-                    key={group}
-                    className="landing-marquee-group"
-                    aria-hidden={group === 1 || undefined}
-                  >
-                    {[
-                      ...achievements,
-                      ...achievements,
-                      ...achievements,
-                      ...achievements,
-                    ].map((ach, i) => (
-                      <div key={`${group}-${ach.id}-${i}`} className="ach-item">
-                        <div
-                          className={`ach-medal ${ach.solTier ? "sol" : "earned"}`}
-                          aria-hidden="true"
-                        >
-                          <div className="ach-face" />
-                          <span className="ach-glyph">{ach.glyph}</span>
-                        </div>
-                        <div className="ach-info">
-                          <p className="ach-name">{ach.name}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <p className="mx-auto mt-8 max-w-lg text-center text-sm leading-relaxed text-text-3">
-              {t("gamificationCopy", { count: achievements.length })}
-            </p>
-          </section>
-        )}
-
-        {/* ── CTA ── */}
+        {/* ── CTA × Achievements (designer feedback, 19-08): the standalone
+            marquee section merged into the closing CTA — promise on top, the
+            rewards spinning in the middle, the way in right below. */}
         <section className="relative overflow-hidden bg-[var(--primary-dark)]">
           <div
             className="absolute inset-0 opacity-[0.04]"
@@ -729,14 +663,24 @@ export function LandingPageClient({
             aria-hidden="true"
           />
 
-          <div className="container relative px-4 py-16 text-center sm:py-24 md:py-36">
+          <div className="container relative px-4 py-16 text-center sm:py-20 md:py-28">
             <h2 className="mb-4 font-display text-3xl font-black tracking-[-1px] text-white sm:text-4xl md:text-6xl">
               {t("ctaTitle")}
             </h2>
-            <p className="mx-auto mb-10 max-w-md text-base text-white/50 sm:text-lg">
+            <p className="mx-auto max-w-md text-base text-white/50 sm:text-lg">
               {t("ctaSubtitle")}
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-4">
+
+            {achievements.length > 0 && (
+              <div className="mt-10 sm:mt-12">
+                <AchievementRing achievements={achievements} />
+                <p className="mx-auto mt-6 max-w-lg text-center text-sm leading-relaxed text-white/50">
+                  {t("gamificationCopy", { count: achievements.length })}
+                </p>
+              </div>
+            )}
+
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
               {/* LX-A1: bottom "Get Started" deep-links into flagship lesson 1
                   instead of opening the auth modal. */}
               {!isLoggedIn && (
