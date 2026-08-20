@@ -3303,11 +3303,17 @@ BEGIN
     FROM public.email_subscriptions es
     JOIN auth.users u ON u.id = es.user_id
     JOIN public.profiles p ON p.id = es.user_id
+    -- #1075: consent is asserted HERE, at claim time — the claim and the ledger
+    -- INSERT are one statement, so a flip between the learner scheduling and
+    -- the cron claiming excludes the row.
     WHERE es.reminder_opt_in = true
       AND u.email IS NOT NULL
       AND u.email <> ''
-      -- Synthetic wallet-auth addresses are not inboxes (see #779).
-      AND u.email NOT LIKE '%@wallet.superteam-lms.local'
+      -- Synthetic wallet-auth addresses are not inboxes (see #779). lower():
+      -- SQL mirror of isWalletPlaceholderEmail (#1074,
+      -- apps/web/src/lib/auth/wallet-placeholder.ts) — a differently-cased
+      -- placeholder must not slip past a byte-wise LIKE. Keep the two in step.
+      AND lower(u.email) NOT LIKE '%@wallet.superteam-lms.local'
       -- Multi-day plans: membership of the committed `days` list
       -- (`jsonb ? text` = element exists). All seven entries = daily. The claim
       -- below still caps a learner at ONE reminder per São Paulo day.
@@ -3508,11 +3514,17 @@ BEGIN
     JOIN auth.users u      ON u.id = es.user_id
     JOIN public.profiles p ON p.id = es.user_id
     LEFT JOIN public.user_xp ux ON ux.user_id = es.user_id
+    -- #1075: consent is asserted HERE, at claim time — the claim and the ledger
+    -- INSERT are one statement, so a flip between the learner becoming due and
+    -- the cron claiming excludes the row.
     WHERE es.reminder_opt_in = true
       AND u.email IS NOT NULL
       AND u.email <> ''
-      -- Synthetic wallet-auth addresses are not inboxes (see #779).
-      AND u.email NOT LIKE '%@wallet.superteam-lms.local'
+      -- Synthetic wallet-auth addresses are not inboxes (see #779). lower():
+      -- SQL mirror of isWalletPlaceholderEmail (#1074,
+      -- apps/web/src/lib/auth/wallet-placeholder.ts) — a differently-cased
+      -- placeholder must not slip past a byte-wise LIKE. Keep the two in step.
+      AND lower(u.email) NOT LIKE '%@wallet.superteam-lms.local'
   ),
   lapsed AS (
     SELECT c.*, (v_today - c.last_seen)::int AS inactive_days

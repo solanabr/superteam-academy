@@ -11,6 +11,12 @@
  * to know that).
  *
  * Importable from both server and client code — keep it dependency-free.
+ *
+ * SQL mirror (#1075): the email claim RPCs (`claim_due_session_reminders`,
+ * `claim_due_reengagement`) apply the same predicate as
+ * `lower(u.email) NOT LIKE '%@wallet.superteam-lms.local'` — see
+ * supabase/migrations/20260819190000_email_claim_consent_recheck.sql. A domain
+ * change must land in both languages.
  */
 
 /** Domain suffix of the synthetic wallet-auth placeholder email. */
