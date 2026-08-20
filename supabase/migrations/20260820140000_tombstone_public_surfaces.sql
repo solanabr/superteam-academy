@@ -30,7 +30,15 @@
 -- already surfacing through these three objects today with no malicious write
 -- anywhere. A write-side guard on is_public would not catch that; this does.
 --
--- Reader-only change: no column, no grant, no security posture moves. Each body
+-- Reader-only change: no column and no security posture moves. ONE grant does
+-- move, deliberately: community_stats currently carries Supabase's default
+-- `arwdDxtm` for anon and authenticated, and the REVOKE below narrows that to
+-- SELECT, matching public_profiles and public_onchain_deployments which were
+-- already tightened. Inert either way — the view aggregates with GROUP BY, so
+-- it is not auto-updatable and the write bits could never be exercised — but it
+-- is a real privilege change on prod and belongs in the ledger, not glossed as
+-- "no grants move". public_user_xp still carries the same default and is also
+-- non-updatable; left alone here rather than widening this PR. Each body
 -- below is carried forward verbatim from the latest migration that defines it
 -- (named above) with the single filter added, and each object's existing grants
 -- are re-stated explicitly rather than left to CREATE OR REPLACE's implicit
