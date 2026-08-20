@@ -42,6 +42,7 @@
     "collapse": "Ocultar estatísticas"
   },
   "nav": {
+    "admin": "Admin",
     "home": "Início",
     "teach": "Ensinar",
     "courses": "Cursos",

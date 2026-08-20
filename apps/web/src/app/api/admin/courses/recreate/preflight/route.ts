@@ -23,12 +23,11 @@ import { sanitizeReason } from "@/lib/admin/sanitize-reason";
  * as `{ canRecreate: false, reason }` with a 200. Only an unexpected failure
  * (RPC/DB) is a 500.
  *
- * Auth: this GET relies on the HMAC-signed `admin_session` cookie
- * (`requireAdminAuth`). The cookie is `SameSite=Strict`, so a cross-site GET
- * carries no cookie and is rejected with 401 — that, not an origin check, is the
- * boundary here. `isSameOriginRequest` returns true for a GET (no CSRF-mutation
- * surface), so the POST route's same-origin assertion is a no-op for GET and is
- * deliberately not applied; this handler is read-only regardless.
+ * Auth: this GET relies on the caller's Supabase session + the `admin_users`
+ * allowlist (`requireAdminAuth`). `isSameOriginRequest` returns true for a GET
+ * (no CSRF-mutation surface), so the POST route's same-origin assertion is a
+ * no-op for GET and is deliberately not applied; this handler is read-only
+ * regardless.
  *
  * Any `reason`/error string is scrubbed with {@link sanitizeReason} before it
  * leaves the server: refusal reasons from `preflightRecreate` can embed the
@@ -37,7 +36,7 @@ import { sanitizeReason } from "@/lib/admin/sanitize-reason";
  */
 export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
-    requireAdminAuth(req);
+    await requireAdminAuth(req);
   } catch (e) {
     if (e instanceof AdminAuthError) return adminUnauthorizedResponse();
     throw e;

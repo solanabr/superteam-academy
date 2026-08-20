@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import {
@@ -8,6 +8,7 @@ import {
   Check,
   Copy,
   GearSix,
+  ShieldStar,
   SignOut,
   Trophy,
   UserCircle,
@@ -21,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { fetchIsAdmin } from "@/lib/admin/client";
 import { resetUser } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 import { logoutDynamic } from "@/lib/dynamic/client";
@@ -42,6 +44,24 @@ export function UserMenu({
   const tNav = useTranslations("nav");
   const { disconnect, connected } = useWallet();
   const [copied, setCopied] = useState(false);
+
+  // Cosmetic Admin entry: shown only when the server says the session is on
+  // the admin_users allowlist (/api/admin/me, memoized per page load). The
+  // server gate on /admin and /api/admin/* is the security boundary.
+  const [isAdmin, setIsAdmin] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    void fetchIsAdmin()
+      .then((admin) => {
+        if (!cancelled) setIsAdmin(admin);
+      })
+      .catch(() => {
+        // Fail closed: any probe failure just means no Admin entry.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleSignOut = useCallback(async () => {
     if (connected) {
@@ -173,6 +193,17 @@ export function UserMenu({
             {tCommon("settings")}
           </Link>
         </DropdownMenuItem>
+        {isAdmin && (
+          <DropdownMenuItem asChild>
+            <Link
+              href={`/${locale}/admin`}
+              className="flex items-center gap-2 font-display text-[13px] font-semibold"
+            >
+              <ShieldStar size={14} weight="bold" />
+              {tNav("admin")}
+            </Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={handleSignOut}

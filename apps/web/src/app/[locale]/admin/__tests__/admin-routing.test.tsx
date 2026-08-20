@@ -1,47 +1,45 @@
-// @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
 import AdminPage from "../page";
 import AdminPublishRedirect from "../publish/page";
 import AdminDeployRedirect from "../deploy/page";
 
 /**
- * Routing contract of the merged Courses screen:
- *   - `/admin` (valid session) lands on `/admin/courses` (was `/admin/status`)
+ * Routing contract of the session-based admin console:
+ *   - `/admin` (allowlisted session) lands on `/admin/courses`
+ *   - a signed-in NON-admin gets a 404 (notFound), never a redirect — the
+ *     panel's existence is not revealed (anonymous visitors are bounced to the
+ *     landing by the middleware before this page runs)
  *   - `/admin/publish` and `/admin/deploy` — the two screens Courses replaced —
  *     stay alive as redirects so bookmarks and muscle memory don't 404.
  * The redirect target is locale-prefixed, so a `pt-BR` admin stays in `pt-BR`.
  */
 
-const { redirectMock, isValidAdminSessionMock, cookieGetMock } = vi.hoisted(
-  () => ({
-    redirectMock: vi.fn<(url: string) => never>(),
-    isValidAdminSessionMock: vi.fn<() => boolean>(),
-    cookieGetMock: vi.fn<() => { value: string } | undefined>(),
-  })
-);
+const { redirectMock, notFoundMock, requireAdminMock } = vi.hoisted(() => ({
+  redirectMock: vi.fn<(url: string) => never>(),
+  notFoundMock: vi.fn<() => never>(() => {
+    throw new Error("NEXT_NOT_FOUND");
+  }),
+  requireAdminMock: vi.fn<() => Promise<{ userId: string } | null>>(),
+}));
 
-vi.mock("next/navigation", () => ({ redirect: redirectMock }));
-vi.mock("next/headers", () => ({
-  cookies: async () => ({ get: cookieGetMock }),
+vi.mock("next/navigation", () => ({
+  redirect: redirectMock,
+  notFound: notFoundMock,
 }));
 vi.mock("@/lib/admin/auth", () => ({
-  isValidAdminSession: isValidAdminSessionMock,
-}));
-vi.mock("../admin-login-form", () => ({
-  AdminLoginForm: () => <div data-testid="admin-login-form" />,
+  requireAdmin: requireAdminMock,
 }));
 
 beforeEach(() => {
   vi.clearAllMocks();
-  cookieGetMock.mockReturnValue({ value: "signed-session" });
-  isValidAdminSessionMock.mockReturnValue(true);
+  requireAdminMock.mockResolvedValue({ userId: "admin-1" });
 });
 
 describe("/admin default landing", () => {
-  it("sends an authenticated admin to the Courses screen", async () => {
+  it("sends an allowlisted admin to the Courses screen", async () => {
     await AdminPage({ params: Promise.resolve({ locale: "en" }) });
     expect(redirectMock).toHaveBeenCalledWith("/en/admin/courses");
+    expect(notFoundMock).not.toHaveBeenCalled();
   });
 
   it("keeps the locale prefix on the landing redirect", async () => {
@@ -49,17 +47,14 @@ describe("/admin default landing", () => {
     expect(redirectMock).toHaveBeenCalledWith("/pt-BR/admin/courses");
   });
 
-  it("still renders the login form (and never redirects) without a session", async () => {
-    isValidAdminSessionMock.mockReturnValue(false);
-    cookieGetMock.mockReturnValue(undefined);
+  it("404s a signed-in non-admin and never redirects (panel not revealed)", async () => {
+    requireAdminMock.mockResolvedValue(null);
 
-    render(
-      (await AdminPage({
-        params: Promise.resolve({ locale: "en" }),
-      })) as React.ReactElement
-    );
+    await expect(
+      AdminPage({ params: Promise.resolve({ locale: "en" }) })
+    ).rejects.toThrow("NEXT_NOT_FOUND");
 
-    expect(screen.getByTestId("admin-login-form")).toBeInTheDocument();
+    expect(notFoundMock).toHaveBeenCalledTimes(1);
     expect(redirectMock).not.toHaveBeenCalled();
   });
 });

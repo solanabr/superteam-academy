@@ -36,7 +36,7 @@ export const maxDuration = 300;
  */
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
-    requireAdminAuth(req);
+    await requireAdminAuth(req);
   } catch (e) {
     if (e instanceof AdminAuthError) return adminUnauthorizedResponse();
     throw e;

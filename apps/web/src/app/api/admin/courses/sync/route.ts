@@ -89,8 +89,9 @@ function parseActiveLessons(
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  let adminUserId: string;
   try {
-    requireAdminAuth(req);
+    ({ userId: adminUserId } = await requireAdminAuth(req));
   } catch (e) {
     if (e instanceof AdminAuthError) return adminUnauthorizedResponse();
     throw e;
@@ -145,6 +146,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
+
+  // Audit trail: who requested this on-chain deploy/update.
+  console.log(
+    `[admin/courses/sync] ${courseId} (admin=${adminUserId}): sync requested` +
+      (commitContent ? " (commitContent)" : "")
+  );
 
   if (new TextEncoder().encode(courseId).length > 32) {
     return NextResponse.json(

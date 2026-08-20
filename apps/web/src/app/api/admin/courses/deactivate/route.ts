@@ -20,7 +20,7 @@ import { COURSES_CACHE_TAG } from "@/lib/content/queries";
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
-    requireAdminAuth(req);
+    await requireAdminAuth(req);
   } catch (e) {
     if (e instanceof AdminAuthError) return adminUnauthorizedResponse();
     throw e;

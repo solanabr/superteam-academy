@@ -14,6 +14,24 @@ export type Database = {
   };
   public: {
     Tables: {
+      admin_users: {
+        Row: {
+          user_id: string;
+          granted_at: string;
+          granted_by: string;
+        };
+        Insert: {
+          user_id: string;
+          granted_at?: string;
+          granted_by: string;
+        };
+        Update: {
+          user_id?: string;
+          granted_at?: string;
+          granted_by?: string;
+        };
+        Relationships: [];
+      };
       league_tiers: {
         Row: { tier: number; min_prior_week_xp: number };
         Insert: { tier: number; min_prior_week_xp: number };

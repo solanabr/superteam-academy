@@ -20,6 +20,7 @@ vi.mock("@/lib/admin/auth", () => ({
     new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 }),
   requireAdminAuth: vi.fn(() => {
     if (h.state.authThrows) throw new h.AdminAuthError();
+    return { userId: "admin-user-1" };
   }),
 }));
 

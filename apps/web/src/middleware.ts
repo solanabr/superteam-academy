@@ -3,61 +3,8 @@ import { createServerClient } from "@supabase/ssr";
 import createIntlMiddleware from "next-intl/middleware";
 import { env } from "@/lib/env";
 import { locales, defaultLocale } from "@/lib/i18n/config";
-import { isAdminRoute, isAdminRootPath } from "@/lib/admin/routes";
-import { ADMIN_SESSION_MAX_AGE_MS } from "@/lib/admin/session-format";
+import { isAdminRoute } from "@/lib/admin/routes";
 import { buildCsp, generateNonce } from "@/lib/csp";
-
-// NOTE: This Edge-runtime `isValidAdminSession` (Web Crypto) must stay in sync
-// with the Node-runtime implementation in `lib/admin/auth.ts` (Node `crypto`).
-// The shared cookie format + max-age live in `lib/admin/session-format.ts`.
-
-function hexEncode(buf: ArrayBuffer): string {
-  return Array.from(new Uint8Array(buf))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-function timingSafeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let mismatch = 0;
-  for (let i = 0; i < a.length; i++) {
-    mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  }
-  return mismatch === 0;
-}
-
-async function isValidAdminSession(
-  cookieValue: string | undefined
-): Promise<boolean> {
-  if (!cookieValue) return false;
-  const secret = process.env.ADMIN_SECRET;
-  if (!secret) return false;
-
-  const dotIndex = cookieValue.indexOf(".");
-  if (dotIndex === -1) return false;
-
-  const timestamp = cookieValue.slice(0, dotIndex);
-  const signature = cookieValue.slice(dotIndex + 1);
-
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(timestamp));
-  const expectedSig = hexEncode(sig);
-
-  if (!timingSafeEqual(signature, expectedSig)) return false;
-
-  const age = Date.now() - Number(timestamp);
-  if (Number.isNaN(age) || age < 0 || age > ADMIN_SESSION_MAX_AGE_MS)
-    return false;
-
-  return true;
-}
 
 const intlMiddleware = createIntlMiddleware({
   locales,
@@ -155,23 +102,26 @@ export async function middleware(request: NextRequest) {
     intlResponse.cookies.set(cookie);
   });
 
-  // Admin routes: check admin_session cookie (separate from Supabase session)
-  // The /admin page renders its own login form when the cookie is absent,
-  // so sub-routes that need protection redirect back to /admin.
+  // Admin routes: gated on the SUPABASE session here, exactly like the other
+  // auth-gated routes — no session means a redirect to the localized landing.
+  // Whether the session's user is actually an admin (an `admin_users` row) is
+  // decided server-side by `requireAdmin()` in the /admin layout/page, which
+  // 404s non-admins so the panel's existence is not revealed. The middleware
+  // cannot make that call itself: the allowlist is service-role-only and the
+  // Edge runtime must not hold the service key.
   if (isAdminRoute(request.nextUrl.pathname)) {
-    const adminSession = request.cookies.get("admin_session");
-    const isAdminRoot = isAdminRootPath(request.nextUrl.pathname);
-    if (!(await isValidAdminSession(adminSession?.value))) {
-      if (!isAdminRoot) {
-        const locale =
-          locales.find((l) => request.nextUrl.pathname.startsWith(`/${l}`)) ??
-          defaultLocale;
-        const adminRedirect = NextResponse.redirect(
-          new URL(`/${locale}/admin`, request.url)
-        );
-        adminRedirect.headers.set("Content-Security-Policy", csp);
-        return adminRedirect;
-      }
+    if (!userId) {
+      const locale =
+        locales.find((l) => request.nextUrl.pathname.startsWith(`/${l}`)) ??
+        defaultLocale;
+      const adminRedirect = NextResponse.redirect(
+        new URL(`/${locale}`, request.url)
+      );
+      adminRedirect.headers.set("Content-Security-Policy", csp);
+      supabaseResponse.cookies.getAll().forEach((cookie) => {
+        adminRedirect.cookies.set(cookie);
+      });
+      return adminRedirect;
     }
     return intlResponse;
   }
