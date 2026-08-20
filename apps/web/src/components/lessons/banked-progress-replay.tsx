@@ -17,8 +17,13 @@ export const REPLAY_BANKED_EVENT = "superteam:replay-banked";
 
 /**
  * Replays anonymously-banked lesson completions once the learner is signed in
- * (LX-A4c). Mounted globally (GamificationOverlays) so it runs regardless of
- * which page the learner lands on after auth, and re-runs on enrollment.
+ * (LX-A4c), and re-runs on enrollment.
+ *
+ * Mounted by GamificationOverlays, which since #1097 is (platform)-only — so
+ * this does NOT run on marketing routes. Harmless for the banked-work flow:
+ * replaying needs a course to replay INTO, every completion path is a
+ * platform route, and unreplayed work stays banked in localStorage until the
+ * learner gets there.
  *
  * Every outcome is surfaced, never silently dropped:
  *   - completed   → one success toast for the batch.

@@ -8,6 +8,9 @@ import {
   publishAmbientWallet,
   setWalletReturnCaptureActive,
 } from "@/lib/solana/ambient-wallet-store";
+// Preloads the chunk AuthModal reaches through React.lazy, so these
+// assertions never race a cold transform of its graph (#1109 flake).
+import "@/components/auth/auth-modal-body";
 import { AuthModal } from "../auth-modal";
 
 /**
@@ -34,8 +37,8 @@ vi.mock("@/lib/analytics", () => ({ trackEvent: vi.fn() }));
 
 // The real module mounts wallet-adapter + the Dynamic SDK; this suite is
 // about WHEN the stack mounts, not what is inside it. Like the real stack's
-// registrar, the fake registers itself in the ambient store on mount so the
-// modal's body gate opens.
+// registrar, the fake registers itself in the ambient store on mount, which
+// is what the Solana button waits on.
 vi.mock("@/components/auth/scoped-auth-providers", async () => {
   const { publishAmbientWallet: publish } =
     await import("@/lib/solana/ambient-wallet-store");
@@ -83,134 +86,97 @@ afterEach(() => {
 });
 
 describe("AuthModal scoped provider mounting (#1097)", () => {
-  it(
-    "lazily mounts the scoped stack when opened with no live stack, and the body renders once it registers",
-    { timeout: 15_000 },
-    async () => {
-      renderWithIntl(<AuthModal open onOpenChange={() => {}} />);
+  it("lazily mounts the scoped stack when opened with no live stack, and the body renders once it registers", async () => {
+    renderWithIntl(<AuthModal open onOpenChange={() => {}} />);
 
-      expect(await screen.findByTestId("scoped-providers")).toBeInTheDocument();
-      // Generous timeout: the body chunk's first import loads the Dynamic SDK.
-      expect(
-        await screen.findByRole(
-          "button",
-          { name: CONNECT_WALLET },
-          { timeout: 10_000 }
-        )
-      ).toBeInTheDocument();
-    }
-  );
+    expect(await screen.findByTestId("scoped-providers")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", { name: CONNECT_WALLET })
+    ).toBeInTheDocument();
+  });
 
   it("mounts nothing scoped while closed", () => {
     renderWithIntl(<AuthModal open={false} onOpenChange={() => {}} />);
     expect(screen.queryByTestId("scoped-providers")).not.toBeInTheDocument();
   });
 
-  it(
-    "keeps the scoped stack mounted after the dialog closes (wallet-modal handoff)",
-    { timeout: 15_000 },
-    async () => {
-      const { rerender } = renderWithIntl(
-        <AuthModal open onOpenChange={() => {}} />
-      );
-      await screen.findByTestId("scoped-providers");
+  it("keeps the scoped stack mounted after the dialog closes (wallet-modal handoff)", async () => {
+    const { rerender } = renderWithIntl(
+      <AuthModal open onOpenChange={() => {}} />
+    );
+    await screen.findByTestId("scoped-providers");
 
-      rerender(
-        <NextIntlClientProvider locale="en" messages={messages}>
-          <AuthModal open={false} onOpenChange={() => {}} />
-        </NextIntlClientProvider>
-      );
+    rerender(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <AuthModal open={false} onOpenChange={() => {}} />
+      </NextIntlClientProvider>
+    );
+
+    expect(
+      screen.queryByText(messages.auth.signInTitle)
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId("scoped-providers")).toBeInTheDocument();
+  });
+
+  it("never mounts the scoped stack when a live stack is registered (double-mount guard)", async () => {
+    const unregister = fakeAmbient();
+    try {
+      renderWithIntl(<AuthModal open onOpenChange={() => {}} />);
 
       expect(
-        screen.queryByText(messages.auth.signInTitle)
-      ).not.toBeInTheDocument();
-      expect(screen.getByTestId("scoped-providers")).toBeInTheDocument();
-    }
-  );
-
-  it(
-    "never mounts the scoped stack when a live stack is registered (double-mount guard)",
-    { timeout: 15_000 },
-    async () => {
-      const unregister = fakeAmbient();
-      try {
-        renderWithIntl(<AuthModal open onOpenChange={() => {}} />);
-
-        expect(
-          await screen.findByRole(
-            "button",
-            { name: CONNECT_WALLET },
-            { timeout: 10_000 }
-          )
-        ).toBeInTheDocument();
-        expect(
-          screen.queryByTestId("scoped-providers")
-        ).not.toBeInTheDocument();
-      } finally {
-        unregister();
-      }
-    }
-  );
-
-  it(
-    "disarms its own stack when another one registers while mounted (NEW-2: navigation with the modal open)",
-    { timeout: 15_000 },
-    async () => {
-      renderWithIntl(<AuthModal open onOpenChange={() => {}} />);
-      await screen.findByTestId("scoped-providers");
-
-      // The learner navigates to a (platform) route with the dialog up: the
-      // layout's stack registers as a second live stack…
-      const unregister = fakeAmbient();
-      try {
-        // …and the modal drops its own, converging back to one stack while the
-        // body keeps rendering against the newcomer.
-        await waitFor(() =>
-          expect(
-            screen.queryByTestId("scoped-providers")
-          ).not.toBeInTheDocument()
-        );
-        expect(
-          await screen.findByRole(
-            "button",
-            { name: CONNECT_WALLET },
-            { timeout: 10_000 }
-          )
-        ).toBeInTheDocument();
-      } finally {
-        unregister();
-      }
-    }
-  );
-
-  it(
-    "does not arm while the catcher's capture window is open (F4), then renders the body once that stack registers",
-    { timeout: 15_000 },
-    async () => {
-      setWalletReturnCaptureActive();
-      renderWithIntl(<AuthModal open onOpenChange={() => {}} />);
-
-      // The modal shows the standing-up spinner and must not start its own
-      // stack while the catcher's is on the way.
+        await screen.findByRole("button", { name: CONNECT_WALLET })
+      ).toBeInTheDocument();
       expect(screen.queryByTestId("scoped-providers")).not.toBeInTheDocument();
-
-      // The catcher's stack registers (this also clears the capture flag)…
-      const unregister = fakeAmbient();
-      try {
-        // …and the body proceeds against it, still with no modal-owned stack.
-        expect(
-          await screen.findByRole(
-            "button",
-            { name: CONNECT_WALLET },
-            { timeout: 10_000 }
-          )
-        ).toBeInTheDocument();
-        expect(
-          screen.queryByTestId("scoped-providers")
-        ).not.toBeInTheDocument();
-      } finally {
-        unregister();
-      }
+    } finally {
+      unregister();
     }
-  );
+  });
+
+  it("disarms its own stack when another one registers while mounted (NEW-2: navigation with the modal open)", async () => {
+    renderWithIntl(<AuthModal open onOpenChange={() => {}} />);
+    await screen.findByTestId("scoped-providers");
+
+    // The learner navigates to a (platform) route with the dialog up: the
+    // layout's stack registers as a second live stack…
+    const unregister = fakeAmbient();
+    try {
+      // …and the modal drops its own, converging back to one stack while the
+      // body keeps rendering against the newcomer.
+      await waitFor(() =>
+        expect(screen.queryByTestId("scoped-providers")).not.toBeInTheDocument()
+      );
+      expect(
+        await screen.findByRole("button", { name: CONNECT_WALLET })
+      ).toBeInTheDocument();
+    } finally {
+      unregister();
+    }
+  });
+
+  it("does not arm while the catcher's capture window is open (F4), then renders the body once that stack registers", async () => {
+    setWalletReturnCaptureActive();
+    renderWithIntl(<AuthModal open onOpenChange={() => {}} />);
+
+    // No modal-owned stack while the catcher's is on the way…
+    expect(screen.queryByTestId("scoped-providers")).not.toBeInTheDocument();
+    // …but the buttons that need no stack are already there (#1109 review):
+    // this used to be a full-body spinner.
+    expect(
+      await screen.findByRole("button", {
+        name: messages.auth.signInWithGoogle,
+      })
+    ).toBeEnabled();
+
+    // The catcher's stack registers (this also clears the capture flag)…
+    const unregister = fakeAmbient();
+    try {
+      // …and the body proceeds against it, still with no modal-owned stack.
+      expect(
+        await screen.findByRole("button", { name: CONNECT_WALLET })
+      ).toBeInTheDocument();
+      expect(screen.queryByTestId("scoped-providers")).not.toBeInTheDocument();
+    } finally {
+      unregister();
+    }
+  });
 });

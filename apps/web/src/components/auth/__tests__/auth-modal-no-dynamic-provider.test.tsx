@@ -45,6 +45,12 @@ vi.mock("@/lib/dynamic/config", () => ({
 }));
 
 import { publishAmbientWallet } from "@/lib/solana/ambient-wallet-store";
+// Preloads the chunk AuthModal reaches through React.lazy, so the assertions
+// below meet a module that is already in the registry instead of racing a
+// cold transform of the (deliberately unmocked) SDK graph — the #1109 flake.
+// The gate this suite guards is unaffected: `isDynamicEnabled()` is false, so
+// DynamicSocialSignIn still never renders.
+import "@/components/auth/auth-modal-body";
 import { AuthModal } from "../auth-modal";
 
 // A live ambient registration models a (platform) route (#1097); it is the
@@ -64,7 +70,7 @@ afterEach(() => {
 });
 
 describe("AuthModal with Dynamic disabled and no provider mounted", () => {
-  it("opens without throwing, and offers the other sign-in methods", { timeout: 15_000 }, async () => {
+  it("opens without throwing, and offers the other sign-in methods", async () => {
     expect(() =>
       render(
         <NextIntlClientProvider locale="en" messages={messages}>
@@ -73,24 +79,15 @@ describe("AuthModal with Dynamic disabled and no provider mounted", () => {
       )
     ).not.toThrow();
 
-    // findBy with a generous timeout: the dialog body is a lazy chunk since
-    // #1097, and its first import in a suite loads the Dynamic SDK.
+    // findBy, not getBy: the body is still a React.lazy boundary.
     expect(
-      await screen.findByText(
-        messages.auth.signInTitle,
-        {},
-        { timeout: 10_000 }
-      )
+      await screen.findByText(messages.auth.signInTitle, {})
     ).toBeInTheDocument();
     // The wallet route stays available — it is the guaranteed way in.
-    // findBy with a generous timeout: the body chunk's first import in this
-    // suite loads the (unmocked) Dynamic SDK.
     expect(
-      await screen.findByRole(
-        "button",
-        { name: messages.auth.connectSolanaWallet },
-        { timeout: 10_000 }
-      )
+      await screen.findByRole("button", {
+        name: messages.auth.connectSolanaWallet,
+      })
     ).toBeInTheDocument();
     // ...and the email button is absent rather than broken.
     expect(
@@ -112,7 +109,7 @@ describe("AuthModal with Dynamic disabled and no provider mounted", () => {
   // A separate render: a click leaves every button disabled while the
   // full-page OAuth navigation is presumed imminent, so the two kill-switch
   // clicks cannot share one modal instance.
-  it("GitHub falls back to Supabase OAuth the same way", { timeout: 15_000 }, async () => {
+  it("GitHub falls back to Supabase OAuth the same way", async () => {
     render(
       <NextIntlClientProvider locale="en" messages={messages}>
         <AuthModal open onOpenChange={() => {}} />
@@ -120,11 +117,9 @@ describe("AuthModal with Dynamic disabled and no provider mounted", () => {
     );
 
     fireEvent.click(
-      await screen.findByRole(
-        "button",
-        { name: messages.auth.signInWithGitHub },
-        { timeout: 10_000 }
-      )
+      await screen.findByRole("button", {
+        name: messages.auth.signInWithGitHub,
+      })
     );
     expect(signInWithOAuth).toHaveBeenCalledWith(
       expect.objectContaining({ provider: "github" })

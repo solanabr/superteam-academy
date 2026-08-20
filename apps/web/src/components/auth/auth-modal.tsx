@@ -28,11 +28,10 @@ import {
   useWalletReturnCaptureActive,
 } from "@/lib/solana/ambient-wallet-store";
 import { ChunkErrorBoundary } from "@/components/auth/chunk-error-boundary";
+import { OAuthFallbackButton } from "@/components/auth/oauth-fallback-button";
 import { useSocialReturnPending } from "@/hooks/use-social-return-pending";
-import type {
-  AuthLoadingMethod,
-  AuthModalBodyProps,
-} from "@/components/auth/auth-modal-body";
+import type { AuthLoadingMethod } from "@/components/auth/auth-modal-types";
+import type { AuthModalBodyProps } from "@/components/auth/auth-modal-body";
 
 interface AuthModalProps {
   trigger?: React.ReactNode;
@@ -120,6 +119,11 @@ export function AuthModal({
   //  - captureActive: DynamicReturnCatcher has decided to mount its own stack
   //    for a redirect return but its chunk has not registered yet; arming in
   //    that window would race it (review F4).
+  //
+  // Nothing in the dialog WAITS on that stack any more — the body renders as
+  // soon as its own chunk lands, and the Solana button alone tracks the
+  // registration (#1109 review). Keeping the two downloads gated on each
+  // other also made them serial.
   const ambientLive = useAmbientWalletLive();
   const captureActive = useWalletReturnCaptureActive();
   const [scopedMounted, setScopedMounted] = useState(false);
@@ -156,19 +160,37 @@ export function AuthModal({
     if (scopedMounted && stackCount >= 2) setScopedMounted(false);
   }, [scopedMounted, stackCount]);
 
-  // Chunk-load failure handling (review F3): both lazies are recreated per
-  // attempt because a rejected React.lazy caches its rejection.
-  const [chunkFailed, setChunkFailed] = useState(false);
-  const [attempt, setAttempt] = useState(0);
-  const { LazyBody, LazyStack } = useMemo(() => {
-    void attempt; // cache-buster: a new attempt makes fresh lazy components
-    return {
-      LazyBody: lazy(
-        () => import("@/components/auth/auth-modal-body")
-      ) as ComponentType<AuthModalBodyProps>,
-      LazyStack: lazy(() => import("@/components/auth/scoped-auth-providers")),
-    };
-  }, [attempt]);
+  // Chunk-load failure handling (review F3): a lazy is recreated per attempt
+  // because a rejected React.lazy caches its rejection.
+  //
+  // The two chunks fail separately and cost different things (#1109 review):
+  // a dead STACK chunk only takes the wallet button with it, while a dead
+  // BODY chunk takes the whole button set — and Google/GitHub need neither,
+  // so they are re-rendered here from the static fallback module rather than
+  // left behind a "Try again". Separate attempt counters keep one retry from
+  // remounting the other half, which would drop the body's in-flight state.
+  const [stackFailed, setStackFailed] = useState(false);
+  const [bodyFailed, setBodyFailed] = useState(false);
+  const [stackAttempt, setStackAttempt] = useState(0);
+  const [bodyAttempt, setBodyAttempt] = useState(0);
+  const retryWalletStack = () => {
+    setStackFailed(false);
+    setStackAttempt((a) => a + 1);
+  };
+  const retryBody = () => {
+    setBodyFailed(false);
+    setBodyAttempt((a) => a + 1);
+  };
+  const LazyBody = useMemo(() => {
+    void bodyAttempt; // cache-buster: a new attempt makes a fresh lazy
+    return lazy(
+      () => import("@/components/auth/auth-modal-body")
+    ) as ComponentType<AuthModalBodyProps>;
+  }, [bodyAttempt]);
+  const LazyStack = useMemo(() => {
+    void stackAttempt;
+    return lazy(() => import("@/components/auth/scoped-auth-providers"));
+  }, [stackAttempt]);
 
   const spinner = (
     <div
@@ -184,8 +206,8 @@ export function AuthModal({
     <>
       {scopedMounted ? (
         <ChunkErrorBoundary
-          key={`stack-${attempt}`}
-          onError={() => setChunkFailed(true)}
+          key={`stack-${stackAttempt}`}
+          onError={() => setStackFailed(true)}
         >
           <Suspense fallback={null}>
             <LazyStack />
@@ -220,34 +242,44 @@ export function AuthModal({
               {t(showLater ? "keepProgressSubtitle" : "signInSubtitle")}
             </DialogDescription>
           </DialogHeader>
-          {chunkFailed ? (
-            <div className="mt-6 flex flex-col items-center gap-4">
+          {bodyFailed ? (
+            // The button set is gone with its chunk, but two of the three ways
+            // in never needed it: render them from the static module so a
+            // blocked CDN or a stale deploy costs the wallet path only.
+            <div className="mt-6 space-y-3">
               <p
                 className="max-w-xs text-center text-sm font-medium text-danger"
                 role="alert"
               >
                 {t("authFailed")}
               </p>
-              <Button
-                variant="push"
-                size="sm"
-                onClick={() => {
-                  setChunkFailed(false);
-                  setAttempt((a) => a + 1);
-                }}
-              >
-                {t("retry")}
-              </Button>
+              <OAuthFallbackButton
+                provider="google"
+                loading={loading}
+                setLoading={setLoading}
+                setErrorMessage={setErrorMessage}
+              />
+              <OAuthFallbackButton
+                provider="github"
+                loading={loading}
+                setLoading={setLoading}
+                setErrorMessage={setErrorMessage}
+              />
+              {errorMessage && (
+                <p className="text-center text-sm text-danger" role="alert">
+                  {errorMessage}
+                </p>
+              )}
+              <div className="flex justify-center pt-1">
+                <Button variant="ghost" size="sm" onClick={retryBody}>
+                  {t("retry")}
+                </Button>
+              </div>
             </div>
-          ) : !ambientLive ? (
-            // The provider stack is still standing up (scoped chunk loading,
-            // or the catcher's) — the body needs it registered before the
-            // wallet buttons can do anything.
-            spinner
           ) : (
             <ChunkErrorBoundary
-              key={`body-${attempt}`}
-              onError={() => setChunkFailed(true)}
+              key={`body-${bodyAttempt}`}
+              onError={() => setBodyFailed(true)}
             >
               <Suspense fallback={spinner}>
                 <LazyBody
@@ -258,6 +290,8 @@ export function AuthModal({
                   setOpen={setOpen}
                   showLater={showLater}
                   onLater={onLater}
+                  walletStackFailed={stackFailed}
+                  retryWalletStack={retryWalletStack}
                 />
               </Suspense>
             </ChunkErrorBoundary>

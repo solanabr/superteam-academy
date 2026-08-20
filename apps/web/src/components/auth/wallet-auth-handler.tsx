@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useCallback,
+} from "react";
+import { createPortal } from "react-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -13,9 +20,25 @@ type AuthOverlayState =
   | { status: "error"; message: string; canRetry: boolean };
 
 /**
- * Mounts at the layout level (inside SolanaWalletProvider).
- * Listens for wallet connection and auto-triggers SIWS authentication.
- * Shows a full-screen loading overlay during the auth flow.
+ * Mounts inside SolanaWalletProvider — on (platform) routes via the layout,
+ * elsewhere via the sign-in modal's scoped stack. Listens for wallet
+ * connection and auto-triggers SIWS authentication, showing a full-screen
+ * overlay for the duration.
+ *
+ * The overlay goes through a PORTAL, like the wallet-select modal it follows
+ * (`WalletModal` in @solana/wallet-adapter-react-ui). Since #1097 the scoped
+ * stack mounts under the Header, whose bar carries `backdrop-blur-md` — a
+ * non-`none` backdrop-filter makes that element a containing block for
+ * `position: fixed` descendants, so an in-tree overlay is clipped to the
+ * 57px nav strip. Both the spinner and the error branch (the message a stuck
+ * learner most needs) were rendering inside it.
+ *
+ * As a body child the overlay leaves the Header's stacking context, so it
+ * needs the dialog layer (z-300) rather than the old z-100 — under the
+ * Header's z-200 the nav would paint over the scrim and stay clickable. The
+ * two never coexist: the sign-in dialog closes before the wallet-select
+ * modal opens, and that modal (z-1040, its own stylesheet) closes on connect,
+ * which is what triggers this overlay.
  */
 export function WalletAuthHandler() {
   const locale = useLocale();
@@ -26,6 +49,11 @@ export function WalletAuthHandler() {
   const [overlayState, setOverlayState] = useState<AuthOverlayState>({
     status: "idle",
   });
+  // Resolved in an effect, never at module scope or during render: the server
+  // has no `document`, and a portal on the first client render would not match
+  // the server's null output.
+  const [portalTarget, setPortalTarget] = useState<Element | null>(null);
+  useLayoutEffect(() => setPortalTarget(document.body), []);
 
   const authenticate = useCallback(async () => {
     if (!publicKey || (!signIn && !signMessage) || isAuthenticating.current)
@@ -199,13 +227,14 @@ export function WalletAuthHandler() {
     }
   }, [connected]);
 
-  if (overlayState.status === "idle") return null;
+  if (overlayState.status === "idle" || !portalTarget) return null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center backdrop-blur-sm [background:color-mix(in_srgb,var(--bg)_80%,transparent)]"
+      className="fixed inset-0 z-[300] flex items-center justify-center backdrop-blur-sm [background:color-mix(in_srgb,var(--bg)_80%,transparent)]"
       role="status"
       aria-live="polite"
+      data-testid="siws-overlay"
     >
       <div className="flex flex-col items-center gap-4">
         {overlayState.status === "authenticating" && (
@@ -238,6 +267,7 @@ export function WalletAuthHandler() {
           </>
         )}
       </div>
-    </div>
+    </div>,
+    portalTarget
   );
 }
