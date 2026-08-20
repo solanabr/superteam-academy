@@ -1,13 +1,8 @@
-import {
-  getCourseIdBySlug,
-  getCourseLessons,
-  getCourseSlugById,
-} from "@/lib/content/queries";
+import { getCourseLessons, getCourseSlugById } from "@/lib/content/queries";
 import {
   DEFAULT_SEGMENT,
   SEGMENT_ENTRY_COURSE,
 } from "@/lib/courses/learner-segment";
-import { isUnlistedCourse } from "@/lib/courses/unlisted";
 
 /**
  * Resolves a content course id into its first-lesson deep-link for `locale`.
@@ -46,29 +41,4 @@ export async function resolveFlagshipLessonHref(
   locale: string
 ): Promise<string> {
   return resolveEntryLessonHref(locale, SEGMENT_ENTRY_COURSE[DEFAULT_SEGMENT]);
-}
-
-/** The event booth micro-course (academy-courses#37). */
-const HERO_COURSE_SLUG = "pilula-solana-superteam";
-
-/**
- * The landing hero target: the Pílula COURSE page — the booth audience picks
- * a course, they don't get dropped mid-lesson — but only once that course is
- * deployed+synced (`getCourseIdBySlug` is the sync-gated read; the ungated
- * `getCourseById` would happily link a course whose page 404s). Until the
- * admin sync runs, the hero keeps the flagship lesson deep-link.
- *
- * UNLISTED demotes the hero too: unlisting removes a course from every
- * discovery surface, and the homepage's primary CTA is the biggest discovery
- * surface there is — promoting a course there while hiding it from the
- * catalog would be the two halves of the site contradicting each other. The
- * course page itself stays reachable (that is what unlisted means), so the
- * booth QR/direct links keep working; only the hero's PROMOTION falls back
- * to the flagship deep-link.
- */
-export async function resolveHeroHref(locale: string): Promise<string> {
-  const synced = await getCourseIdBySlug(HERO_COURSE_SLUG);
-  return synced && !isUnlistedCourse(synced._id)
-    ? `/${locale}/courses/${HERO_COURSE_SLUG}`
-    : resolveFlagshipLessonHref(locale);
 }
