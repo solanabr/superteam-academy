@@ -620,11 +620,25 @@
     display: none;
   }
 
-  /* Optical centring: symbol glyphs (✩ ★ ⬡ ◎ ∞) come from a fallback font
-     and sit ~7% low inside their em box; digits and letter pairs do not. */
-  .patch[data-glyph="symbol"] > span {
+  /* The glyph is either text from the vendored font or a drawn mark. Both are
+     centred by the grid with no optical nudge: the marks carry their ink box
+     centred in the viewBox, and the text glyphs measure within 0.01em of
+     centre on their own. The mark is sized so its ink lands at the same
+     optical weight as a two-digit glyph rather than filling the stitch ring. */
+  .patch-text {
     display: block;
-    transform: translateY(-0.07em);
+  }
+  .patch-mark {
+    display: block;
+    width: calc(var(--size) * 0.42);
+    height: calc(var(--size) * 0.42);
+    color: var(--patch-glyph);
+    overflow: visible;
+  }
+  .patch[data-locked] .patch-mark {
+    width: calc(var(--size) * 0.36);
+    height: calc(var(--size) * 0.36);
+    color: currentColor;
   }
 
   /* tier → shape */
@@ -781,9 +795,11 @@
     border-radius: var(--patch-radius);
   }
 
-  /* Inset so the slices never break the faces' silhouette */
+  /* Inset so the slices never break the faces' silhouette. 1px, not 2 — at 2
+     the band stops visibly short of the rim and reads as a gap between the two
+     sides rather than as the patch's edge. */
   .patch3d__slice {
-    inset: 2px;
+    inset: 1px;
     background: var(--shade);
   }
 
@@ -816,16 +832,14 @@
 
   .patch3d__glyph {
     position: relative;
+    display: grid;
+    place-items: center;
     font:
       700 calc(var(--size) * 0.4) / 1 var(--font-mono),
       "JetBrains Mono",
       monospace;
     color: var(--patch-glyph);
     user-select: none;
-  }
-  .patch3d__glyph--symbol {
-    display: block;
-    transform: translateY(-0.07em);
   }
 
   /* Tier 4: the notch lives on the FACES only. The faces self-rotate and the

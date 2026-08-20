@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { resolvePatchLook } from "@/components/gamification/patch-look";
+import { PatchGlyph } from "@/components/gamification/patch-glyph";
 
 /**
  * The achievement patch (spec: achievement-patches v1, 20-08).
@@ -41,11 +42,10 @@ export function AchievementPatch({
       data-size={size}
       data-tier={look.tier}
       data-cat={look.cat}
-      data-glyph={look.symbol ? "symbol" : "text"}
       data-locked={state === "locked" || undefined}
       aria-hidden="true"
     >
-      <span>{look.glyph}</span>
+      <PatchGlyph glyph={look.glyph} />
     </span>
   );
 }
