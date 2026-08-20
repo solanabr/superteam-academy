@@ -188,8 +188,6 @@ export function Header() {
   return (
     <header className="fixed left-0 right-0 top-0 z-[200]">
       <div className="relative bg-transparent backdrop-blur-md">
-        {/* LowSolBanner moved to (platform)/layout.tsx (#1097): it needs the
-            wallet providers, which no longer mount above the Header. */}
         <div className="relative mx-auto flex h-[56px] max-w-[1600px] items-center px-[16px]">
           {/* Left: Logo (desktop lg+) */}
           <Link
