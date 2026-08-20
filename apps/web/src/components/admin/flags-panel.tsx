@@ -17,29 +17,58 @@ interface ModerationFlag {
 /** Which failure the last action hit — mapped to a translated string by the UI. */
 type ActionError = "fetch" | "network";
 
+/**
+ * Which failure the last queue load hit. `unauthorized` is split out from
+ * `fetch` because the route 401s on an expired admin session, and that needs a
+ * different instruction than a 500 — retrying a dead session just fails again.
+ */
+type LoadError = "fetch" | "network" | "unauthorized";
+
+const LOAD_ERROR_KEY: Record<LoadError, string> = {
+  fetch: "loadErrorFetch",
+  network: "loadErrorNetwork",
+  unauthorized: "loadErrorUnauthorized",
+};
+
 export function FlagsPanel({
   onCountChange,
 }: {
   onCountChange?: (count: number) => void;
 }) {
   const t = useTranslations("admin.flags");
+  const tAdmin = useTranslations("admin");
   const [flags, setFlags] = useState<ModerationFlag[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<LoadError | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<ActionError | null>(null);
 
-  const load = useCallback(async () => {
-    try {
-      const res = await fetch("/api/admin/flags");
-      if (!res.ok) return;
-      const body = (await res.json()) as { flags?: ModerationFlag[] };
-      setFlags(body.flags ?? []);
-    } catch {
-      // Non-critical convenience view.
-    }
+  // A failed load must never read as "queue is clear" (#1132), so it drops
+  // whatever was on screen and renders the failed branch instead of the list.
+  const load = useCallback((): void => {
+    setLoading(true);
+    setLoadError(null);
+    void (async () => {
+      try {
+        const res = await fetch("/api/admin/flags");
+        if (!res.ok) {
+          setFlags([]);
+          setLoadError(res.status === 401 ? "unauthorized" : "fetch");
+          return;
+        }
+        const body = (await res.json()) as { flags?: ModerationFlag[] };
+        setFlags(body.flags ?? []);
+      } catch {
+        setFlags([]);
+        setLoadError("network");
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
   useEffect(() => {
-    void load();
+    load();
   }, [load]);
 
   // Keep the parent's badge count in sync with the list (incl. optimistic drops).
@@ -79,13 +108,39 @@ export function FlagsPanel({
     <div className="space-y-4">
       <p className="text-sm text-text-3">{t("description")}</p>
 
+      {/* Transient errors get the neutral `streak` treatment, not `danger` —
+          the convention course-sync-table.tsx documents, where `danger` is
+          reserved for blocking and destructive states. */}
       {error && (
-        <div className="rounded-md border border-danger bg-danger-light p-3 text-sm text-danger">
+        <div
+          role="alert"
+          className="rounded-md border border-streak bg-streak-light p-3 text-sm text-streak"
+        >
           {t(error === "network" ? "errorNetwork" : "errorFetch")}
         </div>
       )}
 
-      {flags.length === 0 ? (
+      {loading ? (
+        <div className="flex items-center justify-center py-10">
+          <p role="status" className="text-sm text-text-3">
+            {t("loading")}
+          </p>
+        </div>
+      ) : loadError ? (
+        <div
+          role="alert"
+          className="rounded-md border border-streak bg-streak-light p-3 text-sm text-streak"
+        >
+          {t(LOAD_ERROR_KEY[loadError])}
+          <button
+            type="button"
+            onClick={load}
+            className="ml-3 underline hover:no-underline"
+          >
+            {tAdmin("states.retry")}
+          </button>
+        </div>
+      ) : flags.length === 0 ? (
         <p className="text-sm text-text-3">{t("noPending")}</p>
       ) : (
         <ul className="space-y-2">
