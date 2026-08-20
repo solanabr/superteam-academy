@@ -378,7 +378,14 @@ export function ProveWidget({ flipLabel }: { flipLabel: string }) {
   const toggle = () => setFlipped((f) => !f);
 
   return (
-    <div ref={frameRef} className="group" style={{ perspective: "1100px" }}>
+    // max-w + centered (designer feedback 19-08): at full column width the
+    // card's justify-between anatomy left a void between header and footer;
+    // capping it restores the proportions of a physical card.
+    <div
+      ref={frameRef}
+      className="group mx-auto w-full max-w-[420px]"
+      style={{ perspective: "1100px" }}
+    >
       <div
         role="button"
         tabIndex={0}
@@ -420,6 +427,39 @@ export function ProveWidget({ flipLabel }: { flipLabel: string }) {
               </div>
               <div className="mt-1 font-mono text-[10px] uppercase tracking-widest text-text-3">
                 Rust &amp; Programs · Intermediate
+              </div>
+            </div>
+            {/* Middle band (designer feedback 19-08): the fields the minted
+                credential actually carries, so the card reads as a document
+                rather than a frame around blank space. */}
+            <div className="border-t-[1.5px] border-dashed border-border pt-3">
+              <div className="flex flex-wrap gap-1.5">
+                {["anchor", "pdas", "cpi-security"].map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-md border-[1.5px] border-border-strong px-2 py-0.5 font-mono text-[10px] font-semibold text-text-2"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+              <div className="mt-2.5 flex gap-7">
+                <div>
+                  <div className="font-mono text-[9px] uppercase tracking-widest text-text-3">
+                    Issued
+                  </div>
+                  <div className="font-mono text-xs font-bold text-text-2">
+                    2026-08-02
+                  </div>
+                </div>
+                <div>
+                  <div className="font-mono text-[9px] uppercase tracking-widest text-text-3">
+                    XP earned
+                  </div>
+                  <div className="font-mono text-xs font-bold text-xp">
+                    ⚡ 1,250
+                  </div>
+                </div>
               </div>
             </div>
             <div className="flex items-end justify-between gap-3">
