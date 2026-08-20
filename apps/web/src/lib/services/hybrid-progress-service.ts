@@ -16,6 +16,9 @@ import { env } from "@/lib/env";
 import type { Database } from "@/lib/supabase/types";
 import { logError } from "@/lib/logging";
 
+/** Upper bound on the supplementary on-chain XP read (public RPC). */
+const ONCHAIN_READ_TIMEOUT_MS = 1500;
+
 /**
  * A Supabase/PostgREST read error, normalized for `logError`. Capturing and
  * logging these (instead of destructuring `data` alone and letting it fall to a
@@ -66,13 +69,23 @@ export class HybridProgressService implements LearningProgressService {
   async getXP(userId: string): Promise<number> {
     const walletAddress = await this.getWalletForUser(userId);
 
-    // Read on-chain balance if wallet and XP mint are available
+    // Read on-chain balance if wallet and XP mint are available. Supabase
+    // user_xp is the source of truth — the chain balance only participates as
+    // a supplementary max() below — so a slow public RPC must never stall the
+    // caller (the dashboard server shell awaits this inside its main Suspense
+    // section): the read races a short timeout and falls back to 0, which the
+    // max() resolves to the Supabase total.
     let onChainXp = 0;
     if (walletAddress && this.xpMint) {
-      try {
+      const mint = this.xpMint;
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const timeout = new Promise<number>((resolve) => {
+        timer = setTimeout(() => resolve(0), ONCHAIN_READ_TIMEOUT_MS);
+      });
+      const read = (async () => {
         const owner = new PublicKey(walletAddress);
         const ata = getAssociatedTokenAddressSync(
-          this.xpMint,
+          mint,
           owner,
           false,
           TOKEN_2022_PROGRAM_ID
@@ -83,10 +96,11 @@ export class HybridProgressService implements LearningProgressService {
           "confirmed",
           TOKEN_2022_PROGRAM_ID
         );
-        onChainXp = Number(account.amount);
-      } catch {
-        // ATA not found, RPC error, or any other issue
-      }
+        return Number(account.amount);
+      })();
+      // ATA not found, RPC error, or any other issue → 0 (Supabase total wins)
+      onChainXp = await Promise.race([read.catch(() => 0), timeout]);
+      clearTimeout(timer);
     }
 
     // Always read Supabase total (includes community XP that is DB-only)

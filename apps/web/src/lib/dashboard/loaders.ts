@@ -34,6 +34,8 @@ import { retryQuestXpForUser } from "@/lib/gamification/xp-queue-settlement";
 import { getCohortLeaderboard } from "@/lib/leaderboard/cohort";
 import { deriveCohortStrip } from "@/lib/leaderboard/cohort-window";
 import { buildReviewSession } from "@/lib/review/session";
+import { logError } from "@/lib/logging";
+import { ERROR_IDS } from "@/constants/errorIds";
 import { serverEnv } from "@/lib/env.server";
 import type { ActivityItem, CurrentCourse, DashboardCoreData } from "./types";
 
@@ -86,6 +88,8 @@ export const loadDashboardCore = cache(
 
     // Burst A — everything keyed on the user id alone, in one Promise.all.
     const [
+      // Supabase user_xp is the source of truth; the on-chain read inside
+      // getXP is a supplementary max() only, internally bounded by a timeout.
       totalXp,
       streakData,
       achievementsResult,
@@ -485,6 +489,11 @@ export async function loadDashboardQuests(
     return empty;
   }
 
+  // Auth note: the page gates this on getAuthClaims() (verified JWT) rather
+  // than a getUser() round trip, so this XP-writing evaluation accepts the
+  // same ≤JWT-expiry banned-token window as #1089's middleware invariant —
+  // harmless (a banned user can only farm their own dead account); operator-
+  // side closure is tracked in #1104.
   try {
     const questData = await getAllQuests();
     if (questData.quests.length === 0) return empty;
@@ -556,8 +565,14 @@ export async function loadReviewDue(
       count: session.length,
       titles: session.map((item) => item.lessonTitle),
     };
-  } catch {
-    // Non-critical dashboard surface — the strip stays hidden on failure.
+  } catch (err: unknown) {
+    // Non-critical dashboard surface — the strip stays hidden on failure, but
+    // a broken query must stay distinguishable from an empty queue in logs.
+    logError({
+      errorId: ERROR_IDS.REVIEW_DUE_FAILED,
+      error: err instanceof Error ? err : new Error(String(err)),
+      context: { loader: "loadReviewDue" },
+    });
     return { count: 0, titles: [] };
   }
 }
@@ -577,11 +592,20 @@ export async function loadCohortStrip(
   }
   try {
     const admin = createAdminClient();
+    // The board RPC lazily assigns the viewer's weekly cohort on first read —
+    // a render-time write inherited from the old client fetch to
+    // /api/leaderboard/cohort, idempotent per (user, week).
     const league = await getCohortLeaderboard(admin, userId);
     if (!league) return null;
     return { ...league, entries: deriveCohortStrip(league.entries) };
-  } catch {
-    // Non-critical dashboard surface — stay hidden on failure.
+  } catch (err: unknown) {
+    // Non-critical dashboard surface — stays hidden on failure, but a broken
+    // query must stay distinguishable from "no cohort yet" in logs.
+    logError({
+      errorId: ERROR_IDS.COHORT_STRIP_FAILED,
+      error: err instanceof Error ? err : new Error(String(err)),
+      context: { loader: "loadCohortStrip" },
+    });
     return null;
   }
 }

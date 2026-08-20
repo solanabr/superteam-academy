@@ -77,8 +77,9 @@ export default async function DashboardPage({
           with the day's rail slots below them. */}
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-8">
         <aside className="order-2 space-y-6">
-          {/* Due-review strip (LX-B6); renders nothing when the queue is empty. */}
-          <Suspense fallback={<SectionFallback label={loading} />}>
+          {/* Due-review strip (LX-B6); renders nothing when the queue is
+              empty — the common case, so no spinner fallback (like the hero). */}
+          <Suspense fallback={null}>
             <ReviewStripSection userId={userId} />
           </Suspense>
 
@@ -89,8 +90,9 @@ export default async function DashboardPage({
           </Suspense>
 
           {/* Cohort league "you ±3" (LX-B9b) — shows a quiet solo state while
-              this week's cohort is still filling. */}
-          <Suspense fallback={<SectionFallback label={loading} />}>
+              this week's cohort is still filling; often renders nothing, so
+              no spinner fallback. */}
+          <Suspense fallback={null}>
             <CohortStripSection userId={userId} />
           </Suspense>
 
