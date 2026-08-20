@@ -2,8 +2,8 @@
 import { describe, it, expect } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import { ContentTabs } from "../content-tabs";
 import messages from "@/messages/en.json";
+import { ContentTabs } from "../courses/content-tabs";
 
 function renderTabs() {
   return render(

@@ -4,7 +4,7 @@ import { render, screen } from "@testing-library/react";
 import { createTranslator } from "next-intl";
 import type { ContentQuest } from "@/lib/content/queries";
 import messages from "@/messages/en.json";
-import { QuestsTable } from "../quests-table";
+import { QuestsTable } from "../courses/quests-table";
 
 vi.mock("next-intl/server", () => ({
   getTranslations: async (

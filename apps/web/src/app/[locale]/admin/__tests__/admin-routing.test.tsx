@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import AdminPage from "../page";
 import AdminPublishRedirect from "../publish/page";
 import AdminDeployRedirect from "../deploy/page";
+import AdminContentRedirect from "../content/page";
 
 /**
  * Routing contract of the session-based admin console:
@@ -9,8 +10,9 @@ import AdminDeployRedirect from "../deploy/page";
  *   - a signed-in NON-admin gets a 404 (notFound), never a redirect — the
  *     panel's existence is not revealed (anonymous visitors are bounced to the
  *     landing by the middleware before this page runs)
- *   - `/admin/publish` and `/admin/deploy` — the two screens Courses replaced —
- *     stay alive as redirects so bookmarks and muscle memory don't 404.
+ *   - `/admin/publish`, `/admin/deploy` and `/admin/content` — the screens
+ *     Courses replaced — stay alive as redirects so bookmarks and muscle
+ *     memory don't 404.
  * The redirect target is locale-prefixed, so a `pt-BR` admin stays in `pt-BR`.
  */
 
@@ -68,5 +70,17 @@ describe("retired admin routes", () => {
   it("redirects /admin/deploy to /admin/courses", async () => {
     await AdminDeployRedirect({ params: Promise.resolve({ locale: "es" }) });
     expect(redirectMock).toHaveBeenCalledWith("/es/admin/courses");
+  });
+
+  it("redirects /admin/content to /admin/courses", async () => {
+    await AdminContentRedirect({ params: Promise.resolve({ locale: "en" }) });
+    expect(redirectMock).toHaveBeenCalledWith("/en/admin/courses");
+  });
+
+  it("keeps the locale prefix on the /admin/content redirect", async () => {
+    await AdminContentRedirect({
+      params: Promise.resolve({ locale: "pt-BR" }),
+    });
+    expect(redirectMock).toHaveBeenCalledWith("/pt-BR/admin/courses");
   });
 });

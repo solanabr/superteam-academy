@@ -4,7 +4,7 @@ import { render, screen } from "@testing-library/react";
 import { createTranslator } from "next-intl";
 import type { AdminLearningPathWithRefs } from "@/lib/content/queries";
 import messages from "@/messages/en.json";
-import { PathsTable } from "../paths-table";
+import { PathsTable } from "../courses/paths-table";
 
 // Real ICU-aware translator (supports the `danglingCount` plural rule),
 // rather than a raw key lookup — `next-intl/server`'s `getTranslations` needs

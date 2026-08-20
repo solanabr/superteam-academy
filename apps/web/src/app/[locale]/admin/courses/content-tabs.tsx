@@ -11,9 +11,9 @@ interface ContentTabsProps {
 }
 
 /**
- * Sub-view switch for the admin Content tab (#513 WS-C): Quests / Achievements
- * / Paths share ONE "Content" nav entry rather than three top-level sections —
- * none has Courses-scale write surface (plan decision). Built on the existing
+ * Sub-view switch for the supporting-content step of `/admin/courses`: Quests
+ * / Achievements / Paths share ONE tab strip rather than three sections — none
+ * has Courses-scale write surface. Built on the existing
  * Radix-backed `Tabs` primitive (`components/ui/tabs.tsx`) instead of
  * hand-rolled tab markup, so keyboard nav (arrow keys) and the full ARIA
  * tablist/tab/tabpanel wiring come for free.

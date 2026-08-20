@@ -9,7 +9,7 @@ interface PathsTableProps {
 }
 
 /**
- * Paths sub-view of the Content tab (#513 WS-C) — READ-ONLY, ZERO on-chain.
+ * Paths sub-view of the supporting-content step — READ-ONLY, ZERO on-chain.
  * Shows each path's resolved course sequence, and loudly flags any `courseId`
  * ref that resolves to nothing instead of the silent drop `pathCourseRefIds`
  * callers get elsewhere today — the net-new dangling-ref detection

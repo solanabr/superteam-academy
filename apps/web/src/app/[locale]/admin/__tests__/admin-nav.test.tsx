@@ -46,10 +46,10 @@ afterEach(() => {
 });
 
 describe("AdminNav", () => {
-  it("renders exactly the five section links pointing at locale-prefixed routes", () => {
+  it("renders exactly the four section links pointing at locale-prefixed routes", () => {
     renderWithIntl(<AdminNav />);
     const links = screen.getAllByRole("link");
-    expect(links).toHaveLength(5);
+    expect(links).toHaveLength(4);
 
     expect(screen.getByRole("link", { name: nav.courses })).toHaveAttribute(
       "href",
@@ -67,19 +67,17 @@ describe("AdminNav", () => {
       "href",
       "/en/admin/status"
     );
-    expect(screen.getByRole("link", { name: nav.content })).toHaveAttribute(
-      "href",
-      "/en/admin/content"
-    );
   });
 
-  it("no longer offers the retired Publish / Deploy entries", () => {
+  // #1136 folded Content into Courses; publish/deploy went the same way earlier.
+  it("no longer offers the retired Publish / Deploy / Content entries", () => {
     renderWithIntl(<AdminNav />);
     const hrefs = screen
       .getAllByRole("link")
       .map((link) => link.getAttribute("href"));
     expect(hrefs).not.toContain("/en/admin/publish");
     expect(hrefs).not.toContain("/en/admin/deploy");
+    expect(hrefs).not.toContain("/en/admin/content");
   });
 
   it("labels the nav landmark from the admin namespace", () => {
@@ -97,12 +95,7 @@ describe("AdminNav", () => {
       "aria-current",
       "page"
     );
-    for (const label of [
-      nav.moderation,
-      nav.insights,
-      nav.status,
-      nav.content,
-    ]) {
+    for (const label of [nav.moderation, nav.insights, nav.status]) {
       expect(screen.getByRole("link", { name: label })).not.toHaveAttribute(
         "aria-current"
       );
@@ -159,8 +152,8 @@ describe("AdminNav", () => {
     await waitFor(() =>
       expect(screen.getByLabelText(nav.pendingFlagsUnknown)).toBeInTheDocument()
     );
-    // Nav still renders its five links and never throws into the tree.
-    expect(screen.getAllByRole("link")).toHaveLength(5);
+    // Nav still renders its four links and never throws into the tree.
+    expect(screen.getAllByRole("link")).toHaveLength(4);
     // The marker is scoped to Moderation and carries no count.
     expect(
       screen.getByRole("link", { name: /Moderation/ })
