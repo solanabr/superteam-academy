@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/messages/en.json";
+import { AmbientWalletProvider } from "@/lib/solana/optional-wallet";
 import { AuthModal } from "../auth-modal";
 
 vi.mock("@solana/wallet-adapter-react-ui", () => ({
@@ -35,10 +36,13 @@ vi.mock("@/lib/supabase/client", () => ({
 
 vi.mock("@/lib/analytics", () => ({ trackEvent: vi.fn() }));
 
+// Wrapped in AmbientWalletProvider: this suite models the (platform) routes,
+// where the provider stack is ambient in the layout (#1097). The scoped
+// (marketing) path has its own suite, auth-modal-scoped-providers.test.tsx.
 function renderWithIntl(ui: ReactElement) {
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
-      {ui}
+      <AmbientWalletProvider>{ui}</AmbientWalletProvider>
     </NextIntlClientProvider>
   );
 }
@@ -51,10 +55,14 @@ beforeEach(() => {
 });
 
 describe("AuthModal — controlled mode (#556)", () => {
-  it("opens programmatically via the open prop, without rendering a trigger button", () => {
+  it("opens programmatically via the open prop, without rendering a trigger button", async () => {
     renderWithIntl(<AuthModal open onOpenChange={() => {}} />);
 
-    expect(screen.getByText(TITLE)).toBeInTheDocument();
+    // findBy with a generous timeout: the dialog body is a lazy chunk since
+    // #1097, and its first import in a suite loads the Dynamic SDK.
+    expect(
+      await screen.findByText(TITLE, {}, { timeout: 10_000 })
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: DEFAULT_TRIGGER })
     ).not.toBeInTheDocument();
@@ -69,11 +77,11 @@ describe("AuthModal — controlled mode (#556)", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("reports close through onOpenChange", () => {
+  it("reports close through onOpenChange", async () => {
     const onOpenChange = vi.fn();
     renderWithIntl(<AuthModal open onOpenChange={onOpenChange} />);
 
-    fireEvent.keyDown(screen.getByText(TITLE), { key: "Escape" });
+    fireEvent.keyDown(await screen.findByText(TITLE), { key: "Escape" });
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
@@ -93,23 +101,23 @@ describe("AuthModal — controlled mode (#556)", () => {
 });
 
 describe("AuthModal — uncontrolled mode (unchanged)", () => {
-  it("renders the default trigger and opens on click", () => {
+  it("renders the default trigger and opens on click", async () => {
     renderWithIntl(<AuthModal />);
 
     const trigger = screen.getByRole("button", { name: DEFAULT_TRIGGER });
     expect(screen.queryByText(TITLE)).not.toBeInTheDocument();
 
     fireEvent.click(trigger);
-    expect(screen.getByText(TITLE)).toBeInTheDocument();
+    expect(await screen.findByText(TITLE)).toBeInTheDocument();
   });
 });
 
 describe("AuthModal — Later affordance (LX-A4b)", () => {
-  it("shows the keep-progress framing, a Later button, and reassurance copy", () => {
+  it("shows the keep-progress framing, a Later button, and reassurance copy", async () => {
     renderWithIntl(<AuthModal open onOpenChange={() => {}} showLater />);
 
     expect(
-      screen.getByText(messages.auth.keepProgressTitle)
+      await screen.findByText(messages.auth.keepProgressTitle)
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: messages.auth.later })
@@ -135,21 +143,25 @@ describe("AuthModal — Later affordance (LX-A4b)", () => {
     expect(claimCopy).toContain("saved");
   });
 
-  it("closes and calls onLater when Later is tapped", () => {
+  it("closes and calls onLater when Later is tapped", async () => {
     const onOpenChange = vi.fn();
     const onLater = vi.fn();
     renderWithIntl(
       <AuthModal open onOpenChange={onOpenChange} showLater onLater={onLater} />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: messages.auth.later }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: messages.auth.later })
+    );
     expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(onLater).toHaveBeenCalledTimes(1);
   });
 
-  it("omits the Later affordance by default", () => {
+  it("omits the Later affordance by default", async () => {
     renderWithIntl(<AuthModal open onOpenChange={() => {}} />);
 
+    // Wait for the lazy body before asserting the button's absence.
+    await screen.findByText(TITLE);
     expect(
       screen.queryByRole("button", { name: messages.auth.later })
     ).not.toBeInTheDocument();

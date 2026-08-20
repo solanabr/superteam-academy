@@ -8,6 +8,7 @@ import {
 } from "@solana/wallet-adapter-react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { env } from "@/lib/env";
+import { AmbientWalletProvider } from "@/lib/solana/optional-wallet";
 import { WalletAuthHandler } from "@/components/auth/wallet-auth-handler";
 
 import "@solana/wallet-adapter-react-ui/styles.css";
@@ -46,8 +47,13 @@ export function SolanaWalletProvider({ children }: SolanaWalletProviderProps) {
         onError={onError}
       >
         <WalletModalProvider>
-          <WalletAuthHandler />
-          {children}
+          {/* Stamps "wallet hooks resolve here" for useOptionalWallet /
+              useHasAmbientWallet — the providers mount only on (platform)
+              routes (#1097), and Header children render everywhere. */}
+          <AmbientWalletProvider>
+            <WalletAuthHandler />
+            {children}
+          </AmbientWalletProvider>
         </WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>

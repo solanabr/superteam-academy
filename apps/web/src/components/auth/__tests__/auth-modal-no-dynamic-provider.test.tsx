@@ -4,6 +4,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/messages/en.json";
+import { AmbientWalletProvider } from "@/lib/solana/optional-wallet";
 
 /**
  * The gate's core promise: with `NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID` unset the
@@ -46,17 +47,30 @@ vi.mock("@/lib/dynamic/config", () => ({
 
 import { AuthModal } from "../auth-modal";
 
+// AmbientWalletProvider models a (platform) route (#1097); it is the plain
+// boolean stamp from lib/solana/optional-wallet, not a Dynamic provider, so
+// this render still exercises "no DynamicProvider mounted".
 describe("AuthModal with Dynamic disabled and no provider mounted", () => {
-  it("opens without throwing, and offers the other sign-in methods", () => {
+  it("opens without throwing, and offers the other sign-in methods", async () => {
     expect(() =>
       render(
         <NextIntlClientProvider locale="en" messages={messages}>
-          <AuthModal open onOpenChange={() => {}} />
+          <AmbientWalletProvider>
+            <AuthModal open onOpenChange={() => {}} />
+          </AmbientWalletProvider>
         </NextIntlClientProvider>
       )
     ).not.toThrow();
 
-    expect(screen.getByText(messages.auth.signInTitle)).toBeInTheDocument();
+    // findBy with a generous timeout: the dialog body is a lazy chunk since
+    // #1097, and its first import in a suite loads the Dynamic SDK.
+    expect(
+      await screen.findByText(
+        messages.auth.signInTitle,
+        {},
+        { timeout: 10_000 }
+      )
+    ).toBeInTheDocument();
     // The wallet route stays available — it is the guaranteed way in.
     expect(
       screen.getByRole("button", { name: messages.auth.connectSolanaWallet })
@@ -81,15 +95,19 @@ describe("AuthModal with Dynamic disabled and no provider mounted", () => {
   // A separate render: a click leaves every button disabled while the
   // full-page OAuth navigation is presumed imminent, so the two kill-switch
   // clicks cannot share one modal instance.
-  it("GitHub falls back to Supabase OAuth the same way", () => {
+  it("GitHub falls back to Supabase OAuth the same way", async () => {
     render(
       <NextIntlClientProvider locale="en" messages={messages}>
-        <AuthModal open onOpenChange={() => {}} />
+        <AmbientWalletProvider>
+          <AuthModal open onOpenChange={() => {}} />
+        </AmbientWalletProvider>
       </NextIntlClientProvider>
     );
 
     fireEvent.click(
-      screen.getByRole("button", { name: messages.auth.signInWithGitHub })
+      await screen.findByRole("button", {
+        name: messages.auth.signInWithGitHub,
+      })
     );
     expect(signInWithOAuth).toHaveBeenCalledWith(
       expect.objectContaining({ provider: "github" })

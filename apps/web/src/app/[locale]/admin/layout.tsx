@@ -1,7 +1,8 @@
 import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";
-import { AdminNav } from "./admin-nav";
 import { isValidAdminSession } from "@/lib/admin/auth";
+import { DynamicReturnCatcher } from "@/components/auth/dynamic-return-catcher";
+import { AdminNav } from "./admin-nav";
 
 /**
  * Admin console shell. When the `admin_session` cookie validates, it renders
@@ -23,13 +24,21 @@ export default async function AdminLayout({
   const session = cookieStore.get("admin_session");
 
   if (!isValidAdminSession(session?.value)) {
-    return <>{children}</>;
+    // Admin sits outside (platform), so a Dynamic redirect landing here needs
+    // the catcher, same as marketing (#1097).
+    return (
+      <>
+        <DynamicReturnCatcher />
+        {children}
+      </>
+    );
   }
 
   const t = await getTranslations("admin");
 
   return (
     <div className="min-h-screen bg-bg text-text">
+      <DynamicReturnCatcher />
       <div className="mx-auto max-w-6xl px-4 py-8">
         <div className="mb-8">
           <h1 className="font-display text-2xl font-bold text-text">

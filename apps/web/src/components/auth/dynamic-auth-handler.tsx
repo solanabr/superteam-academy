@@ -21,10 +21,8 @@ import { createClient } from "@/lib/supabase/client";
 import { runWalletSiws } from "@/lib/wallet/siws";
 import { logoutDynamic } from "@/lib/dynamic/client";
 import { toMessageSigner } from "@/lib/dynamic/siws";
-import {
-  bridgeDynamicSession,
-  setSocialReturnPending,
-} from "@/lib/dynamic/social";
+import { bridgeDynamicSession } from "@/lib/dynamic/social";
+import { setSocialReturnPending } from "@/lib/dynamic/social-return-pending";
 import { dispatchToast } from "@/components/ui/toast-container";
 
 /**

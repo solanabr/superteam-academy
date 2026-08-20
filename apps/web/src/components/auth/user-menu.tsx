@@ -12,7 +12,7 @@ import {
   Trophy,
   UserCircle,
 } from "@phosphor-icons/react";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useOptionalWallet } from "@/lib/solana/optional-wallet";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,7 +23,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { resetUser } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
-import { logoutDynamic } from "@/lib/dynamic/client";
+import { isDynamicEnabled } from "@/lib/dynamic/config";
 
 interface UserMenuProps {
   username: string;
@@ -40,28 +40,35 @@ export function UserMenu({
 }: UserMenuProps) {
   const tCommon = useTranslations("common");
   const tNav = useTranslations("nav");
-  const { disconnect, connected } = useWallet();
+  // Null on routes without the wallet provider stack (marketing/admin,
+  // #1097) — there is nothing connected to disconnect there, and Supabase
+  // sign-out below works regardless.
+  const wallet = useOptionalWallet();
   const [copied, setCopied] = useState(false);
 
   const handleSignOut = useCallback(async () => {
-    if (connected) {
+    if (wallet?.connected) {
       try {
-        await disconnect();
+        await wallet.disconnect();
       } catch {
         // Wallet may already be disconnected — proceed with sign-out
       }
     }
     // End the Dynamic session too — without this, promptless MPC signing lets
     // the layout-level auth handler silently sign the learner back in on the
-    // next page load (see logoutDynamic).
-    await logoutDynamic();
+    // next page load (see logoutDynamic). Imported on demand: the static
+    // import would put the Dynamic SDK back into the global header chunk.
+    if (isDynamicEnabled()) {
+      const { logoutDynamic } = await import("@/lib/dynamic/client");
+      await logoutDynamic();
+    }
     const supabase = createClient();
     await supabase.auth.signOut();
     // Sever the analytics identity so the next visitor on this browser is not
     // attributed to the signed-out account.
     resetUser();
     window.location.href = `/${locale}`;
-  }, [locale, connected, disconnect]);
+  }, [locale, wallet]);
 
   const handleCopyAddress = useCallback(
     (e: React.MouseEvent) => {

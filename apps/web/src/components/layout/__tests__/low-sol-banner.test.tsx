@@ -14,8 +14,14 @@ const state = vi.hoisted(() => {
 });
 
 vi.mock("@solana/wallet-adapter-react", () => ({
-  useWallet: () => ({ publicKey: state.publicKey }),
   useConnection: () => ({ connection: state.connection }),
+}));
+
+// The banner reads the wallet through useOptionalWallet (#1097) so it renders
+// null on provider-less routes; these cases all model a (platform) route
+// where the ambient providers exist.
+vi.mock("@/lib/solana/optional-wallet", () => ({
+  useOptionalWallet: () => ({ publicKey: state.publicKey }),
 }));
 
 vi.mock("next-intl", () => ({

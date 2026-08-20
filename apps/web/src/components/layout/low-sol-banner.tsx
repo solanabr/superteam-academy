@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useWallet, useConnection } from "@solana/wallet-adapter-react";
+import { useConnection } from "@solana/wallet-adapter-react";
 import { useTranslations } from "next-intl";
+import { useOptionalWallet } from "@/lib/solana/optional-wallet";
 
 // Inlined so this layout-mounted component doesn't pull @solana/web3.js into
 // the shared client chunk for one plain constant (#1090).
@@ -16,7 +17,11 @@ const IS_DEVNET =
 
 export function LowSolBanner() {
   const t = useTranslations("nav");
-  const { publicKey } = useWallet();
+  // Null on routes without the wallet provider stack (marketing/admin,
+  // #1097): no wallet there means nothing to warn about, and the guards
+  // below all key off a null publicKey.
+  const wallet = useOptionalWallet();
+  const publicKey = wallet?.publicKey ?? null;
   const { connection } = useConnection();
   const [balance, setBalance] = useState<number | null>(null);
   const [dismissed, setDismissed] = useState(false);
