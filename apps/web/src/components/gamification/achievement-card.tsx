@@ -3,11 +3,14 @@
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { ProofPill } from "@/components/ui/proof-pill";
+import { AchievementMedal } from "@/components/gamification/achievement-medal";
 
 interface AchievementCardProps {
   name: string;
   description: string;
   glyph: string;
+  /** Phosphor icon name from the achievement doc — drives the medal engraving. */
+  icon?: string;
   solTier?: boolean;
   unlockedAt?: Date;
   explorerUrl?: string;
@@ -21,6 +24,7 @@ export function AchievementCard({
   // (shown in tooltips or detail panels, not in the compact octagon layout)
   description: _description,
   glyph,
+  icon,
   solTier,
   unlockedAt,
   explorerUrl,
@@ -36,10 +40,7 @@ export function AchievementCard({
   const cluster = network === "mainnet" ? "mainnet-beta" : network;
 
   const medal = (
-    <div className={cn("ach-medal", medalState)} aria-hidden="true">
-      <div className="ach-face" />
-      <span className="ach-glyph">{glyph}</span>
-    </div>
+    <AchievementMedal glyph={glyph} icon={icon} state={medalState} />
   );
 
   return (
