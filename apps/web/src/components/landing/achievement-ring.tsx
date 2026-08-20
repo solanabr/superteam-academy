@@ -1,7 +1,7 @@
 "use client";
 
 import type { DeployedAchievement } from "@/lib/content/queries";
-import { AchievementPatch } from "@/components/gamification/achievement-patch";
+import { AchievementPatch3D } from "@/components/gamification/achievement-patch-3d";
 
 /**
  * The CTA section's rotating achievement ring (designer feedback, 19-08).
@@ -11,11 +11,16 @@ import { AchievementPatch } from "@/components/gamification/achievement-patch";
  * section: the achievements now sit between the CTA's promise and its buttons,
  * so the reward is on screen at the moment of decision.
  *
+ * The badges are the spec's 3D patch — real thickness, six shade slices
+ * between two identically-authored faces — so the ring's own orbit supplies
+ * each patch's Y rotation and their corners show as they pass edge-on. Far-side
+ * patches are the ones showing their back face, which is dimmed so the ring
+ * reads as depth rather than a flat wall of badges.
+ *
  * All motion is CSS (`.ach-ring*` in globals.css): items are placed with
  * per-item `--ring-a` angles around a shared `--ring-r` radius and the ring
- * animates one full turn. Each item is double-faced — the back face is the
- * same content pre-rotated 180° and ghosted — so far-side medals stay visible
- * (dimmed, card-carousel style) without ever rendering mirrored.
+ * animates one full turn. Names are flat text, so each carries a pre-rotated
+ * back copy — otherwise the far half would render mirrored.
  * `prefers-reduced-motion` stops the spin and leaves a static arc.
  */
 export function AchievementRing({
@@ -35,25 +40,20 @@ export function AchievementRing({
             className="ach-ring-item"
             style={{ "--ring-a": `${i * step}deg` } as React.CSSProperties}
           >
-            <div className="ach-ring-face">
-              <AchievementPatch
-                id={ach.id}
-                glyph={ach.glyph}
-                solTier={ach.solTier}
-                category={ach.category}
-                state="earned"
-              />
+            <AchievementPatch3D
+              id={ach.id}
+              glyph={ach.glyph}
+              solTier={ach.solTier}
+              category={ach.category}
+            />
+            <div className="ach-ring-label">
               <p className="ach-ring-name">{ach.name}</p>
-            </div>
-            <div className="ach-ring-face ach-ring-back" aria-hidden="true">
-              <AchievementPatch
-                id={ach.id}
-                glyph={ach.glyph}
-                solTier={ach.solTier}
-                category={ach.category}
-                state="earned"
-              />
-              <p className="ach-ring-name">{ach.name}</p>
+              <p
+                className="ach-ring-name ach-ring-name--back"
+                aria-hidden="true"
+              >
+                {ach.name}
+              </p>
             </div>
           </div>
         ))}

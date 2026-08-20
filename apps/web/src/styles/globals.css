@@ -628,19 +628,23 @@
   }
 
   /* tier → shape */
-  .patch[data-tier="1"] {
+  .patch[data-tier="1"],
+  .patch3d[data-tier="1"] {
     --patch-radius: calc(var(--size) * 0.14);
     --stitch-radius: calc(var(--size) * 0.07);
   }
-  .patch[data-tier="2"] {
+  .patch[data-tier="2"],
+  .patch3d[data-tier="2"] {
     --patch-radius: calc(var(--size) * 0.3);
     --stitch-radius: calc(var(--size) * 0.22);
   }
-  .patch[data-tier="3"] {
+  .patch[data-tier="3"],
+  .patch3d[data-tier="3"] {
     --patch-radius: 999px;
     --stitch-radius: 999px;
   }
-  .patch[data-tier="4"] {
+  .patch[data-tier="4"],
+  .patch3d[data-tier="4"] {
     --patch-radius: calc(var(--size) * 0.36) calc(var(--size) * 0.11)
       calc(var(--size) * 0.36) calc(var(--size) * 0.11);
     --stitch-radius: calc(var(--size) * 0.28) calc(var(--size) * 0.06)
@@ -648,37 +652,44 @@
   }
 
   /* category → colour */
-  .patch[data-cat="reward"] {
+  .patch[data-cat="reward"],
+  .patch3d[data-cat="reward"] {
     --fill: #f5a623;
     --shade: #b45309;
   }
-  .patch[data-cat="start"] {
+  .patch[data-cat="start"],
+  .patch3d[data-cat="start"] {
     --fill: #fde68a;
     --shade: #f5a623;
   }
-  .patch[data-cat="course"] {
+  .patch[data-cat="course"],
+  .patch3d[data-cat="course"] {
     --fill: #2ecc8e;
     --shade: #0a7055;
   }
-  .patch[data-cat="craft"] {
+  .patch[data-cat="craft"],
+  .patch3d[data-cat="craft"] {
     --fill: #0a7055;
     --shade: #065c44;
     --patch-glyph: #fafaf7;
     --stitch: rgba(250, 250, 247, 0.55);
   }
-  .patch[data-cat="community"] {
+  .patch[data-cat="community"],
+  .patch3d[data-cat="community"] {
     --fill: #ea580c;
     --shade: #9a3412;
     --patch-glyph: #fafaf7;
     --stitch: rgba(250, 250, 247, 0.55);
   }
-  .patch[data-cat="endurance"] {
+  .patch[data-cat="endurance"],
+  .patch3d[data-cat="endurance"] {
     --fill: #19231b;
     --shade: #0e1117;
     --patch-glyph: #2ecc8e;
     --stitch: rgba(250, 250, 247, 0.5);
   }
-  .patch[data-cat="onchain"] {
+  .patch[data-cat="onchain"],
+  .patch3d[data-cat="onchain"] {
     --fill: linear-gradient(135deg, #9945ff, #14f195);
     --shade: #6d28d9;
     --patch-glyph: #fafaf7;
@@ -736,6 +747,92 @@
   }
   [data-theme="dark"] .patch[data-locked]::before {
     border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  /* ── The 3D patch (spec: achievement-patches v1, "The 3D patch") ──
+     The same flat art given thickness: six slices in the category's shade
+     colour stacked between a front and a back face. No lighting, no bevel,
+     no specular — a printed patch turning over, not a metal coin.
+
+     No perspective of its own: it renders inside a parent that already owns
+     the 3D scene (the CTA ring), whose orbit supplies the Y rotation. */
+  .patch3d {
+    --size: 84px;
+    --t: 14px;
+    --fill: #f5a623;
+    --shade: #b45309;
+    --patch-glyph: #19231b;
+    --stitch: rgba(25, 35, 27, 0.45);
+    --patch-radius: 10px;
+    --stitch-radius: 5px;
+    --patch-ink: #19231b;
+
+    position: relative;
+    width: var(--size);
+    height: var(--size);
+    flex-shrink: 0;
+    transform-style: preserve-3d;
+  }
+
+  .patch3d__slice,
+  .patch3d__face {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--patch-radius);
+  }
+
+  /* Inset so the slices never break the faces' silhouette */
+  .patch3d__slice {
+    inset: 2px;
+    background: var(--shade);
+  }
+
+  .patch3d__face {
+    display: grid;
+    place-items: center;
+    background: var(--fill);
+    border: 3px solid var(--patch-ink);
+    /* Without this the away-facing face paints over the near one */
+    backface-visibility: hidden;
+  }
+
+  /* Both faces are authored identically. The back face's own rotateY(180deg)
+     cancels the container's rotation at the moment it faces the viewer, so its
+     art reads upright — a counter-mirror here would reverse the glyph. */
+  .patch3d__face--front {
+    transform: translateZ(calc(var(--t) / 2));
+  }
+  .patch3d__face--back {
+    transform: translateZ(calc(var(--t) / -2)) rotateY(180deg);
+  }
+
+  .patch3d__stitch {
+    position: absolute;
+    inset: 6px;
+    border: 2px dashed var(--stitch);
+    border-radius: var(--stitch-radius);
+    pointer-events: none;
+  }
+
+  .patch3d__glyph {
+    position: relative;
+    font:
+      700 calc(var(--size) * 0.4) / 1 var(--font-mono),
+      "JetBrains Mono",
+      monospace;
+    color: var(--patch-glyph);
+    user-select: none;
+  }
+  .patch3d__glyph--symbol {
+    display: block;
+    transform: translateY(-0.07em);
+  }
+
+  /* Tier 4: the notch lives on the FACES only. The faces self-rotate and the
+     slices do not, so an asymmetric slice profile would disagree with the face
+     on the back half — the slices take the per-corner maximum instead. */
+  .patch3d[data-tier="4"] .patch3d__slice {
+    border-radius: calc(var(--size) * 0.34);
   }
 
   /* Info block below the patch */
@@ -1602,12 +1699,10 @@
 /* ── CTA achievement ring (designer feedback 19-08) ─────────────────
    The flat marquee became a 3D ring inside the closing CTA: items sit at
    per-item --ring-a angles around a shared --ring-r radius, the whole ring
-   turns forever, and hover (or focus inside) pauses it. Every item carries
-   two faces (card-flip technique): the front is the real content, the back
-   is the same content pre-rotated 180° and ghosted — so far-side medals
-   stay visible as a dim backdrop instead of vanishing, and neither face
-   ever renders mirrored. The stage flex-centers the ring so the empty
-   space above and below it is equal. */
+   turns forever, and hover (or focus inside) pauses it. The badges are the
+   spec's 3D patch, so each is a real object with thickness and the orbit
+   supplies its Y rotation — no per-patch spin on top. The stage flex-centers
+   the ring so the empty space above and below it is equal. */
 .ach-ring-stage {
   perspective: 1400px;
   height: 220px;
@@ -1640,35 +1735,35 @@
 .ach-ring-item {
   position: absolute;
   inset: 0;
-  transform: rotateY(var(--ring-a)) translateZ(var(--ring-r));
-  transform-style: preserve-3d;
-}
-.ach-ring-face {
-  position: absolute;
-  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  backface-visibility: hidden;
+  gap: 12px;
+  transform: rotateY(var(--ring-a)) translateZ(var(--ring-r));
+  transform-style: preserve-3d;
 }
-.ach-ring-back {
-  transform: rotateY(180deg);
-  opacity: 0.28;
-  pointer-events: none;
-}
-/* Ring patches run one size up from the grid's 72px token. The ring sits on
-   the dark CTA panel, so the outline and shadow take the dark-theme cream
-   regardless of the page theme. */
-.ach-ring-face .patch {
-  --size: 84px;
+
+/* The patches are real 3D objects, so the ring's orbit turns each one a full
+   360° per cycle and their corners show as they pass edge-on. The far half of
+   the ring is exactly the half showing its back face, so dimming the back face
+   is what makes the background badges read as depth. */
+.ach-ring-item .patch3d {
   --patch-ink: #fafaf7;
-  box-shadow: 0 var(--lift) 0 0 rgba(250, 250, 247, 0.92);
 }
-.ach-ring-face .patch[data-cat="reward"],
-.ach-ring-face .patch[data-cat="start"],
-.ach-ring-face .patch[data-cat="course"] {
+.ach-ring-item .patch3d[data-cat="reward"],
+.ach-ring-item .patch3d[data-cat="start"],
+.ach-ring-item .patch3d[data-cat="course"] {
   --stitch: rgba(25, 35, 27, 0.4);
+}
+.ach-ring-item .patch3d__face--back {
+  opacity: 0.32;
+}
+
+/* Names are flat text: the far half would render mirrored, so each carries a
+   pre-rotated back copy, ghosted to match its patch. */
+.ach-ring-label {
+  position: relative;
+  transform-style: preserve-3d;
 }
 .ach-ring-name {
   font-family: var(--font-display), "Nunito", sans-serif;
@@ -1677,7 +1772,15 @@
   line-height: 1.3;
   text-align: center;
   color: rgba(255, 255, 255, 0.85);
+  backface-visibility: hidden;
 }
+.ach-ring-name--back {
+  position: absolute;
+  inset: 0;
+  transform: rotateY(180deg);
+  opacity: 0.4;
+}
+
 @keyframes ach-ring-spin {
   from {
     transform: rotateY(0deg);
@@ -1689,6 +1792,9 @@
 @media (prefers-reduced-motion: reduce) {
   .ach-ring {
     animation: none;
+    /* Parked slightly off-axis so the patches still read as objects with
+       thickness rather than flat cards. */
+    transform: rotateY(-18deg);
   }
 }
 
@@ -1697,6 +1803,10 @@
   .patch {
     --size: 56px;
     --border: 2.5px;
+  }
+  .patch3d {
+    --size: 64px;
+    --t: 10px;
   }
   .ach-name {
     font-size: 10px;
