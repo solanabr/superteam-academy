@@ -13,7 +13,7 @@ import {
   GraduationCap,
   ArrowSquareOut,
 } from "@phosphor-icons/react";
-import type { ActivityItem } from "@/hooks/use-dashboard-data";
+import type { ActivityItem } from "@/lib/dashboard/types";
 
 const SOLANA_CLUSTER = process.env.NEXT_PUBLIC_SOLANA_NETWORK ?? "devnet";
 function explorerTxUrl(sig: string): string {

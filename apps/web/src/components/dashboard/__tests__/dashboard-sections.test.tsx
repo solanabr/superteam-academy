@@ -3,7 +3,7 @@ import type { ReactElement } from "react";
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import type { ActivityItem } from "@/hooks/use-dashboard-data";
+import type { ActivityItem } from "@/lib/dashboard/types";
 import messages from "@/messages/en.json";
 import { ActivitySection } from "../activity-section";
 
