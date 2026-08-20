@@ -36,7 +36,11 @@ async function loadLeaderboard(
   });
 
   if (error) {
-    throw new Error(`Failed to load leaderboard (${timeframe})`);
+    // Throwing (not returning []) keeps the failure out of the data cache;
+    // the RPC message rides along so the route's logError isn't blind.
+    throw new Error(
+      `Failed to load leaderboard (${timeframe}): ${error.message}`
+    );
   }
 
   return (data ?? []).map(

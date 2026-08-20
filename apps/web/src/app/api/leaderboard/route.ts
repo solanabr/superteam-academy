@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logError } from "@/lib/logging";
+import { ERROR_IDS } from "@/constants/errorIds";
 import {
   getCachedLeaderboard,
   type LeaderboardTimeframe,
@@ -29,7 +31,12 @@ export async function GET(request: NextRequest) {
       timeframe as LeaderboardTimeframe
     );
     return NextResponse.json({ entries }, { headers: CACHE_HEADERS });
-  } catch {
+  } catch (err: unknown) {
+    logError({
+      errorId: ERROR_IDS.LEADERBOARD_FETCH_FAILED,
+      error: err instanceof Error ? err : new Error(String(err)),
+      context: { route: "/api/leaderboard", timeframe },
+    });
     return NextResponse.json(
       { error: "Failed to fetch leaderboard" },
       { status: 500 }
