@@ -50,12 +50,6 @@ export interface ResolvedPatchLook {
   cat: PatchCategory;
   /** The glyph to render — the spec's override where one exists. */
   glyph: string;
-  /**
-   * Single-char symbol glyphs (✩ ★ ⬡ ◎ ∞) come from a fallback font and sit
-   * ~7% low in their em box, so they get an optical nudge. Digits and letter
-   * pairs do not.
-   */
-  symbol: boolean;
 }
 
 export function resolvePatchLook(
@@ -71,11 +65,9 @@ export function resolvePatchLook(
 
   const look = PATCH_LOOKS[id] ?? fallback;
 
-  const shown = look.glyph ?? glyph;
   return {
     tier: look.tier,
     cat: look.cat,
-    glyph: shown,
-    symbol: shown.length === 1 && shown.charCodeAt(0) > 127,
+    glyph: look.glyph ?? glyph,
   };
 }

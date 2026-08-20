@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { resolvePatchLook } from "@/components/gamification/patch-look";
+import { PatchGlyph } from "@/components/gamification/patch-glyph";
 
 /**
  * The 3D achievement patch (spec: achievement-patches v1, "The 3D patch").
@@ -20,7 +21,19 @@ import { resolvePatchLook } from "@/components/gamification/patch-look";
  * colour come from the same `data-tier` / `data-cat` attributes as the flat
  * patch, so the two can never drift apart.
  */
-const SLICES = [-5, -3, -1, 1, 3, 5]; // every 2px through --t: 14px
+/**
+ * The edge band. Slices are zero-thickness planes, so their spacing is what
+ * decides whether the rim reads as a solid edge or as a comb: at the 2px pitch
+ * the spec sketches you can see between them as a patch turns, and the 2px
+ * inset leaves the band visibly narrower than the silhouette it belongs to.
+ * A 1px pitch across the full thickness closes both gaps, and a 1px inset is
+ * still enough to keep the slices from breaking the faces' outline.
+ */
+const THICKNESS = 14;
+const SLICES = Array.from(
+  { length: THICKNESS - 1 },
+  (_, i) => i - (THICKNESS - 2) / 2
+);
 
 export function AchievementPatch3D({
   id,
@@ -36,22 +49,13 @@ export function AchievementPatch3D({
   category?: string;
   className?: string;
 }) {
-  const {
-    tier,
-    cat,
-    glyph: shown,
-    symbol,
-  } = resolvePatchLook(id, glyph, solTier, category);
+  const look = resolvePatchLook(id, glyph, solTier, category);
 
   const face = (
     <>
       <span className="patch3d__stitch" aria-hidden="true" />
-      <span
-        className={
-          symbol ? "patch3d__glyph patch3d__glyph--symbol" : "patch3d__glyph"
-        }
-      >
-        {shown}
+      <span className="patch3d__glyph">
+        <PatchGlyph glyph={look.glyph} />
       </span>
     </>
   );
@@ -59,8 +63,8 @@ export function AchievementPatch3D({
   return (
     <div
       className={cn("patch3d", className)}
-      data-tier={tier}
-      data-cat={cat}
+      data-tier={look.tier}
+      data-cat={look.cat}
       aria-hidden="true"
     >
       {SLICES.map((z) => (
