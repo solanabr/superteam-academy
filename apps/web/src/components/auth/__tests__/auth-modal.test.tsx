@@ -83,64 +83,76 @@ afterEach(() => {
 });
 
 describe("AuthModal — one error placement (#1077)", () => {
-  it("renders a Dynamic button failure at modal level, not inline under the button", { timeout: 15_000 }, async () => {
-    dynamicState.enabled = true;
-    dynamicState.redirectMock.mockRejectedValueOnce(new Error("no settings"));
-    vi.spyOn(console, "error").mockImplementation(() => {});
+  it(
+    "renders a Dynamic button failure at modal level, not inline under the button",
+    { timeout: 15_000 },
+    async () => {
+      dynamicState.enabled = true;
+      dynamicState.redirectMock.mockRejectedValueOnce(new Error("no settings"));
+      vi.spyOn(console, "error").mockImplementation(() => {});
 
-    renderWithIntl(<AuthModal open onOpenChange={() => {}} />);
-    // findBy with a generous timeout: the dialog body is a lazy chunk since
-    // #1097, and its first import in a suite is slow.
-    fireEvent.click(
-      await screen.findByRole(
+      renderWithIntl(<AuthModal open onOpenChange={() => {}} />);
+      // findBy with a generous timeout: the dialog body is a lazy chunk since
+      // #1097, and its first import in a suite is slow.
+      fireEvent.click(
+        await screen.findByRole(
+          "button",
+          { name: messages.auth.signInWithGoogle },
+          { timeout: 10_000 }
+        )
+      );
+
+      const alert = await screen.findByRole("alert");
+      expect(alert).toHaveTextContent(messages.auth.googleSignInFailed);
+      // Modal-level style (text-sm), the same channel Supabase fallbacks use.
+      expect(alert.className).toContain("text-sm");
+      expect(screen.getAllByRole("alert")).toHaveLength(1);
+    }
+  );
+
+  it(
+    "clears the modal-level error when a new Dynamic attempt starts",
+    { timeout: 15_000 },
+    async () => {
+      dynamicState.enabled = true;
+      dynamicState.redirectMock.mockRejectedValueOnce(new Error("no settings"));
+      vi.spyOn(console, "error").mockImplementation(() => {});
+
+      renderWithIntl(<AuthModal open onOpenChange={() => {}} />);
+      const googleButton = await screen.findByRole(
         "button",
         { name: messages.auth.signInWithGoogle },
         { timeout: 10_000 }
-      )
-    );
+      );
+      fireEvent.click(googleButton);
+      await screen.findByRole("alert");
 
-    const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent(messages.auth.googleSignInFailed);
-    // Modal-level style (text-sm), the same channel Supabase fallbacks use.
-    expect(alert.className).toContain("text-sm");
-    expect(screen.getAllByRole("alert")).toHaveLength(1);
-  });
-
-  it("clears the modal-level error when a new Dynamic attempt starts", { timeout: 15_000 }, async () => {
-    dynamicState.enabled = true;
-    dynamicState.redirectMock.mockRejectedValueOnce(new Error("no settings"));
-    vi.spyOn(console, "error").mockImplementation(() => {});
-
-    renderWithIntl(<AuthModal open onOpenChange={() => {}} />);
-    const googleButton = await screen.findByRole(
-      "button",
-      { name: messages.auth.signInWithGoogle },
-      { timeout: 10_000 }
-    );
-    fireEvent.click(googleButton);
-    await screen.findByRole("alert");
-
-    // Next attempt resolves (never navigates in jsdom) — the stale error goes.
-    fireEvent.click(googleButton);
-    await waitFor(() =>
-      expect(screen.queryByRole("alert")).not.toBeInTheDocument()
-    );
-  });
+      // Next attempt resolves (never navigates in jsdom) — the stale error goes.
+      fireEvent.click(googleButton);
+      await waitFor(() =>
+        expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+      );
+    }
+  );
 });
 
 describe("AuthModal — controlled mode (#556)", () => {
-  it("opens programmatically via the open prop, without rendering a trigger button", { timeout: 15_000 }, async () => {
-    renderWithIntl(<AuthModal open onOpenChange={() => {}} />);
+  it(
+    "opens programmatically via the open prop, without rendering a trigger button",
+    { timeout: 15_000 },
+    async () => {
+      renderWithIntl(<AuthModal open onOpenChange={() => {}} />);
 
-    // findBy with a generous timeout: the dialog body is a lazy chunk since
-    // #1097, and its first import in a suite loads the Dynamic SDK.
-    expect(
-      await screen.findByText(TITLE, {}, { timeout: 10_000 })
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: DEFAULT_TRIGGER })
-    ).not.toBeInTheDocument();
-  });
+      // findBy with a generous timeout: the dialog body is a lazy chunk since
+      // #1097, and its first import in a suite loads the Dynamic SDK.
+      expect(
+        await screen.findByText(TITLE, {}, { timeout: 10_000 })
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: DEFAULT_TRIGGER })
+      ).not.toBeInTheDocument();
+    }
+  );
 
   it("renders nothing while closed in controlled mode (no stray sign-in button)", () => {
     renderWithIntl(<AuthModal open={false} onOpenChange={() => {}} />);
@@ -175,31 +187,45 @@ describe("AuthModal — controlled mode (#556)", () => {
 });
 
 describe("AuthModal — uncontrolled mode (unchanged)", () => {
-  it("renders the default trigger and opens on click", { timeout: 15_000 }, async () => {
-    renderWithIntl(<AuthModal />);
+  it(
+    "renders the default trigger and opens on click",
+    { timeout: 15_000 },
+    async () => {
+      renderWithIntl(<AuthModal />);
 
-    const trigger = screen.getByRole("button", { name: DEFAULT_TRIGGER });
-    expect(screen.queryByText(TITLE)).not.toBeInTheDocument();
+      const trigger = screen.getByRole("button", { name: DEFAULT_TRIGGER });
+      expect(screen.queryByText(TITLE)).not.toBeInTheDocument();
 
-    fireEvent.click(trigger);
-    expect(await screen.findByText(TITLE)).toBeInTheDocument();
-  });
+      fireEvent.click(trigger);
+      expect(await screen.findByText(TITLE)).toBeInTheDocument();
+    }
+  );
 });
 
 describe("AuthModal — Later affordance (LX-A4b)", () => {
-  it("shows the keep-progress framing, a Later button, and reassurance copy", { timeout: 15_000 }, async () => {
-    renderWithIntl(<AuthModal open onOpenChange={() => {}} showLater />);
+  it(
+    "shows the keep-progress framing, a Later button, and reassurance copy",
+    { timeout: 15_000 },
+    async () => {
+      renderWithIntl(<AuthModal open onOpenChange={() => {}} showLater />);
 
-    expect(
-      await screen.findByText(messages.auth.keepProgressTitle)
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: messages.auth.later })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(messages.auth.progressSavedLocally)
-    ).toBeInTheDocument();
-  });
+      expect(
+        await screen.findByText(messages.auth.keepProgressTitle)
+      ).toBeInTheDocument();
+      // The Later button and reassurance copy live in the LAZY body (the title is
+      // Dialog-header chrome, outside it) — findBy, or CI load flakes this.
+      expect(
+        await screen.findByRole(
+          "button",
+          { name: messages.auth.later },
+          { timeout: 10_000 }
+        )
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(messages.auth.progressSavedLocally)
+      ).toBeInTheDocument();
+    }
+  );
 
   it("never uses discard/lose/delete language (F4) — progress is framed as kept", () => {
     const claimCopy = [
@@ -217,19 +243,28 @@ describe("AuthModal — Later affordance (LX-A4b)", () => {
     expect(claimCopy).toContain("saved");
   });
 
-  it("closes and calls onLater when Later is tapped", { timeout: 15_000 }, async () => {
-    const onOpenChange = vi.fn();
-    const onLater = vi.fn();
-    renderWithIntl(
-      <AuthModal open onOpenChange={onOpenChange} showLater onLater={onLater} />
-    );
+  it(
+    "closes and calls onLater when Later is tapped",
+    { timeout: 15_000 },
+    async () => {
+      const onOpenChange = vi.fn();
+      const onLater = vi.fn();
+      renderWithIntl(
+        <AuthModal
+          open
+          onOpenChange={onOpenChange}
+          showLater
+          onLater={onLater}
+        />
+      );
 
-    fireEvent.click(
-      await screen.findByRole("button", { name: messages.auth.later })
-    );
-    expect(onOpenChange).toHaveBeenCalledWith(false);
-    expect(onLater).toHaveBeenCalledTimes(1);
-  });
+      fireEvent.click(
+        await screen.findByRole("button", { name: messages.auth.later })
+      );
+      expect(onOpenChange).toHaveBeenCalledWith(false);
+      expect(onLater).toHaveBeenCalledTimes(1);
+    }
+  );
 
   it("omits the Later affordance by default", { timeout: 15_000 }, async () => {
     renderWithIntl(<AuthModal open onOpenChange={() => {}} />);
