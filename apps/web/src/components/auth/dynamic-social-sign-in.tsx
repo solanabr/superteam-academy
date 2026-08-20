@@ -32,7 +32,7 @@ interface ProviderConfig {
   Icon: ComponentType<{ className?: string }>;
   /** auth.* key for the button label. */
   labelKey: string;
-  /** auth.* key for the inline redirect-failure message. */
+  /** auth.* key for the redirect-failure message (rendered by the parent). */
   errorKey: string;
 }
 
@@ -52,19 +52,26 @@ const PROVIDERS: Record<DynamicSocialProvider, ProviderConfig> = {
 export function DynamicSocialSignIn({
   provider,
   disabled,
+  onError,
 }: {
   provider: DynamicSocialProvider;
   disabled: boolean;
+  /**
+   * Error channel (#1077): the parent renders the failure message where every
+   * other sign-in error already renders (the modal-level `role="alert"`), so
+   * Dynamic and Supabase-fallback errors share one placement and size.
+   * Called with `null` when a new attempt starts.
+   */
+  onError: (message: string | null) => void;
 }) {
   const t = useTranslations("auth");
   const [starting, setStarting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const { data: dynamicUser } = useUser();
   const { Icon, labelKey, errorKey } = PROVIDERS[provider];
 
   const handleClick = async () => {
     setStarting(true);
-    setError(null);
+    onError(null);
     trackEvent("auth_method_selected", { method: `dynamic_${provider}` });
     try {
       // Same stale-session hazard the email form guards against, with a
@@ -81,34 +88,27 @@ export function DynamicSocialSignIn({
       });
     } catch (err) {
       console.error(`[DynamicSocialSignIn:${provider}] redirect failed:`, err);
-      setError(t(errorKey));
+      onError(t(errorKey));
       setStarting(false);
     }
   };
 
   return (
-    <div className="space-y-1.5">
-      <Button
-        variant="outline"
-        className="h-12 w-full gap-3 text-sm font-medium"
-        disabled={disabled || starting}
-        onClick={handleClick}
-      >
-        {starting ? (
-          <div
-            className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent"
-            aria-hidden="true"
-          />
-        ) : (
-          <Icon className="h-5 w-5 shrink-0" />
-        )}
-        {starting ? t("connecting") : t(labelKey)}
-      </Button>
-      {error && (
-        <p className="text-center text-xs text-danger" role="alert">
-          {error}
-        </p>
+    <Button
+      variant="outline"
+      className="h-12 w-full gap-3 text-sm font-medium"
+      disabled={disabled || starting}
+      onClick={handleClick}
+    >
+      {starting ? (
+        <div
+          className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent"
+          aria-hidden="true"
+        />
+      ) : (
+        <Icon className="h-5 w-5 shrink-0" />
       )}
-    </div>
+      {starting ? t("connecting") : t(labelKey)}
+    </Button>
   );
 }

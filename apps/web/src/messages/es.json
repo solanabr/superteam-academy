@@ -697,6 +697,7 @@
     "walletEmbeddedDynamic": "Billetera integrada (Dynamic) — creada con tu inicio de sesión social · Permanente",
     "usedForSignInDynamic": "Usada para iniciar sesión (vía Dynamic)",
     "dynamicLinkHint": "Vincular también te permite iniciar sesión directamente y refuerza la recuperación de tu cuenta.",
+    "dynamicMethodCountNote": "Necesitas al menos un método de inicio de sesión vinculado. Tu inicio de sesión social vía Dynamic no cuenta como método vinculado hasta que lo vincules arriba.",
     "dangerZone": "Zona de peligro",
     "deleteAccountTitle": "Eliminar cuenta",
     "deleteAccountDescription": "Solicita la eliminación permanente de tu cuenta. Tu perfil se anonimiza y se oculta, y se cierra tu sesión. Esto no se puede deshacer.",

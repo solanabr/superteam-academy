@@ -697,6 +697,7 @@
     "walletEmbeddedDynamic": "Embedded wallet (Dynamic) — created with your social sign-in · Permanent",
     "usedForSignInDynamic": "Used for sign-in (via Dynamic)",
     "dynamicLinkHint": "Linking also lets you sign in directly and strengthens account recovery.",
+    "dynamicMethodCountNote": "You need at least one linked sign-in method. Your social sign-in via Dynamic doesn't count as a linked method until you link it above.",
     "dangerZone": "Danger zone",
     "deleteAccountTitle": "Delete account",
     "deleteAccountDescription": "Request permanent deletion of your account. Your profile is anonymized and hidden, and you are signed out. This cannot be undone.",

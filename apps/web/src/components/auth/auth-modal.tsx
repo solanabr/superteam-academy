@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { forwardRef, useState, type ComponentProps } from "react";
 import { useTranslations } from "next-intl";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { GithubLogo } from "@phosphor-icons/react";
@@ -41,6 +41,37 @@ interface AuthModalProps {
   onLater?: () => void;
 }
 
+/**
+ * The button that opens the auth modal, with the social-return spinner built
+ * in: while the Google/GitHub return handshake runs, the button shows
+ * "Signing in…" and disables itself. AuthModal's default trigger; also for
+ * custom triggers (the landing hero) that hand-copied this markup before
+ * #1077. Forwards ref and props so it works under `DialogTrigger asChild`.
+ */
+export const AuthTriggerButton = forwardRef<
+  HTMLButtonElement,
+  ComponentProps<typeof Button> & { label: string }
+>(function AuthTriggerButton({ label, disabled, ...props }, ref) {
+  const t = useTranslations("auth");
+  const socialReturnPending = useSocialReturnPending();
+
+  return (
+    <Button ref={ref} disabled={disabled || socialReturnPending} {...props}>
+      {socialReturnPending ? (
+        <span className="inline-flex items-center gap-2">
+          <span
+            className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+            aria-hidden="true"
+          />
+          {t("signingIn")}
+        </span>
+      ) : (
+        label
+      )}
+    </Button>
+  );
+});
+
 export function AuthModal({
   trigger,
   open: controlledOpen,
@@ -67,10 +98,6 @@ export function AuthModal({
   // cannot be conditional, so the gate is a component boundary instead:
   // DynamicSocialSignIn owns the hooks and mounts only when Dynamic is enabled.
   const dynamicEnabled = isDynamicEnabled();
-  // While the Google-return handshake runs, the trigger button carries the
-  // loading state — the alternative was a full-screen overlay, and the owner
-  // preferred the button.
-  const socialReturnPending = useSocialReturnPending();
   const { setVisible } = useWalletModal();
 
   // Return the learner to the page they signed in from (#619 review): the OAuth
@@ -156,20 +183,11 @@ export function AuthModal({
     >
       {(trigger !== undefined || !isControlled) && (
         <DialogTrigger asChild>
+          {/* While the Google-return handshake runs, the trigger button
+              carries the loading state — the alternative was a full-screen
+              overlay, and the owner preferred the button. */}
           {trigger ?? (
-            <Button variant="push" disabled={socialReturnPending}>
-              {socialReturnPending ? (
-                <span className="inline-flex items-center gap-2">
-                  <span
-                    className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
-                    aria-hidden="true"
-                  />
-                  {t("signingIn")}
-                </span>
-              ) : (
-                tCommon("signIn")
-              )}
-            </Button>
+            <AuthTriggerButton variant="push" label={tCommon("signIn")} />
           )}
         </DialogTrigger>
       )}
@@ -214,6 +232,7 @@ export function AuthModal({
             <DynamicSocialSignIn
               provider="google"
               disabled={loading !== null}
+              onError={setErrorMessage}
             />
           ) : (
             <Button
@@ -239,6 +258,7 @@ export function AuthModal({
             <DynamicSocialSignIn
               provider="github"
               disabled={loading !== null}
+              onError={setErrorMessage}
             />
           ) : (
             <Button

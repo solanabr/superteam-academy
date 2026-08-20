@@ -158,6 +158,33 @@ describe("AccountTab — Dynamic session", () => {
     ).toBeInTheDocument();
   });
 
+  it("reconciles the method-count hint when the only extra sign-in is via Dynamic (#1077)", async () => {
+    dyn.enabled = true;
+    dyn.user = { verifiedCredentials: [{ oauthProvider: "google" }] };
+
+    renderTab(); // wallet linked (count 1) + Google via Dynamic, unlinked
+
+    expect(
+      await screen.findByText(messages.settings.dynamicMethodCountNote)
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(messages.settings.cannotUnlinkLastHint)
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps the plain safety hint when no Dynamic provider is in play", () => {
+    dyn.enabled = true;
+
+    renderTab();
+
+    expect(
+      screen.getByText(messages.settings.cannotUnlinkLastHint)
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(messages.settings.dynamicMethodCountNote)
+    ).not.toBeInTheDocument();
+  });
+
   it("leaves every row unchanged when there is no Dynamic session", () => {
     dyn.enabled = true;
 

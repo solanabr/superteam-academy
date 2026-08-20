@@ -58,7 +58,11 @@ describe.each([
 ])("DynamicSocialSignIn ($provider)", ({ provider, label, failure }) => {
   it("starts the redirect flow back to the current page", async () => {
     renderWithIntl(
-      <DynamicSocialSignIn provider={provider} disabled={false} />
+      <DynamicSocialSignIn
+        provider={provider}
+        disabled={false}
+        onError={vi.fn()}
+      />
     );
     fireEvent.click(screen.getByRole("button", { name: label }));
 
@@ -75,7 +79,11 @@ describe.each([
     userState.current = { userId: "stale-user" };
 
     renderWithIntl(
-      <DynamicSocialSignIn provider={provider} disabled={false} />
+      <DynamicSocialSignIn
+        provider={provider}
+        disabled={false}
+        onError={vi.fn()}
+      />
     );
     fireEvent.click(screen.getByRole("button", { name: label }));
 
@@ -85,15 +93,23 @@ describe.each([
     expect(logoutOrder as number).toBeLessThan(redirectOrder as number);
   });
 
-  it("surfaces a translated error when the redirect cannot start", async () => {
+  it("lifts a translated error to onError when the redirect cannot start (#1077: the parent owns the one error placement)", async () => {
     redirectMock.mockRejectedValueOnce(new Error("no project settings"));
     vi.spyOn(console, "error").mockImplementation(() => {});
+    const onError = vi.fn();
 
     renderWithIntl(
-      <DynamicSocialSignIn provider={provider} disabled={false} />
+      <DynamicSocialSignIn
+        provider={provider}
+        disabled={false}
+        onError={onError}
+      />
     );
     fireEvent.click(screen.getByRole("button", { name: label }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(failure);
+    // Cleared at click time, then the failure — and NO inline alert of its own.
+    expect(onError).toHaveBeenCalledWith(null);
+    await waitFor(() => expect(onError).toHaveBeenCalledWith(failure));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 });
