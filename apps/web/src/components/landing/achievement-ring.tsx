@@ -12,10 +12,11 @@ import { AchievementMedal } from "@/components/gamification/achievement-medal";
  * so the reward is on screen at the moment of decision.
  *
  * All motion is CSS (`.ach-ring*` in globals.css): items are placed with
- * per-item `--ring-a` angles around a shared `--ring-r` radius, the ring
- * animates one full turn, and `backface-visibility: hidden` culls the far half
- * so labels never render mirrored. `prefers-reduced-motion` stops the spin and
- * leaves a static arc.
+ * per-item `--ring-a` angles around a shared `--ring-r` radius and the ring
+ * animates one full turn. Each item is double-faced — the back face is the
+ * same content pre-rotated 180° and ghosted — so far-side medals stay visible
+ * (dimmed, card-carousel style) without ever rendering mirrored.
+ * `prefers-reduced-motion` stops the spin and leaves a static arc.
  */
 export function AchievementRing({
   achievements,
@@ -34,12 +35,22 @@ export function AchievementRing({
             className="ach-ring-item"
             style={{ "--ring-a": `${i * step}deg` } as React.CSSProperties}
           >
-            <AchievementMedal
-              glyph={ach.glyph}
-              icon={ach.icon}
-              state={ach.solTier ? "sol" : "earned"}
-            />
-            <p className="ach-ring-name">{ach.name}</p>
+            <div className="ach-ring-face">
+              <AchievementMedal
+                glyph={ach.glyph}
+                icon={ach.icon}
+                state={ach.solTier ? "sol" : "earned"}
+              />
+              <p className="ach-ring-name">{ach.name}</p>
+            </div>
+            <div className="ach-ring-face ach-ring-back" aria-hidden="true">
+              <AchievementMedal
+                glyph={ach.glyph}
+                icon={ach.icon}
+                state={ach.solTier ? "sol" : "earned"}
+              />
+              <p className="ach-ring-name">{ach.name}</p>
+            </div>
           </div>
         ))}
       </div>

@@ -1674,29 +1674,35 @@
 /* ── CTA achievement ring (designer feedback 19-08) ─────────────────
    The flat marquee became a 3D ring inside the closing CTA: items sit at
    per-item --ring-a angles around a shared --ring-r radius, the whole ring
-   turns forever, and hover (or focus inside) pauses it. backface-visibility
-   culls the far half so labels never render mirrored. */
+   turns forever, and hover (or focus inside) pauses it. Every item carries
+   two faces (card-flip technique): the front is the real content, the back
+   is the same content pre-rotated 180° and ghosted — so far-side medals
+   stay visible as a dim backdrop instead of vanishing, and neither face
+   ever renders mirrored. The stage flex-centers the ring so the empty
+   space above and below it is equal. */
 .ach-ring-stage {
   perspective: 1400px;
   height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .ach-ring {
-  --ring-r: 150px;
+  --ring-r: 120px;
   position: relative;
   width: 96px;
   height: 150px;
-  margin: 0 auto;
   transform-style: preserve-3d;
   animation: ach-ring-spin 36s linear infinite;
 }
 @media (min-width: 640px) {
   .ach-ring {
-    --ring-r: 230px;
+    --ring-r: 180px;
   }
 }
 @media (min-width: 1024px) {
   .ach-ring {
-    --ring-r: 300px;
+    --ring-r: 230px;
   }
 }
 .ach-ring-stage:hover .ach-ring,
@@ -1706,12 +1712,42 @@
 .ach-ring-item {
   position: absolute;
   inset: 0;
+  transform: rotateY(var(--ring-a)) translateZ(var(--ring-r));
+  transform-style: preserve-3d;
+}
+.ach-ring-face {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  transform: rotateY(var(--ring-a)) translateZ(var(--ring-r));
   backface-visibility: hidden;
+}
+.ach-ring-back {
+  transform: rotateY(180deg);
+  opacity: 0.28;
+  pointer-events: none;
+}
+.ach-ring-back .ach-medal {
+  animation: none;
+  filter: none;
+}
+/* Ring medals run one size up from the grid's 70px token */
+.ach-ring-face .ach-medal {
+  width: 84px;
+  height: 84px;
+}
+.ach-ring-face .ach-face {
+  width: 68px;
+  height: 68px;
+}
+.ach-ring-face .ach-stamp-icon {
+  width: 30px;
+  height: 30px;
+}
+.ach-ring-face .ach-medal .ach-stamp .ach-glyph {
+  font-size: 11px;
 }
 .ach-ring-name {
   font-family: var(--font-display), "Nunito", sans-serif;
