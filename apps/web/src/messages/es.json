@@ -1191,6 +1191,7 @@
     },
     "coursesScreen": {
       "intro": {
+        "summary": "Cómo funcionan la publicación y el deploy",
         "lede": "Llevar un curso hasta los estudiantes requiere dos pasos separados, en este orden. Esta pantalla reúne los dos: publicación arriba, despliegue abajo.",
         "step1Title": "1. Publicar — ¿la app ya tiene este curso?",
         "step1Body": "El contenido de los cursos vive en el repositorio academy-courses. La app distribuye una copia compilada de él, fijada a un único commit en content.lock. Publicar es un pull request humano que actualiza esa fijación y reconstruye el paquete; en cuanto se fusiona, Vercel vuelve a desplegar y el contenido queda en la app. Esta pantalla no escribe nada: muestra la divergencia y te entrega un PR ya rellenado.",

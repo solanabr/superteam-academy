@@ -1191,6 +1191,7 @@
     },
     "coursesScreen": {
       "intro": {
+        "summary": "How publishing and deploying work",
         "lede": "Getting a course to learners takes two separate steps, in order. This screen holds both: publish on top, deploy below.",
         "step1Title": "1. Publish — does the app have this course?",
         "step1Body": "Course content lives in the academy-courses repo. The app ships a compiled copy of it, pinned to one commit in content.lock. Publishing is a human pull request that bumps that pin and rebuilds the bundle; once it merges, Vercel redeploys and the content is in the app. This screen writes nothing — it shows the drift and hands you a prefilled PR.",
