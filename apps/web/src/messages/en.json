@@ -1474,7 +1474,7 @@
       "loading": "Loading…",
       "error": "Failed to load insights.",
       "empty": "No data yet.",
-      "quizNote": "Quiz correctness is tracked as the quiz_checked product-analytics event (PostHog) — it is not persisted server-side, so it appears in PostHog dashboards rather than here.",
+      "quizNote": "Quiz correctness is not persisted server-side — it lives in PostHog as the quiz_checked event.",
       "ai": {
         "title": "AI Tutor",
         "learners": "Learners using AI",
@@ -1486,10 +1486,11 @@
         "lesson": "Lesson",
         "assistsCol": "Assists",
         "learnersCol": "Learners",
-        "spendByDay": "Daily spend",
         "day": "Day",
         "usd": "USD",
-        "requests": "Requests"
+        "requests": "Requests",
+        "spendChart": "Daily AI spend (30d)",
+        "spendChartLabel": "Daily AI spend in USD over the last 30 days"
       },
       "learning": {
         "title": "Learning",
@@ -1497,12 +1498,15 @@
         "enrollments": "Enrollments",
         "active7d": "Active (7d)",
         "active30d": "Active (30d)",
-        "perCourse": "Completions by course",
+        "perCourse": "Lessons completed by course",
         "course": "Course",
-        "completions": "Completions",
-        "learnersCol": "Learners",
-        "completionsByDay": "Completions by day (30d)",
-        "day": "Day"
+        "completions": "Lessons completed",
+        "learnersCol": "Learners reached",
+        "completionsByDay": "Lessons completed by day (30d)",
+        "day": "Day",
+        "completionsChartLabel": "Lessons completed per day over the last 30 days",
+        "activityHint": "Active counts learners who completed a lesson in the window — not sign-ins or sessions.",
+        "perCourseHint": "One row per completed lesson, so a learner counts once per lesson. Learners reached is how many finished at least one lesson in the course."
       }
     }
   },
