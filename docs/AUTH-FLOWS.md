@@ -38,7 +38,7 @@ a Supabase blip can't lock everyone out), replacement of the `user_xxxxxxxx`
 placeholder username, a fire-and-forget `retryPendingOnchainActions` drain, and — on
 the two rails that carry a provider photo (`/api/auth/dynamic` and
 `/api/auth/callback`, #1063) — avatar adoption: the provider avatar is written on
-FIRST login only, when `profiles.avatar_url` is null (owner ruling 2026-08-19). Once
+FIRST login only, when `profiles.avatar_url` is null (owner ruling 2026-08-18). Once
 any avatar exists — provider photo or custom upload — no sign-in overwrites it. Add a
 new way in, add all of them. The middleware is not another chokepoint — it mints
 nothing; it re-runs the tombstone check per request as a backstop, and that is all.
