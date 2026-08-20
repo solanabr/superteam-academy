@@ -577,22 +577,22 @@
     transform: scale(1.12) translateY(-3px);
   }
 
-  /* Earned — brand-green metallic gradient (designer feedback 19-08: the gold
-     read as generic; the medal now carries the palette the rest of the app
-     wears). Stops are the brand greens — primary-dark → primary → a pale
-     highlight — arranged as the same 145° "metal" sweep the gold used. */
+  /* Earned — amber metal, per brand guide §03/§07: amber IS the reward
+     currency ("Amber = XP, levels, gold medals"), so the medal keeps the gold
+     sweep; identity comes from the per-achievement engraving (.ach-stamp),
+     not from a palette swap. */
   .ach-medal.earned {
     background: linear-gradient(
       145deg,
-      #04382a 0%,
-      #065c44 18%,
-      #2ecc8e 38%,
-      #a8f0d4 50%,
-      #2ecc8e 62%,
-      #065c44 84%,
-      #04382a 100%
+      #7a4500 0%,
+      #b45309 15%,
+      #f5a623 35%,
+      #fde68a 50%,
+      #f5a623 65%,
+      #b45309 85%,
+      #7a4500 100%
     );
-    filter: drop-shadow(0 6px 18px rgba(46, 204, 142, 0.38));
+    filter: drop-shadow(0 6px 18px rgba(245, 166, 35, 0.38));
     animation: medal-pulse 3.5s ease-in-out infinite;
   }
 
@@ -658,15 +658,45 @@
     height: 56px;
   }
 
-  /* Glyph — display-font text, no emoji (designer feedback 19-08: the medal
-     face wears the brand's display face, not the code font). */
+  /* Glyph — monospace text, no emoji (brand guide §07: "Achievement glyphs —
+     JetBrains Mono, never emoji"). */
   .ach-glyph {
-    font-family: var(--font-display), "Nunito", sans-serif;
-    font-weight: 900;
+    font-family: var(--font-mono), "JetBrains Mono", monospace;
+    font-weight: 600;
     user-select: none;
     position: relative;
     z-index: 1;
     line-height: 1;
+  }
+
+  /* Per-achievement engraving (designer feedback 20-08): the achievement's
+     Phosphor icon stamped into the metal above the mono glyph — dark fill
+     with a hairline top-light, like a minted coin. No new colors; the medal
+     material carries the tier, the stamp carries the identity. */
+  .ach-stamp {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .ach-stamp-icon {
+    width: 26px;
+    height: 26px;
+    color: rgba(0, 0, 0, 0.55);
+    filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.25));
+  }
+
+  .ach-medal .ach-stamp .ach-glyph {
+    font-size: 10px;
+    letter-spacing: 0;
+  }
+
+  .ach-medal.locked .ach-stamp-icon {
+    color: var(--text-disabled);
+    filter: none;
   }
 
   .ach-medal.earned .ach-glyph,
@@ -1108,10 +1138,10 @@
 @keyframes medal-pulse {
   0%,
   100% {
-    filter: drop-shadow(0 6px 18px rgba(46, 204, 142, 0.32));
+    filter: drop-shadow(0 6px 18px rgba(245, 166, 35, 0.32));
   }
   50% {
-    filter: drop-shadow(0 8px 26px rgba(46, 204, 142, 0.58));
+    filter: drop-shadow(0 8px 26px rgba(245, 166, 35, 0.58));
   }
 }
 

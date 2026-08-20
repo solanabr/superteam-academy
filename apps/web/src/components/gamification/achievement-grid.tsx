@@ -172,6 +172,7 @@ export function AchievementGrid({
               name={def.name}
               description={def.description}
               glyph={def.glyph}
+              icon={def.icon}
               solTier={def.solTier}
               unlockedAt={unlockedMap.get(def.id)}
               explorerUrl={explorerUrlMap.get(def.id)}
