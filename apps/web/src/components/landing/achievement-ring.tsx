@@ -1,7 +1,7 @@
 "use client";
 
 import type { DeployedAchievement } from "@/lib/content/queries";
-import { AchievementMedal } from "@/components/gamification/achievement-medal";
+import { AchievementPatch } from "@/components/gamification/achievement-patch";
 
 /**
  * The CTA section's rotating achievement ring (designer feedback, 19-08).
@@ -36,18 +36,22 @@ export function AchievementRing({
             style={{ "--ring-a": `${i * step}deg` } as React.CSSProperties}
           >
             <div className="ach-ring-face">
-              <AchievementMedal
+              <AchievementPatch
+                id={ach.id}
                 glyph={ach.glyph}
-                icon={ach.icon}
-                state={ach.solTier ? "sol" : "earned"}
+                solTier={ach.solTier}
+                category={ach.category}
+                state="earned"
               />
               <p className="ach-ring-name">{ach.name}</p>
             </div>
             <div className="ach-ring-face ach-ring-back" aria-hidden="true">
-              <AchievementMedal
+              <AchievementPatch
+                id={ach.id}
                 glyph={ach.glyph}
-                icon={ach.icon}
-                state={ach.solTier ? "sol" : "earned"}
+                solTier={ach.solTier}
+                category={ach.category}
+                state="earned"
               />
               <p className="ach-ring-name">{ach.name}</p>
             </div>

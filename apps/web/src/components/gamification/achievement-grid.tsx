@@ -169,10 +169,11 @@ export function AchievementGrid({
           {sorted.map((def) => (
             <AchievementCard
               key={def.id}
+              id={def.id}
               name={def.name}
               description={def.description}
               glyph={def.glyph}
-              icon={def.icon}
+              category={def.category}
               solTier={def.solTier}
               unlockedAt={unlockedMap.get(def.id)}
               explorerUrl={explorerUrlMap.get(def.id)}
