@@ -188,14 +188,6 @@ const ACTIONS: readonly ModerationAction[] = [
   "lock",
 ];
 
-/** The audit `action` value each request writes, once the target is known. */
-type AuditAction =
-  | "removed_thread"
-  | "removed_answer"
-  | "locked_thread"
-  | "resolved"
-  | "dismissed";
-
 /**
  * POST { flagId, action: "resolve" | "dismiss" | "remove" | "lock" }
  *
@@ -245,36 +237,47 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const admin = createAdminClient();
 
-  // The target comes from the flag row, never from the request body — a client
-  // can name a flag, not a thread to delete.
+  // Only pending flags are actionable, and the target comes from the flag row,
+  // never from the request body — a client can name a flag, not a thread to
+  // delete. A non-pending or missing flag is a 404 (already handled, or gone).
   const { data: flag, error: flagError } = await admin
     .from("flags")
     .select("id, thread_id, answer_id")
     .eq("id", flagId)
+    .eq("status", "pending")
     .maybeSingle();
 
   if (flagError) {
     return NextResponse.json({ error: "Lookup failed" }, { status: 500 });
   }
   if (!flag) {
-    return NextResponse.json({ error: "Flag not found" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Flag not found or already resolved" },
+      { status: 404 }
+    );
   }
 
   const threadId = flag.thread_id;
   const answerId = flag.answer_id;
 
-  let auditAction: AuditAction;
+  // Every branch is ONE RPC that commits the content change, the flag write, and
+  // the audit row in a single transaction — so a failure can never leave content
+  // removed with no audit trail, or a flag resolved with no record of who did it.
+  let rpcError: { message: string } | null;
 
   if (action === "remove") {
-    let rpc;
     if (threadId !== null) {
-      rpc = await admin.rpc("moderate_soft_delete_thread", {
+      ({ error: rpcError } = await admin.rpc("moderate_soft_delete_thread", {
         p_thread_id: threadId,
-      });
+        p_flag_id: flagId,
+        p_actor_id: auth.userId,
+      }));
     } else if (answerId !== null) {
-      rpc = await admin.rpc("moderate_soft_delete_answer", {
+      ({ error: rpcError } = await admin.rpc("moderate_soft_delete_answer", {
         p_answer_id: answerId,
-      });
+        p_flag_id: flagId,
+        p_actor_id: auth.userId,
+      }));
     } else {
       // chk_flag_target_exclusive makes this unreachable; a flag with no target
       // is corrupt data, not a request to remove nothing.
@@ -283,66 +286,38 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         { status: 500 }
       );
     }
-    if (rpc.error) {
-      // The RPCs raise on a target that is missing or already tombstoned. That
-      // is a conflict, not a server fault, and must not read as "try again".
-      const gone = /already removed/i.test(rpc.error.message ?? "");
-      console.error("Admin moderation remove failed:", rpc.error.message);
-      return NextResponse.json(
-        { error: gone ? "Content already removed" : "Remove failed" },
-        { status: gone ? 409 : 500 }
-      );
-    }
-    auditAction = threadId ? "removed_thread" : "removed_answer";
   } else if (action === "lock") {
-    if (!threadId) {
+    if (threadId === null) {
       return NextResponse.json(
         { error: "lock applies to thread reports only" },
         { status: 400 }
       );
     }
-    const { error: lockError } = await admin
-      .from("threads")
-      .update({ is_locked: true })
-      .eq("id", threadId);
-    if (lockError) {
-      console.error("Admin moderation lock failed:", lockError.message);
-      return NextResponse.json({ error: "Lock failed" }, { status: 500 });
-    }
-    auditAction = "locked_thread";
+    ({ error: rpcError } = await admin.rpc("moderate_lock_thread", {
+      p_thread_id: threadId,
+      p_flag_id: flagId,
+      p_actor_id: auth.userId,
+    }));
   } else {
-    auditAction = action === "resolve" ? "resolved" : "dismissed";
+    ({ error: rpcError } = await admin.rpc("moderate_resolve_flag", {
+      p_flag_id: flagId,
+      p_dismiss: action === "dismiss",
+      p_actor_id: auth.userId,
+    }));
   }
 
-  // `remove` settles the report as well as the content; `lock` does not.
-  if (action !== "lock") {
-    const { error } = await admin
-      .from("flags")
-      .update({
-        status: action === "dismiss" ? "dismissed" : "resolved",
-        resolved_at: new Date().toISOString(),
-        resolved_by: auth.userId,
-      })
-      .eq("id", flagId);
-
-    if (error) {
-      return NextResponse.json({ error: "Update failed" }, { status: 500 });
-    }
+  if (rpcError) {
+    // The RPCs raise on a target that is missing or already tombstoned/handled.
+    // That is a conflict, not a server fault, and must not read as "try again".
+    const gone = /already removed|already resolved|not found/i.test(
+      rpcError.message ?? ""
+    );
+    console.error(`Admin moderation ${action} failed:`, rpcError.message);
+    return NextResponse.json(
+      { error: gone ? "Content already actioned" : "Action failed" },
+      { status: gone ? 409 : 500 }
+    );
   }
 
-  // Audit last, so it only ever records what actually happened. A failure here
-  // is reported (`audited: false`) rather than turned into a 500: the content
-  // action already landed, and a 500 would invite a destructive retry.
-  const { error: auditError } = await admin.from("moderation_actions").insert({
-    action: auditAction,
-    thread_id: threadId,
-    answer_id: answerId,
-    flag_id: flagId,
-    actor_id: auth.userId,
-  });
-  if (auditError) {
-    console.error("Moderation audit write failed:", auditError.message);
-  }
-
-  return NextResponse.json({ success: true, audited: !auditError });
+  return NextResponse.json({ success: true });
 }

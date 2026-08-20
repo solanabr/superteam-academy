@@ -1508,8 +1508,7 @@
       "showContent": "Mostrar o conteudo denunciado",
       "contentUnavailable": "Nao foi possivel carregar o conteudo denunciado.",
       "errorConflict": "Esse conteudo ja foi removido. Recarregue a fila.",
-      "errorRateLimited": "Acoes de moderacao demais em sequencia. Espere um minuto e tente de novo.",
-      "auditWarning": "A acao foi aplicada, mas nao foi registrada no log de moderacao."
+      "errorRateLimited": "Acoes de moderacao demais em sequencia. Espere um minuto e tente de novo."
     },
     "insightsScreen": {
       "title": "Métricas",

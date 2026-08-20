@@ -1508,8 +1508,7 @@
       "showContent": "Show the reported content",
       "contentUnavailable": "The reported content could not be loaded.",
       "errorConflict": "That content has already been removed. Reload the queue.",
-      "errorRateLimited": "Too many moderation actions in a row. Wait a minute and try again.",
-      "auditWarning": "The action went through, but it was not written to the moderation log."
+      "errorRateLimited": "Too many moderation actions in a row. Wait a minute and try again."
     },
     "insightsScreen": {
       "title": "Insights",

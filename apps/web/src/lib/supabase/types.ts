@@ -1750,11 +1750,19 @@ export type Database = {
         Returns: undefined;
       };
       moderate_soft_delete_thread: {
-        Args: { p_thread_id: string };
+        Args: { p_thread_id: string; p_flag_id: string; p_actor_id: string };
         Returns: undefined;
       };
       moderate_soft_delete_answer: {
-        Args: { p_answer_id: string };
+        Args: { p_answer_id: string; p_flag_id: string; p_actor_id: string };
+        Returns: undefined;
+      };
+      moderate_lock_thread: {
+        Args: { p_thread_id: string; p_flag_id: string; p_actor_id: string };
+        Returns: undefined;
+      };
+      moderate_resolve_flag: {
+        Args: { p_flag_id: string; p_dismiss: boolean; p_actor_id: string };
         Returns: undefined;
       };
       soft_delete_thread: {

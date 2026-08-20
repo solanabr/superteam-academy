@@ -1,22 +1,23 @@
-// REAL SQL-execution proof of the moderator soft-delete RPCs (#1131), run in
+// REAL SQL-execution proof of the moderator action RPCs (#1131), run in
 // in-process Postgres (pglite) against BOTH copies of the DDL: the migration
 // that gets applied, and the supabase/schema.sql mirror fresh environments are
 // built from.
 //
 // What has to hold, and why:
-//   1. These functions delete content with NO ownership check — that is the
-//      whole point of a moderator action — so the only thing standing between
-//      "admin removes spam" and "any logged-in user removes anything" is the
+//   1. These functions change content with NO ownership check — that is the
+//      whole point of a moderator action — so the only thing between "admin
+//      removes spam" and "any logged-in user removes anything" is the
 //      REVOKE/GRANT. anon and authenticated must not be able to execute them.
-//      That case is red-proofed in-suite: grant EXECUTE back and the call
-//      succeeds, so the denial is provably the REVOKE and not an accident of
-//      the stub.
-//   2. The cascade semantics must match the author-gated originals (thread →
-//      its answers; answer → answer_count decrement + un-accept), because
-//      moderation removing content differently from an author deleting it is
-//      how denormalized counters drift.
-//   3. The removed target's creation XP is clawed back. Also red-proofed
-//      in-suite: the same cascade WITHOUT the revoke leaves the XP behind.
+//      Red-proofed in-suite: grant EXECUTE back and the call succeeds.
+//   2. ATOMICITY. Each RPC does the content change, the flag write, and the
+//      audit INSERT in one transaction. If any step raises, ALL of it must roll
+//      back — content must never be removed with no audit row. Red-proofed
+//      in-suite: a trigger that raises on the audit INSERT leaves the content,
+//      the XP, and the flag exactly as they were.
+//   3. The removed target's creation XP is clawed back — and only that. Also
+//      red-proofed: the same cascade WITHOUT the revoke leaves the XP behind.
+//   4. Cascade semantics match the author-gated originals (thread → its answers;
+//      answer → answer_count decrement + un-accept), so counters don't drift.
 //
 // @vitest-environment node
 import { existsSync, readFileSync } from "node:fs";
@@ -46,40 +47,6 @@ const migration = readFileSync(
 );
 const schema = readFileSync(resolve(repoRoot, "supabase/schema.sql"), "utf8");
 
-// Definitions name their parameter; grants use the bare argument type.
-const THREAD_FN = "public.moderate_soft_delete_thread(p_thread_id UUID)";
-const ANSWER_FN = "public.moderate_soft_delete_answer(p_answer_id UUID)";
-const THREAD_SIG = "public.moderate_soft_delete_thread(UUID)";
-const ANSWER_SIG = "public.moderate_soft_delete_answer(UUID)";
-
-/** Pull one `CREATE OR REPLACE FUNCTION <sig> … $$;` block out of a SQL file. */
-function extractFunction(sql: string, signature: string): string {
-  const start = sql.indexOf(`CREATE OR REPLACE FUNCTION ${signature}`);
-  if (start < 0) throw new Error(`function ${signature} not found`);
-  const end = sql.indexOf("$$;", start);
-  if (end < 0) throw new Error(`unterminated body for ${signature}`);
-  return sql.slice(start, end + 3);
-}
-
-/** Pull one single-statement `<needle>…;` out of a SQL file. */
-function extractStatement(sql: string, needle: string): string {
-  const start = sql.indexOf(needle);
-  if (start < 0) throw new Error(`statement not found: ${needle}`);
-  const end = sql.indexOf(";", start);
-  if (end < 0) throw new Error(`unterminated statement: ${needle}`);
-  return sql.slice(start, end + 1);
-}
-
-// Both copies are assembled from their OWN file's statements, never from
-// literals written here — a schema.sql that lost a REVOKE fails at extraction
-// instead of quietly testing this file's idea of it.
-function grants(sql: string, fn: string): string {
-  return [
-    extractStatement(sql, `REVOKE EXECUTE ON FUNCTION ${fn} FROM`),
-    extractStatement(sql, `GRANT EXECUTE ON FUNCTION ${fn} TO`),
-  ].join("\n");
-}
-
 /** Pull one `CREATE TABLE [IF NOT EXISTS] <name> ( … \n);` block out of a file. */
 function extractTable(sql: string, name: string): string {
   const start = sql.search(
@@ -93,27 +60,57 @@ function extractTable(sql: string, name: string): string {
 
 // The migration copy runs the file WHOLE — not a hand-picked set of statements
 // — so a stray `GRANT … TO authenticated` anywhere in it would be applied too,
-// and the denial cases below would catch it.
-const copies = {
-  migration,
-  "schema.sql mirror": [
-    extractTable(schema, "moderation_actions"),
-    extractFunction(schema, THREAD_FN),
-    extractFunction(schema, ANSWER_FN),
-    grants(schema, THREAD_SIG),
-    grants(schema, ANSWER_SIG),
-  ].join("\n"),
-};
+// and the denial cases below would catch it. The schema.sql mirror is assembled
+// from schema.sql's OWN statements so a mirror that lost a REVOKE fails at
+// extraction instead of testing this file's idea of it.
+function extractFromSchema(name: string): string {
+  const create = new RegExp(`CREATE OR REPLACE FUNCTION public\\.${name}\\(`);
+  const start = schema.search(create);
+  if (start < 0) throw new Error(`function ${name} not found in schema.sql`);
+  const end = schema.indexOf("$$;", start);
+  if (end < 0) throw new Error(`unterminated body for ${name}`);
+  return schema.slice(start, end + 3);
+}
+
+function extractGrants(name: string, args: string): string {
+  const revoke = schema.indexOf(
+    `REVOKE EXECUTE ON FUNCTION public.${name}(${args}) FROM`
+  );
+  const grant = schema.indexOf(
+    `GRANT EXECUTE ON FUNCTION public.${name}(${args}) TO`
+  );
+  if (revoke < 0 || grant < 0)
+    throw new Error(`grants for ${name} not found in schema.sql`);
+  return [
+    schema.slice(revoke, schema.indexOf(";", revoke) + 1),
+    schema.slice(grant, schema.indexOf(";", grant) + 1),
+  ].join("\n");
+}
+
+const UUID3 = "UUID, UUID, UUID";
+const mirror = [
+  extractTable(schema, "moderation_actions"),
+  extractFromSchema("moderate_soft_delete_thread"),
+  extractFromSchema("moderate_soft_delete_answer"),
+  extractFromSchema("moderate_lock_thread"),
+  extractFromSchema("moderate_resolve_flag"),
+  extractGrants("moderate_soft_delete_thread", UUID3),
+  extractGrants("moderate_soft_delete_answer", UUID3),
+  extractGrants("moderate_lock_thread", UUID3),
+  extractGrants("moderate_resolve_flag", "UUID, BOOLEAN, UUID"),
+].join("\n");
+
+const copies = { migration, "schema.sql mirror": mirror };
 
 // The real revoke_community_xp, lifted from schema.sql — the clawback is only
 // as good as the function it delegates to, including its GREATEST(0, …) floor.
-const REVOKE_XP = extractFunction(
-  schema,
-  `revoke_community_xp(
-  p_user_id UUID,
-  p_idempotency_key TEXT
-)`
-);
+const REVOKE_XP = (() => {
+  const start = schema.indexOf(
+    `CREATE OR REPLACE FUNCTION revoke_community_xp(`
+  );
+  const end = schema.indexOf("$$;", start);
+  return schema.slice(start, end + 3);
+})();
 
 // Minimal stand-in for the community surface these functions touch.
 const STUB_SETUP = `
@@ -141,8 +138,14 @@ const STUB_SETUP = `
     deleted_at timestamptz
   );
 
-  -- Only the columns the audit table's FK needs.
-  CREATE TABLE public.flags (id uuid PRIMARY KEY, status text NOT NULL DEFAULT 'pending');
+  CREATE TABLE public.flags (
+    id uuid PRIMARY KEY,
+    thread_id uuid REFERENCES public.threads(id),
+    answer_id uuid REFERENCES public.answers(id),
+    status text NOT NULL DEFAULT 'pending',
+    resolved_at timestamptz,
+    resolved_by uuid REFERENCES public.profiles(id)
+  );
 
   CREATE TABLE public.user_xp (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -161,11 +164,14 @@ const STUB_SETUP = `
   );
 `;
 
+const ADMIN = "00000000-0000-0000-0000-0000000000ad";
 const AUTHOR = "11111111-1111-1111-1111-111111111111";
 const ANSWERER = "22222222-2222-2222-2222-222222222222";
 const THREAD = "aaaaaaaa-0000-0000-0000-000000000001";
 const ANSWER_A = "bbbbbbbb-0000-0000-0000-000000000001";
 const ANSWER_B = "bbbbbbbb-0000-0000-0000-000000000002";
+const FLAG_THREAD = "cccccccc-0000-0000-0000-000000000001";
+const FLAG_ANSWER = "cccccccc-0000-0000-0000-000000000002";
 
 interface XpRow {
   total_xp: number;
@@ -195,8 +201,16 @@ async function scalar<T>(db: PGlite, sql: string, args: unknown[]): Promise<T> {
   return Object.values(rows[0] as Record<string, T>)[0] as T;
 }
 
+async function auditCount(db: PGlite, flagId: string): Promise<number> {
+  return scalar<number>(
+    db,
+    `SELECT count(*)::int FROM public.moderation_actions WHERE flag_id = $1`,
+    [flagId]
+  );
+}
+
 for (const [copy, ddl] of Object.entries(copies)) {
-  describe(`#1131 moderator soft-delete RPCs — ${copy}`, () => {
+  describe(`#1131 moderator action RPCs — ${copy}`, () => {
     let db: PGlite;
 
     beforeAll(async () => {
@@ -210,16 +224,17 @@ for (const [copy, ddl] of Object.entries(copies)) {
       await db.exec("RESET ROLE;");
       // Re-apply the whole DDL every time: the red-proof below hands EXECUTE
       // back to `authenticated`, and a failure partway through it must not
-      // silently disarm the rest of the suite. The audit table is dropped
-      // first because schema.sql's copy is a plain CREATE TABLE.
+      // silently disarm the rest of the suite. The audit table is dropped first
+      // because schema.sql's copy is a plain CREATE TABLE.
       await db.exec("DROP TABLE IF EXISTS public.moderation_actions CASCADE;");
       await db.exec(ddl);
       await db.exec(
-        "TRUNCATE public.xp_transactions, public.user_xp, public.answers, public.threads, public.profiles CASCADE;"
+        "TRUNCATE public.flags, public.xp_transactions, public.user_xp, public.answers, public.threads, public.profiles CASCADE;"
       );
       await db.query(
-        `INSERT INTO public.profiles(id, username) VALUES ($1,'author'), ($2,'answerer')`,
-        [AUTHOR, ANSWERER]
+        `INSERT INTO public.profiles(id, username)
+         VALUES ($1,'admin'), ($2,'author'), ($3,'answerer')`,
+        [ADMIN, AUTHOR, ANSWERER]
       );
       await db.query(
         `INSERT INTO public.threads(id, author_id, answer_count, is_solved, accepted_answer_id)
@@ -231,8 +246,13 @@ for (const [copy, ddl] of Object.entries(copies)) {
          VALUES ($1, $2, $3, true), ($4, $2, $3, false)`,
         [ANSWER_A, THREAD, ANSWERER, ANSWER_B]
       );
-      // XP as the community routes award it: 20 for the thread, 10 per answer,
-      // plus an upvote award that v1 deliberately does NOT claw back.
+      await db.query(
+        `INSERT INTO public.flags(id, thread_id, answer_id, status)
+         VALUES ($1, $2, NULL, 'pending'), ($3, NULL, $4, 'pending')`,
+        [FLAG_THREAD, THREAD, FLAG_ANSWER, ANSWER_A]
+      );
+      // XP as the community routes award it: 20 for the thread, 10/20 per
+      // answer, plus an upvote award that v1 deliberately does NOT claw back.
       await db.query(
         `INSERT INTO public.user_xp(user_id, total_xp, level) VALUES ($1, 25, 0), ($2, 30, 0)`,
         [AUTHOR, ANSWERER]
@@ -253,9 +273,13 @@ for (const [copy, ddl] of Object.entries(copies)) {
       );
     });
 
-    it("thread removal tombstones the thread and cascades to its live answers", async () => {
+    it("thread removal: cascade + XP clawback + flag resolved + one audit row, atomically", async () => {
       await become(db, "service_role");
-      await db.query(`SELECT public.moderate_soft_delete_thread($1)`, [THREAD]);
+      await db.query(`SELECT public.moderate_soft_delete_thread($1, $2, $3)`, [
+        THREAD,
+        FLAG_THREAD,
+        ADMIN,
+      ]);
 
       expect(
         await scalar<string | null>(
@@ -271,30 +295,78 @@ for (const [copy, ddl] of Object.entries(copies)) {
           [THREAD]
         )
       ).toBe(0);
+      // 25 - 20 (thread:<id>) = 5; the 5 XP of upvote award stays (v1 scope).
+      expect(await xpOf(db, AUTHOR)).toMatchObject({ total_xp: 5 });
+      expect(await xpOf(db, ANSWERER)).toMatchObject({ total_xp: 30 });
+      // Removal settles the report, and attributes it.
+      expect(
+        await scalar<string>(
+          db,
+          `SELECT status FROM public.flags WHERE id = $1`,
+          [FLAG_THREAD]
+        )
+      ).toBe("resolved");
+      expect(
+        await scalar<string>(
+          db,
+          `SELECT resolved_by FROM public.flags WHERE id = $1`,
+          [FLAG_THREAD]
+        )
+      ).toBe(ADMIN);
+      const { rows } = await (async () => {
+        await db.exec("RESET ROLE;");
+        return db.query<{ action: string; actor_id: string }>(
+          `SELECT action, actor_id FROM public.moderation_actions WHERE flag_id = $1`,
+          [FLAG_THREAD]
+        );
+      })();
+      expect(rows).toEqual([{ action: "removed_thread", actor_id: ADMIN }]);
     });
 
-    it("thread removal claws back the thread's own creation XP — and only that", async () => {
-      await become(db, "service_role");
-      await db.query(`SELECT public.moderate_soft_delete_thread($1)`, [THREAD]);
+    it("RED-PROOF: a raise on the audit INSERT rolls the WHOLE action back", async () => {
+      // Force the last step (the audit INSERT) to fail, and prove nothing else
+      // survived: not the tombstone, not the XP clawback, not the flag resolve.
+      // This is the atomicity guarantee the gate asked for.
+      await db.exec("RESET ROLE;");
+      await db.exec(`
+        CREATE OR REPLACE FUNCTION public.boom_audit() RETURNS trigger
+        LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'boom'; END; $$;
+        CREATE TRIGGER trg_boom_audit BEFORE INSERT ON public.moderation_actions
+          FOR EACH ROW EXECUTE FUNCTION public.boom_audit();
+      `);
 
-      // 25 - 20 (thread:<id>) = 5. The 5 XP of upvote award stays: v1 does not
-      // reverse vote XP, and this test is what pins that scope.
-      expect(await xpOf(db, AUTHOR)).toMatchObject({ total_xp: 5 });
+      await become(db, "service_role");
+      await expect(
+        db.query(`SELECT public.moderate_soft_delete_thread($1, $2, $3)`, [
+          THREAD,
+          FLAG_THREAD,
+          ADMIN,
+        ])
+      ).rejects.toThrow(/boom/);
+
+      await db.exec("RESET ROLE;");
+      await db.exec(
+        "DROP TRIGGER trg_boom_audit ON public.moderation_actions;"
+      );
+
       expect(
-        await scalar<number>(
+        await scalar<string | null>(
           db,
-          `SELECT count(*)::int FROM public.xp_transactions WHERE idempotency_key = $1`,
-          [`thread:${THREAD}`]
+          `SELECT deleted_at FROM public.threads WHERE id = $1`,
+          [THREAD]
         )
-      ).toBe(0);
-      // The cascaded answers' XP is likewise NOT reversed in v1.
-      expect(await xpOf(db, ANSWERER)).toMatchObject({ total_xp: 30 });
+      ).toBeNull();
+      expect(await xpOf(db, AUTHOR)).toMatchObject({ total_xp: 25 });
+      expect(
+        await scalar<string>(
+          db,
+          `SELECT status FROM public.flags WHERE id = $1`,
+          [FLAG_THREAD]
+        )
+      ).toBe("pending");
     });
 
     it("RED-PROOF: the same cascade without the clawback leaves the XP behind", async () => {
-      // The literal body of the author-gated original — cascade, no revoke. If
-      // the assertion above could pass without the PERFORM line, this would
-      // show 5 as well.
       await db.exec("RESET ROLE;");
       await db.query(
         `UPDATE public.threads SET deleted_at = NOW() WHERE id = $1`,
@@ -304,14 +376,15 @@ for (const [copy, ddl] of Object.entries(copies)) {
         `UPDATE public.answers SET deleted_at = NOW() WHERE thread_id = $1 AND deleted_at IS NULL`,
         [THREAD]
       );
-
       expect(await xpOf(db, AUTHOR)).toMatchObject({ total_xp: 25 });
     });
 
-    it("answer removal decrements answer_count, un-accepts, and revokes its XP", async () => {
+    it("answer removal: count decrement, un-accept, XP clawback, flag resolved, audit", async () => {
       await become(db, "service_role");
-      await db.query(`SELECT public.moderate_soft_delete_answer($1)`, [
+      await db.query(`SELECT public.moderate_soft_delete_answer($1, $2, $3)`, [
         ANSWER_A,
+        FLAG_ANSWER,
+        ADMIN,
       ]);
 
       expect(
@@ -337,6 +410,20 @@ for (const [copy, ddl] of Object.entries(copies)) {
       ).toBeNull();
       // 30 - 10 (answer:<id>); the second answer's 20 is untouched.
       expect(await xpOf(db, ANSWERER)).toMatchObject({ total_xp: 20 });
+      expect(
+        await scalar<string>(
+          db,
+          `SELECT status FROM public.flags WHERE id = $1`,
+          [FLAG_ANSWER]
+        )
+      ).toBe("resolved");
+      expect(
+        await scalar<string>(
+          db,
+          `SELECT action FROM public.moderation_actions WHERE flag_id = $1`,
+          [FLAG_ANSWER]
+        )
+      ).toBe("removed_answer");
     });
 
     it("answer_count never goes negative", async () => {
@@ -345,10 +432,17 @@ for (const [copy, ddl] of Object.entries(copies)) {
         `UPDATE public.threads SET answer_count = 0 WHERE id = $1`,
         [THREAD]
       );
+      // Re-point the flag at answer B so the un-accept path is not taken.
+      await db.query(`UPDATE public.flags SET answer_id = $2 WHERE id = $1`, [
+        FLAG_ANSWER,
+        ANSWER_B,
+      ]);
 
       await become(db, "service_role");
-      await db.query(`SELECT public.moderate_soft_delete_answer($1)`, [
+      await db.query(`SELECT public.moderate_soft_delete_answer($1, $2, $3)`, [
         ANSWER_B,
+        FLAG_ANSWER,
+        ADMIN,
       ]);
 
       expect(
@@ -362,45 +456,190 @@ for (const [copy, ddl] of Object.entries(copies)) {
 
     it("user_xp floors at 0 when the clawback exceeds the balance", async () => {
       await db.exec("RESET ROLE;");
-      // A learner who has since spent/lost XP: 20 owed back, 4 on hand.
       await db.query(
         `UPDATE public.user_xp SET total_xp = 4 WHERE user_id = $1`,
         [AUTHOR]
       );
 
       await become(db, "service_role");
-      await db.query(`SELECT public.moderate_soft_delete_thread($1)`, [THREAD]);
+      await db.query(`SELECT public.moderate_soft_delete_thread($1, $2, $3)`, [
+        THREAD,
+        FLAG_THREAD,
+        ADMIN,
+      ]);
 
       expect(await xpOf(db, AUTHOR)).toEqual({ total_xp: 0, level: 0 });
     });
 
+    it("lock: locks the thread, LEAVES the flag pending, and audits the lock", async () => {
+      await become(db, "service_role");
+      await db.query(`SELECT public.moderate_lock_thread($1, $2, $3)`, [
+        THREAD,
+        FLAG_THREAD,
+        ADMIN,
+      ]);
+
+      expect(
+        await scalar<boolean>(
+          db,
+          `SELECT is_locked FROM public.threads WHERE id = $1`,
+          [THREAD]
+        )
+      ).toBe(true);
+      // A lock does NOT settle the report.
+      expect(
+        await scalar<string>(
+          db,
+          `SELECT status FROM public.flags WHERE id = $1`,
+          [FLAG_THREAD]
+        )
+      ).toBe("pending");
+      expect(
+        await scalar<string>(
+          db,
+          `SELECT action FROM public.moderation_actions WHERE flag_id = $1`,
+          [FLAG_THREAD]
+        )
+      ).toBe("locked_thread");
+    });
+
+    it("lock on an already-locked thread still audits (no-op tolerant)", async () => {
+      await db.exec("RESET ROLE;");
+      await db.query(
+        `UPDATE public.threads SET is_locked = true WHERE id = $1`,
+        [THREAD]
+      );
+
+      await become(db, "service_role");
+      await db.query(`SELECT public.moderate_lock_thread($1, $2, $3)`, [
+        THREAD,
+        FLAG_THREAD,
+        ADMIN,
+      ]);
+
+      expect(await auditCount(db, FLAG_THREAD)).toBe(1);
+    });
+
+    it("resolve: marks the flag resolved with an audit row, no content change", async () => {
+      await become(db, "service_role");
+      await db.query(`SELECT public.moderate_resolve_flag($1, false, $2)`, [
+        FLAG_THREAD,
+        ADMIN,
+      ]);
+
+      expect(
+        await scalar<string>(
+          db,
+          `SELECT status FROM public.flags WHERE id = $1`,
+          [FLAG_THREAD]
+        )
+      ).toBe("resolved");
+      expect(
+        await scalar<string | null>(
+          db,
+          `SELECT deleted_at FROM public.threads WHERE id = $1`,
+          [THREAD]
+        )
+      ).toBeNull();
+      expect(
+        await scalar<string>(
+          db,
+          `SELECT action FROM public.moderation_actions WHERE flag_id = $1`,
+          [FLAG_THREAD]
+        )
+      ).toBe("resolved");
+    });
+
+    it("dismiss: marks the flag dismissed with a matching audit row", async () => {
+      await become(db, "service_role");
+      await db.query(`SELECT public.moderate_resolve_flag($1, true, $2)`, [
+        FLAG_THREAD,
+        ADMIN,
+      ]);
+
+      expect(
+        await scalar<string>(
+          db,
+          `SELECT status FROM public.flags WHERE id = $1`,
+          [FLAG_THREAD]
+        )
+      ).toBe("dismissed");
+      expect(
+        await scalar<string>(
+          db,
+          `SELECT action FROM public.moderation_actions WHERE flag_id = $1`,
+          [FLAG_THREAD]
+        )
+      ).toBe("dismissed");
+    });
+
     it("refuses a second removal instead of double-revoking", async () => {
       await become(db, "service_role");
-      await db.query(`SELECT public.moderate_soft_delete_thread($1)`, [THREAD]);
+      await db.query(`SELECT public.moderate_soft_delete_thread($1, $2, $3)`, [
+        THREAD,
+        FLAG_THREAD,
+        ADMIN,
+      ]);
 
       await expect(
-        db.query(`SELECT public.moderate_soft_delete_thread($1)`, [THREAD])
+        db.query(`SELECT public.moderate_soft_delete_thread($1, $2, $3)`, [
+          THREAD,
+          FLAG_THREAD,
+          ADMIN,
+        ])
       ).rejects.toThrow(/already removed/i);
+    });
 
+    it("resolve refuses a non-pending flag", async () => {
+      await db.exec("RESET ROLE;");
+      await db.query(
+        `UPDATE public.flags SET status = 'resolved' WHERE id = $1`,
+        [FLAG_THREAD]
+      );
+
+      await become(db, "service_role");
       await expect(
-        db.query(`SELECT public.moderate_soft_delete_answer($1)`, [ANSWER_A])
-      ).rejects.toThrow(/already removed/i);
+        db.query(`SELECT public.moderate_resolve_flag($1, false, $2)`, [
+          FLAG_THREAD,
+          ADMIN,
+        ])
+      ).rejects.toThrow(/already resolved/i);
     });
 
     // The security assertion: these functions have no ownership check, so
     // execute privilege IS the authorization.
     for (const role of ["anon", "authenticated"] as const) {
-      it(`${role} cannot execute either moderator RPC`, async () => {
+      it(`${role} cannot execute any moderator RPC`, async () => {
         await become(db, role);
 
         await expect(
-          db.query(`SELECT public.moderate_soft_delete_thread($1)`, [THREAD])
+          db.query(`SELECT public.moderate_soft_delete_thread($1, $2, $3)`, [
+            THREAD,
+            FLAG_THREAD,
+            ADMIN,
+          ])
         ).rejects.toThrow(/permission denied/i);
         await expect(
-          db.query(`SELECT public.moderate_soft_delete_answer($1)`, [ANSWER_A])
+          db.query(`SELECT public.moderate_soft_delete_answer($1, $2, $3)`, [
+            ANSWER_A,
+            FLAG_ANSWER,
+            ADMIN,
+          ])
+        ).rejects.toThrow(/permission denied/i);
+        await expect(
+          db.query(`SELECT public.moderate_lock_thread($1, $2, $3)`, [
+            THREAD,
+            FLAG_THREAD,
+            ADMIN,
+          ])
+        ).rejects.toThrow(/permission denied/i);
+        await expect(
+          db.query(`SELECT public.moderate_resolve_flag($1, false, $2)`, [
+            FLAG_THREAD,
+            ADMIN,
+          ])
         ).rejects.toThrow(/permission denied/i);
 
-        // Nothing was removed by the attempt.
         expect(
           await scalar<string | null>(
             db,
@@ -412,16 +651,17 @@ for (const [copy, ddl] of Object.entries(copies)) {
     }
 
     it("RED-PROOF: granting EXECUTE back lets authenticated delete anything", async () => {
-      // Proves the denial above comes from the REVOKE in the DDL under test —
-      // not from the stub, the search_path, or a missing table grant. With the
-      // grant restored, a plain logged-in user removes someone else's thread.
       await db.exec("RESET ROLE;");
       await db.exec(
-        `GRANT EXECUTE ON FUNCTION public.moderate_soft_delete_thread(UUID) TO authenticated;`
+        `GRANT EXECUTE ON FUNCTION public.moderate_soft_delete_thread(UUID, UUID, UUID) TO authenticated;`
       );
 
       await become(db, "authenticated");
-      await db.query(`SELECT public.moderate_soft_delete_thread($1)`, [THREAD]);
+      await db.query(`SELECT public.moderate_soft_delete_thread($1, $2, $3)`, [
+        THREAD,
+        FLAG_THREAD,
+        ADMIN,
+      ]);
 
       expect(
         await scalar<string | null>(

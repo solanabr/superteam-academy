@@ -66,8 +66,6 @@ export function FlagsPanel({
   const [lockedIds, setLockedIds] = useState<string[]>([]);
   // Expanded "read the reported content here" blocks.
   const [expandedIds, setExpandedIds] = useState<string[]>([]);
-  // The action landed but its audit row did not — reported, never swallowed.
-  const [auditWarning, setAuditWarning] = useState(false);
 
   // A failed load must never read as "queue is clear" (#1132), so it drops
   // whatever was on screen and renders the failed branch instead of the list.
@@ -105,7 +103,6 @@ export function FlagsPanel({
   async function act(flagId: string, action: FlagAction) {
     setBusyId(flagId);
     setError(null);
-    setAuditWarning(false);
     try {
       const res = await fetch("/api/admin/flags", {
         method: "POST",
@@ -127,11 +124,6 @@ export function FlagsPanel({
         );
         return;
       }
-      const body = (await res.json().catch(() => ({}))) as {
-        audited?: boolean;
-      };
-      if (body.audited === false) setAuditWarning(true);
-
       if (action === "lock") {
         // A lock does not settle the report: the card stays, the button stops.
         setLockedIds((prev) => [...prev, flagId]);
@@ -161,15 +153,6 @@ export function FlagsPanel({
           className="rounded-md border border-streak bg-streak-light p-3 text-sm text-streak"
         >
           {t(ACTION_ERROR_KEY[error])}
-        </div>
-      )}
-
-      {auditWarning && (
-        <div
-          role="alert"
-          className="rounded-md border border-streak bg-streak-light p-3 text-sm text-streak"
-        >
-          {t("auditWarning")}
         </div>
       )}
 

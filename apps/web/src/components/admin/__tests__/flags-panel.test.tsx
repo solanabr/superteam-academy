@@ -359,23 +359,6 @@ describe("FlagsPanel remove — destructive, so it takes two clicks", () => {
       expect(screen.getByText(flagsMsgs.errorRateLimited)).toBeInTheDocument()
     );
   });
-
-  it("warns when the action landed but was not audited", async () => {
-    panelWith([flag], {
-      json: async () => ({ success: true, audited: false }),
-    });
-    renderPanel();
-    await waitFor(() =>
-      expect(screen.getByText(flagsMsgs.remove)).toBeInTheDocument()
-    );
-
-    fireEvent.click(screen.getByText(flagsMsgs.remove));
-    fireEvent.click(screen.getByText(messages.community.delete));
-
-    await waitFor(() =>
-      expect(screen.getByText(flagsMsgs.auditWarning)).toBeInTheDocument()
-    );
-  });
 });
 
 describe("FlagsPanel lock — thread-only, non-terminal", () => {

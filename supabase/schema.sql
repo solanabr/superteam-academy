@@ -2047,8 +2047,9 @@ GRANT EXECUTE ON FUNCTION soft_delete_thread(UUID, UUID) TO service_role;
 REVOKE EXECUTE ON FUNCTION soft_delete_answer(UUID, UUID) FROM authenticated, anon, public;
 GRANT EXECUTE ON FUNCTION soft_delete_answer(UUID, UUID) TO service_role;
 
--- Moderator soft-delete of a thread. Same cascade as soft_delete_thread
--- (deleted_at on the thread and on its live answers), no ownership check.
+-- Moderator soft-delete of a thread + flag-resolve + audit, in one transaction.
+-- Same cascade as soft_delete_thread (deleted_at on the thread and on its live
+-- answers), no ownership check.
 --
 -- XP CLAWBACK SCOPE (v1, deliberate): only the removed thread's own creation XP
 -- is revoked, via the existing idempotency key `thread:<id>`. Upvote XP on the
@@ -2057,7 +2058,11 @@ GRANT EXECUTE ON FUNCTION soft_delete_answer(UUID, UUID) TO service_role;
 -- answer, and getting the accepted-answer bonus right, which is a bigger change
 -- than the moderation buttons this ships. Removing spam therefore still leaves
 -- the spammer any vote XP it earned.
-CREATE OR REPLACE FUNCTION public.moderate_soft_delete_thread(p_thread_id UUID)
+CREATE OR REPLACE FUNCTION public.moderate_soft_delete_thread(
+  p_thread_id UUID,
+  p_flag_id UUID,
+  p_actor_id UUID
+)
 RETURNS VOID
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
 DECLARE
@@ -2076,18 +2081,31 @@ BEGIN
    WHERE thread_id = p_thread_id AND deleted_at IS NULL;
 
   PERFORM public.revoke_community_xp(v_author_id, 'thread:' || p_thread_id::text);
+
+  -- Removal settles the report.
+  UPDATE public.flags
+     SET status = 'resolved', resolved_at = NOW(), resolved_by = p_actor_id
+   WHERE id = p_flag_id;
+
+  INSERT INTO public.moderation_actions(action, thread_id, flag_id, actor_id)
+  VALUES ('removed_thread', p_thread_id, p_flag_id, p_actor_id);
 END;
 $$;
 
--- Moderator soft-delete of a single answer. Same bookkeeping as
--- soft_delete_answer (answer_count decrement with a zero floor, un-accept if it
--- was the accepted answer), no ownership check.
+-- Moderator soft-delete of a single answer + flag-resolve + audit, in one
+-- transaction. Same bookkeeping as soft_delete_answer (answer_count decrement
+-- with a zero floor, un-accept if it was the accepted answer), no ownership
+-- check.
 --
 -- XP CLAWBACK SCOPE (v1, deliberate): only this answer's own creation XP
 -- (`answer:<id>`), for the same reason as above. In particular the
 -- accepted-answer bonus (`accept:<thread>:<answer>`) is NOT revoked when an
 -- accepted answer is removed.
-CREATE OR REPLACE FUNCTION public.moderate_soft_delete_answer(p_answer_id UUID)
+CREATE OR REPLACE FUNCTION public.moderate_soft_delete_answer(
+  p_answer_id UUID,
+  p_flag_id UUID,
+  p_actor_id UUID
+)
 RETURNS VOID
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
 DECLARE
@@ -2114,13 +2132,91 @@ BEGIN
   END IF;
 
   PERFORM public.revoke_community_xp(v_author_id, 'answer:' || p_answer_id::text);
+
+  UPDATE public.flags
+     SET status = 'resolved', resolved_at = NOW(), resolved_by = p_actor_id
+   WHERE id = p_flag_id;
+
+  INSERT INTO public.moderation_actions(action, answer_id, flag_id, actor_id)
+  VALUES ('removed_answer', p_answer_id, p_flag_id, p_actor_id);
 END;
 $$;
 
-REVOKE EXECUTE ON FUNCTION public.moderate_soft_delete_thread(UUID) FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.moderate_soft_delete_thread(UUID) TO service_role;
-REVOKE EXECUTE ON FUNCTION public.moderate_soft_delete_answer(UUID) FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.moderate_soft_delete_answer(UUID) TO service_role;
+-- Moderator lock of a thread + audit, in one transaction. A lock stops the
+-- argument without settling the report, so it deliberately does NOT resolve the
+-- flag — the moderator still resolves or dismisses it afterwards.
+--
+-- No-op tolerant: an already-locked thread still writes the audit row (the
+-- moderator did take the action) but skips the redundant UPDATE.
+CREATE OR REPLACE FUNCTION public.moderate_lock_thread(
+  p_thread_id UUID,
+  p_flag_id UUID,
+  p_actor_id UUID
+)
+RETURNS VOID
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+DECLARE
+  v_is_locked BOOLEAN;
+BEGIN
+  SELECT is_locked INTO v_is_locked
+  FROM public.threads
+  WHERE id = p_thread_id AND deleted_at IS NULL;
+
+  IF v_is_locked IS NULL THEN
+    RAISE EXCEPTION 'Thread not found or already removed';
+  END IF;
+
+  IF NOT v_is_locked THEN
+    UPDATE public.threads SET is_locked = TRUE WHERE id = p_thread_id;
+  END IF;
+
+  INSERT INTO public.moderation_actions(action, thread_id, flag_id, actor_id)
+  VALUES ('locked_thread', p_thread_id, p_flag_id, p_actor_id);
+END;
+$$;
+
+-- Resolve or dismiss a report with no content change (out-of-band handling) +
+-- audit, in one transaction. p_dismiss picks which: dismiss = the report is not
+-- valid, resolve = handled elsewhere. The target ids for the audit row are read
+-- from the flag itself so the caller cannot mis-pair them.
+CREATE OR REPLACE FUNCTION public.moderate_resolve_flag(
+  p_flag_id UUID,
+  p_dismiss BOOLEAN,
+  p_actor_id UUID
+)
+RETURNS VOID
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+DECLARE
+  v_thread_id UUID;
+  v_answer_id UUID;
+  v_status TEXT := CASE WHEN p_dismiss THEN 'dismissed' ELSE 'resolved' END;
+BEGIN
+  SELECT thread_id, answer_id INTO v_thread_id, v_answer_id
+  FROM public.flags
+  WHERE id = p_flag_id AND status = 'pending';
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Flag not found or already resolved';
+  END IF;
+
+  UPDATE public.flags
+     SET status = v_status, resolved_at = NOW(), resolved_by = p_actor_id
+   WHERE id = p_flag_id;
+
+  INSERT INTO public.moderation_actions(action, thread_id, answer_id, flag_id, actor_id)
+  VALUES (v_status, v_thread_id, v_answer_id, p_flag_id, p_actor_id);
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.moderate_soft_delete_thread(UUID, UUID, UUID) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.moderate_soft_delete_thread(UUID, UUID, UUID) TO service_role;
+REVOKE EXECUTE ON FUNCTION public.moderate_soft_delete_answer(UUID, UUID, UUID) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.moderate_soft_delete_answer(UUID, UUID, UUID) TO service_role;
+REVOKE EXECUTE ON FUNCTION public.moderate_lock_thread(UUID, UUID, UUID) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.moderate_lock_thread(UUID, UUID, UUID) TO service_role;
+REVOKE EXECUTE ON FUNCTION public.moderate_resolve_flag(UUID, BOOLEAN, UUID) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.moderate_resolve_flag(UUID, BOOLEAN, UUID) TO service_role;
+
 
 -- ============================================================
 -- Community Forum: RLS Policies
