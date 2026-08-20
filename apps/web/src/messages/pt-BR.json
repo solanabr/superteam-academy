@@ -1503,7 +1503,7 @@
       "loading": "Carregando…",
       "error": "Não foi possível carregar as métricas.",
       "empty": "Sem dados ainda.",
-      "quizNote": "O acerto nos quizzes é registrado como o evento de analytics quiz_checked (PostHog) — não é persistido no servidor, então aparece nos dashboards do PostHog e não aqui.",
+      "quizNote": "A correção dos quizzes não é persistida no servidor — ela fica no PostHog, no evento quiz_checked.",
       "ai": {
         "title": "Tutor de IA",
         "learners": "Alunos usando IA",
@@ -1518,7 +1518,9 @@
         "spendByDay": "Gasto diário",
         "day": "Dia",
         "usd": "USD",
-        "requests": "Requisições"
+        "requests": "Requisições",
+        "spendChart": "Gasto diário de IA (30d)",
+        "spendChartLabel": "Gasto diário de IA em USD nos últimos 30 dias"
       },
       "learning": {
         "title": "Aprendizado",
@@ -1526,12 +1528,15 @@
         "enrollments": "Matrículas",
         "active7d": "Ativos (7d)",
         "active30d": "Ativos (30d)",
-        "perCourse": "Concluídas por curso",
+        "perCourse": "Lições concluídas por curso",
         "course": "Curso",
-        "completions": "Concluídas",
-        "learnersCol": "Alunos",
-        "completionsByDay": "Concluídas por dia (30d)",
-        "day": "Dia"
+        "completions": "Lições concluídas",
+        "learnersCol": "Pessoas alcançadas",
+        "completionsByDay": "Lições concluídas por dia (30d)",
+        "day": "Dia",
+        "completionsChartLabel": "Lições concluídas por dia nos últimos 30 dias",
+        "activityHint": "Ativos conta quem concluiu uma lição no período — não logins nem sessões.",
+        "perCourseHint": "Uma linha por lição concluída, então cada pessoa conta uma vez por lição. Pessoas alcançadas é quantas concluíram ao menos uma lição do curso."
       }
     }
   },

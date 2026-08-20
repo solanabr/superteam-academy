@@ -4128,3 +4128,157 @@ $$;
 
 REVOKE EXECUTE ON FUNCTION public.get_platform_stats() FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.get_platform_stats() TO service_role;
+
+-- ─────────────────────────────────────────────
+-- ADMIN INSIGHTS RPC (#1135)
+-- ─────────────────────────────────────────────
+-- The whole /admin/insights fold in SQL instead of 50k-row-capped fetches
+-- folded in JS. Two load-bearing invariants: every per-user aggregate joins
+-- profiles ON deleted_at IS NULL (soft-deleted accounts keep their
+-- enrollments/user_progress/challenge_assists rows — the FK cascades never
+-- fire on a tombstone), and both day series are zero-filled over a 30-day
+-- generate_series so an idle day is a 0 bar, not a missing point.
+-- SECURITY DEFINER + service_role-only; reached only from the admin-authed
+-- /api/admin/insights route via createAdminClient(). Mirrors
+-- supabase/migrations/20260820140000_get_admin_insights.sql.
+
+CREATE OR REPLACE FUNCTION public.get_admin_insights()
+RETURNS jsonb
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+WITH
+-- Live learners only. Every CTE below joins through this.
+live AS (
+  SELECT p.id FROM public.profiles p WHERE p.deleted_at IS NULL
+),
+-- The 30 calendar days the charts draw, oldest first.
+window_days AS (
+  SELECT d::date AS day
+  FROM generate_series(current_date - 29, current_date, interval '1 day') AS d
+),
+
+-- ── AI tutor ────────────────────────────────────────────────────────────────
+-- A refunded row can sit at 0/0; it is not evidence anyone used the tutor.
+assists AS (
+  SELECT ca.user_id, ca.lesson_id, ca.assists_used, ca.billed_assists
+  FROM public.challenge_assists ca
+  JOIN live ON live.id = ca.user_id
+  WHERE ca.assists_used > 0 OR ca.billed_assists > 0
+),
+assist_totals AS (
+  SELECT
+    COUNT(DISTINCT a.user_id)::bigint         AS learners_using_ai,
+    COALESCE(SUM(a.assists_used), 0)::bigint  AS total_assists,
+    COALESCE(SUM(a.billed_assists), 0)::bigint AS billed_assists
+  FROM assists a
+),
+top_lessons AS (
+  SELECT
+    a.lesson_id,
+    SUM(a.assists_used)::bigint       AS assists,
+    COUNT(DISTINCT a.user_id)::bigint AS learners
+  FROM assists a
+  GROUP BY a.lesson_id
+  ORDER BY SUM(a.assists_used) DESC, a.lesson_id ASC
+  LIMIT 10
+),
+-- micro-USD → USD rounded to cents, matching microUsdToUsd():
+-- Math.round(micro / 10_000) / 100. micro_usd is clamped >= 0 on write, so
+-- Postgres' round-half-away-from-zero and JS' round-half-up agree.
+spend AS (
+  SELECT
+    wd.day,
+    ROUND(COALESCE(l.micro_usd, 0) / 10000.0) / 100.0 AS usd,
+    COALESCE(l.request_count, 0)::bigint              AS requests
+  FROM window_days wd
+  LEFT JOIN public.ai_spend_ledger l
+    ON l.spend_day = wd.day AND l.scope = 'global'
+  ORDER BY wd.day
+),
+
+-- ── Learning ────────────────────────────────────────────────────────────────
+-- One row per COMPLETED LESSON — user_progress is keyed (user_id, lesson_id).
+-- "completions" here is lessons finished, never courses finished; the panel
+-- labels it as such.
+progress AS (
+  SELECT up.user_id, up.course_id, up.completed_at
+  FROM public.user_progress up
+  JOIN live ON live.id = up.user_id
+  WHERE up.completed = true
+),
+per_course AS (
+  SELECT
+    pr.course_id,
+    COUNT(*)::bigint                   AS completions,
+    COUNT(DISTINCT pr.user_id)::bigint AS learners
+  FROM progress pr
+  GROUP BY pr.course_id
+  ORDER BY COUNT(*) DESC, pr.course_id ASC
+),
+completions_by_day AS (
+  SELECT wd.day, COUNT(pr.user_id)::bigint AS count
+  FROM window_days wd
+  LEFT JOIN progress pr
+    -- UTC day bucketing, matching the JS aggregation's ISO-string slice.
+    ON (pr.completed_at AT TIME ZONE 'UTC')::date = wd.day
+  GROUP BY wd.day
+  ORDER BY wd.day
+)
+
+SELECT jsonb_build_object(
+  'generatedAt', to_char(now() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
+  'ai', jsonb_build_object(
+    'learnersUsingAi', (SELECT learners_using_ai FROM assist_totals),
+    'totalAssists',    (SELECT total_assists     FROM assist_totals),
+    'billedAssists',   (SELECT billed_assists    FROM assist_totals),
+    'topLessons', COALESCE((
+      SELECT jsonb_agg(jsonb_build_object(
+               'lessonId', tl.lesson_id,
+               'assists',  tl.assists,
+               'learners', tl.learners)
+             ORDER BY tl.assists DESC, tl.lesson_id ASC)
+      FROM top_lessons tl
+    ), '[]'::jsonb),
+    'spendByDay', COALESCE((
+      SELECT jsonb_agg(jsonb_build_object(
+               'day',      to_char(s.day, 'YYYY-MM-DD'),
+               'usd',      s.usd,
+               'requests', s.requests)
+             ORDER BY s.day)
+      FROM spend s
+    ), '[]'::jsonb),
+    'spend30dUsd', COALESCE((SELECT ROUND(SUM(s.usd), 2) FROM spend s), 0),
+    'requests30d', COALESCE((SELECT SUM(s.requests)::bigint FROM spend s), 0)
+  ),
+  'learning', jsonb_build_object(
+    'totalLearners',    (SELECT COUNT(*)::bigint FROM live),
+    'totalEnrollments', (SELECT COUNT(*)::bigint FROM public.enrollments e
+                           JOIN live ON live.id = e.user_id),
+    'activeLearners7d', (SELECT COUNT(DISTINCT pr.user_id)::bigint FROM progress pr
+                           WHERE pr.completed_at >= now() - interval '7 days'),
+    'activeLearners30d', (SELECT COUNT(DISTINCT pr.user_id)::bigint FROM progress pr
+                           WHERE pr.completed_at >= now() - interval '30 days'),
+    'completionsByDay', COALESCE((
+      SELECT jsonb_agg(jsonb_build_object(
+               'day',   to_char(c.day, 'YYYY-MM-DD'),
+               'count', c.count)
+             ORDER BY c.day)
+      FROM completions_by_day c
+    ), '[]'::jsonb),
+    'perCourse', COALESCE((
+      SELECT jsonb_agg(jsonb_build_object(
+               'courseId',    pc.course_id,
+               'completions', pc.completions,
+               'learners',    pc.learners)
+             ORDER BY pc.completions DESC, pc.course_id ASC)
+      FROM per_course pc
+    ), '[]'::jsonb)
+  )
+);
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.get_admin_insights() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_admin_insights() TO service_role;
