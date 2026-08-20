@@ -36,9 +36,10 @@ export default async function LocaleLayout(props: LocaleLayoutProps) {
   // The wallet/Dynamic provider stack and the gamification overlays are NOT
   // here (#1097): they mount in (platform)/layout.tsx, so marketing and admin
   // first loads don't pay for wallet-adapter, the Dynamic SDK, or TanStack
-  // Query. Header children that touch the wallet degrade through
-  // useOptionalWallet, and the sign-in modal lazily mounts its own scoped
-  // stack when opened outside (platform).
+  // Query. The Header sits ABOVE that stack, so its wallet consumers cannot
+  // reach it through context and read the module-level ambient store instead
+  // (lib/solana/ambient-wallet-store.ts); the sign-in modal lazily mounts its
+  // own scoped stack when opened outside (platform).
   return (
     <ThemeProvider
       attribute="data-theme"

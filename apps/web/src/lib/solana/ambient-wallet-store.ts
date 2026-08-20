@@ -42,6 +42,13 @@ const registrations = new Map<object, AmbientWalletState>();
  */
 let returnCaptureActive = false;
 
+/**
+ * The handlers currently showing the SIWS overlay. A set rather than a
+ * boolean because two stacks can briefly overlap while crossing route groups,
+ * and the departing one's cleanup must not clear the arriving one's flag.
+ */
+const siwsOwners = new Set<object>();
+
 const listeners = new Set<() => void>();
 
 function emit(): void {
@@ -120,6 +127,34 @@ export function getWalletReturnCaptureActive(): boolean {
   return returnCaptureActive;
 }
 
+/**
+ * Raised by `WalletAuthHandler` for as long as its full-screen SIWS overlay is
+ * up, and watched by `AuthModal`, which closes itself when it goes true.
+ *
+ * The two genuinely can coexist since #1097: opening the dialog is what mounts
+ * the scoped stack, and `autoConnect` reconnects a remembered wallet the
+ * instant it mounts — so a returning signed-out learner fires SIWS with the
+ * dialog still open. Radix marks the body `pointer-events: none` for a modal
+ * dialog and the body-portalled overlay inherits it, leaving Retry and Dismiss
+ * rendered but inert behind a full-screen scrim. Closing the dialog is the
+ * same handoff the manual path already does before opening the wallet-select
+ * modal; this makes the automatic path do it too.
+ *
+ * Returns a release for the caller's own claim.
+ */
+export function setSiwsActive(owner: object): () => void {
+  siwsOwners.add(owner);
+  emit();
+  return () => {
+    if (!siwsOwners.delete(owner)) return;
+    emit();
+  };
+}
+
+export function getSiwsActive(): boolean {
+  return siwsOwners.size > 0;
+}
+
 const serverNull = () => null;
 const serverFalse = () => false;
 const serverZero = () => 0;
@@ -146,4 +181,9 @@ export function useWalletReturnCaptureActive(): boolean {
     getWalletReturnCaptureActive,
     serverFalse
   );
+}
+
+/** Whether a SIWS overlay is on screen — see {@link setSiwsActive}. */
+export function useSiwsActive(): boolean {
+  return useSyncExternalStore(subscribe, getSiwsActive, serverFalse);
 }

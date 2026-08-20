@@ -17,11 +17,18 @@ import {
  * when the row has no segment yet: a returning learner's stored choice must win
  * over a stale anonymous pick left in this browser.
  *
- * Mounted globally (GamificationOverlays), mirroring BankedProgressReplay so it
- * runs regardless of which page the learner lands on after auth. Best-effort by
- * design: any write failure (including the columns not yet existing in an
- * environment where the migration has not applied) is swallowed — the
- * localStorage copy remains the read fallback, exactly like the progress bank.
+ * Mounted by GamificationOverlays, which since #1097 is (platform)-only — so
+ * this does NOT run on marketing routes, and /start is one of them. A learner
+ * who finishes the intake and signs in through the Supabase-OAuth fallback is
+ * returned to /{locale}/start by `buildOAuthRedirect`, so the copy waits for
+ * their first platform route. The wallet and Dynamic paths land on /dashboard
+ * and sync immediately. Nothing is lost either way — the localStorage copy is
+ * the read fallback until the DB row wins.
+ *
+ * Best-effort by design: any write failure (including the columns not yet
+ * existing in an environment where the migration has not applied) is
+ * swallowed — the localStorage copy remains the read fallback, exactly like
+ * the progress bank.
  *
  * Shared-browser hygiene (F4): once the signed-in user's DB row is the
  * authoritative source — whether we just copied into it OR it already carried a
