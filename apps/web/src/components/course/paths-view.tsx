@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { BookOpen, Compass } from "@phosphor-icons/react";
+import { BookOpen } from "@phosphor-icons/react";
 import type { LearningPath } from "@superteam-lms/types";
 import {
   DEFAULT_SEGMENT,
