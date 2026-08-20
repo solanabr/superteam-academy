@@ -4140,7 +4140,7 @@ GRANT EXECUTE ON FUNCTION public.get_platform_stats() TO service_role;
 -- generate_series so an idle day is a 0 bar, not a missing point.
 -- SECURITY DEFINER + service_role-only; reached only from the admin-authed
 -- /api/admin/insights route via createAdminClient(). Mirrors
--- supabase/migrations/20260820140000_get_admin_insights.sql.
+-- supabase/migrations/20260820170000_get_admin_insights.sql.
 
 CREATE OR REPLACE FUNCTION public.get_admin_insights()
 RETURNS jsonb

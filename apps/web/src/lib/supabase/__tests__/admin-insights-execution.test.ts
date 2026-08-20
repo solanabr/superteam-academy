@@ -52,7 +52,7 @@ const repoRoot = findRepoRoot();
 const migration = readFileSync(
   resolve(
     repoRoot,
-    "supabase/migrations/20260820140000_get_admin_insights.sql"
+    "supabase/migrations/20260820170000_get_admin_insights.sql"
   ),
   "utf8"
 );
