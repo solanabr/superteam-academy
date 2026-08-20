@@ -3,9 +3,9 @@ import type { ReactElement } from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import type { AdminStatus } from "../admin-status-types";
 import { DeployClient } from "../courses/deploy-client";
-import messages from "@/messages/en.json";
 
 function renderWithIntl(ui: ReactElement) {
   return render(
@@ -29,6 +29,7 @@ vi.mock("@/components/admin/course-sync-table", () => ({
 
 const status: AdminStatus = {
   program: {
+    network: "devnet",
     deployed: true,
     programId: "AcademyProgram1111111111111111111111111111",
     configPda: "Config11111111111111111111111111111111111",

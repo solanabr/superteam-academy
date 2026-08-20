@@ -3,9 +3,9 @@ import type { ReactElement } from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import type { AdminStatus } from "../admin-status-types";
 import { StatusClient } from "../status/status-client";
-import messages from "@/messages/en.json";
 
 // DataResyncPanel carries its own behavior and posts to /api/admin/resync,
 // so it is stubbed out here.
@@ -15,6 +15,7 @@ vi.mock("@/components/admin/data-resync-panel", () => ({
 
 const status: AdminStatus = {
   program: {
+    network: "devnet",
     deployed: true,
     programId: "AcademyProgram1111111111111111111111111111",
     configPda: "Config11111111111111111111111111111111111",
@@ -143,13 +144,65 @@ describe("StatusClient", () => {
     await waitFor(() => {
       expect(screen.getByTestId("data-resync-panel")).toBeInTheDocument();
     });
-    // No test-id on prod markup: locate the counts by their i18n'd labels.
-    const coursesLabel = screen.getByText(`${messages.admin.counts.courses}:`);
+    // No test-id on prod markup: the counts are a `<dl>`, so each label's
+    // `<dd>` sibling carries the number.
+    const coursesLabel = screen.getByText(messages.admin.counts.courses);
     expect(coursesLabel.nextElementSibling).toHaveTextContent("2");
     const achievementsLabel = screen.getByText(
-      `${messages.admin.counts.achievements}:`
+      messages.admin.counts.achievements
     );
     expect(achievementsLabel.nextElementSibling).toHaveTextContent("1");
+  });
+
+  // #1140: the network used to be the literal string "devnet", so this screen
+  // would have kept saying "devnet" while pointed at mainnet.
+  it("renders the network the server reported, not a literal", async () => {
+    mockStatusFetch({
+      ...status,
+      program: { ...status.program, network: "mainnet" },
+    });
+    renderWithIntl(<StatusClient />);
+
+    await waitFor(() => {
+      expect(screen.getByText("mainnet")).toBeInTheDocument();
+    });
+    expect(screen.queryByText("devnet")).not.toBeInTheDocument();
+  });
+
+  it("says 'unknown' when the server could not tell which chain it is on", async () => {
+    mockStatusFetch({
+      ...status,
+      program: { ...status.program, network: "unknown" },
+    });
+    renderWithIntl(<StatusClient />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(messages.admin.programBar.networkUnknown)
+      ).toBeInTheDocument();
+    });
+    expect(screen.queryByText("devnet")).not.toBeInTheDocument();
+    expect(screen.queryByText("mainnet")).not.toBeInTheDocument();
+  });
+
+  it("explains an empty payload instead of rendering nothing", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => null } as Response)
+      .mockResolvedValue({ ok: true, json: async () => status } as Response);
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderWithIntl(<StatusClient />);
+    await waitFor(() => {
+      expect(
+        screen.getByText(messages.admin.states.unavailable)
+      ).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await waitFor(() => {
+      expect(screen.getByText("devnet")).toBeInTheDocument();
+    });
   });
 
   it("refetches on the program-bar Refresh button", async () => {

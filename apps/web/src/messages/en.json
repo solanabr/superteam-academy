@@ -1261,7 +1261,8 @@
       "fetchError": "Failed to fetch status",
       "networkError": "Network error",
       "retry": "Retry",
-      "refresh": "Refresh"
+      "refresh": "Refresh",
+      "unavailable": "No status was returned."
     },
     "programBar": {
       "network": "Network",
@@ -1269,7 +1270,12 @@
       "config": "Config",
       "found": "Found",
       "notInitialized": "Not initialized",
+      "networkUnknown": "unknown",
       "authorityMismatch": "Authority mismatch — check PROGRAM_AUTHORITY_SECRET"
+    },
+    "statusScreen": {
+      "programHeading": "Program",
+      "countsHeading": "Deployed content"
     },
     "deployScreen": {
       "coursesHeading": "Courses",

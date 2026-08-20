@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterAll } from "vitest";
-import { resolveSolanaNetwork } from "../network";
+import { resolveSolanaNetwork, networkFromRpcUrl } from "../network";
 
 const ORIGINAL = process.env.NEXT_PUBLIC_SOLANA_NETWORK;
 
@@ -38,5 +38,42 @@ describe("resolveSolanaNetwork", () => {
       cluster: "mainnet-beta",
       label: "Mainnet",
     });
+  });
+});
+
+describe("networkFromRpcUrl", () => {
+  it("reads devnet out of the host", () => {
+    expect(networkFromRpcUrl("https://api.devnet.solana.com")).toBe("devnet");
+    expect(networkFromRpcUrl("https://devnet.helius-rpc.com/?api-key=x")).toBe(
+      "devnet"
+    );
+  });
+
+  it("reads mainnet out of the host, including mainnet-beta", () => {
+    expect(networkFromRpcUrl("https://api.mainnet-beta.solana.com")).toBe(
+      "mainnet"
+    );
+    expect(networkFromRpcUrl("https://mainnet.helius-rpc.com/?api-key=x")).toBe(
+      "mainnet"
+    );
+  });
+
+  it("says unknown for a host that names no cluster", () => {
+    expect(networkFromRpcUrl("https://rpc.internal.example.com")).toBe(
+      "unknown"
+    );
+    expect(networkFromRpcUrl("http://localhost:8899")).toBe("unknown");
+  });
+
+  it("says unknown rather than throwing on an unparseable URL", () => {
+    expect(networkFromRpcUrl("")).toBe("unknown");
+    expect(networkFromRpcUrl("not a url")).toBe("unknown");
+  });
+
+  it("ignores cluster names outside the host", () => {
+    expect(networkFromRpcUrl("https://rpc.example.com/devnet")).toBe("unknown");
+    expect(networkFromRpcUrl("https://rpc.example.com/?net=mainnet")).toBe(
+      "unknown"
+    );
   });
 });

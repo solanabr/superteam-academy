@@ -1261,7 +1261,8 @@
       "fetchError": "Falha ao buscar o status",
       "networkError": "Erro de rede",
       "retry": "Tentar novamente",
-      "refresh": "Atualizar"
+      "refresh": "Atualizar",
+      "unavailable": "Nenhum status foi retornado."
     },
     "programBar": {
       "network": "Rede",
@@ -1269,7 +1270,12 @@
       "config": "Config",
       "found": "Encontrada",
       "notInitialized": "Não inicializada",
+      "networkUnknown": "desconhecida",
       "authorityMismatch": "Divergência de autoridade — verifique PROGRAM_AUTHORITY_SECRET"
+    },
+    "statusScreen": {
+      "programHeading": "Programa",
+      "countsHeading": "Conteúdo publicado on-chain"
     },
     "deployScreen": {
       "coursesHeading": "Cursos",
