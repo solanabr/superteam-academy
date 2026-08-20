@@ -3,53 +3,37 @@
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { initAnalytics, trackPageView, identifyUser } from "@/lib/analytics";
-import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/lib/auth/auth-provider";
 
 export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const initialized = useRef(false);
+  // Consume AuthProvider's session state (this provider is nested inside it in
+  // the locale layout) instead of running a second getSession() +
+  // onAuthStateChange subscription against the same singleton browser client.
+  const { user } = useAuth();
 
-  // Initialize analytics once. Ref-guarded on its own so the guard cannot
-  // take the auth subscription down with it (see next effect).
+  // Initialize analytics once (ref-guarded, StrictMode-safe).
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
     initAnalytics();
-
-    // Identify user if already authenticated
-    const supabase = createClient();
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        const user = session.user;
-        identifyUser(user.id, {
-          email: user.email,
-          walletAddress: user.user_metadata?.wallet_address,
-        });
-      }
-    });
   }, []);
 
-  // Auth subscription: subscribe on EVERY mount, clean up on unmount. When
-  // this shared an effect with the ref-guarded init, a StrictMode/remount
-  // cycle ran the cleanup (unsubscribe) but the guard skipped the re-run —
-  // leaving no listener for the rest of the session.
+  // Identify whenever a signed-in user appears or their identity object
+  // changes (AuthProvider re-emits on every auth state change, so a wallet
+  // link that updates user_metadata re-identifies — same timing the old
+  // in-house onAuthStateChange subscription had). Sign-out intentionally does
+  // NOT reset here; resetUser() is called by the explicit sign-out flows
+  // (user-menu, danger-tab), matching the previous behavior.
   useEffect(() => {
-    const supabase = createClient();
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        identifyUser(session.user.id, {
-          email: session.user.email,
-          walletAddress: session.user.user_metadata?.wallet_address,
-        });
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+    if (user) {
+      identifyUser(user.id, {
+        email: user.email,
+        walletAddress: user.user_metadata?.wallet_address,
+      });
+    }
+  }, [user]);
 
   // Track page views on route changes
   useEffect(() => {

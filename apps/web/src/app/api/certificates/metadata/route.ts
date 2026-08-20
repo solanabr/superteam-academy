@@ -1,18 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createCookielessClient } from "@/lib/supabase/cookieless";
 
+// A day, not immutable/1y: credential metadata is updatable post-mint
+// (attribute upgrades), so an unrecallable forever-cache would pin stale JSON.
+// `CDN-Cache-Control` mirror required: Vercel strips a bare `s-maxage`.
 const CACHE_HEADERS = {
-  "Cache-Control": "public, max-age=31536000, immutable",
+  // max-age gives browsers an hour (s-maxage alone leaves them uncached);
+  // the CDN holds it for a day.
+  "Cache-Control": "public, max-age=3600, s-maxage=86400",
+  "CDN-Cache-Control": "public, s-maxage=86400",
 };
 
 /**
  * Serves NFT metadata JSON for Metaplex Core credentials.
  *
- * `?id=<uuid>` — reads metadata from the `nft_metadata` table
+ * `?id=<uuid>` — reads metadata from the `nft_metadata` table, which has a
+ * public SELECT policy, via the cookieless anon client (no Set-Cookie, so the
+ * CDN may actually cache the response).
  */
-// Auth/cookie + per-request DB access — never statically prerender (DYNAMIC_SERVER_USAGE).
-export const dynamic = "force-dynamic";
-
 export async function GET(request: NextRequest) {
   const id = request.nextUrl.searchParams.get("id");
 
@@ -23,7 +28,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const supabase = await createClient();
+  const supabase = createCookielessClient();
   const { data: row, error } = await supabase
     .from("nft_metadata")
     .select("data")

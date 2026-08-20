@@ -1,10 +1,12 @@
 import "server-only";
 
+import { cache } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { unstable_cache } from "next/cache";
 import { env } from "@/lib/env";
 import { serverEnv } from "@/lib/env.server";
 import { COURSES_CACHE_TAG } from "@/lib/content/queries";
+import { createCookielessClient } from "@/lib/supabase/cookieless";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 import type { Database } from "@/lib/supabase/types";
@@ -46,19 +48,6 @@ export type OnchainDeploymentRow =
   Database["public"]["Tables"]["onchain_deployments"]["Row"];
 
 const VIEW_COLUMNS = "content_id, kind, status, is_active, achievement_pda";
-
-/**
- * Cookieless anon client. NOT `lib/supabase/server.ts` — that reads `cookies()`,
- * which would opt catalog/lesson pages out of static rendering. Sessions are
- * disabled: this is a pure read over a world-readable view.
- */
-function createCookielessClient() {
-  return createClient<Database>(
-    env.NEXT_PUBLIC_SUPABASE_URL,
-    env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    { auth: { persistSession: false, autoRefreshToken: false } }
-  );
-}
 
 /**
  * Service-role client typed for this seam. Mirrors `lib/supabase/admin.ts`; the
@@ -142,10 +131,22 @@ function fetchActiveDeploymentRows(): Promise<DeploymentStatus[]> {
  * "Outage behaviour" note on {@link loadActiveDeploymentRows}. Every public
  * caller (`isSynced` gate) treats a missing entry as "not synced", so an
  * empty map is equivalent to "nothing is visible right now", not corrupt data.
+ *
+ * Layered caching: React `cache()` OUTSIDE `unstable_cache`. The inner
+ * `unstable_cache` persists the row array across requests (tag + revalidate);
+ * the outer `cache()` memoizes per request, so the several gate reads a single
+ * render performs share one promise — and one Map build — instead of
+ * re-deserializing the cached rows 3-4 times.
  */
-export async function getActiveDeployments(): Promise<
+// React's SERVER build exports `cache`; the client build vitest resolves does
+// not (undefined). Identity fallback keeps the module importable in tests —
+// per-request memoization is a server-render concern anyway.
+const memoizePerRequest: typeof cache =
+  typeof cache === "function" ? cache : (fn) => fn;
+
+export const getActiveDeployments: () => Promise<
   ReadonlyMap<string, DeploymentStatus>
-> {
+> = memoizePerRequest(async () => {
   try {
     return toDeploymentMap(await fetchActiveDeploymentRows());
   } catch (err) {
@@ -156,7 +157,7 @@ export async function getActiveDeployments(): Promise<
     });
     return new Map();
   }
-}
+});
 
 /**
  * Full deployment row by content id, uncached, via the service-role client.
