@@ -16,7 +16,6 @@ import {
   type PathCourseProgress,
 } from "@/components/course/learning-path-section";
 
-
 interface PathsViewProps {
   learningPaths: LearningPath[];
   progress: Map<string, PathCourseProgress>;
