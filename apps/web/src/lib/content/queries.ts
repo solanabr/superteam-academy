@@ -328,7 +328,14 @@ export async function resolveReviewItems(
 
 export async function getAllLearningPaths(): Promise<LearningPath[]> {
   const map = await getActiveDeployments();
-  const paths = [...pathsById.values()].sort(byPathOrder);
+  // `draft` and `retired` are the content repo's lifecycle flags
+  // (packages/content-schema/src/path.ts). They were defined but never read,
+  // so the only way to hide a path was to delete it — which is why the Paths
+  // tab ended up held behind a hardcoded constant instead. Honouring them here
+  // is what makes visibility a content decision rather than a code one.
+  const paths = [...pathsById.values()]
+    .filter((p) => !p.draft && !p.retired)
+    .sort(byPathOrder);
   return paths.map((p) => {
     const memberIds = new Set(pathCourseRefIds(p));
     // Iterate the store (doc order) so member ordering matches GROQ's
