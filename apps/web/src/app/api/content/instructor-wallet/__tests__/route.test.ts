@@ -8,8 +8,10 @@ const { createClientMock } = vi.hoisted(() => ({
   createClientMock: vi.fn(),
 }));
 
-vi.mock("@/lib/supabase/server", () => ({
-  createClient: createClientMock,
+// The route reads through the cookieless anon client (#1094) so the response
+// carries no Set-Cookie and stays CDN-cacheable.
+vi.mock("@/lib/supabase/cookieless", () => ({
+  createCookielessClient: createClientMock,
 }));
 
 import { GET } from "../route";
@@ -41,7 +43,7 @@ describe("GET /api/content/instructor-wallet", () => {
       bio: "Rust developer",
       social_links: { twitter: "alice_dev" },
     });
-    createClientMock.mockResolvedValue({ from: stub.from });
+    createClientMock.mockReturnValue({ from: stub.from });
 
     const res = await GET(
       req(`/api/content/instructor-wallet?wallet=${WALLET}`)
@@ -65,7 +67,7 @@ describe("GET /api/content/instructor-wallet", () => {
 
   it("returns profile: null when the wallet has no public profile", async () => {
     const stub = stubSupabase(null);
-    createClientMock.mockResolvedValue({ from: stub.from });
+    createClientMock.mockReturnValue({ from: stub.from });
 
     const res = await GET(
       req(`/api/content/instructor-wallet?wallet=${WALLET}`)
@@ -88,7 +90,9 @@ describe("GET /api/content/instructor-wallet", () => {
   });
 
   it("500s with a generic message on failure (no stack trace leak)", async () => {
-    createClientMock.mockRejectedValue(new Error("boom secret detail"));
+    createClientMock.mockImplementation(() => {
+      throw new Error("boom secret detail");
+    });
     const res = await GET(
       req(`/api/content/instructor-wallet?wallet=${WALLET}`)
     );
