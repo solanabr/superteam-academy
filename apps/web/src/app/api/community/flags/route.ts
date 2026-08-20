@@ -44,15 +44,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // "Other" carries no information by construction, so it only reaches a
+    // moderator with an explanation attached.
+    const trimmedDetails =
+      typeof details === "string" ? details.trim().slice(0, 1000) : "";
+    if (reason === "other" && trimmedDetails.length < 10) {
+      return NextResponse.json({ error: "detailsRequired" }, { status: 400 });
+    }
+
     const { error } = await supabase.from("flags").insert({
       reporter_id: user.id,
       thread_id: threadId || null,
       answer_id: answerId || null,
       reason,
-      details: details?.slice(0, 1000) || null,
+      details: trimmedDetails || null,
     });
 
     if (error) {
+      // A second report of the same item hits the partial unique indexes on
+      // (reporter_id, thread_id/answer_id), and self-reports hit the
+      // prevent_self_flag trigger. Neither is a server fault, so both get a
+      // structured code the modal can translate instead of a bare 500.
+      if (error.code === "23505") {
+        return NextResponse.json({ error: "alreadyReported" }, { status: 409 });
+      }
+      if (error.message?.includes("Cannot flag your own content")) {
+        return NextResponse.json({ error: "ownContent" }, { status: 403 });
+      }
       return NextResponse.json(
         { error: "Failed to submit flag" },
         { status: 500 }

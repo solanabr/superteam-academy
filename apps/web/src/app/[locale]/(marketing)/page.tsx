@@ -1,6 +1,6 @@
 import { ERROR_IDS } from "@/constants/errorIds";
 import { getAllCourses, getDeployedAchievements } from "@/lib/content/queries";
-import { resolveHeroHref } from "@/lib/courses/entry-lesson";
+import { resolveFlagshipLessonHref } from "@/lib/courses/entry-lesson";
 import { logError } from "@/lib/logging";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { LandingPageClient } from "./landing-client";
@@ -74,9 +74,7 @@ export default async function LandingPage({
   const [courses, achievements, flagshipLessonHref, stats] = await Promise.all([
     getAllCourses(),
     getDeployedAchievements(),
-    // The event booth course page once it's synced; the LX-A1 flagship lesson
-    // deep-link (or catalog) until then — resolveHeroHref owns that gate.
-    resolveHeroHref(locale),
+    resolveFlagshipLessonHref(locale),
     fetchPlatformStats(),
   ]);
 

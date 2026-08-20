@@ -12,9 +12,10 @@ import { DIFFICULTIES } from "./constants";
  *   - `retired: true` — permanently emptied; the id is preserved because path
  *                       ids are permanent once live.
  *
- * Neither flag is read at runtime — hiding is empty-`courses`-only, and the
- * bundle's `LearningPath` type carries neither. They exist for the content
- * gates and for authors reading the file.
+ * Both flags ARE read at runtime: `getAllLearningPaths`
+ * (apps/web/src/lib/content/queries.ts) filters a draft or retired path out of
+ * the Paths tab (#1141) — visibility is a content decision, which is what
+ * replaced the hardcoded Coming-soon constant. The content gates read them too.
  *
  * content-lint gate 4b enforces the rest: a `retired` path MUST be empty, a
  * draft+empty path MUST also be retired (the implicit-retirement pattern that

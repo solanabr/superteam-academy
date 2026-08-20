@@ -75,6 +75,10 @@
       "type": "string",
       "pattern": "^course-[a-z0-9]+(?:-[a-z0-9]+)*$"
     },
+    "unlisted": {
+      "default": false,
+      "type": "boolean"
+    },
     "modules": {
       "minItems": 1,
       "type": "array",

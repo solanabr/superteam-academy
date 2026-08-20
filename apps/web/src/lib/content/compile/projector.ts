@@ -137,6 +137,10 @@ export function projectContent(
       prerequisiteCourse: c.prerequisiteCourse
         ? weakRef(c.prerequisiteCourse)
         : undefined,
+      // `|| undefined` so the default-false case emits no key at all: every
+      // course in today's bundle is listed, so the generated JSON stays
+      // byte-identical and the CI content-freshness gate stays green.
+      unlisted: c.unlisted || undefined,
       modules: c.modules.map((m) => ({
         _type: "courseModule",
         _key: m.key,
