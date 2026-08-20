@@ -1,19 +1,58 @@
 "use client";
 
-import { useCallback, useMemo, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, type ReactNode } from "react";
 import type { WalletError } from "@solana/wallet-adapter-base";
 import {
   ConnectionProvider,
   WalletProvider,
+  useWallet,
 } from "@solana/wallet-adapter-react";
-import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
+import {
+  WalletModalProvider,
+  useWalletModal,
+} from "@solana/wallet-adapter-react-ui";
 import { env } from "@/lib/env";
+import { publishAmbientWallet } from "@/lib/solana/ambient-wallet-store";
 import { WalletAuthHandler } from "@/components/auth/wallet-auth-handler";
 
 import "@solana/wallet-adapter-react-ui/styles.css";
 
 interface SolanaWalletProviderProps {
   children: ReactNode;
+}
+
+/**
+ * Publishes the live wallet surface into the ambient store (#1097): the
+ * provider stack mounts on (platform) routes — or scoped around the sign-in
+ * flow — BELOW the global Header, so Header children (UserMenu, AuthModal)
+ * can never reach these hooks through context and read the store instead.
+ */
+function AmbientWalletRegistrar() {
+  const { connected, publicKey, disconnect } = useWallet();
+  const { setVisible } = useWalletModal();
+  // Stable owner across re-publishes: same-owner publishes replace the
+  // registration IN PLACE, so subscribers never see a transient null while
+  // this stack updates its own state (review NEW-3).
+  const ownerRef = useRef<object>({});
+  const unregisterRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    unregisterRef.current = publishAmbientWallet(
+      {
+        connected,
+        publicKey: publicKey?.toBase58() ?? null,
+        disconnect,
+        openWalletModal: () => setVisible(true),
+      },
+      ownerRef.current
+    );
+  }, [connected, publicKey, disconnect, setVisible]);
+
+  useEffect(() => {
+    return () => unregisterRef.current?.();
+  }, []);
+
+  return null;
 }
 
 export function SolanaWalletProvider({ children }: SolanaWalletProviderProps) {
@@ -46,6 +85,7 @@ export function SolanaWalletProvider({ children }: SolanaWalletProviderProps) {
         onError={onError}
       >
         <WalletModalProvider>
+          <AmbientWalletRegistrar />
           <WalletAuthHandler />
           {children}
         </WalletModalProvider>

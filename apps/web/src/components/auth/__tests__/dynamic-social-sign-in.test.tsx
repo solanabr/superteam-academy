@@ -24,8 +24,13 @@ vi.mock("@dynamic-labs-sdk/client", () => ({
   logout: logoutMock,
   signInWithSocialRedirect: redirectMock,
 }));
-vi.mock("@dynamic-labs-sdk/react-hooks", () => ({
-  useUser: () => ({ data: userState.current }),
+// Since #1097 the component reads the session imperatively (getCore over the
+// client singleton) instead of through the provider-bound useUser hook.
+vi.mock("@dynamic-labs-sdk/client/core", () => ({
+  getCore: () => ({ state: { get: () => ({ user: userState.current }) } }),
+}));
+vi.mock("@/lib/dynamic/client", () => ({
+  getDynamicClient: () => ({}),
 }));
 vi.mock("@/lib/analytics", () => ({ trackEvent: vi.fn() }));
 

@@ -13,6 +13,8 @@ const state = vi.hoisted(() => {
   };
 });
 
+// The banner mounts inside the (platform) provider stack (#1097), so its
+// hooks always resolve against a live provider — which these mocks model.
 vi.mock("@solana/wallet-adapter-react", () => ({
   useWallet: () => ({ publicKey: state.publicKey }),
   useConnection: () => ({ connection: state.connection }),

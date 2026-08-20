@@ -65,6 +65,8 @@ vi.mock("@/lib/dynamic/client", () => ({ logoutDynamic }));
 vi.mock("@/lib/dynamic/siws", () => ({ toMessageSigner: vi.fn() }));
 vi.mock("@/lib/dynamic/social", () => ({
   bridgeDynamicSession,
+}));
+vi.mock("@/lib/dynamic/social-return-pending", () => ({
   setSocialReturnPending: vi.fn(),
 }));
 vi.mock("@/components/ui/toast-container", () => ({ dispatchToast: vi.fn() }));

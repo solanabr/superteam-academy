@@ -3,11 +3,12 @@
 import { useState, type ComponentType } from "react";
 import { useTranslations } from "next-intl";
 import { logout, signInWithSocialRedirect } from "@dynamic-labs-sdk/client";
-import { useUser } from "@dynamic-labs-sdk/react-hooks";
+import { getCore } from "@dynamic-labs-sdk/client/core";
 import { GithubLogo } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
-import { GoogleLogo } from "@/components/icons/google-logo";
+import { getDynamicClient } from "@/lib/dynamic/client";
 import { trackEvent } from "@/lib/analytics";
+import { GoogleLogo } from "@/components/icons/google-logo";
 
 /**
  * A social sign-in button routed through Dynamic instead of Supabase OAuth.
@@ -21,10 +22,12 @@ import { trackEvent } from "@/lib/analytics";
  * by `DynamicAuthHandler`; there is no popup variant on web (see
  * `lib/dynamic/social.ts`).
  *
- * Split out because `useUser` throws `MissingProviderError` outside a
- * `DynamicProvider`, and hooks cannot be conditional, so the feature gate has
- * to be a component boundary. One component serves every provider — adding a
- * third is a PROVIDERS entry, not a copy-paste.
+ * Reads the Dynamic session imperatively (the SDK's own `getCore` escape
+ * hatch, same one `lib/dynamic/social.ts` uses) rather than through
+ * `useUser`, because since #1097 this renders in the lazily-loaded modal
+ * body OUTSIDE any `DynamicProvider` — every `@dynamic-labs-sdk/react-hooks`
+ * hook throws `MissingProviderError` there. One component serves every
+ * provider — adding a third is a PROVIDERS entry, not a copy-paste.
  */
 type DynamicSocialProvider = "google" | "github";
 
@@ -66,7 +69,6 @@ export function DynamicSocialSignIn({
 }) {
   const t = useTranslations("auth");
   const [starting, setStarting] = useState(false);
-  const { data: dynamicUser } = useUser();
   const { Icon, labelKey, errorKey } = PROVIDERS[provider];
 
   const handleClick = async () => {
@@ -78,7 +80,17 @@ export function DynamicSocialSignIn({
       // different symptom: `processSocialCallback` branches on `client.user`
       // and calls `oauthVerify` (LINK this account to the existing Dynamic
       // user) instead of `oauthSignIn` when one is present. This button is
-      // strictly sign-in, so a session that predates it is cleared.
+      // strictly sign-in, so a session that predates it is cleared. Read at
+      // click time from core state — no provider, no hook (see docblock).
+      const client = getDynamicClient();
+      let dynamicUser: unknown = null;
+      if (client) {
+        try {
+          dynamicUser = getCore(client).state.get().user;
+        } catch {
+          // Core unavailable — treat as "no session".
+        }
+      }
       if (dynamicUser) await logout();
       await signInWithSocialRedirect({
         provider,

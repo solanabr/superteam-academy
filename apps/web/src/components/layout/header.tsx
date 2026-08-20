@@ -16,7 +16,6 @@ import { UserMenu } from "@/components/auth/user-menu";
 import { LevelBadge } from "@/components/gamification/level-badge";
 import { xpToNextLevel, calculateLevel } from "@/lib/gamification/xp";
 import { createClient } from "@/lib/supabase/client";
-import { LowSolBanner } from "@/components/layout/low-sol-banner";
 
 // LX-B13 (#583): the leaderboard is intentionally NOT a primary nav CTA at
 // launch — it stays reachable via the user menu and the footer. Restore it
@@ -189,7 +188,8 @@ export function Header() {
   return (
     <header className="fixed left-0 right-0 top-0 z-[200]">
       <div className="relative bg-transparent backdrop-blur-md">
-        <LowSolBanner />
+        {/* LowSolBanner moved to (platform)/layout.tsx (#1097): it needs the
+            wallet providers, which no longer mount above the Header. */}
         <div className="relative mx-auto flex h-[56px] max-w-[1600px] items-center px-[16px]">
           {/* Left: Logo (desktop lg+) */}
           <Link

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { requireAdmin } from "@/lib/admin/auth";
+import { DynamicReturnCatcher } from "@/components/auth/dynamic-return-catcher";
 import { AdminNav } from "./admin-nav";
 
 /**
@@ -34,6 +35,9 @@ export default async function AdminLayout({
 
   return (
     <div className="min-h-screen bg-bg text-text">
+      {/* Admin sits outside (platform), so a Dynamic redirect (e.g. a device
+          registration link) landing here needs the catcher (#1097). */}
+      <DynamicReturnCatcher />
       <div className="mx-auto max-w-6xl px-4 py-8">
         <div className="mb-8">
           <h1 className="font-display text-2xl font-bold text-text">
