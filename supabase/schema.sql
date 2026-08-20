@@ -24,9 +24,11 @@ CREATE TABLE profiles (
   -- string was converted to a one-element `days` array by
   -- 20260804120000_recurring_lesson_plan.sql and is no longer read. Non-PII,
   -- not in public_profiles; written self-service via the own-row profiles UPDATE
-  -- RLS policy. No column on profiles is privilege-bearing, so the shape+size
-  -- CHECKs below (chk_profiles_prefs_object / chk_profiles_prefs_size) are the
-  -- sole bound on this self-write. See 20260726160000_add_profiles_prefs.sql.
+  -- RLS policy. prefs itself is not privilege-bearing (unlike wallet_address,
+  -- deleted_at, and the referral columns, each of which carries a write-lock
+  -- trigger), so the shape+size CHECKs below (chk_profiles_prefs_object /
+  -- chk_profiles_prefs_size) are the sole bound on this self-write. See
+  -- 20260726160000_add_profiles_prefs.sql.
   prefs JSONB NOT NULL DEFAULT '{}',
   is_public BOOLEAN DEFAULT true,
   name_rerolls_used INTEGER DEFAULT 0,
@@ -34,14 +36,25 @@ CREATE TABLE profiles (
   -- NOTE: profiles.role was RETIRED by SP1 (migration 20260710120000, applied to
   -- prod as ledger 20260711152518). The column, its chk_profiles_role CHECK, and
   -- the enforce_profile_role_write lockdown trigger are all gone from prod, so
-  -- they are absent from this snapshot too (#699). Nothing privilege-bearing
-  -- remains on profiles — self-writes are bounded by the CHECK constraints alone.
+  -- they are absent from this snapshot too (#699). Authorization no longer lives
+  -- on a profiles column, but several columns are still privilege-bearing and
+  -- carry write-lock triggers rather than CHECKs: wallet_address (#408),
+  -- deleted_at (#1103), and the referral pair.
   -- /start intake state (LX-A3, #566). Self-writable via the own-row UPDATE
   -- policy: non-sensitive columns bounded only by the CHECKs below. NULL until a
   -- learner runs the intake. See migration 20260726150000_add_profiles_segment_state.sql.
   segment SMALLINT,
   goal TEXT,
   daily_goal SMALLINT,
+  -- Account-deletion tombstone (20260704140000_account_deletion.sql). We never
+  -- hard-delete a profile: on-chain XP and credential NFTs are immutable and
+  -- bound to the wallet, and DB history references them. POST /api/account/delete
+  -- stamps both and scrubs the PII instead. deleted_at is what every public read
+  -- and every login chokepoint keys on, so it is PRIVILEGE-BEARING and locked to
+  -- service_role by trg_enforce_profile_deleted_at_write below (#1103);
+  -- deletion_requested_at is the audit trail and is not gated.
+  deleted_at TIMESTAMPTZ,
+  deletion_requested_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

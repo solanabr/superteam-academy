@@ -25,7 +25,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { PGlite } from "@electric-sql/pglite";
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
 
 function findRepoRoot(): string {
   let dir = dirname(fileURLToPath(import.meta.url));
@@ -69,17 +69,42 @@ function extractStatement(sql: string, needle: string): string {
   return sql.slice(start, end + 1);
 }
 
+/** Pull one `CREATE TABLE <name> ( … \n);` block out of a SQL file. */
+function extractTable(sql: string, name: string): string {
+  const start = sql.indexOf(`CREATE TABLE ${name} (`);
+  if (start < 0) throw new Error(`table ${name} not found`);
+  const end = sql.indexOf("\n);", start);
+  if (end < 0) throw new Error(`unterminated table ${name}`);
+  return sql.slice(start, end + 3);
+}
+
+/** Pull one `CREATE OR REPLACE VIEW <name> AS … ;` block out of a SQL file. */
+function extractView(sql: string, name: string): string {
+  const start = sql.indexOf(`CREATE OR REPLACE VIEW ${name} AS`);
+  if (start < 0) throw new Error(`view ${name} not found`);
+  const end = sql.indexOf(";", start);
+  if (end < 0) throw new Error(`unterminated view ${name}`);
+  return sql.slice(start, end + 1);
+}
+
+/** The drop-then-create trigger install, taken from whichever file is under test. */
+function triggerInstall(sql: string): string {
+  return [
+    extractStatement(
+      sql,
+      `DROP TRIGGER IF EXISTS ${TRIGGER} ON public.profiles`
+    ),
+    extractStatement(sql, `CREATE TRIGGER ${TRIGGER}`),
+  ].join("\n");
+}
+
 // The mirror copy is assembled from schema.sql's OWN statements, never from
 // literals written here — so a schema.sql that lost the REVOKE or the trigger
 // install fails at extraction instead of quietly testing this file's idea of it.
 const mirror = [
   extractFunction(schema, FN),
   extractStatement(schema, `REVOKE EXECUTE ON FUNCTION ${FN} FROM`),
-  extractStatement(
-    schema,
-    `DROP TRIGGER IF EXISTS ${TRIGGER} ON public.profiles`
-  ),
-  extractStatement(schema, `CREATE TRIGGER ${TRIGGER}`),
+  triggerInstall(schema),
 ].join("\n");
 
 // Minimal stand-in for the real profiles surface: the three Supabase roles, a
@@ -163,11 +188,24 @@ function resurrect(db: PGlite) {
 for (const copy of ["migration", "schema.sql mirror"] as const) {
   describe(`#1103 deleted_at write lock — ${copy}`, () => {
     let db: PGlite;
+    const sql = copy === "migration" ? migration : mirror;
 
-    beforeEach(async () => {
+    // One instance per describe — creating a PGlite is expensive enough that
+    // doing it per test starves the other pglite suites when the whole file
+    // set runs in parallel. State is reset in beforeEach instead.
+    beforeAll(async () => {
       db = new PGlite();
       await db.exec(STUB_SETUP);
-      await db.exec(copy === "migration" ? migration : mirror);
+      await db.exec(sql);
+    }, 60_000);
+
+    beforeEach(async () => {
+      await db.exec("RESET ROLE;");
+      // Re-install the trigger before every case: the "RLS alone" test drops
+      // it, and a failure partway through that test must not silently disarm
+      // the rest of the suite.
+      await db.exec(triggerInstall(sql));
+      await db.exec("TRUNCATE public.profiles CASCADE;");
       // Seeding a tombstone is itself a privileged write, so seed as
       // service_role — under any other role the INSERT branch would coerce
       // deleted_at back to NULL and there would be nothing to test.
@@ -181,7 +219,7 @@ for (const copy of ["migration", "schema.sql mirror"] as const) {
       await db.exec("RESET ROLE;");
     });
 
-    afterEach(async () => {
+    afterAll(async () => {
       await db.close();
     });
 
@@ -279,3 +317,102 @@ for (const copy of ["migration", "schema.sql mirror"] as const) {
     });
   });
 }
+
+// The cases above build profiles from STUB_SETUP, which is exactly why the
+// review below found what it found: a hand-written stub always has the columns
+// the test wants. These build it from schema.sql's OWN declaration instead, so
+// the snapshot has to be internally consistent.
+describe("#1103 schema.sql is coherent with itself", () => {
+  let db: PGlite;
+
+  beforeAll(async () => {
+    db = new PGlite();
+    await db.exec(`
+      CREATE ROLE anon;
+      CREATE ROLE authenticated;
+      CREATE ROLE service_role BYPASSRLS;
+      CREATE SCHEMA IF NOT EXISTS auth;
+      CREATE TABLE auth.users (id uuid PRIMARY KEY);
+    `);
+    await db.exec(extractTable(schema, "profiles"));
+    await db.exec(`
+      CREATE TABLE user_xp (
+        user_id uuid PRIMARY KEY REFERENCES profiles(id),
+        total_xp integer NOT NULL DEFAULT 0,
+        level integer NOT NULL DEFAULT 0
+      );
+      GRANT SELECT, INSERT, UPDATE ON profiles TO authenticated;
+      GRANT ALL ON profiles, user_xp TO service_role;
+      INSERT INTO auth.users(id) VALUES ('${LIVE}'), ('${TOMBSTONED}');
+    `);
+    await db.exec(mirror);
+  }, 60_000);
+
+  beforeEach(async () => {
+    await db.exec("RESET ROLE;");
+    await db.exec(`
+      DROP VIEW IF EXISTS public_user_xp;
+      DROP VIEW IF EXISTS public_profiles;
+      TRUNCATE user_xp, profiles CASCADE;
+    `);
+  });
+
+  afterAll(async () => {
+    await db.close();
+  });
+
+  // F1 of the #1115 adversarial review: the trigger reads NEW.deleted_at, but
+  // the profiles declaration in the same file never had the column (nor
+  // deletion_requested_at), so on a DB built from this snapshot EVERY write to
+  // profiles died with `record "new" has no field "deleted_at"` — the trigger
+  // turned a missing column into a total outage of the table.
+  it("declares the columns the trigger and the public views read", async () => {
+    await become(db, "service_role");
+    await db.query(
+      `INSERT INTO profiles(id, username, deleted_at, deletion_requested_at)
+       VALUES ($1, 'real-learner', NULL, NULL), ($2, 'deleted-user-abc123', now(), now())`,
+      [LIVE, TOMBSTONED]
+    );
+
+    // An ordinary self-service edit must not trip the trigger.
+    await become(db, "authenticated", LIVE);
+    await db.query(`UPDATE profiles SET bio = 'gm' WHERE id = $1`, [LIVE]);
+
+    // …and the lock still holds on the real table shape.
+    await expect(
+      db.query(`UPDATE profiles SET deleted_at = NULL WHERE id = $1`, [
+        TOMBSTONED,
+      ])
+    ).rejects.toThrow(DENIED);
+  });
+
+  it("creates the two public views that filter p.deleted_at", async () => {
+    // #1105 restored `AND p.deleted_at IS NULL` to public_user_xp; both views
+    // fail to create at all if the column is missing from the declaration.
+    await db.exec(extractView(schema, "public_user_xp"));
+    await db.exec(extractView(schema, "public_profiles"));
+
+    await become(db, "service_role");
+    await db.query(
+      `INSERT INTO profiles(id, username, is_public, deleted_at)
+       VALUES ($1, 'real-learner', true, NULL), ($2, 'deleted-user-abc123', true, now())`,
+      [LIVE, TOMBSTONED]
+    );
+    await db.query(
+      `INSERT INTO user_xp(user_id, total_xp, level) VALUES ($1, 150, 1), ($2, 500, 2)`,
+      [LIVE, TOMBSTONED]
+    );
+
+    // The tombstoned row is public and carries XP, so only the deleted_at
+    // filter can keep it out of either view.
+    await db.exec("RESET ROLE;");
+    const xp = await db.query<{ user_id: string }>(
+      `SELECT user_id FROM public_user_xp`
+    );
+    const profiles = await db.query<{ id: string }>(
+      `SELECT id FROM public_profiles`
+    );
+    expect(xp.rows.map((r) => r.user_id)).toEqual([LIVE]);
+    expect(profiles.rows.map((r) => r.id)).toEqual([LIVE]);
+  });
+});

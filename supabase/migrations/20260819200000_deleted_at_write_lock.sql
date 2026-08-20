@@ -49,6 +49,13 @@
 -- the top of its body for the wallet lock — the identical check, so the same
 -- set_config satisfies this one.
 --
+-- OPERATORS: a plain `postgres` session (the Supabase SQL editor, a manual
+-- backfill) is NOT privileged here — run `SET ROLE service_role;` first. An
+-- UPDATE raises 42501, but an INSERT carrying deleted_at is SILENTLY coerced to
+-- NULL with no error, so a manual tombstone appears to succeed and does not.
+-- The wallet lock has the same trap; see 20260817180000:44-49 for the time it
+-- cost a real merge.
+--
 -- Idempotent: CREATE OR REPLACE FUNCTION + DROP TRIGGER IF EXISTS / CREATE.
 
 CREATE OR REPLACE FUNCTION public.enforce_profile_deleted_at_write()
