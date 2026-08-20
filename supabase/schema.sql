@@ -897,6 +897,12 @@ CREATE TRIGGER trg_enforce_profile_deleted_at_write
   FOR EACH ROW
   EXECUTE FUNCTION public.enforce_profile_deleted_at_write();
 
+-- Partial index from 20260704140000_account_deletion.sql, live on prod but never
+-- mirrored here. Tombstones are a tiny minority of rows, so the partial form is
+-- what the deleted_at IS NULL reads want.
+CREATE INDEX IF NOT EXISTS idx_profiles_deleted_at
+  ON public.profiles(deleted_at) WHERE deleted_at IS NOT NULL;
+
 -- ─────────────────────────────────────────────
 -- 5b. LEADERBOARD RPC
 -- ─────────────────────────────────────────────
