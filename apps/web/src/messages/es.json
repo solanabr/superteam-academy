@@ -52,7 +52,6 @@
     "profile": "Perfil",
     "settings": "Configuración",
     "certificates": "Certificados",
-    "dismissBanner": "Cerrar",
     "review": "Repaso"
   },
   "auth": {
