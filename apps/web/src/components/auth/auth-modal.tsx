@@ -247,11 +247,13 @@ export function AuthModal({
             // in never needed it: render them from the static module so a
             // blocked CDN or a stale deploy costs the wallet path only.
             <div className="mt-6 space-y-3">
+              {/* One error placement (#1077): a later OAuth failure replaces
+                  the chunk message rather than stacking a second alert. */}
               <p
-                className="max-w-xs text-center text-sm font-medium text-danger"
+                className="mx-auto max-w-xs text-center text-sm font-medium text-danger"
                 role="alert"
               >
-                {t("authFailed")}
+                {errorMessage ?? t("authFailed")}
               </p>
               <OAuthFallbackButton
                 provider="google"
@@ -265,11 +267,6 @@ export function AuthModal({
                 setLoading={setLoading}
                 setErrorMessage={setErrorMessage}
               />
-              {errorMessage && (
-                <p className="text-center text-sm text-danger" role="alert">
-                  {errorMessage}
-                </p>
-              )}
               <div className="flex justify-center pt-1">
                 <Button variant="ghost" size="sm" onClick={retryBody}>
                   {t("retry")}

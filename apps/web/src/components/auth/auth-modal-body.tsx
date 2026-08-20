@@ -14,8 +14,6 @@ import { DynamicSocialSignIn } from "@/components/auth/dynamic-social-sign-in";
 import { OAuthFallbackButton } from "@/components/auth/oauth-fallback-button";
 import type { AuthLoadingMethod } from "@/components/auth/auth-modal-types";
 
-export type { AuthLoadingMethod };
-
 export interface AuthModalBodyProps {
   loading: AuthLoadingMethod;
   setLoading: (v: AuthLoadingMethod) => void;
