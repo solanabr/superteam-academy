@@ -1,8 +1,6 @@
-import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { getAuthClaims } from "@/lib/auth/dal";
-import { Spinner } from "@/components/ui/spinner";
 import { NextLessonPlan } from "@/components/dashboard/next-lesson-plan";
 import {
   CohortStripSection,
@@ -15,28 +13,18 @@ import {
 // Auth cookie + per-user data on every render — never statically prerender.
 export const dynamic = "force-dynamic";
 
-function SectionFallback({ label }: { label: string }) {
-  return (
-    <div
-      role="status"
-      aria-busy="true"
-      className="flex items-center justify-center py-10"
-    >
-      <Spinner />
-      <span className="sr-only">{label}</span>
-    </div>
-  );
-}
-
 /**
  * Dashboard server shell (#1096). One server render replaces the old
  * client-side `useDashboardData` burst (~19 requests in 4 waves): the shared
  * claims read comes from the DAL, per-user Supabase reads run on the
  * cookie-bound server client, and content lookups are direct bundle imports.
- * Each independent section streams behind its own Suspense boundary; the
- * surfaces below stay independent slot components under
- * `components/dashboard/` so future surfaces land additively instead of
- * contending for this file.
+ * NO per-section Suspense on purpose (owner call, 20-08): the sections used
+ * to stream in at different times, which read as a broken staggered load.
+ * The async section components still FETCH in parallel (React renders async
+ * siblings concurrently; the core loader is cache()d and shared), but the
+ * page flushes as ONE paint behind the route's loading.tsx. The sections stay
+ * independent slot components under `components/dashboard/` so future
+ * surfaces land additively instead of contending for this file.
  */
 export default async function DashboardPage({
   params,
@@ -44,16 +32,14 @@ export default async function DashboardPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const [t, tCommon, claims] = await Promise.all([
+  const [t, claims] = await Promise.all([
     getTranslations("dashboard"),
-    getTranslations("common"),
     getAuthClaims(),
   ]);
 
   // Middleware auth-gates /dashboard; this branch is defense-in-depth.
   if (!claims?.sub) redirect(`/${locale}`);
   const userId = claims.sub;
-  const loading = tCommon("loading");
 
   return (
     <div className="space-y-8">
@@ -65,9 +51,7 @@ export default async function DashboardPage({
           The ONE hero: everything below drops into the two-column working
           area so no other surface competes with it at full width. Shares the
           cache()d core loader with the main column — one data pass. */}
-      <Suspense fallback={null}>
-        <ContinueHeroSection userId={userId} />
-      </Suspense>
+      <ContinueHeroSection userId={userId} />
 
       {/* Main column + right rail. The rail carries the day's actionable,
           glanceable surfaces (review queue, quests, league, session plan);
@@ -79,22 +63,16 @@ export default async function DashboardPage({
         <aside className="order-2 space-y-6">
           {/* Due-review strip (LX-B6); renders nothing when the queue is
               empty — the common case, so no spinner fallback (like the hero). */}
-          <Suspense fallback={null}>
-            <ReviewStripSection userId={userId} />
-          </Suspense>
+          <ReviewStripSection userId={userId} />
 
           {/* Daily quests — extracted from the identity panel into its own
               rail card so the day's actions sit together. */}
-          <Suspense fallback={<SectionFallback label={loading} />}>
-            <QuestsSection userId={userId} />
-          </Suspense>
+          <QuestsSection userId={userId} />
 
           {/* Cohort league "you ±3" (LX-B9b) — shows a quiet solo state while
               this week's cohort is still filling; often renders nothing, so
               no spinner fallback. */}
-          <Suspense fallback={null}>
-            <CohortStripSection userId={userId} />
-          </Suspense>
+          <CohortStripSection userId={userId} />
 
           {/* Session-end if-then plan — "when's your next lesson?" (LX-A6).
               Client island: reads and writes its own profiles.prefs slot. */}
@@ -102,9 +80,7 @@ export default async function DashboardPage({
         </aside>
 
         <div className="order-1 min-w-0 space-y-8">
-          <Suspense fallback={<SectionFallback label={loading} />}>
-            <MainColumnSection userId={userId} />
-          </Suspense>
+          <MainColumnSection userId={userId} />
         </div>
       </div>
     </div>
