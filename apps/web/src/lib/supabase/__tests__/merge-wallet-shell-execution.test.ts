@@ -62,6 +62,15 @@ const walletWriteTrigger = extractFunction(
   "public.enforce_profile_wallet_write()"
 );
 
+// #1103 locked deleted_at to service_role the same way. The merge TOMBSTONES
+// the shell (`SET deleted_at = now()`), so that guard is now on the merge's
+// write path too — install it here as well, or this suite would keep passing
+// against a schema the merge can no longer write to.
+const deletedAtWriteTrigger = extractFunction(
+  schema,
+  "public.enforce_profile_deleted_at_write()"
+);
+
 // Stub versions of every table the merge touches, with the REAL user-facing
 // keys (the UNIQUE/PK constraints the conflict policy depends on). Column sets
 // are trimmed to what the function reads or the keys require; shapes mirror
@@ -330,12 +339,18 @@ describe("merge_wallet_shell_account", () => {
     db = new PGlite();
     await db.exec(STUB_SETUP);
     await db.exec(walletWriteTrigger);
+    await db.exec(deletedAtWriteTrigger);
     await db.exec(`
       DROP TRIGGER IF EXISTS trg_enforce_profile_wallet_write ON public.profiles;
       CREATE TRIGGER trg_enforce_profile_wallet_write
         BEFORE INSERT OR UPDATE ON public.profiles
         FOR EACH ROW
         EXECUTE FUNCTION public.enforce_profile_wallet_write();
+      DROP TRIGGER IF EXISTS trg_enforce_profile_deleted_at_write ON public.profiles;
+      CREATE TRIGGER trg_enforce_profile_deleted_at_write
+        BEFORE INSERT OR UPDATE ON public.profiles
+        FOR EACH ROW
+        EXECUTE FUNCTION public.enforce_profile_deleted_at_write();
     `);
     await db.exec(migration);
   });

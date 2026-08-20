@@ -175,13 +175,13 @@ for (const copy of COPIES) {
 
       const fresh = await newStats(db);
       expect(fresh).toEqual(await oldStats(db));
-      // Pin the semantics, not just parity: private XP excluded (the view's
-      // is_public filter), but private profiles/certs still counted — exactly
-      // what the old unfiltered head counts did. The soft-deleted profile's XP
-      // is INCLUDED today because schema.sql's public_user_xp is stale (#1105
-      // — prod filters deleted_at IS NULL). When #1105 lands, total_xp here
-      // must drop to 425; builders stays 4 (the head count never filtered).
-      expect(fresh).toEqual({ total_xp: 925, builders: 4, credentials: 3 });
+      // Pin the semantics, not just parity: private AND soft-deleted XP are
+      // excluded (the view's is_public + deleted_at filters), but private
+      // profiles/certs are still counted — exactly what the old unfiltered head
+      // counts did. total_xp dropped 925 → 425 when #1105 restored the
+      // deleted_at guard to schema.sql's public_user_xp; builders stays 4
+      // because the head count never filtered.
+      expect(fresh).toEqual({ total_xp: 425, builders: 4, credentials: 3 });
     });
 
     it("is not executable by anon or authenticated", async () => {
