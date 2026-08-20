@@ -1175,6 +1175,7 @@
       "courses": "Courses",
       "moderation": "Moderation",
       "pendingFlags": "{count, plural, one {# pending flag} other {# pending flags}}",
+      "pendingFlagsUnknown": "Pending flag count unavailable",
       "status": "Status",
       "content": "Content",
       "insights": "Insights"
@@ -1486,7 +1487,11 @@
     },
     "flags": {
       "description": "Community posts reported by users. Resolve once you've actioned the content, or dismiss if the report isn't valid.",
+      "loading": "Loading the moderation queue...",
       "noPending": "No pending flags.",
+      "loadErrorFetch": "Couldn't load the moderation queue. Its state is unknown — reports may be waiting.",
+      "loadErrorNetwork": "Network error loading the moderation queue. Its state is unknown — reports may be waiting.",
+      "loadErrorUnauthorized": "Your admin session has expired, so the moderation queue could not be loaded. Sign in again.",
       "reportedBy": "reported by @{reporter}",
       "unknownReporter": "unknown",
       "targetThread": "thread",

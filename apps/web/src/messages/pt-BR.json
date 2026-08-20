@@ -1175,6 +1175,7 @@
       "courses": "Cursos",
       "moderation": "Moderação",
       "pendingFlags": "{count, plural, one {# denúncia pendente} other {# denúncias pendentes}}",
+      "pendingFlagsUnknown": "Contagem de denúncias pendentes indisponível",
       "status": "Status",
       "content": "Conteúdo",
       "insights": "Métricas"
@@ -1486,7 +1487,11 @@
     },
     "flags": {
       "description": "Publicações da comunidade denunciadas por usuários. Resolva depois de tratar o conteúdo ou descarte se a denúncia não for válida.",
+      "loading": "Carregando a fila de moderação...",
       "noPending": "Nenhuma denúncia pendente.",
+      "loadErrorFetch": "Não foi possível carregar a fila de moderação. O estado dela é desconhecido — pode haver denúncias aguardando.",
+      "loadErrorNetwork": "Erro de rede ao carregar a fila de moderação. O estado dela é desconhecido — pode haver denúncias aguardando.",
+      "loadErrorUnauthorized": "Sua sessão de administrador expirou, então a fila de moderação não pôde ser carregada. Entre novamente.",
       "reportedBy": "denunciado por @{reporter}",
       "unknownReporter": "desconhecido",
       "targetThread": "tópico",

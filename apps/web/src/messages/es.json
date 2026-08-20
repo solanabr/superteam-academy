@@ -1175,6 +1175,7 @@
       "courses": "Cursos",
       "moderation": "Moderación",
       "pendingFlags": "{count, plural, one {# reporte pendiente} other {# reportes pendientes}}",
+      "pendingFlagsUnknown": "Recuento de reportes pendientes no disponible",
       "status": "Estado",
       "content": "Contenido",
       "insights": "Métricas"
@@ -1486,7 +1487,11 @@
     },
     "flags": {
       "description": "Publicaciones de la comunidad reportadas por usuarios. Resuelve una vez que hayas actuado sobre el contenido, o descarta si el reporte no es válido.",
+      "loading": "Cargando la cola de moderación...",
       "noPending": "No hay reportes pendientes.",
+      "loadErrorFetch": "No se pudo cargar la cola de moderación. Su estado es desconocido: puede haber reportes esperando.",
+      "loadErrorNetwork": "Error de red al cargar la cola de moderación. Su estado es desconocido: puede haber reportes esperando.",
+      "loadErrorUnauthorized": "Tu sesión de administrador expiró, por lo que no se pudo cargar la cola de moderación. Inicia sesión de nuevo.",
       "reportedBy": "reportado por @{reporter}",
       "unknownReporter": "desconocido",
       "targetThread": "hilo",
