@@ -2,7 +2,12 @@
 
 import { lazy, Suspense, useEffect, useState } from "react";
 import { isDynamicEnabled } from "@/lib/dynamic/config";
-import { setWalletReturnCaptureActive } from "@/lib/solana/ambient-wallet-store";
+import { logError } from "@/lib/logging";
+import {
+  clearWalletReturnCapture,
+  setWalletReturnCaptureActive,
+} from "@/lib/solana/ambient-wallet-store";
+import { ChunkErrorBoundary } from "@/components/auth/chunk-error-boundary";
 
 const ScopedAuthProviders = lazy(
   () => import("@/components/auth/scoped-auth-providers")
@@ -44,9 +49,25 @@ export function DynamicReturnCatcher() {
   }, []);
 
   if (!mount) return null;
+  // A failed chunk load must clear the capture flag it set (review NEW-1):
+  // no registration will ever arrive to clear it, and a stuck flag keeps
+  // every sign-in trigger disabled at "Signing in…" for the page's life —
+  // while an uncaught layout-level throw would take out the whole route.
+  // Silent recovery is right for a headless catcher: the learner clicks
+  // sign-in again and the modal path (flag now clear) takes over.
   return (
-    <Suspense fallback={null}>
-      <ScopedAuthProviders />
-    </Suspense>
+    <ChunkErrorBoundary
+      onError={(error) => {
+        clearWalletReturnCapture();
+        logError({
+          errorId: "dynamic-return-catcher.chunk-failed",
+          error,
+        });
+      }}
+    >
+      <Suspense fallback={null}>
+        <ScopedAuthProviders />
+      </Suspense>
+    </ChunkErrorBoundary>
   );
 }

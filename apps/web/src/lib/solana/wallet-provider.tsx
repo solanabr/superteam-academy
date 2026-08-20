@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, type ReactNode } from "react";
 import type { WalletError } from "@solana/wallet-adapter-base";
 import {
   ConnectionProvider,
@@ -30,18 +30,27 @@ interface SolanaWalletProviderProps {
 function AmbientWalletRegistrar() {
   const { connected, publicKey, disconnect } = useWallet();
   const { setVisible } = useWalletModal();
+  // Stable owner across re-publishes: same-owner publishes replace the
+  // registration IN PLACE, so subscribers never see a transient null while
+  // this stack updates its own state (review NEW-3).
+  const ownerRef = useRef<object>({});
+  const unregisterRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
-    // publishAmbientWallet returns an ownership-guarded unregister: if
-    // another stack registered since (brief overlaps exist while crossing
-    // route groups), this stack's unmount leaves it untouched.
-    return publishAmbientWallet({
-      connected,
-      publicKey: publicKey?.toBase58() ?? null,
-      disconnect,
-      openWalletModal: () => setVisible(true),
-    });
+    unregisterRef.current = publishAmbientWallet(
+      {
+        connected,
+        publicKey: publicKey?.toBase58() ?? null,
+        disconnect,
+        openWalletModal: () => setVisible(true),
+      },
+      ownerRef.current
+    );
   }, [connected, publicKey, disconnect, setVisible]);
+
+  useEffect(() => {
+    return () => unregisterRef.current?.();
+  }, []);
 
   return null;
 }

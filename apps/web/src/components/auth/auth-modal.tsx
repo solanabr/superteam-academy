@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Component,
   forwardRef,
   lazy,
   Suspense,
@@ -11,7 +10,6 @@ import {
   useState,
   type ComponentProps,
   type ComponentType,
-  type ReactNode,
 } from "react";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -25,9 +23,11 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
+  useAmbientStackCount,
   useAmbientWalletLive,
   useWalletReturnCaptureActive,
 } from "@/lib/solana/ambient-wallet-store";
+import { ChunkErrorBoundary } from "@/components/auth/chunk-error-boundary";
 import { useSocialReturnPending } from "@/hooks/use-social-return-pending";
 import type {
   AuthLoadingMethod,
@@ -87,31 +87,6 @@ export const AuthTriggerButton = forwardRef<
   );
 });
 
-/**
- * Catches a failed lazy chunk load (e.g. a stale chunk 404 right after a
- * deploy) so it surfaces as an in-modal retry instead of the root error page
- * (#1097 review F3). Remounted via `key` on retry, because a rejected
- * `React.lazy` stays rejected — the parent recreates the lazy components too.
- */
-class ChunkErrorBoundary extends Component<
-  { onError: () => void; children: ReactNode },
-  { failed: boolean }
-> {
-  state = { failed: false };
-
-  static getDerivedStateFromError() {
-    return { failed: true };
-  }
-
-  componentDidCatch() {
-    this.props.onError();
-  }
-
-  render() {
-    return this.state.failed ? null : this.props.children;
-  }
-}
-
 export function AuthModal({
   trigger,
   open: controlledOpen,
@@ -157,11 +132,29 @@ export function AuthModal({
   // Disarm on client-side navigation while closed: without this, a scoped
   // stack armed on a marketing page would keep living beside the (platform)
   // stack after the learner navigates there.
+  //
+  // TIMING (review): the disarm effect runs in the same React commit that
+  // renders the new route's layout, so the two WalletProviders overlap for at
+  // most a single frame — while autoConnect's connect() is an async
+  // round-trip into the wallet extension that has not resolved yet, and
+  // WalletAuthHandler only fires SIWS on `connected` flipping true. A
+  // double-SIWS would need the overlap to outlive that round-trip; one frame
+  // cannot. This effect must NOT be merged into the same commit as the route
+  // swap by moving it into render — keep it an effect.
   const openRef = useRef(open);
   openRef.current = open;
   useEffect(() => {
     if (!openRef.current) setScopedMounted(false);
   }, [pathname]);
+
+  // …and while OPEN: navigation with the dialog up (or any second stack
+  // registering) shows as a registration count of 2 — this stack's own
+  // registration plus the newcomer's. Dropping ours converges back to one;
+  // the body keeps working against the newcomer via the store (review NEW-2).
+  const stackCount = useAmbientStackCount();
+  useEffect(() => {
+    if (scopedMounted && stackCount >= 2) setScopedMounted(false);
+  }, [scopedMounted, stackCount]);
 
   // Chunk-load failure handling (review F3): both lazies are recreated per
   // attempt because a rejected React.lazy caches its rejection.
