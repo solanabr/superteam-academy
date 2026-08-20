@@ -13,6 +13,7 @@ const flag = {
   reporter: "alice",
   targetType: "thread" as const,
   preview: "reported post",
+  body: "the whole reported post, in full",
   url: null,
 };
 
@@ -226,5 +227,211 @@ describe("FlagsPanel action-error paths", () => {
       ).toBeInTheDocument()
     );
     expect(screen.queryByText(/offline/)).not.toBeInTheDocument();
+  });
+});
+
+// #1131: the card can now action the reported CONTENT, not just the report.
+const answerFlag = {
+  ...flag,
+  id: "flag-2",
+  targetType: "answer" as const,
+  preview: "reported answer",
+  body: "the whole reported answer",
+};
+
+/** GET returns `flags`; every later POST gets `actionResponse`. */
+function panelWith(
+  flags: unknown[],
+  actionResponse: Record<string, unknown> = {}
+) {
+  const fetchMock = vi.fn().mockImplementation((_url, init?: RequestInit) =>
+    init?.method === "POST"
+      ? Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => ({ success: true, audited: true }),
+          ...actionResponse,
+        })
+      : Promise.resolve({ ok: true, json: async () => ({ flags }) })
+  );
+  vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
+}
+
+function postBodies(fetchMock: ReturnType<typeof vi.fn>): unknown[] {
+  return fetchMock.mock.calls
+    .filter(([, init]) => (init as RequestInit | undefined)?.method === "POST")
+    .map(
+      ([, init]) => JSON.parse(String((init as RequestInit).body)) as unknown
+    );
+}
+
+describe("FlagsPanel remove — destructive, so it takes two clicks", () => {
+  it("does NOT post on the first Remove click", async () => {
+    const fetchMock = panelWith([flag]);
+    renderPanel();
+    await waitFor(() =>
+      expect(screen.getByText(flagsMsgs.remove)).toBeInTheDocument()
+    );
+
+    fireEvent.click(screen.getByText(flagsMsgs.remove));
+
+    expect(postBodies(fetchMock)).toEqual([]);
+    expect(
+      screen.getByText(messages.community.confirmDelete)
+    ).toBeInTheDocument();
+  });
+
+  it("posts action:remove once confirmed", async () => {
+    const fetchMock = panelWith([flag]);
+    renderPanel();
+    await waitFor(() =>
+      expect(screen.getByText(flagsMsgs.remove)).toBeInTheDocument()
+    );
+
+    fireEvent.click(screen.getByText(flagsMsgs.remove));
+    fireEvent.click(screen.getByText(messages.community.delete));
+
+    await waitFor(() =>
+      expect(postBodies(fetchMock)).toEqual([
+        { flagId: "flag-1", action: "remove" },
+      ])
+    );
+    // The actioned flag leaves the queue.
+    await waitFor(() =>
+      expect(screen.queryByText(flag.preview)).not.toBeInTheDocument()
+    );
+  });
+
+  it("cancel disarms the confirm without posting", async () => {
+    const fetchMock = panelWith([flag]);
+    renderPanel();
+    await waitFor(() =>
+      expect(screen.getByText(flagsMsgs.remove)).toBeInTheDocument()
+    );
+
+    fireEvent.click(screen.getByText(flagsMsgs.remove));
+    fireEvent.click(screen.getByText(messages.community.cancel));
+
+    expect(postBodies(fetchMock)).toEqual([]);
+    expect(screen.getByText(flagsMsgs.remove)).toBeInTheDocument();
+    expect(screen.getByText(flag.preview)).toBeInTheDocument();
+  });
+
+  it("tells the moderator to reload when the content is already gone (409)", async () => {
+    panelWith([flag], {
+      ok: false,
+      status: 409,
+      json: async () => ({ error: "Content already removed" }),
+    });
+    renderPanel();
+    await waitFor(() =>
+      expect(screen.getByText(flagsMsgs.remove)).toBeInTheDocument()
+    );
+
+    fireEvent.click(screen.getByText(flagsMsgs.remove));
+    fireEvent.click(screen.getByText(messages.community.delete));
+
+    await waitFor(() =>
+      expect(screen.getByText(flagsMsgs.errorConflict)).toBeInTheDocument()
+    );
+    // A conflict is not the generic retry-me failure.
+    expect(screen.queryByText(flagsMsgs.errorFetch)).not.toBeInTheDocument();
+    // …and the flag stays in the queue, since nothing was decided.
+    expect(screen.getByText(flag.preview)).toBeInTheDocument();
+  });
+
+  it("surfaces a rate-limit refusal as its own message", async () => {
+    panelWith([flag], {
+      ok: false,
+      status: 429,
+      json: async () => ({ error: "Too many requests" }),
+    });
+    renderPanel();
+    await waitFor(() =>
+      expect(screen.getByText(flagsMsgs.remove)).toBeInTheDocument()
+    );
+
+    fireEvent.click(screen.getByText(flagsMsgs.remove));
+    fireEvent.click(screen.getByText(messages.community.delete));
+
+    await waitFor(() =>
+      expect(screen.getByText(flagsMsgs.errorRateLimited)).toBeInTheDocument()
+    );
+  });
+});
+
+describe("FlagsPanel lock — thread-only, non-terminal", () => {
+  it("offers Lock on a thread report and keeps the card after locking", async () => {
+    const fetchMock = panelWith([flag]);
+    renderPanel();
+    await waitFor(() =>
+      expect(screen.getByText(flagsMsgs.lock)).toBeInTheDocument()
+    );
+
+    fireEvent.click(screen.getByText(flagsMsgs.lock));
+
+    await waitFor(() =>
+      expect(postBodies(fetchMock)).toEqual([
+        { flagId: "flag-1", action: "lock" },
+      ])
+    );
+    // A lock does not settle the report, so the card stays…
+    expect(screen.getByText(flag.preview)).toBeInTheDocument();
+    // …and the button stops offering a no-op.
+    await waitFor(() =>
+      expect(screen.getByText(flagsMsgs.locked)).toBeInTheDocument()
+    );
+    expect(
+      screen.getByRole("button", { name: flagsMsgs.locked })
+    ).toBeDisabled();
+  });
+
+  it("offers no Lock on an answer report — there is no thread of its own", async () => {
+    panelWith([answerFlag]);
+    renderPanel();
+    await waitFor(() =>
+      expect(screen.getByText(answerFlag.preview)).toBeInTheDocument()
+    );
+
+    expect(screen.queryByText(flagsMsgs.lock)).not.toBeInTheDocument();
+    // Remove is still available on an answer.
+    expect(screen.getByText(flagsMsgs.remove)).toBeInTheDocument();
+  });
+});
+
+describe("FlagsPanel link-less cards expose the content", () => {
+  it("renders the full body in an expandable block when there is no link", async () => {
+    panelWith([flag]);
+    renderPanel();
+
+    await waitFor(() =>
+      expect(screen.getByText(flagsMsgs.showContent)).toBeInTheDocument()
+    );
+    expect(screen.getByText(flag.body)).toBeInTheDocument();
+    expect(screen.queryByText(flagsMsgs.view)).not.toBeInTheDocument();
+  });
+
+  it("links out instead when the target URL resolved", async () => {
+    panelWith([{ ...flag, url: "/en/community/general/reported-title-ab12" }]);
+    renderPanel();
+
+    await waitFor(() =>
+      expect(screen.getByText(flagsMsgs.view)).toBeInTheDocument()
+    );
+    expect(screen.getByText(flagsMsgs.view)).toHaveAttribute(
+      "href",
+      "/en/community/general/reported-title-ab12"
+    );
+    expect(screen.queryByText(flagsMsgs.showContent)).not.toBeInTheDocument();
+  });
+
+  it("says so rather than rendering an empty block when the body is missing too", async () => {
+    panelWith([{ ...flag, body: "" }]);
+    renderPanel();
+
+    await waitFor(() =>
+      expect(screen.getByText(flagsMsgs.contentUnavailable)).toBeInTheDocument()
+    );
   });
 });

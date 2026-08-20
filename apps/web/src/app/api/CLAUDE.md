@@ -98,7 +98,7 @@ ADMIN_SECRET/HMAC-cookie system and its `/api/admin/auth` login route are gone.
 | `/api/admin/courses/recreate/preflight` | GET      | Admin session (admin_users) | Read-only preflight validation for the recreate execute route        |
 | `/api/admin/achievements/sync`          | POST     | Admin session (admin_users) | Deploy achievement type + collection on-chain                        |
 | `/api/admin/resync`                     | POST     | Admin session (admin_users) | Resync on-chain state to Supabase                                    |
-| `/api/admin/flags`                      | GET      | Admin session (admin_users) | Pending community flags for the moderation queue                     |
+| `/api/admin/flags`                      | GET/POST | Admin session (admin_users) | Moderation queue; POST actions a flag (resolve/dismiss/remove/lock)  |
 | `/api/admin/freeze`                     | GET/POST | Admin session (admin_users) | Read/set the global deploy-window freeze (reset wave B2)             |
 | `/api/admin/publish/pin`                | GET      | Admin session (admin_users) | Content pin: pinned bundle SHA + counts vs academy-courses HEAD      |
 | `/api/admin/capstone-funnel`            | GET      | Admin session (admin_users) | Capstone credential funnel counters (#725)                           |

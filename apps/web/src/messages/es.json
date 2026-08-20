@@ -1466,7 +1466,14 @@
       "resolve": "Resolver",
       "dismiss": "Descartar",
       "errorFetch": "No se pudo actualizar el reporte. Inténtalo de nuevo.",
-      "errorNetwork": "Error de red. Inténtalo de nuevo."
+      "errorNetwork": "Error de red. Inténtalo de nuevo.",
+      "remove": "Eliminar contenido",
+      "lock": "Bloquear hilo",
+      "locked": "Hilo bloqueado",
+      "showContent": "Mostrar el contenido denunciado",
+      "contentUnavailable": "No se pudo cargar el contenido denunciado.",
+      "errorConflict": "Ese contenido ya fue eliminado. Recarga la cola.",
+      "errorRateLimited": "Demasiadas acciones de moderacion seguidas. Espera un minuto e intenta de nuevo."
     },
     "insightsScreen": {
       "title": "Métricas",

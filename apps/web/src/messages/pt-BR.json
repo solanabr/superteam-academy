@@ -1466,7 +1466,14 @@
       "resolve": "Resolver",
       "dismiss": "Descartar",
       "errorFetch": "Falha ao atualizar a denúncia. Tente novamente.",
-      "errorNetwork": "Erro de rede. Tente novamente."
+      "errorNetwork": "Erro de rede. Tente novamente.",
+      "remove": "Remover conteudo",
+      "lock": "Trancar topico",
+      "locked": "Topico trancado",
+      "showContent": "Mostrar o conteudo denunciado",
+      "contentUnavailable": "Nao foi possivel carregar o conteudo denunciado.",
+      "errorConflict": "Esse conteudo ja foi removido. Recarregue a fila.",
+      "errorRateLimited": "Acoes de moderacao demais em sequencia. Espere um minuto e tente de novo."
     },
     "insightsScreen": {
       "title": "Métricas",
