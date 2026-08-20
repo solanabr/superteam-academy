@@ -24,9 +24,13 @@ CREATE TABLE IF NOT EXISTS public.moderation_actions (
   thread_id UUID REFERENCES public.threads(id) ON DELETE SET NULL,
   answer_id UUID REFERENCES public.answers(id) ON DELETE SET NULL,
   flag_id UUID REFERENCES public.flags(id) ON DELETE SET NULL,
-  -- The acting admin. Nullable because the FK is ON DELETE SET NULL and because
-  -- older rows (or a future non-session caller) may not carry one — the audit
-  -- row is still worth keeping without it.
+  -- The acting admin. This column only became possible with the `admin_users`
+  -- allowlist (20260819170000): under the retired shared ADMIN_SECRET every
+  -- moderator was the same anonymous caller and there was no identity to store.
+  -- requireAdminAuth() now returns the acting admin's user id, so the route
+  -- stamps it here and in flags.resolved_by. Nullable because the FK is
+  -- ON DELETE SET NULL and a future non-session caller may not carry one — an
+  -- audit row without an actor still beats no audit row.
   actor_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
