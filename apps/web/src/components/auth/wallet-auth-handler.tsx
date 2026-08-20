@@ -133,8 +133,21 @@ export function WalletAuthHandler() {
           return;
         }
       } catch {
-        // User intentionally declined signing — dismiss silently
-        setOverlayState({ status: "idle" });
+        // The learner declined the signature. This used to dismiss silently,
+        // which was fine while the sign-in dialog stayed up BEHIND the
+        // overlay — a decline left Google and GitHub in front of them. The
+        // dialog closes now (see the SIWS flag above), so silence would empty
+        // the screen: they clicked Sign in, a signature prompt they never
+        // asked for appeared, they refused it, and everything vanished.
+        //
+        // Retry is the escape hatch that matters here, because `hasTriedAuth`
+        // only resets on DISCONNECT — re-opening the modal and re-picking the
+        // same still-connected wallet would not re-fire SIWS.
+        setOverlayState({
+          status: "error",
+          message: t("signatureDeclined"),
+          canRetry: true,
+        });
         isAuthenticating.current = false;
         return;
       }

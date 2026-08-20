@@ -5,7 +5,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/messages/en.json";
-import { publishAmbientWallet } from "@/lib/solana/ambient-wallet-store";
+import {
+  publishAmbientWallet,
+  setSiwsActive,
+} from "@/lib/solana/ambient-wallet-store";
 // Preloads the chunk AuthModal reaches through React.lazy — see auth-modal.test.tsx.
 import "@/components/auth/auth-modal-body";
 import { AuthModal } from "../auth-modal";
@@ -35,7 +38,17 @@ vi.mock("@/lib/dynamic/config", () => ({
 /** Controlled the way real callers drive it, so `setOpen(false)` lands. */
 function ControlledModal() {
   const [open, setOpen] = useState(true);
-  return <AuthModal open={open} onOpenChange={setOpen} />;
+  return (
+    <>
+      {/* Stands in for a controlled parent driving the dialog out from under
+          the handoff — a route change, or the enroll flow giving up. Reached
+          by testid, since Radix aria-hides everything outside an open modal. */}
+      <button data-testid="outside-toggle" onClick={() => setOpen((v) => !v)}>
+        toggle from outside
+      </button>
+      <AuthModal open={open} onOpenChange={setOpen} />
+    </>
+  );
 }
 
 function renderWithIntl(ui: ReactElement) {
@@ -50,6 +63,9 @@ const CONNECT_WALLET = messages.auth.connectSolanaWallet;
 
 let openWalletModal: ReturnType<typeof vi.fn<() => void>>;
 let unregister: (() => void) | null = null;
+// Released in cleanup, never inline: the flag is module-level state, so a
+// test that fails before its own release would leak it into every test after.
+let releaseSiws: (() => void) | null = null;
 
 function liveStack() {
   openWalletModal = vi.fn();
@@ -93,6 +109,8 @@ beforeEach(() => {
 afterEach(() => {
   unregister?.();
   unregister = null;
+  releaseSiws?.();
+  releaseSiws = null;
   vi.useRealTimers();
 });
 
@@ -149,6 +167,50 @@ describe("AuthModal wallet handoff", () => {
       messages.auth.authFailed
     );
     expect(screen.getByText(messages.auth.signInTitle)).toBeInTheDocument();
+  });
+
+  it("stands down when SIWS takes the screen mid-handoff", async () => {
+    // autoConnect can reconnect a remembered wallet while this handoff is
+    // still on its timers. The picker would then open ON TOP of the SIWS
+    // overlay and bury its Retry and Dismiss — the exact bug this PR exists
+    // to fix, re-created through a different modal.
+    const button = await openAndFindWalletButton();
+
+    vi.useFakeTimers();
+    fireEvent.click(button);
+    await advance(150);
+    releaseSiws = setSiwsActive({});
+    await advance(1000);
+
+    expect(openWalletModal).not.toHaveBeenCalled();
+    // The dialog still gets out of the way — that part is by design.
+    expect(
+      screen.queryByText(messages.auth.signInTitle)
+    ).not.toBeInTheDocument();
+  });
+
+  it("leaves no error behind when the dialog closes mid-handoff", async () => {
+    const button = await openAndFindWalletButton();
+
+    vi.useFakeTimers();
+    fireEvent.click(button);
+    // Closed behind the handoff's back, and the stack goes with it.
+    fireEvent.click(screen.getByTestId("outside-toggle"));
+    unregister?.();
+    unregister = null;
+    await advance(1000);
+    await flush();
+
+    expect(openWalletModal).not.toHaveBeenCalled();
+
+    // Re-opening must not greet the learner with an error written while they
+    // were not looking.
+    fireEvent.click(screen.getByTestId("outside-toggle"));
+    vi.useRealTimers();
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   it("never pops the picker open after AuthModal unmounts", async () => {

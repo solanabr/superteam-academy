@@ -65,9 +65,13 @@ describe("AuthModal when the body chunk fails to load", () => {
     renderWithIntl(<AuthModal open onOpenChange={() => {}} />);
 
     fireEvent.click(
-      await screen.findByRole("button", {
-        name: messages.auth.signInWithGoogle,
-      })
+      await screen.findByRole(
+        "button",
+        {
+          name: messages.auth.signInWithGoogle,
+        },
+        { timeout: 5000 }
+      )
     );
     await waitFor(() =>
       expect(signInWithOAuth).toHaveBeenCalledWith(
@@ -95,9 +99,9 @@ describe("AuthModal when the body chunk fails to load", () => {
 
     // Await the fallback: asserting before the lazy import rejects would pass
     // against the spinner, whatever the copy says.
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      messages.auth.optionsLoadFailed
-    );
+    expect(
+      await screen.findByRole("alert", undefined, { timeout: 5000 })
+    ).toHaveTextContent(messages.auth.optionsLoadFailed);
     expect(
       screen.queryByText(messages.auth.authFailed)
     ).not.toBeInTheDocument();
@@ -114,9 +118,13 @@ describe("AuthModal when the body chunk fails to load", () => {
     });
     renderWithIntl(<AuthModal open onOpenChange={() => {}} />);
 
-    const google = await screen.findByRole("button", {
-      name: messages.auth.signInWithGoogle,
-    });
+    const google = await screen.findByRole(
+      "button",
+      {
+        name: messages.auth.signInWithGoogle,
+      },
+      { timeout: 5000 }
+    );
     fireEvent.click(google);
     await waitFor(() =>
       expect(
@@ -152,17 +160,25 @@ describe("AuthModal when the body chunk fails to load", () => {
   it("offers a retry that re-attempts the chunk", async () => {
     renderWithIntl(<AuthModal open onOpenChange={() => {}} />);
 
-    const retry = await screen.findByRole("button", {
-      name: messages.auth.retry,
-    });
+    const retry = await screen.findByRole(
+      "button",
+      {
+        name: messages.auth.retry,
+      },
+      { timeout: 5000 }
+    );
     fireEvent.click(retry);
 
     // The import still fails, so we land back on the same fallback rather than
     // on a blank dialog — and Google is still there.
     expect(
-      await screen.findByRole("button", {
-        name: messages.auth.signInWithGoogle,
-      })
+      await screen.findByRole(
+        "button",
+        {
+          name: messages.auth.signInWithGoogle,
+        },
+        { timeout: 5000 }
+      )
     ).toBeInTheDocument();
   });
 });

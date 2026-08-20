@@ -3,7 +3,7 @@
 import type { ReactElement } from "react";
 import { useState } from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/messages/en.json";
 
@@ -25,13 +25,17 @@ import messages from "@/messages/en.json";
  * the same handoff the manual wallet path already does.
  */
 
+const walletState = vi.hoisted(() => ({
+  signMessage: vi.fn(async () => new Uint8Array([1, 2, 3])),
+}));
+
 vi.mock("@solana/wallet-adapter-react", () => ({
   useWallet: () => ({
     connected: true,
     publicKey: {
       toBase58: () => "TestWa11etPubkey1111111111111111111111111111",
     },
-    signMessage: vi.fn(async () => new Uint8Array([1, 2, 3])),
+    signMessage: walletState.signMessage,
     signIn: undefined,
   }),
 }));
@@ -102,10 +106,20 @@ function renderWithIntl(ui: ReactElement) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  walletState.signMessage.mockImplementation(
+    async () => new Uint8Array([1, 2, 3])
+  );
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
 
 afterEach(() => {
+  // Unmount FIRST, while the wallet mock is still in place. RTL registers its
+  // own cleanup at import time, so LIFO ordering runs this hook before it —
+  // restoring mocks here would tear the mock out from under the unmount, and
+  // WalletAuthHandler's SIWS claim is released in an effect cleanup. A claim
+  // that leaks is module-level state: the next test in this file would see a
+  // spurious siwsActive and the dialog would close for the wrong reason.
+  cleanup();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
@@ -171,6 +185,38 @@ describe("SIWS firing while the sign-in dialog is open", () => {
     expect(
       screen.queryByText(messages.auth.signInTitle)
     ).not.toBeInTheDocument();
+  });
+
+  it("says so when the learner declines, instead of emptying the screen", async () => {
+    // The compounding case. A returning learner clicks Sign in, their wallet
+    // auto-reconnects and pops a signature prompt they never asked for, and
+    // they refuse it. Dismissing silently was fine while the dialog stayed up
+    // BEHIND the overlay — Google and GitHub were still in front of them. It
+    // closes now, so silence would leave nothing at all.
+    walletState.signMessage.mockRejectedValueOnce(new Error("User rejected"));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => ({ nonce: "test-nonce", domain: "localhost" }),
+      }))
+    );
+
+    renderWithIntl(<ControlledModal onClose={vi.fn()} />);
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent(messages.auth.signatureDeclined);
+    // Retry is the one that matters: `hasTriedAuth` only resets on DISCONNECT,
+    // so re-opening the modal and re-picking the same connected wallet would
+    // not re-fire SIWS.
+    expect(
+      screen.getByRole("button", { name: messages.auth.retry })
+    ).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: messages.auth.dismiss })
+    ).toBeEnabled();
+    // Not the wallet-failure copy — they chose this.
+    expect(alert).not.toHaveTextContent(messages.auth.authFailed);
   });
 
   it("opts the overlay out of an inherited body lock", async () => {

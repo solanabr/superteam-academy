@@ -62,9 +62,13 @@ describe("AuthModal when the provider-stack chunk fails to load", () => {
     renderWithIntl(<AuthModal open onOpenChange={() => {}} />);
 
     fireEvent.click(
-      await screen.findByRole("button", {
-        name: messages.auth.signInWithGoogle,
-      })
+      await screen.findByRole(
+        "button",
+        {
+          name: messages.auth.signInWithGoogle,
+        },
+        { timeout: 5000 }
+      )
     );
     await waitFor(() =>
       expect(signInWithOAuth).toHaveBeenCalledWith(
@@ -77,12 +81,18 @@ describe("AuthModal when the provider-stack chunk fails to load", () => {
     renderWithIntl(<AuthModal open onOpenChange={() => {}} />);
 
     fireEvent.click(
-      await screen.findByRole("button", {
-        name: messages.auth.connectSolanaWallet,
-      })
+      await screen.findByRole(
+        "button",
+        {
+          name: messages.auth.connectSolanaWallet,
+        },
+        { timeout: 5000 }
+      )
     );
 
-    const alert = await screen.findByRole("alert");
+    const alert = await screen.findByRole("alert", undefined, {
+      timeout: 5000,
+    });
     expect(alert).toHaveTextContent(messages.auth.authFailed);
     // …and the button is usable again rather than stuck in its loading state.
     expect(

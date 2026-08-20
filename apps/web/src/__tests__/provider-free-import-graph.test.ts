@@ -55,8 +55,68 @@ const FORBIDDEN = [
 const IMPORT_RE =
   /(?:^|\n)\s*(?:import|export)\b(?!\s+type\b)(?:[\w\s,{}*$]*?\bfrom\s*)?\s*["']([^"']+)["']/g;
 
+/**
+ * Blanks out comments, preserving newlines so the line anchoring above still
+ * lines up. A comment ANYWHERE inside an import clause — `import { // why\n
+ * useWallet } from "pkg"`, or `import { X } /* c *\/ from "pkg"` — otherwise
+ * makes the whole statement invisible, because the clause charset cannot
+ * cross `/`. That is an entirely ordinary thing to write, Prettier preserves
+ * it, and for a LOCAL import it would silently drop that module's whole
+ * subtree from the walk.
+ *
+ * Quote-aware, so a `//` inside a string is left alone. It does not model
+ * regex literals or template-literal substitutions; neither can appear in an
+ * import statement, and the walker's own guard test would catch a miss.
+ */
+function stripComments(source: string): string {
+  let out = "";
+  let quote: string | null = null;
+  let i = 0;
+  while (i < source.length) {
+    const c = source[i];
+    const next = source[i + 1];
+    if (quote !== null) {
+      if (c === "\\") {
+        out += c + (next ?? "");
+        i += 2;
+        continue;
+      }
+      if (c === quote) quote = null;
+      out += c;
+      i += 1;
+      continue;
+    }
+    if (c === '"' || c === "'" || c === "`") {
+      quote = c;
+      out += c;
+      i += 1;
+      continue;
+    }
+    if (c === "/" && next === "/") {
+      while (i < source.length && source[i] !== "\n") i += 1;
+      continue;
+    }
+    if (c === "/" && next === "*") {
+      i += 2;
+      while (
+        i < source.length &&
+        !(source[i] === "*" && source[i + 1] === "/")
+      ) {
+        if (source[i] === "\n") out += "\n"; // keep line anchoring intact
+        i += 1;
+      }
+      i += 2;
+      continue;
+    }
+    out += c;
+    i += 1;
+  }
+  return out;
+}
+
 /** Exported for its own tests — the walker is only as good as this. */
-export function parseImports(source: string): string[] {
+export function parseImports(rawSource: string): string[] {
+  const source = stripComments(rawSource);
   const found: string[] = [];
   for (const match of source.matchAll(IMPORT_RE)) {
     const specifier = match[1];
@@ -219,6 +279,47 @@ describe("the import scanner itself", () => {
         ].join("\n")
       )
     ).toEqual([]);
+  });
+
+  it("sees through comments inside an import clause", () => {
+    // Proved blind before: a comment anywhere in the clause made the whole
+    // statement invisible, because the clause charset cannot cross `/`.
+    expect(
+      parseImports(
+        'import {\n  // needed for the wallet chip\n  useWallet,\n} from "@solana/wallet-adapter-react";'
+      )
+    ).toEqual(["@solana/wallet-adapter-react"]);
+    expect(parseImports('import { X } /* why */ from "pkg";')).toEqual(["pkg"]);
+    expect(parseImports('import /* default */ X from "pkg";')).toEqual(["pkg"]);
+    // Worst case: a commented LOCAL import drops that module's whole subtree.
+    expect(parseImports('import { a } from "@/lib/thing"; // keep\n')).toEqual([
+      "@/lib/thing",
+    ]);
+    expect(
+      parseImports(
+        '/*\n * A block comment above.\n */\nimport x from "after-block";'
+      )
+    ).toEqual(["after-block"]);
+  });
+
+  it("does not mistake a `//` inside a string for a comment", () => {
+    expect(
+      parseImports(
+        ['const u = "https://example.com";', 'import x from "real";'].join("\n")
+      )
+    ).toEqual(["real"]);
+  });
+
+  it("ignores imports that are themselves commented out", () => {
+    expect(
+      parseImports(
+        [
+          '// import dead from "commented-out";',
+          '/* import alsoDead from "block-commented"; */',
+          'import live from "live";',
+        ].join("\n")
+      )
+    ).toEqual(["live"]);
   });
 
   it("never lets one statement swallow the next", () => {

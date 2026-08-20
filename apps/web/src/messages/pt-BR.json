@@ -61,6 +61,7 @@
     "accountDeleted": "Esta conta foi excluída e não pode mais fazer login.",
     "authFailed": "A autenticação da carteira falhou. Tente novamente ou use outro método de login.",
     "optionsLoadFailed": "Algumas opções de login não carregaram. Continue com Google ou GitHub, ou tente novamente.",
+    "signatureDeclined": "Assinatura recusada. Tente novamente ou use outro método de login.",
     "chooseWallet": "Escolha uma carteira",
     "connecting": "Conectando...",
     "connectSolanaWallet": "Conectar Carteira Solana",

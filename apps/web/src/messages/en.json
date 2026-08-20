@@ -61,6 +61,7 @@
     "accountDeleted": "This account has been deleted and can't sign in.",
     "authFailed": "Wallet authentication failed. Please try again or use a different sign-in method.",
     "optionsLoadFailed": "Some sign-in options couldn't load. Continue with Google or GitHub, or try again.",
+    "signatureDeclined": "Signature declined. Try again, or use another sign-in method.",
     "chooseWallet": "Choose a wallet",
     "connecting": "Connecting...",
     "connectSolanaWallet": "Connect Solana Wallet",

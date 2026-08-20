@@ -25,6 +25,7 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   getAmbientWallet,
+  getSiwsActive,
   useAmbientStackCount,
   useAmbientWalletLive,
   useSiwsActive,
@@ -242,6 +243,21 @@ export function AuthModal({
       handoffTimers.current.push(setTimeout(fn, ms));
     };
     at(() => {
+      // SIWS beat us to it. autoConnect reconnects a remembered wallet the
+      // moment the stack mounts, so the learner can already be mid-signature
+      // while this timer runs — the picker would land ON TOP of the overlay
+      // and bury the Retry and Dismiss this whole change exists to keep
+      // reachable. Stand down; the overlay owns the screen now.
+      if (getSiwsActive()) {
+        setLoading(null);
+        return;
+      }
+      // Closed behind our back (SIWS, or the learner). Never write an error
+      // into a closed dialog — it would greet them on their next open.
+      if (!openRef.current) {
+        setLoading(null);
+        return;
+      }
       // Read the store BEFORE closing: a stack that unregistered during the
       // wait has no modal to hand off to, and closing first would leave the
       // learner on the page with the spinner gone and no error anywhere.
@@ -253,6 +269,9 @@ export function AuthModal({
       setOpen(false);
       setLoading(null);
       at(() => {
+        // Same two guards, re-read: both windows are live, and this one runs
+        // with the dialog already closed.
+        if (getSiwsActive()) return;
         const live = getAmbientWallet();
         if (live) {
           live.openWalletModal();
