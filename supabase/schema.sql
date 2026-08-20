@@ -4195,7 +4195,10 @@ spend AS (
     COALESCE(l.request_count, 0)::bigint              AS requests
   FROM window_days wd
   LEFT JOIN public.ai_spend_ledger l
-    ON l.spend_day = wd.day AND l.scope = 'global'
+    -- scope_key is pinned, not just scope: every other global-scope read pins
+    -- both, and only convention (no constraint) keeps a second 'global' row
+    -- from fanning this join out and double-counting the day.
+    ON l.spend_day = wd.day AND l.scope = 'global' AND l.scope_key = ''
   ORDER BY wd.day
 ),
 

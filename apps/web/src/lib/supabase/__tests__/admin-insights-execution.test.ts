@@ -153,7 +153,7 @@ async function jsInsights(db: PGlite): Promise<PlatformInsights> {
     `SELECT to_char(spend_day, 'YYYY-MM-DD') AS spend_day, micro_usd::int AS micro_usd,
             request_count
      FROM public.ai_spend_ledger
-     WHERE scope = 'global' AND spend_day >= current_date - 29`
+     WHERE scope = 'global' AND scope_key = '' AND spend_day >= current_date - 29`
   );
 
   return aggregateInsights({
@@ -302,6 +302,11 @@ for (const copy of COPIES) {
       const spendByDay = new Map(out.ai.spendByDay.map((s) => [s.day, s.usd]));
       expect(spendByDay.get(dayOnly(2))).toBe(1.23);
       expect(spendByDay.get(dayOnly(3))).toBe(0);
+      // The stray scope_key='stray' global row is $8.89 — if the join were
+      // keyed on `scope` alone it would fan day -2 out and inflate the total.
+      expect(
+        out.ai.spendByDay.filter((s) => s.day === dayOnly(2))
+      ).toHaveLength(1);
       expect(out.ai.spend30dUsd).toBe(1.73);
       expect(out.ai.requests30d).toBe(6);
     });
@@ -349,7 +354,9 @@ async function seedFixture(db: PGlite): Promise<void> {
     INSERT INTO public.ai_spend_ledger(scope, scope_key, spend_day, micro_usd, request_count) VALUES
       ('global',  '', current_date - 2, 1234567, 4),
       ('global',  '', current_date - 4,  500000, 2),
-      -- Per-account rows must not leak into the global series.
-      ('account', '${LIVE_A}', current_date - 2, 9999999, 99);
+      -- Neither a per-account row nor a stray 'global' row under another
+      -- scope_key may leak into the series.
+      ('account', '${LIVE_A}', current_date - 2, 9999999, 99),
+      ('global',  'stray',     current_date - 2, 8888888, 88);
   `);
 }

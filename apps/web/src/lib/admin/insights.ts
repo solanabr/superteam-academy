@@ -352,6 +352,9 @@ async function fetchInsightsFromRows(
         .from("ai_spend_ledger")
         .select("spend_day, micro_usd, request_count")
         .eq("scope", "global")
+        // scope_key is pinned too: only convention keeps a second 'global' row
+        // from existing, and a stray one would double-count the day.
+        .eq("scope_key", "")
         .gte("spend_day", cut30Day)
         .limit(100),
     ]);
