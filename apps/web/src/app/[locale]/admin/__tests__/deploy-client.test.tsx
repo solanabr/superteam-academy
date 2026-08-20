@@ -17,8 +17,8 @@ function renderWithIntl(ui: ReactElement) {
 
 // The sync table carries its own tests and fires on-chain sync requests, so
 // it is stubbed; the stub surfaces the props wiring under test. The
-// Achievements sync table used to render as a second section here (#513
-// WS-C relocated it into `admin/content/achievements-subview.tsx`).
+// Achievements sync table used to render as a second section here; it now
+// lives in `admin/courses/achievements-subview.tsx`.
 vi.mock("@/components/admin/course-sync-table", () => ({
   CourseSyncTable: ({ onRefresh }: { onRefresh: () => void }) => (
     <button data-testid="course-sync-table" onClick={onRefresh}>

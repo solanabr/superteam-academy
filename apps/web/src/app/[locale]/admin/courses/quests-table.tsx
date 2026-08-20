@@ -8,7 +8,7 @@ interface QuestsTableProps {
 }
 
 /**
- * Quests sub-view of the Content tab (#513 WS-C) — READ-ONLY, ZERO on-chain.
+ * Quests sub-view of the supporting-content step — READ-ONLY, ZERO on-chain.
  * Quests have no sync/deploy action: they're pure content, evaluated against
  * Supabase progress at request time (`/api/quests/daily`), so this is a plain
  * reward-config table, not a mutation surface — do NOT invent a sync here.

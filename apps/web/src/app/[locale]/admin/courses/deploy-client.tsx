@@ -1,9 +1,9 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useAdminStatus } from "../use-admin-status";
 import { CourseSyncTable } from "@/components/admin/course-sync-table";
 import { AdminCard } from "@/components/admin/admin-card";
+import { useAdminStatus } from "../use-admin-status";
 
 /**
  * The deploy half of `/admin/courses` (step 2): the Courses sync table.
@@ -11,10 +11,10 @@ import { AdminCard } from "@/components/admin/admin-card";
  * `/api/admin/status` fetch + loading/error/refetch live in the shared
  * `useAdminStatus` hook (SP3-D), which the status screen uses too.
  *
- * The Achievements sync table used to render as a second section here; #513
- * WS-C relocated it into the new Content tab's Achievements sub-view
- * (`admin/content/achievements-subview.tsx`), which reuses this same
- * `useAdminStatus()` hook — same data, same sync behavior, different screen.
+ * The Achievements sync table used to render as a second section here; it now
+ * lives in `./achievements-subview.tsx`, one step further down this same
+ * screen (#1136), reusing this same `useAdminStatus()` hook — same data, same
+ * sync behavior.
  */
 export function DeployClient() {
   const t = useTranslations("admin");

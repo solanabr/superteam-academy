@@ -2,9 +2,10 @@
 
 # Admin Console Guide
 
-The admin console is a three-screen panel for operating the platform: the
-**Courses** screen (publish content, then deploy it on-chain — two steps, one
-screen), **Moderation** of the community forum, and platform **Status**.
+The admin console is a four-screen panel for operating the platform: the
+**Courses** screen (publish content, deploy it on-chain, and the supporting
+quest/achievement/path tables — three steps, one screen), **Moderation** of the
+community forum, **Insights**, and platform **Status**.
 
 It is **not** a CMS. Course content is authored in the
 [`solanabr/academy-courses`](https://github.com/solanabr/academy-courses) git
@@ -43,19 +44,21 @@ token** — nothing in the app can push a commit or open a PR on your behalf.
 
 ---
 
-## The three screens
+## The four screens
 
-| Screen         | Route               | What it does                                                                 |
-| -------------- | ------------------- | ---------------------------------------------------------------------------- |
-| **Courses**    | `/admin/courses`    | Publish (step 1) **and** deploy (step 2) in one screen — see below           |
-| **Moderation** | `/admin/moderation` | The pending community-flag queue (resolve / dismiss)                         |
-| **Status**     | `/admin/status`     | Program liveness, authority match, deploy counts, on-chain → Supabase resync |
+| Screen         | Route               | What it does                                                                    |
+| -------------- | ------------------- | ------------------------------------------------------------------------------- |
+| **Courses**    | `/admin/courses`    | Publish (step 1), deploy (step 2), supporting content (step 3) — see below      |
+| **Moderation** | `/admin/moderation` | The pending community-flag queue (resolve / dismiss)                            |
+| **Insights**   | `/admin/insights`   | Platform-behaviour aggregates: AI-tutor usage, spend, lesson funnel             |
+| **Status**     | `/admin/status`     | Network, program liveness, authority match, deploy counts, on-chain → DB resync |
 
 The nav rail is persistent (left rail on desktop, tabs on mobile). The
 **Moderation** tab carries a badge with the pending-flag count.
 
-`/admin/publish` and `/admin/deploy` were the first two screens; they are now
-one screen and both old routes redirect to `/admin/courses`.
+`/admin/publish`, `/admin/deploy` and `/admin/content` were separate screens;
+they are now steps of Courses, and all three old routes redirect to
+`/admin/courses`.
 
 ### Publish vs deploy — they are not the same step
 

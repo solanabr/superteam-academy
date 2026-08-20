@@ -4,8 +4,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/messages/en.json";
-import type { AdminStatus } from "../../admin-status-types";
-import { AchievementsSubview } from "../achievements-subview";
+import type { AdminStatus } from "../admin-status-types";
+import { AchievementsSubview } from "../courses/achievements-subview";
 
 function renderWithIntl(ui: ReactElement) {
   return render(
