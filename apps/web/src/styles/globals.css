@@ -1759,6 +1759,21 @@
   opacity: 0.32;
 }
 
+/* On the ring the cream outline is a hover affordance, not permanent chrome:
+   seven outlined patches at once read as a cage, and the fills already carry
+   the shape. The border stays in the box (transparent, not removed) so picking
+   one out never shifts its geometry — only the one patch under the cursor
+   draws its outline, while the stage's :hover rule holds the whole ring still
+   so it can be read. */
+.ach-ring-item .patch3d__face {
+  border-color: transparent;
+  transition: border-color 0.18s ease;
+}
+.ach-ring-item:hover .patch3d__face,
+.ach-ring-item:focus-within .patch3d__face {
+  border-color: var(--patch-ink);
+}
+
 /* Names are flat text: the far half would render mirrored, so each carries a
    pre-rotated back copy, ghosted to match its patch. */
 .ach-ring-label {
