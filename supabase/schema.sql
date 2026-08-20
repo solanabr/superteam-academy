@@ -829,6 +829,62 @@ CREATE TRIGGER trg_enforce_profile_wallet_write
 REVOKE EXECUTE ON FUNCTION public.enforce_profile_wallet_write() FROM PUBLIC, anon, authenticated;
 
 -- ─────────────────────────────────────────────
+-- 5a-ter. LOCK profiles.deleted_at WRITES TO service_role (#1103)
+-- ─────────────────────────────────────────────
+-- Same escalation class as the wallet lock above, on the account tombstone.
+-- deleted_at is what every public read and every login chokepoint keys on, and
+-- the column-agnostic self-service UPDATE policy let the tombstoned user clear
+-- it: `UPDATE profiles SET deleted_at = NULL, is_public = true` on their own row
+-- via PostgREST, using an access token that outlives the deletion, permanently
+-- resurrects the account. A SEPARATE trigger rather than a third column in
+-- enforce_profile_wallet_write, so replacing that function's body can never
+-- revert this guard (or vice versa) — the same shape the referral lock uses.
+-- Non-privileged UPDATEs that change it error in EITHER direction (self-delete
+-- must go through POST /api/account/delete, which also scrubs PII and revokes
+-- sessions); non-privileged INSERTs are coerced back to NULL (handle_new_user
+-- never sets it). See migration 20260819200000_deleted_at_write_lock.sql.
+CREATE OR REPLACE FUNCTION public.enforce_profile_deleted_at_write()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = ''
+AS $$
+DECLARE
+  jwt_role TEXT;
+  is_privileged BOOLEAN;
+BEGIN
+  jwt_role := NULLIF(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role';
+  is_privileged := COALESCE(current_user = 'service_role' OR jwt_role = 'service_role', false);
+
+  IF is_privileged THEN
+    RETURN NEW;
+  END IF;
+
+  IF TG_OP = 'UPDATE' THEN
+    IF NEW.deleted_at IS DISTINCT FROM OLD.deleted_at THEN
+      RAISE EXCEPTION
+        'permission denied: deleted_at may only be changed by service_role'
+        USING ERRCODE = 'insufficient_privilege';
+    END IF;
+  ELSIF TG_OP = 'INSERT' THEN
+    IF NEW.deleted_at IS NOT NULL THEN
+      NEW.deleted_at := NULL;
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.enforce_profile_deleted_at_write() FROM PUBLIC, anon, authenticated;
+
+DROP TRIGGER IF EXISTS trg_enforce_profile_deleted_at_write ON public.profiles;
+CREATE TRIGGER trg_enforce_profile_deleted_at_write
+  BEFORE INSERT OR UPDATE ON public.profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION public.enforce_profile_deleted_at_write();
+
+-- ─────────────────────────────────────────────
 -- 5b. LEADERBOARD RPC
 -- ─────────────────────────────────────────────
 
@@ -860,6 +916,7 @@ BEGIN
       JOIN public.profiles p ON p.id = ux.user_id
       WHERE ux.total_xp > 0
         AND p.is_public = true
+        AND p.deleted_at IS NULL
         AND p.username IS NOT NULL
         AND p.username <> ''
       ORDER BY ux.total_xp DESC
@@ -882,6 +939,7 @@ BEGIN
         FROM public.xp_transactions xt
         JOIN public.profiles p ON p.id = xt.user_id
         WHERE p.is_public = true
+          AND p.deleted_at IS NULL
           AND p.username IS NOT NULL
           AND p.username <> ''
           AND xt.created_at >= CASE
@@ -904,13 +962,17 @@ GRANT EXECUTE ON FUNCTION public.get_leaderboard(TEXT, INT) TO authenticated, an
 -- is_public filter is the access control. Used for public reads (marketing
 -- stats, public profiles, community author level badges) now that user_xp is
 -- own-row-only.
--- INVARIANT: the is_public filter is the SOLE access guard — removing it would
--- make every user's XP publicly readable. Do not remove it.
+-- INVARIANT: the is_public + deleted_at filters are the SOLE access guard —
+-- removing either would make soft-deleted or private users' XP publicly
+-- readable. Do not remove them. (#1105: the deleted_at half was added to prod by
+-- 20260704140000_account_deletion.sql and never mirrored here, so every DB
+-- rebuilt from this snapshot shipped without it.)
 CREATE OR REPLACE VIEW public_user_xp AS
   SELECT ux.user_id, ux.total_xp, ux.level
   FROM user_xp ux
   JOIN profiles p ON p.id = ux.user_id
-  WHERE p.is_public = true;
+  WHERE p.is_public = true
+    AND p.deleted_at IS NULL;
 
 REVOKE ALL ON public_user_xp FROM PUBLIC, anon, authenticated;
 GRANT SELECT ON public_user_xp TO anon, authenticated;
