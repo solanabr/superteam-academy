@@ -3,15 +3,16 @@
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { ProofPill } from "@/components/ui/proof-pill";
-import { AchievementMedal } from "@/components/gamification/achievement-medal";
+import { AchievementPatch } from "@/components/gamification/achievement-patch";
 
 interface AchievementCardProps {
+  /** Content _id — drives the patch's tier + category (achievement-patches v1). */
+  id: string;
   name: string;
   description: string;
   glyph: string;
-  /** Phosphor icon name from the achievement doc — drives the medal engraving. */
-  icon?: string;
   solTier?: boolean;
+  category?: string;
   unlockedAt?: Date;
   explorerUrl?: string;
   assetAddress?: string;
@@ -19,13 +20,14 @@ interface AchievementCardProps {
 }
 
 export function AchievementCard({
+  id,
   name,
-  // description is intentionally omitted from the medal grid view
-  // (shown in tooltips or detail panels, not in the compact octagon layout)
+  // description is intentionally omitted from the patch grid view
+  // (shown in tooltips or detail panels, not in the compact layout)
   description: _description,
   glyph,
-  icon,
   solTier,
+  category,
   unlockedAt,
   explorerUrl,
   assetAddress,
@@ -33,14 +35,17 @@ export function AchievementCard({
 }: AchievementCardProps) {
   const t = useTranslations("gamification");
   const isUnlocked = !!unlockedAt;
-  const isSol = isUnlocked && !!solTier;
-
-  const medalState = isUnlocked ? (isSol ? "sol" : "earned") : "locked";
   const network = process.env.NEXT_PUBLIC_SOLANA_NETWORK ?? "devnet";
   const cluster = network === "mainnet" ? "mainnet-beta" : network;
 
-  const medal = (
-    <AchievementMedal glyph={glyph} icon={icon} state={medalState} />
+  const patch = (
+    <AchievementPatch
+      id={id}
+      glyph={glyph}
+      solTier={solTier}
+      category={category}
+      state={isUnlocked ? "earned" : "locked"}
+    />
   );
 
   return (
@@ -53,10 +58,10 @@ export function AchievementCard({
           aria-label={`${name} — ${t("viewOnExplorer")}`}
           className="rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2"
         >
-          {medal}
+          {patch}
         </a>
       ) : (
-        medal
+        patch
       )}
 
       <div className="ach-info">
