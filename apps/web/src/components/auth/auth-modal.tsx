@@ -119,6 +119,16 @@ export function AuthModal({
   // the body's `awaitingStack` is a ref inside the lazy chunk, so a body
   // remount mid-load would otherwise orphan a truthy `loading` forever — and
   // `onOpenChange` below refuses to close while it is truthy (#1126).
+  //
+  // This also drops a visible OAuth error when the SIWS auto-close below
+  // fires — deliberate. From the moment the overlay takes the screen it owns
+  // error reporting, and every SIWS terminus surfaces its own outcome:
+  // success hard-redirects, and failure (including a declined signature)
+  // renders the overlay's own message with Retry and Dismiss. Resurfacing a
+  // stale Google error underneath a wallet flow would misattribute the
+  // failure, and nothing is stranded — the learner can reopen and retry.
+  // Keep that invariant if you add a SIWS ending: if one can ever end
+  // silently, this reset starts hiding a real error.
   useEffect(() => {
     if (open) return;
     setLoading(null);
