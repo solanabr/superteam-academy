@@ -62,6 +62,7 @@
     "authFailed": "A autenticação da carteira falhou. Tente novamente ou use outro método de login.",
     "optionsLoadFailed": "Algumas opções de login não carregaram. Continue com Google ou GitHub, ou tente novamente.",
     "signatureDeclined": "Assinatura recusada. Tente novamente ou use outro método de login.",
+    "walletDisconnected": "O login foi interrompido — sua carteira desconectou. Tente novamente ou use outro método de acesso.",
     "chooseWallet": "Escolha uma carteira",
     "connecting": "Conectando...",
     "connectSolanaWallet": "Conectar Carteira Solana",

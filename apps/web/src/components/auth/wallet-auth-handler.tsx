@@ -244,13 +244,22 @@ export function WalletAuthHandler() {
     }
   }, [connected, publicKey, signIn, signMessage, authenticate]);
 
-  // Reset when wallet disconnects
+  // Reset when wallet disconnects. Mid-signature is the exception: the dialog
+  // has already auto-closed for SIWS, so idling silently empties the screen.
+  // No Retry — authenticate() early-returns without a publicKey.
   useEffect(() => {
-    if (!connected) {
-      hasTriedAuth.current = false;
-      setOverlayState({ status: "idle" });
-    }
-  }, [connected]);
+    if (connected) return;
+    hasTriedAuth.current = false;
+    setOverlayState((prev) =>
+      prev.status === "authenticating"
+        ? {
+            status: "error",
+            message: t("walletDisconnected"),
+            canRetry: false,
+          }
+        : { status: "idle" }
+    );
+  }, [connected, t]);
 
   if (overlayState.status === "idle" || !portalTarget) return null;
 
