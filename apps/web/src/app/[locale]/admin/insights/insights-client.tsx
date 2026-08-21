@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Robot, ChartBar } from "@phosphor-icons/react";
 import type { PlatformInsights } from "@/lib/admin/insights";
 import {
@@ -89,6 +89,7 @@ const usd = (v: number): string => `$${v.toFixed(2)}`;
 
 export function InsightsClient() {
   const t = useTranslations("admin.insightsScreen");
+  const locale = useLocale();
 
   const [data, setData] = useState<PlatformInsights | null>(null);
   const [error, setError] = useState(false);
@@ -191,6 +192,7 @@ export function InsightsClient() {
             label={t("learning.completionsChartLabel")}
             dayHeader={t("learning.day")}
             valueHeader={t("learning.completions")}
+            locale={locale}
             empty={t("empty")}
           />
         </Panel>
@@ -242,6 +244,7 @@ export function InsightsClient() {
             label={t("ai.spendChartLabel")}
             dayHeader={t("ai.day")}
             valueHeader={t("ai.usd")}
+            locale={locale}
             format={usd}
             secondary={{
               header: t("ai.requests"),
