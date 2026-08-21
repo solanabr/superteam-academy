@@ -5,6 +5,7 @@ import {
   Keypair,
   SystemProgram,
   PublicKey,
+  SendTransactionError,
   Transaction,
   TransactionInstruction,
 } from "@solana/web3.js";
@@ -525,13 +526,17 @@ export async function buildSignedRewardXpTx(
   };
 }
 
-// Thrown when the broadcast itself was REJECTED — the transaction never reached
-// the cluster. Node rejection, a preflight revert (on-chain `MintingPaused`,
-// a deactivated minter), or a socket error all land here. The distinction
-// matters to callers that reserved the signature before sending: nothing
-// happened on-chain, so the reservation can safely be released and retried.
-// A failure from confirmTransaction is deliberately NOT this error — that case
-// is ambiguous (the transaction may well have landed) and must keep its claim.
+// Thrown when the node RESPONDED with a rejection — a preflight revert
+// (on-chain `MintingPaused`, a deactivated minter) or any other refusal that
+// proves the transaction never entered the cluster. The distinction matters to
+// callers that reserved the signature before sending: nothing happened
+// on-chain, so the reservation can safely be released and retried.
+//
+// Deliberately narrow. Only a `SendTransactionError` carries that proof. A
+// transport failure (ECONNRESET, timeout) is AMBIGUOUS — the node may have
+// already forwarded the transaction before the socket died — and so is a
+// confirmTransaction failure. Those propagate as-is and keep their claim.
+// Under-minting is recoverable; double-minting soulbound XP is not.
 export class TransactionNotBroadcastError extends Error {
   constructor(
     readonly signature: string,
@@ -556,8 +561,15 @@ export async function sendSignedTransaction(
   try {
     await connection.sendRawTransaction(tx.rawTransaction, { maxRetries: 5 });
   } catch (err) {
-    // Nothing reached the cluster — safe to unwind and retry from scratch.
-    throw new TransactionNotBroadcastError(tx.signature, err);
+    // Only a SendTransactionError proves the node responded with a refusal, so
+    // nothing reached the cluster and the caller may safely unwind. Anything
+    // else (transport failure) is ambiguous: the node may already have
+    // forwarded the transaction, so it propagates unchanged and the caller
+    // keeps its reservation rather than risking a second mint.
+    if (err instanceof SendTransactionError) {
+      throw new TransactionNotBroadcastError(tx.signature, err);
+    }
+    throw err;
   }
   const result = await connection.confirmTransaction(
     {

@@ -1170,6 +1170,33 @@ describe("retryPendingOnchainActions — quest XP on-chain leg", () => {
     expect(String(patch?.last_error)).toContain("verify on-chain");
   });
 
+  it("KEEPS the claim on any send failure that is not a proven node rejection", async () => {
+    h.rows = [{ ...mintRow }];
+    // A transport failure surfaces as a plain Error, NOT
+    // TransactionNotBroadcastError — the node may already have forwarded the
+    // transaction, so releasing here would let the next sweep mint again.
+    h.sendSignedTransaction.mockRejectedValue(new Error("ECONNRESET"));
+
+    await retryPendingOnchainActions(USER_ID);
+
+    expect(h.ledgerUpdates).toEqual([
+      { id: "xptx-1", patch: { tx_signature: "MINT_SIG" } },
+    ]);
+    expect(patchFor("r-mint")?.retry_count).toBe(1);
+  });
+
+  it("resolves the kept-claim row on the next sweep instead of minting again", async () => {
+    // The sweep after an ambiguous failure: the claim is still there.
+    h.rows = [{ ...mintRow, retry_count: 1 }];
+    h.xpLedgerRow = { id: "xptx-1", tx_signature: "MINT_SIG" };
+
+    await retryPendingOnchainActions(USER_ID);
+
+    expect(h.buildSignedRewardXpTx).not.toHaveBeenCalled();
+    expect(h.sendSignedTransaction).not.toHaveBeenCalled();
+    expect(typeof patchFor("r-mint")?.resolved_at).toBe("string");
+  });
+
   it("does not send when the claim write itself errors", async () => {
     h.rows = [{ ...mintRow }];
     h.stampShouldError = true;
