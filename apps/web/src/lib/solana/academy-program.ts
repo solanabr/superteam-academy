@@ -5,9 +5,11 @@ import {
   Keypair,
   SystemProgram,
   PublicKey,
+  Transaction,
   TransactionInstruction,
 } from "@solana/web3.js";
 import { AnchorError, BN } from "@coral-xyz/anchor";
+import bs58 from "bs58";
 import {
   getAssociatedTokenAddressSync,
   createAssociatedTokenAccountIdempotentInstruction,
@@ -17,6 +19,7 @@ import {
 import type { Idl } from "@coral-xyz/anchor";
 import { AnchorProvider, Program } from "@coral-xyz/anchor";
 import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
+import { serverEnv } from "@/lib/env.server";
 import IDL from "./idl/superteam_academy_vnext.json";
 import {
   findConfigPDA,
@@ -29,7 +32,6 @@ import {
 } from "./pda";
 import { extractCustomErrorCode, resolveIdlError } from "./parse-program-error";
 import { fetchCourse } from "./academy-reads";
-import { serverEnv } from "@/lib/env.server";
 
 export { getProgramId } from "./pda";
 
@@ -60,6 +62,7 @@ interface MethodBuilder {
   preInstructions(ixs: TransactionInstruction[]): MethodBuilder;
   signers(signers: Keypair[]): MethodBuilder;
   rpc(): Promise<string>;
+  transaction(): Promise<Transaction>;
 }
 
 interface AcademyMethods {
@@ -475,11 +478,81 @@ export async function awardAchievement(
   return { signature: sig, assetAddress: assetKeypair.publicKey };
 }
 
-export async function rewardXp(
+/** A reward_xp transaction that is fully signed but not yet broadcast. */
+export interface SignedRewardXpTx {
+  /** The transaction's final signature — known BEFORE anything is sent. */
+  signature: string;
+  /** The exact signed bytes. Re-sending these is idempotent on Solana. */
+  rawTransaction: Buffer;
+  blockhash: string;
+  lastValidBlockHeight: number;
+}
+
+// reward_xp has no receipt PDA and no nonce, so the chain cannot tell a retry
+// from a second award — the ONLY thing that makes a re-send safe is sending the
+// same already-signed bytes. That is why building/signing and sending are split
+// here: a caller can learn the signature, durably reserve it, and only then
+// broadcast. Never rebuild a reward_xp transaction to "retry" it; a fresh
+// blockhash produces a fresh signature and mints again.
+export async function buildSignedRewardXpTx(
   recipient: PublicKey,
   amount: number,
   memo: string
-): Promise<string> {
+): Promise<SignedRewardXpTx> {
+  const connection = getConnection();
+  const { transaction, signer } = await buildRewardXpTransaction(
+    recipient,
+    amount,
+    memo
+  );
+
+  const { blockhash, lastValidBlockHeight } =
+    await connection.getLatestBlockhash("confirmed");
+  transaction.recentBlockhash = blockhash;
+  transaction.feePayer = signer.publicKey;
+  transaction.sign(signer);
+
+  const signature = transaction.signature;
+  if (!signature) {
+    throw new Error("reward_xp transaction failed to sign");
+  }
+
+  return {
+    signature: bs58.encode(signature),
+    rawTransaction: transaction.serialize(),
+    blockhash,
+    lastValidBlockHeight,
+  };
+}
+
+// Broadcast an already-signed transaction and wait for confirmation. `maxRetries`
+// makes the RPC node rebroadcast the SAME bytes until blockhash expiry, so a
+// dropped packet never produces a second signature.
+export async function sendSignedTransaction(
+  tx: SignedRewardXpTx
+): Promise<void> {
+  const connection = getConnection();
+  await connection.sendRawTransaction(tx.rawTransaction, { maxRetries: 5 });
+  const result = await connection.confirmTransaction(
+    {
+      signature: tx.signature,
+      blockhash: tx.blockhash,
+      lastValidBlockHeight: tx.lastValidBlockHeight,
+    },
+    "confirmed"
+  );
+  if (result.value.err) {
+    throw new Error(
+      `reward_xp transaction ${tx.signature} failed: ${JSON.stringify(result.value.err)}`
+    );
+  }
+}
+
+async function buildRewardXpTransaction(
+  recipient: PublicKey,
+  amount: number,
+  memo: string
+): Promise<{ transaction: Transaction; signer: Keypair }> {
   const program = getProgram();
   const signer = getBackendSigner();
   const [configPDA] = findConfigPDA(program.programId);
@@ -511,7 +584,7 @@ export async function rewardXp(
     ASSOCIATED_TOKEN_PROGRAM_ID
   );
 
-  const sig = await methods
+  const transaction = await methods
     .rewardXp(new BN(amount), memo)
     .preInstructions([createAtaIx])
     .accountsPartial({
@@ -523,7 +596,7 @@ export async function rewardXp(
       backendSigner: signer.publicKey,
       tokenProgram: TOKEN_2022_PROGRAM_ID,
     })
-    .rpc();
+    .transaction();
 
-  return sig;
+  return { transaction, signer };
 }

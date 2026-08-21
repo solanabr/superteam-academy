@@ -21,7 +21,8 @@ import {
   awardAchievement,
   finalizeCourse,
   issueCredential,
-  rewardXp,
+  buildSignedRewardXpTx,
+  sendSignedTransaction,
 } from "./academy-program";
 import { getProgramId } from "./pda";
 
@@ -34,11 +35,14 @@ type OnchainActionType =
   | "quest_xp_mint"
   | "enroll";
 
-// Hard ceiling on a single quest mint. Matches award_xp's own per-award clamp
-// (c_max_award_xp = 2000), which is stricter than the program's MAX_XP_PER_MINT
-// (5000) — so an amount the DB would never have credited can never reach the
-// chain, even if a queue payload were somehow forged.
-const MAX_QUEST_MINT_XP = 2000;
+// Hard ceiling on a single quest mint, matching the REGISTERED MinterRole's
+// on-chain `max_xp_per_call` (scripts/init-program.ts registers the backend
+// signer with maxXpPerCall = 100, and reward_xp enforces it). That is far
+// stricter than either award_xp's 2000 per-award clamp or the program's
+// MAX_XP_PER_MINT of 5000, so this is the binding constraint: an amount above
+// it is guaranteed to revert, which is why it defers instead of retrying.
+// Raising a quest above this needs register_minter re-run with a higher cap.
+const MAX_QUEST_MINT_XP = 100;
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 type PendingActionRow =
@@ -453,27 +457,50 @@ export async function retryPendingOnchainActions(
         // failure here bumps retry_count like any other Pass-2 action and the
         // learner keeps their XP — only the explorer link is missing until a
         // later drain succeeds.
+        //
+        // RESERVE-THEN-SEND. `reward_xp` has no receipt PDA and no nonce, so
+        // unlike award_achievement the chain cannot reject a duplicate: whoever
+        // sends twice, mints twice. Three real double-mint paths converge here
+        // — a confirmation timeout on a tx that actually landed, a serverless
+        // kill between send and the DB write (the drain is fire-and-forget at
+        // every auth call site), and two overlapping drains reading the same
+        // NULL signature. All three are closed the same way: learn the
+        // signature by signing FIRST, claim it in the DB with a conditional
+        // update, and only then broadcast. Losing the claim race means another
+        // drain owns this mint — resolve and send nothing. A crash after the
+        // claim leaves at worst a phantom signature: a row pointing at a tx
+        // that never landed, which errs toward under-minting (the DB XP is
+        // already correct) and is reconcilable with getSignatureStatus.
         case "quest_xp_mint": {
           const xpAmount = payload.xpAmount;
           if (
             typeof xpAmount !== "number" ||
             !Number.isFinite(xpAmount) ||
             !Number.isInteger(xpAmount) ||
-            xpAmount <= 0 ||
-            xpAmount > MAX_QUEST_MINT_XP
+            xpAmount <= 0
           ) {
             throw new Error(
               `Invalid quest_xp_mint payload: xpAmount=${JSON.stringify(xpAmount)}`
             );
           }
 
+          // Over the on-chain per-call cap the program WILL reject the mint, so
+          // retrying just burns the 5-attempt budget and abandons the row in
+          // silence. Defer instead (no retry burn, loud marker): the fix is an
+          // operator lowering the quest's XP or raising the registered
+          // MinterRole cap, and the row lands on the next drain once they do.
+          if (xpAmount > MAX_QUEST_MINT_XP) {
+            await deferForMintCap(adminClient, row, xpAmount);
+            continue;
+          }
+
           // Double-mint guard, and the reason a re-sweep is safe on top of the
           // resolved_at filter: the xp_transactions row this mint belongs to is
           // found by the SAME idempotency key award_xp used (reference_id), and
-          // a signature already sitting there means the mint landed on an
-          // earlier sweep whose resolve write did not stick. Skip the chain and
-          // resolve. Note award_xp never sets tx_signature for a quest credit,
-          // so a non-null value here can only be this handler's own backfill.
+          // a signature already sitting there means an earlier attempt already
+          // claimed this mint. Skip the chain and resolve. Note award_xp never
+          // sets tx_signature for a quest credit, so a non-null value here can
+          // only be this handler's own claim.
           const { data: xpRow, error: xpRowError } = await adminClient
             .from("xp_transactions")
             .select("id, tx_signature")
@@ -491,32 +518,51 @@ export async function retryPendingOnchainActions(
               `No xp_transactions row for quest credit ${row.reference_id} — not minting`
             );
           }
-          if (xpRow.tx_signature) break; // already minted → just resolve
+          if (xpRow.tx_signature) break; // already claimed → just resolve
 
           const memo =
             typeof payload.memo === "string" && payload.memo.length > 0
               ? payload.memo.slice(0, 64)
               : `daily_quest:${row.reference_id}`;
 
-          const signature = await withRetry(() =>
-            rewardXp(wallet, xpAmount, memo)
-          );
+          // 1. Build and SIGN — the signature is now known, nothing is sent.
+          //    Deliberately not wrapped in withRetry: a rebuild would take a
+          //    fresh blockhash and produce a DIFFERENT signature, which is the
+          //    double-mint this whole structure exists to prevent. A build
+          //    failure is safe to retry at the row level (nothing was sent).
+          const signedTx = await buildSignedRewardXpTx(wallet, xpAmount, memo);
 
-          // Backfill the ledger row's signature (the Activity feed's ↗ link).
-          // Guarded on tx_signature IS NULL so two concurrent drains cannot
-          // overwrite each other's stamp.
-          const { error: stampError } = await adminClient
+          // 2. CLAIM the signature. `.is("tx_signature", null)` makes this the
+          //    mutual-exclusion point: exactly one concurrent drain gets rows
+          //    back, the loser gets zero and must not send.
+          const { data: claimed, error: claimError } = await adminClient
             .from("xp_transactions")
-            .update({ tx_signature: signature })
+            .update({ tx_signature: signedTx.signature })
             .eq("id", xpRow.id)
-            .is("tx_signature", null);
-          if (stampError) {
-            // The mint is on-chain and irreversible. Do NOT rethrow: a retry
-            // would mint a SECOND time (the guard above reads the signature we
-            // just failed to write). Log and resolve — the XP is correct in
-            // both ledgers; only the explorer link is missing.
-            console.error(
-              `[onchain-queue] minted quest XP ${signature} for ${row.reference_id} but failed to stamp xp_transactions: ${stampError.message}`
+            .is("tx_signature", null)
+            .select("id");
+          if (claimError) throw new Error(claimError.message);
+
+          if (!claimed || claimed.length === 0) {
+            // Another drain claimed it between our read and our update. It owns
+            // the send; resolving here is correct and sends nothing.
+            break;
+          }
+
+          // 3. Send the SAME signed bytes. Re-sending an identical signed
+          //    transaction is idempotent on Solana, so the RPC-level rebroadcast
+          //    inside sendSignedTransaction can never mint twice.
+          try {
+            await sendSignedTransaction(signedTx);
+          } catch (sendErr) {
+            const message =
+              sendErr instanceof Error ? sendErr.message : String(sendErr);
+            // The claim is already written, so the next sweep will resolve this
+            // row without re-sending — by design, since we cannot tell a failed
+            // send from a slow-confirming one. Surface it loudly and throw so
+            // last_error records which signature to reconcile on-chain.
+            throw new Error(
+              `quest mint send failed after claiming signature ${signedTx.signature} (verify on-chain before re-minting): ${message}`
             );
           }
           break;
@@ -656,6 +702,36 @@ async function deferForCapstoneGate(
     const message = err instanceof Error ? err.message : String(err);
     console.error(
       `[onchain-queue] ${courseId}: failed to write capstone-gate-defer marker for row ${row.id}: ${message}`
+    );
+  }
+}
+
+// Per-call mint-cap deferral. Same contract as the deferrals above: leave the
+// row unresolved, record why, do NOT touch retry_count. An amount over the
+// registered MinterRole's max_xp_per_call reverts on-chain every single time,
+// so retrying would silently abandon the row after 5 attempts; deferring keeps
+// it alive (and visible in last_error) until an operator lowers the quest's XP
+// or re-registers the minter with a higher cap. Log-and-swallow a marker-write
+// failure for the same F5 reason documented above.
+async function deferForMintCap(
+  adminClient: AdminClient,
+  row: PendingActionRow,
+  amount: number
+): Promise<void> {
+  const marker = `quest-mint-over-cap:${amount}>${MAX_QUEST_MINT_XP}`;
+  console.error(
+    `[onchain-queue] row ${row.id} (${row.reference_id}) requests ${amount} XP, over the minter's per-call cap of ${MAX_QUEST_MINT_XP} — deferring`
+  );
+  try {
+    const { error } = await adminClient
+      .from("pending_onchain_actions")
+      .update({ last_error: marker })
+      .eq("id", row.id);
+    if (error) throw new Error(error.message);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(
+      `[onchain-queue] failed to write mint-cap-defer marker for row ${row.id}: ${message}`
     );
   }
 }
