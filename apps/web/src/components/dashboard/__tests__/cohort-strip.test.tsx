@@ -93,8 +93,9 @@ describe("CohortStrip — the viewer's own row", () => {
     const me = container.querySelector(".lb-row.me");
     expect(me).not.toBeNull();
     // The marker is `.me` on the row itself; the mini stylesheet turns that
-    // into an ink BORDER (in-box) rather than an outline (out-of-box), so
-    // `.lb-list-mini`'s overflow can never shear it off.
+    // into an ink border plus an INSET ring rather than an outline, so it
+    // draws inside the border box and `.lb-list-mini`'s overflow can never
+    // shear it off.
     expect(me!.className).toContain("lb-row");
     expect(container.querySelector(".lb-list-mini")).not.toBeNull();
     expect(me!.closest(".lb-list-mini")).not.toBeNull();
