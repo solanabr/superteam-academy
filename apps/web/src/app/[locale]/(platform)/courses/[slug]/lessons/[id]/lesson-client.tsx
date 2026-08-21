@@ -823,11 +823,17 @@ export function LessonPageClient({
             <span className="font-mono text-xs tabular-nums text-text-3">
               {currentIndex + 1}/{allLessons.length}
             </span>
-            <ProgressBar
-              value={currentIndex + 1}
-              max={allLessons.length}
-              className="hidden w-16 sm:block sm:w-20"
-            />
+            {/* The width/visibility classes ride on a wrapper: `.seg-track`
+                sets display outside Tailwind's layer, so `hidden`/`sm:block`
+                on the bar itself would never win. */}
+            <div className="hidden w-16 sm:block sm:w-20">
+              <ProgressBar
+                value={currentIndex + 1}
+                max={allLessons.length}
+                segmented
+                size="slim"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -888,15 +894,18 @@ export function LessonPageClient({
           {!hasCodeBlock && paneSections}
 
           {/* Bottom nav hidden on challenge pages (#770): Prev/Next live in the
-            top bar and code lessons complete via the ChallengeInterface submit. */}
+            top bar and code lessons complete via the ChallengeInterface submit.
+            Mobile: a 2-col grid — the completion CTA spans the top row,
+            Prev/Next split the second 50/50 (owner, 21-08). Desktop keeps the
+            centred flex row; the CTA wrapper dissolves via sm:contents. */}
           {!hasCodeBlock && (
-            <div className="flex flex-col gap-3 border-t border-border pt-6 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center">
+            <div className="grid grid-cols-2 gap-3 border-t border-border pt-6 sm:flex sm:flex-row sm:flex-wrap sm:items-center sm:justify-center">
               {prevLesson && (
                 <Button
                   variant="pushOutline"
                   size="default"
                   asChild
-                  className="w-full justify-center sm:w-auto sm:min-w-[120px]"
+                  className="order-2 w-full justify-center sm:order-none sm:w-auto sm:min-w-[120px]"
                 >
                   <Link
                     href={`${linkBase}/${courseSlug}/lessons/${prevLesson.slug}`}
@@ -910,38 +919,61 @@ export function LessonPageClient({
               lessons complete via this explicit button. Once completed the
               button gives way to a quiet status pill — a disabled button
               duplicating the nav CTA's label read as two dead actions. */}
-              {!hasCodeBlock &&
-                (userId ? (
-                  isEnrolled ? (
-                    isCompleted ? (
-                      <span
-                        role="status"
-                        className="inline-flex h-10 items-center justify-center gap-1.5 rounded-full border border-[var(--primary-border)] bg-[var(--primary-dim)] px-4 font-display text-[11px] font-bold uppercase tracking-[0.4px] text-primary"
-                      >
-                        <CheckCircle
-                          size={16}
-                          weight="fill"
-                          aria-hidden="true"
-                        />
-                        {t("lessonComplete")}
-                      </span>
+              <div className="order-1 col-span-2 flex flex-col sm:contents">
+                {!hasCodeBlock &&
+                  (userId ? (
+                    isEnrolled ? (
+                      isCompleted ? (
+                        <span
+                          role="status"
+                          className="inline-flex h-10 items-center justify-center gap-1.5 rounded-full border border-[var(--primary-border)] bg-[var(--primary-dim)] px-4 font-display text-[11px] font-bold uppercase tracking-[0.4px] text-primary"
+                        >
+                          <CheckCircle
+                            size={16}
+                            weight="fill"
+                            aria-hidden="true"
+                          />
+                          {t("lessonComplete")}
+                        </span>
+                      ) : (
+                        <Button
+                          variant="pushSuccess"
+                          size="default"
+                          disabled={
+                            isCompleting ||
+                            hasLinkedWallet === false ||
+                            !gateReady
+                          }
+                          onClick={() => handleComplete()}
+                          title={!gateReady ? t("completeGateHint") : undefined}
+                          className="w-full gap-2 sm:w-auto"
+                        >
+                          {isCompleting && (
+                            <>
+                              <div
+                                className="h-5 w-5 animate-spin rounded-full border-[3px] border-white/30 border-t-white"
+                                aria-hidden="true"
+                              />
+                              <span className="sr-only">
+                                {tCommon("loading")}
+                              </span>
+                            </>
+                          )}
+                          {t("markComplete")}
+                        </Button>
+                      )
                     ) : (
                       <Button
-                        variant="pushSuccess"
+                        variant="push"
                         size="default"
-                        disabled={
-                          isCompleting ||
-                          hasLinkedWallet === false ||
-                          !gateReady
-                        }
-                        onClick={() => handleComplete()}
-                        title={!gateReady ? t("completeGateHint") : undefined}
-                        className="w-full gap-2 sm:w-auto"
+                        disabled={isEnrolling}
+                        onClick={handleEnroll}
+                        className="gap-2"
                       >
-                        {isCompleting && (
+                        {isEnrolling && (
                           <>
                             <div
-                              className="h-5 w-5 animate-spin rounded-full border-[3px] border-white/30 border-t-white"
+                              className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
                               aria-hidden="true"
                             />
                             <span className="sr-only">
@@ -949,49 +981,30 @@ export function LessonPageClient({
                             </span>
                           </>
                         )}
-                        {t("markComplete")}
+                        {tCourses("enrollNow")}
                       </Button>
                     )
                   ) : (
+                    // Anonymous: banks the work done so far, then opens the sign-in
+                    // prompt with its "Later" escape (LX-A4). The controlled modal is
+                    // rendered once below.
                     <Button
                       variant="push"
                       size="default"
-                      disabled={isEnrolling}
-                      onClick={handleEnroll}
                       className="gap-2"
+                      onClick={openClaimAuth}
                     >
-                      {isEnrolling && (
-                        <>
-                          <div
-                            className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
-                            aria-hidden="true"
-                          />
-                          <span className="sr-only">{tCommon("loading")}</span>
-                        </>
-                      )}
-                      {tCourses("enrollNow")}
+                      {t("signInToTrack")}
                     </Button>
-                  )
-                ) : (
-                  // Anonymous: banks the work done so far, then opens the sign-in
-                  // prompt with its "Later" escape (LX-A4). The controlled modal is
-                  // rendered once below.
-                  <Button
-                    variant="push"
-                    size="default"
-                    className="gap-2"
-                    onClick={openClaimAuth}
-                  >
-                    {t("signInToTrack")}
-                  </Button>
-                ))}
+                  ))}
+              </div>
 
               {nextLesson ? (
                 <Button
                   variant={isCompleted ? "push" : "pushOutline"}
                   size="default"
                   asChild
-                  className="w-full justify-center sm:w-auto sm:min-w-[120px]"
+                  className={`order-3 w-full justify-center sm:order-none sm:w-auto sm:min-w-[120px] ${prevLesson ? "" : "col-span-2"}`}
                 >
                   <Link
                     href={`${linkBase}/${courseSlug}/lessons/${nextLesson.slug}`}
@@ -1007,7 +1020,7 @@ export function LessonPageClient({
                   variant={isCompleted ? "push" : "pushOutline"}
                   size="default"
                   asChild
-                  className="w-full justify-center sm:w-auto sm:min-w-[120px]"
+                  className={`order-3 w-full justify-center sm:order-none sm:w-auto sm:min-w-[120px] ${prevLesson ? "" : "col-span-2"}`}
                 >
                   <Link href={`${linkBase}/${courseSlug}`}>
                     {t("finishCourse")} &rarr;

@@ -1381,57 +1381,6 @@
   color: var(--primary);
 }
 
-/* Legacy compat aliases */
-.progress-fat {
-  width: 100%;
-  height: 14px;
-  background: var(--input);
-  border-radius: var(--r-full);
-  border: 1px solid var(--border);
-  overflow: hidden;
-}
-.progress-fat-fill {
-  height: 100%;
-  border-radius: var(--r-full);
-  position: relative;
-  overflow: hidden;
-  transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.progress-fat-fill::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.08) 25%,
-    rgba(255, 255, 255, 0.32) 50%,
-    rgba(255, 255, 255, 0.08) 75%,
-    transparent 100%
-  );
-  animation: shimmer 2.2s ease-in-out infinite;
-}
-.progress-fat-fill::before {
-  content: "";
-  position: absolute;
-  top: 2px;
-  left: 6px;
-  right: 6px;
-  height: 3px;
-  background: rgba(255, 255, 255, 0.28);
-  border-radius: var(--r-full);
-  z-index: 1;
-}
-.progress-fill-teal {
-  background: linear-gradient(90deg, var(--primary-dark), var(--primary));
-}
-.progress-fill-amber {
-  background: linear-gradient(90deg, var(--xp-dark), var(--xp));
-}
-.progress-fill-green {
-  background: linear-gradient(90deg, var(--primary-dark), var(--success));
-}
-
 /* ── Achievement medal keyframes (outside @layer for animation compat) ── */
 @keyframes patch-pop {
   from {
@@ -2510,51 +2459,8 @@
   transform: rotate(180deg);
 }
 
-/* ── Full-width progress bar — the hero visual ── */
-.path-bar-track {
-  width: 100%;
-  height: 7px;
-  background: var(--border);
-  border-radius: 99px;
-  overflow: hidden;
-  position: relative;
-}
-.path-bar-fill {
-  height: 100%;
-  border-radius: 99px;
-  background: linear-gradient(
-    90deg,
-    var(--primary-dark, var(--primary)),
-    var(--primary)
-  );
-  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  min-width: 0;
-  overflow: hidden;
-}
-/* Shimmer sweep — like dashboard XP bar */
-.path-bar-fill::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.1) 25%,
-    rgba(255, 255, 255, 0.35) 50%,
-    rgba(255, 255, 255, 0.1) 75%,
-    transparent 100%
-  );
-  animation: path-shimmer 2.2s ease-in-out infinite;
-}
-@keyframes path-shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
-}
+/* The path bar itself is the progress standard — see `.path-bar-track` in the
+   progress-bar block next to `.dash-xp-track`. */
 
 /* Row 2: Stats footer */
 .path-header-foot {
@@ -4366,9 +4272,23 @@ a.path-step-card:hover .path-step-badge.skip {
    the level ring and used for nothing else. No inner shadow, no cap on the
    fill, no gradient. Dark swaps the outline and the track only; the mint
    carries over untouched. */
-.dash-xp-track {
+/* The three tokens every learner-facing progress bar is built from. Declared
+   once, on every construction that uses them, so a value can never drift
+   between the XP bar, the segmented lesson bars and the path bar. */
+.dash-xp-track,
+.seg-track,
+.path-bar-track {
   --xpbar-ink: #19231b;
   --xpbar-track: rgba(25, 35, 27, 0.12);
+  --xpbar-fill: #2ecc8e;
+}
+[data-theme="dark"] .dash-xp-track,
+[data-theme="dark"] .seg-track,
+[data-theme="dark"] .path-bar-track {
+  --xpbar-ink: #fafaf7;
+  --xpbar-track: rgba(250, 250, 247, 0.18);
+}
+.dash-xp-track {
   width: 100%;
   max-width: 200px;
   height: 16px;
@@ -4377,17 +4297,82 @@ a.path-step-card:hover .path-step-badge.skip {
   border-radius: var(--r-full);
   overflow: hidden;
 }
-[data-theme="dark"] .dash-xp-track {
-  --xpbar-ink: #fafaf7;
-  --xpbar-track: rgba(250, 250, 247, 0.18);
-}
 .dash-xp-fill {
   height: 100%;
-  background: #2ecc8e;
+  background: var(--xpbar-fill);
   transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 @media (prefers-reduced-motion: reduce) {
   .dash-xp-fill {
+    transition: none;
+  }
+}
+
+/* ── Segmented variant — discrete counts (lessons) ──────────────────────────
+   Same track, outline and fill as the XP bar; the only difference is that the
+   inside is divided into one cell per lesson. Ink hairlines are drawn ON TOP
+   of each cell's left edge, so they read at any height and never depend on a
+   translucent gap compositing correctly. Sizes are set with two custom
+   properties, so a variant is a height + a border weight, not a new bar. */
+/* No `width` on the base: block-level auto already fills its container, and an
+   explicit 100% here (unlayered) would beat any Tailwind width a caller sets. */
+.seg-track {
+  display: flex;
+  height: var(--seg-h, 13px);
+  background: var(--xpbar-track);
+  border: var(--seg-border, 2.5px) solid var(--xpbar-ink);
+  border-radius: var(--r-full);
+  overflow: hidden;
+}
+.seg-track--slim {
+  --seg-h: 10px;
+  --seg-border: 2px;
+}
+.seg-track--micro {
+  --seg-h: 8px;
+  --seg-border: 1.5px;
+  width: 64px;
+}
+.seg-cell {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.seg-cell + .seg-cell {
+  box-shadow: inset 1.5px 0 0 var(--xpbar-ink);
+}
+.seg-cell--on {
+  background: var(--xpbar-fill);
+}
+/* Smooth fill inside the same track — used for continuous shares, and as the
+   fallback when a course has too many lessons for legible ticks. */
+.seg-fill {
+  height: 100%;
+  background: var(--xpbar-fill);
+  transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .seg-fill {
+    transition: none;
+  }
+}
+
+/* ── Learning-path bar — smooth, never segmented: a path spans whole courses,
+   so ticks would read as lessons and mislead. ── */
+.path-bar-track {
+  width: 100%;
+  height: 10px;
+  background: var(--xpbar-track);
+  border: 2px solid var(--xpbar-ink);
+  border-radius: var(--r-full);
+  overflow: hidden;
+}
+.path-bar-fill {
+  height: 100%;
+  background: var(--xpbar-fill);
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .path-bar-fill {
     transition: none;
   }
 }
@@ -5460,58 +5445,35 @@ a.path-step-card:hover .path-step-title {
   border: 1.5px solid var(--border);
   white-space: nowrap;
 }
-/* ── Progress ring with count inside + label — pushed right ── */
+/* ── Lesson count over a micro segmented strip — pushed right ── */
 .cc-card .cc-progress {
   display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
   flex-shrink: 0;
 }
-.cc-progress .cc-ring-wrap {
-  position: relative;
-  width: 42px;
-  height: 42px;
-}
-.cc-ring {
-  width: 42px;
-  height: 42px;
-}
-.cc-ring-track {
-  fill: none;
-  stroke: var(--border-default);
-  stroke-width: 3;
-}
-.cc-ring-fill {
-  fill: none;
-  stroke: var(--primary);
-  stroke-width: 3;
-  stroke-linecap: round;
-  transition: stroke-dashoffset 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.cc-ring-count {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.cc-count {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
   font-family: var(--font-mono, var(--font-m));
   font-weight: 700;
   font-size: 11px;
   color: var(--text-3);
   letter-spacing: -0.3px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
-.cc-ring-done {
+.cc-count-done {
   color: var(--primary);
   font-weight: 800;
 }
-.cc-ring-label {
-  font-family: var(--font-mono, var(--font-m));
-  font-size: 10px;
+.cc-count-label {
+  font-size: 9px;
   font-weight: 600;
-  color: var(--text-3);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  margin-left: 4px;
 }
 
 /* ── Endowed-progress reason (LX-B12) — stated cause for a pre-credited tick,
@@ -5536,15 +5498,14 @@ a.path-step-card:hover .path-step-title {
   color: var(--primary);
 }
 
-/* Near-goal intensification: a thicker, glowing ring as a course approaches
+/* Near-goal intensification: a glowing strip as a course approaches
    completion. Emphasis is purely visual — the counts stay honest. */
-.cc-card--near-goal .cc-ring-fill {
-  stroke-width: 4;
+.cc-card--near-goal .seg-track {
   filter: drop-shadow(
-    0 0 3px color-mix(in srgb, var(--primary) 55%, transparent)
+    0 0 3px color-mix(in srgb, var(--xpbar-fill) 55%, transparent)
   );
 }
-.cc-card--near-goal .cc-ring-done {
+.cc-card--near-goal .cc-count-done {
   font-size: 12px;
 }
 

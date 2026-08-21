@@ -206,15 +206,10 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
   const correctCount = b.questions.filter((q) => results[q.id]?.correct).length;
   const allCorrect = total > 0 && correctCount === total;
 
-  // Owner call (2026-07-31): once every question is answered correctly the
-  // quiz folds itself — the header chips carry the recap and the AI Partner
-  // sits directly underneath. Fires once on the transition, so the learner can
-  // still reopen the section manually afterwards.
-  const prevAllCorrect = useRef(false);
-  useEffect(() => {
-    if (allCorrect && !prevAllCorrect.current) setOpen(false);
-    prevAllCorrect.current = allCorrect;
-  }, [allCorrect]);
+  // The quiz used to fold itself on a clean sweep (owner call 2026-07-31).
+  // Reversed 2026-08-21: the sweep usually lands on the LAST question, and
+  // auto-folding snatched its explanation away mid-read. The header's COMPLETE
+  // chip still signals done; folding is the learner's own click now.
 
   const multi = q?.multiSelect ?? false;
   const chosen = q ? (selections[q.id] ?? []) : [];
@@ -292,10 +287,9 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
 
       {/* Completion state (#943): a clean sweep is acknowledged in-block — no
           popup, per the three-popup rule. It sits OUTSIDE the collapsible body
-          on purpose: the same sweep auto-collapses the quiz, and a live-region
-          insertion inside a subtree that goes `hidden` in the same frame is
-          neither seen nor reliably announced. Always mounted so the region
-          exists before the text arrives. */}
+          so it stays perceivable if the learner folds the quiz by hand (the
+          sweep no longer folds it automatically — owner 2026-08-21). Always
+          mounted so the region exists before the text arrives. */}
       <div aria-live="polite" className="px-5 pb-5 empty:hidden">
         {allCorrect && (
           <p className="flex items-center gap-2 rounded-md border border-[var(--primary-border)] bg-[var(--primary-dim)] p-3 text-sm font-medium text-primary">
