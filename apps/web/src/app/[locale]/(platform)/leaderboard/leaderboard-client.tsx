@@ -9,6 +9,11 @@ import * as Tooltip from "@radix-ui/react-tooltip";
 import type { LeaderboardEntry, CohortLeague } from "@superteam-lms/types";
 import { LevelBadge } from "@/components/gamification/level-badge";
 import { CohortRow } from "@/components/leaderboard/cohort-row";
+import {
+  ORDINAL,
+  RankMarker,
+  topRankAttr,
+} from "@/components/leaderboard/rank-marker";
 import { ReferralBoard } from "@/components/leaderboard/referral-board";
 import { cn } from "@/lib/utils";
 
@@ -98,13 +103,6 @@ function PodiumCard({
   );
 }
 
-/** Only the top three carry a rank tab; everything below is a bare numeral. */
-const ORDINAL: Record<number, string | undefined> = {
-  1: "ST",
-  2: "ND",
-  3: "RD",
-};
-
 /* ── Ranked row for positions 4+ (global board) ── */
 function RankedRow({
   entry,
@@ -126,31 +124,14 @@ function RankedRow({
       className="block no-underline"
     >
       {/* data-top marks the three ranks that carry a tab; they keep the solid
-          card while everything below drops to a dashed outline. */}
+          card while everything below drops to a dashed outline. Shared with the
+          cohort row so the two lists can never disagree about the treatment. */}
       <div
         className={cn("lb-row", isCurrentUser && "me")}
-        data-top={ORDINAL[entry.rank] ? "" : undefined}
+        data-top={topRankAttr(entry.rank)}
         style={style}
       >
-        {ORDINAL[entry.rank] ? (
-          <div
-            className="rank-tab"
-            data-rank={entry.rank}
-            aria-label={t("rankLabel", { rank: entry.rank })}
-          >
-            <span className="rank-tab-num">{entry.rank}</span>
-            <span className="rank-tab-ord" aria-hidden="true">
-              {ORDINAL[entry.rank]}
-            </span>
-          </div>
-        ) : (
-          <span
-            className="lb-rank"
-            aria-label={t("rankLabel", { rank: entry.rank })}
-          >
-            {entry.rank}
-          </span>
-        )}
+        <RankMarker rank={entry.rank} />
 
         <div className="lb-av" aria-hidden="true">
           {entry.avatarUrl ? (
