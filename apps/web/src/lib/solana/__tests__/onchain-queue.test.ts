@@ -56,6 +56,37 @@ const h = vi.hoisted(() => ({
   // F5 — simulate the maintenance-defer marker WRITE itself failing (a
   // transient DB error), independent of any other update in the sweep.
   deferWriteShouldError: false,
+  // ── quest_xp_mint support ──
+  /** Builds+signs the mint tx; the signature is known before anything is sent. */
+  buildSignedRewardXpTx: vi.fn<(...args: unknown[]) => Promise<unknown>>(),
+  /** Broadcasts the already-signed bytes. */
+  sendSignedTransaction: vi.fn<(...args: unknown[]) => Promise<void>>(),
+  /** Rows the conditional claim update returns; [] = another drain won it. */
+  claimResult: [{ id: "xptx-1" }] as { id: string }[],
+  /** PostgREST error returned by the enqueue upsert (supabase-js does not throw). */
+  enqueueError: null as { message: string } | null,
+  /** Mirrors the real error class: broadcast rejected, nothing reached the cluster. */
+  TransactionNotBroadcastError: class extends Error {
+    constructor(
+      readonly signature: string,
+      readonly cause: unknown
+    ) {
+      super(`reward_xp transaction ${signature} was never broadcast`);
+      this.name = "TransactionNotBroadcastError";
+    }
+  },
+  /** Rows inserted into pending_onchain_actions during the sweep. */
+  inserts: [] as Record<string, unknown>[],
+  /** Next id handed to an inserted queue row. */
+  insertedRowId: "r-mint-new",
+  /** Simulate the unique constraint already holding a row (re-sweep). */
+  insertConflicts: false,
+  /** The xp_transactions row the mint case looks up, keyed by idempotency key. */
+  xpLedgerRow: null as { id: string; tx_signature: string | null } | null,
+  /** Updates applied to xp_transactions (the signature backfill). */
+  ledgerUpdates: [] as { id: unknown; patch: Record<string, unknown> }[],
+  /** Simulate the signature-backfill write failing. */
+  stampShouldError: false,
 }));
 
 vi.mock("server-only", () => ({}));
@@ -78,6 +109,13 @@ vi.mock("../academy-program", () => ({
   awardAchievement: (...args: unknown[]) => h.awardAchievement(...args),
   finalizeCourse: (...args: unknown[]) => h.finalizeCourse(...args),
   issueCredential: vi.fn(),
+  buildSignedRewardXpTx: (...args: unknown[]) =>
+    h.buildSignedRewardXpTx(...args),
+  sendSignedTransaction: (...args: unknown[]) =>
+    h.sendSignedTransaction(...args),
+  // Real class, so the drainer's `instanceof` branch is genuinely exercised —
+  // a plain stub would make the pre-broadcast path untestable.
+  TransactionNotBroadcastError: h.TransactionNotBroadcastError,
 }));
 
 vi.mock("../academy-reads", () => ({
@@ -113,6 +151,8 @@ vi.mock("@/lib/supabase/admin", () => {
     private patch: Record<string, unknown> | null = null;
     private updateId: unknown = undefined;
 
+    constructor(private table: string) {}
+
     select(): this {
       return this;
     }
@@ -124,12 +164,45 @@ vi.mock("@/lib/supabase/admin", () => {
       this.patch = patch;
       return this;
     }
+    upsert(row: Record<string, unknown>): this {
+      h.inserts.push(row);
+      return this;
+    }
     eq(column: string, value: unknown): this {
       if (this.isUpdate && column === "id") this.updateId = value;
       return this;
     }
     lt(): Promise<{ data: PendingRow[]; error: null }> {
       return Promise.resolve({ data: h.rows, error: null });
+    }
+    // The mint case's ledger lookup, and the enqueue's `.select().maybeSingle()`.
+    maybeSingle(): Promise<{
+      data: unknown;
+      error: { message: string } | null;
+    }> {
+      if (this.table === "xp_transactions") {
+        return Promise.resolve({ data: h.xpLedgerRow, error: null });
+      }
+      // pending_onchain_actions upsert → the row it created, or null when the
+      // UNIQUE(user_id, action_type, reference_id) key already held one.
+      // supabase-js reports a rejected write (CHECK violation, transient) in
+      // `error` — it does NOT throw — so the stub must be able to do the same.
+      if (h.enqueueError) {
+        return Promise.resolve({ data: null, error: h.enqueueError });
+      }
+      const inserted = h.inserts[h.inserts.length - 1];
+      if (h.insertConflicts || !inserted) {
+        return Promise.resolve({ data: null, error: null });
+      }
+      return Promise.resolve({
+        data: {
+          ...inserted,
+          id: h.insertedRowId,
+          retry_count: 0,
+          resolved_at: null,
+        },
+        error: null,
+      });
     }
     single(): Promise<{
       data: { wallet_address: string } | null;
@@ -142,10 +215,25 @@ vi.mock("@/lib/supabase/admin", () => {
     }
     then(
       onFulfilled?: (value: {
-        data: null;
+        data: { id: string }[] | null;
         error: { message: string } | null;
       }) => unknown
     ): Promise<unknown> {
+      // The signature CLAIM: `update(...).eq("id").is("tx_signature", null)
+      // .select("id")`. Returning [] models losing the race to another drain.
+      // The claim RELEASE (`tx_signature: null`) also lands here.
+      if (this.isUpdate && this.patch && this.table === "xp_transactions") {
+        h.ledgerUpdates.push({ id: this.updateId, patch: this.patch });
+        if (h.stampShouldError) {
+          return Promise.resolve({
+            data: null,
+            error: { message: "claim failed" },
+          }).then(onFulfilled);
+        }
+        return Promise.resolve({ data: h.claimResult, error: null }).then(
+          onFulfilled
+        );
+      }
       if (this.isUpdate && this.patch) {
         h.updates.push({ id: this.updateId, patch: this.patch });
         // F5 — the maintenance-defer marker is the ONLY update that sets
@@ -170,7 +258,7 @@ vi.mock("@/lib/supabase/admin", () => {
 
   return {
     createAdminClient: () => ({
-      from: (_table: string) => new Chain(),
+      from: (table: string) => new Chain(table),
       rpc: (_fn: string, params: Record<string, unknown>) =>
         Promise.resolve(h.awardXp(params)),
     }),
@@ -203,6 +291,23 @@ beforeEach(() => {
   // certificate/finalize tests exercise their original paths unchanged.
   h.checkCapstoneCredentialGate.mockResolvedValue({ status: "not_capstone" });
   h.deferWriteShouldError = false;
+  h.buildSignedRewardXpTx.mockReset();
+  h.buildSignedRewardXpTx.mockResolvedValue({
+    signature: "MINT_SIG",
+    rawTransaction: Buffer.from("signed-bytes"),
+    blockhash: "BLOCKHASH",
+    lastValidBlockHeight: 1000,
+  });
+  h.sendSignedTransaction.mockReset();
+  h.sendSignedTransaction.mockResolvedValue(undefined);
+  h.claimResult = [{ id: "xptx-1" }];
+  h.enqueueError = null;
+  h.inserts.length = 0;
+  h.insertedRowId = "r-mint-new";
+  h.insertConflicts = false;
+  h.xpLedgerRow = { id: "xptx-1", tx_signature: null };
+  h.ledgerUpdates.length = 0;
+  h.stampShouldError = false;
   // Default: course already finalized on-chain, so finalizeCourse is skipped
   // and each test exercises the XP-settlement path in isolation.
   h.fetchEnrollment.mockResolvedValue({ completed_at: 1_700_000_000 });
@@ -734,5 +839,373 @@ describe("retryPendingOnchainActions — capstone credential gate (LX-E2)", () =
     );
     const patch = patchFor("r-cap-cert-ok");
     expect(String(patch?.last_error ?? "")).not.toContain("capstone-gate");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Quest XP on-chain leg. A daily-quest credit is DB-only (Pass 1, wallet-less);
+// when the learner HAS a linked wallet the credit also enqueues a
+// `quest_xp_mint` row, and Pass 2 mints the same XP as soulbound Token-2022
+// supply and stamps the signature onto the xp_transactions row so the Activity
+// feed can link it. The DB credit is never blocked or clawed back by any of it.
+// ---------------------------------------------------------------------------
+
+describe("retryPendingOnchainActions — quest XP on-chain leg", () => {
+  const questRow = {
+    id: "r-quest",
+    action_type: "quest_xp",
+    reference_id: "quest-daily-1:2026-08-21",
+    retry_count: 0,
+    payload: { xpAmount: 25, memo: "daily_quest:quest-daily-1" },
+  };
+
+  const mintRow = {
+    id: "r-mint",
+    action_type: "quest_xp_mint",
+    reference_id: "quest-daily-1:2026-08-21",
+    retry_count: 0,
+    payload: { xpAmount: 25, memo: "daily_quest:quest-daily-1" },
+  };
+
+  it("credits, enqueues the mint row, claims the signature, and sends once — all in one sweep", async () => {
+    h.rows = [{ ...questRow }];
+    h.awardXp.mockReturnValue({ data: 25, error: null });
+
+    await retryPendingOnchainActions(USER_ID);
+
+    // Pass 1 credited and resolved the DB row.
+    expect(typeof patchFor("r-quest")?.resolved_at).toBe("string");
+
+    // The mint row was enqueued under the SAME reference identity.
+    expect(h.inserts).toHaveLength(1);
+    expect(h.inserts[0]).toMatchObject({
+      user_id: USER_ID,
+      action_type: "quest_xp_mint",
+      reference_id: "quest-daily-1:2026-08-21",
+      payload: { xpAmount: 25, memo: "daily_quest:quest-daily-1" },
+    });
+
+    // Signed once, for the credited amount, to the linked wallet.
+    expect(h.buildSignedRewardXpTx).toHaveBeenCalledTimes(1);
+    const [recipient, amount, memo] =
+      h.buildSignedRewardXpTx.mock.calls[0] ?? [];
+    expect((recipient as { toBase58(): string }).toBase58()).toBe(
+      "WALLET_ADDR"
+    );
+    expect(amount).toBe(25);
+    expect(memo).toBe("daily_quest:quest-daily-1");
+
+    // The signature was CLAIMED before anything was broadcast…
+    expect(h.ledgerUpdates).toEqual([
+      { id: "xptx-1", patch: { tx_signature: "MINT_SIG" } },
+    ]);
+    // …and then the already-signed bytes were sent exactly once.
+    expect(h.sendSignedTransaction).toHaveBeenCalledTimes(1);
+    expect(h.sendSignedTransaction.mock.calls[0]?.[0]).toMatchObject({
+      signature: "MINT_SIG",
+    });
+
+    expect(typeof patchFor("r-mint-new")?.resolved_at).toBe("string");
+  });
+
+  it("claims the signature BEFORE sending, so a crash mid-send cannot re-mint", async () => {
+    h.rows = [{ ...mintRow }];
+    // Sample how many ledger writes had happened at each step. The claim is the
+    // only ledger write in this flow, so the counts pin down the ordering
+    // without patching anything: nothing written when we sign, one written by
+    // the time we send.
+    let ledgerWritesAtSign = -1;
+    let ledgerWritesAtSend = -1;
+    h.buildSignedRewardXpTx.mockImplementation(() => {
+      ledgerWritesAtSign = h.ledgerUpdates.length;
+      return Promise.resolve({
+        signature: "MINT_SIG",
+        rawTransaction: Buffer.from("signed-bytes"),
+        blockhash: "BLOCKHASH",
+        lastValidBlockHeight: 1000,
+      });
+    });
+    h.sendSignedTransaction.mockImplementation(() => {
+      ledgerWritesAtSend = h.ledgerUpdates.length;
+      return Promise.resolve();
+    });
+
+    await retryPendingOnchainActions(USER_ID);
+
+    expect(ledgerWritesAtSign).toBe(0); // signed first, nothing claimed yet
+    expect(ledgerWritesAtSend).toBe(1); // claim landed before the broadcast
+    expect(h.ledgerUpdates[0]).toEqual({
+      id: "xptx-1",
+      patch: { tx_signature: "MINT_SIG" },
+    });
+  });
+
+  it("sends NOTHING when another drain won the claim race", async () => {
+    h.rows = [{ ...mintRow }];
+    h.claimResult = []; // conditional update matched zero rows
+
+    await retryPendingOnchainActions(USER_ID);
+
+    // It signed (that is how it learned the signature) but never broadcast.
+    expect(h.buildSignedRewardXpTx).toHaveBeenCalledTimes(1);
+    expect(h.sendSignedTransaction).not.toHaveBeenCalled();
+    // The other drain owns the send, so this row resolves rather than lingering.
+    expect(typeof patchFor("r-mint")?.resolved_at).toBe("string");
+    expect(patchFor("r-mint")?.retry_count).toBeUndefined();
+  });
+
+  it("mints the CREDITED amount, not the requested one, when the daily cap clamped the award", async () => {
+    h.rows = [
+      { ...questRow, payload: { xpAmount: 25, memo: "daily_quest:q" } },
+    ];
+    h.awardXp.mockReturnValue({ data: 10, error: null }); // cap clamped 25 → 10
+
+    await retryPendingOnchainActions(USER_ID);
+
+    expect(h.inserts[0]).toMatchObject({ payload: { xpAmount: 10 } });
+    expect(h.buildSignedRewardXpTx.mock.calls[0]?.[1]).toBe(10);
+  });
+
+  it("enqueues NOTHING and mints nothing for a wallet-less learner", async () => {
+    h.rows = [{ ...questRow }];
+    h.walletAddress = null;
+    h.awardXp.mockReturnValue({ data: 25, error: null });
+
+    await retryPendingOnchainActions(USER_ID);
+
+    // The DB credit still lands — wallet-less is the whole story, not a failure.
+    expect(typeof patchFor("r-quest")?.resolved_at).toBe("string");
+    expect(h.inserts).toHaveLength(0);
+    expect(h.buildSignedRewardXpTx).not.toHaveBeenCalled();
+  });
+
+  it("does not enqueue a mint when the cap ate the whole credit (nothing landed)", async () => {
+    h.rows = [{ ...questRow }];
+    h.awardXp.mockReturnValue({ data: 0, error: null });
+
+    await retryPendingOnchainActions(USER_ID);
+
+    expect(patchFor("r-quest")?.last_error).toBe("daily-cap-deferred");
+    expect(h.inserts).toHaveLength(0);
+    expect(h.buildSignedRewardXpTx).not.toHaveBeenCalled();
+  });
+
+  it("logs loudly and enqueues nothing when the upsert is REJECTED (supabase-js returns, never throws)", async () => {
+    h.rows = [{ ...questRow }];
+    h.awardXp.mockReturnValue({ data: 25, error: null });
+    h.enqueueError = {
+      message:
+        'new row violates check constraint "pending_onchain_actions_action_type_check"',
+    };
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await retryPendingOnchainActions(USER_ID);
+
+    // The DB credit is unaffected — it was already resolved before the enqueue.
+    expect(typeof patchFor("r-quest")?.resolved_at).toBe("string");
+    // Nothing is minted, and the loss is NOT silent.
+    expect(h.buildSignedRewardXpTx).not.toHaveBeenCalled();
+    expect(logged).toHaveBeenCalledWith(
+      expect.stringContaining("quest_xp_mint enqueue REJECTED")
+    );
+    logged.mockRestore();
+  });
+
+  it("DEFERS a quest_xp_mint row while the platform is frozen, without minting or burning a retry", async () => {
+    h.rows = [{ ...mintRow, retry_count: 1 }];
+    h.isPlatformFrozen.mockResolvedValue(true);
+
+    await retryPendingOnchainActions(USER_ID);
+
+    const patch = patchFor("r-mint");
+    expect(patch?.last_error).toBe("platform-frozen");
+    expect(patch?.retry_count).toBeUndefined();
+    expect(patch?.resolved_at).toBeUndefined();
+    expect(h.buildSignedRewardXpTx).not.toHaveBeenCalled();
+  });
+
+  it("keeps crediting quest XP while frozen and defers the mint row it just enqueued", async () => {
+    h.rows = [{ ...questRow }];
+    h.isPlatformFrozen.mockResolvedValue(true);
+    h.awardXp.mockReturnValue({ data: 25, error: null });
+
+    await retryPendingOnchainActions(USER_ID);
+
+    expect(typeof patchFor("r-quest")?.resolved_at).toBe("string");
+    expect(h.inserts).toHaveLength(1);
+    expect(patchFor("r-mint-new")?.last_error).toBe("platform-frozen");
+    expect(h.buildSignedRewardXpTx).not.toHaveBeenCalled();
+  });
+
+  it("does NOT double-mint when the ledger row already carries a signature", async () => {
+    h.rows = [{ ...mintRow }];
+    h.xpLedgerRow = { id: "xptx-1", tx_signature: "EARLIER_SIG" };
+
+    await retryPendingOnchainActions(USER_ID);
+
+    expect(h.buildSignedRewardXpTx).not.toHaveBeenCalled();
+    expect(h.sendSignedTransaction).not.toHaveBeenCalled();
+    expect(h.ledgerUpdates).toHaveLength(0);
+    // Still resolved — the work is done, the row must not linger.
+    expect(typeof patchFor("r-mint")?.resolved_at).toBe("string");
+  });
+
+  it("does not re-enqueue a mint row that already exists (re-sweep of a credited quest)", async () => {
+    h.rows = [{ ...questRow }];
+    h.awardXp.mockReturnValue({ data: 25, error: null }); // idempotent re-report
+    h.insertConflicts = true;
+
+    await retryPendingOnchainActions(USER_ID);
+
+    // The upsert is attempted (ON CONFLICT DO NOTHING) but yields no new row,
+    // so this sweep mints nothing — the existing row drains on its own.
+    expect(h.buildSignedRewardXpTx).not.toHaveBeenCalled();
+  });
+
+  it("refuses to mint when no xp_transactions row backs the credit", async () => {
+    h.rows = [{ ...mintRow }];
+    h.xpLedgerRow = null;
+
+    await retryPendingOnchainActions(USER_ID);
+
+    expect(h.buildSignedRewardXpTx).not.toHaveBeenCalled();
+    const patch = patchFor("r-mint");
+    expect(patch?.resolved_at).toBeUndefined();
+    expect(patch?.retry_count).toBe(1);
+  });
+
+  it("DEFERS an amount over the minter's per-call cap instead of burning retries on a guaranteed revert", async () => {
+    h.rows = [
+      { ...mintRow, id: "r-mint-big", payload: { xpAmount: 101, memo: "m" } },
+    ];
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await retryPendingOnchainActions(USER_ID);
+
+    expect(h.buildSignedRewardXpTx).not.toHaveBeenCalled();
+    const patch = patchFor("r-mint-big");
+    // Deferral, not failure: the retry budget is untouched so an operator can
+    // fix the quest definition and have it land on the next drain.
+    expect(patch?.retry_count).toBeUndefined();
+    expect(patch?.resolved_at).toBeUndefined();
+    expect(String(patch?.last_error)).toContain("quest-mint-over-cap:101>100");
+    logged.mockRestore();
+  });
+
+  it("mints an amount exactly at the per-call cap", async () => {
+    h.rows = [
+      { ...mintRow, id: "r-mint-100", payload: { xpAmount: 100, memo: "m" } },
+    ];
+
+    await retryPendingOnchainActions(USER_ID);
+
+    expect(h.buildSignedRewardXpTx.mock.calls[0]?.[1]).toBe(100);
+    expect(typeof patchFor("r-mint-100")?.resolved_at).toBe("string");
+  });
+
+  it("retries a malformed amount rather than deferring it", async () => {
+    h.rows = [
+      { ...mintRow, id: "r-mint-bad", payload: { xpAmount: "25", memo: "m" } },
+    ];
+
+    await retryPendingOnchainActions(USER_ID);
+
+    expect(h.buildSignedRewardXpTx).not.toHaveBeenCalled();
+    expect(patchFor("r-mint-bad")?.retry_count).toBe(1);
+  });
+
+  it("leaves the DB credit intact and retries when signing fails (nothing was sent)", async () => {
+    h.rows = [{ ...questRow }];
+    h.awardXp.mockReturnValue({ data: 25, error: null });
+    h.buildSignedRewardXpTx.mockRejectedValue(new Error("rpc unavailable"));
+
+    await retryPendingOnchainActions(USER_ID);
+
+    // The credit stands — resolved, untouched by the chain failure.
+    expect(typeof patchFor("r-quest")?.resolved_at).toBe("string");
+    expect(h.ledgerUpdates).toHaveLength(0); // never claimed
+    const patch = patchFor("r-mint-new");
+    expect(patch?.resolved_at).toBeUndefined();
+    expect(patch?.retry_count).toBe(1);
+    expect(String(patch?.last_error)).toContain("rpc unavailable");
+  });
+
+  it("RELEASES the claim when the broadcast was rejected, so the mint is not forfeited", async () => {
+    h.rows = [{ ...mintRow }];
+    // Nothing reached the cluster — e.g. preflight revert while the program is
+    // paused on-chain, which the DB freeze gate knows nothing about.
+    h.sendSignedTransaction.mockRejectedValue(
+      new h.TransactionNotBroadcastError("MINT_SIG", new Error("MintingPaused"))
+    );
+
+    await retryPendingOnchainActions(USER_ID);
+
+    // Claimed, then cleared — conditionally, so it can only undo OUR claim.
+    expect(h.ledgerUpdates).toEqual([
+      { id: "xptx-1", patch: { tx_signature: "MINT_SIG" } },
+      { id: "xptx-1", patch: { tx_signature: null } },
+    ]);
+    // The row retries like any other Pass-2 failure; the next sweep sees a NULL
+    // signature and mints properly instead of resolving a phantom.
+    const patch = patchFor("r-mint");
+    expect(patch?.resolved_at).toBeUndefined();
+    expect(patch?.retry_count).toBe(1);
+    expect(String(patch?.last_error)).toContain("not broadcast");
+  });
+
+  it("KEEPS the claim when confirmation fails (ambiguous — the tx may have landed)", async () => {
+    h.rows = [{ ...mintRow }];
+    h.sendSignedTransaction.mockRejectedValue(new Error("blockhash expired"));
+
+    await retryPendingOnchainActions(USER_ID);
+
+    // Exactly one ledger write: the claim. No release — re-minting is the
+    // danger here, not forfeiting.
+    expect(h.ledgerUpdates).toEqual([
+      { id: "xptx-1", patch: { tx_signature: "MINT_SIG" } },
+    ]);
+    const patch = patchFor("r-mint");
+    expect(patch?.retry_count).toBe(1);
+    expect(String(patch?.last_error)).toContain("MINT_SIG");
+    expect(String(patch?.last_error)).toContain("verify on-chain");
+  });
+
+  it("KEEPS the claim on any send failure that is not a proven node rejection", async () => {
+    h.rows = [{ ...mintRow }];
+    // A transport failure surfaces as a plain Error, NOT
+    // TransactionNotBroadcastError — the node may already have forwarded the
+    // transaction, so releasing here would let the next sweep mint again.
+    h.sendSignedTransaction.mockRejectedValue(new Error("ECONNRESET"));
+
+    await retryPendingOnchainActions(USER_ID);
+
+    expect(h.ledgerUpdates).toEqual([
+      { id: "xptx-1", patch: { tx_signature: "MINT_SIG" } },
+    ]);
+    expect(patchFor("r-mint")?.retry_count).toBe(1);
+  });
+
+  it("resolves the kept-claim row on the next sweep instead of minting again", async () => {
+    // The sweep after an ambiguous failure: the claim is still there.
+    h.rows = [{ ...mintRow, retry_count: 1 }];
+    h.xpLedgerRow = { id: "xptx-1", tx_signature: "MINT_SIG" };
+
+    await retryPendingOnchainActions(USER_ID);
+
+    expect(h.buildSignedRewardXpTx).not.toHaveBeenCalled();
+    expect(h.sendSignedTransaction).not.toHaveBeenCalled();
+    expect(typeof patchFor("r-mint")?.resolved_at).toBe("string");
+  });
+
+  it("does not send when the claim write itself errors", async () => {
+    h.rows = [{ ...mintRow }];
+    h.stampShouldError = true;
+
+    await retryPendingOnchainActions(USER_ID);
+
+    expect(h.sendSignedTransaction).not.toHaveBeenCalled();
+    const patch = patchFor("r-mint");
+    expect(patch?.resolved_at).toBeUndefined();
+    expect(patch?.retry_count).toBe(1);
   });
 });

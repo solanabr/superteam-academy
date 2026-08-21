@@ -1098,7 +1098,7 @@ CREATE POLICY "Users can view their own deployments"
 CREATE TABLE pending_onchain_actions (
   id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id        UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  action_type    TEXT NOT NULL CHECK (action_type IN ('achievement', 'certificate', 'course_finalize', 'xp', 'quest_xp', 'enroll')),
+  action_type    TEXT NOT NULL CHECK (action_type IN ('achievement', 'certificate', 'course_finalize', 'xp', 'quest_xp', 'quest_xp_mint', 'enroll')),
   reference_id   TEXT NOT NULL,
   payload        JSONB NOT NULL,
   failed_at      TIMESTAMPTZ DEFAULT NOW(),
@@ -1151,8 +1151,14 @@ CREATE POLICY "Users can view their own daily quests"
 -- row in THIS transaction (atomic with the xp_granted flip), so a quest is
 -- never marked granted without a durable delivery record. The XP is then
 -- credited idempotently by retryPendingOnchainActions() -> award_xp()
--- (reference_id = idempotency key); it is NOT minted on-chain from a retry
--- path, because rewardXp is non-idempotent and would double-mint soulbound XP.
+-- (reference_id = idempotency key).
+-- When the learner has a linked wallet that credit ALSO enqueues a
+-- 'quest_xp_mint' row, which mints the same XP on-chain via reward_xp and
+-- stamps the signature onto the xp_transactions row. reward_xp is itself
+-- non-idempotent (no receipt PDA), so the drainer signs first, reserves the
+-- signature with a conditional update on xp_transactions.tx_signature, and only
+-- then broadcasts those exact bytes — one claim, one mint. Wallet-less learners
+-- stay DB-only.
 -- Called via service_role from /api/quests/daily.
 CREATE OR REPLACE FUNCTION get_daily_quest_state(
   p_user_id           UUID,
