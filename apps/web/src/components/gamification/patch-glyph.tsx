@@ -21,6 +21,12 @@
  *
  * These are the spec's own marks redrawn, not interface iconography; Phosphor
  * stays in the interface, as the spec requires.
+ *
+ * Extended 21-08 for the chip and mark tiers (GlyphChip / GlyphMark). The
+ * subset was re-checked against the shipped woff2 before adding anything: the
+ * text glyphs those tiers use ("</>", "+", "×3", digits) are all covered, and
+ * ✓ ▸ ⚡ ◍ are all absent, so they join the drawn set here rather than falling
+ * back to a system symbol font at a different advance width.
  */
 
 /** Five-pointed star, outer r 40 / inner r 15.9, ink box centred on (50,50). */
@@ -56,6 +62,37 @@ const MARKS: Record<string, React.ReactNode> = {
       strokeLinejoin="round"
     />
   ),
+  // Check — ink box 20..80 × 27..73, so the stroke centres like the others.
+  "✓": (
+    <path
+      d="M20 51 L42 73 L80 27"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="11"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  ),
+  // Play triangle, bounding box centred (no optical nudge — see docblock).
+  "▸": <path d="M25 20 L75 50 L25 80Z" fill="currentColor" />,
+  // Bolt.
+  "⚡": (
+    <path d="M58 10 L30 55 L46 55 L40 90 L70 42 L52 42Z" fill="currentColor" />
+  ),
+  // Ring with an offset dot — the community mark.
+  "◍": (
+    <g>
+      <circle
+        cx="50"
+        cy="50"
+        r="34"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="9"
+      />
+      <circle cx="38" cy="62" r="10" fill="currentColor" />
+    </g>
+  ),
   // Bullseye: ring plus a solid centre.
   "◎": (
     <g>
@@ -75,13 +112,24 @@ const MARKS: Record<string, React.ReactNode> = {
 export function PatchGlyph({ glyph }: { glyph: string }) {
   const mark = MARKS[glyph];
 
+  // data-glyph is the only way to assert which mark rendered: a drawn mark has
+  // no text node, so a test could otherwise only compare path data.
   if (mark) {
     return (
-      <svg className="patch-mark" viewBox="0 0 100 100" aria-hidden="true">
+      <svg
+        className="patch-mark"
+        viewBox="0 0 100 100"
+        data-glyph={glyph}
+        aria-hidden="true"
+      >
         {mark}
       </svg>
     );
   }
 
-  return <span className="patch-text">{glyph}</span>;
+  return (
+    <span className="patch-text" data-glyph={glyph}>
+      {glyph}
+    </span>
+  );
 }

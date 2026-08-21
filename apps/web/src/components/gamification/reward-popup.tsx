@@ -5,7 +5,8 @@ import { useTranslations } from "next-intl";
 import { Lightning } from "@phosphor-icons/react";
 import { celebrate } from "@/lib/gamification/celebration";
 import { useQuestName } from "@/lib/gamification/use-quest-name";
-import { LevelBadge } from "@/components/gamification/level-badge";
+import { GlyphChip } from "@/components/gamification/glyph-chip";
+import type { PatchCategory } from "@/components/gamification/patch-look";
 import { cn } from "@/lib/utils";
 import { LEVEL_UP_EVENT } from "./level-up-popup";
 import { QUEST_REWARD_EVENT } from "./quest-reward-toast";
@@ -25,9 +26,14 @@ import { SURPRISE_BONUS_EVENT } from "./surprise-bonus-toast";
  *
  * Rework 05-08 (owner-approved via mock): the cards moved off the Solana
  * gradient onto the house `.rw-card` — the gradient is reserved for the
- * certificate popup (on-chain artifact). A level-up shows the actual
- * LevelBadge at its new tier; quest and bonus keep their emoji in the gold
- * metallic ring; XP rides the dq-reward-style lightning chip.
+ * certificate popup (on-chain artifact). XP rides the dq-reward-style
+ * lightning chip.
+ *
+ * Glyph pass 21-08 (owner-approved): the icon is a 40px GlyphChip on all three
+ * moments — gold ✓ for a completed quest, gold ★ for the surprise bonus, and a
+ * round course-green chip carrying the new level number. That retires the last
+ * two emoji on this surface and the LevelBadge copy, which duplicated the
+ * header's badge at a moment when the header is already updating.
  *
  * What did NOT change: confetti is still reserved by LX-B11 for deploy +
  * credential mint. Every event routed here resolves to the "popup" tier, which
@@ -111,7 +117,7 @@ export function RewardPopupQueue({ className }: { className?: string }) {
 
   /** Per-kind copy. The switch is exhaustive — a new kind is a compile error. */
   function describe(item: RewardItem): {
-    emoji: string | null;
+    chip: { glyph: string; cat: PatchCategory; round?: boolean };
     label: string;
     name: string;
     xp: number | null;
@@ -119,21 +125,21 @@ export function RewardPopupQueue({ className }: { className?: string }) {
     switch (item.kind) {
       case "level-up":
         return {
-          emoji: null,
+          chip: { glyph: String(item.level), cat: "course", round: true },
           label: t("levelUp"),
           name: t("levelUpMessage", { level: item.level }),
           xp: null,
         };
       case "daily-quest":
         return {
-          emoji: "🎯",
+          chip: { glyph: "✓", cat: "reward" },
           label: t("questComplete"),
           name: questName(item.questId),
           xp: item.xpReward,
         };
       case "surprise-bonus":
         return {
-          emoji: "✨",
+          chip: { glyph: "★", cat: "reward" },
           label: t("surpriseBonusTitle"),
           name: t("surpriseBonusMessage"),
           xp: item.amount,
@@ -146,7 +152,7 @@ export function RewardPopupQueue({ className }: { className?: string }) {
   const dismiss = () =>
     setQueue((prev) => prev.filter((item) => item.uid !== current.uid));
 
-  const { emoji, label, name, xp } = describe(current);
+  const { chip, label, name, xp } = describe(current);
 
   return (
     <div
@@ -154,9 +160,10 @@ export function RewardPopupQueue({ className }: { className?: string }) {
       aria-live="polite"
       aria-label={label}
     >
-      {/* Rework 05-08: house card, per-moment accent. A level-up shows the
-          actual LevelBadge (the same object the header updates); quest and
-          bonus keep their emoji in the gold metallic ring. */}
+      {/* House card, per-moment accent (rework 05-08). 21-08: the icon is a
+          40px GlyphChip on all three moments — the emoji ring and the
+          LevelBadge both predate the glyph language and were the last two
+          icon idioms left on this surface. */}
       <div
         key={current.uid}
         className={cn(
@@ -164,13 +171,12 @@ export function RewardPopupQueue({ className }: { className?: string }) {
           current.kind === "level-up" ? "level" : "gold"
         )}
       >
-        {current.kind === "level-up" ? (
-          <LevelBadge level={current.level} size={44} />
-        ) : (
-          <div className="rw-ring" aria-hidden="true">
-            <div className="rw-ring-in">{emoji}</div>
-          </div>
-        )}
+        <GlyphChip
+          glyph={chip.glyph}
+          cat={chip.cat}
+          size={40}
+          round={chip.round}
+        />
         <div className="flex-1">
           <div className="rw-kicker">{label}</div>
           <div className="rw-name">{name}</div>
