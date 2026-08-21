@@ -8,6 +8,7 @@ import {
   CheckCircle,
   Sparkle,
 } from "@phosphor-icons/react";
+import { LevelBadge } from "@/components/gamification/level-badge";
 
 /* ────────────────────────────────────────────────────────────────────
    Hero showcase — who you become, not what you type. A Builder ID card
@@ -170,9 +171,7 @@ function IdCard({
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full font-display text-xl font-black text-white shadow-[0_4px_0_0_var(--xp-dark)] [background:linear-gradient(135deg,var(--xp),var(--xp-dark))]">
-            5
-          </div>
+          <LevelBadge level={5} size="lg" progress={84} />
           <div className="min-w-0">
             <div className="truncate font-display text-xl font-black">
               you.sol
@@ -183,8 +182,8 @@ function IdCard({
           </div>
         </div>
 
-        <div className="mt-5 h-2.5 overflow-hidden rounded-full border-[2px] border-border bg-subtle">
-          <div className="h-full w-[84%] rounded-full [background:linear-gradient(90deg,var(--primary),var(--xp))]" />
+        <div className="dash-xp-track mt-5 max-w-none">
+          <div className="dash-xp-fill" style={{ width: "84%" }} />
         </div>
 
         <div className="mt-5 flex items-center justify-between">
