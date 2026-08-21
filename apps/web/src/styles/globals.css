@@ -558,7 +558,6 @@
      does that. */
   .nav-pill {
     --pill-ink: #19231b;
-    --pill-shadow: #19231b;
     display: inline-flex;
     align-items: center;
     gap: 11px;
@@ -567,19 +566,20 @@
     border-radius: 999px;
     background: var(--card);
     border: 2.5px solid var(--pill-ink);
-    box-shadow: 0 4px 0 0 var(--pill-shadow);
+    /* No hard shadow. The pill sits in a row of flat header controls — the
+       theme toggle and language switcher are outline-and-fill with no lift —
+       and a shadow made it the only raised object up there. The hexagon
+       inside keeps its own drop-shadow; that one follows the six sides and
+       is what gives the mark its depth. */
     text-decoration: none;
+    transition: background-color 0.15s;
   }
-  /* Interactive only when it links out; a static pill stays still. */
+  /* Interactive only when it links out; a static pill stays still. With no
+     shadow to lift against, hover matches its neighbours and shifts the
+     background instead. */
   a.nav-pill:hover,
   button.nav-pill:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 0 0 var(--pill-shadow);
-  }
-  a.nav-pill:active,
-  button.nav-pill:active {
-    transform: translateY(3px);
-    box-shadow: 0 1px 0 0 var(--pill-shadow);
+    background: var(--subtle);
   }
   .nav-pill-rule {
     width: 1.5px;
@@ -609,7 +609,6 @@
   }
   [data-theme="dark"] .nav-pill {
     --pill-ink: #fafaf7;
-    --pill-shadow: rgba(250, 250, 247, 0.2);
   }
 
   /* ── Achievement Medal Grid — V9 Superteam Academy ── */
