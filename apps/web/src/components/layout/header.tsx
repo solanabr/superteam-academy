@@ -278,10 +278,13 @@ export function Header() {
 
           {/* Right: XP ring → lang → theme → user (desktop lg+) */}
           <div className="relative z-10 ml-auto hidden shrink-0 items-center gap-[10px] lg:flex">
+            {/* The nav pill: hexagon, hairline rule, lifetime total. It nests
+                only the hexagon — no rounded rectangle inside a rounded
+                rectangle — and carries no progress. */}
             {isLoggedIn && (
               <div
                 className={cn(
-                  "group relative flex items-center gap-[8px] rounded-full border border-[var(--border)] bg-[var(--card)] py-[4px] pl-[4px] pr-[12px] transition-all duration-500",
+                  "nav-pill group relative transition-shadow duration-500",
                   glowing && "shadow-glow-xp"
                 )}
                 title={tGam("xpTooltip", {
@@ -291,18 +294,18 @@ export function Header() {
                   level: level + 1,
                 })}
               >
-                <LevelBadge level={level} size="pill" />
-
+                <LevelBadge level={level} size={30} />
+                <span className="nav-pill-rule" aria-hidden="true" />
                 <span
                   className={cn(
-                    "font-display text-[13px] font-black tabular-nums text-[var(--xp)] transition-transform duration-300",
+                    "nav-pill-xp transition-transform duration-300",
                     glowing && "scale-105"
                   )}
                 >
-                  {displayedXp.toLocaleString()}
-                  <span className="ml-[2px] text-[10px] font-bold text-[var(--text-3)]">
-                    XP
+                  <span className="nav-pill-num">
+                    {displayedXp.toLocaleString()}
                   </span>
+                  <span className="nav-pill-unit">XP</span>
                 </span>
 
                 {xpGainAmount !== null && (

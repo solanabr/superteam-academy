@@ -269,7 +269,7 @@ export function ThreadDetailClient({ shortId }: ThreadDetailClientProps) {
             </span>
           )}
           {thread.author.level > 0 && (
-            <LevelBadge level={thread.author.level} size="pill" />
+            <LevelBadge level={thread.author.level} size={30} />
           )}
           <span>{timeAgo(thread.created_at, t)}</span>
           <span>{t("views", { count: thread.view_count })}</span>

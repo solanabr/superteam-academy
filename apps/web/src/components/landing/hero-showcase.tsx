@@ -171,7 +171,7 @@ function IdCard({
         </div>
 
         <div className="flex items-center gap-4">
-          <LevelBadge level={5} size={72} progress={84} />
+          <LevelBadge level={5} size={72} />
           <div className="min-w-0">
             <div className="truncate font-display text-xl font-black">
               you.sol
