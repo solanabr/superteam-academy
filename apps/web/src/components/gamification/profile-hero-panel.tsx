@@ -134,7 +134,7 @@ export function ProfileHeroPanel({
         <div className="prof-xp">
           <LevelBadge
             level={stats.level}
-            size="xl"
+            size={104}
             progress={progressPercent}
           />
           <div>

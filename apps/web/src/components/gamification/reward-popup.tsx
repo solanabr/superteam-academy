@@ -165,7 +165,7 @@ export function RewardPopupQueue({ className }: { className?: string }) {
         )}
       >
         {current.kind === "level-up" ? (
-          <LevelBadge level={current.level} size="md" />
+          <LevelBadge level={current.level} size={44} />
         ) : (
           <div className="rw-ring" aria-hidden="true">
             <div className="rw-ring-in">{emoji}</div>

@@ -291,7 +291,7 @@ export function Header() {
                   level: level + 1,
                 })}
               >
-                <LevelBadge level={level} size="sm" />
+                <LevelBadge level={level} size="pill" />
 
                 <span
                   className={cn(
