@@ -22,11 +22,11 @@
  * These are the spec's own marks redrawn, not interface iconography; Phosphor
  * stays in the interface, as the spec requires.
  *
- * Extended 21-08 for the chip and mark tiers (GlyphChip / GlyphMark). The
- * subset was re-checked against the shipped woff2 before adding anything: the
- * text glyphs those tiers use ("</>", "+", "×3", digits) are all covered, and
- * ✓ ▸ ⚡ ◍ are all absent, so they join the drawn set here rather than falling
- * back to a system symbol font at a different advance width.
+ * Extended 21-08 for GlyphChip. The subset was re-checked against the shipped
+ * woff2 before adding anything: the text glyphs the chips use ("</>", "+",
+ * "×3", digits) are all covered, and ✓ ▸ ⚡ ◍ are all absent, so they join the
+ * drawn set here rather than falling back to a system symbol font at a
+ * different advance width.
  */
 
 /** Five-pointed star, outer r 40 / inner r 15.9, ink box centred on (50,50). */
