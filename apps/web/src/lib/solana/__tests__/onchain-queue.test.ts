@@ -56,6 +56,20 @@ const h = vi.hoisted(() => ({
   // F5 — simulate the maintenance-defer marker WRITE itself failing (a
   // transient DB error), independent of any other update in the sweep.
   deferWriteShouldError: false,
+  // ── quest_xp_mint support ──
+  rewardXp: vi.fn<(...args: unknown[]) => Promise<string>>(),
+  /** Rows inserted into pending_onchain_actions during the sweep. */
+  inserts: [] as Record<string, unknown>[],
+  /** Next id handed to an inserted queue row. */
+  insertedRowId: "r-mint-new",
+  /** Simulate the unique constraint already holding a row (re-sweep). */
+  insertConflicts: false,
+  /** The xp_transactions row the mint case looks up, keyed by idempotency key. */
+  xpLedgerRow: null as { id: string; tx_signature: string | null } | null,
+  /** Updates applied to xp_transactions (the signature backfill). */
+  ledgerUpdates: [] as { id: unknown; patch: Record<string, unknown> }[],
+  /** Simulate the signature-backfill write failing. */
+  stampShouldError: false,
 }));
 
 vi.mock("server-only", () => ({}));
@@ -78,6 +92,7 @@ vi.mock("../academy-program", () => ({
   awardAchievement: (...args: unknown[]) => h.awardAchievement(...args),
   finalizeCourse: (...args: unknown[]) => h.finalizeCourse(...args),
   issueCredential: vi.fn(),
+  rewardXp: (...args: unknown[]) => h.rewardXp(...args),
 }));
 
 vi.mock("../academy-reads", () => ({
@@ -113,6 +128,8 @@ vi.mock("@/lib/supabase/admin", () => {
     private patch: Record<string, unknown> | null = null;
     private updateId: unknown = undefined;
 
+    constructor(private table: string) {}
+
     select(): this {
       return this;
     }
@@ -124,12 +141,40 @@ vi.mock("@/lib/supabase/admin", () => {
       this.patch = patch;
       return this;
     }
+    upsert(row: Record<string, unknown>): this {
+      h.inserts.push(row);
+      return this;
+    }
     eq(column: string, value: unknown): this {
       if (this.isUpdate && column === "id") this.updateId = value;
       return this;
     }
     lt(): Promise<{ data: PendingRow[]; error: null }> {
       return Promise.resolve({ data: h.rows, error: null });
+    }
+    // The mint case's ledger lookup, and the enqueue's `.select().maybeSingle()`.
+    maybeSingle(): Promise<{
+      data: unknown;
+      error: { message: string } | null;
+    }> {
+      if (this.table === "xp_transactions") {
+        return Promise.resolve({ data: h.xpLedgerRow, error: null });
+      }
+      // pending_onchain_actions upsert → the row it created, or null when the
+      // UNIQUE(user_id, action_type, reference_id) key already held one.
+      const inserted = h.inserts[h.inserts.length - 1];
+      if (h.insertConflicts || !inserted) {
+        return Promise.resolve({ data: null, error: null });
+      }
+      return Promise.resolve({
+        data: {
+          ...inserted,
+          id: h.insertedRowId,
+          retry_count: 0,
+          resolved_at: null,
+        },
+        error: null,
+      });
     }
     single(): Promise<{
       data: { wallet_address: string } | null;
@@ -146,6 +191,16 @@ vi.mock("@/lib/supabase/admin", () => {
         error: { message: string } | null;
       }) => unknown
     ): Promise<unknown> {
+      if (this.isUpdate && this.patch && this.table === "xp_transactions") {
+        h.ledgerUpdates.push({ id: this.updateId, patch: this.patch });
+        if (h.stampShouldError) {
+          return Promise.resolve({
+            data: null,
+            error: { message: "stamp failed" },
+          }).then(onFulfilled);
+        }
+        return Promise.resolve({ data: null, error: null }).then(onFulfilled);
+      }
       if (this.isUpdate && this.patch) {
         h.updates.push({ id: this.updateId, patch: this.patch });
         // F5 — the maintenance-defer marker is the ONLY update that sets
@@ -170,7 +225,7 @@ vi.mock("@/lib/supabase/admin", () => {
 
   return {
     createAdminClient: () => ({
-      from: (_table: string) => new Chain(),
+      from: (table: string) => new Chain(table),
       rpc: (_fn: string, params: Record<string, unknown>) =>
         Promise.resolve(h.awardXp(params)),
     }),
@@ -203,6 +258,14 @@ beforeEach(() => {
   // certificate/finalize tests exercise their original paths unchanged.
   h.checkCapstoneCredentialGate.mockResolvedValue({ status: "not_capstone" });
   h.deferWriteShouldError = false;
+  h.rewardXp.mockReset();
+  h.rewardXp.mockResolvedValue("MINT_SIG");
+  h.inserts.length = 0;
+  h.insertedRowId = "r-mint-new";
+  h.insertConflicts = false;
+  h.xpLedgerRow = { id: "xptx-1", tx_signature: null };
+  h.ledgerUpdates.length = 0;
+  h.stampShouldError = false;
   // Default: course already finalized on-chain, so finalizeCourse is skipped
   // and each test exercises the XP-settlement path in isolation.
   h.fetchEnrollment.mockResolvedValue({ completed_at: 1_700_000_000 });
@@ -734,5 +797,234 @@ describe("retryPendingOnchainActions — capstone credential gate (LX-E2)", () =
     );
     const patch = patchFor("r-cap-cert-ok");
     expect(String(patch?.last_error ?? "")).not.toContain("capstone-gate");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Quest XP on-chain leg. A daily-quest credit is DB-only (Pass 1, wallet-less);
+// when the learner HAS a linked wallet the credit also enqueues a
+// `quest_xp_mint` row, and Pass 2 mints the same XP as soulbound Token-2022
+// supply and stamps the signature onto the xp_transactions row so the Activity
+// feed can link it. The DB credit is never blocked or clawed back by any of it.
+// ---------------------------------------------------------------------------
+
+describe("retryPendingOnchainActions — quest XP on-chain leg", () => {
+  const questRow = {
+    id: "r-quest",
+    action_type: "quest_xp",
+    reference_id: "quest-daily-1:2026-08-21",
+    retry_count: 0,
+    payload: { xpAmount: 25, memo: "daily_quest:quest-daily-1" },
+  };
+
+  it("credits, enqueues the mint row, mints once, and stamps the signature — all in one sweep", async () => {
+    h.rows = [{ ...questRow }];
+    h.awardXp.mockReturnValue({ data: 25, error: null });
+
+    await retryPendingOnchainActions(USER_ID);
+
+    // Pass 1 credited and resolved the DB row.
+    expect(typeof patchFor("r-quest")?.resolved_at).toBe("string");
+
+    // The mint row was enqueued under the SAME reference identity.
+    expect(h.inserts).toHaveLength(1);
+    expect(h.inserts[0]).toMatchObject({
+      user_id: USER_ID,
+      action_type: "quest_xp_mint",
+      reference_id: "quest-daily-1:2026-08-21",
+      payload: { xpAmount: 25, memo: "daily_quest:quest-daily-1" },
+    });
+
+    // Pass 2 minted exactly once, to the linked wallet, for the credited amount.
+    expect(h.rewardXp).toHaveBeenCalledTimes(1);
+    const [recipient, amount, memo] = h.rewardXp.mock.calls[0] ?? [];
+    expect((recipient as { toBase58(): string }).toBase58()).toBe(
+      "WALLET_ADDR"
+    );
+    expect(amount).toBe(25);
+    expect(memo).toBe("daily_quest:quest-daily-1");
+
+    // …and backfilled the ledger row's signature, guarded to the row it read.
+    expect(h.ledgerUpdates).toEqual([
+      { id: "xptx-1", patch: { tx_signature: "MINT_SIG" } },
+    ]);
+
+    // The mint row itself resolved.
+    expect(typeof patchFor("r-mint-new")?.resolved_at).toBe("string");
+  });
+
+  it("mints the CREDITED amount, not the requested one, when the daily cap clamped the award", async () => {
+    h.rows = [
+      { ...questRow, payload: { xpAmount: 25, memo: "daily_quest:q" } },
+    ];
+    h.awardXp.mockReturnValue({ data: 10, error: null }); // cap clamped 25 → 10
+
+    await retryPendingOnchainActions(USER_ID);
+
+    expect(h.inserts[0]).toMatchObject({ payload: { xpAmount: 10 } });
+    expect(h.rewardXp.mock.calls[0]?.[1]).toBe(10);
+  });
+
+  it("enqueues NOTHING and mints nothing for a wallet-less learner", async () => {
+    h.rows = [{ ...questRow }];
+    h.walletAddress = null;
+    h.awardXp.mockReturnValue({ data: 25, error: null });
+
+    await retryPendingOnchainActions(USER_ID);
+
+    // The DB credit still lands — wallet-less is the whole story, not a failure.
+    expect(typeof patchFor("r-quest")?.resolved_at).toBe("string");
+    expect(h.inserts).toHaveLength(0);
+    expect(h.rewardXp).not.toHaveBeenCalled();
+  });
+
+  it("does not enqueue a mint when the cap ate the whole credit (nothing landed)", async () => {
+    h.rows = [{ ...questRow }];
+    h.awardXp.mockReturnValue({ data: 0, error: null });
+
+    await retryPendingOnchainActions(USER_ID);
+
+    expect(patchFor("r-quest")?.last_error).toBe("daily-cap-deferred");
+    expect(h.inserts).toHaveLength(0);
+    expect(h.rewardXp).not.toHaveBeenCalled();
+  });
+
+  it("DEFERS a quest_xp_mint row while the platform is frozen, without minting or burning a retry", async () => {
+    h.rows = [
+      {
+        id: "r-mint",
+        action_type: "quest_xp_mint",
+        reference_id: "quest-daily-1:2026-08-21",
+        retry_count: 1,
+        payload: { xpAmount: 25, memo: "daily_quest:quest-daily-1" },
+      },
+    ];
+    h.isPlatformFrozen.mockResolvedValue(true);
+
+    await retryPendingOnchainActions(USER_ID);
+
+    const patch = patchFor("r-mint");
+    expect(patch?.last_error).toBe("platform-frozen");
+    expect(patch?.retry_count).toBeUndefined();
+    expect(patch?.resolved_at).toBeUndefined();
+    expect(h.rewardXp).not.toHaveBeenCalled();
+  });
+
+  it("keeps crediting quest XP while frozen and defers the mint row it just enqueued", async () => {
+    h.rows = [{ ...questRow }];
+    h.isPlatformFrozen.mockResolvedValue(true);
+    h.awardXp.mockReturnValue({ data: 25, error: null });
+
+    await retryPendingOnchainActions(USER_ID);
+
+    expect(typeof patchFor("r-quest")?.resolved_at).toBe("string");
+    expect(h.inserts).toHaveLength(1);
+    expect(patchFor("r-mint-new")?.last_error).toBe("platform-frozen");
+    expect(h.rewardXp).not.toHaveBeenCalled();
+  });
+
+  it("does NOT double-mint when the ledger row already carries a signature", async () => {
+    h.rows = [
+      {
+        id: "r-mint",
+        action_type: "quest_xp_mint",
+        reference_id: "quest-daily-1:2026-08-21",
+        retry_count: 0,
+        payload: { xpAmount: 25, memo: "daily_quest:quest-daily-1" },
+      },
+    ];
+    h.xpLedgerRow = { id: "xptx-1", tx_signature: "EARLIER_SIG" };
+
+    await retryPendingOnchainActions(USER_ID);
+
+    expect(h.rewardXp).not.toHaveBeenCalled();
+    expect(h.ledgerUpdates).toHaveLength(0);
+    // Still resolved — the work is done, the row must not linger.
+    expect(typeof patchFor("r-mint")?.resolved_at).toBe("string");
+  });
+
+  it("does not re-enqueue a mint row that already exists (re-sweep of a credited quest)", async () => {
+    h.rows = [{ ...questRow }];
+    h.awardXp.mockReturnValue({ data: 25, error: null }); // idempotent re-report
+    h.insertConflicts = true;
+
+    await retryPendingOnchainActions(USER_ID);
+
+    // The upsert is attempted (ON CONFLICT DO NOTHING) but yields no new row,
+    // so this sweep mints nothing — the existing row drains on its own.
+    expect(h.rewardXp).not.toHaveBeenCalled();
+  });
+
+  it("refuses to mint when no xp_transactions row backs the credit", async () => {
+    h.rows = [
+      {
+        id: "r-mint",
+        action_type: "quest_xp_mint",
+        reference_id: "quest-daily-1:2026-08-21",
+        retry_count: 0,
+        payload: { xpAmount: 25, memo: "m" },
+      },
+    ];
+    h.xpLedgerRow = null;
+
+    await retryPendingOnchainActions(USER_ID);
+
+    expect(h.rewardXp).not.toHaveBeenCalled();
+    const patch = patchFor("r-mint");
+    expect(patch?.resolved_at).toBeUndefined();
+    expect(patch?.retry_count).toBe(1);
+  });
+
+  it("rejects an out-of-cap xpAmount instead of minting it", async () => {
+    h.rows = [
+      {
+        id: "r-mint-big",
+        action_type: "quest_xp_mint",
+        reference_id: "quest-daily-1:2026-08-21",
+        retry_count: 0,
+        payload: { xpAmount: 2001, memo: "m" },
+      },
+    ];
+
+    await retryPendingOnchainActions(USER_ID);
+
+    expect(h.rewardXp).not.toHaveBeenCalled();
+    expect(patchFor("r-mint-big")?.retry_count).toBe(1);
+  });
+
+  it("leaves the DB credit intact and retries when the mint itself fails", async () => {
+    h.rows = [{ ...questRow }];
+    h.awardXp.mockReturnValue({ data: 25, error: null });
+    h.rewardXp.mockRejectedValue(new Error("blockhash expired"));
+
+    await retryPendingOnchainActions(USER_ID);
+
+    // The credit stands — resolved, untouched by the chain failure.
+    expect(typeof patchFor("r-quest")?.resolved_at).toBe("string");
+    // Only the mint row retries.
+    const patch = patchFor("r-mint-new");
+    expect(patch?.resolved_at).toBeUndefined();
+    expect(patch?.retry_count).toBe(1);
+    expect(String(patch?.last_error)).toContain("blockhash expired");
+  });
+
+  it("resolves (never retries) when the mint landed but the signature stamp failed", async () => {
+    h.rows = [
+      {
+        id: "r-mint",
+        action_type: "quest_xp_mint",
+        reference_id: "quest-daily-1:2026-08-21",
+        retry_count: 0,
+        payload: { xpAmount: 25, memo: "m" },
+      },
+    ];
+    h.stampShouldError = true;
+
+    await retryPendingOnchainActions(USER_ID);
+
+    expect(h.rewardXp).toHaveBeenCalledTimes(1);
+    // Retrying would mint a SECOND time — the row must resolve regardless.
+    expect(typeof patchFor("r-mint")?.resolved_at).toBe("string");
+    expect(patchFor("r-mint")?.retry_count).toBeUndefined();
   });
 });

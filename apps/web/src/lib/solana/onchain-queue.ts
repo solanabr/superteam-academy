@@ -21,6 +21,7 @@ import {
   awardAchievement,
   finalizeCourse,
   issueCredential,
+  rewardXp,
 } from "./academy-program";
 import { getProgramId } from "./pda";
 
@@ -30,7 +31,14 @@ type OnchainActionType =
   | "course_finalize"
   | "xp"
   | "quest_xp"
+  | "quest_xp_mint"
   | "enroll";
+
+// Hard ceiling on a single quest mint. Matches award_xp's own per-award clamp
+// (c_max_award_xp = 2000), which is stricter than the program's MAX_XP_PER_MINT
+// (5000) — so an amount the DB would never have credited can never reach the
+// chain, even if a queue payload were somehow forged.
+const MAX_QUEST_MINT_XP = 2000;
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 type PendingActionRow =
@@ -85,14 +93,20 @@ export async function retryPendingOnchainActions(
   if (fetchError || !rows || rows.length === 0) return;
 
   // ── Pass 1: DB-only quest_xp credits (no wallet required) ──
-  await creditQuestXpRows(
+  // For a learner with a linked wallet, each credit that lands also enqueues a
+  // `quest_xp_mint` row; those come back here so the mint happens on the SAME
+  // sweep rather than waiting for the next login.
+  const questMintRows = await creditQuestXpRows(
     adminClient,
     userId,
     rows.filter((row) => row.action_type === "quest_xp")
   );
 
   // ── Pass 2: on-chain actions (all require a linked wallet) ──
-  const onchainRows = rows.filter((r) => r.action_type !== "quest_xp");
+  const onchainRows = [
+    ...rows.filter((r) => r.action_type !== "quest_xp"),
+    ...questMintRows,
+  ];
   if (onchainRows.length === 0) return;
 
   // GLOBAL deploy-window freeze (reset wave B2). When the platform is frozen,
@@ -121,8 +135,9 @@ export async function retryPendingOnchainActions(
 
   const wallet = new PublicKey(profile.wallet_address);
 
-  for (const row of rows) {
-    if (row.action_type === "quest_xp") continue; // handled in Pass 1
+  // onchainRows is already quest_xp-free (Pass 1 owns those) and carries the
+  // mint rows Pass 1 just enqueued.
+  for (const row of onchainRows) {
     try {
       const actionType = row.action_type as OnchainActionType;
       const payload = row.payload as Record<string, unknown>;
@@ -425,6 +440,86 @@ export async function retryPendingOnchainActions(
             "lesson" // #736 — the "xp" action credits lesson-completion XP
           );
           continue; // settlement (resolve / cap-defer / retry) handled inside
+        }
+
+        // The on-chain leg of a daily-quest credit that already landed in the
+        // DB (enqueued by creditQuestXpRows, which only does so for a learner
+        // with a linked wallet). Mints the same XP as soulbound Token-2022
+        // supply and stamps the resulting signature onto the xp_transactions
+        // row so the dashboard Activity feed renders its explorer link.
+        //
+        // This case can never claw back or block the DB credit: that credit is
+        // committed and its own queue row resolved before this row exists. A
+        // failure here bumps retry_count like any other Pass-2 action and the
+        // learner keeps their XP — only the explorer link is missing until a
+        // later drain succeeds.
+        case "quest_xp_mint": {
+          const xpAmount = payload.xpAmount;
+          if (
+            typeof xpAmount !== "number" ||
+            !Number.isFinite(xpAmount) ||
+            !Number.isInteger(xpAmount) ||
+            xpAmount <= 0 ||
+            xpAmount > MAX_QUEST_MINT_XP
+          ) {
+            throw new Error(
+              `Invalid quest_xp_mint payload: xpAmount=${JSON.stringify(xpAmount)}`
+            );
+          }
+
+          // Double-mint guard, and the reason a re-sweep is safe on top of the
+          // resolved_at filter: the xp_transactions row this mint belongs to is
+          // found by the SAME idempotency key award_xp used (reference_id), and
+          // a signature already sitting there means the mint landed on an
+          // earlier sweep whose resolve write did not stick. Skip the chain and
+          // resolve. Note award_xp never sets tx_signature for a quest credit,
+          // so a non-null value here can only be this handler's own backfill.
+          const { data: xpRow, error: xpRowError } = await adminClient
+            .from("xp_transactions")
+            .select("id, tx_signature")
+            .eq("user_id", userId)
+            .eq("idempotency_key", row.reference_id)
+            .maybeSingle();
+          if (xpRowError) throw new Error(xpRowError.message);
+
+          // No ledger row means the credit this mint mirrors is not visible
+          // (a replica lag, or the credit was rolled back). Minting anyway
+          // would put XP on-chain that the ledger does not account for, so
+          // fail into the ordinary retry path instead.
+          if (!xpRow) {
+            throw new Error(
+              `No xp_transactions row for quest credit ${row.reference_id} — not minting`
+            );
+          }
+          if (xpRow.tx_signature) break; // already minted → just resolve
+
+          const memo =
+            typeof payload.memo === "string" && payload.memo.length > 0
+              ? payload.memo.slice(0, 64)
+              : `daily_quest:${row.reference_id}`;
+
+          const signature = await withRetry(() =>
+            rewardXp(wallet, xpAmount, memo)
+          );
+
+          // Backfill the ledger row's signature (the Activity feed's ↗ link).
+          // Guarded on tx_signature IS NULL so two concurrent drains cannot
+          // overwrite each other's stamp.
+          const { error: stampError } = await adminClient
+            .from("xp_transactions")
+            .update({ tx_signature: signature })
+            .eq("id", xpRow.id)
+            .is("tx_signature", null);
+          if (stampError) {
+            // The mint is on-chain and irreversible. Do NOT rethrow: a retry
+            // would mint a SECOND time (the guard above reads the signature we
+            // just failed to write). Log and resolve — the XP is correct in
+            // both ledgers; only the explorer link is missing.
+            console.error(
+              `[onchain-queue] minted quest XP ${signature} for ${row.reference_id} but failed to stamp xp_transactions: ${stampError.message}`
+            );
+          }
+          break;
         }
 
         case "enroll": {
