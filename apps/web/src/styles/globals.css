@@ -4497,6 +4497,23 @@ a.path-step-card:hover .path-step-badge.skip {
   border-width: 1px;
   box-shadow: none;
   border-radius: var(--r-md);
+  /* The rank-4+ dashed outline needs the solid top-3 podium for contrast
+     (40cd9caf spec). This strip shows only the you-±3 neighbourhood — usually
+     all rank 4+ — so every row went dashed and the card read as broken
+     (owner, 21-08). Quiet solid hairlines here; the full board keeps the spec. */
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--lb-ink) 14%, transparent);
+}
+.lb-list-mini .lb-row[data-top] {
+  /* A top-3 row that does appear keeps its solid emphasis, minus the lift. */
+  border-width: 1.5px;
+  border-color: var(--lb-ink);
+}
+.lb-list-mini .lb-row.me {
+  /* The full-size ring (2px + 3px offset) overflows the tight card and clips
+     against the scroll container; keep the marker but tuck it in. */
+  outline-width: 1.5px;
+  outline-offset: 1px;
 }
 .lb-list-mini .lb-av {
   width: 26px;
