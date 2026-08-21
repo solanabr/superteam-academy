@@ -132,23 +132,33 @@ export async function getOwnReferralStats(userId: string): Promise<{
 }> {
   const supabase = createAdminClient();
 
-  const { data: code, error: codeError } = await supabase.rpc(
-    "get_or_create_referral_code",
-    { p_user_id: userId }
-  );
+  // The code mint, the season lookup and the lifetime signup count don't
+  // depend on each other — run them in one round instead of four serial hops
+  // (this route sat behind a visible spinner on the leaderboard card). Only
+  // the season-points count needs the season's window, so it goes second.
+  const nowIso = new Date().toISOString();
+  const [codeRes, seasonRes, signupRes] = await Promise.all([
+    supabase.rpc("get_or_create_referral_code", { p_user_id: userId }),
+    supabase
+      .from("referral_seasons")
+      .select("number, starts_at, ends_at")
+      .lte("starts_at", nowIso)
+      .order("number", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("referral_events")
+      .select("id", { count: "exact", head: true })
+      .eq("referrer_id", userId)
+      .eq("kind", "signup"),
+  ]);
+
+  const { data: code, error: codeError } = codeRes;
   if (codeError || !code) {
     throw new Error(codeError?.message ?? "code mint failed");
   }
-
-  const nowIso = new Date().toISOString();
-  const { data: seasonData, error: seasonError } = await supabase
-    .from("referral_seasons")
-    .select("number, starts_at, ends_at")
-    .lte("starts_at", nowIso)
-    .order("number", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (seasonError) throw new Error(seasonError.message);
+  if (seasonRes.error) throw new Error(seasonRes.error.message);
+  const seasonData = seasonRes.data;
   const season: ReferralSeason | null = seasonData
     ? {
         number: seasonData.number,
@@ -156,6 +166,7 @@ export async function getOwnReferralStats(userId: string): Promise<{
         endsAt: seasonData.ends_at,
       }
     : null;
+  if (signupRes.error) throw new Error(signupRes.error.message);
 
   let seasonPoints = 0;
   if (season) {
@@ -169,17 +180,10 @@ export async function getOwnReferralStats(userId: string): Promise<{
     seasonPoints = count ?? 0;
   }
 
-  const { count: signupCount, error: signupError } = await supabase
-    .from("referral_events")
-    .select("id", { count: "exact", head: true })
-    .eq("referrer_id", userId)
-    .eq("kind", "signup");
-  if (signupError) throw new Error(signupError.message);
-
   return {
     code,
     seasonPoints,
-    referredSignups: signupCount ?? 0,
+    referredSignups: signupRes.count ?? 0,
     season,
   };
 }

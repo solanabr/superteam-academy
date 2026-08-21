@@ -254,7 +254,7 @@ describe("QuizBlock — proofs and answered reporting", () => {
   });
 });
 
-describe("QuizBlock — completion state survives the auto-collapse", () => {
+describe("QuizBlock — a clean sweep leaves the quiz open (owner 2026-08-21)", () => {
   /** Answer every question of `quizBlock` correctly, in stepper order. */
   function sweep(): void {
     fireEvent.click(screen.getByLabelText("A program-derived address"));
@@ -265,31 +265,29 @@ describe("QuizBlock — completion state survives the auto-collapse", () => {
     fireEvent.click(checkButton());
   }
 
-  it("shows the all-correct summary in a live region even though the block folds", () => {
+  it("does NOT auto-fold — the last explanation stays on screen", () => {
     renderWithIntl(<QuizBlock block={quizBlock} ctx={makeCtx()} />);
     sweep();
 
-    // The owner-requested auto-collapse fires on this exact transition.
+    // The sweep lands on the last question; folding here used to snatch its
+    // explanation away mid-read (the 2026-07-31 auto-collapse, reversed).
+    expect(screen.getByRole("button", { name: /Quiz/ })).toHaveAttribute(
+      "aria-expanded",
+      "true"
+    );
+    const summary = screen.getByText("All 2 questions answered correctly.");
+    expect(summary.closest(".hidden")).toBeNull();
+  });
+
+  it("still folds and reopens by hand, keeping the header score + Complete chip", () => {
+    renderWithIntl(<QuizBlock block={quizBlock} ctx={makeCtx()} />);
+    sweep();
+
+    fireEvent.click(screen.getByRole("button", { name: /Quiz/ }));
     expect(screen.getByRole("button", { name: /Quiz/ })).toHaveAttribute(
       "aria-expanded",
       "false"
     );
-
-    // ...and the completion line must still be perceivable. It has to live in
-    // a polite live region OUTSIDE the collapsible body: the body carries the
-    // `hidden` utility on the very frame the sweep lands, so a summary nested
-    // in it is neither painted nor reliably announced. (jsdom loads no
-    // stylesheet, so `toBeVisible` cannot see a class-driven display:none —
-    // the ancestor check below is what actually proves the placement.)
-    const summary = screen.getByText("All 2 questions answered correctly.");
-    const live = summary.closest("[aria-live]");
-    expect(live).toHaveAttribute("aria-live", "polite");
-    expect(live!.closest(".hidden")).toBeNull();
-  });
-
-  it("keeps the header score + Complete chip readable while collapsed", () => {
-    renderWithIntl(<QuizBlock block={quizBlock} ctx={makeCtx()} />);
-    sweep();
     expect(screen.getByText("2/2 correct")).toBeVisible();
     expect(screen.getByText("Complete")).toBeVisible();
   });
