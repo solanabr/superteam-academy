@@ -232,18 +232,12 @@ export function Sidebar() {
                 level: level + 1,
               })}
             </div>
-            <div
-              className="sidebar-prog overflow-hidden rounded-full"
-              style={{ height: "6px", background: "var(--input)" }}
-            >
+            {/* Same construction as the profile XP bar, one size down:
+                ink-outlined track, solid fill, no gradient. */}
+            <div className="sidebar-prog dash-xp-track max-w-none">
               <div
-                className="sidebar-prog-fill h-full rounded-full"
-                style={{
-                  width: `${progressPercent}%`,
-                  background:
-                    "linear-gradient(90deg, var(--primary-dark), var(--primary))",
-                  transition: "width 0.6s cubic-bezier(0.4,0,0.2,1)",
-                }}
+                className="dash-xp-fill"
+                style={{ width: `${progressPercent}%` }}
               />
             </div>
           </div>

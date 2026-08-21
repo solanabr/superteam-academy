@@ -93,7 +93,10 @@ export function ProfileBody({
               return (
                 <AchievementToken
                   key={ach.id}
+                  id={ach.id}
                   glyph={ach.glyph}
+                  category={ach.category}
+                  solTier={ach.solTier}
                   name={ach.name}
                   hint={ach.description}
                   state={earned ? (isSol ? "sol" : "earned") : "locked"}

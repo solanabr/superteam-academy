@@ -1,53 +1,104 @@
 import { cn } from "@/lib/utils";
 
+/**
+ * The level badge (spec: Profile Level and XP, 2a — "ring badge, LV lock-up,
+ * colour by band").
+ *
+ * Replaces the metallic gradient sphere with the same flat, ink-outlined
+ * construction the achievement patches use: a plate disc with a hard offset
+ * shadow, a segmented progress ring, and an inner disc whose fill comes from
+ * the level band. The ring is the only ring in the system — a patch never
+ * gets one.
+ *
+ * `progress` is optional because most places that show a level (comment
+ * bylines, the leaderboard, the header) know the level but not how far into
+ * it the learner is. Without it the badge drops the ring and reads as a plain
+ * banded disc rather than inventing a value.
+ */
+export type LevelBand =
+  | "recruit"
+  | "learner"
+  | "builder"
+  | "contributor"
+  | "core";
+
+/**
+ * Bands walk cream → butter → green → deep green → ink, so a badge's rank is
+ * legible without reading the number. The Solana gradient stays reserved for
+ * flagship patches and never appears here.
+ */
+export function getLevelBand(level: number): LevelBand {
+  if (level >= 20) return "core";
+  if (level >= 11) return "contributor";
+  if (level >= 6) return "builder";
+  if (level >= 3) return "learner";
+  return "recruit";
+}
+
+export type LevelBadgeSize = "xs" | "sm" | "md" | "lg" | "xl";
+
+/** The LV kicker is dropped below 60px, where it stops being legible. */
+const SHOWS_KICKER: Record<LevelBadgeSize, boolean> = {
+  xs: false,
+  sm: false,
+  md: false,
+  lg: true,
+  xl: true,
+};
+
+/** Below 44px the ring's segments muddy into a smear, so it is dropped too. */
+const SHOWS_RING: Record<LevelBadgeSize, boolean> = {
+  xs: false,
+  sm: false,
+  md: true,
+  lg: true,
+  xl: true,
+};
+
 interface LevelBadgeProps {
   level: number;
-  size?: "xs" | "sm" | "md" | "lg" | "xl";
+  size?: LevelBadgeSize;
+  /** Percent into the current level (0–100). Omit to render without the ring. */
+  progress?: number;
   className?: string;
 }
 
-export type LevelTier = "seed" | "sprout" | "sapling" | "canopy" | "legend";
-
-export function getLevelTier(level: number): LevelTier {
-  if (level >= 50) return "legend";
-  if (level >= 20) return "canopy";
-  if (level >= 10) return "sapling";
-  if (level >= 5) return "sprout";
-  return "seed";
-}
-
-const sizeClasses = {
-  xs: "w-[20px] h-[20px] text-[10px] border-[1.5px]",
-  sm: "w-[32px] h-[32px] text-[13px] border-[2px]",
-  md: "w-[44px] h-[44px] text-[16px] border-[2.5px]",
-  lg: "w-[64px] h-[64px] text-[28px] border-[2.5px]",
-  xl: "w-[96px] h-[96px] text-[42px] border-[3px]",
-} as const;
-
-/** Static tier → CSS class map so Tailwind can detect the literal strings during content scanning */
-const tierClasses: Record<LevelTier, string> = {
-  seed: "lv-seed",
-  sprout: "lv-sprout",
-  sapling: "lv-sapling",
-  canopy: "lv-canopy",
-  legend: "lv-legend",
-};
-
-export function LevelBadge({ level, size = "md", className }: LevelBadgeProps) {
-  const tier = getLevelTier(level);
+export function LevelBadge({
+  level,
+  size = "md",
+  progress,
+  className,
+}: LevelBadgeProps) {
+  const band = getLevelBand(level);
+  const ring =
+    progress !== undefined && SHOWS_RING[size]
+      ? Math.max(0, Math.min(100, progress))
+      : null;
 
   return (
     <div
-      className={cn(
-        "level-badge",
-        tierClasses[tier],
-        sizeClasses[size],
-        className
-      )}
+      className={cn("lv-badge", className)}
+      data-band={band}
+      data-size={size}
+      data-ring={ring !== null || undefined}
+      style={ring !== null ? { ["--lv-pct" as string]: ring } : undefined}
       role="img"
-      aria-label={`Level ${level}`}
+      aria-label={
+        ring !== null
+          ? `Level ${level}, ${Math.round(ring)}% to the next level`
+          : `Level ${level}`
+      }
     >
-      {level}
+      {ring !== null && (
+        <>
+          <span className="lv-ring" aria-hidden="true" />
+          <span className="lv-ring-seg" aria-hidden="true" />
+        </>
+      )}
+      <span className="lv-core">
+        {SHOWS_KICKER[size] && <span className="lv-kicker">LV</span>}
+        <span className="lv-num">{level}</span>
+      </span>
     </div>
   );
 }
