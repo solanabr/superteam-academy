@@ -3,17 +3,35 @@
 import { useEffect, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import {
-  BookOpen,
   CaretLeft,
   CaretRight,
-  ChatCircle,
   Lightning,
-  Medal,
-  Scroll,
-  GraduationCap,
   ArrowSquareOut,
 } from "@phosphor-icons/react";
 import type { ActivityItem } from "@/lib/dashboard/types";
+import { GlyphMark } from "@/components/gamification/glyph-mark";
+import type { MarkTint } from "@/components/gamification/glyph-mark";
+
+/* ---------------------------------------------------------------
+   ACTIVITY MARK MAP — activity type → bare glyph + tint (owner-approved
+   21-08). Tier 3 of the glyph language: no container, a fixed 22px gutter.
+--------------------------------------------------------------- */
+const ACTIVITY_MARKS: Record<string, { glyph: string; tint: MarkTint }> = {
+  lesson: { glyph: "+", tint: "primary" },
+  challenge: { glyph: "</>", tint: "primary" },
+  course_complete: { glyph: "★", tint: "primary" },
+  achievement: { glyph: "◎", tint: "gold" },
+  certificate: { glyph: "⬡", tint: "purple" },
+  enrollment: { glyph: "▸", tint: "primary" },
+  community: { glyph: "◍", tint: "sky" },
+  xp_other: { glyph: "⚡", tint: "streak" },
+};
+
+const FALLBACK_MARK = ACTIVITY_MARKS.xp_other!;
+
+export function activityMark(type: string): { glyph: string; tint: MarkTint } {
+  return ACTIVITY_MARKS[type] ?? FALLBACK_MARK;
+}
 
 const SOLANA_CLUSTER = process.env.NEXT_PUBLIC_SOLANA_NETWORK ?? "devnet";
 function explorerTxUrl(sig: string): string {
@@ -31,6 +49,11 @@ interface ActivitySectionProps {
  * "Activity" dashboard section — paginated multi-source feed (lessons,
  * challenges, achievements, certificates, enrollments, community, XP) with
  * explorer deep links for on-chain items.
+ *
+ * The row's leading icon is a GlyphMark in a fixed 22px gutter (21-08). The
+ * bordered `.act-icon` boxes it replaces sized themselves around whichever
+ * Phosphor glyph they held, so rows read as slightly different heights — the
+ * owner's "first row looks smaller" report.
  */
 export function ActivitySection({ recentActivity }: ActivitySectionProps) {
   const t = useTranslations("dashboard");
@@ -104,28 +127,12 @@ export function ActivitySection({ recentActivity }: ActivitySectionProps) {
           <div className="act-panel-amb" aria-hidden="true" />
           <div className="act-feed">
             {activityPageItems.map((activity) => {
-              const iconMap = {
-                lesson: Lightning,
-                challenge: Lightning,
-                course_complete: GraduationCap,
-                achievement: Medal,
-                certificate: Scroll,
-                enrollment: BookOpen,
-                community: ChatCircle,
-                xp_other: Lightning,
-              };
-              const ActivityIcon = iconMap[activity.type] ?? Lightning;
+              const mark = activityMark(activity.type);
 
               const inner = (
                 <>
                   <div className="act-left">
-                    <div className={`act-icon ${activity.type}`}>
-                      <ActivityIcon
-                        size={16}
-                        weight="duotone"
-                        aria-hidden="true"
-                      />
-                    </div>
+                    <GlyphMark glyph={mark.glyph} tint={mark.tint} />
                     <span className="act-text">{activity.action}</span>
                   </div>
                   <div className="act-right">

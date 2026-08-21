@@ -758,21 +758,25 @@
 
   /* category → colour */
   .patch[data-cat="reward"],
+  .chip[data-cat="reward"],
   .patch3d[data-cat="reward"] {
     --fill: #f5a623;
     --shade: #b45309;
   }
   .patch[data-cat="start"],
+  .chip[data-cat="start"],
   .patch3d[data-cat="start"] {
     --fill: #fde68a;
     --shade: #f5a623;
   }
   .patch[data-cat="course"],
+  .chip[data-cat="course"],
   .patch3d[data-cat="course"] {
     --fill: #2ecc8e;
     --shade: #0a7055;
   }
   .patch[data-cat="craft"],
+  .chip[data-cat="craft"],
   .patch3d[data-cat="craft"] {
     --fill: #0a7055;
     --shade: #065c44;
@@ -780,6 +784,7 @@
     --stitch: rgba(250, 250, 247, 0.55);
   }
   .patch[data-cat="community"],
+  .chip[data-cat="community"],
   .patch3d[data-cat="community"] {
     --fill: #ea580c;
     --shade: #9a3412;
@@ -787,6 +792,7 @@
     --stitch: rgba(250, 250, 247, 0.55);
   }
   .patch[data-cat="endurance"],
+  .chip[data-cat="endurance"],
   .patch3d[data-cat="endurance"] {
     --fill: #19231b;
     --shade: #0e1117;
@@ -794,6 +800,7 @@
     --stitch: rgba(250, 250, 247, 0.5);
   }
   .patch[data-cat="onchain"],
+  .chip[data-cat="onchain"],
   .patch3d[data-cat="onchain"] {
     --fill: linear-gradient(135deg, #9945ff, #14f195);
     --shade: #6d28d9;
@@ -835,7 +842,8 @@
   }
 
   /* dark theme — outline and shadow flip to cream, fills unchanged */
-  [data-theme="dark"] .patch {
+  [data-theme="dark"] .patch,
+  [data-theme="dark"] .chip {
     --patch-ink: #fafaf7;
     box-shadow: 0 var(--lift) 0 0 rgba(250, 250, 247, 0.92);
   }
@@ -852,6 +860,112 @@
   }
   [data-theme="dark"] .patch[data-locked]::before {
     border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  /* ── CHIP — tier 2 of the glyph language (owner-approved 21-08) ──
+     The patch construction sized down for repeated rows: category fill, ink
+     outline, hard offset shadow, same glyph rendering — no dashed stitch.
+     Presence steps down with repetition, so the stitch stays a patch-only
+     signal. The category fills are inherited from the `.patch[data-cat=…]`
+     rules above (this selector is listed alongside them), which is what stops
+     a chip drifting away from the patch it descends from. */
+  .chip {
+    --size: 34px;
+    --border: 2px;
+    --lift: 2px;
+    --fill: #f5a623;
+    --patch-glyph: #19231b;
+    --chip-radius: calc(var(--size) * 0.26);
+    --patch-ink: #19231b;
+
+    position: relative;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: var(--size);
+    height: var(--size);
+    border: var(--border) solid var(--patch-ink);
+    border-radius: var(--chip-radius);
+    background: var(--fill);
+    box-shadow: 0 var(--lift) 0 0 var(--patch-ink);
+    font:
+      700 calc(var(--size) * 0.38) / 1 var(--font-mono),
+      "JetBrains Mono",
+      monospace;
+    color: var(--patch-glyph);
+    user-select: none;
+  }
+  .chip[data-size="28"] {
+    --size: 28px;
+  }
+  .chip[data-size="40"] {
+    --size: 40px;
+  }
+  .chip[data-round] {
+    --chip-radius: 999px;
+  }
+  /* "</>" is three mono advances inside a 40px box — tighten so it never
+     touches the outline. */
+  .chip .patch-text {
+    letter-spacing: -0.04em;
+  }
+  .chip .patch-mark {
+    width: calc(var(--size) * 0.46);
+    height: calc(var(--size) * 0.46);
+  }
+
+  /* ── MARK — tier 3: no container, just the glyph in a fixed gutter ──
+     Used where the row repeats most (the activity feed). The 22px cell is
+     rigid on purpose: the bordered icon boxes it replaces let each row's text
+     start at a slightly different x depending on the icon inside. */
+  .mark {
+    --size: 22px;
+    --tint: var(--primary);
+    --patch-glyph: var(--tint);
+
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: var(--size);
+    height: var(--size);
+    font:
+      700 14px / 1 var(--font-mono),
+      "JetBrains Mono",
+      monospace;
+    color: var(--tint);
+    user-select: none;
+  }
+  .mark .patch-mark {
+    width: 15px;
+    height: 15px;
+  }
+  .mark[data-tint="primary"] {
+    --tint: var(--primary);
+  }
+  .mark[data-tint="streak"] {
+    --tint: var(--streak);
+  }
+  /* Gold, purple and sky have no token of their own. The literals below are
+     the light-mode values; each gets a lighter dark-mode value the same way
+     --xp and --streak already flip, so no mark relies on one colour reading on
+     both grounds. */
+  .mark[data-tint="gold"] {
+    --tint: #d97706;
+  }
+  .mark[data-tint="purple"] {
+    --tint: #9945ff;
+  }
+  .mark[data-tint="sky"] {
+    --tint: #0284c7;
+  }
+  [data-theme="dark"] .mark[data-tint="gold"] {
+    --tint: #f5a623;
+  }
+  [data-theme="dark"] .mark[data-tint="purple"] {
+    --tint: #b07cff;
+  }
+  [data-theme="dark"] .mark[data-tint="sky"] {
+    --tint: #38bdf8;
   }
 
   /* ── The 3D patch (spec: achievement-patches v1, "The 3D patch") ──
@@ -3013,33 +3127,6 @@ a.path-step-card:hover .path-step-badge.skip {
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
-/* Gold metallic emoji ring (quest 🎯 / surprise bonus ✨). */
-.rw-ring {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  padding: 4px;
-  flex-shrink: 0;
-  background: linear-gradient(
-    145deg,
-    #7a3e00 0%,
-    #b45309 25%,
-    #f5a623 55%,
-    #fde68a 75%,
-    #b45309 100%
-  );
-  box-shadow: 0 0 16px rgba(245, 166, 35, 0.4);
-}
-.rw-ring-in {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: var(--card);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-}
 /* Popup patch sits at 40px; the card row is tighter than the dashboard. */
 /* Mini diploma — the certificate artifact in miniature. */
 .rw-diploma {
@@ -4908,7 +4995,7 @@ a.path-step-card:hover .path-step-badge.skip {
 /* Individual quest row */
 .dq {
   display: grid;
-  grid-template-columns: 26px 1fr auto auto;
+  grid-template-columns: 28px 1fr auto auto;
   align-items: center;
   gap: 9px;
   padding: 6px 10px;
@@ -4938,20 +5025,6 @@ a.path-step-card:hover .path-step-badge.skip {
 .dq-link:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
-}
-.dq-icon {
-  width: 26px;
-  height: 26px;
-  border-radius: var(--r-sm);
-  background: var(--primary-dim);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--primary);
-}
-.dq.done .dq-icon {
-  background: var(--xp-dim, rgba(230, 186, 60, 0.12));
-  color: var(--xp);
 }
 .dq-info {
   display: flex;
@@ -5622,58 +5695,6 @@ a.path-step-card:hover .path-step-title {
   gap: 12px;
   min-width: 0;
   flex: 1;
-}
-
-/* ── Icon — bordered rounded square with depth ── */
-.act-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: var(--r-md, 8px);
-  flex-shrink: 0;
-  border: 1.5px solid;
-}
-.act-icon.lesson {
-  background: var(--primary-dim);
-  border-color: color-mix(in srgb, var(--primary) 25%, transparent);
-  color: var(--primary);
-}
-.act-icon.challenge {
-  background: rgba(249, 115, 22, 0.08);
-  border-color: rgba(249, 115, 22, 0.2);
-  color: #f97316;
-}
-.act-icon.course_complete {
-  background: var(--primary-dim);
-  border-color: color-mix(in srgb, var(--primary) 25%, transparent);
-  color: var(--primary);
-}
-.act-icon.achievement {
-  background: rgba(245, 166, 35, 0.08);
-  border-color: rgba(245, 166, 35, 0.2);
-  color: var(--xp);
-}
-.act-icon.certificate {
-  background: rgba(153, 69, 255, 0.08);
-  border-color: rgba(153, 69, 255, 0.2);
-  color: #9945ff;
-}
-.act-icon.enrollment {
-  background: var(--primary-dim);
-  border-color: color-mix(in srgb, var(--primary) 25%, transparent);
-  color: var(--primary);
-}
-.act-icon.community {
-  background: rgba(56, 189, 248, 0.08);
-  border-color: rgba(56, 189, 248, 0.2);
-  color: #38bdf8;
-}
-.act-icon.xp_other {
-  background: rgba(245, 166, 35, 0.08);
-  border-color: rgba(245, 166, 35, 0.2);
-  color: var(--xp);
 }
 
 /* ── Text ── */

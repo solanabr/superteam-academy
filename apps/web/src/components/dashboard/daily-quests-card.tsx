@@ -2,34 +2,40 @@
 
 import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
-import {
-  BookOpen,
-  Code,
-  Lightning,
-  Trophy,
-  Scroll,
-  CircleDashed,
-  CheckCircle,
-} from "@phosphor-icons/react";
-import type { Icon } from "@phosphor-icons/react";
+import { Lightning, CheckCircle } from "@phosphor-icons/react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import type { DailyQuest } from "@superteam-lms/types";
 import { questHref } from "@/lib/gamification/quest-links";
 import { cn } from "@/lib/utils";
+import { GlyphChip } from "@/components/gamification/glyph-chip";
+import type { PatchCategory } from "@/components/gamification/patch-look";
 
 /* ---------------------------------------------------------------
-   QUEST ICON MAP — maps content icon strings to Phosphor components
+   QUEST GLYPH MAP — content icon string → chip glyph + category.
+
+   Keyed on the icon string the quest doc carries (not the quest type) so
+   adding a quest doc still needs no code change, exactly as the Phosphor map
+   it replaces did. Glyph choices are the owner's, approved 21-08.
 --------------------------------------------------------------- */
-const QUEST_ICONS: Record<string, Icon> = {
-  BookOpen,
-  Code,
-  Lightning,
-  Trophy,
-  Scroll,
+interface QuestGlyph {
+  glyph: string;
+  cat: PatchCategory;
+}
+
+const QUEST_GLYPHS: Record<string, QuestGlyph> = {
+  Code: { glyph: "</>", cat: "craft" }, // challenge
+  BookOpen: { glyph: "▸", cat: "course" }, // a lesson
+  Scroll: { glyph: "⬡", cat: "endurance" }, // a module
+  Lightning: { glyph: "×3", cat: "course" }, // three lessons
+  Trophy: { glyph: "∞", cat: "community" }, // login streak
 };
 
-function getQuestIcon(iconName: string): Icon {
-  return QUEST_ICONS[iconName] ?? CircleDashed;
+const FALLBACK_GLYPH: QuestGlyph = { glyph: "•", cat: "course" };
+
+/** A completed quest keeps its category but flips the glyph to a check. */
+export function questGlyph(iconName: string, completed: boolean): QuestGlyph {
+  const base = QUEST_GLYPHS[iconName] ?? FALLBACK_GLYPH;
+  return completed ? { ...base, glyph: "✓" } : base;
 }
 
 function getHoursUntilReset(resetTime: string): number {
@@ -47,7 +53,8 @@ interface DailyQuestsCardProps {
  * Daily Quests as a standalone rail card. Extracted from the identity panel
  * (where it shared the bottom row with the heatmap) so the dashboard's right
  * rail can carry the day's actionable surfaces together. Row anatomy (`dq-*`)
- * and the per-type deep-links (#572) are unchanged.
+ * and the per-type deep-links (#572) are unchanged; only the leading icon
+ * changed, from a Phosphor glyph in a tinted box to a 28px GlyphChip.
  */
 export function DailyQuestsCard({
   quests,
@@ -75,13 +82,11 @@ export function DailyQuestsCard({
         <Tooltip.Provider delayDuration={150} skipDelayDuration={150}>
           <div className="dq-list-capped flex flex-col gap-[5px]">
             {quests.map((quest) => {
-              const IconComp = getQuestIcon(quest.icon);
+              const chip = questGlyph(quest.icon, quest.completed);
               const href = questHref(quest.type, locale);
               const inner = (
                 <>
-                  <div className="dq-icon">
-                    <IconComp size={16} weight="duotone" />
-                  </div>
+                  <GlyphChip glyph={chip.glyph} cat={chip.cat} size={28} />
                   <div className="dq-info">
                     <span className="dq-name">{quest.name}</span>
                   </div>

@@ -3,11 +3,12 @@
 import { useEffect } from "react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { Play, ArrowRight, Confetti } from "@phosphor-icons/react";
+import { ArrowRight } from "@phosphor-icons/react";
 import {
   trackContinueCardShown,
   trackContinueCardClick,
 } from "@/lib/analytics/events";
+import { GlyphChip } from "@/components/gamification/glyph-chip";
 
 /**
  * What the dashboard hero's Continue card points at (LX-B2, issue #551):
@@ -87,16 +88,14 @@ export function ContinueCard({ target, locale }: ContinueCardProps) {
           aria-hidden="true"
         />
 
-        <span
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-white"
-          aria-hidden="true"
-        >
-          {target.kind === "lesson" ? (
-            <Play size={20} weight="fill" />
-          ) : (
-            <Confetti size={20} weight="fill" />
-          )}
-        </span>
+        {/* The resume affordance is a 40px chip (21-08), squared rather than
+            the old round disc — the round shape is the patch's tier-3 signal
+            and does not belong on a navigation control. */}
+        <GlyphChip
+          glyph={target.kind === "lesson" ? "▸" : "★"}
+          cat="course"
+          size={40}
+        />
 
         <div className="min-w-0 flex-1">
           <p className="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
