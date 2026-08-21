@@ -35,10 +35,16 @@ export function getLevelBand(level: number): LevelBand {
   return "recruit";
 }
 
-export type LevelBadgeSize = "xs" | "sm" | "md" | "lg" | "xl";
+/**
+ * `pill` is the horizontal lock-up from the spec — LV and the number side by
+ * side in a banded capsule. It suits a dense row where a disc would fight the
+ * avatars and rank coins for the same circular real estate.
+ */
+export type LevelBadgeSize = "pill" | "xs" | "sm" | "md" | "lg" | "xl";
 
 /** The LV kicker is dropped below 60px, where it stops being legible. */
 const SHOWS_KICKER: Record<LevelBadgeSize, boolean> = {
+  pill: true,
   xs: false,
   sm: false,
   md: false,
@@ -48,6 +54,7 @@ const SHOWS_KICKER: Record<LevelBadgeSize, boolean> = {
 
 /** Below 44px the ring's segments muddy into a smear, so it is dropped too. */
 const SHOWS_RING: Record<LevelBadgeSize, boolean> = {
+  pill: false,
   xs: false,
   sm: false,
   md: true,

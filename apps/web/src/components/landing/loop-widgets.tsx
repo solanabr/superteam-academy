@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Lightning, CheckCircle, Circle } from "@phosphor-icons/react";
 import { prefersReducedMotion } from "@/lib/reduced-motion";
+import { LevelBadge } from "@/components/gamification/level-badge";
 
 /* ────────────────────────────────────────────────────────────────────
    Landing "loop" widgets — the product loop rebuilt as live miniatures
@@ -295,21 +296,17 @@ export function EarnWidget({ replayLabel }: { replayLabel: string }) {
         {/* Level orb + XP counter */}
         <div className="flex items-center gap-4">
           <div
-            className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full font-display text-xl font-black text-white shadow-[0_4px_0_0_var(--xp-dark)] transition-transform duration-300 [background:linear-gradient(135deg,var(--xp),var(--xp-dark))] ${popOrb ? "scale-110" : ""}`}
-            aria-hidden="true"
+            className={`shrink-0 transition-transform duration-300 ${popOrb ? "scale-110" : ""}`}
           >
-            5
+            <LevelBadge level={5} size="lg" progress={pct} />
           </div>
           <div className="min-w-0 flex-1">
             <div className="font-mono text-2xl font-black tabular-nums text-xp">
               {xp.toLocaleString()}
               <span className="ml-1 text-xs font-bold text-text-3">XP</span>
             </div>
-            <div className="mt-2 h-3 overflow-hidden rounded-full border-[2px] border-border bg-subtle">
-              <div
-                className="h-full rounded-full transition-[width] duration-1000 ease-out [background:linear-gradient(90deg,var(--primary),var(--xp))]"
-                style={{ width: `${pct}%` }}
-              />
+            <div className="dash-xp-track mt-2 max-w-none">
+              <div className="dash-xp-fill" style={{ width: `${pct}%` }} />
             </div>
           </div>
         </div>

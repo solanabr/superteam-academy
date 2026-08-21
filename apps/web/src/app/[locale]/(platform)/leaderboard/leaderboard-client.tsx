@@ -84,7 +84,7 @@ function PodiumCard({
 
         {/* Level = floor(sqrt(XP/100)) legitimately yields 0 early on — a
             "0" coin reads as broken, so the badge waits for level 1. */}
-        {entry.level >= 1 && <LevelBadge level={entry.level} size="sm" />}
+        {entry.level >= 1 && <LevelBadge level={entry.level} size="pill" />}
       </div>
     </Link>
   );
@@ -144,7 +144,7 @@ function RankedRow({
         </div>
 
         <div className="lb-right">
-          {entry.level >= 1 && <LevelBadge level={entry.level} size="sm" />}
+          {entry.level >= 1 && <LevelBadge level={entry.level} size="pill" />}
           <span className="lb-xp">{entry.totalXp.toLocaleString()} XP</span>
         </div>
       </div>

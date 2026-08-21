@@ -504,8 +504,10 @@
     font-weight: 700;
     letter-spacing: 0.2em;
     line-height: 1;
-    /* the tracking is trailing-side only, so nudge back to optical centre */
-    text-indent: 0.2em;
+    /* Letter-spacing is applied after the last character too, so centring the
+       box leaves the ink half a step left. Shift back by half the tracking —
+       not the whole, which over-corrects the other way. */
+    text-indent: 0.1em;
     color: var(--lv-label);
   }
 
@@ -546,6 +548,30 @@
     --lv-inset: 12px;
     --lv-num: 36px;
     --lv-kicker: 10px;
+  }
+
+  /* The horizontal lock-up: same band fill and ink outline, laid out in a
+     row. No ring — a capsule has nowhere to put one. */
+  .lv-badge[data-size="pill"] {
+    --lv-border: 2px;
+    --lv-lift: 3px;
+    --lv-num: 16px;
+    --lv-kicker: 9px;
+    width: auto;
+    height: 30px;
+    padding: 0 11px;
+    border-radius: 999px;
+  }
+  .lv-badge[data-size="pill"] .lv-core {
+    position: static;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 100%;
+  }
+  .lv-badge[data-size="pill"] .lv-kicker {
+    letter-spacing: 0.14em;
+    text-indent: 0.07em;
   }
 
   /* bands */
