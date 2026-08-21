@@ -1,65 +1,49 @@
 import { cn } from "@/lib/utils";
 
 /**
- * The level badge (spec: Profile Level and XP, 2a — "ring badge, LV lock-up,
- * colour by band").
+ * The level badge (spec: Leaderboard and Level, §1).
  *
- * Replaces the metallic gradient sphere with the same flat, ink-outlined
- * construction the achievement patches use: a plate disc with a hard offset
- * shadow, a segmented progress ring, and an inner disc whose fill comes from
- * the level band. The ring is the only ring in the system — a patch never
- * gets one.
+ * A plate disc holding a stacked LV lock-up, wrapped in a progress ring — the
+ * only ring in the system, so a badge is never mistaken for an achievement
+ * patch. Flat fill, ink outline, hard offset shadow: no metal, no gradient.
  *
- * `progress` is optional because most places that show a level (comment
- * bylines, the leaderboard, the header) know the level but not how far into
- * it the learner is. Without it the badge drops the ring and reads as a plain
- * banded disc rather than inventing a value.
+ * Mint belongs to progress alone: it fills the ring and the XP bar and is
+ * never a band colour. The band ramp walks cream → amber → deep green → ink,
+ * so rank is legible before the numeral is read.
  */
-export type LevelBand =
-  | "recruit"
-  | "learner"
-  | "builder"
-  | "contributor"
-  | "core";
+export type LevelBand = "recruit" | "learner" | "contributor" | "core";
 
 /**
- * Bands walk cream → butter → green → deep green → ink, so a badge's rank is
- * legible without reading the number. The Solana gradient stays reserved for
- * flagship patches and never appears here.
+ * Four bands, inclusive maxima. If the XP curve moves, redistribute these
+ * thresholds — the spec is explicit that a fifth colour is not an option.
  */
 export function getLevelBand(level: number): LevelBand {
   if (level >= 20) return "core";
-  if (level >= 11) return "contributor";
-  if (level >= 6) return "builder";
+  if (level >= 10) return "contributor";
   if (level >= 3) return "learner";
   return "recruit";
 }
 
 /**
- * `pill` is the horizontal lock-up from the spec — LV and the number side by
- * side in a banded capsule. It suits a dense row where a disc would fight the
- * avatars and rank coins for the same circular real estate.
+ * The spec's three disc sizes plus the inline lock-up. `pill` puts LV before
+ * the numeral in a capsule, for rows too dense to carry a disc.
  */
-export type LevelBadgeSize = "pill" | "xs" | "sm" | "md" | "lg" | "xl";
+export type LevelBadgeSize = "pill" | 44 | 72 | 104;
 
-/** The LV kicker is dropped below 60px, where it stops being legible. */
-const SHOWS_KICKER: Record<LevelBadgeSize, boolean> = {
+/** LV is hidden below 60px rather than shrunk further. */
+const SHOWS_KICKER: Record<string, boolean> = {
   pill: true,
-  xs: false,
-  sm: false,
-  md: false,
-  lg: true,
-  xl: true,
+  44: false,
+  72: true,
+  104: true,
 };
 
-/** Below 44px the ring's segments muddy into a smear, so it is dropped too. */
-const SHOWS_RING: Record<LevelBadgeSize, boolean> = {
+/** A pill has nowhere to put a ring. */
+const SHOWS_RING: Record<string, boolean> = {
   pill: false,
-  xs: false,
-  sm: false,
-  md: true,
-  lg: true,
-  xl: true,
+  44: true,
+  72: true,
+  104: true,
 };
 
 interface LevelBadgeProps {
@@ -72,7 +56,7 @@ interface LevelBadgeProps {
 
 export function LevelBadge({
   level,
-  size = "md",
+  size = 44,
   progress,
   className,
 }: LevelBadgeProps) {
@@ -88,7 +72,7 @@ export function LevelBadge({
       data-band={band}
       data-size={size}
       data-ring={ring !== null || undefined}
-      style={ring !== null ? { ["--lv-pct" as string]: ring } : undefined}
+      style={ring !== null ? { ["--lv-pct" as string]: `${ring}%` } : undefined}
       role="img"
       aria-label={
         ring !== null
@@ -96,12 +80,7 @@ export function LevelBadge({
           : `Level ${level}`
       }
     >
-      {ring !== null && (
-        <>
-          <span className="lv-ring" aria-hidden="true" />
-          <span className="lv-ring-seg" aria-hidden="true" />
-        </>
-      )}
+      {ring !== null && <span className="lv-ring" aria-hidden="true" />}
       <span className="lv-core">
         {SHOWS_KICKER[size] && <span className="lv-kicker">LV</span>}
         <span className="lv-num">{level}</span>

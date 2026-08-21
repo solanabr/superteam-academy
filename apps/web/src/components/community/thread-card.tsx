@@ -154,7 +154,7 @@ export function ThreadCard({
               </span>
             </span>
           )}
-          {author.level > 0 && <LevelBadge level={author.level} size="xs" />}
+          {author.level > 0 && <LevelBadge level={author.level} size="pill" />}
           <span>{timeAgo(createdAt, t)}</span>
           <span className="flex items-center gap-1">
             <ChatCircle size={11} aria-hidden="true" />

@@ -222,7 +222,7 @@ export function Sidebar() {
               >
                 {displayedXp.toLocaleString()} XP
               </span>
-              <LevelBadge level={level} size="sm" />
+              <LevelBadge level={level} size="pill" />
             </div>
             <div className="mb-[7px] font-mono text-[10px] tabular-nums text-[var(--text-3)]">
               {tGam("xpTooltip", {
@@ -243,7 +243,7 @@ export function Sidebar() {
           </div>
         ) : (
           <div className="flex flex-col items-center gap-1 overflow-hidden rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--card)] p-2">
-            <LevelBadge level={level} size="sm" />
+            <LevelBadge level={level} size="pill" />
             <span className="font-display text-[10px] font-bold tabular-nums text-[var(--xp)]">
               {displayedXp.toLocaleString()}
             </span>

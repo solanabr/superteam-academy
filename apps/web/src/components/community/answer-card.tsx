@@ -118,7 +118,7 @@ export function AnswerCard({
               </span>
             )}
             {answer.author.level > 0 && (
-              <LevelBadge level={answer.author.level} size="xs" />
+              <LevelBadge level={answer.author.level} size="pill" />
             )}
           </div>
           <div className="text-xs text-[var(--text-2)]">

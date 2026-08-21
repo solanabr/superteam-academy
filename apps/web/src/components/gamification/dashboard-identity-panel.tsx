@@ -310,7 +310,7 @@ export function DashboardIdentityPanel({
           Achievements render in their own strip below the panel. */}
       <div className="dash-split">
         <div className="dash-identity">
-          <LevelBadge level={level} size="xl" progress={progressPercent} />
+          <LevelBadge level={level} size={104} progress={progressPercent} />
 
           <div>
             <div className="dash-xp-num" aria-label={`${xp} XP`}>

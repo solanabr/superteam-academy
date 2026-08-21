@@ -298,7 +298,7 @@ export function EarnWidget({ replayLabel }: { replayLabel: string }) {
           <div
             className={`shrink-0 transition-transform duration-300 ${popOrb ? "scale-110" : ""}`}
           >
-            <LevelBadge level={5} size="lg" progress={pct} />
+            <LevelBadge level={5} size={72} progress={pct} />
           </div>
           <div className="min-w-0 flex-1">
             <div className="font-mono text-2xl font-black tabular-nums text-xp">

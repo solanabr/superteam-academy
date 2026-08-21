@@ -420,65 +420,56 @@
     );
   }
 
-  /* ── Level badge (spec: Profile Level and XP, 2a) ──────────────────
-     The metallic gradient sphere is gone: the badge is now built the way the
-     achievement patches are — flat fill, ink outline, hard offset shadow. A
-     plate disc carries a segmented progress ring (the only ring in the
-     system; a patch never gets one), and the inner disc's fill comes from the
-     level band, so rank reads without reading the number. */
+  /* ── Level badge (spec: Leaderboard and Level, §1) ─────────────────
+     Three stacked layers, no SVG and no gradient: a plate disc, a mint
+     progress ring, and a banded inner disc carrying the LV lock-up. Mint is
+     withheld for progress — it fills the ring and the XP bar and is never a
+     band colour, so "how far" and "how high" never use the same signal. */
   .lv-badge {
     --lv-size: 44px;
-    --lv-border: 2px;
+    --lv-outline: 2px;
     --lv-lift: 3px;
-    --lv-inset: 6px;
+    --lv-inset: 5px;
     --lv-num: 18px;
     --lv-kicker: 8px;
+
     --lv-ink: #19231b;
     --lv-plate: #fafaf7;
+    --lv-shadow: #19231b;
+    --lv-track: rgba(25, 35, 27, 0.12);
+    --lv-mint: #2ecc8e;
+
     --lv-fill: #fde68a;
     --lv-text: #19231b;
-    --lv-label: rgba(25, 35, 27, 0.55);
+    --lv-label: rgba(25, 35, 27, 0.82);
 
     position: relative;
     flex-shrink: 0;
     width: var(--lv-size);
     height: var(--lv-size);
     border-radius: 999px;
-    border: var(--lv-border) solid var(--lv-ink);
-    box-shadow: 0 var(--lv-lift) 0 0 var(--lv-ink);
-    /* No ring: the badge itself is the banded disc. */
+    border: var(--lv-outline) solid var(--lv-ink);
+    box-shadow: 0 var(--lv-lift) 0 0 var(--lv-shadow);
+    /* Without a ring the badge itself is the banded disc. */
     background: var(--lv-fill);
     font-variant-numeric: tabular-nums;
     cursor: default;
   }
-
-  /* With a ring the plate shows through behind it, and the band moves inward
-     to the core disc. */
   .lv-badge[data-ring] {
     background: var(--lv-plate);
   }
 
+  /* One continuous arc from −90°. No ticks, no segments, no cap. */
   .lv-ring {
     position: absolute;
+    /* inset 0 is already inside the badge's own border box, which is the
+       spec's "inset by the outline width". */
     inset: 0;
     border-radius: 999px;
     background: conic-gradient(
       from -90deg,
-      var(--lv-ink) 0 calc(var(--lv-pct) * 1%),
-      color-mix(in oklab, var(--lv-ink) 12%, transparent)
-        calc(var(--lv-pct) * 1%) 100%
-    );
-  }
-
-  /* Ticks cut the sweep into countable segments. */
-  .lv-ring-seg {
-    position: absolute;
-    inset: 0;
-    border-radius: 999px;
-    background: repeating-conic-gradient(
-      from -90deg,
-      var(--lv-plate) 0 1.6deg,
-      transparent 1.6deg 30deg
+      var(--lv-mint) 0 var(--lv-pct),
+      var(--lv-track) var(--lv-pct) 100%
     );
   }
 
@@ -492,21 +483,22 @@
     text-align: center;
     line-height: 1;
   }
+  /* The ring band is the gap between the two outlines. */
   .lv-badge[data-ring] .lv-core {
     inset: var(--lv-inset);
-    border: var(--lv-border) solid var(--lv-ink);
+    border: var(--lv-outline) solid var(--lv-ink);
     background: var(--lv-fill);
   }
 
+  /* The label is part of the mark, not a caption — it never drops below 82%. */
   .lv-kicker {
     font-family: var(--font-mono), "JetBrains Mono", monospace;
     font-size: var(--lv-kicker);
     font-weight: 700;
     letter-spacing: 0.2em;
     line-height: 1;
-    /* Letter-spacing is applied after the last character too, so centring the
-       box leaves the ink half a step left. Shift back by half the tracking —
-       not the whole, which over-corrects the other way. */
+    /* Tracking is applied after the last character too, so centring the box
+       leaves the ink half a step left. Shift back by half. */
     text-indent: 0.1em;
     color: var(--lv-label);
   }
@@ -519,41 +511,27 @@
     color: var(--lv-text);
   }
 
-  /* sizes — pixel dimensions unchanged from the previous badge so no layout
-     that hosts one has to move */
-  .lv-badge[data-size="xs"] {
-    --lv-size: 20px;
-    --lv-border: 1.5px;
-    --lv-lift: 2px;
-    --lv-num: 11px;
-  }
-  .lv-badge[data-size="sm"] {
-    --lv-size: 32px;
-    --lv-border: 2px;
-    --lv-lift: 2px;
-    --lv-num: 15px;
-  }
-  .lv-badge[data-size="lg"] {
-    --lv-size: 64px;
-    --lv-border: 2.5px;
+  /* geometry by size */
+  .lv-badge[data-size="72"] {
+    --lv-size: 72px;
+    --lv-outline: 2.5px;
     --lv-lift: 4px;
-    --lv-inset: 8px;
-    --lv-num: 23px;
-    --lv-kicker: 7.5px;
+    --lv-inset: 7px;
+    --lv-num: 26px;
+    --lv-kicker: 9px;
   }
-  .lv-badge[data-size="xl"] {
-    --lv-size: 96px;
-    --lv-border: 3px;
+  .lv-badge[data-size="104"] {
+    --lv-size: 104px;
+    --lv-outline: 3px;
     --lv-lift: 5px;
-    --lv-inset: 12px;
-    --lv-num: 36px;
-    --lv-kicker: 10px;
+    --lv-inset: 10px;
+    --lv-num: 38px;
+    --lv-kicker: 11px;
   }
 
-  /* The horizontal lock-up: same band fill and ink outline, laid out in a
-     row. No ring — a capsule has nowhere to put one. */
+  /* The inline lock-up: LV before the numeral in a capsule. */
   .lv-badge[data-size="pill"] {
-    --lv-border: 2px;
+    --lv-outline: 2px;
     --lv-lift: 3px;
     --lv-num: 16px;
     --lv-kicker: 9px;
@@ -574,40 +552,31 @@
     text-indent: 0.07em;
   }
 
-  /* bands */
+  /* The band ramp: cream → amber → deep green → ink. Never mint. */
   .lv-badge[data-band="recruit"] {
     --lv-fill: #fafaf7;
   }
   .lv-badge[data-band="learner"] {
     --lv-fill: #fde68a;
   }
-  .lv-badge[data-band="builder"] {
-    --lv-fill: #2ecc8e;
-    --lv-label: rgba(25, 35, 27, 0.6);
-  }
   .lv-badge[data-band="contributor"] {
     --lv-fill: #0a7055;
     --lv-text: #fafaf7;
-    --lv-label: rgba(250, 250, 247, 0.7);
+    --lv-label: rgba(250, 250, 247, 0.9);
   }
   .lv-badge[data-band="core"] {
     --lv-fill: #19231b;
     --lv-text: #fafaf7;
-    --lv-label: rgba(250, 250, 247, 0.6);
+    --lv-label: rgba(250, 250, 247, 0.85);
   }
 
-  /* dark theme — outline and shadow flip to cream, band fills unchanged.
-     Recruit is the exception: a near-white disc needs the dark plate under it
-     or it disappears into its own outline. */
+  /* Dark surface — variable swaps on the same markup, never a forked
+     component. Mint and the band fills carry over untouched. */
   [data-theme="dark"] .lv-badge {
     --lv-ink: #fafaf7;
-    --lv-plate: #131920;
-    box-shadow: 0 var(--lv-lift) 0 0 rgba(250, 250, 247, 0.92);
-  }
-  [data-theme="dark"] .lv-badge[data-band="recruit"] {
-    --lv-fill: #131920;
-    --lv-text: #fafaf7;
-    --lv-label: rgba(250, 250, 247, 0.6);
+    --lv-plate: #19231b;
+    --lv-shadow: rgba(250, 250, 247, 0.2);
+    --lv-track: rgba(250, 250, 247, 0.18);
   }
 
   /* ── Achievement Medal Grid — V9 Superteam Academy ── */
@@ -3388,17 +3357,30 @@ a.path-step-card:hover .path-step-badge.skip {
   }
 }
 
+/* One ink/tint pair for the whole board, swapped once for dark. Everything
+   below reads them, so dark mode is a variable swap and not a second design. */
+.podium-grid,
+.lb-list {
+  --lb-ink: #19231b;
+  --lb-tint: rgba(25, 35, 27, 0.1);
+}
+[data-theme="dark"] .podium-grid,
+[data-theme="dark"] .lb-list {
+  --lb-ink: #fafaf7;
+  --lb-tint: rgba(250, 250, 247, 0.14);
+}
+
 .podium-card {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 20px 12px 16px;
-  border-radius: var(--r-lg);
-  border: 2.5px solid var(--border);
+  padding: 24px 12px 16px;
+  border-radius: 16px;
+  border: 2.5px solid var(--lb-ink, var(--border));
   background: var(--card);
-  box-shadow: var(--shadow);
+  box-shadow: 0 4px 0 0 var(--lb-ink, var(--border));
   transition: all 0.2s;
   animation: podium-rise 0.45s ease-out both;
   cursor: pointer;
@@ -3414,127 +3396,130 @@ a.path-step-card:hover .path-step-badge.skip {
 }
 
 .podium-card:hover {
-  border-color: var(--border-hover);
   transform: translateY(-2px);
-  box-shadow: var(--shadow-hover);
 }
 
-/* Rank-specific accent borders & backgrounds */
+/* Rank is carried by the tab alone. The cards themselves are the same flat
+   object — the only difference is that first place is a size step larger and
+   sits higher, per the spec's geometry table. Every radial glow and metallic
+   tint that used to encode rank here is gone; leaving one would double up on
+   a signal the tab already carries. */
 .podium-card.gold {
   /* #1 stands taller — the grid bottom-aligns, so extra padding lifts it. */
-  padding: 28px 12px 22px;
-  border-color: rgba(245, 166, 35, 0.4);
-  background:
-    radial-gradient(
-      ellipse at 50% 0%,
-      rgba(245, 166, 35, 0.1) 0%,
-      transparent 70%
-    ),
-    var(--card);
-  box-shadow:
-    0 2px 0 0 rgba(245, 166, 35, 0.18),
-    0 0 30px rgba(245, 166, 35, 0.08);
-}
-.podium-card.silver {
-  border-color: rgba(148, 163, 184, 0.35);
-  background:
-    radial-gradient(
-      ellipse at 50% 0%,
-      rgba(148, 163, 184, 0.08) 0%,
-      transparent 70%
-    ),
-    var(--card);
-}
-.podium-card.bronze {
-  border-color: rgba(180, 83, 9, 0.25);
-  background:
-    radial-gradient(
-      ellipse at 50% 0%,
-      rgba(180, 83, 9, 0.06) 0%,
-      transparent 70%
-    ),
-    var(--card);
+  padding: 30px 14px 22px;
+  border-width: 3px;
+  border-radius: 18px;
+  box-shadow: 0 5px 0 0 var(--lb-ink, var(--border));
 }
 .podium-card.me {
-  outline: 2px solid var(--primary);
-  outline-offset: -1px;
+  outline: 2px solid var(--lb-ink, var(--border));
+  outline-offset: 3px;
 }
 
-/* Rank coin — metallic numeral in the level-badge family (05-08: the
-   crown/medal/lightning trio was three metaphors for one idea). */
-.podium-rank-icon {
+/* Rank tab (spec: Leaderboard and Level, §2). Metal cannot survive a flat
+   treatment — gold, silver and bronze are gradients by definition — so the
+   trio flattens to three solid fills on a notched ribbon locked to the card's
+   top-left corner. The tab overhangs the card by its own outline width so the
+   two outlines read as one continuous line, and its sharp 4px corners are the
+   notch: never round all four.
+
+   These two fills are leaderboard-only. They are declared here rather than as
+   theme tokens precisely so they cannot be picked up as a category colour. */
+.rank-tab {
+  --rank-fill: #fde68a;
+  --rank-outline: 2.5px;
   position: absolute;
-  top: -14px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
+  top: -16px;
+  left: calc(var(--rank-outline) * -1);
+  height: 30px;
+  padding: 0 11px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-family: var(--font-display, var(--font-d));
+  gap: 5px;
+  border: var(--rank-outline) solid var(--lb-ink, #19231b);
+  border-radius: 14px 4px 14px 4px;
+  background: var(--rank-fill);
+}
+/* The three fills are light enough to carry ink text, which is part of why
+   they were chosen — the numerals stay ink on every theme. */
+.rank-tab-num {
+  font-family: var(--font-display), "Nunito", sans-serif;
   font-weight: 900;
-  font-size: 13px;
+  font-size: 17px;
+  line-height: 1;
+  color: #19231b;
   font-variant-numeric: tabular-nums;
-  border: 2.5px solid;
 }
-.podium-card.gold .podium-rank-icon {
-  background: linear-gradient(
-    145deg,
-    #92400e,
-    #b45309 30%,
-    #f5a623 70%,
-    #fde68a
-  );
-  border-color: #f5a623;
-  color: #fffbeb;
-  box-shadow: 0 0 12px rgba(245, 166, 35, 0.4);
+.rank-tab-ord {
+  font-family: var(--font-mono), "JetBrains Mono", monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-indent: 0.05em;
+  color: rgba(25, 35, 27, 0.82);
 }
-.podium-card.silver .podium-rank-icon {
-  background: linear-gradient(
-    145deg,
-    #475569,
-    #64748b 30%,
-    #94a3b8 70%,
-    #e2e8f0
-  );
-  border-color: #94a3b8;
-  color: #f8fafc;
+.rank-tab[data-rank="1"] {
+  --rank-fill: #fde68a;
+  --rank-outline: 3px;
+  top: -19px;
+  height: 36px;
+  padding: 0 13px;
+  border-radius: 16px 4px 16px 4px;
 }
-.podium-card.bronze .podium-rank-icon {
-  background: linear-gradient(
-    145deg,
-    #7c2d12,
-    #9a3412 30%,
-    #c2410c 70%,
-    #fdba74
-  );
-  border-color: #c2410c;
-  color: #fff7ed;
+.rank-tab[data-rank="1"] .rank-tab-num {
+  font-size: 21px;
+}
+.rank-tab[data-rank="1"] .rank-tab-ord {
+  font-size: 10px;
+}
+.rank-tab[data-rank="2"] {
+  --rank-fill: #d2cec7;
+}
+.rank-tab[data-rank="3"] {
+  --rank-fill: #e08a34;
+}
+/* In a list row the tab shrinks and sits inline rather than overhanging. */
+.lb-row .rank-tab {
+  --rank-outline: 2px;
+  position: static;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: 11px 3px 11px 3px;
+  flex: none;
+}
+.lb-row .rank-tab .rank-tab-num {
+  font-size: 14px;
+}
+.lb-row .rank-tab .rank-tab-ord {
+  font-size: 8px;
+}
+[data-theme="dark"] .rank-tab {
+  --lb-ink: #fafaf7;
 }
 
 /* Podium avatar */
+/* Avatars are rank-neutral: an ink tint with a full ink outline. Putting a
+   rank colour on a runner-up's avatar destroys the read that gold, silver and
+   bronze mean rank and nothing else. */
 .podium-avatar {
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-display, var(--font-d));
-  font-weight: 800;
-  font-size: 16px;
-  color: #fff;
-  background: linear-gradient(135deg, var(--primary), var(--xp));
-  border: 2.5px solid var(--border);
+  display: grid;
+  place-items: center;
+  font-family: var(--font-mono), "JetBrains Mono", monospace;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--lb-ink, var(--text));
+  background: var(--lb-tint, rgba(25, 35, 27, 0.1));
+  border: 2.5px solid var(--lb-ink, var(--border));
   flex-shrink: 0;
-  background-size: cover;
+  overflow: hidden;
 }
 .podium-card.gold .podium-avatar {
-  border-color: rgba(245, 166, 35, 0.5);
-  width: 60px;
-  height: 60px;
+  width: 62px;
+  height: 62px;
+  border-width: 3px;
   font-size: 18px;
 }
 
@@ -3551,14 +3536,14 @@ a.path-step-card:hover .path-step-badge.skip {
   gap: 4px;
 }
 .podium-xp {
-  font-family: var(--font-display, var(--font-d));
-  font-weight: 900;
-  font-size: 16px;
-  color: var(--xp);
+  font-family: var(--font-mono), "JetBrains Mono", monospace;
+  font-weight: 700;
+  font-size: 11px;
+  color: var(--text-2);
   font-variant-numeric: tabular-nums; /* F37 */
 }
 .podium-card.gold .podium-xp {
-  font-size: 18px;
+  font-size: 12px;
 }
 
 /* ══════════════════════════════════════
@@ -3570,31 +3555,40 @@ a.path-step-card:hover .path-step-badge.skip {
   gap: 6px;
 }
 
+/* Rank 4+ drops to a dashed outline with no fill and no shadow — the only
+   elevation change in the list. A row that carries a rank tab keeps the solid
+   card and the hard shadow. */
 .lb-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  background: var(--card);
-  border: 2.5px solid var(--border);
-  border-radius: var(--r-md);
-  box-shadow: 0 2px 0 0 var(--border);
-  transition: all 0.15s;
+  gap: 11px;
+  padding: 8px 13px 8px 8px;
+  border: 2px dashed color-mix(in srgb, var(--lb-ink) 28%, transparent);
+  border-radius: 12px;
+  transition:
+    transform 0.15s,
+    background 0.15s;
   animation: card-in 0.35s ease both;
   animation-delay: calc(var(--i, 0) * 50ms);
 }
+.lb-row[data-top] {
+  background: var(--card);
+  border: 2.5px solid var(--lb-ink);
+  box-shadow: 0 3px 0 0 var(--lb-ink);
+}
 .lb-row:hover {
-  border-color: var(--border-hover);
   background: var(--card-hover);
 }
 .lb-row:active {
   transform: translateY(2px);
+}
+.lb-row[data-top]:active {
   box-shadow: none;
 }
+/* The signed-in user keeps their rank treatment and adds a ring outside it. */
 .lb-row.me {
-  border-color: var(--primary);
-  background: var(--primary-dim);
-  box-shadow: 0 2px 0 0 var(--primary-light);
+  outline: 2px solid var(--lb-ink);
+  outline-offset: 3px;
 }
 
 .lb-rank {
@@ -3662,10 +3656,11 @@ a.path-step-card:hover .path-step-badge.skip {
   margin-left: auto;
 }
 .lb-xp {
-  font-family: var(--font-display, var(--font-d));
-  font-weight: 900;
-  font-size: 14px;
-  color: var(--xp);
+  /* Mono for counts and XP, per the spec's type rule. */
+  font-family: var(--font-mono), "JetBrains Mono", monospace;
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--text-2);
   text-align: right;
   min-width: 54px;
   font-variant-numeric: tabular-nums; /* F37 */
@@ -3682,12 +3677,22 @@ a.path-step-card:hover .path-step-badge.skip {
     padding: 12px 14px;
     gap: 12px;
   }
-  .podium-rank-icon {
+  /* Stacked to a row on small screens: the tab sits inline instead of
+     overhanging a corner it no longer has. */
+  .podium-card .rank-tab,
+  .podium-card .rank-tab[data-rank="1"] {
+    --rank-outline: 2px;
     position: static;
-    transform: none;
-    width: 24px;
-    height: 24px;
-    font-size: 13px;
+    height: 26px;
+    padding: 0 8px;
+    border-radius: 11px 3px 11px 3px;
+    flex: none;
+  }
+  .podium-card .rank-tab .rank-tab-num {
+    font-size: 14px;
+  }
+  .podium-card .rank-tab .rank-tab-ord {
+    font-size: 8px;
   }
   .podium-avatar,
   .podium-card.gold .podium-avatar {
@@ -4212,21 +4217,29 @@ a.path-step-card:hover .path-step-badge.skip {
   font-style: normal;
   font-weight: 700;
 }
-/* XP bar (spec: Profile Level and XP, 2a). Same construction as the badge and
-   the patches: an ink-outlined track with a solid fill, no gradient and no
-   shimmer — the 6px hairline it replaced read as chrome rather than progress. */
+/* XP bar (spec: Leaderboard and Level, §1). 16px, fully round, ink outline,
+   MINT fill on an ink-12% track — mint is the progress signal, shared with
+   the level ring and used for nothing else. No inner shadow, no cap on the
+   fill, no gradient. Dark swaps the outline and the track only; the mint
+   carries over untouched. */
 .dash-xp-track {
+  --xpbar-ink: #19231b;
+  --xpbar-track: rgba(25, 35, 27, 0.12);
   width: 100%;
   max-width: 200px;
   height: 16px;
-  background: color-mix(in oklab, var(--text) 12%, transparent);
-  border: 2.5px solid var(--text);
+  background: var(--xpbar-track);
+  border: 2.5px solid var(--xpbar-ink);
   border-radius: var(--r-full);
   overflow: hidden;
 }
+[data-theme="dark"] .dash-xp-track {
+  --xpbar-ink: #fafaf7;
+  --xpbar-track: rgba(250, 250, 247, 0.18);
+}
 .dash-xp-fill {
   height: 100%;
-  background: var(--text);
+  background: #2ecc8e;
   transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 @media (prefers-reduced-motion: reduce) {
