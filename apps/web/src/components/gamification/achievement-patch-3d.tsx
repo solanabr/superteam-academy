@@ -74,6 +74,13 @@ export function AchievementPatch3D({
           style={{ transform: `translateZ(${z}px)` }}
         />
       ))}
+      {/* Rim panels. The slices run parallel to the faces, so edge-on they
+          have no projected width at all and the patch thins to nothing as it
+          passes 90°. These two planes sit perpendicular to them along the left
+          and right edges, which is exactly where a real slab shows its
+          thickness — so the middle stays filled right through the turn. */}
+      <div className="patch3d__rim patch3d__rim--l" />
+      <div className="patch3d__rim patch3d__rim--r" />
       <div className="patch3d__face patch3d__face--back">{face}</div>
       <div className="patch3d__face patch3d__face--front">{face}</div>
     </div>

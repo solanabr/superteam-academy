@@ -671,13 +671,13 @@ export function LandingPageClient({
               {t("ctaSubtitle")}
             </p>
 
-            {/* mt-6 above matches the copy's mt-6 below; the stage
-                flex-centers the ring, so the whitespace around the
-                carousel reads symmetric. */}
+            {/* Equal margins above and below: the ring's stage is sized to
+                its own content, so these are the only whitespace between the
+                badges and the copy on either side. */}
             {achievements.length > 0 && (
-              <div className="mt-6">
+              <div className="mt-16">
                 <AchievementRing achievements={achievements} />
-                <p className="mx-auto mt-6 max-w-lg text-center text-sm leading-relaxed text-white/50">
+                <p className="mx-auto mt-16 max-w-lg text-center text-sm leading-relaxed text-white/50">
                   {t("gamificationCopy", { count: achievements.length })}
                 </p>
               </div>
