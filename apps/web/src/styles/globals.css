@@ -4536,10 +4536,22 @@ a.path-step-card:hover .path-step-badge.skip {
   border-color: var(--lb-ink);
 }
 .lb-list-mini .lb-row.me {
-  /* The full-size ring (2px + 3px offset) overflows the tight card and clips
-     against the scroll container; keep the marker but tuck it in. */
-  outline-width: 1.5px;
-  outline-offset: 1px;
+  /* An outline draws OUTSIDE the border-box, and this list scrolls — so at the
+     first or last visible row the scroll container shears the ring off. A
+     rank-14 viewer sits at the bottom of the window and lost it entirely
+     (owner, 21-08). In the mini strip the marker is therefore in-box: the row
+     already carries a border, so the ink colour on it is the marker. Padding
+     drops by the 0.5px the border gains, keeping every row on the 40px floor
+     the quest and activity lists share. The full leaderboard keeps its ring —
+     it does not scroll inside a capped box. */
+  outline: none;
+  border-color: var(--lb-ink);
+  /* The extra weight is an INSET ring, not a wider border. A 1.5px border
+     snaps to 1px at DPR 1 (border widths round to whole device pixels), so it
+     both lost the emphasis and knocked the row off 40px — measured 39px. An
+     inset shadow is unaffected by that rounding and costs no layout at all,
+     so every row stays exactly 40px whether or not it is the viewer's. */
+  box-shadow: inset 0 0 0 1px var(--lb-ink);
 }
 .lb-list-mini .lb-av {
   width: 26px;

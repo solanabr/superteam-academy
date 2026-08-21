@@ -1,9 +1,11 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
 import { UsersThree, ArrowRight } from "@phosphor-icons/react";
 import type { CohortLeague } from "@superteam-lms/types";
+import { scrollBehavior } from "@/lib/reduced-motion";
 import { CohortRow } from "@/components/leaderboard/cohort-row";
 
 interface CohortStripProps {
@@ -28,6 +30,43 @@ function tierName(t: (k: string) => string, tier: number): string {
 export function CohortStrip({ league }: CohortStripProps) {
   const t = useTranslations("gamification");
   const locale = useLocale();
+  const listRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * Bring the viewer's own row into the strip's window on mount.
+   *
+   * The window is "you ±3", but the list is capped and scrolls, so a viewer
+   * near the bottom of their cohort opened the dashboard to a strip parked at
+   * the top — it looked like the league "starts at 8" and their own row was
+   * below the fold (owner, 21-08).
+   *
+   * Scrolls the CONTAINER, never the page: `scrollIntoView` would walk up the
+   * ancestor chain and yank the whole dashboard on load.
+   */
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list) return;
+
+    const me = list.querySelector<HTMLElement>(".lb-row.me");
+    if (!me) return;
+
+    const max = list.scrollHeight - list.clientHeight;
+    if (max <= 0) return; // Everything already fits; nothing to bring into view.
+
+    // Rect deltas rather than offsetTop: each row may sit inside a <Link>
+    // wrapper, so the offsetParent chain is not the scroll container.
+    const delta =
+      me.getBoundingClientRect().top - list.getBoundingClientRect().top;
+    const centered =
+      list.scrollTop + delta - (list.clientHeight - me.offsetHeight) / 2;
+    const top = Math.max(0, Math.min(centered, max));
+
+    if (typeof list.scrollTo === "function") {
+      list.scrollTo({ top, behavior: scrollBehavior() });
+    } else {
+      list.scrollTop = top;
+    }
+  }, [league]);
 
   // Hidden until the viewer has been assigned a weekly cohort at all.
   if (!league) return null;
@@ -74,7 +113,7 @@ export function CohortStrip({ league }: CohortStripProps) {
         <p className="mb-2.5 truncate text-[13px] font-semibold text-text-2">
           {tierName(t, league.tier)}
         </p>
-        <div className="lb-list lb-list-compact lb-list-mini">
+        <div ref={listRef} className="lb-list lb-list-compact lb-list-mini">
           {league.entries.map((entry, i) => (
             <CohortRow
               key={entry.rank}

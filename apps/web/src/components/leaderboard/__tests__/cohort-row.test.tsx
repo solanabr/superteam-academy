@@ -57,3 +57,48 @@ describe("CohortRow — weekly XP framing (#789)", () => {
     expect(screen.getByText("+1,275 XP")).toBeInTheDocument();
   });
 });
+
+// The 40cd9caf spec: ranks 1-3 keep a solid card and a notched rank tab, and
+// ranks 4+ drop to a dashed outline that only reads correctly against that
+// solid top three. CohortRow shipped with neither half, so the League tab —
+// which has no separate podium and renders rank 1 downward as rows — went
+// fully dashed (owner, 21-08).
+
+describe("CohortRow — podium contrast (40cd9caf spec)", () => {
+  function row(container: HTMLElement): HTMLElement {
+    return container.querySelector(".lb-row") as HTMLElement;
+  }
+
+  it.each([1, 2, 3])("marks rank %i as top: solid card + rank tab", (rank) => {
+    const { container } = renderRow({ ...base, rank });
+
+    expect(row(container).hasAttribute("data-top")).toBe(true);
+    const tab = container.querySelector(".rank-tab");
+    expect(tab).not.toBeNull();
+    expect(tab!.getAttribute("data-rank")).toBe(String(rank));
+    expect(container.querySelector(".lb-rank")).toBeNull();
+  });
+
+  it.each([4, 5, 27])("leaves rank %i dashed: bare numeral, no tab", (rank) => {
+    const { container } = renderRow({ ...base, rank });
+
+    expect(row(container).hasAttribute("data-top")).toBe(false);
+    expect(container.querySelector(".rank-tab")).toBeNull();
+    expect(container.querySelector(".lb-rank")!.textContent).toBe(String(rank));
+  });
+
+  it("keeps the rank accessible in both treatments", () => {
+    const { unmount } = renderRow({ ...base, rank: 1 });
+    expect(screen.getByLabelText("Rank 1")).toBeInTheDocument();
+    unmount();
+
+    renderRow({ ...base, rank: 9 });
+    expect(screen.getByLabelText("Rank 9")).toBeInTheDocument();
+  });
+
+  it("shows the ordinal suffix on the tab", () => {
+    const { container } = renderRow({ ...base, rank: 2 });
+    expect(container.querySelector(".rank-tab-num")!.textContent).toBe("2");
+    expect(container.querySelector(".rank-tab-ord")!.textContent).toBe("ND");
+  });
+});
