@@ -9,28 +9,39 @@ import {
   ArrowSquareOut,
 } from "@phosphor-icons/react";
 import type { ActivityItem } from "@/lib/dashboard/types";
-import { GlyphTile } from "@/components/gamification/glyph-tile";
-import type { TileTint } from "@/components/gamification/glyph-tile";
+import { GlyphChip } from "@/components/gamification/glyph-chip";
+import type { PatchCategory } from "@/components/gamification/patch-look";
 
 /* ---------------------------------------------------------------
-   ACTIVITY MARK MAP — activity type → glyph + tint (owner-approved 21-08).
-   Rendered as tier 3 of the glyph language: a 24px tile washed with the tint.
+   ACTIVITY CHIP MAP — activity type → glyph + patch category.
+
+   Same 24px chip as the quest rows, so the dashboard has ONE icon object
+   rather than a per-card treatment. Colour therefore comes from the standard
+   `data-cat` fills; the two types that had bespoke tints moved to their
+   nearest standard fill — certificate from purple to `onchain` (the Solana
+   gradient, which is what a credential actually is), and community from sky
+   to `community` orange, which xp_other shares.
 --------------------------------------------------------------- */
-const ACTIVITY_MARKS: Record<string, { glyph: string; tint: TileTint }> = {
-  lesson: { glyph: "+", tint: "primary" },
-  challenge: { glyph: "</>", tint: "primary" },
-  course_complete: { glyph: "★", tint: "primary" },
-  achievement: { glyph: "◎", tint: "gold" },
-  certificate: { glyph: "⬡", tint: "purple" },
-  enrollment: { glyph: "▸", tint: "primary" },
-  community: { glyph: "◍", tint: "sky" },
-  xp_other: { glyph: "⚡", tint: "streak" },
+interface ActivityChip {
+  glyph: string;
+  cat: PatchCategory;
+}
+
+const ACTIVITY_CHIPS: Record<string, ActivityChip> = {
+  lesson: { glyph: "+", cat: "course" },
+  challenge: { glyph: "</>", cat: "craft" },
+  course_complete: { glyph: "★", cat: "course" },
+  achievement: { glyph: "◎", cat: "reward" },
+  certificate: { glyph: "⬡", cat: "onchain" },
+  enrollment: { glyph: "▸", cat: "start" },
+  community: { glyph: "◍", cat: "community" },
+  xp_other: { glyph: "⚡", cat: "community" },
 };
 
-const FALLBACK_MARK = ACTIVITY_MARKS.xp_other!;
+const FALLBACK_CHIP = ACTIVITY_CHIPS.xp_other!;
 
-export function activityMark(type: string): { glyph: string; tint: TileTint } {
-  return ACTIVITY_MARKS[type] ?? FALLBACK_MARK;
+export function activityChip(type: string): ActivityChip {
+  return ACTIVITY_CHIPS[type] ?? FALLBACK_CHIP;
 }
 
 const SOLANA_CLUSTER = process.env.NEXT_PUBLIC_SOLANA_NETWORK ?? "devnet";
@@ -50,10 +61,12 @@ interface ActivitySectionProps {
  * challenges, achievements, certificates, enrollments, community, XP) with
  * explorer deep links for on-chain items.
  *
- * The row's leading icon is a 24px GlyphTile (21-08) — the old `.act-icon`
- * footprint, but a flat tint wash instead of a bordered box, and a mono glyph
- * instead of a Phosphor icon. A fixed-size container is also what answers the
- * owner's "first row looks smaller" report: the bordered boxes sized
+ * Rework 21-08: the feed adopts the dashboard's row-card system (a bordered
+ * card per row, no zebra striping) and the same 24px GlyphChip the quest rows
+ * use. Two earlier passes — bare gutter marks, then a tint-washed tile — both
+ * read as a treatment invented for this one card; the owner wanted the icon
+ * object the rest of the dashboard already had. A fixed-size chip also answers
+ * the "first row looks smaller" report: the Phosphor boxes it replaces sized
  * themselves around whichever glyph they held.
  */
 export function ActivitySection({ recentActivity }: ActivitySectionProps) {
@@ -128,12 +141,12 @@ export function ActivitySection({ recentActivity }: ActivitySectionProps) {
           <div className="act-panel-amb" aria-hidden="true" />
           <div className="act-feed">
             {activityPageItems.map((activity) => {
-              const mark = activityMark(activity.type);
+              const chip = activityChip(activity.type);
 
               const inner = (
                 <>
                   <div className="act-left">
-                    <GlyphTile glyph={mark.glyph} tint={mark.tint} />
+                    <GlyphChip glyph={chip.glyph} cat={chip.cat} size={24} />
                     <span className="act-text">{activity.action}</span>
                   </div>
                   <div className="act-right">

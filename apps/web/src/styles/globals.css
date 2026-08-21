@@ -922,73 +922,6 @@
     height: calc(var(--size) * 0.46);
   }
 
-  /* ── TILE — tier 3: the quietest container (owner, 21-08) ──
-     Shipped first as a bare glyph in a bare gutter; at the activity feed's
-     real density the owner found the rows lost their anchor and read sparse.
-     So the tier keeps a container, but the lightest one available: the type
-     colour at 12% for the ground, the same colour at full strength for the
-     glyph, no ink outline and no shadow. That leaves three distinct weights —
-     patch (stitch + outline + shadow), chip (outline + shadow), tile (wash) —
-     which is what the three-tier hierarchy was for.
-
-     The 24px footprint is the old `.act-icon` box, so row rhythm is unchanged;
-     only the vocabulary inside it moved from Phosphor to the mono glyphs. */
-  .tile {
-    --size: 24px;
-    --tint: var(--primary);
-    --patch-glyph: var(--tint);
-
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-    width: var(--size);
-    height: var(--size);
-    border-radius: 7px;
-    background: color-mix(in srgb, var(--tint) 12%, transparent);
-    font:
-      700 11px / 1 var(--font-mono),
-      "JetBrains Mono",
-      monospace;
-    color: var(--tint);
-    user-select: none;
-  }
-  /* "</>" is the widest text glyph — three mono advances in a 24px box. */
-  .tile .patch-text {
-    letter-spacing: -0.04em;
-  }
-  .tile .patch-mark {
-    width: 13px;
-    height: 13px;
-  }
-  .tile[data-tint="primary"] {
-    --tint: var(--primary);
-  }
-  .tile[data-tint="streak"] {
-    --tint: var(--streak);
-  }
-  /* Gold, purple and sky have no token of their own. The literals below are
-     the light-mode values; each gets a lighter dark-mode value the same way
-     --xp and --streak already flip, so no tile relies on one colour reading on
-     both grounds. */
-  .tile[data-tint="gold"] {
-    --tint: #d97706;
-  }
-  .tile[data-tint="purple"] {
-    --tint: #9945ff;
-  }
-  .tile[data-tint="sky"] {
-    --tint: #0284c7;
-  }
-  [data-theme="dark"] .tile[data-tint="gold"] {
-    --tint: #f5a623;
-  }
-  [data-theme="dark"] .tile[data-tint="purple"] {
-    --tint: #b07cff;
-  }
-  [data-theme="dark"] .tile[data-tint="sky"] {
-    --tint: #38bdf8;
-  }
-
   /* ── The 3D patch (spec: achievement-patches v1, "The 3D patch") ──
      The same flat art given thickness: six slices in the category's shade
      colour stacked between a front and a back face. No lighting, no bevel,
@@ -4590,6 +4523,23 @@ a.path-step-card:hover .path-step-badge.skip {
   border-width: 1px;
   box-shadow: none;
   border-radius: var(--r-md);
+  /* The rank-4+ dashed outline needs the solid top-3 podium for contrast
+     (40cd9caf spec). This strip shows only the you-±3 neighbourhood — usually
+     all rank 4+ — so every row went dashed and the card read as broken
+     (owner, 21-08). Quiet solid hairlines here; the full board keeps the spec. */
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--lb-ink) 14%, transparent);
+}
+.lb-list-mini .lb-row[data-top] {
+  /* A top-3 row that does appear keeps its solid emphasis, minus the lift. */
+  border-width: 1.5px;
+  border-color: var(--lb-ink);
+}
+.lb-list-mini .lb-row.me {
+  /* The full-size ring (2px + 3px offset) overflows the tight card and clips
+     against the scroll container; keep the marker but tuck it in. */
+  outline-width: 1.5px;
+  outline-offset: 1px;
 }
 .lb-list-mini .lb-av {
   width: 26px;
@@ -5647,36 +5597,51 @@ a.path-step-card:hover .path-step-title {
 
 /* ── Feed container ── */
 .act-feed {
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 14px;
   position: relative;
   z-index: 1;
 }
 
-/* ── Row layout ── */
+/* ── Row layout ──
+   The feed reads as the dashboard's row-card system, not a table: same
+   1px border / --r-md / card-alt recipe and the same 40px floor as `.dq` and
+   `.lb-list-mini .lb-row`, so all three lists across the dashboard line up.
+   The zebra striping is gone — the cards separate the rows now. */
 .act-row {
   display: flex;
   align-items: center;
-  padding: 7px 22px;
-  gap: 10px;
-  transition: background 0.15s;
+  min-height: 40px;
+  padding: 6px 10px;
+  gap: 9px;
+  border-radius: var(--r-md);
+  background: var(--card-alt, rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--border);
+  transition:
+    border-color 0.15s,
+    background 0.15s;
   text-decoration: none;
   color: inherit;
   position: relative;
   z-index: 1;
 }
-.act-row + .act-row {
-  border-top: 1px solid color-mix(in srgb, var(--border) 40%, transparent);
-}
-.act-row:nth-child(even) {
-  background: color-mix(in srgb, var(--subtle) 40%, transparent);
-}
 .act-row:hover {
-  background: var(--card-hover);
+  border-color: var(--border-default);
+}
+/* A row that deep-links to the explorer gets the `.dq-link` affordance. */
+a.act-row:hover {
+  border-color: var(--primary);
+}
+a.act-row:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 .act-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 9px;
   min-width: 0;
   flex: 1;
 }
@@ -5731,7 +5696,7 @@ a.path-step-card:hover .path-step-title {
     font-size: 12px;
   }
   .act-row {
-    padding: 8px 14px;
+    padding: 6px 8px;
     flex-wrap: wrap;
   }
   .act-right {
