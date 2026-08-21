@@ -162,3 +162,41 @@ describe("CohortStrip — render guards", () => {
     expect(container.querySelector(".lb-list-mini")).toBeNull();
   });
 });
+
+// The unassigned/solo state kept a Phosphor icon in a primary-dim disc — the
+// last legacy icon on this card (owner, 21-08). It becomes a 24px chip like
+// every other icon on the dashboard.
+
+describe("CohortStrip — the solo state's icon", () => {
+  function soloContainer(): HTMLElement {
+    return renderStrip(league({ entries: [entry(1, true)] })).container;
+  }
+
+  it("uses the community chip, not a legacy disc", () => {
+    const container = soloContainer();
+
+    const chip = container.querySelector(".chip");
+    expect(chip).not.toBeNull();
+    expect(chip!.getAttribute("data-cat")).toBe("community");
+    expect(chip!.getAttribute("data-size")).toBe("24");
+    expect(
+      chip!.querySelector("[data-glyph]")!.getAttribute("data-glyph")
+    ).toBe("◍");
+  });
+
+  it("keeps it decorative — the tier name carries the meaning", () => {
+    const container = soloContainer();
+
+    expect(container.querySelector(".chip")!.getAttribute("aria-hidden")).toBe(
+      "true"
+    );
+    // Tier 2 is "Sprout League" in en.json.
+    expect(container.textContent).toContain("Sprout League");
+  });
+
+  it("leaves no primary-dim disc behind", () => {
+    const container = soloContainer();
+    expect(container.querySelector(".bg-primary-dim")).toBeNull();
+    expect(container.querySelector(".rounded-full")).toBeNull();
+  });
+});
