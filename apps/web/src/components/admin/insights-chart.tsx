@@ -1,18 +1,35 @@
 "use client";
 
 /**
- * Hand-rolled viewBox SVG charts for the admin Insights panel (#1135).
+ * Admin Insights time-series charts (#1148, rewritten from the hand-rolled SVG
+ * of #1135 which had no axes and only a native-`title` tooltip).
  *
- * A 30-point time series rendered as table rows is the one shape that least
- * suits rows, but adding a charting library to pull two sparklines onto an
- * admin-only screen is not a trade this bundle should make. Same approach as
- * `components/gamification/skill-radar.tsx`: plain SVG, `viewBox` scaling, and
- * colours from CSS tokens so light/dark come for free.
+ * The visual is Recharts, loaded through `next/dynamic({ ssr: false })` so the
+ * library — recharts + its d3 deps, ~50 kB gz — is code-split onto the
+ * admin-only route and never ships in any other bundle. This module keeps only
+ * the data prep (`fillDayWindow`), the `BarCell` table fill, and the wrapper
+ * that pairs the lazy chart with an always-present `sr-only` table.
  *
- * Accessibility: the SVG is `role="img"` with an `aria-label`, every mark
- * carries a `<title>` for pointer hover, and the same numbers are repeated in a
- * `sr-only` table — a screen reader reads the data, not "chart".
+ * Accessibility: the chart itself is `aria-hidden`; screen readers get the same
+ * numbers from the `sr-only` table, so nobody hears "chart" with no data.
  */
+
+import dynamic from "next/dynamic";
+
+const RechartsInsightsChart = dynamic(
+  () =>
+    import("./insights-chart-recharts").then((mod) => ({
+      default: mod.RechartsInsightsChart,
+    })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="px-2 py-3">
+        <div className="bg-card-alt h-[180px] w-full animate-pulse rounded-lg" />
+      </div>
+    ),
+  }
+);
 
 export interface DayPoint {
   /** `YYYY-MM-DD`, ascending, one entry per day of the window. */
@@ -23,14 +40,16 @@ export interface DayPoint {
 interface InsightsChartProps {
   variant: "bar" | "area";
   data: DayPoint[];
-  /** Describes the whole chart (`aria-label`). */
+  /** Describes the whole chart (table caption + tooltip context). */
   label: string;
   dayHeader: string;
   valueHeader: string;
-  /** Renders a value for the `<title>` tooltips and the table. */
+  /** BCP-47 tag for localised month/day tick labels. */
+  locale: string;
+  /** Renders a value for the tooltip, Y axis, and the table. */
   format?: (value: number) => string;
   /**
-   * A second series shown ONLY in tooltips and the table. Deliberately not a
+   * A second series shown ONLY in the tooltip and the table. Deliberately not a
    * second axis: two y-scales on one plot invite reading a crossing as
    * meaningful when it is an artefact of the scaling.
    */
@@ -75,10 +94,6 @@ export function fillDayWindow<T extends { day: string }>(
   return out;
 }
 
-const W = 320;
-const H = 96;
-const PAD_Y = 6;
-
 const identity = (v: number): string => String(v);
 
 export function InsightsChart({
@@ -87,6 +102,7 @@ export function InsightsChart({
   label,
   dayHeader,
   valueHeader,
+  locale,
   format = identity,
   secondary,
   empty,
@@ -95,112 +111,24 @@ export function InsightsChart({
     return <p className="p-4 text-sm text-text-3">{empty}</p>;
   }
 
-  // A flat all-zero window would divide by zero; treat it as a full-height
-  // scale of 1 so the baseline still renders instead of NaN coordinates.
-  const max = Math.max(1, ...data.map((d) => d.value));
-  const n = data.length;
-  const plotH = H - PAD_Y * 2;
-  const y = (value: number): number => PAD_Y + plotH * (1 - value / max);
-
-  const slot = W / n;
-  const barW = Math.max(1, slot * 0.68);
-
-  const points = data.map((d, i) => ({
-    x: slot * i + slot / 2,
-    y: y(d.value),
-  }));
-  const line = points
-    .map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(2)},${p.y.toFixed(2)}`)
-    .join(" ");
-  const firstX = slot / 2;
-  const lastX = slot * (n - 1) + slot / 2;
-  const baseline = H - PAD_Y;
-  const area = `${line} L${lastX.toFixed(2)},${baseline} L${firstX.toFixed(2)},${baseline} Z`;
-
-  const tooltip = (d: DayPoint, i: number): string => {
-    const head = `${d.day}: ${format(d.value)}`;
-    if (!secondary) return head;
-    const raw = secondary.values[i] ?? 0;
-    return `${head} · ${secondary.header} ${(secondary.format ?? identity)(raw)}`;
-  };
-
   return (
-    <div className="px-4 py-3">
-      <svg
-        viewBox={`0 0 ${W} ${H}`}
-        role="img"
-        aria-label={label}
-        className="h-24 w-full overflow-visible"
-        preserveAspectRatio="none"
-      >
-        <defs>
-          <linearGradient id="insights-area" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.45" />
-            <stop offset="100%" stopColor="var(--primary)" stopOpacity="0.02" />
-          </linearGradient>
-        </defs>
-
-        <line
-          x1="0"
-          y1={H - PAD_Y}
-          x2={W}
-          y2={H - PAD_Y}
-          stroke="var(--border)"
-          strokeWidth="1"
-          vectorEffect="non-scaling-stroke"
-        />
-
-        {variant === "bar"
-          ? data.map((d, i) => {
-              const top = y(d.value);
-              return (
-                <rect
-                  key={d.day}
-                  x={slot * i + (slot - barW) / 2}
-                  y={top}
-                  width={barW}
-                  // A zero day still gets a hairline so the window reads as
-                  // continuous rather than as missing data.
-                  height={Math.max(1, H - PAD_Y - top)}
-                  rx="1"
-                  fill="var(--primary)"
-                  opacity={d.value === 0 ? 0.25 : 0.85}
-                >
-                  <title>{tooltip(d, i)}</title>
-                </rect>
-              );
-            })
-          : null}
-
-        {variant === "area" ? (
-          <>
-            <path d={area} fill="url(#insights-area)" />
-            <path
-              d={line}
-              fill="none"
-              stroke="var(--primary)"
-              strokeWidth="2"
-              strokeLinejoin="round"
-              strokeLinecap="round"
-              vectorEffect="non-scaling-stroke"
-            />
-            {data.map((d, i) => (
-              // Invisible hit target per day: the line itself is too thin to
-              // hover, and a 2px dot per day would clutter 30 points.
-              <rect
-                key={d.day}
-                x={slot * i}
-                y="0"
-                width={slot}
-                height={H}
-                fill="transparent"
-              >
-                <title>{tooltip(d, i)}</title>
-              </rect>
-            ))}
-          </>
-        ) : null}
-      </svg>
+    <div>
+      <RechartsInsightsChart
+        variant={variant}
+        data={data.map((d, i) => ({
+          day: d.day,
+          value: d.value,
+          secondary: secondary?.values[i] ?? 0,
+        }))}
+        format={format}
+        valueHeader={valueHeader}
+        secondary={
+          secondary
+            ? { header: secondary.header, format: secondary.format ?? identity }
+            : undefined
+        }
+        locale={locale}
+      />
 
       <table className="sr-only">
         <caption>{label}</caption>

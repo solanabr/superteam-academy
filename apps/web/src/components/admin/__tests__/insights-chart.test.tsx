@@ -1,13 +1,32 @@
 // @vitest-environment jsdom
-import { describe, it, expect } from "vitest";
+import React from "react";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { InsightsChart, BarCell, fillDayWindow } from "../insights-chart";
+
+// ResponsiveContainer measures 0×0 in jsdom (no ResizeObserver layout), so
+// recharts would render an empty chart. Give the chart child fixed dimensions
+// instead, and drop the ResizeObserver dependency entirely.
+vi.mock("recharts", async () => {
+  const actual = await vi.importActual<typeof import("recharts")>("recharts");
+  return {
+    ...actual,
+    ResponsiveContainer: ({ children }: { children: React.ReactElement }) =>
+      React.cloneElement(children, { width: 480, height: 180 }),
+  };
+});
+
+// Import AFTER the mock so the chart picks up the patched ResponsiveContainer.
+const { RechartsInsightsChart, InsightsChartTooltip } =
+  await import("../insights-chart-recharts");
 
 const series = (values: number[]): { day: string; value: number }[] =>
   values.map((value, i) => ({
     day: `2026-08-${String(i + 1).padStart(2, "0")}`,
     value,
   }));
+
+const usd = (v: number): string => `$${v.toFixed(2)}`;
 
 describe("fillDayWindow", () => {
   it("pads a sparse series to a continuous window ending on endDay", () => {
@@ -51,47 +70,106 @@ describe("fillDayWindow", () => {
   });
 });
 
-describe("InsightsChart", () => {
+describe("RechartsInsightsChart", () => {
+  const rechartsData = (values: number[], secondary?: number[]) =>
+    values.map((value, i) => ({
+      day: `2026-08-${String(i + 1).padStart(2, "0")}`,
+      value,
+      secondary: secondary?.[i] ?? 0,
+    }));
+
   it("draws one bar per day, zero days included", () => {
     const { container } = render(
-      <InsightsChart
+      <RechartsInsightsChart
         variant="bar"
-        data={series([3, 0, 5])}
-        label="Lessons completed per day"
-        dayHeader="Day"
+        data={rechartsData([3, 0, 5])}
+        format={String}
         valueHeader="Lessons"
-        empty="No data yet."
+        locale="en"
       />
     );
-
-    const bars = container.querySelectorAll("svg rect");
-    expect(bars).toHaveLength(3);
-    // The tallest day reaches the top of the plot; the zero day still gets a
-    // hairline so the window reads as continuous rather than as a gap.
-    const heights = [...bars].map((b) => Number(b.getAttribute("height")));
-    expect(heights[2] ?? 0).toBeGreaterThan(heights[0] ?? 0);
-    expect(heights[1]).toBe(1);
+    expect(container.querySelectorAll(".recharts-bar-rectangle")).toHaveLength(
+      3
+    );
   });
 
-  it("labels every mark with its day and value", () => {
+  it("renders an area path and axes for the spend series", () => {
     const { container } = render(
-      <InsightsChart
-        variant="bar"
-        data={series([3, 0, 5])}
-        label="Lessons completed per day"
-        dayHeader="Day"
-        valueHeader="Lessons"
-        empty="No data yet."
+      <RechartsInsightsChart
+        variant="area"
+        data={rechartsData([0.5, 1.25, 0.75])}
+        format={usd}
+        valueHeader="USD"
+        locale="en"
       />
     );
-
-    const titles = [...container.querySelectorAll("svg title")].map(
-      (t) => t.textContent
-    );
-    expect(titles).toEqual(["2026-08-01: 3", "2026-08-02: 0", "2026-08-03: 5"]);
+    expect(container.querySelector(".recharts-area-area")).toBeTruthy();
+    // The complaint that started #1148: no axes. Both must now render.
+    expect(container.querySelector(".recharts-xAxis")).toBeTruthy();
+    expect(container.querySelector(".recharts-yAxis")).toBeTruthy();
   });
 
-  it("repeats the data in a screen-reader table", () => {
+  it("thins the 30 daily x ticks to a readable subset, formatted like Aug 14", () => {
+    const days = Array.from({ length: 30 }, (_, i) => ({
+      day: `2026-08-${String(i + 1).padStart(2, "0")}`,
+      value: i,
+    }));
+    const { container } = render(
+      <RechartsInsightsChart
+        variant="bar"
+        data={days}
+        format={String}
+        valueHeader="Lessons"
+        locale="en"
+      />
+    );
+    const dayTicks = [
+      ...container.querySelectorAll(".recharts-cartesian-axis-tick-value"),
+    ]
+      .map((t) => t.textContent ?? "")
+      .filter((t) => t.startsWith("Aug"));
+    // interval=4 keeps every 5th of 30 daily ticks — far fewer than 30, not zero.
+    expect(dayTicks.length).toBeGreaterThan(0);
+    expect(dayTicks.length).toBeLessThan(15);
+    expect(dayTicks).toContain("Aug 1");
+  });
+});
+
+describe("InsightsChartTooltip", () => {
+  it("shows the date and value, with the secondary series as a second line", () => {
+    render(
+      <InsightsChartTooltip
+        active
+        payload={[
+          { payload: { day: "2026-08-14", value: 1.25, secondary: 9 } },
+        ]}
+        format={usd}
+        valueHeader="USD"
+        secondary={{ header: "Requests", format: String }}
+        locale="en"
+      />
+    );
+    expect(screen.getByText("Aug 14")).toBeTruthy();
+    expect(screen.getByText("USD: $1.25")).toBeTruthy();
+    expect(screen.getByText("Requests: 9")).toBeTruthy();
+  });
+
+  it("renders nothing when inactive", () => {
+    const { container } = render(
+      <InsightsChartTooltip
+        active={false}
+        payload={[{ payload: { day: "2026-08-14", value: 1 } }]}
+        format={String}
+        valueHeader="Lessons"
+        locale="en"
+      />
+    );
+    expect(container).toBeEmptyDOMElement();
+  });
+});
+
+describe("InsightsChart wrapper", () => {
+  it("repeats every day in a screen-reader table", () => {
     render(
       <InsightsChart
         variant="bar"
@@ -99,13 +177,11 @@ describe("InsightsChart", () => {
         label="Lessons completed per day"
         dayHeader="Day"
         valueHeader="Lessons"
+        locale="en"
         empty="No data yet."
       />
     );
 
-    expect(
-      screen.getByRole("img", { name: "Lessons completed per day" })
-    ).toBeTruthy();
     const table = screen.getByRole("table", {
       name: "Lessons completed per day",
     });
@@ -113,47 +189,24 @@ describe("InsightsChart", () => {
     expect(screen.getByRole("rowheader", { name: "2026-08-02" })).toBeTruthy();
   });
 
-  it("carries the secondary series in tooltips and the table, not a second axis", () => {
-    const { container } = render(
+  it("carries the secondary series in the table as a column, not a second axis", () => {
+    render(
       <InsightsChart
         variant="area"
         data={series([0.5, 1.25])}
         label="Daily AI spend"
         dayHeader="Day"
         valueHeader="USD"
-        format={(v) => `$${v.toFixed(2)}`}
+        locale="en"
+        format={usd}
         secondary={{ header: "Requests", values: [2, 9] }}
         empty="No data yet."
       />
     );
 
-    const titles = [...container.querySelectorAll("svg title")].map(
-      (t) => t.textContent
-    );
-    expect(titles).toEqual([
-      "2026-08-01: $0.50 · Requests 2",
-      "2026-08-02: $1.25 · Requests 9",
-    ]);
-    // One line path plus one area path — never a second scaled series.
-    expect(container.querySelectorAll("svg path")).toHaveLength(2);
     expect(screen.getByRole("columnheader", { name: "Requests" })).toBeTruthy();
-  });
-
-  it("renders an all-zero window instead of NaN coordinates", () => {
-    const { container } = render(
-      <InsightsChart
-        variant="area"
-        data={series([0, 0, 0])}
-        label="Daily AI spend"
-        dayHeader="Day"
-        valueHeader="USD"
-        empty="No data yet."
-      />
-    );
-
-    for (const path of container.querySelectorAll("svg path")) {
-      expect(path.getAttribute("d")).not.toContain("NaN");
-    }
+    expect(screen.getByRole("cell", { name: "$1.25" })).toBeTruthy();
+    expect(screen.getByRole("cell", { name: "9" })).toBeTruthy();
   });
 
   it("shows the empty message rather than an axis with nothing on it", () => {
@@ -164,6 +217,7 @@ describe("InsightsChart", () => {
         label="Lessons completed per day"
         dayHeader="Day"
         valueHeader="Lessons"
+        locale="en"
         empty="No data yet."
       />
     );
