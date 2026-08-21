@@ -420,104 +420,168 @@
     );
   }
 
-  /* ── Level Badge — V9 Superteam Academy numbered circles ── */
+  /* ── Level badge (spec: Profile Level and XP, 2a) ──────────────────
+     The metallic gradient sphere is gone: the badge is now built the way the
+     achievement patches are — flat fill, ink outline, hard offset shadow. A
+     plate disc carries a segmented progress ring (the only ring in the
+     system; a patch never gets one), and the inner disc's fill comes from the
+     level band, so rank reads without reading the number. */
+  .lv-badge {
+    --lv-size: 44px;
+    --lv-border: 2px;
+    --lv-lift: 3px;
+    --lv-inset: 6px;
+    --lv-num: 18px;
+    --lv-kicker: 8px;
+    --lv-ink: #19231b;
+    --lv-plate: #fafaf7;
+    --lv-fill: #fde68a;
+    --lv-text: #19231b;
+    --lv-label: rgba(25, 35, 27, 0.55);
 
-  .level-badge {
-    border-radius: 50%;
-    border: 2.5px solid;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--font-display), "Nunito", sans-serif;
-    font-weight: 900;
-    letter-spacing: -0.5px;
-    /* F37: tabular numerals so level digits never reflow between values */
-    font-variant-numeric: tabular-nums;
-    transition:
-      transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
-      box-shadow 0.2s;
-    cursor: default;
+    position: relative;
     flex-shrink: 0;
+    width: var(--lv-size);
+    height: var(--lv-size);
+    border-radius: 999px;
+    border: var(--lv-border) solid var(--lv-ink);
+    box-shadow: 0 var(--lv-lift) 0 0 var(--lv-ink);
+    /* No ring: the badge itself is the banded disc. */
+    background: var(--lv-fill);
+    font-variant-numeric: tabular-nums;
+    cursor: default;
+  }
+
+  /* With a ring the plate shows through behind it, and the band moves inward
+     to the core disc. */
+  .lv-badge[data-ring] {
+    background: var(--lv-plate);
+  }
+
+  .lv-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    background: conic-gradient(
+      from -90deg,
+      var(--lv-ink) 0 calc(var(--lv-pct) * 1%),
+      color-mix(in oklab, var(--lv-ink) 12%, transparent)
+        calc(var(--lv-pct) * 1%) 100%
+    );
+  }
+
+  /* Ticks cut the sweep into countable segments. */
+  .lv-ring-seg {
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    background: repeating-conic-gradient(
+      from -90deg,
+      var(--lv-plate) 0 1.6deg,
+      transparent 1.6deg 30deg
+    );
+  }
+
+  .lv-core {
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    text-align: center;
     line-height: 1;
   }
-
-  .level-badge:hover {
-    transform: scale(1.12);
+  .lv-badge[data-ring] .lv-core {
+    inset: var(--lv-inset);
+    border: var(--lv-border) solid var(--lv-ink);
+    background: var(--lv-fill);
   }
 
-  /* Lv 1–4: seed — gold filled */
-  .lv-seed {
-    background: linear-gradient(
-      145deg,
-      #92400e 0%,
-      #b45309 30%,
-      #f5a623 70%,
-      #fde68a 100%
-    );
-    border-color: #f5a623;
-    color: var(--bg);
-    box-shadow: 0 0 18px rgba(245, 166, 35, 0.45);
-    animation: lv-canopy-pulse 3s ease-in-out infinite;
+  .lv-kicker {
+    font-family: var(--font-mono), "JetBrains Mono", monospace;
+    font-size: var(--lv-kicker);
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    line-height: 1;
+    /* the tracking is trailing-side only, so nudge back to optical centre */
+    text-indent: 0.2em;
+    color: var(--lv-label);
   }
 
-  /* Lv 5–9: sprout — orange filled */
-  .lv-sprout {
-    background: linear-gradient(
-      145deg,
-      #9a3412 0%,
-      #c2410c 30%,
-      #f97316 70%,
-      #fdba74 100%
-    );
-    border-color: #f97316;
-    color: var(--bg);
-    box-shadow: 0 0 18px rgba(249, 115, 22, 0.45);
-    animation: lv-canopy-pulse 3s ease-in-out infinite;
+  .lv-num {
+    font-family: var(--font-display), "Nunito", sans-serif;
+    font-weight: 900;
+    font-size: var(--lv-num);
+    line-height: 0.9;
+    color: var(--lv-text);
   }
 
-  /* Lv 10–19: sapling — magenta-pink */
-  .lv-sapling {
-    background: linear-gradient(
-      145deg,
-      #9f1239 0%,
-      #db2777 30%,
-      #e879f9 70%,
-      #f0abfc 100%
-    );
-    border-color: #e879f9;
-    color: var(--bg);
-    box-shadow: 0 0 18px rgba(232, 121, 249, 0.45);
-    animation: lv-canopy-pulse 3s ease-in-out infinite;
+  /* sizes — pixel dimensions unchanged from the previous badge so no layout
+     that hosts one has to move */
+  .lv-badge[data-size="xs"] {
+    --lv-size: 20px;
+    --lv-border: 1.5px;
+    --lv-lift: 2px;
+    --lv-num: 11px;
+  }
+  .lv-badge[data-size="sm"] {
+    --lv-size: 32px;
+    --lv-border: 2px;
+    --lv-lift: 2px;
+    --lv-num: 15px;
+  }
+  .lv-badge[data-size="lg"] {
+    --lv-size: 64px;
+    --lv-border: 2.5px;
+    --lv-lift: 4px;
+    --lv-inset: 8px;
+    --lv-num: 23px;
+    --lv-kicker: 7.5px;
+  }
+  .lv-badge[data-size="xl"] {
+    --lv-size: 96px;
+    --lv-border: 3px;
+    --lv-lift: 5px;
+    --lv-inset: 12px;
+    --lv-num: 36px;
+    --lv-kicker: 10px;
   }
 
-  /* Lv 20–49: canopy — rich purple filled */
-  .lv-canopy {
-    background: linear-gradient(
-      145deg,
-      #4c1d95 0%,
-      #6d28d9 30%,
-      #9945ff 70%,
-      #c4b5fd 100%
-    );
-    border-color: #9945ff;
-    color: var(--bg);
-    box-shadow: 0 0 20px rgba(153, 69, 255, 0.5);
-    animation: lv-canopy-pulse 3s ease-in-out infinite;
+  /* bands */
+  .lv-badge[data-band="recruit"] {
+    --lv-fill: #fafaf7;
+  }
+  .lv-badge[data-band="learner"] {
+    --lv-fill: #fde68a;
+  }
+  .lv-badge[data-band="builder"] {
+    --lv-fill: #2ecc8e;
+    --lv-label: rgba(25, 35, 27, 0.6);
+  }
+  .lv-badge[data-band="contributor"] {
+    --lv-fill: #0a7055;
+    --lv-text: #fafaf7;
+    --lv-label: rgba(250, 250, 247, 0.7);
+  }
+  .lv-badge[data-band="core"] {
+    --lv-fill: #19231b;
+    --lv-text: #fafaf7;
+    --lv-label: rgba(250, 250, 247, 0.6);
   }
 
-  /* Lv 50+: legend — Solana iridescent (purple → green) */
-  .lv-legend {
-    background: linear-gradient(
-      145deg,
-      #7c3aed 0%,
-      #9945ff 30%,
-      #14f195 70%,
-      #6ee7b7 100%
-    );
-    border-color: #14f195;
-    color: var(--bg);
-    box-shadow: 0 0 24px rgba(153, 69, 255, 0.45);
-    animation: lv-legend-pulse 3s ease-in-out infinite;
+  /* dark theme — outline and shadow flip to cream, band fills unchanged.
+     Recruit is the exception: a near-white disc needs the dark plate under it
+     or it disappears into its own outline. */
+  [data-theme="dark"] .lv-badge {
+    --lv-ink: #fafaf7;
+    --lv-plate: #131920;
+    box-shadow: 0 var(--lv-lift) 0 0 rgba(250, 250, 247, 0.92);
+  }
+  [data-theme="dark"] .lv-badge[data-band="recruit"] {
+    --lv-fill: #131920;
+    --lv-text: #fafaf7;
+    --lv-label: rgba(250, 250, 247, 0.6);
   }
 
   /* ── Achievement Medal Grid — V9 Superteam Academy ── */
@@ -1023,35 +1087,15 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SIDEBAR — v9 progress bar shimmer
-   The fill pseudo-element provides the sweeping light effect
+   SIDEBAR — XP rail
+   Inherits the profile XP bar's construction; only the height differs.
 ═══════════════════════════════════════════════════════════════ */
+/* The sidebar rail is the profile XP bar one size down: it inherits
+   .dash-xp-track's ink outline and solid fill and only overrides the
+   height, so the two can never drift apart. */
 .sidebar-prog {
-  height: 4px;
-  background: var(--input);
-  border-radius: var(--r-full);
-  overflow: hidden;
-}
-.sidebar-prog-fill {
-  height: 100%;
-  border-radius: var(--r-full);
-  background: linear-gradient(90deg, var(--primary-dark), var(--primary));
-  position: relative;
-  overflow: hidden;
-}
-.sidebar-prog-fill::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.12) 25%,
-    rgba(255, 255, 255, 0.38) 50%,
-    rgba(255, 255, 255, 0.12) 75%,
-    transparent 100%
-  );
-  animation: shimmer 2.2s ease-in-out infinite;
+  height: 11px;
+  border-width: 2px;
 }
 
 /* ── V9 shimmer — sweeping white aura on progress bars ── */
@@ -1248,25 +1292,6 @@
 
 /* ── Level badge tier animations ── */
 /* Shared glow pulse — uses neutral white so it works for all tier colors */
-@keyframes lv-canopy-pulse {
-  0%,
-  100% {
-    filter: brightness(1);
-  }
-  50% {
-    filter: brightness(1.15);
-  }
-}
-
-@keyframes lv-legend-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 18px rgba(153, 69, 255, 0.35);
-  }
-  50% {
-    box-shadow: 0 0 28px rgba(20, 241, 149, 0.5);
-  }
-}
 
 /* ── V9 Dashboard Panel ambient glow keyframes ── */
 @keyframes dash-amb-a {
@@ -2902,7 +2927,7 @@ a.path-step-card:hover .path-step-badge.skip {
 
 /* ── Reward popup rework (owner-approved 05-08) ──
    House card + per-moment accent; the icon is the real component (LevelBadge,
-   earned dm-oct token, mini diploma). The Solana gradient stays certificate-
+   earned achievement patch, mini diploma). The Solana gradient stays certificate-
    only — every other card is a bordered house card. */
 .rw-card {
   display: flex;
@@ -2988,18 +3013,7 @@ a.path-step-card:hover .path-step-badge.skip {
   justify-content: center;
   font-size: 20px;
 }
-/* Popup-sized dm-oct (base token is 52px; the card row wants 44). */
-.rw-oct .dm-oct {
-  width: 44px;
-  height: 44px;
-}
-.rw-oct .dm-face {
-  width: 35px;
-  height: 35px;
-}
-.rw-oct .dm-glyph {
-  font-size: 12px;
-}
+/* Popup patch sits at 40px; the card row is tighter than the dashboard. */
 /* Mini diploma — the certificate artifact in miniature. */
 .rw-diploma {
   width: 34px;
@@ -4108,10 +4122,9 @@ a.path-step-card:hover .path-step-badge.skip {
     gap: 12px;
     padding: 28px 20px 24px;
   }
-  .dash-identity .level-badge {
-    width: 88px !important;
-    height: 88px !important;
-    font-size: 38px !important;
+  .dash-identity .lv-badge {
+    --lv-size: 88px;
+    --lv-num: 33px;
   }
   .dash-xp-num {
     font-size: 42px;
@@ -4137,7 +4150,9 @@ a.path-step-card:hover .path-step-badge.skip {
   font-family: var(--font-display, var(--font-d));
   font-weight: 900;
   font-size: 34px;
-  color: var(--xp);
+  /* Ink, not amber: in the new lock-up the amber sits in the badge's band and
+     the total reads as plain type beside it. */
+  color: var(--text);
   letter-spacing: -1.5px;
   line-height: 1;
   margin-bottom: 2px;
@@ -4167,39 +4182,31 @@ a.path-step-card:hover .path-step-badge.skip {
   white-space: nowrap; /* "339 XP to Level 4" must not break mid-phrase in the split band */
 }
 .dash-xp-to em {
-  color: var(--xp);
+  color: var(--text);
   font-style: normal;
-  font-weight: 600;
+  font-weight: 700;
 }
+/* XP bar (spec: Profile Level and XP, 2a). Same construction as the badge and
+   the patches: an ink-outlined track with a solid fill, no gradient and no
+   shimmer — the 6px hairline it replaced read as chrome rather than progress. */
 .dash-xp-track {
   width: 100%;
   max-width: 200px;
-  height: 6px;
-  background: var(--input);
+  height: 16px;
+  background: color-mix(in oklab, var(--text) 12%, transparent);
+  border: 2.5px solid var(--text);
   border-radius: var(--r-full);
   overflow: hidden;
 }
 .dash-xp-fill {
   height: 100%;
-  border-radius: var(--r-full);
-  background: linear-gradient(90deg, var(--xp-dark), var(--xp));
-  position: relative;
-  overflow: hidden;
+  background: var(--text);
   transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.dash-xp-fill::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.1) 25%,
-    rgba(255, 255, 255, 0.35) 50%,
-    rgba(255, 255, 255, 0.1) 75%,
-    transparent 100%
-  );
-  animation: shimmer 2.2s ease-in-out infinite;
+@media (prefers-reduced-motion: reduce) {
+  .dash-xp-fill {
+    transition: none;
+  }
 }
 .dash-ach {
   padding: 18px 16px;
@@ -4328,117 +4335,6 @@ a.path-step-card:hover .path-step-badge.skip {
 .dm:nth-child(12) {
   animation-delay: 0.38s;
 }
-.dm-oct {
-  width: 52px;
-  height: 52px;
-  clip-path: polygon(
-    25% 0%,
-    75% 0%,
-    100% 25%,
-    100% 75%,
-    75% 100%,
-    25% 100%,
-    0% 75%,
-    0% 25%
-  );
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  transition:
-    transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
-    filter 0.22s;
-}
-.dm:hover .dm-oct {
-  transform: scale(1.14) translateY(-3px);
-}
-.dm-oct.earned {
-  background: linear-gradient(
-    145deg,
-    #7a3e00 0%,
-    #b45309 18%,
-    #f5a623 40%,
-    #fde68a 52%,
-    #f5a623 65%,
-    #b45309 84%,
-    #7a3e00 100%
-  );
-  filter: drop-shadow(0 4px 10px rgba(245, 166, 35, 0.3));
-  animation: dm-glow 3.5s ease-in-out infinite;
-}
-.dm-oct.sol {
-  background: var(--sol-grad);
-  animation: dm-sol 3.5s ease-in-out infinite;
-}
-.dm-oct.locked {
-  background: var(--border-strong);
-  filter: none;
-  opacity: 0.25;
-}
-.dm:hover .dm-oct.locked {
-  transform: none;
-}
-.dm-face {
-  width: 42px;
-  height: 42px;
-  clip-path: polygon(
-    25% 0%,
-    75% 0%,
-    100% 25%,
-    100% 75%,
-    75% 100%,
-    25% 100%,
-    0% 75%,
-    0% 25%
-  );
-  position: absolute;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.dm-oct.earned .dm-face {
-  background: linear-gradient(
-    155deg,
-    rgba(0, 0, 0, 0.2) 0%,
-    rgba(255, 255, 255, 0.08) 50%,
-    rgba(0, 0, 0, 0.16) 100%
-  );
-}
-.dm-oct.sol .dm-face {
-  background: linear-gradient(
-    155deg,
-    rgba(0, 0, 0, 0.24) 0%,
-    rgba(255, 255, 255, 0.1) 50%,
-    rgba(0, 0, 0, 0.2) 100%
-  );
-}
-.dm-oct.locked .dm-face {
-  background: var(--card);
-  width: 46px;
-  height: 46px;
-}
-.dm-glyph {
-  font-family: var(--font-mono, var(--font-m));
-  font-weight: 600;
-  font-size: 14px;
-  position: relative;
-  z-index: 1;
-  line-height: 1;
-  user-select: none;
-  letter-spacing: -0.5px;
-}
-.dm-oct.earned .dm-glyph {
-  color: rgba(0, 0, 0, 0.56);
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.2);
-}
-.dm-oct.sol .dm-glyph {
-  color: rgba(0, 0, 0, 0.52);
-  font-size: 17px;
-  letter-spacing: 0;
-}
-.dm-oct.locked .dm-glyph {
-  color: var(--text-disabled);
-}
 .dm-name {
   font-family: var(--font-display, var(--font-d));
   font-size: 9px;
@@ -4449,11 +4345,22 @@ a.path-step-card:hover .path-step-badge.skip {
   text-transform: uppercase;
   max-width: 56px;
 }
-.dm-oct.locked ~ .dm-name {
+/* The token is a real button (it opens the tooltip), so its patch takes the
+   spec's interactive press-lift — the patch's own :hover rules are scoped to
+   a/button elements and this one is a span inside the button. */
+.dm:hover .patch:not([data-locked]) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 0 var(--patch-ink);
+}
+.dm:active .patch:not([data-locked]) {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 0 var(--patch-ink);
+}
+
+.dm .patch[data-locked] ~ .dm-name {
   color: var(--text-disabled);
 }
-.dm-oct.earned ~ .dm-name,
-.dm-oct.sol ~ .dm-name {
+.dm .patch:not([data-locked]) ~ .dm-name {
   color: var(--text-2);
 }
 
@@ -4469,26 +4376,8 @@ a.path-step-card:hover .path-step-badge.skip {
   .dm {
     gap: 8px;
   }
-  .dm-oct {
-    width: 68px;
-    height: 68px;
-  }
-  .dm-face {
-    width: 56px;
-    height: 56px;
-  }
-  .dm-oct.locked .dm-face {
-    width: 60px;
-    height: 60px;
-  }
-  .dm-oct.locked {
-    opacity: 0.35;
-  }
-  .dm-glyph {
-    font-size: 18px;
-  }
-  .dm-oct.sol .dm-glyph {
-    font-size: 21px;
+  .dm .patch {
+    --size: 68px;
   }
   .dm-name {
     font-size: 11px;
@@ -4554,16 +4443,10 @@ a.path-step-card:hover .path-step-badge.skip {
   grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
   gap: 10px;
 }
-.ach-rail-grid .dm-oct {
-  width: 44px;
-  height: 44px;
-}
-.ach-rail-grid .dm-oct.locked .dm-face {
-  width: 36px;
-  height: 36px;
-}
-.ach-rail-grid .dm-glyph {
-  font-size: 14px;
+.ach-rail-grid .dm .patch {
+  --size: 44px;
+  --border: 2px;
+  --lift: 3px;
 }
 .ach-rail-grid .dm-name {
   font-size: 10px;
@@ -4651,22 +4534,10 @@ a.path-step-card:hover .path-step-badge.skip {
 .ach-strip-row .dm-name {
   display: none;
 }
-.ach-strip-row .dm-oct {
-  width: 44px;
-  height: 44px;
-}
-/* The base locked face is a fixed 46px — larger than this strip's 44px tile,
-   which blanked the whole octagon. Size it to the tile and keep locked tokens
-   readable as "next goals", not ghosts. */
-.ach-strip-row .dm-oct.locked {
-  opacity: 0.6;
-}
-.ach-strip-row .dm-oct.locked .dm-face {
-  width: 38px;
-  height: 38px;
-}
-.ach-strip-row .dm-glyph {
-  font-size: 16px;
+.ach-strip-row .dm .patch {
+  --size: 44px;
+  --border: 2px;
+  --lift: 3px;
 }
 
 /* Identity | heatmap split band (04-08): level+XP left, activity right. */

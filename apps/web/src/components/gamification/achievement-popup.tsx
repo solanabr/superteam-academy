@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { Lightning } from "@phosphor-icons/react";
 import { getAllAchievements } from "@/lib/content/client-queries";
 import { cn } from "@/lib/utils";
+import { AchievementPatch } from "@/components/gamification/achievement-patch";
 
 interface AchievementEvent {
   id: string;
@@ -43,6 +44,7 @@ interface TokenInfo {
   glyph: string;
   name: string;
   solTier: boolean;
+  category: string;
 }
 
 export function AchievementPopup({ className }: { className?: string }) {
@@ -53,7 +55,7 @@ export function AchievementPopup({ className }: { className?: string }) {
 
   const [events, setEvents] = useState<AchievementEvent[]>([]);
 
-  // Content catalog by id — the popup renders the achievement's REAL octagon
+  // Content catalog by id — the popup renders the achievement's REAL patch
   // token (glyph + tier), and the content name beats the id-derived fallback
   // the Realtime handler sends. Fetched lazily on the first unlock; a failed
   // fetch just leaves the fallback name and a starter glyph.
@@ -68,7 +70,12 @@ export function AchievementPopup({ className }: { className?: string }) {
           new Map(
             all.map((a) => [
               a.id,
-              { glyph: a.glyph, name: a.name, solTier: a.solTier },
+              {
+                glyph: a.glyph,
+                name: a.name,
+                solTier: a.solTier,
+                category: a.category,
+              },
             ])
           )
         );
@@ -124,7 +131,7 @@ export function AchievementPopup({ className }: { className?: string }) {
         const info = catalog?.get(ev.id);
         return (
           /* Rework 05-08: house card, gold accent — the icon is the earned
-             dm-oct token itself, the same one lighting up on the dashboard. */
+             patch itself, the same one lighting up on the dashboard. */
           <button
             key={ev.uid}
             onClick={() => handleClick(ev.uid)}
@@ -132,10 +139,14 @@ export function AchievementPopup({ className }: { className?: string }) {
             aria-label={`${t("newAchievement")}: ${info?.name ?? ev.name}`}
           >
             <div className="rw-oct" aria-hidden="true">
-              <div className={cn("dm-oct", info?.solTier ? "sol" : "earned")}>
-                <div className="dm-face" />
-                <span className="dm-glyph">{info?.glyph ?? "★"}</span>
-              </div>
+              <AchievementPatch
+                id={ev.id}
+                glyph={info?.glyph ?? "★"}
+                category={info?.category}
+                solTier={info?.solTier}
+                state="earned"
+                size={40}
+              />
             </div>
             <div className="flex-1">
               <div className="rw-kicker">{t("newAchievement")}</div>

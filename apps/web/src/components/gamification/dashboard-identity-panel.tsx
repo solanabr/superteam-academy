@@ -6,6 +6,7 @@ import { Lock, CheckCircle } from "@phosphor-icons/react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import type { StreakData } from "@superteam-lms/types";
 import { LevelBadge } from "@/components/gamification/level-badge";
+import { AchievementPatch } from "@/components/gamification/achievement-patch";
 import { xpToNextLevel } from "@/lib/gamification/xp";
 import { cn } from "@/lib/utils";
 
@@ -169,10 +170,15 @@ function buildHeatmapData(
 }
 
 /* ---------------------------------------------------------------
-   ACHIEVEMENT TOKEN (V9 octagonal .dm-oct)
+   ACHIEVEMENT TOKEN — the achievement patch in a tappable, tooltipped
+   wrapper. The octagonal .dm-oct medal it used to render is gone with the
+   rest of the metal (achievement-patches v1).
 --------------------------------------------------------------- */
 export function AchievementToken({
+  id,
   glyph,
+  category,
+  solTier,
   name,
   hint,
   state,
@@ -182,7 +188,11 @@ export function AchievementToken({
   onOpenChange,
   wasDrag,
 }: {
+  /** Content _id — selects the patch's tier and category. */
+  id: string;
   glyph: string;
+  category?: string;
+  solTier?: boolean;
   name: string;
   hint: string;
   state: "earned" | "sol" | "locked";
@@ -215,10 +225,14 @@ export function AchievementToken({
             onTap?.();
           }}
         >
-          <div className={cn("dm-oct", state)} aria-hidden="true">
-            <div className="dm-face" />
-            <span className="dm-glyph">{glyph}</span>
-          </div>
+          <AchievementPatch
+            id={id}
+            glyph={glyph}
+            category={category}
+            solTier={solTier}
+            state={isLocked ? "locked" : "earned"}
+            size={56}
+          />
           <span className="dm-name">{name}</span>
         </button>
       </Tooltip.Trigger>
@@ -296,7 +310,7 @@ export function DashboardIdentityPanel({
           Achievements render in their own strip below the panel. */}
       <div className="dash-split">
         <div className="dash-identity">
-          <LevelBadge level={level} size="xl" />
+          <LevelBadge level={level} size="xl" progress={progressPercent} />
 
           <div>
             <div className="dash-xp-num" aria-label={`${xp} XP`}>
