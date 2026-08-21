@@ -7,7 +7,6 @@ import type {
   LearningPath,
   QuizBlockData,
 } from "@superteam-lms/types";
-import { isUnlistedCourse } from "@/lib/courses/unlisted";
 import {
   getActiveDeployments,
   getDeploymentById,
@@ -200,21 +199,19 @@ async function gatedCourses(): Promise<CourseDoc[]> {
 // --- Public / catalog queries (gated: synced + active) ---
 
 /**
- * Listing visibility (#1137): hidden from discovery because the CONTENT says
- * so — `unlisted: true` on the course doc, carried through the projector into
- * the bundle. Unlisted is a LISTING property, not an access gate: the course
- * page, its lessons, enrolment and completion keep working for anyone holding
- * the URL. What goes away is the catalog, the landing count, the sitemap,
- * recommendations, the filter chips, and path membership.
+ * Listing visibility (#1137): a course is hidden from discovery only when the
+ * CONTENT says so — `unlisted: true` on the course doc, carried through the
+ * projector into the bundle. Unlisted is a LISTING property, not an access
+ * gate: the course page, its lessons, enrolment and completion keep working for
+ * anyone holding the URL. What goes away is the catalog, the landing count, the
+ * sitemap, recommendations, the filter chips, and path membership.
  *
- * The second clause is the app-code constant this replaces
- * (lib/courses/unlisted.ts), kept as a temporary fallback: the flag lives in
- * the content repo, so today's one unlisted course can only set it once that
- * content PR lands and `content.lock` bumps (Part 2 of #1137). Drop the
- * clause — and unlisted.ts with it — at that bump.
+ * This is the last word on course visibility — no app-code id list backs it up
+ * (the old lib/courses/unlisted.ts fallback is gone). No course in today's
+ * bundle sets the flag, so nothing is hidden.
  */
 function isCourseUnlisted(c: CourseDoc): boolean {
-  return c.unlisted === true || isUnlistedCourse(c._id);
+  return c.unlisted === true;
 }
 
 export async function getAllCourses(): Promise<Course[]> {
@@ -226,9 +223,9 @@ export async function getAllCourses(): Promise<Course[]> {
 }
 
 /**
- * Every synced+active course, unlisted included — for ADMIN surfaces only
- * (resync must see an unlisted course or it could never be repaired). Public
- * pages use {@link getAllCourses}.
+ * Every synced+active course, ignoring the `unlisted` content flag — for ADMIN
+ * surfaces only (resync must see an unlisted course or it could never be
+ * repaired). Public pages use {@link getAllCourses}.
  */
 export async function getAllCoursesIncludingUnlisted(): Promise<Course[]> {
   const courses = await gatedCourses();
