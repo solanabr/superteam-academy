@@ -132,11 +132,7 @@ export function ProfileHeroPanel({
 
         {/* RIGHT — XP + Level + Progress */}
         <div className="prof-xp">
-          <LevelBadge
-            level={stats.level}
-            size={104}
-            progress={progressPercent}
-          />
+          <LevelBadge level={stats.level} size={104} />
           <div>
             <div className="dash-xp-num" aria-label={`${stats.totalXp} XP`}>
               {stats.totalXp.toLocaleString()}

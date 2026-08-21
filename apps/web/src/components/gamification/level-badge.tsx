@@ -3,13 +3,17 @@ import { cn } from "@/lib/utils";
 /**
  * The level badge (spec: Leaderboard and Level, §1).
  *
- * A plate disc holding a stacked LV lock-up, wrapped in a progress ring — the
- * only ring in the system, so a badge is never mistaken for an achievement
- * patch. Flat fill, ink outline, hard offset shadow: no metal, no gradient.
+ * A hexagon carrying a stacked LV lock-up in the band's fill. The silhouette
+ * is the point: achievement patches are square, squircle, circle and notched,
+ * so the hexagon belongs to the level badge and to nothing else. There is no
+ * ring and no stitch — progress is not on the badge at all, it lives in the
+ * XP bar.
  *
- * Mint belongs to progress alone: it fills the ring and the XP bar and is
- * never a band colour. The band ramp walks cream → amber → deep green → ink,
- * so rank is legible before the numeral is read.
+ * Built from two clipped hexagons rather than a bordered element, because a
+ * clip-path crops a border away: the outline is the layer underneath, showing
+ * through the inset of the fill above it. The hard shadow is a drop-shadow
+ * filter for the same reason — a box-shadow would draw a rectangle around the
+ * six sides.
  */
 export type LevelBand = "recruit" | "learner" | "contributor" | "core";
 
@@ -24,24 +28,13 @@ export function getLevelBand(level: number): LevelBand {
   return "recruit";
 }
 
-/**
- * The spec's three disc sizes plus the inline lock-up. `pill` puts LV before
- * the numeral in a capsule, for rows too dense to carry a disc.
- */
-export type LevelBadgeSize = "pill" | 44 | 72 | 104;
+/** Heights; the hexagon's width is 0.88 × its height. */
+export type LevelBadgeSize = 30 | 44 | 72 | 104;
 
-/** LV is hidden below 60px rather than shrunk further. */
-const SHOWS_KICKER: Record<string, boolean> = {
-  pill: true,
+/** LV is hidden below 60px rather than shrunk — there the numeral stands alone. */
+const SHOWS_KICKER: Record<number, boolean> = {
+  30: false,
   44: false,
-  72: true,
-  104: true,
-};
-
-/** A pill has nowhere to put a ring. */
-const SHOWS_RING: Record<string, boolean> = {
-  pill: false,
-  44: true,
   72: true,
   104: true,
 };
@@ -49,38 +42,20 @@ const SHOWS_RING: Record<string, boolean> = {
 interface LevelBadgeProps {
   level: number;
   size?: LevelBadgeSize;
-  /** Percent into the current level (0–100). Omit to render without the ring. */
-  progress?: number;
   className?: string;
 }
 
-export function LevelBadge({
-  level,
-  size = 44,
-  progress,
-  className,
-}: LevelBadgeProps) {
-  const band = getLevelBand(level);
-  const ring =
-    progress !== undefined && SHOWS_RING[size]
-      ? Math.max(0, Math.min(100, progress))
-      : null;
-
+export function LevelBadge({ level, size = 44, className }: LevelBadgeProps) {
   return (
     <div
       className={cn("lv-badge", className)}
-      data-band={band}
+      data-band={getLevelBand(level)}
       data-size={size}
-      data-ring={ring !== null || undefined}
-      style={ring !== null ? { ["--lv-pct" as string]: `${ring}%` } : undefined}
       role="img"
-      aria-label={
-        ring !== null
-          ? `Level ${level}, ${Math.round(ring)}% to the next level`
-          : `Level ${level}`
-      }
+      aria-label={`Level ${level}`}
     >
-      {ring !== null && <span className="lv-ring" aria-hidden="true" />}
+      <span className="lv-hex-outline" aria-hidden="true" />
+      <span className="lv-hex-fill" aria-hidden="true" />
       <span className="lv-core">
         {SHOWS_KICKER[size] && <span className="lv-kicker">LV</span>}
         <span className="lv-num">{level}</span>

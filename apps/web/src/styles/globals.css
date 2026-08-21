@@ -421,73 +421,60 @@
   }
 
   /* ── Level badge (spec: Leaderboard and Level, §1) ─────────────────
-     Three stacked layers, no SVG and no gradient: a plate disc, a mint
-     progress ring, and a banded inner disc carrying the LV lock-up. Mint is
-     withheld for progress — it fills the ring and the XP bar and is never a
-     band colour, so "how far" and "how high" never use the same signal. */
+     A pointy-top hexagon — the one silhouette no achievement patch uses, so
+     a level is never mistaken for an achievement. Two clipped layers, no SVG
+     and no border: a clip-path crops a border away, so the outline is simply
+     the ink layer underneath showing through the fill's inset. The hard
+     shadow is a drop-shadow filter for the same reason — a box-shadow would
+     draw a rectangle around the six sides.
+
+     No ring and no stitch: progress is not on the badge, it lives in the XP
+     bar. Mint never appears here. */
   .lv-badge {
-    --lv-size: 44px;
-    --lv-outline: 2px;
-    --lv-lift: 3px;
-    --lv-inset: 5px;
-    --lv-num: 18px;
+    --lv-h: 44px;
+    --lv-w: 39px;
+    --lv-inset: 2px;
+    --lv-num: 19px;
     --lv-kicker: 8px;
+    --lv-lift: 3px;
 
     --lv-ink: #19231b;
-    --lv-plate: #fafaf7;
     --lv-shadow: #19231b;
-    --lv-track: rgba(25, 35, 27, 0.12);
-    --lv-mint: #2ecc8e;
-
-    --lv-fill: #fde68a;
+    --lv-band: #fde68a;
     --lv-text: #19231b;
     --lv-label: rgba(25, 35, 27, 0.82);
 
     position: relative;
     flex-shrink: 0;
-    width: var(--lv-size);
-    height: var(--lv-size);
-    border-radius: 999px;
-    border: var(--lv-outline) solid var(--lv-ink);
-    box-shadow: 0 var(--lv-lift) 0 0 var(--lv-shadow);
-    /* Without a ring the badge itself is the banded disc. */
-    background: var(--lv-fill);
+    width: var(--lv-w);
+    height: var(--lv-h);
+    filter: drop-shadow(0 var(--lv-lift) 0 var(--lv-shadow));
     font-variant-numeric: tabular-nums;
     cursor: default;
   }
-  .lv-badge[data-ring] {
-    background: var(--lv-plate);
-  }
 
-  /* One continuous arc from −90°. No ticks, no segments, no cap. */
-  .lv-ring {
+  .lv-hex-outline,
+  .lv-hex-fill {
     position: absolute;
-    /* inset 0 is already inside the badge's own border box, which is the
-       spec's "inset by the outline width". */
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  }
+  .lv-hex-outline {
     inset: 0;
-    border-radius: 999px;
-    background: conic-gradient(
-      from -90deg,
-      var(--lv-mint) 0 var(--lv-pct),
-      var(--lv-track) var(--lv-pct) 100%
-    );
+    background: var(--lv-ink);
+  }
+  .lv-hex-fill {
+    inset: var(--lv-inset);
+    background: var(--lv-band);
   }
 
   .lv-core {
     position: absolute;
     inset: 0;
-    border-radius: 999px;
     display: grid;
     place-items: center;
     align-content: center;
     text-align: center;
     line-height: 1;
-  }
-  /* The ring band is the gap between the two outlines. */
-  .lv-badge[data-ring] .lv-core {
-    inset: var(--lv-inset);
-    border: var(--lv-outline) solid var(--lv-ink);
-    background: var(--lv-fill);
   }
 
   /* The label is part of the mark, not a caption — it never drops below 82%. */
@@ -497,6 +484,7 @@
     font-weight: 700;
     letter-spacing: 0.2em;
     line-height: 1;
+    margin-bottom: 3px;
     /* Tracking is applied after the last character too, so centring the box
        leaves the ink half a step left. Shift back by half. */
     text-indent: 0.1em;
@@ -511,72 +499,117 @@
     color: var(--lv-text);
   }
 
-  /* geometry by size */
+  /* geometry by size — width is 0.88 × height throughout */
+  .lv-badge[data-size="30"] {
+    --lv-h: 30px;
+    --lv-w: 27px;
+    --lv-inset: 1.5px;
+    --lv-num: 14px;
+    --lv-lift: 2px;
+  }
   .lv-badge[data-size="72"] {
-    --lv-size: 72px;
-    --lv-outline: 2.5px;
-    --lv-lift: 4px;
-    --lv-inset: 7px;
-    --lv-num: 26px;
+    --lv-h: 72px;
+    --lv-w: 64px;
+    --lv-inset: 2.5px;
+    --lv-num: 28px;
     --lv-kicker: 9px;
+    --lv-lift: 4px;
   }
   .lv-badge[data-size="104"] {
-    --lv-size: 104px;
-    --lv-outline: 3px;
-    --lv-lift: 5px;
-    --lv-inset: 10px;
-    --lv-num: 38px;
+    --lv-h: 104px;
+    --lv-w: 92px;
+    --lv-inset: 3px;
+    --lv-num: 40px;
     --lv-kicker: 11px;
-  }
-
-  /* The inline lock-up: LV before the numeral in a capsule. */
-  .lv-badge[data-size="pill"] {
-    --lv-outline: 2px;
-    --lv-lift: 3px;
-    --lv-num: 16px;
-    --lv-kicker: 9px;
-    width: auto;
-    height: 30px;
-    padding: 0 11px;
-    border-radius: 999px;
-  }
-  .lv-badge[data-size="pill"] .lv-core {
-    position: static;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    height: 100%;
-  }
-  .lv-badge[data-size="pill"] .lv-kicker {
-    letter-spacing: 0.14em;
-    text-indent: 0.07em;
+    --lv-lift: 5px;
   }
 
   /* The band ramp: cream → amber → deep green → ink. Never mint. */
   .lv-badge[data-band="recruit"] {
-    --lv-fill: #fafaf7;
+    --lv-band: #fafaf7;
   }
   .lv-badge[data-band="learner"] {
-    --lv-fill: #fde68a;
+    --lv-band: #fde68a;
   }
   .lv-badge[data-band="contributor"] {
-    --lv-fill: #0a7055;
+    --lv-band: #0a7055;
     --lv-text: #fafaf7;
     --lv-label: rgba(250, 250, 247, 0.9);
   }
+  /* Core is ink on ink in light mode — by design; on dark the cream outline
+     is what separates the badge from the panel. */
   .lv-badge[data-band="core"] {
-    --lv-fill: #19231b;
+    --lv-band: #19231b;
     --lv-text: #fafaf7;
     --lv-label: rgba(250, 250, 247, 0.85);
   }
 
   /* Dark surface — variable swaps on the same markup, never a forked
-     component. Mint and the band fills carry over untouched. */
+     component. The band fills carry over untouched. */
   [data-theme="dark"] .lv-badge {
     --lv-ink: #fafaf7;
-    --lv-plate: #19231b;
     --lv-shadow: rgba(250, 250, 247, 0.2);
-    --lv-track: rgba(250, 250, 247, 0.18);
+  }
+
+  /* ── Nav pill (spec: Leaderboard and Level, §1) ────────────────────
+     The badge's compact home in the top bar: hexagon, hairline rule,
+     lifetime total. It nests only the hexagon — no rounded rectangle inside
+     a rounded rectangle — and it carries no progress; the profile's bar
+     does that. */
+  .nav-pill {
+    --pill-ink: #19231b;
+    --pill-shadow: #19231b;
+    display: inline-flex;
+    align-items: center;
+    gap: 11px;
+    height: 44px;
+    padding: 0 16px 0 8px;
+    border-radius: 999px;
+    background: var(--card);
+    border: 2.5px solid var(--pill-ink);
+    box-shadow: 0 4px 0 0 var(--pill-shadow);
+    text-decoration: none;
+  }
+  /* Interactive only when it links out; a static pill stays still. */
+  a.nav-pill:hover,
+  button.nav-pill:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 0 var(--pill-shadow);
+  }
+  a.nav-pill:active,
+  button.nav-pill:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 0 var(--pill-shadow);
+  }
+  .nav-pill-rule {
+    width: 1.5px;
+    height: 20px;
+    background: color-mix(in srgb, var(--pill-ink) 20%, transparent);
+    flex: none;
+  }
+  .nav-pill-xp {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+  }
+  .nav-pill-num {
+    font-family: var(--font-display), "Nunito", sans-serif;
+    font-weight: 900;
+    font-size: 19px;
+    line-height: 1;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+  .nav-pill-unit {
+    font-family: var(--font-mono), "JetBrains Mono", monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--text-2);
+  }
+  [data-theme="dark"] .nav-pill {
+    --pill-ink: #fafaf7;
+    --pill-shadow: rgba(250, 250, 247, 0.2);
   }
 
   /* ── Achievement Medal Grid — V9 Superteam Academy ── */
@@ -3378,7 +3411,11 @@ a.path-step-card:hover .path-step-badge.skip {
   gap: 8px;
   padding: 24px 12px 16px;
   border-radius: 16px;
-  border: 2.5px solid var(--lb-ink, var(--border));
+  /* Integer outline on purpose: border-width is rounded down to whole pixels
+     for layout, so a declared 2.5px is used as 2px. The rank tab overhangs by
+     exactly this value to make the two outlines read as one line, and a
+     fractional declaration put the two half a pixel out of register. */
+  border: 2px solid var(--lb-ink, var(--border));
   background: var(--card);
   box-shadow: 0 4px 0 0 var(--lb-ink, var(--border));
   transition: all 0.2s;
@@ -3427,7 +3464,7 @@ a.path-step-card:hover .path-step-badge.skip {
    theme tokens precisely so they cannot be picked up as a category colour. */
 .rank-tab {
   --rank-fill: #fde68a;
-  --rank-outline: 2.5px;
+  --rank-outline: 2px;
   position: absolute;
   top: -16px;
   left: calc(var(--rank-outline) * -1);
