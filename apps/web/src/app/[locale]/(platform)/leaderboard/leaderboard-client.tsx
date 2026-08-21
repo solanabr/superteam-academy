@@ -7,6 +7,7 @@ import Image from "next/image";
 import { Trophy, UsersThree, Info, Gift } from "@phosphor-icons/react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import type { LeaderboardEntry, CohortLeague } from "@superteam-lms/types";
+import { GlyphChip } from "@/components/gamification/glyph-chip";
 import { LevelBadge } from "@/components/gamification/level-badge";
 import { CohortRow } from "@/components/leaderboard/cohort-row";
 import {
@@ -192,9 +193,12 @@ function LeagueBoard({ cohort }: { cohort: CohortLeague | null }) {
   return (
     <>
       <div className="lb-league-head">
-        <span className="lb-league-icon" aria-hidden="true">
-          <UsersThree size={22} weight="fill" />
-        </span>
+        {/* The league identity mark, matching the dashboard's league strip —
+            a league is a cohort of people, so it takes the community mark.
+            40px keeps the header's presence; the strip's solo state uses 24.
+            `.lb-league-icon` stays in the stylesheet: the Referrals tab still
+            uses that disc for its own (gift) icon. */}
+        <GlyphChip glyph="◍" cat="community" size={40} />
         <div className="min-w-0 flex-1">
           {/* The ⓘ sits beside the tier name it explains — parked at the far
               end of a full-width line it read as unrelated (05-08). */}

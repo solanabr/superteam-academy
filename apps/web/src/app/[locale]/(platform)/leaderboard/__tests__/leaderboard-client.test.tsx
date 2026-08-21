@@ -85,3 +85,40 @@ describe("LeaderboardClient — league framing + scoring info (#789)", () => {
     ).not.toBeInTheDocument();
   });
 });
+
+// Icon sweep 21-08: the League header's primary-dim disc was the last legacy
+// icon in the league surfaces. It becomes the same community chip the
+// dashboard's league strip uses, so the two cards agree.
+
+describe("LeaderboardClient — the league header icon", () => {
+  it("uses the 40px community chip, not the legacy disc", () => {
+    const { container } = renderClient(cohort);
+
+    const chip = container.querySelector(".lb-league-head .chip");
+    expect(chip).not.toBeNull();
+    expect(chip!.getAttribute("data-cat")).toBe("community");
+    // 40 keeps the header's presence; the dashboard strip's solo state uses 24.
+    expect(chip!.getAttribute("data-size")).toBe("40");
+    expect(
+      chip!.querySelector("[data-glyph]")!.getAttribute("data-glyph")
+    ).toBe("◍");
+  });
+
+  it("keeps it decorative — the tier name carries the meaning", () => {
+    const { container } = renderClient(cohort);
+
+    expect(
+      container
+        .querySelector(".lb-league-head .chip")!
+        .getAttribute("aria-hidden")
+    ).toBe("true");
+    expect(container.querySelector(".lb-league-tier")).not.toBeNull();
+  });
+
+  it("leaves no league disc behind in the header", () => {
+    const { container } = renderClient(cohort);
+    expect(
+      container.querySelector(".lb-league-head .lb-league-icon")
+    ).toBeNull();
+  });
+});
