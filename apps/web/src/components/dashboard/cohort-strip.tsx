@@ -3,9 +3,10 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
-import { UsersThree, ArrowRight } from "@phosphor-icons/react";
+import { ArrowRight } from "@phosphor-icons/react";
 import type { CohortLeague } from "@superteam-lms/types";
 import { scrollBehavior } from "@/lib/reduced-motion";
+import { GlyphChip } from "@/components/gamification/glyph-chip";
 import { CohortRow } from "@/components/leaderboard/cohort-row";
 
 interface CohortStripProps {
@@ -80,12 +81,11 @@ export function CohortStrip({ league }: CohortStripProps) {
         </h2>
         <div className="rounded-xl border border-border bg-card p-4 shadow-card">
           <div className="flex items-center gap-3">
-            <span
-              className="bg-primary-dim flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-primary"
-              aria-hidden="true"
-            >
-              <UsersThree size={18} weight="fill" />
-            </span>
+            {/* A league is a cohort of people, so it takes the community mark.
+                The assigned state expresses league identity through the tier
+                NAME alone and carries no colour of its own, so nothing here
+                argued for a fill other than the community one. */}
+            <GlyphChip glyph="◍" cat="community" size={24} />
             <p className="text-[13px] font-semibold text-text-2">
               {tierName(t, league.tier)}
             </p>
