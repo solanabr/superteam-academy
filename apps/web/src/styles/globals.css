@@ -789,10 +789,15 @@
   }
 
   .patch3d__slice,
-  .patch3d__face {
+  .patch3d__face,
+  .patch3d__rim {
     position: absolute;
-    inset: 0;
     border-radius: var(--patch-radius);
+  }
+
+  .patch3d__slice,
+  .patch3d__face {
+    inset: 0;
   }
 
   /* Inset so the slices never break the faces' silhouette. 1px, not 2 — at 2
@@ -801,6 +806,43 @@
   .patch3d__slice {
     inset: 1px;
     background: var(--shade);
+  }
+
+  /* The rim: the slab's actual edge. The slices all run parallel to the faces,
+     so edge-on they have no projected width and the patch thins to nothing as
+     it passes 90°. These two planes stand perpendicular to them along the left
+     and right edges, presenting their full width exactly when the faces present
+     none, so the middle stays filled right through the turn.
+
+     --rim-h is the length of the shape's STRAIGHT left/right edge, i.e. 100%
+     minus twice the corner radius. Sizing each panel to exactly that span is
+     what keeps it inside the silhouette: any taller and it squares off the
+     corners the faces have rounded. A circle has no straight edge at all, so
+     tier 3 gets a short band at the waist. */
+  .patch3d__rim {
+    --rim-h: 72%;
+    top: calc((100% - var(--rim-h)) / 2);
+    height: var(--rim-h);
+    width: var(--t);
+    border-radius: calc(var(--t) / 2);
+    background: var(--shade);
+  }
+  .patch3d[data-tier="2"] .patch3d__rim {
+    --rim-h: 40%;
+  }
+  .patch3d[data-tier="3"] .patch3d__rim {
+    --rim-h: 22%;
+  }
+  .patch3d[data-tier="4"] .patch3d__rim {
+    --rim-h: 50%;
+  }
+  .patch3d__rim--l {
+    left: calc(var(--t) / -2);
+    transform: rotateY(90deg);
+  }
+  .patch3d__rim--r {
+    right: calc(var(--t) / -2);
+    transform: rotateY(90deg);
   }
 
   .patch3d__face {
@@ -1719,7 +1761,12 @@
    the ring so the empty space above and below it is equal. */
 .ach-ring-stage {
   perspective: 1400px;
-  height: 220px;
+  /* Sized to the badge + label, with no slack of its own: the surrounding
+     margins are then the only thing between the ring and the copy above and
+     below it, so equal margins read as equal gaps. Near items scale up under
+     perspective and overhang this box, but symmetrically about their own
+     centre, which keeps the two gaps matched. */
+  height: 112px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1728,7 +1775,7 @@
   --ring-r: 120px;
   position: relative;
   width: 96px;
-  height: 150px;
+  height: 112px;
   transform-style: preserve-3d;
   animation: ach-ring-spin 36s linear infinite;
 }
@@ -1752,6 +1799,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  /* Centred, not top-aligned: the patch and its label are shorter than the
+     ring box, and leaving that slack at the bottom made the gap under the
+     badges visibly larger than the one above them. */
+  justify-content: center;
   gap: 12px;
   transform: rotateY(var(--ring-a)) translateZ(var(--ring-r));
   transform-style: preserve-3d;
@@ -1769,9 +1820,11 @@
 .ach-ring-item .patch3d[data-cat="course"] {
   --stitch: rgba(25, 35, 27, 0.4);
 }
-.ach-ring-item .patch3d__face--back {
-  opacity: 0.32;
-}
+/* The back face is opaque like the front. Ghosting it made the far half of
+   the ring read as a hollow shell — the bright rim and slices showed straight
+   through the translucent face, so the badge looked like two misaligned
+   pieces instead of one solid object. Depth is carried by perspective scale
+   and by the ghosted name label instead. */
 
 /* On the ring the cream outline is a hover affordance, not permanent chrome:
    seven outlined patches at once read as a cage, and the fills already carry
@@ -1802,6 +1855,11 @@
   text-align: center;
   color: rgba(255, 255, 255, 0.85);
   backface-visibility: hidden;
+  /* One line always. A wrapped name makes that item taller than its
+     neighbours, which pushes the lowest label below the rest and reopens the
+     uneven gap under the ring. Names overflow the narrow item box instead —
+     they are centred, and the badges sit far enough apart to take it. */
+  white-space: nowrap;
 }
 .ach-ring-name--back {
   position: absolute;
