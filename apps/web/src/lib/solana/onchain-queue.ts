@@ -23,6 +23,7 @@ import {
   issueCredential,
   buildSignedRewardXpTx,
   sendSignedTransaction,
+  TransactionNotBroadcastError,
 } from "./academy-program";
 import { getProgramId } from "./pda";
 
@@ -557,10 +558,26 @@ export async function retryPendingOnchainActions(
           } catch (sendErr) {
             const message =
               sendErr instanceof Error ? sendErr.message : String(sendErr);
-            // The claim is already written, so the next sweep will resolve this
-            // row without re-sending — by design, since we cannot tell a failed
-            // send from a slow-confirming one. Surface it loudly and throw so
-            // last_error records which signature to reconcile on-chain.
+
+            if (sendErr instanceof TransactionNotBroadcastError) {
+              // The broadcast was REJECTED — nothing reached the cluster, so no
+              // mint exists and the claim is protecting nothing. Keeping it
+              // would forfeit the mint permanently: every later sweep would see
+              // a non-null tx_signature and resolve without ever sending. That
+              // is a real outage shape, not a corner case — pausing the program
+              // on-chain (independent of the DB freeze gate) fails preflight for
+              // every quest mint in the window. RELEASE the claim so the row
+              // retries normally. The `.eq("tx_signature", <our sig>)` makes the
+              // release safe under any interleaving: it can only clear OUR
+              // claim, never one another drain has since written.
+              await releaseMintClaim(adminClient, xpRow.id, signedTx.signature);
+              throw new Error(`quest mint was not broadcast: ${message}`);
+            }
+
+            // Confirmation failed or timed out: genuinely ambiguous — the
+            // transaction may have landed. KEEP the claim, so the next sweep
+            // resolves this row instead of minting a second time. The signature
+            // goes into last_error so an operator can settle it on-chain.
             throw new Error(
               `quest mint send failed after claiming signature ${signedTx.signature} (verify on-chain before re-minting): ${message}`
             );
@@ -702,6 +719,32 @@ async function deferForCapstoneGate(
     const message = err instanceof Error ? err.message : String(err);
     console.error(
       `[onchain-queue] ${courseId}: failed to write capstone-gate-defer marker for row ${row.id}: ${message}`
+    );
+  }
+}
+
+// Undo a signature claim whose transaction was never broadcast. Conditional on
+// the claim still being OURS, so it can never clear a claim a concurrent drain
+// wrote in the meantime. A failure here is logged and swallowed: the caller is
+// already throwing into the retry path, and a stuck claim degrades to the
+// phantom-signature case (recoverable) rather than an exception that would mask
+// the real send error.
+async function releaseMintClaim(
+  adminClient: AdminClient,
+  xpTransactionId: string,
+  signature: string
+): Promise<void> {
+  try {
+    const { error } = await adminClient
+      .from("xp_transactions")
+      .update({ tx_signature: null })
+      .eq("id", xpTransactionId)
+      .eq("tx_signature", signature);
+    if (error) throw new Error(error.message);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(
+      `[onchain-queue] failed to release unbroadcast mint claim ${signature} on xp_transactions ${xpTransactionId}: ${message}`
     );
   }
 }

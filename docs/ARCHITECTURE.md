@@ -500,26 +500,28 @@ The Solana program (`onchain-academy`) is built with Pinocchio 0.11 (`cargo buil
 
 Source of truth: `onchain-academy/programs/onchain-academy/src/instructions/`.
 
-| Instruction (Rust)            | TypeScript Builder (`academy-program.ts`)           | Signer            |
-| ----------------------------- | --------------------------------------------------- | ----------------- |
-| `initialize`                  | -- (one-time setup via `scripts/init-program.ts`)   | Authority         |
-| `update_config`               | -- (admin CLI)                                      | Authority         |
-| `create_course`               | `deployCoursePda()` in `admin-signer.ts`            | Authority         |
-| `update_course`               | `updateCoursePda()` in `admin-signer.ts`            | Authority         |
-| `close_course`                | -- (admin CLI)                                      | Authority         |
-| `enroll`                      | `/api/enroll/sponsor` → client co-signs             | Learner + payer   |
-| `complete_lesson`             | `completeLesson()` in `academy-program.ts`          | Backend signer    |
-| `finalize_course`             | `finalizeCourse()` in `academy-program.ts`          | Backend signer    |
-| `close_enrollment`            | Client-side via `instructions.ts`                   | Learner wallet    |
-| `issue_credential`            | `issueCredential()` in `academy-program.ts`         | Backend signer    |
-| `upgrade_credential`          | -- (not yet used in API routes)                     | Backend signer    |
-| `register_minter`             | -- (admin CLI)                                      | Authority         |
-| `update_minter`               | -- (admin CLI)                                      | Authority         |
-| `revoke_minter`               | -- (admin CLI)                                      | Authority         |
-| `reward_xp`                   | `rewardXp()` in `academy-program.ts` (daily quests) | Registered minter |
-| `create_achievement_type`     | `deployAchievementType()` in `admin-signer.ts`      | Authority         |
-| `award_achievement`           | `awardAchievement()` in `academy-program.ts`        | Registered minter |
-| `deactivate_achievement_type` | -- (admin CLI)                                      | Authority         |
+| Instruction (Rust)            | TypeScript Builder (`academy-program.ts`)                                                    | Signer            |
+| ----------------------------- | -------------------------------------------------------------------------------------------- | ----------------- |
+| `initialize`                  | -- (one-time setup via `scripts/init-program.ts`)                                            | Authority         |
+| `update_config`               | -- (admin CLI)                                                                               | Authority         |
+| `create_course`               | `deployCoursePda()` in `admin-signer.ts`                                                     | Authority         |
+| `update_course`               | `updateCoursePda()` in `admin-signer.ts`                                                     | Authority         |
+| `close_course`                | -- (admin CLI)                                                                               | Authority         |
+| `enroll`                      | `/api/enroll/sponsor` → client co-signs                                                      | Learner + payer   |
+| `complete_lesson`             | `completeLesson()` in `academy-program.ts`                                                   | Backend signer    |
+| `finalize_course`             | `finalizeCourse()` in `academy-program.ts`                                                   | Backend signer    |
+| `close_enrollment`            | Client-side via `instructions.ts`                                                            | Learner wallet    |
+| `issue_credential`            | `issueCredential()` in `academy-program.ts`                                                  | Backend signer    |
+| `upgrade_credential`          | -- (not yet used in API routes)                                                              | Backend signer    |
+| `register_minter`             | -- (admin CLI)                                                                               | Authority         |
+| `update_minter`               | -- (admin CLI)                                                                               | Authority         |
+| `revoke_minter`               | -- (admin CLI)                                                                               | Authority         |
+| `reward_xp`                   | `buildSignedRewardXpTx()` + `sendSignedTransaction()` in `academy-program.ts` (daily quests) | Registered minter |
+| `create_achievement_type`     | `deployAchievementType()` in `admin-signer.ts`                                               | Authority         |
+| `award_achievement`           | `awardAchievement()` in `academy-program.ts`                                                 | Registered minter |
+| `deactivate_achievement_type` | -- (admin CLI)                                                                               | Authority         |
+
+`reward_xp` is split across two functions on purpose. It has no receipt PDA, so the chain cannot reject a duplicate — the caller must guarantee at-most-once itself. `buildSignedRewardXpTx()` returns a signed transaction whose signature is known before anything is broadcast; the quest drainer reserves that signature in `xp_transactions.tx_signature` with a conditional update, then `sendSignedTransaction()` broadcasts those exact bytes (re-sending identical signed bytes is idempotent on Solana). Never rebuild the transaction to retry it: a fresh blockhash means a fresh signature, which mints again.
 
 ### PDA Table
 

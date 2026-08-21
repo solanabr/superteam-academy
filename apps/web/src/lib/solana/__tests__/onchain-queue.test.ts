@@ -65,6 +65,16 @@ const h = vi.hoisted(() => ({
   claimResult: [{ id: "xptx-1" }] as { id: string }[],
   /** PostgREST error returned by the enqueue upsert (supabase-js does not throw). */
   enqueueError: null as { message: string } | null,
+  /** Mirrors the real error class: broadcast rejected, nothing reached the cluster. */
+  TransactionNotBroadcastError: class extends Error {
+    constructor(
+      readonly signature: string,
+      readonly cause: unknown
+    ) {
+      super(`reward_xp transaction ${signature} was never broadcast`);
+      this.name = "TransactionNotBroadcastError";
+    }
+  },
   /** Rows inserted into pending_onchain_actions during the sweep. */
   inserts: [] as Record<string, unknown>[],
   /** Next id handed to an inserted queue row. */
@@ -103,6 +113,9 @@ vi.mock("../academy-program", () => ({
     h.buildSignedRewardXpTx(...args),
   sendSignedTransaction: (...args: unknown[]) =>
     h.sendSignedTransaction(...args),
+  // Real class, so the drainer's `instanceof` branch is genuinely exercised —
+  // a plain stub would make the pre-broadcast path untestable.
+  TransactionNotBroadcastError: h.TransactionNotBroadcastError,
 }));
 
 vi.mock("../academy-reads", () => ({
@@ -202,12 +215,13 @@ vi.mock("@/lib/supabase/admin", () => {
     }
     then(
       onFulfilled?: (value: {
-        data: null;
+        data: { id: string }[] | null;
         error: { message: string } | null;
       }) => unknown
     ): Promise<unknown> {
       // The signature CLAIM: `update(...).eq("id").is("tx_signature", null)
       // .select("id")`. Returning [] models losing the race to another drain.
+      // The claim RELEASE (`tx_signature: null`) also lands here.
       if (this.isUpdate && this.patch && this.table === "xp_transactions") {
         h.ledgerUpdates.push({ id: this.updateId, patch: this.patch });
         if (h.stampShouldError) {
@@ -217,9 +231,8 @@ vi.mock("@/lib/supabase/admin", () => {
           }).then(onFulfilled);
         }
         return Promise.resolve({ data: h.claimResult, error: null }).then(
-          onFulfilled as never
+          onFulfilled
         );
-        return Promise.resolve({ data: null, error: null }).then(onFulfilled);
       }
       if (this.isUpdate && this.patch) {
         h.updates.push({ id: this.updateId, patch: this.patch });
@@ -897,9 +910,14 @@ describe("retryPendingOnchainActions — quest XP on-chain leg", () => {
 
   it("claims the signature BEFORE sending, so a crash mid-send cannot re-mint", async () => {
     h.rows = [{ ...mintRow }];
-    const order: string[] = [];
+    // Sample how many ledger writes had happened at each step. The claim is the
+    // only ledger write in this flow, so the counts pin down the ordering
+    // without patching anything: nothing written when we sign, one written by
+    // the time we send.
+    let ledgerWritesAtSign = -1;
+    let ledgerWritesAtSend = -1;
     h.buildSignedRewardXpTx.mockImplementation(() => {
-      order.push("sign");
+      ledgerWritesAtSign = h.ledgerUpdates.length;
       return Promise.resolve({
         signature: "MINT_SIG",
         rawTransaction: Buffer.from("signed-bytes"),
@@ -908,19 +926,18 @@ describe("retryPendingOnchainActions — quest XP on-chain leg", () => {
       });
     });
     h.sendSignedTransaction.mockImplementation(() => {
-      order.push("send");
+      ledgerWritesAtSend = h.ledgerUpdates.length;
       return Promise.resolve();
     });
-    const claimIndex = () => order.push("claim");
-    const originalPush = h.ledgerUpdates.push.bind(h.ledgerUpdates);
-    h.ledgerUpdates.push = ((...args: never[]) => {
-      claimIndex();
-      return originalPush(...args);
-    }) as typeof h.ledgerUpdates.push;
 
     await retryPendingOnchainActions(USER_ID);
 
-    expect(order).toEqual(["sign", "claim", "send"]);
+    expect(ledgerWritesAtSign).toBe(0); // signed first, nothing claimed yet
+    expect(ledgerWritesAtSend).toBe(1); // claim landed before the broadcast
+    expect(h.ledgerUpdates[0]).toEqual({
+      id: "xptx-1",
+      patch: { tx_signature: "MINT_SIG" },
+    });
   });
 
   it("sends NOTHING when another drain won the claim race", async () => {
@@ -1113,12 +1130,40 @@ describe("retryPendingOnchainActions — quest XP on-chain leg", () => {
     expect(String(patch?.last_error)).toContain("rpc unavailable");
   });
 
-  it("records the claimed signature in last_error when the send fails, so it can be reconciled", async () => {
+  it("RELEASES the claim when the broadcast was rejected, so the mint is not forfeited", async () => {
+    h.rows = [{ ...mintRow }];
+    // Nothing reached the cluster — e.g. preflight revert while the program is
+    // paused on-chain, which the DB freeze gate knows nothing about.
+    h.sendSignedTransaction.mockRejectedValue(
+      new h.TransactionNotBroadcastError("MINT_SIG", new Error("MintingPaused"))
+    );
+
+    await retryPendingOnchainActions(USER_ID);
+
+    // Claimed, then cleared — conditionally, so it can only undo OUR claim.
+    expect(h.ledgerUpdates).toEqual([
+      { id: "xptx-1", patch: { tx_signature: "MINT_SIG" } },
+      { id: "xptx-1", patch: { tx_signature: null } },
+    ]);
+    // The row retries like any other Pass-2 failure; the next sweep sees a NULL
+    // signature and mints properly instead of resolving a phantom.
+    const patch = patchFor("r-mint");
+    expect(patch?.resolved_at).toBeUndefined();
+    expect(patch?.retry_count).toBe(1);
+    expect(String(patch?.last_error)).toContain("not broadcast");
+  });
+
+  it("KEEPS the claim when confirmation fails (ambiguous — the tx may have landed)", async () => {
     h.rows = [{ ...mintRow }];
     h.sendSignedTransaction.mockRejectedValue(new Error("blockhash expired"));
 
     await retryPendingOnchainActions(USER_ID);
 
+    // Exactly one ledger write: the claim. No release — re-minting is the
+    // danger here, not forfeiting.
+    expect(h.ledgerUpdates).toEqual([
+      { id: "xptx-1", patch: { tx_signature: "MINT_SIG" } },
+    ]);
     const patch = patchFor("r-mint");
     expect(patch?.retry_count).toBe(1);
     expect(String(patch?.last_error)).toContain("MINT_SIG");

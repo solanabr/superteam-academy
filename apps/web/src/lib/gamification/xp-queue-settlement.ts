@@ -124,9 +124,12 @@ function makeWalletLookup(
       .single();
     if (error) {
       // Do NOT cache a failure as "no wallet" — that would silently downgrade a
-      // wallet-linked learner to DB-only for the rest of the sweep.
+      // wallet-linked learner to DB-only for the rest of the sweep. The award
+      // being settled right now still loses its mint permanently, for the same
+      // reason a rejected enqueue does: its quest row is already resolved, so
+      // nothing will ever revisit it.
       console.error(
-        `[xp-queue-settlement] wallet lookup failed for ${userId}: ${error.message}`
+        `[xp-queue-settlement] wallet lookup failed for ${userId} — this award will never mint on-chain (its queue row is already resolved): ${error.message}`
       );
       return null;
     }

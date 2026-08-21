@@ -525,6 +525,27 @@ export async function buildSignedRewardXpTx(
   };
 }
 
+// Thrown when the broadcast itself was REJECTED — the transaction never reached
+// the cluster. Node rejection, a preflight revert (on-chain `MintingPaused`,
+// a deactivated minter), or a socket error all land here. The distinction
+// matters to callers that reserved the signature before sending: nothing
+// happened on-chain, so the reservation can safely be released and retried.
+// A failure from confirmTransaction is deliberately NOT this error — that case
+// is ambiguous (the transaction may well have landed) and must keep its claim.
+export class TransactionNotBroadcastError extends Error {
+  constructor(
+    readonly signature: string,
+    readonly cause: unknown
+  ) {
+    super(
+      `reward_xp transaction ${signature} was never broadcast: ${
+        cause instanceof Error ? cause.message : String(cause)
+      }`
+    );
+    this.name = "TransactionNotBroadcastError";
+  }
+}
+
 // Broadcast an already-signed transaction and wait for confirmation. `maxRetries`
 // makes the RPC node rebroadcast the SAME bytes until blockhash expiry, so a
 // dropped packet never produces a second signature.
@@ -532,7 +553,12 @@ export async function sendSignedTransaction(
   tx: SignedRewardXpTx
 ): Promise<void> {
   const connection = getConnection();
-  await connection.sendRawTransaction(tx.rawTransaction, { maxRetries: 5 });
+  try {
+    await connection.sendRawTransaction(tx.rawTransaction, { maxRetries: 5 });
+  } catch (err) {
+    // Nothing reached the cluster — safe to unwind and retry from scratch.
+    throw new TransactionNotBroadcastError(tx.signature, err);
+  }
   const result = await connection.confirmTransaction(
     {
       signature: tx.signature,
