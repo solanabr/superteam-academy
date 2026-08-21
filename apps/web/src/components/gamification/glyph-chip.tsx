@@ -16,7 +16,7 @@ import type { PatchCategory } from "@/components/gamification/patch-look";
  * custom properties verbatim in globals.css), so a chip can never drift from
  * the patch it descends from.
  */
-export type ChipSize = 28 | 34 | 40;
+export type ChipSize = 24 | 28 | 34 | 40;
 
 export function GlyphChip({
   glyph,

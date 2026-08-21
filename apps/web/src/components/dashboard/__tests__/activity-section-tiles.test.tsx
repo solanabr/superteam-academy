@@ -6,10 +6,12 @@ import messages from "@/messages/en.json";
 import type { ActivityItem } from "@/lib/dashboard/types";
 import { ActivitySection, activityMark } from "../activity-section";
 
-// Glyph pass 21-08: the feed's bordered Phosphor icon boxes became the MARK
-// tier — a bare glyph in a fixed 22px gutter, colour carrying the type. The
-// fixed gutter is also what fixes the owner's "first row looks smaller"
-// report: every row's text now starts at the same x.
+// Glyph pass 21-08: the feed's bordered Phosphor icon boxes became the TILE
+// tier — the same 24px footprint, but a flat tint wash (no border, no shadow)
+// holding a mono glyph. This landed as a bare gutter mark first; the owner
+// found it read sparse at real density, so the tier kept the lightest possible
+// container. A fixed-size container is also what fixes the "first row looks
+// smaller" report: every row's text now starts at the same x.
 
 function item(overrides: Partial<ActivityItem>): ActivityItem {
   return {
@@ -58,24 +60,24 @@ describe("activityMark", () => {
   });
 });
 
-describe("ActivitySection marks", () => {
-  it("renders one decorative mark per row, tinted by type", () => {
+describe("ActivitySection tiles", () => {
+  it("renders one decorative tile per row, tinted by type", () => {
     const { container } = renderFeed([
       item({ type: "achievement", action: "Unlocked First Steps" }),
       item({ type: "community", action: "Answered a thread" }),
     ]);
 
-    const marks = container.querySelectorAll(".mark");
-    expect(marks).toHaveLength(2);
-    expect(marks[0]!.getAttribute("data-tint")).toBe("gold");
-    expect(marks[0]!.getAttribute("aria-hidden")).toBe("true");
+    const tiles = container.querySelectorAll(".tile");
+    expect(tiles).toHaveLength(2);
+    expect(tiles[0]!.getAttribute("data-tint")).toBe("gold");
+    expect(tiles[0]!.getAttribute("aria-hidden")).toBe("true");
     expect(
-      marks[0]!.querySelector("[data-glyph]")!.getAttribute("data-glyph")
+      tiles[0]!.querySelector("[data-glyph]")!.getAttribute("data-glyph")
     ).toBe("◎");
-    expect(marks[1]!.getAttribute("data-tint")).toBe("sky");
+    expect(tiles[1]!.getAttribute("data-tint")).toBe("sky");
   });
 
-  it("no longer renders the bordered icon box", () => {
+  it("no longer renders the bordered Phosphor icon box", () => {
     const { container } = renderFeed([item({ type: "lesson" })]);
     expect(container.querySelector(".act-icon")).toBeNull();
   });

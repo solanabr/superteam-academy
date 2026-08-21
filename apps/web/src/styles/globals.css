@@ -895,6 +895,14 @@
     color: var(--patch-glyph);
     user-select: none;
   }
+  /* 24 is the quest-row size (owner, 21-08): the 28px chip read too heavy in
+     a five-row list, and the shorter row is also what keeps all five visible
+     without the card scrolling. */
+  .chip[data-size="24"] {
+    --size: 24px;
+    --border: 1.5px;
+    --lift: 1.5px;
+  }
   .chip[data-size="28"] {
     --size: 28px;
   }
@@ -914,12 +922,19 @@
     height: calc(var(--size) * 0.46);
   }
 
-  /* ── MARK — tier 3: no container, just the glyph in a fixed gutter ──
-     Used where the row repeats most (the activity feed). The 22px cell is
-     rigid on purpose: the bordered icon boxes it replaces let each row's text
-     start at a slightly different x depending on the icon inside. */
-  .mark {
-    --size: 22px;
+  /* ── TILE — tier 3: the quietest container (owner, 21-08) ──
+     Shipped first as a bare glyph in a bare gutter; at the activity feed's
+     real density the owner found the rows lost their anchor and read sparse.
+     So the tier keeps a container, but the lightest one available: the type
+     colour at 12% for the ground, the same colour at full strength for the
+     glyph, no ink outline and no shadow. That leaves three distinct weights —
+     patch (stitch + outline + shadow), chip (outline + shadow), tile (wash) —
+     which is what the three-tier hierarchy was for.
+
+     The 24px footprint is the old `.act-icon` box, so row rhythm is unchanged;
+     only the vocabulary inside it moved from Phosphor to the mono glyphs. */
+  .tile {
+    --size: 24px;
     --tint: var(--primary);
     --patch-glyph: var(--tint);
 
@@ -928,43 +943,49 @@
     flex-shrink: 0;
     width: var(--size);
     height: var(--size);
+    border-radius: 7px;
+    background: color-mix(in srgb, var(--tint) 12%, transparent);
     font:
-      700 14px / 1 var(--font-mono),
+      700 11px / 1 var(--font-mono),
       "JetBrains Mono",
       monospace;
     color: var(--tint);
     user-select: none;
   }
-  .mark .patch-mark {
-    width: 15px;
-    height: 15px;
+  /* "</>" is the widest text glyph — three mono advances in a 24px box. */
+  .tile .patch-text {
+    letter-spacing: -0.04em;
   }
-  .mark[data-tint="primary"] {
+  .tile .patch-mark {
+    width: 13px;
+    height: 13px;
+  }
+  .tile[data-tint="primary"] {
     --tint: var(--primary);
   }
-  .mark[data-tint="streak"] {
+  .tile[data-tint="streak"] {
     --tint: var(--streak);
   }
   /* Gold, purple and sky have no token of their own. The literals below are
      the light-mode values; each gets a lighter dark-mode value the same way
-     --xp and --streak already flip, so no mark relies on one colour reading on
+     --xp and --streak already flip, so no tile relies on one colour reading on
      both grounds. */
-  .mark[data-tint="gold"] {
+  .tile[data-tint="gold"] {
     --tint: #d97706;
   }
-  .mark[data-tint="purple"] {
+  .tile[data-tint="purple"] {
     --tint: #9945ff;
   }
-  .mark[data-tint="sky"] {
+  .tile[data-tint="sky"] {
     --tint: #0284c7;
   }
-  [data-theme="dark"] .mark[data-tint="gold"] {
+  [data-theme="dark"] .tile[data-tint="gold"] {
     --tint: #f5a623;
   }
-  [data-theme="dark"] .mark[data-tint="purple"] {
+  [data-theme="dark"] .tile[data-tint="purple"] {
     --tint: #b07cff;
   }
-  [data-theme="dark"] .mark[data-tint="sky"] {
+  [data-theme="dark"] .tile[data-tint="sky"] {
     --tint: #38bdf8;
   }
 
@@ -4992,12 +5013,19 @@ a.path-step-card:hover .path-step-badge.skip {
   scrollbar-color: var(--border-default) transparent;
 }
 
-/* Individual quest row */
+/* Individual quest row.
+
+   min-height pins this to the league card's row height. `.lb-list-mini .lb-row`
+   is sized by its 26px avatar (26 + 6/6 padding + 1/1 border = 40px, border-box);
+   the quest chip is deliberately 24px, so without the floor the two rail cards
+   would sit 2px out of step and stop reading as one list system. Raising the
+   chip instead is not the fix — the owner wants it subtle (21-08). */
 .dq {
   display: grid;
-  grid-template-columns: 28px 1fr auto auto;
+  grid-template-columns: 24px 1fr auto auto;
   align-items: center;
   gap: 9px;
+  min-height: 40px;
   padding: 6px 10px;
   border-radius: var(--r-md);
   background: var(--card-alt, rgba(255, 255, 255, 0.02));
@@ -5057,11 +5085,6 @@ a.path-step-card:hover .path-step-badge.skip {
   color: var(--xp);
   white-space: nowrap;
   font-variant-numeric: tabular-nums; /* F37 */
-}
-.dq-check {
-  color: var(--primary);
-  display: flex;
-  align-items: center;
 }
 .dq-progress-lbl {
   font-family: var(--font-mono, var(--font-m));
