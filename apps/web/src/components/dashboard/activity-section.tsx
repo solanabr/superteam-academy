@@ -9,14 +9,14 @@ import {
   ArrowSquareOut,
 } from "@phosphor-icons/react";
 import type { ActivityItem } from "@/lib/dashboard/types";
-import { GlyphMark } from "@/components/gamification/glyph-mark";
-import type { MarkTint } from "@/components/gamification/glyph-mark";
+import { GlyphTile } from "@/components/gamification/glyph-tile";
+import type { TileTint } from "@/components/gamification/glyph-tile";
 
 /* ---------------------------------------------------------------
-   ACTIVITY MARK MAP — activity type → bare glyph + tint (owner-approved
-   21-08). Tier 3 of the glyph language: no container, a fixed 22px gutter.
+   ACTIVITY MARK MAP — activity type → glyph + tint (owner-approved 21-08).
+   Rendered as tier 3 of the glyph language: a 24px tile washed with the tint.
 --------------------------------------------------------------- */
-const ACTIVITY_MARKS: Record<string, { glyph: string; tint: MarkTint }> = {
+const ACTIVITY_MARKS: Record<string, { glyph: string; tint: TileTint }> = {
   lesson: { glyph: "+", tint: "primary" },
   challenge: { glyph: "</>", tint: "primary" },
   course_complete: { glyph: "★", tint: "primary" },
@@ -29,7 +29,7 @@ const ACTIVITY_MARKS: Record<string, { glyph: string; tint: MarkTint }> = {
 
 const FALLBACK_MARK = ACTIVITY_MARKS.xp_other!;
 
-export function activityMark(type: string): { glyph: string; tint: MarkTint } {
+export function activityMark(type: string): { glyph: string; tint: TileTint } {
   return ACTIVITY_MARKS[type] ?? FALLBACK_MARK;
 }
 
@@ -50,10 +50,11 @@ interface ActivitySectionProps {
  * challenges, achievements, certificates, enrollments, community, XP) with
  * explorer deep links for on-chain items.
  *
- * The row's leading icon is a GlyphMark in a fixed 22px gutter (21-08). The
- * bordered `.act-icon` boxes it replaces sized themselves around whichever
- * Phosphor glyph they held, so rows read as slightly different heights — the
- * owner's "first row looks smaller" report.
+ * The row's leading icon is a 24px GlyphTile (21-08) — the old `.act-icon`
+ * footprint, but a flat tint wash instead of a bordered box, and a mono glyph
+ * instead of a Phosphor icon. A fixed-size container is also what answers the
+ * owner's "first row looks smaller" report: the bordered boxes sized
+ * themselves around whichever glyph they held.
  */
 export function ActivitySection({ recentActivity }: ActivitySectionProps) {
   const t = useTranslations("dashboard");
@@ -132,7 +133,7 @@ export function ActivitySection({ recentActivity }: ActivitySectionProps) {
               const inner = (
                 <>
                   <div className="act-left">
-                    <GlyphMark glyph={mark.glyph} tint={mark.tint} />
+                    <GlyphTile glyph={mark.glyph} tint={mark.tint} />
                     <span className="act-text">{activity.action}</span>
                   </div>
                   <div className="act-right">

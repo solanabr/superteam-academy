@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
-import { Lightning, CheckCircle } from "@phosphor-icons/react";
+import { Lightning } from "@phosphor-icons/react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import type { DailyQuest } from "@superteam-lms/types";
 import { questHref } from "@/lib/gamification/quest-links";
@@ -25,7 +25,11 @@ interface QuestGlyph {
 const QUEST_GLYPHS: Record<string, QuestGlyph> = {
   Code: { glyph: "</>", cat: "craft" }, // challenge
   BookOpen: { glyph: "▸", cat: "course" }, // a lesson
-  Scroll: { glyph: "⬡", cat: "endurance" }, // a module
+  // A module is course progress, so it takes the course fill. It shipped on
+  // `endurance` for one round; that fill is near-black and dominated its row
+  // (owner, 21-08). `start` is lighter still but reads as "beginner", which a
+  // module completion is not.
+  Scroll: { glyph: "⬡", cat: "course" }, // a module
   Lightning: { glyph: "×3", cat: "course" }, // three lessons
   Trophy: { glyph: "∞", cat: "community" }, // login streak
 };
@@ -53,8 +57,9 @@ interface DailyQuestsCardProps {
  * Daily Quests as a standalone rail card. Extracted from the identity panel
  * (where it shared the bottom row with the heatmap) so the dashboard's right
  * rail can carry the day's actionable surfaces together. Row anatomy (`dq-*`)
- * and the per-type deep-links (#572) are unchanged; only the leading icon
- * changed, from a Phosphor glyph in a tinted box to a 28px GlyphChip.
+ * and the per-type deep-links (#572) are unchanged; the leading icon became a
+ * 24px GlyphChip, and a completed row lost its right-side check medallion
+ * (the chip's own ✓ was saying the same thing twice).
  */
 export function DailyQuestsCard({
   quests,
@@ -86,7 +91,7 @@ export function DailyQuestsCard({
               const href = questHref(quest.type, locale);
               const inner = (
                 <>
-                  <GlyphChip glyph={chip.glyph} cat={chip.cat} size={28} />
+                  <GlyphChip glyph={chip.glyph} cat={chip.cat} size={24} />
                   <div className="dq-info">
                     <span className="dq-name">{quest.name}</span>
                   </div>
@@ -94,11 +99,10 @@ export function DailyQuestsCard({
                     <Lightning size={12} weight="fill" />+{quest.xpReward}{" "}
                     {t("xp")}
                   </div>
-                  {quest.completed ? (
-                    <div className="dq-check">
-                      <CheckCircle size={18} weight="fill" />
-                    </div>
-                  ) : (
+                  {/* Completed rows carry no right-side check: the chip's own
+                      ✓ plus the muted row already say it, and the medallion
+                      made it twice (owner, 21-08). */}
+                  {!quest.completed && (
                     <span className="dq-progress-lbl">
                       {quest.currentValue}/{quest.targetValue}
                     </span>

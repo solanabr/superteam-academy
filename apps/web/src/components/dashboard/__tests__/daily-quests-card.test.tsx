@@ -86,9 +86,11 @@ describe("DailyQuestsCard quest chips", () => {
       glyph: "▸",
       cat: "course",
     });
+    // The module quest took `endurance` for one round; that fill is near-black
+    // and dominated its row, so it moved to the course fill (owner, 21-08).
     expect(questGlyph("Scroll", false)).toEqual({
       glyph: "⬡",
-      cat: "endurance",
+      cat: "course",
     });
     expect(questGlyph("Lightning", false)).toEqual({
       glyph: "×3",
@@ -142,5 +144,35 @@ describe("DailyQuestsCard quest chips", () => {
     expect(
       container.querySelector(".chip [data-glyph]")!.getAttribute("data-glyph")
     ).toBe("✓");
+  });
+
+  it("sizes the row chip at 24px so all five quests fit without scrolling", () => {
+    const { container } = renderPanel([quest({ icon: "Code" })]);
+
+    expect(container.querySelector(".chip")!.getAttribute("data-size")).toBe(
+      "24"
+    );
+  });
+
+  it("says 'done' ONCE — the chip's check, not a second right-side medallion", () => {
+    // The completed row used to render both. Owner, 21-08: keep the chip flip,
+    // drop the medallion, let the muted title carry the rest.
+    const { container } = renderPanel([
+      quest({ icon: "Code", completed: true, currentValue: 1 }),
+    ]);
+
+    expect(container.querySelector(".dq-check")).toBeNull();
+    expect(container.querySelector(".dq-progress-lbl")).toBeNull();
+    expect(container.querySelector(".dq.done")).not.toBeNull();
+  });
+
+  it("still shows the progress counter while a quest is incomplete", () => {
+    const { container } = renderPanel([
+      quest({ icon: "Lightning", currentValue: 1, targetValue: 3 }),
+    ]);
+
+    expect(container.querySelector(".dq-progress-lbl")!.textContent).toBe(
+      "1/3"
+    );
   });
 });
