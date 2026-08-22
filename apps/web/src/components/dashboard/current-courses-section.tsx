@@ -17,7 +17,6 @@ import { deriveEndowedProgress } from "@/lib/courses/endowed-progress";
 import { CourseCompletionMint } from "@/components/certificates/course-completion-mint";
 import { GlyphChip } from "@/components/gamification/glyph-chip";
 import { ProgressBar } from "@/components/course/progress-bar";
-import { Button } from "@/components/ui/button";
 import { dispatchToast } from "@/components/ui/toast-container";
 
 interface CurrentCoursesSectionProps {
@@ -208,12 +207,11 @@ export function CurrentCoursesSection({
           })}
         </div>
       ) : (
+        // No CTA here (owner, 22-08): the chip and the copy carry the state on
+        // their own.
         <div className="cc-empty">
           <GlyphChip glyph="▸" size={48} empty />
           <p className="text-text-3">{t("noCourses")}</p>
-          <Button asChild variant="push" size="sm" className="mt-2">
-            <Link href={`/${locale}/courses`}>{t("browseCourses")}</Link>
-          </Button>
         </div>
       )}
     </section>

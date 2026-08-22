@@ -85,7 +85,10 @@ export function DailyQuestsCard({
         {/* The rail shows the whole set — no drag-scroll viewport like the old
           panel slot needed; the list is three-ish rows tall. */}
         <Tooltip.Provider delayDuration={150} skipDelayDuration={150}>
-          <div className="dq-list-capped flex flex-col gap-[5px]">
+          {/* Layout and gap live in `.dq-list-capped`, which shares the list
+              tokens with the league strip — a Tailwind gap here would fork the
+              value the two cards are supposed to agree on. */}
+          <div className="dq-list-capped">
             {quests.map((quest) => {
               const chip = questGlyph(quest.icon, quest.completed);
               const href = questHref(quest.type, locale);
