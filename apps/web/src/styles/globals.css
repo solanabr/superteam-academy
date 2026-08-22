@@ -2468,44 +2468,6 @@
   gap: 10px;
   flex-wrap: wrap;
 }
-.filter-pills {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-/* ── Unified filter pills (difficulty + path) ── */
-.filter-pill {
-  font-family: var(--font-display, var(--font-d));
-  font-weight: 700;
-  font-size: 12px;
-  padding: 8px 14px;
-  min-height: 44px;
-  border: 2.5px solid var(--border);
-  border-radius: 99px;
-  cursor: pointer;
-  background: var(--card);
-  color: var(--text-2);
-  box-shadow: 0 2px 0 0 var(--border);
-  transition: all 0.15s;
-  user-select: none;
-  white-space: nowrap;
-}
-.filter-pill:hover {
-  border-color: var(--border-hover, var(--border));
-  color: var(--text);
-}
-.filter-pill:active {
-  transform: translateY(2px);
-  box-shadow: none;
-}
-.filter-pill.active {
-  background: var(--primary-bg, var(--primary-dim));
-  border-color: var(--primary);
-  color: var(--primary);
-  box-shadow: none;
-  transform: translateY(2px);
-}
 
 /* ── Learning Path sections — premium redesign ── */
 .path-section {
@@ -5642,15 +5604,26 @@ a.path-step-card:hover .path-step-badge.skip {
   gap: 12px;
 }
 /* ── Next-lesson plan: mini calendar tile ── */
+/* The saved plan's mini calendar — the last soft-shadow object on this card
+   (owner, 22-08). It takes the ink construction: ink outline, hard offset
+   shadow, no blur.
+
+   Its ink is the literal dark one on both grounds. The card-plate rule (flip
+   with the theme, as `.btn-ink--secondary` does) was the other candidate and
+   was measured first — but this widget sits in a row beside the primary
+   button, and a cream ring next to that button's dark one is the exact kind of
+   disagreement this pass exists to remove. On a dark card the outline reads as
+   a keyline gap rather than a bright ring, which is the same trade the avatar
+   rings already make. */
 .nlp-cal {
   flex-shrink: 0;
   min-width: 56px;
   max-width: 96px;
   border-radius: 10px;
   overflow: hidden;
-  border: 1px solid var(--border-strong);
+  border: 1.5px solid var(--ink-dark);
+  box-shadow: 0 1.5px 0 0 var(--ink-dark);
   text-align: center;
-  box-shadow: var(--shadow);
 }
 .nlp-cal-day {
   display: block;
@@ -5660,7 +5633,8 @@ a.path-step-card:hover .path-step-badge.skip {
   text-overflow: ellipsis;
   white-space: nowrap;
   background: var(--primary);
-  color: var(--primary-foreground, #fff);
+  /* The primary voice, from the same token the Button and pressed key use. */
+  color: var(--primary-fg);
   font-family: var(--font-mono, var(--font-m));
   font-size: 9px;
   font-weight: 700;
