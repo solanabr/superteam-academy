@@ -979,9 +979,7 @@
     color: var(--primary-fg);
     border: 1.5px solid var(--ink-dark);
     box-shadow: 0 1.5px 0 0 var(--ink-dark);
-    font-family: var(--font-mono), "JetBrains Mono", monospace;
     font-weight: 700;
-    text-transform: uppercase;
     user-select: none;
   }
   .pressed-key:active {
@@ -995,12 +993,94 @@
      never nudges the row. */
   .daykey {
     width: 100%;
+    font-family: var(--font-mono), "JetBrains Mono", monospace;
+    text-transform: uppercase;
     min-height: 26px;
     padding: 0 4px;
     border-radius: var(--r-md);
     font-size: 10px;
     line-height: 1.2;
     letter-spacing: 1px;
+  }
+
+  /* ── Segmented control ─────────────────────────────────────────
+     One control behind the community sort/type filters and the catalog's
+     difficulty row, which had grown three different selected looks (a flat
+     primary fill, a dim tinted pill, and a translucent chip). The SELECTED
+     segment is `.pressed-key`, so it reads as the same object as a selected
+     day key and a primary button; the unselected one stays quiet.
+
+     Two silhouettes, because the two surfaces genuinely differ: `track` is the
+     community idiom (segments inside one bordered rail), `pills` is the
+     catalog idiom (free-standing rounded pills). Only the shape differs — the
+     selected treatment is identical. */
+  .seg-track {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    padding: 2px;
+    border: 1px solid var(--quiet-line);
+    border-radius: var(--r-md);
+    background: var(--surface);
+  }
+  .seg-pills {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .seg {
+    white-space: nowrap;
+    cursor: pointer;
+    border-radius: var(--r-sm);
+    padding: 6px 10px;
+    font-size: 13px;
+    font-weight: 600;
+    transition:
+      color 0.15s,
+      background 0.15s,
+      border-color 0.15s;
+  }
+  /* The quiet state is scoped OFF the selected one rather than declared flat.
+     `.seg` and `.pressed-key` are both single-class selectors, so whichever
+     lands later in the file wins — and a flat `background: transparent` plus a
+     `border: … transparent` shorthand here silently erased the selected fill
+     AND its ink ring. Everything that `.pressed-key` owns must therefore be
+     declared only for the unselected case.
+
+     The transparent border is 1.5px to match the selected one, so a segment
+     does not change size when it is picked. */
+  .seg:not(.pressed-key) {
+    color: var(--text-2);
+    background: transparent;
+    border: 1.5px solid transparent;
+  }
+  .seg:hover:not(.pressed-key) {
+    background: var(--card-hover);
+    color: var(--text);
+  }
+  .seg:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  /* The catalog's pills are free-standing, so an unselected one needs its own
+     edge and ground; a segment in a track borrows the track's. */
+  .seg-pills .seg {
+    border-radius: 999px;
+    padding: 8px 14px;
+    min-height: 40px;
+    font-family: var(--font-display, var(--font-d));
+    font-weight: 700;
+    font-size: 12px;
+  }
+  .seg-pills .seg:not(.pressed-key) {
+    border-color: var(--quiet-line);
+    background: var(--card);
+  }
+  /* A selected pill keeps the round silhouette the row is built on. */
+  .seg-pills .pressed-key {
+    border-radius: 999px;
   }
 
   /* ── Avatars wear the ink ring (owner, 22-08) ──────────────────

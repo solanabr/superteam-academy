@@ -1057,7 +1057,9 @@
     "answersCount": "Answers ({count})",
     "sortBy": "Sort by",
     "createThreadFailed": "Could not start the discussion. Try again.",
-    "threadType": "Thread type"
+    "threadType": "Thread type",
+    "sortLabel": "Sort threads",
+    "filterLabel": "Filter by type"
   },
   "aiPartner": {
     "title": "AI Partner",

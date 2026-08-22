@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { MagnifyingGlass, X } from "@phosphor-icons/react";
 import type { Course, LearningPath } from "@superteam-lms/types";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { CourseCard } from "@/components/course/course-card";
 import { type PathCourseProgress } from "@/components/course/learning-path-section";
 import { PathsView } from "@/components/course/paths-view";
@@ -191,33 +192,19 @@ export function CourseCatalogClient({
               )}
             </div>
 
-            <div className="filter-pills">
-              {ALL_DIFFICULTIES.map((diff) => (
-                <button
-                  key={diff}
-                  onClick={() =>
-                    setActiveDifficulty(
-                      diff === "all"
-                        ? null
-                        : diff === activeDifficulty
-                          ? null
-                          : diff
-                    )
-                  }
-                  className={`filter-pill ${
-                    diff === "all"
-                      ? !activeDifficulty
-                        ? "active"
-                        : ""
-                      : activeDifficulty === diff
-                        ? "active"
-                        : ""
-                  }`}
-                >
-                  {diff === "all" ? tCommon("all") : t(diff)}
-                </button>
-              ))}
-            </div>
+            {/* The difficulty row is a segmented control like the community
+                filters — "All" is just the null option, so picking a segment
+                replaces the old click-the-active-one-to-clear behaviour. */}
+            <SegmentedControl
+              variant="pills"
+              ariaLabel={t("difficulty")}
+              options={ALL_DIFFICULTIES.map((diff) => ({
+                value: diff === "all" ? null : (diff as Difficulty),
+                label: diff === "all" ? tCommon("all") : t(diff),
+              }))}
+              value={activeDifficulty}
+              onChange={setActiveDifficulty}
+            />
           </div>
 
           {/* Course Grid */}
