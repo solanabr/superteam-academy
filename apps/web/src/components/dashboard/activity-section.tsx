@@ -2,12 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import {
-  CaretLeft,
-  CaretRight,
-  Lightning,
-  ArrowSquareOut,
-} from "@phosphor-icons/react";
+import { CaretLeft, CaretRight, ArrowSquareOut } from "@phosphor-icons/react";
 import type { ActivityItem } from "@/lib/dashboard/types";
 import { GlyphChip } from "@/components/gamification/glyph-chip";
 import type { PatchCategory } from "@/components/gamification/patch-look";
@@ -217,12 +212,7 @@ export function ActivitySection({ recentActivity }: ActivitySectionProps) {
         </div>
       ) : (
         <div className="act-empty">
-          <Lightning
-            size={40}
-            weight="duotone"
-            className="text-text-3"
-            aria-hidden="true"
-          />
+          <GlyphChip glyph="⚡" size={48} empty />
           <p className="text-text-3">{t("noRecentActivity")}</p>
         </div>
       )}

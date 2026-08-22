@@ -726,7 +726,8 @@
     color: var(--patch-glyph);
     overflow: visible;
   }
-  .patch[data-locked] .patch-mark {
+  .patch[data-locked] .patch-mark,
+  .chip[data-empty] .patch-mark {
     width: calc(var(--size) * 0.36);
     height: calc(var(--size) * 0.36);
     color: currentColor;
@@ -822,7 +823,8 @@
 
   /* Locked is an empty dashed slot showing the target — never a faded copy
      of the earned art. */
-  .patch[data-locked] {
+  .patch[data-locked],
+  .chip[data-empty] {
     background: #f3f1ec;
     border-style: dashed;
     border-color: rgba(25, 35, 27, 0.24);
@@ -852,7 +854,8 @@
   [data-theme="dark"] .patch[data-cat="course"] {
     --stitch: rgba(25, 35, 27, 0.4);
   }
-  [data-theme="dark"] .patch[data-locked] {
+  [data-theme="dark"] .patch[data-locked],
+  [data-theme="dark"] .chip[data-empty] {
     background: #131920;
     border-color: rgba(255, 255, 255, 0.2);
     color: #78838f;
@@ -909,9 +912,35 @@
   .chip[data-size="40"] {
     --size: 40px;
   }
+  /* The empty-state step — illustration scale, not a row icon. */
+  .chip[data-size="48"] {
+    --size: 48px;
+    --border: 2px;
+  }
   .chip[data-round] {
     --chip-radius: 999px;
   }
+  /* A day key in the "Plan your next lesson" card — the chip construction on a
+     wider, text-bearing button (owner, 21-08). It carries the real `.chip`
+     class, so fill, ink, border and hard shadow all come from the chip rules
+     above and cannot drift; only the box changes from a square to a full-width
+     key. Pair it with data-size="24" for the 1.5px border/lift step.
+
+     min-height matches the unselected day pill exactly (10px text at Tailwind's
+     normal line-height + 6px padding + border), so toggling a day never nudges
+     the row. */
+  .daykey {
+    width: 100%;
+    height: auto;
+    min-height: 26px;
+    padding: 0 4px;
+    border-radius: var(--r-md);
+    font-size: 10px;
+    line-height: 1.2;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
   /* "</>" is three mono advances inside a 40px box — tighten so it never
      touches the outline. */
   .chip .patch-text {

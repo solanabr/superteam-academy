@@ -135,6 +135,50 @@ describe("NextLessonPlan (LX-A6)", () => {
       day: "wed",
     });
   });
+
+  // Owner, 21-08: a selected day wears the chip construction (course fill, ink
+  // border, hard offset shadow) by carrying the real `.chip` class, so it can
+  // never drift from the chips elsewhere. Unselected stays the quiet pill.
+  it("gives a selected day the chip treatment and leaves the rest quiet", async () => {
+    renderPlan();
+    await screen.findByText(messages.dashboard.nextLessonPrompt);
+
+    const tue = screen.getByRole("button", { name: "Tue", pressed: true });
+    const wed = screen.getByRole("button", { name: "Wed", pressed: false });
+
+    expect(tue.className).toContain("chip");
+    expect(tue.className).toContain("daykey");
+    expect(tue.getAttribute("data-cat")).toBe("course");
+    // The 24px step is what carries the 1.5px border and 1.5px lift.
+    expect(tue.getAttribute("data-size")).toBe("24");
+
+    expect(wed.className).not.toContain("chip");
+    expect(wed.getAttribute("data-cat")).toBeNull();
+    expect(wed.className).toContain("border-border");
+
+    // The two states must be visually distinguishable, not just aria-different.
+    expect(tue.className).not.toBe(wed.className);
+  });
+
+  it("moves the treatment with the selection", async () => {
+    renderPlan();
+    await screen.findByText(messages.dashboard.nextLessonPrompt);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Wed", pressed: false })
+    );
+
+    // Multi-select: both days now wear it (days[] has always been a set).
+    for (const name of ["Tue", "Wed"]) {
+      const btn = screen.getByRole("button", { name, pressed: true });
+      expect(btn.className).toContain("chip daykey");
+    }
+
+    fireEvent.click(screen.getByRole("button", { name: "Tue", pressed: true }));
+    expect(
+      screen.getByRole("button", { name: "Tue", pressed: false }).className
+    ).not.toContain("chip");
+  });
 });
 
 // #869 — the plan card is the consent-capture surface for the session-plan

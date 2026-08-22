@@ -16,28 +16,39 @@ import type { PatchCategory } from "@/components/gamification/patch-look";
  * custom properties verbatim in globals.css), so a chip can never drift from
  * the patch it descends from.
  */
-export type ChipSize = 24 | 28 | 34 | 40;
+export type ChipSize = 24 | 28 | 34 | 40 | 48;
 
 export function GlyphChip({
   glyph,
   cat,
   size = 34,
   round = false,
+  empty = false,
   className,
 }: {
   glyph: string;
-  cat: PatchCategory;
+  /** Ignored when `empty` — an empty state has no category to colour. */
+  cat?: PatchCategory;
   size?: ChipSize;
   /** Circular instead of the default squared chip. */
   round?: boolean;
+  /**
+   * The empty-state variant: dashed outline, no fill, muted glyph — the same
+   * treatment the patch already uses for a not-yet-earned achievement, because
+   * "nothing here yet" is the same statement (owner, 21-08). It shares the
+   * locked patch's declaration block in globals.css rather than restating its
+   * values, so the two can never drift.
+   */
+  empty?: boolean;
   className?: string;
 }) {
   return (
     <span
       className={cn("chip", className)}
       data-size={size}
-      data-cat={cat}
+      data-cat={empty ? undefined : cat}
       data-round={round || undefined}
+      data-empty={empty || undefined}
       aria-hidden="true"
     >
       <PatchGlyph glyph={glyph} />

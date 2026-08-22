@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
-import { GraduationCap } from "@phosphor-icons/react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { CertificateCard } from "@/components/certificates/certificate-card";
+import { GlyphChip } from "@/components/gamification/glyph-chip";
 import { ProfileHeroPanel } from "@/components/gamification/profile-hero-panel";
 import { SkillRadar } from "@/components/gamification/skill-radar";
 import { AchievementToken } from "@/components/gamification/dashboard-identity-panel";
@@ -194,12 +194,7 @@ export function ProfileBody({
             {tCerts("title")}
           </h2>
           <div className="flex flex-col items-center justify-center gap-3 py-10">
-            <GraduationCap
-              size={44}
-              weight="duotone"
-              className="text-accent"
-              aria-hidden="true"
-            />
+            <GlyphChip glyph="⬡" size={48} empty />
             <p className="text-center font-body text-text-3">
               {tCerts("noCertificates")}
             </p>
