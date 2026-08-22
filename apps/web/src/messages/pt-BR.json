@@ -1057,7 +1057,9 @@
     "answersCount": "Respostas ({count})",
     "sortBy": "Ordenar por",
     "createThreadFailed": "Não foi possível iniciar a discussão. Tente de novo.",
-    "threadType": "Tipo de tópico"
+    "threadType": "Tipo de tópico",
+    "sortLabel": "Ordenar tópicos",
+    "filterLabel": "Filtrar por tipo"
   },
   "aiPartner": {
     "title": "Parceiro de IA",
