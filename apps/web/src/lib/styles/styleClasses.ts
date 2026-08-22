@@ -189,16 +189,6 @@ export const PROGRESS_STYLES = {
   /** Track container — fat 16px with chunky border */
   track:
     "w-full h-4 bg-subtle rounded-full border-[2.5px] border-border overflow-hidden",
-  /** Fill base — gradient + inner highlight pseudo-element */
-  fillBase: "h-full rounded-full relative progress-fat-fill",
-  /** Teal fill — course progress */
-  fillTeal: "h-full rounded-full relative progress-fat-fill progress-fill-teal",
-  /** Amber fill — XP/level progress */
-  fillAmber:
-    "h-full rounded-full relative progress-fat-fill progress-fill-amber",
-  /** Green fill — completed */
-  fillGreen:
-    "h-full rounded-full relative progress-fat-fill progress-fill-green",
   /** Label above progress bar */
   label: "font-display font-bold text-sm text-text",
   /** Value text beside label */

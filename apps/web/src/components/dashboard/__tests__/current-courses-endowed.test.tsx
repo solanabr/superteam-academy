@@ -61,12 +61,14 @@ describe("CurrentCoursesSection — endowed progress (LX-B12)", () => {
     ).toBeInTheDocument();
 
     // The honest count is still 0 of 8 — the tick never inflates it.
-    expect(
-      screen.getByRole("img", { name: "0 of 8 lessons completed" })
-    ).toBeInTheDocument();
+    const bar = screen.getByRole("progressbar", {
+      name: "0 of 8 lessons completed",
+    });
+    expect(bar).toHaveAttribute("aria-valuenow", "0");
+    expect(bar).toHaveAttribute("aria-valuemax", "8");
   });
 
-  it("renders a non-zero fill after enrollment (ring is not empty at 0%)", () => {
+  it("renders a non-zero fill after enrollment (bar is not empty at 0%)", () => {
     const { container } = renderWithIntl(
       <CurrentCoursesSection
         currentCourses={[
@@ -82,12 +84,10 @@ describe("CurrentCoursesSection — endowed progress (LX-B12)", () => {
       />
     );
 
-    const fill = container.querySelector(".cc-ring-fill") as SVGCircleElement;
-    const circumference = 2 * Math.PI * 15;
-    const offset = Number(fill.getAttribute("stroke-dashoffset"));
-    // A 0% ring would be fully offset (offset === circumference). The endowed
-    // tick fills a sliver, so the offset is strictly less.
-    expect(offset).toBeLessThan(circumference);
+    // Zero completions, but the endowed tick still lights exactly one cell —
+    // an all-dark strip would drop the head-start the ring used to show.
+    expect(container.querySelectorAll(".seg-cell")).toHaveLength(8);
+    expect(container.querySelectorAll(".seg-cell--on")).toHaveLength(1);
   });
 
   it("surfaces the near-goal nudge and intensifies the ring near completion", () => {
@@ -111,6 +111,8 @@ describe("CurrentCoursesSection — endowed progress (LX-B12)", () => {
       screen.getByText(messages.dashboard.endowedProgress.nearGoal)
     ).toBeInTheDocument();
     expect(container.querySelector(".cc-card--near-goal")).not.toBeNull();
+    // 6 of 8 lit — the strip never runs ahead of the honest count.
+    expect(container.querySelectorAll(".seg-cell--on")).toHaveLength(6);
     // No enrollment reason once lessons are earned.
     expect(
       screen.queryByText(messages.dashboard.endowedProgress.enrolledFirstStep)
@@ -145,5 +147,35 @@ describe("CurrentCoursesSection — endowed progress (LX-B12)", () => {
         messages.dashboard.endowedProgress.nearGoal
       )
     ).toBeNull();
+  });
+});
+
+// Owner, 22-08: the empty state lost its "Browse Courses" CTA — the dashed chip
+// and the copy carry it alone. (The i18n key stays: continue-card and
+// review-session are still consumers.)
+describe("CurrentCoursesSection — empty state", () => {
+  function renderEmpty() {
+    return renderWithIntl(
+      <CurrentCoursesSection currentCourses={[]} userId="user-1" />
+    );
+  }
+
+  it("shows the dashed chip and the copy", () => {
+    const { container } = renderEmpty();
+
+    expect(screen.getByText(messages.dashboard.noCourses)).toBeInTheDocument();
+    const chip = container.querySelector(".cc-empty .chip");
+    expect(chip).not.toBeNull();
+    expect(chip!.hasAttribute("data-empty")).toBe(true);
+  });
+
+  it("renders NO call to action", () => {
+    renderEmpty();
+
+    expect(
+      screen.queryByRole("link", { name: messages.dashboard.browseCourses })
+    ).toBeNull();
+    expect(screen.queryByRole("button")).toBeNull();
+    expect(screen.queryByRole("link")).toBeNull();
   });
 });

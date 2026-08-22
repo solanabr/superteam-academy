@@ -306,7 +306,9 @@ describe("QuizBlock — interaction states (#943)", () => {
     expect(
       screen.queryByRole("button", { name: "Check answer" })
     ).not.toBeInTheDocument();
-    expect(nextButton().className).toContain("bg-primary");
+    // The emphasized-button marker moved from a Tailwind bg utility to the
+    // ink construction class (owner decision A, 22-08).
+    expect(nextButton().className).toContain("btn-ink--primary");
     // Correct-state styling + explanation survive the lock.
     expect(screen.getByText("Correct!")).toBeInTheDocument();
     expect(
@@ -346,14 +348,14 @@ describe("QuizBlock — interaction states (#943)", () => {
 
     fireEvent.click(screen.getByLabelText("A program-derived address"));
     fireEvent.click(checkButton());
-    expect(nextButton().className).toContain("bg-primary");
+    expect(nextButton().className).toContain("btn-ink--primary");
   });
 
   it("keeps Next subdued when the current answer is wrong", () => {
     renderWithIntl(<QuizBlock block={quizBlock} ctx={makeCtx()} />);
     fireEvent.click(screen.getByLabelText("A private key"));
     fireEvent.click(checkButton());
-    expect(nextButton().className).not.toContain("bg-primary");
+    expect(nextButton().className).not.toContain("btn-ink--primary");
   });
 
   it("shows an in-block completion state only when EVERY question is correct", () => {

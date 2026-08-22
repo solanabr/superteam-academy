@@ -6,6 +6,7 @@ import { useTranslations, useLocale } from "next-intl";
 import { User } from "@phosphor-icons/react";
 import type { CohortLeaderboardEntry } from "@superteam-lms/types";
 import { cn } from "@/lib/utils";
+import { RankMarker, topRankAttr } from "@/components/leaderboard/rank-marker";
 
 interface CohortRowProps {
   entry: CohortLeaderboardEntry;
@@ -29,10 +30,16 @@ export function CohortRow({ entry, style }: CohortRowProps) {
     : null;
 
   const inner = (
-    <div className={cn("lb-row", entry.isYou && "me")} style={style}>
-      <span className="lb-rank" aria-label={`${t("rank")} ${entry.rank}`}>
-        {entry.rank}
-      </span>
+    // data-top marks the three ranks that carry a tab; they keep the solid card
+    // while everything below drops to a dashed outline. The League tab has no
+    // separate podium, so rank 1 appears here as a row — without this the whole
+    // board went dashed (owner, 21-08).
+    <div
+      className={cn("lb-row", entry.isYou && "me")}
+      data-top={topRankAttr(entry.rank)}
+      style={style}
+    >
+      <RankMarker rank={entry.rank} />
 
       <div className="lb-av" aria-hidden="true">
         {entry.avatarUrl ? (

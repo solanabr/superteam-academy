@@ -1057,7 +1057,9 @@
     "answersCount": "Respuestas ({count})",
     "sortBy": "Ordenar por",
     "createThreadFailed": "No se pudo iniciar la conversación. Inténtalo de nuevo.",
-    "threadType": "Tipo de tema"
+    "threadType": "Tipo de tema",
+    "sortLabel": "Ordenar temas",
+    "filterLabel": "Filtrar por tipo"
   },
   "aiPartner": {
     "title": "Compañero de IA",

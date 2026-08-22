@@ -4,7 +4,7 @@ import { render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import type { DailyQuest } from "@superteam-lms/types";
 import messages from "@/messages/en.json";
-import { DailyQuestsCard } from "../daily-quests-card";
+import { DailyQuestsCard, questGlyph } from "../daily-quests-card";
 
 // #572 (LX-B7): quest cards become per-type deep-links (now rendered by the
 // standalone DailyQuestsCard rail card). The review quest deep-
@@ -73,5 +73,106 @@ describe("DailyQuestsCard quest deep-links", () => {
     expect(reviewLink).toBeDefined();
     expect(within(reviewLink!).getByText("Clear reviews")).toBeDefined();
     expect(reviewLink!).toHaveAttribute("href", "/en/review");
+  });
+});
+
+// Glyph pass 21-08: the Phosphor icon map became the CHIP tier of the glyph
+// language. The row keeps its anatomy; only the leading icon changed.
+
+describe("DailyQuestsCard quest chips", () => {
+  it("maps every shipped quest icon string to its owner-approved glyph", () => {
+    expect(questGlyph("Code", false)).toEqual({ glyph: "</>", cat: "craft" });
+    expect(questGlyph("BookOpen", false)).toEqual({
+      glyph: "▸",
+      cat: "course",
+    });
+    // The module quest took `endurance` for one round; that fill is near-black
+    // and dominated its row, so it moved to the course fill (owner, 21-08).
+    expect(questGlyph("Scroll", false)).toEqual({
+      glyph: "⬡",
+      cat: "course",
+    });
+    expect(questGlyph("Lightning", false)).toEqual({
+      glyph: "×3",
+      cat: "course",
+    });
+    expect(questGlyph("Trophy", false)).toEqual({
+      glyph: "∞",
+      cat: "community",
+    });
+  });
+
+  it("falls back to a neutral chip for an icon string it has never seen", () => {
+    expect(questGlyph("SomeNewPhosphorIcon", false)).toEqual({
+      glyph: "•",
+      cat: "course",
+    });
+  });
+
+  it("flips a completed quest's glyph to a check, keeping its category", () => {
+    expect(questGlyph("Code", true)).toEqual({ glyph: "✓", cat: "craft" });
+    expect(questGlyph("Trophy", true)).toEqual({
+      glyph: "✓",
+      cat: "community",
+    });
+  });
+
+  it("renders a decorative chip beside the quest name", () => {
+    const { container } = renderPanel([
+      quest({
+        id: "quest-challenge",
+        icon: "Code",
+        name: "Complete a Challenge",
+      }),
+    ]);
+
+    const chip = container.querySelector(".chip");
+    expect(chip).not.toBeNull();
+    expect(chip!.getAttribute("data-cat")).toBe("craft");
+    expect(chip!.getAttribute("aria-hidden")).toBe("true");
+    expect(
+      chip!.querySelector("[data-glyph]")!.getAttribute("data-glyph")
+    ).toBe("</>");
+    expect(screen.getByText("Complete a Challenge")).toBeDefined();
+  });
+
+  it("shows the check chip once the quest is completed", () => {
+    const { container } = renderPanel([
+      quest({ id: "quest-challenge", icon: "Code", completed: true }),
+    ]);
+
+    expect(
+      container.querySelector(".chip [data-glyph]")!.getAttribute("data-glyph")
+    ).toBe("✓");
+  });
+
+  it("sizes the row chip at 24px so all five quests fit without scrolling", () => {
+    const { container } = renderPanel([quest({ icon: "Code" })]);
+
+    expect(container.querySelector(".chip")!.getAttribute("data-size")).toBe(
+      "24"
+    );
+  });
+
+  it("says 'done' ONCE — the chip's check, not a second right-side medallion", () => {
+    // The completed row used to render both. Owner, 21-08: keep the chip flip,
+    // drop the medallion, let the muted title carry the rest.
+    const { container } = renderPanel([
+      quest({ icon: "Code", completed: true, currentValue: 1 }),
+    ]);
+
+    expect(container.querySelector(".dq-check")).toBeNull();
+    expect(container.querySelector(".dq-progress-lbl")).toBeNull();
+    expect(container.querySelector(".dq.done")).not.toBeNull();
+  });
+
+  it("still shows the progress counter while a quest is incomplete", () => {
+    const { container } = renderPanel([
+      quest({ icon: "Lightning", currentValue: 1, targetValue: 3 }),
+    ]);
+
+    expect(container.querySelector(".dq-progress-lbl")!.textContent).toBe(
+      "1/3"
+    );
   });
 });

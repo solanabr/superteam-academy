@@ -80,6 +80,57 @@ describe("RewardPopupQueue — rendering each reward kind", () => {
   });
 });
 
+describe("RewardPopupQueue — the chip icon (glyph pass 21-08)", () => {
+  /** The chip's glyph + category for whatever card is on screen. */
+  function chip(): {
+    glyph: string | null;
+    cat: string | null;
+    round: boolean;
+  } {
+    const el = document.querySelector(".rw-card .chip");
+    if (!el) throw new Error("no chip on the card");
+    return {
+      glyph: el.querySelector("[data-glyph]")!.getAttribute("data-glyph"),
+      cat: el.getAttribute("data-cat"),
+      round: el.hasAttribute("data-round"),
+    };
+  }
+
+  it("shows a gold check for a completed quest", () => {
+    renderQueue();
+    act(() =>
+      dispatchQuestReward({ questId: "quest-complete-lesson", xpReward: 25 })
+    );
+
+    expect(chip()).toEqual({ glyph: "✓", cat: "reward", round: false });
+  });
+
+  it("shows a gold star for the surprise bonus", () => {
+    renderQueue();
+    act(() => dispatchSurpriseBonus(30));
+
+    expect(chip()).toEqual({ glyph: "★", cat: "reward", round: false });
+  });
+
+  it("shows the new level number in a round course-green chip", () => {
+    renderQueue();
+    act(() => dispatchLevelUp(7));
+
+    expect(chip()).toEqual({ glyph: "7", cat: "course", round: true });
+  });
+
+  it("keeps the icon decorative — the card carries the label", () => {
+    renderQueue();
+    act(() => dispatchSurpriseBonus(30));
+
+    const el = document.querySelector(".rw-card .chip")!;
+    expect(el.getAttribute("aria-hidden")).toBe("true");
+    expect(
+      document.querySelector('[aria-live="polite"]')?.getAttribute("aria-label")
+    ).toBe("Surprise Bonus");
+  });
+});
+
 describe("RewardPopupQueue — queueing, never stacking", () => {
   it("plays two simultaneous rewards SEQUENTIALLY, never overlapping", () => {
     renderQueue();

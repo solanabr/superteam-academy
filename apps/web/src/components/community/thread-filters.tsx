@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { cn } from "@/lib/utils";
 
 interface ThreadFiltersProps {
@@ -55,45 +56,29 @@ export function ThreadFilters({
     // ONE row: sort + type/scope filters on the left, the primary action on
     // the right.
     <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-      {/* Sort tabs */}
-      <div className="flex gap-1 overflow-x-auto rounded-lg border border-[var(--border-default)] bg-[var(--surface)] p-0.5">
-        {SORT_OPTIONS.map((opt) => (
-          <button
-            key={opt.value}
-            type="button"
-            onClick={() => onSortChange(opt.value)}
-            className={cn(
-              "whitespace-nowrap rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-colors",
-              sort === opt.value
-                ? "bg-[var(--primary)] text-white"
-                : "text-[var(--text-2)] hover:bg-[var(--card-hover)] hover:text-[var(--text)]"
-            )}
-          >
-            {t(opt.labelKey)}
-          </button>
-        ))}
-      </div>
+      {/* Sort and type are both segmented controls — the shared one, so their
+          selected state is the same object as a selected day key or a primary
+          button rather than this file's own flat primary fill. */}
+      <SegmentedControl
+        options={SORT_OPTIONS.map((opt) => ({
+          value: opt.value as string,
+          label: t(opt.labelKey),
+        }))}
+        value={sort}
+        onChange={onSortChange}
+        ariaLabel={t("sortLabel")}
+      />
 
-      {/* Type filter — same segmented-control anatomy as the sort tabs so the
-          two groups read as sibling controls */}
       {showTypeFilter && (
-        <div className="flex gap-1 overflow-x-auto rounded-lg border border-[var(--border-default)] bg-[var(--surface)] p-0.5">
-          {TYPE_OPTIONS.map((opt) => (
-            <button
-              key={opt.labelKey}
-              type="button"
-              onClick={() => onTypeChange(opt.value)}
-              className={cn(
-                "whitespace-nowrap rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-colors",
-                type === opt.value
-                  ? "bg-[var(--primary)] text-white"
-                  : "text-[var(--text-2)] hover:bg-[var(--card-hover)] hover:text-[var(--text)]"
-              )}
-            >
-              {t(opt.labelKey)}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl
+          options={TYPE_OPTIONS.map((opt) => ({
+            value: opt.value as string | undefined,
+            label: t(opt.labelKey),
+          }))}
+          value={type}
+          onChange={onTypeChange}
+          ariaLabel={t("filterLabel")}
+        />
       )}
 
       {/* "Course questions" — an independent scope TOGGLE (a course question

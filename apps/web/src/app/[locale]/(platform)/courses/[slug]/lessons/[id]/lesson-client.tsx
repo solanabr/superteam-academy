@@ -823,11 +823,17 @@ export function LessonPageClient({
             <span className="font-mono text-xs tabular-nums text-text-3">
               {currentIndex + 1}/{allLessons.length}
             </span>
-            <ProgressBar
-              value={currentIndex + 1}
-              max={allLessons.length}
-              className="hidden w-16 sm:block sm:w-20"
-            />
+            {/* The width/visibility classes ride on a wrapper: `.seg-track`
+                sets display outside Tailwind's layer, so `hidden`/`sm:block`
+                on the bar itself would never win. */}
+            <div className="hidden w-16 sm:block sm:w-20">
+              <ProgressBar
+                value={currentIndex + 1}
+                max={allLessons.length}
+                segmented
+                size="slim"
+              />
+            </div>
           </div>
         </div>
       </div>

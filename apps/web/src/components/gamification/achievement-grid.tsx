@@ -2,16 +2,11 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import {
-  CaretDown,
-  Check,
-  CheckSquare,
-  Square,
-  Trophy,
-} from "@phosphor-icons/react";
+import { CaretDown, Check, CheckSquare, Square } from "@phosphor-icons/react";
 import type { Achievement } from "@superteam-lms/types";
 import type { AchievementDefinition } from "@/lib/gamification";
 import { cn } from "@/lib/utils";
+import { GlyphChip } from "@/components/gamification/glyph-chip";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -183,12 +178,7 @@ export function AchievementGrid({
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center gap-4 py-12">
-          <Trophy
-            size={48}
-            weight="duotone"
-            className="text-accent"
-            aria-hidden="true"
-          />
+          <GlyphChip glyph="◎" size={48} empty />
           <p className="text-center font-body text-text-3">
             {t("noAchievements")}
           </p>

@@ -7,6 +7,7 @@ import Image from "next/image";
 import { Copy, Check, Gift, Info, XLogo } from "@phosphor-icons/react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { cn } from "@/lib/utils";
+import { GlyphChip } from "@/components/gamification/glyph-chip";
 
 interface ReferralStanding {
   userId: string;
@@ -291,7 +292,7 @@ export function ReferralBoard({ currentUserId }: { currentUserId: string }) {
 
       {failed || (standings !== null && standings.length === 0) ? (
         <div className="lb-empty">
-          <Gift size={48} weight="duotone" aria-hidden="true" />
+          <GlyphChip glyph="◍" size={48} empty />
           <p>{t("referralNoEntries")}</p>
         </div>
       ) : standings === null ? (

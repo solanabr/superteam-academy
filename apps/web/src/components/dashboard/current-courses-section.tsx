@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Transaction } from "@solana/web3.js";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { BookOpen, X, Sparkle, ArrowUp } from "@phosphor-icons/react";
+import { X, Sparkle, ArrowUp } from "@phosphor-icons/react";
 import { buildCloseEnrollmentInstruction } from "@/lib/solana/instructions";
 import {
   parseProgramError,
@@ -15,7 +15,8 @@ import {
 import type { CurrentCourse } from "@/lib/dashboard/types";
 import { deriveEndowedProgress } from "@/lib/courses/endowed-progress";
 import { CourseCompletionMint } from "@/components/certificates/course-completion-mint";
-import { Button } from "@/components/ui/button";
+import { GlyphChip } from "@/components/gamification/glyph-chip";
+import { ProgressBar } from "@/components/course/progress-bar";
 import { dispatchToast } from "@/components/ui/toast-container";
 
 interface CurrentCoursesSectionProps {
@@ -124,9 +125,6 @@ export function CurrentCoursesSection({
               course.totalLessons
             );
             const isComplete = ep.isComplete;
-            const ringR = 15;
-            const ringC = 2 * Math.PI * ringR;
-            const ringOffset = ringC * (1 - ep.displayFraction);
             const progressAria = t("lessonsDone", {
               completed: course.completedLessons,
               total: course.totalLessons,
@@ -160,39 +158,24 @@ export function CurrentCoursesSection({
                     <div className="cc-meta">
                       <div className="cc-title">{course.title}</div>
                     </div>
-                    <span
-                      className="cc-progress"
-                      role="img"
-                      aria-label={progressAria}
-                    >
-                      <span className="cc-ring-wrap" aria-hidden="true">
-                        <svg className="cc-ring" viewBox="0 0 36 36">
-                          <circle
-                            cx="18"
-                            cy="18"
-                            r={ringR}
-                            className="cc-ring-track"
-                          />
-                          <circle
-                            cx="18"
-                            cy="18"
-                            r={ringR}
-                            strokeDasharray={ringC}
-                            strokeDashoffset={ringOffset}
-                            transform="rotate(-90 18 18)"
-                            className="cc-ring-fill"
-                          />
-                        </svg>
-                        <span className="cc-ring-count">
-                          <span className="cc-ring-done">
-                            {course.completedLessons}
-                          </span>
-                          /{course.totalLessons}
+                    <span className="cc-progress">
+                      <span className="cc-count" aria-hidden="true">
+                        <span className="cc-count-done">
+                          {course.completedLessons}
+                        </span>
+                        /{course.totalLessons}
+                        <span className="cc-count-label">
+                          {tCourses("lessons")}
                         </span>
                       </span>
-                      <span className="cc-ring-label" aria-hidden="true">
-                        {tCourses("lessons")}
-                      </span>
+                      <ProgressBar
+                        value={course.completedLessons}
+                        max={course.totalLessons}
+                        displayFraction={ep.displayFraction}
+                        segmented
+                        size="micro"
+                        aria-label={progressAria}
+                      />
                     </span>
                   </div>
                   {/* Stated reason for a pre-credited tick, or the near-goal
@@ -224,17 +207,11 @@ export function CurrentCoursesSection({
           })}
         </div>
       ) : (
+        // No CTA here (owner, 22-08): the chip and the copy carry the state on
+        // their own.
         <div className="cc-empty">
-          <BookOpen
-            size={40}
-            weight="duotone"
-            className="text-text-3"
-            aria-hidden="true"
-          />
+          <GlyphChip glyph="▸" size={48} empty />
           <p className="text-text-3">{t("noCourses")}</p>
-          <Button asChild variant="push" size="sm" className="mt-2">
-            <Link href={`/${locale}/courses`}>{t("browseCourses")}</Link>
-          </Button>
         </div>
       )}
     </section>

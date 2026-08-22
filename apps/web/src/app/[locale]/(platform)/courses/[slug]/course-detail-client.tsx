@@ -283,8 +283,8 @@ export function CourseDetailClient({
                 {isEnrolled && (
                   <div className="mb-5 space-y-2">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="font-display text-[13px] font-bold text-text-2">
-                        {completedCount} / {totalLessons} {t("lessons")}
+                      <span className="font-mono text-xs font-semibold uppercase tabular-nums tracking-wider text-text-2">
+                        {completedCount}/{totalLessons} {t("lessons")}
                       </span>
                       <span className="font-display text-[13px] font-bold text-text-3">
                         {isComplete ? t("completed") : t("inProgress")}
@@ -293,7 +293,7 @@ export function CourseDetailClient({
                     <ProgressBar
                       value={completedCount}
                       max={totalLessons}
-                      showLabel
+                      segmented
                     />
                   </div>
                 )}

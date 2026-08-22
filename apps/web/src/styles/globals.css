@@ -639,6 +639,40 @@
     cursor: default;
   }
 
+  /* ── The ink palette ───────────────────────────────────────────
+     One source for the values the whole ink construction shares: the chip and
+     patch fills, and (since the 22-08 button pass, decision A) the Button
+     system. These are deliberately LITERALS, not theme tokens — a patch's
+     green is the same green on both grounds, which is what makes the family
+     read as one system. Only `--ink-line` flips, and only the secondary
+     button uses it. */
+  :root {
+    --ink-green: #2ecc8e;
+    --ink-orange: #ea580c;
+    --ink-dark: #19231b;
+    --ink-cream: #fafaf7;
+    --ink-on-orange: #fff4ec;
+    --ink-line: #19231b;
+    /* The primary Button's fill is `--primary` and its label is this. Both
+       are consumed by `.pressed-key` too, so a selected control and a primary
+       button can never disagree about the primary voice. */
+    --primary-fg: #fff;
+    /* The quiet hairline every bordered element on a card shares — quest rows,
+       league rows, activity rows, unselected day pills. One token so those
+       surfaces cannot drift apart again (this was the third parity fix between
+       the quests and league cards).
+
+       It is declared once PER THEME rather than once overall: a custom property
+       whose value references another custom property is substituted at its
+       declaration scope, so a lone :root definition would bake in the light
+       ink and keep rendering the light hairline on a dark page. */
+    --quiet-line: color-mix(in srgb, var(--ink-line) 14%, transparent);
+  }
+  [data-theme="dark"] {
+    --ink-line: #fafaf7;
+    --quiet-line: color-mix(in srgb, var(--ink-line) 14%, transparent);
+  }
+
   /* ── Achievement patch (spec: achievement-patches v1) ────────────
      Replaces the metallic octagon medal. Flat fill, ink outline, dashed
      stitch, hard offset shadow — the construction the buttons already use.
@@ -726,7 +760,8 @@
     color: var(--patch-glyph);
     overflow: visible;
   }
-  .patch[data-locked] .patch-mark {
+  .patch[data-locked] .patch-mark,
+  .chip[data-empty] .patch-mark {
     width: calc(var(--size) * 0.36);
     height: calc(var(--size) * 0.36);
     color: currentColor;
@@ -758,21 +793,25 @@
 
   /* category → colour */
   .patch[data-cat="reward"],
+  .chip[data-cat="reward"],
   .patch3d[data-cat="reward"] {
     --fill: #f5a623;
     --shade: #b45309;
   }
   .patch[data-cat="start"],
+  .chip[data-cat="start"],
   .patch3d[data-cat="start"] {
     --fill: #fde68a;
     --shade: #f5a623;
   }
   .patch[data-cat="course"],
+  .chip[data-cat="course"],
   .patch3d[data-cat="course"] {
-    --fill: #2ecc8e;
+    --fill: var(--ink-green);
     --shade: #0a7055;
   }
   .patch[data-cat="craft"],
+  .chip[data-cat="craft"],
   .patch3d[data-cat="craft"] {
     --fill: #0a7055;
     --shade: #065c44;
@@ -780,13 +819,15 @@
     --stitch: rgba(250, 250, 247, 0.55);
   }
   .patch[data-cat="community"],
+  .chip[data-cat="community"],
   .patch3d[data-cat="community"] {
-    --fill: #ea580c;
+    --fill: var(--ink-orange);
     --shade: #9a3412;
     --patch-glyph: #fafaf7;
     --stitch: rgba(250, 250, 247, 0.55);
   }
   .patch[data-cat="endurance"],
+  .chip[data-cat="endurance"],
   .patch3d[data-cat="endurance"] {
     --fill: #19231b;
     --shade: #0e1117;
@@ -794,6 +835,7 @@
     --stitch: rgba(250, 250, 247, 0.5);
   }
   .patch[data-cat="onchain"],
+  .chip[data-cat="onchain"],
   .patch3d[data-cat="onchain"] {
     --fill: linear-gradient(135deg, #9945ff, #14f195);
     --shade: #6d28d9;
@@ -815,7 +857,8 @@
 
   /* Locked is an empty dashed slot showing the target — never a faded copy
      of the earned art. */
-  .patch[data-locked] {
+  .patch[data-locked],
+  .chip[data-empty] {
     background: #f3f1ec;
     border-style: dashed;
     border-color: rgba(25, 35, 27, 0.24);
@@ -835,6 +878,14 @@
   }
 
   /* dark theme — outline and shadow flip to cream, fills unchanged */
+  /* The PATCH flips its ink to cream on a dark ground — David's original
+     treatment, unchanged.
+
+     The CHIP deliberately no longer does (owner, 22-08). A chip is a small
+     object with an edge, like a button or an avatar, and those all keep the
+     literal dark ink on both grounds; the chip was the last thing still
+     flipping, which is why a selected day key showed a light ring in dark mode
+     while the Save button beside it showed a dark one. */
   [data-theme="dark"] .patch {
     --patch-ink: #fafaf7;
     box-shadow: 0 var(--lift) 0 0 rgba(250, 250, 247, 0.92);
@@ -844,7 +895,8 @@
   [data-theme="dark"] .patch[data-cat="course"] {
     --stitch: rgba(25, 35, 27, 0.4);
   }
-  [data-theme="dark"] .patch[data-locked] {
+  [data-theme="dark"] .patch[data-locked],
+  [data-theme="dark"] .chip[data-empty] {
     background: #131920;
     border-color: rgba(255, 255, 255, 0.2);
     color: #78838f;
@@ -852,6 +904,286 @@
   }
   [data-theme="dark"] .patch[data-locked]::before {
     border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  /* ── CHIP — tier 2 of the glyph language (owner-approved 21-08) ──
+     The patch construction sized down for repeated rows: category fill, ink
+     outline, hard offset shadow, same glyph rendering — no dashed stitch.
+     Presence steps down with repetition, so the stitch stays a patch-only
+     signal. The category fills are inherited from the `.patch[data-cat=…]`
+     rules above (this selector is listed alongside them), which is what stops
+     a chip drifting away from the patch it descends from. */
+  .chip {
+    --size: 34px;
+    --border: 2px;
+    --lift: 2px;
+    --fill: #f5a623;
+    --patch-glyph: #19231b;
+    --chip-radius: calc(var(--size) * 0.26);
+    --patch-ink: #19231b;
+
+    position: relative;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: var(--size);
+    height: var(--size);
+    border: var(--border) solid var(--patch-ink);
+    border-radius: var(--chip-radius);
+    background: var(--fill);
+    box-shadow: 0 var(--lift) 0 0 var(--patch-ink);
+    font:
+      700 calc(var(--size) * 0.38) / 1 var(--font-mono),
+      "JetBrains Mono",
+      monospace;
+    color: var(--patch-glyph);
+    user-select: none;
+  }
+  /* 24 is the quest-row size (owner, 21-08): the 28px chip read too heavy in
+     a five-row list, and the shorter row is also what keeps all five visible
+     without the card scrolling. */
+  .chip[data-size="24"] {
+    --size: 24px;
+    --border: 1.5px;
+    --lift: 1.5px;
+  }
+  .chip[data-size="28"] {
+    --size: 28px;
+  }
+  .chip[data-size="40"] {
+    --size: 40px;
+  }
+  /* The empty-state step — illustration scale, not a row icon. */
+  .chip[data-size="48"] {
+    --size: 48px;
+    --border: 2px;
+  }
+  .chip[data-round] {
+    --chip-radius: 999px;
+  }
+  /* ── Pressed key: the shared SELECTED state for selection controls ──
+     Day keys in the plan card, community filter pills, and anything else that
+     is a segmented choice rather than an action. Construction comes from the
+     ink family (literal-ink ring, small hard lift, pressed travel); COLOUR
+     comes from the primary Button's own tokens (owner, 22-08, superseding the
+     earlier chip-green spec) so a selected control and a primary button always
+     read as the same voice in both themes.
+
+     The silhouette is left to the consumer: day keys stay squared, pills stay
+     rounded-full. Only the treatment is shared. */
+  .pressed-key {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary);
+    color: var(--primary-fg);
+    border: 1.5px solid var(--ink-dark);
+    box-shadow: 0 1.5px 0 0 var(--ink-dark);
+    font-weight: 700;
+    user-select: none;
+  }
+  .pressed-key:active {
+    transform: translateY(1.5px);
+    box-shadow: 0 0 0 0 var(--ink-dark);
+  }
+
+  /* A day key in the "Plan your next lesson" card — a pressed key shaped like
+     the quiet pill beside it. min-height matches that pill exactly (10px text
+     at Tailwind's normal line-height + 6px padding + border) so toggling a day
+     never nudges the row. */
+  .daykey {
+    width: 100%;
+    font-family: var(--font-mono), "JetBrains Mono", monospace;
+    text-transform: uppercase;
+    min-height: 26px;
+    padding: 0 4px;
+    border-radius: var(--r-md);
+    font-size: 10px;
+    line-height: 1.2;
+    letter-spacing: 1px;
+  }
+
+  /* ── Segmented control ─────────────────────────────────────────
+     One control behind the community sort/type filters and the catalog's
+     difficulty row, which had grown three different selected looks (a flat
+     primary fill, a dim tinted pill, and a translucent chip). The SELECTED
+     segment is `.pressed-key`, so it reads as the same object as a selected
+     day key and a primary button; the unselected one stays quiet.
+
+     Two silhouettes, because the two surfaces genuinely differ: `track` is the
+     community idiom (segments inside one bordered rail), `pills` is the
+     catalog idiom (free-standing rounded pills). Only the shape differs — the
+     selected treatment is identical. */
+  .seg-track {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    padding: 2px;
+    border: 1px solid var(--quiet-line);
+    border-radius: var(--r-md);
+    background: var(--surface);
+  }
+  .seg-pills {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .seg {
+    white-space: nowrap;
+    cursor: pointer;
+    border-radius: var(--r-sm);
+    padding: 6px 10px;
+    font-size: 13px;
+    font-weight: 600;
+    transition:
+      color 0.15s,
+      background 0.15s,
+      border-color 0.15s;
+  }
+  /* The quiet state is scoped OFF the selected one rather than declared flat.
+     `.seg` and `.pressed-key` are both single-class selectors, so whichever
+     lands later in the file wins — and a flat `background: transparent` plus a
+     `border: … transparent` shorthand here silently erased the selected fill
+     AND its ink ring. Everything that `.pressed-key` owns must therefore be
+     declared only for the unselected case.
+
+     The transparent border is 1.5px to match the selected one, so a segment
+     does not change size when it is picked. */
+  .seg:not(.pressed-key) {
+    color: var(--text-2);
+    background: transparent;
+    border: 1.5px solid transparent;
+  }
+  .seg:hover:not(.pressed-key) {
+    background: var(--card-hover);
+    color: var(--text);
+  }
+  .seg:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  /* The catalog's pills are free-standing, so an unselected one needs its own
+     edge and ground; a segment in a track borrows the track's. */
+  .seg-pills .seg {
+    border-radius: 999px;
+    padding: 8px 14px;
+    min-height: 40px;
+    font-family: var(--font-display, var(--font-d));
+    font-weight: 700;
+    font-size: 12px;
+  }
+  .seg-pills .seg:not(.pressed-key) {
+    border-color: var(--quiet-line);
+    background: var(--card);
+  }
+  /* A selected pill keeps the round silhouette the row is built on. */
+  .seg-pills .pressed-key {
+    border-radius: 999px;
+  }
+
+  /* ── Avatars wear the ink ring (owner, 22-08) ──────────────────
+     A general rule, not a per-surface fix: the shared `Avatar` primitive and
+     the leaderboard's `.lb-av` both carry this, so every identity chip in the
+     app is ringed at once.
+
+     An OUTSET shadow, deliberately not the alternatives: a border would eat
+     inward and crop the image (avatars fill their box), and an inset shadow
+     paints beneath the child <img>, so image avatars would show no ring at
+     all. It costs no layout, so no row height moves.
+
+     ONE width at every size. 1.5px was checked from the 26px league row up to
+     the 40px header pill and reads correctly across that range; a size-scaled
+     ring would need a rule per surface for no visible gain.
+
+     The ink is the LITERAL dark glyph ink on both grounds (owner, 22-08),
+     matching the chips and the filled buttons rather than the flipping token.
+     On a dark card that reads as a keyline gap rather than a bright ring —
+     which is the intent: an avatar is an object with an edge, not a
+     highlighted one. The `.me` row marker deliberately does the opposite and
+     keeps the flipping ink, because it IS a highlight. */
+  .avatar-ink {
+    box-shadow: 0 0 0 1.5px var(--ink-dark);
+  }
+
+  /* ── The ink Button (owner decision A, 22-08) ──────────────────
+     The Button primitive adopts the same construction as the chips: flat fill,
+     ink outline, hard offset shadow, and a pressed-key active state. The
+     variant/size API is unchanged — these classes are what the cva emits.
+
+     Cascade note: this lives in CSS rather than arbitrary Tailwind utilities
+     because the size modifier has to override the variant's shadow, and two
+     arbitrary `shadow-[...]` utilities resolve by stylesheet order, not by the
+     order they appear in the class string. */
+  .btn-ink {
+    --btn-line: var(--ink-dark);
+    border: 2px solid var(--btn-line);
+    box-shadow: 0 3px 0 0 var(--btn-line);
+  }
+  .btn-ink:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 0 var(--btn-line);
+  }
+  /* Small buttons sit closer to the page. */
+  .btn-ink--sm {
+    box-shadow: 0 2px 0 0 var(--btn-line);
+  }
+  .btn-ink--sm:active:not(:disabled) {
+    box-shadow: 0 1px 0 0 var(--btn-line);
+  }
+
+  /* Owner reversal 22-08 (option B, superseding A): primary keeps the app's
+     existing colour voice — the `--primary` fill and white label — and takes
+     ONLY the construction from the ink system: the outline, the hard shadow
+     and the pressed state. Its ink is still the dark literal on both grounds,
+     like every other filled variant. */
+  .btn-ink--primary {
+    background: var(--primary);
+    color: var(--primary-fg);
+  }
+  .btn-ink--primary:hover:not(:disabled) {
+    background: var(--primary-hover);
+  }
+
+  .btn-ink--danger {
+    background: var(--ink-orange);
+    color: var(--ink-on-orange);
+  }
+  .btn-ink--danger:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--ink-orange) 92%, #000);
+  }
+
+  /* The one variant whose ink follows the theme: on a dark page a dark outline
+     around a dark card is invisible, so it flips to cream. The filled variants
+     keep dark ink on both grounds — their fill supplies the contrast. */
+  .btn-ink--secondary {
+    --btn-line: var(--ink-line);
+    background: var(--card);
+    color: var(--text);
+  }
+  .btn-ink--secondary:hover:not(:disabled) {
+    background: var(--card-hover);
+  }
+
+  /* Disabled is a flat, shadowless plate — never a faded copy of the live
+     button, and it must not depress when clicked. */
+  .btn-ink:disabled {
+    background: var(--card-alt);
+    color: var(--text-3);
+    border-color: var(--border-strong);
+    box-shadow: none;
+    transform: none;
+  }
+
+  /* "</>" is three mono advances inside a 40px box — tighten so it never
+     touches the outline. */
+  .chip .patch-text {
+    letter-spacing: -0.04em;
+  }
+  .chip .patch-mark {
+    width: calc(var(--size) * 0.46);
+    height: calc(var(--size) * 0.46);
   }
 
   /* ── The 3D patch (spec: achievement-patches v1, "The 3D patch") ──
@@ -1244,57 +1576,6 @@
   font-family: var(--font-mono, var(--font-m));
   font-size: 12px;
   color: var(--primary);
-}
-
-/* Legacy compat aliases */
-.progress-fat {
-  width: 100%;
-  height: 14px;
-  background: var(--input);
-  border-radius: var(--r-full);
-  border: 1px solid var(--border);
-  overflow: hidden;
-}
-.progress-fat-fill {
-  height: 100%;
-  border-radius: var(--r-full);
-  position: relative;
-  overflow: hidden;
-  transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.progress-fat-fill::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.08) 25%,
-    rgba(255, 255, 255, 0.32) 50%,
-    rgba(255, 255, 255, 0.08) 75%,
-    transparent 100%
-  );
-  animation: shimmer 2.2s ease-in-out infinite;
-}
-.progress-fat-fill::before {
-  content: "";
-  position: absolute;
-  top: 2px;
-  left: 6px;
-  right: 6px;
-  height: 3px;
-  background: rgba(255, 255, 255, 0.28);
-  border-radius: var(--r-full);
-  z-index: 1;
-}
-.progress-fill-teal {
-  background: linear-gradient(90deg, var(--primary-dark), var(--primary));
-}
-.progress-fill-amber {
-  background: linear-gradient(90deg, var(--xp-dark), var(--xp));
-}
-.progress-fill-green {
-  background: linear-gradient(90deg, var(--primary-dark), var(--success));
 }
 
 /* ── Achievement medal keyframes (outside @layer for animation compat) ── */
@@ -2187,44 +2468,6 @@
   gap: 10px;
   flex-wrap: wrap;
 }
-.filter-pills {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-/* ── Unified filter pills (difficulty + path) ── */
-.filter-pill {
-  font-family: var(--font-display, var(--font-d));
-  font-weight: 700;
-  font-size: 12px;
-  padding: 8px 14px;
-  min-height: 44px;
-  border: 2.5px solid var(--border);
-  border-radius: 99px;
-  cursor: pointer;
-  background: var(--card);
-  color: var(--text-2);
-  box-shadow: 0 2px 0 0 var(--border);
-  transition: all 0.15s;
-  user-select: none;
-  white-space: nowrap;
-}
-.filter-pill:hover {
-  border-color: var(--border-hover, var(--border));
-  color: var(--text);
-}
-.filter-pill:active {
-  transform: translateY(2px);
-  box-shadow: none;
-}
-.filter-pill.active {
-  background: var(--primary-bg, var(--primary-dim));
-  border-color: var(--primary);
-  color: var(--primary);
-  box-shadow: none;
-  transform: translateY(2px);
-}
 
 /* ── Learning Path sections — premium redesign ── */
 .path-section {
@@ -2375,51 +2618,8 @@
   transform: rotate(180deg);
 }
 
-/* ── Full-width progress bar — the hero visual ── */
-.path-bar-track {
-  width: 100%;
-  height: 7px;
-  background: var(--border);
-  border-radius: 99px;
-  overflow: hidden;
-  position: relative;
-}
-.path-bar-fill {
-  height: 100%;
-  border-radius: 99px;
-  background: linear-gradient(
-    90deg,
-    var(--primary-dark, var(--primary)),
-    var(--primary)
-  );
-  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  min-width: 0;
-  overflow: hidden;
-}
-/* Shimmer sweep — like dashboard XP bar */
-.path-bar-fill::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.1) 25%,
-    rgba(255, 255, 255, 0.35) 50%,
-    rgba(255, 255, 255, 0.1) 75%,
-    transparent 100%
-  );
-  animation: path-shimmer 2.2s ease-in-out infinite;
-}
-@keyframes path-shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
-}
+/* The path bar itself is the progress standard — see `.path-bar-track` in the
+   progress-bar block next to `.dash-xp-track`. */
 
 /* Row 2: Stats footer */
 .path-header-foot {
@@ -3012,33 +3212,6 @@ a.path-step-card:hover .path-step-badge.skip {
   color: var(--xp);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
-}
-/* Gold metallic emoji ring (quest 🎯 / surprise bonus ✨). */
-.rw-ring {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  padding: 4px;
-  flex-shrink: 0;
-  background: linear-gradient(
-    145deg,
-    #7a3e00 0%,
-    #b45309 25%,
-    #f5a623 55%,
-    #fde68a 75%,
-    #b45309 100%
-  );
-  box-shadow: 0 0 16px rgba(245, 166, 35, 0.4);
-}
-.rw-ring-in {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: var(--card);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
 }
 /* Popup patch sits at 40px; the card row is tighter than the dashboard. */
 /* Mini diploma — the certificate artifact in miniature. */
@@ -3642,6 +3815,12 @@ a.path-step-card:hover .path-step-badge.skip {
   width: 36px;
   height: 36px;
   border-radius: 50%;
+  /* The app-wide avatar ink ring — the same declaration as `.avatar-ink`.
+     Deliberately NOT `--lb-ink`: that is the board's flipping ink, and an
+     avatar's ring is the literal dark ink on both grounds. The `.me` row
+     marker next to it still uses `--lb-ink`, because that one is a highlight
+     and has to stay visible on the dark card. */
+  box-shadow: 0 0 0 1.5px var(--ink-dark);
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -4258,9 +4437,23 @@ a.path-step-card:hover .path-step-badge.skip {
    the level ring and used for nothing else. No inner shadow, no cap on the
    fill, no gradient. Dark swaps the outline and the track only; the mint
    carries over untouched. */
-.dash-xp-track {
+/* The three tokens every learner-facing progress bar is built from. Declared
+   once, on every construction that uses them, so a value can never drift
+   between the XP bar, the segmented lesson bars and the path bar. */
+.dash-xp-track,
+.seg-track,
+.path-bar-track {
   --xpbar-ink: #19231b;
   --xpbar-track: rgba(25, 35, 27, 0.12);
+  --xpbar-fill: #2ecc8e;
+}
+[data-theme="dark"] .dash-xp-track,
+[data-theme="dark"] .seg-track,
+[data-theme="dark"] .path-bar-track {
+  --xpbar-ink: #fafaf7;
+  --xpbar-track: rgba(250, 250, 247, 0.18);
+}
+.dash-xp-track {
   width: 100%;
   max-width: 200px;
   height: 16px;
@@ -4269,17 +4462,82 @@ a.path-step-card:hover .path-step-badge.skip {
   border-radius: var(--r-full);
   overflow: hidden;
 }
-[data-theme="dark"] .dash-xp-track {
-  --xpbar-ink: #fafaf7;
-  --xpbar-track: rgba(250, 250, 247, 0.18);
-}
 .dash-xp-fill {
   height: 100%;
-  background: #2ecc8e;
+  background: var(--xpbar-fill);
   transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 @media (prefers-reduced-motion: reduce) {
   .dash-xp-fill {
+    transition: none;
+  }
+}
+
+/* ── Segmented variant — discrete counts (lessons) ──────────────────────────
+   Same track, outline and fill as the XP bar; the only difference is that the
+   inside is divided into one cell per lesson. Ink hairlines are drawn ON TOP
+   of each cell's left edge, so they read at any height and never depend on a
+   translucent gap compositing correctly. Sizes are set with two custom
+   properties, so a variant is a height + a border weight, not a new bar. */
+/* No `width` on the base: block-level auto already fills its container, and an
+   explicit 100% here (unlayered) would beat any Tailwind width a caller sets. */
+.seg-track {
+  display: flex;
+  height: var(--seg-h, 13px);
+  background: var(--xpbar-track);
+  border: var(--seg-border, 2.5px) solid var(--xpbar-ink);
+  border-radius: var(--r-full);
+  overflow: hidden;
+}
+.seg-track--slim {
+  --seg-h: 10px;
+  --seg-border: 2px;
+}
+.seg-track--micro {
+  --seg-h: 8px;
+  --seg-border: 1.5px;
+  width: 64px;
+}
+.seg-cell {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.seg-cell + .seg-cell {
+  box-shadow: inset 1.5px 0 0 var(--xpbar-ink);
+}
+.seg-cell--on {
+  background: var(--xpbar-fill);
+}
+/* Smooth fill inside the same track — used for continuous shares, and as the
+   fallback when a course has too many lessons for legible ticks. */
+.seg-fill {
+  height: 100%;
+  background: var(--xpbar-fill);
+  transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .seg-fill {
+    transition: none;
+  }
+}
+
+/* ── Learning-path bar — smooth, never segmented: a path spans whole courses,
+   so ticks would read as lessons and mislead. ── */
+.path-bar-track {
+  width: 100%;
+  height: 10px;
+  background: var(--xpbar-track);
+  border: 2px solid var(--xpbar-ink);
+  border-radius: var(--r-full);
+  overflow: hidden;
+}
+.path-bar-fill {
+  height: 100%;
+  background: var(--xpbar-fill);
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .path-bar-fill {
     transition: none;
   }
 }
@@ -4472,10 +4730,26 @@ a.path-step-card:hover .path-step-badge.skip {
   color: var(--text-3);
 }
 
-/* Daily quests list: ~5 rows visible, scroll beyond — the same cap idiom as
-   the league card (owner, 04-08). */
+/* ── One list system (owner, 22-08) ──
+   The Daily Quests card is the REFERENCE: the league strip derives its metrics
+   and type from these tokens rather than restating numbers, so the two rail
+   cards cannot drift apart again. Both cards show exactly five rows. */
+:root {
+  --list-row-h: 40px;
+  --list-row-gap: 5px;
+  --list-title-size: 13px;
+  --list-title-weight: 700;
+  --list-xp-size: 12px;
+  --list-meta-size: 10px;
+  /* Five rows and the four gaps between them — nothing else. */
+  --list-cap-5: calc(5 * var(--list-row-h) + 4 * var(--list-row-gap));
+}
+
 .dq-list-capped {
-  max-height: 224px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--list-row-gap);
+  max-height: var(--list-cap-5);
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--border-default) transparent;
@@ -4485,31 +4759,80 @@ a.path-step-card:hover .path-step-badge.skip {
    (.dq: 6px 10px pad, 9px gap, 1px border, 10px list gap) so the two rail
    cards read as one list system. ~6 rows visible, scroll beyond. */
 .lb-list-mini {
-  max-height: 264px;
+  /* Exactly five rows, from the same tokens the quests card uses — if the row
+     floor moves, both caps move with it. The you-±3 window still holds up to
+     seven rows behind the scroll. */
+  max-height: var(--list-cap-5);
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--border-default) transparent;
-  gap: 5px;
+  gap: var(--list-row-gap);
 }
 .lb-list-mini .lb-row {
+  min-height: var(--list-row-h);
   padding: 6px 10px;
   gap: 9px;
   border-width: 1px;
   box-shadow: none;
   border-radius: var(--r-md);
+  /* The rank-4+ dashed outline needs the solid top-3 podium for contrast
+     (40cd9caf spec). This strip shows only the you-±3 neighbourhood — usually
+     all rank 4+ — so every row went dashed and the card read as broken
+     (owner, 21-08). Quiet solid hairlines here; the full board keeps the spec.
+     The colour is now the shared `--quiet-line` token rather than this rule's
+     own color-mix, so the quests card resolves to exactly the same value. */
+  border-style: solid;
+  border-color: var(--quiet-line);
+}
+.lb-list-mini .lb-row[data-top] {
+  /* A top-3 row that does appear keeps its solid emphasis, minus the lift. */
+  border-width: 1.5px;
+  border-color: var(--lb-ink);
+}
+.lb-list-mini .lb-row.me {
+  /* An outline draws OUTSIDE the border-box, and this list scrolls — so at the
+     first or last visible row the scroll container shears the ring off. A
+     rank-14 viewer sits at the bottom of the window and lost it entirely
+     (owner, 21-08). In the mini strip the marker is therefore in-box: the row
+     already carries a border, so the ink colour on it is the marker. Padding
+     drops by the 0.5px the border gains, keeping every row on the 40px floor
+     the quest and activity lists share. The full leaderboard keeps its ring —
+     it does not scroll inside a capped box. */
+  outline: none;
+  border-color: var(--lb-ink);
+  /* The extra weight is an INSET ring, not a wider border. A 1.5px border
+     snaps to 1px at DPR 1 (border widths round to whole device pixels), so it
+     both lost the emphasis and knocked the row off 40px — measured 39px. An
+     inset shadow is unaffected by that rounding and costs no layout at all,
+     so every row stays exactly 40px whether or not it is the viewer's. */
+  box-shadow: inset 0 0 0 1px var(--lb-ink);
 }
 .lb-list-mini .lb-av {
   width: 26px;
   height: 26px;
 }
 .lb-list-mini .lb-name {
-  font-size: 13px;
+  /* The quests card's title spec: body sans, not the display face, and an
+     EXPLICIT text colour — `.dq-name` sets one and `.lb-name` only inherited,
+     which left the league names a step dimmer in dark mode. */
+  font-family: inherit;
+  font-size: var(--list-title-size);
+  font-weight: var(--list-title-weight);
+  color: var(--text);
 }
 .lb-list-mini .lb-rank {
-  font-size: 11px;
+  /* Matches .dq-progress-lbl — the secondary numeral in both cards. */
+  font-family: var(--font-mono, var(--font-m));
+  font-size: var(--list-meta-size);
 }
 .lb-list-mini .lb-xp {
-  font-size: 12px;
+  /* Matches .dq-reward: display face, amber. Scoped off .lb-xp--zero so a
+     zero weekly score stays muted (that rule is less specific than this one). */
+  font-family: var(--font-display, var(--font-d));
+  font-size: var(--list-xp-size);
+}
+.lb-list-mini .lb-xp:not(.lb-xp--zero) {
+  color: var(--xp);
 }
 
 /* Profile rail achievements: dashboard tokens in a 4-col grid, names on. */
@@ -4905,16 +5228,23 @@ a.path-step-card:hover .path-step-badge.skip {
   scrollbar-color: var(--border-default) transparent;
 }
 
-/* Individual quest row */
+/* Individual quest row.
+
+   min-height pins this to the league card's row height. `.lb-list-mini .lb-row`
+   is sized by its 26px avatar (26 + 6/6 padding + 1/1 border = 40px, border-box);
+   the quest chip is deliberately 24px, so without the floor the two rail cards
+   would sit 2px out of step and stop reading as one list system. Raising the
+   chip instead is not the fix — the owner wants it subtle (21-08). */
 .dq {
   display: grid;
-  grid-template-columns: 26px 1fr auto auto;
+  grid-template-columns: 24px 1fr auto auto;
   align-items: center;
   gap: 9px;
+  min-height: var(--list-row-h);
   padding: 6px 10px;
   border-radius: var(--r-md);
   background: var(--card-alt, rgba(255, 255, 255, 0.02));
-  border: 1px solid var(--border);
+  border: 1px solid var(--quiet-line);
   transition:
     border-color 0.15s,
     background 0.15s;
@@ -4939,20 +5269,6 @@ a.path-step-card:hover .path-step-badge.skip {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
-.dq-icon {
-  width: 26px;
-  height: 26px;
-  border-radius: var(--r-sm);
-  background: var(--primary-dim);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--primary);
-}
-.dq.done .dq-icon {
-  background: var(--xp-dim, rgba(230, 186, 60, 0.12));
-  color: var(--xp);
-}
 .dq-info {
   display: flex;
   flex-direction: column;
@@ -4960,8 +5276,8 @@ a.path-step-card:hover .path-step-badge.skip {
   min-width: 0;
 }
 .dq-name {
-  font-size: 13px;
-  font-weight: 700;
+  font-size: var(--list-title-size);
+  font-weight: var(--list-title-weight);
   color: var(--text);
   white-space: nowrap;
   overflow: hidden;
@@ -4979,20 +5295,15 @@ a.path-step-card:hover .path-step-badge.skip {
   align-items: center;
   gap: 3px;
   font-family: var(--font-display, var(--font-d));
-  font-size: 12px;
+  font-size: var(--list-xp-size);
   font-weight: 700;
   color: var(--xp);
   white-space: nowrap;
   font-variant-numeric: tabular-nums; /* F37 */
 }
-.dq-check {
-  color: var(--primary);
-  display: flex;
-  align-items: center;
-}
 .dq-progress-lbl {
   font-family: var(--font-mono, var(--font-m));
-  font-size: 10px;
+  font-size: var(--list-meta-size);
   color: var(--text-3);
   white-space: nowrap;
   font-variant-numeric: tabular-nums; /* F37 */
@@ -5293,15 +5604,26 @@ a.path-step-card:hover .path-step-badge.skip {
   gap: 12px;
 }
 /* ── Next-lesson plan: mini calendar tile ── */
+/* The saved plan's mini calendar — the last soft-shadow object on this card
+   (owner, 22-08). It takes the ink construction: ink outline, hard offset
+   shadow, no blur.
+
+   Its ink is the literal dark one on both grounds. The card-plate rule (flip
+   with the theme, as `.btn-ink--secondary` does) was the other candidate and
+   was measured first — but this widget sits in a row beside the primary
+   button, and a cream ring next to that button's dark one is the exact kind of
+   disagreement this pass exists to remove. On a dark card the outline reads as
+   a keyline gap rather than a bright ring, which is the same trade the avatar
+   rings already make. */
 .nlp-cal {
   flex-shrink: 0;
   min-width: 56px;
   max-width: 96px;
   border-radius: 10px;
   overflow: hidden;
-  border: 1px solid var(--border-strong);
+  border: 1.5px solid var(--ink-dark);
+  box-shadow: 0 1.5px 0 0 var(--ink-dark);
   text-align: center;
-  box-shadow: var(--shadow);
 }
 .nlp-cal-day {
   display: block;
@@ -5311,7 +5633,8 @@ a.path-step-card:hover .path-step-badge.skip {
   text-overflow: ellipsis;
   white-space: nowrap;
   background: var(--primary);
-  color: var(--primary-foreground, #fff);
+  /* The primary voice, from the same token the Button and pressed key use. */
+  color: var(--primary-fg);
   font-family: var(--font-mono, var(--font-m));
   font-size: 9px;
   font-weight: 700;
@@ -5364,58 +5687,35 @@ a.path-step-card:hover .path-step-title {
   border: 1.5px solid var(--border);
   white-space: nowrap;
 }
-/* ── Progress ring with count inside + label — pushed right ── */
+/* ── Lesson count over a micro segmented strip — pushed right ── */
 .cc-card .cc-progress {
   display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
   flex-shrink: 0;
 }
-.cc-progress .cc-ring-wrap {
-  position: relative;
-  width: 42px;
-  height: 42px;
-}
-.cc-ring {
-  width: 42px;
-  height: 42px;
-}
-.cc-ring-track {
-  fill: none;
-  stroke: var(--border-default);
-  stroke-width: 3;
-}
-.cc-ring-fill {
-  fill: none;
-  stroke: var(--primary);
-  stroke-width: 3;
-  stroke-linecap: round;
-  transition: stroke-dashoffset 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.cc-ring-count {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.cc-count {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
   font-family: var(--font-mono, var(--font-m));
   font-weight: 700;
   font-size: 11px;
   color: var(--text-3);
   letter-spacing: -0.3px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
-.cc-ring-done {
+.cc-count-done {
   color: var(--primary);
   font-weight: 800;
 }
-.cc-ring-label {
-  font-family: var(--font-mono, var(--font-m));
-  font-size: 10px;
+.cc-count-label {
+  font-size: 9px;
   font-weight: 600;
-  color: var(--text-3);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  margin-left: 4px;
 }
 
 /* ── Endowed-progress reason (LX-B12) — stated cause for a pre-credited tick,
@@ -5440,15 +5740,14 @@ a.path-step-card:hover .path-step-title {
   color: var(--primary);
 }
 
-/* Near-goal intensification: a thicker, glowing ring as a course approaches
+/* Near-goal intensification: a glowing strip as a course approaches
    completion. Emphasis is purely visual — the counts stay honest. */
-.cc-card--near-goal .cc-ring-fill {
-  stroke-width: 4;
+.cc-card--near-goal .seg-track {
   filter: drop-shadow(
-    0 0 3px color-mix(in srgb, var(--primary) 55%, transparent)
+    0 0 3px color-mix(in srgb, var(--xpbar-fill) 55%, transparent)
   );
 }
-.cc-card--near-goal .cc-ring-done {
+.cc-card--near-goal .cc-count-done {
   font-size: 12px;
 }
 
@@ -5568,6 +5867,8 @@ a.path-step-card:hover .path-step-title {
   padding: 2px 8px;
   border-radius: var(--r-full);
 }
+/* Keeps its card shell. It briefly went card-less on 22-08; the owner reversed
+   that after seeing it live. */
 .act-empty {
   display: flex;
   flex-direction: column;
@@ -5590,90 +5891,53 @@ a.path-step-card:hover .path-step-title {
 
 /* ── Feed container ── */
 .act-feed {
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 14px;
   position: relative;
   z-index: 1;
 }
 
-/* ── Row layout ── */
+/* ── Row layout ──
+   The feed reads as the dashboard's row-card system, not a table: same
+   1px border / --r-md / card-alt recipe and the same 40px floor as `.dq` and
+   `.lb-list-mini .lb-row`, so all three lists across the dashboard line up.
+   The zebra striping is gone — the cards separate the rows now. */
 .act-row {
   display: flex;
   align-items: center;
-  padding: 7px 22px;
-  gap: 10px;
-  transition: background 0.15s;
+  min-height: var(--list-row-h);
+  padding: 6px 10px;
+  gap: 9px;
+  border-radius: var(--r-md);
+  background: var(--card-alt, rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--quiet-line);
+  transition:
+    border-color 0.15s,
+    background 0.15s;
   text-decoration: none;
   color: inherit;
   position: relative;
   z-index: 1;
 }
-.act-row + .act-row {
-  border-top: 1px solid color-mix(in srgb, var(--border) 40%, transparent);
-}
-.act-row:nth-child(even) {
-  background: color-mix(in srgb, var(--subtle) 40%, transparent);
-}
 .act-row:hover {
-  background: var(--card-hover);
+  border-color: var(--border-default);
+}
+/* A row that deep-links to the explorer gets the `.dq-link` affordance. */
+a.act-row:hover {
+  border-color: var(--primary);
+}
+a.act-row:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 .act-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 9px;
   min-width: 0;
   flex: 1;
-}
-
-/* ── Icon — bordered rounded square with depth ── */
-.act-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: var(--r-md, 8px);
-  flex-shrink: 0;
-  border: 1.5px solid;
-}
-.act-icon.lesson {
-  background: var(--primary-dim);
-  border-color: color-mix(in srgb, var(--primary) 25%, transparent);
-  color: var(--primary);
-}
-.act-icon.challenge {
-  background: rgba(249, 115, 22, 0.08);
-  border-color: rgba(249, 115, 22, 0.2);
-  color: #f97316;
-}
-.act-icon.course_complete {
-  background: var(--primary-dim);
-  border-color: color-mix(in srgb, var(--primary) 25%, transparent);
-  color: var(--primary);
-}
-.act-icon.achievement {
-  background: rgba(245, 166, 35, 0.08);
-  border-color: rgba(245, 166, 35, 0.2);
-  color: var(--xp);
-}
-.act-icon.certificate {
-  background: rgba(153, 69, 255, 0.08);
-  border-color: rgba(153, 69, 255, 0.2);
-  color: #9945ff;
-}
-.act-icon.enrollment {
-  background: var(--primary-dim);
-  border-color: color-mix(in srgb, var(--primary) 25%, transparent);
-  color: var(--primary);
-}
-.act-icon.community {
-  background: rgba(56, 189, 248, 0.08);
-  border-color: rgba(56, 189, 248, 0.2);
-  color: #38bdf8;
-}
-.act-icon.xp_other {
-  background: rgba(245, 166, 35, 0.08);
-  border-color: rgba(245, 166, 35, 0.2);
-  color: var(--xp);
 }
 
 /* ── Text ── */
@@ -5726,7 +5990,7 @@ a.path-step-card:hover .path-step-title {
     font-size: 12px;
   }
   .act-row {
-    padding: 8px 14px;
+    padding: 6px 8px;
     flex-wrap: wrap;
   }
   .act-right {

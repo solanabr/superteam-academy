@@ -135,6 +135,53 @@ describe("NextLessonPlan (LX-A6)", () => {
       day: "wed",
     });
   });
+
+  // Owner, 22-08: a selected day wears the shared `.pressed-key` treatment —
+  // ink ring and hard lift from the ink family, fill and label from the primary
+  // Button's tokens. Unselected stays the quiet pill.
+  it("gives a selected day the pressed-key treatment and leaves the rest quiet", async () => {
+    renderPlan();
+    await screen.findByText(messages.dashboard.nextLessonPrompt);
+
+    const tue = screen.getByRole("button", { name: "Tue", pressed: true });
+    const wed = screen.getByRole("button", { name: "Wed", pressed: false });
+
+    // The shared pressed-key treatment: ink ring + hard lift from the ink
+    // family, fill and label from the primary Button's tokens (owner, 22-08 —
+    // superseding the earlier chip-green spec).
+    expect(tue.className).toContain("pressed-key");
+    expect(tue.className).toContain("daykey");
+
+    expect(wed.className).not.toContain("pressed-key");
+    expect(wed.getAttribute("data-cat")).toBeNull();
+    // Unselected pills joined the shared quiet hairline every bordered element
+    // on a card uses (owner, 22-08) — they no longer carry their own border
+    // token.
+    expect(wed.className).toContain("[border-color:var(--quiet-line)]");
+
+    // The two states must be visually distinguishable, not just aria-different.
+    expect(tue.className).not.toBe(wed.className);
+  });
+
+  it("moves the treatment with the selection", async () => {
+    renderPlan();
+    await screen.findByText(messages.dashboard.nextLessonPrompt);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Wed", pressed: false })
+    );
+
+    // Multi-select: both days now wear it (days[] has always been a set).
+    for (const name of ["Tue", "Wed"]) {
+      const btn = screen.getByRole("button", { name, pressed: true });
+      expect(btn.className).toContain("pressed-key daykey");
+    }
+
+    fireEvent.click(screen.getByRole("button", { name: "Tue", pressed: true }));
+    expect(
+      screen.getByRole("button", { name: "Tue", pressed: false }).className
+    ).not.toContain("pressed-key");
+  });
 });
 
 // #869 — the plan card is the consent-capture surface for the session-plan

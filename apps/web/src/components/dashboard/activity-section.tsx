@@ -2,18 +2,42 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import {
-  BookOpen,
-  CaretLeft,
-  CaretRight,
-  ChatCircle,
-  Lightning,
-  Medal,
-  Scroll,
-  GraduationCap,
-  ArrowSquareOut,
-} from "@phosphor-icons/react";
+import { CaretLeft, CaretRight, ArrowSquareOut } from "@phosphor-icons/react";
 import type { ActivityItem } from "@/lib/dashboard/types";
+import { GlyphChip } from "@/components/gamification/glyph-chip";
+import type { PatchCategory } from "@/components/gamification/patch-look";
+
+/* ---------------------------------------------------------------
+   ACTIVITY CHIP MAP — activity type → glyph + patch category.
+
+   Same 24px chip as the quest rows, so the dashboard has ONE icon object
+   rather than a per-card treatment. Colour therefore comes from the standard
+   `data-cat` fills; the two types that had bespoke tints moved to their
+   nearest standard fill — certificate from purple to `onchain` (the Solana
+   gradient, which is what a credential actually is), and community from sky
+   to `community` orange, which xp_other shares.
+--------------------------------------------------------------- */
+interface ActivityChip {
+  glyph: string;
+  cat: PatchCategory;
+}
+
+const ACTIVITY_CHIPS: Record<string, ActivityChip> = {
+  lesson: { glyph: "+", cat: "course" },
+  challenge: { glyph: "</>", cat: "craft" },
+  course_complete: { glyph: "★", cat: "course" },
+  achievement: { glyph: "◎", cat: "reward" },
+  certificate: { glyph: "⬡", cat: "onchain" },
+  enrollment: { glyph: "▸", cat: "start" },
+  community: { glyph: "◍", cat: "community" },
+  xp_other: { glyph: "⚡", cat: "community" },
+};
+
+const FALLBACK_CHIP = ACTIVITY_CHIPS.xp_other!;
+
+export function activityChip(type: string): ActivityChip {
+  return ACTIVITY_CHIPS[type] ?? FALLBACK_CHIP;
+}
 
 const SOLANA_CLUSTER = process.env.NEXT_PUBLIC_SOLANA_NETWORK ?? "devnet";
 function explorerTxUrl(sig: string): string {
@@ -31,6 +55,14 @@ interface ActivitySectionProps {
  * "Activity" dashboard section — paginated multi-source feed (lessons,
  * challenges, achievements, certificates, enrollments, community, XP) with
  * explorer deep links for on-chain items.
+ *
+ * Rework 21-08: the feed adopts the dashboard's row-card system (a bordered
+ * card per row, no zebra striping) and the same 24px GlyphChip the quest rows
+ * use. Two earlier passes — bare gutter marks, then a tint-washed tile — both
+ * read as a treatment invented for this one card; the owner wanted the icon
+ * object the rest of the dashboard already had. A fixed-size chip also answers
+ * the "first row looks smaller" report: the Phosphor boxes it replaces sized
+ * themselves around whichever glyph they held.
  */
 export function ActivitySection({ recentActivity }: ActivitySectionProps) {
   const t = useTranslations("dashboard");
@@ -104,28 +136,12 @@ export function ActivitySection({ recentActivity }: ActivitySectionProps) {
           <div className="act-panel-amb" aria-hidden="true" />
           <div className="act-feed">
             {activityPageItems.map((activity) => {
-              const iconMap = {
-                lesson: Lightning,
-                challenge: Lightning,
-                course_complete: GraduationCap,
-                achievement: Medal,
-                certificate: Scroll,
-                enrollment: BookOpen,
-                community: ChatCircle,
-                xp_other: Lightning,
-              };
-              const ActivityIcon = iconMap[activity.type] ?? Lightning;
+              const chip = activityChip(activity.type);
 
               const inner = (
                 <>
                   <div className="act-left">
-                    <div className={`act-icon ${activity.type}`}>
-                      <ActivityIcon
-                        size={16}
-                        weight="duotone"
-                        aria-hidden="true"
-                      />
-                    </div>
+                    <GlyphChip glyph={chip.glyph} cat={chip.cat} size={24} />
                     <span className="act-text">{activity.action}</span>
                   </div>
                   <div className="act-right">
@@ -196,12 +212,7 @@ export function ActivitySection({ recentActivity }: ActivitySectionProps) {
         </div>
       ) : (
         <div className="act-empty">
-          <Lightning
-            size={40}
-            weight="duotone"
-            className="text-text-3"
-            aria-hidden="true"
-          />
+          <GlyphChip glyph="⚡" size={48} empty />
           <p className="text-text-3">{t("noRecentActivity")}</p>
         </div>
       )}
