@@ -639,6 +639,40 @@
     cursor: default;
   }
 
+  /* ── The ink palette ───────────────────────────────────────────
+     One source for the values the whole ink construction shares: the chip and
+     patch fills, and (since the 22-08 button pass, decision A) the Button
+     system. These are deliberately LITERALS, not theme tokens — a patch's
+     green is the same green on both grounds, which is what makes the family
+     read as one system. Only `--ink-line` flips, and only the secondary
+     button uses it. */
+  :root {
+    --ink-green: #2ecc8e;
+    --ink-orange: #ea580c;
+    --ink-dark: #19231b;
+    --ink-cream: #fafaf7;
+    --ink-on-orange: #fff4ec;
+    --ink-line: #19231b;
+    /* The primary Button's fill is `--primary` and its label is this. Both
+       are consumed by `.pressed-key` too, so a selected control and a primary
+       button can never disagree about the primary voice. */
+    --primary-fg: #fff;
+    /* The quiet hairline every bordered element on a card shares — quest rows,
+       league rows, activity rows, unselected day pills. One token so those
+       surfaces cannot drift apart again (this was the third parity fix between
+       the quests and league cards).
+
+       It is declared once PER THEME rather than once overall: a custom property
+       whose value references another custom property is substituted at its
+       declaration scope, so a lone :root definition would bake in the light
+       ink and keep rendering the light hairline on a dark page. */
+    --quiet-line: color-mix(in srgb, var(--ink-line) 14%, transparent);
+  }
+  [data-theme="dark"] {
+    --ink-line: #fafaf7;
+    --quiet-line: color-mix(in srgb, var(--ink-line) 14%, transparent);
+  }
+
   /* ── Achievement patch (spec: achievement-patches v1) ────────────
      Replaces the metallic octagon medal. Flat fill, ink outline, dashed
      stitch, hard offset shadow — the construction the buttons already use.
@@ -773,7 +807,7 @@
   .patch[data-cat="course"],
   .chip[data-cat="course"],
   .patch3d[data-cat="course"] {
-    --fill: #2ecc8e;
+    --fill: var(--ink-green);
     --shade: #0a7055;
   }
   .patch[data-cat="craft"],
@@ -787,7 +821,7 @@
   .patch[data-cat="community"],
   .chip[data-cat="community"],
   .patch3d[data-cat="community"] {
-    --fill: #ea580c;
+    --fill: var(--ink-orange);
     --shade: #9a3412;
     --patch-glyph: #fafaf7;
     --stitch: rgba(250, 250, 247, 0.55);
@@ -844,8 +878,15 @@
   }
 
   /* dark theme — outline and shadow flip to cream, fills unchanged */
-  [data-theme="dark"] .patch,
-  [data-theme="dark"] .chip {
+  /* The PATCH flips its ink to cream on a dark ground — David's original
+     treatment, unchanged.
+
+     The CHIP deliberately no longer does (owner, 22-08). A chip is a small
+     object with an edge, like a button or an avatar, and those all keep the
+     literal dark ink on both grounds; the chip was the last thing still
+     flipping, which is why a selected day key showed a light ring in dark mode
+     while the Save button beside it showed a dark one. */
+  [data-theme="dark"] .patch {
     --patch-ink: #fafaf7;
     box-shadow: 0 var(--lift) 0 0 rgba(250, 250, 247, 0.92);
   }
@@ -920,25 +961,139 @@
   .chip[data-round] {
     --chip-radius: 999px;
   }
-  /* A day key in the "Plan your next lesson" card — the chip construction on a
-     wider, text-bearing button (owner, 21-08). It carries the real `.chip`
-     class, so fill, ink, border and hard shadow all come from the chip rules
-     above and cannot drift; only the box changes from a square to a full-width
-     key. Pair it with data-size="24" for the 1.5px border/lift step.
+  /* ── Pressed key: the shared SELECTED state for selection controls ──
+     Day keys in the plan card, community filter pills, and anything else that
+     is a segmented choice rather than an action. Construction comes from the
+     ink family (literal-ink ring, small hard lift, pressed travel); COLOUR
+     comes from the primary Button's own tokens (owner, 22-08, superseding the
+     earlier chip-green spec) so a selected control and a primary button always
+     read as the same voice in both themes.
 
-     min-height matches the unselected day pill exactly (10px text at Tailwind's
-     normal line-height + 6px padding + border), so toggling a day never nudges
-     the row. */
+     The silhouette is left to the consumer: day keys stay squared, pills stay
+     rounded-full. Only the treatment is shared. */
+  .pressed-key {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary);
+    color: var(--primary-fg);
+    border: 1.5px solid var(--ink-dark);
+    box-shadow: 0 1.5px 0 0 var(--ink-dark);
+    font-family: var(--font-mono), "JetBrains Mono", monospace;
+    font-weight: 700;
+    text-transform: uppercase;
+    user-select: none;
+  }
+  .pressed-key:active {
+    transform: translateY(1.5px);
+    box-shadow: 0 0 0 0 var(--ink-dark);
+  }
+
+  /* A day key in the "Plan your next lesson" card — a pressed key shaped like
+     the quiet pill beside it. min-height matches that pill exactly (10px text
+     at Tailwind's normal line-height + 6px padding + border) so toggling a day
+     never nudges the row. */
   .daykey {
     width: 100%;
-    height: auto;
     min-height: 26px;
     padding: 0 4px;
     border-radius: var(--r-md);
     font-size: 10px;
     line-height: 1.2;
     letter-spacing: 1px;
-    text-transform: uppercase;
+  }
+
+  /* ── Avatars wear the ink ring (owner, 22-08) ──────────────────
+     A general rule, not a per-surface fix: the shared `Avatar` primitive and
+     the leaderboard's `.lb-av` both carry this, so every identity chip in the
+     app is ringed at once.
+
+     An OUTSET shadow, deliberately not the alternatives: a border would eat
+     inward and crop the image (avatars fill their box), and an inset shadow
+     paints beneath the child <img>, so image avatars would show no ring at
+     all. It costs no layout, so no row height moves.
+
+     ONE width at every size. 1.5px was checked from the 26px league row up to
+     the 40px header pill and reads correctly across that range; a size-scaled
+     ring would need a rule per surface for no visible gain.
+
+     The ink is the LITERAL dark glyph ink on both grounds (owner, 22-08),
+     matching the chips and the filled buttons rather than the flipping token.
+     On a dark card that reads as a keyline gap rather than a bright ring —
+     which is the intent: an avatar is an object with an edge, not a
+     highlighted one. The `.me` row marker deliberately does the opposite and
+     keeps the flipping ink, because it IS a highlight. */
+  .avatar-ink {
+    box-shadow: 0 0 0 1.5px var(--ink-dark);
+  }
+
+  /* ── The ink Button (owner decision A, 22-08) ──────────────────
+     The Button primitive adopts the same construction as the chips: flat fill,
+     ink outline, hard offset shadow, and a pressed-key active state. The
+     variant/size API is unchanged — these classes are what the cva emits.
+
+     Cascade note: this lives in CSS rather than arbitrary Tailwind utilities
+     because the size modifier has to override the variant's shadow, and two
+     arbitrary `shadow-[...]` utilities resolve by stylesheet order, not by the
+     order they appear in the class string. */
+  .btn-ink {
+    --btn-line: var(--ink-dark);
+    border: 2px solid var(--btn-line);
+    box-shadow: 0 3px 0 0 var(--btn-line);
+  }
+  .btn-ink:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 0 var(--btn-line);
+  }
+  /* Small buttons sit closer to the page. */
+  .btn-ink--sm {
+    box-shadow: 0 2px 0 0 var(--btn-line);
+  }
+  .btn-ink--sm:active:not(:disabled) {
+    box-shadow: 0 1px 0 0 var(--btn-line);
+  }
+
+  /* Owner reversal 22-08 (option B, superseding A): primary keeps the app's
+     existing colour voice — the `--primary` fill and white label — and takes
+     ONLY the construction from the ink system: the outline, the hard shadow
+     and the pressed state. Its ink is still the dark literal on both grounds,
+     like every other filled variant. */
+  .btn-ink--primary {
+    background: var(--primary);
+    color: var(--primary-fg);
+  }
+  .btn-ink--primary:hover:not(:disabled) {
+    background: var(--primary-hover);
+  }
+
+  .btn-ink--danger {
+    background: var(--ink-orange);
+    color: var(--ink-on-orange);
+  }
+  .btn-ink--danger:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--ink-orange) 92%, #000);
+  }
+
+  /* The one variant whose ink follows the theme: on a dark page a dark outline
+     around a dark card is invisible, so it flips to cream. The filled variants
+     keep dark ink on both grounds — their fill supplies the contrast. */
+  .btn-ink--secondary {
+    --btn-line: var(--ink-line);
+    background: var(--card);
+    color: var(--text);
+  }
+  .btn-ink--secondary:hover:not(:disabled) {
+    background: var(--card-hover);
+  }
+
+  /* Disabled is a flat, shadowless plate — never a faded copy of the live
+     button, and it must not depress when clicked. */
+  .btn-ink:disabled {
+    background: var(--card-alt);
+    color: var(--text-3);
+    border-color: var(--border-strong);
+    box-shadow: none;
+    transform: none;
   }
 
   /* "</>" is three mono advances inside a 40px box — tighten so it never
@@ -3618,13 +3773,12 @@ a.path-step-card:hover .path-step-badge.skip {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  /* Chip-family ink ring, echoing the podium avatar's own ink border.
-     An OUTSET box-shadow, deliberately not the alternatives: a border would eat
-     1.5px inward and crop the image avatars (they fill the box via h-full),
-     an INSET shadow paints under the child <img> so image avatars would show
-     no ring at all, and an outline gets sheared off by the mini strip's scroll
-     container. A shadow costs no layout, so rows stay on the 40px floor. */
-  box-shadow: 0 0 0 1.5px var(--lb-ink);
+  /* The app-wide avatar ink ring — the same declaration as `.avatar-ink`.
+     Deliberately NOT `--lb-ink`: that is the board's flipping ink, and an
+     avatar's ring is the literal dark ink on both grounds. The `.me` row
+     marker next to it still uses `--lb-ink`, because that one is a highlight
+     and has to stay visible on the dark card. */
+  box-shadow: 0 0 0 1.5px var(--ink-dark);
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -4582,9 +4736,11 @@ a.path-step-card:hover .path-step-badge.skip {
   /* The rank-4+ dashed outline needs the solid top-3 podium for contrast
      (40cd9caf spec). This strip shows only the you-±3 neighbourhood — usually
      all rank 4+ — so every row went dashed and the card read as broken
-     (owner, 21-08). Quiet solid hairlines here; the full board keeps the spec. */
+     (owner, 21-08). Quiet solid hairlines here; the full board keeps the spec.
+     The colour is now the shared `--quiet-line` token rather than this rule's
+     own color-mix, so the quests card resolves to exactly the same value. */
   border-style: solid;
-  border-color: color-mix(in srgb, var(--lb-ink) 14%, transparent);
+  border-color: var(--quiet-line);
 }
 .lb-list-mini .lb-row[data-top] {
   /* A top-3 row that does appear keeps its solid emphasis, minus the lift. */
@@ -5046,7 +5202,7 @@ a.path-step-card:hover .path-step-badge.skip {
   padding: 6px 10px;
   border-radius: var(--r-md);
   background: var(--card-alt, rgba(255, 255, 255, 0.02));
-  border: 1px solid var(--border);
+  border: 1px solid var(--quiet-line);
   transition:
     border-color 0.15s,
     background 0.15s;
@@ -5702,7 +5858,7 @@ a.path-step-card:hover .path-step-title {
   gap: 9px;
   border-radius: var(--r-md);
   background: var(--card-alt, rgba(255, 255, 255, 0.02));
-  border: 1px solid var(--border);
+  border: 1px solid var(--quiet-line);
   transition:
     border-color 0.15s,
     background 0.15s;
