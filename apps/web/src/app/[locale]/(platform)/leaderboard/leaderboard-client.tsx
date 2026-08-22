@@ -6,15 +6,16 @@ import Link from "next/link";
 import Image from "next/image";
 import { Trophy, UsersThree, Info, Gift } from "@phosphor-icons/react";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import type { LeaderboardEntry, CohortLeague } from "@superteam-lms/types";
+import type {
+  LeaderboardEntry,
+  CohortLeague,
+  CohortLeaderboardEntry,
+} from "@superteam-lms/types";
 import { GlyphChip } from "@/components/gamification/glyph-chip";
 import { LevelBadge } from "@/components/gamification/level-badge";
 import { CohortRow } from "@/components/leaderboard/cohort-row";
-import {
-  ORDINAL,
-  RankMarker,
-  topRankAttr,
-} from "@/components/leaderboard/rank-marker";
+import { RankMarker, topRankAttr } from "@/components/leaderboard/rank-marker";
+import { PodiumCard, splitPodium } from "@/components/leaderboard/podium-card";
 import { ReferralBoard } from "@/components/leaderboard/referral-board";
 import { cn } from "@/lib/utils";
 
@@ -33,8 +34,9 @@ function tierName(t: (k: string) => string, tier: number): string {
   return t(`leagueTier${clamped}`);
 }
 
-/* ── Podium card for ranks 1-3 (global board) ── */
-function PodiumCard({
+/* ── Podium card for ranks 1-3 (global board) — a thin adapter over the
+      shared card, which the League board uses too. ── */
+function GlobalPodiumCard({
   entry,
   isCurrentUser,
   locale,
@@ -43,64 +45,17 @@ function PodiumCard({
   isCurrentUser: boolean;
   locale: string;
 }) {
-  const t = useTranslations("gamification");
-  const initials = entry.username.slice(0, 2).toUpperCase();
-  const rank = entry.rank;
-
   return (
-    <Link
+    <PodiumCard
+      rank={entry.rank}
+      name={entry.username}
+      initials={entry.username.slice(0, 2).toUpperCase()}
+      avatarUrl={entry.avatarUrl}
+      value={`${entry.totalXp.toLocaleString()} XP`}
+      isYou={isCurrentUser}
       href={`/${locale}/profile/${encodeURIComponent(entry.username)}`}
-      className="block no-underline"
-    >
-      <div
-        className={cn(
-          "podium-card",
-          rank === 1 && "gold",
-          rank === 2 && "silver",
-          rank === 3 && "bronze",
-          isCurrentUser && "me"
-        )}
-      >
-        {/* Notched rank ribbon, locked to the card's top-left corner. Gold,
-            silver and bronze mean rank and nothing else. */}
-        <div
-          className="rank-tab"
-          data-rank={rank}
-          aria-label={t("rankLabel", { rank })}
-        >
-          <span className="rank-tab-num">{rank}</span>
-          <span className="rank-tab-ord" aria-hidden="true">
-            {ORDINAL[rank]}
-          </span>
-        </div>
-
-        <div className={cn("podium-avatar", rank === 1 && "gold")}>
-          {entry.avatarUrl ? (
-            <Image
-              src={entry.avatarUrl}
-              alt=""
-              width={64}
-              height={64}
-              unoptimized
-              className="h-full w-full rounded-full object-cover"
-            />
-          ) : (
-            <span>{initials}</span>
-          )}
-        </div>
-
-        <div className="podium-name">
-          <span className="truncate">{entry.username}</span>
-          {isCurrentUser && <span className="lb-me-tag">{t("you")}</span>}
-        </div>
-
-        <div className="podium-xp">{entry.totalXp.toLocaleString()} XP</div>
-
-        {/* Level = floor(sqrt(XP/100)) legitimately yields 0 early on — a
-            "0" coin reads as broken, so the badge waits for level 1. */}
-        {entry.level >= 1 && <LevelBadge level={entry.level} size={30} />}
-      </div>
-    </Link>
+      level={entry.level}
+    />
   );
 }
 
@@ -168,8 +123,53 @@ function RankedRow({
   );
 }
 
+/* ── Podium card for a cohort's top 3 — the second adapter over the shared
+      card. A cohort shows the WEEKLY score and can carry anonymized members,
+      so it maps those rather than reusing the global adapter. ── */
+function CohortPodiumCard({
+  entry,
+  locale,
+}: {
+  entry: CohortLeaderboardEntry;
+  locale: string;
+}) {
+  const t = useTranslations("gamification");
+
+  const anonymized = !entry.username;
+
+  return (
+    <PodiumCard
+      rank={entry.rank}
+      name={entry.username ?? t("anonymousLearner")}
+      initials={
+        entry.username ? entry.username.slice(0, 2).toUpperCase() : null
+      }
+      avatarUrl={entry.avatarUrl}
+      // The '+' frames it as points earned this period, matching the rows
+      // below (#789); the aria-label carries "this week".
+      value={`+${entry.score.toLocaleString()} XP`}
+      valueAriaLabel={t("leagueScoreAria", {
+        score: entry.score.toLocaleString(),
+      })}
+      isYou={entry.isYou}
+      href={
+        anonymized
+          ? null
+          : `/${locale}/profile/${encodeURIComponent(entry.username!)}`
+      }
+      anonymized={anonymized}
+    />
+  );
+}
+
 /* ── League (cohort) board — the primary view ── */
-function LeagueBoard({ cohort }: { cohort: CohortLeague | null }) {
+function LeagueBoard({
+  cohort,
+  locale,
+}: {
+  cohort: CohortLeague | null;
+  locale: string;
+}) {
   const t = useTranslations("gamification");
 
   if (!cohort) {
@@ -189,6 +189,8 @@ function LeagueBoard({ cohort }: { cohort: CohortLeague | null }) {
       </div>
     );
   }
+
+  const { podiumOrdered, rest, compact } = splitPodium(cohort.entries);
 
   return (
     <>
@@ -216,8 +218,18 @@ function LeagueBoard({ cohort }: { cohort: CohortLeague | null }) {
         </div>
       </div>
 
+      {/* The League tab gets the same podium as the Global board (owner,
+          22-08). Without it the whole cohort rendered as dashed rank-4+ rows,
+          including its rank 1 — the dashed treatment only reads correctly
+          against a solid podium. */}
+      <div className={cn("podium-grid", compact && "podium-compact")}>
+        {podiumOrdered.map((entry) => (
+          <CohortPodiumCard key={entry.rank} entry={entry} locale={locale} />
+        ))}
+      </div>
+
       <div className="lb-list">
-        {cohort.entries.map((entry, i) => (
+        {rest.map((entry, i) => (
           <CohortRow
             key={entry.rank}
             entry={entry}
@@ -280,12 +292,7 @@ function GlobalBoard({
   const t = useTranslations("gamification");
   const tCommon = useTranslations("common");
 
-  const podiumEntries = entries.slice(0, 3);
-  const restEntries = entries.slice(3);
-  const podiumOrdered: LeaderboardEntry[] =
-    podiumEntries.length >= 3
-      ? [podiumEntries[1]!, podiumEntries[0]!, podiumEntries[2]!]
-      : podiumEntries;
+  const { podiumOrdered, rest: restEntries, compact } = splitPodium(entries);
 
   const TIMEFRAMES: Timeframe[] = ["weekly", "monthly", "alltime"];
 
@@ -315,14 +322,9 @@ function GlobalBoard({
         </div>
       ) : (
         <>
-          <div
-            className={cn(
-              "podium-grid",
-              podiumEntries.length < 3 && "podium-compact"
-            )}
-          >
+          <div className={cn("podium-grid", compact && "podium-compact")}>
             {podiumOrdered.map((entry) => (
-              <PodiumCard
+              <GlobalPodiumCard
                 key={entry.userId}
                 entry={entry}
                 isCurrentUser={entry.userId === currentUserId}
@@ -440,7 +442,7 @@ export function LeaderboardClient({
       </div>
 
       {board === "league" ? (
-        <LeagueBoard cohort={initialCohort} />
+        <LeagueBoard cohort={initialCohort} locale={locale} />
       ) : board === "global" ? (
         <GlobalBoard
           entries={globalEntries}
