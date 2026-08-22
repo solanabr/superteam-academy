@@ -172,10 +172,11 @@ export function BuildWidget({
             type="button"
             onClick={run}
             disabled={state === "running"}
-            className={`duration-[120ms] inline-flex cursor-pointer items-center gap-2 rounded-md border-none px-4 py-2 font-display text-sm font-extrabold text-white transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:translate-y-[2px] disabled:pointer-events-none ${
-              state === "passed"
-                ? "bg-success shadow-[0_4px_0_0_var(--success-dark)]"
-                : "bg-primary shadow-[0_4px_0_0_var(--primary-dark)] hover:bg-primary-hover"
+            /* Hand-rolled copy of the old push button; converted to the ink
+               construction with the rest of the system (22-08). The passed
+               state keeps its own success fill over the same construction. */
+            className={`btn-ink duration-[120ms] inline-flex cursor-pointer items-center gap-2 rounded-md px-4 py-2 font-display text-sm font-extrabold transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:pointer-events-none ${
+              state === "passed" ? "bg-success text-white" : "btn-ink--primary"
             }`}
           >
             {state === "running" && (

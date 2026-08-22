@@ -10,8 +10,11 @@ const Avatar = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AvatarPrimitive.Root
     ref={ref}
+    /* `avatar-ink` is the app-wide rule that every identity chip wears the ink
+       ring (owner, 22-08) — see the `.avatar-ink` note in globals.css for why
+       it is an outset shadow rather than a border. */
     className={cn(
-      "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full",
+      "avatar-ink relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full",
       className
     )}
     {...props}

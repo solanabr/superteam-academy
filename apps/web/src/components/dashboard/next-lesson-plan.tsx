@@ -245,17 +245,15 @@ export function NextLessonPlan({ userId }: NextLessonPlanProps) {
                           type="button"
                           aria-pressed={on}
                           onClick={() => toggleDay(day)}
-                          // A selected day wears the chip construction itself
-                          // (course fill, ink border, hard offset shadow) via
-                          // the real `.chip` class — no restated literals, so
-                          // it can never drift from the chips elsewhere.
-                          // Unselected stays the quiet pill it already was.
-                          data-cat={on ? "course" : undefined}
-                          data-size={on ? 24 : undefined}
+                          // A selected day wears the shared `.pressed-key`
+                          // treatment: ink ring and hard lift from the ink
+                          // family, fill and label from the primary Button's
+                          // own tokens, so the two always read as the same
+                          // voice. Unselected stays the quiet pill it was.
                           className={
                             on
-                              ? "chip daykey focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                              : "hover:border-primary/50 rounded-md border border-border px-2 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[1px] text-text-3 [background:var(--input)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                              ? "pressed-key daykey focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                              : "hover:border-primary/50 rounded-md border px-2 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[1px] text-text-3 [background:var(--input)] [border-color:var(--quiet-line)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                           }
                         >
                           {t(weekdayKey(day)).slice(0, 3)}
