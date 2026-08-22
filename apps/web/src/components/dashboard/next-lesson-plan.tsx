@@ -245,9 +245,16 @@ export function NextLessonPlan({ userId }: NextLessonPlanProps) {
                           type="button"
                           aria-pressed={on}
                           onClick={() => toggleDay(day)}
+                          // A selected day wears the chip construction itself
+                          // (course fill, ink border, hard offset shadow) via
+                          // the real `.chip` class — no restated literals, so
+                          // it can never drift from the chips elsewhere.
+                          // Unselected stays the quiet pill it already was.
+                          data-cat={on ? "course" : undefined}
+                          data-size={on ? 24 : undefined}
                           className={
                             on
-                              ? "rounded-md border border-primary bg-primary px-2 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[1px] text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                              ? "chip daykey focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                               : "hover:border-primary/50 rounded-md border border-border px-2 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[1px] text-text-3 [background:var(--input)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                           }
                         >

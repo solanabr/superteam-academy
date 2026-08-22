@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Transaction } from "@solana/web3.js";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { BookOpen, X, Sparkle, ArrowUp } from "@phosphor-icons/react";
+import { X, Sparkle, ArrowUp } from "@phosphor-icons/react";
 import { buildCloseEnrollmentInstruction } from "@/lib/solana/instructions";
 import {
   parseProgramError,
@@ -15,6 +15,7 @@ import {
 import type { CurrentCourse } from "@/lib/dashboard/types";
 import { deriveEndowedProgress } from "@/lib/courses/endowed-progress";
 import { CourseCompletionMint } from "@/components/certificates/course-completion-mint";
+import { GlyphChip } from "@/components/gamification/glyph-chip";
 import { ProgressBar } from "@/components/course/progress-bar";
 import { Button } from "@/components/ui/button";
 import { dispatchToast } from "@/components/ui/toast-container";
@@ -208,12 +209,7 @@ export function CurrentCoursesSection({
         </div>
       ) : (
         <div className="cc-empty">
-          <BookOpen
-            size={40}
-            weight="duotone"
-            className="text-text-3"
-            aria-hidden="true"
-          />
+          <GlyphChip glyph="▸" size={48} empty />
           <p className="text-text-3">{t("noCourses")}</p>
           <Button asChild variant="push" size="sm" className="mt-2">
             <Link href={`/${locale}/courses`}>{t("browseCourses")}</Link>

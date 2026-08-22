@@ -175,7 +175,7 @@ function LeagueBoard({ cohort }: { cohort: CohortLeague | null }) {
   if (!cohort) {
     return (
       <div className="lb-empty">
-        <UsersThree size={48} weight="duotone" aria-hidden="true" />
+        <GlyphChip glyph="◍" size={48} empty />
         <p>{t("leagueSignIn")}</p>
       </div>
     );
@@ -184,7 +184,7 @@ function LeagueBoard({ cohort }: { cohort: CohortLeague | null }) {
   if (cohort.entries.length === 0) {
     return (
       <div className="lb-empty">
-        <UsersThree size={48} weight="duotone" aria-hidden="true" />
+        <GlyphChip glyph="◍" size={48} empty />
         <p>{t("noEntries")}</p>
       </div>
     );
@@ -310,7 +310,7 @@ function GlobalBoard({
         </div>
       ) : entries.length === 0 ? (
         <div className="lb-empty">
-          <Trophy size={48} weight="duotone" aria-hidden="true" />
+          <GlyphChip glyph="★" size={48} empty />
           <p>{t("noEntries")}</p>
         </div>
       ) : (

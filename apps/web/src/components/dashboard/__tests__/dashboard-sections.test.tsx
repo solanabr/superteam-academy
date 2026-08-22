@@ -62,4 +62,35 @@ describe("ActivitySection", () => {
     renderWithIntl(<ActivitySection recentActivity={[]} />);
     expect(screen.getByText("No recent activity")).toBeInTheDocument();
   });
+
+  // Empty states use the LOCKED treatment (owner, 21-08): "nothing here yet" is
+  // the same statement a not-yet-earned patch makes, so it borrows that
+  // construction rather than a duotone illustration.
+  it("gives the empty state a dashed empty-variant chip, not a Phosphor icon", () => {
+    const { container } = renderWithIntl(
+      <ActivitySection recentActivity={[]} />
+    );
+
+    const chip = container.querySelector(".act-empty .chip");
+    expect(chip).not.toBeNull();
+    expect(chip!.hasAttribute("data-empty")).toBe(true);
+    // An empty state has no category to colour.
+    expect(chip!.hasAttribute("data-cat")).toBe(false);
+    expect(chip!.getAttribute("data-size")).toBe("48");
+    // Decorative — the copy carries the meaning.
+    expect(chip!.getAttribute("aria-hidden")).toBe("true");
+    expect(
+      chip!.querySelector("[data-glyph]")!.getAttribute("data-glyph")
+    ).toBe("⚡");
+  });
+
+  it("keeps a populated feed's chips coloured, unlike the empty one", () => {
+    const { container } = renderWithIntl(
+      <ActivitySection recentActivity={items} />
+    );
+
+    const chip = container.querySelector(".act-row .chip");
+    expect(chip!.hasAttribute("data-empty")).toBe(false);
+    expect(chip!.hasAttribute("data-cat")).toBe(true);
+  });
 });
