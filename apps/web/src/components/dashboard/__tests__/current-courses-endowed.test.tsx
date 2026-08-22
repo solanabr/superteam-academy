@@ -149,3 +149,33 @@ describe("CurrentCoursesSection — endowed progress (LX-B12)", () => {
     ).toBeNull();
   });
 });
+
+// Owner, 22-08: the empty state lost its "Browse Courses" CTA — the dashed chip
+// and the copy carry it alone. (The i18n key stays: continue-card and
+// review-session are still consumers.)
+describe("CurrentCoursesSection — empty state", () => {
+  function renderEmpty() {
+    return renderWithIntl(
+      <CurrentCoursesSection currentCourses={[]} userId="user-1" />
+    );
+  }
+
+  it("shows the dashed chip and the copy", () => {
+    const { container } = renderEmpty();
+
+    expect(screen.getByText(messages.dashboard.noCourses)).toBeInTheDocument();
+    const chip = container.querySelector(".cc-empty .chip");
+    expect(chip).not.toBeNull();
+    expect(chip!.hasAttribute("data-empty")).toBe(true);
+  });
+
+  it("renders NO call to action", () => {
+    renderEmpty();
+
+    expect(
+      screen.queryByRole("link", { name: messages.dashboard.browseCourses })
+    ).toBeNull();
+    expect(screen.queryByRole("button")).toBeNull();
+    expect(screen.queryByRole("link")).toBeNull();
+  });
+});

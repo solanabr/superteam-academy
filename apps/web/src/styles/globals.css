@@ -3618,6 +3618,13 @@ a.path-step-card:hover .path-step-badge.skip {
   width: 36px;
   height: 36px;
   border-radius: 50%;
+  /* Chip-family ink ring, echoing the podium avatar's own ink border.
+     An OUTSET box-shadow, deliberately not the alternatives: a border would eat
+     1.5px inward and crop the image avatars (they fill the box via h-full),
+     an INSET shadow paints under the child <img> so image avatars would show
+     no ring at all, and an outline gets sheared off by the mini strip's scroll
+     container. A shadow costs no layout, so rows stay on the 40px floor. */
+  box-shadow: 0 0 0 1.5px var(--lb-ink);
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -4527,10 +4534,26 @@ a.path-step-card:hover .path-step-badge.skip {
   color: var(--text-3);
 }
 
-/* Daily quests list: ~5 rows visible, scroll beyond — the same cap idiom as
-   the league card (owner, 04-08). */
+/* ── One list system (owner, 22-08) ──
+   The Daily Quests card is the REFERENCE: the league strip derives its metrics
+   and type from these tokens rather than restating numbers, so the two rail
+   cards cannot drift apart again. Both cards show exactly five rows. */
+:root {
+  --list-row-h: 40px;
+  --list-row-gap: 5px;
+  --list-title-size: 13px;
+  --list-title-weight: 700;
+  --list-xp-size: 12px;
+  --list-meta-size: 10px;
+  /* Five rows and the four gaps between them — nothing else. */
+  --list-cap-5: calc(5 * var(--list-row-h) + 4 * var(--list-row-gap));
+}
+
 .dq-list-capped {
-  max-height: 224px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--list-row-gap);
+  max-height: var(--list-cap-5);
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--border-default) transparent;
@@ -4540,13 +4563,17 @@ a.path-step-card:hover .path-step-badge.skip {
    (.dq: 6px 10px pad, 9px gap, 1px border, 10px list gap) so the two rail
    cards read as one list system. ~6 rows visible, scroll beyond. */
 .lb-list-mini {
-  max-height: 264px;
+  /* Exactly five rows, from the same tokens the quests card uses — if the row
+     floor moves, both caps move with it. The you-±3 window still holds up to
+     seven rows behind the scroll. */
+  max-height: var(--list-cap-5);
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--border-default) transparent;
-  gap: 5px;
+  gap: var(--list-row-gap);
 }
 .lb-list-mini .lb-row {
+  min-height: var(--list-row-h);
   padding: 6px 10px;
   gap: 9px;
   border-width: 1px;
@@ -4587,13 +4614,27 @@ a.path-step-card:hover .path-step-badge.skip {
   height: 26px;
 }
 .lb-list-mini .lb-name {
-  font-size: 13px;
+  /* The quests card's title spec: body sans, not the display face, and an
+     EXPLICIT text colour — `.dq-name` sets one and `.lb-name` only inherited,
+     which left the league names a step dimmer in dark mode. */
+  font-family: inherit;
+  font-size: var(--list-title-size);
+  font-weight: var(--list-title-weight);
+  color: var(--text);
 }
 .lb-list-mini .lb-rank {
-  font-size: 11px;
+  /* Matches .dq-progress-lbl — the secondary numeral in both cards. */
+  font-family: var(--font-mono, var(--font-m));
+  font-size: var(--list-meta-size);
 }
 .lb-list-mini .lb-xp {
-  font-size: 12px;
+  /* Matches .dq-reward: display face, amber. Scoped off .lb-xp--zero so a
+     zero weekly score stays muted (that rule is less specific than this one). */
+  font-family: var(--font-display, var(--font-d));
+  font-size: var(--list-xp-size);
+}
+.lb-list-mini .lb-xp:not(.lb-xp--zero) {
+  color: var(--xp);
 }
 
 /* Profile rail achievements: dashboard tokens in a 4-col grid, names on. */
@@ -5001,7 +5042,7 @@ a.path-step-card:hover .path-step-badge.skip {
   grid-template-columns: 24px 1fr auto auto;
   align-items: center;
   gap: 9px;
-  min-height: 40px;
+  min-height: var(--list-row-h);
   padding: 6px 10px;
   border-radius: var(--r-md);
   background: var(--card-alt, rgba(255, 255, 255, 0.02));
@@ -5037,8 +5078,8 @@ a.path-step-card:hover .path-step-badge.skip {
   min-width: 0;
 }
 .dq-name {
-  font-size: 13px;
-  font-weight: 700;
+  font-size: var(--list-title-size);
+  font-weight: var(--list-title-weight);
   color: var(--text);
   white-space: nowrap;
   overflow: hidden;
@@ -5056,7 +5097,7 @@ a.path-step-card:hover .path-step-badge.skip {
   align-items: center;
   gap: 3px;
   font-family: var(--font-display, var(--font-d));
-  font-size: 12px;
+  font-size: var(--list-xp-size);
   font-weight: 700;
   color: var(--xp);
   white-space: nowrap;
@@ -5064,7 +5105,7 @@ a.path-step-card:hover .path-step-badge.skip {
 }
 .dq-progress-lbl {
   font-family: var(--font-mono, var(--font-m));
-  font-size: 10px;
+  font-size: var(--list-meta-size);
   color: var(--text-3);
   white-space: nowrap;
   font-variant-numeric: tabular-nums; /* F37 */
@@ -5616,6 +5657,8 @@ a.path-step-card:hover .path-step-title {
   padding: 2px 8px;
   border-radius: var(--r-full);
 }
+/* Keeps its card shell. It briefly went card-less on 22-08; the owner reversed
+   that after seeing it live. */
 .act-empty {
   display: flex;
   flex-direction: column;
@@ -5654,7 +5697,7 @@ a.path-step-card:hover .path-step-title {
 .act-row {
   display: flex;
   align-items: center;
-  min-height: 40px;
+  min-height: var(--list-row-h);
   padding: 6px 10px;
   gap: 9px;
   border-radius: var(--r-md);

@@ -54,17 +54,21 @@ function patch(prop: string, descriptor: PropertyDescriptor) {
   });
 }
 
-/** A window (180px) shorter than its content (264px) — the `.me` row is below the fold. */
+/**
+ * The real geometry after the 22-08 list-system pass: the strip caps at five
+ * rows (5 x 40px + 4 x 5px gap = 220px) while the you-±3 window can hold
+ * seven (7 x 40 + 6 x 5 = 310px), so the `.me` row sits below the fold.
+ */
 function stubScrollableList(scrollTo: ReturnType<typeof vi.fn>) {
   patch("scrollTo", { writable: true, value: scrollTo });
   patch("scrollHeight", {
     get(this: Element) {
-      return this.classList.contains("lb-list-mini") ? 264 : 0;
+      return this.classList.contains("lb-list-mini") ? 310 : 0;
     },
   });
   patch("clientHeight", {
     get(this: Element) {
-      return this.classList.contains("lb-list-mini") ? 180 : 0;
+      return this.classList.contains("lb-list-mini") ? 220 : 0;
     },
   });
 }
@@ -112,7 +116,7 @@ describe("CohortStrip — the viewer's own row", () => {
     expect(typeof arg.top).toBe("number");
     expect(arg.top).toBeGreaterThanOrEqual(0);
     // Clamped to the scrollable range — never past the end of the list.
-    expect(arg.top).toBeLessThanOrEqual(264 - 180);
+    expect(arg.top).toBeLessThanOrEqual(310 - 220);
   });
 
   it("honours reduced motion", () => {

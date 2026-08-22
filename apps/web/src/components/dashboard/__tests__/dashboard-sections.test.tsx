@@ -84,6 +84,33 @@ describe("ActivitySection", () => {
     ).toBe("⚡");
   });
 
+  // The empty state keeps its own card shell (`.act-empty` carries the
+  // background/border/shadow in globals.css) — it went card-less briefly on
+  // 22-08 and the owner reversed that after seeing it live. What stays true
+  // either way: it is not the `.act-panel` feed shell, and there is no pager.
+  it("renders the empty state in its own container, not the feed panel", () => {
+    const { container } = renderWithIntl(
+      <ActivitySection recentActivity={[]} />
+    );
+
+    expect(container.querySelector(".act-empty")).not.toBeNull();
+    expect(container.querySelector(".act-panel")).toBeNull();
+    expect(container.querySelector(".act-pager")).toBeNull();
+    // The heading survives either way.
+    expect(
+      screen.getByText(messages.dashboard.recentActivity)
+    ).toBeInTheDocument();
+  });
+
+  it("renders the feed panel when there IS activity", () => {
+    const { container } = renderWithIntl(
+      <ActivitySection recentActivity={items} />
+    );
+
+    expect(container.querySelector(".act-panel")).not.toBeNull();
+    expect(container.querySelector(".act-empty")).toBeNull();
+  });
+
   it("keeps a populated feed's chips coloured, unlike the empty one", () => {
     const { container } = renderWithIntl(
       <ActivitySection recentActivity={items} />
