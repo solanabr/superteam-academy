@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Trophy, UsersThree, Info, Gift } from "@phosphor-icons/react";
 import * as Tooltip from "@radix-ui/react-tooltip";
@@ -24,6 +25,9 @@ type Board = "league" | "global" | "referrals";
 
 /** The ids alone, hoisted so `?board=` can be validated before render. */
 const BOARD_IDS = ["league", "global", "referrals"] as const;
+
+const isBoard = (value: string | null): value is Board =>
+  value !== null && (BOARD_IDS as readonly string[]).includes(value);
 
 interface LeaderboardClientProps {
   initialGlobalEntries: LeaderboardEntry[];
@@ -363,19 +367,41 @@ export function LeaderboardClient({
   const t = useTranslations("gamification");
   const locale = useLocale();
 
+  /* The URL is the source of truth for which board is open.
+   *
+   * Reading `?board=` once at mount was not enough: the user menu links here
+   * from this very page, and a same-route transition does not remount, so the
+   * URL changed while the tab did not. Reading it reactively fixes that
+   * direction; WRITING it on every tab click fixes the other one. Without the
+   * write, a visitor sitting on `?board=referrals` who clicks League leaves
+   * the two disagreeing — and the menu entry silently no-ops again, because
+   * the param it would set is already there. */
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const asked = searchParams.get("board");
+
   // League is primary; fall back to global for anon visitors with no cohort.
-  // `?board=` wins over both, so the user menu (and any shared link) can open
-  // a specific tab instead of dropping the reader on the default one.
-  const [board, setBoard] = useState<Board>(() => {
-    const asked =
-      typeof window !== "undefined"
-        ? new URLSearchParams(window.location.search).get("board")
-        : null;
-    if (asked && (BOARD_IDS as readonly string[]).includes(asked)) {
-      return asked as Board;
-    }
-    return initialCohort ? "league" : "global";
-  });
+  const [board, setBoard] = useState<Board>(() =>
+    isBoard(asked) ? asked : initialCohort ? "league" : "global"
+  );
+
+  useEffect(() => {
+    if (isBoard(asked)) setBoard(asked);
+  }, [asked]);
+
+  const selectBoard = useCallback(
+    (next: Board) => {
+      setBoard(next);
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("board", next);
+      // `replace`, not `push`: flipping tabs is not a navigation the back
+      // button should have to walk through. `scroll: false` keeps the reader
+      // where they are.
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [router, pathname, searchParams]
+  );
   const [timeframe, setTimeframe] = useState<Timeframe>("alltime");
   const [globalEntries, setGlobalEntries] =
     useState<LeaderboardEntry[]>(initialGlobalEntries);
@@ -438,7 +464,7 @@ export function LeaderboardClient({
             key={b.id}
             role="tab"
             aria-selected={board === b.id}
-            onClick={() => setBoard(b.id)}
+            onClick={() => selectBoard(b.id)}
             className={cn("lb-board-tab", board === b.id && "active")}
           >
             {b.id === "league" ? (
