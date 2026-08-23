@@ -1,9 +1,22 @@
 // @vitest-environment jsdom
-import { describe, it, expect, afterEach } from "vitest";
+/* eslint-disable import/order -- vi.mock factories are hoisted above imports. */
+import { describe, it, expect, afterEach, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
 import type { CohortLeague } from "@superteam-lms/types";
 import messages from "@/messages/en.json";
+const nav = vi.hoisted(() => ({
+  params: new URLSearchParams(),
+  replace: vi.fn(),
+}));
+
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => nav.params,
+  usePathname: () => "/en/leaderboard",
+  useRouter: () => ({ replace: nav.replace }),
+}));
+
 import { LeaderboardClient } from "../leaderboard-client";
 
 const cohort: CohortLeague = {
@@ -245,38 +258,70 @@ describe("LeaderboardClient — League podium edge cases", () => {
 });
 
 /* The user menu links straight to the Referrals tab, so `?board=` has to be
-   honoured — without it that entry drops the reader on the League board. */
-describe("LeaderboardClient — ?board= deep link", () => {
-  const setSearch = (search: string) => {
-    Object.defineProperty(window, "location", {
-      value: { ...window.location, search },
-      writable: true,
-    });
-  };
+   honoured — and honoured on a SAME-ROUTE transition, which is the common
+   case: the menu is reachable from the leaderboard itself, and that click
+   does not remount the client. */
+describe("LeaderboardClient — ?board= drives the open tab", () => {
+  const selected = () =>
+    screen
+      .getAllByRole("tab")
+      .find((t) => t.getAttribute("aria-selected") === "true")?.textContent;
 
-  afterEach(() => setSearch(""));
+  afterEach(() => {
+    nav.params = new URLSearchParams();
+    nav.replace.mockClear();
+  });
 
   it("opens the Referrals tab when asked for it", () => {
-    setSearch("?board=referrals");
+    nav.params = new URLSearchParams("board=referrals");
     renderClient(cohort);
-    expect(
-      screen.getByRole("tab", { name: messages.gamification.referrals })
-    ).toHaveAttribute("aria-selected", "true");
+    expect(selected()).toContain(messages.gamification.referrals);
   });
 
   it("still defaults to League with no query", () => {
-    setSearch("");
     renderClient(cohort);
-    expect(
-      screen.getByRole("tab", { name: messages.gamification.league })
-    ).toHaveAttribute("aria-selected", "true");
+    expect(selected()).toContain(messages.gamification.league);
   });
 
   it("ignores a board id it does not know", () => {
-    setSearch("?board=nope");
+    nav.params = new URLSearchParams("board=nope");
     renderClient(cohort);
-    expect(
-      screen.getByRole("tab", { name: messages.gamification.league })
-    ).toHaveAttribute("aria-selected", "true");
+    expect(selected()).toContain(messages.gamification.league);
+  });
+
+  /* The regression: a same-route click updates the URL without remounting, so
+     a board read once at mount never saw the change. */
+  it("follows ?board= when it changes without a remount", () => {
+    const { rerender } = renderClient(cohort);
+    expect(selected()).toContain(messages.gamification.league);
+
+    nav.params = new URLSearchParams("board=referrals");
+    rerender(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <LeaderboardClient
+          initialGlobalEntries={[]}
+          initialCohort={cohort}
+          currentUserId="u1"
+        />
+      </NextIntlClientProvider>
+    );
+
+    expect(selected()).toContain(messages.gamification.referrals);
+  });
+
+  /* And the other direction: clicking a tab writes the URL, so the two cannot
+     drift into a state where the menu entry sets a param that is already set. */
+  it("writes the chosen board back to the URL", async () => {
+    const user = userEvent.setup();
+    renderClient(cohort);
+
+    await user.click(
+      screen.getByRole("tab", { name: messages.gamification.global })
+    );
+
+    expect(nav.replace).toHaveBeenCalledWith(
+      "/en/leaderboard?board=global",
+      expect.objectContaining({ scroll: false })
+    );
   });
 });
