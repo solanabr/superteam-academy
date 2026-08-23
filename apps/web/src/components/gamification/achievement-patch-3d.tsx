@@ -22,17 +22,25 @@ import { PatchGlyph } from "@/components/gamification/patch-glyph";
  * patch, so the two can never drift apart.
  */
 /**
- * The edge band. Slices are zero-thickness planes, so their spacing is what
- * decides whether the rim reads as a solid edge or as a comb: at the 2px pitch
- * the spec sketches you can see between them as a patch turns, and the 2px
- * inset leaves the band visibly narrower than the silhouette it belongs to.
- * A 1px pitch across the full thickness closes both gaps, and a 1px inset is
- * still enough to keep the slices from breaking the faces' outline.
+ * The edge band, expressed as fractions of the slab's own thickness.
+ *
+ * Slices are zero-thickness planes, so their spacing is what decides whether
+ * the rim reads as a solid edge or as a comb; thirteen of them across the
+ * thickness closes the gaps.
+ *
+ * They are FRACTIONS, not pixels, because the faces sit at `±var(--t)/2` and
+ * the thickness is a CSS variable that changes per breakpoint. Absolute
+ * offsets drifted the moment `--t` shrank on mobile: the outermost slices
+ * ended up in FRONT of the faces, and since a slice is a solid fill inset
+ * only 1px, it covered the face entirely — the badges rendered as blank
+ * coloured blobs with no glyph and no stitch. A fraction cannot drift: the
+ * outermost lands at 6/7 of the half-thickness, always inside the faces.
  */
-const THICKNESS = 14;
+const SLICE_COUNT = 13;
+const HALF = (SLICE_COUNT - 1) / 2;
 const SLICES = Array.from(
-  { length: THICKNESS - 1 },
-  (_, i) => i - (THICKNESS - 2) / 2
+  { length: SLICE_COUNT },
+  (_, i) => (i - HALF) / (HALF + 1)
 );
 
 export function AchievementPatch3D({
@@ -67,11 +75,11 @@ export function AchievementPatch3D({
       data-cat={look.cat}
       aria-hidden="true"
     >
-      {SLICES.map((z) => (
+      {SLICES.map((f) => (
         <div
-          key={z}
+          key={f}
           className="patch3d__slice"
-          style={{ transform: `translateZ(${z}px)` }}
+          style={{ transform: `translateZ(calc(var(--t) / 2 * ${f}))` }}
         />
       ))}
       {/* Rim panels. The slices run parallel to the faces, so edge-on they

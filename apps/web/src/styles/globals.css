@@ -2208,6 +2208,18 @@
     --size: 64px;
     --t: 10px;
   }
+  /* The 72px badge is a desktop card's proportion. On a phone the same
+     hexagon dominates the card it sits in, so it steps down to 60 — the
+     spec's floor for keeping the LV lock-up, so the label stays legitimate
+     rather than being shrunk past the point it reads. */
+  .lv-badge[data-size="72"] {
+    --lv-h: 60px;
+    --lv-w: 53px;
+    --lv-inset: 2.5px;
+    --lv-num: 24px;
+    --lv-kicker: 8px;
+    --lv-lift: 3px;
+  }
   .ach-name {
     font-size: 10px;
   }
