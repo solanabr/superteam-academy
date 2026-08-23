@@ -3546,6 +3546,21 @@ a.path-step-card:hover .path-step-badge.skip {
   align-items: end;
   margin-bottom: 8px;
 }
+/* The cards are in RANK order in the DOM — which is the reading order, and
+   the order they stack in on a phone. The 2-1-3 podium arrangement is a
+   side-by-side idea, so it is done here, visually, only where there are three
+   columns to do it in. */
+@media (min-width: 541px) {
+  .podium-grid > :nth-child(1) {
+    order: 2;
+  }
+  .podium-grid > :nth-child(2) {
+    order: 1;
+  }
+  .podium-grid > :nth-child(3) {
+    order: 3;
+  }
+}
 .podium-compact {
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
 }
@@ -3919,8 +3934,15 @@ a.stat-receipt:active {
 /* ── Responsive: stack podium on small screens ── */
 @media (max-width: 540px) {
   .podium-grid {
-    grid-template-columns: 1fr;
+    /* minmax(0, …), not 1fr: a bare `1fr` floors at the column's min-content,
+       and one long username kept the row wider than the phone. */
+    grid-template-columns: minmax(0, 1fr);
     gap: 10px;
+  }
+  /* Each card is wrapped in a Link, which is the grid item — it has to be
+     allowed to shrink too, or the floor just moves up one level. */
+  .podium-grid > * {
+    min-width: 0;
   }
   .podium-card {
     flex-direction: row;
@@ -3954,6 +3976,12 @@ a.stat-receipt:active {
     flex-direction: row;
     text-align: left;
     flex: 1;
+    min-width: 0;
+  }
+  /* The truncating span is itself a flex child, so it needs the same escape
+     from `min-width: auto` — without it the name's longest word is the row's
+     hard floor and the ellipsis never gets a chance to do its job. */
+  .podium-name > span {
     min-width: 0;
   }
   .podium-xp {

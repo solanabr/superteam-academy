@@ -190,7 +190,7 @@ function LeagueBoard({
     );
   }
 
-  const { podiumOrdered, rest, compact } = splitPodium(cohort.entries);
+  const { podium, rest, compact } = splitPodium(cohort.entries);
 
   return (
     <>
@@ -223,7 +223,7 @@ function LeagueBoard({
           including its rank 1 — the dashed treatment only reads correctly
           against a solid podium. */}
       <div className={cn("podium-grid", compact && "podium-compact")}>
-        {podiumOrdered.map((entry) => (
+        {podium.map((entry) => (
           <CohortPodiumCard key={entry.rank} entry={entry} locale={locale} />
         ))}
       </div>
@@ -292,7 +292,7 @@ function GlobalBoard({
   const t = useTranslations("gamification");
   const tCommon = useTranslations("common");
 
-  const { podiumOrdered, rest: restEntries, compact } = splitPodium(entries);
+  const { podium, rest: restEntries, compact } = splitPodium(entries);
 
   const TIMEFRAMES: Timeframe[] = ["weekly", "monthly", "alltime"];
 
@@ -323,7 +323,7 @@ function GlobalBoard({
       ) : (
         <>
           <div className={cn("podium-grid", compact && "podium-compact")}>
-            {podiumOrdered.map((entry) => (
+            {podium.map((entry) => (
               <GlobalPodiumCard
                 key={entry.userId}
                 entry={entry}

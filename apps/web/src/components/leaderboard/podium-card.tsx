@@ -121,22 +121,22 @@ export function PodiumCard({
 }
 
 /**
- * Splits a ranked list into the podium (top 3) and the rows below it, with the
- * podium reordered 2-1-3 so the winner stands in the middle.
+ * Splits a ranked list into the podium (top 3) and the rows below it.
+ *
+ * The podium comes back in RANK order. It used to be reordered 2-1-3 here so
+ * the winner stood in the middle, but that is a side-by-side idea: stacked on
+ * a phone it put second place on top, and it made the DOM order disagree with
+ * the reading order on every screen. The 2-1-3 arrangement is now done in CSS,
+ * and only where there are three columns to do it in.
  *
  * A short board keeps whatever it has — one or two entries render as a
  * compact podium rather than leaving gaps (`podium-compact`).
  */
 export function splitPodium<T>(entries: T[]): {
   podium: T[];
-  podiumOrdered: T[];
   rest: T[];
   compact: boolean;
 } {
   const podium = entries.slice(0, 3);
-  const rest = entries.slice(3);
-  const podiumOrdered =
-    podium.length >= 3 ? [podium[1]!, podium[0]!, podium[2]!] : podium;
-
-  return { podium, podiumOrdered, rest, compact: podium.length < 3 };
+  return { podium, rest: entries.slice(3), compact: podium.length < 3 };
 }
