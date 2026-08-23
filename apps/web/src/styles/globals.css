@@ -1013,8 +1013,15 @@
      Two silhouettes, because the two surfaces genuinely differ: `track` is the
      community idiom (segments inside one bordered rail), `pills` is the
      catalog idiom (free-standing rounded pills). Only the shape differs — the
-     selected treatment is identical. */
-  .seg-track {
+     selected treatment is identical.
+
+     NAMESPACED `segctl-*` on purpose. These shipped for one day as `.seg`,
+     `.seg-track` and `.seg-pills`, which collided head-on with the progress
+     bar's own `.seg-track` / `.seg-cell` / `.seg-fill` family — and the
+     progress bar's rules are UNLAYERED while these live in `@layer base`, so
+     unlayered won outright and the community filter groups rendered as 13px
+     clipped capsules. Anything added here keeps the `segctl-` prefix. */
+  .segctl-track {
     display: flex;
     gap: 4px;
     overflow-x: auto;
@@ -1023,13 +1030,13 @@
     border-radius: var(--r-md);
     background: var(--surface);
   }
-  .seg-pills {
+  .segctl-pills {
     display: flex;
     gap: 6px;
     flex-wrap: wrap;
   }
 
-  .seg {
+  .segctl-tab {
     white-space: nowrap;
     cursor: pointer;
     border-radius: var(--r-sm);
@@ -1042,7 +1049,7 @@
       border-color 0.15s;
   }
   /* The quiet state is scoped OFF the selected one rather than declared flat.
-     `.seg` and `.pressed-key` are both single-class selectors, so whichever
+     `.segctl-tab` and `.pressed-key` are both single-class selectors, so whichever
      lands later in the file wins — and a flat `background: transparent` plus a
      `border: … transparent` shorthand here silently erased the selected fill
      AND its ink ring. Everything that `.pressed-key` owns must therefore be
@@ -1050,23 +1057,23 @@
 
      The transparent border is 1.5px to match the selected one, so a segment
      does not change size when it is picked. */
-  .seg:not(.pressed-key) {
+  .segctl-tab:not(.pressed-key) {
     color: var(--text-2);
     background: transparent;
     border: 1.5px solid transparent;
   }
-  .seg:hover:not(.pressed-key) {
+  .segctl-tab:hover:not(.pressed-key) {
     background: var(--card-hover);
     color: var(--text);
   }
-  .seg:focus-visible {
+  .segctl-tab:focus-visible {
     outline: 2px solid var(--primary);
     outline-offset: 2px;
   }
 
   /* The catalog's pills are free-standing, so an unselected one needs its own
      edge and ground; a segment in a track borrows the track's. */
-  .seg-pills .seg {
+  .segctl-pills .segctl-tab {
     border-radius: 999px;
     padding: 8px 14px;
     min-height: 40px;
@@ -1074,12 +1081,12 @@
     font-weight: 700;
     font-size: 12px;
   }
-  .seg-pills .seg:not(.pressed-key) {
+  .segctl-pills .segctl-tab:not(.pressed-key) {
     border-color: var(--quiet-line);
     background: var(--card);
   }
   /* A selected pill keeps the round silhouette the row is built on. */
-  .seg-pills .pressed-key {
+  .segctl-pills .pressed-key {
     border-radius: 999px;
   }
 
