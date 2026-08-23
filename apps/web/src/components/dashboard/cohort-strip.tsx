@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { Fragment, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
 import { ArrowRight } from "@phosphor-icons/react";
@@ -114,13 +114,22 @@ export function CohortStrip({ league }: CohortStripProps) {
           {tierName(t, league.tier)}
         </p>
         <div ref={listRef} className="lb-list lb-list-compact lb-list-mini">
-          {league.entries.map((entry, i) => (
-            <CohortRow
-              key={entry.rank}
-              entry={entry}
-              style={{ "--i": i } as React.CSSProperties}
-            />
-          ))}
+          {league.entries.map((entry, i) => {
+            // The leader is pinned above the viewer's window, so the ranks are
+            // not always contiguous. Mark the jump rather than letting "1"
+            // sitting above "5" read as a list that lost its middle.
+            const prev = league.entries[i - 1];
+            const gap = prev !== undefined && entry.rank - prev.rank > 1;
+            return (
+              <Fragment key={entry.rank}>
+                {gap && <div className="lb-row-break" aria-hidden="true" />}
+                <CohortRow
+                  entry={entry}
+                  style={{ "--i": i } as React.CSSProperties}
+                />
+              </Fragment>
+            );
+          })}
         </div>
       </div>
     </section>
