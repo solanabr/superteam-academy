@@ -161,13 +161,18 @@ describe("LeaderboardClient — the League podium", () => {
     expect(container.querySelector(".podium-card.bronze")).not.toBeNull();
   });
 
-  it("stands the winner in the middle (2-1-3)", () => {
+  /* The DOM carries RANK order, which is the reading order and the order the
+     podium stacks in on a phone. Standing the winner in the middle is a
+     side-by-side arrangement and now lives in CSS, applied only above the
+     stacking breakpoint — as 2-1-3 markup it put second place on top of a
+     phone's stack. */
+  it("renders the podium in rank order", () => {
     const { container } = renderClient(five);
 
     const ranks = [...container.querySelectorAll(".podium-card")].map((card) =>
       card.querySelector(".rank-tab")?.getAttribute("data-rank")
     );
-    expect(ranks).toEqual(["2", "1", "3"]);
+    expect(ranks).toEqual(["1", "2", "3"]);
   });
 
   it("leaves the rows below the podium dashed — no data-top", () => {
