@@ -21,6 +21,7 @@ import { ProgressBar } from "@/components/course/progress-bar";
 import { InstructorCard } from "@/components/course/instructor-card";
 import { createClient } from "@/lib/supabase/client";
 import { findNextIncompleteLesson } from "@/lib/courses/continue-learning";
+import { ShareCourseButton } from "@/components/referrals/share-course-button";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { useOnChainEnroll } from "@/hooks/use-on-chain-enroll";
@@ -371,6 +372,16 @@ export function CourseDetailClient({
                 ) : (
                   <div className="h-11 w-full animate-pulse rounded-[var(--r-md)] bg-[var(--input)]" />
                 )}
+
+                {/* Sharing is a referral: the link carries the viewer's code,
+                    so a course they recommend credits them. Quiet next to the
+                    CTA — it is the second thing you do here, not the first. */}
+                <div className="mt-3">
+                  <ShareCourseButton
+                    courseSlug={course.slug}
+                    courseTitle={course.title}
+                  />
+                </div>
               </div>
             </div>
           </div>

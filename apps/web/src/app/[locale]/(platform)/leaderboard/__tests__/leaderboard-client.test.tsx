@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import type { CohortLeague } from "@superteam-lms/types";
@@ -246,5 +246,42 @@ describe("LeaderboardClient — League podium edge cases", () => {
     expect(gold?.textContent).toContain("Anonymous learner");
     // An anonymized member is not linkable — the other two still are.
     expect(container.querySelectorAll(".podium-grid a")).toHaveLength(2);
+  });
+});
+
+/* The user menu links straight to the Referrals tab, so `?board=` has to be
+   honoured — without it that entry drops the reader on the League board. */
+describe("LeaderboardClient — ?board= deep link", () => {
+  const setSearch = (search: string) => {
+    Object.defineProperty(window, "location", {
+      value: { ...window.location, search },
+      writable: true,
+    });
+  };
+
+  afterEach(() => setSearch(""));
+
+  it("opens the Referrals tab when asked for it", () => {
+    setSearch("?board=referrals");
+    renderClient(cohort);
+    expect(
+      screen.getByRole("tab", { name: messages.gamification.referrals })
+    ).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("still defaults to League with no query", () => {
+    setSearch("");
+    renderClient(cohort);
+    expect(
+      screen.getByRole("tab", { name: messages.gamification.league })
+    ).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("ignores a board id it does not know", () => {
+    setSearch("?board=nope");
+    renderClient(cohort);
+    expect(
+      screen.getByRole("tab", { name: messages.gamification.league })
+    ).toHaveAttribute("aria-selected", "true");
   });
 });
