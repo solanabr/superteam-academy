@@ -34,7 +34,7 @@
     --xp-chip-fg: #b45309;
     --streak-chip-bg: rgba(234, 88, 12, 0.12);
     --streak-chip-fg: #ea580c;
-    --code-bg: #161b27;
+    --code-bg: #1b1b1b;
     --code-fg: #e6edf3;
 
     /* ── Borders ── */
@@ -172,15 +172,21 @@
      next-themes toggles data-theme="dark" on <html>; Tailwind's dark: variant
      and dark:* utilities depend on this data-attribute selector.    */
   [data-theme="dark"] {
-    --bg: #0e1117;
-    --surface: #131920;
-    --card: #161b27;
-    --card-hover: #1c2333;
-    --card-glass-blur: rgba(22, 27, 39, 0.7);
+    /* Neutral grays, not blue-black. Each value is the luminance-matched gray
+       of the blue-tinted surface it replaces, so every contrast ratio the
+       palette was tuned for is unchanged — only the hue is gone. The blue cast
+       fought the ink construction, whose cream outlines and green/amber fills
+       carry the only colour these surfaces should have. */
+    --bg: #111111;
+    --surface: #181818;
+    --card: #1b1b1b;
+    --card-hover: #232323;
+    /* Opaque now: the bars that used this no longer blur what is behind them. */
+    --card-glass-blur: #1b1b1b;
     --card-alt: rgba(255, 255, 255, 0.02);
-    --input: #1c2333;
+    --input: #232323;
     /* ── O&H keepers — dark values match existing rendered surfaces ── */
-    --inset: #1c2333;
+    --inset: #232323;
     --avatar-bg: #116b48;
     --avatar-fg: #e9fbf3;
     --xp-chip-bg: rgba(245, 166, 35, 0.14);
@@ -263,7 +269,7 @@
     --text-3: #8b96a3; /* ≥4.5:1 on --card at 10-12px (owner contrast pass, 04-08) */
     --text-disabled: #484f5a;
 
-    --sg-0: #1c2333;
+    --sg-0: #232323;
     --sg-1: #0d4a32;
     --sg-2: #116b48;
     --sg-3: #1a9964;
@@ -282,8 +288,8 @@
     --shadow-cert-hover: 0 4px 0 0 rgba(153, 69, 255, 0.45);
     --shadow-cert-lg: 0 4px 0 0 rgba(153, 69, 255, 0.45);
 
-    --subtle: #1c2333;
-    --warm: #131920;
+    --subtle: #232323;
+    --warm: #181818;
     --secondary: #2ecc8e;
     --secondary-light: #27bd82;
     --secondary-bg: rgba(46, 204, 142, 0.12);
@@ -830,7 +836,8 @@
   .chip[data-cat="endurance"],
   .patch3d[data-cat="endurance"] {
     --fill: #19231b;
-    --shade: #0e1117;
+    /* A darker step of the fill, not the page's black. */
+    --shade: #0f150f;
     --patch-glyph: #2ecc8e;
     --stitch: rgba(250, 250, 247, 0.5);
   }
@@ -901,7 +908,7 @@
   }
   [data-theme="dark"] .patch[data-locked],
   [data-theme="dark"] .chip[data-empty] {
-    background: #131920;
+    background: #181818;
     border-color: rgba(255, 255, 255, 0.2);
     color: #78838f;
     box-shadow: none;
@@ -1616,23 +1623,6 @@
 /* Shared glow pulse — uses neutral white so it works for all tier colors */
 
 /* ── V9 Dashboard Panel ambient glow keyframes ── */
-@keyframes dash-amb-a {
-  0% {
-    transform: translate(0, 0);
-  }
-  100% {
-    transform: translate(32px, 24px);
-  }
-}
-
-@keyframes dash-amb-b {
-  0% {
-    transform: translate(0, 0);
-  }
-  100% {
-    transform: translate(-24px, 16px);
-  }
-}
 
 /* ── V9 Medal token entry & glow keyframes ── */
 @keyframes dm-in {
@@ -3295,8 +3285,6 @@ a.path-step-card:hover .path-step-badge.skip {
   height: var(--mobile-nav-height);
   padding-bottom: env(safe-area-inset-bottom, 0px);
   background: var(--card-glass-blur);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   border-top: 1px solid var(--border-default);
 }
 @media (min-width: 1024px) {
@@ -4230,8 +4218,6 @@ a.path-step-card:hover .path-step-badge.skip {
   padding: 3px;
   border-radius: 9999px;
   background: var(--card-glass-blur);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
@@ -4332,35 +4318,15 @@ a.path-step-card:hover .path-step-badge.skip {
   );
   opacity: 0.6;
 }
+/* The ambient glow is retired. Two animated radial blobs behind the panel
+   were the last of the glass look: soft coloured light is the opposite of a
+   flat fill with a hard outline, and against the neutral grays it read as a
+   smudge rather than depth. The element stays as an empty positioning layer
+   so the markup that mounts it does not have to change. */
 .dash-panel-amb {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  overflow: hidden;
-  z-index: 0;
+  display: none;
 }
-.dash-panel-amb::before {
-  content: "";
-  position: absolute;
-  width: 380px;
-  height: 380px;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--primary-dim) 0%, transparent 68%);
-  top: -140px;
-  left: -40px;
-  animation: dash-amb-a 14s ease-in-out infinite alternate;
-}
-.dash-panel-amb::after {
-  content: "";
-  position: absolute;
-  width: 320px;
-  height: 320px;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--xp-dim) 0%, transparent 68%);
-  top: -80px;
-  right: 40px;
-  animation: dash-amb-b 11s ease-in-out infinite alternate;
-}
+
 .dash-top {
   display: grid;
   grid-template-columns: 1fr;
@@ -5839,37 +5805,12 @@ a.path-step-card:hover .path-step-title {
   );
   opacity: 0.5;
 }
-/* Ambient glow — warm amber + green atmosphere */
+/* The activity panel's glow is retired with the dashboard's — same reason,
+   same empty positioning layer. */
 .act-panel-amb {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  overflow: hidden;
-  z-index: 0;
-  border-radius: inherit;
+  display: none;
 }
-.act-panel-amb::before {
-  content: "";
-  position: absolute;
-  width: 300px;
-  height: 300px;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--xp-dim) 0%, transparent 68%);
-  top: -120px;
-  right: -30px;
-  animation: dash-amb-b 11s ease-in-out infinite alternate;
-}
-.act-panel-amb::after {
-  content: "";
-  position: absolute;
-  width: 200px;
-  height: 200px;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--primary-dim) 0%, transparent 70%);
-  bottom: -80px;
-  left: 20px;
-  animation: dash-amb-a 16s ease-in-out infinite alternate;
-}
+
 /* ── Section heading — sits outside the panel ── */
 .act-section-head {
   display: flex;
