@@ -8,6 +8,7 @@ import {
   Check,
   Copy,
   GearSix,
+  Gift,
   ShieldStar,
   SignOut,
   Trophy,
@@ -42,6 +43,7 @@ export function UserMenu({
 }: UserMenuProps) {
   const tCommon = useTranslations("common");
   const tNav = useTranslations("nav");
+  const tGam = useTranslations("gamification");
   // The wallet surface published by whichever provider stack is live
   // ((platform) layout or the modal's scoped stack, #1097) — UserMenu renders
   // in the global Header ABOVE both, so context can't reach it and the module
@@ -190,6 +192,15 @@ export function UserMenu({
           >
             <Certificate size={14} weight="bold" />
             {tCommon("certificates")}
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link
+            href={`/${locale}/leaderboard?board=referrals`}
+            className="flex items-center gap-2 font-display text-[13px] font-semibold"
+          >
+            <Gift size={14} weight="bold" />
+            {tGam("referrals")}
           </Link>
         </DropdownMenuItem>
         {/* LX-B13 (#583): demoted leaderboard entry point — kept reachable

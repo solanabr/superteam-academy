@@ -22,6 +22,9 @@ import { cn } from "@/lib/utils";
 type Timeframe = "weekly" | "monthly" | "alltime";
 type Board = "league" | "global" | "referrals";
 
+/** The ids alone, hoisted so `?board=` can be validated before render. */
+const BOARD_IDS = ["league", "global", "referrals"] as const;
+
 interface LeaderboardClientProps {
   initialGlobalEntries: LeaderboardEntry[];
   initialCohort: CohortLeague | null;
@@ -361,9 +364,18 @@ export function LeaderboardClient({
   const locale = useLocale();
 
   // League is primary; fall back to global for anon visitors with no cohort.
-  const [board, setBoard] = useState<Board>(
-    initialCohort ? "league" : "global"
-  );
+  // `?board=` wins over both, so the user menu (and any shared link) can open
+  // a specific tab instead of dropping the reader on the default one.
+  const [board, setBoard] = useState<Board>(() => {
+    const asked =
+      typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search).get("board")
+        : null;
+    if (asked && (BOARD_IDS as readonly string[]).includes(asked)) {
+      return asked as Board;
+    }
+    return initialCohort ? "league" : "global";
+  });
   const [timeframe, setTimeframe] = useState<Timeframe>("alltime");
   const [globalEntries, setGlobalEntries] =
     useState<LeaderboardEntry[]>(initialGlobalEntries);
