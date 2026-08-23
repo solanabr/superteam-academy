@@ -11,7 +11,7 @@ import { useAuth } from "@/lib/auth/auth-provider";
 import { isInstructorWallet } from "@/lib/content/client-queries";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
-import { AuthModal } from "@/components/auth/auth-modal";
+import { AuthModal, AuthTriggerButton } from "@/components/auth/auth-modal";
 import { UserMenu } from "@/components/auth/user-menu";
 import { LevelBadge } from "@/components/gamification/level-badge";
 import { xpToNextLevel, calculateLevel } from "@/lib/gamification/xp";
@@ -35,6 +35,7 @@ export function Header() {
   const t = useTranslations("nav");
   const tA11y = useTranslations("a11y");
   const tGam = useTranslations("gamification");
+  const tCommon = useTranslations("common");
   const locale = useLocale();
   const pathname = usePathname();
   const { user, profile, isLoading: authLoading } = useAuth();
@@ -334,7 +335,15 @@ export function Header() {
                 locale={locale}
               />
             ) : (
-              <AuthModal />
+              <AuthModal
+                trigger={
+                  <AuthTriggerButton
+                    variant="push"
+                    size="sm"
+                    label={tCommon("signIn")}
+                  />
+                }
+              />
             )}
           </div>
 
@@ -375,7 +384,15 @@ export function Header() {
                   locale={locale}
                 />
               ) : (
-                <AuthModal />
+                <AuthModal
+                  trigger={
+                    <AuthTriggerButton
+                      variant="push"
+                      size="sm"
+                      label={tCommon("signIn")}
+                    />
+                  }
+                />
               )}
             </div>
           </div>

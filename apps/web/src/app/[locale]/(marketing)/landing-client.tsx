@@ -22,6 +22,7 @@ import {
   EarnWidget,
   ProveWidget,
 } from "@/components/landing/loop-widgets";
+import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import type { DeployedAchievement } from "@/lib/content/queries";
 
@@ -62,54 +63,65 @@ function useCountUp(target: number, duration = 1800) {
   return { ref, value };
 }
 
-function CountUpStat({
+/**
+ * One number, attached to the claim it proves.
+ *
+ * Replaces the four-across metrics band that used to sit under the hero. The
+ * numbers were the same, but a wall of them above the fold reads as decoration
+ * — the shape every template uses — and none of them was next to the sentence
+ * it was evidence for. Each figure now sits on its own step: courses under
+ * BUILD, XP under EARN, credentials under PROVE. Where the chain can back a
+ * number, the chip is a link to the explorer and says so.
+ */
+function StatReceipt({
   target,
   label,
-  color,
   href,
+  accent,
 }: {
   target: number;
   label: string;
-  color: string;
-  /** Explorer receipt — the number links to its on-chain address. */
+  /** Explorer receipt — present only where the number is verifiable on-chain. */
   href?: string;
+  /** The XP figure keeps the amber it carries everywhere else in the product. */
+  accent?: boolean;
 }) {
   const { ref, value } = useCountUp(target);
+
   const inner = (
     <>
       <span
         ref={ref}
-        className={`font-mono text-2xl font-black tabular-nums sm:text-3xl md:text-4xl ${color}`}
+        className={cn(
+          "font-display text-[22px] font-black tabular-nums leading-none",
+          accent ? "text-xp" : "text-text"
+        )}
       >
         {value.toLocaleString()}
       </span>
-      <span className="font-mono text-[11px] font-bold uppercase tracking-widest text-text-3 transition-colors group-hover/stat:text-primary">
+      <span className="font-mono text-[11px] font-bold uppercase tracking-widest text-text-3">
         {label}
-        {href && (
-          <span className="ml-1 opacity-0 transition-opacity group-hover/stat:opacity-100">
-            {"↗"}
-          </span>
-        )}
       </span>
+      {href && (
+        <span
+          className="font-mono text-[11px] text-text-3 transition-colors group-hover/stat:text-primary"
+          aria-hidden="true"
+        >
+          {"↗"}
+        </span>
+      )}
     </>
   );
 
-  if (href) {
-    return (
-      <a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="group/stat flex flex-col items-center gap-1 text-center focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
-      >
-        {inner}
-      </a>
-    );
-  }
-  return (
-    <div className="group/stat flex flex-col items-center gap-1 text-center">
+  const shell =
+    "stat-receipt group/stat inline-flex items-baseline gap-2.5 no-underline";
+
+  return href ? (
+    <a href={href} target="_blank" rel="noopener noreferrer" className={shell}>
       {inner}
-    </div>
+    </a>
+  ) : (
+    <div className={shell}>{inner}</div>
   );
 }
 
@@ -337,6 +349,7 @@ export function LandingPageClient({
       title: t("step1Title"),
       desc: t("step1Desc"),
       hint: t("step1Hint"),
+      stat: <StatReceipt target={courseCount} label={t("statCourses")} />,
       widget: (
         <BuildWidget
           runLabel={t("w1Run")}
@@ -351,6 +364,14 @@ export function LandingPageClient({
       title: t("step2Title"),
       desc: t("step2Desc"),
       hint: t("step2Hint"),
+      stat: (
+        <StatReceipt
+          target={totalXpMinted}
+          label={t("statXpMinted")}
+          href={XP_MINT_EXPLORER}
+          accent
+        />
+      ),
       widget: <EarnWidget replayLabel={t("w2Replay")} />,
     },
     {
@@ -359,6 +380,13 @@ export function LandingPageClient({
       title: t("step3Title"),
       desc: t("step3Desc"),
       hint: t("step3Hint"),
+      stat: (
+        <StatReceipt
+          target={credentialsIssued}
+          label={t("statCredentials")}
+          href={PROGRAM_EXPLORER}
+        />
+      ),
       widget: <ProveWidget flipLabel={t("w3Flip")} />,
     },
   ];
@@ -502,78 +530,6 @@ export function LandingPageClient({
           </div>
         </section>
 
-        {/* ── On-Chain Stats ── */}
-        <section className="pb-12 pt-4 md:pb-16 md:pt-6">
-          <div className="container px-4">
-            <div className="mb-6 flex items-end justify-end">
-              <div className="hidden text-sm font-medium text-text-3 md:block">
-                {t("statsComment")}
-              </div>
-            </div>
-            <Reveal>
-              <div className="card-chunky overflow-hidden p-0">
-                {/* Instrument header: live chain heartbeat + the receipt link */}
-                <div className="flex items-center justify-between gap-3 border-b-[2.5px] border-border px-5 py-2.5 font-mono text-[11px] text-text-3">
-                  <span className="flex items-center gap-2">
-                    <span
-                      className="h-2 w-2 animate-pulse rounded-full bg-success"
-                      aria-hidden="true"
-                    />
-                    <span>
-                      {SOLANA_NETWORK}
-                      <LiveSlot />
-                    </span>
-                  </span>
-                  {PROGRAM_EXPLORER && (
-                    <a
-                      href={PROGRAM_EXPLORER}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="shrink-0 font-bold transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                    >
-                      {t("statsExplorer")} {"↗"}
-                    </a>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-6 p-6 md:grid-cols-4 md:gap-0 md:divide-x-[2.5px] md:divide-border md:p-8">
-                  <CountUpStat
-                    target={totalXpMinted}
-                    label={t("statXpMinted")}
-                    color="text-xp"
-                    href={XP_MINT_EXPLORER}
-                  />
-                  {enrolledBuilders >= STAT_FLOOR_BUILDERS ? (
-                    <CountUpStat
-                      target={enrolledBuilders}
-                      label={t("statBuilders")}
-                      color="text-text"
-                    />
-                  ) : (
-                    <CountUpStat
-                      target={ONCHAIN_INSTRUCTION_COUNT}
-                      label={t("statInstructions")}
-                      color="text-text"
-                      href={PROGRAM_EXPLORER}
-                    />
-                  )}
-                  <CountUpStat
-                    target={credentialsIssued}
-                    label={t("statCredentials")}
-                    color="text-text"
-                    href={PROGRAM_EXPLORER}
-                  />
-                  <CountUpStat
-                    target={courseCount}
-                    label={t("statCourses")}
-                    color="text-text"
-                  />
-                </div>
-              </div>
-            </Reveal>
-          </div>
-        </section>
-
         {/* ── How it works: build → earn → prove ── */}
         <section className="border-y-[2.5px] border-border bg-subtle">
           <div className="container px-4 py-12 sm:py-20 md:py-28">
@@ -608,6 +564,7 @@ export function LandingPageClient({
                         {"// "}
                         {step.hint}
                       </p>
+                      <div className="mt-5">{step.stat}</div>
                     </div>
                     <div className={i % 2 === 1 ? "md:order-1" : ""}>
                       {step.widget}
@@ -616,6 +573,54 @@ export function LandingPageClient({
                 </Reveal>
               ))}
             </div>
+
+            {/* The heartbeat and the headcount, once, after the three steps
+                have earned them — not a metrics wall above the fold. */}
+            <Reveal>
+              <div className="mt-12 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 border-t-[2.5px] border-border pt-6 font-mono text-[11px] text-text-3 md:mt-20">
+                <span className="flex items-center gap-2">
+                  <span
+                    className="h-2 w-2 rounded-full bg-success"
+                    aria-hidden="true"
+                  />
+                  <span>
+                    {SOLANA_NETWORK}
+                    <LiveSlot />
+                  </span>
+                </span>
+                <span aria-hidden="true">·</span>
+                <StatReceipt
+                  target={
+                    enrolledBuilders >= STAT_FLOOR_BUILDERS
+                      ? enrolledBuilders
+                      : ONCHAIN_INSTRUCTION_COUNT
+                  }
+                  label={
+                    enrolledBuilders >= STAT_FLOOR_BUILDERS
+                      ? t("statBuilders")
+                      : t("statInstructions")
+                  }
+                  href={
+                    enrolledBuilders >= STAT_FLOOR_BUILDERS
+                      ? undefined
+                      : PROGRAM_EXPLORER
+                  }
+                />
+                {PROGRAM_EXPLORER && (
+                  <>
+                    <span aria-hidden="true">·</span>
+                    <a
+                      href={PROGRAM_EXPLORER}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-bold transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                    >
+                      {t("statsExplorer")} {"↗"}
+                    </a>
+                  </>
+                )}
+              </div>
+            </Reveal>
 
             {/* The rest of the platform, quietly */}
             <div className="mt-14 grid grid-cols-1 gap-4 md:mt-24 md:grid-cols-3">

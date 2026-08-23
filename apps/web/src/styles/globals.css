@@ -1656,21 +1656,6 @@
   }
 }
 
-/* ── V9 Activity heatmap today-cell animation ── */
-@keyframes today-cell {
-  0%,
-  100% {
-    box-shadow:
-      0 0 0 1.5px rgba(245, 166, 35, 0.4),
-      0 0 7px rgba(245, 166, 35, 0.36);
-  }
-  50% {
-    box-shadow:
-      0 0 0 2px rgba(245, 166, 35, 0.6),
-      0 0 13px rgba(245, 166, 35, 0.52);
-  }
-}
-
 /* ── Page spinner — matches XP progress bar style ── */
 .sol-spinner {
   width: 28px;
@@ -3768,6 +3753,31 @@ a.path-step-card:hover .path-step-badge.skip {
   border-left: 2px dotted var(--quiet-line);
 }
 
+/* A landing stat, worn as a receipt on the claim it proves. The ink
+   construction at chip scale: outline, quiet plate, hard shadow only when the
+   number links out to a block explorer — an unlinked figure is a statement,
+   a linked one is a receipt you can go and check. */
+.stat-receipt {
+  padding: 7px 13px;
+  border-radius: 999px;
+  border: 2px solid var(--ink-line);
+  background: var(--card);
+}
+a.stat-receipt {
+  box-shadow: 0 3px 0 0 var(--ink-line);
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
+}
+a.stat-receipt:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 0 0 var(--ink-line);
+}
+a.stat-receipt:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 0 var(--ink-line);
+}
+
 /* ══════════════════════════════════════
    RANKED LIST — positions 4+
    ══════════════════════════════════════ */
@@ -4287,44 +4297,21 @@ a.path-step-card:hover .path-step-badge.skip {
    ═══════════════════════════════════════════════════════════════ */
 .dash-panel {
   background: var(--card);
-  border: 1px solid var(--border);
+  /* The ink construction, matching the cards and chips it sits beside: a real
+     outline and a hard offset shadow, not a 1px hairline over a soft blur. */
+  border: 2px solid var(--ink-line);
   border-radius: var(--r-xl);
-  box-shadow: var(--shadow);
+  box-shadow: 0 3px 0 0 var(--ink-line);
   position: relative;
   overflow: hidden;
   min-width: 0;
 }
-/* Gradient accent hairline — 1px, emerald→amber, 60% opacity, across the top
-   edge of a major panel (brand guide §9.3). `.accent-hairline` is the reusable
-   form for panels that are not the dashboard identity panel; both need the
-   host to be `position: relative` with `overflow: hidden`. */
-.dash-panel::before,
+/* The gradient accent hairline is retired. A 1px emerald-to-amber sweep across
+   the top edge was the last gradient on a major panel; the ink construction
+   carries a panel with an outline, not a light source. `.accent-hairline`
+   stays as a no-op class so the pages that mount it need no edit. */
 .accent-hairline::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  z-index: 5;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    var(--primary-dark) 10%,
-    var(--primary) 35%,
-    var(--xp) 65%,
-    var(--xp-dark) 90%,
-    transparent 100%
-  );
-  opacity: 0.6;
-}
-/* The ambient glow is retired. Two animated radial blobs behind the panel
-   were the last of the glass look: soft coloured light is the opposite of a
-   flat fill with a hard outline, and against the neutral grays it read as a
-   smudge rather than depth. The element stays as an empty positioning layer
-   so the markup that mounts it does not have to change. */
-.dash-panel-amb {
-  display: none;
+  content: none;
 }
 
 .dash-top {
@@ -4710,12 +4697,6 @@ a.path-step-card:hover .path-step-badge.skip {
 }
 
 /* Bottom row — heatmap bigger, quests smaller (flipped from top) */
-/* Dark: the amber ambient blob sat directly behind the heatmap labels and
-   dragged their contrast below AA — halve it there (owner pass, 04-08). */
-[data-theme="dark"] .dash-panel-amb::after {
-  opacity: 0.5;
-}
-
 /* A zero weekly score is not a reward — muted until points land. */
 .lb-xp--zero {
   color: var(--text-3);
@@ -4946,20 +4927,16 @@ a.path-step-card:hover .path-step-badge.skip {
   .dash-split .dash-identity {
     position: relative;
   }
+  /* A plain hairline on the shared quiet line. The fading gradient it
+     replaces was tuned to the panel's ambient softness, which is gone. */
   .dash-split .dash-identity::after {
     content: "";
     position: absolute;
     top: 14%;
     bottom: 14%;
     right: 0;
-    width: 1px;
-    background: linear-gradient(
-      to bottom,
-      transparent,
-      var(--border) 30%,
-      var(--border) 70%,
-      transparent
-    );
+    width: 2px;
+    background: var(--quiet-line);
   }
 }
 @media (max-width: 899px) {
@@ -5138,7 +5115,9 @@ a.path-step-card:hover .path-step-badge.skip {
 }
 .cday.today {
   background: var(--sg-today);
-  animation: today-cell 2s ease-in-out infinite;
+  /* Marked with an outline, not a pulsing glow: the ink system states things
+     with a line, and a 2s loop on an 11px square drew the eye off the data. */
+  box-shadow: 0 0 0 1.5px var(--ink-line);
 }
 /* Streak-freeze day (LX-B8): an inactive day a freeze saved. Stays on the
    green palette (owner call, 04-08): a neutral cell with a green ring reads
