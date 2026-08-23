@@ -21,7 +21,23 @@ import { cn } from "@/lib/utils";
  * Options are addressed by INDEX, not by value, because the "All" option is
  * legitimately `null`/`undefined` on both consumers and would otherwise need a
  * sentinel.
+ *
+ * Every class this component emits is namespaced `segctl-*`. It shipped for a
+ * day as `.seg` / `.seg-track` / `.seg-pills` and collided with the progress
+ * bar's `.seg-track`, which is unlayered and therefore beat these `@layer base`
+ * rules outright — the community filters rendered as 13px clipped capsules.
+ * `SEGCTL_CLASSES` below is asserted disjoint from the progress bar's names in
+ * `segmented-control.test.tsx`, so the next collision fails a test instead of
+ * reaching the page.
  */
+
+/** Every class name this component can emit — kept in sync by its test. */
+export const SEGCTL_CLASSES = [
+  "segctl-track",
+  "segctl-pills",
+  "segctl-tab",
+  "pressed-key",
+] as const;
 export interface SegmentedOption<T> {
   value: T;
   label: string;
@@ -47,7 +63,10 @@ export function SegmentedControl<T>({
     <div
       role="group"
       aria-label={ariaLabel}
-      className={cn(variant === "track" ? "seg-track" : "seg-pills", className)}
+      className={cn(
+        variant === "track" ? "segctl-track" : "segctl-pills",
+        className
+      )}
     >
       {options.map((option, i) => {
         const selected = option.value === value;
@@ -57,7 +76,7 @@ export function SegmentedControl<T>({
             type="button"
             aria-pressed={selected}
             onClick={() => onChange(option.value)}
-            className={cn("seg", selected && "pressed-key")}
+            className={cn("segctl-tab", selected && "pressed-key")}
           >
             {option.label}
           </button>

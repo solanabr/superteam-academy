@@ -53,8 +53,8 @@ describe("SegmentedControl", () => {
     expect(on.className).toContain("pressed-key");
     expect(off.className).not.toContain("pressed-key");
     // Both are still segments — only the state differs.
-    expect(on.className).toContain("seg");
-    expect(off.className).toContain("seg");
+    expect(on.className).toContain("segctl-tab");
+    expect(off.className).toContain("segctl-tab");
   });
 
   it("reports the picked value", () => {
@@ -120,7 +120,7 @@ describe("SegmentedControl", () => {
         ariaLabel="Sort"
       />
     );
-    expect(container.querySelector(".seg-track")).not.toBeNull();
+    expect(container.querySelector(".segctl-track")).not.toBeNull();
 
     rerender(
       <SegmentedControl
@@ -131,8 +131,8 @@ describe("SegmentedControl", () => {
         variant="pills"
       />
     );
-    expect(container.querySelector(".seg-pills")).not.toBeNull();
-    expect(container.querySelector(".seg-track")).toBeNull();
+    expect(container.querySelector(".segctl-pills")).not.toBeNull();
+    expect(container.querySelector(".segctl-track")).toBeNull();
   });
 
   it("keeps every segment a real button (focusable, keyboard-operable)", () => {

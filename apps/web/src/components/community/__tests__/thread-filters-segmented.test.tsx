@@ -90,7 +90,7 @@ describe("ThreadFilters — the shared segmented control", () => {
     const chip = screen.getByRole("button", {
       name: messages.community.filterCourseQuestions,
     });
-    expect(chip.className).not.toContain("seg");
+    expect(chip.className).not.toContain("segctl-");
     expect(chip).toHaveAttribute("aria-pressed", "true");
   });
 
