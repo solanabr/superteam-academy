@@ -80,9 +80,9 @@ describe("deriveCohortStrip (LX-B9b)", () => {
     entry(i + 1, i + 1 === 15)
   );
 
-  it("returns the viewer ±3 centered", () => {
+  it("returns the viewer ±3 centered, with the leader pinned above it", () => {
     const strip = deriveCohortStrip(board);
-    expect(strip.map((e) => e.rank)).toEqual([12, 13, 14, 15, 16, 17, 18]);
+    expect(strip.map((e) => e.rank)).toEqual([1, 12, 13, 14, 15, 16, 17, 18]);
     expect(strip.find((e) => e.isYou)?.rank).toBe(15);
   });
 
@@ -93,11 +93,28 @@ describe("deriveCohortStrip (LX-B9b)", () => {
     ]);
   });
 
-  it("slides to the bottom edge for the last rank", () => {
+  it("slides to the bottom edge for the last rank, still led by rank 1", () => {
     const b = board.map((e) => ({ ...e, isYou: e.rank === 30 }));
     expect(deriveCohortStrip(b).map((e) => e.rank)).toEqual([
-      24, 25, 26, 27, 28, 29, 30,
+      1, 24, 25, 26, 27, 28, 29, 30,
     ]);
+  });
+
+  it("does not duplicate the leader when the window already contains it", () => {
+    for (const myRank of [1, 2, 3, 4]) {
+      const b = board.map((e) => ({ ...e, isYou: e.rank === myRank }));
+      const ranks = deriveCohortStrip(b).map((e) => e.rank);
+      expect(ranks).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    }
+  });
+
+  it("pins the leader as soon as the window slides past them", () => {
+    // Viewer at rank 5 windows to 2..8 — the case that showed a league
+    // starting at "2nd" on the dashboard.
+    const b = board.map((e) => ({ ...e, isYou: e.rank === 5 }));
+    const ranks = deriveCohortStrip(b).map((e) => e.rank);
+    expect(ranks).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(ranks.filter((r) => r === 1)).toHaveLength(1);
   });
 
   it("returns the whole cohort when it is small", () => {

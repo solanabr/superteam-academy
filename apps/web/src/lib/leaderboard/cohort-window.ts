@@ -43,5 +43,17 @@ export function deriveCohortStrip(
   const you = entries.find((e) => e.isYou);
   if (!you) return [];
   const { lo, hi } = cohortStripWindow(you.rank, entries.length, radius);
-  return entries.filter((e) => e.rank >= lo && e.rank <= hi);
+  const window = entries.filter((e) => e.rank >= lo && e.rank <= hi);
+
+  // The leader is always shown, even when the window has slid past them: a
+  // league whose list opens at "2nd" reads as a board with its top cut off,
+  // and who is winning is the one fact a league is for. When rank 1 is
+  // already inside the window this changes nothing; when it is not, the jump
+  // in rank numbers is what tells the reader the list is not contiguous, and
+  // the strip renders a break there.
+  if (window.length > 0 && window[0]!.rank > 1) {
+    const leader = entries.find((e) => e.rank === 1);
+    if (leader) return [leader, ...window];
+  }
+  return window;
 }
