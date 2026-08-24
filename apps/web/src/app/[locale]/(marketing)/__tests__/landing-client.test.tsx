@@ -125,10 +125,10 @@ describe("LandingPageClient — LX-A1 deep-link CTAs", () => {
     expect(intake).toHaveAttribute("href", "/en/start");
   });
 
-  it("keeps the accuracy-corrected wedge as the hero line (owner 2026-08-01: the learner writes the code, AI explains)", () => {
+  it("keeps the trimmed wedge as the hero line (owner 2026-08-24: one sentence, AI helps you understand it)", () => {
     renderLanding();
     expect(
-      screen.getAllByText(/You write the code/i).length
+      screen.getAllByText(/AI helps you understand it/i).length
     ).toBeGreaterThanOrEqual(1);
   });
 
