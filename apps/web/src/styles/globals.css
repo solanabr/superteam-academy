@@ -6624,3 +6624,28 @@ textarea.set-input {
 [data-theme="dark"] .lv-badge {
   box-shadow: none;
 }
+
+/* The Passed chip is the one chip that FILLS. On dark it fills with the
+   button's deep green rather than mint: mint under a white label is 2.1:1,
+   which is the pairing this spec exists to remove. It rides the same
+   `.btn-ink` construction as the Run button it replaces, so the keyline and
+   the missing shadow come for free. */
+.btn-ink--pass {
+  background: var(--success);
+  color: #fff;
+}
+[data-theme="dark"] .btn-ink--pass {
+  background: var(--btn-fill);
+  color: var(--btn-label);
+}
+
+/* Outlined XP chrome — the floating loot pills and the terminal's XP chip.
+   The amber numerals stay amber; they carry their own contrast and are the
+   only coloured text allowed inside outlined chrome. The outline is not
+   theirs to colour: it takes the one keyline, and drops the card shadow with
+   everything else on dark. */
+[data-theme="dark"] .term-xp-chip,
+[data-theme="dark"] .hero-loot {
+  border-color: var(--keyline);
+  box-shadow: none;
+}
