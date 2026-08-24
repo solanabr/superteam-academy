@@ -1075,10 +1075,19 @@
     display: flex;
     gap: 4px;
     overflow-x: auto;
+    /* The track scrolls when it is narrower than its segments, but it must not
+       reserve a scrollbar gutter for the possibility: on a classic-scrollbar
+       platform that gutter made every rail 17px taller than the segments
+       inside it — the catalog's rails measured 56px around 35px tabs, and no
+       neighbouring control could line up with them. */
+    scrollbar-width: none;
     padding: 2px;
     border: 1px solid var(--quiet-line);
     border-radius: var(--r-md);
     background: var(--surface);
+  }
+  .segctl-track::-webkit-scrollbar {
+    display: none;
   }
   .segctl-pills {
     display: flex;
@@ -2504,12 +2513,20 @@
    (`.catalog-tabs` / `.catalog-tab`). It is a segmented choice, so it now uses
    the shared `SegmentedControl` track like the filter rails under it. */
 
-/* ── Filter row layout (search + rails on the same row) ── */
+/* ── Filter row layout (search + rails on the same row) ──
+   One control strip: the search field and the rails read as the same height,
+   which they get by stretching to the line rather than by anyone hardcoding
+   the other's metrics. The rails also refuse to shrink — as flex items with a
+   `flex-1` input beside them they were being crushed to a few pixels wide and
+   scrolling internally; wrapping to the next line is the correct answer. */
 .filter-row {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 10px;
   flex-wrap: wrap;
+}
+.filter-row .segctl-track {
+  flex-shrink: 0;
 }
 
 /* ── Learning Path sections — premium redesign ── */

@@ -191,7 +191,7 @@ export function CourseCatalogClient({
                 placeholder={tCommon("search") + "..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-9 w-full rounded-[var(--r-md)] border-[2.5px] border-border bg-card pl-9 pr-4 text-sm text-text shadow-[var(--shadow-sm)] outline-none transition-[border-color] duration-150 placeholder:text-text-3 focus:border-primary"
+                className="h-full min-h-9 w-full rounded-[var(--r-md)] border-[2.5px] border-border bg-card pl-9 pr-4 text-sm text-text shadow-[var(--shadow-sm)] outline-none transition-[border-color] duration-150 placeholder:text-text-3 focus:border-primary"
                 aria-label={tCommon("search")}
               />
               {searchQuery && (
