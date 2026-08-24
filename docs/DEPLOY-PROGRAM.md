@@ -1,482 +1,263 @@
-> Last synced: 2026-03-02
+> Last synced: 2026-08-24
 
-# Deploying Onchain Academy to Devnet
+# Deploying the program to devnet
 
-Each bounty applicant deploys their own program instance on devnet. This gives you full authority over the program — no shared keys, no waiting on others, and a clean environment to test your frontend against.
+Deploy your own instance of `onchain_academy` on devnet: full authority, no
+shared keys, a clean environment to test a frontend against.
 
-Architecture reference: [ARCHITECTURE.md](./ARCHITECTURE.md) (program specification + on-chain details)
+The program is **Pinocchio-only**. The Anchor implementation was deleted, along
+with `Anchor.toml` — there is no `anchor build`, no `anchor deploy`, and no
+`anchor account` in this runbook. You build with `cargo build-sbf` and deploy
+with `solana program deploy`.
 
-> **⚠️ The program is now Pinocchio-only (the Anchor build was retired).** The
-> canonical, current runbook is **[Pinocchio Runtime § Fresh devnet
-> instance](#fresh-devnet-instance-self-owned-id)** below — it builds with
-> `cargo build-sbf` and deploys with `solana program deploy`. The legacy §1–12
-> below still describe the old Anchor-CLI flow (`update-program-id.sh`,
-> `anchor deploy`, `anchor account`, editing `Anchor.toml`); those commands no
-> longer apply — `Anchor.toml` and the Anchor crate have been deleted. Read
-> §1–2, §6, §8–12 for context (keypairs, funding, initialize, verify), but take
-> the build/deploy steps (§3–5, §7) from the Fresh devnet instance runbook.
+Companion docs: [SPEC.md](./SPEC.md) is the authoritative program specification;
+[PINOCCHIO-MIGRATION.md](./PINOCCHIO-MIGRATION.md) explains what the port
+changed for clients; [ARCHITECTURE.md](./ARCHITECTURE.md) covers how the app
+uses it.
 
 ---
 
 ## Prerequisites
 
-| Tool       | Version |
-| ---------- | ------- |
-| Rust       | 1.82+   |
-| Solana CLI | 1.18+   |
-| Anchor CLI | 0.31+   |
-| Node.js    | 18+     |
-| pnpm       | any     |
-
-Verify:
+| Tool       | Version          | Note                                          |
+| ---------- | ---------------- | --------------------------------------------- |
+| Rust       | 1.89+            | Pinocchio 0.11.2 requires it                  |
+| Solana CLI | Agave 2.x or 3.x | Downloads platform-tools `v1.54` on demand    |
+| Node.js    | 20               | For the TypeScript helper scripts (`npx tsx`) |
+| pnpm       | 10               | Pinned by `packageManager` at the repo root   |
 
 ```bash
-rustc --version
-solana --version
-anchor --version
-node --version
+rustc --version && solana --version && node --version
 ```
+
+## Two program-id flavors
+
+The program id is baked in at compile time, so which artifact you deploy matters.
+
+| Build                        | Program id                                     | Use                                                                            |
+| ---------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------ |
+| `pnpm build:pinocchio`       | `7NeJaSRyb4Wxay3Tcd9bdpD7T3GWYUQSFyrhG8SgwE8V` | Default. The upstream id the IDL declares; what every parity gate runs against |
+| `pnpm build:pinocchio:fresh` | `Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u` | `--features fresh-id`. The self-owned devnet instance — deploy this one        |
+
+A new id means new PDAs, so a fresh instance starts empty. Every client works
+unchanged apart from the id.
+
+Deploying the **default** artifact at the fresh id cannot corrupt anything: the
+baked-id self-check rejects every instruction with `DeclaredProgramIdMismatch`
+(4100). Seeing 4100 on devnet means you deployed the wrong artifact — rebuild
+and redeploy `…_fresh.so`. The reverse mix-up is impossible, since the
+fresh-flavor binary never carries the upstream id.
 
 ---
 
-## 1. Clone and Setup
+## 1. Keypairs
 
-```bash
-git clone https://github.com/solanabr/superteam-academy
-cd superteam-academy/onchain-academy
-pnpm install
-```
-
----
-
-## 2. Generate Keypairs
-
-Three keypairs are needed. All go in the `wallets/` directory at the repo root (gitignored).
+All keypairs live in `wallets/` (gitignored).
 
 ```bash
 mkdir -p wallets
-```
 
-**Authority/payer keypair** — your deployer wallet. Skip this step if you already have a Solana CLI wallet you want to use; copy it to `wallets/signer.json`.
-
-```bash
+# Deployer / authority. Skip if you already have a CLI wallet to use.
 solana-keygen new --outfile wallets/signer.json
-```
 
-**Program keypair** — determines the program ID. Use `grind` for a vanity address (optional) or `new` for a random one.
-
-```bash
-# Option A: random
+# Program keypair — determines the program id. `grind` for a vanity address.
 solana-keygen new --outfile wallets/program-keypair.json
 
-# Option B: vanity (takes time, skip on first deploy)
-solana-keygen grind --starts-with ACAD:1 --outfile wallets/program-keypair.json
-```
-
-**XP mint keypair** — determines the XP token mint address. This is passed as a signer to `initialize`, not a PDA.
-
-```bash
-# Option A: random
+# XP mint keypair — a signer to `initialize`, not a PDA.
 solana-keygen new --outfile wallets/xp-mint-keypair.json
-
-# Option B: vanity
-solana-keygen grind --starts-with XP:1 --outfile wallets/xp-mint-keypair.json
 ```
 
-Confirm all three exist:
+The already-provisioned fresh instance uses
+`onchain-academy/wallets/pinocchio-program-devnet-v2.json` and
+`onchain-academy/wallets/xp-mint-keypair.json` (both gitignored). Generating a
+genuinely new id means changing the baked constant in `src/consts.rs` and
+rebuilding, not just swapping the keypair file.
 
-```bash
-ls wallets/
-# signer.json  program-keypair.json  xp-mint-keypair.json
-```
+## 2. Fund the deployer
 
----
-
-## 3. Update Program ID
-
-Run the script from the repo root. It reads the pubkey from `wallets/program-keypair.json` and patches `declare_id!()` in `lib.rs` and the `onchain_academy` entry in `Anchor.toml`.
-
-```bash
-chmod +x scripts/update-program-id.sh
-./scripts/update-program-id.sh
-```
-
-The script uses `sed -i ''` (macOS syntax). On Linux, edit the script to use `sed -i` without the empty string:
-
-```bash
-# In scripts/update-program-id.sh, change:
-sed -i '' "s/..."
-# To:
-sed -i "s/..."
-```
-
-Verify the program ID was updated:
-
-```bash
-grep "declare_id" onchain-academy/programs/onchain-academy/src/lib.rs
-grep "onchain_academy" onchain-academy/Anchor.toml
-```
-
-Both should show the pubkey from `wallets/program-keypair.json`.
-
----
-
-## 4. Build
-
-```bash
-cd onchain-academy
-pnpm build:pinocchio
-```
-
-The committed IDL the clients load lives at:
-
-- `idl/onchain_academy.ts` — TypeScript types for your client
-- `idl/onchain_academy.json` — raw JSON IDL
-
-**If you get `edition2024` or dependency resolution errors**, pin these crates and rebuild:
-
-```bash
-cargo update -p blake3 --precise 1.7.0
-cargo update -p rmp --precise 0.8.14
-cargo update -p rmp-serde --precise 1.3.0
-pnpm build:pinocchio
-```
-
----
-
-## 5. Configure Devnet
-
-Edit `onchain-academy/Anchor.toml`. Change the cluster:
-
-```toml
-[provider]
-cluster = "devnet"
-wallet = "../wallets/signer.json"
-```
-
-Also update the programs table key. Change `[programs.localnet]` to `[programs.devnet]`:
-
-```toml
-[programs.devnet]
-onchain_academy = "<YOUR_PROGRAM_ID>"
-```
-
-Set Solana CLI to devnet:
+Deployment costs roughly 1.5–2 SOL for the ~213 KB binary, plus about 0.01 SOL
+of rent for `initialize`.
 
 ```bash
 solana config set --url devnet
-solana config set --keypair ../wallets/signer.json
+solana config set --keypair wallets/signer.json
+
+solana airdrop 2
+solana airdrop 2
+solana balance
 ```
 
----
+If the CLI airdrop is rate-limited, use <https://faucet.solana.com>.
 
-## 6. Fund Your Wallet
+## 3. Pre-flight gates
 
-You need 3-5 SOL for deployment and transactions.
+Both must be green before you spend devnet SOL:
 
 ```bash
-# Airdrop (limited to 2 SOL per request, run twice if needed)
-solana airdrop 2 wallets/signer.json
-solana airdrop 2 wallets/signer.json
+cd onchain-academy
 
-# Check balance
-solana balance ../wallets/signer.json
+pnpm build:pinocchio    # cargo build-sbf --tools-version v1.54
+pnpm test:layout        # host tests: byte/discriminator/CPI-wire parity
+pnpm test:integration   # LiteSVM: every instruction, happy and error paths
 ```
 
-If the CLI airdrop is rate-limited, connect Github and use the web faucet: https://faucet.solana.com
+`fresh_id_smoke.rs` inside the integration suite runs `initialize` in-SVM and
+byte-checks the resulting Config — a fresh-id deploy is proven before it touches
+devnet.
 
----
-
-## 7. Deploy
-
-Run from inside `onchain-academy/`:
+## 4. Build the deploy artifact
 
 ```bash
-anchor deploy --program-name onchain_academy --provider.cluster devnet --program-keypair ../wallets/program-keypair.json
-```
-
-On success you will see:
-
-```
-Program Id: <YOUR_PROGRAM_ID>
-Deploy success
-```
-
----
-
-## 8. Initialize the Program
-
-This is a one-time operation that:
-
-- Creates the `Config` PDA
-- Creates the XP mint (Token-2022, NonTransferable + PermanentDelegate, 0 decimals)
-- Auto-registers the authority as a `MinterRole` (label: "backend", unlimited cap)
-
-The deployer wallet becomes both `authority` and `backend_signer` — no separate backend key needed for devnet.
-
-Run `scripts/initialize.ts`:
-
-```bash
-export ANCHOR_PROVIDER_URL=https://api.devnet.solana.com \
-export ANCHOR_WALLET=../wallets/signer.json \
-npx ts-node scripts/initialize.ts
-```
-
-Note: `initialize` will fail with `already initialized` if run a second time — this is expected. The program enforces single initialization via the `config` PDA init constraint.
-
-Note on XP token metadata: The `initialize` instruction sets the `MetadataPointer` extension on the mint but defers actual metadata initialization to a separate client transaction. This is cosmetic — the mint works fully for XP minting without it. You can initialize metadata later when building the frontend.
-
----
-
-## 9. Create a Test Course
-
-```bash
-npx ts-node scripts/create-mock-course.ts
-```
-
-> **Mainnet caveat.** `create-mock-course.ts` uses a placeholder creator wallet
-> and default `trackId` / `trackLevel`. `Course.creator`, `track_id`, and
-> `track_level` are **immutable** after `create_course` (no `update_course`
-> setter; recoverable on devnet only via a full recreate, and NOT at all on
-> mainnet). Before any mainnet course creation, work the **instructor
-> credibility & track ladder** section of the Pre-Mainnet Checklist in the
-> `superteam-academy-dev` skill (`deployment.md`): real instructor wallets
-> confirmed per course, `trackId` / `trackLevel` finalized per owner decision
-> D-6, credibility display verified.
-
----
-
-## 10. Create Track Collection (optional — credential flow only)
-
-Required only if you are testing `issue_credential` or `upgrade_credential`. Metaplex Core is already deployed on devnet — no fixtures needed.
-
-```bash
-npx ts-node scripts/create-mock-track.ts
-```
-
-Store the collection address — it is required as an account in `issue_credential`.
-
----
-
-## 11. Verify Deployment
-
-```bash
-# Show program info
-solana program show <YOUR_PROGRAM_ID>
-
-# Fetch config account
-anchor account onchain_academy.Config <CONFIG_PDA> --provider.cluster devnet
-
-# Check XP mint
-spl-token display <XP_MINT_ADDRESS> --program-id TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb
-```
-
----
-
-## 12. Frontend Environment Variables
-
-Add these to your `.env.local`:
-
-```env
-# Public (safe to expose)
-NEXT_PUBLIC_PROGRAM_ID=<YOUR_PROGRAM_ID>
-NEXT_PUBLIC_XP_MINT_ADDRESS=<YOUR_XP_MINT_ADDRESS>
-NEXT_PUBLIC_SOLANA_NETWORK=devnet
-
-# Server-side only (never expose to client)
-BACKEND_SIGNER_SECRET=<BASE58_PRIVATE_KEY>
-PROGRAM_AUTHORITY_SECRET=<BASE58_PRIVATE_KEY>
-```
-
-For devnet, `BACKEND_SIGNER_SECRET` and `PROGRAM_AUTHORITY_SECRET` can be the same keypair (as base58). In production these are separate keys.
-
-To extract the base58 private key from a Solana keypair JSON file:
-
-```bash
-node -e "const k=require('./wallets/signer.json'); const bs58=require('bs58'); console.log(bs58.encode(Buffer.from(k)))"
-```
-
----
-
-## Quick Reference
-
-See [Pinocchio Runtime § Fresh devnet instance](#fresh-devnet-instance-self-owned-id)
-for the full, live deploy runbook. In short:
-
-```bash
-# Build the deploy artifact (run from onchain-academy/)
+cd onchain-academy
 pnpm build:pinocchio:fresh
-
-# Deploy under your own wallet (fee payer + upgrade authority default to
-# ~/.config/solana/id.json)
-solana program deploy target/deploy/onchain_academy_pinocchio_fresh.so \
-  --program-id wallets/pinocchio-program-devnet.json --url devnet
-
-# Initialize
-ANCHOR_PROVIDER_URL=https://api.devnet.solana.com \
-ANCHOR_WALLET=~/.config/solana/id.json \
-npx ts-node scripts/initialize.ts
-
-# Verify
-solana program show <PROGRAM_ID>
 ```
 
----
+`scripts/build-pinocchio-deploy.sh` gates on `cargo test --features fresh-id`
+first, emits `target/deploy/onchain_academy_pinocchio_fresh.so`, and restores the
+default artifact afterwards.
 
-## Troubleshooting
+> **`edition2024` or dependency-resolution errors**: pin the offending crates and
+> rebuild.
+>
+> ```bash
+> cargo update -p blake3 --precise 1.7.0
+> cargo update -p rmp --precise 0.8.14
+> cargo update -p rmp-serde --precise 1.3.0
+> ```
 
-**`edition2024` or `rmp-serde` build errors**
-
-Rust edition 2024 resolver conflicts. Pin the affected crates:
-
-```bash
-cargo update -p blake3 --precise 1.7.0
-cargo update -p rmp --precise 0.8.14
-cargo update -p rmp-serde --precise 1.3.0
-pnpm build:pinocchio
-```
-
-**`sed: illegal option` on Linux**
-
-The `update-program-id.sh` script uses macOS `sed -i ''` syntax. On Linux, edit the two `sed` lines in the script to remove the empty string argument:
+## 5. Deploy
 
 ```bash
-# macOS (default in repo)
-sed -i '' "s/..."
-
-# Linux
-sed -i "s/..."
-```
-
-**`Error: Account already in use` / "already initialized"**
-
-The Config PDA already exists at this program ID. Either you already initialized successfully, or there is a key collision. Check the Config PDA on-chain:
-
-```bash
-solana account $(solana-keygen pubkey wallets/signer.json) --url devnet
-```
-
-If you want a fresh deployment, generate a new program keypair and redeploy.
-
-**Insufficient SOL**
-
-Deployment costs roughly 2-3 SOL. `initialize` costs an additional ~0.01 SOL for rent. Use https://faucet.solana.com if the CLI airdrop is rate-limited.
-
-**`solana program deploy` fails mid-way (buffer account left behind)**
-
-A failed deploy can leave a funded intermediate buffer account. Reclaim its
-rent and retry:
-
-```bash
-solana program close --buffers --url devnet --keypair wallets/signer.json
-```
-
----
-
-## Pinocchio Runtime
-
-The program is built with Pinocchio
-(`onchain-academy/programs/onchain-academy-pinocchio`) — see
-[SPEC.md](./SPEC.md) and [ANCHOR-VS-PINOCCHIO.md](./ANCHOR-VS-PINOCCHIO.md).
-The live deploy path is a **fresh devnet instance** under a self-owned program
-id (built with `--features fresh-id`): a clean sandbox for end-to-end testing.
-Runbook below.
-
-### Build
-
-```bash
-cd onchain-academy
-pnpm build:pinocchio
-# = cargo build-sbf --manifest-path programs/onchain-academy-pinocchio/Cargo.toml --tools-version v1.54
-```
-
-Pinocchio 0.11.2 requires rustc >= 1.89, hence the pinned platform-tools
-`v1.54` (any Agave 2.x/3.x CLI downloads it on demand). Artifact:
-`target/deploy/onchain_academy_pinocchio.so`.
-
-The default build bakes the upstream program id. `pnpm build:pinocchio:fresh`
-(`scripts/build-pinocchio-deploy.sh`) additionally produces
-`target/deploy/onchain_academy_pinocchio_fresh.so` with the self-owned
-instance id baked in (`--features fresh-id`), gating the id/PDA consts with
-`cargo test --features fresh-id` first and restoring the default artifact
-afterwards.
-
-> Trident and the CU harness load `target/deploy/onchain_academy.so`;
-> `bash scripts/select-program.sh` installs the pinocchio build into that slot
-> (and prints the SHA-256). For devnet deploys use the explicit
-> `solana program deploy` below.
-
-### Pre-flight gates
-
-Both must be green before a deploy:
-
-```bash
-cd onchain-academy
-pnpm build:pinocchio   # cargo build-sbf --tools-version v1.54
-pnpm test:layout       # byte/discriminator/CPI-wire parity
-pnpm test:integration  # single-LiteSVM: all instructions, happy + error paths
-pnpm cu:compare        # regenerates tests/CU_COMPARISON.md (local; needs RAM)
-```
-
-### Fresh devnet instance (self-owned id)
-
-End-to-end testing without the upstream upgrade authority: deploy the
-pinocchio build at its own program id, with your own wallet as both
-`authority` and `backend_signer`. A new id means new PDAs — the instance
-starts empty (no upstream courses carry over); the IDL and all clients work
-unchanged apart from the id.
-
-Identity baked at compile time by `--features fresh-id`, verified by the
-`config_pda_consts` host test and `tests/differential/tests/fresh_id_smoke.rs`
-(in-SVM initialize + byte-checked Config before any devnet SOL is spent):
-
-| What                  | Value                                                                                                                |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| Program id            | `Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u`                                                                       |
-| Program keypair       | `onchain-academy/wallets/pinocchio-program-devnet-v2.json` (gitignored)                                              |
-| Config PDA (bump 254) | `E9GVGKbyoWNSf9B1iR8gNVecwDwqnzNbUxcBzVCVSXan`                                                                       |
-| XP mint               | `BUk5izZcRompFe2da1yv9BLcMLBEEyg7JCvS8nQYoHHd` (keypair: `onchain-academy/wallets/xp-mint-keypair.json`, gitignored) |
-
-```bash
-cd onchain-academy
-
-# 1. Build the deploy artifact. (The TS helper scripts load the committed IDL
-#    at onchain-academy/idl/ — no extra build step needed.)
-pnpm build:pinocchio:fresh
-
-# 2. Deploy under your own wallet — fee payer + upgrade authority default to
-#    ~/.config/solana/id.json. Rent for the ~200 KB binary is ~1.5 SOL.
 solana program deploy target/deploy/onchain_academy_pinocchio_fresh.so \
   --program-id wallets/pinocchio-program-devnet-v2.json \
   --url devnet
-
-# 3. Initialize: creates Config + the Token-2022 XP mint (from
-#    wallets/xp-mint-keypair.json) + your backend MinterRole.
-#    The public endpoint rate-limits aggressively — any provider URL works
-#    here (e.g. Helius devnet with your key).
-export ACADEMY_PROGRAM_ID=Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u
-export ANCHOR_PROVIDER_URL=https://api.devnet.solana.com
-export ANCHOR_WALLET=~/.config/solana/id.json
-# scripts/initialize.ts reads ../wallets/xp-mint-keypair.json relative to CWD —
-# run it from onchain-academy/scripts/. (No ts-node in deps; tsx works.)
-(cd scripts && npx tsx initialize.ts)
-
-# 4. E2E canary — every scripts/*.ts helper honors ACADEMY_PROGRAM_ID:
-npx tsx scripts/create-mock-course.ts
-npx tsx scripts/e2e-flow.ts   # enroll → lessons → finalize → close
-npx tsx scripts/check-xp.ts
-# Credential leg: create a track collection first (§10,
-# create-mock-track.ts) and pass it to e2e-flow.ts / issue-credential.ts.
-
-# 5. Verify
-solana program show Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u --url devnet
 ```
 
-Deploying the DEFAULT-flavor `.so` at this id cannot corrupt anything: the
-baked-id self-check rejects every instruction with
-`DeclaredProgramIdMismatch` (4100) — proven in `fresh_id_smoke.rs`. Seeing
-4100 on devnet means the wrong artifact; redeploy `…_fresh.so`. The reverse
-mix-up is impossible (the fresh-flavor binary never holds the upstream id).
+Fee payer and upgrade authority default to `~/.config/solana/id.json`.
 
-Frontend against the fresh instance: point `NEXT_PUBLIC_PROGRAM_ID` and
-`NEXT_PUBLIC_XP_MINT_ADDRESS` (§12) at the table values above.
+> **Use a dedicated RPC, not the public devnet endpoint.** A ~213 KB program
+> deploy is hundreds of sequential write transactions, and the public endpoint
+> rate-limits aggressively enough to fail one part-way through. Pass a provider
+> URL (Helius devnet with your key, for example) to `--url`.
+>
+> If a deploy does fail part-way it leaves a funded buffer account behind.
+> Reclaim the rent before retrying:
+>
+> ```bash
+> solana program close --buffers --url devnet --keypair wallets/signer.json
+> ```
+
+## 6. Initialize
+
+One-time. It creates the Config PDA, creates the XP mint (Token-2022,
+NonTransferable + PermanentDelegate + MetadataPointer, 0 decimals), and
+auto-registers the authority as a `MinterRole` labelled `backend` with an
+unlimited cap. On devnet the deployer is both `authority` and `backend_signer`.
+
+`scripts/initialize.ts` reads `../wallets/xp-mint-keypair.json` relative to the
+working directory, so run it from `scripts/`. There is no `ts-node` in the
+dependency tree — use `tsx`.
+
+```bash
+cd onchain-academy
+
+export ACADEMY_PROGRAM_ID=Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u
+export ANCHOR_PROVIDER_URL=<your devnet RPC>
+export ANCHOR_WALLET=~/.config/solana/id.json
+
+(cd scripts && npx tsx initialize.ts)
+```
+
+A second run fails with "already initialized" — expected. The Config PDA's init
+constraint enforces single initialization.
+
+Token metadata is deferred: `initialize` sets the MetadataPointer extension but
+leaves the TokenMetadata initialization to a separate client transaction (an
+Agave 3.0 CPI-realloc restriction). This is cosmetic — the mint works fully for
+XP without it.
+
+## 7. Smoke-test end to end
+
+Every `scripts/*.ts` helper honours `ACADEMY_PROGRAM_ID`.
+
+```bash
+npx tsx scripts/create-mock-course.ts
+npx tsx scripts/e2e-flow.ts        # enroll → lessons → finalize → close
+npx tsx scripts/check-xp.ts
+```
+
+For the credential leg, create a track collection first
+(`scripts/create-mock-track.ts`) and pass it to `e2e-flow.ts` /
+`issue-credential.ts`. Metaplex Core is already live on devnet — no fixtures
+needed.
+
+> **Before any mainnet course creation.** `create-mock-course.ts` uses a
+> placeholder creator wallet and default `trackId` / `trackLevel`.
+> `Course.creator`, `track_id`, and `track_level` are **immutable** after
+> `create_course` — there is no `update_course` setter, recovery on devnet needs
+> a full recreate, and there is no recovery at all on mainnet. Confirm real
+> instructor wallets and the finalized track ladder first.
+
+## 8. Verify
+
+```bash
+solana program show $ACADEMY_PROGRAM_ID --url devnet
+
+npx tsx scripts/fetch-config.ts
+
+spl-token display <XP_MINT_ADDRESS> \
+  --program-id TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb
+```
+
+The live fresh instance, for comparison:
+
+| What        | Value                                                     |
+| ----------- | --------------------------------------------------------- |
+| Program id  | `Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u`            |
+| Config PDA  | `E9GVGKbyoWNSf9B1iR8gNVecwDwqnzNbUxcBzVCVSXan` (bump 254) |
+| XP mint     | `BUk5izZcRompFe2da1yv9BLcMLBEEyg7JCvS8nQYoHHd`            |
+| Binary size | 213,024 bytes                                             |
+
+## 9. Point the frontend at it
+
+```env
+NEXT_PUBLIC_PROGRAM_ID=<your program id>
+NEXT_PUBLIC_XP_MINT_ADDRESS=<xp mint from the initialize output>
+NEXT_PUBLIC_SOLANA_NETWORK=devnet
+
+PROGRAM_AUTHORITY_SECRET=<JSON array of 64 keypair bytes>
+BACKEND_SIGNER_SECRET=<JSON array of 64 keypair bytes>
+```
+
+On devnet the two secrets can be the same keypair; in production they are
+separate keys. Both are **JSON byte arrays**, the same format
+`solana-keygen` writes — not base58 strings. `getProgramId()` throws when
+`NEXT_PUBLIC_PROGRAM_ID` is unset rather than silently defaulting.
+
+The full annotated env list is the `## Environment Variables` block in
+[`apps/web/CLAUDE.md`](../apps/web/CLAUDE.md).
+
+---
+
+## Reproducible builds
+
+`.github/workflows/ci.yml` runs a `verifiable-build` job and a `publish-hash`
+job that writes the SHA-256 of the toolchain-reproducible build to a dedicated
+`program-hash` branch on every change. [PROGRAM-HASH.md](./PROGRAM-HASH.md) is
+the human-readable spec and entry point; it is deliberately not CI-updated on
+`main`, because branch protection forbids the bot from pushing there.
+
+Trident and the CU harness load `target/deploy/onchain_academy.so`;
+`bash scripts/select-program.sh` installs the Pinocchio build into that slot and
+prints its SHA-256. Devnet deploys use the explicit `solana program deploy` path
+above instead.
+
+## Troubleshooting
+
+| Symptom                                        | Cause                                                                             |
+| ---------------------------------------------- | --------------------------------------------------------------------------------- |
+| `DeclaredProgramIdMismatch` (4100)             | Wrong artifact for this id. Rebuild with `build:pinocchio:fresh` and redeploy.    |
+| `Account already in use` / already initialized | The Config PDA exists. You already initialized, or you are reusing a live id.     |
+| Deploy stalls or fails part-way                | Public RPC rate limit. Use a provider URL, then `solana program close --buffers`. |
+| `edition2024` / `rmp-serde` build errors       | Edition-2024 resolver conflict. Pin the crates as shown in §4.                    |
+| Insufficient SOL                               | Budget ~2 SOL for the deploy plus rent. Airdrop twice or use the web faucet.      |

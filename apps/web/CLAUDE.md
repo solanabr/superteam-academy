@@ -39,7 +39,7 @@ Server components share one per-request claims read via `getAuthClaims()` (`lib/
 
 ### Achievements
 
-The curated set (currently 10) lives in `solanabr/academy-courses` under `achievements/` — git is the source of truth; do not enumerate them here.
+The curated set (currently 18 — the course-agnostic ladder, Speedrunner as the only course badge) lives in `solanabr/academy-courses` under `achievements/` — git is the source of truth; do not enumerate them here.
 
 **Unlock logic is declarative, not a per-achievement map.** Each achievement doc carries an `award` rule (a discriminated union of `AwardKind`); `lib/gamification/achievements.ts` holds `PREDICATES satisfies Record<AwardKind, Predicate>` — one predicate per _kind_, so adding a kind without a predicate is a compile error, and no course/path id is ever hardcoded. Adding an achievement means adding a content doc, not code.
 

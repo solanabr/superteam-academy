@@ -1,4 +1,4 @@
-> Last synced: 2026-07-12
+> Last synced: 2026-08-24
 
 # Deployment Guide
 
@@ -51,49 +51,56 @@ compiled from the `solanabr/academy-courses` git repo — see
 
 Add all environment variables in **Vercel → Project → Settings → Environment Variables**.
 
-#### Required Variables
+> **The authoritative list is the `## Environment Variables` block in
+> [`apps/web/CLAUDE.md`](../apps/web/CLAUDE.md)** — every variable, what it does,
+> and what happens when it is unset. `.env.example` is the copyable template.
+> This section covers only what is specific to deploying, and does not repeat the
+> full list.
 
 Validated eagerly at boot (`lib/env.ts` for public, `lib/env.server.ts` for
 server-only, both wired through `instrumentation.ts`). A missing **required** var
 fails the boot loudly rather than degrading silently.
 
-| Variable                        | Type            | Notes                                                                                                                                                                                                                                                            |
-| ------------------------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | Public          | Bundled into client JS                                                                                                                                                                                                                                           |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public          | Bundled into client JS                                                                                                                                                                                                                                           |
-| `SUPABASE_SERVICE_ROLE_KEY`     | **Server-only** | Never exposed to browser                                                                                                                                                                                                                                         |
-| `NEXT_PUBLIC_SOLANA_RPC_URL`    | Public          | Browser RPC. Must carry **no** privileged key (e.g. `https://api.devnet.solana.com`)                                                                                                                                                                             |
-| `SOLANA_RPC_URL`                | **Server-only** | Server RPC — **this** is the one that may carry the Helius key. Required at boot so a misconfig fails loudly instead of falling back to public devnet                                                                                                            |
-| `NEXT_PUBLIC_SOLANA_NETWORK`    | Public          | `devnet`                                                                                                                                                                                                                                                         |
-| `NEXT_PUBLIC_APP_URL`           | Public          | Your Vercel URL (e.g., `https://superteam-academy-web.vercel.app`)                                                                                                                                                                                               |
-| `NEXT_PUBLIC_PROGRAM_ID`        | Public          | Program ID from `solana program deploy` (see [DEPLOY-PROGRAM.md](./DEPLOY-PROGRAM.md))                                                                                                                                                                           |
-| `NEXT_PUBLIC_XP_MINT_ADDRESS`   | Public          | XP mint pubkey from the `initialize` output                                                                                                                                                                                                                      |
-| `BUILD_SERVER_URL`              | **Server-only** | Cloud Run service URL (e.g., `https://academy-build-server-HASH.a.run.app`)                                                                                                                                                                                      |
-| `BUILD_SERVER_API_KEY`          | **Server-only** | Same value as `ACADEMY_API_KEY` on Cloud Run                                                                                                                                                                                                                     |
-| `HELIUS_API_KEY`                | **Server-only** | Helius key for webhook management — the registration/list calls live in the operator tool `scripts/helius-webhook-config.ts`, run by hand; the app itself only verifies inbound deliveries                                                                       |
-| `PROGRAM_AUTHORITY_SECRET`      | **Server-only** | The `Config.authority` keypair (JSON array of 64 bytes) — required for admin on-chain deployments                                                                                                                                                                |
-| `BACKEND_SIGNER_SECRET`         | **Server-only** | The keypair registered in `Config.backend_signer` — signs lesson completion / finalize / credential transactions                                                                                                                                                 |
-| `ADMIN_SECRET`                  | **Server-only** | Admin console password **and** the HMAC key signing the `admin_session` cookie (min 32 chars). Required to access `/{locale}/admin`                                                                                                                              |
-| `HELIUS_WEBHOOK_SECRET`         | **Server-only** | Shared secret for Helius webhook signature verification (`/api/webhooks/helius`)                                                                                                                                                                                 |
-| `XP_MINT_AUTHORITY_SECRET`      | **Server-only** | XP mint authority keypair — required for the wallet link/unlink XP transfers                                                                                                                                                                                     |
-| `GITHUB_TOKEN`                  | **Server-only** | Fine-grained **read** token for `solanabr/academy-courses`. Powers the admin **Publish** screen (HEAD polling + CI checks). Optional at boot, but the admin content routes 503 without it. **Read scope only — no route in the app holds a GitHub write token.** |
+Two things to know before you paste anything in:
 
-#### Optional Variables
+- **`NEXT_PUBLIC_*` is inlined at build time.** Changing one requires a redeploy
+  with "Use existing Build Cache" **disabled** — a cache-reusing redeploy keeps
+  the old value baked into the served chunks while the dashboard shows the new
+  one. That exact trap has caused a live incident. Verify by grepping the served
+  `/_next/static` chunks, not the dashboard.
+- **`ADMIN_SECRET` is retired** and can be deleted. Admin access is a Supabase
+  session checked against the `admin_users` table; there is no admin password.
 
-| Variable                         | Type            | Notes                                                                                                                                                                                                                                                                |
-| -------------------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GEMINI_API_KEY`                 | **Server-only** | Gemini key for the AI lesson assistant (`/api/ai/*`). Omit to disable the assistant.                                                                                                                                                                                 |
-| `AI_PARTNER_SEAL_SECRET`         | **Server-only** | Dedicated key for sealing the comprehension-check token. If unset, derived from `SUPABASE_SERVICE_ROLE_KEY`.                                                                                                                                                         |
-| `ARWEAVE_UPLOADER_SECRET`        | **Server-only** | Funds Irys uploads that pin credential metadata to Arweave at mint. A **Solana** keypair (JSON array of 64 bytes), not an Arweave JWK. Unset → mint falls back to `/api/certificates/metadata`. Required (funded on mainnet-beta) for permanent mainnet credentials. |
-| `MODERATION_WEBHOOK_URL`         | **Server-only** | Slack/Discord-compatible incoming webhook. When set, the first flag on a community post pings it. Unset → no notification (the `/admin/moderation` queue still fills).                                                                                               |
-| `RUST_PLAYGROUND_URL`            | **Server-only** | `/api/rust/execute` upstream (default: play.rust-lang.org)                                                                                                                                                                                                           |
-| `RESEND_API_KEY`                 | **Server-only** | Resend key for outbound email (announcements #769, session-plan reminders #869). The mail pipeline is **fail-closed**: unset ⇒ nothing is ever sent. Set only once a Resend sending domain (DKIM/SPF/DMARC) is verified.                                             |
-| `EMAIL_FROM`                     | **Server-only** | Verified From identity, e.g. `Superteam Academy <news@st.academy>`. Unset → `DEFAULT_EMAIL_FROM` in `lib/email/resend.ts`.                                                                                                                                           |
-| `CRON_SECRET`                    | **Server-only** | Shared secret for Vercel Cron (#869). Vercel sends it as `Authorization: Bearer $CRON_SECRET` to every `/api/cron/*` route. **Unset ⇒ the cron route 503s and no reminder is sent** — an unauthenticated mail trigger must never be reachable.                       |
-| `NEXT_PUBLIC_GA4_MEASUREMENT_ID` | Public          | Google Analytics 4                                                                                                                                                                                                                                                   |
-| `NEXT_PUBLIC_POSTHOG_KEY`        | Public          | PostHog project key                                                                                                                                                                                                                                                  |
-| `NEXT_PUBLIC_POSTHOG_HOST`       | Public          | PostHog instance URL                                                                                                                                                                                                                                                 |
-| `NEXT_PUBLIC_SENTRY_DSN`         | Public          | Sentry error tracking (DSN is safe to expose)                                                                                                                                                                                                                        |
+#### The ones that gate a deploy
+
+Required at boot — the build or the first request fails without them:
+
+| Variable                        | Type            | Notes                                                                                                                                   |
+| ------------------------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Public          | Bundled into client JS                                                                                                                  |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public          | Bundled into client JS                                                                                                                  |
+| `SUPABASE_SERVICE_ROLE_KEY`     | **Server-only** | Never exposed to the browser. Also gates admin auth — without it every admin check fails closed                                         |
+| `NEXT_PUBLIC_SOLANA_RPC_URL`    | Public          | Browser RPC. Must carry **no** privileged key                                                                                           |
+| `SOLANA_RPC_URL`                | **Server-only** | Server RPC — **this** is the one that may carry the Helius key. Required so a misconfig fails loudly instead of hitting public devnet   |
+| `NEXT_PUBLIC_APP_URL`           | Public          | A **production** build with this unset fails at boot. An empty value would pin a relative metadata URI into an immutable credential NFT |
+
+#### Feature-gated
+
+Everything else switches a feature on or off. Unset means the feature is off,
+and every one of them degrades deliberately rather than crashing:
+
+| Set these for…           | Variables                                                                                                                                                              |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| On-chain features        | `NEXT_PUBLIC_PROGRAM_ID`, `NEXT_PUBLIC_XP_MINT_ADDRESS`, `NEXT_PUBLIC_SOLANA_NETWORK`, `PROGRAM_AUTHORITY_SECRET`, `BACKEND_SIGNER_SECRET`, `XP_MINT_AUTHORITY_SECRET` |
+| Helius event ingestion   | `HELIUS_API_KEY`, `HELIUS_WEBHOOK_SECRET`                                                                                                                              |
+| The admin publish card   | `GITHUB_TOKEN` (**read scope only** — no route holds a write token; unset ⇒ 503 on that card alone)                                                                    |
+| Rust builds and deploys  | `BUILD_SERVER_URL`, `BUILD_SERVER_API_KEY`, `RUST_PLAYGROUND_URL`                                                                                                      |
+| The AI lesson assistant  | `GEMINI_API_KEY`, `AI_PARTNER_SEAL_SECRET`, the `AI_SPEND_*` caps, the `AI_MODEL_*` overrides                                                                          |
+| Embedded wallets         | `NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID` (see the build-cache warning above)                                                                                               |
+| Permanent credentials    | `ARWEAVE_UPLOADER_SECRET` — a **Solana** keypair funding Irys, not an Arweave JWK. Unset ⇒ mint falls back to `/api/certificates/metadata`                             |
+| Outbound email + cron    | `RESEND_API_KEY`, `EMAIL_FROM`, `CRON_SECRET` — all **fail-closed**: unset means nothing is ever sent                                                                  |
+| Moderation notifications | `MODERATION_WEBHOOK_URL` (the queue still fills without it)                                                                                                            |
+| Analytics                | `NEXT_PUBLIC_GA4_MEASUREMENT_ID`, `NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST`, `NEXT_PUBLIC_SENTRY_DSN`                                                      |
 
 > **Tip**: Variables prefixed with `NEXT_PUBLIC_` are bundled into the client-side JavaScript bundle. All others are server-only and only accessible in API routes and server components.
 
@@ -157,38 +164,25 @@ Subsequent pushes to `main` trigger automatic deployments. Pull requests get pre
    ```bash
    supabase db push
    ```
-   This runs every file in `supabase/migrations/` in order, creating all 21 tables, RLS policies, indexes, SECURITY DEFINER functions, and views.
+   This runs all 60 files in `supabase/migrations/` in order, creating the 36
+   tables, RLS policies, indexes, SECURITY DEFINER functions, and views. The
+   table inventory and the access model are in
+   [ARCHITECTURE.md § Database](./ARCHITECTURE.md#7-database).
 
-> **Migrations are the source of truth.** `supabase/schema.sql` is a generated snapshot (via `supabase db dump`) kept for reference and diffing — do **not** run or hand-edit it. Ship schema changes as new migrations: `supabase migration new <name>`, then `supabase db push`.
+> **Migrations are the source of truth.** `supabase/schema.sql` is a generated
+> snapshot kept for reference and diffing — do **not** run or hand-edit it. It is
+> also currently **stale**: `admin_users`, `onchain_deployments`, and
+> `platform_freeze` exist only in the migrations. Ship schema changes as new
+> migrations (`supabase migration new <name>`, then `supabase db push`).
 
-The schema includes:
+> **Read [DB-MIGRATION-LEDGER.md](./DB-MIGRATION-LEDGER.md) before any
+> `supabase db push` or `migration list` against production.** Migrations applied
+> through the Supabase MCP carry an MCP-stamped version that diverges from the
+> repo filename, so the CLI considers them unapplied.
 
-| Table                     | Purpose                                                          |
-| ------------------------- | ---------------------------------------------------------------- |
-| `profiles`                | User profiles (wallet, email)                                    |
-| `enrollments`             | Course enrollments                                               |
-| `user_progress`           | Lesson completion tracking                                       |
-| `user_xp`                 | Total XP per user                                                |
-| `xp_transactions`         | XP change log                                                    |
-| `user_achievements`       | Unlocked achievements                                            |
-| `certificates`            | NFT certificate records                                          |
-| `siws_nonces`             | SIWS replay protection                                           |
-| `nft_metadata`            | NFT metadata storage                                             |
-| `deployed_programs`       | **Learner** practice program deployments                         |
-| `onchain_deployments`     | **Platform** content → chain state (the learner-visibility gate) |
-| `pending_onchain_actions` | On-chain retry queue                                             |
-| `user_daily_quests`       | Daily quest progress tracking                                    |
-| `challenge_assists`       | Per-user AI-assist budget for challenges                         |
-| `forum_categories`        | Community forum sections                                         |
-| `threads`                 | Community discussion threads                                     |
-| `answers`                 | Thread replies                                                   |
-| `votes`                   | Upvotes/downvotes                                                |
-| `flags`                   | Content moderation flags                                         |
-| `thread_views`            | Per-user thread view dedup                                       |
-| `rate_limits`             | Cross-instance API rate limiter                                  |
-
-Plus three views: `community_stats`, `public_user_xp`, and
-`public_onchain_deployments`.
+Grant yourself admin access by inserting your `auth.users` id into
+`admin_users` — that table is the entire admin authorization model, and it starts
+empty.
 
 > **`onchain_deployments` is load-bearing for content visibility.** It is the
 > post-SP2 home of the on-chain sync status that gates which courses learners can
@@ -399,7 +393,13 @@ Google OAuth lets users sign in without a wallet. It requires configuration in b
 
 Google OAuth runs through Supabase Auth — enter the **Client ID** and **Client Secret** in the Supabase dashboard (**Authentication → Providers → Google**), not in the app's environment. The app has no `NEXT_PUBLIC_GOOGLE_CLIENT_ID`.
 
-> **Note**: The `profiles` table has a `github_id` column in the schema for future GitHub OAuth, but it is not currently implemented in the app.
+GitHub OAuth works the same way — enable the GitHub provider in Supabase and add
+the callback URL to your GitHub OAuth app.
+
+> **When Dynamic is configured, it owns the Google and GitHub handshakes** and
+> the Supabase providers become the fallback path. Configure both anyway: SIWS
+> and Supabase OAuth are the kill switch if Dynamic is unavailable. See
+> [AUTH-FLOWS.md](./AUTH-FLOWS.md).
 
 ---
 
@@ -624,8 +624,10 @@ After deploying, verify:
 - [ ] Landing page loads without errors
 - [ ] Courses display correctly (served from the committed bundle; a course only
       appears once its `onchain_deployments` row is `synced` + active)
-- [ ] Wallet connect works (Phantom, Solflare, Backpack)
-- [ ] Google OAuth works (if configured)
+- [ ] SIWS works with an external wallet (the guaranteed path — test this one
+      even if Dynamic is configured)
+- [ ] Google / GitHub sign-in works, through whichever rail is live
+- [ ] `/admin` 404s for a non-allowlisted account and loads for an allowlisted one
 - [ ] Completing a lesson awards XP
 - [ ] Leaderboard shows correct rankings
 - [ ] NFT certificate minting works on Devnet
