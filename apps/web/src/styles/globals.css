@@ -145,6 +145,12 @@
     --r-xl: 22px;
     --r-full: 999px;
 
+    /* The fixed header's reserved band — the offset `main` pads by and the
+       amount a full-viewport section has to subtract. One token so a header
+       resize cannot leave the landing hero overflowing by exactly its own
+       chrome. The bar itself is 56px; the extra 4px is the gap under it. */
+    --header-h: 60px;
+
     /* ── Shadows ── */
     --shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 2px 0 0 rgba(0, 0, 0, 0.06);
     --shadow-hover: 0 4px 0 0 rgba(0, 0, 0, 0.08);

@@ -423,8 +423,14 @@ export function LandingPageClient({
 
       <div className="flex-1">
         {/* ── Hero — the stage reacts to the cursor (parallax halo + tilt) ── */}
+        {/* The hero owns the first screen: the viewport minus the fixed
+            header's band. `min-h` and not `h`, and `dvh` and not `vh` — a
+            short laptop viewport has to be able to scroll rather than clip,
+            and mobile browser chrome must not push the section past the fold.
+            The content centres in whatever space that leaves instead of
+            gaining dead padding at the bottom. */}
         <section
-          className="relative overflow-hidden"
+          className="relative flex min-h-[calc(100dvh-var(--header-h))] items-center overflow-hidden"
           onMouseMove={handleHeroMove}
           onMouseLeave={resetHeroParallax}
         >
@@ -440,7 +446,7 @@ export function LandingPageClient({
             />
           </div>
 
-          <div className="container px-4 pb-10 pt-8 sm:pb-12 sm:pt-10 md:pb-14 md:pt-14">
+          <div className="container w-full px-4 pb-10 pt-8 sm:pb-12 sm:pt-10 md:pb-14 md:pt-14">
             <div className="mx-auto grid max-w-6xl items-center gap-12 md:grid-cols-2 md:gap-16">
               <div>
                 <div
