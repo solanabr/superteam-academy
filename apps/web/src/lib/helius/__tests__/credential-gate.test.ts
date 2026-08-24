@@ -63,9 +63,6 @@ vi.mock("@/lib/gamification/achievements", () => ({
   checkNewAchievements: vi.fn(() => []),
   buildUserState: vi.fn(),
 }));
-vi.mock("@/lib/gamification/surprise-bonus", () => ({
-  maybeAwardSurpriseBonus: vi.fn(),
-}));
 vi.mock("@/lib/helius/resolvers", () => ({
   resolveUserId,
   resolveCourseId,

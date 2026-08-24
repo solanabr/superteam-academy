@@ -7,15 +7,14 @@ import {
   trackCredentialMinted,
 } from "@/lib/analytics/events";
 import {
-  pickSurpriseBonusToasts,
   pickQuestRewardToasts,
   __resetServerXpFeedbackForTests,
 } from "@/lib/gamification/server-xp-feedback";
 import { useGamificationEvents } from "../use-gamification-events";
 
 // Real events + server-xp-feedback modules between hook and facades — asserts
-// the wire format, the cross-path dedupe with the manual-mint observation, AND
-// the shared surprise-bonus dedupe with the #796 dashboard poll.
+// the wire format, the cross-path dedupe with the manual-mint observation and
+// the shared quest dedupe with the dashboard poll.
 const h = vi.hoisted(() => ({
   trackEvent: vi.fn(),
   dispatchCertificateMinted: vi.fn(),
@@ -23,7 +22,6 @@ const h = vi.hoisted(() => ({
   // Level seeded by the hook's `user_xp` select; null = no row (ref stays null,
   // so the first UPDATE cannot false-trigger).
   seedLevel: null as number | null,
-  dispatchSurpriseBonus: vi.fn(),
   dispatchQuestReward: vi.fn(),
   handlers: new Map<string, (payload: unknown) => void>(),
   // Realtime auth plumbing (#800)
@@ -38,7 +36,7 @@ const h = vi.hoisted(() => ({
 
 vi.mock("@/lib/analytics", () => ({ trackEvent: h.trackEvent }));
 
-vi.mock("@/components/gamification/achievement-popup", () => ({
+vi.mock("@/components/gamification/achievement-unlock", () => ({
   dispatchAchievementUnlock: vi.fn(),
   dispatchAchievementXp: vi.fn(),
 }));
@@ -47,9 +45,6 @@ vi.mock("@/components/gamification/certificate-popup", () => ({
 }));
 vi.mock("@/components/gamification/level-up-popup", () => ({
   dispatchLevelUp: h.dispatchLevelUp,
-}));
-vi.mock("@/components/gamification/surprise-bonus-toast", () => ({
-  dispatchSurpriseBonus: h.dispatchSurpriseBonus,
 }));
 vi.mock("@/components/gamification/quest-reward-toast", () => ({
   dispatchQuestReward: h.dispatchQuestReward,
@@ -150,7 +145,6 @@ beforeEach(() => {
   h.dispatchCertificateMinted.mockClear();
   h.dispatchLevelUp.mockClear();
   h.seedLevel = null;
-  h.dispatchSurpriseBonus.mockClear();
   h.dispatchQuestReward.mockClear();
   h.setAuth.mockClear();
   h.authUnsubscribe.mockClear();
@@ -385,107 +379,6 @@ describe("useGamificationEvents — level-up popup (restored 2026-08-01)", () =>
     act(() => onXpUpdate({ new: { level: 4 } }));
 
     expect(h.dispatchLevelUp).not.toHaveBeenCalled();
-  });
-});
-
-describe("useGamificationEvents — surprise bonus no-double-toast invariant", () => {
-  it("fires only ONE toast when the authed Realtime path and the #796 poll see the same award", async () => {
-    // Seed the tab: the first poll observation silently marks existing history
-    // seen, so subsequent claims of a NEW award are the ones that would toast.
-    // Same userId the hook uses so both paths share the per-user dedupe (#796).
-    pickSurpriseBonusToasts([], "user-1");
-
-    await mountHook();
-    const onXpInsert = await waitForHandler("xp_transactions:INSERT");
-
-    // Authed Realtime delivers the surprise bonus first → toasts once and
-    // claims the shared key.
-    act(() =>
-      onXpInsert({
-        new: {
-          id: "xtx-1",
-          amount: 25,
-          reason: "surprise_bonus:lesson-what-is-a-pda",
-          tx_signature: "sig-1",
-          idempotency_key: "sb-1",
-        },
-      })
-    );
-    expect(h.dispatchSurpriseBonus).toHaveBeenCalledTimes(1);
-    expect(h.dispatchSurpriseBonus).toHaveBeenCalledWith(25);
-
-    // #796 dashboard poll then re-scans recent transactions and sees the SAME
-    // award (same idempotency_key). The shared claimSurpriseBonus dedupe must
-    // make it a no-op — no second toast amount.
-    const pollToasts = pickSurpriseBonusToasts(
-      [
-        {
-          reason: "surprise_bonus:lesson-what-is-a-pda",
-          amount: 25,
-          tx_signature: "sig-1",
-          idempotency_key: "sb-1",
-          created_at: new Date().toISOString(),
-        },
-      ],
-      "user-1"
-    );
-    expect(pollToasts).toEqual([]);
-    expect(h.dispatchSurpriseBonus).toHaveBeenCalledTimes(1);
-  });
-
-  const surpriseCredit = () => ({
-    new: {
-      id: "xtx-sb1",
-      amount: 25,
-      reason: "surprise_bonus:lesson-what-is-a-pda",
-      tx_signature: "sig-sb1",
-      idempotency_key: "sb-1",
-    },
-  });
-
-  const pollRow = () => ({
-    reason: "surprise_bonus:lesson-what-is-a-pda",
-    amount: 25,
-    tx_signature: "sig-sb1",
-    idempotency_key: "sb-1",
-    created_at: new Date().toISOString(),
-  });
-
-  it("Realtime first, then poll: ONE toast and ONE xp-gain for the same award", async () => {
-    pickSurpriseBonusToasts([], "user-1"); // seed the tab
-    const gains = countXpGains();
-    await mountHook();
-    const onXpInsert = await waitForHandler("xp_transactions:INSERT");
-
-    act(() => onXpInsert(surpriseCredit()));
-    expect(h.dispatchSurpriseBonus).toHaveBeenCalledTimes(1);
-    expect(gains.count()).toBe(1);
-
-    // The dashboard poll then sees the SAME award — the shared seen-set makes
-    // it a no-op, so it dispatches neither a toast nor an XP bump.
-    expect(pickSurpriseBonusToasts([pollRow()], "user-1")).toEqual([]);
-    expect(gains.count()).toBe(1);
-    gains.stop();
-  });
-
-  it("poll first, then Realtime: no second toast and NO second xp-gain (#926)", async () => {
-    pickSurpriseBonusToasts([], "user-1"); // seed the tab
-    const gains = countXpGains();
-    await mountHook();
-    const onXpInsert = await waitForHandler("xp_transactions:INSERT");
-
-    // The dashboard poll wins the claim and does its own dispatchXpGain —
-    // modelled here by the single claim below.
-    expect(pickSurpriseBonusToasts([pollRow()], "user-1")).toEqual([25]);
-
-    // Realtime then observes the SAME award. It must neither toast NOR bump
-    // the counter: the header's optimistic XP is monotonic (never pulls back
-    // down), so a second bump would inflate the displayed balance for the
-    // rest of the session.
-    act(() => onXpInsert(surpriseCredit()));
-    expect(h.dispatchSurpriseBonus).toHaveBeenCalledTimes(0);
-    expect(gains.count()).toBe(0);
-    gains.stop();
   });
 });
 

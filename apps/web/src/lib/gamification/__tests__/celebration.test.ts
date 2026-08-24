@@ -55,7 +55,9 @@ describe("celebrationTierFor — the LX-B11 tier map", () => {
     // daily-cadence reward with CONFETTI would still be the routine-reward
     // pattern LX-B11 exists to prevent — the assertion below keeps confetti
     // pinned to deploy + credential mint.
-    "surprise-bonus": "popup",
+    // Achievement unlocks joined the shared queue on 2026-08-24; the surprise
+    // bonus was removed outright in the same change.
+    achievement: "popup",
     "daily-quest": "popup",
   };
 
@@ -115,7 +117,7 @@ describe("celebrate — confetti firing per tier", () => {
   it("fires NO confetti for any popup-tier reward — the popup card IS the moment", () => {
     celebrate("level-up");
     celebrate("daily-quest");
-    celebrate("surprise-bonus");
+    celebrate("achievement");
     vi.advanceTimersByTime(1000);
     expect(confettiMock).not.toHaveBeenCalled();
   });

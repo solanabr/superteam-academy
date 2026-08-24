@@ -15,10 +15,7 @@ import {
 import { CohortStrip } from "@/components/dashboard/cohort-strip";
 import { CurrentCoursesSection } from "@/components/dashboard/current-courses-section";
 import { DailyQuestsCard } from "@/components/dashboard/daily-quests-card";
-import {
-  QuestRewardCelebrations,
-  SurpriseBonusCelebrations,
-} from "@/components/dashboard/dashboard-celebrations";
+import { QuestRewardCelebrations } from "@/components/dashboard/dashboard-celebrations";
 import { DashboardFetchError } from "@/components/dashboard/dashboard-fetch-error";
 import { ReviewStrip } from "@/components/dashboard/review-strip";
 import type { DashboardCoreData } from "@/lib/dashboard/types";
@@ -112,12 +109,6 @@ export async function MainColumnSection({ userId }: SectionProps) {
 
       {/* ═══ Activity ═══ */}
       <ActivitySection recentActivity={data.recentActivity} />
-
-      {/* #790 poll-path surprise-bonus toasts — client island, renders nothing. */}
-      <SurpriseBonusCelebrations
-        rows={data.surpriseBonusRows}
-        userId={userId}
-      />
     </>
   );
 }

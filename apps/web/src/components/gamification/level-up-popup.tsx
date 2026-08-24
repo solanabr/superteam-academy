@@ -12,7 +12,7 @@ export const LEVEL_UP_EVENT = "superteam:level-up";
  * popups were so cool" — so the moment is back at the POPUP tier. Rendering
  * lives in the shared reward popup queue
  * (components/gamification/reward-popup.tsx), which sequences it against the
- * quest and surprise-bonus rewards that can land on the same lesson completion.
+ * quest rewards and achievement unlocks that land on the same lesson completion.
  *
  * Popup-only, never confetti: with Level = floor(sqrt(XP/100)) early level-ups
  * arrive every few lessons, and confetti that frequent is exactly the routine-

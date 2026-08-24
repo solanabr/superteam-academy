@@ -4,7 +4,6 @@ import type {
   RecommendedCourse,
 } from "@/lib/content/queries";
 import type { ContinueTarget } from "@/lib/courses/continue-learning";
-import type { XpTransactionRow } from "@/lib/gamification/server-xp-feedback";
 
 /** An enrolled, not-yet-minted course resolved from the content bundle. */
 export interface CurrentCourse {
@@ -56,11 +55,4 @@ export interface DashboardCoreData {
   continueTarget: ContinueTarget | null;
   recommendedCourses: RecommendedCourse[];
   recentActivity: ActivityItem[];
-  /**
-   * Recent surprise-bonus xp_transactions rows, handed to the client
-   * celebration island so the #790 poll-path toasts keep firing (the dedupe
-   * seen-set lives in the browser's sessionStorage, so the pick must stay
-   * client-side).
-   */
-  surpriseBonusRows: XpTransactionRow[];
 }
