@@ -8,8 +8,8 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getActiveDeployments, isSynced } from "@/lib/content/deployments";
 import {
-  getAllAchievements,
   getAllCourseLessonCounts,
+  getDeployedAchievements,
   getLearningPathsForAdmin,
 } from "@/lib/content/queries";
 
@@ -221,8 +221,11 @@ export async function checkCommunityAchievements(
   admin: AdminClient,
   userId: string
 ): Promise<void> {
+  // Deployed-only, like the webhook award path: an un-deployed achievement
+  // unlocking here would write a user_achievements row with no tx/asset and
+  // permanently block the real on-chain award once the PDA exists.
   const [allAchievements, state, { data: unlocked }] = await Promise.all([
-    getAllAchievements(),
+    getDeployedAchievements(),
     buildUserState(admin, userId),
     admin
       .from("user_achievements")

@@ -179,13 +179,27 @@ vi.mock("server-only", () => ({}));
 //    single-module course (`course-visao-geral-solana`, 3 lessons, module
 //    `origens-e-historia`) authored under its OWN creator wallet
 //    (`Em8D6Xyu…`), which is why the creator assertion is now a per-course
-//    map instead of one constant. The same bump sets `creatorRewardXp: 30` on
-//    the two Kaue courses — invisible here, `projectCourse` never projected
+//    map instead of one constant. The same bump carries `creatorRewardXp: 30`
+//    on the two Kaue courses — invisible here, `projectCourse` never projected
 //    that field — and the upstream images arrive pre-compressed, so no asset
 //    url moves. New content again = golden is the projected bundle:
 //    courses.json and lessons.json gained the projector-generated docs and
 //    quests-raw.json's moduleLessonMap gained the one-module entry. Every
 //    pre-existing doc is byte-unchanged.
+//  - gamification ladder (bump to academy-courses @958e7877, academy-courses
+//    #41): an achievements+quests-ONLY wave — no course, lesson, path or slot
+//    moved, so courses/lessons/paths/summaries/course-by-slug and quests-raw's
+//    derived fields are all byte-unchanged. achievements 7 -> 24: 17 new docs
+//    (streak/lessons-completed ladders, the three per-course badges, the
+//    first-steps path badge, three community-stat badges) plus 4 repricings
+//    (first-steps 50 -> 25, week-warrior 100 -> 75, monthly-master 300 -> 200,
+//    consistency-king 500 -> 400) and `achievement-early-adopter` flipping
+//    `user-number lte:100` -> `manual`, so it no longer auto-fires on signup.
+//    The fixture stays the exact both-directions cover, regenerated into the
+//    raw capture's null-filled award shape. quests-raw's `quests` array is the
+//    ACTIVE set, so `quest-challenge` (active: false now) DROPS out of it,
+//    and complete-lesson 25 -> 20 / lesson-batch 3 -> 2 targets at 50 -> 40 /
+//    login-streak 40 -> 50 land in the remaining four.
 const deps = { lessonsById };
 
 function bundleCourse(id: string): CourseDoc {
@@ -360,6 +374,18 @@ describe("projectAchievement — mapAchievement over the bundle", () => {
     });
     expect(completer.glyph).toBe("✦");
     expect(completer.solTier).toBe(false);
+  });
+
+  it("early-adopter is manual — it no longer auto-fires on signup", () => {
+    // The ladder wave retired the `user-number lte:100` rule. Asserted
+    // positively because the regression is silent: a doc that drifted back to
+    // an auto rule would hand every early signup 500 XP on day one, and a
+    // byte-identical comparison against a golden regenerated from that same
+    // doc could never catch it.
+    const early = projectAchievement(
+      achievementsById.get("achievement-early-adopter")!
+    );
+    expect(early.award).toEqual({ kind: "manual" });
   });
 });
 
