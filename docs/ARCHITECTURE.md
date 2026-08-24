@@ -580,12 +580,12 @@ XP is dual-tracked: Token-2022 on-chain (truth) plus a Supabase mirror (speed).
 
 **Level** is `floor(sqrt(totalXP / 100))` — 100 XP for L1, 400 for L2, 10 000 for
 L10. The same formula is implemented in `award_xp()` in SQL; both must move
-together. Community XP is capped at 50/day inside `award_xp()`; API routes cap
+together. Community XP is capped at 50/day inside `award_community_xp()`; API routes cap
 per-call awards independently (100 per lesson, 2000 per generic award).
 
 ### Streaks
 
-Handled entirely inside `award_xp()`: yesterday's activity increments, today's is
+Handled entirely inside `award_community_xp()`: yesterday's activity increments, today's is
 a no-op, a gap longer than a day resets to 1, and `longest_streak` is a running
 `GREATEST`. Streak freezes (`streak_freezes_used`) can cover missed days.
 
@@ -662,7 +662,7 @@ functions.
 | Post an answer  | 10  | `answer:{id}`                  |
 | Answer accepted | 25  | `accept:{threadId}:{answerId}` |
 
-Community XP is capped at 50/day inside `award_xp()`. Re-accepting a different
+Community XP is capped at 50/day inside `award_community_xp()`. Re-accepting a different
 answer revokes the previous answerer's 25 XP through `revoke_community_xp()`
 before awarding the new one.
 
