@@ -4,6 +4,18 @@ import { NextRequest } from "next/server";
 
 vi.mock("server-only", () => ({}));
 
+// Swap only after() — see the same shim in the /api/auth/wallet suite.
+const { deferred } = vi.hoisted(() => ({
+  deferred: vi.fn<(fn: () => Promise<void> | void) => void>(),
+}));
+vi.mock("next/server", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/server")>()),
+  after: (fn: () => Promise<void> | void) => {
+    deferred(fn);
+    return Promise.resolve(fn());
+  },
+}));
+
 const {
   exchangeCodeForSession,
   signOut,
@@ -73,6 +85,7 @@ describe("GET /api/auth/callback — #461 refuse login for deleted accounts", ()
     expect(res.headers.get("location")).toBe("https://app.test/en/dashboard");
     expect(signOut).not.toHaveBeenCalled();
     expect(retryPendingOnchainActions).toHaveBeenCalledWith("user-1");
+    expect(deferred).toHaveBeenCalledTimes(1);
   });
 
   it("refuses a tombstoned profile: signs out, never reaches the intended redirect", async () => {

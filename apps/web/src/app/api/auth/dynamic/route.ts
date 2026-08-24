@@ -1,6 +1,6 @@
 import "server-only";
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { createRemoteJWKSet, jwtVerify, type JWTPayload } from "jose";
@@ -17,6 +17,10 @@ import { retryPendingOnchainActions } from "@/lib/solana/onchain-queue";
 import { logError, logEvent } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 import type { Database } from "@/lib/supabase/types";
+
+// The after() queue drain does per-row RPC reads and on-chain sends; the
+// framework default would truncate it mid-sweep.
+export const maxDuration = 60;
 
 /**
  * Social sign-in through Dynamic → the learner's EXISTING Supabase account.
@@ -907,14 +911,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // The on-chain retry queue drains from the login routes, so this new
     // chokepoint must drain it too — otherwise a learner who only ever signs in
     // through Dynamic never gets their queued enrollments/XP/achievements
-    // retried. Fire-and-forget: a queue hiccup must not fail the sign-in.
-    retryPendingOnchainActions(userId).catch((err: unknown) =>
-      logError({
-        errorId: ERROR_IDS.DYNAMIC_AUTH_FAILED,
-        error: err instanceof Error ? err : new Error(String(err)),
-        context: { note: "retryPendingOnchainActions failed", userId },
-      })
-    );
+    // retried. Off the response path via after(), never a detached promise: a
+    // queue hiccup must not fail the sign-in, but a bare fire-and-forget is
+    // killed when the serverless instance freezes on response (see the same
+    // call in /api/auth/wallet).
+    after(async () => {
+      try {
+        await retryPendingOnchainActions(userId);
+      } catch (err: unknown) {
+        logError({
+          errorId: ERROR_IDS.DYNAMIC_AUTH_FAILED,
+          error: err instanceof Error ? err : new Error(String(err)),
+          context: { note: "retryPendingOnchainActions failed", userId },
+        });
+      }
+    });
 
     return NextResponse.json({ success: true });
   } catch (err: unknown) {

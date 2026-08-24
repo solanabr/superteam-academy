@@ -38,7 +38,11 @@ const {
 
 vi.mock("@/lib/content/deployments", () => ({ isCourseInMaintenance }));
 vi.mock("@/lib/platform/freeze", () => ({ isPlatformFrozen }));
-vi.mock("@/lib/solana/academy-reads", () => ({ fetchEnrollment, fetchCourse }));
+vi.mock("@/lib/solana/academy-reads", () => ({
+  fetchEnrollment,
+  fetchCourse,
+  fetchAchievementReceipt: vi.fn(async () => false),
+}));
 vi.mock("@/lib/solana/bitmap", () => ({ isCourseComplete }));
 vi.mock("@/lib/solana/pda", () => ({ getProgramId: () => "program-id" }));
 vi.mock("@/lib/solana/academy-program", () => ({

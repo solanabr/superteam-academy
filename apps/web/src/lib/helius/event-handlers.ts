@@ -13,7 +13,12 @@ import {
   awardAchievement as onChainAwardAchievement,
   getConnection,
 } from "@/lib/solana/academy-program";
-import { fetchEnrollment, fetchCourse } from "@/lib/solana/academy-reads";
+import {
+  fetchEnrollment,
+  fetchCourse,
+  fetchAchievementReceipt,
+} from "@/lib/solana/academy-reads";
+import { describeTxError } from "@/lib/solana/describe-tx-error";
 import { getProgramId } from "@/lib/solana/pda";
 import { uploadCertificateMetadata } from "@/lib/solana/arweave";
 import { isCourseComplete } from "@/lib/solana/bitmap";
@@ -51,7 +56,7 @@ async function queueFailedAction(
   payload: Record<string, unknown>,
   error: unknown
 ): Promise<void> {
-  const message = error instanceof Error ? error.message : String(error);
+  const message = describeTxError(error);
   try {
     const supabase = createAdminClient();
     await supabase.from("pending_onchain_actions").upsert(
@@ -756,7 +761,9 @@ export async function tryIssueCredential(
 // Internal: check achievement eligibility and award on-chain
 // ---------------------------------------------------------------------------
 
-async function checkAndAwardAchievements(
+// Exported for direct testing, like tryFinalizeCourse above — reaching it
+// through a full webhook event needs scaffolding that hides what is under test.
+export async function checkAndAwardAchievements(
   userId: string,
   walletAddress: string,
   supabase: ReturnType<typeof createAdminClient>
@@ -807,8 +814,41 @@ async function checkAndAwardAchievements(
 
     // Award each new achievement on-chain
     const recipientPk = new PublicKey(walletAddress);
+    const connection = getConnection();
     for (const achievement of newAchievements) {
       try {
+        // `newAchievements` is derived from user_achievements, and that table is
+        // written by the AchievementAwarded webhook — which lands SECONDS after
+        // the award tx. Two lesson completions inside that window both see the
+        // achievement as un-earned, so the second one re-awards it. The
+        // AchievementReceipt PDA already exists at that point, so the CPI's
+        // Allocate fails with `custom program error: 0x0` and we queue a
+        // "failure" for something that is fully delivered. That is where every
+        // stuck achievement row in prod came from.
+        //
+        // Read the receipt first, exactly as the queue drainer does. The chain
+        // stays the source of truth for "already awarded", and reconciling the
+        // DB from it means a missed AchievementAwarded webhook still surfaces
+        // the badge. Nothing is minted twice: this only ever suppresses a send.
+        if (
+          await fetchAchievementReceipt(
+            achievement.id,
+            walletAddress,
+            connection,
+            getProgramId()
+          )
+        ) {
+          const { error: unlockRpcError } = await supabase.rpc(
+            "unlock_achievement",
+            {
+              p_user_id: userId,
+              p_achievement_id: achievement.id,
+            }
+          );
+          if (unlockRpcError) throw new Error(unlockRpcError.message);
+          continue;
+        }
+
         await onChainAwardAchievement(achievement.id, recipientPk);
       } catch (err) {
         await queueFailedAction(

@@ -10,6 +10,7 @@ import type { Database } from "@/lib/supabase/types";
 import {
   creditQuestXpRows,
   creditXpAndSettle,
+  MAX_RETRIES,
 } from "@/lib/gamification/xp-queue-settlement";
 import {
   fetchAchievementReceipt,
@@ -25,6 +26,7 @@ import {
   sendSignedTransaction,
   TransactionNotBroadcastError,
 } from "./academy-program";
+import { describeTxError } from "./describe-tx-error";
 import { getProgramId } from "./pda";
 
 type OnchainActionType =
@@ -93,7 +95,7 @@ export async function retryPendingOnchainActions(
     .select("*")
     .eq("user_id", userId)
     .is("resolved_at", null)
-    .lt("retry_count", 5);
+    .lt("retry_count", MAX_RETRIES);
 
   if (fetchError || !rows || rows.length === 0) return;
 
@@ -638,14 +640,27 @@ export async function retryPendingOnchainActions(
         .update({ resolved_at: new Date().toISOString() })
         .eq("id", row.id);
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
+      // describeTxError, not err.message: Anchor destroys the message of any
+      // transaction that failed AFTER broadcast, leaving the useless literal
+      // "Unknown action 'undefined'" as the whole error (see the helper).
+      const message = describeTxError(err);
+      const nextRetryCount = (row.retry_count ?? 0) + 1;
       await adminClient
         .from("pending_onchain_actions")
         .update({
-          retry_count: (row.retry_count ?? 0) + 1,
+          retry_count: nextRetryCount,
           last_error: message,
         })
         .eq("id", row.id);
+
+      // At the cap the fetch filter stops selecting this row, so no later drain
+      // will ever see it again. Say so once, with the identity an operator needs
+      // to requeue it, instead of letting it disappear.
+      if (nextRetryCount >= MAX_RETRIES) {
+        console.error(
+          `[onchain-queue] row ${row.id} (${row.action_type} ${row.reference_id}, user ${userId}) exhausted its ${MAX_RETRIES}-attempt budget and will no longer be retried: ${message}`
+        );
+      }
     }
   }
 }
