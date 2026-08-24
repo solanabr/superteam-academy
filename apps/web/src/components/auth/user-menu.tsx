@@ -181,7 +181,7 @@ export function UserMenu({
             href={`/${locale}/profile`}
             className="flex items-center gap-2 font-display text-[13px] font-semibold"
           >
-            <UserCircle size={14} weight="bold" />
+            <UserCircle size={16} weight="bold" />
             {tCommon("profile")}
           </Link>
         </DropdownMenuItem>
@@ -190,7 +190,7 @@ export function UserMenu({
             href={`/${locale}/certificates`}
             className="flex items-center gap-2 font-display text-[13px] font-semibold"
           >
-            <Certificate size={14} weight="bold" />
+            <Certificate size={16} weight="bold" />
             {tCommon("certificates")}
           </Link>
         </DropdownMenuItem>
@@ -199,7 +199,7 @@ export function UserMenu({
             href={`/${locale}/leaderboard?board=referrals`}
             className="flex items-center gap-2 font-display text-[13px] font-semibold"
           >
-            <Gift size={14} weight="bold" />
+            <Gift size={16} weight="bold" />
             {tGam("referrals")}
           </Link>
         </DropdownMenuItem>
@@ -210,7 +210,7 @@ export function UserMenu({
             href={`/${locale}/leaderboard`}
             className="flex items-center gap-2 font-display text-[13px] font-semibold"
           >
-            <Trophy size={14} weight="bold" />
+            <Trophy size={16} weight="bold" />
             {tNav("leaderboard")}
           </Link>
         </DropdownMenuItem>
@@ -219,7 +219,7 @@ export function UserMenu({
             href={`/${locale}/settings`}
             className="flex items-center gap-2 font-display text-[13px] font-semibold"
           >
-            <GearSix size={14} weight="bold" />
+            <GearSix size={16} weight="bold" />
             {tCommon("settings")}
           </Link>
         </DropdownMenuItem>
@@ -229,7 +229,7 @@ export function UserMenu({
               href={`/${locale}/admin`}
               className="flex items-center gap-2 font-display text-[13px] font-semibold"
             >
-              <ShieldStar size={14} weight="bold" />
+              <ShieldStar size={16} weight="bold" />
               {tNav("admin")}
             </Link>
           </DropdownMenuItem>
@@ -239,7 +239,7 @@ export function UserMenu({
           onClick={handleSignOut}
           className="flex items-center gap-2 font-display text-[13px] font-semibold"
         >
-          <SignOut size={14} weight="bold" />
+          <SignOut size={16} weight="bold" />
           {tCommon("signOut")}
         </DropdownMenuItem>
       </DropdownMenuContent>
