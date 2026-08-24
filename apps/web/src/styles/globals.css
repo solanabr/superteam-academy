@@ -2434,7 +2434,21 @@
     color: var(--text-3);
   }
 
-  /* Status badge — corner pill */
+  /* ── Status chip — the corner badge on a card banner ──────────
+     The `.chip` construction, sized for a label instead of a glyph: solid
+     fill, literal ink outline, hard offset shadow, caps label. It replaces a
+     translucent `color-mix(… , var(--card))` pill that inherited the theme's
+     card colour and then sat on top of arbitrary cover art — over a light
+     photo the old enrolled chip was near-invisible.
+
+     The ink is the LITERAL dark one on BOTH grounds, like the chips, the
+     avatar rings and the filled buttons: this badge is drawn on a photograph,
+     not on a themed surface, so there is no ground for a flipping line to
+     agree with. Fills are literals for the same reason, which also means the
+     chip looks identical in light and dark — deliberate.
+
+     Contrast is carried by the fill, not the art: #19231b on mint (#2ecc8e)
+     is 8.6:1 and on cream (#fafaf7) 16.6:1, so both hold over any banner. */
   .course-card-status {
     position: absolute;
     top: 10px;
@@ -2444,28 +2458,27 @@
     align-items: center;
     gap: 4px;
     width: fit-content;
-    padding: 3px 10px;
-    border-radius: 999px;
-    border: 2px solid currentColor;
-    /* Brand guide pill spec: Nunito 700 · caps · 11px · +0.4px · tabular */
+    padding: 3px 9px 4px;
+    border-radius: 7px;
+    border: 1.5px solid var(--ink-dark);
+    box-shadow: 0 1.5px 0 0 var(--ink-dark);
+    color: var(--ink-dark);
     font-family: var(--font-display, var(--font-d));
     font-size: 11px;
-    font-weight: 700;
+    font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.4px;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
-  /* Solid card-colored fill — these sit on top of the (dark) cover image */
+  /* Earned: the mint the `course` patch category already uses for a finished
+     course, so a completed card and a course patch read as the same event. */
   .course-card-status.completed {
-    color: var(--success, #22c55e);
-    border-color: color-mix(in srgb, var(--success, #22c55e) 35%, transparent);
-    background: color-mix(in srgb, var(--success, #22c55e) 10%, var(--card));
+    background: var(--ink-green);
   }
+  /* In progress is informational, not an award — the neutral cream plate. */
   .course-card-status.enrolled {
-    color: var(--primary);
-    border-color: color-mix(in srgb, var(--primary) 35%, transparent);
-    background: color-mix(in srgb, var(--primary) 10%, var(--card));
+    background: var(--ink-cream);
   }
 }
 

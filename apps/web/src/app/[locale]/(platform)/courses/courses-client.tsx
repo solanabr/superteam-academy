@@ -8,11 +8,16 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { CourseCard } from "@/components/course/course-card";
 import { type PathCourseProgress } from "@/components/course/learning-path-section";
 import { PathsView } from "@/components/course/paths-view";
+import {
+  buildStatusMap,
+  filterCatalogCourses,
+  type CourseStatus,
+  type Difficulty,
+  type StatusFilter,
+} from "@/lib/courses/catalog-filter";
 import { useSegmentState } from "@/lib/onboarding/use-segment-state";
 import { createClient } from "@/lib/supabase/client";
 
-type Difficulty = "beginner" | "intermediate" | "advanced";
-type CourseStatus = "enrolled" | "completed";
 type ActiveTab = "all" | "paths";
 
 interface CourseCatalogClientProps {
@@ -27,6 +32,19 @@ const ALL_DIFFICULTIES: (Difficulty | "all")[] = [
   "advanced",
 ];
 
+const ALL_STATUSES: (StatusFilter | "all")[] = [
+  "all",
+  "enrolled",
+  "not-enrolled",
+  "completed",
+];
+
+const STATUS_LABEL_KEY = {
+  enrolled: "enrolled",
+  "not-enrolled": "notEnrolled",
+  completed: "completed",
+} as const satisfies Record<StatusFilter, string>;
+
 function useCourseProgress(courses: Course[]) {
   const [statuses, setStatuses] = useState<Map<string, CourseStatus>>(
     new Map()
@@ -34,6 +52,9 @@ function useCourseProgress(courses: Course[]) {
   const [progress, setProgress] = useState<Map<string, PathCourseProgress>>(
     new Map()
   );
+  // Drives whether the status rail exists at all — an anonymous visitor has no
+  // enrollment state to filter on, so the rail would be three dead options.
+  const [isSignedIn, setIsSignedIn] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -42,6 +63,7 @@ function useCourseProgress(courses: Course[]) {
         data: { session },
       } = await supabase.auth.getSession();
       if (!session?.user) return;
+      setIsSignedIn(true);
 
       const [
         { data: enrollments },
@@ -50,7 +72,7 @@ function useCourseProgress(courses: Course[]) {
       ] = await Promise.all([
         supabase
           .from("enrollments")
-          .select("course_id")
+          .select("course_id, completed_at")
           .eq("user_id", session.user.id),
         supabase
           .from("certificates")
@@ -62,7 +84,10 @@ function useCourseProgress(courses: Course[]) {
           .eq("user_id", session.user.id),
       ]);
 
-      const statusMap = new Map<string, CourseStatus>();
+      const statusMap = buildStatusMap(
+        enrollments ?? [],
+        (certificates ?? []).map((row) => row.course_id)
+      );
       const progressMap = new Map<string, PathCourseProgress>();
 
       // Count completed lessons per course
@@ -74,13 +99,6 @@ function useCourseProgress(courses: Course[]) {
             (completedByCourse.get(row.course_id) ?? 0) + 1
           );
         }
-      }
-
-      for (const row of enrollments ?? []) {
-        statusMap.set(row.course_id, "enrolled");
-      }
-      for (const row of certificates ?? []) {
-        statusMap.set(row.course_id, "completed");
       }
 
       // Build progress entries enriched with total lesson counts
@@ -108,7 +126,7 @@ function useCourseProgress(courses: Course[]) {
     fetchData();
   }, [courses]);
 
-  return { statuses, progress };
+  return { statuses, progress, isSignedIn };
 }
 
 export function CourseCatalogClient({
@@ -122,20 +140,17 @@ export function CourseCatalogClient({
   const [activeDifficulty, setActiveDifficulty] = useState<Difficulty | null>(
     null
   );
-  const { statuses, progress } = useCourseProgress(courses);
+  const [activeStatus, setActiveStatus] = useState<StatusFilter | null>(null);
+  const { statuses, progress, isSignedIn } = useCourseProgress(courses);
   // Segment/goal from the /start intake (LX-A3): drives the path-page modality
   // and the goal framing line. Absent for learners who never ran the intake.
   const { segment, goal } = useSegmentState();
 
-  const filteredCourses = courses.filter((course) => {
-    const matchesSearch =
-      !searchQuery ||
-      course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      course.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesDifficulty =
-      !activeDifficulty || course.difficulty === activeDifficulty;
-    return matchesSearch && matchesDifficulty;
-  });
+  const filteredCourses = filterCatalogCourses(
+    courses,
+    { searchQuery, difficulty: activeDifficulty, status: activeStatus },
+    statuses
+  );
 
   return (
     <div className="space-y-6">
@@ -165,7 +180,7 @@ export function CourseCatalogClient({
       {/* ════════ TAB 1: ALL COURSES ════════ */}
       {activeTab === "all" && (
         <div className="space-y-3">
-          {/* Row 1: Search + Difficulty pills */}
+          {/* Row 1: search + the difficulty and status rails */}
           <div className="filter-row">
             <div className="relative w-full max-w-[400px] flex-1 sm:min-w-[200px]">
               <MagnifyingGlass
@@ -192,11 +207,10 @@ export function CourseCatalogClient({
               )}
             </div>
 
-            {/* The difficulty row is a segmented control like the community
-                filters — "All" is just the null option, so picking a segment
-                replaces the old click-the-active-one-to-clear behaviour. */}
+            {/* Two rails side by side, the community idiom (owner, 24-08):
+                segments grouped inside one bordered track, one track per axis.
+                "All" is the null option on each, and the axes compose. */}
             <SegmentedControl
-              variant="pills"
               ariaLabel={t("difficulty")}
               options={ALL_DIFFICULTIES.map((diff) => ({
                 value: diff === "all" ? null : (diff as Difficulty),
@@ -205,6 +219,24 @@ export function CourseCatalogClient({
               value={activeDifficulty}
               onChange={setActiveDifficulty}
             />
+
+            {/* Status is the learner's own relationship to a course, so it has
+                nothing to say to an anonymous visitor — the rail is absent
+                rather than disabled. */}
+            {isSignedIn && (
+              <SegmentedControl
+                ariaLabel={t("status")}
+                options={ALL_STATUSES.map((status) => ({
+                  value: status === "all" ? null : (status as StatusFilter),
+                  label:
+                    status === "all"
+                      ? tCommon("all")
+                      : t(STATUS_LABEL_KEY[status as StatusFilter]),
+                }))}
+                value={activeStatus}
+                onChange={setActiveStatus}
+              />
+            )}
           </div>
 
           {/* Course Grid */}

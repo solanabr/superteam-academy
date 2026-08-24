@@ -212,6 +212,8 @@
     "modules": "módulos",
     "enrolled": "Matriculado",
     "completed": "Concluído",
+    "status": "Status",
+    "notEnrolled": "Não matriculado",
     "inProgress": "Em Andamento",
     "continueCourse": "Continuar Aprendendo",
     "enrollNow": "Matricular-se",

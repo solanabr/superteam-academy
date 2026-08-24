@@ -212,6 +212,8 @@
     "modules": "modules",
     "enrolled": "Enrolled",
     "completed": "Completed",
+    "status": "Status",
+    "notEnrolled": "Not enrolled",
     "inProgress": "In Progress",
     "continueCourse": "Continue Learning",
     "enrollNow": "Enroll Now",

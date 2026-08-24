@@ -16,7 +16,13 @@ import { cn } from "@/lib/utils";
  *
  * Silhouette is a real difference rather than a cosmetic one, so it stays a
  * prop: `track` groups segments inside one bordered rail (community), `pills`
- * leaves them free-standing and round (catalog).
+ * leaves them free-standing and round.
+ *
+ * `pills` currently has NO consumer — the catalog was its only one and moved
+ * to `track` on the owner's 24-08 ruling, so both of its filter rails read as
+ * the community's grouped rails. It stays because it is the shape half of the
+ * control's API, exercised by the tests, and deleting it would make the next
+ * free-standing row reinvent it.
  *
  * Options are addressed by INDEX, not by value, because the "All" option is
  * legitimately `null`/`undefined` on both consumers and would otherwise need a
