@@ -269,8 +269,13 @@ export function RewardPopupQueue({ className }: { className?: string }) {
       }
     : describe(current);
 
-  const dismiss = () =>
+  // A dismissed card counts toward the individual-card budget exactly like a
+  // timed-out one — otherwise clicking ✕ through the queue bypasses the
+  // summary collapse this component exists to enforce.
+  const dismiss = () => {
     setQueue((prev) => prev.filter((item) => item.uid !== current.uid));
+    setPlayed((count) => count + 1);
+  };
 
   /** Per-kind copy. The switch is exhaustive — a new kind is a compile error. */
   function describe(item: RewardItem): {

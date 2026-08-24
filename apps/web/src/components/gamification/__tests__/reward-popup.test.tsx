@@ -258,6 +258,23 @@ describe("RewardPopupQueue — the 3-card ceiling", () => {
     expect(cards()).toHaveLength(0);
   });
 
+  it("holds the 2-cards-plus-summary ceiling when cards are dismissed by click", () => {
+    renderQueue();
+    dispatchMany(5);
+
+    // Clicking ✕ through the first two cards must count against the budget
+    // exactly like waiting them out — otherwise a click-happy learner gets
+    // all five cards individually.
+    expect(screen.getByText("Level Up")).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss" }));
+    expect(screen.getByText("Achievement 1")).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss" }));
+
+    expect(cards()).toHaveLength(1);
+    expect(screen.getByText("More Rewards")).toBeDefined();
+    expect(screen.getByText("3 more rewards")).toBeDefined();
+  });
+
   it("plays exactly three cards when three rewards land — no pointless summary", () => {
     renderQueue();
     dispatchMany(3);
