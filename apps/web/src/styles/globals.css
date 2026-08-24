@@ -4304,9 +4304,7 @@ a.stat-receipt:active {
   display: none;
   align-items: center;
   gap: 2px;
-  /* Extra room at the bottom for the active item's 3px lift, which would
-     otherwise land flush against the bar's inner edge. */
-  padding: 3px 3px 6px;
+  padding: 3px;
   border-radius: 9999px;
   background: var(--card-glass-blur);
   border: 1px solid var(--border);
@@ -4344,12 +4342,7 @@ a.stat-receipt:active {
   display: flex;
   align-items: center;
   gap: 7px;
-  /* The transparent border is carried by EVERY item, active or not, so the
-     active one's ink outline costs no layout and nothing shifts as the current
-     page changes. Padding is reduced by the border width to keep the bar the
-     height it was. */
-  padding: 3px 11px;
-  border: 2px solid transparent;
+  padding: 5px 13px;
   border-radius: 9999px;
   font-size: 13px;
   font-weight: 600;
@@ -4363,17 +4356,19 @@ a.stat-receipt:active {
   color: var(--text-2);
   background: var(--card-hover);
 }
-/* Active — the ink lift on the tint (owner, option B, 24-08). The tint fill
-   and the label colour are unchanged; what is new is the chip family's
-   construction on top of them: a literal dark ink outline on BOTH grounds and
-   a hard offset shadow, so the current page reads as a raised object rather
-   than as a coloured glow. The two soft glow shadows this replaces (one per
-   theme) were the last light-source effect in the header. */
 .nav-link.active {
   color: var(--primary);
   background: var(--primary-dim);
-  border-color: var(--ink-dark);
-  box-shadow: 0 3px 0 0 var(--ink-dark);
+  box-shadow:
+    0 0 12px rgba(46, 204, 142, 0.12),
+    inset 0 1px 0 rgba(46, 204, 142, 0.08);
+}
+
+/* Light mode adjustments */
+:root .nav-link.active {
+  box-shadow:
+    0 0 8px rgba(10, 112, 85, 0.1),
+    inset 0 1px 0 rgba(10, 112, 85, 0.06);
 }
 
 /* ═══════════════════════════════════════════════════════════════
