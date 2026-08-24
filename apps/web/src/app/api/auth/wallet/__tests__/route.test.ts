@@ -31,7 +31,9 @@ const {
   selectExistingProfile,
   selectLinkedWallet,
   selectUsername,
+  selectWalletKind,
   updateWalletAddress,
+  updateWalletKind,
   updateUsername,
   isAccountDeleted,
   retryPendingOnchainActions,
@@ -47,7 +49,9 @@ const {
     vi.fn<() => Promise<{ data: unknown; error: unknown }>>(),
   selectLinkedWallet: vi.fn<() => Promise<{ data: unknown; error: unknown }>>(),
   selectUsername: vi.fn<() => Promise<{ data: unknown; error: unknown }>>(),
+  selectWalletKind: vi.fn<() => Promise<{ data: unknown; error: unknown }>>(),
   updateWalletAddress: vi.fn().mockResolvedValue({ error: null }),
+  updateWalletKind: vi.fn().mockResolvedValue({ error: null }),
   updateUsername: vi.fn().mockResolvedValue({ error: null }),
   isAccountDeleted: vi.fn<(userId: string) => Promise<boolean>>(),
   retryPendingOnchainActions: vi.fn().mockResolvedValue(undefined),
@@ -70,12 +74,14 @@ vi.mock("@supabase/supabase-js", () => ({
             if (fields === "wallet_address")
               return { single: selectLinkedWallet };
             if (fields === "username") return { single: selectUsername };
+            if (fields === "wallet_kind") return { single: selectWalletKind };
             throw new Error(`unexpected select fields "${fields}"`);
           },
         }),
         update: (patch: Record<string, unknown>) => ({
           eq: () => {
             if ("wallet_address" in patch) return updateWalletAddress(patch);
+            if ("wallet_kind" in patch) return updateWalletKind(patch);
             if ("username" in patch) return updateUsername(patch);
             throw new Error("unexpected update patch");
           },
@@ -114,7 +120,7 @@ vi.mock("@/lib/auth/account-status", () => ({ isAccountDeleted }));
 
 import { POST } from "../route";
 
-function walletRequest(): NextRequest {
+function walletRequest(walletKind?: unknown): NextRequest {
   return new NextRequest("https://app.test/api/auth/wallet", {
     method: "POST",
     headers: { host: "app.test", "content-type": "application/json" },
@@ -122,6 +128,7 @@ function walletRequest(): NextRequest {
       message: "app.test wants you to sign in...",
       signature: [1, 2, 3],
       publicKey: "WalletPubkey11111111111111111111111111111",
+      ...(walletKind === undefined ? {} : { walletKind }),
     }),
   });
 }
@@ -134,6 +141,10 @@ beforeEach(() => {
   // wallet_address on deletion, so this lookup can never find the tombstoned
   // row by wallet address).
   selectExistingProfile.mockResolvedValue({ data: null, error: null });
+  selectWalletKind.mockResolvedValue({
+    data: { wallet_kind: null },
+    error: null,
+  });
   createUser.mockResolvedValue({ error: null });
   generateLink.mockResolvedValue({
     data: { properties: { hashed_token: "tok_123" } },
@@ -193,5 +204,51 @@ describe("POST /api/auth/wallet — #489 refuse wallet_address write for deleted
   it("checks deletion status for the resolved (post-verifyOtp) user id", async () => {
     await POST(walletRequest());
     expect(isAccountDeleted).toHaveBeenCalledWith("user-1");
+  });
+});
+
+// #1179 — how the wallet was provisioned decides which recovery affordance an
+// expired session is offered. Nothing is AUTHORISED by it, which is why the
+// declaration is believed only while the column is still NULL.
+describe("POST /api/auth/wallet — wallet_kind (#1179)", () => {
+  it("records the client-declared kind on a first-time wallet login", async () => {
+    await POST(walletRequest("external"));
+    expect(updateWalletKind).toHaveBeenCalledWith({ wallet_kind: "external" });
+  });
+
+  it("never overwrites a kind the account already has", async () => {
+    // The Dynamic bridge writes 'embedded' BEFORE the embedded wallet is
+    // linked, so a later declaration must not be able to undo it.
+    selectWalletKind.mockResolvedValue({
+      data: { wallet_kind: "embedded" },
+      error: null,
+    });
+
+    await POST(walletRequest("external"));
+
+    expect(updateWalletKind).not.toHaveBeenCalled();
+    // The wallet link itself is unaffected.
+    expect(updateWalletAddress).toHaveBeenCalled();
+  });
+
+  it("ignores a value that is not one of the two kinds", async () => {
+    await POST(walletRequest("admin"));
+    expect(updateWalletKind).not.toHaveBeenCalled();
+  });
+
+  it("writes nothing when the client declares nothing", async () => {
+    await POST(walletRequest());
+    expect(updateWalletKind).not.toHaveBeenCalled();
+  });
+
+  it("still signs the learner in when the kind write fails", async () => {
+    // A DB without the migration applied must not turn every wallet login
+    // into a 500 over a routing hint.
+    selectWalletKind.mockRejectedValue(new Error("column does not exist"));
+
+    const res = await POST(walletRequest("external"));
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual({ success: true });
   });
 });

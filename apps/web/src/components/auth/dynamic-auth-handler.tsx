@@ -254,7 +254,10 @@ export function DynamicAuthHandler() {
         const outcome = await runWalletSiws(
           toMessageSigner(solanaAccount, signMessage),
           address,
-          Boolean(supabaseUser)
+          Boolean(supabaseUser),
+          // This handler only ever signs with a Dynamic WaaS account, so the
+          // kind is a constant here, not a guess.
+          "embedded"
         );
 
         if (outcome.ok) {

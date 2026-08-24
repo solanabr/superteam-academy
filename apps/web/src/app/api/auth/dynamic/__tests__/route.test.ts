@@ -860,7 +860,11 @@ describe("POST /api/auth/dynamic — post-login parity with the other chokepoint
     );
 
     expect(res.status).toBe(200);
-    expect(profileUpdate).not.toHaveBeenCalled();
+    // The wallet_kind write (#1179) is the only profile update this account
+    // earns — the username is already real.
+    expect(profileUpdate).not.toHaveBeenCalledWith(
+      expect.objectContaining({ username: expect.anything() })
+    );
   });
 
   it("drains the on-chain retry queue for the signed-in user", async () => {
@@ -951,6 +955,71 @@ describe("POST /api/auth/dynamic — account-fork auto-merge", () => {
       p_shell: SHELL_ID,
       p_wallet: SHELL_WALLET,
     });
+  });
+
+  // #1179 MERGE BRANCH. Previously uncovered, and the branch where a naive
+  // "a wallet appeared ⇒ external" inference hands this fix's own target user
+  // the dead end back: DynamicAuthHandler links the EMBEDDED wallet through
+  // /api/auth/wallet with walletKind "embedded", so a Dynamic email sign-in
+  // leaves a shell holding an embedded wallet.
+  //
+  // profileSingle serves three reads in order: the initial profile, the
+  // post-merge wallet_address re-read, then recordWalletKind's wallet_kind.
+  function armMergeReads(shellKind: string | null) {
+    shellLookup.mockResolvedValue({
+      data: [
+        { id: SHELL_ID, wallet_address: SHELL_WALLET, wallet_kind: shellKind },
+      ],
+      error: null,
+    });
+    profileSingle
+      .mockResolvedValueOnce({
+        data: { username: "sol-surfer", wallet_address: null },
+      })
+      .mockResolvedValueOnce({ data: { wallet_address: SHELL_WALLET } })
+      .mockResolvedValueOnce({ data: { wallet_kind: null } });
+  }
+
+  it("carries an EMBEDDED shell's kind through the merge", async () => {
+    armMergeScenario();
+    armMergeReads("embedded");
+
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await jwtWithWallet() })
+    );
+
+    expect(res.status).toBe(200);
+    expect(profileUpdate).toHaveBeenCalledWith({ wallet_kind: "embedded" });
+  });
+
+  it("carries an EXTERNAL shell's kind through the merge", async () => {
+    // A SIWS-with-an-extension shell: the wallet really is external, and the
+    // learner really should get the connect modal.
+    armMergeScenario();
+    armMergeReads("external");
+
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await jwtWithWallet() })
+    );
+
+    expect(res.status).toBe(200);
+    expect(profileUpdate).toHaveBeenCalledWith({ wallet_kind: "external" });
+  });
+
+  it("writes nothing when a pre-migration shell has no kind to carry", async () => {
+    // Unknown is the honest answer — and it keeps the pre-#1179 behaviour
+    // rather than guessing. The backfill classifies these.
+    armMergeScenario();
+    armMergeReads(null);
+
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await jwtWithWallet() })
+    );
+
+    expect(res.status).toBe(200);
+    expect(profileUpdate).not.toHaveBeenCalledWith(
+      expect.objectContaining({ wallet_kind: expect.anything() })
+    );
   });
 
   it("revokes the shell's sessions (permanent ban) after a successful merge", async () => {
@@ -1630,5 +1699,42 @@ describe("POST /api/auth/dynamic — avatar adoption on the bridge", () => {
 
     expect(res.status).toBe(200);
     expect(avatarUpdates()).toEqual([]);
+  });
+});
+
+// #1179 — the ONE server-authoritative wallet_kind write. It is what lets the
+// SIWS routes treat their client-declared kind as a first-write-only hint.
+describe("POST /api/auth/dynamic — wallet_kind (#1179)", () => {
+  it("marks a wallet-less Dynamic sign-in as embedded", async () => {
+    // No wallet yet: the only wallet this account can end up with is the
+    // embedded one DynamicAuthHandler is about to create.
+    profileSingle.mockResolvedValue({
+      data: { username: "gabriel", wallet_address: null },
+    });
+
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await signDynamicJwt() })
+    );
+
+    expect(res.status).toBe(200);
+    expect(profileUpdate).toHaveBeenCalledWith({ wallet_kind: "embedded" });
+  });
+
+  it("leaves an account that already holds a wallet alone", async () => {
+    // An EXTENSION user signing in with Google through Dynamic reaches this
+    // route too. Marking them embedded would offer the wrong recovery path
+    // for a wallet they hold in Phantom.
+    profileSingle.mockResolvedValue({
+      data: { username: "gabriel", wallet_address: "Wa11et1111111111111111" },
+    });
+
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await signDynamicJwt() })
+    );
+
+    expect(res.status).toBe(200);
+    expect(profileUpdate).not.toHaveBeenCalledWith(
+      expect.objectContaining({ wallet_kind: expect.anything() })
+    );
   });
 });

@@ -5,6 +5,8 @@ import {
   signTransaction,
 } from "@dynamic-labs-sdk/solana";
 import type { SolanaWalletAccount } from "@dynamic-labs-sdk/solana";
+import type { WalletKind } from "@/lib/auth/wallet-kind";
+import { getDynamicClient } from "./client";
 import { isDynamicEnabled } from "./config";
 
 export type { SolanaWalletAccount };
@@ -37,20 +39,88 @@ export type { SolanaWalletAccount };
  */
 
 /**
- * The learner's embedded Solana wallet account, or null when there isn't one.
+ * What the embedded wallet is doing right now.
  *
- * Null covers every non-wallet state at once — feature off, client not
- * created, SDK not initialised, signed out, or signed in without a Solana
- * account — because callers all do the same thing with them: fall back to the
- * wallet-adapter path.
+ * This used to be a plain `SolanaWalletAccount | null`, and collapsing every
+ * non-wallet state into one `null` is what produced the dead end this type
+ * exists to remove: an embedded learner whose Dynamic session had expired was
+ * indistinguishable from a learner with no wallet, so enrol and unenrol showed
+ * them the EXTERNAL wallet-connect modal — an ask they cannot answer, with no
+ * route back to Dynamic short of a full sign-out.
+ *
+ * - `account`  — sign with it.
+ * - `expired`  — they HAD an embedded wallet and the session is gone. Offer
+ *                Dynamic re-auth, never the connect modal.
+ * - `loading`  — the SDK has not finished initialising (or the WaaS wallet is
+ *                still hydrating). Disable the action; showing any prompt here
+ *                is the init race, where a perfectly valid session got the
+ *                connect modal purely because the read was early.
+ * - `none`     — no embedded wallet is involved. Unchanged behaviour.
  */
-export function getDynamicSolanaAccount(): SolanaWalletAccount | null {
-  if (!isDynamicEnabled()) return null;
+export type DynamicAccountState =
+  | { kind: "account"; account: SolanaWalletAccount }
+  | { kind: "expired" }
+  | { kind: "loading" }
+  | { kind: "none" };
+
+/**
+ * The learner's embedded Solana wallet, or WHY there isn't one.
+ *
+ * ## Why `walletKind` has to be passed in
+ *
+ * After a reload past expiry the SDK holds nothing: `hydrateStateWithStorage`
+ * only applies a stored session whose `sessionExpiration` is still in the
+ * future, and it emits no logout event for the one it drops. So "expired" and
+ * "never had one" look identical from SDK state alone — the app has to
+ * remember, and where it remembers is `profiles.wallet_kind`. Callers pass
+ * what their profile says; `null` (legacy/unknown) keeps the old behaviour.
+ *
+ * The Dynamic session storage is deliberately NOT consulted as a second
+ * signal. It is a `storageTier: "secure"` adapter (async, not localStorage),
+ * and `syncStateWithStorage` removes the session record on the first state
+ * write where `sessionExpiresAt` is null — which is exactly what hydration
+ * does when it drops an expired session. A signal that races its own erasure
+ * is worse than no signal.
+ */
+export function getDynamicSolanaAccount(
+  walletKind: WalletKind | null = null
+): DynamicAccountState {
+  if (!isDynamicEnabled()) return { kind: "none" };
+
+  const client = getDynamicClient();
+  if (!client) return { kind: "none" };
+
+  let account: SolanaWalletAccount | undefined;
   try {
-    return getWalletAccounts().find(isSolanaWalletAccount) ?? null;
+    account = getWalletAccounts().find(isSolanaWalletAccount);
   } catch {
-    return null;
+    // Reading accounts before init throws; the status check below decides.
   }
+  if (account) return { kind: "account", account };
+
+  // 'uninitialized' | 'in-progress' — the read is simply early.
+  if (client.initStatus !== "finished" && client.initStatus !== "failed") {
+    return { kind: "loading" };
+  }
+
+  // Signed in with a live session but no Solana account yet: the WaaS keygen
+  // DynamicAuthHandler starts on first sign-in is still running.
+  const expiresAt = client.sessionExpiresAt;
+  if (client.user && expiresAt !== null && expiresAt.getTime() > Date.now()) {
+    return { kind: "loading" };
+  }
+
+  return walletKind === "embedded" ? { kind: "expired" } : { kind: "none" };
+}
+
+/**
+ * Back-compat shim: the account or null, as `getDynamicSolanaAccount` used to
+ * return. For call sites that genuinely have nothing to do with the failure
+ * mode — anything that only asks "can I sign right now?".
+ */
+export function getDynamicSolanaAccountOrNull(): SolanaWalletAccount | null {
+  const state = getDynamicSolanaAccount();
+  return state.kind === "account" ? state.account : null;
 }
 
 /**
@@ -79,4 +149,38 @@ export async function signWithDynamicWallet(
     walletAccount,
   });
   return signedTransaction as unknown as Transaction;
+}
+
+/**
+ * Did this failure mean "your Dynamic session is gone", rather than "the
+ * program rejected the transaction"?
+ *
+ * The third face of the same bug: a session that dies BETWEEN the wallet read
+ * and the signature. `signWithDynamicWallet` then rejects with the SDK's
+ * `UnauthorizedError`, which used to reach `parseProgramError` and be toasted
+ * as an unexplained failure — the learner is told the enrolment broke when
+ * what actually happened is that they need to sign in again.
+ *
+ * Matched by NAME and CODE rather than `instanceof`: the pnpm graph holds two
+ * `@dynamic-labs-sdk/client` instances (differing peer sets), so the class
+ * identity does not necessarily cross the boundary — the same reason
+ * `DynamicAuthHandler` re-implements `isSolanaWalletAccount` locally. Both
+ * fields are set by the SDK's own error constructor.
+ *
+ * `cause` is walked ONE level: the SDK's own `BaseError` takes a `cause` and
+ * the WaaS signer wraps failures, so an expiry can arrive as
+ * `WaasLoadFailedError { cause: UnauthorizedError }`. One level, not a loop —
+ * a deeper chain means the expiry is no longer what the failure is ABOUT, and
+ * an unbounded walk on an attacker-shaped cycle is not worth the reach.
+ */
+export function isDynamicSessionExpiredError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  if (isUnauthorized(error)) return true;
+  return isUnauthorized(error.cause);
+}
+
+function isUnauthorized(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  if (error.name === "UnauthorizedError") return true;
+  return (error as Error & { code?: unknown }).code === "unauthorized_error";
 }

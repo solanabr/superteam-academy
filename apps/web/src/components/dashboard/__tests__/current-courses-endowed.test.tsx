@@ -23,8 +23,14 @@ vi.mock("@/lib/auth/auth-provider", () => ({
   useAuth: () => ({ profile: null }),
 }));
 vi.mock("@/lib/dynamic/solana", () => ({
-  getDynamicSolanaAccount: () => null,
+  isDynamicSessionExpiredError: () => false,
   signWithDynamicWallet: vi.fn(),
+}));
+vi.mock("@/hooks/use-dynamic-session-state", () => ({
+  useDynamicSessionState: () => ({ status: "none", account: null }),
+}));
+vi.mock("@/lib/dynamic/social", () => ({
+  startDynamicSocialSignIn: vi.fn(),
 }));
 vi.mock("@/lib/analytics", () => ({ trackEvent: vi.fn() }));
 

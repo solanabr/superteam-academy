@@ -1685,6 +1685,11 @@
     "mismatchTitle": "Wrong wallet connected",
     "mismatchBody": "You're connected with a different wallet than the one linked to your account ({linked}). Switch to it in your wallet to continue — a wallet link is permanent, so this one can't take its place.",
     "enrollMismatch": "Enrolment is recorded against your linked wallet ({linked}). Switch to it in your wallet and try again.",
-    "enrollNoLinkedWallet": "Your account has no linked wallet yet, so an enrolment made now could not be credited to you. Link a wallet in Settings first."
+    "enrollNoLinkedWallet": "Your account has no linked wallet yet, so an enrolment made now could not be credited to you. Link a wallet in Settings first.",
+    "reauthTitle": "Your session expired",
+    "reauthBody": "Your wallet is still yours — sign in again with the account you used and it comes straight back.",
+    "reauthActionGoogle": "Sign in with Google",
+    "reauthActionGitHub": "Sign in with GitHub",
+    "reauthStarting": "Redirecting…"
   }
 }

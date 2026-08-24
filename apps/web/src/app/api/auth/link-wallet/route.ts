@@ -7,12 +7,16 @@ import { mintXpToWallet } from "@/lib/solana/xp-mint";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 import { serverEnv } from "@/lib/env.server";
+import { parseWalletKind } from "@/lib/auth/wallet-kind";
+import { recordWalletKind } from "@/lib/auth/record-wallet-kind";
 import type { Database } from "@/lib/supabase/types";
 
 interface LinkWalletRequest {
   message: string;
   signature: number[];
   publicKey: string;
+  /** Client-declared, believed only on the first write — see recordWalletKind. */
+  walletKind?: unknown;
 }
 
 export async function POST(request: NextRequest) {
@@ -141,6 +145,15 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    // Separate, best-effort write: a routing hint must never be able to fail a
+    // wallet link (see recordWalletKind). For a Dynamic learner the bridge has
+    // already written 'embedded', so this call is a no-op there.
+    await recordWalletKind(
+      supabaseAdmin,
+      user.id,
+      parseWalletKind(body.walletKind)
+    );
 
     // One-time XP sync: mint existing Supabase XP to the newly linked wallet
     // so on-chain balance reflects all XP earned before wallet was connected.

@@ -159,6 +159,10 @@ export function WalletAuthHandler() {
           message: messageText,
           signature: signatureArray,
           publicKey: signerAddress,
+          // Wallet-adapter only ever hands us an extension wallet, so the
+          // account's recovery path is "reconnect", never "re-auth with
+          // Dynamic". Recorded so an expired-session check can tell them apart.
+          walletKind: "external",
         }),
       });
 

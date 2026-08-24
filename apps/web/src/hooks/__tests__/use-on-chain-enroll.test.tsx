@@ -15,11 +15,16 @@ const wallet = vi.hoisted(() => ({
 }));
 
 // The Dynamic embedded wallet, absent by default — set `account` to hand the
-// hook an email sign-up's wallet.
+// hook an email sign-up's wallet, or `status` to describe a session that is
+// loading / expired / absent.
 const dynamic = vi.hoisted(() => ({
   account: null as { address: string } | null,
+  status: "none" as "valid" | "expired" | "loading" | "none",
   signWithDynamicWallet: vi.fn(),
+  startDynamicSocialSignIn: vi.fn(),
 }));
+
+const dynamicEnabled = vi.hoisted(() => ({ value: true }));
 
 vi.mock("@solana/wallet-adapter-react", () => ({
   useConnection: () => ({
@@ -34,11 +39,20 @@ vi.mock("@solana/wallet-adapter-react", () => ({
   }),
 }));
 
-// The account's linked wallet — the one every enrolment path binds to.
-const auth = vi.hoisted(() => ({ walletAddress: null as string | null }));
+// The account's linked wallet — the one every enrolment path binds to — plus
+// how that wallet was provisioned (#1179).
+const auth = vi.hoisted(() => ({
+  walletAddress: null as string | null,
+  walletKind: null as "embedded" | "external" | null,
+}));
 
 vi.mock("@/lib/auth/auth-provider", () => ({
-  useAuth: () => ({ profile: { wallet_address: auth.walletAddress } }),
+  useAuth: () => ({
+    profile: {
+      wallet_address: auth.walletAddress,
+      wallet_kind: auth.walletKind,
+    },
+  }),
 }));
 
 vi.mock("next-intl", () => ({
@@ -46,9 +60,30 @@ vi.mock("next-intl", () => ({
     values ? `${key}:${Object.values(values).join(",")}` : key,
 }));
 
-vi.mock("@/lib/dynamic/solana", () => ({
-  getDynamicSolanaAccount: () => dynamic.account,
+// `getDynamicSolanaAccount` is NOT mocked here — the hook no longer calls it.
+// It reads the composed session state, and the real predicate is exercised in
+// lib/dynamic/__tests__/session-state.test.ts (which mocks the SDK, not this
+// module) so this suite cannot green-light a broken one.
+vi.mock("@/lib/dynamic/solana", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/dynamic/solana")>()),
   signWithDynamicWallet: dynamic.signWithDynamicWallet,
+}));
+
+vi.mock("@/hooks/use-dynamic-session-state", () => ({
+  useDynamicSessionState: () => ({
+    status: dynamic.account ? "valid" : dynamic.status,
+    account: dynamic.account,
+  }),
+}));
+
+vi.mock("@/lib/dynamic/social", () => ({
+  startDynamicSocialSignIn: dynamic.startDynamicSocialSignIn,
+}));
+
+// The NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID kill switch.
+vi.mock("@/lib/dynamic/config", () => ({
+  isDynamicEnabled: () => dynamicEnabled.value,
+  getDynamicEnvironmentId: () => (dynamicEnabled.value ? "env-id" : null),
 }));
 
 vi.mock("@solana/wallet-adapter-react-ui", () => ({
@@ -95,7 +130,10 @@ beforeEach(() => {
   vi.clearAllMocks();
   wallet.publicKey = null;
   dynamic.account = null;
+  dynamic.status = "none";
   auth.walletAddress = null;
+  auth.walletKind = null;
+  dynamicEnabled.value = true;
   vi.unstubAllGlobals();
 });
 
@@ -335,6 +373,144 @@ describe("useOnChainEnroll — Dynamic embedded wallet", () => {
       "confirmed"
     );
     expect(onSuccess).toHaveBeenCalledTimes(1);
+    expect(result.current.enrollError).toBeNull();
+  });
+
+  it("offers re-auth — never the connect modal — when the session expired", async () => {
+    // #1179: the whole bug. An embedded learner whose Dynamic JWT died has no
+    // extension to connect and no route from that modal back to Dynamic.
+    // DELETE the `status === "expired" || isEmbeddedLearner` branch in
+    // useOnChainEnroll and this case fails on the FIRST assertion —
+    // setVisible(true) is exactly what the old code did here.
+    dynamic.status = "expired";
+    auth.walletKind = "embedded";
+
+    const { result } = renderHook(() =>
+      useOnChainEnroll({
+        courseId: COURSE_ID,
+        userId: "user-1",
+        onRequireAuth: vi.fn(),
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleEnroll();
+    });
+
+    expect(wallet.setVisible).not.toHaveBeenCalled();
+    expect(result.current.reauthPrompt).not.toBeNull();
+    expect(wallet.sendTransaction).not.toHaveBeenCalled();
+    expect(dynamic.signWithDynamicWallet).not.toHaveBeenCalled();
+
+    // The prompt's action is the real social redirect, not a dead button —
+    // and it takes the provider the LEARNER picked. Guessing Google for a
+    // GitHub learner mints a second account (the bridge matches on the
+    // provider-verified email), which is worse than the dead end being fixed.
+    await act(async () => {
+      await result.current.reauthPrompt?.start("github");
+    });
+    expect(dynamic.startDynamicSocialSignIn).toHaveBeenCalledWith("github");
+  });
+
+  it("falls back to the connect modal with Dynamic switched off", async () => {
+    // The kill switch must degrade to the pre-existing behaviour, never to a
+    // reauth card whose buttons silently do nothing.
+    dynamicEnabled.value = false;
+    auth.walletKind = "embedded";
+
+    const { result } = renderHook(() =>
+      useOnChainEnroll({
+        courseId: COURSE_ID,
+        userId: "user-1",
+        onRequireAuth: vi.fn(),
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleEnroll();
+    });
+
+    expect(result.current.reauthPrompt).toBeNull();
+    expect(wallet.setVisible).toHaveBeenCalledWith(true);
+  });
+
+  it("keeps the connect modal shut while the SDK is still initialising", async () => {
+    // The init race: a learner with a perfectly VALID session used to get the
+    // connect modal purely because the click beat initialisation.
+    dynamic.status = "loading";
+
+    const { result } = renderHook(() =>
+      useOnChainEnroll({
+        courseId: COURSE_ID,
+        userId: "user-1",
+        onRequireAuth: vi.fn(),
+      })
+    );
+
+    expect(result.current.isWalletResolving).toBe(true);
+
+    await act(async () => {
+      await result.current.handleEnroll();
+    });
+
+    // Neither affordance: no modal, and no prompt claiming a dead session.
+    expect(wallet.setVisible).not.toHaveBeenCalled();
+    expect(result.current.reauthPrompt).toBeNull();
+    expect(result.current.enrollError).toBeNull();
+  });
+
+  it("still opens the connect modal for an external-wallet learner", async () => {
+    // The unchanged path, pinned: nothing about #1179 may reach the population
+    // for whom "connect your wallet" is the correct ask.
+    dynamic.status = "none";
+    auth.walletKind = "external";
+
+    const { result } = renderHook(() =>
+      useOnChainEnroll({
+        courseId: COURSE_ID,
+        userId: "user-1",
+        onRequireAuth: vi.fn(),
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleEnroll();
+    });
+
+    expect(wallet.setVisible).toHaveBeenCalledWith(true);
+    expect(result.current.reauthPrompt).toBeNull();
+  });
+
+  it("shows re-auth, not a raw error, when the session dies mid-signature", async () => {
+    const address = Keypair.generate().publicKey.toBase58();
+    dynamic.account = { address };
+    auth.walletAddress = address;
+    auth.walletKind = "embedded";
+    // What the SDK actually throws when the JWT expired between the wallet
+    // read and the signing call.
+    const unauthorized = Object.assign(new Error("Unauthorized"), {
+      name: "UnauthorizedError",
+      code: "unauthorized_error",
+    });
+    dynamic.signWithDynamicWallet.mockRejectedValue(unauthorized);
+
+    const onError = vi.fn();
+    const { result } = renderHook(() =>
+      useOnChainEnroll({
+        courseId: COURSE_ID,
+        userId: "user-1",
+        onRequireAuth: vi.fn(),
+        onError,
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleEnroll();
+    });
+
+    expect(result.current.reauthPrompt).not.toBeNull();
+    // Not toasted as a program failure, and not reported as an enrol error.
+    expect(onError).not.toHaveBeenCalled();
     expect(result.current.enrollError).toBeNull();
   });
 

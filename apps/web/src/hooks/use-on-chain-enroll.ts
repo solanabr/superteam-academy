@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
@@ -15,9 +15,15 @@ import {
   parseWalletAddress,
 } from "@/lib/solana/linked-wallet";
 import {
-  getDynamicSolanaAccount,
+  isDynamicSessionExpiredError,
   signWithDynamicWallet,
 } from "@/lib/dynamic/solana";
+import {
+  startDynamicSocialSignIn,
+  type DynamicSocialProvider,
+} from "@/lib/dynamic/social";
+import { isDynamicEnabled } from "@/lib/dynamic/config";
+import { useDynamicSessionState } from "@/hooks/use-dynamic-session-state";
 import { trackEvent } from "@/lib/analytics";
 import {
   parseProgramError,
@@ -138,6 +144,22 @@ interface UseOnChainEnrollResult {
   isEnrolling: boolean;
   handleEnroll: () => Promise<void>;
   enrollError: string | null;
+  /**
+   * Non-null when the learner's embedded-wallet session has expired and the
+   * only way on is re-authenticating with their social provider. Consumers
+   * render `<LinkedWalletPrompt variant="reauth" …>` from it.
+   */
+  reauthPrompt: {
+    /** The learner picks the provider — the app cannot know which one. */
+    start: (provider: DynamicSocialProvider) => Promise<void>;
+    dismiss: () => void;
+  } | null;
+  /**
+   * The Dynamic SDK has not finished deciding whether this learner has an
+   * embedded wallet. Disable the CTA rather than guessing — guessing is what
+   * showed the connect modal to learners with a perfectly valid session.
+   */
+  isWalletResolving: boolean;
 }
 
 export function useOnChainEnroll({
@@ -151,10 +173,18 @@ export function useOnChainEnroll({
   const { publicKey, sendTransaction } = useWallet();
   const { setVisible: setWalletModalVisible } = useWalletModal();
   const { profile } = useAuth();
+  const dynamicSession = useDynamicSessionState();
   const t = useTranslations("walletPrompt");
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [enrollError, setEnrollError] = useState<string | null>(null);
+  const [showReauth, setShowReauth] = useState(false);
   const linkedWallet = profile?.wallet_address ?? null;
+  // Gated on the feature switch: with Dynamic off there is no redirect to
+  // offer, so a reauth card would be a button that silently does nothing. The
+  // kill switch has to degrade to the pre-existing behaviour, not to a
+  // dead-end card — `lib/dynamic/config.ts` states that contract.
+  const isEmbeddedLearner =
+    profile?.wallet_kind === "embedded" && isDynamicEnabled();
 
   const handleEnroll = useCallback(async () => {
     if (isEnrolling) return;
@@ -169,11 +199,26 @@ export function useOnChainEnroll({
     // only the right answer when neither exists — an email sign-up already has
     // one, and the connect modal was the exact dead end embedded wallets were
     // brought in to remove.
-    const dynamicAccount = publicKey ? null : getDynamicSolanaAccount();
+    const dynamicAccount = publicKey ? null : dynamicSession.account;
     // An unparseable embedded address is no wallet at all, not a crash.
     const learner =
       publicKey ?? parseWalletAddress(dynamicAccount?.address ?? null);
     if (!learner) {
+      // Still initialising: the SDK simply has not answered yet. Any prompt
+      // here is the init race — a valid session shown the connect modal purely
+      // because the click was early. Do nothing; the CTA is disabled anyway.
+      if (dynamicSession.status === "loading") return;
+
+      // An embedded learner can never answer "connect a wallet": they have no
+      // extension, and the modal offers no route back to Dynamic. Offer the
+      // one thing that works. `isEmbeddedLearner` is checked alongside the
+      // session status so this holds even if Dynamic is switched off under a
+      // learner who already has an embedded wallet.
+      if (dynamicSession.status === "expired" || isEmbeddedLearner) {
+        setShowReauth(true);
+        return;
+      }
+
       setWalletModalVisible(true);
       return;
     }
@@ -247,6 +292,15 @@ export function useOnChainEnroll({
           signature: onChainSignature,
         });
       } catch (err: unknown) {
+        // The session can die BETWEEN the wallet read and the signature. That
+        // is not a program error and must not be parsed as one — the learner
+        // would be told the enrolment failed when what they need is to sign in
+        // again.
+        if (isDynamicSessionExpiredError(err)) {
+          setShowReauth(true);
+          return;
+        }
+
         const parsed = parseProgramError(err);
 
         // code 0 = SystemError::AccountAlreadyInUse: the enrollment PDA already
@@ -284,8 +338,29 @@ export function useOnChainEnroll({
     setWalletModalVisible,
     isEnrolling,
     linkedWallet,
+    isEmbeddedLearner,
+    dynamicSession,
     t,
   ]);
 
-  return { isEnrolling, handleEnroll, enrollError };
+  const reauthPrompt = useMemo(
+    () =>
+      showReauth
+        ? {
+            /** The learner picks the provider — see LinkedWalletPrompt. */
+            start: (provider: DynamicSocialProvider) =>
+              startDynamicSocialSignIn(provider),
+            dismiss: () => setShowReauth(false),
+          }
+        : null,
+    [showReauth]
+  );
+
+  return {
+    isEnrolling,
+    handleEnroll,
+    enrollError,
+    reauthPrompt,
+    isWalletResolving: !publicKey && dynamicSession.status === "loading",
+  };
 }

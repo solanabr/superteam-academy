@@ -20,6 +20,7 @@
  */
 
 import { createSIWSMessage, formatSIWSMessage } from "@/lib/solana/wallet-auth";
+import type { WalletKind } from "@/lib/auth/wallet-kind";
 
 /** Matches the `signMessage` surface of the SDK's Solana chain object. */
 export interface MessageSigner {
@@ -52,11 +53,18 @@ const STATEMENT = "Sign this message to verify your wallet ownership";
  * @param address  the connected Solana address
  * @param hasSession whether a Supabase session already exists — decides which
  *                   route runs, and therefore whether this signs in or links
+ * @param walletKind which sort of wallet is signing. Required, not optional:
+ *                   only the caller knows, and a caller that forgot would
+ *                   silently record the wrong recovery path. The server treats
+ *                   it as a hint (see the routes) — it is believed only on the
+ *                   FIRST write for an account, and nothing is authorised by
+ *                   it.
  */
 export async function runWalletSiws(
   signer: MessageSigner,
   address: string,
-  hasSession: boolean
+  hasSession: boolean,
+  walletKind: WalletKind
 ): Promise<SiwsOutcome> {
   const mode = hasSession ? "link" : "signIn";
 
@@ -100,6 +108,7 @@ export async function runWalletSiws(
       message: messageText,
       signature: Array.from(signature),
       publicKey: address,
+      walletKind,
     }),
   });
 

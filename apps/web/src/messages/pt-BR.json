@@ -1685,6 +1685,11 @@
     "mismatchTitle": "Carteira errada conectada",
     "mismatchBody": "Você está conectado com uma carteira diferente da vinculada à sua conta ({linked}). Troque para ela na sua carteira para continuar — o vínculo é permanente, então esta não pode substituí-la.",
     "enrollMismatch": "A inscrição é registrada na carteira vinculada à sua conta ({linked}). Troque para ela na sua carteira e tente de novo.",
-    "enrollNoLinkedWallet": "Sua conta ainda não tem carteira vinculada, então uma inscrição feita agora não poderia ser creditada a você. Vincule uma carteira em Configurações primeiro."
+    "enrollNoLinkedWallet": "Sua conta ainda não tem carteira vinculada, então uma inscrição feita agora não poderia ser creditada a você. Vincule uma carteira em Configurações primeiro.",
+    "reauthTitle": "Sua sessão expirou",
+    "reauthBody": "Sua carteira continua sendo sua — entre de novo com a conta que você usou e ela volta na hora.",
+    "reauthActionGoogle": "Entrar com Google",
+    "reauthActionGitHub": "Entrar com GitHub",
+    "reauthStarting": "Redirecionando…"
   }
 }

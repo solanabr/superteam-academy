@@ -27,6 +27,7 @@ import { REPLAY_BANKED_EVENT } from "@/components/lessons/banked-progress-replay
 import { ThreadList } from "@/components/community/thread-list";
 import { ThreadComposer } from "@/components/community/thread-composer";
 import { LessonSection } from "@/components/lessons/lesson-section";
+import { LinkedWalletPrompt } from "@/components/wallet/linked-wallet-prompt";
 import {
   LessonJumpChips,
   type JumpChip,
@@ -255,7 +256,13 @@ export function LessonPageClient({
     setIsAuthModalOpen(true);
   }, [bankCurrentLesson]);
 
-  const { isEnrolling, handleEnroll, enrollError } = useOnChainEnroll({
+  const {
+    isEnrolling,
+    handleEnroll,
+    enrollError,
+    reauthPrompt,
+    isWalletResolving,
+  } = useOnChainEnroll({
     courseId,
     userId,
     // Anonymous Enroll (e.g. the challenge "tests passed" overlay) banks the
@@ -971,7 +978,9 @@ export function LessonPageClient({
                       <Button
                         variant="push"
                         size="default"
-                        disabled={isEnrolling}
+                        // isWalletResolving: the Dynamic SDK has not answered
+                        // yet. Brief, and the alternative is the init race.
+                        disabled={isEnrolling || isWalletResolving}
                         onClick={handleEnroll}
                         className="gap-2"
                       >
@@ -1048,6 +1057,16 @@ export function LessonPageClient({
             <p role="alert" className="text-center text-sm text-danger">
               {tCourses("enrollFailed")}
             </p>
+          )}
+          {/* Embedded wallet, dead Dynamic session (#1179): the connect modal
+              asks for an extension they do not have. */}
+          {reauthPrompt && (
+            <LinkedWalletPrompt
+              variant="reauth"
+              linkedWallet={null}
+              onReauth={reauthPrompt.start}
+              onDismiss={reauthPrompt.dismiss}
+            />
           )}
           {hasLinkedWallet === false && isEnrolled && (
             <p role="alert" className="text-center text-sm text-text-3">
