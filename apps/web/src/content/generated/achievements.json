@@ -51,23 +51,6 @@
     "xpReward": 400
   },
   {
-    "_id": "achievement-course-completer",
-    "_type": "achievement",
-    "award": {
-      "course": "course-btc-to-sol-evolution",
-      "kind": "course-completed"
-    },
-    "category": "progress",
-    "description": "Complete an entire course",
-    "glyph": "✦",
-    "icon": "graduation-cap",
-    "maxSupply": 0,
-    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-course-completer",
-    "name": "Course Completer",
-    "solTier": false,
-    "xpReward": 200
-  },
-  {
     "_id": "achievement-double-digits",
     "_type": "achievement",
     "award": {
@@ -99,59 +82,6 @@
     "name": "Early Adopter",
     "solTier": true,
     "xpReward": 1000
-  },
-  {
-    "_id": "achievement-evolution-explorer",
-    "_type": "achievement",
-    "award": {
-      "course": "course-btc-to-sol-evolution",
-      "gte": 5,
-      "kind": "lessons-completed-in-course"
-    },
-    "category": "progress",
-    "description": "Complete 5 lessons of From Bitcoin to Solana",
-    "glyph": "⅓",
-    "icon": "compass",
-    "maxSupply": 0,
-    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-evolution-explorer",
-    "name": "Five Chapters In",
-    "solTier": false,
-    "xpReward": 50
-  },
-  {
-    "_id": "achievement-evolution-navigator",
-    "_type": "achievement",
-    "award": {
-      "course": "course-btc-to-sol-evolution",
-      "gte": 10,
-      "kind": "lessons-completed-in-course"
-    },
-    "category": "progress",
-    "description": "Complete 10 lessons of From Bitcoin to Solana",
-    "glyph": "⅔",
-    "icon": "compass",
-    "maxSupply": 0,
-    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-evolution-navigator",
-    "name": "Two-Thirds There",
-    "solTier": false,
-    "xpReward": 80
-  },
-  {
-    "_id": "achievement-evolution-scholar",
-    "_type": "achievement",
-    "award": {
-      "course": "course-btc-to-sol-evolution",
-      "kind": "course-completed"
-    },
-    "category": "progress",
-    "description": "Complete From Bitcoin to Solana",
-    "glyph": "✦",
-    "icon": "graduation-cap",
-    "maxSupply": 0,
-    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-evolution-scholar",
-    "name": "Evolution Scholar",
-    "solTier": false,
-    "xpReward": 150
   },
   {
     "_id": "achievement-first-steps",
@@ -290,40 +220,6 @@
     "name": "Monthly Master",
     "solTier": false,
     "xpReward": 200
-  },
-  {
-    "_id": "achievement-panorama",
-    "_type": "achievement",
-    "award": {
-      "course": "course-visao-geral-solana",
-      "kind": "course-completed"
-    },
-    "category": "progress",
-    "description": "Complete Visão Geral do Solana",
-    "glyph": "◎",
-    "icon": "compass",
-    "maxSupply": 0,
-    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-panorama",
-    "name": "Visão Geral",
-    "solTier": false,
-    "xpReward": 60
-  },
-  {
-    "_id": "achievement-pilula-taken",
-    "_type": "achievement",
-    "award": {
-      "course": "course-pilula-solana-superteam",
-      "kind": "course-completed"
-    },
-    "category": "progress",
-    "description": "Complete Pílula Solana & Superteam",
-    "glyph": "◆",
-    "icon": "graduation-cap",
-    "maxSupply": 0,
-    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-pilula-taken",
-    "name": "Pílula Tomada",
-    "solTier": false,
-    "xpReward": 30
   },
   {
     "_id": "achievement-speedrunner",

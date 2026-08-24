@@ -200,6 +200,14 @@ vi.mock("server-only", () => ({}));
 //    ACTIVE set, so `quest-challenge` (active: false now) DROPS out of it,
 //    and complete-lesson 25 -> 20 / lesson-batch 3 -> 2 targets at 50 -> 40 /
 //    login-streak 40 -> 50 land in the remaining four.
+//  - course-badge trim (bump to academy-courses @aff33b8d, academy-courses
+//    #42): owner ruling — no course-specific achievements except speedrunner.
+//    achievements 24 -> 18: pilula-taken, panorama, evolution-explorer,
+//    evolution-navigator, evolution-scholar and the legacy course-completer
+//    (which duplicated evolution-scholar's trigger) all deleted; the fixture
+//    drops the same six from both arrays. Nothing else in the bundle moved.
+//    The award-shape assertion moves course-completer -> speedrunner, now the
+//    bundle's only `course-completed` doc.
 const deps = { lessonsById };
 
 function bundleCourse(id: string): CourseDoc {
@@ -362,18 +370,18 @@ describe("projectAchievement — mapAchievement over the bundle", () => {
     }
   });
 
-  it("award is validated + stripped; course-completer = course-completed", () => {
-    // Was anchor-expert until the alpha wave parked it; course-completer is now
-    // the bundle's only `course-completed` award, retargeted to the flagship.
-    const completer = projectAchievement(
-      achievementsById.get("achievement-course-completer")!
+  it("award is validated + stripped; speedrunner = course-completed", () => {
+    // Was anchor-expert, then course-completer; the trim wave deleted every
+    // course-specific badge except speedrunner, so it now carries the bundle's
+    // only `course-completed` award.
+    const speedrunner = projectAchievement(
+      achievementsById.get("achievement-speedrunner")!
     );
-    expect(completer.award).toEqual({
+    expect(speedrunner.award).toEqual({
       kind: "course-completed",
-      course: "course-btc-to-sol-evolution",
+      course: "course-solana-speedrun",
     });
-    expect(completer.glyph).toBe("✦");
-    expect(completer.solTier).toBe(false);
+    expect(speedrunner.solTier).toBe(false);
   });
 
   it("early-adopter is manual — it no longer auto-fires on signup", () => {

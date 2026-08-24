@@ -39,25 +39,6 @@
       "xpReward": 400
     },
     {
-      "_id": "achievement-course-completer",
-      "award": {
-        "course": "course-btc-to-sol-evolution",
-        "days": null,
-        "gte": null,
-        "kind": "course-completed",
-        "lte": null,
-        "path": null,
-        "stat": null
-      },
-      "category": "progress",
-      "description": "Complete an entire course",
-      "glyph": "✦",
-      "icon": "graduation-cap",
-      "name": "Course Completer",
-      "solTier": false,
-      "xpReward": 200
-    },
-    {
       "_id": "achievement-early-adopter",
       "award": {
         "course": null,
@@ -172,63 +153,6 @@
       "xpReward": 80
     },
     {
-      "_id": "achievement-evolution-explorer",
-      "award": {
-        "course": "course-btc-to-sol-evolution",
-        "days": null,
-        "gte": 5,
-        "kind": "lessons-completed-in-course",
-        "lte": null,
-        "path": null,
-        "stat": null
-      },
-      "category": "progress",
-      "description": "Complete 5 lessons of From Bitcoin to Solana",
-      "glyph": "⅓",
-      "icon": "compass",
-      "name": "Five Chapters In",
-      "solTier": false,
-      "xpReward": 50
-    },
-    {
-      "_id": "achievement-evolution-navigator",
-      "award": {
-        "course": "course-btc-to-sol-evolution",
-        "days": null,
-        "gte": 10,
-        "kind": "lessons-completed-in-course",
-        "lte": null,
-        "path": null,
-        "stat": null
-      },
-      "category": "progress",
-      "description": "Complete 10 lessons of From Bitcoin to Solana",
-      "glyph": "⅔",
-      "icon": "compass",
-      "name": "Two-Thirds There",
-      "solTier": false,
-      "xpReward": 80
-    },
-    {
-      "_id": "achievement-evolution-scholar",
-      "award": {
-        "course": "course-btc-to-sol-evolution",
-        "days": null,
-        "gte": null,
-        "kind": "course-completed",
-        "lte": null,
-        "path": null,
-        "stat": null
-      },
-      "category": "progress",
-      "description": "Complete From Bitcoin to Solana",
-      "glyph": "✦",
-      "icon": "graduation-cap",
-      "name": "Evolution Scholar",
-      "solTier": false,
-      "xpReward": 150
-    },
-    {
       "_id": "achievement-first-steps-path",
       "award": {
         "course": null,
@@ -339,44 +263,6 @@
       "glyph": "↪",
       "icon": "message-square",
       "name": "Helping Hand",
-      "solTier": false,
-      "xpReward": 30
-    },
-    {
-      "_id": "achievement-panorama",
-      "award": {
-        "course": "course-visao-geral-solana",
-        "days": null,
-        "gte": null,
-        "kind": "course-completed",
-        "lte": null,
-        "path": null,
-        "stat": null
-      },
-      "category": "progress",
-      "description": "Complete Visão Geral do Solana",
-      "glyph": "◎",
-      "icon": "compass",
-      "name": "Visão Geral",
-      "solTier": false,
-      "xpReward": 60
-    },
-    {
-      "_id": "achievement-pilula-taken",
-      "award": {
-        "course": "course-pilula-solana-superteam",
-        "days": null,
-        "gte": null,
-        "kind": "course-completed",
-        "lte": null,
-        "path": null,
-        "stat": null
-      },
-      "category": "progress",
-      "description": "Complete Pílula Solana & Superteam",
-      "glyph": "◆",
-      "icon": "graduation-cap",
-      "name": "Pílula Tomada",
       "solTier": false,
       "xpReward": 30
     },
@@ -497,25 +383,6 @@
       "xpReward": 400
     },
     {
-      "_id": "achievement-course-completer",
-      "award": {
-        "course": "course-btc-to-sol-evolution",
-        "days": null,
-        "gte": null,
-        "kind": "course-completed",
-        "lte": null,
-        "path": null,
-        "stat": null
-      },
-      "category": "progress",
-      "description": "Complete an entire course",
-      "glyph": "✦",
-      "icon": "graduation-cap",
-      "name": "Course Completer",
-      "solTier": false,
-      "xpReward": 200
-    },
-    {
       "_id": "achievement-early-adopter",
       "award": {
         "course": null,
@@ -630,63 +497,6 @@
       "xpReward": 80
     },
     {
-      "_id": "achievement-evolution-explorer",
-      "award": {
-        "course": "course-btc-to-sol-evolution",
-        "days": null,
-        "gte": 5,
-        "kind": "lessons-completed-in-course",
-        "lte": null,
-        "path": null,
-        "stat": null
-      },
-      "category": "progress",
-      "description": "Complete 5 lessons of From Bitcoin to Solana",
-      "glyph": "⅓",
-      "icon": "compass",
-      "name": "Five Chapters In",
-      "solTier": false,
-      "xpReward": 50
-    },
-    {
-      "_id": "achievement-evolution-navigator",
-      "award": {
-        "course": "course-btc-to-sol-evolution",
-        "days": null,
-        "gte": 10,
-        "kind": "lessons-completed-in-course",
-        "lte": null,
-        "path": null,
-        "stat": null
-      },
-      "category": "progress",
-      "description": "Complete 10 lessons of From Bitcoin to Solana",
-      "glyph": "⅔",
-      "icon": "compass",
-      "name": "Two-Thirds There",
-      "solTier": false,
-      "xpReward": 80
-    },
-    {
-      "_id": "achievement-evolution-scholar",
-      "award": {
-        "course": "course-btc-to-sol-evolution",
-        "days": null,
-        "gte": null,
-        "kind": "course-completed",
-        "lte": null,
-        "path": null,
-        "stat": null
-      },
-      "category": "progress",
-      "description": "Complete From Bitcoin to Solana",
-      "glyph": "✦",
-      "icon": "graduation-cap",
-      "name": "Evolution Scholar",
-      "solTier": false,
-      "xpReward": 150
-    },
-    {
       "_id": "achievement-first-steps-path",
       "award": {
         "course": null,
@@ -797,44 +607,6 @@
       "glyph": "↪",
       "icon": "message-square",
       "name": "Helping Hand",
-      "solTier": false,
-      "xpReward": 30
-    },
-    {
-      "_id": "achievement-panorama",
-      "award": {
-        "course": "course-visao-geral-solana",
-        "days": null,
-        "gte": null,
-        "kind": "course-completed",
-        "lte": null,
-        "path": null,
-        "stat": null
-      },
-      "category": "progress",
-      "description": "Complete Visão Geral do Solana",
-      "glyph": "◎",
-      "icon": "compass",
-      "name": "Visão Geral",
-      "solTier": false,
-      "xpReward": 60
-    },
-    {
-      "_id": "achievement-pilula-taken",
-      "award": {
-        "course": "course-pilula-solana-superteam",
-        "days": null,
-        "gte": null,
-        "kind": "course-completed",
-        "lte": null,
-        "path": null,
-        "stat": null
-      },
-      "category": "progress",
-      "description": "Complete Pílula Solana & Superteam",
-      "glyph": "◆",
-      "icon": "graduation-cap",
-      "name": "Pílula Tomada",
       "solTier": false,
       "xpReward": 30
     },

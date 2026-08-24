@@ -29,7 +29,6 @@ const PATCH_LOOKS: Record<string, PatchLook> = {
   "achievement-first-steps": { tier: 1, cat: "reward" },
   "achievement-early-adopter": { tier: 1, cat: "start" },
   "achievement-rust-rookie": { tier: 1, cat: "start" },
-  "achievement-course-completer": { tier: 2, cat: "course", glyph: "★" },
   "achievement-bug-hunter": { tier: 2, cat: "community", glyph: "!" },
   "achievement-monthly-master": { tier: 2, cat: "reward" },
   "achievement-week-warrior": { tier: 2, cat: "reward" },
