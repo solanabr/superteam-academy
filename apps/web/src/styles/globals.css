@@ -2434,35 +2434,34 @@
     color: var(--text-3);
   }
 
-  /* ── Status chip — the corner badge on a card banner ──────────
-     The `.chip` construction, sized for a label instead of a glyph: solid
-     fill, literal ink outline, hard offset shadow, caps label. It replaces a
-     translucent `color-mix(… , var(--card))` pill that inherited the theme's
-     card colour and then sat on top of arbitrary cover art — over a light
-     photo the old enrolled chip was near-invisible.
+  /* ── Status chip — `StatusChip`, the one learner-status stamp ──
+     The `.chip` construction sized for a label instead of a glyph: solid fill,
+     literal ink outline, hard offset shadow, caps label. It replaces two
+     separate translucent pills — the card banner's and the path timeline's —
+     that each did `color-mix(…, var(--card))`, inherited the theme's card
+     colour, and then sat on top of arbitrary cover art. Over a light photo the
+     old enrolled pill was near-invisible.
 
-     The OUTLINE is the literal dark ink on BOTH grounds, like the chips, the
-     avatar rings and the filled buttons: this badge is drawn on a photograph,
-     not on a themed surface, so there is no ground for a flipping line to
-     agree with, and a cream ring would disappear into a light banner.
+     The OUTLINE is the literal dark ink on BOTH grounds, like the glyph chips,
+     the avatar rings and the filled buttons: the card variant is drawn on a
+     photograph, not on a themed surface, so there is no ground for a flipping
+     line to agree with, and a cream ring would vanish into a light banner.
 
-     Contrast is carried by the fill, never by the art underneath — the neutral
-     chip is #19231b on cream (#fafaf7), 16.6:1, and the earned one inherits
-     the primary pair below. Both hold over a photo and over the Forge banner's
-     flat orange. */
-  .course-card-status {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 2;
+     Contrast is carried by the fill, never by the art underneath: the neutral
+     chip is #19231b on cream (#fafaf7), 16.6:1, and the earned one is the
+     primary pair (white on #0a7055 light, on #2ecc8e dark). Both hold over a
+     photo and over the Forge banner's flat orange. */
+  .status-chip {
     display: inline-flex;
     align-items: center;
     gap: 4px;
     width: fit-content;
+    flex-shrink: 0;
     padding: 3px 9px 4px;
     border-radius: 7px;
     border: 1.5px solid var(--ink-dark);
     box-shadow: 0 1.5px 0 0 var(--ink-dark);
+    background: var(--ink-cream);
     color: var(--ink-dark);
     font-family: var(--font-display, var(--font-d));
     font-size: 11px;
@@ -2472,18 +2471,28 @@
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
+  /* The compact step of the same chip — timeline rows, not card banners. */
+  .status-chip[data-size="sm"] {
+    padding: 2px 8px 3px;
+    border-radius: 6px;
+    font-size: 10px;
+  }
   /* Earned. Colour comes from the primary tokens — the same pair `.pressed-key`
      and the primary Button read — so a COMPLETED chip and a selected "All" key
      are the same green on the same page: the light theme's dark green under a
      white label, the dark theme's mint. A literal mint was tried first (owner,
      24-08) and read as a foreign brightness beside the light-theme rails. */
-  .course-card-status.completed {
+  .status-chip[data-tone="earned"] {
     background: var(--primary);
     color: var(--primary-fg);
   }
-  /* In progress is informational, not an award — the neutral cream plate. */
-  .course-card-status.enrolled {
-    background: var(--ink-cream);
+
+  /* Placement only — the chip itself is `.status-chip`. */
+  .course-card-status {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
   }
 }
 
@@ -2491,35 +2500,11 @@
    COURSE CATALOG — tabs, path filter pills, learning path sections
 ═══════════════════════════════════════════════════════════════ */
 
-/* ── Catalog tabs ── */
-.catalog-tabs {
-  display: flex;
-  gap: 4px;
-  overflow-x: auto;
-}
-.catalog-tab {
-  font-family: var(--font-display, var(--font-d));
-  font-weight: 800;
-  font-size: 14px;
-  padding: 12px 20px;
-  min-height: 44px;
-  border: none;
-  background: none;
-  color: var(--text-3);
-  cursor: pointer;
-  border-bottom: 3px solid transparent;
-  transition: all 0.15s;
-  white-space: nowrap;
-}
-.catalog-tab:hover {
-  color: var(--text);
-}
-.catalog-tab.active {
-  color: var(--primary);
-  border-bottom-color: var(--primary);
-}
+/* The All Courses / Learning Paths switcher was an underline-tab family here
+   (`.catalog-tabs` / `.catalog-tab`). It is a segmented choice, so it now uses
+   the shared `SegmentedControl` track like the filter rails under it. */
 
-/* ── Filter row layout (search + pills on same row) ── */
+/* ── Filter row layout (search + rails on the same row) ── */
 .filter-row {
   display: flex;
   align-items: center;
@@ -2655,16 +2640,20 @@
   }
 }
 
+/* The path's kind ("FOUNDATION") — informational, so it takes the neutral ink
+   chip the course cards use: cream plate, literal ink outline, hard lift. */
 .path-tag {
   font-family: var(--font-mono, var(--font-m));
-  font-weight: 600;
+  font-weight: 700;
   font-size: 10px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  padding: 3px 10px;
-  border-radius: 99px;
-  border: 1.5px solid var(--border);
-  color: var(--text-3);
+  padding: 2px 8px 3px;
+  border-radius: 6px;
+  border: 1.5px solid var(--ink-dark);
+  box-shadow: 0 1.5px 0 0 var(--ink-dark);
+  background: var(--ink-cream);
+  color: var(--ink-dark);
 }
 
 .path-chevron {
@@ -2676,7 +2665,7 @@
   transform: rotate(180deg);
 }
 
-/* The path bar itself is the progress standard — see `.path-bar-track` in the
+/* The path bar is the shared `ProgressBar` — see `.seg-track` in the
    progress-bar block next to `.dash-xp-track`. */
 
 /* Row 2: Stats footer */
@@ -2697,13 +2686,21 @@
   font-size: 14px;
   line-height: 1;
 }
+/* The XP counter is the dashboard's `.dq-reward` idiom — drawn lightning plus
+   an amber display face. It was an emoji floating on the row; the amber accent
+   survives, the bare emoji does not. */
 .path-foot-xp {
   margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   font-family: var(--font-display, var(--font-d));
   font-weight: 800;
   font-size: 13px;
   color: var(--xp);
   letter-spacing: -0.3px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 /* ═══════════════════════════════════════════════
@@ -2752,7 +2749,10 @@
   position: relative;
 }
 
-/* ── Node circle (bigger, bolder) ── */
+/* ── Step disc — the round `.chip` at 36px ──────────────────────
+   Flat fill, literal ink outline, hard offset lift, mono mark. A step is the
+   same kind of object as a glyph chip or a patch, so it is drawn the same way
+   rather than as a soft circle with a tinted border. */
 .path-step-node {
   width: 36px;
   height: 36px;
@@ -2763,39 +2763,51 @@
   font-family: var(--font-mono, var(--font-m));
   font-weight: 700;
   font-size: 13px;
-  color: var(--text-3);
-  background: var(--card);
-  border: 2.5px solid var(--border);
+  color: var(--ink-dark);
+  background: var(--ink-cream);
+  border: 2px solid var(--ink-dark);
+  box-shadow: 0 2px 0 0 var(--ink-dark);
   position: relative;
   z-index: 2;
   align-self: start;
   margin-top: 16px;
-  transition: all 0.25s ease;
+  transition:
+    background 0.25s ease,
+    color 0.25s ease;
 }
 
-/* State: done — universal green */
+/* Done — the same earned green as the COMPLETED chip, from the primary pair. */
 .path-step.done .path-step-node {
-  background: var(--success, #22c55e);
-  color: #fff;
-  border-color: transparent;
+  background: var(--primary);
+  color: var(--primary-fg);
 }
 
-/* State: active — pulsing XP glow */
+/* Active — the amber XP accent, the one place on this rail that pulses. The
+   glow is layered ON TOP of the disc's own hard lift, which stays. */
 .path-step.active .path-step-node {
   background: var(--xp);
-  color: #1a1a1a;
-  border-color: var(--xp);
   font-weight: 800;
-  box-shadow: 0 0 0 5px color-mix(in srgb, var(--xp) 22%, transparent);
   animation: node-pulse 2.5s ease-in-out infinite;
 }
 @keyframes node-pulse {
   0%,
   100% {
-    box-shadow: 0 0 0 5px color-mix(in srgb, var(--xp) 22%, transparent);
+    box-shadow:
+      0 2px 0 0 var(--ink-dark),
+      0 0 0 5px color-mix(in srgb, var(--xp) 22%, transparent);
   }
   50% {
-    box-shadow: 0 0 0 10px color-mix(in srgb, var(--xp) 8%, transparent);
+    box-shadow:
+      0 2px 0 0 var(--ink-dark),
+      0 0 0 10px color-mix(in srgb, var(--xp) 8%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .path-step.active .path-step-node {
+    animation: none;
+    box-shadow:
+      0 2px 0 0 var(--ink-dark),
+      0 0 0 5px color-mix(in srgb, var(--xp) 22%, transparent);
   }
 }
 
@@ -2889,56 +2901,25 @@ a.path-step-card:active {
   text-overflow: ellipsis;
 }
 
-/* Status badges — compact */
-.path-step-badge {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  /* Brand guide pill spec: Nunito 700 · caps · +0.4px · tabular */
-  font-family: var(--font-display, var(--font-d));
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  font-variant-numeric: tabular-nums;
-  border-radius: 99px;
-  padding: 2px 8px;
-  border: 1.5px solid;
-  white-space: nowrap;
-}
-.path-step-badge.done {
-  color: var(--success, #22c55e);
-  border-color: color-mix(in srgb, var(--success, #22c55e) 30%, transparent);
-  background: color-mix(in srgb, var(--success, #22c55e) 8%, transparent);
-}
-.path-step-badge.active {
-  color: var(--primary);
-  border-color: color-mix(in srgb, var(--primary) 30%, transparent);
-  background: color-mix(in srgb, var(--primary) 8%, transparent);
-}
+/* The row's COMPLETED and lesson-count badges are `StatusChip` at `size="sm"`
+   — literally the component the catalog cards use, not a matching copy. The
+   old `.path-step-badge` family lived here and drifted from the card twice. */
 
-/* Continue chip — the one filled action on the timeline (active row only) */
+/* Continue — the one filled action on the timeline (active row only). It is
+   the Button primitive's classes on a span, so it cannot drift from a real
+   primary button; only the row placement lives here. */
 .path-step-continue {
   flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
   margin-left: auto;
-  padding: 4px 12px;
-  border-radius: 99px;
-  background: var(--primary);
-  color: #fff;
-  font-family: var(--font-display, var(--font-d));
-  font-size: 11px;
-  font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.4px;
-  white-space: nowrap;
-  transition: background 0.15s ease;
+  font-size: 11px;
 }
-a.path-step-card:hover .path-step-continue {
-  background: var(--primary-hover, var(--primary));
+.path-step-skip {
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-size: 10px;
 }
 
 .path-step-lock {
@@ -2956,37 +2937,15 @@ a.path-step-card:hover .path-step-continue {
   flex-wrap: wrap;
 }
 .path-step-meta-xp {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
   color: var(--xp);
   font-weight: 700;
 }
 
-/* Slim progress bar — active step only */
-.path-step-progress {
-  height: 3px;
-  background: var(--subtle);
-  border-radius: 99px;
-  overflow: hidden;
-  margin-top: 6px;
-}
-.path-step-fill {
-  height: 100%;
-  border-radius: 99px;
-  position: relative;
-  overflow: hidden;
-  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-}
-.path-step-fill::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.35) 50%,
-    transparent 100%
-  );
-  animation: shimmer 2.2s ease-in-out infinite;
-}
+/* The active row's own bar is `ProgressBar size="slim"` — the shared ink
+   construction, not a 3px tinted line with a shimmer sweep. */
 
 /* ── Staggered reveal ── */
 .path-section.open .path-step {
@@ -3019,22 +2978,6 @@ a.path-step-card:hover .path-step-continue {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-/* Step progress bar — universal primary color */
-.path-step-fill {
-  background: var(--primary);
-}
-
-/* ── Skip-ahead badge (LX-A7 guided-skip modality) ── */
-.path-step-badge.skip {
-  color: var(--text-3);
-  border-color: var(--border);
-  background: var(--subtle);
-}
-a.path-step-card:hover .path-step-badge.skip {
-  color: var(--text);
-  border-color: var(--border-hover);
 }
 
 /* ═══ PATHS VIEW — guidance row + start-here card (LX-A7) ═══ */
@@ -4518,15 +4461,13 @@ a.stat-receipt:active {
    once, on every construction that uses them, so a value can never drift
    between the XP bar, the segmented lesson bars and the path bar. */
 .dash-xp-track,
-.seg-track,
-.path-bar-track {
+.seg-track {
   --xpbar-ink: #19231b;
   --xpbar-track: rgba(25, 35, 27, 0.12);
   --xpbar-fill: #2ecc8e;
 }
 [data-theme="dark"] .dash-xp-track,
-[data-theme="dark"] .seg-track,
-[data-theme="dark"] .path-bar-track {
+[data-theme="dark"] .seg-track {
   --xpbar-ink: var(--ink-line);
   /* The unfilled remainder of the bar is a fill; keep it bright-derived. Mint
      stays the FILLED portion — the spec retires mint as a button fill only. */
@@ -4600,26 +4541,10 @@ a.stat-receipt:active {
   }
 }
 
-/* ── Learning-path bar — smooth, never segmented: a path spans whole courses,
-   so ticks would read as lessons and mislead. ── */
-.path-bar-track {
-  width: 100%;
-  height: 10px;
-  background: var(--xpbar-track);
-  border: 2px solid var(--xpbar-ink);
-  border-radius: var(--r-full);
-  overflow: hidden;
-}
-.path-bar-fill {
-  height: 100%;
-  background: var(--xpbar-fill);
-  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
-}
-@media (prefers-reduced-motion: reduce) {
-  .path-bar-fill {
-    transition: none;
-  }
-}
+/* The learning-path header bar was its own smooth `.path-bar-track` here. It
+   is now the shared `ProgressBar`: the path footer counts lessons, so the bar
+   counts them too, and `SEGMENT_CAP` decides ticks vs. smooth fill instead of
+   this file. */
 .dash-ach {
   padding: 18px 16px;
   display: flex;

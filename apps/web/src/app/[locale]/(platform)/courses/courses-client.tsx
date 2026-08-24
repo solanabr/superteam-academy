@@ -161,21 +161,19 @@ export function CourseCatalogClient({
         <p className="mt-1 text-text-3">{t("catalogSubtitle")}</p>
       </div>
 
-      {/* Tabs */}
-      <div className="catalog-tabs">
-        <button
-          className={`catalog-tab ${activeTab === "all" ? "active" : ""}`}
-          onClick={() => setActiveTab("all")}
-        >
-          {t("allCourses")}
-        </button>
-        <button
-          className={`catalog-tab ${activeTab === "paths" ? "active" : ""}`}
-          onClick={() => setActiveTab("paths")}
-        >
-          {t("learningPaths")}
-        </button>
-      </div>
+      {/* All Courses / Learning Paths is a segmented choice like any other, so
+          it wears the same rail as the filters below it rather than its own
+          underline-tab idiom (owner, 24-08). */}
+      <SegmentedControl
+        ariaLabel={t("view")}
+        options={[
+          { value: "all" as ActiveTab, label: t("allCourses") },
+          { value: "paths" as ActiveTab, label: t("learningPaths") },
+        ]}
+        value={activeTab}
+        onChange={setActiveTab}
+        className="w-fit"
+      />
 
       {/* ════════ TAB 1: ALL COURSES ════════ */}
       {activeTab === "all" && (
