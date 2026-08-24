@@ -554,12 +554,10 @@
      component. The band fills carry over untouched. */
   [data-theme="dark"] .lv-badge {
     --lv-ink: var(--ink-line);
-    --lv-shadow: color-mix(in srgb, var(--ink-line) 20%, transparent);
-  }
-  /* The badge in the top bar keeps the pill's full contrast. */
-  [data-theme="dark"] .nav-pill .lv-badge {
-    --lv-ink: var(--ink-bright);
-    --lv-shadow: color-mix(in srgb, var(--ink-bright) 20%, transparent);
+    /* No shadows on dark: the hard offset is a light-theme device, and on a
+       dark ground the keyline already does that job. Drawing both reads as a
+       double border. */
+    --lv-shadow: transparent;
   }
 
   /* ── Nav pill (spec: Leaderboard and Level, §1) ────────────────────
@@ -618,9 +616,8 @@
     letter-spacing: 0.06em;
     color: var(--text-2);
   }
-  /* The one object that stays cream — see `--ink-bright`. */
   [data-theme="dark"] .nav-pill {
-    --pill-ink: var(--ink-bright);
+    --pill-ink: var(--ink-line);
   }
 
   /* ── Achievement Medal Grid — V9 Superteam Academy ── */
@@ -681,17 +678,44 @@
     --quiet-line: color-mix(in srgb, var(--ink-line) 14%, transparent);
   }
   [data-theme="dark"] {
-    /* Light gray, not cream. A near-white outline against these surfaces ran
-       at ~18:1 and read as glare on every constructed object at once —
-       buttons, patches, cards, tracks. Gray lands at ~8:1, which is half the
-       contrast and still far above the 3:1 WCAG asks of a non-text boundary.
+    /* Deep green and charcoal (spec: Dark theme buttons, 24-08). Supersedes
+       both the cream frame and the light-gray softening that followed it.
 
-       `--ink-bright` is the exception, kept for the nav pill: the level and XP
-       in the top bar are the one place that should hold full contrast, so the
-       viewer's own state stays the brightest thing on the page. */
-    --ink-line: #adadad;
+       The cream frame put a ~17:1 edge around the brightest element on the
+       page, and mint at full strength gave a white label only 2.1:1. The fill
+       drops to deep green — 6.1:1 under white — and the frame becomes a
+       CHARCOAL keyline, darker than the fill, which is the same relationship
+       the light theme already draws in ink. The button stays a patch; it
+       stops glowing.
+
+       One keyline for the whole theme: buttons, count pills, XP pills, chips
+       and badges all take `--keyline`. Width scales with the component,
+       colour does not. `--keyline-raised` is the single exception, for
+       surfaces lighter than #232323.
+
+       The keyline is STRUCTURE and never becomes a text colour — that was the
+       failure of the previous pass, where pill labels picked up the outline
+       gray and went unreadable. Labels are `--btn-label` on a fill and
+       `--ink-bright` on outlined chrome. */
+    --btn-fill: #0a7055;
+    --btn-fill-hover: #0e9470;
+    --btn-fill-press: #075c45;
+    --btn-label: #ffffff;
+    --keyline: #55524c;
+    --keyline-hover: #8a857c;
+    --keyline-raised: #6b675f;
+    --btn-fill-disabled: #1e3830;
+    --keyline-disabled: #33312c;
+    --label-disabled: #6b6862;
+    --focus-ring: #2ecc8e;
+
+    /* Every flipping outline in the app already reads this one token. */
+    --ink-line: var(--keyline);
+    /* Label colour for outlined chrome — never an outline. */
     --ink-bright: #fafaf7;
-    --quiet-line: color-mix(in srgb, var(--ink-line) 14%, transparent);
+    /* Hairlines and tints stay bright-derived: they are FILLS, and a charcoal
+       at 12% over a #111 page is indistinguishable from the page itself. */
+    --quiet-line: color-mix(in srgb, var(--ink-bright) 12%, transparent);
   }
 
   /* ── Achievement patch (spec: achievement-patches v1) ────────────
@@ -914,7 +938,7 @@
   [data-theme="dark"] .patch,
   [data-theme="dark"] .chip {
     --patch-ink: var(--ink-line);
-    box-shadow: 0 var(--lift) 0 0 var(--ink-line);
+    box-shadow: none;
   }
   [data-theme="dark"] .patch[data-cat="reward"],
   [data-theme="dark"] .patch[data-cat="start"],
@@ -924,12 +948,12 @@
   [data-theme="dark"] .patch[data-locked],
   [data-theme="dark"] .chip[data-empty] {
     background: #181818;
-    border-color: rgba(255, 255, 255, 0.2);
-    color: #78838f;
+    border-color: var(--keyline-disabled);
+    color: var(--label-disabled);
     box-shadow: none;
   }
   [data-theme="dark"] .patch[data-locked]::before {
-    border-color: rgba(255, 255, 255, 0.12);
+    border-color: var(--keyline-disabled);
   }
 
   /* ── CHIP — tier 2 of the glyph language (owner-approved 21-08) ──
@@ -3601,7 +3625,9 @@ a.path-step-card:hover .path-step-badge.skip {
 [data-theme="dark"] .podium-grid,
 [data-theme="dark"] .lb-list {
   --lb-ink: var(--ink-line);
-  --lb-tint: color-mix(in srgb, var(--ink-line) 14%, transparent);
+  /* Tint is a FILL, not an outline — it stays bright-derived so the row still
+     separates from the page once the keyline goes charcoal. */
+  --lb-tint: color-mix(in srgb, var(--ink-bright) 11%, transparent);
 }
 
 .podium-card {
@@ -4484,7 +4510,9 @@ a.stat-receipt:active {
 [data-theme="dark"] .seg-track,
 [data-theme="dark"] .path-bar-track {
   --xpbar-ink: var(--ink-line);
-  --xpbar-track: color-mix(in srgb, var(--ink-line) 18%, transparent);
+  /* The unfilled remainder of the bar is a fill; keep it bright-derived. Mint
+     stays the FILLED portion — the spec retires mint as a button fill only. */
+  --xpbar-track: color-mix(in srgb, var(--ink-bright) 15%, transparent);
 }
 .dash-xp-track {
   width: 100%;
@@ -6470,4 +6498,129 @@ textarea.set-input {
 .avatar-crop-zoom:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 3px;
+}
+
+/* ══ Dark theme: deep green and charcoal ══════════════════════════════════
+   Spec: "Dark theme buttons", 24-08. Buttons and outlined chrome on dark
+   surfaces move from mint in a bright frame to deep green in a charcoal
+   keyline. The construction does not change — flat fill, hard outline, no
+   gradient — only the two colours, plus the shadow coming off.
+
+   These rules live at the end of the file, unlayered, because they have to
+   beat the Tailwind utilities the Button's cva emits (the focus outline in
+   particular). Light theme is untouched by everything below.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* The colour behind a focused control, so the focus ring's gap matches the
+   surface rather than approximating it. Resolves per theme via `--bg`. */
+:root {
+  --page-bg: var(--bg);
+}
+
+/* Raised surfaces — cards, modals, popovers lighter than #232323 — step the
+   keyline up. The only exception in the system. */
+[data-theme="dark"] .surface--raised {
+  --keyline: var(--keyline-raised);
+  --page-bg: var(--card);
+}
+[data-theme="dark"] .dash-panel {
+  --page-bg: var(--card);
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────
+   3px is the floor for the keyline: below that it stops registering against
+   a dark page, where the light theme's 2px ink line reads fine. */
+[data-theme="dark"] .btn-ink {
+  --btn-line: var(--keyline);
+  border-width: 3px;
+  box-shadow: none;
+  transition:
+    background-color 0.14s,
+    border-color 0.14s,
+    transform 0.14s;
+}
+/* Both surfaces lift together — that is what keeps it feeling like a physical
+   patch catching light, now that there is no shadow to lift against. */
+[data-theme="dark"] .btn-ink:hover:not(:disabled) {
+  border-color: var(--keyline-hover);
+  transform: translateY(-2px);
+}
+[data-theme="dark"] .btn-ink:active:not(:disabled) {
+  border-color: var(--keyline);
+  transform: translateY(1px);
+  box-shadow: none;
+  transition-duration: 0.1s;
+}
+[data-theme="dark"] .btn-ink--sm,
+[data-theme="dark"] .btn-ink--sm:active:not(:disabled) {
+  box-shadow: none;
+}
+
+/* Mint is retired as a button fill on dark, and nowhere else: it stays the
+   XP bar, the progress fills, the eyebrow labels and the focus ring. */
+[data-theme="dark"] .btn-ink--primary {
+  background: var(--btn-fill);
+  color: var(--btn-label);
+}
+[data-theme="dark"] .btn-ink--primary:hover:not(:disabled) {
+  background: var(--btn-fill-hover);
+}
+[data-theme="dark"] .btn-ink--primary:active:not(:disabled) {
+  background: var(--btn-fill-press);
+}
+
+/* Secondary carries no green at all — the keyline and the label do the work. */
+[data-theme="dark"] .btn-ink--secondary {
+  background: transparent;
+  color: var(--ink-bright);
+}
+[data-theme="dark"] .btn-ink--secondary:hover:not(:disabled) {
+  background: rgba(250, 250, 247, 0.05);
+}
+
+[data-theme="dark"] .btn-ink:disabled {
+  background: var(--btn-fill-disabled);
+  border-color: var(--keyline-disabled);
+  color: var(--label-disabled);
+  box-shadow: none;
+  transform: none;
+}
+
+/* The gap ring must match the surface behind the button, not the keyline. */
+[data-theme="dark"] .btn-ink:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px var(--page-bg),
+    0 0 0 6px var(--focus-ring);
+}
+
+/* ── No shadows on dark ──────────────────────────────────────────────────
+   The hard offset shadow is a light-theme device; on dark the keyline does
+   that job and drawing both reads as a double border. Every object below is
+   part of the ink construction and would otherwise keep a half-converted
+   look next to the buttons. */
+[data-theme="dark"] button.patch:hover,
+[data-theme="dark"] button.patch:active,
+[data-theme="dark"] .dm:hover .patch:not([data-locked]),
+[data-theme="dark"] .dm:active .patch:not([data-locked]),
+[data-theme="dark"] .podium-card,
+[data-theme="dark"] .podium-card.gold,
+[data-theme="dark"] .lb-row[data-top],
+[data-theme="dark"] a.stat-receipt,
+[data-theme="dark"] a.stat-receipt:hover,
+[data-theme="dark"] a.stat-receipt:active,
+[data-theme="dark"] .dash-panel,
+[data-theme="dark"] .nlp-cal {
+  box-shadow: none;
+}
+
+/* ── Pills, chips and badges ─────────────────────────────────────────────
+   Everything outlined takes the same keyline. The label is bright; the
+   outline never becomes the text colour. Amber numerals stay amber — they
+   carry their own contrast and are the only coloured text allowed inside
+   outlined chrome. */
+[data-theme="dark"] .nav-pill,
+[data-theme="dark"] .rank-tab,
+[data-theme="dark"] .lv-badge {
+  box-shadow: none;
 }
