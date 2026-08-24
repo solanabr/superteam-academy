@@ -114,6 +114,7 @@
     "heroWedge": "Você escreve o código. A IA te ajuda a entender por que ele funciona.",
     "heroSubtitle": "Código de verdade no navegador. XP a cada lição. Credencial que mora na sua wallet.",
     "exploreCourses": "Bora construir",
+    "notSureWhereToStart": "Não sabe por onde começar? São 4 toques",
     "howTitle": "Como funciona",
     "howComment": "// construa → ganhe → prove",
     "step1Kicker": "Construa",
@@ -450,7 +451,8 @@
     "reviewDueTitle": "{count} para revisar",
     "reviewDueAria": "{count} itens para revisar, abrir revisão",
     "reviewMore": "+{count} mais",
-    "reviewNow": "Revisar agora"
+    "reviewNow": "Revisar agora",
+    "unenrollStarted": "Você só pode remover um curso que ainda não começou."
   },
   "gamification": {
     "xp": "XP",
@@ -1670,5 +1672,16 @@
     "viewCommit": "Ver commit no GitHub",
     "openCourse": "Abrir prévia do curso",
     "scopedNote": "Mostrando apenas os cursos alterados neste pull request ({count} sem alterações ocultos)."
+  },
+  "walletPrompt": {
+    "connectTitle": "Conecte sua carteira vinculada",
+    "connectBody": "Para cancelar a inscrição, aprove com a carteira vinculada à sua conta ({linked}). Conecte-a para continuar.",
+    "connectBodyUnknown": "Para cancelar a inscrição, conecte a carteira vinculada à sua conta — o programa precisa da assinatura dela.",
+    "connectAction": "Conectar carteira",
+    "dismiss": "Cancelar",
+    "mismatchTitle": "Carteira errada conectada",
+    "mismatchBody": "Você está conectado com uma carteira diferente da vinculada à sua conta ({linked}). Troque para ela na sua carteira para continuar — o vínculo é permanente, então esta não pode substituí-la.",
+    "enrollMismatch": "A inscrição é registrada na carteira vinculada à sua conta ({linked}). Troque para ela na sua carteira e tente de novo.",
+    "enrollNoLinkedWallet": "Sua conta ainda não tem carteira vinculada, então uma inscrição feita agora não poderia ser creditada a você. Vincule uma carteira em Configurações primeiro."
   }
 }

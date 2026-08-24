@@ -42,6 +42,8 @@ const h = vi.hoisted(() => ({
   fetchEnrollment: vi.fn(),
   finalizeCourse: vi.fn(),
   awardAchievement: vi.fn(),
+  /** Whether the AchievementReceipt PDA already exists on-chain. */
+  fetchAchievementReceipt: vi.fn<() => Promise<boolean>>(),
   isCourseInMaintenance: vi.fn<(courseId: string) => Promise<boolean>>(),
   isPlatformFrozen: vi.fn<() => Promise<boolean>>(),
   getCourseById: vi.fn(),
@@ -119,7 +121,7 @@ vi.mock("../academy-program", () => ({
 }));
 
 vi.mock("../academy-reads", () => ({
-  fetchAchievementReceipt: vi.fn(),
+  fetchAchievementReceipt: () => h.fetchAchievementReceipt(),
   fetchEnrollment: (...args: unknown[]) => h.fetchEnrollment(...args),
   fetchCourse: vi.fn(),
 }));
@@ -259,13 +261,18 @@ vi.mock("@/lib/supabase/admin", () => {
   return {
     createAdminClient: () => ({
       from: (table: string) => new Chain(table),
-      rpc: (_fn: string, params: Record<string, unknown>) =>
-        Promise.resolve(h.awardXp(params)),
+      // Only award_xp is driven per-test; every other SECURITY DEFINER call
+      // (unlock_achievement) succeeds quietly, as it does in practice.
+      rpc: (fn: string, params: Record<string, unknown>) =>
+        fn === "award_xp"
+          ? Promise.resolve(h.awardXp(params))
+          : Promise.resolve({ data: null, error: null }),
     }),
   };
 });
 
 import { retryPendingOnchainActions } from "../onchain-queue";
+import { MAX_RETRIES } from "@/lib/gamification/xp-queue-settlement";
 
 const USER_ID = "user-1";
 
@@ -282,6 +289,12 @@ beforeEach(() => {
   h.fetchEnrollment.mockReset();
   h.finalizeCourse.mockReset();
   h.awardAchievement.mockReset();
+  h.awardAchievement.mockResolvedValue({
+    signature: "AWARD_SIG",
+    assetAddress: { toBase58: () => "ASSET_ADDR" },
+  });
+  h.fetchAchievementReceipt.mockReset();
+  h.fetchAchievementReceipt.mockResolvedValue(false);
   h.isCourseInMaintenance.mockReset();
   h.isPlatformFrozen.mockReset();
   h.isPlatformFrozen.mockResolvedValue(false);
@@ -1207,5 +1220,137 @@ describe("retryPendingOnchainActions — quest XP on-chain leg", () => {
     const patch = patchFor("r-mint");
     expect(patch?.resolved_at).toBeUndefined();
     expect(patch?.retry_count).toBe(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The stuck-row shapes actually found in prod on 2026-08-24.
+//
+// 20 achievement rows and 3 quest_xp_mint rows sat unresolved for up to four
+// weeks with retry_count 0 — the drain had never once processed them, because
+// the login routes fired it as a detached promise that the serverless runtime
+// kills at response. These feed the drain each row exactly as it sits in the
+// table and assert it dispatches to the right handler and settles.
+// ---------------------------------------------------------------------------
+
+describe("retryPendingOnchainActions — prod stuck rows (2026-08-24)", () => {
+  it("resolves an achievement row whose receipt is already on-chain, without re-awarding", async () => {
+    // The real shape: the webhook re-awarded an achievement that was already
+    // on-chain, the CPI's Allocate failed with `custom program error: 0x0`, and
+    // the row has carried that as last_error ever since.
+    h.rows = [
+      {
+        id: "r-ach",
+        action_type: "achievement",
+        reference_id: "achievement-first-steps",
+        retry_count: 0,
+        payload: {
+          achievementId: "achievement-first-steps",
+          walletAddress: "WALLET_ADDR",
+        },
+      },
+    ];
+    h.fetchAchievementReceipt.mockResolvedValue(true);
+
+    await retryPendingOnchainActions(USER_ID);
+
+    // Never a second mint: the chain already has the receipt.
+    expect(h.awardAchievement).not.toHaveBeenCalled();
+    expect(typeof patchFor("r-ach")?.resolved_at).toBe("string");
+  });
+
+  it("awards and resolves an achievement row with no receipt yet", async () => {
+    h.rows = [
+      {
+        id: "r-ach",
+        action_type: "achievement",
+        reference_id: "achievement-early-adopter",
+        retry_count: 0,
+        payload: {
+          achievementId: "achievement-early-adopter",
+          walletAddress: "WALLET_ADDR",
+        },
+      },
+    ];
+    h.fetchAchievementReceipt.mockResolvedValue(false);
+
+    await retryPendingOnchainActions(USER_ID);
+
+    expect(h.awardAchievement).toHaveBeenCalledWith(
+      "achievement-early-adopter",
+      expect.anything()
+    );
+    expect(typeof patchFor("r-ach")?.resolved_at).toBe("string");
+  });
+
+  it("mints a never-attempted quest_xp_mint row (last_error NULL, no claim)", async () => {
+    // The 3 prod quest_xp_mint rows: last_error NULL, retry_count 0, and their
+    // xp_transactions row carries NO signature. Not the #1159 phantom-claim
+    // case — genuinely owed mints that were never attempted.
+    h.rows = [
+      {
+        id: "r-mint-prod",
+        action_type: "quest_xp_mint",
+        reference_id: "quest-login-streak:2026-08-22",
+        retry_count: 0,
+        payload: { xpAmount: 40, memo: "daily_quest:quest-login-streak" },
+      },
+    ];
+    h.xpLedgerRow = { id: "xptx-1", tx_signature: null };
+
+    await retryPendingOnchainActions(USER_ID);
+
+    expect(h.buildSignedRewardXpTx).toHaveBeenCalledTimes(1);
+    expect(h.sendSignedTransaction).toHaveBeenCalledTimes(1);
+    expect(typeof patchFor("r-mint-prod")?.resolved_at).toBe("string");
+  });
+
+  it("bumps retry_count and records a usable error when the award genuinely fails", async () => {
+    h.rows = [
+      {
+        id: "r-ach",
+        action_type: "achievement",
+        reference_id: "achievement-first-steps",
+        retry_count: 0,
+        payload: { achievementId: "achievement-first-steps" },
+      },
+    ];
+    h.fetchAchievementReceipt.mockResolvedValue(false);
+    // Anchor's post-broadcast failure path destroys the message; the queue must
+    // not persist the bare "Unknown action 'undefined'" sentinel.
+    h.awardAchievement.mockRejectedValue(
+      new Error("Unknown action 'undefined'")
+    );
+
+    await retryPendingOnchainActions(USER_ID);
+
+    const patch = patchFor("r-ach");
+    expect(patch?.resolved_at).toBeUndefined();
+    expect(patch?.retry_count).toBe(1);
+    expect(patch?.last_error).not.toBe("Unknown action 'undefined'");
+    expect(patch?.last_error).toContain("after broadcast");
+  });
+
+  it("says so loudly when a row exhausts its attempt budget", async () => {
+    h.rows = [
+      {
+        id: "r-ach",
+        action_type: "achievement",
+        reference_id: "achievement-first-steps",
+        retry_count: MAX_RETRIES - 1,
+        payload: { achievementId: "achievement-first-steps" },
+      },
+    ];
+    h.fetchAchievementReceipt.mockResolvedValue(false);
+    h.awardAchievement.mockRejectedValue(new Error("rpc down"));
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await retryPendingOnchainActions(USER_ID);
+
+    expect(patchFor("r-ach")?.retry_count).toBe(MAX_RETRIES);
+    expect(logged.mock.calls.flat().join(" ")).toContain(
+      "exhausted its 5-attempt budget"
+    );
+    logged.mockRestore();
   });
 });

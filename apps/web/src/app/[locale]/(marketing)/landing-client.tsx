@@ -512,6 +512,24 @@ export function LandingPageClient({
                     />
                   )}
                 </div>
+
+                {/* The /start intake had NO inbound link anywhere in the app
+                    (LX-A1 replaced the old CTAs with the flagship deep-link and
+                    left it orphaned) \u2014 so its whole funnel, and every
+                    profiles.segment/goal/daily_goal, sat empty. This quiet
+                    secondary line is the entry point; the deep-link above stays
+                    the primary path. */}
+                <p
+                  className="hero-seq mt-4"
+                  style={{ "--seq": 5 } as React.CSSProperties}
+                >
+                  <Link
+                    href={`/${locale}/start`}
+                    className="text-sm font-semibold text-text-2 underline underline-offset-4 transition-colors hover:text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  >
+                    {t("notSureWhereToStart")} {"\u2192"}
+                  </Link>
+                </p>
               </div>
 
               {/* Desktop showcase \u2014 the Builder ID and its orbiting loot */}

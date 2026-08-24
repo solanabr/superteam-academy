@@ -3,6 +3,9 @@ import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { bankCompletion, readBank } from "../progress-bank";
 import { replayBankedCompletions } from "../replay-banked";
 
+const { trackEvent } = vi.hoisted(() => ({ trackEvent: vi.fn() }));
+vi.mock("@/lib/analytics", () => ({ trackEvent }));
+
 const base = {
   courseId: "solana-101",
   courseSlug: "solana-101",
@@ -27,6 +30,7 @@ function mockFetch(
 
 beforeEach(() => {
   window.localStorage.clear();
+  trackEvent.mockClear();
 });
 
 afterEach(() => {
@@ -139,5 +143,46 @@ describe("replayBankedCompletions", () => {
     ]);
     // The failed one is preserved; the succeeded one is gone.
     expect(readBank()).toHaveLength(1);
+  });
+
+  it("fires lesson_completed for each replayed completion", async () => {
+    bankCompletion({ ...base, lessonId: "lesson-1" });
+    bankCompletion({ ...base, lessonId: "lesson-2" });
+    vi.stubGlobal(
+      "fetch",
+      mockFetch(() => ({ status: 200, json: { success: true } }))
+    );
+
+    await replayBankedCompletions();
+
+    expect(trackEvent).toHaveBeenCalledTimes(2);
+    expect(trackEvent).toHaveBeenCalledWith("lesson_completed", {
+      lessonId: "lesson-1",
+      courseId: "solana-101",
+      source: "replay",
+    });
+    expect(trackEvent).toHaveBeenCalledWith("lesson_completed", {
+      lessonId: "lesson-2",
+      courseId: "solana-101",
+      source: "replay",
+    });
+  });
+
+  it("does not fire lesson_completed for outcomes that did not complete", async () => {
+    bankCompletion({ ...base, lessonId: "lesson-1" });
+    bankCompletion({ ...base, lessonId: "lesson-2" });
+    vi.stubGlobal(
+      "fetch",
+      mockFetch((body) => {
+        const { lessonId } = body as { lessonId: string };
+        return lessonId === "lesson-1"
+          ? { status: 429 }
+          : { status: 403, json: { reason: "quiz_failed" } };
+      })
+    );
+
+    await replayBankedCompletions();
+
+    expect(trackEvent).not.toHaveBeenCalled();
   });
 });

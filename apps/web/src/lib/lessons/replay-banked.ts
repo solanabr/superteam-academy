@@ -21,6 +21,7 @@
  */
 
 import type { CompletionDenyReason } from "@/lib/lessons/completion-error";
+import { trackEvent } from "@/lib/analytics";
 import { readBank, removeBanked, type BankedCompletion } from "./progress-bank";
 
 export type ReplayStatus = "completed" | "needsEnroll" | "retry" | "needsRedo";
@@ -92,6 +93,18 @@ export async function replayBankedCompletions(): Promise<ReplayOutcome[]> {
     } catch {
       status = "retry";
       reason = "network";
+    }
+
+    if (status === "completed") {
+      // A replayed entry is a real lesson completion — it writes the same
+      // user_progress row a live one does. It fired no event until #1160, which
+      // is most of why PostHog's lesson_completed count ran well under the DB's.
+      // `source` keeps the two paths separable rather than silently merged.
+      trackEvent("lesson_completed", {
+        lessonId: entry.lessonId,
+        courseId: entry.courseId,
+        source: "replay",
+      });
     }
 
     if (status === "completed" || status === "needsRedo") {

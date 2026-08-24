@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
 import { generateWalletName } from "@/lib/utils/generate-wallet-name";
@@ -11,6 +11,10 @@ import {
 } from "@/lib/auth/account-status";
 import { shouldAdoptAvatar } from "@/lib/auth/avatar-adoption";
 import type { Database } from "@/lib/supabase/types";
+
+// The after() queue drain does per-row RPC reads and on-chain sends; the
+// framework default would truncate it mid-sweep.
+export const maxDuration = 60;
 
 function sanitizeRedirect(raw: string, fallback: string): string {
   try {
@@ -145,13 +149,20 @@ export async function GET(request: NextRequest) {
         .eq("id", userId);
     }
 
-    retryPendingOnchainActions(userId).catch((err: unknown) =>
-      logError({
-        errorId: ERROR_IDS.OAUTH_CALLBACK_FAILED,
-        error: err instanceof Error ? err : new Error(String(err)),
-        context: { note: "retryPendingOnchainActions failed", userId },
-      })
-    );
+    // after(), not a detached promise — see the note on the same call in
+    // /api/auth/wallet: a bare fire-and-forget drain dies when the serverless
+    // instance freezes on response, which is why queued rows never retried.
+    after(async () => {
+      try {
+        await retryPendingOnchainActions(userId);
+      } catch (err: unknown) {
+        logError({
+          errorId: ERROR_IDS.OAUTH_CALLBACK_FAILED,
+          error: err instanceof Error ? err : new Error(String(err)),
+          context: { note: "retryPendingOnchainActions failed", userId },
+        });
+      }
+    });
 
     return response;
   } catch (err: unknown) {

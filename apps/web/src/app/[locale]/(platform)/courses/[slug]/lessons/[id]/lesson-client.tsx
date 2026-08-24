@@ -402,6 +402,11 @@ export function LessonPageClient({
           lessonId: lesson._id,
           courseId,
           signature: result.signature,
+          // `source` partitions the event by completion path. Until #1160 this
+          // was the ONLY instrumented path, so replayed banked work (and
+          // test-out credits) landed in user_progress with no event and the
+          // PostHog count read ~40% below the DB's.
+          source: "live",
         });
       }
     } catch (err) {

@@ -39,5 +39,15 @@
       "lesson-ssr-superteam-porta-de-entrada": 2
     },
     "version": 1
+  },
+  "course-visao-geral-solana": {
+    "next": 3,
+    "retired": [],
+    "slots": {
+      "lesson-vgs-desafios-iniciais": 1,
+      "lesson-vgs-marcos-e-adocao": 2,
+      "lesson-vgs-origens-fundacao": 0
+    },
+    "version": 1
   }
 }
