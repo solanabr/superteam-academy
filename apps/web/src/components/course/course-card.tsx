@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { CheckCircle } from "@phosphor-icons/react";
+import { Check } from "@phosphor-icons/react";
 import { useTranslations, useLocale } from "next-intl";
+import { StatusChip } from "@/components/course/status-chip";
 
 interface CourseCardProps {
   slug: string;
@@ -63,23 +64,24 @@ export function CourseCard({
           </h3>
         )}
         {status === "completed" && (
-          <span
-            className="course-card-status completed"
+          <StatusChip
+            tone="earned"
+            className="course-card-status"
             aria-label={t("completed")}
           >
-            <CheckCircle size={11} weight="fill" aria-hidden="true" />
+            <Check size={11} weight="bold" aria-hidden="true" />
             {t("completed")}
-          </span>
+          </StatusChip>
         )}
         {status === "enrolled" &&
           completedLessons !== undefined &&
           lessonCount !== undefined && (
-            <span
-              className="course-card-status enrolled"
+            <StatusChip
+              className="course-card-status"
               aria-label={`${completedLessons}/${lessonCount} ${t("lessons")}`}
             >
               {completedLessons}/{lessonCount} {t("lessons")}
-            </span>
+            </StatusChip>
           )}
       </div>
 

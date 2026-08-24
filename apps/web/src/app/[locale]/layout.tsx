@@ -57,7 +57,7 @@ export default async function LocaleLayout(props: LocaleLayoutProps) {
           <AnalyticsProvider>
             <div className="grid-bg flex min-h-screen flex-col bg-[var(--bg)]">
               <Header />
-              <main id="main-content" className="flex-1 pt-[60px]">
+              <main id="main-content" className="flex-1 pt-[var(--header-h)]">
                 {children}
               </main>
               <MobileBottomNav />

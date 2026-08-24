@@ -6,12 +6,16 @@ import Link from "next/link";
 import {
   CaretDoubleRight,
   CaretDown,
+  Check,
+  Lightning,
   Lock,
-  CheckCircle,
 } from "@phosphor-icons/react";
 import type { LearningPath } from "@superteam-lms/types";
 import type { PathGuidanceModality } from "@/lib/courses/learner-segment";
 import { cn } from "@/lib/utils";
+import { ProgressBar } from "@/components/course/progress-bar";
+import { StatusChip } from "@/components/course/status-chip";
+import { buttonVariants } from "@/components/ui/button";
 
 export interface PathCourseProgress {
   courseId: string;
@@ -67,11 +71,6 @@ export function LearningPathSection({
 
   const totalXpPossible = courses.reduce((sum, c) => sum + c.xpReward, 0);
 
-  const progressPercent =
-    totalLessonsTotal > 0
-      ? Math.round((completedLessonsTotal / totalLessonsTotal) * 100)
-      : 0;
-
   const totalHours = courses.reduce((s, c) => s + c.duration, 0);
 
   // Sequential gate: course N is "ahead" if course N-1 is not completed.
@@ -122,13 +121,16 @@ export function LearningPathSection({
           />
         </div>
 
-        {/* Progress bar — full width hero element */}
-        <div className="path-bar-track">
-          <div
-            className="path-bar-fill"
-            style={{ width: `${progressPercent}%` }}
-          />
-        </div>
+        {/* Progress bar — the shared ink construction. Lessons are discrete and
+            the footer counts them, so the bar counts them too: one cell per
+            lesson, falling back to a smooth fill on its own past SEGMENT_CAP
+            where ticks stop being countable. */}
+        <ProgressBar
+          value={completedLessonsTotal}
+          max={totalLessonsTotal}
+          segmented
+          aria-label={`${completedLessonsTotal}/${totalLessonsTotal} ${t("lessons")}`}
+        />
 
         {/* Row 2: Stats */}
         <div className="path-header-foot">
@@ -141,8 +143,11 @@ export function LearningPathSection({
           <span>
             {totalHours} {t("hours")}
           </span>
+          {/* The dashboard's XP idiom: drawn lightning + amber display face,
+              not an emoji and not a tinted pill. */}
           <span className="path-foot-xp">
-            {"\u26A1"} {totalXpEarned.toLocaleString()} /{" "}
+            <Lightning size={12} weight="fill" aria-hidden="true" />
+            {totalXpEarned.toLocaleString()} /{" "}
             {totalXpPossible.toLocaleString()}
           </span>
         </div>
@@ -158,10 +163,6 @@ export function LearningPathSection({
             modality === "guided-skip" && ahead && idx === firstAheadIdx;
           const isComplete = p?.isCompleted ?? false;
           const isActive = (p?.isEnrolled && !p?.isCompleted) ?? false;
-          const percent =
-            p && p.totalLessons > 0
-              ? Math.round((p.completedLessons / p.totalLessons) * 100)
-              : 0;
           const lessonCount =
             course.modules?.reduce(
               (sum, m) => sum + (m.lessons?.length ?? 0),
@@ -185,24 +186,49 @@ export function LearningPathSection({
                 <div className="path-step-top">
                   <h4 className="path-step-title">{course.title}</h4>
                   {isComplete && (
-                    <span className="path-step-badge done">
-                      <CheckCircle size={11} weight="fill" /> {t("completed")}
-                    </span>
+                    <StatusChip tone="earned" size="sm">
+                      <Check size={11} weight="bold" aria-hidden="true" />
+                      {t("completed")}
+                    </StatusChip>
                   )}
                   {isActive && (
                     <>
-                      <span className="path-step-badge active">
+                      <StatusChip
+                        size="sm"
+                        aria-label={`${completedLessons}/${lessonCount} ${t("lessons")}`}
+                      >
                         {completedLessons}/{lessonCount}
-                      </span>
-                      <span className="path-step-continue">
+                      </StatusChip>
+                      {/* The row's card IS the link, so the affordances inside
+                          it are spans wearing the Button's classes — a nested
+                          <button> inside an <a> is invalid markup. */}
+                      <span
+                        className={cn(
+                          buttonVariants({ variant: "primary", size: "sm" }),
+                          "path-step-continue"
+                        )}
+                      >
                         {t("continue")}
-                        <CaretDoubleRight size={11} weight="bold" />
+                        <CaretDoubleRight
+                          size={11}
+                          weight="bold"
+                          aria-hidden="true"
+                        />
                       </span>
                     </>
                   )}
                   {skipAhead && (
-                    <span className="path-step-badge skip">
-                      <CaretDoubleRight size={11} weight="bold" />{" "}
+                    <span
+                      className={cn(
+                        buttonVariants({ variant: "secondary", size: "sm" }),
+                        "path-step-skip"
+                      )}
+                    >
+                      <CaretDoubleRight
+                        size={11}
+                        weight="bold"
+                        aria-hidden="true"
+                      />{" "}
                       {t("skipAhead")}
                     </span>
                   )}
@@ -227,17 +253,21 @@ export function LearningPathSection({
                   <span>{t(course.difficulty)}</span>
                   <span>·</span>
                   <span className="path-step-meta-xp">
-                    {"\u26A1"} {course.xpReward}
+                    <Lightning size={11} weight="fill" aria-hidden="true" />
+                    {course.xpReward}
                   </span>
                 </div>
-                {/* Slim progress bar — only for active */}
+                {/* Slim progress bar — only for active. The same construction
+                    as the path bar above it, one step down in height. */}
                 {isActive && (
-                  <div className="path-step-progress">
-                    <div
-                      className="path-step-fill"
-                      style={{ width: `${percent}%` }}
-                    />
-                  </div>
+                  <ProgressBar
+                    value={completedLessons}
+                    max={lessonCount}
+                    segmented
+                    size="slim"
+                    className="mt-1.5"
+                    aria-label={`${completedLessons}/${lessonCount} ${t("lessons")}`}
+                  />
                 )}
               </div>
             </div>
@@ -247,7 +277,7 @@ export function LearningPathSection({
             <div key={course._id} className={`path-step ${stepStatus}`}>
               <div className="path-step-node" aria-hidden="true">
                 {isComplete ? (
-                  <CheckCircle size={16} weight="fill" />
+                  <Check size={16} weight="bold" />
                 ) : locked ? (
                   <Lock size={14} weight="duotone" />
                 ) : (
