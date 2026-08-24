@@ -24,6 +24,8 @@ const dynamic = vi.hoisted(() => ({
   startDynamicSocialSignIn: vi.fn(),
 }));
 
+const dynamicEnabled = vi.hoisted(() => ({ value: true }));
+
 vi.mock("@solana/wallet-adapter-react", () => ({
   useConnection: () => ({
     connection: {
@@ -78,6 +80,12 @@ vi.mock("@/lib/dynamic/social", () => ({
   startDynamicSocialSignIn: dynamic.startDynamicSocialSignIn,
 }));
 
+// The NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID kill switch.
+vi.mock("@/lib/dynamic/config", () => ({
+  isDynamicEnabled: () => dynamicEnabled.value,
+  getDynamicEnvironmentId: () => (dynamicEnabled.value ? "env-id" : null),
+}));
+
 vi.mock("@solana/wallet-adapter-react-ui", () => ({
   useWalletModal: () => ({ setVisible: wallet.setVisible }),
 }));
@@ -125,6 +133,7 @@ beforeEach(() => {
   dynamic.status = "none";
   auth.walletAddress = null;
   auth.walletKind = null;
+  dynamicEnabled.value = true;
   vi.unstubAllGlobals();
 });
 
@@ -393,11 +402,36 @@ describe("useOnChainEnroll — Dynamic embedded wallet", () => {
     expect(wallet.sendTransaction).not.toHaveBeenCalled();
     expect(dynamic.signWithDynamicWallet).not.toHaveBeenCalled();
 
-    // The prompt's action is the real social redirect, not a dead button.
+    // The prompt's action is the real social redirect, not a dead button —
+    // and it takes the provider the LEARNER picked. Guessing Google for a
+    // GitHub learner mints a second account (the bridge matches on the
+    // provider-verified email), which is worse than the dead end being fixed.
     await act(async () => {
-      await result.current.reauthPrompt?.start();
+      await result.current.reauthPrompt?.start("github");
     });
-    expect(dynamic.startDynamicSocialSignIn).toHaveBeenCalledWith("google");
+    expect(dynamic.startDynamicSocialSignIn).toHaveBeenCalledWith("github");
+  });
+
+  it("falls back to the connect modal with Dynamic switched off", async () => {
+    // The kill switch must degrade to the pre-existing behaviour, never to a
+    // reauth card whose buttons silently do nothing.
+    dynamicEnabled.value = false;
+    auth.walletKind = "embedded";
+
+    const { result } = renderHook(() =>
+      useOnChainEnroll({
+        courseId: COURSE_ID,
+        userId: "user-1",
+        onRequireAuth: vi.fn(),
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleEnroll();
+    });
+
+    expect(result.current.reauthPrompt).toBeNull();
+    expect(wallet.setVisible).toHaveBeenCalledWith(true);
   });
 
   it("keeps the connect modal shut while the SDK is still initialising", async () => {

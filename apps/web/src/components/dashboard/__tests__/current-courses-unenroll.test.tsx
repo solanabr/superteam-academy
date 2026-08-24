@@ -28,6 +28,14 @@ const auth = vi.hoisted(() => ({
   walletKind: null as "embedded" | "external" | null,
 }));
 
+// The NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID kill switch.
+const dynamicEnabled = vi.hoisted(() => ({ value: true }));
+
+vi.mock("@/lib/dynamic/config", () => ({
+  isDynamicEnabled: () => dynamicEnabled.value,
+  getDynamicEnvironmentId: () => (dynamicEnabled.value ? "env-id" : null),
+}));
+
 vi.mock("@solana/wallet-adapter-react", () => ({
   useConnection: () => ({
     connection: {
@@ -125,6 +133,7 @@ beforeEach(() => {
   dynamic.status = "none";
   auth.walletAddress = null;
   auth.walletKind = null;
+  dynamicEnabled.value = true;
 });
 
 describe("CurrentCoursesSection — unenroll wallet resolution", () => {
@@ -185,12 +194,41 @@ describe("CurrentCoursesSection — unenroll wallet resolution", () => {
     ).not.toBeInTheDocument();
     expect(wallet.setVisible).not.toHaveBeenCalled();
 
+    // BOTH providers, always. The profile records that the wallet is embedded,
+    // never which social account minted it — and sending a GitHub learner
+    // through Google mints a SECOND account (the bridge matches on the
+    // provider-verified email), so their courses appear to vanish.
+    expect(
+      screen.getByRole("button", {
+        name: messages.walletPrompt.reauthActionGoogle,
+      })
+    ).toBeInTheDocument();
+
     await userEvent.click(
-      screen.getByRole("button", { name: messages.walletPrompt.reauthAction })
+      screen.getByRole("button", {
+        name: messages.walletPrompt.reauthActionGitHub,
+      })
     );
-    expect(dynamic.startDynamicSocialSignIn).toHaveBeenCalledWith("google");
+    expect(dynamic.startDynamicSocialSignIn).toHaveBeenCalledWith("github");
     // Still no adapter modal, even after the action ran.
     expect(wallet.setVisible).not.toHaveBeenCalled();
+  });
+
+  it("falls back to connect — never a dead reauth card — with Dynamic switched off", async () => {
+    // The kill switch must degrade to the pre-existing behaviour, not to a
+    // card whose button silently does nothing (lib/dynamic/config.ts).
+    dynamicEnabled.value = false;
+    auth.walletKind = "embedded";
+
+    renderSection();
+    await clickUnenroll();
+
+    expect(
+      screen.queryByText(messages.walletPrompt.reauthTitle)
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(messages.walletPrompt.connectBodyUnknown)
+    ).toBeInTheDocument();
   });
 
   it("shows nothing at all while the Dynamic SDK is still initialising", async () => {

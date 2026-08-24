@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { truncateAddress } from "@/lib/utils";
+// Type-only: erased at compile time, so this file still pulls in no Dynamic SDK.
+import type { DynamicSocialProvider } from "@/lib/dynamic/social";
 import { Button } from "@/components/ui/button";
 
 export type LinkedWalletPromptVariant = "connect" | "mismatch" | "reauth";
@@ -21,13 +23,34 @@ interface LinkedWalletPromptProps {
   /** Opens the wallet-adapter modal. Only rendered for the "connect" variant. */
   onConnect?: () => void;
   /**
-   * Starts the Dynamic social sign-in redirect. Only rendered for "reauth".
-   * Passed in rather than called here so this component keeps no Dynamic SDK
-   * import — it renders on pages that must build without one.
+   * Starts the Dynamic social sign-in redirect for the provider the learner
+   * picks. Only rendered for "reauth". Passed in rather than called here so
+   * this component keeps no Dynamic SDK import — it renders on pages that must
+   * build without one.
    */
-  onReauth?: () => void | Promise<void>;
+  onReauth?: (provider: DynamicSocialProvider) => void | Promise<void>;
   onDismiss: () => void;
 }
+
+/**
+ * Both providers, always — the card cannot know which one the learner used.
+ *
+ * The profile records that the wallet is `embedded`, never which social
+ * account minted it, and the Dynamic session that WOULD know is the thing
+ * that just expired. Guessing is not a cosmetic bug: `/api/auth/dynamic`
+ * matches accounts on the provider-verified email, so sending a GitHub learner
+ * through Google mints a SECOND account and their courses appear to vanish —
+ * strictly worse than the dead end this card replaces.
+ *
+ * Same order as the sign-in modal (`auth-modal-body.tsx`).
+ */
+const REAUTH_PROVIDERS = [
+  { provider: "google", labelKey: "reauthActionGoogle" },
+  { provider: "github", labelKey: "reauthActionGitHub" },
+] as const satisfies ReadonlyArray<{
+  provider: DynamicSocialProvider;
+  labelKey: string;
+}>;
 
 /**
  * Explain-then-act card for the enrol / unenrol wallet flows.
@@ -51,7 +74,10 @@ export function LinkedWalletPrompt({
   const t = useTranslations("walletPrompt");
   const linked = linkedWallet ? truncateAddress(linkedWallet) : null;
   const ref = useRef<HTMLDivElement>(null);
-  const [reauthStarting, setReauthStarting] = useState(false);
+  // Which provider's redirect is in flight, so only that button shows the
+  // pending label while both are disabled.
+  const [reauthStarting, setReauthStarting] =
+    useState<DynamicSocialProvider | null>(null);
 
   // The card answers a click that may be well below it, so bring it into view
   // and give it focus — otherwise the ✕ appears to do nothing.
@@ -95,24 +121,27 @@ export function LinkedWalletPrompt({
             {t("connectAction")}
           </Button>
         )}
-        {variant === "reauth" && onReauth && (
-          <Button
-            size="sm"
-            variant="primary"
-            disabled={reauthStarting}
-            onClick={() => {
-              // The click ends in a full-page navigation, so this flag is the
-              // only feedback between click and redirect. It is never cleared
-              // on success — the page is gone.
-              setReauthStarting(true);
-              void Promise.resolve(onReauth()).catch(() =>
-                setReauthStarting(false)
-              );
-            }}
-          >
-            {reauthStarting ? t("reauthStarting") : t("reauthAction")}
-          </Button>
-        )}
+        {variant === "reauth" &&
+          onReauth &&
+          REAUTH_PROVIDERS.map(({ provider, labelKey }) => (
+            <Button
+              key={provider}
+              size="sm"
+              variant="primary"
+              disabled={reauthStarting !== null}
+              onClick={() => {
+                // The click ends in a full-page navigation, so this flag is
+                // the only feedback between click and redirect. It is never
+                // cleared on success — the page is gone.
+                setReauthStarting(provider);
+                void Promise.resolve(onReauth(provider)).catch(() =>
+                  setReauthStarting(null)
+                );
+              }}
+            >
+              {reauthStarting === provider ? t("reauthStarting") : t(labelKey)}
+            </Button>
+          ))}
         <Button size="sm" variant="ghost" onClick={onDismiss}>
           {t("dismiss")}
         </Button>

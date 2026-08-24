@@ -50,6 +50,14 @@ COMMENT ON COLUMN public.profiles.wallet_kind IS
 -- The function is REPLACED, not duplicated: same name, same trigger, same
 -- SECURITY INVOKER + pinned search_path contract as 20260710120000. Only the
 -- guarded column set grows.
+--
+-- DELIBERATE EXCEPTION to the one-guard-per-concern convention that
+-- 20260819200000 (deleted_at) argues for. That separation exists so replacing
+-- one function's body cannot silently revert an UNRELATED guard. wallet_kind
+-- is not unrelated — it is meaningless without wallet_address and is always
+-- written in the same request — so a separate trigger would create two
+-- functions that must be edited together, which is the failure mode the
+-- convention is trying to avoid.
 
 CREATE OR REPLACE FUNCTION public.enforce_profile_wallet_write()
 RETURNS TRIGGER

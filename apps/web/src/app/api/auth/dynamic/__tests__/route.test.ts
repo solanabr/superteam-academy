@@ -957,6 +957,71 @@ describe("POST /api/auth/dynamic — account-fork auto-merge", () => {
     });
   });
 
+  // #1179 MERGE BRANCH. Previously uncovered, and the branch where a naive
+  // "a wallet appeared ⇒ external" inference hands this fix's own target user
+  // the dead end back: DynamicAuthHandler links the EMBEDDED wallet through
+  // /api/auth/wallet with walletKind "embedded", so a Dynamic email sign-in
+  // leaves a shell holding an embedded wallet.
+  //
+  // profileSingle serves three reads in order: the initial profile, the
+  // post-merge wallet_address re-read, then recordWalletKind's wallet_kind.
+  function armMergeReads(shellKind: string | null) {
+    shellLookup.mockResolvedValue({
+      data: [
+        { id: SHELL_ID, wallet_address: SHELL_WALLET, wallet_kind: shellKind },
+      ],
+      error: null,
+    });
+    profileSingle
+      .mockResolvedValueOnce({
+        data: { username: "sol-surfer", wallet_address: null },
+      })
+      .mockResolvedValueOnce({ data: { wallet_address: SHELL_WALLET } })
+      .mockResolvedValueOnce({ data: { wallet_kind: null } });
+  }
+
+  it("carries an EMBEDDED shell's kind through the merge", async () => {
+    armMergeScenario();
+    armMergeReads("embedded");
+
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await jwtWithWallet() })
+    );
+
+    expect(res.status).toBe(200);
+    expect(profileUpdate).toHaveBeenCalledWith({ wallet_kind: "embedded" });
+  });
+
+  it("carries an EXTERNAL shell's kind through the merge", async () => {
+    // A SIWS-with-an-extension shell: the wallet really is external, and the
+    // learner really should get the connect modal.
+    armMergeScenario();
+    armMergeReads("external");
+
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await jwtWithWallet() })
+    );
+
+    expect(res.status).toBe(200);
+    expect(profileUpdate).toHaveBeenCalledWith({ wallet_kind: "external" });
+  });
+
+  it("writes nothing when a pre-migration shell has no kind to carry", async () => {
+    // Unknown is the honest answer — and it keeps the pre-#1179 behaviour
+    // rather than guessing. The backfill classifies these.
+    armMergeScenario();
+    armMergeReads(null);
+
+    const res = await POST(
+      dynamicRequest({ dynamicJwt: await jwtWithWallet() })
+    );
+
+    expect(res.status).toBe(200);
+    expect(profileUpdate).not.toHaveBeenCalledWith(
+      expect.objectContaining({ wallet_kind: expect.anything() })
+    );
+  });
+
   it("revokes the shell's sessions (permanent ban) after a successful merge", async () => {
     armMergeScenario();
 

@@ -29,13 +29,19 @@ BEGIN;
 -- 1. Wallet-first accounts: signed in by SIWS, so their auth email is the
 --    synthetic <pubkey>@wallet.superteam-lms.local placeholder. These are
 --    unambiguously external — the embedded path never mints that email.
+--
+--    lower() on both statements' placeholder match, per the SQL-mirror rule in
+--    lib/auth/wallet-placeholder.ts (precedent: 20260819190000). GoTrue
+--    lowercases what it stores, but a differently-cased row would otherwise
+--    escape statement 1 AND pass statement 2's NOT LIKE — landing on
+--    'embedded', the one wrong answer that changes behaviour.
 UPDATE public.profiles p
    SET wallet_kind = 'external'
   FROM auth.users u
  WHERE u.id = p.id
    AND p.wallet_kind IS NULL
    AND p.wallet_address IS NOT NULL
-   AND u.email LIKE '%@wallet.superteam-lms.local';
+   AND lower(u.email) LIKE '%@wallet.superteam-lms.local';
 
 -- 2. Dynamic-bridged accounts: EMAIL-provider identity only, a real (non
 --    placeholder) address, and a wallet. Nothing else in the app produces
@@ -48,7 +54,7 @@ UPDATE public.profiles p
  WHERE u.id = p.id
    AND p.wallet_kind IS NULL
    AND p.wallet_address IS NOT NULL
-   AND u.email NOT LIKE '%@wallet.superteam-lms.local'
+   AND lower(u.email) NOT LIKE '%@wallet.superteam-lms.local'
    AND NOT EXISTS (
      SELECT 1
        FROM auth.identities i

@@ -153,6 +153,27 @@ describe("isDynamicSessionExpiredError", () => {
     expect(isDynamicSessionExpiredError(err)).toBe(true);
   });
 
+  it("unwraps one level of `cause` — the WaaS signer wraps its failures", () => {
+    const wrapped = Object.assign(new Error("Waas load failed"), {
+      name: "WaasLoadFailedError",
+      cause: Object.assign(new Error("Unauthorized"), {
+        name: "UnauthorizedError",
+      }),
+    });
+    expect(isDynamicSessionExpiredError(wrapped)).toBe(true);
+  });
+
+  it("stops at one level — a deeper chain is no longer ABOUT the expiry", () => {
+    const deep = new Error("outer", {
+      cause: new Error("middle", {
+        cause: Object.assign(new Error("Unauthorized"), {
+          name: "UnauthorizedError",
+        }),
+      }),
+    });
+    expect(isDynamicSessionExpiredError(deep)).toBe(false);
+  });
+
   it("does not swallow ordinary program failures", () => {
     expect(
       isDynamicSessionExpiredError(new Error("custom program error"))

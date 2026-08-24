@@ -14,6 +14,7 @@ import {
   signWithDynamicWallet,
 } from "@/lib/dynamic/solana";
 import { startDynamicSocialSignIn } from "@/lib/dynamic/social";
+import { isDynamicEnabled } from "@/lib/dynamic/config";
 import { useDynamicSessionState } from "@/hooks/use-dynamic-session-state";
 import { buildCloseEnrollmentInstruction } from "@/lib/solana/instructions";
 import {
@@ -64,7 +65,10 @@ export function CurrentCoursesSection({
   const [unenrollingId, setUnenrollingId] = useState<string | null>(null);
   const [walletPrompt, setWalletPrompt] = useState<LinkedWalletPromptVariant>();
   const linkedWallet = profile?.wallet_address ?? null;
-  const isEmbeddedLearner = profile?.wallet_kind === "embedded";
+  // Gated on the feature switch: with Dynamic off there is no redirect to
+  // offer, so a reauth card would be a button that silently does nothing.
+  const isEmbeddedLearner =
+    profile?.wallet_kind === "embedded" && isDynamicEnabled();
 
   // Sync local courses state with data hook
   useEffect(() => {
@@ -201,9 +205,7 @@ export function CurrentCoursesSection({
               : undefined
           }
           onReauth={
-            walletPrompt === "reauth"
-              ? () => startDynamicSocialSignIn("google")
-              : undefined
+            walletPrompt === "reauth" ? startDynamicSocialSignIn : undefined
           }
           onDismiss={() => setWalletPrompt(undefined)}
         />

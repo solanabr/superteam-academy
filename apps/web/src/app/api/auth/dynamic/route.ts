@@ -13,6 +13,7 @@ import { shouldAdoptAvatar } from "@/lib/auth/avatar-adoption";
 import { revokeUserSessions } from "@/lib/auth/revoke-sessions";
 import { isWalletPlaceholderEmail } from "@/lib/auth/wallet-placeholder";
 import { recordWalletKind } from "@/lib/auth/record-wallet-kind";
+import { parseWalletKind, type WalletKind } from "@/lib/auth/wallet-kind";
 import { generateWalletName } from "@/lib/utils/generate-wallet-name";
 import { retryPendingOnchainActions } from "@/lib/solana/onchain-queue";
 import { logError, logEvent } from "@/lib/logging";
@@ -529,27 +530,34 @@ async function mergeWalletShellAccount(
   supabaseAdmin: ReturnType<typeof createAdminClient>,
   userId: string,
   claims: DynamicJwtClaims
-): Promise<void> {
+): Promise<WalletKind | null> {
   try {
     const wallets = blockchainAddresses(claims);
-    if (wallets.length === 0) return;
+    if (wallets.length === 0) return null;
 
     const { data: shells, error: shellError } = await supabaseAdmin
       .from("profiles")
-      .select("id, wallet_address")
+      // wallet_kind rides along (#1179): the shell OWNS the wallet being
+      // moved, so it is the only row that knows how that wallet was
+      // provisioned. A shell born from a Dynamic EMAIL sign-in holds the
+      // EMBEDDED wallet — DynamicAuthHandler links it through
+      // /api/auth/wallet with walletKind: "embedded" — so inferring
+      // "merged ⇒ external" would hand this fix's own target user the dead
+      // end back.
+      .select("id, wallet_address, wallet_kind")
       .in("wallet_address", wallets)
       .neq("id", userId)
       .is("deleted_at", null);
-    if (shellError || !shells || shells.length === 0) return;
+    if (shellError || !shells || shells.length === 0) return null;
     if (shells.length > 1) {
       logEvent({
         event: "dynamic-auth.shell-merge-ambiguous",
         context: { userId, candidates: shells.length },
       });
-      return;
+      return null;
     }
     const shell = shells[0]!;
-    if (!shell.wallet_address) return;
+    if (!shell.wallet_address) return null;
 
     // Shell-ness, auth side: the synthetic email says the account was born
     // from a wallet; the identities check says it never became anything more.
@@ -558,17 +566,18 @@ async function mergeWalletShellAccount(
     // re-proves the profile side (google_id/github_id NULL, email pattern).
     const { data: shellUser, error: userError } =
       await supabaseAdmin.auth.admin.getUserById(shell.id);
-    if (userError || !shellUser?.user) return;
+    if (userError || !shellUser?.user) return null;
     // Case-insensitive (#921) — identical for anything GoTrue can store (it
     // lowercases emails), and a hypothetical odd-cased shell still hits the
     // RPC's own shell-ness re-proof, which refuses and leaves sign-in unmerged.
-    if (!isWalletPlaceholderEmail(shellUser.user.email)) return;
+    if (!isWalletPlaceholderEmail(shellUser.user.email)) return null;
     // A real shell has exactly its synthetic email identity (from
     // admin.createUser). Any non-email identity means it is somebody's
     // account; NO identities means we don't know what it is — refuse both.
     const identities = shellUser.user.identities ?? [];
-    if (identities.length === 0) return;
-    if (identities.some((identity) => identity.provider !== "email")) return;
+    if (identities.length === 0) return null;
+    if (identities.some((identity) => identity.provider !== "email"))
+      return null;
 
     const { data: merged, error: mergeError } = await supabaseAdmin.rpc(
       "merge_wallet_shell_account",
@@ -580,7 +589,7 @@ async function mergeWalletShellAccount(
         error: new Error(mergeError.message),
         context: { note: "shell merge refused", userId, shellId: shell.id },
       });
-      return;
+      return null;
     }
     logEvent({ event: "dynamic-auth.shell-merged", context: { merged } });
 
@@ -622,12 +631,19 @@ async function mergeWalletShellAccount(
         },
       });
     }
+
+    // The merge committed. The RPC predates wallet_kind and does not copy it,
+    // so the target row is still NULL and the caller writes what the shell
+    // knew. NULL here (a pre-migration shell) stays NULL: unknown is the
+    // honest answer, and it keeps the pre-#1179 behaviour rather than guessing.
+    return parseWalletKind(shell.wallet_kind);
   } catch (err: unknown) {
     logError({
       errorId: ERROR_IDS.DYNAMIC_AUTH_FAILED,
       error: err instanceof Error ? err : new Error(String(err)),
       context: { note: "shell merge failed", userId },
     });
+    return null;
   }
 }
 
@@ -886,7 +902,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // own to lose — and BEFORE the queue drain below, so pending on-chain
     // actions inherited from the shell drain in this same sign-in.
     if (!profile?.wallet_address) {
-      await mergeWalletShellAccount(supabaseAdmin, userId, claims);
+      const mergedKind = await mergeWalletShellAccount(
+        supabaseAdmin,
+        userId,
+        claims
+      );
 
       // The one server-authoritative wallet_kind write, and the reason the
       // client-declared kind on the SIWS link can be a no-op: this runs BEFORE
@@ -897,9 +917,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       // through Dynamic reaches it too, and marking them 'embedded' would
       // offer the wrong recovery path for a wallet they hold in Phantom.
       //
-      // Re-read after the merge rather than trusting `profile`: a merged shell
-      // is a wallet-first (SIWS) account, so a wallet that appeared during the
-      // merge is an EXTERNAL one, not the embedded wallet about to be created.
+      // Re-read after the merge rather than trusting `profile`, because the
+      // merge can have brought a wallet across. When it did, the SHELL is what
+      // knows the kind — a shell can hold either sort (SIWS with an extension,
+      // or a Dynamic email sign-in whose embedded wallet signed in first), and
+      // a NULL from a pre-migration shell stays NULL rather than being guessed.
       const { data: merged } = await supabaseAdmin
         .from("profiles")
         .select("wallet_address")
@@ -908,7 +930,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       await recordWalletKind(
         supabaseAdmin,
         userId,
-        merged?.wallet_address ? "external" : "embedded"
+        merged?.wallet_address ? mergedKind : "embedded"
       );
     }
 

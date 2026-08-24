@@ -1687,8 +1687,9 @@
     "enrollMismatch": "A inscrição é registrada na carteira vinculada à sua conta ({linked}). Troque para ela na sua carteira e tente de novo.",
     "enrollNoLinkedWallet": "Sua conta ainda não tem carteira vinculada, então uma inscrição feita agora não poderia ser creditada a você. Vincule uma carteira em Configurações primeiro.",
     "reauthTitle": "Sua sessão expirou",
-    "reauthBody": "Sua carteira continua sendo sua — entrar de novo com o Google a traz de volta para você continuar.",
-    "reauthAction": "Entrar com Google",
+    "reauthBody": "Sua carteira continua sendo sua — entre de novo com a conta que você usou e ela volta na hora.",
+    "reauthActionGoogle": "Entrar com Google",
+    "reauthActionGitHub": "Entrar com GitHub",
     "reauthStarting": "Redirecionando…"
   }
 }

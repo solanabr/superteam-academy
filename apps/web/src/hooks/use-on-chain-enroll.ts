@@ -18,7 +18,11 @@ import {
   isDynamicSessionExpiredError,
   signWithDynamicWallet,
 } from "@/lib/dynamic/solana";
-import { startDynamicSocialSignIn } from "@/lib/dynamic/social";
+import {
+  startDynamicSocialSignIn,
+  type DynamicSocialProvider,
+} from "@/lib/dynamic/social";
+import { isDynamicEnabled } from "@/lib/dynamic/config";
 import { useDynamicSessionState } from "@/hooks/use-dynamic-session-state";
 import { trackEvent } from "@/lib/analytics";
 import {
@@ -145,7 +149,11 @@ interface UseOnChainEnrollResult {
    * only way on is re-authenticating with their social provider. Consumers
    * render `<LinkedWalletPrompt variant="reauth" …>` from it.
    */
-  reauthPrompt: { start: () => Promise<void>; dismiss: () => void } | null;
+  reauthPrompt: {
+    /** The learner picks the provider — the app cannot know which one. */
+    start: (provider: DynamicSocialProvider) => Promise<void>;
+    dismiss: () => void;
+  } | null;
   /**
    * The Dynamic SDK has not finished deciding whether this learner has an
    * embedded wallet. Disable the CTA rather than guessing — guessing is what
@@ -171,7 +179,12 @@ export function useOnChainEnroll({
   const [enrollError, setEnrollError] = useState<string | null>(null);
   const [showReauth, setShowReauth] = useState(false);
   const linkedWallet = profile?.wallet_address ?? null;
-  const isEmbeddedLearner = profile?.wallet_kind === "embedded";
+  // Gated on the feature switch: with Dynamic off there is no redirect to
+  // offer, so a reauth card would be a button that silently does nothing. The
+  // kill switch has to degrade to the pre-existing behaviour, not to a
+  // dead-end card — `lib/dynamic/config.ts` states that contract.
+  const isEmbeddedLearner =
+    profile?.wallet_kind === "embedded" && isDynamicEnabled();
 
   const handleEnroll = useCallback(async () => {
     if (isEnrolling) return;
@@ -334,7 +347,9 @@ export function useOnChainEnroll({
     () =>
       showReauth
         ? {
-            start: () => startDynamicSocialSignIn("google"),
+            /** The learner picks the provider — see LinkedWalletPrompt. */
+            start: (provider: DynamicSocialProvider) =>
+              startDynamicSocialSignIn(provider),
             dismiss: () => setShowReauth(false),
           }
         : null,

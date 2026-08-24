@@ -166,8 +166,20 @@ export async function signWithDynamicWallet(
  * identity does not necessarily cross the boundary — the same reason
  * `DynamicAuthHandler` re-implements `isSolanaWalletAccount` locally. Both
  * fields are set by the SDK's own error constructor.
+ *
+ * `cause` is walked ONE level: the SDK's own `BaseError` takes a `cause` and
+ * the WaaS signer wraps failures, so an expiry can arrive as
+ * `WaasLoadFailedError { cause: UnauthorizedError }`. One level, not a loop —
+ * a deeper chain means the expiry is no longer what the failure is ABOUT, and
+ * an unbounded walk on an attacker-shaped cycle is not worth the reach.
  */
 export function isDynamicSessionExpiredError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  if (isUnauthorized(error)) return true;
+  return isUnauthorized(error.cause);
+}
+
+function isUnauthorized(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
   if (error.name === "UnauthorizedError") return true;
   return (error as Error & { code?: unknown }).code === "unauthorized_error";

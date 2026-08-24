@@ -823,6 +823,13 @@ CREATE OR REPLACE TRIGGER on_auth_user_created
 -- session is offered, so a self-write would be a switch on the learner's own
 -- auth recovery. Same writers (the service-role SIWS routes) plus the Dynamic
 -- bridge; the signup path sets neither column.
+--
+-- DELIBERATE EXCEPTION to the one-guard-per-concern convention the deleted_at
+-- lock below argues for: that separation exists so replacing one function's
+-- body cannot silently revert an UNRELATED guard. wallet_kind is not unrelated
+-- — it is meaningless without wallet_address and always written in the same
+-- request — so splitting it out would create two functions that must be edited
+-- together, which is the failure mode the convention is trying to avoid.
 CREATE OR REPLACE FUNCTION public.enforce_profile_wallet_write()
 RETURNS TRIGGER
 LANGUAGE plpgsql

@@ -1687,8 +1687,9 @@
     "enrollMismatch": "La inscripción se registra en la billetera vinculada a tu cuenta ({linked}). Cambia a ella en tu billetera e inténtalo de nuevo.",
     "enrollNoLinkedWallet": "Tu cuenta aún no tiene billetera vinculada, así que una inscripción hecha ahora no podría acreditarse a ti. Vincula una billetera en Ajustes primero.",
     "reauthTitle": "Tu sesión expiró",
-    "reauthBody": "Tu billetera sigue siendo tuya — al iniciar sesión de nuevo con Google vuelve y puedes continuar.",
-    "reauthAction": "Iniciar sesión con Google",
+    "reauthBody": "Tu billetera sigue siendo tuya — inicia sesión de nuevo con la cuenta que usaste y vuelve enseguida.",
+    "reauthActionGoogle": "Iniciar sesión con Google",
+    "reauthActionGitHub": "Iniciar sesión con GitHub",
     "reauthStarting": "Redirigiendo…"
   }
 }
