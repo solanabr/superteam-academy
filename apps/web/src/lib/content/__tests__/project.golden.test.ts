@@ -175,6 +175,17 @@ vi.mock("server-only", () => ({}));
 //    courses.json and lessons.json gained the projector-generated docs and
 //    quests-raw.json's moduleLessonMap gained the one-module entry. Every
 //    pre-existing doc is byte-unchanged.
+//  - Forge College pilot (bump to academy-courses @4a6e4c6): a PT-BR
+//    single-module course (`course-visao-geral-solana`, 3 lessons, module
+//    `origens-e-historia`) authored under its OWN creator wallet
+//    (`Em8D6Xyu…`), which is why the creator assertion is now a per-course
+//    map instead of one constant. The same bump sets `creatorRewardXp: 30` on
+//    the two Kaue courses — invisible here, `projectCourse` never projected
+//    that field — and the upstream images arrive pre-compressed, so no asset
+//    url moves. New content again = golden is the projected bundle:
+//    courses.json and lessons.json gained the projector-generated docs and
+//    quests-raw.json's moduleLessonMap gained the one-module entry. Every
+//    pre-existing doc is byte-unchanged.
 const deps = { lessonsById };
 
 function bundleCourse(id: string): CourseDoc {
@@ -195,9 +206,19 @@ describe("projectCourse — getAllCourses shape (summary module lessons)", () =>
     }
   });
 
+  // Each course is authored under its own creator wallet, not the platform
+  // authority the track-1 courses carried. The alpha catalog and the Pílula
+  // booth elective share Kaue's wallet; the Forge College pilot has its own.
+  const EXPECTED_CREATOR: Record<string, string> = {
+    "course-btc-to-sol-evolution":
+      "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
+    "course-solana-speedrun": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
+    "course-pilula-solana-superteam":
+      "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
+    "course-visao-geral-solana": "Em8D6XyuXvNUK1YgLKBaji7HbbrZZq7fCdq3sGMXqxVZ",
+  };
+
   it("creator is a real wallet (#399/B3); thumbnail is a compiled banner url", () => {
-    // The alpha catalog is authored under its own creator wallet, not the
-    // platform authority the track-1 courses carried.
     //
     // `thumbnail` was null for every course until the banner wave (#1007) —
     // not by projector design, but because no pinned content had ever set the
@@ -207,7 +228,7 @@ describe("projectCourse — getAllCourses shape (summary module lessons)", () =>
     // comparison against a golden that was regenerated from that same content.
     for (const golden of goldenCourses) {
       const c = projectCourse(bundleCourse(golden._id), deps);
-      expect(c.creator).toBe("3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ");
+      expect(c.creator).toBe(EXPECTED_CREATOR[golden._id]);
       expect(c.thumbnail).toMatch(/^\/content-assets\/[\w-]+\/[\w.-]+$/);
     }
   });

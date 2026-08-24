@@ -70,6 +70,14 @@
       "lessonIds": [
         "lesson-psp-solana-em-2-minutos"
       ]
+    },
+    {
+      "_id": "course-visao-geral-solana:origens-e-historia",
+      "lessonIds": [
+        "lesson-vgs-origens-fundacao",
+        "lesson-vgs-desafios-iniciais",
+        "lesson-vgs-marcos-e-adocao"
+      ]
     }
   ],
   "quests": [
