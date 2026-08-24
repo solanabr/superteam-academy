@@ -553,8 +553,13 @@
   /* Dark surface — variable swaps on the same markup, never a forked
      component. The band fills carry over untouched. */
   [data-theme="dark"] .lv-badge {
-    --lv-ink: #fafaf7;
-    --lv-shadow: rgba(250, 250, 247, 0.2);
+    --lv-ink: var(--ink-line);
+    --lv-shadow: color-mix(in srgb, var(--ink-line) 20%, transparent);
+  }
+  /* The badge in the top bar keeps the pill's full contrast. */
+  [data-theme="dark"] .nav-pill .lv-badge {
+    --lv-ink: var(--ink-bright);
+    --lv-shadow: color-mix(in srgb, var(--ink-bright) 20%, transparent);
   }
 
   /* ── Nav pill (spec: Leaderboard and Level, §1) ────────────────────
@@ -613,8 +618,9 @@
     letter-spacing: 0.06em;
     color: var(--text-2);
   }
+  /* The one object that stays cream — see `--ink-bright`. */
   [data-theme="dark"] .nav-pill {
-    --pill-ink: #fafaf7;
+    --pill-ink: var(--ink-bright);
   }
 
   /* ── Achievement Medal Grid — V9 Superteam Academy ── */
@@ -675,7 +681,16 @@
     --quiet-line: color-mix(in srgb, var(--ink-line) 14%, transparent);
   }
   [data-theme="dark"] {
-    --ink-line: #fafaf7;
+    /* Light gray, not cream. A near-white outline against these surfaces ran
+       at ~18:1 and read as glare on every constructed object at once —
+       buttons, patches, cards, tracks. Gray lands at ~8:1, which is half the
+       contrast and still far above the 3:1 WCAG asks of a non-text boundary.
+
+       `--ink-bright` is the exception, kept for the nav pill: the level and XP
+       in the top bar are the one place that should hold full contrast, so the
+       viewer's own state stays the brightest thing on the page. */
+    --ink-line: #adadad;
+    --ink-bright: #fafaf7;
     --quiet-line: color-mix(in srgb, var(--ink-line) 14%, transparent);
   }
 
@@ -898,8 +913,8 @@
      shadow on a dark page. */
   [data-theme="dark"] .patch,
   [data-theme="dark"] .chip {
-    --patch-ink: #fafaf7;
-    box-shadow: 0 var(--lift) 0 0 rgba(250, 250, 247, 0.92);
+    --patch-ink: var(--ink-line);
+    box-shadow: 0 var(--lift) 0 0 var(--ink-line);
   }
   [data-theme="dark"] .patch[data-cat="reward"],
   [data-theme="dark"] .patch[data-cat="start"],
@@ -3585,8 +3600,8 @@ a.path-step-card:hover .path-step-badge.skip {
 }
 [data-theme="dark"] .podium-grid,
 [data-theme="dark"] .lb-list {
-  --lb-ink: #fafaf7;
-  --lb-tint: rgba(250, 250, 247, 0.14);
+  --lb-ink: var(--ink-line);
+  --lb-tint: color-mix(in srgb, var(--ink-line) 14%, transparent);
 }
 
 .podium-card {
@@ -3717,7 +3732,7 @@ a.path-step-card:hover .path-step-badge.skip {
   font-size: 8px;
 }
 [data-theme="dark"] .rank-tab {
-  --lb-ink: #fafaf7;
+  --lb-ink: var(--ink-line);
 }
 
 /* Podium avatar */
@@ -4468,8 +4483,8 @@ a.stat-receipt:active {
 [data-theme="dark"] .dash-xp-track,
 [data-theme="dark"] .seg-track,
 [data-theme="dark"] .path-bar-track {
-  --xpbar-ink: #fafaf7;
-  --xpbar-track: rgba(250, 250, 247, 0.18);
+  --xpbar-ink: var(--ink-line);
+  --xpbar-track: color-mix(in srgb, var(--ink-line) 18%, transparent);
 }
 .dash-xp-track {
   width: 100%;
