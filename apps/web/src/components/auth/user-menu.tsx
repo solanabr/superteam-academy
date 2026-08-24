@@ -12,7 +12,7 @@ import {
   ShieldStar,
   SignOut,
   Trophy,
-  UserCircle,
+  User,
 } from "@phosphor-icons/react";
 import { useAmbientWallet } from "@/lib/solana/ambient-wallet-store";
 import {
@@ -181,7 +181,7 @@ export function UserMenu({
             href={`/${locale}/profile`}
             className="flex items-center gap-2 font-display text-[13px] font-semibold"
           >
-            <UserCircle size={16} weight="bold" />
+            <User size={16} weight="bold" />
             {tCommon("profile")}
           </Link>
         </DropdownMenuItem>
