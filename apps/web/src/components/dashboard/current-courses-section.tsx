@@ -3,11 +3,18 @@
 import { useEffect, useState, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
-import { Transaction } from "@solana/web3.js";
+import { PublicKey, Transaction } from "@solana/web3.js";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { X, Sparkle, ArrowUp } from "@phosphor-icons/react";
+import { useAuth } from "@/lib/auth/auth-provider";
+import { trackEvent } from "@/lib/analytics";
+import {
+  getDynamicSolanaAccount,
+  signWithDynamicWallet,
+} from "@/lib/dynamic/solana";
 import { buildCloseEnrollmentInstruction } from "@/lib/solana/instructions";
+import { findWalletMismatch } from "@/lib/solana/linked-wallet";
 import {
   parseProgramError,
   preflightTransaction,
@@ -15,6 +22,7 @@ import {
 import type { CurrentCourse } from "@/lib/dashboard/types";
 import { deriveEndowedProgress } from "@/lib/courses/endowed-progress";
 import { CourseCompletionMint } from "@/components/certificates/course-completion-mint";
+import { LinkedWalletPrompt } from "@/components/wallet/linked-wallet-prompt";
 import { GlyphChip } from "@/components/gamification/glyph-chip";
 import { ProgressBar } from "@/components/course/progress-bar";
 import { dispatchToast } from "@/components/ui/toast-container";
@@ -42,8 +50,11 @@ export function CurrentCoursesSection({
   const { connection } = useConnection();
   const { publicKey, sendTransaction } = useWallet();
   const { setVisible: setWalletModalVisible } = useWalletModal();
+  const { profile } = useAuth();
   const [courses, setCourses] = useState<CurrentCourse[]>([]);
   const [unenrollingId, setUnenrollingId] = useState<string | null>(null);
+  const [walletPrompt, setWalletPrompt] = useState<"connect" | "mismatch">();
+  const linkedWallet = profile?.wallet_address ?? null;
 
   // Sync local courses state with data hook
   useEffect(() => {
@@ -52,11 +63,28 @@ export function CurrentCoursesSection({
 
   const handleUnenroll = useCallback(
     async (courseId: string) => {
-      if (!publicKey) {
-        setWalletModalVisible(true);
+      // Same wallet resolution as enrolment: an email sign-up holds a Dynamic
+      // embedded wallet that wallet-adapter knows nothing about, and the
+      // connect modal is a dead end for them. Only a learner with neither
+      // wallet is asked to connect.
+      const dynamicAccount = publicKey ? null : getDynamicSolanaAccount();
+      const learner =
+        publicKey ??
+        (dynamicAccount ? new PublicKey(dynamicAccount.address) : null);
+      if (!learner) {
+        setWalletPrompt("connect");
         return;
       }
 
+      // close_enrollment refunds rent to the learner and requires the learner
+      // to sign, so a wallet other than the linked one can only simulate to a
+      // bare failure.
+      if (findWalletMismatch(learner.toBase58(), linkedWallet)) {
+        setWalletPrompt("mismatch");
+        return;
+      }
+
+      setWalletPrompt(undefined);
       setUnenrollingId(courseId);
 
       const withTimeout = <T,>(
@@ -72,23 +100,31 @@ export function CurrentCoursesSection({
         ]);
 
       try {
-        const ix = buildCloseEnrollmentInstruction(courseId, publicKey);
+        const ix = buildCloseEnrollmentInstruction(courseId, learner);
         const tx = new Transaction().add(ix);
 
         // Pre-simulate to catch program errors before wallet popup.
         // Backpack hangs if simulation fails inside sendTransaction.
-        await preflightTransaction(tx, connection, publicKey);
+        await preflightTransaction(tx, connection, learner);
 
-        const sig = await withTimeout(
-          sendTransaction(tx, connection, { skipPreflight: true }),
-          30_000,
-          "Wallet signing"
-        );
+        // The embedded wallet signs via Dynamic's MPC service — no prompt,
+        // no wallet-adapter.
+        const sendViaWallet = dynamicAccount
+          ? async () => {
+              const signed = await signWithDynamicWallet(tx, dynamicAccount);
+              return connection.sendRawTransaction(signed.serialize(), {
+                skipPreflight: true,
+              });
+            }
+          : () => sendTransaction(tx, connection, { skipPreflight: true });
+
+        const sig = await withTimeout(sendViaWallet(), 30_000, "Wallet signing");
         await withTimeout(
           connection.confirmTransaction(sig, "confirmed"),
           30_000,
           "Confirmation"
         );
+        trackEvent("unenrollment_onchain", { courseId, signature: sig });
 
         // On-chain TX succeeded — Helius webhook will sync Supabase.
         // Optimistically update UI.
@@ -102,7 +138,7 @@ export function CurrentCoursesSection({
         setUnenrollingId(null);
       }
     },
-    [publicKey, sendTransaction, connection, setWalletModalVisible, t, tErrors]
+    [publicKey, sendTransaction, connection, linkedWallet, t, tErrors]
   );
 
   return (
@@ -113,6 +149,22 @@ export function CurrentCoursesSection({
           <span className="cc-section-count">{courses.length}</span>
         )}
       </div>
+
+      {walletPrompt && (
+        <LinkedWalletPrompt
+          variant={walletPrompt}
+          linkedWallet={linkedWallet}
+          onConnect={
+            walletPrompt === "connect"
+              ? () => {
+                  setWalletPrompt(undefined);
+                  setWalletModalVisible(true);
+                }
+              : undefined
+          }
+          onDismiss={() => setWalletPrompt(undefined)}
+        />
+      )}
 
       {courses.length > 0 ? (
         <div className="cc-grid">
@@ -125,6 +177,7 @@ export function CurrentCoursesSection({
               course.totalLessons
             );
             const isComplete = ep.isComplete;
+            const started = course.completedLessons > 0;
             const progressAria = t("lessonsDone", {
               completed: course.completedLessons,
               total: course.totalLessons,
@@ -138,12 +191,27 @@ export function CurrentCoursesSection({
                 }
                 style={{ "--i": i } as React.CSSProperties}
               >
+                {/* The program refuses close_enrollment once any lesson is
+                    done (EnrollmentInProgress), so the ✕ says so up front
+                    rather than after a failed simulation. The 24h cooldown
+                    can't be gated here — the dashboard carries no enrollment
+                    timestamp — and still surfaces as a mapped program error. */}
                 {!isComplete && (
                   <button
-                    onClick={() => handleUnenroll(course.courseId)}
+                    onClick={() =>
+                      started
+                        ? dispatchToast(t("unenrollStarted"), "warning")
+                        : handleUnenroll(course.courseId)
+                    }
                     disabled={unenrollingId === course.courseId}
-                    className="cc-unenroll"
-                    aria-label={t("removeCourse")}
+                    aria-disabled={started}
+                    title={started ? t("unenrollStarted") : undefined}
+                    className={
+                      started ? "cc-unenroll opacity-40" : "cc-unenroll"
+                    }
+                    aria-label={
+                      started ? t("unenrollStarted") : t("removeCourse")
+                    }
                   >
                     {unenrollingId === course.courseId ? (
                       <span className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />

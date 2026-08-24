@@ -19,6 +19,14 @@ vi.mock("@solana/wallet-adapter-react-ui", () => ({
 vi.mock("@/components/certificates/course-completion-mint", () => ({
   CourseCompletionMint: () => null,
 }));
+vi.mock("@/lib/auth/auth-provider", () => ({
+  useAuth: () => ({ profile: null }),
+}));
+vi.mock("@/lib/dynamic/solana", () => ({
+  getDynamicSolanaAccount: () => null,
+  signWithDynamicWallet: vi.fn(),
+}));
+vi.mock("@/lib/analytics", () => ({ trackEvent: vi.fn() }));
 
 import { CurrentCoursesSection } from "../current-courses-section";
 

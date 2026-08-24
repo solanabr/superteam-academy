@@ -450,7 +450,8 @@
     "reviewDueTitle": "{count} para revisar",
     "reviewDueAria": "{count} itens para revisar, abrir revisão",
     "reviewMore": "+{count} mais",
-    "reviewNow": "Revisar agora"
+    "reviewNow": "Revisar agora",
+    "unenrollStarted": "Você só pode remover um curso que ainda não começou."
   },
   "gamification": {
     "xp": "XP",
@@ -1670,5 +1671,15 @@
     "viewCommit": "Ver commit no GitHub",
     "openCourse": "Abrir prévia do curso",
     "scopedNote": "Mostrando apenas os cursos alterados neste pull request ({count} sem alterações ocultos)."
+  },
+  "walletPrompt": {
+    "connectTitle": "Conecte sua carteira vinculada",
+    "connectBody": "Para cancelar a inscrição, aprove com a carteira vinculada à sua conta ({linked}). Conecte-a para continuar.",
+    "connectBodyUnknown": "Para cancelar a inscrição, conecte a carteira vinculada à sua conta — o programa precisa da assinatura dela.",
+    "connectAction": "Conectar carteira",
+    "dismiss": "Cancelar",
+    "mismatchTitle": "Carteira errada conectada",
+    "mismatchBody": "Você está conectado com uma carteira diferente da vinculada à sua conta ({linked}). Troque para ela na sua carteira ou vincule esta em Configurações.",
+    "enrollMismatch": "A inscrição é registrada na carteira vinculada à sua conta ({linked}). Troque para ela na sua carteira, ou vincule a atual em Configurações, e tente de novo."
   }
 }

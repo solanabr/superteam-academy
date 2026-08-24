@@ -1,11 +1,15 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { PublicKey, Transaction } from "@solana/web3.js";
 import type { Connection } from "@solana/web3.js";
+import { useAuth } from "@/lib/auth/auth-provider";
+import { truncateAddress } from "@/lib/utils";
 import { buildEnrollInstruction } from "@/lib/solana/instructions";
+import { findWalletMismatch } from "@/lib/solana/linked-wallet";
 import {
   getDynamicSolanaAccount,
   signWithDynamicWallet,
@@ -32,11 +36,16 @@ const TX_TIMEOUT_MS = 30_000;
  * enrol if sponsorship is down or unconfigured — this adds a cheaper route in,
  * not a new way to fail.
  */
+type EnrollBuild =
+  | { kind: "tx"; tx: Transaction }
+  /** The sponsor built for a wallet that is not the one about to sign. */
+  | { kind: "wrongLearner"; learner: string };
+
 async function buildEnrollTransaction(
   courseId: string,
   learner: PublicKey,
   connection: Connection
-): Promise<Transaction> {
+): Promise<EnrollBuild> {
   try {
     const res = await fetch("/api/enroll/sponsor", {
       method: "POST",
@@ -44,8 +53,18 @@ async function buildEnrollTransaction(
       body: JSON.stringify({ courseId }),
     });
     if (res.ok) {
-      const data = (await res.json()) as { transaction?: string };
+      const data = (await res.json()) as {
+        transaction?: string;
+        learner?: string;
+      };
       if (data.transaction) {
+        // The route builds for the SESSION PROFILE's linked wallet, never for
+        // one named by the client. If that is not the wallet about to sign,
+        // the transaction is unsignable here and self-paying instead would
+        // enrol the wrong wallet — stop.
+        if (data.learner && data.learner !== learner.toBase58()) {
+          return { kind: "wrongLearner", learner: data.learner };
+        }
         // Decoded without Buffer: this runs in the browser, where Next does not
         // guarantee a Buffer polyfill in the App Router.
         const bytes = Uint8Array.from(atob(data.transaction), (c) =>
@@ -53,7 +72,7 @@ async function buildEnrollTransaction(
         );
         // Deliberately NOT preflighted — preflightTransaction assigns the
         // learner as fee payer, which would undo the sponsorship.
-        return Transaction.from(bytes);
+        return { kind: "tx", tx: Transaction.from(bytes) };
       }
     }
   } catch {
@@ -62,7 +81,7 @@ async function buildEnrollTransaction(
 
   const tx = new Transaction().add(buildEnrollInstruction(courseId, learner));
   await preflightTransaction(tx, connection, learner);
-  return tx;
+  return { kind: "tx", tx };
 }
 
 function withTimeout<T>(
@@ -110,8 +129,11 @@ export function useOnChainEnroll({
   const { connection } = useConnection();
   const { publicKey, sendTransaction } = useWallet();
   const { setVisible: setWalletModalVisible } = useWalletModal();
+  const { profile } = useAuth();
+  const t = useTranslations("walletPrompt");
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [enrollError, setEnrollError] = useState<string | null>(null);
+  const linkedWallet = profile?.wallet_address ?? null;
 
   const handleEnroll = useCallback(async () => {
     if (isEnrolling) return;
@@ -135,6 +157,23 @@ export function useOnChainEnroll({
       return;
     }
 
+    const reportMismatch = (linked: string) => {
+      const msg = t("enrollMismatch", { linked: truncateAddress(linked) });
+      setEnrollError(msg);
+      dispatchToast(msg, "warning");
+      onError?.(msg);
+    };
+
+    // Both enrolment paths bind to the linked wallet: the sponsor builds for
+    // it, and the webhook resolves the on-chain enrollment back to a user by
+    // it. Signing with anything else — sponsored or self-paid — produces an
+    // enrollment no account owns.
+    const mismatch = findWalletMismatch(learner.toBase58(), linkedWallet);
+    if (mismatch) {
+      reportMismatch(mismatch);
+      return;
+    }
+
     setEnrollError(null);
     setIsEnrolling(true);
 
@@ -142,7 +181,16 @@ export function useOnChainEnroll({
       let onChainSignature: string;
 
       try {
-        const tx = await buildEnrollTransaction(courseId, learner, connection);
+        const build = await buildEnrollTransaction(
+          courseId,
+          learner,
+          connection
+        );
+        if (build.kind === "wrongLearner") {
+          reportMismatch(build.learner);
+          return;
+        }
+        const tx = build.tx;
         // The embedded wallet signs via Dynamic's MPC service — no prompt, no
         // wallet-adapter — and the signed bytes are submitted directly. The
         // MPC signer attaches its signature to the existing transaction, so a
@@ -206,6 +254,8 @@ export function useOnChainEnroll({
     onError,
     setWalletModalVisible,
     isEnrolling,
+    linkedWallet,
+    t,
   ]);
 
   return { isEnrolling, handleEnroll, enrollError };

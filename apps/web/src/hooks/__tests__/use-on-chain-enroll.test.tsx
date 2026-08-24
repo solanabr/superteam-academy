@@ -34,6 +34,20 @@ vi.mock("@solana/wallet-adapter-react", () => ({
   }),
 }));
 
+// The account's linked wallet — the one every enrolment path binds to.
+const auth = vi.hoisted(() => ({ walletAddress: null as string | null }));
+
+vi.mock("@/lib/auth/auth-provider", () => ({
+  useAuth: () => ({ profile: { wallet_address: auth.walletAddress } }),
+}));
+
+vi.mock("next-intl", () => ({
+  useTranslations:
+    () =>
+    (key: string, values?: Record<string, string>) =>
+      values ? `${key}:${Object.values(values).join(",")}` : key,
+}));
+
 vi.mock("@/lib/dynamic/solana", () => ({
   getDynamicSolanaAccount: () => dynamic.account,
   signWithDynamicWallet: dynamic.signWithDynamicWallet,
@@ -67,6 +81,9 @@ vi.mock("@solana/web3.js", async (importOriginal) => {
   return {
     ...actual,
     Transaction: class {
+      static from(): unknown {
+        return new this();
+      }
       add(): this {
         return this;
       }
@@ -80,7 +97,20 @@ beforeEach(() => {
   vi.clearAllMocks();
   wallet.publicKey = null;
   dynamic.account = null;
+  auth.walletAddress = null;
+  vi.unstubAllGlobals();
 });
+
+/** Sponsor route responding with a transaction built for `learner`. */
+function stubSponsor(learner: string) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ transaction: btoa("sponsored"), learner }),
+    })
+  );
+}
 
 describe("useOnChainEnroll — anonymous visitor (#556)", () => {
   it("calls onRequireAuth instead of silently returning when userId is null", async () => {
@@ -158,6 +188,81 @@ describe("useOnChainEnroll — signed-in user (unchanged paths)", () => {
     );
     expect(onSuccess).toHaveBeenCalledTimes(1);
     expect(onRequireAuth).not.toHaveBeenCalled();
+    expect(result.current.enrollError).toBeNull();
+  });
+});
+
+describe("useOnChainEnroll — linked-wallet binding", () => {
+  it("aborts when the sponsor built for a different learner", async () => {
+    // No linked wallet known client-side (profile still loading), so only the
+    // sponsor's own answer can catch this.
+    wallet.publicKey = Keypair.generate().publicKey satisfies PublicKey;
+    stubSponsor(Keypair.generate().publicKey.toBase58());
+    const onError = vi.fn();
+
+    const { result } = renderHook(() =>
+      useOnChainEnroll({
+        courseId: COURSE_ID,
+        userId: "user-1",
+        onRequireAuth: vi.fn(),
+        onError,
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleEnroll();
+    });
+
+    expect(wallet.sendTransaction).not.toHaveBeenCalled();
+    expect(wallet.sendRawTransaction).not.toHaveBeenCalled();
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(result.current.enrollError).toContain("enrollMismatch");
+  });
+
+  it("never self-pays with a wallet that is not the linked one", async () => {
+    wallet.publicKey = Keypair.generate().publicKey satisfies PublicKey;
+    auth.walletAddress = Keypair.generate().publicKey.toBase58();
+    // Sponsor unavailable — the old code fell straight through to self-pay,
+    // which is what mints an enrollment no account can be resolved to.
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
+
+    const { result } = renderHook(() =>
+      useOnChainEnroll({
+        courseId: COURSE_ID,
+        userId: "user-1",
+        onRequireAuth: vi.fn(),
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleEnroll();
+    });
+
+    expect(wallet.sendTransaction).not.toHaveBeenCalled();
+    expect(result.current.enrollError).toContain("enrollMismatch");
+  });
+
+  it("proceeds when the signing wallet is the linked one", async () => {
+    const key = Keypair.generate().publicKey;
+    wallet.publicKey = key satisfies PublicKey;
+    auth.walletAddress = key.toBase58();
+    stubSponsor(key.toBase58());
+    wallet.sendTransaction.mockResolvedValue("mock-signature");
+    wallet.confirmTransaction.mockResolvedValue({ value: { err: null } });
+
+    const { result } = renderHook(() =>
+      useOnChainEnroll({
+        courseId: COURSE_ID,
+        userId: "user-1",
+        onRequireAuth: vi.fn(),
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleEnroll();
+    });
+
+    expect(wallet.sendTransaction).toHaveBeenCalledTimes(1);
     expect(result.current.enrollError).toBeNull();
   });
 });

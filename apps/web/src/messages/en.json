@@ -450,7 +450,8 @@
     "reviewDueTitle": "{count} due for review",
     "reviewDueAria": "{count} items due for review, open review",
     "reviewMore": "+{count} more",
-    "reviewNow": "Review now"
+    "reviewNow": "Review now",
+    "unenrollStarted": "You can only remove a course you haven't started yet."
   },
   "gamification": {
     "xp": "XP",
@@ -1670,5 +1671,15 @@
     "viewCommit": "View commit on GitHub",
     "openCourse": "Open course preview",
     "scopedNote": "Showing only the courses changed in this pull request ({count} unchanged hidden)."
+  },
+  "walletPrompt": {
+    "connectTitle": "Connect your linked wallet",
+    "connectBody": "To unenroll, approve with your linked wallet ({linked}). Connect it to continue.",
+    "connectBodyUnknown": "To unenroll, connect the wallet linked to your account — the program needs it to sign.",
+    "connectAction": "Connect wallet",
+    "dismiss": "Cancel",
+    "mismatchTitle": "Wrong wallet connected",
+    "mismatchBody": "You're connected with a different wallet than the one linked to your account ({linked}). Switch to it in your wallet, or link this one in Settings.",
+    "enrollMismatch": "Enrolment is recorded against your linked wallet ({linked}). Switch to it in your wallet, or link the one you are using now in Settings, then try again."
   }
 }
