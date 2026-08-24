@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { truncateAddress } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -33,11 +34,25 @@ export function LinkedWalletPrompt({
 }: LinkedWalletPromptProps) {
   const t = useTranslations("walletPrompt");
   const linked = linkedWallet ? truncateAddress(linkedWallet) : null;
+  const ref = useRef<HTMLDivElement>(null);
+
+  // The card answers a click that may be well below it, so bring it into view
+  // and give it focus — otherwise the ✕ appears to do nothing.
+  useEffect(() => {
+    const card = ref.current;
+    if (!card) return;
+    // jsdom (and older Safari) has no scrollIntoView options support; focus
+    // alone still puts the card in view there.
+    card.scrollIntoView?.({ block: "nearest" });
+    card.focus();
+  }, [variant]);
 
   return (
     <div
+      ref={ref}
       role="alert"
-      className="bg-card border-border shadow-card mb-4 space-y-2 rounded-xl border p-4"
+      tabIndex={-1}
+      className="bg-card border-border shadow-card focus-visible:outline-primary mb-4 space-y-2 rounded-xl border p-4 focus-visible:outline-2 focus-visible:outline-offset-2"
     >
       <p className="text-text font-display text-sm font-bold">
         {variant === "connect" ? t("connectTitle") : t("mismatchTitle")}

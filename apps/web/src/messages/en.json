@@ -1679,7 +1679,8 @@
     "connectAction": "Connect wallet",
     "dismiss": "Cancel",
     "mismatchTitle": "Wrong wallet connected",
-    "mismatchBody": "You're connected with a different wallet than the one linked to your account ({linked}). Switch to it in your wallet, or link this one in Settings.",
-    "enrollMismatch": "Enrolment is recorded against your linked wallet ({linked}). Switch to it in your wallet, or link the one you are using now in Settings, then try again."
+    "mismatchBody": "You're connected with a different wallet than the one linked to your account ({linked}). Switch to it in your wallet to continue — a wallet link is permanent, so this one can't take its place.",
+    "enrollMismatch": "Enrolment is recorded against your linked wallet ({linked}). Switch to it in your wallet and try again.",
+    "enrollNoLinkedWallet": "Your account has no linked wallet yet, so an enrolment made now could not be credited to you. Link a wallet in Settings first."
   }
 }

@@ -1,3 +1,5 @@
+import { PublicKey } from "@solana/web3.js";
+
 /**
  * Guard for flows whose on-chain effect is bound to the account's LINKED
  * wallet (`profiles.wallet_address`) rather than to whatever wallet happens to
@@ -11,17 +13,42 @@
  * (close_enrollment needs that other wallet to sign). Cheaper to refuse.
  */
 
+/** A wallet address as a key, or null when it is absent or unparseable. */
+export function parseWalletAddress(
+  value: string | null | undefined
+): PublicKey | null {
+  if (!value) return null;
+  try {
+    return new PublicKey(value);
+  } catch {
+    return null;
+  }
+}
+
 /**
  * The linked wallet when it differs from the wallet about to sign, else null.
  *
- * Returns null when no linked wallet is known — the profile may still be
- * loading, and blocking on an absent value would break the flow for everyone
- * during that window.
+ * Compared as keys, not strings, so encoding differences can never read as a
+ * mismatch. An unparseable stored address counts as UNKNOWN rather than as a
+ * mismatch — one bad row should not lock an account out of every flow — which
+ * leaves it to the callers that must not act on an unknown wallet to say so.
  */
 export function findWalletMismatch(
   signingAddress: string,
   linkedAddress: string | null | undefined
 ): string | null {
-  if (!linkedAddress) return null;
-  return linkedAddress === signingAddress ? null : linkedAddress;
+  const linked = parseWalletAddress(linkedAddress);
+  const signing = parseWalletAddress(signingAddress);
+  if (!linked || !signing) return null;
+  return linked.equals(signing) ? null : linked.toBase58();
+}
+
+/** Whether two addresses name the same wallet. Unparseable never matches. */
+export function isSameWallet(
+  a: string | null | undefined,
+  b: string | null | undefined
+): boolean {
+  const left = parseWalletAddress(a);
+  const right = parseWalletAddress(b);
+  return left !== null && right !== null && left.equals(right);
 }

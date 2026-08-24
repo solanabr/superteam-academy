@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
-import { PublicKey, Transaction } from "@solana/web3.js";
+import { Transaction } from "@solana/web3.js";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { X, Sparkle, ArrowUp } from "@phosphor-icons/react";
@@ -14,7 +14,10 @@ import {
   signWithDynamicWallet,
 } from "@/lib/dynamic/solana";
 import { buildCloseEnrollmentInstruction } from "@/lib/solana/instructions";
-import { findWalletMismatch } from "@/lib/solana/linked-wallet";
+import {
+  findWalletMismatch,
+  parseWalletAddress,
+} from "@/lib/solana/linked-wallet";
 import {
   parseProgramError,
   preflightTransaction,
@@ -68,9 +71,9 @@ export function CurrentCoursesSection({
       // connect modal is a dead end for them. Only a learner with neither
       // wallet is asked to connect.
       const dynamicAccount = publicKey ? null : getDynamicSolanaAccount();
+      // An unparseable embedded address is no wallet at all, not a crash.
       const learner =
-        publicKey ??
-        (dynamicAccount ? new PublicKey(dynamicAccount.address) : null);
+        publicKey ?? parseWalletAddress(dynamicAccount?.address ?? null);
       if (!learner) {
         setWalletPrompt("connect");
         return;

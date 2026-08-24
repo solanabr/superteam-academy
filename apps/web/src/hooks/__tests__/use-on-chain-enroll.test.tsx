@@ -164,7 +164,9 @@ describe("useOnChainEnroll — signed-in user (unchanged paths)", () => {
   it("sends the enroll transaction and reports success when signed in with a wallet", async () => {
     const onRequireAuth = vi.fn();
     const onSuccess = vi.fn();
-    wallet.publicKey = Keypair.generate().publicKey satisfies PublicKey;
+    const key = Keypair.generate().publicKey;
+    wallet.publicKey = key satisfies PublicKey;
+    auth.walletAddress = key.toBase58();
     wallet.sendTransaction.mockResolvedValue("mock-signature");
     wallet.confirmTransaction.mockResolvedValue({ value: { err: null } });
 
@@ -242,6 +244,39 @@ describe("useOnChainEnroll — linked-wallet binding", () => {
     expect(result.current.enrollError).toContain("enrollMismatch");
   });
 
+  it("does not self-pay when the sponsor refuses and no wallet is linked", async () => {
+    // The Google sign-up with Phantom connected and nothing linked: the route
+    // 400s ("No wallet linked"), which used to drop straight into self-pay and
+    // mint an enrollment the webhook could never resolve to an account.
+    wallet.publicKey = Keypair.generate().publicKey satisfies PublicKey;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        json: async () => ({ error: "No wallet linked to this account" }),
+      })
+    );
+    const onError = vi.fn();
+
+    const { result } = renderHook(() =>
+      useOnChainEnroll({
+        courseId: COURSE_ID,
+        userId: "user-1",
+        onRequireAuth: vi.fn(),
+        onError,
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleEnroll();
+    });
+
+    expect(wallet.sendTransaction).not.toHaveBeenCalled();
+    expect(wallet.sendRawTransaction).not.toHaveBeenCalled();
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(result.current.enrollError).toContain("enrollNoLinkedWallet");
+  });
+
   it("proceeds when the signing wallet is the linked one", async () => {
     const key = Keypair.generate().publicKey;
     wallet.publicKey = key satisfies PublicKey;
@@ -270,7 +305,9 @@ describe("useOnChainEnroll — linked-wallet binding", () => {
 describe("useOnChainEnroll — Dynamic embedded wallet", () => {
   it("signs with the embedded wallet instead of opening the connect modal", async () => {
     const onSuccess = vi.fn();
-    dynamic.account = { address: Keypair.generate().publicKey.toBase58() };
+    const address = Keypair.generate().publicKey.toBase58();
+    dynamic.account = { address };
+    auth.walletAddress = address;
     dynamic.signWithDynamicWallet.mockResolvedValue({
       serialize: () => new Uint8Array(),
     });
@@ -304,7 +341,9 @@ describe("useOnChainEnroll — Dynamic embedded wallet", () => {
   });
 
   it("prefers a connected wallet-adapter wallet over the embedded one", async () => {
-    wallet.publicKey = Keypair.generate().publicKey satisfies PublicKey;
+    const key = Keypair.generate().publicKey;
+    wallet.publicKey = key satisfies PublicKey;
+    auth.walletAddress = key.toBase58();
     dynamic.account = { address: Keypair.generate().publicKey.toBase58() };
     wallet.sendTransaction.mockResolvedValue("adapter-signature");
     wallet.confirmTransaction.mockResolvedValue({ value: { err: null } });

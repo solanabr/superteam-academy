@@ -1679,7 +1679,8 @@
     "connectAction": "Conectar billetera",
     "dismiss": "Cancelar",
     "mismatchTitle": "Billetera incorrecta conectada",
-    "mismatchBody": "Estás conectado con una billetera distinta a la vinculada a tu cuenta ({linked}). Cambia a ella en tu billetera o vincula esta en Ajustes.",
-    "enrollMismatch": "La inscripción se registra en la billetera vinculada a tu cuenta ({linked}). Cambia a ella en tu billetera, o vincula la actual en Ajustes, e inténtalo de nuevo."
+    "mismatchBody": "Estás conectado con una billetera distinta a la vinculada a tu cuenta ({linked}). Cambia a ella en tu billetera para continuar — el vínculo es permanente, así que esta no puede reemplazarla.",
+    "enrollMismatch": "La inscripción se registra en la billetera vinculada a tu cuenta ({linked}). Cambia a ella en tu billetera e inténtalo de nuevo.",
+    "enrollNoLinkedWallet": "Tu cuenta aún no tiene billetera vinculada, así que una inscripción hecha ahora no podría acreditarse a ti. Vincula una billetera en Ajustes primero."
   }
 }

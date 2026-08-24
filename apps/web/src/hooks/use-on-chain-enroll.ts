@@ -4,12 +4,16 @@ import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { PublicKey, Transaction } from "@solana/web3.js";
-import type { Connection } from "@solana/web3.js";
+import { Transaction } from "@solana/web3.js";
+import type { Connection, PublicKey } from "@solana/web3.js";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { truncateAddress } from "@/lib/utils";
 import { buildEnrollInstruction } from "@/lib/solana/instructions";
-import { findWalletMismatch } from "@/lib/solana/linked-wallet";
+import {
+  findWalletMismatch,
+  isSameWallet,
+  parseWalletAddress,
+} from "@/lib/solana/linked-wallet";
 import {
   getDynamicSolanaAccount,
   signWithDynamicWallet,
@@ -39,11 +43,14 @@ const TX_TIMEOUT_MS = 30_000;
 type EnrollBuild =
   | { kind: "tx"; tx: Transaction }
   /** The sponsor built for a wallet that is not the one about to sign. */
-  | { kind: "wrongLearner"; learner: string };
+  | { kind: "wrongLearner"; learner: string }
+  /** Self-pay was the only route left, with no linked wallet to check against. */
+  | { kind: "unverifiedWallet" };
 
 async function buildEnrollTransaction(
   courseId: string,
   learner: PublicKey,
+  linkedWallet: string | null,
   connection: Connection
 ): Promise<EnrollBuild> {
   try {
@@ -61,8 +68,14 @@ async function buildEnrollTransaction(
         // The route builds for the SESSION PROFILE's linked wallet, never for
         // one named by the client. If that is not the wallet about to sign,
         // the transaction is unsignable here and self-paying instead would
-        // enrol the wrong wallet — stop.
-        if (data.learner && data.learner !== learner.toBase58()) {
+        // enrol the wrong wallet — stop. Checked against the linked wallet too
+        // when one is known, so a route that ever built for something else
+        // cannot pass just because the browser holds that same key.
+        if (
+          data.learner &&
+          (!isSameWallet(data.learner, learner.toBase58()) ||
+            (linkedWallet && !isSameWallet(data.learner, linkedWallet)))
+        ) {
           return { kind: "wrongLearner", learner: data.learner };
         }
         // Decoded without Buffer: this runs in the browser, where Next does not
@@ -77,6 +90,14 @@ async function buildEnrollTransaction(
     }
   } catch {
     // Fall through to self-pay.
+  }
+
+  // Self-pay is reached whenever sponsorship is unavailable — including the
+  // 400 a learner with no linked wallet gets. That learner is exactly who must
+  // NOT self-pay: the webhook resolves an enrollment by linked wallet, so the
+  // transaction would spend their SOL on a record no account can claim.
+  if (!isSameWallet(linkedWallet, learner.toBase58())) {
+    return { kind: "unverifiedWallet" };
   }
 
   const tx = new Transaction().add(buildEnrollInstruction(courseId, learner));
@@ -149,9 +170,9 @@ export function useOnChainEnroll({
     // one, and the connect modal was the exact dead end embedded wallets were
     // brought in to remove.
     const dynamicAccount = publicKey ? null : getDynamicSolanaAccount();
+    // An unparseable embedded address is no wallet at all, not a crash.
     const learner =
-      publicKey ??
-      (dynamicAccount ? new PublicKey(dynamicAccount.address) : null);
+      publicKey ?? parseWalletAddress(dynamicAccount?.address ?? null);
     if (!learner) {
       setWalletModalVisible(true);
       return;
@@ -184,10 +205,18 @@ export function useOnChainEnroll({
         const build = await buildEnrollTransaction(
           courseId,
           learner,
+          linkedWallet,
           connection
         );
         if (build.kind === "wrongLearner") {
           reportMismatch(build.learner);
+          return;
+        }
+        if (build.kind === "unverifiedWallet") {
+          const msg = t("enrollNoLinkedWallet");
+          setEnrollError(msg);
+          dispatchToast(msg, "warning");
+          onError?.(msg);
           return;
         }
         const tx = build.tx;
