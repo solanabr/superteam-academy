@@ -1,5 +1,23 @@
 [
   {
+    "_id": "achievement-accepted",
+    "_type": "achievement",
+    "award": {
+      "gte": 1,
+      "kind": "community-stat",
+      "stat": "acceptedAnswers"
+    },
+    "category": "community",
+    "description": "Have one of your answers accepted",
+    "glyph": "✓",
+    "icon": "check-circle",
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-accepted",
+    "name": "Accepted Answer",
+    "solTier": false,
+    "xpReward": 75
+  },
+  {
     "_id": "achievement-bug-hunter",
     "_type": "achievement",
     "award": {
@@ -30,7 +48,7 @@
     "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-consistency-king",
     "name": "Consistency King",
     "solTier": true,
-    "xpReward": 500
+    "xpReward": 400
   },
   {
     "_id": "achievement-course-completer",
@@ -50,11 +68,27 @@
     "xpReward": 200
   },
   {
+    "_id": "achievement-double-digits",
+    "_type": "achievement",
+    "award": {
+      "gte": 10,
+      "kind": "lessons-completed"
+    },
+    "category": "progress",
+    "description": "Complete 10 lessons",
+    "glyph": "10",
+    "icon": "rocket",
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-double-digits",
+    "name": "Double Digits",
+    "solTier": false,
+    "xpReward": 80
+  },
+  {
     "_id": "achievement-early-adopter",
     "_type": "achievement",
     "award": {
-      "kind": "user-number",
-      "lte": 100
+      "kind": "manual"
     },
     "category": "special",
     "description": "Join the platform during the first month",
@@ -65,6 +99,59 @@
     "name": "Early Adopter",
     "solTier": true,
     "xpReward": 1000
+  },
+  {
+    "_id": "achievement-evolution-explorer",
+    "_type": "achievement",
+    "award": {
+      "course": "course-btc-to-sol-evolution",
+      "gte": 5,
+      "kind": "lessons-completed-in-course"
+    },
+    "category": "progress",
+    "description": "Complete 5 lessons of From Bitcoin to Solana",
+    "glyph": "⅓",
+    "icon": "compass",
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-evolution-explorer",
+    "name": "Five Chapters In",
+    "solTier": false,
+    "xpReward": 50
+  },
+  {
+    "_id": "achievement-evolution-navigator",
+    "_type": "achievement",
+    "award": {
+      "course": "course-btc-to-sol-evolution",
+      "gte": 10,
+      "kind": "lessons-completed-in-course"
+    },
+    "category": "progress",
+    "description": "Complete 10 lessons of From Bitcoin to Solana",
+    "glyph": "⅔",
+    "icon": "compass",
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-evolution-navigator",
+    "name": "Two-Thirds There",
+    "solTier": false,
+    "xpReward": 80
+  },
+  {
+    "_id": "achievement-evolution-scholar",
+    "_type": "achievement",
+    "award": {
+      "course": "course-btc-to-sol-evolution",
+      "kind": "course-completed"
+    },
+    "category": "progress",
+    "description": "Complete From Bitcoin to Solana",
+    "glyph": "✦",
+    "icon": "graduation-cap",
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-evolution-scholar",
+    "name": "Evolution Scholar",
+    "solTier": false,
+    "xpReward": 150
   },
   {
     "_id": "achievement-first-steps",
@@ -81,7 +168,111 @@
     "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-first-steps",
     "name": "First Steps",
     "solTier": false,
+    "xpReward": 25
+  },
+  {
+    "_id": "achievement-first-steps-path",
+    "_type": "achievement",
+    "award": {
+      "kind": "path-completed",
+      "path": "path-first-steps"
+    },
+    "category": "progress",
+    "description": "Complete every course in the First Steps path",
+    "glyph": "✧",
+    "icon": "graduation-cap",
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-first-steps-path",
+    "name": "First Steps Complete",
+    "solTier": true,
+    "xpReward": 200
+  },
+  {
+    "_id": "achievement-first-word",
+    "_type": "achievement",
+    "award": {
+      "gte": 1,
+      "kind": "community-stat",
+      "stat": "totalThreads"
+    },
+    "category": "community",
+    "description": "Start your first forum thread",
+    "glyph": "✎",
+    "icon": "message-circle",
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-first-word",
+    "name": "First Word",
+    "solTier": false,
+    "xpReward": 30
+  },
+  {
+    "_id": "achievement-fortnight",
+    "_type": "achievement",
+    "award": {
+      "days": 14,
+      "kind": "streak"
+    },
+    "category": "streaks",
+    "description": "Maintain a 14-day learning streak",
+    "glyph": "14",
+    "icon": "flame",
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-fortnight",
+    "name": "Fortnight",
+    "solTier": false,
+    "xpReward": 125
+  },
+  {
+    "_id": "achievement-getting-traction",
+    "_type": "achievement",
+    "award": {
+      "gte": 5,
+      "kind": "lessons-completed"
+    },
+    "category": "progress",
+    "description": "Complete 5 lessons",
+    "glyph": "05",
+    "icon": "rocket",
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-getting-traction",
+    "name": "Getting Traction",
+    "solTier": false,
     "xpReward": 50
+  },
+  {
+    "_id": "achievement-half-century",
+    "_type": "achievement",
+    "award": {
+      "gte": 50,
+      "kind": "lessons-completed"
+    },
+    "category": "progress",
+    "description": "Complete 50 lessons",
+    "glyph": "50",
+    "icon": "crown",
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-half-century",
+    "name": "Half Century",
+    "solTier": true,
+    "xpReward": 250
+  },
+  {
+    "_id": "achievement-helping-hand",
+    "_type": "achievement",
+    "award": {
+      "gte": 1,
+      "kind": "community-stat",
+      "stat": "totalAnswers"
+    },
+    "category": "community",
+    "description": "Post your first answer in the forum",
+    "glyph": "↪",
+    "icon": "message-square",
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-helping-hand",
+    "name": "Helping Hand",
+    "solTier": false,
+    "xpReward": 30
   },
   {
     "_id": "achievement-monthly-master",
@@ -98,7 +289,109 @@
     "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-monthly-master",
     "name": "Monthly Master",
     "solTier": false,
-    "xpReward": 300
+    "xpReward": 200
+  },
+  {
+    "_id": "achievement-panorama",
+    "_type": "achievement",
+    "award": {
+      "course": "course-visao-geral-solana",
+      "kind": "course-completed"
+    },
+    "category": "progress",
+    "description": "Complete Visão Geral do Solana",
+    "glyph": "◎",
+    "icon": "compass",
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-panorama",
+    "name": "Visão Geral",
+    "solTier": false,
+    "xpReward": 60
+  },
+  {
+    "_id": "achievement-pilula-taken",
+    "_type": "achievement",
+    "award": {
+      "course": "course-pilula-solana-superteam",
+      "kind": "course-completed"
+    },
+    "category": "progress",
+    "description": "Complete Pílula Solana & Superteam",
+    "glyph": "◆",
+    "icon": "graduation-cap",
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-pilula-taken",
+    "name": "Pílula Tomada",
+    "solTier": false,
+    "xpReward": 30
+  },
+  {
+    "_id": "achievement-speedrunner",
+    "_type": "achievement",
+    "award": {
+      "course": "course-solana-speedrun",
+      "kind": "course-completed"
+    },
+    "category": "progress",
+    "description": "Complete the Solana Speedrun course",
+    "glyph": "»",
+    "icon": "flame",
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-speedrunner",
+    "name": "Speedrunner",
+    "solTier": false,
+    "xpReward": 75
+  },
+  {
+    "_id": "achievement-three-day-spark",
+    "_type": "achievement",
+    "award": {
+      "days": 3,
+      "kind": "streak"
+    },
+    "category": "streaks",
+    "description": "Maintain a 3-day learning streak",
+    "glyph": "3×",
+    "icon": "flame",
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-three-day-spark",
+    "name": "Three-Day Spark",
+    "solTier": false,
+    "xpReward": 40
+  },
+  {
+    "_id": "achievement-twenty-five",
+    "_type": "achievement",
+    "award": {
+      "gte": 25,
+      "kind": "lessons-completed"
+    },
+    "category": "progress",
+    "description": "Complete 25 lessons",
+    "glyph": "25",
+    "icon": "trophy",
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-twenty-five",
+    "name": "Twenty-Five",
+    "solTier": false,
+    "xpReward": 150
+  },
+  {
+    "_id": "achievement-warmed-up",
+    "_type": "achievement",
+    "award": {
+      "gte": 3,
+      "kind": "lessons-completed"
+    },
+    "category": "progress",
+    "description": "Complete 3 lessons",
+    "glyph": "03",
+    "icon": "footprints",
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-warmed-up",
+    "name": "Warmed Up",
+    "solTier": false,
+    "xpReward": 40
   },
   {
     "_id": "achievement-week-warrior",
@@ -115,6 +408,6 @@
     "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-week-warrior",
     "name": "Week Warrior",
     "solTier": false,
-    "xpReward": 100
+    "xpReward": 75
   }
 ]

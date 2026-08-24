@@ -36,7 +36,7 @@
       "icon": "trophy",
       "name": "Consistency King",
       "solTier": true,
-      "xpReward": 500
+      "xpReward": 400
     },
     {
       "_id": "achievement-course-completer",
@@ -63,8 +63,8 @@
         "course": null,
         "days": null,
         "gte": null,
-        "kind": "user-number",
-        "lte": 100,
+        "kind": "manual",
+        "lte": null,
         "path": null,
         "stat": null
       },
@@ -93,7 +93,7 @@
       "icon": "footprints",
       "name": "First Steps",
       "solTier": false,
-      "xpReward": 50
+      "xpReward": 25
     },
     {
       "_id": "achievement-monthly-master",
@@ -112,7 +112,7 @@
       "icon": "crown",
       "name": "Monthly Master",
       "solTier": false,
-      "xpReward": 300
+      "xpReward": 200
     },
     {
       "_id": "achievement-week-warrior",
@@ -131,7 +131,330 @@
       "icon": "flame",
       "name": "Week Warrior",
       "solTier": false,
-      "xpReward": 100
+      "xpReward": 75
+    },
+    {
+      "_id": "achievement-accepted",
+      "award": {
+        "course": null,
+        "days": null,
+        "gte": 1,
+        "kind": "community-stat",
+        "lte": null,
+        "path": null,
+        "stat": "acceptedAnswers"
+      },
+      "category": "community",
+      "description": "Have one of your answers accepted",
+      "glyph": "✓",
+      "icon": "check-circle",
+      "name": "Accepted Answer",
+      "solTier": false,
+      "xpReward": 75
+    },
+    {
+      "_id": "achievement-double-digits",
+      "award": {
+        "course": null,
+        "days": null,
+        "gte": 10,
+        "kind": "lessons-completed",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "progress",
+      "description": "Complete 10 lessons",
+      "glyph": "10",
+      "icon": "rocket",
+      "name": "Double Digits",
+      "solTier": false,
+      "xpReward": 80
+    },
+    {
+      "_id": "achievement-evolution-explorer",
+      "award": {
+        "course": "course-btc-to-sol-evolution",
+        "days": null,
+        "gte": 5,
+        "kind": "lessons-completed-in-course",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "progress",
+      "description": "Complete 5 lessons of From Bitcoin to Solana",
+      "glyph": "⅓",
+      "icon": "compass",
+      "name": "Five Chapters In",
+      "solTier": false,
+      "xpReward": 50
+    },
+    {
+      "_id": "achievement-evolution-navigator",
+      "award": {
+        "course": "course-btc-to-sol-evolution",
+        "days": null,
+        "gte": 10,
+        "kind": "lessons-completed-in-course",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "progress",
+      "description": "Complete 10 lessons of From Bitcoin to Solana",
+      "glyph": "⅔",
+      "icon": "compass",
+      "name": "Two-Thirds There",
+      "solTier": false,
+      "xpReward": 80
+    },
+    {
+      "_id": "achievement-evolution-scholar",
+      "award": {
+        "course": "course-btc-to-sol-evolution",
+        "days": null,
+        "gte": null,
+        "kind": "course-completed",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "progress",
+      "description": "Complete From Bitcoin to Solana",
+      "glyph": "✦",
+      "icon": "graduation-cap",
+      "name": "Evolution Scholar",
+      "solTier": false,
+      "xpReward": 150
+    },
+    {
+      "_id": "achievement-first-steps-path",
+      "award": {
+        "course": null,
+        "days": null,
+        "gte": null,
+        "kind": "path-completed",
+        "lte": null,
+        "path": "path-first-steps",
+        "stat": null
+      },
+      "category": "progress",
+      "description": "Complete every course in the First Steps path",
+      "glyph": "✧",
+      "icon": "graduation-cap",
+      "name": "First Steps Complete",
+      "solTier": true,
+      "xpReward": 200
+    },
+    {
+      "_id": "achievement-first-word",
+      "award": {
+        "course": null,
+        "days": null,
+        "gte": 1,
+        "kind": "community-stat",
+        "lte": null,
+        "path": null,
+        "stat": "totalThreads"
+      },
+      "category": "community",
+      "description": "Start your first forum thread",
+      "glyph": "✎",
+      "icon": "message-circle",
+      "name": "First Word",
+      "solTier": false,
+      "xpReward": 30
+    },
+    {
+      "_id": "achievement-fortnight",
+      "award": {
+        "course": null,
+        "days": 14,
+        "gte": null,
+        "kind": "streak",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "streaks",
+      "description": "Maintain a 14-day learning streak",
+      "glyph": "14",
+      "icon": "flame",
+      "name": "Fortnight",
+      "solTier": false,
+      "xpReward": 125
+    },
+    {
+      "_id": "achievement-getting-traction",
+      "award": {
+        "course": null,
+        "days": null,
+        "gte": 5,
+        "kind": "lessons-completed",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "progress",
+      "description": "Complete 5 lessons",
+      "glyph": "05",
+      "icon": "rocket",
+      "name": "Getting Traction",
+      "solTier": false,
+      "xpReward": 50
+    },
+    {
+      "_id": "achievement-half-century",
+      "award": {
+        "course": null,
+        "days": null,
+        "gte": 50,
+        "kind": "lessons-completed",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "progress",
+      "description": "Complete 50 lessons",
+      "glyph": "50",
+      "icon": "crown",
+      "name": "Half Century",
+      "solTier": true,
+      "xpReward": 250
+    },
+    {
+      "_id": "achievement-helping-hand",
+      "award": {
+        "course": null,
+        "days": null,
+        "gte": 1,
+        "kind": "community-stat",
+        "lte": null,
+        "path": null,
+        "stat": "totalAnswers"
+      },
+      "category": "community",
+      "description": "Post your first answer in the forum",
+      "glyph": "↪",
+      "icon": "message-square",
+      "name": "Helping Hand",
+      "solTier": false,
+      "xpReward": 30
+    },
+    {
+      "_id": "achievement-panorama",
+      "award": {
+        "course": "course-visao-geral-solana",
+        "days": null,
+        "gte": null,
+        "kind": "course-completed",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "progress",
+      "description": "Complete Visão Geral do Solana",
+      "glyph": "◎",
+      "icon": "compass",
+      "name": "Visão Geral",
+      "solTier": false,
+      "xpReward": 60
+    },
+    {
+      "_id": "achievement-pilula-taken",
+      "award": {
+        "course": "course-pilula-solana-superteam",
+        "days": null,
+        "gte": null,
+        "kind": "course-completed",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "progress",
+      "description": "Complete Pílula Solana & Superteam",
+      "glyph": "◆",
+      "icon": "graduation-cap",
+      "name": "Pílula Tomada",
+      "solTier": false,
+      "xpReward": 30
+    },
+    {
+      "_id": "achievement-speedrunner",
+      "award": {
+        "course": "course-solana-speedrun",
+        "days": null,
+        "gte": null,
+        "kind": "course-completed",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "progress",
+      "description": "Complete the Solana Speedrun course",
+      "glyph": "»",
+      "icon": "flame",
+      "name": "Speedrunner",
+      "solTier": false,
+      "xpReward": 75
+    },
+    {
+      "_id": "achievement-three-day-spark",
+      "award": {
+        "course": null,
+        "days": 3,
+        "gte": null,
+        "kind": "streak",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "streaks",
+      "description": "Maintain a 3-day learning streak",
+      "glyph": "3×",
+      "icon": "flame",
+      "name": "Three-Day Spark",
+      "solTier": false,
+      "xpReward": 40
+    },
+    {
+      "_id": "achievement-twenty-five",
+      "award": {
+        "course": null,
+        "days": null,
+        "gte": 25,
+        "kind": "lessons-completed",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "progress",
+      "description": "Complete 25 lessons",
+      "glyph": "25",
+      "icon": "trophy",
+      "name": "Twenty-Five",
+      "solTier": false,
+      "xpReward": 150
+    },
+    {
+      "_id": "achievement-warmed-up",
+      "award": {
+        "course": null,
+        "days": null,
+        "gte": 3,
+        "kind": "lessons-completed",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "progress",
+      "description": "Complete 3 lessons",
+      "glyph": "03",
+      "icon": "footprints",
+      "name": "Warmed Up",
+      "solTier": false,
+      "xpReward": 40
     }
   ],
   "deployed": [
@@ -171,7 +494,7 @@
       "icon": "trophy",
       "name": "Consistency King",
       "solTier": true,
-      "xpReward": 500
+      "xpReward": 400
     },
     {
       "_id": "achievement-course-completer",
@@ -198,8 +521,8 @@
         "course": null,
         "days": null,
         "gte": null,
-        "kind": "user-number",
-        "lte": 100,
+        "kind": "manual",
+        "lte": null,
         "path": null,
         "stat": null
       },
@@ -228,7 +551,7 @@
       "icon": "footprints",
       "name": "First Steps",
       "solTier": false,
-      "xpReward": 50
+      "xpReward": 25
     },
     {
       "_id": "achievement-monthly-master",
@@ -247,7 +570,7 @@
       "icon": "crown",
       "name": "Monthly Master",
       "solTier": false,
-      "xpReward": 300
+      "xpReward": 200
     },
     {
       "_id": "achievement-week-warrior",
@@ -266,7 +589,330 @@
       "icon": "flame",
       "name": "Week Warrior",
       "solTier": false,
-      "xpReward": 100
+      "xpReward": 75
+    },
+    {
+      "_id": "achievement-accepted",
+      "award": {
+        "course": null,
+        "days": null,
+        "gte": 1,
+        "kind": "community-stat",
+        "lte": null,
+        "path": null,
+        "stat": "acceptedAnswers"
+      },
+      "category": "community",
+      "description": "Have one of your answers accepted",
+      "glyph": "✓",
+      "icon": "check-circle",
+      "name": "Accepted Answer",
+      "solTier": false,
+      "xpReward": 75
+    },
+    {
+      "_id": "achievement-double-digits",
+      "award": {
+        "course": null,
+        "days": null,
+        "gte": 10,
+        "kind": "lessons-completed",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "progress",
+      "description": "Complete 10 lessons",
+      "glyph": "10",
+      "icon": "rocket",
+      "name": "Double Digits",
+      "solTier": false,
+      "xpReward": 80
+    },
+    {
+      "_id": "achievement-evolution-explorer",
+      "award": {
+        "course": "course-btc-to-sol-evolution",
+        "days": null,
+        "gte": 5,
+        "kind": "lessons-completed-in-course",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "progress",
+      "description": "Complete 5 lessons of From Bitcoin to Solana",
+      "glyph": "⅓",
+      "icon": "compass",
+      "name": "Five Chapters In",
+      "solTier": false,
+      "xpReward": 50
+    },
+    {
+      "_id": "achievement-evolution-navigator",
+      "award": {
+        "course": "course-btc-to-sol-evolution",
+        "days": null,
+        "gte": 10,
+        "kind": "lessons-completed-in-course",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "progress",
+      "description": "Complete 10 lessons of From Bitcoin to Solana",
+      "glyph": "⅔",
+      "icon": "compass",
+      "name": "Two-Thirds There",
+      "solTier": false,
+      "xpReward": 80
+    },
+    {
+      "_id": "achievement-evolution-scholar",
+      "award": {
+        "course": "course-btc-to-sol-evolution",
+        "days": null,
+        "gte": null,
+        "kind": "course-completed",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "progress",
+      "description": "Complete From Bitcoin to Solana",
+      "glyph": "✦",
+      "icon": "graduation-cap",
+      "name": "Evolution Scholar",
+      "solTier": false,
+      "xpReward": 150
+    },
+    {
+      "_id": "achievement-first-steps-path",
+      "award": {
+        "course": null,
+        "days": null,
+        "gte": null,
+        "kind": "path-completed",
+        "lte": null,
+        "path": "path-first-steps",
+        "stat": null
+      },
+      "category": "progress",
+      "description": "Complete every course in the First Steps path",
+      "glyph": "✧",
+      "icon": "graduation-cap",
+      "name": "First Steps Complete",
+      "solTier": true,
+      "xpReward": 200
+    },
+    {
+      "_id": "achievement-first-word",
+      "award": {
+        "course": null,
+        "days": null,
+        "gte": 1,
+        "kind": "community-stat",
+        "lte": null,
+        "path": null,
+        "stat": "totalThreads"
+      },
+      "category": "community",
+      "description": "Start your first forum thread",
+      "glyph": "✎",
+      "icon": "message-circle",
+      "name": "First Word",
+      "solTier": false,
+      "xpReward": 30
+    },
+    {
+      "_id": "achievement-fortnight",
+      "award": {
+        "course": null,
+        "days": 14,
+        "gte": null,
+        "kind": "streak",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "streaks",
+      "description": "Maintain a 14-day learning streak",
+      "glyph": "14",
+      "icon": "flame",
+      "name": "Fortnight",
+      "solTier": false,
+      "xpReward": 125
+    },
+    {
+      "_id": "achievement-getting-traction",
+      "award": {
+        "course": null,
+        "days": null,
+        "gte": 5,
+        "kind": "lessons-completed",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "progress",
+      "description": "Complete 5 lessons",
+      "glyph": "05",
+      "icon": "rocket",
+      "name": "Getting Traction",
+      "solTier": false,
+      "xpReward": 50
+    },
+    {
+      "_id": "achievement-half-century",
+      "award": {
+        "course": null,
+        "days": null,
+        "gte": 50,
+        "kind": "lessons-completed",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "progress",
+      "description": "Complete 50 lessons",
+      "glyph": "50",
+      "icon": "crown",
+      "name": "Half Century",
+      "solTier": true,
+      "xpReward": 250
+    },
+    {
+      "_id": "achievement-helping-hand",
+      "award": {
+        "course": null,
+        "days": null,
+        "gte": 1,
+        "kind": "community-stat",
+        "lte": null,
+        "path": null,
+        "stat": "totalAnswers"
+      },
+      "category": "community",
+      "description": "Post your first answer in the forum",
+      "glyph": "↪",
+      "icon": "message-square",
+      "name": "Helping Hand",
+      "solTier": false,
+      "xpReward": 30
+    },
+    {
+      "_id": "achievement-panorama",
+      "award": {
+        "course": "course-visao-geral-solana",
+        "days": null,
+        "gte": null,
+        "kind": "course-completed",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "progress",
+      "description": "Complete Visão Geral do Solana",
+      "glyph": "◎",
+      "icon": "compass",
+      "name": "Visão Geral",
+      "solTier": false,
+      "xpReward": 60
+    },
+    {
+      "_id": "achievement-pilula-taken",
+      "award": {
+        "course": "course-pilula-solana-superteam",
+        "days": null,
+        "gte": null,
+        "kind": "course-completed",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "progress",
+      "description": "Complete Pílula Solana & Superteam",
+      "glyph": "◆",
+      "icon": "graduation-cap",
+      "name": "Pílula Tomada",
+      "solTier": false,
+      "xpReward": 30
+    },
+    {
+      "_id": "achievement-speedrunner",
+      "award": {
+        "course": "course-solana-speedrun",
+        "days": null,
+        "gte": null,
+        "kind": "course-completed",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "progress",
+      "description": "Complete the Solana Speedrun course",
+      "glyph": "»",
+      "icon": "flame",
+      "name": "Speedrunner",
+      "solTier": false,
+      "xpReward": 75
+    },
+    {
+      "_id": "achievement-three-day-spark",
+      "award": {
+        "course": null,
+        "days": 3,
+        "gte": null,
+        "kind": "streak",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "streaks",
+      "description": "Maintain a 3-day learning streak",
+      "glyph": "3×",
+      "icon": "flame",
+      "name": "Three-Day Spark",
+      "solTier": false,
+      "xpReward": 40
+    },
+    {
+      "_id": "achievement-twenty-five",
+      "award": {
+        "course": null,
+        "days": null,
+        "gte": 25,
+        "kind": "lessons-completed",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "progress",
+      "description": "Complete 25 lessons",
+      "glyph": "25",
+      "icon": "trophy",
+      "name": "Twenty-Five",
+      "solTier": false,
+      "xpReward": 150
+    },
+    {
+      "_id": "achievement-warmed-up",
+      "award": {
+        "course": null,
+        "days": null,
+        "gte": 3,
+        "kind": "lessons-completed",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "progress",
+      "description": "Complete 3 lessons",
+      "glyph": "03",
+      "icon": "footprints",
+      "name": "Warmed Up",
+      "solTier": false,
+      "xpReward": 40
     }
   ]
 }

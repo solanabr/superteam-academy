@@ -82,16 +82,6 @@
   ],
   "quests": [
     {
-      "_id": "quest-challenge",
-      "description": "Pass a challenge lesson",
-      "icon": "Code",
-      "name": "Complete a Challenge",
-      "resetType": "daily",
-      "targetValue": 1,
-      "type": "challenge",
-      "xpReward": 35
-    },
-    {
       "_id": "quest-complete-lesson",
       "description": "Finish any lesson today",
       "icon": "BookOpen",
@@ -99,7 +89,7 @@
       "resetType": "daily",
       "targetValue": 1,
       "type": "lesson",
-      "xpReward": 25
+      "xpReward": 20
     },
     {
       "_id": "quest-complete-module",
@@ -113,13 +103,13 @@
     },
     {
       "_id": "quest-lesson-batch",
-      "description": "Finish 3 lessons in a single day",
+      "description": "Finish 2 lessons in a single day",
       "icon": "Lightning",
-      "name": "Complete 3 Lessons",
+      "name": "Complete 2 Lessons",
       "resetType": "daily",
-      "targetValue": 3,
+      "targetValue": 2,
       "type": "lesson_batch",
-      "xpReward": 50
+      "xpReward": 40
     },
     {
       "_id": "quest-login-streak",
@@ -129,7 +119,7 @@
       "resetType": "multi_day",
       "targetValue": 3,
       "type": "login_streak",
-      "xpReward": 40
+      "xpReward": 50
     }
   ]
 }
