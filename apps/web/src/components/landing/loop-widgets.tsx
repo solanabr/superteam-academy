@@ -176,7 +176,7 @@ export function BuildWidget({
                construction with the rest of the system (22-08). The passed
                state keeps its own success fill over the same construction. */
             className={`btn-ink duration-[120ms] inline-flex cursor-pointer items-center gap-2 rounded-md px-4 py-2 font-display text-sm font-extrabold transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:pointer-events-none ${
-              state === "passed" ? "bg-success text-white" : "btn-ink--primary"
+              state === "passed" ? "btn-ink--pass" : "btn-ink--primary"
             }`}
           >
             {state === "running" && (
