@@ -226,5 +226,45 @@
         ]
       }
     ]
+  },
+  {
+    "_id": "course-visao-geral-solana",
+    "title": "Visão Geral da Blockchain Solana",
+    "slug": "visao-geral-solana",
+    "description": "Apresentar aos alunos a blockchain Solana, abordando sua história fundamental e arquitetura central. Usar analogias e recursos visuais para tornar conceitos complexos acessíveis a iniciantes.",
+    "difficulty": "beginner",
+    "duration": 1.7,
+    "thumbnail": "/content-assets/visao-geral-solana/banner.png",
+    "creator": "Em8D6XyuXvNUK1YgLKBaji7HbbrZZq7fCdq3sGMXqxVZ",
+    "tags": [
+      "solana-fundamentals"
+    ],
+    "xpReward": 60,
+    "trackId": 0,
+    "trackLevel": 0,
+    "modules": [
+      {
+        "key": "origens-e-historia",
+        "title": "Origens e História da Solana",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-vgs-origens-fundacao",
+            "title": "Origens e História da Fundação",
+            "slug": "origens-e-historia-da-fundacao"
+          },
+          {
+            "_id": "lesson-vgs-desafios-iniciais",
+            "title": "Desafios e Obstáculos Iniciais",
+            "slug": "desafios-e-obstaculos-iniciais"
+          },
+          {
+            "_id": "lesson-vgs-marcos-e-adocao",
+            "title": "Marcos e Linha do Tempo de Adoção",
+            "slug": "marcos-e-linha-do-tempo-de-adocao"
+          }
+        ]
+      }
+    ]
   }
 ]
