@@ -114,6 +114,17 @@ describe("LandingPageClient — LX-A1 deep-link CTAs", () => {
     expect(within(modals[0]!).getByText(/sign up/i)).toBeInTheDocument();
   });
 
+  // Red-proofs the orphaned-route fix: /start carried the whole onboarding
+  // funnel and every profiles.segment write, and nothing in the app linked to
+  // it — so both were empty in production.
+  it("offers a hero entry point into the /start intake", () => {
+    renderLanding();
+    const intake = screen.getByRole("link", {
+      name: /not sure where to start/i,
+    });
+    expect(intake).toHaveAttribute("href", "/en/start");
+  });
+
   it("keeps the accuracy-corrected wedge as the hero line (owner 2026-08-01: the learner writes the code, AI explains)", () => {
     renderLanding();
     expect(
