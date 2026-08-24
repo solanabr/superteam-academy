@@ -75,7 +75,7 @@ solanabr/academy-courses ──► compile-content.ts ──► committed bundle
 | `packages/challenge-executor/` | Sandboxed challenge runner shared by the app and the linter         |
 | `packages/deploy/`             | Browser-side Solana program deployment (BPF loader chunking)        |
 | `packages/config/`             | Shared ESLint, TypeScript, Tailwind configs                         |
-| `supabase/`                    | 62 migrations (source of truth) + a generated `schema.sql` snapshot |
+| `supabase/`                    | 60 migrations (source of truth) + a generated `schema.sql` snapshot |
 
 ### Deployment model
 
@@ -449,7 +449,7 @@ The retired `ADMIN_SECRET` / HMAC-cookie system is gone from all runtime code.
 ## 7. Database
 
 **36 tables, RLS enabled on all of them.** Migrations in `supabase/migrations/`
-are the source of truth (62 of them); `supabase/schema.sql` is a generated
+are the source of truth (60 of them); `supabase/schema.sql` is a generated
 snapshot kept for diffing.
 
 | Group                | Tables                                                                                                                                                            |

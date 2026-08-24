@@ -164,7 +164,7 @@ Subsequent pushes to `main` trigger automatic deployments. Pull requests get pre
    ```bash
    supabase db push
    ```
-   This runs all 62 files in `supabase/migrations/` in order, creating the 36
+   This runs all 60 files in `supabase/migrations/` in order, creating the 36
    tables, RLS policies, indexes, SECURITY DEFINER functions, and views. The
    table inventory and the access model are in
    [ARCHITECTURE.md § Database](./ARCHITECTURE.md#7-database).
