@@ -2441,14 +2441,15 @@
      card colour and then sat on top of arbitrary cover art — over a light
      photo the old enrolled chip was near-invisible.
 
-     The ink is the LITERAL dark one on BOTH grounds, like the chips, the
+     The OUTLINE is the literal dark ink on BOTH grounds, like the chips, the
      avatar rings and the filled buttons: this badge is drawn on a photograph,
      not on a themed surface, so there is no ground for a flipping line to
-     agree with. Fills are literals for the same reason, which also means the
-     chip looks identical in light and dark — deliberate.
+     agree with, and a cream ring would disappear into a light banner.
 
-     Contrast is carried by the fill, not the art: #19231b on mint (#2ecc8e)
-     is 8.6:1 and on cream (#fafaf7) 16.6:1, so both hold over any banner. */
+     Contrast is carried by the fill, never by the art underneath — the neutral
+     chip is #19231b on cream (#fafaf7), 16.6:1, and the earned one inherits
+     the primary pair below. Both hold over a photo and over the Forge banner's
+     flat orange. */
   .course-card-status {
     position: absolute;
     top: 10px;
@@ -2471,10 +2472,14 @@
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
-  /* Earned: the mint the `course` patch category already uses for a finished
-     course, so a completed card and a course patch read as the same event. */
+  /* Earned. Colour comes from the primary tokens — the same pair `.pressed-key`
+     and the primary Button read — so a COMPLETED chip and a selected "All" key
+     are the same green on the same page: the light theme's dark green under a
+     white label, the dark theme's mint. A literal mint was tried first (owner,
+     24-08) and read as a foreign brightness beside the light-theme rails. */
   .course-card-status.completed {
-    background: var(--ink-green);
+    background: var(--primary);
+    color: var(--primary-fg);
   }
   /* In progress is informational, not an award — the neutral cream plate. */
   .course-card-status.enrolled {
