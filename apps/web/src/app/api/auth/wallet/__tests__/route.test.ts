@@ -4,6 +4,23 @@ import { NextRequest } from "next/server";
 
 vi.mock("server-only", () => ({}));
 
+// The real after() needs a request scope these direct-POST unit tests do not
+// have, so swap only that export and keep the rest of next/server real
+// (NextRequest/NextResponse are used throughout). Running the callback here
+// keeps the existing "the drain ran" assertions honest AND proves the route
+// schedules the drain through after(): a bare detached promise — the shape that
+// let the serverless runtime kill every sweep — never reaches this spy.
+const { deferred } = vi.hoisted(() => ({
+  deferred: vi.fn<(fn: () => Promise<void> | void) => void>(),
+}));
+vi.mock("next/server", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/server")>()),
+  after: (fn: () => Promise<void> | void) => {
+    deferred(fn);
+    return Promise.resolve(fn());
+  },
+}));
+
 const {
   verifySIWSRequest,
   getUserById,
@@ -149,6 +166,9 @@ describe("POST /api/auth/wallet — #489 refuse wallet_address write for deleted
     });
     expect(signOut).not.toHaveBeenCalled();
     expect(retryPendingOnchainActions).toHaveBeenCalledWith("user-1");
+    // Scheduled via after(), so the sweep survives the response instead of
+    // being killed with the serverless instance.
+    expect(deferred).toHaveBeenCalledTimes(1);
   });
 
   it("refuses a tombstoned account: no wallet_address write, signs out, 403 + accountDeleted", async () => {

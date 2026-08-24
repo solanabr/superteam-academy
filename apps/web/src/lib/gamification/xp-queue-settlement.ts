@@ -12,6 +12,16 @@ type AdminClient = ReturnType<typeof createAdminClient>;
 type PendingActionRow =
   Database["public"]["Tables"]["pending_onchain_actions"]["Row"];
 
+// Attempt budget for a genuinely failing row, shared by both drains (this
+// module's quest_xp sweep and lib/solana/onchain-queue's full sweep). A row at
+// or above it is excluded from every future drain by the fetch filters, so
+// reaching it means abandonment — the on-chain drainer logs when a row does.
+// Deferrals (daily cap, course maintenance, capstone gate, mint cap, platform
+// freeze) deliberately spend nothing from this budget. Lives here, not in
+// onchain-queue, so the chain-free module can use it without importing the
+// Solana client graph.
+export const MAX_RETRIES = 5;
+
 // ---------------------------------------------------------------------------
 // Narrow sweep: deliver this user's pending quest_xp credits (DB-only)
 // ---------------------------------------------------------------------------
@@ -29,7 +39,7 @@ export async function retryQuestXpForUser(
     .eq("user_id", userId)
     .eq("action_type", "quest_xp")
     .is("resolved_at", null)
-    .lt("retry_count", 5);
+    .lt("retry_count", MAX_RETRIES);
 
   if (fetchError || !rows || rows.length === 0) return;
 

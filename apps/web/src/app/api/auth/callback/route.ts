@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
 import { generateWalletName } from "@/lib/utils/generate-wallet-name";
@@ -145,13 +145,20 @@ export async function GET(request: NextRequest) {
         .eq("id", userId);
     }
 
-    retryPendingOnchainActions(userId).catch((err: unknown) =>
-      logError({
-        errorId: ERROR_IDS.OAUTH_CALLBACK_FAILED,
-        error: err instanceof Error ? err : new Error(String(err)),
-        context: { note: "retryPendingOnchainActions failed", userId },
-      })
-    );
+    // after(), not a detached promise — see the note on the same call in
+    // /api/auth/wallet: a bare fire-and-forget drain dies when the serverless
+    // instance freezes on response, which is why queued rows never retried.
+    after(async () => {
+      try {
+        await retryPendingOnchainActions(userId);
+      } catch (err: unknown) {
+        logError({
+          errorId: ERROR_IDS.OAUTH_CALLBACK_FAILED,
+          error: err instanceof Error ? err : new Error(String(err)),
+          context: { note: "retryPendingOnchainActions failed", userId },
+        });
+      }
+    });
 
     return response;
   } catch (err: unknown) {

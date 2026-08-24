@@ -5,6 +5,18 @@ import { SignJWT, exportJWK, generateKeyPair } from "jose";
 
 vi.mock("server-only", () => ({}));
 
+// Swap only after() — see the same shim in the /api/auth/wallet suite.
+const { deferred } = vi.hoisted(() => ({
+  deferred: vi.fn<(fn: () => Promise<void> | void) => void>(),
+}));
+vi.mock("next/server", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/server")>()),
+  after: (fn: () => Promise<void> | void) => {
+    deferred(fn);
+    return Promise.resolve(fn());
+  },
+}));
+
 const {
   getDynamicEnvironmentId,
   isRateLimited,
@@ -858,6 +870,7 @@ describe("POST /api/auth/dynamic — post-login parity with the other chokepoint
 
     expect(res.status).toBe(200);
     expect(retryPendingOnchainActions).toHaveBeenCalledWith("supabase-user-1");
+    expect(deferred).toHaveBeenCalledTimes(1);
   });
 
   it("still signs in when the queue drain rejects", async () => {

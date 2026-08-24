@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { cookies } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
@@ -227,13 +227,23 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    retryPendingOnchainActions(userId).catch((err: unknown) =>
-      logError({
-        errorId: ERROR_IDS.WALLET_AUTH_FAILED,
-        error: err instanceof Error ? err : new Error(String(err)),
-        context: { note: "retryPendingOnchainActions failed", userId },
-      })
-    );
+    // Inside after(), NOT a bare fire-and-forget promise. The drain does RPC
+    // reads and on-chain sends that take seconds; a detached promise is killed
+    // when the serverless instance freezes on response, which is why every
+    // queued row in prod sat at retry_count 0 for weeks — the sweep never got
+    // far enough to write anything back. after() keeps the invocation alive
+    // past the response without the caller waiting on it.
+    after(async () => {
+      try {
+        await retryPendingOnchainActions(userId);
+      } catch (err: unknown) {
+        logError({
+          errorId: ERROR_IDS.WALLET_AUTH_FAILED,
+          error: err instanceof Error ? err : new Error(String(err)),
+          context: { note: "retryPendingOnchainActions failed", userId },
+        });
+      }
+    });
 
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
