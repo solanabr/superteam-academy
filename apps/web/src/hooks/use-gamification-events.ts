@@ -4,19 +4,16 @@ import { useEffect, useRef } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { trackCredentialMinted } from "@/lib/analytics/events";
 import { createClient } from "@/lib/supabase/client";
-import { isSurpriseBonusReason } from "@/lib/gamification/surprise-bonus";
 import {
-  claimSurpriseBonus,
   claimQuestRewardFromCredit,
   QUEST_XP_REASON_PREFIX,
 } from "@/lib/gamification/server-xp-feedback";
 import {
   dispatchAchievementUnlock,
   dispatchAchievementXp,
-} from "@/components/gamification/achievement-popup";
+} from "@/components/gamification/achievement-unlock";
 import { dispatchCertificateMinted } from "@/components/gamification/certificate-popup";
 import { dispatchLevelUp } from "@/components/gamification/level-up-popup";
-import { dispatchSurpriseBonus } from "@/components/gamification/surprise-bonus-toast";
 import { dispatchQuestReward } from "@/components/gamification/quest-reward-toast";
 
 let xpEventCounter = 0;
@@ -202,44 +199,9 @@ export function useGamificationEvents(userId: string | undefined) {
               return;
             }
 
-            // Surprise bonus (LX-B15) → informational toast (never confetti). The
-            // reward only surfaces here, AFTER it is granted server-side — there
-            // is no pre-announcement anywhere in the UI. Localization happens in
-            // the mounted RewardPopupQueue (inside the intl provider).
-            // #790: the dashboard poll also detects surprise bonuses (for sessions
-            // where Realtime isn't delivering); claimSurpriseBonus is a session
-            // dedupe SHARED with that path, so whichever fires first wins and the
-            // other is a no-op — never a double toast.
-            if (row.reason && isSurpriseBonusReason(row.reason)) {
-              // KEEP IN SYNC with surpriseKey() in server-xp-feedback.ts: both
-              // channels share claimSurpriseBonus's seen-set, so they must derive
-              // the SAME key for the same award. maybeAwardSurpriseBonus always
-              // sets idempotency_key, so the fallbacks below are dead today — but
-              // if it ever becomes optional, both sites' fallbacks must stay
-              // aligned or a bonus would toast twice (once per path).
-              if (
-                claimSurpriseBonus(
-                  row.idempotency_key ?? row.id ?? row.tx_signature ?? "",
-                  userId
-                )
-              ) {
-                // celebrate() runs in RewardPopupQueue when the popup renders
-                // — a direct call here would double-fire confetti if the tier
-                // is ever bumped past "popup".
-                dispatchSurpriseBonus(amount);
-                // The counter bump belongs to the channel that WON the claim
-                // (#925's quest rule). The header's optimistic XP is a
-                // monotonic `Math.max(supabaseXp, prev + amount)` that never
-                // pulls back down, so an unconditional dispatch here when the
-                // #790 poll already counted this bonus would permanently
-                // inflate the displayed XP for the session. The poll path
-                // mirrors this: it only bumps for entries
-                // pickSurpriseBonusToasts actually claimed.
-                dispatchXpGain(amount);
-              }
-              return;
-            }
-
+            // Any other credit (including a historical `surprise_bonus:` row,
+            // now that the bonus itself is retired) just moves the XP counter —
+            // no popup, no celebration.
             dispatchXpGain(amount);
           }
         )

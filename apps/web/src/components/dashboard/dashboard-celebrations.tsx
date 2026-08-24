@@ -2,22 +2,18 @@
 
 import { useEffect } from "react";
 import type { DailyQuest } from "@superteam-lms/types";
-import {
-  pickQuestRewardToasts,
-  pickSurpriseBonusToasts,
-  type XpTransactionRow,
-} from "@/lib/gamification/server-xp-feedback";
-import { celebrate } from "@/lib/gamification/celebration";
+import { pickQuestRewardToasts } from "@/lib/gamification/server-xp-feedback";
 import { dispatchXpGain } from "@/hooks/use-gamification-events";
-import { dispatchSurpriseBonus } from "@/components/gamification/surprise-bonus-toast";
 import { dispatchQuestReward } from "@/components/gamification/quest-reward-toast";
 
 /**
- * Render-nothing client islands that keep the #790 server-granted-XP feedback
+ * Render-nothing client island that keeps the #790 server-granted-XP feedback
  * alive under the server-shell dashboard (#1096): the DATA now arrives as
- * server-rendered props, but the toast/celebration decisions must stay in the
- * browser — the dedupe seen-sets (sessionStorage + module state, shared with
- * the Realtime path) only exist there.
+ * server-rendered props, but the celebration decision must stay in the browser —
+ * the dedupe seen-set (module state, shared with the Realtime path) only exists
+ * there.
+ *
+ * The surprise-bonus sibling island went away with the feature itself (24-08).
  */
 
 interface QuestRewardCelebrationsProps {
@@ -43,26 +39,6 @@ export function QuestRewardCelebrations({
       });
     }
   }, [quests, questPeriod, userId]);
-
-  return null;
-}
-
-interface SurpriseBonusCelebrationsProps {
-  rows: XpTransactionRow[];
-  userId: string;
-}
-
-export function SurpriseBonusCelebrations({
-  rows,
-  userId,
-}: SurpriseBonusCelebrationsProps) {
-  useEffect(() => {
-    for (const amount of pickSurpriseBonusToasts(rows, userId)) {
-      dispatchXpGain(amount);
-      celebrate("surprise-bonus");
-      dispatchSurpriseBonus(amount);
-    }
-  }, [rows, userId]);
 
   return null;
 }

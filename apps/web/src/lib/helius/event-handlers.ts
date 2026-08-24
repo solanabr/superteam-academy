@@ -27,7 +27,6 @@ import {
   buildUserState,
 } from "@/lib/gamification/achievements";
 import { getCourseById, getDeployedAchievements } from "@/lib/content/queries";
-import { maybeAwardSurpriseBonus } from "@/lib/gamification/surprise-bonus";
 import { recordReferralCoursePoint } from "@/lib/referrals/server";
 import { scheduleQuestEvaluation } from "@/lib/gamification/quest-evaluation";
 import { isCourseInMaintenance } from "@/lib/content/deployments";
@@ -231,32 +230,6 @@ export async function handleLessonCompleted(
         courseId,
       },
     });
-  }
-
-  // 2b. Surprise XP delight bonus (LX-B15) — server-side only, never
-  // pre-announced. Best-effort: a failed bonus must never fail the completion.
-  if (lessonId) {
-    try {
-      await maybeAwardSurpriseBonus(supabase, {
-        userId,
-        lessonId,
-        txSignature,
-      });
-    } catch (bonusError) {
-      logError({
-        errorId: ERROR_IDS.LESSON_COMPLETE_FAILED,
-        error:
-          bonusError instanceof Error
-            ? bonusError
-            : new Error(String(bonusError)),
-        context: {
-          handler: "handleLessonCompleted",
-          step: "surprise_bonus",
-          userId,
-          courseId,
-        },
-      });
-    }
   }
 
   // 3. Check if all lessons complete -> finalize course on-chain

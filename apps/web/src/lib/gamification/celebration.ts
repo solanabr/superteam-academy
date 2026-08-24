@@ -18,7 +18,7 @@ import { prefersReducedMotion } from "@/lib/reduced-motion";
  * reading of the brand guide, and #957 deleted its plumbing. The owner reversed
  * that: "the popups were so cool", and of the small success toasts the
  * recurring rewards had been demoted to, "those toasts are so cheap". So
- * level-up, daily-quest completion and the surprise bonus all sit at the POPUP
+ * level-up, daily-quest completion and achievement unlocks all sit at the POPUP
  * tier and render through the shared reward popup queue
  * (components/gamification/reward-popup.tsx). This supersedes the PED-10
  * minimal-celebration reading for THESE THREE events — it is a deliberate
@@ -47,7 +47,7 @@ export type CelebrationEvent =
   | "deploy-success"
   | "level-up"
   | "credential-mint"
-  | "surprise-bonus"
+  | "achievement"
   | "daily-quest";
 
 export type CelebrationTier = "none" | "popup" | "medium" | "full";
@@ -56,15 +56,14 @@ export const CELEBRATION_TIERS: Record<CelebrationEvent, CelebrationTier> = {
   "deploy-success": "medium",
   "level-up": "popup",
   "credential-mint": "full",
-  // A surprise bonus (LX-B15) was "none" — a calm success toast — until the
-  // 2026-08-01 reversal. It is a real granted reward, so it now gets the popup
-  // card like its peers. Still never confetti: its delight is the
-  // unexpectedness of the reward, not spectacle.
-  "surprise-bonus": "popup",
+  // An achievement unlock joined the shared queue in the 24-08 choreography
+  // rework (it used to render in its own always-parallel surface). Same popup
+  // tier as its peers — never confetti.
+  achievement: "popup",
   // A completed daily quest is a real earned moment, so it goes through the
   // house celebration system — at the POPUP tier, NOT confetti. Every peer
   // moment a learner meets this often is popup-or-quieter (level-up: popup;
-  // achievement: popup; surprise bonus: popup); confetti is reserved by LX-B11
+  // achievement: popup); confetti is reserved by LX-B11
   // for deploy + credential mint precisely because a daily-cadence reward is
   // the routine-reward pattern the tiering exists to avoid. The pop-spring
   // popup card IS the moment. Flip this one constant to "medium" if the owner

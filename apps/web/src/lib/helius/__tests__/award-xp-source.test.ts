@@ -63,9 +63,6 @@ vi.mock("@/lib/helius/resolvers", () => ({
   resolveCourseId,
   resolveLessonId,
 }));
-vi.mock("@/lib/gamification/surprise-bonus", () => ({
-  maybeAwardSurpriseBonus: vi.fn(async () => undefined),
-}));
 vi.mock("@/lib/solana/pda", () => ({ getProgramId: () => "program-id" }));
 vi.mock("@/lib/solana/academy-program", () => ({
   getConnection: () => ({}),

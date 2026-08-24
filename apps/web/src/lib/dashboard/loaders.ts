@@ -21,7 +21,6 @@ import {
 } from "@/lib/content/queries";
 import { deriveContinueTarget } from "@/lib/courses/continue-learning";
 import { questDisplayName } from "@/lib/gamification/quest-name";
-import { isSurpriseBonusReason } from "@/lib/gamification/surprise-bonus";
 import {
   nextMidnightUtc,
   questPeriodUtc,
@@ -452,11 +451,6 @@ export const loadDashboardCore = cache(
       continueTarget,
       recommendedCourses: recommended,
       recentActivity: raw,
-      // Only the surprise-bonus candidates cross to the client celebration
-      // island — the browser holds the sessionStorage dedupe, not the server.
-      surpriseBonusRows: (transactions ?? []).filter(
-        (tx) => tx.reason != null && isSurpriseBonusReason(tx.reason)
-      ),
     };
   }
 );

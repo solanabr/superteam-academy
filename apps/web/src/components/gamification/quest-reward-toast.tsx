@@ -14,7 +14,7 @@ export interface QuestRewardDetail {
  * reward can never reach this dispatcher twice.
  *
  * Localization lives in the presentation layer, keeping the callers (a hook and
- * a plain hook-free module) provider-free — the same split the surprise-bonus
+ * a plain hook-free module) provider-free — the same split every reward
  * dispatcher uses. That is also why no `name` rides on the event: the only
  * English source either channel has is the bundle's authored name, so the
  * renderer resolves the localized name from the id instead.
