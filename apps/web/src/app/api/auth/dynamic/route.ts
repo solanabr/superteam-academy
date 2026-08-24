@@ -18,6 +18,10 @@ import { logError, logEvent } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 import type { Database } from "@/lib/supabase/types";
 
+// The after() queue drain does per-row RPC reads and on-chain sends; the
+// framework default would truncate it mid-sweep.
+export const maxDuration = 60;
+
 /**
  * Social sign-in through Dynamic → the learner's EXISTING Supabase account.
  *

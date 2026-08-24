@@ -12,6 +12,11 @@ import { isAccountDeleted } from "@/lib/auth/account-status";
 import { WALLET_PLACEHOLDER_EMAIL_DOMAIN } from "@/lib/auth/wallet-placeholder";
 import type { Database } from "@/lib/supabase/types";
 
+// The after() queue drain does per-row RPC reads and on-chain sends; the
+// framework default would truncate it mid-sweep (worst case: between a
+// quest-mint claim and its send).
+export const maxDuration = 60;
+
 interface WalletAuthRequest {
   message: string;
   signature: number[];

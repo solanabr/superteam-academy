@@ -838,10 +838,14 @@ export async function checkAndAwardAchievements(
             getProgramId()
           )
         ) {
-          await supabase.rpc("unlock_achievement", {
-            p_user_id: userId,
-            p_achievement_id: achievement.id,
-          });
+          const { error: unlockRpcError } = await supabase.rpc(
+            "unlock_achievement",
+            {
+              p_user_id: userId,
+              p_achievement_id: achievement.id,
+            }
+          );
+          if (unlockRpcError) throw new Error(unlockRpcError.message);
           continue;
         }
 

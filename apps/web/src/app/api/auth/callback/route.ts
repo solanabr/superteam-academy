@@ -12,6 +12,10 @@ import {
 import { shouldAdoptAvatar } from "@/lib/auth/avatar-adoption";
 import type { Database } from "@/lib/supabase/types";
 
+// The after() queue drain does per-row RPC reads and on-chain sends; the
+// framework default would truncate it mid-sweep.
+export const maxDuration = 60;
+
 function sanitizeRedirect(raw: string, fallback: string): string {
   try {
     const decoded = decodeURIComponent(raw);
