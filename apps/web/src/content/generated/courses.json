@@ -276,5 +276,56 @@
     "trackLevel": 0,
     "xpPerLesson": 20,
     "xpReward": 80
+  },
+  {
+    "_id": "course-visao-geral-solana",
+    "_type": "course",
+    "creator": "Em8D6XyuXvNUK1YgLKBaji7HbbrZZq7fCdq3sGMXqxVZ",
+    "creatorRewardXp": 30,
+    "description": "Apresentar aos alunos a blockchain Solana, abordando sua história fundamental e arquitetura central. Usar analogias e recursos visuais para tornar conceitos complexos acessíveis a iniciantes.",
+    "difficulty": "beginner",
+    "duration": 1.7,
+    "minCompletionsForReward": 0,
+    "modules": [
+      {
+        "_key": "origens-e-historia",
+        "_type": "courseModule",
+        "key": "origens-e-historia",
+        "lessons": [
+          {
+            "_key": "lesson-vgs-origens-fundacao",
+            "_ref": "lesson-vgs-origens-fundacao",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-vgs-desafios-iniciais",
+            "_ref": "lesson-vgs-desafios-iniciais",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-vgs-marcos-e-adocao",
+            "_ref": "lesson-vgs-marcos-e-adocao",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Origens e História da Solana"
+      }
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "visao-geral-solana"
+    },
+    "tags": [
+      "solana-fundamentals"
+    ],
+    "thumbnail": "/content-assets/visao-geral-solana/banner.png",
+    "title": "Visão Geral da Blockchain Solana",
+    "trackId": 0,
+    "trackLevel": 0,
+    "xpPerLesson": 20,
+    "xpReward": 60
   }
 ]
