@@ -6649,3 +6649,91 @@ textarea.set-input {
   border-color: var(--keyline);
   box-shadow: none;
 }
+
+/* ══ The deep green panel ═════════════════════════════════════════════════
+   A LIGHT-surface case, not a dark one: deep green is the background here, so
+   the theme's charcoal keyline does not apply. `--keyline` on green runs at
+   1.6:1 and reads as a disabled control — which is what it looked like.
+
+   Inside this panel the buttons revert to the patch pattern the light theme
+   already draws: solid body, ink keyline, hard offset shadow. The fill is a
+   fixed pair rather than a token, because the panel is the same green in both
+   themes and the contrast is stated against that green, not against the page.
+
+   Placed last in the file so it beats the dark-theme block above at equal
+   specificity.
+   ───────────────────────────────────────────────────────────────────────── */
+.panel--green {
+  background: #0e6a4c;
+}
+
+/* Only the primary is filled. */
+.panel--green .btn-ink {
+  --btn-line: #19231b;
+  background: #fafaf7;
+  color: #19231b;
+  border: 4px solid #19231b;
+  border-radius: 14px;
+  padding: 16px 32px;
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 5px 0 0 #19231b;
+  transform: none;
+  transition:
+    transform 0.1s,
+    box-shadow 0.1s,
+    background 0.14s;
+}
+/* Amber appears on HOVER only. It never rests as a fill here — at rest it
+   would compete with the achievement patches above it. */
+.panel--green .btn-ink:hover:not(:disabled) {
+  background: #fde68a;
+  border-color: #19231b;
+  transform: translateY(2px);
+  box-shadow: 0 3px 0 0 #19231b;
+}
+/* The press is the whole interaction: the button travels down the exact
+   height of its shadow, 5px to 0, and lands flush. No scale, no opacity. */
+.panel--green .btn-ink:active:not(:disabled) {
+  transform: translateY(5px);
+  box-shadow: 0 0 0 0 #19231b;
+}
+
+/* The secondary keeps no fill and no shadow, so the hierarchy holds without a
+   size difference — the extra vertical padding buys back the primary's
+   thicker keyline so both sit at the same height. */
+.panel--green .btn-ink--secondary {
+  background: transparent;
+  color: #fafaf7;
+  border: 3px solid rgba(250, 250, 247, 0.55);
+  padding: 17px 30px;
+  box-shadow: none;
+}
+.panel--green .btn-ink--secondary:hover:not(:disabled) {
+  background: rgba(250, 250, 247, 0.08);
+  border-color: #fafaf7;
+  transform: none;
+  box-shadow: none;
+}
+.panel--green .btn-ink--secondary:active:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Cream, not mint: mint sits too close to the panel to read as a ring. */
+.panel--green .btn-ink:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px #0e6a4c,
+    0 0 0 6px #fafaf7;
+}
+
+/* The patches in the ring above are on the same green, so they take the same
+   correction — otherwise they would carry the identical 1.6:1 outline the
+   CTAs just lost. */
+[data-theme="dark"] .panel--green .patch,
+[data-theme="dark"] .panel--green .chip {
+  --patch-ink: #19231b;
+  box-shadow: 0 var(--lift) 0 0 #19231b;
+}

@@ -653,7 +653,7 @@ export function LandingPageClient({
         {/* ── CTA × Achievements (designer feedback, 19-08): the standalone
             marquee section merged into the closing CTA — promise on top, the
             rewards spinning in the middle, the way in right below. */}
-        <section className="relative overflow-hidden bg-[var(--primary-dark)]">
+        <section className="panel--green relative overflow-hidden">
           <div
             className="absolute inset-0 opacity-[0.04]"
             aria-hidden="true"
@@ -698,12 +698,7 @@ export function LandingPageClient({
                   </Link>
                 </Button>
               )}
-              <Button
-                variant="push"
-                size="lg"
-                className="border-none bg-white text-[var(--secondary)] shadow-[0_4px_0_0_var(--shadow-push-color)] hover:bg-white/95 active:shadow-[0_1px_0_0_var(--shadow-push-color)]"
-                asChild
-              >
+              <Button variant="outline" size="lg" asChild>
                 <Link href={`/${locale}/courses`}>
                   {t("ctaExploreCourses")} {"\u2192"}
                 </Link>
