@@ -2915,6 +2915,20 @@ a.path-step-card:active {
   letter-spacing: 0.4px;
   font-size: 11px;
 }
+/* A deliberate path-context exception to the "mint retired on dark buttons"
+   rule (owner call, 24-08). Everything around this button on a timeline row is
+   mint on dark — the COMPLETED chip, the segmented bars, the ✓ disc — and the
+   deep-green button was the only thing in the group speaking a different
+   green. Scoped to this row only: `.btn-ink--primary` is untouched, so every
+   other primary button in the app keeps the dark spec. White on mint is the
+   accepted tradeoff here, the same one the chip already makes. */
+[data-theme="dark"] .path-step-continue.btn-ink--primary {
+  background: var(--primary);
+  color: var(--primary-fg);
+}
+[data-theme="dark"] .path-step-continue.btn-ink--primary:hover:not(:disabled) {
+  background: var(--primary-hover, var(--primary));
+}
 .path-step-skip {
   flex-shrink: 0;
   text-transform: uppercase;
