@@ -927,55 +927,40 @@ SECURITY DEFINER
 SET search_path = ''
 AS $$
 BEGIN
-  IF p_timeframe = 'alltime' THEN
-    RETURN QUERY
+  RETURN QUERY
+    SELECT
+      sub.user_id,
+      sub.username,
+      sub.avatar_url,
+      sub.total_xp,
+      COALESCE(ux.level, FLOOR(SQRT(sub.total_xp / 100.0))::INT) AS level,
+      ROW_NUMBER() OVER (ORDER BY sub.total_xp DESC)::BIGINT AS rank
+    FROM (
       SELECT
-        ux.user_id,
+        xt.user_id,
         p.username,
         p.avatar_url,
-        ux.total_xp::BIGINT,
-        ux.level,
-        ROW_NUMBER() OVER (ORDER BY ux.total_xp DESC)::BIGINT AS rank
-      FROM public.user_xp ux
-      JOIN public.profiles p ON p.id = ux.user_id
-      WHERE ux.total_xp > 0
-        AND p.is_public = true
+        SUM(xt.amount)::BIGINT AS total_xp
+      FROM public.xp_transactions xt
+      JOIN public.profiles p ON p.id = xt.user_id
+      WHERE p.is_public = true
         AND p.deleted_at IS NULL
         AND p.username IS NOT NULL
         AND p.username <> ''
-      ORDER BY ux.total_xp DESC
-      LIMIT LEAST(p_limit, 100);
-  ELSE
-    RETURN QUERY
-      SELECT
-        sub.user_id,
-        sub.username,
-        sub.avatar_url,
-        sub.total_xp,
-        COALESCE(ux.level, FLOOR(SQRT(sub.total_xp / 100.0))::INT) AS level,
-        ROW_NUMBER() OVER (ORDER BY sub.total_xp DESC)::BIGINT AS rank
-      FROM (
-        SELECT
-          xt.user_id,
-          p.username,
-          p.avatar_url,
-          SUM(xt.amount)::BIGINT AS total_xp
-        FROM public.xp_transactions xt
-        JOIN public.profiles p ON p.id = xt.user_id
-        WHERE p.is_public = true
-          AND p.deleted_at IS NULL
-          AND p.username IS NOT NULL
-          AND p.username <> ''
-          AND xt.created_at >= CASE
+        AND NOT public.is_rank_excluded_reason(xt.reason)
+        AND (
+          p_timeframe = 'alltime'
+          OR xt.created_at >= CASE
             WHEN p_timeframe = 'weekly'  THEN NOW() - INTERVAL '7 days'
             WHEN p_timeframe = 'monthly' THEN NOW() - INTERVAL '1 month'
           END
-        GROUP BY xt.user_id, p.username, p.avatar_url
-      ) sub
-      LEFT JOIN public.user_xp ux ON ux.user_id = sub.user_id
-      ORDER BY sub.total_xp DESC
-      LIMIT LEAST(p_limit, 100);
-  END IF;
+        )
+      GROUP BY xt.user_id, p.username, p.avatar_url
+      HAVING SUM(xt.amount) > 0
+    ) sub
+    LEFT JOIN public.user_xp ux ON ux.user_id = sub.user_id
+    ORDER BY sub.total_xp DESC
+    LIMIT LEAST(p_limit, 100);
 END;
 $$;
 
@@ -3101,6 +3086,20 @@ $$;
 REVOKE EXECUTE ON FUNCTION public.is_league_eligible_source(TEXT)
   FROM PUBLIC, anon, authenticated;
 
+-- Ranking exclusion (2026-08-24): the retired early-adopter grant stops
+-- scoring on every board/league; holders keep the XP and level.
+CREATE OR REPLACE FUNCTION public.is_rank_excluded_reason(p_reason TEXT)
+RETURNS BOOLEAN
+LANGUAGE sql
+IMMUTABLE
+AS $$
+  SELECT p_reason = 'Achievement reward: achievement-early-adopter';
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.is_rank_excluded_reason(TEXT)
+  FROM PUBLIC, anon, authenticated;
+
+
 CREATE OR REPLACE FUNCTION public.league_week_start(p_date DATE)
 RETURNS DATE
 LANGUAGE sql
@@ -3196,7 +3195,8 @@ BEGIN
   WHERE x.user_id = p_user_id
     AND x.created_at >= v_prior_start::timestamptz
     AND x.created_at <  v_week_start::timestamptz
-    AND public.is_league_eligible_source(x.source);
+    AND public.is_league_eligible_source(x.source)
+    AND NOT public.is_rank_excluded_reason(x.reason);
 
   SELECT t.tier INTO v_tier
   FROM public.league_tiers t
@@ -3277,6 +3277,7 @@ BEGIN
       AND x.created_at >= v_week_start::timestamptz
       AND x.created_at <  (v_week_start + 7)::timestamptz
       AND public.is_league_eligible_source(x.source)
+      AND NOT public.is_rank_excluded_reason(x.reason)
   ), 0)
   WHERE m.cohort_id = p_cohort_id;
 
