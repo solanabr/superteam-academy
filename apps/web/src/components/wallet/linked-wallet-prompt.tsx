@@ -52,12 +52,12 @@ export function LinkedWalletPrompt({
       ref={ref}
       role="alert"
       tabIndex={-1}
-      className="bg-card border-border shadow-card focus-visible:outline-primary mb-4 space-y-2 rounded-xl border p-4 focus-visible:outline-2 focus-visible:outline-offset-2"
+      className="mb-4 space-y-2 rounded-xl border border-border bg-card p-4 shadow-card focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     >
-      <p className="text-text font-display text-sm font-bold">
+      <p className="font-display text-sm font-bold text-text">
         {variant === "connect" ? t("connectTitle") : t("mismatchTitle")}
       </p>
-      <p className="text-text-2 text-xs">
+      <p className="text-xs text-text-2">
         {variant === "connect"
           ? linked
             ? t("connectBody", { linked })

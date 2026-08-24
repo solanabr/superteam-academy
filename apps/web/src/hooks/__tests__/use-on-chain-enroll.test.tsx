@@ -42,10 +42,8 @@ vi.mock("@/lib/auth/auth-provider", () => ({
 }));
 
 vi.mock("next-intl", () => ({
-  useTranslations:
-    () =>
-    (key: string, values?: Record<string, string>) =>
-      values ? `${key}:${Object.values(values).join(",")}` : key,
+  useTranslations: () => (key: string, values?: Record<string, string>) =>
+    values ? `${key}:${Object.values(values).join(",")}` : key,
 }));
 
 vi.mock("@/lib/dynamic/solana", () => ({

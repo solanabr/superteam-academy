@@ -10,12 +10,24 @@ import * as Sentry from "@sentry/nextjs";
 
 const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
 
+// Browser sessions are already tracked (`browserSessionIntegration` is a default
+// integration in SDK v10) — what was missing is a RELEASE to attribute them to,
+// and crash-free-session rate is computed per release, so without one the health
+// panel stays empty. `withSentryConfig` injects `_sentryRelease` only when the
+// build creates a Sentry release, which needs SENTRY_AUTH_TOKEN/ORG/PROJECT; on
+// a deploy without those there is no release at all. Vercel's system env gives us
+// the same commit SHA the Sentry CLI would have picked, so the two agree when
+// both are present. Spread conditionally: a literal `release: undefined` would
+// override the injected value (the SDK spreads our options last).
+const release = process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA;
+
 if (dsn) {
   Sentry.init({
     dsn,
     environment: process.env.NODE_ENV,
     // 100% of transactions in dev, 10% in production.
     tracesSampleRate: process.env.NODE_ENV === "development" ? 1.0 : 0.1,
+    ...(release ? { release } : {}),
   });
 
   // A malformed DSN makes `init` bail without a client — and with `debug`

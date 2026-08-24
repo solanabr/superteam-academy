@@ -121,7 +121,11 @@ export function CurrentCoursesSection({
             }
           : () => sendTransaction(tx, connection, { skipPreflight: true });
 
-        const sig = await withTimeout(sendViaWallet(), 30_000, "Wallet signing");
+        const sig = await withTimeout(
+          sendViaWallet(),
+          30_000,
+          "Wallet signing"
+        );
         await withTimeout(
           connection.confirmTransaction(sig, "confirmed"),
           30_000,
