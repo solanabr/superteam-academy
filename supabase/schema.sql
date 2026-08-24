@@ -12,6 +12,15 @@
 CREATE TABLE profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   wallet_address TEXT UNIQUE,
+  -- How that wallet was provisioned: 'embedded' (Dynamic WaaS) or 'external'
+  -- (wallet-adapter). NULL = unknown/legacy, and callers MUST read it as "not
+  -- known to be embedded" so an unwritten row behaves exactly as before. Its
+  -- one job is telling an embedded learner whose Dynamic JWT expired apart
+  -- from a learner with no wallet at all — the connect modal is a dead end for
+  -- the first and the right answer for the second. Privilege-bearing, so it
+  -- rides the enforce_profile_wallet_write lock below.
+  -- See 20260824120000_wallet_kind.sql.
+  wallet_kind TEXT,
   google_id TEXT UNIQUE,
   github_id TEXT UNIQUE,
   username TEXT UNIQUE NOT NULL,
@@ -184,6 +193,9 @@ ALTER TABLE profiles
 ALTER TABLE profiles
   ADD CONSTRAINT chk_profiles_name_rerolls_max CHECK (name_rerolls_used <= 3);
 -- (chk_profiles_role removed with the retired role column — see #699.)
+-- NULL passes: unknown/legacy is a valid state for wallet_kind.
+ALTER TABLE profiles
+  ADD CONSTRAINT chk_profiles_wallet_kind CHECK (wallet_kind IN ('embedded', 'external'));
 -- /start intake bounds (LX-A3, #566). NULL passes each CHECK (never-onboarded rows).
 ALTER TABLE profiles
   ADD CONSTRAINT chk_profiles_segment CHECK (segment IN (1, 2, 3));
@@ -805,6 +817,12 @@ CREATE OR REPLACE TRIGGER on_auth_user_created
 -- INSERTs are coerced back to NULL (the signup path never sets it). SECURITY
 -- INVOKER so current_user reflects the actual caller. Live on prod since
 -- 2026-07-10. See migration 20260710120000_drop_teacher_role.sql.
+--
+-- wallet_kind joined the guarded set in 20260824120000_wallet_kind.sql: it
+-- describes the same wallet identity and decides which re-auth path an expired
+-- session is offered, so a self-write would be a switch on the learner's own
+-- auth recovery. Same writers (the service-role SIWS routes) plus the Dynamic
+-- bridge; the signup path sets neither column.
 CREATE OR REPLACE FUNCTION public.enforce_profile_wallet_write()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -828,9 +846,17 @@ BEGIN
         'permission denied: wallet_address may only be changed by service_role'
         USING ERRCODE = 'insufficient_privilege';
     END IF;
+    IF NEW.wallet_kind IS DISTINCT FROM OLD.wallet_kind THEN
+      RAISE EXCEPTION
+        'permission denied: wallet_kind may only be changed by service_role'
+        USING ERRCODE = 'insufficient_privilege';
+    END IF;
   ELSIF TG_OP = 'INSERT' THEN
     IF NEW.wallet_address IS NOT NULL THEN
       NEW.wallet_address := NULL;
+    END IF;
+    IF NEW.wallet_kind IS NOT NULL THEN
+      NEW.wallet_kind := NULL;
     END IF;
   END IF;
 

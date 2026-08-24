@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { DynamicProvider } from "@dynamic-labs-sdk/react-hooks";
 import { getDynamicClient } from "@/lib/dynamic/client";
 import { DynamicAuthHandler } from "@/components/auth/dynamic-auth-handler";
+import { DynamicSessionKeepalive } from "@/components/auth/dynamic-session-keepalive";
 
 /**
  * Dynamic embedded wallets for the whole app.
@@ -45,6 +46,9 @@ export function DynamicWalletProvider({
             it would crash every page, and only on hydration, so the build
             would still look healthy. */}
         <DynamicAuthHandler />
+        {/* Uses no hooks from the SDK, so it could sit anywhere under the
+            client — kept here so everything Dynamic-lifecycle is in one place. */}
+        <DynamicSessionKeepalive />
         {children}
       </DynamicProvider>
     </QueryClientProvider>

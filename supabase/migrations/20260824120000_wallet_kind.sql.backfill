@@ -1,0 +1,72 @@
+-- BACKFILL for profiles.wallet_kind — NOT a migration.
+--
+-- Deliberately not a .sql file and deliberately not in the migration itself:
+-- the migration must be safe to apply unattended, and this is a best-effort
+-- CLASSIFICATION of existing rows, not a schema change. Run it manually
+-- (psql / SQL editor as service_role) AFTER 20260824120000_wallet_kind.sql
+-- has been applied, and only when someone is watching the row counts.
+--
+-- Both statements are idempotent (WHERE wallet_kind IS NULL) and neither can
+-- reclassify a row that a live route has already written.
+--
+-- Accuracy note: wallet_kind is an OPTIMISATION, not a trust boundary. A row
+-- left NULL keeps the pre-existing behaviour (treated as external), so an
+-- under-inclusive backfill is safe — which is why the ambiguous population is
+-- deliberately left alone (see statement 3's comment). Run inside a
+-- transaction and read the counts before COMMIT.
+--
+-- CORRECTION to the design note this was written from: a learner who signed in
+-- with "Continue with Google" THROUGH DYNAMIC has NO Supabase google identity.
+-- The bridge mints the account with admin.createUser({ email }), i.e. an
+-- EMAIL-provider identity carrying the provider's real address (see the
+-- docblock in /api/auth/dynamic and DynamicSessionProbe). A google/github
+-- identity therefore means Supabase OAuth, not Dynamic — the opposite of the
+-- brief's rule, and classifying on it would have mislabelled every embedded
+-- account as external.
+
+BEGIN;
+
+-- 1. Wallet-first accounts: signed in by SIWS, so their auth email is the
+--    synthetic <pubkey>@wallet.superteam-lms.local placeholder. These are
+--    unambiguously external — the embedded path never mints that email.
+UPDATE public.profiles p
+   SET wallet_kind = 'external'
+  FROM auth.users u
+ WHERE u.id = p.id
+   AND p.wallet_kind IS NULL
+   AND p.wallet_address IS NOT NULL
+   AND u.email LIKE '%@wallet.superteam-lms.local';
+
+-- 2. Dynamic-bridged accounts: EMAIL-provider identity only, a real (non
+--    placeholder) address, and a wallet. Nothing else in the app produces
+--    that shape — Supabase OAuth leaves a google/github identity, and SIWS
+--    leaves the placeholder email caught by statement 1 — so the only way
+--    such a row holds a wallet is the embedded one the bridge created.
+UPDATE public.profiles p
+   SET wallet_kind = 'embedded'
+  FROM auth.users u
+ WHERE u.id = p.id
+   AND p.wallet_kind IS NULL
+   AND p.wallet_address IS NOT NULL
+   AND u.email NOT LIKE '%@wallet.superteam-lms.local'
+   AND NOT EXISTS (
+     SELECT 1
+       FROM auth.identities i
+      WHERE i.user_id = p.id
+        AND i.provider <> 'email'
+   );
+
+-- 3. NOT classified, on purpose: an account with a google/github identity AND
+--    a wallet. It could have linked an external wallet in Settings, or picked
+--    up an embedded one from the Dynamic handler while already signed in with
+--    Supabase OAuth — the rows are indistinguishable here. Leaving them NULL
+--    keeps today's behaviour (connect modal); the next successful Dynamic
+--    bridge or wallet link writes the real value.
+
+-- Sanity read before COMMIT.
+SELECT wallet_kind, count(*)
+  FROM public.profiles
+ WHERE wallet_address IS NOT NULL
+ GROUP BY wallet_kind;
+
+COMMIT;

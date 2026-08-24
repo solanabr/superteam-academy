@@ -10,9 +10,11 @@ import { X, Sparkle, ArrowUp } from "@phosphor-icons/react";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { trackEvent } from "@/lib/analytics";
 import {
-  getDynamicSolanaAccount,
+  isDynamicSessionExpiredError,
   signWithDynamicWallet,
 } from "@/lib/dynamic/solana";
+import { startDynamicSocialSignIn } from "@/lib/dynamic/social";
+import { useDynamicSessionState } from "@/hooks/use-dynamic-session-state";
 import { buildCloseEnrollmentInstruction } from "@/lib/solana/instructions";
 import {
   findWalletMismatch,
@@ -25,7 +27,10 @@ import {
 import type { CurrentCourse } from "@/lib/dashboard/types";
 import { deriveEndowedProgress } from "@/lib/courses/endowed-progress";
 import { CourseCompletionMint } from "@/components/certificates/course-completion-mint";
-import { LinkedWalletPrompt } from "@/components/wallet/linked-wallet-prompt";
+import {
+  LinkedWalletPrompt,
+  type LinkedWalletPromptVariant,
+} from "@/components/wallet/linked-wallet-prompt";
 import { GlyphChip } from "@/components/gamification/glyph-chip";
 import { ProgressBar } from "@/components/course/progress-bar";
 import { dispatchToast } from "@/components/ui/toast-container";
@@ -54,10 +59,12 @@ export function CurrentCoursesSection({
   const { publicKey, sendTransaction } = useWallet();
   const { setVisible: setWalletModalVisible } = useWalletModal();
   const { profile } = useAuth();
+  const dynamicSession = useDynamicSessionState();
   const [courses, setCourses] = useState<CurrentCourse[]>([]);
   const [unenrollingId, setUnenrollingId] = useState<string | null>(null);
-  const [walletPrompt, setWalletPrompt] = useState<"connect" | "mismatch">();
+  const [walletPrompt, setWalletPrompt] = useState<LinkedWalletPromptVariant>();
   const linkedWallet = profile?.wallet_address ?? null;
+  const isEmbeddedLearner = profile?.wallet_kind === "embedded";
 
   // Sync local courses state with data hook
   useEffect(() => {
@@ -70,12 +77,21 @@ export function CurrentCoursesSection({
       // embedded wallet that wallet-adapter knows nothing about, and the
       // connect modal is a dead end for them. Only a learner with neither
       // wallet is asked to connect.
-      const dynamicAccount = publicKey ? null : getDynamicSolanaAccount();
+      const dynamicAccount = publicKey ? null : dynamicSession.account;
       // An unparseable embedded address is no wallet at all, not a crash.
       const learner =
         publicKey ?? parseWalletAddress(dynamicAccount?.address ?? null);
       if (!learner) {
-        setWalletPrompt("connect");
+        // Still initialising — no prompt at all. Prompting here is the init
+        // race: a valid session told to connect a wallet.
+        if (dynamicSession.status === "loading") return;
+        // An embedded learner has no extension to connect and no route from
+        // that modal back to Dynamic; re-auth is the only thing that works.
+        setWalletPrompt(
+          dynamicSession.status === "expired" || isEmbeddedLearner
+            ? "reauth"
+            : "connect"
+        );
         return;
       }
 
@@ -138,6 +154,12 @@ export function CurrentCoursesSection({
         setCourses((prev) => prev.filter((c) => c.courseId !== courseId));
         dispatchToast(t("unenrollSuccess"), "success");
       } catch (err: unknown) {
+        // The Dynamic session can die between the wallet read and the
+        // signature; that is a re-auth, not a program error.
+        if (isDynamicSessionExpiredError(err)) {
+          setWalletPrompt("reauth");
+          return;
+        }
         const parsed = parseProgramError(err);
         const msg = parsed.i18nKey ? tErrors(parsed.i18nKey) : parsed.fallback;
         dispatchToast(msg, "warning");
@@ -145,7 +167,16 @@ export function CurrentCoursesSection({
         setUnenrollingId(null);
       }
     },
-    [publicKey, sendTransaction, connection, linkedWallet, t, tErrors]
+    [
+      publicKey,
+      sendTransaction,
+      connection,
+      linkedWallet,
+      dynamicSession,
+      isEmbeddedLearner,
+      t,
+      tErrors,
+    ]
   );
 
   return (
@@ -167,6 +198,11 @@ export function CurrentCoursesSection({
                   setWalletPrompt(undefined);
                   setWalletModalVisible(true);
                 }
+              : undefined
+          }
+          onReauth={
+            walletPrompt === "reauth"
+              ? () => startDynamicSocialSignIn("google")
               : undefined
           }
           onDismiss={() => setWalletPrompt(undefined)}

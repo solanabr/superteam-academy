@@ -10,6 +10,8 @@ import { retryPendingOnchainActions } from "@/lib/solana/onchain-queue";
 import { serverEnv } from "@/lib/env.server";
 import { isAccountDeleted } from "@/lib/auth/account-status";
 import { WALLET_PLACEHOLDER_EMAIL_DOMAIN } from "@/lib/auth/wallet-placeholder";
+import { parseWalletKind } from "@/lib/auth/wallet-kind";
+import { recordWalletKind } from "@/lib/auth/record-wallet-kind";
 import type { Database } from "@/lib/supabase/types";
 
 // The after() queue drain does per-row RPC reads and on-chain sends; the
@@ -21,6 +23,8 @@ interface WalletAuthRequest {
   message: string;
   signature: number[];
   publicKey: string;
+  /** Client-declared, believed only on the first write — see recordWalletKind. */
+  walletKind?: unknown;
 }
 
 function walletEmail(publicKey: string): string {
@@ -212,6 +216,14 @@ export async function POST(request: NextRequest) {
       .from("profiles")
       .update({ wallet_address: body.publicKey })
       .eq("id", userId);
+
+    // Separate, best-effort write: a routing hint must never be able to fail a
+    // login (see recordWalletKind).
+    await recordWalletKind(
+      supabaseAdmin,
+      userId,
+      parseWalletKind(body.walletKind)
+    );
 
     // Assign a fun generated name if profile still has the placeholder
     const { data: profile } = await supabaseAdmin

@@ -70,6 +70,9 @@ export async function POST(): Promise<NextResponse> {
       avatar_url: null,
       social_links: null,
       wallet_address: null,
+      // Follows wallet_address: with no wallet there is nothing to describe,
+      // and a stale kind would out-live the wallet it referred to.
+      wallet_kind: null,
       google_id: null,
       github_id: null,
       is_public: false,

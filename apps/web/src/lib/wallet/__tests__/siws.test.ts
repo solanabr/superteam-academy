@@ -41,7 +41,12 @@ describe("runWalletSiws — routing (#986)", () => {
       url === "/api/auth/nonce" ? okJson(NONCE) : okJson({ ok: true })
     );
 
-    const out = await runWalletSiws(signerThatSigns(), ADDRESS, false);
+    const out = await runWalletSiws(
+      signerThatSigns(),
+      ADDRESS,
+      false,
+      "embedded"
+    );
 
     expect(out).toEqual({ ok: true, mode: "signedIn" });
     const urls = fetchMock.mock.calls.map((c) => c[0]);
@@ -54,7 +59,12 @@ describe("runWalletSiws — routing (#986)", () => {
       url === "/api/auth/nonce" ? okJson(NONCE) : okJson({ ok: true })
     );
 
-    const out = await runWalletSiws(signerThatSigns(), ADDRESS, true);
+    const out = await runWalletSiws(
+      signerThatSigns(),
+      ADDRESS,
+      true,
+      "embedded"
+    );
 
     expect(out).toEqual({ ok: true, mode: "linked" });
     const urls = fetchMock.mock.calls.map((c) => c[0]);
@@ -70,7 +80,7 @@ describe("runWalletSiws — the signed payload", () => {
     );
     const signer = signerThatSigns();
 
-    await runWalletSiws(signer, ADDRESS, false);
+    await runWalletSiws(signer, ADDRESS, false, "embedded");
 
     const call = (signer.signMessage as ReturnType<typeof vi.fn>).mock.calls[0];
     if (!call) throw new Error("signMessage was never called");
@@ -92,7 +102,7 @@ describe("runWalletSiws — failures", () => {
       }),
     };
 
-    const out = await runWalletSiws(signer, ADDRESS, false);
+    const out = await runWalletSiws(signer, ADDRESS, false, "embedded");
 
     // A distinct key so the caller can stay silent instead of showing an alert.
     expect(out).toEqual({ ok: false, reason: "declined", mode: "signIn" });
@@ -114,7 +124,12 @@ describe("runWalletSiws — failures", () => {
           })
     );
 
-    const linking = await runWalletSiws(signerThatSigns(), ADDRESS, true);
+    const linking = await runWalletSiws(
+      signerThatSigns(),
+      ADDRESS,
+      true,
+      "embedded"
+    );
     expect(linking).toEqual({
       ok: false,
       reason: "walletAlreadyLinked",
@@ -132,7 +147,12 @@ describe("runWalletSiws — failures", () => {
           })
     );
 
-    const signingIn = await runWalletSiws(signerThatSigns(), ADDRESS, false);
+    const signingIn = await runWalletSiws(
+      signerThatSigns(),
+      ADDRESS,
+      false,
+      "embedded"
+    );
     expect(signingIn).toEqual({
       ok: false,
       reason: "differentWalletLinked",
@@ -143,7 +163,12 @@ describe("runWalletSiws — failures", () => {
   it("fails with a generic key when the nonce cannot be fetched", async () => {
     mockFetch(() => new Response("", { status: 500 }));
 
-    const out = await runWalletSiws(signerThatSigns(), ADDRESS, false);
+    const out = await runWalletSiws(
+      signerThatSigns(),
+      ADDRESS,
+      false,
+      "embedded"
+    );
 
     expect(out).toEqual({ ok: false, reason: "authFailed", mode: "signIn" });
   });
@@ -155,7 +180,12 @@ describe("runWalletSiws — failures", () => {
         : new Response("<html>502</html>", { status: 502 })
     );
 
-    const out = await runWalletSiws(signerThatSigns(), ADDRESS, false);
+    const out = await runWalletSiws(
+      signerThatSigns(),
+      ADDRESS,
+      false,
+      "embedded"
+    );
 
     // Never surface raw server output to a learner.
     expect(out).toEqual({ ok: false, reason: "authFailed", mode: "signIn" });

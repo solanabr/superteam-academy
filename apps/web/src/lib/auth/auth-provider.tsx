@@ -12,11 +12,18 @@ import {
 } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import type { WalletKind } from "@/lib/auth/wallet-kind";
 
 export interface UserProfile {
   username: string;
   avatar_url: string | null;
   wallet_address: string | null;
+  /**
+   * How that wallet was provisioned — `null` for legacy/unknown rows, which
+   * every consumer must read as "not known to be embedded".
+   * See `lib/auth/wallet-kind.ts`.
+   */
+  wallet_kind: WalletKind | null;
 }
 
 interface AuthContextValue {
@@ -29,7 +36,7 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const PROFILE_COLUMNS = "username, avatar_url, wallet_address";
+const PROFILE_COLUMNS = "username, avatar_url, wallet_address, wallet_kind";
 
 // Single state object — ensures ONE render per state transition.
 // Three separate useState calls would cause three render cycles,

@@ -574,6 +574,7 @@ export type Database = {
           username: string;
           verified: boolean;
           wallet_address: string | null;
+          wallet_kind: string | null;
           wallet_xp_synced_at: string | null;
         };
         Insert: {
@@ -598,6 +599,7 @@ export type Database = {
           username: string;
           verified?: boolean;
           wallet_address?: string | null;
+          wallet_kind?: string | null;
           wallet_xp_synced_at?: string | null;
         };
         Update: {
@@ -622,6 +624,7 @@ export type Database = {
           username?: string;
           verified?: boolean;
           wallet_address?: string | null;
+          wallet_kind?: string | null;
           wallet_xp_synced_at?: string | null;
         };
         Relationships: [];

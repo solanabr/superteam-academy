@@ -2,11 +2,12 @@
 
 import { useState, type ComponentType } from "react";
 import { useTranslations } from "next-intl";
-import { logout, signInWithSocialRedirect } from "@dynamic-labs-sdk/client";
-import { getCore } from "@dynamic-labs-sdk/client/core";
 import { GithubLogo } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
-import { getDynamicClient } from "@/lib/dynamic/client";
+import {
+  startDynamicSocialSignIn,
+  type DynamicSocialProvider,
+} from "@/lib/dynamic/social";
 import { trackEvent } from "@/lib/analytics";
 import { GoogleLogo } from "@/components/icons/google-logo";
 
@@ -22,15 +23,14 @@ import { GoogleLogo } from "@/components/icons/google-logo";
  * by `DynamicAuthHandler`; there is no popup variant on web (see
  * `lib/dynamic/social.ts`).
  *
- * Reads the Dynamic session imperatively (the SDK's own `getCore` escape
- * hatch, same one `lib/dynamic/social.ts` uses) rather than through
- * `useUser`, because since #1097 this renders in the lazily-loaded modal
- * body OUTSIDE any `DynamicProvider` — every `@dynamic-labs-sdk/react-hooks`
- * hook throws `MissingProviderError` there. One component serves every
- * provider — adding a third is a PROVIDERS entry, not a copy-paste.
+ * The redirect itself lives in `lib/dynamic/social.ts` so the expired-session
+ * prompt can start the same flow. It reads the Dynamic session imperatively
+ * (the SDK's own `getCore` escape hatch) rather than through `useUser`,
+ * because since #1097 this renders in the lazily-loaded modal body OUTSIDE any
+ * `DynamicProvider` — every `@dynamic-labs-sdk/react-hooks` hook throws
+ * `MissingProviderError` there. One component serves every provider — adding a
+ * third is a PROVIDERS entry, not a copy-paste.
  */
-type DynamicSocialProvider = "google" | "github";
-
 interface ProviderConfig {
   Icon: ComponentType<{ className?: string }>;
   /** auth.* key for the button label. */
@@ -76,28 +76,10 @@ export function DynamicSocialSignIn({
     onError(null);
     trackEvent("auth_method_selected", { method: `dynamic_${provider}` });
     try {
-      // Same stale-session hazard the email form guards against, with a
-      // different symptom: `processSocialCallback` branches on `client.user`
-      // and calls `oauthVerify` (LINK this account to the existing Dynamic
-      // user) instead of `oauthSignIn` when one is present. This button is
-      // strictly sign-in, so a session that predates it is cleared. Read at
-      // click time from core state — no provider, no hook (see docblock).
-      const client = getDynamicClient();
-      let dynamicUser: unknown = null;
-      if (client) {
-        try {
-          dynamicUser = getCore(client).state.get().user;
-        } catch {
-          // Core unavailable — treat as "no session".
-        }
-      }
-      if (dynamicUser) await logout();
-      await signInWithSocialRedirect({
-        provider,
-        // Back to the page they left. The SDK strips its own params off this
-        // before storing it, and re-adds them on the way back.
-        redirectUrl: window.location.href,
-      });
+      // Shared with the expired-session prompt (`lib/dynamic/social.ts`),
+      // which needs the identical flow. The stale-session clear and the
+      // return-URL handling live there.
+      await startDynamicSocialSignIn(provider);
     } catch (err) {
       console.error(`[DynamicSocialSignIn:${provider}] redirect failed:`, err);
       onError(t(errorKey));

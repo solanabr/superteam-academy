@@ -40,8 +40,48 @@
  * impossible.
  */
 
+import { logout, signInWithSocialRedirect } from "@dynamic-labs-sdk/client";
 import { getCore } from "@dynamic-labs-sdk/client/core";
 import { getDynamicClient } from "@/lib/dynamic/client";
+
+/** The social providers this platform offers through Dynamic. */
+export type DynamicSocialProvider = "google" | "github";
+
+/**
+ * Start the social sign-in redirect.
+ *
+ * Extracted from `DynamicSocialSignIn` so the expired-session prompt can offer
+ * the SAME way back in rather than a near-copy: an embedded learner whose JWT
+ * died needs exactly this flow, and two implementations of it would drift.
+ *
+ * Ends in a full-page navigation, so nothing after the call runs (see the
+ * redirect note above); it only returns if the redirect could not be started.
+ *
+ * A pre-existing Dynamic session is cleared first: `processSocialCallback`
+ * branches on `client.user` and LINKS to that user (`oauthVerify`) instead of
+ * signing in (`oauthSignIn`) when one is present. Read at call time from core
+ * state — this runs from components mounted outside any `DynamicProvider`.
+ */
+export async function startDynamicSocialSignIn(
+  provider: DynamicSocialProvider
+): Promise<void> {
+  const client = getDynamicClient();
+  let dynamicUser: unknown = null;
+  if (client) {
+    try {
+      dynamicUser = getCore(client).state.get().user;
+    } catch {
+      // Core unavailable — treat as "no session".
+    }
+  }
+  if (dynamicUser) await logout();
+  await signInWithSocialRedirect({
+    provider,
+    // Back to the page they left. The SDK strips its own params off this
+    // before storing it, and re-adds them on the way back.
+    redirectUrl: window.location.href,
+  });
+}
 
 /**
  * Message keys in the `auth` namespace. Returned instead of a rendered string

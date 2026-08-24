@@ -12,6 +12,7 @@ import { isAccountDeleted } from "@/lib/auth/account-status";
 import { shouldAdoptAvatar } from "@/lib/auth/avatar-adoption";
 import { revokeUserSessions } from "@/lib/auth/revoke-sessions";
 import { isWalletPlaceholderEmail } from "@/lib/auth/wallet-placeholder";
+import { recordWalletKind } from "@/lib/auth/record-wallet-kind";
 import { generateWalletName } from "@/lib/utils/generate-wallet-name";
 import { retryPendingOnchainActions } from "@/lib/solana/onchain-queue";
 import { logError, logEvent } from "@/lib/logging";
@@ -886,6 +887,29 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // actions inherited from the shell drain in this same sign-in.
     if (!profile?.wallet_address) {
       await mergeWalletShellAccount(supabaseAdmin, userId, claims);
+
+      // The one server-authoritative wallet_kind write, and the reason the
+      // client-declared kind on the SIWS link can be a no-op: this runs BEFORE
+      // DynamicAuthHandler links anything, so it is the FIRST write.
+      //
+      // Gated on "no wallet yet" deliberately. Reaching this route only proves
+      // a Dynamic session exists — an EXTENSION user who signs in with Google
+      // through Dynamic reaches it too, and marking them 'embedded' would
+      // offer the wrong recovery path for a wallet they hold in Phantom.
+      //
+      // Re-read after the merge rather than trusting `profile`: a merged shell
+      // is a wallet-first (SIWS) account, so a wallet that appeared during the
+      // merge is an EXTERNAL one, not the embedded wallet about to be created.
+      const { data: merged } = await supabaseAdmin
+        .from("profiles")
+        .select("wallet_address")
+        .eq("id", userId)
+        .single();
+      await recordWalletKind(
+        supabaseAdmin,
+        userId,
+        merged?.wallet_address ? "external" : "embedded"
+      );
     }
 
     if (profile?.username?.startsWith("user_")) {

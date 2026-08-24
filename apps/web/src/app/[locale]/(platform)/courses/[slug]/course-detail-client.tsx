@@ -29,6 +29,7 @@ import { findEnrollmentPDA } from "@/lib/solana/pda";
 import { ThreadList } from "@/components/community/thread-list";
 import { ThreadComposer } from "@/components/community/thread-composer";
 import { CourseChangelog } from "@/components/course/course-changelog";
+import { LinkedWalletPrompt } from "@/components/wallet/linked-wallet-prompt";
 import type { PublicProfile } from "@/lib/profiles/public-profile";
 import type { CourseChangelogEntry } from "@/lib/courses/changelog-types";
 
@@ -173,15 +174,16 @@ export function CourseDetailClient({
     fetchEnrollmentAndProgress();
   }, [authLoading, fetchEnrollmentAndProgress]);
 
-  const { isEnrolling, handleEnroll } = useOnChainEnroll({
-    courseId: course._id,
-    userId,
-    // Anonymous Enroll opens the auth modal instead of silently no-oping
-    // (#556). The signed-out CTA below already renders the AuthModal trigger,
-    // so this only fires if handleEnroll is reached some other way.
-    onRequireAuth: () => setAuthModalOpen(true),
-    onSuccess: () => setIsEnrolled(true),
-  });
+  const { isEnrolling, handleEnroll, reauthPrompt, isWalletResolving } =
+    useOnChainEnroll({
+      courseId: course._id,
+      userId,
+      // Anonymous Enroll opens the auth modal instead of silently no-oping
+      // (#556). The signed-out CTA below already renders the AuthModal trigger,
+      // so this only fires if handleEnroll is reached some other way.
+      onRequireAuth: () => setAuthModalOpen(true),
+      onSuccess: () => setIsEnrolled(true),
+    });
 
   const completedCount = completedLessons.length;
   const isComplete = completedCount === totalLessons && totalLessons > 0;
@@ -299,6 +301,18 @@ export function CourseDetailClient({
                   </div>
                 )}
 
+                {/* An embedded-wallet learner whose Dynamic session expired.
+                    The wallet-connect modal is a dead end for them (#1179), so
+                    the way back is signing in with the provider again. */}
+                {reauthPrompt && (
+                  <LinkedWalletPrompt
+                    variant="reauth"
+                    linkedWallet={walletAddress ?? null}
+                    onReauth={reauthPrompt.start}
+                    onDismiss={reauthPrompt.dismiss}
+                  />
+                )}
+
                 {/* CTA button */}
                 {!isLoading && userId ? (
                   <>
@@ -327,7 +341,13 @@ export function CourseDetailClient({
                         onClick={
                           isEnrolled || readOnly ? undefined : handleEnroll
                         }
-                        disabled={isEnrolling}
+                        // isWalletResolving: the Dynamic SDK has not yet said
+                        // whether this learner holds an embedded wallet. Brief,
+                        // and the alternative is the init race.
+                        disabled={
+                          isEnrolling ||
+                          (!isEnrolled && !readOnly && isWalletResolving)
+                        }
                         asChild={isEnrolled || readOnly ? true : undefined}
                       >
                         {/* readOnly (#831): a previewed course has no on-chain

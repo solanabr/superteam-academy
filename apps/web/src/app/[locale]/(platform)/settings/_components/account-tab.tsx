@@ -245,6 +245,9 @@ export function AccountTab({
             message: formatted,
             signature: Array.from(sig),
             publicKey: address,
+            // This tab links an extension wallet through wallet-adapter; the
+            // embedded one is linked by DynamicAuthHandler, never here.
+            walletKind: "external",
           }),
         });
 
