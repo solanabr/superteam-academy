@@ -1,4 +1,4 @@
-> Last synced: 2026-07-12
+> Last synced: 2026-08-24
 
 # Admin Console Guide
 
@@ -13,31 +13,50 @@ repo and ships to the app as a **committed, compiled bundle**. The console holds
 **no content-write token** and cannot mutate content — publishing is a pull
 request. See [Publishing content](#1-publish--pin-the-content-bundle).
 
-## Accessing the console
+## Access
 
 The console lives at `/{locale}/admin` (e.g. `/en/admin`).
 
-**Authentication**: `/admin` renders a login form. Enter the value of
-`ADMIN_SECRET`. On success the server sets an **HMAC-signed `admin_session`
-cookie**, and `/admin` redirects to `/admin/courses` (the default screen).
+**There is no admin password and no login form.** Access is your ordinary
+Supabase session, checked against the `admin_users` allowlist table. Grant
+yourself access by inserting your `auth.users` id into `admin_users` — that table
+has RLS on with **zero policies** plus explicit REVOKEs, so only the service role
+can read or write it, and no `ADMIN_SECRET`-style shared credential exists.
 
-- The middleware bounces unauthenticated `/admin/*` sub-routes back to `/admin`.
-- Every `/api/admin/*` route authorizes on that **signed cookie plus a
-  same-origin check** (`requireAdminAuth`, `lib/admin/auth.ts`). There is no
-  `Authorization: Bearer <ADMIN_SECRET>` header path — the secret is only ever
-  submitted once, at login, and is never read in a page component (so it cannot
-  leak into a client payload).
+How it is enforced, in layers:
+
+- Middleware redirects a session-less `/admin` to the localized landing.
+- `requireAdmin()` (`lib/admin/auth.ts`) verifies the user server-side via
+  `supabase.auth.getUser()` — never a client-supplied id — then checks the
+  allowlist with the service-role client. It fails closed on everything: no
+  session, expired session, DB error, missing env.
+- Both `admin/layout.tsx` and `admin/page.tsx` call it and `notFound()` on
+  failure, so a signed-in non-admin gets a **404** and the panel's existence is
+  not revealed. A new admin sub-page that does its own server-side private fetch
+  must call `requireAdmin()` itself — Next renders segments in parallel, so the
+  layout's check does not gate a sibling's data fetch.
+- Every `/api/admin/*` route calls `requireAdminAuth()`, which adds a same-origin
+  CSRF check (`Sec-Fetch-Site`, falling back to `Origin`) on state-changing
+  methods and returns the acting admin's id for attribution.
+
+> The old `ADMIN_SECRET` / HMAC-`admin_session`-cookie system is **retired** and
+> can be deleted from your Vercel environment. One straggler: the operator script
+> `scripts/init-program.ts` still reads `ADMIN_SECRET` as a bearer token for its
+> admin API calls, and is therefore broken against the current routes.
 
 ## Required environment variables
 
+Admin **auth** needs no environment variable at all. These are what the admin
+_operations_ need:
+
 | Variable                    | Required for                                                                                                                                                                                         |
 | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ADMIN_SECRET`              | Console login + the HMAC key that signs `admin_session`. Min 32 random chars. Unset → the console cannot be logged into and admin routes 401.                                                        |
+| `SUPABASE_SERVICE_ROLE_KEY` | The `admin_users` allowlist read, `onchain_deployments` writes, and the moderation queue. Without it every admin check fails closed.                                                                 |
 | `PROGRAM_AUTHORITY_SECRET`  | The `Config.authority` keypair. Signs `create_course`, `update_course`, `create_achievement_type` from the **Courses** screen.                                                                       |
 | `BACKEND_SIGNER_SECRET`     | The keypair registered in `Config.backend_signer`. Signs lesson/credential instructions from the learner-facing API routes.                                                                          |
 | `SOLANA_RPC_URL`            | Server-only RPC (may carry the Helius key). Required at boot — every admin screen reads chain state through it.                                                                                      |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service-role writes to `onchain_deployments` (deploy status) and reads of the moderation queue.                                                                                                      |
 | `GITHUB_TOKEN`              | Fine-grained **read** token for `solanabr/academy-courses`. Powers the publish card's HEAD polling + CI-checks lookup. Unset → Publish shows "drift unavailable" (503); everything else still works. |
+| `RESEND_API_KEY`            | The course-announcement send. Unset ⇒ nothing is ever sent (fail-closed).                                                                                                                            |
 
 `GITHUB_TOKEN` is read-only by design. **No admin route holds a GitHub write
 token** — nothing in the app can push a commit or open a PR on your behalf.
@@ -52,6 +71,16 @@ token** — nothing in the app can push a commit or open a PR on your behalf.
 | **Moderation** | `/admin/moderation` | The pending community-flag queue (resolve / dismiss)                            |
 | **Insights**   | `/admin/insights`   | Platform-behaviour aggregates: AI-tutor usage, spend, lesson funnel             |
 | **Status**     | `/admin/status`     | Network, program liveness, authority match, deploy counts, on-chain → DB resync |
+
+Two admin capabilities have no nav entry of their own:
+
+- **Platform freeze** (`/api/admin/freeze`) — a global deploy-window kill switch.
+  While it is on, the `pending_onchain_actions` drain defers wholesale rather
+  than writing to a chain that is mid-migration. The freeze route is
+  deliberately not itself freeze-gated, so it can always be turned back off.
+- **Course recreate** (`/api/admin/courses/recreate`) — **destructive**: it
+  closes and recreates a Course PDA. Always run
+  `/api/admin/courses/recreate/preflight` (read-only) first.
 
 The nav rail is persistent (left rail on desktop, tabs on mobile). The
 **Moderation** tab carries a badge with the pending-flag count.
@@ -255,21 +284,22 @@ on-chain transaction. On-chain is the source of truth; the mirror is rebuildable
 
 ## Troubleshooting
 
-| Symptom                                       | Check                                                                                                                                    |
-| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| **"Unauthorized" / 401 on every admin route** | `ADMIN_SECRET` unset, or the `admin_session` cookie expired — log in again. Cross-origin requests are rejected by design.                |
-| **Publish card says "drift unavailable"**     | `GITHUB_TOKEN` unset or GitHub unreachable. The route 503s rather than crashing. Unauthenticated GitHub is 60 req/hr per IP.             |
-| **Course not visible to learners**            | Its `onchain_deployments` row must be `status = "synced"` and `is_active` not `false`. Deploy it from `/admin/courses`.                  |
-| **New lesson not showing up**                 | The bundle is pinned. Bump `content.lock` and recompile — merging content to `academy-courses` alone changes nothing in the app.         |
-| **"Transaction failed" on Deploy**            | Verify `PROGRAM_AUTHORITY_SECRET` is the real `Config.authority` (the Status screen's authority match tells you) and is funded with SOL. |
-| **CI fails with "Content bundle is stale"**   | You bumped `content.lock` without recompiling, or hand-edited the generated bundle. Run `pnpm --filter web compile-content` and commit.  |
+| Symptom                                     | Check                                                                                                                                     |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **404 on `/admin` while signed in**         | Your user id is not in `admin_users`. Insert it with the service role. A 404 rather than a 403 is deliberate.                             |
+| **401 on an admin API route**               | No Supabase session, or the request was cross-origin — both are rejected by design. `SUPABASE_SERVICE_ROLE_KEY` unset fails the same way. |
+| **Publish card says "drift unavailable"**   | `GITHUB_TOKEN` unset or GitHub unreachable. The route 503s rather than crashing. Unauthenticated GitHub is 60 req/hr per IP.              |
+| **Course not visible to learners**          | Its `onchain_deployments` row must be `status = "synced"` and `is_active` not `false`. Deploy it from `/admin/courses`.                   |
+| **New lesson not showing up**               | The bundle is pinned. Bump `content.lock` and recompile — merging content to `academy-courses` alone changes nothing in the app.          |
+| **"Transaction failed" on Deploy**          | Verify `PROGRAM_AUTHORITY_SECRET` is the real `Config.authority` (the Status screen's authority match tells you) and is funded with SOL.  |
+| **CI fails with "Content bundle is stale"** | You bumped `content.lock` without recompiling, or hand-edited the generated bundle. Run `pnpm --filter web compile-content` and commit.   |
 
 ---
 
 ## Security notes
 
-- `ADMIN_SECRET` must be at least 32 random characters and is never committed. It
-  is the HMAC key for the session cookie — rotating it invalidates all sessions.
+- Admin access is a row in `admin_users`, not a shared secret. Revoking someone
+  is a `DELETE`; there is no password to rotate and nothing to leak.
 - `PROGRAM_AUTHORITY_SECRET` and `BACKEND_SIGNER_SECRET` must never reach the
   browser. Every admin route and signer module is `import "server-only"`.
 - The `onchain_deployments` base table has **RLS on with no policies** —

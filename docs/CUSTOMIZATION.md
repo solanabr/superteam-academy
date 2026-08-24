@@ -1,325 +1,138 @@
-> Last synced: 2026-03-02
+> Last synced: 2026-08-24
 
 # Customization Guide
 
-How to customize and extend Superteam Academy for your own needs.
+How to retheme, translate, and extend Superteam Academy.
 
-## Theme Customization
+## Theming
 
-### CSS Custom Properties
+The design system is **Solarium v9** — an "ink" construction of cream outlines,
+forest-green and amber fills, chips, and pressed-key button affordances. It is
+deliberately _not_ the Solana purple-to-teal gradient, which is now reserved for
+credentials. The rendered reference is `docs/design-system.html` (the brand
+guide); `apps/web/src/styles/globals.css` is the implementation and the only CSS
+file in the app.
 
-The design system is built on CSS custom properties defined in `apps/web/src/styles/globals.css`. These control all colors across both light and dark modes. Values are plain hex or rgba.
+### Where the tokens live
 
-**Light Mode** (`:root`):
+Light mode is the `:root` baseline. Dark mode is **`[data-theme="dark"]`**, an
+attribute — not a `.dark` class.
 
 ```css
 :root {
-  /* -- Primary: Deep Teal -- */
-  --primary: #0d9488;
-  --primary-hover: #0b7e73;
-  --primary-dark: #087068;
-  --primary-light: #ccfbf1;
-  --primary-bg: #f0fdfa;
-
-  /* -- Accent: Warm Amber -- */
-  --accent: #f59e0b;
-  --accent-hover: #d97706;
-  --accent-dark: #b45309;
-  --accent-light: #fef3c7;
-  --accent-bg: #fffbeb;
-
-  /* -- Secondary: Ink Teal -- */
-  --secondary: #0f2f2d;
-  --secondary-light: #134e4a;
-  --secondary-bg: #e6fffb;
-
-  /* -- Success: Botanical Green -- */
-  --success: #16a34a;
-  --success-dark: #15803d;
-  --success-light: #dcfce7;
-  --success-bg: #f0fdf4;
-
-  /* -- Streak: Flame Orange -- */
-  --streak: #ea580c;
-  --streak-light: #fff7ed;
-
-  /* -- Danger: Warm Coral -- */
-  --danger: #e11d48;
-  --danger-light: #ffe4e6;
-
-  /* -- Solana Nod (used sparingly) -- */
-  --solana-purple: #9945ff;
-  --solana-green: #14f195;
-
-  /* -- Neutrals: warm cream -- */
-  --bg: #fafaf7;
+  --bg: #fafaf7; /* warm cream page */
+  --surface: #ffffff;
   --card: #ffffff;
-  --subtle: #f5f3ee;
-  --warm: #fdf8f0;
-  --border: #e7e4dd;
-  --border-hover: #d4d0c7;
-  --text: #1c1917;
-  --text-2: #57534e;
-  --text-3: #a8a29e;
+  --primary: #0a7055; /* Forest Emerald — dark enough for a light ground */
+  --xp: #f59e0b; /* Warm Amber */
+  --border: rgba(0, 0, 0, 0.08);
+}
 
-  /* -- Radii -- */
-  --r-sm: 10px;
-  --r-md: 14px;
-  --r-lg: 18px;
-  --r-xl: 24px;
+[data-theme="dark"] {
+  --bg: #111111; /* neutral gray, not blue-black */
+  --surface: #181818;
+  --card: #1b1b1b;
+  --primary: #2ecc8e; /* lifted mint for a dark ground */
+  --border: rgba(255, 255, 255, 0.07);
 }
 ```
 
-**Dark Mode** (`.dark`):
+The dark neutrals are the luminance-matched grays of the blue-tinted surfaces
+they replaced, so every contrast ratio the palette was tuned for is unchanged —
+only the hue is gone. The blue cast fought the ink construction, whose cream
+outlines and green/amber fills are meant to carry the only colour on those
+surfaces.
 
-```css
-.dark {
-  /* -- Neutrals: Soft Neutral Dark -- */
-  --bg: #343431;
-  --card: #3d3c38;
-  --subtle: #46443f;
-  --warm: #4a4843;
-  --border: #57534e;
-  --border-hover: #6a655e;
-  --text: #f5f1ea;
-  --text-2: #d4cec3;
-  --text-3: #a79f93;
+The token families, so you know what you are reaching for:
 
-  /* -- Primary: lifted for dark readability -- */
-  --primary: #2dd4bf;
-  --primary-hover: #22c7b3;
-  --primary-dark: #0b7e73;
-  --primary-light: rgba(45, 212, 191, 0.15);
-  --primary-bg: rgba(45, 212, 191, 0.1);
+| Family         | Tokens                                                                                                      |
+| -------------- | ----------------------------------------------------------------------------------------------------------- |
+| Surfaces       | `--bg`, `--surface`, `--card`, `--card-hover`, `--card-alt`, `--inset`, `--input`                           |
+| Borders        | `--border`, `--border-default`, `--border-strong`, `--keyline{,-hover,-raised}`                             |
+| Brand          | `--primary{,-hover,-dark,-dim,-light,-bg,-border}`                                                          |
+| XP / accent    | `--xp`, `--xp-dim`, `--xp-dark`, and the `--accent*` Tailwind aliases                                       |
+| **Ink**        | `--ink-line`, `--ink-bright`, `--ink-cream`, `--ink-dark`, `--ink-green`, `--ink-orange`, `--ink-on-orange` |
+| Buttons        | `--btn-fill{,-hover,-press,-disabled}`, `--btn-label`, `--btn-line`                                         |
+| Identity chips | `--avatar-bg`, `--avatar-fg`, `--xp-chip-{bg,fg}`, `--streak-chip-{bg,fg}`                                  |
+| Code islands   | `--code-bg`, `--code-fg`                                                                                    |
+| Layout         | `--header-h`, `--rim-h`, `--chip-radius`, `--focus-ring`                                                    |
+| Semantic       | `--danger*`, `--error`, `--freeze*`, `--gold-ink`, `--gold-hi`                                              |
 
-  /* -- Accent: lifted -- */
-  --accent: #fbbf24;
-  --accent-hover: #f59e0b;
-  --accent-dark: #b45309;
-  --accent-light: rgba(251, 191, 36, 0.18);
-  --accent-bg: rgba(251, 191, 36, 0.1);
+The ink family is the one to understand before making changes. Only `--ink-line`
+flips between themes; the rest hold across both so outlined chrome reads as one
+system in either mode.
 
-  /* etc. -- see globals.css for the full set */
-}
-```
+### Rebranding
 
-To change the color scheme, update the hex/rgba values in `globals.css`. All components reference these properties through Tailwind classes like `bg-primary`, `text-text`, `border-border`, etc.
+1. Change the `--primary-*` and `--xp-*` values in **both** the `:root` and
+   `[data-theme="dark"]` blocks. Dark needs a lifted variant — the light-mode
+   value will not carry on a `#111` ground.
+2. Nothing in `tailwind.config.ts` needs touching. Every colour there is a
+   `var(--token)` reference, so it follows automatically.
+3. Confetti colours in the celebration layer are hardcoded hex — update them to
+   match.
 
-### Changing the Primary Color Scheme
+To add a whole new colour group, define the variables in both blocks in
+`globals.css`, then add the Tailwind mapping in `tailwind.config.ts`.
 
-To rebrand from Deep Teal to a different primary color:
+### Tailwind
 
-1. Update the `--primary-*` variables in both `:root` (light) and `.dark` blocks in `globals.css`
-2. Update the `--accent-*` variables if desired
-3. The Tailwind config (`apps/web/tailwind.config.ts`) references these CSS variables, so no Tailwind changes are needed
-4. Confetti colors in `apps/web/src/components/gamification/level-up-overlay.tsx` use hardcoded hex values -- update those to match
+`darkMode: ["selector", "[data-theme='dark']"]` — the `dark:` variant keys on
+the same attribute `next-themes` writes, so the CSS variables and the Tailwind
+utilities can never disagree about which mode is active.
 
-### Tailwind Configuration
+Beyond the colour mappings the config extends `borderRadius`, `fontFamily`,
+`boxShadow` (including the push-button and card-lift shadows the ink system
+relies on), and a set of keyframe animations for XP pops, shimmer, breathe, and
+pulse rings. Plugins: `tailwindcss-animate` and `@tailwindcss/typography` (the
+latter styles rendered lesson markdown).
 
-Extended theme values are defined in `apps/web/tailwind.config.ts`. Colors reference CSS variables so they respond to light/dark mode automatically.
-
-**Color System:**
-
-The Tailwind config maps semantic color names to CSS custom properties:
-
-```typescript
-colors: {
-  primary: {
-    DEFAULT: "var(--primary)",
-    hover: "var(--primary-hover)",
-    dark: "var(--primary-dark)",
-    light: "var(--primary-light)",
-    bg: "var(--primary-bg)",
-    foreground: "#FFFFFF",
-  },
-  accent: {
-    DEFAULT: "var(--accent)",
-    hover: "var(--accent-hover)",
-    dark: "var(--accent-dark)",
-    light: "var(--accent-light)",
-    bg: "var(--accent-bg)",
-    foreground: "#FFFFFF",
-  },
-  secondary: {
-    DEFAULT: "var(--secondary)",
-    light: "var(--secondary-light)",
-    bg: "var(--secondary-bg)",
-    foreground: "#FFFFFF",
-  },
-  success: {
-    DEFAULT: "var(--success)",
-    dark: "var(--success-dark)",
-    light: "var(--success-light)",
-    bg: "var(--success-bg)",
-  },
-  streak: {
-    DEFAULT: "var(--streak)",
-    light: "var(--streak-light)",
-  },
-  danger: {
-    DEFAULT: "var(--danger)",
-    light: "var(--danger-light)",
-  },
-  solana: {
-    purple: "var(--solana-purple)",
-    green: "var(--solana-green)",
-  },
-  /* Neutrals */
-  bg: "var(--bg)",
-  card: { DEFAULT: "var(--card)", foreground: "var(--text)" },
-  subtle: "var(--subtle)",
-  warm: "var(--warm)",
-  border: { DEFAULT: "var(--border)", hover: "var(--border-hover)" },
-  text: { DEFAULT: "var(--text)", 2: "var(--text-2)", 3: "var(--text-3)" },
-}
-```
-
-To add a new color group, define the CSS variables in `globals.css` (both `:root` and `.dark` blocks), then add the Tailwind mapping in `tailwind.config.ts`.
-
-**Legacy shadcn Compatibility:**
-
-The config also includes compatibility aliases for shadcn/ui components:
-
-- `background` -> `var(--bg)`
-- `foreground` -> `var(--text)`
-- `destructive` -> `var(--danger)` (with white foreground)
-- `muted` -> `var(--subtle)` (with `--text-3` foreground)
-- `popover` -> `var(--card)` (with `--text` foreground)
-- `input` -> `var(--border)`
-- `ring` -> `var(--primary)`
-
-**Certificate Gradient:**
-
-```typescript
-backgroundImage: {
-  "cert-gradient":
-    "linear-gradient(135deg, var(--solana-purple) 0%, var(--solana-green) 100%)",
-}
-```
-
-The Solana gradient is used sparingly (certificates only). A matching `.bg-cert-gradient` utility class is also available in `globals.css`.
-
-**Border Radius:**
-
-```typescript
-borderRadius: {
-  sm: "var(--r-sm)",   // 10px
-  md: "var(--r-md)",   // 14px
-  lg: "var(--r-lg)",   // 18px
-  xl: "var(--r-xl)",   // 24px
-}
-```
-
-**Custom Shadows:**
-
-```typescript
-boxShadow: {
-  push: "0 4px 0 0 var(--shadow-push-color)",        // 3D push button
-  "push-sm": "0 2px 0 0 var(--shadow-push-color)",   // Small push button
-  "push-active": "0 1px 0 0 var(--shadow-push-color)", // Pressed push button
-  card: "var(--shadow-card)",                          // Chunky card
-  "card-hover": "var(--shadow-card-hover)",            // Card hover lift
-  glow: "var(--shadow-glow)",                          // Dark-mode glow
-  cert: "var(--shadow-cert)",                          // Certificate cards
-  "cert-hover": "var(--shadow-cert-hover)",            // Certificate hover
-  "cert-lg": "var(--shadow-cert-lg)",                  // Large certificate
-}
-```
-
-**Custom Animations:**
-
-| Name             | Duration / Timing                      | Purpose                                     |
-| ---------------- | -------------------------------------- | ------------------------------------------- |
-| `accordion-down` | 0.2s ease-out                          | Radix accordion open transition             |
-| `accordion-up`   | 0.2s ease-out                          | Radix accordion close transition            |
-| `xp-pop`         | 2s ease-out (forwards)                 | XP gain popup: scale up, float up, fade out |
-| `shimmer`        | 2s infinite                            | Loading skeleton shimmer effect             |
-| `breathe`        | 2s infinite alternate ease-in-out      | Gentle pulsing scale for emphasis           |
-| `pop`            | 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) | Bounce-in entry for popups                  |
-| `pulse-ring`     | 2s infinite                            | Pulsing glow ring on CTAs                   |
-| `bounce-in`      | 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) | Quick elastic scale-in                      |
-
-**Additional transition utilities:**
-
-- `duration-600`: 600ms transition duration
-- `ease-smooth`: `cubic-bezier(0.4, 0, 0.2, 1)` timing function
-
-**CSS Utility Classes (in globals.css):**
-
-Beyond Tailwind's generated classes, `globals.css` provides additional utilities:
-
-- `.btn-push` / `.btn-push:active`: 3D push-button press effect
-- `.card-chunky` / `.card-chunky:hover`: Bordered card with shadow lift on hover
-- `.progress-fat` / `.progress-fat-fill`: Thick progress bar with inner highlight
-- `.progress-fill-teal` / `.progress-fill-amber` / `.progress-fill-green`: Progress bar color variants
-- `.banner-beginner` / `.banner-intermediate` / `.banner-advanced`: Difficulty-based gradient banners (with dark mode variants)
-- `.font-display` / `.font-body`: Font family shortcuts
-
-**Tailwind Plugins:**
-
-- `tailwindcss-animate`: Animation utility classes
-- `@tailwindcss/typography`: Prose styling for Markdown content
+`globals.css` also carries the component classes that are too structural for
+utilities: `.patch` / `.chip` (with `data-cat` and `data-locked` variants),
+`.nav-pill`, `.lv-badge`, the `.prog-*` progress system, `.banner-*` difficulty
+banners, `.term-*` and `.hero-*` landing animations, `.ach-ring*`, and the
+sidebar rules.
 
 ### Fonts
 
-Three font families are configured in `apps/web/src/app/layout.tsx`:
+Three families, self-hosted through `next/font/google` in
+`apps/web/src/app/layout.tsx` — no runtime request to Google, so the CSP does
+not need to allow one.
 
-| Variable         | Font              | Usage                  |
-| ---------------- | ----------------- | ---------------------- |
-| `--font-sans`    | Plus Jakarta Sans | Body text, UI elements |
-| `--font-display` | Nunito            | Headings, display text |
-| `--font-mono`    | JetBrains Mono    | Code blocks, editor    |
+| Variable   | Font              | Used for            |
+| ---------- | ----------------- | ------------------- |
+| `--font-d` | Nunito            | Headings, display   |
+| `--font-b` | Plus Jakarta Sans | Body, UI            |
+| `--font-m` | JetBrains Mono    | Code blocks, editor |
 
-To change fonts, update the `next/font/google` imports in `layout.tsx`. The CSS variables are set automatically via Next.js's `variable` option, so `globals.css` and `tailwind.config.ts` need no changes.
+Swapping a font is an edit to the `next/font/google` import; the CSS variable is
+wired by Next's `variable` option, so neither `globals.css` nor the Tailwind
+config changes.
 
-### Dark/Light Mode Toggle
+### Theme switching
 
-Theme switching is handled by `next-themes`:
+`next-themes` with `attribute="data-theme"`, mounted by
+`components/layout/theme-provider.tsx` and toggled by `theme-toggle.tsx`. Because
+selection is an attribute on `<html>`, both the CSS variables and Tailwind's
+`dark:` variant switch from a single source.
 
-- `ThemeProvider` in `components/layout/theme-provider.tsx` wraps the app
-- `ThemeToggle` in `components/layout/theme-toggle.tsx` provides the UI toggle
-- `darkMode: "class"` in `tailwind.config.ts` enables class-based dark mode
+## Adding a language
 
-All color tokens have separate light and dark values. Components use `dark:` Tailwind variants or the CSS variable system (which switches automatically based on the `.dark` class on `<html>`).
+`next-intl`, three locales today: `en` (default), `pt-BR`, `es`. Message files
+are `apps/web/src/messages/<locale>.json`.
 
-## Adding New Languages (i18n)
+**1. Create the message file.** Copy `en.json` and translate every value. All
+locale files must have identical key structures — a missing key is a runtime
+`MISSING_MESSAGE` error, and two test suites enforce it
+(`src/messages/__tests__/parity.test.ts` and `no-duplicate-keys.test.ts`). There
+are currently 31 top-level namespaces; take the list from `en.json` rather than
+from this document, which will rot.
 
-The platform uses `next-intl` for internationalization.
-
-### Current Locales
-
-Three locales are currently supported (files in `apps/web/src/messages/`):
-
-- `en.json` -- English (default)
-- `pt-BR.json` -- Portuguese (Brazil)
-- `es.json` -- Spanish
-
-### Step 1: Create the Message File
-
-Create a new JSON file in `apps/web/src/messages/`. Copy the structure from `en.json` and translate all values. Every key must be present -- missing keys cause `MISSING_MESSAGE` errors at runtime.
-
-```
-apps/web/src/messages/fr.json
-```
-
-The top-level namespace structure to replicate (21 namespaces):
-
-```
-common, nav, auth, landing, courses, lesson, dashboard,
-gamification, certificates, profile, settings, a11y, footer,
-notFound, error, errors, timeAgo, nameGenerator, deploy,
-community, programErrors
-```
-
-### Step 2: Register the Locale
-
-Update `apps/web/src/lib/i18n/config.ts`:
+**2. Register it** in `apps/web/src/lib/i18n/config.ts`:
 
 ```typescript
 export const locales = ["en", "pt-BR", "es", "fr"] as const;
-export type Locale = (typeof locales)[number];
 export const defaultLocale: Locale = "en";
-
 export const localeNames: Record<Locale, string> = {
   en: "English",
   "pt-BR": "Portugues (BR)",
@@ -328,76 +141,64 @@ export const localeNames: Record<Locale, string> = {
 };
 ```
 
-### Step 3: No Middleware Changes Needed
+**3. That is all.** The middleware and `lib/i18n/request.ts` both read from
+`config.ts` — the middleware iterates `locales`, and the request handler imports
+`@/messages/${locale}.json` dynamically. `localePrefix` is `"always"`, so the new
+locale is live at `/fr/` immediately.
 
-The middleware (`apps/web/src/middleware.ts`) imports from `config.ts`:
+Two conventions worth keeping: never hardcode a UI string in a component, and
+remember that the root-level `not-found.tsx` and `error.tsx` render _outside_ the
+`[locale]` layout — they cannot use `next-intl` and carry inline translation
+objects keyed off `usePathname()` instead.
 
-```typescript
-import { locales, defaultLocale } from "@/lib/i18n/config";
-```
+## Wallets
 
-It reads from the `locales` array dynamically, so no separate middleware update is needed.
-
-The i18n request handler (`apps/web/src/lib/i18n/request.ts`) also imports from `config.ts` and dynamically loads the message file:
-
-```typescript
-messages: (await import(`@/messages/${locale}.json`)).default,
-```
-
-### Step 4: Verify
-
-Run the development server and navigate to `http://localhost:3000/fr/` to verify the new locale loads correctly.
-
-### Translation Guidelines
-
-- All UI strings must be externalized in message files -- never hardcode text in components
-- Use nested keys for organization (e.g., `courses.difficulty.beginner`)
-- Keep keys descriptive: `auth.connectWallet` not `btn1`
-- Pluralization is supported via next-intl's ICU message format
-- Root-level files (`not-found.tsx`, `error.tsx`) cannot use `next-intl` because they render outside the `[locale]` layout. They use inline translation objects.
-
-### Critical vs Optional Namespaces
-
-All namespaces are required for a complete translation. The most critical ones (used on every page):
-
-- `common` -- shared buttons, labels, app name
-- `nav` -- navigation links
-- `auth` -- wallet connection, sign in/out
-- `footer` -- footer links and text
-- `a11y` -- accessibility labels (screen readers)
-
-The remaining namespaces are page-specific and can be translated incrementally, though missing keys will show `MISSING_MESSAGE` warnings.
-
-## Adding New Wallet Adapters
-
-The Solana wallet provider is configured in `apps/web/src/lib/solana/wallet-provider.tsx`.
-
-### Wallet Standard Auto-Discovery
-
-The platform uses the **Wallet Standard** protocol, which automatically discovers any wallet extension the user has installed (Phantom, Solflare, Backpack, MetaMask Snap, etc.). No wallet adapters are explicitly imported or instantiated:
+`apps/web/src/lib/solana/wallet-provider.tsx` configures the external-wallet
+layer. It relies on the **Wallet Standard**, so the adapter array is empty:
 
 ```typescript
 const wallets = useMemo(() => [], []);
 ```
 
-This means:
+Any Wallet Standard-compliant extension the learner has installed is discovered
+automatically. No code changes when a new wallet ships.
 
-- Any Wallet Standard-compliant wallet works out of the box
-- No code changes are needed when new wallets are released
-- The wallet selection modal shows whatever wallets the user has installed
+Embedded wallets are a separate, optional layer: Dynamic, gated entirely on
+`NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID`. Unset it and no provider mounts, no SDK
+loads, and no network call happens — SIWS with an external wallet stays the
+guaranteed way in. Read the flag only through
+`lib/dynamic/config.ts` (`isDynamicEnabled` / `getDynamicEnvironmentId`).
 
-### Network Configuration
+> `NEXT_PUBLIC_*` values are inlined at **build** time. Changing the Dynamic
+> environment id needs a redeploy with build cache **disabled** — a cache-reusing
+> redeploy silently keeps the old value baked into the served chunks.
 
-The RPC endpoint is configured via the `NEXT_PUBLIC_SOLANA_RPC_URL` environment variable. It defaults to Solana Devnet if not set:
+The RPC endpoint comes from `NEXT_PUBLIC_SOLANA_RPC_URL` and must carry no
+privileged key; the server-side `SOLANA_RPC_URL` is the one that may hold the
+Helius key. To move clusters, change both and set
+`NEXT_PUBLIC_SOLANA_NETWORK=mainnet-beta`.
 
-```typescript
-const endpoint = useMemo(
-  () => process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? clusterApiUrl("devnet"),
-  []
-);
-```
+## Adding a course
 
-To switch to mainnet, update the environment variable and set `NEXT_PUBLIC_SOLANA_NETWORK=mainnet-beta`.
+Course content is not in this repo. It lives in
+[`solanabr/academy-courses`](https://github.com/solanabr/academy-courses), is
+compiled by `pnpm --filter web compile-content` at the SHA pinned in
+`apps/web/content.lock`, and ships as a committed bundle.
+
+Adding or changing a course is therefore three steps, in order:
+
+1. Merge the content change in `academy-courses`. Its CI runs the content linter
+   (`packages/content-lint`), which is what certifies a tree as publishable.
+2. In this repo, bump `"sha"` in `apps/web/content.lock`, run
+   `pnpm --filter web compile-content`, and commit the lock **and** the
+   regenerated bundle together. CI byte-compares a fresh recompile against what
+   you committed, so a stale bundle or a hand-edit fails the build.
+3. Deploy it on-chain from `/admin` — a course stays invisible to learners until
+   its `onchain_deployments` row is `synced` and active. See
+   [ADMIN.md](./ADMIN.md).
+
+Never hand-edit `apps/web/src/content/generated/*`; an ESLint rule also bans
+importing it outside `src/lib/content/`.
 
 ## Extending the Gamification System
 

@@ -1,365 +1,218 @@
-<div align="center">
-  <h1>Superteam Academy</h1>
-  <p><strong>A Solana-native learning platform with on-chain credentials.</strong></p>
-  <p>Soulbound XP tokens, NFT certificates, interactive coding challenges, and gamified progression — all on Solana.</p>
-  <p>Built by <a href="https://superteam.fun">Superteam Brazil</a></p>
+# Superteam Academy
 
-  <p>
-    <a href="#overview">Overview</a> &bull;
-    <a href="#tech-stack">Tech Stack</a> &bull;
-    <a href="#local-development">Local Development</a> &bull;
-    <a href="#environment-variables">Environment Variables</a> &bull;
-    <a href="#deployment">Deployment</a> &bull;
-    <a href="#documentation">Documentation</a>
-  </p>
+A Solana-native learning platform. Learners enroll in courses, complete lessons,
+and earn credentials that live on-chain: soulbound XP as Token-2022, course
+certificates as Metaplex Core NFTs. Built by [Superteam Brazil](https://superteam.fun).
 
-  <p>
-    <img src="https://img.shields.io/badge/Solana-Devnet-9945FF?logo=solana" alt="Solana" />
-    <img src="https://img.shields.io/badge/Token--2022-Soulbound_XP-14F195" alt="Token-2022" />
-    <img src="https://img.shields.io/badge/Metaplex_Core-NFT_Credentials-E42575" alt="Metaplex Core" />
-    <img src="https://img.shields.io/badge/Next.js-14-black?logo=next.js" alt="Next.js 14" />
-    <img src="https://img.shields.io/badge/Anchor-0.31+-DEA584?logo=rust" alt="Anchor" />
-    <img src="https://img.shields.io/badge/TypeScript-Strict-3178C6?logo=typescript" alt="TypeScript" />
-    <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="MIT License" />
-  </p>
-</div>
+Open source, MIT. Currently running on **devnet**.
 
----
+## How it fits together
 
-## Overview
+Four moving parts, each with a clear job:
 
-Superteam Academy is an open-source learning management system built on Solana. Learners enroll in courses, complete lessons to earn soulbound XP tokens, receive NFT certificates on course completion, and collect achievements — all with on-chain verification.
+| Part                 | What it is                                        | Where                                                                     |
+| -------------------- | ------------------------------------------------- | ------------------------------------------------------------------------- |
+| **Web app**          | Next.js 15 App Router on Vercel                   | `apps/web/`                                                               |
+| **On-chain program** | Pinocchio (Rust), 18 instructions, 6 PDA types    | `onchain-academy/`                                                        |
+| **Database**         | Supabase Postgres — 36 tables, RLS on all of them | `supabase/`                                                               |
+| **Course content**   | A committed bundle, compiled from a separate repo | [`solanabr/academy-courses`](https://github.com/solanabr/academy-courses) |
 
-### Feature Highlights
+On-chain state is the source of truth for XP balances, lesson completion (a
+bitmap in the Enrollment PDA), and credentials. Supabase mirrors it for fast
+queries, streaks, and leaderboards; mirror writes are non-fatal and rebuildable.
 
-**On-Chain Credentials**
+**There is no CMS.** Content is authored in git, compiled ahead of time by
+`compile-content.ts`, and committed to this repo as typed JSON pinned to one
+`academy-courses` commit (`apps/web/content.lock`). Nothing fetches content at
+runtime, and no credential in the app can mutate it — publishing is a pull
+request.
 
-- **Soulbound XP tokens** via Token-2022 (NonTransferable + PermanentDelegate) — cannot be transferred or self-burned
-- **NFT certificates** via Metaplex Core, auto-minted on course completion and frozen to the learner's wallet (PermanentFreezeDelegate)
-- **On-chain lesson tracking** using a bitmap stored in the Enrollment PDA — each bit represents a lesson
+## What learners get
 
-**Interactive Learning**
+- **Soulbound XP** — Token-2022 with NonTransferable + PermanentDelegate. Minted
+  by CPI on lesson completion; cannot be transferred or self-burned.
+- **Credential NFTs** — Metaplex Core, frozen to the learner's wallet via
+  PermanentFreezeDelegate, one collection per course track.
+- **Interactive lessons** — a lesson is an ordered `blocks[]` page builder:
+  prose, video, Monaco code challenges, quizzes, reflections, and Solana widgets
+  (devnet airdrop, IDL program explorer, deployed-program card).
+- **Rust/Anchor compilation** — `buildable` challenges and in-browser program
+  deploys go through a Rust/Axum build server on Cloud Run.
+- **AI lesson assistant** — Gemini-backed, with per-day spend caps enforced by a
+  Postgres ledger.
+- **Gamification** — 18 achievements (a course-agnostic ladder plus one course
+  badge), 5 daily/multi-day quests, streaks, leagues, referrals, and a
+  leaderboard. Level is `floor(sqrt(totalXP / 100))`.
+- **Community forum** — threads, answers, voting, accepted answers, flags, and
+  XP for participation with a daily cap.
+- **Three languages** — English, Portuguese (pt-BR), Spanish.
 
-- Code challenges with an in-browser Monaco Editor (JS/TS syntax highlighting, automated test cases)
-- Rust/Anchor program compilation via a sandboxed build server
-- Content lessons with rich markdown rendering
-- Program deployment and interaction directly from lesson pages
-
-**Gamification**
-
-- XP rewards for lesson completions (10-100 XP based on difficulty)
-- Level progression: `Level = floor(sqrt(totalXP / 100))`
-- Daily streaks tracking consecutive learning days
-- Achievements across 5 categories (Progress, Streaks, Skills, Community, Special), with unlock rules declared in content
-- Celebration popups for level-ups, achievements, and certificate minting
-
-**Community Forum**
-
-- Discussion threads with category browsing and full-text search
-- Answers with upvoting/downvoting and accepted answer marking
-- Content flagging for moderation
-- Community XP rewards for participation
-
-**Daily Quests**
-
-- Rotating daily objectives (complete a lesson, earn XP, etc.)
-- Bonus XP for first daily completion and streak bonuses
-
-**Platform**
-
-- i18n: English, Portuguese (pt-BR), Spanish
-- Dark/light mode with Solana-branded gradient theme
-- Wallet auth (SIWS) supporting Phantom, Solflare, and Backpack
-- Google OAuth + GitHub OAuth for low-friction onboarding
-- Admin panel for deploying courses and achievements on-chain
-- Live leaderboard with weekly, monthly, and all-time XP rankings
-- In-browser program deployment with wallet-signed transactions
-
-## Tech Stack
-
-| Layer            | Technology                                                            |
-| ---------------- | --------------------------------------------------------------------- |
-| Frontend         | Next.js 14 (App Router), React 18, Tailwind CSS, shadcn/ui + Radix UI |
-| Content          | Committed bundle compiled from the `academy-courses` git repo         |
-| Database / Auth  | Supabase (Postgres, RLS, Auth)                                        |
-| On-Chain Program | Solana, Pinocchio 0.11 (Rust, `cargo build-sbf`)                      |
-| XP Tokens        | Token-2022 (NonTransferable + PermanentDelegate)                      |
-| Credential NFTs  | Metaplex Core (soulbound via PermanentFreezeDelegate)                 |
-| i18n             | next-intl (EN, PT-BR, ES)                                             |
-| Auth             | SIWS (Sign In With Solana) + Google OAuth + GitHub OAuth              |
-| Code Editor      | Monaco Editor                                                         |
-| Build Server     | Rust/Axum on GCP Cloud Run                                            |
-| Analytics        | GA4, PostHog, Sentry (all optional)                                   |
-| RPC              | Helius (DAS API for credential queries + leaderboard)                 |
-| Monorepo         | Turborepo + pnpm 9                                                    |
-| Deployment       | Vercel (web) + GCP Cloud Run (build server)                           |
-
-## Screenshots
-
-|                  Dashboard                  |                  Code Challenge                  |                   Certificate                   |
-| :-----------------------------------------: | :----------------------------------------------: | :---------------------------------------------: |
-| ![Dashboard](apps/web/public/dashboard.png) | ![Code Challenge](apps/web/public/challenge.png) | ![Certificate](apps/web/public/certificate.png) |
-
-## Local Development
+## Getting it running
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org) >= 18
-- [pnpm](https://pnpm.io) >= 9
-- A [Supabase](https://supabase.com) account (free tier works)
-- A Solana wallet ([Phantom](https://phantom.app) recommended)
+- Node.js >= 18 and pnpm 10 (the repo pins `packageManager`)
+- A Supabase project (free tier is fine)
+- For on-chain work: Rust, the Solana CLI, and `cargo build-sbf`. No Anchor CLI —
+  the program is Pinocchio.
 
-For on-chain program development, you also need:
-
-- [Rust](https://rustup.rs) >= 1.82
-- [Solana CLI](https://docs.solanalabs.com/cli/install) >= 1.18
-- [Anchor CLI](https://www.anchor-lang.com/docs/installation) >= 0.31
-
-### Quick Setup
+### Quickstart
 
 ```bash
-# 1. Clone and install
-git clone https://github.com/superteam-brazil/superteam-academy.git
+git clone https://github.com/solanabr/superteam-academy.git
 cd superteam-academy
 pnpm install
 
-# 2. Configure environment
+# Environment: copy the template and fill in real values.
 cp .env.example apps/web/.env.local
-# Replace every placeholder with a real value — .env.example holds illustrative
-# defaults, not working credentials. Minimum to boot (see Environment Variables):
-# NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY,
-# NEXT_PUBLIC_SOLANA_RPC_URL, SOLANA_RPC_URL.
 
-# 3. Set up the database (migrations are the source of truth)
-# Create a Supabase project, install the Supabase CLI, then link and push:
-#   supabase link --project-ref <your-project-ref>
-#   supabase db push        # applies supabase/migrations/ in order
-# supabase/schema.sql is a generated snapshot for reference — do not run it directly.
+# Database: migrations are the source of truth.
+supabase link --project-ref <your-project-ref>
+supabase db push
 
-# 4. Content — nothing to import.
-# Course content is a COMMITTED bundle (apps/web/src/content/generated/), compiled
-# from solanabr/academy-courses at the SHA pinned in apps/web/content.lock.
-# It is already in the repo. To recompile it after a pin bump:
-#   pnpm --filter web compile-content
-
-# 5. Start the dev server
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open <http://localhost:3000>.
 
-**Minimum variables for basic dev** (no on-chain features): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SOLANA_RPC_URL`, `SOLANA_RPC_URL`.
+The minimum to boot is `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+`SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SOLANA_RPC_URL`, and `SOLANA_RPC_URL`.
+On-chain features additionally need `NEXT_PUBLIC_PROGRAM_ID`,
+`NEXT_PUBLIC_XP_MINT_ADDRESS`, `PROGRAM_AUTHORITY_SECRET`, and
+`BACKEND_SIGNER_SECRET` — see [docs/DEPLOY-PROGRAM.md](docs/DEPLOY-PROGRAM.md).
 
-> **Courses won't appear until they're deployed on-chain.** Visibility is gated on
-> the Supabase `onchain_deployments` table (`status = "synced"` and active), which
-> starts empty on a fresh project. Deploy courses from `/en/admin/deploy` — see
-> [docs/ADMIN.md](docs/ADMIN.md).
+The **authoritative, annotated env-var list** — every variable, what it does, and
+what happens when it is unset — is the `## Environment Variables` block in
+[`apps/web/CLAUDE.md`](apps/web/CLAUDE.md). `.env.example` is the copyable
+template; treat CLAUDE.md as the explanation.
 
-**Full on-chain features** require: `NEXT_PUBLIC_PROGRAM_ID`, `NEXT_PUBLIC_XP_MINT_ADDRESS`, `PROGRAM_AUTHORITY_SECRET`, `BACKEND_SIGNER_SECRET`. See [Program Deployment](docs/DEPLOY-PROGRAM.md) for the deploy and initialize workflow.
+> **Nothing shows up on a fresh project.** Course visibility is gated on the
+> Supabase `onchain_deployments` table (`status = "synced"` and active), which
+> starts empty. Deploy courses from `/en/admin` — see [docs/ADMIN.md](docs/ADMIN.md).
 
-### Development Commands
+Course content is already in the repo (`apps/web/src/content/generated/`) — there
+is nothing to import. To rebuild it after bumping the pin:
+`pnpm --filter web compile-content`.
+
+### Commands
 
 ```bash
-pnpm dev          # Start Next.js dev server
-pnpm build        # Production build
+pnpm dev          # Next.js dev server
+pnpm build        # production build (Turborepo)
 pnpm lint         # ESLint
-pnpm typecheck    # TypeScript type checking
-pnpm format       # Prettier formatting
+pnpm typecheck    # tsc
+pnpm format       # Prettier
 ```
 
-## Project Structure
+## Repository map
 
 ```
 superteam-academy/
 ├── apps/
-│   ├── web/                    # Next.js 14 application
-│   │   ├── src/app/            #   App Router pages ([locale] route groups)
-│   │   │   ├── [locale]/
-│   │   │   │   ├── (marketing)/  # Landing page
-│   │   │   │   ├── (platform)/   # Authenticated routes (dashboard, courses, etc.)
-│   │   │   │   └── admin/        # Admin panel
-│   │   │   └── api/              # API routes (auth, lessons, achievements, etc.)
-│   │   ├── src/components/     #   UI components (auth, editor, gamification, layout)
-│   │   ├── src/lib/            #   Utilities (supabase, content, github, solana, analytics)
-│   │   ├── src/content/generated/  # COMMITTED content bundle (do not hand-edit)
-│   │   ├── content.lock        #   The academy-courses commit the bundle is pinned to
-│   │   ├── scripts/            #   compile-content.ts (repo → committed bundle)
-│   │   └── src/messages/       #   i18n translation files (en, pt-BR, es)
-│   └── build-server/           # Rust/Axum build server (GCP Cloud Run)
-├── onchain-academy/            # Pinocchio program workspace (Solana)
-│   ├── programs/               #   On-chain program source (Rust)
-│   └── tests/                  #   Integration + unit tests
+│   ├── web/                      Next.js 15 app
+│   │   ├── src/app/[locale]/     pages — (marketing), (platform), admin
+│   │   ├── src/app/api/          72 API routes
+│   │   ├── src/lib/              content, solana, auth, gamification, ai, helius…
+│   │   ├── src/content/generated/  COMMITTED content bundle — never hand-edit
+│   │   ├── src/messages/         en / pt-BR / es
+│   │   └── content.lock          the academy-courses commit the bundle is pinned to
+│   └── build-server/             Rust/Axum program compiler (Cloud Run)
+├── onchain-academy/              Pinocchio program workspace + IDL + tests
 ├── packages/
-│   ├── types/                  # Shared TypeScript interfaces
-│   ├── content-schema/         # Zod schemas for the content standard
-│   ├── content-lint/           # Content linter (runs in academy-courses CI)
-│   ├── challenge-executor/     # Sandboxed challenge runner (QuickJS)
-│   ├── deploy/                 # Browser-based Solana program deployment library
-│   └── config/                 # Shared ESLint, TS, Tailwind configs
-├── supabase/                   # Database schema + migrations
-├── scripts/                    # Helper scripts (init-program, update-program-id)
-├── wallets/                    # Keypairs (gitignored)
-└── docs/                       # Documentation
+│   ├── types/                    shared TypeScript interfaces
+│   ├── content-schema/           Zod schemas for the content standard
+│   ├── content-lint/             content linter — runs in academy-courses CI
+│   ├── challenge-executor/       sandboxed challenge runner (QuickJS)
+│   ├── deploy/                   browser-side Solana program deployment
+│   └── config/                   shared ESLint / TS / Tailwind configs
+├── supabase/                     migrations (source of truth) + schema snapshot
+├── scripts/                      operator scripts
+└── docs/                         the guides below
 ```
 
-Course **content** lives in a separate repo:
-[`solanabr/academy-courses`](https://github.com/solanabr/academy-courses).
+## Signing in
 
-## Environment Variables
+Three ways in, all of which end at a **server-set Supabase cookie session** —
+nothing mints a session client-side:
 
-Copy `.env.example` to `apps/web/.env.local` and fill in values.
+- **SIWS with an external wallet** — the wallet signs a nonce; `/api/auth/wallet`
+  verifies it. Always available; the guaranteed path.
+- **Dynamic embedded wallets** — Google handshake and embedded-wallet ownership
+  proven by Dynamic, exchanged at `/api/auth/dynamic`. Optional: unset
+  `NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID` and it is simply off.
+- **Supabase OAuth (Google / GitHub)** — the fallback and kill switch, via
+  `/api/auth/callback`.
 
-### Supabase (Required)
+The full map, including the post-login rituals every rail must share, is
+[docs/AUTH-FLOWS.md](docs/AUTH-FLOWS.md).
 
-| Variable                        | Scope  | Description                                                         |
-| ------------------------------- | ------ | ------------------------------------------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | Client | Supabase project URL                                                |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Client | Public anon key (safe for browser)                                  |
-| `SUPABASE_SERVICE_ROLE_KEY`     | Server | Service role key for admin operations. **Never expose to browser.** |
+## On-chain program
 
-### Content
+Built with Pinocchio 0.11 (`#![no_std]`, `cargo build-sbf`). The Anchor
+implementation it was ported from has been deleted — there is no `Anchor.toml`
+and no Anchor CLI in the toolchain. The committed IDL at
+`onchain-academy/idl/onchain_academy.json` is still Anchor IDL format, because
+that is the wire contract every client decodes against.
 
-**No variables required.** Course content is a committed bundle — there is no CMS
-and no content-write credential. `GITHUB_TOKEN` (below) is optional, read-only, and
-only used to poll the content repo's HEAD/CI state for the admin Publish screen.
+- **18 instructions**, dispatched on the 8-byte `sha256("global:<name>")`
+  sighash: initialize, config, course CRUD, enroll, complete lesson, finalize,
+  credentials, minter roles, XP rewards, achievements.
+- **6 PDA types**: Config, Course, Enrollment, MinterRole, AchievementType,
+  AchievementReceipt.
+- 37 program errors (6000+) and 18 events, emitted byte-identically to Anchor's
+  `emit!` so existing indexers keep working.
 
-### Solana (Required for on-chain features)
+The program id is baked at compile time in two flavors. The default build carries
+the upstream id `7NeJaSRyb4Wxay3Tcd9bdpD7T3GWYUQSFyrhG8SgwE8V` (what the IDL
+declares); `--features fresh-id` carries
+`Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u`, the self-owned devnet instance
+that is actually deployed and initialized. Clients read the id from
+`NEXT_PUBLIC_PROGRAM_ID` and throw if it is unset.
 
-| Variable                      | Scope  | Description                                                                                       |
-| ----------------------------- | ------ | ------------------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_SOLANA_RPC_URL`  | Client | Browser RPC endpoint. Must carry **no** privileged key (default: `https://api.devnet.solana.com`) |
-| `SOLANA_RPC_URL`              | Server | Server RPC endpoint — **this** is the one that may carry the Helius key. Required at boot.        |
-| `NEXT_PUBLIC_SOLANA_NETWORK`  | Client | Network name (`devnet`)                                                                           |
-| `NEXT_PUBLIC_PROGRAM_ID`      | Client | Program ID from `solana program deploy`                                                           |
-| `NEXT_PUBLIC_XP_MINT_ADDRESS` | Client | XP mint pubkey from `initialize` output                                                           |
+Byte-level layouts, validation order, and every invariant:
+[docs/SPEC.md](docs/SPEC.md). Deploying your own instance:
+[docs/DEPLOY-PROGRAM.md](docs/DEPLOY-PROGRAM.md).
 
-### Admin / Signing (Required for the admin console and on-chain operations)
+## Admin console
 
-| Variable                   | Scope  | Description                                                                                                                                |
-| -------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `PROGRAM_AUTHORITY_SECRET` | Server | JSON array of authority keypair bytes (64 elements). The keypair that signed `initialize`.                                                 |
-| `BACKEND_SIGNER_SECRET`    | Server | JSON array of backend signer keypair bytes. On devnet, same as `PROGRAM_AUTHORITY_SECRET`.                                                 |
-| `XP_MINT_AUTHORITY_SECRET` | Server | JSON array of XP mint authority keypair bytes. Signs XP token mints; omit to disable XP minting.                                           |
-| `ADMIN_SECRET`             | Server | Admin console secret (min 32 chars, random) — also the HMAC key signing the `admin_session` cookie                                         |
-| `GITHUB_TOKEN`             | Server | Fine-grained **read** token for `solanabr/academy-courses`. Powers the admin Publish screen. Unset → those routes 503. **No write scope.** |
+`/{locale}/admin`, four screens: **Courses** (publish pin, on-chain deploy,
+supporting content), **Moderation**, **Insights**, **Status**.
 
-### Build Server (Optional -- for code compilation features)
-
-| Variable               | Scope  | Description                                                                      |
-| ---------------------- | ------ | -------------------------------------------------------------------------------- |
-| `BUILD_SERVER_URL`     | Server | Cloud Run service URL                                                            |
-| `BUILD_SERVER_API_KEY` | Server | API key for `X-API-Key` header (same as `ACADEMY_API_KEY` on Cloud Run)          |
-| `RUST_PLAYGROUND_URL`  | Server | Upstream for `/api/rust/execute` (default: `https://play.rust-lang.org/execute`) |
-
-### AI Lesson Assistant (Optional)
-
-| Variable                 | Scope  | Description                                                                             |
-| ------------------------ | ------ | --------------------------------------------------------------------------------------- |
-| `GEMINI_API_KEY`         | Server | Google Gemini API key for the in-lesson AI assistant (`/api/ai/*`). Omit to disable it. |
-| `AI_PARTNER_SEAL_SECRET` | Server | Key sealing the comprehension-check token. Falls back to `SUPABASE_SERVICE_ROLE_KEY`.   |
-
-### Credentials & Moderation (Optional)
-
-| Variable                  | Scope  | Description                                                                                                          |
-| ------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------- |
-| `ARWEAVE_UPLOADER_SECRET` | Server | Solana keypair funding Irys uploads that pin credential metadata to Arweave. Unset → falls back to the metadata API. |
-| `MODERATION_WEBHOOK_URL`  | Server | Slack/Discord-compatible webhook pinged on the first flag of a post.                                                 |
-| `HELIUS_API_KEY`          | Server | Helius DAS API + webhook management                                                                                  |
-| `HELIUS_WEBHOOK_SECRET`   | Server | Verifies Helius webhook signatures                                                                                   |
-
-### Analytics (Optional -- platform works without these)
-
-| Variable                         | Scope  | Description                                                |
-| -------------------------------- | ------ | ---------------------------------------------------------- |
-| `NEXT_PUBLIC_GA4_MEASUREMENT_ID` | Client | Google Analytics 4 measurement ID                          |
-| `NEXT_PUBLIC_POSTHOG_KEY`        | Client | PostHog project key                                        |
-| `NEXT_PUBLIC_POSTHOG_HOST`       | Client | PostHog instance URL (default: `https://us.i.posthog.com`) |
-| `NEXT_PUBLIC_SENTRY_DSN`         | Client | Sentry error tracking DSN (public/safe to expose)          |
-
-### App URL
-
-| Variable              | Scope  | Description                                                                        |
-| --------------------- | ------ | ---------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_APP_URL` | Client | Base URL for sitemap, OG tags, NFT metadata URI (default: `http://localhost:3000`) |
-
-## Deployment
-
-Superteam Academy deploys as a Vercel-hosted Next.js app backed by Supabase (Postgres + Auth) and a Solana on-chain program. Content ships inside the build — there is no CMS to deploy.
-
-- **[Production Deployment Guide](docs/DEPLOYMENT.md)** -- Full instructions for Vercel, Supabase, the content bundle, Google OAuth, GCP Cloud Run (build server), analytics, custom domains, and post-deployment checklist.
-- **[Program Deployment Guide](docs/DEPLOY-PROGRAM.md)** -- On-chain program build, deploy, and initialize workflow (keypair generation, Pinocchio build via `cargo build-sbf`, devnet deploy, XP mint creation).
-
-## On-Chain Program
-
-**Program**: Superteam Academy (`onchain_academy`)
-**Network**: Solana Devnet
-**Program ID**: `7NeJaSRyb4Wxay3Tcd9bdpD7T3GWYUQSFyrhG8SgwE8V`
-
-The program manages the full learning lifecycle on-chain:
-
-- **18 instructions**: initialize, update config, create/update/close course, enroll, complete lesson, finalize course, close enrollment, issue/upgrade credential, register/update/revoke minter, reward XP, create/deactivate achievement type, award achievement
-- **6 PDA account types**: Config, Course, Enrollment, MinterRole, AchievementType, AchievementReceipt
-- **XP minting**: Token-2022 soulbound tokens minted on lesson completion
-- **Credential issuance**: Metaplex Core NFTs minted on course completion
-
-For deployment instructions, see [docs/DEPLOY-PROGRAM.md](docs/DEPLOY-PROGRAM.md).
-For system architecture, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
-
-## Admin Console
-
-**URL**: `/{locale}/admin` (e.g., `/en/admin`)
-**Auth**: Enter the `ADMIN_SECRET` value — this mints an HMAC-signed `admin_session` cookie
-
-Four screens:
-
-- **Publish** (`/admin/publish`): shows the pinned content SHA vs `academy-courses` HEAD and hands you a prefilled PR link. Publishing is a **pull request** that bumps `content.lock` + commits the regenerated bundle — the console holds no write token and cannot mutate content.
-- **Deploy** (`/admin/deploy`): deploy courses and achievements on-chain (Course PDA + Metaplex Core collection), and deactivate/reactivate courses. Recorded in the Supabase `onchain_deployments` table, which **is** the learner-visibility gate.
-- **Moderation** (`/admin/moderation`): the pending community-flag queue.
-- **Status** (`/admin/status`): program liveness, authority match, deploy counts, and on-chain → Supabase resync.
-
-For details, see [docs/ADMIN.md](docs/ADMIN.md).
+Access is your ordinary Supabase session checked against an `admin_users`
+allowlist that only the service role can read. There is no admin password and no
+login form — signed-in non-admins get a 404. See [docs/ADMIN.md](docs/ADMIN.md).
 
 ## Documentation
 
-| Document                                     | Description                                               |
-| -------------------------------------------- | --------------------------------------------------------- |
-| [Architecture](docs/ARCHITECTURE.md)         | System design, account maps, data flows, content pipeline |
-| [Customization](docs/CUSTOMIZATION.md)       | Theming, i18n, gamification, and extending                |
-| [Admin Guide](docs/ADMIN.md)                 | The 4-screen console: publish, deploy, moderate, status   |
-| [Deployment](docs/DEPLOYMENT.md)             | Vercel, Supabase, content bundle, build server            |
-| [Program Deployment](docs/DEPLOY-PROGRAM.md) | On-chain program build, deploy, and initialize            |
-| [Developer Reference](CLAUDE.md)             | Full codebase conventions, security model, API routes     |
-
-## Known Limitations / Roadmap
-
-The on-chain program is feature-complete with 18 instructions covering the full learning lifecycle. The following items are scoped for future iterations:
-
-- **Track collection enforcement**: `track_collection` is validated server-side during credential issuance but is not yet enforced on-chain as an account constraint (future program upgrade).
-- **`perfect-score` achievement**: dropped, not deferred. Block results are transient by design, so there is no durable "passed on first try" signal to key it on.
-- **Build server**: Compilation features (`buildable` Rust challenges + program deployment) require a separately deployed Rust/Axum build server on GCP Cloud Run. See the [Deployment](#deployment) section for setup details.
-
-## Code Quality
-
-- TypeScript strict mode with zero `any` types
-- ESLint + Prettier enforced via Husky pre-commit hooks
-- Conventional commits: `feat:`, `fix:`, `docs:`, `chore:`, `refactor:`
-- All UI strings externalized via next-intl (never hardcoded)
-- Server components by default, client components only when needed
-- RLS enabled on all Supabase tables; sensitive functions restricted to `service_role`
+| Doc                                                   | What it covers                                           |
+| ----------------------------------------------------- | -------------------------------------------------------- |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md)               | System design, data flows, service interfaces, DB schema |
+| [AUTH-FLOWS.md](docs/AUTH-FLOWS.md)                   | Every way into a session, mapped from the code           |
+| [SPEC.md](docs/SPEC.md)                               | Authoritative on-chain program specification             |
+| [DEPLOYMENT.md](docs/DEPLOYMENT.md)                   | Vercel, Supabase, Cloud Run, cron, analytics             |
+| [DEPLOY-PROGRAM.md](docs/DEPLOY-PROGRAM.md)           | Build, deploy, and initialize the program on devnet      |
+| [ADMIN.md](docs/ADMIN.md)                             | The admin console, screen by screen                      |
+| [CUSTOMIZATION.md](docs/CUSTOMIZATION.md)             | Theming, i18n, extending content and gamification        |
+| [PINOCCHIO-MIGRATION.md](docs/PINOCCHIO-MIGRATION.md) | What changed in the Anchor → Pinocchio port              |
+| [DB-MIGRATION-LEDGER.md](docs/DB-MIGRATION-LEDGER.md) | Filename ↔ prod migration-ledger reconciliation          |
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feat/your-feature`
-3. Commit using conventional commits: `git commit -m "feat: add quiz lesson type"`
-4. Push and open a pull request
+Branch, commit conventionally, open a PR:
+
+```bash
+git checkout -b feat/your-thing
+git commit -m "feat: add quiz lesson type"
+```
+
+House rules that CI actually enforces: TypeScript strict with no `any`, all UI
+strings through next-intl, server components by default, ESLint + Prettier on a
+pre-commit hook, and a byte-comparison of the committed content bundle against a
+fresh recompile.
 
 ## License
 
-MIT
+MIT.
 
-## Acknowledgments
-
-- [Superteam Brazil](https://superteam.fun) -- community and bounty program
-- [Solana Foundation](https://solana.org) -- blockchain infrastructure
-- Built with [Claude Code](https://claude.ai/claude-code) (Anthropic)
+Thanks to [Superteam Brazil](https://superteam.fun) and the
+[Solana Foundation](https://solana.org).
