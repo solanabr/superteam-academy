@@ -8,6 +8,28 @@ There is **no CMS to deploy**. Course content ships as a committed bundle
 compiled from the `solanabr/academy-courses` git repo — see
 [Content Bundle](#content-bundle).
 
+```
+       ┌──────────────┐        ┌──────────────┐
+       │   Vercel     │───────►│   Supabase   │   Postgres + Auth, RLS on
+       │  apps/web    │        └──────────────┘
+       │  (root dir)  │        ┌──────────────┐
+       │              │───────►│ Solana devnet│   program + Token-2022 + MPL Core
+       │  content     │        └──────┬───────┘
+       │  bundled in  │               │ Helius webhook
+       │              │◄──────────────┘
+       │              │        ┌──────────────┐
+       │              │───────►│  Cloud Run   │   Rust/Axum build server (optional)
+       └──────────────┘        └──────────────┘
+```
+
+| What you deploy  | Where         | Required?                                      |
+| ---------------- | ------------- | ---------------------------------------------- |
+| Web app          | Vercel        | Yes                                            |
+| Database + Auth  | Supabase      | Yes                                            |
+| On-chain program | Solana devnet | Yes for XP, credentials, and course visibility |
+| Build server     | GCP Cloud Run | Only for Rust builds and in-browser deploys    |
+| Content          | —             | Nothing to provision; it ships in the build    |
+
 ---
 
 ## Table of Contents

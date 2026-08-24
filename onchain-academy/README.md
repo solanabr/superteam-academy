@@ -154,7 +154,7 @@ The e2e script is resumable — it detects existing enrollment state and picks u
 
 - [Program Specification](../docs/SPEC.md) — Full instruction specs, account structures, error codes
 - [Architecture](../docs/ARCHITECTURE.md) — Account maps, data flows, CU budgets
-- [Frontend Integration](../docs/INTEGRATION.md) — PDA derivation, instruction usage, events, error handling
+- [Pinocchio Migration](../docs/PINOCCHIO-MIGRATION.md) — PDA derivation, instruction usage, events, and error handling from a client's side
 - [Deployment Guide](../docs/DEPLOY-PROGRAM.md) — Deploy your own instance on devnet
 
 ## License

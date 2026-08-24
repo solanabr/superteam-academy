@@ -1,8 +1,9 @@
 # Superteam Academy — brand asset pack
 
 Everything here is derived from the official Superteam Academy logo vector and the
-shipping product's design tokens. Read [`../design-system.html`](../design-system.html) — the canonical brand guide
-(byte-identical copy of `Superteam-Academy-Brand-Guide-standalone.html` here).
+shipping product's design tokens. The canonical brand guide is
+[`../design-system.html`](../design-system.html) — a single standalone HTML file,
+fine to hand to a partner as-is.
 
 ## logo/ — master vectors
 

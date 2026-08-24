@@ -19,6 +19,25 @@ sign-in. This document does not duplicate either — it says how they connect.
 
 ---
 
+## Contents
+
+| §                                                          | What is in it                                                     |
+| ---------------------------------------------------------- | ----------------------------------------------------------------- |
+| [1. The shape of the system](#1-the-shape-of-the-system)   | Topology diagram, monorepo layout, deployment model               |
+| [2. Page structure](#2-page-structure)                     | Route tree, component groups, client vs server                    |
+| [3. Data flow](#3-data-flow)                               | Content pipeline, visibility gate, lesson completion, retry queue |
+| [4. Service layer](#4-service-layer)                       | `lib/content`, `lib/solana`, `lib/ai`                             |
+| [5. On-chain integration](#5-on-chain-integration)         | Instruction signers, PDAs, XP and credentials, trust boundary     |
+| [6. Authentication](#6-authentication)                     | The three session rails, middleware, admin authorization          |
+| [7. Database](#7-database)                                 | 36 tables, views, the RLS access pattern                          |
+| [8. Gamification](#8-gamification-as-shipped)              | XP, levels, streaks, achievements, quests, reward popups          |
+| [9. Community forum](#9-community-forum)                   | Threads, votes, flags, community XP                               |
+| [10. API routes](#10-api-routes)                           | The 72 routes, grouped                                            |
+| [11. Build server](#11-build-server)                       | The Rust/Axum compile pipeline and its sandbox                    |
+| [12. Design decisions](#12-design-decisions-worth-knowing) | Why the system is shaped this way                                 |
+
+---
+
 ## 1. The shape of the system
 
 ```
@@ -117,6 +136,38 @@ visitor can read a lesson, they just cannot complete one.
 map the learner to one of three segments and route them at an entry lesson. The
 route resolution is sync-gated — an unsynced entry course falls back to
 `/courses` rather than a 404ing lesson page.
+
+### Component groups
+
+`apps/web/src/components/` is grouped by surface, not by type:
+
+| Group                                                          | What lives there                                                               |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `ui/`                                                          | shadcn/Radix primitives — the only group nothing else may bypass               |
+| `layout/`, `landing/`, `onboarding/`                           | Chrome, the marketing surface, and the `/start` intake                         |
+| `auth/`, `wallet/`                                             | Sign-in rails, wallet connect/link, session-bound gates                        |
+| `courses/`, `course/`, `lessons/`, `editor/`                   | Catalog, course detail, the `blocks[]` renderer, Monaco + the runner           |
+| `dashboard/`, `profile/`, `settings/`, `review/`               | The learner's own surfaces                                                     |
+| `gamification/`, `leaderboard/`, `referrals/`, `certificates/` | Levels, achievement patches, reward popups, cohort ranking, credential display |
+| `community/`                                                   | Threads, answers, voting, flagging                                             |
+| `deploy/`                                                      | Browser-side program deployment UI                                             |
+| `admin/`                                                       | The four admin screens                                                         |
+| `analytics/`, `icons/`                                         | Provider wrappers and iconography                                              |
+
+### Client vs server
+
+Server components are the default; `"use client"` is the exception and has to
+earn itself. The always-client set is small and predictable:
+
+| Must be client                | Why                                                          |
+| ----------------------------- | ------------------------------------------------------------ |
+| Wallet + Dynamic providers    | Browser-only SDKs, context at the `[locale]` layout root     |
+| Monaco + the challenge runner | `dynamic()` with `ssr: false` — a 4 MB+ SSR bundle otherwise |
+| Reward popups, confetti       | Event-bus subscribers with animation state                   |
+| Forms, votes, filters         | Interactive state and optimistic updates                     |
+
+Everything read-only — catalog, lesson prose, leaderboard, profiles — renders on
+the server, so those routes ship no client JS for their data.
 
 ---
 
@@ -408,9 +459,23 @@ invariant, in one line:
 > Supabase OAuth for the fallback); **Supabase owns identity**; every proof is
 > exchanged **server-side** for a Supabase cookie session.
 
-Three session-minting routes — `/api/auth/wallet` (SIWS), `/api/auth/dynamic`
-(Dynamic JWT verified against the per-environment JWKS), `/api/auth/callback`
-(Supabase OAuth) — and they share four post-login rituals: tombstone refusal on
+```
+  prover                        exchange (server)              identity
+  ──────                        ─────────────────              ────────
+  wallet signs a nonce   ──►    /api/auth/wallet        ┐
+  Dynamic JWT + JWKS     ──►    /api/auth/dynamic       ├──►  Supabase
+  Supabase OAuth         ──►    /api/auth/callback      ┘     cookie session
+                                       │
+                                       └── four post-login rituals
+```
+
+| Rail                 | What it verifies                                | Optional?                                        |
+| -------------------- | ----------------------------------------------- | ------------------------------------------------ |
+| `/api/auth/wallet`   | SIWS signature over a server-issued nonce       | No — the guaranteed path and the kill switch     |
+| `/api/auth/dynamic`  | A Dynamic JWT against the per-environment JWKS  | Yes — unset `NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID` |
+| `/api/auth/callback` | A Supabase OAuth code exchange (Google, GitHub) | Yes — the fallback rail                          |
+
+The three share four post-login rituals: tombstone refusal on
 `profiles.deleted_at`, placeholder-username replacement, the
 `pending_onchain_actions` drain, and first-login avatar adoption. Add a new way
 in, add all four.
@@ -582,14 +647,24 @@ over a tsvector, and a flag queue feeding `/admin/moderation`.
 Nine routes under `/api/community/*`: threads (list, detail, create, delete),
 answers (create, accept, delete), votes, flags, search. Writes are authenticated
 and rate-limited; votes and thread/answer creation go through SECURITY DEFINER
-functions. Self-voting and self-flagging are blocked by database triggers, and
-denormalized counters (`vote_score`, `answer_count`) are maintained by triggers
-rather than application code.
+functions.
 
-XP is idempotency-keyed (`thread:{id}`, `answer:{id}`,
-`accept:{threadId}:{answerId}`). Re-accepting a different answer revokes the
-previous answerer's 25 XP through `revoke_community_xp()` before awarding the new
-one.
+| Enforced by               | What it enforces                                              |
+| ------------------------- | ------------------------------------------------------------- |
+| Database trigger          | No self-voting, no self-flagging                              |
+| Database trigger          | Denormalized `vote_score` and `answer_count` — never app code |
+| SECURITY DEFINER function | Vote writes, thread/answer creation, XP award and revoke      |
+| RLS policy                | Public SELECT on categories, threads, answers, votes          |
+
+| Action          | XP  | Idempotency key                |
+| --------------- | --- | ------------------------------ |
+| Create a thread | 5   | `thread:{id}`                  |
+| Post an answer  | 10  | `answer:{id}`                  |
+| Answer accepted | 25  | `accept:{threadId}:{answerId}` |
+
+Community XP is capped at 50/day inside `award_xp()`. Re-accepting a different
+answer revokes the previous answerer's 25 XP through `revoke_community_xp()`
+before awarding the new one.
 
 ---
 
@@ -638,41 +713,66 @@ programs.
 | `/health`        | —         | Health + cache stats        |
 | `/metrics`       | X-API-Key | Counts, durations, hit rate |
 
-The pipeline validates paths and sizes (`/src/*.rs` only), blocks
-`std::process` / `std::fs` / `std::net` / `Command::new` / `proc_macro`, hashes
-the content for a cache lookup, then runs `cargo-build-sbf --offline` against a
-pre-cached crate set behind a concurrency semaphore. Defense in depth: SBF is the
-compile target so the output cannot touch the host, the container runs non-root,
-CORS is an exact origin match, the body limit is 512 KB, and the API key compare
-is constant-time.
+The pipeline:
+
+```
+POST /build
+  → X-API-Key (constant-time compare) + 512 KB body cap + exact-origin CORS
+  → path/size validation — /src/*.rs only
+  → source scan: reject std::process, std::fs, std::net, Command::new, proc_macro
+  → content hash → LRU cache lookup ─── hit ──► return the cached .so
+  → concurrency semaphore
+  → cargo-build-sbf --offline against a pre-cached crate set
+  → .so returned inline as base64
+```
+
+Defense in depth: SBF is the compile target, so the output cannot touch the host
+even if the source scan is beaten, and the container runs non-root.
 
 ---
 
 ## 12. Design decisions worth knowing
 
-**Hybrid on-chain / off-chain.** Chain first, mirror second, mirror failures
-non-fatal. The alternative — writing Supabase first — would make the mirror
-authoritative in exactly the failure cases where it must not be.
+| Decision                        | The trade                                                           |
+| ------------------------------- | ------------------------------------------------------------------- |
+| Hybrid on-chain / off-chain     | Verifiable truth, at the cost of a mirror that can lag              |
+| Backend signer for progress     | Anti-cheat before the chain, at the cost of a trusted off-chain key |
+| Content as a committed artifact | Zero runtime dependency, at the cost of a deploy to publish         |
+| Visibility gated in Supabase    | Reversible hiding, at the cost of one more thing to sync            |
+| Sandboxed challenge execution   | No server execution to secure, at the cost of a JS-only runner      |
+| Ink over gradient               | A distinct identity, at the cost of the recognizable Solana palette |
 
-**Backend signer, not learner signer, for progress.** Lesson completion,
-finalization, and credential issuance are backend-signed so eligibility is
-checked before the chain is touched. Enrollment and closure stay learner-signed:
-they are personal commitments with no anti-cheat concern.
+### Hybrid on-chain / off-chain progress
 
-**Content as a committed artifact.** Content changes become reviewable diffs with
-CI gates, the read path has zero network hops, and no runtime path can mutate
-content because no write token exists. The cost is that publishing needs a
-deploy — the intended trade.
+Chain first, mirror second, mirror failures non-fatal. The alternative — writing
+Supabase first — would make the mirror authoritative in exactly the failure cases
+where it must not be.
 
-**Visibility gated in Supabase, not in content.** Courses stay hidden until they
-actually exist on-chain, and an admin can hide one again without destroying the
-PDA. Fail-closed: no row means hidden.
+### Backend signer, not learner signer, for progress
 
-**Sandboxed challenge execution.** Challenge code runs in a QuickJS sandbox in
-the browser with a mock console — no DOM, no network, no module imports, and no
-server-side execution infrastructure to secure.
+Lesson completion, finalization, and credential issuance are backend-signed so
+eligibility is checked before the chain is touched. Enrollment and closure stay
+learner-signed: they are personal commitments with no anti-cheat concern.
 
-**Ink over gradient.** The visual system is a dark-green/mint "ink" construction
-with outlined chips and pressed-key affordances, not the Solana purple-to-teal
-gradient, which is now reserved for credentials. See
-[CUSTOMIZATION.md](./CUSTOMIZATION.md).
+### Content as a committed artifact
+
+Content changes become reviewable diffs with CI gates, the read path has zero
+network hops, and no runtime path can mutate content because no write token
+exists. The cost is that publishing needs a deploy — the intended trade.
+
+### Visibility gated in Supabase, not in content
+
+Courses stay hidden until they actually exist on-chain, and an admin can hide one
+again without destroying the PDA. Fail-closed: no row means hidden.
+
+### Sandboxed challenge execution
+
+Challenge code runs in a QuickJS sandbox in the browser with a mock console — no
+DOM, no network, no module imports, and no server-side execution infrastructure
+to secure.
+
+### Ink over gradient
+
+The visual system is a dark-green/mint "ink" construction with outlined chips and
+pressed-key affordances, not the Solana purple-to-teal gradient, which is now
+reserved for credentials. See [CUSTOMIZATION.md](./CUSTOMIZATION.md).
