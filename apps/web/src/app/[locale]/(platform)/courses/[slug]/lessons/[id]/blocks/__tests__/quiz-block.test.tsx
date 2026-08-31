@@ -550,6 +550,22 @@ describe("QuizBlock — stepper (#849)", () => {
     expect(screen.getByText("What is a PDA?")).toBeInTheDocument();
   });
 
+  it("ArrowRight on the last question collapses instead of no-opping", () => {
+    renderWithIntl(<QuizBlock block={quizBlock} ctx={makeCtx()} />);
+    fireEvent.keyDown(screen.getByText("What is a PDA?"), {
+      key: "ArrowRight",
+    });
+
+    // Parity with the forward button, which closes the quiz here.
+    fireEvent.keyDown(screen.getByText("Which are soulbound?"), {
+      key: "ArrowRight",
+    });
+    expect(screen.getByRole("button", { name: /Quiz/ })).toHaveAttribute(
+      "aria-expanded",
+      "false"
+    );
+  });
+
   it("does NOT hijack arrow keys inside the radio/checkbox group", () => {
     renderWithIntl(<QuizBlock block={quizBlock} ctx={makeCtx()} />);
     // Arrows on an option input move the native selection, never the card.
