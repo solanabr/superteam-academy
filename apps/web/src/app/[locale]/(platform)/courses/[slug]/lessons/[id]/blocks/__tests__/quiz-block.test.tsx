@@ -279,6 +279,39 @@ describe("QuizBlock — a clean sweep leaves the quiz open (owner 2026-08-21)", 
     expect(summary.closest(".hidden")).toBeNull();
   });
 
+  it("turns the forward slot into Close on the last question instead of dead-ending", () => {
+    renderWithIntl(<QuizBlock block={quizBlock} ctx={makeCtx()} />);
+    sweep();
+
+    // Nowhere left to advance to, so the slot collapses the section rather
+    // than sitting there disabled (owner, 2026-08-31).
+    expect(
+      screen.queryByRole("button", { name: "Next question" })
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Close quiz" }));
+    expect(screen.getByRole("button", { name: /Quiz/ })).toHaveAttribute(
+      "aria-expanded",
+      "false"
+    );
+  });
+
+  it("offers Close on the last question even when the answer is wrong", () => {
+    renderWithIntl(<QuizBlock block={quizBlock} ctx={makeCtx()} />);
+    fireEvent.click(screen.getByLabelText("A program-derived address"));
+    fireEvent.click(checkButton());
+    fireEvent.click(nextButton());
+
+    // Subdued skip-Next path: an attempted-but-wrong last question must not
+    // strand the learner either.
+    fireEvent.click(screen.getByLabelText("SOL"));
+    fireEvent.click(checkButton());
+    fireEvent.click(screen.getByRole("button", { name: "Close quiz" }));
+    expect(screen.getByRole("button", { name: /Quiz/ })).toHaveAttribute(
+      "aria-expanded",
+      "false"
+    );
+  });
+
   it("still folds and reopens by hand, keeping the header score + Complete chip", () => {
     renderWithIntl(<QuizBlock block={quizBlock} ctx={makeCtx()} />);
     sweep();

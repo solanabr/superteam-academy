@@ -6,6 +6,7 @@ import {
   CaretDown,
   CaretLeft,
   CaretRight,
+  CaretUp,
   CheckCircle,
   Robot,
   XCircle,
@@ -109,6 +110,7 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
   }, [hydrated, storageKey, selections, results, checkedEver]);
   // Section starts open (#770); collapsing leaves the score badge as the recap.
   const [open, setOpen] = useState(true);
+  const headerRef = useRef<HTMLButtonElement>(null);
   const [index, setIndex] = useState(0);
   const promptRef = useRef<HTMLLegendElement>(null);
   // True only between a user-initiated navigation and the focus effect below —
@@ -222,6 +224,17 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
   // inputs and Check disable while the verdict + explanation stay visible.
   const locked = result?.correct ?? false;
 
+  // On the final question the forward slot has nowhere to go, so instead of a
+  // dead disabled button it collapses the section — the manual counterpart to
+  // the auto-fold that was removed on 2026-08-21 for snatching the last
+  // explanation away mid-read. Focus returns to the header so the keyboard
+  // path doesn't strand on a control that just disappeared.
+  const lastQuestion = current === total - 1;
+  const collapse = useCallback(() => {
+    setOpen(false);
+    headerRef.current?.focus();
+  }, []);
+
   const onBodyKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
     if (!q) return;
     const tag = (event.target as HTMLElement).tagName;
@@ -251,6 +264,7 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
   return (
     <div className="rounded-[var(--r-lg)] border-[2.5px] border-border bg-card shadow-card">
       <button
+        ref={headerRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
@@ -413,12 +427,14 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
             <Button
               variant="primary"
               size="sm"
-              onClick={() => goTo(current + 1)}
-              disabled={current === total - 1}
-              aria-disabled={current === total - 1}
+              onClick={lastQuestion ? collapse : () => goTo(current + 1)}
             >
-              {t("quizNext")}
-              <CaretRight size={14} weight="bold" aria-hidden="true" />
+              {lastQuestion ? t("quizCollapse") : t("quizNext")}
+              {lastQuestion ? (
+                <CaretUp size={14} weight="bold" aria-hidden="true" />
+              ) : (
+                <CaretRight size={14} weight="bold" aria-hidden="true" />
+              )}
             </Button>
           )}
           {!locked && q && (
@@ -439,12 +455,14 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
                 <Button
                   variant="secondary"
                   size="sm"
-                  onClick={() => goTo(current + 1)}
-                  disabled={current === total - 1}
-                  aria-disabled={current === total - 1}
+                  onClick={lastQuestion ? collapse : () => goTo(current + 1)}
                 >
-                  {t("quizNext")}
-                  <CaretRight size={14} weight="bold" aria-hidden="true" />
+                  {lastQuestion ? t("quizCollapse") : t("quizNext")}
+                  {lastQuestion ? (
+                    <CaretUp size={14} weight="bold" aria-hidden="true" />
+                  ) : (
+                    <CaretRight size={14} weight="bold" aria-hidden="true" />
+                  )}
                 </Button>
               )}
             </div>

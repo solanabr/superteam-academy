@@ -374,6 +374,7 @@
     "quizPosition": "Question {current} of {total}",
     "quizPrev": "Previous question",
     "quizNext": "Next question",
+    "quizCollapse": "Close quiz",
     "quizUnlocksAssistant": "AI Partner unlocks after the quiz — {answered}/{total} answered",
     "quizCompleteChip": "Complete",
     "quizAllCorrect": "All {total} questions answered correctly.",

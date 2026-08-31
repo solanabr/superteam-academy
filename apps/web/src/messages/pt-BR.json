@@ -374,6 +374,7 @@
     "quizPosition": "Pergunta {current} de {total}",
     "quizPrev": "Pergunta anterior",
     "quizNext": "Próxima pergunta",
+    "quizCollapse": "Fechar quiz",
     "quizUnlocksAssistant": "O AI Partner é liberado depois do quiz — {answered}/{total} respondidas",
     "quizCompleteChip": "Concluído",
     "quizAllCorrect": "Todas as {total} perguntas respondidas corretamente.",
