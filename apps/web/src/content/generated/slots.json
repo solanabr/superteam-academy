@@ -41,12 +41,25 @@
     "version": 1
   },
   "course-visao-geral-solana": {
-    "next": 3,
+    "next": 16,
     "retired": [],
     "slots": {
+      "lesson-vgs-analisando-a-arquitetura-da-solana-para-o-relatorio": 14,
+      "lesson-vgs-componentes-centrais-do-runtime-e-papeis-dos-validadores": 5,
+      "lesson-vgs-compromissos-de-projeto-e-caracteristicas-distintivas": 7,
       "lesson-vgs-desafios-iniciais": 1,
+      "lesson-vgs-enquadrando-o-projeto-final-escopo-e-metodo-para-a-historia-da-solana": 12,
+      "lesson-vgs-fluxo-de-transacoes-e-modelo-de-processamento": 6,
+      "lesson-vgs-introducao-ao-ecossistema-solana-e-terminologia": 8,
+      "lesson-vgs-licoes-aprendidas-e-perspectivas": 3,
+      "lesson-vgs-mapeando-categorias-de-projetos-no-ecossistema-solana": 10,
       "lesson-vgs-marcos-e-adocao": 2,
-      "lesson-vgs-origens-fundacao": 0
+      "lesson-vgs-navegando-pelos-recursos-da-solana-e-proximos-passos": 11,
+      "lesson-vgs-origens-fundacao": 0,
+      "lesson-vgs-relatorio-final-redacao-e-polimento-do-relatorio-abrangente-sobre-solana": 15,
+      "lesson-vgs-sintetizando-a-historia-da-solana": 13,
+      "lesson-vgs-terminologia-essencial-da-solana-em-contexto": 9,
+      "lesson-vgs-visao-geral-da-arquitetura-da-solana": 4
     },
     "version": 1
   }
