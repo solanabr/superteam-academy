@@ -938,7 +938,7 @@ export function LessonPageClient({
                       isCompleted ? (
                         <span
                           role="status"
-                          className="inline-flex h-10 items-center justify-center gap-1.5 rounded-full border border-[var(--primary-border)] bg-[var(--primary-dim)] px-4 font-display text-[11px] font-bold uppercase tracking-[0.4px] text-primary"
+                          className="btn-ink inline-flex h-10 items-center justify-center gap-1.5 rounded-md bg-[var(--primary-dim)] px-4 font-display text-[11px] font-bold uppercase tracking-[0.4px] text-primary"
                         >
                           <CheckCircle
                             size={16}
@@ -963,7 +963,7 @@ export function LessonPageClient({
                           {isCompleting && (
                             <>
                               <div
-                                className="h-5 w-5 animate-spin rounded-full border-[3px] border-white/30 border-t-white"
+                                className="h-5 w-5 animate-spin rounded-full border-[3px] border-current border-t-transparent"
                                 aria-hidden="true"
                               />
                               <span className="sr-only">
@@ -987,7 +987,7 @@ export function LessonPageClient({
                         {isEnrolling && (
                           <>
                             <div
-                              className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
+                              className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
                               aria-hidden="true"
                             />
                             <span className="sr-only">

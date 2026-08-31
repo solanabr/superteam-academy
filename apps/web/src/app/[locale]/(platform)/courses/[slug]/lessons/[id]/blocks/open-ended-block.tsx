@@ -150,7 +150,7 @@ export function OpenEndedBlock({ block, ctx }: BlockRenderProps) {
             {status === "submitting" ? (
               <>
                 <span
-                  className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
+                  className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
                   aria-hidden="true"
                 />
                 <span className="sr-only">{t("reflectionSubmitting")}</span>
