@@ -208,6 +208,17 @@ vi.mock("server-only", () => ({}));
 //    drops the same six from both arrays. Nothing else in the bundle moved.
 //    The award-shape assertion moves course-completer -> speedrunner, now the
 //    bundle's only `course-completed` doc.
+//  - visao-geral completion (bump to academy-courses @8f40db93, academy-courses
+//    #45): the Forge College pilot grows 3 -> 16 lessons across 4 modules.
+//    Slots are APPEND-ONLY — the pilot keeps 0/1/2 and the 13 new lessons take
+//    3-15 — so existing learners' on-chain progress bits stay valid (the #741
+//    trap). The course record changes in place: duration 1.7 -> 7, xpReward
+//    60 -> 320 (16 x 20), thumbnail banner.png -> banner.jpg, and tags widen
+//    from solana-fundamentals alone to also cover transactions, account-model
+//    and rpc-reads. The 3 pilot lessons are rewritten too (raw HTML converted
+//    to Markdown, text unchanged), which is the 48 deletions in lessons.json.
+//    No other course moved. quests-raw's moduleLessonMap gains the 3 new
+//    modules; challengeLessonIds is unchanged (the course has no challenges).
 const deps = { lessonsById };
 
 function bundleCourse(id: string): CourseDoc {

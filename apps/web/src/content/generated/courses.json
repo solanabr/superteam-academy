@@ -284,7 +284,7 @@
     "creatorRewardXp": 30,
     "description": "Apresentar aos alunos a blockchain Solana, abordando sua história fundamental e arquitetura central. Usar analogias e recursos visuais para tornar conceitos complexos acessíveis a iniciantes.",
     "difficulty": "beginner",
-    "duration": 1.7,
+    "duration": 7,
     "minCompletionsForReward": 0,
     "modules": [
       {
@@ -309,9 +309,111 @@
             "_ref": "lesson-vgs-marcos-e-adocao",
             "_type": "reference",
             "_weak": true
+          },
+          {
+            "_key": "lesson-vgs-licoes-aprendidas-e-perspectivas",
+            "_ref": "lesson-vgs-licoes-aprendidas-e-perspectivas",
+            "_type": "reference",
+            "_weak": true
           }
         ],
         "title": "Origens e História da Solana"
+      },
+      {
+        "_key": "arquitetura-central",
+        "_type": "courseModule",
+        "key": "arquitetura-central",
+        "lessons": [
+          {
+            "_key": "lesson-vgs-visao-geral-da-arquitetura-da-solana",
+            "_ref": "lesson-vgs-visao-geral-da-arquitetura-da-solana",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-vgs-componentes-centrais-do-runtime-e-papeis-dos-validadores",
+            "_ref": "lesson-vgs-componentes-centrais-do-runtime-e-papeis-dos-validadores",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-vgs-fluxo-de-transacoes-e-modelo-de-processamento",
+            "_ref": "lesson-vgs-fluxo-de-transacoes-e-modelo-de-processamento",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-vgs-compromissos-de-projeto-e-caracteristicas-distintivas",
+            "_ref": "lesson-vgs-compromissos-de-projeto-e-caracteristicas-distintivas",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Compreendendo a Arquitetura Central da Solana"
+      },
+      {
+        "_key": "ecossistema-e-terminologia",
+        "_type": "courseModule",
+        "key": "ecossistema-e-terminologia",
+        "lessons": [
+          {
+            "_key": "lesson-vgs-introducao-ao-ecossistema-solana-e-terminologia",
+            "_ref": "lesson-vgs-introducao-ao-ecossistema-solana-e-terminologia",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-vgs-terminologia-essencial-da-solana-em-contexto",
+            "_ref": "lesson-vgs-terminologia-essencial-da-solana-em-contexto",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-vgs-mapeando-categorias-de-projetos-no-ecossistema-solana",
+            "_ref": "lesson-vgs-mapeando-categorias-de-projetos-no-ecossistema-solana",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-vgs-navegando-pelos-recursos-da-solana-e-proximos-passos",
+            "_ref": "lesson-vgs-navegando-pelos-recursos-da-solana-e-proximos-passos",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Exploração do Ecossistema Solana e Terminologia"
+      },
+      {
+        "_key": "projeto-final",
+        "_type": "courseModule",
+        "key": "projeto-final",
+        "lessons": [
+          {
+            "_key": "lesson-vgs-enquadrando-o-projeto-final-escopo-e-metodo-para-a-historia-da-solana",
+            "_ref": "lesson-vgs-enquadrando-o-projeto-final-escopo-e-metodo-para-a-historia-da-solana",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-vgs-sintetizando-a-historia-da-solana",
+            "_ref": "lesson-vgs-sintetizando-a-historia-da-solana",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-vgs-analisando-a-arquitetura-da-solana-para-o-relatorio",
+            "_ref": "lesson-vgs-analisando-a-arquitetura-da-solana-para-o-relatorio",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-vgs-relatorio-final-redacao-e-polimento-do-relatorio-abrangente-sobre-solana",
+            "_ref": "lesson-vgs-relatorio-final-redacao-e-polimento-do-relatorio-abrangente-sobre-solana",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Projeto Final: Documentando a Jornada e a Arquitetura da Solana"
       }
     ],
     "slug": {
@@ -319,13 +421,16 @@
       "current": "visao-geral-solana"
     },
     "tags": [
-      "solana-fundamentals"
+      "account-model",
+      "rpc-reads",
+      "solana-fundamentals",
+      "transactions"
     ],
-    "thumbnail": "/content-assets/visao-geral-solana/banner.png",
+    "thumbnail": "/content-assets/visao-geral-solana/banner.jpg",
     "title": "Visão Geral da Blockchain Solana",
     "trackId": 0,
     "trackLevel": 0,
     "xpPerLesson": 20,
-    "xpReward": 60
+    "xpReward": 320
   }
 ]

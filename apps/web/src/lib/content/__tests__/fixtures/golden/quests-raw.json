@@ -57,6 +57,12 @@
       ]
     },
     {
+      "_id": "course-pilula-solana-superteam:pilula",
+      "lessonIds": [
+        "lesson-psp-solana-em-2-minutos"
+      ]
+    },
+    {
       "_id": "course-solana-speedrun:speedrun",
       "lessonIds": [
         "lesson-ssr-por-que-solana",
@@ -66,17 +72,39 @@
       ]
     },
     {
-      "_id": "course-pilula-solana-superteam:pilula",
-      "lessonIds": [
-        "lesson-psp-solana-em-2-minutos"
-      ]
-    },
-    {
       "_id": "course-visao-geral-solana:origens-e-historia",
       "lessonIds": [
         "lesson-vgs-origens-fundacao",
         "lesson-vgs-desafios-iniciais",
-        "lesson-vgs-marcos-e-adocao"
+        "lesson-vgs-marcos-e-adocao",
+        "lesson-vgs-licoes-aprendidas-e-perspectivas"
+      ]
+    },
+    {
+      "_id": "course-visao-geral-solana:arquitetura-central",
+      "lessonIds": [
+        "lesson-vgs-visao-geral-da-arquitetura-da-solana",
+        "lesson-vgs-componentes-centrais-do-runtime-e-papeis-dos-validadores",
+        "lesson-vgs-fluxo-de-transacoes-e-modelo-de-processamento",
+        "lesson-vgs-compromissos-de-projeto-e-caracteristicas-distintivas"
+      ]
+    },
+    {
+      "_id": "course-visao-geral-solana:ecossistema-e-terminologia",
+      "lessonIds": [
+        "lesson-vgs-introducao-ao-ecossistema-solana-e-terminologia",
+        "lesson-vgs-terminologia-essencial-da-solana-em-contexto",
+        "lesson-vgs-mapeando-categorias-de-projetos-no-ecossistema-solana",
+        "lesson-vgs-navegando-pelos-recursos-da-solana-e-proximos-passos"
+      ]
+    },
+    {
+      "_id": "course-visao-geral-solana:projeto-final",
+      "lessonIds": [
+        "lesson-vgs-enquadrando-o-projeto-final-escopo-e-metodo-para-a-historia-da-solana",
+        "lesson-vgs-sintetizando-a-historia-da-solana",
+        "lesson-vgs-analisando-a-arquitetura-da-solana-para-o-relatorio",
+        "lesson-vgs-relatorio-final-redacao-e-polimento-do-relatorio-abrangente-sobre-solana"
       ]
     }
   ],
