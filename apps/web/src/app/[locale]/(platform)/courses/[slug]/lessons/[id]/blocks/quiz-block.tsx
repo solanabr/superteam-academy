@@ -254,7 +254,10 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
     if (tag === "INPUT") return;
     if (event.key === "ArrowRight") {
       event.preventDefault();
-      goTo(current + 1);
+      // Parity with the forward button: on the last question there is nowhere
+      // to advance to, so ArrowRight collapses instead of silently no-opping.
+      if (lastQuestion) collapse();
+      else goTo(current + 1);
     } else if (event.key === "ArrowLeft") {
       event.preventDefault();
       goTo(current - 1);
