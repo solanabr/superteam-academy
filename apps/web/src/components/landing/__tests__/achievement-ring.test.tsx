@@ -31,7 +31,7 @@ describe("AchievementRing — a fixed, spaced sample of the catalog", () => {
     const { container } = render(<AchievementRing achievements={catalog} />);
     const items = container.querySelectorAll(".ach-ring-item");
     expect(items.length).toBeLessThan(catalog.length);
-    expect(items.length).toBe(7);
+    expect(items.length).toBe(9);
   });
 
   it("spreads the items evenly around the full turn", () => {
@@ -57,8 +57,8 @@ describe("AchievementRing — a fixed, spaced sample of the catalog", () => {
     // shuffled would disagree with the client's first pass and blow up
     // hydration. The server therefore emits the leading slice, in order.
     const html = renderToString(<AchievementRing achievements={catalog} />);
-    catalog.slice(0, 7).forEach((a) => expect(html).toContain(a.name));
-    expect(html).not.toContain(">Achievement 7<");
+    catalog.slice(0, 9).forEach((a) => expect(html).toContain(a.name));
+    expect(html).not.toContain(">Achievement 9<");
     expect(renderToString(<AchievementRing achievements={catalog} />)).toBe(
       html
     );

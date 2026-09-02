@@ -14,7 +14,7 @@ import { AchievementPatch3D } from "@/components/gamification/achievement-patch-
  * neighbours at every breakpoint, and the ring reads as a sample of the set
  * rather than an inventory of it.
  */
-const RING_SLOTS = 7;
+const RING_SLOTS = 9;
 
 /** Draw `n` distinct items at random. Does not touch the input. */
 function sample<T>(items: readonly T[], n: number): T[] {
