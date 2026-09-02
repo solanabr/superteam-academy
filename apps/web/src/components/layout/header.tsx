@@ -9,6 +9,7 @@ import { House, Book, ChatCircle, Chalkboard } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { isInstructorWallet } from "@/lib/content/client-queries";
+import { BetaTag } from "@/components/layout/beta-tag";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { AuthModal, AuthTriggerButton } from "@/components/auth/auth-modal";
@@ -191,30 +192,34 @@ export function Header() {
       <div className="relative bg-transparent backdrop-blur-md">
         <div className="relative mx-auto flex h-[56px] max-w-[1600px] items-center px-[16px]">
           {/* Left: Logo (desktop lg+) */}
-          <Link
-            href={`/${locale}`}
-            className="relative z-10 mr-auto hidden shrink-0 lg:flex"
-          >
-            {/* Academy lockup is the primary mark (brand guide §02). h-6 renders
+          {/* The Beta tag is a SIBLING of the wordmark's link, not a child:
+              it belongs to the lockup but is neither clickable nor part of the
+              link's accessible name. `items-center` centres it on the lockup
+              box rather than on the 56px header band. */}
+          <div className="relative z-10 mr-auto hidden shrink-0 items-center gap-[10px] lg:flex">
+            <Link href={`/${locale}`} className="flex shrink-0">
+              {/* Academy lockup is the primary mark (brand guide §02). h-6 renders
                 it ~126px wide — above the 110px minimum, so the lockup (not the
                 mark) is the correct variant here. */}
-            <Image
-              src="/brand/academy-lockup-forest.svg"
-              alt="Superteam Academy"
-              width={157}
-              height={30}
-              priority
-              className="h-6 w-auto dark:hidden"
-            />
-            <Image
-              src="/brand/academy-lockup-green.svg"
-              alt="Superteam Academy"
-              width={157}
-              height={30}
-              priority
-              className="hidden h-6 w-auto dark:block"
-            />
-          </Link>
+              <Image
+                src="/brand/academy-lockup-forest.svg"
+                alt="Superteam Academy"
+                width={157}
+                height={30}
+                priority
+                className="h-6 w-auto dark:hidden"
+              />
+              <Image
+                src="/brand/academy-lockup-green.svg"
+                alt="Superteam Academy"
+                width={157}
+                height={30}
+                priority
+                className="hidden h-6 w-auto dark:block"
+              />
+            </Link>
+            <BetaTag />
+          </div>
 
           {/* Center: nav pill bar (desktop lg+) */}
           {authLoading ? (
@@ -349,27 +354,30 @@ export function Header() {
 
           {/* Mobile/tablet top bar (< lg) — logo + compact utils */}
           <div className="flex flex-1 items-center justify-between gap-3 lg:hidden">
-            <Link
-              href={user ? `/${locale}/dashboard` : `/${locale}`}
-              className="flex min-h-[44px] items-center"
-            >
-              <Image
-                src="/brand/academy-lockup-forest.svg"
-                alt="Superteam Academy"
-                width={157}
-                height={30}
-                priority
-                className="h-6 w-auto dark:hidden"
-              />
-              <Image
-                src="/brand/academy-lockup-green.svg"
-                alt="Superteam Academy"
-                width={157}
-                height={30}
-                priority
-                className="hidden h-6 w-auto dark:block"
-              />
-            </Link>
+            <div className="flex items-center gap-[10px]">
+              <Link
+                href={user ? `/${locale}/dashboard` : `/${locale}`}
+                className="flex min-h-[44px] shrink-0 items-center"
+              >
+                <Image
+                  src="/brand/academy-lockup-forest.svg"
+                  alt="Superteam Academy"
+                  width={157}
+                  height={30}
+                  priority
+                  className="h-6 w-auto dark:hidden"
+                />
+                <Image
+                  src="/brand/academy-lockup-green.svg"
+                  alt="Superteam Academy"
+                  width={157}
+                  height={30}
+                  priority
+                  className="hidden h-6 w-auto dark:block"
+                />
+              </Link>
+              <BetaTag />
+            </div>
 
             <div className="flex items-center gap-2">
               <LanguageSwitcher />

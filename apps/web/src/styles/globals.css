@@ -6717,3 +6717,48 @@ textarea.set-input {
   --patch-ink: #19231b;
   box-shadow: 0 var(--lift) 0 0 #19231b;
 }
+
+/* ══ Beta tag ═════════════════════════════════════════════════════════════
+   The header's pre-release marker (spec: Beta tag, option 1e / 2c). It is
+   built from the achievement-badge vocabulary — flat fill, full keyline, hard
+   offset shadow — so it belongs to the same family as the patches, chips and
+   level bands instead of reading as a generic status pill.
+
+   Geometry, type and spacing are identical in both themes; only the fill, the
+   keyline and the label change. The keyline and the shadow are always the same
+   colour as each other.
+
+   Light does NOT carry the dark theme's warm cream across: cream on the
+   #FAFAF7 page is a 1.06:1 difference, so the chip would lose its shape and
+   stop reading as a patch. Amber keeps the flat-fill-plus-keyline language
+   intact on cream. That amber is also the Learner band fill and first place on
+   the leaderboard; in the header it is spatially far from both, so the
+   collision is accepted — revisit if amber ever picks up a stricter meaning.
+   ───────────────────────────────────────────────────────────────────────── */
+.beta-tag {
+  display: inline-block;
+  font-family: var(--font-display), "Nunito", sans-serif;
+  font-weight: 900;
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  /* Asymmetric: optical centring for the uppercase cap-height. */
+  padding: 4px 10px 3px;
+  border: 1.5px solid var(--ink-dark);
+  border-radius: 5px;
+  color: var(--ink-dark);
+  background: #fde68a;
+  box-shadow: 0 2px 0 var(--ink-dark);
+  /* The 2px shadow makes the visual box taller than the border box. It is
+     allowed to overhang — no compensating margin. */
+  user-select: none;
+}
+[data-theme="dark"] .beta-tag {
+  /* A warmer cream than the system's #fafaf7 surface, picked so the tag does
+     not read as a floating card against the dark header. */
+  background: #f1e9d2;
+  border-color: var(--keyline);
+  box-shadow: 0 2px 0 var(--keyline);
+  color: #33312c;
+}
