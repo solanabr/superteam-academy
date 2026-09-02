@@ -1,6 +1,7 @@
 {
   "common": {
     "appName": "Superteam Academy",
+    "beta": "Beta",
     "tagline": "Learn Solana Development",
     "loading": "Loading...",
     "error": "Something went wrong",
