@@ -68,11 +68,18 @@ const stripAnsi = (s: string): string => s.replace(ANSI_REGEX, "");
 /**
  * Detect the last top-level `fn` in the submission — the function the tests
  * invoke. Top-level only (start of line, no indentation) so methods inside
- * `impl` blocks are skipped. Mirrors `buildRustTestHarness` in the browser
- * runner. `main` is not a gradeable entry point.
+ * `impl` blocks are skipped, and the LAST match wins because helpers are
+ * declared above the entry point. An optional visibility modifier (`pub`,
+ * `pub(crate)`, `pub(super)`, `pub(in path)`) is accepted: `pub fn` is the
+ * natural Rust spelling of an entry point, and rejecting it failed the whole
+ * submission closed before the Playground was ever called. Mirrors
+ * `buildRustTestHarness` in the browser runner. `main` is not a gradeable entry
+ * point.
  */
 function detectFunctionName(code: string): string | null {
-  const fns = [...code.matchAll(/^fn\s+(\w+)\s*\(/gm)];
+  const fns = [
+    ...code.matchAll(/^(?:pub(?:\s*\([^)]*\))?\s+)?fn\s+(\w+)\s*\(/gm),
+  ];
   const name = fns[fns.length - 1]?.[1] ?? null;
   return name && name !== "main" ? name : null;
 }

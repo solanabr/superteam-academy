@@ -29,22 +29,27 @@ function mockPlayground(
     code: string
   ) => { ok?: boolean; success?: boolean; stdout?: string; stderr?: string }
 ) {
-  vi.stubGlobal(
-    "fetch",
-    vi.fn(async (_url: string, init: { body: string }) => {
-      const { code } = JSON.parse(init.body) as { code: string };
-      const nonce = code.match(/TEST_([0-9a-f]{24})_/)?.[1] ?? "";
-      const r = respond(nonce, code);
-      return {
-        ok: r.ok ?? true,
-        json: async () => ({
-          success: r.success ?? true,
-          stdout: r.stdout ?? "",
-          stderr: r.stderr ?? "",
-        }),
-      } as unknown as Response;
-    })
-  );
+  const spy = vi.fn(async (_url: string, init: { body: string }) => {
+    const { code } = JSON.parse(init.body) as { code: string };
+    const nonce = code.match(/TEST_([0-9a-f]{24})_/)?.[1] ?? "";
+    const r = respond(nonce, code);
+    return {
+      ok: r.ok ?? true,
+      json: async () => ({
+        success: r.success ?? true,
+        stdout: r.stdout ?? "",
+        stderr: r.stderr ?? "",
+      }),
+    } as unknown as Response;
+  });
+  vi.stubGlobal("fetch", spy);
+  return spy;
+}
+
+/** The harness the grader sent to the Playground on its last (only) call. */
+function sentHarness(spy: ReturnType<typeof mockPlayground>): string {
+  const init = spy.mock.calls[0]?.[1] as { body: string } | undefined;
+  return init ? (JSON.parse(init.body) as { code: string }).code : "";
 }
 
 const passAll = (nonce: string) =>
@@ -128,6 +133,64 @@ describe("runRustSubmission", () => {
     const spy = vi.fn();
     vi.stubGlobal("fetch", spy);
     const r = await runRustSubmission("fn main() { let x = 1; }", tests);
+    expect(r).toMatchObject({ available: true, passed: false });
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  // REGRESSION: the entry-point detector was `/^fn\s+…/`, which no `pub fn`
+  // line can match. A submission spelled the natural Rust way never reached the
+  // Playground at all — every test failed closed with "No top-level function
+  // found in submission", naming nothing the learner had done wrong. Authored
+  // content had to be rewritten to bare `fn` to be gradeable. Both spellings
+  // must work, so neither convention can silently zero a challenge again.
+  it.each([
+    ["bare", "fn add(a: i32, b: i32) -> i32 { a + b }"],
+    ["pub", "pub fn add(a: i32, b: i32) -> i32 { a + b }"],
+    ["pub(crate)", "pub(crate) fn add(a: i32, b: i32) -> i32 { a + b }"],
+    ["pub(super)", "pub(super) fn add(a: i32, b: i32) -> i32 { a + b }"],
+    [
+      "pub(in crate::m)",
+      "pub(in crate::m) fn add(a: i32, b: i32) -> i32 { 0 }",
+    ],
+  ])("grades a %s `fn` entry point", async (_visibility, code) => {
+    const spy = mockPlayground((n) => ({ stdout: passAll(n) }));
+    const r = await runRustSubmission(code, tests);
+    expect(spy).toHaveBeenCalledOnce();
+    // The detected name is spliced into the harness — proves `add` was the
+    // entry point, not just that something was found.
+    expect(sentHarness(spy)).toContain("add(2, 3)");
+    expect(r).toMatchObject({ available: true, passed: true });
+  });
+
+  it("skips `pub fn` methods indented inside an impl block", async () => {
+    const spy = mockPlayground((n) => ({ stdout: passAll(n) }));
+    const code = [
+      "struct S;",
+      "impl S {",
+      "    pub fn helper(&self) -> i32 { 1 }",
+      "}",
+      "pub fn add(a: i32, b: i32) -> i32 { a + b }",
+    ].join("\n");
+    await runRustSubmission(code, tests);
+    expect(sentHarness(spy)).toContain("add(2, 3)");
+    expect(sentHarness(spy)).not.toContain("helper(2, 3)");
+  });
+
+  // Documented convention: helpers are declared above, the entry point last.
+  it("takes the LAST top-level fn as the entry point", async () => {
+    const spy = mockPlayground((n) => ({ stdout: passAll(n) }));
+    const code = [
+      "fn double(x: i32) -> i32 { x * 2 }",
+      "pub fn add(a: i32, b: i32) -> i32 { double(a) + b }",
+    ].join("\n");
+    await runRustSubmission(code, tests);
+    expect(sentHarness(spy)).toContain("add(2, 3)");
+  });
+
+  it("fails closed on a `pub fn main` with no other entry point", async () => {
+    const spy = vi.fn();
+    vi.stubGlobal("fetch", spy);
+    const r = await runRustSubmission("pub fn main() { let x = 1; }", tests);
     expect(r).toMatchObject({ available: true, passed: false });
     expect(spy).not.toHaveBeenCalled();
   });
