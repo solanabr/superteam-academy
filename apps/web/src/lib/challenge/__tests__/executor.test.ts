@@ -29,6 +29,17 @@ const sumTests: AdminTestCase[] = [
 ];
 
 const CORRECT = "function add(a, b) { return a + b; }";
+// The same correct function behind the docblock an authored starter ships. The
+// prose "a plain top-level function declaration (no export…)" is the exact
+// wording that hijacked entry-point detection in production — see the
+// regression test below.
+const CORRECT_WITH_DOCBLOCK = `/**
+ * Add two numbers.
+ *
+ * The grader calls add(a, b) directly -
+ * keep it a plain top-level function declaration (no export, no imports).
+ */
+function add(a, b) { return a + b; }`;
 // Passes the VISIBLE test (returns 5 for 2,3) but FAILS the hidden test —
 // this is exactly the "passed in the browser" shape that must be caught.
 const PASSES_VISIBLE_ONLY =
@@ -98,6 +109,50 @@ describe.skipIf(!EXECUTOR_AVAILABLE)(
       // in QuickJS -> every test failed -> an un-completable challenge.
       expect(run.passed).toBe(true);
       expect(run.results.find((r) => r.id === "values")?.passed).toBe(true);
+    });
+
+    // REGRESSION: entry-point detection ran over the raw source and took the
+    // FIRST `function <name>(`-shaped text it found, comments included. A
+    // starter whose docblock read "keep it a plain top-level function
+    // declaration (no export, no imports)" made the harness call
+    // `declaration(...)`, so a learner who wrote the reference solution and
+    // left the comment in place — the normal editing path — scored 0/5 with
+    // "'declaration' is not defined" and nothing in the UI to explain it.
+    // Comment text must never name the entry point.
+    it.each([
+      ["a docblock (the production failure)", CORRECT_WITH_DOCBLOCK],
+      [
+        "a line comment",
+        "// do not write function subtract(a, b) here\nfunction add(a, b) { return a + b; }",
+      ],
+      [
+        "a block comment naming an arrow binding",
+        "/* not const total = (a + b) */\nconst add = (a, b) => a + b;",
+      ],
+      [
+        "a trailing comment after the real declaration",
+        "function add(a, b) { return a + b; }\n// function ignored(x) {}",
+      ],
+    ])("picks the real entry point past %s", async (_label, code) => {
+      const run = await runJsSubmission(code, sumTests);
+      expect(run.available).toBe(true);
+      if (!run.available) return;
+      expect(run.results.map((r) => r.detail).join(" | ")).not.toContain(
+        "is not defined"
+      );
+      expect(run.passed).toBe(true);
+    });
+
+    // Guard the fix in the other direction: comment stripping must not reach
+    // into string literals, where `//` and `/*` are ordinary characters.
+    it("keeps string literals containing comment markers intact", async () => {
+      const run = await runJsSubmission(
+        'function add(a, b) { const rpc = "https://example.com/*x*/"; return rpc ? a + b : 0; }',
+        sumTests
+      );
+      expect(run.available).toBe(true);
+      if (!run.available) return;
+      expect(run.passed).toBe(true);
     });
 
     it("rejects a WRONG submission", async () => {

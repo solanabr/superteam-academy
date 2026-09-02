@@ -288,8 +288,60 @@ function transformImports(code: string): string {
 // Code analysis helpers — run on the main thread
 // ---------------------------------------------------------------------------
 
+/**
+ * Blank out comment TEXT before any code analysis. detectFunctionName takes the
+ * first declaration-shaped match, so prose could name the entry point: a
+ * starter whose docblock read "keep it a plain top-level function declaration
+ * (no export, no imports)" made the runner call declaration(...) and failed a
+ * correct submission on every case. String and template literals are copied
+ * through untouched — a // inside a URL is not a comment. Each comment leaves a
+ * space behind so it cannot glue two tokens together. The result is used ONLY
+ * to read identifiers; the code that RUNS is always the original source.
+ * Mirrors stripComments in @superteam-lms/challenge-executor.
+ */
+function stripComments(code: string): string {
+  let out = "";
+  let i = 0;
+  const n = code.length;
+  while (i < n) {
+    const c = code.charAt(i);
+    if (c === "/" && code.charAt(i + 1) === "/") {
+      while (i < n && code.charAt(i) !== "\n") i++;
+      out += " ";
+      continue;
+    }
+    if (c === "/" && code.charAt(i + 1) === "*") {
+      i += 2;
+      while (i < n && !(code.charAt(i) === "*" && code.charAt(i + 1) === "/"))
+        i++;
+      i += 2;
+      out += " ";
+      continue;
+    }
+    if (c === '"' || c === "'" || c === "`") {
+      out += c;
+      i++;
+      while (i < n) {
+        const d = code.charAt(i);
+        out += d;
+        i++;
+        if (d === "\\") {
+          out += code.charAt(i);
+          i++;
+          continue;
+        }
+        if (d === c) break;
+      }
+      continue;
+    }
+    out += c;
+    i++;
+  }
+  return out;
+}
+
 function detectFunctionName(code: string): string | null {
-  const fnMatch = code.match(
+  const fnMatch = stripComments(code).match(
     /(?:function\s+(\w+)\s*\(|(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s*)?\()/
   );
   return fnMatch ? (fnMatch[1] ?? fnMatch[2] ?? null) : null;
@@ -299,7 +351,7 @@ function functionHasParams(code: string, fnName: string): boolean {
   const re = new RegExp(
     `(?:function\\s+${fnName}\\s*\\(([^)]*?)\\)|(?:const|let|var)\\s+${fnName}\\s*=\\s*(?:async\\s*)?\\(([^)]*?)\\))`
   );
-  const m = code.match(re);
+  const m = stripComments(code).match(re);
   if (!m) return false;
   const params = (m[1] ?? m[2] ?? "").trim();
   return params.length > 0;
@@ -557,9 +609,13 @@ function stripAnsi(str: string): string {
 }
 
 function buildRustTestHarness(userCode: string, tests: TestCase[]): string {
-  // Match top-level fn declarations (start of line, no indentation).
-  // This skips methods inside impl blocks which are always indented.
-  const topLevelFns = [...userCode.matchAll(/^fn\s+(\w+)\s*\(/gm)];
+  // Match top-level fn declarations (start of line, no indentation), with an
+  // optional visibility modifier — `pub fn` is the natural Rust spelling and
+  // must grade. This skips methods inside impl blocks which are always
+  // indented. Mirrors detectFunctionName in lib/challenge/rust-executor.ts.
+  const topLevelFns = [
+    ...userCode.matchAll(/^(?:pub(?:\s*\([^)]*\))?\s+)?fn\s+(\w+)\s*\(/gm),
+  ];
   const lastMatch = topLevelFns[topLevelFns.length - 1];
   const fnName = lastMatch?.[1] ?? null;
 
