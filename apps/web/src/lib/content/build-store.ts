@@ -51,5 +51,6 @@ export function buildStore(raw: RawBundle): ContentStore {
     questsById: readonly(idEntries<QuestDoc>(raw.quests)),
     pathsById: readonly(idEntries<LearningPathDoc>(raw.paths)),
     slotsByCourseId: readonly<SlotsLockT>(Object.entries(raw.slots)),
+    l10nByCourseId: readonly(Object.entries(raw.l10n)),
   };
 }

@@ -7,6 +7,7 @@ import {
   Quest,
   LearningPath,
   SlotsLock,
+  L10nStrings,
   type CourseT,
   type LessonT,
   type SlotsLockT,
@@ -108,6 +109,15 @@ export function buildModel(root: string, diagnostics: Diagnostic[]): RepoModel {
       case "path": {
         const path = parse(doc, LearningPath);
         if (path) model.paths.push({ file: doc.path, path });
+        break;
+      }
+      case "l10n": {
+        // The strict shape is the structural half of rule 4 (an overlay can
+        // carry display strings only); the cross-reference half — every key
+        // names a real module, lesson, block, question, option or test — is
+        // the bundle compiler's, fail-closed at content publish.
+        const strings = parse(doc, L10nStrings);
+        if (strings) model.l10n.push({ file: doc.path, strings });
         break;
       }
     }

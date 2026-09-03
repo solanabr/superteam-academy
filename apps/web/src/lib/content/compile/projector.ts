@@ -121,6 +121,9 @@ export function projectContent(
       _type: "course",
       title: c.title,
       slug: { _type: "slug", current: c.slug },
+      // The language the base tree IS (PR #51). Every other language the
+      // course is available in lives in l10n.json, keyed by this course's id.
+      sourceLocale: c.sourceLocale,
       description: c.description,
       difficulty: c.difficulty,
       duration: c.duration,

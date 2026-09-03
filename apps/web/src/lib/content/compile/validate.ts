@@ -14,9 +14,10 @@ import {
   type SlotsLockT,
   type SkillsTaxonomyT,
 } from "@superteam-lms/content-schema";
+import type { RepoTree } from "@/lib/github/types";
 import { ContentValidationError } from "./types";
 import { gateCodeBlock, type GraderSet } from "./executor-gate";
-import type { RepoTree } from "@/lib/github/types";
+import { collectL10nFile, validateL10n, type L10nOverlays } from "./l10n";
 
 export interface ValidatedContent {
   courses: CourseT[];
@@ -36,6 +37,12 @@ export interface ValidatedContent {
   code: Map<string, string>; // ts/rs path → body
   idl: Map<string, string>; // idl path → json
   assets: Map<string, Uint8Array>; // image path → bytes
+  /**
+   * Course translation overlays (`courses/<slug>/l10n/<locale>/`), keyed by
+   * course dir + locale — see `l10n.ts`. Collected FIRST in the classifier so
+   * nothing under `l10n/` is ever read as a source document or source asset.
+   */
+  l10n: L10nOverlays;
 }
 
 const text = (bytes: Uint8Array): string => new TextDecoder().decode(bytes);
@@ -64,7 +71,10 @@ export async function parseAndValidateTree(
     code: new Map(),
     idl: new Map(),
     assets: new Map(),
+    l10n: new Map(),
   };
+  /** course id → repo dir, so overlays can be bound to their course. */
+  const courseDirById = new Map<string, string>();
 
   const zod = <T>(
     schema: { parse: (x: unknown) => T },
@@ -84,6 +94,10 @@ export async function parseAndValidateTree(
     // reach classification, so a tree not built by `extractTarball` cannot
     // slip a parked (`_draft/`) doc past this validator.
     if (isExcludedContentPath(path)) continue;
+    // Translation overlays first: a file under `l10n/` is fully owned by that
+    // branch, whatever its name, so the unanchored suffix checks below can
+    // never mistake an overlay for a course, a lesson or a source asset.
+    if (collectL10nFile(path, bytes, v.l10n, issues)) continue;
     if (path === "skills.yaml") {
       // The only content type at the repo root, not nested under a course/
       // collection dir — a single canonical skill vocabulary, not one doc per
@@ -93,7 +107,10 @@ export async function parseAndValidateTree(
       if (s) v.skills = s;
     } else if (path.endsWith("/course.yaml")) {
       const c = zod(Course, parseYaml(text(bytes)), path);
-      if (c) v.courses.push(c);
+      if (c) {
+        v.courses.push(c);
+        courseDirById.set(c.id, dirOf(path));
+      }
     } else if (path.endsWith("/slots.lock.json")) {
       const s = zod(SlotsLock, JSON.parse(text(bytes)), path);
       if (s) v.slots.set(dirOf(path), s);
@@ -170,6 +187,21 @@ export async function parseAndValidateTree(
       issues.push(...blockIssues);
     }
   }
+
+  // Every overlay key must bind to something real in the source course — a
+  // module key, a lesson slug, a block of the right type, a question/option/
+  // test id, an image the source has. Same check as the bundle compiler's.
+  issues.push(
+    ...validateL10n(
+      v.l10n,
+      { courses: v.courses, lessons: v.lessons, courseDirById },
+      tree,
+      (dir, rel) => {
+        const raw = tree.get(`${dir}/${rel}`);
+        return raw ? (JSON.parse(text(raw)) as { id?: unknown }[]) : [];
+      }
+    )
+  );
 
   if (issues.length > 0) throw new ContentValidationError(issues);
   return v;

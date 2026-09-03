@@ -219,6 +219,18 @@ vi.mock("server-only", () => ({}));
 //    to Markdown, text unchanged), which is the 48 deletions in lessons.json.
 //    No other course moved. quests-raw's moduleLessonMap gains the 3 new
 //    modules; challengeLessonIds is unchanged (the course has no challenges).
+//  - content i18n + WebP wave (bump to academy-courses @8371d7e9, academy-
+//    courses #47/#51/#52): every course.yaml now declares `sourceLocale`
+//    (three PT-BR originals, one EN) and the compiler stamps it on the raw
+//    course doc — `projectCourse` does NOT project it (only the locale-aware
+//    query path attaches locale fields, and only when asked), so courses.json
+//    is byte-unchanged. #52 converts every published PNG to WebP, which
+//    rewrites the image urls inside prose blocks — that is the whole
+//    lessons.json + course-by-slug.json delta, plus #47's repaired adoption
+//    visual in solana-speedrun. Counts unchanged (4 courses / 36 lessons).
+//    No course ships an `l10n/` overlay at this SHA, so l10n.json is `{}`
+//    and the localized-projection path is covered by queries-l10n.test.ts
+//    against a fixture rather than by a golden.
 const deps = { lessonsById };
 
 function bundleCourse(id: string): CourseDoc {

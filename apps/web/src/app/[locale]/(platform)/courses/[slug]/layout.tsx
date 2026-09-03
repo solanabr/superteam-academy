@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import { getCourseBySlug } from "@/lib/content/queries";
 
 export async function generateMetadata(props: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ locale: string; slug: string }>;
 }): Promise<Metadata> {
   const params = await props.params;
-  const course = await getCourseBySlug(params.slug);
+  const course = await getCourseBySlug(params.slug, params.locale);
 
   // Course not found / not yet public — fall back to a slug-derived title.
   if (!course) {

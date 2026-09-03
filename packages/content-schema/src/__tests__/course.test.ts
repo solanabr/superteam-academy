@@ -4,6 +4,7 @@ import { Course } from "../course";
 const base = {
   id: "course-solana-fundamentals",
   slug: "solana-fundamentals",
+  sourceLocale: "en",
   title: "Solana Fundamentals",
   difficulty: "beginner",
   duration: 6,

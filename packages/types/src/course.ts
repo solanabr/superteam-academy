@@ -214,6 +214,20 @@ export interface Course {
   trackLevel?: number;
   /** Authoring workflow state (issue #263). Legacy/repo-synced docs may omit this. */
   authoringStatus?: AuthoringStatus;
+  /**
+   * Content i18n (academy-courses PR #51). A course is one course in every
+   * language it is available in: `sourceLocale` is the language it was
+   * written in, `availableLocales` is that plus every translation overlay it
+   * ships, and `locale` is the language THIS projection was rendered in —
+   * the requested one when the course has it, the source otherwise. A
+   * course reached in a language it does not have still renders (in its
+   * source), so consumers compare `locale` to what the reader asked for to
+   * decide whether to say so. Absent on projections that were not asked for
+   * a locale (grading, API, admin), which read the source tree.
+   */
+  sourceLocale?: string;
+  availableLocales?: string[];
+  locale?: string;
 }
 
 export interface LearningPath {

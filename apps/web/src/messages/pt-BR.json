@@ -269,7 +269,9 @@
     "continue": "Continuar",
     "comingSoon": "Em breve",
     "pathsComingSoonTitle": "As trilhas de aprendizado estão chegando",
-    "pathsComingSoonDescription": "Estamos montando roteiros guiados pelo catálogo. Enquanto isso, veja todos os cursos na aba Todos os Cursos."
+    "pathsComingSoonDescription": "Estamos montando roteiros guiados pelo catálogo. Enquanto isso, veja todos os cursos na aba Todos os Cursos.",
+    "languageNotice": "Este curso ainda não está disponível em {language}, então você está lendo o original em {source}.",
+    "availableIn": "Disponível em"
   },
   "lesson": {
     "content": "Conteúdo",

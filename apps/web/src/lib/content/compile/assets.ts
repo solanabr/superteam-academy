@@ -1,5 +1,20 @@
 import { createHash } from "node:crypto";
 
+/**
+ * Image rules shared by the source tree and the `l10n/` overlays: only these
+ * formats may enter the app repo (fail-closed on anything else), and a per-file
+ * cap so a content PR cannot bloat it. A localized image inherits both.
+ */
+export const ASSET_EXT_ALLOWLIST = new Set([
+  "png",
+  "jpg",
+  "jpeg",
+  "webp",
+  "svg",
+]);
+/** 1 MiB. */
+export const MAX_ASSET_BYTES = 1024 * 1024;
+
 export interface Dimensions {
   width: number;
   height: number;

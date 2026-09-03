@@ -11,6 +11,7 @@ import { Quest } from "../src/quest";
 import { LearningPath } from "../src/path";
 import { SlotsLock } from "../src/slots";
 import { SkillsTaxonomy } from "../src/skills";
+import { L10nStrings } from "../src/l10n";
 
 /** One entry per file kind an author writes (or a tool generates). */
 export const SCHEMA_TARGETS = {
@@ -22,6 +23,8 @@ export const SCHEMA_TARGETS = {
   path: LearningPath,
   slots: SlotsLock,
   skills: SkillsTaxonomy,
+  /** `courses/<slug>/l10n/<locale>/strings.yaml` — the content repo ships this as `l10n-strings.schema.json`. */
+  l10n: L10nStrings,
 } as const;
 
 function main(): void {

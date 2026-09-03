@@ -51,7 +51,10 @@ describe("GET /api/content/courses", () => {
     );
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ courses: [{ _id: "course-a" }] });
-    expect(fns.getCoursesByIds).toHaveBeenCalledWith(["course-a", "course-b"]);
+    expect(fns.getCoursesByIds).toHaveBeenCalledWith(
+      ["course-a", "course-b"],
+      undefined
+    );
     expectCdnCacheable(res);
   });
 
@@ -60,7 +63,10 @@ describe("GET /api/content/courses", () => {
     await getCourses(
       req("/api/content/courses?ids=course-b,course-a,course-b")
     );
-    expect(fns.getCoursesByIds).toHaveBeenCalledWith(["course-a", "course-b"]);
+    expect(fns.getCoursesByIds).toHaveBeenCalledWith(
+      ["course-a", "course-b"],
+      undefined
+    );
   });
 
   it("400s on missing ids", async () => {
@@ -118,10 +124,10 @@ describe("GET /api/content/course-lessons", () => {
         },
       ],
     });
-    expect(fns.getCourseLessonOrders).toHaveBeenCalledWith([
-      "course-a",
-      "course-b",
-    ]);
+    expect(fns.getCourseLessonOrders).toHaveBeenCalledWith(
+      ["course-a", "course-b"],
+      undefined
+    );
     expectCdnCacheable(res);
   });
 
@@ -201,7 +207,7 @@ describe("GET /api/content/recommended", () => {
     fns.getRecommendedCourses.mockResolvedValue([]);
     const res = await getRecommended(req("/api/content/recommended"));
     expect(res.status).toBe(200);
-    expect(fns.getRecommendedCourses).toHaveBeenCalledWith([]);
+    expect(fns.getRecommendedCourses).toHaveBeenCalledWith([], undefined);
   });
 
   it("passes exclude ids through", async () => {
@@ -210,7 +216,10 @@ describe("GET /api/content/recommended", () => {
       req("/api/content/recommended?exclude=course-a")
     );
     expect(await res.json()).toEqual({ courses: [{ _id: "course-b" }] });
-    expect(fns.getRecommendedCourses).toHaveBeenCalledWith(["course-a"]);
+    expect(fns.getRecommendedCourses).toHaveBeenCalledWith(
+      ["course-a"],
+      undefined
+    );
     expectCdnCacheable(res);
   });
 

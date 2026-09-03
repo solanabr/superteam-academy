@@ -269,7 +269,9 @@
     "continue": "Continue",
     "comingSoon": "Coming soon",
     "pathsComingSoonTitle": "Learning paths are on the way",
-    "pathsComingSoonDescription": "We're building guided routes through the catalogue. In the meantime, browse every course in the All Courses tab."
+    "pathsComingSoonDescription": "We're building guided routes through the catalogue. In the meantime, browse every course in the All Courses tab.",
+    "languageNotice": "This course isn't available in {language} yet, so you're reading the {source} original.",
+    "availableIn": "Available in"
   },
   "lesson": {
     "content": "Content",

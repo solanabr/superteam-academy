@@ -3,6 +3,7 @@ import "server-only";
 import type { SlotsLockT } from "@superteam-lms/content-schema";
 import achievementsJson from "@/content/generated/achievements.json";
 import coursesJson from "@/content/generated/courses.json";
+import l10nJson from "@/content/generated/l10n.json";
 import lessonsJson from "@/content/generated/lessons.json";
 import pathsJson from "@/content/generated/paths.json";
 import questsJson from "@/content/generated/quests.json";
@@ -11,6 +12,7 @@ import slotsJson from "@/content/generated/slots.json";
 import type {
   AchievementDoc,
   CourseDoc,
+  L10nBundle,
   LearningPathDoc,
   LessonDoc,
   QuestDoc,
@@ -42,6 +44,10 @@ const store = buildStore({
   quests: questsJson as unknown as QuestDoc[],
   paths: pathsJson as unknown as LearningPathDoc[],
   slots: slotsJson as unknown as Record<string, SlotsLockT>,
+  // `{}` typed as the sparse overlay map: `resolveJsonModule` infers an empty
+  // literal as `{}`, which has no index signature, so this seam takes the
+  // same one boundary assertion as the others.
+  l10n: l10nJson as unknown as L10nBundle,
 });
 
 export const {
@@ -53,6 +59,7 @@ export const {
   questsById,
   pathsById,
   slotsByCourseId,
+  l10nByCourseId,
 } = store;
 
 /**

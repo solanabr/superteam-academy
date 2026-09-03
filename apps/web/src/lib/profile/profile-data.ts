@@ -1,3 +1,4 @@
+import { getLocale } from "next-intl/server";
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Achievement, Certificate } from "@superteam-lms/types";
@@ -129,7 +130,7 @@ async function shapeProfileContent(input: ShapeInput): Promise<ProfileContent> {
   const [courseSummaries, allLessonSkills, allAchievements] = await Promise.all(
     [
       enrolledIds.length > 0
-        ? getCoursesByIds(enrolledIds)
+        ? getCoursesByIds(enrolledIds, await getLocale())
         : Promise.resolve([]),
       getAllLessonSkills(),
       getAllAchievements(),

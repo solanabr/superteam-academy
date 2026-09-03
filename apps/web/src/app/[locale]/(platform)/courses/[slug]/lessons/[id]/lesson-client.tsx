@@ -28,6 +28,7 @@ import { ThreadList } from "@/components/community/thread-list";
 import { ThreadComposer } from "@/components/community/thread-composer";
 import { LessonSection } from "@/components/lessons/lesson-section";
 import { LinkedWalletPrompt } from "@/components/wallet/linked-wallet-prompt";
+import { CourseLanguageNotice } from "@/components/courses/course-language-notice";
 import {
   LessonJumpChips,
   type JumpChip,
@@ -109,6 +110,14 @@ interface LessonPageClientProps {
    */
   buildersCompleted?: number;
   /**
+   * Content i18n (academy-courses PR #51): the language the course is written
+   * in and every language it ships. When the reader's UI locale is not among
+   * them the lesson still renders — in the source language — and a notice
+   * says so. Optional: the teacher preview does not thread them.
+   */
+  courseSourceLocale?: string | null;
+  courseAvailableLocales?: string[] | null;
+  /**
    * Base path for in-lesson navigation (back, prev/next). Defaults to the live
    * catalogue (`/{locale}/courses`); the teacher preview (#831) points it at
    * itself so navigation never escapes into `/courses`, where an unpublished
@@ -178,6 +187,8 @@ export function LessonPageClient({
   courseXpPerLesson,
   courseDifficulty = null,
   buildersCompleted = 0,
+  courseSourceLocale = null,
+  courseAvailableLocales = null,
   hrefBase,
   readOnly = false,
 }: LessonPageClientProps) {
@@ -746,6 +757,12 @@ export function LessonPageClient({
           : "max-w-3xl space-y-6"
       }`}
     >
+      <CourseLanguageNotice
+        sourceLocale={courseSourceLocale}
+        availableLocales={courseAvailableLocales}
+        className="lg:shrink-0"
+      />
+
       {/* Lesson top bar — full-bleed on challenges so its bottom border and
           content line up with the edge-to-edge editor split below. Three
           columns: back (left), Prev/Next (center, challenge pages),

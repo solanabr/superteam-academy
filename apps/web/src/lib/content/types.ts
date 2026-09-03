@@ -1,5 +1,8 @@
 import type { SlotsLockT } from "@superteam-lms/content-schema";
 import type { BundleDoc } from "@/lib/content/compile/types";
+import type { L10nBundle, L10nCourseBundle } from "@/lib/content/compile/l10n";
+
+export type { L10nBundle, L10nCourseBundle };
 
 /**
  * The committed content bundle (`src/content/generated/*.json`) holds RAW
@@ -51,6 +54,8 @@ export interface RawBundle {
   quests: QuestDoc[];
   paths: LearningPathDoc[];
   slots: Record<string, SlotsLockT>;
+  /** `l10n.json`: course id → locale → translated leaves (sparse). */
+  l10n: L10nBundle;
 }
 
 /** Typed, read-only lookup maps over the bundle. Maps are exposed as
@@ -64,4 +69,6 @@ export interface ContentStore {
   questsById: ReadonlyMap<string, QuestDoc>;
   pathsById: ReadonlyMap<string, LearningPathDoc>;
   slotsByCourseId: ReadonlyMap<string, SlotsLockT>;
+  /** Translation overlays by course id; a course with none is simply absent. */
+  l10nByCourseId: ReadonlyMap<string, Record<string, L10nCourseBundle>>;
 }

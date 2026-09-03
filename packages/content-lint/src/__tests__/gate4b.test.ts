@@ -9,6 +9,7 @@ slug: ${id.replace("course-", "")}
 title: ${id}
 difficulty: beginner
 duration: 1
+sourceLocale: en
 xpPerLesson: 10
 xpReward: 100
 modules: [{ key: m, title: M, lessons: [lesson-a] }]

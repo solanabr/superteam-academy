@@ -6,6 +6,7 @@ import type {
   QuestT,
   LearningPathT,
   SlotsLockT,
+  L10nStringsT,
 } from "@superteam-lms/content-schema";
 
 export interface LessonEntry {
@@ -38,6 +39,8 @@ export interface RepoModel {
   achievements: { file: string; achievement: AchievementT }[];
   quests: { file: string; quest: QuestT }[];
   paths: { file: string; path: LearningPathT }[];
+  /** Course translation overlays (`l10n/<locale>/strings.yaml`), schema-valid. */
+  l10n: { file: string; strings: L10nStringsT }[];
 }
 
 /** The typed collections start empty; Gate 1 (checks/gate1-schema.ts) fills them. */
@@ -51,5 +54,6 @@ export function emptyModel(root: string): RepoModel {
     achievements: [],
     quests: [],
     paths: [],
+    l10n: [],
   };
 }

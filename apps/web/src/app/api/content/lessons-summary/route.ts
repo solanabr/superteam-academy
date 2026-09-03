@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getLessonsByIds } from "@/lib/content/queries";
 import { parseIds, CONTENT_CACHE_HEADERS } from "../params";
+import { localeFromRequest } from "../locale";
 
 /**
  * Public lesson SUMMARIES by id — the client-side face of `getLessonsByIds`
@@ -15,9 +16,9 @@ export async function GET(request: NextRequest) {
     // Explicit re-projection: even if the underlying fn ever grew extra fields,
     // this route serves EXACTLY the summary keys and nothing else (answer-key
     // guard — the shape-lock test asserts adversarial extras are stripped).
-    const lessons = (await getLessonsByIds(ids)).map(
-      ({ _id, title, slug }) => ({ _id, title, slug })
-    );
+    const lessons = (
+      await getLessonsByIds(ids, localeFromRequest(request))
+    ).map(({ _id, title, slug }) => ({ _id, title, slug }));
     return NextResponse.json({ lessons }, { headers: CONTENT_CACHE_HEADERS });
   } catch {
     return NextResponse.json(

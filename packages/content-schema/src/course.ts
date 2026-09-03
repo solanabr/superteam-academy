@@ -2,6 +2,7 @@ import { z } from "zod";
 import { CourseId, LessonId, ModuleKey } from "./ids";
 import { DIFFICULTIES, MAX_LESSON_SLOTS, MAX_XP_PER_MINT } from "./constants";
 import { SolanaAddress } from "./wallet";
+import { ContentLocale } from "./l10n";
 
 const unique = <T>(xs: readonly T[]) => new Set(xs).size === xs.length;
 
@@ -17,6 +18,20 @@ export const Course = z
   .object({
     id: CourseId,
     slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+    /**
+     * The language this course is WRITTEN in — the language its base tree IS
+     * (academy-courses PR #51). Set once at creation. Other languages arrive
+     * as `l10n/<locale>/` overlays beside the lessons (see `l10n.ts`), and
+     * the available-language list is DERIVED: this plus whatever overlay
+     * folders exist. Fallback is always requested → sourceLocale, never →
+     * `en`; most live courses are PT-BR originals with no English at all.
+     *
+     * Required, not defaulted: a defaulted `en` would silently label a
+     * Portuguese course English the moment an author forgot the line, and
+     * the Portuguese reader would then be told the course is not available
+     * in Portuguese.
+     */
+    sourceLocale: ContentLocale,
     title: z.string().min(1),
     description: z.string().optional(),
     difficulty: z.enum(DIFFICULTIES),

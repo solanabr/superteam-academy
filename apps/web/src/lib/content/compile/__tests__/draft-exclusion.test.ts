@@ -25,6 +25,7 @@ function course(id: string, slug: string, lessonId: string): unknown {
   return {
     id,
     slug,
+    sourceLocale: "en",
     title: slug,
     description: "d",
     difficulty: "beginner",

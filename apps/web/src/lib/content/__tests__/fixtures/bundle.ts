@@ -39,6 +39,7 @@ export const fixtureBundle: RawBundle = {
   ],
   quests: [{ _id: "quest-daily", _type: "quest", name: "Daily Quest" }],
   paths: [{ _id: "path-core", _type: "learningPath", title: "Core Path" }],
+  l10n: {},
   slots: {
     "course-alpha": {
       version: 1,

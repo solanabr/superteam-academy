@@ -8,6 +8,7 @@ export * from "./skills";
 export * from "./version-stamp";
 export * from "./blocks";
 export * from "./lesson";
+export * from "./l10n";
 export * from "./course";
 export * from "./achievement";
 export * from "./quest";

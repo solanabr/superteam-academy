@@ -28,9 +28,18 @@ import {
 } from "./project";
 import { resolveRefs } from "./resolve-refs";
 import {
+  availableLocales,
+  docSourceLocale,
+  localizeCourseDoc,
+  localizeLessonDoc,
+  localizedLessonMap,
+  resolveCourseLocale,
+} from "./localize";
+import {
   achievementsById,
   coursesById,
   coursesBySlug,
+  l10nByCourseId,
   lessonsById,
   pathsById,
   questsById,
@@ -127,6 +136,85 @@ export function byTrackLevel(
 
 const projectionDeps = { lessonsById };
 
+// --- content i18n (academy-courses PR #51) ---
+
+/**
+ * A course doc plus its lessons, in ONE language. `requested` is the reader's
+ * UI locale; the course answers in it when it has it (as source or overlay)
+ * and in its own source language otherwise — links never break, the page
+ * just says so. Without `requested` (grading, admin, API routes that have no
+ * reader) the source tree is returned untouched, so those paths cannot even
+ * observe that overlays exist.
+ *
+ * Learner-facing queries take a trailing optional `locale` and route through
+ * here; everything downstream (projectors, renderers) stays locale-blind.
+ */
+interface LocalizedCourse {
+  doc: CourseDoc;
+  lessonsById: ReadonlyMap<string, LessonDoc>;
+  locale: string;
+  sourceLocale: string;
+  availableLocales: string[];
+}
+
+function localizeCourse(doc: CourseDoc, requested?: string): LocalizedCourse {
+  const overlays = l10nByCourseId.get(doc._id);
+  const sourceLocale = docSourceLocale(doc);
+  const locale = resolveCourseLocale(requested, sourceLocale, overlays);
+  const overlay = locale === sourceLocale ? undefined : overlays?.[locale];
+  return {
+    doc: localizeCourseDoc(doc, overlay),
+    lessonsById: localizedLessonMap(lessonsById, overlay),
+    locale,
+    sourceLocale,
+    availableLocales: availableLocales(sourceLocale, overlays),
+  };
+}
+
+/** The locale fields a learner-facing `Course` projection carries — only when a locale was asked for. */
+function localeFields(
+  l: LocalizedCourse,
+  requested: string | undefined
+): Pick<Course, "sourceLocale" | "availableLocales" | "locale"> {
+  if (requested === undefined) return {};
+  return {
+    sourceLocale: l.sourceLocale,
+    availableLocales: l.availableLocales,
+    locale: l.locale,
+  };
+}
+
+/** Project a course in the reader's language, with the locale fields attached. */
+function projectLocalizedCourse(
+  doc: CourseDoc,
+  requested: string | undefined,
+  opts: Parameters<typeof projectCourse>[2] = {}
+): Course {
+  const l = localizeCourse(doc, requested);
+  return {
+    ...projectCourse(l.doc, { lessonsById: l.lessonsById }, opts),
+    ...localeFields(l, requested),
+  };
+}
+
+/**
+ * The overlay for ONE lesson in ONE locale, found through its owning course
+ * (a lesson belongs to exactly one course). Undefined when the lesson is not
+ * translated into `locale`, or when no locale was asked for.
+ */
+function lessonOverlayFor(lessonId: string, requested: string | undefined) {
+  if (requested === undefined) return undefined;
+  for (const [courseId, overlays] of l10nByCourseId) {
+    const entry = overlays[requested]?.lessons?.[lessonId];
+    if (!entry) continue;
+    const course = coursesById.get(courseId);
+    // Only honour the overlay when the course actually renders in that locale
+    // — identical to the course path's `resolveCourseLocale`.
+    if (course && docSourceLocale(course) !== requested) return entry;
+  }
+  return undefined;
+}
+
 // --- store traversal helpers ---
 
 /** A course doc's `creator` wallet (issue #478), or null when unset. */
@@ -149,13 +237,16 @@ function courseModules(doc: CourseDoc): RawModule[] {
  * dereferenced through the store and unresolvable ones dropped (#405 hardening —
  * the explicit mirror of GROQ `(modules[].lessons[]->{…})[defined(_id)]`).
  */
-function courseLessonDocs(doc: CourseDoc): LessonDoc[] {
+function courseLessonDocs(
+  doc: CourseDoc,
+  lessons: ReadonlyMap<string, LessonDoc> = lessonsById
+): LessonDoc[] {
   const out: LessonDoc[] = [];
   for (const m of courseModules(doc)) {
     const refs = Array.isArray(m.lessons) ? m.lessons : [];
     for (const ref of refs) {
       const id = refId(ref);
-      const lesson = id ? lessonsById.get(id) : undefined;
+      const lesson = id ? lessons.get(id) : undefined;
       if (lesson) out.push(lesson);
     }
   }
@@ -214,11 +305,11 @@ function isCourseUnlisted(c: CourseDoc): boolean {
   return c.unlisted === true;
 }
 
-export async function getAllCourses(): Promise<Course[]> {
+export async function getAllCourses(locale?: string): Promise<Course[]> {
   const courses = await gatedCourses();
   return courses
     .filter((c) => !isCourseUnlisted(c))
-    .map((c) => projectCourse(c, projectionDeps))
+    .map((c) => projectLocalizedCourse(c, locale))
     .sort(byTrackLevel);
 }
 
@@ -232,24 +323,29 @@ export async function getAllCoursesIncludingUnlisted(): Promise<Course[]> {
   return courses.map((c) => projectCourse(c, projectionDeps)).sort(byTitle);
 }
 
-export async function getCourseBySlug(slug: string): Promise<Course | null> {
+export async function getCourseBySlug(
+  slug: string,
+  locale?: string
+): Promise<Course | null> {
   const doc = coursesBySlug.get(slug);
   if (!doc) return null;
   const map = await getActiveDeployments();
   if (!isSynced(map.get(doc._id))) return null;
-  return projectCourse(doc, projectionDeps, { fullLessons: true });
+  return projectLocalizedCourse(doc, locale, { fullLessons: true });
 }
 
 export async function getLessonBySlug(
   courseSlug: string,
-  lessonSlug: string
+  lessonSlug: string,
+  locale?: string
 ): Promise<Lesson | null> {
   const course = coursesBySlug.get(courseSlug);
   if (!course) return null;
   const map = await getActiveDeployments();
   if (!isSynced(map.get(course._id))) return null;
-  const lesson = courseLessonDocs(course).find(
-    (l) => l.slug?.current === lessonSlug
+  const l = localizeCourse(course, locale);
+  const lesson = courseLessonDocs(l.doc, l.lessonsById).find(
+    (x) => x.slug?.current === lessonSlug
   );
   return lesson ? projectLesson(lesson) : null;
 }
@@ -335,7 +431,9 @@ export async function resolveReviewItems(
   return out;
 }
 
-export async function getAllLearningPaths(): Promise<LearningPath[]> {
+export async function getAllLearningPaths(
+  locale?: string
+): Promise<LearningPath[]> {
   const map = await getActiveDeployments();
   // `draft` and `retired` are the content repo's lifecycle flags
   // (packages/content-schema/src/path.ts). They were defined but never read,
@@ -355,7 +453,32 @@ export async function getAllLearningPaths(): Promise<LearningPath[]> {
       (c) =>
         memberIds.has(c._id) && isSynced(map.get(c._id)) && !isCourseUnlisted(c)
     );
-    return projectLearningPath(p, members, projectionDeps);
+    // Paths themselves are not translated (the content repo defines l10n per
+    // course), but their member courses are: localize each member and hand
+    // the projector a lesson map that carries every member's overlay, so the
+    // module summaries inside come out translated too.
+    const localized = members.map((c) => localizeCourse(c, locale));
+    const lessons = localized.reduce<ReadonlyMap<string, LessonDoc>>(
+      (acc, l) => {
+        const overlays = l10nByCourseId.get(l.doc._id);
+        const overlay =
+          l.locale === l.sourceLocale ? undefined : overlays?.[l.locale];
+        return localizedLessonMap(acc, overlay);
+      },
+      lessonsById
+    );
+    const path = projectLearningPath(
+      p,
+      localized.map((l) => l.doc),
+      { lessonsById: lessons }
+    );
+    if (locale !== undefined) {
+      path.courses = path.courses.map((course, i) => ({
+        ...course,
+        ...localeFields(localized[i]!, locale),
+      }));
+    }
+    return path;
   });
 }
 
@@ -405,26 +528,37 @@ export async function getCourseIdBySlug(slug: string): Promise<{
   _id: string;
   xpPerLesson: number;
   difficulty: string | null;
+  /** The language the course is written in, and every language it ships (source first). */
+  sourceLocale: string;
+  availableLocales: string[];
 } | null> {
   const doc = coursesBySlug.get(slug);
   if (!doc) return null;
   const map = await getActiveDeployments();
   if (!isSynced(map.get(doc._id))) return null;
+  const sourceLocale = docSourceLocale(doc);
   return {
     _id: doc._id,
     xpPerLesson: num(doc.xpPerLesson) ?? 0,
     difficulty: str(doc.difficulty),
+    sourceLocale,
+    availableLocales: availableLocales(
+      sourceLocale,
+      l10nByCourseId.get(doc._id)
+    ),
   };
 }
 
 export async function getCourseLessons(
-  courseSlug: string
+  courseSlug: string,
+  locale?: string
 ): Promise<Pick<Lesson, "_id" | "title" | "slug">[]> {
   const doc = coursesBySlug.get(courseSlug);
   if (!doc) return [];
   const map = await getActiveDeployments();
   if (!isSynced(map.get(doc._id))) return [];
-  return courseLessonDocs(doc).map(projectLessonSummary);
+  const l = localizeCourse(doc, locale);
+  return courseLessonDocs(l.doc, l.lessonsById).map(projectLessonSummary);
 }
 
 // --- Dashboard & Profile Queries ---
@@ -440,13 +574,21 @@ export interface CourseSummary {
   learningPath: string | null;
 }
 
-export async function getCoursesByIds(ids: string[]): Promise<CourseSummary[]> {
+export async function getCoursesByIds(
+  ids: string[],
+  locale?: string
+): Promise<CourseSummary[]> {
   if (ids.length === 0) return [];
   const idSet = new Set(ids);
   const map = await getActiveDeployments();
   return [...coursesById.values()]
     .filter((c) => idSet.has(c._id) && isSynced(map.get(c._id)))
-    .map((c) => projectCourseSummary(c, learningPathTitleFor(c._id)));
+    .map((c) =>
+      projectCourseSummary(
+        localizeCourse(c, locale).doc,
+        learningPathTitleFor(c._id)
+      )
+    );
 }
 
 export interface LessonSummary {
@@ -468,26 +610,39 @@ export interface CourseLessonOrder {
  * — this feeds the dashboard's next-incomplete-lesson derivation.
  */
 export async function getCourseLessonOrders(
-  ids: string[]
+  ids: string[],
+  locale?: string
 ): Promise<CourseLessonOrder[]> {
   if (ids.length === 0) return [];
   const idSet = new Set(ids);
   const map = await getActiveDeployments();
   return [...coursesById.values()]
     .filter((c) => idSet.has(c._id) && isSynced(map.get(c._id)))
-    .map((c) => ({
-      _id: c._id,
-      slug: c.slug.current,
-      lessons: courseLessonDocs(c).map(projectLessonSummary),
-    }));
+    .map((c) => {
+      const l = localizeCourse(c, locale);
+      return {
+        _id: c._id,
+        slug: c.slug.current,
+        lessons: courseLessonDocs(l.doc, l.lessonsById).map(
+          projectLessonSummary
+        ),
+      };
+    });
 }
 
-export async function getLessonsByIds(ids: string[]): Promise<LessonSummary[]> {
+export async function getLessonsByIds(
+  ids: string[],
+  locale?: string
+): Promise<LessonSummary[]> {
   if (ids.length === 0) return [];
   const idSet = new Set(ids);
   return [...lessonsById.values()]
     .filter((l) => idSet.has(l._id))
-    .map(projectLessonSummary);
+    .map((l) =>
+      projectLessonSummary(
+        localizeLessonDoc(l, lessonOverlayFor(l._id, locale))
+      )
+    );
 }
 
 export interface RecommendedCourse {
@@ -509,7 +664,8 @@ export interface RecommendedCourse {
 }
 
 export async function getRecommendedCourses(
-  excludeIds: string[]
+  excludeIds: string[],
+  locale?: string
 ): Promise<RecommendedCourse[]> {
   const exclude = new Set(excludeIds);
   const map = await getActiveDeployments();
@@ -522,7 +678,12 @@ export async function getRecommendedCourses(
         // course, even to a learner who found it by direct link.
         !isCourseUnlisted(c)
     )
-    .map((c) => projectRecommended(c, learningPathTitleFor(c._id)))
+    .map((c) =>
+      projectRecommended(
+        localizeCourse(c, locale).doc,
+        learningPathTitleFor(c._id)
+      )
+    )
     .sort(byTrackLevel);
 }
 

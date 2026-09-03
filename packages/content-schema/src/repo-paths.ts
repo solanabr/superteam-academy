@@ -48,6 +48,66 @@ export function isExcludedContentPath(relPath: string): boolean {
   return relPath.startsWith(TEMPLATE_PREFIX) || isDraftPath(relPath);
 }
 
+/**
+ * The translation overlay directory inside a course (academy-courses PR #51):
+ * `courses/<slug>/l10n/<locale>/` mirrors the course folder and holds only
+ * the files that DIFFER — a `strings.yaml` for structured strings, translated
+ * `.md` prose and re-rendered images at their mirrored paths.
+ */
+export const L10N_DIR = "l10n";
+
+/**
+ * Three filenames are forbidden anywhere under `l10n/`. The compiler matches
+ * them by suffix at ANY depth, so an overlay carrying one would ship as a
+ * duplicate course or lesson (or a second slot lock). Structured strings go
+ * in `strings.yaml`.
+ */
+export const L10N_FORBIDDEN_BASENAMES = [
+  "course.yaml",
+  "lesson.yaml",
+  "slots.lock.json",
+] as const;
+
+export const L10N_STRINGS_FILE = "strings.yaml";
+
+export interface L10nPath {
+  /** The course directory the overlay belongs to (`courses/<slug>`). */
+  courseDir: string;
+  /** The folder name under `l10n/` — NOT yet validated as a known locale. */
+  locale: string;
+  /** Path inside the overlay, mirroring the course folder (`lessons/x/intro.md`). */
+  rest: string;
+}
+
+const L10N_SEGMENT = /^(.*?)\/l10n\/([^/]+)\/(.+)$/;
+
+/**
+ * Split a repo-relative path that sits inside a course's translation
+ * overlay, or null. Unanchored and depth-blind like every other compiler
+ * rule here: whatever precedes `/l10n/` is the course dir. An `l10n/` at the
+ * repo root (no course dir in front of it) does not match.
+ */
+export function parseL10nPath(relPath: string): L10nPath | null {
+  const m = L10N_SEGMENT.exec(relPath);
+  if (!m) return null;
+  const [, courseDir, locale, rest] = m;
+  if (!courseDir || !locale || !rest) return null;
+  return { courseDir, locale, rest };
+}
+
+/** True for `courses/<slug>/l10n/<locale>/strings.yaml` — the one overlay DOCUMENT. */
+export function isL10nStringsPath(relPath: string): boolean {
+  return parseL10nPath(relPath)?.rest === L10N_STRINGS_FILE;
+}
+
+/** True when a file under `l10n/` carries one of the forbidden basenames. */
+export function isForbiddenL10nPath(relPath: string): boolean {
+  const l = parseL10nPath(relPath);
+  if (!l) return false;
+  const base = l.rest.slice(l.rest.lastIndexOf("/") + 1);
+  return (L10N_FORBIDDEN_BASENAMES as readonly string[]).includes(base);
+}
+
 /** Collections whose `.yaml` files the compiler treats as documents, by prefix. */
 const COMPILER_COLLECTION_PREFIXES = ["achievements/", "quests/", "paths/"];
 
@@ -68,6 +128,10 @@ const COMPILER_COLLECTION_PREFIXES = ["achievements/", "quests/", "paths/"];
  * walks `.yaml`. Same for `.yml`.
  */
 export function isCompilerContentDoc(relPath: string): boolean {
+  // The overlay branch runs FIRST in the compiler's chain, so a file under
+  // `l10n/` is never a course or a lesson to it — its `strings.yaml` is the
+  // only document the compiler emits from there.
+  if (parseL10nPath(relPath)) return isL10nStringsPath(relPath);
   if (relPath.endsWith("/course.yaml") || relPath.endsWith("/lesson.yaml")) {
     return true;
   }
