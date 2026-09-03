@@ -86,6 +86,11 @@ const L10N_SEGMENT = /^(.*?)\/l10n\/([^/]+)\/(.+)$/;
  * overlay, or null. Unanchored and depth-blind like every other compiler
  * rule here: whatever precedes `/l10n/` is the course dir. An `l10n/` at the
  * repo root (no course dir in front of it) does not match.
+ *
+ * The course-dir capture is LAZY, so the first `/l10n/` segment wins. A course
+ * whose slug is literally `l10n` (`courses/l10n/l10n/en/…`) would therefore
+ * mis-split; the slug regex allows it, nothing else about the tree does, and
+ * it is not worth a special case — noted here so it is not rediscovered.
  */
 export function parseL10nPath(relPath: string): L10nPath | null {
   const m = L10N_SEGMENT.exec(relPath);
