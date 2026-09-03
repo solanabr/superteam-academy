@@ -76,6 +76,7 @@ export const PNG_1X1 = Buffer.from(
 const courseYaml = stringify({
   id: "course-demo",
   slug: "demo",
+  sourceLocale: "en",
   title: "Demo",
   description: "d",
   difficulty: "beginner",

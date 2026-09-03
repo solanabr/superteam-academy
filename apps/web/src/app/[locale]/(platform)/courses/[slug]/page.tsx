@@ -6,14 +6,16 @@ import { createClient } from "@/lib/supabase/server";
 import { CourseDetailClient } from "./course-detail-client";
 
 interface CourseDetailPageProps {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ locale: string; slug: string }>;
 }
 
 export default async function CourseDetailPage({
   params,
 }: CourseDetailPageProps) {
-  const { slug } = await params;
-  const course = await getCourseBySlug(slug);
+  const { locale, slug } = await params;
+  // In the reader's UI language when the course has it, its source language
+  // otherwise — the client compares `course.locale` to `locale` to say so.
+  const course = await getCourseBySlug(slug, locale);
   if (!course) notFound();
 
   // Resolve the instructor's public academy profile server-side (issue

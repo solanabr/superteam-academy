@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { after } from "next/server";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import type {
   CohortLeague,
   DailyQuest,
@@ -210,6 +210,12 @@ export const loadDashboardCore = cache(
       ...new Set([...allEnrolledIds, ...mintedCourseIds]),
     ];
 
+    // Course and lesson titles in the reader's language (content i18n): this
+    // loader only ever runs inside a `[locale]` page render, where next-intl
+    // has already resolved the request locale — the same call the dashboard
+    // sections make themselves.
+    const locale = await getLocale();
+
     // Burst B — content-bundle lookups keyed on burst A's ids. Direct imports:
     // in-memory bundle reads, no /api/content/* HTTP hop (#1096).
     const [
@@ -219,11 +225,11 @@ export const loadDashboardCore = cache(
       lessonOrders,
       lessonSummaries,
     ] = await Promise.all([
-      getCoursesByIds(allCourseIdsToFetch),
-      getRecommendedCourses(excludeFromRecommended),
+      getCoursesByIds(allCourseIdsToFetch, locale),
+      getRecommendedCourses(excludeFromRecommended, locale),
       getAllAchievements(),
-      getCourseLessonOrders(allEnrolledIds),
-      getLessonsByIds(uniqueLessonIds),
+      getCourseLessonOrders(allEnrolledIds, locale),
+      getLessonsByIds(uniqueLessonIds, locale),
     ]);
 
     const courseMap = new Map(courseSummaries.map((c) => [c._id, c]));

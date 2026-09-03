@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCourseLessonOrders } from "@/lib/content/queries";
 import { parseIds, CONTENT_CACHE_HEADERS } from "../params";
+import { localeFromRequest } from "../locale";
 
 /**
  * Ordered lesson summaries per course id — the client-side face of
@@ -13,7 +14,10 @@ export async function GET(request: NextRequest) {
   const ids = parseIds(request.nextUrl.searchParams.get("ids"), false);
   if (ids instanceof NextResponse) return ids;
   try {
-    const courses = await getCourseLessonOrders(ids);
+    const courses = await getCourseLessonOrders(
+      ids,
+      localeFromRequest(request)
+    );
     return NextResponse.json({ courses }, { headers: CONTENT_CACHE_HEADERS });
   } catch {
     return NextResponse.json(

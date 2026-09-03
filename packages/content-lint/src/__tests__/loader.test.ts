@@ -203,6 +203,7 @@ describe("compiler ⊆ lint agreement (#973)", () => {
   const CANONICAL = [
     "courses/live/course.yaml",
     "courses/live/lessons/x/lesson.yaml",
+    "courses/live/l10n/en/strings.yaml",
     "achievements/a.yaml",
     "quests/q.yaml",
     "paths/p.yaml",

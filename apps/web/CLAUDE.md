@@ -201,3 +201,27 @@ pnpm --filter web compile-content   # from repo root (or: cd apps/web && pnpm co
   `src/lib/content/`.
 - **Publishing new content** = a PR that bumps `content.lock` to the new SHA **and** commits the
   regenerated bundle in the same change.
+
+### Course translations (content i18n)
+
+A course is **one course in every language it ships** (academy-courses PR #51). `course.yaml`
+declares `sourceLocale` (the language the base tree IS); other languages are an overlay at
+`courses/<slug>/l10n/<locale>/` — a `strings.yaml` for structured strings plus translated `.md`
+prose and re-rendered images at their mirrored paths. Available languages are **derived**
+(source + overlay folders), never authored.
+
+- **Compiler** (`lib/content/compile/l10n.ts`): the `l10n/` branch runs FIRST in classification,
+  so an overlay file is never read as a course/lesson/source asset. Every overlay key must bind to
+  something real (module key, lesson slug, block key of the right type, question/option/test id,
+  hint index) and every translated `.md`/image must mirror a source file — fail-closed. Emits a
+  sparse `generated/l10n.json` (course id → locale → leaves) and localized images under
+  `public/content-assets/<slug>/l10n/<locale>/`. The source bundle is untouched.
+- **Runtime** (`lib/content/localize.ts`): per-leaf merge onto the RAW docs before projection, so
+  projectors and renderers stay locale-blind. Learner-facing queries take a trailing optional
+  `locale`; `[locale]` pages pass `params.locale`, `/api/content/*` routes derive it
+  (`?locale=` → `NEXT_LOCALE` cookie → `Referer` path), request-scoped loaders use `getLocale()`.
+  **No locale = source tree**: grading (`getLessonByIdForGrading`), admin and email never localize.
+- **Fallback is to the course's own source language, never to `en`.** A course reached in a
+  language it lacks still renders, in its source, and `Course.locale ≠ requested` drives the
+  `CourseLanguageNotice`. An overlay is structurally unable to carry ids, `correct`, XP,
+  `starter`/`solution` or test `input`/`expectedOutput` (`L10nStrings` is `strictObject`).

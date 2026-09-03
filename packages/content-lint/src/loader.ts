@@ -15,7 +15,9 @@ export type DocKind =
   | "achievement"
   | "quest"
   | "path"
-  | "slots";
+  | "slots"
+  /** `courses/<slug>/l10n/<locale>/strings.yaml` — a course translation overlay. */
+  | "l10n";
 
 export interface RawDoc {
   /** Repo-relative POSIX-style path. */
@@ -73,6 +75,7 @@ export function classify(path: string): DocKind | null {
   if (/^courses\/[^/]+\/lessons\/[^/]+\/[^/]+\.quiz\.yaml$/.test(path)) {
     return "quiz";
   }
+  if (/^courses\/[^/]+\/l10n\/[^/]+\/strings\.yaml$/.test(path)) return "l10n";
   if (/^achievements\/[^/]+\.yaml$/.test(path)) return "achievement";
   if (/^quests\/[^/]+\.yaml$/.test(path)) return "quest";
   if (/^paths\/[^/]+\.yaml$/.test(path)) return "path";

@@ -220,6 +220,7 @@ vi.mock("../store", () => {
     coursesBySlug: new Map(h.courses.map((c) => [c.slug.current, c])),
     lessonsById: new Map(h.lessons.map((l) => [l._id, l])),
     lessonsBySlug: new Map(h.lessons.map((l) => [l.slug.current, l])),
+    l10nByCourseId: new Map(),
     achievementsById: byId(h.achievements),
     questsById: byId(h.quests),
     pathsById: byId(h.paths),
@@ -298,6 +299,9 @@ describe("gated catalog fns — synced+active only, trackLevel asc", () => {
       _id: "course-zeta",
       xpPerLesson: 20,
       difficulty: "beginner",
+      // A doc that predates `sourceLocale` reads as English, with no overlays.
+      sourceLocale: "en",
+      availableLocales: ["en"],
     });
     expect(await q.getCourseIdBySlug("off")).toBeNull();
   });

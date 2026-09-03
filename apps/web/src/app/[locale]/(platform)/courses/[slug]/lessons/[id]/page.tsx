@@ -16,8 +16,8 @@ export default async function LessonPage({ params }: LessonPageProps) {
   const { locale, slug, id } = await params;
 
   const [lesson, allLessons, courseInfo] = await Promise.all([
-    getLessonBySlug(slug, id),
-    getCourseLessons(slug),
+    getLessonBySlug(slug, id, locale),
+    getCourseLessons(slug, locale),
     getCourseIdBySlug(slug),
   ]);
 
@@ -43,6 +43,8 @@ export default async function LessonPage({ params }: LessonPageProps) {
       courseXpPerLesson={courseInfo?.xpPerLesson ?? 0}
       courseDifficulty={courseInfo?.difficulty ?? null}
       buildersCompleted={buildersCompleted}
+      courseSourceLocale={courseInfo?.sourceLocale ?? null}
+      courseAvailableLocales={courseInfo?.availableLocales ?? null}
     />
   );
 }

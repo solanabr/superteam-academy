@@ -12,6 +12,7 @@ function courseModel(xpPerLesson: number, lessonCount: number) {
     slotsPath: null,
     slotsLock: null,
     course: {
+      sourceLocale: "en",
       xpPerLesson,
       modules: [{ key: "m", title: "M", lessons }],
     } as never,

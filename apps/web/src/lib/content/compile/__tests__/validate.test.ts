@@ -27,6 +27,7 @@ function tree(files: Record<string, string>): Map<string, Uint8Array> {
 const courseYaml = stringify({
   id: "course-demo",
   slug: "demo",
+  sourceLocale: "en",
   title: "Demo",
   description: "d",
   difficulty: "beginner",
@@ -248,6 +249,7 @@ describe("parseAndValidateTree", () => {
     const parkedCourse = stringify({
       id: "course-parked",
       slug: "parked",
+      sourceLocale: "en",
       title: "Parked",
       description: "d",
       difficulty: "beginner",

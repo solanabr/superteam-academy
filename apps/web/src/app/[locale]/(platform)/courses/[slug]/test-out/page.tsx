@@ -25,7 +25,7 @@ interface TestOutPageProps {
  */
 export default async function TestOutPage({ params }: TestOutPageProps) {
   const { locale, slug } = await params;
-  const course = await getCourseBySlug(slug);
+  const course = await getCourseBySlug(slug, locale);
   if (!course) notFound();
 
   const t = await getTranslations("testOut");

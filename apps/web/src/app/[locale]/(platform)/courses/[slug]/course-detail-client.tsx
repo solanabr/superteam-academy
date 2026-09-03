@@ -30,6 +30,7 @@ import { ThreadList } from "@/components/community/thread-list";
 import { ThreadComposer } from "@/components/community/thread-composer";
 import { CourseChangelog } from "@/components/course/course-changelog";
 import { LinkedWalletPrompt } from "@/components/wallet/linked-wallet-prompt";
+import { CourseLanguageNotice } from "@/components/courses/course-language-notice";
 import type { PublicProfile } from "@/lib/profiles/public-profile";
 import type { CourseChangelogEntry } from "@/lib/courses/changelog-types";
 
@@ -230,6 +231,12 @@ export function CourseDetailClient({
             <h1 className="mt-4 font-display text-3xl font-black tracking-[-0.5px] md:text-4xl">
               {course.title}
             </h1>
+
+            <CourseLanguageNotice
+              sourceLocale={course.sourceLocale}
+              availableLocales={course.availableLocales}
+              className="mt-4"
+            />
 
             <div className="mt-4 space-y-4">
               <p className="text-[15px] leading-relaxed text-text-2">

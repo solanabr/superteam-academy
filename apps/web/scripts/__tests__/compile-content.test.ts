@@ -24,6 +24,7 @@ function validTree(): RepoTree {
         "title: Intro Course",
         "difficulty: beginner",
         "duration: 1",
+        "sourceLocale: en",
         "xpPerLesson: 10",
         "xpReward: 100",
         `creator: ${WALLET}`,
@@ -145,6 +146,7 @@ function treeWithAssets(): RepoTree {
         "title: Intro Course",
         "difficulty: beginner",
         "duration: 1",
+        "sourceLocale: en",
         "xpPerLesson: 10",
         "xpReward: 100",
         `creator: ${WALLET}`,
@@ -183,6 +185,7 @@ describe("compileContent", () => {
       "paths.json",
       "slots.json",
       "skills.json",
+      "l10n.json",
       "meta.json",
     ];
     for (const n of names) expect(files.has(n)).toBe(true);
@@ -201,6 +204,8 @@ describe("compileContent", () => {
       achievements: 1,
       quests: 1,
       learningPaths: 1,
+      // Courses carrying at least one `l10n/` overlay — none in this tree.
+      l10nCourses: 0,
     });
 
     expect((JSON.parse(files.get("courses.json")!) as unknown[]).length).toBe(

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRecommendedCourses } from "@/lib/content/queries";
 import { parseIds, CONTENT_CACHE_HEADERS } from "../params";
+import { localeFromRequest } from "../locale";
 
 /**
  * Public recommended-course summaries — the client-side face of
@@ -13,7 +14,10 @@ export async function GET(request: NextRequest) {
   const exclude = parseIds(request.nextUrl.searchParams.get("exclude"), true);
   if (exclude instanceof NextResponse) return exclude;
   try {
-    const courses = await getRecommendedCourses(exclude);
+    const courses = await getRecommendedCourses(
+      exclude,
+      localeFromRequest(request)
+    );
     return NextResponse.json({ courses }, { headers: CONTENT_CACHE_HEADERS });
   } catch {
     return NextResponse.json(

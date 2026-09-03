@@ -34,6 +34,8 @@ import {
 } from "@superteam-lms/content-schema";
 import type { RepoTree } from "@/lib/github/types";
 import { projectContent } from "./projector";
+import { collectL10nFile, planL10n, validateL10n } from "./l10n";
+import { ASSET_EXT_ALLOWLIST, MAX_ASSET_BYTES } from "./assets";
 import { ContentValidationError } from "./types";
 import type { ValidatedContent } from "./validate";
 
@@ -101,6 +103,7 @@ function validateTree(tree: RepoTree): CompileInput {
     code: new Map(),
     idl: new Map(),
     assets: new Map(),
+    l10n: new Map(),
   };
   const courseDirById = new Map<string, string>();
 
@@ -122,6 +125,12 @@ function validateTree(tree: RepoTree): CompileInput {
     // classification below is unanchored (`endsWith("/course.yaml")`), so a tree
     // built anywhere else would compile parked docs into the shipped bundle.
     if (isExcludedContentPath(p)) continue;
+    // Translation overlays first (academy-courses PR #51): a file under
+    // `l10n/` is fully owned by that branch, whatever its name, so the
+    // unanchored suffix checks below can never mistake an overlay for a
+    // course, a lesson, source prose or a source asset — the exact duplicate-
+    // document hazard the content repo's README warns about.
+    if (collectL10nFile(p, bytes, content.l10n, issues)) continue;
     if (p === "skills.yaml") {
       // The only content type at the repo root, not nested under a course/
       // collection dir — a single canonical skill vocabulary, not one doc per
@@ -232,10 +241,8 @@ const COUNT_KEY: Record<string, string> = {
 
 // ── asset pipeline (SP2 Task 2) ──────────────────────────────────────────────
 
-/** Only these image formats may enter the app repo (fail-closed on anything else). */
-const ASSET_EXT_ALLOWLIST = new Set(["png", "jpg", "jpeg", "webp", "svg"]);
-/** Per-file cap so a content PR can't bloat the app repo. 1 MiB. */
-const MAX_ASSET_BYTES = 1024 * 1024;
+// The image allowlist + size cap live in `assets.ts`, shared with the l10n
+// overlay pipeline so a localized image obeys exactly the source's rules.
 /** Copied under public/<PREFIX>; the rewritten url is `/<PREFIX>/...`. */
 export const ASSET_PUBLIC_PREFIX = "content-assets";
 
@@ -407,7 +414,22 @@ export function compileBundle(
     courseDirById
   );
   const refIssues = validateAssetReferences(content, courseDirById, plan);
-  const issues = [...assetIssues, ...refIssues];
+  const resolveTests = (dir: string, rel: string): unknown[] => {
+    const raw = tree.get(`${dir}/${rel}`);
+    return raw ? (JSON.parse(text(raw)) as unknown[]) : [];
+  };
+  const l10nSource = {
+    courses: content.courses,
+    lessons: content.lessons,
+    courseDirById,
+  };
+  const l10nIssues = validateL10n(
+    content.l10n,
+    l10nSource,
+    tree,
+    resolveTests as (dir: string, rel: string) => { id?: unknown }[]
+  );
+  const issues = [...assetIssues, ...refIssues, ...l10nIssues];
   if (issues.length > 0) throw new ContentValidationError(issues);
 
   // Reuse the sync's projector so emitted docs match Sanity's shape exactly.
@@ -416,10 +438,6 @@ export function compileBundle(
   // but validateAssetReferences already proved every reference resolves).
   const resolveAsset = (p: string): string | null =>
     plan.urlByRepoPath.get(p) ?? null;
-  const resolveTests = (dir: string, rel: string): unknown[] => {
-    const raw = tree.get(`${dir}/${rel}`);
-    return raw ? (JSON.parse(text(raw)) as unknown[]) : [];
-  };
   const { docs } = projectContent(
     content,
     opts.sha,
@@ -489,11 +507,26 @@ export function compileBundle(
   // slug fails the compile, naming the lesson and the bad slug.
   files.set("skills.json", stableJson(content.skills));
 
+  // l10n.json: course id → locale → translated leaves (sparse). Localized
+  // images join the asset set under `<slug>/l10n/<locale>/…`, a subtree no
+  // source image can occupy. Always emitted — `{}` when no course has an
+  // overlay — so the store's import never has to guess.
+  const l10n = planL10n(
+    content.l10n,
+    l10nSource,
+    resolveAsset,
+    ASSET_PUBLIC_PREFIX
+  );
+  files.set("l10n.json", stableJson(l10n.bundle));
+  const assets = new Map(plan.bytesByPublicPath);
+  for (const [rel, bytes] of l10n.assets) assets.set(rel, bytes);
+  counts.l10nCourses = Object.keys(l10n.bundle).length;
+
   const meta: Record<string, unknown> = { sha: opts.sha, counts };
   if (opts.compiledAt !== null) meta.compiledAt = opts.compiledAt;
   files.set("meta.json", stableJson(meta));
 
-  return { files, assets: plan.bytesByPublicPath };
+  return { files, assets };
 }
 
 /** JSON-modules-only view of {@link compileBundle} (assets written separately). */

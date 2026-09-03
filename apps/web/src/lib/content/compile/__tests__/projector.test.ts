@@ -8,6 +8,7 @@ function fixture(): ValidatedContent {
       {
         id: "course-demo",
         slug: "demo",
+        sourceLocale: "en",
         title: "Demo",
         description: "d",
         difficulty: "beginner",
@@ -55,6 +56,7 @@ function fixture(): ValidatedContent {
     ]),
     idl: new Map(),
     assets: new Map(),
+    l10n: new Map(),
   } as ValidatedContent;
 }
 
