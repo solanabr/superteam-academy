@@ -18,6 +18,7 @@ import {
 import { useUser, useGetWalletAccounts } from "@dynamic-labs-sdk/react-hooks";
 import type { SolanaWalletAccount } from "@/lib/dynamic/solana";
 import { createClient } from "@/lib/supabase/client";
+import { isSameWallet } from "@/lib/solana/linked-wallet";
 import { runWalletSiws } from "@/lib/wallet/siws";
 import { logoutDynamic } from "@/lib/dynamic/client";
 import { toMessageSigner } from "@/lib/dynamic/siws";
@@ -242,13 +243,31 @@ export function DynamicAuthHandler() {
 
         // Already linked: nothing to do. Re-running would re-prompt for a
         // signature on every page load.
+        //
+        // One case falls THROUGH to the SIWS call below: the linked wallet IS
+        // this embedded wallet and the account's `wallet_kind` was never
+        // recorded. Accounts that held a Supabase session before Dynamic
+        // existed reach no route that could record it — the bridge treats
+        // their social return as a link rather than a sign-in, and this early
+        // return covered the rest — so a NULL kind offers them the
+        // connect-a-wallet modal when their Dynamic session expires, which is
+        // a dead end for a learner with no extension. Safe to re-link: the
+        // link route treats a re-link of the wallet an account already has as
+        // a no-op apart from recording the kind, and the embedded wallet signs
+        // through Dynamic's MPC service with no prompt, so the learner sees
+        // nothing. Best-effort like every other outcome here — a failure just
+        // retries on a later page load.
+        let healingWalletKind = false;
         if (supabaseUser) {
           const { data: profile } = await supabase
             .from("profiles")
-            .select("wallet_address")
+            .select("wallet_address, wallet_kind")
             .eq("id", supabaseUser.id)
             .maybeSingle();
-          if (profile?.wallet_address) return;
+          healingWalletKind =
+            profile?.wallet_kind === null &&
+            isSameWallet(profile.wallet_address, address);
+          if (profile?.wallet_address && !healingWalletKind) return;
         }
 
         const outcome = await runWalletSiws(
@@ -261,6 +280,12 @@ export function DynamicAuthHandler() {
         );
 
         if (outcome.ok) {
+          // A heal sets no cookies (the link route, unlike sign-in, sets
+          // none) and needs no profile refresh: an in-session expiry is
+          // caught by the SDK's logout event regardless of kind, and a
+          // reload past expiry refetches the profile anyway.
+          if (healingWalletKind) return;
+
           // Hard reload so the Supabase client re-initialises with the cookies
           // the route just set — a soft navigation keeps the anonymous client.
           window.location.reload();
