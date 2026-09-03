@@ -1,11 +1,12 @@
 {
-  "compiledAt": "2026-08-31T19:48:43Z",
+  "compiledAt": "2026-09-03T17:23:23Z",
   "counts": {
     "achievements": 18,
     "courses": 4,
+    "l10nCourses": 0,
     "learningPaths": 1,
     "lessons": 36,
     "quests": 5
   },
-  "sha": "8f40db933bbf7c737dbb3ec265a7118db39a79f1"
+  "sha": "8371d7e96091db390c3794c8c0a452e4e17a5744"
 }
