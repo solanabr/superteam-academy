@@ -160,6 +160,7 @@
       "_type": "slug",
       "current": "btc-to-sol-evolution"
     },
+    "sourceLocale": "en",
     "tags": [
       "account-model",
       "anchor",
@@ -206,6 +207,7 @@
       "_type": "slug",
       "current": "pilula-solana-superteam"
     },
+    "sourceLocale": "pt-BR",
     "tags": [
       "solana-fundamentals",
       "transactions"
@@ -264,6 +266,7 @@
       "_type": "slug",
       "current": "solana-speedrun"
     },
+    "sourceLocale": "pt-BR",
     "tags": [
       "account-model",
       "keypairs-wallets",
@@ -420,6 +423,7 @@
       "_type": "slug",
       "current": "visao-geral-solana"
     },
+    "sourceLocale": "pt-BR",
     "tags": [
       "account-model",
       "rpc-reads",
