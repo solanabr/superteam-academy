@@ -134,8 +134,10 @@ export async function POST(request: NextRequest) {
     // `recordWalletKind` still has work to do, which is exactly what the
     // handler's wallet_kind heal re-links for.
     //
-    // An unlink nulls `wallet_address`, so the unlink → re-link recovery is
-    // not this case and keeps its sync.
+    // Wallet links are permanent (the unlink route refuses them), so the only
+    // writer that nulls `wallet_address` is account deletion — a deleted
+    // account never reaches this route. There is no unlink → re-link path to
+    // preserve here.
     const sameWalletRelink = ownProfile?.wallet_address === body.publicKey;
 
     if (!sameWalletRelink) {
@@ -171,8 +173,8 @@ export async function POST(request: NextRequest) {
 
     // One-time XP sync: mint existing Supabase XP to the newly linked wallet
     // so on-chain balance reflects all XP earned before wallet was connected.
-    // Guarded by wallet_xp_synced_at to prevent double-mint if a previous
-    // unlink's burn failed and the user re-links.
+    // Guarded by wallet_xp_synced_at, which is stamped only when a mint
+    // actually happened — see the same-wallet re-link note above.
     let xpSynced = 0;
     let syncSignature: string | undefined;
 
