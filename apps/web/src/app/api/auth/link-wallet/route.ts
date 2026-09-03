@@ -125,25 +125,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Link wallet to current user's profile
-    const { error: updateError } = await supabaseAdmin
-      .from("profiles")
-      .update({ wallet_address: body.publicKey })
-      .eq("id", user.id);
+    // Re-linking the wallet this account already has. The link itself has
+    // nothing left to write, and the XP sync below MUST NOT run: it is guarded
+    // by `wallet_xp_synced_at`, which is stamped only when a mint actually
+    // happens, so an account that linked while its XP was 0 still carries a
+    // NULL stamp — and a re-link would then mint its whole accrued total on
+    // top of the XP the award queue has been minting per lesson. Only
+    // `recordWalletKind` still has work to do, which is exactly what the
+    // handler's wallet_kind heal re-links for.
+    //
+    // Wallet links are permanent (the unlink route refuses them), so the only
+    // writer that nulls `wallet_address` is account deletion — a deleted
+    // account never reaches this route. There is no unlink → re-link path to
+    // preserve here.
+    const sameWalletRelink = ownProfile?.wallet_address === body.publicKey;
 
-    if (updateError) {
-      // UNIQUE constraint violation — race condition
-      if (updateError.code === "23505") {
+    if (!sameWalletRelink) {
+      const { error: updateError } = await supabaseAdmin
+        .from("profiles")
+        .update({ wallet_address: body.publicKey })
+        .eq("id", user.id);
+
+      if (updateError) {
+        // UNIQUE constraint violation — race condition
+        if (updateError.code === "23505") {
+          return NextResponse.json(
+            { error: "walletAlreadyLinked" },
+            { status: 409 }
+          );
+        }
+        console.error("[link-wallet] Update error:", updateError.message);
         return NextResponse.json(
-          { error: "walletAlreadyLinked" },
-          { status: 409 }
+          { error: "Failed to link wallet" },
+          { status: 500 }
         );
       }
-      console.error("[link-wallet] Update error:", updateError.message);
-      return NextResponse.json(
-        { error: "Failed to link wallet" },
-        { status: 500 }
-      );
     }
 
     // Separate, best-effort write: a routing hint must never be able to fail a
@@ -157,12 +173,12 @@ export async function POST(request: NextRequest) {
 
     // One-time XP sync: mint existing Supabase XP to the newly linked wallet
     // so on-chain balance reflects all XP earned before wallet was connected.
-    // Guarded by wallet_xp_synced_at to prevent double-mint if a previous
-    // unlink's burn failed and the user re-links.
+    // Guarded by wallet_xp_synced_at, which is stamped only when a mint
+    // actually happened — see the same-wallet re-link note above.
     let xpSynced = 0;
     let syncSignature: string | undefined;
 
-    if (!ownProfile?.wallet_xp_synced_at) {
+    if (!sameWalletRelink && !ownProfile?.wallet_xp_synced_at) {
       const { data: xpRow } = await supabaseAdmin
         .from("user_xp")
         .select("total_xp")
