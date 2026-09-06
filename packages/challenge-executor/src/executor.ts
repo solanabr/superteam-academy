@@ -331,13 +331,61 @@ function makeMockConsole() {
 
 /* ---- code analysis (ports of challenge-runner helpers) ------------------ */
 
+/* Blank out comment TEXT before any code analysis. The detector below takes the
+ * first declaration-shaped match, so prose could name the entry point: a
+ * starter whose docblock read "keep it a plain top-level function declaration
+ * (no export, no imports)" made the harness call declaration(...), and a
+ * learner who wrote the reference solution but kept the comment scored 0/5 with
+ * "'declaration' is not defined". String and template literals are copied
+ * through untouched — a // inside a URL is not a comment. Each comment leaves a
+ * space behind so it cannot glue two tokens together. The result is used ONLY
+ * to read identifiers; the code that RUNS is always the original source. */
+function stripComments(code) {
+  var out = "";
+  var i = 0;
+  var n = code.length;
+  while (i < n) {
+    var c = code.charAt(i);
+    if (c === "/" && code.charAt(i + 1) === "/") {
+      while (i < n && code.charAt(i) !== "\n") i++;
+      out += " ";
+      continue;
+    }
+    if (c === "/" && code.charAt(i + 1) === "*") {
+      i += 2;
+      while (i < n && !(code.charAt(i) === "*" && code.charAt(i + 1) === "/")) i++;
+      i += 2;
+      out += " ";
+      continue;
+    }
+    /* Quote openers. The third is the backtick, written as an escape because
+     * this runtime source lives inside a String.raw template on the host,
+     * where a literal backtick would end the template. */
+    if (c === '"' || c === "'" || c === "\u0060") {
+      out += c;
+      i++;
+      while (i < n) {
+        var d = code.charAt(i);
+        out += d;
+        i++;
+        if (d === "\\") { out += code.charAt(i); i++; continue; }
+        if (d === c) break;
+      }
+      continue;
+    }
+    out += c;
+    i++;
+  }
+  return out;
+}
+
 function detectFunctionName(code) {
-  var m = code.match(/(?:function\s+(\w+)\s*\(|(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s*)?\()/);
+  var m = stripComments(code).match(/(?:function\s+(\w+)\s*\(|(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s*)?\()/);
   return m ? (m[1] || m[2] || null) : null;
 }
 function functionHasParams(code, fnName) {
   var re = new RegExp("(?:function\\s+" + fnName + "\\s*\\(([^)]*?)\\)|(?:const|let|var)\\s+" + fnName + "\\s*=\\s*(?:async\\s*)?\\(([^)]*?)\\))");
-  var m = code.match(re);
+  var m = stripComments(code).match(re);
   if (!m) return false;
   var params = (m[1] || m[2] || "").trim();
   return params.length > 0;
