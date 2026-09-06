@@ -753,7 +753,12 @@ export function LessonPageClient({
             // negative margins and become a fixed-height flex column
             // (100dvh minus the fixed header's 60px offset). Top bar is
             // shrink-0; the IDE flex-fills the rest.
-            "max-w-[1600px] space-y-0 lg:-mb-8 lg:-mt-8 lg:flex lg:h-[calc(100dvh-60px)] lg:flex-col"
+            //
+            // The same trick horizontally at lg: the fluid --page-gutter would
+            // otherwise shrink the editor by ~34px a side on a laptop, so the
+            // workspace bleeds it back out and re-applies its own 32px inset.
+            // Below lg it keeps the page gutter like everything else.
+            "lg:page-gutter-bleed max-w-[1600px] space-y-0 lg:-mb-8 lg:-mt-8 lg:flex lg:h-[calc(100dvh-60px)] lg:flex-col lg:px-8"
           : "max-w-3xl space-y-6"
       }`}
     >

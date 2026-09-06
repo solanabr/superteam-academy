@@ -26,7 +26,7 @@ export default function PlatformLayout({
           its hook throws outside a DynamicContextProvider, so it must never
           be a sibling. */}
       <DynamicWalletProvider>
-        <div className="container px-4 pb-20 pt-6 sm:px-6 md:pt-8 lg:px-8 lg:pb-8">
+        <div className="page-gutter container pb-20 pt-6 md:pt-8 lg:pb-8">
           {children}
         </div>
         <GamificationOverlays />

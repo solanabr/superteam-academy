@@ -13,7 +13,7 @@ export function Footer() {
 
   return (
     <footer className="border-t-[2.5px] border-border bg-subtle">
-      <div className="container px-4 py-10 sm:px-8 md:py-12">
+      <div className="page-gutter container py-10 md:py-12">
         <div className="flex flex-col items-center gap-6 md:flex-row md:justify-between">
           <div className="flex flex-col items-center gap-3 md:items-start">
             {/* Academy lockup leads; Superteam Brasil is the "Powered by"

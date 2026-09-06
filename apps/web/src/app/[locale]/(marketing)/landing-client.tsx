@@ -446,7 +446,7 @@ export function LandingPageClient({
             />
           </div>
 
-          <div className="container w-full px-4 pb-10 pt-8 sm:pb-12 sm:pt-10 md:pb-14 md:pt-14">
+          <div className="page-gutter container w-full pb-10 pt-8 sm:pb-12 sm:pt-10 md:pb-14 md:pt-14">
             <div className="mx-auto grid max-w-6xl items-center gap-12 md:grid-cols-2 md:gap-16">
               <div>
                 <div
@@ -556,7 +556,7 @@ export function LandingPageClient({
 
         {/* ── How it works: build → earn → prove ── */}
         <section className="border-y-[2.5px] border-border bg-subtle">
-          <div className="container px-4 py-12 sm:py-20 md:py-28">
+          <div className="page-gutter container py-12 sm:py-20 md:py-28">
             <Reveal>
               <div className="mb-10 flex items-end justify-between sm:mb-16">
                 <h2 className="font-display text-2xl font-black tracking-[-0.5px] sm:text-3xl md:text-4xl">
@@ -692,7 +692,7 @@ export function LandingPageClient({
             aria-hidden="true"
           />
 
-          <div className="container relative px-4 py-16 text-center sm:py-20 md:py-28">
+          <div className="page-gutter container relative py-16 text-center sm:py-20 md:py-28">
             <h2 className="mb-4 font-display text-3xl font-black tracking-[-1px] text-white sm:text-4xl md:text-6xl">
               {t("ctaTitle")}
             </h2>
