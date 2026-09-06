@@ -33,7 +33,7 @@ export default async function RoadmapPage({
   return (
     <div className="flex min-h-screen flex-col">
       <main className="flex-1">
-        <div className="container max-w-4xl px-4 py-12 sm:py-16 md:py-24">
+        <div className="page-gutter container max-w-4xl py-12 sm:py-16 md:py-24">
           <h1 className="font-display text-3xl font-black tracking-tight sm:text-5xl">
             {t("title")}
           </h1>

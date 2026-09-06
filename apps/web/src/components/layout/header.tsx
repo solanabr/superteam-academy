@@ -190,7 +190,7 @@ export function Header() {
   return (
     <header className="fixed left-0 right-0 top-0 z-[200]">
       <div className="relative bg-transparent backdrop-blur-md">
-        <div className="relative mx-auto flex h-[56px] max-w-[1600px] items-center px-[16px]">
+        <div className="page-gutter relative mx-auto flex h-[56px] max-w-[1600px] items-center">
           {/* Left: Logo (desktop lg+) */}
           {/* The Beta tag is a SIBLING of the wordmark's link, not a child:
               it belongs to the lockup but is neither clickable nor part of the
