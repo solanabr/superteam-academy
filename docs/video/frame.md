@@ -49,7 +49,7 @@ ground: "--bg + the .grid-bg fractal-noise tile + the hero's code rain at waterm
 
 3d:
 scene: "perspective 1000px on a stable parent, transform-style: preserve-3d on the body"
-footage-card: "continuous rotateY -6°→+6° / rotateX +3°→-3°, 14s sine - hero-card-idle"
+footage-card: "the hero card idle: rotateX 2°→-1.5°, rotateY -4°→4°, 9s ease-in-out, 1.6s delay, infinite - .hero-card-idle (globals.css); a video may widen the range for legibility, but the product's own values are these"
 builder-id: "both faces authored, back pre-rotated 180°, one 0→360 pose ladder" # achievement-patch-3d.tsx
 
 ---
