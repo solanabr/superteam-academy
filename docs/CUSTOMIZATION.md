@@ -109,6 +109,12 @@ Swapping a font is an edit to the `next/font/google` import; the CSS variable is
 wired by Next's `variable` option, so neither `globals.css` nor the Tailwind
 config changes.
 
+### Video brand guide
+
+The same tokens, inverted for video: [`docs/video/frame.md`](video/frame.md) is the
+HyperFrames design spec for course primers and social cuts, with the motion rules in
+[`docs/video/MOTION.md`](video/MOTION.md).
+
 ### Theme switching
 
 `next-themes` with `attribute="data-theme"`, mounted by
