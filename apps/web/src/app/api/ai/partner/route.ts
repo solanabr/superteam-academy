@@ -133,10 +133,13 @@ interface ValidatedProposeResponse {
 }
 
 // Narrow the Gemini `edits` array. Each entry must be an object with a NON-empty
-// string `search` (empty is unlocatable) and a string `replace` (empty is a
-// valid deletion). Rejects a missing/empty/oversized list. The route does not
-// apply the edits — the client does, against the live buffer — but it still
-// enforces shape so a malformed payload 502s here rather than reaching the UI.
+// string `search` (empty is unlocatable), a string `replace` (empty is a valid
+// deletion), and `replace` must DIFFER from `search` — an edit that rewrites a
+// span to itself is as useless as an unlocatable one (owner-reported
+// 2026-09-08: it renders a diff card with nothing but unchanged lines).
+// Rejects a missing/empty/oversized list. The route does not apply the edits —
+// the client does, against the live buffer — but it still enforces shape so a
+// malformed payload 502s here rather than reaching the UI.
 function validateEdits(value: unknown): CodeEdit[] | null {
   if (!Array.isArray(value) || value.length === 0) return null;
   if (value.length > MAX_PROPOSE_EDITS) return null;
@@ -146,6 +149,7 @@ function validateEdits(value: unknown): CodeEdit[] | null {
     const e = item as Record<string, unknown>;
     if (typeof e.search !== "string" || e.search.length === 0) return null;
     if (typeof e.replace !== "string") return null;
+    if (e.replace === e.search) return null;
     edits.push({ search: e.search, replace: e.replace });
   }
   return edits;
@@ -669,10 +673,24 @@ export async function POST(request: NextRequest) {
       // as the guard for post-request buffer drift, which remains legitimate.
       // applyEdits is the exact sequential-replace the diff card runs, so the
       // server verdict and the client verdict can never disagree.
-      if (!applyEdits(code, validated.edits).ok) {
+      const applied = applyEdits(code, validated.edits);
+      if (!applied.ok) {
         console.error(
           "Gemini propose edits do not apply to the learner buffer"
         );
+        return NextResponse.json(
+          { error: "AI returned an invalid response" },
+          { status: 502 }
+        );
+      }
+      // Owner-reported 2026-09-08: the same dead card, reached the other way —
+      // edits that DO apply but leave the buffer byte-identical (the model
+      // "confirming" already-correct code by rewriting a span to itself). Each
+      // individual edit is now rejected by validateEdits, so what survives to
+      // here is the compound case: edits that differ one by one but cancel out.
+      // Same failure class as an inapplicable edit — 502, billed, not refunded.
+      if (applied.proposed === code) {
+        console.error("Gemini propose edits are a no-op");
         return NextResponse.json(
           { error: "AI returned an invalid response" },
           { status: 502 }
