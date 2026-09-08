@@ -9,6 +9,7 @@ import { Keypair } from "@solana/web3.js";
 import { setCachedBinary } from "@superteam-lms/deploy";
 import { executeRustCode } from "@/lib/rust/execute";
 import { buildProgram } from "@/lib/build-server/client";
+import { firstCompilerErrorLine } from "@/lib/challenge/compiler-error";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import type {
@@ -806,9 +807,12 @@ async function runBuildChallenge(
       return {
         testCase: tc,
         passed: result.success,
+        // On failure show the compiler diagnostic, not the head of stderr —
+        // that is always cargo-build-sbf's INFO/WARN preamble. Full stderr
+        // stays in `error` for the Output tab.
         actualOutput: result.success
           ? "Compilation successful"
-          : cleanStderr.slice(0, 500),
+          : firstCompilerErrorLine(cleanStderr, 300),
       };
     }
     // Additional tests: pass if build succeeded (future: check for specific patterns)

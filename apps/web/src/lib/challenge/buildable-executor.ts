@@ -58,8 +58,9 @@
  */
 
 import type { AdminTestCase } from "@superteam-lms/types";
-import type { ServerTestResult, SubmissionRunResult } from "./executor";
 import { serverEnv } from "@/lib/env.server";
+import type { ServerTestResult, SubmissionRunResult } from "./executor";
+import { firstCompilerErrorLine } from "./compiler-error";
 
 const BUILD_SERVER_URL = serverEnv.BUILD_SERVER_URL;
 const BUILD_SERVER_API_KEY = serverEnv.BUILD_SERVER_API_KEY;
@@ -85,9 +86,6 @@ interface BuildServerResponse {
   uuid: string | null;
   binary_b64?: string;
 }
-
-const ANSI_REGEX = /\x1b\[[0-9;]*m/g;
-const stripAnsi = (s: string): string => s.replace(ANSI_REGEX, "");
 
 /** Whether the build server is configured (and therefore grading can run). */
 export function isBuildServerConfigured(): boolean {
@@ -202,14 +200,8 @@ export async function runBuildableSubmission(
 
   // Explicit compile failure: a bad submission, not an outage. Surface the first
   // real compiler error line as a short, non-sensitive diagnostic (no answer
-  // key). Prefer a diagnostic line (`error[E1234]:` / `error:`) over incidental
-  // matches like a crate named "…-error" in cargo's "Compiling …" progress.
-  const lines = stripAnsi(data.stderr ?? "").split("\n");
-  const firstError =
-    lines.find((l) => /^\s*error(\[|:)/.test(l)) ??
-    lines.find((l) => l.includes("error")) ??
-    "Program did not compile";
-  return allFailed(tests, firstError.trim().slice(0, 200));
+  // key).
+  return allFailed(tests, firstCompilerErrorLine(data.stderr ?? ""));
 }
 
 /** Result of running a single test case — re-exported for callers/tests. */
