@@ -4,6 +4,7 @@ import {
   getPreviewBundle,
   findPreviewCourse,
   findPreviewLesson,
+  previewCourseLessons,
 } from "@/lib/teach/preview-store";
 import {
   requirePreviewPage,
@@ -37,13 +38,16 @@ export default async function PreviewLessonPage({ params }: Props) {
   if (prNumber === null) notFound();
 
   const bundle = await getPreviewBundle(prNumber);
-  const course = findPreviewCourse(bundle, slug);
+  // The course, and therefore every lesson in it, in the UI language when the
+  // PR ships it — the lesson list, prev/next titles and the lesson body all
+  // come from this one localized projection.
+  const course = findPreviewCourse(bundle, slug, locale);
   if (!course) notFound();
 
-  const lesson = findPreviewLesson(bundle, course, id);
+  const lesson = findPreviewLesson(course, id);
   if (!lesson) notFound();
 
-  const allLessons = (bundle.lessonsByCourse[course._id] ?? []).map((l) => ({
+  const allLessons = previewCourseLessons(course).map((l) => ({
     _id: l._id,
     title: l.title,
     slug: l.slug,
@@ -57,6 +61,8 @@ export default async function PreviewLessonPage({ params }: Props) {
       courseSlug={course.slug}
       courseId={course._id}
       courseXpPerLesson={bundle.xpPerLessonById[course._id] ?? 0}
+      courseSourceLocale={course.sourceLocale ?? null}
+      courseAvailableLocales={course.availableLocales ?? null}
       hrefBase={previewHrefBase(locale, prNumber)}
       readOnly
     />

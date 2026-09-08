@@ -1,6 +1,10 @@
 import "server-only";
 
 import type { Course, Lesson } from "@superteam-lms/types";
+import type { L10nBundle } from "@/lib/content/compile/l10n";
+import { localizeCourseView } from "@/lib/content/localize";
+import { projectCourse } from "@/lib/content/project";
+import type { CourseDoc, LessonDoc } from "@/lib/content/types";
 import { compilePrPreview, type PrHead } from "./preview-compile";
 
 /**
@@ -19,8 +23,13 @@ import { compilePrPreview, type PrHead } from "./preview-compile";
 /** The compiled bundle, in the shapes the real page components consume. */
 export interface PreviewBundle {
   head: PrHead;
+  /** Source-language projections — the listing's view. */
   courses: Course[];
   lessonsByCourse: Record<string, Lesson[]>;
+  /** Raw docs + overlays, so the pages can project in the reader's locale. */
+  rawCourses: CourseDoc[];
+  rawLessonsById: Map<string, LessonDoc>;
+  l10n: L10nBundle;
   xpPerLessonById: Record<string, number>;
   /** Asset bytes by public rel path — served by the preview asset route (#923). */
   assets: Map<string, Uint8Array>;
@@ -62,6 +71,9 @@ export async function getPreviewBundle(
     head: r.head,
     courses: r.courses as unknown as Course[],
     lessonsByCourse: r.lessonsByCourse as unknown as Record<string, Lesson[]>,
+    rawCourses: r.rawCourses,
+    rawLessonsById: r.rawLessonsById,
+    l10n: r.l10n,
     xpPerLessonById: r.xpPerLessonById,
     assets: r.assets,
   }));
@@ -73,18 +85,51 @@ export async function getPreviewBundle(
   return value;
 }
 
+/**
+ * A previewed course in the reader's language — the same resolution the live
+ * `getCourseBySlug(slug, locale)` performs, over the PR's own overlays:
+ * `locale` when the course ships it (as source or as `l10n/<locale>/`), the
+ * source language otherwise, with the locale fields attached so the real
+ * course/lesson components show the same language notice they show live.
+ * That is what lets a teacher check both halves of a bilingual PR before it
+ * is published, by switching the UI language.
+ */
 export function findPreviewCourse(
   bundle: PreviewBundle,
-  slug: string
+  slug: string,
+  locale?: string
 ): Course | null {
-  return bundle.courses.find((c) => c.slug === slug) ?? null;
+  const doc = bundle.rawCourses.find((c) => c.slug?.current === slug);
+  if (!doc) return null;
+  const view = localizeCourseView(
+    doc,
+    bundle.l10n[doc._id],
+    bundle.rawLessonsById,
+    locale
+  );
+  return {
+    ...projectCourse(
+      view.doc,
+      { lessonsById: view.lessonsById },
+      { fullLessons: true }
+    ),
+    sourceLocale: view.sourceLocale,
+    availableLocales: view.availableLocales,
+    locale: view.locale,
+  };
 }
 
+/** A localized course's lessons in curriculum order — what prev/next follows. */
+export function previewCourseLessons(course: Course): Lesson[] {
+  return (course.modules ?? []).flatMap((m) => (m.lessons ?? []) as Lesson[]);
+}
+
+/** A lesson of an already-localized course, so it is in the same language. */
 export function findPreviewLesson(
-  bundle: PreviewBundle,
   course: Course,
   lessonSlug: string
 ): Lesson | null {
-  const lessons = bundle.lessonsByCourse[course._id] ?? [];
-  return lessons.find((l) => l.slug === lessonSlug) ?? null;
+  return (
+    previewCourseLessons(course).find((l) => l.slug === lessonSlug) ?? null
+  );
 }

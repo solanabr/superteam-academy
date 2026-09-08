@@ -30,10 +30,10 @@ import { resolveRefs } from "./resolve-refs";
 import {
   availableLocales,
   docSourceLocale,
-  localizeCourseDoc,
+  localizeCourseView,
   localizeLessonDoc,
   localizedLessonMap,
-  resolveCourseLocale,
+  type LocalizedCourseView,
 } from "./localize";
 import {
   achievementsById,
@@ -149,26 +149,15 @@ const projectionDeps = { lessonsById };
  * Learner-facing queries take a trailing optional `locale` and route through
  * here; everything downstream (projectors, renderers) stays locale-blind.
  */
-interface LocalizedCourse {
-  doc: CourseDoc;
-  lessonsById: ReadonlyMap<string, LessonDoc>;
-  locale: string;
-  sourceLocale: string;
-  availableLocales: string[];
-}
+type LocalizedCourse = LocalizedCourseView;
 
 function localizeCourse(doc: CourseDoc, requested?: string): LocalizedCourse {
-  const overlays = l10nByCourseId.get(doc._id);
-  const sourceLocale = docSourceLocale(doc);
-  const locale = resolveCourseLocale(requested, sourceLocale, overlays);
-  const overlay = locale === sourceLocale ? undefined : overlays?.[locale];
-  return {
-    doc: localizeCourseDoc(doc, overlay),
-    lessonsById: localizedLessonMap(lessonsById, overlay),
-    locale,
-    sourceLocale,
-    availableLocales: availableLocales(sourceLocale, overlays),
-  };
+  return localizeCourseView(
+    doc,
+    l10nByCourseId.get(doc._id),
+    lessonsById,
+    requested
+  );
 }
 
 /** The locale fields a learner-facing `Course` projection carries — only when a locale was asked for. */

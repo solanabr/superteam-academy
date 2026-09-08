@@ -221,6 +221,11 @@ prose and re-rendered images at their mirrored paths. Available languages are **
   `locale`; `[locale]` pages pass `params.locale`, `/api/content/*` routes derive it
   (`?locale=` → `NEXT_LOCALE` cookie → `Referer` path), request-scoped loaders use `getLocale()`.
   **No locale = source tree**: grading (`getLessonByIdForGrading`), admin and email never localize.
+- **Teacher preview** (`lib/teach/preview-store.ts`): the in-memory compile keeps its raw docs and
+  `l10n.json`; `findPreviewCourse(bundle, slug, locale)` projects through the same
+  `localizeCourseView` the live queries use, so a teacher checks each language of a bilingual PR
+  by switching the UI language. The listing stays in the source language and shows each course's
+  `availableLocales`.
 - **Fallback is to the course's own source language, never to `en`.** A course reached in a
   language it lacks still renders, in its source, and `Course.locale ≠ requested` drives the
   `CourseLanguageNotice`. An overlay is structurally unable to carry ids, `correct`, XP,

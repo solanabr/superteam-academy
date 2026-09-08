@@ -35,7 +35,9 @@ export default async function PreviewCoursePage({ params }: Props) {
   if (prNumber === null) notFound();
 
   const bundle = await getPreviewBundle(prNumber);
-  const course = findPreviewCourse(bundle, slug);
+  // In the UI language when the PR ships it, its source language otherwise —
+  // switching the language picker is how a teacher checks each half.
+  const course = findPreviewCourse(bundle, slug, locale);
   if (!course) notFound();
 
   return (
