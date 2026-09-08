@@ -1665,7 +1665,8 @@
       "meta": "by {author} · {branch} · {sha}"
     },
     "course": {
-      "lessons": "{count} lessons"
+      "lessons": "{count} lessons",
+      "languages": "Languages: {list}"
     },
     "issues": {
       "title": "{count} content issue(s)",

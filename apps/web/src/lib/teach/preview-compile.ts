@@ -9,8 +9,10 @@ import {
   ASSET_PUBLIC_PREFIX,
 } from "@/lib/content/compile/compile-bundle";
 import { ContentValidationError } from "@/lib/content/compile/types";
+import type { L10nBundle } from "@/lib/content/compile/l10n";
 import { projectCourse } from "@/lib/content/project";
-import type { CourseProjectionDeps } from "@/lib/content/project";
+import { availableLocales, docSourceLocale } from "@/lib/content/localize";
+import type { CourseDoc, LessonDoc } from "@/lib/content/types";
 import { CONTENT_REPO } from "./pr-url";
 import { changedCourseDirs, changedCourseIds } from "./pr-files";
 
@@ -28,14 +30,6 @@ const API = "https://api.github.com";
 
 /** Ceiling on the tarball fetch + body read. Matches lib/content/prior-content. */
 const TARBALL_TIMEOUT_MS = 30_000;
-
-// Derived from the projector's own signature so this file needs no new exports
-// from `lib/content/project` — the doc shapes stay private to that module.
-type CourseDocT = Parameters<typeof projectCourse>[0];
-type LessonDocT =
-  CourseProjectionDeps["lessonsById"] extends ReadonlyMap<string, infer V>
-    ? V
-    : never;
 
 /**
  * `academy-courses` is PUBLIC, so every read here works unauthenticated (#830).
@@ -168,9 +162,25 @@ export async function fetchPrChangedFiles(number: number): Promise<string[]> {
  */
 export interface PreviewResult {
   head: PrHead;
+  /**
+   * Courses in their SOURCE language — the listing's view — each carrying
+   * `sourceLocale` / `availableLocales` so the teacher can see which
+   * languages the PR ships. The course and lesson preview pages do not read
+   * these: they project the raw docs below in the reader's locale through
+   * the same rule the live site uses (see `preview-store`).
+   */
   courses: Course[];
-  /** Hydrated lessons per course id, in course order. */
+  /** Hydrated lessons per course id, in course order (source language). */
   lessonsByCourse: Record<string, Lesson[]>;
+  /**
+   * The raw compiled docs and the PR's translation overlays (content i18n),
+   * with every asset url already pointed at the preview asset route. This is
+   * what lets a previewed course render in Portuguese AND English from one
+   * compile — the fix the live site got in #1199 reached the preview here.
+   */
+  rawCourses: CourseDoc[];
+  rawLessonsById: Map<string, LessonDoc>;
+  l10n: L10nBundle;
   /**
    * Per-course XP, keyed by course id. Read from the raw doc because the
    * projected `Course` does not carry it — the live lesson page fetches it
@@ -265,21 +275,25 @@ export async function compilePrPreview(
 
   // Courses reference their lessons (`_ref`), so hydration runs through the
   // projector rather than a field on the lesson — lessons carry no back-pointer.
-  const lessonsById = new Map<string, LessonDocT>();
+  const lessonsById = new Map<string, LessonDoc>();
   for (const doc of readArray(files, "lessons.json")) {
-    lessonsById.set(String(doc._id), doc as unknown as LessonDocT);
+    lessonsById.set(String(doc._id), doc as unknown as LessonDoc);
   }
 
-  const courseDocs = readArray(files, "courses.json");
-  const courses = courseDocs.map((doc) =>
-    projectCourse(
-      doc as unknown as CourseDocT,
-      { lessonsById },
-      {
-        fullLessons: true,
-      }
-    )
-  );
+  // The PR's translation overlays, url-rewritten above like every other
+  // module. `{}` when no course in the PR ships an `l10n/` folder.
+  const l10nRaw = files.get("l10n.json");
+  const l10n: L10nBundle = l10nRaw ? (JSON.parse(l10nRaw) as L10nBundle) : {};
+
+  const courseDocs = readArray(files, "courses.json") as unknown as CourseDoc[];
+  const courses = courseDocs.map((doc) => {
+    const sourceLocale = docSourceLocale(doc);
+    return {
+      ...projectCourse(doc, { lessonsById }, { fullLessons: true }),
+      sourceLocale,
+      availableLocales: availableLocales(sourceLocale, l10n[doc._id]),
+    };
+  });
 
   // Flatten each projected course's modules back into an ordered lesson list —
   // the same order the curriculum renders, so prev/next in the preview matches.
@@ -300,7 +314,7 @@ export async function compilePrPreview(
   const xpPerLessonById: Record<string, number> = {};
   for (const doc of courseDocs) {
     const xp = doc.xpPerLesson;
-    xpPerLessonById[String(doc._id)] = typeof xp === "number" ? xp : 0;
+    xpPerLessonById[doc._id] = typeof xp === "number" ? xp : 0;
   }
 
   // Scope to the PR's own courses (#831) — dir names from the changed files,
@@ -313,6 +327,9 @@ export async function compilePrPreview(
     courses,
     assets,
     lessonsByCourse,
+    rawCourses: courseDocs,
+    rawLessonsById: lessonsById,
+    l10n,
     xpPerLessonById,
     changedCourseIds: changed,
     counts,

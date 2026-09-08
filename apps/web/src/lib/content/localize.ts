@@ -226,3 +226,40 @@ export function localizedLessonMap(
   }
   return view;
 }
+
+// ── one course, one language ────────────────────────────────────────────────
+
+/** A course doc plus a lesson map, both already in ONE language. */
+export interface LocalizedCourseView {
+  doc: CourseDoc;
+  lessonsById: ReadonlyMap<string, LessonDoc>;
+  /** The language this view renders in — requested when the course has it, else the source. */
+  locale: string;
+  sourceLocale: string;
+  availableLocales: string[];
+}
+
+/**
+ * Resolve a course into the reader's language. Pure and store-independent so
+ * every reader of a bundle — the live query layer over the committed store,
+ * the teacher preview over an in-memory compile — resolves locale by exactly
+ * the same rule: `requested` when the course ships it (as source or overlay),
+ * the course's own source language otherwise, never English by default.
+ */
+export function localizeCourseView(
+  doc: CourseDoc,
+  overlays: Record<string, L10nCourseBundle> | undefined,
+  lessonsById: ReadonlyMap<string, LessonDoc>,
+  requested?: string
+): LocalizedCourseView {
+  const sourceLocale = docSourceLocale(doc);
+  const locale = resolveCourseLocale(requested, sourceLocale, overlays);
+  const overlay = locale === sourceLocale ? undefined : overlays?.[locale];
+  return {
+    doc: localizeCourseDoc(doc, overlay),
+    lessonsById: localizedLessonMap(lessonsById, overlay),
+    locale,
+    sourceLocale,
+    availableLocales: availableLocales(sourceLocale, overlays),
+  };
+}

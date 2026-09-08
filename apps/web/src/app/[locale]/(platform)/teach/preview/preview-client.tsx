@@ -8,11 +8,13 @@ import {
   Lightning,
   Lock,
   Warning,
+  Translate,
 } from "@phosphor-icons/react";
 import { useLocale } from "next-intl";
 import { parsePrUrl } from "@/lib/teach/pr-url";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { localeNames, type Locale } from "@/lib/i18n/config";
 
 interface PreviewLesson {
   _id: string;
@@ -27,6 +29,9 @@ interface PreviewCourse {
   title: string;
   description?: string;
   difficulty?: string;
+  /** The language the course is written in, and every language it ships. */
+  sourceLocale?: string;
+  availableLocales?: string[];
 }
 
 interface PreviewHead {
@@ -369,6 +374,21 @@ export function TeachPreviewClient() {
                         <span>
                           {t("course.lessons", { count: lessons.length })}
                         </span>
+                        {/* Which languages this PR ships the course in (content
+                            i18n). Open the course with the UI in each one to
+                            check that half; an untranslated locale falls back
+                            to the source with a notice, exactly as live. */}
+                        {course.availableLocales &&
+                          course.availableLocales.length > 0 && (
+                            <span className="flex items-center gap-1">
+                              <Translate size={12} weight="bold" />
+                              {t("course.languages", {
+                                list: course.availableLocales
+                                  .map((l) => localeNames[l as Locale] ?? l)
+                                  .join(" · "),
+                              })}
+                            </span>
+                          )}
                         {result.xpPerLessonById[course._id] != null && (
                           <span className="flex items-center gap-1 text-xp">
                             <Lightning size={12} weight="fill" />+
