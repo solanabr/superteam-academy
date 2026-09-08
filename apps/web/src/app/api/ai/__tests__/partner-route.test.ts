@@ -249,6 +249,53 @@ describe("POST /api/ai/partner", () => {
     expect(res.status).toBe(502);
   });
 
+  it("502s a propose whose single edit replaces the buffer with itself", async () => {
+    // Owner-reported 2026-09-08: `search` byte-identical to `replace`. The
+    // search DOES occur, so the applicability check passed and the client
+    // rendered a diff card that changed nothing — for a billed turn.
+    stubGeminiFetch(
+      JSON.stringify({
+        type: "propose",
+        rationale: "The learner code is already correct.",
+        edits: [{ search: "let x = 1;", replace: "let x = 1;" }],
+        check: {
+          question: "Why?",
+          options: ["A", "B", "C"],
+          correctIndex: 0,
+          explanation: "Because.",
+        },
+      })
+    );
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest(VALID_BODY));
+    expect(res.status).toBe(502);
+    // Same class as an inapplicable edit: billed, not refunded.
+    expect(refundAssistTurn).not.toHaveBeenCalled();
+  });
+
+  it("502s a propose whose edits individually differ but net out to the input buffer", async () => {
+    stubGeminiFetch(
+      JSON.stringify({
+        type: "propose",
+        rationale: "Shuffle it around.",
+        edits: [
+          { search: "let x = 1;", replace: "let y = 1;" },
+          { search: "let y = 1;", replace: "let x = 1;" },
+        ],
+        check: {
+          question: "Why?",
+          options: ["A", "B", "C"],
+          correctIndex: 0,
+          explanation: "Because.",
+        },
+      })
+    );
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest(VALID_BODY));
+    expect(res.status).toBe(502);
+    expect(refundAssistTurn).not.toHaveBeenCalled();
+  });
+
   it("passes through a well-formed propose response, sealed and validated", async () => {
     stubGeminiFetch(PROPOSE_GEMINI_TEXT);
 
