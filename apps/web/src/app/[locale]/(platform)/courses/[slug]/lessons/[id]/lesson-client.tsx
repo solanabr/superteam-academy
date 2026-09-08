@@ -759,7 +759,14 @@ export function LessonPageClient({
             // workspace bleeds it back out and re-applies its own 32px inset.
             // Below lg it keeps the page gutter like everything else.
             "lg:page-gutter-bleed max-w-[1600px] space-y-0 lg:-mb-8 lg:-mt-8 lg:flex lg:h-[calc(100dvh-60px)] lg:flex-col lg:px-8"
-          : "max-w-3xl space-y-6"
+          : // Reading lessons use the page's own column, the same one the
+            // course page fills (#1206). They used to sit in a 768px band
+            // centred inside it, which on a laptop left ~34% of the width
+            // empty on each side and made a lesson look narrower than the
+            // course it belongs to. The platform shell's `container` +
+            // `--page-gutter` already cap and inset the page; capping again
+            // here was the only reason the two screens disagreed.
+            "space-y-6"
       }`}
     >
       <CourseLanguageNotice

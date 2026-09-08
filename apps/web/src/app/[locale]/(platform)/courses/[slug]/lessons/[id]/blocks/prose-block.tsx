@@ -134,7 +134,11 @@ export function ProseBlock({ block, ctx }: BlockRenderProps) {
   }, [ctx, t]);
 
   return (
-    <div className="prose max-w-3xl dark:prose-invert">
+    // `max-w-none` cancels the typography plugin's own 65ch cap and adds
+    // none of its own: the PARENT owns the width. On a reading lesson that is
+    // the page column; inside a challenge's instructions rail it is the rail,
+    // which is narrower than any cap this could carry.
+    <div className="prose max-w-none dark:prose-invert">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw, rehypeHighlight]}
