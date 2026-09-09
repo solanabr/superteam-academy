@@ -20,6 +20,10 @@ export function DeployedProgramCardBlock({ ctx }: BlockRenderProps) {
       courseSlug={ctx.courseSlug}
       courseId={ctx.courseId}
       programKeypairSecret={ctx.programKeypairSecret ?? undefined}
+      xpReward={ctx.xpReward}
+      earnedXp={ctx.earnedXp}
+      isCompleted={ctx.isCompleted}
+      nextLessonHref={ctx.nextLessonHref}
       onBuildExpired={ctx.resetBuild}
     />
   );

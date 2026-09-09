@@ -547,6 +547,9 @@ export function LessonPageClient({
       buildUuid,
       programKeypairSecret,
       resetBuild,
+      nextLessonHref: nextLesson
+        ? `${linkBase}/${courseSlug}/lessons/${nextLesson.slug}`
+        : null,
     }),
     [
       lesson,
@@ -567,6 +570,8 @@ export function LessonPageClient({
       buildUuid,
       programKeypairSecret,
       resetBuild,
+      linkBase,
+      nextLesson,
     ]
   );
 

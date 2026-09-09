@@ -24,6 +24,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { shouldShowEncouragement } from "@/lib/gamification/celebration";
+import { setDeployFlow } from "@/lib/deploy/flow-store";
+import { DEPLOY_EDITOR_ANCHOR_ID } from "@/lib/deploy/scroll";
+import { useDeployFlow } from "@/hooks/use-deploy-flow";
+import { DeployStepper } from "@/components/deploy/deploy-stepper";
 import { CodeEditor, resetEditorStorage } from "./code-editor";
 import { canFormatLanguage } from "./formatting";
 import { Stopwatch } from "./stopwatch";
@@ -38,6 +42,9 @@ import type {
 } from "./types";
 
 const LESSON_COMPLETE_EVENT = "superteam:lesson-complete";
+
+/** The deploy success card asking for this lesson's normal submit. */
+const REQUEST_SUBMIT_EVENT = "superteam:request-submit";
 
 // Submit verdict state machine (#942 PR A). `judging` renders while the
 // server-side save is in flight; `accepted`/`rejected` are the server's
@@ -112,6 +119,10 @@ export function ChallengeInterface({
 
   // Default to true for backwards compatibility
   const isEnrolled = isEnrolledProp ?? true;
+
+  // Shared with the deploy panel's stepper (module store, not context — the two
+  // live in sibling subtrees under the lesson page).
+  const deployFlow = useDeployFlow();
 
   const [code, setCode] = useState(initialCode);
   const [challengeState, setChallengeState] = useState<ChallengeState>({
@@ -406,6 +417,27 @@ export function ChallengeInterface({
     completeLesson();
   }, [isEnrolled, completeLesson, lessonId, code]);
 
+  // A deployable lesson's Submit also lives on the deploy success card, next to
+  // the program that was just deployed. It asks for the SAME submit — the
+  // enrollment gate, the grading and the verdict all stay here.
+  useEffect(() => {
+    if (!isDeployable) return;
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ lessonId: string }>).detail;
+      if (detail?.lessonId !== lessonId) return;
+      handleSubmit();
+    };
+    window.addEventListener(REQUEST_SUBMIT_EVENT, handler);
+    return () => window.removeEventListener(REQUEST_SUBMIT_EVENT, handler);
+  }, [isDeployable, lessonId, handleSubmit]);
+
+  // The editor owns the "submit" step of the deploy flow; the panel owns the
+  // rest. Both steppers read one store.
+  useEffect(() => {
+    if (!isDeployable) return;
+    setDeployFlow({ submitted: isComplete });
+  }, [isDeployable, isComplete]);
+
   // Auto-complete when user enrolls after passing all tests
   useEffect(() => {
     if (pendingSubmit && isEnrolled && !isComplete) {
@@ -616,7 +648,9 @@ export function ChallengeInterface({
             (CSS: .verdict-card in globals.css; reduced motion collapses the
             flash to an instant settle). */}
         <div
-          className="verdict-card order-2 flex min-h-0 flex-col overflow-hidden lg:order-none lg:flex-1"
+          id={isDeployable ? DEPLOY_EDITOR_ANCHOR_ID : undefined}
+          tabIndex={isDeployable ? -1 : undefined}
+          className="verdict-card order-2 flex min-h-0 flex-col overflow-hidden outline-none lg:order-none lg:flex-1"
           data-verdict={verdict}
           data-verdict-flash={verdictFlash ? "" : undefined}
         >
@@ -638,6 +672,16 @@ export function ChallengeInterface({
                   isJudging={verdict === "judging"}
                   xpReward={xpReward}
                 />
+                {/* Where the lesson goes next, mirrored beside the Build
+                    button — the deploy card is in the other column and used to
+                    be unfindable after a successful compile. */}
+                {isDeployable && (
+                  <DeployStepper
+                    state={deployFlow}
+                    variant="strip"
+                    className="hidden md:flex"
+                  />
+                )}
               </div>
 
               <div className="flex items-center gap-1">
