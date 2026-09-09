@@ -27,8 +27,10 @@
  * deleting the exercise. What makes the verdict mean something is the lesson's
  * verification harness — a type-level check naming the symbols the exercise has
  * to define, shipped at the bottom of `starter`. So we do not compile what the
- * learner sent: we compile `withCanonicalHarness(code, starter)`, which strips
- * any harness region the submission carries and re-appends the STARTER's. A
+ * learner sent: we compile `buildGradeFiles(code, starter)`, which strips any
+ * harness region the submission carries and compiles the STARTER's as a separate
+ * `/src/_verify.rs` module, declared on the line ABOVE the body so nothing the
+ * learner writes can switch it off (an append could be — see `harness.ts`). A
  * submission passes iff THAT compiles.
  *
  * SECURITY — this path grants on-chain XP, so it must resist a hostile
@@ -69,7 +71,7 @@ import type { AdminTestCase } from "@superteam-lms/types";
 import { serverEnv } from "@/lib/env.server";
 import type { ServerTestResult, SubmissionRunResult } from "./executor";
 import { firstCompilerErrorLine } from "./compiler-error";
-import { splitHarness, withCanonicalHarness } from "./harness";
+import { buildGradeFiles, splitHarness } from "./harness";
 
 const BUILD_SERVER_URL = serverEnv.BUILD_SERVER_URL;
 const BUILD_SERVER_API_KEY = serverEnv.BUILD_SERVER_API_KEY;
@@ -102,20 +104,18 @@ export function isBuildServerConfigured(): boolean {
 }
 
 /**
- * The build server only accepts source paths matching `^/src/<name>.rs$`, so a
- * buildable submission is always compiled as the crate's `src/lib.rs`. It also
- * pins `declare_id!` at runtime, but for a *compile-only* grade the placeholder
- * id compiles fine, so we leave the source byte-identical (no rewrite needed).
- *
- * A per-request nonce file busts the build server's content-addressable cache so
- * one learner's PASS/FAIL is never served from another submission's cached
- * entry — the grade always reflects THIS exact source.
+ * The graded files plus a per-request nonce file, which busts the build server's
+ * content-addressable cache so one learner's PASS/FAIL is never served from
+ * another submission's cached entry — the grade always reflects THIS exact
+ * source. The build server pins `declare_id!` at runtime, but for a
+ * *compile-only* grade the placeholder id compiles fine, so the submission goes
+ * over byte-identical (no rewrite needed).
  */
-function toBuildFiles(source: string, nonce: string): [string, string][] {
-  return [
-    ["/src/lib.rs", source],
-    ["/src/_grade_nonce.rs", `// ${nonce}`],
-  ];
+function toBuildFiles(
+  graded: [string, string][],
+  nonce: string
+): [string, string][] {
+  return [...graded, ["/src/_grade_nonce.rs", `// ${nonce}`]];
 }
 
 /** Fail every test with the same reason (bad submission, not a build outage). */
@@ -181,7 +181,7 @@ export async function runBuildableSubmission(
   }
 
   const nonce = crypto.randomUUID();
-  const files = toBuildFiles(withCanonicalHarness(code, starter), nonce);
+  const files = toBuildFiles(buildGradeFiles(code, starter), nonce);
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);

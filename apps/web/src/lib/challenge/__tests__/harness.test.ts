@@ -2,7 +2,23 @@ import { describe, it, expect, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 import { lessonsById } from "@/lib/content/store";
-import { HARNESS_MARKER, splitHarness, withCanonicalHarness } from "../harness";
+import {
+  buildGradeFiles,
+  HARNESS_MARKER,
+  LIB_PATH,
+  splitHarness,
+  VERIFY_PATH,
+} from "../harness";
+
+/** The two graded files, keyed by path. */
+function graded(submission: string, starter: string) {
+  const files = new Map(buildGradeFiles(submission, starter));
+  return {
+    files,
+    lib: files.get(LIB_PATH) ?? "",
+    verify: files.get(VERIFY_PATH) ?? "",
+  };
+}
 
 const RULE = "// ─────────────────────────────────────────";
 const STARTER = [
@@ -49,40 +65,68 @@ describe("splitHarness", () => {
   });
 });
 
-describe("withCanonicalHarness", () => {
-  it("re-attaches the harness a learner deleted", () => {
-    const spliced = withCanonicalHarness("pub fn nothing() {}", STARTER);
-    expect(spliced).toContain("pub fn nothing() {}");
-    expect(spliced).toContain("first_program::ping");
+describe("buildGradeFiles", () => {
+  it("puts the harness in its own module file, never in lib.rs", () => {
+    const { files, lib, verify } = graded("pub fn nothing() {}", STARTER);
+    expect([...files.keys()]).toEqual([LIB_PATH, VERIFY_PATH]);
+    expect(lib).toContain("pub fn nothing() {}");
+    expect(lib).not.toContain(HARNESS_MARKER);
+    expect(verify).toContain("first_program::ping");
+  });
+
+  it("declares the harness module ABOVE the learner's body", () => {
+    const { lib } = graded("pub fn nothing() {}", STARTER);
+    expect(lib.startsWith("#[allow(dead_code)]\nmod _verify;\n")).toBe(true);
+    expect(lib.indexOf("mod _verify;")).toBeLessThan(
+      lib.indexOf("pub fn nothing() {}")
+    );
+  });
+
+  it("leaves a trailing attribute dangling at EOF, not on the harness", () => {
+    // Bypass 1: `#[cfg(any())]` with nothing after it used to bind to the
+    // appended `mod verify` and delete it. Nothing follows it now.
+    const { lib } = graded("pub fn nothing() {}\n\n#[cfg(any())]\n", STARTER);
+    expect(lib.trimEnd().endsWith("#[cfg(any())]")).toBe(true);
+    expect(lib).not.toContain("first_program::ping");
+  });
+
+  it("pushes a crate-level inner attribute below an item (a hard error)", () => {
+    // Bypass 2: `#![cfg(any())]` as line 1 stripped the whole crate. With the
+    // module declaration first, rustc rejects it outright.
+    const { lib } = graded("#![cfg(any())]\npub fn nothing() {}\n", STARTER);
+    expect(lib.indexOf("mod _verify;")).toBeLessThan(
+      lib.indexOf("#![cfg(any())]")
+    );
   });
 
   it("replaces a harness the learner edited into a no-op", () => {
     const tampered = `pub fn nothing() {}\n${RULE}\n${HARNESS_MARKER}\n// nothing here\n`;
-    const spliced = withCanonicalHarness(tampered, STARTER);
-    expect(spliced).not.toContain("// nothing here");
-    expect(spliced).toContain("first_program::ping");
+    const { lib, verify } = graded(tampered, STARTER);
+    expect(lib).not.toContain("// nothing here");
+    expect(verify).toContain("first_program::ping");
   });
 
-  it("collapses a duplicated harness back to exactly one", () => {
-    const spliced = withCanonicalHarness(`${STARTER}\n${HARNESS}`, STARTER);
-    expect(spliced.split(HARNESS_MARKER)).toHaveLength(2);
+  it("strips a duplicated harness whole", () => {
+    const { lib, verify } = graded(`${STARTER}\n${HARNESS}`, STARTER);
+    expect(lib).not.toContain(HARNESS_MARKER);
+    expect(verify.split(HARNESS_MARKER)).toHaveLength(2);
   });
 
-  it("leaves an untouched submission's own harness in place, once", () => {
-    const spliced = withCanonicalHarness(STARTER, STARTER);
-    expect(spliced.split(HARNESS_MARKER)).toHaveLength(2);
-    expect(spliced).toContain("// TODO: add `ping`.");
+  it("keeps an untouched submission's own body, harness moved out", () => {
+    const { lib } = graded(STARTER, STARTER);
+    expect(lib).toContain("// TODO: add `ping`.");
+    expect(lib).not.toContain(HARNESS_MARKER);
   });
 
-  it("returns the submission unchanged when the starter has no harness", () => {
-    expect(withCanonicalHarness("pub fn nothing() {}", "fn main() {}")).toBe(
-      "pub fn nothing() {}"
-    );
+  it("returns a lone lib.rs when the starter has no harness", () => {
+    expect(buildGradeFiles("pub fn nothing() {}", "fn main() {}")).toEqual([
+      [LIB_PATH, "pub fn nothing() {}"],
+    ]);
   });
 
   it("normalises CRLF submissions", () => {
-    const crlf = "pub fn nothing() {}\r\n";
-    expect(withCanonicalHarness(crlf, STARTER)).not.toContain("\r");
+    const { lib } = graded("pub fn nothing() {}\r\n", STARTER);
+    expect(lib).not.toContain("\r");
   });
 });
 
@@ -113,24 +157,24 @@ function buildableStarter(lessonId: string): string {
 }
 
 describe("the empty-submission exploit is closed", () => {
-  it("splices ping/Ping back into a `pub fn nothing() {}` submission", () => {
-    const spliced = withCanonicalHarness(
+  it("compiles ping/Ping against a `pub fn nothing() {}` submission", () => {
+    const { verify } = graded(
       "pub fn nothing() {}",
       buildableStarter("lesson-b2s-your-first-solana-program")
     );
-    // Both symbols the deleted exercise had to define — the spliced source
+    // Both symbols the deleted exercise had to define — the graded crate
     // cannot compile without them.
-    expect(spliced).toContain("first_program::ping");
-    expect(spliced).toContain("Ping {}");
+    expect(verify).toContain("first_program::ping");
+    expect(verify).toContain("Ping {}");
   });
 
-  it("splices the bump type-check back into an emptied vault submission", () => {
-    const spliced = withCanonicalHarness(
+  it("compiles the bump type-check against an emptied vault submission", () => {
+    const { verify } = graded(
       "pub fn nothing() {}",
       buildableStarter("lesson-b2s-an-anchor-vault")
     );
-    expect(spliced).toContain("s.vault_bump");
-    expect(spliced).toContain("s.state_bump");
+    expect(verify).toContain("s.vault_bump");
+    expect(verify).toContain("s.state_bump");
   });
 
   it("every live buildable starter carries the marker", () => {

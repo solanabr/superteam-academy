@@ -10,7 +10,7 @@ import { setCachedBinary } from "@superteam-lms/deploy";
 import { executeRustCode } from "@/lib/rust/execute";
 import { buildProgram } from "@/lib/build-server/client";
 import { firstCompilerErrorLine } from "@/lib/challenge/compiler-error";
-import { withCanonicalHarness } from "@/lib/challenge/harness";
+import { buildGradeFiles, LIB_PATH } from "@/lib/challenge/harness";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import type {
@@ -744,9 +744,9 @@ async function runBuildChallenge(
   starter: string
 ): Promise<ExecutionResult> {
   // Compile exactly what the server grader will compile: the learner's work with
-  // the lesson's canonical verification harness spliced back on. Without this an
-  // in-editor "Compilar" would go green on a submission the server then fails.
-  const graded = withCanonicalHarness(code, starter);
+  // the lesson's canonical verification harness as its own module. Without this
+  // an in-editor "Compilar" would go green on a submission the server then fails.
+  const graded = buildGradeFiles(code, starter);
 
   // Generate a program keypair BEFORE building so we can inject the correct
   // declare_id!() into the source. Anchor validates that the invoked program
@@ -756,11 +756,18 @@ async function runBuildChallenge(
   const programId = programKeypair.publicKey.toBase58();
 
   // Replace any existing declare_id!("...") with the actual program pubkey.
-  // The student's placeholder value doesn't matter — we always override it.
-  const buildCode = graded.replace(
-    /declare_id!\s*\(\s*"[^"]*"\s*\)/,
-    `declare_id!("${programId}")`
-  );
+  // The student's placeholder value doesn't matter — we always override it. Only
+  // the crate root can carry it; the harness module is sent verbatim.
+  const files = graded.map(([path, content]) => ({
+    path,
+    content:
+      path === LIB_PATH
+        ? content.replace(
+            /declare_id!\s*\(\s*"[^"]*"\s*\)/,
+            `declare_id!("${programId}")`
+          )
+        : content,
+  }));
 
   // The build server uses content-addressable caching (SHA256 of all files).
   // A nonce file busts the cache so we always get a fresh binary for deployment.
@@ -768,7 +775,7 @@ async function runBuildChallenge(
   // The build server only accepts paths matching /src/<name>.rs
   const result = await buildProgram({
     files: [
-      { path: "/src/lib.rs", content: buildCode },
+      ...files,
       { path: "/src/_nonce.rs", content: `// ${crypto.randomUUID()}` },
     ],
   });
@@ -931,7 +938,7 @@ export function ChallengeRunner({
         setIsRunning(false);
       }
     }, 50);
-  }, [code, tests, language, buildType, onResult]);
+  }, [code, tests, language, buildType, starter, onResult]);
 
   const showSubmit =
     allPassed && !isComplete && !isJudging && (!isDeployable || deployComplete);

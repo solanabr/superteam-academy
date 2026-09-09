@@ -66,6 +66,16 @@ function mockBuildServer(
   );
 }
 
+/** Stub a passing build server and record the files it was sent, by path. */
+function captureFiles(): Map<string, string> {
+  const sent = new Map<string, string>();
+  mockBuildServer((body) => {
+    for (const [path, content] of body.files) sent.set(path, content);
+    return { success: true };
+  });
+  return sent;
+}
+
 async function loadGrader() {
   vi.resetModules();
   return import("../buildable-executor");
@@ -110,7 +120,7 @@ describe("runBuildableSubmission — build server configured", () => {
     }
   });
 
-  it("sends /src/lib.rs plus a cache-busting nonce file, with the API key", async () => {
+  it("sends lib.rs + the harness module + a nonce file, with the API key", async () => {
     const spy = vi.fn(
       async (
         _url: string,
@@ -120,9 +130,14 @@ describe("runBuildableSubmission — build server configured", () => {
         expect(_url).toBe(`${URL}/build`);
         expect(init.headers["X-API-Key"]).toBe(KEY);
         const paths = body.files.map((f) => f[0]);
-        expect(paths).toContain("/src/lib.rs");
+        expect(paths.slice(0, 2)).toEqual(["/src/lib.rs", "/src/_verify.rs"]);
         expect(
-          paths.some((p) => p.endsWith(".rs") && p !== "/src/lib.rs")
+          paths.some(
+            (p) =>
+              p.endsWith(".rs") &&
+              p !== "/src/lib.rs" &&
+              p !== "/src/_verify.rs"
+          )
         ).toBe(true);
         return {
           ok: true,
@@ -137,33 +152,54 @@ describe("runBuildableSubmission — build server configured", () => {
   });
 
   it("compiles the submission with the starter's canonical harness", async () => {
-    let libRs = "";
-    mockBuildServer((body) => {
-      libRs = body.files.find((f) => f[0] === "/src/lib.rs")?.[1] ?? "";
-      return { success: true };
-    });
+    const sent = captureFiles();
     const { runBuildableSubmission } = await loadGrader();
     // The exploit: delete the exercise and ship something that compiles alone.
     await runBuildableSubmission("pub fn nothing() {}", tests, STARTER);
-    expect(libRs).toContain("pub fn nothing() {}");
-    expect(libRs).toContain("first_program::ping");
+    expect(sent.get("/src/lib.rs")).toContain("pub fn nothing() {}");
+    expect(sent.get("/src/lib.rs")).toContain("mod _verify;");
+    expect(sent.get("/src/_verify.rs")).toContain("first_program::ping");
   });
 
   it("replaces a harness the submission tampered with", async () => {
-    let libRs = "";
-    mockBuildServer((body) => {
-      libRs = body.files.find((f) => f[0] === "/src/lib.rs")?.[1] ?? "";
-      return { success: true };
-    });
+    const sent = captureFiles();
     const { runBuildableSubmission } = await loadGrader();
     await runBuildableSubmission(
       `pub fn nothing() {}\n${MARKER}\n// harness deleted\n`,
       tests,
       STARTER
     );
-    expect(libRs).not.toContain("// harness deleted");
-    expect(libRs).toContain("first_program::ping");
-    expect(libRs.split(MARKER)).toHaveLength(2);
+    expect(sent.get("/src/lib.rs")).not.toContain("// harness deleted");
+    expect(sent.get("/src/lib.rs")).not.toContain(MARKER);
+    expect(sent.get("/src/_verify.rs")).toContain("first_program::ping");
+  });
+
+  it("keeps a trailing attribute away from the harness (bypass 1)", async () => {
+    const sent = captureFiles();
+    const { runBuildableSubmission } = await loadGrader();
+    await runBuildableSubmission(
+      "pub fn nothing() {}\n\n#[cfg(any())]\n",
+      tests,
+      STARTER
+    );
+    expect(sent.get("/src/lib.rs")?.trimEnd().endsWith("#[cfg(any())]")).toBe(
+      true
+    );
+    expect(sent.get("/src/lib.rs")).not.toContain("first_program::ping");
+  });
+
+  it("pushes a crate-level inner attribute below an item (bypass 2)", async () => {
+    const sent = captureFiles();
+    const { runBuildableSubmission } = await loadGrader();
+    await runBuildableSubmission(
+      "#![cfg(any())]\npub fn nothing() {}\n",
+      tests,
+      STARTER
+    );
+    const lib = sent.get("/src/lib.rs") ?? "";
+    expect(lib.indexOf("mod _verify;")).toBeLessThan(
+      lib.indexOf("#![cfg(any())]")
+    );
   });
 
   it("fails closed when the starter carries no harness", async () => {
