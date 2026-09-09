@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import { PublicKey } from "@solana/web3.js";
+import { Keypair, PublicKey } from "@solana/web3.js";
 import messages from "@/messages/en.json";
 import { DeployPanel } from "../deploy-panel";
 
@@ -38,7 +38,8 @@ vi.mock("@/lib/auth/auth-provider", () => ({
   }),
 }));
 
-vi.mock("@superteam-lms/deploy", () => ({
+vi.mock("@superteam-lms/deploy", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@superteam-lms/deploy")>()),
   deployProgram: h.deployProgram,
   resumeDeployment: vi.fn(),
   // No binary is cached in this suite, so the funding gate reads nothing and
@@ -159,8 +160,10 @@ describe("DeployPanel — saved deploy state is wallet-scoped", () => {
       `deploy-state-${wallet.slice(0, 8)}-${BUILD_UUID}`,
       JSON.stringify({
         buildUuid: BUILD_UUID,
-        bufferKeypairSecret: [],
-        programKeypairSecret: [],
+        // Real keypair secrets: the panel now validates saved state before
+        // offering a resume, and a malformed one is dropped.
+        bufferKeypairSecret: Array.from(Keypair.generate().secretKey),
+        programKeypairSecret: Array.from(Keypair.generate().secretKey),
         lastUploadedChunk: 3,
         totalChunks: 10,
         phase: "uploading",

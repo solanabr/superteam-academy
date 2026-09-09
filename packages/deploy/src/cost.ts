@@ -47,7 +47,13 @@ export interface DeployCostEstimate {
  */
 export async function estimateDeployCost(
   connection: Connection,
-  programLen: number
+  programLen: number,
+  /**
+   * Transactions the payer sends beyond the deploy itself. The session-key
+   * path adds two (SetAuthority, sweep) that the payer — the session key —
+   * must still be able to pay for after the deploy has drained it into rent.
+   */
+  extraTransactions = 0
 ): Promise<DeployCostEstimate> {
   const [bufferRent, programRent, programDataRent] = await Promise.all([
     connection.getMinimumBalanceForRentExemption(
@@ -61,7 +67,8 @@ export async function estimateDeployCost(
 
   const chunks = Math.ceil(programLen / CHUNK_SIZE);
   const feeLamports =
-    (chunks + 2) * (BASE_FEE_LAMPORTS + PRIORITY_FEE_LAMPORTS);
+    (chunks + 2 + extraTransactions) *
+    (BASE_FEE_LAMPORTS + PRIORITY_FEE_LAMPORTS);
 
   return {
     bufferRent,
@@ -73,4 +80,30 @@ export async function estimateDeployCost(
         SAFETY_MULTIPLIER
     ),
   };
+}
+
+/**
+ * Transactions the session key sends that a plain deploy does not: the
+ * `SetAuthority` that hands the program to the learner, and the sweep that
+ * returns the remainder.
+ */
+export const SESSION_KEY_EXTRA_TRANSACTIONS = 2;
+
+/**
+ * What the learner must transfer into a freshly generated session key.
+ *
+ * The session key pays for everything from the buffer onwards, so if the
+ * transfer is short by even one fee the deploy strands mid-upload with SOL the
+ * learner cannot easily get back. Same estimate as `estimateDeployCost`, plus
+ * the two transactions the session key sends on its own behalf.
+ */
+export function estimateSessionKeyDeployCost(
+  connection: Connection,
+  programLen: number
+): Promise<DeployCostEstimate> {
+  return estimateDeployCost(
+    connection,
+    programLen,
+    SESSION_KEY_EXTRA_TRANSACTIONS
+  );
 }
