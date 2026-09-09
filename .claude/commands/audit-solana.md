@@ -9,7 +9,7 @@ You are conducting a security audit for Solana programs. This is CRITICAL - take
 - [security.md](../skills/security.md) - Comprehensive security checklist
 - [programs-anchor.md](../skills/programs-anchor.md) - Anchor security patterns
 - [programs-pinocchio.md](../skills/programs-pinocchio.md) - Pinocchio security patterns
-- [testing.md](../skills/testing.md) - Fuzz testing with Trident
+- [testing.md](../skills/testing.md) - Fuzz testing with litesvm
 
 ## Pre-Audit Checklist
 
@@ -64,6 +64,7 @@ echo "✅ Automated analysis complete"
 **CRITICAL**: Every account MUST be validated. Check each instruction:
 
 ### Owner Checks
+
 ```rust
 // ✓ CORRECT: Validate account owner
 if *account.owner != expected_program_id {
@@ -74,6 +75,7 @@ if *account.owner != expected_program_id {
 ```
 
 ### Signer Checks
+
 ```rust
 // ✓ CORRECT: Verify signer
 if !authority.is_signer {
@@ -84,6 +86,7 @@ if !authority.is_signer {
 ```
 
 ### PDA Validation
+
 ```rust
 // ✓ CORRECT: Use stored canonical bump
 let seeds = &[
@@ -111,6 +114,7 @@ let total = amount_a + amount_b;
 ```
 
 **Checklist**:
+
 - [ ] All additions use `checked_add`
 - [ ] All subtractions use `checked_sub`
 - [ ] All multiplications use `checked_mul`
@@ -120,6 +124,7 @@ let total = amount_a + amount_b;
 ## Step 4: Common Attack Vectors
 
 ### Type Cosplay
+
 ```rust
 // ✓ CORRECT: Check discriminator
 if account.data.borrow()[0..8] != User::DISCRIMINATOR {
@@ -130,6 +135,7 @@ if account.data.borrow()[0..8] != User::DISCRIMINATOR {
 ```
 
 ### Account Revival
+
 ```rust
 // ✓ CORRECT: Zero data AND set closed discriminator
 let mut data = account.data.borrow_mut();
@@ -141,6 +147,7 @@ data[0..8].copy_from_slice(&CLOSED_ACCOUNT_DISCRIMINATOR);
 ```
 
 ### Arbitrary CPI
+
 ```rust
 // ✓ CORRECT: Validate program ID
 if cpi_program.key() != spl_token::ID {
@@ -152,6 +159,7 @@ invoke(&instruction, accounts)?;
 ```
 
 ### Missing Reload After CPI
+
 ```rust
 // ✓ CORRECT: Reload account after CPI
 token::transfer(cpi_ctx, amount)?;
@@ -163,6 +171,7 @@ token::transfer(cpi_ctx, amount)?;
 ```
 
 ### PDA Seed Collision
+
 ```rust
 // ✓ CORRECT: Unique prefixes per account type
 let user_seeds = [b"user_vault", user.key().as_ref()];
@@ -218,32 +227,35 @@ Verify comprehensive test coverage:
 - [ ] Arithmetic edge cases tested (max values, overflow)
 - [ ] PDA derivation tested
 - [ ] CPI success and failure paths tested
-- [ ] Fuzz testing with Trident (REQUIRED for mainnet)
+- [ ] Fuzz testing with litesvm (REQUIRED for mainnet)
 
-### Fuzz Testing with Trident
+### Fuzz Testing with litesvm
+
+The harness lives at `onchain-academy/tests/fuzz` and drives the compiled
+pinocchio `.so` on litesvm — see `.github/workflows/fuzz.yml` and
+`onchain-academy/README.md` for the full setup and CI wiring.
 
 ```bash
-# Setup Trident (if not already)
-if [ ! -d "trident-tests" ]; then
-    echo "Setting up Trident fuzz testing..."
-    trident init
-fi
+# Build the program the fuzzer targets
+cargo build-sbf --manifest-path programs/onchain-academy-pinocchio/Cargo.toml --tools-version v1.54
 
-# Run fuzz tests for at least 10 minutes (Trident v0.7+)
+# Run fuzz tests for at least 10 minutes
 echo "🔍 Running fuzz tests (10 minutes minimum)..."
-cd trident-tests
-trident fuzz run --timeout 600
+cd tests/fuzz
+cargo build --release --bin fuzz
+FUZZ_MAX_SECONDS=600 cargo run --release --bin fuzz -- 1000000
 
 # Review any crashes found
-if [ -d "hfuzz_workspace" ]; then
-    echo "⚠️  Review crash reports in hfuzz_workspace/"
-    ls -la hfuzz_workspace/*/crashes/ 2>/dev/null || echo "No crashes found ✅"
+if [ -d "crashes" ]; then
+    echo "⚠️  Review crash reports in crashes/"
+    ls -la crashes/ 2>/dev/null || echo "No crashes found ✅"
 fi
 
-cd ..
+cd ../..
 ```
 
 Fuzz testing discovers:
+
 - Unexpected arithmetic overflows
 - Invalid account combinations
 - Edge case panics
@@ -355,6 +367,7 @@ fi
 Go through this systematically:
 
 ### Account Security
+
 - [ ] Every account has owner check
 - [ ] Signer verification for privileged operations
 - [ ] PDA validation with canonical bumps
@@ -362,18 +375,21 @@ Go through this systematically:
 - [ ] No seed collisions possible
 
 ### Arithmetic Security
+
 - [ ] All arithmetic uses checked operations
 - [ ] Division by zero handled
 - [ ] Casting uses try_into() with errors
 - [ ] Token amounts use u64 consistently
 
 ### CPI Security
+
 - [ ] Program IDs validated before CPI
 - [ ] Signer privileges controlled
 - [ ] Accounts reloaded after modifying CPIs
 - [ ] Reentrancy considered
 
 ### Data Security
+
 - [ ] All instruction data validated
 - [ ] Account data size verified
 - [ ] Strings/vectors have length limits
@@ -391,6 +407,7 @@ Create `docs/security-audit-[date].md`:
 **Auditor**: claude-maintainer
 
 ## Summary
+
 - Total Issues: X
 - Critical: X
 - High: X
@@ -437,6 +454,7 @@ Create `docs/security-audit-[date].md`:
 ## Professional Audit Firms
 
 For mainnet deployment, consider:
+
 - OtterSec
 - Neodyme
 - Halborn

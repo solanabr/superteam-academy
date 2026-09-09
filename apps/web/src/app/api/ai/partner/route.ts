@@ -626,7 +626,7 @@ export async function POST(request: NextRequest) {
         finishReason,
       });
       return NextResponse.json(
-        { error: "AI could not generate a response" },
+        { error: "AI could not generate a response", billed: true },
         { status: 502 }
       );
     }
@@ -644,7 +644,7 @@ export async function POST(request: NextRequest) {
         snippet: rawText.slice(0, 200),
       });
       return NextResponse.json(
-        { error: "AI returned an invalid response" },
+        { error: "AI returned an invalid response", billed: true },
         { status: 502 }
       );
     }
@@ -655,7 +655,7 @@ export async function POST(request: NextRequest) {
       // still parsed). NOT refunded — the tokens were billed.
       console.error("Gemini partner API returned a malformed payload");
       return NextResponse.json(
-        { error: "AI returned an invalid response" },
+        { error: "AI returned an invalid response", billed: true },
         { status: 502 }
       );
     }
@@ -679,7 +679,7 @@ export async function POST(request: NextRequest) {
           "Gemini propose edits do not apply to the learner buffer"
         );
         return NextResponse.json(
-          { error: "AI returned an invalid response" },
+          { error: "AI returned an invalid response", billed: true },
           { status: 502 }
         );
       }
@@ -691,8 +691,18 @@ export async function POST(request: NextRequest) {
       // Same failure class as an inapplicable edit — 502, billed, not refunded.
       if (applied.proposed === code) {
         console.error("Gemini propose edits are a no-op");
+        // Still NOT refunded. The learner controls the buffer the model
+        // reasons about, so "already-correct code makes the model propose
+        // nothing" is learner-reachable — refunding it would be an
+        // unmetered-call lever, not a courtesy. `reason` only lets the client
+        // say the honest thing ("nothing to change — ask for a review
+        // instead") instead of the generic error.
         return NextResponse.json(
-          { error: "AI returned an invalid response" },
+          {
+            error: "AI returned an invalid response",
+            billed: true,
+            reason: "no_change",
+          },
           { status: 502 }
         );
       }
@@ -743,7 +753,7 @@ export async function POST(request: NextRequest) {
       await refundAssistTurn(user.id, lesson._id, spend.tier);
     }
     return NextResponse.json(
-      { error: "Failed to get response" },
+      { error: "Failed to get response", billed },
       { status: 500 }
     );
   }

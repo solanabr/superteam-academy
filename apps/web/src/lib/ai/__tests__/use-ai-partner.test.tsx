@@ -265,6 +265,89 @@ describe("useAiPartner", () => {
     expect(result.current.error).toBeTruthy();
   });
 
+  it("advances the meter on a BILLED failure — the turn is spent server-side", async () => {
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: false,
+      status: 502,
+      json: async () => ({
+        error: "AI returned an invalid response",
+        billed: true,
+      }),
+    } as Response);
+
+    const { result } = await renderPartner(baseProps());
+
+    await act(async () => {
+      await result.current.proposeFix();
+    });
+
+    expect(result.current.counts).toEqual({ free: 1, metered: 0, socratic: 0 });
+    expect(result.current.errorKind).toBe("billed");
+  });
+
+  it("classifies a no-op propose so the client can point at the review", async () => {
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: false,
+      status: 502,
+      json: async () => ({
+        error: "AI returned an invalid response",
+        billed: true,
+        reason: "no_change",
+      }),
+    } as Response);
+
+    const { result } = await renderPartner(baseProps());
+
+    await act(async () => {
+      await result.current.proposeFix();
+    });
+
+    expect(result.current.errorKind).toBe("noChange");
+    expect(result.current.counts.free).toBe(1);
+  });
+
+  it("leaves the meter alone on an UNBILLED failure (refunded upstream error)", async () => {
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: false,
+      status: 502,
+      json: async () => ({
+        error: "AI service unavailable",
+        upstreamStatus: 429,
+      }),
+    } as Response);
+
+    const { result } = await renderPartner(baseProps());
+
+    await act(async () => {
+      await result.current.proposeFix();
+    });
+
+    expect(result.current.counts).toEqual({ free: 0, metered: 0, socratic: 0 });
+    expect(result.current.errorKind).toBe("generic");
+  });
+
+  it("review() resolves false on a failure and true on a reply", async () => {
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: async () => ({ error: "Failed to get response", billed: false }),
+    } as Response);
+    const { result } = await renderPartner(baseProps());
+    let outcome: boolean | undefined;
+    await act(async () => {
+      outcome = await result.current.review();
+    });
+    expect(outcome).toBe(false);
+
+    vi.mocked(global.fetch).mockResolvedValue(
+      jsonResponse({ type: "review", summary: "looks good", notes: [] })
+    );
+    await act(async () => {
+      outcome = await result.current.review();
+    });
+    expect(outcome).toBe(true);
+  });
+
   it("advances counts in ladder order: free -> metered -> socratic (tier boundaries at turns 3 and 11)", async () => {
     vi.mocked(global.fetch).mockResolvedValue(
       jsonResponse({ type: "answer", text: "ok" })

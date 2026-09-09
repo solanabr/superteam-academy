@@ -393,7 +393,15 @@
     "formatUnchanged": "Já está formatado.",
     "formatUnsupported": "A formatação não está disponível para esta linguagem.",
     "finishCourse": "Concluir curso",
-    "completeGateHint": "Conclua o quiz e a reflexão acima para habilitar"
+    "completeGateHint": "Conclua o quiz e a reflexão acima para habilitar",
+    "executionTimeout": "Execução expirou após {seconds}s — verifique se há loops infinitos",
+    "dynamicImportBlocked": "import() dinâmico não é permitido nos desafios",
+    "syntaxError": "Erro de sintaxe: {message}",
+    "returnValueLabel": "Valor de retorno:",
+    "noFunctionFound": "Nenhuma função encontrada no seu código",
+    "rustAssertionFailed": "asserção falhou",
+    "rustNoOutput": "O teste não produziu saída",
+    "rustCompilationFailed": "Falha na compilação"
   },
   "dashboard": {
     "allCaughtUp": "Tudo em dia!",
@@ -849,7 +857,8 @@
       "startOver": "Recomeçar",
       "insufficientSol": "SOL insuficiente. Precisa de ~{amount} a mais.",
       "buildExpired": "Build expirado",
-      "rebuildHint": "Clique em \"Run\" no editor para recompilar e faça o deploy novamente."
+      "rebuildHint": "Clique em \"Run\" no editor para recompilar e faça o deploy novamente.",
+      "copied": "Copiado!"
     },
     "save": {
       "recording": "Registrando seu deploy…",
@@ -904,7 +913,12 @@
       "accounts": "Contas",
       "accountData": "Dados da Conta",
       "executeInstruction": "Executar {name}",
-      "accountNotFound": "Conta não encontrada. Execute uma instrução para criá-la."
+      "accountNotFound": "Conta não encontrada. Execute uma instrução para criá-la.",
+      "unknownInstruction": "Instrução desconhecida: {name}",
+      "accountNotResolved": "A conta \"{name}\" não foi resolvida. Informe uma chave pública.",
+      "base58AddressPlaceholder": "Endereço Base58...",
+      "publicKeyPlaceholder": "Chave pública...",
+      "myWallet": "Minha carteira"
     },
     "capstone": {
       "journeyTitle": "Sua Jornada",
@@ -1097,6 +1111,8 @@
       "ai": "Parceiro de IA",
       "loading": "Pensando...",
       "error": "Algo deu errado. Tente novamente.",
+      "errorBilled": "Algo deu errado do lado da IA, e este turno foi consumido. Tente novamente.",
+      "errorNoChange": "O parceiro não encontrou nada para mudar no seu código, e este turno foi consumido. Peça uma revisão da sua solução.",
       "spendCapped": "O Parceiro de IA atingiu o limite de uso de hoje. Ele volta amanhã; enquanto isso, as dicas e os testes continuam aqui para ajudar."
     },
     "actions": {
@@ -1106,7 +1122,8 @@
       "askLabel": "Pergunte ao Parceiro de IA sobre este desafio",
       "askSend": "Enviar",
       "review": "Revisar minha solução",
-      "reviewHint": "Receba comentários idiomáticos sobre a solução que você já concluiu — isto não altera seu XP."
+      "reviewHint": "Receba comentários idiomáticos sobre a solução que você já concluiu — isto não altera seu XP.",
+      "reviewedHint": "Você já revisou esta solução. Altere seu código para receber uma revisão nova."
     },
     "composer": {
       "empty": "Pergunte o que quiser sobre este desafio. As dicas escritas para esta lição ficam na seção Dicas acima."
@@ -1126,6 +1143,7 @@
       "checkCorrect": "Correto — agora você pode aplicar a mudança.",
       "acceptLocked": "Responda corretamente para aplicar esta mudança.",
       "applied": "Aplicado ao seu código",
+      "alreadyApplied": "Esta mudança já está no seu código.",
       "unchangedCollapsed": "{count, plural, one {# linha inalterada} other {# linhas inalteradas}}",
       "lineAdded": "Adicionado",
       "lineRemoved": "Removido"
@@ -1135,7 +1153,8 @@
       "diffCard": "Mudança de código proposta"
     },
     "socratic": {
-      "chip": "Tutor leve"
+      "chip": "Tutor leve",
+      "transition": "Suas 8 assistências acabaram. Agora você tem 20 turnos de orientação mais leves — o tutor conduz com perguntas em vez de mudanças prontas."
     },
     "exhausted": {
       "title": "Os turnos do tutor neste desafio acabaram",

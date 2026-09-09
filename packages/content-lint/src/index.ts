@@ -14,6 +14,7 @@ export * from "./checks/gate6-executor";
 export * from "./checks/gate7-quiz";
 export * from "./checks/gate13a-capabilities";
 export * from "./checks/gate13bcd-widgets";
+export * from "./checks/gate13e-deploy-card";
 export * from "./checks/gate19-skills";
 export * from "./checks/gate20-originality";
 export * from "./checks/gate21-version-currency";

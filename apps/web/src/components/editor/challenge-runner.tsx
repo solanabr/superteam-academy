@@ -19,6 +19,10 @@ import type {
   TestResult,
 } from "./types";
 
+/** The `lesson`-namespace translator, threaded into module-level orchestrators
+ * that run outside the component (so they can't call `useTranslations` themselves). */
+type Translator = ReturnType<typeof useTranslations>;
+
 // ---------------------------------------------------------------------------
 // Web Worker sandbox — all user code executes in a separate thread with no
 // DOM access.  The worker can be terminated to kill infinite loops.
@@ -195,6 +199,7 @@ const EXEC_TIMEOUT_MS = 5_000;
  * The worker is terminated on timeout OR after the result arrives.
  */
 function runInWorker(
+  t: Translator,
   wrappedCode: string,
   timeoutMs: number = EXEC_TIMEOUT_MS
 ): Promise<{ result?: unknown; output: string; error?: string }> {
@@ -203,11 +208,7 @@ function runInWorker(
 
     const timer = setTimeout(() => {
       worker.terminate();
-      reject(
-        new Error(
-          `Execution timed out after ${timeoutMs / 1000}s — check for infinite loops`
-        )
-      );
+      reject(new Error(t("executionTimeout", { seconds: timeoutMs / 1000 })));
     }, timeoutMs);
 
     worker.onmessage = (e: MessageEvent) => {
@@ -231,10 +232,10 @@ function runInWorker(
 // The result is plain JS that gets sent to the worker.
 // ---------------------------------------------------------------------------
 
-function transformImports(code: string): string {
+function transformImports(t: Translator, code: string): string {
   // F-46: Block dynamic import() syntax to prevent module loading bypass
   if (/import\s*\(/.test(code)) {
-    throw new Error("Dynamic import() is not allowed in challenges");
+    throw new Error(t("dynamicImportBlocked"));
   }
 
   let transformed = code;
@@ -280,7 +281,7 @@ function transformImports(code: string): string {
     transformed = result.code;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    throw new Error(`Syntax error: ${message}`);
+    throw new Error(t("syntaxError", { message }));
   }
 
   return transformed;
@@ -464,13 +465,14 @@ function isTypeShape(expected: string): Record<string, string> | null {
 // ---------------------------------------------------------------------------
 
 async function captureConsoleOutput(
+  t: Translator,
   code: string,
   firstTest?: TestCase
 ): Promise<{
   output: string;
   error?: string;
 }> {
-  const transformed = transformImports(code);
+  const transformed = transformImports(t, code);
   const fnName = detectFunctionName(transformed);
 
   try {
@@ -490,7 +492,7 @@ if (__res__ !== undefined) console.log(typeof __res__ === "object" ? JSON.string
 ${argSetup}
 const __res__ = await ${fnName}(${callArgs});
 if (__res__ !== undefined) {
-  console.log("Return value:");
+  console.log(${JSON.stringify(t("returnValueLabel"))});
   console.log(typeof __res__ === "object" ? JSON.stringify(__res__, null, 2) : __res__);
 }`;
     }
@@ -504,7 +506,7 @@ if (__res__ !== undefined) {
       })();
     `;
 
-    const { output, error } = await runInWorker(wrappedCode);
+    const { output, error } = await runInWorker(t, wrappedCode);
     return { output, error };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -513,10 +515,11 @@ if (__res__ !== undefined) {
 }
 
 async function runTestCase(
+  t: Translator,
   code: string,
   testCase: TestCase
 ): Promise<TestResult> {
-  const transformed = transformImports(code);
+  const transformed = transformImports(t, code);
   const fnName = detectFunctionName(transformed);
 
   if (!fnName) {
@@ -524,7 +527,7 @@ async function runTestCase(
       testCase,
       passed: false,
       actualOutput: "",
-      error: "No function found in your code",
+      error: t("noFunctionFound"),
     };
   }
 
@@ -580,7 +583,7 @@ async function runTestCase(
       })();
     `;
 
-    const { result, error } = await runInWorker(wrappedCode);
+    const { result, error } = await runInWorker(t, wrappedCode);
 
     if (error) {
       return { testCase, passed: false, actualOutput: "", error };
@@ -664,6 +667,7 @@ ${testCalls.join("\n")}
 }
 
 function parseRustTestResults(
+  t: Translator,
   stdout: string,
   stderr: string,
   tests: TestCase[],
@@ -685,7 +689,7 @@ function parseRustTestResults(
       return {
         testCase: tc,
         passed: false,
-        actualOutput: failMatch[1]?.trim() ?? "assertion failed",
+        actualOutput: failMatch[1]?.trim() ?? t("rustAssertionFailed"),
       };
     }
 
@@ -693,7 +697,7 @@ function parseRustTestResults(
       testCase: tc,
       passed: false,
       actualOutput: "",
-      error: success ? "Test did not produce output" : "Compilation failed",
+      error: success ? t("rustNoOutput") : t("rustCompilationFailed"),
     };
   });
 
@@ -706,11 +710,12 @@ function parseRustTestResults(
   return {
     testResults,
     output: cleanOutput,
-    error: !success ? cleanStderr || "Compilation failed" : undefined,
+    error: !success ? cleanStderr || t("rustCompilationFailed") : undefined,
   };
 }
 
 async function runRustChallenge(
+  t: Translator,
   code: string,
   tests: TestCase[]
 ): Promise<ExecutionResult> {
@@ -718,6 +723,7 @@ async function runRustChallenge(
   const result = await executeRustCode(harnessCode);
 
   const { testResults, output, error } = parseRustTestResults(
+    t,
     result.stdout,
     result.stderr,
     tests,
@@ -810,7 +816,9 @@ async function runBuildChallenge(
   // Parse compiler stderr for warnings/errors
   const stderr = result.stderr ?? "";
   const hasErrors = !result.success;
-  const cleanStderr = stderr.replace(/\x1b\[[0-9;]*m/g, "");
+  // Stripped once here for the Output tab; firstCompilerErrorLine strips
+  // internally, so it takes the raw stderr directly below.
+  const cleanStderr = stripAnsi(stderr);
 
   // For build challenges, "tests" are compilation checks:
   // - Test 0 always checks: "Program compiles successfully"
@@ -826,7 +834,7 @@ async function runBuildChallenge(
         // stays in `error` for the Output tab.
         actualOutput: result.success
           ? "Compilation successful"
-          : firstCompilerErrorLine(cleanStderr, 300),
+          : firstCompilerErrorLine(stderr, 300),
       };
     }
     // Additional tests: pass if build succeeded (future: check for specific patterns)
@@ -907,14 +915,18 @@ export function ChallengeRunner({
           }
         } else if (language === "rust") {
           // Rust path: remote execution via proxy API
-          const result = await runRustChallenge(code, tests);
+          const result = await runRustChallenge(t, code, tests);
           setAllPassed(result.success);
           onResult(result);
         } else {
           // JS/TS path: Web Worker sandbox (unchanged)
-          const { output, error } = await captureConsoleOutput(code, tests[0]);
+          const { output, error } = await captureConsoleOutput(
+            t,
+            code,
+            tests[0]
+          );
           const testResults: TestResult[] = await Promise.all(
-            tests.map((tc) => runTestCase(code, tc))
+            tests.map((tc) => runTestCase(t, code, tc))
           );
           const success = testResults.every((r) => r.passed);
 
@@ -938,7 +950,7 @@ export function ChallengeRunner({
         setIsRunning(false);
       }
     }, 50);
-  }, [code, tests, language, buildType, starter, onResult]);
+  }, [code, tests, language, buildType, starter, onResult, t]);
 
   const showSubmit =
     allPassed && !isComplete && !isJudging && (!isDeployable || deployComplete);

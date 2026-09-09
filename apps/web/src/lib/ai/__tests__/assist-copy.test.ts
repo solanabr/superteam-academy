@@ -70,9 +70,10 @@ describe("#864 aiPartner copy is never paywall-shaped", () => {
         }
       ).aiPartner;
       expect(Object.keys(ai.meter).sort()).toEqual(["metered", "socratic"]);
-      // `entered` is gone with the Socratic banner (owner 2026-07-31): the tier
-      // shift is announced by the meter chip alone.
-      expect(Object.keys(ai.socratic).sort()).toEqual(["chip"]);
+      // `entered` is gone with the Socratic banner (owner 2026-07-31). The chip
+      // names the tier; `transition` is the one line that explains why the
+      // counter changed unit and restarted (8/8 assists → 1/20 guiding turns).
+      expect(Object.keys(ai.socratic).sort()).toEqual(["chip", "transition"]);
       expect(Object.keys(ai.exhausted).sort()).toEqual([
         "body",
         "communityCta",

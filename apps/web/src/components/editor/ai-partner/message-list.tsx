@@ -79,7 +79,11 @@ export function MessageList({
   className,
 }: MessageListProps) {
   const t = useTranslations("aiPartner");
-  const [dismissed, setDismissed] = useState<Set<number>>(new Set());
+  // Keyed by the proposal's seal token, not its list position: one token is
+  // minted per proposed patch, so a dismissal follows its own card. It is still
+  // per-mount state — the rehydrated log carries no dismissed flag, so a reload
+  // brings discarded cards back; persisting that needs a field on the log entry.
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 
   const lastProposeIndex = messages.reduce(
     (last, message, index) =>
@@ -138,7 +142,7 @@ export function MessageList({
         const { response } = message;
 
         if (response.type === "propose") {
-          if (dismissed.has(index)) {
+          if (dismissed.has(response.checkToken)) {
             return (
               <MessageBubble
                 key={index}
@@ -176,7 +180,7 @@ export function MessageList({
                   onApply(proposed);
                 }}
                 onReject={() =>
-                  setDismissed((prev) => new Set(prev).add(index))
+                  setDismissed((prev) => new Set(prev).add(response.checkToken))
                 }
                 stale={index !== lastProposeIndex}
                 eventCtx={eventCtx}
