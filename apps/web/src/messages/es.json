@@ -861,7 +861,16 @@
       "buildExpired": "Build expirado",
       "rebuildHint": "Haz clic en \"Run\" en el editor para recompilar y despliega de nuevo.",
       "resolvingWallet": "Comprobando tu billetera…",
-      "copied": "¡Copiado!"
+      "copied": "¡Copiado!",
+      "sessionKeyNotice": "Al desplegar, el costo estimado pasa de tu billetera a una clave temporal en esta pestaña, que sube el programa por ti; lo que sobre vuelve a tu billetera al final.",
+      "logFunded": "Clave temporal de despliegue financiada",
+      "logOwnershipTransferred": "Propiedad transferida a tu billetera",
+      "logRefunded": "SOL restante devuelto a tu billetera",
+      "ownershipFailed": "El programa está desplegado, pero la transferencia de propiedad a tu billetera falló. Reclámala abajo — no hay nada más que rehacer.",
+      "claimOwnership": "Reclamar propiedad",
+      "refundFailed": "El SOL restante sigue en la clave temporal ({address}). El despliegue está completo; puedes reintentar el reembolso.",
+      "retryRefund": "Reintentar reembolso",
+      "sessionKeyLost": "Esta página perdió la clave temporal de despliegue, así que la subida no puede reanudarse. Empieza de nuevo para desplegar."
     },
     "save": {
       "recording": "Registrando tu despliegue…",

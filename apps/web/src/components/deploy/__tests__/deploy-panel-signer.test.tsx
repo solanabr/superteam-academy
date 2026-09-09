@@ -2,9 +2,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import {
+  Keypair,
+  LAMPORTS_PER_SOL,
+  PublicKey,
+  SystemInstruction,
+} from "@solana/web3.js";
 import { EMBEDDED_BATCH_SIZE } from "@/hooks/use-deploy-signer";
 import messages from "@/messages/en.json";
+import { encryptSessionKey } from "@/lib/deploy/session-key-storage";
 import { DeployPanel } from "../deploy-panel";
 
 /**
@@ -24,6 +30,8 @@ const h = vi.hoisted(() => ({
   signTransaction: vi.fn(),
   signAllTransactions: vi.fn(),
   deployProgram: vi.fn(),
+  runSessionKeyDeploy: vi.fn(),
+  startOverSessionKey: vi.fn(),
   binaryLength: null as number | null,
   estimateDeployCost: vi.fn(),
   balanceLamports: 0,
@@ -52,7 +60,14 @@ vi.mock("@/hooks/use-deploy-signer", async (importOriginal) => ({
 vi.mock("@solana/wallet-adapter-react", () => ({
   useWallet: () => ({ publicKey: null }),
   useConnection: () => ({
-    connection: { getBalance: async () => h.balanceLamports },
+    connection: {
+      getBalance: async () => h.balanceLamports,
+      getLatestBlockhash: async () => ({
+        blockhash: "11111111111111111111111111111111",
+        lastValidBlockHeight: 1,
+      }),
+      sendRawTransaction: async () => "fund-sig",
+    },
   }),
 }));
 
@@ -63,11 +78,15 @@ vi.mock("@/lib/auth/auth-provider", () => ({
   }),
 }));
 
-vi.mock("@superteam-lms/deploy", () => ({
+vi.mock("@superteam-lms/deploy", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@superteam-lms/deploy")>()),
   deployProgram: h.deployProgram,
   resumeDeployment: vi.fn(),
+  runSessionKeyDeploy: h.runSessionKeyDeploy,
+  startOverSessionKey: h.startOverSessionKey,
   getCachedBinaryLength: () => h.binaryLength,
   estimateDeployCost: h.estimateDeployCost,
+  estimateSessionKeyDeployCost: h.estimateDeployCost,
   createAirdropRequest: vi.fn(async () => ({ success: false, error: "no" })),
 }));
 
@@ -106,11 +125,31 @@ beforeEach(() => {
     durationMs: 1000,
     rentLamports: 0,
   });
+  h.signTransaction.mockReset();
+  h.startOverSessionKey.mockReset();
+  h.startOverSessionKey.mockResolvedValue({
+    closeSignature: "close-sig",
+    refund: { signature: "refund-sig", lamports: 500 },
+  });
+  h.runSessionKeyDeploy.mockReset();
+  h.runSessionKeyDeploy.mockResolvedValue({
+    programId: PROGRAM_ID,
+    programIdPubkey: new PublicKey(PROGRAM_ID),
+    totalChunks: 3,
+    durationMs: 1000,
+    rentLamports: 0,
+    sessionKeySecret: Array.from(Keypair.generate().secretKey),
+    fundedLamports: 1_300_000_000,
+    authoritySignature: "authority-sig",
+    refundLamports: 1_000,
+    refundError: null,
+  });
   h.estimateDeployCost.mockReset();
   h.trackEvent.mockReset();
   h.isSessionExpired.mockReset();
   h.isSessionExpired.mockReturnValue(false);
   localStorage.clear();
+  sessionStorage.clear();
   vi.stubGlobal(
     "fetch",
     vi.fn(async (_url: string, init?: RequestInit) => {
@@ -149,21 +188,53 @@ describe("DeployPanel — signer resolution", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("deploys with the embedded signer and its batch size", async () => {
+  it("routes the embedded wallet through the session key, with one wallet signature", async () => {
     renderPanel();
 
     fireEvent.click(
       await screen.findByRole("button", { name: "Deploy to Devnet" })
     );
 
-    await waitFor(() => expect(h.deployProgram).toHaveBeenCalledTimes(1));
-    const call = h.deployProgram.mock.calls[0]![0];
-    expect(call.batchSize).toBe(EMBEDDED_BATCH_SIZE);
-    expect(call.wallet.publicKey.toBase58()).toBe(EMBEDDED);
+    await waitFor(() => expect(h.runSessionKeyDeploy).toHaveBeenCalledTimes(1));
+    // The MPC-signed upload batches are gone: nothing goes through
+    // deployProgram, and the wallet's only job is the funding transfer.
+    expect(h.deployProgram).not.toHaveBeenCalled();
+    const call = h.runSessionKeyDeploy.mock.calls[0]![0];
+    expect(call.learner.toBase58()).toBe(EMBEDDED);
+    expect(call.buildUuid).toBe("build-uuid-123");
+    expect(typeof call.fund).toBe("function");
     expect(h.trackEvent).toHaveBeenCalledWith("deploy_started", {
       signerKind: "embedded",
-      batchSize: EMBEDDED_BATCH_SIZE,
+      batchSize: null,
+      resumed: false,
     });
+  });
+
+  it("funds from the learner with exactly one wallet signature", async () => {
+    h.signTransaction.mockResolvedValue({
+      serialize: () => new Uint8Array([1, 2, 3]),
+    });
+    renderPanel();
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Deploy to Devnet" })
+    );
+    await waitFor(() => expect(h.runSessionKeyDeploy).toHaveBeenCalledTimes(1));
+
+    const { fund } = h.runSessionKeyDeploy.mock.calls[0]![0];
+    const destination = Keypair.generate().publicKey;
+    const signature = await fund(1_234_567, destination);
+
+    expect(signature).toBe("fund-sig");
+    // One MPC signature for the whole deploy — that is the entire point of the
+    // session key — and it pays from the learner into the session key.
+    expect(h.signTransaction).toHaveBeenCalledTimes(1);
+    const tx = h.signTransaction.mock.calls[0]![0];
+    expect(tx.feePayer.toBase58()).toBe(EMBEDDED);
+    const transfer = SystemInstruction.decodeTransfer(tx.instructions[0]);
+    expect(transfer.fromPubkey.toBase58()).toBe(EMBEDDED);
+    expect(transfer.toPubkey.equals(destination)).toBe(true);
+    expect(Number(transfer.lamports)).toBe(1_234_567);
   });
 
   it("takes the mismatch check from the signer's key, not the adapter's", async () => {
@@ -175,7 +246,7 @@ describe("DeployPanel — signer resolution", () => {
   });
 
   it("a session that expires mid-deploy pauses for re-auth instead of erroring", async () => {
-    h.deployProgram.mockRejectedValue(new Error("session gone"));
+    h.runSessionKeyDeploy.mockRejectedValue(new Error("session gone"));
     h.isSessionExpired.mockReturnValue(true);
     renderPanel();
 
@@ -229,5 +300,82 @@ describe("DeployPanel — funding gate", () => {
     });
     expect(button).toBeEnabled();
     expect(screen.queryByText("Fund Your Wallet")).not.toBeInTheDocument();
+  });
+});
+
+describe("DeployPanel — session-key resume and start over", () => {
+  const BUILD = "build-uuid-123";
+  const SESSION_SECRET = Array.from(Keypair.generate().secretKey);
+  const deployment = {
+    buildUuid: BUILD,
+    bufferKeypairSecret: Array.from(Keypair.generate().secretKey),
+    programKeypairSecret: Array.from(Keypair.generate().secretKey),
+    lastUploadedChunk: 12,
+    totalChunks: 74,
+    phase: "uploading" as const,
+  };
+
+  async function seedPausedSession() {
+    const session = await encryptSessionKey(SESSION_SECRET, BUILD);
+    sessionStorage.setItem(
+      `deploy-state-${EMBEDDED.slice(0, 8)}-${BUILD}`,
+      JSON.stringify({
+        deployment,
+        session,
+        sessionAddress: "SessionKeyAddress",
+      })
+    );
+  }
+
+  it("resumes from the saved offset with the same session key — no second transfer", async () => {
+    await seedPausedSession();
+    renderPanel();
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Resume Deployment" })
+    );
+
+    await waitFor(() => expect(h.runSessionKeyDeploy).toHaveBeenCalledTimes(1));
+    const call = h.runSessionKeyDeploy.mock.calls[0]![0];
+    expect(call.persistedSessionKey).toEqual(SESSION_SECRET);
+    expect(call.resumeState).toMatchObject({
+      lastUploadedChunk: 12,
+      totalChunks: 74,
+    });
+  });
+
+  it("start over closes the buffer and sweeps the session key back first", async () => {
+    await seedPausedSession();
+    renderPanel();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Start Over" }));
+
+    await waitFor(() => expect(h.startOverSessionKey).toHaveBeenCalledTimes(1));
+    const call = h.startOverSessionKey.mock.calls[0]![0];
+    expect(call.sessionKeySecret).toEqual(SESSION_SECRET);
+    expect(call.bufferKeypairSecret).toEqual(deployment.bufferKeypairSecret);
+    expect(call.destination.toBase58()).toBe(EMBEDDED);
+    expect(sessionStorage.length).toBe(0);
+  });
+
+  it("drops a saved state whose program keypair is not this build's", async () => {
+    await seedPausedSession();
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <DeployPanel
+          buildUuid={BUILD}
+          lessonId="lesson-1"
+          courseSlug="btc-to-sol-evolution"
+          courseId="course-btc-to-sol"
+          programKeypairSecret={Array.from(Keypair.generate().secretKey)}
+        />
+      </NextIntlClientProvider>
+    );
+
+    // No resume is offered, and the crafted record is gone rather than reused.
+    expect(
+      await screen.findByRole("button", { name: "Deploy to Devnet" })
+    ).toBeInTheDocument();
+    expect(sessionStorage.length).toBe(0);
   });
 });

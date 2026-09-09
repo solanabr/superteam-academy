@@ -79,7 +79,7 @@ function fetchBinary(uuid: string): Uint8Array {
 /**
  * Send a signed transaction with retry logic.
  */
-async function sendWithRetry(
+export async function sendWithRetry(
   connection: Connection,
   serializedTx: Uint8Array,
   maxRetries = 3
@@ -105,7 +105,7 @@ async function sendWithRetry(
 /**
  * Confirm a transaction with timeout.
  */
-async function confirmTx(
+export async function confirmTx(
   connection: Connection,
   signature: string,
   blockhash: string,

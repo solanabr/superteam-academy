@@ -861,7 +861,16 @@
       "buildExpired": "Build expired",
       "rebuildHint": "Click \"Run\" in the editor to rebuild, then deploy again.",
       "resolvingWallet": "Checking your wallet…",
-      "copied": "Copied!"
+      "copied": "Copied!",
+      "sessionKeyNotice": "Deploying moves the estimated cost from your wallet to a temporary key in this tab, which uploads the program for you; whatever is left comes back to your wallet at the end.",
+      "logFunded": "Temporary deploy key funded",
+      "logOwnershipTransferred": "Ownership transferred to your wallet",
+      "logRefunded": "Remaining SOL refunded to your wallet",
+      "ownershipFailed": "The program is deployed, but transferring ownership to your wallet failed. Claim it below — nothing else needs to be redone.",
+      "claimOwnership": "Claim ownership",
+      "refundFailed": "The leftover SOL is still in the temporary key ({address}). The deploy is complete; you can retry the refund.",
+      "retryRefund": "Retry refund",
+      "sessionKeyLost": "This page lost the temporary deploy key, so the upload cannot be resumed. Start over to deploy again."
     },
     "save": {
       "recording": "Recording your deployment…",
