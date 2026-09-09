@@ -5,7 +5,7 @@ import type { AdminTestCase } from "@superteam-lms/types";
 import { registerCheck } from "../lint";
 import { type RepoModel, type LessonEntry } from "../model";
 import { diag, type Diagnostic } from "../diagnostics";
-import { buildGradeFiles } from "../harness";
+import { buildGradeFiles, splitHarness } from "../harness";
 import {
   createCompiler,
   hasToolchain,
@@ -196,6 +196,48 @@ async function gradeRustBlock(
   return out;
 }
 
+/** Trims trailing whitespace per line and normalizes CRLF, for a stable comparison. */
+function normalizeHarness(text: string): string {
+  return text
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .map((line) => line.replace(/[ \t]+$/, ""))
+    .join("\n")
+    .trim();
+}
+
+/**
+ * A solution that carries its own harness region is graded with the
+ * STARTER's harness spliced in instead (`buildGradeFiles`) — its own copy is
+ * never compiled. If the two differ, an author can ship a solution whose
+ * inline harness looks stricter (or looser) than what the grader actually
+ * enforces, and CI would stay green. Flag that drift here, independent of
+ * whether the Rust oracle can compile anything.
+ */
+function checkHarnessDrift(
+  entry: LessonEntry,
+  block: CodeBlock,
+  starterSrc: string,
+  solutionSrc: string
+): Diagnostic[] {
+  const { harness: solutionHarness } = splitHarness(solutionSrc);
+  if (!solutionHarness) return [];
+
+  const { harness: starterHarness } = splitHarness(starterSrc);
+  if (normalizeHarness(solutionHarness) === normalizeHarness(starterHarness)) {
+    return [];
+  }
+
+  return [
+    diag(
+      "gate-6",
+      "error",
+      entry.file,
+      `block "${block.key}": solution.rs carries a verification harness that differs from the starter's — the grader always compiles the STARTER's harness (buildGradeFiles), so the solution's copy is silently discarded; make it match the starter's harness exactly or remove it`
+    ),
+  ];
+}
+
 export async function gate6Check(model: RepoModel): Promise<Diagnostic[]> {
   const out: Diagnostic[] = [];
   const blocks: { entry: LessonEntry; block: CodeBlock }[] = [];
@@ -241,6 +283,15 @@ export async function gate6Check(model: RepoModel): Promise<Diagnostic[]> {
   try {
     for (const { entry, block } of blocks) {
       const buildable = block.buildType === "buildable";
+      if (block.language === "rust" && buildable) {
+        try {
+          const starterSrc = read(model.root, entry, block.starter);
+          const solutionSrc = read(model.root, entry, block.solution);
+          out.push(...checkHarnessDrift(entry, block, starterSrc, solutionSrc));
+        } catch {
+          // Unreadable starter/solution is reported by gradeRustBlock or gate-22.
+        }
+      }
       if (block.language === "typescript" && !buildable) {
         out.push(...(await gradeJsBlock(model.root, entry, block)));
       } else if (block.language === "rust" && buildable && compiler) {
