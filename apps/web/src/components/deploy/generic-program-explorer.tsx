@@ -13,6 +13,7 @@ import type { Idl } from "@coral-xyz/anchor";
 import { useTranslations } from "next-intl";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useDeploySigner } from "@/hooks/use-deploy-signer";
+import { isDynamicSessionExpiredError } from "@/lib/dynamic/solana";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LinkedWalletPrompt } from "@/components/wallet/linked-wallet-prompt";
@@ -135,6 +136,7 @@ export function GenericProgramExplorer({
   const { setVisible: openWalletModal } = useWalletModal();
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [reauthDismissed, setReauthDismissed] = useState(false);
+  const [sessionExpired, setSessionExpired] = useState(false);
   const [pendingReconnectWallet, setPendingReconnectWallet] =
     useState<WalletName | null>(null);
   const reconnectAttemptsRef = useRef(0);
@@ -225,6 +227,12 @@ export function GenericProgramExplorer({
       reconnectAttemptsRef.current = 0;
     }
   }, [publicKey]);
+
+  // A session that came back is no longer expired. Keyed on the status rather
+  // than on `publicKey`, which is stable across a re-auth to the same address.
+  useEffect(() => {
+    if (signerStatus === "ready") setSessionExpired(false);
+  }, [signerStatus]);
 
   // State-driven reconnection: after select(null) deselects the adapter,
   // re-select the remembered wallet once the provider reflects the change.
@@ -579,6 +587,16 @@ export function GenericProgramExplorer({
           return;
         }
 
+        // An expired embedded session recovers through Dynamic re-auth, the
+        // same as in the deploy panel — `isWalletKeyringError` is
+        // extension-specific, so without this the learner gets a raw error and
+        // no way back.
+        if (isDynamicSessionExpiredError(err)) {
+          setSessionExpired(true);
+          setReauthDismissed(false);
+          return;
+        }
+
         if (isWalletKeyringError(msg)) {
           reconnectAttemptsRef.current += 1;
           setWalletError(true);
@@ -678,21 +696,22 @@ export function GenericProgramExplorer({
     );
   }
 
-  if (!publicKey) {
-    // An embedded learner whose Dynamic session expired must never be shown the
-    // connect modal: they have no extension, and the modal has no route back to
-    // Dynamic short of a full sign-out.
-    if (signerStatus === "expired" && !reauthDismissed) {
-      return (
-        <LinkedWalletPrompt
-          variant="reauth"
-          linkedWallet={null}
-          onReauth={startReauth}
-          onDismiss={() => setReauthDismissed(true)}
-        />
-      );
-    }
+  // An embedded learner whose Dynamic session expired must never be shown the
+  // connect modal: they have no extension, and the modal has no route back to
+  // Dynamic short of a full sign-out. `sessionExpired` covers the mid-execute
+  // case, where the signer can still look ready.
+  if ((signerStatus === "expired" || sessionExpired) && !reauthDismissed) {
+    return (
+      <LinkedWalletPrompt
+        variant="reauth"
+        linkedWallet={null}
+        onReauth={startReauth}
+        onDismiss={() => setReauthDismissed(true)}
+      />
+    );
+  }
 
+  if (!publicKey) {
     return (
       <Card className="border-yellow-500/30 bg-yellow-500/5">
         <CardContent className="space-y-4 py-8 text-center">
