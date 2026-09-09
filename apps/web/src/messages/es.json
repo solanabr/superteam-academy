@@ -876,6 +876,8 @@
       "claimOwnership": "Reclamar propiedad",
       "refundFailed": "El SOL restante sigue en la clave temporal ({address}). El despliegue está completo; puedes reintentar el reembolso.",
       "retryRefund": "Reintentar reembolso",
+      "fundingCheckFailed": "No pudimos comprobar si tu transferencia anterior se completó, así que no enviamos otra — no se te ha cobrado dos veces. Inténtalo de nuevo en un momento.",
+      "retryFundingCheck": "Intentar de nuevo",
       "sessionKeyLost": "La clave temporal de despliegue de esta pestaña se perdió al recargar la página, así que la subida no puede reanudarse y el SOL que aún tiene quedó atrapado en {address}. Copia esa dirección para recuperar los fondos por tu cuenta; un nuevo despliegue empieza con otra clave.",
       "copyAddress": "Copiar dirección",
       "rateLimitWaiting": "El servicio de la billetera está ocupado (límite de solicitudes) — reintentando en {seconds}s",
