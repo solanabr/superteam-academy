@@ -2,6 +2,8 @@ export * from "./diagnostics";
 export * from "./loader";
 export * from "./model";
 export * from "./lint";
+export * from "./harness";
+export * from "./rust-oracle";
 export * from "./checks/gate1-schema";
 export * from "./checks/gate2-ids";
 export * from "./checks/gate3-slots";

@@ -1,0 +1,26 @@
+diff --git a/courses/_template/lessons/deploy/program/solution.rs b/courses/_template/lessons/deploy/program/solution.rs
+index faa9cb0..e2ee62e 100644
+--- a/courses/_template/lessons/deploy/program/solution.rs
++++ b/courses/_template/lessons/deploy/program/solution.rs
+@@ -1 +1 @@
+-// solution program
++pub fn ping() {}
+diff --git a/courses/_template/lessons/deploy/program/starter.rs b/courses/_template/lessons/deploy/program/starter.rs
+index e4d185c..2810c56 100644
+--- a/courses/_template/lessons/deploy/program/starter.rs
++++ b/courses/_template/lessons/deploy/program/starter.rs
+@@ -1 +1,13 @@
+-// starter program
++// TODO: add a public `ping` handler.
++//
++// Everything below the marker is the verification harness. The grader strips
++// whatever harness your submission carries and re-attaches this one before
++// compiling, so deleting it does not make the exercise go away.
++
++// ─────────────────────────────────────────────────────────────────────────────
++// VERIFICATION HARNESS — DO NOT EDIT ANYTHING BELOW THIS LINE.
++// ─────────────────────────────────────────────────────────────────────────────
++#[allow(dead_code)]
++mod verify {
++    const PING: fn() = super::ping;
++}
