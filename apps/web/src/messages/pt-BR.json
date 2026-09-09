@@ -834,7 +834,8 @@
       "refreshBalance": "Atualizar",
       "connectWallet": "Conecte sua carteira para continuar",
       "copyAddress": "Copiar endereço",
-      "addressCopied": "Copiado!"
+      "addressCopied": "Copiado!",
+      "rateLimitedRetryAfter": "O faucet da devnet está limitado. Tente de novo em {seconds}s, ou use o faucet web."
     },
     "deployment": {
       "deployToDevnet": "Deploy na Devnet",
@@ -861,7 +862,9 @@
       "buildExpired": "Build expirado",
       "rebuildHint": "Clique em \"Run\" no editor para recompilar e faça o deploy novamente.",
       "resolvingWallet": "Verificando sua carteira…",
-      "copied": "Copiado!"
+      "copied": "Copiado!",
+      "rateLimitWaiting": "O serviço da carteira está ocupado (limite de requisições) — tentando de novo em {seconds}s",
+      "rateLimitPaused": "O serviço da carteira ainda está limitando assinaturas. Nada foi perdido — espere um minuto e retome."
     },
     "save": {
       "recording": "Registrando seu deploy…",
