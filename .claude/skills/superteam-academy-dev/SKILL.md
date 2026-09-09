@@ -76,7 +76,7 @@ ENROLL → COMPLETE LESSONS → FINALIZE COURSE → ISSUE CREDENTIAL → CLOSE E
 | Programs       | Anchor 0.31+, Rust 1.82+                                                        |
 | Token Standard | Token-2022 (NonTransferable, PermanentDelegate, MetadataPointer, TokenMetadata) |
 | Credentials    | Metaplex Core NFTs (soulbound via PermanentFreezeDelegate)                      |
-| Testing        | Mollusk, LiteSVM (scenarios + fuzz)                                                |
+| Testing        | Mollusk, LiteSVM (scenarios + fuzz)                                             |
 | Client         | TypeScript, @coral-xyz/anchor, @solana/web3.js                                  |
 | Frontend       | Next.js 14+, React, Tailwind CSS                                                |
 | RPC            | Helius (DAS API for XP leaderboard + credential NFT queries)                    |

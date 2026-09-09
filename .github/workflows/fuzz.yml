@@ -17,8 +17,11 @@ name: Fuzz (litesvm)
 #
 # Exit-code contract (fuzz binary): 0 = all iterations clean, 98 = preflight
 # smoke failed (harness/runtime broken, no fuzzing happened), 99 = crash
-# (violated invariant or unexpected program error). Wrapped in `timeout`, so a
-# clean full-window run surfaces as 124 (or 143 = 128+SIGTERM).
+# (violated invariant or unexpected program error). The binary self-stops at
+# FUZZ_MAX_SECONDS, so a clean run always exits 0 with a `coverage:` line; the
+# `timeout` wrapper firing (124, or 143 = 128+SIGTERM) means an iteration hung
+# and is a failure, not a full window. A failing run files/nudges a tracking
+# issue so a red nightly cannot go unnoticed again.
 
 on:
   schedule:
@@ -53,6 +56,10 @@ jobs:
     runs-on: ubuntu-latest
     # Job ceiling above the fuzz window so build + the run both fit.
     timeout-minutes: 40
+    # Scoped here rather than at workflow level: only this job files the alarm.
+    permissions:
+      contents: read
+      issues: write
     env:
       SOLANA_VERSION: "3.1.10"
       # 600s floor enforced below regardless of the dispatch input.
@@ -128,30 +135,42 @@ jobs:
           # coverage summary; `timeout` is the hard backstop.
           export FUZZ_MAX_SECONDS="${DURATION}"
           # SIGTERM at DURATION+60; SIGKILL 30s later if it ignores TERM.
+          # Tee'd so the completion check below can read the summary back.
           timeout --signal=TERM --kill-after=30s "$((DURATION + 60))s" \
-            cargo run --release --bin fuzz -- "${FUZZ_ITERATIONS}"
-          CODE=$?
+            cargo run --release --bin fuzz -- "${FUZZ_ITERATIONS}" 2>&1 | tee fuzz.log
+          CODE="${PIPESTATUS[0]}"
           echo "fuzzer exit code: ${CODE}"
+
+          fail() {
+            echo "FUZZ_FAILURE=$1" >> "$GITHUB_ENV"
+            echo "::error::$1"
+            exit 1
+          }
+
           case "${CODE}" in
             0)
+              # A run that stopped early — killed, OOM, output truncated — can
+              # still exit 0 through the pipe. The coverage summary is the only
+              # proof the driver reached its end.
+              if ! grep -q '^coverage:' fuzz.log; then
+                fail "Fuzzer exited 0 without printing a coverage line — the run did not complete."
+              fi
               echo "Fuzzing completed with no crashes."
               ;;
             124|143)
-              # 124 = GNU timeout reached; 143 = 128+SIGTERM. Either means the
-              # full window elapsed without the fuzzer reporting a crash.
-              echo "Fuzzing ran the full window with no crashes."
+              # 124 = GNU timeout reached; 143 = 128+SIGTERM. The binary stops
+              # itself at FUZZ_MAX_SECONDS, so `timeout` firing DURATION+60s
+              # later means an iteration hung — never a clean window.
+              fail "Fuzzer hung: killed by timeout ${DURATION}s+60s after the budget (exit ${CODE}). No coverage line."
               ;;
             98)
-              echo "::error::Preflight smoke failed — the program never executed, so nothing was fuzzed."
-              exit 1
+              fail "Preflight smoke failed — the program never executed, so nothing was fuzzed."
               ;;
             99)
-              echo "::error::Fuzzer reported a crash (exit 99). See the log + the crash artifact."
-              exit 1
+              fail "Fuzzer reported a crash (exit 99). See the log + the crash artifact."
               ;;
             *)
-              echo "::error::Fuzzer exited unexpectedly with code ${CODE}."
-              exit "${CODE}"
+              fail "Fuzzer exited unexpectedly with code ${CODE}."
               ;;
           esac
 
@@ -163,3 +182,47 @@ jobs:
           path: onchain-academy/tests/fuzz/crashes/
           if-no-files-found: ignore
           retention-days: 14
+
+      # A red nightly nobody sees is a nightly that does not exist — Trident was
+      # red for seven weeks. Same pattern as bcb-561-reverify-alarm.yml: the
+      # preinstalled `gh` CLI against the default token, no action to SHA-pin.
+      - name: File or nudge the failure issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # Stable marker — the idempotency key. Never change it without
+          # closing the issue it currently tracks.
+          TITLE: "[alarm] nightly fuzz (litesvm) is failing"
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          REASON: ${{ env.FUZZ_FAILURE || 'The job failed before the fuzzer ran (build, preflight tests or setup).' }}
+        run: |
+          set -euo pipefail
+
+          # printf rather than an indented heredoc: YAML block-scalar indentation
+          # would otherwise land in the issue body as markdown code blocks.
+          summary="$(printf 'Run: %s\nReason: %s\n\nExit-code contract: **98** preflight smoke failed (the program never executed — nothing was fuzzed), **99** the fuzzer found a crash (invariant violation or unexpected program error; the fuzz-crashes artifact carries the seed and the instruction sequence), **124/143** the fuzzer hung past its budget, anything else an unexpected driver failure.' "$RUN_URL" "$REASON")"
+
+          # Client-side title match, not --search: the search index is
+          # eventually consistent and idempotency must not depend on it.
+          existing="$(gh issue list \
+            --repo "$GITHUB_REPOSITORY" \
+            --state all --limit 1000 \
+            --json number,state,title \
+            --jq "[.[] | select(.title == \"$TITLE\")][0] // empty")"
+
+          if [ -n "$existing" ]; then
+            num="$(echo "$existing" | jq -r '.number')"
+            state="$(echo "$existing" | jq -r '.state | ascii_downcase')"
+            if [ "$state" != "open" ]; then
+              echo "Tracking issue #$num is closed — reopening for a fresh failure."
+              gh issue reopen "$num" --repo "$GITHUB_REPOSITORY"
+            fi
+            gh issue comment "$num" --repo "$GITHUB_REPOSITORY" \
+              --body "$(printf 'Nightly fuzz failed again.\n\n%s' "$summary")"
+            echo "Nudged #$num."
+            exit 0
+          fi
+
+          gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITLE" \
+            --body "$(printf 'The nightly fuzz job (.github/workflows/fuzz.yml) failed.\n\n%s\n\nClose this issue once the nightly is green again; it is reopened and nudged on the next failure.' "$summary")"
+          echo "Filed the tracking issue."

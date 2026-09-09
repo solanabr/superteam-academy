@@ -120,7 +120,17 @@ fn main() {
         started.elapsed().as_secs_f64()
     );
     println!(
-        "coverage: {} transactions, {} enrollments, {} lessons completed, {} finalizations",
-        stats.transactions, stats.enrollments, stats.lessons_completed, stats.finalizations
+        "coverage: {} transactions, {} enrollments, {} lessons completed, {} finalizations, \
+         {} unenrollments, {} course recreations",
+        stats.transactions,
+        stats.enrollments,
+        stats.lessons_completed,
+        stats.finalizations,
+        stats.unenrollments,
+        stats.course_recreations
+    );
+    println!(
+        "time-dependent rejections: {} UnenrollCooldown (6008), {} StaleEnrollment (6034)",
+        stats.cooldown_rejections, stats.stale_rejections
     );
 }

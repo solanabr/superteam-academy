@@ -4,7 +4,10 @@
 //! 09-2026) with the same coverage: one iteration initializes the platform and
 //! creates a course with fuzzed economics, then runs a random sequence of
 //! `enroll` / `complete_lesson` / `finalize_course` flows and checks the same
-//! two invariants.
+//! two invariants. Two flows the Trident harness never had were added in
+//! 09-2026 — `close_enrollment` (unenroll) and a close/recreate of the course —
+//! along with a seeded clock warp between flows, without which every
+//! time-dependent branch in the program was unreachable.
 //!
 //! Everything is derived from a single u64 seed: given the seed the exact same
 //! instruction sequence replays, so a crash file is a reproduction recipe.
@@ -93,24 +96,62 @@ pub struct Crash {
 
 pub type FuzzResult<T> = Result<T, Crash>;
 
-/// Program errors that are *findings*, not valid rejections.
+/// Error codes the fuzzer explicitly tracks so the coverage line can prove the
+/// time-dependent branches were reached (F-3).
+pub const ERR_UNENROLL_COOLDOWN: u32 = 6008;
+pub const ERR_STALE_ENROLLMENT: u32 = 6034;
+
+/// Is this transaction error an *expected* rejection of fuzzed input?
 ///
-/// A fuzzed instruction is expected to be refused all the time — a `Custom(n)`
-/// error is the program working. These variants instead mean the program
-/// aborted, ran away with compute, or could not be executed at all. The last
-/// one is what seven weeks of red Trident nightlies actually were.
-fn is_unexpected(err: &TransactionError) -> bool {
+/// Allowlist, not denylist: a fuzzer that treats "anything I have not seen" as
+/// normal cannot report the errors that matter. Only these mean "the runtime or
+/// the program refused a badly-shaped input"; everything else — the runtime
+/// guards (`UnbalancedInstruction`, `ModifiedProgramId`,
+/// `ExternalAccountDataModified`, `PrivilegeEscalation`), an abort
+/// (`ProgramFailedToComplete`), a runaway (`ComputationalBudgetExceeded`), a
+/// program that will not execute at all (`UnsupportedProgramId`, the seven-week
+/// Trident outage) — is a finding.
+fn is_expected_rejection(err: &TransactionError) -> bool {
+    let TransactionError::InstructionError(_, ie) = err else {
+        // Transaction-level failures (fee payer, blockhash, account locks) are
+        // harness bugs, not program behavior. Surface them.
+        return false;
+    };
     matches!(
-        err,
-        TransactionError::InstructionError(
-            _,
-            InstructionError::ProgramFailedToComplete
-                | InstructionError::ComputationalBudgetExceeded
-                | InstructionError::ProgramEnvironmentSetupFailure
-                | InstructionError::UnsupportedProgramId
-                | InstructionError::InvalidError
-        )
+        ie,
+        // The program's own AcademyError codes — a rejection is it working.
+        InstructionError::Custom(_)
+            // Fuzzed instruction data that does not parse.
+            | InstructionError::InvalidInstructionData
+            | InstructionError::InvalidArgument
+            // An account of the wrong type, owner or size for the handler.
+            | InstructionError::InvalidAccountData
+            | InstructionError::InvalidAccountOwner
+            | InstructionError::UninitializedAccount
+            // A PDA the fuzzer asked to create twice (re-enroll, re-create).
+            | InstructionError::AccountAlreadyInitialized
+            // A required signer the fuzzed account set did not carry.
+            | InstructionError::MissingRequiredSignature
+            | InstructionError::MissingAccount
+            // A fuzzed learner short of rent/lamports for the account it opens.
+            | InstructionError::InsufficientFunds
+            // System-program create against a non-system-owned address.
+            | InstructionError::IllegalOwner
     )
+}
+
+/// Inverse of [`is_expected_rejection`] — kept as a named predicate because the
+/// send path reads better as "is this a finding".
+fn is_unexpected(err: &TransactionError) -> bool {
+    !is_expected_rejection(err)
+}
+
+/// The `Custom` code of a rejection, for the per-code counters.
+fn custom_code(err: &TransactionError) -> Option<u32> {
+    match err {
+        TransactionError::InstructionError(_, InstructionError::Custom(c)) => Some(*c),
+        _ => None,
+    }
 }
 
 /// Success counters per flow. Printed by the driver at the end of a run: a run
@@ -122,6 +163,14 @@ pub struct Stats {
     pub enrollments: u64,
     pub lessons_completed: u64,
     pub finalizations: u64,
+    pub unenrollments: u64,
+    pub course_recreations: u64,
+    /// Rejections with `UnenrollCooldown` (6008) — unreachable before the
+    /// clock started moving.
+    pub cooldown_rejections: u64,
+    /// Rejections with `StaleEnrollment` (6034) — unreachable before the
+    /// course-recreate flow existed.
+    pub stale_rejections: u64,
 }
 
 impl Stats {
@@ -130,6 +179,10 @@ impl Stats {
         self.enrollments += other.enrollments;
         self.lessons_completed += other.lessons_completed;
         self.finalizations += other.finalizations;
+        self.unenrollments += other.unenrollments;
+        self.course_recreations += other.course_recreations;
+        self.cooldown_rejections += other.cooldown_rejections;
+        self.stale_rejections += other.stale_rejections;
     }
 }
 
@@ -195,6 +248,11 @@ impl Session {
                 }
             }
             Err(failed) => {
+                match custom_code(&failed.err) {
+                    Some(ERR_UNENROLL_COOLDOWN) => self.stats.cooldown_rejections += 1,
+                    Some(ERR_STALE_ENROLLMENT) => self.stats.stale_rejections += 1,
+                    _ => {}
+                }
                 self.sequence
                     .push(format!("{label} -> err {:?}", failed.err));
                 let TransactionMetadata { logs, .. } = failed.meta;
@@ -242,7 +300,18 @@ impl Session {
         if !self.initialize()?.ok {
             return Ok(false);
         }
+        let created = self.create_fuzzed_course("create_course")?;
 
+        // creator (== authority) ATA, target of finalize creator-reward mints.
+        let authority = self.authority.pubkey();
+        let mint = self.xp_mint;
+        let ata = ixs::create_ata_idempotent(&authority, &authority, &mint);
+        self.send_checked("create_ata(creator)", &[ata], &[])?;
+        Ok(created)
+    }
+
+    /// One `create_course` with fuzzed economics under [`COURSE_ID`].
+    fn create_fuzzed_course(&mut self, label: &str) -> FuzzResult<bool> {
         // Bounded fuzzed economics: difficulty must be 1..=3 and lesson_count
         // >= 1 or create_course rejects it (a valid rejection, but we want a
         // usable course most iterations).
@@ -282,22 +351,16 @@ impl Session {
             creator_reward_xp,
             collection: None,
         };
-        let created = self
+        Ok(self
             .send_checked(
                 &format!(
-                    "create_course(lessons={lesson_count}, difficulty={difficulty}, \
+                    "{label}(lessons={lesson_count}, difficulty={difficulty}, \
                      xp_per_lesson={xp_per_lesson}, creator_reward_xp={creator_reward_xp})"
                 ),
                 &[ixs::create_course(&authority, &params)],
                 &[],
             )?
-            .ok;
-
-        // creator (== authority) ATA, target of finalize creator-reward mints.
-        let mint = self.xp_mint;
-        let ata = ixs::create_ata_idempotent(&authority, &authority, &mint);
-        self.send_checked("create_ata(creator)", &[ata], &[])?;
-        Ok(created)
+            .ok)
     }
 
     /// Enroll a brand-new learner, then provision its XP ATA.
@@ -374,6 +437,19 @@ impl Session {
         // the active_lessons mask. Nothing here retires a slot, so the course
         // stays dense and this equals the lesson_count used at creation.
         let Some(course) = self.course() else {
+            // A rejected `recreate_course` can leave the PDA freed; that is the
+            // fuzzer's own doing, not layout drift. Only a *populated* account
+            // that will not decode is a finding.
+            let pda = ixs::course_pda(COURSE_ID);
+            if self
+                .h
+                .svm
+                .get_account(&pda)
+                .is_none_or(|a| a.data.len() < 8)
+            {
+                self.sequence.push("finalize -> skipped (no course)".into());
+                return Ok(());
+            }
             return Err(Crash {
                 kind: "harness",
                 detail: "Course account could not be decoded — layout drift?".into(),
@@ -427,13 +503,104 @@ impl Session {
         Ok(())
     }
 
-    /// One random flow, as the Trident flow executor did.
-    pub fn step(&mut self) -> FuzzResult<()> {
-        match self.rng.gen_range(0..3u8) {
-            0 => self.flow_enroll(),
-            1 => self.flow_complete_lesson(),
-            _ => self.flow_finalize(),
+    /// Unenroll: `close_enrollment` reclaims the rent and frees the PDA.
+    ///
+    /// Gated on the 24h `UNENROLL_COOLDOWN_SECS`, so before the clock started
+    /// moving this flow could only ever have produced `UnenrollCooldown`
+    /// (6008). With [`Session::warp_clock`] both sides are reachable.
+    ///
+    /// Invariant: on success the Enrollment PDA is gone.
+    pub fn flow_close_enrollment(&mut self) -> FuzzResult<()> {
+        let Some((idx, learner)) = self.pick_learner() else {
+            self.sequence
+                .push("close_enrollment -> skipped (no learners)".into());
+            return Ok(());
+        };
+        let signer = self.learners[idx].insecure_clone();
+        let ix = ixs::close_enrollment(COURSE_ID, &learner);
+        let out = self.send_checked(
+            &format!("close_enrollment(learner#{idx})"),
+            &[ix],
+            &[&signer],
+        )?;
+        if !out.ok {
+            return Ok(());
         }
+        self.stats.unenrollments += 1;
+        // The learner no longer has an enrollment; drop it so later flows keep
+        // working against live ones.
+        self.learners.swap_remove(idx);
+
+        let pda = ixs::enrollment_pda(COURSE_ID, &learner);
+        if self
+            .h
+            .svm
+            .get_account(&pda)
+            .is_some_and(|a| !a.data.is_empty())
+        {
+            return Err(Crash {
+                kind: "invariant violated",
+                detail: "close_enrollment succeeded but the Enrollment PDA still has data"
+                    .to_string(),
+                logs: out.logs,
+            });
+        }
+        Ok(())
+    }
+
+    /// Close the course and recreate it under the same id, which claims the
+    /// next `Config.course_generation`. Every enrollment made before the
+    /// recreate is now superseded — the only way to reach `StaleEnrollment`
+    /// (6034) from `complete_lesson` / `finalize_course`.
+    pub fn flow_recreate_course(&mut self) -> FuzzResult<()> {
+        let authority = self.authority.pubkey();
+        let closed = self
+            .send_checked(
+                "close_course",
+                &[ixs::close_course(&authority, COURSE_ID)],
+                &[],
+            )?
+            .ok;
+        // Always recreate, even if the close was rejected, so the course PDA is
+        // never left freed for the following flows.
+        let recreated = self.create_fuzzed_course("recreate_course")?;
+        if closed && recreated {
+            self.stats.course_recreations += 1;
+        }
+        Ok(())
+    }
+
+    /// One random flow, as the Trident flow executor did.
+    ///
+    /// Weighted so the three original flows keep the coverage they had: the
+    /// recreate flow tears the course down, so it stays rare.
+    pub fn step(&mut self) -> FuzzResult<()> {
+        self.warp_clock();
+        match self.rng.gen_range(0..64u8) {
+            0..=17 => self.flow_enroll(),
+            18..=35 => self.flow_complete_lesson(),
+            36..=53 => self.flow_finalize(),
+            54..=62 => self.flow_close_enrollment(),
+            _ => self.flow_recreate_course(),
+        }
+    }
+
+    /// Advance the VM clock by a seeded delta before each flow.
+    ///
+    /// litesvm starts at `unix_timestamp = 0` and nothing moved it, so every
+    /// time-dependent branch in the program was unreachable. Most hops stay
+    /// inside the 24h unenroll cooldown (the 6008 rejection path); one in four
+    /// clears it (the success path).
+    fn warp_clock(&mut self) {
+        const UNENROLL_COOLDOWN_SECS: i64 = 86_400;
+        let delta = if self.rng.gen_bool(0.25) {
+            self.rng
+                .gen_range(UNENROLL_COOLDOWN_SECS + 1..=UNENROLL_COOLDOWN_SECS * 3)
+        } else {
+            self.rng.gen_range(1..=3_600)
+        };
+        self.h.warp(delta);
+        self.sequence.push(format!("warp(+{delta}s)"));
     }
 
     fn pick_learner(&mut self) -> Option<(usize, Pubkey)> {
