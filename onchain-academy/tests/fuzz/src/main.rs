@@ -105,7 +105,7 @@ fn main() {
                 println!("  {step}");
             }
         }
-        stats.merge(session.stats);
+        stats.merge(&session.stats);
         done = iteration + 1;
         if done.is_multiple_of(100) {
             println!(
@@ -132,5 +132,10 @@ fn main() {
     println!(
         "time-dependent rejections: {} UnenrollCooldown (6008), {} StaleEnrollment (6034)",
         stats.cooldown_rejections, stats.stale_rejections
+    );
+    println!(
+        "hostile account swaps rejected: {} ({})",
+        stats.hostile_total(),
+        stats.hostile_summary()
     );
 }

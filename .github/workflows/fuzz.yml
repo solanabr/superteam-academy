@@ -6,6 +6,12 @@ name: Fuzz (litesvm)
 # for 10+ minutes against the REAL compiled `.so`, fails the job if the fuzzer
 # finds a crash, and uploads the crash file for triage.
 #
+# Beyond the happy-path flows the harness also sends hostile account sets — one
+# instruction in sixteen carries a single wrong-but-plausible account (another
+# learner's Enrollment PDA, a foreign Course PDA, the wrong token account) and
+# the program must reject it. An acceptance is exit 99, same as any other
+# invariant violation.
+#
 # The harness (onchain-academy/tests/fuzz) drives litesvm 0.12 — the agave 3.x
 # runtime line the differential suite already uses. It replaced Trident in
 # 09-2026: Trident 0.12 embeds solana-sbpf 0.11 (agave 2.x), which cannot
@@ -190,8 +196,11 @@ jobs:
         if: failure()
         env:
           GH_TOKEN: ${{ github.token }}
-          # Stable marker — the idempotency key. Never change it without
-          # closing the issue it currently tracks.
+          # The idempotency key is the LABEL, not the title: a title match over
+          # a paged listing silently stops finding the issue once the repo has
+          # more issues than the page cap, and then files a duplicate every
+          # night. Never change the label without closing the issue it tracks.
+          LABEL: fuzz-alarm
           TITLE: "[alarm] nightly fuzz (litesvm) is failing"
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           REASON: ${{ env.FUZZ_FAILURE || 'The job failed before the fuzzer ran (build, preflight tests or setup).' }}
@@ -202,13 +211,26 @@ jobs:
           # would otherwise land in the issue body as markdown code blocks.
           summary="$(printf 'Run: %s\nReason: %s\n\nExit-code contract: **98** preflight smoke failed (the program never executed — nothing was fuzzed), **99** the fuzzer found a crash (invariant violation or unexpected program error; the fuzz-crashes artifact carries the seed and the instruction sequence), **124/143** the fuzzer hung past its budget, anything else an unexpected driver failure.' "$RUN_URL" "$REASON")"
 
-          # Client-side title match, not --search: the search index is
-          # eventually consistent and idempotency must not depend on it.
-          existing="$(gh issue list \
+          # The label may not exist yet (first failure, or someone deleted it).
+          # `--force` makes this a no-op when it does.
+          gh label create "$LABEL" --repo "$GITHUB_REPOSITORY" --force \
+            --color B60205 --description "Tracking issue for a failing nightly alarm job"
+
+          # Label lookup, not a title scan and not --search: labels are exact
+          # and unpaged here, while the search index is eventually consistent.
+          # An open issue wins over a closed one if both somehow carry the label.
+          # No pre-existing issue needs migrating onto the label: the alarm has
+          # never fired, so nothing carries the title yet.
+          if ! existing="$(gh issue list \
             --repo "$GITHUB_REPOSITORY" \
-            --state all --limit 1000 \
-            --json number,state,title \
-            --jq "[.[] | select(.title == \"$TITLE\")][0] // empty")"
+            --label "$LABEL" --state all --limit 100 \
+            --json number,state \
+            --jq '([.[] | select(.state == "OPEN")] + .)[0] // empty')"; then
+            # Never fall through to `gh issue create` on a failed listing: that
+            # is exactly how duplicates get filed.
+            echo "::error::could not list issues labelled $LABEL — refusing to file a possible duplicate"
+            exit 1
+          fi
 
           if [ -n "$existing" ]; then
             num="$(echo "$existing" | jq -r '.number')"
@@ -223,6 +245,6 @@ jobs:
             exit 0
           fi
 
-          gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITLE" \
+          gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITLE" --label "$LABEL" \
             --body "$(printf 'The nightly fuzz job (.github/workflows/fuzz.yml) failed.\n\n%s\n\nClose this issue once the nightly is green again; it is reopened and nudged on the next failure.' "$summary")"
           echo "Filed the tracking issue."
