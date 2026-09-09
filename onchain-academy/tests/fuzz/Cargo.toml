@@ -1,0 +1,33 @@
+# Standalone workspace: litesvm pins its own solana-sdk line; keep it out of the
+# program workspace (same isolation pattern as tests/rust and tests/differential).
+#
+# This replaced the Trident harness in 09-2026. Trident 0.12 embeds trident-svm
+# 0.2 / solana-sbpf 0.11 (agave 2.x), which cannot execute the platform-tools
+# v1.54 Pinocchio .so at all — every instruction died with
+# "unsupported BPF instruction", so the nightly produced zero coverage from
+# 2026-07-22 on. litesvm 0.12 is the agave 3.x runtime line and runs the same
+# binary fine, which is what tests/differential already uses.
+[workspace]
+
+[package]
+name = "onchain-academy-fuzz"
+version = "0.1.0"
+description = "Seeded litesvm fuzz harness for the onchain_academy program"
+edition = "2021"
+publish = false
+
+[dependencies]
+litesvm = "0.12"
+solana-sdk = "3"
+rand = "0.8"
+borsh = "1.5"
+# Instruction builders, PDA helpers and the .so loader are shared with the
+# differential suite rather than duplicated — same program, same runtime line.
+onchain-academy-differential = { path = "../differential" }
+
+[[bin]]
+name = "fuzz"
+path = "src/main.rs"
+
+[profile.release]
+opt-level = 3

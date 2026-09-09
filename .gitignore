@@ -68,9 +68,8 @@ lcov.info
 *.profraw
 *.profdata
 
-# Fuzz corpus (can be large)
-onchain-academy/trident-tests/fuzz/corpus/
-onchain-academy/trident-tests/fuzz/artifacts/
+# Fuzz crash reports (written by tests/fuzz, uploaded as CI artifacts)
+onchain-academy/tests/fuzz/crashes/
 
 # Verifiable build artifacts
 onchain-academy/target/verifiable/

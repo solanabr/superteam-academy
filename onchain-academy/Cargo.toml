@@ -3,10 +3,11 @@ members = [
     "programs/*",
 ]
 exclude = [
-    # Trident fuzz tests are their own workspace (own [workspace] table +
-    # crates.io trident-fuzz pinning a different solana-sdk). Keep them out of
-    # the program workspace so `anchor build` / `cargo build` never resolve them.
-    "trident-tests",
+    # The litesvm test workspaces (differential + fuzz) pin their own solana-sdk
+    # line. Keep them out of the program workspace so `anchor build` /
+    # `cargo build` never resolve them.
+    "tests/differential",
+    "tests/fuzz",
 ]
 resolver = "2"
 

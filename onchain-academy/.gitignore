@@ -6,8 +6,5 @@ node_modules
 test-ledger
 .yarn
 
-# Trident fuzz runtime artifacts (metrics, crash corpus, debug logs).
-trident-tests/trident-genesis
-trident-tests/*.json
-trident-tests/trident_debug.log
-**/trident-cov-*.profraw
+# Fuzz crash reports (uploaded as CI artifacts).
+tests/fuzz/crashes/

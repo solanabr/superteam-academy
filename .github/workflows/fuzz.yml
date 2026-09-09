@@ -1,17 +1,24 @@
-name: Fuzz (Trident)
+name: Fuzz (litesvm)
 
-# P2-1 — real program-level fuzzing of the on-chain `onchain_academy` crate with
-# Trident (https://ackee.xyz/trident). This is a SCHEDULED, non-blocking job: it
-# is intentionally NOT wired to `pull_request`, so it never gates PR merges. It
-# runs nightly (and on demand) for 10+ minutes against the REAL compiled program,
-# fails the job if the fuzzer finds a crash, and uploads any crash/debug
-# artifacts for triage.
+# P2-1 — real program-level fuzzing of the on-chain `onchain_academy` program.
+# This is a SCHEDULED, non-blocking job: it is intentionally NOT wired to
+# `pull_request`, so it never gates PR merges. It runs nightly (and on demand)
+# for 10+ minutes against the REAL compiled `.so`, fails the job if the fuzzer
+# finds a crash, and uploads the crash file for triage.
 #
-# Trident 0.12.0 drives an in-process SVM loop under catch_unwind; with
-# TRIDENT_WITH_EXIT_CODE=1 the binary exits 99 on the first panic (a program
-# panic or a violated invariant assertion) and 0 otherwise. We bound wall-clock
-# with `timeout`, so a clean run is either exit 0 (all iterations done) or exit
-# 124 (timeout reached with no crash).
+# The harness (onchain-academy/tests/fuzz) drives litesvm 0.12 — the agave 3.x
+# runtime line the differential suite already uses. It replaced Trident in
+# 09-2026: Trident 0.12 embeds solana-sbpf 0.11 (agave 2.x), which cannot
+# execute the platform-tools v1.54 Pinocchio binary at all ("unsupported BPF
+# instruction" on every instruction), so from 2026-07-22 the nightly was red
+# with zero coverage. A preflight smoke now runs one `initialize` and hard-fails
+# with its own exit code if the program does not execute, so that failure mode
+# can never masquerade as fuzzing again.
+#
+# Exit-code contract (fuzz binary): 0 = all iterations clean, 98 = preflight
+# smoke failed (harness/runtime broken, no fuzzing happened), 99 = crash
+# (violated invariant or unexpected program error). Wrapped in `timeout`, so a
+# clean full-window run surfaces as 124 (or 143 = 128+SIGTERM).
 
 on:
   schedule:
@@ -24,9 +31,13 @@ on:
         required: false
         default: "900"
       iterations:
-        description: "Trident iteration count (upper bound; timeout usually hits first)"
+        description: "Iteration count (upper bound; timeout usually hits first)"
         required: false
         default: "1000000"
+      seed:
+        description: "Master seed (leave blank for a time-based seed, printed in the log)"
+        required: false
+        default: ""
 
 # Don't pile up nightly runs on top of each other.
 concurrency:
@@ -37,8 +48,8 @@ permissions:
   contents: read
 
 jobs:
-  trident-fuzz:
-    name: Trident fuzz (onchain_academy)
+  fuzz:
+    name: Fuzz (onchain_academy · litesvm)
     runs-on: ubuntu-latest
     # Job ceiling above the fuzz window so build + the run both fit.
     timeout-minutes: 40
@@ -47,6 +58,7 @@ jobs:
       # 600s floor enforced below regardless of the dispatch input.
       FUZZ_DURATION: ${{ github.event.inputs.duration_seconds || '900' }}
       FUZZ_ITERATIONS: ${{ github.event.inputs.iterations || '1000000' }}
+      FUZZ_SEED: ${{ github.event.inputs.seed || '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -55,11 +67,12 @@ jobs:
 
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
-          # Cache both the program workspace (for the pinocchio build) and the
-          # fuzz workspace (trident-fuzz + trident-svm are a big cold build).
+          # The fuzz crate path-depends on the differential crate; cache both
+          # plus the program workspace (for the pinocchio build).
           workspaces: |
             onchain-academy
-            onchain-academy/trident-tests
+            onchain-academy/tests/differential
+            onchain-academy/tests/fuzz
 
       # Cache the Solana CLI install + the SBF platform-tools (v1.54) so
       # cargo-build-sbf doesn't re-download them each nightly run.
@@ -81,27 +94,27 @@ jobs:
           echo "$BIN" >> "$GITHUB_PATH"
           "$BIN/cargo-build-sbf" --version
 
-      # Trident.toml loads ../target/deploy/onchain_academy.so, so the program
-      # must be compiled to SBF and installed into that slot first. (Token-2022 /
-      # ATA / system programs are bundled by trident-svm — no extra .so needed.)
+      # The harness loads target/deploy/onchain_academy_pinocchio.so, so the
+      # program must be compiled to SBF first. Token-2022, the Associated-Token
+      # program and the system program are litesvm built-ins.
       - name: Build program (.so for the fuzz SVM)
-        run: |
-          cargo build-sbf --manifest-path programs/onchain-academy-pinocchio/Cargo.toml --tools-version v1.54
-          bash scripts/select-program.sh
+        run: cargo build-sbf --manifest-path programs/onchain-academy-pinocchio/Cargo.toml --tools-version v1.54
         working-directory: onchain-academy
 
       - name: Build fuzz target
-        run: cargo build --release --bin fuzz_0
-        working-directory: onchain-academy/trident-tests
+        run: cargo build --release --bin fuzz
+        working-directory: onchain-academy/tests/fuzz
+
+      # Exits 98 if the program cannot execute — the check that would have
+      # caught seven weeks of "1M iterations, 0 successes" on day one.
+      - name: Preflight smoke + harness tests
+        run: cargo test --release
+        working-directory: onchain-academy/tests/fuzz
 
       - name: Run fuzzer (>= 10 min)
-        working-directory: onchain-academy/trident-tests
+        working-directory: onchain-academy/tests/fuzz
         env:
-          # Make panics (program panic OR a violated invariant assertion) set a
-          # non-zero process exit code so the job fails on a real finding.
-          TRIDENT_WITH_EXIT_CODE: "1"
-          # Surface Trident's per-transaction JSON metrics.
-          FUZZING_METRICS: "1"
+          FUZZ_CRASH_DIR: crashes
         run: |
           set +e
           DURATION="${FUZZ_DURATION}"
@@ -111,22 +124,29 @@ jobs:
             DURATION=600
           fi
           echo "Fuzzing for up to ${DURATION}s (iteration ceiling ${FUZZ_ITERATIONS})..."
-          # SIGTERM at DURATION; SIGKILL 30s later if it ignores TERM.
-          timeout --signal=TERM --kill-after=30s "${DURATION}s" \
-            cargo run --release --bin fuzz_0 -- "${FUZZ_ITERATIONS}"
+          # The binary also stops itself at the budget so it can print its
+          # coverage summary; `timeout` is the hard backstop.
+          export FUZZ_MAX_SECONDS="${DURATION}"
+          # SIGTERM at DURATION+60; SIGKILL 30s later if it ignores TERM.
+          timeout --signal=TERM --kill-after=30s "$((DURATION + 60))s" \
+            cargo run --release --bin fuzz -- "${FUZZ_ITERATIONS}"
           CODE=$?
           echo "fuzzer exit code: ${CODE}"
           case "${CODE}" in
             0)
-              echo "Fuzzing completed all iterations with no crashes."
+              echo "Fuzzing completed with no crashes."
               ;;
             124|143)
               # 124 = GNU timeout reached; 143 = 128+SIGTERM. Either means the
               # full window elapsed without the fuzzer reporting a crash.
-              echo "Fuzzing ran the full ${DURATION}s window with no crashes."
+              echo "Fuzzing ran the full window with no crashes."
+              ;;
+            98)
+              echo "::error::Preflight smoke failed — the program never executed, so nothing was fuzzed."
+              exit 1
               ;;
             99)
-              echo "::error::Trident reported a crash (exit 99). See logs + artifacts."
+              echo "::error::Fuzzer reported a crash (exit 99). See the log + the crash artifact."
               exit 1
               ;;
             *)
@@ -135,14 +155,11 @@ jobs:
               ;;
           esac
 
-      - name: Upload fuzz artifacts (metrics + crash corpus)
-        if: always()
+      - name: Upload crash reports
+        if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: trident-fuzz-artifacts
-          path: |
-            onchain-academy/trident-tests/*.json
-            onchain-academy/trident-tests/trident-genesis/**
-            onchain-academy/trident-tests/trident_debug.log
+          name: fuzz-crashes
+          path: onchain-academy/tests/fuzz/crashes/
           if-no-files-found: ignore
           retention-days: 14
