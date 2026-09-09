@@ -240,6 +240,15 @@ vi.mock("server-only", () => ({}));
 //    verification harness in the starter/solution. One lesson moves; counts,
 //    slots and every other doc are byte-unchanged, so lessons.json and
 //    course-by-slug.json are the only fixtures regenerated.
+//  - ping-program harness drift fix (bump to academy-courses @f2d97edb,
+//    academy-courses #64): the grader always compiles the starter's
+//    verification harness, never the solution's, so the solution's extra
+//    explanatory comments inside that region were dead weight that could
+//    drift. Comments moved above the marker into the solution body — same
+//    lesson (b2s `your-first-solana-program`, ping-program block), comment
+//    text only, no code change. Counts, slots and every other doc are
+//    byte-unchanged, so lessons.json and course-by-slug.json are the only
+//    fixtures regenerated.
 const deps = { lessonsById };
 
 function bundleCourse(id: string): CourseDoc {
