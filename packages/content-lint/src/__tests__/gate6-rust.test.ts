@@ -117,6 +117,49 @@ describe("gate 6 — grade files (pure)", () => {
   });
 });
 
+describe("gate 6 — solution harness drift", () => {
+  afterEach(() => {
+    process.env.CONTENT_LINT_RUST_ORACLE = "off";
+  });
+
+  it("passes when the solution carries no harness of its own", async () => {
+    process.env.CONTENT_LINT_RUST_ORACLE = "off";
+    const r = await runLint(makeTempRepo(tree(STARTER, SOLUTION)));
+    expect(errors(r.diagnostics)).toEqual([]);
+  });
+
+  it("passes when the solution's harness matches the starter's byte-for-byte", async () => {
+    process.env.CONTENT_LINT_RUST_ORACLE = "off";
+    const solutionWithHarness = `pub fn ping() {}\n${HARNESS}`;
+    const r = await runLint(makeTempRepo(tree(STARTER, solutionWithHarness)));
+    expect(errors(r.diagnostics)).toEqual([]);
+  });
+
+  it("passes when the two harnesses differ only in trailing whitespace or CRLF", async () => {
+    process.env.CONTENT_LINT_RUST_ORACLE = "off";
+    const noisyHarness = HARNESS.replace(/\n/g, "\r\n").replace(
+      "mod verify {",
+      "mod verify {   "
+    );
+    const solutionWithHarness = `pub fn ping() {}\n${noisyHarness}`;
+    const r = await runLint(makeTempRepo(tree(STARTER, solutionWithHarness)));
+    expect(errors(r.diagnostics)).toEqual([]);
+  });
+
+  it("errors when the solution's harness has silently drifted from the starter's", async () => {
+    process.env.CONTENT_LINT_RUST_ORACLE = "off";
+    const driftedHarness = HARNESS.replace("super::ping", "super::nope");
+    const solutionWithHarness = `pub fn ping() {}\n${driftedHarness}`;
+    const r = await runLint(makeTempRepo(tree(STARTER, solutionWithHarness)));
+    expect(
+      errorMatching(
+        r.diagnostics,
+        /solution\.rs carries a verification harness that differs from the starter's/
+      )
+    ).toBe(true);
+  });
+});
+
 describe("gate 6 — rust oracle without a toolchain", () => {
   const realPath = process.env.PATH;
   afterEach(() => {
