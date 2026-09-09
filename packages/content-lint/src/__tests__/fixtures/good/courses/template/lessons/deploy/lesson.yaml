@@ -13,3 +13,6 @@ blocks:
     tests: program/tests.json
     consumes: [funded-wallet]
     produces: deployed-program
+  - key: deployed
+    type: deployed-program-card
+    consumes: [deployed-program]
