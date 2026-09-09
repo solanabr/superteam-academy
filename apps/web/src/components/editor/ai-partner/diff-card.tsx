@@ -199,12 +199,12 @@ export function DiffCard({
   const alreadyApplied =
     !applied.ok &&
     edits.length > 0 &&
-    edits.every(
-      (edit) =>
-        typeof edit?.replace === "string" &&
-        edit.replace.length > 0 &&
-        current.includes(edit.replace)
-    );
+    edits.every((edit) => {
+      if (typeof edit?.replace !== "string") return false;
+      return edit.replace.length > 0
+        ? current.includes(edit.replace)
+        : !current.includes(edit.search);
+    });
 
   // The correct index/explanation are sealed server-side (`checkToken`) and
   // never shipped to the browser — grading a pick is an async round trip to

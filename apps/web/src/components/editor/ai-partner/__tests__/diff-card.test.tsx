@@ -620,4 +620,92 @@ describe("applied state survives the buffer it just changed", () => {
       screen.queryByRole("button", { name: /^accept$/i })
     ).not.toBeInTheDocument();
   });
+
+  // A pure-deletion edit (`replace: ""`) has no replacement text to search
+  // for, so `alreadyApplied` falls back to "the search text is gone" — the
+  // fix for the blocking review finding on #1219.
+  const DELETE_BUFFER = "fn main() {\n  debug_print();\n}";
+  const DELETED_BUFFER = "fn main() {\n}";
+  const DELETION: CodeEdit[] = [{ search: "  debug_print();\n", replace: "" }];
+
+  it('recognizes a deletion edit already applied (replace: "")', () => {
+    renderWithIntl(
+      <DiffCard
+        current={DELETED_BUFFER}
+        edits={DELETION}
+        rationale="removes the debug print"
+        check={check}
+        checkToken="tok"
+        onVerify={vi.fn()}
+        onAccept={vi.fn()}
+        onReject={() => {}}
+        stale={false}
+      />
+    );
+
+    expect(
+      screen.getByText(messages.aiPartner.diff.alreadyApplied)
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/couldn't be applied automatically/i)
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^accept$/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it("still offers Accept for a deletion edit not yet applied", () => {
+    renderWithIntl(
+      <DiffCard
+        current={DELETE_BUFFER}
+        edits={DELETION}
+        rationale="removes the debug print"
+        check={check}
+        checkToken="tok"
+        onVerify={vi.fn()}
+        onAccept={vi.fn()}
+        onReject={() => {}}
+        stale={false}
+      />
+    );
+
+    expect(
+      screen.queryByText(messages.aiPartner.diff.alreadyApplied)
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/couldn't be applied automatically/i)
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /^accept$/i })
+    ).toBeInTheDocument();
+  });
+
+  it("recognizes a mixed set — one deletion applied and one replacement applied", () => {
+    const MIXED_APPLIED_BUFFER = "fn main() {\n  ping();\n}";
+    const MIXED: CodeEdit[] = [
+      { search: "// TODO", replace: "ping();" },
+      { search: "  debug_print();\n", replace: "" },
+    ];
+
+    renderWithIntl(
+      <DiffCard
+        current={MIXED_APPLIED_BUFFER}
+        edits={MIXED}
+        rationale="fills in the TODO and removes the debug print"
+        check={check}
+        checkToken="tok"
+        onVerify={vi.fn()}
+        onAccept={vi.fn()}
+        onReject={() => {}}
+        stale={false}
+      />
+    );
+
+    expect(
+      screen.getByText(messages.aiPartner.diff.alreadyApplied)
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/couldn't be applied automatically/i)
+    ).not.toBeInTheDocument();
+  });
 });
