@@ -14,6 +14,7 @@ import {
   PublicKey,
   SystemInstruction,
 } from "@solana/web3.js";
+import { FundingCheckError } from "@superteam-lms/deploy";
 import { EMBEDDED_BATCH_SIZE } from "@/hooks/use-deploy-signer";
 import messages from "@/messages/en.json";
 import { encryptSessionKey } from "@/lib/deploy/session-key-storage";
@@ -44,6 +45,7 @@ const h = vi.hoisted(() => ({
   balanceLamports: 0,
   trackEvent: vi.fn(),
   isSessionExpired: vi.fn(() => false),
+  holdDecrypt: null as Promise<void> | null,
 }));
 
 vi.mock("@/hooks/use-deploy-signer", async (importOriginal) => ({
@@ -97,6 +99,22 @@ vi.mock("@superteam-lms/deploy", async (importOriginal) => ({
   estimateSessionKeyDeployCost: h.estimateDeployCost,
   createAirdropRequest: vi.fn(async () => ({ success: false, error: "no" })),
 }));
+
+// The decrypt is what Deploy waits on. `h.holdDecrypt` lets a test park it
+// mid-flight and click the button while the saved key is still unread.
+vi.mock("@/lib/deploy/session-key-storage", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/lib/deploy/session-key-storage")>();
+  return {
+    ...actual,
+    decryptSessionKey: async (
+      ...args: Parameters<typeof actual.decryptSessionKey>
+    ) => {
+      if (h.holdDecrypt) await h.holdDecrypt;
+      return actual.decryptSessionKey(...args);
+    },
+  };
+});
 
 vi.mock("@/lib/gamification/celebration", () => ({ celebrate: vi.fn() }));
 vi.mock("@/lib/analytics", () => ({ trackEvent: h.trackEvent }));
@@ -161,6 +179,7 @@ beforeEach(() => {
   h.trackEvent.mockReset();
   h.isSessionExpired.mockReset();
   h.isSessionExpired.mockReturnValue(false);
+  h.holdDecrypt = null;
   localStorage.clear();
   sessionStorage.clear();
   vi.stubGlobal(
@@ -322,21 +341,76 @@ describe("DeployPanel — signer resolution", () => {
       refundError: null,
     });
     renderPanel();
-    // The panel keeps the key and drops the (absent) offset — that rewrite is
-    // how we know the restore has run.
-    await waitFor(() =>
-      expect(
-        sessionStorage.getItem(`deploy-state-${EMBEDDED.slice(0, 8)}-${BUILD}`)
-      ).toContain('"deployment":null')
-    );
-    fireEvent.click(
-      await screen.findByRole("button", { name: "Deploy to Devnet" })
-    );
+    // Deploy stays disabled until the saved key has been decrypted back into
+    // the panel — clicking before that would generate a fresh key over the one
+    // holding the learner's SOL. Waiting for the enabled button is the barrier.
+    const deploy = await screen.findByRole("button", {
+      name: "Deploy to Devnet",
+    });
+    await waitFor(() => expect(deploy).toBeEnabled());
+    expect(
+      sessionStorage.getItem(`deploy-state-${EMBEDDED.slice(0, 8)}-${BUILD}`)
+    ).toContain('"deployment":null');
+    fireEvent.click(deploy);
 
     await waitFor(() => expect(h.runSessionKeyDeploy).toHaveBeenCalledTimes(1));
     const retry = h.runSessionKeyDeploy.mock.calls[0]![0];
     expect(retry.persistedSessionKey).toEqual(secret);
     expect(retry.pendingFundingSignature).toBe("first-fund-sig");
+  });
+
+  it("will not deploy while the saved key is still being read back", async () => {
+    const secret = Array.from(Keypair.generate().secretKey);
+    sessionStorage.setItem(
+      `deploy-state-${EMBEDDED.slice(0, 8)}-${BUILD}`,
+      JSON.stringify({
+        deployment: null,
+        session: await encryptSessionKey(secret, BUILD),
+        sessionAddress: "SessionKeyAddress",
+        fundingSignature: "first-fund-sig",
+      })
+    );
+    let release = () => {};
+    h.holdDecrypt = new Promise<void>((resolve) => {
+      release = () => resolve();
+    });
+    renderPanel();
+
+    // Clicking here would fund a SECOND key over the one that already holds
+    // the learner's SOL, so the button refuses until the decrypt lands.
+    const button = await screen.findByRole("button", {
+      name: "Checking your wallet…",
+    });
+    expect(button).toBeDisabled();
+    fireEvent.click(button);
+    expect(h.runSessionKeyDeploy).not.toHaveBeenCalled();
+
+    release();
+    const deploy = await screen.findByRole("button", {
+      name: "Deploy to Devnet",
+    });
+    fireEvent.click(deploy);
+    await waitFor(() => expect(h.runSessionKeyDeploy).toHaveBeenCalledTimes(1));
+    expect(h.runSessionKeyDeploy.mock.calls[0]![0].persistedSessionKey).toEqual(
+      secret
+    );
+  });
+
+  it("offers a retry, not a second transfer, when the funding check can't answer", async () => {
+    h.runSessionKeyDeploy.mockRejectedValueOnce(
+      new FundingCheckError("rpc-error")
+    );
+    renderPanel();
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Deploy to Devnet" })
+    );
+
+    expect(
+      await screen.findByText(/didn't send another one/i)
+    ).toBeInTheDocument();
+    fireEvent.click(await screen.findByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(h.runSessionKeyDeploy).toHaveBeenCalledTimes(2));
   });
 
   it("takes the mismatch check from the signer's key, not the adapter's", async () => {
@@ -498,6 +572,51 @@ describe("DeployPanel — session-key resume and start over", () => {
       session: null,
       sessionAddress: "StrandedSessionKeyAddress",
     });
+
+    // Every reload after that, too: the pruned record has no session left to
+    // decrypt, and the restore must keep reading it as a stranded key rather
+    // than as junk to delete.
+    for (let reload = 0; reload < 2; reload++) {
+      cleanup();
+      renderPanel();
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "StrandedSessionKeyAddress"
+      );
+      expect(
+        JSON.parse(
+          sessionStorage.getItem(
+            `deploy-state-${EMBEDDED.slice(0, 8)}-${BUILD}`
+          )!
+        )
+      ).toMatchObject({
+        session: null,
+        sessionAddress: "StrandedSessionKeyAddress",
+      });
+    }
+
+    // It goes when there is a key to replace it with: a new deploy reports its
+    // session key, and the record now names an address that CAN be signed with.
+    h.runSessionKeyDeploy.mockImplementation(
+      async (params: {
+        events: {
+          onSessionKey: (s: number[], k: PublicKey) => Promise<void> | void;
+        };
+      }) => {
+        await params.events.onSessionKey(
+          Array.from(Keypair.generate().secretKey),
+          Keypair.generate().publicKey
+        );
+        throw new Error("stop here");
+      }
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Deploy to Devnet" })
+    );
+    await waitFor(() =>
+      expect(
+        screen.queryByText(/StrandedSessionKeyAddress/)
+      ).not.toBeInTheDocument()
+    );
   });
 
   it("warns before the transfer that a reload strands the funds", async () => {

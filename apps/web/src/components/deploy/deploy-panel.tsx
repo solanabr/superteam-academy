@@ -11,6 +11,7 @@ import {
   estimateSessionKeyDeployCost,
   getCachedBinaryLength,
   isResumableDeploymentState,
+  FundingCheckError,
   OwnershipTransferError,
   resumeDeployment,
   runSessionKeyDeploy,
@@ -198,6 +199,16 @@ export function DeployPanel({
   );
   const lostSessionAddressRef = useRef<string | null>(null);
   const [lostCopied, setLostCopied] = useState(false);
+  // Whether the saved session key has been read back yet. Deploy waits for it:
+  // clicking before the decrypt resolves would generate a fresh key over the
+  // one an earlier attempt already funded, and transfer a second time.
+  const [restoreStatus, setRestoreStatus] = useState<"pending" | "done">(
+    "pending"
+  );
+  // The funding check could not tell whether the learner's transfer landed, so
+  // nothing was sent. Offers a retry rather than a start over — the carried-over
+  // key is the whole point.
+  const [fundingCheckFailed, setFundingCheckFailed] = useState(false);
   // A start-over sweep that rejected. Held so "retry refund" has a key to
   // sweep WITH — `resetSession` runs before the sweep settles.
   const strandedSweepRef = useRef<{
@@ -503,8 +514,14 @@ export function DeployPanel({
   // is offered — and dropped, not repaired, when it fails.
   useEffect(() => {
     let cancelled = false;
+    const settle = () => {
+      if (!cancelled) setRestoreStatus("done");
+    };
     const stored = readDeployState(buildUuid, walletPrefix);
-    if (!stored) return;
+    if (!stored) {
+      settle();
+      return;
+    }
 
     const deployment = stored.deployment;
     const resumable =
@@ -516,59 +533,80 @@ export function DeployPanel({
       });
 
     // Dropped without waiting on the decrypt: a state that is neither
-    // resumable nor attached to a funded key has nothing worth reading.
+    // resumable nor attached to a funded key has nothing worth reading — with
+    // one exception. A record already pruned down to a stranded key's address
+    // (session null, address kept) is the only surviving record of where the
+    // learner's SOL went, and it has to outlive every later reload, not just
+    // the one that created it.
     if (!resumable && !(stored.session && stored.fundingSignature)) {
-      clearDeployState(buildUuid, walletPrefix);
-      return;
-    }
-
-    (async () => {
-      // No session key means the adapter path (or a reload that took the
-      // wrapping nonce with it): a session-key deploy cannot resume without it.
-      const secret = stored.session
-        ? await decryptSessionKey(stored.session, buildUuid)
-        : null;
-      if (cancelled) return;
-
-      // A reload. The key is unrecoverable, but it is where the learner's SOL
-      // went — so the record is kept down to its address, and shown, rather
-      // than deleted along with the only way to find the funds again.
-      if (stored.session && !secret) {
-        if (!stored.sessionAddress) {
-          clearDeployState(buildUuid, walletPrefix);
-          return;
-        }
+      if (!stored.session && stored.sessionAddress) {
         storedRef.current = {
           deployment: null,
           session: null,
           sessionAddress: stored.sessionAddress,
           fundingSignature: stored.fundingSignature,
         };
-        writeDeployState(buildUuid, walletPrefix, storedRef.current);
         rememberLostAddress(stored.sessionAddress);
+        settle();
         return;
       }
-      // Nothing to resume from — but a key with a funding signature against it
-      // is a key an earlier attempt may have paid into, and the offset is not
-      // what makes it worth keeping. Keep it (and only it, never the state that
-      // failed validation) so the next Deploy carries it over instead of
-      // transferring a second time.
-      if (!resumable) {
-        if (!secret) {
-          clearDeployState(buildUuid, walletPrefix);
+      clearDeployState(buildUuid, walletPrefix);
+      settle();
+      return;
+    }
+
+    // Deploy is gated on `settle`, so every branch below has to reach it.
+    void (async () => {
+      try {
+        // No session key means the adapter path (or a reload that took the
+        // wrapping nonce with it): a session-key deploy cannot resume without it.
+        const secret = stored.session
+          ? await decryptSessionKey(stored.session, buildUuid)
+          : null;
+        if (cancelled) return;
+
+        // A reload. The key is unrecoverable, but it is where the learner's SOL
+        // went — so the record is kept down to its address, and shown, rather
+        // than deleted along with the only way to find the funds again.
+        if (stored.session && !secret) {
+          if (!stored.sessionAddress) {
+            clearDeployState(buildUuid, walletPrefix);
+            return;
+          }
+          storedRef.current = {
+            deployment: null,
+            session: null,
+            sessionAddress: stored.sessionAddress,
+            fundingSignature: stored.fundingSignature,
+          };
+          writeDeployState(buildUuid, walletPrefix, storedRef.current);
+          rememberLostAddress(stored.sessionAddress);
+          return;
+        }
+        // Nothing to resume from — but a key with a funding signature against it
+        // is a key an earlier attempt may have paid into, and the offset is not
+        // what makes it worth keeping. Keep it (and only it, never the state that
+        // failed validation) so the next Deploy carries it over instead of
+        // transferring a second time.
+        if (!resumable) {
+          if (!secret) {
+            clearDeployState(buildUuid, walletPrefix);
+            return;
+          }
+          sessionSecretRef.current = secret;
+          setSessionAddress(stored.sessionAddress);
+          storedRef.current = { ...stored, deployment: null };
+          writeDeployState(buildUuid, walletPrefix, storedRef.current);
           return;
         }
         sessionSecretRef.current = secret;
         setSessionAddress(stored.sessionAddress);
-        storedRef.current = { ...stored, deployment: null };
-        writeDeployState(buildUuid, walletPrefix, storedRef.current);
-        return;
+        storedRef.current = stored;
+        setSavedState(deployment);
+        setPanelState("paused");
+      } finally {
+        settle();
       }
-      sessionSecretRef.current = secret;
-      setSessionAddress(stored.sessionAddress);
-      storedRef.current = stored;
-      setSavedState(deployment);
-      setPanelState("paused");
     })();
 
     return () => {
@@ -757,6 +795,7 @@ export function DeployPanel({
       setBatchInfo(null);
       setSessionExpired(false);
       setRefundFailed(false);
+      setFundingCheckFailed(false);
       setClaim(null);
       startTimeRef.current = Date.now();
       if (resume) {
@@ -858,6 +897,15 @@ export function DeployPanel({
           setSessionAddress(err.sessionKeyAddress.toBase58());
           setClaim(err.deployResult);
           setErrorMessage(t("ownershipFailed"));
+          setPanelState("paused");
+          return;
+        }
+        // The funding check could not say whether the earlier transfer landed,
+        // so nothing was sent and nothing is lost — the same key, and its
+        // pending signature, are still saved. This is a retry, not a failure.
+        if (err instanceof FundingCheckError) {
+          setFundingCheckFailed(true);
+          setErrorMessage(t("fundingCheckFailed"));
           setPanelState("paused");
           return;
         }
@@ -1005,6 +1053,9 @@ export function DeployPanel({
   // Deploy handler
   const handleDeploy = useCallback(async () => {
     if (!signer || needsFunding) return;
+    // The saved key is still being read back. Deploying now would generate a
+    // fresh one over a key an earlier attempt may have already funded.
+    if (restoreStatus === "pending") return;
     if (isEmbedded) {
       await runEmbedded(null);
       return;
@@ -1082,6 +1133,7 @@ export function DeployPanel({
     buildCallbacks,
     handleSuccess,
     isEmbedded,
+    restoreStatus,
     runEmbedded,
     t,
   ]);
@@ -1674,6 +1726,15 @@ export function DeployPanel({
           )}
 
           <div className="flex gap-2">
+            {fundingCheckFailed && (
+              <Button
+                onClick={handleDeploy}
+                className="flex-1"
+                disabled={!signer || restoreStatus === "pending"}
+              >
+                {t("retryFundingCheck")}
+              </Button>
+            )}
             {!isExpired && !claim && savedState && (
               <Button
                 onClick={handleResume}
@@ -1782,9 +1843,9 @@ export function DeployPanel({
           <Button
             onClick={handleDeploy}
             className="w-full bg-gradient-to-r from-solana-purple to-solana-green font-semibold text-white hover:opacity-90"
-            disabled={!signer || needsFunding}
+            disabled={!signer || needsFunding || restoreStatus === "pending"}
           >
-            {signerStatus === "resolving"
+            {signerStatus === "resolving" || restoreStatus === "pending"
               ? t("resolvingWallet")
               : needsFunding
                 ? t("insufficientSol", {

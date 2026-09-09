@@ -871,6 +871,8 @@
       "claimOwnership": "Claim ownership",
       "refundFailed": "The leftover SOL is still in the temporary key ({address}). The deploy is complete; you can retry the refund.",
       "retryRefund": "Retry refund",
+      "fundingCheckFailed": "We couldn't check whether your earlier transfer went through, so we didn't send another one — you have not been charged twice. Try again in a moment.",
+      "retryFundingCheck": "Try again",
       "sessionKeyLost": "This tab's temporary deploy key was lost when the page reloaded, so the upload can't be resumed and the SOL it still holds is stranded at {address}. Copy that address to recover the funds yourself; deploying again starts with a new key.",
       "copyAddress": "Copy address",
       "rateLimitWaiting": "Wallet service is busy (rate limited) — retrying in {seconds}s",
