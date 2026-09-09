@@ -38,6 +38,7 @@ vi.mock("@solana/wallet-adapter-react", () => ({
 
 vi.mock("@superteam-lms/deploy", () => ({
   createAirdropRequest: h.createAirdropRequest,
+  MAX_RETRY_AFTER_SECONDS: 600,
 }));
 
 function renderCard(props?: {
@@ -120,5 +121,28 @@ describe("WalletFundingCard", () => {
       name: new RegExp(EMBEDDED.toBase58()),
     });
     expect(copyButton).toHaveTextContent("Copy address");
+  });
+
+  it("clamps a hostile retry-after instead of parking the button for a day", async () => {
+    h.createAirdropRequest.mockResolvedValue({
+      success: false,
+      rateLimited: true,
+      retryAfterSeconds: 86_400,
+    });
+    renderCard();
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Request Airdrop" })
+    );
+
+    // The countdown label shows the clamped value, not the raw day-long one.
+    expect(
+      await screen.findByRole("button", { name: "Request Airdrop (600s)" })
+    ).toBeInTheDocument();
+
+    // The faucet link stays usable regardless of the cooldown.
+    expect(
+      screen.getByRole("link", { name: "faucet.solana.com" })
+    ).toHaveAttribute("href", "https://faucet.solana.com");
   });
 });

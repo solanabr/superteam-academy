@@ -15,6 +15,17 @@ import { Connection, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
  */
 export const DEVNET_FAUCET_ENDPOINT = "https://api.devnet.solana.com";
 
+/**
+ * Ceiling for a faucet-reported `retryAfterSeconds`.
+ *
+ * The faucet's `Retry-After` is an untrusted body we regex out of a thrown
+ * message (see `parseRetryAfterSeconds`) — a body like `retry-after: 86400`
+ * would otherwise park the funding button for a full day. Capped so a
+ * misbehaving or hostile response degrades to "wait a while", not "dead
+ * button".
+ */
+export const MAX_RETRY_AFTER_SECONDS = 600;
+
 export interface AirdropResult {
   success: boolean;
   signature?: string;
@@ -128,5 +139,6 @@ function parseRetryAfterSeconds(message: string): number | undefined {
     );
   if (!match) return undefined;
   const seconds = Number(match[1]);
-  return Number.isFinite(seconds) && seconds > 0 ? seconds : undefined;
+  if (!Number.isFinite(seconds) || seconds <= 0) return undefined;
+  return Math.min(seconds, MAX_RETRY_AFTER_SECONDS);
 }

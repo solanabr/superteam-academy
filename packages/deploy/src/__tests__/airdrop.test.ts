@@ -31,8 +31,11 @@ vi.mock("@solana/web3.js", async (importOriginal) => {
   };
 });
 
-const { createAirdropRequest, DEVNET_FAUCET_ENDPOINT } =
-  await import("../airdrop");
+const {
+  createAirdropRequest,
+  DEVNET_FAUCET_ENDPOINT,
+  MAX_RETRY_AFTER_SECONDS,
+} = await import("../airdrop");
 
 const WALLET = Keypair.generate().publicKey;
 
@@ -99,6 +102,17 @@ describe("createAirdropRequest", () => {
 
     expect(result.rateLimited).toBe(true);
     expect(result.retryAfterSeconds).toBeUndefined();
+  });
+
+  it("caps a hostile retry-after instead of parking the button for a day", async () => {
+    rpc.requestAirdrop.mockRejectedValue(
+      new Error("429 Too Many Requests, retry-after: 86400")
+    );
+
+    const result = await createAirdropRequest(WALLET);
+
+    expect(result.rateLimited).toBe(true);
+    expect(result.retryAfterSeconds).toBe(MAX_RETRY_AFTER_SECONDS);
   });
 
   it("retries transient failures before giving up", async () => {
