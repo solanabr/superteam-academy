@@ -231,6 +231,24 @@ vi.mock("server-only", () => ({}));
 //    No course ships an `l10n/` overlay at this SHA, so l10n.json is `{}`
 //    and the localized-projection path is covered by queries-l10n.test.ts
 //    against a fixture rather than by a golden.
+//  - deploy-lesson fund + card blocks (bump to academy-courses @ea7fb51e,
+//    academy-courses #61/#62): the b2s `your-first-solana-program` lesson
+//    wraps its deployable code block in a `wallet-funding` block (produces
+//    `funded-wallet`, which the code block now consumes) and a
+//    `deployed-program-card` (consumes `deployed-program`, which the code
+//    block now produces), plus a prose paragraph on deploy rent and a real
+//    verification harness in the starter/solution. One lesson moves; counts,
+//    slots and every other doc are byte-unchanged, so lessons.json and
+//    course-by-slug.json are the only fixtures regenerated.
+//  - ping-program harness drift fix (bump to academy-courses @f2d97edb,
+//    academy-courses #64): the grader always compiles the starter's
+//    verification harness, never the solution's, so the solution's extra
+//    explanatory comments inside that region were dead weight that could
+//    drift. Comments moved above the marker into the solution body — same
+//    lesson (b2s `your-first-solana-program`, ping-program block), comment
+//    text only, no code change. Counts, slots and every other doc are
+//    byte-unchanged, so lessons.json and course-by-slug.json are the only
+//    fixtures regenerated.
 const deps = { lessonsById };
 
 function bundleCourse(id: string): CourseDoc {
