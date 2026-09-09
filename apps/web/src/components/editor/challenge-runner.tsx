@@ -796,7 +796,9 @@ async function runBuildChallenge(
   // Parse compiler stderr for warnings/errors
   const stderr = result.stderr ?? "";
   const hasErrors = !result.success;
-  const cleanStderr = stderr.replace(/\x1b\[[0-9;]*m/g, "");
+  // Stripped once here for the Output tab; firstCompilerErrorLine strips
+  // internally, so it takes the raw stderr directly below.
+  const cleanStderr = stripAnsi(stderr);
 
   // For build challenges, "tests" are compilation checks:
   // - Test 0 always checks: "Program compiles successfully"
@@ -812,7 +814,7 @@ async function runBuildChallenge(
         // stays in `error` for the Output tab.
         actualOutput: result.success
           ? "Compilation successful"
-          : firstCompilerErrorLine(cleanStderr, 300),
+          : firstCompilerErrorLine(stderr, 300),
       };
     }
     // Additional tests: pass if build succeeded (future: check for specific patterns)
