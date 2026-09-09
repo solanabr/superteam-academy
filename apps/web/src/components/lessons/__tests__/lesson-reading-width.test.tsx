@@ -52,7 +52,6 @@ function ctx(): BlockContext {
     buildUuid: null,
     programKeypairSecret: null,
     resetBuild: vi.fn(),
-    nextLessonHref: null,
     canSubmit: true,
   } as unknown as BlockContext;
 }

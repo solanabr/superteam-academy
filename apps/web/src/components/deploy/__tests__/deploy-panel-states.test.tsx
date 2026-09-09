@@ -78,7 +78,6 @@ function renderPanel(props?: { isCompleted?: boolean }) {
         courseSlug="btc-to-sol-evolution"
         courseId="course-btc-to-sol"
         xpReward={50}
-        nextLessonHref="/en/courses/btc-to-sol-evolution/lessons/next"
         {...props}
       />
     </NextIntlClientProvider>

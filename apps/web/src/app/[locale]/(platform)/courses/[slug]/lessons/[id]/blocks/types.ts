@@ -58,8 +58,6 @@ export interface BlockContext {
   programKeypairSecret: number[] | null;
   /** Clear the current build (deploy panel `onBuildExpired`). */
   resetBuild: () => void;
-  /** Href of the next lesson in course order, or null at the end. */
-  nextLessonHref: string | null;
   /**
    * Every gateable block in this lesson reports done, so a submit will not be
    * refused by the server for a block the learner has not reached yet. Read by

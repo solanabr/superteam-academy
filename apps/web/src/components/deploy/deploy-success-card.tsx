@@ -1,10 +1,9 @@
 "use client";
 
 import { useCallback, useState, type ReactNode } from "react";
-import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
-import { ArrowRight, CheckCircle, Copy } from "@phosphor-icons/react";
+import { CheckCircle, Copy } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatElapsed } from "@/lib/deploy/progress";
@@ -16,8 +15,6 @@ interface DeploySuccessCardProps {
   durationMs: number;
   /** XP this lesson pays, for the un-submitted state's button badge. */
   xpReward: number;
-  /** XP actually credited, once the lesson is complete. */
-  earnedXp: number | null;
   isComplete: boolean;
   /**
    * Every other graded block in the lesson is done. A deploy lesson's quiz sits
@@ -32,7 +29,6 @@ interface DeploySuccessCardProps {
    *  is actually recorded — the capstone credential gate reads that record,
    *  not the on-chain deploy itself. */
   saveStatus: SaveStatus | "idle";
-  nextLessonHref: string | null;
   /** The server-record status, rendered under the stats. */
   saveStatusSlot?: ReactNode;
   /** A warning that needs attention even though the deploy itself succeeded —
@@ -55,16 +51,15 @@ export function DeploySuccessCard({
   rentLamports,
   durationMs,
   xpReward,
-  earnedXp,
   isComplete,
   canSubmit = true,
   onSubmit,
   saveStatus,
-  nextLessonHref,
   saveStatusSlot,
   noticeSlot,
 }: DeploySuccessCardProps) {
   const t = useTranslations("deploy.deployment");
+  const tLesson = useTranslations("lesson");
   const [copied, setCopied] = useState(false);
 
   const isSaved = saveStatus === "saved";
@@ -146,19 +141,9 @@ export function DeploySuccessCard({
         {saveStatusSlot}
 
         {isComplete ? (
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="inline-flex items-center gap-1.5 rounded-md border-2 border-[color:var(--ink-line)] bg-xp px-2.5 py-1 font-display text-sm font-extrabold text-[color:var(--ink-dark)]">
-              {t("xpEarned", { xp: String(earnedXp ?? xpReward) })}
-            </span>
-            {nextLessonHref && (
-              <Button asChild variant="primary" size="sm">
-                <Link href={nextLessonHref}>
-                  {t("nextLesson")}
-                  <ArrowRight size={14} weight="bold" aria-hidden="true" />
-                </Link>
-              </Button>
-            )}
-          </div>
+          <span className="text-sm font-medium text-success">
+            {tLesson("lessonComplete")}
+          </span>
         ) : saveFailed ? null : (
           <div className="space-y-2">
             <Button

@@ -21,10 +21,8 @@ export function DeployedProgramCardBlock({ ctx }: BlockRenderProps) {
       courseId={ctx.courseId}
       programKeypairSecret={ctx.programKeypairSecret ?? undefined}
       xpReward={ctx.xpReward}
-      earnedXp={ctx.earnedXp}
       isCompleted={ctx.isCompleted}
       canSubmit={ctx.canSubmit}
-      nextLessonHref={ctx.nextLessonHref}
       onBuildExpired={ctx.resetBuild}
     />
   );

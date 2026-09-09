@@ -150,11 +150,9 @@ describe("DeploySuccessCard", () => {
         rentLamports={1_500_000}
         durationMs={95_000}
         xpReward={50}
-        earnedXp={null}
         isComplete={false}
         onSubmit={onSubmit}
         saveStatus="saved"
-        nextLessonHref="/en/courses/btc-to-sol/lessons/next"
       />
     );
 
@@ -177,38 +175,34 @@ describe("DeploySuccessCard", () => {
         rentLamports={0}
         durationMs={0}
         xpReward={50}
-        earnedXp={null}
         isComplete={false}
         onSubmit={vi.fn()}
         saveStatus="saved"
-        nextLessonHref={null}
       />
     );
     fireEvent.click(screen.getByRole("button", { name: "Copy program ID" }));
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(PROGRAM_ID);
   });
 
-  it("swaps submit for the XP earned and the next lesson once complete", () => {
+  it("swaps submit for the editor toolbar's completed state once complete", () => {
     wrap(
       <DeploySuccessCard
         programId={PROGRAM_ID}
         rentLamports={1_500_000}
         durationMs={95_000}
         xpReward={50}
-        earnedXp={50}
         isComplete
         onSubmit={vi.fn()}
         saveStatus="saved"
-        nextLessonHref="/en/courses/btc-to-sol/lessons/next"
       />
     );
-    expect(screen.getByText("+50 XP earned")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Next lesson/ })).toHaveAttribute(
-      "href",
-      "/en/courses/btc-to-sol/lessons/next"
-    );
+    expect(screen.getByText("Lesson Complete!")).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /Submit lesson/ })
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/XP earned/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /Next lesson/ })
     ).not.toBeInTheDocument();
   });
 
@@ -219,11 +213,9 @@ describe("DeploySuccessCard", () => {
         rentLamports={1_500_000}
         durationMs={95_000}
         xpReward={50}
-        earnedXp={null}
         isComplete={false}
         onSubmit={vi.fn()}
         saveStatus="saving"
-        nextLessonHref="/en/courses/btc-to-sol/lessons/next"
       />
     );
     const submit = screen.getByRole("button", {
@@ -239,11 +231,9 @@ describe("DeploySuccessCard", () => {
         rentLamports={1_500_000}
         durationMs={95_000}
         xpReward={50}
-        earnedXp={null}
         isComplete={false}
         onSubmit={vi.fn()}
         saveStatus="rejected"
-        nextLessonHref="/en/courses/btc-to-sol/lessons/next"
         saveStatusSlot={<button type="button">Retry save</button>}
       />
     );

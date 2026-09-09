@@ -77,8 +77,6 @@ interface DeployPanelProps {
   programKeypairSecret?: number[];
   /** Lesson XP, for the success card's submit affordance. */
   xpReward?: number;
-  /** XP actually credited once the lesson is complete. */
-  earnedXp?: number | null;
   /** The lesson is already complete (submit is done). */
   isCompleted?: boolean;
   /**
@@ -88,7 +86,6 @@ interface DeployPanelProps {
    * Defaults to true: a lesson with nothing else to grade is always submittable.
    */
   canSubmit?: boolean;
-  nextLessonHref?: string | null;
   onBuildExpired?: () => void;
 }
 
@@ -140,10 +137,8 @@ export function DeployPanel({
   courseId,
   programKeypairSecret,
   xpReward = 0,
-  earnedXp = null,
   isCompleted = false,
   canSubmit = true,
-  nextLessonHref = null,
   onBuildExpired,
 }: DeployPanelProps) {
   const t = useTranslations("deploy.deployment");
@@ -1344,12 +1339,10 @@ export function DeployPanel({
         rentLamports={result.rentLamports}
         durationMs={result.durationMs}
         xpReward={xpReward}
-        earnedXp={earnedXp}
         isComplete={isCompleted}
         canSubmit={canSubmit}
         onSubmit={handleRequestSubmit}
         saveStatus={saveStatus}
-        nextLessonHref={nextLessonHref}
         noticeSlot={refundWarning}
         saveStatusSlot={
           <DeploySaveStatus

@@ -612,9 +612,6 @@ export function LessonPageClient({
       buildUuid,
       programKeypairSecret,
       resetBuild,
-      nextLessonHref: nextLesson
-        ? `${linkBase}/${courseSlug}/lessons/${nextLesson.slug}`
-        : null,
       canSubmit: gateReady,
     }),
     [
@@ -636,8 +633,6 @@ export function LessonPageClient({
       buildUuid,
       programKeypairSecret,
       resetBuild,
-      linkBase,
-      nextLesson,
       gateReady,
     ]
   );
