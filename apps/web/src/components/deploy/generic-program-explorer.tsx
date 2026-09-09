@@ -128,7 +128,12 @@ export function GenericProgramExplorer({
   // The wallet that signs — extension or embedded. `useWallet` is still read
   // for the ADAPTER-only reconnect path below (an embedded wallet has no
   // adapter to re-select; its recovery is Dynamic re-auth).
-  const { status: signerStatus, signer, startReauth } = useDeploySigner();
+  const {
+    status: signerStatus,
+    signer,
+    kind: signerKind,
+    startReauth,
+  } = useDeploySigner();
   const publicKey = signer?.publicKey ?? null;
   const signTransaction = signer?.signTransaction ?? null;
   const { disconnect, wallet, select } = useWallet();
@@ -589,7 +594,10 @@ export function GenericProgramExplorer({
         // same as in the deploy panel — `isWalletKeyringError` is
         // extension-specific, so without this the learner gets a raw error and
         // no way back.
-        if (isDynamicSessionExpiredError(err)) {
+        // Embedded only: an extension adapter that happened to throw an
+        // `unauthorized_error` has no Dynamic session to re-auth, and its own
+        // handling (keyring reconnect) is below.
+        if (signerKind === "embedded" && isDynamicSessionExpiredError(err)) {
           setSessionExpired(true);
           setReauthDismissed(false);
           return;
@@ -635,6 +643,7 @@ export function GenericProgramExplorer({
     [
       publicKey,
       signTransaction,
+      signerKind,
       programId,
       idl,
       instructionCoder,
@@ -698,7 +707,11 @@ export function GenericProgramExplorer({
   // connect modal: they have no extension, and the modal has no route back to
   // Dynamic short of a full sign-out. `sessionExpired` covers the mid-execute
   // case, where the signer can still look ready.
-  if ((signerStatus === "expired" || sessionExpired) && !reauthDismissed) {
+  if (
+    (signerStatus === "expired" ||
+      (sessionExpired && signerKind === "embedded")) &&
+    !reauthDismissed
+  ) {
     return (
       <LinkedWalletPrompt
         variant="reauth"

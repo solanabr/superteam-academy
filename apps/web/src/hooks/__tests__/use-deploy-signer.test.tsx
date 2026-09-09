@@ -2,10 +2,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { Keypair, Transaction } from "@solana/web3.js";
+import { isDynamicSessionExpiredError } from "@/lib/dynamic/solana";
 import { useDeploySigner, EMBEDDED_BATCH_SIZE } from "../use-deploy-signer";
 
 const ADAPTER_KEY = Keypair.generate().publicKey;
 const EMBEDDED_KEY = Keypair.generate().publicKey;
+const OTHER_KEY = Keypair.generate().publicKey;
 
 const wallet = vi.hoisted(() => ({
   publicKey: null as unknown,
@@ -33,7 +35,10 @@ vi.mock("@solana/wallet-adapter-react", () => ({
   }),
 }));
 
-vi.mock("@/lib/dynamic/solana", () => ({
+// Only the signing calls are stubbed — `isDynamicSessionExpiredError` is the
+// real predicate, so the tests below assert what the app actually matches on.
+vi.mock("@/lib/dynamic/solana", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/dynamic/solana")>()),
   signWithDynamicWallet: dynamic.signWithDynamicWallet,
   signAllWithDynamicWallet: dynamic.signAllWithDynamicWallet,
 }));
@@ -63,6 +68,16 @@ beforeEach(() => {
   dynamic.signAllWithDynamicWallet.mockReset();
   dynamicEnabled.value = true;
 });
+
+/** The thrown value, so a test can assert on it with the app's own predicate. */
+async function rejection(promise: Promise<unknown>): Promise<unknown> {
+  try {
+    await promise;
+  } catch (error) {
+    return error;
+  }
+  throw new Error("expected the call to reject");
+}
 
 describe("useDeploySigner", () => {
   it("prefers the wallet-adapter wallet and keeps the package's default batch size", () => {
@@ -151,6 +166,63 @@ describe("useDeploySigner", () => {
     expect(result.current.status).toBe("none");
     expect(result.current.kind).toBeNull();
     expect(result.current.signer).toBeNull();
+  });
+
+  it("refuses to sign once the session moves to a different account", async () => {
+    dynamic.account = { address: EMBEDDED_KEY.toBase58() };
+
+    const { result, rerender } = renderHook(() => useDeploySigner());
+    const captured = result.current.signer!;
+    const advertised = captured.publicKey!.toBase58();
+
+    // The session swaps under an in-flight signer. Without the address check
+    // the closure would happily hand the NEW account to the MPC signer while
+    // still advertising the old key — a transaction built for A, signed by B.
+    dynamic.account = { address: OTHER_KEY.toBase58() };
+    rerender();
+
+    const tx = new Transaction();
+    await expect(captured.signTransaction(tx)).rejects.toMatchObject({
+      name: "UnauthorizedError",
+    });
+    await expect(captured.signAllTransactions([tx])).rejects.toMatchObject({
+      name: "UnauthorizedError",
+    });
+    expect(dynamic.signWithDynamicWallet).not.toHaveBeenCalled();
+    expect(dynamic.signAllWithDynamicWallet).not.toHaveBeenCalled();
+    // The advertised identity never mutates either — the swap produces a new
+    // signer, it does not repoint the old one.
+    expect(captured.publicKey!.toBase58()).toBe(advertised);
+    expect(result.current.signer).not.toBe(captured);
+    expect(result.current.signer?.publicKey?.toBase58()).toBe(
+      OTHER_KEY.toBase58()
+    );
+  });
+
+  it("raises an expiry both entry points when the session dies mid-flight", async () => {
+    dynamic.account = { address: EMBEDDED_KEY.toBase58() };
+
+    const { result, rerender } = renderHook(() => useDeploySigner());
+    const captured = result.current.signer!;
+
+    // Session gone between render and signature. The error has to be one
+    // `isDynamicSessionExpiredError` recognises, or the caller shows a raw
+    // failure instead of the re-auth card.
+    dynamic.account = null;
+    dynamic.status = "expired";
+    rerender();
+
+    const tx = new Transaction();
+    expect(
+      isDynamicSessionExpiredError(
+        await rejection(captured.signTransaction(tx))
+      )
+    ).toBe(true);
+    expect(
+      isDynamicSessionExpiredError(
+        await rejection(captured.signAllTransactions([tx]))
+      )
+    ).toBe(true);
   });
 
   it("an unparseable embedded address is no wallet, not a crash", () => {
