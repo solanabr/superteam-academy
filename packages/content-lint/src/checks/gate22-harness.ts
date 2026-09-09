@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { registerCheck } from "../lint";
 import { type RepoModel, type LessonEntry } from "../model";
 import { diag, type Diagnostic } from "../diagnostics";
+import { HARNESS_MARKER } from "../harness";
 
 /**
  * Gate 22 — a buildable challenge must ship a verification harness.
@@ -14,12 +15,7 @@ import { diag, type Diagnostic } from "../diagnostics";
  * splices it back onto every submission (apps/web/src/lib/challenge/harness.ts)
  * and refuses to grade a block whose starter has none — so a lesson without one
  * is not merely weak, it is un-completable. Catch it here instead.
- *
- * The marker string is duplicated from that module on purpose: content-lint does
- * not depend on the app. Keep the two in sync.
  */
-const HARNESS_MARKER =
-  "// VERIFICATION HARNESS — DO NOT EDIT ANYTHING BELOW THIS LINE.";
 
 interface CodeBlock {
   type: "code";

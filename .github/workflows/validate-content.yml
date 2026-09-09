@@ -14,6 +14,19 @@ permissions:
 jobs:
   content-lint:
     runs-on: ubuntu-latest
+    # A cold platform-tools download + Anchor dependency build is the long pole;
+    # warm it is a couple of minutes. Gate 6 caps each block's build itself
+    # (CONTENT_LINT_RUST_TIMEOUT_MS, default 300s) and reports a timeout as an
+    # error, so this is a backstop, not the mechanism.
+    timeout-minutes: 45
+    env:
+      # Same Agave as ci.yml's on-chain jobs — the platform-tools v1.54 the
+      # build server compiles learner submissions with.
+      SOLANA_VERSION: "3.1.10"
+      # Fail rather than degrade to a notice if the toolchain is missing: a
+      # silently skipped Rust oracle is the hole this job exists to close.
+      CONTENT_LINT_RUST_ORACLE: require
+      CONTENT_LINT_SBF_TARGET_DIR: ${{ github.workspace }}/sbf-target
     steps:
       # 1. The caller's content repo (academy-courses) at the PR head, full history
       #    so gate 2 (id immutability) and gate 3 (slots regeneration) can diff base.
@@ -42,6 +55,49 @@ jobs:
           node-version: 20
           cache: pnpm
           cache-dependency-path: linter/pnpm-lock.yaml
+
+      # ── Rust/SBF toolchain for gate 6's buildable oracle ───────────────────
+      # Gate 6 compiles every `buildType: buildable` starter and solution with
+      # cargo-build-sbf against apps/build-server/programs/Cargo.toml, the same
+      # way the build server compiles a learner's submission. Without this the
+      # gate degrades to a notice and a Rust reference solution can rot
+      # unnoticed — which is how the 2026-09 stale-build-image incident hid.
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@4be7066ada62dd38de10e7b70166bc74ed198c30 # stable channel, resolved 2026-06-30
+
+      - name: Cache Solana CLI + platform-tools
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            ~/.local/share/solana/install
+            ~/.cache/solana
+          key: solana-${{ runner.os }}-${{ env.SOLANA_VERSION }}-tools-v1.54
+
+      # The linter reuses ONE build directory and this target dir across every
+      # block in a run, so only the leaf crate recompiles per source. Keyed on
+      # the template's Cargo.lock: a dependency bump invalidates it, content
+      # edits do not.
+      - name: Cache cargo registry + SBF target
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ${{ github.workspace }}/sbf-target
+          key: content-lint-sbf-${{ runner.os }}-${{ hashFiles('linter/apps/build-server/programs/Cargo.lock') }}
+          restore-keys: content-lint-sbf-${{ runner.os }}-
+
+      - name: Install Solana CLI
+        run: |
+          if [ ! -x "$HOME/.local/share/solana/install/active_release/bin/solana" ]; then
+            # Download then run so a bad URL fails the step loudly —
+            # `sh -c "$(curl ...)"` swallows curl's exit code.
+            curl -sSfL "https://release.anza.xyz/v${SOLANA_VERSION}/install" -o /tmp/solana-install.sh
+            sh /tmp/solana-install.sh
+          fi
+          BIN="$HOME/.local/share/solana/install/active_release/bin"
+          echo "$BIN" >> "$GITHUB_PATH"
+          "$BIN/cargo-build-sbf" --version
 
       - name: Install (linter workspace only)
         working-directory: linter
