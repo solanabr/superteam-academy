@@ -1353,6 +1353,7 @@ export function DeployPanel({
         earnedXp={earnedXp}
         isComplete={isCompleted}
         onSubmit={handleRequestSubmit}
+        saveStatus={saveStatus}
         nextLessonHref={nextLessonHref}
         noticeSlot={refundWarning}
         saveStatusSlot={
@@ -1507,15 +1508,10 @@ export function DeployPanel({
                 {t("resume")}
               </Button>
             )}
-            {isRebuild ? (
-              <Button
-                onClick={handleRebuild}
-                variant="outline"
-                className="flex-1"
-              >
-                {t("rebuild")}
-              </Button>
-            ) : (
+            {/* Rebuild's own action already lives in the DeployErrorNotice
+                above (errorActions.rebuild) — a second "Back to the editor"
+                button here would just repeat it. */}
+            {!isRebuild && (
               <Button
                 onClick={handleStartOver}
                 variant="outline"

@@ -883,6 +883,7 @@
       "rateLimitWaiting": "O serviço da carteira está ocupado (limite de requisições) — tentando de novo em {seconds}s",
       "rateLimitPaused": "O serviço da carteira ainda está limitando assinaturas. Nada foi perdido — espere um minuto e retome.",
       "submitLesson": "Enviar lição",
+      "recordingDeploy": "Registrando seu deploy…",
       "xpEarned": "+{xp} XP conquistados",
       "nextLesson": "Próxima lição",
       "lessonSubmitted": "Lição concluída",

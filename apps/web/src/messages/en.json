@@ -883,6 +883,7 @@
       "rateLimitWaiting": "Wallet service is busy (rate limited) — retrying in {seconds}s",
       "rateLimitPaused": "The wallet service is still rate-limiting signatures. Nothing was lost — wait a minute and resume.",
       "submitLesson": "Submit lesson",
+      "recordingDeploy": "Recording your deploy…",
       "xpEarned": "+{xp} XP earned",
       "nextLesson": "Next lesson",
       "lessonSubmitted": "Lesson complete",

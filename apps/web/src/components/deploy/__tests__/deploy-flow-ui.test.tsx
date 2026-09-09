@@ -180,6 +180,7 @@ describe("DeploySuccessCard", () => {
         earnedXp={null}
         isComplete={false}
         onSubmit={onSubmit}
+        saveStatus="saved"
         nextLessonHref="/en/courses/btc-to-sol/lessons/next"
       />
     );
@@ -206,6 +207,7 @@ describe("DeploySuccessCard", () => {
         earnedXp={null}
         isComplete={false}
         onSubmit={vi.fn()}
+        saveStatus="saved"
         nextLessonHref={null}
       />
     );
@@ -223,6 +225,7 @@ describe("DeploySuccessCard", () => {
         earnedXp={50}
         isComplete
         onSubmit={vi.fn()}
+        saveStatus="saved"
         nextLessonHref="/en/courses/btc-to-sol/lessons/next"
       />
     );
@@ -234,5 +237,51 @@ describe("DeploySuccessCard", () => {
     expect(
       screen.queryByRole("button", { name: /Submit lesson/ })
     ).not.toBeInTheDocument();
+  });
+
+  it("disables submit with the recording label while the save is in flight", () => {
+    wrap(
+      <DeploySuccessCard
+        programId={PROGRAM_ID}
+        rentLamports={1_500_000}
+        durationMs={95_000}
+        xpReward={50}
+        earnedXp={null}
+        isComplete={false}
+        onSubmit={vi.fn()}
+        saveStatus="saving"
+        nextLessonHref="/en/courses/btc-to-sol/lessons/next"
+      />
+    );
+    const submit = screen.getByRole("button", {
+      name: /Recording your deploy/,
+    });
+    expect(submit).toBeDisabled();
+  });
+
+  it("hides submit when the save failed, leaving the retry action to the save-status slot", () => {
+    wrap(
+      <DeploySuccessCard
+        programId={PROGRAM_ID}
+        rentLamports={1_500_000}
+        durationMs={95_000}
+        xpReward={50}
+        earnedXp={null}
+        isComplete={false}
+        onSubmit={vi.fn()}
+        saveStatus="rejected"
+        nextLessonHref="/en/courses/btc-to-sol/lessons/next"
+        saveStatusSlot={<button type="button">Retry save</button>}
+      />
+    );
+    expect(
+      screen.queryByRole("button", { name: /Submit lesson/ })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Recording your deploy/ })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Retry save" })
+    ).toBeInTheDocument();
   });
 });

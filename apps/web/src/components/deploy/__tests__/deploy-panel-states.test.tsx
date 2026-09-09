@@ -195,10 +195,48 @@ describe("DeployPanel — the states a learner can land in", () => {
     renderPanel();
     (await screen.findByRole("button", { name: "Deploy to Devnet" })).click();
 
+    expect(await screen.findByText(PROGRAM_ID)).toBeInTheDocument();
     const submit = await screen.findByRole("button", { name: /Submit lesson/ });
-    expect(screen.getByText(PROGRAM_ID)).toBeInTheDocument();
+    await waitFor(() => expect(submit).not.toBeDisabled());
     submit.click();
-    await waitFor(() => expect(requested).toHaveBeenCalled());
+    await waitFor(() => expect(requested).toHaveBeenCalledTimes(1));
+    window.removeEventListener("superteam:request-submit", requested);
+  });
+
+  it("keeps Submit disabled and never requests a submit while the deploy record fails to save", async () => {
+    h.deployProgram.mockResolvedValue({
+      programId: PROGRAM_ID,
+      programIdPubkey: new PublicKey(PROGRAM_ID),
+      totalChunks: 3,
+      durationMs: 12_000,
+      rentLamports: 1_500_000,
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (!init || init.method !== "POST") {
+          return { ok: true, json: async () => ({ deployed: false }) };
+        }
+        if (String(url).includes("/api/deploy/save")) {
+          return { ok: false, status: 500, json: async () => ({}) };
+        }
+        return { ok: true, status: 200, json: async () => ({}) };
+      })
+    );
+    const requested = vi.fn();
+    window.addEventListener("superteam:request-submit", requested);
+
+    renderPanel();
+    (await screen.findByRole("button", { name: "Deploy to Devnet" })).click();
+
+    expect(await screen.findByText(PROGRAM_ID)).toBeInTheDocument();
+    const submit = await screen.findByRole("button", {
+      name: /Recording your deploy/,
+    });
+    expect(submit).toBeDisabled();
+
+    submit.click();
+    expect(requested).not.toHaveBeenCalled();
     window.removeEventListener("superteam:request-submit", requested);
   });
 });

@@ -883,6 +883,7 @@
       "rateLimitWaiting": "El servicio de la billetera está ocupado (límite de solicitudes) — reintentando en {seconds}s",
       "rateLimitPaused": "El servicio de la billetera sigue limitando las firmas. No se perdió nada — espera un minuto y reanuda.",
       "submitLesson": "Enviar lección",
+      "recordingDeploy": "Registrando tu deploy…",
       "xpEarned": "+{xp} XP ganados",
       "nextLesson": "Siguiente lección",
       "lessonSubmitted": "Lección completada",

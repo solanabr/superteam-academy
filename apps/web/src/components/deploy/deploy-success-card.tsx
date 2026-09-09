@@ -8,6 +8,7 @@ import { ArrowRight, CheckCircle, Copy } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatElapsed } from "@/lib/deploy/progress";
+import type { SaveStatus } from "@/lib/deploy/save-deployment";
 
 interface DeploySuccessCardProps {
   programId: string;
@@ -20,6 +21,10 @@ interface DeploySuccessCardProps {
   isComplete: boolean;
   /** Runs the lesson's normal submit path. */
   onSubmit: () => void;
+  /** The server-record save status. Submit is only enabled once the deploy
+   *  is actually recorded — the capstone credential gate reads that record,
+   *  not the on-chain deploy itself. */
+  saveStatus: SaveStatus | "idle";
   nextLessonHref: string | null;
   /** The server-record status, rendered under the stats. */
   saveStatusSlot?: ReactNode;
@@ -46,12 +51,20 @@ export function DeploySuccessCard({
   earnedXp,
   isComplete,
   onSubmit,
+  saveStatus,
   nextLessonHref,
   saveStatusSlot,
   noticeSlot,
 }: DeploySuccessCardProps) {
   const t = useTranslations("deploy.deployment");
   const [copied, setCopied] = useState(false);
+
+  const isSaved = saveStatus === "saved";
+  const isSaving =
+    saveStatus === "saving" ||
+    saveStatus === "retrying" ||
+    saveStatus === "idle";
+  const saveFailed = saveStatus === "retryable" || saveStatus === "rejected";
 
   const handleCopy = useCallback(async () => {
     try {
@@ -138,9 +151,14 @@ export function DeploySuccessCard({
               </Button>
             )}
           </div>
-        ) : (
-          <Button onClick={onSubmit} variant="primary" className="w-full">
-            {t("submitLesson")}
+        ) : saveFailed ? null : (
+          <Button
+            onClick={onSubmit}
+            variant="primary"
+            className="w-full"
+            disabled={!isSaved}
+          >
+            {isSaving ? t("recordingDeploy") : t("submitLesson")}
             <span className="ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold [background:rgba(255,255,255,0.20)]">
               +{xpReward} XP
             </span>
