@@ -23,6 +23,7 @@ export function DeployedProgramCardBlock({ ctx }: BlockRenderProps) {
       xpReward={ctx.xpReward}
       earnedXp={ctx.earnedXp}
       isCompleted={ctx.isCompleted}
+      canSubmit={ctx.canSubmit}
       nextLessonHref={ctx.nextLessonHref}
       onBuildExpired={ctx.resetBuild}
     />

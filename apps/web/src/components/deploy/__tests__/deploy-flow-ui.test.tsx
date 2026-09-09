@@ -4,8 +4,6 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/messages/en.json";
 import { toFriendlyError } from "@/lib/deploy/friendly-error";
-import { EMPTY_DEPLOY_FLOW } from "@/lib/deploy/steps";
-import { DeployStepper } from "../deploy-stepper";
 import { DeployErrorNotice } from "../deploy-error-notice";
 import { DeployProgressView } from "../deploy-progress";
 import { DeploySuccessCard } from "../deploy-success-card";
@@ -19,31 +17,6 @@ function wrap(ui: React.ReactNode) {
     </NextIntlClientProvider>
   );
 }
-
-describe("DeployStepper", () => {
-  it("names all four steps and marks the active one", () => {
-    wrap(<DeployStepper state={{ ...EMPTY_DEPLOY_FLOW, built: true }} />);
-    for (const label of ["Build", "Fund", "Deploy", "Submit"]) {
-      expect(
-        screen.getByRole("button", { name: new RegExp(label) })
-      ).toBeInTheDocument();
-    }
-    expect(screen.getByRole("button", { name: /Fund/ })).toHaveAttribute(
-      "aria-current",
-      "step"
-    );
-    expect(screen.getByRole("button", { name: /Build/ })).not.toHaveAttribute(
-      "aria-current"
-    );
-  });
-
-  it("scrolls to a step's card when it is clicked", () => {
-    const onSelect = vi.fn();
-    wrap(<DeployStepper state={EMPTY_DEPLOY_FLOW} onSelect={onSelect} />);
-    fireEvent.click(screen.getByRole("button", { name: /Deploy/ }));
-    expect(onSelect).toHaveBeenCalledWith("deploy");
-  });
-});
 
 describe("DeployErrorNotice", () => {
   it("shows the mapped sentence, never the raw failure", () => {

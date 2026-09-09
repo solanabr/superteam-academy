@@ -237,6 +237,27 @@ export function LessonPageClient({
   const setProof = useCallback((blockKey: string, proof: unknown) => {
     proofsRef.current[blockKey] = proof;
   }, []);
+
+  /**
+   * THE completion payload. Every submit entry point — the editor toolbar's
+   * Submit, the deploy success card's Submit, the Mark Complete button, and the
+   * anonymous bank — goes through this one builder, so none of them can ship a
+   * different set of proofs than the server grades.
+   */
+  const submissionProofs = useCallback(
+    (): Record<string, unknown> => ({ ...proofsRef.current }),
+    []
+  );
+
+  /** The code block's proof travels on an event, not through `setProof`. */
+  const codeBlockKey =
+    lesson.blocks.find((b) => b._type === "code")?.key ?? null;
+  const captureSubmittedCode = useCallback(
+    (code: string) => {
+      if (codeBlockKey) setProof(codeBlockKey, { code });
+    },
+    [codeBlockKey, setProof]
+  );
   const resetBuild = useCallback(() => {
     setBuildUuid(null);
     setProgramKeypairSecret(null);
@@ -255,9 +276,17 @@ export function LessonPageClient({
       lessonId: lesson._id,
       lessonSlug: lesson.slug,
       lessonTitle: lesson.title,
-      proofs: { ...proofsRef.current },
+      proofs: submissionProofs(),
     });
-  }, [readOnly, courseId, courseSlug, lesson._id, lesson.slug, lesson.title]);
+  }, [
+    readOnly,
+    courseId,
+    courseSlug,
+    lesson._id,
+    lesson.slug,
+    lesson.title,
+    submissionProofs,
+  ]);
 
   // Claim moment: bank first, THEN open the sign-in prompt with its "Later"
   // escape. Ordering matters — the modal's Later path relies on the work
@@ -341,7 +370,13 @@ export function LessonPageClient({
       prev[blockKey] === done ? prev : { ...prev, [blockKey]: done }
     );
   }, []);
-  const gateBlocks = lesson.blocks.filter((b) => isGateBlock(b._type));
+  // `code` is a gate type but never reports done — the editor's submit IS its
+  // proof — so it is excluded here. Including it would make the gate false on
+  // every challenge lesson, which is why the editor's submit paths could not be
+  // gated on it at all before.
+  const gateBlocks = lesson.blocks.filter(
+    (b) => b._type !== "code" && isGateBlock(b._type)
+  );
   const gateReady =
     isCompleted || gateBlocks.every((b) => doneBlocks[b.key] === true);
   // AI hard-off on the capstone (#867) — the CLIENT leg of the server refusal
@@ -406,7 +441,7 @@ export function LessonPageClient({
       const result = await completeLessonAPI(
         lesson._id,
         courseId,
-        proofsRef.current
+        submissionProofs()
       );
       setIsCompleting(false);
       setIsCompleted(true);
@@ -458,21 +493,39 @@ export function LessonPageClient({
     hasLinkedWallet,
     hasCodeBlock,
     hasQuizBlock,
+    submissionProofs,
     t,
   ]);
 
   // A passing code submission originates in ChallengeInterface, which dispatches
   // `superteam:lesson-complete` with the submitted code. Capture it as the code
   // block's proof, then drive completion (the server re-grades it).
+  //
+  // This is also the ONE place the lesson's client gate is applied to a code
+  // submit. A deploy lesson puts its quiz UNDER the deploy card, so the natural
+  // order is deploy → Submit → "your quiz answers aren't correct yet" — a
+  // server 403 about a quiz the learner had not reached, and the editor's
+  // verdict then stayed rejected while the quiz sat finished above it. A submit
+  // with an unfinished graded block never leaves the browser now; it says which
+  // block is waiting, and clears itself when that block is done.
   useEffect(() => {
     const handleChallengeComplete = (e: Event) => {
       const detail = (
         e as CustomEvent<{ lessonId: string; submittedCode?: string }>
       ).detail;
       if (detail.lessonId !== lesson._id) return;
-      const codeBlock = lesson.blocks.find((b) => b._type === "code");
-      if (codeBlock && typeof detail.submittedCode === "string") {
-        proofsRef.current[codeBlock.key] = { code: detail.submittedCode };
+      if (typeof detail.submittedCode === "string") {
+        captureSubmittedCode(detail.submittedCode);
+      }
+      if (!gateReady) {
+        const message = t("completeGateHint");
+        setCompletionError(message);
+        window.dispatchEvent(
+          new CustomEvent("superteam:lesson-complete-error", {
+            detail: { lessonId: lesson._id, message },
+          })
+        );
+        return;
       }
       handleComplete();
     };
@@ -486,7 +539,20 @@ export function LessonPageClient({
         "superteam:lesson-complete",
         handleChallengeComplete
       );
-  }, [lesson, handleComplete]);
+  }, [lesson._id, handleComplete, captureSubmittedCode, gateReady, t]);
+
+  // A gate-blocked submit leaves a rejection on the editor card. Once the block
+  // it named is finished, that verdict is a lie — retire it rather than making
+  // the learner submit again to find out it is stale.
+  useEffect(() => {
+    if (!gateReady) return;
+    setCompletionError(null);
+    window.dispatchEvent(
+      new CustomEvent("superteam:lesson-complete-reset", {
+        detail: { lessonId: lesson._id },
+      })
+    );
+  }, [gateReady, lesson._id]);
 
   // An anonymous learner who passes a challenge submits BEFORE enrolling, so the
   // passing code never rides `superteam:lesson-complete` (which drives an authed
@@ -498,9 +564,8 @@ export function LessonPageClient({
         e as CustomEvent<{ lessonId: string; submittedCode?: string }>
       ).detail;
       if (detail.lessonId !== lesson._id) return;
-      const codeBlock = lesson.blocks.find((b) => b._type === "code");
-      if (codeBlock && typeof detail.submittedCode === "string") {
-        proofsRef.current[codeBlock.key] = { code: detail.submittedCode };
+      if (typeof detail.submittedCode === "string") {
+        captureSubmittedCode(detail.submittedCode);
       }
     };
     window.addEventListener("superteam:challenge-proof", handleChallengeProof);
@@ -509,7 +574,7 @@ export function LessonPageClient({
         "superteam:challenge-proof",
         handleChallengeProof
       );
-  }, [lesson]);
+  }, [lesson._id, captureSubmittedCode]);
 
   // Build-complete events (deployable code blocks / deployed-program card).
   useEffect(() => {
@@ -550,6 +615,7 @@ export function LessonPageClient({
       nextLessonHref: nextLesson
         ? `${linkBase}/${courseSlug}/lessons/${nextLesson.slug}`
         : null,
+      canSubmit: gateReady,
     }),
     [
       lesson,
@@ -572,6 +638,7 @@ export function LessonPageClient({
       resetBuild,
       linkBase,
       nextLesson,
+      gateReady,
     ]
   );
 

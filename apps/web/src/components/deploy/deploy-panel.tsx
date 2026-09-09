@@ -39,7 +39,6 @@ import {
   toFriendlyError,
   type FriendlyError,
 } from "@/lib/deploy/friendly-error";
-import { setDeployFlow } from "@/lib/deploy/flow-store";
 import {
   DEPLOY_EDITOR_ANCHOR_ID,
   DEPLOY_PANEL_ANCHOR_ID,
@@ -54,13 +53,11 @@ import {
   writeDeployState,
   type StoredDeployState,
 } from "@/lib/deploy/session-key-storage";
-import { useDeployFlow } from "@/hooks/use-deploy-flow";
 import { useDeploySigner } from "@/hooks/use-deploy-signer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LinkedWalletPrompt } from "@/components/wallet/linked-wallet-prompt";
 import { DeploySaveStatus } from "./deploy-save-status";
-import { DeployStepper } from "./deploy-stepper";
 import { DeployErrorNotice } from "./deploy-error-notice";
 import { DeployProgressView, type DeployLogEntry } from "./deploy-progress";
 import { DeploySuccessCard } from "./deploy-success-card";
@@ -84,6 +81,13 @@ interface DeployPanelProps {
   earnedXp?: number | null;
   /** The lesson is already complete (submit is done). */
   isCompleted?: boolean;
+  /**
+   * Every other graded block in the lesson is done. False means a submit would
+   * be refused by the server for a block the learner has not reached — on a
+   * deploy lesson the quiz sits BELOW this card, so that was the normal path.
+   * Defaults to true: a lesson with nothing else to grade is always submittable.
+   */
+  canSubmit?: boolean;
   nextLessonHref?: string | null;
   onBuildExpired?: () => void;
 }
@@ -138,6 +142,7 @@ export function DeployPanel({
   xpReward = 0,
   earnedXp = null,
   isCompleted = false,
+  canSubmit = true,
   nextLessonHref = null,
   onBuildExpired,
 }: DeployPanelProps) {
@@ -203,8 +208,6 @@ export function DeployPanel({
     secret: number[];
     bufferKeypairSecret: number[] | null;
   } | null>(null);
-
-  const flow = useDeployFlow();
 
   // Extension wallet or Dynamic embedded wallet — the deploy is signed and paid
   // by whichever one this learner actually has. A throttled embedded signing
@@ -405,24 +408,16 @@ export function DeployPanel({
     });
   }, [needsFunding, shortfallLamports, costLamports, signerKind]);
 
-  // Publish this panel's half of the flow — the editor publishes build and
-  // submit. Both steppers read the same store.
-  useEffect(() => {
-    const built = Boolean(buildUuid);
-    setDeployFlow({
-      built,
-      funded: built && !needsFunding,
-      deployed: panelState === "success" && Boolean(result),
-    });
-  }, [buildUuid, needsFunding, panelState, result]);
-
-  useEffect(() => {
-    setDeployFlow({ submitted: isCompleted });
-  }, [isCompleted]);
-
   // A finished build means the next thing to do is down here, in the other
   // column. Take the learner to it rather than leaving them on a Compile button
-  // that has nothing more to say.
+  // that has nothing more to say. This scroll is all that is left of #1231's
+  // Build → Fund → Deploy → Submit stepper, which the owner had removed.
+  //
+  // If a build indicator is ever wanted again, do NOT derive it from "a
+  // buildUuid exists" the way the stepper did: `buildUuid` survives the failed
+  // re-build that follows it, so the step kept its tick while the editor was
+  // showing a compile error. Any such indicator must key on the LATEST run's
+  // result, not on the presence of an id from an earlier one.
   useEffect(() => {
     const handler = () => revealElement(panelRef.current);
     window.addEventListener("superteam:build-complete", handler);
@@ -1335,7 +1330,6 @@ export function DeployPanel({
       tabIndex={-1}
       className="space-y-3 outline-none"
     >
-      <DeployStepper state={flow} />
       {children}
     </div>
   );
@@ -1352,6 +1346,7 @@ export function DeployPanel({
         xpReward={xpReward}
         earnedXp={earnedXp}
         isComplete={isCompleted}
+        canSubmit={canSubmit}
         onSubmit={handleRequestSubmit}
         saveStatus={saveStatus}
         nextLessonHref={nextLessonHref}

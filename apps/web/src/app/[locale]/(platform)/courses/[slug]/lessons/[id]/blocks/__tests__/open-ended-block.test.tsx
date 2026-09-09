@@ -43,6 +43,7 @@ function makeCtx(overrides: Partial<BlockContext> = {}): BlockContext {
     programKeypairSecret: null,
     resetBuild: vi.fn(),
     nextLessonHref: null,
+    canSubmit: true,
     ...overrides,
   };
 }

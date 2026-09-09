@@ -61,6 +61,13 @@ export interface BlockContext {
   /** Href of the next lesson in course order, or null at the end. */
   nextLessonHref: string | null;
   /**
+   * Every gateable block in this lesson reports done, so a submit will not be
+   * refused by the server for a block the learner has not reached yet. Read by
+   * any block that offers its own Submit (the deploy success card) so the two
+   * submit buttons agree with the Mark Complete gate.
+   */
+  canSubmit: boolean;
+  /**
    * Challenge lessons only: the non-code "instructions" blocks (prose, etc.),
    * pre-rendered by `lesson-client` and threaded into the code block so the
    * description renders inside the IDE's side rail alongside the test cases,

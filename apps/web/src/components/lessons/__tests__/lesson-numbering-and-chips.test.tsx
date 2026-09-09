@@ -116,6 +116,7 @@ describe("ProseBlock — numbered lesson h1", () => {
       programKeypairSecret: null,
       resetBuild: vi.fn(),
       nextLessonHref: null,
+      canSubmit: true,
       ...overrides,
     };
   }

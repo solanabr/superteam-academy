@@ -1,8 +1,7 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
-import { render, screen, act } from "@testing-library/react";
+import { describe, it, expect, vi, beforeAll } from "vitest";
+import { render, act } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import { resetDeployFlow, setDeployFlow } from "@/lib/deploy/flow-store";
 import { DEPLOY_EDITOR_ANCHOR_ID } from "@/lib/deploy/scroll";
 import messages from "@/messages/en.json";
 import { ChallengeInterface } from "../challenge-interface";
@@ -43,8 +42,6 @@ beforeAll(() => {
   });
 });
 
-beforeEach(() => resetDeployFlow());
-
 function renderChallenge(
   overrides: Partial<Parameters<typeof ChallengeInterface>[0]> = {}
 ) {
@@ -69,30 +66,16 @@ function renderChallenge(
 }
 
 describe("ChallengeInterface — deploy flow", () => {
-  it("mirrors the stepper in the toolbar for a deployable lesson", () => {
-    setDeployFlow({ built: true });
-    renderChallenge();
-    const nav = screen.getByRole("navigation", { name: "Deploy progress" });
-    expect(nav).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Fund/ })).toHaveAttribute(
-      "aria-current",
-      "step"
-    );
-  });
-
   it("leaves a non-deployable lesson's toolbar alone", () => {
     renderChallenge({
       isDeployable: false,
       language: "typescript",
       buildType: undefined,
     });
-    expect(
-      screen.queryByRole("navigation", { name: "Deploy progress" })
-    ).not.toBeInTheDocument();
     expect(document.getElementById(DEPLOY_EDITOR_ANCHOR_ID)).toBeNull();
   });
 
-  it("is the scroll target the Build step points at", () => {
+  it("is the scroll target a finished build reveals", () => {
     renderChallenge();
     expect(document.getElementById(DEPLOY_EDITOR_ANCHOR_ID)).not.toBeNull();
   });

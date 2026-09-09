@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { firstCompilerErrorLine } from "../compiler-error";
+import {
+  analyzeCompilerError,
+  compilerErrorSummary,
+  firstCompilerErrorLine,
+} from "../compiler-error";
 
 /** A real `cargo-build-sbf` failure: long INFO/WARN preamble, then the error. */
 const CARGO_STDERR = [
@@ -84,5 +88,118 @@ describe("firstCompilerErrorLine", () => {
     ].join("\n");
     const result = firstCompilerErrorLine(stderr, 50);
     expect(result).toHaveLength(50);
+  });
+});
+
+/**
+ * Real diagnostics from the two live buildable lessons. Since #1218 a lesson's
+ * verification harness compiles as `src/_verify.rs`, so a submission that does
+ * not define what the lesson asks for fails inside a file the learner has never
+ * seen — and the test row printed that verbatim.
+ */
+const HARNESS_MISSING_TYPE = [
+  "[INFO cargo_build_sbf] spawn: rustc --version",
+  "    Compiling first_program v0.1.0 (/build)",
+  "error[E0412]: cannot find type `Ping` in this scope",
+  "  --> src/_verify.rs:12:22",
+  "   |",
+  "12 |     const _: fn() = || { let _: Ping; };",
+  "   |                      ^^^^ not found in this scope",
+  "error: could not compile `first_program` (lib) due to 1 previous error",
+].join("\n");
+
+const HARNESS_MISSING_FN = [
+  "    Compiling first_program v0.1.0 (/build)",
+  "error[E0425]: cannot find function `ping` in this scope",
+  "  --> src/_verify.rs:12:22",
+].join("\n");
+
+const HARNESS_UNRESOLVED_MODULE = [
+  "    Compiling first_program v0.1.0 (/build)",
+  "error[E0433]: failed to resolve: use of undeclared crate or module `first_program`",
+  "  --> src/_verify.rs:7:9",
+].join("\n");
+
+const HARNESS_VAULT_STATE = [
+  "    Compiling vault v0.1.0 (/build)",
+  "error[E0412]: cannot find type `VaultState` in this scope",
+  "  --> src/_verify.rs:15:17",
+].join("\n");
+
+const LEARNER_LIFETIMES = [
+  "    Compiling counter v0.1.0 (/build)",
+  "error[E0107]: struct takes 4 lifetime arguments but 1 lifetime argument was supplied",
+  "  --> src/lib.rs:24:24",
+].join("\n");
+
+describe("analyzeCompilerError", () => {
+  it("flags a harness diagnostic and names the missing type", () => {
+    const diagnostic = analyzeCompilerError(HARNESS_MISSING_TYPE);
+    expect(diagnostic.fromHarness).toBe(true);
+    expect(diagnostic.symbol).toBe("Ping");
+    expect(diagnostic.raw).toContain("src/_verify.rs:12:22");
+  });
+
+  it("names a missing function", () => {
+    expect(analyzeCompilerError(HARNESS_MISSING_FN)).toMatchObject({
+      fromHarness: true,
+      symbol: "ping",
+    });
+  });
+
+  it("names an unresolved module", () => {
+    expect(analyzeCompilerError(HARNESS_UNRESOLVED_MODULE)).toMatchObject({
+      fromHarness: true,
+      symbol: "first_program",
+    });
+  });
+
+  it("flags a harness error it cannot name a symbol for", () => {
+    const stderr = [
+      "error[E0308]: mismatched types",
+      "  --> src/_verify.rs:9:5",
+    ].join("\n");
+    expect(analyzeCompilerError(stderr)).toMatchObject({
+      fromHarness: true,
+      symbol: null,
+    });
+  });
+
+  it("leaves an error in the learner's own file alone", () => {
+    const diagnostic = analyzeCompilerError(LEARNER_LIFETIMES);
+    expect(diagnostic.fromHarness).toBe(false);
+    expect(diagnostic.raw).toContain("src/lib.rs:24:24");
+  });
+});
+
+describe("compilerErrorSummary", () => {
+  it("explains a harness miss instead of printing it", () => {
+    expect(compilerErrorSummary(HARNESS_VAULT_STATE)).toBe(
+      "The verification harness could not find what the lesson asks for: VaultState"
+    );
+  });
+
+  it("falls back when the message names no symbol", () => {
+    const stderr = [
+      "error[E0061]: this function takes 1 argument but 2 arguments were supplied",
+      "  --> src/_verify.rs:9:5",
+    ].join("\n");
+    expect(compilerErrorSummary(stderr)).toBe(
+      "Your code does not match what the harness expects"
+    );
+  });
+
+  it("uses the caller's localizer when one is given", () => {
+    expect(
+      compilerErrorSummary(HARNESS_MISSING_FN, 200, (symbol) =>
+        symbol ? `faltando: ${symbol}` : "sem simbolo"
+      )
+    ).toBe("faltando: ping");
+  });
+
+  it("passes a learner-file diagnostic through verbatim", () => {
+    expect(compilerErrorSummary(LEARNER_LIFETIMES)).toBe(
+      firstCompilerErrorLine(LEARNER_LIFETIMES)
+    );
   });
 });

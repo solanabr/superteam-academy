@@ -19,6 +19,13 @@ interface DeploySuccessCardProps {
   /** XP actually credited, once the lesson is complete. */
   earnedXp: number | null;
   isComplete: boolean;
+  /**
+   * Every other graded block in the lesson is done. A deploy lesson's quiz sits
+   * BELOW this card, so an eager Submit here used to POST a payload the server
+   * refused ("your quiz answers aren't correct yet") for a quiz the learner had
+   * not reached. Submit waits for it instead, and says so.
+   */
+  canSubmit?: boolean;
   /** Runs the lesson's normal submit path. */
   onSubmit: () => void;
   /** The server-record save status. Submit is only enabled once the deploy
@@ -50,6 +57,7 @@ export function DeploySuccessCard({
   xpReward,
   earnedXp,
   isComplete,
+  canSubmit = true,
   onSubmit,
   saveStatus,
   nextLessonHref,
@@ -152,17 +160,22 @@ export function DeploySuccessCard({
             )}
           </div>
         ) : saveFailed ? null : (
-          <Button
-            onClick={onSubmit}
-            variant="primary"
-            className="w-full"
-            disabled={!isSaved}
-          >
-            {isSaving ? t("recordingDeploy") : t("submitLesson")}
-            <span className="ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold [background:rgba(255,255,255,0.20)]">
-              +{xpReward} XP
-            </span>
-          </Button>
+          <div className="space-y-2">
+            <Button
+              onClick={onSubmit}
+              variant="primary"
+              className="w-full"
+              disabled={!isSaved || !canSubmit}
+            >
+              {isSaving ? t("recordingDeploy") : t("submitLesson")}
+              <span className="ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold [background:rgba(255,255,255,0.20)]">
+                +{xpReward} XP
+              </span>
+            </Button>
+            {!canSubmit && (
+              <p className="text-xs text-text-3">{t("submitBlocked")}</p>
+            )}
+          </div>
         )}
       </CardContent>
     </Card>

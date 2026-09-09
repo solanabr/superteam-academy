@@ -298,6 +298,8 @@
     "completionRateLimited": "Estás completando lecciones muy rápido. Espera un momento e inténtalo de nuevo — tu progreso está guardado.",
     "completionInProgress": "Esta lección ya se está completando. Espera un instante e inténtalo de nuevo — tu progreso está guardado.",
     "completionFailedQuiz": "Una o más respuestas del quiz aún no son correctas. Revisa tus respuestas arriba y envíalo de nuevo.",
+    "harnessMissingSymbol": "La verificación de la lección no encontró lo que pide: {symbol}",
+    "harnessMismatch": "Tu código no coincide con lo que espera la verificación de la lección",
     "completionFailedParsons": "Las líneas aún no están en el orden correcto. Ordénalas arriba y envíalo de nuevo.",
     "completionFailedReflection": "Esta lección incluye una reflexión que aún no se ha enviado. Envía tu reflexión e inténtalo de nuevo.",
     "quizCheck": "Comprobar respuesta",
@@ -883,6 +885,7 @@
       "rateLimitWaiting": "El servicio de la billetera está ocupado (límite de solicitudes) — reintentando en {seconds}s",
       "rateLimitPaused": "El servicio de la billetera sigue limitando las firmas. No se perdió nada — espera un minuto y reanuda.",
       "submitLesson": "Enviar lección",
+      "submitBlocked": "Completa el quiz de abajo primero — la lección se envía completa.",
       "recordingDeploy": "Registrando tu deploy…",
       "xpEarned": "+{xp} XP ganados",
       "nextLesson": "Siguiente lección",
@@ -962,16 +965,6 @@
       "deployStep": "Desplegar",
       "interact": "Interactuar",
       "yourProgram": "Tu Programa Desplegado"
-    },
-    "steps": {
-      "label": "Progreso del despliegue",
-      "build": "Compilar",
-      "fund": "Fondos",
-      "deploy": "Desplegar",
-      "submit": "Enviar",
-      "goTo": "Ir a {step}",
-      "done": "completado",
-      "current": "paso actual"
     },
     "errors": {
       "airdropRateLimited": "El faucet de devnet está ocupado. Inténtalo de nuevo en unos {seconds}s o usa el faucet web.",
