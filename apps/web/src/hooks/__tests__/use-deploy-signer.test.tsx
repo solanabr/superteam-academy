@@ -172,6 +172,29 @@ describe("useDeploySigner", () => {
     vi.useRealTimers();
   });
 
+  it("waits out a rate limit on the single funding signature too", async () => {
+    vi.useFakeTimers();
+    dynamic.account = { address: EMBEDDED_KEY.toBase58() };
+    const rateLimited = new Error("Rate limited");
+    rateLimited.name = "WalletApiError";
+    const tx = new Transaction();
+    dynamic.signWithDynamicWallet
+      .mockRejectedValueOnce(rateLimited)
+      .mockResolvedValue(tx);
+
+    const onRateLimitWait = vi.fn();
+    const { result } = renderHook(() => useDeploySigner({ onRateLimitWait }));
+    // On the session-key deploy this is the ONLY remote signature there is —
+    // the funding transfer. Failing it fails the deploy before a lamport moves.
+    const pending = result.current.signer!.signTransaction(tx);
+    await vi.runAllTimersAsync();
+
+    await expect(pending).resolves.toBe(tx);
+    expect(dynamic.signWithDynamicWallet).toHaveBeenCalledTimes(2);
+    expect(onRateLimitWait).toHaveBeenCalledOnce();
+    vi.useRealTimers();
+  });
+
   it("leaves the adapter path unwrapped", async () => {
     wallet.publicKey = ADAPTER_KEY;
     const txs = Array.from({ length: 12 }, () => new Transaction());

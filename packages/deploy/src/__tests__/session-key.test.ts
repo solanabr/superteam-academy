@@ -12,6 +12,7 @@ import { setCachedBinary } from "../deploy";
 import {
   createFundingTransfer,
   isResumableDeploymentState,
+  OwnershipTransferError,
   runSessionKeyDeploy,
   startOverSessionKey,
   sweepSessionKey,
@@ -130,7 +131,11 @@ describe("runSessionKeyDeploy", () => {
 
     // The embedded wallet signs ONE transaction: the funding transfer.
     expect(fund).toHaveBeenCalledTimes(1);
-    expect(fund).toHaveBeenCalledWith(estimate.totalLamports, sessionKey);
+    expect(fund).toHaveBeenCalledWith(
+      estimate.totalLamports,
+      sessionKey,
+      expect.any(Function)
+    );
     expect(result.fundedLamports).toBe(estimate.totalLamports);
 
     // Everything actually sent — buffer create, 5 writes, deploy, SetAuthority,
@@ -244,6 +249,144 @@ describe("runSessionKeyDeploy", () => {
     expect(writes).toHaveLength(2);
     expect(writes[0]!.data.readUInt32LE(4)).toBe(3 * 900);
   });
+
+  it("reports the funding signature before the transfer is broadcast", async () => {
+    setCachedBinary("uuid-broadcast", BINARY);
+    const h = harness();
+    h.setBalance(9_000_000);
+
+    const order: string[] = [];
+    const result = await runSessionKeyDeploy({
+      connection: h.connection,
+      learner: Keypair.generate().publicKey,
+      buildUuid: "uuid-broadcast",
+      fund: async (_lamports, _to, onSignature) => {
+        onSignature("fund-sig");
+        order.push("broadcast");
+        return "fund-sig";
+      },
+      callbacks: callbacks(),
+      events: {
+        onFundingBroadcast: ({ signature }) => {
+          order.push(`persisted:${signature}`);
+        },
+      },
+    });
+
+    // The signature is persisted BEFORE the send: a `fund` that throws after
+    // broadcasting must still leave a record of the transfer behind.
+    expect(order[0]).toBe("persisted:fund-sig");
+    expect(order[1]).toBe("broadcast");
+    expect(result.fundedLamports).toBeGreaterThan(0);
+  });
+
+  it("does not fund a carried-over key the first attempt already paid for", async () => {
+    setCachedBinary("uuid-refund-twice", BINARY);
+    const session = Keypair.generate();
+    const h = harness();
+    const estimate = await estimateSessionKeyDeployCost(
+      h.connection,
+      BINARY.length
+    );
+    // The first attempt's transfer landed; only its confirmation was lost.
+    h.setBalance(estimate.totalLamports);
+
+    const fund = vi.fn(async () => "second-fund-sig");
+    const result = await runSessionKeyDeploy({
+      connection: h.connection,
+      learner: Keypair.generate().publicKey,
+      buildUuid: "uuid-refund-twice",
+      fund,
+      callbacks: callbacks(),
+      persistedSessionKey: Array.from(session.secretKey),
+      pendingFundingSignature: "first-fund-sig",
+    });
+
+    // Same key, no second transfer — the learner pays for this deploy once.
+    expect(fund).not.toHaveBeenCalled();
+    expect(result.fundedLamports).toBe(0);
+    expect(result.sessionKeySecret).toEqual(Array.from(session.secretKey));
+  });
+
+  it("funds a carried-over key whose transfer never landed", async () => {
+    setCachedBinary("uuid-refund-none", BINARY);
+    const session = Keypair.generate();
+    const h = harness();
+    let balanceReads = 0;
+    (h.connection.getBalance as ReturnType<typeof vi.fn>).mockImplementation(
+      async () => (balanceReads++ === 0 ? 0 : 9_000_000)
+    );
+    // The persisted transfer is on chain and failed; only the retry's own
+    // transfer confirms.
+    (
+      h.connection.getSignatureStatuses as ReturnType<typeof vi.fn>
+    ).mockImplementation(async (sigs: string[]) => ({
+      value: sigs.map((sig) =>
+        sig === "lost-sig"
+          ? { err: { InsufficientFundsForRent: {} }, confirmationStatus: null }
+          : { err: null, confirmationStatus: "confirmed" as const }
+      ),
+    }));
+
+    const fund = vi.fn(async () => "fund-sig");
+    const result = await runSessionKeyDeploy({
+      connection: h.connection,
+      learner: Keypair.generate().publicKey,
+      buildUuid: "uuid-refund-none",
+      fund,
+      callbacks: callbacks(),
+      persistedSessionKey: Array.from(session.secretKey),
+      pendingFundingSignature: "lost-sig",
+    });
+
+    expect(fund).toHaveBeenCalledTimes(1);
+    expect(result.fundedLamports).toBeGreaterThan(0);
+  });
+
+  it("reports a failed handover with the session ADDRESS, never its secret", async () => {
+    setCachedBinary("uuid-ownership", BINARY);
+    const h = harness();
+    h.setBalance(9_000_000);
+    let sessionKey: PublicKey | null = null;
+    // Everything sends until SetAuthority (variant 4), which never lands.
+    const send = h.connection.sendRawTransaction as ReturnType<typeof vi.fn>;
+    const realSend = send.getMockImplementation() as (
+      raw: Uint8Array
+    ) => Promise<string>;
+    send.mockImplementation(async (raw: Uint8Array) => {
+      const tx = Transaction.from(Buffer.from(raw));
+      const isSetAuthority = loaderIxs(tx).some(
+        (ix) => ix.data.length === 4 && ix.data.readUInt32LE(0) === 4
+      );
+      if (isSetAuthority) throw new Error("SetAuthority refused");
+      return realSend(raw);
+    });
+
+    const error = await runSessionKeyDeploy({
+      connection: h.connection,
+      learner: Keypair.generate().publicKey,
+      buildUuid: "uuid-ownership",
+      fund: async () => "fund-sig",
+      callbacks: callbacks(),
+      events: {
+        onSessionKey: (_secret, publicKey) => {
+          sessionKey = publicKey;
+        },
+      },
+    }).catch((err: unknown) => err);
+
+    expect(error).toBeInstanceOf(OwnershipTransferError);
+    const ownership = error as OwnershipTransferError;
+    expect(ownership.sessionKeyAddress.equals(sessionKey!)).toBe(true);
+    expect(
+      ownership.programId.equals(ownership.deployResult.programIdPubkey)
+    ).toBe(true);
+    // Nothing spendable rides on an error object: it gets rethrown, logged and
+    // captured by Sentry.
+    expect(Object.values(ownership)).not.toContainEqual(expect.any(Array));
+    expect(JSON.stringify(ownership)).not.toContain("sessionKeySecret");
+    // `transferProgramAuthority` spends its full backoff before giving up.
+  }, 20_000);
 
   it("refuses to resume into a buffer the session key does not control", async () => {
     setCachedBinary("uuid-foreign", BINARY);

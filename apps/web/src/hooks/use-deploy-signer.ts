@@ -163,8 +163,24 @@ export function useDeploySigner(
           // The MPC signer attaches its signature to the transaction it is
           // given rather than rebuilding it, so these are safe to hand a
           // partially-signed tx (the buffer/program keypair's signature).
-          signTransaction: async (tx) =>
-            (await signWithDynamicWallet(tx, activeAccount())) as typeof tx,
+          //
+          // Through the same backoff as the batch path. On the session-key
+          // deploy this is the ONLY remote signature there is — the funding
+          // transfer — so a throttled call here fails the whole deploy before
+          // a lamport moves, where a wait of a few seconds would have carried
+          // it. One transaction, one sub-batch.
+          signTransaction: async (tx) => {
+            const [signed] = await signAllWithRateLimitBackoff([tx], {
+              signAll: async (batch) => [
+                await signWithDynamicWallet(batch[0]!, activeAccount()),
+              ],
+              onRateLimitWait: (info) => onRateLimitWaitRef.current?.(info),
+              refreshBlockhash: async () =>
+                (await connectionRef.current.getLatestBlockhash("confirmed"))
+                  .blockhash,
+            });
+            return signed as typeof tx;
+          },
           // Dynamic throttles this call (see rate-limit.ts): sub-batched,
           // retried with backoff, and re-stamped with a fresh blockhash when
           // the waiting outlives the one the batch arrived with.

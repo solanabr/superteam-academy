@@ -23,9 +23,12 @@ import type { DeploymentState } from "@superteam-lms/deploy";
  * not change that, and no browser-side scheme would.
  *
  * The in-memory nonce also means a full page reload loses the ability to
- * decrypt. That costs nothing extra: the compiled binary lives in an in-memory
- * cache too, so a reload already forces a rebuild — and the panel warns before
- * the transfer that a lost page strands the (devnet, valueless) balance.
+ * decrypt. The compiled binary lives in an in-memory cache too, so a reload
+ * already forces a rebuild — and the panel warns before the transfer that it
+ * strands whatever the key holds. What survives a reload is the session key's
+ * ADDRESS: the record is kept, minus the parts that are now useless, so the
+ * panel can name the account the (devnet, valueless) balance is sitting in
+ * instead of forgetting it ever existed.
  */
 
 const STORAGE_PREFIX = "deploy-state-";
@@ -37,8 +40,17 @@ export interface StoredDeployState {
   deployment: DeploymentState | null;
   /** AES-GCM ciphertext of the session key's 64-byte secret, or null. */
   session: string | null;
-  /** The session key's address — shown when a refund needs a retry. */
+  /**
+   * The session key's address — shown when a refund needs a retry, and kept
+   * after a reload has taken the decryption nonce with it: it is then the only
+   * record of where the learner's SOL went.
+   */
   sessionAddress: string | null;
+  /**
+   * The funding transfer's signature, written before it was broadcast. A retry
+   * asks the cluster about it rather than transferring a second time.
+   */
+  fundingSignature: string | null;
 }
 
 /**
@@ -71,6 +83,10 @@ export function readDeployState(
           typeof stored.sessionAddress === "string"
             ? stored.sessionAddress
             : null,
+        fundingSignature:
+          typeof stored.fundingSignature === "string"
+            ? stored.fundingSignature
+            : null,
       };
     }
     // Pre-session-key shape: the DeploymentState written directly.
@@ -78,6 +94,7 @@ export function readDeployState(
       deployment: parsed as DeploymentState,
       session: null,
       sessionAddress: null,
+      fundingSignature: null,
     };
   } catch {
     return null;

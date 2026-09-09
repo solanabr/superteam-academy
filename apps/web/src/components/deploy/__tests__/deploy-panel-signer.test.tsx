@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+} from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import {
   Keypair,
@@ -32,6 +38,7 @@ const h = vi.hoisted(() => ({
   deployProgram: vi.fn(),
   runSessionKeyDeploy: vi.fn(),
   startOverSessionKey: vi.fn(),
+  sweepSessionKey: vi.fn(),
   binaryLength: null as number | null,
   estimateDeployCost: vi.fn(),
   balanceLamports: 0,
@@ -84,6 +91,7 @@ vi.mock("@superteam-lms/deploy", async (importOriginal) => ({
   resumeDeployment: vi.fn(),
   runSessionKeyDeploy: h.runSessionKeyDeploy,
   startOverSessionKey: h.startOverSessionKey,
+  sweepSessionKey: h.sweepSessionKey,
   getCachedBinaryLength: () => h.binaryLength,
   estimateDeployCost: h.estimateDeployCost,
   estimateSessionKeyDeployCost: h.estimateDeployCost,
@@ -126,6 +134,11 @@ beforeEach(() => {
     rentLamports: 0,
   });
   h.signTransaction.mockReset();
+  h.sweepSessionKey.mockReset();
+  h.sweepSessionKey.mockResolvedValue({
+    signature: "sweep-sig",
+    lamports: 500,
+  });
   h.startOverSessionKey.mockReset();
   h.startOverSessionKey.mockResolvedValue({
     closeSignature: "close-sig",
@@ -235,6 +248,95 @@ describe("DeployPanel — signer resolution", () => {
     expect(transfer.fromPubkey.toBase58()).toBe(EMBEDDED);
     expect(transfer.toPubkey.equals(destination)).toBe(true);
     expect(Number(transfer.lamports)).toBe(1_234_567);
+  });
+
+  const BUILD = "build-uuid-123";
+
+  it("persists the funding signature before the transfer is broadcast", async () => {
+    const sent: string[] = [];
+    h.signTransaction.mockImplementation(async () => ({
+      signature: Buffer.alloc(64, 7),
+      serialize: () => {
+        sent.push("broadcast");
+        return new Uint8Array([1, 2, 3]);
+      },
+    }));
+    renderPanel();
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Deploy to Devnet" })
+    );
+    await waitFor(() => expect(h.runSessionKeyDeploy).toHaveBeenCalledTimes(1));
+
+    const { fund } = h.runSessionKeyDeploy.mock.calls[0]![0];
+    const reported: string[] = [];
+    await fund(1_000, Keypair.generate().publicKey, (sig: string) =>
+      reported.push(sig)
+    );
+
+    expect(reported).toHaveLength(1);
+    expect(sent).toEqual(["broadcast"]);
+  });
+
+  it("a retry after a funded attempt reuses that key instead of funding a new one", async () => {
+    // The first attempt funds a key, then throws — a dropped confirmation.
+    const secret = Array.from(Keypair.generate().secretKey);
+    const sessionPubkey = Keypair.generate().publicKey;
+    h.runSessionKeyDeploy.mockImplementation(
+      async (params: {
+        events: {
+          onSessionKey: (s: number[], k: PublicKey) => Promise<void> | void;
+          onFundingBroadcast: (info: { signature: string }) => void;
+        };
+      }) => {
+        await params.events.onSessionKey(secret, sessionPubkey);
+        params.events.onFundingBroadcast({ signature: "first-fund-sig" });
+        throw new Error(
+          "Timed out waiting for the funding transfer to confirm."
+        );
+      }
+    );
+    renderPanel();
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Deploy to Devnet" })
+    );
+    await waitFor(() => expect(h.runSessionKeyDeploy).toHaveBeenCalledTimes(1));
+
+    // Nothing resumable was saved — the buffer never existed — so the learner
+    // comes back to a panel offering a plain Deploy. That must not walk away
+    // from the key their SOL is already sitting in.
+    await screen.findByRole("button", { name: "Start Over" });
+    cleanup();
+    h.runSessionKeyDeploy.mockReset();
+    h.runSessionKeyDeploy.mockResolvedValue({
+      programId: PROGRAM_ID,
+      programIdPubkey: new PublicKey(PROGRAM_ID),
+      totalChunks: 3,
+      durationMs: 1000,
+      rentLamports: 0,
+      sessionKeySecret: secret,
+      fundedLamports: 0,
+      authoritySignature: "authority-sig",
+      refundLamports: 0,
+      refundError: null,
+    });
+    renderPanel();
+    // The panel keeps the key and drops the (absent) offset — that rewrite is
+    // how we know the restore has run.
+    await waitFor(() =>
+      expect(
+        sessionStorage.getItem(`deploy-state-${EMBEDDED.slice(0, 8)}-${BUILD}`)
+      ).toContain('"deployment":null')
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Deploy to Devnet" })
+    );
+
+    await waitFor(() => expect(h.runSessionKeyDeploy).toHaveBeenCalledTimes(1));
+    const retry = h.runSessionKeyDeploy.mock.calls[0]![0];
+    expect(retry.persistedSessionKey).toEqual(secret);
+    expect(retry.pendingFundingSignature).toBe("first-fund-sig");
   });
 
   it("takes the mismatch check from the signer's key, not the adapter's", async () => {
@@ -356,6 +458,80 @@ describe("DeployPanel — session-key resume and start over", () => {
     expect(call.bufferKeypairSecret).toEqual(deployment.bufferKeypairSecret);
     expect(call.destination.toBase58()).toBe(EMBEDDED);
     expect(sessionStorage.length).toBe(0);
+  });
+
+  it("keeps the stranded key's address after a reload, and offers to copy it", async () => {
+    // A reload: the record survives in sessionStorage, but the wrapping nonce
+    // died with the page, so the ciphertext no longer decrypts.
+    sessionStorage.setItem(
+      `deploy-state-${EMBEDDED.slice(0, 8)}-${BUILD}`,
+      JSON.stringify({
+        deployment,
+        session: "dGhpcyBpcyBub3QgZGVjcnlwdGFibGUgYW55IG1vcmU=",
+        sessionAddress: "StrandedSessionKeyAddress",
+        fundingSignature: "fund-sig",
+      })
+    );
+    const writeText = vi.fn(async () => undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText },
+      configurable: true,
+    });
+
+    renderPanel();
+
+    // The address is shown, not forgotten — it is the only record of where the
+    // learner's SOL went.
+    const notice = await screen.findByRole("alert");
+    expect(notice).toHaveTextContent("StrandedSessionKeyAddress");
+    fireEvent.click(screen.getByRole("button", { name: "Copy address" }));
+    await waitFor(() =>
+      expect(writeText).toHaveBeenCalledWith("StrandedSessionKeyAddress")
+    );
+
+    // And it survives the next reload too.
+    const stored = JSON.parse(
+      sessionStorage.getItem(`deploy-state-${EMBEDDED.slice(0, 8)}-${BUILD}`)!
+    );
+    expect(stored).toMatchObject({
+      deployment: null,
+      session: null,
+      sessionAddress: "StrandedSessionKeyAddress",
+    });
+  });
+
+  it("warns before the transfer that a reload strands the funds", async () => {
+    renderPanel();
+    await screen.findByRole("button", { name: "Deploy to Devnet" });
+    expect(
+      screen.getByText(/reloading the page during the upload/i)
+    ).toBeInTheDocument();
+  });
+
+  it("retries the sweep when start over could not return the SOL", async () => {
+    await seedPausedSession();
+    h.startOverSessionKey.mockRejectedValueOnce(new Error("rpc down"));
+    renderPanel();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Start Over" }));
+
+    const retry = await screen.findByRole("button", { name: "Retry refund" });
+    expect(screen.getByText(/SessionKeyAddress/)).toBeInTheDocument();
+
+    fireEvent.click(retry);
+
+    // The retry runs the same close-and-sweep, with the key start over was
+    // about to throw away — not a no-op on a cleared session.
+    await waitFor(() => expect(h.startOverSessionKey).toHaveBeenCalledTimes(2));
+    const call = h.startOverSessionKey.mock.calls[1]![0];
+    expect(call.sessionKeySecret).toEqual(SESSION_SECRET);
+    expect(call.bufferKeypairSecret).toEqual(deployment.bufferKeypairSecret);
+    expect(call.destination.toBase58()).toBe(EMBEDDED);
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "Retry refund" })
+      ).not.toBeInTheDocument()
+    );
   });
 
   it("drops a saved state whose program keypair is not this build's", async () => {

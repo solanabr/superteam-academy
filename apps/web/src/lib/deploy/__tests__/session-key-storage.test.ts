@@ -56,17 +56,19 @@ describe("deploy state storage", () => {
     phase: "uploading" as const,
   };
 
-  it("round-trips the deployment, the wrapped key and its address", () => {
+  it("round-trips the deployment, the wrapped key, its address and funding", () => {
     writeDeployState(BUILD, WALLET, {
       deployment,
       session: "cipher",
       sessionAddress: "SessionAddr",
+      fundingSignature: "fund-sig",
     });
 
     expect(readDeployState(BUILD, WALLET)).toEqual({
       deployment,
       session: "cipher",
       sessionAddress: "SessionAddr",
+      fundingSignature: "fund-sig",
     });
     clearDeployState(BUILD, WALLET);
     expect(readDeployState(BUILD, WALLET)).toBeNull();
@@ -77,6 +79,7 @@ describe("deploy state storage", () => {
       deployment,
       session: null,
       sessionAddress: null,
+      fundingSignature: null,
     });
     expect(readDeployState(BUILD, "9WzDXwBb")).toBeNull();
 
@@ -89,6 +92,25 @@ describe("deploy state storage", () => {
       deployment,
       session: null,
       sessionAddress: null,
+      fundingSignature: null,
+    });
+  });
+
+  it("keeps a record that is nothing but the stranded key's address", () => {
+    // What a reload leaves behind: no deployment, no decryptable secret, and
+    // the one field that still means something.
+    writeDeployState(BUILD, WALLET, {
+      deployment: null,
+      session: null,
+      sessionAddress: "StrandedAddr",
+      fundingSignature: null,
+    });
+
+    expect(readDeployState(BUILD, WALLET)).toEqual({
+      deployment: null,
+      session: null,
+      sessionAddress: "StrandedAddr",
+      fundingSignature: null,
     });
   });
 });

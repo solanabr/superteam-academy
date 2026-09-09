@@ -56,6 +56,13 @@ const SWEEP_FEE_LAMPORTS = 5_000;
 const FUNDING_TIMEOUT_MS = 90_000;
 const FUNDING_POLL_MS = 1_500;
 
+/**
+ * How long to wait on a funding signature left over from an attempt that threw.
+ * Shorter than a fresh transfer: the point is to find out whether it landed, and
+ * a signature the cluster has never heard of should not stall a retry.
+ */
+const PENDING_FUNDING_TIMEOUT_MS = 20_000;
+
 /** Attempts for `SetAuthority`, which must succeed or the deploy is unowned. */
 const AUTHORITY_ATTEMPTS = 4;
 const AUTHORITY_BACKOFF_MS = 1_000;
@@ -72,6 +79,12 @@ export interface SessionKeyEvents {
    * otherwise strand the funds with no key to spend them.
    */
   onSessionKey?: (secret: number[], publicKey: PublicKey) => void;
+  /**
+   * The funding transfer has a signature — it is on the wire, and may land even
+   * if the very next line throws. Callers persist it HERE, so a retry can ask
+   * the cluster what happened instead of transferring a second time.
+   */
+  onFundingBroadcast?: (info: { signature: string }) => void;
   onFunded?: (info: { lamports: number; signature: string }) => void;
   onOwnershipTransferred?: (info: {
     signature: string;
@@ -89,14 +102,28 @@ export interface SessionKeyDeployParams {
   /**
    * Sign and send the funding transfer from the learner's wallet, returning its
    * signature. This is the ONE transaction the embedded wallet signs.
+   *
+   * `onSignature` is called with the signature BEFORE the transaction is
+   * broadcast, because a `fund` that throws after broadcasting still moves the
+   * learner's SOL — and without the signature a retry has no way to find out.
    */
-  fund: (lamports: number, to: PublicKey) => Promise<string>;
+  fund: (
+    lamports: number,
+    to: PublicKey,
+    onSignature: (signature: string) => void
+  ) => Promise<string>;
   callbacks: DeploymentCallbacks;
   programKeypairSecret?: number[];
   /** Session-key secret from a paused deploy; a new key is generated without it. */
   persistedSessionKey?: number[] | null;
   /** Deployment state from a paused deploy — set together with the key. */
   resumeState?: DeploymentState | null;
+  /**
+   * A funding signature persisted by an attempt that threw before it could
+   * confirm. Passed with `persistedSessionKey` and no `resumeState`: the upload
+   * never started, but the transfer may well have landed.
+   */
+  pendingFundingSignature?: string | null;
   events?: SessionKeyEvents;
 }
 
@@ -158,17 +185,26 @@ export function createFundingTransfer(params: {
 /**
  * Raised when the deploy landed but the upgrade authority is still the session
  * key. The program is on-chain and paid for; the panel offers "claim
- * ownership", which re-runs only `transferProgramAuthority`, so the fields it
- * needs travel with the error.
+ * ownership", which re-runs only `transferProgramAuthority`.
+ *
+ * It carries the program it deployed and the session key's ADDRESS — never the
+ * secret. An error object gets rethrown, logged and captured by Sentry; a
+ * spendable key riding on one is a live key in an error report. The caller
+ * already holds the secret (it persisted it from `onSessionKey`), so putting it
+ * here bought nothing.
  */
 export class OwnershipTransferError extends Error {
   constructor(
     message: string,
     readonly deployResult: DeployResult,
-    readonly sessionKeySecret: number[]
+    readonly sessionKeyAddress: PublicKey
   ) {
     super(message);
     this.name = "OwnershipTransferError";
+  }
+
+  get programId(): PublicKey {
+    return this.deployResult.programIdPubkey;
   }
 }
 
@@ -328,6 +364,38 @@ async function waitForFunding(
       throw new Error("Timed out waiting for the funding transfer to confirm.");
     }
     await new Promise((r) => setTimeout(r, FUNDING_POLL_MS));
+  }
+}
+
+/**
+ * Does this session key already hold the deploy's cost?
+ *
+ * Two ways it can, both from an attempt that threw after the transfer was on
+ * the wire: the balance is simply there, or a signature was persisted before
+ * broadcast and the cluster confirms it landed. Either answer means the retry
+ * must NOT transfer again. Anything else — no balance, an unknown or failed
+ * signature — falls through to a fresh transfer.
+ */
+async function isAlreadyFunded(
+  connection: Connection,
+  sessionKey: PublicKey,
+  requiredLamports: number,
+  pendingSignature: string | null
+): Promise<boolean> {
+  const balance = await connection.getBalance(sessionKey, "confirmed");
+  if (balance >= requiredLamports) return true;
+  if (!pendingSignature) return false;
+  try {
+    await waitForFunding(
+      connection,
+      pendingSignature,
+      sessionKey,
+      requiredLamports,
+      PENDING_FUNDING_TIMEOUT_MS
+    );
+    return true;
+  } catch {
+    return false;
   }
 }
 
@@ -504,15 +572,37 @@ export async function runSessionKeyDeploy(
       );
     }
     const estimate = await estimateSessionKeyDeployCost(connection, programLen);
-    const signature = await fund(estimate.totalLamports, session.publicKey);
-    await waitForFunding(
-      connection,
-      signature,
-      session.publicKey,
-      estimate.totalLamports
-    );
-    fundedLamports = estimate.totalLamports;
-    events.onFunded?.({ lamports: fundedLamports, signature });
+
+    // A carried-over key may already be paid for: a `fund` that broadcast and
+    // then threw — a dropped response, a confirm timeout — leaves the learner's
+    // SOL on chain, and funding a second time would double the bill for a
+    // deploy they have already paid for. A key generated a line ago cannot be,
+    // so it is not asked.
+    const funded = params.persistedSessionKey
+      ? await isAlreadyFunded(
+          connection,
+          session.publicKey,
+          estimate.totalLamports,
+          params.pendingFundingSignature ?? null
+        )
+      : false;
+
+    if (!funded) {
+      const signature = await fund(
+        estimate.totalLamports,
+        session.publicKey,
+        (broadcast) => events.onFundingBroadcast?.({ signature: broadcast })
+      );
+      events.onFundingBroadcast?.({ signature });
+      await waitForFunding(
+        connection,
+        signature,
+        session.publicKey,
+        estimate.totalLamports
+      );
+      fundedLamports = estimate.totalLamports;
+      events.onFunded?.({ lamports: fundedLamports, signature });
+    }
   }
 
   const deployResult = resumeState
@@ -544,7 +634,7 @@ export async function runSessionKeyDeploy(
     throw new OwnershipTransferError(
       err instanceof Error ? err.message : String(err),
       deployResult,
-      sessionKeySecret
+      session.publicKey
     );
   }
   events.onOwnershipTransferred?.({
