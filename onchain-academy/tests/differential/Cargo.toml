@@ -1,5 +1,5 @@
 # Standalone workspace: litesvm pins its own solana-sdk line; keep it out of
-# the program workspace (same isolation pattern as tests/rust and trident-tests).
+# the program workspace (same isolation pattern as tests/rust and tests/fuzz).
 [workspace]
 
 [package]

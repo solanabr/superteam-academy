@@ -28,6 +28,10 @@ import { scheduleQuestEvaluation } from "@/lib/gamification/quest-evaluation";
 import { isPlatformFrozen } from "@/lib/platform/freeze";
 import { platformFrozenResponse } from "@/lib/platform/freeze-http";
 
+// Grading a buildable block waits up to 130s on the build server here, then still
+// has an on-chain tx to send. 300 is the Vercel plan ceiling, as in api/build-program.
+export const maxDuration = 300;
+
 interface LessonCompleteRequest {
   lessonId: string;
   courseId: string;

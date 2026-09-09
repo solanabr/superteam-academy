@@ -28,9 +28,27 @@ export function firstCompilerErrorLine(
   if (index === -1) index = lines.findIndex((l) => l.includes("error"));
   if (index === -1) return "Program did not compile";
 
-  const parts = [lines[index]!.trim()];
+  const errorLine = lines[index]!.trim();
   const next = lines[index + 1]?.trim();
-  if (next?.startsWith("-->")) parts.push(next);
+  const location = next?.startsWith("-->") ? next : undefined;
 
-  return parts.join(" ").slice(0, maxLength);
+  if (!location) return errorLine.slice(0, maxLength);
+
+  // Truncate each half on its own budget so a long diagnostic never cuts
+  // the `--> file:line:col` location mid-string — the location gets first
+  // claim on the budget, the error line takes what's left.
+  const separator = " ";
+  let truncatedLocation = location.slice(
+    0,
+    Math.max(0, maxLength - separator.length)
+  );
+  const truncatedError = errorLine.slice(
+    0,
+    Math.max(0, maxLength - separator.length - truncatedLocation.length)
+  );
+  // No room for any of the error line — give the location the full budget
+  // instead of leaving a separator's worth of space unused.
+  if (!truncatedError) truncatedLocation = location.slice(0, maxLength);
+
+  return [truncatedError, truncatedLocation].filter(Boolean).join(separator);
 }

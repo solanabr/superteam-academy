@@ -393,7 +393,15 @@
     "formatUnchanged": "Already formatted.",
     "formatUnsupported": "Formatting isn't available for this language.",
     "finishCourse": "Finish course",
-    "completeGateHint": "Finish the quiz and reflection above to enable"
+    "completeGateHint": "Finish the quiz and reflection above to enable",
+    "executionTimeout": "Execution timed out after {seconds}s — check for infinite loops",
+    "dynamicImportBlocked": "Dynamic import() is not allowed in challenges",
+    "syntaxError": "Syntax error: {message}",
+    "returnValueLabel": "Return value:",
+    "noFunctionFound": "No function found in your code",
+    "rustAssertionFailed": "assertion failed",
+    "rustNoOutput": "Test did not produce output",
+    "rustCompilationFailed": "Compilation failed"
   },
   "dashboard": {
     "allCaughtUp": "All caught up!",
@@ -849,7 +857,8 @@
       "startOver": "Start Over",
       "insufficientSol": "Not enough SOL. Need ~{amount} more.",
       "buildExpired": "Build expired",
-      "rebuildHint": "Click \"Run\" in the editor to rebuild, then deploy again."
+      "rebuildHint": "Click \"Run\" in the editor to rebuild, then deploy again.",
+      "copied": "Copied!"
     },
     "save": {
       "recording": "Recording your deployment…",
@@ -904,7 +913,12 @@
       "accounts": "Accounts",
       "accountData": "Account Data",
       "executeInstruction": "Execute {name}",
-      "accountNotFound": "Account not found. Run an instruction to create it."
+      "accountNotFound": "Account not found. Run an instruction to create it.",
+      "unknownInstruction": "Unknown instruction: {name}",
+      "accountNotResolved": "Account \"{name}\" is not resolved. Please provide a public key.",
+      "base58AddressPlaceholder": "Base58 address...",
+      "publicKeyPlaceholder": "PublicKey...",
+      "myWallet": "My wallet"
     },
     "capstone": {
       "journeyTitle": "Your Journey",
@@ -1097,6 +1111,8 @@
       "ai": "AI Partner",
       "loading": "Thinking...",
       "error": "Something went wrong. Try again.",
+      "errorBilled": "Something went wrong on the AI's side, and this turn was used up. Try again.",
+      "errorNoChange": "The partner found nothing to change in your code, and this turn was used up. Ask it to review your solution instead.",
       "spendCapped": "The AI Partner has reached today's usage limit. It'll be back tomorrow — meanwhile, the authored hints and tests are still here to help."
     },
     "actions": {
@@ -1106,7 +1122,8 @@
       "askLabel": "Ask the AI Partner about this challenge",
       "askSend": "Send",
       "review": "Review my solution",
-      "reviewHint": "Get idiomatic feedback on your passing solution — this doesn't change your XP."
+      "reviewHint": "Get idiomatic feedback on your passing solution — this doesn't change your XP.",
+      "reviewedHint": "You've already reviewed this solution. Change your code to get a fresh review."
     },
     "composer": {
       "empty": "Ask anything about this challenge. Authored hints for this lesson live in the Hints section above."
@@ -1126,6 +1143,7 @@
       "checkCorrect": "Correct — you can apply the change now.",
       "acceptLocked": "Answer the check correctly to apply this change.",
       "applied": "Applied to your code",
+      "alreadyApplied": "This change is already in your code.",
       "unchangedCollapsed": "{count, plural, one {# unchanged line} other {# unchanged lines}}",
       "lineAdded": "Added",
       "lineRemoved": "Removed"
@@ -1135,7 +1153,8 @@
       "diffCard": "Proposed code change"
     },
     "socratic": {
-      "chip": "Lighter tutor"
+      "chip": "Lighter tutor",
+      "transition": "Your 8 assists are used up. You now have 20 lighter guiding turns — the tutor leads with questions instead of finished changes."
     },
     "exhausted": {
       "title": "This challenge's tutor turns are used up",

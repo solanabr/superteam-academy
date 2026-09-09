@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { useState } from "react";
 import type { ReactElement } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
@@ -19,12 +20,70 @@ const check = {
 // newline): the edit path is search/replace, not a whole-file echo.
 const ADD_B: CodeEdit[] = [{ search: "a", replace: "a\nb" }];
 
+// A real editor edit: the `search` text is CONSUMED by its own replacement, so
+// re-deriving the apply against the live buffer misses once it lands. ADD_B
+// above cannot show that — its search survives its own replacement.
+const BUFFER = "fn main() {\n  // TODO\n}";
+const APPLIED_BUFFER = "fn main() {\n  ping();\n}";
+const CONSUMING: CodeEdit[] = [{ search: "// TODO", replace: "ping();" }];
+
 function renderWithIntl(ui: ReactElement) {
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
       {ui}
     </NextIntlClientProvider>
   );
+}
+
+/**
+ * The card as the app actually mounts it: `current` is the LIVE buffer, so
+ * accepting feeds the new code straight back in as the next `current`
+ * (challenge-interface's `getCode={() => code}` / `onApply={setCode}`).
+ */
+function LiveCard({
+  initial = BUFFER,
+  edits = CONSUMING,
+  onVerify,
+  onAccept,
+  stale = false,
+}: {
+  initial?: string;
+  edits?: CodeEdit[];
+  onVerify: (
+    token: string,
+    picked: 0 | 1 | 2
+  ) => Promise<{ correct: boolean; explanation: string }>;
+  onAccept?: (proposed: string) => void;
+  stale?: boolean;
+}) {
+  const [code, setCode] = useState(initial);
+  return (
+    <DiffCard
+      current={code}
+      edits={edits}
+      rationale="fills in the TODO"
+      check={check}
+      checkToken="tok"
+      onVerify={onVerify}
+      onAccept={(proposed) => {
+        onAccept?.(proposed);
+        setCode(proposed);
+      }}
+      onReject={() => {}}
+      stale={stale}
+    />
+  );
+}
+
+async function acceptOn(
+  onVerify: ReturnType<typeof vi.fn>
+): Promise<HTMLElement> {
+  fireEvent.click(screen.getByRole("button", { name: "B" }));
+  await waitFor(() => expect(onVerify).toHaveBeenCalled());
+  const accept = await screen.findByRole("button", { name: /accept/i });
+  await waitFor(() => expect(accept).not.toBeDisabled());
+  fireEvent.click(accept);
+  return accept;
 }
 
 it("gates Accept behind a correct answer and only applies on the Accept click", async () => {
@@ -34,19 +93,10 @@ it("gates Accept behind a correct answer and only applies on the Accept click", 
     .mockResolvedValueOnce({ correct: false, explanation: "because B" })
     .mockResolvedValueOnce({ correct: true, explanation: "because B" });
 
-  renderWithIntl(
-    <DiffCard
-      current="a"
-      edits={ADD_B}
-      rationale="adds b"
-      check={check}
-      checkToken="tok"
-      onVerify={onVerify}
-      onAccept={onAccept}
-      onReject={() => {}}
-      stale={false}
-    />
-  );
+  // Rendered the way the app renders it: `current` follows the live buffer, so
+  // the post-Accept re-render is the real one (a static `current` here is what
+  // hid the P0).
+  renderWithIntl(<LiveCard onVerify={onVerify} onAccept={onAccept} />);
 
   // The check is shown immediately; Accept starts locked.
   expect(screen.getByRole("button", { name: "A" })).toBeInTheDocument();
@@ -69,7 +119,7 @@ it("gates Accept behind a correct answer and only applies on the Accept click", 
 
   // Only the explicit Accept click applies the reconstructed buffer.
   fireEvent.click(screen.getByRole("button", { name: /accept/i }));
-  expect(onAccept).toHaveBeenCalledWith("a\nb");
+  expect(onAccept).toHaveBeenCalledWith(APPLIED_BUFFER);
 
   // After applying, the card confirms and retires the action buttons.
   expect(screen.getByText(/applied to your code/i)).toBeInTheDocument();
@@ -438,5 +488,224 @@ describe("comprehension_check_answered", () => {
         attempt: 1,
       })
     );
+  });
+});
+
+// ── An applied proposal stays applied ─────────────────────────────────────
+// The card re-derives its apply from the LIVE buffer on every render, so the
+// moment its own Accept lands the `search` text is gone. Without the latch that
+// dropped the card straight into the red "couldn't be applied" branch — the
+// audit's P0, and invisible to a test that re-renders with a static buffer.
+
+describe("applied state survives the buffer it just changed", () => {
+  it("keeps the confirmation after Accept feeds the new buffer back in", async () => {
+    const onVerify = vi
+      .fn()
+      .mockResolvedValue({ correct: true, explanation: "yes" });
+
+    renderWithIntl(<LiveCard onVerify={onVerify} />);
+    await acceptOn(onVerify);
+
+    expect(
+      screen.getByText(messages.aiPartner.diff.applied)
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/couldn't be applied automatically/i)
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^accept$/i })
+    ).not.toBeInTheDocument();
+    // The snapshot keeps the diff readable rather than blanking the card.
+    expect(screen.getByText("ping();")).toBeInTheDocument();
+    // …and a card that has been applied is never also "out of date".
+    expect(
+      screen.queryByText(messages.aiPartner.diff.stale)
+    ).not.toBeInTheDocument();
+  });
+
+  it("recognizes an edit already present in the buffer (reload / typed by hand)", () => {
+    // Reload-equivalent: the chat log rehydrates, the accepted flag does not,
+    // and the card mounts against a buffer that already carries the change.
+    renderWithIntl(
+      <DiffCard
+        current={APPLIED_BUFFER}
+        edits={CONSUMING}
+        rationale="fills in the TODO"
+        check={check}
+        checkToken="tok"
+        onVerify={vi.fn()}
+        onAccept={vi.fn()}
+        onReject={() => {}}
+        stale={false}
+      />
+    );
+
+    expect(
+      screen.getByText(messages.aiPartner.diff.alreadyApplied)
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/couldn't be applied automatically/i)
+    ).not.toBeInTheDocument();
+    // Informational only: nothing here can write to the buffer.
+    expect(
+      screen.queryByRole("button", { name: /^accept$/i })
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(check.question)).not.toBeInTheDocument();
+  });
+
+  it("shows the neutral state on a sibling card once the other one applied it", async () => {
+    const onVerify = vi
+      .fn()
+      .mockResolvedValue({ correct: true, explanation: "yes" });
+
+    function TwoCards() {
+      const [code, setCode] = useState(BUFFER);
+      const common = {
+        edits: CONSUMING,
+        check,
+        checkToken: "tok",
+        onVerify,
+        onReject: () => {},
+        stale: false,
+        onAccept: setCode,
+      };
+      return (
+        <>
+          <DiffCard {...common} current={code} rationale="card one" />
+          <DiffCard {...common} current={code} rationale="card two" />
+        </>
+      );
+    }
+
+    renderWithIntl(<TwoCards />);
+    fireEvent.click(screen.getAllByRole("button", { name: "B" })[0]!);
+    await waitFor(() => expect(onVerify).toHaveBeenCalled());
+    const accept = screen.getAllByRole("button", { name: /accept/i })[0]!;
+    await waitFor(() => expect(accept).not.toBeDisabled());
+    fireEvent.click(accept);
+
+    expect(
+      screen.getByText(messages.aiPartner.diff.applied)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(messages.aiPartner.diff.alreadyApplied)
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/couldn't be applied automatically/i)
+    ).not.toBeInTheDocument();
+  });
+
+  it("still degrades on TRUE drift — search gone AND the change absent", () => {
+    renderWithIntl(
+      <DiffCard
+        current={"fn main() {\n  something_else();\n}"}
+        edits={CONSUMING}
+        rationale="fills in the TODO"
+        check={check}
+        checkToken="tok"
+        onVerify={vi.fn()}
+        onAccept={vi.fn()}
+        onReject={() => {}}
+        stale={false}
+      />
+    );
+
+    expect(
+      screen.getByText(/couldn't be applied automatically/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(messages.aiPartner.diff.alreadyApplied)
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^accept$/i })
+    ).not.toBeInTheDocument();
+  });
+
+  // A pure-deletion edit (`replace: ""`) has no replacement text to search
+  // for, so `alreadyApplied` falls back to "the search text is gone" — the
+  // fix for the blocking review finding on #1219.
+  const DELETE_BUFFER = "fn main() {\n  debug_print();\n}";
+  const DELETED_BUFFER = "fn main() {\n}";
+  const DELETION: CodeEdit[] = [{ search: "  debug_print();\n", replace: "" }];
+
+  it('recognizes a deletion edit already applied (replace: "")', () => {
+    renderWithIntl(
+      <DiffCard
+        current={DELETED_BUFFER}
+        edits={DELETION}
+        rationale="removes the debug print"
+        check={check}
+        checkToken="tok"
+        onVerify={vi.fn()}
+        onAccept={vi.fn()}
+        onReject={() => {}}
+        stale={false}
+      />
+    );
+
+    expect(
+      screen.getByText(messages.aiPartner.diff.alreadyApplied)
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/couldn't be applied automatically/i)
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^accept$/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it("still offers Accept for a deletion edit not yet applied", () => {
+    renderWithIntl(
+      <DiffCard
+        current={DELETE_BUFFER}
+        edits={DELETION}
+        rationale="removes the debug print"
+        check={check}
+        checkToken="tok"
+        onVerify={vi.fn()}
+        onAccept={vi.fn()}
+        onReject={() => {}}
+        stale={false}
+      />
+    );
+
+    expect(
+      screen.queryByText(messages.aiPartner.diff.alreadyApplied)
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/couldn't be applied automatically/i)
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /^accept$/i })
+    ).toBeInTheDocument();
+  });
+
+  it("recognizes a mixed set — one deletion applied and one replacement applied", () => {
+    const MIXED_APPLIED_BUFFER = "fn main() {\n  ping();\n}";
+    const MIXED: CodeEdit[] = [
+      { search: "// TODO", replace: "ping();" },
+      { search: "  debug_print();\n", replace: "" },
+    ];
+
+    renderWithIntl(
+      <DiffCard
+        current={MIXED_APPLIED_BUFFER}
+        edits={MIXED}
+        rationale="fills in the TODO and removes the debug print"
+        check={check}
+        checkToken="tok"
+        onVerify={vi.fn()}
+        onAccept={vi.fn()}
+        onReject={() => {}}
+        stale={false}
+      />
+    );
+
+    expect(
+      screen.getByText(messages.aiPartner.diff.alreadyApplied)
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/couldn't be applied automatically/i)
+    ).not.toBeInTheDocument();
   });
 });

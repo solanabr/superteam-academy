@@ -13,6 +13,7 @@ You are setting up a CI/CD pipeline for Solana program development. Modern Solan
 ## Overview
 
 This command creates a GitHub Actions workflow that automatically:
+
 - Builds programs with verifiable builds
 - Runs comprehensive tests (unit, integration, fuzz)
 - Performs security audits (cargo audit, clippy)
@@ -149,13 +150,14 @@ jobs:
         with:
           toolchain: ${{ env.RUST_VERSION }}
 
-      - name: Install Trident
-        run: cargo install trident-cli
+      - name: Build program (.so for the fuzz SVM)
+        run: cargo build-sbf --manifest-path programs/onchain-academy-pinocchio/Cargo.toml --tools-version v1.54
 
       - name: Run Fuzz Tests
         run: |
-          cd trident-tests
-          trident fuzz run --timeout 300
+          cd tests/fuzz
+          cargo build --release --bin fuzz
+          FUZZ_MAX_SECONDS=300 cargo run --release --bin fuzz -- 1000000
         timeout-minutes: 10
         continue-on-error: true
 
@@ -164,7 +166,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: fuzz-results
-          path: trident-tests/hfuzz_workspace/
+          path: tests/fuzz/crashes/
 EOF
 
 echo "✅ GitHub Actions workflow created: .github/workflows/solana-security.yml"
@@ -394,6 +396,7 @@ After pushing, configure branch protection on GitHub:
 ## CI/CD Best Practices
 
 ### Automated Checks on Every Commit
+
 - Format validation
 - Security lints (clippy)
 - Vulnerability scanning (cargo audit)
@@ -401,12 +404,14 @@ After pushing, configure branch protection on GitHub:
 - Build verification
 
 ### Before Merging to Main
+
 - All CI checks must pass
 - Code review required
 - No security warnings
 - Test coverage maintained
 
 ### Before Deploying to Mainnet
+
 - Verifiable build succeeds
 - All tests pass (including fuzz)
 - Professional security audit completed
@@ -415,6 +420,7 @@ After pushing, configure branch protection on GitHub:
 ## Monitoring and Alerts
 
 Consider setting up:
+
 - GitHub notifications for security advisories
 - Slack/Discord integration for CI failures
 - Automated security reports
@@ -423,15 +429,18 @@ Consider setting up:
 ## Maintenance
 
 ### Weekly
+
 - Review dependabot PRs
 - Update security advisories
 
 ### Monthly
+
 - Review and update security lints
 - Audit CI/CD pipeline performance
 - Update toolchain versions
 
 ### Before Major Releases
+
 - Full security audit
 - Penetration testing
 - Third-party code review

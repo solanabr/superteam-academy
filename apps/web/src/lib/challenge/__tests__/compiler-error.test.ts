@@ -66,4 +66,23 @@ describe("firstCompilerErrorLine", () => {
     expect(firstCompilerErrorLine(long)).toHaveLength(200);
     expect(firstCompilerErrorLine(long, 300)).toHaveLength(300);
   });
+
+  it("keeps the location intact and truncates only the error line", () => {
+    const stderr = [
+      `error[E0107]: ${"x".repeat(500)}`,
+      "   --> src/lib.rs:24:24",
+    ].join("\n");
+    const result = firstCompilerErrorLine(stderr, 200);
+    expect(result).toHaveLength(200);
+    expect(result.endsWith("--> src/lib.rs:24:24")).toBe(true);
+  });
+
+  it("truncates the location too when it alone exceeds maxLength", () => {
+    const stderr = [
+      "error: short",
+      `   --> ${"src/".repeat(100)}lib.rs:1:1`,
+    ].join("\n");
+    const result = firstCompilerErrorLine(stderr, 50);
+    expect(result).toHaveLength(50);
+  });
 });
