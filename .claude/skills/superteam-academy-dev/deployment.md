@@ -102,7 +102,7 @@ anchor idl upgrade --filepath target/idl/my_program.json \
 cargo test --all
 
 # 2. Fuzz testing (critical paths)
-trident fuzz run fuzz_0 --iterations 50000
+(cd onchain-academy/tests/fuzz && cargo run --release --bin fuzz -- 50000)
 
 # 3. Build verification
 anchor build --verifiable

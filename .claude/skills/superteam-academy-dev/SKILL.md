@@ -1,6 +1,6 @@
 ---
 name: superteam-academy-dev
-description: Superteam Academy — decentralized learning platform on Solana with soulbound XP tokens (Token-2022), Metaplex Core credentials, course registry, achievements, and creator incentives. Covers Anchor program development, testing with LiteSVM/Mollusk/Trident.
+description: Superteam Academy — decentralized learning platform on Solana with soulbound XP tokens (Token-2022), Metaplex Core credentials, course registry, achievements, and creator incentives. Covers Anchor program development, testing with LiteSVM/Mollusk.
 user-invocable: true
 ---
 
@@ -76,7 +76,7 @@ ENROLL → COMPLETE LESSONS → FINALIZE COURSE → ISSUE CREDENTIAL → CLOSE E
 | Programs       | Anchor 0.31+, Rust 1.82+                                                        |
 | Token Standard | Token-2022 (NonTransferable, PermanentDelegate, MetadataPointer, TokenMetadata) |
 | Credentials    | Metaplex Core NFTs (soulbound via PermanentFreezeDelegate)                      |
-| Testing        | Mollusk, LiteSVM, Trident (fuzz)                                                |
+| Testing        | Mollusk, LiteSVM (scenarios + fuzz)                                                |
 | Client         | TypeScript, @coral-xyz/anchor, @solana/web3.js                                  |
 | Frontend       | Next.js 14+, React, Tailwind CSS                                                |
 | RPC            | Helius (DAS API for XP leaderboard + credential NFT queries)                    |
@@ -127,7 +127,7 @@ Always verify:
 
 - **Unit test** (Mollusk): Each instruction in isolation
 - **Integration test** (LiteSVM): Full enroll → complete lessons → finalize → credential flow
-- **Fuzz test** (Trident): Random amounts, edge cases, bitmap bounds
+- **Fuzz test** (litesvm, `tests/fuzz`): Random amounts, edge cases, bitmap bounds
 - **Attack test**: Unauthorized signer, double completion, supply exhaustion
 
 ## Progressive Disclosure (read when needed)
@@ -138,7 +138,7 @@ Always verify:
 
 ### Testing & Security
 
-- [testing.md](testing.md) — LiteSVM, Mollusk, Trident, CI guidance
+- [testing.md](testing.md) — LiteSVM, Mollusk, fuzzing, CI guidance
 - [security.md](security.md) — Vulnerability categories, program checklists
 
 ### Deployment
@@ -160,7 +160,7 @@ Always verify:
 | Anchor program code | programs-anchor.md |
 | Where a file lives in the monorepo | structure.md |
 | Unit/integration testing | testing.md |
-| Fuzz testing (Trident) | testing.md |
+| Fuzz testing (litesvm) | testing.md |
 | Security review, audit | security.md |
 | Deploy to devnet/mainnet | deployment.md |
 | Token standards, SPL, Token-2022 | ecosystem.md |

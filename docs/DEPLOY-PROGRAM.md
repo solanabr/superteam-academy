@@ -247,7 +247,7 @@ job that writes the SHA-256 of the toolchain-reproducible build to a dedicated
 the human-readable spec and entry point; it is deliberately not CI-updated on
 `main`, because branch protection forbids the bot from pushing there.
 
-Trident and the CU harness load `target/deploy/onchain_academy.so`;
+The CU harness loads `target/deploy/onchain_academy.so`;
 `bash scripts/select-program.sh` installs the Pinocchio build into that slot and
 prints its SHA-256. Devnet deploys use the explicit `solana program deploy` path
 above instead.

@@ -105,7 +105,7 @@ pnpm cu:compare
 cargo fmt && cargo clippy -- -W clippy::all
 ```
 
-Trident and the CU harness load `target/deploy/onchain_academy.so`;
+The CU harness loads `target/deploy/onchain_academy.so`;
 `bash scripts/select-program.sh` installs the pinocchio build into that slot.
 
 If you hit `edition2024` build errors:

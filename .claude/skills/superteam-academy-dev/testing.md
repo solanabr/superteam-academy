@@ -353,23 +353,23 @@ jobs:
         run: cargo test --test integration
 ```
 
-## Trident Fuzz Testing
+## Fuzz Testing (litesvm)
 
 Property-based fuzzing for security edge cases. **Required for production programs.**
+Academy's harness lives in `onchain-academy/tests/fuzz` and runs on litesvm;
+Trident was dropped in 09-2026 because its embedded solana-sbpf 0.11 cannot
+execute a platform-tools v1.54 binary.
 
 ### Setup
 
 ```bash
-# Initialize fuzz tests
-trident init
+cd onchain-academy/tests/fuzz
 
-cd trident-tests
+# Preflight smoke + determinism tests
+cargo test --release
 
-# Run fuzz tests (10+ minutes for security)
-trident fuzz run --timeout 600
-
-# Check for crashes
-ls hfuzz_workspace/*/crashes/
+# Seeded run (FUZZ_SEED replays an exact sequence; crashes land in ./crashes)
+FUZZ_MAX_SECONDS=600 cargo run --release --bin fuzz -- 1000000
 ```
 
 ### When to Use
@@ -428,5 +428,5 @@ git diff main...HEAD
 - Minimize fixtures; prefer programmatic account creation
 - Profile CU usage during development to catch regressions
 - Run integration tests in separate CI stage to control runtime
-- Run Trident fuzz tests before any mainnet deployment
+- Run the fuzz harness before any mainnet deployment
 - Clean AI slop from branches before merging
