@@ -10,6 +10,7 @@ import { setCachedBinary } from "@superteam-lms/deploy";
 import { executeRustCode } from "@/lib/rust/execute";
 import { buildProgram } from "@/lib/build-server/client";
 import { firstCompilerErrorLine } from "@/lib/challenge/compiler-error";
+import { withCanonicalHarness } from "@/lib/challenge/harness";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import type {
@@ -739,8 +740,14 @@ async function runRustChallenge(
 
 async function runBuildChallenge(
   code: string,
-  tests: TestCase[]
+  tests: TestCase[],
+  starter: string
 ): Promise<ExecutionResult> {
+  // Compile exactly what the server grader will compile: the learner's work with
+  // the lesson's canonical verification harness spliced back on. Without this an
+  // in-editor "Compilar" would go green on a submission the server then fails.
+  const graded = withCanonicalHarness(code, starter);
+
   // Generate a program keypair BEFORE building so we can inject the correct
   // declare_id!() into the source. Anchor validates that the invoked program
   // address matches declare_id at runtime — without this, every deployment
@@ -750,7 +757,7 @@ async function runBuildChallenge(
 
   // Replace any existing declare_id!("...") with the actual program pubkey.
   // The student's placeholder value doesn't matter — we always override it.
-  const buildCode = code.replace(
+  const buildCode = graded.replace(
     /declare_id!\s*\(\s*"[^"]*"\s*\)/,
     `declare_id!("${programId}")`
   );
@@ -845,6 +852,7 @@ export function ChallengeRunner({
   language,
   buildType,
   isDeployable,
+  starter,
   onResult,
   onSubmit,
   isComplete,
@@ -875,7 +883,7 @@ export function ChallengeRunner({
       try {
         if (language === "rust" && buildType === "buildable") {
           // Build path: compile Anchor/Solana program via build server
-          const result = await runBuildChallenge(code, tests);
+          const result = await runBuildChallenge(code, tests, starter ?? "");
           setAllPassed(result.success);
           onResult(result);
 

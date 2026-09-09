@@ -27,6 +27,21 @@ const tests: AdminTestCase[] = [
 
 const CODE = 'use anchor_lang::prelude::*;\ndeclare_id!("Fg6");\n';
 
+const MARKER =
+  "// VERIFICATION HARNESS — DO NOT EDIT ANYTHING BELOW THIS LINE.";
+/** A starter shaped like a real lesson's: exercise on top, harness below. */
+const STARTER = [
+  "use anchor_lang::prelude::*;",
+  'declare_id!("Fg6");',
+  "// TODO (p1): add the `ping` handler here.",
+  "// \u2500\u2500\u2500\u2500\u2500",
+  MARKER,
+  "mod verify {",
+  "    const PING: fn() = first_program::ping;",
+  "}",
+  "",
+].join("\n");
+
 /** Stub the build server. `respond` gets the parsed request body. */
 function mockBuildServer(
   respond: (body: {
@@ -72,7 +87,7 @@ describe("runBuildableSubmission — build server configured", () => {
   it("passes ALL tests when the program compiles (success: true)", async () => {
     mockBuildServer(() => ({ success: true }));
     const { runBuildableSubmission } = await loadGrader();
-    const r = await runBuildableSubmission(CODE, tests);
+    const r = await runBuildableSubmission(CODE, tests, STARTER);
     expect(r.available).toBe(true);
     expect(r).toMatchObject({ passed: true });
     if (r.available) {
@@ -87,7 +102,7 @@ describe("runBuildableSubmission — build server configured", () => {
       stderr: "error[E0425]: cannot find value `x` in this scope",
     }));
     const { runBuildableSubmission } = await loadGrader();
-    const r = await runBuildableSubmission(CODE, tests);
+    const r = await runBuildableSubmission(CODE, tests, STARTER);
     expect(r).toMatchObject({ available: true, passed: false });
     if (r.available) {
       expect(r.results[0]?.passed).toBe(false);
@@ -117,8 +132,47 @@ describe("runBuildableSubmission — build server configured", () => {
     );
     vi.stubGlobal("fetch", spy);
     const { runBuildableSubmission } = await loadGrader();
-    await runBuildableSubmission(CODE, tests);
+    await runBuildableSubmission(CODE, tests, STARTER);
     expect(spy).toHaveBeenCalledOnce();
+  });
+
+  it("compiles the submission with the starter's canonical harness", async () => {
+    let libRs = "";
+    mockBuildServer((body) => {
+      libRs = body.files.find((f) => f[0] === "/src/lib.rs")?.[1] ?? "";
+      return { success: true };
+    });
+    const { runBuildableSubmission } = await loadGrader();
+    // The exploit: delete the exercise and ship something that compiles alone.
+    await runBuildableSubmission("pub fn nothing() {}", tests, STARTER);
+    expect(libRs).toContain("pub fn nothing() {}");
+    expect(libRs).toContain("first_program::ping");
+  });
+
+  it("replaces a harness the submission tampered with", async () => {
+    let libRs = "";
+    mockBuildServer((body) => {
+      libRs = body.files.find((f) => f[0] === "/src/lib.rs")?.[1] ?? "";
+      return { success: true };
+    });
+    const { runBuildableSubmission } = await loadGrader();
+    await runBuildableSubmission(
+      `pub fn nothing() {}\n${MARKER}\n// harness deleted\n`,
+      tests,
+      STARTER
+    );
+    expect(libRs).not.toContain("// harness deleted");
+    expect(libRs).toContain("first_program::ping");
+    expect(libRs.split(MARKER)).toHaveLength(2);
+  });
+
+  it("fails closed when the starter carries no harness", async () => {
+    const spy = vi.fn();
+    vi.stubGlobal("fetch", spy);
+    const { runBuildableSubmission } = await loadGrader();
+    const r = await runBuildableSubmission(CODE, tests, "fn main() {}");
+    expect(r).toEqual({ available: false, reason: "executor_unavailable" });
+    expect(spy).not.toHaveBeenCalled();
   });
 
   it("degrades closed when the build server is unreachable", async () => {
@@ -129,14 +183,14 @@ describe("runBuildableSubmission — build server configured", () => {
       })
     );
     const { runBuildableSubmission } = await loadGrader();
-    const r = await runBuildableSubmission(CODE, tests);
+    const r = await runBuildableSubmission(CODE, tests, STARTER);
     expect(r).toEqual({ available: false, reason: "executor_unavailable" });
   });
 
   it("degrades closed on a non-2xx build-server response", async () => {
     mockBuildServer(() => ({ ok: false }));
     const { runBuildableSubmission } = await loadGrader();
-    const r = await runBuildableSubmission(CODE, tests);
+    const r = await runBuildableSubmission(CODE, tests, STARTER);
     expect(r).toEqual({ available: false, reason: "executor_unavailable" });
   });
 
@@ -145,7 +199,7 @@ describe("runBuildableSubmission — build server configured", () => {
     vi.stubGlobal("fetch", spy);
     const { runBuildableSubmission } = await loadGrader();
     const big = "// x\n".repeat(30_000); // > 100KB
-    const r = await runBuildableSubmission(big, tests);
+    const r = await runBuildableSubmission(big, tests, STARTER);
     expect(r).toMatchObject({ available: true, passed: false });
     expect(spy).not.toHaveBeenCalled();
   });
@@ -159,7 +213,7 @@ describe("runBuildableSubmission — build server NOT configured", () => {
     const { runBuildableSubmission, isBuildServerConfigured } =
       await loadGrader();
     expect(isBuildServerConfigured()).toBe(false);
-    const r = await runBuildableSubmission(CODE, tests);
+    const r = await runBuildableSubmission(CODE, tests, STARTER);
     expect(r).toEqual({ available: false, reason: "executor_unavailable" });
     expect(spy).not.toHaveBeenCalled();
   });
@@ -171,7 +225,7 @@ describe("gradeCode — buildable routing", () => {
     key: "c1",
     language: "rust" as const,
     buildType: "buildable" as const,
-    starter: "",
+    starter: STARTER,
     tests,
     solution: CODE,
   };

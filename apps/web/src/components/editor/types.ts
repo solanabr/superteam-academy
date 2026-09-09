@@ -60,6 +60,9 @@ export interface ChallengeRunnerProps {
   language: EditorLanguage;
   buildType?: BuildType;
   isDeployable?: boolean;
+  /** Starter source. Buildable runs splice its verification harness back on so
+   * the in-editor verdict matches the server's (see lib/challenge/harness.ts). */
+  starter?: string;
   onResult: (result: ExecutionResult) => void;
   onSubmit: () => void;
   isComplete: boolean;
