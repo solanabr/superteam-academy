@@ -393,7 +393,15 @@
     "formatUnchanged": "Ya está formateado.",
     "formatUnsupported": "El formateo no está disponible para este lenguaje.",
     "finishCourse": "Finalizar curso",
-    "completeGateHint": "Completa el quiz y la reflexión de arriba para habilitar"
+    "completeGateHint": "Completa el quiz y la reflexión de arriba para habilitar",
+    "executionTimeout": "La ejecución superó el tiempo tras {seconds}s — revisa si hay bucles infinitos",
+    "dynamicImportBlocked": "No se permite import() dinámico en los desafíos",
+    "syntaxError": "Error de sintaxis: {message}",
+    "returnValueLabel": "Valor de retorno:",
+    "noFunctionFound": "No se encontró ninguna función en tu código",
+    "rustAssertionFailed": "la aserción falló",
+    "rustNoOutput": "La prueba no produjo salida",
+    "rustCompilationFailed": "Falló la compilación"
   },
   "dashboard": {
     "allCaughtUp": "¡Todo al día!",
@@ -849,7 +857,8 @@
       "startOver": "Empezar de Nuevo",
       "insufficientSol": "SOL insuficiente. Necesita ~{amount} más.",
       "buildExpired": "Build expirado",
-      "rebuildHint": "Haz clic en \"Run\" en el editor para recompilar y despliega de nuevo."
+      "rebuildHint": "Haz clic en \"Run\" en el editor para recompilar y despliega de nuevo.",
+      "copied": "¡Copiado!"
     },
     "save": {
       "recording": "Registrando tu despliegue…",
@@ -904,7 +913,12 @@
       "accounts": "Cuentas",
       "accountData": "Datos de la Cuenta",
       "executeInstruction": "Ejecutar {name}",
-      "accountNotFound": "Cuenta no encontrada. Ejecuta una instrucción para crearla."
+      "accountNotFound": "Cuenta no encontrada. Ejecuta una instrucción para crearla.",
+      "unknownInstruction": "Instrucción desconocida: {name}",
+      "accountNotResolved": "La cuenta \"{name}\" no está resuelta. Proporciona una clave pública.",
+      "base58AddressPlaceholder": "Dirección Base58...",
+      "publicKeyPlaceholder": "Clave pública...",
+      "myWallet": "Mi billetera"
     },
     "capstone": {
       "journeyTitle": "Tu Camino",

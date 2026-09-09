@@ -393,7 +393,15 @@
     "formatUnchanged": "Already formatted.",
     "formatUnsupported": "Formatting isn't available for this language.",
     "finishCourse": "Finish course",
-    "completeGateHint": "Finish the quiz and reflection above to enable"
+    "completeGateHint": "Finish the quiz and reflection above to enable",
+    "executionTimeout": "Execution timed out after {seconds}s — check for infinite loops",
+    "dynamicImportBlocked": "Dynamic import() is not allowed in challenges",
+    "syntaxError": "Syntax error: {message}",
+    "returnValueLabel": "Return value:",
+    "noFunctionFound": "No function found in your code",
+    "rustAssertionFailed": "assertion failed",
+    "rustNoOutput": "Test did not produce output",
+    "rustCompilationFailed": "Compilation failed"
   },
   "dashboard": {
     "allCaughtUp": "All caught up!",
@@ -849,7 +857,8 @@
       "startOver": "Start Over",
       "insufficientSol": "Not enough SOL. Need ~{amount} more.",
       "buildExpired": "Build expired",
-      "rebuildHint": "Click \"Run\" in the editor to rebuild, then deploy again."
+      "rebuildHint": "Click \"Run\" in the editor to rebuild, then deploy again.",
+      "copied": "Copied!"
     },
     "save": {
       "recording": "Recording your deployment…",
@@ -904,7 +913,12 @@
       "accounts": "Accounts",
       "accountData": "Account Data",
       "executeInstruction": "Execute {name}",
-      "accountNotFound": "Account not found. Run an instruction to create it."
+      "accountNotFound": "Account not found. Run an instruction to create it.",
+      "unknownInstruction": "Unknown instruction: {name}",
+      "accountNotResolved": "Account \"{name}\" is not resolved. Please provide a public key.",
+      "base58AddressPlaceholder": "Base58 address...",
+      "publicKeyPlaceholder": "PublicKey...",
+      "myWallet": "My wallet"
     },
     "capstone": {
       "journeyTitle": "Your Journey",
