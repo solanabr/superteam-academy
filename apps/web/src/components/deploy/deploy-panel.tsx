@@ -1,28 +1,36 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useWallet, useConnection } from "@solana/wallet-adapter-react";
+import { useConnection } from "@solana/wallet-adapter-react";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import {
   deployProgram,
+  estimateDeployCost,
+  getCachedBinaryLength,
   resumeDeployment,
   type DeploymentCallbacks,
   type DeploymentState,
   type DeployResult,
   type DeployStep,
+  type WalletAdapter,
 } from "@superteam-lms/deploy";
 import { useTranslations } from "next-intl";
 import { celebrate } from "@/lib/gamification/celebration";
 import { useAuth } from "@/lib/auth/auth-provider";
+import { trackEvent } from "@/lib/analytics";
+import { isDynamicSessionExpiredError } from "@/lib/dynamic/solana";
 import {
   saveDeploymentWithRetry,
   type SaveStatus,
 } from "@/lib/deploy/save-deployment";
+import { useDeploySigner } from "@/hooks/use-deploy-signer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { LinkedWalletPrompt } from "@/components/wallet/linked-wallet-prompt";
 import { cn } from "@/lib/utils";
 import { DeploySaveStatus } from "./deploy-save-status";
+import { WalletFundingCard } from "./wallet-funding-card";
 import { WalletMismatchWarning } from "./wallet-mismatch-warning";
 
 // ---------------------------------------------------------------------------
@@ -101,6 +109,29 @@ function formatDuration(ms: number): string {
   return `${minutes}m ${remaining}s`;
 }
 
+/**
+ * The signer, with per-batch signing time logged outside production.
+ *
+ * EMBEDDED_BATCH_SIZE is provisional: MPC signing latency for N transactions
+ * against a real Dynamic session cannot be measured from a test environment.
+ * This is how it gets measured on a real session — without shipping a console
+ * line to learners.
+ */
+function instrumentSigner(base: WalletAdapter): WalletAdapter {
+  if (process.env.NODE_ENV === "production") return base;
+  const signAllTransactions: WalletAdapter["signAllTransactions"] = async (
+    txs
+  ) => {
+    const started = Date.now();
+    const signed = await base.signAllTransactions(txs);
+    console.debug(
+      `[deploy] signAllTransactions(${txs.length}) took ${Date.now() - started}ms`
+    );
+    return signed;
+  };
+  return { ...base, signAllTransactions };
+}
+
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   return `${(bytes / 1024).toFixed(1)} KB`;
@@ -134,7 +165,16 @@ export function DeployPanel({
   onBuildExpired,
 }: DeployPanelProps) {
   const t = useTranslations("deploy.deployment");
-  const { publicKey, signTransaction, signAllTransactions } = useWallet();
+  // Extension wallet or Dynamic embedded wallet — the deploy is signed and paid
+  // by whichever one this learner actually has.
+  const {
+    status: signerStatus,
+    signer,
+    kind: signerKind,
+    batchSize,
+    startReauth,
+  } = useDeploySigner();
+  const publicKey = signer?.publicKey ?? null;
   const { connection } = useConnection();
   const { profile, isLoading: authLoading } = useAuth();
 
@@ -156,6 +196,14 @@ export function DeployPanel({
     batchNumber: number;
     totalBatches: number;
   } | null>(null);
+  // The Dynamic session died mid-deploy. Distinct from the hook's `expired`,
+  // which describes the session BEFORE a deploy starts.
+  const [sessionExpired, setSessionExpired] = useState(false);
+  const [reauthDismissed, setReauthDismissed] = useState(false);
+  // Funding gate: what this deploy costs, and what the signer holds.
+  const [costLamports, setCostLamports] = useState<number | null>(null);
+  const [balanceLamports, setBalanceLamports] = useState<number | null>(null);
+  const fundingTrackedRef = useRef(false);
 
   // Timing
   const startTimeRef = useRef<number>(0);
@@ -221,6 +269,56 @@ export function DeployPanel({
         : linkedWallet !== connectedWallet
           ? "mismatch"
           : null;
+
+  const needsReauth =
+    (signerStatus === "expired" || sessionExpired) && !reauthDismissed;
+
+  // An embedded wallet starts at zero SOL, so "can this learner afford the
+  // deploy?" has to be answered before the button is enabled — otherwise the
+  // first thing they meet is a failed buffer-create transaction. The estimate
+  // covers buffer + program + programdata rent and every fee (packages/deploy).
+  const gateActive = panelState === "ready" || panelState === "paused";
+  useEffect(() => {
+    if (!gateActive || !signer?.publicKey) return;
+    const programLen = getCachedBinaryLength(buildUuid);
+    if (programLen === null) return;
+
+    const payer = signer.publicKey;
+    let cancelled = false;
+    (async () => {
+      try {
+        const [estimate, lamports] = await Promise.all([
+          estimateDeployCost(connection, programLen),
+          connection.getBalance(payer, "confirmed"),
+        ]);
+        if (cancelled) return;
+        setCostLamports(estimate.totalLamports);
+        setBalanceLamports(lamports);
+      } catch {
+        // A failed RPC read must not block a deploy the learner can afford:
+        // leaving both null keeps the gate open, as before this change.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [gateActive, signer, connection, buildUuid]);
+
+  const shortfallLamports =
+    costLamports !== null && balanceLamports !== null
+      ? Math.max(costLamports - balanceLamports, 0)
+      : 0;
+  const needsFunding = shortfallLamports > 0;
+
+  useEffect(() => {
+    if (!needsFunding || fundingTrackedRef.current) return;
+    fundingTrackedRef.current = true;
+    trackEvent("deploy_funding_required", {
+      signerKind,
+      shortfallLamports,
+      costLamports,
+    });
+  }, [needsFunding, shortfallLamports, costLamports, signerKind]);
 
   // Check for an existing deployment on mount. The SERVER record is the source
   // of truth for whether this deploy is recorded; localStorage is only an
@@ -413,6 +511,12 @@ export function DeployPanel({
         }
       }
 
+      trackEvent("deploy_completed", {
+        signerKind,
+        durationMs: deployResult.durationMs,
+        totalChunks: deployResult.totalChunks,
+      });
+
       // Medium celebration — a successful devnet deploy is one of the two
       // confetti-worthy milestones (LX-B11); respects prefers-reduced-motion.
       celebrate("deploy-success");
@@ -425,12 +529,12 @@ export function DeployPanel({
       // failed save is surfaced with a retry, never silently swallowed (#622).
       runSave(deployResult);
     },
-    [buildUuid, courseSlug, lessonId, walletPrefix, runSave]
+    [buildUuid, courseSlug, lessonId, walletPrefix, runSave, signerKind]
   );
 
   // Deploy handler
   const handleDeploy = useCallback(async () => {
-    if (!publicKey || !signTransaction || !signAllTransactions) return;
+    if (!signer || needsFunding) return;
 
     setPanelState("deploying");
     setTxLog([]);
@@ -440,22 +544,36 @@ export function DeployPanel({
     setResult(null);
     setBatchInfo(null);
     setSaveStatus("idle");
+    setSessionExpired(false);
     saveCancelledRef.current = true;
     startTimeRef.current = Date.now();
 
     const callbacks = buildCallbacks();
+    trackEvent("deploy_started", { signerKind, batchSize });
 
     try {
       const deployResult = await deployProgram({
         connection,
-        wallet: { publicKey, signTransaction, signAllTransactions },
+        wallet: instrumentSigner(signer),
         buildServerUrl: "/api",
         buildUuid,
         callbacks,
         programKeypairSecret,
+        batchSize,
       });
       handleSuccess(deployResult);
     } catch (err) {
+      // An expired embedded session is not a deploy failure: the uploaded
+      // chunks survive (the buffer authority is the payer, the same key after
+      // re-auth), so this pauses for re-auth rather than reporting an error.
+      if (isDynamicSessionExpiredError(err)) {
+        trackEvent("deploy_session_expired", { signerKind, phase: "deploy" });
+        setSessionExpired(true);
+        setReauthDismissed(false);
+        setPanelState("paused");
+        return;
+      }
+
       const message = err instanceof Error ? err.message : String(err);
       setErrorMessage(message);
 
@@ -470,9 +588,10 @@ export function DeployPanel({
       }
     }
   }, [
-    publicKey,
-    signTransaction,
-    signAllTransactions,
+    signer,
+    signerKind,
+    batchSize,
+    needsFunding,
     connection,
     buildUuid,
     programKeypairSecret,
@@ -482,12 +601,12 @@ export function DeployPanel({
 
   // Resume handler
   const handleResume = useCallback(async () => {
-    if (!publicKey || !signTransaction || !signAllTransactions || !savedState)
-      return;
+    if (!signer || !savedState) return;
 
     setPanelState("deploying");
     setErrorMessage(null);
     setBatchInfo(null);
+    setSessionExpired(false);
     startTimeRef.current = Date.now();
 
     // Restore chunk progress from saved state
@@ -495,25 +614,35 @@ export function DeployPanel({
     setChunkTotal(savedState.totalChunks);
 
     const callbacks = buildCallbacks();
+    trackEvent("deploy_started", { signerKind, batchSize, resumed: true });
 
     try {
       const deployResult = await resumeDeployment({
         connection,
-        wallet: { publicKey, signTransaction, signAllTransactions },
+        wallet: instrumentSigner(signer),
         buildServerUrl: "/api",
         state: savedState,
         callbacks,
+        batchSize,
       });
       handleSuccess(deployResult);
     } catch (err) {
+      if (isDynamicSessionExpiredError(err)) {
+        trackEvent("deploy_session_expired", { signerKind, phase: "resume" });
+        setSessionExpired(true);
+        setReauthDismissed(false);
+        setPanelState("paused");
+        return;
+      }
+
       const message = err instanceof Error ? err.message : String(err);
       setErrorMessage(message);
       setPanelState("paused");
     }
   }, [
-    publicKey,
-    signTransaction,
-    signAllTransactions,
+    signer,
+    signerKind,
+    batchSize,
     connection,
     savedState,
     buildCallbacks,
@@ -918,12 +1047,21 @@ export function DeployPanel({
             </div>
           )}
 
+          {needsReauth && (
+            <LinkedWalletPrompt
+              variant="reauth"
+              linkedWallet={linkedWallet}
+              onReauth={startReauth}
+              onDismiss={() => setReauthDismissed(true)}
+            />
+          )}
+
           <div className="flex gap-2">
             {!isExpired && savedState && (
               <Button
                 onClick={handleResume}
                 className="flex-1"
-                disabled={!publicKey}
+                disabled={!signer}
               >
                 {t("resume")}
               </Button>
@@ -1002,13 +1140,37 @@ export function DeployPanel({
           />
         )}
 
-        <Button
-          onClick={handleDeploy}
-          className="w-full bg-gradient-to-r from-solana-purple to-solana-green font-semibold text-white hover:opacity-90"
-          disabled={!publicKey}
-        >
-          {t("deployToDevnet")}
-        </Button>
+        {/* The deploy costs real rent and fees. An embedded wallet starts at
+            zero, so fund it here rather than failing on the first tx. */}
+        {needsFunding && (
+          <WalletFundingCard
+            requiredLamports={costLamports ?? undefined}
+            onBalance={setBalanceLamports}
+          />
+        )}
+
+        {needsReauth ? (
+          <LinkedWalletPrompt
+            variant="reauth"
+            linkedWallet={linkedWallet}
+            onReauth={startReauth}
+            onDismiss={() => setReauthDismissed(true)}
+          />
+        ) : (
+          <Button
+            onClick={handleDeploy}
+            className="w-full bg-gradient-to-r from-solana-purple to-solana-green font-semibold text-white hover:opacity-90"
+            disabled={!signer || needsFunding}
+          >
+            {signerStatus === "resolving"
+              ? t("resolvingWallet")
+              : needsFunding
+                ? t("insufficientSol", {
+                    amount: (shortfallLamports / LAMPORTS_PER_SOL).toFixed(2),
+                  })
+                : t("deployToDevnet")}
+          </Button>
+        )}
       </CardContent>
     </Card>
   );

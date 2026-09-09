@@ -45,6 +45,17 @@ export function setCachedBinary(uuid: string, data: Uint8Array): void {
 }
 
 /**
+ * Byte length of the cached binary, or null when nothing is cached for `uuid`.
+ *
+ * The funding gate has to know what a deploy will cost BEFORE starting one, and
+ * that cost is driven by the binary's length. A miss means the build is gone
+ * from this session, which callers already treat as "rebuild".
+ */
+export function getCachedBinaryLength(uuid: string): number | null {
+  return getGlobalCache().get(uuid)?.length ?? null;
+}
+
+/**
  * Retrieve the compiled .so binary cached client-side after build.
  *
  * The build server returns the binary INLINE (binaryB64), which is stored in the
@@ -416,10 +427,19 @@ export async function deployProgram(params: {
   callbacks: DeploymentCallbacks;
   /** Pre-generated program keypair (from build-time declare_id injection). */
   programKeypairSecret?: number[];
+  /**
+   * Write txs signed per `signAllTransactions` call. Defaults to BATCH_SIZE,
+   * which is tuned for a wallet-adapter popup — one prompt, then the learner's
+   * click. A signer whose per-call latency scales with the batch (Dynamic's MPC
+   * service) passes a smaller one so each batch still lands inside the single
+   * blockhash the batch shares.
+   */
+  batchSize?: number;
 }): Promise<DeployResult> {
   // `buildServerUrl` is accepted for API compatibility but no longer used: the
   // binary is read from the client-side cache, not fetched over HTTP.
   const { connection, wallet, buildUuid, callbacks } = params;
+  const batchSize = params.batchSize ?? BATCH_SIZE;
   const startTime = Date.now();
 
   if (!wallet.publicKey) throw new Error("Wallet not connected");
@@ -487,8 +507,8 @@ export async function deployProgram(params: {
   callbacks.onStepChange("upload");
   state.phase = "uploading";
 
-  for (let batchStart = 0; batchStart < totalChunks; batchStart += BATCH_SIZE) {
-    const batchEnd = Math.min(batchStart + BATCH_SIZE, totalChunks);
+  for (let batchStart = 0; batchStart < totalChunks; batchStart += batchSize) {
+    const batchEnd = Math.min(batchStart + batchSize, totalChunks);
     const batchTxs: Transaction[] = [];
 
     // Get fresh blockhash for each batch (prevents expiry)
@@ -510,8 +530,8 @@ export async function deployProgram(params: {
     // Let the UI know which batch (of how many) is about to prompt the
     // wallet, before the popup actually appears.
     callbacks.onBatchStart({
-      batchNumber: Math.floor(batchStart / BATCH_SIZE) + 1,
-      totalBatches: Math.ceil(totalChunks / BATCH_SIZE),
+      batchNumber: Math.floor(batchStart / batchSize) + 1,
+      totalBatches: Math.ceil(totalChunks / batchSize),
     });
 
     // Batch sign (1 wallet popup per batch)
@@ -615,9 +635,12 @@ export async function resumeDeployment(params: {
   buildServerUrl: string;
   state: DeploymentState;
   callbacks: DeploymentCallbacks;
+  /** See `deployProgram`. Resume signs with the same signer, so same size. */
+  batchSize?: number;
 }): Promise<DeployResult> {
   // `buildServerUrl` accepted for API compatibility but unused (see deployProgram).
   const { connection, wallet, state, callbacks } = params;
+  const batchSize = params.batchSize ?? BATCH_SIZE;
   const startTime = Date.now();
 
   if (!wallet.publicKey) throw new Error("Wallet not connected");
@@ -651,9 +674,9 @@ export async function resumeDeployment(params: {
     for (
       let batchStart = startChunk;
       batchStart < totalChunks;
-      batchStart += BATCH_SIZE
+      batchStart += batchSize
     ) {
-      const batchEnd = Math.min(batchStart + BATCH_SIZE, totalChunks);
+      const batchEnd = Math.min(batchStart + batchSize, totalChunks);
       const batchTxs: Transaction[] = [];
 
       const { blockhash } = await connection.getLatestBlockhash("confirmed");
@@ -674,8 +697,8 @@ export async function resumeDeployment(params: {
       // Let the UI know which batch (of how many) is about to prompt the
       // wallet, before the popup actually appears.
       callbacks.onBatchStart({
-        batchNumber: Math.floor(batchStart / BATCH_SIZE) + 1,
-        totalBatches: Math.ceil(totalChunks / BATCH_SIZE),
+        batchNumber: Math.floor(batchStart / batchSize) + 1,
+        totalBatches: Math.ceil(totalChunks / batchSize),
       });
 
       const signedBatch = await wallet.signAllTransactions(batchTxs);

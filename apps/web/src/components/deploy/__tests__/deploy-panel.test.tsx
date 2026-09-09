@@ -3,8 +3,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { PublicKey } from "@solana/web3.js";
-import { DeployPanel } from "../deploy-panel";
 import messages from "@/messages/en.json";
+import { DeployPanel } from "../deploy-panel";
 
 const CONNECTED = "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF";
 const OTHER_WALLET = "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM";
@@ -41,6 +41,11 @@ vi.mock("@/lib/auth/auth-provider", () => ({
 vi.mock("@superteam-lms/deploy", () => ({
   deployProgram: h.deployProgram,
   resumeDeployment: vi.fn(),
+  // No binary is cached in this suite, so the funding gate reads nothing and
+  // never runs — these tests describe the panel with funding already settled.
+  getCachedBinaryLength: () => null,
+  estimateDeployCost: vi.fn(),
+  createAirdropRequest: vi.fn(),
 }));
 
 vi.mock("@/lib/gamification/celebration", () => ({ celebrate: h.celebrate }));

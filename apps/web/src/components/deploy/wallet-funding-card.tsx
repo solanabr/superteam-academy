@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import { useWallet, useConnection } from "@solana/wallet-adapter-react";
-import { LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useConnection } from "@solana/wallet-adapter-react";
+import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { createAirdropRequest } from "@superteam-lms/deploy";
 import { useTranslations } from "next-intl";
+import { useDeploySigner } from "@/hooks/use-deploy-signer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -12,15 +13,41 @@ import { Progress } from "@/components/ui/progress";
 const TARGET_SOL = 5;
 const COOLDOWN_SECONDS = 15;
 
-export function WalletFundingCard() {
+interface WalletFundingCardProps {
+  /**
+   * What a pending deploy needs, in lamports. When set, the card measures
+   * progress against this figure instead of the standalone 5 SOL target — the
+   * deploy panel's inline funding gate passes the estimate it computed.
+   */
+  requiredLamports?: number;
+  /** Every balance read, so a parent gate can re-evaluate without polling. */
+  onBalance?: (lamports: number) => void;
+}
+
+export function WalletFundingCard({
+  requiredLamports,
+  onBalance,
+}: WalletFundingCardProps = {}) {
   const t = useTranslations("deploy.walletFunding");
-  const { publicKey } = useWallet();
+  // Extension or embedded — an embedded learner has no wallet-adapter key and
+  // is exactly who arrives here with zero SOL.
+  const { signer } = useDeploySigner();
+  // `refreshBalance` runs from an effect keyed on itself, so the key it closes
+  // over has to be referentially stable or the card polls `getBalance` forever.
+  // Re-deriving it from the address means a future caller cannot re-break this
+  // by handing the card a freshly-parsed `PublicKey` each render.
+  const address = signer?.publicKey?.toBase58() ?? null;
+  const publicKey = useMemo(
+    () => (address ? new PublicKey(address) : null),
+    [address]
+  );
   const { connection } = useConnection();
 
   const [balance, setBalance] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isAirdropping, setIsAirdropping] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const [addressCopied, setAddressCopied] = useState(false);
   const [message, setMessage] = useState<{
     text: string;
     type: "success" | "warning" | "error";
@@ -34,12 +61,13 @@ export function WalletFundingCard() {
     try {
       const lamports = await connection.getBalance(publicKey, "confirmed");
       setBalance(lamports / LAMPORTS_PER_SOL);
+      onBalance?.(lamports);
     } catch {
       setBalance(null);
     } finally {
       setIsLoading(false);
     }
-  }, [publicKey, connection]);
+  }, [publicKey, connection, onBalance]);
 
   useEffect(() => {
     refreshBalance();
@@ -65,6 +93,9 @@ export function WalletFundingCard() {
 
     if (result.success) {
       setBalance(result.newBalance ?? balance);
+      if (result.newBalance !== undefined) {
+        onBalance?.(Math.round(result.newBalance * LAMPORTS_PER_SOL));
+      }
       setMessage({
         text: t("airdropSuccess", { amount: "2" }),
         type: "success",
@@ -87,6 +118,17 @@ export function WalletFundingCard() {
     setIsAirdropping(false);
   };
 
+  const handleCopyAddress = async () => {
+    if (!publicKey) return;
+    try {
+      await navigator.clipboard.writeText(publicKey.toBase58());
+      setAddressCopied(true);
+      setTimeout(() => setAddressCopied(false), 2000);
+    } catch {
+      // clipboard API unavailable
+    }
+  };
+
   // Not connected state
   if (!publicKey) {
     return (
@@ -98,9 +140,20 @@ export function WalletFundingCard() {
     );
   }
 
+  // With a deploy estimate in hand, "enough" is that estimate — not a flat
+  // 5 SOL that is both too much for a small program and no guarantee for a
+  // large one.
+  const targetSol =
+    requiredLamports !== undefined
+      ? requiredLamports / LAMPORTS_PER_SOL
+      : TARGET_SOL;
   const progressPercent =
-    balance !== null ? Math.min((balance / TARGET_SOL) * 100, 100) : 0;
-  const isReady = balance !== null && balance >= TARGET_SOL - 0.5; // ~4.5 SOL is enough
+    balance !== null ? Math.min((balance / targetSol) * 100, 100) : 0;
+  const isReady =
+    balance !== null &&
+    (requiredLamports !== undefined
+      ? balance >= targetSol
+      : balance >= TARGET_SOL - 0.5); // ~4.5 SOL is enough
 
   return (
     <Card className="border-border/50">
@@ -144,7 +197,9 @@ export function WalletFundingCard() {
               ? t("readyForDeploy")
               : t("needMoreSol", {
                   amount:
-                    balance !== null ? (TARGET_SOL - balance).toFixed(1) : "5",
+                    balance !== null
+                      ? (targetSol - balance).toFixed(2)
+                      : targetSol.toFixed(2),
                 })}
           </p>
         </div>
@@ -162,17 +217,33 @@ export function WalletFundingCard() {
           >
             <p>{message.text}</p>
             {message.type === "warning" && (
-              <p className="mt-1">
-                {t("faucetHint")}{" "}
-                <a
-                  href="https://faucet.solana.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline hover:text-yellow-400"
+              <>
+                <p className="mt-1">
+                  {t("faucetHint")}{" "}
+                  <a
+                    href="https://faucet.solana.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:text-yellow-400"
+                  >
+                    faucet.solana.com
+                  </a>
+                </p>
+                {/* The faucet asks for an address. An embedded wallet has no
+                    extension UI to read one out of, so hand it over here. */}
+                <button
+                  type="button"
+                  onClick={handleCopyAddress}
+                  className="bg-muted/50 mt-2 flex w-full items-center gap-2 rounded-md px-3 py-2 text-left font-mono text-xs text-foreground transition-colors hover:bg-muted"
                 >
-                  faucet.solana.com
-                </a>
-              </p>
+                  <span className="flex-1 truncate">
+                    {publicKey.toBase58()}
+                  </span>
+                  <span className="shrink-0 text-[10px] text-muted-foreground">
+                    {addressCopied ? t("addressCopied") : t("copyAddress")}
+                  </span>
+                </button>
+              </>
             )}
           </div>
         )}

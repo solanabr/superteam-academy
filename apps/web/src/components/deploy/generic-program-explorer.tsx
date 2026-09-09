@@ -12,8 +12,11 @@ import { BorshInstructionCoder, BorshCoder, BN } from "@coral-xyz/anchor";
 import type { Idl } from "@coral-xyz/anchor";
 import { useTranslations } from "next-intl";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { useDeploySigner } from "@/hooks/use-deploy-signer";
+import { isDynamicSessionExpiredError } from "@/lib/dynamic/solana";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { LinkedWalletPrompt } from "@/components/wallet/linked-wallet-prompt";
 import { cn } from "@/lib/utils";
 import {
   isWalletKeyringError,
@@ -122,11 +125,18 @@ export function GenericProgramExplorer({
   courseId,
 }: GenericProgramExplorerProps) {
   const t = useTranslations("deploy.explorer");
-  const { publicKey, signTransaction, disconnect, wallet, select } =
-    useWallet();
+  // The wallet that signs — extension or embedded. `useWallet` is still read
+  // for the ADAPTER-only reconnect path below (an embedded wallet has no
+  // adapter to re-select; its recovery is Dynamic re-auth).
+  const { status: signerStatus, signer, startReauth } = useDeploySigner();
+  const publicKey = signer?.publicKey ?? null;
+  const signTransaction = signer?.signTransaction ?? null;
+  const { disconnect, wallet, select } = useWallet();
   const { connection } = useConnection();
   const { setVisible: openWalletModal } = useWalletModal();
   const [isReconnecting, setIsReconnecting] = useState(false);
+  const [reauthDismissed, setReauthDismissed] = useState(false);
+  const [sessionExpired, setSessionExpired] = useState(false);
   const [pendingReconnectWallet, setPendingReconnectWallet] =
     useState<WalletName | null>(null);
   const reconnectAttemptsRef = useRef(0);
@@ -217,6 +227,12 @@ export function GenericProgramExplorer({
       reconnectAttemptsRef.current = 0;
     }
   }, [publicKey]);
+
+  // A session that came back is no longer expired. Keyed on the status rather
+  // than on `publicKey`, which is stable across a re-auth to the same address.
+  useEffect(() => {
+    if (signerStatus === "ready") setSessionExpired(false);
+  }, [signerStatus]);
 
   // State-driven reconnection: after select(null) deselects the adapter,
   // re-select the remembered wallet once the provider reflects the change.
@@ -569,6 +585,16 @@ export function GenericProgramExplorer({
           return;
         }
 
+        // An expired embedded session recovers through Dynamic re-auth, the
+        // same as in the deploy panel — `isWalletKeyringError` is
+        // extension-specific, so without this the learner gets a raw error and
+        // no way back.
+        if (isDynamicSessionExpiredError(err)) {
+          setSessionExpired(true);
+          setReauthDismissed(false);
+          return;
+        }
+
         if (isWalletKeyringError(msg)) {
           reconnectAttemptsRef.current += 1;
           setWalletError(true);
@@ -668,6 +694,21 @@ export function GenericProgramExplorer({
     );
   }
 
+  // An embedded learner whose Dynamic session expired must never be shown the
+  // connect modal: they have no extension, and the modal has no route back to
+  // Dynamic short of a full sign-out. `sessionExpired` covers the mid-execute
+  // case, where the signer can still look ready.
+  if ((signerStatus === "expired" || sessionExpired) && !reauthDismissed) {
+    return (
+      <LinkedWalletPrompt
+        variant="reauth"
+        linkedWallet={null}
+        onReauth={startReauth}
+        onDismiss={() => setReauthDismissed(true)}
+      />
+    );
+  }
+
   if (!publicKey) {
     return (
       <Card className="border-yellow-500/30 bg-yellow-500/5">
@@ -675,13 +716,15 @@ export function GenericProgramExplorer({
           <p className="text-sm text-muted-foreground">
             {t("walletDisconnected")}
           </p>
-          <Button
-            onClick={() => openWalletModal(true)}
-            variant="outline"
-            size="sm"
-          >
-            {t("connectWallet")}
-          </Button>
+          {signerStatus !== "resolving" && (
+            <Button
+              onClick={() => openWalletModal(true)}
+              variant="outline"
+              size="sm"
+            >
+              {t("connectWallet")}
+            </Button>
+          )}
         </CardContent>
       </Card>
     );

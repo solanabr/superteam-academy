@@ -832,7 +832,9 @@
       "readyForDeploy": "Pronto para o deploy!",
       "needMoreSol": "Precisa de ~{amount} SOL a mais",
       "refreshBalance": "Atualizar",
-      "connectWallet": "Conecte sua carteira para continuar"
+      "connectWallet": "Conecte sua carteira para continuar",
+      "copyAddress": "Copiar endereço",
+      "addressCopied": "Copiado!"
     },
     "deployment": {
       "deployToDevnet": "Deploy na Devnet",
@@ -858,6 +860,7 @@
       "insufficientSol": "SOL insuficiente. Precisa de ~{amount} a mais.",
       "buildExpired": "Build expirado",
       "rebuildHint": "Clique em \"Run\" no editor para recompilar e faça o deploy novamente.",
+      "resolvingWallet": "Verificando sua carteira…",
       "copied": "Copiado!"
     },
     "save": {
