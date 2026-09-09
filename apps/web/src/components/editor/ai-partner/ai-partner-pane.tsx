@@ -123,6 +123,7 @@ export function AiPartnerPane({
     resetAvailableAt,
     loading,
     error,
+    errorKind,
     ask,
     proposeFix,
     review,
@@ -149,6 +150,19 @@ export function AiPartnerPane({
     (message?: string) => guardAction(() => void proposeFix(message)),
     [guardAction, proposeFix]
   );
+
+  // Review idempotence: a review of an unchanged buffer is the same answer for
+  // another ladder turn (the audit found ten of them in a row on one lesson).
+  // Latch the reviewed buffer and withdraw the CTA until the code actually
+  // changes; a failed review clears the latch so it stays retryable.
+  const [reviewedCode, setReviewedCode] = useState<string | null>(null);
+  const alreadyReviewed = reviewedCode !== null && reviewedCode === getCode();
+  const handleReview = useCallback(async () => {
+    const reviewing = getCode();
+    setReviewedCode(reviewing);
+    const ok = await review();
+    if (!ok) setReviewedCode(null);
+  }, [getCode, review]);
 
   // Socratic-entry analytics (#864): fire once per lesson when the ladder
   // lands on the Socratic tier (the helper session-dedupes as well).
@@ -218,6 +232,12 @@ export function AiPartnerPane({
           <p className="text-xs text-text-3">
             {disabled ? t("completed") : t("subtitle")}
           </p>
+          {/* The meter changes unit AND resets (8/8 assists → 1/20 guiding
+              turns) when the ladder reaches the Socratic rung. One sentence in
+              the header says so; the accounting is untouched. */}
+          {tier === "socratic" && (
+            <p className="text-xs text-text-3">{t("socratic.transition")}</p>
+          )}
         </button>
       </div>
 
@@ -320,7 +340,13 @@ export function AiPartnerPane({
 
       {open && error && !spendCapped && (
         <div className="shrink-0 border-t border-border px-4 py-2">
-          <p className="text-xs text-danger">{t("messages.error")}</p>
+          <p className="text-xs text-danger">
+            {errorKind === "noChange"
+              ? t("messages.errorNoChange")
+              : errorKind === "billed"
+                ? t("messages.errorBilled")
+                : t("messages.error")}
+          </p>
         </div>
       )}
 
@@ -349,15 +375,17 @@ export function AiPartnerPane({
             type="button"
             variant="secondary"
             size="sm"
-            onClick={() => review()}
-            disabled={loading || budgetExhausted}
+            onClick={() => void handleReview()}
+            disabled={loading || budgetExhausted || alreadyReviewed}
             className="w-full gap-1.5"
           >
             <MagnifyingGlass size={14} weight="duotone" aria-hidden="true" />
             {t("actions.review")}
           </Button>
           <p className="mt-1.5 text-[11px] text-text-3">
-            {t("actions.reviewHint")}
+            {alreadyReviewed
+              ? t("actions.reviewedHint")
+              : t("actions.reviewHint")}
           </p>
         </div>
       )}
@@ -378,8 +406,15 @@ export function AiPartnerPane({
             // at exhaustion where the community handoff takes over. (The
             // Composer also hard-disables it on `budgetExhausted`, so it can
             // never fire even if it were rendered in that state.)
+            // Withdrawn again once the solution passes: `hasFailedRun` is
+            // sticky by design, but on a passing buffer the model has nothing
+            // to change and the schema still forces it to invent an edit — a
+            // billed turn for a no-op or a 502. The review CTA above owns that
+            // state.
             onPropose={
-              hasFailedRun && !budgetExhausted ? proposeGuarded : undefined
+              hasFailedRun && !solutionPassed && !budgetExhausted
+                ? proposeGuarded
+                : undefined
             }
             disabled={loading || disabled}
             pending={loading}

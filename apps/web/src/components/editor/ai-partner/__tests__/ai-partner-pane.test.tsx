@@ -6,7 +6,7 @@
 // at all while suppressed (see challenge-interface-ai-gate.test.tsx), so a
 // suppressed lesson can never surface this button.
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/messages/en.json";
 import ptBR from "@/messages/pt-BR.json";
@@ -14,7 +14,7 @@ import es from "@/messages/es.json";
 import type { AssistTier } from "@/lib/ai/partner-types";
 import { AiPartnerPane } from "../ai-partner-pane";
 
-const review = vi.fn();
+const review = vi.fn(async () => true);
 const hookState = {
   messages: [] as unknown[],
   counts: { free: 0, metered: 0, socratic: 0 },
@@ -25,6 +25,7 @@ const hookState = {
   resetAvailableAt: null as number | null,
   loading: false,
   error: null as string | null,
+  errorKind: null as "generic" | "billed" | "noChange" | null,
   proposeFix: vi.fn(),
   ask: vi.fn(),
   review,
@@ -69,6 +70,7 @@ const sendLabel = messages.aiPartner.actions.askSend;
 
 beforeEach(() => {
   review.mockReset();
+  review.mockResolvedValue(true);
   hookState.ask.mockReset();
   hookState.proposeFix.mockReset();
   hookState.messages = [];
@@ -77,6 +79,141 @@ beforeEach(() => {
   hookState.spendCapped = false;
   hookState.loading = false;
   hookState.error = null;
+  hookState.errorKind = null;
+});
+
+describe("AiPartnerPane — propose is withdrawn once the solution passes", () => {
+  const proposeButton = () =>
+    screen.queryByRole("button", {
+      name: new RegExp(messages.aiPartner.actions.propose, "i"),
+    });
+
+  it("hides 'show me a change' on a passing solution, even though hasFailedRun is sticky", () => {
+    renderPane({ hasRunTests: true, hasFailedRun: true, solutionPassed: true });
+    expect(proposeButton()).not.toBeInTheDocument();
+    // The learner is not left without an action: review owns this state.
+    expect(
+      screen.getByRole("button", { name: messages.aiPartner.actions.review })
+    ).toBeInTheDocument();
+  });
+
+  it("still offers it while the solution is failing", () => {
+    renderPane({
+      hasRunTests: true,
+      hasFailedRun: true,
+      solutionPassed: false,
+    });
+    expect(proposeButton()).toBeEnabled();
+  });
+});
+
+describe("AiPartnerPane — review is idempotent per buffer", () => {
+  const reviewButton = () =>
+    screen.getByRole("button", { name: messages.aiPartner.actions.review });
+
+  it("disables the CTA after a review of an unchanged buffer", async () => {
+    renderPane({ solutionPassed: true });
+    fireEvent.click(reviewButton());
+    await waitFor(() => expect(reviewButton()).toBeDisabled());
+
+    fireEvent.click(reviewButton());
+    expect(review).toHaveBeenCalledTimes(1);
+    expect(
+      screen.getByText(messages.aiPartner.actions.reviewedHint)
+    ).toBeInTheDocument();
+  });
+
+  it("re-arms when the buffer changes", async () => {
+    let code = "first";
+    const pane = () => (
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <AiPartnerPane
+          lessonSlug="l"
+          courseSlug="c"
+          getCode={() => code}
+          getTestSummary={() => "3/3 passing"}
+          onApply={() => {}}
+          solutionPassed
+        />
+      </NextIntlClientProvider>
+    );
+    const { rerender } = render(pane());
+
+    fireEvent.click(reviewButton());
+    await waitFor(() => expect(reviewButton()).toBeDisabled());
+
+    // The learner edits; the next render reads the new buffer and the CTA is
+    // live again (a review of DIFFERENT code is a different answer).
+    code = "second";
+    rerender(pane());
+    expect(reviewButton()).toBeEnabled();
+  });
+
+  it("stays retryable when the review itself fails", async () => {
+    review.mockResolvedValue(false);
+    renderPane({ solutionPassed: true });
+    fireEvent.click(reviewButton());
+    await waitFor(() => expect(reviewButton()).toBeEnabled());
+  });
+});
+
+describe("AiPartnerPane — error copy admits a spent turn", () => {
+  it("says the turn was used on a billed failure", () => {
+    hookState.error = "Request failed (502)";
+    hookState.errorKind = "billed";
+    renderPane();
+    expect(
+      screen.getByText(messages.aiPartner.messages.errorBilled)
+    ).toBeInTheDocument();
+  });
+
+  it("points a no-change propose at the review instead", () => {
+    hookState.error = "Request failed (502)";
+    hookState.errorKind = "noChange";
+    renderPane();
+    expect(
+      screen.getByText(messages.aiPartner.messages.errorNoChange)
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the generic copy for an unbilled failure", () => {
+    hookState.error = "Network error";
+    hookState.errorKind = "generic";
+    renderPane();
+    expect(
+      screen.getByText(messages.aiPartner.messages.error)
+    ).toBeInTheDocument();
+  });
+});
+
+describe("AiPartnerPane — the metered → Socratic switch is explained", () => {
+  it("renders the transition line only on the Socratic tier", () => {
+    renderPane();
+    expect(
+      screen.queryByText(messages.aiPartner.socratic.transition)
+    ).not.toBeInTheDocument();
+
+    hookState.tier = "socratic";
+    renderPane();
+    expect(
+      screen.getByText(messages.aiPartner.socratic.transition)
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the new copy keys in all three locales", () => {
+    for (const catalog of [messages, ptBR, es]) {
+      for (const value of [
+        catalog.aiPartner.socratic.transition,
+        catalog.aiPartner.actions.reviewedHint,
+        catalog.aiPartner.messages.errorBilled,
+        catalog.aiPartner.messages.errorNoChange,
+        catalog.aiPartner.diff.alreadyApplied,
+      ]) {
+        expect(typeof value).toBe("string");
+        expect(value.length).toBeGreaterThan(0);
+      }
+    }
+  });
 });
 
 describe("AiPartnerPane — daily spend cap (#591)", () => {

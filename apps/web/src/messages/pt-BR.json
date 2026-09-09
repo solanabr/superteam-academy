@@ -1097,6 +1097,8 @@
       "ai": "Parceiro de IA",
       "loading": "Pensando...",
       "error": "Algo deu errado. Tente novamente.",
+      "errorBilled": "Algo deu errado do lado da IA, e este turno foi consumido. Tente novamente.",
+      "errorNoChange": "O parceiro não encontrou nada para mudar no seu código, e este turno foi consumido. Peça uma revisão da sua solução.",
       "spendCapped": "O Parceiro de IA atingiu o limite de uso de hoje. Ele volta amanhã; enquanto isso, as dicas e os testes continuam aqui para ajudar."
     },
     "actions": {
@@ -1106,7 +1108,8 @@
       "askLabel": "Pergunte ao Parceiro de IA sobre este desafio",
       "askSend": "Enviar",
       "review": "Revisar minha solução",
-      "reviewHint": "Receba comentários idiomáticos sobre a solução que você já concluiu — isto não altera seu XP."
+      "reviewHint": "Receba comentários idiomáticos sobre a solução que você já concluiu — isto não altera seu XP.",
+      "reviewedHint": "Você já revisou esta solução. Altere seu código para receber uma revisão nova."
     },
     "composer": {
       "empty": "Pergunte o que quiser sobre este desafio. As dicas escritas para esta lição ficam na seção Dicas acima."
@@ -1126,6 +1129,7 @@
       "checkCorrect": "Correto — agora você pode aplicar a mudança.",
       "acceptLocked": "Responda corretamente para aplicar esta mudança.",
       "applied": "Aplicado ao seu código",
+      "alreadyApplied": "Esta mudança já está no seu código.",
       "unchangedCollapsed": "{count, plural, one {# linha inalterada} other {# linhas inalteradas}}",
       "lineAdded": "Adicionado",
       "lineRemoved": "Removido"
@@ -1135,7 +1139,8 @@
       "diffCard": "Mudança de código proposta"
     },
     "socratic": {
-      "chip": "Tutor leve"
+      "chip": "Tutor leve",
+      "transition": "Suas 8 assistências acabaram. Agora você tem 20 turnos de orientação mais leves — o tutor conduz com perguntas em vez de mudanças prontas."
     },
     "exhausted": {
       "title": "Os turnos do tutor neste desafio acabaram",
