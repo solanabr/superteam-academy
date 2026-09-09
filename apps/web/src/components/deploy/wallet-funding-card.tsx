@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useConnection } from "@solana/wallet-adapter-react";
-import { LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { createAirdropRequest } from "@superteam-lms/deploy";
 import { useTranslations } from "next-intl";
 import { useDeploySigner } from "@/hooks/use-deploy-signer";
@@ -32,7 +32,15 @@ export function WalletFundingCard({
   // Extension or embedded — an embedded learner has no wallet-adapter key and
   // is exactly who arrives here with zero SOL.
   const { signer } = useDeploySigner();
-  const publicKey = signer?.publicKey ?? null;
+  // `refreshBalance` runs from an effect keyed on itself, so the key it closes
+  // over has to be referentially stable or the card polls `getBalance` forever.
+  // Re-deriving it from the address means a future caller cannot re-break this
+  // by handing the card a freshly-parsed `PublicKey` each render.
+  const address = signer?.publicKey?.toBase58() ?? null;
+  const publicKey = useMemo(
+    () => (address ? new PublicKey(address) : null),
+    [address]
+  );
   const { connection } = useConnection();
 
   const [balance, setBalance] = useState<number | null>(null);

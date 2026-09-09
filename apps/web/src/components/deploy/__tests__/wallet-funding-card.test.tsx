@@ -78,7 +78,11 @@ describe("WalletFundingCard", () => {
     await waitFor(() =>
       expect(h.createAirdropRequest).toHaveBeenCalledTimes(1)
     );
-    expect(h.createAirdropRequest.mock.calls[0]![1]).toBe(EMBEDDED);
+    // By address, not by object identity: the card re-derives the key from the
+    // signer's address so its `refreshBalance` effect cannot self-sustain.
+    expect(h.createAirdropRequest.mock.calls[0]![1].toBase58()).toBe(
+      EMBEDDED.toBase58()
+    );
   });
 
   it("measures against the deploy estimate when one is given", async () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import type { WalletAdapter } from "@superteam-lms/deploy";
 import { parseWalletAddress } from "@/lib/solana/linked-wallet";
@@ -67,8 +67,17 @@ export function useDeploySigner(): DeploySignerState {
   const dynamicSession = useDynamicSessionState();
   const dynamicEnabled = isDynamicEnabled();
   const account = dynamicEnabled ? dynamicSession.account : null;
-  // Read before the memo so the adapter branch does not depend on it.
-  const embeddedKey = parseWalletAddress(account?.address ?? null);
+  // The session is identified by its ADDRESS, never by object identity:
+  // `parseWalletAddress` mints a new `PublicKey` per call and
+  // `getDynamicSolanaAccount` rebuilds its result per call, so keying the memo
+  // on either handed every caller a new `signer` — and a new
+  // `signer.publicKey` — on every render. `WalletFundingCard` turned that into
+  // an unbounded `getBalance` poll. The account stays live through a ref, so
+  // the sign closures always reach the current session object without
+  // destabilising the signer.
+  const embeddedAddress = account?.address ?? null;
+  const accountRef = useRef(account);
+  accountRef.current = account;
 
   return useMemo<DeploySignerState>(() => {
     const startReauth = (provider: DynamicSocialProvider) =>
@@ -93,7 +102,22 @@ export function useDeploySigner(): DeploySignerState {
 
     if (!dynamicEnabled) return { status: "none", ...idle };
 
-    if (account && embeddedKey) {
+    const embeddedKey = parseWalletAddress(embeddedAddress);
+    if (embeddedKey) {
+      // Reading the ref at call time, not at memo time, is what keeps the
+      // signer stable. It can only have gone null because the session died
+      // between this render and the signature, which is an expiry — raise it
+      // as one so callers offer re-auth instead of a raw failure.
+      const activeAccount = () => {
+        const current = accountRef.current;
+        if (!current) {
+          const expired = new Error("Dynamic session ended before signing");
+          expired.name = "UnauthorizedError";
+          throw expired;
+        }
+        return current;
+      };
+
       return {
         status: "ready",
         signer: {
@@ -102,9 +126,12 @@ export function useDeploySigner(): DeploySignerState {
           // given rather than rebuilding it, so these are safe to hand a
           // partially-signed tx (the buffer/program keypair's signature).
           signTransaction: async (tx) =>
-            (await signWithDynamicWallet(tx, account)) as typeof tx,
+            (await signWithDynamicWallet(tx, activeAccount())) as typeof tx,
           signAllTransactions: async (txs) =>
-            (await signAllWithDynamicWallet(txs, account)) as typeof txs,
+            (await signAllWithDynamicWallet(
+              txs,
+              activeAccount()
+            )) as typeof txs,
         },
         kind: "embedded",
         batchSize: EMBEDDED_BATCH_SIZE,
@@ -126,7 +153,6 @@ export function useDeploySigner(): DeploySignerState {
     signAllTransactions,
     dynamicEnabled,
     dynamicSession.status,
-    account,
-    embeddedKey,
+    embeddedAddress,
   ]);
 }

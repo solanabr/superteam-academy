@@ -107,6 +107,21 @@ describe("useDeploySigner", () => {
     );
   });
 
+  it("hands back the SAME signer across re-renders while the session is unchanged", () => {
+    dynamic.account = { address: EMBEDDED_KEY.toBase58() };
+
+    const { result, rerender } = renderHook(() => useDeploySigner());
+    const first = result.current.signer;
+    rerender();
+    rerender();
+
+    // Referential stability is load-bearing: `WalletFundingCard` keys a
+    // `useCallback` on `signer.publicKey` and drives it from an effect, so a
+    // fresh object per render is an unbounded `getBalance` poll.
+    expect(result.current.signer).toBe(first);
+    expect(result.current.signer?.publicKey).toBe(first?.publicKey);
+  });
+
   it("reports `resolving` while the SDK is still initialising", () => {
     dynamic.status = "loading";
     const { result } = renderHook(() => useDeploySigner());
