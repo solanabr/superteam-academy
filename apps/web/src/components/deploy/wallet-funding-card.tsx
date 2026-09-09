@@ -8,13 +8,20 @@ import {
   MAX_RETRY_AFTER_SECONDS,
 } from "@superteam-lms/deploy";
 import { useTranslations } from "next-intl";
+import { ArrowClockwise, Wallet } from "@phosphor-icons/react";
+import {
+  toFriendlyError,
+  type FriendlyError,
+} from "@/lib/deploy/friendly-error";
 import { useDeploySigner } from "@/hooks/use-deploy-signer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { DeployErrorNotice } from "./deploy-error-notice";
 
 const TARGET_SOL = 5;
 const COOLDOWN_SECONDS = 15;
+const FAUCET_URL = "https://faucet.solana.com";
 
 interface WalletFundingCardProps {
   /**
@@ -50,11 +57,10 @@ export function WalletFundingCard({
   const [isLoading, setIsLoading] = useState(false);
   const [isAirdropping, setIsAirdropping] = useState(false);
   const [cooldown, setCooldown] = useState(0);
-  const [addressCopied, setAddressCopied] = useState(false);
-  const [message, setMessage] = useState<{
-    text: string;
-    type: "success" | "warning" | "error";
-  } | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  // The faucet's failure, already translated into something to do about it —
+  // a raw 403 JSON body never reaches the learner (#1228 follow-up).
+  const [airdropError, setAirdropError] = useState<FriendlyError | null>(null);
   const airdropRef = useRef(false);
 
   // Fetch balance on mount and after airdrop
@@ -90,7 +96,8 @@ export function WalletFundingCard({
     if (airdropRef.current) return;
     airdropRef.current = true;
     setIsAirdropping(true);
-    setMessage(null);
+    setToast(null);
+    setAirdropError(null);
 
     // No `connection` argument: the airdrop goes to the PUBLIC devnet RPC,
     // whose limit is per address, while the app's keyed endpoint meters the
@@ -102,53 +109,48 @@ export function WalletFundingCard({
       if (result.newBalance !== undefined) {
         onBalance?.(Math.round(result.newBalance * LAMPORTS_PER_SOL));
       }
-      setMessage({
-        text: t("airdropSuccess", { amount: "2" }),
-        type: "success",
-      });
+      setToast(t("airdropSuccess", { amount: "2" }));
       setCooldown(COOLDOWN_SECONDS);
-    } else if (result.rateLimited) {
+    } else {
       // Capped again here, defensively — `createAirdropRequest` already caps
       // what it parses out of the faucet body, but the cooldown timer should
       // never trust an unbounded number even if that changes upstream.
       const retryAfter = result.retryAfterSeconds
         ? Math.min(result.retryAfterSeconds, MAX_RETRY_AFTER_SECONDS)
         : undefined;
-      setMessage({
-        text: retryAfter
-          ? t("rateLimitedRetryAfter", { seconds: String(retryAfter) })
-          : t("rateLimitedWithFaucet"),
-        type: "warning",
-      });
-      setCooldown(retryAfter ?? 60);
-    } else {
-      setMessage({
-        text: result.error ?? t("networkError"),
-        type: "error",
-      });
+      setAirdropError(
+        toFriendlyError(
+          result.rateLimited ? "rate limited" : (result.error ?? ""),
+          {
+            source: "airdrop",
+            retryAfterSeconds: retryAfter,
+          }
+        )
+      );
+      if (result.rateLimited) setCooldown(retryAfter ?? 60);
     }
 
     airdropRef.current = false;
     setIsAirdropping(false);
   };
 
-  const handleCopyAddress = async () => {
+  const handleOpenFaucet = async () => {
     if (!publicKey) return;
     try {
       await navigator.clipboard.writeText(publicKey.toBase58());
-      setAddressCopied(true);
-      setTimeout(() => setAddressCopied(false), 2000);
+      setToast(t("faucetToast"));
     } catch {
-      // clipboard API unavailable
+      // clipboard API unavailable — the faucet still opens
     }
+    window.open(FAUCET_URL, "_blank", "noopener,noreferrer");
   };
 
   // Not connected state
   if (!publicKey) {
     return (
-      <Card className="border-yellow-500/30 bg-yellow-500/5">
+      <Card className="border-2 border-[color:var(--ink-line)]">
         <CardContent className="py-6 text-center">
-          <p className="text-sm text-muted-foreground">{t("connectWallet")}</p>
+          <p className="text-sm text-text-2">{t("connectWallet")}</p>
         </CardContent>
       </Card>
     );
@@ -168,102 +170,79 @@ export function WalletFundingCard({
     (requiredLamports !== undefined
       ? balance >= targetSol
       : balance >= TARGET_SOL - 0.5); // ~4.5 SOL is enough
+  const shortfall =
+    balance !== null ? Math.max(targetSol - balance, 0) : targetSol;
 
   return (
-    <Card className="border-border/50">
+    <Card className="border-2 border-[color:var(--ink-line)]">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-lg">
-          {/* Wallet icon */}
-          <svg
-            className="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M21 12a2.25 2.25 0 0 0-2.25-2.25H15a3 3 0 1 1-6 0H5.25A2.25 2.25 0 0 0 3 12m18 0v6a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 9m18 0V6a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 6v3"
-            />
-          </svg>
+          <Wallet size={20} weight="duotone" aria-hidden="true" />
           {t("title")}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Wallet address and balance */}
-        <div className="flex items-center justify-between text-sm">
-          <span className="font-mono text-muted-foreground">
-            {publicKey.toBase58().slice(0, 4)}...
-            {publicKey.toBase58().slice(-4)}
-          </span>
-          <span className="font-semibold">
-            {t("balance")}:{" "}
-            {balance !== null ? `${balance.toFixed(2)} SOL` : "..."}
-          </span>
-        </div>
+        <p className="font-mono text-xs text-text-3">
+          {publicKey.toBase58().slice(0, 4)}...{publicKey.toBase58().slice(-4)}
+        </p>
 
-        {/* Progress toward target */}
+        <dl className="grid grid-cols-3 gap-2 text-sm">
+          <div>
+            <dt className="font-mono text-[10px] uppercase tracking-wide text-text-3">
+              {t("required")}
+            </dt>
+            <dd className="font-semibold">{targetSol.toFixed(2)} SOL</dd>
+          </div>
+          <div>
+            <dt className="font-mono text-[10px] uppercase tracking-wide text-text-3">
+              {t("balance")}
+            </dt>
+            <dd className="font-semibold">
+              {balance !== null ? `${balance.toFixed(2)} SOL` : "…"}
+            </dd>
+          </div>
+          <div>
+            <dt className="font-mono text-[10px] uppercase tracking-wide text-text-3">
+              {t("shortfall")}
+            </dt>
+            <dd className="font-semibold">{shortfall.toFixed(2)} SOL</dd>
+          </div>
+        </dl>
+
         <div className="space-y-1">
           <Progress value={progressPercent} className="h-2" />
-          <p className="text-right text-xs text-muted-foreground">
-            {isReady
-              ? t("readyForDeploy")
-              : t("needMoreSol", {
-                  amount:
-                    balance !== null
-                      ? (targetSol - balance).toFixed(2)
-                      : targetSol.toFixed(2),
-                })}
-          </p>
+          {/* "Ready" is a claim about the balance, so it only appears when the
+              balance actually covers the deploy — never above an error. */}
+          {isReady && (
+            <p className="text-right text-xs font-semibold text-success">
+              {t("readyForDeploy")}
+            </p>
+          )}
         </div>
 
-        {/* Status message */}
-        {message && (
-          <div
-            className={`text-sm ${
-              message.type === "success"
-                ? "text-success"
-                : message.type === "warning"
-                  ? "text-yellow-500"
-                  : "text-red-500"
-            }`}
-          >
-            <p>{message.text}</p>
-            {message.type === "warning" && (
-              <>
-                <p className="mt-1">
-                  {t("faucetHint")}{" "}
-                  <a
-                    href="https://faucet.solana.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline hover:text-yellow-400"
-                  >
-                    faucet.solana.com
-                  </a>
-                </p>
-                {/* The faucet asks for an address. An embedded wallet has no
-                    extension UI to read one out of, so hand it over here. */}
-                <button
-                  type="button"
-                  onClick={handleCopyAddress}
-                  className="bg-muted/50 mt-2 flex w-full items-center gap-2 rounded-md px-3 py-2 text-left font-mono text-xs text-foreground transition-colors hover:bg-muted"
-                >
-                  <span className="flex-1 truncate">
-                    {publicKey.toBase58()}
-                  </span>
-                  <span className="shrink-0 text-[10px] text-muted-foreground">
-                    {addressCopied ? t("addressCopied") : t("copyAddress")}
-                  </span>
-                </button>
-              </>
-            )}
+        {airdropError && (
+          <div className="space-y-1">
+            <DeployErrorNotice error={airdropError} />
+            {/* Usable even while the airdrop button is cooling down — the
+                faucet imposes its own limit, not this button's. */}
+            <a
+              href={FAUCET_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block text-xs font-medium text-primary hover:underline"
+            >
+              faucet.solana.com
+            </a>
           </div>
         )}
 
-        {/* Action buttons */}
-        <div className="flex gap-2">
+        {toast && (
+          <p role="status" aria-live="polite" className="text-sm text-success">
+            {toast}
+          </p>
+        )}
+
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             onClick={handleAirdrop}
             disabled={isAirdropping || cooldown > 0}
@@ -276,27 +255,21 @@ export function WalletFundingCard({
                 ? `${t("requestAirdrop")} (${cooldown}s)`
                 : t("requestAirdrop")}
           </Button>
+          <Button onClick={handleOpenFaucet} variant="outline">
+            {t("openFaucet")}
+          </Button>
           <Button
             onClick={refreshBalance}
             disabled={isLoading}
             variant="outline"
             size="icon"
+            aria-label={t("refreshBalance")}
           >
-            {/* Refresh icon */}
-            <svg
-              className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182"
-              />
-            </svg>
-            <span className="sr-only">{t("refreshBalance")}</span>
+            <ArrowClockwise
+              size={16}
+              className={isLoading ? "animate-spin" : undefined}
+              aria-hidden="true"
+            />
           </Button>
         </div>
       </CardContent>

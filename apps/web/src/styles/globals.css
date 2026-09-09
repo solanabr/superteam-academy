@@ -719,7 +719,10 @@
     --keyline-raised: #6b675f;
     --btn-fill-disabled: #1e3830;
     --keyline-disabled: #33312c;
-    --label-disabled: #6b6862;
+    /* 3.3:1 on --btn-fill-disabled (was #6b6862 at 2.27:1) — the disabled
+       "Not enough SOL" button is the one disabled control that still carries
+       a number the learner needs. */
+    --label-disabled: #86837b;
     --focus-ring: #2ecc8e;
 
     /* Every flipping outline in the app already reads this one token. */

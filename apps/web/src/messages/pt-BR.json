@@ -835,7 +835,12 @@
       "connectWallet": "Conecte sua carteira para continuar",
       "copyAddress": "Copiar endereço",
       "addressCopied": "Copiado!",
-      "rateLimitedRetryAfter": "O faucet da devnet está limitado. Tente de novo em {seconds}s, ou use o faucet web."
+      "rateLimitedRetryAfter": "O faucet da devnet está limitado. Tente de novo em {seconds}s, ou use o faucet web.",
+      "required": "Necessário para este deploy",
+      "shortfall": "Ainda falta",
+      "openFaucet": "Abrir torneira",
+      "faucetToast": "Endereço copiado — cole na torneira.",
+      "cooldown": "Tente de novo em {seconds}s"
     },
     "deployment": {
       "deployToDevnet": "Deploy na Devnet",
@@ -876,7 +881,19 @@
       "sessionKeyLost": "A chave temporária de deploy desta aba se perdeu quando a página recarregou, então o envio não pode ser retomado e o SOL que ela ainda tem ficou preso em {address}. Copie esse endereço para recuperar os fundos por conta própria; um novo deploy começa com outra chave.",
       "copyAddress": "Copiar endereço",
       "rateLimitWaiting": "O serviço da carteira está ocupado (limite de requisições) — tentando de novo em {seconds}s",
-      "rateLimitPaused": "O serviço da carteira ainda está limitando assinaturas. Nada foi perdido — espere um minuto e retome."
+      "rateLimitPaused": "O serviço da carteira ainda está limitando assinaturas. Nada foi perdido — espere um minuto e retome.",
+      "submitLesson": "Enviar lição",
+      "recordingDeploy": "Registrando seu deploy…",
+      "xpEarned": "+{xp} XP conquistados",
+      "nextLesson": "Próxima lição",
+      "lessonSubmitted": "Lição concluída",
+      "deployTime": "Tempo de deploy",
+      "rentLocked": "Aluguel bloqueado",
+      "copyProgramId": "Copiar ID do programa",
+      "waitingForWallet": "Aguardando o serviço da carteira",
+      "waitingForWalletBody": "Ele está limitando nossos pedidos de assinatura. Estamos tentando de novo automaticamente — nada foi perdido.",
+      "pausedBody": "Nada foi perdido. Retome quando quiser ou comece o deploy de novo.",
+      "rebuild": "Voltar ao editor"
     },
     "save": {
       "recording": "Registrando seu deploy…",
@@ -945,6 +962,47 @@
       "deployStep": "Deploy",
       "interact": "Interagir",
       "yourProgram": "Seu Programa Deployado"
+    },
+    "steps": {
+      "label": "Progresso do deploy",
+      "build": "Compilar",
+      "fund": "Fundos",
+      "deploy": "Deploy",
+      "submit": "Enviar",
+      "goTo": "Ir para {step}",
+      "done": "concluído",
+      "current": "etapa atual"
+    },
+    "errors": {
+      "airdropRateLimited": "A torneira da devnet está ocupada. Tente de novo em cerca de {seconds}s ou use a torneira web.",
+      "airdropFailed": "O airdrop não foi concluído. Tente de novo ou use a torneira web.",
+      "walletRateLimited": "O serviço da carteira está ocupado. Estamos esperando e pedindo de novo por você — nada foi perdido.",
+      "sessionExpired": "Sua sessão expirou durante o deploy. Entre de novo e o upload continua de onde parou.",
+      "buildExpired": "Esta compilação não está mais disponível. Compile seu programa de novo e faça o deploy.",
+      "insufficientSol": "Este deploy precisa de mais ou menos {amount} SOL na sua carteira.",
+      "blockhashExpired": "A rede demorou demais para confirmar uma transação. Retome — todos os chunks já enviados são mantidos.",
+      "unknown": "O deploy parou de forma inesperada. Nada foi perdido on-chain, então tente de novo.",
+      "showDetails": "Ver detalhes"
+    },
+    "errorActions": {
+      "retry": "Tentar de novo",
+      "resume": "Retomar deploy",
+      "rebuild": "Voltar ao editor",
+      "reauth": "Entrar de novo",
+      "fund": "Adicionar fundos"
+    },
+    "progress": {
+      "phaseBuffer": "Criando a conta de buffer",
+      "phaseUpload": "Enviando seu programa",
+      "phaseFinalize": "Finalizando o deploy",
+      "phaseTransfer": "Transferindo a propriedade",
+      "phaseRefund": "Devolvendo o aluguel restante",
+      "phaseComplete": "Pronto",
+      "chunks": "{current} de {total} chunks",
+      "elapsed": "{elapsed} decorridos",
+      "remaining": "~{seconds}s restantes",
+      "details": "Detalhes das transações",
+      "waiting": "Aguardando o serviço da carteira — tentando de novo automaticamente"
     }
   },
   "programErrors": {

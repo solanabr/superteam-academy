@@ -835,7 +835,12 @@
       "connectWallet": "Conecta tu billetera para continuar",
       "copyAddress": "Copiar dirección",
       "addressCopied": "¡Copiado!",
-      "rateLimitedRetryAfter": "El faucet de devnet está limitado. Inténtalo en {seconds}s, o usa el faucet web."
+      "rateLimitedRetryAfter": "El faucet de devnet está limitado. Inténtalo en {seconds}s, o usa el faucet web.",
+      "required": "Necesario para este despliegue",
+      "shortfall": "Todavía falta",
+      "openFaucet": "Abrir faucet",
+      "faucetToast": "Dirección copiada — pégala en el faucet.",
+      "cooldown": "Inténtalo de nuevo en {seconds}s"
     },
     "deployment": {
       "deployToDevnet": "Desplegar en Devnet",
@@ -876,7 +881,19 @@
       "sessionKeyLost": "La clave temporal de despliegue de esta pestaña se perdió al recargar la página, así que la subida no puede reanudarse y el SOL que aún tiene quedó atrapado en {address}. Copia esa dirección para recuperar los fondos por tu cuenta; un nuevo despliegue empieza con otra clave.",
       "copyAddress": "Copiar dirección",
       "rateLimitWaiting": "El servicio de la billetera está ocupado (límite de solicitudes) — reintentando en {seconds}s",
-      "rateLimitPaused": "El servicio de la billetera sigue limitando las firmas. No se perdió nada — espera un minuto y reanuda."
+      "rateLimitPaused": "El servicio de la billetera sigue limitando las firmas. No se perdió nada — espera un minuto y reanuda.",
+      "submitLesson": "Enviar lección",
+      "recordingDeploy": "Registrando tu deploy…",
+      "xpEarned": "+{xp} XP ganados",
+      "nextLesson": "Siguiente lección",
+      "lessonSubmitted": "Lección completada",
+      "deployTime": "Tiempo de despliegue",
+      "rentLocked": "Renta bloqueada",
+      "copyProgramId": "Copiar ID del programa",
+      "waitingForWallet": "Esperando al servicio de la billetera",
+      "waitingForWalletBody": "Está limitando nuestras peticiones de firma. Reintentamos automáticamente — no se perdió nada.",
+      "pausedBody": "No se perdió nada. Reanuda cuando quieras o empieza el despliegue de nuevo.",
+      "rebuild": "Volver al editor"
     },
     "save": {
       "recording": "Registrando tu despliegue…",
@@ -945,6 +962,47 @@
       "deployStep": "Desplegar",
       "interact": "Interactuar",
       "yourProgram": "Tu Programa Desplegado"
+    },
+    "steps": {
+      "label": "Progreso del despliegue",
+      "build": "Compilar",
+      "fund": "Fondos",
+      "deploy": "Desplegar",
+      "submit": "Enviar",
+      "goTo": "Ir a {step}",
+      "done": "completado",
+      "current": "paso actual"
+    },
+    "errors": {
+      "airdropRateLimited": "El faucet de devnet está ocupado. Inténtalo de nuevo en unos {seconds}s o usa el faucet web.",
+      "airdropFailed": "El airdrop no se completó. Inténtalo de nuevo o usa el faucet web.",
+      "walletRateLimited": "El servicio de la billetera está ocupado. Estamos esperando y reintentando por ti — no se perdió nada.",
+      "sessionExpired": "Tu sesión expiró durante el despliegue. Inicia sesión otra vez y la subida sigue donde se detuvo.",
+      "buildExpired": "Esta compilación ya no está disponible. Compila tu programa de nuevo y despliega.",
+      "insufficientSol": "Este despliegue necesita alrededor de {amount} SOL más en tu billetera.",
+      "blockhashExpired": "La red tardó demasiado en confirmar una transacción. Reanuda — los chunks ya subidos se conservan.",
+      "unknown": "El despliegue se detuvo de forma inesperada. No se perdió nada on-chain, inténtalo de nuevo.",
+      "showDetails": "Ver detalles"
+    },
+    "errorActions": {
+      "retry": "Intentar de nuevo",
+      "resume": "Reanudar despliegue",
+      "rebuild": "Volver al editor",
+      "reauth": "Iniciar sesión de nuevo",
+      "fund": "Añadir fondos"
+    },
+    "progress": {
+      "phaseBuffer": "Creando la cuenta buffer",
+      "phaseUpload": "Subiendo tu programa",
+      "phaseFinalize": "Finalizando el despliegue",
+      "phaseTransfer": "Transfiriendo la propiedad",
+      "phaseRefund": "Devolviendo la renta sobrante",
+      "phaseComplete": "Listo",
+      "chunks": "{current} de {total} chunks",
+      "elapsed": "{elapsed} transcurridos",
+      "remaining": "~{seconds}s restantes",
+      "details": "Detalles de las transacciones",
+      "waiting": "Esperando al servicio de la billetera — reintentando automáticamente"
     }
   },
   "programErrors": {

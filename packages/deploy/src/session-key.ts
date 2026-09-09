@@ -404,20 +404,26 @@ async function checkPendingFunding(
   const deadline = Date.now() + PENDING_FUNDING_TIMEOUT_MS;
   for (;;) {
     let status: SignatureStatus | null;
+    let confirmedBalance: number | null = null;
     try {
       const { value } = await connection.getSignatureStatuses([signature]);
       status = value[0] ?? null;
+      // Inside the same try: a balance read that throws is the check failing,
+      // not the transfer, and must fail closed like the status read above.
+      if (
+        !status?.err &&
+        (status?.confirmationStatus === "confirmed" ||
+          status?.confirmationStatus === "finalized")
+      ) {
+        confirmedBalance = await connection.getBalance(sessionKey, "confirmed");
+      }
     } catch {
       // The read failed, not the transfer.
       throw new FundingCheckError("rpc-error");
     }
     if (status?.err) return "failed";
-    if (
-      status?.confirmationStatus === "confirmed" ||
-      status?.confirmationStatus === "finalized"
-    ) {
-      const balance = await connection.getBalance(sessionKey, "confirmed");
-      return balance >= requiredLamports ? "funded" : "failed";
+    if (confirmedBalance !== null) {
+      return confirmedBalance >= requiredLamports ? "funded" : "failed";
     }
     if (Date.now() > deadline) throw new FundingCheckError("still-pending");
     await new Promise((r) => setTimeout(r, PENDING_FUNDING_POLL_MS));

@@ -58,6 +58,8 @@ export interface BlockContext {
   programKeypairSecret: number[] | null;
   /** Clear the current build (deploy panel `onBuildExpired`). */
   resetBuild: () => void;
+  /** Href of the next lesson in course order, or null at the end. */
+  nextLessonHref: string | null;
   /**
    * Challenge lessons only: the non-code "instructions" blocks (prose, etc.),
    * pre-rendered by `lesson-client` and threaded into the code block so the

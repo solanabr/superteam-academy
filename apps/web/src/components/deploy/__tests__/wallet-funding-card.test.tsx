@@ -93,7 +93,10 @@ describe("WalletFundingCard", () => {
     renderCard({ requiredLamports: 1.5 * LAMPORTS_PER_SOL });
 
     // 1.5 needed, 0.5 held — the shortfall is the estimate's, not a flat 5 SOL.
-    expect(await screen.findByText("Need ~1.00 more SOL")).toBeInTheDocument();
+    expect(await screen.findByText("1.50 SOL")).toBeInTheDocument();
+    expect(screen.getByText("0.50 SOL")).toBeInTheDocument();
+    expect(screen.getByText("1.00 SOL")).toBeInTheDocument();
+    expect(screen.queryByText("Ready for deployment!")).not.toBeInTheDocument();
   });
 
   it("reports each balance read so the panel's gate can re-evaluate", async () => {
@@ -106,10 +109,12 @@ describe("WalletFundingCard", () => {
     );
   });
 
-  it("shows a copyable address when the faucet rate-limits the airdrop", async () => {
+  it("explains a rate-limited faucet without printing its response", async () => {
     h.createAirdropRequest.mockResolvedValue({
       success: false,
       rateLimited: true,
+      retryAfterSeconds: 30,
+      error: 'Airdrop failed after 3 attempts: 403 : {"jsonrpc":"2.0"}',
     });
     renderCard();
 
@@ -117,10 +122,34 @@ describe("WalletFundingCard", () => {
       await screen.findByRole("button", { name: "Request Airdrop" })
     );
 
-    const copyButton = await screen.findByRole("button", {
-      name: new RegExp(EMBEDDED.toBase58()),
-    });
-    expect(copyButton).toHaveTextContent("Copy address");
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent(
+      "The devnet faucet is busy. Try again in about 30s"
+    );
+    expect(screen.queryByText(/jsonrpc/)).not.toBeInTheDocument();
+  });
+
+  it("copies the address and opens the faucet on the secondary route", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, { clipboard: { writeText } });
+    const open = vi.fn();
+    vi.stubGlobal("open", open);
+
+    renderCard();
+    fireEvent.click(await screen.findByRole("button", { name: "Open faucet" }));
+
+    await waitFor(() =>
+      expect(writeText).toHaveBeenCalledWith(EMBEDDED.toBase58())
+    );
+    expect(open).toHaveBeenCalledWith(
+      "https://faucet.solana.com",
+      "_blank",
+      "noopener,noreferrer"
+    );
+    expect(
+      await screen.findByText("Address copied — paste it into the faucet.")
+    ).toBeInTheDocument();
+    vi.unstubAllGlobals();
   });
 
   it("clamps a hostile retry-after instead of parking the button for a day", async () => {

@@ -25,6 +25,7 @@ import {
   type WalletAdapter,
 } from "@superteam-lms/deploy";
 import { useTranslations } from "next-intl";
+import { Rocket } from "@phosphor-icons/react";
 import { celebrate } from "@/lib/gamification/celebration";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { trackEvent } from "@/lib/analytics";
@@ -35,6 +36,17 @@ import {
   type SaveStatus,
 } from "@/lib/deploy/save-deployment";
 import {
+  toFriendlyError,
+  type FriendlyError,
+} from "@/lib/deploy/friendly-error";
+import { setDeployFlow } from "@/lib/deploy/flow-store";
+import {
+  DEPLOY_EDITOR_ANCHOR_ID,
+  DEPLOY_PANEL_ANCHOR_ID,
+  revealElement,
+} from "@/lib/deploy/scroll";
+import type { DeployPhase } from "@/lib/deploy/progress";
+import {
   clearDeployState,
   decryptSessionKey,
   encryptSessionKey,
@@ -42,13 +54,16 @@ import {
   writeDeployState,
   type StoredDeployState,
 } from "@/lib/deploy/session-key-storage";
+import { useDeployFlow } from "@/hooks/use-deploy-flow";
 import { useDeploySigner } from "@/hooks/use-deploy-signer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { LinkedWalletPrompt } from "@/components/wallet/linked-wallet-prompt";
-import { cn } from "@/lib/utils";
 import { DeploySaveStatus } from "./deploy-save-status";
+import { DeployStepper } from "./deploy-stepper";
+import { DeployErrorNotice } from "./deploy-error-notice";
+import { DeployProgressView, type DeployLogEntry } from "./deploy-progress";
+import { DeploySuccessCard } from "./deploy-success-card";
 import { WalletFundingCard } from "./wallet-funding-card";
 import { WalletMismatchWarning } from "./wallet-mismatch-warning";
 
@@ -63,40 +78,29 @@ interface DeployPanelProps {
   courseId: string;
   /** Pre-generated program keypair from build-time declare_id injection. */
   programKeypairSecret?: number[];
+  /** Lesson XP, for the success card's submit affordance. */
+  xpReward?: number;
+  /** XP actually credited once the lesson is complete. */
+  earnedXp?: number | null;
+  /** The lesson is already complete (submit is done). */
+  isCompleted?: boolean;
+  nextLessonHref?: string | null;
   onBuildExpired?: () => void;
 }
 
-interface TxLogEntry {
-  /** Absent for notices that aren't a transaction (e.g. a rate-limit wait). */
-  signature?: string;
-  step: DeployStep;
-  message: string;
+interface TxLogEntry extends DeployLogEntry {
+  step: DeployPhase;
   timestamp: number;
 }
 
 type PanelState = "ready" | "deploying" | "success" | "paused" | "error";
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-const EXPLORER_BASE = "https://explorer.solana.com";
+/** The lesson's submit path, reached from the success card. */
+const REQUEST_SUBMIT_EVENT = "superteam:request-submit";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function truncateSig(sig: string): string {
-  return sig.slice(0, 8);
-}
-
-function formatDuration(ms: number): string {
-  const seconds = Math.round(ms / 1000);
-  if (seconds < 60) return `${seconds}s`;
-  const minutes = Math.floor(seconds / 60);
-  const remaining = seconds % 60;
-  return `${minutes}m ${remaining}s`;
-}
 
 /**
  * The signer, with per-batch signing time logged outside production.
@@ -121,26 +125,6 @@ function instrumentSigner(base: WalletAdapter): WalletAdapter {
   return { ...base, signAllTransactions };
 }
 
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  return `${(bytes / 1024).toFixed(1)} KB`;
-}
-
-// ---------------------------------------------------------------------------
-// Step indicator data
-// ---------------------------------------------------------------------------
-
-const DEPLOY_STEPS: { key: DeployStep; labelKey: string }[] = [
-  { key: "buffer", labelKey: "createBuffer" },
-  { key: "upload", labelKey: "uploadChunks" },
-  { key: "finalize", labelKey: "finalize" },
-];
-
-function stepIndex(step: DeployStep): number {
-  const idx = DEPLOY_STEPS.findIndex((s) => s.key === step);
-  return idx >= 0 ? idx : 0;
-}
-
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -151,6 +135,10 @@ export function DeployPanel({
   courseSlug,
   courseId,
   programKeypairSecret,
+  xpReward = 0,
+  earnedXp = null,
+  isCompleted = false,
+  nextLessonHref = null,
   onBuildExpired,
 }: DeployPanelProps) {
   const t = useTranslations("deploy.deployment");
@@ -163,18 +151,18 @@ export function DeployPanel({
   // the capstone credential gate) once the save succeeds (#622). Separate from
   // panelState, which tracks the on-chain deploy itself.
   const [saveStatus, setSaveStatus] = useState<SaveStatus | "idle">("idle");
-  const [currentStep, setCurrentStep] = useState<DeployStep>("buffer");
+  const [currentStep, setCurrentStep] = useState<DeployPhase>("buffer");
   const [chunkCurrent, setChunkCurrent] = useState(0);
   const [chunkTotal, setChunkTotal] = useState(0);
   const [txLog, setTxLog] = useState<TxLogEntry[]>([]);
   const [result, setResult] = useState<DeployResult | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [friendlyError, setFriendlyError] = useState<FriendlyError | null>(
+    null
+  );
+  // The signer is waiting out a throttle and will ask again on its own. This is
+  // never "paused" — there is nothing for the learner to press.
+  const [autoRetrySeconds, setAutoRetrySeconds] = useState<number | null>(null);
   const [savedState, setSavedState] = useState<DeploymentState | null>(null);
-  const [batchInfo, setBatchInfo] = useState<{
-    batchNumber: number;
-    totalBatches: number;
-  } | null>(null);
   // The Dynamic session died mid-deploy. Distinct from the hook's `expired`,
   // which describes the session BEFORE a deploy starts.
   const [sessionExpired, setSessionExpired] = useState(false);
@@ -216,10 +204,12 @@ export function DeployPanel({
     bufferKeypairSecret: number[] | null;
   } | null>(null);
 
+  const flow = useDeployFlow();
+
   // Extension wallet or Dynamic embedded wallet — the deploy is signed and paid
   // by whichever one this learner actually has. A throttled embedded signing
-  // request is reported into the same log the learner is already watching:
-  // nothing has failed, the signer is waiting before it asks again.
+  // request becomes the "waiting for the wallet service" state: nothing has
+  // failed, the signer is waiting before it asks again.
   const {
     status: signerStatus,
     signer,
@@ -228,13 +218,13 @@ export function DeployPanel({
     startReauth,
   } = useDeploySigner({
     onRateLimitWait: ({ waitMs }) => {
+      const seconds = Math.max(1, Math.round(waitMs / 1000));
+      setAutoRetrySeconds(seconds);
       setTxLog((prev) => [
         ...prev,
         {
           step: "upload",
-          message: t("rateLimitWaiting", {
-            seconds: String(Math.max(1, Math.round(waitMs / 1000))),
-          }),
+          message: t("rateLimitWaiting", { seconds: String(seconds) }),
           timestamp: Date.now(),
         },
       ]);
@@ -246,8 +236,9 @@ export function DeployPanel({
   const startTimeRef = useRef<number>(0);
   const [elapsed, setElapsed] = useState(0);
 
-  // Ref for scrollable log
-  const logEndRef = useRef<HTMLDivElement>(null);
+  // The panel is the scroll/focus target after a build, and the anchor every
+  // stepper step past "build" points at.
+  const panelRef = useRef<HTMLDivElement>(null);
 
   // Save-loop lifecycle: cancel the in-flight save + suppress setState after
   // unmount (the retry loop can outlive the component).
@@ -281,11 +272,6 @@ export function DeployPanel({
     }, 1000);
     return () => clearInterval(interval);
   }, [panelState]);
-
-  // Auto-scroll log
-  useEffect(() => {
-    logEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [txLog]);
 
   // Wallet-scoped localStorage key prefix to prevent cross-user cache leaks
   const walletPrefix = publicKey ? publicKey.toBase58().slice(0, 8) : "";
@@ -407,6 +393,7 @@ export function DeployPanel({
       ? Math.max(costLamports - balanceLamports, 0)
       : 0;
   const needsFunding = shortfallLamports > 0;
+  const shortfallSol = shortfallLamports / LAMPORTS_PER_SOL;
 
   useEffect(() => {
     if (!needsFunding || fundingTrackedRef.current) return;
@@ -417,6 +404,31 @@ export function DeployPanel({
       costLamports,
     });
   }, [needsFunding, shortfallLamports, costLamports, signerKind]);
+
+  // Publish this panel's half of the flow — the editor publishes build and
+  // submit. Both steppers read the same store.
+  useEffect(() => {
+    const built = Boolean(buildUuid);
+    setDeployFlow({
+      built,
+      funded: built && !needsFunding,
+      deployed: panelState === "success" && Boolean(result),
+    });
+  }, [buildUuid, needsFunding, panelState, result]);
+
+  useEffect(() => {
+    setDeployFlow({ submitted: isCompleted });
+  }, [isCompleted]);
+
+  // A finished build means the next thing to do is down here, in the other
+  // column. Take the learner to it rather than leaving them on a Compile button
+  // that has nothing more to say.
+  useEffect(() => {
+    const handler = () => revealElement(panelRef.current);
+    window.addEventListener("superteam:build-complete", handler);
+    return () =>
+      window.removeEventListener("superteam:build-complete", handler);
+  }, []);
 
   // Check for an existing deployment on mount. The SERVER record is the source
   // of truth for whether this deploy is recorded; localStorage is only an
@@ -514,6 +526,10 @@ export function DeployPanel({
   // is offered — and dropped, not repaired, when it fails.
   useEffect(() => {
     let cancelled = false;
+    // A new build restarts the read-back, so the gate closes again — otherwise
+    // the first click after a rebuild would run against the previous build's
+    // "done".
+    setRestoreStatus("pending");
     const settle = () => {
       if (!cancelled) setRestoreStatus("done");
     };
@@ -626,12 +642,15 @@ export function DeployPanel({
       onChunkProgress: (current: number, total: number) => {
         setChunkCurrent(current);
         setChunkTotal(total);
+        // Progress means the throttle let go.
+        setAutoRetrySeconds(null);
       },
       onTransactionConfirmed: (info: {
         signature: string;
         step: DeployStep;
         message: string;
       }) => {
+        setAutoRetrySeconds(null);
         setTxLog((prev) => [
           ...prev,
           {
@@ -643,7 +662,7 @@ export function DeployPanel({
         ]);
       },
       onError: (error) => {
-        setErrorMessage(error.message);
+        setFriendlyError(toFriendlyError(error.message, { shortfallSol }));
         setPanelState(error.retryable ? "paused" : "error");
       },
       onStateUpdate: (state: DeploymentState) => {
@@ -651,22 +670,27 @@ export function DeployPanel({
         persistStored();
         setSavedState(state);
       },
-      onBatchStart: (info) => {
-        setBatchInfo(info);
+      onBatchStart: () => {
+        setAutoRetrySeconds(null);
       },
     };
-  }, [persistStored]);
+  }, [persistStored, shortfallSol]);
 
-  /** One log line per phase, alongside the per-chunk lines from the package. */
-  const logPhase = useCallback(
-    (signature: string, step: DeployStep, message: string) => {
-      setTxLog((prev) => [
-        ...prev,
-        { signature, step, message, timestamp: Date.now() },
-      ]);
-    },
-    []
-  );
+  /**
+   * The embedded path's own callbacks: identical, except the upload finishing
+   * is not the deploy finishing. The session key still owns the program until
+   * the SetAuthority + sweep below run, so the package's terminal "complete"
+   * becomes the transfer phase here instead of flipping the panel to success.
+   */
+  const buildEmbeddedCallbacks = useCallback((): DeploymentCallbacks => {
+    const base = buildCallbacks();
+    return {
+      ...base,
+      onStepChange: (step: DeployStep) => {
+        setCurrentStep(step === "complete" ? "transfer" : step);
+      },
+    };
+  }, [buildCallbacks]);
 
   // Persist the deploy to the server (source of truth for the credential
   // gate), retrying transient failures with backoff and surfacing the outcome
@@ -696,6 +720,7 @@ export function DeployPanel({
     (deployResult: DeployResult) => {
       setResult(deployResult);
       setPanelState("success");
+      setAutoRetrySeconds(null);
       setClaim(null);
       clearStored();
 
@@ -742,6 +767,51 @@ export function DeployPanel({
     [clearStored, courseSlug, lessonId, walletPrefix, runSave, signerKind]
   );
 
+  /** Shared failure handling for both the fresh deploy and the resume. */
+  const handleFailure = useCallback(
+    (err: unknown, phase: "deploy" | "resume"): void => {
+      setAutoRetrySeconds(null);
+
+      // The funding check could not say whether the earlier transfer landed,
+      // so nothing was sent and nothing is lost — the same key, and its
+      // pending signature, are still saved. This is a retry, not a failure,
+      // and it carries its own copy rather than the generic error notice.
+      if (err instanceof FundingCheckError) {
+        setFundingCheckFailed(true);
+        setFriendlyError(null);
+        setPanelState("paused");
+        return;
+      }
+
+      // An expired embedded session is not a deploy failure: the uploaded
+      // chunks survive (the buffer authority is the payer, the same key after
+      // re-auth), so this pauses for re-auth rather than reporting an error.
+      if (isDynamicSessionExpiredError(err)) {
+        trackEvent("deploy_session_expired", { signerKind, phase });
+        setSessionExpired(true);
+        setReauthDismissed(false);
+        setFriendlyError(toFriendlyError("session expired"));
+        setPanelState("paused");
+        return;
+      }
+
+      // Throttled by Dynamic's wallet API after the signer had already spent
+      // its backoff. Nothing on chain failed and the buffer keeps every chunk
+      // that landed, so this is a wait, not a broken deploy.
+      if (isDynamicRateLimitError(err)) {
+        trackEvent("deploy_rate_limited", { signerKind, phase });
+        setFriendlyError(toFriendlyError("rate limited"));
+        setPanelState("paused");
+        return;
+      }
+
+      const friendly = toFriendlyError(err, { shortfallSol });
+      setFriendlyError(friendly);
+      setPanelState(friendly.action === "rebuild" ? "error" : "paused");
+    },
+    [signerKind, shortfallSol]
+  );
+
   /**
    * The learner's single signature: a transfer of the estimated cost into the
    * session key. Built with the learner as payer so the fee is theirs too.
@@ -771,6 +841,17 @@ export function DeployPanel({
     [signer, connection]
   );
 
+  /** One log line per phase, alongside the per-chunk lines from the package. */
+  const logPhase = useCallback(
+    (signature: string, step: DeployPhase, message: string) => {
+      setTxLog((prev) => [
+        ...prev,
+        { signature, step, message, timestamp: Date.now() },
+      ]);
+    },
+    []
+  );
+
   /** Deploy (or resume) through a local session key — the embedded path. */
   const runEmbedded = useCallback(
     async (resume: { state: DeploymentState; secret: number[] } | null) => {
@@ -791,13 +872,13 @@ export function DeployPanel({
           : null;
 
       setPanelState("deploying");
-      setErrorMessage(null);
-      setBatchInfo(null);
+      setFriendlyError(null);
       setSessionExpired(false);
       setRefundFailed(false);
       setFundingCheckFailed(false);
       setClaim(null);
       startTimeRef.current = Date.now();
+      setElapsed(0);
       if (resume) {
         setChunkCurrent(resume.state.lastUploadedChunk + 1);
         setChunkTotal(resume.state.totalChunks);
@@ -837,7 +918,7 @@ export function DeployPanel({
           learner,
           buildUuid,
           fund: fundSessionKey,
-          callbacks: buildCallbacks(),
+          callbacks: buildEmbeddedCallbacks(),
           programKeypairSecret,
           persistedSessionKey: resume?.secret ?? carryOver?.secret ?? null,
           resumeState: resume?.state ?? null,
@@ -873,6 +954,7 @@ export function DeployPanel({
               logPhase(signature, "buffer", t("logFunded"));
             },
             onOwnershipTransferred: ({ signature }) => {
+              setCurrentStep("refund");
               trackEvent("deploy_ownership_transferred", {
                 signerKind,
                 lamports: costLamports ?? 0,
@@ -896,49 +978,10 @@ export function DeployPanel({
           // `onSessionKey`); the error carries only addresses.
           setSessionAddress(err.sessionKeyAddress.toBase58());
           setClaim(err.deployResult);
-          setErrorMessage(t("ownershipFailed"));
           setPanelState("paused");
           return;
         }
-        // The funding check could not say whether the earlier transfer landed,
-        // so nothing was sent and nothing is lost — the same key, and its
-        // pending signature, are still saved. This is a retry, not a failure.
-        if (err instanceof FundingCheckError) {
-          setFundingCheckFailed(true);
-          setErrorMessage(t("fundingCheckFailed"));
-          setPanelState("paused");
-          return;
-        }
-        if (isDynamicSessionExpiredError(err)) {
-          trackEvent("deploy_session_expired", {
-            signerKind,
-            phase: resume ? "resume" : "deploy",
-          });
-          setSessionExpired(true);
-          setReauthDismissed(false);
-          setPanelState("paused");
-          return;
-        }
-        // The session key itself never touches Dynamic, but the funding
-        // transfer that pays it does — a single `signTransaction` call the
-        // embedded wallet can still throttle. The buffer keeps whatever
-        // landed before the transfer, so this is a wait, not a broken deploy.
-        if (isDynamicRateLimitError(err)) {
-          trackEvent("deploy_rate_limited", {
-            signerKind,
-            phase: resume ? "resume" : "deploy",
-          });
-          setErrorMessage(t("rateLimitPaused"));
-          setPanelState("paused");
-          return;
-        }
-        const message = err instanceof Error ? err.message : String(err);
-        setErrorMessage(message);
-        setPanelState(
-          message.toLowerCase().includes("expired") || message.includes("404")
-            ? "error"
-            : "paused"
-        );
+        handleFailure(err, resume ? "resume" : "deploy");
       }
     },
     [
@@ -948,8 +991,9 @@ export function DeployPanel({
       buildUuid,
       programKeypairSecret,
       fundSessionKey,
-      buildCallbacks,
+      buildEmbeddedCallbacks,
       handleSuccess,
+      handleFailure,
       logPhase,
       persistStored,
       rememberLostAddress,
@@ -963,7 +1007,7 @@ export function DeployPanel({
     const secret = sessionSecretRef.current;
     if (!claim || !secret || !signer?.publicKey) return;
     const learner = signer.publicKey;
-    setErrorMessage(null);
+    setFriendlyError(null);
     try {
       const signature = await transferProgramAuthority({
         connection,
@@ -996,7 +1040,7 @@ export function DeployPanel({
 
       handleSuccess(claim);
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : String(err));
+      setFriendlyError(toFriendlyError(err, { shortfallSol }));
     }
   }, [
     claim,
@@ -1007,6 +1051,7 @@ export function DeployPanel({
     handleSuccess,
     logPhase,
     t,
+    shortfallSol,
   ]);
 
   /**
@@ -1065,13 +1110,14 @@ export function DeployPanel({
     setTxLog([]);
     setChunkCurrent(0);
     setChunkTotal(0);
-    setErrorMessage(null);
+    setFriendlyError(null);
     setResult(null);
-    setBatchInfo(null);
+    setAutoRetrySeconds(null);
     setSaveStatus("idle");
     setSessionExpired(false);
     saveCancelledRef.current = true;
     startTimeRef.current = Date.now();
+    setElapsed(0);
 
     const callbacks = buildCallbacks();
     trackEvent("deploy_started", { signerKind, batchSize });
@@ -1088,39 +1134,7 @@ export function DeployPanel({
       });
       handleSuccess(deployResult);
     } catch (err) {
-      // An expired embedded session is not a deploy failure: the uploaded
-      // chunks survive (the buffer authority is the payer, the same key after
-      // re-auth), so this pauses for re-auth rather than reporting an error.
-      if (isDynamicSessionExpiredError(err)) {
-        trackEvent("deploy_session_expired", { signerKind, phase: "deploy" });
-        setSessionExpired(true);
-        setReauthDismissed(false);
-        setPanelState("paused");
-        return;
-      }
-
-      // Throttled by Dynamic's wallet API after the signer had already spent
-      // its backoff. Nothing on chain failed and the buffer keeps every chunk
-      // that landed, so this is a wait, not a broken deploy.
-      if (isDynamicRateLimitError(err)) {
-        trackEvent("deploy_rate_limited", { signerKind, phase: "deploy" });
-        setErrorMessage(t("rateLimitPaused"));
-        setPanelState("paused");
-        return;
-      }
-
-      const message = err instanceof Error ? err.message : String(err);
-      setErrorMessage(message);
-
-      // Determine if this is a build expired error
-      if (
-        message.toLowerCase().includes("expired") ||
-        message.includes("404")
-      ) {
-        setPanelState("error");
-      } else {
-        setPanelState("paused");
-      }
+      handleFailure(err, "deploy");
     }
   }, [
     signer,
@@ -1132,10 +1146,10 @@ export function DeployPanel({
     programKeypairSecret,
     buildCallbacks,
     handleSuccess,
+    handleFailure,
     isEmbedded,
     restoreStatus,
     runEmbedded,
-    t,
   ]);
 
   // Resume handler
@@ -1144,10 +1158,10 @@ export function DeployPanel({
     if (isEmbedded) {
       const secret = sessionSecretRef.current;
       // Without the session key there is nothing to resume WITH: the buffer's
-      // authority is that key, so a fresh deploy (and transfer) is the only way
-      // forward.
+      // authority is that key, so the panel falls back to naming the stranded
+      // address rather than pretending a resume is possible.
       if (!secret) {
-        setErrorMessage(t("sessionKeyLost", { address: sessionAddress ?? "" }));
+        rememberLostAddress(sessionAddress);
         setPanelState("paused");
         return;
       }
@@ -1156,10 +1170,11 @@ export function DeployPanel({
     }
 
     setPanelState("deploying");
-    setErrorMessage(null);
-    setBatchInfo(null);
+    setFriendlyError(null);
+    setAutoRetrySeconds(null);
     setSessionExpired(false);
     startTimeRef.current = Date.now();
+    setElapsed(0);
 
     // Restore chunk progress from saved state
     setChunkCurrent(savedState.lastUploadedChunk + 1);
@@ -1179,24 +1194,7 @@ export function DeployPanel({
       });
       handleSuccess(deployResult);
     } catch (err) {
-      if (isDynamicSessionExpiredError(err)) {
-        trackEvent("deploy_session_expired", { signerKind, phase: "resume" });
-        setSessionExpired(true);
-        setReauthDismissed(false);
-        setPanelState("paused");
-        return;
-      }
-
-      if (isDynamicRateLimitError(err)) {
-        trackEvent("deploy_rate_limited", { signerKind, phase: "resume" });
-        setErrorMessage(t("rateLimitPaused"));
-        setPanelState("paused");
-        return;
-      }
-
-      const message = err instanceof Error ? err.message : String(err);
-      setErrorMessage(message);
-      setPanelState("paused");
+      handleFailure(err, "resume");
     }
   }, [
     signer,
@@ -1207,9 +1205,10 @@ export function DeployPanel({
     sessionAddress,
     buildCallbacks,
     handleSuccess,
+    handleFailure,
     isEmbedded,
     runEmbedded,
-    t,
+    rememberLostAddress,
   ]);
 
   // Start over handler
@@ -1254,9 +1253,9 @@ export function DeployPanel({
     setTxLog([]);
     setChunkCurrent(0);
     setChunkTotal(0);
-    setErrorMessage(null);
+    setFriendlyError(null);
     setResult(null);
-    setBatchInfo(null);
+    setAutoRetrySeconds(null);
     setCurrentStep("buffer");
     setSaveStatus("idle");
     saveCancelledRef.current = true;
@@ -1269,17 +1268,19 @@ export function DeployPanel({
     resetSession,
   ]);
 
-  // Copy program ID
-  const handleCopyProgramId = useCallback(async () => {
-    if (!result) return;
-    try {
-      await navigator.clipboard.writeText(result.programId);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // clipboard API unavailable
-    }
-  }, [result]);
+  const handleRebuild = useCallback(() => {
+    handleStartOver();
+    onBuildExpired?.();
+    revealElement(document.getElementById(DEPLOY_EDITOR_ANCHOR_ID));
+  }, [handleStartOver, onBuildExpired]);
+
+  // The success card submits through the lesson's normal path — the editor owns
+  // enrollment, grading and the verdict; this only asks for it.
+  const handleRequestSubmit = useCallback(() => {
+    window.dispatchEvent(
+      new CustomEvent(REQUEST_SUBMIT_EVENT, { detail: { lessonId } })
+    );
+  }, [lessonId]);
 
   const handleCopyLostAddress = useCallback(async () => {
     if (!lostSessionAddress) return;
@@ -1299,11 +1300,11 @@ export function DeployPanel({
    * ready — so the retry is never a button on a screen nobody reaches.
    */
   const refundWarning = refundFailed ? (
-    <div className="flex flex-wrap items-center gap-2 rounded-md bg-yellow-500/10 px-3 py-2 text-xs text-yellow-500">
+    <div className="flex flex-wrap items-center gap-2 rounded-md border-2 border-[color:var(--ink-line)] bg-accent-bg p-3 text-xs text-text">
       <span className="flex-1">
         {t("refundFailed", { address: sessionAddress ?? "" })}
       </span>
-      <Button size="sm" variant="outline" onClick={handleRetryRefund}>
+      <Button size="sm" variant="secondary" onClick={handleRetryRefund}>
         {t("retryRefund")}
       </Button>
     </div>
@@ -1317,151 +1318,52 @@ export function DeployPanel({
   const lostKeyNotice = lostSessionAddress ? (
     <div
       role="alert"
-      className="space-y-2 rounded-md bg-yellow-500/10 px-3 py-2 text-xs text-yellow-500"
+      className="space-y-2 rounded-md border-2 border-[color:var(--ink-line)] bg-accent-bg p-3 text-xs text-text"
     >
       <p>{t("sessionKeyLost", { address: lostSessionAddress })}</p>
-      <Button size="sm" variant="outline" onClick={handleCopyLostAddress}>
+      <Button size="sm" variant="secondary" onClick={handleCopyLostAddress}>
         {lostCopied ? t("copied") : t("copyAddress")}
       </Button>
     </div>
   ) : null;
 
-  // Chunk progress percentage
-  const chunkPercent =
-    chunkTotal > 0 ? Math.round((chunkCurrent / chunkTotal) * 100) : 0;
-
-  // Estimated time remaining (rough -- based on elapsed vs progress)
-  const estimatedTimeRemaining =
-    chunkCurrent > 0 && chunkTotal > 0 && panelState === "deploying"
-      ? Math.round(
-          ((elapsed / chunkCurrent) * (chunkTotal - chunkCurrent)) / 1000
-        )
-      : null;
+  /** Everything renders inside this shell, so the anchor is always present. */
+  const shell = (children: React.ReactNode) => (
+    <div
+      id={DEPLOY_PANEL_ANCHOR_ID}
+      ref={panelRef}
+      tabIndex={-1}
+      className="space-y-3 outline-none"
+    >
+      <DeployStepper state={flow} />
+      {children}
+    </div>
+  );
 
   // -------------------------------------------------------------------------
   // Render: Success state
   // -------------------------------------------------------------------------
   if (panelState === "success" && result) {
-    return (
-      <Card className="border-[var(--success-border)] bg-[var(--success-bg)]">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg text-success">
-            {/* Checkmark icon */}
-            <svg
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2}
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            {t("success")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Program ID with copy */}
-          <div className="space-y-1">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("programId")}
-            </p>
-            <button
-              onClick={handleCopyProgramId}
-              className="bg-muted/50 group flex w-full items-center gap-2 rounded-md px-3 py-2 font-mono text-sm transition-colors hover:bg-muted"
-            >
-              <span className="flex-1 truncate text-left">
-                {result.programId}
-              </span>
-              <span className="shrink-0 text-xs text-muted-foreground group-hover:text-foreground">
-                {copied ? t("copied") : ""}
-              </span>
-              {/* Copy icon */}
-              <svg
-                className="h-4 w-4 shrink-0 text-muted-foreground"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9.75a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184"
-                />
-              </svg>
-            </button>
-          </div>
-
-          {/* Explorer link */}
-          <a
-            href={`${EXPLORER_BASE}/address/${result.programId}?cluster=devnet`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
-          >
-            {t("viewOnExplorer")}
-            <svg
-              className="h-3.5 w-3.5"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2}
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
-              />
-            </svg>
-          </a>
-
-          {/* Deployment stats — only show when we have real data */}
-          {result.totalChunks > 0 && (
-            <div className="bg-muted/30 grid grid-cols-2 gap-3 rounded-lg p-3">
-              <div>
-                <p className="text-xs text-muted-foreground">{t("size")}</p>
-                <p className="text-sm font-semibold">
-                  {formatBytes(result.totalChunks * 1000)}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">{t("chunks")}</p>
-                <p className="text-sm font-semibold">
-                  {result.totalChunks + 2}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">{t("time")}</p>
-                <p className="text-sm font-semibold">
-                  {formatDuration(result.durationMs)}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">{t("rent")}</p>
-                <p className="text-sm font-semibold">
-                  {(result.rentLamports / LAMPORTS_PER_SOL).toFixed(4)} SOL
-                </p>
-              </div>
-            </div>
-          )}
-
-          {refundWarning}
-
-          {/* Server-record status — the deploy only counts toward the capstone
-              credential once it's recorded; un-recorded shows a retry. */}
+    return shell(
+      <DeploySuccessCard
+        programId={result.programId}
+        rentLamports={result.rentLamports}
+        durationMs={result.durationMs}
+        xpReward={xpReward}
+        earnedXp={earnedXp}
+        isComplete={isCompleted}
+        onSubmit={handleRequestSubmit}
+        saveStatus={saveStatus}
+        nextLessonHref={nextLessonHref}
+        noticeSlot={refundWarning}
+        saveStatusSlot={
           <DeploySaveStatus
             ref={saveErrorRef}
             status={saveStatus}
-            onRetry={() => {
-              if (result) runSave(result);
-            }}
+            onRetry={() => runSave(result)}
           />
-        </CardContent>
-      </Card>
+        }
+      />
     );
   }
 
@@ -1469,7 +1371,7 @@ export function DeployPanel({
   // Render: Deploying state
   // -------------------------------------------------------------------------
   if (panelState === "deploying") {
-    return (
+    return shell(
       <Card className="border-border/50">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
@@ -1481,156 +1383,32 @@ export function DeployPanel({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* 3-step stepper */}
-          <div className="flex items-center gap-1">
-            {DEPLOY_STEPS.map((step, idx) => {
-              const currentIdx = stepIndex(currentStep);
-              const isComplete = idx < currentIdx;
-              const isCurrent = idx === currentIdx;
-
-              return (
-                <div key={step.key} className="flex flex-1 items-center gap-1">
-                  <div className="flex flex-1 flex-col items-center gap-1">
-                    {/* Step circle */}
-                    <div
-                      className={cn(
-                        "flex h-7 w-7 items-center justify-center rounded-full border-2 text-xs font-bold transition-all",
-                        isComplete && "border-success bg-success text-white",
-                        isCurrent &&
-                          "border-primary bg-gradient-to-r from-solana-purple to-solana-green text-white",
-                        !isComplete &&
-                          !isCurrent &&
-                          "border-muted-foreground/30 text-muted-foreground/50"
-                      )}
-                    >
-                      {isComplete ? (
-                        <svg
-                          className="h-4 w-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth={3}
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M4.5 12.75l6 6 9-13.5"
-                          />
-                        </svg>
-                      ) : isCurrent ? (
-                        <div
-                          className="h-2.5 w-2.5 animate-pulse rounded-full bg-white"
-                          aria-hidden="true"
-                        />
-                      ) : (
-                        idx + 1
-                      )}
-                    </div>
-                    {/* Step label */}
-                    <span
-                      className={cn(
-                        "text-center text-[10px] leading-tight",
-                        isCurrent
-                          ? "font-semibold text-foreground"
-                          : "text-muted-foreground"
-                      )}
-                    >
-                      {t(step.labelKey)}
-                    </span>
-                  </div>
-                  {/* Connector line */}
-                  {idx < DEPLOY_STEPS.length - 1 && (
-                    <div
-                      className={cn(
-                        "mb-5 h-0.5 flex-1",
-                        isComplete ? "bg-success" : "bg-muted-foreground/20"
-                      )}
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Chunk progress bar */}
-          {currentStep === "upload" && chunkTotal > 0 && (
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">
-                  {t("chunkProgress", {
-                    current: String(chunkCurrent),
-                    total: String(chunkTotal),
-                  })}
-                </span>
-                <span className="font-mono font-semibold">{chunkPercent}%</span>
-              </div>
-              <Progress value={chunkPercent} size="thin" variant="primary" />
-              {estimatedTimeRemaining !== null &&
-                estimatedTimeRemaining > 0 && (
-                  <p className="text-right text-[10px] text-muted-foreground">
-                    {t("timeRemaining", {
-                      seconds: String(estimatedTimeRemaining),
-                    })}
-                  </p>
-                )}
+          {autoRetrySeconds !== null && (
+            <div
+              role="status"
+              aria-live="polite"
+              className="flex items-start gap-2 rounded-md border-2 border-[color:var(--ink-line)] bg-accent-bg p-3 text-sm"
+            >
+              <div
+                className="mt-0.5 h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-accent border-t-transparent"
+                aria-hidden="true"
+              />
+              <span>
+                <span className="font-display font-extrabold">
+                  {t("waitingForWallet")}
+                </span>{" "}
+                {t("waitingForWalletBody")}
+              </span>
             </div>
           )}
 
-          {/* Batch signing prompt — tied to the real signAllTransactions
-              batch (via onBatchStart), so it's only shown while there's
-              actually more than one upload batch to approve. */}
-          {currentStep === "upload" &&
-            batchInfo &&
-            batchInfo.totalBatches > 1 && (
-              <div className="flex items-center gap-2 rounded-md bg-yellow-500/10 px-3 py-2 text-xs text-yellow-500">
-                <svg
-                  className="h-4 w-4 shrink-0"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
-                  />
-                </svg>
-                {t("approvingBatch", {
-                  current: String(batchInfo.batchNumber),
-                  total: String(batchInfo.totalBatches),
-                })}
-              </div>
-            )}
-
-          {/* Transaction log */}
-          {txLog.length > 0 && (
-            <div className="bg-muted/30 max-h-32 overflow-y-auto rounded-md p-2">
-              <div className="space-y-1">
-                {txLog.map((entry, idx) => (
-                  <div
-                    key={`${entry.signature ?? "note"}-${idx}`}
-                    className="flex items-center gap-2 text-[11px]"
-                  >
-                    {entry.signature && (
-                      <a
-                        href={`${EXPLORER_BASE}/tx/${entry.signature}?cluster=devnet`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="shrink-0 font-mono text-primary hover:underline"
-                      >
-                        {truncateSig(entry.signature)}
-                      </a>
-                    )}
-                    <span className="truncate text-muted-foreground">
-                      {entry.message}
-                    </span>
-                  </div>
-                ))}
-                <div ref={logEndRef} />
-              </div>
-            </div>
-          )}
+          <DeployProgressView
+            phase={currentStep}
+            chunkCurrent={chunkCurrent}
+            chunkTotal={chunkTotal}
+            elapsedMs={elapsed}
+            entries={txLog}
+          />
         </CardContent>
       </Card>
     );
@@ -1640,66 +1418,49 @@ export function DeployPanel({
   // Render: Paused / Error state
   // -------------------------------------------------------------------------
   if (panelState === "paused" || panelState === "error") {
-    const isExpired =
-      panelState === "error" &&
-      errorMessage &&
-      (errorMessage.toLowerCase().includes("expired") ||
-        errorMessage.includes("404"));
+    const action = friendlyError?.action ?? "resume";
+    const isRebuild = action === "rebuild";
+    const canResume = Boolean(savedState) && !isRebuild && !claim;
 
-    return (
-      <Card className="border-yellow-500/30 bg-yellow-500/5">
+    return shell(
+      <Card className="border-2 border-[color:var(--ink-line)]">
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg text-yellow-500">
-            {/* Warning icon */}
-            <svg
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
-              />
-            </svg>
-            {isExpired ? t("buildExpired") : t("paused")}
+          <CardTitle className="text-lg">
+            {isRebuild ? t("buildExpired") : t("paused")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {isExpired ? (
-            <p className="text-sm text-muted-foreground">{t("rebuildHint")}</p>
-          ) : errorMessage ? (
-            <p className="text-sm text-muted-foreground">{errorMessage}</p>
-          ) : null}
+          {friendlyError ? (
+            <DeployErrorNotice
+              error={friendlyError}
+              onAction={
+                action === "rebuild"
+                  ? handleRebuild
+                  : action === "retry"
+                    ? () => void handleDeploy()
+                    : action === "resume"
+                      ? () => void handleResume()
+                      : undefined
+              }
+            />
+          ) : fundingCheckFailed ? (
+            <p role="alert" className="text-sm text-text-2">
+              {t("fundingCheckFailed")}
+            </p>
+          ) : claim ? (
+            <p className="text-sm text-text-2">{t("ownershipFailed")}</p>
+          ) : (
+            <p className="text-sm text-text-2">{t("pausedBody")}</p>
+          )}
 
-          {/* Transaction log from before the pause */}
           {txLog.length > 0 && (
-            <div className="bg-muted/30 max-h-24 overflow-y-auto rounded-md p-2">
-              <div className="space-y-1">
-                {txLog.map((entry, idx) => (
-                  <div
-                    key={`${entry.signature ?? "note"}-${idx}`}
-                    className="flex items-center gap-2 text-[11px]"
-                  >
-                    {entry.signature && (
-                      <a
-                        href={`${EXPLORER_BASE}/tx/${entry.signature}?cluster=devnet`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="shrink-0 font-mono text-primary hover:underline"
-                      >
-                        {truncateSig(entry.signature)}
-                      </a>
-                    )}
-                    <span className="truncate text-muted-foreground">
-                      {entry.message}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <DeployProgressView
+              phase={currentStep}
+              chunkCurrent={chunkCurrent}
+              chunkTotal={chunkTotal}
+              elapsedMs={elapsed}
+              entries={txLog}
+            />
           )}
 
           {lostKeyNotice}
@@ -1717,49 +1478,44 @@ export function DeployPanel({
           {/* The program is deployed and paid for; only the authority handover
               is missing, and it is the one step this button re-runs. */}
           {claim && (
-            <div className="bg-muted/30 space-y-2 rounded-md p-3">
+            <div className="space-y-2 rounded-md border-2 border-[color:var(--ink-line)] bg-card p-3">
               <p className="break-all font-mono text-xs">{claim.programId}</p>
-              <Button onClick={handleClaimOwnership} className="w-full">
+              <Button
+                onClick={() => void handleClaimOwnership()}
+                className="w-full"
+              >
                 {t("claimOwnership")}
               </Button>
             </div>
           )}
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {fundingCheckFailed && (
               <Button
-                onClick={handleDeploy}
+                onClick={() => void handleDeploy()}
                 className="flex-1"
                 disabled={!signer || restoreStatus === "pending"}
               >
                 {t("retryFundingCheck")}
               </Button>
             )}
-            {!isExpired && !claim && savedState && (
+            {canResume && (
               <Button
-                onClick={handleResume}
+                onClick={() => void handleResume()}
                 className="flex-1"
                 disabled={!signer}
               >
                 {t("resume")}
               </Button>
             )}
-            {isExpired && onBuildExpired ? (
-              <Button
-                onClick={() => {
-                  handleStartOver();
-                  onBuildExpired();
-                }}
-                variant="outline"
-                className="flex-1"
-              >
-                {t("startOver")}
-              </Button>
-            ) : (
+            {/* Rebuild's own action already lives in the DeployErrorNotice
+                above (errorActions.rebuild) — a second "Back to the editor"
+                button here would just repeat it. */}
+            {!isRebuild && (
               <Button
                 onClick={handleStartOver}
                 variant="outline"
-                className={cn(!isExpired && savedState ? "" : "flex-1")}
+                className={canResume ? "" : "flex-1"}
               >
                 {t("startOver")}
               </Button>
@@ -1775,41 +1531,24 @@ export function DeployPanel({
   // -------------------------------------------------------------------------
 
   // If no buildUuid yet (panel mounted to check server for existing deploy),
-  // don't show the "ready" UI — the check-on-mount effect handles it.
-  if (!buildUuid) return null;
+  // the stepper still says where the learner is: on the build step.
+  if (!buildUuid) {
+    return shell(<p className="text-sm text-text-2">{t("description")}</p>);
+  }
 
-  return (
+  return shell(
     <Card className="border-border/50">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-lg">
-          {/* Rocket icon */}
-          <svg
-            className="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.841m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"
-            />
-          </svg>
+          <Rocket size={20} weight="duotone" aria-hidden="true" />
           {t("deployToDevnet")}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground">{t("description")}</p>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-sm text-text-2">{t("description")}</p>
+        <p className="text-xs text-text-3">
           {isEmbedded ? t("sessionKeyNotice") : t("batchExplainer")}
         </p>
-
-        {/* Build UUID */}
-        <div className="bg-muted/30 rounded-md px-3 py-2">
-          <span className="text-xs text-muted-foreground">Build: </span>
-          <span className="font-mono text-xs">{buildUuid.slice(0, 12)}...</span>
-        </div>
 
         {lostKeyNotice}
         {refundWarning}
@@ -1841,15 +1580,15 @@ export function DeployPanel({
           />
         ) : (
           <Button
-            onClick={handleDeploy}
-            className="w-full bg-gradient-to-r from-solana-purple to-solana-green font-semibold text-white hover:opacity-90"
+            onClick={() => void handleDeploy()}
+            className="w-full"
             disabled={!signer || needsFunding || restoreStatus === "pending"}
           >
             {signerStatus === "resolving" || restoreStatus === "pending"
               ? t("resolvingWallet")
               : needsFunding
                 ? t("insufficientSol", {
-                    amount: (shortfallLamports / LAMPORTS_PER_SOL).toFixed(2),
+                    amount: shortfallSol.toFixed(2),
                   })
                 : t("deployToDevnet")}
           </Button>

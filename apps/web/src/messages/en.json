@@ -835,7 +835,12 @@
       "connectWallet": "Connect your wallet to continue",
       "copyAddress": "Copy address",
       "addressCopied": "Copied!",
-      "rateLimitedRetryAfter": "Devnet faucet is rate-limited. Try again in {seconds}s, or use the web faucet."
+      "rateLimitedRetryAfter": "Devnet faucet is rate-limited. Try again in {seconds}s, or use the web faucet.",
+      "required": "Needed for this deploy",
+      "shortfall": "Still needed",
+      "openFaucet": "Open faucet",
+      "faucetToast": "Address copied — paste it into the faucet.",
+      "cooldown": "Try again in {seconds}s"
     },
     "deployment": {
       "deployToDevnet": "Deploy to Devnet",
@@ -876,7 +881,19 @@
       "sessionKeyLost": "This tab's temporary deploy key was lost when the page reloaded, so the upload can't be resumed and the SOL it still holds is stranded at {address}. Copy that address to recover the funds yourself; deploying again starts with a new key.",
       "copyAddress": "Copy address",
       "rateLimitWaiting": "Wallet service is busy (rate limited) — retrying in {seconds}s",
-      "rateLimitPaused": "The wallet service is still rate-limiting signatures. Nothing was lost — wait a minute and resume."
+      "rateLimitPaused": "The wallet service is still rate-limiting signatures. Nothing was lost — wait a minute and resume.",
+      "submitLesson": "Submit lesson",
+      "recordingDeploy": "Recording your deploy…",
+      "xpEarned": "+{xp} XP earned",
+      "nextLesson": "Next lesson",
+      "lessonSubmitted": "Lesson complete",
+      "deployTime": "Deploy time",
+      "rentLocked": "Rent locked",
+      "copyProgramId": "Copy program ID",
+      "waitingForWallet": "Waiting for the wallet service",
+      "waitingForWalletBody": "It's throttling our signature requests. We're retrying automatically — nothing was lost.",
+      "pausedBody": "Nothing was lost. Resume when you're ready, or start the deploy over.",
+      "rebuild": "Back to the editor"
     },
     "save": {
       "recording": "Recording your deployment…",
@@ -945,6 +962,47 @@
       "deployStep": "Deploy",
       "interact": "Interact",
       "yourProgram": "Your Deployed Program"
+    },
+    "steps": {
+      "label": "Deploy progress",
+      "build": "Build",
+      "fund": "Fund",
+      "deploy": "Deploy",
+      "submit": "Submit",
+      "goTo": "Go to {step}",
+      "done": "done",
+      "current": "current step"
+    },
+    "errors": {
+      "airdropRateLimited": "The devnet faucet is busy. Try again in about {seconds}s, or use the web faucet.",
+      "airdropFailed": "The airdrop didn't go through. Try again, or use the web faucet.",
+      "walletRateLimited": "The wallet service is busy. We're waiting and asking again for you — nothing was lost.",
+      "sessionExpired": "Your sign-in expired mid-deploy. Sign in again and the upload carries on from where it stopped.",
+      "buildExpired": "This build is no longer available. Build your program again, then deploy.",
+      "insufficientSol": "This deploy needs about {amount} more SOL in your wallet.",
+      "blockhashExpired": "The network took too long to confirm a transaction. Resume — every chunk already uploaded is kept.",
+      "unknown": "The deploy stopped unexpectedly. Nothing on chain was lost, so try again.",
+      "showDetails": "Show details"
+    },
+    "errorActions": {
+      "retry": "Try again",
+      "resume": "Resume deploy",
+      "rebuild": "Back to the editor",
+      "reauth": "Sign in again",
+      "fund": "Fund wallet"
+    },
+    "progress": {
+      "phaseBuffer": "Creating the buffer account",
+      "phaseUpload": "Uploading your program",
+      "phaseFinalize": "Finalizing the deployment",
+      "phaseTransfer": "Transferring ownership",
+      "phaseRefund": "Refunding leftover rent",
+      "phaseComplete": "Done",
+      "chunks": "{current} of {total} chunks",
+      "elapsed": "{elapsed} elapsed",
+      "remaining": "~{seconds}s left",
+      "details": "Transaction details",
+      "waiting": "Waiting for the wallet service — retrying automatically"
     }
   },
   "programErrors": {
