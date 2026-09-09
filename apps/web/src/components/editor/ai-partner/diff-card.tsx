@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { applyEdits } from "@/lib/ai/apply-edits";
 import { trackComprehensionCheckAnswered } from "@/lib/analytics/events";
 import type { ChallengeEventContext } from "@/lib/analytics/events";
+import type { ApplyEditsResult } from "@/lib/ai/apply-edits";
 import type {
   CodeEdit,
   ProposeResponse,
@@ -167,12 +168,43 @@ export function DiffCard({
   // flow; a miss (the model's snippet no longer occurs — e.g. the code changed
   // since the request) degrades to showing the edit textually, never mutating
   // the buffer.
-  const applied = useMemo(() => applyEdits(current, edits), [current, edits]);
+  const live = useMemo(() => applyEdits(current, edits), [current, edits]);
+
+  // Latch the accepted result. `current` is the LIVE buffer, so the moment the
+  // learner accepts, the `search` text is gone and `live` flips to a miss — the
+  // card would degrade into the red "couldn't be applied" banner right after
+  // applying it. Snapshotting the baseline + reconstruction at accept time
+  // keeps the confirmation on screen without loosening the apply rule: the
+  // apply itself is still evaluated against the live buffer, once.
+  const acceptedRef = useRef<{ baseline: string; proposed: string } | null>(
+    null
+  );
+  const snapshot = accepted ? acceptedRef.current : null;
+  const applied = useMemo<ApplyEditsResult>(
+    () => (snapshot ? { ok: true, proposed: snapshot.proposed } : live),
+    [snapshot, live]
+  );
+  const baseline = snapshot ? snapshot.baseline : current;
 
   const lines = useMemo(
-    () => (applied.ok ? toHunkRows(diffLines(current, applied.proposed)) : []),
-    [current, applied]
+    () => (applied.ok ? toHunkRows(diffLines(baseline, applied.proposed)) : []),
+    [baseline, applied]
   );
+
+  // The cases local state cannot cover: a reload (the log rehydrates, the
+  // accepted flag does not), the learner typing the change by hand, or a
+  // sibling card having applied the same edit. The edits no longer apply, but
+  // every replacement is already in the buffer — informational, not an error,
+  // and deliberately without an Accept button so it can never touch the code.
+  const alreadyApplied =
+    !applied.ok &&
+    edits.length > 0 &&
+    edits.every(
+      (edit) =>
+        typeof edit?.replace === "string" &&
+        edit.replace.length > 0 &&
+        current.includes(edit.replace)
+    );
 
   // The correct index/explanation are sealed server-side (`checkToken`) and
   // never shipped to the browser — grading a pick is an async round trip to
@@ -223,14 +255,39 @@ export function DiffCard({
   // Applying the change is gated on a verified-correct answer — never fires
   // otherwise, so the code only changes on an intentional, earned Accept.
   const handleAccept = () => {
-    if (!applied.ok || stale || correctPick === null || accepted) return;
-    onAccept(applied.proposed);
+    if (!live.ok || stale || correctPick === null || accepted) return;
+    acceptedRef.current = { baseline: current, proposed: live.proposed };
+    onAccept(live.proposed);
     setAccepted(true);
   };
 
   // Degrade path: the edit no longer applies to the live buffer. Show it
   // textually (search → replace) so the learner can apply it by hand — never a
   // silent no-op, never an Accept that would corrupt the buffer.
+  if (alreadyApplied) {
+    return (
+      <div
+        className={cn("card-chunky space-y-3 p-4", className)}
+        role="group"
+        aria-label={t("a11y.diffCard")}
+      >
+        <div className="flex items-center gap-2">
+          <Sparkle
+            size={16}
+            weight="duotone"
+            className="shrink-0 text-primary"
+            aria-hidden="true"
+          />
+          <p className="text-sm font-medium text-text">{rationale}</p>
+        </div>
+        <p className="flex items-center gap-1.5 text-sm font-medium text-success">
+          <Check size={16} weight="bold" aria-hidden="true" />
+          {t("diff.alreadyApplied")}
+        </p>
+      </div>
+    );
+  }
+
   if (!applied.ok) {
     return (
       <div
@@ -296,7 +353,7 @@ export function DiffCard({
     <div
       className={cn(
         "card-chunky space-y-3 p-4",
-        stale && "opacity-60",
+        stale && !accepted && "opacity-60",
         className
       )}
       role="group"
@@ -371,7 +428,7 @@ export function DiffCard({
         </pre>
       </div>
 
-      {stale && (
+      {stale && !accepted && (
         <div className="flex items-center gap-2 rounded-md border p-2 text-xs [background:var(--danger-light)] [border-color:var(--danger-border)]">
           <WarningCircle
             size={14}

@@ -15,6 +15,15 @@ import type {
 
 export type { PartnerMessage };
 
+/**
+ * Why the last action failed, for copy that tells the truth about billing:
+ * - `generic`   — no turn was spent (network, config, refunded upstream error).
+ * - `billed`    — the model ran and the turn IS spent; the meter has advanced.
+ * - `noChange`  — a billed `propose` the model turned into a no-op (route
+ *   `reason: "no_change"`): nothing to apply, so point the learner at review.
+ */
+export type PartnerErrorKind = "generic" | "billed" | "noChange";
+
 // The ladder constants live in partner-types.ts (single source of truth,
 // shared with the server budget). The SERVER enforces every boundary via the
 // spend_assist_ladder_turn RPC; this hook only mirrors the counts for display
@@ -56,10 +65,13 @@ interface UseAiPartnerResult {
   resetAvailableAt: number | null;
   loading: boolean;
   error: string | null;
+  /** Classifies `error` so the pane can admit a spent turn (see PartnerErrorKind). */
+  errorKind: PartnerErrorKind | null;
   /** Ask for a concrete change. Optionally carries the learner's composer draft. */
   proposeFix: (message?: string) => Promise<void>;
   ask: (message: string) => Promise<void>;
-  review: () => Promise<void>;
+  /** Resolves true when the review actually came back — false on any failure. */
+  review: () => Promise<boolean>;
   /** Spend the one guarded per-lesson reset. Resolves with the server verdict. */
   requestReset: () => Promise<ResetOutcome>;
   verifyCheck: (
@@ -76,6 +88,13 @@ function isBudgetExhausted(
   reply: PartnerRouteReply
 ): reply is { budgetExhausted: true; counts?: AssistTurnCounts } {
   return "budgetExhausted" in reply && reply.budgetExhausted === true;
+}
+
+/** Shape of the route's JSON error bodies (all fields optional by design). */
+interface ErrorBody {
+  spendCapped?: boolean;
+  billed?: boolean;
+  reason?: string;
 }
 
 function isCounts(value: unknown): value is AssistTurnCounts {
@@ -115,6 +134,7 @@ export function useAiPartner({
   const [resetAvailableAt, setResetAvailableAt] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorKind, setErrorKind] = useState<PartnerErrorKind | null>(null);
 
   const tier = useMemo(() => assistTierFor(counts), [counts]);
   const budgetExhausted = serverExhausted || tier === "exhausted";
@@ -180,9 +200,10 @@ export function useAiPartner({
   // authored hint ladder is not routed through here at all: those hints render
   // as lesson-pane disclosures straight from the content bundle.
   const callPartnerRoute = useCallback(
-    async (action: PartnerAction, message?: string) => {
+    async (action: PartnerAction, message?: string): Promise<boolean> => {
       setLoading(true);
       setError(null);
+      setErrorKind(null);
       setSpendCapped(false);
       try {
         const res = await fetch(PARTNER_ROUTE, {
@@ -199,27 +220,32 @@ export function useAiPartner({
         });
 
         if (!res.ok) {
+          let body: ErrorBody = {};
+          try {
+            body = ((await res.json()) ?? {}) as ErrorBody;
+          } catch {
+            // Non-JSON error body → generic, unbilled handling below.
+          }
+
           // The daily spend cap (#591) returns 503 with `spendCapped: true`.
           // Surface it as its own state so the pane shows dedicated localized
           // copy ("tutor at capacity today") rather than the generic error.
-          if (res.status === 503) {
-            try {
-              const body: unknown = await res.json();
-              if (
-                typeof body === "object" &&
-                body !== null &&
-                "spendCapped" in body &&
-                (body as { spendCapped?: unknown }).spendCapped === true
-              ) {
-                setSpendCapped(true);
-                return;
-              }
-            } catch {
-              // Non-JSON 503 → fall through to the generic error below.
-            }
+          if (res.status === 503 && body.spendCapped === true) {
+            setSpendCapped(true);
+            return false;
+          }
+
+          // A failure the model was still billed for spends a ladder turn
+          // server-side (route: `billed: true`). Advance the mirror here too,
+          // or the meter silently lags until the next reload.
+          if (body.billed === true) {
+            setCounts(advanceCounts);
+            setErrorKind(body.reason === "no_change" ? "noChange" : "billed");
+          } else {
+            setErrorKind("generic");
           }
           setError(`Request failed (${res.status})`);
-          return;
+          return false;
         }
 
         const reply: PartnerRouteReply = await res.json();
@@ -229,13 +255,16 @@ export function useAiPartner({
           // count mirror when it reports the real numbers.
           if (isCounts(reply.counts)) setCounts(reply.counts);
           setServerExhausted(true);
-          return;
+          return false;
         }
 
         setCounts(advanceCounts);
         setMessages((prev) => [...prev, { role: "ai", response: reply }]);
+        return true;
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "Network error");
+        setErrorKind("generic");
+        return false;
       } finally {
         setLoading(false);
       }
@@ -257,9 +286,10 @@ export function useAiPartner({
   // Post-pass idiomatic review (LX-C9). A paid action like propose/ask — it
   // spends an assist and appends the AI review to the chat. The caller gates
   // this on a passing run; the route is agnostic to that (it grades nothing).
-  const review = useCallback(async () => {
-    await callPartnerRoute("review");
-  }, [callPartnerRoute]);
+  const review = useCallback(
+    async () => await callPartnerRoute("review"),
+    [callPartnerRoute]
+  );
 
   const ask = useCallback(
     async (message: string) => {
@@ -350,6 +380,7 @@ export function useAiPartner({
     resetAvailableAt,
     loading,
     error,
+    errorKind,
     proposeFix,
     ask,
     review,
