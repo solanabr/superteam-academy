@@ -71,6 +71,25 @@ describe("isDynamicRateLimitError", () => {
     );
     expect(isDynamicRateLimitError(null)).toBe(false);
   });
+
+  it("defers to session expiry when a 429 also carries UnauthorizedError", () => {
+    const ambiguous = Object.assign(new Error("Unauthorized"), {
+      name: "UnauthorizedError",
+      status: 429,
+    });
+    expect(isDynamicRateLimitError(ambiguous)).toBe(false);
+  });
+
+  it("defers to session expiry when it arrives wrapped in cause", () => {
+    const wrapped = Object.assign(new Error("Rate limited"), {
+      name: "WalletApiError",
+      status: 429,
+      cause: Object.assign(new Error("Session ended"), {
+        name: "UnauthorizedError",
+      }),
+    });
+    expect(isDynamicRateLimitError(wrapped)).toBe(false);
+  });
 });
 
 describe("rateLimitDelayMs", () => {

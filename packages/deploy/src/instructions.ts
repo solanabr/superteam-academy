@@ -106,3 +106,35 @@ export function createCloseBufferInstruction(
     data,
   });
 }
+
+/**
+ * Move the upgrade authority of a ProgramData (or buffer) account.
+ *
+ * Loader v3 variant 4, `SetAuthority`, whose account list is
+ * `[buffer-or-programdata (writable), current authority (signer), new
+ * authority]` — the NEW authority does not sign, which is the whole reason a
+ * session-key upload can hand ownership to a learner whose wallet signs only
+ * once. The ProgramData layout this writes into is the one
+ * `apps/web/src/lib/solana/verify-program-deploy.ts` reads back:
+ * tag(u32) | slot(u64) | Option<Pubkey> authority — so a confirmed
+ * SetAuthority is exactly what makes `verifyProgramDeployment(programId,
+ * learner)` return ok.
+ */
+export function createSetAuthorityInstruction(
+  programDataAddress: PublicKey,
+  currentAuthorityAddress: PublicKey,
+  newAuthorityAddress: PublicKey
+): TransactionInstruction {
+  const data = Buffer.alloc(4);
+  data.writeUInt32LE(4, 0); // variant 4: SetAuthority
+
+  return new TransactionInstruction({
+    keys: [
+      { pubkey: programDataAddress, isSigner: false, isWritable: true },
+      { pubkey: currentAuthorityAddress, isSigner: true, isWritable: false },
+      { pubkey: newAuthorityAddress, isSigner: false, isWritable: false },
+    ],
+    programId: BPF_LOADER_UPGRADEABLE_ID,
+    data,
+  });
+}

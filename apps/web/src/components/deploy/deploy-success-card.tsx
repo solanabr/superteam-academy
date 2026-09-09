@@ -23,6 +23,9 @@ interface DeploySuccessCardProps {
   nextLessonHref: string | null;
   /** The server-record status, rendered under the stats. */
   saveStatusSlot?: ReactNode;
+  /** A warning that needs attention even though the deploy itself succeeded —
+   *  e.g. the session key's leftover-rent sweep failed and needs a retry. */
+  noticeSlot?: ReactNode;
 }
 
 const EXPLORER_BASE = "https://explorer.solana.com";
@@ -45,6 +48,7 @@ export function DeploySuccessCard({
   onSubmit,
   nextLessonHref,
   saveStatusSlot,
+  noticeSlot,
 }: DeploySuccessCardProps) {
   const t = useTranslations("deploy.deployment");
   const [copied, setCopied] = useState(false);
@@ -115,6 +119,8 @@ export function DeploySuccessCard({
             </div>
           </dl>
         )}
+
+        {noticeSlot}
 
         {saveStatusSlot}
 

@@ -25,7 +25,10 @@ vi.mock("@/hooks/use-deploy-signer", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/hooks/use-deploy-signer")>()),
   useDeploySigner: () => ({
     status: "ready",
-    kind: "embedded",
+    // The adapter path — this suite is about the generic pause/rebuild/error
+    // states, which are shared with the embedded (session-key) path covered
+    // separately in deploy-panel-signer.test.tsx.
+    kind: "adapter",
     signer: {
       publicKey: h.publicKey,
       signTransaction: vi.fn(),
@@ -48,7 +51,8 @@ vi.mock("@/lib/auth/auth-provider", () => ({
   }),
 }));
 
-vi.mock("@superteam-lms/deploy", () => ({
+vi.mock("@superteam-lms/deploy", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@superteam-lms/deploy")>()),
   deployProgram: h.deployProgram,
   resumeDeployment: vi.fn(),
   getCachedBinaryLength: () => null,

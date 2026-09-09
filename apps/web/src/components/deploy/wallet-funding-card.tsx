@@ -3,7 +3,10 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useConnection } from "@solana/wallet-adapter-react";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
-import { createAirdropRequest } from "@superteam-lms/deploy";
+import {
+  createAirdropRequest,
+  MAX_RETRY_AFTER_SECONDS,
+} from "@superteam-lms/deploy";
 import { useTranslations } from "next-intl";
 import { ArrowClockwise, Wallet } from "@phosphor-icons/react";
 import {
@@ -109,13 +112,22 @@ export function WalletFundingCard({
       setToast(t("airdropSuccess", { amount: "2" }));
       setCooldown(COOLDOWN_SECONDS);
     } else {
+      // Capped again here, defensively — `createAirdropRequest` already caps
+      // what it parses out of the faucet body, but the cooldown timer should
+      // never trust an unbounded number even if that changes upstream.
+      const retryAfter = result.retryAfterSeconds
+        ? Math.min(result.retryAfterSeconds, MAX_RETRY_AFTER_SECONDS)
+        : undefined;
       setAirdropError(
         toFriendlyError(
           result.rateLimited ? "rate limited" : (result.error ?? ""),
-          { source: "airdrop", retryAfterSeconds: result.retryAfterSeconds }
+          {
+            source: "airdrop",
+            retryAfterSeconds: retryAfter,
+          }
         )
       );
-      if (result.rateLimited) setCooldown(result.retryAfterSeconds ?? 60);
+      if (result.rateLimited) setCooldown(retryAfter ?? 60);
     }
 
     airdropRef.current = false;
@@ -208,7 +220,21 @@ export function WalletFundingCard({
           )}
         </div>
 
-        {airdropError && <DeployErrorNotice error={airdropError} />}
+        {airdropError && (
+          <div className="space-y-1">
+            <DeployErrorNotice error={airdropError} />
+            {/* Usable even while the airdrop button is cooling down — the
+                faucet imposes its own limit, not this button's. */}
+            <a
+              href={FAUCET_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block text-xs font-medium text-primary hover:underline"
+            >
+              faucet.solana.com
+            </a>
+          </div>
+        )}
 
         {toast && (
           <p role="status" aria-live="polite" className="text-sm text-success">
@@ -226,7 +252,7 @@ export function WalletFundingCard({
             {isAirdropping
               ? t("requesting")
               : cooldown > 0
-                ? t("cooldown", { seconds: String(cooldown) })
+                ? `${t("requestAirdrop")} (${cooldown}s)`
                 : t("requestAirdrop")}
           </Button>
           <Button onClick={handleOpenFaucet} variant="outline">

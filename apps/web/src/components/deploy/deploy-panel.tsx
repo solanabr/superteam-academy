@@ -3,11 +3,20 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useConnection } from "@solana/wallet-adapter-react";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import bs58 from "bs58";
 import {
+  createFundingTransfer,
   deployProgram,
   estimateDeployCost,
+  estimateSessionKeyDeployCost,
   getCachedBinaryLength,
+  isResumableDeploymentState,
+  OwnershipTransferError,
   resumeDeployment,
+  runSessionKeyDeploy,
+  startOverSessionKey,
+  sweepSessionKey,
+  transferProgramAuthority,
   type DeploymentCallbacks,
   type DeploymentState,
   type DeployResult,
@@ -35,6 +44,15 @@ import {
   DEPLOY_PANEL_ANCHOR_ID,
   revealElement,
 } from "@/lib/deploy/scroll";
+import type { DeployPhase } from "@/lib/deploy/progress";
+import {
+  clearDeployState,
+  decryptSessionKey,
+  encryptSessionKey,
+  readDeployState,
+  writeDeployState,
+  type StoredDeployState,
+} from "@/lib/deploy/session-key-storage";
 import { useDeployFlow } from "@/hooks/use-deploy-flow";
 import { useDeploySigner } from "@/hooks/use-deploy-signer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -70,7 +88,7 @@ interface DeployPanelProps {
 }
 
 interface TxLogEntry extends DeployLogEntry {
-  step: DeployStep;
+  step: DeployPhase;
   timestamp: number;
 }
 
@@ -80,65 +98,8 @@ type PanelState = "ready" | "deploying" | "success" | "paused" | "error";
 const REQUEST_SUBMIT_EVENT = "superteam:request-submit";
 
 // ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-const STORAGE_PREFIX = "deploy-state-";
-
-// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-/**
- * Saved deploy state is scoped by wallet, like the localStorage keys below: a
- * resume replays a buffer the PAYER owns, so offering one learner's paused
- * deploy to the next wallet on the same browser is both a leak and a resume
- * that cannot succeed. With no wallet resolved there is no key, so nothing is
- * read or written — by the time a deploy runs there is always a signer.
- */
-function sessionKey(buildUuid: string, walletPrefix: string): string | null {
-  if (!walletPrefix) return null;
-  return `${STORAGE_PREFIX}${walletPrefix}-${buildUuid}`;
-}
-
-function loadSavedState(
-  buildUuid: string,
-  walletPrefix: string
-): DeploymentState | null {
-  const key = sessionKey(buildUuid, walletPrefix);
-  if (!key) return null;
-  try {
-    const raw = sessionStorage.getItem(key);
-    if (!raw) return null;
-    return JSON.parse(raw) as DeploymentState;
-  } catch {
-    return null;
-  }
-}
-
-function savePersistentState(
-  buildUuid: string,
-  walletPrefix: string,
-  state: DeploymentState
-): void {
-  const key = sessionKey(buildUuid, walletPrefix);
-  if (!key) return;
-  try {
-    sessionStorage.setItem(key, JSON.stringify(state));
-  } catch {
-    // sessionStorage full or unavailable — non-critical
-  }
-}
-
-function clearSavedState(buildUuid: string, walletPrefix: string): void {
-  const key = sessionKey(buildUuid, walletPrefix);
-  if (!key) return;
-  try {
-    sessionStorage.removeItem(key);
-  } catch {
-    // ignore
-  }
-}
 
 /**
  * The signer, with per-batch signing time logged outside production.
@@ -189,7 +150,7 @@ export function DeployPanel({
   // the capstone credential gate) once the save succeeds (#622). Separate from
   // panelState, which tracks the on-chain deploy itself.
   const [saveStatus, setSaveStatus] = useState<SaveStatus | "idle">("idle");
-  const [currentStep, setCurrentStep] = useState<DeployStep>("buffer");
+  const [currentStep, setCurrentStep] = useState<DeployPhase>("buffer");
   const [chunkCurrent, setChunkCurrent] = useState(0);
   const [chunkTotal, setChunkTotal] = useState(0);
   const [txLog, setTxLog] = useState<TxLogEntry[]>([]);
@@ -209,6 +170,28 @@ export function DeployPanel({
   const [costLamports, setCostLamports] = useState<number | null>(null);
   const [balanceLamports, setBalanceLamports] = useState<number | null>(null);
   const fundingTrackedRef = useRef(false);
+  // Session-key upload (embedded wallets): the local key that pays for and
+  // signs the whole upload after the wallet's single funding signature.
+  const sessionSecretRef = useRef<number[] | null>(null);
+  const [sessionAddress, setSessionAddress] = useState<string | null>(null);
+  // The deploy landed but the upgrade authority is still the session key —
+  // the learner does not own it yet and the server record is refused.
+  const [claim, setClaim] = useState<DeployResult | null>(null);
+  const [refundFailed, setRefundFailed] = useState(false);
+  // A reload took the wrapping nonce with it, so the key that holds the
+  // learner's SOL can no longer be signed with. Its address is all that is
+  // left, and the panel keeps showing it until a new deploy replaces it.
+  const [lostSessionAddress, setLostSessionAddress] = useState<string | null>(
+    null
+  );
+  const lostSessionAddressRef = useRef<string | null>(null);
+  const [lostCopied, setLostCopied] = useState(false);
+  // A start-over sweep that rejected. Held so "retry refund" has a key to
+  // sweep WITH — `resetSession` runs before the sweep settles.
+  const strandedSweepRef = useRef<{
+    secret: number[];
+    bufferKeypairSecret: number[] | null;
+  } | null>(null);
 
   const flow = useDeployFlow();
 
@@ -282,6 +265,63 @@ export function DeployPanel({
   // Wallet-scoped localStorage key prefix to prevent cross-user cache leaks
   const walletPrefix = publicKey ? publicKey.toBase58().slice(0, 8) : "";
 
+  // An embedded wallet signs through Dynamic's rate-limited MPC service, so it
+  // signs ONE transaction (the funding transfer) and a local session key signs
+  // the rest. Extension wallets are unchanged: they sign their own batches.
+  const isEmbedded = signerKind === "embedded";
+
+  // Everything worth resuming, in one record: the upload offset and the
+  // encrypted session key that owns the buffer that offset points into.
+  const storedRef = useRef<StoredDeployState>({
+    deployment: null,
+    session: null,
+    sessionAddress: null,
+    fundingSignature: null,
+  });
+
+  const persistStored = useCallback(() => {
+    writeDeployState(buildUuid, walletPrefix, storedRef.current);
+  }, [buildUuid, walletPrefix]);
+
+  const rememberLostAddress = useCallback((address: string | null) => {
+    lostSessionAddressRef.current = address;
+    setLostSessionAddress(address);
+  }, []);
+
+  /**
+   * Drop the saved deploy, keeping the stranded key's address if there is one.
+   * That address is not UI state — it is the only record of where a reload sent
+   * the learner's SOL, and it outlives the deploy that created it.
+   */
+  const clearStored = useCallback(() => {
+    const lost = lostSessionAddressRef.current;
+    if (!lost) {
+      clearDeployState(buildUuid, walletPrefix);
+      return;
+    }
+    storedRef.current = {
+      deployment: null,
+      session: null,
+      sessionAddress: lost,
+      fundingSignature: null,
+    };
+    writeDeployState(buildUuid, walletPrefix, storedRef.current);
+  }, [buildUuid, walletPrefix]);
+
+  const resetSession = useCallback(() => {
+    sessionSecretRef.current = null;
+    strandedSweepRef.current = null;
+    setSessionAddress(null);
+    setClaim(null);
+    setRefundFailed(false);
+    storedRef.current = {
+      deployment: null,
+      session: null,
+      sessionAddress: null,
+      fundingSignature: null,
+    };
+  }, []);
+
   // Pre-flight wallet check: the server records a deploy against the LINKED
   // wallet (profiles.wallet_address), while the deploy signs with the CONNECTED
   // wallet. When they differ, a successful deploy can't be recorded and the
@@ -317,7 +357,11 @@ export function DeployPanel({
     (async () => {
       try {
         const [estimate, lamports] = await Promise.all([
-          estimateDeployCost(connection, programLen),
+          // The embedded path funds a session key, which then pays for two more
+          // transactions of its own — gate on what will actually be transferred.
+          isEmbedded
+            ? estimateSessionKeyDeployCost(connection, programLen)
+            : estimateDeployCost(connection, programLen),
           connection.getBalance(payer, "confirmed"),
         ]);
         if (cancelled) return;
@@ -331,7 +375,7 @@ export function DeployPanel({
     return () => {
       cancelled = true;
     };
-  }, [gateActive, signer, connection, buildUuid]);
+  }, [gateActive, signer, connection, buildUuid, isEmbedded]);
 
   const shortfallLamports =
     costLamports !== null && balanceLamports !== null
@@ -463,14 +507,86 @@ export function DeployPanel({
     };
   }, [lessonId, courseId, courseSlug, walletPrefix]);
 
-  // Check for resumable state on mount
+  // Check for resumable state on mount.
+  //
+  // sessionStorage is writable by anything on this origin, and a resume replays
+  // rent-paying transactions against the accounts the state names, so the state
+  // is validated against this build and its injected program keypair before it
+  // is offered — and dropped, not repaired, when it fails.
   useEffect(() => {
-    const existing = loadSavedState(buildUuid, walletPrefix);
-    if (existing && existing.phase !== "complete") {
-      setSavedState(existing);
-      setPanelState("paused");
+    let cancelled = false;
+    const stored = readDeployState(buildUuid, walletPrefix);
+    if (!stored) return;
+
+    const deployment = stored.deployment;
+    const resumable =
+      deployment &&
+      deployment.phase !== "complete" &&
+      isResumableDeploymentState(deployment, {
+        buildUuid,
+        programKeypairSecret,
+      });
+
+    // Dropped without waiting on the decrypt: a state that is neither
+    // resumable nor attached to a funded key has nothing worth reading.
+    if (!resumable && !(stored.session && stored.fundingSignature)) {
+      clearDeployState(buildUuid, walletPrefix);
+      return;
     }
-  }, [buildUuid, walletPrefix]);
+
+    (async () => {
+      // No session key means the adapter path (or a reload that took the
+      // wrapping nonce with it): a session-key deploy cannot resume without it.
+      const secret = stored.session
+        ? await decryptSessionKey(stored.session, buildUuid)
+        : null;
+      if (cancelled) return;
+
+      // A reload. The key is unrecoverable, but it is where the learner's SOL
+      // went — so the record is kept down to its address, and shown, rather
+      // than deleted along with the only way to find the funds again.
+      if (stored.session && !secret) {
+        if (!stored.sessionAddress) {
+          clearDeployState(buildUuid, walletPrefix);
+          return;
+        }
+        storedRef.current = {
+          deployment: null,
+          session: null,
+          sessionAddress: stored.sessionAddress,
+          fundingSignature: stored.fundingSignature,
+        };
+        writeDeployState(buildUuid, walletPrefix, storedRef.current);
+        rememberLostAddress(stored.sessionAddress);
+        return;
+      }
+      // Nothing to resume from — but a key with a funding signature against it
+      // is a key an earlier attempt may have paid into, and the offset is not
+      // what makes it worth keeping. Keep it (and only it, never the state that
+      // failed validation) so the next Deploy carries it over instead of
+      // transferring a second time.
+      if (!resumable) {
+        if (!secret) {
+          clearDeployState(buildUuid, walletPrefix);
+          return;
+        }
+        sessionSecretRef.current = secret;
+        setSessionAddress(stored.sessionAddress);
+        storedRef.current = { ...stored, deployment: null };
+        writeDeployState(buildUuid, walletPrefix, storedRef.current);
+        return;
+      }
+      sessionSecretRef.current = secret;
+      setSessionAddress(stored.sessionAddress);
+      storedRef.current = stored;
+      setSavedState(deployment);
+      setPanelState("paused");
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [buildUuid, walletPrefix, programKeypairSecret, rememberLostAddress]);
 
   // Build deployment callbacks
   const buildCallbacks = useCallback((): DeploymentCallbacks => {
@@ -508,14 +624,31 @@ export function DeployPanel({
         setPanelState(error.retryable ? "paused" : "error");
       },
       onStateUpdate: (state: DeploymentState) => {
-        savePersistentState(buildUuid, walletPrefix, state);
+        storedRef.current = { ...storedRef.current, deployment: state };
+        persistStored();
         setSavedState(state);
       },
       onBatchStart: () => {
         setAutoRetrySeconds(null);
       },
     };
-  }, [buildUuid, walletPrefix, shortfallSol]);
+  }, [persistStored, shortfallSol]);
+
+  /**
+   * The embedded path's own callbacks: identical, except the upload finishing
+   * is not the deploy finishing. The session key still owns the program until
+   * the SetAuthority + sweep below run, so the package's terminal "complete"
+   * becomes the transfer phase here instead of flipping the panel to success.
+   */
+  const buildEmbeddedCallbacks = useCallback((): DeploymentCallbacks => {
+    const base = buildCallbacks();
+    return {
+      ...base,
+      onStepChange: (step: DeployStep) => {
+        setCurrentStep(step === "complete" ? "transfer" : step);
+      },
+    };
+  }, [buildCallbacks]);
 
   // Persist the deploy to the server (source of truth for the credential
   // gate), retrying transient failures with backoff and surfacing the outcome
@@ -546,7 +679,8 @@ export function DeployPanel({
       setResult(deployResult);
       setPanelState("success");
       setAutoRetrySeconds(null);
-      clearSavedState(buildUuid, walletPrefix);
+      setClaim(null);
+      clearStored();
 
       // Save program ID + stats to localStorage for use in later lessons and refresh.
       // Keys are scoped by wallet to prevent cross-user cache leaks.
@@ -588,7 +722,7 @@ export function DeployPanel({
       // failed save is surfaced with a retry, never silently swallowed (#622).
       runSave(deployResult);
     },
-    [buildUuid, courseSlug, lessonId, walletPrefix, runSave, signerKind]
+    [clearStored, courseSlug, lessonId, walletPrefix, runSave, signerKind]
   );
 
   /** Shared failure handling for both the fresh deploy and the resume. */
@@ -625,9 +759,295 @@ export function DeployPanel({
     [signerKind, shortfallSol]
   );
 
+  /**
+   * The learner's single signature: a transfer of the estimated cost into the
+   * session key. Built with the learner as payer so the fee is theirs too.
+   */
+  const fundSessionKey = useCallback(
+    async (
+      lamports: number,
+      to: PublicKey,
+      onSignature: (signature: string) => void
+    ): Promise<string> => {
+      if (!signer?.publicKey) throw new Error("Wallet not connected");
+      const { blockhash } = await connection.getLatestBlockhash("confirmed");
+      const tx = createFundingTransfer({
+        learner: signer.publicKey,
+        sessionKey: to,
+        lamports,
+        blockhash,
+      });
+      const signed = await signer.signTransaction(tx);
+      // The signature exists as soon as the wallet signs, and a send that
+      // throws can still have reached the cluster. Report it BEFORE
+      // broadcasting, so a retry can ask what happened instead of transferring
+      // a second time.
+      if (signed.signature) onSignature(bs58.encode(signed.signature));
+      return connection.sendRawTransaction(signed.serialize());
+    },
+    [signer, connection]
+  );
+
+  /** One log line per phase, alongside the per-chunk lines from the package. */
+  const logPhase = useCallback(
+    (signature: string, step: DeployPhase, message: string) => {
+      setTxLog((prev) => [
+        ...prev,
+        { signature, step, message, timestamp: Date.now() },
+      ]);
+    },
+    []
+  );
+
+  /** Deploy (or resume) through a local session key — the embedded path. */
+  const runEmbedded = useCallback(
+    async (resume: { state: DeploymentState; secret: number[] } | null) => {
+      if (!signer?.publicKey) return;
+      const learner = signer.publicKey;
+
+      // A "fresh" deploy that follows an attempt which already funded a key is
+      // not fresh: that key holds the learner's SOL. Generating a new one over
+      // it would transfer a second time and orphan the first, so the key is
+      // carried over and `runSessionKeyDeploy` decides from the chain whether
+      // it still needs funding at all.
+      const carryOver =
+        !resume && sessionSecretRef.current
+          ? {
+              secret: sessionSecretRef.current,
+              fundingSignature: storedRef.current.fundingSignature,
+            }
+          : null;
+
+      setPanelState("deploying");
+      setFriendlyError(null);
+      setSessionExpired(false);
+      setRefundFailed(false);
+      setClaim(null);
+      startTimeRef.current = Date.now();
+      setElapsed(0);
+      if (resume) {
+        setChunkCurrent(resume.state.lastUploadedChunk + 1);
+        setChunkTotal(resume.state.totalChunks);
+      } else {
+        setTxLog([]);
+        setChunkCurrent(0);
+        setChunkTotal(0);
+        setResult(null);
+        setSaveStatus("idle");
+        saveCancelledRef.current = true;
+        // A fresh run gets a fresh key; leaving the previous run's buffer in
+        // the record would offer a resume pairing a new key with an old buffer.
+        storedRef.current = carryOver
+          ? {
+              deployment: null,
+              session: storedRef.current.session,
+              sessionAddress: storedRef.current.sessionAddress,
+              fundingSignature: storedRef.current.fundingSignature,
+            }
+          : {
+              deployment: null,
+              session: null,
+              sessionAddress: null,
+              fundingSignature: null,
+            };
+      }
+
+      trackEvent("deploy_started", {
+        signerKind,
+        batchSize: null,
+        resumed: Boolean(resume),
+      });
+
+      try {
+        const deployResult = await runSessionKeyDeploy({
+          connection,
+          learner,
+          buildUuid,
+          fund: fundSessionKey,
+          callbacks: buildEmbeddedCallbacks(),
+          programKeypairSecret,
+          persistedSessionKey: resume?.secret ?? carryOver?.secret ?? null,
+          resumeState: resume?.state ?? null,
+          pendingFundingSignature: carryOver?.fundingSignature ?? null,
+          events: {
+            onSessionKey: async (secret, sessionPubkey) => {
+              // Persisted BEFORE the transfer: a crash right after it would
+              // otherwise strand the funds with no key left to spend them.
+              sessionSecretRef.current = secret;
+              setSessionAddress(sessionPubkey.toBase58());
+              // This record now names a key that CAN be signed with.
+              rememberLostAddress(null);
+              const ciphertext = await encryptSessionKey(secret, buildUuid);
+              storedRef.current = {
+                ...storedRef.current,
+                session: ciphertext,
+                sessionAddress: sessionPubkey.toBase58(),
+              };
+              persistStored();
+            },
+            onFundingBroadcast: ({ signature }) => {
+              storedRef.current = {
+                ...storedRef.current,
+                fundingSignature: signature,
+              };
+              persistStored();
+            },
+            onFunded: ({ lamports, signature }) => {
+              trackEvent("deploy_session_key_funded", {
+                signerKind,
+                lamports,
+              });
+              logPhase(signature, "buffer", t("logFunded"));
+            },
+            onOwnershipTransferred: ({ signature }) => {
+              setCurrentStep("refund");
+              trackEvent("deploy_ownership_transferred", {
+                signerKind,
+                lamports: costLamports ?? 0,
+              });
+              logPhase(signature, "finalize", t("logOwnershipTransferred"));
+            },
+            onRefunded: ({ signature, lamports }) => {
+              trackEvent("deploy_refunded", { signerKind, lamports });
+              logPhase(signature, "complete", t("logRefunded"));
+            },
+            onRefundFailed: () => setRefundFailed(true),
+          },
+        });
+
+        handleSuccess(deployResult);
+      } catch (err) {
+        // The deploy landed but ownership did not move: the program is live and
+        // paid for, so this is a claim-ownership retry, not a failed deploy.
+        if (err instanceof OwnershipTransferError) {
+          // The secret is already in `sessionSecretRef` (persisted from
+          // `onSessionKey`); the error carries only addresses.
+          setSessionAddress(err.sessionKeyAddress.toBase58());
+          setClaim(err.deployResult);
+          setPanelState("paused");
+          return;
+        }
+        handleFailure(err, resume ? "resume" : "deploy");
+      }
+    },
+    [
+      signer,
+      signerKind,
+      connection,
+      buildUuid,
+      programKeypairSecret,
+      fundSessionKey,
+      buildEmbeddedCallbacks,
+      handleSuccess,
+      handleFailure,
+      logPhase,
+      persistStored,
+      rememberLostAddress,
+      costLamports,
+      t,
+    ]
+  );
+
+  /** Re-run only the SetAuthority step after it failed post-deploy. */
+  const handleClaimOwnership = useCallback(async () => {
+    const secret = sessionSecretRef.current;
+    if (!claim || !secret || !signer?.publicKey) return;
+    const learner = signer.publicKey;
+    setFriendlyError(null);
+    try {
+      const signature = await transferProgramAuthority({
+        connection,
+        sessionKeySecret: secret,
+        programId: claim.programIdPubkey,
+        newAuthority: learner,
+      });
+      trackEvent("deploy_ownership_transferred", {
+        signerKind,
+        lamports: costLamports ?? 0,
+      });
+      logPhase(signature, "finalize", t("logOwnershipTransferred"));
+
+      try {
+        const refund = await sweepSessionKey({
+          connection,
+          sessionKeySecret: secret,
+          destination: learner,
+        });
+        if (refund) {
+          trackEvent("deploy_refunded", {
+            signerKind,
+            lamports: refund.lamports,
+          });
+          logPhase(refund.signature, "complete", t("logRefunded"));
+        }
+      } catch {
+        setRefundFailed(true);
+      }
+
+      handleSuccess(claim);
+    } catch (err) {
+      setFriendlyError(toFriendlyError(err, { shortfallSol }));
+    }
+  }, [
+    claim,
+    signer,
+    signerKind,
+    connection,
+    costLamports,
+    handleSuccess,
+    logPhase,
+    t,
+    shortfallSol,
+  ]);
+
+  /**
+   * Retry a sweep that failed — after a complete deploy, or after a start over.
+   *
+   * Those need different transactions: a start over still has a buffer holding
+   * rent, so it retries the close-and-sweep, not the sweep alone. Which one is
+   * decided by whether `handleStartOver` left a stranded key behind.
+   */
+  const handleRetryRefund = useCallback(async () => {
+    const stranded = strandedSweepRef.current;
+    const secret = stranded?.secret ?? sessionSecretRef.current;
+    if (!secret || !signer?.publicKey) return;
+    const destination = signer.publicKey;
+    try {
+      const refund = stranded
+        ? (
+            await startOverSessionKey({
+              connection,
+              sessionKeySecret: secret,
+              bufferKeypairSecret: stranded.bufferKeypairSecret,
+              destination,
+            })
+          ).refund
+        : await sweepSessionKey({
+            connection,
+            sessionKeySecret: secret,
+            destination,
+          });
+      if (refund) {
+        trackEvent("deploy_refunded", {
+          signerKind,
+          lamports: refund.lamports,
+        });
+      }
+      strandedSweepRef.current = null;
+      setRefundFailed(false);
+      setSessionAddress(null);
+    } catch {
+      // Still failing — the warning stays, with its retry.
+    }
+  }, [signer, signerKind, connection]);
+
   // Deploy handler
   const handleDeploy = useCallback(async () => {
     if (!signer || needsFunding) return;
+    if (isEmbedded) {
+      await runEmbedded(null);
+      return;
+    }
 
     setPanelState("deploying");
     setTxLog([]);
@@ -670,11 +1090,26 @@ export function DeployPanel({
     buildCallbacks,
     handleSuccess,
     handleFailure,
+    isEmbedded,
+    runEmbedded,
   ]);
 
   // Resume handler
   const handleResume = useCallback(async () => {
     if (!signer || !savedState) return;
+    if (isEmbedded) {
+      const secret = sessionSecretRef.current;
+      // Without the session key there is nothing to resume WITH: the buffer's
+      // authority is that key, so the panel falls back to naming the stranded
+      // address rather than pretending a resume is possible.
+      if (!secret) {
+        rememberLostAddress(sessionAddress);
+        setPanelState("paused");
+        return;
+      }
+      await runEmbedded({ state: savedState, secret });
+      return;
+    }
 
     setPanelState("deploying");
     setFriendlyError(null);
@@ -709,14 +1144,52 @@ export function DeployPanel({
     batchSize,
     connection,
     savedState,
+    sessionAddress,
     buildCallbacks,
     handleSuccess,
     handleFailure,
+    isEmbedded,
+    runEmbedded,
+    rememberLostAddress,
   ]);
 
   // Start over handler
   const handleStartOver = useCallback(() => {
-    clearSavedState(buildUuid, walletPrefix);
+    // A session key that is about to be discarded still holds the learner's
+    // SOL, and its buffer still holds rent. Close and sweep before the key is
+    // gone; both are best effort — a devnet balance must not block a retry.
+    const secret = sessionSecretRef.current;
+    if (secret && signer?.publicKey) {
+      const destination = signer.publicKey;
+      const address = sessionAddress;
+      const bufferKeypairSecret =
+        storedRef.current.deployment?.bufferKeypairSecret ?? null;
+      void startOverSessionKey({
+        connection,
+        sessionKeySecret: secret,
+        bufferKeypairSecret,
+        destination,
+      })
+        .then((outcome) => {
+          if (outcome.refund) {
+            trackEvent("deploy_refunded", {
+              signerKind,
+              lamports: outcome.refund.lamports,
+            });
+          }
+        })
+        .catch(() => {
+          // The reset below has already run, so the retry would have no key to
+          // sweep with. Hand it this one back, along with the address the
+          // warning names.
+          strandedSweepRef.current = { secret, bufferKeypairSecret };
+          setSessionAddress(address);
+          setRefundFailed(true);
+        });
+    }
+
+    clearStored();
+    resetSession();
     setSavedState(null);
     setPanelState("ready");
     setTxLog([]);
@@ -728,7 +1201,14 @@ export function DeployPanel({
     setCurrentStep("buffer");
     setSaveStatus("idle");
     saveCancelledRef.current = true;
-  }, [buildUuid, walletPrefix]);
+  }, [
+    clearStored,
+    connection,
+    signer,
+    signerKind,
+    sessionAddress,
+    resetSession,
+  ]);
 
   const handleRebuild = useCallback(() => {
     handleStartOver();
@@ -743,6 +1223,51 @@ export function DeployPanel({
       new CustomEvent(REQUEST_SUBMIT_EVENT, { detail: { lessonId } })
     );
   }, [lessonId]);
+
+  const handleCopyLostAddress = useCallback(async () => {
+    if (!lostSessionAddress) return;
+    try {
+      await navigator.clipboard.writeText(lostSessionAddress);
+      setLostCopied(true);
+      setTimeout(() => setLostCopied(false), 2000);
+    } catch {
+      // clipboard API unavailable
+    }
+  }, [lostSessionAddress]);
+
+  /**
+   * The sweep is the one step allowed to fail without failing the deploy: the
+   * program is live and owned by the learner either way. Rendered wherever the
+   * panel can land after a failed sweep — success AND, after a start over,
+   * ready — so the retry is never a button on a screen nobody reaches.
+   */
+  const refundWarning = refundFailed ? (
+    <div className="flex flex-wrap items-center gap-2 rounded-md border-2 border-[color:var(--ink-line)] bg-accent-bg p-3 text-xs text-text">
+      <span className="flex-1">
+        {t("refundFailed", { address: sessionAddress ?? "" })}
+      </span>
+      <Button size="sm" variant="secondary" onClick={handleRetryRefund}>
+        {t("retryRefund")}
+      </Button>
+    </div>
+  ) : null;
+
+  /**
+   * A reload took the key that holds the learner's SOL. Nothing here can spend
+   * it, so the panel does the one useful thing left: name the account, in a
+   * form they can copy into a wallet or the explorer.
+   */
+  const lostKeyNotice = lostSessionAddress ? (
+    <div
+      role="alert"
+      className="space-y-2 rounded-md border-2 border-[color:var(--ink-line)] bg-accent-bg p-3 text-xs text-text"
+    >
+      <p>{t("sessionKeyLost", { address: lostSessionAddress })}</p>
+      <Button size="sm" variant="secondary" onClick={handleCopyLostAddress}>
+        {lostCopied ? t("copied") : t("copyAddress")}
+      </Button>
+    </div>
+  ) : null;
 
   /** Everything renders inside this shell, so the anchor is always present. */
   const shell = (children: React.ReactNode) => (
@@ -771,6 +1296,7 @@ export function DeployPanel({
         isComplete={isCompleted}
         onSubmit={handleRequestSubmit}
         nextLessonHref={nextLessonHref}
+        noticeSlot={refundWarning}
         saveStatusSlot={
           <DeploySaveStatus
             ref={saveErrorRef}
@@ -835,7 +1361,7 @@ export function DeployPanel({
   if (panelState === "paused" || panelState === "error") {
     const action = friendlyError?.action ?? "resume";
     const isRebuild = action === "rebuild";
-    const canResume = Boolean(savedState) && !isRebuild;
+    const canResume = Boolean(savedState) && !isRebuild && !claim;
 
     return shell(
       <Card className="border-2 border-[color:var(--ink-line)]">
@@ -858,6 +1384,8 @@ export function DeployPanel({
                       : undefined
               }
             />
+          ) : claim ? (
+            <p className="text-sm text-text-2">{t("ownershipFailed")}</p>
           ) : (
             <p className="text-sm text-text-2">{t("pausedBody")}</p>
           )}
@@ -872,6 +1400,9 @@ export function DeployPanel({
             />
           )}
 
+          {lostKeyNotice}
+          {refundWarning}
+
           {needsReauth && (
             <LinkedWalletPrompt
               variant="reauth"
@@ -879,6 +1410,20 @@ export function DeployPanel({
               onReauth={startReauth}
               onDismiss={() => setReauthDismissed(true)}
             />
+          )}
+
+          {/* The program is deployed and paid for; only the authority handover
+              is missing, and it is the one step this button re-runs. */}
+          {claim && (
+            <div className="space-y-2 rounded-md border-2 border-[color:var(--ink-line)] bg-card p-3">
+              <p className="break-all font-mono text-xs">{claim.programId}</p>
+              <Button
+                onClick={() => void handleClaimOwnership()}
+                className="w-full"
+              >
+                {t("claimOwnership")}
+              </Button>
+            </div>
           )}
 
           <div className="flex flex-wrap gap-2">
@@ -934,7 +1479,12 @@ export function DeployPanel({
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-text-2">{t("description")}</p>
-        <p className="text-xs text-text-3">{t("batchExplainer")}</p>
+        <p className="text-xs text-text-3">
+          {isEmbedded ? t("sessionKeyNotice") : t("batchExplainer")}
+        </p>
+
+        {lostKeyNotice}
+        {refundWarning}
 
         {/* Pre-flight: warn (don't block) when this deploy won't be recorded
             against the wallet the learner is connected with. */}
