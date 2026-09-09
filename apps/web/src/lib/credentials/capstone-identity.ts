@@ -32,10 +32,11 @@
 // to this file. Do NOT pre-build a registry for one entry.
 //
 // DORMANT until track-1 restores (public alpha, 2026-08-04). C3 is parked under
-// `_draft/` in academy-courses, so neither id below is in the compiled bundle
-// and the alpha catalog hosts no `deployed-program-card` block at all. The
-// constant stays PINNED to C3 on purpose rather than being retargeted or
-// emptied:
+// `_draft/` in academy-courses, so neither id below is in the compiled bundle.
+// Alpha lessons may still host a `deployed-program-card` (the b2s deploy lesson
+// does): the gate is keyed on the COURSE, so such a lesson records a real
+// deploy without gating anybody's credential. The constant stays PINNED to C3
+// on purpose rather than being retargeted or emptied:
 //   - pinned, both predicates answer `false` for every live course/lesson, so
 //     the alpha catalog issues credentials ungated (correct — nothing in it is
 //     a graded deploy) and every alpha lesson keeps its AI partner;

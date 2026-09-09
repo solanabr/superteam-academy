@@ -60,11 +60,14 @@ describe("capstone-gate — dormant while the capstone course is parked", () => 
   // The capstone system is DORMANT for the public alpha: C3 is parked under
   // `_draft/` in academy-courses, so neither constant resolves against the
   // bundle (see the dormancy note in capstone-identity.ts). What must hold is
-  // that dormancy is total and fails closed — the alpha catalog must contain
-  // NO gated course and NO deploy panel, so nothing is half-gated. When
-  // track-1 restores, these flip back into the constants-match-the-bundle
-  // assertions this block replaced (course present, deploy lesson present and
-  // hosting the panel, lesson belongs to the course, exactly one panel).
+  // that dormancy is total and fails closed — no live course may be subject to
+  // the gate, so nothing is half-gated. The alpha catalog DOES host deploy
+  // panels now (academy-courses #61 gave the b2s deploy lesson a funding block
+  // and a `deployed-program-card`), which is safe precisely because the gate is
+  // keyed on the course: those lessons record a real deploy without gating
+  // anyone's credential on it. When track-1 restores, these flip back into the
+  // constants-match-the-bundle assertions this block replaced (course present,
+  // deploy lesson present and hosting the panel, lesson belongs to the course).
   const bundleCourseIds = coursesJson.map((c) => c._id);
   const deployPanelLessons = lessonsJson.filter((l) =>
     (l.blocks ?? []).some((b) => b._type === "deployed-program-card")
@@ -87,8 +90,26 @@ describe("capstone-gate — dormant while the capstone course is parked", () => 
     }
   });
 
-  it("no live lesson hosts a deploy panel", () => {
-    expect(deployPanelLessons.map((l) => l._id)).toEqual([]);
+  it("no deploy panel sits inside a gated course", () => {
+    const courseOfLesson = new Map<string, string>();
+    for (const course of coursesJson) {
+      for (const mod of course.modules ?? []) {
+        for (const ref of mod.lessons ?? []) {
+          if (ref._ref) courseOfLesson.set(ref._ref, course._id);
+        }
+      }
+    }
+    for (const lesson of deployPanelLessons) {
+      const courseId = courseOfLesson.get(lesson._id);
+      expect(
+        courseId,
+        `${lesson._id} belongs to no bundle course`
+      ).toBeDefined();
+      expect(
+        isCapstoneCourse(courseId!),
+        `deploy panel in "${lesson._id}" must not sit in a gated course`
+      ).toBe(false);
+    }
   });
 });
 
