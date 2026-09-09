@@ -1,0 +1,31 @@
+# Drop-in replacement for solanabr/academy-courses .github/workflows/validate-content.yml
+#
+# NOT a live workflow — it lives here as a patch to apply in the CONTENT repo,
+# which this repo does not push to. It is a `.yml` under docs/ deliberately, so
+# GitHub does not register it as a workflow of the monorepo.
+#
+# Why: gate 6 now compiles every `buildType: buildable` starter and solution
+# with cargo-build-sbf against apps/build-server/programs/Cargo.toml. The
+# toolchain install, the caches and the `require` mode that makes a missing
+# toolchain an error all live in the monorepo's reusable workflow
+# (.github/workflows/validate-content.yml), so the content repo stops carrying
+# its own copy of the steps and calls that instead — future changes to the gate
+# arrive without another PR here.
+#
+# `courses/_template` already carries the harness the oracle requires
+# (academy-courses #62) — this file is the only patch left to apply.
+
+name: validate-content
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  content-lint:
+    name: content-lint
+    uses: solanabr/superteam-academy/.github/workflows/validate-content.yml@main

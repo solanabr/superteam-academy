@@ -82,6 +82,7 @@ beforeEach(() => {
   h.celebrate.mockClear();
   postStatus = 200;
   localStorage.clear();
+  sessionStorage.clear();
   vi.stubGlobal(
     "fetch",
     vi.fn(async (_url: string, init?: RequestInit) => {
@@ -147,5 +148,43 @@ describe("DeployPanel — save outcome after a successful deploy", () => {
     );
     // The on-chain deploy still succeeded — the program id is shown.
     expect(screen.getByText(PROGRAM_ID)).toBeInTheDocument();
+  });
+});
+
+describe("DeployPanel — saved deploy state is wallet-scoped", () => {
+  const BUILD_UUID = "build-uuid-123";
+
+  function seedPausedState(wallet: string) {
+    sessionStorage.setItem(
+      `deploy-state-${wallet.slice(0, 8)}-${BUILD_UUID}`,
+      JSON.stringify({
+        buildUuid: BUILD_UUID,
+        bufferKeypairSecret: [],
+        programKeypairSecret: [],
+        lastUploadedChunk: 3,
+        totalChunks: 10,
+        phase: "uploading",
+      })
+    );
+  }
+
+  it("resumes the paused deploy for the wallet that saved it", async () => {
+    seedPausedState(CONNECTED);
+    renderPanel();
+
+    expect(await screen.findByText("Deployment paused")).toBeInTheDocument();
+  });
+
+  it("hides it from a different wallet on the same browser", async () => {
+    // The saved buffer is owned by CONNECTED's keypair, so resuming it as
+    // OTHER_WALLET would spend the wrong learner's SOL on a deploy that
+    // cannot finalize — and it leaks that a deploy is in flight at all.
+    seedPausedState(OTHER_WALLET);
+    renderPanel();
+
+    expect(
+      await screen.findByRole("button", { name: "Deploy to Devnet" })
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Deployment paused")).not.toBeInTheDocument();
   });
 });

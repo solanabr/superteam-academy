@@ -67,13 +67,26 @@ const STORAGE_PREFIX = "deploy-state-";
 // Helpers
 // ---------------------------------------------------------------------------
 
-function sessionKey(buildUuid: string): string {
-  return `${STORAGE_PREFIX}${buildUuid}`;
+/**
+ * Saved deploy state is scoped by wallet, like the localStorage keys below: a
+ * resume replays a buffer the PAYER owns, so offering one learner's paused
+ * deploy to the next wallet on the same browser is both a leak and a resume
+ * that cannot succeed. With no wallet resolved there is no key, so nothing is
+ * read or written — by the time a deploy runs there is always a signer.
+ */
+function sessionKey(buildUuid: string, walletPrefix: string): string | null {
+  if (!walletPrefix) return null;
+  return `${STORAGE_PREFIX}${walletPrefix}-${buildUuid}`;
 }
 
-function loadSavedState(buildUuid: string): DeploymentState | null {
+function loadSavedState(
+  buildUuid: string,
+  walletPrefix: string
+): DeploymentState | null {
+  const key = sessionKey(buildUuid, walletPrefix);
+  if (!key) return null;
   try {
-    const raw = sessionStorage.getItem(sessionKey(buildUuid));
+    const raw = sessionStorage.getItem(key);
     if (!raw) return null;
     return JSON.parse(raw) as DeploymentState;
   } catch {
@@ -81,17 +94,25 @@ function loadSavedState(buildUuid: string): DeploymentState | null {
   }
 }
 
-function savePersistentState(buildUuid: string, state: DeploymentState): void {
+function savePersistentState(
+  buildUuid: string,
+  walletPrefix: string,
+  state: DeploymentState
+): void {
+  const key = sessionKey(buildUuid, walletPrefix);
+  if (!key) return;
   try {
-    sessionStorage.setItem(sessionKey(buildUuid), JSON.stringify(state));
+    sessionStorage.setItem(key, JSON.stringify(state));
   } catch {
     // sessionStorage full or unavailable — non-critical
   }
 }
 
-function clearSavedState(buildUuid: string): void {
+function clearSavedState(buildUuid: string, walletPrefix: string): void {
+  const key = sessionKey(buildUuid, walletPrefix);
+  if (!key) return;
   try {
-    sessionStorage.removeItem(sessionKey(buildUuid));
+    sessionStorage.removeItem(key);
   } catch {
     // ignore
   }
@@ -410,12 +431,12 @@ export function DeployPanel({
 
   // Check for resumable state on mount
   useEffect(() => {
-    const existing = loadSavedState(buildUuid);
+    const existing = loadSavedState(buildUuid, walletPrefix);
     if (existing && existing.phase !== "complete") {
       setSavedState(existing);
       setPanelState("paused");
     }
-  }, [buildUuid]);
+  }, [buildUuid, walletPrefix]);
 
   // Build deployment callbacks
   const buildCallbacks = useCallback((): DeploymentCallbacks => {
@@ -450,14 +471,14 @@ export function DeployPanel({
         setPanelState(error.retryable ? "paused" : "error");
       },
       onStateUpdate: (state: DeploymentState) => {
-        savePersistentState(buildUuid, state);
+        savePersistentState(buildUuid, walletPrefix, state);
         setSavedState(state);
       },
       onBatchStart: (info) => {
         setBatchInfo(info);
       },
     };
-  }, [buildUuid]);
+  }, [buildUuid, walletPrefix]);
 
   // Persist the deploy to the server (source of truth for the credential
   // gate), retrying transient failures with backoff and surfacing the outcome
@@ -487,7 +508,7 @@ export function DeployPanel({
     (deployResult: DeployResult) => {
       setResult(deployResult);
       setPanelState("success");
-      clearSavedState(buildUuid);
+      clearSavedState(buildUuid, walletPrefix);
 
       // Save program ID + stats to localStorage for use in later lessons and refresh.
       // Keys are scoped by wallet to prevent cross-user cache leaks.
@@ -651,7 +672,7 @@ export function DeployPanel({
 
   // Start over handler
   const handleStartOver = useCallback(() => {
-    clearSavedState(buildUuid);
+    clearSavedState(buildUuid, walletPrefix);
     setSavedState(null);
     setPanelState("ready");
     setTxLog([]);
@@ -663,7 +684,7 @@ export function DeployPanel({
     setCurrentStep("buffer");
     setSaveStatus("idle");
     saveCancelledRef.current = true;
-  }, [buildUuid]);
+  }, [buildUuid, walletPrefix]);
 
   // Copy program ID
   const handleCopyProgramId = useCallback(async () => {
