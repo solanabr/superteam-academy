@@ -1,4 +1,5 @@
 import type { Transaction } from "@solana/web3.js";
+import { isDynamicSessionExpiredError } from "./solana";
 
 /**
  * Surviving Dynamic's MPC signing throttle.
@@ -84,9 +85,17 @@ export interface SignAllWithBackoffOptions {
  * rate limit, or the message itself. `cause` is walked one level for the same
  * reason `isDynamicSessionExpiredError` does it: the WaaS signer wraps
  * failures once.
+ *
+ * Session expiry takes precedence. Dynamic can hand back a 429 whose `name`
+ * is `UnauthorizedError` (or wrap one in `cause`) — the session died and the
+ * WaaS layer's own throttling response happens to carry the same status. That
+ * shape matches both matchers; treating it as a rate limit would burn the
+ * full backoff budget before the caller ever reaches reauth. Checked first so
+ * the caller goes straight to reauth instead.
  */
 export function isDynamicRateLimitError(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
+  if (isDynamicSessionExpiredError(error)) return false;
   return (
     isRateLimited(error) || isRateLimited((error as { cause?: unknown }).cause)
   );

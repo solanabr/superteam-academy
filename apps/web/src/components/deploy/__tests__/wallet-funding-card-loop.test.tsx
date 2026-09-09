@@ -49,6 +49,7 @@ vi.mock("@/hooks/use-dynamic-session-state", () => ({
 
 vi.mock("@superteam-lms/deploy", () => ({
   createAirdropRequest: vi.fn(),
+  MAX_RETRY_AFTER_SECONDS: 600,
 }));
 
 function renderCard() {
