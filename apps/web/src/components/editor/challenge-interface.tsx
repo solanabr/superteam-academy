@@ -24,10 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { shouldShowEncouragement } from "@/lib/gamification/celebration";
-import { setDeployFlow } from "@/lib/deploy/flow-store";
 import { DEPLOY_EDITOR_ANCHOR_ID } from "@/lib/deploy/scroll";
-import { useDeployFlow } from "@/hooks/use-deploy-flow";
-import { DeployStepper } from "@/components/deploy/deploy-stepper";
 import { CodeEditor, resetEditorStorage } from "./code-editor";
 import { canFormatLanguage } from "./formatting";
 import { Stopwatch } from "./stopwatch";
@@ -119,10 +116,6 @@ export function ChallengeInterface({
 
   // Default to true for backwards compatibility
   const isEnrolled = isEnrolledProp ?? true;
-
-  // Shared with the deploy panel's stepper (module store, not context — the two
-  // live in sibling subtrees under the lesson page).
-  const deployFlow = useDeployFlow();
 
   const [code, setCode] = useState(initialCode);
   const [challengeState, setChallengeState] = useState<ChallengeState>({
@@ -431,13 +424,6 @@ export function ChallengeInterface({
     return () => window.removeEventListener(REQUEST_SUBMIT_EVENT, handler);
   }, [isDeployable, lessonId, handleSubmit]);
 
-  // The editor owns the "submit" step of the deploy flow; the panel owns the
-  // rest. Both steppers read one store.
-  useEffect(() => {
-    if (!isDeployable) return;
-    setDeployFlow({ submitted: isComplete });
-  }, [isDeployable, isComplete]);
-
   // Auto-complete when user enrolls after passing all tests
   useEffect(() => {
     if (pendingSubmit && isEnrolled && !isComplete) {
@@ -460,6 +446,21 @@ export function ChallengeInterface({
     window.addEventListener("superteam:lesson-complete-error", handler);
     return () =>
       window.removeEventListener("superteam:lesson-complete-error", handler);
+  }, [lessonId]);
+
+  // A rejection the learner has since fixed (they finished the quiz the submit
+  // was refused for) is no longer true. lesson-client says so; the card drops
+  // back to idle rather than showing a verdict about work that is now done.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ lessonId: string }>).detail;
+      if (detail?.lessonId !== lessonId) return;
+      setVerdict((current) => (current === "rejected" ? "idle" : current));
+      setRejectReason(null);
+    };
+    window.addEventListener("superteam:lesson-complete-reset", handler);
+    return () =>
+      window.removeEventListener("superteam:lesson-complete-reset", handler);
   }, [lessonId]);
 
   // Vertical drag for the editor/output split — the resizer sits above the
@@ -672,16 +673,6 @@ export function ChallengeInterface({
                   isJudging={verdict === "judging"}
                   xpReward={xpReward}
                 />
-                {/* Where the lesson goes next, mirrored beside the Build
-                    button — the deploy card is in the other column and used to
-                    be unfindable after a successful compile. */}
-                {isDeployable && (
-                  <DeployStepper
-                    state={deployFlow}
-                    variant="strip"
-                    className="hidden md:flex"
-                  />
-                )}
               </div>
 
               <div className="flex items-center gap-1">

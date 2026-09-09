@@ -298,6 +298,8 @@
     "completionRateLimited": "Você está concluindo lições muito rápido. Aguarde um pouco e tente novamente — seu progresso está salvo.",
     "completionInProgress": "Esta lição já está sendo concluída. Aguarde um instante e tente novamente — seu progresso está salvo.",
     "completionFailedQuiz": "Uma ou mais respostas do quiz ainda não estão corretas. Revise suas respostas acima e envie novamente.",
+    "harnessMissingSymbol": "A verificação da lição não encontrou o que ela pede: {symbol}",
+    "harnessMismatch": "Seu código não corresponde ao que a verificação da lição espera",
     "completionFailedParsons": "As linhas ainda não estão na ordem certa. Organize-as acima e envie novamente.",
     "completionFailedReflection": "Esta lição inclui uma reflexão que ainda não foi enviada. Envie sua reflexão e tente novamente.",
     "quizCheck": "Verificar resposta",
@@ -883,9 +885,8 @@
       "rateLimitWaiting": "O serviço da carteira está ocupado (limite de requisições) — tentando de novo em {seconds}s",
       "rateLimitPaused": "O serviço da carteira ainda está limitando assinaturas. Nada foi perdido — espere um minuto e retome.",
       "submitLesson": "Enviar lição",
+      "submitBlocked": "Conclua o quiz abaixo primeiro — a lição é enviada por inteiro.",
       "recordingDeploy": "Registrando seu deploy…",
-      "xpEarned": "+{xp} XP conquistados",
-      "nextLesson": "Próxima lição",
       "lessonSubmitted": "Lição concluída",
       "deployTime": "Tempo de deploy",
       "rentLocked": "Aluguel bloqueado",
@@ -962,16 +963,6 @@
       "deployStep": "Deploy",
       "interact": "Interagir",
       "yourProgram": "Seu Programa Deployado"
-    },
-    "steps": {
-      "label": "Progresso do deploy",
-      "build": "Compilar",
-      "fund": "Fundos",
-      "deploy": "Deploy",
-      "submit": "Enviar",
-      "goTo": "Ir para {step}",
-      "done": "concluído",
-      "current": "etapa atual"
     },
     "errors": {
       "airdropRateLimited": "A torneira da devnet está ocupada. Tente de novo em cerca de {seconds}s ou use a torneira web.",

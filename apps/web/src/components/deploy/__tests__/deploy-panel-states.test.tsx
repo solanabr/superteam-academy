@@ -4,7 +4,6 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import messages from "@/messages/en.json";
-import { resetDeployFlow } from "@/lib/deploy/flow-store";
 import { DeployPanel } from "../deploy-panel";
 
 /**
@@ -79,7 +78,6 @@ function renderPanel(props?: { isCompleted?: boolean }) {
         courseSlug="btc-to-sol-evolution"
         courseId="course-btc-to-sol"
         xpReward={50}
-        nextLessonHref="/en/courses/btc-to-sol-evolution/lessons/next"
         {...props}
       />
     </NextIntlClientProvider>
@@ -100,7 +98,6 @@ beforeEach(() => {
   h.deployProgram.mockReset();
   h.isSessionExpired.mockReset().mockReturnValue(false);
   h.isRateLimited.mockReset().mockReturnValue(false);
-  resetDeployFlow();
   localStorage.clear();
   sessionStorage.clear();
   vi.stubGlobal(
@@ -117,19 +114,6 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("DeployPanel — the states a learner can land in", () => {
-  it("shows the stepper above the panel, pointing at the deploy step", async () => {
-    renderPanel();
-    expect(
-      await screen.findByRole("navigation", { name: "Deploy progress" })
-    ).toBeInTheDocument();
-    await waitFor(() =>
-      expect(screen.getByRole("button", { name: /Deploy —/ })).toHaveAttribute(
-        "aria-current",
-        "step"
-      )
-    );
-  });
-
   it("pauses with a resume when the wallet service throttles the signer", async () => {
     h.isRateLimited.mockReturnValue(true);
     h.deployProgram.mockRejectedValue(

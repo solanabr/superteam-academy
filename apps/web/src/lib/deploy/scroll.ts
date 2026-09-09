@@ -7,17 +7,8 @@
  * lands there too.
  */
 
-import type { DeployStepKey } from "./steps";
-
 export const DEPLOY_EDITOR_ANCHOR_ID = "deploy-flow-editor";
 export const DEPLOY_PANEL_ANCHOR_ID = "deploy-flow-panel";
-
-export const DEPLOY_STEP_ANCHORS: Record<DeployStepKey, string> = {
-  build: DEPLOY_EDITOR_ANCHOR_ID,
-  fund: DEPLOY_PANEL_ANCHOR_ID,
-  deploy: DEPLOY_PANEL_ANCHOR_ID,
-  submit: DEPLOY_PANEL_ANCHOR_ID,
-};
 
 export function prefersReducedMotion(): boolean {
   return (
@@ -35,9 +26,4 @@ export function revealElement(el: HTMLElement | null): void {
     block: "start",
   });
   el.focus?.({ preventScroll: true });
-}
-
-export function revealDeployStep(step: DeployStepKey): void {
-  if (typeof document === "undefined") return;
-  revealElement(document.getElementById(DEPLOY_STEP_ANCHORS[step]));
 }

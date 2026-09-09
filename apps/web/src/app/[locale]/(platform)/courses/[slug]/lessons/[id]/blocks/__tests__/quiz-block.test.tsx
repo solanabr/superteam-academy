@@ -78,7 +78,7 @@ function makeCtx(overrides: Partial<BlockContext> = {}): BlockContext {
     buildUuid: null,
     programKeypairSecret: null,
     resetBuild: vi.fn(),
-    nextLessonHref: null,
+    canSubmit: true,
     ...overrides,
   };
 }

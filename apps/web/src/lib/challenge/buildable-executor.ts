@@ -70,7 +70,7 @@
 import type { AdminTestCase } from "@superteam-lms/types";
 import { serverEnv } from "@/lib/env.server";
 import type { ServerTestResult, SubmissionRunResult } from "./executor";
-import { firstCompilerErrorLine } from "./compiler-error";
+import { compilerErrorSummary } from "./compiler-error";
 import { buildGradeFiles, splitHarness } from "./harness";
 
 const BUILD_SERVER_URL = serverEnv.BUILD_SERVER_URL;
@@ -216,8 +216,9 @@ export async function runBuildableSubmission(
 
   // Explicit compile failure: a bad submission, not an outage. Surface the first
   // real compiler error line as a short, non-sensitive diagnostic (no answer
-  // key).
-  return allFailed(tests, firstCompilerErrorLine(data.stderr ?? ""));
+  // key) — or, when that error is inside the hidden harness module, the sentence
+  // the editor shows for it, so the 403 reason and the test row agree.
+  return allFailed(tests, compilerErrorSummary(data.stderr ?? ""));
 }
 
 /** Result of running a single test case — re-exported for callers/tests. */

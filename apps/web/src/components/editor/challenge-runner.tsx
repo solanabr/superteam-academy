@@ -9,7 +9,7 @@ import { Keypair } from "@solana/web3.js";
 import { setCachedBinary } from "@superteam-lms/deploy";
 import { executeRustCode } from "@/lib/rust/execute";
 import { buildProgram } from "@/lib/build-server/client";
-import { firstCompilerErrorLine } from "@/lib/challenge/compiler-error";
+import { compilerErrorSummary } from "@/lib/challenge/compiler-error";
 import { buildGradeFiles, LIB_PATH } from "@/lib/challenge/harness";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -745,6 +745,7 @@ async function runRustChallenge(
 // ---------------------------------------------------------------------------
 
 async function runBuildChallenge(
+  t: Translator,
   code: string,
   tests: TestCase[],
   starter: string
@@ -830,11 +831,16 @@ async function runBuildChallenge(
         testCase: tc,
         passed: result.success,
         // On failure show the compiler diagnostic, not the head of stderr —
-        // that is always cargo-build-sbf's INFO/WARN preamble. Full stderr
-        // stays in `error` for the Output tab.
+        // that is always cargo-build-sbf's INFO/WARN preamble. An error inside
+        // the hidden harness module is rewritten into what it means for the
+        // learner; the raw diagnostic stays in `error` for the Output tab.
         actualOutput: result.success
           ? "Compilation successful"
-          : firstCompilerErrorLine(stderr, 300),
+          : compilerErrorSummary(stderr, 300, (symbol) =>
+              symbol
+                ? t("harnessMissingSymbol", { symbol })
+                : t("harnessMismatch")
+            ),
       };
     }
     // Additional tests: pass if build succeeded (future: check for specific patterns)
@@ -898,7 +904,7 @@ export function ChallengeRunner({
       try {
         if (language === "rust" && buildType === "buildable") {
           // Build path: compile Anchor/Solana program via build server
-          const result = await runBuildChallenge(code, tests, starter ?? "");
+          const result = await runBuildChallenge(t, code, tests, starter ?? "");
           setAllPassed(result.success);
           onResult(result);
 

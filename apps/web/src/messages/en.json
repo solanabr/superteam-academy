@@ -298,6 +298,8 @@
     "completionRateLimited": "You're completing lessons very quickly. Please wait a little while and try again — your progress is safe.",
     "completionInProgress": "This lesson is already being completed. Give it a moment and try again — your progress is safe.",
     "completionFailedQuiz": "One or more quiz answers aren't correct yet. Check your answers above and submit again.",
+    "harnessMissingSymbol": "The verification harness could not find what the lesson asks for: {symbol}",
+    "harnessMismatch": "Your code does not match what the harness expects",
     "completionFailedParsons": "The lines aren't in the right order yet. Arrange them above and submit again.",
     "completionFailedReflection": "This lesson includes a reflection that hasn't been submitted yet. Submit your reflection, then try again.",
     "quizCheck": "Check answer",
@@ -883,9 +885,8 @@
       "rateLimitWaiting": "Wallet service is busy (rate limited) — retrying in {seconds}s",
       "rateLimitPaused": "The wallet service is still rate-limiting signatures. Nothing was lost — wait a minute and resume.",
       "submitLesson": "Submit lesson",
+      "submitBlocked": "Finish the quiz below first — the lesson is submitted as a whole.",
       "recordingDeploy": "Recording your deploy…",
-      "xpEarned": "+{xp} XP earned",
-      "nextLesson": "Next lesson",
       "lessonSubmitted": "Lesson complete",
       "deployTime": "Deploy time",
       "rentLocked": "Rent locked",
@@ -962,16 +963,6 @@
       "deployStep": "Deploy",
       "interact": "Interact",
       "yourProgram": "Your Deployed Program"
-    },
-    "steps": {
-      "label": "Deploy progress",
-      "build": "Build",
-      "fund": "Fund",
-      "deploy": "Deploy",
-      "submit": "Submit",
-      "goTo": "Go to {step}",
-      "done": "done",
-      "current": "current step"
     },
     "errors": {
       "airdropRateLimited": "The devnet faucet is busy. Try again in about {seconds}s, or use the web faucet.",

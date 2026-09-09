@@ -1,10 +1,9 @@
 "use client";
 
 import { useCallback, useState, type ReactNode } from "react";
-import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
-import { ArrowRight, CheckCircle, Copy } from "@phosphor-icons/react";
+import { CheckCircle, Copy } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatElapsed } from "@/lib/deploy/progress";
@@ -16,16 +15,20 @@ interface DeploySuccessCardProps {
   durationMs: number;
   /** XP this lesson pays, for the un-submitted state's button badge. */
   xpReward: number;
-  /** XP actually credited, once the lesson is complete. */
-  earnedXp: number | null;
   isComplete: boolean;
+  /**
+   * Every other graded block in the lesson is done. A deploy lesson's quiz sits
+   * BELOW this card, so an eager Submit here used to POST a payload the server
+   * refused ("your quiz answers aren't correct yet") for a quiz the learner had
+   * not reached. Submit waits for it instead, and says so.
+   */
+  canSubmit?: boolean;
   /** Runs the lesson's normal submit path. */
   onSubmit: () => void;
   /** The server-record save status. Submit is only enabled once the deploy
    *  is actually recorded — the capstone credential gate reads that record,
    *  not the on-chain deploy itself. */
   saveStatus: SaveStatus | "idle";
-  nextLessonHref: string | null;
   /** The server-record status, rendered under the stats. */
   saveStatusSlot?: ReactNode;
   /** A warning that needs attention even though the deploy itself succeeded —
@@ -48,15 +51,15 @@ export function DeploySuccessCard({
   rentLamports,
   durationMs,
   xpReward,
-  earnedXp,
   isComplete,
+  canSubmit = true,
   onSubmit,
   saveStatus,
-  nextLessonHref,
   saveStatusSlot,
   noticeSlot,
 }: DeploySuccessCardProps) {
   const t = useTranslations("deploy.deployment");
+  const tLesson = useTranslations("lesson");
   const [copied, setCopied] = useState(false);
 
   const isSaved = saveStatus === "saved";
@@ -138,31 +141,26 @@ export function DeploySuccessCard({
         {saveStatusSlot}
 
         {isComplete ? (
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="inline-flex items-center gap-1.5 rounded-md border-2 border-[color:var(--ink-line)] bg-xp px-2.5 py-1 font-display text-sm font-extrabold text-[color:var(--ink-dark)]">
-              {t("xpEarned", { xp: String(earnedXp ?? xpReward) })}
-            </span>
-            {nextLessonHref && (
-              <Button asChild variant="primary" size="sm">
-                <Link href={nextLessonHref}>
-                  {t("nextLesson")}
-                  <ArrowRight size={14} weight="bold" aria-hidden="true" />
-                </Link>
-              </Button>
+          <span className="text-sm font-medium text-success">
+            {tLesson("lessonComplete")}
+          </span>
+        ) : saveFailed ? null : (
+          <div className="space-y-2">
+            <Button
+              onClick={onSubmit}
+              variant="primary"
+              className="w-full"
+              disabled={!isSaved || !canSubmit}
+            >
+              {isSaving ? t("recordingDeploy") : t("submitLesson")}
+              <span className="ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold [background:rgba(255,255,255,0.20)]">
+                +{xpReward} XP
+              </span>
+            </Button>
+            {!canSubmit && (
+              <p className="text-xs text-text-3">{t("submitBlocked")}</p>
             )}
           </div>
-        ) : saveFailed ? null : (
-          <Button
-            onClick={onSubmit}
-            variant="primary"
-            className="w-full"
-            disabled={!isSaved}
-          >
-            {isSaving ? t("recordingDeploy") : t("submitLesson")}
-            <span className="ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold [background:rgba(255,255,255,0.20)]">
-              +{xpReward} XP
-            </span>
-          </Button>
         )}
       </CardContent>
     </Card>
