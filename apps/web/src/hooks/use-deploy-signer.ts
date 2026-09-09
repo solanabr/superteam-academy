@@ -105,13 +105,20 @@ export function useDeploySigner(): DeploySignerState {
     const embeddedKey = parseWalletAddress(embeddedAddress);
     if (embeddedKey) {
       // Reading the ref at call time, not at memo time, is what keeps the
-      // signer stable. It can only have gone null because the session died
-      // between this render and the signature, which is an expiry — raise it
-      // as one so callers offer re-auth instead of a raw failure.
+      // signer stable. But a ref can drift from the address this signer
+      // advertises, so both ways it can drift raise the SDK's own
+      // `UnauthorizedError`, which `isDynamicSessionExpiredError` matches:
+      // null means the session died between this render and the signature, and
+      // a different address means the signer would sign with an account other
+      // than its `publicKey` — a transaction built for A signed by B.
       const activeAccount = () => {
         const current = accountRef.current;
-        if (!current) {
-          const expired = new Error("Dynamic session ended before signing");
+        if (!current || current.address !== embeddedAddress) {
+          const expired = new Error(
+            current
+              ? "Dynamic account changed before signing"
+              : "Dynamic session ended before signing"
+          );
           expired.name = "UnauthorizedError";
           throw expired;
         }

@@ -28,18 +28,19 @@ const IDL = JSON.stringify({
 const h = vi.hoisted(() => ({
   signTransaction: vi.fn(),
   startReauth: vi.fn(),
+  kind: "embedded" as "embedded" | "adapter",
 }));
 
 vi.mock("@/hooks/use-deploy-signer", () => ({
   useDeploySigner: () => ({
     status: "ready",
-    kind: "embedded",
+    kind: h.kind,
     signer: {
       publicKey: WALLET,
       signTransaction: h.signTransaction,
       signAllTransactions: vi.fn(),
     },
-    batchSize: 15,
+    batchSize: h.kind === "embedded" ? 15 : undefined,
     startReauth: h.startReauth,
   }),
 }));
@@ -89,6 +90,7 @@ beforeEach(() => {
   );
   h.signTransaction.mockReset();
   h.startReauth.mockReset();
+  h.kind = "embedded";
   vi.stubGlobal(
     "fetch",
     vi.fn(async () => ({ ok: true, json: async () => ({ deployed: false }) }))
@@ -116,5 +118,26 @@ describe("GenericProgramExplorer — expired Dynamic session", () => {
       await screen.findByRole("button", { name: /Google/i })
     ).toBeInTheDocument();
     expect(screen.queryByText("session expired")).not.toBeInTheDocument();
+  });
+
+  it("leaves an adapter's unauthorized_error to the adapter path", async () => {
+    // Nothing in the extension wallets throws this today, but the re-auth card
+    // is a social sign-in an extension user cannot complete, so the branch is
+    // gated on the signer kind rather than on the error alone.
+    h.kind = "adapter";
+    const unauthorized = Object.assign(new Error("wallet locked"), {
+      code: "unauthorized_error",
+    });
+    h.signTransaction.mockRejectedValue(unauthorized);
+
+    renderExplorer();
+
+    fireEvent.click(await screen.findByText("Ping"));
+    fireEvent.click(await screen.findByRole("button", { name: /Execute/ }));
+
+    expect(await screen.findByText("wallet locked")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Google/i })
+    ).not.toBeInTheDocument();
   });
 });
