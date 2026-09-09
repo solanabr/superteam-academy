@@ -3,7 +3,9 @@ export {
   resumeDeployment,
   closeBuffer,
   setCachedBinary,
+  getCachedBinaryLength,
 } from "./deploy";
+export { estimateDeployCost, type DeployCostEstimate } from "./cost";
 export { createAirdropRequest, type AirdropResult } from "./airdrop";
 export { CHUNK_SIZE, BPF_LOADER_UPGRADEABLE_ID } from "./constants";
 export type {

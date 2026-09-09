@@ -378,3 +378,128 @@ describe("deployProgram + resumeDeployment both use the pool + CU limit (#776)",
     expect(h.writeTxs.every(hasCuLimit)).toBe(true);
   });
 });
+
+// ---------------------------------------------------------------------------
+// batchSize — an embedded (MPC) signer signs fewer txs per call than a wallet
+// popup can, and both entry points have to honour the same number.
+// ---------------------------------------------------------------------------
+describe("batchSize honoured by both entry points, default unchanged", () => {
+  const ZERO_HASH = "11111111111111111111111111111111";
+
+  function harness(bufferKp: Keypair) {
+    const batchSizes: number[] = [];
+    let sigN = 0;
+
+    const connection = {
+      getLatestBlockhash: vi.fn(async () => ({
+        blockhash: ZERO_HASH,
+        lastValidBlockHeight: 1000,
+      })),
+      getMinimumBalanceForRentExemption: vi.fn(async () => 1_000_000),
+      sendRawTransaction: vi.fn(async () => `sig-${sigN++}`),
+      confirmTransaction: vi.fn(async () => ({ value: { err: null } })),
+      getSignatureStatuses: vi.fn(async (pending: string[]) => ({
+        value: pending.map(() => ({
+          err: null,
+          confirmationStatus: "confirmed" as const,
+        })),
+      })),
+      getAccountInfo: vi.fn(async (pk: PublicKey) =>
+        pk.equals(bufferKp.publicKey) ? { data: Buffer.alloc(0) } : null
+      ),
+    } as unknown as Connection;
+
+    const kp = Keypair.generate();
+    const wallet: WalletAdapter = {
+      publicKey: kp.publicKey,
+      signTransaction: async (tx) => {
+        tx.partialSign(kp);
+        return tx;
+      },
+      signAllTransactions: async (txs) => {
+        batchSizes.push(txs.length);
+        for (const tx of txs) tx.partialSign(kp);
+        return txs;
+      },
+    };
+
+    const callbacks: DeploymentCallbacks = {
+      onStepChange: vi.fn(),
+      onChunkProgress: vi.fn(),
+      onTransactionConfirmed: vi.fn(),
+      onError: vi.fn(),
+      onStateUpdate: vi.fn(),
+      onBatchStart: vi.fn(),
+    };
+
+    return { connection, wallet, callbacks, batchSizes };
+  }
+
+  // 12 chunks at CHUNK_SIZE=900.
+  const BINARY = new Uint8Array(900 * 12).fill(7);
+
+  function resumeState(bufferKp: Keypair, uuid: string): DeploymentState {
+    return {
+      buildUuid: uuid,
+      bufferKeypairSecret: Array.from(bufferKp.secretKey),
+      programKeypairSecret: Array.from(Keypair.generate().secretKey),
+      lastUploadedChunk: -1,
+      totalChunks: 12,
+      phase: "uploading",
+    };
+  }
+
+  it("deployProgram splits the upload into batches of the requested size", async () => {
+    const bufferKp = Keypair.generate();
+    const h = harness(bufferKp);
+    setCachedBinary("uuid-batch-5", BINARY);
+
+    await deployProgram({
+      connection: h.connection,
+      wallet: h.wallet,
+      buildServerUrl: "unused",
+      buildUuid: "uuid-batch-5",
+      callbacks: h.callbacks,
+      batchSize: 5,
+    });
+
+    expect(h.batchSizes).toEqual([5, 5, 2]);
+    expect(h.callbacks.onBatchStart).toHaveBeenCalledWith({
+      batchNumber: 3,
+      totalBatches: 3,
+    });
+  });
+
+  it("resumeDeployment uses the same size", async () => {
+    const bufferKp = Keypair.generate();
+    const h = harness(bufferKp);
+    setCachedBinary("uuid-batch-resume", BINARY);
+
+    await resumeDeployment({
+      connection: h.connection,
+      wallet: h.wallet,
+      buildServerUrl: "unused",
+      state: resumeState(bufferKp, "uuid-batch-resume"),
+      callbacks: h.callbacks,
+      batchSize: 5,
+    });
+
+    expect(h.batchSizes).toEqual([5, 5, 2]);
+  });
+
+  it("omitting it keeps the 50-tx default — one batch for this binary", async () => {
+    const bufferKp = Keypair.generate();
+    const h = harness(bufferKp);
+    setCachedBinary("uuid-batch-default", BINARY);
+
+    await deployProgram({
+      connection: h.connection,
+      wallet: h.wallet,
+      buildServerUrl: "unused",
+      buildUuid: "uuid-batch-default",
+      callbacks: h.callbacks,
+    });
+
+    expect(h.batchSizes).toEqual([12]);
+  });
+});

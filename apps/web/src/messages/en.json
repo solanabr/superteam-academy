@@ -824,7 +824,9 @@
       "readyForDeploy": "Ready for deployment!",
       "needMoreSol": "Need ~{amount} more SOL",
       "refreshBalance": "Refresh",
-      "connectWallet": "Connect your wallet to continue"
+      "connectWallet": "Connect your wallet to continue",
+      "copyAddress": "Copy address",
+      "addressCopied": "Copied!"
     },
     "deployment": {
       "deployToDevnet": "Deploy to Devnet",
@@ -849,7 +851,8 @@
       "startOver": "Start Over",
       "insufficientSol": "Not enough SOL. Need ~{amount} more.",
       "buildExpired": "Build expired",
-      "rebuildHint": "Click \"Run\" in the editor to rebuild, then deploy again."
+      "rebuildHint": "Click \"Run\" in the editor to rebuild, then deploy again.",
+      "resolvingWallet": "Checking your wallet…"
     },
     "save": {
       "recording": "Recording your deployment…",

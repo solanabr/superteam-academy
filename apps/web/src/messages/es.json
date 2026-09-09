@@ -824,7 +824,9 @@
       "readyForDeploy": "Listo para el despliegue!",
       "needMoreSol": "Necesita ~{amount} SOL más",
       "refreshBalance": "Actualizar",
-      "connectWallet": "Conecta tu billetera para continuar"
+      "connectWallet": "Conecta tu billetera para continuar",
+      "copyAddress": "Copiar dirección",
+      "addressCopied": "¡Copiado!"
     },
     "deployment": {
       "deployToDevnet": "Desplegar en Devnet",
@@ -849,7 +851,8 @@
       "startOver": "Empezar de Nuevo",
       "insufficientSol": "SOL insuficiente. Necesita ~{amount} más.",
       "buildExpired": "Build expirado",
-      "rebuildHint": "Haz clic en \"Run\" en el editor para recompilar y despliega de nuevo."
+      "rebuildHint": "Haz clic en \"Run\" en el editor para recompilar y despliega de nuevo.",
+      "resolvingWallet": "Comprobando tu billetera…"
     },
     "save": {
       "recording": "Registrando tu despliegue…",

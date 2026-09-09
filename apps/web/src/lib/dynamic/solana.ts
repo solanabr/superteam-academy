@@ -2,6 +2,7 @@ import { Transaction } from "@solana/web3.js";
 import { getWalletAccounts } from "@dynamic-labs-sdk/client";
 import {
   isSolanaWalletAccount,
+  signAllTransactions,
   signTransaction,
 } from "@dynamic-labs-sdk/solana";
 import type { SolanaWalletAccount } from "@dynamic-labs-sdk/solana";
@@ -149,6 +150,35 @@ export async function signWithDynamicWallet(
     walletAccount,
   });
   return signedTransaction as unknown as Transaction;
+}
+
+/**
+ * Sign every transaction in `transactions` with the embedded wallet, in order.
+ *
+ * A program deploy signs one transaction per ~900-byte chunk, batched so the
+ * whole batch shares a single blockhash. Signing them one MPC round trip at a
+ * time would spend that window on latency alone, which is why the batch entry
+ * point exists.
+ *
+ * The SDK returns the signed transactions positionally, and the caller relies on
+ * that: `packages/deploy` maps signature i back to chunk i. The array is
+ * returned as-is, never re-ordered.
+ */
+export async function signAllWithDynamicWallet(
+  transactions: Transaction[],
+  walletAccount: SolanaWalletAccount
+): Promise<Transaction[]> {
+  // Same version-boundary cast as signWithDynamicWallet: the SDK pins
+  // @solana/web3.js 1.98.1 while the app tracks ^1.98.4, so `Transaction` is
+  // nominally two types with identical shapes.
+  type SdkTransactions = Parameters<
+    typeof signAllTransactions
+  >[0]["transactions"];
+  const { signedTransactions } = await signAllTransactions({
+    transactions: transactions as unknown as SdkTransactions,
+    walletAccount,
+  });
+  return signedTransactions as unknown as Transaction[];
 }
 
 /**

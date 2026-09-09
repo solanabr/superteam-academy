@@ -12,8 +12,10 @@ import { BorshInstructionCoder, BorshCoder, BN } from "@coral-xyz/anchor";
 import type { Idl } from "@coral-xyz/anchor";
 import { useTranslations } from "next-intl";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { useDeploySigner } from "@/hooks/use-deploy-signer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { LinkedWalletPrompt } from "@/components/wallet/linked-wallet-prompt";
 import { cn } from "@/lib/utils";
 import {
   isWalletKeyringError,
@@ -122,11 +124,17 @@ export function GenericProgramExplorer({
   courseId,
 }: GenericProgramExplorerProps) {
   const t = useTranslations("deploy.explorer");
-  const { publicKey, signTransaction, disconnect, wallet, select } =
-    useWallet();
+  // The wallet that signs — extension or embedded. `useWallet` is still read
+  // for the ADAPTER-only reconnect path below (an embedded wallet has no
+  // adapter to re-select; its recovery is Dynamic re-auth).
+  const { status: signerStatus, signer, startReauth } = useDeploySigner();
+  const publicKey = signer?.publicKey ?? null;
+  const signTransaction = signer?.signTransaction ?? null;
+  const { disconnect, wallet, select } = useWallet();
   const { connection } = useConnection();
   const { setVisible: openWalletModal } = useWalletModal();
   const [isReconnecting, setIsReconnecting] = useState(false);
+  const [reauthDismissed, setReauthDismissed] = useState(false);
   const [pendingReconnectWallet, setPendingReconnectWallet] =
     useState<WalletName | null>(null);
   const reconnectAttemptsRef = useRef(0);
@@ -671,19 +679,35 @@ export function GenericProgramExplorer({
   }
 
   if (!publicKey) {
+    // An embedded learner whose Dynamic session expired must never be shown the
+    // connect modal: they have no extension, and the modal has no route back to
+    // Dynamic short of a full sign-out.
+    if (signerStatus === "expired" && !reauthDismissed) {
+      return (
+        <LinkedWalletPrompt
+          variant="reauth"
+          linkedWallet={null}
+          onReauth={startReauth}
+          onDismiss={() => setReauthDismissed(true)}
+        />
+      );
+    }
+
     return (
       <Card className="border-yellow-500/30 bg-yellow-500/5">
         <CardContent className="space-y-4 py-8 text-center">
           <p className="text-sm text-muted-foreground">
             {t("walletDisconnected")}
           </p>
-          <Button
-            onClick={() => openWalletModal(true)}
-            variant="outline"
-            size="sm"
-          >
-            {t("connectWallet")}
-          </Button>
+          {signerStatus !== "resolving" && (
+            <Button
+              onClick={() => openWalletModal(true)}
+              variant="outline"
+              size="sm"
+            >
+              {t("connectWallet")}
+            </Button>
+          )}
         </CardContent>
       </Card>
     );
