@@ -1,13 +1,17 @@
 "use client";
 
 import { useMemo, useRef } from "react";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import type { WalletAdapter } from "@superteam-lms/deploy";
 import { parseWalletAddress } from "@/lib/solana/linked-wallet";
 import {
   signAllWithDynamicWallet,
   signWithDynamicWallet,
 } from "@/lib/dynamic/solana";
+import {
+  signAllWithRateLimitBackoff,
+  type RateLimitWaitInfo,
+} from "@/lib/dynamic/rate-limit";
 import {
   startDynamicSocialSignIn,
   type DynamicSocialProvider,
@@ -29,6 +33,16 @@ import { useDynamicSessionState } from "@/hooks/use-dynamic-session-state";
  * signatures per call than the adapter path, still only ~8 batches for a
  * 100 KB program. The deploy panel logs per-batch signing time in development
  * so the number can be replaced with a measured one.
+ *
+ * MEASURED (owner, production, 09-09-2026, `your-first-solana-program`,
+ * 74 chunks): the first batch of 15 got three chunks in before Dynamic
+ * answered `WalletApiError: Rate limited`. So the binding constraint is not
+ * blockhash-window latency at all — it is how many signatures the MPC API
+ * accepts in quick succession. Lowering this number would not have helped: a
+ * batch of 3 would have been throttled on the next batch instead, and smaller
+ * batches mean more blockhash fetches for the same 74 chunks. The fix is
+ * `signAllWithRateLimitBackoff` below — sub-batches of
+ * `EMBEDDED_SUB_BATCH_SIZE` with backoff between them — so 15 stays.
  */
 export const EMBEDDED_BATCH_SIZE = 15;
 
@@ -48,6 +62,14 @@ export interface DeploySignerState {
   startReauth: (provider: DynamicSocialProvider) => Promise<void>;
 }
 
+export interface DeploySignerOptions {
+  /**
+   * Dynamic throttled the signing request and the signer is waiting before
+   * asking again. Embedded path only; the deploy has NOT failed.
+   */
+  onRateLimitWait?: (info: RateLimitWaitInfo) => void;
+}
+
 /**
  * The wallet that will sign and pay for a program deploy — extension or
  * embedded.
@@ -62,8 +84,11 @@ export interface DeploySignerState {
  * With `isDynamicEnabled()` false this degrades to exactly the adapter-only
  * behaviour that shipped before — no Dynamic read, no reauth card.
  */
-export function useDeploySigner(): DeploySignerState {
+export function useDeploySigner(
+  options: DeploySignerOptions = {}
+): DeploySignerState {
   const { publicKey, signTransaction, signAllTransactions } = useWallet();
+  const { connection } = useConnection();
   const dynamicSession = useDynamicSessionState();
   const dynamicEnabled = isDynamicEnabled();
   const account = dynamicEnabled ? dynamicSession.account : null;
@@ -78,6 +103,12 @@ export function useDeploySigner(): DeploySignerState {
   const embeddedAddress = account?.address ?? null;
   const accountRef = useRef(account);
   accountRef.current = account;
+  // Same reason as `accountRef`: callers pass a fresh closure per render, and
+  // keying the memo on it would hand every consumer a new signer each render.
+  const onRateLimitWaitRef = useRef(options.onRateLimitWait);
+  onRateLimitWaitRef.current = options.onRateLimitWait;
+  const connectionRef = useRef(connection);
+  connectionRef.current = connection;
 
   return useMemo<DeploySignerState>(() => {
     const startReauth = (provider: DynamicSocialProvider) =>
@@ -134,11 +165,18 @@ export function useDeploySigner(): DeploySignerState {
           // partially-signed tx (the buffer/program keypair's signature).
           signTransaction: async (tx) =>
             (await signWithDynamicWallet(tx, activeAccount())) as typeof tx,
+          // Dynamic throttles this call (see rate-limit.ts): sub-batched,
+          // retried with backoff, and re-stamped with a fresh blockhash when
+          // the waiting outlives the one the batch arrived with.
           signAllTransactions: async (txs) =>
-            (await signAllWithDynamicWallet(
-              txs,
-              activeAccount()
-            )) as typeof txs,
+            (await signAllWithRateLimitBackoff(txs, {
+              signAll: (batch) =>
+                signAllWithDynamicWallet(batch, activeAccount()),
+              onRateLimitWait: (info) => onRateLimitWaitRef.current?.(info),
+              refreshBlockhash: async () =>
+                (await connectionRef.current.getLatestBlockhash("confirmed"))
+                  .blockhash,
+            })) as typeof txs,
         },
         kind: "embedded",
         batchSize: EMBEDDED_BATCH_SIZE,

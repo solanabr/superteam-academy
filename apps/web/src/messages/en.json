@@ -834,7 +834,8 @@
       "refreshBalance": "Refresh",
       "connectWallet": "Connect your wallet to continue",
       "copyAddress": "Copy address",
-      "addressCopied": "Copied!"
+      "addressCopied": "Copied!",
+      "rateLimitedRetryAfter": "Devnet faucet is rate-limited. Try again in {seconds}s, or use the web faucet."
     },
     "deployment": {
       "deployToDevnet": "Deploy to Devnet",
@@ -861,7 +862,9 @@
       "buildExpired": "Build expired",
       "rebuildHint": "Click \"Run\" in the editor to rebuild, then deploy again.",
       "resolvingWallet": "Checking your wallet…",
-      "copied": "Copied!"
+      "copied": "Copied!",
+      "rateLimitWaiting": "Wallet service is busy (rate limited) — retrying in {seconds}s",
+      "rateLimitPaused": "The wallet service is still rate-limiting signatures. Nothing was lost — wait a minute and resume."
     },
     "save": {
       "recording": "Recording your deployment…",

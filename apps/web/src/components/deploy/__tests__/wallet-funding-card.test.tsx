@@ -80,7 +80,9 @@ describe("WalletFundingCard", () => {
     );
     // By address, not by object identity: the card re-derives the key from the
     // signer's address so its `refreshBalance` effect cannot self-sustain.
-    expect(h.createAirdropRequest.mock.calls[0]![1].toBase58()).toBe(
+    // The app connection is NOT passed — the airdrop goes to the public devnet
+    // RPC, whose faucet limit is per address rather than per project.
+    expect(h.createAirdropRequest.mock.calls[0]![0].toBase58()).toBe(
       EMBEDDED.toBase58()
     );
   });

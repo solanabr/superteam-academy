@@ -89,7 +89,10 @@ export function WalletFundingCard({
     setIsAirdropping(true);
     setMessage(null);
 
-    const result = await createAirdropRequest(connection, publicKey, 2);
+    // No `connection` argument: the airdrop goes to the PUBLIC devnet RPC,
+    // whose limit is per address, while the app's keyed endpoint meters the
+    // faucet per project — one learner's 2 SOL used to exhaust everyone's day.
+    const result = await createAirdropRequest(publicKey, 2);
 
     if (result.success) {
       setBalance(result.newBalance ?? balance);
@@ -102,11 +105,14 @@ export function WalletFundingCard({
       });
       setCooldown(COOLDOWN_SECONDS);
     } else if (result.rateLimited) {
+      const retryAfter = result.retryAfterSeconds;
       setMessage({
-        text: t("rateLimitedWithFaucet"),
+        text: retryAfter
+          ? t("rateLimitedRetryAfter", { seconds: String(retryAfter) })
+          : t("rateLimitedWithFaucet"),
         type: "warning",
       });
-      setCooldown(60);
+      setCooldown(retryAfter ?? 60);
     } else {
       setMessage({
         text: result.error ?? t("networkError"),

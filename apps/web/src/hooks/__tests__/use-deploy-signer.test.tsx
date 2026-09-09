@@ -25,6 +25,13 @@ const dynamic = vi.hoisted(() => ({
 
 const dynamicEnabled = vi.hoisted(() => ({ value: true }));
 
+const connectionMock = vi.hoisted(() => ({
+  getLatestBlockhash: vi.fn(async () => ({
+    blockhash: "fresh",
+    lastValidBlockHeight: 1,
+  })),
+}));
+
 vi.mock("@solana/wallet-adapter-react", () => ({
   useWallet: () => ({
     publicKey: wallet.publicKey,
@@ -33,6 +40,9 @@ vi.mock("@solana/wallet-adapter-react", () => ({
       ? wallet.signAllTransactions
       : undefined,
   }),
+  // Only used by the embedded path, to re-stamp a batch whose blockhash the
+  // rate-limit backoff has outlived.
+  useConnection: () => ({ connection: connectionMock }),
 }));
 
 // Only the signing calls are stubbed — `isDynamicSessionExpiredError` is the
@@ -120,6 +130,59 @@ describe("useDeploySigner", () => {
       [tx],
       dynamic.account
     );
+  });
+
+  it("splits an embedded batch into sub-batches, in order", async () => {
+    dynamic.account = { address: EMBEDDED_KEY.toBase58() };
+    dynamic.signAllWithDynamicWallet.mockImplementation(
+      async (txs: Transaction[]) => txs
+    );
+
+    const { result } = renderHook(() => useDeploySigner());
+    const txs = Array.from({ length: 12 }, () => new Transaction());
+    const signed = await result.current.signer!.signAllTransactions(txs);
+
+    // Dynamic throttles the MPC API by signatures asked for at once, so a
+    // 15-tx batch goes out five at a time.
+    expect(
+      dynamic.signAllWithDynamicWallet.mock.calls.map((call) => call[0].length)
+    ).toEqual([5, 5, 2]);
+    // The deploy maps signature i back to chunk i.
+    expect(signed).toEqual(txs);
+  });
+
+  it("waits out a rate limit instead of failing the batch", async () => {
+    vi.useFakeTimers();
+    dynamic.account = { address: EMBEDDED_KEY.toBase58() };
+    const rateLimited = new Error("Rate limited");
+    rateLimited.name = "WalletApiError";
+    dynamic.signAllWithDynamicWallet
+      .mockRejectedValueOnce(rateLimited)
+      .mockImplementation(async (txs: Transaction[]) => txs);
+
+    const onRateLimitWait = vi.fn();
+    const { result } = renderHook(() => useDeploySigner({ onRateLimitWait }));
+    const txs = [new Transaction()];
+    const pending = result.current.signer!.signAllTransactions(txs);
+    await vi.runAllTimersAsync();
+
+    await expect(pending).resolves.toEqual(txs);
+    expect(dynamic.signAllWithDynamicWallet).toHaveBeenCalledTimes(2);
+    expect(onRateLimitWait).toHaveBeenCalledOnce();
+    vi.useRealTimers();
+  });
+
+  it("leaves the adapter path unwrapped", async () => {
+    wallet.publicKey = ADAPTER_KEY;
+    const txs = Array.from({ length: 12 }, () => new Transaction());
+    wallet.signAllTransactions.mockResolvedValue(txs);
+
+    const { result } = renderHook(() => useDeploySigner());
+    await result.current.signer!.signAllTransactions(txs);
+
+    // An extension wallet signs locally: one popup, no sub-batching, no
+    // backoff.
+    expect(wallet.signAllTransactions).toHaveBeenCalledWith(txs);
   });
 
   it("hands back the SAME signer across re-renders while the session is unchanged", () => {
