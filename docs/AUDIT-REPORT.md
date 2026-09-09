@@ -207,7 +207,7 @@ Kani toolchain is provisioned (not installed in this environment).
 ## 6. Deploy readiness
 
 - All gates green post-hardening: host parity (§4), dual-VM differential,
-  unmodified TS acceptance suite, bounded proofs, Trident fuzz smoke.
+  unmodified TS acceptance suite, bounded proofs, litesvm fuzz smoke.
 - Measured CU after hardening: **−39.2%** total vs Anchor
   ([tests/CU_COMPARISON.md](../onchain-academy/tests/CU_COMPARISON.md)); binary
   −70% (672 KB → 202 KB).
