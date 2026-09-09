@@ -11,6 +11,7 @@ import { estimateSessionKeyDeployCost } from "../cost";
 import { setCachedBinary } from "../deploy";
 import {
   createFundingTransfer,
+  FundingCheckError,
   isResumableDeploymentState,
   OwnershipTransferError,
   runSessionKeyDeploy,
@@ -341,6 +342,63 @@ describe("runSessionKeyDeploy", () => {
 
     expect(fund).toHaveBeenCalledTimes(1);
     expect(result.fundedLamports).toBeGreaterThan(0);
+  });
+
+  it("does not re-fund when the status read itself fails", async () => {
+    setCachedBinary("uuid-status-error", BINARY);
+    const session = Keypair.generate();
+    const h = harness();
+    h.setBalance(0);
+    (
+      h.connection.getSignatureStatuses as ReturnType<typeof vi.fn>
+    ).mockRejectedValue(new Error("503 rate limited"));
+
+    const fund = vi.fn(async () => "second-fund-sig");
+    const error = await runSessionKeyDeploy({
+      connection: h.connection,
+      learner: Keypair.generate().publicKey,
+      buildUuid: "uuid-status-error",
+      fund,
+      callbacks: callbacks(),
+      persistedSessionKey: Array.from(session.secretKey),
+      pendingFundingSignature: "unreadable-sig",
+    }).catch((err: unknown) => err);
+
+    // A failed READ is not proof the transfer failed: it may have landed.
+    expect(error).toBeInstanceOf(FundingCheckError);
+    expect((error as FundingCheckError).reason).toBe("rpc-error");
+    expect(fund).not.toHaveBeenCalled();
+  });
+
+  it("does not re-fund a transfer still pending past the blockhash window", async () => {
+    setCachedBinary("uuid-status-pending", BINARY);
+    const session = Keypair.generate();
+    const h = harness();
+    h.setBalance(0);
+    (
+      h.connection.getSignatureStatuses as ReturnType<typeof vi.fn>
+    ).mockResolvedValue({ value: [null] });
+
+    const fund = vi.fn(async () => "second-fund-sig");
+    vi.useFakeTimers();
+    const pending = runSessionKeyDeploy({
+      connection: h.connection,
+      learner: Keypair.generate().publicKey,
+      buildUuid: "uuid-status-pending",
+      fund,
+      callbacks: callbacks(),
+      persistedSessionKey: Array.from(session.secretKey),
+      pendingFundingSignature: "slow-sig",
+    }).catch((err: unknown) => err);
+    // Past the ~90 s a blockhash stays valid for; the poll gives up, the
+    // learner does not pay twice.
+    await vi.advanceTimersByTimeAsync(95_000);
+    const error = await pending;
+    vi.useRealTimers();
+
+    expect(error).toBeInstanceOf(FundingCheckError);
+    expect((error as FundingCheckError).reason).toBe("still-pending");
+    expect(fund).not.toHaveBeenCalled();
   });
 
   it("reports a failed handover with the session ADDRESS, never its secret", async () => {

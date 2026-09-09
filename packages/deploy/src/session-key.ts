@@ -2,6 +2,7 @@ import {
   Connection,
   Keypair,
   PublicKey,
+  type SignatureStatus,
   SystemProgram,
   Transaction,
 } from "@solana/web3.js";
@@ -58,10 +59,11 @@ const FUNDING_POLL_MS = 1_500;
 
 /**
  * How long to wait on a funding signature left over from an attempt that threw.
- * Shorter than a fresh transfer: the point is to find out whether it landed, and
- * a signature the cluster has never heard of should not stall a retry.
+ * Long enough to outlive the blockhash it was signed with (~90 s): a transfer
+ * that is merely slow must not be declared lost while it can still land.
  */
-const PENDING_FUNDING_TIMEOUT_MS = 20_000;
+const PENDING_FUNDING_TIMEOUT_MS = 90_000;
+const PENDING_FUNDING_POLL_MS = 3_000;
 
 /** Attempts for `SetAuthority`, which must succeed or the deploy is unowned. */
 const AUTHORITY_ATTEMPTS = 4;
@@ -370,33 +372,73 @@ async function waitForFunding(
 /**
  * Does this session key already hold the deploy's cost?
  *
- * Two ways it can, both from an attempt that threw after the transfer was on
- * the wire: the balance is simply there, or a signature was persisted before
- * broadcast and the cluster confirms it landed. Either answer means the retry
- * must NOT transfer again. Anything else — no balance, an unknown or failed
- * signature — falls through to a fresh transfer.
+ * Three answers, not two. `"funded"` — the balance is there, or the persisted
+ * transfer confirmed — and `"failed"` — the transfer is on chain and errored —
+ * are both definitive, so the caller can transfer again on the second one. The
+ * third is the one that matters: when the check itself cannot answer (the RPC
+ * read failed, or the signature is still pending past the blockhash it was
+ * signed with) the transfer MIGHT have landed, and sending a second one would
+ * double the learner's bill. That fails closed into a retry.
  */
-async function isAlreadyFunded(
+type FundingCheck = "funded" | "failed";
+
+/** Thrown when the funding check could not tell whether the learner paid. */
+export class FundingCheckError extends Error {
+  readonly reason: "rpc-error" | "still-pending";
+
+  constructor(reason: "rpc-error" | "still-pending") {
+    super(
+      "Could not confirm the previous funding transfer, so no second transfer was sent."
+    );
+    this.name = "FundingCheckError";
+    this.reason = reason;
+  }
+}
+
+async function checkPendingFunding(
+  connection: Connection,
+  signature: string,
+  sessionKey: PublicKey,
+  requiredLamports: number
+): Promise<FundingCheck> {
+  const deadline = Date.now() + PENDING_FUNDING_TIMEOUT_MS;
+  for (;;) {
+    let status: SignatureStatus | null;
+    try {
+      const { value } = await connection.getSignatureStatuses([signature]);
+      status = value[0] ?? null;
+    } catch {
+      // The read failed, not the transfer.
+      throw new FundingCheckError("rpc-error");
+    }
+    if (status?.err) return "failed";
+    if (
+      status?.confirmationStatus === "confirmed" ||
+      status?.confirmationStatus === "finalized"
+    ) {
+      const balance = await connection.getBalance(sessionKey, "confirmed");
+      return balance >= requiredLamports ? "funded" : "failed";
+    }
+    if (Date.now() > deadline) throw new FundingCheckError("still-pending");
+    await new Promise((r) => setTimeout(r, PENDING_FUNDING_POLL_MS));
+  }
+}
+
+async function checkExistingFunding(
   connection: Connection,
   sessionKey: PublicKey,
   requiredLamports: number,
   pendingSignature: string | null
-): Promise<boolean> {
+): Promise<FundingCheck> {
   const balance = await connection.getBalance(sessionKey, "confirmed");
-  if (balance >= requiredLamports) return true;
-  if (!pendingSignature) return false;
-  try {
-    await waitForFunding(
-      connection,
-      pendingSignature,
-      sessionKey,
-      requiredLamports,
-      PENDING_FUNDING_TIMEOUT_MS
-    );
-    return true;
-  } catch {
-    return false;
-  }
+  if (balance >= requiredLamports) return "funded";
+  if (!pendingSignature) return "failed";
+  return checkPendingFunding(
+    connection,
+    pendingSignature,
+    sessionKey,
+    requiredLamports
+  );
 }
 
 async function sendLocal(
@@ -579,15 +621,15 @@ export async function runSessionKeyDeploy(
     // deploy they have already paid for. A key generated a line ago cannot be,
     // so it is not asked.
     const funded = params.persistedSessionKey
-      ? await isAlreadyFunded(
+      ? await checkExistingFunding(
           connection,
           session.publicKey,
           estimate.totalLamports,
           params.pendingFundingSignature ?? null
         )
-      : false;
+      : "failed";
 
-    if (!funded) {
+    if (funded === "failed") {
       const signature = await fund(
         estimate.totalLamports,
         session.publicKey,

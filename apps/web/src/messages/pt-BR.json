@@ -871,6 +871,8 @@
       "claimOwnership": "Reivindicar propriedade",
       "refundFailed": "O SOL restante ainda está na chave temporária ({address}). O deploy está completo; você pode tentar o reembolso de novo.",
       "retryRefund": "Tentar reembolso de novo",
+      "fundingCheckFailed": "Não conseguimos verificar se a sua transferência anterior foi concluída, então não enviamos outra — você não pagou duas vezes. Tente de novo em instantes.",
+      "retryFundingCheck": "Tentar de novo",
       "sessionKeyLost": "A chave temporária de deploy desta aba se perdeu quando a página recarregou, então o envio não pode ser retomado e o SOL que ela ainda tem ficou preso em {address}. Copie esse endereço para recuperar os fundos por conta própria; um novo deploy começa com outra chave.",
       "copyAddress": "Copiar endereço",
       "rateLimitWaiting": "O serviço da carteira está ocupado (limite de requisições) — tentando de novo em {seconds}s",

@@ -21,6 +21,7 @@ export {
   assertSessionOwnsBuffer,
   keypairSigner,
   OwnershipTransferError,
+  FundingCheckError,
   type SessionKeyDeployParams,
   type SessionKeyDeployResult,
   type SessionKeyEvents,
