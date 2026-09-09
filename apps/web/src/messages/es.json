@@ -834,7 +834,8 @@
       "refreshBalance": "Actualizar",
       "connectWallet": "Conecta tu billetera para continuar",
       "copyAddress": "Copiar dirección",
-      "addressCopied": "¡Copiado!"
+      "addressCopied": "¡Copiado!",
+      "rateLimitedRetryAfter": "El faucet de devnet está limitado. Inténtalo en {seconds}s, o usa el faucet web."
     },
     "deployment": {
       "deployToDevnet": "Desplegar en Devnet",
@@ -870,7 +871,9 @@
       "claimOwnership": "Reclamar propiedad",
       "refundFailed": "El SOL restante sigue en la clave temporal ({address}). El despliegue está completo; puedes reintentar el reembolso.",
       "retryRefund": "Reintentar reembolso",
-      "sessionKeyLost": "Esta página perdió la clave temporal de despliegue, así que la subida no puede reanudarse. Empieza de nuevo para desplegar."
+      "sessionKeyLost": "Esta página perdió la clave temporal de despliegue, así que la subida no puede reanudarse. Empieza de nuevo para desplegar.",
+      "rateLimitWaiting": "El servicio de la billetera está ocupado (límite de solicitudes) — reintentando en {seconds}s",
+      "rateLimitPaused": "El servicio de la billetera sigue limitando las firmas. No se perdió nada — espera un minuto y reanuda."
     },
     "save": {
       "recording": "Registrando tu despliegue…",

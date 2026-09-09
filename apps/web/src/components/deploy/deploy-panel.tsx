@@ -27,6 +27,7 @@ import { celebrate } from "@/lib/gamification/celebration";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { trackEvent } from "@/lib/analytics";
 import { isDynamicSessionExpiredError } from "@/lib/dynamic/solana";
+import { isDynamicRateLimitError } from "@/lib/dynamic/rate-limit";
 import {
   saveDeploymentWithRetry,
   type SaveStatus,
@@ -64,7 +65,8 @@ interface DeployPanelProps {
 }
 
 interface TxLogEntry {
-  signature: string;
+  /** Absent for notices that aren't a transaction (e.g. a rate-limit wait). */
+  signature?: string;
   step: DeployStep;
   message: string;
   timestamp: number;
@@ -150,16 +152,6 @@ export function DeployPanel({
   onBuildExpired,
 }: DeployPanelProps) {
   const t = useTranslations("deploy.deployment");
-  // Extension wallet or Dynamic embedded wallet — the deploy is signed and paid
-  // by whichever one this learner actually has.
-  const {
-    status: signerStatus,
-    signer,
-    kind: signerKind,
-    batchSize,
-    startReauth,
-  } = useDeploySigner();
-  const publicKey = signer?.publicKey ?? null;
   const { connection } = useConnection();
   const { profile, isLoading: authLoading } = useAuth();
 
@@ -197,6 +189,32 @@ export function DeployPanel({
   // the learner does not own it yet and the server record is refused.
   const [claim, setClaim] = useState<DeployResult | null>(null);
   const [refundFailed, setRefundFailed] = useState(false);
+
+  // Extension wallet or Dynamic embedded wallet — the deploy is signed and paid
+  // by whichever one this learner actually has. A throttled embedded signing
+  // request is reported into the same log the learner is already watching:
+  // nothing has failed, the signer is waiting before it asks again.
+  const {
+    status: signerStatus,
+    signer,
+    kind: signerKind,
+    batchSize,
+    startReauth,
+  } = useDeploySigner({
+    onRateLimitWait: ({ waitMs }) => {
+      setTxLog((prev) => [
+        ...prev,
+        {
+          step: "upload",
+          message: t("rateLimitWaiting", {
+            seconds: String(Math.max(1, Math.round(waitMs / 1000))),
+          }),
+          timestamp: Date.now(),
+        },
+      ]);
+    },
+  });
+  const publicKey = signer?.publicKey ?? null;
 
   // Timing
   const startTimeRef = useRef<number>(0);
@@ -734,6 +752,19 @@ export function DeployPanel({
           setPanelState("paused");
           return;
         }
+        // The session key itself never touches Dynamic, but the funding
+        // transfer that pays it does — a single `signTransaction` call the
+        // embedded wallet can still throttle. The buffer keeps whatever
+        // landed before the transfer, so this is a wait, not a broken deploy.
+        if (isDynamicRateLimitError(err)) {
+          trackEvent("deploy_rate_limited", {
+            signerKind,
+            phase: resume ? "resume" : "deploy",
+          });
+          setErrorMessage(t("rateLimitPaused"));
+          setPanelState("paused");
+          return;
+        }
         const message = err instanceof Error ? err.message : String(err);
         setErrorMessage(message);
         setPanelState(
@@ -878,6 +909,16 @@ export function DeployPanel({
         return;
       }
 
+      // Throttled by Dynamic's wallet API after the signer had already spent
+      // its backoff. Nothing on chain failed and the buffer keeps every chunk
+      // that landed, so this is a wait, not a broken deploy.
+      if (isDynamicRateLimitError(err)) {
+        trackEvent("deploy_rate_limited", { signerKind, phase: "deploy" });
+        setErrorMessage(t("rateLimitPaused"));
+        setPanelState("paused");
+        return;
+      }
+
       const message = err instanceof Error ? err.message : String(err);
       setErrorMessage(message);
 
@@ -903,6 +944,7 @@ export function DeployPanel({
     handleSuccess,
     isEmbedded,
     runEmbedded,
+    t,
   ]);
 
   // Resume handler
@@ -950,6 +992,13 @@ export function DeployPanel({
         trackEvent("deploy_session_expired", { signerKind, phase: "resume" });
         setSessionExpired(true);
         setReauthDismissed(false);
+        setPanelState("paused");
+        return;
+      }
+
+      if (isDynamicRateLimitError(err)) {
+        trackEvent("deploy_rate_limited", { signerKind, phase: "resume" });
+        setErrorMessage(t("rateLimitPaused"));
         setPanelState("paused");
         return;
       }
@@ -1317,17 +1366,19 @@ export function DeployPanel({
               <div className="space-y-1">
                 {txLog.map((entry, idx) => (
                   <div
-                    key={`${entry.signature}-${idx}`}
+                    key={`${entry.signature ?? "note"}-${idx}`}
                     className="flex items-center gap-2 text-[11px]"
                   >
-                    <a
-                      href={`${EXPLORER_BASE}/tx/${entry.signature}?cluster=devnet`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="shrink-0 font-mono text-primary hover:underline"
-                    >
-                      {truncateSig(entry.signature)}
-                    </a>
+                    {entry.signature && (
+                      <a
+                        href={`${EXPLORER_BASE}/tx/${entry.signature}?cluster=devnet`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="shrink-0 font-mono text-primary hover:underline"
+                      >
+                        {truncateSig(entry.signature)}
+                      </a>
+                    )}
                     <span className="truncate text-muted-foreground">
                       {entry.message}
                     </span>
@@ -1386,17 +1437,19 @@ export function DeployPanel({
               <div className="space-y-1">
                 {txLog.map((entry, idx) => (
                   <div
-                    key={`${entry.signature}-${idx}`}
+                    key={`${entry.signature ?? "note"}-${idx}`}
                     className="flex items-center gap-2 text-[11px]"
                   >
-                    <a
-                      href={`${EXPLORER_BASE}/tx/${entry.signature}?cluster=devnet`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="shrink-0 font-mono text-primary hover:underline"
-                    >
-                      {truncateSig(entry.signature)}
-                    </a>
+                    {entry.signature && (
+                      <a
+                        href={`${EXPLORER_BASE}/tx/${entry.signature}?cluster=devnet`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="shrink-0 font-mono text-primary hover:underline"
+                      >
+                        {truncateSig(entry.signature)}
+                      </a>
+                    )}
                     <span className="truncate text-muted-foreground">
                       {entry.message}
                     </span>

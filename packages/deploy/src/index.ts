@@ -25,7 +25,12 @@ export {
   type SessionKeyDeployResult,
   type SessionKeyEvents,
 } from "./session-key";
-export { createAirdropRequest, type AirdropResult } from "./airdrop";
+export {
+  createAirdropRequest,
+  DEVNET_FAUCET_ENDPOINT,
+  MAX_RETRY_AFTER_SECONDS,
+  type AirdropResult,
+} from "./airdrop";
 export { CHUNK_SIZE, BPF_LOADER_UPGRADEABLE_ID } from "./constants";
 export type {
   DeployStep,

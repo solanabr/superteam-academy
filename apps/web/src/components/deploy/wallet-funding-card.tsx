@@ -3,7 +3,10 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useConnection } from "@solana/wallet-adapter-react";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
-import { createAirdropRequest } from "@superteam-lms/deploy";
+import {
+  createAirdropRequest,
+  MAX_RETRY_AFTER_SECONDS,
+} from "@superteam-lms/deploy";
 import { useTranslations } from "next-intl";
 import { useDeploySigner } from "@/hooks/use-deploy-signer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -89,7 +92,10 @@ export function WalletFundingCard({
     setIsAirdropping(true);
     setMessage(null);
 
-    const result = await createAirdropRequest(connection, publicKey, 2);
+    // No `connection` argument: the airdrop goes to the PUBLIC devnet RPC,
+    // whose limit is per address, while the app's keyed endpoint meters the
+    // faucet per project — one learner's 2 SOL used to exhaust everyone's day.
+    const result = await createAirdropRequest(publicKey, 2);
 
     if (result.success) {
       setBalance(result.newBalance ?? balance);
@@ -102,11 +108,19 @@ export function WalletFundingCard({
       });
       setCooldown(COOLDOWN_SECONDS);
     } else if (result.rateLimited) {
+      // Capped again here, defensively — `createAirdropRequest` already caps
+      // what it parses out of the faucet body, but the cooldown timer should
+      // never trust an unbounded number even if that changes upstream.
+      const retryAfter = result.retryAfterSeconds
+        ? Math.min(result.retryAfterSeconds, MAX_RETRY_AFTER_SECONDS)
+        : undefined;
       setMessage({
-        text: t("rateLimitedWithFaucet"),
+        text: retryAfter
+          ? t("rateLimitedRetryAfter", { seconds: String(retryAfter) })
+          : t("rateLimitedWithFaucet"),
         type: "warning",
       });
-      setCooldown(60);
+      setCooldown(retryAfter ?? 60);
     } else {
       setMessage({
         text: result.error ?? t("networkError"),

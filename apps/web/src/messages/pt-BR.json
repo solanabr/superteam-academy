@@ -834,7 +834,8 @@
       "refreshBalance": "Atualizar",
       "connectWallet": "Conecte sua carteira para continuar",
       "copyAddress": "Copiar endereço",
-      "addressCopied": "Copiado!"
+      "addressCopied": "Copiado!",
+      "rateLimitedRetryAfter": "O faucet da devnet está limitado. Tente de novo em {seconds}s, ou use o faucet web."
     },
     "deployment": {
       "deployToDevnet": "Deploy na Devnet",
@@ -870,7 +871,9 @@
       "claimOwnership": "Reivindicar propriedade",
       "refundFailed": "O SOL restante ainda está na chave temporária ({address}). O deploy está completo; você pode tentar o reembolso de novo.",
       "retryRefund": "Tentar reembolso de novo",
-      "sessionKeyLost": "Esta página perdeu a chave temporária de deploy, então o envio não pode ser retomado. Recomece para fazer o deploy de novo."
+      "sessionKeyLost": "Esta página perdeu a chave temporária de deploy, então o envio não pode ser retomado. Recomece para fazer o deploy de novo.",
+      "rateLimitWaiting": "O serviço da carteira está ocupado (limite de requisições) — tentando de novo em {seconds}s",
+      "rateLimitPaused": "O serviço da carteira ainda está limitando assinaturas. Nada foi perdido — espere um minuto e retome."
     },
     "save": {
       "recording": "Registrando seu deploy…",
