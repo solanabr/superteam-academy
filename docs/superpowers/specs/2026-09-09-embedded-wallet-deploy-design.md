@@ -71,7 +71,7 @@ Resolution, mirroring `use-on-chain-enroll.ts`:
 
 **C2. Batch signing helper.** `signAllWithDynamicWallet(txs, account)` in `lib/dynamic/solana.ts`, wrapping the SDK's `signAllTransactions` (present in `@dynamic-labs-sdk/solana` 1.27.1) with the same version-boundary cast and the same `isDynamicSessionExpiredError` semantics as `signWithDynamicWallet`. Returns the signed transactions in order.
 
-**C3. Batch size follows the signer.** `deployProgram` and `resumeDeployment` in `packages/deploy/src/deploy.ts` get an optional `batchSize` (default stays 50). Every batch shares one blockhash fetched before signing, and a blockhash lives roughly 60 to 90 s on devnet. Fifty MPC signatures in one call is an unmeasured cost. The builder measures `signAllTransactions` latency for 10, 25 and 50 transactions against a real Dynamic session and picks the embedded batch size so signing finishes well inside the window (target under 20 s per batch). The number and the measurement go in the PR body. Resume uses the same size.
+**C3. Batch size follows the signer.** `deployProgram` and `resumeDeployment` in `packages/deploy/src/deploy.ts` get an optional `batchSize` (default stays 50). Every batch shares one blockhash fetched before signing, and a blockhash lives roughly 60 to 90 s on devnet. Fifty MPC signatures in one call is an unmeasured cost. The builder measures `signAllTransactions` latency for 10, 25 and 50 transactions against a real Dynamic session and picks the embedded batch size so signing finishes well inside the window (target under 20 s per batch). The number and the measurement go in the PR body. Resume uses the same size. The measured size can go stale (an SDK upgrade, a provider change on Dynamic's side) — a too-large batch then degrades to the existing resend/resume path rather than becoming a security issue.
 
 **C4. Deploy panel uses the signer.** `DeployPanel` replaces `useWallet()` with `useDeploySigner()`:
 
@@ -117,11 +117,11 @@ Resolution, mirroring `use-on-chain-enroll.ts`:
 
 ## Review
 
-PR C touches wallet signing and on-chain spend, so it gets an independent adversarial gate before merge. Points for the gate: the embedded signer cannot be used to sign for a wallet other than the session's; the cache prefix cannot collide across users; the funding card cannot target a different address than the signer; the kill switch degrades to today's behaviour; no new server route.
+PR C touches wallet signing and on-chain spend, so it gets an independent adversarial gate before merge. Points for the gate: the embedded signer cannot be used to sign for a wallet other than the session's; the cache prefix cannot collide across users; the funding card cannot target a different address than the signer; the kill switch degrades to today's behaviour; no new server route; the 1.2x cost buffer in `estimateDeployCost` (C5) holds against real devnet priority-fee spikes, not just the mocked test case.
 
 ## Rollout
 
-Behind the existing `isDynamicEnabled()` flag. Order: B (lint) and A (content) can merge any time, A's lock bump after C is live so the lesson is not exposed with a panel that still ignores embedded wallets. Verify with the owner's own account, then watch `deploy_completed` by `signerKind` for a week.
+Behind the existing `isDynamicEnabled()` flag. Order: B (lint) and A (content) can merge any time, A's lock bump after C is live so the lesson is not exposed with a panel that still ignores embedded wallets. Verify with the owner's own account, then watch `deploy_completed` by `signerKind` for a week. Once PR C lands, `docs/ARCHITECTURE.md` gets a `useDeploySigner()` mention next to the existing enroll-signing pattern.
 
 ## Alternatives considered
 

@@ -18,18 +18,19 @@ You are an Anchor framework specialist with deep expertise in building secure, m
 
 ## Core Competencies
 
-| Domain | Expertise |
-|--------|-----------|
-| **Anchor Framework** | v0.32+, macros, constraints, IDL |
-| **Account Validation** | Constraints, has_one, seeds, init patterns |
-| **Error Handling** | Custom errors, error codes, descriptive messages |
-| **Testing** | Anchor test framework, TypeScript integration |
-| **IDL Generation** | Auto-generated interfaces for clients |
-| **CPI Helpers** | Built-in CPI modules, context generation |
+| Domain                 | Expertise                                        |
+| ---------------------- | ------------------------------------------------ |
+| **Anchor Framework**   | v0.32+, macros, constraints, IDL                 |
+| **Account Validation** | Constraints, has_one, seeds, init patterns       |
+| **Error Handling**     | Custom errors, error codes, descriptive messages |
+| **Testing**            | Anchor test framework, TypeScript integration    |
+| **IDL Generation**     | Auto-generated interfaces for clients            |
+| **CPI Helpers**        | Built-in CPI modules, context generation         |
 
 ## When to Use Anchor
 
 **Perfect for**:
+
 - Rapid prototyping and MVP development
 - Team projects requiring standardization
 - Programs needing auto-generated clients (IDL)
@@ -37,6 +38,7 @@ You are an Anchor framework specialist with deep expertise in building secure, m
 - Complex account validation patterns
 
 **Consider alternatives when**:
+
 - CU optimization is critical (use Pinocchio)
 - Binary size must be minimized
 - Need maximum control over every instruction
@@ -395,21 +397,21 @@ pub fn transfer(ctx: Context<Transfer>, amount: u64) -> Result<()> {
 
 ## Testing Framework Decision
 
-| Framework | Speed | Use Case | When to Use |
-|-----------|-------|----------|-------------|
-| **anchor test** | 🐢 Slow | Full E2E | Integration, multi-instruction flows |
-| **Mollusk** | ⚡ Fastest | Unit tests | Individual instruction testing |
-| **LiteSVM** | ⚡ Fast | Integration | Multi-instruction without validator |
-| **Surfpool** | 🚀 Fast | Realistic state | Testing with mainnet/devnet state |
-| **Trident** | 🐢 Slow | Fuzz testing | Edge case discovery, security |
+| Framework        | Speed      | Use Case        | When to Use                          |
+| ---------------- | ---------- | --------------- | ------------------------------------ |
+| **anchor test**  | 🐢 Slow    | Full E2E        | Integration, multi-instruction flows |
+| **Mollusk**      | ⚡ Fastest | Unit tests      | Individual instruction testing       |
+| **LiteSVM**      | ⚡ Fast    | Integration     | Multi-instruction without validator  |
+| **Surfpool**     | 🚀 Fast    | Realistic state | Testing with mainnet/devnet state    |
+| **litesvm fuzz** | 🐢 Slow    | Fuzz testing    | Edge case discovery, security        |
 
 ### Recommended Testing Strategy
 
 ```
 1. Mollusk (unit)     → Fast iteration during development
-2. LiteSVM (integ)    → Multi-instruction flow testing  
+2. LiteSVM (integ)    → Multi-instruction flow testing
 3. anchor test (E2E)  → Full integration before deploy
-4. Trident (fuzz)     → Security edge cases
+4. litesvm fuzz       → Security edge cases (onchain-academy/tests/fuzz)
 ```
 
 ### Anchor Test Example
@@ -454,6 +456,7 @@ describe("my_program", () => {
 ## Best Practices
 
 ### Security Checklist
+
 - [ ] All accounts validated with constraints
 - [ ] Arithmetic uses checked operations
 - [ ] PDAs use stored canonical bumps
@@ -462,12 +465,14 @@ describe("my_program", () => {
 - [ ] Tests cover all instructions and errors
 
 ### Performance Tips
+
 - Use `#[derive(InitSpace)]` for accurate space calculation
 - Store bumps to avoid recalculation (~1500 CU savings)
 - Use `close` constraint for safe account closure
 - Feature-gate debug logs: `#[cfg(feature = "debug")]`
 
 ### Code Organization
+
 ```
 programs/my-program/src/
 ├── lib.rs              # Program entry, declare_id
@@ -484,6 +489,7 @@ programs/my-program/src/
 ## When to Optimize to Pinocchio
 
 Consider switching if:
+
 - CU usage exceeds limits consistently
 - Transaction costs become significant at scale
 - Binary size is problematic

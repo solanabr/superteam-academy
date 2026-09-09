@@ -2,7 +2,7 @@
 description: "Run Rust tests for Solana programs and backend services"
 ---
 
-You are running Rust tests. This command covers Solana program testing (Mollusk, LiteSVM, Surfpool, Trident) and backend service testing.
+You are running Rust tests. This command covers Solana program testing (Mollusk, LiteSVM, Surfpool, litesvm-based fuzzing) and backend service testing.
 
 ## Related Skills
 
@@ -43,7 +43,7 @@ fi
 1. **Unit tests (fastest)**: Mollusk - individual instruction tests
 2. **Integration tests (fast)**: LiteSVM - multi-instruction flows
 3. **Realistic state tests**: Surfpool - mainnet/devnet state locally
-4. **Fuzz tests**: Trident - edge case discovery
+4. **Fuzz tests**: litesvm (`onchain-academy/tests/fuzz`) - edge case discovery
 
 ### Mollusk Unit Tests
 
@@ -155,42 +155,45 @@ surfpool stop
 // - Account cloning between environments
 
 // Time travel to specific slot
-await connection._rpcRequest('surfnet_timeTravel', [{
-    absoluteSlot: 250000000
-}]);
+await connection._rpcRequest("surfnet_timeTravel", [
+  {
+    absoluteSlot: 250000000,
+  },
+]);
 
 // Clone account from mainnet
-await connection._rpcRequest('surfnet_cloneProgramAccount', [{
+await connection._rpcRequest("surfnet_cloneProgramAccount", [
+  {
     source: mainnetProgramId.toString(),
     destination: localProgramId.toString(),
     account: accountPubkey.toString(),
-}]);
+  },
+]);
 ```
 
-### Trident Fuzz Tests
+### litesvm Fuzz Tests
 
-Property-based fuzzing for edge cases:
+Property-based fuzzing for edge cases against the compiled `.so`, see
+`.github/workflows/fuzz.yml` and `onchain-academy/README.md`:
 
 ```bash
-echo "🔱 Running Trident fuzz tests..."
+echo "🐢 Running litesvm fuzz tests..."
 
-# Initialize (first time only)
-if [ ! -d "trident-tests" ]; then
-    trident init
-fi
+cargo build-sbf --manifest-path programs/onchain-academy-pinocchio/Cargo.toml --tools-version v1.54
 
-cd trident-tests
+cd tests/fuzz
+cargo build --release --bin fuzz
 
-# Run fuzz tests (modern syntax)
-trident fuzz run --timeout 300
+# Run fuzz tests
+FUZZ_MAX_SECONDS=300 cargo run --release --bin fuzz -- 1000000
 
 # Check for crashes
-if [ -d "hfuzz_workspace" ]; then
+if [ -d "crashes" ]; then
     echo "📋 Checking for crash reports..."
-    find hfuzz_workspace -name "crashes" -type d -exec ls -la {} \; 2>/dev/null
+    ls -la crashes/ 2>/dev/null
 fi
 
-cd ..
+cd ../..
 ```
 
 ### Complete Solana Test Suite
@@ -213,10 +216,10 @@ cargo test --lib
 echo "📍 Integration tests..."
 cargo test --test '*'
 
-# 4. Fuzz tests (Trident) - quick run
-if [ -d "trident-tests" ]; then
+# 4. Fuzz tests (litesvm) - quick run
+if [ -d "tests/fuzz" ]; then
     echo "📍 Fuzz tests..."
-    cd trident-tests && trident fuzz run --timeout 60 && cd ..
+    (cd tests/fuzz && FUZZ_MAX_SECONDS=60 cargo run --release --bin fuzz -- 1000000)
 fi
 
 echo "✅ All Solana tests complete!"
@@ -354,13 +357,13 @@ RUST_LOG=trace RUST_BACKTRACE=full cargo test failing_test -- --nocapture --exac
 
 ## Test Framework Comparison
 
-| Framework | Speed | Use Case | Scope |
-|-----------|-------|----------|-------|
-| **Mollusk** | ⚡ Fastest | Single instruction | Unit |
-| **LiteSVM** | ⚡ Fast | Multi-instruction flows | Integration |
-| **Surfpool** | 🚀 Fast | Realistic cluster state | Integration |
-| **Trident** | 🐢 Slower | Edge case discovery | Fuzz |
-| **test-validator** | 🐢 Slowest | Full network simulation | E2E |
+| Framework          | Speed      | Use Case                | Scope       |
+| ------------------ | ---------- | ----------------------- | ----------- |
+| **Mollusk**        | ⚡ Fastest | Single instruction      | Unit        |
+| **LiteSVM**        | ⚡ Fast    | Multi-instruction flows | Integration |
+| **Surfpool**       | 🚀 Fast    | Realistic cluster state | Integration |
+| **litesvm fuzz**   | 🐢 Slower  | Edge case discovery     | Fuzz        |
+| **test-validator** | 🐢 Slowest | Full network simulation | E2E         |
 
 ## CI Test Pattern
 
@@ -400,4 +403,4 @@ Before deployment:
 
 ---
 
-**Remember**: Test at all levels. Mollusk for speed, LiteSVM for integration, Surfpool for realistic state, Trident for edge cases.
+**Remember**: Test at all levels. Mollusk for speed, LiteSVM for integration, Surfpool for realistic state, litesvm fuzz for edge cases.
