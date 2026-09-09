@@ -132,3 +132,48 @@ Behind the existing `isDynamicEnabled()` flag. Order: B (lint) and A (content) c
 
 - MPC batch signing latency (C3) is the one unknown that could change the shape. It is measured inside PR C before the batch size is fixed.
 - Does the title "code you can never edit" mean the deploy should burn the upgrade authority? `deployProgram` does not today. Out of scope here; worth a separate content or protocol decision.
+
+## Addendum (2026-09-09, after the production test): session-key upload
+
+### What the test showed
+
+The owner's first production deploy with the embedded wallet funded the wallet, created the buffer and uploaded chunks 1 to 3 of 74, then paused with `WalletApiError: Rate limited`. Dynamic's MPC service throttles a burst of signatures; every chunk is one remote signature, so a 74-chunk program cannot be signed at a usable speed through the embedded wallet, and "Retomar Deploy" hits the same limit. Separately, the airdrop failed with the Helius project cap ("1 SOL per project per day"), because it went through the app's RPC key rather than the public devnet RPC.
+
+The backoff and public-RPC airdrop fix makes the flow survivable, not good: a deploy becomes minutes of waiting on the wallet service.
+
+### Design: one MPC signature, then a local session key
+
+On Deploy, the embedded wallet signs exactly one transaction: a SystemProgram transfer of the estimated deploy cost (`estimateDeployCost`, already 1.2x) to a fresh `Keypair` generated in the browser, the session key. From there nothing touches Dynamic:
+
+1. The session key is payer and authority for the buffer (`createInitializeBufferInstruction`, `createWriteInstruction`), signing all chunk transactions locally with `Keypair.sign`. The existing batching, bounded dispatch, confirm and resend logic is unchanged; only the signer is local, so a 74-chunk upload takes seconds.
+2. The session key is payer and `upgrade_authority` for `createDeployInstruction`, so the finalize is also local.
+3. Immediately after the deploy confirms, a Loader v3 `SetAuthority` on the ProgramData account moves the upgrade authority from the session key to the learner's linked wallet. `SetAuthority` is signed by the current authority only; the new authority is a non-signing account, so no second MPC signature is needed. `verifyProgramDeployment` (server, `/api/deploy/save`) keeps requiring `upgrade_authority == profiles.wallet_address`, so the record is attributed exactly as today.
+4. The session key transfers its remaining lamports back to the learner's wallet (one local transaction) and is discarded.
+
+The learner still pays every lamport, from their own wallet, and ends up owning the program. The only change is who holds the pen during the upload.
+
+### Persistence and resume
+
+The session key's secret lives in `sessionStorage` under the wallet-scoped deploy-state key, alongside `lastUploadedChunk`, encrypted with a key derived from a random nonce kept in memory plus the buildUuid (best effort: the threat is a leaked storage dump, not an attacker with the running page). Resume reads it back and continues from the last uploaded chunk with the same session key, so a paused deploy never needs a second funding transfer. Start over closes the buffer with `createCloseBufferInstruction` (refund to the session key) and sweeps the session key back to the learner before generating a new one. If the page is lost mid-upload with the secret gone, the SOL in the session key is stranded; the amount is bounded by the estimate (about 1.3 SOL on devnet, valueless), and the panel says so before the transfer.
+
+### Wallet kinds
+
+- Embedded: session-key path, always.
+- Extension wallet: unchanged by default (it signs batches itself with no rate limit). Offer the session-key path behind the same code as an option later if extension users report popup fatigue; not in this change.
+
+### Failure handling
+
+| situation                                    | behaviour                                                                                                                                                                                  |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| funding transfer rejected or session expired | reauth card, nothing spent                                                                                                                                                                 |
+| transfer confirmed, upload fails             | paused, session key persisted, resume continues; start over refunds                                                                                                                        |
+| SetAuthority fails after deploy              | retry with backoff; if it still fails the panel shows the program id and a "claim ownership" button that re-runs only step 3; the server record is not written until the authority matches |
+| refund fails                                 | non-blocking warning with the session key's address and a retry; the deploy is complete                                                                                                    |
+
+### Testing
+
+Unit: funding transfer amount equals the estimate; all chunk and finalize transactions are signed by the session key and never by the Dynamic helper (assert the helper is called exactly once); SetAuthority is built with the linked wallet as new authority and the session key as signer; refund sweeps the balance minus fee; resume reuses the persisted session key and offset; start over closes the buffer and sweeps. Integration on devnet by the gate with a real embedded account: deploy the live lesson's binary end to end, confirm `verifyProgramDeployment` passes against the linked wallet, time the run.
+
+### Review
+
+Adversarial gate, same points as C plus: the session key's secret never leaves the browser, is never logged or sent to telemetry, and is unrecoverable by another origin; the SetAuthority target can only ever be the session's linked wallet; a crafted saved state cannot make resume pay into a foreign buffer.
