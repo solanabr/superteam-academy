@@ -29,6 +29,7 @@ use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 use solana_sdk::transaction::{Transaction, TransactionError};
+use std::collections::BTreeMap;
 
 pub const SOL: u64 = 1_000_000_000;
 /// Fixed course id so the Course / Enrollment PDAs are reproducible across flows.
@@ -103,40 +104,25 @@ pub const ERR_STALE_ENROLLMENT: u32 = 6034;
 
 /// Is this transaction error an *expected* rejection of fuzzed input?
 ///
-/// Allowlist, not denylist: a fuzzer that treats "anything I have not seen" as
-/// normal cannot report the errors that matter. Only these mean "the runtime or
-/// the program refused a badly-shaped input"; everything else — the runtime
-/// guards (`UnbalancedInstruction`, `ModifiedProgramId`,
-/// `ExternalAccountDataModified`, `PrivilegeEscalation`), an abort
-/// (`ProgramFailedToComplete`), a runaway (`ComputationalBudgetExceeded`), a
-/// program that will not execute at all (`UnsupportedProgramId`, the seven-week
-/// Trident outage) — is a finding.
+/// Allowlist of exactly one variant: `Custom(_)`, the program's own
+/// `AcademyError` codes plus the Anchor-parity framework codes its validation
+/// helpers return. Everything else is a finding.
+///
+/// The allowlist started wider — ten further `InstructionError` variants,
+/// justified as "fuzzed data that does not parse", "a learner short of rent"
+/// and so on. None of them is reachable: this is a flow/state fuzzer, so it
+/// only ever builds well-formed data, correct signers and real ATAs, and the
+/// gate on #1214 observed zero non-`Custom` errors in ~64k transactions across
+/// three seeds. Each was also a real bug signature — a forgotten
+/// `target.resize(0)` in `close_account` surfaces as `ModifiedProgramId`, a
+/// wrong account reaching the Token-2022 CPI as `InvalidAccountData`, a
+/// program debiting lamports it may not as `InsufficientFunds`.
+///
+/// Re-add a variant only together with the seed that produced it.
 fn is_expected_rejection(err: &TransactionError) -> bool {
-    let TransactionError::InstructionError(_, ie) = err else {
-        // Transaction-level failures (fee payer, blockhash, account locks) are
-        // harness bugs, not program behavior. Surface them.
-        return false;
-    };
     matches!(
-        ie,
-        // The program's own AcademyError codes — a rejection is it working.
-        InstructionError::Custom(_)
-            // Fuzzed instruction data that does not parse.
-            | InstructionError::InvalidInstructionData
-            | InstructionError::InvalidArgument
-            // An account of the wrong type, owner or size for the handler.
-            | InstructionError::InvalidAccountData
-            | InstructionError::InvalidAccountOwner
-            | InstructionError::UninitializedAccount
-            // A PDA the fuzzer asked to create twice (re-enroll, re-create).
-            | InstructionError::AccountAlreadyInitialized
-            // A required signer the fuzzed account set did not carry.
-            | InstructionError::MissingRequiredSignature
-            | InstructionError::MissingAccount
-            // A fuzzed learner short of rent/lamports for the account it opens.
-            | InstructionError::InsufficientFunds
-            // System-program create against a non-system-owned address.
-            | InstructionError::IllegalOwner
+        err,
+        TransactionError::InstructionError(_, InstructionError::Custom(_))
     )
 }
 
@@ -157,7 +143,7 @@ fn custom_code(err: &TransactionError) -> Option<u32> {
 /// Success counters per flow. Printed by the driver at the end of a run: a run
 /// that "completed" with zeros is not coverage, it is the failure mode this
 /// port exists to make visible.
-#[derive(Default, Debug, Clone, Copy)]
+#[derive(Default, Debug, Clone)]
 pub struct Stats {
     pub transactions: u64,
     pub enrollments: u64,
@@ -171,10 +157,15 @@ pub struct Stats {
     /// Rejections with `StaleEnrollment` (6034) — unreachable before the
     /// course-recreate flow existed.
     pub stale_rejections: u64,
+    /// Hostile account sets that the program rejected, by `Custom` code. The
+    /// codes matter as much as the count: they say *which* account check did
+    /// the rejecting, so a check going missing shows up as a code that stops
+    /// appearing rather than as a silent pass.
+    pub hostile_rejections: BTreeMap<u32, u64>,
 }
 
 impl Stats {
-    pub fn merge(&mut self, other: Stats) {
+    pub fn merge(&mut self, other: &Stats) {
         self.transactions += other.transactions;
         self.enrollments += other.enrollments;
         self.lessons_completed += other.lessons_completed;
@@ -183,6 +174,25 @@ impl Stats {
         self.course_recreations += other.course_recreations;
         self.cooldown_rejections += other.cooldown_rejections;
         self.stale_rejections += other.stale_rejections;
+        for (code, count) in &other.hostile_rejections {
+            *self.hostile_rejections.entry(*code).or_default() += count;
+        }
+    }
+
+    /// `6000x12, 2006x7` — the hostile-swap rejection codes for the summary line.
+    pub fn hostile_summary(&self) -> String {
+        if self.hostile_rejections.is_empty() {
+            return "none".to_string();
+        }
+        self.hostile_rejections
+            .iter()
+            .map(|(code, count)| format!("{code}x{count}"))
+            .collect::<Vec<_>>()
+            .join(", ")
+    }
+
+    pub fn hostile_total(&self) -> u64 {
+        self.hostile_rejections.values().sum()
     }
 }
 
@@ -190,6 +200,45 @@ pub struct Outcome {
     pub ok: bool,
     pub logs: Vec<String>,
     pub err: Option<TransactionError>,
+}
+
+/// Course id whose PDA is never created — the "foreign course" of the hostile
+/// account sets.
+pub const FOREIGN_COURSE_ID: &str = "fuzz-course-foreign";
+
+/// One wrong-but-plausible account substituted into an otherwise valid
+/// instruction (G-2 on #1214).
+///
+/// Every flow above sends a *correct* account set, so the program's account
+/// checks were never exercised: the gate deleted `expect_program_owned`
+/// outright and the fuzzer still ran clean. These swaps change exactly one
+/// address per instruction — the kind of substitution a caller who holds a
+/// signature but not the right accounts would attempt — and the program must
+/// reject every one of them.
+///
+/// Which check they actually exercise: deleting the enrollment `expect_pda` in
+/// `complete_lesson` makes `ForeignEnrollment` pass and the run exit 99.
+/// Deleting `expect_program_owned` alone stays clean, and that is not a gap —
+/// `expect_account` runs `expect_initialized` and the discriminator compare
+/// around it, so no substituted account can be caught by the owner check
+/// alone. It is defense in depth, not the load-bearing check.
+#[derive(Debug, Clone, Copy)]
+enum AccountSwap {
+    /// `complete_lesson` against another learner's Enrollment PDA: the seeds no
+    /// longer match the learner account, so `expect_pda` must reject (2006).
+    ForeignEnrollment,
+    /// `complete_lesson` crediting the creator's XP ATA instead of the
+    /// learner's: `require_xp_recipient` must reject on the owner binding
+    /// (6000).
+    CreatorTokenAccount,
+    /// `complete_lesson` reading a Course PDA that was never created: the
+    /// account is system-owned and empty, so `expect_account` must reject
+    /// (3012 / 3007).
+    UnknownCourse,
+    /// `close_enrollment` signed by one learner but pointed at another
+    /// learner's Enrollment PDA — the account-substitution that would drain a
+    /// stranger's rent. Must reject (2006).
+    ForeignEnrollmentOnClose,
 }
 
 pub struct Session {
@@ -202,6 +251,10 @@ pub struct Session {
     pub xp_mint: Pubkey,
     pub stats: Stats,
     learners: Vec<Keypair>,
+    /// Did the last `create_fuzzed_course` in this session succeed? That is the
+    /// only legitimate reason for the Course PDA to be missing, so it is the
+    /// only condition under which a flow may skip on it.
+    course_live: bool,
 }
 
 impl Session {
@@ -217,6 +270,7 @@ impl Session {
             xp_mint: Pubkey::default(),
             stats: Stats::default(),
             learners: Vec::new(),
+            course_live: false,
         }
     }
 
@@ -351,7 +405,7 @@ impl Session {
             creator_reward_xp,
             collection: None,
         };
-        Ok(self
+        let created = self
             .send_checked(
                 &format!(
                     "{label}(lessons={lesson_count}, difficulty={difficulty}, \
@@ -360,7 +414,9 @@ impl Session {
                 &[ixs::create_course(&authority, &params)],
                 &[],
             )?
-            .ok)
+            .ok;
+        self.course_live = created;
+        Ok(created)
     }
 
     /// Enroll a brand-new learner, then provision its XP ATA.
@@ -437,22 +493,25 @@ impl Session {
         // the active_lessons mask. Nothing here retires a slot, so the course
         // stays dense and this equals the lesson_count used at creation.
         let Some(course) = self.course() else {
-            // A rejected `recreate_course` can leave the PDA freed; that is the
-            // fuzzer's own doing, not layout drift. Only a *populated* account
-            // that will not decode is a finding.
-            let pda = ixs::course_pda(COURSE_ID);
-            if self
-                .h
-                .svm
-                .get_account(&pda)
-                .is_none_or(|a| a.data.len() < 8)
-            {
+            // The one legitimate reason there is no course: the fuzzer's own
+            // `create_course` / `recreate_course` was rejected, so the PDA was
+            // never (re)opened. Anything else — a Course that exists but is
+            // truncated, zeroed or otherwise undecodable — is the program
+            // losing an account, and must crash rather than skip.
+            if !self.course_live {
                 self.sequence.push("finalize -> skipped (no course)".into());
                 return Ok(());
             }
+            let len = self
+                .h
+                .svm
+                .get_account(&ixs::course_pda(COURSE_ID))
+                .map_or(0, |a| a.data.len());
             return Err(Crash {
-                kind: "harness",
-                detail: "Course account could not be decoded — layout drift?".into(),
+                kind: "invariant violated",
+                detail: format!(
+                    "create_course succeeded but the Course PDA no longer decodes (len {len})"
+                ),
                 logs: Vec::new(),
             });
         };
@@ -570,6 +629,84 @@ impl Session {
         Ok(())
     }
 
+    /// Send one instruction with a single hostile account substituted, and
+    /// require the program to reject it.
+    ///
+    /// The assertion is the point: any `Custom` code counts (which check fires
+    /// depends on the order the handler validates in, and on whatever state the
+    /// preceding flows left behind), but *acceptance* is an invariant failure —
+    /// the program acted on an account it had no business accepting.
+    pub fn flow_hostile_account(&mut self) -> FuzzResult<()> {
+        let Some((idx, learner)) = self.pick_learner() else {
+            self.sequence
+                .push("hostile -> skipped (no learners)".into());
+            return Ok(());
+        };
+        // Draw unconditionally so the RNG stream does not depend on how many
+        // learners happen to be alive — the sequence must stay seed-derived.
+        let draw = self.rng.gen_range(0..4u8);
+        let other = self.pick_other_learner(idx);
+        let swap = match draw {
+            0 if other.is_some() => AccountSwap::ForeignEnrollment,
+            1 => AccountSwap::CreatorTokenAccount,
+            2 => AccountSwap::UnknownCourse,
+            _ if other.is_some() => AccountSwap::ForeignEnrollmentOnClose,
+            // Only one learner alive: fall back to a swap that needs no second.
+            _ => AccountSwap::CreatorTokenAccount,
+        };
+
+        let mint = self.xp_mint;
+        let backend = self.authority.pubkey();
+        let authority = self.authority.pubkey();
+        let mut signer: Option<Keypair> = None;
+        let ix = match swap {
+            AccountSwap::ForeignEnrollment => {
+                let mut ix = ixs::complete_lesson(COURSE_ID, &learner, &mint, &backend, 0);
+                // 2 = enrollment.
+                ix.accounts[2].pubkey = ixs::enrollment_pda(COURSE_ID, &other.expect("other"));
+                ix
+            }
+            AccountSwap::CreatorTokenAccount => ixs::complete_lesson_with_ata(
+                COURSE_ID,
+                &learner,
+                &ixs::ata(&authority, &mint),
+                &mint,
+                &backend,
+                0,
+            ),
+            AccountSwap::UnknownCourse => {
+                let mut ix = ixs::complete_lesson(COURSE_ID, &learner, &mint, &backend, 0);
+                // 1 = course.
+                ix.accounts[1].pubkey = ixs::course_pda(FOREIGN_COURSE_ID);
+                ix
+            }
+            AccountSwap::ForeignEnrollmentOnClose => {
+                let mut ix = ixs::close_enrollment(COURSE_ID, &learner);
+                // 1 = enrollment; account 2 (the signer) stays this learner.
+                ix.accounts[1].pubkey = ixs::enrollment_pda(COURSE_ID, &other.expect("other"));
+                signer = Some(self.learners[idx].insecure_clone());
+                ix
+            }
+        };
+
+        let label = format!("hostile({swap:?}, learner#{idx})");
+        let signers: Vec<&Keypair> = signer.iter().collect();
+        let out = self.send_checked(&label, &[ix], &signers)?;
+        match out.err.as_ref().and_then(custom_code) {
+            Some(code) => {
+                *self.stats.hostile_rejections.entry(code).or_default() += 1;
+                Ok(())
+            }
+            // `send_checked` already turned a non-`Custom` error into a finding,
+            // so the only way here is a transaction that succeeded.
+            None => Err(Crash {
+                kind: "invariant violated",
+                detail: format!("{label} was ACCEPTED — the program acted on a swapped account"),
+                logs: out.logs,
+            }),
+        }
+    }
+
     /// One random flow, as the Trident flow executor did.
     ///
     /// Weighted so the three original flows keep the coverage they had: the
@@ -577,10 +714,12 @@ impl Session {
     pub fn step(&mut self) -> FuzzResult<()> {
         self.warp_clock();
         match self.rng.gen_range(0..64u8) {
-            0..=17 => self.flow_enroll(),
-            18..=35 => self.flow_complete_lesson(),
-            36..=53 => self.flow_finalize(),
-            54..=62 => self.flow_close_enrollment(),
+            0..=16 => self.flow_enroll(),
+            17..=33 => self.flow_complete_lesson(),
+            34..=49 => self.flow_finalize(),
+            50..=58 => self.flow_close_enrollment(),
+            // 1 flow in 16: one hostile account substitution.
+            59..=62 => self.flow_hostile_account(),
             _ => self.flow_recreate_course(),
         }
     }
@@ -601,6 +740,18 @@ impl Session {
         };
         self.h.warp(delta);
         self.sequence.push(format!("warp(+{delta}s)"));
+    }
+
+    /// A learner other than `skip`, for the swaps that need a second party.
+    fn pick_other_learner(&mut self, skip: usize) -> Option<Pubkey> {
+        if self.learners.len() < 2 {
+            return None;
+        }
+        let mut idx = self.rng.gen_range(0..self.learners.len() - 1);
+        if idx >= skip {
+            idx += 1;
+        }
+        Some(self.learners[idx].pubkey())
     }
 
     fn pick_learner(&mut self) -> Option<(usize, Pubkey)> {
