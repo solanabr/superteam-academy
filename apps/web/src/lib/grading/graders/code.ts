@@ -63,10 +63,12 @@ export async function gradeCode(
   }
   const code = proof.code;
 
-  // Buildable: compiled by the Anchor build server. An outage — or the build
-  // server simply not being configured — surfaces as `available: false` → 503.
+  // Buildable: compiled by the Anchor build server with the lesson's canonical
+  // verification harness spliced back on (the starter carries it), so a deleted
+  // exercise cannot compile. An outage — or the build server simply not being
+  // configured — surfaces as `available: false` → 503.
   if (b?.buildType === "buildable") {
-    return fromRun(await runBuildableSubmission(code, tests));
+    return fromRun(await runBuildableSubmission(code, tests, b.starter ?? ""));
   }
 
   // Plain Rust: graded via the Rust Playground.

@@ -15,17 +15,23 @@
  * the browser `runBuildChallenge` (in `challenge-runner.tsx`) is a non-
  * authoritative UX pre-check; the server is the source of truth.
  *
- * GRADING RUBRIC (compilation success)
- * ------------------------------------
+ * GRADING RUBRIC (the canonical harness compiles)
+ * -----------------------------------------------
  * Every buildable lesson's tests are compilation checks. Test 0 is always
  * "Program compiles successfully"; any further tests are prose content-checks
  * ("Code contains a greet function", …) that the browser runner ALSO grades as
- * plain compile-success (it never regexes the description). We honour the same
- * contract server-side: a submission passes iff the build server reports the
- * program compiled. The build server's own `build.rs` still defers IDL parsing
- * ("no anchor-syn"), so `success: bool` is the only authoritative signal — and a
- * clean SBF compile is the realistic, non-forgeable v1 bar for these lessons.
- * (If a future lesson encodes a checkable expected result, extend here.)
+ * plain compile-success (it never regexes the description).
+ *
+ * Compilation ALONE is not a grade: the build server copies a template
+ * Cargo.toml, so `pub fn nothing() {}` compiles and the learner would pass by
+ * deleting the exercise. What makes the verdict mean something is the lesson's
+ * verification harness — a type-level check naming the symbols the exercise has
+ * to define, shipped at the bottom of `starter`. So we do not compile what the
+ * learner sent: we compile `buildGradeFiles(code, starter)`, which strips any
+ * harness region the submission carries and compiles the STARTER's as a separate
+ * `/src/_verify.rs` module, declared on the line ABOVE the body so nothing the
+ * learner writes can switch it off (an append could be — see `harness.ts`). A
+ * submission passes iff THAT compiles.
  *
  * SECURITY — this path grants on-chain XP, so it must resist a hostile
  * submission forging a pass:
@@ -42,6 +48,10 @@
  *     failed (a bad submission, not an outage).
  *   - SIZE-CAPPED. The raw submission is rejected above `MAX_BUILDABLE_BYTES`
  *     before any network call.
+ *   - FAIL-CLOSED ON A HARNESS-LESS LESSON. If the block's starter carries no
+ *     harness there is nothing to grade against, so the grader reports
+ *     `available: false` rather than falling back to bare compilation. Content
+ *     CI (gate 22) is what keeps such a lesson from shipping.
  *
  * ⚠️ OPERATIONAL SECURITY — grading an untrusted `anchor build` runs the
  * submission's `build.rs` / proc-macros as arbitrary code on the build host; the
@@ -61,6 +71,7 @@ import type { AdminTestCase } from "@superteam-lms/types";
 import { serverEnv } from "@/lib/env.server";
 import type { ServerTestResult, SubmissionRunResult } from "./executor";
 import { firstCompilerErrorLine } from "./compiler-error";
+import { buildGradeFiles, splitHarness } from "./harness";
 
 const BUILD_SERVER_URL = serverEnv.BUILD_SERVER_URL;
 const BUILD_SERVER_API_KEY = serverEnv.BUILD_SERVER_API_KEY;
@@ -93,20 +104,18 @@ export function isBuildServerConfigured(): boolean {
 }
 
 /**
- * The build server only accepts source paths matching `^/src/<name>.rs$`, so a
- * buildable submission is always compiled as the crate's `src/lib.rs`. It also
- * pins `declare_id!` at runtime, but for a *compile-only* grade the placeholder
- * id compiles fine, so we leave the source byte-identical (no rewrite needed).
- *
- * A per-request nonce file busts the build server's content-addressable cache so
- * one learner's PASS/FAIL is never served from another submission's cached
- * entry — the grade always reflects THIS exact source.
+ * The graded files plus a per-request nonce file, which busts the build server's
+ * content-addressable cache so one learner's PASS/FAIL is never served from
+ * another submission's cached entry — the grade always reflects THIS exact
+ * source. The build server pins `declare_id!` at runtime, but for a
+ * *compile-only* grade the placeholder id compiles fine, so the submission goes
+ * over byte-identical (no rewrite needed).
  */
-function toBuildFiles(code: string, nonce: string): [string, string][] {
-  return [
-    ["/src/lib.rs", code],
-    ["/src/_grade_nonce.rs", `// ${nonce}`],
-  ];
+function toBuildFiles(
+  graded: [string, string][],
+  nonce: string
+): [string, string][] {
+  return [...graded, ["/src/_grade_nonce.rs", `// ${nonce}`]];
 }
 
 /** Fail every test with the same reason (bad submission, not a build outage). */
@@ -151,7 +160,8 @@ function allPassed(tests: AdminTestCase[]): SubmissionRunResult {
  */
 export async function runBuildableSubmission(
   code: string,
-  tests: AdminTestCase[]
+  tests: AdminTestCase[],
+  starter: string
 ): Promise<SubmissionRunResult> {
   // Fail closed when the build server is not configured. This is the guard that
   // leaves prod (build server not deployed) unchanged — a buildable submission
@@ -164,8 +174,14 @@ export async function runBuildableSubmission(
     return allFailed(tests, "Submission too large");
   }
 
+  // No harness in the starter → nothing distinguishes a real solution from an
+  // empty file. Deny rather than grade on bare compilation.
+  if (!splitHarness(starter).harness) {
+    return { available: false, reason: "executor_unavailable" };
+  }
+
   const nonce = crypto.randomUUID();
-  const files = toBuildFiles(code, nonce);
+  const files = toBuildFiles(buildGradeFiles(code, starter), nonce);
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);

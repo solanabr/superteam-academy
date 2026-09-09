@@ -631,6 +631,7 @@ export function ChallengeInterface({
                   language={language}
                   buildType={buildType}
                   isDeployable={isDeployable}
+                  starter={initialCode}
                   onResult={handleResult}
                   onSubmit={handleSubmit}
                   isComplete={isComplete}
