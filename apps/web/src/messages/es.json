@@ -393,7 +393,15 @@
     "formatUnchanged": "Ya está formateado.",
     "formatUnsupported": "El formateo no está disponible para este lenguaje.",
     "finishCourse": "Finalizar curso",
-    "completeGateHint": "Completa el quiz y la reflexión de arriba para habilitar"
+    "completeGateHint": "Completa el quiz y la reflexión de arriba para habilitar",
+    "executionTimeout": "La ejecución superó el tiempo tras {seconds}s — revisa si hay bucles infinitos",
+    "dynamicImportBlocked": "No se permite import() dinámico en los desafíos",
+    "syntaxError": "Error de sintaxis: {message}",
+    "returnValueLabel": "Valor de retorno:",
+    "noFunctionFound": "No se encontró ninguna función en tu código",
+    "rustAssertionFailed": "la aserción falló",
+    "rustNoOutput": "La prueba no produjo salida",
+    "rustCompilationFailed": "Falló la compilación"
   },
   "dashboard": {
     "allCaughtUp": "¡Todo al día!",
@@ -852,7 +860,8 @@
       "insufficientSol": "SOL insuficiente. Necesita ~{amount} más.",
       "buildExpired": "Build expirado",
       "rebuildHint": "Haz clic en \"Run\" en el editor para recompilar y despliega de nuevo.",
-      "resolvingWallet": "Comprobando tu billetera…"
+      "resolvingWallet": "Comprobando tu billetera…",
+      "copied": "¡Copiado!"
     },
     "save": {
       "recording": "Registrando tu despliegue…",
@@ -907,7 +916,12 @@
       "accounts": "Cuentas",
       "accountData": "Datos de la Cuenta",
       "executeInstruction": "Ejecutar {name}",
-      "accountNotFound": "Cuenta no encontrada. Ejecuta una instrucción para crearla."
+      "accountNotFound": "Cuenta no encontrada. Ejecuta una instrucción para crearla.",
+      "unknownInstruction": "Instrucción desconocida: {name}",
+      "accountNotResolved": "La cuenta \"{name}\" no está resuelta. Proporciona una clave pública.",
+      "base58AddressPlaceholder": "Dirección Base58...",
+      "publicKeyPlaceholder": "Clave pública...",
+      "myWallet": "Mi billetera"
     },
     "capstone": {
       "journeyTitle": "Tu Camino",
@@ -1100,6 +1114,8 @@
       "ai": "Compañero de IA",
       "loading": "Pensando...",
       "error": "Algo salió mal. Inténtalo de nuevo.",
+      "errorBilled": "Algo salió mal del lado de la IA y este turno se consumió. Inténtalo de nuevo.",
+      "errorNoChange": "El compañero no encontró nada que cambiar en tu código y este turno se consumió. Pide una revisión de tu solución.",
       "spendCapped": "El Compañero de IA alcanzó el límite de uso de hoy. Volverá mañana; mientras tanto, las pistas y las pruebas siguen disponibles para ayudarte."
     },
     "actions": {
@@ -1109,7 +1125,8 @@
       "askLabel": "Pregúntale al Compañero de IA sobre este reto",
       "askSend": "Enviar",
       "review": "Revisar mi solución",
-      "reviewHint": "Recibe comentarios idiomáticos sobre tu solución ya resuelta — esto no cambia tu XP."
+      "reviewHint": "Recibe comentarios idiomáticos sobre tu solución ya resuelta — esto no cambia tu XP.",
+      "reviewedHint": "Ya revisaste esta solución. Cambia tu código para recibir una revisión nueva."
     },
     "composer": {
       "empty": "Pregunta lo que quieras sobre este reto. Las pistas escritas para esta lección están en la sección Pistas de arriba."
@@ -1129,6 +1146,7 @@
       "checkCorrect": "Correcto — ya puedes aplicar el cambio.",
       "acceptLocked": "Responde correctamente para aplicar este cambio.",
       "applied": "Aplicado a tu código",
+      "alreadyApplied": "Este cambio ya está en tu código.",
       "unchangedCollapsed": "{count, plural, one {# línea sin cambios} other {# líneas sin cambios}}",
       "lineAdded": "Añadido",
       "lineRemoved": "Eliminado"
@@ -1138,7 +1156,8 @@
       "diffCard": "Cambio de código propuesto"
     },
     "socratic": {
-      "chip": "Tutor ligero"
+      "chip": "Tutor ligero",
+      "transition": "Tus 8 asistencias se acabaron. Ahora tienes 20 turnos de guía más ligeros — el tutor empieza con preguntas en lugar de cambios terminados."
     },
     "exhausted": {
       "title": "Se usaron los turnos del tutor en este desafío",

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Active-slot installer: everything downstream (Trident, the CU harness) loads
+# Active-slot installer: everything downstream (the CU harness) loads
 # target/deploy/onchain_academy.so. This script installs the pinocchio build
 # into that slot.
 #

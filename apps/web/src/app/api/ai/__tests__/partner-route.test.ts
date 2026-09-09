@@ -294,6 +294,22 @@ describe("POST /api/ai/partner", () => {
     const res = await POST(makeRequest(VALID_BODY));
     expect(res.status).toBe(502);
     expect(refundAssistTurn).not.toHaveBeenCalled();
+    // The client needs to know the turn is gone (meter) and why (copy) — the
+    // no-op is NOT refunded, because the learner controls the buffer that
+    // provokes it and a refund would be an unmetered-call lever.
+    const body = (await res.json()) as { billed?: boolean; reason?: string };
+    expect(body.billed).toBe(true);
+    expect(body.reason).toBe("no_change");
+  });
+
+  it("marks a billed 502 as billed so the client meter can follow", async () => {
+    stubGeminiFetch("not valid json {{{");
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest(VALID_BODY));
+    expect(res.status).toBe(502);
+    expect(refundAssistTurn).not.toHaveBeenCalled();
+    const body = (await res.json()) as { billed?: boolean };
+    expect(body.billed).toBe(true);
   });
 
   it("passes through a well-formed propose response, sealed and validated", async () => {

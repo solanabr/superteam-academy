@@ -433,7 +433,7 @@ export function GenericProgramExplorer({
             }[];
           }
         ).instructions.find((ix) => ix.name === ixName);
-        if (!ixDef) throw new Error(`Unknown instruction: ${ixName}`);
+        if (!ixDef) throw new Error(t("unknownInstruction", { name: ixName }));
 
         // Build args object
         const args: Record<string, unknown> = {};
@@ -501,9 +501,7 @@ export function GenericProgramExplorer({
             const unresolved = r.unresolved;
             // Must have manual entry
             if (!manual[accName]) {
-              throw new Error(
-                `Account "${accName}" is not resolved. Please provide a public key.`
-              );
+              throw new Error(t("accountNotResolved", { name: accName }));
             }
             keys.push({
               pubkey: new PublicKey(manual[accName]),
@@ -894,7 +892,7 @@ export function GenericProgramExplorer({
                                 }}
                                 placeholder={
                                   rawType === "publicKey"
-                                    ? "Base58 address..."
+                                    ? t("base58AddressPlaceholder")
                                     : isBigNumType(rawType)
                                       ? "0 (string-backed BN)"
                                       : rawType
@@ -923,7 +921,7 @@ export function GenericProgramExplorer({
                                   }));
                                 }}
                               >
-                                My wallet
+                                {t("myWallet")}
                               </Button>
                             )}
                           </div>
@@ -972,7 +970,7 @@ export function GenericProgramExplorer({
                                   },
                                 }));
                               }}
-                              placeholder="PublicKey..."
+                              placeholder={t("publicKeyPlaceholder")}
                               className="w-full rounded border border-orange-500/30 bg-background px-1 py-0.5 font-mono text-[10px] sm:w-32"
                             />
                           </div>
@@ -990,7 +988,9 @@ export function GenericProgramExplorer({
                   >
                     {isExecuting
                       ? t("executing") + "..."
-                      : `Execute ${formatInstructionName(ix.name)}`}
+                      : t("executeInstruction", {
+                          name: formatInstructionName(ix.name),
+                        })}
                   </Button>
                 </div>
               )}

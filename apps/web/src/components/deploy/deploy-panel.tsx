@@ -728,7 +728,7 @@ export function DeployPanel({
                 {result.programId}
               </span>
               <span className="shrink-0 text-xs text-muted-foreground group-hover:text-foreground">
-                {copied ? "Copied!" : ""}
+                {copied ? t("copied") : ""}
               </span>
               {/* Copy icon */}
               <svg
