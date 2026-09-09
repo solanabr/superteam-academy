@@ -78,8 +78,19 @@ export interface CompileResult {
 }
 
 export interface RustCompiler {
-  compile(source: string): Promise<CompileResult>;
+  /** `[path, content]` pairs as the grader sends them, e.g. `/src/lib.rs`. */
+  compile(files: [string, string][]): Promise<CompileResult>;
   dispose(): void;
+}
+
+/**
+ * `/src/lib.rs` → `<buildDir>/src/lib.rs`. The build server accepts only
+ * `^/src/<name>.rs$`; anything else is a bug in the caller, not lesson input.
+ */
+function resolveFile(buildDir: string, path: string): string {
+  const name = /^\/src\/([A-Za-z0-9_]+\.rs)$/.exec(path)?.[1];
+  if (!name) throw new Error(`unsupported build file path: ${path}`);
+  return join(buildDir, "src", name);
 }
 
 /**
@@ -115,8 +126,14 @@ export function createCompiler(
   const outDir = join(buildDir, "out");
 
   return {
-    async compile(source: string): Promise<CompileResult> {
-      writeFileSync(join(buildDir, "src", "lib.rs"), source, "utf8");
+    async compile(files: [string, string][]): Promise<CompileResult> {
+      // Wipe src/ first: a file left behind by the previous block (say a
+      // `_verify.rs` this one does not ship) would otherwise still compile in.
+      rmSync(join(buildDir, "src"), { recursive: true, force: true });
+      mkdirSync(join(buildDir, "src"), { recursive: true });
+      for (const [path, content] of files) {
+        writeFileSync(resolveFile(buildDir, path), content, "utf8");
+      }
       // Clear the previous artifact so a stale .so cannot pass for this build.
       rmSync(outDir, { recursive: true, force: true });
       const r = await runBuild(buildDir, outDir, targetDir, limit);

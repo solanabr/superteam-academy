@@ -5,7 +5,7 @@ import type { AdminTestCase } from "@superteam-lms/types";
 import { registerCheck } from "../lint";
 import { type RepoModel, type LessonEntry } from "../model";
 import { diag, type Diagnostic } from "../diagnostics";
-import { withCanonicalHarness } from "../harness";
+import { buildGradeFiles } from "../harness";
 import {
   createCompiler,
   hasToolchain,
@@ -117,10 +117,10 @@ async function gradeJsBlock(
 /**
  * Compile a buildable Rust block through the real SBF toolchain.
  *
- * Both sources are spliced with the STARTER's canonical harness first, exactly
- * as the runtime grader does (apps/web/src/lib/challenge/harness.ts), so what
- * CI proves is what a learner is actually graded on. Starter must fail;
- * solution must pass.
+ * Both sources are compiled as the two files the runtime grader sends — the
+ * body under a prepended `mod _verify;`, the STARTER's canonical harness as
+ * `/src/_verify.rs` (apps/web/src/lib/challenge/harness.ts) — so what CI proves
+ * is what a learner is actually graded on. Starter must fail; solution must pass.
  */
 async function gradeRustBlock(
   root: string,
@@ -148,7 +148,7 @@ async function gradeRustBlock(
   }
 
   const solution = await compiler.compile(
-    withCanonicalHarness(solutionSrc, starterSrc)
+    buildGradeFiles(solutionSrc, starterSrc)
   );
   if (solution.timedOut) {
     out.push(
@@ -171,7 +171,7 @@ async function gradeRustBlock(
   }
 
   const starter = await compiler.compile(
-    withCanonicalHarness(starterSrc, starterSrc)
+    buildGradeFiles(starterSrc, starterSrc)
   );
   if (starter.timedOut) {
     out.push(

@@ -12,9 +12,8 @@
 # its own copy of the steps and calls that instead — future changes to the gate
 # arrive without another PR here.
 #
-# Apply together with academy-courses-template-harness.patch: `courses/_template`
-# ships `// starter program` / `// solution program`, which both compile, so the
-# oracle correctly fails the template until it carries a real harness.
+# `courses/_template` already carries the harness the oracle requires
+# (academy-courses #62) — this file is the only patch left to apply.
 
 name: validate-content
 

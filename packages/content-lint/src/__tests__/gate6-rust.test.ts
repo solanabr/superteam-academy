@@ -2,7 +2,12 @@ import { afterEach, describe, expect, it } from "vitest";
 import { runLint } from "../lint";
 import type { Diagnostic } from "../diagnostics";
 import { hasToolchain, resetToolchainProbe } from "../rust-oracle";
-import { splitHarness, withCanonicalHarness } from "../harness";
+import {
+  LIB_PATH,
+  VERIFY_PATH,
+  buildGradeFiles,
+  splitHarness,
+} from "../harness";
 import "../checks/gate1-schema";
 import "../checks/gate6-executor";
 import { makeTempRepo } from "./helpers";
@@ -69,17 +74,46 @@ function errorMatching(diagnostics: Diagnostic[], re: RegExp): boolean {
   return errors(diagnostics).some((d) => re.test(d.message));
 }
 
-describe("gate 6 — harness splice (pure)", () => {
+describe("gate 6 — grade files (pure)", () => {
   it("keeps the harness region from the rule line down", () => {
     const { body, harness } = splitHarness(STARTER);
     expect(body.trim()).toBe("// TODO: add a public `ping` function.");
     expect(harness).toContain("const PING: fn() = super::ping;");
   });
 
-  it("re-attaches the starter's harness to a submission that deleted it", () => {
-    const spliced = withCanonicalHarness("pub fn ping() {}", STARTER);
-    expect(spliced).toContain("pub fn ping() {}");
-    expect(spliced).toContain("const PING: fn() = super::ping;");
+  it("puts the starter's harness in its own module file, not appended", () => {
+    const files = buildGradeFiles("pub fn ping() {}", STARTER);
+    expect(files.map(([p]) => p)).toEqual([LIB_PATH, VERIFY_PATH]);
+
+    const lib = files[0]![1];
+    expect(lib).toContain("mod _verify;");
+    expect(lib).toContain("pub fn ping() {}");
+    expect(lib).not.toContain("const PING: fn() = super::ping;");
+    // The declaration must lead, or a trailing attribute in the body could
+    // bind to it and switch the harness off.
+    expect(lib.indexOf("mod _verify;")).toBeLessThan(
+      lib.indexOf("pub fn ping")
+    );
+
+    const verify = files[1]![1];
+    expect(verify.startsWith("use super::*;")).toBe(true);
+    expect(verify).toContain("const PING: fn() = super::ping;");
+  });
+
+  it("compiles a harness-less starter as a lone lib.rs", () => {
+    expect(buildGradeFiles(SOLUTION, "pub fn ping() {}")).toEqual([
+      [LIB_PATH, SOLUTION],
+    ]);
+  });
+
+  it("strips a harness the submission carries before splicing the canonical one", () => {
+    const tampered = `pub fn ping() {}\n${HARNESS.replace("super::ping", "super::nope")}`;
+    const [, [, verify]] = buildGradeFiles(tampered, STARTER) as [
+      [string, string],
+      [string, string],
+    ];
+    expect(verify).toContain("const PING: fn() = super::ping;");
+    expect(verify).not.toContain("super::nope");
   });
 });
 

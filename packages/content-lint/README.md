@@ -85,5 +85,6 @@ and runs the CLI against the content tree. It also installs the Solana CLI +
 platform-tools v1.54 (cached) and sets `CONTENT_LINT_RUST_ORACLE=require`, so
 gate 6's buildable oracle actually compiles rather than deferring.
 
-`docs/ci/` carries the patch the content repo needs to switch to this reusable
-workflow, plus the `courses/_template` harness fix the oracle requires.
+`docs/ci/` carries the workflow file the content repo needs to switch to this
+reusable workflow. (The `courses/_template` harness the oracle requires landed in
+academy-courses #62.)
