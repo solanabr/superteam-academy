@@ -393,7 +393,15 @@
     "formatUnchanged": "Já está formatado.",
     "formatUnsupported": "A formatação não está disponível para esta linguagem.",
     "finishCourse": "Concluir curso",
-    "completeGateHint": "Conclua o quiz e a reflexão acima para habilitar"
+    "completeGateHint": "Conclua o quiz e a reflexão acima para habilitar",
+    "executionTimeout": "Execução expirou após {seconds}s — verifique se há loops infinitos",
+    "dynamicImportBlocked": "import() dinâmico não é permitido nos desafios",
+    "syntaxError": "Erro de sintaxe: {message}",
+    "returnValueLabel": "Valor de retorno:",
+    "noFunctionFound": "Nenhuma função encontrada no seu código",
+    "rustAssertionFailed": "asserção falhou",
+    "rustNoOutput": "O teste não produziu saída",
+    "rustCompilationFailed": "Falha na compilação"
   },
   "dashboard": {
     "allCaughtUp": "Tudo em dia!",
@@ -849,7 +857,8 @@
       "startOver": "Recomeçar",
       "insufficientSol": "SOL insuficiente. Precisa de ~{amount} a mais.",
       "buildExpired": "Build expirado",
-      "rebuildHint": "Clique em \"Run\" no editor para recompilar e faça o deploy novamente."
+      "rebuildHint": "Clique em \"Run\" no editor para recompilar e faça o deploy novamente.",
+      "copied": "Copiado!"
     },
     "save": {
       "recording": "Registrando seu deploy…",
@@ -904,7 +913,12 @@
       "accounts": "Contas",
       "accountData": "Dados da Conta",
       "executeInstruction": "Executar {name}",
-      "accountNotFound": "Conta não encontrada. Execute uma instrução para criá-la."
+      "accountNotFound": "Conta não encontrada. Execute uma instrução para criá-la.",
+      "unknownInstruction": "Instrução desconhecida: {name}",
+      "accountNotResolved": "A conta \"{name}\" não foi resolvida. Informe uma chave pública.",
+      "base58AddressPlaceholder": "Endereço Base58...",
+      "publicKeyPlaceholder": "Chave pública...",
+      "myWallet": "Minha carteira"
     },
     "capstone": {
       "journeyTitle": "Sua Jornada",
