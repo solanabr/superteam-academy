@@ -63,6 +63,52 @@
       ]
     },
     {
+      "_id": "course-solana-hackathon-expert:before",
+      "lessonIds": [
+        "lesson-she-the-record",
+        "lesson-she-read-the-rubric",
+        "lesson-she-day-zero"
+      ]
+    },
+    {
+      "_id": "course-solana-hackathon-expert:week1",
+      "lessonIds": [
+        "lesson-she-ideation",
+        "lesson-she-market-research",
+        "lesson-she-validation-sprint",
+        "lesson-she-rederive-winning"
+      ]
+    },
+    {
+      "_id": "course-solana-hackathon-expert:build",
+      "lessonIds": [
+        "lesson-she-scope-the-slice",
+        "lesson-she-build-sprint",
+        "lesson-she-make-it-real"
+      ]
+    },
+    {
+      "_id": "course-solana-hackathon-expert:story",
+      "lessonIds": [
+        "lesson-she-gtm",
+        "lesson-she-the-deck",
+        "lesson-she-two-videos"
+      ]
+    },
+    {
+      "_id": "course-solana-hackathon-expert:submit",
+      "lessonIds": [
+        "lesson-she-submit",
+        "lesson-she-after"
+      ]
+    },
+    {
+      "_id": "course-solana-hackathon-expert:seasonal",
+      "lessonIds": [
+        "lesson-she-rehearsal"
+      ]
+    },
+    {
       "_id": "course-solana-speedrun:speedrun",
       "lessonIds": [
         "lesson-ssr-por-que-solana",

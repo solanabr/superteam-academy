@@ -220,6 +220,178 @@
     "xpReward": 20
   },
   {
+    "_id": "course-solana-hackathon-expert",
+    "_type": "course",
+    "creator": "8kMziL5e3qEWhp1nQHEiYLRypymyBVTXNxgZXyQwhbSo",
+    "creatorRewardXp": 30,
+    "description": "Take a problem you actually have to a submission-ready Colosseum package in one month: a working devnet demo, a deck, two videos and a GTM one-pager, and use a seasonal hackathon or an Earn side track as a rehearsal for the next Colosseum edition.",
+    "difficulty": "intermediate",
+    "duration": 12,
+    "minCompletionsForReward": 0,
+    "modules": [
+      {
+        "_key": "before",
+        "_type": "courseModule",
+        "key": "before",
+        "lessons": [
+          {
+            "_key": "lesson-she-the-record",
+            "_ref": "lesson-she-the-record",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-she-read-the-rubric",
+            "_ref": "lesson-she-read-the-rubric",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-she-day-zero",
+            "_ref": "lesson-she-day-zero",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Before the clock starts"
+      },
+      {
+        "_key": "week1",
+        "_type": "courseModule",
+        "key": "week1",
+        "lessons": [
+          {
+            "_key": "lesson-she-ideation",
+            "_ref": "lesson-she-ideation",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-she-market-research",
+            "_ref": "lesson-she-market-research",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-she-validation-sprint",
+            "_ref": "lesson-she-validation-sprint",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-she-rederive-winning",
+            "_ref": "lesson-she-rederive-winning",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Week 1: idea to evidence"
+      },
+      {
+        "_key": "build",
+        "_type": "courseModule",
+        "key": "build",
+        "lessons": [
+          {
+            "_key": "lesson-she-scope-the-slice",
+            "_ref": "lesson-she-scope-the-slice",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-she-build-sprint",
+            "_ref": "lesson-she-build-sprint",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-she-make-it-real",
+            "_ref": "lesson-she-make-it-real",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Weeks 2 and 3: the demoable slice"
+      },
+      {
+        "_key": "story",
+        "_type": "courseModule",
+        "key": "story",
+        "lessons": [
+          {
+            "_key": "lesson-she-gtm",
+            "_ref": "lesson-she-gtm",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-she-the-deck",
+            "_ref": "lesson-she-the-deck",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-she-two-videos",
+            "_ref": "lesson-she-two-videos",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Week 4: the story"
+      },
+      {
+        "_key": "submit",
+        "_type": "courseModule",
+        "key": "submit",
+        "lessons": [
+          {
+            "_key": "lesson-she-submit",
+            "_ref": "lesson-she-submit",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-she-after",
+            "_ref": "lesson-she-after",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Submit, then keep going"
+      },
+      {
+        "_key": "seasonal",
+        "_type": "courseModule",
+        "key": "seasonal",
+        "lessons": [
+          {
+            "_key": "lesson-she-rehearsal",
+            "_ref": "lesson-she-rehearsal",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Optional: rehearse the season before the season"
+      }
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "solana-hackathon-expert"
+    },
+    "sourceLocale": "en",
+    "tags": [
+      "rpc-reads",
+      "solana-fundamentals",
+      "transactions"
+    ],
+    "thumbnail": "/content-assets/solana-hackathon-expert/banner.webp",
+    "title": "Solana Hackathon Expert: Build a Winning Project",
+    "trackId": 0,
+    "trackLevel": 0,
+    "xpPerLesson": 20,
+    "xpReward": 300
+  },
+  {
     "_id": "course-solana-speedrun",
     "_type": "course",
     "creator": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",

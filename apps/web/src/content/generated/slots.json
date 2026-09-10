@@ -29,6 +29,29 @@
     },
     "version": 1
   },
+  "course-solana-hackathon-expert": {
+    "next": 16,
+    "retired": [],
+    "slots": {
+      "lesson-she-after": 14,
+      "lesson-she-build-sprint": 8,
+      "lesson-she-day-zero": 2,
+      "lesson-she-gtm": 10,
+      "lesson-she-ideation": 3,
+      "lesson-she-make-it-real": 9,
+      "lesson-she-market-research": 4,
+      "lesson-she-read-the-rubric": 1,
+      "lesson-she-rederive-winning": 6,
+      "lesson-she-rehearsal": 15,
+      "lesson-she-scope-the-slice": 7,
+      "lesson-she-submit": 13,
+      "lesson-she-the-deck": 11,
+      "lesson-she-the-record": 0,
+      "lesson-she-two-videos": 12,
+      "lesson-she-validation-sprint": 5
+    },
+    "version": 1
+  },
   "course-solana-speedrun": {
     "next": 4,
     "retired": [],
