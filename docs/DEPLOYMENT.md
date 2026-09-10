@@ -168,6 +168,29 @@ Click **Deploy**. Vercel will:
 
 Subsequent pushes to `main` trigger automatic deployments. Pull requests get preview deployments.
 
+#### If a deployment does not run, or fails before the build starts
+
+Check the Vercel **account** before you check the code. Vercel gates deploys on
+account state, and those failures do not look like account problems — the push
+lands on GitHub, the commit is on `main`, and Vercel is either silent or shows a
+build that never really started. Nothing in the repo explains it, so the hunt
+starts in the wrong place.
+
+The one that has actually bitten us: **two-factor authentication not enabled on
+the Vercel account** blocks deployments. Enable 2FA, then re-trigger with an
+empty commit (`git commit --allow-empty`) or **Redeploy** in the dashboard —
+fixing the account setting does not retroactively build the commit that was
+blocked.
+
+Others worth ruling out in the same pass, all account- rather than code-shaped:
+a plan/usage limit reached, a payment method that needs updating, or the GitHub
+integration's repository access having been revoked.
+
+Only once the account is clean is it worth reading build logs — and if the
+deployment _did_ build and simply produced the wrong output, see the build-cache
+warning about `NEXT_PUBLIC_*` in `apps/web/CLAUDE.md`, which is a genuine
+build-time problem rather than an account one.
+
 ---
 
 ## Supabase Setup
