@@ -1,0 +1,73 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- POST-APPLY VERIFICATION for 20260910120000_verified_kind.sql
+--
+-- ONE statement on purpose. The Supabase SQL editor renders only the LAST
+-- result set, so a script of separate SELECTs silently shows you the last one
+-- and discards the rest. Every check is a row here.
+--
+-- Read the `pass` column. All true = applied correctly.
+-- ═══════════════════════════════════════════════════════════════════════════
+WITH guarded AS (
+  SELECT array_agg(m[1] ORDER BY m[1]) AS cols
+    FROM regexp_matches(
+           pg_get_functiondef('public.enforce_profile_wallet_write()'::regprocedure),
+           'NEW\.(\w+) IS DISTINCT FROM OLD\.\1', 'g') AS m
+),
+badges AS (
+  SELECT count(*) FILTER (WHERE verified_kind = 'superteam') AS superteam,
+         count(*) FILTER (WHERE verified_kind = 'partner')   AS partner,
+         count(*) FILTER (WHERE verified_kind IS NOT NULL
+                            AND NOT verified)                AS kind_without_flag
+    FROM public.profiles
+),
+checks(sort, check_name, expected, actual) AS (
+  VALUES
+  -- ── the column and its constraints ──────────────────────────────────────
+  (1, 'verified_kind column exists', 'true',
+      (SELECT (count(*) > 0)::text FROM information_schema.columns
+        WHERE table_schema='public' AND table_name='profiles'
+          AND column_name='verified_kind')),
+  (2, 'CHECK: closed set {superteam,partner}', 'true',
+      (SELECT (count(*) > 0)::text FROM pg_constraint
+        WHERE conname='chk_profiles_verified_kind')),
+  (3, 'CHECK: a kind requires verified=true', 'true',
+      (SELECT (count(*) > 0)::text FROM pg_constraint
+        WHERE conname='chk_profiles_verified_kind_needs_verified')),
+
+  -- ── the write lock: the #1183 regression check ──────────────────────────
+  -- Fewer than 5 means a column is self-writable. THIS IS THE ONE THAT
+  -- MATTERS: #1183 shipped a body that read correctly and left two open.
+  (4, 'trigger installed', 'true',
+      (SELECT (count(*) > 0)::text FROM pg_trigger
+        WHERE tgname='trg_enforce_profile_wallet_write' AND NOT tgisinternal)),
+  (5, 'guarded columns (count)', '5',
+      (SELECT coalesce(array_length(cols,1),0)::text FROM guarded)),
+  (6, 'guarded columns (which)',
+      'display_name,verified,verified_kind,wallet_address,wallet_kind',
+      (SELECT array_to_string(cols, ',') FROM guarded)),
+  (7, 'helper not callable via PostgREST RPC', 'false',
+      has_function_privilege('authenticated',
+        'public.enforce_profile_wallet_write()', 'EXECUTE')::text),
+
+  -- ── the view ────────────────────────────────────────────────────────────
+  (8, 'public_profiles exposes verified_kind', 'true',
+      (SELECT (count(*) > 0)::text FROM information_schema.columns
+        WHERE table_schema='public' AND table_name='public_profiles'
+          AND column_name='verified_kind')),
+
+  -- ── the backfill ────────────────────────────────────────────────────────
+  -- A short count is NOT corruption: an UPDATE matches nothing until that
+  -- author has signed in. Re-run their statement once they have.
+  (9,  'Superteam members badged (Kaue, David)', '2',
+      (SELECT superteam::text FROM badges)),
+  (10, 'verified partners badged (Artur)', '1',
+      (SELECT partner::text FROM badges)),
+  (11, 'no kind on an unbadged row', '0',
+      (SELECT kind_without_flag::text FROM badges))
+)
+SELECT check_name,
+       expected,
+       actual,
+       (actual IS NOT DISTINCT FROM expected) AS pass
+  FROM checks
+ ORDER BY sort;
