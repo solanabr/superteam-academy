@@ -204,6 +204,31 @@ GRANT SELECT ON public.public_profiles TO anon, authenticated;
 -- SET ROLE, not SET LOCAL ROLE: SET LOCAL outside an explicit transaction is a
 -- no-op with only a warning, and whether the runner wraps the file in one is
 -- not something this file can know.
+--
+-- But service_role is not simply "postgres with more rights" — it has LESS
+-- reach into `auth`. Supabase grants it the public schema, not the auth schema,
+-- so once we SET ROLE the `auth.users` lookup at the bottom of this file fails
+-- with "permission denied for table users". The two halves of the backfill
+-- therefore need different privileges: reading auth.users needs `postgres`,
+-- writing the guarded columns needs service_role, and neither role can do both.
+--
+-- So resolve the email to a profile id FIRST, as `postgres`, and carry only the
+-- id across the role boundary. A TEMP table, so nothing outlives the session
+-- and no permanent grant on `auth` is created as a side effect of a badge
+-- backfill — `GRANT SELECT ON auth.users TO service_role` would fix the error
+-- and permanently widen service_role's reach into auth to do it.
+DROP TABLE IF EXISTS _verified_kind_targets;
+CREATE TEMP TABLE _verified_kind_targets (id UUID PRIMARY KEY);
+
+INSERT INTO _verified_kind_targets (id)
+SELECT p.id
+  FROM public.profiles p
+  JOIN auth.users u ON u.id = p.id
+ WHERE lower(u.email) = 'davidpotolskilafeta@gmail.com'
+    ON CONFLICT DO NOTHING;
+
+GRANT SELECT ON _verified_kind_targets TO service_role;
+
 SET ROLE service_role;
 
 -- Kaue Kano — Superteam member. Creator of btc-to-sol-evolution,
@@ -230,10 +255,13 @@ UPDATE public.profiles
 -- alone carries no `wallet_address`, so the statement above would match
 -- nothing. Both are idempotent and both target the same person, so whichever
 -- identifier his row actually holds, the badge lands.
-UPDATE public.profiles p
+--
+-- Reads the id resolved above rather than joining auth.users here: this
+-- statement runs as service_role, which cannot see the auth schema.
+UPDATE public.profiles
    SET verified = true, verified_kind = 'superteam'
-  FROM auth.users u
- WHERE u.id = p.id
-   AND lower(u.email) = 'davidpotolskilafeta@gmail.com';
+ WHERE id IN (SELECT id FROM _verified_kind_targets);
 
 RESET ROLE;
+
+DROP TABLE _verified_kind_targets;
