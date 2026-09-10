@@ -249,6 +249,20 @@ vi.mock("server-only", () => ({}));
 //    text only, no code change. Counts, slots and every other doc are
 //    byte-unchanged, so lessons.json and course-by-slug.json are the only
 //    fixtures regenerated.
+//  - hackathon course (bump to academy-courses @daa13ec, PRs #58/#64): +1
+//    course / +16 lessons — `course-solana-hackathon-expert` (EN, intermediate,
+//    5 modules, trackId 0 / trackLevel 0), authored under the OWNER's wallet
+//    rather than Kaue's or Forge's, which is why EXPECTED_CREATOR grows a
+//    fourth distinct address. Purely ADDITIVE: the regeneration re-projected
+//    every pre-existing course and lesson first and asserted each one
+//    byte-identical, so no existing doc moved and existing order is preserved
+//    with the new docs appended. courses.json and lessons.json gained the new
+//    docs; quests-raw's DERIVED challengeLessonIds/moduleLessonMap were
+//    regenerated (the raw quest docs are untouched). paths, summaries,
+//    course-by-slug and achievements-raw are byte-unchanged — the course joins
+//    no path and the full-blocks fixture still targets the alpha flagship.
+//    Staged only: no on-chain create and no `deployed_programs` row, so the
+//    catalog gate keeps it invisible until the owner runs the admin sync.
 const deps = { lessonsById };
 
 function bundleCourse(id: string): CourseDoc {
@@ -271,7 +285,8 @@ describe("projectCourse — getAllCourses shape (summary module lessons)", () =>
 
   // Each course is authored under its own creator wallet, not the platform
   // authority the track-1 courses carried. The alpha catalog and the Pílula
-  // booth elective share Kaue's wallet; the Forge College pilot has its own.
+  // booth elective share Kaue's wallet; the Forge College pilot has its own;
+  // the hackathon course is the owner's.
   const EXPECTED_CREATOR: Record<string, string> = {
     "course-btc-to-sol-evolution":
       "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
@@ -279,6 +294,8 @@ describe("projectCourse — getAllCourses shape (summary module lessons)", () =>
     "course-pilula-solana-superteam":
       "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
     "course-visao-geral-solana": "Em8D6XyuXvNUK1YgLKBaji7HbbrZZq7fCdq3sGMXqxVZ",
+    "course-solana-hackathon-expert":
+      "8kMziL5e3qEWhp1nQHEiYLRypymyBVTXNxgZXyQwhbSo",
   };
 
   it("creator is a real wallet (#399/B3); thumbnail is a compiled banner url", () => {

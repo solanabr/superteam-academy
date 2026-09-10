@@ -355,5 +355,147 @@
         ]
       }
     ]
+  },
+  {
+    "_id": "course-solana-hackathon-expert",
+    "title": "Solana Hackathon Expert: Build a Winning Project",
+    "slug": "solana-hackathon-expert",
+    "description": "Take a problem you actually have to a submission-ready Colosseum package in one month: a working devnet demo, a deck, two videos and a GTM one-pager, and use a seasonal hackathon or an Earn side track as a rehearsal for the next Colosseum edition.",
+    "difficulty": "intermediate",
+    "duration": 12,
+    "thumbnail": "/content-assets/solana-hackathon-expert/banner.webp",
+    "creator": "8kMziL5e3qEWhp1nQHEiYLRypymyBVTXNxgZXyQwhbSo",
+    "tags": [
+      "rpc-reads",
+      "solana-fundamentals",
+      "transactions"
+    ],
+    "xpReward": 300,
+    "trackId": 0,
+    "trackLevel": 0,
+    "modules": [
+      {
+        "key": "before",
+        "title": "Before the clock starts",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-she-the-record",
+            "title": "The record",
+            "slug": "the-record"
+          },
+          {
+            "_id": "lesson-she-read-the-rubric",
+            "title": "What winning means at Colosseum",
+            "slug": "read-the-rubric"
+          },
+          {
+            "_id": "lesson-she-day-zero",
+            "title": "The team on day 0",
+            "slug": "day-zero"
+          }
+        ]
+      },
+      {
+        "key": "week1",
+        "title": "Week 1: idea to evidence",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-she-ideation",
+            "title": "Problems you actually have",
+            "slug": "ideation"
+          },
+          {
+            "_id": "lesson-she-market-research",
+            "title": "Sizing at hackathon speed",
+            "slug": "market-research"
+          },
+          {
+            "_id": "lesson-she-validation-sprint",
+            "title": "Evidence in one week, then decide",
+            "slug": "validation-sprint"
+          },
+          {
+            "_id": "lesson-she-rederive-winning",
+            "title": "Re-derive winning for a Colosseum season you have never seen",
+            "slug": "rederive-winning"
+          }
+        ]
+      },
+      {
+        "key": "build",
+        "title": "Weeks 2 and 3: the demoable slice",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-she-scope-the-slice",
+            "title": "Scope to the three-minute demo",
+            "slug": "scope-the-slice"
+          },
+          {
+            "_id": "lesson-she-build-sprint",
+            "title": "Build it with an agent team",
+            "slug": "build-sprint"
+          },
+          {
+            "_id": "lesson-she-make-it-real",
+            "title": "Make it real, then say what changed",
+            "slug": "make-it-real"
+          }
+        ]
+      },
+      {
+        "key": "story",
+        "title": "Week 4: the story",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-she-gtm",
+            "title": "Where the first hundred come from",
+            "slug": "gtm"
+          },
+          {
+            "_id": "lesson-she-the-deck",
+            "title": "The hackathon deck, not the investor deck",
+            "slug": "the-deck"
+          },
+          {
+            "_id": "lesson-she-two-videos",
+            "title": "The two videos",
+            "slug": "two-videos"
+          }
+        ]
+      },
+      {
+        "key": "submit",
+        "title": "Submit, then keep going",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-she-submit",
+            "title": "The form, the deadline, the rules",
+            "slug": "submit"
+          },
+          {
+            "_id": "lesson-she-after",
+            "title": "After the deadline",
+            "slug": "after"
+          }
+        ]
+      },
+      {
+        "key": "seasonal",
+        "title": "Optional: rehearse the season before the season",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-she-rehearsal",
+            "title": "Rehearse the season before the season",
+            "slug": "rehearsal"
+          }
+        ]
+      }
+    ]
   }
 ]
