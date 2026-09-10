@@ -193,6 +193,19 @@ GRANT SELECT ON public.public_profiles TO anon, authenticated;
 -- surface) once the profile exists. `verified` is set alongside the kind
 -- because every reader gates on it.
 
+-- RUNS AS service_role, DELIBERATELY. The trigger installed above is already
+-- live by this point in the file, and it treats ONLY service_role as
+-- privileged — `postgres` is not, so `supabase db push` and the Supabase SQL
+-- editor (both of which connect as `postgres`) would hit
+-- "permission denied: verified may only be changed by service_role" here and
+-- abort the whole migration, DDL included. Verified by executing this file in
+-- pglite as `postgres`: without this line it fails on the first UPDATE below.
+--
+-- SET ROLE, not SET LOCAL ROLE: SET LOCAL outside an explicit transaction is a
+-- no-op with only a warning, and whether the runner wraps the file in one is
+-- not something this file can know.
+SET ROLE service_role;
+
 -- Kaue Kano — Superteam member. Creator of btc-to-sol-evolution,
 -- pilula-solana-superteam and solana-speedrun in the current content bundle.
 UPDATE public.profiles
@@ -222,3 +235,5 @@ UPDATE public.profiles p
   FROM auth.users u
  WHERE u.id = p.id
    AND lower(u.email) = 'davidpotolskilafeta@gmail.com';
+
+RESET ROLE;
