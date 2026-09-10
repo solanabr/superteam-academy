@@ -32,13 +32,14 @@ describe("resolvePublicProfileByWallet", () => {
 
     expect(from).toHaveBeenCalledWith("public_profiles");
     expect(select).toHaveBeenCalledWith(
-      "username, display_name, verified, avatar_url, bio, social_links"
+      "username, display_name, verified, verified_kind, avatar_url, bio, social_links"
     );
     expect(eq).toHaveBeenCalledWith("wallet_address", WALLET);
     expect(profile).toEqual({
       username: "alice",
       displayName: null,
       verified: false,
+      verifiedKind: null,
       avatarUrl: "https://example.com/a.png",
       bio: "Rust developer",
       socialLinks: { twitter: "alice_dev" },
@@ -65,6 +66,7 @@ describe("resolvePublicProfileByWallet", () => {
       // A NULL `verified` from the view must normalise to false, never leak
       // through as nullish — an unverified teacher must not render badged.
       verified: false,
+      verifiedKind: null,
       avatarUrl: null,
       bio: null,
       socialLinks: null,

@@ -5,6 +5,7 @@ import { GithubLogo, TwitterLogo, DiscordLogo } from "@phosphor-icons/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LevelBadge } from "@/components/gamification/level-badge";
 import { VerifiedBadge } from "@/components/profile/verified-badge";
+import type { VerifiedKind } from "@/lib/profiles/public-profile";
 import { xpToNextLevel } from "@/lib/gamification/xp";
 
 interface ProfileHeroPanelProps {
@@ -14,6 +15,8 @@ interface ProfileHeroPanelProps {
     displayName?: string | null;
     /** Admin-granted verified-teacher badge (#997). */
     verified?: boolean;
+    /** Which badge to wear (#1234) — Superteam member or verified partner. */
+    verifiedKind?: VerifiedKind | null;
     bio: string;
     avatarUrl: string;
     joinedAt: Date;
@@ -74,7 +77,9 @@ export function ProfileHeroPanel({
             <div className="flex flex-wrap items-center gap-2.5">
               <h1 className="flex items-center gap-1.5 font-display text-[24px] font-black leading-tight tracking-[-0.5px]">
                 {displayName}
-                {user.verified && <VerifiedBadge className="h-5 w-5" />}
+                {user.verified && (
+                  <VerifiedBadge kind={user.verifiedKind} className="h-5 w-5" />
+                )}
               </h1>
               {showVisibilityBadge && (
                 <span className="inline-flex items-center gap-1 rounded-full border border-success px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-success [background:var(--success-bg)]">

@@ -1,6 +1,23 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/types";
 
+/**
+ * The kinds of verified author the Academy publishes (#1234). Closed set,
+ * mirrored by `chk_profiles_verified_kind` in the database — the column is
+ * written by admin tooling and by hand, and a typo'd kind would otherwise
+ * render as an unbadged author with no error anywhere.
+ */
+export const VERIFIED_KINDS = ["superteam", "partner"] as const;
+export type VerifiedKind = (typeof VERIFIED_KINDS)[number];
+
+/** Narrow a raw DB/JSON value to a known kind; anything else is no badge kind. */
+export function toVerifiedKind(value: unknown): VerifiedKind | null {
+  return typeof value === "string" &&
+    (VERIFIED_KINDS as readonly string[]).includes(value)
+    ? (value as VerifiedKind)
+    : null;
+}
+
 /** Non-sensitive social handles a profile may set (settings page shape). */
 export interface SocialLinks {
   twitter?: string;
@@ -26,6 +43,13 @@ export interface PublicProfile {
   displayName: string | null;
   /** Admin-granted verified-teacher badge (#997). */
   verified: boolean;
+  /**
+   * WHICH badge a verified author wears (#1234): a Superteam member or an
+   * outside partner organisation. `null` on a verified profile is the
+   * pre-#1234 state and falls back to the generic teacher badge, so nobody
+   * loses a badge waiting for an admin to classify them.
+   */
+  verifiedKind: VerifiedKind | null;
   avatarUrl: string | null;
   bio: string | null;
   socialLinks: SocialLinks | null;
@@ -56,7 +80,9 @@ export async function resolvePublicProfileByWallet(
 ): Promise<PublicProfile | null> {
   const { data } = await supabase
     .from("public_profiles")
-    .select("username, display_name, verified, avatar_url, bio, social_links")
+    .select(
+      "username, display_name, verified, verified_kind, avatar_url, bio, social_links"
+    )
     .eq("wallet_address", wallet)
     .maybeSingle();
 
@@ -70,6 +96,7 @@ export async function resolvePublicProfileByWallet(
     // Default false rather than trusting a nullable read: an unverified teacher
     // wrongly badged is worse than a verified one briefly unbadged.
     verified: data.verified ?? false,
+    verifiedKind: toVerifiedKind(data.verified_kind),
     avatarUrl: data.avatar_url,
     bio: data.bio,
     socialLinks: (data.social_links as SocialLinks | null) ?? null,

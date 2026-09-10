@@ -69,6 +69,14 @@ export const SCHEMA_EXPECTATIONS: readonly SchemaExpectation[] = [
   },
   {
     kind: "column",
+    table: "public_profiles",
+    column: "verified_kind",
+    migration: "20260910120000_verified_kind.sql",
+    description:
+      "verified badge KIND (#1234) — selected by the same course-page and public-profile reads as display_name/verified, so its absence 400s both",
+  },
+  {
+    kind: "column",
     table: "user_xp",
     column: "streak_freezes",
     migration: "20260726190000_streak_forgiveness.sql",
