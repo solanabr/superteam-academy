@@ -161,13 +161,17 @@ UPDATE public.profiles
  WHERE wallet_address = 'Em8D6XyuXvNUK1YgLKBaji7HbbrZZq7fCdq3sGMXqxVZ';
 
 -- David Potolski Lafetá — Superteam member. His course is not in the bundle
--- yet, so there is no `Course.creator` wallet to match on; matched by the
--- account's sign-in email instead (profiles.id IS auth.users.id).
---
--- VERIFY THIS ONE ON APPLY: if his account signed in with a wallet or a
--- different address, this matches nothing and silently does nothing. The check
--- is `SELECT username, verified, verified_kind FROM public.profiles WHERE
--- verified_kind = 'superteam'` — it must return HIS row as well as Kaue's.
+-- yet, so there is no `Course.creator` to read the wallet from; it was given
+-- directly (owner, 2026-09-10) and is keyed the same way as the two above.
+UPDATE public.profiles
+   SET verified = true, verified_kind = 'superteam'
+ WHERE wallet_address = '8kMziL5e3qEWhp1nQHEiYLRypymyBVTXNxgZXyQwhbSo';
+
+-- …and by sign-in email as well, because that wallet is only on the profile
+-- row if the account has linked it. An account that signed in through Google
+-- alone carries no `wallet_address`, so the statement above would match
+-- nothing. Both are idempotent and both target the same person, so whichever
+-- identifier his row actually holds, the badge lands.
 UPDATE public.profiles p
    SET verified = true, verified_kind = 'superteam'
   FROM auth.users u
