@@ -78,7 +78,9 @@ export function InstructorCard({
               >
                 {name}
               </Link>
-              {profile.verified && <VerifiedBadge className="ml-1" />}
+              {profile.verified && (
+                <VerifiedBadge kind={profile.verifiedKind} className="ml-1" />
+              )}
             </>
           ) : (
             <span className="font-mono text-text-3">

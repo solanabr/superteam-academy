@@ -54,6 +54,7 @@ describe("GET /api/content/instructor-wallet", () => {
         username: "alice",
         displayName: null,
         verified: false,
+        verifiedKind: null,
         avatarUrl: "https://example.com/a.png",
         bio: "Rust developer",
         socialLinks: { twitter: "alice_dev" },

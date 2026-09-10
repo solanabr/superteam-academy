@@ -9,6 +9,7 @@ function profile(over: Partial<PublicProfile> = {}): PublicProfile {
     username: "brave-anchor-9000",
     displayName: null,
     verified: false,
+    verifiedKind: null,
     avatarUrl: null,
     bio: null,
     socialLinks: null,

@@ -573,6 +573,7 @@ export type Database = {
           social_links: Json | null;
           username: string;
           verified: boolean;
+          verified_kind: string | null;
           wallet_address: string | null;
           wallet_kind: string | null;
           wallet_xp_synced_at: string | null;
@@ -598,6 +599,7 @@ export type Database = {
           social_links?: Json | null;
           username: string;
           verified?: boolean;
+          verified_kind?: string | null;
           wallet_address?: string | null;
           wallet_kind?: string | null;
           wallet_xp_synced_at?: string | null;
@@ -623,6 +625,7 @@ export type Database = {
           social_links?: Json | null;
           username?: string;
           verified?: boolean;
+          verified_kind?: string | null;
           wallet_address?: string | null;
           wallet_kind?: string | null;
           wallet_xp_synced_at?: string | null;
@@ -1352,6 +1355,7 @@ export type Database = {
           social_links: Json | null;
           username: string | null;
           verified: boolean | null;
+          verified_kind: string | null;
           wallet_address: string | null;
         };
         Relationships: [];

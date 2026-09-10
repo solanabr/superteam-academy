@@ -10,6 +10,10 @@ import {
 } from "@/lib/content/queries";
 import type { DeployedAchievement } from "@/lib/content/queries";
 import { completedLessonsToRadar } from "@/lib/gamification";
+import {
+  toVerifiedKind,
+  type VerifiedKind,
+} from "@/lib/profiles/public-profile";
 import { getProgressService } from "@/lib/services";
 import { calculateLevel } from "@/lib/gamification/xp";
 
@@ -22,6 +26,8 @@ export interface ProfileUser {
   displayName: string | null;
   /** Admin-granted verified-teacher badge (#997). */
   verified: boolean;
+  /** Which badge to wear (#1234) — Superteam member or verified partner. */
+  verifiedKind: VerifiedKind | null;
   bio: string;
   avatarUrl: string;
   joinedAt: Date;
@@ -237,7 +243,7 @@ export async function fetchPublicProfile(
   const { data: profile, error: profileError } = await supabase
     .from("public_profiles")
     .select(
-      "id, username, display_name, verified, bio, avatar_url, social_links, created_at"
+      "id, username, display_name, verified, verified_kind, bio, avatar_url, social_links, created_at"
     )
     .eq("username", username)
     .single();
@@ -290,6 +296,7 @@ export async function fetchPublicProfile(
     // Default false, never a nullable passthrough: wrongly badging an
     // unverified teacher is worse than briefly missing a badge.
     verified: profile.verified ?? false,
+    verifiedKind: toVerifiedKind(profile.verified_kind),
     bio: profile.bio ?? "",
     avatarUrl: profile.avatar_url ?? "",
     joinedAt: new Date(profile.created_at ?? Date.now()),
@@ -371,6 +378,7 @@ export async function fetchOwnProfile(
     username: profile.username,
     displayName: profile.display_name ?? null,
     verified: profile.verified ?? false,
+    verifiedKind: toVerifiedKind(profile.verified_kind),
     bio: profile.bio ?? "",
     avatarUrl: profile.avatar_url ?? "",
     joinedAt: new Date(profile.created_at ?? Date.now()),
