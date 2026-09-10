@@ -59,7 +59,7 @@ const SELF = "33333333-3333-3333-3333-333333333333";
  * Supabase gives it, or `SET ROLE service_role` would land on a role that
  * cannot touch the table.
  */
-async function freshDb(): Promise<PGlite> {
+async function freshDb(davidHasWallet = true): Promise<PGlite> {
   const db = new PGlite();
   await db.exec(`
     CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role;
@@ -80,11 +80,13 @@ async function freshDb(): Promise<PGlite> {
       deleted_at timestamptz
     );
     GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;
-    GRANT USAGE ON SCHEMA auth TO service_role;
-    GRANT SELECT ON auth.users TO service_role;
+    -- NOTE what is deliberately NOT granted: SELECT on auth.users. Real
+    -- Supabase does not give service_role access to the auth schema, and an
+    -- earlier version of this harness granted it "to model production" — which
+    -- masked a migration that could not run on production at all.
     INSERT INTO auth.users VALUES ('${DAVID}', 'davidpotolskilafeta@gmail.com');
     INSERT INTO public.profiles (id, username, wallet_address)
-      VALUES ('${DAVID}', 'david', '${DAVID_WALLET}');
+      VALUES ('${DAVID}', 'david', ${davidHasWallet ? `'${DAVID_WALLET}'` : "NULL"});
     INSERT INTO public.profiles (id, username) VALUES ('${SELF}', 'learner');
   `);
   return db;
@@ -196,5 +198,53 @@ describe("#1234 — every privileged column rejects a non-service write", () => 
       `SELECT verified_kind FROM public.profiles WHERE id = '${SELF}'`
     );
     expect(r.rows[0]!.verified_kind).toBe("partner");
+  });
+});
+
+describe("#1234 — the email-keyed half of the backfill, across the role boundary", () => {
+  let db: PGlite;
+  beforeAll(async () => {
+    // A Google-only account: signed in, no wallet ever linked, so
+    // `profiles.wallet_address` is NULL and the wallet-keyed UPDATE matches
+    // nothing. The email statement is the only thing that can badge him — and
+    // it has to read auth.users, which service_role cannot see, so it reads an
+    // id resolved as `postgres` before the role switch.
+    db = await freshDb(false);
+    await db.exec(migration);
+  });
+  afterAll(async () => {
+    await db.close();
+  });
+
+  it("badges an author who has no linked wallet", async () => {
+    const r = await db.query<{ verified: boolean; verified_kind: string }>(
+      `SELECT verified, verified_kind FROM public.profiles WHERE username = 'david'`
+    );
+    expect(r.rows[0]).toEqual({ verified: true, verified_kind: "superteam" });
+  });
+
+  it("leaves no scratch table behind in the session", async () => {
+    const r = await db.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM pg_tables WHERE tablename = '_verified_kind_targets'`
+    );
+    expect(r.rows[0]!.n).toBe(0);
+  });
+
+  it("grants service_role nothing on auth as a side effect", async () => {
+    // The one-line "fix" for the permission error would have been
+    // GRANT SELECT ON auth.users TO service_role — permanently widening
+    // service_role's reach into auth to run a badge backfill. It did not happen.
+    const r = await db.query<{ can: boolean }>(
+      `SELECT has_table_privilege('service_role', 'auth.users', 'SELECT') AS can`
+    );
+    expect(r.rows[0]!.can).toBe(false);
+  });
+
+  it("is idempotent — a second apply is a no-op, not an error", async () => {
+    await expect(db.exec(migration)).resolves.toBeDefined();
+    const r = await db.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM public.profiles WHERE verified_kind IS NOT NULL`
+    );
+    expect(r.rows[0]!.n).toBe(1);
   });
 });
