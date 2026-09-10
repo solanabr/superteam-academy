@@ -45,6 +45,31 @@ COMMENT ON COLUMN public.profiles.verified_kind IS
   'Which verified badge to show: superteam (Superteam member) or partner (verified partner). NULL on a verified profile falls back to the generic teacher badge. Admin-set (service_role only) — a self-awardable "Superteam member" badge would be meaningless.';
 
 -- Extend the existing guard rather than adding a second trigger (#997's note).
+--
+-- THE GUARDED SET IS THE UNION OF EVERY MIGRATION THAT EVER TOUCHED THIS
+-- FUNCTION, NOT JUST THIS ONE'S COLUMN. CREATE OR REPLACE FUNCTION swaps the
+-- whole body, so a column omitted here is a write lock DELETED — silently,
+-- with a green migration and no failing test, because the only thing behind it
+-- is `ON profiles FOR UPDATE USING (auth.uid() = id)`, which does not constrain
+-- WHICH columns a learner writes.
+--
+-- That is not hypothetical. The history of this function:
+--
+--   20260710120000 (#696)  wallet_address
+--   20260805120000 (#997)  wallet_address, display_name, verified
+--   20260824120000 (#1183) wallet_address, wallet_kind    ← dropped #997's two
+--   this migration          all five
+--
+-- #1183 replaced the body starting from the #710 text and lost `display_name`
+-- and `verified` on the way. It is applied (ledger: 20260824213846), so on
+-- prod right now those two columns are self-writable and a learner can award
+-- themselves the badge this PR is busy adding kinds to. Restoring them is
+-- therefore not tidy-up: applying this migration CLOSES that hole, which is
+-- why the ledger row asks for the #1183-regression check as well as the
+-- verified_kind one.
+--
+-- Before editing this body again, diff the guarded set against every earlier
+-- version, not against the one you happened to open.
 CREATE OR REPLACE FUNCTION public.enforce_profile_wallet_write()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -63,9 +88,18 @@ BEGIN
   END IF;
 
   IF TG_OP = 'UPDATE' THEN
+    -- IS DISTINCT FROM is NULL-safe and lets a no-op update through.
     IF NEW.wallet_address IS DISTINCT FROM OLD.wallet_address THEN
       RAISE EXCEPTION
         'permission denied: wallet_address may only be changed by service_role'
+        USING ERRCODE = 'insufficient_privilege';
+    END IF;
+    -- wallet_kind (#1183) decides which re-auth path the account is offered
+    -- (Dynamic embedded vs. external adapter); self-writable, it would be a
+    -- switch on the learner's own auth recovery.
+    IF NEW.wallet_kind IS DISTINCT FROM OLD.wallet_kind THEN
+      RAISE EXCEPTION
+        'permission denied: wallet_kind may only be changed by service_role'
         USING ERRCODE = 'insufficient_privilege';
     END IF;
     IF NEW.display_name IS DISTINCT FROM OLD.display_name THEN
@@ -89,6 +123,9 @@ BEGIN
     IF NEW.wallet_address IS NOT NULL THEN
       NEW.wallet_address := NULL;
     END IF;
+    IF NEW.wallet_kind IS NOT NULL THEN
+      NEW.wallet_kind := NULL;
+    END IF;
     IF NEW.display_name IS NOT NULL THEN
       NEW.display_name := NULL;
     END IF;
@@ -108,6 +145,14 @@ DROP TRIGGER IF EXISTS trg_enforce_profile_wallet_write ON public.profiles;
 CREATE TRIGGER trg_enforce_profile_wallet_write
   BEFORE INSERT OR UPDATE ON public.profiles
   FOR EACH ROW EXECUTE FUNCTION public.enforce_profile_wallet_write();
+
+-- Restated with the body it belongs to: a trigger function runs in trigger
+-- context and must never be reachable as a PostgREST RPC. CREATE OR REPLACE
+-- preserves existing grants, so this is a no-op on a database that already ran
+-- #710/#1183 — it is here so the replacement is self-contained rather than
+-- depending on a REVOKE in a file it silently overwrites.
+REVOKE EXECUTE ON FUNCTION public.enforce_profile_wallet_write()
+  FROM PUBLIC, anon, authenticated;
 
 -- Republish the public view with the new field APPENDED.
 --
