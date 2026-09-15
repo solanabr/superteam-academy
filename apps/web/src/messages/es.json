@@ -382,6 +382,8 @@
     "quizCollapse": "Cerrar quiz",
     "quizUnlocksAssistant": "El AI Partner se desbloquea después del cuestionario — {answered}/{total} respondidas",
     "quizCompleteChip": "Completado",
+    "quizEnrollTitle": "Inscríbete para hacer el quiz",
+    "quizEnrollBody": "El quiz es parte del curso: inscríbete para responderlo, seguir tu progreso y ganar XP.",
     "quizAllCorrect": "Las {total} preguntas respondidas correctamente.",
     "formatCode": "Formatear",
     "stopwatch": "Cronómetro",

@@ -607,3 +607,56 @@ describe("QuizBlock — stepper (#849)", () => {
     expect(document.activeElement).toBe(screen.getByText("What is a PDA?"));
   });
 });
+
+describe("QuizBlock — enrollment gate (owner 2026-09-15)", () => {
+  it("not enrolled: the quiz renders but sits behind the enroll overlay", () => {
+    renderWithIntl(
+      <QuizBlock block={quizBlock} ctx={makeCtx({ isEnrolled: false })} />
+    );
+    // The overlay names the gate and carries the one action.
+    expect(screen.getByText("Enroll to take the quiz")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Enroll Now" })
+    ).toBeInTheDocument();
+    // The quiz itself is still MOUNTED (the visitor sees its shape through
+    // the blur) but is display-only: hidden from assistive tech and inert.
+    // div[…]: the phosphor icons are aria-hidden decorations too.
+    const veiled = document.querySelector('div[aria-hidden="true"]');
+    expect(veiled).not.toBeNull();
+    expect(veiled!.textContent).toContain("What is a PDA?");
+    expect(veiled!.className).toContain("pointer-events-none");
+  });
+
+  it("the enroll button hands off to ctx.onEnroll (auth modal for visitors, on-chain enroll for users)", () => {
+    const onEnroll = vi.fn();
+    renderWithIntl(
+      <QuizBlock
+        block={quizBlock}
+        ctx={makeCtx({ isEnrolled: false, onEnroll })}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Enroll Now" }));
+    expect(onEnroll).toHaveBeenCalledTimes(1);
+  });
+
+  it("gated interactive controls are unreachable — Check is not an accessible button", () => {
+    renderWithIntl(
+      <QuizBlock block={quizBlock} ctx={makeCtx({ isEnrolled: false })} />
+    );
+    // aria-hidden removes the quiz's own controls from the accessibility
+    // tree, so the ONLY button a screen reader finds is the enroll CTA.
+    expect(
+      screen.queryByRole("button", { name: "Check answer" })
+    ).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button")).toHaveLength(1);
+  });
+
+  it("enrolled: no overlay, quiz fully interactive", () => {
+    renderWithIntl(<QuizBlock block={quizBlock} ctx={makeCtx()} />);
+    expect(
+      screen.queryByText("Enroll to take the quiz")
+    ).not.toBeInTheDocument();
+    expect(document.querySelector('div[aria-hidden="true"]')).toBeNull();
+    expect(checkButton()).toBeInTheDocument();
+  });
+});

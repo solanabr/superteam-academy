@@ -382,6 +382,8 @@
     "quizCollapse": "Close quiz",
     "quizUnlocksAssistant": "AI Partner unlocks after the quiz — {answered}/{total} answered",
     "quizCompleteChip": "Complete",
+    "quizEnrollTitle": "Enroll to take the quiz",
+    "quizEnrollBody": "The quiz is part of the course — enroll to answer it, track your progress, and earn XP.",
     "quizAllCorrect": "All {total} questions answered correctly.",
     "formatCode": "Format",
     "stopwatch": "Stopwatch",
