@@ -8,6 +8,7 @@ import {
   CaretRight,
   CaretUp,
   CheckCircle,
+  LockSimple,
   Robot,
   XCircle,
 } from "@phosphor-icons/react";
@@ -62,6 +63,15 @@ function isChoiceCorrect(q: QuizQuestionData, chosen: string[]): boolean {
 export function QuizBlock({ block, ctx }: BlockRenderProps) {
   const b = block as QuizBlockData;
   const t = useTranslations("lesson");
+  const tCourses = useTranslations("courses");
+  // Enrollment gate (owner 2026-09-15): a visitor sees that a quiz exists and
+  // roughly what it looks like, but the questions sit behind a blur with one
+  // action — Enroll. Not an anti-cheat boundary (the doc ships client-side by
+  // the D4 open-book ruling); it makes "this is part of the course" legible
+  // and routes the visitor into the same enroll flow the challenge overlay
+  // uses. `onEnroll` already handles the signed-out case by opening the auth
+  // modal (#556), so one button serves both anonymous and signed-in visitors.
+  const gated = !ctx.isEnrolled;
   // Device-scoped persistence (owner 2026-07-31): a refresh must not lose the
   // quiz. localStorage, hydrated in an effect — reading it during render would
   // desync the first paint from SSR (hydration mismatch), same rule as the
@@ -111,6 +121,14 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
   // Section starts open (#770); collapsing leaves the score badge as the recap.
   const [open, setOpen] = useState(true);
   const headerRef = useRef<HTMLButtonElement>(null);
+  // `inert` is set imperatively: @types/react 18 has no inert prop, but the
+  // DOM property is typed. It removes the gated quiz from the tab order and
+  // the accessibility tree, so keyboard and screen-reader users cannot land
+  // inside content that pointer users cannot reach.
+  const gateRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (gateRef.current) gateRef.current.inert = gated;
+  }, [gated]);
   const [index, setIndex] = useState(0);
   const promptRef = useRef<HTMLLegendElement>(null);
   // True only between a user-initiated navigation and the focus effect below —
@@ -265,230 +283,276 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
   };
 
   return (
-    <div className="rounded-[var(--r-lg)] border-[2.5px] border-border bg-card shadow-card">
-      <button
-        ref={headerRef}
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        className="flex w-full items-center gap-2 p-5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    // `relative` anchors the enroll overlay; `overflow-hidden` (gated only)
+    // clips the overlay's backdrop blur to the card's rounded corners.
+    <div
+      className={cn(
+        "rounded-[var(--r-lg)] border-[2.5px] border-border bg-card shadow-card",
+        gated && "relative overflow-hidden"
+      )}
+    >
+      {/* Everything the quiz normally renders, unchanged — behind the gate it
+          is display-only: inert (see effect above) plus pointer/selection off
+          for the pre-hydration frames inert cannot cover. */}
+      <div
+        ref={gateRef}
+        aria-hidden={gated || undefined}
+        className={cn(gated && "pointer-events-none select-none")}
       >
-        <h3 className="font-display text-sm font-extrabold uppercase text-text-3">
-          {t("quiz")}
-        </h3>
-        {/* Count = neutral data chip; state = the ONE colored chip. Both went
+        <button
+          ref={headerRef}
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          className="flex w-full items-center gap-2 p-5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <h3 className="font-display text-sm font-extrabold uppercase text-text-3">
+            {t("quiz")}
+          </h3>
+          {/* Count = neutral data chip; state = the ONE colored chip. Both went
             success-green on a sweep and read as duplicate twins. */}
-        <span className="rounded-full px-2 py-0.5 text-xs font-bold tabular-nums text-text-3 [background:var(--inset)]">
-          {t("quizScore", {
-            correct: correctCount,
-            total,
-          })}
-        </span>
-        {allCorrect && (
-          <span className="flex items-center gap-1 rounded-full border border-[var(--primary-border)] bg-[var(--primary-dim)] px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.4px] text-primary">
-            <CheckCircle size={12} weight="bold" aria-hidden="true" />
-            {t("quizCompleteChip")}
+          <span className="rounded-full px-2 py-0.5 text-xs font-bold tabular-nums text-text-3 [background:var(--inset)]">
+            {t("quizScore", {
+              correct: correctCount,
+              total,
+            })}
           </span>
-        )}
-        <CaretDown
-          size={14}
-          weight="bold"
-          aria-hidden="true"
-          className={cn(
-            "ml-auto shrink-0 text-text-3 transition-transform",
-            !open && "-rotate-90"
+          {allCorrect && (
+            <span className="flex items-center gap-1 rounded-full border border-[var(--primary-border)] bg-[var(--primary-dim)] px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.4px] text-primary">
+              <CheckCircle size={12} weight="bold" aria-hidden="true" />
+              {t("quizCompleteChip")}
+            </span>
           )}
-        />
-        <span className="sr-only">{t("toggleSection")}</span>
-      </button>
+          <CaretDown
+            size={14}
+            weight="bold"
+            aria-hidden="true"
+            className={cn(
+              "ml-auto shrink-0 text-text-3 transition-transform",
+              !open && "-rotate-90"
+            )}
+          />
+          <span className="sr-only">{t("toggleSection")}</span>
+        </button>
 
-      {/* Completion state (#943): a clean sweep is acknowledged in-block — no
+        {/* Completion state (#943): a clean sweep is acknowledged in-block — no
           popup, per the three-popup rule. It sits OUTSIDE the collapsible body
           so it stays perceivable if the learner folds the quiz by hand (the
           sweep no longer folds it automatically — owner 2026-08-21). Always
           mounted so the region exists before the text arrives. */}
-      <div aria-live="polite" className="px-5 pb-5 empty:hidden">
-        {allCorrect && (
-          <p className="flex items-center gap-2 rounded-md border border-[var(--primary-border)] bg-[var(--primary-dim)] p-3 text-sm font-medium text-primary">
-            <CheckCircle size={16} weight="bold" aria-hidden="true" />
-            {t("quizAllCorrect", { total })}
-          </p>
-        )}
-      </div>
-
-      <div
-        className={cn("space-y-6 px-5 pb-5", !open && "hidden")}
-        onKeyDown={onBodyKeyDown}
-      >
-        {/* Always-mounted position announcer: navigation swaps the card, so a
-            separate live region tells screen readers where they landed. */}
-        {stepper && (
-          <p aria-live="polite" className="sr-only">
-            {t("quizPosition", { current: current + 1, total })}
-          </p>
-        )}
-        {q && (
-          <fieldset key={q.id} className="space-y-2">
-            <legend
-              ref={promptRef}
-              tabIndex={-1}
-              className="rounded-sm font-display font-bold text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              {q.prompt}
-            </legend>
-            <div className="space-y-1.5">
-              {q.options.map((o) => {
-                const judged = result?.chosen.includes(o.id) ?? false;
-                return (
-                  <label
-                    key={o.id}
-                    className={cn(
-                      "flex items-center gap-2 rounded-md border p-2 text-sm transition-colors",
-                      locked
-                        ? "cursor-default"
-                        : "cursor-pointer hover:bg-inset",
-                      judged
-                        ? o.correct
-                          ? "border-success"
-                          : "border-danger"
-                        : "border-border"
-                    )}
-                  >
-                    <input
-                      type={multi ? "checkbox" : "radio"}
-                      name={q.id}
-                      value={o.id}
-                      checked={chosen.includes(o.id)}
-                      onChange={() => toggle(q.id, o.id, multi)}
-                      disabled={locked}
-                      className="accent-primary"
-                    />
-                    <span>{o.label}</span>
-                  </label>
-                );
-              })}
-            </div>
-            {/* Always-mounted live region: the verdict + authored feedback are
-                announced when they appear. Focus stays on the Check button —
-                nothing is unmounted from under the keyboard user. */}
-            <div aria-live="polite" className="space-y-2">
-              {result && (
-                <div className="reveal-in space-y-2">
-                  <p
-                    className={`flex items-center gap-1.5 text-sm font-medium ${
-                      result.correct ? "text-success" : "text-danger"
-                    }`}
-                  >
-                    {result.correct ? (
-                      <CheckCircle size={16} weight="bold" aria-hidden="true" />
-                    ) : (
-                      <XCircle size={16} weight="bold" aria-hidden="true" />
-                    )}
-                    {result.correct ? t("quizCorrect") : t("quizIncorrect")}
-                  </p>
-                  {chosenWithFeedback.map((o) => (
-                    <p key={o.id} className="text-sm text-text">
-                      {multi && (
-                        <span className="font-medium">{o.label}: </span>
-                      )}
-                      {o.feedback}
-                    </p>
-                  ))}
-                  {q.explanation && (
-                    <div className="space-y-1 rounded-md border border-border bg-inset p-3">
-                      <p className="font-display text-xs font-bold uppercase tracking-wide text-text-3">
-                        {t("quizExplanationLabel")}
-                      </p>
-                      <p className="text-sm text-text">{q.explanation}</p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </fieldset>
-        )}
-
-        {/* One action row: Check answer lives in the Next slot and morphs into
-            the emphasized Next once the question is correct (owner, 2026-07-31).
-            Non-stepper quizzes get the same morphing slot without Prev/Next. */}
-        <div className="flex items-center justify-between gap-2">
-          {stepper ? (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => goTo(current - 1)}
-              disabled={current === 0}
-              aria-disabled={current === 0}
-            >
-              <CaretLeft size={14} weight="bold" aria-hidden="true" />
-              {t("quizPrev")}
-            </Button>
-          ) : (
-            <span />
-          )}
-          {locked && stepper && (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={lastQuestion ? collapse : () => goTo(current + 1)}
-            >
-              {lastQuestion ? t("quizCollapse") : t("quizNext")}
-              {lastQuestion ? (
-                <CaretUp size={14} weight="bold" aria-hidden="true" />
-              ) : (
-                <CaretRight size={14} weight="bold" aria-hidden="true" />
-              )}
-            </Button>
-          )}
-          {!locked && q && (
-            <div className="flex items-center gap-2">
-              <Button
-                variant="pushSuccess"
-                size="sm"
-                onClick={() => check(q, chosen, locked)}
-                disabled={chosen.length === 0}
-                aria-disabled={chosen.length === 0}
-              >
-                {t("quizCheck")}
-              </Button>
-              {/* A wrong-but-attempted question can be skipped (subdued Next):
-                  the AI gate counts attempts, and nobody dead-ends on a hard
-                  question. The primary Next appears only on correct. */}
-              {stepper && checkedEver[q.id] && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={lastQuestion ? collapse : () => goTo(current + 1)}
-                >
-                  {lastQuestion ? t("quizCollapse") : t("quizNext")}
-                  {lastQuestion ? (
-                    <CaretUp size={14} weight="bold" aria-hidden="true" />
-                  ) : (
-                    <CaretRight size={14} weight="bold" aria-hidden="true" />
-                  )}
-                </Button>
-              )}
-            </div>
+        <div aria-live="polite" className="px-5 pb-5 empty:hidden">
+          {allCorrect && (
+            <p className="flex items-center gap-2 rounded-md border border-[var(--primary-border)] bg-[var(--primary-dim)] p-3 text-sm font-medium text-primary">
+              <CheckCircle size={16} weight="bold" aria-hidden="true" />
+              {t("quizAllCorrect", { total })}
+            </p>
           )}
         </div>
 
-        {/* The AI Partner is suppressed while any question is unchecked
+        <div
+          className={cn("space-y-6 px-5 pb-5", !open && "hidden")}
+          onKeyDown={onBodyKeyDown}
+        >
+          {/* Always-mounted position announcer: navigation swaps the card, so a
+            separate live region tells screen readers where they landed. */}
+          {stepper && (
+            <p aria-live="polite" className="sr-only">
+              {t("quizPosition", { current: current + 1, total })}
+            </p>
+          )}
+          {q && (
+            <fieldset key={q.id} className="space-y-2">
+              <legend
+                ref={promptRef}
+                tabIndex={-1}
+                className="rounded-sm font-display font-bold text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {q.prompt}
+              </legend>
+              <div className="space-y-1.5">
+                {q.options.map((o) => {
+                  const judged = result?.chosen.includes(o.id) ?? false;
+                  return (
+                    <label
+                      key={o.id}
+                      className={cn(
+                        "flex items-center gap-2 rounded-md border p-2 text-sm transition-colors",
+                        locked
+                          ? "cursor-default"
+                          : "cursor-pointer hover:bg-inset",
+                        judged
+                          ? o.correct
+                            ? "border-success"
+                            : "border-danger"
+                          : "border-border"
+                      )}
+                    >
+                      <input
+                        type={multi ? "checkbox" : "radio"}
+                        name={q.id}
+                        value={o.id}
+                        checked={chosen.includes(o.id)}
+                        onChange={() => toggle(q.id, o.id, multi)}
+                        disabled={locked}
+                        className="accent-primary"
+                      />
+                      <span>{o.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+              {/* Always-mounted live region: the verdict + authored feedback are
+                announced when they appear. Focus stays on the Check button —
+                nothing is unmounted from under the keyboard user. */}
+              <div aria-live="polite" className="space-y-2">
+                {result && (
+                  <div className="reveal-in space-y-2">
+                    <p
+                      className={`flex items-center gap-1.5 text-sm font-medium ${
+                        result.correct ? "text-success" : "text-danger"
+                      }`}
+                    >
+                      {result.correct ? (
+                        <CheckCircle
+                          size={16}
+                          weight="bold"
+                          aria-hidden="true"
+                        />
+                      ) : (
+                        <XCircle size={16} weight="bold" aria-hidden="true" />
+                      )}
+                      {result.correct ? t("quizCorrect") : t("quizIncorrect")}
+                    </p>
+                    {chosenWithFeedback.map((o) => (
+                      <p key={o.id} className="text-sm text-text">
+                        {multi && (
+                          <span className="font-medium">{o.label}: </span>
+                        )}
+                        {o.feedback}
+                      </p>
+                    ))}
+                    {q.explanation && (
+                      <div className="space-y-1 rounded-md border border-border bg-inset p-3">
+                        <p className="font-display text-xs font-bold uppercase tracking-wide text-text-3">
+                          {t("quizExplanationLabel")}
+                        </p>
+                        <p className="text-sm text-text">{q.explanation}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </fieldset>
+          )}
+
+          {/* One action row: Check answer lives in the Next slot and morphs into
+            the emphasized Next once the question is correct (owner, 2026-07-31).
+            Non-stepper quizzes get the same morphing slot without Prev/Next. */}
+          <div className="flex items-center justify-between gap-2">
+            {stepper ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => goTo(current - 1)}
+                disabled={current === 0}
+                aria-disabled={current === 0}
+              >
+                <CaretLeft size={14} weight="bold" aria-hidden="true" />
+                {t("quizPrev")}
+              </Button>
+            ) : (
+              <span />
+            )}
+            {locked && stepper && (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={lastQuestion ? collapse : () => goTo(current + 1)}
+              >
+                {lastQuestion ? t("quizCollapse") : t("quizNext")}
+                {lastQuestion ? (
+                  <CaretUp size={14} weight="bold" aria-hidden="true" />
+                ) : (
+                  <CaretRight size={14} weight="bold" aria-hidden="true" />
+                )}
+              </Button>
+            )}
+            {!locked && q && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="pushSuccess"
+                  size="sm"
+                  onClick={() => check(q, chosen, locked)}
+                  disabled={chosen.length === 0}
+                  aria-disabled={chosen.length === 0}
+                >
+                  {t("quizCheck")}
+                </Button>
+                {/* A wrong-but-attempted question can be skipped (subdued Next):
+                  the AI gate counts attempts, and nobody dead-ends on a hard
+                  question. The primary Next appears only on correct. */}
+                {stepper && checkedEver[q.id] && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={lastQuestion ? collapse : () => goTo(current + 1)}
+                  >
+                    {lastQuestion ? t("quizCollapse") : t("quizNext")}
+                    {lastQuestion ? (
+                      <CaretUp size={14} weight="bold" aria-hidden="true" />
+                    ) : (
+                      <CaretRight size={14} weight="bold" aria-hidden="true" />
+                    )}
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* The AI Partner is suppressed while any question is unchecked
             (LX-C1/F18) — retrieval stays AI-free. The gate is unchanged; the
             line states it explicitly and counts down (#770, #943). Only on
             lessons that HAVE an AI Partner (a code block) — a prose+quiz
             lesson has no assistant to unlock (owner 2026-08-02). */}
-        {!allChecked && ctx.lesson.blocks.some((lb) => lb._type === "code") && (
-          <p className="flex items-start gap-2 rounded-md border border-border p-3 text-xs text-text-3 [background:var(--inset)]">
-            <Robot
-              size={16}
+          {!allChecked &&
+            ctx.lesson.blocks.some((lb) => lb._type === "code") && (
+              <p className="flex items-start gap-2 rounded-md border border-border p-3 text-xs text-text-3 [background:var(--inset)]">
+                <Robot
+                  size={16}
+                  weight="duotone"
+                  className="mt-px shrink-0 text-primary"
+                  aria-hidden="true"
+                />
+                {t("quizUnlocksAssistant", { answered: answeredCount, total })}
+              </p>
+            )}
+        </div>
+      </div>
+
+      {/* Enroll gate — same overlay grammar as the challenge's "tests passed"
+          card (challenge-interface.tsx): translucent wash + backdrop blur over
+          the content, one framed card, one action. blur-md rather than -sm
+          because the point is that the QUESTIONS are not readable — the shape
+          of the quiz shows through, the content does not. */}
+      {gated && (
+        <div className="absolute inset-0 flex items-center justify-center p-4 backdrop-blur-md [background:color-mix(in_srgb,var(--bg)_60%,transparent)]">
+          <div className="flex max-w-sm flex-col items-center gap-3 rounded-xl border-[2.5px] border-border bg-card p-6 text-center shadow-card">
+            <LockSimple
+              size={32}
               weight="duotone"
-              className="mt-px shrink-0 text-primary"
+              className="text-primary"
               aria-hidden="true"
             />
-            {t("quizUnlocksAssistant", { answered: answeredCount, total })}
-          </p>
-        )}
-      </div>
+            <p className="font-display text-lg font-black">
+              {t("quizEnrollTitle")}
+            </p>
+            <p className="text-sm text-text-3">{t("quizEnrollBody")}</p>
+            <Button variant="push" size="lg" onClick={ctx.onEnroll}>
+              {tCourses("enrollNow")}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
