@@ -263,6 +263,18 @@ vi.mock("server-only", () => ({}));
 //    no path and the full-blocks fixture still targets the alpha flagship.
 //    Staged only: no on-chain create and no `deployed_programs` row, so the
 //    catalog gate keeps it invisible until the owner runs the admin sync.
+//  - catalog wave (bump to academy-courses @133c53af, 475 commits): +4
+//    courses / +113 lessons — `course-rust-ts-fundamentals`,
+//    `course-mastering-anchor-v2`, `course-digital-assets` and
+//    `course-solana-payments-commerce`, all under Kaue's wallet, all staged
+//    (no on-chain create, invisible until the owner syncs). Pre-existing
+//    edits ride along: 16 b2s lessons re-worded upstream (incl. the
+//    sign-and-verify retitle, which is the whole paths.json delta) and the
+//    Pílula course gains creatorRewardXp 30 (invisible here — projectCourse
+//    never projected that field). courses/lessons/course-by-slug and
+//    quests-raw's derived challengeLessonIds/moduleLessonMap regenerated
+//    through the real projectors (existing order preserved, new docs
+//    appended); course-summaries and achievements-raw byte-unchanged.
 const deps = { lessonsById };
 
 function bundleCourse(id: string): CourseDoc {
@@ -296,6 +308,13 @@ describe("projectCourse — getAllCourses shape (summary module lessons)", () =>
     "course-visao-geral-solana": "Em8D6XyuXvNUK1YgLKBaji7HbbrZZq7fCdq3sGMXqxVZ",
     "course-solana-hackathon-expert":
       "8kMziL5e3qEWhp1nQHEiYLRypymyBVTXNxgZXyQwhbSo",
+    "course-digital-assets": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
+    "course-mastering-anchor-v2":
+      "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
+    "course-rust-ts-fundamentals":
+      "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
+    "course-solana-payments-commerce":
+      "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
   };
 
   it("creator is a real wallet (#399/B3); thumbnail is a compiled banner url", () => {
