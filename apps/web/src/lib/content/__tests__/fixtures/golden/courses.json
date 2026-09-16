@@ -39,7 +39,7 @@
           },
           {
             "_id": "lesson-b2s-sign-and-verify",
-            "title": "Sign and verify: identity without an account",
+            "title": "Sign and verify: making an identity out of 32 random bytes",
             "slug": "sign-and-verify"
           }
         ]
@@ -493,6 +493,1009 @@
             "_id": "lesson-she-rehearsal",
             "title": "Rehearse the season before the season",
             "slug": "rehearsal"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "_id": "course-digital-assets",
+    "title": "Digital Assets, Tokenization & Token Extensions",
+    "slug": "digital-assets",
+    "description": "By the end you can read any live mint's bytes, build Token-2022 mints and Core/compressed NFT assets from raw instructions, and wire a working on-chain token economy, choosing the right primitive and proving it resolves. Expect to work locally: the labs install and use rustup, the Agave CLI, and surfpool's mainnet fork on your own machine, and a few steps touch devnet.",
+    "difficulty": "intermediate",
+    "duration": 35,
+    "thumbnail": "/content-assets/digital-assets/banner.webp",
+    "creator": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
+    "tags": [
+      "account-model",
+      "anchor",
+      "checked-arithmetic",
+      "compute-budget",
+      "das-api",
+      "error-handling",
+      "merkle-proofs",
+      "pdas",
+      "program-security",
+      "rpc-reads",
+      "signers",
+      "solana-fundamentals",
+      "solana-kit",
+      "solana-programs",
+      "spl-tokens",
+      "state-compression",
+      "token-2022",
+      "token-metadata",
+      "transactions",
+      "version-pinning"
+    ],
+    "xpReward": 560,
+    "trackId": 0,
+    "trackLevel": 0,
+    "modules": [
+      {
+        "key": "token-layer",
+        "title": "The token layer, from raw bytes up",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-da-m01-l1-what-is-this-token",
+            "title": "What is this token, really?",
+            "slug": "m01-l1-what-is-this-token"
+          },
+          {
+            "_id": "lesson-da-m01-l2-mint-account-anatomy",
+            "title": "Mint & account anatomy from raw bytes",
+            "slug": "m01-l2-mint-account-anatomy"
+          },
+          {
+            "_id": "lesson-da-m01-l3-p-token-switch",
+            "title": "The p-token switch: frozen interface, new engine",
+            "slug": "m01-l3-p-token-switch"
+          },
+          {
+            "_id": "lesson-da-m01-l4-decision-framework-conflict-matrix",
+            "title": "Classic SPL vs Token-2022: the decision framework + the conflict matrix",
+            "slug": "m01-l4-decision-framework-conflict-matrix"
+          }
+        ]
+      },
+      {
+        "key": "extension-catalog",
+        "title": "The extension catalog",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-da-m02-l1-economics-extensions",
+            "title": "Economics extensions: fees, interest, scaled UI (and where the fees GO)",
+            "slug": "m02-l1-economics-extensions"
+          },
+          {
+            "_id": "lesson-da-m02-l2-authority-extensions",
+            "title": "Authority extensions: who can touch your tokens",
+            "slug": "m02-l2-authority-extensions"
+          },
+          {
+            "_id": "lesson-da-m02-l3-holder-protection-extensions",
+            "title": "Holder-protection extensions: what accounts can refuse",
+            "slug": "m02-l3-holder-protection-extensions"
+          },
+          {
+            "_id": "lesson-da-m02-l4-native-metadata",
+            "title": "Native metadata: MetadataPointer + TokenMetadata TLV",
+            "slug": "m02-l4-native-metadata"
+          }
+        ]
+      },
+      {
+        "key": "transfer-hooks",
+        "title": "Transfer hooks",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-da-m03-l1-write-the-hook",
+            "title": "Write the hook: the interface + your one Rust program",
+            "slug": "m03-l1-write-the-hook"
+          },
+          {
+            "_id": "lesson-da-m03-l2-resolving-hooks-composability",
+            "title": "Resolving hooks, and why they break composability",
+            "slug": "m03-l2-resolving-hooks-composability"
+          }
+        ]
+      },
+      {
+        "key": "confidential-transfers",
+        "title": "Confidential transfers",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-da-m04-l1-confidential-model",
+            "title": "The confidential model: encrypted balances on a public chain",
+            "slug": "m04-l1-confidential-model"
+          },
+          {
+            "_id": "lesson-da-m04-l2-issuer-ops",
+            "title": "Issuer ops: auditor, registry, and confidential supply",
+            "slug": "m04-l2-issuer-ops"
+          }
+        ]
+      },
+      {
+        "key": "compatibility-reality",
+        "title": "The compatibility reality",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-da-m05-l1-dex-allowlist-artifact",
+            "title": "The DEX allowlist as a teaching artifact",
+            "slug": "m05-l1-dex-allowlist-artifact"
+          },
+          {
+            "_id": "lesson-da-m05-l2-designing-routable-token",
+            "title": "Designing a routable, compliant token",
+            "slug": "m05-l2-designing-routable-token"
+          }
+        ]
+      },
+      {
+        "key": "digital-collectibles",
+        "title": "Digital collectibles: Core-first",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-da-m06-l1-metadata-standards",
+            "title": "The metadata standards wallets actually read",
+            "slug": "m06-l1-metadata-standards"
+          },
+          {
+            "_id": "lesson-da-m06-l2-metaplex-core",
+            "title": "Ship the NFT: Metaplex Core collections, plugins, and editions",
+            "slug": "m06-l2-metaplex-core"
+          },
+          {
+            "_id": "lesson-da-m06-l3-token-metadata-legacy",
+            "title": "Token Metadata as legacy: pNFTs and the royalty reality",
+            "slug": "m06-l3-token-metadata-legacy"
+          }
+        ]
+      },
+      {
+        "key": "compression",
+        "title": "Compression: millions of assets",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-da-m07-l1-bubblegum-v2-cnfts",
+            "title": "Bubblegum v2: mint a million NFTs for the price of a laptop",
+            "slug": "m07-l1-bubblegum-v2-cnfts"
+          },
+          {
+            "_id": "lesson-da-m07-l2-reading-assets-das",
+            "title": "Read anything: one DAS script for fungibles, Core assets, and cNFTs",
+            "slug": "m07-l2-reading-assets-das"
+          },
+          {
+            "_id": "lesson-da-m07-l3-zk-compression-frontier",
+            "title": "ZK compression and the Light Token frontier: when NOT to compress",
+            "slug": "m07-l3-zk-compression-frontier"
+          }
+        ]
+      },
+      {
+        "key": "launch-distribution",
+        "title": "Launch & distribution",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-da-m08-l1-bonding-curves-graduation",
+            "title": "Bonding curves & graduation: pump.fun from constants",
+            "slug": "m08-l1-bonding-curves-graduation"
+          },
+          {
+            "_id": "lesson-da-m08-l2-launchpad-landscape",
+            "title": "The launchpad landscape, anti-snipe & what graduation seeds",
+            "slug": "m08-l2-launchpad-landscape"
+          },
+          {
+            "_id": "lesson-da-m08-l3-airdrops-at-scale",
+            "title": "Airdrops at scale: cost engineering & vesting claims",
+            "slug": "m08-l3-airdrops-at-scale"
+          }
+        ]
+      },
+      {
+        "key": "token-economies",
+        "title": "Token economies in production",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-da-m09-l1-fee-routing-buyback",
+            "title": "Fee routing & buyback/burn: where the money actually flows",
+            "slug": "m09-l1-fee-routing-buyback"
+          },
+          {
+            "_id": "lesson-da-m09-l2-gating-migrations",
+            "title": "Gating & points-to-token migrations: wiring the whole economy",
+            "slug": "m09-l2-gating-migrations"
+          },
+          {
+            "_id": "lesson-da-m09-l3-production-case-studies",
+            "title": "Production case studies & the frontier: what actually shipped",
+            "slug": "m09-l3-production-case-studies"
+          }
+        ]
+      },
+      {
+        "key": "capstone",
+        "title": "Capstone & close",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-da-m10-l1-capstone-choose-primitive",
+            "title": "Capstone: choose your primitive and wire the economy",
+            "slug": "m10-l1-capstone-choose-primitive"
+          },
+          {
+            "_id": "lesson-da-m10-l2-cumulative-checkpoint-close",
+            "title": "Cumulative checkpoint and close",
+            "slug": "m10-l2-cumulative-checkpoint-close"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "_id": "course-mastering-anchor-v2",
+    "title": "Master Anchor V2",
+    "slug": "mastering-anchor-v2",
+    "description": "Design, build, test, secure, and ship an Anchor V2 program to devnet against the 2.0.0-rc.1 release candidate, then migrate a 0.31/1.0 codebase to V2 with a map of what changed and why. This is a machine-on-your-desk course: you install and drive the V2 RC toolchain locally — anchor-cli via cargo and avm, rustup's Rust alongside it, and Docker for the solana-verify build — and you deploy to devnet. V2 is an unaudited RC, so the course ends by teaching you to decide honestly when it is the right call and when the maintained 1.x line still is. It does not teach Rust and it does not teach Anchor: it assumes you already ship Anchor programs and want the V2 delta.",
+    "difficulty": "advanced",
+    "duration": 48,
+    "thumbnail": "/content-assets/mastering-anchor-v2/banner.webp",
+    "creator": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
+    "tags": [
+      "account-model",
+      "anchor",
+      "checked-arithmetic",
+      "compute-budget",
+      "cpi",
+      "error-handling",
+      "idl",
+      "pdas",
+      "program-deployment",
+      "program-security",
+      "program-testing",
+      "rpc-reads",
+      "signers",
+      "solana-kit",
+      "solana-programs",
+      "spl-tokens",
+      "token-2022",
+      "version-pinning"
+    ],
+    "xpReward": 600,
+    "trackId": 0,
+    "trackLevel": 0,
+    "modules": [
+      {
+        "key": "orientation-anatomy-macros",
+        "title": "Orientation, anatomy & the macro expansion",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-mav2-m01-l1",
+            "title": "Your Account<T> is the slow path",
+            "slug": "m01-l1"
+          },
+          {
+            "_id": "lesson-mav2-m01-l2",
+            "title": "Two parallel lines, and the install that fights you",
+            "slug": "m01-l2"
+          },
+          {
+            "_id": "lesson-mav2-m01-l3",
+            "title": "Program anatomy: what declare_id! and #[program] expand to",
+            "slug": "m01-l3"
+          },
+          {
+            "_id": "lesson-mav2-m01-l4",
+            "title": "#[derive(Accounts)], dispatch, discriminators & errors",
+            "slug": "m01-l4"
+          }
+        ]
+      },
+      {
+        "key": "accounts-pod-data",
+        "title": "Accounts & data modeling under Pod (the V2 thesis, applied)",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-mav2-m02-l1",
+            "title": "Account<T> is zero-copy by default",
+            "slug": "m02-l1"
+          },
+          {
+            "_id": "lesson-mav2-m02-l2",
+            "title": "Pod data types, lists in an account, and zero-copy events",
+            "slug": "m02-l2"
+          },
+          {
+            "_id": "lesson-mav2-m02-l3",
+            "title": "The borsh escape hatch: when Pod isn't enough",
+            "slug": "m02-l3"
+          }
+        ]
+      },
+      {
+        "key": "pdas-constraints",
+        "title": "PDAs, constraints & the extensible constraint system",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-mav2-m03-l1",
+            "title": "PDAs & canonical bumps in V2",
+            "slug": "m03-l1"
+          },
+          {
+            "_id": "lesson-mav2-m03-l2",
+            "title": "The constraint catalog (and init_if_needed, in situ)",
+            "slug": "m03-l2"
+          },
+          {
+            "_id": "lesson-mav2-m03-l3",
+            "title": "Write your own constraint: the AccountConstraint trait",
+            "slug": "m03-l3"
+          }
+        ]
+      },
+      {
+        "key": "cpi-composition",
+        "title": "CPIs & composition: the CpiHandle borrow model",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-mav2-m04-l1",
+            "title": "CPI basics and signing as a PDA",
+            "slug": "m04-l1"
+          },
+          {
+            "_id": "lesson-mav2-m04-l2",
+            "title": "The reload footgun is gone",
+            "slug": "m04-l2"
+          },
+          {
+            "_id": "lesson-mav2-m04-l3",
+            "title": "Composition: build the prize-escrow",
+            "slug": "m04-l3"
+          }
+        ]
+      },
+      {
+        "key": "tokens-framework-seat",
+        "title": "Tokens from the framework's seat (mechanics only)",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-mav2-m05-l1",
+            "title": "token_interface & transfer_checked: upgrade the vault and escrow to SPL",
+            "slug": "m05-l1"
+          },
+          {
+            "_id": "lesson-mav2-m05-l2",
+            "title": "Build the token-ticket swap",
+            "slug": "m05-l2"
+          },
+          {
+            "_id": "lesson-mav2-m05-l3",
+            "title": "Token-2022 from the framework's seat",
+            "slug": "m05-l3"
+          }
+        ]
+      },
+      {
+        "key": "observe-profile-debug",
+        "title": "Observe your program: profile, debug, cover, optimize",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-mav2-m06-l1",
+            "title": "Turn the instruments on: profile, debug, and cover the swap",
+            "slug": "m06-l1"
+          },
+          {
+            "_id": "lesson-mav2-m06-l2",
+            "title": "The measured loop: buy back CU one change at a time",
+            "slug": "m06-l2"
+          }
+        ]
+      },
+      {
+        "key": "security-v2-defaults",
+        "title": "Security under V2 defaults (the re-derivation)",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-mav2-m07-l1",
+            "title": "What V2 kills at compile time",
+            "slug": "m07-l1"
+          },
+          {
+            "_id": "lesson-mav2-m07-l2",
+            "title": "What still bites you (exploit then patch)",
+            "slug": "m07-l2"
+          },
+          {
+            "_id": "lesson-mav2-m07-l3",
+            "title": "The audit checklist as a lab; fuzz as the assessment",
+            "slug": "m07-l3"
+          }
+        ]
+      },
+      {
+        "key": "ship-idl-verify",
+        "title": "Ship it: IDL, clients, and a verifiable build",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-mav2-m08-l1",
+            "title": "Ship a client: the IDL, Program Metadata, and a Codama/kit client",
+            "slug": "m08-l1"
+          },
+          {
+            "_id": "lesson-mav2-m08-l2",
+            "title": "Prove it: a verifiable build on devnet, and the authority trust surface",
+            "slug": "m08-l2"
+          }
+        ]
+      },
+      {
+        "key": "peel-and-prove",
+        "title": "Peel & prove",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-mav2-m09-l1",
+            "title": "Strip the framework I: rebuild the vault native",
+            "slug": "m09-l1"
+          },
+          {
+            "_id": "lesson-mav2-m09-l2",
+            "title": "Strip the framework II: the diff, and what Anchor generates",
+            "slug": "m09-l2"
+          },
+          {
+            "_id": "lesson-mav2-m09-l3",
+            "title": "Capstone: run the whole arcade floor",
+            "slug": "m09-l3"
+          }
+        ]
+      },
+      {
+        "key": "migrate-and-conclude",
+        "title": "Migrate & conclude",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-mav2-m10-l1",
+            "title": "0.3x -> 1.0: the pains migrators still hit",
+            "slug": "m10-l1"
+          },
+          {
+            "_id": "lesson-mav2-m10-l2",
+            "title": "1.x -> 2.0: the rewrite deltas",
+            "slug": "m10-l2"
+          },
+          {
+            "_id": "lesson-mav2-m10-l3",
+            "title": "Migration capstone: port a 0.31/1.0 program to V2",
+            "slug": "m10-l3"
+          },
+          {
+            "_id": "lesson-mav2-m10-l4",
+            "title": "Conclusion: what you built, and should you move to V2 today?",
+            "slug": "m10-l4"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "_id": "course-rust-ts-fundamentals",
+    "title": "Rust & TypeScript Fundamentals for Web3",
+    "slug": "rust-ts-fundamentals",
+    "description": "By the end you can read and write the Rust and TypeScript that real web3 codebases are made of, and ship them: a TypeScript dashboard on Vercel, edge workers in both languages on Cloudflare, and a containerized Rust service on GHCR, all wired to live Solana data with one signed devnet transfer. This is a local-toolchain course, so expect to install as you build: Node in module one, rustup and cargo in module four, Docker in module six, and the Solana CLI in m08-l4, where a local validator stands by as the last-resort fallback for a dry devnet faucet.",
+    "difficulty": "beginner",
+    "duration": 52,
+    "thumbnail": "/content-assets/rust-ts-fundamentals/banner.webp",
+    "creator": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
+    "tags": [
+      "account-model",
+      "api-design",
+      "async-concurrency",
+      "automated-testing",
+      "checked-arithmetic",
+      "ci",
+      "compiler-errors",
+      "confirmation",
+      "containers",
+      "debugging",
+      "deployment",
+      "edge-runtimes",
+      "error-handling",
+      "http-fundamentals",
+      "keypairs-wallets",
+      "npm-publishing",
+      "observability",
+      "rpc-reads",
+      "rust-borrowing",
+      "rust-enums",
+      "rust-modules",
+      "rust-ownership",
+      "rust-result",
+      "rust-structs",
+      "rust-traits",
+      "schema-validation",
+      "semver",
+      "signers",
+      "solana-fundamentals",
+      "solana-kit",
+      "supply-chain-security",
+      "technical-writing",
+      "toolchain-versions",
+      "transactions",
+      "typescript-types",
+      "version-pinning"
+    ],
+    "xpReward": 500,
+    "trackId": 0,
+    "trackLevel": 0,
+    "modules": [
+      {
+        "key": "m01-first-heartbeat",
+        "title": "Put a heartbeat on the internet",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-rtf-m01-l1",
+            "title": "The map: what we teach, what we bookmark, and why both languages",
+            "slug": "m01-l1"
+          },
+          {
+            "_id": "lesson-rtf-m01-l2",
+            "title": "Node 24, TypeScript 7, and your first probe",
+            "slug": "m01-l2"
+          },
+          {
+            "_id": "lesson-rtf-m01-l3",
+            "title": "Green means it ran without you: git, GitHub flow, Actions",
+            "slug": "m01-l3"
+          }
+        ]
+      },
+      {
+        "key": "m02-types-alarm-system",
+        "title": "Types are the alarm system",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-rtf-m02-l1",
+            "title": "Make impossible states unrepresentable",
+            "slug": "m02-l1"
+          },
+          {
+            "_id": "lesson-rtf-m02-l2",
+            "title": "Parse, don't validate: zod at the boundary",
+            "slug": "m02-l2"
+          },
+          {
+            "_id": "lesson-rtf-m02-l3",
+            "title": "Async that survives contact: limits, backoff, cancellation",
+            "slug": "m02-l3"
+          },
+          {
+            "_id": "lesson-rtf-m02-l4",
+            "title": "Tests are probes for your code: vitest",
+            "slug": "m02-l4"
+          }
+        ]
+      },
+      {
+        "key": "m03-ship-to-a-url",
+        "title": "Someone else can see it now",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-rtf-m03-l1",
+            "title": "package.json is a contract: workspaces, engines, peers",
+            "slug": "m03-l1"
+          },
+          {
+            "_id": "lesson-rtf-m03-l2",
+            "title": "React as a consumer: the dashboard",
+            "slug": "m03-l2"
+          },
+          {
+            "_id": "lesson-rtf-m03-l3",
+            "title": "Vercel: the URL",
+            "slug": "m03-l3"
+          },
+          {
+            "_id": "lesson-rtf-m03-l4",
+            "title": "Publish something real: tsdown and the signs of a dying dep",
+            "slug": "m03-l4"
+          }
+        ]
+      },
+      {
+        "key": "m04-stricter-foreman",
+        "title": "Same machine, stricter foreman",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-rtf-m04-l1",
+            "title": "Ownership is the point",
+            "slug": "m04-l1"
+          },
+          {
+            "_id": "lesson-rtf-m04-l2",
+            "title": "Errors are values: Result, ?, and the two-crate canon",
+            "slug": "m04-l2"
+          },
+          {
+            "_id": "lesson-rtf-m04-l3",
+            "title": "Enums are state machines",
+            "slug": "m04-l3"
+          }
+        ]
+      },
+      {
+        "key": "m05-rust-that-ships",
+        "title": "Rust that ships",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-rtf-m05-l1",
+            "title": "serde: the boundary parser",
+            "slug": "m05-l1"
+          },
+          {
+            "_id": "lesson-rtf-m05-l2",
+            "title": "cargo mastery: editions, workspaces, features, MSRV",
+            "slug": "m05-l2"
+          },
+          {
+            "_id": "lesson-rtf-m05-l3",
+            "title": "clap, a real probe arm, and a binary anyone can download",
+            "slug": "m05-l3"
+          }
+        ]
+      },
+      {
+        "key": "m06-runs-anywhere",
+        "title": "It runs anywhere, forever",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-rtf-m06-l1",
+            "title": "A daemon, not a script: tokio + a /status endpoint",
+            "slug": "m06-l1"
+          },
+          {
+            "_id": "lesson-rtf-m06-l2",
+            "title": "Containers 101: put the poller in a box",
+            "slug": "m06-l2"
+          },
+          {
+            "_id": "lesson-rtf-m06-l3",
+            "title": "Two Dockerfiles, one idea: multi-stage honesty",
+            "slug": "m06-l3"
+          },
+          {
+            "_id": "lesson-rtf-m06-l4",
+            "title": "compose for local, GHCR from CI",
+            "slug": "m06-l4"
+          }
+        ]
+      },
+      {
+        "key": "m07-edge-probes",
+        "title": "Probes belong at the edge",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-rtf-m07-l1",
+            "title": "A worker in every city: TS at the edge + KV",
+            "slug": "m07-l1"
+          },
+          {
+            "_id": "lesson-rtf-m07-l2",
+            "title": "The payoff: Rust on the same edge",
+            "slug": "m07-l2"
+          }
+        ]
+      },
+      {
+        "key": "m08-solana-target",
+        "title": "Point it at the most interesting target",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-rtf-m08-l1",
+            "title": "A chain is a target: the minimal model + first reads",
+            "slug": "m08-l1"
+          },
+          {
+            "_id": "lesson-rtf-m08-l2",
+            "title": "Reads in production: the Solana panel",
+            "slug": "m08-l2"
+          },
+          {
+            "_id": "lesson-rtf-m08-l3",
+            "title": "The Rust path: raw JSON-RPC",
+            "slug": "m08-l3"
+          },
+          {
+            "_id": "lesson-rtf-m08-l4",
+            "title": "The write path health check: one transfer",
+            "slug": "m08-l4"
+          }
+        ]
+      },
+      {
+        "key": "m09-operate-it",
+        "title": "Run it like you mean it",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-rtf-m09-l1",
+            "title": "Supply chain: the 86-minute attack",
+            "slug": "m09-l1"
+          },
+          {
+            "_id": "lesson-rtf-m09-l2",
+            "title": "Observe the observer: logs, errors, alarms",
+            "slug": "m09-l2"
+          }
+        ]
+      },
+      {
+        "key": "m10-station-whole",
+        "title": "Pulse Station, whole",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-rtf-m10-l1",
+            "title": "Assembly: the station, whole",
+            "slug": "m10-l1"
+          },
+          {
+            "_id": "lesson-rtf-m10-l2",
+            "title": "Conclusion: the map you now own",
+            "slug": "m10-l2"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "_id": "course-solana-payments-commerce",
+    "title": "Solana Payments & Commerce",
+    "slug": "solana-payments-commerce",
+    "description": "By the end you can take real money on Solana end to end, a stablecoin Solana Pay checkout and POS, a webhook-driven back office with reconciliation and refunds, non-custodial subscriptions with dunning, on/off ramps, and x402/MPP machine payments, assembled into one running commerce stack on devnet — where the course touches regulation, it is an engineering framing of the seams, not legal advice. This is a local-toolchain course from the first lab: module one already needs Node 24 and installs packages on your machine, module two adds the Anza Agave CLI (`solana` plus `spl-token`), and from there every lab runs npm workspaces locally against devnet; one step in module eight — `cargo install kora-cli` — additionally needs a Rust toolchain.",
+    "difficulty": "intermediate",
+    "duration": 55,
+    "thumbnail": "/content-assets/solana-payments-commerce/banner.webp",
+    "creator": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
+    "tags": [
+      "account-model",
+      "api-monetization",
+      "brazil-compliance",
+      "checked-arithmetic",
+      "compute-budget",
+      "confirmation",
+      "error-handling",
+      "payment-model-selection",
+      "pdas",
+      "program-security",
+      "recurring-delegation",
+      "rpc-reads",
+      "signers",
+      "solana-fundamentals",
+      "solana-kit",
+      "solana-pay",
+      "spl-tokens",
+      "subscriptions-program",
+      "token-2022",
+      "transaction-fees",
+      "transactions",
+      "version-pinning",
+      "x402-protocol"
+    ],
+    "xpReward": 480,
+    "trackId": 0,
+    "trackLevel": 0,
+    "modules": [
+      {
+        "key": "rails-mental-model",
+        "title": "The rails you're switching to",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-spc-m01-l1",
+            "title": "Watch a dollar settle: your first five minutes on Solana rails",
+            "slug": "m01-l1"
+          },
+          {
+            "_id": "lesson-spc-m01-l2",
+            "title": "Finality vs the card stack: the payments mental model",
+            "slug": "m01-l2"
+          }
+        ]
+      },
+      {
+        "key": "stablecoin-transfers",
+        "title": "Stablecoin transfers, down to the decimal",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-spc-m02-l1",
+            "title": "Anatomy of a USDC payment: mints, ATAs, and the transfer-kit",
+            "slug": "m02-l1"
+          },
+          {
+            "_id": "lesson-spc-m02-l2",
+            "title": "The 2026 stablecoin roster: PYUSD, Token-2022, and how USDC travels",
+            "slug": "m02-l2"
+          }
+        ]
+      },
+      {
+        "key": "checkout-surfaces",
+        "title": "Checkout surfaces: Solana Pay, the record fair, and blinks",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-spc-m03-l1",
+            "title": "Checkout with a QR: the Solana Pay spec, live",
+            "slug": "m03-l1"
+          },
+          {
+            "_id": "lesson-spc-m03-l2",
+            "title": "Transaction requests: the server builds the transaction",
+            "slug": "m03-l2"
+          },
+          {
+            "_id": "lesson-spc-m03-l3",
+            "title": "The record fair: POS, and the mobile-hardware reality",
+            "slug": "m03-l3"
+          },
+          {
+            "_id": "lesson-spc-m03-l4",
+            "title": "A blink for the drop: actions that execute anywhere (that renders them)",
+            "slug": "m03-l4"
+          }
+        ]
+      },
+      {
+        "key": "back-office",
+        "title": "The back office: verify, ingest, reconcile, refund",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-spc-m04-l1",
+            "title": "Trust no frontend: confirmation policy and server-side verification",
+            "slug": "m04-l1"
+          },
+          {
+            "_id": "lesson-spc-m04-l2",
+            "title": "Webhooks that lie: ingestion and idempotency",
+            "slug": "m04-l2"
+          },
+          {
+            "_id": "lesson-spc-m04-l3",
+            "title": "Reconciliation, refunds, and partial fills: the missing manual",
+            "slug": "m04-l3"
+          }
+        ]
+      },
+      {
+        "key": "recurring-revenue",
+        "title": "Recurring revenue without custody",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-spc-m05-l1",
+            "title": "The delegate primitive: approve once, pull on schedule",
+            "slug": "m05-l1"
+          },
+          {
+            "_id": "lesson-spc-m05-l2",
+            "title": "The official Subscriptions program: plans, PDAs, and the kit-7 seam",
+            "slug": "m05-l2"
+          },
+          {
+            "_id": "lesson-spc-m05-l3",
+            "title": "Dunning, lifecycle, and who else does this",
+            "slug": "m05-l3"
+          }
+        ]
+      },
+      {
+        "key": "fiat-edge",
+        "title": "The fiat edge",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-spc-m06-l1",
+            "title": "Onramps, and the way back out",
+            "slug": "m06-l1"
+          },
+          {
+            "_id": "lesson-spc-m06-l2",
+            "title": "Acceptance and corridors: Stripe, MoonPay Commerce, and PIX",
+            "slug": "m06-l2"
+          }
+        ]
+      },
+      {
+        "key": "machine-customers",
+        "title": "Machine customers: x402 and the agentic turn",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-spc-m07-l1",
+            "title": "HTTP 402, revived: the x402 protocol",
+            "slug": "m07-l1"
+          },
+          {
+            "_id": "lesson-spc-m07-l2",
+            "title": "Paywall the pressing-price API, then build the bot that pays it",
+            "slug": "m07-l2"
+          },
+          {
+            "_id": "lesson-spc-m07-l3",
+            "title": "MPP, AP2, ACP: the standards war (and gating the API with pay)",
+            "slug": "m07-l3"
+          }
+        ]
+      },
+      {
+        "key": "fees-offline-golive",
+        "title": "Fees, offline, and going live",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-spc-m08-l1",
+            "title": "Gasless with Kora: nobody brings SOL to a record fair",
+            "slug": "m08-l1"
+          },
+          {
+            "_id": "lesson-spc-m08-l2",
+            "title": "Deferred payments: durable nonces at the fair (and the outage that scarred them)",
+            "slug": "m08-l2"
+          },
+          {
+            "_id": "lesson-spc-m08-l3",
+            "title": "The production gate: a go-live checklist that means it",
+            "slug": "m08-l3"
+          }
+        ]
+      },
+      {
+        "key": "capstone-assembly",
+        "title": "Capstone: Wavelength, open for business",
+        "description": null,
+        "lessons": [
+          {
+            "_id": "lesson-spc-m09-l1",
+            "title": "Assembly: one store, every rail",
+            "slug": "m09-l1"
+          },
+          {
+            "_id": "lesson-spc-m09-l2",
+            "title": "Where the rails go from here",
+            "slug": "m09-l2"
           }
         ]
       }

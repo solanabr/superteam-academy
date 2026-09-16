@@ -30,5 +30,210 @@
   {
     "label": "Solana Kit",
     "slug": "solana-kit"
+  },
+  {
+    "label": "SPL Tokens",
+    "slug": "spl-tokens"
+  },
+  {
+    "label": "Token-2022",
+    "slug": "token-2022"
+  },
+  {
+    "label": "Program Derived Addresses",
+    "slug": "pdas"
+  },
+  {
+    "label": "Checked Arithmetic",
+    "slug": "checked-arithmetic"
+  },
+  {
+    "label": "Signers & Fee Payers",
+    "slug": "signers"
+  },
+  {
+    "label": "Transaction Fees",
+    "slug": "transaction-fees"
+  },
+  {
+    "label": "Compute Budget",
+    "slug": "compute-budget"
+  },
+  {
+    "label": "Confirmation & Commitment",
+    "slug": "confirmation"
+  },
+  {
+    "label": "Error Handling",
+    "slug": "error-handling"
+  },
+  {
+    "label": "Version Pinning",
+    "slug": "version-pinning"
+  },
+  {
+    "label": "Program Security",
+    "slug": "program-security"
+  },
+  {
+    "label": "Payment Model Selection",
+    "slug": "payment-model-selection"
+  },
+  {
+    "label": "Solana Pay",
+    "slug": "solana-pay"
+  },
+  {
+    "label": "x402 Protocol",
+    "slug": "x402-protocol"
+  },
+  {
+    "label": "API Monetization",
+    "slug": "api-monetization"
+  },
+  {
+    "label": "Subscriptions Program",
+    "slug": "subscriptions-program"
+  },
+  {
+    "label": "Recurring Delegation",
+    "slug": "recurring-delegation"
+  },
+  {
+    "label": "Brazil Payments Compliance",
+    "reviewExempt": true,
+    "slug": "brazil-compliance"
+  },
+  {
+    "label": "Cross-Program Invocation",
+    "slug": "cpi"
+  },
+  {
+    "label": "Program Testing",
+    "slug": "program-testing"
+  },
+  {
+    "label": "Program Deployment",
+    "slug": "program-deployment"
+  },
+  {
+    "label": "IDL & Program Metadata",
+    "slug": "idl"
+  },
+  {
+    "label": "Token & Asset Metadata",
+    "slug": "token-metadata"
+  },
+  {
+    "label": "State Compression",
+    "slug": "state-compression"
+  },
+  {
+    "label": "Merkle Proofs",
+    "slug": "merkle-proofs"
+  },
+  {
+    "label": "Digital Asset Standard API",
+    "slug": "das-api"
+  },
+  {
+    "label": "Rust Ownership",
+    "slug": "rust-ownership"
+  },
+  {
+    "label": "Rust Borrowing",
+    "slug": "rust-borrowing"
+  },
+  {
+    "label": "Rust Enums",
+    "slug": "rust-enums"
+  },
+  {
+    "label": "Rust Structs",
+    "slug": "rust-structs"
+  },
+  {
+    "label": "Rust Traits",
+    "slug": "rust-traits"
+  },
+  {
+    "label": "Rust Result",
+    "slug": "rust-result"
+  },
+  {
+    "label": "Rust Modules & Visibility",
+    "slug": "rust-modules"
+  },
+  {
+    "label": "Reading Compiler Errors",
+    "slug": "compiler-errors"
+  },
+  {
+    "label": "Toolchain Versions",
+    "slug": "toolchain-versions"
+  },
+  {
+    "label": "Semantic Versioning",
+    "slug": "semver"
+  },
+  {
+    "label": "npm Publishing",
+    "slug": "npm-publishing"
+  },
+  {
+    "label": "API Design",
+    "slug": "api-design"
+  },
+  {
+    "label": "Continuous Integration",
+    "slug": "ci"
+  },
+  {
+    "label": "Deployment",
+    "slug": "deployment"
+  },
+  {
+    "label": "Debugging",
+    "slug": "debugging"
+  },
+  {
+    "label": "Technical Writing",
+    "slug": "technical-writing"
+  },
+  {
+    "label": "HTTP, Fetch & CORS",
+    "slug": "http-fundamentals"
+  },
+  {
+    "label": "TypeScript Type System",
+    "slug": "typescript-types"
+  },
+  {
+    "label": "Schema Validation",
+    "slug": "schema-validation"
+  },
+  {
+    "label": "Async & Concurrency",
+    "slug": "async-concurrency"
+  },
+  {
+    "label": "Automated Testing",
+    "slug": "automated-testing"
+  },
+  {
+    "label": "Containers & Docker",
+    "slug": "containers"
+  },
+  {
+    "label": "Edge Runtimes",
+    "slug": "edge-runtimes"
+  },
+  {
+    "label": "Logging & Observability",
+    "slug": "observability"
+  },
+  {
+    "label": "Supply Chain Security",
+    "slug": "supply-chain-security"
   }
 ]

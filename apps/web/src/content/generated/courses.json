@@ -179,10 +179,606 @@
     "xpReward": 300
   },
   {
+    "_id": "course-digital-assets",
+    "_type": "course",
+    "creator": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
+    "creatorRewardXp": 30,
+    "description": "By the end you can read any live mint's bytes, build Token-2022 mints and Core/compressed NFT assets from raw instructions, and wire a working on-chain token economy, choosing the right primitive and proving it resolves. Expect to work locally: the labs install and use rustup, the Agave CLI, and surfpool's mainnet fork on your own machine, and a few steps touch devnet.",
+    "difficulty": "intermediate",
+    "duration": 35,
+    "minCompletionsForReward": 0,
+    "modules": [
+      {
+        "_key": "token-layer",
+        "_type": "courseModule",
+        "key": "token-layer",
+        "lessons": [
+          {
+            "_key": "lesson-da-m01-l1-what-is-this-token",
+            "_ref": "lesson-da-m01-l1-what-is-this-token",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-da-m01-l2-mint-account-anatomy",
+            "_ref": "lesson-da-m01-l2-mint-account-anatomy",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-da-m01-l3-p-token-switch",
+            "_ref": "lesson-da-m01-l3-p-token-switch",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-da-m01-l4-decision-framework-conflict-matrix",
+            "_ref": "lesson-da-m01-l4-decision-framework-conflict-matrix",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "The token layer, from raw bytes up"
+      },
+      {
+        "_key": "extension-catalog",
+        "_type": "courseModule",
+        "key": "extension-catalog",
+        "lessons": [
+          {
+            "_key": "lesson-da-m02-l1-economics-extensions",
+            "_ref": "lesson-da-m02-l1-economics-extensions",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-da-m02-l2-authority-extensions",
+            "_ref": "lesson-da-m02-l2-authority-extensions",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-da-m02-l3-holder-protection-extensions",
+            "_ref": "lesson-da-m02-l3-holder-protection-extensions",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-da-m02-l4-native-metadata",
+            "_ref": "lesson-da-m02-l4-native-metadata",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "The extension catalog"
+      },
+      {
+        "_key": "transfer-hooks",
+        "_type": "courseModule",
+        "key": "transfer-hooks",
+        "lessons": [
+          {
+            "_key": "lesson-da-m03-l1-write-the-hook",
+            "_ref": "lesson-da-m03-l1-write-the-hook",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-da-m03-l2-resolving-hooks-composability",
+            "_ref": "lesson-da-m03-l2-resolving-hooks-composability",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Transfer hooks"
+      },
+      {
+        "_key": "confidential-transfers",
+        "_type": "courseModule",
+        "key": "confidential-transfers",
+        "lessons": [
+          {
+            "_key": "lesson-da-m04-l1-confidential-model",
+            "_ref": "lesson-da-m04-l1-confidential-model",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-da-m04-l2-issuer-ops",
+            "_ref": "lesson-da-m04-l2-issuer-ops",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Confidential transfers"
+      },
+      {
+        "_key": "compatibility-reality",
+        "_type": "courseModule",
+        "key": "compatibility-reality",
+        "lessons": [
+          {
+            "_key": "lesson-da-m05-l1-dex-allowlist-artifact",
+            "_ref": "lesson-da-m05-l1-dex-allowlist-artifact",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-da-m05-l2-designing-routable-token",
+            "_ref": "lesson-da-m05-l2-designing-routable-token",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "The compatibility reality"
+      },
+      {
+        "_key": "digital-collectibles",
+        "_type": "courseModule",
+        "key": "digital-collectibles",
+        "lessons": [
+          {
+            "_key": "lesson-da-m06-l1-metadata-standards",
+            "_ref": "lesson-da-m06-l1-metadata-standards",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-da-m06-l2-metaplex-core",
+            "_ref": "lesson-da-m06-l2-metaplex-core",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-da-m06-l3-token-metadata-legacy",
+            "_ref": "lesson-da-m06-l3-token-metadata-legacy",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Digital collectibles: Core-first"
+      },
+      {
+        "_key": "compression",
+        "_type": "courseModule",
+        "key": "compression",
+        "lessons": [
+          {
+            "_key": "lesson-da-m07-l1-bubblegum-v2-cnfts",
+            "_ref": "lesson-da-m07-l1-bubblegum-v2-cnfts",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-da-m07-l2-reading-assets-das",
+            "_ref": "lesson-da-m07-l2-reading-assets-das",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-da-m07-l3-zk-compression-frontier",
+            "_ref": "lesson-da-m07-l3-zk-compression-frontier",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Compression: millions of assets"
+      },
+      {
+        "_key": "launch-distribution",
+        "_type": "courseModule",
+        "key": "launch-distribution",
+        "lessons": [
+          {
+            "_key": "lesson-da-m08-l1-bonding-curves-graduation",
+            "_ref": "lesson-da-m08-l1-bonding-curves-graduation",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-da-m08-l2-launchpad-landscape",
+            "_ref": "lesson-da-m08-l2-launchpad-landscape",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-da-m08-l3-airdrops-at-scale",
+            "_ref": "lesson-da-m08-l3-airdrops-at-scale",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Launch & distribution"
+      },
+      {
+        "_key": "token-economies",
+        "_type": "courseModule",
+        "key": "token-economies",
+        "lessons": [
+          {
+            "_key": "lesson-da-m09-l1-fee-routing-buyback",
+            "_ref": "lesson-da-m09-l1-fee-routing-buyback",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-da-m09-l2-gating-migrations",
+            "_ref": "lesson-da-m09-l2-gating-migrations",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-da-m09-l3-production-case-studies",
+            "_ref": "lesson-da-m09-l3-production-case-studies",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Token economies in production"
+      },
+      {
+        "_key": "capstone",
+        "_type": "courseModule",
+        "key": "capstone",
+        "lessons": [
+          {
+            "_key": "lesson-da-m10-l1-capstone-choose-primitive",
+            "_ref": "lesson-da-m10-l1-capstone-choose-primitive",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-da-m10-l2-cumulative-checkpoint-close",
+            "_ref": "lesson-da-m10-l2-cumulative-checkpoint-close",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Capstone & close"
+      }
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "digital-assets"
+    },
+    "sourceLocale": "en",
+    "tags": [
+      "account-model",
+      "anchor",
+      "checked-arithmetic",
+      "compute-budget",
+      "das-api",
+      "error-handling",
+      "merkle-proofs",
+      "pdas",
+      "program-security",
+      "rpc-reads",
+      "signers",
+      "solana-fundamentals",
+      "solana-kit",
+      "solana-programs",
+      "spl-tokens",
+      "state-compression",
+      "token-2022",
+      "token-metadata",
+      "transactions",
+      "version-pinning"
+    ],
+    "thumbnail": "/content-assets/digital-assets/banner.webp",
+    "title": "Digital Assets, Tokenization & Token Extensions",
+    "trackId": 0,
+    "trackLevel": 0,
+    "xpPerLesson": 20,
+    "xpReward": 560
+  },
+  {
+    "_id": "course-mastering-anchor-v2",
+    "_type": "course",
+    "creator": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
+    "creatorRewardXp": 30,
+    "description": "Design, build, test, secure, and ship an Anchor V2 program to devnet against the 2.0.0-rc.1 release candidate, then migrate a 0.31/1.0 codebase to V2 with a map of what changed and why. This is a machine-on-your-desk course: you install and drive the V2 RC toolchain locally — anchor-cli via cargo and avm, rustup's Rust alongside it, and Docker for the solana-verify build — and you deploy to devnet. V2 is an unaudited RC, so the course ends by teaching you to decide honestly when it is the right call and when the maintained 1.x line still is. It does not teach Rust and it does not teach Anchor: it assumes you already ship Anchor programs and want the V2 delta.",
+    "difficulty": "advanced",
+    "duration": 48,
+    "minCompletionsForReward": 0,
+    "modules": [
+      {
+        "_key": "orientation-anatomy-macros",
+        "_type": "courseModule",
+        "key": "orientation-anatomy-macros",
+        "lessons": [
+          {
+            "_key": "lesson-mav2-m01-l1",
+            "_ref": "lesson-mav2-m01-l1",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-mav2-m01-l2",
+            "_ref": "lesson-mav2-m01-l2",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-mav2-m01-l3",
+            "_ref": "lesson-mav2-m01-l3",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-mav2-m01-l4",
+            "_ref": "lesson-mav2-m01-l4",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Orientation, anatomy & the macro expansion"
+      },
+      {
+        "_key": "accounts-pod-data",
+        "_type": "courseModule",
+        "key": "accounts-pod-data",
+        "lessons": [
+          {
+            "_key": "lesson-mav2-m02-l1",
+            "_ref": "lesson-mav2-m02-l1",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-mav2-m02-l2",
+            "_ref": "lesson-mav2-m02-l2",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-mav2-m02-l3",
+            "_ref": "lesson-mav2-m02-l3",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Accounts & data modeling under Pod (the V2 thesis, applied)"
+      },
+      {
+        "_key": "pdas-constraints",
+        "_type": "courseModule",
+        "key": "pdas-constraints",
+        "lessons": [
+          {
+            "_key": "lesson-mav2-m03-l1",
+            "_ref": "lesson-mav2-m03-l1",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-mav2-m03-l2",
+            "_ref": "lesson-mav2-m03-l2",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-mav2-m03-l3",
+            "_ref": "lesson-mav2-m03-l3",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "PDAs, constraints & the extensible constraint system"
+      },
+      {
+        "_key": "cpi-composition",
+        "_type": "courseModule",
+        "key": "cpi-composition",
+        "lessons": [
+          {
+            "_key": "lesson-mav2-m04-l1",
+            "_ref": "lesson-mav2-m04-l1",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-mav2-m04-l2",
+            "_ref": "lesson-mav2-m04-l2",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-mav2-m04-l3",
+            "_ref": "lesson-mav2-m04-l3",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "CPIs & composition: the CpiHandle borrow model"
+      },
+      {
+        "_key": "tokens-framework-seat",
+        "_type": "courseModule",
+        "key": "tokens-framework-seat",
+        "lessons": [
+          {
+            "_key": "lesson-mav2-m05-l1",
+            "_ref": "lesson-mav2-m05-l1",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-mav2-m05-l2",
+            "_ref": "lesson-mav2-m05-l2",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-mav2-m05-l3",
+            "_ref": "lesson-mav2-m05-l3",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Tokens from the framework's seat (mechanics only)"
+      },
+      {
+        "_key": "observe-profile-debug",
+        "_type": "courseModule",
+        "key": "observe-profile-debug",
+        "lessons": [
+          {
+            "_key": "lesson-mav2-m06-l1",
+            "_ref": "lesson-mav2-m06-l1",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-mav2-m06-l2",
+            "_ref": "lesson-mav2-m06-l2",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Observe your program: profile, debug, cover, optimize"
+      },
+      {
+        "_key": "security-v2-defaults",
+        "_type": "courseModule",
+        "key": "security-v2-defaults",
+        "lessons": [
+          {
+            "_key": "lesson-mav2-m07-l1",
+            "_ref": "lesson-mav2-m07-l1",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-mav2-m07-l2",
+            "_ref": "lesson-mav2-m07-l2",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-mav2-m07-l3",
+            "_ref": "lesson-mav2-m07-l3",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Security under V2 defaults (the re-derivation)"
+      },
+      {
+        "_key": "ship-idl-verify",
+        "_type": "courseModule",
+        "key": "ship-idl-verify",
+        "lessons": [
+          {
+            "_key": "lesson-mav2-m08-l1",
+            "_ref": "lesson-mav2-m08-l1",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-mav2-m08-l2",
+            "_ref": "lesson-mav2-m08-l2",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Ship it: IDL, clients, and a verifiable build"
+      },
+      {
+        "_key": "peel-and-prove",
+        "_type": "courseModule",
+        "key": "peel-and-prove",
+        "lessons": [
+          {
+            "_key": "lesson-mav2-m09-l1",
+            "_ref": "lesson-mav2-m09-l1",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-mav2-m09-l2",
+            "_ref": "lesson-mav2-m09-l2",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-mav2-m09-l3",
+            "_ref": "lesson-mav2-m09-l3",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Peel & prove"
+      },
+      {
+        "_key": "migrate-and-conclude",
+        "_type": "courseModule",
+        "key": "migrate-and-conclude",
+        "lessons": [
+          {
+            "_key": "lesson-mav2-m10-l1",
+            "_ref": "lesson-mav2-m10-l1",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-mav2-m10-l2",
+            "_ref": "lesson-mav2-m10-l2",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-mav2-m10-l3",
+            "_ref": "lesson-mav2-m10-l3",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-mav2-m10-l4",
+            "_ref": "lesson-mav2-m10-l4",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Migrate & conclude"
+      }
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "mastering-anchor-v2"
+    },
+    "sourceLocale": "en",
+    "tags": [
+      "account-model",
+      "anchor",
+      "checked-arithmetic",
+      "compute-budget",
+      "cpi",
+      "error-handling",
+      "idl",
+      "pdas",
+      "program-deployment",
+      "program-security",
+      "program-testing",
+      "rpc-reads",
+      "signers",
+      "solana-kit",
+      "solana-programs",
+      "spl-tokens",
+      "token-2022",
+      "version-pinning"
+    ],
+    "thumbnail": "/content-assets/mastering-anchor-v2/banner.webp",
+    "title": "Master Anchor V2",
+    "trackId": 0,
+    "trackLevel": 0,
+    "xpPerLesson": 20,
+    "xpReward": 600
+  },
+  {
     "_id": "course-pilula-solana-superteam",
     "_type": "course",
     "creator": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
-    "creatorRewardXp": 0,
+    "creatorRewardXp": 30,
     "description": "A pílula de 2 minutos: por que o sistema financeiro está migrando pra Solana, o truque que a deixa rápida, e como você ganha dinheiro nela pela Superteam Brasil.",
     "difficulty": "beginner",
     "duration": 0.03,
@@ -218,6 +814,333 @@
     "trackLevel": 0,
     "xpPerLesson": 20,
     "xpReward": 20
+  },
+  {
+    "_id": "course-rust-ts-fundamentals",
+    "_type": "course",
+    "creator": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
+    "creatorRewardXp": 30,
+    "description": "By the end you can read and write the Rust and TypeScript that real web3 codebases are made of, and ship them: a TypeScript dashboard on Vercel, edge workers in both languages on Cloudflare, and a containerized Rust service on GHCR, all wired to live Solana data with one signed devnet transfer. This is a local-toolchain course, so expect to install as you build: Node in module one, rustup and cargo in module four, Docker in module six, and the Solana CLI in m08-l4, where a local validator stands by as the last-resort fallback for a dry devnet faucet.",
+    "difficulty": "beginner",
+    "duration": 52,
+    "minCompletionsForReward": 0,
+    "modules": [
+      {
+        "_key": "m01-first-heartbeat",
+        "_type": "courseModule",
+        "key": "m01-first-heartbeat",
+        "lessons": [
+          {
+            "_key": "lesson-rtf-m01-l1",
+            "_ref": "lesson-rtf-m01-l1",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-rtf-m01-l2",
+            "_ref": "lesson-rtf-m01-l2",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-rtf-m01-l3",
+            "_ref": "lesson-rtf-m01-l3",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Put a heartbeat on the internet"
+      },
+      {
+        "_key": "m02-types-alarm-system",
+        "_type": "courseModule",
+        "key": "m02-types-alarm-system",
+        "lessons": [
+          {
+            "_key": "lesson-rtf-m02-l1",
+            "_ref": "lesson-rtf-m02-l1",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-rtf-m02-l2",
+            "_ref": "lesson-rtf-m02-l2",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-rtf-m02-l3",
+            "_ref": "lesson-rtf-m02-l3",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-rtf-m02-l4",
+            "_ref": "lesson-rtf-m02-l4",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Types are the alarm system"
+      },
+      {
+        "_key": "m03-ship-to-a-url",
+        "_type": "courseModule",
+        "key": "m03-ship-to-a-url",
+        "lessons": [
+          {
+            "_key": "lesson-rtf-m03-l1",
+            "_ref": "lesson-rtf-m03-l1",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-rtf-m03-l2",
+            "_ref": "lesson-rtf-m03-l2",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-rtf-m03-l3",
+            "_ref": "lesson-rtf-m03-l3",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-rtf-m03-l4",
+            "_ref": "lesson-rtf-m03-l4",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Someone else can see it now"
+      },
+      {
+        "_key": "m04-stricter-foreman",
+        "_type": "courseModule",
+        "key": "m04-stricter-foreman",
+        "lessons": [
+          {
+            "_key": "lesson-rtf-m04-l1",
+            "_ref": "lesson-rtf-m04-l1",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-rtf-m04-l2",
+            "_ref": "lesson-rtf-m04-l2",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-rtf-m04-l3",
+            "_ref": "lesson-rtf-m04-l3",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Same machine, stricter foreman"
+      },
+      {
+        "_key": "m05-rust-that-ships",
+        "_type": "courseModule",
+        "key": "m05-rust-that-ships",
+        "lessons": [
+          {
+            "_key": "lesson-rtf-m05-l1",
+            "_ref": "lesson-rtf-m05-l1",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-rtf-m05-l2",
+            "_ref": "lesson-rtf-m05-l2",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-rtf-m05-l3",
+            "_ref": "lesson-rtf-m05-l3",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Rust that ships"
+      },
+      {
+        "_key": "m06-runs-anywhere",
+        "_type": "courseModule",
+        "key": "m06-runs-anywhere",
+        "lessons": [
+          {
+            "_key": "lesson-rtf-m06-l1",
+            "_ref": "lesson-rtf-m06-l1",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-rtf-m06-l2",
+            "_ref": "lesson-rtf-m06-l2",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-rtf-m06-l3",
+            "_ref": "lesson-rtf-m06-l3",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-rtf-m06-l4",
+            "_ref": "lesson-rtf-m06-l4",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "It runs anywhere, forever"
+      },
+      {
+        "_key": "m07-edge-probes",
+        "_type": "courseModule",
+        "key": "m07-edge-probes",
+        "lessons": [
+          {
+            "_key": "lesson-rtf-m07-l1",
+            "_ref": "lesson-rtf-m07-l1",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-rtf-m07-l2",
+            "_ref": "lesson-rtf-m07-l2",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Probes belong at the edge"
+      },
+      {
+        "_key": "m08-solana-target",
+        "_type": "courseModule",
+        "key": "m08-solana-target",
+        "lessons": [
+          {
+            "_key": "lesson-rtf-m08-l1",
+            "_ref": "lesson-rtf-m08-l1",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-rtf-m08-l2",
+            "_ref": "lesson-rtf-m08-l2",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-rtf-m08-l3",
+            "_ref": "lesson-rtf-m08-l3",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-rtf-m08-l4",
+            "_ref": "lesson-rtf-m08-l4",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Point it at the most interesting target"
+      },
+      {
+        "_key": "m09-operate-it",
+        "_type": "courseModule",
+        "key": "m09-operate-it",
+        "lessons": [
+          {
+            "_key": "lesson-rtf-m09-l1",
+            "_ref": "lesson-rtf-m09-l1",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-rtf-m09-l2",
+            "_ref": "lesson-rtf-m09-l2",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Run it like you mean it"
+      },
+      {
+        "_key": "m10-station-whole",
+        "_type": "courseModule",
+        "key": "m10-station-whole",
+        "lessons": [
+          {
+            "_key": "lesson-rtf-m10-l1",
+            "_ref": "lesson-rtf-m10-l1",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-rtf-m10-l2",
+            "_ref": "lesson-rtf-m10-l2",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Pulse Station, whole"
+      }
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "rust-ts-fundamentals"
+    },
+    "sourceLocale": "en",
+    "tags": [
+      "account-model",
+      "api-design",
+      "async-concurrency",
+      "automated-testing",
+      "checked-arithmetic",
+      "ci",
+      "compiler-errors",
+      "confirmation",
+      "containers",
+      "debugging",
+      "deployment",
+      "edge-runtimes",
+      "error-handling",
+      "http-fundamentals",
+      "keypairs-wallets",
+      "npm-publishing",
+      "observability",
+      "rpc-reads",
+      "rust-borrowing",
+      "rust-enums",
+      "rust-modules",
+      "rust-ownership",
+      "rust-result",
+      "rust-structs",
+      "rust-traits",
+      "schema-validation",
+      "semver",
+      "signers",
+      "solana-fundamentals",
+      "solana-kit",
+      "supply-chain-security",
+      "technical-writing",
+      "toolchain-versions",
+      "transactions",
+      "typescript-types",
+      "version-pinning"
+    ],
+    "thumbnail": "/content-assets/rust-ts-fundamentals/banner.webp",
+    "title": "Rust & TypeScript Fundamentals for Web3",
+    "trackId": 0,
+    "trackLevel": 0,
+    "xpPerLesson": 20,
+    "xpReward": 500
   },
   {
     "_id": "course-solana-hackathon-expert",
@@ -390,6 +1313,270 @@
     "trackLevel": 0,
     "xpPerLesson": 20,
     "xpReward": 300
+  },
+  {
+    "_id": "course-solana-payments-commerce",
+    "_type": "course",
+    "creator": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
+    "creatorRewardXp": 30,
+    "description": "By the end you can take real money on Solana end to end, a stablecoin Solana Pay checkout and POS, a webhook-driven back office with reconciliation and refunds, non-custodial subscriptions with dunning, on/off ramps, and x402/MPP machine payments, assembled into one running commerce stack on devnet — where the course touches regulation, it is an engineering framing of the seams, not legal advice. This is a local-toolchain course from the first lab: module one already needs Node 24 and installs packages on your machine, module two adds the Anza Agave CLI (`solana` plus `spl-token`), and from there every lab runs npm workspaces locally against devnet; one step in module eight — `cargo install kora-cli` — additionally needs a Rust toolchain.",
+    "difficulty": "intermediate",
+    "duration": 55,
+    "minCompletionsForReward": 0,
+    "modules": [
+      {
+        "_key": "rails-mental-model",
+        "_type": "courseModule",
+        "key": "rails-mental-model",
+        "lessons": [
+          {
+            "_key": "lesson-spc-m01-l1",
+            "_ref": "lesson-spc-m01-l1",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-spc-m01-l2",
+            "_ref": "lesson-spc-m01-l2",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "The rails you're switching to"
+      },
+      {
+        "_key": "stablecoin-transfers",
+        "_type": "courseModule",
+        "key": "stablecoin-transfers",
+        "lessons": [
+          {
+            "_key": "lesson-spc-m02-l1",
+            "_ref": "lesson-spc-m02-l1",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-spc-m02-l2",
+            "_ref": "lesson-spc-m02-l2",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Stablecoin transfers, down to the decimal"
+      },
+      {
+        "_key": "checkout-surfaces",
+        "_type": "courseModule",
+        "key": "checkout-surfaces",
+        "lessons": [
+          {
+            "_key": "lesson-spc-m03-l1",
+            "_ref": "lesson-spc-m03-l1",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-spc-m03-l2",
+            "_ref": "lesson-spc-m03-l2",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-spc-m03-l3",
+            "_ref": "lesson-spc-m03-l3",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-spc-m03-l4",
+            "_ref": "lesson-spc-m03-l4",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Checkout surfaces: Solana Pay, the record fair, and blinks"
+      },
+      {
+        "_key": "back-office",
+        "_type": "courseModule",
+        "key": "back-office",
+        "lessons": [
+          {
+            "_key": "lesson-spc-m04-l1",
+            "_ref": "lesson-spc-m04-l1",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-spc-m04-l2",
+            "_ref": "lesson-spc-m04-l2",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-spc-m04-l3",
+            "_ref": "lesson-spc-m04-l3",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "The back office: verify, ingest, reconcile, refund"
+      },
+      {
+        "_key": "recurring-revenue",
+        "_type": "courseModule",
+        "key": "recurring-revenue",
+        "lessons": [
+          {
+            "_key": "lesson-spc-m05-l1",
+            "_ref": "lesson-spc-m05-l1",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-spc-m05-l2",
+            "_ref": "lesson-spc-m05-l2",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-spc-m05-l3",
+            "_ref": "lesson-spc-m05-l3",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Recurring revenue without custody"
+      },
+      {
+        "_key": "fiat-edge",
+        "_type": "courseModule",
+        "key": "fiat-edge",
+        "lessons": [
+          {
+            "_key": "lesson-spc-m06-l1",
+            "_ref": "lesson-spc-m06-l1",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-spc-m06-l2",
+            "_ref": "lesson-spc-m06-l2",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "The fiat edge"
+      },
+      {
+        "_key": "machine-customers",
+        "_type": "courseModule",
+        "key": "machine-customers",
+        "lessons": [
+          {
+            "_key": "lesson-spc-m07-l1",
+            "_ref": "lesson-spc-m07-l1",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-spc-m07-l2",
+            "_ref": "lesson-spc-m07-l2",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-spc-m07-l3",
+            "_ref": "lesson-spc-m07-l3",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Machine customers: x402 and the agentic turn"
+      },
+      {
+        "_key": "fees-offline-golive",
+        "_type": "courseModule",
+        "key": "fees-offline-golive",
+        "lessons": [
+          {
+            "_key": "lesson-spc-m08-l1",
+            "_ref": "lesson-spc-m08-l1",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-spc-m08-l2",
+            "_ref": "lesson-spc-m08-l2",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-spc-m08-l3",
+            "_ref": "lesson-spc-m08-l3",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Fees, offline, and going live"
+      },
+      {
+        "_key": "capstone-assembly",
+        "_type": "courseModule",
+        "key": "capstone-assembly",
+        "lessons": [
+          {
+            "_key": "lesson-spc-m09-l1",
+            "_ref": "lesson-spc-m09-l1",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-spc-m09-l2",
+            "_ref": "lesson-spc-m09-l2",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Capstone: Wavelength, open for business"
+      }
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "solana-payments-commerce"
+    },
+    "sourceLocale": "en",
+    "tags": [
+      "account-model",
+      "api-monetization",
+      "brazil-compliance",
+      "checked-arithmetic",
+      "compute-budget",
+      "confirmation",
+      "error-handling",
+      "payment-model-selection",
+      "pdas",
+      "program-security",
+      "recurring-delegation",
+      "rpc-reads",
+      "signers",
+      "solana-fundamentals",
+      "solana-kit",
+      "solana-pay",
+      "spl-tokens",
+      "subscriptions-program",
+      "token-2022",
+      "transaction-fees",
+      "transactions",
+      "version-pinning",
+      "x402-protocol"
+    ],
+    "thumbnail": "/content-assets/solana-payments-commerce/banner.webp",
+    "title": "Solana Payments & Commerce",
+    "trackId": 0,
+    "trackLevel": 0,
+    "xpPerLesson": 20,
+    "xpReward": 480
   },
   {
     "_id": "course-solana-speedrun",

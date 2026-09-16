@@ -3,7 +3,44 @@
     "lesson-b2s-an-anchor-vault",
     "lesson-b2s-the-crosschain-ops-bot",
     "lesson-b2s-wire-a-bot-and-a-face",
-    "lesson-b2s-your-first-solana-program"
+    "lesson-b2s-your-first-solana-program",
+    "lesson-da-m01-l4-decision-framework-conflict-matrix",
+    "lesson-da-m02-l1-economics-extensions",
+    "lesson-da-m03-l1-write-the-hook",
+    "lesson-da-m04-l2-issuer-ops",
+    "lesson-da-m05-l1-dex-allowlist-artifact",
+    "lesson-da-m06-l2-metaplex-core",
+    "lesson-da-m07-l2-reading-assets-das",
+    "lesson-da-m08-l1-bonding-curves-graduation",
+    "lesson-da-m09-l1-fee-routing-buyback",
+    "lesson-mav2-m01-l4",
+    "lesson-mav2-m02-l2",
+    "lesson-mav2-m03-l3",
+    "lesson-mav2-m04-l1",
+    "lesson-mav2-m04-l2",
+    "lesson-mav2-m05-l2",
+    "lesson-mav2-m06-l2",
+    "lesson-mav2-m07-l2",
+    "lesson-mav2-m08-l1",
+    "lesson-mav2-m09-l1",
+    "lesson-mav2-m10-l2",
+    "lesson-rtf-m01-l2",
+    "lesson-rtf-m02-l1",
+    "lesson-rtf-m02-l3",
+    "lesson-rtf-m03-l1",
+    "lesson-rtf-m04-l1",
+    "lesson-rtf-m04-l3",
+    "lesson-rtf-m05-l1",
+    "lesson-rtf-m08-l1",
+    "lesson-rtf-m08-l2",
+    "lesson-rtf-m09-l1",
+    "lesson-spc-m02-l1",
+    "lesson-spc-m03-l4",
+    "lesson-spc-m04-l1",
+    "lesson-spc-m05-l2",
+    "lesson-spc-m06-l1",
+    "lesson-spc-m07-l2",
+    "lesson-spc-m08-l2"
   ],
   "moduleLessonMap": [
     {
@@ -57,9 +94,248 @@
       ]
     },
     {
+      "_id": "course-digital-assets:token-layer",
+      "lessonIds": [
+        "lesson-da-m01-l1-what-is-this-token",
+        "lesson-da-m01-l2-mint-account-anatomy",
+        "lesson-da-m01-l3-p-token-switch",
+        "lesson-da-m01-l4-decision-framework-conflict-matrix"
+      ]
+    },
+    {
+      "_id": "course-digital-assets:extension-catalog",
+      "lessonIds": [
+        "lesson-da-m02-l1-economics-extensions",
+        "lesson-da-m02-l2-authority-extensions",
+        "lesson-da-m02-l3-holder-protection-extensions",
+        "lesson-da-m02-l4-native-metadata"
+      ]
+    },
+    {
+      "_id": "course-digital-assets:transfer-hooks",
+      "lessonIds": [
+        "lesson-da-m03-l1-write-the-hook",
+        "lesson-da-m03-l2-resolving-hooks-composability"
+      ]
+    },
+    {
+      "_id": "course-digital-assets:confidential-transfers",
+      "lessonIds": [
+        "lesson-da-m04-l1-confidential-model",
+        "lesson-da-m04-l2-issuer-ops"
+      ]
+    },
+    {
+      "_id": "course-digital-assets:compatibility-reality",
+      "lessonIds": [
+        "lesson-da-m05-l1-dex-allowlist-artifact",
+        "lesson-da-m05-l2-designing-routable-token"
+      ]
+    },
+    {
+      "_id": "course-digital-assets:digital-collectibles",
+      "lessonIds": [
+        "lesson-da-m06-l1-metadata-standards",
+        "lesson-da-m06-l2-metaplex-core",
+        "lesson-da-m06-l3-token-metadata-legacy"
+      ]
+    },
+    {
+      "_id": "course-digital-assets:compression",
+      "lessonIds": [
+        "lesson-da-m07-l1-bubblegum-v2-cnfts",
+        "lesson-da-m07-l2-reading-assets-das",
+        "lesson-da-m07-l3-zk-compression-frontier"
+      ]
+    },
+    {
+      "_id": "course-digital-assets:launch-distribution",
+      "lessonIds": [
+        "lesson-da-m08-l1-bonding-curves-graduation",
+        "lesson-da-m08-l2-launchpad-landscape",
+        "lesson-da-m08-l3-airdrops-at-scale"
+      ]
+    },
+    {
+      "_id": "course-digital-assets:token-economies",
+      "lessonIds": [
+        "lesson-da-m09-l1-fee-routing-buyback",
+        "lesson-da-m09-l2-gating-migrations",
+        "lesson-da-m09-l3-production-case-studies"
+      ]
+    },
+    {
+      "_id": "course-digital-assets:capstone",
+      "lessonIds": [
+        "lesson-da-m10-l1-capstone-choose-primitive",
+        "lesson-da-m10-l2-cumulative-checkpoint-close"
+      ]
+    },
+    {
+      "_id": "course-mastering-anchor-v2:orientation-anatomy-macros",
+      "lessonIds": [
+        "lesson-mav2-m01-l1",
+        "lesson-mav2-m01-l2",
+        "lesson-mav2-m01-l3",
+        "lesson-mav2-m01-l4"
+      ]
+    },
+    {
+      "_id": "course-mastering-anchor-v2:accounts-pod-data",
+      "lessonIds": [
+        "lesson-mav2-m02-l1",
+        "lesson-mav2-m02-l2",
+        "lesson-mav2-m02-l3"
+      ]
+    },
+    {
+      "_id": "course-mastering-anchor-v2:pdas-constraints",
+      "lessonIds": [
+        "lesson-mav2-m03-l1",
+        "lesson-mav2-m03-l2",
+        "lesson-mav2-m03-l3"
+      ]
+    },
+    {
+      "_id": "course-mastering-anchor-v2:cpi-composition",
+      "lessonIds": [
+        "lesson-mav2-m04-l1",
+        "lesson-mav2-m04-l2",
+        "lesson-mav2-m04-l3"
+      ]
+    },
+    {
+      "_id": "course-mastering-anchor-v2:tokens-framework-seat",
+      "lessonIds": [
+        "lesson-mav2-m05-l1",
+        "lesson-mav2-m05-l2",
+        "lesson-mav2-m05-l3"
+      ]
+    },
+    {
+      "_id": "course-mastering-anchor-v2:observe-profile-debug",
+      "lessonIds": [
+        "lesson-mav2-m06-l1",
+        "lesson-mav2-m06-l2"
+      ]
+    },
+    {
+      "_id": "course-mastering-anchor-v2:security-v2-defaults",
+      "lessonIds": [
+        "lesson-mav2-m07-l1",
+        "lesson-mav2-m07-l2",
+        "lesson-mav2-m07-l3"
+      ]
+    },
+    {
+      "_id": "course-mastering-anchor-v2:ship-idl-verify",
+      "lessonIds": [
+        "lesson-mav2-m08-l1",
+        "lesson-mav2-m08-l2"
+      ]
+    },
+    {
+      "_id": "course-mastering-anchor-v2:peel-and-prove",
+      "lessonIds": [
+        "lesson-mav2-m09-l1",
+        "lesson-mav2-m09-l2",
+        "lesson-mav2-m09-l3"
+      ]
+    },
+    {
+      "_id": "course-mastering-anchor-v2:migrate-and-conclude",
+      "lessonIds": [
+        "lesson-mav2-m10-l1",
+        "lesson-mav2-m10-l2",
+        "lesson-mav2-m10-l3",
+        "lesson-mav2-m10-l4"
+      ]
+    },
+    {
       "_id": "course-pilula-solana-superteam:pilula",
       "lessonIds": [
         "lesson-psp-solana-em-2-minutos"
+      ]
+    },
+    {
+      "_id": "course-rust-ts-fundamentals:m01-first-heartbeat",
+      "lessonIds": [
+        "lesson-rtf-m01-l1",
+        "lesson-rtf-m01-l2",
+        "lesson-rtf-m01-l3"
+      ]
+    },
+    {
+      "_id": "course-rust-ts-fundamentals:m02-types-alarm-system",
+      "lessonIds": [
+        "lesson-rtf-m02-l1",
+        "lesson-rtf-m02-l2",
+        "lesson-rtf-m02-l3",
+        "lesson-rtf-m02-l4"
+      ]
+    },
+    {
+      "_id": "course-rust-ts-fundamentals:m03-ship-to-a-url",
+      "lessonIds": [
+        "lesson-rtf-m03-l1",
+        "lesson-rtf-m03-l2",
+        "lesson-rtf-m03-l3",
+        "lesson-rtf-m03-l4"
+      ]
+    },
+    {
+      "_id": "course-rust-ts-fundamentals:m04-stricter-foreman",
+      "lessonIds": [
+        "lesson-rtf-m04-l1",
+        "lesson-rtf-m04-l2",
+        "lesson-rtf-m04-l3"
+      ]
+    },
+    {
+      "_id": "course-rust-ts-fundamentals:m05-rust-that-ships",
+      "lessonIds": [
+        "lesson-rtf-m05-l1",
+        "lesson-rtf-m05-l2",
+        "lesson-rtf-m05-l3"
+      ]
+    },
+    {
+      "_id": "course-rust-ts-fundamentals:m06-runs-anywhere",
+      "lessonIds": [
+        "lesson-rtf-m06-l1",
+        "lesson-rtf-m06-l2",
+        "lesson-rtf-m06-l3",
+        "lesson-rtf-m06-l4"
+      ]
+    },
+    {
+      "_id": "course-rust-ts-fundamentals:m07-edge-probes",
+      "lessonIds": [
+        "lesson-rtf-m07-l1",
+        "lesson-rtf-m07-l2"
+      ]
+    },
+    {
+      "_id": "course-rust-ts-fundamentals:m08-solana-target",
+      "lessonIds": [
+        "lesson-rtf-m08-l1",
+        "lesson-rtf-m08-l2",
+        "lesson-rtf-m08-l3",
+        "lesson-rtf-m08-l4"
+      ]
+    },
+    {
+      "_id": "course-rust-ts-fundamentals:m09-operate-it",
+      "lessonIds": [
+        "lesson-rtf-m09-l1",
+        "lesson-rtf-m09-l2"
+      ]
+    },
+    {
+      "_id": "course-rust-ts-fundamentals:m10-station-whole",
+      "lessonIds": [
+        "lesson-rtf-m10-l1",
+        "lesson-rtf-m10-l2"
       ]
     },
     {
@@ -106,6 +382,75 @@
       "_id": "course-solana-hackathon-expert:seasonal",
       "lessonIds": [
         "lesson-she-rehearsal"
+      ]
+    },
+    {
+      "_id": "course-solana-payments-commerce:rails-mental-model",
+      "lessonIds": [
+        "lesson-spc-m01-l1",
+        "lesson-spc-m01-l2"
+      ]
+    },
+    {
+      "_id": "course-solana-payments-commerce:stablecoin-transfers",
+      "lessonIds": [
+        "lesson-spc-m02-l1",
+        "lesson-spc-m02-l2"
+      ]
+    },
+    {
+      "_id": "course-solana-payments-commerce:checkout-surfaces",
+      "lessonIds": [
+        "lesson-spc-m03-l1",
+        "lesson-spc-m03-l2",
+        "lesson-spc-m03-l3",
+        "lesson-spc-m03-l4"
+      ]
+    },
+    {
+      "_id": "course-solana-payments-commerce:back-office",
+      "lessonIds": [
+        "lesson-spc-m04-l1",
+        "lesson-spc-m04-l2",
+        "lesson-spc-m04-l3"
+      ]
+    },
+    {
+      "_id": "course-solana-payments-commerce:recurring-revenue",
+      "lessonIds": [
+        "lesson-spc-m05-l1",
+        "lesson-spc-m05-l2",
+        "lesson-spc-m05-l3"
+      ]
+    },
+    {
+      "_id": "course-solana-payments-commerce:fiat-edge",
+      "lessonIds": [
+        "lesson-spc-m06-l1",
+        "lesson-spc-m06-l2"
+      ]
+    },
+    {
+      "_id": "course-solana-payments-commerce:machine-customers",
+      "lessonIds": [
+        "lesson-spc-m07-l1",
+        "lesson-spc-m07-l2",
+        "lesson-spc-m07-l3"
+      ]
+    },
+    {
+      "_id": "course-solana-payments-commerce:fees-offline-golive",
+      "lessonIds": [
+        "lesson-spc-m08-l1",
+        "lesson-spc-m08-l2",
+        "lesson-spc-m08-l3"
+      ]
+    },
+    {
+      "_id": "course-solana-payments-commerce:capstone-assembly",
+      "lessonIds": [
+        "lesson-spc-m09-l1",
+        "lesson-spc-m09-l2"
       ]
     },
     {
