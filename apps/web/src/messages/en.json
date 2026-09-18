@@ -490,8 +490,6 @@
     "levelUp": "Level Up",
     "levelUpMessage": "You reached level {level}!",
     "questComplete": "Quest Complete",
-    "moreRewardsTitle": "More Rewards",
-    "moreRewards": "{count, plural, one {# more reward} other {# more rewards}}",
     "dismissReward": "Dismiss",
     "newAchievement": "Achievement Unlocked",
     "viewAchievements": "View Achievements",

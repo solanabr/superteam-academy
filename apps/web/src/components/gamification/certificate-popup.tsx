@@ -4,18 +4,20 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { celebrate } from "@/lib/gamification/celebration";
-import { useRewardQueueBusy } from "@/lib/gamification/reward-queue-state";
 import { cn } from "@/lib/utils";
 
 /**
  * V9 Certificate Minted popup — uses .popup-grad.cert pattern
  * from the design system (pop-spring animation, Solana gradient border).
  *
- * Deferral (choreography rework 24-08): a credential mint arrives on its own
- * Realtime insert, which routinely lands while the reward queue is still playing
- * a level-up or an achievement — so the platform's loudest moment played UNDER a
- * stack of smaller cards. A mint now waits for the queue to drain before it
- * renders and before the confetti fires.
+ * History: the 24-08 choreography rework made a mint WAIT for the reward queue
+ * to drain, because one-card-at-a-time sequencing otherwise buried it.
+ *
+ * OWNER REVERSAL 2026-09-18: rewards stack concurrently now, so there is
+ * nothing to wait for. A mint renders immediately and sits ABOVE the reward
+ * stack — it is the loudest moment on the platform and it gets the top slot
+ * with its confetti. Several mints stack the same way, newest on top. The 8s
+ * duplicate-mint dedupe stays where it was, in celebration.ts.
  */
 
 interface CertificateEvent {
@@ -45,13 +47,27 @@ export function CertificatePopup({ className }: { className?: string }) {
   const locale = typeof params.locale === "string" ? params.locale : "en";
 
   const [events, setEvents] = useState<CertificateEvent[]>([]);
-  /** Mints observed while the reward queue was still running. */
-  const [deferred, setDeferred] = useState<CertificateEvent[]>([]);
-  const rewardQueueBusy = useRewardQueueBusy();
+
+  // Timers are kept so a card's beat survives re-renders and is cleared on
+  // unmount.
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  useEffect(() => {
+    const timers = timersRef.current;
+    return () => timers.forEach(clearTimeout);
+  }, []);
 
   const handleMinted = useCallback((e: Event) => {
     const detail = (e as CustomEvent<CertificateEvent>).detail;
-    setDeferred((prev) => [...prev, detail]);
+    setEvents((prev) => [...prev, detail]);
+    // Full celebration — a credential mint is the rarest milestone (LX-B11).
+    // celebrate() dedupes against the manual-mint path (8s window) and
+    // respects prefers-reduced-motion.
+    celebrate("credential-mint");
+    timersRef.current.push(
+      setTimeout(() => {
+        setEvents((prev) => prev.filter((other) => other.uid !== detail.uid));
+      }, CERTIFICATE_POPUP_DURATION_MS)
+    );
   }, []);
 
   useEffect(() => {
@@ -59,33 +75,6 @@ export function CertificatePopup({ className }: { className?: string }) {
     return () =>
       window.removeEventListener("superteam:certificate-minted", handleMinted);
   }, [handleMinted]);
-
-  // Dismiss timers start when the card actually appears, so a deferred mint
-  // still gets its full beat. Held in a ref because the release effect re-runs
-  // as soon as it drains `deferred` — a cleanup there would cancel the timers it
-  // just scheduled.
-  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
-  useEffect(() => {
-    const timers = timersRef.current;
-    return () => timers.forEach(clearTimeout);
-  }, []);
-
-  useEffect(() => {
-    if (rewardQueueBusy || deferred.length === 0) return;
-    setDeferred([]);
-    setEvents((prev) => [...prev, ...deferred]);
-    // Full celebration — a credential mint is the rarest milestone (LX-B11).
-    // celebrate() dedupes against the manual-mint path and respects
-    // prefers-reduced-motion.
-    celebrate("credential-mint");
-    for (const ev of deferred) {
-      timersRef.current.push(
-        setTimeout(() => {
-          setEvents((prev) => prev.filter((e) => e.uid !== ev.uid));
-        }, CERTIFICATE_POPUP_DURATION_MS)
-      );
-    }
-  }, [rewardQueueBusy, deferred]);
 
   if (events.length === 0) return null;
 
@@ -96,11 +85,11 @@ export function CertificatePopup({ className }: { className?: string }) {
 
   return (
     <div
-      className={cn("flex flex-col gap-2", className)}
+      className={cn("flex flex-col items-end gap-2", className)}
       aria-live="polite"
-      aria-label={t("certificateMinted")}
     >
-      {events.map((ev) => (
+      {/* Newest on top, like the reward stack below it. */}
+      {[...events].reverse().map((ev) => (
         /* v9 .popup-grad.cert — Solana gradient border, pop-spring animation */
         <button
           key={ev.uid}

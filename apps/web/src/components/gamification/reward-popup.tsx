@@ -11,8 +11,10 @@ import { useRouter, useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Lightning } from "@phosphor-icons/react";
 import { getAllAchievements } from "@/lib/content/client-queries";
-import { celebrate } from "@/lib/gamification/celebration";
-import { setRewardQueueLength } from "@/lib/gamification/reward-queue-state";
+import {
+  celebrate,
+  prefersReducedMotion,
+} from "@/lib/gamification/celebration";
 import { useQuestName } from "@/lib/gamification/use-quest-name";
 import { cn } from "@/lib/utils";
 import { AchievementPatch } from "@/components/gamification/achievement-patch";
@@ -28,7 +30,7 @@ import { LEVEL_UP_EVENT } from "./level-up-popup";
 import { QUEST_REWARD_EVENT } from "./quest-reward-toast";
 
 /**
- * The reward popup queue — the single presentation surface for every recurring
+ * The reward popup stack — the single presentation surface for every recurring
  * reward moment: level-up, daily-quest completion and achievement unlocks.
  *
  * Owner reversal 2026-08-01: these shipped as small success toasts (the
@@ -37,15 +39,21 @@ import { QUEST_REWARD_EVENT } from "./quest-reward-toast";
  * pop-spring popup cards. This supersedes the earlier PED-10
  * minimal-celebration reading; see the tier map in lib/gamification/celebration.ts.
  *
- * CHOREOGRAPHY REWORK 24-08 (owner-approved). A first lesson could stack six to
- * eight reward surfaces across ~25 seconds. Three changes fixed that:
- *   1. Achievement unlocks join this queue instead of rendering in their own
- *      parallel column, where two unlocks meant two simultaneous cards.
- *   2. A moment plays at most 3 cards: two rewards, then one summary card for
- *      everything still waiting.
- *   3. The beat dropped 5s → 3.5s, so a full moment runs ~7s.
- * The certificate popup + confetti now wait for this queue to drain
- * (lib/gamification/reward-queue-state.ts).
+ * CHOREOGRAPHY REWORK 24-08 (superseded, kept for the history): a first lesson
+ * could stack six to eight reward surfaces across ~25 seconds, so this
+ * component became a FIFO queue — one card on stage at a time, achievement
+ * unlocks folded into it, two individual cards then a summary card for the
+ * rest, and the certificate popup deferred until the queue drained.
+ *
+ * OWNER REVERSAL 2026-09-18 — READ BEFORE "FIXING" THIS BACK TO A QUEUE.
+ * The owner reversed the sequencing on purpose: rewards render CONCURRENTLY as
+ * a vertical stack, newest on top, each card with its own 3.5s beat (paused
+ * while hovered or focused) and its own ✕. What survived from 24-08:
+ * achievement unlocks stay on this one surface, and the level-up card still
+ * de-dupes in place. What went: the 2-cards-then-summary collapse, and the
+ * certificate deferral (a mint now renders immediately, above this stack).
+ * Nothing waits for anything else — past MAX_VISIBLE_REWARD_CARDS the OLDEST
+ * card leaves early rather than a queue forming behind it.
  *
  * REMOVED 24-08: the LX-B15 surprise bonus. The owner cut the feature outright —
  * its server roll, its dispatcher and its card are gone. Historical
@@ -56,24 +64,35 @@ import { QUEST_REWARD_EVENT } from "./quest-reward-toast";
  * celebrate() guarantees is confetti-free.
  */
 
-/** How long one reward holds the stage before the queue advances. */
+/** How long one reward card stays up before it dismisses itself. */
 export const REWARD_POPUP_DURATION_MS = 3500;
 
 /**
- * Individual cards one moment may play before the rest collapse into a single
- * summary card. Two played + one summary = the 3-card ceiling.
+ * Cards on screen at once. A sixth arrival pushes the OLDEST card out early —
+ * the stack never becomes a queue, and it never grows past what fits above the
+ * lesson's Continue button on a phone.
  */
-export const MAX_INDIVIDUAL_REWARD_CARDS = 2;
+export const MAX_VISIBLE_REWARD_CARDS = 5;
+
+/** Leave animation; a dismissed card is unmounted after it. */
+export const REWARD_LEAVE_MS = 180;
 
 type RewardItem =
-  | { kind: "level-up"; uid: number; level: number }
-  | { kind: "daily-quest"; uid: number; questId: string; xpReward: number }
+  | { kind: "level-up"; uid: number; level: number; leaving?: boolean }
+  | {
+      kind: "daily-quest";
+      uid: number;
+      questId: string;
+      xpReward: number;
+      leaving?: boolean;
+    }
   | {
       kind: "achievement";
       uid: number;
       achievementId: string;
       name: string;
       xpReward: number;
+      leaving?: boolean;
     };
 
 interface TokenInfo {
@@ -84,19 +103,8 @@ interface TokenInfo {
 }
 
 // Module-level so uids stay unique across an effect re-run or a remount —
-// a collision would let the dismiss filter drop the wrong queue entry.
+// a collision would let the dismiss filter drop the wrong stack entry.
 let uidCounter = 0;
-
-function xpOf(item: RewardItem): number {
-  switch (item.kind) {
-    case "level-up":
-      return 0;
-    case "daily-quest":
-      return item.xpReward;
-    case "achievement":
-      return item.xpReward;
-  }
-}
 
 export function RewardPopupQueue({ className }: { className?: string }) {
   const t = useTranslations("gamification");
@@ -105,26 +113,68 @@ export function RewardPopupQueue({ className }: { className?: string }) {
   const params = useParams();
   const locale = typeof params.locale === "string" ? params.locale : "en";
 
-  const [queue, setQueue] = useState<RewardItem[]>([]);
-  /** Individual cards already played in this moment; resets when the queue empties. */
-  const [played, setPlayed] = useState(0);
+  const [items, setItems] = useState<RewardItem[]>([]);
 
-  const enqueue = useCallback((item: RewardItem) => {
-    setQueue((prev) => [...prev, item]);
+  const remove = useCallback((uid: number) => {
+    setItems((prev) => prev.filter((i) => i.uid !== uid));
   }, []);
+
+  /** Unmount after the leave animation (reduced motion: on the next tick). */
+  const scheduleUnmount = useCallback(
+    (uid: number) => {
+      const delay = prefersReducedMotion() ? 0 : REWARD_LEAVE_MS;
+      setTimeout(() => remove(uid), delay);
+    },
+    [remove]
+  );
+
+  // Mark, then unmount — so the cards above settle into the gap instead of
+  // snapping. The global prefers-reduced-motion rule collapses the animation.
+  const dismiss = useCallback(
+    (uid: number) => {
+      setItems((prev) =>
+        prev.map((i) => (i.uid === uid ? { ...i, leaving: true } : i))
+      );
+      scheduleUnmount(uid);
+    },
+    [scheduleUnmount]
+  );
+
+  /**
+   * Append (oldest first) and enforce the cap. Past MAX_VISIBLE_REWARD_CARDS
+   * the OLDEST live card starts leaving immediately — nothing queues behind
+   * the stack. A `leaving` card is on its way out and doesn't count.
+   */
+  const withCap = useCallback(
+    (prev: RewardItem[], item: RewardItem): RewardItem[] => {
+      const next = [...prev, item];
+      const live = next.filter((i) => !i.leaving);
+      if (live.length <= MAX_VISIBLE_REWARD_CARDS) return next;
+      const evicted = live[0];
+      if (!evicted) return next;
+      scheduleUnmount(evicted.uid);
+      return next.map((i) =>
+        i.uid === evicted.uid ? { ...i, leaving: true } : i
+      );
+    },
+    [scheduleUnmount]
+  );
 
   useEffect(() => {
     const nextUid = () => (uidCounter += 1);
 
-    // One level-up card per moment: a burst of XP can cross two level
-    // boundaries within a second, and two "Level Up" cards in a row read as a
-    // bug. The pending card absorbs the higher level instead.
+    // One level-up card at a time: a burst of XP can cross two level
+    // boundaries within a second, and two "Level Up" cards read as a bug. The
+    // card on screen absorbs the higher level in place instead — this survived
+    // the 2026-09-18 reversal to stacking on purpose.
     const onLevelUp = (e: Event) => {
       const { level } = (e as CustomEvent<{ level: number }>).detail;
-      setQueue((prev) => {
-        const index = prev.findIndex((item) => item.kind === "level-up");
+      setItems((prev) => {
+        const index = prev.findIndex(
+          (item) => item.kind === "level-up" && !item.leaving
+        );
         if (index === -1) {
-          return [...prev, { kind: "level-up", uid: nextUid(), level }];
+          return withCap(prev, { kind: "level-up", uid: nextUid(), level });
         }
         const existing = prev[index];
         if (existing?.kind !== "level-up" || level <= existing.level) {
@@ -139,26 +189,35 @@ export function RewardPopupQueue({ className }: { className?: string }) {
       const { questId, xpReward } = (
         e as CustomEvent<{ questId: string; xpReward: number }>
       ).detail;
-      enqueue({ kind: "daily-quest", uid: nextUid(), questId, xpReward });
+      setItems((prev) =>
+        withCap(prev, {
+          kind: "daily-quest",
+          uid: nextUid(),
+          questId,
+          xpReward,
+        })
+      );
     };
     const onAchievement = (e: Event) => {
       const { achievementId, name } = (
         e as CustomEvent<AchievementUnlockDetail>
       ).detail;
-      enqueue({
-        kind: "achievement",
-        uid: nextUid(),
-        achievementId,
-        name,
-        xpReward: 0,
-      });
+      setItems((prev) =>
+        withCap(prev, {
+          kind: "achievement",
+          uid: nextUid(),
+          achievementId,
+          name,
+          xpReward: 0,
+        })
+      );
     };
     // The XP amount arrives separately, on the achievement's xp_transactions
-    // INSERT — enrich whichever card is queued or on screen.
+    // INSERT — enrich whichever card is on screen.
     const onAchievementXp = (e: Event) => {
       const { achievementId, amount } = (e as CustomEvent<AchievementXpDetail>)
         .detail;
-      setQueue((prev) =>
+      setItems((prev) =>
         prev.map((item) =>
           item.kind === "achievement" && item.achievementId === achievementId
             ? { ...item, xpReward: amount }
@@ -177,7 +236,7 @@ export function RewardPopupQueue({ className }: { className?: string }) {
       window.removeEventListener(ACHIEVEMENT_UNLOCK_EVENT, onAchievement);
       window.removeEventListener(ACHIEVEMENT_XP_EVENT, onAchievementXp);
     };
-  }, [enqueue]);
+  }, [withCap]);
 
   // Content catalog by id — an achievement card renders its REAL patch token
   // (glyph + tier), and the content name beats the id-derived fallback the
@@ -185,7 +244,7 @@ export function RewardPopupQueue({ className }: { className?: string }) {
   // leaves the fallback name and a starter glyph.
   const [catalog, setCatalog] = useState<Map<string, TokenInfo> | null>(null);
   const catalogRequested = useRef(false);
-  const hasAchievement = queue.some((item) => item.kind === "achievement");
+  const hasAchievement = items.some((item) => item.kind === "achievement");
   useEffect(() => {
     if (!hasAchievement || catalogRequested.current) return;
     catalogRequested.current = true;
@@ -210,72 +269,10 @@ export function RewardPopupQueue({ className }: { className?: string }) {
       });
   }, [hasAchievement]);
 
-  // More than the ceiling still waiting once two have played? Collapse the rest
-  // into one summary card. With exactly three rewards the third plays normally —
-  // a summary standing in for a single card would be worse, not calmer.
-  const showSummary =
-    played >= MAX_INDIVIDUAL_REWARD_CARDS && queue.length >= 2;
-  const current = queue[0];
-  const currentUid = current?.uid;
-  const currentKind = current?.kind;
-
-  // The head holds the stage for a fixed beat, then the queue advances. Keyed
-  // on the head's uid so each reward gets a full duration — an arrival while
-  // one is showing must not shorten (or restart) the one on screen.
-  useEffect(() => {
-    if (currentUid === undefined || currentKind === undefined) return;
-    // Routed through the tier module for uniformity; every kind reaching this
-    // component resolves to the "popup" tier, which is guaranteed confetti-free
-    // (asserted in celebration.test.ts). The summary card is a digest, not a
-    // moment, so it celebrates nothing.
-    if (!showSummary) celebrate(currentKind);
-    const timer = setTimeout(() => {
-      if (showSummary) {
-        setQueue([]);
-        return;
-      }
-      setQueue((prev) => prev.filter((item) => item.uid !== currentUid));
-      setPlayed((count) => count + 1);
-    }, REWARD_POPUP_DURATION_MS);
-    return () => clearTimeout(timer);
-  }, [currentUid, currentKind, showSummary]);
-
-  // An empty queue ends the moment: the card budget resets and the certificate
-  // popup is released (it defers while anything is queued).
-  useEffect(() => {
-    if (queue.length === 0 && played !== 0) setPlayed(0);
-    setRewardQueueLength(queue.length);
-  }, [queue.length, played]);
-
-  useEffect(() => () => setRewardQueueLength(0), []);
-
   const goToAchievements = useCallback(() => {
-    setQueue([]);
+    setItems([]);
     router.push(`/${locale}/profile#achievements`);
   }, [locale, router]);
-
-  if (!current) return null;
-
-  const summaryXp = queue.reduce((sum, item) => sum + xpOf(item), 0);
-
-  const card = showSummary
-    ? {
-        accent: "gold",
-        icon: <GlyphChip glyph="+" cat="reward" size={40} />,
-        label: t("moreRewardsTitle"),
-        name: t("moreRewards", { count: queue.length }),
-        xp: summaryXp,
-        onOpen: goToAchievements,
-      }
-    : describe(current);
-
-  // A dismissed card counts toward the individual-card budget exactly like a
-  // timed-out one — otherwise clicking ✕ through the queue bypasses the
-  // summary collapse this component exists to enforce.
-  const dismiss = () => {
-    setQueue((prev) => prev.filter((item) => item.uid !== current.uid));
-    setPlayed((count) => count + 1);
-  };
 
   /** Per-kind copy. The switch is exhaustive — a new kind is a compile error. */
   function describe(item: RewardItem): {
@@ -311,7 +308,7 @@ export function RewardPopupQueue({ className }: { className?: string }) {
       case "achievement": {
         // The icon is the earned patch itself, the same one lighting up on the
         // dashboard — the patch stays the achievement's own idiom inside the
-        // shared queue.
+        // shared stack.
         const info = catalog?.get(item.achievementId);
         return {
           accent: "gold",
@@ -336,50 +333,131 @@ export function RewardPopupQueue({ className }: { className?: string }) {
     }
   }
 
-  const { accent, icon, label, name, xp, onOpen } = card;
+  if (items.length === 0) return null;
+
+  // Newest on top: the stack is bottom-anchored, so the newest card is FIRST in
+  // DOM order. The live region carries no aria-label of its own, so a screen
+  // reader reads the card that arrived, not a stand-in for the whole surface.
+  const stack = [...items].reverse();
 
   return (
     <div
-      className={cn("flex flex-col gap-2", className)}
+      className={cn("flex flex-col items-end gap-2", className)}
       aria-live="polite"
-      aria-label={label}
     >
-      <div
-        key={showSummary ? "summary" : current.uid}
-        className={cn("rw-card", accent)}
-      >
-        {icon}
-        {onOpen ? (
-          <button
-            type="button"
-            onClick={onOpen}
-            className="flex-1 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            aria-label={`${label}: ${name} — ${t("viewAchievements")}`}
-          >
-            <div className="rw-kicker">{label}</div>
-            <div className="rw-name">{name}</div>
-          </button>
-        ) : (
-          <div className="flex-1">
-            <div className="rw-kicker">{label}</div>
-            <div className="rw-name">{name}</div>
-          </div>
-        )}
-        {xp > 0 && (
-          <div className="rw-xp">
-            <Lightning size={12} weight="fill" aria-hidden="true" />+{xp}{" "}
-            {t("xp")}
-          </div>
-        )}
+      {stack.map((item) => (
+        <RewardCard
+          key={item.uid}
+          kind={item.kind}
+          leaving={item.leaving === true}
+          dismissLabel={t("dismissReward")}
+          xpLabel={t("xp")}
+          viewLabel={t("viewAchievements")}
+          onDismiss={() => dismiss(item.uid)}
+          {...describe(item)}
+        />
+      ))}
+    </div>
+  );
+}
+
+/**
+ * One card, owning its own beat. The timer lives here rather than in the parent
+ * so a card's 3.5s is unaffected by anything arriving or leaving above it, and
+ * so hovering (or focusing) a card holds it open — a learner reaching for the ✕
+ * or the achievements link must not have it disappear mid-reach.
+ */
+function RewardCard({
+  kind,
+  accent,
+  icon,
+  label,
+  name,
+  xp,
+  onOpen,
+  onDismiss,
+  leaving,
+  dismissLabel,
+  xpLabel,
+  viewLabel,
+}: {
+  kind: "level-up" | "daily-quest" | "achievement";
+  accent: string;
+  icon: ReactNode;
+  label: string;
+  name: string;
+  xp: number;
+  onOpen: (() => void) | null;
+  onDismiss: () => void;
+  leaving: boolean;
+  dismissLabel: string;
+  xpLabel: string;
+  viewLabel: string;
+}) {
+  const [paused, setPaused] = useState(false);
+  const remainingRef = useRef(REWARD_POPUP_DURATION_MS);
+  const dismissRef = useRef(onDismiss);
+  dismissRef.current = onDismiss;
+
+  // Routed through the tier module for uniformity; every kind reaching this
+  // component resolves to the "popup" tier, which is guaranteed confetti-free
+  // (asserted in celebration.test.ts).
+  useEffect(() => {
+    celebrate(kind);
+  }, [kind]);
+
+  useEffect(() => {
+    if (paused || leaving) return;
+    const startedAt = Date.now();
+    const timer = setTimeout(() => dismissRef.current(), remainingRef.current);
+    return () => {
+      clearTimeout(timer);
+      remainingRef.current = Math.max(
+        0,
+        remainingRef.current - (Date.now() - startedAt)
+      );
+    };
+  }, [paused, leaving]);
+
+  return (
+    <div
+      className={cn("rw-card", accent, leaving && "rw-leaving")}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
+    >
+      {icon}
+      {onOpen ? (
         <button
           type="button"
-          onClick={showSummary ? () => setQueue([]) : dismiss}
-          aria-label={t("dismissReward")}
-          className="ml-1 shrink-0 rounded-md px-1.5 py-0.5 text-sm leading-none opacity-60 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          onClick={onOpen}
+          className="flex-1 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          aria-label={`${label}: ${name} — ${viewLabel}`}
         >
-          ✕
+          <div className="rw-kicker">{label}</div>
+          <div className="rw-name">{name}</div>
         </button>
-      </div>
+      ) : (
+        <div className="flex-1">
+          <div className="rw-kicker">{label}</div>
+          <div className="rw-name">{name}</div>
+        </div>
+      )}
+      {xp > 0 && (
+        <div className="rw-xp">
+          <Lightning size={12} weight="fill" aria-hidden="true" />+{xp}{" "}
+          {xpLabel}
+        </div>
+      )}
+      <button
+        type="button"
+        onClick={onDismiss}
+        aria-label={dismissLabel}
+        className="ml-1 shrink-0 rounded-md px-1.5 py-0.5 text-sm leading-none opacity-60 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      >
+        ✕
+      </button>
     </div>
   );
 }

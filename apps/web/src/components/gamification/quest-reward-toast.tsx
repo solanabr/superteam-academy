@@ -19,8 +19,9 @@ export interface QuestRewardDetail {
  * English source either channel has is the bundle's authored name, so the
  * renderer resolves the localized name from the id instead.
  *
- * Presentation moved from a success toast to the reward popup queue on
- * 2026-08-01 (owner: toasts read as too cheap for the moment) — see
+ * Presentation moved from a success toast to the reward popup on 2026-08-01
+ * (owner: toasts read as too cheap for the moment), and those popups stopped
+ * queueing and started STACKING on 2026-09-18 (owner reversal) — see
  * components/gamification/reward-popup.tsx. Only the rendering changed: this
  * dispatcher and the claimQuestReward dedupe both channels share are untouched.
  */

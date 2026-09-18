@@ -3239,6 +3239,29 @@ a.path-step-card:active {
     var(--shadow),
     0 0 20px var(--xp-dim);
 }
+/* Leaving card (stacked rewards, owner reversal 2026-09-18): it fades and
+   slides out while collapsing its own row, so the cards above settle into the
+   gap instead of snapping. The global prefers-reduced-motion blanket collapses
+   the animation; the component unmounts the node either way. */
+@keyframes rw-leave {
+  0% {
+    opacity: 1;
+    max-height: 120px;
+    transform: translateX(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    max-height: 0;
+    margin-bottom: -8px;
+    transform: translateX(14px) scale(0.96);
+  }
+}
+.rw-card.rw-leaving {
+  pointer-events: none;
+  overflow: hidden;
+  animation: rw-leave 180ms ease-in forwards;
+}
+
 .rw-kicker {
   font-family: var(--font-mono, var(--font-m));
   font-size: 10px;

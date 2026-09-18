@@ -19,11 +19,13 @@ export interface AchievementXpDetail {
  * `user_achievements` INSERT subscription.
  *
  * Choreography rework 24-08: unlocks used to render in their own always-parallel
- * surface, so two unlocks landing together stacked two cards next to whatever
- * the reward queue was already playing. They now enter the SAME queue as the
- * level-up and quest rewards (components/gamification/reward-popup.tsx) and take
- * their turn. Localization stays in the presentation layer, so this dispatcher
- * (and the hook that calls it) needs no intl provider.
+ * surface, beside whatever the reward queue was playing. They moved onto the
+ * SAME surface as the level-up and quest rewards
+ * (components/gamification/reward-popup.tsx). Owner reversal 2026-09-18: that
+ * surface stacks its cards again instead of sequencing them — one surface,
+ * concurrent cards, each with its own beat. Localization stays in the
+ * presentation layer, so this dispatcher (and the hook that calls it) needs no
+ * intl provider.
  */
 export function dispatchAchievementUnlock(
   achievementId: string,
