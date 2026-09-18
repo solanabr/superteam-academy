@@ -289,6 +289,13 @@ vi.mock("server-only", () => ({}));
 //    courses/lessons/course-by-slug/achievements-raw regenerated through the
 //    real projectors with existing order preserved. slots.json is
 //    byte-identical — no course was added, removed or reshaped.
+//  - Comece aqui drops the Pílula (bump to academy-courses @ef5e28f, content
+//    #73): the booth elective leaves `path-comece-aqui`, whose membership is
+//    now the three courses a newcomer actually walks, and the shelf blurb is
+//    reworded to match. One file moved upstream (`paths/comece-aqui.yaml`), so
+//    paths.json is the only fixture regenerated; counts, slots.json and every
+//    course, lesson and achievement doc are byte-unchanged. The Pílula itself
+//    is untouched and still reachable from the catalogue.
 const deps = { lessonsById };
 
 function bundleCourse(id: string): CourseDoc {
