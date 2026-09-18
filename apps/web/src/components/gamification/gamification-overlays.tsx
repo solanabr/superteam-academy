@@ -24,7 +24,7 @@ export function GamificationOverlays() {
       {/* Copies the anonymous /start intake into the profile on sign-in (LX-A3). */}
       <SegmentSync />
       {!userId ? null : (
-        /* ONE bottom-right surface.
+        /* ONE overlay surface (bottom-right on desktop, top-right on a phone).
            Owner reversal 2026-08-01 (supersedes the brand wave #955/#957): the
            recurring reward moments get popups again, not toasts. Choreography
            rework 24-08: level-up, daily-quest completion AND achievement
@@ -37,7 +37,12 @@ export function GamificationOverlays() {
            immediately and sits above the stack, which is why it is first here.
            The header level badge stays as the ambient signal; the popup is the
            moment, and both firing is intended. */
-        <div className="pointer-events-none fixed bottom-4 right-3 z-50 flex flex-col items-end gap-2 sm:bottom-6 sm:right-6">
+        /* Anchoring, from the 18-09 browser probe: bottom-right on >= sm, but
+           TOP-right under the 57px header on a phone. A near-full-width card
+           stack anchored to the bottom of a 375px viewport sits exactly on the
+           lesson's "Next →" / "Sign in to track" row and swallows the taps —
+           one card cleared it, a stack does not. */
+        <div className="pointer-events-none fixed right-3 top-[65px] z-50 flex flex-col items-end gap-2 sm:bottom-6 sm:right-6 sm:top-auto">
           <CertificatePopup className="pointer-events-auto" />
           <RewardPopupQueue className="pointer-events-auto" />
         </div>

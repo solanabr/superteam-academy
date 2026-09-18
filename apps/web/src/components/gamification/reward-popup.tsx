@@ -68,11 +68,18 @@ import { QUEST_REWARD_EVENT } from "./quest-reward-toast";
 export const REWARD_POPUP_DURATION_MS = 3500;
 
 /**
- * Cards on screen at once. A sixth arrival pushes the OLDEST card out early —
- * the stack never becomes a queue, and it never grows past what fits above the
- * lesson's Continue button on a phone.
+ * Cards on screen at once. One past the cap pushes the OLDEST card out early —
+ * the stack never becomes a queue.
+ *
+ * Phones get a lower cap: a card is near full width there, so five of them are
+ * a wall over the lesson. Measured in the 18-09 browser probe at 375x812:
+ * 5 cards = 37% of the viewport, 3 = ~27%.
  */
 export const MAX_VISIBLE_REWARD_CARDS = 5;
+export const MAX_VISIBLE_REWARD_CARDS_MOBILE = 3;
+
+/** Same breakpoint as the layout's `sm:` (Tailwind default). */
+const MOBILE_QUERY = "(max-width: 639px)";
 
 /** Leave animation; a dismissed card is unmounted after it. */
 export const REWARD_LEAVE_MS = 180;
@@ -115,6 +122,23 @@ export function RewardPopupQueue({ className }: { className?: string }) {
 
   const [items, setItems] = useState<RewardItem[]>([]);
 
+  // Read through a ref so the cap can change with the viewport without
+  // re-subscribing the event listeners. jsdom and SSR have no matchMedia:
+  // the desktop cap is the default there.
+  const capRef = useRef(MAX_VISIBLE_REWARD_CARDS);
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const mql = window.matchMedia(MOBILE_QUERY);
+    const apply = () => {
+      capRef.current = mql.matches
+        ? MAX_VISIBLE_REWARD_CARDS_MOBILE
+        : MAX_VISIBLE_REWARD_CARDS;
+    };
+    apply();
+    mql.addEventListener("change", apply);
+    return () => mql.removeEventListener("change", apply);
+  }, []);
+
   const remove = useCallback((uid: number) => {
     setItems((prev) => prev.filter((i) => i.uid !== uid));
   }, []);
@@ -149,7 +173,7 @@ export function RewardPopupQueue({ className }: { className?: string }) {
     (prev: RewardItem[], item: RewardItem): RewardItem[] => {
       const next = [...prev, item];
       const live = next.filter((i) => !i.leaving);
-      if (live.length <= MAX_VISIBLE_REWARD_CARDS) return next;
+      if (live.length <= capRef.current) return next;
       const evicted = live[0];
       if (!evicted) return next;
       scheduleUnmount(evicted.uid);
