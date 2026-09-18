@@ -160,14 +160,14 @@
         "gte": null,
         "kind": "path-completed",
         "lte": null,
-        "path": "path-first-steps",
+        "path": "path-comece-aqui",
         "stat": null
       },
       "category": "progress",
-      "description": "Complete every course in the First Steps path",
+      "description": "Complete every course in the Comece aqui path",
       "glyph": "✧",
       "icon": "graduation-cap",
-      "name": "First Steps Complete",
+      "name": "Comece aqui",
       "solTier": true,
       "xpReward": 200
     },

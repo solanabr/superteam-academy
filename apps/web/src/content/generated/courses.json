@@ -183,7 +183,7 @@
     "_type": "course",
     "creator": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
     "creatorRewardXp": 30,
-    "description": "By the end you can read any live mint's bytes, build Token-2022 mints and Core/compressed NFT assets from raw instructions, and wire a working on-chain token economy, choosing the right primitive and proving it resolves. Expect to work locally: the labs install and use rustup, the Agave CLI, and surfpool's mainnet fork on your own machine, and a few steps touch devnet.",
+    "description": "Read any live mint's bytes, build Token-2022 mints and Core/compressed NFT assets from raw instructions, then wire a working on-chain token economy — choosing the right primitive and proving it resolves. Expect to work locally: the labs install and use rustup, the Agave CLI, and surfpool's mainnet fork on your own machine, and a few steps touch devnet.",
     "difficulty": "intermediate",
     "duration": 35,
     "minCompletionsForReward": 0,
@@ -468,7 +468,7 @@
     "title": "Digital Assets, Tokenization & Token Extensions",
     "trackId": 0,
     "trackLevel": 0,
-    "xpPerLesson": 20,
+    "xpPerLesson": 15,
     "xpReward": 560
   },
   {
@@ -771,7 +771,7 @@
     "title": "Master Anchor V2",
     "trackId": 0,
     "trackLevel": 0,
-    "xpPerLesson": 20,
+    "xpPerLesson": 18,
     "xpReward": 600
   },
   {
@@ -820,7 +820,7 @@
     "_type": "course",
     "creator": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
     "creatorRewardXp": 30,
-    "description": "By the end you can read and write the Rust and TypeScript that real web3 codebases are made of, and ship them: a TypeScript dashboard on Vercel, edge workers in both languages on Cloudflare, and a containerized Rust service on GHCR, all wired to live Solana data with one signed devnet transfer. This is a local-toolchain course, so expect to install as you build: Node in module one, rustup and cargo in module four, Docker in module six, and the Solana CLI in m08-l4, where a local validator stands by as the last-resort fallback for a dry devnet faucet.",
+    "description": "Read and write the Rust and TypeScript that real web3 codebases are made of, then ship them: a TypeScript dashboard on Vercel, edge workers in both languages on Cloudflare, and a containerized Rust service on GHCR, all wired to live Solana data with one signed devnet transfer. This is a local-toolchain course, so expect to install as you build: Node in module one, rustup and cargo in module four, Docker in module six, and the Solana CLI in m08-l4, where a local validator stands by as the last-resort fallback for a dry devnet faucet.",
     "difficulty": "beginner",
     "duration": 52,
     "minCompletionsForReward": 0,
@@ -1139,7 +1139,7 @@
     "title": "Rust & TypeScript Fundamentals for Web3",
     "trackId": 0,
     "trackLevel": 0,
-    "xpPerLesson": 20,
+    "xpPerLesson": 15,
     "xpReward": 500
   },
   {
@@ -1319,7 +1319,7 @@
     "_type": "course",
     "creator": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
     "creatorRewardXp": 30,
-    "description": "By the end you can take real money on Solana end to end, a stablecoin Solana Pay checkout and POS, a webhook-driven back office with reconciliation and refunds, non-custodial subscriptions with dunning, on/off ramps, and x402/MPP machine payments, assembled into one running commerce stack on devnet — where the course touches regulation, it is an engineering framing of the seams, not legal advice. This is a local-toolchain course from the first lab: module one already needs Node 24 and installs packages on your machine, module two adds the Anza Agave CLI (`solana` plus `spl-token`), and from there every lab runs npm workspaces locally against devnet; one step in module eight — `cargo install kora-cli` — additionally needs a Rust toolchain.",
+    "description": "Take real money on Solana end to end: a stablecoin Solana Pay checkout and POS, a webhook-driven back office with reconciliation and refunds, non-custodial subscriptions with dunning, on/off ramps, and x402/MPP machine payments, assembled into one running commerce stack on devnet — where the course touches regulation, it is an engineering framing of the seams, not legal advice. This is a local-toolchain course from the first lab: module one already needs Node 24 and installs packages on your machine, module two adds the Anza Agave CLI (`solana` plus `spl-token`), and from there every lab runs npm workspaces locally against devnet; one step in module eight — `cargo install kora-cli` — additionally needs a Rust toolchain.",
     "difficulty": "intermediate",
     "duration": 55,
     "minCompletionsForReward": 0,
@@ -1575,7 +1575,7 @@
     "title": "Solana Payments & Commerce",
     "trackId": 0,
     "trackLevel": 0,
-    "xpPerLesson": 20,
+    "xpPerLesson": 15,
     "xpReward": 480
   },
   {
