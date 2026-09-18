@@ -21,14 +21,19 @@ vi.mock("@/lib/content/deployments", async (importOriginal) => {
 import { buildUserState } from "../achievements";
 
 /**
- * The live path and its real bundle membership. Retargeted to the alpha
- * catalog's only path (`path-first-steps`, 2 members) when the track-1 ladder
- * was parked; `UNSYNCED` plays the role C1 did — a member that is in the path
- * but has no on-chain deployment row.
+ * The live path and its real bundle membership. `path-first-steps` was retired
+ * by the three-shelf content wave (academy-courses#72) and a retired path never
+ * reaches `completedPathIds` at all, which would make every case here vacuous —
+ * so this targets the shelf that inherited its courses. `UNSYNCED` plays the
+ * role C1 did: a member that is in the path but has no on-chain deployment row.
  */
-const PATH = "path-first-steps";
+const PATH = "path-comece-aqui";
 const UNSYNCED = "course-solana-speedrun";
-const LIVE_MEMBERS = ["course-btc-to-sol-evolution"];
+const LIVE_MEMBERS = [
+  "course-pilula-solana-superteam",
+  "course-visao-geral-solana",
+  "course-btc-to-sol-evolution",
+];
 
 function sync(...courseIds: string[]) {
   deployments.clear();

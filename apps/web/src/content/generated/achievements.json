@@ -105,15 +105,15 @@
     "_type": "achievement",
     "award": {
       "kind": "path-completed",
-      "path": "path-first-steps"
+      "path": "path-comece-aqui"
     },
     "category": "progress",
-    "description": "Complete every course in the First Steps path",
+    "description": "Complete every course in the Comece aqui path",
     "glyph": "✧",
     "icon": "graduation-cap",
     "maxSupply": 0,
     "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-first-steps-path",
-    "name": "First Steps Complete",
+    "name": "Comece aqui",
     "solTier": true,
     "xpReward": 200
   },

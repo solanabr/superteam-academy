@@ -275,6 +275,20 @@ vi.mock("server-only", () => ({}));
 //    quests-raw's derived challengeLessonIds/moduleLessonMap regenerated
 //    through the real projectors (existing order preserved, new docs
 //    appended); course-summaries and achievements-raw byte-unchanged.
+//  - three-shelf paths wave (bump to academy-courses @8bc4a69, content #72 and
+//    the eight commits before it): `path-first-steps` is retired in place and
+//    three ordered shelves replace it — `path-comece-aqui` (order 1, the four
+//    entry courses), `path-hackathon` (2) and `path-construa-e-publique` (3).
+//    `getAllLearningPaths` already drops `retired` paths, so the retired doc
+//    stays in the bundle and out of every listing. Riding along:
+//    `achievement-first-steps-path` retargets to `path-comece-aqui` and is
+//    renamed "Comece aqui" (id unchanged, so the on-chain PDA is unchanged),
+//    three courses drop to their right-sized `xpPerLesson`, and upstream
+//    re-wordings land across b2s, visao-geral-solana and the hackathon course.
+//    paths.json now covers every bundle path (the three new shelves included);
+//    courses/lessons/course-by-slug/achievements-raw regenerated through the
+//    real projectors with existing order preserved. slots.json is
+//    byte-identical — no course was added, removed or reshaped.
 const deps = { lessonsById };
 
 function bundleCourse(id: string): CourseDoc {

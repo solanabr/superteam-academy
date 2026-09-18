@@ -1,11 +1,11 @@
 [
   {
-    "_id": "path-first-steps",
+    "_id": "path-comece-aqui",
     "_type": "learningPath",
     "courses": [
       {
-        "_key": "course-btc-to-sol-evolution",
-        "_ref": "course-btc-to-sol-evolution",
+        "_key": "course-pilula-solana-superteam",
+        "_ref": "course-pilula-solana-superteam",
         "_type": "reference",
         "_weak": true
       },
@@ -14,15 +14,98 @@
         "_ref": "course-solana-speedrun",
         "_type": "reference",
         "_weak": true
+      },
+      {
+        "_key": "course-visao-geral-solana",
+        "_ref": "course-visao-geral-solana",
+        "_type": "reference",
+        "_weak": true
+      },
+      {
+        "_key": "course-btc-to-sol-evolution",
+        "_ref": "course-btc-to-sol-evolution",
+        "_type": "reference",
+        "_weak": true
       }
     ],
-    "description": "Your first steps onchain. Understand how blockchains evolved from Bitcoin to Solana, then go hands-on and make your first moves on the network in minutes.",
+    "description": "Seus primeiros passos na Solana. Dois minutos pra entender a tese, dez pra ter seu primeiro ativo na mainnet, depois a visão completa da rede e um curso mão na massa do Bitcoin até a Solana.",
     "difficulty": "beginner",
     "draft": false,
     "order": 1,
     "retired": false,
+    "slug": "comece-aqui",
+    "tag": "Fundamentos",
+    "title": "Comece aqui"
+  },
+  {
+    "_id": "path-construa-e-publique",
+    "_type": "learningPath",
+    "courses": [
+      {
+        "_key": "course-rust-ts-fundamentals",
+        "_ref": "course-rust-ts-fundamentals",
+        "_type": "reference",
+        "_weak": true
+      },
+      {
+        "_key": "course-solana-payments-commerce",
+        "_ref": "course-solana-payments-commerce",
+        "_type": "reference",
+        "_weak": true
+      },
+      {
+        "_key": "course-digital-assets",
+        "_ref": "course-digital-assets",
+        "_type": "reference",
+        "_weak": true
+      },
+      {
+        "_key": "course-mastering-anchor-v2",
+        "_ref": "course-mastering-anchor-v2",
+        "_type": "reference",
+        "_weak": true
+      }
+    ],
+    "description": "Rust e TypeScript do jeito que os códigos web3 de verdade são escritos, pagamentos em stablecoin de ponta a ponta, tokens e ativos digitais, e por fim programas Anchor V2 prontos pra produção.",
+    "difficulty": "intermediate",
+    "draft": false,
+    "order": 3,
+    "retired": false,
+    "slug": "construa-e-publique",
+    "tag": "Builder",
+    "title": "Construa e publique"
+  },
+  {
+    "_id": "path-first-steps",
+    "_type": "learningPath",
+    "courses": [],
+    "description": "Your first steps onchain. Understand how blockchains evolved from Bitcoin to Solana, then go hands-on and make your first moves on the network in minutes.",
+    "difficulty": "beginner",
+    "draft": false,
+    "order": 99,
+    "retired": true,
     "slug": "first-steps",
     "tag": "Foundation",
     "title": "First Steps"
+  },
+  {
+    "_id": "path-hackathon",
+    "_type": "learningPath",
+    "courses": [
+      {
+        "_key": "course-solana-hackathon-expert",
+        "_ref": "course-solana-hackathon-expert",
+        "_type": "reference",
+        "_weak": true
+      }
+    ],
+    "description": "Do problema real ao pacote de submissão do Colosseum em um mês: demo na devnet, deck, dois vídeos e um one-pager de go-to-market.",
+    "difficulty": "intermediate",
+    "draft": false,
+    "order": 2,
+    "retired": false,
+    "slug": "hackathon",
+    "tag": "Arena",
+    "title": "Hackathon"
   }
 ]
