@@ -4,11 +4,17 @@ import type { RepoTree } from "@/lib/github/types";
 
 /**
  * Decompression bounds against a malicious/corrupt tarball (a gzip bomb inflates
- * to gigabytes; a pathological archive packs millions of tiny headers). The
- * academy-courses repo is text + optimised images — well under these — so the
- * caps only ever fire on abuse. Both are overridable for tests.
+ * to gigabytes; a pathological archive packs millions of tiny headers). Both are
+ * overridable for tests.
+ *
+ * The byte cap was 128 MiB on the premise that academy-courses is "text +
+ * optimised images — well under these". The first l10n overlay (content #53)
+ * falsified that: the repo inflates to 137 MB at @c464313 and the bump could not
+ * compile at all. A locale overlay ships its own rendered figures, so every
+ * further translated course adds tens of MB and the ceiling has to sit well
+ * above today's tree, not just past it.
  */
-const DEFAULT_MAX_DECOMPRESSED_BYTES = 128 * 1024 * 1024; // 128 MiB
+const DEFAULT_MAX_DECOMPRESSED_BYTES = 384 * 1024 * 1024; // 384 MiB
 const DEFAULT_MAX_ENTRIES = 20_000;
 
 export interface ExtractOpts {
