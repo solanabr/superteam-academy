@@ -288,6 +288,7 @@
     "failed": "Reprobado",
     "markComplete": "Marcar como Completada",
     "lessonComplete": "¡Lección Completada!",
+    "challengeLocked": "Desafío completado. El código está bloqueado.",
     "savingProgress": "Guardando progreso...",
     "verdictJudging": "Evaluando tu envío…",
     "verdictAccepted": "Aceptado",

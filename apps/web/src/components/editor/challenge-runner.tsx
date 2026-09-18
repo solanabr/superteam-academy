@@ -897,6 +897,11 @@ export function ChallengeRunner({
   }, [isDeployable]);
 
   const handleRun = useCallback(() => {
+    // A completed challenge is read-only (owner, 18-09): re-running it after
+    // the accepted verdict is pointless and invites a second submit attempt.
+    // Guarded here as well as on the button, so a programmatic click (the
+    // attempt-gate nudge focuses this ref) can't re-enter either.
+    if (isComplete) return;
     setIsRunning(true);
 
     // Use setTimeout to allow UI to update before executing
@@ -956,7 +961,7 @@ export function ChallengeRunner({
         setIsRunning(false);
       }
     }, 50);
-  }, [code, tests, language, buildType, starter, onResult, t]);
+  }, [code, tests, language, buildType, starter, onResult, isComplete, t]);
 
   const showSubmit =
     allPassed && !isComplete && !isJudging && (!isDeployable || deployComplete);
@@ -967,9 +972,15 @@ export function ChallengeRunner({
         ref={runButtonRef}
         onClick={handleRun}
         disabled={isRunning}
+        // Soft-disabled once complete rather than `disabled`: the button keeps
+        // its focus-visible ring and stays reachable, and the reason is
+        // announced instead of the control silently vanishing from the tab
+        // order (WCAG 4.1.2).
+        aria-disabled={isRunning || isComplete || undefined}
+        title={isComplete ? t("challengeLocked") : undefined}
         size="sm"
         variant={showSubmit ? "pushOutline" : "push"}
-        className="gap-1.5"
+        className={cn("gap-1.5", isComplete && "cursor-not-allowed opacity-50")}
       >
         {isRunning ? (
           <CircleNotch
@@ -994,7 +1005,7 @@ export function ChallengeRunner({
       )}
 
       {isComplete && (
-        <span className="text-sm font-medium text-success">
+        <span className="whitespace-nowrap text-sm font-medium text-success">
           {t("lessonComplete")}
         </span>
       )}
