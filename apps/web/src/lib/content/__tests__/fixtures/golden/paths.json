@@ -12,7 +12,7 @@
   {
     "_id": "path-comece-aqui",
     "title": "Comece aqui",
-    "description": "Seus primeiros passos na Solana. Dois minutos pra entender a tese, dez pra ter seu primeiro ativo na mainnet, depois a visão completa da rede e um curso mão na massa do Bitcoin até a Solana.",
+    "description": "Seus primeiros passos na Solana. Dez minutos pra ter seu primeiro ativo na mainnet, depois a visão completa da rede e um curso mão na massa do Bitcoin até a Solana.",
     "slug": "comece-aqui",
     "tag": "Fundamentos",
     "order": 1,
@@ -162,37 +162,6 @@
                 "_id": "lesson-b2s-where-you-go-from-here",
                 "title": "Cut the net: where you go from here",
                 "slug": "where-you-go-from-here"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "_id": "course-pilula-solana-superteam",
-        "title": "Pílula Solana & Superteam",
-        "slug": "pilula-solana-superteam",
-        "description": "A pílula de 2 minutos: por que o sistema financeiro está migrando pra Solana, o truque que a deixa rápida, e como você ganha dinheiro nela pela Superteam Brasil.",
-        "difficulty": "beginner",
-        "duration": 0.03,
-        "thumbnail": "/content-assets/pilula-solana-superteam/banner.webp",
-        "creator": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
-        "tags": [
-          "solana-fundamentals",
-          "transactions"
-        ],
-        "xpReward": 20,
-        "trackId": 0,
-        "trackLevel": 0,
-        "modules": [
-          {
-            "key": "pilula",
-            "title": "A Pílula",
-            "description": null,
-            "lessons": [
-              {
-                "_id": "lesson-psp-solana-em-2-minutos",
-                "title": "Solana em 2 minutos (e como ganhar dinheiro nela)",
-                "slug": "solana-em-2-minutos"
               }
             ]
           }

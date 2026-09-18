@@ -30,7 +30,6 @@ import { buildUserState } from "../achievements";
 const PATH = "path-comece-aqui";
 const UNSYNCED = "course-solana-speedrun";
 const LIVE_MEMBERS = [
-  "course-pilula-solana-superteam",
   "course-visao-geral-solana",
   "course-btc-to-sol-evolution",
 ];
