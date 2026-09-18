@@ -10,9 +10,11 @@ export const LEVEL_UP_EVENT = "superteam:level-up";
  * strict three-popup reading of the brand guide, and this dispatcher deleted as
  * unreachable plumbing by #957. The owner reversed that on 2026-08-01 — "the
  * popups were so cool" — so the moment is back at the POPUP tier. Rendering
- * lives in the shared reward popup queue
- * (components/gamification/reward-popup.tsx), which sequences it against the
- * quest rewards and achievement unlocks that land on the same lesson completion.
+ * lives in the shared reward popup surface
+ * (components/gamification/reward-popup.tsx). It used to SEQUENCE this against
+ * the quest rewards and achievement unlocks landing on the same lesson
+ * completion; owner reversal 2026-09-18 made those cards STACK instead, so a
+ * level-up now appears immediately alongside them (still de-duped in place).
  *
  * Popup-only, never confetti: with Level = floor(sqrt(XP/100)) early level-ups
  * arrive every few lessons, and confetti that frequent is exactly the routine-

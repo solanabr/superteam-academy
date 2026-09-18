@@ -24,17 +24,25 @@ export function GamificationOverlays() {
       {/* Copies the anonymous /start intake into the profile on sign-in (LX-A3). */}
       <SegmentSync />
       {!userId ? null : (
-        /* ONE bottom-right surface, one card at a time.
+        /* ONE overlay surface (bottom-right on desktop, top-right on a phone).
            Owner reversal 2026-08-01 (supersedes the brand wave #955/#957): the
            recurring reward moments get popups again, not toasts. Choreography
            rework 24-08: level-up, daily-quest completion AND achievement
-           unlocks all render through RewardPopupQueue — the achievement popup
-           used to be a second, always-parallel surface beside it, so two
-           unlocks meant two cards on top of whatever the queue was playing.
-           The certificate popup is the only other surface here and it defers
-           until the queue drains. The header level badge stays as the ambient
-           signal; the popup is the moment, and both firing is intended. */
-        <div className="pointer-events-none fixed bottom-4 right-3 z-50 flex flex-col items-end gap-2 sm:bottom-6 sm:right-6">
+           unlocks all render through this one surface — the achievement popup
+           used to be a second, always-parallel column beside it.
+
+           OWNER REVERSAL 2026-09-18: the 24-08 one-card-at-a-time sequencing is
+           gone. Reward cards STACK (newest on top, each with its own beat), and
+           the certificate popup no longer defers behind them — it renders
+           immediately and sits above the stack, which is why it is first here.
+           The header level badge stays as the ambient signal; the popup is the
+           moment, and both firing is intended. */
+        /* Anchoring, from the 18-09 browser probe: bottom-right on >= sm, but
+           TOP-right under the 57px header on a phone. A near-full-width card
+           stack anchored to the bottom of a 375px viewport sits exactly on the
+           lesson's "Next →" / "Sign in to track" row and swallows the taps —
+           one card cleared it, a stack does not. */
+        <div className="pointer-events-none fixed right-3 top-[65px] z-50 flex flex-col items-end gap-2 sm:bottom-6 sm:right-6 sm:top-auto">
           <CertificatePopup className="pointer-events-auto" />
           <RewardPopupQueue className="pointer-events-auto" />
         </div>

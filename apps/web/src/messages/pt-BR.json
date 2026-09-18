@@ -491,8 +491,6 @@
     "levelUp": "Subiu de Nível",
     "levelUpMessage": "Você alcançou o nível {level}!",
     "questComplete": "Missão Concluída",
-    "moreRewardsTitle": "Mais Recompensas",
-    "moreRewards": "{count, plural, one {mais # recompensa} other {mais # recompensas}}",
     "dismissReward": "Dispensar",
     "newAchievement": "Conquista Desbloqueada",
     "viewAchievements": "Ver Conquistas",

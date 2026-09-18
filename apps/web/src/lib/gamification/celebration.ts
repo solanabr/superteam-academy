@@ -19,8 +19,9 @@ import { prefersReducedMotion } from "@/lib/reduced-motion";
  * that: "the popups were so cool", and of the small success toasts the
  * recurring rewards had been demoted to, "those toasts are so cheap". So
  * level-up, daily-quest completion and achievement unlocks all sit at the POPUP
- * tier and render through the shared reward popup queue
- * (components/gamification/reward-popup.tsx). This supersedes the PED-10
+ * tier and render through the shared reward popup surface
+ * (components/gamification/reward-popup.tsx — a queue from 24-08, a concurrent
+ * STACK again since the owner's 2026-09-18 reversal). This supersedes the PED-10
  * minimal-celebration reading for THESE THREE events — it is a deliberate
  * product decision, not drift.
  *
@@ -92,7 +93,9 @@ export function shouldShowEncouragement(
 /**
  * A credential mint can be observed twice within moments (manual mint success
  * + the Supabase Realtime certificate INSERT funneling into the popup), so
- * full-tier celebrations within this window are collapsed into one.
+ * full-tier celebrations within this window are collapsed into one. This is the
+ * ONLY thing holding a duplicate mint back now that the certificate popup no
+ * longer waits for the reward stack (owner reversal 2026-09-18).
  */
 export const FULL_TIER_DEDUPE_MS = 8000;
 
