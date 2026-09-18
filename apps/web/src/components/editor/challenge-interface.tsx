@@ -347,6 +347,7 @@ export function ChallengeInterface({
   // short localized note, which is what the original silent no-op lacked.
   const [formatNote, setFormatNote] = useState<string | null>(null);
   const handleFormat = useCallback(async () => {
+    if (isComplete) return;
     const status = await editorHandle.current?.format();
     setFormatNote(
       !status || status === "formatted"
@@ -359,7 +360,7 @@ export function ChallengeInterface({
                 : "formatUnsupported"
           )
     );
-  }, [t]);
+  }, [isComplete, t]);
 
   // The note is transient — it explains one click, and must not linger over
   // the next edit.
@@ -370,13 +371,16 @@ export function ChallengeInterface({
   }, [formatNote]);
 
   const handleReset = useCallback(() => {
+    // Resetting a completed challenge would wipe the accepted code the locked
+    // editor is showing, so the lock covers it too.
+    if (isComplete) return;
     setCode(initialCode);
     resetEditorStorage(lessonId);
     setChallengeState({
       status: "idle",
       executionResult: null,
     });
-  }, [initialCode, lessonId]);
+  }, [initialCode, lessonId, isComplete]);
 
   const completeLesson = useCallback(() => {
     setPendingSubmit(false);
@@ -657,7 +661,10 @@ export function ChallengeInterface({
         >
           {/* Toolbar */}
           <div className="shrink-0 border-b border-border bg-card px-3 py-2.5">
-            <div className="flex items-center justify-between">
+            {/* Wraps rather than clips: the completed state adds both the
+                "Lesson Complete!" label and the View-solution button to an
+                already-full row, which overflowed the card at 1440px. */}
+            <div className="flex flex-wrap items-center justify-between gap-y-1">
               <div className="flex items-center gap-2">
                 <ChallengeRunner
                   runButtonRef={runButtonRef}
@@ -684,7 +691,12 @@ export function ChallengeInterface({
                     variant="ghost"
                     size="sm"
                     onClick={() => void handleFormat()}
-                    className="gap-1 text-xs"
+                    aria-disabled={isComplete || undefined}
+                    title={isComplete ? t("challengeLocked") : undefined}
+                    className={cn(
+                      "gap-1 text-xs",
+                      isComplete && "cursor-not-allowed opacity-50"
+                    )}
                     aria-label={t("formatCode")}
                   >
                     <MagicWand size={16} weight="duotone" aria-hidden="true" />
@@ -719,7 +731,12 @@ export function ChallengeInterface({
                   variant="ghost"
                   size="sm"
                   onClick={handleReset}
-                  className="gap-1 text-xs"
+                  aria-disabled={isComplete || undefined}
+                  title={isComplete ? t("challengeLocked") : undefined}
+                  className={cn(
+                    "gap-1 text-xs",
+                    isComplete && "cursor-not-allowed opacity-50"
+                  )}
                   aria-label={t("resetCode")}
                 >
                   <ArrowCounterClockwise
@@ -738,6 +755,16 @@ export function ChallengeInterface({
             {formatNote && (
               <p role="status" className="mt-1.5 text-xs text-text-3">
                 {formatNote}
+              </p>
+            )}
+
+            {/* Why the toolbar is inert. Its own line rather than squeezed into
+                the button row, which a completed challenge's "Lesson Complete!"
+                already fills. role="note" — it is standing context, not a
+                change to announce. */}
+            {isComplete && (
+              <p role="note" className="mt-1.5 text-xs text-text-3">
+                {t("challengeLocked")}
               </p>
             )}
           </div>
@@ -819,6 +846,12 @@ export function ChallengeInterface({
               language={language}
               value={code}
               onChange={handleCodeChange}
+              // Locked once the submission is accepted. `isComplete` starts
+              // true from the persisted `isAlreadyCompleted`, so the lock holds
+              // across a reload, not only in the just-accepted session. The
+              // editor keeps its highlighting and scrolling and still shows the
+              // learner's own accepted code (CodeEditor restores it).
+              readOnly={isComplete}
               className="h-full rounded-none border-0"
             />
 

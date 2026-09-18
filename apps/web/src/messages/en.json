@@ -288,6 +288,7 @@
     "failed": "Failed",
     "markComplete": "Mark as Complete",
     "lessonComplete": "Lesson Complete!",
+    "challengeLocked": "Challenge complete. The code is locked.",
     "savingProgress": "Saving progress...",
     "verdictJudging": "Judging your submission…",
     "verdictAccepted": "Accepted",
