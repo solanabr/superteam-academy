@@ -120,8 +120,10 @@ for (const [label, sql] of [
 
     it("computes intervals from the schedule, never a hardcoded day count", () => {
       // The transition bodies must read interval_days from review_schedule.
-      expect(sql).toContain(
-        "SELECT interval_days INTO v_interval\n    FROM public.review_schedule"
+      // Table-qualified since the ambiguous-`box` fix: `box` is also a
+      // RETURNS TABLE OUT column, so a bare reference errors at runtime.
+      expect(sql).toMatch(
+        /SELECT (?:rs\.)?interval_days INTO v_interval\n\s*FROM public\.review_schedule/
       );
       // No literal review interval baked into a make_interval/now() expression.
       expect(sql).not.toMatch(/make_interval\(days => (1|3|7|21)\b/);
