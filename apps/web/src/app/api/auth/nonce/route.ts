@@ -91,14 +91,16 @@ export async function GET(request: NextRequest) {
     // legs without a half-table scan under the row lock.
     const pendingCutoff = new Date(Date.now() - NONCE_TTL_MS).toISOString();
     const consumedCutoff = new Date(Date.now() - CONSUMED_TTL_MS).toISOString();
-    void supabaseAdmin
-      .from("siws_nonces")
-      .delete()
-      .or(
-        `and(status.eq.pending,created_at.lt.${pendingCutoff}),` +
-          `and(status.eq.consumed,created_at.lt.${consumedCutoff})`
-      )
-      .abortSignal(AbortSignal.timeout(NONCE_CLEANUP_TIMEOUT_MS))
+    void Promise.resolve(
+      supabaseAdmin
+        .from("siws_nonces")
+        .delete()
+        .or(
+          `and(status.eq.pending,created_at.lt.${pendingCutoff}),` +
+            `and(status.eq.consumed,created_at.lt.${consumedCutoff})`
+        )
+        .abortSignal(AbortSignal.timeout(NONCE_CLEANUP_TIMEOUT_MS))
+    )
       .then(({ error }) => {
         if (error) {
           console.error("[SIWS] Nonce cleanup error:", error.message);
