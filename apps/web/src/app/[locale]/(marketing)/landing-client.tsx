@@ -17,6 +17,7 @@ import { AuthModal, AuthTriggerButton } from "@/components/auth/auth-modal";
 import { AuthErrorToast } from "@/components/auth/auth-error-toast";
 import { AchievementRing } from "@/components/landing/achievement-ring";
 import { HeroShowcase } from "@/components/landing/hero-showcase";
+import { HackathonHero } from "@/components/landing/hackathon-hero";
 import {
   BuildWidget,
   EarnWidget,
@@ -422,6 +423,9 @@ export function LandingPageClient({
       </Suspense>
 
       <div className="flex-1">
+        {/* Solana Hackathon promo — a single centred banner above the hero. */}
+        <HackathonHero />
+
         {/* ── Hero — the stage reacts to the cursor (parallax halo + tilt) ── */}
         {/* The hero owns the first screen: the viewport minus the fixed
             header's band. `min-h` and not `h`, and `dvh` and not `vh` — a

@@ -34,8 +34,7 @@
     "label": "Anuncio del Solana Hackathon",
     "message": "¿Vas a participar en el Solana Hackathon?",
     "register": "Regístrate",
-    "takeCourse": "Haz el curso de preparación",
-    "dismiss": "Descartar"
+    "takeCourse": "Haz el curso de preparación"
   },
   "teach": {
     "title": "Tus cursos",

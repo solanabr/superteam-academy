@@ -34,8 +34,7 @@
     "label": "Solana Hackathon announcement",
     "message": "Building for the Solana Hackathon?",
     "register": "Register",
-    "takeCourse": "Take the prep course",
-    "dismiss": "Dismiss"
+    "takeCourse": "Take the prep course"
   },
   "teach": {
     "title": "Your courses",
