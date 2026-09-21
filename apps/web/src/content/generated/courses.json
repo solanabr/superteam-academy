@@ -469,7 +469,7 @@
     "trackId": 0,
     "trackLevel": 0,
     "xpPerLesson": 15,
-    "xpReward": 560
+    "xpReward": 420
   },
   {
     "_id": "course-mastering-anchor-v2",
@@ -772,7 +772,7 @@
     "trackId": 0,
     "trackLevel": 0,
     "xpPerLesson": 18,
-    "xpReward": 600
+    "xpReward": 540
   },
   {
     "_id": "course-pilula-solana-superteam",
@@ -1140,7 +1140,7 @@
     "trackId": 0,
     "trackLevel": 0,
     "xpPerLesson": 15,
-    "xpReward": 500
+    "xpReward": 465
   },
   {
     "_id": "course-solana-hackathon-expert",
@@ -1576,7 +1576,7 @@
     "trackId": 0,
     "trackLevel": 0,
     "xpPerLesson": 15,
-    "xpReward": 480
+    "xpReward": 360
   },
   {
     "_id": "course-solana-speedrun",

@@ -296,6 +296,23 @@ vi.mock("server-only", () => ({}));
 //    paths.json is the only fixture regenerated; counts, slots.json and every
 //    course, lesson and achievement doc are byte-unchanged. The Pílula itself
 //    is untouched and still reachable from the catalogue.
+//  - hackathon pt-BR/es + banner (bump to academy-courses @50143ca8, content
+//    #75/#76/#77): `course-solana-hackathon-expert` gains pt-BR and es
+//    overlays — 376 translated leaves each, covering all 16 lessons and every
+//    quiz string — so l10n.json goes 5 -> 6 localized courses. The overlays are
+//    text-only (no re-rendered figures), which is why no localized asset
+//    appears under `public/content-assets/<slug>/l10n/`. The course banner is
+//    re-rendered from the owner's Colosseum World's Fair art, letterboxed onto
+//    16:9 (banner.webp, the only asset byte that moved). NEITHER touches the
+//    projected course shape — `availableLocales` is attached by the
+//    locale-aware query path, not `projectCourse` — so the fixture delta here
+//    is entirely PR #75's ride-along: four courses drop to their right-sized
+//    xpReward (digital-assets 560 -> 420, mastering-anchor-v2 600 -> 540,
+//    rust-ts-fundamentals 500 -> 465, solana-payments-commerce 480 -> 360),
+//    each appearing twice because paths.json nests its member courses.
+//    courses.json and paths.json are the only fixtures regenerated; lessons,
+//    course-by-slug, summaries, achievements-raw, quests-raw and slots.json
+//    are byte-unchanged.
 const deps = { lessonsById };
 
 function bundleCourse(id: string): CourseDoc {
