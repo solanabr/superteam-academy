@@ -133,6 +133,13 @@ export function ChallengeInterface({
   // appears once the flash settles to amber. Reduced motion skips the flash
   // entirely (instant settle).
   const [verdictFlash, setVerdictFlash] = useState(false);
+  // The Accepted card is a one-shot acknowledgement of a submission made in
+  // this session, dismissible because the editor underneath is read-only and
+  // shows the accepted code (#1244) — leaving the blurred card up just hides
+  // it. It never opens on a revisit; `submittedRef` is what separates a fresh
+  // acceptance from an already-completed lesson loading in.
+  const [acceptedCardOpen, setAcceptedCardOpen] = useState(false);
+  const submittedRef = useRef(false);
   const [rejectReason, setRejectReason] = useState<string | null>(null);
   const isComplete = verdict === "accepted";
 
@@ -200,7 +207,14 @@ export function ChallengeInterface({
     if (isAlreadyCompleted && !prevIsAlreadyCompleted.current) {
       setVerdict("accepted");
       setRejectReason(null);
-      if (!prefersReducedMotion()) setVerdictFlash(true);
+      // The flash and the Accepted card belong to THIS submission. A revisit
+      // (mount already completed, or the async DB check resolving into the
+      // same flip) gets the read-only editor and the toolbar's lock note
+      // instead — the card would only sit over the learner's accepted code.
+      if (submittedRef.current) {
+        setAcceptedCardOpen(true);
+        if (!prefersReducedMotion()) setVerdictFlash(true);
+      }
     }
     prevIsAlreadyCompleted.current = isAlreadyCompleted ?? false;
   }, [isAlreadyCompleted]);
@@ -211,6 +225,18 @@ export function ChallengeInterface({
     const id = setTimeout(() => setVerdictFlash(false), VERDICT_FLASH_MS);
     return () => clearTimeout(id);
   }, [verdictFlash]);
+
+  // Escape dismisses the Accepted card, alongside the close button and a click
+  // on the backdrop. The card is not a modal — it never traps focus — so the
+  // listener lives on the document.
+  useEffect(() => {
+    if (!acceptedCardOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setAcceptedCardOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [acceptedCardOpen]);
 
   const [panelHeight, setPanelHeight] = useState(120);
   // null = default 50/50 (both columns flex-1); a number = the user dragged the
@@ -385,6 +411,7 @@ export function ChallengeInterface({
   const completeLesson = useCallback(() => {
     setPendingSubmit(false);
     setRejectReason(null);
+    submittedRef.current = true;
     setVerdict("judging");
     onComplete?.();
 
@@ -932,13 +959,28 @@ export function ChallengeInterface({
             {/* Accepted verdict — appears once the card's green flash settles
                 to amber (immediately under reduced motion). Calm, no confetti:
                 celebration is reserved for deploy + credential-mint milestones
-                (LX-B11). */}
-            {verdict === "accepted" && !verdictFlash && (
+                (LX-B11). Dismissible via the close button, Escape or a click
+                on the backdrop: the read-only editor behind it holds the code
+                that was just accepted, and the toolbar keeps the lock note. */}
+            {verdict === "accepted" && !verdictFlash && acceptedCardOpen && (
               <div
                 role="status"
-                className="pointer-events-none absolute inset-0 flex items-center justify-center backdrop-blur-sm [background:color-mix(in_srgb,var(--bg)_60%,transparent)]"
+                data-testid="accepted-verdict"
+                onClick={() => setAcceptedCardOpen(false)}
+                className="verdict-accepted-overlay absolute inset-0 flex items-center justify-center backdrop-blur-sm [background:color-mix(in_srgb,var(--bg)_60%,transparent)]"
               >
-                <div className="verdict-accepted-card flex flex-col items-center gap-2 rounded-xl border-[2.5px] p-6 shadow-card">
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  className="verdict-accepted-card relative flex flex-col items-center gap-2 rounded-xl border-[2.5px] p-6 pt-8 shadow-card"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setAcceptedCardOpen(false)}
+                    aria-label={tA11y("close")}
+                    className="absolute right-2 top-2 rounded-md p-1 text-text-3 transition-colors hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  >
+                    <X size={16} weight="bold" aria-hidden="true" />
+                  </button>
                   <CheckCircle
                     size={32}
                     weight="duotone"
