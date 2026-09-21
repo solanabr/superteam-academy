@@ -174,11 +174,16 @@ async function drainQueue(options: {
 }
 
 /**
- * The coarse DB read behind every drain. Ordering, the precise backoff and the
- * cap all live in `selectDueRows` — the query only narrows enough to keep the
- * payload small: unresolved, inside the budget, and not attempted within the
+ * The coarse DB read behind every drain. Ordering, the retry budget, the precise
+ * backoff and the cap all live in `selectDueRows` — the query narrows only
+ * enough to keep the payload small: unresolved, and not attempted within the
  * SMALLEST backoff step. `limit * 4` is headroom so the precise filter still has
- * a full run's worth of rows to choose from after dropping the not-yet-due ones.
+ * a full run's worth of rows to choose from after dropping the ones it rejects.
+ *
+ * The retry budget is deliberately NOT a SQL predicate. `retry_count` is
+ * nullable, and `retry_count < 5` in Postgres drops a NULL row — it would be
+ * invisible to every drain forever. `selectDueRows` reads a NULL as 0, the way
+ * the column's own default does.
  */
 async function fetchDrainCandidates(
   adminClient: AdminClient,
@@ -189,7 +194,6 @@ async function fetchDrainCandidates(
     .from("pending_onchain_actions")
     .select("*")
     .is("resolved_at", null)
-    .lt("retry_count", MAX_RETRIES)
     .or(`last_attempt_at.is.null,last_attempt_at.lt.${cutoff}`);
 
   if (options.userId) query = query.eq("user_id", options.userId);
