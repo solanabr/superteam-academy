@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowRight, X } from "@phosphor-icons/react";
+import { ColosseumSeal } from "@/components/layout/colosseum-seal";
 
 /**
  * Top-of-app promo strip for the Solana Hackathon (owner 2026-09-21): register
@@ -59,11 +61,25 @@ export function HackathonBanner() {
       aria-label={t("label")}
       className="w-full border-b-[2.5px] border-[#1c1917] text-[#1c1917] [background:var(--accent)]"
     >
-      <div className="page-gutter mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-4 gap-y-2 py-2.5">
-        <p className="text-sm font-semibold">
-          <span aria-hidden="true" className="mr-1.5">
-            🏆
-          </span>
+      {/* Decorative "Crypto World's Fair" top piece — full-bleed painterly
+          strip. object-cover keeps the lockup centred as the width changes;
+          it carries no text the reader needs (that's the row below), so it is
+          aria-hidden. */}
+      <div className="relative h-9 w-full sm:h-12">
+        <Image
+          src="/promo/crypto-worlds-fair.png"
+          alt=""
+          aria-hidden="true"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-center"
+        />
+      </div>
+
+      <div className="page-gutter mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-4 gap-y-2 border-t-[2.5px] border-[#1c1917] py-2.5">
+        <p className="flex items-center gap-2 text-sm font-semibold">
+          <ColosseumSeal className="h-6 w-6 shrink-0" />
           {t("message")}
         </p>
 
