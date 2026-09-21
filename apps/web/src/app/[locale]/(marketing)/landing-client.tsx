@@ -430,7 +430,7 @@ export function LandingPageClient({
             The content centres in whatever space that leaves instead of
             gaining dead padding at the bottom. */}
         <section
-          className="relative flex min-h-[calc(100dvh-var(--header-h))] items-center overflow-hidden"
+          className="relative flex min-h-[calc(100dvh-var(--header-h))] items-start overflow-hidden"
           onMouseMove={handleHeroMove}
           onMouseLeave={resetHeroParallax}
         >
@@ -446,7 +446,7 @@ export function LandingPageClient({
             />
           </div>
 
-          <div className="page-gutter container w-full pb-10 pt-8 sm:pb-12 sm:pt-10 md:pb-14 md:pt-14">
+          <div className="page-gutter container w-full pb-10 pt-6 sm:pb-12 md:pb-14 md:pt-8">
             <div className="mx-auto grid max-w-6xl items-center gap-12 md:grid-cols-2 md:gap-16">
               <div>
                 <div
