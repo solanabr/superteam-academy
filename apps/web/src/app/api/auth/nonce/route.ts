@@ -7,7 +7,11 @@ import { ERROR_IDS } from "@/constants/errorIds";
 import { serverEnv } from "@/lib/env.server";
 
 const NONCE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const CONSUMED_TTL_MS = 60 * 60 * 1000; // 1 hour
 const MAX_PENDING_PER_IP = 10;
+// Cleanup and the rate-limit count are both single-row-ish statements server
+// side; anything past 2 s is a stalled socket, not a slow query.
+const NONCE_CLEANUP_TIMEOUT_MS = 2_000;
 
 // Auth/cookie + per-request DB access — never statically prerender (DYNAMIC_SERVER_USAGE).
 export const dynamic = "force-dynamic";
@@ -44,7 +48,8 @@ export async function GET(request: NextRequest) {
       .select("*", { count: "exact", head: true })
       .eq("status", "pending")
       .eq("ip_address", ip)
-      .gte("created_at", new Date(Date.now() - NONCE_TTL_MS).toISOString());
+      .gte("created_at", new Date(Date.now() - NONCE_TTL_MS).toISOString())
+      .abortSignal(AbortSignal.timeout(NONCE_CLEANUP_TIMEOUT_MS));
 
     if (countError) {
       console.error("[SIWS] Rate limit check error:", countError.message);
@@ -72,20 +77,39 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Background cleanup: expired pending (>5 min) and old consumed (>1 hour)
-    supabaseAdmin
+    // Background cleanup: expired pending (>5 min) and old consumed (>1 hour).
+    //
+    // ONE statement, not two: this used to fire two unawaited DELETEs per nonce
+    // request, each with `.then(() => {})` and no rejection handler. Postgres
+    // deletes in 0.13 ms; the p95 of 185 s was the Vercel→Supabase socket
+    // hanging, and with no `.catch` that surfaced as an unhandled rejection
+    // rather than a log line. Now: one `or`-filtered DELETE, a 2 s abort bound,
+    // and an explicit catch. Still fire-and-forget — a learner signing in must
+    // never wait on housekeeping — but it can no longer hang or crash the
+    // process, and the (status, created_at) index added in
+    // 20260921120000_perf_completion_counts_leaderboard_nonces.sql serves both
+    // legs without a half-table scan under the row lock.
+    const pendingCutoff = new Date(Date.now() - NONCE_TTL_MS).toISOString();
+    const consumedCutoff = new Date(Date.now() - CONSUMED_TTL_MS).toISOString();
+    void supabaseAdmin
       .from("siws_nonces")
       .delete()
-      .eq("status", "pending")
-      .lt("created_at", new Date(Date.now() - NONCE_TTL_MS).toISOString())
-      .then(() => {});
-
-    supabaseAdmin
-      .from("siws_nonces")
-      .delete()
-      .eq("status", "consumed")
-      .lt("created_at", new Date(Date.now() - 60 * 60 * 1000).toISOString())
-      .then(() => {});
+      .or(
+        `and(status.eq.pending,created_at.lt.${pendingCutoff}),` +
+          `and(status.eq.consumed,created_at.lt.${consumedCutoff})`
+      )
+      .abortSignal(AbortSignal.timeout(NONCE_CLEANUP_TIMEOUT_MS))
+      .then(({ error }) => {
+        if (error) {
+          console.error("[SIWS] Nonce cleanup error:", error.message);
+        }
+      })
+      .catch((err: unknown) => {
+        console.error(
+          "[SIWS] Nonce cleanup failed:",
+          err instanceof Error ? err.message : String(err)
+        );
+      });
 
     return NextResponse.json({
       nonce,

@@ -8,6 +8,8 @@ export type LeaderboardTimeframe = "weekly" | "monthly" | "alltime";
 
 export const LEADERBOARD_CACHE_TAG = "leaderboard";
 
+const LEADERBOARD_TIMEOUT_MS = 2_000;
+
 /**
  * Global XP leaderboard, shared by the `/api/leaderboard` route and the
  * leaderboard page. The `get_leaderboard` RPC is SECURITY DEFINER, anon-granted,
@@ -30,10 +32,17 @@ async function loadLeaderboard(
   timeframe: LeaderboardTimeframe
 ): Promise<LeaderboardEntry[]> {
   const supabase = createCookielessClient();
-  const { data, error } = await supabase.rpc("get_leaderboard", {
-    p_timeframe: timeframe,
-    p_limit: 20,
-  });
+  const { data, error } = await supabase
+    .rpc("get_leaderboard", {
+      p_timeframe: timeframe,
+      p_limit: 20,
+    })
+    // Postgres answers this in ~11 ms (max 214 ms over 30 d) and PostgREST caps
+    // any statement at 8 s, so a longer wait is a stalled Vercel→Supabase
+    // socket rather than a slow query. Unbounded it reached p95 182 s with the
+    // board render waiting on it; 2 s is far above the healthy round trip and
+    // turns a hung socket into a fast, loggable failure.
+    .abortSignal(AbortSignal.timeout(LEADERBOARD_TIMEOUT_MS));
 
   if (error) {
     // Throwing (not returning []) keeps the failure out of the data cache;
