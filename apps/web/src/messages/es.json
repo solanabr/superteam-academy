@@ -406,7 +406,13 @@
     "noFunctionFound": "No se encontró ninguna función en tu código",
     "rustAssertionFailed": "la aserción falló",
     "rustNoOutput": "La prueba no produjo salida",
-    "rustCompilationFailed": "Falló la compilación"
+    "rustCompilationFailed": "Falló la compilación",
+    "videoFallback": {
+      "regionLabel": "Video disponible solo en YouTube",
+      "watchOnYoutube": "Ver en YouTube",
+      "onlyOnYoutube": "Este video solo se puede ver en YouTube.",
+      "listenOnSpotify": "Escuchar en Spotify"
+    }
   },
   "dashboard": {
     "allCaughtUp": "¡Todo al día!",

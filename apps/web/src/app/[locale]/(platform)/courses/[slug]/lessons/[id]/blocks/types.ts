@@ -1,5 +1,6 @@
 import type { JSX, ReactNode } from "react";
 import type { Lesson, LessonBlock } from "@superteam-lms/types";
+import type { VideoEmbedMap } from "@/lib/video/types";
 
 /**
  * Shared context every block renderer receives. Interactive blocks contribute a
@@ -74,6 +75,14 @@ export interface BlockContext {
   instructionsSlot?: ReactNode;
   /** Disclosure sections (Topics/Hints/Discussion) rendered BELOW the AI pane (#942). */
   sectionsSlot?: ReactNode;
+  /**
+   * Server-side YouTube embeddability verdicts, keyed by video block key
+   * (`lib/video/embeddability`). A key whose verdict is `embeddable: false`
+   * renders the watch-on-YouTube card instead of a dead player. Optional and
+   * absent-means-embeddable: the teacher preview does not probe, and a YouTube
+   * outage degrades to rendering the player exactly as before.
+   */
+  videoEmbeds?: VideoEmbedMap;
 }
 
 export interface BlockRenderProps {

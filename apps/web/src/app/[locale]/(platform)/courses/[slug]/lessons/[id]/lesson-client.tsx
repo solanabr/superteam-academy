@@ -34,6 +34,7 @@ import {
   type JumpChip,
 } from "@/components/lessons/lesson-jump-chips";
 import { scrollBehavior } from "@/lib/reduced-motion";
+import type { VideoEmbedMap } from "@/lib/video/types";
 import { RENDERERS, type BlockContext } from "./blocks";
 
 /** Anchor for the toolbar's jump-to-discussion affordance (#942). */
@@ -131,6 +132,12 @@ interface LessonPageClientProps {
    * Defaults to false — live behaviour is untouched.
    */
   readOnly?: boolean;
+  /**
+   * Per-video-block embeddability, probed server-side (#video-embed-fallback).
+   * Threaded straight onto `BlockContext`; absent means "render the player",
+   * which is what the teacher preview and any probe failure produce.
+   */
+  videoEmbeds?: VideoEmbedMap;
 }
 
 interface CompletionResponse {
@@ -191,6 +198,7 @@ export function LessonPageClient({
   courseAvailableLocales = null,
   hrefBase,
   readOnly = false,
+  videoEmbeds,
 }: LessonPageClientProps) {
   // Live catalogue unless a caller overrides it (#831 teacher preview).
   const linkBase = hrefBase ?? `/${locale}/courses`;
@@ -613,6 +621,7 @@ export function LessonPageClient({
       programKeypairSecret,
       resetBuild,
       canSubmit: gateReady,
+      videoEmbeds,
     }),
     [
       lesson,
@@ -634,6 +643,7 @@ export function LessonPageClient({
       programKeypairSecret,
       resetBuild,
       gateReady,
+      videoEmbeds,
     ]
   );
 

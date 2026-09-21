@@ -118,6 +118,9 @@ export function buildCsp(nonce: string): string {
       "https://arweave.net https://*.arweave.net",
       supabase.http,
       "https://stats.g.doubleclick.net",
+      // YouTube poster frames for the watch-on-YouTube fallback card — the only
+      // thing a non-embeddable lesson video can still show of itself.
+      "https://i.ytimg.com",
       // Dynamic's wallet icons (sprite + per-wallet art) — found empirically,
       // like its connect-src entries below; the SDK builds the URLs at runtime.
       "https://iconic.dynamic-static-assets.com https://dynamic-static-assets.com",
