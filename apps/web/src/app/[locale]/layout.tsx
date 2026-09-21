@@ -8,6 +8,7 @@ import { AnalyticsProvider } from "@/components/analytics/analytics-provider";
 import { AuthProvider } from "@/lib/auth/auth-provider";
 import { ReferralCapture } from "@/components/referrals/referral-capture";
 import { Header } from "@/components/layout/header";
+import { HackathonPromo } from "@/components/landing/hackathon-promo";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { ToastContainer } from "@/components/ui/toast-container";
 
@@ -58,6 +59,10 @@ export default async function LocaleLayout(props: LocaleLayoutProps) {
             <div className="grid-bg flex min-h-screen flex-col bg-[var(--bg)]">
               <Header />
               <main id="main-content" className="flex-1 pt-[var(--header-h)]">
+                {/* Full-bleed hackathon bar — shows on the landing and courses
+                    catalog only (its own route gate), above every page's
+                    gutter container so it stays edge-to-edge. */}
+                <HackathonPromo />
                 {children}
               </main>
               <MobileBottomNav />
