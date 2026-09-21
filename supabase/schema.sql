@@ -1137,12 +1137,22 @@ CREATE TABLE pending_onchain_actions (
   failed_at      TIMESTAMPTZ DEFAULT NOW(),
   retry_count    INT DEFAULT 0,
   last_error     TEXT,
+  -- Stamped by the drain BEFORE each attempt (markAttempt), so an attempt that
+  -- dies mid-flight still counts and backoff has a trustworthy key. Separate
+  -- from retry_count, which is the FAILURE budget that deferrals never spend.
+  last_attempt_at TIMESTAMPTZ,
+  attempt_count  INT NOT NULL DEFAULT 0,
   resolved_at    TIMESTAMPTZ,
   UNIQUE(user_id, action_type, reference_id)
 );
 
 CREATE INDEX idx_pending_onchain_actions_user_id
   ON pending_onchain_actions(user_id)
+  WHERE resolved_at IS NULL;
+
+-- Oldest-debt-first selection across ALL users, for the 15-minute cron drain.
+CREATE INDEX idx_pending_onchain_actions_drain
+  ON pending_onchain_actions(failed_at)
   WHERE resolved_at IS NULL;
 
 ALTER TABLE pending_onchain_actions ENABLE ROW LEVEL SECURITY;

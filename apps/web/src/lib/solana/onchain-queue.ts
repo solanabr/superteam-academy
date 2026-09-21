@@ -10,7 +10,8 @@ import type { Database } from "@/lib/supabase/types";
 import {
   creditQuestXpRows,
   creditXpAndSettle,
-  MAX_RETRIES,
+  markAttempt,
+  bumpRetry,
 } from "@/lib/gamification/xp-queue-settlement";
 import {
   fetchAchievementReceipt,
@@ -26,8 +27,20 @@ import {
   sendSignedTransaction,
   TransactionNotBroadcastError,
 } from "./academy-program";
-import { describeTxError } from "./describe-tx-error";
 import { getProgramId } from "./pda";
+import {
+  ALREADY_SATISFIED_ERROR_CODES,
+  isAlreadySatisfied,
+  serializeQueueError,
+} from "./queue-errors";
+import {
+  BACKOFF_BASE_MS,
+  DRAIN_LIMIT,
+  MAX_RETRIES,
+  groupByUser,
+  selectDueRows,
+  type DrainableRow,
+} from "@/lib/queue/selection";
 
 type OnchainActionType =
   | "achievement"
@@ -84,21 +97,121 @@ export async function withRetry<T>(
 // creditQuestXpRows() in lib/gamification/xp-queue-settlement.ts (the chain-free
 // settlement module both passes share) for how delivery is made idempotent.
 
+export interface DrainSummary {
+  /** Rows the selection policy handed this run. */
+  selected: number;
+  /** Distinct learners those rows belong to. */
+  users: number;
+  /** Rows the run stamped an attempt on (selected minus a wallet-less skip). */
+  attempted: number;
+}
+
+/**
+ * Drain the rows owed to ONE learner, oldest first. Called from the three login
+ * routes (inside `after()`), so a learner who signs in gets their own debt
+ * settled immediately rather than waiting for the next cron tick.
+ */
 export async function retryPendingOnchainActions(
   userId: string
-): Promise<void> {
+): Promise<DrainSummary> {
+  return drainQueue({ userId });
+}
+
+/**
+ * Drain the OLDEST unresolved rows across every learner. This is the path that
+ * makes delivery independent of the owner signing in again — the gap that left
+ * 77 `quest_xp_mint` rows unattempted for up to 29 days. Wired to
+ * `/api/cron/onchain-queue` every 15 minutes; see `apps/web/vercel.json`.
+ */
+export async function drainAllPendingOnchainActions(
+  options: { limit?: number } = {}
+): Promise<DrainSummary> {
+  return drainQueue({ limit: options.limit ?? DRAIN_LIMIT });
+}
+
+async function drainQueue(options: {
+  userId?: string;
+  limit?: number;
+}): Promise<DrainSummary> {
   const adminClient = createAdminClient();
   const connection = getConnection();
+  const now = Date.now();
+  const limit = options.limit ?? DRAIN_LIMIT;
 
-  const { data: rows, error: fetchError } = await adminClient
+  const candidates = await fetchDrainCandidates(adminClient, {
+    userId: options.userId,
+    now,
+    limit,
+  });
+  const due = selectDueRows(candidates, { now, limit });
+  // The single-user query already narrowed by owner, so grouping would only be
+  // a chance to lose rows. The global (cron) run has to group, because the
+  // per-user pipeline is what owns the freeze check, the wallet read and the
+  // Pass-1 quest sweep.
+  const groups = options.userId
+    ? due.length > 0
+      ? [{ userId: options.userId, rows: due }]
+      : []
+    : groupByUser(due);
+
+  const summary: DrainSummary = {
+    selected: due.length,
+    users: groups.length,
+    attempted: 0,
+  };
+
+  for (const group of groups) {
+    await drainRowsForUser(
+      adminClient,
+      connection,
+      group.userId,
+      group.rows as PendingActionRow[],
+      summary
+    );
+  }
+
+  return summary;
+}
+
+/**
+ * The coarse DB read behind every drain. Ordering, the precise backoff and the
+ * cap all live in `selectDueRows` — the query only narrows enough to keep the
+ * payload small: unresolved, inside the budget, and not attempted within the
+ * SMALLEST backoff step. `limit * 4` is headroom so the precise filter still has
+ * a full run's worth of rows to choose from after dropping the not-yet-due ones.
+ */
+async function fetchDrainCandidates(
+  adminClient: AdminClient,
+  options: { userId?: string; now: number; limit: number }
+): Promise<DrainableRow[]> {
+  const cutoff = new Date(options.now - BACKOFF_BASE_MS).toISOString();
+  let query = adminClient
     .from("pending_onchain_actions")
     .select("*")
-    .eq("user_id", userId)
     .is("resolved_at", null)
-    .lt("retry_count", MAX_RETRIES);
+    .lt("retry_count", MAX_RETRIES)
+    .or(`last_attempt_at.is.null,last_attempt_at.lt.${cutoff}`);
 
-  if (fetchError || !rows || rows.length === 0) return;
+  if (options.userId) query = query.eq("user_id", options.userId);
 
+  const { data, error } = await query
+    .order("failed_at", { ascending: true, nullsFirst: true })
+    .limit(options.limit * 4);
+
+  if (error) {
+    console.error(`[onchain-queue] candidate fetch failed: ${error.message}`);
+    return [];
+  }
+  return (data ?? []) as DrainableRow[];
+}
+
+async function drainRowsForUser(
+  adminClient: AdminClient,
+  connection: ReturnType<typeof getConnection>,
+  userId: string,
+  rows: PendingActionRow[],
+  summary: DrainSummary
+): Promise<void> {
   // ── Pass 1: DB-only quest_xp credits (no wallet required) ──
   // For a learner with a linked wallet, each credit that lands also enqueues a
   // `quest_xp_mint` row; those come back here so the mint happens on the SAME
@@ -138,13 +251,31 @@ export async function retryPendingOnchainActions(
     .eq("id", userId)
     .single();
 
-  if (!profile?.wallet_address) return;
+  // No linked wallet means every Pass-2 action is unperformable — there is no
+  // recipient. Return without touching a thing (no attempt stamped, no retry
+  // burned): the rows wait for the learner to link a wallet. Said out loud,
+  // because a silent return here is indistinguishable from an empty queue and
+  // that ambiguity is part of why the prod backlog went unnoticed.
+  if (!profile?.wallet_address) {
+    console.warn(
+      `[onchain-queue] user ${userId} has ${onchainRows.length} pending on-chain row(s) but no linked wallet — nothing attempted`
+    );
+    return;
+  }
 
   const wallet = new PublicKey(profile.wallet_address);
 
   // onchainRows is already quest_xp-free (Pass 1 owns those) and carries the
   // mint rows Pass 1 just enqueued.
   for (const row of onchainRows) {
+    // Record the attempt BEFORE doing it (see markAttempt). Two reasons, both
+    // learned from the 21 Sep prod backlog: only the failure path used to write
+    // anything, so an attempt killed mid-flight — serverless freeze, RPC hang,
+    // a throw past the catch — left no trace and the row looked untouched
+    // forever; and `last_attempt_at` is the backoff key, so without it a row is
+    // re-attempted on every single tick.
+    await markAttempt(adminClient, row);
+    summary.attempted += 1;
     try {
       const actionType = row.action_type as OnchainActionType;
       const payload = row.payload as Record<string, unknown>;
@@ -204,8 +335,18 @@ export async function retryPendingOnchainActions(
             getProgramId()
           )) as Record<string, unknown> | null;
 
-          // Already issued on-chain — just resolve the queue entry
-          if (enrollment?.credential_asset) break;
+          // Already issued on-chain — reconcile the local row if the mint
+          // landed but the DB write did not, then resolve the queue entry.
+          if (enrollment?.credential_asset) {
+            await reconcileCertificateRow(
+              adminClient,
+              connection,
+              userId,
+              wallet,
+              courseId
+            );
+            break;
+          }
 
           // LX-E2 — re-run the capstone gate HERE too: a `certificate` row
           // queued by the webhook (e.g. the deploy save lagged behind finalize)
@@ -640,28 +781,162 @@ export async function retryPendingOnchainActions(
         .update({ resolved_at: new Date().toISOString() })
         .eq("id", row.id);
     } catch (err) {
-      // describeTxError, not err.message: Anchor destroys the message of any
-      // transaction that failed AFTER broadcast, leaving the useless literal
-      // "Unknown action 'undefined'" as the whole error (see the helper).
-      const message = describeTxError(err);
-      const nextRetryCount = (row.retry_count ?? 0) + 1;
-      await adminClient
-        .from("pending_onchain_actions")
-        .update({
-          retry_count: nextRetryCount,
-          last_error: message,
-        })
-        .eq("id", row.id);
+      // serializeQueueError, not err.message: Anchor destroys the message of
+      // any transaction that failed AFTER broadcast, and `String(err)` on a
+      // non-Error throw writes the literal "[object Object]" (two prod rows
+      // carry exactly that). The helper names both cases and appends the
+      // program error code, the signature and a log excerpt when present.
+      const message = serializeQueueError(err);
 
-      // At the cap the fetch filter stops selecting this row, so no later drain
-      // will ever see it again. Say so once, with the identity an operator needs
-      // to requeue it, instead of letting it disappear.
-      if (nextRetryCount >= MAX_RETRIES) {
+      // TERMINAL, ALREADY-SATISFIED errors. A code in this set means the chain
+      // already holds the state this row was trying to produce — 6017
+      // CredentialAlreadyIssued is the one two prod `certificate` rows have
+      // been stuck on since 31 Aug / 9 Sep. Retrying is guaranteed to fail the
+      // same way until the budget runs out and the row is abandoned in silence,
+      // so resolve it, and reconcile whatever local row is missing first.
+      const satisfied = isAlreadySatisfied(err);
+      if (satisfied) {
+        await resolveAsAlreadySatisfied(
+          adminClient,
+          connection,
+          userId,
+          wallet,
+          row,
+          satisfied.code,
+          message
+        );
+        continue;
+      }
+
+      await bumpRetry(adminClient, row, message);
+
+      // At the cap the selection filter stops choosing this row, so no later
+      // drain will ever see it again. Say so once, with the identity an
+      // operator needs to requeue it, instead of letting it disappear.
+      const spent = (row.retry_count ?? 0) + 1;
+      if (spent >= MAX_RETRIES) {
         console.error(
           `[onchain-queue] row ${row.id} (${row.action_type} ${row.reference_id}, user ${userId}) exhausted its ${MAX_RETRIES}-attempt budget and will no longer be retried: ${message}`
         );
       }
     }
+  }
+}
+
+/**
+ * Settle a row whose failure proves the on-chain state is ALREADY what we
+ * wanted. The row is resolved either way — the alternative is retrying an
+ * error that can never change — but local state is reconciled first, because
+ * the whole point of the queue is that the DB agrees with the chain.
+ *
+ * Only `certificate` has a local row that can be missing at this point: an
+ * `issueCredential` that reverted with CredentialAlreadyIssued means the
+ * credential exists on-chain while `certificates` may hold nothing (the row is
+ * written only after a successful mint). `course_finalize` and the `xp` path
+ * keep their own ledgers idempotently, and an achievement is short-circuited by
+ * its receipt PDA before it ever reaches here.
+ */
+async function resolveAsAlreadySatisfied(
+  adminClient: AdminClient,
+  connection: ReturnType<typeof getConnection>,
+  userId: string,
+  wallet: PublicKey,
+  row: PendingActionRow,
+  code: number,
+  message: string
+): Promise<void> {
+  const name = ALREADY_SATISFIED_ERROR_CODES[code] ?? `error-${code}`;
+  console.warn(
+    `[onchain-queue] row ${row.id} (${row.action_type} ${row.reference_id}, user ${userId}) failed with ${name} (${code}) — the chain already holds this state, resolving instead of retrying`
+  );
+
+  if (row.action_type === "certificate") {
+    const payload = row.payload as Record<string, unknown>;
+    const courseId =
+      typeof payload.courseId === "string" ? payload.courseId : null;
+    if (courseId) {
+      await reconcileCertificateRow(
+        adminClient,
+        connection,
+        userId,
+        wallet,
+        courseId
+      );
+    }
+  }
+
+  await adminClient
+    .from("pending_onchain_actions")
+    .update({
+      resolved_at: new Date().toISOString(),
+      last_error: `resolved-already-satisfied:${name}: ${message}`,
+    })
+    .eq("id", row.id);
+}
+
+/**
+ * Backfill the local `certificates` row for a credential that exists on-chain
+ * but not in the DB. Reads the asset address off the Enrollment PDA rather than
+ * inventing one, and does nothing when the row is already there or the chain
+ * read comes back empty — a wrong mint_address would be worse than a missing
+ * one. Never throws: the caller is resolving a terminal row, and a failed
+ * reconcile must not turn that into another retry.
+ */
+async function reconcileCertificateRow(
+  adminClient: AdminClient,
+  connection: ReturnType<typeof getConnection>,
+  userId: string,
+  wallet: PublicKey,
+  courseId: string
+): Promise<void> {
+  try {
+    const { data: existing } = await adminClient
+      .from("certificates")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("course_id", courseId)
+      .maybeSingle();
+    if (existing) return;
+
+    const enrollment = (await fetchEnrollment(
+      courseId,
+      wallet,
+      connection,
+      getProgramId()
+    )) as Record<string, unknown> | null;
+    const asset = enrollment?.credential_asset;
+    const mintAddress =
+      typeof asset === "string"
+        ? asset
+        : typeof (asset as { toBase58?: () => string })?.toBase58 === "function"
+          ? (asset as { toBase58: () => string }).toBase58()
+          : null;
+    if (!mintAddress) {
+      console.error(
+        `[onchain-queue] cannot reconcile certificate for ${userId}/${courseId}: no credential asset on the Enrollment PDA`
+      );
+      return;
+    }
+
+    const course = await getCourseById(courseId);
+    const { error } = await adminClient.from("certificates").upsert(
+      {
+        user_id: userId,
+        course_id: courseId,
+        course_title: course?.title ?? courseId,
+        mint_address: mintAddress,
+        credential_type: "core",
+      },
+      { onConflict: "user_id,course_id" }
+    );
+    if (error) throw new Error(error.message);
+    console.warn(
+      `[onchain-queue] reconciled missing certificates row for ${userId}/${courseId} from on-chain asset ${mintAddress}`
+    );
+  } catch (err) {
+    console.error(
+      `[onchain-queue] certificate reconcile failed for ${userId}/${courseId}: ${serializeQueueError(err)}`
+    );
   }
 }
 

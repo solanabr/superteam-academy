@@ -518,8 +518,10 @@ export type Database = {
       pending_onchain_actions: {
         Row: {
           action_type: string;
+          attempt_count: number;
           failed_at: string | null;
           id: string;
+          last_attempt_at: string | null;
           last_error: string | null;
           payload: Json;
           reference_id: string;
@@ -529,8 +531,10 @@ export type Database = {
         };
         Insert: {
           action_type: string;
+          attempt_count?: number;
           failed_at?: string | null;
           id?: string;
+          last_attempt_at?: string | null;
           last_error?: string | null;
           payload: Json;
           reference_id: string;
@@ -540,8 +544,10 @@ export type Database = {
         };
         Update: {
           action_type?: string;
+          attempt_count?: number;
           failed_at?: string | null;
           id?: string;
+          last_attempt_at?: string | null;
           last_error?: string | null;
           payload?: Json;
           reference_id?: string;

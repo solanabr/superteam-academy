@@ -8,6 +8,10 @@
     {
       "path": "/api/cron/reengagement",
       "schedule": "0 13 * * *"
+    },
+    {
+      "path": "/api/cron/onchain-queue",
+      "schedule": "*/15 * * * *"
     }
   ]
 }
