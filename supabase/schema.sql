@@ -2886,8 +2886,10 @@ AS $$
 DECLARE
   v_interval INT;
 BEGIN
-  SELECT interval_days INTO v_interval
-    FROM public.review_schedule WHERE box = 1;
+  -- `rs.` is load-bearing: bare `box` collides with the RETURNS TABLE OUT
+  -- column of the same name, which errored on EVERY call until #1247.
+  SELECT rs.interval_days INTO v_interval
+    FROM public.review_schedule rs WHERE rs.box = 1;
 
   INSERT INTO public.review_items (user_id, item_key, box, due_at)
   VALUES (p_user_id, p_item_key, 1, now() + make_interval(days => v_interval))
