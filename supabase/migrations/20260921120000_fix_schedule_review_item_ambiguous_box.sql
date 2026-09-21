@@ -47,11 +47,13 @@ $$;
 REVOKE ALL ON FUNCTION schedule_review_item(UUID, TEXT) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION schedule_review_item(UUID, TEXT) TO service_role;
 
--- MANUAL VERIFICATION (no pgTAP harness in this repo; a unit test cannot
--- execute plpgsql, so the app-side guard is the static check in
+-- MANUAL VERIFICATION — DONE (no pgTAP harness in this repo; a unit test cannot
+-- execute plpgsql, so the committed guard is the static check in
 -- apps/web/src/lib/review/__tests__/review-rpc-sql.test.ts).
 --
--- After applying, against prod as service_role:
+-- Applied to prod via MCP 2026-09-21 as ledger version `20260921140739`;
+-- steps 1 and 2 below were run and passed, and the probe row was removed.
+-- Kept as the record of what was checked:
 --
 --   -- 1. Fails BEFORE this migration, returns a row after it.
 --   SELECT * FROM schedule_review_item(
