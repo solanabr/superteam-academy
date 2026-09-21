@@ -102,7 +102,12 @@ export interface DrainSummary {
   selected: number;
   /** Distinct learners those rows belong to. */
   users: number;
-  /** Rows the run stamped an attempt on (selected minus a wallet-less skip). */
+  /**
+   * On-chain (Pass 2) rows this run stamped an attempt on. Not equal to
+   * `selected`: it excludes rows skipped for a missing wallet and the DB-only
+   * `quest_xp` credits (Pass 1), and it INCLUDES the `quest_xp_mint` rows Pass 1
+   * enqueued during this same run, which is why it can exceed `selected`.
+   */
   attempted: number;
 }
 
