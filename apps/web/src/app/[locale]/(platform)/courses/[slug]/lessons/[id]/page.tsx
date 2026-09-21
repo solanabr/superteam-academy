@@ -6,6 +6,7 @@ import {
   getLessonSkills,
 } from "@/lib/content/queries";
 import { getLessonCompletionCount } from "@/lib/lessons/completion-count";
+import { getLessonVideoEmbeds } from "@/lib/video/embeddability";
 import { LessonPageClient } from "./lesson-client";
 
 interface LessonPageProps {
@@ -25,11 +26,15 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
   // buildersCompleted degrades to 0 on any failure (and 0 when the course is
   // not synced yet) — the chip is enrichment and must never block the render.
-  const [skills, buildersCompleted] = await Promise.all([
+  // videoEmbeds: one cached oembed probe per YouTube id (>= 1 day, tagged with
+  // the course tag). Never throws and never blocks — an unreachable YouTube
+  // resolves to "embeddable", i.e. the player renders exactly as before.
+  const [skills, buildersCompleted, videoEmbeds] = await Promise.all([
     getLessonSkills(lesson._id),
     courseInfo
       ? getLessonCompletionCount(courseInfo._id, lesson._id)
       : Promise.resolve(0),
+    getLessonVideoEmbeds(lesson.blocks),
   ]);
 
   return (
@@ -45,6 +50,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
       buildersCompleted={buildersCompleted}
       courseSourceLocale={courseInfo?.sourceLocale ?? null}
       courseAvailableLocales={courseInfo?.availableLocales ?? null}
+      videoEmbeds={videoEmbeds}
     />
   );
 }

@@ -406,7 +406,13 @@
     "noFunctionFound": "No function found in your code",
     "rustAssertionFailed": "assertion failed",
     "rustNoOutput": "Test did not produce output",
-    "rustCompilationFailed": "Compilation failed"
+    "rustCompilationFailed": "Compilation failed",
+    "videoFallback": {
+      "regionLabel": "Video available on YouTube only",
+      "watchOnYoutube": "Watch on YouTube",
+      "onlyOnYoutube": "This video can only be watched on YouTube.",
+      "listenOnSpotify": "Listen on Spotify"
+    }
   },
   "dashboard": {
     "allCaughtUp": "All caught up!",

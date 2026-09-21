@@ -32,6 +32,13 @@ describe("page CSP (the one middleware actually serves)", () => {
     expect(frameSrc).toContain("https://player.vimeo.com");
   });
 
+  it("allows the YouTube poster frame the fallback card renders", () => {
+    // A video whose owner disabled embedding gets a watch-on-YouTube card whose
+    // only image is i.ytimg.com's thumbnail; without this the card renders a
+    // blank plate and the CSP violation is silent.
+    expect(directive("img-src")).toContain("https://i.ytimg.com");
+  });
+
   it("allows the Dynamic embedded-wallet origins (read from the SDK, not guessed)", () => {
     // connect-src: the SDK's API + telemetry. Without these every sign-in dies
     // as a CSP violation before Dynamic's flow can open — the same failure mode

@@ -21,3 +21,4 @@ export * from "./checks/gate19-skills";
 export * from "./checks/gate20-originality";
 export * from "./checks/gate21-version-currency";
 export * from "./checks/gate22-harness";
+export * from "./checks/gate23-video-embeddable";
