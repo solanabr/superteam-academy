@@ -8,6 +8,7 @@ import { AnalyticsProvider } from "@/components/analytics/analytics-provider";
 import { AuthProvider } from "@/lib/auth/auth-provider";
 import { ReferralCapture } from "@/components/referrals/referral-capture";
 import { Header } from "@/components/layout/header";
+import { HackathonBanner } from "@/components/layout/hackathon-banner";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { ToastContainer } from "@/components/ui/toast-container";
 
@@ -58,6 +59,10 @@ export default async function LocaleLayout(props: LocaleLayoutProps) {
             <div className="grid-bg flex min-h-screen flex-col bg-[var(--bg)]">
               <Header />
               <main id="main-content" className="flex-1 pt-[var(--header-h)]">
+                {/* Promo strip at the very top of the content area (main
+                    already clears the fixed header). Full-bleed on every
+                    route; dismissible and remembered per device. */}
+                <HackathonBanner />
                 {children}
               </main>
               <MobileBottomNav />

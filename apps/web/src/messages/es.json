@@ -30,6 +30,13 @@
     "all": "Todos",
     "viewOnSolanaExplorer": "Ver en Solana Explorer: {address}"
   },
+  "hackathonBanner": {
+    "label": "Anuncio del Solana Hackathon",
+    "message": "¿Vas a participar en el Solana Hackathon?",
+    "register": "Regístrate",
+    "takeCourse": "Haz el curso de preparación",
+    "dismiss": "Descartar"
+  },
   "teach": {
     "title": "Tus cursos",
     "subtitle": "Vista de solo lectura de los cursos sincronizados con tu billetera.",

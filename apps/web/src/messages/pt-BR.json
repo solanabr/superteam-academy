@@ -30,6 +30,13 @@
     "all": "Todos",
     "viewOnSolanaExplorer": "Ver no Solana Explorer: {address}"
   },
+  "hackathonBanner": {
+    "label": "Aviso do Solana Hackathon",
+    "message": "Vai participar do Solana Hackathon?",
+    "register": "Inscreva-se",
+    "takeCourse": "Faça o curso de preparação",
+    "dismiss": "Dispensar"
+  },
   "teach": {
     "title": "Seus cursos",
     "subtitle": "Visualização somente leitura dos cursos sincronizados com sua carteira.",
