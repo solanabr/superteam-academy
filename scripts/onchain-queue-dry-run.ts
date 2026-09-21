@@ -26,7 +26,11 @@ import {
   selectDueRows,
   type DrainableRow,
 } from "../apps/web/src/lib/queue/selection";
-import { isAlreadySatisfied } from "../apps/web/src/lib/solana/queue-errors";
+import {
+  ALREADY_SATISFIED_ERROR_CODES,
+  isAlreadySatisfied,
+  parseProgramError,
+} from "../apps/web/src/lib/solana/queue-errors";
 
 const DRY_RUN = process.argv.includes("--dry-run");
 
@@ -75,6 +79,16 @@ async function main(): Promise<void> {
     ])
   );
 
+  // The drain scopes terminal classification to the academy program, so the
+  // report has to as well or it would over-promise. Unset = report nothing as
+  // terminal rather than guess.
+  const programId = process.env.NEXT_PUBLIC_PROGRAM_ID ?? null;
+  if (!programId) {
+    console.error(
+      "NEXT_PUBLIC_PROGRAM_ID is unset — terminal-error classification will be reported as unknown"
+    );
+  }
+
   const counts: Record<string, number> = {};
   const bump = (key: string) => {
     counts[key] = (counts[key] ?? 0) + 1;
@@ -101,9 +115,24 @@ async function main(): Promise<void> {
     // Reported before the cap, because "this row will never succeed and the
     // drain now resolves it" is the fact worth seeing for the whole backlog,
     // not just for the 25 rows this particular run would take.
-    const terminal = isAlreadySatisfied({ message: row.last_error ?? "" });
-    if (terminal) {
-      bump(`resolve: already satisfied on-chain (${terminal.name})`);
+    //
+    // Two-tier, because the drain resolves a row only when the code is
+    // ATTRIBUTABLE to the academy program (gate finding 4) and a stored
+    // `last_error` string usually carries no `Program <id> invoke` frame to
+    // attribute from — the live thrown error does. So: "resolve" when this text
+    // alone is enough, "likely resolve" when the code matches but attribution
+    // has to wait for the runtime error. Neither is a row this run will send.
+    const stored = { message: row.last_error ?? "" };
+    const attributed = programId ? isAlreadySatisfied(stored, programId) : null;
+    if (attributed) {
+      bump(`resolve: already satisfied on-chain (${attributed.name})`);
+      continue;
+    }
+    const code = parseProgramError(stored)?.code;
+    if (code !== undefined && code in ALREADY_SATISFIED_ERROR_CODES) {
+      bump(
+        `likely resolve: ${ALREADY_SATISFIED_ERROR_CODES[code]} (${code}) — awaits runtime program attribution`
+      );
       continue;
     }
     if (!selectedIds.has(row.id)) {
@@ -120,11 +149,11 @@ async function main(): Promise<void> {
   console.log(`pending_onchain_actions — unresolved rows: ${rows.length}`);
   console.log(`learners affected: ${userIds.length}`);
   console.log(
-    `this run would select ${selected.length} (cap ${DRAIN_LIMIT}), oldest first`
+    `this run would select ${selected.length} (cap ${DRAIN_LIMIT}), least-recently-attempted first`
   );
   if (selected.length > 0) {
     console.log(
-      `oldest selected: ${selected[0].action_type} ${selected[0].reference_id} (failed_at ${selected[0].failed_at})`
+      `first selected: ${selected[0].action_type} ${selected[0].reference_id} (failed_at ${selected[0].failed_at})`
     );
   }
   console.log("");

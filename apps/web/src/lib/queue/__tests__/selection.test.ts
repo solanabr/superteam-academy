@@ -5,7 +5,8 @@ import {
   DRAIN_LIMIT,
   MAX_RETRIES,
   backoffMs,
-  compareOldestFirst,
+  attemptFloorMs,
+  compareLeastRecentlyAttempted,
   groupByUser,
   isDueForRetry,
   selectDueRows,
@@ -41,6 +42,16 @@ function row(overrides: Partial<DrainableRow> & { id: string }): DrainableRow {
 
 const minutesAgo = (n: number) => new Date(NOW - n * 60_000).toISOString();
 
+describe("attemptFloorMs", () => {
+  it("charges nothing before the first attempt and grows after it", () => {
+    expect(attemptFloorMs(0)).toBe(0);
+    expect(attemptFloorMs(1)).toBe(BACKOFF_BASE_MS);
+    expect(attemptFloorMs(3)).toBe(BACKOFF_BASE_MS * 4);
+    expect(attemptFloorMs(null)).toBe(0);
+    expect(attemptFloorMs(99)).toBe(BACKOFF_MAX_MS);
+  });
+});
+
 describe("backoffMs", () => {
   it("makes a never-failed row due immediately and grows 4x per failure", () => {
     expect(backoffMs(0)).toBe(0);
@@ -61,29 +72,65 @@ describe("backoffMs", () => {
 
 describe("isDueForRetry", () => {
   it("is always due when nothing has ever been attempted", () => {
-    expect(isDueForRetry({ retry_count: 4, last_attempt_at: null }, NOW)).toBe(
-      true
-    );
-  });
-
-  it("holds a just-attempted failing row back, and releases it after backoff", () => {
-    const justTried = { retry_count: 1, last_attempt_at: minutesAgo(1) };
-    expect(isDueForRetry(justTried, NOW)).toBe(false);
     expect(
-      isDueForRetry({ retry_count: 1, last_attempt_at: minutesAgo(6) }, NOW)
+      isDueForRetry(
+        { retry_count: 4, attempt_count: 9, last_attempt_at: null },
+        NOW
+      )
     ).toBe(true);
   });
 
-  it("holds a row attempted this second even with no failures recorded", () => {
-    // A deferral stamps last_attempt_at without spending the budget; backoff(0)
-    // is 0, so it is due again on the next run but never twice in one run.
-    const deferred = { retry_count: 0, last_attempt_at: minutesAgo(0) };
-    expect(isDueForRetry(deferred, NOW)).toBe(true);
+  it("holds a just-attempted failing row back, and releases it after backoff", () => {
+    const justTried = {
+      retry_count: 1,
+      attempt_count: 1,
+      last_attempt_at: minutesAgo(1),
+    };
+    expect(isDueForRetry(justTried, NOW)).toBe(false);
+    expect(
+      isDueForRetry(
+        { retry_count: 1, attempt_count: 1, last_attempt_at: minutesAgo(6) },
+        NOW
+      )
+    ).toBe(true);
+  });
+
+  it("holds a DEFERRED row back even though it spent no retry budget", () => {
+    // GATE finding 1: a deferral leaves retry_count at 0, so backoffMs alone
+    // said "due now" forever and a gated row was permanently top of the queue.
+    // attempt_count is what charges it a delay.
+    const deferred = {
+      retry_count: 0,
+      attempt_count: 1,
+      last_attempt_at: minutesAgo(1),
+    };
+    expect(isDueForRetry(deferred, NOW)).toBe(false);
+    expect(
+      isDueForRetry(
+        { retry_count: 0, attempt_count: 1, last_attempt_at: minutesAgo(6) },
+        NOW
+      )
+    ).toBe(true);
+  });
+
+  it("backs a repeatedly-deferred row off further each time", () => {
+    // 40 deferrals is the capstone-gate shape: still owed, but asking again
+    // every 15 minutes for a month is pure churn.
+    const gated = {
+      retry_count: 0,
+      attempt_count: 40,
+      last_attempt_at: minutesAgo(60),
+    };
+    expect(isDueForRetry(gated, NOW)).toBe(false);
+    expect(attemptFloorMs(40)).toBe(BACKOFF_MAX_MS);
   });
 
   it("does not pin a row out of the queue on an unparseable stamp", () => {
     expect(
-      isDueForRetry({ retry_count: 2, last_attempt_at: "not a date" }, NOW)
+      isDueForRetry(
+        { retry_count: 2, attempt_count: 2, last_attempt_at: "not a date" },
+        NOW
+      )
     ).toBe(true);
   });
 });
@@ -117,8 +164,18 @@ describe("selectDueRows", () => {
   it("drops rows whose backoff has not elapsed", () => {
     const selected = selectDueRows(
       [
-        row({ id: "cooling", retry_count: 2, last_attempt_at: minutesAgo(5) }),
-        row({ id: "ready", retry_count: 2, last_attempt_at: minutesAgo(25) }),
+        row({
+          id: "cooling",
+          retry_count: 2,
+          attempt_count: 2,
+          last_attempt_at: minutesAgo(5),
+        }),
+        row({
+          id: "ready",
+          retry_count: 2,
+          attempt_count: 2,
+          last_attempt_at: minutesAgo(25),
+        }),
       ],
       { now: NOW }
     );
@@ -172,12 +229,12 @@ describe("groupByUser", () => {
   });
 });
 
-describe("compareOldestFirst", () => {
+describe("compareLeastRecentlyAttempted", () => {
   it("breaks a tie on id, so a run is deterministic", () => {
     const a = row({ id: "a", failed_at: "2026-09-01T00:00:00Z" });
     const b = row({ id: "b", failed_at: "2026-09-01T00:00:00Z" });
-    expect(compareOldestFirst(a, b)).toBeLessThan(0);
-    expect(compareOldestFirst(b, a)).toBeGreaterThan(0);
-    expect(compareOldestFirst(a, a)).toBe(0);
+    expect(compareLeastRecentlyAttempted(a, b)).toBeLessThan(0);
+    expect(compareLeastRecentlyAttempted(b, a)).toBeGreaterThan(0);
+    expect(compareLeastRecentlyAttempted(a, a)).toBe(0);
   });
 });

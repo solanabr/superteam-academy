@@ -119,22 +119,26 @@ describe("parseProgramError", () => {
   });
 });
 
+// Program attribution (gate finding 4) has its own suite in inner-error.test.ts;
+// here the errors are AnchorError-shaped and name our program, so attribution is
+// satisfied and these tests stay about WHICH codes count as already-done.
+const OURS = "AcadEmY1111111111111111111111111111111111p";
+
+const anchorErr = (code: number, name = `code-${code}`) => ({
+  errorCode: { code: name, number: code },
+  program: OURS,
+});
+
 describe("isAlreadySatisfied", () => {
   it("recognises the already-done codes", () => {
     for (const code of Object.keys(ALREADY_SATISFIED_ERROR_CODES)) {
-      expect(
-        isAlreadySatisfied(new Error(`Error Number: ${code}.`))
-      ).not.toBeNull();
+      expect(isAlreadySatisfied(anchorErr(Number(code)), OURS)).not.toBeNull();
     }
   });
 
   it("recognises the prod CredentialAlreadyIssued row", () => {
     expect(
-      isAlreadySatisfied(
-        new Error(
-          "AnchorError occurred. Error Code: CredentialAlreadyIssued. Error Number: 6017. Error Message: Credential already issued for this enrollment"
-        )
-      )
+      isAlreadySatisfied(anchorErr(6017, "CredentialAlreadyIssued"), OURS)
     ).toEqual({ code: 6017, name: "CredentialAlreadyIssued" });
   });
 
@@ -143,13 +147,13 @@ describe("isAlreadySatisfied", () => {
     // change on retry either, but the state we owe does not exist — resolving
     // them would silently drop it.
     for (const code of [6015, 6016, 6019, 6023, 6031]) {
-      expect(
-        isAlreadySatisfied(new Error(`Error Number: ${code}.`))
-      ).toBeNull();
+      expect(isAlreadySatisfied(anchorErr(code), OURS)).toBeNull();
     }
   });
 
   it("does not resolve an ordinary transient failure", () => {
-    expect(isAlreadySatisfied(new Error("blockhash not found"))).toBeNull();
+    expect(
+      isAlreadySatisfied(new Error("blockhash not found"), OURS)
+    ).toBeNull();
   });
 });

@@ -66,8 +66,9 @@ export async function creditQuestXpRows(
   const minted: PendingActionRow[] = [];
   const walletAddress = makeWalletLookup(adminClient, userId);
   for (const row of rows) {
-    // Every attempt is recorded before it runs — see markAttempt.
-    await markAttempt(adminClient, row);
+    // Claim + record the attempt before doing it — see markAttempt. A row
+    // another drain already holds is skipped, not raced.
+    if (!(await markAttempt(adminClient, row))) continue;
     const payload = row.payload as Record<string, unknown>;
     const xpAmount = payload.xpAmount;
     if (
@@ -295,8 +296,15 @@ export async function creditXpAndSettle(
 // ---------------------------------------------------------------------------
 
 /**
- * Record that an attempt on `row` is STARTING: increment `attempt_count` and
- * stamp `last_attempt_at`.
+ * How stale a claim must be before another drain may take the row. Long enough
+ * that a normal attempt (a send plus confirmation) finishes inside it; short
+ * enough that an attempt killed mid-flight does not strand the row for long.
+ */
+export const CLAIM_STALE_AFTER_MS = 2 * 60 * 1000;
+
+/**
+ * CLAIM the row and record that an attempt on it is STARTING. Returns false
+ * when another drain already holds it, in which case the caller must not act.
  *
  * Written BEFORE the work, not after. The old code wrote to the row only on the
  * failure path, so an attempt that died mid-flight — a serverless freeze during
@@ -306,34 +314,44 @@ export async function creditXpAndSettle(
  * the table written by a PRODUCER at enqueue time: there was no record of an
  * attempt to find.
  *
+ * And it is a CLAIM, not a blind stamp (gate finding 3). The 15-minute cron
+ * drain and a login-triggered drain can select the same row in the same second;
+ * both would then pass the action's own existence check — the AchievementReceipt
+ * PDA read, the Enrollment `credential_asset` read — and both would send. The
+ * chain rejects the loser so nothing double-mints, but it costs a fee, a retry
+ * unit, and a created-then-deleted `nft_metadata` row. `claim_onchain_action`
+ * does the guarded UPDATE ... RETURNING in one statement, so exactly one caller
+ * gets the row, and increments `attempt_count` in SQL rather than
+ * read-modify-write.
+ *
  * Deliberately NOT `retry_count`. That column is the 5-attempt FAILURE budget,
  * and "a deferral spends none of it" is a load-bearing invariant with its own
  * regression tests (a defer during a course recreate must never push a genuinely
  * owed credential past the budget, #453 rail 3 / F5). Spending it up-front would
  * charge every gated row — and every gated row whose marker write failed — for
  * doing nothing. So attempts and failures are counted separately:
- * `attempt_count` says how many times we tried, `retry_count` how many of those
- * genuinely failed, and `last_attempt_at` is the backoff key for both.
+ * `attempt_count` says how many times we tried (and floors the backoff, so a
+ * perpetually-deferred row cannot spin), `retry_count` how many of those
+ * genuinely failed, and `last_attempt_at` is the backoff and ordering key.
  *
- * A failure to write this is logged and swallowed: the attempt itself is still
- * worth making, and throwing here would abort the whole sweep.
+ * An RPC failure is logged and treated as NOT claimed: skipping one row on a
+ * transient DB error is strictly safer than acting without the claim.
  */
 export async function markAttempt(
   adminClient: AdminClient,
   row: PendingActionRow
-): Promise<void> {
-  const { error } = await adminClient
-    .from("pending_onchain_actions")
-    .update({
-      attempt_count: (row.attempt_count ?? 0) + 1,
-      last_attempt_at: new Date().toISOString(),
-    })
-    .eq("id", row.id);
+): Promise<boolean> {
+  const { data, error } = await adminClient.rpc("claim_onchain_action", {
+    p_id: row.id,
+    p_stale_before: new Date(Date.now() - CLAIM_STALE_AFTER_MS).toISOString(),
+  });
   if (error) {
     console.error(
-      `[xp-queue-settlement] failed to stamp attempt on row ${row.id}: ${error.message}`
+      `[xp-queue-settlement] failed to claim row ${row.id}: ${error.message}`
     );
+    return false;
   }
+  return Array.isArray(data) ? data.length > 0 : Boolean(data);
 }
 
 // Transient-failure bookkeeping: spend one unit of the retry budget and record

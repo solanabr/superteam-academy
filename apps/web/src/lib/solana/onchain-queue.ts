@@ -203,7 +203,13 @@ async function fetchDrainCandidates(
 
   if (options.userId) query = query.eq("user_id", options.userId);
 
+  // COALESCE(last_attempt_at, failed_at) is the priority key (see
+  // compareLeastRecentlyAttempted). PostgREST cannot order on an expression, so
+  // order on `last_attempt_at` NULLS FIRST — never-attempted rows come back
+  // first — with `failed_at` as the tiebreaker, and let selectDueRows apply the
+  // exact key. The over-fetch is what makes that safe.
   const { data, error } = await query
+    .order("last_attempt_at", { ascending: true, nullsFirst: true })
     .order("failed_at", { ascending: true, nullsFirst: true })
     .limit(options.limit * 4);
 
@@ -261,11 +267,20 @@ async function drainRowsForUser(
     .single();
 
   // No linked wallet means every Pass-2 action is unperformable — there is no
-  // recipient. Return without touching a thing (no attempt stamped, no retry
-  // burned): the rows wait for the learner to link a wallet. Said out loud,
-  // because a silent return here is indistinguishable from an empty queue and
-  // that ambiguity is part of why the prod backlog went unnoticed.
+  // recipient. The rows wait for the learner to link one, and no retry is
+  // burned. But each one IS claimed and stamped first (gate finding 1): leaving
+  // `last_attempt_at` NULL kept them permanently at the head of the
+  // least-recently-attempted queue, so a wallet-less learner's rows would be
+  // re-selected on every run and starve everyone behind them. Said out loud
+  // too, because a silent return here is indistinguishable from an empty queue
+  // and that ambiguity is part of why the prod backlog went unnoticed.
   if (!profile?.wallet_address) {
+    for (const row of onchainRows) {
+      if (await markAttempt(adminClient, row)) {
+        summary.attempted += 1;
+        await deferForMissingWallet(adminClient, row);
+      }
+    }
     console.warn(
       `[onchain-queue] user ${userId} has ${onchainRows.length} pending on-chain row(s) but no linked wallet — nothing attempted`
     );
@@ -283,7 +298,9 @@ async function drainRowsForUser(
     // a throw past the catch — left no trace and the row looked untouched
     // forever; and `last_attempt_at` is the backoff key, so without it a row is
     // re-attempted on every single tick.
-    await markAttempt(adminClient, row);
+    // A row another drain already holds is skipped, not raced: both would
+    // otherwise pass this action's own existence check and both would send.
+    if (!(await markAttempt(adminClient, row))) continue;
     summary.attempted += 1;
     try {
       const actionType = row.action_type as OnchainActionType;
@@ -803,7 +820,9 @@ async function drainRowsForUser(
       // been stuck on since 31 Aug / 9 Sep. Retrying is guaranteed to fail the
       // same way until the budget runs out and the row is abandoned in silence,
       // so resolve it, and reconcile whatever local row is missing first.
-      const satisfied = isAlreadySatisfied(err);
+      // Scoped to OUR program id: an inner program's colliding code must never
+      // resolve a row (gate finding 4).
+      const satisfied = isAlreadySatisfied(err, getProgramId().toBase58());
       if (satisfied) {
         await resolveAsAlreadySatisfied(
           adminClient,
@@ -859,8 +878,43 @@ async function resolveAsAlreadySatisfied(
     `[onchain-queue] row ${row.id} (${row.action_type} ${row.reference_id}, user ${userId}) failed with ${name} (${code}) — the chain already holds this state, resolving instead of retrying`
   );
 
+  const payload = row.payload as Record<string, unknown>;
+
+  // GATE finding 2. A `course_finalize` row carries TWO obligations: the
+  // on-chain finalize, and (when its payload says so) an XP completion bonus.
+  // CourseAlreadyFinalized only settles the first. Resolving the row here would
+  // skip the award branch below and lose the bonus permanently — the exact
+  // CS-7 credit-loss class this queue exists to prevent, reintroduced by the
+  // already-satisfied shortcut. So pay the bonus first and let
+  // creditXpAndSettle own the row's fate: it resolves on a credit, defers on the
+  // daily cap (no retry burned) and bumps on a transient RPC error. award_xp is
+  // idempotent on `reference_id`, so doing this on a row whose bonus already
+  // landed re-reports the credited amount and resolves — never a double-credit.
+  if (row.action_type === "course_finalize") {
+    const xpAmount = payload.xpAmount;
+    if (
+      typeof xpAmount === "number" &&
+      Number.isFinite(xpAmount) &&
+      xpAmount > 0
+    ) {
+      const reason =
+        typeof payload.reason === "string"
+          ? payload.reason
+          : `Completed course: ${payload.courseId ?? row.reference_id}`;
+      await creditXpAndSettle(
+        adminClient,
+        userId,
+        row,
+        xpAmount,
+        reason,
+        row.reference_id,
+        "course_completion"
+      );
+      return;
+    }
+  }
+
   if (row.action_type === "certificate") {
-    const payload = row.payload as Record<string, unknown>;
     const courseId =
       typeof payload.courseId === "string" ? payload.courseId : null;
     if (courseId) {
@@ -1074,6 +1128,29 @@ async function deferForMintCap(
     const message = err instanceof Error ? err.message : String(err);
     console.error(
       `[onchain-queue] failed to write mint-cap-defer marker for row ${row.id}: ${message}`
+    );
+  }
+}
+
+// Missing-wallet deferral. Same contract as the deferrals above: leave the row
+// unresolved, record why, do NOT touch retry_count. The row IS claimed and
+// stamped first by the caller, which is the whole point — an unstamped row stays
+// first in the least-recently-attempted order forever (gate finding 1).
+// Log-and-swallow a marker-write failure for the same F5 reason documented above.
+async function deferForMissingWallet(
+  adminClient: AdminClient,
+  row: PendingActionRow
+): Promise<void> {
+  try {
+    const { error } = await adminClient
+      .from("pending_onchain_actions")
+      .update({ last_error: "no-linked-wallet" })
+      .eq("id", row.id);
+    if (error) throw new Error(error.message);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(
+      `[onchain-queue] failed to write missing-wallet-defer marker for row ${row.id}: ${message}`
     );
   }
 }

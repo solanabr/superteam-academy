@@ -95,6 +95,10 @@ const h = vi.hoisted(() => ({
   ledgerUpdates: [] as { id: unknown; patch: Record<string, unknown> }[],
   /** Simulate the signature-backfill write failing. */
   stampShouldError: false,
+  /** Queue rows a concurrent drain holds — claim_onchain_action returns []. */
+  claimedElsewhere: new Set<string>(),
+  /** Every claim_onchain_action call, in order. */
+  claims: [] as string[],
 }));
 
 vi.mock("server-only", () => ({}));
@@ -278,12 +282,26 @@ vi.mock("@/lib/supabase/admin", () => {
   return {
     createAdminClient: () => ({
       from: (table: string) => new Chain(table),
-      // Only award_xp is driven per-test; every other SECURITY DEFINER call
-      // (unlock_achievement) succeeds quietly, as it does in practice.
-      rpc: (fn: string, params: Record<string, unknown>) =>
-        fn === "award_xp"
-          ? Promise.resolve(h.awardXp(params))
-          : Promise.resolve({ data: null, error: null }),
+      // award_xp is driven per-test; `claim_onchain_action` is the #1247 attempt
+      // claim, which must hand the row back or the drain skips it (a test can
+      // put an id in `h.claimedElsewhere` to model losing the race); every
+      // other SECURITY DEFINER call (unlock_achievement) succeeds quietly, as
+      // it does in practice.
+      rpc: (fn: string, params: Record<string, unknown>) => {
+        if (fn === "award_xp") return Promise.resolve(h.awardXp(params));
+        if (fn === "claim_onchain_action") {
+          const id = params.p_id as string;
+          h.claims.push(id);
+          if (h.claimedElsewhere.has(id)) {
+            return Promise.resolve({ data: [], error: null });
+          }
+          return Promise.resolve({
+            data: [{ id, attempt_count: 1 }],
+            error: null,
+          });
+        }
+        return Promise.resolve({ data: null, error: null });
+      },
     }),
   };
 });
@@ -354,6 +372,8 @@ beforeEach(() => {
   h.xpLedgerRow = { id: "xptx-1", tx_signature: null };
   h.ledgerUpdates.length = 0;
   h.stampShouldError = false;
+  h.claimedElsewhere.clear();
+  h.claims.length = 0;
   // Default: course already finalized on-chain, so finalizeCourse is skipped
   // and each test exercises the XP-settlement path in isolation.
   h.fetchEnrollment.mockResolvedValue({ completed_at: 1_700_000_000 });
@@ -657,15 +677,13 @@ describe("retryPendingOnchainActions — maintenance-gate deferral (adversarial-
     // Exactly ONE update was attempted for this row — the defer marker write
     // itself (which failed). No SECOND update (a bumpRetry-style patch with
     // retry_count) was made for it.
-    // Two writes and no more: the attempt stamp (#1247 — always first), then
-    // the defer marker itself, which failed. Crucially NOT a third,
-    // bumpRetry-style write carrying retry_count.
+    // The row was claimed (#1247 — the attempt stamp is an RPC, so it is not a
+    // table write), then the defer marker was attempted and failed. That is the
+    // ONLY write: crucially NOT a second, bumpRetry-style write carrying
+    // retry_count.
+    expect(h.claims).toContain("r-cf-gated-dbfail");
     const rowUpdates = patchesFor("r-cf-gated-dbfail");
-    expect(rowUpdates).toHaveLength(2);
-    expect(Object.keys(rowUpdates[0] ?? {}).sort()).toEqual([
-      "attempt_count",
-      "last_attempt_at",
-    ]);
+    expect(rowUpdates).toHaveLength(1);
     const patch = patchFor("r-cf-gated-dbfail");
     expect(patch?.retry_count).toBeUndefined();
     expect(patch?.resolved_at).toBeUndefined();

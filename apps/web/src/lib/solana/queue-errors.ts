@@ -52,14 +52,21 @@ export interface ProgramError {
  * Pull the Anchor error code out of a thrown error. Anchor surfaces it three
  * ways depending on how far the transaction got, and the queue sees all three:
  *   • an `AnchorError` instance    → `error.errorCode.number`
- *   • a formatted message          → "Error Code: X. Error Number: 6017."
+ *   • a formatted message or log   → "Error Code: X. Error Number: 6017."
  *   • a raw simulation failure     → "custom program error: 0x1781"
+ *
+ * Unscoped by design — this is what `serializeQueueError` puts in `last_error`
+ * for the operator. Whether a code may RESOLVE a row is `isAlreadySatisfied`,
+ * which additionally requires the code to be attributable to our program.
  */
 export function parseProgramError(err: unknown): ProgramError | null {
   const fromInstance = codeFromAnchorInstance(err);
   if (fromInstance) return fromInstance;
 
-  const message = rawMessage(err);
+  // Message AND logs: a real `SendTransactionError` carries the AnchorError
+  // line in `logs`, not in `message`, so scanning the message alone missed the
+  // code on exactly the errors that have one.
+  const message = attributionText(err);
 
   const numbered = /Error Number:\s*(\d+)/.exec(message);
   if (numbered) {
@@ -79,11 +86,128 @@ export function parseProgramError(err: unknown): ProgramError | null {
   return null;
 }
 
-/** Does this error mean the chain already holds the state we wanted? */
-export function isAlreadySatisfied(err: unknown): ProgramError | null {
+/**
+ * Does this error mean OUR program says the chain already holds the state we
+ * wanted?
+ *
+ * GATE finding 4. `parseProgramError` regexes the whole thrown text, and
+ * web3.js's `SendTransactionError` embeds every instruction's program logs in
+ * that text — so whichever code appears first decided whether a row was
+ * resolved. Two ways that gets it wrong, both live shapes:
+ *   • an inner program's code that happens to collide with one of ours. The
+ *     prod achievement rows fail with `custom program error: 0x0` on
+ *     "Instruction 1", which is MPL Core, not the academy program.
+ *   • our own non-terminal failure (MintingPaused) printed after a terminal code
+ *     from an earlier, successful instruction.
+ * Resolving on either would silently drop something we owe, which is strictly
+ * worse than retrying, so attribution is REQUIRED and unattributable text fails
+ * closed. Serialisation still reports the code — this gate is only about
+ * whether the row may be resolved.
+ *
+ * `programId` is the academy program (base58). Pass it explicitly rather than
+ * reading env here, so this module stays chain-free and the rule is testable.
+ */
+export function isAlreadySatisfied(
+  err: unknown,
+  programId: string
+): ProgramError | null {
   const parsed = parseProgramError(err);
   if (!parsed) return null;
-  return parsed.code in ALREADY_SATISFIED_ERROR_CODES ? parsed : null;
+  if (!(parsed.code in ALREADY_SATISFIED_ERROR_CODES)) return null;
+  return raisedByProgram(err, programId, parsed.code) ? parsed : null;
+}
+
+/** Base58 program id, as it appears in `Program <id> invoke/failed` log lines. */
+const PROGRAM_ID_PATTERN = "[1-9A-HJ-NP-Za-km-z]{32,44}";
+
+/**
+ * Is `code` attributable to `programId`? True when either
+ *   • the throw is an AnchorError-shaped object naming that program, or
+ *   • the log text puts the code inside that program's invoke frame — the
+ *     nearest preceding `Program <id> invoke` is ours, or a
+ *     `Program <ourId> failed: custom program error: 0x…` line carries it.
+ * False when the text names no program at all: unattributable, so fail closed.
+ */
+function raisedByProgram(
+  err: unknown,
+  programId: string,
+  code: number
+): boolean {
+  const named = programOf(err);
+  if (named) return named === programId;
+
+  const text = attributionText(err);
+  if (!text) return false;
+
+  // `Program <ourId> failed: custom program error: 0x…` — the failure line
+  // names the program and the code together, so it is self-attributing.
+  const failedLine = new RegExp(
+    `Program\\s+(${PROGRAM_ID_PATTERN})\\s+failed:\\s*custom program error:\\s*(0x[0-9a-fA-F]+|\\d+)`,
+    "g"
+  );
+  for (const m of text.matchAll(failedLine)) {
+    if (m[1] === programId && Number(m[2]) === code) return true;
+  }
+
+  // Otherwise locate the code and walk back to the innermost invoke frame.
+  const codeIndex = indexOfCode(text, code);
+  if (codeIndex < 0) return false;
+
+  const invoke = new RegExp(
+    `Program\\s+(${PROGRAM_ID_PATTERN})\\s+invoke`,
+    "g"
+  );
+  let enclosing: string | null = null;
+  for (const m of text.matchAll(invoke)) {
+    if (m.index !== undefined && m.index < codeIndex) enclosing = m[1] ?? null;
+    else break;
+  }
+  return enclosing === programId;
+}
+
+/** Where in `text` the code that was parsed actually appears. */
+function indexOfCode(text: string, code: number): number {
+  const numbered = text.indexOf(`Error Number: ${code}`);
+  if (numbered >= 0) return numbered;
+  const hex = text.indexOf(`custom program error: 0x${code.toString(16)}`);
+  if (hex >= 0) return hex;
+  return text.indexOf(`custom program error: ${code}`);
+}
+
+/** The program an AnchorError-shaped throw names, if any. */
+function programOf(err: unknown): string | null {
+  if (typeof err !== "object" || err === null) return null;
+  const program = (err as { program?: unknown }).program;
+  if (typeof program === "string" && program.length > 0) return program;
+  const toBase58 = (program as { toBase58?: () => string } | undefined)
+    ?.toBase58;
+  if (typeof toBase58 === "function") {
+    try {
+      return toBase58.call(program);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+/** Message plus program logs — everything that can carry an invoke frame. */
+function attributionText(err: unknown): string {
+  const parts = [rawMessage(err)];
+  if (typeof err === "object" && err !== null) {
+    const record = err as Record<string, unknown>;
+    for (const key of ["logs", "transactionLogs", "errorLogs"]) {
+      const value = record[key];
+      if (Array.isArray(value)) {
+        parts.push(
+          value
+            .filter((line): line is string => typeof line === "string")
+            .join("\n")
+        );
+      }
+    }
+  }
+  return parts.filter((part) => part.length > 0).join("\n");
 }
 
 /**

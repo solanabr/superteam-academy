@@ -1376,6 +1376,15 @@ export type Database = {
       };
     };
     Functions: {
+      /**
+       * Atomic claim + attempt stamp for the on-chain retry queue drain.
+       * Returns the row only to the caller that won it; zero rows means another
+       * drain holds it (or it resolved), and the caller must skip.
+       */
+      claim_onchain_action: {
+        Args: { p_id: string; p_stale_before: string };
+        Returns: { id: string; attempt_count: number }[];
+      };
       course_lesson_completion_counts: {
         Args: { p_course_id: string };
         Returns: { lesson_id: string; completed_by: number }[];

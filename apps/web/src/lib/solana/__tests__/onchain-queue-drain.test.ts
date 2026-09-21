@@ -52,11 +52,20 @@ const h = vi.hoisted(() => ({
   existingCertificates: new Set<string>(),
   awardAchievement: vi.fn(),
   issueCredential: vi.fn(),
+  finalizeCourse: vi.fn(),
   fetchAchievementReceipt: vi.fn<() => Promise<boolean>>(),
   fetchEnrollment: vi.fn(),
   /** The fake sender: what the drain would broadcast. */
   sendSignedTransaction: vi.fn<(...args: unknown[]) => Promise<void>>(),
   buildSignedRewardXpTx: vi.fn<(...args: unknown[]) => Promise<unknown>>(),
+  /** Rows a concurrent drain already holds — claim_onchain_action returns []. */
+  claimedElsewhere: new Set<string>(),
+  /** Every claim_onchain_action call, in order. */
+  claims: [] as string[],
+  /** award_xp calls, so a lost XP bonus is visible. */
+  awardXpCalls: [] as Record<string, unknown>[],
+  /** What award_xp reports as credited. */
+  awardXpCredited: 10 as number,
 }));
 
 vi.mock("server-only", () => ({}));
@@ -77,7 +86,7 @@ vi.mock("../pda", () => ({
 vi.mock("../academy-program", () => ({
   getConnection: () => ({}),
   awardAchievement: (...args: unknown[]) => h.awardAchievement(...args),
-  finalizeCourse: vi.fn(),
+  finalizeCourse: (...args: unknown[]) => h.finalizeCourse(...args),
   issueCredential: (...args: unknown[]) => h.issueCredential(...args),
   buildSignedRewardXpTx: (...args: unknown[]) =>
     h.buildSignedRewardXpTx(...args),
@@ -244,7 +253,36 @@ vi.mock("@/lib/supabase/admin", () => {
   return {
     createAdminClient: () => ({
       from: (table: string) => new Chain(table),
-      rpc: () => Promise.resolve({ data: 10, error: null }),
+      rpc: (fn: string, params: Record<string, unknown>) => {
+        if (fn === "claim_onchain_action") {
+          const id = params.p_id as string;
+          h.claims.push(id);
+          if (h.claimedElsewhere.has(id)) {
+            // Another drain holds it: the guarded UPDATE matches no row.
+            return Promise.resolve({ data: [], error: null });
+          }
+          const target = h.rows.find((r) => r.id === id);
+          const next = ((target?.attempt_count as number) ?? 0) + 1;
+          if (target) {
+            target.attempt_count = next;
+            target.last_attempt_at = new Date().toISOString();
+          }
+          h.updates.push({
+            table: "pending_onchain_actions",
+            id,
+            patch: { attempt_count: next, last_attempt_at: "claimed" },
+          });
+          return Promise.resolve({
+            data: [{ id, attempt_count: next }],
+            error: null,
+          });
+        }
+        if (fn === "award_xp") {
+          h.awardXpCalls.push(params);
+          return Promise.resolve({ data: h.awardXpCredited, error: null });
+        }
+        return Promise.resolve({ data: null, error: null });
+      },
     }),
   };
 });
@@ -295,6 +333,8 @@ beforeEach(() => {
     assetAddress: { toBase58: () => "ASSET_ADDR" },
   });
   h.issueCredential.mockReset();
+  h.finalizeCourse.mockReset();
+  h.finalizeCourse.mockResolvedValue({ signature: "FINALIZE_SIG" });
   h.fetchAchievementReceipt.mockReset();
   h.fetchAchievementReceipt.mockResolvedValue(false);
   h.fetchEnrollment.mockReset();
@@ -308,6 +348,10 @@ beforeEach(() => {
     blockhash: "BH",
     lastValidBlockHeight: 1,
   });
+  h.claimedElsewhere.clear();
+  h.claims.length = 0;
+  h.awardXpCalls.length = 0;
+  h.awardXpCredited = 10;
 });
 
 describe("every attempt is recorded before the work", () => {
@@ -400,15 +444,17 @@ describe("selection is global and oldest-first", () => {
     expect(patchesFor("theirs")).toHaveLength(0);
   });
 
-  it("touches nothing, loudly, for a learner with no linked wallet", async () => {
+  it("sends nothing, loudly, for a learner with no linked wallet", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     h.wallets = {};
     h.rows = [row({ id: "r1" })];
 
-    const summary = await retryPendingOnchainActions("u1");
+    await retryPendingOnchainActions("u1");
 
-    expect(summary.attempted).toBe(0);
-    expect(patchesFor("r1")).toHaveLength(0);
+    // The row IS stamped (gate finding 1 — see the dedicated suite below);
+    // what must not happen is a send or a burned retry.
+    expect(h.awardAchievement).not.toHaveBeenCalled();
+    expect(finalPatch("r1").retry_count).toBeUndefined();
     expect(warn.mock.calls.flat().join(" ")).toContain("no linked wallet");
     warn.mockRestore();
   });
@@ -476,8 +522,12 @@ describe("terminal already-satisfied errors", () => {
     h.rows = [row({ ...certRow })];
     h.fetchEnrollment.mockResolvedValue({});
     h.issueCredential.mockRejectedValue(
-      new Error(
-        "AnchorError occurred. Error Code: CredentialAlreadyIssued. Error Number: 6017. Error Message: Credential already issued for this enrollment"
+      Object.assign(
+        new Error(
+          "AnchorError occurred. Error Code: CredentialAlreadyIssued. Error Number: 6017. Error Message: Credential already issued for this enrollment"
+        ),
+        // Attribution is required since gate finding 4 — name our program.
+        { program: "PROGRAM_ID" }
       )
     );
 
@@ -498,7 +548,10 @@ describe("terminal already-satisfied errors", () => {
       .mockResolvedValueOnce({})
       .mockResolvedValue({ credential_asset: "ASSET_ON_CHAIN" });
     h.issueCredential.mockRejectedValue(
-      new Error("Error Code: CredentialAlreadyIssued. Error Number: 6017.")
+      Object.assign(
+        new Error("Error Code: CredentialAlreadyIssued. Error Number: 6017."),
+        { program: "PROGRAM_ID" }
+      )
     );
 
     await drainAllPendingOnchainActions();
@@ -527,7 +580,12 @@ describe("terminal already-satisfied errors", () => {
     // was awarded — resolving it would silently drop what we owe.
     h.rows = [row({ id: "r1" })];
     h.awardAchievement.mockRejectedValue(
-      new Error("Error Code: AchievementSupplyExhausted. Error Number: 6023.")
+      Object.assign(
+        new Error(
+          "Error Code: AchievementSupplyExhausted. Error Number: 6023."
+        ),
+        { program: "PROGRAM_ID" }
+      )
     );
 
     await drainAllPendingOnchainActions();
@@ -566,5 +624,137 @@ describe("error serialisation", () => {
     expect(lastError).toContain("failed after broadcast");
     expect(lastError).toContain("SIG_ABC");
     expect(lastError).toContain("Program failed to complete");
+  });
+});
+
+describe("GATE: course_finalize with an XP bonus", () => {
+  const finalizeRow = {
+    id: "r-cf",
+    action_type: "course_finalize",
+    reference_id: "course-solana-speedrun",
+    payload: {
+      courseId: "course-solana-speedrun",
+      xpAmount: 500,
+      reason: "Course completion bonus: course-solana-speedrun",
+    },
+  } as const;
+
+  // GATE finding 2: a course_finalize row owes TWO things — the on-chain
+  // finalize and (when its payload says so) an XP completion bonus.
+  // CourseAlreadyFinalized settles only the first. Resolving the row on that
+  // error skipped the award branch and lost the bonus permanently, which is the
+  // CS-7 credit-loss class this queue exists to prevent.
+  it("still pays the bonus when finalize reverts with CourseAlreadyFinalized", async () => {
+    h.rows = [row({ ...finalizeRow })];
+    h.fetchEnrollment.mockResolvedValue(null); // not completed → finalize runs
+    h.finalizeCourse.mockRejectedValue(
+      Object.assign(
+        new Error("Error Code: CourseAlreadyFinalized. Error Number: 6005."),
+        { program: "PROGRAM_ID" }
+      )
+    );
+
+    await drainAllPendingOnchainActions();
+
+    expect(h.awardXpCalls).toHaveLength(1);
+    expect(h.awardXpCalls[0]).toMatchObject({
+      p_amount: 500,
+      p_idempotency_key: "course-solana-speedrun",
+      p_source: "course_completion",
+    });
+    expect(typeof finalPatch("r-cf").resolved_at).toBe("string");
+  });
+
+  it("does not resolve the row when the bonus is cap-deferred", async () => {
+    h.rows = [row({ ...finalizeRow })];
+    h.fetchEnrollment.mockResolvedValue(null);
+    h.awardXpCredited = 0; // the 5000/day cap ate it
+    h.finalizeCourse.mockRejectedValue(
+      Object.assign(
+        new Error("Error Code: CourseAlreadyFinalized. Error Number: 6005."),
+        { program: "PROGRAM_ID" }
+      )
+    );
+
+    await drainAllPendingOnchainActions();
+
+    const patch = finalPatch("r-cf");
+    expect(patch.resolved_at).toBeUndefined();
+    expect(patch.last_error).toBe("daily-cap-deferred");
+    expect(patch.retry_count).toBeUndefined(); // a deferral spends no budget
+  });
+
+  it("resolves with the already-satisfied marker when no bonus is owed", async () => {
+    h.rows = [
+      row({
+        ...finalizeRow,
+        payload: { courseId: "course-solana-speedrun" }, // no xpAmount
+      }),
+    ];
+    h.fetchEnrollment.mockResolvedValue(null);
+    h.finalizeCourse.mockRejectedValue(
+      Object.assign(
+        new Error("Error Code: CourseAlreadyFinalized. Error Number: 6005."),
+        { program: "PROGRAM_ID" }
+      )
+    );
+
+    await drainAllPendingOnchainActions();
+
+    const patch = finalPatch("r-cf");
+    expect(typeof patch.resolved_at).toBe("string");
+    expect(patch.last_error).toContain("resolved-already-satisfied");
+    expect(h.awardXpCalls).toHaveLength(0);
+  });
+});
+
+describe("GATE: the attempt stamp is an atomic claim", () => {
+  // GATE finding 3: markAttempt was a blind UPDATE, so the cron drain and a
+  // login drain could both pass an action's existence check and both send.
+  it("skips a row another drain already holds, without acting on it", async () => {
+    h.rows = [row({ id: "held" }), row({ id: "free" })];
+    h.claimedElsewhere.add("held");
+
+    const summary = await drainAllPendingOnchainActions();
+
+    expect(h.claims).toContain("held");
+    expect(h.awardAchievement).toHaveBeenCalledTimes(1);
+    expect(summary.attempted).toBe(1);
+    expect(finalPatch("free").resolved_at).toBeDefined();
+    // Nothing written to the held row beyond the (failed) claim attempt.
+    expect(patchesFor("held")).toHaveLength(0);
+  });
+
+  it("claims every row before touching the chain", async () => {
+    h.rows = [row({ id: "a" }), row({ id: "b" })];
+
+    await drainAllPendingOnchainActions();
+
+    expect(h.claims).toEqual(["a", "b"]);
+  });
+});
+
+describe("GATE: a wallet-less learner's rows are stamped, not left first in line", () => {
+  // GATE finding 1, second half: returning before the stamp left
+  // last_attempt_at NULL, which is permanently top priority under
+  // least-recently-attempted ordering.
+  it("claims and marks each row instead of returning untouched", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    h.wallets = {};
+    h.rows = [row({ id: "r1" }), row({ id: "r2" })];
+
+    const summary = await drainAllPendingOnchainActions();
+
+    expect(summary.attempted).toBe(2);
+    expect(h.claims).toEqual(["r1", "r2"]);
+    for (const id of ["r1", "r2"]) {
+      const patch = finalPatch(id);
+      expect(patch.attempt_count).toBe(1);
+      expect(patch.last_error).toBe("no-linked-wallet");
+      expect(patch.resolved_at).toBeUndefined();
+      expect(patch.retry_count).toBeUndefined(); // no budget burned
+    }
+    expect(h.awardAchievement).not.toHaveBeenCalled();
+    warn.mockRestore();
   });
 });
