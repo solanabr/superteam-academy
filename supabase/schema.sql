@@ -1159,6 +1159,11 @@ CREATE TABLE pending_onchain_actions (
   failed_at      TIMESTAMPTZ DEFAULT NOW(),
   retry_count    INT DEFAULT 0,
   last_error     TEXT,
+  -- Stamped by the drain BEFORE each attempt (markAttempt), so an attempt that
+  -- dies mid-flight still counts and backoff has a trustworthy key. Separate
+  -- from retry_count, which is the FAILURE budget that deferrals never spend.
+  last_attempt_at TIMESTAMPTZ,
+  attempt_count  INT NOT NULL DEFAULT 0,
   resolved_at    TIMESTAMPTZ,
   UNIQUE(user_id, action_type, reference_id)
 );
@@ -1167,11 +1172,46 @@ CREATE INDEX idx_pending_onchain_actions_user_id
   ON pending_onchain_actions(user_id)
   WHERE resolved_at IS NULL;
 
+-- Oldest-debt-first selection across ALL users, for the 15-minute cron drain.
+CREATE INDEX idx_pending_onchain_actions_drain
+  ON pending_onchain_actions(failed_at)
+  WHERE resolved_at IS NULL;
+
 ALTER TABLE pending_onchain_actions ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "users_read_own_pending_actions"
   ON pending_onchain_actions
   FOR SELECT USING (auth.uid() = user_id);
+
+-- ── claim_onchain_action ──────────────────────────────────────
+-- Atomic claim for the queue drain: stamps the attempt AND hands the row to
+-- exactly one caller, so the cron drain and a login drain cannot both act on
+-- the same row (gate finding 3 on #1255). attempt_count is incremented in SQL,
+-- never read-modify-write. Reclaimable: a row whose last attempt predates the
+-- caller's cutoff is claimable again, so an attempt killed mid-flight does not
+-- strand the row.
+-- Drain-only (service_role), never a client RPC.
+CREATE OR REPLACE FUNCTION public.claim_onchain_action(
+  p_id           UUID,
+  p_stale_before TIMESTAMPTZ
+) RETURNS TABLE (id UUID, attempt_count INT)
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  UPDATE public.pending_onchain_actions AS a
+     SET attempt_count   = a.attempt_count + 1,
+         last_attempt_at = NOW()
+   WHERE a.id = p_id
+     AND a.resolved_at IS NULL
+     AND (a.last_attempt_at IS NULL OR a.last_attempt_at < p_stale_before)
+  RETURNING a.id, a.attempt_count;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.claim_onchain_action(UUID, TIMESTAMPTZ)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.claim_onchain_action(UUID, TIMESTAMPTZ)
+  TO service_role;
 
 -- ═══════════════════════════════════════════════════════════════
 -- DAILY QUESTS

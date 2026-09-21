@@ -2,39 +2,19 @@
  * Turn a thrown transaction error into the string we persist as
  * `pending_onchain_actions.last_error`.
  *
- * Exists because of an upstream mismatch that silently destroys the most
- * useful failures we get. `@solana/web3.js` 1.95+ changed
- * `SendTransactionError` to a single-options-object constructor
- * (`{ action, signature, transactionMessage, logs }`), but Anchor's
- * `AnchorProvider.sendAndConfirm` still calls it positionally —
- * `new SendTransactionError(err.message, logs)` (present in both 0.31.1 and
- * 0.32.1). Destructuring a string yields `undefined` for every field, so the
- * message builder falls to its `default:` branch and the instance carries the
- * literal text below with the real program error, the signature and the logs
- * all dropped on the floor.
+ * Thin alias over `serializeQueueError` (lib/solana/queue-errors.ts), which is
+ * the single implementation shared by the producers (`queueFailedAction`), the
+ * drain and the dry-run script. Kept as its own export because the producers
+ * read as "describe this tx error" at their call sites.
  *
- * That branch is reached only when a transaction was BROADCAST and then failed
- * during confirmation — exactly the case an operator most needs the logs for.
- * Three of the stuck achievement rows in prod carry this sentinel as their
- * whole `last_error`, which is what made them look like a queue dispatch bug
- * rather than an ordinary on-chain rejection.
- *
- * Nothing can be recovered from such an instance (the fields were never
- * assigned), so the best available fix is to stop the string from lying: name
- * what actually happened and where the detail went.
+ * Originally this handled exactly one upstream mismatch: `@solana/web3.js`
+ * 1.95+ changed `SendTransactionError` to a single-options-object constructor,
+ * but Anchor's `AnchorProvider.sendAndConfirm` still calls it positionally
+ * (both 0.31.1 and 0.32.1), so a transaction that failed AFTER broadcast
+ * arrives with the literal `Unknown action 'undefined'` and no signature or
+ * logs. That case still gets named; queue-errors.ts adds the program error
+ * code, the signature, a log excerpt, and — the reason it moved — a real string
+ * for anything thrown that is not an Error, where the old `String(err)` wrote
+ * the useless literal `[object Object]`.
  */
-const WEB3JS_LOST_CONTEXT_SENTINEL = "Unknown action 'undefined'";
-
-export function describeTxError(err: unknown): string {
-  const message = err instanceof Error ? err.message : String(err);
-
-  if (message.trim() === WEB3JS_LOST_CONTEXT_SENTINEL) {
-    return (
-      "on-chain transaction failed after broadcast; program logs unavailable " +
-      "(Anchor built SendTransactionError positionally against web3.js's " +
-      "options-object constructor, discarding message/signature/logs)"
-    );
-  }
-
-  return message;
-}
+export { serializeQueueError as describeTxError } from "./queue-errors";

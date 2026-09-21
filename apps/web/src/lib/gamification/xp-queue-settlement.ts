@@ -2,6 +2,7 @@ import "server-only";
 
 import type { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/types";
+import { DRAIN_LIMIT, MAX_RETRIES, isDueForRetry } from "@/lib/queue/selection";
 
 // Chain-free XP-queue settlement. Extracted from lib/solana/onchain-queue.ts so
 // the quest paths (/api/quests/daily, quest-evaluation, and the action routes
@@ -12,15 +13,11 @@ type AdminClient = ReturnType<typeof createAdminClient>;
 type PendingActionRow =
   Database["public"]["Tables"]["pending_onchain_actions"]["Row"];
 
-// Attempt budget for a genuinely failing row, shared by both drains (this
-// module's quest_xp sweep and lib/solana/onchain-queue's full sweep). A row at
-// or above it is excluded from every future drain by the fetch filters, so
-// reaching it means abandonment — the on-chain drainer logs when a row does.
-// Deferrals (daily cap, course maintenance, capstone gate, mint cap, platform
-// freeze) deliberately spend nothing from this budget. Lives here, not in
-// onchain-queue, so the chain-free module can use it without importing the
-// Solana client graph.
-export const MAX_RETRIES = 5;
+// The attempt budget and the selection policy live in lib/solana/queue-selection
+// (chain-free, so this module can use it without pulling the Solana client
+// graph). Re-exported here because both drains and their tests read it from
+// this module.
+export { MAX_RETRIES } from "@/lib/queue/selection";
 
 // ---------------------------------------------------------------------------
 // Narrow sweep: deliver this user's pending quest_xp credits (DB-only)
@@ -39,11 +36,24 @@ export async function retryQuestXpForUser(
     .eq("user_id", userId)
     .eq("action_type", "quest_xp")
     .is("resolved_at", null)
-    .lt("retry_count", MAX_RETRIES);
+    .lt("retry_count", MAX_RETRIES)
+    .order("failed_at", { ascending: true, nullsFirst: true })
+    .limit(DRAIN_LIMIT);
 
   if (fetchError || !rows || rows.length === 0) return;
 
-  await creditQuestXpRows(adminClient, userId, rows);
+  // This sweep shares the BACKOFF with the full drain, not its ordering or its
+  // cap: it is a single user's DB-only credits, so oldest-`failed_at` and a
+  // fetch ceiling are enough, and `selectDueRows`' least-recently-attempted
+  // round-robin (which exists to stop one learner's gated on-chain rows
+  // monopolising a global run) has nothing to arbitrate here. The backoff does
+  // matter — without it a row failing on a stuck RPC would be re-attempted on
+  // every dashboard load and every /api/quests/daily poll.
+  const now = Date.now();
+  const due = rows.filter((row) => isDueForRetry(row, now));
+  if (due.length === 0) return;
+
+  await creditQuestXpRows(adminClient, userId, due);
 }
 
 // award_xp credits by user_id, so wallet-less (e.g. Google-only) users still
@@ -60,6 +70,9 @@ export async function creditQuestXpRows(
   const minted: PendingActionRow[] = [];
   const walletAddress = makeWalletLookup(adminClient, userId);
   for (const row of rows) {
+    // Claim + record the attempt before doing it — see markAttempt. A row
+    // another drain already holds is skipped, not raced.
+    if (!(await markAttempt(adminClient, row))) continue;
     const payload = row.payload as Record<string, unknown>;
     const xpAmount = payload.xpAmount;
     if (
@@ -267,7 +280,9 @@ export async function creditXpAndSettle(
       return credited ?? 0;
     } else {
       // Daily cap consumed the whole credit — deferral, not failure: keep the
-      // row unresolved and do NOT increment retry_count.
+      // row unresolved and do NOT increment retry_count. markAttempt already
+      // recorded that we looked, so backoff still keeps a capped row from being
+      // re-examined on every request.
       await adminClient
         .from("pending_onchain_actions")
         .update({ last_error: "daily-cap-deferred" })
@@ -280,8 +295,71 @@ export async function creditXpAndSettle(
   return 0;
 }
 
-// Transient-failure bookkeeping: bump retry_count and record the error so the
-// row is retried under the existing < 5 attempt budget with backoff.
+// ---------------------------------------------------------------------------
+// Attempt bookkeeping
+// ---------------------------------------------------------------------------
+
+/**
+ * How stale a claim must be before another drain may take the row. Long enough
+ * that a normal attempt (a send plus confirmation) finishes inside it; short
+ * enough that an attempt killed mid-flight does not strand the row for long.
+ */
+export const CLAIM_STALE_AFTER_MS = 2 * 60 * 1000;
+
+/**
+ * CLAIM the row and record that an attempt on it is STARTING. Returns false
+ * when another drain already holds it, in which case the caller must not act.
+ *
+ * Written BEFORE the work, not after. The old code wrote to the row only on the
+ * failure path, so an attempt that died mid-flight — a serverless freeze during
+ * an RPC send, a throw that escaped the handler — left the row looking
+ * untouched, and the next drain repeated it immediately and forever. That is
+ * why prod showed 461 rows all at `retry_count` 0 with every `last_error` in
+ * the table written by a PRODUCER at enqueue time: there was no record of an
+ * attempt to find.
+ *
+ * And it is a CLAIM, not a blind stamp (gate finding 3). The 15-minute cron
+ * drain and a login-triggered drain can select the same row in the same second;
+ * both would then pass the action's own existence check — the AchievementReceipt
+ * PDA read, the Enrollment `credential_asset` read — and both would send. The
+ * chain rejects the loser so nothing double-mints, but it costs a fee, a retry
+ * unit, and a created-then-deleted `nft_metadata` row. `claim_onchain_action`
+ * does the guarded UPDATE ... RETURNING in one statement, so exactly one caller
+ * gets the row, and increments `attempt_count` in SQL rather than
+ * read-modify-write.
+ *
+ * Deliberately NOT `retry_count`. That column is the 5-attempt FAILURE budget,
+ * and "a deferral spends none of it" is a load-bearing invariant with its own
+ * regression tests (a defer during a course recreate must never push a genuinely
+ * owed credential past the budget, #453 rail 3 / F5). Spending it up-front would
+ * charge every gated row — and every gated row whose marker write failed — for
+ * doing nothing. So attempts and failures are counted separately:
+ * `attempt_count` says how many times we tried (and floors the backoff, so a
+ * perpetually-deferred row cannot spin), `retry_count` how many of those
+ * genuinely failed, and `last_attempt_at` is the backoff and ordering key.
+ *
+ * An RPC failure is logged and treated as NOT claimed: skipping one row on a
+ * transient DB error is strictly safer than acting without the claim.
+ */
+export async function markAttempt(
+  adminClient: AdminClient,
+  row: PendingActionRow
+): Promise<boolean> {
+  const { data, error } = await adminClient.rpc("claim_onchain_action", {
+    p_id: row.id,
+    p_stale_before: new Date(Date.now() - CLAIM_STALE_AFTER_MS).toISOString(),
+  });
+  if (error) {
+    console.error(
+      `[xp-queue-settlement] failed to claim row ${row.id}: ${error.message}`
+    );
+    return false;
+  }
+  return Array.isArray(data) ? data.length > 0 : Boolean(data);
+}
+
+// Transient-failure bookkeeping: spend one unit of the retry budget and record
+// the error, so the row is retried under the < MAX_RETRIES budget with backoff.
 export async function bumpRetry(
   adminClient: AdminClient,
   row: PendingActionRow,

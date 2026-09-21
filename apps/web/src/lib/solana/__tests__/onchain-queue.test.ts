@@ -25,6 +25,12 @@ interface PendingRow {
   reference_id: string;
   retry_count: number | null;
   payload: Record<string, unknown>;
+  /** Selection fields — defaulted by `row()` below so each test states only
+   *  what it cares about. */
+  user_id?: string | null;
+  failed_at?: string | null;
+  last_attempt_at?: string | null;
+  resolved_at?: string | null;
 }
 
 // Hoisted shared state so the module mocks (evaluated before the test body) can
@@ -89,6 +95,10 @@ const h = vi.hoisted(() => ({
   ledgerUpdates: [] as { id: unknown; patch: Record<string, unknown> }[],
   /** Simulate the signature-backfill write failing. */
   stampShouldError: false,
+  /** Queue rows a concurrent drain holds — claim_onchain_action returns []. */
+  claimedElsewhere: new Set<string>(),
+  /** Every claim_onchain_action call, in order. */
+  claims: [] as string[],
 }));
 
 vi.mock("server-only", () => ({}));
@@ -145,9 +155,11 @@ vi.mock("@/lib/credentials/capstone-gate", () => ({
 }));
 
 vi.mock("@/lib/supabase/admin", () => {
-  // Minimal chainable stub of the Supabase query builder. Terminal reads
-  // (`.lt()`, `.single()`) return real promises; an `.update(...).eq("id", …)`
-  // chain records the patch when awaited (via the thenable `then`).
+  // Minimal chainable stub of the Supabase query builder. The drain's row read
+  // is `select().is().lt().or().order().limit()`, so `.limit()` is the terminal
+  // that yields `h.rows`; `.single()` / `.maybeSingle()` are the other terminal
+  // reads, and an `.update(...).eq("id", …)` chain records the patch when
+  // awaited (via the thenable `then`).
   class Chain {
     private isUpdate = false;
     private patch: Record<string, unknown> | null = null;
@@ -174,7 +186,16 @@ vi.mock("@/lib/supabase/admin", () => {
       if (this.isUpdate && column === "id") this.updateId = value;
       return this;
     }
-    lt(): Promise<{ data: PendingRow[]; error: null }> {
+    lt(): this {
+      return this;
+    }
+    or(): this {
+      return this;
+    }
+    order(): this {
+      return this;
+    }
+    limit(): Promise<{ data: PendingRow[]; error: null }> {
       return Promise.resolve({ data: h.rows, error: null });
     }
     // The mint case's ledger lookup, and the enqueue's `.select().maybeSingle()`.
@@ -261,12 +282,26 @@ vi.mock("@/lib/supabase/admin", () => {
   return {
     createAdminClient: () => ({
       from: (table: string) => new Chain(table),
-      // Only award_xp is driven per-test; every other SECURITY DEFINER call
-      // (unlock_achievement) succeeds quietly, as it does in practice.
-      rpc: (fn: string, params: Record<string, unknown>) =>
-        fn === "award_xp"
-          ? Promise.resolve(h.awardXp(params))
-          : Promise.resolve({ data: null, error: null }),
+      // award_xp is driven per-test; `claim_onchain_action` is the #1247 attempt
+      // claim, which must hand the row back or the drain skips it (a test can
+      // put an id in `h.claimedElsewhere` to model losing the race); every
+      // other SECURITY DEFINER call (unlock_achievement) succeeds quietly, as
+      // it does in practice.
+      rpc: (fn: string, params: Record<string, unknown>) => {
+        if (fn === "award_xp") return Promise.resolve(h.awardXp(params));
+        if (fn === "claim_onchain_action") {
+          const id = params.p_id as string;
+          h.claims.push(id);
+          if (h.claimedElsewhere.has(id)) {
+            return Promise.resolve({ data: [], error: null });
+          }
+          return Promise.resolve({
+            data: [{ id, attempt_count: 1 }],
+            error: null,
+          });
+        }
+        return Promise.resolve({ data: null, error: null });
+      },
     }),
   };
 });
@@ -276,9 +311,25 @@ import { MAX_RETRIES } from "@/lib/gamification/xp-queue-settlement";
 
 const USER_ID = "user-1";
 
-/** The single update the queue applied to `rowId`, or undefined if untouched. */
+/**
+ * The row's FINAL state: every patch the queue wrote to `rowId`, merged in
+ * order, or undefined if it was never touched.
+ *
+ * Since #1247 a row takes two writes per attempt — `markAttempt` stamps
+ * `retry_count` + `last_attempt_at` BEFORE the work, then the outcome write
+ * resolves it, records an error, or (a deferral) restores `retry_count`. The
+ * merge is the state the next drain will read, so that is what these tests
+ * assert on.
+ */
 function patchFor(rowId: string): Record<string, unknown> | undefined {
-  return h.updates.find((u) => u.id === rowId)?.patch;
+  const patches = h.updates.filter((u) => u.id === rowId);
+  if (patches.length === 0) return undefined;
+  return Object.assign({}, ...patches.map((u) => u.patch));
+}
+
+/** All patches written to `rowId`, unmerged — for tests that count writes. */
+function patchesFor(rowId: string): Record<string, unknown>[] {
+  return h.updates.filter((u) => u.id === rowId).map((u) => u.patch);
 }
 
 beforeEach(() => {
@@ -321,6 +372,8 @@ beforeEach(() => {
   h.xpLedgerRow = { id: "xptx-1", tx_signature: null };
   h.ledgerUpdates.length = 0;
   h.stampShouldError = false;
+  h.claimedElsewhere.clear();
+  h.claims.length = 0;
   // Default: course already finalized on-chain, so finalizeCourse is skipped
   // and each test exercises the XP-settlement path in isolation.
   h.fetchEnrollment.mockResolvedValue({ completed_at: 1_700_000_000 });
@@ -624,7 +677,12 @@ describe("retryPendingOnchainActions — maintenance-gate deferral (adversarial-
     // Exactly ONE update was attempted for this row — the defer marker write
     // itself (which failed). No SECOND update (a bumpRetry-style patch with
     // retry_count) was made for it.
-    const rowUpdates = h.updates.filter((u) => u.id === "r-cf-gated-dbfail");
+    // The row was claimed (#1247 — the attempt stamp is an RPC, so it is not a
+    // table write), then the defer marker was attempted and failed. That is the
+    // ONLY write: crucially NOT a second, bumpRetry-style write carrying
+    // retry_count.
+    expect(h.claims).toContain("r-cf-gated-dbfail");
+    const rowUpdates = patchesFor("r-cf-gated-dbfail");
     expect(rowUpdates).toHaveLength(1);
     const patch = patchFor("r-cf-gated-dbfail");
     expect(patch?.retry_count).toBeUndefined();
