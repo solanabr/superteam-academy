@@ -65,6 +65,12 @@ const post = async (body: unknown): Promise<Response> => {
 
 let warnSpy: ReturnType<typeof vi.spyOn>;
 
+/** The `[HELIUS_DECODE_001]` lines logged so far, with their context arg. */
+const undecodableLogs = (): unknown[][] =>
+  (warnSpy.mock.calls as unknown[][]).filter(
+    (call) => call[0] === `[${UNDECODABLE_CODE}]`
+  );
+
 beforeEach(() => {
   h.decode.mockReset();
   h.handleLessonCompleted.mockReset().mockResolvedValue(undefined);
@@ -117,9 +123,7 @@ describe("POST /api/webhooks/helius — an entry with no transaction", () => {
   it("logs the stable code ONCE with the count, not once per entry", async () => {
     await post([goodEntry("sig-1"), {}, {}, {}]);
 
-    const codeLines = warnSpy.mock.calls.filter(
-      (c) => c[0] === `[${UNDECODABLE_CODE}]`
-    );
+    const codeLines = undecodableLogs();
     expect(codeLines).toHaveLength(1);
     expect(codeLines[0]?.[1]).toEqual({ undecodable: 3, total: 4 });
   });
@@ -128,9 +132,7 @@ describe("POST /api/webhooks/helius — an entry with no transaction", () => {
     const res = await post([goodEntry("sig-1"), goodEntry("sig-2")]);
 
     expect(await res.json()).toMatchObject({ processed: 2, undecodable: 0 });
-    expect(
-      warnSpy.mock.calls.filter((c) => c[0] === `[${UNDECODABLE_CODE}]`)
-    ).toHaveLength(0);
+    expect(undecodableLogs()).toHaveLength(0);
   });
 });
 
