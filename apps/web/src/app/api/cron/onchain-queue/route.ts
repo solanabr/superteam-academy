@@ -1,8 +1,7 @@
 import "server-only";
 
-import { timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { serverEnv } from "@/lib/env.server";
+import { runCronJob } from "@/lib/cron/guard";
 import { drainAllPendingOnchainActions } from "@/lib/solana/onchain-queue";
 
 // Service-role DB writes + on-chain sends — never prerender, never cache.
@@ -29,11 +28,11 @@ export const maxDuration = 300;
  *
  * SCHEDULE: `apps/web/vercel.json` runs this every 15 minutes.
  *
- * AUTH: Vercel Cron sends `Authorization: Bearer $CRON_SECRET`. Fails CLOSED —
- * with `CRON_SECRET` unset it 503s and drains nothing, so a misconfigured
- * deploy can never expose an unauthenticated trigger for on-chain writes. The
- * comparison is timing-safe. Same guard as /api/cron/session-reminders and
- * /api/cron/reengagement.
+ * AUTH + OBSERVABILITY: the shared `runCronJob` guard (fail-closed on an unset
+ * `CRON_SECRET`, timing-safe bearer compare, one `[CRON_00n]` line per
+ * non-2xx). Its `NEXT_PUBLIC_APP_URL` requirement is load-bearing here and not
+ * just for mail: the `certificate` action builds the credential's metadata URI
+ * from it, and an empty value would pin a RELATIVE URI into an immutable NFT.
  *
  * OVERLAP: safe. Each action is idempotent against the chain or the ledger
  * (receipt PDA reads, `resolved_at`, award_xp's idempotency key, and the mint's
@@ -41,26 +40,7 @@ export const maxDuration = 300;
  * backoff filter, so a row attempted seconds ago is not due.
  */
 export async function GET(req: NextRequest): Promise<NextResponse> {
-  const secret = serverEnv.CRON_SECRET;
-  if (!secret) {
-    return NextResponse.json(
-      { error: "cron is not configured" },
-      { status: 503 }
-    );
-  }
-  if (!authorized(req.headers.get("authorization"), secret)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const summary = await drainAllPendingOnchainActions();
-  return NextResponse.json(summary);
-}
-
-/** Constant-time `Bearer <secret>` check. Length mismatch is rejected first. */
-function authorized(header: string | null, secret: string): boolean {
-  if (!header) return false;
-  const expected = Buffer.from(`Bearer ${secret}`);
-  const actual = Buffer.from(header);
-  if (actual.length !== expected.length) return false;
-  return timingSafeEqual(actual, expected);
+  return runCronJob("onchain-queue", req.headers, async () =>
+    drainAllPendingOnchainActions()
+  );
 }
