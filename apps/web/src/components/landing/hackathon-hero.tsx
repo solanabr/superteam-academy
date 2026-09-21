@@ -4,18 +4,18 @@ import Image from "next/image";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowRight } from "@phosphor-icons/react";
-import { ColosseumSeal } from "@/components/layout/colosseum-seal";
 
 /**
- * Solana Hackathon promo — a single centred banner on the landing page (owner
- * 2026-09-21, replacing the app-wide top strip). A dark card carrying the
- * "Crypto World's Fair" wordmark in white, with two CTAs: register for the
- * hackathon (external) and take the prep course (in-app).
+ * Solana Hackathon promo — a single full-bleed bar at the top of the landing
+ * page (owner 2026-09-21). A thin near-black strip that spans border to border,
+ * carrying the "Crypto World's Fair" wordmark in white, a one-line hook, and two
+ * CTAs: register for the hackathon (external) and take the prep course (in-app).
  *
- * Theme-invariant on purpose: the card is its own near-black surface with white
- * content in both themes, so it reads the same on the light and dark landing.
- * The wordmark is a real `<Image>` (white-on-transparent PNG) with a text alt,
- * so it is the card's accessible title rather than decoration.
+ * The dark surface is edge-to-edge; the inner content is gutter-padded and
+ * capped so it never hugs the edges on an ultrawide screen. Theme-invariant
+ * (near-black + white in both themes), so it reads the same on the light and
+ * dark landing. The wordmark is a real `<Image>` with a text alt — it is the
+ * bar's accessible title, not decoration.
  */
 const HACKATHON_URL = "https://hackathon.superteam.com.br/";
 const COURSE_SLUG = "solana-hackathon-expert";
@@ -27,44 +27,39 @@ export function HackathonHero() {
   return (
     <section
       aria-label={t("label")}
-      className="page-gutter container pt-6 sm:pt-8"
+      className="w-full border-b border-white/10 bg-[#0b0b0d] text-white"
     >
-      <div className="mx-auto flex max-w-3xl flex-col items-center gap-5 rounded-2xl border-2 border-white/10 bg-[#0b0b0d] px-6 py-9 text-center text-white shadow-[0_12px_40px_-14px_rgba(0,0,0,0.65)] sm:px-10 sm:py-11">
-        <ColosseumSeal className="h-9 w-9" />
+      <div className="page-gutter mx-auto flex max-w-[1600px] flex-wrap items-center justify-center gap-x-6 gap-y-3 py-2.5 sm:justify-between">
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+          {/* The wordmark IS the bar's title (white-on-transparent). Intrinsic
+              932×73; a small height keeps the bar thin, width auto, capped. */}
+          <Image
+            src="/promo/crypto-worlds-fair-wordmark.png"
+            alt="Crypto World's Fair"
+            width={932}
+            height={73}
+            priority
+            className="h-5 w-auto max-w-full sm:h-6"
+          />
+          <p className="text-xs text-white/70 sm:text-sm">{t("message")}</p>
+        </div>
 
-        {/* The wordmark IS the card's title (white-on-transparent), so it keeps
-            a real text alt rather than being hidden. Intrinsic 932×73; height
-            drives the display size, width auto, never past the card. */}
-        <Image
-          src="/promo/crypto-worlds-fair-wordmark.png"
-          alt="Crypto World's Fair"
-          width={932}
-          height={73}
-          priority
-          className="h-7 w-auto max-w-full sm:h-10"
-        />
-
-        <p className="max-w-md text-sm text-white/80 sm:text-base">
-          {t("message")}
-        </p>
-
-        <div className="mt-1 flex flex-wrap items-center justify-center gap-3">
-          {/* Primary: register for the hackathon (external). Solid white pill,
-              the one strong CTA on the dark card. */}
+        <div className="flex flex-wrap items-center justify-center gap-2.5">
+          {/* Primary: register for the hackathon (external). Solid white pill. */}
           <a
             href={HACKATHON_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-1.5 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-[#1c1917] shadow-[3px_3px_0_0_rgba(255,255,255,0.22)] transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            className="inline-flex items-center justify-center gap-1.5 rounded-full bg-white px-4 py-1.5 text-sm font-bold text-[#1c1917] transition-transform hover:-translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           >
             {t("register")}
-            <ArrowRight size={16} weight="bold" aria-hidden="true" />
+            <ArrowRight size={14} weight="bold" aria-hidden="true" />
           </a>
 
           {/* Secondary: the prep course (in-app, locale-aware). Outlined white. */}
           <Link
             href={`/${locale}/courses/${COURSE_SLUG}`}
-            className="inline-flex items-center justify-center rounded-full border-2 border-white px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            className="inline-flex items-center justify-center rounded-full border-2 border-white px-4 py-1.5 text-sm font-bold text-white transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           >
             {t("takeCourse")}
           </Link>
