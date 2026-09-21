@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   decodeEventsFromTransaction,
   normalizeEventData,
+  UNDECODABLE_CODE,
 } from "@/lib/helius/event-decoder";
 import {
   handleEnrolled,
@@ -24,6 +25,7 @@ import type {
   XpRewardedEvent,
 } from "@/lib/helius/types";
 import { serverEnv } from "@/lib/env.server";
+import { logEvent } from "@/lib/logging";
 
 const WEBHOOK_SECRET = serverEnv.HELIUS_WEBHOOK_SECRET;
 const MAX_BODY_SIZE = 1 * 1024 * 1024; // 1 MB
@@ -65,8 +67,23 @@ export async function POST(req: NextRequest) {
   }
 
   // 4. Process each transaction
+  let undecodable = 0;
+
   for (const tx of transactions) {
-    const { events, signature } = decodeEventsFromTransaction(tx);
+    const {
+      events,
+      signature,
+      undecodable: skipped,
+    } = decodeEventsFromTransaction(tx);
+
+    // An entry with no usable transaction is skipped, not fatal. Before #1252
+    // the decoder read `tx.transaction.signatures[0]` unguarded and threw
+    // (Sentry SA-2), which abandoned every REMAINING entry in the same POST
+    // and 500'd — so Helius retried a payload that can never decode.
+    if (skipped) {
+      undecodable++;
+      continue;
+    }
 
     for (const event of events) {
       const data: unknown = normalizeEventData(event.data);
@@ -123,6 +140,18 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Return 200 to acknowledge receipt (prevents Helius retry)
-  return NextResponse.json({ received: true });
+  if (undecodable > 0) {
+    logEvent({
+      event: UNDECODABLE_CODE,
+      context: { undecodable, total: transactions.length },
+    });
+  }
+
+  // Always 200: a retry cannot make an undecodable entry decodable, and the
+  // decodable entries in the same batch have already been processed.
+  return NextResponse.json({
+    received: true,
+    processed: transactions.length - undecodable,
+    undecodable,
+  });
 }
