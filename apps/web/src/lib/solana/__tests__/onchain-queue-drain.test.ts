@@ -66,6 +66,8 @@ const h = vi.hoisted(() => ({
   awardXpCalls: [] as Record<string, unknown>[],
   /** What award_xp reports as credited. */
   awardXpCredited: 10 as number,
+  /** The global deploy-window freeze (reset wave B2). */
+  frozen: false,
 }));
 
 vi.mock("server-only", () => ({}));
@@ -111,7 +113,7 @@ vi.mock("@/lib/content/deployments", () => ({
 }));
 
 vi.mock("@/lib/platform/freeze", () => ({
-  isPlatformFrozen: () => Promise.resolve(false),
+  isPlatformFrozen: () => Promise.resolve(h.frozen),
 }));
 
 vi.mock("@/lib/credentials/capstone-gate", () => ({
@@ -352,6 +354,7 @@ beforeEach(() => {
   h.claims.length = 0;
   h.awardXpCalls.length = 0;
   h.awardXpCredited = 10;
+  h.frozen = false;
 });
 
 describe("every attempt is recorded before the work", () => {
@@ -756,5 +759,72 @@ describe("GATE: a wallet-less learner's rows are stamped, not left first in line
     }
     expect(h.awardAchievement).not.toHaveBeenCalled();
     warn.mockRestore();
+  });
+});
+
+describe("GATE round 2: a platform freeze must not starve the DB-only credits", () => {
+  // Same class as the wallet-less path. The freeze branch deferred every
+  // on-chain row WITHOUT claiming it, so `last_attempt_at` stayed NULL — top
+  // priority under least-recently-attempted ordering. With DRAIN_LIMIT on-chain
+  // rows frozen, every run re-selected exactly those and never reached the
+  // `quest_xp` credits queued behind them. Those need no chain at all, and a
+  // deploy window can last a while.
+  function frozenBacklog() {
+    // DRAIN_LIMIT on-chain rows, all older than the quest credit behind them.
+    const onchain = Array.from({ length: DRAIN_LIMIT }, (_, i) =>
+      row({
+        id: `ach${String(i).padStart(2, "0")}`,
+        action_type: "achievement",
+        failed_at: new Date(
+          Date.parse("2026-08-01T00:00:00Z") + i * 3_600_000
+        ).toISOString(),
+      })
+    );
+    const quest = row({
+      id: "quest",
+      action_type: "quest_xp",
+      reference_id: "quest-complete-lesson:2026-09-20",
+      payload: { xpAmount: 25, memo: "daily_quest:complete-lesson" },
+      failed_at: "2026-09-20T00:00:00.000Z",
+    });
+    return [...onchain, quest];
+  }
+
+  it("credits the quest_xp row on the next run instead of never", async () => {
+    h.frozen = true;
+    h.rows = frozenBacklog();
+
+    // Run 1: the cap is filled by the oldest rows, which are the frozen
+    // on-chain ones. The quest credit does not make the cut — that is fine.
+    await drainAllPendingOnchainActions();
+    expect(h.awardXpCalls).toHaveLength(0);
+    // Every frozen row was claimed and marked, which is the fix.
+    expect(finalPatch("ach00").attempt_count).toBe(1);
+    expect(finalPatch("ach00").last_error).toBe("platform-frozen");
+    expect(finalPatch("ach00").resolved_at).toBeUndefined();
+    expect(finalPatch("ach00").retry_count).toBeUndefined();
+
+    // Run 2: the frozen rows now carry a stamp, so the never-attempted quest
+    // credit sorts ahead of them and is credited — during the freeze, because
+    // it needs no chain.
+    await drainAllPendingOnchainActions();
+    expect(h.awardXpCalls).toHaveLength(1);
+    expect(h.awardXpCalls[0]).toMatchObject({
+      p_amount: 25,
+      p_idempotency_key: "quest-complete-lesson:2026-09-20",
+      p_source: "quest",
+    });
+    expect(typeof finalPatch("quest").resolved_at).toBe("string");
+  });
+
+  it("sends nothing on-chain while frozen", async () => {
+    h.frozen = true;
+    h.rows = frozenBacklog();
+
+    await drainAllPendingOnchainActions();
+    await drainAllPendingOnchainActions();
+
+    expect(h.awardAchievement).not.toHaveBeenCalled();
+    expect(h.sendSignedTransaction).not.toHaveBeenCalled();
   });
 });

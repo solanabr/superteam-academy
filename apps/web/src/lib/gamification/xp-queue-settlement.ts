@@ -42,8 +42,12 @@ export async function retryQuestXpForUser(
 
   if (fetchError || !rows || rows.length === 0) return;
 
-  // Oldest first (the query), and only rows whose backoff has elapsed. Without
-  // the second filter a row failing on a stuck RPC would be re-attempted on
+  // This sweep shares the BACKOFF with the full drain, not its ordering or its
+  // cap: it is a single user's DB-only credits, so oldest-`failed_at` and a
+  // fetch ceiling are enough, and `selectDueRows`' least-recently-attempted
+  // round-robin (which exists to stop one learner's gated on-chain rows
+  // monopolising a global run) has nothing to arbitrate here. The backoff does
+  // matter — without it a row failing on a stuck RPC would be re-attempted on
   // every dashboard load and every /api/quests/daily poll.
   const now = Date.now();
   const due = rows.filter((row) => isDueForRetry(row, now));

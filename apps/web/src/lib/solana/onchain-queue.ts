@@ -253,9 +253,19 @@ async function drainRowsForUser(
   // the login-drainer CHURN during the window: no failed tx, no wasted RPC, no
   // retry-budget burn. quest_xp (Pass 1) is DB-only and wallet-less — it is not
   // an on-chain write, so it is intentionally NOT frozen and already ran above.
+  //
+  // CLAIM each row before deferring it (gate round 2, same class as the
+  // wallet-less path). Deferring without a claim left `last_attempt_at` NULL,
+  // which is top priority under least-recently-attempted ordering — so a freeze
+  // with DRAIN_LIMIT on-chain rows behind it would re-select the same rows on
+  // every run for the whole window and never reach the DB-only quest_xp credits
+  // queued behind them. Those credits need no chain and must keep flowing.
   if (await isPlatformFrozen()) {
     for (const row of onchainRows) {
-      await deferForPlatformFreeze(adminClient, row);
+      if (await markAttempt(adminClient, row)) {
+        summary.attempted += 1;
+        await deferForPlatformFreeze(adminClient, row);
+      }
     }
     return;
   }
