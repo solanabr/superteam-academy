@@ -40,12 +40,12 @@ describe("HackathonBanner", () => {
     );
   });
 
-  it("the Register label is a FIXED dark ink, not the theme-flipping --text (dark-mode bug)", () => {
+  it("the Register label is a FIXED white, not the theme-flipping --text (dark-mode bug)", () => {
     renderBanner();
     const register = screen.getByRole("link", { name: /Register/ });
-    // The pill is white in both themes, so its label must be black in both —
-    // `var(--text)` turns near-white on dark and made the label invisible.
-    expect(register.className).toContain("text-[#1c1917]");
+    // The bar is black in both themes, so the label must be white in both —
+    // `var(--text)` turns near-black on light and would vanish on the black bar.
+    expect(register.className).toContain("text-white");
     expect(register.className).not.toContain("var(--text)");
   });
 

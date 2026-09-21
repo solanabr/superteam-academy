@@ -11,15 +11,14 @@ import { ColosseumSeal } from "@/components/layout/colosseum-seal";
  * Top-of-app promo strip for the Solana Hackathon (owner 2026-09-21): register
  * for the hackathon, and take the prep course on the Academy.
  *
- * Amber surface, to grab attention (owner 2026-09-21 — green blended in). The
- * bar is deliberately THEME-INVARIANT: amber (`--accent`) is bright in both
- * light and dark, so it carries a FIXED dark ink (#1c1917) for text, keyline
- * and shadow in both themes rather than the theme-flipping `--text`/`--ink-line`
- * tokens — those turn light on dark and made the white Register pill's label
- * invisible there. The primary CTA is a white pill with black ink (the patch
- * pattern), the secondary an underlined text link. It sits at the top of `main`
- * — which already clears the fixed header — as a full-bleed strip on every
- * route.
+ * Black surface with white content (owner 2026-09-21 — amber read as ugly). The
+ * bar is deliberately THEME-INVARIANT: pure black with WHITE text, keyline and
+ * shadow in both themes, never the theme-flipping `--text`/`--ink-line` tokens.
+ * The primary CTA is a white-outlined ghost pill with white text (the patch
+ * pattern, inverted for a dark surface), the secondary an underlined text link.
+ * A light bottom hairline keeps the black bar legible against the dark theme's
+ * near-black page. It sits at the top of `main` — which already clears the
+ * fixed header — as a full-bleed strip on every route.
  *
  * Dismissible and remembered per device: once closed it stays closed
  * (localStorage), so it never re-nags. Render is gated on that check running in
@@ -59,7 +58,7 @@ export function HackathonBanner() {
   return (
     <aside
       aria-label={t("label")}
-      className="w-full border-b-[2.5px] border-[#1c1917] text-[#1c1917] [background:var(--accent)]"
+      className="w-full border-b border-white/20 text-white [background:#000]"
     >
       {/* Decorative "Crypto World's Fair" top piece — full-bleed painterly
           strip. object-cover keeps the lockup centred as the width changes;
@@ -77,21 +76,21 @@ export function HackathonBanner() {
         />
       </div>
 
-      <div className="page-gutter mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-4 gap-y-2 border-t-[2.5px] border-[#1c1917] py-2.5">
+      <div className="page-gutter mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-4 gap-y-2 border-t border-white/15 py-2.5">
         <p className="flex items-center gap-2 text-sm font-semibold">
           <ColosseumSeal className="h-6 w-6 shrink-0" />
           {t("message")}
         </p>
 
         <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-2">
-          {/* Primary: register for the hackathon (external). A white pill with
-              BLACK ink — keyline, label and hard offset shadow all fixed dark
-              in both themes, so the label never disappears on the dark theme. */}
+          {/* Primary: register for the hackathon (external). A white-outlined
+              ghost pill — keyline, label and hard offset shadow all white, so
+              it reads as a raised control on the black bar in both themes. */}
           <a
             href={HACKATHON_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-full border-[2px] border-[#1c1917] bg-white px-3.5 py-1 text-sm font-bold text-[#1c1917] shadow-[2px_2px_0_0_#1c1917] transition-transform hover:-translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1c1917]"
+            className="inline-flex items-center gap-1.5 rounded-full border-[2px] border-white bg-transparent px-3.5 py-1 text-sm font-bold text-white shadow-[2px_2px_0_0_#fff] transition-transform hover:-translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           >
             {t("register")}
             <ArrowRight size={14} weight="bold" aria-hidden="true" />
@@ -100,7 +99,7 @@ export function HackathonBanner() {
           {/* Secondary: the prep course (in-app, locale-aware). */}
           <Link
             href={`/${locale}/courses/${COURSE_SLUG}`}
-            className="text-sm font-semibold underline decoration-2 underline-offset-2 hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1c1917]"
+            className="text-sm font-semibold underline decoration-2 underline-offset-2 hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           >
             {t("takeCourse")}
           </Link>
@@ -110,7 +109,7 @@ export function HackathonBanner() {
           type="button"
           onClick={dismiss}
           aria-label={t("dismiss")}
-          className="shrink-0 rounded-full p-1 opacity-80 transition-opacity hover:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1c1917]"
+          className="shrink-0 rounded-full p-1 opacity-80 transition-opacity hover:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
         >
           <X size={16} weight="bold" aria-hidden="true" />
         </button>
