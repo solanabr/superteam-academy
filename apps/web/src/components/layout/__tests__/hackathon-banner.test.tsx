@@ -83,4 +83,16 @@ describe("HackathonBanner", () => {
     expect(screen.getByText(messages.hackathonBanner.message)).toBeVisible();
     expect(screen.getByRole("link", { name: /Register/ })).toBeVisible();
   });
+
+  it("carries the decorative Crypto World's Fair top strip and the Colosseum seal", () => {
+    const { container } = renderBanner();
+    // The painterly top piece (a next/image; its src keeps the asset name even
+    // through the image-optimizer URL).
+    expect(
+      container.querySelector('img[src*="crypto-worlds-fair"]')
+    ).not.toBeNull();
+    // The seal that replaced the trophy — anchored on its named gradient so the
+    // assertion doesn't match the CTA's arrow/X icons.
+    expect(container.querySelector("#cseal-wax")).not.toBeNull();
+  });
 });
