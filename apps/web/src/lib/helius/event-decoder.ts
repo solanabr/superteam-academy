@@ -12,6 +12,14 @@ if (!PROGRAM_ID) {
 const eventCoder = new BorshEventCoder(IDL as unknown as Idl);
 
 /**
+ * Stable code for webhook entries we cannot decode at all. The route counts
+ * them across a request and logs ONE line carrying the count — a malformed
+ * feed then shows up as a number rather than as silence, and a batch that is
+ * entirely undecodable cannot spam the log with one line per entry.
+ */
+export const UNDECODABLE_CODE = "HELIUS_DECODE_001";
+
+/**
  * Extract and decode all Anchor events from a raw Helius transaction.
  *
  * Anchor emits events via `sol_log_data` which appears in transaction logs as:
@@ -23,8 +31,21 @@ const eventCoder = new BorshEventCoder(IDL as unknown as Idl);
 export function decodeEventsFromTransaction(tx: HeliusRawTransaction): {
   events: DecodedEvent[];
   signature: string;
+  /** Set when the entry carried no usable transaction and was skipped. */
+  undecodable?: boolean;
 } {
-  const signature = tx.transaction.signatures[0] ?? "";
+  // Helius has delivered entries with no `transaction` at all (Sentry SA-2:
+  // 5 events, `TypeError: Cannot read properties of undefined (reading
+  // 'signatures')`). The payload type says the field is always there; the wire
+  // format disagrees, and the throw took down the whole batch — every later
+  // entry in the same POST went unprocessed and the route 500'd, so Helius
+  // retried a payload we can never decode. Skip the entry instead: no
+  // signature means nothing to attribute an event to anyway.
+  const signature = tx?.transaction?.signatures?.[0];
+  if (!signature) {
+    return { events: [], signature: "", undecodable: true };
+  }
+
   const logs = tx.meta?.logMessages ?? [];
 
   if (tx.meta?.err) {
