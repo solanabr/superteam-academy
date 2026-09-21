@@ -50,6 +50,9 @@ export function VideoUnavailableCard({
             CDN and the card must survive the image being blocked too — an
             error falls through to the plate colour below. */}
         {!posterFailed && (
+          /* eslint-disable-next-line @next/next/no-img-element --
+             next/image would proxy this through our optimizer and swallow the
+             error we rely on; the point of this element is that it may fail. */
           <img
             src={youtubeThumbnailUrl(videoId)}
             alt=""
