@@ -296,6 +296,16 @@ vi.mock("server-only", () => ({}));
 //    paths.json is the only fixture regenerated; counts, slots.json and every
 //    course, lesson and achievement doc are byte-unchanged. The Pílula itself
 //    is untouched and still reachable from the catalogue.
+//  - xpReward card totals (bump to academy-courses @5c51eb4e, content #75): a
+//    VALUES-ONLY wave — the September XP right-sizing moved `xpPerLesson` on
+//    the four wave courses but left `xpReward` untouched, so every card kept
+//    rendering totals computed at the old 20 XP/lesson. Four integers change
+//    to `xpPerLesson × lessonCount`: digital-assets 560 -> 420, anchor-v2
+//    600 -> 540, rust-ts 500 -> 465, payments 480 -> 360. courses.json and
+//    paths.json carry them (the only two fixtures holding these courses'
+//    xpReward); course-by-slug, course-summaries, lessons, achievements-raw,
+//    quests-raw and slots.json are byte-unchanged, and counts are unchanged
+//    (9 courses / 165 lessons) — no doc added, removed or reshaped.
 const deps = { lessonsById };
 
 function bundleCourse(id: string): CourseDoc {
