@@ -529,7 +529,7 @@
       "transactions",
       "version-pinning"
     ],
-    "xpReward": 560,
+    "xpReward": 420,
     "trackId": 0,
     "trackLevel": 0,
     "modules": [
@@ -774,7 +774,7 @@
       "token-2022",
       "version-pinning"
     ],
-    "xpReward": 600,
+    "xpReward": 540,
     "trackId": 0,
     "trackLevel": 0,
     "modules": [
@@ -1047,7 +1047,7 @@
       "typescript-types",
       "version-pinning"
     ],
-    "xpReward": 500,
+    "xpReward": 465,
     "trackId": 0,
     "trackLevel": 0,
     "modules": [
@@ -1312,7 +1312,7 @@
       "version-pinning",
       "x402-protocol"
     ],
-    "xpReward": 480,
+    "xpReward": 360,
     "trackId": 0,
     "trackLevel": 0,
     "modules": [
