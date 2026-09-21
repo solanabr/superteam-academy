@@ -208,11 +208,73 @@ describe("ChallengeInterface — Submit verdict state machine (#942)", () => {
     expect(screen.getByText("+50 XP earned")).toBeTruthy();
   });
 
-  it("a lesson already completed on mount starts settled — no flash", () => {
+  it("a lesson already completed on mount starts settled — no flash, no card", () => {
     const view = renderChallenge({ isAlreadyCompleted: true, earnedXp: 35 });
     const card = verdictCard(view.container);
     expect(card.dataset.verdict).toBe("accepted");
     expect(card.hasAttribute("data-verdict-flash")).toBe(false);
-    expect(screen.getByText("+35 XP earned")).toBeTruthy();
+    // The Accepted card acknowledges a fresh submission; a revisit gets the
+    // read-only editor and the toolbar lock note instead.
+    expect(screen.queryByTestId("accepted-verdict")).toBeNull();
+    expect(h.runnerProps?.isComplete).toBe(true);
+  });
+});
+
+// The accepted card used to sit over the editor forever, blurring the very
+// code the learner just got accepted (#1244 made that code readable).
+describe("ChallengeInterface — Accepted card is dismissible", () => {
+  function acceptFresh() {
+    h.reducedMotion = true; // settle instantly; the flash is covered above
+    const view = renderChallenge({ xpReward: 50 });
+    act(() => h.runnerProps?.onSubmit());
+    act(() => view.rerenderWith({ isAlreadyCompleted: true }));
+    expect(screen.getByTestId("accepted-verdict")).toBeTruthy();
+    return view;
+  }
+
+  it("shows right after acceptance and closes via the close button", () => {
+    acceptFresh();
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(screen.queryByTestId("accepted-verdict")).toBeNull();
+  });
+
+  it("closes on Escape", () => {
+    acceptFresh();
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByTestId("accepted-verdict")).toBeNull();
+  });
+
+  it("closes on a backdrop click but not on a click inside the card", () => {
+    acceptFresh();
+    fireEvent.click(screen.getByText("Accepted"));
+    expect(screen.getByTestId("accepted-verdict")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("accepted-verdict"));
+    expect(screen.queryByTestId("accepted-verdict")).toBeNull();
+  });
+
+  it("dismissing keeps the completed state — the editor stays locked", () => {
+    acceptFresh();
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(verdictCard(document.body).dataset.verdict).toBe("accepted");
+    expect(h.runnerProps?.isComplete).toBe(true);
+  });
+
+  it("does not come back on remount with the completion persisted", () => {
+    const view = acceptFresh();
+    fireEvent.keyDown(document, { key: "Escape" });
+    view.unmount();
+
+    renderChallenge({ isAlreadyCompleted: true, earnedXp: 50 });
+    expect(screen.queryByTestId("accepted-verdict")).toBeNull();
+  });
+
+  it("does not open when the async completion check resolves on a revisit", () => {
+    const view = renderChallenge();
+    expect(screen.queryByTestId("accepted-verdict")).toBeNull();
+    // No submit in this session: the flip is the DB check landing, not a
+    // verdict on something the learner just did.
+    act(() => view.rerenderWith({ isAlreadyCompleted: true }));
+    expect(screen.queryByTestId("accepted-verdict")).toBeNull();
+    expect(verdictCard(view.container).dataset.verdict).toBe("accepted");
   });
 });

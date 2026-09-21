@@ -1945,6 +1945,20 @@
     box-shadow: 0 0 34px -12px var(--accent);
   }
 }
+/* The Accepted overlay is dismissible (#1244 made the editor underneath
+   read-only and readable), so it fades in rather than appearing hard. The
+   blanket prefers-reduced-motion rule collapses the fade. */
+.verdict-accepted-overlay {
+  animation: verdict-accepted-in 0.18s ease-out both;
+}
+@keyframes verdict-accepted-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
 /* Accepted card — amber-edged, matching the settled glow. */
 .verdict-accepted-card {
   background: var(--card);
