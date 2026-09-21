@@ -2,10 +2,25 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-const { rpc } = vi.hoisted(() => ({ rpc: vi.fn() }));
+const { rpc, signals } = vi.hoisted(() => ({
+  rpc: vi.fn(),
+  signals: [] as AbortSignal[],
+}));
 
+// `.rpc(...).abortSignal(signal)` — the call is bounded so a stalled
+// Vercel→Supabase socket fails fast instead of hanging the board render.
 vi.mock("@/lib/supabase/cookieless", () => ({
-  createCookielessClient: () => ({ rpc }),
+  createCookielessClient: () => ({
+    rpc: (...args: unknown[]) => {
+      const result = rpc(...args);
+      return {
+        abortSignal(signal: AbortSignal) {
+          signals.push(signal);
+          return result;
+        },
+      };
+    },
+  }),
 }));
 
 // unstable_cache is identity here so the test drives loadLeaderboard directly —
@@ -19,6 +34,7 @@ import { getCachedLeaderboard } from "../global";
 
 beforeEach(() => {
   vi.clearAllMocks();
+  signals.length = 0;
 });
 
 describe("getCachedLeaderboard (#1107 F1)", () => {
@@ -55,5 +71,7 @@ describe("getCachedLeaderboard (#1107 F1)", () => {
         rank: 1,
       },
     ]);
+    expect(signals).toHaveLength(1);
+    expect(signals[0]).toBeInstanceOf(AbortSignal);
   });
 });

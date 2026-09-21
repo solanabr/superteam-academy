@@ -23,14 +23,31 @@ vi.mock("next/cache", () => ({
   },
 }));
 
+const logError = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/logging", () => ({ logError }));
+
+// `.rpc(...).abortSignal(signal)` — the builder is thenable, so the loader can
+// await the chain. abortSignal records the signal it was handed.
 const rpc = vi.hoisted(() => vi.fn());
+const signals = vi.hoisted(() => [] as AbortSignal[]);
 vi.mock("@/lib/supabase/admin", () => ({
-  createAdminClient: () => ({ rpc }),
+  createAdminClient: () => ({
+    rpc: (...args: unknown[]) => {
+      const result = rpc(...args);
+      return {
+        abortSignal(signal: AbortSignal) {
+          signals.push(signal);
+          return result;
+        },
+      };
+    },
+  }),
 }));
 
 beforeEach(() => {
   rpc.mockReset();
-  vi.spyOn(console, "error").mockImplementation(() => {});
+  logError.mockReset();
+  signals.length = 0;
 });
 
 describe("getLessonCompletionCount", () => {
@@ -47,16 +64,56 @@ describe("getLessonCompletionCount", () => {
       p_course_id: "course-x",
     });
     expect(await getLessonCompletionCount("course-x", "lesson-nobody")).toBe(0);
+    expect(logError).not.toHaveBeenCalled();
   });
 
-  it("returns 0 on an RPC error (chip must never break the lesson render)", async () => {
+  it("bounds the RPC with an abort signal", async () => {
+    rpc.mockResolvedValue({ data: [], error: null });
+    await getLessonCompletionCount("course-x", "lesson-a");
+    expect(signals).toHaveLength(1);
+    expect(signals[0]).toBeInstanceOf(AbortSignal);
+  });
+
+  // The whole point of this module: a failure inside the `unstable_cache`
+  // callback must NEVER become a throw. A throw there surfaces during
+  // background revalidation, attributed to whatever page is rendering, which
+  // is how this decorative chip became 98% of the platform's runtime errors.
+  it("returns 0 and does not throw on an RPC error", async () => {
     rpc.mockResolvedValue({ data: null, error: { message: "boom" } });
-    expect(await getLessonCompletionCount("course-x", "lesson-a")).toBe(0);
+    await expect(
+      getLessonCompletionCount("course-x", "lesson-a")
+    ).resolves.toBe(0);
+    expect(logError).toHaveBeenCalledTimes(1);
+    expect(logError.mock.calls[0]?.[0].errorId).toBe(
+      "LESSON_COMPLETION_COUNT_001"
+    );
   });
 
-  it("returns 0 when the client itself throws", async () => {
-    rpc.mockRejectedValue(new Error("network down"));
-    expect(await getLessonCompletionCount("course-x", "lesson-a")).toBe(0);
+  it("returns 0 and does not throw when the fetch itself rejects", async () => {
+    rpc.mockRejectedValue(new TypeError("fetch failed"));
+    await expect(
+      getLessonCompletionCount("course-x", "lesson-a")
+    ).resolves.toBe(0);
+    expect(logError).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns 0 and does not throw when the request is aborted", async () => {
+    rpc.mockRejectedValue(
+      Object.assign(new Error("The operation was aborted"), {
+        name: "TimeoutError",
+      })
+    );
+    await expect(
+      getLessonCompletionCount("course-x", "lesson-a")
+    ).resolves.toBe(0);
+    expect(logError).toHaveBeenCalledTimes(1);
+  });
+
+  it("logs once per failed load, not once per lesson lookup", async () => {
+    rpc.mockResolvedValue({ data: null, error: { message: "boom" } });
+    await getLessonCompletionCount("course-x", "lesson-a");
+    expect(logError).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenCalledTimes(1);
   });
 
   it("returns 0 on a null data payload", async () => {

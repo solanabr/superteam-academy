@@ -175,7 +175,12 @@ CREATE TABLE IF NOT EXISTS siws_nonces (
 );
 
 CREATE INDEX idx_siws_nonces_created_at ON siws_nonces (created_at);
-CREATE INDEX idx_siws_nonces_status ON siws_nonces (status);
+-- Both hot statements on this table lead with status and range on created_at:
+-- the per-IP rate-limit count and the expiry cleanup DELETE. A (status)-only
+-- index selects ~half the table and then filters, which is a half-table scan
+-- under the DELETE's row lock at login-storm size (perf pass 21-09-2026).
+CREATE INDEX idx_siws_nonces_status_created_at ON siws_nonces (status, created_at);
+CREATE INDEX idx_siws_nonces_status_ip_created_at ON siws_nonces (status, ip_address, created_at);
 
 ALTER TABLE siws_nonces ENABLE ROW LEVEL SECURITY;
 
@@ -260,7 +265,16 @@ CREATE INDEX idx_enrollments_user_id ON enrollments(user_id);
 CREATE INDEX idx_enrollments_course_id ON enrollments(course_id);
 CREATE INDEX idx_user_progress_user_id ON user_progress(user_id);
 CREATE INDEX idx_user_progress_course_id ON user_progress(course_id);
+-- course_lesson_completion_counts() groups completed rows of one course by
+-- lesson; partial + covering makes that an index-only scan sized to the
+-- course rather than a seq scan of the table (perf pass 21-09-2026).
+CREATE INDEX idx_user_progress_course_lesson_completed
+  ON user_progress (course_id, lesson_id) WHERE completed;
 CREATE INDEX idx_xp_transactions_user_id ON xp_transactions(user_id);
+-- get_leaderboard()'s weekly/monthly branch filters on created_at and groups
+-- by user_id.
+CREATE INDEX idx_xp_transactions_user_created
+  ON xp_transactions (user_id, created_at DESC);
 CREATE INDEX idx_xp_transactions_created_at ON xp_transactions(created_at);
 CREATE UNIQUE INDEX idx_xp_transactions_idempotency
   ON xp_transactions (user_id, idempotency_key)
@@ -941,6 +955,13 @@ CREATE TRIGGER trg_enforce_profile_deleted_at_write
 CREATE INDEX IF NOT EXISTS idx_profiles_deleted_at
   ON public.profiles(deleted_at) WHERE deleted_at IS NOT NULL;
 
+-- get_leaderboard() joins profiles on exactly this predicate on every call and
+-- had no index for it, so both branches seq-scanned profiles (perf pass
+-- 21-09-2026).
+CREATE INDEX IF NOT EXISTS idx_profiles_public_ranked
+  ON public.profiles (id)
+  WHERE is_public AND deleted_at IS NULL AND username IS NOT NULL AND username <> '';
+
 -- ─────────────────────────────────────────────
 -- 5b. LEADERBOARD RPC
 -- ─────────────────────────────────────────────
@@ -956,6 +977,7 @@ RETURNS TABLE (
 )
 LANGUAGE plpgsql
 STABLE
+PARALLEL SAFE
 SECURITY DEFINER
 SET search_path = ''
 AS $$
@@ -2458,6 +2480,7 @@ CREATE OR REPLACE FUNCTION course_lesson_completion_counts(p_course_id TEXT)
 RETURNS TABLE (lesson_id TEXT, completed_by BIGINT)
 LANGUAGE sql
 STABLE
+PARALLEL SAFE
 SECURITY DEFINER
 SET search_path = ''
 AS $$
@@ -4352,6 +4375,7 @@ CREATE OR REPLACE FUNCTION public.get_platform_stats()
 RETURNS TABLE (total_xp BIGINT, builders BIGINT, credentials BIGINT)
 LANGUAGE sql
 STABLE
+PARALLEL SAFE
 SECURITY DEFINER
 SET search_path = ''
 AS $$
