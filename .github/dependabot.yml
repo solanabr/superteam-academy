@@ -1,9 +1,19 @@
 version: 2
 updates:
-  # Keep SHA-pinned GitHub Actions (see .github/workflows/*.yml) current.
-  # Dependabot opens a PR bumping the pinned SHA + version comment whenever
-  # an action publishes a new release — the pins never silently rot.
+  # Keep SHA-pinned GitHub Actions (see .github/workflows/*.yml) current, but
+  # QUIETLY. Dependabot's default is one PR per action, which is the noise this
+  # config kept generating even in weeks with no work on our side. The `groups`
+  # rule below batches every action bump into a SINGLE monthly PR instead, and
+  # the limit keeps it to that one PR. The pins still never silently rot — the
+  # bumps just arrive together, once a month, in one reviewable PR.
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
+    open-pull-requests-limit: 1
+    commit-message:
+      prefix: "ci"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
