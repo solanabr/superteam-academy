@@ -19,7 +19,10 @@ import { pathToFileURL } from "node:url";
 import { SKIP_MARKER } from "./guard-git.mjs";
 import { basename, commands, normalize, runHook } from "./lib/shell.mjs";
 
-// Used only when branch protection can't be read (the endpoint needs admin).
+// The required checks on this repo's main, used only when branch protection
+// can't be read (the endpoint needs admin). The names must match the job names
+// in ci.yml and action-pin-guard.yml; a hook test asserts they do.
+export const HOME_REPO = "solanabr/superteam-academy";
 export const FALLBACK_REQUIRED = [
   "Frontend (lint · typecheck · test)",
   "On-chain (fmt · clippy · cargo test)",
@@ -137,7 +140,12 @@ function parseApi(args) {
     const eq = a.indexOf("=");
     const name = a.startsWith("--") && eq > 0 ? a.slice(0, eq) : a;
     const inline = a.startsWith("--") && eq > 0 ? a.slice(eq + 1) : null;
-    if (API_VALUES.has(name)) {
+    if (/^-X.+/.test(a)) {
+      method = a.slice(2).toUpperCase();
+    } else if (/^-[fF].+=/.test(a)) {
+      const k = a.indexOf("=");
+      fields[a.slice(2, k)] = a.slice(k + 1);
+    } else if (API_VALUES.has(name)) {
       const value = inline ?? args[++i] ?? "";
       if (name === "-X" || name === "--method") method = value.toUpperCase();
       else if (["-f", "--raw-field", "-F", "--field"].includes(name)) {
@@ -174,9 +182,9 @@ function mergeTarget(args, { gh, readFile, cwd, raw }) {
         }
       : null;
   }
-  const m = api.endpoint?.match(
-    /(?:^|\/)repos\/([^/]+)\/([^/]+)\/pulls\/(\d+)\/merge\/?$/
-  );
+  const m = api.endpoint
+    ?.split("?")[0]
+    .match(/(?:^|\/)repos\/([^/]+)\/([^/]+)\/pulls\/(\d+)\/merge\/?$/);
   if (!m || api.method === "GET") return null;
 
   let fields = api.fields;
@@ -228,7 +236,12 @@ function requiredChecks(gh, repo, base) {
       ]),
     ];
   } catch {
-    return base === "main" ? FALLBACK_REQUIRED : [];
+    // Unreadable protection: use the known list for this repo's main. Anywhere
+    // else, return none, and checkProblems then requires every check that
+    // reported on the head to be COMPLETED and green.
+    return repo.toLowerCase() === HOME_REPO && base === "main"
+      ? FALLBACK_REQUIRED
+      : [];
   }
 }
 

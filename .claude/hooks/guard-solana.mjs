@@ -51,7 +51,7 @@ const REASONS = {
   helius:
     "Blocked: program writes go only through a Helius devnet RPC (the public devnet endpoint has corrupted large deploys). Pass a Helius devnet URL with --url via an env var, or point the Solana CLI config at one.",
   unresolved:
-    "Blocked: couldn't resolve the --url value (an env var that isn't set in Claude Code's environment). Omit --url so the Solana CLI config is used, or export the variable before starting Claude Code.",
+    "Blocked: couldn't resolve the --url or --config value (it uses an env var that isn't set in Claude Code's own environment, or another shell expansion). Omit --url so the Solana CLI config is used, or export the variable before starting Claude Code.",
   noConfig:
     "Blocked: no --url given and the Solana CLI config couldn't be read, so the target cluster is unknown (the CLI's default is mainnet).",
 };
@@ -91,10 +91,21 @@ function urlAndConfig(argv) {
   return { url, config };
 }
 
+// Substitute $VAR and ${VAR} from Claude Code's environment, anywhere in the
+// value (e.g. a Helius URL ending in ?api-key=$KEY). Returns null when a
+// variable is unset or the value uses any other expansion: the guard can't
+// know the target, so it fails closed.
 function resolveVars(value, env) {
-  if (!value.includes("$")) return value;
-  const whole = value.match(/^\$\{?([A-Za-z_][A-Za-z0-9_]*)\}?$/);
-  return whole ? (env[whole[1]] ?? null) : null;
+  let missing = false;
+  const out = value.replace(
+    /\$\{([A-Za-z_][A-Za-z0-9_]*)\}|\$([A-Za-z_][A-Za-z0-9_]*)/g,
+    (_, braced, bare) => {
+      const v = env[braced ?? bare];
+      if (v === undefined || v === "") missing = true;
+      return v ?? "";
+    }
+  );
+  return missing || out.includes("$") ? null : out;
 }
 
 export function classify(url) {

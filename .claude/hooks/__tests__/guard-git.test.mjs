@@ -36,6 +36,30 @@ const blocked = [
   ["git add a.ts && git commit -m 'fix: thing [ci skip]'", "commit after add"],
 ];
 
+// Each of these hid the guarded command behind a heredoc whose apostrophe or
+// quote used to swallow the rest of the line.
+const PREFIX = `git commit -m "$(cat <<'EOF'\nfix: don't drop the nonce\nEOF\n)"`;
+blocked.push(
+  [`${PREFIX}; git config user.email bot@x`, "identity after a heredoc commit"],
+  [
+    `gh pr create --title x --body "$(cat <<'EOF'\nIt's done\nEOF\n)" && git config user.email bot@x`,
+    "identity after a heredoc PR body",
+  ],
+  [
+    `git commit -m "$(cat <<'EOF'\nfix: say "hi"\nEOF\n)" && git config user.email bot@x`,
+    "double quote inside the heredoc",
+  ],
+  [
+    `echo "$(echo $(cat <<'EOF'\nit's\nEOF\n))" && git config user.email bot@x`,
+    "nested $( $(...) )",
+  ],
+  [
+    'git commit -m "unterminated && git config user.email bot@x',
+    "unclosed quote",
+  ],
+  ["pnpm exec git config user.email bot@x", "pnpm exec wrapper"]
+);
+
 const allowed = [
   ["git status", "status"],
   ["git config --get user.email", "--get read"],
@@ -58,6 +82,10 @@ const allowed = [
   ["echo '[skip ci]'", "marker outside a commit"],
   ["GIT_PAGER=cat git log -1", "unrelated env"],
   ["pnpm --filter web test", "not git"],
+  [
+    "git commit -m \"$(cat <<'EOF'\nfix: don't drop the nonce\nEOF\n)\" && git push",
+    "heredoc commit then push",
+  ],
 ];
 
 for (const [cmd, label] of blocked) {

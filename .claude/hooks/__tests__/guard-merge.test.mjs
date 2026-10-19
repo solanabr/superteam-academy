@@ -240,3 +240,60 @@ test("ignores unrelated gh commands", () => {
     assert.equal(calls.length, 0, cmd);
   }
 });
+
+// B1 regressions: a heredoc with an apostrophe used to swallow the merge.
+const HEREDOC_PR = `gh pr create --title x --body "$(cat <<'EOF'\nIt's done\nEOF\n)"`;
+const HEREDOC_COMMIT = `git commit -m "$(cat <<'EOF'\nfix: don't drop the nonce\nEOF\n)"`;
+
+test("sees a merge after a heredoc PR body with an apostrophe", () => {
+  const cmd = `${HEREDOC_PR} && gh pr merge 7 --squash --auto`;
+  const pr = {
+    commits: [{ messageHeadline: "wip", messageBody: "[skip ci]" }],
+  };
+  const { v, calls } = run(cmd, { pr });
+  assert.ok(calls.length > 0, "the merge was never evaluated");
+  assert.equal(v.allow, false);
+});
+
+test("sees a merge after a heredoc commit, push and merge chain", () => {
+  const cmd = `${HEREDOC_COMMIT} && git push && gh pr merge 7 --squash`;
+  const { v } = run(cmd, { runs: [] });
+  assert.equal(v.allow, false);
+  assert.match(v.reason, /not reported/);
+});
+
+test("parses -XPUT and strips a query string from the endpoint", () => {
+  const cmd =
+    "gh api -XPUT 'repos/solanabr/superteam-academy/pulls/42/merge?x=1' -f merge_method=squash";
+  assert.equal(run(cmd, { runs: [] }).v.allow, false);
+  assert.deepEqual(run(cmd).v, { allow: true });
+  const attached =
+    "gh api --method PUT repos/solanabr/superteam-academy/pulls/42/merge -fcommit_message=[no ci]";
+  assert.equal(run(attached).v.allow, false);
+});
+
+test("another repo without readable protection needs every reported check green, no invented names", () => {
+  const pr = { url: "https://github.com/someone/fork/pull/42" };
+  const runs = [
+    { id: 1, name: "build", status: "completed", conclusion: "success" },
+    { id: 2, name: "lint", status: "in_progress", conclusion: null },
+  ];
+  const blocked = run("gh pr merge 42 --squash", {
+    pr,
+    protection: "forbidden",
+    runs,
+  });
+  assert.equal(blocked.v.allow, false);
+  assert.match(blocked.v.reason, /lint: in_progress/);
+  assert.doesNotMatch(blocked.v.reason, /Frontend|SHA-pin/);
+  const green = runs.map((r) => ({
+    ...r,
+    status: "completed",
+    conclusion: "success",
+  }));
+  assert.deepEqual(
+    run("gh pr merge 42 --squash", { pr, protection: "forbidden", runs: green })
+      .v,
+    { allow: true }
+  );
+});

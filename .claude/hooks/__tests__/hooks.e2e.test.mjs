@@ -167,6 +167,49 @@ test("guard-merge: runs the real gh call path against a stub gh", () => {
   assert.equal(marker.status, 2);
 });
 
+test("B1 repros: each guard still sees commands after a heredoc with an apostrophe", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "guard-b1-"));
+  const file = path.join(dir, "scenario.json");
+  fs.writeFileSync(
+    file,
+    JSON.stringify({
+      pr: {
+        number: 7,
+        url: "https://github.com/solanabr/superteam-academy/pull/7",
+        headRefOid: "d".repeat(40),
+        baseRefName: "main",
+        title: "fix: x",
+        commits: [{ messageHeadline: "wip", messageBody: "[skip ci]" }],
+      },
+      required: ["SHA-pin guard"],
+      runs: [],
+    })
+  );
+  const env = {
+    PATH: `${path.join(here, "fixtures", "bin")}${path.delimiter}${process.env.PATH}`,
+    GH_STUB_SCENARIO: file,
+  };
+  const prBody = `gh pr create --title x --body "$(cat <<'EOF'\nIt's done\nEOF\n)"`;
+  const commit = `git commit -m "$(cat <<'EOF'\nfix: don't drop the nonce\nEOF\n)"`;
+  const home = solanaHome(`https://devnet.helius-rpc.com/?api-key=${KEY}`);
+
+  const cases = [
+    ["guard-merge.mjs", `${prBody} && gh pr merge 7 --squash --auto`, env],
+    ["guard-merge.mjs", `${commit} && git push && gh pr merge 7 --squash`, env],
+    [
+      "guard-solana.mjs",
+      `${commit} && solana program deploy x.so -um`,
+      { HOME: home },
+    ],
+    ["guard-git.mjs", `${commit}; git config user.email bot@x`, {}],
+  ];
+  for (const [hook, command, extraEnv] of cases) {
+    const r = runHook(hook, command, extraEnv);
+    assert.equal(r.status, 2, `${hook} let through: ${command}`);
+    assert.match(r.stderr, /^Blocked:/);
+  }
+});
+
 test("settings.json wires every hook to an existing script, scoped and failing closed", () => {
   const settings = JSON.parse(
     fs.readFileSync(path.join(projectDir, ".claude", "settings.json"), "utf8")
