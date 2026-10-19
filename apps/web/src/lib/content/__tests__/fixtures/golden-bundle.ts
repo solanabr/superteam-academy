@@ -441,7 +441,10 @@ export const goldenBundle: RawBundle = {
         course: {
           title: "Alpha: from thesis to your first asset",
           thumbnail: image("c"),
-          modules: { fundamentos: { title: "Fundamentals" } },
+          modules: {
+            fundamentos: { title: "Fundamentals" },
+            deploy: { description: "Put a program on devnet." },
+          },
         },
         lessons: {
           "lesson-alpha-quiz": {

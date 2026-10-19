@@ -221,7 +221,10 @@ describe("localized course projection (content i18n)", () => {
     expect(projected.title).toBe("Alpha: from thesis to your first asset");
     expect(projected.thumbnail).not.toBe(source.thumbnail);
     expect(projected.description).toBe(source.description);
+    expect(projected.modules[0]!.title).toBe("Fundamentals");
+    expect(projected.modules[0]!.description).toBeNull();
     expect(projected.modules[1]!.title).toBe(source.modules[1]!.title);
+    expect(projected.modules[1]!.description).toBe("Put a program on devnet.");
   });
 
   it("never changes what the grader reads", () => {

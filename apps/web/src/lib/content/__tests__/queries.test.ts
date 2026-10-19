@@ -567,6 +567,12 @@ describe("getAllQuests — active only", () => {
 });
 
 describe("admin fns — full deployment row join", () => {
+  it("getAllCoursesIncludingUnlisted sorts by title, not store order", async () => {
+    // The store holds Zeta before Alpha, so only the title sort puts Alpha first.
+    const res = await q.getAllCoursesIncludingUnlisted();
+    expect(res.map((c) => c._id)).toEqual(["course-alpha", "course-zeta"]);
+  });
+
   it("getAllCoursesAdmin sorts by title + maps the onChainStatus row", async () => {
     const res = await q.getAllCoursesAdmin();
     expect(res.map((c) => c._id)).toEqual([

@@ -211,7 +211,7 @@
     {
       "key": "deploy",
       "title": "Deploy",
-      "description": "Coloque um programa na devnet.",
+      "description": "Put a program on devnet.",
       "lessons": [
         {
           "_id": "lesson-alpha-deploy",
