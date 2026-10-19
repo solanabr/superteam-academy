@@ -2,6 +2,7 @@
    the module imports so the `server-only` graph loads under vitest. */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { Keypair, PublicKey } from "@solana/web3.js";
+import type { SettledResult } from "@/lib/solana/admin-signer";
 
 vi.mock("server-only", () => ({}));
 
@@ -29,7 +30,7 @@ let courses: unknown[] = [];
 let accounts: Map<string, object | null> = new Map();
 let onChainCourse: Record<string, unknown> | null = null;
 let fetchCourseThrows = false;
-let closeResult = { success: true, signature: "close-sig" };
+let closeResult: SettledResult = { outcome: "landed", signature: "close-sig" };
 let createResults: Array<{
   success: boolean;
   signature?: string;
@@ -46,6 +47,8 @@ let genesisHashThrows = false;
 // the deactivation's slot as the RPC reports it (null = not seen).
 let recheckCourse: Record<string, unknown> | null = null;
 let deactivationSlot: number | null = 123;
+// Statuses the RPC reports for create signatures (getSignatureStatuses).
+let signatureStatuses: Map<string, { err: unknown }> = new Map();
 // Every getAccountInfo call, with its config, and an optional hook that can
 // throw to simulate a lagging or unreachable RPC.
 type ReadConfig = { commitment?: string; minContextSlot?: number } | string;
@@ -77,13 +80,22 @@ vi.mock("@/lib/solana/admin-signer", async (importOriginal) => {
     ...actual,
     getAuthorityPublicKey: () => authority,
     getPlatformBackendSigners: async () => [BACKEND_SIGNER],
-    closeCoursePda: vi.fn(async () => {
+    // The chain side of the mocks: a landed close removes the account, a
+    // landed create puts it back.
+    closeCoursePda: vi.fn(async (courseId: string) => {
       calls.push("close");
+      if (closeResult.outcome === "landed")
+        accounts.delete(coursePda(courseId));
       return closeResult;
     }),
-    deployCoursePda: vi.fn(async () => {
+    deployCoursePda: vi.fn(async (p: { courseId: string }) => {
       calls.push("create");
-      return createResults.shift() ?? { success: false, error: "no result" };
+      const result = createResults.shift() ?? {
+        success: false,
+        error: "no result",
+      };
+      if (result.success) accounts.set(coursePda(p.courseId), { lamports: 1 });
+      return result;
     }),
     setCourseCollectionPda: vi.fn(async () => {
       calls.push("bind");
@@ -155,6 +167,12 @@ vi.mock("@solana/web3.js", async (importOriginal) => {
         return {
           context: { slot: 1 },
           value: deactivationSlot == null ? null : { slot: deactivationSlot },
+        };
+      }
+      async getSignatureStatuses(signatures: string[]) {
+        return {
+          context: { slot: 1 },
+          value: signatures.map((sig) => signatureStatuses.get(sig) ?? null),
         };
       }
     },
@@ -230,8 +248,9 @@ beforeEach(() => {
     // trips the lesson-count guard.
     liveLessonCount: 5,
   };
-  closeResult = { success: true, signature: "close-sig" };
+  closeResult = { outcome: "landed", signature: "close-sig" };
   createResults = [{ success: true, signature: "create-sig" }];
+  signatureStatuses = new Map();
   bindResult = { success: true, signature: "bind-sig" };
   updateResult = { success: true, signature: "update-sig" };
   dbThrows = false;
@@ -397,13 +416,18 @@ describe("mainnet recreate — zero enrollments only", () => {
     expect(calls).toEqual([]);
   });
 
-  it("puts is_active back when the close fails after the freeze", async () => {
-    closeResult = { success: false, signature: "" };
+  it("puts is_active back when the close definitively did not land", async () => {
+    closeResult = {
+      outcome: "notLanded",
+      error: "its blockhash expired before it landed",
+    };
 
     const err = await captureError(recreateCourse(COURSE_ID));
 
     expect(err.phase).toBe("close");
     expect(err.courseIntact).toBe(true);
+    expect(err.message).toMatch(/nothing was destroyed/i);
+    expect(err.message).toMatch(/deactivated and then re-activated/i);
     expect(calls).toEqual([
       "gate:on",
       "deactivate",
@@ -411,6 +435,21 @@ describe("mainnet recreate — zero enrollments only", () => {
       "activate",
       "gate:off",
     ]);
+  });
+
+  it("sends no activate and keeps the gate when the close outcome is unknown", async () => {
+    closeResult = {
+      outcome: "unknown",
+      signature: "close-sig",
+      error: "RPC unreachable",
+    };
+
+    const err = await captureError(recreateCourse(COURSE_ID));
+
+    expect(err.courseIntact).toBe(false);
+    expect(err.message).toMatch(/UNKNOWN/);
+    expect(err.message).toMatch(/re-activate it/);
+    expect(calls).toEqual(["gate:on", "deactivate", "close"]);
   });
 
   it("re-reads the course pinned at the deactivation's slot", async () => {
@@ -779,7 +818,7 @@ describe("rail 3 — the maintenance gate", () => {
   });
 
   it("clears the gate when the close itself fails (course untouched)", async () => {
-    closeResult = { success: false, error: "Unauthorized" } as never;
+    closeResult = { outcome: "notLanded", error: "Unauthorized" };
     await expect(recreateCourse(COURSE_ID)).rejects.toBeInstanceOf(
       RecreateCourseError
     );
@@ -788,7 +827,7 @@ describe("rail 3 — the maintenance gate", () => {
 
   it("LEAVES the gate ON when the create ultimately fails (course is genuinely down)", async () => {
     vi.useFakeTimers();
-    createResults = Array.from({ length: 4 }, () => ({
+    createResults = Array.from({ length: 3 }, () => ({
       success: false,
       error: "rpc down",
     }));
@@ -801,7 +840,6 @@ describe("rail 3 — the maintenance gate", () => {
     expect(calls).toEqual([
       "gate:on",
       "close",
-      "create",
       "create",
       "create",
       "create",
@@ -1014,7 +1052,6 @@ describe("create fails after close — the course is DOWN", () => {
       { success: false, error: "blockhash not found" },
       { success: false, error: "blockhash not found" },
       { success: false, error: "node is behind" },
-      { success: false, error: "node is behind" },
     ];
 
     const promise = recreateCourse(COURSE_ID);
@@ -1028,13 +1065,12 @@ describe("create fails after close — the course is DOWN", () => {
     // THE flag the caller must branch on: the course is NOT intact.
     expect(thrown.courseIntact).toBe(false);
 
-    // It retried hard (4 attempts), then persisted the truth. Note the DB row is
+    // It retried hard (3 attempts), then persisted the truth. Note the DB row is
     // written AFTER the last failed create — and is `not_deployed`, never a stale
     // `synced` claiming the course is fine.
     expect(calls).toEqual([
       "gate:on",
       "close",
-      "create",
       "create",
       "create",
       "create",
@@ -1086,7 +1122,7 @@ describe("create fails after close — the course is DOWN", () => {
 
   it("still throws the loud error when persisting not_deployed ALSO fails", async () => {
     vi.useFakeTimers();
-    createResults = Array.from({ length: 4 }, () => ({
+    createResults = Array.from({ length: 3 }, () => ({
       success: false,
       error: "rpc down",
     }));
@@ -1109,7 +1145,7 @@ describe("create fails after close — the course is DOWN", () => {
 // ---------------------------------------------------------------------------
 describe("close fails", () => {
   it("reports the course as INTACT and never attempts the create", async () => {
-    closeResult = { success: false, error: "Unauthorized" } as never;
+    closeResult = { outcome: "notLanded", error: "Unauthorized" };
 
     let thrown: RecreateCourseError | undefined;
     try {
@@ -1125,21 +1161,45 @@ describe("close fails", () => {
     expect(calls).toEqual(["gate:on", "close", "gate:off"]);
   });
 
-  it("goes on to the create when the close timed out but the account is gone", async () => {
-    vi.mocked(closeCoursePda).mockImplementationOnce(async () => {
-      calls.push("close");
-      accounts.delete(coursePda(COURSE_ID));
-      return {
-        success: false,
-        error: "Transaction was not confirmed in 30.00 seconds",
-      };
+  it("keeps the gate and says the state is unknown when the close outcome is unknown", async () => {
+    closeResult = {
+      outcome: "unknown",
+      signature: "close-sig",
+      error: "RPC unreachable",
+    };
+
+    const err = await captureError(recreateCourse(COURSE_ID));
+
+    expect(err.phase).toBe("close");
+    expect(err.courseIntact).toBe(false);
+    expect(err.message).toMatch(/UNKNOWN/);
+    expect(err.message).toMatch(/expires after 10 minutes/);
+    expect(err.message).not.toMatch(/nothing was destroyed/i);
+    expect(deployCoursePda).not.toHaveBeenCalled();
+    expect(calls).toEqual(["gate:on", "close"]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// A create that times out can still land. After every failed attempt the
+// course is looked up before retrying or giving up.
+// ---------------------------------------------------------------------------
+describe("a create that lands late", () => {
+  const TIMEOUT = "Transaction was not confirmed in 30.00 seconds";
+
+  it("counts a timed-out attempt whose course shows up as landed, with its signature", async () => {
+    vi.mocked(deployCoursePda).mockImplementationOnce(async (p) => {
+      calls.push("create");
+      accounts.set(coursePda(p.courseId), { lamports: 1 });
+      return { success: false, error: TIMEOUT, signature: "create-late" };
     });
+    signatureStatuses.set("create-late", { err: null });
 
     const result = await recreateCourse(COURSE_ID);
 
-    expect(result.action).toBe("recreated");
-    expect(result.closeSignature).toBeNull();
-    expect(result.warnings.join(" ")).toMatch(/so it landed/i);
+    expect(result.createSignature).toBe("create-late");
+    expect(result.createAttempts).toBe(1);
+    expect(result.warnings.join(" ")).toMatch(/so it landed\./);
     expect(calls).toEqual([
       "gate:on",
       "close",
@@ -1151,22 +1211,45 @@ describe("close fails", () => {
     ]);
   });
 
-  it("leaves the gate on and says the state is unknown when the re-read fails too", async () => {
-    vi.mocked(closeCoursePda).mockImplementationOnce(async () => {
-      calls.push("close");
-      readHook = () => {
-        throw new Error("RPC unreachable");
-      };
-      return { success: false, error: "blockhash expired" };
+  it("stops retrying once an earlier attempt turns out to have landed", async () => {
+    vi.useFakeTimers();
+    vi.mocked(deployCoursePda)
+      .mockImplementationOnce(async () => {
+        calls.push("create");
+        return { success: false, error: TIMEOUT, signature: "create-1" };
+      })
+      .mockImplementationOnce(async (p) => {
+        // create-1 landed in the meantime, so this one is refused.
+        calls.push("create");
+        accounts.set(coursePda(p.courseId), { lamports: 1 });
+        return { success: false, error: "account already in use" };
+      });
+    signatureStatuses.set("create-1", { err: null });
+
+    const promise = recreateCourse(COURSE_ID);
+    await vi.runAllTimersAsync();
+    const result = await promise;
+
+    expect(result.createSignature).toBe("create-1");
+    expect(result.createAttempts).toBe(2);
+    expect(calls.filter((c) => c === "create")).toHaveLength(2);
+    expect(calls).toContain("db:synced");
+    expect(calls).not.toContain("db:not_deployed");
+  });
+
+  it("reports a null signature and skips the changelog when the landing can't be attributed", async () => {
+    vi.mocked(deployCoursePda).mockImplementationOnce(async (p) => {
+      calls.push("create");
+      accounts.set(coursePda(p.courseId), { lamports: 1 });
+      return { success: false, error: "fetch failed" };
     });
 
-    const err = await captureError(recreateCourse(COURSE_ID));
+    const result = await recreateCourse(COURSE_ID);
 
-    expect(err.phase).toBe("close");
-    expect(err.courseIntact).toBe(false);
-    expect(err.message).toMatch(/UNKNOWN/);
-    expect(deployCoursePda).not.toHaveBeenCalled();
-    expect(calls).toEqual(["gate:on", "close"]);
+    expect(result.createSignature).toBeNull();
+    expect(result.warnings.join(" ")).toMatch(/could not be confirmed/);
+    expect(calls).toContain("db:synced");
+    expect(calls).not.toContain("changelog:recreated");
   });
 });
 

@@ -11,8 +11,15 @@ import "server-only";
  *
  * This module MUST ONLY be imported from API routes (server-side).
  */
-import { Connection, Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
-import type { PublicKeyInitData } from "@solana/web3.js";
+import {
+  Connection,
+  Keypair,
+  PublicKey,
+  SendTransactionError,
+  SystemProgram,
+  TransactionExpiredTimeoutError,
+} from "@solana/web3.js";
+import type { PublicKeyInitData, Transaction } from "@solana/web3.js";
 import { AnchorProvider, Program } from "@coral-xyz/anchor";
 import type { Idl } from "@coral-xyz/anchor";
 import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
@@ -63,6 +70,7 @@ interface MethodBuilder {
   accountsPartial(accounts: Record<string, PublicKey>): MethodBuilder;
   signers(signers: Keypair[]): MethodBuilder;
   rpc(): Promise<string>;
+  transaction(): Promise<Transaction>;
 }
 
 interface AdminMethods {
@@ -94,6 +102,10 @@ interface CreateAchievementTypeOnChainParams {
 
 export interface AdminSignerResult {
   success: boolean;
+  /**
+   * On failure, set by deployCoursePda when the tx timed out unconfirmed: it
+   * may still land.
+   */
   signature?: string;
   error?: string;
   /** Set when a known guard refused before anything was sent (see ERROR_IDS). */
@@ -135,9 +147,10 @@ export interface CreateCourseAdminParams {
    */
   allowUnusualCreator?: boolean;
   /**
-   * Genesis hash of `SOLANA_RPC_URL` when the caller has just read it (the
-   * recreate pre-flight), so the create doesn't depend on a second lookup.
-   * Omitted, deployCoursePda reads it from the connection that sends the tx.
+   * Genesis hash of `SOLANA_RPC_URL` the caller has just read (the recreate
+   * pre-flight). deployCoursePda still reads it from the connection that sends
+   * the tx and uses this only if that lookup throws, so a create after the
+   * close doesn't hinge on a second lookup.
    */
   genesisHash?: string;
 }
@@ -325,6 +338,104 @@ export async function getPlatformBackendSigners(
     // BACKEND_SIGNER_SECRET unset or malformed.
   }
   return keys;
+}
+
+const errorText = (err: unknown): string =>
+  err instanceof Error ? err.message : String(err);
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * How long {@link sendAndSettle} waits for a definitive answer. A blockhash is
+ * valid for ~150 blocks, about 60-70s on mainnet.
+ */
+const SETTLE_TIMEOUT_MS = 75_000;
+const SETTLE_POLL_MS = 2_000;
+
+/**
+ * A send's outcome once it can no longer change. `notLanded` covers a rejected
+ * send, a tx that failed on-chain, and one whose blockhash expired before it
+ * landed. `unknown`: the RPC gave no definitive answer within
+ * SETTLE_TIMEOUT_MS, so the tx may or may not have landed.
+ */
+export type SettledResult =
+  | { outcome: "landed"; signature: string }
+  | { outcome: "notLanded"; error: string }
+  | { outcome: "unknown"; signature: string; error: string };
+
+/**
+ * Sign and send `tx` with a fresh blockhash, then poll until it is confirmed,
+ * failed, or past that blockhash's expiry without landing. `.rpc()` gives up
+ * after 30s while a tx can still land for about as long again, so its failure
+ * can't tell "didn't land" from "still in flight".
+ */
+async function sendAndSettle(
+  connection: Connection,
+  signer: Keypair,
+  tx: Transaction
+): Promise<SettledResult> {
+  let blockhash: string;
+  let fetchedAtSlot: number;
+  try {
+    const latest = await connection.getLatestBlockhashAndContext("confirmed");
+    blockhash = latest.value.blockhash;
+    fetchedAtSlot = latest.context.slot;
+  } catch (err) {
+    return { outcome: "notLanded", error: errorText(err) };
+  }
+  tx.feePayer = signer.publicKey;
+  tx.recentBlockhash = blockhash;
+  tx.sign(signer);
+  const signature = bs58.encode(tx.signature!);
+  try {
+    await connection.sendRawTransaction(tx.serialize(), {
+      preflightCommitment: "confirmed",
+    });
+  } catch (err) {
+    // An error answer (failed preflight, unknown blockhash, ...) means the RPC
+    // never forwarded it. A transport error may have gone out: settle it.
+    if (err instanceof SendTransactionError) {
+      return { outcome: "notLanded", error: err.message };
+    }
+  }
+
+  const deadline = Date.now() + SETTLE_TIMEOUT_MS;
+  let lastError = "no definitive answer from the RPC";
+  for (;;) {
+    try {
+      // Expiry first, then the status from a node at or past that slot: a tx
+      // can only land while its blockhash is valid, and a lagging node could
+      // otherwise miss one that already did.
+      const valid = await connection.isBlockhashValid(blockhash, {
+        commitment: "confirmed",
+        minContextSlot: fetchedAtSlot,
+      });
+      const { context, value: status } =
+        await connection.getSignatureStatus(signature);
+      const settled =
+        status?.confirmationStatus === "confirmed" ||
+        status?.confirmationStatus === "finalized";
+      if (settled && status.err) {
+        return {
+          outcome: "notLanded",
+          error: `failed on-chain: ${JSON.stringify(status.err)}`,
+        };
+      }
+      if (settled) return { outcome: "landed", signature };
+      if (!valid.value && !status && context.slot >= valid.context.slot) {
+        return {
+          outcome: "notLanded",
+          error: "its blockhash expired before it landed",
+        };
+      }
+    } catch (err) {
+      lastError = errorText(err);
+    }
+    if (Date.now() >= deadline) {
+      return { outcome: "unknown", signature, error: lastError };
+    }
+    await sleep(SETTLE_POLL_MS);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -530,11 +641,19 @@ export async function deployCoursePda(
     }
     // Fail-closed: mainnet unless the connection the tx goes through answers
     // with devnet's genesis hash (or is loopback serving localnet). Read per
-    // call; an unreadable genesis refuses with ClusterUnverifiedError.
+    // call. The caller's hash is only a fallback for a failed lookup; with
+    // neither, it refuses with ClusterUnverifiedError.
     const connection = _connection;
     const mainnet = await isMainnetFailClosed(
       connection.rpcEndpoint,
-      async () => params.genesisHash ?? (await connection.getGenesisHash())
+      async () => {
+        try {
+          return await connection.getGenesisHash();
+        } catch (err) {
+          if (params.genesisHash) return params.genesisHash;
+          throw err;
+        }
+      }
     );
     // Built before assertCreatorAllowed so that on mainnet the identity guard
     // inside the builder (unset track/level, platform-key creator; no override)
@@ -612,11 +731,17 @@ export async function deployCoursePda(
         errorId: ERROR_IDS.CLUSTER_UNVERIFIED,
       };
     }
-    const message = err instanceof Error ? err.message : String(err);
+    const message = errorText(err);
     console.error(
       `[admin-signer] deployCoursePda(${params.courseId}): ${message}`
     );
-    return { success: false, error: message };
+    return {
+      success: false,
+      error: message,
+      ...(err instanceof TransactionExpiredTimeoutError
+        ? { signature: err.signature }
+        : {}),
+    };
   }
 }
 
@@ -690,6 +815,9 @@ export async function updateCoursePda(
  * the Course PDA DOES NOT EXIST and `enroll` / `complete_lesson` have no account
  * to read. See the orchestrator for the pre-flight + retry that bound that window.
  *
+ * Waits for a definitive outcome ({@link sendAndSettle}): the caller acts on
+ * "landed" or "not landed", and must treat "unknown" as possibly closed.
+ *
  * Learner progress does NOT survive. Enrollment PDAs are not passed to
  * `close_course`, but the recreated course gets a new generation, and the
  * program rejects older-generation enrollments (`StaleEnrollment`, 6034) and
@@ -705,38 +833,39 @@ export async function updateCoursePda(
  *   - `is_active` → true, `collection` → default, `content_tx_id` → zeroes.
  *     The orchestrator restores the first two; a re-sync restores the third.
  */
-export async function closeCoursePda(
-  courseId: string
-): Promise<AdminSignerResult> {
+export async function closeCoursePda(courseId: string): Promise<SettledResult> {
   const { ready } = initialize();
-  if (!ready || !_program || !_authority) {
+  if (!ready || !_program || !_authority || !_connection) {
     return {
-      success: false,
+      outcome: "notLanded",
       error: "Admin signer not configured (PROGRAM_AUTHORITY_SECRET missing)",
     };
   }
 
+  let tx: Transaction;
   try {
     const [configPDA] = findConfigPDA(getProgramId());
     const [coursePDA] = findCoursePDA(courseId, getProgramId());
-
     const methods = _program.methods as unknown as AdminMethods;
-
-    const signature = await methods
+    tx = await methods
       .closeCourse(courseId)
       .accountsPartial({
         config: configPDA,
         course: coursePDA,
         authority: _authority.publicKey,
       })
-      .rpc();
-
-    return { success: true, signature };
+      .transaction();
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error(`[admin-signer] closeCoursePda(${courseId}): ${message}`);
-    return { success: false, error: message };
+    return { outcome: "notLanded", error: errorText(err) };
   }
+
+  const result = await sendAndSettle(_connection, _authority, tx);
+  if (result.outcome !== "landed") {
+    console.error(
+      `[admin-signer] closeCoursePda(${courseId}): ${result.outcome}: ${result.error}`
+    );
+  }
+  return result;
 }
 
 /**

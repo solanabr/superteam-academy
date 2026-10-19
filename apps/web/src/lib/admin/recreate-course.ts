@@ -9,6 +9,7 @@ import {
   acquireCourseMaintenanceGate,
 } from "@/lib/content/deployment-writes";
 import { recordCourseRecreated } from "@/lib/content/changelog-writes";
+import { MAINTENANCE_GATE_TTL_MIN } from "@/lib/content/maintenance-gate";
 import {
   decodeCourse,
   fetchCourse,
@@ -80,10 +81,12 @@ import {
  *      instead of reading a course that may not exist yet. A gate stuck open
  *      by a failed recreate also clears the next time the course transitions
  *      to `"synced"` (e.g. via the ordinary Deploy path) — see
- *      `writeCourseOnChainStatus`.
+ *      `writeCourseOnChainStatus` — and stops counting once it is older than
+ *      `MAINTENANCE_GATE_TTL_MS` (see `lib/content/maintenance-gate.ts`).
  *   3. RETRY THE CREATE HARD. {@link CREATE_ATTEMPTS} attempts, each a fresh
  *      `.rpc()` (Anchor fetches a new blockhash per call, so a retry is never a
- *      resend of an expired tx).
+ *      resend of an expired tx). A timed-out attempt that lands late is
+ *      detected by looking for the course after every failure.
  *   4. FAIL LOUD, LEAVE IT RECOVERABLE. If the create still fails we do NOT
  *      swallow it: the deployment row is written honestly as `not_deployed`
  *      (never left as a stale `synced` claiming the course is fine) and the
@@ -122,8 +125,11 @@ import {
  * creator != authority always apply.
  */
 
-/** Create attempts after the close has landed. */
-const CREATE_ATTEMPTS = 4;
+/**
+ * Create attempts after the close has landed. Three keeps the mainnet worst
+ * case inside the route's 300s maxDuration (see the route).
+ */
+const CREATE_ATTEMPTS = 3;
 
 /** Backoff between create attempts (ms). */
 const CREATE_RETRY_DELAY_MS = 1_000;
@@ -145,13 +151,14 @@ export type RecreatePhase = "preflight" | "freeze" | "close" | "create";
  *   - `true`  → nothing was destroyed. The pre-flight refused (no on-chain call
  *     was made at all), the mainnet freeze stopped before the close (the message
  *     says whether the course was re-activated or left inactive), or the close
- *     itself failed and the old Course PDA is still there. Safe to retry.
+ *     definitively did not land and the old Course PDA is still there. Safe to
+ *     retry.
  *   - `false` → THE COURSE IS DOWN, or its state is unknown. Either the close
  *     landed and the create did not, so the Course PDA does not exist and
- *     `enroll` / `complete_lesson` revert until it is recreated, or the close
- *     reported failure and the course could not be read back to tell. Learner
- *     XP is intact; their on-chain course progress does not carry over to the
- *     recreated course. {@link Error.message} carries the recovery instruction.
+ *     `enroll` / `complete_lesson` revert until it is recreated, or the RPC
+ *     never said whether the close landed. Learner XP is intact; their on-chain
+ *     course progress does not carry over to the recreated course.
+ *     {@link Error.message} carries the recovery instruction.
  */
 export class RecreateCourseError extends Error {
   constructor(
@@ -181,12 +188,12 @@ interface PreCloseSnapshot {
 export interface RecreateCourseResult {
   action: "recreated";
   coursePda: string;
+  closeSignature: string;
   /**
-   * `null` when the close reported failure but the course account was gone
-   * afterwards: it landed, and its signature was not returned.
+   * `null` when an attempt reported failure but the course account turned up,
+   * so it landed late, and its signature could not be confirmed.
    */
-  closeSignature: string | null;
-  createSignature: string;
+  createSignature: string | null;
   /** How many create attempts it took (1 = landed first try). */
   createAttempts: number;
   /**
@@ -635,6 +642,35 @@ async function readCourse(
   return info ? decodeCourse(info.data) : null;
 }
 
+/** Whether the Course PDA exists at "confirmed"; `false` when the read fails. */
+async function courseExists(
+  connection: Connection,
+  coursePda: PublicKey
+): Promise<boolean> {
+  try {
+    return (await connection.getAccountInfo(coursePda, "confirmed")) !== null;
+  } catch {
+    return false;
+  }
+}
+
+/** Which of `signatures` landed without error, or `null` if none can be confirmed. */
+async function landedSignature(
+  connection: Connection,
+  signatures: string[]
+): Promise<string | null> {
+  if (signatures.length === 0) return null;
+  try {
+    const { value } = await connection.getSignatureStatuses(signatures, {
+      searchTransactionHistory: true,
+    });
+    const i = value.findIndex((status) => status != null && !status.err);
+    return signatures[i] ?? null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Put `is_active` back after a mainnet recreate deactivated the course and then
  * stopped short of the close (only if it was active before). Never throws;
@@ -741,7 +777,9 @@ async function freezeEnrollments(
  */
 export async function recreateCourse(
   courseId: string,
-  allowUnusualCreator = false
+  allowUnusualCreator = false,
+  /** Who asked, for the audit log. */
+  adminUserId?: string
 ): Promise<RecreateCourseResult> {
   const connection = new Connection(serverEnv.SOLANA_RPC_URL, "confirmed");
 
@@ -756,7 +794,7 @@ export async function recreateCourse(
   );
   if (plan.createParams.allowUnusualCreator) {
     console.warn(
-      `[recreate-course] ${courseId}: allowUnusualCreator applied — the creator-denylist guard is bypassed for this recreate.`
+      `[recreate-course] ${courseId} (admin=${adminUserId ?? "unknown"}): allowUnusualCreator applied — the creator-denylist guard is bypassed for this recreate.`
     );
   }
 
@@ -786,69 +824,77 @@ export async function recreateCourse(
     await freezeEnrollments(plan, connection);
   }
 
-  // 3. CLOSE. From here the course is DOWN until the create lands.
+  // 3. CLOSE. From here the course is DOWN until the create lands. The close
+  //    waits for a definitive outcome: `.rpc()` gives up after 30s while the
+  //    tx can still land, which once made a landed close read as "nothing was
+  //    destroyed".
   const closed = await closeCoursePda(courseId);
-  const warnings: string[] = [];
-  if (!closed.success) {
-    // A confirmation timeout reports failure for a close that may have landed,
-    // so look before claiming nothing was destroyed.
-    let stillDeployed: boolean;
-    try {
-      stillDeployed =
-        (await connection.getAccountInfo(plan.coursePda, "confirmed")) !== null;
-    } catch (err) {
-      // Fail closed: the gate stays on and nothing is re-activated.
-      throw new RecreateCourseError(
-        `Failed to close course "${courseId}" (${closed.error ?? "unknown error"}), and re-reading it failed too ` +
-          `(${errorText(err)}). Whether the course still exists is UNKNOWN. The maintenance gate is left on. ` +
-          `Check the admin status screen before acting: if the course is gone, use Deploy to recreate it; ` +
-          `if it is still there, re-sync it to clear the gate${plan.cluster === "mainnet" ? ", then re-activate it" : ""}.`,
-        "close",
-        false
-      );
-    }
-    if (stillDeployed) {
-      // The old PDA is still there, untouched — clear the gate, nothing was
-      // destroyed. Safe unconditionally: step 2 guarantees only the acquirer
-      // ever reaches this line. On mainnet step 2b deactivated it, so put that
-      // back first.
-      const note = plan.cluster === "mainnet" ? await reactivate(plan) : "";
-      await clearMaintenanceGate(courseId);
-      throw new RecreateCourseError(
-        `Failed to close course "${courseId}": ${closed.error ?? "unknown error"}. The course is UNCHANGED and still deployed — nothing was destroyed.${note}`,
-        "close",
-        true
-      );
-    }
-    // The account is gone, so the close landed: carry on to the create.
-    warnings.push(
-      `The close reported an error (${closed.error ?? "unknown error"}) but the course account was gone afterwards, so it landed; its signature was not returned.`
+  if (closed.outcome === "unknown") {
+    // Fail closed: it may still have landed, so nothing is re-activated, the
+    // gate stays on, and the admin is told the truth.
+    throw new RecreateCourseError(
+      `Could not tell whether the close of course "${courseId}" landed (${closed.error}; signature ${closed.signature}). ` +
+        `Its state is UNKNOWN, so it was not re-activated and the maintenance gate stays on; the gate expires after ` +
+        `${MAINTENANCE_GATE_TTL_MIN} minutes. Then check the course on the admin status screen: if it is gone, use ` +
+        `Deploy to recreate it; if it is still there, recreate it again${plan.cluster === "mainnet" ? " or re-activate it" : ""}.`,
+      "close",
+      false
     );
   }
-  const closeSignature = closed.signature ?? null;
+  if (closed.outcome === "notLanded") {
+    // Definitive: it was rejected, failed on-chain, or its blockhash expired
+    // first, so the old PDA is untouched — clear the gate, nothing was
+    // destroyed. Safe unconditionally: step 2 guarantees only the acquirer
+    // ever reaches this line. On mainnet step 2b deactivated it, so put that
+    // back first.
+    const note = plan.cluster === "mainnet" ? await reactivate(plan) : "";
+    await clearMaintenanceGate(courseId);
+    throw new RecreateCourseError(
+      `Failed to close course "${courseId}": ${closed.error}. The course is UNCHANGED and still deployed — nothing was destroyed.${note}`,
+      "close",
+      true
+    );
+  }
+  const closeSignature = closed.signature;
 
   // 4. CREATE, hard. Each deployCoursePda call is a fresh `.rpc()`, and Anchor
   //    fetches a new blockhash per call — so a retry is a genuinely new tx, not a
-  //    resend of an expired one.
-  let createSignature: string | undefined;
+  //    resend of an expired one. A timed-out attempt can still land, so after
+  //    every failure look for the course before retrying or giving up (a retry
+  //    after a late landing only fails "already in use").
+  let landed = false;
+  let createSignature: string | null = null;
   let createAttempts = 0;
   let lastError = "unknown error";
+  const inFlight: string[] = [];
+  const warnings: string[] = [];
 
   for (let attempt = 1; attempt <= CREATE_ATTEMPTS; attempt++) {
     createAttempts = attempt;
     const created = await deployCoursePda(plan.createParams);
     if (created.success && created.signature) {
+      landed = true;
       createSignature = created.signature;
       break;
     }
+    if (created.signature) inFlight.push(created.signature);
     lastError = created.error ?? "unknown error";
     console.error(
       `[recreate-course] ${courseId}: create attempt ${attempt}/${CREATE_ATTEMPTS} failed: ${lastError}`
     );
+    if (await courseExists(connection, plan.coursePda)) {
+      landed = true;
+      createSignature = await landedSignature(connection, inFlight);
+      warnings.push(
+        `A create attempt reported an error (${lastError}) but the course account exists, so it landed` +
+          (createSignature ? "." : "; its signature could not be confirmed.")
+      );
+      break;
+    }
     if (attempt < CREATE_ATTEMPTS) await sleep(CREATE_RETRY_DELAY_MS);
   }
 
-  if (!createSignature) {
+  if (!landed) {
     // LOUD FAILURE. The close landed, every create attempt failed: the Course PDA
     // is gone. Persist that HONESTLY — leaving a stale `synced` row would have the
     // admin panel claim the course is fine while every enroll/complete_lesson
@@ -859,7 +905,8 @@ export async function recreateCourse(
     // The maintenance gate is deliberately LEFT ON here (not cleared): the
     // course is genuinely down, not just transiently absent, so write paths
     // should keep refusing/queuing until an operator redeploys it — the
-    // ordinary Deploy path is expected to clear the gate once it succeeds.
+    // ordinary Deploy path clears the gate once it succeeds, and it expires
+    // on its own after MAINTENANCE_GATE_TTL_MIN.
     try {
       await writeCourseOnChainStatus(
         courseId,
@@ -876,8 +923,9 @@ export async function recreateCourse(
     throw new RecreateCourseError(
       `Course "${courseId}" was closed but could NOT be recreated after ${CREATE_ATTEMPTS} attempts (last error: ${lastError}). ` +
         `The course is currently NOT deployed on-chain; use Deploy to recreate it. ` +
+        `If the last attempt was only slow it may still land, so refresh the status screen first. ` +
         `Already-minted XP is unaffected, but enrolled learners' on-chain progress does not carry over to the recreated course, and enroll/complete_lesson fail until the Course PDA exists again. ` +
-        `Close signature: ${closeSignature ?? "not returned (the close reported an error but landed)"}`,
+        `Close signature: ${closeSignature}`,
       "create",
       false
     );
@@ -919,11 +967,17 @@ export async function recreateCourse(
   //    not affect any of that. create_course reset version to 1; lessonCount is
   //    the live count preserved through the recreate (H3 never widens it).
   try {
-    await recordCourseRecreated({
-      courseId,
-      txSignature: createSignature,
-      lessonCount: plan.createParams.lessonCount,
-    });
+    if (createSignature) {
+      await recordCourseRecreated({
+        courseId,
+        txSignature: createSignature,
+        lessonCount: plan.createParams.lessonCount,
+      });
+    } else {
+      console.warn(
+        `[course-changelog] ${courseId}: 'recreated' entry SKIPPED — the create landed late and its signature could not be confirmed`
+      );
+    }
   } catch (changelogErr) {
     console.error(
       `[recreate-course] ${courseId}: changelog write failed:`,

@@ -2,9 +2,16 @@
 // deployCoursePda is the one place create_course is sent. These tests pin that
 // the mainnet course-identity guard runs before any transaction is built (on a
 // refusal `methods.createCourse` is never called) and that the cluster is
-// resolved fail-closed from the connection's genesis hash.
+// resolved fail-closed from the connection's genesis hash. The last block pins
+// that closeCoursePda waits for a definitive outcome.
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { Keypair } from "@solana/web3.js";
+import {
+  Keypair,
+  SendTransactionError,
+  SystemProgram,
+  Transaction,
+  TransactionInstruction,
+} from "@solana/web3.js";
 
 vi.mock("server-only", () => ({}));
 
@@ -18,8 +25,13 @@ const h = vi.hoisted(() => {
     },
     rpc,
     createCourse: vi.fn(() => ({ accountsPartial: () => ({ rpc }) })),
+    closeCourse: vi.fn(),
     getGenesisHash: vi.fn<() => Promise<string>>(),
     fetchConfig: vi.fn<() => Promise<unknown>>(),
+    getLatestBlockhashAndContext: vi.fn(),
+    sendRawTransaction: vi.fn(),
+    isBlockhashValid: vi.fn(),
+    getSignatureStatus: vi.fn(),
   };
 });
 
@@ -31,7 +43,7 @@ vi.mock("@coral-xyz/anchor", async (importOriginal) => {
     ...actual,
     AnchorProvider: class {},
     Program: class {
-      methods = { createCourse: h.createCourse };
+      methods = { createCourse: h.createCourse, closeCourse: h.closeCourse };
     },
   };
 });
@@ -43,6 +55,10 @@ vi.mock("@solana/web3.js", async (importOriginal) => {
     Connection: class {
       constructor(readonly rpcEndpoint: string) {}
       getGenesisHash = h.getGenesisHash;
+      getLatestBlockhashAndContext = h.getLatestBlockhashAndContext;
+      sendRawTransaction = h.sendRawTransaction;
+      isBlockhashValid = h.isBlockhashValid;
+      getSignatureStatus = h.getSignatureStatus;
     },
   };
 });
@@ -156,7 +172,18 @@ describe("deployCoursePda — mainnet course identity guard", () => {
     expect(h.createCourse).not.toHaveBeenCalled();
   });
 
-  it("uses the genesis hash the caller already read instead of looking it up", async () => {
+  it("trusts the sending connection's genesis over the caller's", async () => {
+    const result = await deploy({
+      trackId: 0,
+      trackLevel: 0,
+      genesisHash: DEVNET_GENESIS,
+    });
+
+    expect(result.errorId).toBe(MAINNET_ERROR_ID);
+    expect(h.createCourse).not.toHaveBeenCalled();
+  });
+
+  it("falls back to the caller's genesis only when the live lookup throws", async () => {
     h.getGenesisHash.mockRejectedValue(new Error("rpc down"));
 
     const result = await deploy({
@@ -166,7 +193,7 @@ describe("deployCoursePda — mainnet course identity guard", () => {
     });
 
     expect(result).toEqual({ success: true, signature: "create-sig" });
-    expect(h.getGenesisHash).not.toHaveBeenCalled();
+    expect(h.getGenesisHash).toHaveBeenCalledTimes(1);
   });
 
   it("refuses on mainnet when neither the Config nor the env backend signer can be read", async () => {
@@ -261,5 +288,120 @@ describe("deployCoursePda — mainnet course identity guard", () => {
     const result = await deploy({ trackId: 0 });
 
     expect(result.errorId).toBe(MAINNET_ERROR_ID);
+  });
+});
+
+describe("closeCoursePda — waits for a definitive outcome", () => {
+  const BLOCKHASH = Keypair.generate().publicKey.toBase58();
+  const confirmed = { confirmationStatus: "confirmed", err: null };
+  const at = <T>(slot: number, value: T) => ({ context: { slot }, value });
+
+  async function close() {
+    const { closeCoursePda } = await import("../admin-signer");
+    const pending = closeCoursePda("course-speedrun");
+    await vi.runAllTimersAsync();
+    return pending;
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    const tx = new Transaction().add(
+      new TransactionInstruction({
+        keys: [],
+        programId: SystemProgram.programId,
+        data: Buffer.alloc(0),
+      })
+    );
+    h.closeCourse.mockReturnValue({
+      accountsPartial: () => ({ transaction: async () => tx }),
+    });
+    h.getLatestBlockhashAndContext.mockResolvedValue(
+      at(100, { blockhash: BLOCKHASH, lastValidBlockHeight: 250 })
+    );
+    h.sendRawTransaction.mockResolvedValue("sent");
+    h.isBlockhashValid.mockResolvedValue(at(110, true));
+    h.getSignatureStatus.mockResolvedValue(at(110, null));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("reports a close that confirms as landed", async () => {
+    h.getSignatureStatus.mockResolvedValue(at(110, confirmed));
+
+    const result = await close();
+
+    expect(result).toEqual({
+      outcome: "landed",
+      signature: expect.any(String) as string,
+    });
+  });
+
+  it("keeps waiting past .rpc()'s 30s and reports a close that lands later as landed", async () => {
+    let polls = 0;
+    h.getSignatureStatus.mockImplementation(async () =>
+      ++polls < 25 ? at(110, null) : at(160, confirmed)
+    );
+
+    const result = await close();
+
+    expect(result.outcome).toBe("landed");
+    expect(polls).toBe(25);
+  });
+
+  it("reports not landed once the blockhash expired without it", async () => {
+    let polls = 0;
+    h.isBlockhashValid.mockImplementation(async () =>
+      ++polls < 5 ? at(110, true) : at(300, false)
+    );
+    h.getSignatureStatus.mockResolvedValue(at(301, null));
+
+    const result = await close();
+
+    expect(result).toEqual({
+      outcome: "notLanded",
+      error: "its blockhash expired before it landed",
+    });
+  });
+
+  it("doesn't trust an empty status from a node behind the expiry", async () => {
+    h.isBlockhashValid.mockResolvedValue(at(300, false));
+    let polls = 0;
+    h.getSignatureStatus.mockImplementation(async () =>
+      ++polls < 3 ? at(250, null) : at(305, confirmed)
+    );
+
+    const result = await close();
+
+    expect(result.outcome).toBe("landed");
+  });
+
+  it("reports unknown, with the signature, when the RPC never answers", async () => {
+    h.isBlockhashValid.mockRejectedValue(new Error("RPC unreachable"));
+
+    const result = await close();
+
+    expect(result).toEqual({
+      outcome: "unknown",
+      signature: expect.any(String) as string,
+      error: "RPC unreachable",
+    });
+  });
+
+  it("reports a send the RPC rejected as not landed, without waiting", async () => {
+    h.sendRawTransaction.mockRejectedValue(
+      new SendTransactionError({
+        action: "simulate",
+        signature: "",
+        transactionMessage: "Transaction simulation failed",
+        logs: [],
+      })
+    );
+
+    const result = await close();
+
+    expect(result.outcome).toBe("notLanded");
+    expect(h.isBlockhashValid).not.toHaveBeenCalled();
   });
 });

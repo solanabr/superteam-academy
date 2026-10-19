@@ -117,16 +117,16 @@ export function RecreateCourseFlow({
         <p className="mb-2 font-semibold text-success">{t("result.heading")}</p>
         <dl className="space-y-1 font-mono text-xs text-text-2">
           <SummaryRow label={t("result.coursePda")} value={result.coursePda} />
-          {result.closeSignature && (
+          <SummaryRow
+            label={t("result.closeSignature")}
+            value={result.closeSignature}
+          />
+          {result.createSignature && (
             <SummaryRow
-              label={t("result.closeSignature")}
-              value={result.closeSignature}
+              label={t("result.createSignature")}
+              value={result.createSignature}
             />
           )}
-          <SummaryRow
-            label={t("result.createSignature")}
-            value={result.createSignature}
-          />
           <SummaryRow
             label={t("result.attempts")}
             value={String(result.createAttempts)}

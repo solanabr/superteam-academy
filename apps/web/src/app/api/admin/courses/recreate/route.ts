@@ -15,10 +15,11 @@ import {
 } from "@/lib/admin/recreate-course";
 import { sanitizeReason } from "@/lib/admin/sanitize-reason";
 
-// On mainnet a recreate sends a deactivate, waits for it to confirm, re-reads
-// the course, then closes and creates, each a confirmed transaction. 300 is the
-// Vercel plan ceiling, as in api/build-program; a kill mid-way leaves the
-// course inactive or down behind the maintenance gate.
+// 300 is the Vercel plan ceiling, as in api/build-program. Mainnet worst case
+// is about 275s: reads ~4s, deactivate 31s, a close that waits out its
+// blockhash 77s, three creates ~97s, two restore updates 62s. A kill mid-way
+// leaves the course inactive or down behind the maintenance gate, which
+// expires after 10 minutes.
 export const maxDuration = 300;
 
 /**
@@ -138,7 +139,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    const result = await recreateCourse(courseId, allowUnusualCreator);
+    const result = await recreateCourse(
+      courseId,
+      allowUnusualCreator,
+      adminUserId
+    );
     // Audit trail for the destructive path: who recreated what.
     console.log(
       `[admin/courses/recreate] ${courseId} (admin=${adminUserId}): recreate complete`
