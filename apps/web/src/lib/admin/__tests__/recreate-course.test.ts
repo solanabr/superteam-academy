@@ -36,7 +36,6 @@ let createResults: Array<{
   signature?: string;
   error?: string;
 }> = [];
-let bindResult = { success: true, signature: "bind-sig" };
 let updateResult = { success: true, signature: "update-sig" };
 let dbThrows = false;
 // F3 mock controls — the connection's own genesis hash, independent of the
@@ -97,14 +96,18 @@ vi.mock("@/lib/solana/admin-signer", async (importOriginal) => {
       if (result.success) accounts.set(coursePda(p.courseId), { lamports: 1 });
       return result;
     }),
-    setCourseCollectionPda: vi.fn(async () => {
-      calls.push("bind");
-      return bindResult;
-    }),
-    updateCoursePda: vi.fn(async (p: { newIsActive?: boolean }) => {
-      calls.push(p.newIsActive === true ? "activate" : "deactivate");
-      return updateResult;
-    }),
+    // The post-create restore is one update carrying the collection and,
+    // for a course that was inactive, is_active=false.
+    updateCoursePda: vi.fn(
+      async (p: { newIsActive?: boolean; newCollection?: string }) => {
+        if (p.newCollection !== undefined) {
+          calls.push(p.newIsActive === false ? "bind+deactivate" : "bind");
+        } else {
+          calls.push(p.newIsActive === true ? "activate" : "deactivate");
+        }
+        return updateResult;
+      }
+    ),
   };
 });
 
@@ -251,7 +254,6 @@ beforeEach(() => {
   closeResult = { outcome: "landed", signature: "close-sig" };
   createResults = [{ success: true, signature: "create-sig" }];
   signatureStatuses = new Map();
-  bindResult = { success: true, signature: "bind-sig" };
   updateResult = { success: true, signature: "update-sig" };
   dbThrows = false;
   genesisHash = DEVNET_GENESIS_HASH;
@@ -541,8 +543,7 @@ describe("mainnet recreate — zero enrollments only", () => {
         "deactivate",
         "close",
         "create",
-        "bind",
-        "deactivate",
+        "bind+deactivate",
         "db:synced",
         "gate:off",
         "changelog:recreated",
@@ -1012,9 +1013,29 @@ describe("close → create happy path", () => {
 
   it("re-binds the EXISTING collection rather than minting a new one", async () => {
     await recreateCourse(COURSE_ID);
-    const { setCourseCollectionPda } =
-      await import("@/lib/solana/admin-signer");
-    expect(setCourseCollectionPda).toHaveBeenCalledWith(COURSE_ID, COLLECTION);
+    expect(updateCoursePda).toHaveBeenCalledTimes(1);
+    expect(updateCoursePda).toHaveBeenCalledWith({
+      courseId: COURSE_ID,
+      newCollection: COLLECTION,
+    });
+  });
+
+  it("restores the collection and is_active in one update", async () => {
+    onChainCourse = { ...onChainCourse!, is_active: false };
+    await recreateCourse(COURSE_ID);
+    expect(updateCoursePda).toHaveBeenCalledTimes(1);
+    expect(updateCoursePda).toHaveBeenCalledWith({
+      courseId: COURSE_ID,
+      newCollection: COLLECTION,
+      newIsActive: false,
+    });
+  });
+
+  it("sends no restore when there is nothing to restore", async () => {
+    onChainCourse = { ...onChainCourse!, collection: null };
+    courses = [validCourse({ trackCollectionAddress: null })];
+    await recreateCourse(COURSE_ID);
+    expect(updateCoursePda).not.toHaveBeenCalled();
   });
 
   it("re-deactivates a course that was deactivated before the recreate", async () => {
@@ -1025,8 +1046,7 @@ describe("close → create happy path", () => {
       "gate:on",
       "close",
       "create",
-      "bind",
-      "deactivate",
+      "bind+deactivate",
       "db:synced",
       "gate:off",
       "changelog:recreated",
@@ -1035,10 +1055,21 @@ describe("close → create happy path", () => {
   });
 
   it("warns (but does not fail) when the collection re-bind fails", async () => {
-    bindResult = { success: false, error: "blockhash expired" } as never;
+    updateResult = { success: false, error: "blockhash expired" } as never;
     const result = await recreateCourse(COURSE_ID);
     expect(result.action).toBe("recreated");
     expect(result.warnings.join(" ")).toMatch(/Collection re-bind failed/i);
+    expect(result.warnings.join(" ")).not.toMatch(/currently LIVE/);
+  });
+
+  it("warns about both fields when the one restore fails for a course that was inactive", async () => {
+    onChainCourse = { ...onChainCourse!, is_active: false };
+    updateResult = { success: false, error: "blockhash expired" } as never;
+    const result = await recreateCourse(COURSE_ID);
+    expect(result.action).toBe("recreated");
+    expect(result.warnings).toHaveLength(2);
+    expect(result.warnings.join(" ")).toMatch(/Collection re-bind failed/i);
+    expect(result.warnings.join(" ")).toMatch(/currently LIVE/);
   });
 });
 

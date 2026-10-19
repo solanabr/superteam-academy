@@ -27,9 +27,9 @@ import {
   deployCoursePda,
   getAuthorityPublicKey,
   getPlatformBackendSigners,
-  setCourseCollectionPda,
   updateCoursePda,
   type CreateCourseAdminParams,
+  type UpdateCourseAdminParams,
 } from "@/lib/solana/admin-signer";
 import {
   assertMainnetCourseIdentity,
@@ -525,41 +525,42 @@ export async function preflightRecreate(
 
 /**
  * PHASE 4 — best-effort restore of the two resettable fields, AFTER the create
- * landed. Never throws: the course is already up and correct on the fields that
+ * landed, in ONE `update_course` (it takes both, and the collection check
+ * passes on a fresh course whose collection is unset). One confirmation
+ * instead of two keeps the mainnet recreate inside the route's time budget.
+ * Never throws: the course is already up and correct on the fields that
  * matter, and both of these self-heal on the next ordinary sync (which re-binds
  * an unbound collection). Problems come back as warnings.
  */
 async function restoreAfterCreate(plan: RecreatePlan): Promise<string[]> {
-  const warnings: string[] = [];
-
+  const restore: UpdateCourseAdminParams = { courseId: plan.courseId };
   // Re-BIND the collection that already exists. Never create a new one: credentials
   // already minted point at the old collection address and would be orphaned.
   if (plan.snapshot.collection) {
-    const bind = await setCourseCollectionPda(
-      plan.courseId,
-      plan.snapshot.collection
-    );
-    if (!bind.success) {
-      warnings.push(
-        `Collection re-bind failed: ${bind.error ?? "unknown error"}. Credential issuance reverts with CollectionMismatch until you re-sync.`
-      );
-    }
+    restore.newCollection = plan.snapshot.collection;
   }
-
   // create_course forces is_active = true, which would silently un-hide a course
-  // an admin had deliberately deactivated.
+  // an admin had deactivated.
   if (!plan.snapshot.isActive) {
-    const deactivate = await updateCoursePda({
-      courseId: plan.courseId,
-      newIsActive: false,
-    });
-    if (!deactivate.success) {
-      warnings.push(
-        `Course was deactivated before the recreate but could not be re-deactivated: ${deactivate.error ?? "unknown error"}. It is currently LIVE — re-deactivate it.`
-      );
-    }
+    restore.newIsActive = false;
   }
+  if (!restore.newCollection && restore.newIsActive === undefined) return [];
 
+  const result = await updateCoursePda(restore);
+  if (result.success) return [];
+  // One transaction, so a failure means neither field was written.
+  const why = result.error ?? "unknown error";
+  const warnings: string[] = [];
+  if (restore.newCollection !== undefined) {
+    warnings.push(
+      `Collection re-bind failed: ${why}. Credential issuance reverts with CollectionMismatch until you re-sync.`
+    );
+  }
+  if (restore.newIsActive === false) {
+    warnings.push(
+      `Course was deactivated before the recreate but could not be re-deactivated: ${why}. It is currently LIVE — re-deactivate it.`
+    );
+  }
   return warnings;
 }
 

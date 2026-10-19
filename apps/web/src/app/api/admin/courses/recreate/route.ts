@@ -16,10 +16,11 @@ import {
 import { sanitizeReason } from "@/lib/admin/sanitize-reason";
 
 // 300 is the Vercel plan ceiling, as in api/build-program. Mainnet worst case
-// is about 281s: reads ~4s, deactivate 31s, a close that lands just before its
-// blockhash expires ~83s (hard cap 90s), three creates ~97s, two restore
-// updates 62s. A kill mid-way leaves the course inactive or down behind the
-// maintenance gate, which expires after 10 minutes.
+// is about 250s (about 258s with every bound hit): reads ~4s, deactivate 31s,
+// a close that lands just before its blockhash expires ~83s (hard cap 90s),
+// three creates ~97s, one restore update 31s, DB writes ~2s. A kill mid-way
+// leaves the course inactive or down behind the maintenance gate, which
+// expires after 10 minutes.
 export const maxDuration = 300;
 
 /**

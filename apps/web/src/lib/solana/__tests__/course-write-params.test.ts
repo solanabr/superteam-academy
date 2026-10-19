@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { BN } from "@coral-xyz/anchor";
-import { Keypair, PublicKey } from "@solana/web3.js";
+import { BN, Program, type Idl, type Provider } from "@coral-xyz/anchor";
+import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import { ERROR_IDS } from "@/constants/errorIds";
+import VNEXT_IDL from "../idl/superteam_academy_vnext.json";
 import {
   buildCreateCourseOnChainParams,
   buildUpdateCourseOnChainParams,
@@ -211,6 +212,36 @@ describe("buildUpdateCourseOnChainParams (v-next update_course)", () => {
     expect(params.newCreatorRewardXp).toBeNull();
     expect(params.newCollection).toBeNull();
     expect(params.newActiveLessons).toBeNull();
+  });
+
+  it("encodes is_active and collection together in the on-chain field order", () => {
+    // Pinocchio update_course reads: content_tx_id, is_active, xp_per_lesson,
+    // creator_reward_xp, collection, active_lessons, each an Option.
+    const program = new Program(
+      VNEXT_IDL as unknown as Idl,
+      {
+        connection: new Connection("http://127.0.0.1:8899"),
+      } as Provider
+    );
+    const collection = Keypair.generate().publicKey;
+
+    const data = program.coder.instruction.encode("updateCourse", {
+      params: buildUpdateCourseOnChainParams({
+        newIsActive: false,
+        newCollection: collection,
+      }),
+    });
+
+    expect([...data.subarray(8)]).toEqual([
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      ...collection.toBytes(),
+      0,
+    ]);
   });
 
   it("threads a mask with bits above 2^32 through without truncation", () => {
