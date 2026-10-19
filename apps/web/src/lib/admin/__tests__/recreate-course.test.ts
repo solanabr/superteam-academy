@@ -836,9 +836,11 @@ describe("create fails after close — the course is DOWN", () => {
     expect(thrown.message).toMatch(
       /currently NOT deployed on-chain; use Deploy to recreate it/i
     );
-    // ...and states that learner progress survived, which is the whole premise.
+    // ...and says what the learner side loses: XP stays, on-chain progress
+    // does not carry over (the recreated course gets a new generation).
+    expect(thrown.message).toMatch(/Already-minted XP is unaffected/i);
     expect(thrown.message).toMatch(
-      /Enrollments, learner progress and already-minted XP are intact/i
+      /on-chain progress does not carry over to the recreated course/i
     );
     // ...and surfaces the close signature so the operator can audit the chain.
     expect(thrown.message).toMatch(/close-sig/);
