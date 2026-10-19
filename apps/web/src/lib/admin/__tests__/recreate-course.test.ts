@@ -377,7 +377,9 @@ describe("mainnet recreate — zero enrollments only", () => {
     const err = await captureError(recreateCourse(COURSE_ID, true));
 
     expect(err.phase).toBe("preflight");
-    expect(err.message).toMatch(/equals the platform authority/i);
+    expect(err.errorId).toBe("COURSE_IDENTITY_001");
+    expect(closeCoursePda).not.toHaveBeenCalled();
+    expect(deployCoursePda).not.toHaveBeenCalled();
     expect(calls).toEqual([]);
   });
 
