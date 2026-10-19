@@ -91,6 +91,23 @@ describe("capstone identity ↔ the committed bundle", () => {
       expect(deployLessonCourse).toBeUndefined();
     }
   });
+
+  it("puts every deploy panel in a bundle course, and only the graded one in the gated course", () => {
+    // The panel writes its lesson's id (and that lesson's course) to
+    // `deployed_programs`, so a panel in a lesson no course owns records
+    // deploys nothing can ever read back.
+    const panelLessons = lessonsJson
+      .filter((l) => hostsDeployPanel(l._id))
+      .map((l) => l._id);
+    expect(panelLessons.length).toBeGreaterThan(0);
+    for (const lessonId of panelLessons) {
+      const courseId = courseOfLesson.get(lessonId);
+      expect(courseId, `${lessonId} belongs to no bundle course`).toBeDefined();
+      if (isCapstoneCourse(courseId!)) {
+        expect(lessonId).toBe(CAPSTONE_CREDENTIAL.deployLessonId);
+      }
+    }
+  });
 });
 
 describe("isCapstoneCourse", () => {

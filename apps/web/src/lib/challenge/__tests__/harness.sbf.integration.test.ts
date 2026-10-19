@@ -80,6 +80,12 @@ const BUILDABLE = [...lessonsById.values()].flatMap((lesson) =>
     .map((b) => [lesson._id, b] as const)
 );
 
+// Outside the opt-in block so it runs everywhere: an empty list would make the
+// compile suite below pass by compiling nothing.
+it("finds buildable blocks in the live bundle to compile", () => {
+  expect(BUILDABLE.length).toBeGreaterThan(0);
+});
+
 describe.skipIf(!ENABLED)(
   "buildGradeFiles compiles as the grader intends",
   () => {

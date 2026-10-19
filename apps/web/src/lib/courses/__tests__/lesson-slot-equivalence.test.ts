@@ -40,6 +40,7 @@ beforeAll(() => {
 // 500s its completion), and no live lesson sits on a retired slot.
 describe("slot lock ↔ course lessons (current bundle)", () => {
   it("every course's live lessons are exactly its slotted lessons", async () => {
+    let checkedLessons = 0;
     for (const [courseId, lock] of slotsByCourseId) {
       const course = await getCourseById(courseId);
       expect(
@@ -48,6 +49,7 @@ describe("slot lock ↔ course lessons (current bundle)", () => {
       ).not.toBeNull();
       const live = course!.modules.flatMap((m) => m.lessons.map((l) => l._id));
       expect(live.sort(), courseId).toEqual(Object.keys(lock.slots).sort());
+      checkedLessons += live.length;
       for (const slot of Object.values(lock.slots)) {
         expect(
           lock.retired,
@@ -55,6 +57,7 @@ describe("slot lock ↔ course lessons (current bundle)", () => {
         ).not.toContain(slot);
       }
     }
+    expect(checkedLessons).toBeGreaterThan(0);
   });
 });
 
@@ -65,6 +68,7 @@ describe("slot lock ↔ course lessons (current bundle)", () => {
 // cover that path against fixtures.
 describe("slot lock ↔ array-index equivalence (current bundle) — #741", () => {
   it("every DENSE course has slot == findLessonIndex for every lesson", async () => {
+    let checkedLessons = 0;
     for (const [courseId, lock] of slotsByCourseId) {
       if (!isDense(lock)) continue;
       const course = await getCourseById(courseId);
@@ -77,7 +81,10 @@ describe("slot lock ↔ array-index equivalence (current bundle) — #741", () =
           findLessonIndex(course!, lessonId),
           `${courseId}/${lessonId}: slot ${slot} must equal array index`
         ).toBe(slot);
+        checkedLessons++;
       }
     }
+    // Guard against a vacuous pass (e.g. every course filtered out as sparse).
+    expect(checkedLessons).toBeGreaterThan(0);
   });
 });

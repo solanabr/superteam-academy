@@ -91,6 +91,7 @@ const ids = (cs: { _id: string }[]) => cs.map((c) => c._id).sort();
 
 describe("every course without the flag is public", () => {
   it("appears in the catalog listing", async () => {
+    expect(publicIds().length).toBeGreaterThan(0);
     expect(ids(await getAllCourses())).toEqual(publicIds());
   });
 

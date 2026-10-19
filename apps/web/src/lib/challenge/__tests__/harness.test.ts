@@ -174,6 +174,7 @@ describe("the empty-submission exploit is closed", () => {
         .filter((b) => b._type === "code" && b.buildType === "buildable")
         .map((b) => [lesson._id, b.starter ?? ""] as const)
     );
+    expect(starters.length).toBeGreaterThan(0);
     for (const [lessonId, starter] of starters) {
       expect(splitHarness(starter).harness, lessonId).not.toBe("");
     }
