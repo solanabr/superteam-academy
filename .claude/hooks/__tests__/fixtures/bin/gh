@@ -1,0 +1,19 @@
+#!/usr/bin/env node
+// Stand-in for the GitHub CLI in hooks.e2e.test.mjs. Answers from the JSON
+// scenario named by GH_STUB_SCENARIO, so the real guard-merge.mjs can be run
+// end to end without network access.
+const fs = require("node:fs");
+
+const s = JSON.parse(fs.readFileSync(process.env.GH_STUB_SCENARIO, "utf8"));
+const args = process.argv.slice(2);
+const joined = args.join(" ");
+const out = (v) => process.stdout.write(typeof v === "string" ? v : JSON.stringify(v));
+
+if (args[0] === "pr" && args[1] === "view") out(s.pr);
+else if (joined.includes("/protection/required_status_checks")) out({ contexts: s.required, checks: [] });
+else if (joined.includes(`/commits/${s.pr.headRefOid}/check-runs`)) out(s.runs.map((r) => JSON.stringify(r)).join("\n"));
+else if (joined.includes(`/commits/${s.pr.headRefOid}/status`)) out("");
+else {
+  process.stderr.write(`gh stub: unexpected call ${joined}\n`);
+  process.exit(1);
+}
