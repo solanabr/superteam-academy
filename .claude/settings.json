@@ -1,123 +1,98 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
     "allow": [
-      "Bash(anchor *)",
-      "Bash(cargo build-sbf *)",
-      "Bash(cargo test-sbf *)",
+      "Bash(pnpm *)",
       "Bash(cargo test *)",
       "Bash(cargo clippy *)",
       "Bash(cargo fmt *)",
+      "Bash(cargo build-sbf *)",
       "Bash(cargo audit *)",
-      "Bash(cargo install *)",
-      "Bash(cargo geiger *)",
-      "Bash(trident *)",
-
-      "Bash(solana config *)",
       "Bash(solana address *)",
       "Bash(solana balance *)",
-      "Bash(solana airdrop *)",
       "Bash(solana program show *)",
-      "Bash(solana program dump *)",
-      "Bash(solana logs *)",
       "Bash(solana account *)",
+      "Bash(solana program dump *)",
       "Bash(solana-test-validator *)",
-
-      "Bash(npm *)",
-      "Bash(yarn *)",
-      "Bash(pnpm *)",
-      "Bash(bun *)",
-      "Bash(npx *)",
-
       "Bash(git status *)",
       "Bash(git diff *)",
       "Bash(git log *)",
-      "Bash(git add *)",
-      "Bash(git commit *)",
-      "Bash(git push *)",
-      "Bash(git pull *)",
+      "Bash(git show *)",
       "Bash(git fetch *)",
       "Bash(git branch *)",
-      "Bash(git checkout *)",
-      "Bash(gh *)",
-
-      "Bash(ls *)",
-      "Bash(cat *)",
-      "Bash(grep *)",
-      "Bash(find *)",
-      "Bash(mkdir *)",
-      "Bash(touch *)",
-      "Bash(echo *)",
-      "Bash(pwd)",
-      "Bash(cd *)",
-      "Bash(cp *)",
-      "Bash(mv *)"
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git pull *)",
+      "Bash(git checkout -b *)",
+      "Bash(git switch *)",
+      "Bash(gh pr view *)",
+      "Bash(gh pr diff *)",
+      "Bash(gh pr checks *)",
+      "Bash(gh pr list *)",
+      "Bash(gh run view *)",
+      "Bash(gh run list *)",
+      "Bash(gh issue view *)",
+      "Bash(gh issue list *)",
+      "Bash(gh pr create *)"
     ],
     "deny": [
-      "Bash(rm -rf / *)",
+      "Bash(git config user.*)",
+      "Bash(git config --local user.*)",
+      "Bash(git config --worktree user.*)",
+      "Bash(git config --global user.*)",
+      "Bash(git config set *user.*)",
+      "Bash(git -c user.*)",
+      "Bash(git add -A*)",
+      "Bash(git add --all*)",
+      "Bash(git add .)",
+      "Bash(git push * main)",
+      "Bash(git push *:main)",
+      "Bash(git push *:refs/heads/main)",
+      "Bash(solana config get*)",
+      "Bash(solana config set*)",
+      "Bash(solana * config get*)",
+      "Bash(solana * config set*)",
       "Bash(sudo *)",
-      "Bash(chmod 777 *)",
-      "Bash(solana program deploy * mainnet *)",
-      "Bash(solana program deploy * --url *mainnet*)"
+      "Read(/apps/web/src/content/generated/l10n.json)",
+      "Read(/apps/web/src/content/generated/lessons.json)",
+      "Read(~/.config/solana/cli/config.yml)"
     ]
   },
-
   "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "if [ -z \"$CLAUDE_FILE_PATH\" ]; then exit 0; fi\n\ncase \"$CLAUDE_FILE_PATH\" in\n  *.rs)\n    command -v rustfmt >/dev/null 2>&1 && rustfmt \"$CLAUDE_FILE_PATH\" || true\n    ;;\n  *.ts|*.tsx|*.js|*.jsx|*.json|*.md)\n    command -v npx >/dev/null 2>&1 && npx prettier --write \"$CLAUDE_FILE_PATH\" || true\n    ;;\nesac"
-          }
-        ]
-      },
-
-      {
-        "matcher": "Bash",
-        "when": {
-          "command_matches": "cargo test|anchor test"
-        },
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo \"\"\necho \"Test Summary:\";\nif [ \"$CLAUDE_TOOL_EXIT_CODE\" -eq 0 ]; then\n  echo \"All tests passed!\"\nelse\n  echo \"Some tests failed. Review output above.\"\nfi"
-          }
-        ]
-      }
-    ],
-
     "PreToolUse": [
       {
         "matcher": "Bash",
-        "when": {
-          "command_matches": "git commit"
-        },
         "hooks": [
           {
             "type": "command",
-            "command": "set -e\n\necho \"Running pre-commit checks...\"\n\nif [ -f \"Anchor.toml\" ] || grep -q \"solana-program\" Cargo.toml 2>/dev/null; then\n  cargo fmt --check || { cargo fmt; exit 1; }\nfi\n\necho \"Pre-commit checks passed (clippy/tsc/tests run in CI)\""
-          }
-        ]
-      },
-
-      {
-        "matcher": "Bash",
-        "when": {
-          "command_matches": "solana program deploy|anchor deploy"
-        },
-        "hooks": [
+            "if": "Bash(*git *)",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-git.mjs\"",
+            "timeout": 15,
+            "onFailure": "block"
+          },
           {
             "type": "command",
-            "command": "set -e\n\necho \"PRE-DEPLOY CHECKS\"\nNETWORK=$(solana config get | grep \"RPC URL\" | awk '{print $3}')\necho \"Network: $NETWORK\"\n\nif echo \"$NETWORK\" | grep -q mainnet; then\n  echo \"MAINNET DEPLOY WARNING\"\n  echo \"Type 'DEPLOY TO MAINNET' to continue:\";\n  read -r CONFIRM;\n  [ \"$CONFIRM\" = \"DEPLOY TO MAINNET\" ] || exit 1\nfi\n\nif [ -f \"Anchor.toml\" ]; then\n  ls target/deploy/*.so >/dev/null 2>&1 || { echo \"No build found\"; exit 1; }\nfi\n\necho \"Pre-deploy checks passed\""
+            "if": "Bash(*solana*program*)",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-solana.mjs\"",
+            "timeout": 15,
+            "onFailure": "block"
+          },
+          {
+            "type": "command",
+            "if": "Bash(*gh pr merge*)",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-merge.mjs\"",
+            "timeout": 120,
+            "onFailure": "block"
+          },
+          {
+            "type": "command",
+            "if": "Bash(*gh api*merge*)",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-merge.mjs\"",
+            "timeout": 120,
+            "onFailure": "block"
           }
         ]
       }
     ]
-  },
-
-  "modelDefaults": {
-    "agent": "opus",
-    "command": "sonnet"
   }
 }

@@ -1,7 +1,6 @@
 # Prod Secret Hygiene & Rotation Plan (D-2)
 
 > Resolves decision **D-2** (issue #104); the execution of this plan is gate **G-1** (#138).
-> Glossary of task codes: [`docs/TASK-CODES.md`](./TASK-CODES.md).
 
 ## Problem
 

@@ -78,6 +78,11 @@ jobs:
               # already the inputs it guards (the pnpm.overrides pins).
               - 'scripts/brace-glob-probe.mjs'
               - '.github/workflows/ci.yml'
+              # `pnpm test:hooks` runs in this job; its tests also read
+              # settings.json and the required-check job names.
+              - '.claude/hooks/**'
+              - '.claude/settings.json'
+              - '.github/workflows/action-pin-guard.yml'
             onchain:
               - 'onchain-academy/**'
               - '.github/workflows/ci.yml'
@@ -87,6 +92,8 @@ jobs:
 
   # ── Frontend / monorepo: prettier, eslint, tsc, vitest ──────────────────────
   frontend:
+    # Required check. .claude/hooks/guard-merge.mjs falls back to this exact
+    # name (FALLBACK_REQUIRED); rename both together.
     name: Frontend (lint · typecheck · test)
     runs-on: ubuntu-latest
     needs: changes
@@ -178,6 +185,11 @@ jobs:
           NEXT_PUBLIC_APP_URL: http://localhost:3000
         run: pnpm -r test
 
+      - name: Claude Code hook tests
+        # The PreToolUse guards in .claude/hooks (git identity, CI-skip markers,
+        # program deploys, merges). Plain node:test, no install needed.
+        run: pnpm test:hooks
+
   # ── E2E: Playwright, the 3 critical learner paths (#781) ────────────────────
   # Runs the learner-path specs against a PRODUCTION build (`next build &&
   # next start`) fronted by a mock Supabase — the runtime coverage the gate's
@@ -249,6 +261,8 @@ jobs:
 
   # ── On-chain program: fmt, clippy, Rust unit tests ──────────────────────────
   onchain-rust:
+    # Required check. .claude/hooks/guard-merge.mjs falls back to this exact
+    # name (FALLBACK_REQUIRED); rename both together.
     name: On-chain (fmt · clippy · cargo test)
     runs-on: ubuntu-latest
     needs: changes
@@ -649,8 +663,7 @@ jobs:
   #      any hash-unchanged main push short-circuits with no commit.
   #   2. Structural: the push targets `program-hash` (excluded from `on.push`,
   #      never `main`), so it cannot re-trigger this main-gated job.
-  #   3. GITHUB_TOKEN pushes never trigger workflow runs (GitHub recursion guard;
-  #      cf. claude-code-review.yml).
+  #   3. GITHUB_TOKEN pushes never trigger workflow runs (GitHub recursion guard).
   #   4. `[skip ci]` in the bot commit message — a belt for a future PAT swap.
   publish-hash:
     name: Publish program hash

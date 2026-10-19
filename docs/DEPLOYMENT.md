@@ -73,11 +73,10 @@ compiled from the `solanabr/academy-courses` git repo — see
 
 Add all environment variables in **Vercel → Project → Settings → Environment Variables**.
 
-> **The authoritative list is the `## Environment Variables` block in
-> [`apps/web/CLAUDE.md`](../apps/web/CLAUDE.md)** — every variable, what it does,
-> and what happens when it is unset. `.env.example` is the copyable template.
-> This section covers only what is specific to deploying, and does not repeat the
-> full list.
+> **The authoritative list is [`.env.example`](../.env.example)** — every
+> variable, what it does, and what happens when it is unset, in a copyable
+> template. This section covers only what is specific to deploying, and does not
+> repeat the full list.
 
 Validated eagerly at boot (`lib/env.ts` for public, `lib/env.server.ts` for
 server-only, both wired through `instrumentation.ts`). A missing **required** var

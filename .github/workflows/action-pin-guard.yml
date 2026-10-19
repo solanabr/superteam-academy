@@ -27,6 +27,8 @@ permissions:
 
 jobs:
   guard:
+    # Required check. .claude/hooks/guard-merge.mjs falls back to this exact
+    # name (FALLBACK_REQUIRED); rename both together.
     name: SHA-pin guard
     runs-on: ubuntu-latest
     steps:
