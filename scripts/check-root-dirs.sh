@@ -36,7 +36,6 @@ ALLOWED=(
   ".claude"
   ".github"
   ".husky"
-  ".superpowers"
   "apps"
   "docs"
   "onchain-academy"
