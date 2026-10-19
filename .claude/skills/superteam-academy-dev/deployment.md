@@ -534,11 +534,12 @@ anchor deploy --provider.cluster devnet --program-keypair wallets/program-keypai
 
 `Course.creator`, `Course.track_id`, and `Course.track_level` are set once at
 `create_course` and have **no on-chain setter** — `update_course` cannot touch
-them. On devnet a wrong value is recoverable only via a full WS-2 recreate
-(new account, re-enroll). **On mainnet there is no recreate escape: every course
-must be created correctly the FIRST time.** All six devnet courses today carry
-`creator` = platform authority (created pre-#399) — do NOT copy that mistake to
-mainnet. Source of truth for all three fields is the course content doc
+them. The only fix is close + recreate, and the recreated course gets a new
+generation that the program uses to reject every existing enrollment, so
+enrolled learners lose their progress in that course. **On mainnet every course
+must be right before learners enroll** (see Launch day below). All six devnet
+courses today carry `creator` = platform authority (created pre-#399) — do NOT
+copy that mistake to mainnet. Source of truth for all three fields is the course content doc
 (`creatorWallet` / `trackId` / `trackLevel` in `lib/content`), passed straight
 through the admin sync route to `create_course`; there is **no platform-authority
 fallback** — a missing or invalid creator wallet fails the deploy loudly.
@@ -566,6 +567,27 @@ fallback** — a missing or invalid creator wallet fails the deploy loudly.
 - [ ] academy-courses contributor docs (CLAUDE.md / CONTRIBUTING) describe the
       real wallet→instructor flow — no reference to a nonexistent `instructors/`
       directory (LX-D6 docs-drift fix; that fix lands in the separate content repo).
+
+### Launch day: verify every course before learners arrive
+
+The admin deploy refuses to create a mainnet course whose `trackId` or
+`trackLevel` is 0 or whose creator is the platform authority or backend signer
+(`COURSE_IDENTITY_001`); it treats the server as mainnet when
+`NEXT_PUBLIC_SOLANA_NETWORK` or the `SOLANA_RPC_URL` host says so.
+
+- [ ] Create every mainnet course before the platform opens to learners.
+- [ ] Track is the learning path, level is the course's position in it:
+  - Comece aqui = track 1: Speedrun 1, Visão Geral 2, BTC to SOL 3
+  - Hackathon = track 2: Hackathon Expert 1
+  - Construa e publique = track 3: Rust and TS Fundamentals 1, Payments and
+    Commerce 2, Digital Assets 3, Mastering Anchor v2 4
+  - Pílula is not created on mainnet.
+- [ ] The owner enrolls with his own account, finishes one course, and checks
+      that the credential shows the right instructor, track and level.
+- [ ] Any course with a wrong creator, track or level is closed and recreated
+      now, while nobody is enrolled. After learners enroll, a recreate wipes
+      their progress in that course. The admin recreate is devnet-only until
+      Squads custody (#305) lands, so plan how this step runs before launch.
 
 ## Best Practices Summary
 
