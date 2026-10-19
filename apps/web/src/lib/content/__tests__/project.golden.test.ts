@@ -1,10 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
-import {
-  coursesById,
-  lessonsById,
-  achievementsById,
-  questsById,
-} from "../store";
+import { buildStore } from "../build-store";
+import { localizeCourseView } from "../localize";
 import {
   projectCourse,
   projectLesson,
@@ -15,605 +11,347 @@ import {
   projectLearningPath,
   countCourseLessons,
 } from "../project";
-import type { AchievementDoc, CourseDoc } from "../types";
-import { CONTENT_BLOB_BASE_URL } from "../blob-store.mjs";
-import goldenCourses from "./fixtures/golden/courses.json";
-import goldenCourseBySlug from "./fixtures/golden/course-by-slug.json";
-import goldenLessons from "./fixtures/golden/lessons.json";
-import goldenAch from "./fixtures/golden/achievements-raw.json";
-import goldenQuests from "./fixtures/golden/quests-raw.json";
-import goldenPaths from "./fixtures/golden/paths.json";
-import goldenSummaries from "./fixtures/golden/course-summaries.json";
+import type { CourseDoc } from "../types";
+import { goldenBundle } from "./fixtures/golden-bundle";
 
 vi.mock("server-only", () => ({}));
 
-// Golden fixtures (imported above) = a live capture of the PRE-FLIP GROQ output
-// from prod Sanity (public dataset 4e3i2wwc/production). Each projector, fed the
-// committed bundle doc, must deep-equal the captured GROQ shape. Divergences
-// here mean the locked bundle SHA and prod Sanity have drifted (report, do not
-// fudge the fixture) — EXCEPT the documented content-wave deltas below, hand-
-// edited into the fixtures because the golden capture predates them:
-//
-//  - `instructor` → `creator` (issue #478): the retired instructor deref no
-//    longer exists. RESOLVED by #399/B3 — every course now carries a real
-//    `creator` wallet (see below), so the fixtures carry that wallet too, not
-//    the original `null` placeholder.
-//  - deploy-quest flag (academy-courses#36, 2026-08-11): the b2s
-//    `your-first-solana-program` ping-program code block gains
-//    `deployable: true` — the lesson promises a devnet deploy and shipped
-//    without the flag, so the deploy panel never mounted. Fixtures carry the
-//    flipped flag in course-by-slug.json and lessons.json.
-//  - authored → derived `tags` (#466 C3): course `tags` is no longer authored
-//    content: it's the sorted, deduplicated union of the course's lessons'
-//    `skills`. The fixtures carry the DERIVED tags computed from each course's
-//    real lesson `skills`, not the original authored (now-retired) tag list.
-//  - launch-catalog activation (issue #559): the bump to academy-courses
-//    @012cd03d adds course 5 (`course-stablecoin-payments`, 9 lessons / 3
-//    modules) and retargets `achievement-full-stack-solana` from
-//    `path-solana-core` to `path-zero-to-deployed`, and course 4's capstone
-//    `lesson-bfsp-m4-capstone` swaps its held-DeFi "What's Next" pointer for
-//    the Superteam Earn terminus. This content never existed in the pre-flip
-//    Sanity capture, so for these docs the golden = the projected bundle (the
-//    committed bundle is the post-SP2 source of truth); every pre-existing
-//    doc still matches the original prod-Sanity capture unchanged.
-//  - launch-content wave 2 (bump to academy-courses @e1190680): retrieval
-//    closes across the flagship spine (academy-courses #11, 28 quiz blocks
-//    keyed `retrieval-close`), item-52b factual fixes (#9: faucet rate-limit
-//    mechanism, Token-2022 maturity row deleted), challenge tutorNotes (#10),
-//    and reviewExempt skill markers (#8). lessons.json and course-by-slug.json
-//    were regenerated from the bundle through the real projectors for the
-//    affected docs; all other fixtures untouched.
-//  - launch-content wave 3 (bump to academy-courses @1b74e4a6): C2
-//    `rust-for-program-devs` lands (academy-courses #12: +1 course, +14
-//    lessons, new challenge/module entries in quests-raw's derived fields —
-//    staged, not on-chain, so it stays hidden until owner course-creation),
-//    tutorNotes on the two CARRY deploy-path challenges (#14), C5 + template
-//    quiz explanations (#15). courses.json, lessons.json and quests-raw.json's
-//    challengeLessonIds/moduleLessonMap regenerated from the bundle through
-//    the real projectors (order preserved, raw quest docs untouched).
-//  - launch-content wave 4 RE-LAND (bump to academy-courses @7a49747): C3
-//    transform of the LIVE flagship course (16 -> 15 lessons; retired slots
-//    0/2/11/14 burned, new slots 16-18; SPARSE slot map). First attempt #740
-//    was reverted (#744) because the completion path derived bitmap indices
-//    from array position; re-landed only after #751 made every on-chain path
-//    slot-aware. courses/lessons/quests-raw-derived/paths/course-summaries
-//    regenerated through the real projectors.
-//  - launch-content wave 5 (bump to academy-courses @6d352db): C4
-//    `dapp-and-sdk-with-kit` lands (academy-courses #18: +1 course, +11 dense
-//    lessons at slots 0-10, trackLevel 4 — completing the track-1 ladder 1..5;
-//    staged, not on-chain, hidden until owner course-creation). courses.json,
-//    lessons.json and quests-raw's challengeLessonIds/moduleLessonMap
-//    regenerated from the bundle through the real projectors (existing doc
-//    order preserved, raw quest docs untouched).
-//  - catalog finalization (academy-courses #21, wave 5): the 5 superseded
-//    courses DELETED from content (already deactivated on-chain) — bundle is
-//    now the live 4-course ladder (C2/C3/C4/C5, 49 lessons); zero-to-deployed
-//    rewired to that ladder; frontend path retired (draft/empty); the
-//    full-blocks course-by-slug fixture RETARGETED anchor-framework -> C3;
-//    3 achievement awards retargeted (anchor-expert -> C3, rust-rookie -> C2,
-//    course-completer -> C2 pending C1 (#673)). courses/lessons/paths/summaries/
-//    quests-raw-derived regenerated; achievements-raw patched for the 3
-//    retargets only (rest stays the prod-Sanity capture).
-//  - C1 + EVM elective wave (bump to academy-courses @c5c625e0, PRs #22/#23/
-//    #24/#25/#26/#27): +2 courses / +17 lessons — C1 `course-solana-for-web-devs`
-//    (8 lessons, trackLevel 1) and the off-ladder elective
-//    `course-solana-for-evm-devs` (9 lessons, trackId 0). Bundle is now 6
-//    courses / 66 lessons; BOTH new courses are staged-only (no on-chain
-//    create, no deployment row) so the catalog gate keeps them invisible.
-//    Flip-wave edits: `path-zero-to-deployed` gains C1 in the FRONT slot (the
-//    ladder is now C1→C2→C3→C4→C5); `path-solana-core` order 1 -> 8 (order-1
-//    collision, #23); `achievement-course-completer` retargeted C2 -> C1,
-//    closing the #673 placeholder; `achievement-full-stack-solana` description
-//    reworded to name the Zero to Deployed path. Comprehension reflections
-//    (#848 / academy-courses #26) rewrite 4 openEnded prompts across C4/C5
-//    (3 dsk milestones widen 60 -> 120 words; C5's terminus block re-keys
-//    `submit` -> `reflect` and widens 200 -> 250) so no prompt is URL-only.
-//    C4 code stand-ins fixed for inverted deposit account order (#22), which
-//    also touches lesson-dsk-idl-to-typed-client / -wrap-the-generated-client.
-//    courses/lessons/paths/summaries/quests-raw-derived regenerated from the
-//    bundle through the real projectors (existing doc order preserved, new
-//    docs appended, raw quest docs untouched); achievements-raw patched for
-//    the course-completer retarget + the full-stack description only.
-//  - skills sweep + defect batch (bump to academy-courses @23e4d1bf,
-//    PRs #28/#29): an EDITS-ONLY wave — counts are UNCHANGED (6 courses / 66
-//    lessons / 8 paths / 10 achievements / 5 quests), no doc added, removed or
-//    re-keyed, no slot movement. The `skills.yaml` registry shrinks 83 -> 74
-//    (7 dead entries deleted, `defi`+`amm`+`lending`+`staking`+`oracles`
-//    consolidated away, `transfer-hook`/`wallet-adapter`/`siws`/`ci` dropped,
-//    `rpc` RENAMED to `rpc-reads` including 2 C1 lesson retags) and 19 second-
-//    use tags are added, which takes gate-19b to zero warnings and lets the
-//    lint tier flip to error (#676). Note the lessons golden is UNAFFECTED by
-//    retagging: `projectLesson` projects `_id/title/slug/blocks[]` only —
-//    `skills` reaches the app through `getAllLessonSkills`, not this projector.
-//    So of the 20 edited lesson docs only 6 move the golden (the ones whose
-//    BLOCKS changed): C3 `lesson-bfsp-adding-instructions` gains a new
-//    3-question quiz, C2 `lesson-rpd-what-you-built` grows its recap quiz
-//    7 -> 25 questions, plus C4/C5 defect fixes (npm-stat repulls, pricing,
-//    the payment-rails decision map and the terminus block). Course `tags` are
-//    DERIVED from lesson skills, so 5 of 6 courses shift tags (C2's union is
-//    unchanged — its recap picked up slugs already present on sibling lessons,
-//    which is exactly what a second-use sweep produces); C5 also gets an opener
-//    rewrite, its only non-tag course-field change. courses/lessons/
-//    course-by-slug/paths/summaries regenerated through the real projectors;
-//    quests-raw is byte-unchanged (no code block gained or lost) and
-//    achievements-raw is untouched.
-//  - public-alpha activation (bump to academy-courses @7c5ab3a7): the LARGEST
-//    removal wave so far. The whole track-1 catalog (C1-C5, the EVM elective,
-//    `path-zero-to-deployed` and the six unpopulated legacy paths) moves to
-//    `_draft/`, which the compiler excludes (#978), and the alpha catalog takes
-//    its place: 2 courses (`course-btc-to-sol-evolution` EN 15 lessons,
-//    `course-solana-speedrun` PT-BR 4 lessons), 1 path (`path-first-steps`,
-//    those 2 as members), 19 lessons, 7 achievements, 5 quests, 8 skills.
-//    courses/course-by-slug/lessons/paths/summaries/quests-raw-derived were
-//    REGENERATED through the real projectors over the new bundle; the
-//    full-blocks course-by-slug fixture retargeted C3 -> the alpha flagship
-//    `course-btc-to-sol-evolution`. achievements-raw was PATCHED, not
-//    regenerated: `all`/`deployed` keep only the 7 live docs and
-//    `achievement-course-completer` retargets C1 -> the alpha flagship. That
-//    patch also drops the last two docs of the original prod-Sanity capture
-//    that never existed in the bundle (`achievement-perfect-score`,
-//    `achievement-speed-runner`), so the fixture is now an exact
-//    both-directions cover of the bundle and the KNOWN_ABSENT divergence
-//    ledger retires with them. anchor-expert is parked, so the award-shape
-//    assertion moved to a live `course-completed` achievement.
-//  - course banners (bump to academy-courses @94b2b89, academy-courses #35):
-//    both alpha courses gain a course-level `assets/banner.webp` referenced by
-//    the `thumbnail:` key the schema has always accepted, so `thumbnail` stops
-//    projecting as null and the catalogue card stops falling back to
-//    /cover.png (#1007). The same upstream commit corrects `duration` to its
-//    documented unit (hours): btc-to-sol 15 -> 18 (15 was the lesson count),
-//    speedrun 4 -> 0.25 (~15 min). An EDITS-ONLY wave otherwise — counts,
-//    slots, ids and blocks are all unchanged. courses/course-by-slug/paths/
-//    summaries regenerated through the real projectors; lessons.json,
-//    quests-raw.json and achievements-raw.json are byte-unchanged (no lesson,
-//    block or award moved).
-//  - Pílula Solana & Superteam (bump to academy-courses @2c2241d1,
-//    academy-courses #37): a new PT-BR single-lesson booth elective
-//    (`course-pilula-solana-superteam`, 1 module `pilula`, lesson
-//    `lesson-psp-solana-em-2-minutos`, 4 prose beats + 4-question quiz,
-//    duration 0.03h). This content never existed in the pre-flip capture, so
-//    per the launch-catalog precedent its golden = the projected bundle:
-//    courses.json and lessons.json gained the projector-generated docs and
-//    quests-raw.json's moduleLessonMap gained the one-module entry. Every
-//    pre-existing doc is byte-unchanged.
-//  - Forge College pilot (bump to academy-courses @4a6e4c6): a PT-BR
-//    single-module course (`course-visao-geral-solana`, 3 lessons, module
-//    `origens-e-historia`) authored under its OWN creator wallet
-//    (`Em8D6Xyu…`), which is why the creator assertion is now a per-course
-//    map instead of one constant. The same bump carries `creatorRewardXp: 30`
-//    on the two Kaue courses — invisible here, `projectCourse` never projected
-//    that field — and the upstream images arrive pre-compressed, so no asset
-//    url moves. New content again = golden is the projected bundle:
-//    courses.json and lessons.json gained the projector-generated docs and
-//    quests-raw.json's moduleLessonMap gained the one-module entry. Every
-//    pre-existing doc is byte-unchanged.
-//  - gamification ladder (bump to academy-courses @958e7877, academy-courses
-//    #41): an achievements+quests-ONLY wave — no course, lesson, path or slot
-//    moved, so courses/lessons/paths/summaries/course-by-slug and quests-raw's
-//    derived fields are all byte-unchanged. achievements 7 -> 24: 17 new docs
-//    (streak/lessons-completed ladders, the three per-course badges, the
-//    first-steps path badge, three community-stat badges) plus 4 repricings
-//    (first-steps 50 -> 25, week-warrior 100 -> 75, monthly-master 300 -> 200,
-//    consistency-king 500 -> 400) and `achievement-early-adopter` flipping
-//    `user-number lte:100` -> `manual`, so it no longer auto-fires on signup.
-//    The fixture stays the exact both-directions cover, regenerated into the
-//    raw capture's null-filled award shape. quests-raw's `quests` array is the
-//    ACTIVE set, so `quest-challenge` (active: false now) DROPS out of it,
-//    and complete-lesson 25 -> 20 / lesson-batch 3 -> 2 targets at 50 -> 40 /
-//    login-streak 40 -> 50 land in the remaining four.
-//  - course-badge trim (bump to academy-courses @aff33b8d, academy-courses
-//    #42): owner ruling — no course-specific achievements except speedrunner.
-//    achievements 24 -> 18: pilula-taken, panorama, evolution-explorer,
-//    evolution-navigator, evolution-scholar and the legacy course-completer
-//    (which duplicated evolution-scholar's trigger) all deleted; the fixture
-//    drops the same six from both arrays. Nothing else in the bundle moved.
-//    The award-shape assertion moves course-completer -> speedrunner, now the
-//    bundle's only `course-completed` doc.
-//  - visao-geral completion (bump to academy-courses @8f40db93, academy-courses
-//    #45): the Forge College pilot grows 3 -> 16 lessons across 4 modules.
-//    Slots are APPEND-ONLY — the pilot keeps 0/1/2 and the 13 new lessons take
-//    3-15 — so existing learners' on-chain progress bits stay valid (the #741
-//    trap). The course record changes in place: duration 1.7 -> 7, xpReward
-//    60 -> 320 (16 x 20), thumbnail banner.png -> banner.jpg, and tags widen
-//    from solana-fundamentals alone to also cover transactions, account-model
-//    and rpc-reads. The 3 pilot lessons are rewritten too (raw HTML converted
-//    to Markdown, text unchanged), which is the 48 deletions in lessons.json.
-//    No other course moved. quests-raw's moduleLessonMap gains the 3 new
-//    modules; challengeLessonIds is unchanged (the course has no challenges).
-//  - content i18n + WebP wave (bump to academy-courses @8371d7e9, academy-
-//    courses #47/#51/#52): every course.yaml now declares `sourceLocale`
-//    (three PT-BR originals, one EN) and the compiler stamps it on the raw
-//    course doc — `projectCourse` does NOT project it (only the locale-aware
-//    query path attaches locale fields, and only when asked), so courses.json
-//    is byte-unchanged. #52 converts every published PNG to WebP, which
-//    rewrites the image urls inside prose blocks — that is the whole
-//    lessons.json + course-by-slug.json delta, plus #47's repaired adoption
-//    visual in solana-speedrun. Counts unchanged (4 courses / 36 lessons).
-//    No course ships an `l10n/` overlay at this SHA, so l10n.json is `{}`
-//    and the localized-projection path is covered by queries-l10n.test.ts
-//    against a fixture rather than by a golden.
-//  - deploy-lesson fund + card blocks (bump to academy-courses @ea7fb51e,
-//    academy-courses #61/#62): the b2s `your-first-solana-program` lesson
-//    wraps its deployable code block in a `wallet-funding` block (produces
-//    `funded-wallet`, which the code block now consumes) and a
-//    `deployed-program-card` (consumes `deployed-program`, which the code
-//    block now produces), plus a prose paragraph on deploy rent and a real
-//    verification harness in the starter/solution. One lesson moves; counts,
-//    slots and every other doc are byte-unchanged, so lessons.json and
-//    course-by-slug.json are the only fixtures regenerated.
-//  - ping-program harness drift fix (bump to academy-courses @f2d97edb,
-//    academy-courses #64): the grader always compiles the starter's
-//    verification harness, never the solution's, so the solution's extra
-//    explanatory comments inside that region were dead weight that could
-//    drift. Comments moved above the marker into the solution body — same
-//    lesson (b2s `your-first-solana-program`, ping-program block), comment
-//    text only, no code change. Counts, slots and every other doc are
-//    byte-unchanged, so lessons.json and course-by-slug.json are the only
-//    fixtures regenerated.
-//  - hackathon course (bump to academy-courses @daa13ec, PRs #58/#64): +1
-//    course / +16 lessons — `course-solana-hackathon-expert` (EN, intermediate,
-//    5 modules, trackId 0 / trackLevel 0), authored under the OWNER's wallet
-//    rather than Kaue's or Forge's, which is why EXPECTED_CREATOR grows a
-//    fourth distinct address. Purely ADDITIVE: the regeneration re-projected
-//    every pre-existing course and lesson first and asserted each one
-//    byte-identical, so no existing doc moved and existing order is preserved
-//    with the new docs appended. courses.json and lessons.json gained the new
-//    docs; quests-raw's DERIVED challengeLessonIds/moduleLessonMap were
-//    regenerated (the raw quest docs are untouched). paths, summaries,
-//    course-by-slug and achievements-raw are byte-unchanged — the course joins
-//    no path and the full-blocks fixture still targets the alpha flagship.
-//    Staged only: no on-chain create and no `deployed_programs` row, so the
-//    catalog gate keeps it invisible until the owner runs the admin sync.
-//  - catalog wave (bump to academy-courses @133c53af, 475 commits): +4
-//    courses / +113 lessons — `course-rust-ts-fundamentals`,
-//    `course-mastering-anchor-v2`, `course-digital-assets` and
-//    `course-solana-payments-commerce`, all under Kaue's wallet, all staged
-//    (no on-chain create, invisible until the owner syncs). Pre-existing
-//    edits ride along: 16 b2s lessons re-worded upstream (incl. the
-//    sign-and-verify retitle, which is the whole paths.json delta) and the
-//    Pílula course gains creatorRewardXp 30 (invisible here — projectCourse
-//    never projected that field). courses/lessons/course-by-slug and
-//    quests-raw's derived challengeLessonIds/moduleLessonMap regenerated
-//    through the real projectors (existing order preserved, new docs
-//    appended); course-summaries and achievements-raw byte-unchanged.
-//  - three-shelf paths wave (bump to academy-courses @8bc4a69, content #72 and
-//    the eight commits before it): `path-first-steps` is retired in place and
-//    three ordered shelves replace it — `path-comece-aqui` (order 1, the four
-//    entry courses), `path-hackathon` (2) and `path-construa-e-publique` (3).
-//    `getAllLearningPaths` already drops `retired` paths, so the retired doc
-//    stays in the bundle and out of every listing. Riding along:
-//    `achievement-first-steps-path` retargets to `path-comece-aqui` and is
-//    renamed "Comece aqui" (id unchanged, so the on-chain PDA is unchanged),
-//    three courses drop to their right-sized `xpPerLesson`, and upstream
-//    re-wordings land across b2s, visao-geral-solana and the hackathon course.
-//    paths.json now covers every bundle path (the three new shelves included);
-//    courses/lessons/course-by-slug/achievements-raw regenerated through the
-//    real projectors with existing order preserved. slots.json is
-//    byte-identical — no course was added, removed or reshaped.
-//  - Comece aqui drops the Pílula (bump to academy-courses @ef5e28f, content
-//    #73): the booth elective leaves `path-comece-aqui`, whose membership is
-//    now the three courses a newcomer actually walks, and the shelf blurb is
-//    reworded to match. One file moved upstream (`paths/comece-aqui.yaml`), so
-//    paths.json is the only fixture regenerated; counts, slots.json and every
-//    course, lesson and achievement doc are byte-unchanged. The Pílula itself
-//    is untouched and still reachable from the catalogue.
-//  - hackathon pt-BR/es + banner (bump to academy-courses @50143ca8, content
-//    #75/#76/#77): `course-solana-hackathon-expert` gains pt-BR and es
-//    overlays — 376 translated leaves each, covering all 16 lessons and every
-//    quiz string — so l10n.json goes 5 -> 6 localized courses. The overlays are
-//    text-only (no re-rendered figures), which is why no localized asset
-//    appears under `public/content-assets/<slug>/l10n/`. The course banner is
-//    re-rendered from the owner's Colosseum World's Fair art, letterboxed onto
-//    16:9 (banner.webp, the only asset byte that moved). NEITHER touches the
-//    projected course shape — `availableLocales` is attached by the
-//    locale-aware query path, not `projectCourse` — so the fixture delta here
-//    is entirely PR #75's ride-along: four courses drop to their right-sized
-//    xpReward (digital-assets 560 -> 420, mastering-anchor-v2 600 -> 540,
-//    rust-ts-fundamentals 500 -> 465, solana-payments-commerce 480 -> 360),
-//    each appearing twice because paths.json nests its member courses.
-//    courses.json and paths.json are the only fixtures regenerated; lessons,
-//    course-by-slug, summaries, achievements-raw, quests-raw and slots.json
-//    are byte-unchanged.
-//  - images move to Vercel Blob (same pin, academy-courses @50143ca8): every
-//    `/content-assets/<slug>/…` url becomes its content-addressed
-//    `<blob base>/content/<sha256>.<ext>`. The fixtures were remapped by
-//    hashing each old public file, and the new bundle equals the old one under
-//    that same remap, so no other byte moved.
-const deps = { lessonsById };
+/**
+ * Golden tests for the content projectors, run over the small fixed bundle in
+ * `fixtures/golden-bundle.ts`, never over the live one, so a content release
+ * cannot move them. The JSON goldens in `fixtures/golden/` change only when a
+ * projector does; after an intended change, regenerate them and review the
+ * diff:
+ *
+ *   pnpm --filter web exec vitest run src/lib/content/__tests__/project.golden.test.ts -u
+ *
+ * Invariants of the live bundle itself are in `bundle.invariants.test.ts`.
+ */
 
-function bundleCourse(id: string): CourseDoc {
-  const doc = coursesById.get(id);
-  if (!doc) throw new Error(`bundle missing course ${id}`);
+const store = buildStore(goldenBundle);
+const deps = { lessonsById: store.lessonsById };
+const golden = (name: string) => `./fixtures/golden/${name}.json`;
+const json = (value: unknown) => `${JSON.stringify(value, null, 2)}\n`;
+
+function course(id: string): CourseDoc {
+  const doc = store.coursesById.get(id);
+  if (!doc) throw new Error(`fixture missing course ${id}`);
   return doc;
 }
 
-describe("projectCourse — getAllCourses shape (summary module lessons)", () => {
-  it("every bundle course has a golden (bundle → golden coverage)", () => {
-    expect(coursesById.size).toBe(goldenCourses.length);
+type Block = Record<string, unknown>;
+
+/** Every key the `blocks[]` projection emits on every block, null when absent. */
+const NULL_FILLED_BLOCK_KEYS = [
+  "key",
+  "_type",
+  "produces",
+  "consumes",
+  "src",
+  "url",
+  "language",
+  "buildType",
+  "deployable",
+  "starter",
+  "solution",
+  "tests",
+  "hints",
+  "questions",
+  "prompt",
+  "maxWords",
+  "amount",
+  "network",
+  "idl",
+];
+
+describe("projectCourse — catalogue shape (summary lessons)", () => {
+  const projected = [...store.coursesById.values()].map((c) =>
+    projectCourse(c, deps)
+  );
+
+  it("matches the golden", async () => {
+    await expect(json(projected)).toMatchFileSnapshot(golden("courses"));
   });
 
-  it("projects every prod course byte-identically", () => {
-    for (const golden of goldenCourses) {
-      const projected = projectCourse(bundleCourse(golden._id), deps);
-      expect(projected).toEqual(golden);
+  it("drops a module lesson ref that resolves to no lesson (#405)", () => {
+    const alpha = projectCourse(course("course-alpha"), deps);
+    expect(alpha.modules[0]!.lessons.map((l) => l._id)).toEqual([
+      "lesson-alpha-quiz",
+      "lesson-alpha-code",
+    ]);
+  });
+
+  it("projects absent optional fields as null, never undefined", () => {
+    const beta = projectCourse(course("course-beta"), deps);
+    for (const field of [
+      "description",
+      "duration",
+      "thumbnail",
+      "creator",
+      "tags",
+      "trackId",
+      "trackLevel",
+    ] as const) {
+      expect(beta[field], field).toBeNull();
     }
   });
 
-  // Each course is authored under its own creator wallet, not the platform
-  // authority the track-1 courses carried. The alpha catalog and the Pílula
-  // booth elective share Kaue's wallet; the Forge College pilot has its own;
-  // the hackathon course is the owner's.
-  const EXPECTED_CREATOR: Record<string, string> = {
-    "course-btc-to-sol-evolution":
-      "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
-    "course-solana-speedrun": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
-    "course-pilula-solana-superteam":
-      "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
-    "course-visao-geral-solana": "Em8D6XyuXvNUK1YgLKBaji7HbbrZZq7fCdq3sGMXqxVZ",
-    "course-solana-hackathon-expert":
-      "8kMziL5e3qEWhp1nQHEiYLRypymyBVTXNxgZXyQwhbSo",
-    "course-digital-assets": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
-    "course-mastering-anchor-v2":
-      "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
-    "course-rust-ts-fundamentals":
-      "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
-    "course-solana-payments-commerce":
-      "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
-  };
-
-  it("creator is a real wallet (#399/B3); thumbnail is a compiled banner url", () => {
-    //
-    // `thumbnail` was null for every course until the banner wave (#1007) —
-    // not by projector design, but because no pinned content had ever set the
-    // field. It is asserted positively now so the catalogue cannot silently
-    // regress to the /cover.png placeholder: a null here means the pinned
-    // content lost its artwork, which is invisible in a byte-identical
-    // comparison against a golden that was regenerated from that same content.
-    for (const golden of goldenCourses) {
-      const c = projectCourse(bundleCourse(golden._id), deps);
-      expect(c.creator).toBe(EXPECTED_CREATOR[golden._id]);
-      expect(c.thumbnail?.startsWith(`${CONTENT_BLOB_BASE_URL}/content/`)).toBe(
-        true
-      );
-      expect(c.thumbnail).toMatch(/\/content\/[0-9a-f]{64}\.\w+$/);
+  it("leaves the on-chain-only fields off the projection", () => {
+    const alpha = projectCourse(course("course-alpha"), deps);
+    for (const field of [
+      "xpPerLesson",
+      "creatorRewardXp",
+      "minCompletionsForReward",
+      "sourceLocale",
+    ]) {
+      expect(alpha, field).not.toHaveProperty(field);
     }
   });
 });
 
-describe("projectCourse — getCourseBySlug shape (full module lessons)", () => {
-  it("projects the course with full blocks[] lessons byte-identically", () => {
-    const projected = projectCourse(
-      bundleCourse(goldenCourseBySlug._id),
-      deps,
-      {
-        fullLessons: true,
-      }
-    );
-    expect(projected).toEqual(goldenCourseBySlug);
+describe("projectCourse — course page shape (full lessons)", () => {
+  it("matches the golden", async () => {
+    const projected = projectCourse(course("course-alpha"), deps, {
+      fullLessons: true,
+    });
+    await expect(json(projected)).toMatchFileSnapshot(golden("course-by-slug"));
   });
 
   it("attaches trackCollectionAddress only when supplied (getCourseById)", () => {
-    const withAddr = projectCourse(bundleCourse(goldenCourseBySlug._id), deps, {
+    const withAddr = projectCourse(course("course-alpha"), deps, {
       trackCollectionAddress: "TrackColl111",
     });
     expect(withAddr.trackCollectionAddress).toBe("TrackColl111");
-    const without = projectCourse(bundleCourse(goldenCourseBySlug._id), deps);
+    const without = projectCourse(course("course-alpha"), deps);
     expect("trackCollectionAddress" in without).toBe(false);
+  });
+
+  it("flags a failed deployment read only when it failed (#931)", () => {
+    const failed = projectCourse(course("course-alpha"), deps, {
+      deploymentReadFailed: true,
+    });
+    expect(failed.deploymentReadFailed).toBe(true);
+    const fine = projectCourse(course("course-alpha"), deps, {
+      deploymentReadFailed: false,
+    });
+    expect("deploymentReadFailed" in fine).toBe(false);
   });
 });
 
-describe("projectLesson — full blocks[] projection", () => {
-  it("every bundle lesson has a golden (bundle → golden coverage)", () => {
-    expect(lessonsById.size).toBe(goldenLessons.length);
+describe("projectLesson — blocks[] projection", () => {
+  const projected = [...store.lessonsById.values()].map(projectLesson);
+  const blocks = projected.flatMap((l) => l.blocks as unknown as Block[]);
+  const block = (key: string): Block => {
+    const found = blocks.find((b) => b.key === key);
+    if (!found) throw new Error(`fixture missing block ${key}`);
+    return found;
+  };
+
+  it("matches the golden", async () => {
+    await expect(json(projected)).toMatchFileSnapshot(golden("lessons"));
   });
 
-  it("projects every prod lesson byte-identically", () => {
-    for (const golden of goldenLessons) {
-      const doc = lessonsById.get(golden._id);
-      expect(doc, `bundle missing lesson ${golden._id}`).toBeDefined();
-      expect(projectLesson(doc!)).toEqual(golden);
+  it("emits every listed key on every block, null when the block lacks it", () => {
+    for (const b of blocks) {
+      for (const key of NULL_FILLED_BLOCK_KEYS) {
+        expect(b, `${String(b.key)}.${key}`).toHaveProperty(key);
+      }
     }
+    expect(block("intro").questions).toBeNull();
+    expect(block("check").src).toBeNull();
   });
 
-  it("a code block carries solution + tests + all null-filled sibling keys", () => {
-    const codeGolden = goldenLessons.find((l) =>
-      l.blocks?.some((b) => b._type === "code")
-    );
-    expect(codeGolden).toBeDefined();
-    const projected = projectLesson(lessonsById.get(codeGolden!._id)!);
-    const cb = projected.blocks.find((b) => b._type === "code");
-    expect(cb).toBeDefined();
-    // solution/tests present, quiz-only fields null-filled
-    expect((cb as unknown as { solution: string }).solution).toBeTruthy();
-    expect(Array.isArray((cb as unknown as { tests: unknown }).tests)).toBe(
-      true
-    );
-    expect((cb as unknown as { questions: unknown }).questions).toBeNull();
+  it("a code block carries its solution and tests, with quiz fields null", () => {
+    const exercise = block("exercise");
+    expect(exercise.solution).toBeTruthy();
+    expect(Array.isArray(exercise.tests)).toBe(true);
+    expect(exercise.questions).toBeNull();
   });
 
   it("surfaces a test's failureMessage only when authored (#575)", () => {
-    const projected = projectLesson({
-      _id: "lesson-synthetic-575",
-      title: "t",
-      slug: { current: "s" },
-      blocks: [
-        {
-          _key: "exercise",
-          _type: "code",
-          tests: [
-            {
-              id: "t1",
-              description: "authored",
-              input: "1",
-              expectedOutput: "1",
-              failureMessage: "Off by one — start the loop at 0.",
-            },
-            {
-              id: "t2",
-              description: "bare",
-              input: "2",
-              expectedOutput: "2",
-            },
-          ],
-        },
-      ],
-    } as unknown as Parameters<typeof projectLesson>[0]);
-
-    const tests = (
-      projected.blocks[0] as unknown as { tests: Record<string, unknown>[] }
-    ).tests;
-    expect(tests[0]!.failureMessage).toBe("Off by one — start the loop at 0.");
-    // Absent on the raw test → key omitted entirely (byte-identical to golden),
-    // not present-as-null like the frozen-capture siblings.
-    expect("failureMessage" in tests[1]!).toBe(false);
-  });
-});
-
-describe("projectAchievement — mapAchievement over the bundle", () => {
-  // The alpha wave trimmed the fixture to exactly the bundle's live docs (see
-  // the header note), so coverage is now an equality in BOTH directions: no
-  // golden without a bundle doc, no bundle doc without a golden. Every doc must
-  // then project identically (bundle doc == prod GROQ doc through the real
-  // projector).
-  it("bundle and golden cover exactly the same achievements", () => {
-    expect(new Set(achievementsById.keys())).toEqual(
-      new Set(goldenAch.all.map((a) => a._id))
-    );
+    const [authored, bare] = block("exercise").tests as Block[];
+    expect(authored!.failureMessage).toBe("Comece do cursor + 1.");
+    expect("failureMessage" in bare!).toBe(false);
   });
 
-  it("projects each shared achievement identically to prod", () => {
-    for (const raw of goldenAch.all) {
-      const doc = achievementsById.get(raw._id);
-      expect(doc, `bundle missing achievement ${raw._id}`).toBeDefined();
-      // Project the bundle doc AND the prod GROQ raw doc through the same
-      // projector: equal output proves the underlying content matches. The raw
-      // GROQ doc omits `_type` (projectAchievement never reads it).
-      expect(projectAchievement(doc!)).toEqual(
-        projectAchievement(raw as unknown as AchievementDoc)
-      );
+  it("surfaces tutorNotes and the Parsons fields only on blocks that carry them", () => {
+    expect(block("exercise").tutorNotes).toEqual([
+      "O erro comum é reaplicar o próprio cursor.",
+    ]);
+    expect(block("order")).toMatchObject({
+      correctOrder: ["l1", "l2"],
+      explanation: "You sign what you built.",
+    });
+    for (const b of blocks.filter((x) => x.key !== "exercise")) {
+      expect(b).not.toHaveProperty("tutorNotes");
+    }
+    for (const b of blocks.filter((x) => x._type !== "parsons")) {
+      expect(b).not.toHaveProperty("lines");
+      expect(b).not.toHaveProperty("correctOrder");
     }
   });
+});
 
-  it("award is validated + stripped; speedrunner = course-completed", () => {
-    // Was anchor-expert, then course-completer; the trim wave deleted every
-    // course-specific badge except speedrunner, so it now carries the bundle's
-    // only `course-completed` award.
-    const speedrunner = projectAchievement(
-      achievementsById.get("achievement-speedrunner")!
+describe("localized course projection (content i18n)", () => {
+  const view = localizeCourseView(
+    course("course-alpha"),
+    store.l10nByCourseId.get("course-alpha"),
+    store.lessonsById,
+    "en"
+  );
+  const projected = projectCourse(
+    view.doc,
+    { lessonsById: view.lessonsById },
+    { fullLessons: true }
+  );
+  const source = projectCourse(course("course-alpha"), deps, {
+    fullLessons: true,
+  });
+  const lessonBlocks = (c: typeof projected, i: number) =>
+    c.modules[0]!.lessons[i]!.blocks as unknown as Block[];
+
+  it("matches the golden", async () => {
+    expect(view.locale).toBe("en");
+    await expect(json(projected)).toMatchFileSnapshot(
+      golden("localized-course")
     );
-    expect(speedrunner.award).toEqual({
-      kind: "course-completed",
-      course: "course-solana-speedrun",
-    });
-    expect(speedrunner.solTier).toBe(false);
   });
 
-  it("early-adopter is manual — it no longer auto-fires on signup", () => {
-    // The ladder wave retired the `user-number lte:100` rule. Asserted
-    // positively because the regression is silent: a doc that drifted back to
-    // an auto rule would hand every early signup 500 XP on day one, and a
-    // byte-identical comparison against a golden regenerated from that same
-    // doc could never catch it.
-    const early = projectAchievement(
-      achievementsById.get("achievement-early-adopter")!
-    );
-    expect(early.award).toEqual({ kind: "manual" });
+  it("replaces only the translated leaves, including the localized thumbnail", () => {
+    expect(projected.title).toBe("Alpha: from thesis to your first asset");
+    expect(projected.thumbnail).not.toBe(source.thumbnail);
+    expect(projected.description).toBe(source.description);
+    expect(projected.modules[0]!.title).toBe("Fundamentals");
+    expect(projected.modules[0]!.description).toBeNull();
+    expect(projected.modules[1]!.title).toBe(source.modules[1]!.title);
+    expect(projected.modules[1]!.description).toBe("Put a program on devnet.");
+  });
+
+  it("never changes what the grader reads", () => {
+    const [, check] = lessonBlocks(projected, 0);
+    const [, srcCheck] = lessonBlocks(source, 0);
+    const correct = (b: Block) =>
+      (b.questions as { options: { correct: boolean }[] }[]).map((q) =>
+        q.options.map((o) => o.correct)
+      );
+    expect(correct(check!)).toEqual(correct(srcCheck!));
+
+    const [, exercise] = lessonBlocks(projected, 1);
+    const [, srcExercise] = lessonBlocks(source, 1);
+    expect(exercise!.solution).toBe(srcExercise!.solution);
+    expect(exercise!.starter).toBe(srcExercise!.starter);
+    const io = (b: Block) =>
+      (b.tests as Block[]).map((t) => [t.input, t.expectedOutput]);
+    expect(io(exercise!)).toEqual(io(srcExercise!));
   });
 });
 
-describe("projectQuestData — active quests, challenge lessons, module map", () => {
-  // Reference transform = the exact getAllQuests JS over the prod GROQ raw.
-  const ref = {
-    quests: goldenQuests.quests.map((q) => ({
-      id: q._id,
-      name: q.name,
-      description: q.description ?? "",
-      type: q.type,
-      icon: q.icon ?? "CircleDashed",
-      xpReward: q.xpReward,
-      targetValue: q.targetValue,
-      resetType: q.resetType,
-    })),
-    challengeLessonIds: (goldenQuests.challengeLessonIds ?? []).filter(Boolean),
-    moduleLessonMap: (goldenQuests.moduleLessonMap ?? [])
-      .filter((m) => !!m && !!m.lessonIds && m.lessonIds.length > 0)
-      .map((m) => ({
-        id: m!._id ?? "",
-        lessonIds: m!.lessonIds.filter((x): x is string => !!x),
-      })),
-  };
+describe("projectAchievement", () => {
+  const projected = [...store.achievementsById.values()].map(
+    projectAchievement
+  );
+  const byId = (id: string) => projected.find((a) => a.id === id)!;
 
+  it("matches the golden", async () => {
+    await expect(json(projected)).toMatchFileSnapshot(golden("achievements"));
+  });
+
+  it("validates the award and strips keys the schema does not know", () => {
+    expect(byId("achievement-alpha-complete").award).toEqual({
+      kind: "course-completed",
+      course: "course-alpha",
+    });
+  });
+
+  it("projects an award the schema rejects as null, so it never auto-fires", () => {
+    expect(byId("achievement-broken").award).toBeNull();
+  });
+
+  it("defaults glyph to the id's last two chars, solTier to false, xpReward to 0", () => {
+    expect(byId("achievement-early-bird")).toMatchObject({
+      glyph: "RD",
+      solTier: false,
+      xpReward: 0,
+      award: { kind: "manual" },
+    });
+  });
+});
+
+describe("projectQuestData", () => {
   const projected = projectQuestData(
-    [...questsById.values()],
-    [...lessonsById.values()],
-    [...coursesById.values()]
+    [...store.questsById.values()],
+    [...store.lessonsById.values()],
+    [...store.coursesById.values()]
   );
 
-  // Order across quests / challengeLessonIds / modules is not contractual (the
-  // consumer looks up by id), and GROQ doc order != bundle array order, so
-  // compare order-insensitively. lessonIds order WITHIN a module is display
-  // order and IS preserved on both sides.
-  const byId = <T extends { id: string }>(a: T, b: T) =>
-    a.id.localeCompare(b.id);
-
-  it("active quests match prod (order-insensitive)", () => {
-    expect([...projected.quests].sort(byId)).toEqual(
-      [...ref.quests].sort(byId)
-    );
+  it("matches the golden", async () => {
+    await expect(json(projected)).toMatchFileSnapshot(golden("quests"));
   });
 
-  it("challengeLessonIds match prod (as a set)", () => {
-    expect(new Set(projected.challengeLessonIds)).toEqual(
-      new Set(ref.challengeLessonIds)
-    );
-    expect(projected.challengeLessonIds).toHaveLength(
-      ref.challengeLessonIds.length
-    );
+  it("keeps active, non-draft quests and fills the description/icon defaults", () => {
+    expect(projected.quests.map((q) => q.id)).toEqual([
+      "quest-lesson",
+      "quest-streak",
+    ]);
+    expect(projected.quests[1]).toMatchObject({
+      description: "",
+      icon: "CircleDashed",
+    });
   });
 
-  it("moduleLessonMap matches prod (order-insensitive, lessonIds ordered)", () => {
-    expect([...projected.moduleLessonMap].sort(byId)).toEqual(
-      [...ref.moduleLessonMap].sort(byId)
-    );
+  it("lists every lesson with a code block as a challenge", () => {
+    expect(projected.challengeLessonIds).toEqual([
+      "lesson-alpha-code",
+      "lesson-alpha-deploy",
+    ]);
+  });
+
+  it("maps modules by <courseId>:<key>, skipping drafts and empty modules", () => {
+    expect(projected.moduleLessonMap).toEqual([
+      {
+        id: "course-alpha:fundamentos",
+        lessonIds: [
+          "lesson-alpha-quiz",
+          "lesson-alpha-retired",
+          "lesson-alpha-code",
+        ],
+      },
+      { id: "course-alpha:deploy", lessonIds: ["lesson-alpha-deploy"] },
+      { id: "course-beta:order", lessonIds: ["lesson-beta-parsons"] },
+    ]);
   });
 });
 
-describe("projectLearningPath — getAllLearningPaths shape", () => {
-  it("projects every prod path byte-identically (members from bundle)", () => {
-    for (const golden of goldenPaths) {
-      const memberCourses = golden.courses.map((c) => bundleCourse(c._id));
-      const projected = projectLearningPath(golden, memberCourses, deps);
-      expect(projected).toEqual(golden);
-    }
+describe("projectLearningPath", () => {
+  it("matches the golden (member courses resolved from the store)", async () => {
+    const projected = [...store.pathsById.values()].map((p) => {
+      const members = (p.courses as { _ref: string }[]).map((r) =>
+        course(r._ref)
+      );
+      return projectLearningPath(p, members, deps);
+    });
+    await expect(json(projected)).toMatchFileSnapshot(golden("paths"));
   });
 });
 
 describe("projectCourseSummary / projectRecommended / countCourseLessons", () => {
-  it("projectCourseSummary matches getCoursesByIds", () => {
-    for (const golden of goldenSummaries.coursesByIds) {
-      const projected = projectCourseSummary(
-        bundleCourse(golden._id),
-        golden.learningPath
-      );
-      expect(projected).toEqual(golden);
-    }
+  const paths: Record<string, string | null> = {
+    "course-alpha": "Comece aqui",
+    "course-beta": null,
+  };
+
+  it("matches the golden", async () => {
+    const summaries = Object.entries(paths).map(([id, path]) => ({
+      summary: projectCourseSummary(course(id), path),
+      recommended: projectRecommended(course(id), path),
+    }));
+    await expect(json(summaries)).toMatchFileSnapshot(
+      golden("course-summaries")
+    );
   });
 
-  it("projectRecommended matches getRecommendedCourses", () => {
-    for (const golden of goldenSummaries.recommended) {
-      const projected = projectRecommended(
-        bundleCourse(golden._id),
-        golden.learningPath
-      );
-      expect(projected).toEqual(golden);
-    }
-  });
-
-  it("countCourseLessons matches count(modules[].lessons[])", () => {
-    for (const golden of goldenSummaries.lessonCounts) {
-      expect(countCourseLessons(bundleCourse(golden._id))).toBe(
-        golden.totalLessons
-      );
-    }
+  it("counts raw module refs, unresolvable ones included (GROQ count semantics)", () => {
+    expect(countCourseLessons(course("course-alpha"))).toBe(4);
+    expect(countCourseLessons(course("course-beta"))).toBe(1);
   });
 });

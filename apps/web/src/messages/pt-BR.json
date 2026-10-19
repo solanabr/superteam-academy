@@ -1304,7 +1304,7 @@
     },
     "publishPin": {
       "title": "Pin de conteúdo",
-      "description": "O pacote de conteúdo versionado está fixado em um commit do academy-courses no content.lock. Publicar novo conteúdo é um PR humano de uma linha que atualiza o pin e reconstrói o pacote — nenhuma escrita no servidor acontece aqui.",
+      "description": "O pacote de conteúdo versionado está fixado em um commit do academy-courses no content.lock. Até uma hora depois de um merge de conteúdo, o workflow Content release abre o PR que atualiza o pin; revise e faça o merge por lá. Nada é escrito a partir daqui.",
       "refresh": "Atualizar",
       "loading": "Verificando o pin de conteúdo…",
       "unavailable": "Divergência indisponível — não foi possível acessar o GitHub. Tente novamente em instantes.",
@@ -1329,7 +1329,7 @@
       "viewCompare": "Ver commits",
       "preparePrLink": "Abrir formulário de PR",
       "prepare": {
-        "title": "Preparar PR de publicação",
+        "title": "Publicação manual (só se o PR de release não existir)",
         "redHeadWarning": "A CI do HEAD não está verde. Não atualize o pin para conteúdo não verificado — aguarde a CI passar.",
         "step1": "1. Aplique esta alteração de uma linha ao content.lock",
         "step2": "2. Reconstrua o pacote versionado localmente",

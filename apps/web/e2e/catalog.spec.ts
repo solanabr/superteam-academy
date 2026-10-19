@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import {
   ACTIVE_COURSE_SLUGS,
   DEACTIVATED_COURSE_SLUG,
-} from "./harness/fixtures.mjs";
+} from "./harness/targets";
 
 // Spec 2 — Catalog gate (#711 regression, permanent).
 //

@@ -1,0 +1,311 @@
+name: Content release
+
+# Opens, or updates, the one PR that moves apps/web/content.lock to
+# academy-courses main (or to the `sha` given on a manual run) with the
+# recompiled bundle. A human reviews and merges it, then runs Deploy for any
+# course the PR flags (docs/ADMIN.md, "Publishing new content").
+#
+# The App credentials never share a runner with code that reads
+# academy-courses content: `build` compiles with a read-only GITHUB_TOKEN and
+# hands the bundle over as an artifact, and `publish` mints the App token and
+# runs only git and gh, no repo code. The App token is needed because a PR
+# opened with GITHUB_TOKEN never triggers CI.
+#
+# bot/content-release belongs to this workflow. It is rebuilt from main and
+# force-pushed whenever the bundle it should carry changes; never commit to it.
+# A manual run with a `sha` labels its PR `content-pinned`, and scheduled runs
+# leave a pinned PR alone until it is merged or closed.
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: academy-courses commit to release (full 40-hex sha, on main). Leave empty for main HEAD.
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: content-release
+  cancel-in-progress: false
+
+env:
+  CONTENT_REPO: solanabr/academy-courses
+  RELEASE_BRANCH: bot/content-release
+  PIN_LABEL: content-pinned
+  NODE_VERSION: "20"
+
+jobs:
+  resolve:
+    name: Compare content.lock with academy-courses
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      base: ${{ steps.target.outputs.base }}
+      target: ${{ steps.target.outputs.target }}
+      due: ${{ steps.target.outputs.due }}
+      pinned: ${{ steps.target.outputs.pinned }}
+      stale_pr: ${{ steps.target.outputs.stale_pr }}
+    steps:
+      - name: Resolve the release target
+        id: target
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          INPUT_SHA: ${{ inputs.sha }}
+          # What academy-courses' validate-content workflow runs on a push to
+          # main. These are the gates the compile here does not re-run.
+          REQUIRED_CHECKS: content-lint / content-lint,quiz-stats
+        run: |
+          # `due` stays unset unless this run has something to release.
+          out() { echo "$1" >> "$GITHUB_OUTPUT"; }
+
+          open_pr=$(gh api "repos/$GITHUB_REPOSITORY/pulls?head=$GITHUB_REPOSITORY_OWNER:$RELEASE_BRANCH&state=open" --jq '.[0] // empty')
+          pr=$(jq -r '.number' <<< "$open_pr")
+          pinned_pr=$(jq -r '[.labels[].name] | index(env.PIN_LABEL) != null' <<< "$open_pr")
+          if [ "$EVENT" = schedule ] && [ "$pinned_pr" = true ]; then
+            echo "::notice::#$pr pins a specific academy-courses commit; scheduled runs leave it alone."
+            exit 0
+          fi
+
+          # Both later jobs check out this exact main commit.
+          base=$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq .sha)
+          locked=$(gh api "repos/$GITHUB_REPOSITORY/contents/apps/web/content.lock?ref=$base" --jq .content | base64 -d | jq -r .sha)
+          if [ -n "$INPUT_SHA" ]; then
+            if ! [[ "$INPUT_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+              echo "::error::sha must be a full 40-character lowercase commit hash."
+              exit 1
+            fi
+            # sha...main is "ahead" or "identical" only when sha is on main.
+            reach=$(gh api "repos/$CONTENT_REPO/compare/$INPUT_SHA...main" --jq .status) || reach=missing
+            if [ "$reach" != ahead ] && [ "$reach" != identical ]; then
+              echo "::error::$INPUT_SHA is not a commit on $CONTENT_REPO main."
+              exit 1
+            fi
+            target=$INPUT_SHA
+            out "pinned=true"
+          else
+            target=$(gh api "repos/$CONTENT_REPO/commits/main" --jq .sha)
+            out "pinned=false"
+          fi
+          out "base=$base"
+          out "target=$target"
+
+          if [ "$target" = "$locked" ]; then
+            echo "content.lock already pins $target."
+            if [ -n "$pr" ]; then out "stale_pr=$pr"; fi
+            exit 0
+          fi
+
+          # Only a commit whose academy-courses CI passed ships. Red is that
+          # repo's problem and already shows there, so it is a warning here.
+          runs=$(gh api "repos/$CONTENT_REPO/commits/$target/check-runs?filter=latest&per_page=100")
+          ci=success
+          IFS=, read -ra required <<< "$REQUIRED_CHECKS"
+          for name in "${required[@]}"; do
+            conclusion=$(NAME="$name" jq -r '[.check_runs[] | select(.name == env.NAME)][0].conclusion // "pending"' <<< "$runs")
+            if [ "$conclusion" = pending ]; then
+              if [ "$ci" = success ]; then ci=pending; fi
+            elif [ "$conclusion" != success ]; then
+              ci="$name: $conclusion"
+            fi
+          done
+          case "$ci" in
+            success) ;;
+            pending)
+              echo "::notice::academy-courses CI has not reported on $target yet; not releasing it this run."
+              exit 0
+              ;;
+            *)
+              echo "::warning::academy-courses CI failed on $target ($ci); not releasing it."
+              exit 0
+              ;;
+          esac
+
+          echo "content.lock pins $locked; releasing $target."
+          out "due=true"
+
+  close-stale:
+    name: Close the release PR the lock caught up with
+    needs: resolve
+    if: needs.resolve.outputs.stale_pr != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Close it
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ needs.resolve.outputs.stale_pr }}
+          TARGET: ${{ needs.resolve.outputs.target }}
+        run: |
+          gh api -X POST "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --silent \
+            -f body="Closing: content.lock on main already pins academy-courses ${TARGET:0:7}."
+          gh api -X PATCH "repos/$GITHUB_REPOSITORY/pulls/$PR" -f state=closed --silent
+
+  build:
+    name: Compile the bundle at the target
+    needs: resolve
+    if: needs.resolve.outputs.due == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.resolve.outputs.base }}
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10, version read from package.json "packageManager"
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        env:
+          HUSKY: "0"
+        run: pnpm install --frozen-lockfile
+
+      - name: Compile
+        env:
+          # Read-only; only raises the GitHub rate limit for the tarball fetch.
+          GITHUB_TOKEN: ${{ github.token }}
+          TARGET: ${{ needs.resolve.outputs.target }}
+        run: |
+          cp -R apps/web/src/content/generated "$RUNNER_TEMP/before"
+          jq --arg sha "$TARGET" '.sha = $sha' apps/web/content.lock > "$RUNNER_TEMP/content.lock"
+          mv "$RUNNER_TEMP/content.lock" apps/web/content.lock
+          pnpm --filter web compile-content
+
+      - name: Write the PR body
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET: ${{ needs.resolve.outputs.target }}
+        run: |
+          locked=$(jq -r .sha "$RUNNER_TEMP/before/meta.json")
+          gh api "repos/$CONTENT_REPO/compare/$locked...$TARGET" > "$RUNNER_TEMP/compare.json"
+          release="$RUNNER_TEMP/release"
+          mkdir -p "$release"
+          pnpm --filter web exec tsx scripts/content-release-body.ts \
+            --before "$RUNNER_TEMP/before" \
+            --compare "$RUNNER_TEMP/compare.json" > "$release/body.md"
+          cp apps/web/content.lock "$release/content.lock"
+          cp -R apps/web/src/content/generated "$release/generated"
+          cat "$release/body.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: content-release
+          path: ${{ runner.temp }}/release
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    name: Push the release branch and open or update the PR
+    needs: [resolve, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # The App secrets live in this environment, which only `main` may use.
+    environment: content-release
+    # Everything here goes through the App token, so GITHUB_TOKEN gets nothing.
+    permissions: {}
+    steps:
+      - name: Check the App secrets
+        env:
+          HAS_APP: ${{ secrets.CONTENT_RELEASE_APP_ID != '' && secrets.CONTENT_RELEASE_APP_PRIVATE_KEY != '' }}
+        run: |
+          if [ "$HAS_APP" != true ]; then
+            echo "::error::Missing secrets CONTENT_RELEASE_APP_ID and CONTENT_RELEASE_APP_PRIVATE_KEY in the content-release environment (one-time setup: docs/ADMIN.md)."
+            exit 1
+          fi
+
+      - name: Mint the App token
+        id: app
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ secrets.CONTENT_RELEASE_APP_ID }}
+          private-key: ${{ secrets.CONTENT_RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.resolve.outputs.base }}
+          token: ${{ steps.app.outputs.token }}
+          persist-credentials: false
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: content-release
+          path: ${{ runner.temp }}/release
+
+      - name: Push and open or update the PR
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          APP_SLUG: ${{ steps.app.outputs.app-slug }}
+          TARGET: ${{ needs.resolve.outputs.target }}
+          PINNED: ${{ needs.resolve.outputs.pinned }}
+        run: |
+          release="$RUNNER_TEMP/release"
+          paths=(apps/web/content.lock apps/web/src/content/generated)
+          cp "$release/content.lock" apps/web/content.lock
+          rm -rf apps/web/src/content/generated
+          cp -R "$release/generated" apps/web/src/content/generated
+          git add -A "${paths[@]}"
+          if git diff --cached --quiet; then
+            echo "main already ships this bundle."
+            exit 0
+          fi
+
+          gh auth setup-git
+          repo="repos/$GITHUB_REPOSITORY"
+          pr=$(gh api "$repo/pulls?head=$GITHUB_REPOSITORY_OWNER:$RELEASE_BRANCH&state=open" --jq '.[0].number // empty')
+          if [ -n "$pr" ] &&
+            git fetch --quiet --depth=1 origin "$RELEASE_BRANCH" &&
+            git diff --cached --quiet FETCH_HEAD -- "${paths[@]}"; then
+            echo "#$pr already carries this bundle."
+          else
+            title="chore(content): release academy-courses ${TARGET:0:7}"
+            bot="${APP_SLUG}[bot]"
+            bot_id=$(gh api "users/$APP_SLUG%5Bbot%5D" --jq .id)
+            git -c user.name="$bot" -c user.email="$bot_id+$bot@users.noreply.github.com" \
+              commit --quiet -m "$title"
+            if [ -n "$pr" ]; then
+              git push --force origin "HEAD:refs/heads/$RELEASE_BRANCH"
+              gh api -X PATCH "$repo/pulls/$pr" --silent \
+                -f title="$title" -F body=@"$release/body.md"
+            else
+              # Start from main with no leftover branch, so the push never
+              # carries workflow-file changes the App may not make.
+              if git ls-remote --exit-code --heads origin "$RELEASE_BRANCH" > /dev/null; then
+                gh api -X DELETE "$repo/git/refs/heads/$RELEASE_BRANCH" --silent
+              fi
+              git push origin "HEAD:refs/heads/$RELEASE_BRANCH"
+              pr=$(gh api -X POST "$repo/pulls" --jq .number \
+                -f title="$title" -f head="$RELEASE_BRANCH" -f base=main \
+                -F body=@"$release/body.md")
+            fi
+          fi
+
+          labelled=$(gh api "$repo/issues/$pr/labels" --jq 'map(.name) | index(env.PIN_LABEL) != null')
+          if [ "$PINNED" = true ] && [ "$labelled" != true ]; then
+            if ! gh api "$repo/labels/$PIN_LABEL" --silent 2> /dev/null; then
+              gh api -X POST "$repo/labels" --silent -f name="$PIN_LABEL" -f color=d93f0b \
+                -f description="Release PR pinned to a specific academy-courses commit; scheduled runs leave it alone"
+            fi
+            gh api -X POST "$repo/issues/$pr/labels" --silent -f "labels[]=$PIN_LABEL"
+          elif [ "$PINNED" != true ] && [ "$labelled" = true ]; then
+            gh api -X DELETE "$repo/issues/$pr/labels/$PIN_LABEL" --silent
+          fi
+          echo "Release PR: #$pr"

@@ -210,9 +210,11 @@ What this buys:
   and fails on a single byte of drift, catching both a stale bundle after a lock
   bump and a hand-edit of the generated files.
 - **No runtime dependency** — a content-repo outage cannot affect the site.
-- **No content-write credential exists.** Publishing is a PR that bumps
-  `content.lock` and commits the regenerated bundle. `GITHUB_TOKEN` is read-only
-  and only polls HEAD and CI state for the admin publish card.
+- **The app holds no content-write credential.** Publishing is a PR that bumps
+  `content.lock` and commits the regenerated bundle; the Content release
+  workflow opens it with a GitHub App token that lives only in CI. The app's
+  `GITHUB_TOKEN` is read-only and only polls HEAD and CI state for the admin
+  publish card.
 
 `lib/content/store.ts` is `server-only` **by necessity**: the bundle holds quiz
 answer keys, code solutions, and hidden tests, so a client value-import must be a

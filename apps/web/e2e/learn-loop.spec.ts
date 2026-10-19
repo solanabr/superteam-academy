@@ -1,13 +1,13 @@
 import { test, expect } from "@playwright/test";
 import { signInAsLearner } from "./harness/session";
-import { LEARN_LOOP } from "./harness/fixtures.mjs";
+import { LEARN_LOOP } from "./harness/targets";
 import { answerQuizStepper } from "./harness/quiz";
 
 // Spec 1 — Learn loop.
 //
-// Signed-in learner opens an enrolled course, works a quiz-only lesson
-// (`lesson-b2s-hash-everything`; the answer key lives with the fixture), clicks
-// Mark as Complete, and the UI reaches the completed state.
+// Signed-in learner opens an enrolled course, works a quiz-only lesson (picked
+// from the committed bundle, answer key included — see harness/fixtures.mjs),
+// clicks Mark as Complete, and the UI reaches the completed state.
 //
 // Mock boundaries (see e2e/README.md for the full map):
 //   • Session: a locally-minted Supabase cookie (no network, no secret).

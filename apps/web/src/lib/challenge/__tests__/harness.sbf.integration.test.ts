@@ -2,7 +2,7 @@
  * The string-level tests prove WHERE the harness lands; only a real compile
  * proves the bypasses are dead. This one runs `cargo build-sbf` against the
  * build server's own `programs/Cargo.toml` — the same manifest and toolchain
- * prod compiles with — on the live lessons' starters and solutions.
+ * prod compiles with — on every buildable lesson in the live bundle.
  *
  * OPT-IN: needs the Solana toolchain (several minutes of cold compile), so it is
  * skipped unless `SBF_INTEGRATION=1` and `cargo-build-sbf` is on PATH.
@@ -73,26 +73,24 @@ interface CodeBlock {
   solution?: string;
 }
 
-function block(lessonId: string): CodeBlock {
-  const b = (
-    lessonsById.get(lessonId)?.blocks as CodeBlock[] | undefined
-  )?.find((x) => x._type === "code" && x.buildType === "buildable");
-  if (!b) throw new Error(`no buildable block in ${lessonId}`);
-  return b;
-}
+/** Every buildable block in the live bundle, whatever content.lock pins. */
+const BUILDABLE = [...lessonsById.values()].flatMap((lesson) =>
+  (lesson.blocks as CodeBlock[])
+    .filter((b) => b._type === "code" && b.buildType === "buildable")
+    .map((b) => [lesson._id, b] as const)
+);
 
-const LESSONS = [
-  "lesson-b2s-your-first-solana-program",
-  "lesson-b2s-an-anchor-vault",
-];
+// Outside the opt-in block so it runs everywhere: an empty list would make the
+// compile suite below pass by compiling nothing.
+it("finds buildable blocks in the live bundle to compile", () => {
+  expect(BUILDABLE.length).toBeGreaterThan(0);
+});
 
 describe.skipIf(!ENABLED)(
   "buildGradeFiles compiles as the grader intends",
   () => {
-    for (const id of LESSONS) {
+    for (const [id, { starter = "", solution = "" }] of BUILDABLE) {
       describe(id, () => {
-        const { starter = "", solution = "" } = block(id);
-
         it("rejects a dangling trailing attribute (bypass 1)", () => {
           const r = compile("pub fn nothing() {}\n\n#[cfg(any())]\n", starter);
           expect(r.ok).toBe(false);

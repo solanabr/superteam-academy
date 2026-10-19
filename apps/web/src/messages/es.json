@@ -1304,7 +1304,7 @@
     },
     "publishPin": {
       "title": "Fijación de contenido",
-      "description": "El paquete de contenido versionado está fijado a un commit de academy-courses en content.lock. Publicar contenido nuevo es un PR humano de una línea que actualiza la fijación y reconstruye el paquete — aquí no ocurre ninguna escritura en el servidor.",
+      "description": "El paquete de contenido versionado está fijado a un commit de academy-courses en content.lock. Menos de una hora después de un merge de contenido, el workflow Content release abre el PR que mueve la fijación; revísalo y haz el merge allí. Desde aquí no se escribe nada.",
       "refresh": "Actualizar",
       "loading": "Comprobando la fijación de contenido…",
       "unavailable": "Desfase no disponible — no se pudo contactar con GitHub. Inténtalo de nuevo en un momento.",
@@ -1329,7 +1329,7 @@
       "viewCompare": "Ver commits",
       "preparePrLink": "Abrir formulario de PR",
       "prepare": {
-        "title": "Preparar PR de publicación",
+        "title": "Publicación manual (solo si falta el PR de release)",
         "redHeadWarning": "La CI del HEAD no está en verde. No actualices la fijación a contenido no verificado — espera a que la CI pase.",
         "step1": "1. Aplica este cambio de una línea a content.lock",
         "step2": "2. Reconstruye el paquete versionado localmente",

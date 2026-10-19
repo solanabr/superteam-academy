@@ -6,7 +6,6 @@
 # Byte-stable JSON that CI `git diff --exit-code`s — prettier must not reformat it.
 src/content/generated/
 
-# Golden snapshot fixtures for project.golden.test.ts — deep-compared as parsed
-# objects, so formatting is irrelevant, and the 580KB lessons.json OOM-kills
-# prettier when lint-staged runs it at commit time.
+# File snapshots for project.golden.test.ts. Vitest writes them (`-u`) and
+# compares them byte for byte, so prettier must not reformat them.
 src/lib/content/__tests__/fixtures/golden/

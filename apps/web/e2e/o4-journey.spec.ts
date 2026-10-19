@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import messages from "../src/messages/en.json";
 import { signInAsLearner } from "./harness/session";
-import { LEARN_LOOP } from "./harness/fixtures.mjs";
+import { LEARN_LOOP } from "./harness/targets";
 
 // Spec 4 — The O-4 journey (#819), as it stands after the quiz enrollment gate
 // (#1240): anonymous deep-link → the graded surface is GATED → banked work
@@ -148,7 +148,7 @@ test.describe("O-4 journey (anonymous gate → sign in → banked replay)", () =
           courseSlug: LEARN_LOOP.courseSlug,
           lessonId: LEARN_LOOP.lessonId,
           lessonSlug: LEARN_LOOP.lessonSlug,
-          lessonTitle: "Hash everything",
+          lessonTitle: LEARN_LOOP.lessonTitle,
           proofs: bankedProofs,
           bankedAt: Date.now(),
         },

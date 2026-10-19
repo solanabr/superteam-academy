@@ -15,7 +15,18 @@
 
 import https from "node:https";
 import { readFileSync } from "node:fs";
-import { MOCK_PORT, DEPLOYMENTS, LEARNER } from "./fixtures.mjs";
+import { MOCK_PORT, LEARNER, pickTargets } from "./fixtures.mjs";
+
+// The committed bundle the app under test was built from; the specs read the
+// same files and call the same `pickTargets`.
+const bundle = (name) =>
+  JSON.parse(
+    readFileSync(
+      new URL(`../../src/content/generated/${name}.json`, import.meta.url),
+      "utf8"
+    )
+  );
+const { DEPLOYMENTS } = pickTargets(bundle("courses"), bundle("lessons"));
 
 const CERT = process.env.E2E_SSL_CERT;
 const KEY = process.env.E2E_SSL_KEY;

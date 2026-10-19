@@ -1,0 +1,54 @@
+[
+  {
+    "id": "achievement-alpha-complete",
+    "name": "Alpha Graduate",
+    "description": "Complete the Alpha course",
+    "icon": "graduation-cap",
+    "glyph": "A+",
+    "solTier": false,
+    "category": "progress",
+    "xpReward": 50,
+    "award": {
+      "kind": "course-completed",
+      "course": "course-alpha"
+    }
+  },
+  {
+    "id": "achievement-shelf",
+    "name": "Shelf Walker",
+    "description": "Finish every course on the shelf",
+    "icon": "map",
+    "glyph": "◆",
+    "solTier": true,
+    "category": "special",
+    "xpReward": 100,
+    "award": {
+      "kind": "path-completed",
+      "path": "path-shelf"
+    }
+  },
+  {
+    "id": "achievement-early-bird",
+    "name": "Early Bird",
+    "description": "Awarded by hand",
+    "icon": "sunrise",
+    "glyph": "RD",
+    "solTier": false,
+    "category": "special",
+    "xpReward": 0,
+    "award": {
+      "kind": "manual"
+    }
+  },
+  {
+    "id": "achievement-broken",
+    "name": "Broken",
+    "description": "Unknown award kind",
+    "icon": "x",
+    "glyph": "??",
+    "solTier": false,
+    "category": "special",
+    "xpReward": 0,
+    "award": null
+  }
+]

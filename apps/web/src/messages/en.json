@@ -1304,7 +1304,7 @@
     },
     "publishPin": {
       "title": "Content pin",
-      "description": "The committed content bundle is pinned to an academy-courses commit in content.lock. Publishing new content is a one-line human PR that bumps the pin and rebuilds the bundle — no server-side write happens here.",
+      "description": "The committed content bundle is pinned to an academy-courses commit in content.lock. Within an hour of a content merge, the Content release workflow opens the PR that moves the pin; review and merge it there. Nothing is written from here.",
       "refresh": "Refresh",
       "loading": "Checking the content pin…",
       "unavailable": "Drift unavailable — GitHub could not be reached. Try again shortly.",
@@ -1329,7 +1329,7 @@
       "viewCompare": "View commits",
       "preparePrLink": "Open PR form",
       "prepare": {
-        "title": "Prepare publish PR",
+        "title": "Manual release (only if the release PR is missing)",
         "redHeadWarning": "HEAD's CI is not green. Do not bump the pin to unverified content — wait for CI to pass.",
         "step1": "1. Apply this one-line change to content.lock",
         "step2": "2. Rebuild the committed bundle locally",

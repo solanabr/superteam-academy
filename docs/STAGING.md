@@ -81,6 +81,7 @@ service, dataset, CORS origin, or token to configure.
 
 To stage a content change, bump `content.lock` + recompile the bundle on the
 staging branch (see [`docs/ADMIN.md`](./ADMIN.md)); the Preview deploy picks it up.
+The Content release PR's own Preview deploy already stages each release.
 
 ---
 

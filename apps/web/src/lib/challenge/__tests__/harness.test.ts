@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, it, expect, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
@@ -130,7 +132,14 @@ describe("buildGradeFiles", () => {
   });
 });
 
-// --- The exploit, against real content ---------------------------------------
+// --- The exploit, against real starters -------------------------------------
+
+/**
+ * Two starters as they shipped (academy-courses @50143ca), committed so these
+ * cases do not move when content does: the b2s ping program and anchor vault.
+ */
+const realStarter = (name: string): string =>
+  readFileSync(join(__dirname, "fixtures", `${name}.starter.rs`), "utf8");
 
 interface CodeBlock {
   _type: string;
@@ -138,29 +147,11 @@ interface CodeBlock {
   starter?: string;
 }
 
-/** Every buildable code block in the live content bundle. */
-function buildableBlocks(): CodeBlock[] {
-  return [...lessonsById.values()].flatMap((lesson) =>
-    (lesson.blocks as CodeBlock[]).filter(
-      (b) => b._type === "code" && b.buildType === "buildable"
-    )
-  );
-}
-
-function buildableStarter(lessonId: string): string {
-  const lesson = lessonsById.get(lessonId);
-  const block = (lesson?.blocks as CodeBlock[] | undefined)?.find(
-    (b) => b._type === "code" && b.buildType === "buildable"
-  );
-  if (!block?.starter) throw new Error(`no buildable block in ${lessonId}`);
-  return block.starter;
-}
-
 describe("the empty-submission exploit is closed", () => {
   it("compiles ping/Ping against a `pub fn nothing() {}` submission", () => {
     const { verify } = graded(
       "pub fn nothing() {}",
-      buildableStarter("lesson-b2s-your-first-solana-program")
+      realStarter("ping-program")
     );
     // Both symbols the deleted exercise had to define — the graded crate
     // cannot compile without them.
@@ -171,17 +162,21 @@ describe("the empty-submission exploit is closed", () => {
   it("compiles the bump type-check against an emptied vault submission", () => {
     const { verify } = graded(
       "pub fn nothing() {}",
-      buildableStarter("lesson-b2s-an-anchor-vault")
+      realStarter("anchor-vault")
     );
     expect(verify).toContain("s.vault_bump");
     expect(verify).toContain("s.state_bump");
   });
 
-  it("every live buildable starter carries the marker", () => {
-    const blocks = buildableBlocks();
-    expect(blocks.length).toBeGreaterThan(0);
-    for (const b of blocks) {
-      expect(splitHarness(b.starter ?? "").harness).not.toBe("");
+  it("every buildable starter in the live bundle carries the marker", () => {
+    const starters = [...lessonsById.values()].flatMap((lesson) =>
+      (lesson.blocks as CodeBlock[])
+        .filter((b) => b._type === "code" && b.buildType === "buildable")
+        .map((b) => [lesson._id, b.starter ?? ""] as const)
+    );
+    expect(starters.length).toBeGreaterThan(0);
+    for (const [lessonId, starter] of starters) {
+      expect(splitHarness(starter).harness, lessonId).not.toBe("");
     }
   });
 });

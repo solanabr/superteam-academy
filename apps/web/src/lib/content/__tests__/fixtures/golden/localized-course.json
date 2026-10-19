@@ -1,0 +1,321 @@
+{
+  "_id": "course-alpha",
+  "title": "Alpha: from thesis to your first asset",
+  "slug": "alpha",
+  "description": "Por que a Solana, e o seu primeiro ativo onchain.",
+  "difficulty": "beginner",
+  "duration": 0.25,
+  "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc.webp",
+  "creator": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
+  "tags": [
+    "account-model",
+    "keypairs-wallets"
+  ],
+  "xpReward": 60,
+  "trackId": 1,
+  "trackLevel": 2,
+  "modules": [
+    {
+      "key": "fundamentos",
+      "title": "Fundamentals",
+      "description": null,
+      "lessons": [
+        {
+          "_id": "lesson-alpha-quiz",
+          "title": "Hash everything",
+          "slug": "hash-everything",
+          "blocks": [
+            {
+              "key": "intro",
+              "_type": "prose",
+              "produces": null,
+              "consumes": null,
+              "src": "# Hash everything\n\n![Diagram](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd.webp)\n\nA hash is a fingerprint.",
+              "url": null,
+              "language": null,
+              "buildType": null,
+              "deployable": null,
+              "starter": null,
+              "solution": null,
+              "tests": null,
+              "hints": null,
+              "questions": null,
+              "prompt": null,
+              "maxWords": null,
+              "amount": null,
+              "network": null,
+              "idl": null
+            },
+            {
+              "key": "check",
+              "_type": "quiz",
+              "produces": null,
+              "consumes": null,
+              "src": null,
+              "url": null,
+              "language": null,
+              "buildType": null,
+              "deployable": null,
+              "starter": null,
+              "solution": null,
+              "tests": null,
+              "hints": null,
+              "questions": [
+                {
+                  "id": "q1",
+                  "prompt": "What changes when one input byte changes?",
+                  "multiSelect": false,
+                  "options": [
+                    {
+                      "id": "a",
+                      "label": "Só o último byte do hash",
+                      "correct": false,
+                      "feedback": "A mudança se espalha pelo hash inteiro."
+                    },
+                    {
+                      "id": "b",
+                      "label": "The whole hash",
+                      "correct": true,
+                      "feedback": "Isso."
+                    }
+                  ],
+                  "explanation": "Qualquer mudança gera um hash diferente."
+                },
+                {
+                  "id": "q2",
+                  "prompt": "Quais destes são hashes?",
+                  "multiSelect": true,
+                  "options": [
+                    {
+                      "id": "a",
+                      "label": "SHA-256",
+                      "correct": true,
+                      "feedback": null
+                    },
+                    {
+                      "id": "b",
+                      "label": "Ed25519",
+                      "correct": false,
+                      "feedback": "Assinatura."
+                    },
+                    {
+                      "id": "c",
+                      "label": "Keccak-256",
+                      "correct": true,
+                      "feedback": null
+                    }
+                  ],
+                  "explanation": null
+                }
+              ],
+              "prompt": null,
+              "maxWords": null,
+              "amount": null,
+              "network": null,
+              "idl": null
+            },
+            {
+              "key": "video",
+              "_type": "video",
+              "produces": null,
+              "consumes": null,
+              "src": null,
+              "url": "https://www.youtube.com/watch?v=5I1L1FTfEOw",
+              "language": null,
+              "buildType": null,
+              "deployable": null,
+              "starter": null,
+              "solution": null,
+              "tests": null,
+              "hints": null,
+              "questions": null,
+              "prompt": null,
+              "maxWords": null,
+              "amount": null,
+              "network": null,
+              "idl": null
+            }
+          ]
+        },
+        {
+          "_id": "lesson-alpha-code",
+          "title": "Retome do cursor",
+          "slug": "resume-from-cursor",
+          "blocks": [
+            {
+              "key": "intro",
+              "_type": "prose",
+              "produces": null,
+              "consumes": null,
+              "src": "Retome a partir do cursor.",
+              "url": null,
+              "language": null,
+              "buildType": null,
+              "deployable": null,
+              "starter": null,
+              "solution": null,
+              "tests": null,
+              "hints": null,
+              "questions": null,
+              "prompt": null,
+              "maxWords": null,
+              "amount": null,
+              "network": null,
+              "idl": null
+            },
+            {
+              "key": "exercise",
+              "_type": "code",
+              "produces": null,
+              "consumes": null,
+              "src": null,
+              "url": null,
+              "language": "typescript",
+              "buildType": "standard",
+              "deployable": false,
+              "starter": "export function resume(cursor: number) {\n  // TODO\n}\n",
+              "solution": "export function resume(cursor: number) {\n  return cursor + 1;\n}\n",
+              "tests": [
+                {
+                  "id": "t1",
+                  "description": "avança o cursor",
+                  "input": "5",
+                  "expectedOutput": "result === 6",
+                  "failureMessage": "Start from cursor + 1."
+                },
+                {
+                  "id": "t2",
+                  "description": "começa do zero",
+                  "input": "0",
+                  "expectedOutput": "result === 1"
+                }
+              ],
+              "hints": [
+                "Avance o cursor.",
+                "Return the next id."
+              ],
+              "questions": null,
+              "prompt": null,
+              "maxWords": null,
+              "amount": null,
+              "network": null,
+              "idl": null,
+              "tutorNotes": [
+                "O erro comum é reaplicar o próprio cursor."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "deploy",
+      "title": "Deploy",
+      "description": "Put a program on devnet.",
+      "lessons": [
+        {
+          "_id": "lesson-alpha-deploy",
+          "title": "Seu primeiro programa",
+          "slug": "your-first-program",
+          "blocks": [
+            {
+              "key": "fund",
+              "_type": "wallet-funding",
+              "produces": "funded-wallet",
+              "consumes": null,
+              "src": null,
+              "url": null,
+              "language": null,
+              "buildType": null,
+              "deployable": null,
+              "starter": null,
+              "solution": null,
+              "tests": null,
+              "hints": null,
+              "questions": null,
+              "prompt": null,
+              "maxWords": null,
+              "amount": 2,
+              "network": "devnet",
+              "idl": null
+            },
+            {
+              "key": "ping-program",
+              "_type": "code",
+              "produces": "deployed-program",
+              "consumes": [
+                "funded-wallet"
+              ],
+              "src": null,
+              "url": null,
+              "language": "rust",
+              "buildType": "buildable",
+              "deployable": true,
+              "starter": "use anchor_lang::prelude::*;\n",
+              "solution": "use anchor_lang::prelude::*;\npub fn ping() {}\n",
+              "tests": [
+                {
+                  "id": "t1",
+                  "description": "compila",
+                  "input": "",
+                  "expectedOutput": "true"
+                }
+              ],
+              "hints": null,
+              "questions": null,
+              "prompt": null,
+              "maxWords": null,
+              "amount": null,
+              "network": null,
+              "idl": null
+            },
+            {
+              "key": "deployed",
+              "_type": "deployed-program-card",
+              "produces": null,
+              "consumes": [
+                "deployed-program"
+              ],
+              "src": null,
+              "url": null,
+              "language": null,
+              "buildType": null,
+              "deployable": null,
+              "starter": null,
+              "solution": null,
+              "tests": null,
+              "hints": null,
+              "questions": null,
+              "prompt": null,
+              "maxWords": null,
+              "amount": null,
+              "network": null,
+              "idl": null
+            },
+            {
+              "key": "reflect",
+              "_type": "openEnded",
+              "produces": null,
+              "consumes": null,
+              "src": null,
+              "url": null,
+              "language": null,
+              "buildType": null,
+              "deployable": null,
+              "starter": null,
+              "solution": null,
+              "tests": null,
+              "hints": null,
+              "questions": null,
+              "prompt": "O que o programa faz quando recebe um ping?",
+              "maxWords": 120,
+              "amount": null,
+              "network": null,
+              "idl": null
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
