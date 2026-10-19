@@ -64,3 +64,42 @@ export function isMainnetCluster(rpcUrl: string): boolean {
   const label = resolveSolanaNetwork().network.trim().toLowerCase();
   return label.startsWith("mainnet") || networkFromRpcUrl(rpcUrl) === "mainnet";
 }
+
+/** Solana devnet's genesis hash (public, stable; devnet has never been re-genesised). */
+export const DEVNET_GENESIS_HASH =
+  "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG";
+
+/** True for an RPC on this machine (localnet / solana-test-validator). */
+export function isLoopbackRpc(rpcUrl: string): boolean {
+  let host: string;
+  try {
+    host = new URL(rpcUrl).hostname.toLowerCase();
+  } catch {
+    return false;
+  }
+  return (
+    host === "localhost" ||
+    host === "[::1]" ||
+    /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host)
+  );
+}
+
+/**
+ * Fail-closed cluster check for writes that can never be undone. Mainnet
+ * unless the RPC is loopback (localnet) or answers with devnet's genesis hash.
+ * A label or host saying mainnet also counts, and a genesis lookup that throws
+ * counts as mainnet. Unlike {@link isMainnetCluster}, an RPC host that names no
+ * cluster cannot read as "not mainnet" here.
+ */
+export async function isMainnetFailClosed(
+  rpcUrl: string,
+  genesisHash: () => Promise<string>
+): Promise<boolean> {
+  if (isMainnetCluster(rpcUrl)) return true;
+  if (isLoopbackRpc(rpcUrl)) return false;
+  try {
+    return (await genesisHash()) !== DEVNET_GENESIS_HASH;
+  } catch {
+    return true;
+  }
+}

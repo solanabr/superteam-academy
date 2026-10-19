@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { BN } from "@coral-xyz/anchor";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { ERROR_IDS } from "@/constants/errorIds";
@@ -19,11 +19,8 @@ const PREREQ = new PublicKey("SysvarRent111111111111111111111111111111111");
 const AUTHORITY = Keypair.generate().publicKey;
 const BACKEND_SIGNER = Keypair.generate().publicKey;
 const INSTRUCTOR = Keypair.generate().publicKey;
-const DEVNET_RPC = "https://devnet.helius-rpc.com/?api-key=x";
-const MAINNET_RPC = "https://mainnet.helius-rpc.com/?api-key=x";
-
-function guard(rpcUrl: string): CourseIdentityGuard {
-  return { rpcUrl, authority: AUTHORITY, backendSigner: BACKEND_SIGNER };
+function guard(mainnet: boolean): CourseIdentityGuard {
+  return { mainnet, authority: AUTHORITY, backendSigners: [BACKEND_SIGNER] };
 }
 
 describe("buildCreateCourseOnChainParams (v-next create_course)", () => {
@@ -42,7 +39,7 @@ describe("buildCreateCourseOnChainParams (v-next create_course)", () => {
         creatorRewardXp: 30,
         collection: null,
       },
-      guard(DEVNET_RPC)
+      guard(false)
     );
 
     expect(Object.keys(params).sort()).toEqual(
@@ -69,10 +66,6 @@ describe("buildCreateCourseOnChainParams (v-next create_course)", () => {
 });
 
 describe("mainnet course identity guard (in buildCreateCourseOnChainParams)", () => {
-  afterEach(() => {
-    vi.unstubAllEnvs();
-  });
-
   function course(
     overrides: Partial<CreateCourseOnChainParams> = {}
   ): CreateCourseOnChainParams {
@@ -94,10 +87,10 @@ describe("mainnet course identity guard (in buildCreateCourseOnChainParams)", ()
 
   function refusal(
     input: CreateCourseOnChainParams,
-    rpcUrl = MAINNET_RPC
+    g: CourseIdentityGuard = guard(true)
   ): MainnetCourseIdentityError {
     try {
-      buildCreateCourseOnChainParams(input, guard(rpcUrl));
+      buildCreateCourseOnChainParams(input, g);
     } catch (e) {
       expect(e).toBeInstanceOf(MainnetCourseIdentityError);
       return e as MainnetCourseIdentityError;
@@ -122,10 +115,17 @@ describe("mainnet course identity guard (in buildCreateCourseOnChainParams)", ()
     ]);
   });
 
-  it("refuses creator == backend signer on mainnet", () => {
-    expect(refusal(course({ creator: BACKEND_SIGNER })).problems).toEqual([
+  it("refuses creator == any known backend signer on mainnet", () => {
+    const other = Keypair.generate().publicKey;
+    const g = { ...guard(true), backendSigners: [other, BACKEND_SIGNER] };
+    expect(refusal(course({ creator: BACKEND_SIGNER }), g).problems).toEqual([
       "creator",
     ]);
+  });
+
+  it("refuses on mainnet when no backend signer key is known", () => {
+    const g = { ...guard(true), backendSigners: [] };
+    expect(refusal(course(), g).problems).toEqual(["backendSignerUnknown"]);
   });
 
   it("reports every problem at once", () => {
@@ -135,40 +135,27 @@ describe("mainnet course identity guard (in buildCreateCourseOnChainParams)", ()
     ).toEqual(["trackId", "trackLevel", "creator"]);
   });
 
-  // The Borsh encoder writes NaN/undefined as 0 and truncates floats, so these
-  // would land on-chain as unset (or wrong) values.
+  // The BorshCoder writes NaN/undefined/null as 0, truncates floats and throws
+  // only on out-of-range integers, so anything but an in-range integer is
+  // refused here rather than left to the encoder.
   it.each([Number.NaN, 1.5, -1, 65_536])(
-    "refuses an unencodable trackId %s on mainnet",
+    "refuses a trackId of %s on mainnet",
     (trackId) => {
       expect(refusal(course({ trackId })).problems).toEqual(["trackId"]);
     }
   );
 
   it.each([Number.NaN, 2.5, 256])(
-    "refuses an unencodable trackLevel %s on mainnet",
+    "refuses a trackLevel of %s on mainnet",
     (trackLevel) => {
       expect(refusal(course({ trackLevel })).problems).toEqual(["trackLevel"]);
     }
   );
 
-  it("detects mainnet from the network label even with an anonymous RPC host", () => {
-    vi.stubEnv("NEXT_PUBLIC_SOLANA_NETWORK", "mainnet");
-    expect(
-      refusal(course({ trackId: 0 }), "https://rpc.example.com").problems
-    ).toEqual(["trackId"]);
-  });
-
-  it("detects mainnet from the RPC host even when the label says devnet", () => {
-    vi.stubEnv("NEXT_PUBLIC_SOLANA_NETWORK", "devnet");
-    expect(refusal(course({ trackId: 0 }), MAINNET_RPC).problems).toEqual([
-      "trackId",
-    ]);
-  });
-
   it("allows a mainnet course with a real track, level and instructor", () => {
     const params = buildCreateCourseOnChainParams(
       course({ trackId: 3, trackLevel: 4 }),
-      guard(MAINNET_RPC)
+      guard(true)
     );
     expect(params.trackId).toBe(3);
     expect(params.trackLevel).toBe(4);
@@ -179,30 +166,19 @@ describe("mainnet course identity guard (in buildCreateCourseOnChainParams)", ()
     expect(() =>
       buildCreateCourseOnChainParams(
         course({ trackId: 65_535, trackLevel: 255 }),
-        guard(MAINNET_RPC)
+        guard(true)
       )
     ).not.toThrow();
   });
 
-  it("leaves devnet unchanged: 0/0 and creator == authority still build", () => {
-    vi.stubEnv("NEXT_PUBLIC_SOLANA_NETWORK", "devnet");
+  it("does nothing off mainnet: 0/0, creator == authority, no backend signer all build", () => {
     const params = buildCreateCourseOnChainParams(
       course({ trackId: 0, trackLevel: 0, creator: AUTHORITY }),
-      guard(DEVNET_RPC)
+      { ...guard(false), backendSigners: [] }
     );
     expect(params.trackId).toBe(0);
     expect(params.trackLevel).toBe(0);
     expect(params.creator.equals(AUTHORITY)).toBe(true);
-  });
-
-  it("leaves localnet unchanged: 0/0 still builds", () => {
-    vi.stubEnv("NEXT_PUBLIC_SOLANA_NETWORK", "localnet");
-    expect(() =>
-      buildCreateCourseOnChainParams(
-        course({ trackId: 0, trackLevel: 0 }),
-        guard("http://127.0.0.1:8899")
-      )
-    ).not.toThrow();
   });
 });
 

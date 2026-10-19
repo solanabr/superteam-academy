@@ -47,6 +47,7 @@ let genesisHashThrows = false;
 // simulated while rail 4 still passes.
 const DEVNET_RPC = "https://api.devnet.solana.com";
 let rpcUrl = DEVNET_RPC;
+const BACKEND_SIGNER = Keypair.generate().publicKey;
 
 vi.mock("@/lib/env.server", () => ({
   serverEnv: {
@@ -65,6 +66,7 @@ vi.mock("@/lib/solana/admin-signer", async (importOriginal) => {
   return {
     ...actual,
     getAuthorityPublicKey: () => authority,
+    getPlatformBackendSigners: async () => [BACKEND_SIGNER],
     closeCoursePda: vi.fn(async () => {
       calls.push("close");
       return closeResult;
@@ -940,6 +942,16 @@ describe("mainnet course-identity guard runs in pre-flight, before the close", (
     courses = [validCourse({ creatorWallet: AUTHORITY.toBase58() })];
 
     const err = await captureError(recreateCourse(COURSE_ID, true));
+
+    expect(err.errorId).toBe("COURSE_IDENTITY_001");
+    expect(calls).toEqual([]);
+  });
+
+  it("refuses creator == backend signer", async () => {
+    rpcUrl = MAINNET_RPC;
+    courses = [validCourse({ creatorWallet: BACKEND_SIGNER.toBase58() })];
+
+    const err = await captureError(recreateCourse(COURSE_ID));
 
     expect(err.errorId).toBe("COURSE_IDENTITY_001");
     expect(calls).toEqual([]);

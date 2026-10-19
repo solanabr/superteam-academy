@@ -12,6 +12,7 @@ import "server-only";
  * This module MUST ONLY be imported from API routes (server-side).
  */
 import { Connection, Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
+import type { PublicKeyInitData } from "@solana/web3.js";
 import { AnchorProvider, Program } from "@coral-xyz/anchor";
 import type { Idl } from "@coral-xyz/anchor";
 import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
@@ -46,6 +47,8 @@ import {
   type UpdateCourseOnChainParams,
 } from "./course-write-params";
 import { getBackendSigner } from "./academy-program";
+import { fetchConfig } from "./academy-reads";
+import { isMainnetFailClosed } from "./network";
 
 // ---------------------------------------------------------------------------
 // Anchor method builder types — mirrors the pattern in academy-program.ts
@@ -212,6 +215,8 @@ const MPL_CORE_PROGRAM_ID = new PublicKey(
 // ---------------------------------------------------------------------------
 
 let _connection: Connection | null = null;
+// Genesis hash of `_connection`, cached after the first successful lookup.
+let _genesisHash: string | null = null;
 let _authority: Keypair | null = null;
 let _program: Program | null = null;
 let _initialized = false;
@@ -289,16 +294,33 @@ export function getAuthorityPublicKey(): PublicKey | null {
 }
 
 /**
- * The backend signer's pubkey, or `null` when BACKEND_SIGNER_SECRET is unset or
- * malformed. Used by the mainnet course-identity guard, which refuses it as a
- * course creator alongside the authority.
+ * Backend signer keys a mainnet course creator must not be: the on-chain
+ * Config.backend_signer and the BACKEND_SIGNER_SECRET key, whichever can be
+ * read. An empty list means neither could, and the mainnet guard refuses.
  */
-export function getBackendSignerPublicKey(): PublicKey | null {
+export async function getPlatformBackendSigners(
+  connection: Connection
+): Promise<PublicKey[]> {
+  const keys: PublicKey[] = [];
   try {
-    return getBackendSigner().publicKey;
+    const config: unknown = await fetchConfig(connection, getProgramId());
+    if (config && typeof config === "object" && "backend_signer" in config) {
+      keys.push(new PublicKey(config.backend_signer as PublicKeyInitData));
+    }
   } catch {
-    return null;
+    // Unreadable Config: fall back to the env key below.
   }
+  try {
+    keys.push(getBackendSigner().publicKey);
+  } catch {
+    // BACKEND_SIGNER_SECRET unset or malformed.
+  }
+  return keys;
+}
+
+async function connectionGenesisHash(): Promise<string> {
+  _genesisHash ??= await _connection!.getGenesisHash();
+  return _genesisHash;
 }
 
 // ---------------------------------------------------------------------------
@@ -462,7 +484,7 @@ export async function deployCoursePda(
   params: CreateCourseAdminParams
 ): Promise<AdminSignerResult> {
   const { ready } = initialize();
-  if (!ready || !_program || !_authority) {
+  if (!ready || !_program || !_authority || !_connection) {
     return {
       success: false,
       error: "Admin signer not configured (PROGRAM_AUTHORITY_SECRET missing)",
@@ -502,6 +524,12 @@ export async function deployCoursePda(
         `deployCoursePda(${params.courseId}): creatorWallet "${params.creatorWallet}" is off-curve`
       );
     }
+    // Fail-closed: mainnet unless the connection the tx goes through is
+    // loopback or answers with devnet's genesis hash.
+    const mainnet = await isMainnetFailClosed(
+      _connection.rpcEndpoint,
+      connectionGenesisHash
+    );
     // Built before assertCreatorAllowed so that on mainnet the identity guard
     // inside the builder (unset track/level, platform-key creator; no override)
     // is what refuses, with its error id. A no-op on devnet and localnet.
@@ -522,9 +550,11 @@ export async function deployCoursePda(
           collection: null,
         },
         {
-          rpcUrl: serverEnv.SOLANA_RPC_URL,
+          mainnet,
           authority: _authority.publicKey,
-          backendSigner: getBackendSignerPublicKey(),
+          backendSigners: mainnet
+            ? await getPlatformBackendSigners(_connection)
+            : [],
         }
       );
 

@@ -10,13 +10,14 @@ import {
 } from "@/lib/content/deployment-writes";
 import { recordCourseRecreated } from "@/lib/content/changelog-writes";
 import { fetchCourse } from "@/lib/solana/academy-reads";
+import { isMainnetCluster } from "@/lib/solana/network";
 import { findCoursePDA, getProgramId } from "@/lib/solana/pda";
 import {
   assertCreatorAllowed,
   closeCoursePda,
   deployCoursePda,
   getAuthorityPublicKey,
-  getBackendSignerPublicKey,
+  getPlatformBackendSigners,
   setCourseCollectionPda,
   updateCoursePda,
   type CreateCourseAdminParams,
@@ -328,9 +329,14 @@ export async function preflightRecreate(
     refuse(`Instructor wallet "${creatorWallet}" is off-curve`);
   }
   // Mainnet identity guard, the same one deployCoursePda runs, but here it
-  // fires BEFORE the close. Ignores allowUnusualCreator. Unreachable while the
-  // devnet-only check above stands; it keeps a post-#305 mainnet recreate from
-  // closing a course it then refuses to create.
+  // fires BEFORE the close. Ignores allowUnusualCreator. Reuses the genesis
+  // hash read above (fail-closed: anything but devnet's counts as mainnet).
+  // Only the label/host can say mainnet while the devnet-only check above
+  // stands; the guard keeps a mainnet recreate from closing a course it would
+  // then refuse to create.
+  const mainnet =
+    isMainnetCluster(serverEnv.SOLANA_RPC_URL) ||
+    genesisHash! !== DEVNET_GENESIS_HASH;
   try {
     assertMainnetCourseIdentity(
       {
@@ -340,9 +346,11 @@ export async function preflightRecreate(
         trackLevel: course!.trackLevel ?? 0,
       },
       {
-        rpcUrl: serverEnv.SOLANA_RPC_URL,
+        mainnet,
         authority: authority!,
-        backendSigner: getBackendSignerPublicKey(),
+        backendSigners: mainnet
+          ? await getPlatformBackendSigners(connection)
+          : [],
       }
     );
   } catch (e) {

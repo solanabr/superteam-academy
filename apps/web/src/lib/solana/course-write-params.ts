@@ -1,7 +1,6 @@
 import { BN } from "@coral-xyz/anchor";
 import type { PublicKey } from "@solana/web3.js";
 import { ERROR_IDS } from "@/constants/errorIds";
-import { isMainnetCluster } from "./network";
 
 /**
  * Pure mappers + validators for the v-next `create_course` / `update_course`
@@ -77,12 +76,19 @@ function isIntInRange(value: unknown, max: number): value is number {
   );
 }
 
-/** What made a mainnet `create_course` unsafe to send. */
-export type CourseIdentityProblem = "trackId" | "trackLevel" | "creator";
+/**
+ * What made a mainnet `create_course` unsafe to send. `backendSignerUnknown`:
+ * no backend signer key could be read, so a creator equal to it can't be ruled out.
+ */
+export type CourseIdentityProblem =
+  | "trackId"
+  | "trackLevel"
+  | "creator"
+  | "backendSignerUnknown";
 
 /** Client-facing text for a refusal; the per-course detail goes to the log. */
 export const MAINNET_COURSE_IDENTITY_MESSAGE =
-  "Refused on mainnet: a course needs a real track id, track level and an instructor creator wallet (not a platform key). These are permanent once created. Fix the course content and deploy again.";
+  "Refused on mainnet: a course needs a real track id, track level and an instructor creator wallet (not a platform key). These are permanent once created. The server log (COURSE_IDENTITY_001) names the failed check.";
 
 export class MainnetCourseIdentityError extends Error {
   readonly errorId = ERROR_IDS.MAINNET_COURSE_IDENTITY_REFUSED;
@@ -99,21 +105,30 @@ export class MainnetCourseIdentityError extends Error {
 
 /** What the mainnet identity guard needs to know besides the course itself. */
 export interface CourseIdentityGuard {
-  /** The RPC endpoint `create_course` is sent through. */
-  rpcUrl: string;
+  /**
+   * Whether `create_course` would land on mainnet. Resolve it fail-closed
+   * (`isMainnetFailClosed` in ./network): anything not proven devnet or
+   * localnet counts as mainnet.
+   */
+  mainnet: boolean;
   /** Config.authority: `create_course` only lands when the signer equals it. */
   authority: PublicKey;
-  /** The backend signer, when configured. */
-  backendSigner: PublicKey | null;
+  /**
+   * Backend signer keys from every source at hand (on-chain
+   * Config.backend_signer, the env key). On mainnet an empty list refuses.
+   */
+  backendSigners: readonly PublicKey[];
 }
 
 /**
  * `creator`, `track_id` and `track_level` are written once by `create_course`
  * and nothing can update them; on mainnet the only fix is close + recreate,
  * which wipes every enrolled learner's progress. So on mainnet, refuse a course
- * whose track id or level is unset (or out of range, which the encoder would
- * silently write as 0) or whose creator is a platform key. Deliberately no
- * override flag. Devnet and localnet return immediately.
+ * whose track id or level is not an integer in range (the BorshCoder writes
+ * NaN/undefined/null as 0, truncates floats and coerces strings/booleans; only
+ * out-of-range integers throw), or whose creator is a platform key, or when no
+ * backend signer key is known to compare against. Deliberately no override
+ * flag. Off mainnet it returns immediately.
  *
  * @throws {MainnetCourseIdentityError}
  */
@@ -124,19 +139,21 @@ export function assertMainnetCourseIdentity(
   >,
   guard: CourseIdentityGuard
 ): void {
-  if (!isMainnetCluster(guard.rpcUrl)) return;
+  if (!guard.mainnet) return;
 
   const problems: CourseIdentityProblem[] = [];
   if (!isIntInRange(course.trackId, MAX_TRACK_ID)) problems.push("trackId");
   if (!isIntInRange(course.trackLevel, MAX_TRACK_LEVEL)) {
     problems.push("trackLevel");
   }
-  const platformKeys = [guard.authority, guard.backendSigner].filter(
-    (k): k is PublicKey => k !== null
-  );
-  if (platformKeys.some((k) => k.equals(course.creator))) {
+  if (
+    [guard.authority, ...guard.backendSigners].some((k) =>
+      k.equals(course.creator)
+    )
+  ) {
     problems.push("creator");
   }
+  if (guard.backendSigners.length === 0) problems.push("backendSignerUnknown");
   if (problems.length === 0) return;
 
   throw new MainnetCourseIdentityError(
