@@ -116,8 +116,8 @@ soteria -analyzeAll .
 
 > Before creating any course on mainnet, clear the **instructor credibility &
 > track ladder** items in the [Pre-Mainnet Checklist](#pre-mainnet-checklist) —
-> `creator` / `trackId` / `trackLevel` are immutable at creation with no mainnet
-> recreate escape.
+> `creator` / `trackId` / `trackLevel` are immutable at creation. On mainnet a
+> course can only be recreated while nobody is enrolled in it.
 
 ```bash
 # 1. Ensure sufficient SOL (deployment costs ~2-5 SOL depending on program size)
@@ -573,8 +573,9 @@ fallback** — a missing or invalid creator wallet fails the deploy loudly.
 The admin deploy refuses to create a mainnet course whose `trackId` or
 `trackLevel` is unset or whose creator is the platform authority or backend
 signer (`COURSE_IDENTITY_001`). It treats the cluster as mainnet unless the RPC
-is loopback or answers with devnet's genesis hash, so a misconfigured server
-refuses rather than slipping through.
+answers with devnet's genesis hash, or is loopback and answers with a localnet
+genesis, so a misconfigured server refuses rather than slipping through. If the
+genesis hash can't be read at all it refuses with `COURSE_IDENTITY_002`; retry.
 
 Track is the learning path, level is the course's position in it:
 
@@ -589,12 +590,14 @@ In this order, before the platform opens to learners:
 - [ ] Create every mainnet course.
 - [ ] Read each Course PDA back (the admin deploy diff, or
       `onchain-academy/scripts/fetch-course.ts <course-id>`) and check creator,
-      track and level against the ladder above.
+      track and level against the ladder above. On mainnet `fetch-course.ts`
+      needs `ANCHOR_PROVIDER_URL` set to a mainnet RPC (plus any `ANCHOR_WALLET`
+      keypair) and `ACADEMY_PROGRAM_ID` if the mainnet program id differs from
+      the address in `idl/onchain_academy.json`.
 - [ ] Recreate any course with a wrong creator, track or level now, while
-      nobody is enrolled. After learners enroll, a recreate wipes their progress
-      in that course. Admin recreate is devnet-only on main today; mainnet
-      recreate restricted to courses with zero enrollments is in #1269, which
-      needs the owner's yes before it merges.
+      nobody is enrolled. The admin recreate refuses on mainnet once a course
+      has an enrollment, because a recreate wipes enrolled learners' progress
+      in that course.
 - [ ] Only then, on a course already confirmed correct, the owner enrolls with
       his own account, finishes it, and checks that the credential shows the
       right instructor, track and level. That enrollment makes the course

@@ -194,9 +194,9 @@ needed.
 > **Before any mainnet course creation.** `create-mock-course.ts` uses a
 > placeholder creator wallet and default `trackId` / `trackLevel`.
 > `Course.creator`, `track_id`, and `track_level` are **immutable** after
-> `create_course` — there is no `update_course` setter, recovery on devnet needs
-> a full recreate, and there is no recovery at all on mainnet. Confirm real
-> instructor wallets and the finalized track ladder first.
+> `create_course` — there is no `update_course` setter, and recovery needs a
+> full recreate, which on mainnet is only allowed while nobody is enrolled.
+> Confirm real instructor wallets and the finalized track ladder first.
 
 ## 8. Verify
 
