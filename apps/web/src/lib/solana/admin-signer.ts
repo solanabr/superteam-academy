@@ -23,6 +23,11 @@ import {
   fromWeb3JsPublicKey,
 } from "@metaplex-foundation/umi-web3js-adapters";
 import bs58 from "bs58";
+import { serverEnv } from "@/lib/env.server";
+import {
+  padContentTxId,
+  assertMaskMatchesLockfile,
+} from "@/lib/github/content-commit";
 import IDL from "./idl/superteam_academy_vnext.json";
 import {
   findConfigPDA,
@@ -37,11 +42,6 @@ import {
   type CreateCourseOnChainParams,
   type UpdateCourseOnChainParams,
 } from "./course-write-params";
-import { serverEnv } from "@/lib/env.server";
-import {
-  padContentTxId,
-  assertMaskMatchesLockfile,
-} from "@/lib/github/content-commit";
 
 // ---------------------------------------------------------------------------
 // Anchor method builder types — mirrors the pattern in academy-program.ts
@@ -600,17 +600,14 @@ export async function updateCoursePda(
  * the Course PDA DOES NOT EXIST and `enroll` / `complete_lesson` have no account
  * to read. See the orchestrator for the pre-flight + retry that bound that window.
  *
- * What survives (verified against the program, not just its doc comment):
- *   - Enrollment PDAs are seeded `["enrollment", course_id, learner]` and are
- *     never passed to `close_course` — they are physically untouched. Their
- *     stored `enrollment.course` is the Course PDA, which is derived from
- *     `course_id` alone, so recreating under the SAME course_id reproduces the
- *     IDENTICAL address and the `enrollment.course == course.key()` constraint
- *     in `complete_lesson` / `finalize_course` still holds. Learner lesson_flags,
- *     completed_at and already-minted XP all survive.
+ * Learner progress does NOT survive. Enrollment PDAs are not passed to
+ * `close_course`, but the recreated course gets a new generation, and the
+ * program rejects older-generation enrollments (`StaleEnrollment`, 6034) and
+ * re-initialises them empty on `enroll`. Already-minted XP and credentials stay
+ * in learners' wallets.
  *
- * What does NOT survive (`create_course` hard-resets these — no instruction can
- * restore them):
+ * Also lost (`create_course` hard-resets these — no instruction can restore
+ * them):
  *   - `total_completions` / `total_enrollments` → 0. Reset unconditionally by
  *     `create_course`; there is no instruction that can write them back, so a
  *     recreate always loses these two counters. The orchestrator reads and

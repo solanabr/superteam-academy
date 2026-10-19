@@ -144,5 +144,10 @@ describe("CourseChangelog", () => {
     expect(
       screen.getByText(/on-chain course account was recreated/i)
     ).toBeInTheDocument();
+    // A recreate resets on-chain progress; it must not tell learners otherwise.
+    expect(screen.queryByText(/progress and XP were preserved/i)).toBeNull();
+    expect(
+      screen.getByText(/reset your on-chain progress in this course/i)
+    ).toBeInTheDocument();
   });
 });
