@@ -47,6 +47,7 @@ import { slotsByCourseId } from "@/lib/content/store";
 import { SYNCED_SHA } from "@/lib/content/meta";
 import { MaskMismatchError } from "@/lib/github/types";
 import { deriveActiveMask } from "@/lib/github/content-commit";
+import { ERROR_IDS } from "@/constants/errorIds";
 
 /**
  * Load a course's committed `slots.lock.json` from the pinned content bundle
@@ -280,6 +281,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
 
     if (!result.success) {
+      // Mainnet identity guard (unset track/level, platform-key creator): a
+      // content problem refused before anything was sent. Detail is logged.
+      if (result.errorId === ERROR_IDS.MAINNET_COURSE_IDENTITY_REFUSED) {
+        return NextResponse.json(
+          { error: result.error, errorId: result.errorId },
+          { status: 400 }
+        );
+      }
       return NextResponse.json(
         { error: result.error ?? "Deployment failed" },
         { status: 500 }

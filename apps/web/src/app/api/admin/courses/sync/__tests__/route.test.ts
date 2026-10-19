@@ -172,3 +172,34 @@ describe("POST /api/admin/courses/sync — #993 no-op regression", () => {
     expect(updateCoursePda).not.toHaveBeenCalled();
   });
 });
+
+describe("POST /api/admin/courses/sync — mainnet course identity guard", () => {
+  it("returns 400 with the error id when deployCoursePda refuses the create", async () => {
+    // Course PDA absent → the create branch.
+    getAccountInfo.mockResolvedValue(null);
+    deployCoursePda.mockResolvedValue({
+      success: false,
+      error: "Refused on mainnet: ...",
+      errorId: "COURSE_IDENTITY_001",
+    });
+
+    const res = await POST(syncRequest());
+    const body = (await res.json()) as { error?: string; errorId?: string };
+
+    expect(res.status).toBe(400);
+    expect(body.errorId).toBe("COURSE_IDENTITY_001");
+    expect(body.error).toBe("Refused on mainnet: ...");
+    expect(writeCourseOnChainStatus).not.toHaveBeenCalled();
+  });
+
+  it("keeps any other create failure a 500 without an error id", async () => {
+    getAccountInfo.mockResolvedValue(null);
+    deployCoursePda.mockResolvedValue({ success: false, error: "rpc down" });
+
+    const res = await POST(syncRequest());
+    const body = (await res.json()) as { error?: string; errorId?: string };
+
+    expect(res.status).toBe(500);
+    expect(body.errorId).toBeUndefined();
+  });
+});

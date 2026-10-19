@@ -22,7 +22,17 @@ const [coursePda] = PublicKey.findProgramAddressSync(
 // Placeholder content tx ID — replace with a real Arweave tx for production
 const contentTxId = Buffer.alloc(32);
 
+// Mock course with the authority as creator. Never on mainnet, where a course's
+// creator, track and level are permanent.
+const MAINNET_GENESIS_HASH = "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d";
+
 async function main() {
+  if ((await provider.connection.getGenesisHash()) === MAINNET_GENESIS_HASH) {
+    throw new Error(
+      "create-mock-course is devnet/localnet only; refusing on mainnet"
+    );
+  }
+
   const tx = await program.methods
     .createCourse({
       courseId,

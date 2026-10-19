@@ -222,6 +222,25 @@ describe("POST /api/admin/courses/recreate — error mapping", () => {
     expect(body.error).toMatch(/Squads custody/i);
   });
 
+  it("passes the error id through on a mainnet course-identity refusal", async () => {
+    recreateCourse.mockRejectedValue(
+      new RecreateCourseError(
+        "Refused on mainnet: ...",
+        "preflight",
+        true,
+        "COURSE_IDENTITY_001"
+      )
+    );
+    const res = await post({ courseId: COURSE_ID, confirm: COURSE_ID });
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as {
+      errorId?: string;
+      courseIntact: boolean;
+    };
+    expect(body.errorId).toBe("COURSE_IDENTITY_001");
+    expect(body.courseIntact).toBe(true);
+  });
+
   it("maps a post-close create failure to 500, courseIntact:false, with the recovery message", async () => {
     recreateCourse.mockRejectedValue(
       new RecreateCourseError(
