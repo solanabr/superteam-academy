@@ -1,96 +1,62 @@
-{
-  "coursesByIds": [
-    {
-      "_id": "course-btc-to-sol-evolution",
-      "title": "From Bitcoin to Solana: The Evolution of Blockchain Technology",
-      "slug": "btc-to-sol-evolution",
-      "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/ed9740f6ea99a8d6f9b39863c9dda7a802d908f3b3e53b76fab0aeb85e5480a2.webp",
+[
+  {
+    "summary": {
+      "_id": "course-alpha",
+      "title": "Alfa: da tese ao primeiro ativo",
+      "slug": "alpha",
+      "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.webp",
       "tags": [
         "account-model",
-        "anchor",
-        "keypairs-wallets",
-        "rpc-reads",
-        "solana-fundamentals",
-        "solana-kit",
-        "solana-programs",
-        "transactions"
-      ],
-      "difficulty": "beginner",
-      "totalLessons": 15,
-      "learningPath": "First Steps"
-    },
-    {
-      "_id": "course-solana-speedrun",
-      "title": "Solana Speedrun: Inicie sua jornada onchain em minutos",
-      "slug": "solana-speedrun",
-      "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/c2fec3063c434607e652d5684af9c94e05df0260e7fe3011d17bdbea2ed056db.webp",
-      "tags": [
-        "account-model",
-        "keypairs-wallets",
-        "solana-fundamentals",
-        "transactions"
+        "keypairs-wallets"
       ],
       "difficulty": "beginner",
       "totalLessons": 4,
-      "learningPath": "First Steps"
-    }
-  ],
-  "recommended": [
-    {
-      "_id": "course-btc-to-sol-evolution",
-      "title": "From Bitcoin to Solana: The Evolution of Blockchain Technology",
-      "slug": "btc-to-sol-evolution",
-      "description": "Run, script, and explain every generation of blockchain from Bitcoin to Solana, then ship a personal ops bot that manages wallets and agents on both.",
-      "difficulty": "beginner",
-      "duration": 18,
-      "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/ed9740f6ea99a8d6f9b39863c9dda7a802d908f3b3e53b76fab0aeb85e5480a2.webp",
-      "creator": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
-      "tags": [
-        "account-model",
-        "anchor",
-        "keypairs-wallets",
-        "rpc-reads",
-        "solana-fundamentals",
-        "solana-kit",
-        "solana-programs",
-        "transactions"
-      ],
-      "xpReward": 300,
-      "totalLessons": 15,
-      "trackId": 0,
-      "trackLevel": 0,
-      "learningPath": "First Steps"
+      "learningPath": "Comece aqui"
     },
-    {
-      "_id": "course-solana-speedrun",
-      "title": "Solana Speedrun: Inicie sua jornada onchain em minutos",
-      "slug": "solana-speedrun",
-      "description": "Por que o sistema financeiro está migrando para a Solana, como a tecnologia funciona de verdade, e seu primeiro ativo na mainnet — em menos de 10 minutos.",
+    "recommended": {
+      "_id": "course-alpha",
+      "title": "Alfa: da tese ao primeiro ativo",
+      "slug": "alpha",
+      "description": "Por que a Solana, e o seu primeiro ativo onchain.",
       "difficulty": "beginner",
       "duration": 0.25,
-      "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/c2fec3063c434607e652d5684af9c94e05df0260e7fe3011d17bdbea2ed056db.webp",
+      "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.webp",
       "creator": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
       "tags": [
         "account-model",
-        "keypairs-wallets",
-        "solana-fundamentals",
-        "transactions"
+        "keypairs-wallets"
       ],
-      "xpReward": 80,
+      "xpReward": 60,
       "totalLessons": 4,
-      "trackId": 0,
-      "trackLevel": 0,
-      "learningPath": "First Steps"
+      "trackId": 1,
+      "trackLevel": 2,
+      "learningPath": "Comece aqui"
     }
-  ],
-  "lessonCounts": [
-    {
-      "_id": "course-btc-to-sol-evolution",
-      "totalLessons": 15
+  },
+  {
+    "summary": {
+      "_id": "course-beta",
+      "title": "Beta",
+      "slug": "beta",
+      "thumbnail": null,
+      "tags": null,
+      "difficulty": "intermediate",
+      "totalLessons": 1,
+      "learningPath": null
     },
-    {
-      "_id": "course-solana-speedrun",
-      "totalLessons": 4
+    "recommended": {
+      "_id": "course-beta",
+      "title": "Beta",
+      "slug": "beta",
+      "description": null,
+      "difficulty": "intermediate",
+      "duration": null,
+      "thumbnail": null,
+      "creator": null,
+      "tags": null,
+      "xpReward": 10,
+      "totalLessons": 1,
+      "learningPath": null
     }
-  ]
-}
+  }
+]

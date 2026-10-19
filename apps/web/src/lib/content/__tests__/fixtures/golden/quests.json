@@ -1,0 +1,50 @@
+{
+  "quests": [
+    {
+      "id": "quest-lesson",
+      "name": "Complete a Lesson",
+      "description": "Finish any lesson today",
+      "type": "lesson",
+      "icon": "BookOpen",
+      "xpReward": 20,
+      "targetValue": 1,
+      "resetType": "daily"
+    },
+    {
+      "id": "quest-streak",
+      "name": "Keep the Streak",
+      "description": "",
+      "type": "streak",
+      "icon": "CircleDashed",
+      "xpReward": 50,
+      "targetValue": 7,
+      "resetType": "weekly"
+    }
+  ],
+  "challengeLessonIds": [
+    "lesson-alpha-code",
+    "lesson-alpha-deploy"
+  ],
+  "moduleLessonMap": [
+    {
+      "id": "course-alpha:fundamentos",
+      "lessonIds": [
+        "lesson-alpha-quiz",
+        "lesson-alpha-retired",
+        "lesson-alpha-code"
+      ]
+    },
+    {
+      "id": "course-alpha:deploy",
+      "lessonIds": [
+        "lesson-alpha-deploy"
+      ]
+    },
+    {
+      "id": "course-beta:order",
+      "lessonIds": [
+        "lesson-beta-parsons"
+      ]
+    }
+  ]
+}
