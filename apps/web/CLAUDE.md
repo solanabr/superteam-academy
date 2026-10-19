@@ -42,10 +42,10 @@ translation objects keyed by the locale from `usePathname()`. `lib/i18n/request.
 
 ## Gamification
 
-XP amounts, caps and the level formula live in `lib/gamification/xp.ts`; read them there. Unlocks
-are declarative: each achievement content doc carries an `award` rule, and
-`lib/gamification/achievements.ts` holds `PREDICATES satisfies Record<AwardKind, Predicate>`, one
-predicate per kind. A new achievement is a content doc, not code.
+XP amounts and the level formula live in `lib/gamification/xp.ts`; the per-award and daily caps
+live in the `award_xp()` DB function. Unlocks are declarative: each achievement content doc carries
+an `award` rule, and `lib/gamification/achievements.ts` holds one predicate per `AwardKind`
+(`PREDICATES satisfies Record<AwardKind, Predicate>`). A new achievement is a content doc, not code.
 
 ## Environment gotchas
 
