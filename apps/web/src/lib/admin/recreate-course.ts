@@ -9,7 +9,11 @@ import {
   acquireCourseMaintenanceGate,
 } from "@/lib/content/deployment-writes";
 import { recordCourseRecreated } from "@/lib/content/changelog-writes";
-import { fetchCourse } from "@/lib/solana/academy-reads";
+import {
+  decodeCourse,
+  fetchCourse,
+  type DecodedCourse,
+} from "@/lib/solana/academy-reads";
 import { findCoursePDA, getProgramId } from "@/lib/solana/pda";
 import {
   assertCreatorAllowed,
@@ -93,11 +97,17 @@ import {
  * `is_active` and `collection` are also reset, but those we CAN restore, and
  * do — see {@link restoreAfterCreate}.
  *
- * MAINNET. This is the platform's single most destructive on-chain operation,
- * and #305 (Squads custody) has not landed — there is still one hot key that
- * can close any course. Until #305 ships, recreate is hard-refused on any
- * network other than devnet; see the very first check in
- * {@link preflightRecreate}.
+ * MAINNET. Custody stays a single platform key (no Squads, #305 is not
+ * coming), so the rule is narrow instead: on mainnet a course can be recreated
+ * ONLY while nobody is enrolled (`total_enrollments == 0`), i.e. while a recreate
+ * cannot reset anyone's progress. The cluster is identified by the RPC's genesis
+ * hash and the network label must agree; anything else is refused (see rail 4
+ * in {@link preflightRecreate}). Because `enroll` is learner-signed, the
+ * maintenance gate cannot stop it, so after the gate is acquired the course is
+ * deactivated (`enroll` then fails `CourseNotActive`) and the count is re-read
+ * at or after that slot before the close (see {@link freezeEnrollments}). On
+ * mainnet `allowUnusualCreator` is ignored, so the #427 denylist and
+ * creator != authority always apply.
  */
 
 /** Create attempts after the close has landed. */
@@ -115,6 +125,12 @@ const CREATE_RETRY_DELAY_MS = 1_000;
  * connection itself, not just the label.
  */
 const DEVNET_GENESIS_HASH = "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG";
+
+/** Solana mainnet-beta's genesis hash (public, stable). */
+const MAINNET_GENESIS_HASH = "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d";
+
+/** The two clusters a recreate may run on. */
+export type RecreateCluster = "devnet" | "mainnet";
 
 /** The phase a failure happened in — decides whether the course is still intact. */
 export type RecreatePhase = "preflight" | "close" | "create";
@@ -174,6 +190,8 @@ export interface RecreateCourseResult {
 /** Everything the create needs, fully resolved and validated. */
 export interface RecreatePlan {
   courseId: string;
+  /** From the RPC's genesis hash; mainnet adds the zero-enrollment rule. */
+  cluster: RecreateCluster;
   coursePda: PublicKey;
   createParams: CreateCourseAdminParams;
   snapshot: PreCloseSnapshot;
@@ -229,48 +247,43 @@ export async function preflightRecreate(
     throw new RecreateCourseError(message, "preflight", true);
   };
 
-  // Mainnet hard-assert (rail 4). #305 (Squads custody) has not landed, so a
-  // single hot key can currently sign this — the platform's most destructive
-  // on-chain operation. Un-bypassable: this is the FIRST statement in the
-  // function, reads the network fresh (not a module-level cache) every call,
-  // and default-DENIES anything that is not literally "devnet" — including
-  // "mainnet", "mainnet-beta", an UNSET/empty value, or a typo. Deliberately NO
-  // `?? "devnet"` fallback: an unset env var must FAIL SAFE (refuse), not
-  // silently behave as if it were devnet — this is the platform's single most
-  // destructive on-chain operation. Remove only once #305 ships a Squads-vault
-  // assertion to replace it.
-  const network = process.env.NEXT_PUBLIC_SOLANA_NETWORK;
-  if (network !== "devnet") {
-    refuse(
-      `Recreate is unavailable on network "${network ?? "unset"}" until Squads custody (#305) lands — ` +
-        `close+recreate is hard-restricted to devnet in the meantime.`
-    );
-  }
-
-  // F3 — belt AND suspenders: the label check above says "devnet", but
-  // `SOLANA_RPC_URL` (the var the close/create transactions actually target)
-  // is a completely independent env var and could be misconfigured to point
-  // at mainnet. Authenticate the ACTUAL connection by its genesis hash before
-  // doing anything else. Fail-safe: refuse on a mismatch OR on any failure to
-  // fetch it at all — "couldn't verify" must never be treated as "assume
-  // devnet" for the platform's single most destructive on-chain operation.
+  // Rail 4 — which cluster. The FIRST check, read fresh every call. The RPC's
+  // genesis hash identifies the chain (F3: `NEXT_PUBLIC_SOLANA_NETWORK` is a
+  // display label that can disagree with `SOLANA_RPC_URL`), and the label must
+  // agree with it. Default-deny: a genesis hash we can't read, one that is
+  // neither devnet's nor mainnet's, or a label that disagrees (unset included)
+  // refuses. Mainnet additionally needs zero enrollments, checked below once the
+  // live course is read.
   let genesisHash: string;
   try {
     genesisHash = await connection.getGenesisHash();
   } catch (err) {
     refuse(
       `Could not verify the RPC's genesis hash (${err instanceof Error ? err.message : String(err)}) — ` +
-        `refusing to recreate. The "devnet" network label alone is not sufficient authentication for ` +
+        `refusing to recreate. The network label alone is not sufficient authentication for ` +
         `this destructive operation.`
     );
   }
-  if (genesisHash! !== DEVNET_GENESIS_HASH) {
+  const network = process.env.NEXT_PUBLIC_SOLANA_NETWORK;
+  let cluster: RecreateCluster;
+  if (genesisHash! === DEVNET_GENESIS_HASH && network === "devnet") {
+    cluster = "devnet";
+  } else if (
+    genesisHash! === MAINNET_GENESIS_HASH &&
+    (network === "mainnet" || network === "mainnet-beta")
+  ) {
+    cluster = "mainnet";
+  } else {
     refuse(
-      `SOLANA_RPC_URL's genesis hash ("${genesisHash!}") does not match devnet's (${DEVNET_GENESIS_HASH}) — ` +
-        `the configured RPC does not actually point at devnet, even though NEXT_PUBLIC_SOLANA_NETWORK ` +
-        `says "devnet". Refusing to recreate.`
+      `SOLANA_RPC_URL's genesis hash ("${genesisHash!}") and NEXT_PUBLIC_SOLANA_NETWORK ` +
+        `("${network ?? "unset"}") do not identify devnet or mainnet together — recreate needs ` +
+        `devnet's genesis (${DEVNET_GENESIS_HASH}) with "devnet", or mainnet's ` +
+        `(${MAINNET_GENESIS_HASH}) with "mainnet". Refusing to recreate.`
     );
   }
+  // On mainnet the override is ignored: the #427 denylist and
+  // creator != authority always apply.
+  const allowOverride = cluster! === "devnet" && allowUnusualCreator;
 
   if (isDraftId(courseId)) {
     refuse("Cannot recreate a draft document");
@@ -320,7 +333,7 @@ export async function preflightRecreate(
     refuse(`Instructor wallet "${creatorWallet}" is off-curve`);
   }
   try {
-    assertCreatorAllowed(creator!, authority!, courseId, allowUnusualCreator);
+    assertCreatorAllowed(creator!, authority!, courseId, allowOverride);
   } catch (e) {
     refuse(e instanceof Error ? e.message : String(e));
   }
@@ -370,9 +383,11 @@ export async function preflightRecreate(
     collection: null,
   };
   let onChainLessonCount: number | undefined;
+  let liveCourseRead = false;
   try {
     const onChain = await fetchCourse(courseId, connection, getProgramId());
     if (onChain) {
+      liveCourseRead = true;
       snapshot = {
         totalCompletions: Number(onChain.total_completions ?? 0),
         totalEnrollments: Number(onChain.total_enrollments ?? 0),
@@ -389,6 +404,28 @@ export async function preflightRecreate(
     );
   }
   snapshot.collection ??= course!.trackCollectionAddress ?? null;
+
+  // Mainnet: only while nobody is enrolled. A recreate gives the course a new
+  // generation and every existing enrollment goes stale, so with even one
+  // learner enrolled it would reset real progress. `total_enrollments` only
+  // ever grows (close_enrollment does not decrement it), so 0 means no
+  // enrollment exists for the current generation. An unreadable course counts
+  // as "can't prove zero" and refuses. Re-checked after deactivating, right
+  // before the close.
+  if (cluster! === "mainnet") {
+    if (!liveCourseRead) {
+      refuse(
+        `Could not read course "${courseId}" to confirm it has no enrollments — refusing to recreate on mainnet.`
+      );
+    }
+    if (snapshot.totalEnrollments !== 0) {
+      refuse(
+        `Course "${courseId}" has ${snapshot.totalEnrollments} enrollment(s). On mainnet a course can only be ` +
+          `recreated while nobody is enrolled, because a recreate resets every enrolled learner's progress. ` +
+          `Nothing was closed.`
+      );
+    }
+  }
 
   // H3 — never widen lesson_count relative to what is currently live. Default
   // to the on-chain value; refuse if the content bundle wants more. An
@@ -411,6 +448,7 @@ export async function preflightRecreate(
 
   return {
     courseId,
+    cluster: cluster!,
     coursePda,
     snapshot,
     createParams: {
@@ -423,7 +461,7 @@ export async function preflightRecreate(
       prerequisitePda,
       creatorWallet: creatorWallet!,
       creatorRewardXp: course!.creatorRewardXp ?? 0,
-      allowUnusualCreator,
+      allowUnusualCreator: allowOverride,
     },
   };
 }
@@ -529,6 +567,82 @@ async function tryAcquireMaintenanceGate(
 }
 
 /**
+ * Put `is_active` back after a mainnet recreate stopped short of the close
+ * (only if it was active before). Never throws; returns a note for the error.
+ */
+async function reactivate(plan: RecreatePlan): Promise<string> {
+  if (!plan.snapshot.isActive) return "";
+  const on = await updateCoursePda({
+    courseId: plan.courseId,
+    newIsActive: true,
+  });
+  return on.success
+    ? ""
+    : ` The course was left INACTIVE (re-activating failed: ${on.error ?? "unknown error"}) — re-activate it.`;
+}
+
+/**
+ * MAINNET only, with the gate held and before the close. `enroll` is
+ * learner-signed, so the maintenance gate cannot stop it: deactivate the course
+ * (`enroll` then fails `CourseNotActive`), then re-read it at or after the
+ * deactivation's slot and require it inactive with zero enrollments. Any
+ * failure puts `is_active` back, clears the gate and throws with nothing closed.
+ */
+async function freezeEnrollments(
+  plan: RecreatePlan,
+  connection: Connection
+): Promise<void> {
+  const { courseId } = plan;
+  const abort = async (reason: string): Promise<never> => {
+    const note = await reactivate(plan);
+    await clearMaintenanceGate(courseId);
+    throw new RecreateCourseError(
+      `${reason} Nothing was closed.${note}`,
+      "preflight",
+      true
+    );
+  };
+
+  const off = await updateCoursePda({ courseId, newIsActive: false });
+  if (!off.success || !off.signature) {
+    return abort(
+      `Could not deactivate course "${courseId}" before the mainnet recreate (${off.error ?? "unknown error"}).`
+    );
+  }
+
+  let recheck: DecodedCourse | null;
+  try {
+    const status = await connection.getSignatureStatus(off.signature);
+    const slot = status.value?.slot;
+    if (slot == null) {
+      return abort(
+        `Could not confirm the deactivation of course "${courseId}" on this RPC.`
+      );
+    }
+    const info = await connection.getAccountInfo(plan.coursePda, {
+      commitment: "confirmed",
+      minContextSlot: slot,
+    });
+    recheck = info ? decodeCourse(info.data) : null;
+  } catch (err) {
+    return abort(
+      `Could not re-read course "${courseId}" after deactivating it (${err instanceof Error ? err.message : String(err)}).`
+    );
+  }
+  if (!recheck || recheck.is_active) {
+    return abort(
+      `Course "${courseId}" did not read back as inactive after deactivating it.`
+    );
+  }
+  if (recheck.total_enrollments !== 0) {
+    return abort(
+      `Course "${courseId}" now has ${recheck.total_enrollments} enrollment(s): someone enrolled after the ` +
+        `pre-flight. On mainnet a course can only be recreated while nobody is enrolled.`
+    );
+  }
+}
+
+/**
  * Close and recreate a course's on-chain PDA. See the module docstring.
  *
  * @throws {RecreateCourseError} Always check `courseIntact` — `false` means the
@@ -541,8 +655,9 @@ export async function recreateCourse(
   const connection = new Connection(serverEnv.SOLANA_RPC_URL, "confirmed");
 
   // 1. PRE-FLIGHT. Nothing below this line runs unless every create param is
-  //    resolved and valid (including the mainnet hard-assert and H3 lesson-count
-  //    check). Throws with courseIntact: true.
+  //    resolved and valid (including the cluster rail, the mainnet
+  //    zero-enrollment rule and the H3 lesson-count check). Throws with
+  //    courseIntact: true.
   const plan = await preflightRecreate(
     courseId,
     connection,
@@ -570,15 +685,22 @@ export async function recreateCourse(
     throw new RecreateCourseError(message, "preflight", true);
   }
 
+  // 2b. MAINNET: stop new enrollments and re-check the count before closing.
+  if (plan.cluster === "mainnet") {
+    await freezeEnrollments(plan, connection);
+  }
+
   // 3. CLOSE. From here the course is DOWN until the create lands.
   const closed = await closeCoursePda(courseId);
   if (!closed.success) {
     // The close never landed, so the old PDA is still there, untouched — clear
     // the gate immediately, nothing was destroyed. Safe unconditionally: step 2
-    // guarantees only the acquirer ever reaches this line.
+    // guarantees only the acquirer ever reaches this line. On mainnet step 2b
+    // deactivated it, so put that back first.
+    const note = plan.cluster === "mainnet" ? await reactivate(plan) : "";
     await clearMaintenanceGate(courseId);
     throw new RecreateCourseError(
-      `Failed to close course "${courseId}": ${closed.error ?? "unknown error"}. The course is UNCHANGED and still deployed — nothing was destroyed.`,
+      `Failed to close course "${courseId}": ${closed.error ?? "unknown error"}. The course is UNCHANGED and still deployed — nothing was destroyed.${note}`,
       "close",
       true
     );

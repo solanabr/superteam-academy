@@ -11,9 +11,10 @@
  * function — `recreateCourse` from `src/lib/admin/recreate-course.ts`, the exact
  * function the admin UI route calls. This script contains NO second
  * close/create/`close_course` implementation; it only sequences calls to
- * `recreateCourse` and runs the frozen B4 `verifyReset` between each. The devnet
- * genesis-hash pin and the mainnet hard-refuse live INSIDE `recreateCourse`'s
- * preflight and are inherited here unchanged.
+ * `recreateCourse` and runs the frozen B4 `verifyReset` between each. Its
+ * cluster rail lives INSIDE `recreateCourse`'s preflight; this script adds its
+ * own devnet-only genesis assert before `--execute`, so a reset never runs on
+ * mainnet even though a single mainnet recreate with zero enrollments can.
  *
  * SAFETY (default is DRY-RUN):
  *   - No `--execute`               → DRY-RUN: census + read-only per-course
@@ -148,8 +149,9 @@ async function main(): Promise<void> {
   const mode = resolveMode(flags, preSnapshot.courses.length);
   console.error(mode.note);
 
-  // Belt-and-suspenders: authenticate the RPC as devnet before ANY destruction
-  // (recreateCourse re-checks this internally too).
+  // The reset stays devnet-only: authenticate the RPC as devnet before ANY
+  // destruction (recreateCourse alone would also allow a mainnet course with
+  // zero enrollments).
   if (mode.execute) {
     const genesisHash = await primaryConnection.getGenesisHash();
     assertDevnetGenesis(genesisHash);
