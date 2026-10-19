@@ -12,8 +12,9 @@ at the first failed step.
   (`--url devnet`, `-ud`, or a `solana config` pointing at it): it has corrupted large deploys. The
   `guard-solana` hook blocks program writes to anything but Helius devnet or a local validator.
 - Don't print the RPC URL: it carries the API key. `solana config get` and `solana config set` both
-  print it, so the user runs those, not you (settings deny them). Prefer a Solana CLI config the
-  user already pointed at Helius, or `--url "$HELIUS_DEVNET_RPC"` from their environment.
+  print it, so the user runs those, not you (settings deny them). solana's `-v` flag and its RPC
+  error messages also print the full RPC URL, key included. Prefer a Solana CLI config the user
+  already pointed at Helius, or `--url "$HELIUS_DEVNET_RPC"` from their environment.
 - Mainnet deploys, upgrades and authority changes are run by the owner, after the "Before mainnet"
   checklist in `docs/DEPLOY-PROGRAM.md`. If asked for mainnet, prepare the artifact and the
   checklist status, then hand over the exact commands. Don't run them.

@@ -23,7 +23,8 @@
       "Bash(git add *)",
       "Bash(git commit *)",
       "Bash(git pull *)",
-      "Bash(git checkout *)",
+      "Bash(git checkout -b *)",
+      "Bash(git switch *)",
       "Bash(gh pr view *)",
       "Bash(gh pr diff *)",
       "Bash(gh pr checks *)",
@@ -49,9 +50,12 @@
       "Bash(git push *:refs/heads/main)",
       "Bash(solana config get*)",
       "Bash(solana config set*)",
+      "Bash(solana * config get*)",
+      "Bash(solana * config set*)",
       "Bash(sudo *)",
       "Read(/apps/web/src/content/generated/l10n.json)",
-      "Read(/apps/web/src/content/generated/lessons.json)"
+      "Read(/apps/web/src/content/generated/lessons.json)",
+      "Read(~/.config/solana/cli/config.yml)"
     ]
   },
   "hooks": {

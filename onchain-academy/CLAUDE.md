@@ -42,7 +42,8 @@ Follow `docs/DEPLOY-PROGRAM.md`.
   `guard-solana` hook blocks anything else. Prefer pointing the Solana CLI config at Helius over
   putting the URL on the command line, so the key stays out of the transcript. The user sets that
   config: `solana config set` and `solana config get` both print the URL with its key, and the
-  repo's settings deny both to Claude.
+  repo's settings deny both to Claude. solana's `-v` flag and its RPC error messages also print the
+  full RPC URL, key included.
 - After a deploy, byte-verify: `solana program dump` the program and compare its SHA-256 with the
   local artifact.
 - The reproducible-build hash is published by CI to the `program-hash` branch (`docs/PROGRAM-HASH.md`).
