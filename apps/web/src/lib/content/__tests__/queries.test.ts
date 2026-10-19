@@ -66,6 +66,8 @@ const h = vi.hoisted(() => {
       title: "Alpha",
       difficulty: "beginner",
       tags: ["a"],
+      trackId: 1,
+      trackLevel: 2,
       xpPerLesson: 10,
       creator: WALLET_A,
       modules: [{ key: "m1", title: "M1", lessons: [ref("lesson-live-2")] }],
@@ -259,24 +261,42 @@ import * as q from "../queries";
 
 beforeEach(() => vi.clearAllMocks());
 
-describe("gated catalog fns — synced+active only, trackLevel asc", () => {
-  // Zeta has trackLevel 1, Alpha has none (→ sorts last): trackLevel beats
-  // title order, unset trackLevel goes to the end (#929).
-  it("getAllCourses hides deactivated + not-synced, sorts by trackLevel then title", async () => {
+describe("gated catalog fns — synced+active only, path order", () => {
+  // Alpha is on path 1 (level 2), Zeta is on no path (level 1): the path
+  // course comes first even at a higher level.
+  it("getAllCourses hides deactivated + not-synced, sorts by path, level, title", async () => {
     const res = await q.getAllCourses();
-    expect(res.map((c) => c._id)).toEqual(["course-zeta", "course-alpha"]);
+    expect(res.map((c) => c._id)).toEqual(["course-alpha", "course-zeta"]);
   });
 
-  it("byTrackLevel tie-breaks equal levels by title, sends unset last", () => {
+  it("byTrackOrder tie-breaks equal levels by title, sends unset level last", () => {
     const beta = { trackLevel: 1, title: "Beta" };
     const zeta = { trackLevel: 1, title: "Zeta" };
     const unsetA = { title: "Aardvark" };
     const unsetB = { title: "Bee" };
-    expect(q.byTrackLevel(beta, zeta)).toBeLessThan(0);
-    expect(q.byTrackLevel(zeta, beta)).toBeGreaterThan(0);
-    expect(q.byTrackLevel(unsetA, zeta)).toBeGreaterThan(0);
-    // Both unset: Infinity - Infinity is NaN (falsy) → title tie-break fires.
-    expect(q.byTrackLevel(unsetA, unsetB)).toBeLessThan(0);
+    expect(q.byTrackOrder(beta, zeta)).toBeLessThan(0);
+    expect(q.byTrackOrder(zeta, beta)).toBeGreaterThan(0);
+    expect(q.byTrackOrder(unsetA, zeta)).toBeGreaterThan(0);
+    expect(q.byTrackOrder(unsetA, unsetB)).toBeLessThan(0);
+  });
+
+  it("byTrackOrder treats trackId 0, unset and null alike: after every path", () => {
+    const onPath = { trackId: 3, trackLevel: 4, title: "Zeta" };
+    expect(
+      q.byTrackOrder({ trackLevel: 1, title: "A" }, onPath)
+    ).toBeGreaterThan(0);
+    expect(
+      q.byTrackOrder({ trackId: 0, trackLevel: 0, title: "A" }, onPath)
+    ).toBeGreaterThan(0);
+    expect(
+      q.byTrackOrder({ trackId: null, trackLevel: null, title: "A" }, onPath)
+    ).toBeGreaterThan(0);
+    expect(
+      q.byTrackOrder(
+        { trackId: 0, trackLevel: 0, title: "B" },
+        { trackLevel: 0, title: "A" }
+      )
+    ).toBeGreaterThan(0);
   });
 
   it("getCourseBySlug admits synced+active, rejects deactivated", async () => {
@@ -336,10 +356,11 @@ describe("gated catalog fns — synced+active only, trackLevel asc", () => {
   });
 
   it("getRecommendedCourses excludes ids + gates + sorts", async () => {
-    const res = await q.getRecommendedCourses(["course-zeta"]);
-    expect(res.map((c) => c._id)).toEqual(["course-alpha"]);
+    const res = await q.getRecommendedCourses(["course-alpha"]);
+    expect(res.map((c) => c._id)).toEqual(["course-zeta"]);
+    // Same order as the catalog: [0] is the Continue card's default course.
     const all = await q.getRecommendedCourses([]);
-    expect(all.map((c) => c._id)).toEqual(["course-zeta", "course-alpha"]);
+    expect(all.map((c) => c._id)).toEqual(["course-alpha", "course-zeta"]);
   });
 
   it("getAllCourseTags / getAllCourseLessonCounts only synced+active", async () => {
@@ -376,6 +397,101 @@ describe("getLessonByIdForGrading — UNGATED (deactivated course still grades)"
     expect(
       await q.getLessonByIdForGrading("course-zeta", "lesson-off-1")
     ).toBeNull();
+  });
+});
+
+describe("byTrackOrder — learning-path order", () => {
+  // The bundle's courses at 128af0f6 with their source titles: every course
+  // is still trackId 0 / trackLevel 0.
+  const today = [
+    [
+      "course-btc-to-sol-evolution",
+      "From Bitcoin to Solana: The Evolution of Blockchain Technology",
+    ],
+    [
+      "course-digital-assets",
+      "Digital Assets, Tokenization & Token Extensions",
+    ],
+    ["course-mastering-anchor-v2", "Master Anchor V2"],
+    ["course-pilula-solana-superteam", "Pílula Solana & Superteam"],
+    ["course-rust-ts-fundamentals", "Rust & TypeScript Fundamentals for Web3"],
+    [
+      "course-solana-hackathon-expert",
+      "Solana Hackathon Expert: Build a Winning Project",
+    ],
+    ["course-solana-payments-commerce", "Solana Payments & Commerce"],
+    [
+      "course-solana-speedrun",
+      "Solana Speedrun: Inicie sua jornada onchain em minutos",
+    ],
+    ["course-visao-geral-solana", "Visão Geral da Blockchain Solana"],
+  ].map(([_id, title]) => ({
+    _id: _id!,
+    title: title!,
+    trackId: 0,
+    trackLevel: 0,
+  }));
+
+  // The staged content values (not live yet): [trackId, trackLevel].
+  const staged: Record<string, [number, number]> = {
+    "course-solana-speedrun": [1, 1],
+    "course-visao-geral-solana": [1, 2],
+    "course-btc-to-sol-evolution": [1, 3],
+    "course-solana-hackathon-expert": [2, 1],
+    "course-rust-ts-fundamentals": [3, 1],
+    "course-solana-payments-commerce": [3, 2],
+    "course-digital-assets": [3, 3],
+    "course-mastering-anchor-v2": [3, 4],
+  };
+  const withStaged = today.map((c) => {
+    const [trackId, trackLevel] = staged[c._id] ?? [0, 0];
+    return { ...c, trackId, trackLevel };
+  });
+
+  // The comparator this replaced (#929), as the reference for "unchanged".
+  const legacy = (a: (typeof today)[number], b: (typeof today)[number]) =>
+    a.trackLevel - b.trackLevel ||
+    (a.title < b.title ? -1 : a.title > b.title ? 1 : 0);
+
+  const ids = (cs: { _id: string }[]) => cs.map((c) => c._id);
+
+  it("leaves today's order unchanged", () => {
+    const expected = [
+      "course-digital-assets",
+      "course-btc-to-sol-evolution",
+      "course-mastering-anchor-v2",
+      "course-pilula-solana-superteam",
+      "course-rust-ts-fundamentals",
+      "course-solana-hackathon-expert",
+      "course-solana-payments-commerce",
+      "course-solana-speedrun",
+      "course-visao-geral-solana",
+    ];
+    expect(ids([...today].sort(legacy))).toEqual(expected);
+    expect(ids([...today].sort(q.byTrackOrder))).toEqual(expected);
+    expect(ids([...today].reverse().sort(q.byTrackOrder))).toEqual(expected);
+  });
+
+  it("with the staged values: Speedrun first, paths contiguous, off-path last", () => {
+    const sorted = [...withStaged].sort(q.byTrackOrder);
+    expect(ids(sorted)).toEqual([
+      "course-solana-speedrun",
+      "course-visao-geral-solana",
+      "course-btc-to-sol-evolution",
+      "course-solana-hackathon-expert",
+      "course-rust-ts-fundamentals",
+      "course-solana-payments-commerce",
+      "course-digital-assets",
+      "course-mastering-anchor-v2",
+      "course-pilula-solana-superteam",
+    ]);
+    expect(sorted.map((c) => c.trackId)).toEqual([1, 1, 1, 2, 3, 3, 3, 3, 0]);
+    // The old comparator: the 0/0 course first, then Rust & TS (level 1, "R"
+    // beats "S") ahead of Speedrun.
+    expect(ids([...withStaged].sort(legacy)).slice(0, 2)).toEqual([
+      "course-pilula-solana-superteam",
+      "course-rust-ts-fundamentals",
+    ]);
   });
 });
 

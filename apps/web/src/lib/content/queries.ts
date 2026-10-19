@@ -117,20 +117,31 @@ function byField<T>(pick: (x: T) => string | null) {
 const byTitle = byField<{ title: string | null }>((x) => x.title);
 const byName = byField<{ name: string | null }>((x) => x.name);
 
+type TrackOrdered = {
+  trackId?: number | null;
+  trackLevel?: number | null;
+  title: string | null;
+};
+
+function ascending(a: number, b: number): number {
+  return a < b ? -1 : a > b ? 1 : 0;
+}
+
 /**
- * Learner-facing catalog order (#929): `trackLevel` ascending (unset sorts
- * last), title as tie-break — so the entry course renders first, not whichever
- * title happens to sort first. Admin reads stay alphabetical.
+ * Learner-facing course order, shared by the catalog and recommendations (the
+ * dashboard Continue card offers `getRecommendedCourses()[0]`): learning path
+ * first (`trackId` ascending; 0/unset means "not on a path" and sorts after
+ * every path), then position in the path (`trackLevel` ascending, unset last,
+ * #929), then title. Grouping by path keeps paths from interleaving, so path 1
+ * level 1 is the default first course. Admin reads stay alphabetical.
  */
-export function byTrackLevel(
-  a: { trackLevel?: number; title: string | null },
-  b: { trackLevel?: number; title: string | null }
-): number {
-  // Two unset levels subtract to NaN, which is falsy — so they fall through
-  // to the title tie-break rather than comparing as equal-and-stable.
+export function byTrackOrder(a: TrackOrdered, b: TrackOrdered): number {
+  const path = (c: TrackOrdered) => c.trackId || Number.POSITIVE_INFINITY;
+  const level = (c: TrackOrdered) => c.trackLevel ?? Number.POSITIVE_INFINITY;
   return (
-    (a.trackLevel ?? Number.POSITIVE_INFINITY) -
-      (b.trackLevel ?? Number.POSITIVE_INFINITY) || byTitle(a, b)
+    ascending(path(a), path(b)) ||
+    ascending(level(a), level(b)) ||
+    byTitle(a, b)
   );
 }
 
@@ -299,7 +310,7 @@ export async function getAllCourses(locale?: string): Promise<Course[]> {
   return courses
     .filter((c) => !isCourseUnlisted(c))
     .map((c) => projectLocalizedCourse(c, locale))
-    .sort(byTrackLevel);
+    .sort(byTrackOrder);
 }
 
 /**
@@ -673,7 +684,7 @@ export async function getRecommendedCourses(
         learningPathTitleFor(c._id)
       )
     )
-    .sort(byTrackLevel);
+    .sort(byTrackOrder);
 }
 
 export async function getAllCourseTags(): Promise<
