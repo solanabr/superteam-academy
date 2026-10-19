@@ -153,6 +153,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           error: sanitizeReason(e.message),
           phase: e.phase,
           courseIntact: e.courseIntact,
+          ...(e.errorId ? { errorId: e.errorId } : {}),
         },
         { status }
       );

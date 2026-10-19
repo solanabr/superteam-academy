@@ -1,5 +1,6 @@
 import { BN } from "@coral-xyz/anchor";
 import type { PublicKey } from "@solana/web3.js";
+import { ERROR_IDS } from "@/constants/errorIds";
 
 /**
  * Pure mappers + validators for the v-next `create_course` / `update_course`
@@ -61,6 +62,109 @@ export function isValidLessonCount(value: unknown): value is number {
   );
 }
 
+// `track_id` is a u16 and `track_level` a u8 on-chain. 0 is the content
+// schema's "unset" default, so a real value is 1..=max.
+export const MAX_TRACK_ID = 65_535;
+export const MAX_TRACK_LEVEL = 255;
+
+function isIntInRange(value: unknown, max: number): value is number {
+  return (
+    typeof value === "number" &&
+    Number.isInteger(value) &&
+    value >= 1 &&
+    value <= max
+  );
+}
+
+/**
+ * What made a mainnet `create_course` unsafe to send. `backendSignerUnknown`:
+ * no backend signer key could be read, so a creator equal to it can't be ruled out.
+ */
+export type CourseIdentityProblem =
+  | "trackId"
+  | "trackLevel"
+  | "creator"
+  | "backendSignerUnknown";
+
+/** Client-facing text for a refusal; the per-course detail goes to the log. */
+export const MAINNET_COURSE_IDENTITY_MESSAGE =
+  "Refused on mainnet: a course needs a real track id, track level and an instructor creator wallet (not a platform key). These are permanent once created. The server log (COURSE_IDENTITY_001) names the failed check.";
+
+export class MainnetCourseIdentityError extends Error {
+  readonly errorId = ERROR_IDS.MAINNET_COURSE_IDENTITY_REFUSED;
+
+  constructor(
+    readonly courseId: string,
+    readonly problems: readonly CourseIdentityProblem[],
+    detail: string
+  ) {
+    super(detail);
+    this.name = "MainnetCourseIdentityError";
+  }
+}
+
+/** What the mainnet identity guard needs to know besides the course itself. */
+export interface CourseIdentityGuard {
+  /**
+   * Whether `create_course` would land on mainnet. Resolve it fail-closed
+   * (`isMainnetFailClosed` in ./network): anything not proven devnet or
+   * localnet counts as mainnet.
+   */
+  mainnet: boolean;
+  /** Config.authority: `create_course` only lands when the signer equals it. */
+  authority: PublicKey;
+  /**
+   * Backend signer keys from every source at hand (on-chain
+   * Config.backend_signer, the env key). On mainnet an empty list refuses.
+   */
+  backendSigners: readonly PublicKey[];
+}
+
+/**
+ * `creator`, `track_id` and `track_level` are written once by `create_course`
+ * and nothing can update them; on mainnet the only fix is close + recreate,
+ * which wipes every enrolled learner's progress. So on mainnet, refuse a course
+ * whose track id or level is not an integer in range (the BorshCoder writes
+ * NaN/undefined/null as 0, truncates floats and coerces strings/booleans; only
+ * out-of-range integers throw), or whose creator is a platform key, or when no
+ * backend signer key is known to compare against. Deliberately no override
+ * flag. Off mainnet it returns immediately.
+ *
+ * @throws {MainnetCourseIdentityError}
+ */
+export function assertMainnetCourseIdentity(
+  course: Pick<
+    CreateCourseOnChainParams,
+    "courseId" | "creator" | "trackId" | "trackLevel"
+  >,
+  guard: CourseIdentityGuard
+): void {
+  if (!guard.mainnet) return;
+
+  const problems: CourseIdentityProblem[] = [];
+  if (!isIntInRange(course.trackId, MAX_TRACK_ID)) problems.push("trackId");
+  if (!isIntInRange(course.trackLevel, MAX_TRACK_LEVEL)) {
+    problems.push("trackLevel");
+  }
+  if (
+    [guard.authority, ...guard.backendSigners].some((k) =>
+      k.equals(course.creator)
+    )
+  ) {
+    problems.push("creator");
+  }
+  if (guard.backendSigners.length === 0) problems.push("backendSignerUnknown");
+  if (problems.length === 0) return;
+
+  throw new MainnetCourseIdentityError(
+    course.courseId,
+    problems,
+    `create_course(${course.courseId}) refused on mainnet (${problems.join(", ")}): ` +
+      `trackId=${String(course.trackId)} trackLevel=${String(course.trackLevel)} ` +
+      `creator=${course.creator.toBase58()}`
+  );
+}
+
 /**
  * Encode a 256-bit live-lesson mask (`[u64; 4]` as bigints) to the `BN[4]`
  * Anchor's BorshCoder serializes into `new_active_lessons`.
@@ -77,10 +181,15 @@ export function encodeActiveLessonsMask(mask: ActiveLessonsMask): BN[] {
  * Assemble the v-next `create_course` on-chain params. No mask encoding: the
  * program derives `active_lessons = dense_mask(lessonCount)` itself, so the
  * client only sends `lessonCount` and never `min_completions_for_reward`.
+ *
+ * Runs {@link assertMainnetCourseIdentity} first, so no create params exist
+ * for a mainnet course with an unset track/level or a platform-key creator.
  */
 export function buildCreateCourseOnChainParams(
-  input: CreateCourseOnChainParams
+  input: CreateCourseOnChainParams,
+  guard: CourseIdentityGuard
 ): CreateCourseOnChainParams {
+  assertMainnetCourseIdentity(input, guard);
   return {
     courseId: input.courseId,
     creator: input.creator,

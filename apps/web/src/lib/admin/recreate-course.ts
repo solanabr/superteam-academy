@@ -10,16 +10,24 @@ import {
 } from "@/lib/content/deployment-writes";
 import { recordCourseRecreated } from "@/lib/content/changelog-writes";
 import { fetchCourse } from "@/lib/solana/academy-reads";
+import { isMainnetCluster } from "@/lib/solana/network";
 import { findCoursePDA, getProgramId } from "@/lib/solana/pda";
 import {
   assertCreatorAllowed,
   closeCoursePda,
   deployCoursePda,
   getAuthorityPublicKey,
+  getPlatformBackendSigners,
   setCourseCollectionPda,
   updateCoursePda,
   type CreateCourseAdminParams,
 } from "@/lib/solana/admin-signer";
+import {
+  assertMainnetCourseIdentity,
+  MAINNET_COURSE_IDENTITY_MESSAGE,
+  MainnetCourseIdentityError,
+} from "@/lib/solana/course-write-params";
+import { logError } from "@/lib/logging";
 import {
   difficultyToNumber,
   getMissingCourseFields,
@@ -136,7 +144,9 @@ export class RecreateCourseError extends Error {
   constructor(
     message: string,
     readonly phase: RecreatePhase,
-    readonly courseIntact: boolean
+    readonly courseIntact: boolean,
+    /** Set when a known guard refused (see ERROR_IDS). */
+    readonly errorId?: string
   ) {
     super(message);
     this.name = "RecreateCourseError";
@@ -318,6 +328,45 @@ export async function preflightRecreate(
   }
   if (!PublicKey.isOnCurve(creator!.toBytes())) {
     refuse(`Instructor wallet "${creatorWallet}" is off-curve`);
+  }
+  // Mainnet identity guard, the same one deployCoursePda runs, but here it
+  // fires BEFORE the close. Ignores allowUnusualCreator. Reuses the genesis
+  // hash read above (fail-closed: anything but devnet's counts as mainnet).
+  // Only the label/host can say mainnet while the devnet-only check above
+  // stands; the guard keeps a mainnet recreate from closing a course it would
+  // then refuse to create.
+  const mainnet =
+    isMainnetCluster(serverEnv.SOLANA_RPC_URL) ||
+    genesisHash! !== DEVNET_GENESIS_HASH;
+  try {
+    assertMainnetCourseIdentity(
+      {
+        courseId,
+        creator: creator!,
+        trackId: course!.trackId ?? 0,
+        trackLevel: course!.trackLevel ?? 0,
+      },
+      {
+        mainnet,
+        authority: authority!,
+        backendSigners: mainnet
+          ? await getPlatformBackendSigners(connection)
+          : [],
+      }
+    );
+  } catch (e) {
+    if (!(e instanceof MainnetCourseIdentityError)) throw e;
+    logError({
+      errorId: e.errorId,
+      error: e,
+      context: { courseId, problems: e.problems },
+    });
+    throw new RecreateCourseError(
+      MAINNET_COURSE_IDENTITY_MESSAGE,
+      "preflight",
+      true,
+      e.errorId
+    );
   }
   try {
     assertCreatorAllowed(creator!, authority!, courseId, allowUnusualCreator);

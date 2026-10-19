@@ -1,5 +1,12 @@
-import { describe, it, expect, beforeEach, afterAll } from "vitest";
-import { resolveSolanaNetwork, networkFromRpcUrl } from "../network";
+import { describe, it, expect, beforeEach, afterAll, vi } from "vitest";
+import {
+  resolveSolanaNetwork,
+  networkFromRpcUrl,
+  isMainnetCluster,
+  isLoopbackRpc,
+  isMainnetFailClosed,
+  DEVNET_GENESIS_HASH,
+} from "../network";
 
 const ORIGINAL = process.env.NEXT_PUBLIC_SOLANA_NETWORK;
 
@@ -75,5 +82,100 @@ describe("networkFromRpcUrl", () => {
     expect(networkFromRpcUrl("https://rpc.example.com/?net=mainnet")).toBe(
       "unknown"
     );
+  });
+});
+
+describe("isMainnetCluster", () => {
+  it("is true when the label says mainnet, whatever the RPC host", () => {
+    for (const label of ["mainnet", "mainnet-beta", " Mainnet "]) {
+      process.env.NEXT_PUBLIC_SOLANA_NETWORK = label;
+      expect(isMainnetCluster("https://rpc.example.com")).toBe(true);
+    }
+  });
+
+  it("is true when the RPC host says mainnet, even under a devnet label", () => {
+    process.env.NEXT_PUBLIC_SOLANA_NETWORK = "devnet";
+    expect(isMainnetCluster("https://mainnet.helius-rpc.com/?api-key=x")).toBe(
+      true
+    );
+    delete process.env.NEXT_PUBLIC_SOLANA_NETWORK;
+    expect(isMainnetCluster("https://api.mainnet-beta.solana.com")).toBe(true);
+  });
+
+  it("is false for devnet and localnet", () => {
+    process.env.NEXT_PUBLIC_SOLANA_NETWORK = "devnet";
+    expect(isMainnetCluster("https://api.devnet.solana.com")).toBe(false);
+    process.env.NEXT_PUBLIC_SOLANA_NETWORK = "localnet";
+    expect(isMainnetCluster("http://127.0.0.1:8899")).toBe(false);
+    delete process.env.NEXT_PUBLIC_SOLANA_NETWORK;
+    expect(isMainnetCluster("http://localhost:8899")).toBe(false);
+  });
+});
+
+describe("isLoopbackRpc", () => {
+  it("is true for localhost, 127.x and ::1", () => {
+    expect(isLoopbackRpc("http://localhost:8899")).toBe(true);
+    expect(isLoopbackRpc("http://127.0.0.1:8899")).toBe(true);
+    expect(isLoopbackRpc("http://127.1.2.3:8899")).toBe(true);
+    expect(isLoopbackRpc("http://[::1]:8899")).toBe(true);
+  });
+
+  it("is false for remote hosts and lookalikes", () => {
+    expect(isLoopbackRpc("https://api.devnet.solana.com")).toBe(false);
+    expect(isLoopbackRpc("https://127.0.0.1.example.com")).toBe(false);
+    expect(isLoopbackRpc("https://localhost.example.com")).toBe(false);
+    expect(isLoopbackRpc("not a url")).toBe(false);
+  });
+});
+
+describe("isMainnetFailClosed", () => {
+  const MAINNET_GENESIS = "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d";
+  const genesis = (hash: string) => vi.fn(async () => hash);
+
+  it("is true for an anonymous host with an unset label when the genesis is not devnet's", async () => {
+    for (const host of [
+      "https://staked.helius-rpc.com/?api-key=x",
+      "https://rpc.ankr.com/solana",
+      "https://rpc.st.academy",
+      "https://acme.rpcpool.com",
+    ]) {
+      expect(await isMainnetFailClosed(host, genesis(MAINNET_GENESIS))).toBe(
+        true
+      );
+    }
+  });
+
+  it("is false when an anonymous host answers with devnet's genesis", async () => {
+    expect(
+      await isMainnetFailClosed(
+        "https://rpc.example.com",
+        genesis(DEVNET_GENESIS_HASH)
+      )
+    ).toBe(false);
+  });
+
+  it("is true when the genesis lookup throws", async () => {
+    const failing = vi.fn(async (): Promise<string> => {
+      throw new Error("rpc down");
+    });
+    expect(await isMainnetFailClosed("https://rpc.example.com", failing)).toBe(
+      true
+    );
+  });
+
+  it("is false for loopback without asking for the genesis", async () => {
+    const g = genesis(MAINNET_GENESIS);
+    expect(await isMainnetFailClosed("http://127.0.0.1:8899", g)).toBe(false);
+    expect(g).not.toHaveBeenCalled();
+  });
+
+  it("is true when the label says mainnet, even with devnet's genesis", async () => {
+    process.env.NEXT_PUBLIC_SOLANA_NETWORK = "mainnet";
+    expect(
+      await isMainnetFailClosed(
+        "https://rpc.example.com",
+        genesis(DEVNET_GENESIS_HASH)
+      )
+    ).toBe(true);
   });
 });

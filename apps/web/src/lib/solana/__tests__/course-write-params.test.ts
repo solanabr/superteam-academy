@@ -1,32 +1,46 @@
 import { describe, it, expect } from "vitest";
 import { BN } from "@coral-xyz/anchor";
-import { PublicKey } from "@solana/web3.js";
+import { Keypair, PublicKey } from "@solana/web3.js";
+import { ERROR_IDS } from "@/constants/errorIds";
 import {
   buildCreateCourseOnChainParams,
   buildUpdateCourseOnChainParams,
   encodeActiveLessonsMask,
   isValidLessonCount,
+  MainnetCourseIdentityError,
   type ActiveLessonsMask,
+  type CourseIdentityGuard,
+  type CreateCourseOnChainParams,
 } from "../course-write-params";
 
 const CREATOR = new PublicKey("11111111111111111111111111111112");
 const PREREQ = new PublicKey("SysvarRent111111111111111111111111111111111");
 
+const AUTHORITY = Keypair.generate().publicKey;
+const BACKEND_SIGNER = Keypair.generate().publicKey;
+const INSTRUCTOR = Keypair.generate().publicKey;
+function guard(mainnet: boolean): CourseIdentityGuard {
+  return { mainnet, authority: AUTHORITY, backendSigners: [BACKEND_SIGNER] };
+}
+
 describe("buildCreateCourseOnChainParams (v-next create_course)", () => {
   it("emits the v-next CreateCourseParams shape: lessonCount kept, NO minCompletionsForReward", () => {
-    const params = buildCreateCourseOnChainParams({
-      courseId: "solana-101",
-      creator: CREATOR,
-      contentTxId: Array(32).fill(0) as number[],
-      lessonCount: 12,
-      difficulty: 1,
-      xpPerLesson: 10,
-      trackId: 1,
-      trackLevel: 1,
-      prerequisite: PREREQ,
-      creatorRewardXp: 30,
-      collection: null,
-    });
+    const params = buildCreateCourseOnChainParams(
+      {
+        courseId: "solana-101",
+        creator: CREATOR,
+        contentTxId: Array(32).fill(0) as number[],
+        lessonCount: 12,
+        difficulty: 1,
+        xpPerLesson: 10,
+        trackId: 1,
+        trackLevel: 1,
+        prerequisite: PREREQ,
+        creatorRewardXp: 30,
+        collection: null,
+      },
+      guard(false)
+    );
 
     expect(Object.keys(params).sort()).toEqual(
       [
@@ -48,6 +62,123 @@ describe("buildCreateCourseOnChainParams (v-next create_course)", () => {
     expect(params).not.toHaveProperty("minCompletionsForReward");
     expect(params.lessonCount).toBe(12);
     expect(params.creator.equals(CREATOR)).toBe(true);
+  });
+});
+
+describe("mainnet course identity guard (in buildCreateCourseOnChainParams)", () => {
+  function course(
+    overrides: Partial<CreateCourseOnChainParams> = {}
+  ): CreateCourseOnChainParams {
+    return {
+      courseId: "course-speedrun",
+      creator: INSTRUCTOR,
+      contentTxId: Array(32).fill(0) as number[],
+      lessonCount: 8,
+      difficulty: 1,
+      xpPerLesson: 10,
+      trackId: 1,
+      trackLevel: 1,
+      prerequisite: null,
+      creatorRewardXp: 30,
+      collection: null,
+      ...overrides,
+    };
+  }
+
+  function refusal(
+    input: CreateCourseOnChainParams,
+    g: CourseIdentityGuard = guard(true)
+  ): MainnetCourseIdentityError {
+    try {
+      buildCreateCourseOnChainParams(input, g);
+    } catch (e) {
+      expect(e).toBeInstanceOf(MainnetCourseIdentityError);
+      return e as MainnetCourseIdentityError;
+    }
+    throw new Error("expected the guard to refuse");
+  }
+
+  it("refuses trackId 0 on mainnet, with the error id", () => {
+    const err = refusal(course({ trackId: 0 }));
+    expect(err.problems).toEqual(["trackId"]);
+    expect(err.errorId).toBe(ERROR_IDS.MAINNET_COURSE_IDENTITY_REFUSED);
+    expect(err.courseId).toBe("course-speedrun");
+  });
+
+  it("refuses trackLevel 0 on mainnet", () => {
+    expect(refusal(course({ trackLevel: 0 })).problems).toEqual(["trackLevel"]);
+  });
+
+  it("refuses creator == platform authority on mainnet", () => {
+    expect(refusal(course({ creator: AUTHORITY })).problems).toEqual([
+      "creator",
+    ]);
+  });
+
+  it("refuses creator == any known backend signer on mainnet", () => {
+    const other = Keypair.generate().publicKey;
+    const g = { ...guard(true), backendSigners: [other, BACKEND_SIGNER] };
+    expect(refusal(course({ creator: BACKEND_SIGNER }), g).problems).toEqual([
+      "creator",
+    ]);
+  });
+
+  it("refuses on mainnet when no backend signer key is known", () => {
+    const g = { ...guard(true), backendSigners: [] };
+    expect(refusal(course(), g).problems).toEqual(["backendSignerUnknown"]);
+  });
+
+  it("reports every problem at once", () => {
+    expect(
+      refusal(course({ trackId: 0, trackLevel: 0, creator: AUTHORITY }))
+        .problems
+    ).toEqual(["trackId", "trackLevel", "creator"]);
+  });
+
+  // The BorshCoder writes NaN/undefined/null as 0, truncates floats and throws
+  // only on out-of-range integers, so anything but an in-range integer is
+  // refused here rather than left to the encoder.
+  it.each([Number.NaN, 1.5, -1, 65_536])(
+    "refuses a trackId of %s on mainnet",
+    (trackId) => {
+      expect(refusal(course({ trackId })).problems).toEqual(["trackId"]);
+    }
+  );
+
+  it.each([Number.NaN, 2.5, 256])(
+    "refuses a trackLevel of %s on mainnet",
+    (trackLevel) => {
+      expect(refusal(course({ trackLevel })).problems).toEqual(["trackLevel"]);
+    }
+  );
+
+  it("allows a mainnet course with a real track, level and instructor", () => {
+    const params = buildCreateCourseOnChainParams(
+      course({ trackId: 3, trackLevel: 4 }),
+      guard(true)
+    );
+    expect(params.trackId).toBe(3);
+    expect(params.trackLevel).toBe(4);
+    expect(params.creator.equals(INSTRUCTOR)).toBe(true);
+  });
+
+  it("allows the u16/u8 maximums on mainnet", () => {
+    expect(() =>
+      buildCreateCourseOnChainParams(
+        course({ trackId: 65_535, trackLevel: 255 }),
+        guard(true)
+      )
+    ).not.toThrow();
+  });
+
+  it("does nothing off mainnet: 0/0, creator == authority, no backend signer all build", () => {
+    const params = buildCreateCourseOnChainParams(
+      course({ trackId: 0, trackLevel: 0, creator: AUTHORITY }),
+      { ...guard(false), backendSigners: [] }
+    );
+    expect(params.trackId).toBe(0);
+    expect(params.trackLevel).toBe(0);
+    expect(params.creator.equals(AUTHORITY)).toBe(true);
   });
 });
 

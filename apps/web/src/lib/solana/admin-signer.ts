@@ -12,6 +12,7 @@ import "server-only";
  * This module MUST ONLY be imported from API routes (server-side).
  */
 import { Connection, Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
+import type { PublicKeyInitData } from "@solana/web3.js";
 import { AnchorProvider, Program } from "@coral-xyz/anchor";
 import type { Idl } from "@coral-xyz/anchor";
 import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
@@ -24,6 +25,7 @@ import {
 } from "@metaplex-foundation/umi-web3js-adapters";
 import bs58 from "bs58";
 import { serverEnv } from "@/lib/env.server";
+import { logError } from "@/lib/logging";
 import {
   padContentTxId,
   assertMaskMatchesLockfile,
@@ -38,10 +40,15 @@ import {
 import {
   buildCreateCourseOnChainParams,
   buildUpdateCourseOnChainParams,
+  MAINNET_COURSE_IDENTITY_MESSAGE,
+  MainnetCourseIdentityError,
   type ActiveLessonsMask,
   type CreateCourseOnChainParams,
   type UpdateCourseOnChainParams,
 } from "./course-write-params";
+import { getBackendSigner } from "./academy-program";
+import { fetchConfig } from "./academy-reads";
+import { isMainnetFailClosed } from "./network";
 
 // ---------------------------------------------------------------------------
 // Anchor method builder types — mirrors the pattern in academy-program.ts
@@ -84,6 +91,8 @@ export interface AdminSignerResult {
   success: boolean;
   signature?: string;
   error?: string;
+  /** Set when a known guard refused before anything was sent (see ERROR_IDS). */
+  errorId?: string;
 }
 
 export interface DeployAchievementResult {
@@ -206,6 +215,8 @@ const MPL_CORE_PROGRAM_ID = new PublicKey(
 // ---------------------------------------------------------------------------
 
 let _connection: Connection | null = null;
+// Genesis hash of `_connection`, cached after the first successful lookup.
+let _genesisHash: string | null = null;
 let _authority: Keypair | null = null;
 let _program: Program | null = null;
 let _initialized = false;
@@ -280,6 +291,36 @@ export function isAdminSignerReady(): boolean {
 export function getAuthorityPublicKey(): PublicKey | null {
   const { ready } = initialize();
   return ready && _authority ? _authority.publicKey : null;
+}
+
+/**
+ * Backend signer keys a mainnet course creator must not be: the on-chain
+ * Config.backend_signer and the BACKEND_SIGNER_SECRET key, whichever can be
+ * read. An empty list means neither could, and the mainnet guard refuses.
+ */
+export async function getPlatformBackendSigners(
+  connection: Connection
+): Promise<PublicKey[]> {
+  const keys: PublicKey[] = [];
+  try {
+    const config: unknown = await fetchConfig(connection, getProgramId());
+    if (config && typeof config === "object" && "backend_signer" in config) {
+      keys.push(new PublicKey(config.backend_signer as PublicKeyInitData));
+    }
+  } catch {
+    // Unreadable Config: fall back to the env key below.
+  }
+  try {
+    keys.push(getBackendSigner().publicKey);
+  } catch {
+    // BACKEND_SIGNER_SECRET unset or malformed.
+  }
+  return keys;
+}
+
+async function connectionGenesisHash(): Promise<string> {
+  _genesisHash ??= await _connection!.getGenesisHash();
+  return _genesisHash;
 }
 
 // ---------------------------------------------------------------------------
@@ -434,7 +475,8 @@ export function assertCreatorAllowed(
  * Deploy a new Course PDA on-chain.
  *
  * The authority keypair acts as both the payer and the config.authority.
- * The platform wallet is used as the creator (XP reward recipient for creator rewards).
+ * `creatorWallet` becomes the course creator (the creator-reward recipient);
+ * on mainnet it must not be a platform key and the track id/level must be set.
  * content_tx_id is zeroed — update it later via updateCoursePda when the
  * Arweave transaction ID is known.
  */
@@ -442,7 +484,7 @@ export async function deployCoursePda(
   params: CreateCourseAdminParams
 ): Promise<AdminSignerResult> {
   const { ready } = initialize();
-  if (!ready || !_program || !_authority) {
+  if (!ready || !_program || !_authority || !_connection) {
     return {
       success: false,
       error: "Admin signer not configured (PROGRAM_AUTHORITY_SECRET missing)",
@@ -482,6 +524,40 @@ export async function deployCoursePda(
         `deployCoursePda(${params.courseId}): creatorWallet "${params.creatorWallet}" is off-curve`
       );
     }
+    // Fail-closed: mainnet unless the connection the tx goes through is
+    // loopback or answers with devnet's genesis hash.
+    const mainnet = await isMainnetFailClosed(
+      _connection.rpcEndpoint,
+      connectionGenesisHash
+    );
+    // Built before assertCreatorAllowed so that on mainnet the identity guard
+    // inside the builder (unset track/level, platform-key creator; no override)
+    // is what refuses, with its error id. A no-op on devnet and localnet.
+    const onChainParams: CreateCourseOnChainParams =
+      buildCreateCourseOnChainParams(
+        {
+          courseId: params.courseId,
+          creator,
+          contentTxId: Array(32).fill(0) as number[],
+          lessonCount: params.lessonCount,
+          difficulty: params.difficulty,
+          xpPerLesson: params.xpPerLesson,
+          trackId: params.trackId,
+          trackLevel: params.trackLevel,
+          prerequisite,
+          creatorRewardXp: params.creatorRewardXp,
+          // Collection is created after the PDA exists; backfilled via updateCoursePda.
+          collection: null,
+        },
+        {
+          mainnet,
+          authority: _authority.publicKey,
+          backendSigners: mainnet
+            ? await getPlatformBackendSigners(_connection)
+            : [],
+        }
+      );
+
     // On-curve but still wrong: reject denylisted well-knowns and the platform
     // authority itself (both would mis-mint the creator reward). Opt-out via
     // params.allowUnusualCreator for the deliberate case.
@@ -491,22 +567,6 @@ export async function deployCoursePda(
       params.courseId,
       params.allowUnusualCreator ?? false
     );
-
-    const onChainParams: CreateCourseOnChainParams =
-      buildCreateCourseOnChainParams({
-        courseId: params.courseId,
-        creator,
-        contentTxId: Array(32).fill(0) as number[],
-        lessonCount: params.lessonCount,
-        difficulty: params.difficulty,
-        xpPerLesson: params.xpPerLesson,
-        trackId: params.trackId,
-        trackLevel: params.trackLevel,
-        prerequisite,
-        creatorRewardXp: params.creatorRewardXp,
-        // Collection is created after the PDA exists; backfilled via updateCoursePda.
-        collection: null,
-      });
 
     const methods = _program.methods as unknown as AdminMethods;
 
@@ -522,6 +582,18 @@ export async function deployCoursePda(
 
     return { success: true, signature };
   } catch (err: unknown) {
+    if (err instanceof MainnetCourseIdentityError) {
+      logError({
+        errorId: err.errorId,
+        error: err,
+        context: { courseId: params.courseId, problems: err.problems },
+      });
+      return {
+        success: false,
+        error: MAINNET_COURSE_IDENTITY_MESSAGE,
+        errorId: err.errorId,
+      };
+    }
     const message = err instanceof Error ? err.message : String(err);
     console.error(
       `[admin-signer] deployCoursePda(${params.courseId}): ${message}`
