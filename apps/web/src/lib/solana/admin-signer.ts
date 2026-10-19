@@ -11,8 +11,14 @@ import "server-only";
  *
  * This module MUST ONLY be imported from API routes (server-side).
  */
-import { Connection, Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
-import type { PublicKeyInitData } from "@solana/web3.js";
+import {
+  Connection,
+  Keypair,
+  PublicKey,
+  SystemProgram,
+  TransactionExpiredTimeoutError,
+} from "@solana/web3.js";
+import type { PublicKeyInitData, Transaction } from "@solana/web3.js";
 import { AnchorProvider, Program } from "@coral-xyz/anchor";
 import type { Idl } from "@coral-xyz/anchor";
 import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
@@ -26,6 +32,7 @@ import {
 import bs58 from "bs58";
 import { serverEnv } from "@/lib/env.server";
 import { logError } from "@/lib/logging";
+import { ERROR_IDS } from "@/constants/errorIds";
 import {
   padContentTxId,
   assertMaskMatchesLockfile,
@@ -48,7 +55,11 @@ import {
 } from "./course-write-params";
 import { getBackendSigner } from "./academy-program";
 import { fetchConfig } from "./academy-reads";
-import { isMainnetFailClosed } from "./network";
+import {
+  CLUSTER_UNVERIFIED_MESSAGE,
+  ClusterUnverifiedError,
+  isMainnetFailClosed,
+} from "./network";
 
 // ---------------------------------------------------------------------------
 // Anchor method builder types — mirrors the pattern in academy-program.ts
@@ -58,6 +69,7 @@ interface MethodBuilder {
   accountsPartial(accounts: Record<string, PublicKey>): MethodBuilder;
   signers(signers: Keypair[]): MethodBuilder;
   rpc(): Promise<string>;
+  transaction(): Promise<Transaction>;
 }
 
 interface AdminMethods {
@@ -89,6 +101,10 @@ interface CreateAchievementTypeOnChainParams {
 
 export interface AdminSignerResult {
   success: boolean;
+  /**
+   * On failure, set by deployCoursePda when the tx timed out unconfirmed: it
+   * may still land.
+   */
   signature?: string;
   error?: string;
   /** Set when a known guard refused before anything was sent (see ERROR_IDS). */
@@ -129,6 +145,13 @@ export interface CreateCourseAdminParams {
    * exists for a future admin-UI "I know what I'm doing" override.
    */
   allowUnusualCreator?: boolean;
+  /**
+   * Genesis hash of `SOLANA_RPC_URL` the caller has just read (the recreate
+   * pre-flight). deployCoursePda still reads it from the connection that sends
+   * the tx and uses this only if that lookup throws, so a create after the
+   * close doesn't hinge on a second lookup.
+   */
+  genesisHash?: string;
 }
 
 export interface UpdateCourseAdminParams {
@@ -215,8 +238,6 @@ const MPL_CORE_PROGRAM_ID = new PublicKey(
 // ---------------------------------------------------------------------------
 
 let _connection: Connection | null = null;
-// Genesis hash of `_connection`, cached after the first successful lookup.
-let _genesisHash: string | null = null;
 let _authority: Keypair | null = null;
 let _program: Program | null = null;
 let _initialized = false;
@@ -318,9 +339,142 @@ export async function getPlatformBackendSigners(
   return keys;
 }
 
-async function connectionGenesisHash(): Promise<string> {
-  _genesisHash ??= await _connection!.getGenesisHash();
-  return _genesisHash;
+const errorText = (err: unknown): string =>
+  err instanceof Error ? err.message : String(err);
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Hard cap on {@link sendAndSettle}. Expiry is decided by block height, so on
+ * a healthy RPC it ends when the blockhash expires (~150 blocks, 64-80s on a
+ * congested mainnet); the cap only ends a wait the RPC never answers.
+ */
+const SETTLE_TIMEOUT_MS = 90_000;
+const SETTLE_POLL_MS = 2_000;
+/** Per-call bound inside the settle loop, so one hung call can't stall it. */
+const RPC_CALL_TIMEOUT_MS = 10_000;
+
+/** `p`, or a rejection after `ms`: a hung RPC call counts as no answer. */
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error(`RPC call timed out after ${ms}ms`)),
+      ms
+    );
+  });
+  return Promise.race([p, timeout]).finally(() => clearTimeout(timer));
+}
+
+/**
+ * A send's outcome once it can no longer change. `notLanded` covers a tx that
+ * failed on-chain and one whose blockhash expired before it landed.
+ * `unknown`: the RPC gave no definitive answer within SETTLE_TIMEOUT_MS, so
+ * the tx may or may not have landed.
+ */
+export type SettledResult =
+  | { outcome: "landed"; signature: string }
+  | { outcome: "notLanded"; error: string }
+  | { outcome: "unknown"; signature: string; error: string };
+
+/**
+ * Sign and send `tx` with a fresh blockhash, then poll until it is confirmed,
+ * failed on-chain, or the chain is past that blockhash's last valid block
+ * height with no trace of it. `.rpc()` gives up after 30s while a tx can still
+ * land for about as long again, so its failure can't tell "didn't land" from
+ * "still in flight". A send error doesn't decide either: a proxy can forward
+ * the tx and still answer with an error.
+ */
+async function sendAndSettle(
+  connection: Connection,
+  signer: Keypair,
+  tx: Transaction
+): Promise<SettledResult> {
+  const deadline = Date.now() + SETTLE_TIMEOUT_MS;
+  const call = <T>(p: Promise<T>): Promise<T> =>
+    withTimeout(
+      p,
+      Math.max(0, Math.min(RPC_CALL_TIMEOUT_MS, deadline - Date.now()))
+    );
+
+  let blockhash: string;
+  let lastValidBlockHeight: number;
+  let fetchedAtSlot: number;
+  try {
+    const latest = await call(
+      connection.getLatestBlockhashAndContext("confirmed")
+    );
+    ({ blockhash, lastValidBlockHeight } = latest.value);
+    fetchedAtSlot = latest.context.slot;
+  } catch (err) {
+    // Nothing was signed or sent yet.
+    return { outcome: "notLanded", error: errorText(err) };
+  }
+  tx.feePayer = signer.publicKey;
+  tx.recentBlockhash = blockhash;
+  tx.sign(signer);
+  const signature = bs58.encode(tx.signature!);
+
+  let sendError: string | undefined;
+  try {
+    await call(
+      connection.sendRawTransaction(tx.serialize(), {
+        preflightCommitment: "confirmed",
+      })
+    );
+  } catch (err) {
+    sendError = errorText(err);
+  }
+
+  let lastError = sendError ?? "no definitive answer from the RPC";
+  for (;;) {
+    try {
+      // Height first (getEpochInfo returns it with its slot), then the status
+      // from a node at or past that slot, with history search so the answer
+      // doesn't depend on the node's short status cache.
+      const { blockHeight, absoluteSlot } = await call(
+        connection.getEpochInfo({
+          commitment: "confirmed",
+          minContextSlot: fetchedAtSlot,
+        })
+      );
+      const { context, value: status } = await call(
+        connection.getSignatureStatus(signature, {
+          searchTransactionHistory: true,
+        })
+      );
+      const settled =
+        status?.confirmationStatus === "confirmed" ||
+        status?.confirmationStatus === "finalized";
+      if (settled && status.err) {
+        return {
+          outcome: "notLanded",
+          error: `failed on-chain: ${JSON.stringify(status.err)}`,
+        };
+      }
+      if (settled) return { outcome: "landed", signature };
+      // A tx can only land at or below lastValidBlockHeight.
+      if (
+        blockHeight != null &&
+        blockHeight > lastValidBlockHeight &&
+        !status &&
+        context.slot >= absoluteSlot
+      ) {
+        const expired = "its blockhash expired before it landed";
+        return {
+          outcome: "notLanded",
+          error: sendError ? `${sendError}; ${expired}` : expired,
+        };
+      }
+    } catch (err) {
+      lastError = errorText(err);
+    }
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) {
+      return { outcome: "unknown", signature, error: lastError };
+    }
+    await sleep(Math.min(SETTLE_POLL_MS, remaining));
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -524,11 +678,21 @@ export async function deployCoursePda(
         `deployCoursePda(${params.courseId}): creatorWallet "${params.creatorWallet}" is off-curve`
       );
     }
-    // Fail-closed: mainnet unless the connection the tx goes through is
-    // loopback or answers with devnet's genesis hash.
+    // Fail-closed: mainnet unless the connection the tx goes through answers
+    // with devnet's genesis hash (or is loopback serving localnet). Read per
+    // call. The caller's hash is only a fallback for a failed lookup; with
+    // neither, it refuses with ClusterUnverifiedError.
+    const connection = _connection;
     const mainnet = await isMainnetFailClosed(
-      _connection.rpcEndpoint,
-      connectionGenesisHash
+      connection.rpcEndpoint,
+      async () => {
+        try {
+          return await connection.getGenesisHash();
+        } catch (err) {
+          if (params.genesisHash) return params.genesisHash;
+          throw err;
+        }
+      }
     );
     // Built before assertCreatorAllowed so that on mainnet the identity guard
     // inside the builder (unset track/level, platform-key creator; no override)
@@ -553,7 +717,7 @@ export async function deployCoursePda(
           mainnet,
           authority: _authority.publicKey,
           backendSigners: mainnet
-            ? await getPlatformBackendSigners(_connection)
+            ? await getPlatformBackendSigners(connection)
             : [],
         }
       );
@@ -594,11 +758,29 @@ export async function deployCoursePda(
         errorId: err.errorId,
       };
     }
-    const message = err instanceof Error ? err.message : String(err);
+    if (err instanceof ClusterUnverifiedError) {
+      logError({
+        errorId: ERROR_IDS.CLUSTER_UNVERIFIED,
+        error: err,
+        context: { courseId: params.courseId },
+      });
+      return {
+        success: false,
+        error: CLUSTER_UNVERIFIED_MESSAGE,
+        errorId: ERROR_IDS.CLUSTER_UNVERIFIED,
+      };
+    }
+    const message = errorText(err);
     console.error(
       `[admin-signer] deployCoursePda(${params.courseId}): ${message}`
     );
-    return { success: false, error: message };
+    return {
+      success: false,
+      error: message,
+      ...(err instanceof TransactionExpiredTimeoutError
+        ? { signature: err.signature }
+        : {}),
+    };
   }
 }
 
@@ -672,6 +854,9 @@ export async function updateCoursePda(
  * the Course PDA DOES NOT EXIST and `enroll` / `complete_lesson` have no account
  * to read. See the orchestrator for the pre-flight + retry that bound that window.
  *
+ * Waits for a definitive outcome ({@link sendAndSettle}): the caller acts on
+ * "landed" or "not landed", and must treat "unknown" as possibly closed.
+ *
  * Learner progress does NOT survive. Enrollment PDAs are not passed to
  * `close_course`, but the recreated course gets a new generation, and the
  * program rejects older-generation enrollments (`StaleEnrollment`, 6034) and
@@ -687,38 +872,39 @@ export async function updateCoursePda(
  *   - `is_active` → true, `collection` → default, `content_tx_id` → zeroes.
  *     The orchestrator restores the first two; a re-sync restores the third.
  */
-export async function closeCoursePda(
-  courseId: string
-): Promise<AdminSignerResult> {
+export async function closeCoursePda(courseId: string): Promise<SettledResult> {
   const { ready } = initialize();
-  if (!ready || !_program || !_authority) {
+  if (!ready || !_program || !_authority || !_connection) {
     return {
-      success: false,
+      outcome: "notLanded",
       error: "Admin signer not configured (PROGRAM_AUTHORITY_SECRET missing)",
     };
   }
 
+  let tx: Transaction;
   try {
     const [configPDA] = findConfigPDA(getProgramId());
     const [coursePDA] = findCoursePDA(courseId, getProgramId());
-
     const methods = _program.methods as unknown as AdminMethods;
-
-    const signature = await methods
+    tx = await methods
       .closeCourse(courseId)
       .accountsPartial({
         config: configPDA,
         course: coursePDA,
         authority: _authority.publicKey,
       })
-      .rpc();
-
-    return { success: true, signature };
+      .transaction();
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error(`[admin-signer] closeCoursePda(${courseId}): ${message}`);
-    return { success: false, error: message };
+    return { outcome: "notLanded", error: errorText(err) };
   }
+
+  const result = await sendAndSettle(_connection, _authority, tx);
+  if (result.outcome !== "landed") {
+    console.error(
+      `[admin-signer] closeCoursePda(${courseId}): ${result.outcome}: ${result.error}`
+    );
+  }
+  return result;
 }
 
 /**

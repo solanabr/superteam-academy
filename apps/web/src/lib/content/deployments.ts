@@ -6,6 +6,7 @@ import { unstable_cache } from "next/cache";
 import { env } from "@/lib/env";
 import { serverEnv } from "@/lib/env.server";
 import { COURSES_CACHE_TAG } from "@/lib/content/queries";
+import { isMaintenanceGateStale } from "@/lib/content/maintenance-gate";
 import { createCookielessClient } from "@/lib/supabase/cookieless";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
@@ -191,6 +192,8 @@ export async function getDeploymentById(
  *
  * Uncached (unlike {@link getActiveDeployments}) — this gates real-time writes,
  * so a stale "not gated" read defeats the whole point. A single indexed PK read.
+ * A gate older than MAINTENANCE_GATE_TTL_MS was left by an interrupted
+ * recreate and no longer counts.
  *
  * Fails CLOSED: a Supabase read failure returns `true` (treat as gated), the
  * same safety-over-availability posture as this module's other outage path
@@ -204,7 +207,9 @@ export async function isCourseInMaintenance(
 ): Promise<boolean> {
   try {
     const row = await getDeploymentById(courseId);
-    return row?.in_maintenance === true;
+    return (
+      row?.in_maintenance === true && !isMaintenanceGateStale(row.updated_at)
+    );
   } catch (err) {
     logError({
       errorId: ERROR_IDS.COURSE_MAINTENANCE_CHECK_FAILED,

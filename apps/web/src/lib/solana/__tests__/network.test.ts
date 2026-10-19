@@ -5,7 +5,9 @@ import {
   isMainnetCluster,
   isLoopbackRpc,
   isMainnetFailClosed,
+  ClusterUnverifiedError,
   DEVNET_GENESIS_HASH,
+  MAINNET_GENESIS_HASH,
 } from "../network";
 
 const ORIGINAL = process.env.NEXT_PUBLIC_SOLANA_NETWORK;
@@ -129,8 +131,12 @@ describe("isLoopbackRpc", () => {
 });
 
 describe("isMainnetFailClosed", () => {
-  const MAINNET_GENESIS = "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d";
+  const LOCALNET_GENESIS = "4MpjwXxqwNqkk8xjyRZQ3TGb3x8wGbSCH1ifwCWTLcEf";
   const genesis = (hash: string) => vi.fn(async () => hash);
+  const failing = () =>
+    vi.fn(async (): Promise<string> => {
+      throw new Error("rpc down");
+    });
 
   it("is true for an anonymous host with an unset label when the genesis is not devnet's", async () => {
     for (const host of [
@@ -139,9 +145,9 @@ describe("isMainnetFailClosed", () => {
       "https://rpc.st.academy",
       "https://acme.rpcpool.com",
     ]) {
-      expect(await isMainnetFailClosed(host, genesis(MAINNET_GENESIS))).toBe(
-        true
-      );
+      expect(
+        await isMainnetFailClosed(host, genesis(MAINNET_GENESIS_HASH))
+      ).toBe(true);
     }
   });
 
@@ -154,28 +160,70 @@ describe("isMainnetFailClosed", () => {
     ).toBe(false);
   });
 
-  it("is true when the genesis lookup throws", async () => {
-    const failing = vi.fn(async (): Promise<string> => {
-      throw new Error("rpc down");
-    });
-    expect(await isMainnetFailClosed("https://rpc.example.com", failing)).toBe(
-      true
-    );
+  it("is true for a remote host with a genesis that is neither devnet's nor mainnet's", async () => {
+    expect(
+      await isMainnetFailClosed(
+        "https://rpc.example.com",
+        genesis(LOCALNET_GENESIS)
+      )
+    ).toBe(true);
   });
 
-  it("is false for loopback without asking for the genesis", async () => {
-    const g = genesis(MAINNET_GENESIS);
-    expect(await isMainnetFailClosed("http://127.0.0.1:8899", g)).toBe(false);
-    expect(g).not.toHaveBeenCalled();
+  it("throws ClusterUnverifiedError when the genesis lookup fails", async () => {
+    await expect(
+      isMainnetFailClosed("https://rpc.example.com", failing())
+    ).rejects.toBeInstanceOf(ClusterUnverifiedError);
   });
 
-  it("is true when the label says mainnet, even with devnet's genesis", async () => {
+  it("throws ClusterUnverifiedError on loopback too: the lookup comes first", async () => {
+    await expect(
+      isMainnetFailClosed("http://127.0.0.1:8899", failing())
+    ).rejects.toBeInstanceOf(ClusterUnverifiedError);
+  });
+
+  it("is true for a loopback URL that fronts mainnet (tunnel, forked validator)", async () => {
+    for (const host of ["http://127.0.0.1:8899", "http://localhost:8899"]) {
+      const g = genesis(MAINNET_GENESIS_HASH);
+      expect(await isMainnetFailClosed(host, g)).toBe(true);
+      expect(g).toHaveBeenCalledTimes(1);
+    }
+  });
+
+  it("is false for loopback serving localnet or devnet", async () => {
+    expect(
+      await isMainnetFailClosed(
+        "http://127.0.0.1:8899",
+        genesis(LOCALNET_GENESIS)
+      )
+    ).toBe(false);
+    expect(
+      await isMainnetFailClosed(
+        "http://localhost:8899",
+        genesis(DEVNET_GENESIS_HASH)
+      )
+    ).toBe(false);
+  });
+
+  it("asks for the genesis on every call, so a changed answer is seen", async () => {
+    const g = vi
+      .fn<() => Promise<string>>()
+      .mockResolvedValueOnce(DEVNET_GENESIS_HASH)
+      .mockResolvedValueOnce(MAINNET_GENESIS_HASH);
+    expect(await isMainnetFailClosed("https://rpc.example.com", g)).toBe(false);
+    expect(await isMainnetFailClosed("https://rpc.example.com", g)).toBe(true);
+    expect(g).toHaveBeenCalledTimes(2);
+  });
+
+  it("is true when the label says mainnet, even with devnet's genesis or a failing lookup", async () => {
     process.env.NEXT_PUBLIC_SOLANA_NETWORK = "mainnet";
     expect(
       await isMainnetFailClosed(
         "https://rpc.example.com",
         genesis(DEVNET_GENESIS_HASH)
       )
+    ).toBe(true);
+    expect(
+      await isMainnetFailClosed("https://rpc.example.com", failing())
     ).toBe(true);
   });
 });

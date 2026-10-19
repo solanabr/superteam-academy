@@ -219,7 +219,10 @@ Actions:
 - **Deactivate** — `POST /api/admin/courses/deactivate`. Sets the on-chain
   Course `is_active = false` and mirrors it to `onchain_deployments.is_active`,
   which hides the course from learners without deleting the PDA.
-- **Reactivate** — `POST /api/admin/courses/reactivate`. The inverse.
+- **Reactivate** — `POST /api/admin/courses/reactivate`. The inverse. Refused
+  (503) while the course is in maintenance, because a mainnet recreate keeps the
+  course inactive until the close. A gate left by an interrupted recreate
+  expires after 10 minutes, after which reactivate and a new recreate work again.
 
 The `is_active` column is deliberately **tri-state**: `NULL` means "no explicit
 flag" and the gate coalesces it to `true`. Deactivation is opt-in.

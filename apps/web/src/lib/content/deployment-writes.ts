@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { env } from "@/lib/env";
 import { serverEnv } from "@/lib/env.server";
 import type { Database } from "@/lib/supabase/types";
+import { MAINTENANCE_GATE_TTL_MS } from "@/lib/content/maintenance-gate";
 
 /**
  * On-chain deployment WRITE seam (SP2-B Task 6).
@@ -87,7 +88,7 @@ export async function writeCourseOnChainStatus(
   contentId: string,
   status: string,
   coursePda: string,
-  txSignature: string
+  txSignature: string | null
 ): Promise<void> {
   await upsertDeployment({
     content_id: contentId,
@@ -150,17 +151,20 @@ export async function writeCourseMaintenanceFlag(
 /**
  * Conditionally ACQUIRE the per-course maintenance gate (F2 — mutual
  * exclusion). Returns `true` iff THIS call flipped the gate from
- * unset/`false` to `true`; `false` means another recreate already holds it.
- * Never silently overwrites an existing lock — that is what makes this an
- * acquire rather than a last-writer-wins `SET`.
+ * unset/`false` to `true`, or took over one older than
+ * MAINTENANCE_GATE_TTL_MS (left by an interrupted recreate); `false` means
+ * another recreate holds it. Never silently overwrites a live lock — that is
+ * what makes this an acquire rather than a last-writer-wins `SET`.
  *
  * Two steps because the row keyed on `content_id` may not exist yet (a
  * course whose deploy predates this gate, or one never mirrored into
  * `onchain_deployments`):
  *
- *   1. Try to flip an EXISTING, unlocked row:
+ *   1. Try to flip an EXISTING, unlocked (or stale) row:
  *      `UPDATE ... SET in_maintenance = true WHERE content_id = ? AND
- *      in_maintenance = false`. If this touches a row, we hold the gate.
+ *      (in_maintenance = false OR updated_at < now - TTL)`. If this touches a
+ *      row, we hold the gate. Postgres re-checks the WHERE after a concurrent
+ *      update commits, so two stale takeovers can't both win.
  *   2. Zero rows touched means either "no row yet" or "row exists and is
  *      already locked" — a plain `INSERT` distinguishes them: it fails on
  *      the `content_id` primary-key conflict if a row already exists (locked
@@ -176,13 +180,16 @@ export async function acquireCourseMaintenanceGate(
   courseId: string
 ): Promise<boolean> {
   const client = createServiceClient();
-  const nowIso = new Date().toISOString();
+  const now = Date.now();
+  const nowIso = new Date(now).toISOString();
+  const staleBefore = new Date(now - MAINTENANCE_GATE_TTL_MS).toISOString();
 
+  // Unlocked, or locked so long ago that the recreate holding it is dead.
   const { data: flipped, error: updateErr } = await client
     .from("onchain_deployments")
     .update({ in_maintenance: true, updated_at: nowIso })
     .eq("content_id", courseId)
-    .eq("in_maintenance", false)
+    .or(`in_maintenance.eq.false,updated_at.lt."${staleBefore}"`)
     .select("content_id");
   if (updateErr) {
     throw new Error(

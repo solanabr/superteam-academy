@@ -124,7 +124,11 @@ describe("POST /api/admin/courses/recreate — the confirmation gate", () => {
     expect(body.action).toBe("recreated");
     // The destroyed counters reach the caller so the UI can warn about the loss.
     expect(body.lostCounters.totalCompletions).toBe(42);
-    expect(recreateCourse).toHaveBeenCalledWith(COURSE_ID, false);
+    expect(recreateCourse).toHaveBeenCalledWith(
+      COURSE_ID,
+      false,
+      "admin-user-1"
+    );
   });
 
   it("threads allowUnusualCreator through WHEN it is paired with the acknowledgement gate", async () => {
@@ -134,7 +138,11 @@ describe("POST /api/admin/courses/recreate — the confirmation gate", () => {
       allowUnusualCreator: true,
       acknowledgeUnusualCreator: COURSE_ID,
     });
-    expect(recreateCourse).toHaveBeenCalledWith(COURSE_ID, true);
+    expect(recreateCourse).toHaveBeenCalledWith(
+      COURSE_ID,
+      true,
+      "admin-user-1"
+    );
   });
 });
 
@@ -184,7 +192,11 @@ describe("POST /api/admin/courses/recreate — F4: allowUnusualCreator requires 
   it("proceeds with allowUnusualCreator=false when it is simply omitted (no acknowledgement needed)", async () => {
     const res = await post({ courseId: COURSE_ID, confirm: COURSE_ID });
     expect(res.status).toBe(200);
-    expect(recreateCourse).toHaveBeenCalledWith(COURSE_ID, false);
+    expect(recreateCourse).toHaveBeenCalledWith(
+      COURSE_ID,
+      false,
+      "admin-user-1"
+    );
   });
 });
 
@@ -262,6 +274,26 @@ describe("POST /api/admin/courses/recreate — error mapping", () => {
     expect(body.error).toMatch(
       /currently NOT deployed on-chain; use Deploy to recreate it/i
     );
+  });
+
+  it("maps a mainnet freeze abort to 409, course intact, with what happened to is_active", async () => {
+    recreateCourse.mockRejectedValue(
+      new RecreateCourseError(
+        'Course "x" now has 1 enrollment(s): someone enrolled after the pre-flight. It was deactivated and then re-activated. Nothing was closed.',
+        "freeze",
+        true
+      )
+    );
+    const res = await post({ courseId: COURSE_ID, confirm: COURSE_ID });
+    expect(res.status).toBe(409);
+    const body = (await res.json()) as {
+      phase: string;
+      courseIntact: boolean;
+      error: string;
+    };
+    expect(body.phase).toBe("freeze");
+    expect(body.courseIntact).toBe(true);
+    expect(body.error).toMatch(/deactivated and then re-activated/);
   });
 
   it("maps a failed close to 500 but reports the course as intact", async () => {

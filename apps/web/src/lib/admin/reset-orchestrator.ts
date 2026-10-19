@@ -1,3 +1,5 @@
+import type { AdminCourse } from "@/lib/content/queries";
+import { DEVNET_GENESIS_HASH } from "@/lib/solana/network";
 import type {
   ExpectedByCourseId,
   ExpectedCourseValues,
@@ -5,7 +7,6 @@ import type {
   ResetVerifyResult,
 } from "./reset-verify";
 import type { RecreateCourseResult, RecreatePlan } from "./recreate-course";
-import type { AdminCourse } from "@/lib/content/queries";
 
 /**
  * B3 — bulk v-next devnet reset orchestration (#356), the PURE core.
@@ -38,15 +39,6 @@ export const EXPECTED_VNEXT_SIZE = 253;
 
 /** The #356 creator reward: 30 XP (down from 750). */
 export const DEFAULT_CREATOR_REWARD_XP = 30;
-
-/**
- * Devnet's public, stable genesis hash — mirrors the constant inside
- * `recreate-course.ts` (which is not exported). Used by the CLI's belt-and-
- * suspenders devnet assert before any `--execute` (the recreate path re-checks
- * it internally too; this fails the run loudly before the loop even starts).
- */
-export const DEVNET_GENESIS_HASH =
-  "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG";
 
 /**
  * The creator guard override is NEVER enabled by the bulk path. A course whose

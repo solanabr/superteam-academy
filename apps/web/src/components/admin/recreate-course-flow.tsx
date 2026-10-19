@@ -121,10 +121,12 @@ export function RecreateCourseFlow({
             label={t("result.closeSignature")}
             value={result.closeSignature}
           />
-          <SummaryRow
-            label={t("result.createSignature")}
-            value={result.createSignature}
-          />
+          {result.createSignature && (
+            <SummaryRow
+              label={t("result.createSignature")}
+              value={result.createSignature}
+            />
+          )}
           <SummaryRow
             label={t("result.attempts")}
             value={String(result.createAttempts)}

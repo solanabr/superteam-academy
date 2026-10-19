@@ -13,6 +13,8 @@ import { platformFrozenResponse } from "@/lib/platform/freeze-http";
 import { serverEnv } from "@/lib/env.server";
 import { updateCoursePda } from "@/lib/solana/admin-signer";
 import { writeCourseActive } from "@/lib/content/deployment-writes";
+import { isCourseInMaintenance } from "@/lib/content/deployments";
+import { MAINTENANCE_GATE_TTL_MIN } from "@/lib/content/maintenance-gate";
 import { recordCourseReactivated } from "@/lib/content/changelog-writes";
 import { fetchCourse } from "@/lib/solana/academy-reads";
 import { getProgramId } from "@/lib/solana/pda";
@@ -44,6 +46,17 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     courseId = body.courseId;
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  // A mainnet recreate deactivates the course so nobody can enroll before the
+  // close. Re-activating it mid-recreate would reopen that window.
+  if (await isCourseInMaintenance(courseId)) {
+    return NextResponse.json(
+      {
+        error: `A course recreate holds this course's maintenance gate. Try again once it finishes; a gate left by an interrupted recreate expires after ${MAINTENANCE_GATE_TTL_MIN} minutes.`,
+      },
+      { status: 503, headers: { "Retry-After": "60" } }
+    );
   }
 
   const result = await updateCoursePda({ courseId, newIsActive: true });

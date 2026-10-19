@@ -69,6 +69,10 @@ export function isMainnetCluster(rpcUrl: string): boolean {
 export const DEVNET_GENESIS_HASH =
   "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG";
 
+/** Solana mainnet-beta's genesis hash (public, stable). */
+export const MAINNET_GENESIS_HASH =
+  "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d";
+
 /** True for an RPC on this machine (localnet / solana-test-validator). */
 export function isLoopbackRpc(rpcUrl: string): boolean {
   let host: string;
@@ -84,22 +88,45 @@ export function isLoopbackRpc(rpcUrl: string): boolean {
   );
 }
 
+/** Client-facing text for {@link ClusterUnverifiedError}; the cause is logged. */
+export const CLUSTER_UNVERIFIED_MESSAGE =
+  "Refused: could not verify which cluster the RPC is on, so nothing was sent. Retry; the server log (COURSE_IDENTITY_002) has the cause.";
+
+/** The RPC's genesis hash could not be read, so the cluster is unknown. */
+export class ClusterUnverifiedError extends Error {
+  constructor(cause: unknown) {
+    super(
+      `Could not verify the RPC's cluster: the genesis hash lookup failed (${cause instanceof Error ? cause.message : String(cause)})`
+    );
+    this.name = "ClusterUnverifiedError";
+  }
+}
+
 /**
  * Fail-closed cluster check for writes that can never be undone. Mainnet
- * unless the RPC is loopback (localnet) or answers with devnet's genesis hash.
- * A label or host saying mainnet also counts, and a genesis lookup that throws
- * counts as mainnet. Unlike {@link isMainnetCluster}, an RPC host that names no
+ * unless the RPC answers with devnet's genesis hash, or is loopback and answers
+ * with a genesis that is neither devnet's nor mainnet's (localnet). A loopback
+ * URL alone proves nothing: a tunnel or a forked validator can front mainnet.
+ * A label or host saying mainnet counts without a lookup. Pass a lookup that
+ * reads the RPC, not a per-process cache: a cached answer can outlive an RPC
+ * or env change. Unlike {@link isMainnetCluster}, an RPC host that names no
  * cluster cannot read as "not mainnet" here.
+ *
+ * @throws {ClusterUnverifiedError} when the genesis lookup fails and nothing
+ * else says mainnet. Callers refuse the write.
  */
 export async function isMainnetFailClosed(
   rpcUrl: string,
   genesisHash: () => Promise<string>
 ): Promise<boolean> {
   if (isMainnetCluster(rpcUrl)) return true;
-  if (isLoopbackRpc(rpcUrl)) return false;
+  let hash: string;
   try {
-    return (await genesisHash()) !== DEVNET_GENESIS_HASH;
-  } catch {
-    return true;
+    hash = await genesisHash();
+  } catch (err) {
+    throw new ClusterUnverifiedError(err);
   }
+  if (hash === DEVNET_GENESIS_HASH) return false;
+  if (hash === MAINNET_GENESIS_HASH) return true;
+  return !isLoopbackRpc(rpcUrl);
 }
