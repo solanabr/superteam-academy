@@ -335,14 +335,18 @@ This catches both failure modes:
 Publishing is a **pull request**, not a deploy step and not a button:
 
 1. Merge the content change into `solanabr/academy-courses` (its own CI gates it).
-2. In this repo: bump `"sha"` in `apps/web/content.lock`.
-3. Run `pnpm --filter web compile-content`.
-4. Commit `content.lock` **and** the regenerated bundle together.
-5. Merge → Vercel redeploys with the new content.
+2. Within the hour, the Content release workflow
+   (`.github/workflows/content-release.yml`) opens or updates the release PR: it
+   bumps `"sha"` in `apps/web/content.lock` and commits the recompiled bundle.
+3. Review and merge it → Vercel redeploys with the new content.
+4. Run Deploy in `/admin/courses` for every course the PR flags with "slot set
+   changed" (see [Slot activation](#slot-activation--what-is-automated-and-the-one-step-that-is-not)).
 
-The `/admin/courses` screen shows the pin-vs-HEAD drift and hands you a prefilled
-PR link. It holds **no write token** and performs no repo write. See
-[ADMIN.md](./ADMIN.md).
+A manual run (Actions → Content release → Run workflow) releases right away or
+pins a specific academy-courses commit. The workflow needs a one-time GitHub App
+setup; without it, release by hand: edit the lock, run
+`pnpm --filter web compile-content`, and commit both. [ADMIN.md](./ADMIN.md)
+covers both. The app itself holds **no write token**.
 
 > New courses are still **invisible to learners** until they are deployed on-chain
 > from `/admin/courses` — compiling the bundle is necessary but not sufficient.
@@ -394,16 +398,19 @@ requires `flags & active == active` (see `isCourseComplete` in
   still lists the retired slot as active, so every learner who had not already
   completed that now-deleted lesson can never satisfy the gate. They cannot
   complete it either — it is gone from the bundle.
-- Adding a lesson without syncing is benign by comparison: the new slot is
-  simply not yet required.
+- Adding a lesson without syncing does not block finalization, but the new
+  lesson cannot be completed: `complete_lesson` rejects a slot that is not
+  active with `LessonOutOfBounds` until the sync runs.
 
-**After any bump that retires a slot:**
+**After any release that changes a course's slot set:**
 
-1. [ ] Bump `content.lock` and commit the regenerated bundle together (see
-       [Publishing new content](#publishing-new-content); CI byte-compares).
-2. [ ] Run the course sync from `/admin/courses` so `active_lessons` matches the
-       lockfile. `assertMaskMatchesLockfile` guards the signed mask against a
-       mismatch, so a wrong mask is refused rather than written.
+1. [ ] Merge the release PR (see [Publishing new content](#publishing-new-content);
+       CI byte-compares the bundle). Its body flags every course whose
+       `slots.lock.json` changed.
+2. [ ] Run the course sync from `/admin/courses` for each flagged course so
+       `active_lessons` matches the lockfile. `assertMaskMatchesLockfile` guards
+       the signed mask against a mismatch, so a wrong mask is refused rather
+       than written.
 3. [ ] Spot-check a learner mid-course can still finalize.
 
 **Symptom to recognize:** completion 500s citing an unslotted lesson mean the

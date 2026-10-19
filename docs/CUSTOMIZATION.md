@@ -195,10 +195,10 @@ Adding or changing a course is therefore three steps, in order:
 
 1. Merge the content change in `academy-courses`. Its CI runs the content linter
    (`packages/content-lint`), which is what certifies a tree as publishable.
-2. In this repo, bump `"sha"` in `apps/web/content.lock`, run
-   `pnpm --filter web compile-content`, and commit the lock **and** the
-   regenerated bundle together. CI byte-compares a fresh recompile against what
-   you committed, so a stale bundle or a hand-edit fails the build.
+2. Merge the release PR the Content release workflow opens in this repo
+   within the hour. It bumps `"sha"` in `apps/web/content.lock` and commits the
+   regenerated bundle; CI byte-compares a fresh recompile against it, so a stale
+   bundle or a hand-edit fails the build.
 3. Deploy it on-chain from `/admin` — a course stays invisible to learners until
    its `onchain_deployments` row is `synced` and active. See
    [ADMIN.md](./ADMIN.md).
@@ -284,8 +284,9 @@ content docs and are validated by the linter.
 
 #### 2. Publish it
 
-Merge in `academy-courses`, then bump `apps/web/content.lock` and recompile the
-bundle (see [ADMIN.md](./ADMIN.md)). The achievement now exists in the app.
+Merge in `academy-courses`, then merge the release PR that bumps
+`apps/web/content.lock` (see [ADMIN.md](./ADMIN.md)). The achievement now exists
+in the app.
 
 #### 3. Deploy on-chain
 
@@ -477,5 +478,5 @@ compile time or fails closed at runtime.
 
 The content linter (`packages/content-lint`) validates every block in
 `academy-courses` CI. Once your block ships in a released version of the schema,
-content authors can use it; the change reaches the app via a `content.lock` bump
-(see [ADMIN.md](./ADMIN.md)).
+content authors can use it; the change reaches the app through the content
+release PR (see [ADMIN.md](./ADMIN.md)).

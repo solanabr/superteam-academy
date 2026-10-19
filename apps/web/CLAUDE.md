@@ -203,7 +203,12 @@ pnpm --filter web compile-content   # from repo root (or: cd apps/web && pnpm co
 - Do **not** hand-edit `src/content/generated/*`; an ESLint rule bans importing it outside
   `src/lib/content/`.
 - **Publishing new content** = a PR that bumps `content.lock` to the new SHA **and** commits the
-  regenerated bundle in the same change.
+  regenerated bundle in the same change. The Content release workflow
+  (`.github/workflows/content-release.yml`) opens it from `bot/content-release` within the hour of
+  an academy-courses merge; a human merges it, then runs Deploy for any course it flags. Never
+  commit to `bot/content-release`. Golden tests run on a fixed fixture
+  (`lib/content/__tests__/fixtures/golden-bundle.ts`), so a release never needs a test edit;
+  live-bundle checks assert invariants only (`bundle.invariants.test.ts`).
 
 ### Course translations (content i18n)
 
