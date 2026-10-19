@@ -3,9 +3,9 @@ import type { ReactElement } from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import { RecreateCourseFlow } from "../recreate-course-flow";
 import type { DiffEntry } from "@/lib/admin/sync-diff";
 import messages from "@/messages/en.json";
+import { RecreateCourseFlow } from "../recreate-course-flow";
 
 const COURSE_ID = "course-solana-101";
 
@@ -359,21 +359,22 @@ describe("RecreateCourseFlow — FIX B: swallowed preflight load error now rende
   });
 });
 
-describe("RecreateConfirmModal — WS-D copy: on-chain counters vs untouched DB", () => {
+describe("RecreateConfirmModal — reset/preserve copy matches the Pinocchio program", () => {
   const modal = messages.admin.deployScreen.recreate.modal;
 
-  it("renders the approved, non-contradictory reset/preserve copy in the modal", async () => {
+  it("says learner on-chain progress resets and only XP/credentials stay", async () => {
     await openModal(false);
 
-    // The two adjacent lines no longer contradict: one scopes the reset to the
-    // on-chain counters, the other says the DB learner records are untouched.
+    expect(screen.getByText(modal.resetProgress)).toBeInTheDocument();
     expect(screen.getByText(modal.resetCounters)).toBeInTheDocument();
     expect(screen.getByText(modal.preserveList)).toBeInTheDocument();
 
-    // The reset line is explicitly on-chain; the preserve line is explicitly DB.
-    expect(modal.resetCounters).toMatch(/on-chain counters/i);
-    expect(modal.preserveList).toMatch(/database/i);
-    // The retired copy — "all preserved" against a bare "counters reset" — is gone.
+    // A recreate gives the course a new generation, which strands every
+    // existing enrollment (StaleEnrollment, 6034).
+    expect(modal.resetProgress).toMatch(/on-chain progress/i);
+    expect(modal.preserveList).toMatch(/XP/);
+    // The retired claims that learner progress is untouched are gone.
+    expect(screen.queryByText(/are untouched/i)).toBeNull();
     expect(screen.queryByText(/are all preserved/i)).toBeNull();
   });
 });

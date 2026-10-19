@@ -388,6 +388,7 @@ function RecreateConfirmModal({
         {/* Reset vs preserved (fixed summary). */}
         <div className="mt-3 rounded-md border border-border bg-subtle p-2.5 text-xs">
           <p className="font-semibold text-text">{t("resetHeading")}</p>
+          <p className="mt-1 text-text-2">{t("resetProgress")}</p>
           <p className="mt-1 text-text-2">
             {t("resetCounters", {
               completions: preflight.lostCounters.totalCompletions,

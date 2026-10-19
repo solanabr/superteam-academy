@@ -76,19 +76,19 @@ import {
  *      from the ABSENCE of the on-chain account, so a course whose PDA is gone
  *      shows a "Deploy" button that runs the ordinary create path.
  *
- * WHAT SURVIVES A RECREATE. Enrollment PDAs are seeded
- * `["enrollment", course_id, learner]`, are never passed to `close_course`, and
- * are physically untouched. Their stored `enrollment.course` is the Course PDA,
- * derived from `course_id` alone — so recreating under the SAME course_id
- * reproduces the IDENTICAL address and the `enrollment.course == course.key()`
- * constraint in `complete_lesson` / `finalize_course` still holds. Learner
- * lesson_flags, completed_at and already-minted XP all survive — PROVIDED the
- * recreate's `lesson_count` does not exceed what is currently live on-chain
- * (see the H3 note on {@link preflightRecreate}).
+ * LEARNER PROGRESS DOES NOT SURVIVE. On the Pinocchio program, `create_course`
+ * stamps the course with a new generation from `Config.course_nonce`, and every
+ * enrollment records the generation it was made under. Enrollment PDAs are not
+ * touched by `close_course`, but `complete_lesson`, `finalize_course`,
+ * `issue_credential` and `upgrade_credential` reject an enrollment from an older
+ * generation (`StaleEnrollment`, 6034), and `enroll` re-initialises it in place
+ * with empty lesson flags, no `completed_at` and no credential link. So a
+ * recreate resets every enrolled learner's on-chain progress in the course.
+ * XP already minted to learners and credentials already in their wallets stay.
  *
- * WHAT DOES NOT. `create_course` hard-resets `total_completions` and
- * `total_enrollments` to 0, and no instruction can write them back. The
- * pre-flight reads both counters off the live account and returns them in
+ * `create_course` also hard-resets `total_completions` and `total_enrollments`
+ * to 0, and no instruction can write them back. The pre-flight reads both
+ * counters off the live account and returns them in
  * {@link RecreateCourseResult.lostCounters} for operator visibility.
  * `is_active` and `collection` are also reset, but those we CAN restore, and
  * do — see {@link restoreAfterCreate}.
@@ -127,8 +127,9 @@ export type RecreatePhase = "preflight" | "close" | "create";
  *     call was made at all) or the close itself failed, in which case the old
  *     Course PDA is still there, unchanged. Safe to retry, safe to ignore.
  *   - `false` → THE COURSE IS DOWN. The close landed and the create did not, so
- *     the Course PDA does not exist. Enrollments and learner XP are intact, but
- *     `enroll` / `complete_lesson` revert until the PDA is recreated.
+ *     the Course PDA does not exist and `enroll` / `complete_lesson` revert until
+ *     it is recreated. Learner XP is intact; their on-chain course progress does
+ *     not carry over to the recreated course.
  *     {@link Error.message} carries the recovery instruction.
  */
 export class RecreateCourseError extends Error {
@@ -632,7 +633,7 @@ export async function recreateCourse(
     throw new RecreateCourseError(
       `Course "${courseId}" was closed but could NOT be recreated after ${CREATE_ATTEMPTS} attempts (last error: ${lastError}). ` +
         `The course is currently NOT deployed on-chain; use Deploy to recreate it. ` +
-        `Enrollments, learner progress and already-minted XP are intact, but enroll/complete_lesson will fail until the Course PDA exists again. ` +
+        `Already-minted XP is unaffected, but enrolled learners' on-chain progress does not carry over to the recreated course, and enroll/complete_lesson fail until the Course PDA exists again. ` +
         `Close signature: ${closed.signature}`,
       "create",
       false
