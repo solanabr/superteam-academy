@@ -26,59 +26,79 @@ export const LEARNER = {
   walletAddress: "E2ELearnerWa11etAddreSSxxxxxxxxxxxxxxxxxxxxxx",
 };
 
-// ── The catalog gate fixture (#711 regression, spec 2) ──────────────────────
-// Rows shaped like the `public_onchain_deployments` view. `isSynced` (one place,
-// lib/content/deployments.ts) makes a course visible iff status === "synced" AND
-// is_active !== false. So:
-//   • synced + active           → PRESENT in /courses
-//   • synced + is_active:false  → ABSENT  (a DEACTIVATED course — the #711 leak)
-//   • no row                    → ABSENT  (fail-closed)
-// content_id values are real bundle course ids; the catalog renders their slugs.
-// The public-alpha bundle carries exactly 2 courses (the track-1 ladder is
-// parked under `_draft/` in academy-courses), so the fixture is one of each
-// bucket: the flagship synced+active, the speedrun synced+is_active:false. That
-// is the minimum that keeps the spec's two-directional assertion — a present set
-// AND a deactivated absentee — and both rows are real live bundle courses, so
-// neither side can pass because the id simply does not exist. (Nothing filters
-// the catalog by language, so the PT-BR speedrun is absent for the is_active
-// reason and no other.)
-export const DEPLOYMENTS = [
-  {
-    content_id: "course-btc-to-sol-evolution",
-    kind: "course",
-    status: "synced",
-    is_active: true,
-    achievement_pda: null,
-  },
-  // The deactivated course. Must NOT appear in the catalog — this row is the
-  // permanent guard that a deactivated course can never leak back in. It is a
-  // real live bundle course, gated out only by is_active:false.
-  {
-    content_id: "course-solana-speedrun",
-    kind: "course",
-    status: "synced",
-    is_active: false,
-    achievement_pda: null,
-  },
-];
+// ── Targets, picked from the committed bundle ───────────────────────────────
+// The specs run against whatever content.lock pins, so they never name a course
+// or lesson. `pickTargets` is pure (this file stays import-free); the mock and
+// the specs each read the bundle and call it, so both sides agree.
+//
+// The learn-loop target is the first lesson (bundle course order, then module
+// order) the loop can finish by answering one quiz: prose plus exactly one quiz
+// of single-answer questions, nothing else that gates completion. Its course is
+// the active one and the next bundle course is the deactivated one. The answer
+// key comes off the same bundle, so the loop answers correctly and keeps testing
+// the graded path.
+function quizOnly(lesson) {
+  const blocks = lesson?.blocks ?? [];
+  const quizzes = blocks.filter((b) => b._type === "quiz");
+  return (
+    quizzes.length === 1 &&
+    blocks.every((b) => b._type === "prose" || b._type === "quiz") &&
+    quizzes[0].questions.every(
+      (q) => !q.multiSelect && q.options.filter((o) => o.correct).length === 1
+    )
+  );
+}
 
-// Slugs the specs assert on (kept next to the ids they map to, so a bundle rename
-// is caught here rather than silently passing).
-export const ACTIVE_COURSE_SLUGS = ["btc-to-sol-evolution"];
-export const DEACTIVATED_COURSE_SLUG = "solana-speedrun";
+export function pickTargets(courses, lessons) {
+  const lessonsById = new Map(lessons.map((l) => [l._id, l]));
+  const loop = courses
+    .flatMap((course) =>
+      course.modules.flatMap((m) =>
+        m.lessons.map((ref) => ({ course, lesson: lessonsById.get(ref._ref) }))
+      )
+    )
+    .find(({ lesson }) => quizOnly(lesson));
+  if (!loop) throw new Error("e2e: no quiz-only lesson in the bundle");
+  const deactivated = courses.find((c) => c._id !== loop.course._id);
+  if (!deactivated) throw new Error("e2e: the bundle needs a second course");
 
-// The learn-loop target (specs 1 and 4): a quiz-only lesson (prose + quiz, no
-// code block) in the active flagship. `answers` is the real answer key read off
-// the compiled bundle — the correct option differs per question, so the stepper
-// helper takes the pairs rather than one option letter for the whole quiz.
-export const LEARN_LOOP = {
-  courseId: "course-btc-to-sol-evolution",
-  courseSlug: "btc-to-sol-evolution",
-  lessonId: "lesson-b2s-hash-everything",
-  lessonSlug: "hash-everything",
-  answers: [
-    ["q1", "b"],
-    ["q2", "a"],
-    ["q3", "c"],
-  ],
-};
+  return {
+    // The catalog gate (#711 regression, spec 2). Rows shaped like the
+    // `public_onchain_deployments` view. `isSynced` (lib/content/deployments.ts)
+    // makes a course visible iff status === "synced" AND is_active !== false:
+    //   • synced + active           → PRESENT in /courses
+    //   • synced + is_active:false  → ABSENT  (a DEACTIVATED course — the #711 leak)
+    //   • no row                    → ABSENT  (fail-closed)
+    // One of each keeps the spec's two-directional assertion, and both are real
+    // bundle courses, so neither side can pass because the id does not exist.
+    DEPLOYMENTS: [
+      {
+        content_id: loop.course._id,
+        kind: "course",
+        status: "synced",
+        is_active: true,
+        achievement_pda: null,
+      },
+      {
+        content_id: deactivated._id,
+        kind: "course",
+        status: "synced",
+        is_active: false,
+        achievement_pda: null,
+      },
+    ],
+    ACTIVE_COURSE_SLUGS: [loop.course.slug.current],
+    DEACTIVATED_COURSE_SLUG: deactivated.slug.current,
+    // The learn-loop target (specs 1 and 4).
+    LEARN_LOOP: {
+      courseId: loop.course._id,
+      courseSlug: loop.course.slug.current,
+      lessonId: loop.lesson._id,
+      lessonSlug: loop.lesson.slug.current,
+      lessonTitle: loop.lesson.title,
+      answers: loop.lesson.blocks
+        .find((b) => b._type === "quiz")
+        .questions.map((q) => [q.id, q.options.find((o) => o.correct).id]),
+    },
+  };
+}

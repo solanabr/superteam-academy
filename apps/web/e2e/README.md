@@ -67,3 +67,6 @@ no network, no on-chain tx. The learner "session" is a locally-minted cookie
   deactivated one is absent, so the absence check can't pass on an empty page.
 - Fixtures (`harness/fixtures.mjs`) are the single source of truth shared by the
   mock server and the specs.
+- No spec names a course or lesson. `pickTargets` picks them from the committed
+  bundle (the active and deactivated courses, a quiz-only lesson and its answer
+  key), so a content release never needs a spec edit.

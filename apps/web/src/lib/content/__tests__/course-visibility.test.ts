@@ -3,6 +3,7 @@
 import { describe, it, expect, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 import type { DeploymentStatus } from "../deployments";
+import { coursesById } from "../store";
 import type { CourseDoc } from "../types";
 import {
   getAllCourses,
@@ -18,23 +19,16 @@ import {
  * The last hardcoded course-visibility constant (lib/courses/unlisted.ts) is
  * gone. The only thing that hides a course from discovery now is the `unlisted`
  * flag on its content doc, read by `isCourseUnlisted` in ../queries.ts as
- * `c.unlisted === true`. No course in today's bundle sets it, so the Pílula —
- * a real, synced, single-lesson course that used to be hidden by the constant —
- * is now public everywhere the catalog reaches.
+ * `c.unlisted === true`.
  *
- * Asserted against the REAL committed bundle (the entry-course-live pattern),
- * mocking only the on-chain sync gate so every course reads as synced+active.
- * The content-flag mechanism is proven by INJECTING a synthetic `unlisted: true`
- * course into the store maps and watching every listing surface drop it while
+ * Asserted against the REAL committed bundle, mocking only the on-chain sync
+ * gate so every course reads as synced+active, and without naming any course:
+ * whatever content.lock pins, every course that does not set the flag is
+ * public. The flag itself is proven by INJECTING a synthetic `unlisted: true`
+ * clone of a bundle course and watching every listing surface drop it while
  * the admin surface keeps it.
  */
 
-const PILULA_ID = "course-pilula-solana-superteam";
-const PILULA_SLUG = "pilula-solana-superteam";
-
-// A synthetic clone of the Pílula doc, flagged unlisted with a distinct id/slug,
-// injected into the store so the flag path runs end-to-end through the real
-// surfaces. Built from the actual bundle doc inside the store mock below.
 const HIDDEN_ID = "course-synthetic-unlisted";
 const HIDDEN_SLUG = "synthetic-unlisted";
 
@@ -42,11 +36,11 @@ vi.mock("@/lib/content/store", async (importActual) => {
   // Literals repeated (not the module consts) — this factory is hoisted above
   // every top-level binding in the file.
   const actual = await importActual<typeof import("@/lib/content/store")>();
-  const pilula = actual.coursesById.get("course-pilula-solana-superteam");
-  if (!pilula) throw new Error("test fixture missing the Pílula course");
+  const [first] = actual.coursesById.values();
+  if (!first) throw new Error("the committed bundle has no course to clone");
 
   const hidden: CourseDoc = {
-    ...pilula,
+    ...first,
     _id: "course-synthetic-unlisted",
     unlisted: true,
     slug: { _type: "slug", current: "synthetic-unlisted" },
@@ -87,20 +81,34 @@ vi.mock("@/lib/content/deployments", async (importActual) => {
   };
 });
 
-describe("the Pílula is public — no flag, no hiding", () => {
+/** Every bundle course that does not set the flag (the synthetic one does). */
+const publicIds = (also: (c: CourseDoc) => boolean = () => true) =>
+  [...coursesById.values()]
+    .filter((c) => c.unlisted !== true && also(c))
+    .map((c) => c._id)
+    .sort();
+const ids = (cs: { _id: string }[]) => cs.map((c) => c._id).sort();
+
+describe("every course without the flag is public", () => {
   it("appears in the catalog listing", async () => {
-    const listed = await getAllCourses();
-    expect(listed.some((c) => c._id === PILULA_ID)).toBe(true);
+    expect(ids(await getAllCourses())).toEqual(publicIds());
   });
 
   it("appears in recommendations", async () => {
-    const recommended = await getRecommendedCourses([]);
-    expect(recommended.some((c) => c._id === PILULA_ID)).toBe(true);
+    expect(ids(await getRecommendedCourses([]))).toEqual(publicIds());
   });
 
-  it("its tags rejoin the catalog filter chips", async () => {
-    const tagged = await getAllCourseTags();
-    expect(tagged.some((c) => c._id === PILULA_ID)).toBe(true);
+  it("contributes its tags to the catalog filter chips", async () => {
+    expect(ids(await getAllCourseTags())).toEqual(
+      publicIds((c) => Array.isArray(c.tags))
+    );
+  });
+
+  it("resolves by direct link", async () => {
+    for (const course of coursesById.values()) {
+      const resolved = await getCourseBySlug(course.slug.current);
+      expect(resolved?._id, course._id).toBe(course._id);
+    }
   });
 });
 
@@ -125,15 +133,8 @@ describe("the content flag still hides — a synthetic unlisted course", () => {
       false
     );
   });
-});
 
-describe("unlisted is a listing property, not an access gate", () => {
-  it("the Pílula direct link resolves", async () => {
-    const course = await getCourseBySlug(PILULA_SLUG);
-    expect(course?._id).toBe(PILULA_ID);
-  });
-
-  it("an unlisted course's direct link still resolves", async () => {
+  it("still resolves by direct link — unlisted is not an access gate", async () => {
     const course = await getCourseBySlug(HIDDEN_SLUG);
     expect(course?._id).toBe(HIDDEN_ID);
   });

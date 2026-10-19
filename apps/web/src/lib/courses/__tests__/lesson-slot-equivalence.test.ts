@@ -35,12 +35,36 @@ beforeAll(() => {
   process.env.SUPABASE_SERVICE_ROLE_KEY = "srk";
 });
 
-// The safety claim for shipping #741 BEFORE any restructure bump: for the
-// current committed bundle, the slot the new code sends on-chain equals the
-// array index the old code sent — byte-identical behaviour.
+// Whatever content.lock pins, the lock and the course must agree: every live
+// lesson has a slot (getLessonSlot fails closed on one that does not, which
+// 500s its completion), and no live lesson sits on a retired slot.
+describe("slot lock ↔ course lessons (current bundle)", () => {
+  it("every course's live lessons are exactly its slotted lessons", async () => {
+    for (const [courseId, lock] of slotsByCourseId) {
+      const course = await getCourseById(courseId);
+      expect(
+        course,
+        `getCourseById(${courseId}) should resolve`
+      ).not.toBeNull();
+      const live = course!.modules.flatMap((m) => m.lessons.map((l) => l._id));
+      expect(live.sort(), courseId).toEqual(Object.keys(lock.slots).sort());
+      for (const slot of Object.values(lock.slots)) {
+        expect(
+          lock.retired,
+          `${courseId} reuses retired slot ${slot}`
+        ).not.toContain(slot);
+      }
+    }
+  });
+});
+
+// The safety claim for shipping #741 BEFORE any restructure bump: for a dense
+// course (no retired slot, slots 0..n-1), the slot the new code sends on-chain
+// equals the array index the old code sent — byte-identical behaviour. A sparse
+// course has no such equivalence; slot-aware.test.ts and lesson-slot.test.ts
+// cover that path against fixtures.
 describe("slot lock ↔ array-index equivalence (current bundle) — #741", () => {
   it("every DENSE course has slot == findLessonIndex for every lesson", async () => {
-    let checkedLessons = 0;
     for (const [courseId, lock] of slotsByCourseId) {
       if (!isDense(lock)) continue;
       const course = await getCourseById(courseId);
@@ -53,25 +77,7 @@ describe("slot lock ↔ array-index equivalence (current bundle) — #741", () =
           findLessonIndex(course!, lessonId),
           `${courseId}/${lessonId}: slot ${slot} must equal array index`
         ).toBe(slot);
-        checkedLessons++;
       }
     }
-    // Guard against a vacuous pass (e.g. all courses filtered out as sparse).
-    expect(checkedLessons).toBeGreaterThan(0);
-  });
-
-  // Pins the EXACT expected sparse set so any course going sparse stays a
-  // deliberate, reviewed event. The one sparse course this used to allow —
-  // `course-building-first-program`, restructured in #740/#751 — is parked out
-  // of the alpha bundle, so the alpha catalog is fully dense and the set is
-  // empty. The dense⟹equivalence test above and the sparse-fixture tests in
-  // slot-aware.test.ts / lesson-slot.test.ts remain the real guarantees; an
-  // empty set here does NOT mean the sparse path is untested.
-  it("no course is sparse in the alpha catalog", () => {
-    const sparse = [...slotsByCourseId.entries()]
-      .filter(([, lock]) => !isDense(lock))
-      .map(([id]) => id)
-      .sort();
-    expect(sparse).toEqual([]);
   });
 });

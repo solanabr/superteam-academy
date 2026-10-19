@@ -10,20 +10,25 @@ export const LEARNER: {
   username: string;
   walletAddress: string;
 };
-export const DEPLOYMENTS: ReadonlyArray<{
-  content_id: string;
-  kind: string;
-  status: string;
-  is_active: boolean;
-  achievement_pda: string | null;
-}>;
-export const ACTIVE_COURSE_SLUGS: readonly string[];
-export const DEACTIVATED_COURSE_SLUG: string;
-export const LEARN_LOOP: {
-  courseId: string;
-  courseSlug: string;
-  lessonId: string;
-  lessonSlug: string;
-  /** [questionId, correctOptionId] pairs, in the quiz's own order. */
-  answers: ReadonlyArray<readonly [string, string]>;
-};
+export interface E2ETargets {
+  DEPLOYMENTS: ReadonlyArray<{
+    content_id: string;
+    kind: string;
+    status: string;
+    is_active: boolean;
+    achievement_pda: string | null;
+  }>;
+  ACTIVE_COURSE_SLUGS: readonly string[];
+  DEACTIVATED_COURSE_SLUG: string;
+  LEARN_LOOP: {
+    courseId: string;
+    courseSlug: string;
+    lessonId: string;
+    lessonSlug: string;
+    lessonTitle: string;
+    /** [questionId, correctOptionId] pairs, in the quiz's own order. */
+    answers: ReadonlyArray<readonly [string, string]>;
+  };
+}
+/** Pick the spec targets from the committed bundle's courses and lessons. */
+export function pickTargets(courses: unknown, lessons: unknown): E2ETargets;

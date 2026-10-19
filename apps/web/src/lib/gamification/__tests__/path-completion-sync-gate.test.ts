@@ -3,11 +3,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => ({}) }));
 
-// The ONE seam this suite controls: which courses are synced+active. Everything
-// else — learning-path membership, per-course lesson counts — comes from the
-// REAL committed bundle through the REAL queries, because the regression this
-// file locks in only appears when real path membership meets the sync gate.
-// `isSynced` itself stays real (it IS the gate under test).
+// Two seams: which courses are synced+active, and a fixture store holding one
+// live path. Everything between them — path membership, per-course lesson
+// counts, `isSynced` itself (it IS the gate under test) — runs through the real
+// queries, because the regression this file locks in only appears when path
+// membership meets the sync gate.
 const deployments = new Map<string, { status: string; is_active: boolean }>();
 vi.mock("@/lib/content/deployments", async (importOriginal) => {
   const actual =
@@ -18,21 +18,41 @@ vi.mock("@/lib/content/deployments", async (importOriginal) => {
   };
 });
 
+vi.mock("@/lib/content/store", () => {
+  const ref = (id: string) => ({ _ref: id, _type: "reference", _weak: true });
+  const course = (id: string) => ({
+    _id: id,
+    _type: "course",
+    slug: { _type: "slug", current: id },
+    title: id,
+    modules: [{ key: "m", title: "M", lessons: [ref(`lesson-${id}`)] }],
+  });
+  const courses = ["course-live-a", "course-live-b", "course-staged"].map(
+    course
+  );
+  const path = {
+    _id: "path-shelf",
+    _type: "learningPath",
+    title: "Shelf",
+    order: 1,
+    courses: courses.map((c) => ref(c._id)),
+  };
+  return {
+    coursesById: new Map(courses.map((c) => [c._id, c])),
+    lessonsById: new Map(),
+    pathsById: new Map([[path._id, path]]),
+  };
+});
+
 import { buildUserState } from "../achievements";
 
 /**
- * The live path and its real bundle membership. `path-first-steps` was retired
- * by the three-shelf content wave (academy-courses#72) and a retired path never
- * reaches `completedPathIds` at all, which would make every case here vacuous —
- * so this targets the shelf that inherited its courses. `UNSYNCED` plays the
- * role C1 did: a member that is in the path but has no on-chain deployment row.
+ * One live path with three members. `UNSYNCED` plays the role C1 did on the
+ * #892 wave: a member staged into the path with no on-chain deployment row.
  */
-const PATH = "path-comece-aqui";
-const UNSYNCED = "course-solana-speedrun";
-const LIVE_MEMBERS = [
-  "course-visao-geral-solana",
-  "course-btc-to-sol-evolution",
-];
+const PATH = "path-shelf";
+const UNSYNCED = "course-staged";
+const LIVE_MEMBERS = ["course-live-a", "course-live-b"];
 
 function sync(...courseIds: string[]) {
   deployments.clear();

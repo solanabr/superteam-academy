@@ -56,59 +56,39 @@ function adminClientWith(result: {
   };
 }
 
-describe("capstone-gate — dormant while the capstone course is parked", () => {
-  // The capstone system is DORMANT for the public alpha: C3 is parked under
-  // `_draft/` in academy-courses, so neither constant resolves against the
-  // bundle (see the dormancy note in capstone-identity.ts). What must hold is
-  // that dormancy is total and fails closed — no live course may be subject to
-  // the gate, so nothing is half-gated. The alpha catalog DOES host deploy
-  // panels now (academy-courses #61 gave the b2s deploy lesson a funding block
-  // and a `deployed-program-card`), which is safe precisely because the gate is
-  // keyed on the course: those lessons record a real deploy without gating
-  // anyone's credential on it. When track-1 restores, these flip back into the
-  // constants-match-the-bundle assertions this block replaced (course present,
-  // deploy lesson present and hosting the panel, lesson belongs to the course).
-  const bundleCourseIds = coursesJson.map((c) => c._id);
-  const deployPanelLessons = lessonsJson.filter((l) =>
-    (l.blocks ?? []).some((b) => b._type === "deployed-program-card")
-  );
-
-  it("the capstone course is absent from the bundle (dormant)", () => {
-    expect(bundleCourseIds).not.toContain(CAPSTONE_CREDENTIAL.courseId);
-  });
-
-  it("the capstone deploy lesson is absent from the bundle (dormant)", () => {
-    const lesson = lessonsJson.find(
-      (l) => l._id === CAPSTONE_CREDENTIAL.deployLessonId
-    );
-    expect(lesson).toBeUndefined();
-  });
-
-  it("no live course is subject to the deploy gate", () => {
-    for (const id of bundleCourseIds) {
-      expect(isCapstoneCourse(id), `"${id}" must not be gated`).toBe(false);
-    }
-  });
-
-  it("no deploy panel sits inside a gated course", () => {
-    const courseOfLesson = new Map<string, string>();
-    for (const course of coursesJson) {
-      for (const mod of course.modules ?? []) {
-        for (const ref of mod.lessons ?? []) {
-          if (ref._ref) courseOfLesson.set(ref._ref, course._id);
-        }
+describe("capstone identity ↔ the committed bundle", () => {
+  // CAPSTONE_CREDENTIAL is a code constant naming content, so this holds for
+  // whatever content.lock pins and fails only when the two disagree. Today the
+  // capstone course (C3) is parked under `_draft/`, so the gate is dormant:
+  // neither id is in the bundle and no live course is gated. If C3 comes back,
+  // it has to come back whole — its deploy lesson in the course and hosting
+  // the panel — or the gate would deny every capstone credential (see the
+  // dormancy note in capstone-identity.ts).
+  const courseOfLesson = new Map<string, string>();
+  for (const course of coursesJson) {
+    for (const mod of course.modules ?? []) {
+      for (const ref of mod.lessons ?? []) {
+        if (ref._ref) courseOfLesson.set(ref._ref, course._id);
       }
     }
-    for (const lesson of deployPanelLessons) {
-      const courseId = courseOfLesson.get(lesson._id);
-      expect(
-        courseId,
-        `${lesson._id} belongs to no bundle course`
-      ).toBeDefined();
-      expect(
-        isCapstoneCourse(courseId!),
-        `deploy panel in "${lesson._id}" must not sit in a gated course`
-      ).toBe(false);
+  }
+  const hostsDeployPanel = (lessonId: string) =>
+    lessonsJson
+      .find((l) => l._id === lessonId)
+      ?.blocks?.some((b) => b._type === "deployed-program-card") ?? false;
+  const capstoneShipped = coursesJson.some(
+    (c) => c._id === CAPSTONE_CREDENTIAL.courseId
+  );
+
+  it("ships the capstone course and its deploy lesson together, or neither", () => {
+    const deployLessonCourse = courseOfLesson.get(
+      CAPSTONE_CREDENTIAL.deployLessonId
+    );
+    if (capstoneShipped) {
+      expect(deployLessonCourse).toBe(CAPSTONE_CREDENTIAL.courseId);
+      expect(hostsDeployPanel(CAPSTONE_CREDENTIAL.deployLessonId)).toBe(true);
+    } else {
+      expect(deployLessonCourse).toBeUndefined();
     }
   });
 });
