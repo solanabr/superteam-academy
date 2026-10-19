@@ -1,6 +1,8 @@
+import { createHash } from "node:crypto";
 import { describe, it, expect } from "vitest";
 import { stringify } from "yaml";
 import type { RepoTree } from "@/lib/github/types";
+import { contentImageUrl, type AssetManifestEntry } from "../assets";
 import { compileBundle } from "../compile-bundle";
 import { ContentValidationError } from "../types";
 import { PNG_1X1 } from "./_fixtures";
@@ -16,6 +18,8 @@ const enc = new TextEncoder();
 const yaml = (v: unknown): Uint8Array => enc.encode(stringify(v));
 const raw = (s: string): Uint8Array => enc.encode(s);
 const SHA = "d".repeat(40);
+const blobUrl = (bytes: Uint8Array, ext = "png"): string =>
+  contentImageUrl(createHash("sha256").update(bytes).digest("hex"), ext);
 
 const LESSON_DIR = "courses/demo/lessons/basics";
 
@@ -196,7 +200,7 @@ describe("l10n overlays — what the bundle becomes", () => {
     );
   });
 
-  it("carries a translated .md as the prose block's src, rewritten to public asset urls", () => {
+  it("carries a translated .md as the prose block's src, rewritten to blob urls", () => {
     const { files } = compile(
       withOverlay({
         "courses/demo/l10n/en/lessons/basics/intro.md": raw(
@@ -205,35 +209,50 @@ describe("l10n overlays — what the bundle becomes", () => {
       })
     );
     const l10n = JSON.parse(files.get("l10n.json")!);
-    // No localized image → the SOURCE image's public url, per file.
+    // No localized image → the SOURCE image's url, per file.
     expect(
       l10n["course-demo"].en.lessons["lesson-basics"].blocks.intro.src
-    ).toBe("# Hello\n\n![diagram](/content-assets/demo/basics/d.png)\n");
+    ).toBe(`# Hello\n\n![diagram](${blobUrl(PNG_1X1)})\n`);
   });
 
-  it("prefers a localized image at the mirrored path and plans it under <slug>/l10n/<locale>/", () => {
-    const { files, assets } = compile(
+  it("prefers a localized image at the mirrored path, addressed by its own bytes", () => {
+    const enDiagram = raw("en diagram bytes");
+    const enBanner = raw("en banner bytes");
+    const { files, imagePaths } = compile(
       withOverlay({
         "courses/demo/l10n/en/lessons/basics/intro.md": raw(
           "# Hello\n\n![diagram](assets/d.png)\n"
         ),
-        "courses/demo/l10n/en/lessons/basics/assets/d.png": new Uint8Array(
-          PNG_1X1
-        ),
-        "courses/demo/l10n/en/assets/banner.png": new Uint8Array(PNG_1X1),
+        "courses/demo/l10n/en/lessons/basics/assets/d.png": enDiagram,
+        "courses/demo/l10n/en/assets/banner.png": enBanner,
       })
     );
     const l10n = JSON.parse(files.get("l10n.json")!);
     const en = l10n["course-demo"].en;
     expect(en.lessons["lesson-basics"].blocks.intro.src).toContain(
-      "(/content-assets/demo/l10n/en/basics/d.png)"
+      `(${blobUrl(enDiagram)})`
     );
-    expect(en.course.thumbnail).toBe("/content-assets/demo/l10n/en/banner.png");
-    expect(assets.has("demo/l10n/en/basics/d.png")).toBe(true);
-    expect(assets.has("demo/l10n/en/banner.png")).toBe(true);
-    // The source assets are still there, untouched.
-    expect(assets.has("demo/basics/d.png")).toBe(true);
-    expect(assets.has("demo/banner.png")).toBe(true);
+    expect(en.course.thumbnail).toBe(blobUrl(enBanner));
+    // The source images still ship, under their own keys.
+    const [course] = JSON.parse(files.get("courses.json")!) as {
+      thumbnail: string;
+    }[];
+    expect(course!.thumbnail).toBe(blobUrl(PNG_1X1));
+    expect(imagePaths).toEqual([
+      "courses/demo/assets/banner.png",
+      "courses/demo/l10n/en/assets/banner.png",
+      "courses/demo/l10n/en/lessons/basics/assets/d.png",
+      "courses/demo/lessons/basics/assets/d.png",
+    ]);
+    // Source banner and diagram share PNG_1X1, so three blobs, not four.
+    const manifest = JSON.parse(
+      files.get("assets.json")!
+    ) as AssetManifestEntry[];
+    expect(manifest.map((e) => e.path).sort()).toEqual([
+      "courses/demo/assets/banner.png",
+      "courses/demo/l10n/en/assets/banner.png",
+      "courses/demo/l10n/en/lessons/basics/assets/d.png",
+    ]);
   });
 
   it("an overlay folder with only prose (no strings.yaml) is legal", () => {

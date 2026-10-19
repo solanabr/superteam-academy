@@ -135,11 +135,13 @@ describe("teacher preview in the reader's language", () => {
     const b = await compiled();
     const en = b.l10n["course-demo"]!.en!;
     expect(en.course?.title).toBe("Demo Course");
-    // The localized image lives under the preview route, like every other asset.
+    // The localized image lives under the preview route, like every other
+    // image, addressed by its repo path.
+    const localized = "courses/demo/l10n/en/lessons/basics/assets/d.png";
     expect(en.lessons!["lesson-basics"]!.blocks!.intro!.src).toContain(
-      `(/api/teach/preview/${PR}/assets/demo/l10n/en/basics/d.png)`
+      `(/api/teach/preview/${PR}/assets/${localized})`
     );
-    expect(b.assets.has("demo/l10n/en/basics/d.png")).toBe(true);
+    expect(b.imagePaths).toContain(localized);
   });
 
   it("labels each listed course with the languages the PR ships", async () => {

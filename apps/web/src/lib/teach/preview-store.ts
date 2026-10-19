@@ -31,8 +31,8 @@ export interface PreviewBundle {
   rawLessonsById: Map<string, LessonDoc>;
   l10n: L10nBundle;
   xpPerLessonById: Record<string, number>;
-  /** Asset bytes by public rel path — served by the preview asset route (#923). */
-  assets: Map<string, Uint8Array>;
+  /** Repo paths of the images the PR references — the asset route's allowlist (#923). */
+  imagePaths: ReadonlySet<string>;
 }
 
 interface Entry {
@@ -41,10 +41,15 @@ interface Entry {
 }
 
 const TTL_MS = 10 * 60 * 1000;
-const MAX_ENTRIES = 8;
+/**
+ * Each entry holds a whole compiled repo (tens of MiB of parsed docs), and
+ * the function that holds the cache also runs the next compile. A handful of
+ * teachers rarely preview more than a few PRs at once.
+ */
+export const MAX_ENTRIES = 3;
 const cache = new Map<number, Entry>();
 
-function evictExpired(): void {
+function evict(): void {
   const now = Date.now();
   for (const [key, entry] of cache) {
     if (now - entry.at > TTL_MS) cache.delete(key);
@@ -60,7 +65,7 @@ function evictExpired(): void {
 export async function getPreviewBundle(
   prNumber: number
 ): Promise<PreviewBundle> {
-  evictExpired();
+  evict();
 
   const hit = cache.get(prNumber);
   if (hit) return hit.value;
@@ -75,10 +80,11 @@ export async function getPreviewBundle(
     rawLessonsById: r.rawLessonsById,
     l10n: r.l10n,
     xpPerLessonById: r.xpPerLessonById,
-    assets: r.assets,
+    imagePaths: new Set(r.imagePaths),
   }));
 
   cache.set(prNumber, { at: Date.now(), value });
+  evict(); // trim after inserting, so the cap holds while this compile runs
   // A failed compile must not be cached — the teacher will push a fix and retry.
   value.catch(() => cache.delete(prNumber));
 

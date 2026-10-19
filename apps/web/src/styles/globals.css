@@ -2353,7 +2353,7 @@
   }
 
   /* ── Thumbnail area ──
-     Course banners are 16:9 (public/content-assets/<slug>/banner.webp) and
+     Course banners are 16:9 (each course's assets/banner.webp) and
      carry three bands: the kicker + Superteam lockup across the top, the
      headline through the middle, and a strip of metadata pills along the
      bottom. The slot is wider than 16:9, so `cover` must discard some image

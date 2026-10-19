@@ -17,7 +17,13 @@ import {
 import type { RepoTree } from "@/lib/github/types";
 import { ContentValidationError } from "./types";
 import { gateCodeBlock, type GraderSet } from "./executor-gate";
-import { collectL10nFile, validateL10n, type L10nOverlays } from "./l10n";
+import {
+  collectL10nFile,
+  collectL10nImage,
+  validateL10n,
+  type L10nOverlays,
+} from "./l10n";
+import { IMAGE_PATH_RE, type ImageRef } from "./assets";
 
 export interface ValidatedContent {
   courses: CourseT[];
@@ -36,7 +42,7 @@ export interface ValidatedContent {
   prose: Map<string, string>; // md path → body
   code: Map<string, string>; // ts/rs path → body
   idl: Map<string, string>; // idl path → json
-  assets: Map<string, Uint8Array>; // image path → bytes
+  assets: Map<string, ImageRef>; // image path → size + hash, never bytes
   /**
    * Course translation overlays (`courses/<slug>/l10n/<locale>/`), keyed by
    * course dir + locale — see `l10n.ts`. Collected FIRST in the classifier so
@@ -94,6 +100,13 @@ export async function parseAndValidateTree(
     // reach classification, so a tree not built by `extractTarball` cannot
     // slip a parked (`_draft/`) doc past this validator.
     if (isExcludedContentPath(path)) continue;
+    // Images by reference, exactly as the bundle compiler classifies them.
+    if (IMAGE_PATH_RE.test(path)) {
+      if (!collectL10nImage(path, bytes.byteLength, v.l10n, issues)) {
+        v.assets.set(path, { size: bytes.byteLength, sha256: null });
+      }
+      continue;
+    }
     // Translation overlays first: a file under `l10n/` is fully owned by that
     // branch, whatever its name, so the unanchored suffix checks below can
     // never mistake an overlay for a course, a lesson or a source asset.
@@ -132,8 +145,6 @@ export async function parseAndValidateTree(
       v.code.set(path, text(bytes));
     } else if (path.endsWith(".idl.json")) {
       v.idl.set(path, text(bytes));
-    } else if (/\.(png|jpe?g|gif|webp|svg)$/i.test(path)) {
-      v.assets.set(path, bytes);
     }
   }
 

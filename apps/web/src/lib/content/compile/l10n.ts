@@ -10,7 +10,6 @@ import {
   type L10nStringsT,
   type LessonT,
 } from "@superteam-lms/content-schema";
-import type { RepoTree } from "@/lib/github/types";
 import {
   ASSET_EXT_ALLOWLIST,
   MAX_ASSET_BYTES,
@@ -39,9 +38,8 @@ import {
  *     a translation can never bind to nothing and never ship a duplicate
  *     document.
  *  3. `planL10n` — the emitted `l10n.json`, keyed by course id → locale, with
- *     translated prose already rewritten to public asset urls (localized
- *     image where one exists, the source image otherwise) and localized
- *     images planned under `content-assets/<slug>/l10n/<locale>/…`.
+ *     translated prose already rewritten to image urls (localized image
+ *     where one exists, the source image otherwise).
  *
  * The Zod shape (`L10nStrings`, strictObject throughout) is what keeps an
  * overlay structurally incapable of carrying an id, a `correct` flag, an XP
@@ -60,14 +58,13 @@ export interface L10nOverlayInput {
   stringsPath: string | null;
   /** overlay-relative path (`lessons/x/intro.md`) → markdown body. */
   prose: Map<string, string>;
-  /** overlay-relative path (`lessons/x/assets/a.png`, `assets/banner.webp`) → bytes. */
-  assets: Map<string, Uint8Array>;
+  /** overlay-relative path (`lessons/x/assets/a.png`, `assets/banner.webp`) → its repo path and size. */
+  assets: Map<string, { path: string; size: number }>;
 }
 
 export type L10nOverlays = Map<string, L10nOverlayInput>;
 
 const text = (bytes: Uint8Array): string => new TextDecoder().decode(bytes);
-const IMAGE_RE = /\.(png|jpe?g|gif|webp|svg)$/i;
 
 /** Map key for one overlay folder. `/` cannot appear in a locale and `|`
  *  cannot appear in a repo path segment, so the pair is unambiguous. */
@@ -75,29 +72,24 @@ const overlayKey = (courseDir: string, locale: string): string =>
   `${courseDir}|${locale}`;
 
 /**
- * Classify one tree entry as overlay content. Returns true when the path sits
- * under an `l10n/` directory (and is therefore fully handled here, whatever
- * it was), false when the caller's ordinary chain should see it.
- *
- * This runs FIRST in both classifiers, which is what stops an overlay's
- * files from ever being read as a course, a lesson, source prose or a source
- * asset. The three forbidden basenames are an error rather than a silent
- * skip: the author believed they were shipping a translation.
+ * The overlay folder a path sits in, created on first sight. Null when the
+ * path is not under `l10n/`; `overlay: null` when it is, but carries one of
+ * the forbidden basenames. That is an error rather than a silent skip: the
+ * author believed they were shipping a translation.
  */
-export function collectL10nFile(
+function overlayFor(
   path: string,
-  bytes: Uint8Array,
   overlays: L10nOverlays,
   issues: string[]
-): boolean {
+): { overlay: L10nOverlayInput | null; rest: string } | null {
   const l = parseL10nPath(path);
-  if (!l) return false;
+  if (!l) return null;
 
   if (isForbiddenL10nPath(path)) {
     issues.push(
       `${path}: this filename is forbidden under l10n/ — an overlay carries display strings and images only; structured strings go in ${L10N_STRINGS_FILE}`
     );
-    return true;
+    return { overlay: null, rest: l.rest };
   }
 
   const key = overlayKey(l.courseDir, l.locale);
@@ -113,21 +105,54 @@ export function collectL10nFile(
     };
     overlays.set(key, overlay);
   }
+  return { overlay, rest: l.rest };
+}
 
-  if (l.rest === L10N_STRINGS_FILE) {
+/**
+ * Classify one non-image tree entry as overlay content. Returns true when the
+ * path sits under an `l10n/` directory (and is therefore fully handled here,
+ * whatever it was), false when the caller's ordinary chain should see it.
+ *
+ * This runs FIRST in both classifiers, which is what stops an overlay's
+ * files from ever being read as a course, a lesson, source prose or a source
+ * asset.
+ */
+export function collectL10nFile(
+  path: string,
+  bytes: Uint8Array,
+  overlays: L10nOverlays,
+  issues: string[]
+): boolean {
+  const at = overlayFor(path, overlays, issues);
+  if (!at) return false;
+  const { overlay, rest } = at;
+  if (!overlay) return true;
+
+  if (rest === L10N_STRINGS_FILE) {
     try {
       overlay.strings = L10nStrings.parse(parseYaml(text(bytes)));
       overlay.stringsPath = path;
     } catch (e) {
       issues.push(formatZod(path, e));
     }
-  } else if (l.rest.endsWith(".md")) {
-    overlay.prose.set(l.rest, text(bytes));
-  } else if (IMAGE_RE.test(l.rest)) {
-    overlay.assets.set(l.rest, bytes);
+  } else if (rest.endsWith(".md")) {
+    overlay.prose.set(rest, text(bytes));
   }
   // Anything else under l10n/ (a translator's `visual-src/`, a README) is a
   // build input at most — never shipped, never an error.
+  return true;
+}
+
+/** {@link collectL10nFile} for an image, which the tree carries by size and hash only. */
+export function collectL10nImage(
+  path: string,
+  size: number,
+  overlays: L10nOverlays,
+  issues: string[]
+): boolean {
+  const at = overlayFor(path, overlays, issues);
+  if (!at) return false;
+  at.overlay?.assets.set(at.rest, { path, size });
   return true;
 }
 
@@ -174,7 +199,8 @@ interface TestsResolver {
 export function validateL10n(
   overlays: L10nOverlays,
   source: L10nSourceView,
-  tree: RepoTree,
+  /** Every path in the repo snapshot, images included. */
+  tree: { has(path: string): boolean },
   resolveTests: TestsResolver
 ): string[] {
   const issues: string[] = [];
@@ -305,7 +331,7 @@ export function validateL10n(
     }
 
     // ── localized images: must mirror a source image, same rules as source ──
-    for (const [rest, bytes] of o.assets) {
+    for (const [rest, image] of o.assets) {
       const at = `${where}/${rest}`;
       const sourcePath = mirroredSourcePath(o.courseDir, rest, lessonBySlug);
       if (!sourcePath || !tree.has(sourcePath)) {
@@ -319,9 +345,9 @@ export function validateL10n(
           `${at}: extension "${ext}" not allowed (png, jpg, jpeg, webp, svg)`
         );
       }
-      if (bytes.byteLength > MAX_ASSET_BYTES) {
+      if (image.size > MAX_ASSET_BYTES) {
         issues.push(
-          `${at}: ${bytes.byteLength} bytes exceeds the ${MAX_ASSET_BYTES}-byte (1 MiB) cap`
+          `${at}: ${image.size} bytes exceeds the ${MAX_ASSET_BYTES}-byte (1 MiB) cap`
         );
       }
     }
@@ -400,7 +426,7 @@ export interface L10nCourseBundle {
   course?: {
     title?: string;
     description?: string;
-    /** Public url of a localized thumbnail, when the overlay re-rendered it. */
+    /** Url of a localized thumbnail, when the overlay re-rendered it. */
     thumbnail?: string;
     modules?: Record<string, { title?: string; description?: string }>;
   };
@@ -411,27 +437,20 @@ export interface L10nCourseBundle {
 /** `l10n.json`: course id → locale → overlay. Sparse — untranslated leaves are absent. */
 export type L10nBundle = Record<string, Record<string, L10nCourseBundle>>;
 
-export interface L10nPlan {
-  bundle: L10nBundle;
-  /** public rel path (`<slug>/l10n/<locale>/…`) → bytes. */
-  assets: Map<string, Uint8Array>;
-}
-
 /**
  * Build the emitted overlay. Pure: same tree → same bytes. Translated prose is
  * rewritten exactly like source prose (`rewriteMarkdownAssetPaths`), except
- * the resolver prefers a localized image at the mirrored path and falls back
- * to the source image's public url — per file, so a lesson with three of ten
- * images re-rendered ships three localized and seven source.
+ * it prefers a localized image at the mirrored path and falls back to the
+ * source image — per file, so a lesson with three of ten images re-rendered
+ * ships three localized and seven source. `resolveImage` maps a repo path
+ * (source or overlay) to its url.
  */
 export function planL10n(
   overlays: L10nOverlays,
   source: L10nSourceView,
-  resolveSourceAsset: (repoPath: string) => string | null,
-  assetPublicPrefix: string
-): L10nPlan {
+  resolveImage: (repoPath: string) => string | null
+): L10nBundle {
   const bundle: L10nBundle = {};
-  const assets = new Map<string, Uint8Array>();
 
   const courseByDir = new Map<string, CourseT>();
   for (const c of source.courses) {
@@ -448,17 +467,10 @@ export function planL10n(
         .map((l) => [l.lesson.slug, l] as const)
     );
 
-    // Localized images → public paths under the course's own asset dir, in an
-    // `l10n/<locale>/` subtree so they can never collide with a source image.
-    const localizedUrl = new Map<string, string>(); // overlay rest → url
-    for (const [rest, bytes] of o.assets) {
-      const m = /^lessons\/([^/]+)\/assets\/([^/]+)$/.exec(rest);
-      const publicRel = m
-        ? `${course.slug}/l10n/${o.locale}/${m[1]}/${m[2]}`
-        : `${course.slug}/l10n/${o.locale}/${rest.slice("assets/".length)}`;
-      assets.set(publicRel, bytes);
-      localizedUrl.set(rest, `/${assetPublicPrefix}/${publicRel}`);
-    }
+    const localizedUrl = (rest: string): string | null => {
+      const image = o.assets.get(rest);
+      return image ? resolveImage(image.path) : null;
+    };
 
     const out: L10nCourseBundle = {};
     const s = o.strings;
@@ -470,7 +482,7 @@ export function planL10n(
       courseStrings.modules = s.course.modules;
     }
     if (course.thumbnail) {
-      const localized = localizedUrl.get(course.thumbnail);
+      const localized = localizedUrl(course.thumbnail);
       if (localized) courseStrings.thumbnail = localized;
     }
     if (Object.keys(courseStrings).length > 0) out.course = courseStrings;
@@ -496,8 +508,8 @@ export function planL10n(
       const rewritten = rewriteMarkdownAssetPaths(
         md,
         (rel) =>
-          localizedUrl.get(`${lessonRest}/${rel}`) ??
-          resolveSourceAsset(`${found.dir}/${rel}`)
+          localizedUrl(`${lessonRest}/${rel}`) ??
+          resolveImage(`${found.dir}/${rel}`)
       );
       for (const b of found.lesson.blocks) {
         if (b.type !== "prose" || b.src !== m![2]) continue;
@@ -515,5 +527,5 @@ export function planL10n(
     (bundle[course.id] ??= {})[o.locale] = out;
   }
 
-  return { bundle, assets };
+  return bundle;
 }

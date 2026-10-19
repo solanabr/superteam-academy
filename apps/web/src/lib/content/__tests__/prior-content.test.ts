@@ -15,7 +15,10 @@ vi.mock("@/lib/github/github", () => ({
   }),
 }));
 vi.mock("@/lib/content/compile/tarball", () => ({
-  extractTarball: () => extractImpl(),
+  extractTarball: async () => ({
+    files: await extractImpl(),
+    images: new Map(),
+  }),
 }));
 
 import {

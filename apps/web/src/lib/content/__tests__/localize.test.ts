@@ -25,7 +25,7 @@ const course: CourseDoc = {
   sourceLocale: "pt-BR",
   title: "Curso",
   description: "Descrição",
-  thumbnail: "/content-assets/demo/banner.png",
+  thumbnail: "https://blob.test/content/source-banner.png",
   modules: [
     { key: "m1", title: "Módulo 1", description: "d1", lessons: [] },
     { key: "m2", title: "Módulo 2", lessons: [] },
@@ -70,7 +70,7 @@ const lesson: LessonDoc = {
 const overlay: L10nCourseBundle = {
   course: {
     title: "Course",
-    thumbnail: "/content-assets/demo/l10n/en/banner.png",
+    thumbnail: "https://blob.test/content/en-banner.png",
     modules: { m1: { title: "Module 1" } },
   },
   lessons: {
@@ -112,7 +112,7 @@ describe("localizeCourseDoc", () => {
     const out = localizeCourseDoc(course, overlay);
     expect(out.title).toBe("Course");
     expect(out.description).toBe("Descrição"); // untranslated → source
-    expect(out.thumbnail).toBe("/content-assets/demo/l10n/en/banner.png");
+    expect(out.thumbnail).toBe("https://blob.test/content/en-banner.png");
     const modules = out.modules as {
       key: string;
       title: string;

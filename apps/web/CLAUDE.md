@@ -189,7 +189,10 @@ cd apps/web && pnpm dev
 
 Course content ships as a **committed** bundle, not a live fetch. `scripts/compile-content.ts`
 compiles the `solanabr/academy-courses` repo — pinned to the SHA in `apps/web/content.lock` —
-into typed JSON under `src/content/generated/` plus assets under `public/content-assets/`.
+into typed JSON under `src/content/generated/`. Images are not copied: the compiler hashes them and
+points the bundle at `<blob store>/content/<sha256>.<ext>` (`lib/content/blob-store.mjs`), and
+`generated/assets.json` lists them. `scripts/sync-content-assets.ts` uploads missing ones before
+`next build` on Vercel; locally and in CI it skips. The compile needs no token.
 
 ```bash
 pnpm --filter web compile-content   # from repo root (or: cd apps/web && pnpm compile-content)
@@ -214,8 +217,8 @@ prose and re-rendered images at their mirrored paths. Available languages are **
   so an overlay file is never read as a course/lesson/source asset. Every overlay key must bind to
   something real (module key, lesson slug, block key of the right type, question/option/test id,
   hint index) and every translated `.md`/image must mirror a source file — fail-closed. Emits a
-  sparse `generated/l10n.json` (course id → locale → leaves) and localized images under
-  `public/content-assets/<slug>/l10n/<locale>/`. The source bundle is untouched.
+  sparse `generated/l10n.json` (course id → locale → leaves); localized images are hashed and
+  addressed like any other. The source bundle is untouched.
 - **Runtime** (`lib/content/localize.ts`): per-leaf merge onto the RAW docs before projection, so
   projectors and renderers stay locale-blind. Learner-facing queries take a trailing optional
   `locale`; `[locale]` pages pass `params.locale`, `/api/content/*` routes derive it

@@ -28,6 +28,8 @@
  *   nonced easily — out of scope).
  */
 
+import { CONTENT_BLOB_BASE_URL } from "@/lib/content/blob-store.mjs";
+
 /** Extracts the `scheme://host[:port]` origin from a URL, or null if invalid. */
 function originOf(url: string | undefined): string | null {
   if (!url) return null;
@@ -110,10 +112,12 @@ export function buildCsp(nonce: string): string {
     "font-src 'self' data: https://fonts.gstatic.com",
 
     // Images: avatars (Google), NFT art (Arweave), Supabase storage (pinned to
-    // the project host), GA4 measurement pixel (doubleclick). data:/blob:
-    // cover inline SVGs, canvas-confetti, and wallet QR codes.
+    // the project host), GA4 measurement pixel (doubleclick), course images
+    // (the content Blob store). data:/blob: cover inline SVGs, canvas-confetti,
+    // and wallet QR codes.
     [
       "img-src 'self' data: blob:",
+      CONTENT_BLOB_BASE_URL,
       "https://lh3.googleusercontent.com https://avatars.githubusercontent.com",
       "https://arweave.net https://*.arweave.net",
       supabase.http,

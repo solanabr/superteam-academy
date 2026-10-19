@@ -194,7 +194,8 @@ apps/web/scripts/compile-content.ts
         │  → project → emit deterministic JSON (sorted keys, no timestamps)
         ▼
 apps/web/src/content/generated/*.json    COMMITTED, prettier-ignored
-apps/web/public/content-assets/*         COMMITTED
+                                         (images: content-addressed Vercel Blob
+                                         urls, uploaded by the Vercel build)
         │
         ▼ static import (server-only)
 lib/content/store.ts ──► lib/content/queries.ts ──► Server Components
