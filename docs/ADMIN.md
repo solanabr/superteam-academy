@@ -165,33 +165,51 @@ executor gate.
 
 ### Publishing new content
 
-1. Merge the content PR in `academy-courses`.
-2. Within the hour, the **Content release** workflow
+1. A content PR in `academy-courses` needs one approval before it merges (no
+   admin bypass). Review it in `/teach/preview`, which compiles the PR head and
+   renders it with the real course pages.
+2. Within the hour of the merge, the **Content release** workflow
    (`.github/workflows/content-release.yml`) opens or updates the PR
    `chore(content): release academy-courses <short-sha>` from
    `bot/content-release`. It moves `apps/web/content.lock` to academy-courses
-   `main` and commits the recompiled `apps/web/src/content/generated/`. The body
-   lists the academy-courses commits, the courses whose content changed, and a
-   callout for each course whose slot set changed. It only releases a commit
-   whose academy-courses CI is green; while that CI is still running, the next
-   run picks it up.
-3. Review it (the PR's Vercel preview already shows the new content and
-   uploads any new images) and merge once CI is green. Vercel redeploys `main`.
-4. For every course the PR flags with "slot set changed", run **Deploy** in
-   `/admin/courses` right after the merge. Until you do, a lesson added to a
-   live course is visible but cannot be completed (its slot is not active
-   on-chain), and a retired lesson stays required on-chain, which blocks
-   finalization. See [Deploy](#2-deploy--put-content-on-chain) and
-   DEPLOYMENT.md, "Slot activation".
+   `main` and commits the recompiled `apps/web/src/content/generated/`. It only
+   releases a commit on which academy-courses' `content-lint` and `quiz-stats`
+   checks passed: while they are missing or running it waits for the next run,
+   and if either failed it skips the commit with a warning.
+3. Read the callouts at the top of the PR body, then review it (the PR's
+   Vercel preview already shows the new content and uploads any new images)
+   and merge once CI is green. Vercel redeploys `main`.
+4. Act on the callouts right after the merge:
+   - **slot set changed** or **new course**: run **Deploy** for that course in
+     `/admin/courses`. Until you do, a new course stays hidden, a lesson added
+     to a live course is visible but cannot be completed (its slot is not
+     active on-chain), and a retired lesson stays required on-chain, which
+     blocks finalization. See [Deploy](#2-deploy--put-content-on-chain) and
+     DEPLOYMENT.md, "Slot activation".
+   - **xpPerLesson / creatorRewardXp changed**: run Deploy; the chain keeps the
+     old value until you do.
+   - **creator wallet, difficulty, trackId, trackLevel or prerequisite
+     changed**: these are fixed on-chain at creation, so a course that is
+     already deployed would need a recreate. Don't merge that blindly.
+   - **removed**: a deployed course that leaves the bundle loses its pages,
+     lesson completions and credential mint, and drops out of
+     `/admin/courses`. Deactivate it there before merging.
+   - **new achievement**: run Deploy for it in `/admin/courses` before it can
+     be awarded.
 
-To release right away, or to release a specific academy-courses commit (a
-rollback, say), use **Actions → Content release → Run workflow**, with an
-optional `sha`: a full 40-hex commit on academy-courses `main`.
+To release right away, run **Actions → Content release → Run workflow**. To
+release a specific academy-courses commit (a rollback, say), give it a `sha`:
+a full 40-hex commit on academy-courses `main`. That PR is labelled
+`content-pinned`, and scheduled runs leave a pinned PR alone until it is merged
+or closed. Once a rollback merges, the next scheduled run proposes `main`
+again; to hold the rollback, disable the workflow in the Actions tab (or revert
+the content in academy-courses).
 
-There is one release PR at a time; a newer content merge updates it in place.
-`bot/content-release` belongs to the workflow, which rebuilds it from `main`
-and force-pushes it, so never commit to it. To pause releases, disable the
-workflow in the Actions tab.
+There is one release PR at a time; a newer content merge updates it in place,
+and a release PR that `main` has already caught up with is closed with a
+comment. `bot/content-release` belongs to the workflow, which rebuilds it from
+`main` and force-pushes it, so never commit to it. To pause releases, disable
+the workflow in the Actions tab.
 
 If the workflow is unavailable, the manual release still works: on a branch,
 set `"sha"` in `apps/web/content.lock`, run `pnpm --filter web compile-content`,
@@ -201,17 +219,23 @@ and commit the lock **and** `apps/web/src/content/generated/` together. The
 ### One-time setup: the release App
 
 The workflow pushes and opens the PR as a GitHub App, because a PR opened with
-the default `GITHUB_TOKEN` never triggers CI.
+the default `GITHUB_TOKEN` never triggers CI. Its secrets live in the
+`content-release` environment of `solanabr/superteam-academy`, which only
+`main` may use.
 
 1. Create a GitHub App under the `solanabr` organization (Settings → Developer
    settings → GitHub Apps → New GitHub App). No webhook. Repository
-   permissions: **Contents: Read and write**, **Pull requests: Read and write**,
-   and **Metadata: Read-only** (always on). Nothing else.
+   permissions: **Contents: Read and write** and **Pull requests: Read and
+   write** (Metadata: Read-only comes with them). Nothing else; it does not
+   need Workflows.
 2. Install it on `solanabr/superteam-academy` only (Only select repositories).
-3. Generate a private key and add two repository secrets (Settings → Secrets
-   and variables → Actions):
-   - `CONTENT_RELEASE_APP_ID`: the App ID (the Client ID works too).
-   - `CONTENT_RELEASE_APP_PRIVATE_KEY`: the whole `.pem` file.
+3. Generate a private key, then store the App ID (the Client ID works too) and
+   the key as environment secrets:
+
+   ```bash
+   gh secret set CONTENT_RELEASE_APP_ID --env content-release --repo solanabr/superteam-academy
+   gh secret set CONTENT_RELEASE_APP_PRIVATE_KEY --env content-release --repo solanabr/superteam-academy < key.pem
+   ```
 
 Until both secrets exist, a run with something to release fails with an error
 naming them. The App only ever pushes `bot/content-release`, so branch
@@ -340,7 +364,7 @@ on-chain transaction. On-chain is the source of truth; the mirror is rebuildable
 | **Publish card says "drift unavailable"**   | `GITHUB_TOKEN` unset or GitHub unreachable. The route 503s rather than crashing. Unauthenticated GitHub is 60 req/hr per IP.              |
 | **Course not visible to learners**          | Its `onchain_deployments` row must be `status = "synced"` and `is_active` not `false`. Deploy it from `/admin/courses`.                   |
 | **New lesson not showing up**               | The bundle is pinned. Merge the open Content release PR — merging content to `academy-courses` alone changes nothing in the app.          |
-| **No release PR after a content merge**     | Check Actions → Content release: it names missing App secrets or a red academy-courses CI on the commit. Otherwise run it by hand.        |
+| **No release PR after a content merge**     | Check Actions → Content release: a missing-secrets error, a warning that academy-courses CI failed, or a pinned PR it is leaving alone.   |
 | **New lesson visible but won't complete**   | Its slot is not active on-chain yet. Run Deploy for that course in `/admin/courses` (the release PR flagged it).                          |
 | **"Transaction failed" on Deploy**          | Verify `PROGRAM_AUTHORITY_SECRET` is the real `Config.authority` (the Status screen's authority match tells you) and is funded with SOL.  |
 | **CI fails with "Content bundle is stale"** | You bumped `content.lock` without recompiling, or hand-edited the generated bundle. Run `pnpm --filter web compile-content` and commit.   |
