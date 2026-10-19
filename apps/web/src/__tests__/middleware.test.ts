@@ -96,6 +96,10 @@ describe("middleware — matcher (#1089 dotted page slugs)", () => {
     // would 307 it to /en/manifest.webmanifest and 404 (adversarial review F3).
     "/manifest.webmanifest",
     "/icons/icon.avif",
+    // Old course banner urls, still live in shared social cards; the
+    // content-assets route redirects them to the blob store.
+    "/content-assets/btc-to-sol-evolution/banner.webp",
+    "/content-assets/visao-geral-solana/banner.jpg",
   ])("skips middleware for %s", (path) => {
     expect(matcher.test(path)).toBe(false);
   });
