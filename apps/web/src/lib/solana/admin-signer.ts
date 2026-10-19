@@ -23,6 +23,12 @@ import {
   fromWeb3JsPublicKey,
 } from "@metaplex-foundation/umi-web3js-adapters";
 import bs58 from "bs58";
+import { serverEnv } from "@/lib/env.server";
+import { logError } from "@/lib/logging";
+import {
+  padContentTxId,
+  assertMaskMatchesLockfile,
+} from "@/lib/github/content-commit";
 import IDL from "./idl/superteam_academy_vnext.json";
 import {
   findConfigPDA,
@@ -33,15 +39,13 @@ import {
 import {
   buildCreateCourseOnChainParams,
   buildUpdateCourseOnChainParams,
+  MAINNET_COURSE_IDENTITY_MESSAGE,
+  MainnetCourseIdentityError,
   type ActiveLessonsMask,
   type CreateCourseOnChainParams,
   type UpdateCourseOnChainParams,
 } from "./course-write-params";
-import { serverEnv } from "@/lib/env.server";
-import {
-  padContentTxId,
-  assertMaskMatchesLockfile,
-} from "@/lib/github/content-commit";
+import { getBackendSigner } from "./academy-program";
 
 // ---------------------------------------------------------------------------
 // Anchor method builder types — mirrors the pattern in academy-program.ts
@@ -84,6 +88,8 @@ export interface AdminSignerResult {
   success: boolean;
   signature?: string;
   error?: string;
+  /** Set when a known guard refused before anything was sent (see ERROR_IDS). */
+  errorId?: string;
 }
 
 export interface DeployAchievementResult {
@@ -282,6 +288,19 @@ export function getAuthorityPublicKey(): PublicKey | null {
   return ready && _authority ? _authority.publicKey : null;
 }
 
+/**
+ * The backend signer's pubkey, or `null` when BACKEND_SIGNER_SECRET is unset or
+ * malformed. Used by the mainnet course-identity guard, which refuses it as a
+ * course creator alongside the authority.
+ */
+export function getBackendSignerPublicKey(): PublicKey | null {
+  try {
+    return getBackendSigner().publicKey;
+  } catch {
+    return null;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Creator-wallet guard
 // ---------------------------------------------------------------------------
@@ -434,7 +453,8 @@ export function assertCreatorAllowed(
  * Deploy a new Course PDA on-chain.
  *
  * The authority keypair acts as both the payer and the config.authority.
- * The platform wallet is used as the creator (XP reward recipient for creator rewards).
+ * `creatorWallet` becomes the course creator (the creator-reward recipient);
+ * on mainnet it must not be a platform key and the track id/level must be set.
  * content_tx_id is zeroed — update it later via updateCoursePda when the
  * Arweave transaction ID is known.
  */
@@ -482,6 +502,32 @@ export async function deployCoursePda(
         `deployCoursePda(${params.courseId}): creatorWallet "${params.creatorWallet}" is off-curve`
       );
     }
+    // Built before assertCreatorAllowed so that on mainnet the identity guard
+    // inside the builder (unset track/level, platform-key creator; no override)
+    // is what refuses, with its error id. A no-op on devnet and localnet.
+    const onChainParams: CreateCourseOnChainParams =
+      buildCreateCourseOnChainParams(
+        {
+          courseId: params.courseId,
+          creator,
+          contentTxId: Array(32).fill(0) as number[],
+          lessonCount: params.lessonCount,
+          difficulty: params.difficulty,
+          xpPerLesson: params.xpPerLesson,
+          trackId: params.trackId,
+          trackLevel: params.trackLevel,
+          prerequisite,
+          creatorRewardXp: params.creatorRewardXp,
+          // Collection is created after the PDA exists; backfilled via updateCoursePda.
+          collection: null,
+        },
+        {
+          rpcUrl: serverEnv.SOLANA_RPC_URL,
+          authority: _authority.publicKey,
+          backendSigner: getBackendSignerPublicKey(),
+        }
+      );
+
     // On-curve but still wrong: reject denylisted well-knowns and the platform
     // authority itself (both would mis-mint the creator reward). Opt-out via
     // params.allowUnusualCreator for the deliberate case.
@@ -491,22 +537,6 @@ export async function deployCoursePda(
       params.courseId,
       params.allowUnusualCreator ?? false
     );
-
-    const onChainParams: CreateCourseOnChainParams =
-      buildCreateCourseOnChainParams({
-        courseId: params.courseId,
-        creator,
-        contentTxId: Array(32).fill(0) as number[],
-        lessonCount: params.lessonCount,
-        difficulty: params.difficulty,
-        xpPerLesson: params.xpPerLesson,
-        trackId: params.trackId,
-        trackLevel: params.trackLevel,
-        prerequisite,
-        creatorRewardXp: params.creatorRewardXp,
-        // Collection is created after the PDA exists; backfilled via updateCoursePda.
-        collection: null,
-      });
 
     const methods = _program.methods as unknown as AdminMethods;
 
@@ -522,6 +552,18 @@ export async function deployCoursePda(
 
     return { success: true, signature };
   } catch (err: unknown) {
+    if (err instanceof MainnetCourseIdentityError) {
+      logError({
+        errorId: err.errorId,
+        error: err,
+        context: { courseId: params.courseId, problems: err.problems },
+      });
+      return {
+        success: false,
+        error: MAINNET_COURSE_IDENTITY_MESSAGE,
+        errorId: err.errorId,
+      };
+    }
     const message = err instanceof Error ? err.message : String(err);
     console.error(
       `[admin-signer] deployCoursePda(${params.courseId}): ${message}`

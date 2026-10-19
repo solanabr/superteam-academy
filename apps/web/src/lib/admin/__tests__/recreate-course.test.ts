@@ -42,6 +42,19 @@ let dbThrows = false;
 // NEXT_PUBLIC_SOLANA_NETWORK label.
 let genesisHash = DEVNET_GENESIS_HASH;
 let genesisHashThrows = false;
+// The RPC endpoint the mainnet course-identity guard reads (SOLANA_RPC_URL).
+// Independent of the label and the genesis hash, so a mainnet host can be
+// simulated while rail 4 still passes.
+const DEVNET_RPC = "https://api.devnet.solana.com";
+let rpcUrl = DEVNET_RPC;
+
+vi.mock("@/lib/env.server", () => ({
+  serverEnv: {
+    get SOLANA_RPC_URL() {
+      return rpcUrl;
+    },
+  },
+}));
 
 // The REAL #427 guard (assertCreatorAllowed + CREATOR_DENYLIST) is kept via
 // importOriginal — mocking it would test the mock, not the guard. Only the
@@ -199,6 +212,7 @@ beforeEach(() => {
   dbThrows = false;
   genesisHash = DEVNET_GENESIS_HASH;
   genesisHashThrows = false;
+  rpcUrl = DEVNET_RPC;
   vi.clearAllMocks();
 });
 
@@ -895,5 +909,49 @@ describe("close fails", () => {
     expect(thrown!.message).toMatch(/UNCHANGED and still deployed/i);
     expect(deployCoursePda).not.toHaveBeenCalled();
     expect(calls).toEqual(["gate:on", "close", "gate:off"]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Mainnet course-identity guard. The same guard deployCoursePda runs, but in
+// pre-flight so a refusal happens BEFORE the close. Reached here by pointing
+// SOLANA_RPC_URL at a mainnet host while the label and genesis say devnet.
+// ---------------------------------------------------------------------------
+describe("mainnet course-identity guard runs in pre-flight, before the close", () => {
+  const MAINNET_RPC = "https://mainnet.helius-rpc.com/?api-key=x";
+
+  it("refuses trackId 0 and touches nothing", async () => {
+    rpcUrl = MAINNET_RPC;
+    courses = [validCourse({ trackId: 0 })];
+
+    const err = await captureError(recreateCourse(COURSE_ID));
+
+    expect(err).toBeInstanceOf(RecreateCourseError);
+    expect(err.phase).toBe("preflight");
+    expect(err.courseIntact).toBe(true);
+    expect(err.errorId).toBe("COURSE_IDENTITY_001");
+    expect(calls).toEqual([]);
+    expect(closeCoursePda).not.toHaveBeenCalled();
+    expect(deployCoursePda).not.toHaveBeenCalled();
+  });
+
+  it("refuses creator == authority even with allowUnusualCreator", async () => {
+    rpcUrl = MAINNET_RPC;
+    courses = [validCourse({ creatorWallet: AUTHORITY.toBase58() })];
+
+    const err = await captureError(recreateCourse(COURSE_ID, true));
+
+    expect(err.errorId).toBe("COURSE_IDENTITY_001");
+    expect(calls).toEqual([]);
+  });
+
+  it("lets a course with a real track, level and instructor through", async () => {
+    rpcUrl = MAINNET_RPC;
+
+    const result = await recreateCourse(COURSE_ID);
+
+    expect(result.action).toBe("recreated");
+    expect(calls).toContain("close");
+    expect(calls).toContain("create");
   });
 });

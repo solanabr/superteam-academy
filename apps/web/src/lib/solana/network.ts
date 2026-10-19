@@ -52,3 +52,15 @@ export function networkFromRpcUrl(rpcUrl: string): RpcNetwork {
   if (host.includes("devnet")) return "devnet";
   return "unknown";
 }
+
+/**
+ * True when either signal says mainnet: the `NEXT_PUBLIC_SOLANA_NETWORK` label
+ * or the RPC host. For guards that must hold on mainnet, over-claiming is the
+ * safe direction, and trusting the label alone would let a "devnet" label in
+ * front of a mainnet RPC through. A host that names no cluster (localnet, a
+ * private endpoint) does not count, so devnet and localnet are unaffected.
+ */
+export function isMainnetCluster(rpcUrl: string): boolean {
+  const label = resolveSolanaNetwork().network.trim().toLowerCase();
+  return label.startsWith("mainnet") || networkFromRpcUrl(rpcUrl) === "mainnet";
+}

@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeEach, afterAll } from "vitest";
-import { resolveSolanaNetwork, networkFromRpcUrl } from "../network";
+import {
+  resolveSolanaNetwork,
+  networkFromRpcUrl,
+  isMainnetCluster,
+} from "../network";
 
 const ORIGINAL = process.env.NEXT_PUBLIC_SOLANA_NETWORK;
 
@@ -75,5 +79,32 @@ describe("networkFromRpcUrl", () => {
     expect(networkFromRpcUrl("https://rpc.example.com/?net=mainnet")).toBe(
       "unknown"
     );
+  });
+});
+
+describe("isMainnetCluster", () => {
+  it("is true when the label says mainnet, whatever the RPC host", () => {
+    for (const label of ["mainnet", "mainnet-beta", " Mainnet "]) {
+      process.env.NEXT_PUBLIC_SOLANA_NETWORK = label;
+      expect(isMainnetCluster("https://rpc.example.com")).toBe(true);
+    }
+  });
+
+  it("is true when the RPC host says mainnet, even under a devnet label", () => {
+    process.env.NEXT_PUBLIC_SOLANA_NETWORK = "devnet";
+    expect(isMainnetCluster("https://mainnet.helius-rpc.com/?api-key=x")).toBe(
+      true
+    );
+    delete process.env.NEXT_PUBLIC_SOLANA_NETWORK;
+    expect(isMainnetCluster("https://api.mainnet-beta.solana.com")).toBe(true);
+  });
+
+  it("is false for devnet and localnet", () => {
+    process.env.NEXT_PUBLIC_SOLANA_NETWORK = "devnet";
+    expect(isMainnetCluster("https://api.devnet.solana.com")).toBe(false);
+    process.env.NEXT_PUBLIC_SOLANA_NETWORK = "localnet";
+    expect(isMainnetCluster("http://127.0.0.1:8899")).toBe(false);
+    delete process.env.NEXT_PUBLIC_SOLANA_NETWORK;
+    expect(isMainnetCluster("http://localhost:8899")).toBe(false);
   });
 });
