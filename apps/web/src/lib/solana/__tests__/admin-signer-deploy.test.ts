@@ -30,7 +30,7 @@ const h = vi.hoisted(() => {
     fetchConfig: vi.fn<() => Promise<unknown>>(),
     getLatestBlockhashAndContext: vi.fn(),
     sendRawTransaction: vi.fn(),
-    isBlockhashValid: vi.fn(),
+    getEpochInfo: vi.fn(),
     getSignatureStatus: vi.fn(),
   };
 });
@@ -57,7 +57,7 @@ vi.mock("@solana/web3.js", async (importOriginal) => {
       getGenesisHash = h.getGenesisHash;
       getLatestBlockhashAndContext = h.getLatestBlockhashAndContext;
       sendRawTransaction = h.sendRawTransaction;
-      isBlockhashValid = h.isBlockhashValid;
+      getEpochInfo = h.getEpochInfo;
       getSignatureStatus = h.getSignatureStatus;
     },
   };
@@ -293,14 +293,37 @@ describe("deployCoursePda — mainnet course identity guard", () => {
 
 describe("closeCoursePda — waits for a definitive outcome", () => {
   const BLOCKHASH = Keypair.generate().publicKey.toBase58();
+  const LAST_VALID = 250;
   const confirmed = { confirmationStatus: "confirmed", err: null };
   const at = <T>(slot: number, value: T) => ({ context: { slot }, value });
+  const height = (blockHeight: number, absoluteSlot: number) => ({
+    blockHeight,
+    absoluteSlot,
+  });
+  const never = () => new Promise<never>(() => {});
+  const rpcError = () =>
+    new SendTransactionError({
+      action: "send",
+      signature: "",
+      transactionMessage: "Internal error",
+      logs: [],
+    });
 
   async function close() {
     const { closeCoursePda } = await import("../admin-signer");
     const pending = closeCoursePda("course-speedrun");
     await vi.runAllTimersAsync();
     return pending;
+  }
+
+  /** Below the last valid height for `pollsBefore` polls, then past it. */
+  function expireAfter(pollsBefore: number, expirySlot = 300) {
+    let polls = 0;
+    h.getEpochInfo.mockImplementation(async () =>
+      ++polls <= pollsBefore
+        ? height(LAST_VALID - 10, 200)
+        : height(LAST_VALID + 1, expirySlot)
+    );
   }
 
   beforeEach(() => {
@@ -316,11 +339,11 @@ describe("closeCoursePda — waits for a definitive outcome", () => {
       accountsPartial: () => ({ transaction: async () => tx }),
     });
     h.getLatestBlockhashAndContext.mockResolvedValue(
-      at(100, { blockhash: BLOCKHASH, lastValidBlockHeight: 250 })
+      at(100, { blockhash: BLOCKHASH, lastValidBlockHeight: LAST_VALID })
     );
     h.sendRawTransaction.mockResolvedValue("sent");
-    h.isBlockhashValid.mockResolvedValue(at(110, true));
-    h.getSignatureStatus.mockResolvedValue(at(110, null));
+    h.getEpochInfo.mockResolvedValue(height(LAST_VALID - 10, 200));
+    h.getSignatureStatus.mockResolvedValue(at(200, null));
   });
 
   afterEach(() => {
@@ -328,7 +351,7 @@ describe("closeCoursePda — waits for a definitive outcome", () => {
   });
 
   it("reports a close that confirms as landed", async () => {
-    h.getSignatureStatus.mockResolvedValue(at(110, confirmed));
+    h.getSignatureStatus.mockResolvedValue(at(200, confirmed));
 
     const result = await close();
 
@@ -341,7 +364,7 @@ describe("closeCoursePda — waits for a definitive outcome", () => {
   it("keeps waiting past .rpc()'s 30s and reports a close that lands later as landed", async () => {
     let polls = 0;
     h.getSignatureStatus.mockImplementation(async () =>
-      ++polls < 25 ? at(110, null) : at(160, confirmed)
+      ++polls < 25 ? at(200, null) : at(240, confirmed)
     );
 
     const result = await close();
@@ -350,11 +373,8 @@ describe("closeCoursePda — waits for a definitive outcome", () => {
     expect(polls).toBe(25);
   });
 
-  it("reports not landed once the blockhash expired without it", async () => {
-    let polls = 0;
-    h.isBlockhashValid.mockImplementation(async () =>
-      ++polls < 5 ? at(110, true) : at(300, false)
-    );
+  it("decides expiry by block height, reading the status with history search", async () => {
+    expireAfter(4);
     h.getSignatureStatus.mockResolvedValue(at(301, null));
 
     const result = await close();
@@ -363,10 +383,18 @@ describe("closeCoursePda — waits for a definitive outcome", () => {
       outcome: "notLanded",
       error: "its blockhash expired before it landed",
     });
+    expect(h.getEpochInfo).toHaveBeenCalledTimes(5);
+    expect(h.getEpochInfo).toHaveBeenCalledWith({
+      commitment: "confirmed",
+      minContextSlot: 100,
+    });
+    expect(h.getSignatureStatus).toHaveBeenLastCalledWith(expect.any(String), {
+      searchTransactionHistory: true,
+    });
   });
 
   it("doesn't trust an empty status from a node behind the expiry", async () => {
-    h.isBlockhashValid.mockResolvedValue(at(300, false));
+    expireAfter(0);
     let polls = 0;
     h.getSignatureStatus.mockImplementation(async () =>
       ++polls < 3 ? at(250, null) : at(305, confirmed)
@@ -377,31 +405,65 @@ describe("closeCoursePda — waits for a definitive outcome", () => {
     expect(result.outcome).toBe("landed");
   });
 
-  it("reports unknown, with the signature, when the RPC never answers", async () => {
-    h.isBlockhashValid.mockRejectedValue(new Error("RPC unreachable"));
+  it("lands a close whose send answered with a JSON-RPC error", async () => {
+    h.sendRawTransaction.mockRejectedValue(rpcError());
+    let polls = 0;
+    h.getSignatureStatus.mockImplementation(async () =>
+      ++polls < 5 ? at(200, null) : at(240, confirmed)
+    );
+
+    const result = await close();
+
+    expect(result.outcome).toBe("landed");
+  });
+
+  it("settles a rejected send as not landed only once the blockhash expired, keeping the send error", async () => {
+    h.sendRawTransaction.mockRejectedValue(rpcError());
+    expireAfter(3);
+    h.getSignatureStatus.mockResolvedValue(at(301, null));
+
+    const result = await close();
+
+    expect(result.outcome).toBe("notLanded");
+    expect(result).toMatchObject({
+      error: expect.stringMatching(
+        /Internal error[\s\S]*blockhash expired before it landed/
+      ) as string,
+    });
+    expect(h.getEpochInfo).toHaveBeenCalledTimes(4);
+  });
+
+  it("times out a hung status call and keeps polling", async () => {
+    h.getSignatureStatus
+      .mockImplementationOnce(never)
+      .mockResolvedValue(at(240, confirmed));
+
+    const result = await close();
+
+    expect(result.outcome).toBe("landed");
+    expect(h.getSignatureStatus).toHaveBeenCalledTimes(2);
+  });
+
+  it("holds the deadline when every call hangs, and reports unknown with the signature", async () => {
+    h.getEpochInfo.mockImplementation(never);
+    const start = Date.now();
 
     const result = await close();
 
     expect(result).toEqual({
       outcome: "unknown",
       signature: expect.any(String) as string,
-      error: "RPC unreachable",
+      error: expect.stringMatching(/timed out/) as string,
     });
+    expect(Date.now() - start).toBeLessThanOrEqual(90_000);
   });
 
-  it("reports a send the RPC rejected as not landed, without waiting", async () => {
-    h.sendRawTransaction.mockRejectedValue(
-      new SendTransactionError({
-        action: "simulate",
-        signature: "",
-        transactionMessage: "Transaction simulation failed",
-        logs: [],
-      })
-    );
+  it("reports not landed without sending when no blockhash can be fetched", async () => {
+    h.getLatestBlockhashAndContext.mockRejectedValue(new Error("rpc down"));
 
     const result = await close();
 
-    expect(result.outcome).toBe("notLanded");
-    expect(h.isBlockhashValid).not.toHaveBeenCalled();
+    expect(result).toEqual({ outcome: "notLanded", error: "rpc down" });
+    expect(h.sendRawTransaction).not.toHaveBeenCalled();
   });
 });

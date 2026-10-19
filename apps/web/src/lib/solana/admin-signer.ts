@@ -15,7 +15,6 @@ import {
   Connection,
   Keypair,
   PublicKey,
-  SendTransactionError,
   SystemProgram,
   TransactionExpiredTimeoutError,
 } from "@solana/web3.js";
@@ -346,17 +345,32 @@ const errorText = (err: unknown): string =>
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
- * How long {@link sendAndSettle} waits for a definitive answer. A blockhash is
- * valid for ~150 blocks, about 60-70s on mainnet.
+ * Hard cap on {@link sendAndSettle}. Expiry is decided by block height, so on
+ * a healthy RPC it ends when the blockhash expires (~150 blocks, 64-80s on a
+ * congested mainnet); the cap only ends a wait the RPC never answers.
  */
-const SETTLE_TIMEOUT_MS = 75_000;
+const SETTLE_TIMEOUT_MS = 90_000;
 const SETTLE_POLL_MS = 2_000;
+/** Per-call bound inside the settle loop, so one hung call can't stall it. */
+const RPC_CALL_TIMEOUT_MS = 10_000;
+
+/** `p`, or a rejection after `ms`: a hung RPC call counts as no answer. */
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error(`RPC call timed out after ${ms}ms`)),
+      ms
+    );
+  });
+  return Promise.race([p, timeout]).finally(() => clearTimeout(timer));
+}
 
 /**
- * A send's outcome once it can no longer change. `notLanded` covers a rejected
- * send, a tx that failed on-chain, and one whose blockhash expired before it
- * landed. `unknown`: the RPC gave no definitive answer within
- * SETTLE_TIMEOUT_MS, so the tx may or may not have landed.
+ * A send's outcome once it can no longer change. `notLanded` covers a tx that
+ * failed on-chain and one whose blockhash expired before it landed.
+ * `unknown`: the RPC gave no definitive answer within SETTLE_TIMEOUT_MS, so
+ * the tx may or may not have landed.
  */
 export type SettledResult =
   | { outcome: "landed"; signature: string }
@@ -365,53 +379,70 @@ export type SettledResult =
 
 /**
  * Sign and send `tx` with a fresh blockhash, then poll until it is confirmed,
- * failed, or past that blockhash's expiry without landing. `.rpc()` gives up
- * after 30s while a tx can still land for about as long again, so its failure
- * can't tell "didn't land" from "still in flight".
+ * failed on-chain, or the chain is past that blockhash's last valid block
+ * height with no trace of it. `.rpc()` gives up after 30s while a tx can still
+ * land for about as long again, so its failure can't tell "didn't land" from
+ * "still in flight". A send error doesn't decide either: a proxy can forward
+ * the tx and still answer with an error.
  */
 async function sendAndSettle(
   connection: Connection,
   signer: Keypair,
   tx: Transaction
 ): Promise<SettledResult> {
+  const deadline = Date.now() + SETTLE_TIMEOUT_MS;
+  const call = <T>(p: Promise<T>): Promise<T> =>
+    withTimeout(
+      p,
+      Math.max(0, Math.min(RPC_CALL_TIMEOUT_MS, deadline - Date.now()))
+    );
+
   let blockhash: string;
+  let lastValidBlockHeight: number;
   let fetchedAtSlot: number;
   try {
-    const latest = await connection.getLatestBlockhashAndContext("confirmed");
-    blockhash = latest.value.blockhash;
+    const latest = await call(
+      connection.getLatestBlockhashAndContext("confirmed")
+    );
+    ({ blockhash, lastValidBlockHeight } = latest.value);
     fetchedAtSlot = latest.context.slot;
   } catch (err) {
+    // Nothing was signed or sent yet.
     return { outcome: "notLanded", error: errorText(err) };
   }
   tx.feePayer = signer.publicKey;
   tx.recentBlockhash = blockhash;
   tx.sign(signer);
   const signature = bs58.encode(tx.signature!);
+
+  let sendError: string | undefined;
   try {
-    await connection.sendRawTransaction(tx.serialize(), {
-      preflightCommitment: "confirmed",
-    });
+    await call(
+      connection.sendRawTransaction(tx.serialize(), {
+        preflightCommitment: "confirmed",
+      })
+    );
   } catch (err) {
-    // An error answer (failed preflight, unknown blockhash, ...) means the RPC
-    // never forwarded it. A transport error may have gone out: settle it.
-    if (err instanceof SendTransactionError) {
-      return { outcome: "notLanded", error: err.message };
-    }
+    sendError = errorText(err);
   }
 
-  const deadline = Date.now() + SETTLE_TIMEOUT_MS;
-  let lastError = "no definitive answer from the RPC";
+  let lastError = sendError ?? "no definitive answer from the RPC";
   for (;;) {
     try {
-      // Expiry first, then the status from a node at or past that slot: a tx
-      // can only land while its blockhash is valid, and a lagging node could
-      // otherwise miss one that already did.
-      const valid = await connection.isBlockhashValid(blockhash, {
-        commitment: "confirmed",
-        minContextSlot: fetchedAtSlot,
-      });
-      const { context, value: status } =
-        await connection.getSignatureStatus(signature);
+      // Height first (getEpochInfo returns it with its slot), then the status
+      // from a node at or past that slot, with history search so the answer
+      // doesn't depend on the node's short status cache.
+      const { blockHeight, absoluteSlot } = await call(
+        connection.getEpochInfo({
+          commitment: "confirmed",
+          minContextSlot: fetchedAtSlot,
+        })
+      );
+      const { context, value: status } = await call(
+        connection.getSignatureStatus(signature, {
+          searchTransactionHistory: true,
+        })
+      );
       const settled =
         status?.confirmationStatus === "confirmed" ||
         status?.confirmationStatus === "finalized";
@@ -422,19 +453,27 @@ async function sendAndSettle(
         };
       }
       if (settled) return { outcome: "landed", signature };
-      if (!valid.value && !status && context.slot >= valid.context.slot) {
+      // A tx can only land at or below lastValidBlockHeight.
+      if (
+        blockHeight != null &&
+        blockHeight > lastValidBlockHeight &&
+        !status &&
+        context.slot >= absoluteSlot
+      ) {
+        const expired = "its blockhash expired before it landed";
         return {
           outcome: "notLanded",
-          error: "its blockhash expired before it landed",
+          error: sendError ? `${sendError}; ${expired}` : expired,
         };
       }
     } catch (err) {
       lastError = errorText(err);
     }
-    if (Date.now() >= deadline) {
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) {
       return { outcome: "unknown", signature, error: lastError };
     }
-    await sleep(SETTLE_POLL_MS);
+    await sleep(Math.min(SETTLE_POLL_MS, remaining));
   }
 }
 
