@@ -70,8 +70,8 @@ skips locally and in CI. The compile needs no token.
 pnpm --filter web compile-content
 ```
 
-- The generated dir is committed and prettier-ignored. Output is a pure function of the locked SHA,
-  so a recompile must be byte-identical; CI recompiles and runs `git diff --exit-code`.
+- The generated dir is committed and prettier-ignored. A recompile must be byte-identical: CI
+  recompiles and fails on any `git status --porcelain` output for the bundle.
 - Don't hand-edit `src/content/generated/*`. An ESLint rule bans importing it outside `src/lib/content/`.
 - Publishing content means one PR that bumps `content.lock` and commits the regenerated bundle. The
   Content release workflow (`.github/workflows/content-release.yml`) opens it from

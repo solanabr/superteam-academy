@@ -2,7 +2,6 @@
 name: merge-pr
 description: Merge a PR into main following REVIEW.md. Run before any gh pr merge.
 argument-hint: "[pr-number]"
-disable-model-invocation: true
 ---
 
 Merge PR $ARGUMENTS, following `REVIEW.md`. Stop at the first step that fails and say why.
@@ -25,8 +24,9 @@ Merge PR $ARGUMENTS, following `REVIEW.md`. Stop at the first step that fails an
    stale, so wait for the new head's checks to report. Look at non-required failures too and say
    why they don't matter.
 7. **Message.** Write the squash subject and body yourself (`--subject`, `--body`) in the repo's
-   style, with no `[skip ci]`, `[ci skip]` or `[no ci]` anywhere. The default body is the commit
-   list, which can carry one.
+   style, with no CI-skip marker anywhere: `[skip ci]`, `[ci skip]`, `[no ci]`, `[skip actions]`,
+   `[actions skip]`, or a `skip-checks: true` trailer. The default body is the commit list, which
+   can carry one.
 8. **Merge.** `gh pr merge <n> --squash --match-head-commit <sha> --subject "..." --body "..."`.
    The `guard-merge` hook re-checks steps 6 and 7 and blocks the merge if either fails.
 9. **After.** Confirm CI started on the merge SHA on `main` (`gh run list --branch main --limit 5`)

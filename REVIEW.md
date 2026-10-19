@@ -25,7 +25,7 @@ High covers these paths (`apps/web/src/` omitted):
   `lib/solana/xp-mint.ts`, `app/api/certificates/mint/**`, `lib/ai/spend-ledger.ts`.
 - DB migrations: `supabase/migrations/**`.
 - CI and agent guardrails: `.github/workflows/**`, `.claude/settings.json`, `.claude/hooks/**`.
-- The content compiler and preview proxy: `lib/content/compile/**`, `scripts/compile-content.ts`,
+- The content compiler and preview proxy: `lib/content/compile/**`, `apps/web/scripts/compile-content.ts`,
   `lib/teach/**`, `app/api/teach/preview/**`, `app/content-assets/**`.
 
 ## What failure looks like
@@ -83,8 +83,9 @@ added, and `docs/superpowers/**`.
 
 - Merge only when every required check has COMPLETED green on the PR's current head SHA. A rollup
   read right after a push can be stale; "no failures" isn't green.
-- Strip `[skip ci]`, `[ci skip]` and `[no ci]` from the squash subject and body, then confirm CI
-  started on the merge SHA.
+- Strip every CI-skip marker from the squash subject and body (`[skip ci]`, `[ci skip]`, `[no ci]`,
+  `[skip actions]`, `[actions skip]`, and a `skip-checks: true` trailer), then confirm CI started on
+  the merge SHA.
 - After a stacked PR squash-merges, diff its base PR against `main` before merging that one too. It
   can turn into a revert.
 - `/merge-pr` walks these steps. The `guard-merge` hook blocks `gh pr merge` until the checks are
