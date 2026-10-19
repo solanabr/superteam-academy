@@ -25,8 +25,10 @@ export default defineConfig({
     setupFiles: ["./vitest.setup.ts"],
     // The Playwright E2E specs share the `*.spec.ts` glob but must NOT be
     // collected by vitest (they import `@playwright/test`, not the vitest
-    // runner). They run via `pnpm --filter web e2e`. Keep vitest's own defaults.
-    exclude: [...configDefaults.exclude, "e2e/**"],
+    // runner). They run via `pnpm --filter web e2e`. The harness's own unit
+    // tests (`e2e/harness/__tests__/*.test.ts`) do run here. Keep vitest's own
+    // defaults.
+    exclude: [...configDefaults.exclude, "e2e/**/*.spec.ts"],
   },
   resolve: {
     alias: {

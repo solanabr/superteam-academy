@@ -34,9 +34,11 @@ export const LEARNER = {
 // The learn-loop target is the first lesson (bundle course order, then module
 // order) the loop can finish by answering one quiz: prose plus exactly one quiz
 // of single-answer questions, nothing else that gates completion. Its course is
-// the active one and the next bundle course is the deactivated one. The answer
-// key comes off the same bundle, so the loop answers correctly and keeps testing
-// the graded path.
+// the active one and the next bundle course is the deactivated one. Both skip
+// `unlisted` courses: the catalog hides those anyway, so an unlisted active
+// course could never be listed, and an unlisted deactivated one would be absent
+// for the wrong reason. The answer key comes off the same bundle, so the loop
+// answers correctly and keeps testing the graded path.
 function quizOnly(lesson) {
   const blocks = lesson?.blocks ?? [];
   const quizzes = blocks.filter((b) => b._type === "quiz");
@@ -49,7 +51,8 @@ function quizOnly(lesson) {
   );
 }
 
-export function pickTargets(courses, lessons) {
+export function pickTargets(bundleCourses, lessons) {
+  const courses = bundleCourses.filter((c) => c.unlisted !== true);
   const lessonsById = new Map(lessons.map((l) => [l._id, l]));
   const loop = courses
     .flatMap((course) =>
@@ -60,7 +63,9 @@ export function pickTargets(courses, lessons) {
     .find(({ lesson }) => quizOnly(lesson));
   if (!loop) throw new Error("e2e: no quiz-only lesson in the bundle");
   const deactivated = courses.find((c) => c._id !== loop.course._id);
-  if (!deactivated) throw new Error("e2e: the bundle needs a second course");
+  if (!deactivated) {
+    throw new Error("e2e: the bundle needs a second listed course");
+  }
 
   return {
     // The catalog gate (#711 regression, spec 2). Rows shaped like the
