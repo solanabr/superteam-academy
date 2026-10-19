@@ -10,15 +10,17 @@ $ARGUMENTS
 
 ## Related Context
 
-- **Solana Concepts**: See [SKILL.md](../skills/SKILL.md) for concept references
-- **Anchor Patterns**: See [programs-anchor.md](../skills/programs-anchor.md)
-- **Learning Approach**: See **solana-guide** agent for educational patterns
+- **The program**: Pinocchio, in `onchain-academy/programs/onchain-academy-pinocchio/src/`;
+  `docs/SPEC.md` is its specification and `onchain-academy/CLAUDE.md` covers the conventions
+- **The client side**: `apps/web/src/lib/solana/` and `.claude/rules/onchain-client.md`
+- **The rest of the system**: `docs/ARCHITECTURE.md`
 
 ## Explanation Framework
 
 ### 1. Initial Assessment
 
 Determine:
+
 - **Code type**: Program instruction, client code, account structure, test
 - **Complexity level**: Beginner, intermediate, advanced
 - **Key concepts**: What Solana/blockchain concepts are used
@@ -27,38 +29,45 @@ Determine:
 ### 2. Explanation Structure
 
 **High-Level Overview**
+
 - What does this code do? (1-2 sentences)
 - What problem does it solve?
 - Key concepts used
 
 **Visual Diagram**
+
 - Use Mermaid flowcharts for control flow
 - Use relationship diagrams for account structures
 - Use ASCII art for simple data flows
 
 **Step-by-Step Breakdown**
+
 - Walk through each significant section
 - Explain what's happening AND why it matters
 - Highlight non-obvious decisions
 
 **Concept Deep Dives**
 For Solana concepts encountered (PDAs, CPIs, etc.):
+
 - Brief explanation of the concept
 - How it's used in this code
 - Common pitfalls to avoid
 
 **Security Analysis**
+
 - Access control checks
 - Validation patterns
 - Potential issues or considerations
 
 **Patterns Identified**
+
 - Design patterns used (state machine, authority, escrow, etc.)
 - Why the pattern fits this use case
 
 ### 3. Interactive Elements
 
 Include comprehension checks:
+
 - "What would happen if...?"
 - "How would you modify this to...?"
 - Links to related concepts for further learning
@@ -74,5 +83,3 @@ Include comprehension checks:
 7. **Questions** - Comprehension checks
 
 Adjust depth based on complexity. Simple code needs brief explanation. Complex code needs thorough breakdowns with diagrams.
-
-For comprehensive educational content, delegate to **solana-guide** agent.
