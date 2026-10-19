@@ -80,13 +80,16 @@ of rent for `initialize`.
 
 Every write in this runbook goes through a Helius devnet RPC, never the public
 devnet endpoint (see §5). Keep the URL in an environment variable so the API key
-stays out of commands and logs:
+stays out of commands and logs. `solana config set` and `solana config get` print
+the full RPC URL, key included, so silence them, and in a Claude Code session run
+them yourself rather than through Claude (the repo's settings deny both to
+Claude):
 
 ```bash
 export HELIUS_DEVNET_RPC="https://devnet.helius-rpc.com/?api-key=<your key>"
 
-solana config set --url "$HELIUS_DEVNET_RPC"
-solana config set --keypair wallets/signer.json
+solana config set --url "$HELIUS_DEVNET_RPC" > /dev/null
+solana config set --keypair wallets/signer.json > /dev/null
 
 solana airdrop 2
 solana airdrop 2

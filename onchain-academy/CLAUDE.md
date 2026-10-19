@@ -40,7 +40,9 @@ Follow `docs/DEPLOY-PROGRAM.md`.
 - Devnet deploys use the `fresh` artifact (`target/deploy/onchain_academy_pinocchio_fresh.so`) and go
   through a Helius devnet RPC, never the public endpoint, which has corrupted large deploys. The
   `guard-solana` hook blocks anything else. Prefer pointing the Solana CLI config at Helius over
-  putting the URL on the command line, so the key stays out of the transcript.
+  putting the URL on the command line, so the key stays out of the transcript. The user sets that
+  config: `solana config set` and `solana config get` both print the URL with its key, and the
+  repo's settings deny both to Claude.
 - After a deploy, byte-verify: `solana program dump` the program and compare its SHA-256 with the
   local artifact.
 - The reproducible-build hash is published by CI to the `program-hash` branch (`docs/PROGRAM-HASH.md`).

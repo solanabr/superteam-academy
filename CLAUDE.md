@@ -38,8 +38,8 @@ cargo test --manifest-path onchain-academy/Cargo.toml -p onchain-academy-pinocch
 - IMPORTANT: nothing touches mainnet without the owner's explicit confirmation in the conversation.
   That covers program deploys, upgrades and authority changes, and admin course writes.
 - Program deploys and buffer writes go through a Helius RPC only, never the public devnet endpoint.
-- Never print secrets: env values, keypairs, or RPC URLs, which carry API keys. Don't echo
-  `solana config get` or `.env` files.
+- Never print secrets: env values, keypairs, or RPC URLs, which carry API keys. Don't run
+  `solana config get`/`set` (both print the URL) or echo `.env` files.
 - Never set a git identity in a clone or worktree; the global one is inherited. Stage files by
   name, never `git add -A` or `git add .`. No CI-skip markers in commit messages or squash bodies.
 - Apply DB migrations through the Supabase MCP before the PR merges (`supabase/CLAUDE.md`).
@@ -49,7 +49,10 @@ cargo test --manifest-path onchain-academy/Cargo.toml -p onchain-academy-pinocch
 - The repo is public. Issues, PRs, docs and code comments never describe security or ops posture:
   custody, key rotation status, unpatched findings, budgets, balances or internal URLs.
 
-The hooks in `.claude/hooks/` enforce the Helius, git identity, CI-skip and merge-check rules.
+The hooks in `.claude/hooks/` enforce the Helius, git identity, CI-skip and merge-check rules. They
+catch the usual Bash command forms. They're a guard rail, not a security boundary. They run `node`,
+which must be on the PATH of the shell Claude Code uses: they fail closed, so a missing `node`
+blocks every command they match.
 
 ## Review and merge
 
