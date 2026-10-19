@@ -11,8 +11,28 @@ import { COURSES_CACHE_TAG } from "@/lib/content/queries";
 import {
   recreateCourse,
   RecreateCourseError,
+  type RecreatePhase,
 } from "@/lib/admin/recreate-course";
 import { sanitizeReason } from "@/lib/admin/sanitize-reason";
+
+// On mainnet a recreate sends a deactivate, waits for it to confirm, re-reads
+// the course, then closes and creates, each a confirmed transaction. 300 is the
+// Vercel plan ceiling, as in api/build-program; a kill mid-way leaves the
+// course inactive or down behind the maintenance gate.
+export const maxDuration = 300;
+
+/**
+ * preflight: refused, nothing touched. freeze (mainnet): stopped before the
+ * close; the message says whether the course was re-activated or left
+ * inactive. close/create: a server-side failure; `courseIntact: false` means
+ * the course is down or its state is unknown.
+ */
+const STATUS_BY_PHASE: Record<RecreatePhase, number> = {
+  preflight: 400,
+  freeze: 409,
+  close: 500,
+  create: 500,
+};
 
 /**
  * POST /api/admin/courses/recreate — DESTRUCTIVE. Closes a course's on-chain PDA
@@ -43,7 +63,8 @@ import { sanitizeReason } from "@/lib/admin/sanitize-reason";
  *      mainnet course with enrollments, missing signer, bad creator, a
  *      lesson-count superset, a concurrent recreate already in progress, ...)
  *      before anything is touched — see `preflightRecreate`. On mainnet
- *      `allowUnusualCreator` is ignored there.
+ *      `allowUnusualCreator` is ignored there, and `recreateCourse` logs the
+ *      bypass only when it is applied.
  *
  * No UI wires this yet — the confirmation button lands with the /admin/courses
  * screen in a follow-up (WS-2).
@@ -116,12 +137,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  if (allowUnusualCreator) {
-    console.warn(
-      `[admin/courses/recreate] ${courseId} (admin=${adminUserId}): allowUnusualCreator=true acknowledged — bypassing the creator-denylist guard for this recreate.`
-    );
-  }
-
   try {
     const result = await recreateCourse(courseId, allowUnusualCreator);
     // Audit trail for the destructive path: who recreated what.
@@ -134,11 +149,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json(result);
   } catch (e) {
     if (e instanceof RecreateCourseError) {
-      // A pre-flight refusal is a bad request: the params were invalid and NOTHING
-      // was touched. A close/create failure is a server-side failure — and when
-      // `courseIntact` is false the course is DOWN, so the caller must not treat
-      // this as a routine error. The message carries the recovery instruction.
-      const status = e.phase === "preflight" ? 400 : 500;
+      // When `courseIntact` is false the course is DOWN (or unknown), so the
+      // caller must not treat this as a routine error. The message carries the
+      // recovery instruction.
+      const status = STATUS_BY_PHASE[e.phase];
       if (!e.courseIntact) {
         console.error(
           `[admin/courses/recreate] ${courseId} (admin=${adminUserId}): COURSE IS DOWN — ${e.message}`

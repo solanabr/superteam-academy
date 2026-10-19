@@ -264,6 +264,26 @@ describe("POST /api/admin/courses/recreate — error mapping", () => {
     );
   });
 
+  it("maps a mainnet freeze abort to 409, course intact, with what happened to is_active", async () => {
+    recreateCourse.mockRejectedValue(
+      new RecreateCourseError(
+        'Course "x" now has 1 enrollment(s): someone enrolled after the pre-flight. It was deactivated and then re-activated. Nothing was closed.',
+        "freeze",
+        true
+      )
+    );
+    const res = await post({ courseId: COURSE_ID, confirm: COURSE_ID });
+    expect(res.status).toBe(409);
+    const body = (await res.json()) as {
+      phase: string;
+      courseIntact: boolean;
+      error: string;
+    };
+    expect(body.phase).toBe("freeze");
+    expect(body.courseIntact).toBe(true);
+    expect(body.error).toMatch(/deactivated and then re-activated/);
+  });
+
   it("maps a failed close to 500 but reports the course as intact", async () => {
     recreateCourse.mockRejectedValue(
       new RecreateCourseError(

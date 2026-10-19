@@ -87,7 +87,7 @@ export async function writeCourseOnChainStatus(
   contentId: string,
   status: string,
   coursePda: string,
-  txSignature: string
+  txSignature: string | null
 ): Promise<void> {
   await upsertDeployment({
     content_id: contentId,

@@ -46,6 +46,11 @@ let genesisHashThrows = false;
 // the deactivation's slot as the RPC reports it (null = not seen).
 let recheckCourse: Record<string, unknown> | null = null;
 let deactivationSlot: number | null = 123;
+// Every getAccountInfo call, with its config, and an optional hook that can
+// throw to simulate a lagging or unreachable RPC.
+type ReadConfig = { commitment?: string; minContextSlot?: number } | string;
+let accountReads: Array<{ pda: string; config?: ReadConfig }> = [];
+let readHook: ((config?: ReadConfig) => void) | null = null;
 const MAINNET_GENESIS_HASH = "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d";
 // The RPC endpoint the mainnet course-identity guard reads (SOLANA_RPC_URL).
 // Independent of the label and the genesis hash, so a mainnet host can be
@@ -137,7 +142,9 @@ vi.mock("@solana/web3.js", async (importOriginal) => {
   return {
     ...actual,
     Connection: class {
-      async getAccountInfo(pk: PublicKey) {
+      async getAccountInfo(pk: PublicKey, config?: ReadConfig) {
+        accountReads.push({ pda: pk.toBase58(), config });
+        readHook?.(config);
         return accounts.get(pk.toBase58()) ?? null;
       }
       async getGenesisHash() {
@@ -156,7 +163,11 @@ vi.mock("@solana/web3.js", async (importOriginal) => {
 
 import { recreateCourse, RecreateCourseError } from "../recreate-course";
 import { findCoursePDA, getProgramId } from "@/lib/solana/pda";
-import { closeCoursePda, deployCoursePda } from "@/lib/solana/admin-signer";
+import {
+  closeCoursePda,
+  deployCoursePda,
+  updateCoursePda,
+} from "@/lib/solana/admin-signer";
 import {
   writeCourseMaintenanceFlag,
   acquireCourseMaintenanceGate,
@@ -228,6 +239,8 @@ beforeEach(() => {
   genesisHashThrows = false;
   recheckCourse = null;
   deactivationSlot = 123;
+  accountReads = [];
+  readHook = null;
   rpcUrl = DEVNET_RPC;
   vi.clearAllMocks();
 });
@@ -336,9 +349,10 @@ describe("mainnet recreate — zero enrollments only", () => {
 
     const err = await captureError(recreateCourse(COURSE_ID));
 
-    expect(err.phase).toBe("preflight");
+    expect(err.phase).toBe("freeze");
     expect(err.courseIntact).toBe(true);
     expect(err.message).toMatch(/someone enrolled after the pre-flight/i);
+    expect(err.message).toMatch(/deactivated and then re-activated/i);
     // Deactivated, found the enrollment, re-activated, released the gate.
     expect(calls).toEqual(["gate:on", "deactivate", "activate", "gate:off"]);
     expect(closeCoursePda).not.toHaveBeenCalled();
@@ -397,6 +411,123 @@ describe("mainnet recreate — zero enrollments only", () => {
       "activate",
       "gate:off",
     ]);
+  });
+
+  it("re-reads the course pinned at the deactivation's slot", async () => {
+    deactivationSlot = 456;
+
+    await recreateCourse(COURSE_ID);
+
+    expect(accountReads).toContainEqual({
+      pda: coursePda(COURSE_ID),
+      config: { commitment: "confirmed", minContextSlot: 456 },
+    });
+  });
+
+  it("aborts fail-closed when the RPC has not reached the deactivation's slot", async () => {
+    readHook = (config) => {
+      if (typeof config === "object" && config.minContextSlot != null) {
+        throw new Error("Minimum context slot has not been reached");
+      }
+    };
+
+    const err = await captureError(recreateCourse(COURSE_ID));
+
+    expect(err.phase).toBe("freeze");
+    expect(err.courseIntact).toBe(true);
+    expect(err.message).toMatch(/minimum context slot/i);
+    expect(err.message).toMatch(/deactivated and then re-activated/i);
+    expect(calls).toEqual(["gate:on", "deactivate", "activate", "gate:off"]);
+    expect(closeCoursePda).not.toHaveBeenCalled();
+  });
+
+  describe("a deactivate that reports failure", () => {
+    beforeEach(() => {
+      vi.mocked(updateCoursePda).mockImplementationOnce(async () => {
+        calls.push("deactivate");
+        return {
+          success: false,
+          error: "Transaction was not confirmed in 30.00 seconds",
+        };
+      });
+    });
+
+    it("re-activates when it landed late (the course reads inactive)", async () => {
+      recheckCourse = { is_active: false, total_enrollments: 0 };
+
+      const err = await captureError(recreateCourse(COURSE_ID));
+
+      expect(err.phase).toBe("freeze");
+      expect(err.courseIntact).toBe(true);
+      expect(err.message).toMatch(/deactivated and then re-activated/i);
+      expect(calls).toEqual(["gate:on", "deactivate", "activate", "gate:off"]);
+      expect(closeCoursePda).not.toHaveBeenCalled();
+    });
+
+    it("sends no activate when it never landed (the course reads active)", async () => {
+      recheckCourse = { is_active: true, total_enrollments: 0 };
+
+      const err = await captureError(recreateCourse(COURSE_ID));
+
+      expect(err.phase).toBe("freeze");
+      expect(err.message).toMatch(/still reads as active/i);
+      expect(calls).toEqual(["gate:on", "deactivate", "gate:off"]);
+      expect(closeCoursePda).not.toHaveBeenCalled();
+    });
+
+    it("says the state is unknown when the re-read fails, and sends no activate", async () => {
+      readHook = () => {
+        if (calls.includes("deactivate")) throw new Error("RPC unreachable");
+      };
+
+      const err = await captureError(recreateCourse(COURSE_ID));
+
+      expect(err.phase).toBe("freeze");
+      expect(err.message).toMatch(/UNKNOWN/);
+      expect(calls).toEqual(["gate:on", "deactivate", "gate:off"]);
+    });
+  });
+
+  describe("a course already inactive at pre-flight", () => {
+    beforeEach(() => {
+      onChainCourse = { ...onChainCourse, is_active: false };
+    });
+
+    it("is recreated and left inactive", async () => {
+      const result = await recreateCourse(COURSE_ID);
+
+      expect(result.action).toBe("recreated");
+      expect(calls).toEqual([
+        "gate:on",
+        "deactivate",
+        "close",
+        "create",
+        "bind",
+        "deactivate",
+        "db:synced",
+        "gate:off",
+        "changelog:recreated",
+      ]);
+    });
+
+    it("stays inactive when the freeze aborts", async () => {
+      recheckCourse = { is_active: false, total_enrollments: 1 };
+
+      const err = await captureError(recreateCourse(COURSE_ID));
+
+      expect(err.phase).toBe("freeze");
+      expect(err.message).toMatch(/already inactive/i);
+      expect(calls).toEqual(["gate:on", "deactivate", "gate:off"]);
+    });
+  });
+
+  it("ignores allowUnusualCreator for the bypass log, since the override is not applied", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    await recreateCourse(COURSE_ID, true);
+
+    expect(warn.mock.calls.flat().join(" ")).not.toMatch(/bypassed/);
+    warn.mockRestore();
   });
 });
 
@@ -817,6 +948,22 @@ describe("close → create happy path", () => {
     );
   });
 
+  it("hands the create the genesis hash pre-flight verified, so it needs no second lookup", async () => {
+    await recreateCourse(COURSE_ID);
+    expect(deployCoursePda).toHaveBeenCalledWith(
+      expect.objectContaining({ genesisHash: DEVNET_GENESIS_HASH })
+    );
+  });
+
+  it("logs the creator-denylist bypass when the override is applied on devnet", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    await recreateCourse(COURSE_ID, true);
+
+    expect(warn.mock.calls.flat().join(" ")).toMatch(/bypassed/);
+    warn.mockRestore();
+  });
+
   it("REPORTS the counters the recreate destroys (they cannot be restored)", async () => {
     const result = await recreateCourse(COURSE_ID);
     expect(result.lostCounters).toEqual({
@@ -976,6 +1123,50 @@ describe("close fails", () => {
     expect(thrown!.message).toMatch(/UNCHANGED and still deployed/i);
     expect(deployCoursePda).not.toHaveBeenCalled();
     expect(calls).toEqual(["gate:on", "close", "gate:off"]);
+  });
+
+  it("goes on to the create when the close timed out but the account is gone", async () => {
+    vi.mocked(closeCoursePda).mockImplementationOnce(async () => {
+      calls.push("close");
+      accounts.delete(coursePda(COURSE_ID));
+      return {
+        success: false,
+        error: "Transaction was not confirmed in 30.00 seconds",
+      };
+    });
+
+    const result = await recreateCourse(COURSE_ID);
+
+    expect(result.action).toBe("recreated");
+    expect(result.closeSignature).toBeNull();
+    expect(result.warnings.join(" ")).toMatch(/so it landed/i);
+    expect(calls).toEqual([
+      "gate:on",
+      "close",
+      "create",
+      "bind",
+      "db:synced",
+      "gate:off",
+      "changelog:recreated",
+    ]);
+  });
+
+  it("leaves the gate on and says the state is unknown when the re-read fails too", async () => {
+    vi.mocked(closeCoursePda).mockImplementationOnce(async () => {
+      calls.push("close");
+      readHook = () => {
+        throw new Error("RPC unreachable");
+      };
+      return { success: false, error: "blockhash expired" };
+    });
+
+    const err = await captureError(recreateCourse(COURSE_ID));
+
+    expect(err.phase).toBe("close");
+    expect(err.courseIntact).toBe(false);
+    expect(err.message).toMatch(/UNKNOWN/);
+    expect(deployCoursePda).not.toHaveBeenCalled();
+    expect(calls).toEqual(["gate:on", "close"]);
   });
 });
 
