@@ -42,6 +42,11 @@ let dbThrows = false;
 // NEXT_PUBLIC_SOLANA_NETWORK label.
 let genesisHash = DEVNET_GENESIS_HASH;
 let genesisHashThrows = false;
+// Mainnet freeze re-check: the course as read back after deactivating it, and
+// the deactivation's slot as the RPC reports it (null = not seen).
+let recheckCourse: Record<string, unknown> | null = null;
+let deactivationSlot: number | null = 123;
+const MAINNET_GENESIS_HASH = "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d";
 // The RPC endpoint the mainnet course-identity guard reads (SOLANA_RPC_URL).
 // Independent of the label and the genesis hash, so a mainnet host can be
 // simulated while rail 4 still passes.
@@ -79,8 +84,8 @@ vi.mock("@/lib/solana/admin-signer", async (importOriginal) => {
       calls.push("bind");
       return bindResult;
     }),
-    updateCoursePda: vi.fn(async () => {
-      calls.push("deactivate");
+    updateCoursePda: vi.fn(async (p: { newIsActive?: boolean }) => {
+      calls.push(p.newIsActive === true ? "activate" : "deactivate");
       return updateResult;
     }),
   };
@@ -96,6 +101,7 @@ vi.mock("@/lib/solana/academy-reads", () => ({
     if (fetchCourseThrows) throw new Error("undecodable account layout");
     return onChainCourse;
   },
+  decodeCourse: () => recheckCourse,
 }));
 
 vi.mock("@/lib/content/deployment-writes", () => ({
@@ -137,6 +143,12 @@ vi.mock("@solana/web3.js", async (importOriginal) => {
       async getGenesisHash() {
         if (genesisHashThrows) throw new Error("RPC unreachable");
         return genesisHash;
+      }
+      async getSignatureStatus() {
+        return {
+          context: { slot: 1 },
+          value: deactivationSlot == null ? null : { slot: deactivationSlot },
+        };
       }
     },
   };
@@ -214,6 +226,8 @@ beforeEach(() => {
   dbThrows = false;
   genesisHash = DEVNET_GENESIS_HASH;
   genesisHashThrows = false;
+  recheckCourse = null;
+  deactivationSlot = 123;
   rpcUrl = DEVNET_RPC;
   vi.clearAllMocks();
 });
@@ -223,11 +237,11 @@ afterEach(() => {
 });
 
 // ---------------------------------------------------------------------------
-// RAIL 4 — mainnet hard-refusal. Un-bypassable until #305 (Squads custody).
+// RAIL 4 — the cluster. The RPC's genesis hash identifies it and the label must
+// agree; anything else is refused before anything is touched.
 // ---------------------------------------------------------------------------
-describe("rail 4 — mainnet is hard-refused until Squads custody (#305)", () => {
-  it('refuses on NEXT_PUBLIC_SOLANA_NETWORK === "mainnet"', async () => {
-    process.env.NEXT_PUBLIC_SOLANA_NETWORK = "mainnet";
+describe("rail 4 — genesis hash and label must agree on devnet or mainnet", () => {
+  const expectRefused = async (pattern: RegExp) => {
     let thrown: RecreateCourseError | undefined;
     try {
       await recreateCourse(COURSE_ID);
@@ -237,44 +251,44 @@ describe("rail 4 — mainnet is hard-refused until Squads custody (#305)", () =>
     expect(thrown).toBeInstanceOf(RecreateCourseError);
     expect(thrown!.phase).toBe("preflight");
     expect(thrown!.courseIntact).toBe(true);
-    expect(thrown!.message).toMatch(/Squads custody \(#305\)/i);
+    expect(thrown!.message).toMatch(pattern);
     expect(closeCoursePda).not.toHaveBeenCalled();
     expect(writeCourseMaintenanceFlag).not.toHaveBeenCalled();
     expect(calls).toEqual([]);
-  });
+  };
 
-  it('also refuses on the "mainnet-beta" spelling — not a narrow string match', async () => {
-    process.env.NEXT_PUBLIC_SOLANA_NETWORK = "mainnet-beta";
-    let thrown: RecreateCourseError | undefined;
-    try {
-      await recreateCourse(COURSE_ID);
-    } catch (e) {
-      thrown = e as RecreateCourseError;
+  it.each(["mainnet", "mainnet-beta"])(
+    'refuses a "%s" label on devnet\'s genesis',
+    async (label) => {
+      process.env.NEXT_PUBLIC_SOLANA_NETWORK = label;
+      await expectRefused(/do not identify devnet or mainnet together/i);
     }
-    expect(thrown!.phase).toBe("preflight");
-    expect(closeCoursePda).not.toHaveBeenCalled();
-  });
+  );
 
-  it("refuses on an unset/misconfigured network value (default-deny, not default-allow)", async () => {
+  it("refuses an unset label (default-deny, not default-allow)", async () => {
     delete process.env.NEXT_PUBLIC_SOLANA_NETWORK;
-    // Unset must FAIL SAFE — refuse — never silently behave as if it were
-    // devnet. This is the platform's single most destructive on-chain
-    // operation; a default-ALLOW-on-unset reading would be dangerous.
-    let thrown: RecreateCourseError | undefined;
-    try {
-      await recreateCourse(COURSE_ID);
-    } catch (e) {
-      thrown = e as RecreateCourseError;
-    }
-    expect(thrown).toBeInstanceOf(RecreateCourseError);
-    expect(thrown!.phase).toBe("preflight");
-    expect(thrown!.courseIntact).toBe(true);
-    expect(thrown!.message).toMatch(/Squads custody \(#305\)/i);
-    expect(closeCoursePda).not.toHaveBeenCalled();
-    expect(calls).toEqual([]);
+    await expectRefused(/"unset"/);
   });
 
-  it('proceeds when NEXT_PUBLIC_SOLANA_NETWORK is explicitly "devnet"', async () => {
+  it('refuses a "devnet" label on mainnet\'s genesis', async () => {
+    process.env.NEXT_PUBLIC_SOLANA_NETWORK = "devnet";
+    genesisHash = MAINNET_GENESIS_HASH;
+    await expectRefused(/genesis hash/i);
+  });
+
+  it("refuses a genesis hash that is neither devnet's nor mainnet's", async () => {
+    process.env.NEXT_PUBLIC_SOLANA_NETWORK = "devnet";
+    genesisHash = "4uhcVJyU9pJkvQyS88uRDiswHXSCkY3zQawwpjk2NsNY"; // testnet
+    await expectRefused(/do not identify devnet or mainnet together/i);
+  });
+
+  it("fail-safe: refuses when the genesis hash cannot be fetched at all", async () => {
+    process.env.NEXT_PUBLIC_SOLANA_NETWORK = "devnet";
+    genesisHashThrows = true;
+    await expectRefused(/could not verify/i);
+  });
+
+  it("proceeds on devnet when the label AND the genesis hash say devnet", async () => {
     process.env.NEXT_PUBLIC_SOLANA_NETWORK = "devnet";
     const result = await recreateCourse(COURSE_ID);
     expect(result.action).toBe("recreated");
@@ -283,57 +297,106 @@ describe("rail 4 — mainnet is hard-refused until Squads custody (#305)", () =>
 });
 
 // ---------------------------------------------------------------------------
-// F3 — authenticate the ACTUAL RPC (genesis hash), not just the display
-// label. NEXT_PUBLIC_SOLANA_NETWORK and SOLANA_RPC_URL are independent env
-// vars; a "devnet" label paired with a misconfigured mainnet RPC must still
-// be refused.
+// MAINNET — only while nobody is enrolled. Pre-flight checks the live count;
+// after the gate, the course is deactivated (enroll is learner-signed, the gate
+// can't stop it) and the count is re-read before the close.
 // ---------------------------------------------------------------------------
-describe("F3 — the RPC's genesis hash must ALSO match devnet, not just the label", () => {
-  it('refuses even with an explicit "devnet" label when the RPC genesis hash does not match devnet', async () => {
-    process.env.NEXT_PUBLIC_SOLANA_NETWORK = "devnet";
-    // A mainnet-beta-shaped genesis hash, paired with the "devnet" label.
-    genesisHash = "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d";
-
-    let thrown: RecreateCourseError | undefined;
-    try {
-      await recreateCourse(COURSE_ID);
-    } catch (e) {
-      thrown = e as RecreateCourseError;
-    }
-    expect(thrown).toBeInstanceOf(RecreateCourseError);
-    expect(thrown!.phase).toBe("preflight");
-    expect(thrown!.courseIntact).toBe(true);
-    expect(thrown!.message).toMatch(/genesis hash/i);
-    expect(thrown!.message).toMatch(/does not match devnet/i);
-    // Nothing was touched — refused before the close.
-    expect(closeCoursePda).not.toHaveBeenCalled();
-    expect(writeCourseMaintenanceFlag).not.toHaveBeenCalled();
-    expect(calls).toEqual([]);
+describe("mainnet recreate — zero enrollments only", () => {
+  beforeEach(() => {
+    process.env.NEXT_PUBLIC_SOLANA_NETWORK = "mainnet";
+    genesisHash = MAINNET_GENESIS_HASH;
+    onChainCourse = { ...onChainCourse, total_enrollments: 0 };
+    recheckCourse = { is_active: false, total_enrollments: 0 };
   });
 
-  it("fail-safe: refuses when the genesis hash cannot be fetched at all", async () => {
-    process.env.NEXT_PUBLIC_SOLANA_NETWORK = "devnet";
-    genesisHashThrows = true;
-
-    let thrown: RecreateCourseError | undefined;
-    try {
-      await recreateCourse(COURSE_ID);
-    } catch (e) {
-      thrown = e as RecreateCourseError;
-    }
-    expect(thrown).toBeInstanceOf(RecreateCourseError);
-    expect(thrown!.phase).toBe("preflight");
-    expect(thrown!.courseIntact).toBe(true);
-    expect(thrown!.message).toMatch(/could not verify/i);
-    expect(closeCoursePda).not.toHaveBeenCalled();
-    expect(calls).toEqual([]);
-  });
-
-  it("proceeds when the label AND the genesis hash both say devnet", async () => {
-    process.env.NEXT_PUBLIC_SOLANA_NETWORK = "devnet";
-    genesisHash = DEVNET_GENESIS_HASH;
+  it("recreates a course with zero enrollments, deactivating it before the close", async () => {
     const result = await recreateCourse(COURSE_ID);
+
     expect(result.action).toBe("recreated");
+    expect(calls.slice(0, 3)).toEqual(["gate:on", "deactivate", "close"]);
+    expect(calls).toContain("create");
+    // create_course sets is_active=true and the course was active before, so
+    // nothing re-deactivates it afterwards.
+    expect(calls.filter((c) => c === "deactivate")).toHaveLength(1);
+  });
+
+  it("refuses a course with one or more enrollments, touching nothing", async () => {
+    onChainCourse = { ...onChainCourse, total_enrollments: 1 };
+
+    const err = await captureError(recreateCourse(COURSE_ID));
+
+    expect(err.phase).toBe("preflight");
+    expect(err.courseIntact).toBe(true);
+    expect(err.message).toMatch(/1 enrollment\(s\)/);
+    expect(calls).toEqual([]);
+  });
+
+  it("refuses when an enrollment appears between the pre-flight read and the close", async () => {
+    recheckCourse = { is_active: false, total_enrollments: 1 };
+
+    const err = await captureError(recreateCourse(COURSE_ID));
+
+    expect(err.phase).toBe("preflight");
+    expect(err.courseIntact).toBe(true);
+    expect(err.message).toMatch(/someone enrolled after the pre-flight/i);
+    // Deactivated, found the enrollment, re-activated, released the gate.
+    expect(calls).toEqual(["gate:on", "deactivate", "activate", "gate:off"]);
+    expect(closeCoursePda).not.toHaveBeenCalled();
+  });
+
+  it("refuses when the course does not read back inactive", async () => {
+    recheckCourse = { is_active: true, total_enrollments: 0 };
+
+    const err = await captureError(recreateCourse(COURSE_ID));
+
+    expect(err.message).toMatch(/did not read back as inactive/i);
+    expect(closeCoursePda).not.toHaveBeenCalled();
+  });
+
+  it("refuses when the RPC has not seen the deactivation", async () => {
+    deactivationSlot = null;
+
+    const err = await captureError(recreateCourse(COURSE_ID));
+
+    expect(err.message).toMatch(/could not confirm the deactivation/i);
+    expect(calls).toEqual(["gate:on", "deactivate", "activate", "gate:off"]);
+  });
+
+  it("refuses when the live course cannot be read to prove zero enrollments", async () => {
+    onChainCourse = null;
+
+    const err = await captureError(recreateCourse(COURSE_ID));
+
+    expect(err.message).toMatch(/confirm it has no enrollments/i);
+    expect(calls).toEqual([]);
+  });
+
+  it("ignores allowUnusualCreator: creator == authority is refused", async () => {
+    courses = [validCourse({ creatorWallet: AUTHORITY.toBase58() })];
+
+    const err = await captureError(recreateCourse(COURSE_ID, true));
+
+    expect(err.phase).toBe("preflight");
+    expect(err.errorId).toBe("COURSE_IDENTITY_001");
+    expect(closeCoursePda).not.toHaveBeenCalled();
+    expect(deployCoursePda).not.toHaveBeenCalled();
+    expect(calls).toEqual([]);
+  });
+
+  it("puts is_active back when the close fails after the freeze", async () => {
+    closeResult = { success: false, signature: "" };
+
+    const err = await captureError(recreateCourse(COURSE_ID));
+
+    expect(err.phase).toBe("close");
+    expect(err.courseIntact).toBe(true);
+    expect(calls).toEqual([
+      "gate:on",
+      "deactivate",
+      "close",
+      "activate",
+      "gate:off",
+    ]);
   });
 });
 

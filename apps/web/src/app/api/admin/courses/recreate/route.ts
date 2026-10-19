@@ -20,7 +20,8 @@ import { sanitizeReason } from "@/lib/admin/sanitize-reason";
  * `trackId`, `trackLevel`, `prerequisite`) that `update_course` cannot touch.
  * See `lib/admin/recreate-course.ts` for the full rationale, the non-atomicity
  * window this is built around, and the 4 safety rails (admin-auth, the H3
- * lesson-count default, the maintenance gate, and the mainnet hard-refusal).
+ * lesson-count default, the maintenance gate, and the cluster rail: devnet, or
+ * mainnet only while the course has zero enrollments).
  *
  * Guards, in order:
  *   1. `requireAdminAuth` — the caller's Supabase session must belong to a user
@@ -38,9 +39,11 @@ import { sanitizeReason } from "@/lib/admin/sanitize-reason";
  *      requires `acknowledgeUnusualCreator` to equal the `courseId`, a SECOND,
  *      independent field naming the same course, mirroring the `confirm` gate
  *      above. Checked before any on-chain call is made.
- *   4. `recreateCourse` itself refuses (mainnet, missing signer, bad creator,
- *      a lesson-count superset, a concurrent recreate already in progress, ...)
- *      before anything is touched — see `preflightRecreate`.
+ *   4. `recreateCourse` itself refuses (an unknown or mislabelled cluster, a
+ *      mainnet course with enrollments, missing signer, bad creator, a
+ *      lesson-count superset, a concurrent recreate already in progress, ...)
+ *      before anything is touched — see `preflightRecreate`. On mainnet
+ *      `allowUnusualCreator` is ignored there.
  *
  * No UI wires this yet — the confirmation button lands with the /admin/courses
  * screen in a follow-up (WS-2).
