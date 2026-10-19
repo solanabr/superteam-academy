@@ -118,7 +118,8 @@ describe("syncContentAssets", () => {
     githubServes({ [ENTRY_B.path]: B });
 
     const result = await syncContentAssets({
-      manifest: [ENTRY_A, ENTRY_B, ENTRY_C],
+      // A manifest content type is ignored: the extension decides.
+      manifest: [ENTRY_A, { ...ENTRY_B, contentType: "text/html" }, ENTRY_C],
       lock: LOCK,
       env: { ...VERCEL_ENV, GITHUB_TOKEN: "ghs_test" },
       log,
@@ -131,12 +132,12 @@ describe("syncContentAssets", () => {
       cursor: "page-2",
     });
 
+    // Public raw host, no token: preview builds have none, and the REST API
+    // quota never applies.
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe(
-      `https://raw.githubusercontent.com/${LOCK.repo}/${LOCK.sha}/${ENTRY_B.path}`
-    );
-    expect(init.headers).toEqual({ Authorization: "Bearer ghs_test" });
+    expect(fetchMock.mock.calls[0]).toEqual([
+      `https://raw.githubusercontent.com/${LOCK.repo}/${LOCK.sha}/${ENTRY_B.path}`,
+    ]);
 
     expect(blob.put).toHaveBeenCalledTimes(1);
     const [pathname, body, options] = blob.put.mock.calls[0]!;
@@ -236,5 +237,109 @@ describe("syncContentAssets", () => {
     });
 
     expect(result.uploaded).toBe(1);
+  });
+
+  it.each([
+    ["a short hash", { ...ENTRY_A, sha256: "abc" }],
+    ["an ext outside the allowlist", { ...ENTRY_A, ext: "html" }],
+    ["a traversal", { ...ENTRY_A, path: "courses/../../x/a.webp" }],
+    ["a leading slash", { ...ENTRY_A, path: "/courses/c/a.webp" }],
+    ["a backslash", { ...ENTRY_A, path: "courses\\c\\a.webp" }],
+    ["a path whose ext disagrees", { ...ENTRY_A, path: "courses/c/a.svg" }],
+    ["an oversize entry", { ...ENTRY_A, size: 2 * 1024 * 1024 }],
+  ])("refuses a manifest with %s before touching anything", async (_, bad) => {
+    await expect(
+      syncContentAssets({
+        manifest: [ENTRY_B, bad],
+        lock: LOCK,
+        env: VERCEL_ENV,
+        log,
+      })
+    ).rejects.toThrow(/assets.json has 1 malformed/);
+    expect(blob.list).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("refuses a malformed content.lock", async () => {
+    await expect(
+      syncContentAssets({
+        manifest: [ENTRY_A],
+        lock: { repo: "evil.example/../x", sha: LOCK.sha },
+        env: VERCEL_ENV,
+        log,
+      })
+    ).rejects.toThrow(/content.lock is malformed/);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  describe("GitHub rate limits", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it.each([
+      ["a 429", new Response("slow down", { status: 429 })],
+      [
+        "a rate-limited 403",
+        new Response("rate limited", {
+          status: 403,
+          headers: { "retry-after": "2" },
+        }),
+      ],
+    ])("waits out %s and retries", async (_, limited) => {
+      storeHolds();
+      fetchMock
+        .mockResolvedValueOnce(limited)
+        .mockResolvedValueOnce(new Response(new Uint8Array(A)));
+
+      const run = syncContentAssets({
+        manifest: [ENTRY_A],
+        lock: LOCK,
+        env: VERCEL_ENV,
+        log,
+      });
+      await vi.runAllTimersAsync();
+
+      await expect(run).resolves.toMatchObject({ uploaded: 1 });
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    it("gives up after a bounded number of tries", async () => {
+      storeHolds();
+      fetchMock.mockImplementation(() =>
+        Promise.resolve(new Response("slow down", { status: 429 }))
+      );
+
+      const run = syncContentAssets({
+        manifest: [ENTRY_A],
+        lock: LOCK,
+        env: VERCEL_ENV,
+        log,
+      });
+      const failed = expect(run).rejects.toThrow(/GitHub returned 429/);
+      await vi.runAllTimersAsync();
+
+      await failed;
+      expect(fetchMock).toHaveBeenCalledTimes(5);
+      expect(blob.put).not.toHaveBeenCalled();
+    });
+
+    it("does not retry a plain 403", async () => {
+      storeHolds();
+      fetchMock.mockResolvedValue(new Response("nope", { status: 403 }));
+
+      await expect(
+        syncContentAssets({
+          manifest: [ENTRY_A],
+          lock: LOCK,
+          env: VERCEL_ENV,
+          log,
+        })
+      ).rejects.toThrow(/GitHub returned 403/);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
   });
 });

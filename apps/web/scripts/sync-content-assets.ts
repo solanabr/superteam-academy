@@ -5,10 +5,15 @@
  * store's only writer.
  *
  * One paginated `list()` of the store is diffed against
- * `src/content/generated/assets.json`. Each missing image is fetched from the
- * content repo at the content.lock SHA, checked against its manifest sha256,
- * and uploaded under its content-addressed key. Keys are never overwritten or
- * deleted, so an older bundle (a rollback) keeps resolving.
+ * `src/content/generated/assets.json`. Each missing image is fetched from
+ * raw.githubusercontent.com at the content.lock SHA (public, no token, outside
+ * the REST API quota), checked against its manifest sha256, and uploaded under
+ * its content-addressed key. Keys are never overwritten or deleted, so an
+ * older bundle (a rollback) keeps resolving.
+ *
+ * A branch's preview build holds the shared store's token, so `assets.json`
+ * and `content.lock` are untrusted input: every field that shapes a url, a key
+ * or a content type is checked before anything is fetched.
  *
  * On Vercel (`VERCEL` set) the sync is mandatory: a missing token, a GitHub
  * error, a hash mismatch or a blob url that differs from the one the compiler
@@ -22,13 +27,21 @@ import * as path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { BlobError, list, put } from "@vercel/blob";
 import {
+  ASSET_EXT_ALLOWLIST,
+  IMAGE_CONTENT_TYPES,
+  MAX_ASSET_BYTES,
   contentImagePathname,
   contentImageUrl,
+  imageExt,
+  isPlainRepoPath,
   type AssetManifestEntry,
 } from "../src/lib/content/compile/assets";
 
 /** Parallel GitHub fetch + upload pairs. */
 const CONCURRENCY = 8;
+/** Tries per file. Waits double from 1 s, or follow Retry-After, capped. */
+const FETCH_ATTEMPTS = 5;
+const MAX_WAIT_MS = 30_000;
 /** Content-addressed bytes never change under their key. */
 const ONE_YEAR_SECONDS = 365 * 24 * 60 * 60;
 
@@ -49,32 +62,78 @@ export interface SyncResult {
 const sameUrl = (a: string, b: string): boolean =>
   new URL(a).href === new URL(b).href;
 
+function isValidEntry(e: unknown): e is AssetManifestEntry {
+  if (!e || typeof e !== "object") return false;
+  const { sha256, ext, size, path: repoPath } = e as Record<string, unknown>;
+  return (
+    typeof sha256 === "string" &&
+    /^[0-9a-f]{64}$/.test(sha256) &&
+    typeof ext === "string" &&
+    ASSET_EXT_ALLOWLIST.has(ext) &&
+    typeof size === "number" &&
+    Number.isSafeInteger(size) &&
+    size >= 0 &&
+    size <= MAX_ASSET_BYTES &&
+    typeof repoPath === "string" &&
+    isPlainRepoPath(repoPath) &&
+    imageExt(repoPath) === ext
+  );
+}
+
+function checkInput(manifest: unknown, lock: SyncInput["lock"]): void {
+  if (
+    !/^[\w.-]+\/[\w.-]+$/.test(String(lock.repo)) ||
+    !/^[0-9a-f]{40}$/.test(String(lock.sha))
+  ) {
+    throw new Error(`content.lock is malformed: ${JSON.stringify(lock)}`);
+  }
+  if (!Array.isArray(manifest)) throw new Error("assets.json is not an array");
+  const bad = manifest.filter((e) => !isValidEntry(e));
+  if (bad.length > 0) {
+    throw new Error(
+      `assets.json has ${bad.length} malformed entries, e.g. ${JSON.stringify(bad[0])}`
+    );
+  }
+}
+
+/** Worth another try: a network error, a 5xx, or GitHub rate limiting us. */
+function isTransient(res: Response): boolean {
+  if (res.status >= 500 || res.status === 429) return true;
+  return (
+    res.status === 403 &&
+    (res.headers.has("retry-after") ||
+      res.headers.get("x-ratelimit-remaining") === "0")
+  );
+}
+
 async function fetchRepoFile(
   lock: SyncInput["lock"],
-  repoPath: string,
-  githubToken: string | undefined
+  repoPath: string
 ): Promise<Uint8Array> {
   const encoded = repoPath.split("/").map(encodeURIComponent).join("/");
   const url = `https://raw.githubusercontent.com/${lock.repo}/${lock.sha}/${encoded}`;
-  const headers: Record<string, string> = githubToken
-    ? { Authorization: `Bearer ${githubToken}` }
-    : {};
   const at = `${repoPath}@${lock.sha.slice(0, 7)}`;
-  // Retry only what can be transient: a network error or a 5xx. A 4xx is a
-  // fact about this commit and fails at once.
   for (let attempt = 1; ; attempt++) {
     let res: Response | null = null;
     try {
-      res = await fetch(url, { headers });
+      res = await fetch(url);
     } catch (e) {
-      if (attempt >= 3)
+      if (attempt >= FETCH_ATTEMPTS) {
         throw new Error(`GitHub fetch of ${at} failed: ${String(e)}`);
+      }
     }
-    if (res?.ok) return new Uint8Array(await res.arrayBuffer());
-    if (res && (res.status < 500 || attempt >= 3)) {
+    if (res?.ok) {
+      if (Number(res.headers.get("content-length")) > MAX_ASSET_BYTES) {
+        throw new Error(`${at} is larger than ${MAX_ASSET_BYTES} bytes`);
+      }
+      return new Uint8Array(await res.arrayBuffer());
+    }
+    if (res && (!isTransient(res) || attempt >= FETCH_ATTEMPTS)) {
       throw new Error(`GitHub returned ${res.status} for ${at}`);
     }
-    await new Promise((r) => setTimeout(r, 500 * attempt));
+    const retryAfter = Number(res?.headers.get("retry-after"));
+    const wait = retryAfter > 0 ? retryAfter * 1000 : 1000 * 2 ** (attempt - 1);
+    await new Promise((r) => setTimeout(r, Math.min(wait, MAX_WAIT_MS)));
   }
 }
 
@@ -94,6 +153,7 @@ export async function syncContentAssets({
       "BLOB_READ_WRITE_TOKEN is not set: connect the academy-content-assets Blob store to this environment."
     );
   }
+  checkInput(manifest, lock);
 
   const listed = new Map<string, string>(); // pathname → url
   let cursor: string | undefined;
@@ -119,7 +179,7 @@ export async function syncContentAssets({
   }
 
   const upload = async (entry: AssetManifestEntry): Promise<void> => {
-    const bytes = await fetchRepoFile(lock, entry.path, env.GITHUB_TOKEN);
+    const bytes = await fetchRepoFile(lock, entry.path);
     const sha256 = createHash("sha256").update(bytes).digest("hex");
     if (sha256 !== entry.sha256) {
       throw new Error(
@@ -135,7 +195,7 @@ export async function syncContentAssets({
         addRandomSuffix: false,
         allowOverwrite: false,
         cacheControlMaxAge: ONE_YEAR_SECONDS,
-        contentType: entry.contentType,
+        contentType: IMAGE_CONTENT_TYPES.get(entry.ext),
         token,
       }));
     } catch (e) {

@@ -13,6 +13,7 @@ import {
 import {
   ASSET_EXT_ALLOWLIST,
   MAX_ASSET_BYTES,
+  retiredAssetRefs,
   rewriteMarkdownAssetPaths,
 } from "./assets";
 
@@ -358,6 +359,11 @@ export function validateL10n(
       const m = /^lessons\/([^/]+)$/.exec(lessonRest);
       const found = m ? lessonBySlug.get(m[1]!) : undefined;
       if (!found) continue; // reported above
+      for (const url of retiredAssetRefs(md)) {
+        issues.push(
+          `${where}/${rest}: markdown image "${url}" points at the retired /content-assets/ path — reference the file relative to the lesson (assets/<file>)`
+        );
+      }
       for (const rel of markdownImageRefs(md)) {
         const localized = o.assets.has(`${lessonRest}/${rel}`);
         const inSource = tree.has(`${found.dir}/${rel}`);

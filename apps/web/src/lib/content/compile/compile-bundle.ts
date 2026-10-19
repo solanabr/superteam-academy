@@ -47,6 +47,7 @@ import {
   contentImagePathname,
   contentImageUrl,
   imageExt,
+  retiredAssetRefs,
   type AssetManifestEntry,
 } from "./assets";
 import { splitRepoTree, type ContentTree } from "./tarball";
@@ -353,6 +354,11 @@ function validateAssetReferences(
     for (const block of lesson.blocks) {
       if (block.type !== "prose") continue;
       const md = content.prose.get(`${dir}/${block.src}`) ?? "";
+      for (const url of retiredAssetRefs(md)) {
+        issues.push(
+          `lesson ${lesson.id} block ${block.key}: markdown image "${url}" points at the retired /content-assets/ path — reference the file relative to the lesson (assets/<file>)`
+        );
+      }
       for (const rel of markdownImageRefs(md)) {
         if (!shippable.has(`${dir}/${rel}`)) {
           issues.push(

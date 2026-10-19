@@ -5,8 +5,9 @@
     "build": {
       "dependsOn": ["^build"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"],
-      "passThroughEnv": ["VERCEL", "BLOB_READ_WRITE_TOKEN", "GITHUB_TOKEN"],
+      "passThroughEnv": ["BLOB_READ_WRITE_TOKEN"],
       "env": [
+        "VERCEL",
         "NEXT_PUBLIC_SUPABASE_URL",
         "NEXT_PUBLIC_SUPABASE_ANON_KEY",
         "SUPABASE_SERVICE_ROLE_KEY",

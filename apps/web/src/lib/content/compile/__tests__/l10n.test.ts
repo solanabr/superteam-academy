@@ -403,6 +403,21 @@ describe("l10n overlays — what is refused (fail-closed, every issue named)", (
     ).toHaveLength(2);
   });
 
+  it("a translated .md may not point at the retired /content-assets/ path", () => {
+    const issues = issuesOf(
+      withOverlay({
+        "courses/demo/l10n/en/lessons/basics/intro.md": raw(
+          "# Hello\n\n![d](/content-assets/demo/basics/d.png)\n"
+        ),
+      })
+    );
+    expect(
+      issues.some(
+        (i) => i.includes("intro.md") && i.includes("retired /content-assets/")
+      )
+    ).toBe(true);
+  });
+
   it("a localized image must mirror a source image and obey the source rules", () => {
     const issues = issuesOf(
       withOverlay({

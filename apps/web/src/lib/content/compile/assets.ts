@@ -30,6 +30,20 @@ export function imageExt(path: string): string {
   return dot < 0 ? "" : base.slice(dot + 1).toLowerCase();
 }
 
+/**
+ * A repo path made only of real segments: no empty, `.` or `..` part (so no
+ * leading `/`), and no backslash. Anything that builds a fetch url from a path
+ * checks this first.
+ */
+export function isPlainRepoPath(repoPath: string): boolean {
+  return (
+    !repoPath.includes("\\") &&
+    repoPath
+      .split("/")
+      .every((seg) => seg !== "" && seg !== "." && seg !== "..")
+  );
+}
+
 /** An image as the compiler sees it: its size and hash, never its bytes. */
 export interface ImageRef {
   size: number;
@@ -94,6 +108,20 @@ export function cdnUrl(
 }
 
 const IMG = /!\[([^\]]*)\]\(([^)]+)\)/g;
+
+/** Where course images were served from before they moved to Blob storage. */
+const RETIRED_ASSET_PREFIX = "/content-assets/";
+
+/**
+ * Markdown images an author pointed at the retired `/content-assets/` path.
+ * Those urls 404 now, and the rewrite leaves root-relative urls alone, so the
+ * compilers fail on them instead of shipping a broken image.
+ */
+export function retiredAssetRefs(markdown: string): string[] {
+  return [...markdown.matchAll(IMG)]
+    .map((m) => m[2]!)
+    .filter((url) => url.startsWith(RETIRED_ASSET_PREFIX));
+}
 const isRemote = (u: string): boolean =>
   /^(https?:)?\/\//.test(u) || u.startsWith("/");
 

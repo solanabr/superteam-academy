@@ -497,6 +497,23 @@ describe("compileBundle — asset pipeline", () => {
     }
   });
 
+  it("fails closed on a markdown image under the retired /content-assets/ path", () => {
+    const tree = treeWithAssets();
+    tree.set(
+      "courses/intro/lessons/hello/intro.md",
+      enc("# Hello\n\n![old](/content-assets/intro/hello/diagram.png)\n")
+    );
+    try {
+      compileBundle(tree, opts);
+      expect.unreachable("compileBundle should have thrown");
+    } catch (e) {
+      expect(e).toBeInstanceOf(ContentValidationError);
+      const joined = (e as ContentValidationError).issues.join("\n");
+      expect(joined).toContain("lesson-intro-hello");
+      expect(joined).toContain("/content-assets/intro/hello/diagram.png");
+    }
+  });
+
   it("fails closed naming the course when its thumbnail file is missing", () => {
     const tree = treeWithAssets();
     tree.delete("courses/intro/assets/thumb.png");

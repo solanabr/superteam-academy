@@ -9,7 +9,8 @@ const env = vi.hoisted(() => ({
 }));
 vi.mock("@/lib/env.server", () => env);
 
-import { isPlainRepoPath, previewImageUrl } from "../preview-compile";
+import { isPlainRepoPath } from "@/lib/content/compile/assets";
+import { previewImageUrl } from "../preview-compile";
 
 /**
  * #923: a previewed PR's images are not in blob storage, so the preview compile
@@ -48,6 +49,7 @@ describe("isPlainRepoPath", () => {
     "courses/./x.png",
     "/courses/x.png",
     "courses//x.png",
+    "courses\\..\\x.png",
     "",
   ])("refuses %j", (p) => {
     expect(isPlainRepoPath(p)).toBe(false);

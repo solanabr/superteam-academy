@@ -9,6 +9,7 @@ import {
   extractTarball,
   type ContentTree,
 } from "@/lib/content/compile/tarball";
+import { isPlainRepoPath } from "@/lib/content/compile/assets";
 import { compileBundle } from "@/lib/content/compile/compile-bundle";
 import { ContentValidationError } from "@/lib/content/compile/types";
 import type { L10nBundle } from "@/lib/content/compile/l10n";
@@ -348,13 +349,6 @@ export async function compilePrPreview(
 export function previewImageUrl(prNumber: number, repoPath: string): string {
   const encoded = repoPath.split("/").map(encodeURIComponent).join("/");
   return `/api/teach/preview/${prNumber}/assets/${encoded}`;
-}
-
-/** A repo path made only of real segments — no empty, `.` or `..` part. */
-export function isPlainRepoPath(repoPath: string): boolean {
-  return repoPath
-    .split("/")
-    .every((seg) => seg !== "" && seg !== "." && seg !== "..");
 }
 
 /**

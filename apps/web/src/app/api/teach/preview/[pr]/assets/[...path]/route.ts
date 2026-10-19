@@ -5,13 +5,14 @@ import {
   IMAGE_CONTENT_TYPES,
   MAX_ASSET_BYTES,
   imageExt,
+  isPlainRepoPath,
 } from "@/lib/content/compile/assets";
 import {
   requirePreviewAuth,
   previewUnauthorizedResponse,
   TeachPreviewAuthError,
 } from "@/lib/teach/preview-auth";
-import { fetchContentFile, isPlainRepoPath } from "@/lib/teach/preview-compile";
+import { fetchContentFile } from "@/lib/teach/preview-compile";
 import { parsePrSegment } from "@/lib/teach/preview-guard";
 import {
   getPreviewBundle,
