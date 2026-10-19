@@ -215,10 +215,10 @@ function PinBody({ data }: { data: PinResponse }): React.ReactElement {
 }
 
 /**
- * The manual publish flow — the PRIMARY (and only) path to publish new content
- * now that the one-click server-side publish route has been removed. Always
- * rendered, not tucked behind a disclosure: this is the sole way to bump the
- * pin, so a maintainer must not have to expand anything to reach it.
+ * The manual publish flow — the fallback for when the Content release workflow
+ * (.github/workflows/content-release.yml) has not opened its PR. Always
+ * rendered, not tucked behind a disclosure, so a maintainer never has to
+ * expand anything to reach it.
  */
 function PreparePr({ data }: { data: PinResponse }): React.ReactElement {
   const t = useTranslations("admin.publishPin");
