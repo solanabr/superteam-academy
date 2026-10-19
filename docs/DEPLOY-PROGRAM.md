@@ -1,4 +1,4 @@
-> Last synced: 2026-08-24
+> Last synced: 2026-10-19
 
 # Deploying the program to devnet
 
@@ -78,8 +78,14 @@ rebuilding, not just swapping the keypair file.
 Deployment costs roughly 1.5–2 SOL for the ~213 KB binary, plus about 0.01 SOL
 of rent for `initialize`.
 
+Every write in this runbook goes through a Helius devnet RPC, never the public
+devnet endpoint (see §5). Keep the URL in an environment variable so the API key
+stays out of commands and logs:
+
 ```bash
-solana config set --url devnet
+export HELIUS_DEVNET_RPC="https://devnet.helius-rpc.com/?api-key=<your key>"
+
+solana config set --url "$HELIUS_DEVNET_RPC"
 solana config set --keypair wallets/signer.json
 
 solana airdrop 2
@@ -130,21 +136,21 @@ default artifact afterwards.
 ```bash
 solana program deploy target/deploy/onchain_academy_pinocchio_fresh.so \
   --program-id wallets/pinocchio-program-devnet-v2.json \
-  --url devnet
+  --url "$HELIUS_DEVNET_RPC"
 ```
 
 Fee payer and upgrade authority default to `~/.config/solana/id.json`.
 
-> **Use a dedicated RPC, not the public devnet endpoint.** A ~213 KB program
-> deploy is hundreds of sequential write transactions, and the public endpoint
-> rate-limits aggressively enough to fail one part-way through. Pass a provider
-> URL (Helius devnet with your key, for example) to `--url`.
+> **Helius only, never the public devnet endpoint.** A ~213 KB program deploy is
+> hundreds of sequential write transactions, and the public endpoint has
+> corrupted and failed deploys part-way through. In Claude Code sessions the
+> repo's `guard-solana` hook blocks program writes to any other endpoint.
 >
 > If a deploy does fail part-way it leaves a funded buffer account behind.
 > Reclaim the rent before retrying:
 >
 > ```bash
-> solana program close --buffers --url devnet --keypair wallets/signer.json
+> solana program close --buffers --url "$HELIUS_DEVNET_RPC" --keypair wallets/signer.json
 > ```
 
 ## 6. Initialize
@@ -162,7 +168,7 @@ dependency tree — use `tsx`.
 cd onchain-academy
 
 export ACADEMY_PROGRAM_ID=Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u
-export ANCHOR_PROVIDER_URL=<your devnet RPC>
+export ANCHOR_PROVIDER_URL="$HELIUS_DEVNET_RPC"
 export ANCHOR_WALLET=~/.config/solana/id.json
 
 (cd scripts && npx tsx initialize.ts)
@@ -201,7 +207,11 @@ needed.
 ## 8. Verify
 
 ```bash
-solana program show $ACADEMY_PROGRAM_ID --url devnet
+solana program show $ACADEMY_PROGRAM_ID --url "$HELIUS_DEVNET_RPC"
+
+# Byte-verify: the deployed program must match the artifact you built.
+solana program dump $ACADEMY_PROGRAM_ID /tmp/deployed.so --url "$HELIUS_DEVNET_RPC"
+shasum -a 256 /tmp/deployed.so target/deploy/onchain_academy_pinocchio_fresh.so
 
 npx tsx scripts/fetch-config.ts
 
@@ -234,8 +244,7 @@ separate keys. Both are **JSON byte arrays**, the same format
 `solana-keygen` writes — not base58 strings. `getProgramId()` throws when
 `NEXT_PUBLIC_PROGRAM_ID` is unset rather than silently defaulting.
 
-The full annotated env list is the `## Environment Variables` block in
-[`apps/web/CLAUDE.md`](../apps/web/CLAUDE.md).
+The full annotated env list is [`.env.example`](../.env.example) at the repo root.
 
 ---
 
@@ -261,3 +270,87 @@ above instead.
 | Deploy stalls or fails part-way                | Public RPC rate limit. Use a provider URL, then `solana program close --buffers`. |
 | `edition2024` / `rmp-serde` build errors       | Edition-2024 resolver conflict. Pin the crates as shown in §4.                    |
 | Insufficient SOL                               | Budget ~2 SOL for the deploy plus rent. Airdrop twice or use the web faucet.      |
+
+---
+
+## Before mainnet
+
+Mainnet deploys, upgrades and authority changes are run by the owner, after this
+checklist and with explicit confirmation. Claude Code sessions can't run them:
+the `guard-solana` hook blocks program writes to mainnet.
+
+### Program and deploy
+
+- [ ] All suites green: both `cargo test` flavors, `pnpm test:integration`, and a
+      fuzz run of 10+ minutes.
+- [ ] Security audit completed.
+- [ ] The artifact you deploy matches the published reproducible-build hash
+      ([PROGRAM-HASH.md](./PROGRAM-HASH.md)).
+- [ ] CU numbers checked against `onchain-academy/tests/CU_BASELINE.pinocchio.md`.
+- [ ] Metaplex Core credential flow tested end to end on devnet.
+- [ ] Devnet testing over several days.
+- [ ] Frontend Lighthouse: Performance 90+, Accessibility 95+, Best Practices
+      95+, SEO 90+.
+- [ ] The owner's explicit confirmation.
+
+### Instructor credibility and track ladder
+
+`Course.creator`, `Course.track_id` and `Course.track_level` are set once at
+`create_course` and have no on-chain setter. The only fix is close and recreate,
+and the recreated course gets a new generation that rejects every existing
+enrollment, so enrolled learners lose their progress in that course. On mainnet
+every course must be right before learners enroll.
+
+The source of truth for all three fields is the course content doc
+(`creatorWallet`, `trackId`, `trackLevel`), passed straight through the admin
+sync route to `create_course`. There is no platform-authority fallback: a
+missing or invalid creator wallet fails the deploy.
+
+Per course, before its first mainnet `create_course`:
+
+- [ ] The instructor wallet is confirmed with the instructor: a wallet they
+      control, not a placeholder and not the platform authority.
+- [ ] The content doc's `creatorWallet` is that wallet, and it's a valid
+      on-curve address.
+- [ ] The credential track ladder is final, and every course's `trackId` /
+      `trackLevel` matches it, with no unset defaults where a real rung is meant.
+- [ ] Each creator wallet is linked to a public academy profile, so course and
+      certificate pages show a real instructor. Identity comes only from the
+      `public_profiles` view, resolved from `course.creator` by
+      `resolvePublicProfileByWallet` (`api/content/instructor-wallet`).
+- [ ] The academy-courses contributor docs describe the real wallet-to-instructor
+      flow.
+
+### Launch day: verify every course before learners arrive
+
+The admin deploy refuses to create a mainnet course whose `trackId` or
+`trackLevel` is unset, or whose creator is the platform authority or backend
+signer (`COURSE_IDENTITY_001`). It treats the cluster as mainnet unless the RPC
+answers with devnet's genesis hash, or is loopback and answers with a localnet
+genesis, so a misconfigured server refuses rather than slipping through. If the
+genesis hash can't be read at all it refuses with `COURSE_IDENTITY_002`; retry.
+
+Track is the learning path; level is the course's position in it:
+
+- Comece aqui = track 1: Speedrun 1, Visão Geral 2, BTC to SOL 3
+- Hackathon = track 2: Hackathon Expert 1
+- Construa e publique = track 3: Rust and TS Fundamentals 1, Payments and
+  Commerce 2, Digital Assets 3, Mastering Anchor v2 4
+- Pílula is not created on mainnet.
+
+In this order, before the platform opens to learners:
+
+- [ ] Create every mainnet course.
+- [ ] Read each Course PDA back (the admin deploy diff, or
+      `onchain-academy/scripts/fetch-course.ts <course-id>`) and check creator,
+      track and level against the ladder above. On mainnet `fetch-course.ts`
+      needs `ANCHOR_PROVIDER_URL` set to a mainnet RPC (plus any `ANCHOR_WALLET`
+      keypair) and `ACADEMY_PROGRAM_ID` if the mainnet program id differs from
+      the address in `idl/onchain_academy.json`.
+- [ ] Recreate any course with a wrong creator, track or level now, while nobody
+      is enrolled. The admin recreate refuses on mainnet once a course has an
+      enrollment, because a recreate wipes enrolled learners' progress.
+- [ ] Only then, on a course already confirmed correct, the owner enrolls with
+      his own account, finishes it, and checks that the credential shows the
+      right instructor, track and level. That enrollment makes the course
+      non-recreatable on mainnet, which is why it comes last.

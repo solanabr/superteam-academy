@@ -225,9 +225,8 @@ variables are validated at boot — a missing one fails loudly rather than
 degrading silently.
 
 > **The authoritative, annotated list** — every variable, what it does, and what
-> happens when it is unset — is the `## Environment Variables` block in
-> [`apps/web/CLAUDE.md`](apps/web/CLAUDE.md). The tables below are the shape of
-> it, not a replacement.
+> happens when it is unset — is [`.env.example`](.env.example). The tables below
+> are the shape of it, not a replacement.
 
 ### Required
 
