@@ -571,23 +571,34 @@ fallback** — a missing or invalid creator wallet fails the deploy loudly.
 ### Launch day: verify every course before learners arrive
 
 The admin deploy refuses to create a mainnet course whose `trackId` or
-`trackLevel` is 0 or whose creator is the platform authority or backend signer
-(`COURSE_IDENTITY_001`); it treats the server as mainnet when
-`NEXT_PUBLIC_SOLANA_NETWORK` or the `SOLANA_RPC_URL` host says so.
+`trackLevel` is unset or whose creator is the platform authority or backend
+signer (`COURSE_IDENTITY_001`). It treats the cluster as mainnet unless the RPC
+is loopback or answers with devnet's genesis hash, so a misconfigured server
+refuses rather than slipping through.
 
-- [ ] Create every mainnet course before the platform opens to learners.
-- [ ] Track is the learning path, level is the course's position in it:
-  - Comece aqui = track 1: Speedrun 1, Visão Geral 2, BTC to SOL 3
-  - Hackathon = track 2: Hackathon Expert 1
-  - Construa e publique = track 3: Rust and TS Fundamentals 1, Payments and
-    Commerce 2, Digital Assets 3, Mastering Anchor v2 4
-  - Pílula is not created on mainnet.
-- [ ] The owner enrolls with his own account, finishes one course, and checks
-      that the credential shows the right instructor, track and level.
-- [ ] Any course with a wrong creator, track or level is closed and recreated
-      now, while nobody is enrolled. After learners enroll, a recreate wipes
-      their progress in that course. The admin recreate is devnet-only until
-      Squads custody (#305) lands, so plan how this step runs before launch.
+Track is the learning path, level is the course's position in it:
+
+- Comece aqui = track 1: Speedrun 1, Visão Geral 2, BTC to SOL 3
+- Hackathon = track 2: Hackathon Expert 1
+- Construa e publique = track 3: Rust and TS Fundamentals 1, Payments and
+  Commerce 2, Digital Assets 3, Mastering Anchor v2 4
+- Pílula is not created on mainnet.
+
+In this order, before the platform opens to learners:
+
+- [ ] Create every mainnet course.
+- [ ] Read each Course PDA back (the admin deploy diff, or
+      `onchain-academy/scripts/fetch-course.ts <course-id>`) and check creator,
+      track and level against the ladder above.
+- [ ] Recreate any course with a wrong creator, track or level now, while
+      nobody is enrolled. After learners enroll, a recreate wipes their progress
+      in that course. Admin recreate is devnet-only on main today; mainnet
+      recreate restricted to courses with zero enrollments is in #1269, which
+      needs the owner's yes before it merges.
+- [ ] Only then, on a course already confirmed correct, the owner enrolls with
+      his own account, finishes it, and checks that the credential shows the
+      right instructor, track and level. That enrollment makes the course
+      non-recreatable on mainnet, which is why it comes last.
 
 ## Best Practices Summary
 
