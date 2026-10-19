@@ -1,7 +1,15 @@
+import { createHash } from "node:crypto";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { gzipSync } from "node:zlib";
 import { describe, it, expect } from "vitest";
+import {
+  contentImageUrl,
+  type AssetManifestEntry,
+} from "../../src/lib/content/compile/assets";
+import { makeTar } from "../../src/lib/content/compile/__tests__/_fixtures";
+import { extractTarball } from "../../src/lib/content/compile/tarball";
 import { ContentValidationError } from "../../src/lib/content/compile/types";
 import type { RepoTree } from "../../src/lib/github/types";
 import { compileContent, compileBundle, writeBundle } from "../compile-content";
@@ -11,6 +19,8 @@ const WALLET = "BEe3xJDobWhxQ7zNrwaYR4zyEtptgmDuKvaLNZukih5R";
 const enc = (s: string): Uint8Array => new TextEncoder().encode(s);
 /** 1x1-ish placeholder bytes — only the extension/size matter to the pipeline. */
 const bin = (n = 8): Uint8Array => new Uint8Array(n).fill(0x89);
+const sha256 = (bytes: Uint8Array): string =>
+  createHash("sha256").update(bytes).digest("hex");
 
 /** A minimal, schema-valid academy-courses tree: one of every managed type. */
 function validTree(): RepoTree {
@@ -133,7 +143,8 @@ function treeWithCodeBlock(): RepoTree {
 
 /**
  * validTree with a course thumbnail, an in-lesson markdown image, and an
- * unreferenced-but-present asset — the full asset-pipeline surface.
+ * unreferenced-but-present asset — the full asset-pipeline surface. The
+ * thumbnail and the diagram are the same bytes.
  */
 function treeWithAssets(): RepoTree {
   const tree = validTree();
@@ -187,6 +198,7 @@ describe("compileContent", () => {
       "skills.json",
       "l10n.json",
       "meta.json",
+      "assets.json",
     ];
     for (const n of names) expect(files.has(n)).toBe(true);
     expect(files.has("instructors.json")).toBe(false);
@@ -379,47 +391,96 @@ describe("compileContent", () => {
 });
 
 describe("compileBundle — asset pipeline", () => {
-  it("emits no assets for a tree with no images", () => {
-    const { assets } = compileBundle(validTree(), opts);
-    expect(assets.size).toBe(0);
+  const thumbUrl = contentImageUrl(sha256(bin()), "png");
+  const manifestOf = (files: Map<string, string>): AssetManifestEntry[] =>
+    JSON.parse(files.get("assets.json")!) as AssetManifestEntry[];
+
+  it("emits an empty manifest for a tree with no images", () => {
+    const { files, imagePaths } = compileBundle(validTree(), opts);
+    expect(manifestOf(files)).toEqual([]);
+    expect(imagePaths).toEqual([]);
   });
 
-  it("copies every assets/* file to its slug-mirrored public path", () => {
-    const { assets } = compileBundle(treeWithAssets(), opts);
-    expect([...assets.keys()].sort()).toEqual([
-      "intro/hello/diagram.png",
-      "intro/hello/extra.svg",
-      "intro/thumb.png",
-    ]);
-    // bytes are copied verbatim.
-    expect(assets.get("intro/hello/diagram.png")).toEqual(bin());
-  });
-
-  it("rewrites the course thumbnail to its public url", () => {
+  it("rewrites the course thumbnail to its content-addressed blob url", () => {
     const { files } = compileBundle(treeWithAssets(), opts);
     const courses = JSON.parse(files.get("courses.json")!) as {
       thumbnail?: string;
     }[];
-    expect(courses[0]!.thumbnail).toBe("/content-assets/intro/thumb.png");
+    expect(courses[0]!.thumbnail).toBe(thumbUrl);
+    expect(thumbUrl).toMatch(/\/content\/[0-9a-f]{64}\.png$/);
   });
 
-  it("rewrites in-lesson markdown image paths to public urls", () => {
+  it("rewrites in-lesson markdown image paths to blob urls", () => {
     const { files } = compileBundle(treeWithAssets(), opts);
     const lessons = JSON.parse(files.get("lessons.json")!) as {
       blocks: { src: string }[];
     }[];
-    expect(lessons[0]!.blocks[0]!.src).toContain(
-      "![a diagram](/content-assets/intro/hello/diagram.png)"
+    expect(lessons[0]!.blocks[0]!.src).toContain(`![a diagram](${thumbUrl})`);
+  });
+
+  it("lists each referenced blob once, by its smallest repo path", () => {
+    const { files, imagePaths } = compileBundle(treeWithAssets(), opts);
+    expect(imagePaths).toEqual([
+      "courses/intro/assets/thumb.png",
+      "courses/intro/lessons/hello/assets/diagram.png",
+    ]);
+    // Same bytes under two paths share one blob; the unreferenced svg is not
+    // in the bundle, so it is not in the manifest either.
+    expect(manifestOf(files)).toEqual([
+      {
+        sha256: sha256(bin()),
+        ext: "png",
+        size: 8,
+        contentType: "image/png",
+        path: "courses/intro/assets/thumb.png",
+      },
+    ]);
+  });
+
+  it("keys by bytes and extension, so different bytes get different blobs", () => {
+    const tree = treeWithAssets();
+    tree.set("courses/intro/lessons/hello/assets/diagram.png", bin(9));
+    const { files } = compileBundle(tree, opts);
+    expect(manifestOf(files).map((e) => e.sha256)).toEqual(
+      [sha256(bin()), sha256(bin(9))].sort()
     );
   });
 
-  it("is deterministic: same input yields byte-identical files and assets", () => {
+  it("compiles a streamed tarball exactly like the same tree in memory", async () => {
+    const tar = makeTar(
+      Object.fromEntries(
+        [...treeWithAssets()].map(([p, b]) => [`owner-repo-abc/${p}`, b])
+      )
+    );
+    const streamed = await extractTarball(gzipSync(Buffer.from(tar)), {
+      hashImages: true,
+    });
+    const a = compileBundle(streamed, opts);
+    const b = compileBundle(treeWithAssets(), opts);
+    expect(a.imagePaths).toEqual(b.imagePaths);
+    for (const [name, content] of b.files)
+      expect(a.files.get(name)).toBe(content);
+  });
+
+  it("routes every image through imageUrl when given one, and emits no manifest", () => {
+    const { files } = compileBundle(treeWithAssets(), {
+      ...opts,
+      imageUrl: (repoPath) => `/preview/${repoPath}`,
+    });
+    expect(files.has("assets.json")).toBe(false);
+    const courses = JSON.parse(files.get("courses.json")!) as {
+      thumbnail?: string;
+    }[];
+    expect(courses[0]!.thumbnail).toBe(
+      "/preview/courses/intro/assets/thumb.png"
+    );
+  });
+
+  it("is deterministic: same input yields byte-identical files", () => {
     const a = compileBundle(treeWithAssets(), opts);
     const b = compileBundle(treeWithAssets(), opts);
     for (const [name, content] of a.files)
       expect(b.files.get(name)).toBe(content);
-    for (const [name, bytes] of a.assets)
-      expect(b.assets.get(name)).toEqual(bytes);
   });
 
   it("fails closed naming the lesson + path when a markdown image is missing", () => {
@@ -433,6 +494,23 @@ describe("compileBundle — asset pipeline", () => {
       const joined = (e as ContentValidationError).issues.join("\n");
       expect(joined).toContain("lesson-intro-hello");
       expect(joined).toContain("assets/diagram.png");
+    }
+  });
+
+  it("fails closed on a markdown image under the retired /content-assets/ path", () => {
+    const tree = treeWithAssets();
+    tree.set(
+      "courses/intro/lessons/hello/intro.md",
+      enc("# Hello\n\n![old](/content-assets/intro/hello/diagram.png)\n")
+    );
+    try {
+      compileBundle(tree, opts);
+      expect.unreachable("compileBundle should have thrown");
+    } catch (e) {
+      expect(e).toBeInstanceOf(ContentValidationError);
+      const joined = (e as ContentValidationError).issues.join("\n");
+      expect(joined).toContain("lesson-intro-hello");
+      expect(joined).toContain("/content-assets/intro/hello/diagram.png");
     }
   });
 
@@ -453,14 +531,15 @@ describe("compileBundle — asset pipeline", () => {
   it("rejects an asset with a disallowed extension", () => {
     const tree = treeWithAssets();
     tree.set("courses/intro/lessons/hello/assets/anim.gif", bin());
+    tree.set("courses/intro/lessons/hello/assets/notes.txt", bin());
     try {
       compileBundle(tree, opts);
       expect.unreachable("compileBundle should have thrown");
     } catch (e) {
       expect(e).toBeInstanceOf(ContentValidationError);
-      expect((e as ContentValidationError).issues.join("\n")).toContain(
-        "anim.gif"
-      );
+      const joined = (e as ContentValidationError).issues.join("\n");
+      expect(joined).toContain("anim.gif");
+      expect(joined).toContain("notes.txt");
     }
   });
 
@@ -486,23 +565,15 @@ describe("writeBundle", () => {
   it("rebuilds the generated dir from scratch, removing stray committed files", () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "compile-content-"));
     const outDir = path.join(root, "generated");
-    const assetsDir = path.join(root, "content-assets");
     fs.mkdirSync(outDir, { recursive: true });
     fs.writeFileSync(path.join(outDir, "extra.json"), "{}\n"); // stray module
-    fs.mkdirSync(assetsDir, { recursive: true });
-    fs.writeFileSync(path.join(assetsDir, "stale.png"), "x"); // stray asset
 
     try {
-      writeBundle(
-        { outDir, assetsDir },
-        { files: new Map([["meta.json", "{}\n"]]), assets: new Map() }
-      );
+      writeBundle(outDir, new Map([["meta.json", "{}\n"]]));
 
       expect(fs.existsSync(path.join(outDir, "extra.json"))).toBe(false);
       expect(fs.existsSync(path.join(outDir, "meta.json"))).toBe(true);
       expect(fs.existsSync(path.join(outDir, "README.md"))).toBe(true);
-      // No assets → the dir is left absent so `git diff --exit-code` stays clean.
-      expect(fs.existsSync(assetsDir)).toBe(false);
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }

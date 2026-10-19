@@ -125,12 +125,20 @@ solanabr/academy-courses  (git = source of truth: course.yaml, lesson.yaml, achi
 apps/web/scripts/compile-content.ts   (fetch tarball @ SHA → Zod-validate → project → emit)
         │
         ▼
-apps/web/src/content/generated/*.json   (COMMITTED bundle)
-apps/web/public/content-assets/*        (COMMITTED assets)
+apps/web/src/content/generated/*.json   (COMMITTED bundle; assets.json lists its images)
+        │
+        ▼
+Vercel build: scripts/sync-content-assets.ts uploads missing images to Blob, then next build
         │
         ▼
 the running app reads the bundle at build time — no runtime CMS fetch
 ```
+
+Images never enter this repo. The compiler hashes each one and points the
+bundle at `<blob store>/content/<sha256>.<ext>`; the Vercel build uploads
+whatever the store is missing before `next build`. The compile needs no token,
+and nothing is ever deleted from the store, so an older bundle (a revert) still
+finds its images.
 
 Publishing new content is therefore **a pull request against this repo**, not a
 button. The publish card exists to tell you _whether_ a bump is needed and to
@@ -164,17 +172,17 @@ executor gate.
    pnpm --filter web compile-content
    ```
 5. Commit **both** `apps/web/content.lock` **and** the regenerated
-   `apps/web/src/content/generated/` (and `apps/web/public/content-assets/` if
-   assets changed).
+   `apps/web/src/content/generated/`. There are no image files to commit.
 6. Push and open the PR — the card's button opens GitHub's PR form with the
    title and body prefilled. **The button performs no write**; it just opens the
-   form.
+   form. The PR's Vercel preview build uploads any new images, so the preview
+   already shows them.
 7. Merge. Vercel redeploys from `main` with the new bundle.
 
 ### Why CI catches a bad bump
 
 `compile-content` output is a **pure function of the locked SHA** — sorted keys,
-no wall-clock timestamps, assets left as repo-relative paths. CI recompiles the
+no wall-clock timestamps, image urls derived from the bytes. CI recompiles the
 bundle and fails if the result differs by a single byte from what is committed
 (the "Content bundle freshness" step in `.github/workflows/ci.yml`). That catches
 both a stale bundle after a lock bump _and_ a hand-edit of the generated files.

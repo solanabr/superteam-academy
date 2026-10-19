@@ -4,11 +4,6 @@ import type { BundleDoc } from "./types";
 import { rewriteMarkdownAssetPaths } from "./assets";
 import { SOURCE } from "./prune";
 
-export interface AssetUpload {
-  path: string; // repo-relative image path
-  bytes: Uint8Array;
-}
-
 /** Maps a repo-relative image path to its resolved CDN url string, or null if none.
  *  Markdown rewriting needs a plain url, not a Sanity image reference. */
 export type AssetResolver = (repoRelativePath: string) => string | null;
@@ -85,15 +80,9 @@ export function projectContent(
   sha: string,
   resolveAsset: AssetResolver,
   resolveTests: TestsResolver
-): { docs: BundleDoc[]; assets: AssetUpload[] } {
+): { docs: BundleDoc[] } {
   const marker = { source: SOURCE, rev: sha } as const;
   const docs: BundleDoc[] = [];
-  const assets: AssetUpload[] = [...v.assets.entries()].map(
-    ([path, bytes]) => ({
-      path,
-      bytes,
-    })
-  );
 
   // #466 C3: course.tags is DERIVED, not authored — the sorted, deduplicated
   // union of its lessons' `skills`. Built once from the validated lesson set
@@ -190,5 +179,5 @@ export function projectContent(
     docs.push({ _id: q.id, _type: "quest", ...stripId(q), sync: marker });
   }
 
-  return { docs, assets };
+  return { docs };
 }

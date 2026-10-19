@@ -1,5 +1,6 @@
 import createNextIntlPlugin from "next-intl/plugin";
 import { withSentryConfig } from "@sentry/nextjs";
+import { CONTENT_BLOB_BASE_URL } from "./src/lib/content/blob-store.mjs";
 
 const withNextIntl = createNextIntlPlugin({
   requestConfig: "./src/lib/i18n/request.ts",
@@ -50,10 +51,11 @@ const cspDirectives = [
   "font-src 'self' data: https://fonts.gstatic.com",
 
   // Images: avatars (Google), NFT art (Arweave), Supabase storage, GA4
-  // measurement pixel (doubleclick). data:/blob: cover inline SVGs,
-  // canvas-confetti, and wallet QR codes. Supabase stays a wildcard here
-  // (API fallback); the app's middleware CSP pins it.
-  "img-src 'self' data: blob: https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://arweave.net https://*.arweave.net https://*.supabase.co https://stats.g.doubleclick.net",
+  // measurement pixel (doubleclick), course images (content Blob store).
+  // data:/blob: cover inline SVGs, canvas-confetti, and wallet QR codes.
+  // Supabase stays a wildcard here (API fallback); the app's middleware CSP
+  // pins it.
+  `img-src 'self' data: blob: https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://arweave.net https://*.arweave.net https://*.supabase.co https://stats.g.doubleclick.net ${CONTENT_BLOB_BASE_URL}`,
 
   // Network: Supabase (REST + realtime wss), Solana/Helius RPC, Google
   // OAuth/identity, and analytics (GA4, PostHog, Sentry). Wildcards here
@@ -183,14 +185,20 @@ const nextConfig = {
   images: {
     // AVIF first, WebP fallback — smaller derivatives for the same sources.
     formats: ["image/avif", "image/webp"],
-    // 30 days. Content assets are immutable per content.lock (a new publish is
-    // a new URL), and a short TTL multiplies Vercel image-optimization billing.
+    // 30 days. Content images are content-addressed (new bytes, new URL),
+    // and a short TTL multiplies Vercel image-optimization billing.
     minimumCacheTTL: 2592000,
     remotePatterns: [
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
       { protocol: "https", hostname: "avatars.githubusercontent.com" },
       { protocol: "https", hostname: "arweave.net" },
       { protocol: "https", hostname: "*.supabase.co" },
+      // Course thumbnails go through next/image.
+      {
+        protocol: "https",
+        hostname: new URL(CONTENT_BLOB_BASE_URL).hostname,
+        pathname: "/content/**",
+      },
     ],
   },
   async headers() {

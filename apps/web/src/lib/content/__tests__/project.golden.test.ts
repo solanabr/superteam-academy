@@ -16,6 +16,7 @@ import {
   countCourseLessons,
 } from "../project";
 import type { AchievementDoc, CourseDoc } from "../types";
+import { CONTENT_BLOB_BASE_URL } from "../blob-store.mjs";
 import goldenCourses from "./fixtures/golden/courses.json";
 import goldenCourseBySlug from "./fixtures/golden/course-by-slug.json";
 import goldenLessons from "./fixtures/golden/lessons.json";
@@ -313,6 +314,11 @@ vi.mock("server-only", () => ({}));
 //    courses.json and paths.json are the only fixtures regenerated; lessons,
 //    course-by-slug, summaries, achievements-raw, quests-raw and slots.json
 //    are byte-unchanged.
+//  - images move to Vercel Blob (same pin, academy-courses @50143ca8): every
+//    `/content-assets/<slug>/…` url becomes its content-addressed
+//    `<blob base>/content/<sha256>.<ext>`. The fixtures were remapped by
+//    hashing each old public file, and the new bundle equals the old one under
+//    that same remap, so no other byte moved.
 const deps = { lessonsById };
 
 function bundleCourse(id: string): CourseDoc {
@@ -366,7 +372,10 @@ describe("projectCourse — getAllCourses shape (summary module lessons)", () =>
     for (const golden of goldenCourses) {
       const c = projectCourse(bundleCourse(golden._id), deps);
       expect(c.creator).toBe(EXPECTED_CREATOR[golden._id]);
-      expect(c.thumbnail).toMatch(/^\/content-assets\/[\w-]+\/[\w.-]+$/);
+      expect(c.thumbnail?.startsWith(`${CONTENT_BLOB_BASE_URL}/content/`)).toBe(
+        true
+      );
+      expect(c.thumbnail).toMatch(/\/content\/[0-9a-f]{64}\.\w+$/);
     }
   });
 });

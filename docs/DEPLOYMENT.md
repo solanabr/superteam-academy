@@ -290,8 +290,7 @@ apps/web/scripts/compile-content.ts
         │   fetch tarball @ locked SHA → Zod-validate every doc (fail-closed)
         │   → project → emit deterministic JSON
         ▼
-apps/web/src/content/generated/*.json   ← COMMITTED
-apps/web/public/content-assets/*        ← COMMITTED
+apps/web/src/content/generated/*.json   ← COMMITTED (assets.json lists the images)
 ```
 
 `apps/web/content.lock` is the pin:
@@ -697,7 +696,12 @@ After deploying, verify:
 
 - The content bundle is statically imported at build time — **zero** network hops
   and zero cache misses on the read path
-- Course assets are served from `public/content-assets/` by Vercel's CDN
+- Course images are served from the `academy-content-assets` Vercel Blob store
+  at content-addressed urls. `scripts/sync-content-assets.ts` runs before
+  `next build` and uploads whatever the store is missing, using the store's
+  `BLOB_READ_WRITE_TOKEN`; on Vercel a failed sync fails the build
+- Old banner urls (`/content-assets/<slug>/banner.*`, still in shared social
+  cards) 308 to the course's current thumbnail
 - The only per-request content dependency is the on-chain deployment status map
   (Supabase), which is wrapped in `unstable_cache` (tag `courses`, 3600s) with a
   cookieless anon client so catalog and lesson routes stay static/ISR. An admin

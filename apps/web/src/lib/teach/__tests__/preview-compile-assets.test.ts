@@ -9,22 +9,20 @@ const env = vi.hoisted(() => ({
 }));
 vi.mock("@/lib/env.server", () => env);
 
-import { compilePrPreview } from "../preview-compile";
-import {
-  makeCourseTarball,
-  PNG_1X1,
-} from "@/lib/content/compile/__tests__/_fixtures";
+import { compilePrPreview, previewImageUrl } from "../preview-compile";
+import { makeCourseTarball } from "@/lib/content/compile/__tests__/_fixtures";
+import { CONTENT_BLOB_BASE_URL } from "@/lib/content/blob-store.mjs";
 
 /**
- * End-to-end cover for #923, through the SHIPPED compile path rather than a
- * re-implementation of the rewrite: a real tarball goes in, and what comes out
- * must carry both halves of a working image — the bytes, and a url that can
- * serve them. `compileContent` (the pre-#923 call) satisfies neither.
+ * End-to-end cover for #923, through the SHIPPED compile path: a real tarball
+ * goes in, and every image reference that comes out must point at the
+ * preview asset route by a repo path the route will accept. No image bytes
+ * may survive the compile — the route fetches them one at a time.
  */
 
 const SHA = "b".repeat(40);
 const PR = 34;
-const ASSET_KEY = "demo/accounts/pixel.png";
+const IMAGE_PATH = "courses/demo/lessons/accounts/assets/pixel.png";
 
 /** GitHub responses in call order: the PR head, the tarball, then pulls/N/files. */
 function stubGitHub(): void {
@@ -60,43 +58,51 @@ function stubGitHub(): void {
   );
 }
 
+/** True when any value reachable from `v` is a byte array. */
+function holdsBytes(v: unknown, seen = new Set<unknown>()): boolean {
+  if (v instanceof Uint8Array) return true;
+  if (!v || typeof v !== "object" || seen.has(v)) return false;
+  seen.add(v);
+  const children = v instanceof Map ? [...v.values()] : Object.values(v);
+  return children.some((c) => holdsBytes(c, seen));
+}
+
 afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("compilePrPreview asset handling (#923)", () => {
-  it("keeps the compiled bytes on the result", async () => {
+describe("compilePrPreview image handling (#923)", () => {
+  it("records the image by repo path and keeps no image bytes", async () => {
     stubGitHub();
 
     const result = await compilePrPreview(PR);
 
-    expect([...result.assets.keys()]).toContain(ASSET_KEY);
-    expect(Buffer.from(result.assets.get(ASSET_KEY)!)).toEqual(PNG_1X1);
+    expect(result.imagePaths).toEqual([IMAGE_PATH]);
+    expect(holdsBytes(result)).toBe(false);
   });
 
-  it("points the rendered lesson at the preview route, not the published tree", async () => {
+  it("points the rendered lesson at the preview route, not the blob store", async () => {
     stubGitHub();
 
     const result = await compilePrPreview(PR);
 
     // What the lesson page actually renders — the hydrated, projected lesson.
     const rendered = JSON.stringify(result.lessonsByCourse["course-demo"]);
-    expect(rendered).toContain(`/api/teach/preview/${PR}/assets/${ASSET_KEY}`);
-    // `/content-assets/...` would resolve against the PINNED bundle's static
-    // files, which never contain a previewed PR's assets.
-    expect(rendered).not.toContain("/content-assets/");
+    expect(rendered).toContain(`/api/teach/preview/${PR}/assets/${IMAGE_PATH}`);
+    // A PR's images are not uploaded until a lock bump ships them.
+    expect(rendered).not.toContain(CONTENT_BLOB_BASE_URL);
   });
 
-  it("keys the assets exactly as the rewritten urls address them", async () => {
+  it("addresses every image by exactly the path the route allowlists", async () => {
     stubGitHub();
 
     const result = await compilePrPreview(PR);
 
-    // The route serves `assets.get(path)` for the path in the url, so any drift
-    // between the two halves is a broken image no unit test of either half sees.
+    // The route serves only `imagePaths`, so any drift between the url and the
+    // list is a broken image no unit test of either half sees.
     const rendered = JSON.stringify(result.lessonsByCourse["course-demo"]);
-    for (const key of result.assets.keys()) {
-      expect(rendered).toContain(`/api/teach/preview/${PR}/assets/${key}`);
+    for (const p of result.imagePaths) {
+      expect(rendered).toContain(previewImageUrl(PR, p));
     }
   });
 });

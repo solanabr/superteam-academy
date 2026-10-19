@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { CONTENT_BLOB_BASE_URL } from "@/lib/content/blob-store.mjs";
 import { buildCsp } from "@/lib/csp";
 
 // buildCsp is what the MIDDLEWARE serves, and the middleware is what covers every
@@ -37,6 +38,14 @@ describe("page CSP (the one middleware actually serves)", () => {
     // only image is i.ytimg.com's thumbnail; without this the card renders a
     // blank plate and the CSP violation is silent.
     expect(directive("img-src")).toContain("https://i.ytimg.com");
+  });
+
+  it("allows course images from the content Blob store, and nothing wider", () => {
+    const imgSrc = directive("img-src")!.split(" ");
+    expect(imgSrc).toContain(CONTENT_BLOB_BASE_URL);
+    expect(imgSrc.some((s) => s.includes("*.blob.vercel-storage.com"))).toBe(
+      false
+    );
   });
 
   it("allows the Dynamic embedded-wallet origins (read from the SDK, not guessed)", () => {

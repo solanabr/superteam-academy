@@ -2,50 +2,42 @@ import "server-only";
 
 import { NextRequest, NextResponse } from "next/server";
 import {
+  IMAGE_CONTENT_TYPES,
+  MAX_ASSET_BYTES,
+  imageExt,
+  isPlainRepoPath,
+} from "@/lib/content/compile/assets";
+import {
   requirePreviewAuth,
   previewUnauthorizedResponse,
   TeachPreviewAuthError,
 } from "@/lib/teach/preview-auth";
+import { fetchContentFile } from "@/lib/teach/preview-compile";
 import { parsePrSegment } from "@/lib/teach/preview-guard";
-import { getPreviewBundle } from "@/lib/teach/preview-store";
+import {
+  getPreviewBundle,
+  type PreviewBundle,
+} from "@/lib/teach/preview-store";
 
 // Reads the in-memory compiled bundle; never statically rendered.
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/**
- * Content types for the formats the asset pipeline accepts. Deliberately a
- * closed map rather than a lookup library: anything the compiler did not
- * recognise as an asset can never reach this route, and an unknown extension
- * falling back to `application/octet-stream` is the safe default (the browser
- * downloads it rather than executing it).
- */
-const CONTENT_TYPE: Record<string, string> = {
-  png: "image/png",
-  jpg: "image/jpeg",
-  jpeg: "image/jpeg",
-  gif: "image/gif",
-  webp: "image/webp",
-  avif: "image/avif",
-  svg: "image/svg+xml",
-};
-
-function contentTypeFor(path: string): string {
-  const ext = path.slice(path.lastIndexOf(".") + 1).toLowerCase();
-  return CONTENT_TYPE[ext] ?? "application/octet-stream";
-}
+const notFound = (): NextResponse =>
+  NextResponse.json({ error: "Not found" }, { status: 404 });
 
 /**
  * Serves a previewed PR's images (#923).
  *
- * The compiler rewrites every image reference to a public path, but those files
- * only exist on disk for the PUBLISHED bundle — a previewed PR's assets live
- * solely in the compiled-in-memory bundle, so without this route every image in
- * a preview rendered broken.
+ * A PR's images are not in blob storage until a lock bump ships them, so the
+ * compiled preview points every image at this route, keyed by repo path. The
+ * route fetches that one file from GitHub at the PR's head commit.
  *
- * Path traversal is impossible by construction: the requested path is used as a
- * KEY into the compiler-generated asset map, never as a filesystem path. A key
- * that is not present is simply a 404.
+ * It is a proxy, so it only proxies what the compile itself saw: the path must
+ * be one of the compiled bundle's own image paths (never a free-form path,
+ * never `..`), the repo and host are fixed in `fetchContentFile`, the content
+ * type comes from a closed extension map (the upstream's is ignored), and the
+ * body is capped at the compiler's per-image limit.
  */
 export async function GET(
   req: NextRequest,
@@ -65,25 +57,35 @@ export async function GET(
     return NextResponse.json({ error: "Invalid PR" }, { status: 400 });
   }
 
-  const key = path.map((seg) => decodeURIComponent(seg)).join("/");
-
-  let bytes: Uint8Array | undefined;
+  let key: string;
   try {
-    const bundle = await getPreviewBundle(prNumber);
-    bytes = bundle.assets.get(key);
+    key = path.map((seg) => decodeURIComponent(seg)).join("/");
+  } catch {
+    return notFound(); // malformed percent-encoding
+  }
+  const contentType = IMAGE_CONTENT_TYPES.get(imageExt(key));
+  if (!isPlainRepoPath(key) || !contentType) return notFound();
+
+  let bundle: PreviewBundle;
+  try {
+    bundle = await getPreviewBundle(prNumber);
   } catch {
     // A failed compile is already surfaced by the preview page itself; an image
     // request must not repeat that noise.
     return NextResponse.json({ error: "Preview unavailable" }, { status: 502 });
   }
+  if (!bundle.imagePaths.has(key)) return notFound();
 
-  if (!bytes) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  let bytes: Uint8Array;
+  try {
+    bytes = await fetchContentFile(bundle.head.sha, key, MAX_ASSET_BYTES);
+  } catch {
+    return NextResponse.json({ error: "Image unavailable" }, { status: 502 });
   }
 
   return new NextResponse(Buffer.from(bytes), {
     headers: {
-      "Content-Type": contentTypeFor(key),
+      "Content-Type": contentType,
       "Content-Length": String(bytes.byteLength),
       // Private: the bytes are unpublished course content behind a session
       // cookie, so no shared cache may hold them. Short-lived because a pushed

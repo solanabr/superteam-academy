@@ -6,7 +6,7 @@
     "description": "Run, script, and explain every generation of blockchain from Bitcoin to Solana, then ship a personal ops bot that manages wallets and agents on both.",
     "difficulty": "beginner",
     "duration": 18,
-    "thumbnail": "/content-assets/btc-to-sol-evolution/banner.webp",
+    "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/ed9740f6ea99a8d6f9b39863c9dda7a802d908f3b3e53b76fab0aeb85e5480a2.webp",
     "creator": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
     "tags": [
       "account-model",
@@ -155,7 +155,7 @@
     "description": "Por que o sistema financeiro está migrando para a Solana, como a tecnologia funciona de verdade, e seu primeiro ativo na mainnet — em menos de 10 minutos.",
     "difficulty": "beginner",
     "duration": 0.25,
-    "thumbnail": "/content-assets/solana-speedrun/banner.webp",
+    "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/c2fec3063c434607e652d5684af9c94e05df0260e7fe3011d17bdbea2ed056db.webp",
     "creator": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
     "tags": [
       "account-model",
@@ -203,7 +203,7 @@
     "description": "A pílula de 2 minutos: por que o sistema financeiro está migrando pra Solana, o truque que a deixa rápida, e como você ganha dinheiro nela pela Superteam Brasil.",
     "difficulty": "beginner",
     "duration": 0.03,
-    "thumbnail": "/content-assets/pilula-solana-superteam/banner.webp",
+    "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/dcd61958ef8763df004b8eac96bd18464c554a8965544b3a7a87f1c71b70b8f5.webp",
     "creator": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
     "tags": [
       "solana-fundamentals",
@@ -234,7 +234,7 @@
     "description": "Apresentar aos alunos a blockchain Solana, abordando sua história fundamental e arquitetura central. Usar analogias e recursos visuais para tornar conceitos complexos acessíveis a iniciantes.",
     "difficulty": "beginner",
     "duration": 7,
-    "thumbnail": "/content-assets/visao-geral-solana/banner.jpg",
+    "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/787ee598de4df34c7f3b71d56898b93005e5cf618da4f1ce4ba01306e502813b.jpg",
     "creator": "Em8D6XyuXvNUK1YgLKBaji7HbbrZZq7fCdq3sGMXqxVZ",
     "tags": [
       "account-model",
@@ -363,7 +363,7 @@
     "description": "Take a problem you actually have to a submission-ready Colosseum package in one month: a working devnet demo, a deck, two videos and a GTM one-pager, and use a seasonal hackathon or an Earn side track as a rehearsal for the next Colosseum edition.",
     "difficulty": "intermediate",
     "duration": 12,
-    "thumbnail": "/content-assets/solana-hackathon-expert/banner.webp",
+    "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/e47934ff7173f7f22e92495854ddd5268fc8b120c7e41f6937945d665c2f73f6.webp",
     "creator": "8kMziL5e3qEWhp1nQHEiYLRypymyBVTXNxgZXyQwhbSo",
     "tags": [
       "rpc-reads",
@@ -505,7 +505,7 @@
     "description": "Read any live mint's bytes, build Token-2022 mints and Core/compressed NFT assets from raw instructions, then wire a working on-chain token economy — choosing the right primitive and proving it resolves. Expect to work locally: the labs install and use rustup, the Agave CLI, and surfpool's mainnet fork on your own machine, and a few steps touch devnet.",
     "difficulty": "intermediate",
     "duration": 35,
-    "thumbnail": "/content-assets/digital-assets/banner.webp",
+    "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/13e4eac6bb418358a5905a77bb246c050c48ede85447e96d7496a80580cbf92b.webp",
     "creator": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
     "tags": [
       "account-model",
@@ -752,7 +752,7 @@
     "description": "Design, build, test, secure, and ship an Anchor V2 program to devnet against the 2.0.0-rc.1 release candidate, then migrate a 0.31/1.0 codebase to V2 with a map of what changed and why. This is a machine-on-your-desk course: you install and drive the V2 RC toolchain locally — anchor-cli via cargo and avm, rustup's Rust alongside it, and Docker for the solana-verify build — and you deploy to devnet. V2 is an unaudited RC, so the course ends by teaching you to decide honestly when it is the right call and when the maintained 1.x line still is. It does not teach Rust and it does not teach Anchor: it assumes you already ship Anchor programs and want the V2 delta.",
     "difficulty": "advanced",
     "duration": 48,
-    "thumbnail": "/content-assets/mastering-anchor-v2/banner.webp",
+    "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/125aa5070a39197c2154db1343c82413565a5e630a8b3ef138761ba5eabefb26.webp",
     "creator": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
     "tags": [
       "account-model",
@@ -1007,7 +1007,7 @@
     "description": "Read and write the Rust and TypeScript that real web3 codebases are made of, then ship them: a TypeScript dashboard on Vercel, edge workers in both languages on Cloudflare, and a containerized Rust service on GHCR, all wired to live Solana data with one signed devnet transfer. This is a local-toolchain course, so expect to install as you build: Node in module one, rustup and cargo in module four, Docker in module six, and the Solana CLI in m08-l4, where a local validator stands by as the last-resort fallback for a dry devnet faucet.",
     "difficulty": "beginner",
     "duration": 52,
-    "thumbnail": "/content-assets/rust-ts-fundamentals/banner.webp",
+    "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/42eecc4f97fe457c439637e55f773cb3ab028f24244762c20b5b3a99f086fa77.webp",
     "creator": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
     "tags": [
       "account-model",
@@ -1285,7 +1285,7 @@
     "description": "Take real money on Solana end to end: a stablecoin Solana Pay checkout and POS, a webhook-driven back office with reconciliation and refunds, non-custodial subscriptions with dunning, on/off ramps, and x402/MPP machine payments, assembled into one running commerce stack on devnet — where the course touches regulation, it is an engineering framing of the seams, not legal advice. This is a local-toolchain course from the first lab: module one already needs Node 24 and installs packages on your machine, module two adds the Anza Agave CLI (`solana` plus `spl-token`), and from there every lab runs npm workspaces locally against devnet; one step in module eight — `cargo install kora-cli` — additionally needs a Rust toolchain.",
     "difficulty": "intermediate",
     "duration": 55,
-    "thumbnail": "/content-assets/solana-payments-commerce/banner.webp",
+    "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/4ef28e87c710413352c25a8a77ad3b3d3a8473cc084d9a4538b52948883060d4.webp",
     "creator": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
     "tags": [
       "account-model",

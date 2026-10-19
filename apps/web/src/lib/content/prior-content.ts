@@ -97,7 +97,7 @@ export async function resolvePriorRemovedLessons(params: {
       params.priorSha,
       controller.signal
     );
-    tree = await extractTarball(tarball);
+    tree = (await extractTarball(tarball)).files;
   } catch (err) {
     // No GITHUB_TOKEN, network/HTTP error, timeout, or a tarball too large/
     // corrupt. Log loudly (#731 bar) so an admin retiring lessons with, e.g.,

@@ -9,7 +9,12 @@
  * deterministic JSON) → write the result to disk. CI recompiles and `git diff
  * --exit-code`s the result, so `compileBundle`'s output MUST be a pure function
  * of the input tree: stable key order, no wall-clock timestamps (meta.compiledAt
- * is the locked commit's own date), assets left as repo-relative paths.
+ * is the locked commit's own date).
+ *
+ * Images are streamed, hashed and dropped: the bundle points at their
+ * content-addressed blob urls and `assets.json` lists them. Nothing here needs
+ * a storage token — `sync-content-assets.ts` uploads them during the Vercel
+ * build.
  *
  * The executor gate (§6.2a: solution passes / starter fails) is NOT re-run here.
  * It requires the live QuickJS/rust/build runners, was already enforced by the
@@ -21,13 +26,13 @@
  */
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { Readable } from "node:stream";
+import type { ReadableStream as NodeReadableStream } from "node:stream/web";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import {
   compileBundle,
   compileContent,
-  ASSET_PUBLIC_PREFIX,
   GENERATED_README,
-  type CompiledBundle,
 } from "../src/lib/content/compile/compile-bundle";
 import { extractTarball } from "../src/lib/content/compile/tarball";
 import { ContentValidationError } from "../src/lib/content/compile/types";
@@ -74,13 +79,15 @@ async function fetchWithRetry(
   );
 }
 
-async function fetchTarball(lock: Lock): Promise<Uint8Array> {
+/** The tarball as a stream, so its image bytes never sit in memory. */
+async function fetchTarball(lock: Lock): Promise<Readable> {
   const url = `https://api.github.com/repos/${lock.repo}/tarball/${lock.sha}`;
   const res = await fetchWithRetry(url, {
     headers: githubHeaders(),
     redirect: "follow",
   });
-  return new Uint8Array(await res.arrayBuffer());
+  if (!res.body) throw new Error(`empty tarball response (${url})`);
+  return Readable.fromWeb(res.body as NodeReadableStream<Uint8Array>);
 }
 
 /** The locked commit's own committer date — deterministic per SHA, never wall-clock. */
@@ -98,29 +105,18 @@ async function fetchCommitDate(lock: Lock): Promise<string> {
 // ── CLI ──────────────────────────────────────────────────────────────────────
 
 /**
- * Write a compiled bundle to disk, rebuilding BOTH the generated dir and the
- * asset dir from scratch so a stray committed file (a removed module, a renamed
- * image) never survives a recompile — that would leave `git status` clean while
- * the tree no longer matches the compiler output, punching a hole in the CI
- * freshness guarantee. Safe because the compiler always emits every module +
- * README. When there are no assets the asset dir is left absent.
+ * Write the compiled modules to disk, rebuilding the generated dir from scratch
+ * so a stray committed file (a removed module) never survives a recompile —
+ * that would leave `git status` clean while the tree no longer matches the
+ * compiler output, punching a hole in the CI freshness guarantee. Safe because
+ * the compiler always emits every module + README.
  */
-export function writeBundle(
-  dirs: { outDir: string; assetsDir: string },
-  bundle: CompiledBundle
-): void {
-  fs.rmSync(dirs.outDir, { recursive: true, force: true });
-  fs.mkdirSync(dirs.outDir, { recursive: true });
-  fs.writeFileSync(path.join(dirs.outDir, "README.md"), GENERATED_README);
-  for (const [name, contents] of bundle.files) {
-    fs.writeFileSync(path.join(dirs.outDir, name), contents);
-  }
-
-  fs.rmSync(dirs.assetsDir, { recursive: true, force: true });
-  for (const [rel, bytes] of bundle.assets) {
-    const dest = path.join(dirs.assetsDir, rel);
-    fs.mkdirSync(path.dirname(dest), { recursive: true });
-    fs.writeFileSync(dest, bytes);
+export function writeBundle(outDir: string, files: Map<string, string>): void {
+  fs.rmSync(outDir, { recursive: true, force: true });
+  fs.mkdirSync(outDir, { recursive: true });
+  fs.writeFileSync(path.join(outDir, "README.md"), GENERATED_README);
+  for (const [name, contents] of files) {
+    fs.writeFileSync(path.join(outDir, name), contents);
   }
 }
 
@@ -128,7 +124,6 @@ async function main(): Promise<void> {
   const here = path.dirname(fileURLToPath(import.meta.url));
   const lockPath = path.resolve(here, "../content.lock");
   const outDir = path.resolve(here, "../src/content/generated");
-  const assetsDir = path.resolve(here, "../public/", ASSET_PUBLIC_PREFIX);
 
   const lock = JSON.parse(fs.readFileSync(lockPath, "utf8")) as Lock;
   console.log(`Compiling ${lock.repo}@${lock.sha}`);
@@ -137,10 +132,13 @@ async function main(): Promise<void> {
     fetchTarball(lock),
     fetchCommitDate(lock),
   ]);
-  const tree = await extractTarball(tarball);
-  const { files, assets } = compileBundle(tree, { sha: lock.sha, compiledAt });
+  const tree = await extractTarball(tarball, { hashImages: true });
+  const { files, imagePaths } = compileBundle(tree, {
+    sha: lock.sha,
+    compiledAt,
+  });
 
-  writeBundle({ outDir, assetsDir }, { files, assets });
+  writeBundle(outDir, files);
 
   const counts = (
     JSON.parse(files.get("meta.json")!) as { counts: Record<string, number> }
@@ -149,10 +147,9 @@ async function main(): Promise<void> {
     `Emitted ${files.size} modules to ${path.relative(process.cwd(), outDir)}`
   );
   console.log(`Counts: ${JSON.stringify(counts)}`);
+  const blobs = (JSON.parse(files.get("assets.json")!) as unknown[]).length;
   console.log(
-    assets.size === 0
-      ? "Assets: none"
-      : `Assets: ${assets.size} file(s) → ${path.relative(process.cwd(), assetsDir)}`
+    `Images: ${imagePaths.length} referenced, ${blobs} unique blob(s) in assets.json`
   );
 }
 

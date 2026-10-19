@@ -1,13 +1,16 @@
 import "server-only";
 
+import { Readable } from "node:stream";
+import type { ReadableStream as NodeReadableStream } from "node:stream/web";
 import type { Course, Lesson } from "@superteam-lms/types";
 import { serverEnv } from "@/lib/env.server";
 import { GitHubUnavailableError } from "@/lib/github/types";
-import { extractTarball } from "@/lib/content/compile/tarball";
 import {
-  compileBundle,
-  ASSET_PUBLIC_PREFIX,
-} from "@/lib/content/compile/compile-bundle";
+  extractTarball,
+  type ContentTree,
+} from "@/lib/content/compile/tarball";
+import { isPlainRepoPath } from "@/lib/content/compile/assets";
+import { compileBundle } from "@/lib/content/compile/compile-bundle";
 import { ContentValidationError } from "@/lib/content/compile/types";
 import type { L10nBundle } from "@/lib/content/compile/l10n";
 import { projectCourse } from "@/lib/content/project";
@@ -21,15 +24,22 @@ import { changedCourseDirs, changedCourseIds } from "./pr-files";
  * (#828), so a teacher's preview cannot drift from what actually ships.
  *
  * The pipeline is exactly the production one — `extractTarball` +
- * `compileContent` — just pointed at the PR's head commit and kept entirely in
+ * `compileBundle` — just pointed at the PR's head commit and kept entirely in
  * memory. Nothing is written to `src/content/generated`, `content.lock` is not
  * touched, and there is no on-chain effect.
+ *
+ * Images are neither hashed nor kept: the compile only records their paths and
+ * points every reference at the preview asset route, which fetches the one
+ * file a page asks for (#923).
  */
 
 const API = "https://api.github.com";
 
 /** Ceiling on the tarball fetch + body read. Matches lib/content/prior-content. */
 const TARBALL_TIMEOUT_MS = 30_000;
+
+/** Ceiling on one preview image fetch + body read. */
+const IMAGE_TIMEOUT_MS = 10_000;
 
 /**
  * `academy-courses` is PUBLIC, so every read here works unauthenticated (#830).
@@ -66,15 +76,23 @@ function rateLimitError(res: Response): GitHubUnavailableError | null {
 
 async function ghFetch(
   path: string,
-  accept?: string,
-  signal?: AbortSignal
+  init: {
+    accept?: string;
+    signal?: AbortSignal;
+    redirect?: RequestRedirect;
+  } = {}
 ): Promise<Response> {
   const headers = ghHeaders();
-  if (accept) headers.Accept = accept;
+  if (init.accept) headers.Accept = init.accept;
 
   let res: Response;
   try {
-    res = await fetch(`${API}${path}`, { headers, cache: "no-store", signal });
+    res = await fetch(`${API}${path}`, {
+      headers,
+      cache: "no-store",
+      signal: init.signal,
+      redirect: init.redirect,
+    });
   } catch (e) {
     throw new GitHubUnavailableError(
       e instanceof Error ? e.message : String(e)
@@ -174,7 +192,7 @@ export interface PreviewResult {
   lessonsByCourse: Record<string, Lesson[]>;
   /**
    * The raw compiled docs and the PR's translation overlays (content i18n),
-   * with every asset url already pointed at the preview asset route. This is
+   * with every image url already pointed at the preview asset route. This is
    * what lets a previewed course render in Portuguese AND English from one
    * compile — the fix the live site got in #1199 reached the preview here.
    */
@@ -188,11 +206,10 @@ export interface PreviewResult {
    */
   xpPerLessonById: Record<string, number>;
   /**
-   * Asset bytes keyed by the compiler's public rel path
-   * (`<courseSlug>/<lessonSlug>/<file>`). Served by the preview asset route —
-   * a previewed PR's images exist nowhere on disk (#923).
+   * Repo paths of every image the compiled PR references — the only paths the
+   * preview asset route will fetch (#923).
    */
-  assets: Map<string, Uint8Array>;
+  imagePaths: string[];
   /**
    * Ids of the courses this PR adds or modifies — what the teacher came to
    * see. EMPTY means "show everything": the PR touches no course dir, or a
@@ -231,47 +248,39 @@ export async function compilePrPreview(
   // request until the platform's own timeout kills it.
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TARBALL_TIMEOUT_MS);
-  let tree: Map<string, Uint8Array>;
+  let tree: ContentTree;
   try {
-    const res = await ghFetch(
-      `/repos/${CONTENT_REPO}/tarball/${head.sha}`,
-      "application/vnd.github+json",
-      controller.signal
-    );
+    const res = await ghFetch(`/repos/${CONTENT_REPO}/tarball/${head.sha}`, {
+      accept: "application/vnd.github+json",
+      signal: controller.signal,
+    });
     if (!res.ok) {
       throw new GitHubUnavailableError(
         `GitHub tarball/${head.sha.slice(0, 7)} → ${res.status}`
       );
     }
-    tree = await extractTarball(new Uint8Array(await res.arrayBuffer()));
+    if (!res.body) {
+      throw new GitHubUnavailableError(
+        `GitHub tarball/${head.sha.slice(0, 7)} → empty body`
+      );
+    }
+    // Streamed: neither the download nor any image is ever held whole.
+    tree = await extractTarball(
+      Readable.fromWeb(res.body as NodeReadableStream<Uint8Array>)
+    );
   } finally {
     clearTimeout(timer);
   }
 
   // `compiledAt: null` — the preview is not a reproducible bundle and must never
   // stamp a wall-clock time that would differ from a real compile of this SHA.
-  //
-  // compileBundle, NOT compileContent (#923): the modules-only view discards
-  // `assets`, and the compiler has already rewritten every image reference to
-  // `/content-assets/…`. Those paths only exist on disk for the PUBLISHED
-  // bundle, so a previewed PR rendered every image broken.
-  const bundle = compileBundle(tree, { sha: head.sha, compiledAt: null });
-  const assets = bundle.assets;
-
-  // Point the rewritten refs at the preview's own asset route instead of the
-  // published `/content-assets/` tree. Done on the raw module text before
-  // parsing so it covers every carrier (prose bodies, course thumbnails)
-  // without needing to know which fields hold URLs.
-  const files = new Map<string, string>();
-  for (const [name, contents] of bundle.files) {
-    files.set(
-      name,
-      contents.replaceAll(
-        `/${ASSET_PUBLIC_PREFIX}/`,
-        `/api/teach/preview/${number}/assets/`
-      )
-    );
-  }
+  // A PR's images are not in blob storage yet, so every reference points at the
+  // preview's own asset route instead (#923).
+  const { files, imagePaths } = compileBundle(tree, {
+    sha: head.sha,
+    compiledAt: null,
+    imageUrl: (repoPath) => previewImageUrl(number, repoPath),
+  });
 
   // Courses reference their lessons (`_ref`), so hydration runs through the
   // projector rather than a field on the lesson — lessons carry no back-pointer.
@@ -325,7 +334,7 @@ export async function compilePrPreview(
   return {
     head,
     courses,
-    assets,
+    imagePaths,
     lessonsByCourse,
     rawCourses: courseDocs,
     rawLessonsById: lessonsById,
@@ -334,6 +343,65 @@ export async function compilePrPreview(
     changedCourseIds: changed,
     counts,
   };
+}
+
+/** Where a previewed PR's image is served: the preview asset route, by repo path. */
+export function previewImageUrl(prNumber: number, repoPath: string): string {
+  const encoded = repoPath.split("/").map(encodeURIComponent).join("/");
+  return `/api/teach/preview/${prNumber}/assets/${encoded}`;
+}
+
+/**
+ * One file of the content repo at a commit, for the preview asset route.
+ * Same host, repo and token as the tarball fetch, so a fork PR's head (which
+ * GitHub keeps in the base repo under `refs/pull/N/head`) works too. Nothing
+ * here widens what can be reached: the repo is fixed, the path is checked
+ * segment by segment and encoded, redirects are refused, and the body is read
+ * up to `maxBytes` and abandoned past it.
+ */
+export async function fetchContentFile(
+  sha: string,
+  repoPath: string,
+  maxBytes: number
+): Promise<Uint8Array> {
+  if (!/^[0-9a-f]{40}$/.test(sha) || !isPlainRepoPath(repoPath)) {
+    throw new Error("refusing an invalid content file reference");
+  }
+  const encoded = repoPath.split("/").map(encodeURIComponent).join("/");
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), IMAGE_TIMEOUT_MS);
+  try {
+    const res = await ghFetch(
+      `/repos/${CONTENT_REPO}/contents/${encoded}?ref=${sha}`,
+      {
+        accept: "application/vnd.github.raw+json",
+        signal: controller.signal,
+        redirect: "error",
+      }
+    );
+    if (!res.ok || !res.body) {
+      throw new GitHubUnavailableError(`GitHub contents → ${res.status}`);
+    }
+    if (Number(res.headers.get("content-length")) > maxBytes) {
+      throw new Error(`content file exceeds the ${maxBytes}-byte cap`);
+    }
+    const reader = res.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let total = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        controller.abort();
+        throw new Error(`content file exceeds the ${maxBytes}-byte cap`);
+      }
+      chunks.push(value);
+    }
+    return Buffer.concat(chunks);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export { ContentValidationError, GitHubUnavailableError };
