@@ -241,6 +241,32 @@ test("ignores unrelated gh commands", () => {
   }
 });
 
+test("blocks when protection lists no required checks and none have reported yet", () => {
+  const pr = { url: "https://github.com/solanabr/academy-courses/pull/42" };
+  const { v } = run("gh pr merge 42 --squash", {
+    pr,
+    protection: "forbidden",
+    runs: [],
+  });
+  assert.equal(v.allow, false);
+  assert.match(
+    v.reason,
+    /no checks have reported on aaaaaaaaaaaa yet; wait for CI, or merge by hand if this repo has no CI/
+  );
+  const empty = run("gh pr merge 42 --squash", {
+    pr,
+    protection: [],
+    runs: [],
+  });
+  assert.equal(empty.v.allow, false);
+  const baseOff = run("gh pr merge 42 --squash", {
+    pr: { baseRefName: "feature" },
+    protection: "forbidden",
+    runs: [],
+  });
+  assert.equal(baseOff.v.allow, false);
+});
+
 // B1 regressions: a heredoc with an apostrophe used to swallow the merge.
 const HEREDOC_PR = `gh pr create --title x --body "$(cat <<'EOF'\nIt's done\nEOF\n)"`;
 const HEREDOC_COMMIT = `git commit -m "$(cat <<'EOF'\nfix: don't drop the nonce\nEOF\n)"`;

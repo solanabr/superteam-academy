@@ -336,7 +336,15 @@ function verify(target, { gh, readFile, cwd, raw }) {
   if (target.auto) return { allow: true };
 
   const required = requiredChecks(gh, repo, pr.baseRefName);
-  const problems = checkProblems(required, checkState(gh, repo, head));
+  const state = checkState(gh, repo, head);
+  // No required list and nothing reported: a merge seconds after a push would
+  // look clean. Never treat "no checks" as green.
+  if (!required.length && !state.runs.size && !state.statuses.size) {
+    return deny(
+      `Blocked: no checks have reported on ${head.slice(0, 12)} yet; wait for CI, or merge by hand if this repo has no CI.`
+    );
+  }
+  const problems = checkProblems(required, state);
   if (problems.length) {
     return deny(
       `Blocked: PR #${pr.number} isn't green on its current head ${head.slice(0, 12)}. Wait for these and re-check: ${problems.join("; ")}.`
