@@ -26,6 +26,7 @@ import {
 import bs58 from "bs58";
 import { serverEnv } from "@/lib/env.server";
 import { logError } from "@/lib/logging";
+import { ERROR_IDS } from "@/constants/errorIds";
 import {
   padContentTxId,
   assertMaskMatchesLockfile,
@@ -48,7 +49,11 @@ import {
 } from "./course-write-params";
 import { getBackendSigner } from "./academy-program";
 import { fetchConfig } from "./academy-reads";
-import { isMainnetFailClosed } from "./network";
+import {
+  CLUSTER_UNVERIFIED_MESSAGE,
+  ClusterUnverifiedError,
+  isMainnetFailClosed,
+} from "./network";
 
 // ---------------------------------------------------------------------------
 // Anchor method builder types — mirrors the pattern in academy-program.ts
@@ -129,6 +134,12 @@ export interface CreateCourseAdminParams {
    * exists for a future admin-UI "I know what I'm doing" override.
    */
   allowUnusualCreator?: boolean;
+  /**
+   * Genesis hash of `SOLANA_RPC_URL` when the caller has just read it (the
+   * recreate pre-flight), so the create doesn't depend on a second lookup.
+   * Omitted, deployCoursePda reads it from the connection that sends the tx.
+   */
+  genesisHash?: string;
 }
 
 export interface UpdateCourseAdminParams {
@@ -215,8 +226,6 @@ const MPL_CORE_PROGRAM_ID = new PublicKey(
 // ---------------------------------------------------------------------------
 
 let _connection: Connection | null = null;
-// Genesis hash of `_connection`, cached after the first successful lookup.
-let _genesisHash: string | null = null;
 let _authority: Keypair | null = null;
 let _program: Program | null = null;
 let _initialized = false;
@@ -316,11 +325,6 @@ export async function getPlatformBackendSigners(
     // BACKEND_SIGNER_SECRET unset or malformed.
   }
   return keys;
-}
-
-async function connectionGenesisHash(): Promise<string> {
-  _genesisHash ??= await _connection!.getGenesisHash();
-  return _genesisHash;
 }
 
 // ---------------------------------------------------------------------------
@@ -524,11 +528,13 @@ export async function deployCoursePda(
         `deployCoursePda(${params.courseId}): creatorWallet "${params.creatorWallet}" is off-curve`
       );
     }
-    // Fail-closed: mainnet unless the connection the tx goes through is
-    // loopback or answers with devnet's genesis hash.
+    // Fail-closed: mainnet unless the connection the tx goes through answers
+    // with devnet's genesis hash (or is loopback serving localnet). Read per
+    // call; an unreadable genesis refuses with ClusterUnverifiedError.
+    const connection = _connection;
     const mainnet = await isMainnetFailClosed(
-      _connection.rpcEndpoint,
-      connectionGenesisHash
+      connection.rpcEndpoint,
+      async () => params.genesisHash ?? (await connection.getGenesisHash())
     );
     // Built before assertCreatorAllowed so that on mainnet the identity guard
     // inside the builder (unset track/level, platform-key creator; no override)
@@ -553,7 +559,7 @@ export async function deployCoursePda(
           mainnet,
           authority: _authority.publicKey,
           backendSigners: mainnet
-            ? await getPlatformBackendSigners(_connection)
+            ? await getPlatformBackendSigners(connection)
             : [],
         }
       );
@@ -592,6 +598,18 @@ export async function deployCoursePda(
         success: false,
         error: MAINNET_COURSE_IDENTITY_MESSAGE,
         errorId: err.errorId,
+      };
+    }
+    if (err instanceof ClusterUnverifiedError) {
+      logError({
+        errorId: ERROR_IDS.CLUSTER_UNVERIFIED,
+        error: err,
+        context: { courseId: params.courseId },
+      });
+      return {
+        success: false,
+        error: CLUSTER_UNVERIFIED_MESSAGE,
+        errorId: ERROR_IDS.CLUSTER_UNVERIFIED,
       };
     }
     const message = err instanceof Error ? err.message : String(err);

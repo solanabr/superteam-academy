@@ -54,7 +54,9 @@ vi.mock("../academy-reads", () => ({
 
 const MAINNET_GENESIS = "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d";
 const DEVNET_GENESIS = "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG";
+const LOCALNET_GENESIS = "4MpjwXxqwNqkk8xjyRZQ3TGb3x8wGbSCH1ifwCWTLcEf";
 const MAINNET_ERROR_ID = "COURSE_IDENTITY_001";
+const CLUSTER_UNVERIFIED_ID = "COURSE_IDENTITY_002";
 
 const AUTHORITY = Keypair.generate();
 const ENV_BACKEND_SIGNER = Keypair.generate();
@@ -76,8 +78,8 @@ function params(overrides: Record<string, unknown> = {}) {
 }
 
 /**
- * A fresh admin-signer per call: it caches the connection and its genesis hash
- * per process, so each test gets its own module instance.
+ * A fresh admin-signer per call: it caches the connection per process, so each
+ * test gets its own module instance.
  */
 async function deploy(overrides: Record<string, unknown> = {}) {
   const { deployCoursePda } = await import("../admin-signer");
@@ -141,13 +143,30 @@ describe("deployCoursePda — mainnet course identity guard", () => {
     }
   );
 
-  it("refuses when the genesis lookup throws (fail closed)", async () => {
+  it("refuses with a distinct cluster-unverified error when the genesis lookup throws, even for a valid course", async () => {
     h.getGenesisHash.mockRejectedValue(new Error("rpc down"));
 
-    const result = await deploy({ trackId: 0, trackLevel: 0 });
+    const result = await deploy();
 
-    expect(result.errorId).toBe(MAINNET_ERROR_ID);
+    expect(result).toEqual({
+      success: false,
+      error: expect.stringMatching(/could not verify which cluster/i) as string,
+      errorId: CLUSTER_UNVERIFIED_ID,
+    });
     expect(h.createCourse).not.toHaveBeenCalled();
+  });
+
+  it("uses the genesis hash the caller already read instead of looking it up", async () => {
+    h.getGenesisHash.mockRejectedValue(new Error("rpc down"));
+
+    const result = await deploy({
+      trackId: 0,
+      trackLevel: 0,
+      genesisHash: DEVNET_GENESIS,
+    });
+
+    expect(result).toEqual({ success: true, signature: "create-sig" });
+    expect(h.getGenesisHash).not.toHaveBeenCalled();
   });
 
   it("refuses on mainnet when neither the Config nor the env backend signer can be read", async () => {
@@ -179,13 +198,16 @@ describe("deployCoursePda — mainnet course identity guard", () => {
     );
   });
 
-  it("looks the genesis hash up once per process", async () => {
+  it("reads the genesis hash on every create, so an RPC that changes chain is seen", async () => {
     const { deployCoursePda } = await import("../admin-signer");
-    await deployCoursePda(params());
-    await deployCoursePda(params());
+    h.getGenesisHash.mockResolvedValueOnce(DEVNET_GENESIS);
+    const first = await deployCoursePda(params({ trackId: 0, trackLevel: 0 }));
+    const second = await deployCoursePda(params({ trackId: 0, trackLevel: 0 }));
 
-    expect(h.getGenesisHash).toHaveBeenCalledTimes(1);
-    expect(h.createCourse).toHaveBeenCalledTimes(2);
+    expect(first.success).toBe(true);
+    expect(second.errorId).toBe(MAINNET_ERROR_ID);
+    expect(h.getGenesisHash).toHaveBeenCalledTimes(2);
+    expect(h.createCourse).toHaveBeenCalledTimes(1);
   });
 
   it("leaves devnet unchanged: devnet genesis sends 0/0", async () => {
@@ -200,13 +222,23 @@ describe("deployCoursePda — mainnet course identity guard", () => {
     expect(h.fetchConfig).not.toHaveBeenCalled();
   });
 
-  it("leaves localnet unchanged: a loopback RPC sends 0/0 without a genesis lookup", async () => {
+  it("leaves localnet unchanged: a loopback RPC serving localnet sends 0/0", async () => {
     h.env.SOLANA_RPC_URL = "http://127.0.0.1:8899";
+    h.getGenesisHash.mockResolvedValue(LOCALNET_GENESIS);
 
     const result = await deploy({ trackId: 0, trackLevel: 0 });
 
     expect(result).toEqual({ success: true, signature: "create-sig" });
-    expect(h.getGenesisHash).not.toHaveBeenCalled();
+    expect(h.getGenesisHash).toHaveBeenCalledTimes(1);
+  });
+
+  it("refuses 0/0 on a loopback RPC that fronts mainnet", async () => {
+    h.env.SOLANA_RPC_URL = "http://127.0.0.1:8899";
+
+    const result = await deploy({ trackId: 0, trackLevel: 0 });
+
+    expect(result.errorId).toBe(MAINNET_ERROR_ID);
+    expect(h.createCourse).not.toHaveBeenCalled();
   });
 
   it("leaves devnet's creator == authority handling unchanged (plain error, no error id)", async () => {
