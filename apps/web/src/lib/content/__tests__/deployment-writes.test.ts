@@ -11,9 +11,9 @@ let lastOptions: Record<string, unknown> | null = null;
 let upsertError: { message: string } | null = null;
 
 // F2 (acquireCourseMaintenanceGate) mock controls. The conditional acquire
-// issues an `UPDATE ... WHERE content_id = ? AND in_maintenance = false
-// SELECT content_id` first, then falls back to a plain `INSERT` iff the
-// UPDATE touched zero rows.
+// issues an `UPDATE ... WHERE content_id = ? AND (in_maintenance = false OR
+// updated_at < stale cutoff) SELECT content_id` first, then falls back to a
+// plain `INSERT` iff the UPDATE touched zero rows.
 let updateResult: {
   data: Array<{ content_id: string }> | null;
   error: { message: string } | null;
@@ -23,6 +23,7 @@ let insertResult: { error: { message: string; code?: string } | null } = {
 };
 let lastUpdatePatch: Record<string, unknown> | null = null;
 let lastUpdateFilters: Record<string, unknown> = {};
+let lastUpdateOr: string | null = null;
 let lastInsertRow: Record<string, unknown> | null = null;
 
 const upsert = vi.fn(
@@ -41,6 +42,10 @@ class UpdateChain {
   eq(column: string, value: unknown): this {
     this.filters[column] = value;
     lastUpdateFilters = this.filters;
+    return this;
+  }
+  or(filter: string): this {
+    lastUpdateOr = filter;
     return this;
   }
   select(): Promise<typeof updateResult> {
@@ -86,6 +91,7 @@ beforeEach(() => {
   insertResult = { error: null };
   lastUpdatePatch = null;
   lastUpdateFilters = {};
+  lastUpdateOr = null;
   lastInsertRow = null;
   update.mockClear();
   insert.mockClear();
@@ -200,17 +206,17 @@ describe("deployment-writes (SP2-B on-chain status → Supabase)", () => {
 // F2 — acquireCourseMaintenanceGate: conditional acquire (mutual exclusion).
 // ---------------------------------------------------------------------------
 describe("acquireCourseMaintenanceGate (F2 mutual exclusion)", () => {
-  it("acquires by flipping an EXISTING unlocked row (UPDATE ... WHERE content_id = ? AND in_maintenance = false)", async () => {
+  it("acquires by flipping an EXISTING unlocked or stale row", async () => {
     updateResult = { data: [{ content_id: "course-x" }], error: null };
 
     const acquired = await acquireCourseMaintenanceGate("course-x");
 
     expect(acquired).toBe(true);
     expect(lastUpdatePatch).toMatchObject({ in_maintenance: true });
-    expect(lastUpdateFilters).toMatchObject({
-      content_id: "course-x",
-      in_maintenance: false,
-    });
+    expect(lastUpdateFilters).toMatchObject({ content_id: "course-x" });
+    expect(lastUpdateOr).toMatch(
+      /^in_maintenance\.eq\.false,updated_at\.lt\."/
+    );
     // The UPDATE alone touched a row — never falls through to the INSERT path.
     expect(lastInsertRow).toBeNull();
   });
@@ -241,6 +247,18 @@ describe("acquireCourseMaintenanceGate (F2 mutual exclusion)", () => {
     const acquired = await acquireCourseMaintenanceGate("course-x");
 
     expect(acquired).toBe(false);
+  });
+
+  it("takes over a gate only once it is older than the TTL", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-10-19T12:00:00.000Z"));
+
+    await acquireCourseMaintenanceGate("course-x");
+
+    expect(lastUpdateOr).toBe(
+      'in_maintenance.eq.false,updated_at.lt."2026-10-19T11:50:00.000Z"'
+    );
+    vi.useRealTimers();
   });
 
   it("throws on a genuine UPDATE error (not a lock-contention signal)", async () => {

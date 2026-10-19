@@ -135,7 +135,7 @@ describe("getActiveDeployments — degrades to empty on a Supabase read failure"
 });
 
 function supabaseMaintenanceResult(result: {
-  data: { in_maintenance: boolean } | null;
+  data: { in_maintenance: boolean; updated_at?: string } | null;
   error: { message: string } | null;
 }) {
   return {
@@ -182,6 +182,34 @@ describe("isCourseInMaintenance — the per-course maintenance gate (WS-2 #453 r
   it("false when there is no row at all (never gated)", async () => {
     vi.doMock("@supabase/supabase-js", () =>
       supabaseMaintenanceResult({ data: null, error: null })
+    );
+    const { isCourseInMaintenance } = await import("../deployments");
+    await expect(isCourseInMaintenance("course-x")).resolves.toBe(false);
+  });
+
+  it("true while a set gate is younger than the TTL", async () => {
+    vi.doMock("@supabase/supabase-js", () =>
+      supabaseMaintenanceResult({
+        data: {
+          in_maintenance: true,
+          updated_at: new Date(Date.now() - 9 * 60_000).toISOString(),
+        },
+        error: null,
+      })
+    );
+    const { isCourseInMaintenance } = await import("../deployments");
+    await expect(isCourseInMaintenance("course-x")).resolves.toBe(true);
+  });
+
+  it("false once a set gate is older than the TTL (left by an interrupted recreate)", async () => {
+    vi.doMock("@supabase/supabase-js", () =>
+      supabaseMaintenanceResult({
+        data: {
+          in_maintenance: true,
+          updated_at: new Date(Date.now() - 11 * 60_000).toISOString(),
+        },
+        error: null,
+      })
     );
     const { isCourseInMaintenance } = await import("../deployments");
     await expect(isCourseInMaintenance("course-x")).resolves.toBe(false);
