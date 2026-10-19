@@ -649,8 +649,7 @@ jobs:
   #      any hash-unchanged main push short-circuits with no commit.
   #   2. Structural: the push targets `program-hash` (excluded from `on.push`,
   #      never `main`), so it cannot re-trigger this main-gated job.
-  #   3. GITHUB_TOKEN pushes never trigger workflow runs (GitHub recursion guard;
-  #      cf. claude-code-review.yml).
+  #   3. GITHUB_TOKEN pushes never trigger workflow runs (GitHub recursion guard).
   #   4. `[skip ci]` in the bot commit message — a belt for a future PAT swap.
   publish-hash:
     name: Publish program hash
