@@ -638,8 +638,8 @@ jobs:
             echo ""
             echo "Verify against the deployed program:"
             echo '```bash'
-            echo "solana program dump <PROGRAM_ID> onchain.so"
-            echo "sha256sum onchain.so   # must equal the SHA-256 above"
+            echo "solana program dump <PROGRAM_ID> onchain.so   # whole account, zero-padded"
+            echo "head -c $SIZE onchain.so | sha256sum   # must equal the SHA-256 above"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 

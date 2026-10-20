@@ -123,15 +123,17 @@ uploads both flavors with their hashes:
 
 ```bash
 RUN=$(gh run list --branch main --workflow ci.yml --status success --limit 1 --json databaseId --jq '.[0].databaseId')
-gh run download "$RUN" -n verifiable-build -D ~/academy-artifact
-cd ~/academy-artifact
-shasum -a 256 target/deploy-devnet/onchain_academy_pinocchio.so   # must equal program-hash-devnet.txt
-cat program-hash-devnet.txt
+gh run view "$RUN" --json headSha --jq .headSha   # the commit you are about to deploy
+ART=~/academy-artifact-$RUN
+gh run download "$RUN" -n verifiable-build -D "$ART"
+shasum -a 256 "$ART/target/deploy-devnet/onchain_academy_pinocchio.so"
+cat "$ART/program-hash-devnet.txt"   # must match the line above
 ```
 
-`target/deploy-devnet/` holds the devnet (`fresh-id`) flavor and `target/deploy/`
-the default one. The artifact paths in sections 5 and 8 assume you run them from
-`~/academy-artifact`.
+The folder is per run, so a second download can never leave an older binary in
+place. `target/deploy-devnet/` holds the devnet (`fresh-id`) flavor and
+`target/deploy/` the default one. Sections 5 to 8 run from `onchain-academy/`
+and reach the artifact through `$ART`.
 
 For local testing or a throwaway instance you can still build it yourself:
 `pnpm build:pinocchio:fresh` in `onchain-academy/` gates on
@@ -153,17 +155,17 @@ devnet program from that build.
 A first deploy of a new instance signs with the program's own keypair:
 
 ```bash
-solana program deploy target/deploy-devnet/onchain_academy_pinocchio.so \
+solana program deploy "$ART/target/deploy-devnet/onchain_academy_pinocchio.so" \
   --program-id wallets/pinocchio-program-devnet-v2.json \
   --url "$HELIUS_DEVNET_RPC"
 ```
 
 Upgrading the live devnet program uses its address and the upgrade authority
-instead. The binary must fit the program account (213,024 bytes today); if it
-doesn't, run `solana program extend` first.
+instead. The program account has room for a 213,024-byte binary today; a larger
+one is extended automatically, with the fee payer covering the extra rent.
 
 ```bash
-solana program deploy target/deploy-devnet/onchain_academy_pinocchio.so \
+solana program deploy "$ART/target/deploy-devnet/onchain_academy_pinocchio.so" \
   --program-id Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u \
   --upgrade-authority <upgrade-authority-keypair> \
   --url "$HELIUS_DEVNET_RPC"
@@ -242,8 +244,8 @@ solana program show $ACADEMY_PROGRAM_ID --url "$HELIUS_DEVNET_RPC"
 # Byte-verify: the deployed program must match the CI hash. The dump is the
 # whole program account, so hash only the binary's length.
 solana program dump $ACADEMY_PROGRAM_ID /tmp/deployed.so --url "$HELIUS_DEVNET_RPC"
-head -c "$(wc -c < target/deploy-devnet/onchain_academy_pinocchio.so)" /tmp/deployed.so | shasum -a 256
-cat program-hash-devnet.txt
+head -c "$(wc -c < "$ART/target/deploy-devnet/onchain_academy_pinocchio.so")" /tmp/deployed.so | shasum -a 256
+cat "$ART/program-hash-devnet.txt"
 
 npx tsx scripts/fetch-config.ts
 
