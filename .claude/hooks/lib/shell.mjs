@@ -426,11 +426,16 @@ export function readStdinJson() {
 // Run a guard's decide() against the PreToolUse payload on stdin. A denial
 // exits 2 with the reason on stderr, which Claude Code shows to Claude and
 // treats as a block. Anything else exits 0 with no output (no opinion).
+//
+// Set process.exitCode and return instead of calling process.exit(): Node
+// 24.7 intermittently segfaults (exit 139) inside process.exit, and with
+// onFailure "block" every crash blocks the user's command.
 export async function runHook(decide, deps = {}) {
+  process.exitCode = 0;
   const input = readStdinJson();
   const command = input?.tool_input?.command;
-  if (input?.tool_name && input.tool_name !== "Bash") process.exit(0);
-  if (typeof command !== "string" || !command.trim()) process.exit(0);
+  if (input?.tool_name && input.tool_name !== "Bash") return;
+  if (typeof command !== "string" || !command.trim()) return;
   let verdict;
   try {
     verdict = await decide(command, {
@@ -444,9 +449,7 @@ export async function runHook(decide, deps = {}) {
     };
   }
   if (verdict?.allow === false) {
-    // writeSync: on macOS a pipe write is async and process.exit would cut it off.
     fs.writeSync(2, `${verdict.reason}\n`);
-    process.exit(2);
+    process.exitCode = 2;
   }
-  process.exit(0);
 }
