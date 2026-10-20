@@ -1,165 +1,125 @@
-# Prod Secret Hygiene & Rotation Plan (D-2)
+# Secret rotation
 
-> Resolves decision **D-2** (issue #104); the execution of this plan is gate **G-1** (#138).
+How to rotate each secret the app and its services use. Record every rotation
+(date, who, which secret) in the ops log, which lives outside the repo.
 
-## Problem
+## Rules
 
-Every secret below was shared in `apps/web/.env.local` during development. The
-canonical production deploy (**solarium.courses**, Vercel `credit-markets-team/lms`)
-and local dev **currently point at the same Supabase project and reuse the same
-secrets** — production data and credentials are **not isolated** from development.
-Before mainnet, every prod secret must be **freshly minted, isolated from dev, and
-stored outside the repo**.
+- Production and development never share a value. Each environment has its own
+  Supabase project and its own minted credentials.
+- Secrets live only in the platform env stores (Vercel, Cloud Run, GitHub
+  Actions environments). Nothing secret goes in the repo, a screenshot or a paste.
+- API keys can be re-issued, so losing one means minting a new one. On-chain
+  keypairs can't be re-issued: keep a backup of each one outside the env store.
+- `NEXT_PUBLIC_SOLANA_RPC_URL` is inlined into the browser bundle. It carries no
+  key, or a domain-restricted Helius key that is a separate key from the one in
+  `SOLANA_RPC_URL`.
 
-> **Correction (2026-07-09):** the canonical production deploy is
-> **superteam-academy-web.vercel.app** (Vercel `stbr-true`), which auto-deploys from
-> `main`. References to `solarium.courses` / `credit-markets-team/lms` in this
-> document are a parallel red herring, not prod — the rotation decisions below still
-> apply, but to the `stbr-true` deploy.
->
-> **Update (2026-07-12):** the dedicated production Supabase project (D-2 item 1) is
-> **live** (project ref `<project-ref>`). The previously shared project is
-> **retired as a prod source** — do not point anything new at it. The remaining D-2
-> work is credential minting + on-chain custody.
+## Finding every secret
 
-## Decisions (D-2) — RATIFIED 2026-07-03
+Derive the list from the code before trusting the tables below. A secret missing
+here is a secret nobody rotates.
 
-1. **Isolate prod from dev — a NEW dedicated production Supabase project.** Stand
-   up a fresh prod Supabase project with its own `URL` / `anon` / `service_role`,
-   apply the schema + all migrations, migrate/seed the data, and cut prod
-   (solarium.courses) over to it. Retire the shared dev project as a prod source.
-2. **Mint ALL prod credentials fresh** — new Helius API key + webhook secret, a new
-   Gemini key, a new `GITHUB_TOKEN` (read-only), a new
-   `BUILD_SERVER_API_KEY`, and new Supabase keys (from the new project). **No dev
-   value is ever reused in prod.**
-3. **Custody — the platform env store is the source of truth for app secrets.**
-   Prod secrets live only in the **Vercel / Cloud Run encrypted env** (no separate
-   password-manager vault). Because there is no offline master, treat an env wipe
-   as "re-mint" for API-key-class secrets (all are re-issuable).
-   **Exception (non-negotiable): on-chain keypairs.** A program-authority or
-   `backend_signer` keypair must **NOT** live only in an env var — it is not
-   re-issuable and its loss is unrecoverable. Those move to hardware / **Squads
-   multisig** (G-7 #144), with `backend_signer` rotated to a distinct hot key at
-   mainnet init (#118). **Nothing secret in the repo, ever.**
+1. `apps/web/src/lib/env.ts`: the validated public schema.
+2. `apps/web/src/lib/env.server.ts`: the validated server schema.
+3. `apps/web/next.config.mjs`: build-time reads the schemas don't cover
+   (`SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN`).
+4. `apps/web/scripts/`: build scripts that take env as a parameter
+   (`BLOB_READ_WRITE_TOKEN` in `sync-content-assets.ts`).
+5. `turbo.json` `env`: build-cache keys.
+6. `.github/workflows/`: every `secrets.*` reference.
+7. `apps/build-server/src/config.rs`: the build server's own env.
+8. `.env.example`: the documented surface.
+9. The backstop, for anything read straight from `process.env`:
 
-## Secret inventory & rotation
+   ```bash
+   grep -rhoE "process\.env\.[A-Z_0-9]+" apps/web/src apps/web/scripts \
+     apps/web/next.config.mjs --exclude-dir=generated \
+     | sed 's/.*process\.env\.//' | sort -u
+   ```
 
-> **How this inventory was derived** — re-run this before trusting it. An omission
-> here is a secret nobody rotates, so the list is derived from the code, not from
-> the previous version of this doc:
->
-> 1. `apps/web/src/lib/env.ts` — the validated **public** schema (4 vars).
-> 2. `apps/web/src/lib/env.server.ts` — the validated **server** schema (11 vars).
-> 3. `apps/web/next.config.mjs` — build-time reads the schemas don't cover
->    (`SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN`).
-> 4. `turbo.json` `env` — build-cache keys (catches build-time vars).
-> 5. `.env.example` — the documented surface.
-> 6. Backstop, catches anything the above miss:
->    ```bash
->    grep -rhoE "process\.env\.[A-Z_0-9]+" apps/web/src apps/web/next.config.mjs \
->      | sed 's/.*process\.env\.//' | sort -u
->    ```
->
-> Vars 3 and 6 are the ones that bite: a var read directly via `process.env` is
-> **not** in either Zod schema, so schema-only derivation silently misses it. That
-> is how `SENTRY_AUTH_TOKEN` was missed once already.
->
-> **Union as of 2026-07-12: 30 real variables.** Anything in an env store that is
-> not below is **dead** — delete it, don't rotate it.
+A var read directly from `process.env` is in neither Zod schema, so a list built
+from the schemas alone misses it. Anything in an env store that the code doesn't
+read is dead: delete it, don't rotate it. That includes any `SANITY_*` value,
+`NEXT_PUBLIC_HELIUS_API_KEY` and `ADMIN_SECRET`.
 
-### Critical — server-only (rotate before mainnet; leak = high blast radius)
+## Server-only secrets
 
-| Secret                       | Purpose                                                                                                         | Blast radius if leaked                                                                                                                              | How to rotate                                                                                                                                                                                                |
-| ---------------------------- | --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `SUPABASE_SERVICE_ROLE_KEY`  | Bypasses RLS; all privileged DB writes                                                                          | Full DB read/write; forge any user's XP/progress/certs                                                                                              | New prod project (pref.) or Supabase → rotate `service_role` JWT                                                                                                                                             |
-| `BACKEND_SIGNER_SECRET`      | Keypair signing on-chain mint / credential ix                                                                   | Mint arbitrary XP + credentials to any wallet                                                                                                       | New keypair → `update_config` sets `Config.backend_signer` (**#118**)                                                                                                                                        |
-| `PROGRAM_AUTHORITY_SECRET`   | Program upgrade + config authority                                                                              | Upgrade program, rewrite config, seize authority powers                                                                                             | Move to **Squads multisig** at mainnet (**#144**); retire the hot JSON                                                                                                                                       |
-| `XP_MINT_AUTHORITY_SECRET`   | XP mint authority (wallet link/unlink XP moves)                                                                 | Mint/burn XP tokens directly                                                                                                                        | New keypair; must match the mint's authority on-chain                                                                                                                                                        |
-| `ARWEAVE_UPLOADER_SECRET`    | Funds Irys uploads pinning credential metadata                                                                  | Drains the funded upload wallet                                                                                                                     | New Solana keypair; re-fund; old one keeps only residual balance                                                                                                                                             |
-| _(admin access — no secret)_ | Admin console auth is the user's Supabase session checked against the service-role-only `admin_users` allowlist | A compromised ADMIN account can deploy/deactivate content, resync, moderate                                                                         | Not an env rotation: `DELETE FROM admin_users WHERE user_id = …` (service role) revokes instantly; grants are an `INSERT` with `granted_by`. The retired `ADMIN_SECRET` must be deleted from every env store |
-| `HELIUS_WEBHOOK_SECRET`      | Verifies Helius webhook signatures                                                                              | Forge on-chain events → fake enroll / XP / credential grants                                                                                        | Rotate in Helius webhook config **and** env together                                                                                                                                                         |
-| `HELIUS_API_KEY`             | Helius DAS API + webhook management (server)                                                                    | Quota abuse, cost; read of on-chain indexes                                                                                                         | Helius dashboard → rotate                                                                                                                                                                                    |
-| **`SOLANA_RPC_URL`**         | **Server** RPC endpoint — **embeds the Helius key in prod**                                                     | Same as `HELIUS_API_KEY`: the key is _in the URL_. Quota abuse + cost.                                                                              | **Rotate WITH `HELIUS_API_KEY` — they are one secret in two places.**                                                                                                                                        |
-| `BUILD_SERVER_API_KEY`       | Authenticates `/build` calls to the build server                                                                | Submit arbitrary Anchor builds to the compile sandbox                                                                                               | Rotate on the build server + env                                                                                                                                                                             |
-| `GEMINI_API_KEY`             | AI lesson assistant (`/api/ai/*`)                                                                               | Quota abuse, cost                                                                                                                                   | Google AI Studio → rotate                                                                                                                                                                                    |
-| `AI_PARTNER_SEAL_SECRET`     | Seals the comprehension-check token                                                                             | Forge comprehension-check passes                                                                                                                    | New random value (falls back to `SUPABASE_SERVICE_ROLE_KEY` if unset)                                                                                                                                        |
-| **`MODERATION_WEBHOOK_URL`** | Slack/Discord incoming webhook — first flag on a post pings it                                                  | **The URL _is_ the credential.** Anyone holding it can post arbitrary messages into the admin channel (phishing/social-engineering the moderators). | Delete the incoming webhook in Slack/Discord → create a new one → update env                                                                                                                                 |
-| **`SENTRY_AUTH_TOKEN`**      | Build-time source-map upload (`next.config.mjs:171`)                                                            | Write to the Sentry org: upload/alter releases + source maps, read project data                                                                     | Sentry → revoke the token, issue a new one. **CI/Vercel only** — not needed at runtime                                                                                                                       |
-| `GITHUB_TOKEN`               | **Read-only** poll of `academy-courses` HEAD/CI                                                                 | **Low** — read-only, and the repo is public. Worst case: rate-limit abuse                                                                           | GitHub → revoke, issue a new fine-grained read token                                                                                                                                                         |
+| Secret                            | Purpose                                                   | If leaked                                                               | How to rotate                                                                                                                                                                                                                                                         |
+| --------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SUPABASE_SERVICE_ROLE_KEY`       | Bypasses RLS; all privileged DB writes                    | Full DB read/write; forge any user's XP, progress or certificates       | Supabase → Project settings → API → rotate the `service_role` key. Set `AI_PARTNER_SEAL_SECRET` first (see its row).                                                                                                                                                  |
+| `BACKEND_SIGNER_SECRET`           | Co-signs every XP mint, lesson completion and credential  | Mint XP within the minter caps and issue credentials to any wallet      | New keypair → `update_config` with `new_backend_signer`, passing the old backend's `["minter", old_backend]` PDA (required, it retires the old role) → `register_minter` for the new key (`scripts/init-program.ts`) → swap the env value and redeploy.               |
+| `PROGRAM_AUTHORITY_SECRET`        | `Config.authority`: courses, minters, config, kill-switch | Register an uncapped minter, rewrite config, rotate the backend         | `onchain-academy/scripts/rotate-config-authority.ts <NEW_PUBKEY>` (dry run, then `--yes`) signed by the current authority. The upgrade authority is separate: `solana program set-upgrade-authority`. Both are one-step and irreversible, so check the new key twice. |
+| `XP_MINT_AUTHORITY_SECRET`        | Signs XP token mints (`lib/solana/xp-mint.ts`)            | Mint XP tokens directly                                                 | New keypair; it must match the mint's authority on-chain.                                                                                                                                                                                                             |
+| `ARWEAVE_UPLOADER_SECRET`         | Funds the Irys uploads that pin credential metadata       | Drains the upload wallet                                                | New Solana keypair, funded; move or abandon the old wallet's remaining balance. Never reuse it as a signer.                                                                                                                                                           |
+| `HELIUS_WEBHOOK_SECRET`           | Verifies Helius webhook signatures                        | Forged on-chain events: fake enrollments, XP or credential grants       | Change it in the Helius webhook config and the env store together.                                                                                                                                                                                                    |
+| `HELIUS_API_KEY`                  | Webhook management (`scripts/helius-webhook-config.ts`)   | Quota abuse and cost                                                    | Helius dashboard → rotate.                                                                                                                                                                                                                                            |
+| `SOLANA_RPC_URL`                  | Server RPC endpoint; the server Helius key is in the URL  | Same as a leaked Helius key                                             | Rotate it with the Helius key it embeds: they are one secret in two places.                                                                                                                                                                                           |
+| `BUILD_SERVER_API_KEY`            | Authenticates `/build` calls to the build server          | Submit arbitrary Anchor builds to the compile sandbox                   | Set the new value as `ACADEMY_API_KEY` on the build server and as `BUILD_SERVER_API_KEY` in the app env, then redeploy both.                                                                                                                                          |
+| `GEMINI_API_KEY`                  | AI lesson assistant (`/api/ai/*`)                         | Quota abuse and cost                                                    | Google AI Studio → rotate.                                                                                                                                                                                                                                            |
+| `AI_PARTNER_SEAL_SECRET`          | Seals the comprehension-check token                       | Forged comprehension-check passes                                       | New random value. Set it explicitly: unset, it falls back to `SUPABASE_SERVICE_ROLE_KEY`, so rotating the DB key would invalidate live check tokens.                                                                                                                  |
+| `TEACH_PREVIEW_PASSWORD`          | Gates the teacher preview of `academy-courses` PRs        | Anyone can make the server download and compile PR tarballs             | New random value; share it with teachers out of band.                                                                                                                                                                                                                 |
+| `CRON_SECRET`                     | Bearer secret Vercel Cron sends to `/api/cron/*`          | Trigger the scheduled mail and queue jobs at will                       | New random value in the Vercel env; Vercel Cron picks it up on the next deploy.                                                                                                                                                                                       |
+| `RESEND_API_KEY`                  | Sends marketing and reminder email                        | Send mail as the academy domain                                         | Resend → API keys → create a new key, swap it, delete the old one.                                                                                                                                                                                                    |
+| `MODERATION_WEBHOOK_URL`          | Slack/Discord webhook pinged by the first flag on a post  | The URL is the credential: anyone holding it can post into that channel | Delete the incoming webhook in Slack/Discord, create a new one, update the env.                                                                                                                                                                                       |
+| `GITHUB_TOKEN`                    | Read-only polling of `academy-courses` HEAD and CI        | Low: read-only on a public repo; rate-limit abuse                       | GitHub → revoke, issue a new fine-grained read token.                                                                                                                                                                                                                 |
+| `SENTRY_AUTH_TOKEN`               | Build-time source-map upload (`next.config.mjs`)          | Upload or alter releases and source maps, read project data             | Sentry → revoke the token, issue a new one. Build env only; the runtime doesn't need it.                                                                                                                                                                              |
+| `BLOB_READ_WRITE_TOKEN`           | Uploads course images to Vercel Blob at build time        | Overwrite or delete course images                                       | Vercel → Storage → the Blob store: issue a new read-write token, update the env, redeploy.                                                                                                                                                                            |
+| `CONTENT_RELEASE_APP_PRIVATE_KEY` | GitHub App key the content-release workflow uses          | Act as the app, with its permissions, in every repo it's installed on   | GitHub App settings → generate a new private key → update the `content-release` environment secret → delete the old key.                                                                                                                                              |
 
-> **`SOLANA_RPC_URL` is secret-bearing, not config.** `env.server.ts` says it plainly:
-> "this is the one that may carry a privileged Helius API key". Treating it as
-> config is how a Helius key leaks into a screenshot. Its **public** sibling
-> `NEXT_PUBLIC_SOLANA_RPC_URL` must carry **no** key — it is inlined into the
-> browser bundle.
+Admin access has no secret. The admin console checks the user's Supabase session
+against the service-role-only `admin_users` allowlist. To revoke an admin,
+`DELETE FROM admin_users WHERE user_id = …` as service role; it takes effect
+immediately.
 
-> **There is no content-write secret.** The app cannot mutate course content at
-> runtime under any credential — content is a committed bundle and publishing is a
-> pull request. Any `SANITY_*` variable found in an env store is **dead** and should
-> be **deleted**, not rotated.
+There is no content-write secret either. Content is a committed bundle and
+publishing is a pull request, so the app can't change course content at runtime
+under any credential.
 
-### Semi-sensitive (client-exposed, but abuse/quota risk)
+## Client-exposed values
 
-| Secret                          | Purpose                 | Note                                                                                                                         |
-| ------------------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_SOLANA_RPC_URL`    | Browser RPC endpoint    | **Must carry no privileged key** — it is inlined into the client bundle. The Helius-keyed endpoint goes in `SOLANA_RPC_URL`. |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Browser Supabase client | RLS-gated (not a secret), but changes with the new prod project                                                              |
-| `NEXT_PUBLIC_SENTRY_DSN`        | Error reporting         | Safe to expose by design; rotate only on abuse                                                                               |
+| Value                           | Purpose                 | Note                                                                       |
+| ------------------------------- | ----------------------- | -------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SOLANA_RPC_URL`    | Browser RPC endpoint    | Carries no privileged key (see Rules). Rotate its key if it's ever abused. |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Browser Supabase client | RLS-gated, not a secret. Changes when the Supabase project changes.        |
+| `NEXT_PUBLIC_SENTRY_DSN`        | Error reporting         | Safe to expose by design; rotate only on abuse.                            |
 
-### Config — not secret (change only when the underlying resource changes)
+## Config, not secret
 
+Change these only when the resource behind them changes:
 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_PROGRAM_ID`, `NEXT_PUBLIC_XP_MINT_ADDRESS`,
 `NEXT_PUBLIC_SOLANA_NETWORK`, `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_GA4_MEASUREMENT_ID`,
-`NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST`, `BUILD_SERVER_URL`,
-`RUST_PLAYGROUND_URL`, `SENTRY_ORG`, `SENTRY_PROJECT`.
+`NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST`,
+`NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID`, `BUILD_SERVER_URL`, `RUST_PLAYGROUND_URL`,
+`EMAIL_FROM`, `SENTRY_ORG`, `SENTRY_PROJECT`.
 
-(Every name is written out in full — no `_HOST`-style shorthand — so the
-grep-the-doc-against-the-code check above actually works.)
+Every name is written out in full so the derivation check above can grep this
+file against the code.
 
-Google OAuth has **no** app-side env var — the client ID/secret live in the Supabase
-dashboard (Authentication → Providers → Google).
+Google and GitHub OAuth have no app-side env var: their client IDs and secrets
+live in the Supabase dashboard (Authentication → Providers). Rotate them at the
+provider, then paste the new pair there.
 
-### Known drift in the env surface (not secrets — clean these up)
+## Rotation procedure
 
-| Var                                                                                                     | Where                            | Status                                                                                                                                                                                            |
-| ------------------------------------------------------------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_SANITY_PROJECT_ID`, `NEXT_PUBLIC_SANITY_DATASET`, `SANITY_API_TOKEN`, `SANITY_ADMIN_TOKEN` | `turbo.json` `env` (lines 12-15) | **DEAD.** Read nowhere in the codebase. Delete from `turbo.json` and from every env store.                                                                                                        |
-| `NEXT_PUBLIC_HELIUS_API_KEY`                                                                            | (removed)                        | **RESOLVED (#467).** Was a phantom `turbo.json` build-cache key, read nowhere; now deleted. Helius is server-side only (`HELIUS_API_KEY`). Purge any leftover value from Vercel/local env stores. |
-| `GITHUB_TOKEN`, `MODERATION_WEBHOOK_URL`                                                                | absent from `.env.example`       | **UNDOCUMENTED.** Both are live in `env.server.ts`. Add them to `.env.example`.                                                                                                                   |
+Order matters if you want no downtime.
 
-Google OAuth has **no** app-side env var — the client ID/secret live in the Supabase
-dashboard (Authentication → Providers → Google).
+1. **Provision** the new credential at the provider.
+2. **Stage** the new value in the env store. Where the provider allows two live
+   credentials, keep the old one until the new one is verified.
+3. **Rotate on-chain last.** The app keeps working on the old backend signer
+   until the new pubkey is set on `Config` and the new env value is deployed.
+4. **Revoke** the old credential once the new one is confirmed live.
+5. **Verify:** `/api/auth/nonce` returns 200, a test enrollment syncs through the
+   webhook to the DB, an admin action authenticates, and a challenge validates.
+6. **Record** the rotation in the ops log.
 
-## Rotation procedure (order matters — avoid downtime)
+Mainnet authority changes need the owner's explicit confirmation, and program
+writes go through a Helius RPC (see the root `CLAUDE.md`).
 
-1. **Provision** the new prod resource (Supabase project / Helius key / Gemini key).
-2. **Stage** the new value in the platform env store (Vercel prod scope) _without_
-   removing the old one where a dual-read window helps (e.g. deploy, verify, then revoke).
-3. **Rotate on-chain last:** `backend_signer` via `update_config` (the app keeps
-   working through the old signer until the new pubkey is set + redeployed).
-4. **Revoke** the old credential at the provider once the new one is confirmed live.
-5. **Verify:** `/api/auth/nonce` returns 200, a test enroll → webhook → DB sync works,
-   an admin action authenticates, a challenge validates.
-6. **Record** the rotation date + who rotated in a secure ops log (not here, not the repo).
-
-## Cadence & triggers
+## When to rotate
 
 - **On demand:** suspected compromise, a contributor offboarding, or any secret
-  that ever touched the repo / a screen-share / a paste.
-- **Periodic:** third-party API keys ≤ 90 days.
-- **On-chain authority:** once under Squads multisig (#144), routine single-key
-  rotation is unnecessary — key-holder changes go through the multisig.
-
-## Definition of done
-
-- [x] New dedicated prod Supabase live (`<project-ref>`); `service_role` isolated from dev.
-- [ ] Helius (`HELIUS_API_KEY` **+ `SOLANA_RPC_URL` together**), Gemini, `GITHUB_TOKEN`, `BUILD_SERVER_API_KEY`, `SENTRY_AUTH_TOKEN`, `MODERATION_WEBHOOK_URL` all freshly minted for prod. (`ADMIN_SECRET` is retired — admin access is the `admin_users` allowlist; purge any leftover value from every env store.)
-- [ ] `AI_PARTNER_SEAL_SECRET` set explicitly in prod (not derived from `SUPABASE_SERVICE_ROLE_KEY`, so rotating the DB key doesn't silently invalidate live check tokens).
-- [ ] `ARWEAVE_UPLOADER_SECRET` is a dedicated, funded keypair — never reused as a signer.
-- [ ] Dead `SANITY_*` deleted from `turbo.json` and every env store; phantom `NEXT_PUBLIC_HELIUS_API_KEY` already removed from `turbo.json` (#467) — purge any leftover value from Vercel prod + preview + local.
-- [ ] `GITHUB_TOKEN` + `MODERATION_WEBHOOK_URL` added to `.env.example`.
-- [ ] `NEXT_PUBLIC_SOLANA_RPC_URL` carries either no API key or a **domain-restricted** Helius key (it ships in the browser bundle) — and is a **separate** key from the unrestricted `SOLANA_RPC_URL` (#467).
-- [ ] `backend_signer` rotated to a distinct hot key at mainnet init (**#118**).
-- [ ] Program / mint authority under Squads multisig (**#144**).
-- [ ] All prod secrets live only in the Vercel/Cloud Run encrypted env; on-chain keypairs in multisig/HW; repo clean.
-- [ ] `.env.local` retired as any prod source.
+  that touched the repo, a screen share or a paste.
+- **Periodically:** third-party API keys every 90 days or sooner.
+- **On-chain keypairs:** on suspected compromise or a change of key holder.
