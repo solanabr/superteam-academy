@@ -9,8 +9,8 @@ import { serverEnv } from "@/lib/env.server";
  * path a thin, auditable, dependency-light module and makes the unconfigured
  * path trivially total). The module ALWAYS loads: with no `RESEND_API_KEY`,
  * {@link sendEmailBatch} returns `{ ok:false, reason:'unconfigured' }` and sends
- * nothing — it NEVER throws at import or at call. The owner sets the key once a
- * Resend sending domain (DKIM/SPF/DMARC) is verified.
+ * nothing — it NEVER throws at import or at call. Set the key once a Resend
+ * sending domain (DKIM/SPF/DMARC) is verified.
  */
 
 /** Used when `EMAIL_FROM` is unset. The domain must be Resend-verified to send. */

@@ -223,7 +223,7 @@ describe("POST /api/admin/courses/recreate — error mapping", () => {
   it("maps a pre-flight mainnet refusal to 400 (rail 4)", async () => {
     recreateCourse.mockRejectedValue(
       new RecreateCourseError(
-        'Recreate is unavailable on network "mainnet" until Squads custody (#305) lands',
+        `Course "${COURSE_ID}" has 3 enrollment(s). On mainnet a course can only be recreated while nobody is enrolled.`,
         "preflight",
         true
       )
@@ -231,7 +231,7 @@ describe("POST /api/admin/courses/recreate — error mapping", () => {
     const res = await post({ courseId: COURSE_ID, confirm: COURSE_ID });
     expect(res.status).toBe(400);
     const body = (await res.json()) as { error: string };
-    expect(body.error).toMatch(/Squads custody/i);
+    expect(body.error).toMatch(/only be recreated while nobody is enrolled/i);
   });
 
   it("passes the error id through on a mainnet course-identity refusal", async () => {

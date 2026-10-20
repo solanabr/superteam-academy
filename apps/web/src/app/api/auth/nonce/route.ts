@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
     // and an explicit catch. Still fire-and-forget — a learner signing in must
     // never wait on housekeeping — but it can no longer hang or crash the
     // process, and the (status, created_at) index added in
-    // 20260921120000_perf_completion_counts_leaderboard_nonces.sql serves both
+    // 20260921120001_perf_completion_counts_leaderboard_nonces.sql serves both
     // legs without a half-table scan under the row lock.
     const pendingCutoff = new Date(Date.now() - NONCE_TTL_MS).toISOString();
     const consumedCutoff = new Date(Date.now() - CONSUMED_TTL_MS).toISOString();

@@ -1,6 +1,6 @@
 packages:
   - "apps/*"
   - "packages/*"
-  # onchain test deps (ts-mocha/chai/anchor) so `pnpm install` provides them for
-  # `anchor test` — see Anchor.toml [scripts] test (P1-13).
+  # onchain-academy's TS deps (ts-mocha, chai, litesvm, the Anchor client) for
+  # its CU-measurement script (`cu:pinocchio`) and the scripts in onchain-academy/scripts.
   - "onchain-academy"

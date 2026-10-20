@@ -1,4 +1,4 @@
-// Migration lint for 20260921120000_perf_completion_counts_leaderboard_nonces:
+// Migration lint for 20260921120001_perf_completion_counts_leaderboard_nonces:
 // executes the real file in pglite and asserts (a) it applies cleanly and is
 // re-runnable, (b) every index it promises exists with the predicate it
 // promises, (c) the three read RPCs it touches return exactly what they
@@ -27,7 +27,7 @@ const repoRoot = findRepoRoot();
 const migration = readFileSync(
   resolve(
     repoRoot,
-    "supabase/migrations/20260921120000_perf_completion_counts_leaderboard_nonces.sql"
+    "supabase/migrations/20260921120001_perf_completion_counts_leaderboard_nonces.sql"
   ),
   "utf8"
 );
@@ -194,7 +194,10 @@ describe("perf migration: completion counts / leaderboard / siws_nonces", () => 
   });
 
   it("course_lesson_completion_counts still counts completed rows per lesson", async () => {
-    const { rows } = await db.query<{ lesson_id: string; completed_by: number }>(
+    const { rows } = await db.query<{
+      lesson_id: string;
+      completed_by: number;
+    }>(
       "SELECT lesson_id, completed_by::int FROM public.course_lesson_completion_counts('course-x') ORDER BY lesson_id"
     );
     // lesson-3 is incomplete and course-y is a different course: neither appears.

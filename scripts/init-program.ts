@@ -435,7 +435,8 @@ async function cmdRegisterMinter(): Promise<void> {
   console.log(`Minter being added: ${backendSigner.publicKey.toBase58()}`);
 
   // RegisterMinterParams { minter: Pubkey, label: string, max_xp_per_call: u64 }
-  // max_xp_per_call: 100 matches the server-side cap documented in CLAUDE.md
+  // max_xp_per_call: 100. MAX_QUEST_MINT_XP in apps/web/src/lib/solana/onchain-queue.ts
+  // mirrors it, so change both together.
   const params = {
     minter: backendSigner.publicKey,
     label: "backend-signer",

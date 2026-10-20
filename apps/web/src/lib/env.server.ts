@@ -105,8 +105,8 @@ const serverEnvSchema = z.object({
   HELIUS_API_KEY: optStr,
   // Resend API key for marketing/announcement email (#769). Server-only.
   // Optional at boot — the email pipeline is FAIL-CLOSED: unset ⇒ send() returns
-  // an 'unconfigured' result and NOTHING is sent (lib/email/resend.ts). The
-  // owner sets this once a Resend sending domain (DKIM/SPF/DMARC) is verified.
+  // an 'unconfigured' result and NOTHING is sent (lib/email/resend.ts). Set it
+  // once a Resend sending domain (DKIM/SPF/DMARC) is verified.
   RESEND_API_KEY: optStr,
   // Shared secret for Vercel Cron (#869). Vercel sends it as
   // `Authorization: Bearer $CRON_SECRET` on every scheduled invocation. Optional
@@ -128,19 +128,19 @@ const serverEnvSchema = z.object({
   // SUPABASE_SERVICE_ROLE_KEY when unset.
   AI_PARTNER_SEAL_SECRET: optStr,
 
-  // AI tutor spend caps (#591). Daily ceilings in whole US dollars, per
+  // AI tutor spend caps (#591). Daily ceilings in US dollars, per
   // America/Sao_Paulo day, enforced by the ai_spend_ledger (lib/ai/spend-ledger).
-  // Derived DOWNWARD from the $500/mo sponsor commitment (O-1): a $16.67/day
-  // envelope. Config, not constants — bump these when the commitment moves; the
-  // ledger binds on the envelope, not on any cost estimate. Over a *soft* cap the
-  // route DEGRADES (shorter output budget); only a *hard* cap denies (503).
+  // Derive them from the funded AI spend, split into a daily envelope. Config,
+  // not constants: change them when the funding changes; the ledger binds on
+  // the envelope, not on any cost estimate. Over a *soft* cap the route
+  // DEGRADES (shorter output budget); only a *hard* cap denies (503).
   // usdNum: whole/decimal dollars, "" → default. Must be non-negative.
-  AI_SPEND_GLOBAL_SOFT_USD: usdNum(14), // ~84% of the daily envelope
-  AI_SPEND_GLOBAL_HARD_USD: usdNumHard(25), // 1.5× envelope; absorbs a spike day
-  AI_SPEND_ACCOUNT_SOFT_USD: usdNum(0.5), // ~17× the $0.03/learner/mo average
-  AI_SPEND_ACCOUNT_HARD_USD: usdNumHard(1.5), // a single account ≤ ~9% of the envelope
+  AI_SPEND_GLOBAL_SOFT_USD: usdNum(14), // most of the daily envelope
+  AI_SPEND_GLOBAL_HARD_USD: usdNumHard(25), // above the envelope; absorbs a spike day
+  AI_SPEND_ACCOUNT_SOFT_USD: usdNum(0.5), // well above an average learner's use
+  AI_SPEND_ACCOUNT_HARD_USD: usdNumHard(1.5), // one account gets a small share of the envelope
   AI_SPEND_IP_SOFT_USD: usdNum(2), // survives a NAT'd classroom
-  AI_SPEND_IP_HARD_USD: usdNumHard(5), // caps a single-IP farm at ~30% of the envelope
+  AI_SPEND_IP_HARD_USD: usdNumHard(5), // one IP can't take most of the envelope
   // Gemini price sheet OVERRIDE (USD per 1M tokens). Since #868 the ledger
   // prices each billed call at its ROUTED model's rates (MODEL_RATES in
   // lib/ai/models) — a single global rate pair would misprice every action that
