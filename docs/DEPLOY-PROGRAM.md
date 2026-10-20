@@ -44,8 +44,8 @@ unchanged apart from the id.
 
 Deploying the **default** artifact at the fresh id cannot corrupt anything: the
 baked-id self-check rejects every instruction with `DeclaredProgramIdMismatch`
-(4100). Seeing 4100 on devnet means you deployed the wrong artifact — rebuild
-and redeploy `…_fresh.so`. The reverse mix-up is impossible, since the
+(4100). Seeing 4100 on devnet means you deployed the wrong artifact: redeploy
+`target/deploy-devnet/` from the CI artifact. The reverse mix-up is impossible, since the
 fresh-flavor binary never carries the upstream id.
 
 ---
@@ -114,16 +114,32 @@ pnpm test:integration   # LiteSVM: every instruction, happy and error paths
 byte-checks the resulting Config — a fresh-id deploy is proven before it touches
 devnet.
 
-## 4. Build the deploy artifact
+## 4. Get the deploy artifact
+
+Deploy the binary CI built, not one you built locally. A Mac build of the same
+source differs from the CI build in `.text`, so only the CI artifact matches the
+published hashes. Every push to `main` runs the `verifiable-build` job, which
+uploads both flavors with their hashes:
 
 ```bash
-cd onchain-academy
-pnpm build:pinocchio:fresh
+RUN=$(gh run list --branch main --workflow ci.yml --status success --limit 1 --json databaseId --jq '.[0].databaseId')
+gh run view "$RUN" --json headSha --jq .headSha   # the commit you are about to deploy
+ART=~/academy-artifact-$RUN
+gh run download "$RUN" -n verifiable-build -D "$ART"
+shasum -a 256 "$ART/target/deploy-devnet/onchain_academy_pinocchio.so"
+cat "$ART/program-hash-devnet.txt"   # must match the line above
 ```
 
-`scripts/build-pinocchio-deploy.sh` gates on `cargo test --features fresh-id`
-first, emits `target/deploy/onchain_academy_pinocchio_fresh.so`, and restores the
-default artifact afterwards.
+The folder is per run, so a second download can never leave an older binary in
+place. `target/deploy-devnet/` holds the devnet (`fresh-id`) flavor and
+`target/deploy/` the default one. Sections 5 to 8 run from `onchain-academy/`
+and reach the artifact through `$ART`.
+
+For local testing or a throwaway instance you can still build it yourself:
+`pnpm build:pinocchio:fresh` in `onchain-academy/` gates on
+`cargo test --features fresh-id`, then emits
+`target/deploy/onchain_academy_pinocchio_fresh.so`. Don't upgrade the shared
+devnet program from that build.
 
 > **`edition2024` or dependency-resolution errors**: pin the offending crates and
 > rebuild.
@@ -136,9 +152,22 @@ default artifact afterwards.
 
 ## 5. Deploy
 
+A first deploy of a new instance signs with the program's own keypair:
+
 ```bash
-solana program deploy target/deploy/onchain_academy_pinocchio_fresh.so \
+solana program deploy "$ART/target/deploy-devnet/onchain_academy_pinocchio.so" \
   --program-id wallets/pinocchio-program-devnet-v2.json \
+  --url "$HELIUS_DEVNET_RPC"
+```
+
+Upgrading the live devnet program uses its address and the upgrade authority
+instead. The program account has room for a 213,024-byte binary today; a larger
+one is extended automatically, with the fee payer covering the extra rent.
+
+```bash
+solana program deploy "$ART/target/deploy-devnet/onchain_academy_pinocchio.so" \
+  --program-id Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u \
+  --upgrade-authority <upgrade-authority-keypair> \
   --url "$HELIUS_DEVNET_RPC"
 ```
 
@@ -212,9 +241,11 @@ needed.
 ```bash
 solana program show $ACADEMY_PROGRAM_ID --url "$HELIUS_DEVNET_RPC"
 
-# Byte-verify: the deployed program must match the artifact you built.
+# Byte-verify: the deployed program must match the CI hash. The dump is the
+# whole program account, so hash only the binary's length.
 solana program dump $ACADEMY_PROGRAM_ID /tmp/deployed.so --url "$HELIUS_DEVNET_RPC"
-shasum -a 256 /tmp/deployed.so target/deploy/onchain_academy_pinocchio_fresh.so
+head -c "$(wc -c < "$ART/target/deploy-devnet/onchain_academy_pinocchio.so")" /tmp/deployed.so | shasum -a 256
+cat "$ART/program-hash-devnet.txt"
 
 npx tsx scripts/fetch-config.ts
 
@@ -224,12 +255,12 @@ spl-token display <XP_MINT_ADDRESS> \
 
 The live fresh instance, for comparison:
 
-| What        | Value                                                     |
-| ----------- | --------------------------------------------------------- |
-| Program id  | `Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u`            |
-| Config PDA  | `E9GVGKbyoWNSf9B1iR8gNVecwDwqnzNbUxcBzVCVSXan` (bump 254) |
-| XP mint     | `BUk5izZcRompFe2da1yv9BLcMLBEEyg7JCvS8nQYoHHd`            |
-| Binary size | 213,024 bytes                                             |
+| What       | Value                                                     |
+| ---------- | --------------------------------------------------------- |
+| Program id | `Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u`            |
+| Config PDA | `E9GVGKbyoWNSf9B1iR8gNVecwDwqnzNbUxcBzVCVSXan` (bump 254) |
+| XP mint    | `BUk5izZcRompFe2da1yv9BLcMLBEEyg7JCvS8nQYoHHd`            |
+| Room       | 213,024 bytes for the binary                              |
 
 ## 9. Point the frontend at it
 
@@ -266,13 +297,13 @@ above instead.
 
 ## Troubleshooting
 
-| Symptom                                        | Cause                                                                             |
-| ---------------------------------------------- | --------------------------------------------------------------------------------- |
-| `DeclaredProgramIdMismatch` (4100)             | Wrong artifact for this id. Rebuild with `build:pinocchio:fresh` and redeploy.    |
-| `Account already in use` / already initialized | The Config PDA exists. You already initialized, or you are reusing a live id.     |
-| Deploy stalls or fails part-way                | Public RPC rate limit. Use a provider URL, then `solana program close --buffers`. |
-| `edition2024` / `rmp-serde` build errors       | Edition-2024 resolver conflict. Pin the crates as shown in §4.                    |
-| Insufficient SOL                               | Budget ~2 SOL for the deploy plus rent. Airdrop twice or use the web faucet.      |
+| Symptom                                        | Cause                                                                              |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `DeclaredProgramIdMismatch` (4100)             | Wrong artifact for this id. Redeploy `target/deploy-devnet/` from the CI artifact. |
+| `Account already in use` / already initialized | The Config PDA exists. You already initialized, or you are reusing a live id.      |
+| Deploy stalls or fails part-way                | Public RPC rate limit. Use a provider URL, then `solana program close --buffers`.  |
+| `edition2024` / `rmp-serde` build errors       | Edition-2024 resolver conflict. Pin the crates as shown in §4.                     |
+| Insufficient SOL                               | Budget ~2 SOL for the deploy plus rent. Airdrop twice or use the web faucet.       |
 
 ---
 
