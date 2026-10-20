@@ -45,27 +45,27 @@ read is dead: delete it, don't rotate it. That includes any `SANITY_*` value,
 
 ## Server-only secrets
 
-| Secret                            | Purpose                                                   | If leaked                                                               | How to rotate                                                                                                                                                                                                                                                         |
-| --------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `SUPABASE_SERVICE_ROLE_KEY`       | Bypasses RLS; all privileged DB writes                    | Full DB read/write; forge any user's XP, progress or certificates       | Supabase → Project settings → API → rotate the `service_role` key. Set `AI_PARTNER_SEAL_SECRET` first (see its row).                                                                                                                                                  |
-| `BACKEND_SIGNER_SECRET`           | Co-signs every XP mint, lesson completion and credential  | Mint XP within the minter caps and issue credentials to any wallet      | New keypair → `update_config` with `new_backend_signer`, passing the old backend's `["minter", old_backend]` PDA (required, it retires the old role) → `register_minter` for the new key (`scripts/init-program.ts`) → swap the env value and redeploy.               |
-| `PROGRAM_AUTHORITY_SECRET`        | `Config.authority`: courses, minters, config, kill-switch | Register an uncapped minter, rewrite config, rotate the backend         | `onchain-academy/scripts/rotate-config-authority.ts <NEW_PUBKEY>` (dry run, then `--yes`) signed by the current authority. The upgrade authority is separate: `solana program set-upgrade-authority`. Both are one-step and irreversible, so check the new key twice. |
-| `XP_MINT_AUTHORITY_SECRET`        | Signs XP token mints (`lib/solana/xp-mint.ts`)            | Mint XP tokens directly                                                 | New keypair; it must match the mint's authority on-chain.                                                                                                                                                                                                             |
-| `ARWEAVE_UPLOADER_SECRET`         | Funds the Irys uploads that pin credential metadata       | Drains the upload wallet                                                | New Solana keypair, funded; move or abandon the old wallet's remaining balance. Never reuse it as a signer.                                                                                                                                                           |
-| `HELIUS_WEBHOOK_SECRET`           | Verifies Helius webhook signatures                        | Forged on-chain events: fake enrollments, XP or credential grants       | Change it in the Helius webhook config and the env store together.                                                                                                                                                                                                    |
-| `HELIUS_API_KEY`                  | Webhook management (`scripts/helius-webhook-config.ts`)   | Quota abuse and cost                                                    | Helius dashboard → rotate.                                                                                                                                                                                                                                            |
-| `SOLANA_RPC_URL`                  | Server RPC endpoint; the server Helius key is in the URL  | Same as a leaked Helius key                                             | Rotate it with the Helius key it embeds: they are one secret in two places.                                                                                                                                                                                           |
-| `BUILD_SERVER_API_KEY`            | Authenticates `/build` calls to the build server          | Submit arbitrary Anchor builds to the compile sandbox                   | Set the new value as `ACADEMY_API_KEY` on the build server and as `BUILD_SERVER_API_KEY` in the app env, then redeploy both.                                                                                                                                          |
-| `GEMINI_API_KEY`                  | AI lesson assistant (`/api/ai/*`)                         | Quota abuse and cost                                                    | Google AI Studio → rotate.                                                                                                                                                                                                                                            |
-| `AI_PARTNER_SEAL_SECRET`          | Seals the comprehension-check token                       | Forged comprehension-check passes                                       | New random value. Set it explicitly: unset, it falls back to `SUPABASE_SERVICE_ROLE_KEY`, so rotating the DB key would invalidate live check tokens.                                                                                                                  |
-| `TEACH_PREVIEW_PASSWORD`          | Gates the teacher preview of `academy-courses` PRs        | Anyone can make the server download and compile PR tarballs             | New random value; share it with teachers out of band.                                                                                                                                                                                                                 |
-| `CRON_SECRET`                     | Bearer secret Vercel Cron sends to `/api/cron/*`          | Trigger the scheduled mail and queue jobs at will                       | New random value in the Vercel env; Vercel Cron picks it up on the next deploy.                                                                                                                                                                                       |
-| `RESEND_API_KEY`                  | Sends marketing and reminder email                        | Send mail as the academy domain                                         | Resend → API keys → create a new key, swap it, delete the old one.                                                                                                                                                                                                    |
-| `MODERATION_WEBHOOK_URL`          | Slack/Discord webhook pinged by the first flag on a post  | The URL is the credential: anyone holding it can post into that channel | Delete the incoming webhook in Slack/Discord, create a new one, update the env.                                                                                                                                                                                       |
-| `GITHUB_TOKEN`                    | Read-only polling of `academy-courses` HEAD and CI        | Low: read-only on a public repo; rate-limit abuse                       | GitHub → revoke, issue a new fine-grained read token.                                                                                                                                                                                                                 |
-| `SENTRY_AUTH_TOKEN`               | Build-time source-map upload (`next.config.mjs`)          | Upload or alter releases and source maps, read project data             | Sentry → revoke the token, issue a new one. Build env only; the runtime doesn't need it.                                                                                                                                                                              |
-| `BLOB_READ_WRITE_TOKEN`           | Uploads course images to Vercel Blob at build time        | Overwrite or delete course images                                       | Vercel → Storage → the Blob store: issue a new read-write token, update the env, redeploy.                                                                                                                                                                            |
-| `CONTENT_RELEASE_APP_PRIVATE_KEY` | GitHub App key the content-release workflow uses          | Act as the app, with its permissions, in every repo it's installed on   | GitHub App settings → generate a new private key → update the `content-release` environment secret → delete the old key.                                                                                                                                              |
+| Secret                            | Purpose                                                   | If leaked                                                               | How to rotate                                                                                                                                                                  |
+| --------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `SUPABASE_SERVICE_ROLE_KEY`       | Bypasses RLS; all privileged DB writes                    | Full DB read/write; forge any user's XP, progress or certificates       | Supabase → Project settings → API → rotate the `service_role` key. Set `AI_PARTNER_SEAL_SECRET` first (see its row).                                                           |
+| `BACKEND_SIGNER_SECRET`           | Co-signs every XP mint, lesson completion and credential  | Mint XP within the minter caps and issue credentials to any wallet      | New keypair, then [Rotating an on-chain keypair](#rotating-an-on-chain-keypair). Backend-signed writes fail from the `update_config` call until the new env value is deployed. |
+| `PROGRAM_AUTHORITY_SECRET`        | `Config.authority`: courses, minters, config, kill-switch | Register an uncapped minter, rewrite config, rotate the backend         | New keypair, then [Rotating an on-chain keypair](#rotating-an-on-chain-keypair). Admin course writes fail from the rotation until the new env value is deployed.               |
+| `XP_MINT_AUTHORITY_SECRET`        | Signs XP token mints (`lib/solana/xp-mint.ts`)            | Mint XP tokens directly                                                 | New keypair; it must match the mint's authority on-chain.                                                                                                                      |
+| `ARWEAVE_UPLOADER_SECRET`         | Funds the Irys uploads that pin credential metadata       | Drains the upload wallet                                                | New Solana keypair, funded; move or abandon the old wallet's remaining balance. Never reuse it as a signer.                                                                    |
+| `HELIUS_WEBHOOK_SECRET`           | Verifies Helius webhook signatures                        | Forged on-chain events: fake enrollments, XP or credential grants       | Change it in the Helius webhook config and the env store together.                                                                                                             |
+| `HELIUS_API_KEY`                  | Webhook management (`scripts/helius-webhook-config.ts`)   | Quota abuse and cost                                                    | Helius dashboard → rotate.                                                                                                                                                     |
+| `SOLANA_RPC_URL`                  | Server RPC endpoint; the server Helius key is in the URL  | Same as a leaked Helius key                                             | Rotate it with the Helius key it embeds: they are one secret in two places.                                                                                                    |
+| `BUILD_SERVER_API_KEY`            | Authenticates `/build` calls to the build server          | Submit arbitrary Anchor builds to the compile sandbox                   | Set the new value as `ACADEMY_API_KEY` on the build server and as `BUILD_SERVER_API_KEY` in the app env, then redeploy both.                                                   |
+| `GEMINI_API_KEY`                  | AI lesson assistant (`/api/ai/*`)                         | Quota abuse and cost                                                    | Google AI Studio → rotate.                                                                                                                                                     |
+| `AI_PARTNER_SEAL_SECRET`          | Seals the comprehension-check token                       | Forged comprehension-check passes                                       | New random value. Set it explicitly: unset, it falls back to `SUPABASE_SERVICE_ROLE_KEY`, so rotating the DB key would invalidate live check tokens.                           |
+| `TEACH_PREVIEW_PASSWORD`          | Gates the teacher preview of `academy-courses` PRs        | Anyone can make the server download and compile PR tarballs             | New random value; share it with teachers out of band.                                                                                                                          |
+| `CRON_SECRET`                     | Bearer secret Vercel Cron sends to `/api/cron/*`          | Trigger the scheduled mail and queue jobs at will                       | New random value in the Vercel env; Vercel Cron picks it up on the next deploy.                                                                                                |
+| `RESEND_API_KEY`                  | Sends marketing and reminder email                        | Send mail as the academy domain                                         | Resend → API keys → create a new key, swap it, delete the old one.                                                                                                             |
+| `MODERATION_WEBHOOK_URL`          | Slack/Discord webhook pinged by the first flag on a post  | The URL is the credential: anyone holding it can post into that channel | Delete the incoming webhook in Slack/Discord, create a new one, update the env.                                                                                                |
+| `GITHUB_TOKEN`                    | Read-only polling of `academy-courses` HEAD and CI        | Low: read-only on a public repo; rate-limit abuse                       | GitHub → revoke, issue a new fine-grained read token.                                                                                                                          |
+| `SENTRY_AUTH_TOKEN`               | Build-time source-map upload (`next.config.mjs`)          | Upload or alter releases and source maps, read project data             | Sentry → revoke the token, issue a new one. Build env only; the runtime doesn't need it.                                                                                       |
+| `BLOB_READ_WRITE_TOKEN`           | Uploads course images to Vercel Blob at build time        | Overwrite or delete course images                                       | Vercel → Storage → the Blob store: issue a new read-write token, update the env, redeploy.                                                                                     |
+| `CONTENT_RELEASE_APP_PRIVATE_KEY` | GitHub App key the content-release workflow uses          | Act as the app, with its permissions, in every repo it's installed on   | GitHub App settings → generate a new private key → update the `content-release` environment secret → delete the old key.                                                       |
 
 Admin access has no secret. The admin console checks the user's Supabase session
 against the service-role-only `admin_users` allowlist. To revoke an admin,
@@ -102,20 +102,57 @@ provider, then paste the new pair there.
 
 ## Rotation procedure
 
-Order matters if you want no downtime.
+For API keys and other off-chain secrets:
 
 1. **Provision** the new credential at the provider.
-2. **Stage** the new value in the env store. Where the provider allows two live
-   credentials, keep the old one until the new one is verified.
-3. **Rotate on-chain last.** The app keeps working on the old backend signer
-   until the new pubkey is set on `Config` and the new env value is deployed.
-4. **Revoke** the old credential once the new one is confirmed live.
-5. **Verify:** `/api/auth/nonce` returns 200, a test enrollment syncs through the
+2. **Stage** the new value in the env store and deploy. Where the provider allows
+   two live credentials, keep the old one until the new one is verified.
+3. **Revoke** the old credential once the new one is confirmed live.
+4. **Verify:** `/api/auth/nonce` returns 200, a test enrollment syncs through the
    webhook to the DB, an admin action authenticates, and a challenge validates.
-6. **Record** the rotation in the ops log.
+5. **Record** the rotation in the ops log.
 
-Mainnet authority changes need the owner's explicit confirmation, and program
-writes go through a Helius RPC (see the root `CLAUDE.md`).
+### Rotating an on-chain keypair
+
+The program accepts `BACKEND_SIGNER_SECRET` only while it equals
+`Config.backend_signer`, and `PROGRAM_AUTHORITY_SECRET` only while it equals
+`Config.authority`. There is no overlap: the old key is refused the moment the
+on-chain change lands, and the app keeps signing with the old key until the new
+env value is deployed. Keep that gap to minutes.
+
+1. Generate the new keypair and back it up outside the env store.
+2. Backend signer only: register the new key as a minter first
+   (`pnpm tsx scripts/init-program.ts register-minter` with the new key in
+   `BACKEND_SIGNER_SECRET`). `register_minter` doesn't need the key to be the
+   backend signer yet, and `reward_xp` needs the role as soon as it is.
+3. Stage the new value in the Vercel env. It takes effect on the next deploy, not
+   before.
+4. Optionally freeze the platform (`POST /api/admin/freeze` with
+   `{ "frozen": true }`). Lesson completion and certificate minting then return
+   503, and queued on-chain writes are deferred without spending their retry
+   budget.
+5. Send the on-chain change, signed by the current authority:
+   - Backend signer: `update_config` with `new_backend_signer`, passing the old
+     backend's `["minter", old_backend]` PDA as the first remaining account. The
+     same call deactivates the old role.
+   - Authority: `onchain-academy/scripts/rotate-config-authority.ts <NEW_PUBKEY>`
+     (dry run, then `--yes`). It's one-step and irreversible, so check the key
+     twice.
+6. Redeploy immediately, so the app signs with the new key.
+7. Clear the freeze if you set one, then run the checks above plus one lesson
+   completion and one admin course sync.
+
+Without a freeze, every write signed with the rotated key fails between steps 5
+and 6. Lesson completions return an error and the learner has to submit again.
+Writes that go through the retry queue (finalize, credentials, achievements, XP
+mints) back off at 5, 20, 80 and 320 minutes and are abandoned after the fifth
+failure.
+For the authority, admin course writes fail.
+
+The program upgrade authority is separate from `Config.authority`: move it with
+`solana program set-upgrade-authority`. Mainnet authority changes need the
+owner's explicit confirmation, and program writes go through a Helius RPC (see
+the root `CLAUDE.md`).
 
 ## When to rotate
 
