@@ -19,7 +19,7 @@ import {
 import { MODEL_RATES } from "../models";
 
 // The wrapper reads caps from serverEnv, which in tests takes the env.server
-// defaults (O-1 numbers): account soft/hard $0.50/$1.50, IP $2/$5, global
+// defaults: account soft/hard $0.50/$1.50, IP $2/$5, global
 // $14/$25. Micro-USD = USD×1e6. Rates are PER MODEL since #868; the pre-existing
 // cases below were written against $0.30/$2.50, which is exactly flash-lite's
 // sheet, so they pin the cheap tier explicitly.

@@ -23,8 +23,7 @@ import { describe, it, expect } from "vitest";
  *   20260824120000 (#1183)  wallet_address, wallet_kind    ← dropped #997's two
  *   20260910120000 (#1234)  all five                       ← first draft dropped wallet_kind
  *
- * #1183 is applied to production (ledger: 20260824213846), so `verified` and
- * `display_name` are self-writable on prod until #1234's migration lands.
+ * #1234's migration restored the two guards #1183 dropped.
  *
  * The per-column tests in wallet-write-lock-guard.test.ts could not catch
  * either one: they assert that a guard is PRESENT, and every version of the

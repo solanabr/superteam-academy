@@ -31,8 +31,9 @@ CPI-wire defect, no unchecked arithmetic.** The program is safe to deploy to a
 One **HIGH correctness bug** (`close_course` course-reincarnation replay) is
 reachable **only by the trusted authority + backend keys** — it is an
 operational-integrity landmine, not an external-attacker exploit. It is **not a
-devnet-e2e blocker** (you hold both keys and simply won't trigger the sequence),
-but it **should be fixed before any production / multi-user deployment.**
+devnet-e2e blocker** (it needs both trusted keys, and controlled testing simply
+won't trigger the sequence), but it **should be fixed before any production /
+multi-user deployment.**
 
 > **Update (2026-07-09): H-1, M-1, I-1, and L-2 are now FIXED** in the Pinocchio
 > build and covered by regression tests
@@ -109,9 +110,9 @@ oracle has the identical gap and documents it; per this round's trust model that
 does not excuse it.
 
 **Severity rationale:** reachable only with the authority key (close + create)
-**and** the backend key (finalize) — on the fresh instance, both are the
-operator's own wallet. So it is not an outsider exploit; the marginal capability
-it grants a key-holder is small (a backend key can already mint XP within caps).
+**and** the backend key (finalize), both trusted keys. So it is not an outsider
+exploit; the marginal capability it grants a key-holder is small (a backend key
+can already mint XP within caps).
 Its real weight is as a **latent correctness landmine**: a routine-looking admin
 action ("close and recreate a broken course") silently corrupts XP/credential
 accounting for any learner who was mid-course. That is why it must be fixed
@@ -222,8 +223,7 @@ when the old backend never held a role (a freshly appointed backend). Regression
 ## Attack surface & centralization analysis (report only — nothing changed)
 
 You asked where attack surface could be reduced by making parts more
-controlled/centralized. The system's security concentrates in **two keys**, and
-on the devnet instance they are the **same** wallet:
+controlled/centralized. The system's security concentrates in **two keys**:
 
 - **`authority`** — creates/updates/closes courses, registers/revokes/updates
   minters, rotates config, sets the kill-switch. A leaked authority key ⇒ mint
@@ -237,10 +237,10 @@ on the devnet instance they are the **same** wallet:
 Concrete ways to tighten control (in rough priority):
 
 1. **Separate `authority` from `backend_signer`, and put `authority` behind a
-   multisig (Squads).** Today they can be one key and on devnet are. The
-   authority holds the "unlimited" powers (minter registration, un-pause,
-   config rotation); isolating it behind a multisig shrinks the blast radius of
-   any single key compromise to the capped, kill-switchable backend surface.
+   multisig (Squads).** The authority holds the "unlimited" powers (minter
+   registration, un-pause, config rotation); isolating it behind a multisig
+   shrinks the blast radius of any single key compromise to the capped,
+   kill-switchable backend surface.
 2. **Gate or remove `close_course` (fixes H-1).** As a permanent, always-callable
    authority instruction it is the single most dangerous admin capability.
    Require zero live dependents, or drop it in favor of `update_course` +
@@ -284,8 +284,7 @@ gated a production/multi-user deployment are closed. `close_course` on a course
 with live enrollments is now safe (the recreated course gets a fresh generation;
 stale enrollments are rejected with 6034 and re-enroll re-initializes them).
 
-Remaining before a production/multi-user launch (design/ops, not code defects):
-adopt the authority ⁄ backend key separation and the multisig authority from the
-attack-surface section (§ above), and consider the `version` + `_reserved`
-account fields (qedgen P001/P002) while the fresh instance still has no data —
+Before a production/multi-user launch (design/ops, not code defects), weigh the
+key-handling recommendations in the attack-surface section (§ above), and consider
+the `version` + `_reserved` account fields (qedgen P001/P002) while the fresh instance still has no data —
 adding them now is the cheapest it will ever be.

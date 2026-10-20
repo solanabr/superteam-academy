@@ -112,10 +112,10 @@ import {
  * `is_active` and `collection` are also reset, but those we CAN restore, and
  * do — see {@link restoreAfterCreate}.
  *
- * MAINNET. Custody stays a single platform key (no Squads, #305 is not
- * coming), so the rule is narrow instead: on mainnet a course can be recreated
- * ONLY while nobody is enrolled (`total_enrollments == 0`), i.e. while a recreate
- * cannot reset anyone's progress. The cluster is identified by the RPC's genesis
+ * MAINNET. The platform authority signs the close and the create, and on
+ * mainnet a course can be recreated ONLY while nobody is enrolled
+ * (`total_enrollments == 0`), i.e. while a recreate cannot reset anyone's
+ * progress. The cluster is identified by the RPC's genesis
  * hash and the network label must agree; anything else is refused (see rail 4
  * in {@link preflightRecreate}). Because `enroll` is learner-signed, the
  * maintenance gate cannot stop it, so after the gate is acquired the course is
