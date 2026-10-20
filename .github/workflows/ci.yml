@@ -594,6 +594,14 @@ jobs:
       - name: Verifiable build (pinocchio)
         run: cargo build-sbf --manifest-path onchain-academy/programs/onchain-academy-pinocchio/Cargo.toml --tools-version v1.54
 
+      # The devnet program is the same source built with the `fresh-id` feature
+      # (its own program ID). Building it here, on the same runner and toolchain,
+      # makes a devnet upgrade ship the bytes mainnet will get apart from the ID.
+      # A Mac build of the same source differs in .text, so don't upgrade devnet
+      # from a local build.
+      - name: Verifiable build (pinocchio, devnet flavour)
+        run: cargo build-sbf --manifest-path onchain-academy/programs/onchain-academy-pinocchio/Cargo.toml --tools-version v1.54 --features fresh-id --sbf-out-dir onchain-academy/target/deploy-devnet
+
       - name: Compute program hash
         id: hash
         working-directory: onchain-academy
@@ -635,14 +643,33 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
+      # Devnet hash goes to its own file and the summary only. The job outputs
+      # above feed publish-hash and stay the mainnet (default-ID) build.
+      - name: Compute devnet program hash
+        working-directory: onchain-academy
+        run: |
+          SO_PATH="target/deploy-devnet/onchain_academy_pinocchio.so"
+          if [ ! -f "$SO_PATH" ]; then
+            echo "::error::Expected devnet program artifact not found at $SO_PATH"
+            exit 1
+          fi
+          SHA="$(sha256sum "$SO_PATH" | awk '{print $1}')"
+          printf '%s  %s\n' "$SHA" "onchain_academy_pinocchio.so" > program-hash-devnet.txt
+          {
+            echo ""
+            echo "Devnet flavour (\`--features fresh-id\`): SHA-256 \`$SHA\`, artifact path \`target/deploy-devnet/\`."
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: verifiable-build
           path: |
             onchain-academy/target/deploy/onchain_academy_pinocchio.so
+            onchain-academy/target/deploy-devnet/onchain_academy_pinocchio.so
             onchain-academy/idl/*.json
             onchain-academy/program-hash.txt
+            onchain-academy/program-hash-devnet.txt
           if-no-files-found: error
 
   # ── Durable hash record (feeds #140 / G-3) ──────────────────────────────────
