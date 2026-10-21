@@ -16,7 +16,7 @@ import {
   buildXShareIntentUrl,
   trackCredentialShareClick,
 } from "@/lib/credentials/share";
-import { resolveSolanaNetwork } from "@/lib/solana/network";
+import { explorerUrl, resolveSolanaNetwork } from "@/lib/solana/network";
 import { CERTIFICATE_STYLES as CS } from "@/lib/styles/styleClasses";
 import { truncateAddress } from "@/lib/utils";
 
@@ -173,8 +173,8 @@ export default function CertificateViewPage() {
     data;
   const recipientName = data.recipientName ?? t("recipientFallback");
   const { cluster, label: networkLabel } = resolveSolanaNetwork();
-  const explorerUrl = mintAddress
-    ? `https://explorer.solana.com/address/${mintAddress}?cluster=${cluster}`
+  const explorerLink = mintAddress
+    ? explorerUrl("address", mintAddress, cluster)
     : "";
 
   // This page only renders content client-side (data arrives via useEffect),
@@ -215,9 +215,9 @@ export default function CertificateViewPage() {
 
       {/* Action buttons */}
       <div className={v.actions}>
-        {explorerUrl && (
+        {explorerLink && (
           <Button variant="default" size="sm" asChild>
-            <a href={explorerUrl} target="_blank" rel="noopener noreferrer">
+            <a href={explorerLink} target="_blank" rel="noopener noreferrer">
               {t("viewOnExplorer")} &rarr;
             </a>
           </Button>

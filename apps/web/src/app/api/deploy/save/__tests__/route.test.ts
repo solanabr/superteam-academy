@@ -13,6 +13,8 @@ const {
   getUser,
   isRateLimited,
   getAccountInfo,
+  getGenesisHash,
+  rpc,
   profileSingle,
   upsert,
   userClientFrom,
@@ -27,6 +29,8 @@ const {
       }) => void
     >(),
   getUser: vi.fn<() => Promise<unknown>>(),
+  getGenesisHash: vi.fn<() => Promise<string>>(),
+  rpc: { endpoint: "https://api.devnet.solana.com" },
   isRateLimited: vi.fn<
     (
       namespace: string,
@@ -84,12 +88,20 @@ vi.mock("@/lib/rate-limit", () => ({
   getClientIp: () => "203.0.113.7",
 }));
 vi.mock("@/lib/solana/academy-program", () => ({
-  getConnection: () => ({ getAccountInfo }),
+  getConnection: () => ({
+    getAccountInfo,
+    getGenesisHash,
+    rpcEndpoint: rpc.endpoint,
+  }),
 }));
 vi.mock("@/lib/logging", () => ({ logEvent }));
 
 import { POST } from "../route";
 import { CAPSTONE_CREDENTIAL } from "@/lib/credentials/capstone-gate";
+import {
+  DEVNET_GENESIS_HASH,
+  MAINNET_GENESIS_HASH,
+} from "@/lib/solana/network";
 
 // ---------------------------------------------------------------------------
 // BPF Upgradeable Loader fixtures
@@ -176,6 +188,11 @@ const validBody = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.stubEnv("NEXT_PUBLIC_LEARNER_DEPLOY_ENABLED", "true");
+  vi.stubEnv("NEXT_PUBLIC_SOLANA_NETWORK", "devnet");
+  vi.stubEnv("NEXT_PUBLIC_SOLANA_RPC_URL", "https://api.devnet.solana.com");
+  rpc.endpoint = "https://api.devnet.solana.com";
+  getGenesisHash.mockResolvedValue(DEVNET_GENESIS_HASH);
   getUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
   isRateLimited.mockResolvedValue(false);
   profileSingle.mockResolvedValue({
@@ -187,6 +204,65 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
+  vi.unstubAllEnvs();
+});
+
+describe("POST /api/deploy/save — in-lesson deploy off", () => {
+  async function expectRefused(reason: "mainnet" | "disabled") {
+    setHappyChain();
+    const res = await POST(req(validBody));
+    expect(res.status).toBe(403);
+    expect(await res.json()).toEqual({
+      error: "Deploying from the lesson is turned off on this network.",
+      reason,
+    });
+    expect(upsert).not.toHaveBeenCalled();
+    expect(getAccountInfo).not.toHaveBeenCalled();
+  }
+
+  it('refuses when the flag is not "true", before reading the session', async () => {
+    vi.stubEnv("NEXT_PUBLIC_LEARNER_DEPLOY_ENABLED", "");
+    await expectRefused("disabled");
+    expect(getUser).not.toHaveBeenCalled();
+  });
+
+  it.each(["mainnet", "mainnet-beta", " MAINNET-BETA "])(
+    "refuses on a mainnet label (%j) even with the flag on",
+    async (label) => {
+      vi.stubEnv("NEXT_PUBLIC_SOLANA_NETWORK", label);
+      await expectRefused("mainnet");
+      expect(getUser).not.toHaveBeenCalled();
+    }
+  );
+
+  it("refuses when the server RPC host names mainnet", async () => {
+    rpc.endpoint = "https://mainnet.helius-rpc.com/?api-key=x";
+    await expectRefused("mainnet");
+  });
+
+  it("refuses when the browser RPC host names mainnet", async () => {
+    vi.stubEnv(
+      "NEXT_PUBLIC_SOLANA_RPC_URL",
+      "https://api.mainnet-beta.solana.com"
+    );
+    await expectRefused("mainnet");
+  });
+
+  it("refuses when an unlabelled RPC answers with mainnet's genesis hash", async () => {
+    rpc.endpoint = "https://rpc.example.com";
+    getGenesisHash.mockResolvedValue(MAINNET_GENESIS_HASH);
+    await expectRefused("mainnet");
+    expect(getGenesisHash).toHaveBeenCalledTimes(1);
+  });
+
+  it("answers 503 and saves nothing when the genesis hash can't be read", async () => {
+    rpc.endpoint = "https://rpc.example.com";
+    getGenesisHash.mockRejectedValue(new Error("rpc down"));
+    setHappyChain();
+    const res = await POST(req(validBody));
+    expect(res.status).toBe(503);
+    expect(upsert).not.toHaveBeenCalled();
+  });
 });
 
 describe("POST /api/deploy/save — on-chain verification (#560 / LX-E1)", () => {

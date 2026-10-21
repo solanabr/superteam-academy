@@ -8,6 +8,8 @@ import { NextRequest } from "next/server";
 
 vi.mock("server-only", () => ({}));
 
+const rpc = vi.hoisted(() => ({ url: "http://localhost:8899" }));
+
 const {
   getAccountInfo,
   fetchCourse,
@@ -28,7 +30,11 @@ const {
 
 vi.mock("next/cache", () => ({ revalidateTag: vi.fn() }));
 vi.mock("@/lib/env.server", () => ({
-  serverEnv: { SOLANA_RPC_URL: "http://localhost:8899" },
+  serverEnv: {
+    get SOLANA_RPC_URL() {
+      return rpc.url;
+    },
+  },
 }));
 vi.mock("@/lib/admin/auth", () => ({
   requireAdminAuth: vi.fn(() => ({ userId: "admin-user-1" })),
@@ -127,6 +133,7 @@ function syncRequest(): NextRequest {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  rpc.url = "http://localhost:8899";
   getAllCoursesAdmin.mockResolvedValue([bundleCourse()]);
   getAccountInfo.mockResolvedValue({ data: Buffer.alloc(253) });
   fetchCourse.mockResolvedValue(decodedCourse());
@@ -201,5 +208,24 @@ describe("POST /api/admin/courses/sync — mainnet course identity guard", () =>
 
     expect(res.status).toBe(500);
     expect(body.errorId).toBeUndefined();
+  });
+});
+
+describe("POST /api/admin/courses/sync — collection metadata URI", () => {
+  it("refuses before creating the course when the origin can't be pinned", async () => {
+    // The test env's NEXT_PUBLIC_APP_URL is http://localhost:3000; against a
+    // devnet RPC that origin must never reach a collection.
+    rpc.url = "https://api.devnet.solana.com";
+    getAccountInfo.mockResolvedValue(null);
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const res = await POST(syncRequest());
+
+    expect(res.status).toBe(500);
+    expect(((await res.json()) as { error: string }).error).toMatch(
+      /loopback origin/
+    );
+    expect(deployCoursePda).not.toHaveBeenCalled();
+    error.mockRestore();
   });
 });

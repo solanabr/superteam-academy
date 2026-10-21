@@ -1,24 +1,78 @@
 /**
+ * The cluster a `NEXT_PUBLIC_SOLANA_NETWORK` label names, spelled the way the
+ * explorer's `?cluster=` and the Irys/Helius switches expect it.
+ */
+export type SolanaCluster = "mainnet-beta" | "devnet" | "testnet";
+
+/** The label trimmed and lowercased; unset or blank reads as "devnet". */
+export function normalizeNetworkLabel(
+  label: string | null | undefined
+): string {
+  const normalized = (label ?? "").trim().toLowerCase();
+  return normalized === "" ? "devnet" : normalized;
+}
+
+/**
+ * Whether a network label means mainnet. `mainnet` and `mainnet-beta` are both
+ * in use, in any case and with stray whitespace from a dashboard paste, so the
+ * label is compared only through here. Anything starting with "mainnet" counts:
+ * over-claiming mainnet is the safe direction for every caller.
+ */
+export function isMainnetLabel(label: string | null | undefined): boolean {
+  return normalizeNetworkLabel(label).startsWith("mainnet");
+}
+
+/** The cluster a label names. Unknown labels fall back to devnet, the default. */
+export function clusterFromLabel(
+  label: string | null | undefined
+): SolanaCluster {
+  if (isMainnetLabel(label)) return "mainnet-beta";
+  return normalizeNetworkLabel(label) === "testnet" ? "testnet" : "devnet";
+}
+
+const CLUSTER_DISPLAY: Record<SolanaCluster, string> = {
+  "mainnet-beta": "Mainnet",
+  devnet: "Devnet",
+  testnet: "Testnet",
+};
+
+/** The explorer's `?cluster=` suffix: none for mainnet, which is its default. */
+export function explorerClusterQuery(cluster: SolanaCluster): string {
+  return cluster === "mainnet-beta" ? "" : `?cluster=${cluster}`;
+}
+
+/**
+ * A Solana Explorer link for a transaction or an address on `cluster`, which
+ * defaults to the app's own cluster.
+ */
+export function explorerUrl(
+  kind: "tx" | "address",
+  id: string,
+  cluster: SolanaCluster = clusterFromLabel(
+    process.env.NEXT_PUBLIC_SOLANA_NETWORK
+  )
+): string {
+  return `https://explorer.solana.com/${kind}/${id}${explorerClusterQuery(cluster)}`;
+}
+
+/**
  * Solana network identity, resolved from `NEXT_PUBLIC_SOLANA_NETWORK`
- * (devnet default — mirrors the inline convention used across pages).
+ * (devnet default).
  */
 export interface SolanaNetworkInfo {
-  /** Raw env value, e.g. "devnet" | "mainnet". */
+  /** The normalized label, e.g. "devnet" | "mainnet" | "mainnet-beta". */
   network: string;
-  /** Explorer `?cluster=` value — "mainnet" maps to "mainnet-beta". */
-  cluster: string;
-  /** Capitalized display label, e.g. "Devnet" | "Mainnet". */
+  /** The cluster the label names (explorer `?cluster=` spelling). */
+  cluster: SolanaCluster;
+  /** Display label, e.g. "Devnet" | "Mainnet". */
   label: string;
 }
 
 /** Read at call time (not module scope) so tests and previews can override. */
 export function resolveSolanaNetwork(): SolanaNetworkInfo {
-  const network = process.env.NEXT_PUBLIC_SOLANA_NETWORK ?? "devnet";
-  return {
-    network,
-    cluster: network === "mainnet" ? "mainnet-beta" : network,
-    label: network.charAt(0).toUpperCase() + network.slice(1),
-  };
+  const network = normalizeNetworkLabel(process.env.NEXT_PUBLIC_SOLANA_NETWORK);
+  const cluster = clusterFromLabel(network);
+  return { network, cluster, label: CLUSTER_DISPLAY[cluster] };
 }
 
 /**
@@ -61,8 +115,28 @@ export function networkFromRpcUrl(rpcUrl: string): RpcNetwork {
  * private endpoint) does not count, so devnet and localnet are unaffected.
  */
 export function isMainnetCluster(rpcUrl: string): boolean {
-  const label = resolveSolanaNetwork().network.trim().toLowerCase();
-  return label.startsWith("mainnet") || networkFromRpcUrl(rpcUrl) === "mainnet";
+  return (
+    isMainnetLabel(process.env.NEXT_PUBLIC_SOLANA_NETWORK) ||
+    networkFromRpcUrl(rpcUrl) === "mainnet"
+  );
+}
+
+/**
+ * For switches that must not land on devnet by mistake (Irys, the Helius
+ * webhook): mainnet if either the label or the RPC host says so. `disagree`
+ * is set when the label and a host that names a cluster point different ways,
+ * which callers log.
+ */
+export function mainnetBySignals(
+  label: string | null | undefined,
+  rpcUrl: string | null | undefined
+): { mainnet: boolean; disagree: boolean } {
+  const byLabel = isMainnetLabel(label);
+  const byRpc = rpcUrl ? networkFromRpcUrl(rpcUrl) : "unknown";
+  return {
+    mainnet: byLabel || byRpc === "mainnet",
+    disagree: byRpc !== "unknown" && byLabel !== (byRpc === "mainnet"),
+  };
 }
 
 /** Solana devnet's genesis hash (public, stable; devnet has never been re-genesised). */

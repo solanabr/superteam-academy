@@ -2,20 +2,24 @@
  * OPERATOR TOOL — dormant registration tooling for the Helius program webhook.
  * The live webhook was registered out-of-band and is not managed from the app;
  * this module is kept as ops tooling for re-registration (a cluster move, a
- * rotated secret, a new deployment URL), with zero app imports BY DESIGN. It
- * lives under scripts/ precisely because an unimported file is the norm here.
+ * rotated secret, a new deployment URL). It lives under scripts/ precisely
+ * because an unimported file is the norm here.
  *
  * Standalone: plain `process.env` + Node's built-in `fetch`, no `@/` aliases and
- * no `server-only`, so it runs under `npx tsx` outside the Next build.
+ * no `server-only`, so it runs under `npx tsx` outside the Next build. Its one
+ * app import is the dependency-free network helper, so the cluster is decided
+ * the same way as in the app: mainnet if NEXT_PUBLIC_SOLANA_NETWORK or the
+ * SOLANA_RPC_URL host says so.
  *
  *   HELIUS_API_KEY=... HELIUS_WEBHOOK_SECRET=... NEXT_PUBLIC_PROGRAM_ID=... \
  *   NEXT_PUBLIC_SOLANA_NETWORK=devnet npx tsx -e \
  *     "import('./scripts/helius-webhook-config.ts').then(m => m.listWebhooks()).then(console.log)"
  */
+import { mainnetBySignals } from "../apps/web/src/lib/solana/network";
+
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY;
 const PROGRAM_ID = process.env.NEXT_PUBLIC_PROGRAM_ID;
 const WEBHOOK_SECRET = process.env.HELIUS_WEBHOOK_SECRET;
-const NETWORK = process.env.NEXT_PUBLIC_SOLANA_NETWORK ?? "devnet";
 
 interface HeliusWebhookResponse {
   webhookID: string;
@@ -34,10 +38,30 @@ interface HeliusWebhookResponse {
  * always used and what the out-of-band registration was done against. Changing
  * the host is a separate, testable change — the enum fix is not.
  */
-function getHeliusBaseUrl(): string {
-  return NETWORK === "mainnet-beta"
+export function getHeliusBaseUrl(
+  label: string | undefined = process.env.NEXT_PUBLIC_SOLANA_NETWORK,
+  rpcUrl: string | undefined = process.env.SOLANA_RPC_URL
+): string {
+  return targetsMainnet(label, rpcUrl)
     ? "https://api-mainnet.helius-rpc.com"
     : "https://api-devnet.helius-rpc.com";
+}
+
+/**
+ * Mainnet if either the label or the RPC host says so, warning when they
+ * disagree: registering against the wrong cluster succeeds and then never fires.
+ */
+function targetsMainnet(
+  label: string | undefined,
+  rpcUrl: string | undefined
+): boolean {
+  const { mainnet, disagree } = mainnetBySignals(label, rpcUrl);
+  if (disagree) {
+    console.warn(
+      "NEXT_PUBLIC_SOLANA_NETWORK and SOLANA_RPC_URL name different clusters; targeting mainnet."
+    );
+  }
+  return mainnet;
 }
 
 /**
@@ -47,8 +71,11 @@ function getHeliusBaseUrl(): string {
  * simply never fires. ("enhanced"/"enhancedDevnet" are the parsed-payload
  * variants; the decoder here consumes RAW transactions.)
  */
-function rawWebhookType(): "raw" | "rawDevnet" {
-  return NETWORK === "mainnet-beta" ? "raw" : "rawDevnet";
+export function rawWebhookType(
+  label: string | undefined = process.env.NEXT_PUBLIC_SOLANA_NETWORK,
+  rpcUrl: string | undefined = process.env.SOLANA_RPC_URL
+): "raw" | "rawDevnet" {
+  return targetsMainnet(label, rpcUrl) ? "raw" : "rawDevnet";
 }
 
 export async function registerWebhook(

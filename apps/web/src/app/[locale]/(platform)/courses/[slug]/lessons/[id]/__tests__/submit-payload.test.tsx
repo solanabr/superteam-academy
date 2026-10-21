@@ -152,11 +152,15 @@ beforeAll(() => {
 beforeEach(() => {
   window.localStorage.clear();
   vi.clearAllMocks();
+  // These cover the deploy success card's Submit, which only exists while the
+  // in-lesson deploy is on.
+  vi.stubEnv("NEXT_PUBLIC_LEARNER_DEPLOY_ENABLED", "true");
 });
 
 afterEach(() => {
   cleanup();
   window.localStorage.clear();
+  vi.unstubAllEnvs();
 });
 
 function renderLesson() {
