@@ -13,7 +13,10 @@ import {
   markAttempt,
   bumpRetry,
 } from "@/lib/gamification/xp-queue-settlement";
-import { credentialMetadataUri, siteUrl } from "@/lib/metadata/site-origin";
+import {
+  credentialMetadataUri,
+  onChainSiteUrl,
+} from "@/lib/metadata/pinned-uri";
 import {
   BACKOFF_BASE_MS,
   DRAIN_LIMIT,
@@ -470,7 +473,7 @@ async function drainRowsForUser(
               { trait_type: "Platform", value: "Superteam Academy" },
             ],
             properties: { category: "certificate", creators: [] },
-            external_url: siteUrl("/certificates"),
+            external_url: onChainSiteUrl("/certificates"),
             seller_fee_basis_points: 0,
           };
 

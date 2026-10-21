@@ -11,7 +11,7 @@ import { GET as getCollection } from "@/app/api/certificates/metadata/[courseId]
 import {
   achievementMetadataUri,
   courseCollectionMetadataUri,
-} from "../site-origin";
+} from "../pinned-uri";
 
 // The program caps an achievement type's URI at 128 bytes
 // (MAX_ACHIEVEMENT_URI_LEN); the collection URI is held to the same bound.

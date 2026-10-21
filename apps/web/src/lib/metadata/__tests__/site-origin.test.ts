@@ -1,12 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  achievementMetadataUri,
-  courseCollectionMetadataUri,
-  credentialMetadataUri,
-  originOf,
-  siteOrigin,
-  siteUrl,
-} from "../site-origin";
+import { originOf, siteOrigin, siteUrl } from "../site-origin";
 
 const PROD = "https://www.st.academy";
 
@@ -38,36 +31,7 @@ describe("siteOrigin", () => {
   });
 });
 
-describe("metadata URIs", () => {
-  it("are built on the given origin with a stable path", () => {
-    expect(achievementMetadataUri("achievement-first-steps", PROD)).toBe(
-      "https://www.st.academy/api/achievements/metadata/achievement-first-steps"
-    );
-    expect(courseCollectionMetadataUri("course-solana-speedrun", PROD)).toBe(
-      "https://www.st.academy/api/certificates/metadata/course-solana-speedrun"
-    );
-    expect(
-      credentialMetadataUri("5b0e5c7e-1f2a-4c3d-9e8f-0a1b2c3d4e5f", PROD)
-    ).toBe(
-      "https://www.st.academy/api/certificates/metadata?id=5b0e5c7e-1f2a-4c3d-9e8f-0a1b2c3d4e5f"
-    );
-  });
-
-  it("default to the canonical origin, never one passed in by content", () => {
-    expect(achievementMetadataUri("achievement-x")).toBe(
-      "http://localhost:3000/api/achievements/metadata/achievement-x"
-    );
-    expect(courseCollectionMetadataUri("course-x")).toBe(
-      "http://localhost:3000/api/certificates/metadata/course-x"
-    );
-  });
-
-  it("escape an id rather than letting it change the path", () => {
-    expect(achievementMetadataUri("a/../b?c", PROD)).toBe(
-      "https://www.st.academy/api/achievements/metadata/a%2F..%2Fb%3Fc"
-    );
-  });
-
+describe("siteUrl", () => {
   it("joins site paths with exactly one slash", () => {
     expect(siteUrl("/certificates", PROD)).toBe(`${PROD}/certificates`);
     expect(siteUrl("certificates", PROD)).toBe(`${PROD}/certificates`);

@@ -20,7 +20,10 @@ import { isPlatformFrozen } from "@/lib/platform/freeze";
 import { platformFrozenResponse } from "@/lib/platform/freeze-http";
 import { checkCapstoneCredentialGate } from "@/lib/credentials/capstone-gate";
 import { logError } from "@/lib/logging";
-import { credentialMetadataUri, siteUrl } from "@/lib/metadata/site-origin";
+import {
+  credentialMetadataUri,
+  onChainSiteUrl,
+} from "@/lib/metadata/pinned-uri";
 import { ERROR_IDS } from "@/constants/errorIds";
 
 /**
@@ -259,7 +262,7 @@ export async function POST(request: NextRequest) {
         { trait_type: "Course Version", value: onChainCourse.version },
       ],
       properties: { category: "certificate", creators: [] },
-      external_url: siteUrl("/certificates"),
+      external_url: onChainSiteUrl("/certificates"),
       seller_fee_basis_points: 0,
     };
 

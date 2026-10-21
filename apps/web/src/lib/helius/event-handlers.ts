@@ -33,7 +33,10 @@ import { isCourseInMaintenance } from "@/lib/content/deployments";
 import { isPlatformFrozen } from "@/lib/platform/freeze";
 import { checkCapstoneCredentialGate } from "@/lib/credentials/capstone-gate";
 import { logError } from "@/lib/logging";
-import { credentialMetadataUri, siteUrl } from "@/lib/metadata/site-origin";
+import {
+  credentialMetadataUri,
+  onChainSiteUrl,
+} from "@/lib/metadata/pinned-uri";
 import { ERROR_IDS } from "@/constants/errorIds";
 import type {
   EnrolledEvent,
@@ -644,7 +647,7 @@ export async function tryIssueCredential(
         { trait_type: "Platform", value: "Superteam Academy" },
       ],
       properties: { category: "certificate", creators: [] },
-      external_url: siteUrl("/certificates"),
+      external_url: onChainSiteUrl("/certificates"),
       seller_fee_basis_points: 0,
     };
 

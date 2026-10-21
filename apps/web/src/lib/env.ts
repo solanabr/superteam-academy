@@ -48,7 +48,8 @@ const publicEnvSchema = z.object({
   NEXT_PUBLIC_SOLANA_RPC_URL: z.url(),
   // The app's own absolute origin. REQUIRED — not cosmetic: every NFT metadata
   // URI written on-chain (achievement types, course collections, credentials)
-  // is built from it through lib/metadata/site-origin.ts, and email links use
+  // is built from it through lib/metadata/pinned-uri.ts (which also refuses a
+  // loopback origin unless the RPC is a local validator), and email links use
   // it too. An unset var would mint a RELATIVE URI into an immutable Metaplex
   // Core asset — unfixable after the fact. Validating here makes that state
   // unreachable: boot/build fails loudly instead.
