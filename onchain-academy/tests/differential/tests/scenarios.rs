@@ -112,6 +112,14 @@ fn create_course_validation() {
     ctx.h
         .run_expect_custom("zero lessons", &[ix], &authority, &[], 6013);
 
+    // XP a single mint cannot carry -> 6033 at write time (intentional
+    // divergence from the Anchor build, which failed later, at mint time).
+    let mut p = CourseParams::simple("too-much-xp", authority.pubkey(), 3);
+    p.xp_per_lesson = 5_001;
+    let ix = ixs::create_course(&authority.pubkey(), &p);
+    ctx.h
+        .run_expect_custom("xp over a mint", &[ix], &authority, &[], 6033);
+
     // Difficulty 4 -> 6014.
     let mut p = CourseParams::simple("bad-difficulty", authority.pubkey(), 3);
     p.difficulty = 4;
@@ -931,11 +939,19 @@ fn close_course_including_legacy_192() {
     let mut ctx = Ctx::new();
     let authority = ctx.authority.insecure_clone();
 
-    // Current-layout close + recreate.
+    // Current-layout close + recreate (nobody enrolled).
     ctx.create_course(&CourseParams::simple("cc", authority.pubkey(), 2));
     let ix = ixs::close_course(&authority.pubkey(), "cc");
     ctx.h.run_ok("close course", &[ix], &authority, &[]);
     ctx.create_course(&CourseParams::simple("cc", authority.pubkey(), 2));
+
+    // Once anyone enrolls, the current-layout course can no longer be closed
+    // (6037). Intentional divergence from the Anchor build.
+    let learner = ctx.new_learner();
+    ctx.enroll(&learner, "cc");
+    let ix = ixs::close_course(&authority.pubkey(), "cc");
+    ctx.h
+        .run_expect_custom("close enrolled course", &[ix], &authority, &[], 6037);
 
     // Legacy pre-resize 192-byte account: valid discriminator + truncated
     // borsh (no `collection` field). Seeded identically into both VMs.

@@ -27,6 +27,11 @@ const FRESH_CONFIG_PDA: &str = "E9GVGKbyoWNSf9B1iR8gNVecwDwqnzNbUxcBzVCVSXan";
 const IX_INITIALIZE: [u8; 8] = [175, 175, 109, 31, 13, 152, 155, 237];
 const ACC_CONFIG: [u8; 8] = [155, 12, 170, 224, 30, 250, 204, 130];
 
+fn programdata(program_id: &Pubkey) -> Pubkey {
+    let loader = Pubkey::from_str("BPFLoaderUpgradeab1e11111111111111111111111").unwrap();
+    Pubkey::find_program_address(&[program_id.as_ref()], &loader).0
+}
+
 fn initialize_ix(program_id: &Pubkey, xp_mint: &Pubkey, authority: &Pubkey) -> Instruction {
     let config = Pubkey::find_program_address(&[b"config"], program_id).0;
     let minter = Pubkey::find_program_address(&[b"minter", authority.as_ref()], program_id).0;
@@ -40,9 +45,20 @@ fn initialize_ix(program_id: &Pubkey, xp_mint: &Pubkey, authority: &Pubkey) -> I
             AccountMeta::new(minter, false),
             AccountMeta::new_readonly(Pubkey::default(), false),
             AccountMeta::new_readonly(token_2022, false),
+            AccountMeta::new_readonly(programdata(program_id), false),
         ],
         data: IX_INITIALIZE.to_vec(),
     }
+}
+
+/// LiteSVM deploys upgradeable with no authority; record `authority` the way a
+/// real deploy does, since `initialize` requires its signer to be it.
+fn set_upgrade_authority(svm: &mut LiteSVM, program_id: &Pubkey, authority: &Pubkey) {
+    let address = programdata(program_id);
+    let mut account = svm.get_account(&address).expect("ProgramData");
+    account.data[12] = 1;
+    account.data[13..45].copy_from_slice(authority.as_ref());
+    svm.set_account(address, account).unwrap();
 }
 
 fn read_fresh_so() -> Option<Vec<u8>> {
@@ -75,6 +91,27 @@ fn fresh_artifact_initializes_at_its_own_id() {
     let xp_mint = Keypair::new();
     svm.airdrop(&authority.pubkey(), 1_000_000_000).unwrap();
 
+    // The fresh artifact derives ProgramData from its own id: a signer that is
+    // not the upgrade authority is refused (6000) ...
+    let stranger = Keypair::new();
+    svm.airdrop(&stranger.pubkey(), 1_000_000_000).unwrap();
+    set_upgrade_authority(&mut svm, &fresh_id, &authority.pubkey());
+    let ix = initialize_ix(&fresh_id, &xp_mint.pubkey(), &stranger.pubkey());
+    let tx = Transaction::new(
+        &[&stranger, &xp_mint],
+        Message::new(&[ix], Some(&stranger.pubkey())),
+        svm.latest_blockhash(),
+    );
+    let err = svm
+        .send_transaction(tx)
+        .expect_err("stranger must not init");
+    assert!(
+        format!("{:?}", err.err).contains("Custom(6000)"),
+        "{:?}",
+        err.err
+    );
+
+    // ... and the upgrade authority initializes.
     let ix = initialize_ix(&fresh_id, &xp_mint.pubkey(), &authority.pubkey());
     let tx = Transaction::new(
         &[&authority, &xp_mint],

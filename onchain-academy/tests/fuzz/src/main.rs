@@ -134,6 +134,18 @@ fn main() {
         stats.cooldown_rejections, stats.stale_rejections
     );
     println!(
+        "rent payer: {} sponsored enrollments, {} sponsor refunds, {} stale re-enrollments",
+        stats.sponsored_enrollments, stats.sponsor_refunds, stats.stale_reenrollments
+    );
+    println!(
+        "guards: {} impostor initializes refused, {} update_course accepted / {} refused, \
+         {} close_course refused (6037)",
+        stats.impostor_inits_rejected,
+        stats.course_updates,
+        stats.course_update_rejections,
+        stats.close_course_refusals
+    );
+    println!(
         "hostile account swaps rejected: {} ({})",
         stats.hostile_total(),
         stats.hostile_summary()

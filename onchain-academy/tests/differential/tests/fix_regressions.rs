@@ -11,11 +11,17 @@ use solana_sdk::signature::{Keypair, Signer};
 const STALE_ENROLLMENT: u32 = 6034;
 const OLD_MINTER_ROLE_MISSING: u32 = 6035;
 const ENROLLMENT_IN_PROGRESS: u32 = 6036;
+const COURSE_HAS_ENROLLMENTS: u32 = 6037;
 
 /// H-1: a course id closed and recreated gets a fresh generation, so an
 /// enrollment left over from the prior generation can neither finalize nor
 /// complete lessons against the new course — and the learner can re-enroll
 /// cleanly into the new generation.
+///
+/// `close_course` now refuses a course with enrollments (6037), so a live
+/// enrollment can no longer be orphaned this way; the generation check is the
+/// backstop for enrollments orphaned before that rule. The test models that
+/// state by zeroing `total_enrollments` before the close.
 #[test]
 fn h1_recreated_course_rejects_stale_enrollment() {
     let mut ctx = Ctx::new();
@@ -26,10 +32,22 @@ fn h1_recreated_course_rejects_stale_enrollment() {
     ctx.enroll(&learner, "gen");
     ctx.complete_lessons(&learner, "gen", 1); // one lesson done, not finalized
 
-    // Authority closes the course out from under the live enrollment and
-    // recreates it at the same PDA (fresh generation).
+    // The program refuses to close it out from under the live enrollment.
     let close = ixs::close_course(&authority.pubkey(), "gen");
-    ctx.h.run_ok("close_course", &[close], &authority, &[]);
+    ctx.h.run_expect_custom(
+        "close_course with an enrollment",
+        &[close],
+        &authority,
+        &[],
+        COURSE_HAS_ENROLLMENTS,
+    );
+
+    // Pre-rule state: the course was closed anyway and recreated at the same
+    // PDA (fresh generation).
+    ctx.set_course_total_enrollments("gen", 0);
+    let close = ixs::close_course(&authority.pubkey(), "gen");
+    ctx.h
+        .run_ok("close_course (pre-rule state)", &[close], &authority, &[]);
     ctx.create_course(&CourseParams::simple("gen", authority.pubkey(), 1));
 
     // The stale enrollment (prior generation) can no longer earn on the new

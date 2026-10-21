@@ -78,6 +78,31 @@ impl Harness {
         Self { svm }
     }
 
+    /// Sets the upgrade authority recorded in the program's ProgramData
+    /// account. LiteSVM deploys through the upgradeable loader with no
+    /// authority; a real deploy has one, and `initialize` requires its signer
+    /// to be it. `None` models an immutable program.
+    pub fn set_upgrade_authority(&mut self, authority: Option<&Pubkey>) {
+        let address = ixs::programdata_pda();
+        let mut account = self
+            .svm
+            .get_account(&address)
+            .expect("ProgramData account: the program is deployed upgradeable");
+        assert_eq!(account.owner, ixs::bpf_loader_upgradeable_id());
+        assert_eq!(&account.data[0..4], &3u32.to_le_bytes(), "ProgramData tag");
+        match authority {
+            Some(key) => {
+                account.data[12] = 1;
+                account.data[13..45].copy_from_slice(key.as_ref());
+            }
+            None => {
+                account.data[12] = 0;
+                account.data[13..45].fill(0);
+            }
+        }
+        self.svm.set_account(address, account).unwrap();
+    }
+
     pub fn airdrop(&mut self, key: &Pubkey, lamports: u64) {
         self.svm.airdrop(key, lamports).unwrap();
     }

@@ -11,6 +11,7 @@ pub const PROGRAM_ID: &str = "7NeJaSRyb4Wxay3Tcd9bdpD7T3GWYUQSFyrhG8SgwE8V";
 pub const TOKEN_2022_ID: &str = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
 pub const ATA_PROGRAM_ID: &str = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
 pub const MPL_CORE_ID: &str = "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d";
+pub const BPF_LOADER_UPGRADEABLE_ID: &str = "BPFLoaderUpgradeab1e11111111111111111111111";
 
 pub fn program_id() -> Pubkey {
     Pubkey::from_str(PROGRAM_ID).unwrap()
@@ -23,6 +24,9 @@ pub fn ata_program_id() -> Pubkey {
 }
 pub fn mpl_core_id() -> Pubkey {
     Pubkey::from_str(MPL_CORE_ID).unwrap()
+}
+pub fn bpf_loader_upgradeable_id() -> Pubkey {
+    Pubkey::from_str(BPF_LOADER_UPGRADEABLE_ID).unwrap()
 }
 /// The system program id is the all-zero pubkey.
 pub fn system_program_id() -> Pubkey {
@@ -50,6 +54,10 @@ pub fn system_create_account(
 
 // ---- PDAs ------------------------------------------------------------------
 
+/// The program's ProgramData account under the upgradeable loader.
+pub fn programdata_pda() -> Pubkey {
+    Pubkey::find_program_address(&[program_id().as_ref()], &bpf_loader_upgradeable_id()).0
+}
 pub fn config_pda() -> Pubkey {
     Pubkey::find_program_address(&[b"config"], &program_id()).0
 }
@@ -165,6 +173,15 @@ const IX_DEACTIVATE_ACHIEVEMENT_TYPE: [u8; 8] = [185, 21, 222, 243, 192, 118, 71
 // ---- Program instructions ------------------------------------------------------
 
 pub fn initialize(xp_mint: &Pubkey, authority: &Pubkey) -> Instruction {
+    initialize_with_programdata(xp_mint, authority, &programdata_pda())
+}
+
+/// `initialize` with an explicit ProgramData account, for the hostile cases.
+pub fn initialize_with_programdata(
+    xp_mint: &Pubkey,
+    authority: &Pubkey,
+    program_data: &Pubkey,
+) -> Instruction {
     Instruction {
         program_id: program_id(),
         accounts: vec![
@@ -174,6 +191,7 @@ pub fn initialize(xp_mint: &Pubkey, authority: &Pubkey) -> Instruction {
             AccountMeta::new(minter_pda(authority), false),
             AccountMeta::new_readonly(system_program_id(), false),
             AccountMeta::new_readonly(token_2022_id(), false),
+            AccountMeta::new_readonly(*program_data, false),
         ],
         data: Args::new(IX_INITIALIZE).build(),
     }
@@ -417,13 +435,26 @@ pub fn finalize_course(
     }
 }
 
+/// Self-paid close: the learner paid the rent, so the learner gets it back.
 pub fn close_enrollment(course_id: &str, learner: &Pubkey) -> Instruction {
+    close_enrollment_to(course_id, learner, learner)
+}
+
+/// `close_enrollment` with an explicit rent recipient, which the program
+/// requires to be the payer recorded at enroll (or the learner for a legacy
+/// 127-byte enrollment).
+pub fn close_enrollment_to(
+    course_id: &str,
+    learner: &Pubkey,
+    rent_recipient: &Pubkey,
+) -> Instruction {
     Instruction {
         program_id: program_id(),
         accounts: vec![
             AccountMeta::new_readonly(course_pda(course_id), false),
             AccountMeta::new(enrollment_pda(course_id, learner), false),
             AccountMeta::new(*learner, true),
+            AccountMeta::new(*rent_recipient, false),
         ],
         data: Args::new(IX_CLOSE_ENROLLMENT).build(),
     }
