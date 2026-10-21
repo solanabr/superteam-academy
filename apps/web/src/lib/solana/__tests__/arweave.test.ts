@@ -109,6 +109,13 @@ describe("uploadCertificateMetadata — graceful fallback", () => {
 describe("Irys node selection", () => {
   const originalNetwork = process.env.NEXT_PUBLIC_SOLANA_NETWORK;
   const originalSecret = process.env.ARWEAVE_UPLOADER_SECRET;
+  const DEVNET_RPC = "https://api.devnet.solana.com";
+  const MAINNET_RPC = "https://mainnet.helius-rpc.com/?api-key=x";
+  let warnSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+  });
 
   afterEach(() => {
     if (originalNetwork === undefined)
@@ -118,17 +125,43 @@ describe("Irys node selection", () => {
       delete process.env.ARWEAVE_UPLOADER_SECRET;
     else process.env.ARWEAVE_UPLOADER_SECRET = originalSecret;
     irysUploader.mockClear();
+    warnSpy.mockRestore();
   });
 
   it.each(["mainnet", "mainnet-beta", " Mainnet-Beta "])(
-    "uses the mainnet node for %j",
+    "uses the mainnet node for the label %j",
     (label) => {
-      expect(irysNodeFor(label)).toBe("https://uploader.irys.xyz");
+      expect(irysNodeFor(label, MAINNET_RPC)).toBe("https://uploader.irys.xyz");
+      expect(irysNodeFor(label, "https://rpc.example.com")).toBe(
+        "https://uploader.irys.xyz"
+      );
+      expect(warnSpy).not.toHaveBeenCalled();
     }
   );
 
-  it.each(["devnet", "", undefined])("uses the devnet node for %j", (label) => {
-    expect(irysNodeFor(label)).toBe("https://devnet.irys.xyz");
+  it.each(["devnet", "", undefined])(
+    "uses the devnet node for the label %j on a devnet RPC",
+    (label) => {
+      expect(irysNodeFor(label, DEVNET_RPC)).toBe("https://devnet.irys.xyz");
+      expect(warnSpy).not.toHaveBeenCalled();
+    }
+  );
+
+  it("uses mainnet and warns when the label says devnet but the RPC is mainnet", () => {
+    expect(irysNodeFor("devnet", MAINNET_RPC)).toBe(
+      "https://uploader.irys.xyz"
+    );
+    expect(irysNodeFor(undefined, "https://api.mainnet-beta.solana.com")).toBe(
+      "https://uploader.irys.xyz"
+    );
+    expect(warnSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it("uses mainnet and warns when the label says mainnet but the RPC is devnet", () => {
+    expect(irysNodeFor("mainnet", DEVNET_RPC)).toBe(
+      "https://uploader.irys.xyz"
+    );
+    expect(warnSpy).toHaveBeenCalledTimes(1);
   });
 
   it('uploads through the mainnet node when the label is "mainnet"', async () => {

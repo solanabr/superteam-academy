@@ -121,6 +121,24 @@ export function isMainnetCluster(rpcUrl: string): boolean {
   );
 }
 
+/**
+ * For switches that must not land on devnet by mistake (Irys, the Helius
+ * webhook): mainnet if either the label or the RPC host says so. `disagree`
+ * is set when the label and a host that names a cluster point different ways,
+ * which callers log.
+ */
+export function mainnetBySignals(
+  label: string | null | undefined,
+  rpcUrl: string | null | undefined
+): { mainnet: boolean; disagree: boolean } {
+  const byLabel = isMainnetLabel(label);
+  const byRpc = rpcUrl ? networkFromRpcUrl(rpcUrl) : "unknown";
+  return {
+    mainnet: byLabel || byRpc === "mainnet",
+    disagree: byRpc !== "unknown" && byLabel !== (byRpc === "mainnet"),
+  };
+}
+
 /** Solana devnet's genesis hash (public, stable; devnet has never been re-genesised). */
 export const DEVNET_GENESIS_HASH =
   "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG";

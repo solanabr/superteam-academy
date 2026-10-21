@@ -7,14 +7,15 @@
  *
  * Standalone: plain `process.env` + Node's built-in `fetch`, no `@/` aliases and
  * no `server-only`, so it runs under `npx tsx` outside the Next build. Its one
- * app import is the dependency-free network-label helper, so `mainnet` and
- * `mainnet-beta` mean the same thing here as in the app.
+ * app import is the dependency-free network helper, so the cluster is decided
+ * the same way as in the app: mainnet if NEXT_PUBLIC_SOLANA_NETWORK or the
+ * SOLANA_RPC_URL host says so.
  *
  *   HELIUS_API_KEY=... HELIUS_WEBHOOK_SECRET=... NEXT_PUBLIC_PROGRAM_ID=... \
  *   NEXT_PUBLIC_SOLANA_NETWORK=devnet npx tsx -e \
  *     "import('./scripts/helius-webhook-config.ts').then(m => m.listWebhooks()).then(console.log)"
  */
-import { isMainnetLabel } from "../apps/web/src/lib/solana/network";
+import { mainnetBySignals } from "../apps/web/src/lib/solana/network";
 
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY;
 const PROGRAM_ID = process.env.NEXT_PUBLIC_PROGRAM_ID;
@@ -38,11 +39,29 @@ interface HeliusWebhookResponse {
  * the host is a separate, testable change — the enum fix is not.
  */
 export function getHeliusBaseUrl(
-  label: string | undefined = process.env.NEXT_PUBLIC_SOLANA_NETWORK
+  label: string | undefined = process.env.NEXT_PUBLIC_SOLANA_NETWORK,
+  rpcUrl: string | undefined = process.env.SOLANA_RPC_URL
 ): string {
-  return isMainnetLabel(label)
+  return targetsMainnet(label, rpcUrl)
     ? "https://api-mainnet.helius-rpc.com"
     : "https://api-devnet.helius-rpc.com";
+}
+
+/**
+ * Mainnet if either the label or the RPC host says so, warning when they
+ * disagree: registering against the wrong cluster succeeds and then never fires.
+ */
+function targetsMainnet(
+  label: string | undefined,
+  rpcUrl: string | undefined
+): boolean {
+  const { mainnet, disagree } = mainnetBySignals(label, rpcUrl);
+  if (disagree) {
+    console.warn(
+      "NEXT_PUBLIC_SOLANA_NETWORK and SOLANA_RPC_URL name different clusters; targeting mainnet."
+    );
+  }
+  return mainnet;
 }
 
 /**
@@ -53,9 +72,10 @@ export function getHeliusBaseUrl(
  * variants; the decoder here consumes RAW transactions.)
  */
 export function rawWebhookType(
-  label: string | undefined = process.env.NEXT_PUBLIC_SOLANA_NETWORK
+  label: string | undefined = process.env.NEXT_PUBLIC_SOLANA_NETWORK,
+  rpcUrl: string | undefined = process.env.SOLANA_RPC_URL
 ): "raw" | "rawDevnet" {
-  return isMainnetLabel(label) ? "raw" : "rawDevnet";
+  return targetsMainnet(label, rpcUrl) ? "raw" : "rawDevnet";
 }
 
 export async function registerWebhook(

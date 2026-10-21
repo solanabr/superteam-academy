@@ -6,6 +6,7 @@ import {
   clusterFromLabel,
   explorerClusterQuery,
   explorerUrl,
+  mainnetBySignals,
   networkFromRpcUrl,
   isMainnetCluster,
   isLoopbackRpc,
@@ -138,6 +139,29 @@ describe("explorer links", () => {
     expect(explorerUrl("address", "ADDR")).toBe(
       "https://explorer.solana.com/address/ADDR?cluster=devnet"
     );
+  });
+});
+
+describe("mainnetBySignals", () => {
+  const MAINNET_RPC = "https://mainnet.helius-rpc.com/?api-key=x";
+  const DEVNET_RPC = "https://api.devnet.solana.com";
+
+  it("is mainnet when either the label or the RPC host says so", () => {
+    expect(mainnetBySignals("mainnet", DEVNET_RPC).mainnet).toBe(true);
+    expect(mainnetBySignals("devnet", MAINNET_RPC).mainnet).toBe(true);
+    expect(mainnetBySignals(undefined, MAINNET_RPC).mainnet).toBe(true);
+    expect(mainnetBySignals("mainnet-beta", undefined).mainnet).toBe(true);
+    expect(mainnetBySignals("devnet", DEVNET_RPC).mainnet).toBe(false);
+  });
+
+  it("flags a disagreement only when the host names a cluster", () => {
+    expect(mainnetBySignals("devnet", MAINNET_RPC).disagree).toBe(true);
+    expect(mainnetBySignals("mainnet", DEVNET_RPC).disagree).toBe(true);
+    expect(mainnetBySignals("mainnet", MAINNET_RPC).disagree).toBe(false);
+    expect(mainnetBySignals("devnet", DEVNET_RPC).disagree).toBe(false);
+    expect(
+      mainnetBySignals("mainnet", "https://rpc.example.com").disagree
+    ).toBe(false);
   });
 });
 
