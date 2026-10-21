@@ -122,9 +122,10 @@ env value is deployed. Keep that gap to minutes.
 
 1. Generate the new keypair and back it up outside the env store.
 2. Backend signer only: register the new key as a minter first
-   (`pnpm tsx scripts/init-program.ts register-minter` with the new key in
-   `BACKEND_SIGNER_SECRET`). `register_minter` doesn't need the key to be the
-   backend signer yet, and `reward_xp` needs the role as soon as it is.
+   (`npx tsx onchain-academy/scripts/init-program.ts register-minter --cluster <c>
+--minter <NEW_PUBKEY> --max-total-xp <budget>`, dry run, then `--yes`).
+   `register_minter` doesn't need the key to be the backend signer yet, and
+   `reward_xp` needs the role as soon as it is.
 3. Stage the new value in the Vercel env. It takes effect on the next deploy, not
    before.
 4. Optionally freeze the platform (`POST /api/admin/freeze` with
@@ -132,9 +133,10 @@ env value is deployed. Keep that gap to minutes.
    503, and queued on-chain writes are deferred without spending their retry
    budget.
 5. Send the on-chain change, signed by the current authority:
-   - Backend signer: `update_config` with `new_backend_signer`, passing the old
-     backend's `["minter", old_backend]` PDA as the first remaining account. The
-     same call deactivates the old role.
+   - Backend signer: `init-program.ts rotate-backend --cluster <c> --backend
+<NEW_PUBKEY>` (dry run, then `--yes`). It sends `update_config` with
+     `new_backend_signer` and the old backend's `["minter", old_backend]` PDA,
+     which the same call deactivates.
    - Authority: `onchain-academy/scripts/rotate-config-authority.ts <NEW_PUBKEY>`
      (dry run, then `--yes`). It's one-step and irreversible, so check the key
      twice.
