@@ -1,6 +1,11 @@
 import { describe, it, expect, beforeEach, afterAll, vi } from "vitest";
 import {
   resolveSolanaNetwork,
+  normalizeNetworkLabel,
+  isMainnetLabel,
+  clusterFromLabel,
+  explorerClusterQuery,
+  explorerUrl,
   networkFromRpcUrl,
   isMainnetCluster,
   isLoopbackRpc,
@@ -47,6 +52,92 @@ describe("resolveSolanaNetwork", () => {
       cluster: "mainnet-beta",
       label: "Mainnet",
     });
+  });
+});
+
+describe("resolveSolanaNetwork with either mainnet spelling", () => {
+  it.each(["mainnet-beta", " Mainnet-Beta ", "MAINNET"])(
+    "%j resolves to the mainnet-beta cluster and a Mainnet label",
+    (label) => {
+      process.env.NEXT_PUBLIC_SOLANA_NETWORK = label;
+      const info = resolveSolanaNetwork();
+      expect(info.cluster).toBe("mainnet-beta");
+      expect(info.label).toBe("Mainnet");
+    }
+  );
+});
+
+describe("network label helpers", () => {
+  it("normalizes case and whitespace, and reads blank as devnet", () => {
+    expect(normalizeNetworkLabel(" Mainnet-Beta ")).toBe("mainnet-beta");
+    expect(normalizeNetworkLabel("")).toBe("devnet");
+    expect(normalizeNetworkLabel("  ")).toBe("devnet");
+    expect(normalizeNetworkLabel(undefined)).toBe("devnet");
+    expect(normalizeNetworkLabel(null)).toBe("devnet");
+  });
+
+  it("treats mainnet and mainnet-beta, in any case, as mainnet", () => {
+    for (const label of [
+      "mainnet",
+      "mainnet-beta",
+      "Mainnet",
+      "MAINNET-BETA",
+      " mainnet-beta\n",
+    ]) {
+      expect(isMainnetLabel(label)).toBe(true);
+      expect(clusterFromLabel(label)).toBe("mainnet-beta");
+    }
+  });
+
+  it("treats devnet, testnet, blank and unknown labels as not mainnet", () => {
+    for (const label of [
+      "devnet",
+      "Devnet",
+      "testnet",
+      "",
+      undefined,
+      "localnet",
+    ]) {
+      expect(isMainnetLabel(label)).toBe(false);
+    }
+    expect(clusterFromLabel("devnet")).toBe("devnet");
+    expect(clusterFromLabel(" TESTNET ")).toBe("testnet");
+    expect(clusterFromLabel(undefined)).toBe("devnet");
+    expect(clusterFromLabel("localnet")).toBe("devnet");
+  });
+});
+
+describe("explorer links", () => {
+  it("carries no cluster param on mainnet and the right one elsewhere", () => {
+    expect(explorerClusterQuery("mainnet-beta")).toBe("");
+    expect(explorerClusterQuery("devnet")).toBe("?cluster=devnet");
+    expect(explorerClusterQuery("testnet")).toBe("?cluster=testnet");
+  });
+
+  it("builds tx and address links for an explicit cluster", () => {
+    expect(explorerUrl("tx", "SIG", "mainnet-beta")).toBe(
+      "https://explorer.solana.com/tx/SIG"
+    );
+    expect(explorerUrl("address", "ADDR", "devnet")).toBe(
+      "https://explorer.solana.com/address/ADDR?cluster=devnet"
+    );
+  });
+
+  it.each([
+    ["mainnet", "https://explorer.solana.com/tx/SIG"],
+    ["mainnet-beta", "https://explorer.solana.com/tx/SIG"],
+    [" Mainnet ", "https://explorer.solana.com/tx/SIG"],
+    ["devnet", "https://explorer.solana.com/tx/SIG?cluster=devnet"],
+    ["testnet", "https://explorer.solana.com/tx/SIG?cluster=testnet"],
+  ])("defaults to the app's cluster (label %j)", (label, expected) => {
+    process.env.NEXT_PUBLIC_SOLANA_NETWORK = label;
+    expect(explorerUrl("tx", "SIG")).toBe(expected);
+  });
+
+  it("defaults to devnet when the label is unset", () => {
+    expect(explorerUrl("address", "ADDR")).toBe(
+      "https://explorer.solana.com/address/ADDR?cluster=devnet"
+    );
   });
 });
 

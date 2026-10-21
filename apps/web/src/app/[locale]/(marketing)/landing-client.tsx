@@ -23,6 +23,7 @@ import {
   ProveWidget,
 } from "@/components/landing/loop-widgets";
 import { cn } from "@/lib/utils";
+import { explorerUrl, resolveSolanaNetwork } from "@/lib/solana/network";
 import { createClient } from "@/lib/supabase/client";
 import type { DeployedAchievement } from "@/lib/content/queries";
 
@@ -272,13 +273,9 @@ const STAT_FLOOR_BUILDERS = 50;
 const ONCHAIN_INSTRUCTION_COUNT = 18;
 
 // Explorer receipts: "on-chain" is a claim you can click.
-const SOLANA_NETWORK = process.env.NEXT_PUBLIC_SOLANA_NETWORK ?? "devnet";
-const EXPLORER_CLUSTER =
-  SOLANA_NETWORK === "mainnet-beta" ? "" : `?cluster=${SOLANA_NETWORK}`;
+const SOLANA_NETWORK = resolveSolanaNetwork().label.toLowerCase();
 function explorerAddress(address: string | undefined): string | undefined {
-  return address
-    ? `https://explorer.solana.com/address/${address}${EXPLORER_CLUSTER}`
-    : undefined;
+  return address ? explorerUrl("address", address) : undefined;
 }
 const XP_MINT_EXPLORER = explorerAddress(
   process.env.NEXT_PUBLIC_XP_MINT_ADDRESS

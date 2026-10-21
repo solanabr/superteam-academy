@@ -38,11 +38,21 @@ import { keypairIdentity } from "@metaplex-foundation/umi";
 import { fromWeb3JsKeypair } from "@metaplex-foundation/umi-web3js-adapters";
 import { irysUploader } from "@metaplex-foundation/umi-uploader-irys";
 import { serverEnv } from "@/lib/env.server";
+import { isMainnetLabel } from "@/lib/solana/network";
 
 // Irys node URLs. Devnet uploads are free (funded with devnet SOL) but are
 // pruned after ~60 days — only mainnet gives true permanence.
 const IRYS_MAINNET_NODE = "https://uploader.irys.xyz";
 const IRYS_DEVNET_NODE = "https://devnet.irys.xyz";
+
+/**
+ * The Irys node for a network label. Both `mainnet` and `mainnet-beta` must
+ * reach the mainnet node: a devnet upload is pruned, and its URL would be
+ * pinned into a mainnet credential that can't be changed.
+ */
+export function irysNodeFor(label: string | undefined): string {
+  return isMainnetLabel(label) ? IRYS_MAINNET_NODE : IRYS_DEVNET_NODE;
+}
 
 /**
  * Loads the Solana keypair that funds Irys uploads.
@@ -113,9 +123,7 @@ export async function uploadCertificateMetadata(
     return null;
   }
 
-  const network = process.env.NEXT_PUBLIC_SOLANA_NETWORK ?? "devnet";
-  const irysNode =
-    network === "mainnet-beta" ? IRYS_MAINNET_NODE : IRYS_DEVNET_NODE;
+  const irysNode = irysNodeFor(process.env.NEXT_PUBLIC_SOLANA_NETWORK);
 
   try {
     const umi = createUmi(serverEnv.SOLANA_RPC_URL)

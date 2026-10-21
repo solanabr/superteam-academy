@@ -35,8 +35,6 @@ export function AchievementCard({
 }: AchievementCardProps) {
   const t = useTranslations("gamification");
   const isUnlocked = !!unlockedAt;
-  const network = process.env.NEXT_PUBLIC_SOLANA_NETWORK ?? "devnet";
-  const cluster = network === "mainnet" ? "mainnet-beta" : network;
 
   const patch = (
     <AchievementPatch
@@ -72,7 +70,6 @@ export function AchievementCard({
             <ProofPill
               address={assetAddress}
               type="account"
-              network={cluster}
               className="text-[10px]"
             />
           </div>

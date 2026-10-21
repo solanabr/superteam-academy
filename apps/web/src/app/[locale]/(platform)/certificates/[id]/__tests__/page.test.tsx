@@ -88,8 +88,8 @@ function renderPage() {
   );
 }
 
-/** The NFT-details explorer button (not ProofPill, whose href omits the
- *  cluster param on mainnet-beta). */
+/** Every explorer address link on the page: the NFT-details button and the
+ *  ProofPill. Both omit the cluster param on mainnet. */
 function explorerLinks(): string[] {
   return screen
     .getAllByRole("link")
@@ -158,20 +158,21 @@ describe("certificate verify page — network label from env", () => {
     ).toBe(true);
   });
 
-  it("labels Mainnet and targets the mainnet-beta explorer cluster", async () => {
-    process.env.NEXT_PUBLIC_SOLANA_NETWORK = "mainnet";
-    renderPage();
+  it.each(["mainnet", "mainnet-beta", " Mainnet-Beta "])(
+    "labels Mainnet and links the explorer's default cluster for %j",
+    async (label) => {
+      process.env.NEXT_PUBLIC_SOLANA_NETWORK = label;
+      renderPage();
 
-    expect(await screen.findByText("Mainnet")).toBeInTheDocument();
-    expect(screen.queryByText("Devnet")).not.toBeInTheDocument();
-    expect(
-      explorerLinks().some((href) => href.endsWith("?cluster=mainnet-beta"))
-    ).toBe(true);
-    // Never the invalid bare "mainnet" cluster param
-    expect(
-      explorerLinks().some((href) => href.endsWith("?cluster=mainnet"))
-    ).toBe(false);
-  });
+      expect(await screen.findByText("Mainnet")).toBeInTheDocument();
+      expect(screen.queryByText("Devnet")).not.toBeInTheDocument();
+      const links = explorerLinks();
+      expect(links.length).toBeGreaterThan(0);
+      // Mainnet is the explorer's default: no cluster param at all, so never
+      // the invalid bare "mainnet" one either.
+      expect(links.every((href) => !href.includes("?cluster="))).toBe(true);
+    }
+  );
 });
 
 // LX-F1 (#873): the mint_success surface is covered by the share-nudge and

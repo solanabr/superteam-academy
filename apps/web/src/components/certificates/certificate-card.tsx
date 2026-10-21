@@ -81,7 +81,7 @@ export function CertificateCard({
               <ProofPill
                 address={mintAddress}
                 type="account"
-                network={cluster}
+                cluster={cluster}
                 onClick={(e) => e.stopPropagation()}
               />
             ) : (

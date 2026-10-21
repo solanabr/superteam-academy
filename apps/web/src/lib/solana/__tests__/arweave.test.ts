@@ -32,12 +32,13 @@ vi.mock("@metaplex-foundation/umi", () => ({ keypairIdentity: () => ({}) }));
 vi.mock("@metaplex-foundation/umi-web3js-adapters", () => ({
   fromWeb3JsKeypair: () => ({}),
 }));
+const irysUploader = vi.fn((_opts: { address: string }) => ({}));
 vi.mock("@metaplex-foundation/umi-uploader-irys", () => ({
-  irysUploader: () => ({}),
+  irysUploader: (opts: { address: string }) => irysUploader(opts),
 }));
 
 import { Keypair } from "@solana/web3.js";
-import { uploadCertificateMetadata } from "../arweave";
+import { irysNodeFor, uploadCertificateMetadata } from "../arweave";
 
 const METADATA = { name: "Test Credential", symbol: "STACAD" };
 
@@ -102,5 +103,41 @@ describe("uploadCertificateMetadata — graceful fallback", () => {
     uploadJson.mockReturnValueOnce(gatewayUrl);
     await expect(uploadCertificateMetadata(METADATA)).resolves.toBe(gatewayUrl);
     expect(uploadJson).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("Irys node selection", () => {
+  const originalNetwork = process.env.NEXT_PUBLIC_SOLANA_NETWORK;
+  const originalSecret = process.env.ARWEAVE_UPLOADER_SECRET;
+
+  afterEach(() => {
+    if (originalNetwork === undefined)
+      delete process.env.NEXT_PUBLIC_SOLANA_NETWORK;
+    else process.env.NEXT_PUBLIC_SOLANA_NETWORK = originalNetwork;
+    if (originalSecret === undefined)
+      delete process.env.ARWEAVE_UPLOADER_SECRET;
+    else process.env.ARWEAVE_UPLOADER_SECRET = originalSecret;
+    irysUploader.mockClear();
+  });
+
+  it.each(["mainnet", "mainnet-beta", " Mainnet-Beta "])(
+    "uses the mainnet node for %j",
+    (label) => {
+      expect(irysNodeFor(label)).toBe("https://uploader.irys.xyz");
+    }
+  );
+
+  it.each(["devnet", "", undefined])("uses the devnet node for %j", (label) => {
+    expect(irysNodeFor(label)).toBe("https://devnet.irys.xyz");
+  });
+
+  it('uploads through the mainnet node when the label is "mainnet"', async () => {
+    process.env.NEXT_PUBLIC_SOLANA_NETWORK = "mainnet";
+    process.env.ARWEAVE_UPLOADER_SECRET = VALID_SECRET;
+    uploadJson.mockReturnValueOnce("https://gateway.irys.xyz/abc123");
+    await uploadCertificateMetadata(METADATA);
+    expect(irysUploader).toHaveBeenCalledWith({
+      address: "https://uploader.irys.xyz",
+    });
   });
 });
