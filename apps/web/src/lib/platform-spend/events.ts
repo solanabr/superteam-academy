@@ -87,7 +87,10 @@ export function lowBalanceEvent(input: {
   };
 }
 
-export type SponsorDeclineReason = "already_sponsored" | "in_flight";
+export type SponsorDeclineReason =
+  | "already_sponsored"
+  | "in_flight"
+  | "already_enrolled";
 
 export function sponsorDeclinedEvent(input: {
   reason: SponsorDeclineReason;

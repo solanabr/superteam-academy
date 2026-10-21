@@ -10,8 +10,17 @@
 --   * refund_lamports — lamports platform keys received back (closed accounts).
 --
 -- It also enforces the sponsorship rule: a wallet gets at most one sponsored
--- `enroll` per course, ever. A pending (in flight) or confirmed `enroll_sponsor`
--- row holds the slot; a failed or expired one frees it.
+-- `enroll` per course generation of a program, ever. A pending (in flight) or
+-- confirmed `enroll_sponsor` row holds the slot; a failed, expired or
+-- superseded one frees it. The key carries the program id and the on-chain
+-- `Course.generation`, so a recreated course or a program move starts fresh.
+-- `enroll_sponsor_reenroll` (re-initialising a stale enrollment from a
+-- superseded generation, which costs only a fee) has its own slot, so it never
+-- uses up the generation's sponsorship.
+--
+-- `superseded`: a pending sponsorship the learner abandoned (no on-chain trace
+-- when they asked again). Settlement still follows it, so if it lands late its
+-- spend is recorded.
 --
 -- `platform_alert_state` + `claim_platform_alert()` throttle the cron's balance
 -- snapshots and low-balance alerts across serverless invocations.
@@ -29,6 +38,8 @@ CREATE TABLE IF NOT EXISTS public.platform_spend (
   user_id                 UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
   wallet                  TEXT,
   course_id               TEXT,
+  program_id              TEXT,
+  course_generation       BIGINT,
   payer                   TEXT NOT NULL,
   payer_role              TEXT NOT NULL,
   fee_lamports            BIGINT,
@@ -44,31 +55,39 @@ CREATE TABLE IF NOT EXISTS public.platform_spend (
   CONSTRAINT platform_spend_payer_role_check
     CHECK (payer_role IN ('sponsor', 'backend', 'authority')),
   CONSTRAINT platform_spend_status_check
-    CHECK (status IN ('pending', 'confirmed', 'failed', 'expired')),
+    CHECK (status IN ('pending', 'confirmed', 'failed', 'expired', 'superseded')),
   CONSTRAINT platform_spend_amounts_check
     CHECK (
       COALESCE(fee_lamports, 0) >= 0
       AND COALESCE(rent_lamports, 0) >= 0
       AND COALESCE(refund_lamports, 0) >= 0
     ),
-  -- The once-per index below keys on (wallet, course_id); a NULL in either
-  -- would make every such row distinct and bypass it.
+  -- The once-per index below keys on these; a NULL in any of them would make
+  -- every such row distinct and bypass it.
   CONSTRAINT platform_spend_enroll_sponsor_keys_check
     CHECK (
-      action <> 'enroll_sponsor'
-      OR (wallet IS NOT NULL AND course_id IS NOT NULL)
+      action NOT IN ('enroll_sponsor', 'enroll_sponsor_reenroll')
+      OR (
+        wallet IS NOT NULL
+        AND course_id IS NOT NULL
+        AND program_id IS NOT NULL
+        AND course_generation IS NOT NULL
+      )
     )
 );
 
--- At most one live sponsored enrollment per (cluster, wallet, course).
+-- At most one live sponsorship per action, cluster, program, wallet, course
+-- and course generation.
 CREATE UNIQUE INDEX IF NOT EXISTS platform_spend_enroll_sponsor_once
-  ON public.platform_spend (cluster, wallet, course_id)
-  WHERE action = 'enroll_sponsor' AND status IN ('pending', 'confirmed');
+  ON public.platform_spend
+    (action, cluster, program_id, wallet, course_id, course_generation)
+  WHERE action IN ('enroll_sponsor', 'enroll_sponsor_reenroll')
+    AND status IN ('pending', 'confirmed');
 
--- The settle sweep reads the oldest pending rows.
-CREATE INDEX IF NOT EXISTS platform_spend_pending_idx
+-- The settle sweep reads the oldest unsettled rows.
+CREATE INDEX IF NOT EXISTS platform_spend_unsettled_idx
   ON public.platform_spend (created_at)
-  WHERE status = 'pending';
+  WHERE status IN ('pending', 'superseded');
 
 CREATE INDEX IF NOT EXISTS platform_spend_user_id_idx
   ON public.platform_spend (user_id);

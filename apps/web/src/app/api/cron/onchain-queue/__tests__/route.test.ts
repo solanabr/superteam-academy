@@ -57,11 +57,11 @@ describe("GET /api/cron/onchain-queue", () => {
     expect(h.upkeep).not.toHaveBeenCalled();
   });
 
-  it("drains first, then settles spend and checks balances", async () => {
+  it("runs spend upkeep before the drain, so a long drain can't starve it", async () => {
     const res = await GET(request("Bearer s3cret-value"));
 
     expect(res.status).toBe(200);
-    expect(h.calls).toEqual(["drain", "upkeep"]);
+    expect(h.calls).toEqual(["upkeep", "drain"]);
     await expect(res.json()).resolves.toMatchObject({
       job: "onchain-queue",
       attempted: 1,

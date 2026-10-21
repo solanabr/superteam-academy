@@ -153,6 +153,7 @@ export async function handleEnrollmentClosed(
     signature: txSignature,
     wallet: event.learner,
     courseId,
+    programId: getProgramId().toBase58(),
     userId,
   });
 }

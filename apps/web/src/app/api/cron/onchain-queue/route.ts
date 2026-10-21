@@ -36,10 +36,12 @@ export const maxDuration = 300;
  * just for mail: the `certificate` action builds the credential's metadata URI
  * from it, and an empty value would pin a RELATIVE URI into an immutable NFT.
  *
- * SPEND UPKEEP: after the drain, the same tick settles pending rows in the
+ * SPEND UPKEEP: before the drain, the same tick settles ledger rows in the
  * platform spend ledger and checks the sponsor and backend signer balances
- * (hourly PostHog snapshot, throttled low-balance alert). It never fails the
- * drain: each step logs and reports `null` on error.
+ * (hourly PostHog snapshot, throttled low-balance alert). It runs first, inside
+ * its own budget (SPEND_UPKEEP_BUDGET_MS), so a long drain can't starve it and
+ * it can't take more than that from the drain. It never fails the drain: each
+ * step logs and reports `null` on error.
  *
  * OVERLAP: safe. Each action is idempotent against the chain or the ledger
  * (receipt PDA reads, `resolved_at`, award_xp's idempotency key, and the mint's
@@ -48,8 +50,8 @@ export const maxDuration = 300;
  */
 export async function GET(req: NextRequest): Promise<NextResponse> {
   return runCronJob("onchain-queue", req.headers, async () => {
-    const drain = await drainAllPendingOnchainActions();
     const spend = await runSpendUpkeep(getConnection());
+    const drain = await drainAllPendingOnchainActions();
     return { ...drain, spend };
   });
 }

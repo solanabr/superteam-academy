@@ -61,20 +61,27 @@ async function as(role: "anon" | "authenticated" | "service_role") {
 function enroll(
   signature: string,
   overrides: {
+    action?: string;
     status?: string;
     wallet?: string;
     course?: string;
     cluster?: string;
+    program?: string;
+    generation?: number;
   } = {}
 ) {
   return db.query(
     `INSERT INTO public.platform_spend
-       (signature, action, wallet, course_id, payer, payer_role, cluster, status)
-     VALUES ($1, 'enroll_sponsor', $2, $3, 'SponsorKey', 'sponsor', $4, $5)`,
+       (signature, action, wallet, course_id, program_id, course_generation,
+        payer, payer_role, cluster, status)
+     VALUES ($1, $2, $3, $4, $5, $6, 'SponsorKey', 'sponsor', $7, $8)`,
     [
       signature,
+      overrides.action ?? "enroll_sponsor",
       overrides.wallet ?? "WalletA",
       overrides.course ?? "course-x",
+      overrides.program ?? "ProgramA",
+      overrides.generation ?? 7,
       overrides.cluster ?? "devnet",
       overrides.status ?? "pending",
     ]
@@ -116,7 +123,7 @@ describe("platform_spend migration", () => {
     await expect(db.exec(migration)).resolves.toBeDefined();
   });
 
-  it("allows one live sponsored enrollment per wallet and course", async () => {
+  it("allows one live sponsored enrollment per wallet, course and generation", async () => {
     await enroll("SIG1");
     await expect(enroll("SIG2")).rejects.toThrow(/duplicate key/);
 
@@ -124,13 +131,41 @@ describe("platform_spend migration", () => {
     await expect(enroll("SIG3")).rejects.toThrow(/duplicate key/);
   });
 
-  it("frees the slot when the earlier attempt failed or expired", async () => {
+  it("frees the slot when the earlier attempt failed, expired or was superseded", async () => {
     await enroll("SIG1");
     await setStatus("SIG1", "expired");
     await expect(enroll("SIG2")).resolves.toBeDefined();
 
     await setStatus("SIG2", "failed");
     await expect(enroll("SIG3")).resolves.toBeDefined();
+
+    await setStatus("SIG3", "superseded");
+    await expect(enroll("SIG4")).resolves.toBeDefined();
+  });
+
+  it("sponsors a recreated course again: a new generation is a new slot", async () => {
+    await enroll("SIG1", { status: "confirmed", generation: 7 });
+    await expect(enroll("SIG2", { generation: 8 })).resolves.toBeDefined();
+  });
+
+  it("sponsors again after a program move on the same cluster", async () => {
+    await enroll("SIG1", { status: "confirmed", program: "ProgramA" });
+    await expect(
+      enroll("SIG2", { program: "ProgramB" })
+    ).resolves.toBeDefined();
+  });
+
+  it("keeps a stale-enrollment re-enroll out of the generation's slot", async () => {
+    await enroll("SIG1", {
+      action: "enroll_sponsor_reenroll",
+      status: "confirmed",
+    });
+    // The generation's own sponsorship is still free…
+    await expect(enroll("SIG2")).resolves.toBeDefined();
+    // …and the re-enroll slot holds one live row too.
+    await expect(
+      enroll("SIG3", { action: "enroll_sponsor_reenroll" })
+    ).rejects.toThrow(/duplicate key/);
   });
 
   it("refuses to move a second sponsorship to confirmed while one holds the slot", async () => {
@@ -148,15 +183,29 @@ describe("platform_spend migration", () => {
     await expect(enroll("SIG4", { cluster: "mainnet" })).resolves.toBeDefined();
   });
 
-  it("refuses a sponsored enrollment row without its wallet or course", async () => {
-    await expect(
-      db.query(
-        `INSERT INTO public.platform_spend
-           (signature, action, payer, payer_role, cluster)
-         VALUES ('SIG1', 'enroll_sponsor', 'SponsorKey', 'sponsor', 'devnet')`
-      )
-    ).rejects.toThrow(/enroll_sponsor_keys_check/);
-  });
+  it.each(["enroll_sponsor", "enroll_sponsor_reenroll"])(
+    "refuses a %s row without its full once-per key",
+    async (action) => {
+      const insert = (columns: string, values: string) =>
+        db.query(
+          `INSERT INTO public.platform_spend
+             (signature, action, payer, payer_role, cluster${columns})
+           VALUES (gen_random_uuid()::text, $1, 'K', 'sponsor', 'devnet'${values})`,
+          [action]
+        );
+      await expect(insert("", "")).rejects.toThrow(/enroll_sponsor_keys_check/);
+      // Wallet and course, but no program id or generation.
+      await expect(insert(", wallet, course_id", ", 'W', 'C'")).rejects.toThrow(
+        /enroll_sponsor_keys_check/
+      );
+      await expect(
+        insert(
+          ", wallet, course_id, program_id, course_generation",
+          ", 'W', 'C', 'P', 1"
+        )
+      ).resolves.toBeDefined();
+    }
+  );
 
   it("keeps the first row when the same signature is written again", async () => {
     const write = (action: string) =>

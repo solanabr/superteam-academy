@@ -1789,7 +1789,7 @@
     "enrollNoLinkedWallet": "Sua conta ainda não tem carteira vinculada, então uma inscrição feita agora não poderia ser creditada a você. Vincule uma carteira em Configurações primeiro.",
     "enrollSponsorAlreadyUsed": "Sua inscrição neste curso já foi patrocinada uma vez, então a reinscrição é paga pela sua carteira. Adicione um pouco de SOL à carteira para continuar.",
     "enrollSponsorSelfPay": "Esta reinscrição não é patrocinada: sua carteira paga a taxa da rede e o depósito.",
-    "enrollSponsorInFlight": "Sua inscrição anterior ainda está sendo processada. Tente de novo em um minuto.",
+    "enrollSponsorInFlight": "Sua inscrição anterior ainda está sendo confirmada. Tente de novo em alguns segundos.",
     "reauthTitle": "Sua sessão expirou",
     "reauthBody": "Sua carteira continua sendo sua — entre de novo com a conta que você usou e ela volta na hora.",
     "reauthActionGoogle": "Entrar com Google",

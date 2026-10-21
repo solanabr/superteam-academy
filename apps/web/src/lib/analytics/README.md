@@ -116,7 +116,7 @@ No wallet addresses or emails.
 | `platform_spend_settled`   | `action`, `status` (`confirmed` \| `failed`), `fee_lamports`, `rent_lamports`, `refund_lamports`, `net_lamports`, `payer_role`, `course_id?`, `cluster`, `signature` | the on-chain queue cron, once per transaction when its ledger row settles                 |
 | `sponsor_balance_snapshot` | `payer_role` (`sponsor` \| `backend`), `balance_lamports`, `cluster`                                                                                                 | the on-chain queue cron, at most hourly per wallet                                        |
 | `sponsor_low_balance`      | `payer_role`, `balance_lamports`, `threshold_lamports`, `cluster`                                                                                                    | the on-chain queue cron, when a wallet is under `SPONSOR_LOW_BALANCE_SOL` (every 4 h max) |
-| `sponsor_declined`         | `reason` (`already_sponsored` \| `in_flight`), `course_id`, `cluster`                                                                                                | `/api/enroll/sponsor`, after the response, when the once-per-course rule refuses          |
+| `sponsor_declined`         | `reason` (`already_sponsored` \| `in_flight` \| `already_enrolled`), `course_id`, `cluster`                                                                          | `/api/enroll/sponsor`, after the response, when the once-per-course rule refuses          |
 
 ## Onboarding funnel (E2/E7)
 

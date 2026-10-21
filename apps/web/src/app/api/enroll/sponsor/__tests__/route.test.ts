@@ -57,6 +57,10 @@ vi.mock("@/lib/content/queries", () => ({
 }));
 vi.mock("@/lib/solana/sponsor-enroll", () => ({
   buildSponsoredEnrollTransaction: h.buildSponsored,
+  CourseNotOnChainError: class CourseNotOnChainError extends Error {},
+}));
+vi.mock("@/lib/platform-spend/ledger", () => ({
+  LedgerUnavailableError: class LedgerUnavailableError extends Error {},
 }));
 vi.mock("@/lib/solana/academy-program", () => ({
   describeProgramError: (e: unknown) => String(e),
@@ -75,6 +79,8 @@ vi.mock("@/lib/platform-spend/events", () => ({
 vi.mock("@/lib/logging", () => ({ logError: vi.fn() }));
 
 import { SponsorUnavailableError } from "@/lib/solana/sponsor";
+import { CourseNotOnChainError } from "@/lib/solana/sponsor-enroll";
+import { LedgerUnavailableError } from "@/lib/platform-spend/ledger";
 import { POST } from "../route";
 
 const LEARNER = "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ";
@@ -199,10 +205,52 @@ describe("POST /api/enroll/sponsor", () => {
     const res = await POST(post({ courseId: "course-x" }));
 
     expect(res.status).toBe(409);
-    expect(res.headers.get("Retry-After")).toBe("90");
+    expect(res.headers.get("Retry-After")).toBe("10");
     await expect(res.json()).resolves.toMatchObject({
       code: "SPONSOR_IN_FLIGHT",
     });
+  });
+
+  it("tells an already-enrolled learner's client to fall back, without sponsoring", async () => {
+    h.buildSponsored.mockResolvedValue({
+      ok: false,
+      reason: "already_enrolled",
+    });
+    const res = await POST(post({ courseId: "course-x" }));
+
+    expect(res.status).toBe(409);
+    await expect(res.json()).resolves.toMatchObject({
+      code: "SPONSOR_ALREADY_ENROLLED",
+    });
+  });
+
+  it.each([
+    [
+      "the ledger is unavailable (migration not applied)",
+      () =>
+        new LedgerUnavailableError(
+          "read",
+          'relation "platform_spend" does not exist'
+        ),
+    ],
+    [
+      "the Course account is not on-chain",
+      () =>
+        new CourseNotOnChainError('Course account for "course-x" not found'),
+    ],
+  ])("returns a clean 503 when %s, never the raw detail", async (_, error) => {
+    h.buildSponsored.mockRejectedValue(error());
+    const res = await POST(post({ courseId: "course-x" }));
+
+    expect(res.status).toBe(503);
+    const body = await res.json();
+    expect(body).toEqual({
+      error: "Sponsored enrollment is not available right now.",
+      code: "SPONSOR_UNAVAILABLE",
+    });
+    expect(JSON.stringify(body)).not.toMatch(
+      /platform_spend|relation|course-x/
+    );
   });
 
   it("fails closed when the sponsor wallet is not configured", async () => {

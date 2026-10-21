@@ -576,6 +576,7 @@ export type Database = {
         Row: {
           action: string;
           cluster: string;
+          course_generation: number | null;
           course_id: string | null;
           created_at: string;
           fee_lamports: number | null;
@@ -583,6 +584,7 @@ export type Database = {
           last_valid_block_height: number | null;
           payer: string;
           payer_role: string;
+          program_id: string | null;
           refund_lamports: number | null;
           rent_lamports: number | null;
           settled_at: string | null;
@@ -594,12 +596,14 @@ export type Database = {
         Insert: {
           action: string;
           cluster: string;
+          course_generation?: number | null;
           course_id?: string | null;
           created_at?: string;
           fee_lamports?: number | null;
           last_valid_block_height?: number | null;
           payer: string;
           payer_role: string;
+          program_id?: string | null;
           refund_lamports?: number | null;
           rent_lamports?: number | null;
           settled_at?: string | null;
@@ -611,12 +615,14 @@ export type Database = {
         Update: {
           action?: string;
           cluster?: string;
+          course_generation?: number | null;
           course_id?: string | null;
           created_at?: string;
           fee_lamports?: number | null;
           last_valid_block_height?: number | null;
           payer?: string;
           payer_role?: string;
+          program_id?: string | null;
           refund_lamports?: number | null;
           rent_lamports?: number | null;
           settled_at?: string | null;

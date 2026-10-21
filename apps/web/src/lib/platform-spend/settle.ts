@@ -8,7 +8,7 @@ import type {
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logEvent } from "@/lib/logging";
 import { getPlatformPayerKeys, type PayerRole } from "@/lib/solana/sponsor";
-import type { SpendStatus } from "./ledger";
+import { LedgerUnavailableError, type SpendStatus } from "./ledger";
 import { emitServerEvent, spendSettledEvent, type ServerEvent } from "./events";
 
 /**
@@ -19,6 +19,8 @@ import { emitServerEvent, spendSettledEvent, type ServerEvent } from "./events";
 
 export interface SpendRow {
   signature: string;
+  /** `pending`, or `superseded` (abandoned, still followed in case it lands). */
+  status: SpendStatus;
   action: string;
   user_id: string | null;
   wallet: string | null;
@@ -114,7 +116,15 @@ export interface SettleDeps {
   platformKeys: ReadonlyMap<string, PayerRole>;
   emit: (event: ServerEvent) => Promise<void>;
   now: () => number;
+  /** Epoch ms after which no more rows are settled this pass. */
+  deadline?: number;
 }
+
+/**
+ * A row's state after a settle pass: its ledger status, or `unseen` for a
+ * pending row the cluster has no trace of yet (it may never have been sent).
+ */
+export type SettleOutcome = SpendStatus | "unseen";
 
 function isFinal(status: SignatureStatus | null): status is SignatureStatus {
   return (
@@ -128,17 +138,17 @@ function asPayerRole(role: string): PayerRole {
 }
 
 /**
- * Settle `rows` against the chain and return each signature's status after
- * this pass (`pending` when it is still in flight). A row moves out of
- * `pending` at most once: the update is guarded on `status = 'pending'`, and
- * only the caller whose update won emits `platform_spend_settled`, so two
- * concurrent settlers never double-count a transaction.
+ * Settle `rows` against the chain and return each signature's outcome after
+ * this pass. A row settles at most once: the update is guarded on the status
+ * the row was read with, and only the caller whose update won emits
+ * `platform_spend_settled`, so two concurrent settlers never double-count a
+ * transaction. Rows left when `deps.deadline` passes keep their status.
  */
 export async function settleRows(
   rows: SpendRow[],
   deps: SettleDeps
-): Promise<Map<string, SpendStatus>> {
-  const result = new Map<string, SpendStatus>();
+): Promise<Map<string, SettleOutcome>> {
+  const result = new Map<string, SettleOutcome>();
   if (rows.length === 0) return result;
 
   // Height first, then statuses from a node at or past that slot, so "not
@@ -170,8 +180,12 @@ export async function settleRows(
   const events: ServerEvent[] = [];
 
   for (const row of rows) {
+    if (deps.deadline !== undefined && deps.now() >= deps.deadline) {
+      result.set(row.signature, row.status);
+      continue;
+    }
     const status = statuses.get(row.signature) ?? null;
-    let outcome: SpendStatus = "pending";
+    let outcome: SpendStatus = row.status;
     let amounts: SpendAmounts = {
       feeLamports: 0,
       rentLamports: 0,
@@ -205,8 +219,11 @@ export async function settleRows(
       if (pastHeight || unknownTooLong) outcome = "expired";
     }
 
-    if (outcome === "pending") {
-      result.set(row.signature, "pending");
+    if (outcome === row.status) {
+      result.set(
+        row.signature,
+        row.status === "pending" && !status ? "unseen" : row.status
+      );
       continue;
     }
 
@@ -222,15 +239,17 @@ export async function settleRows(
         user_id: userId,
       })
       .eq("signature", row.signature)
-      .eq("status", "pending")
+      .eq("status", row.status)
       .select("signature");
     if (error) {
+      // Includes a superseded row that landed late while its replacement
+      // still holds the slot: retried next pass, once the replacement settles.
       logEvent({
         event: "SPEND_LEDGER_002",
         level: "error",
         context: { signature: row.signature, reason: error.message },
       });
-      result.set(row.signature, "pending");
+      result.set(row.signature, row.status);
       continue;
     }
     result.set(row.signature, outcome);
@@ -300,7 +319,7 @@ export interface SettleSummary {
 const MIN_AGE_MS = 20_000;
 const SETTLE_LIMIT = 100;
 
-/** Cron entry point: settle the oldest pending rows. */
+/** Cron entry point: settle the oldest unsettled rows. */
 export async function settlePendingSpend(
   connection: SettleConnection,
   deps: SettleDeps = defaultSettleDeps(connection)
@@ -309,13 +328,13 @@ export async function settlePendingSpend(
   const { data, error } = await deps.admin
     .from("platform_spend")
     .select(
-      "signature, action, user_id, wallet, course_id, payer, payer_role, cluster, last_valid_block_height, created_at"
+      "signature, status, action, user_id, wallet, course_id, payer, payer_role, cluster, last_valid_block_height, created_at"
     )
-    .eq("status", "pending")
+    .in("status", ["pending", "superseded"])
     .lt("created_at", cutoff)
     .order("created_at", { ascending: true })
     .limit(SETTLE_LIMIT);
-  if (error) throw new Error(`platform_spend read failed: ${error.message}`);
+  if (error) throw new LedgerUnavailableError("read", error.message);
 
   const rows = (data ?? []) as SpendRow[];
   const statuses = await settleRows(rows, deps);
@@ -326,6 +345,16 @@ export async function settlePendingSpend(
     expired: 0,
     pending: 0,
   };
-  for (const status of statuses.values()) summary[status] += 1;
+  for (const outcome of statuses.values()) {
+    if (
+      outcome === "confirmed" ||
+      outcome === "failed" ||
+      outcome === "expired"
+    ) {
+      summary[outcome] += 1;
+    } else {
+      summary.pending += 1;
+    }
+  }
   return summary;
 }

@@ -6,7 +6,11 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCourseById } from "@/lib/content/queries";
 import { describeProgramError } from "@/lib/solana/academy-program";
-import { buildSponsoredEnrollTransaction } from "@/lib/solana/sponsor-enroll";
+import {
+  buildSponsoredEnrollTransaction,
+  CourseNotOnChainError,
+} from "@/lib/solana/sponsor-enroll";
+import { LedgerUnavailableError } from "@/lib/platform-spend/ledger";
 import { SponsorUnavailableError, spendCluster } from "@/lib/solana/sponsor";
 import {
   emitServerEvent,
@@ -24,14 +28,26 @@ import { ERROR_IDS } from "@/constants/errorIds";
 const DECLINE_CODES: Record<SponsorDeclineReason, string> = {
   already_sponsored: "SPONSOR_ALREADY_USED",
   in_flight: "SPONSOR_IN_FLIGHT",
+  // The client self-pays, and its preflight reports the existing enrollment.
+  already_enrolled: "SPONSOR_ALREADY_ENROLLED",
 };
 
 const DECLINE_MESSAGES: Record<SponsorDeclineReason, string> = {
   already_sponsored:
     "This wallet's enrollment in this course was already sponsored once. Re-enrolling is paid by your wallet.",
   in_flight:
-    "A sponsored enrollment for this course is still being processed. Try again in a minute.",
+    "A sponsored enrollment for this course is still being confirmed. Try again in a few seconds.",
+  already_enrolled: "This wallet is already enrolled in this course.",
 };
+
+/** Any of these means "can't sponsor right now"; the detail is only logged. */
+function isSponsorshipUnavailable(err: unknown): err is Error {
+  return (
+    err instanceof SponsorUnavailableError ||
+    err instanceof LedgerUnavailableError ||
+    err instanceof CourseNotOnChainError
+  );
+}
 
 /**
  * Build a platform-sponsored `enroll` transaction (#1004).
@@ -173,7 +189,7 @@ export async function POST(request: NextRequest) {
         {
           status: 409,
           ...(reason === "in_flight"
-            ? { headers: { "Retry-After": "90" } }
+            ? { headers: { "Retry-After": "10" } }
             : {}),
         }
       );
@@ -185,9 +201,9 @@ export async function POST(request: NextRequest) {
       learner: learner.toBase58(),
     });
   } catch (err: unknown) {
-    if (err instanceof SponsorUnavailableError) {
-      // Fail closed: nobody pays rather than the wrong key paying. The client
-      // falls back to a self-paid enrollment.
+    if (isSponsorshipUnavailable(err)) {
+      // Fail closed: nobody pays rather than the wrong key paying, or paying
+      // without the once-per check. The client falls back to self-pay.
       logError({ errorId: ERROR_IDS.ENROLL_SPONSOR_UNAVAILABLE, error: err });
       return NextResponse.json(
         {

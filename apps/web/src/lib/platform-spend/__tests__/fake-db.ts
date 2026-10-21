@@ -1,7 +1,8 @@
 /**
  * In-memory stand-in for the slice of the Supabase query builder the spend
  * ledger uses, with the table's two unique rules: `signature`, and one live
- * (pending or confirmed) `enroll_sponsor` row per (cluster, wallet, course).
+ * (pending or confirmed) sponsorship row per (action, cluster, program,
+ * wallet, course, course generation).
  * The real constraints are exercised against Postgres in
  * `platform-spend-ledger-execution.test.ts`; this keeps the TS logic tests
  * honest about the same rules without a database.
@@ -35,19 +36,23 @@ interface QueryBuilder extends PromiseLike<{ data: unknown; error: unknown }> {
 }
 
 const LIVE = new Set(["pending", "confirmed"]);
+const SPONSORSHIP = new Set(["enroll_sponsor", "enroll_sponsor_reenroll"]);
+const SLOT_KEY = [
+  "action",
+  "cluster",
+  "program_id",
+  "wallet",
+  "course_id",
+  "course_generation",
+] as const;
 
 function violatesOncePer(rows: Row[], row: Row, except?: Row): boolean {
-  if (row.action !== "enroll_sponsor" || !LIVE.has(String(row.status))) {
-    return false;
-  }
+  const holdsSlot = (r: Row) =>
+    SPONSORSHIP.has(String(r.action)) && LIVE.has(String(r.status));
+  if (!holdsSlot(row)) return false;
   return rows.some(
     (r) =>
-      r !== except &&
-      r.action === "enroll_sponsor" &&
-      LIVE.has(String(r.status)) &&
-      r.cluster === row.cluster &&
-      r.wallet === row.wallet &&
-      r.course_id === row.course_id
+      r !== except && holdsSlot(r) && SLOT_KEY.every((k) => r[k] === row[k])
   );
 }
 

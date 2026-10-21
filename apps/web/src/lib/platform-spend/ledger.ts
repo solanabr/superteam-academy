@@ -11,6 +11,7 @@ import { spendCluster } from "@/lib/solana/sponsor";
  */
 export type SpendAction =
   | "enroll_sponsor"
+  | "enroll_sponsor_reenroll"
   | "enroll_refund"
   | "complete_lesson"
   | "finalize"
@@ -20,7 +21,38 @@ export type SpendAction =
   | "admin_course_write"
   | "admin_achievement_write";
 
-export type SpendStatus = "pending" | "confirmed" | "failed" | "expired";
+export type SpendStatus =
+  | "pending"
+  | "confirmed"
+  | "failed"
+  | "expired"
+  | "superseded";
+
+/** The two actions that hold a once-per sponsorship slot. */
+export type SponsorshipAction = "enroll_sponsor" | "enroll_sponsor_reenroll";
+
+/**
+ * What a sponsorship slot is keyed on (with the cluster). The program id and
+ * the on-chain `Course.generation` are part of it: after a recreate or a
+ * program move the learner must enroll again, and that is a new slot.
+ */
+export interface SponsorshipKey {
+  wallet: string;
+  courseId: string;
+  programId: string;
+  courseGeneration: number;
+}
+
+/**
+ * The ledger could not be read or written (e.g. the migration is not applied
+ * yet). The sponsor route turns it into a generic 503 and logs the detail.
+ */
+export class LedgerUnavailableError extends Error {
+  constructor(operation: string, detail: string) {
+    super(`platform_spend ${operation} failed: ${detail}`);
+    this.name = "LedgerUnavailableError";
+  }
+}
 
 /** Who a transaction was for, when the sender knows. */
 export interface SpendContext {
@@ -38,6 +70,9 @@ export interface PlatformTxRecord extends SpendContext {
   payerRole: PayerRole;
   /** Lets settlement call an unlanded transaction expired. */
   lastValidBlockHeight?: number | null;
+  /** Sponsorship rows only: the rest of the once-per key. */
+  programId?: string | null;
+  courseGeneration?: number | null;
 }
 
 /** A ledger write must never hold up the transaction it describes. */
@@ -50,6 +85,8 @@ function toRow(record: PlatformTxRecord) {
     user_id: record.userId ?? null,
     wallet: record.wallet ?? null,
     course_id: record.courseId ?? null,
+    program_id: record.programId ?? null,
+    course_generation: record.courseGeneration ?? null,
     payer: record.payer,
     payer_role: record.payerRole,
     cluster: spendCluster(),
@@ -117,27 +154,29 @@ export interface LiveSponsoredEnroll {
 }
 
 /**
- * The sponsored enrollment holding the once-per slot for this wallet and
- * course, if any. Throws on a DB error: the caller must fail closed rather
- * than sponsor without the check.
+ * The sponsorship holding the once-per slot for this action and key, if any.
+ * Throws {@link LedgerUnavailableError} on a DB error: the caller must fail
+ * closed rather than sponsor without the check.
  */
 export async function findLiveSponsoredEnroll(
-  wallet: string,
-  courseId: string
+  action: SponsorshipAction,
+  key: SponsorshipKey
 ): Promise<LiveSponsoredEnroll | null> {
   const { data, error } = await createAdminClient()
     .from("platform_spend")
     .select(
       "signature, status, last_valid_block_height, created_at, payer, payer_role, action, user_id, wallet, course_id, cluster"
     )
-    .eq("action", "enroll_sponsor")
+    .eq("action", action)
     .eq("cluster", spendCluster())
-    .eq("wallet", wallet)
-    .eq("course_id", courseId)
+    .eq("program_id", key.programId)
+    .eq("wallet", key.wallet)
+    .eq("course_id", key.courseId)
+    .eq("course_generation", key.courseGeneration)
     .in("status", ["pending", "confirmed"])
     .limit(1)
     .maybeSingle();
-  if (error) throw new Error(`platform_spend read failed: ${error.message}`);
+  if (error) throw new LedgerUnavailableError("read", error.message);
   return data as LiveSponsoredEnroll | null;
 }
 
@@ -145,20 +184,40 @@ export async function findLiveSponsoredEnroll(
 const UNIQUE_VIOLATION = "23505";
 
 /**
- * Reserve the once-per slot by inserting the pending `enroll_sponsor` row.
- * `conflict` means a live sponsorship for this wallet and course already
- * exists (the partial unique index refused the insert). Any other DB error
- * throws, so the route refuses to sponsor rather than skip the rule.
+ * Reserve the once-per slot by inserting the pending sponsorship row.
+ * `conflict` means a live sponsorship for this action and key already exists
+ * (the partial unique index refused the insert). Any other DB error throws
+ * {@link LedgerUnavailableError}, so the route refuses to sponsor rather than
+ * skip the rule.
  */
 export async function reserveSponsoredEnroll(
-  record: PlatformTxRecord
+  record: PlatformTxRecord & SponsorshipKey & { action: SponsorshipAction }
 ): Promise<"reserved" | "conflict"> {
   const { error } = await createAdminClient()
     .from("platform_spend")
-    .insert(toRow({ ...record, action: "enroll_sponsor" }));
+    .insert(toRow(record));
   if (!error) return "reserved";
   if (error.code === UNIQUE_VIOLATION) return "conflict";
-  throw new Error(`platform_spend reserve failed: ${error.message}`);
+  throw new LedgerUnavailableError("reserve", error.message);
+}
+
+/**
+ * Release the slot held by a pending sponsorship the learner abandoned.
+ * Guarded on `pending`, so a row that settled in the meantime is left alone
+ * and this returns `false`. Settlement keeps following a superseded row, so a
+ * late landing is still recorded.
+ */
+export async function supersedeSponsoredEnroll(
+  signature: string
+): Promise<boolean> {
+  const { data, error } = await createAdminClient()
+    .from("platform_spend")
+    .update({ status: "superseded" })
+    .eq("signature", signature)
+    .eq("status", "pending")
+    .select("signature");
+  if (error) throw new LedgerUnavailableError("supersede", error.message);
+  return (data ?? []).length === 1;
 }
 
 /**
@@ -171,17 +230,20 @@ export async function recordSponsoredEnrollRefund(input: {
   signature: string;
   wallet: string;
   courseId: string;
+  programId: string;
   userId: string | null;
 }): Promise<void> {
   try {
     const { data, error } = await createAdminClient()
       .from("platform_spend")
       .select("payer, payer_role")
-      .eq("action", "enroll_sponsor")
+      .in("action", ["enroll_sponsor", "enroll_sponsor_reenroll"])
       .eq("status", "confirmed")
       .eq("cluster", spendCluster())
+      .eq("program_id", input.programId)
       .eq("wallet", input.wallet)
       .eq("course_id", input.courseId)
+      .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -192,6 +254,7 @@ export async function recordSponsoredEnrollRefund(input: {
       userId: input.userId,
       wallet: input.wallet,
       courseId: input.courseId,
+      programId: input.programId,
       payer: data.payer,
       payerRole: data.payer_role === "sponsor" ? "sponsor" : "backend",
     });

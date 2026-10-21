@@ -144,6 +144,7 @@ function seed(
   overrides: Partial<SpendRow> & { signature: string }
 ): SpendRow {
   const row: SpendRow = {
+    status: "pending",
     action: "complete_lesson",
     user_id: null,
     wallet: learner.toBase58(),
@@ -155,7 +156,7 @@ function seed(
     created_at: new Date(NOW - 60_000).toISOString(),
     ...overrides,
   };
-  db.tables.platform_spend!.push({ ...row, status: "pending" } as Row);
+  db.tables.platform_spend!.push({ ...row } as Row);
   return row;
 }
 
@@ -272,7 +273,7 @@ describe("settleRows", () => {
 
     const result = await settleRows([row], makeDeps(db, chain, events));
 
-    expect(result.get("SIG1")).toBe("pending");
+    expect(result.get("SIG1")).toBe("unseen");
     expect(db.tables.platform_spend![0]!.status).toBe("pending");
   });
 
@@ -286,9 +287,79 @@ describe("settleRows", () => {
       makeDeps(db, chain, events)
     );
 
-    expect(result.get("SIG1")).toBe("pending");
+    // Unseen: the cluster has no trace of it (it may never have been sent).
+    expect(result.get("SIG1")).toBe("unseen");
+    // Seen but not final yet.
     expect(result.get("SIG2")).toBe("pending");
     expect(events).toHaveLength(0);
+  });
+
+  it("still records a superseded sponsorship that lands late", async () => {
+    const row = seed(db, {
+      signature: "OLD",
+      status: "superseded",
+      action: "enroll_sponsor",
+    });
+    chain.statuses.OLD = { confirmationStatus: "confirmed", err: null };
+    chain.txs.OLD = fakeTx(
+      [sponsor],
+      [10_000_000],
+      [10_000_000 - 5_000 - 1_500_000]
+    );
+
+    const result = await settleRows([row], makeDeps(db, chain, events));
+
+    expect(result.get("OLD")).toBe("confirmed");
+    expect(db.tables.platform_spend![0]).toMatchObject({
+      status: "confirmed",
+      rent_lamports: 1_500_000,
+    });
+    expect(events).toHaveLength(1);
+  });
+
+  it("retries a late landing later while its replacement still holds the slot", async () => {
+    const old = seed(db, {
+      signature: "OLD",
+      status: "superseded",
+      action: "enroll_sponsor",
+      program_id: "P",
+      course_generation: 1,
+    } as Partial<SpendRow> & { signature: string });
+    seed(db, {
+      signature: "NEW",
+      action: "enroll_sponsor",
+      program_id: "P",
+      course_generation: 1,
+    } as Partial<SpendRow> & { signature: string });
+    chain.statuses.OLD = { confirmationStatus: "confirmed", err: null };
+    chain.txs.OLD = fakeTx([sponsor], [10_000], [5_000]);
+
+    const result = await settleRows([old], makeDeps(db, chain, events));
+
+    expect(result.get("OLD")).toBe("superseded");
+    expect(db.tables.platform_spend![0]!.status).toBe("superseded");
+    expect(events).toHaveLength(0);
+  });
+
+  it("stops taking rows once its deadline passes", async () => {
+    const first = seed(db, {
+      signature: "SIG1",
+      last_valid_block_height: 1_500,
+    });
+    const second = seed(db, {
+      signature: "SIG2",
+      last_valid_block_height: 1_500,
+    });
+    // Both rows are expirable, but the budget is already spent.
+    const deps = { ...makeDeps(db, chain, events), deadline: NOW - 1 };
+
+    const result = await settleRows([first, second], deps);
+
+    expect(result.get("SIG1")).toBe("pending");
+    expect(result.get("SIG2")).toBe("pending");
+    expect(db.tables.platform_spend!.every((r) => r.status === "pending")).toBe(
+      true
+    );
   });
 
   it("attributes a learner-less row to the platform", async () => {

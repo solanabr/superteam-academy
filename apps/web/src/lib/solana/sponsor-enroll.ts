@@ -6,16 +6,26 @@ import bs58 from "bs58";
 import {
   findLiveSponsoredEnroll,
   reserveSponsoredEnroll,
-  type SpendStatus,
+  supersedeSponsoredEnroll,
+  type SponsorshipAction,
+  type SponsorshipKey,
 } from "@/lib/platform-spend/ledger";
-import { defaultSettleDeps, settleRows } from "@/lib/platform-spend/settle";
+import {
+  defaultSettleDeps,
+  settleRows,
+  type SettleOutcome,
+} from "@/lib/platform-spend/settle";
 import {
   emitServerEvent,
   type SponsorDeclineReason,
 } from "@/lib/platform-spend/events";
 import { getConnection, getPlatformFeePayer } from "./academy-program";
+import {
+  courseGeneration,
+  enrollmentCourseGeneration,
+} from "./course-generation";
 import { buildEnrollInstruction } from "./instructions";
-import { getProgramId } from "./pda";
+import { findCoursePDA, findEnrollmentPDA, getProgramId } from "./pda";
 
 /**
  * Sponsored `enroll` (#1004).
@@ -48,10 +58,16 @@ import { getProgramId } from "./pda";
  *
  * The sponsor wallet (`SPONSOR_SECRET`) is the `payer` and the fee payer; see
  * resolveFeePayer for the devnet fallback and the mainnet fail-closed rule.
- * A wallet is sponsored at most once per course, ever. The pending ledger row
- * written here is the reservation: a partial unique index holds one live
- * (pending or confirmed) `enroll_sponsor` row per wallet and course, so a
- * learner who closes and re-enrolls pays for the second enrollment.
+ *
+ * A wallet is sponsored at most once per course generation of a program. The
+ * pending ledger row written here is the reservation: a partial unique index
+ * holds one live (pending or confirmed) row per program, wallet, course and
+ * `Course.generation`, so a learner who closes and re-enrolls pays for the
+ * second enrollment, while a recreated course or a program move is a new slot.
+ * Re-initialising an enrollment left from a superseded generation charges no
+ * rent, so it is sponsored as `enroll_sponsor_reenroll` without using up the
+ * generation's slot. A learner already enrolled in the current generation is
+ * not sponsored: that `enroll` can only fail.
  */
 export interface SponsoredEnrollTransaction {
   /** Base64 transaction, sponsor-signed, still missing the learner signature. */
@@ -66,19 +82,31 @@ export type SponsoredEnrollResult =
   | { ok: true; transaction: SponsoredEnrollTransaction }
   | { ok: false; reason: SponsorDeclineReason };
 
+/** The Course account is missing, so there is no generation to key on. */
+export class CourseNotOnChainError extends Error {
+  constructor(courseId: string) {
+    super(`Course account for "${courseId}" not found on-chain`);
+    this.name = "CourseNotOnChainError";
+  }
+}
+
 /**
- * Where the once-per slot for this wallet and course stands. A pending row is
- * settled first: it may have landed (the slot is used), failed or expired (the
- * slot is free again), or still be in flight.
+ * Where the once-per slot stands. A pending row is settled first: it may have
+ * landed (the slot is used), failed or expired (free again), or still be in
+ * flight. A pending row the cluster has never seen was abandoned (a cancelled
+ * or failed signature): it is superseded so the learner can try again at
+ * once. If it lands after all, the replacement fails for a fee, and
+ * settlement still records the late landing against the slot.
  */
-async function priorSponsorship(
-  wallet: string,
-  courseId: string
-): Promise<SpendStatus | null> {
-  const prior = await findLiveSponsoredEnroll(wallet, courseId);
-  if (!prior) return null;
-  if (prior.status !== "pending") return prior.status;
-  const settled = await settleRows([prior], {
+async function slotState(
+  action: SponsorshipAction,
+  key: SponsorshipKey
+): Promise<"free" | "used" | "in_flight"> {
+  const prior = await findLiveSponsoredEnroll(action, key);
+  if (!prior) return "free";
+  if (prior.status === "confirmed") return "used";
+
+  const settled = await settleRows([{ ...prior, status: "pending" }], {
     ...defaultSettleDeps(getConnection()),
     // The settled event goes out after the response, not on the learner's
     // request path.
@@ -86,7 +114,14 @@ async function priorSponsorship(
       after(() => emitServerEvent(event));
     },
   });
-  return settled.get(prior.signature) ?? "pending";
+  const outcome: SettleOutcome = settled.get(prior.signature) ?? "pending";
+  if (outcome === "confirmed") return "used";
+  if (outcome === "unseen") {
+    return (await supersedeSponsoredEnroll(prior.signature))
+      ? "free"
+      : "in_flight";
+  }
+  return outcome === "pending" ? "in_flight" : "free";
 }
 
 export async function buildSponsoredEnrollTransaction(
@@ -97,16 +132,42 @@ export async function buildSponsoredEnrollTransaction(
   const connection = getConnection();
   // Throws SponsorUnavailableError on mainnet without SPONSOR_SECRET.
   const sponsor = await getPlatformFeePayer();
+  const programId = getProgramId();
   const wallet = learner.toBase58();
 
-  const prior = await priorSponsorship(wallet, courseId);
-  if (prior === "confirmed") return { ok: false, reason: "already_sponsored" };
-  if (prior === "pending") return { ok: false, reason: "in_flight" };
+  // One round trip for both: the Course's generation keys the slot, and an
+  // existing Enrollment decides between a fresh enroll and a re-enroll.
+  const [coursePda] = findCoursePDA(courseId, programId);
+  const [enrollmentPda] = findEnrollmentPDA(courseId, learner, programId);
+  const [courseInfo, enrollmentInfo] = await connection.getMultipleAccountsInfo(
+    [coursePda, enrollmentPda]
+  );
+  if (!courseInfo) throw new CourseNotOnChainError(courseId);
+  const generation = courseGeneration(courseInfo.data);
+
+  let action: SponsorshipAction = "enroll_sponsor";
+  if (enrollmentInfo?.owner.equals(programId)) {
+    if (enrollmentCourseGeneration(enrollmentInfo.data) === generation) {
+      return { ok: false, reason: "already_enrolled" };
+    }
+    // Left from a superseded generation: re-initialised in place, no rent.
+    action = "enroll_sponsor_reenroll";
+  }
+
+  const key: SponsorshipKey = {
+    wallet,
+    courseId,
+    programId: programId.toBase58(),
+    courseGeneration: generation,
+  };
+  const slot = await slotState(action, key);
+  if (slot === "used") return { ok: false, reason: "already_sponsored" };
+  if (slot === "in_flight") return { ok: false, reason: "in_flight" };
 
   const instruction = buildEnrollInstruction(
     courseId,
     learner,
-    getProgramId(),
+    programId,
     sponsor.keypair.publicKey
   );
 
@@ -127,11 +188,10 @@ export async function buildSponsoredEnrollTransaction(
   // Reserve before handing anything out. A concurrent request that reserved
   // first wins; this one is declined rather than sponsored twice.
   const reserved = await reserveSponsoredEnroll({
+    ...key,
     signature,
-    action: "enroll_sponsor",
+    action,
     userId,
-    wallet,
-    courseId,
     payer: sponsor.keypair.publicKey.toBase58(),
     payerRole: sponsor.role,
     lastValidBlockHeight,
