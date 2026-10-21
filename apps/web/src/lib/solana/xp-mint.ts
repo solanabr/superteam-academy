@@ -13,16 +13,18 @@ import "server-only";
  * This module must ONLY be imported from API routes (server-side).
  */
 
-import { Connection, Keypair, PublicKey } from "@solana/web3.js";
+import { Connection, Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import {
   burn,
+  createAssociatedTokenAccountIdempotentInstruction,
+  createMintToInstruction,
   getAccount,
   getAssociatedTokenAddressSync,
-  getOrCreateAssociatedTokenAccount,
-  mintTo,
   TOKEN_2022_PROGRAM_ID,
 } from "@solana/spl-token";
 import { serverEnv } from "@/lib/env.server";
+import { resolveFeePayer } from "./sponsor";
+import { sendPlatformTransaction } from "./platform-tx";
 
 // ---------------------------------------------------------------------------
 // Lazy-loaded singletons (initialized on first call)
@@ -83,9 +85,10 @@ export interface XpTxResult {
 /**
  * Mint Token-2022 XP tokens to a user's wallet.
  *
- * Creates the user's Associated Token Account if it doesn't exist,
- * then mints `amount` XP tokens. The authority pays for ATA creation
- * (~0.002 SOL rent on devnet).
+ * Creates the user's Associated Token Account if it doesn't exist and mints
+ * `amount` XP tokens, in one transaction. The sponsor wallet pays the fee and
+ * the token account rent (the mint authority on devnet without
+ * `SPONSOR_SECRET`); the mint authority only signs the mint.
  *
  * This function is non-blocking for the lesson completion flow —
  * callers should fire-and-forget or await but not fail the request
@@ -100,33 +103,43 @@ export async function mintXpToWallet(
     return { success: false, error: "On-chain XP minting not configured" };
   }
 
+  const authority = _authority;
   try {
     const recipient = new PublicKey(walletAddress);
+    const feePayer = await resolveFeePayer(_connection, () => ({
+      keypair: authority,
+      role: "authority",
+    }));
 
-    // Create ATA if needed (Token-2022 program, authority pays rent)
-    const ata = await getOrCreateAssociatedTokenAccount(
-      _connection,
-      _authority,
+    const ata = getAssociatedTokenAddressSync(
       _xpMint,
       recipient,
       false,
-      "confirmed",
-      undefined,
       TOKEN_2022_PROGRAM_ID
+    );
+    const tx = new Transaction().add(
+      createAssociatedTokenAccountIdempotentInstruction(
+        feePayer.keypair.publicKey,
+        ata,
+        recipient,
+        _xpMint,
+        TOKEN_2022_PROGRAM_ID
+      ),
+      createMintToInstruction(
+        _xpMint,
+        ata,
+        authority.publicKey,
+        amount,
+        [],
+        TOKEN_2022_PROGRAM_ID
+      )
     );
 
-    // Mint XP tokens
-    const signature = await mintTo(
-      _connection,
-      _authority,
-      _xpMint,
-      ata.address,
-      _authority.publicKey,
-      amount,
-      [],
-      undefined,
-      TOKEN_2022_PROGRAM_ID
-    );
+    const signature = await sendPlatformTransaction(_connection, tx, {
+      feePayer,
+      signers: [authority],
+      context: { action: "xp_mint", wallet: walletAddress },
+    });
 
     return { success: true, signature, amount };
   } catch (err: unknown) {

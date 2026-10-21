@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import type { CodeBlockData } from "@superteam-lms/types";
+import { isLearnerDeployEnabled } from "@/lib/deploy/learner-deploy";
 import { ChallengeSkeleton } from "./block-skeleton";
 import type { BlockRenderProps } from "./types";
 
@@ -50,7 +51,9 @@ export function CodeBlock({ block, ctx }: BlockRenderProps) {
           initialCode={b.starter}
           language={b.language === "rust" ? "rust" : "typescript"}
           buildType={b.buildType ?? undefined}
-          isDeployable={b.deployable ?? undefined}
+          // A deployable block holds its Submit until the deploy lands. With
+          // the deploy off, it submits like any other build.
+          isDeployable={(b.deployable ?? undefined) && isLearnerDeployEnabled()}
           tests={b.tests}
           hints={b.hints ?? []}
           solution={b.solution}

@@ -36,6 +36,13 @@ interface FakeRow {
   resolved_at: string | null;
 }
 
+// Credentials write their metadata URI into the NFT, and pinned-uri refuses
+// the test env's localhost origin against its devnet RPC. Set a public origin
+// before lib/env parses it.
+vi.hoisted(() => {
+  process.env.NEXT_PUBLIC_APP_URL = "https://academy.test";
+});
+
 const h = vi.hoisted(() => ({
   rows: [] as Record<string, unknown>[],
   /** wallet_address per user id; a missing entry means no linked wallet. */

@@ -1003,6 +1003,14 @@
       "remaining": "~{seconds}s restantes",
       "details": "Detalhes das transações",
       "waiting": "Aguardando o serviço da carteira — tentando de novo automaticamente"
+    },
+    "paused": {
+      "fundingTitle": "O financiamento da carteira está pausado",
+      "fundingBody": "Você não precisa de SOL nesta lição por enquanto. O deploy direto pela lição volta em breve.",
+      "deployTitle": "O deploy pela lição volta em breve",
+      "deployBody": "Você ainda pode concluir esta lição com os outros passos desta página.",
+      "explorerTitle": "O envio de transações pela lição volta em breve",
+      "explorerBody": "Você ainda pode concluir esta lição com os outros passos desta página."
     }
   },
   "programErrors": {
@@ -1788,6 +1796,9 @@
     "mismatchBody": "Você está conectado com uma carteira diferente da vinculada à sua conta ({linked}). Troque para ela na sua carteira para continuar — o vínculo é permanente, então esta não pode substituí-la.",
     "enrollMismatch": "A inscrição é registrada na carteira vinculada à sua conta ({linked}). Troque para ela na sua carteira e tente de novo.",
     "enrollNoLinkedWallet": "Sua conta ainda não tem carteira vinculada, então uma inscrição feita agora não poderia ser creditada a você. Vincule uma carteira em Configurações primeiro.",
+    "enrollSponsorAlreadyUsed": "Sua inscrição neste curso já foi patrocinada uma vez, então a reinscrição é paga pela sua carteira. Adicione um pouco de SOL à carteira para continuar.",
+    "enrollSponsorSelfPay": "Esta reinscrição não é patrocinada: sua carteira paga a taxa da rede e o depósito.",
+    "enrollSponsorInFlight": "Sua inscrição anterior ainda está sendo confirmada. Tente de novo em alguns segundos.",
     "reauthTitle": "Sua sessão expirou",
     "reauthBody": "Sua carteira continua sendo sua — entre de novo com a conta que você usou e ela volta na hora.",
     "reauthActionGoogle": "Entrar com Google",

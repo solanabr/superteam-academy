@@ -2,8 +2,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Hoisted spies so the module mocks can reference them.
 const h = vi.hoisted(() => ({
-  mintTo: vi.fn(),
-  getOrCreateAssociatedTokenAccount: vi.fn(),
+  createAta: vi.fn((..._args: unknown[]) => ({ ix: "create-ata" })),
+  createMintTo: vi.fn((..._args: unknown[]) => ({ ix: "mint-to" })),
+  sendPlatformTransaction: vi.fn(),
+  resolveFeePayer: vi.fn(),
   getAccount: vi.fn(),
   getAssociatedTokenAddressSync: vi.fn(() => ({ toBase58: () => "ATA" })),
   burn: vi.fn(),
@@ -30,6 +32,13 @@ vi.mock("@solana/web3.js", () => ({
   Keypair: {
     fromSecretKey: vi.fn(() => ({ publicKey: { toBase58: () => "AUTH" } })),
   },
+  Transaction: class {
+    instructions: unknown[] = [];
+    add(...ixs: unknown[]) {
+      this.instructions.push(...ixs);
+      return this;
+    }
+  },
   PublicKey: class {
     constructor(public value: string) {}
     toBase58() {
@@ -39,12 +48,22 @@ vi.mock("@solana/web3.js", () => ({
 }));
 vi.mock("@solana/spl-token", () => ({
   TOKEN_2022_PROGRAM_ID: "TOKEN2022",
-  mintTo: h.mintTo,
-  getOrCreateAssociatedTokenAccount: h.getOrCreateAssociatedTokenAccount,
+  createAssociatedTokenAccountIdempotentInstruction: h.createAta,
+  createMintToInstruction: h.createMintTo,
   getAccount: h.getAccount,
   getAssociatedTokenAddressSync: h.getAssociatedTokenAddressSync,
   burn: h.burn,
 }));
+
+vi.mock("../sponsor", () => ({ resolveFeePayer: h.resolveFeePayer }));
+vi.mock("../platform-tx", () => ({
+  sendPlatformTransaction: h.sendPlatformTransaction,
+}));
+
+const SPONSOR = {
+  keypair: { publicKey: { toBase58: () => "SPONSOR" } },
+  role: "sponsor",
+};
 
 // 64-byte fake secret key (valid JSON array — Keypair.fromSecretKey is mocked).
 const VALID_SECRET = JSON.stringify(
@@ -63,6 +82,7 @@ async function loadXpMint(env: Record<string, string | undefined>) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  h.resolveFeePayer.mockResolvedValue(SPONSOR);
 });
 
 describe("mintXpToWallet", () => {
@@ -74,8 +94,7 @@ describe("mintXpToWallet", () => {
     const res = await mintXpToWallet("WALLET", 50);
     expect(res.success).toBe(false);
     expect(res.error).toMatch(/not configured/i);
-    expect(h.getOrCreateAssociatedTokenAccount).not.toHaveBeenCalled();
-    expect(h.mintTo).not.toHaveBeenCalled();
+    expect(h.sendPlatformTransaction).not.toHaveBeenCalled();
   });
 
   it("reports not-configured when the mint address is missing", async () => {
@@ -92,14 +111,11 @@ describe("mintXpToWallet", () => {
       XP_MINT_AUTHORITY_SECRET: "not-json",
     });
     expect((await mintXpToWallet("WALLET", 5)).success).toBe(false);
-    expect(h.mintTo).not.toHaveBeenCalled();
+    expect(h.sendPlatformTransaction).not.toHaveBeenCalled();
   });
 
-  it("mints via Token-2022 and returns the signature + amount", async () => {
-    h.getOrCreateAssociatedTokenAccount.mockResolvedValue({
-      address: { toBase58: () => "ATA" },
-    });
-    h.mintTo.mockResolvedValue("mint-sig");
+  it("mints via Token-2022 in one sponsor-paid tx and returns the signature + amount", async () => {
+    h.sendPlatformTransaction.mockResolvedValue("mint-sig");
 
     const { mintXpToWallet } = await loadXpMint({
       NEXT_PUBLIC_XP_MINT_ADDRESS: "MINT",
@@ -108,14 +124,22 @@ describe("mintXpToWallet", () => {
     const res = await mintXpToWallet("WALLET", 50);
 
     expect(res).toEqual({ success: true, signature: "mint-sig", amount: 50 });
-    const mintArgs = h.mintTo.mock.calls[0];
+    const mintArgs = h.createMintTo.mock.calls[0];
     expect(mintArgs).toContain(50); // amount
     expect(mintArgs).toContain("TOKEN2022"); // Token-2022 program id
+    // The sponsor funds the token account, not the mint authority.
+    expect(h.createAta.mock.calls[0]?.[0]).toBe(SPONSOR.keypair.publicKey);
+    const [, , options] = h.sendPlatformTransaction.mock.calls[0] as [
+      unknown,
+      unknown,
+      { feePayer: unknown; context: unknown },
+    ];
+    expect(options.feePayer).toBe(SPONSOR);
+    expect(options.context).toEqual({ action: "xp_mint", wallet: "WALLET" });
   });
 
-  it("returns the error message when mintTo throws", async () => {
-    h.getOrCreateAssociatedTokenAccount.mockResolvedValue({ address: {} });
-    h.mintTo.mockRejectedValue(new Error("rpc down"));
+  it("returns the error message when the send throws", async () => {
+    h.sendPlatformTransaction.mockRejectedValue(new Error("rpc down"));
 
     const { mintXpToWallet } = await loadXpMint({
       NEXT_PUBLIC_XP_MINT_ADDRESS: "MINT",

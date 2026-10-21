@@ -9,7 +9,7 @@ import {
   Transaction,
   TransactionInstruction,
 } from "@solana/web3.js";
-import { AnchorError, BN } from "@coral-xyz/anchor";
+import { AnchorError, BN, parseIdlErrors } from "@coral-xyz/anchor";
 import bs58 from "bs58";
 import {
   getAssociatedTokenAddressSync,
@@ -21,6 +21,10 @@ import type { Idl } from "@coral-xyz/anchor";
 import { AnchorProvider, Program } from "@coral-xyz/anchor";
 import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
 import { serverEnv } from "@/lib/env.server";
+import {
+  recordPlatformTx,
+  type SpendContext,
+} from "@/lib/platform-spend/ledger";
 import IDL from "./idl/superteam_academy_vnext.json";
 import {
   findConfigPDA,
@@ -33,6 +37,14 @@ import {
 } from "./pda";
 import { extractCustomErrorCode, resolveIdlError } from "./parse-program-error";
 import { fetchCourse } from "./academy-reads";
+import {
+  resolveFeePayer,
+  SponsorUnavailableError,
+  SPONSOR_UNAVAILABLE_MESSAGE,
+  type FeePayer,
+  type PayerRole,
+} from "./sponsor";
+import { sendPlatformTransaction } from "./platform-tx";
 
 export { getProgramId } from "./pda";
 
@@ -130,6 +142,41 @@ export function getProgram(): Program {
   return _serverProgram;
 }
 
+let _idlErrors: Map<number, string> | null = null;
+
+function idlErrors(): Map<number, string> {
+  _idlErrors ??= parseIdlErrors(IDL as unknown as Idl);
+  return _idlErrors;
+}
+
+/**
+ * Who pays for a backend-signed transaction: the sponsor wallet, or on devnet
+ * without `SPONSOR_SECRET`, the backend signer (see resolveFeePayer). Account
+ * rent the program charges to `backend_signer` or `payer` is unaffected; this
+ * picks the fee payer and the payer of the XP token accounts we create.
+ */
+export function getPlatformFeePayer(): Promise<FeePayer> {
+  return resolveFeePayer(getConnection(), () => ({
+    keypair: getBackendSigner(),
+    role: "backend",
+  }));
+}
+
+/** Send a backend-signed academy transaction through the spend ledger. */
+function sendAcademyTx(
+  tx: Transaction,
+  feePayer: FeePayer,
+  signers: Keypair[],
+  context: SpendContext
+): Promise<string> {
+  return sendPlatformTransaction(getConnection(), tx, {
+    feePayer,
+    signers,
+    context,
+    idlErrors: idlErrors(),
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Deployment check — cached permanently after first true
 // ---------------------------------------------------------------------------
@@ -169,6 +216,7 @@ export async function completeLesson(
 ): Promise<string> {
   const program = getProgram();
   const signer = getBackendSigner();
+  const feePayer = await getPlatformFeePayer();
   const [configPDA] = findConfigPDA(program.programId);
   const [coursePDA] = findCoursePDA(courseId, program.programId);
   const [enrollmentPDA] = findEnrollmentPDA(
@@ -196,7 +244,7 @@ export async function completeLesson(
   // so the ATA must be initialized. The idempotent variant is a no-op if it
   // already exists, making this safe to include unconditionally.
   const createAtaIx = createAssociatedTokenAccountIdempotentInstruction(
-    signer.publicKey,
+    feePayer.keypair.publicKey,
     learnerTokenAccount,
     learner,
     xpMint,
@@ -204,7 +252,7 @@ export async function completeLesson(
     ASSOCIATED_TOKEN_PROGRAM_ID
   );
 
-  const sig = await methods
+  const tx = await methods
     .completeLesson(lessonIndex)
     .preInstructions([createAtaIx])
     .accountsPartial({
@@ -217,9 +265,13 @@ export async function completeLesson(
       backendSigner: signer.publicKey,
       tokenProgram: TOKEN_2022_PROGRAM_ID,
     })
-    .rpc();
+    .transaction();
 
-  return sig;
+  return sendAcademyTx(tx, feePayer, [signer], {
+    action: "complete_lesson",
+    wallet: learner.toBase58(),
+    courseId,
+  });
 }
 
 export async function finalizeCourse(
@@ -228,6 +280,7 @@ export async function finalizeCourse(
 ): Promise<string> {
   const program = getProgram();
   const signer = getBackendSigner();
+  const feePayer = await getPlatformFeePayer();
   const [configPDA] = findConfigPDA(program.programId);
   const [coursePDA] = findCoursePDA(courseId, program.programId);
   const [enrollmentPDA] = findEnrollmentPDA(
@@ -277,7 +330,7 @@ export async function finalizeCourse(
 
   // Ensure both token accounts exist before finalization (same owner constraint as completeLesson).
   const createLearnerAtaIx = createAssociatedTokenAccountIdempotentInstruction(
-    signer.publicKey,
+    feePayer.keypair.publicKey,
     learnerTokenAccount,
     learner,
     xpMint,
@@ -285,7 +338,7 @@ export async function finalizeCourse(
     ASSOCIATED_TOKEN_PROGRAM_ID
   );
   const createCreatorAtaIx = createAssociatedTokenAccountIdempotentInstruction(
-    signer.publicKey,
+    feePayer.keypair.publicKey,
     creatorTokenAccount,
     creator,
     xpMint,
@@ -293,7 +346,7 @@ export async function finalizeCourse(
     ASSOCIATED_TOKEN_PROGRAM_ID
   );
 
-  const sig = await methods
+  const tx = await methods
     .finalizeCourse()
     .preInstructions([createLearnerAtaIx, createCreatorAtaIx])
     .accountsPartial({
@@ -308,9 +361,13 @@ export async function finalizeCourse(
       backendSigner: signer.publicKey,
       tokenProgram: TOKEN_2022_PROGRAM_ID,
     })
-    .rpc();
+    .transaction();
 
-  return sig;
+  return sendAcademyTx(tx, feePayer, [signer], {
+    action: "finalize",
+    wallet: learner.toBase58(),
+    courseId,
+  });
 }
 
 export async function issueCredential(
@@ -333,10 +390,13 @@ export async function issueCredential(
   );
 
   const credentialAsset = Keypair.generate();
+  const feePayer = await getPlatformFeePayer();
 
   const methods = program.methods as unknown as AcademyMethods;
 
-  const sig = await methods
+  // `payer` funds the credential asset: rent the program charges to the
+  // backend signer, so it stays there. The sponsor pays the fee.
+  const tx = await methods
     .issueCredential(
       credentialName,
       metadataUri,
@@ -355,8 +415,13 @@ export async function issueCredential(
       mplCoreProgram: MPL_CORE_PROGRAM_ID,
       systemProgram: SystemProgram.programId,
     })
-    .signers([credentialAsset])
-    .rpc();
+    .transaction();
+
+  const sig = await sendAcademyTx(tx, feePayer, [signer, credentialAsset], {
+    action: "credential",
+    wallet: learner.toBase58(),
+    courseId,
+  });
 
   return { signature: sig, mintAddress: credentialAsset.publicKey };
 }
@@ -376,6 +441,10 @@ export function describeProgramError(err: unknown): string {
     return `${errorCode.code} (${errorCode.number}): ${errorMessage}`;
   }
 
+  if (err instanceof SponsorUnavailableError) {
+    return SPONSOR_UNAVAILABLE_MESSAGE;
+  }
+
   const message = err instanceof Error ? err.message : String(err);
   const logs = (err as { logs?: unknown })?.logs;
   const logLines = Array.isArray(logs) ? (logs as string[]) : [];
@@ -391,7 +460,7 @@ export function describeProgramError(err: unknown): string {
   if (
     /insufficient lamports|insufficient funds|Attempt to debit/i.test(haystack)
   ) {
-    return "Backend signer wallet has insufficient SOL to pay for the mint";
+    return "The paying wallet (sponsor or backend signer) has insufficient SOL";
   }
   if (/BACKEND_SIGNER_SECRET/.test(message)) {
     return "BACKEND_SIGNER_SECRET is not configured on the server";
@@ -408,6 +477,7 @@ export async function awardAchievement(
 ): Promise<{ signature: string; assetAddress: PublicKey }> {
   const program = getProgram();
   const signer = getBackendSigner();
+  const feePayer = await getPlatformFeePayer();
   const [configPDA] = findConfigPDA(program.programId);
   const [achievementTypePDA] = findAchievementTypePDA(
     achievementId,
@@ -445,7 +515,7 @@ export async function awardAchievement(
 
   const createRecipientAtaIx =
     createAssociatedTokenAccountIdempotentInstruction(
-      signer.publicKey,
+      feePayer.keypair.publicKey,
       recipientTokenAccount,
       recipient,
       xpMint,
@@ -453,7 +523,9 @@ export async function awardAchievement(
       ASSOCIATED_TOKEN_PROGRAM_ID
     );
 
-  const sig = await methods
+  // `payer` funds the receipt and the asset: program-charged rent, so it stays
+  // on the backend signer. The sponsor pays the fee and the token account.
+  const tx = await methods
     .awardAchievement()
     .preInstructions([createRecipientAtaIx])
     .accountsPartial({
@@ -473,8 +545,12 @@ export async function awardAchievement(
       tokenProgram: TOKEN_2022_PROGRAM_ID,
       systemProgram: SystemProgram.programId,
     })
-    .signers([assetKeypair])
-    .rpc();
+    .transaction();
+
+  const sig = await sendAcademyTx(tx, feePayer, [signer, assetKeypair], {
+    action: "achievement",
+    wallet: recipient.toBase58(),
+  });
 
   return { signature: sig, assetAddress: assetKeypair.publicKey };
 }
@@ -487,6 +563,11 @@ export interface SignedRewardXpTx {
   rawTransaction: Buffer;
   blockhash: string;
   lastValidBlockHeight: number;
+  /** Fee payer (base58) and its role, for the spend ledger. */
+  payer: string;
+  payerRole: PayerRole;
+  /** The learner receiving the XP (base58). */
+  recipient: string;
 }
 
 // reward_xp has no receipt PDA and no nonce, so the chain cannot tell a retry
@@ -501,17 +582,19 @@ export async function buildSignedRewardXpTx(
   memo: string
 ): Promise<SignedRewardXpTx> {
   const connection = getConnection();
+  const feePayer = await getPlatformFeePayer();
   const { transaction, signer } = await buildRewardXpTransaction(
     recipient,
     amount,
-    memo
+    memo,
+    feePayer
   );
 
   const { blockhash, lastValidBlockHeight } =
     await connection.getLatestBlockhash("confirmed");
   transaction.recentBlockhash = blockhash;
-  transaction.feePayer = signer.publicKey;
-  transaction.sign(signer);
+  transaction.feePayer = feePayer.keypair.publicKey;
+  transaction.sign(feePayer.keypair, signer);
 
   const signature = transaction.signature;
   if (!signature) {
@@ -523,6 +606,9 @@ export async function buildSignedRewardXpTx(
     rawTransaction: transaction.serialize(),
     blockhash,
     lastValidBlockHeight,
+    payer: feePayer.keypair.publicKey.toBase58(),
+    payerRole: feePayer.role,
+    recipient: recipient.toBase58(),
   };
 }
 
@@ -558,6 +644,17 @@ export async function sendSignedTransaction(
   tx: SignedRewardXpTx
 ): Promise<void> {
   const connection = getConnection();
+  // Recorded once the send reached the node (or may have): idempotent on the
+  // signature, so a re-send of the same bytes never adds a second row.
+  const record = () =>
+    recordPlatformTx({
+      signature: tx.signature,
+      action: "xp_mint",
+      wallet: tx.recipient,
+      payer: tx.payer,
+      payerRole: tx.payerRole,
+      lastValidBlockHeight: tx.lastValidBlockHeight,
+    });
   try {
     await connection.sendRawTransaction(tx.rawTransaction, { maxRetries: 5 });
   } catch (err) {
@@ -569,16 +666,20 @@ export async function sendSignedTransaction(
     if (err instanceof SendTransactionError) {
       throw new TransactionNotBroadcastError(tx.signature, err);
     }
+    await record();
     throw err;
   }
-  const result = await connection.confirmTransaction(
-    {
-      signature: tx.signature,
-      blockhash: tx.blockhash,
-      lastValidBlockHeight: tx.lastValidBlockHeight,
-    },
-    "confirmed"
-  );
+  const recorded = record();
+  const result = await connection
+    .confirmTransaction(
+      {
+        signature: tx.signature,
+        blockhash: tx.blockhash,
+        lastValidBlockHeight: tx.lastValidBlockHeight,
+      },
+      "confirmed"
+    )
+    .finally(() => recorded);
   if (result.value.err) {
     throw new Error(
       `reward_xp transaction ${tx.signature} failed: ${JSON.stringify(result.value.err)}`
@@ -589,7 +690,8 @@ export async function sendSignedTransaction(
 async function buildRewardXpTransaction(
   recipient: PublicKey,
   amount: number,
-  memo: string
+  memo: string,
+  feePayer: FeePayer
 ): Promise<{ transaction: Transaction; signer: Keypair }> {
   const program = getProgram();
   const signer = getBackendSigner();
@@ -614,7 +716,7 @@ async function buildRewardXpTransaction(
   );
 
   const createAtaIx = createAssociatedTokenAccountIdempotentInstruction(
-    signer.publicKey,
+    feePayer.keypair.publicKey,
     recipientTokenAccount,
     recipient,
     xpMint,

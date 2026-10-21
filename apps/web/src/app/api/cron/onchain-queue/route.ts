@@ -3,6 +3,8 @@ import "server-only";
 import { NextRequest, NextResponse } from "next/server";
 import { runCronJob } from "@/lib/cron/guard";
 import { drainAllPendingOnchainActions } from "@/lib/solana/onchain-queue";
+import { getConnection } from "@/lib/solana/academy-program";
+import { runSpendUpkeep } from "@/lib/platform-spend/upkeep";
 
 // Service-role DB writes + on-chain sends — never prerender, never cache.
 export const dynamic = "force-dynamic";
@@ -34,13 +36,22 @@ export const maxDuration = 300;
  * just for mail: the `certificate` action builds the credential's metadata URI
  * from it, and an empty value would pin a RELATIVE URI into an immutable NFT.
  *
+ * SPEND UPKEEP: before the drain, the same tick settles ledger rows in the
+ * platform spend ledger and checks the sponsor and backend signer balances
+ * (hourly PostHog snapshot, throttled low-balance alert). It runs first, inside
+ * its own budget (SPEND_UPKEEP_BUDGET_MS), so a long drain can't starve it and
+ * it can't take more than that from the drain. It never fails the drain: each
+ * step logs and reports `null` on error.
+ *
  * OVERLAP: safe. Each action is idempotent against the chain or the ledger
  * (receipt PDA reads, `resolved_at`, award_xp's idempotency key, and the mint's
  * sign-claim-send reservation), and a concurrent run selects with the same
  * backoff filter, so a row attempted seconds ago is not due.
  */
 export async function GET(req: NextRequest): Promise<NextResponse> {
-  return runCronJob("onchain-queue", req.headers, async () =>
-    drainAllPendingOnchainActions()
-  );
+  return runCronJob("onchain-queue", req.headers, async () => {
+    const spend = await runSpendUpkeep(getConnection());
+    const drain = await drainAllPendingOnchainActions();
+    return { ...drain, spend };
+  });
 }

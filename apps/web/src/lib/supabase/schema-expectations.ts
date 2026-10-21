@@ -277,6 +277,21 @@ export const SCHEMA_EXPECTATIONS: readonly SchemaExpectation[] = [
     description:
       "moderator resolve/dismiss (#1131) — the Resolve and Dismiss buttons' hot path; a missing fn 500s both",
   },
+  {
+    kind: "table",
+    table: "platform_spend",
+    migration: "20261021120000_platform_spend_ledger.sql",
+    description:
+      "platform spend ledger — the sponsor route reserves its once-per slot here and fails closed (503) without it",
+  },
+  {
+    kind: "rpc",
+    rpc: "claim_platform_alert",
+    args: { p_key: "schema-probe", p_min_interval_seconds: 0 },
+    migration: "20261021120000_platform_spend_ledger.sql",
+    description:
+      "balance snapshot and low-balance alert throttle — the cron skips both without it",
+  },
 ];
 
 // PostgREST "not found in schema cache" + Postgres undefined-object SQLSTATEs.

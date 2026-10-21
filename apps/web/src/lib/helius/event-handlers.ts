@@ -19,6 +19,7 @@ import {
   fetchAchievementReceipt,
 } from "@/lib/solana/academy-reads";
 import { describeTxError } from "@/lib/solana/describe-tx-error";
+import { recordSponsoredEnrollRefund } from "@/lib/platform-spend/ledger";
 import { getProgramId } from "@/lib/solana/pda";
 import { uploadCertificateMetadata } from "@/lib/solana/arweave";
 import { isCourseComplete } from "@/lib/solana/bitmap";
@@ -33,6 +34,10 @@ import { isCourseInMaintenance } from "@/lib/content/deployments";
 import { isPlatformFrozen } from "@/lib/platform/freeze";
 import { checkCapstoneCredentialGate } from "@/lib/credentials/capstone-gate";
 import { logError } from "@/lib/logging";
+import {
+  credentialMetadataUri,
+  onChainSiteUrl,
+} from "@/lib/metadata/pinned-uri";
 import { ERROR_IDS } from "@/constants/errorIds";
 import type {
   EnrolledEvent,
@@ -120,7 +125,7 @@ export async function handleEnrolled(
 
 export async function handleEnrollmentClosed(
   event: EnrollmentClosedEvent,
-  _txSignature: string
+  txSignature: string
 ): Promise<void> {
   const userId = await resolveUserId(event.learner);
   if (!userId) return;
@@ -147,6 +152,14 @@ export async function handleEnrollmentClosed(
       },
     });
   }
+
+  await recordSponsoredEnrollRefund({
+    signature: txSignature,
+    wallet: event.learner,
+    courseId,
+    programId: getProgramId().toBase58(),
+    userId,
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -643,7 +656,7 @@ export async function tryIssueCredential(
         { trait_type: "Platform", value: "Superteam Academy" },
       ],
       properties: { category: "certificate", creators: [] },
-      external_url: `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/certificates`,
+      external_url: onChainSiteUrl("/certificates"),
       seller_fee_basis_points: 0,
     };
 
@@ -658,7 +671,7 @@ export async function tryIssueCredential(
       throw new Error(metaError?.message ?? "Failed to store NFT metadata");
     }
 
-    const appMetadataUri = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/certificates/metadata?id=${metadataRow.id}`;
+    const appMetadataUri = credentialMetadataUri(metadataRow.id);
 
     // This is the PRIMARY (automatic) credential path, so it must pin metadata
     // to Arweave too — otherwise most issued credentials would point at the

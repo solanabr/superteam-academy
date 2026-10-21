@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { CaretLeft, CaretRight, ArrowSquareOut } from "@phosphor-icons/react";
 import type { ActivityItem } from "@/lib/dashboard/types";
+import { explorerUrl } from "@/lib/solana/network";
 import { GlyphChip } from "@/components/gamification/glyph-chip";
 import type { PatchCategory } from "@/components/gamification/patch-look";
 
@@ -37,13 +38,6 @@ const FALLBACK_CHIP = ACTIVITY_CHIPS.xp_other!;
 
 export function activityChip(type: string): ActivityChip {
   return ACTIVITY_CHIPS[type] ?? FALLBACK_CHIP;
-}
-
-const SOLANA_CLUSTER = process.env.NEXT_PUBLIC_SOLANA_NETWORK ?? "devnet";
-function explorerTxUrl(sig: string): string {
-  return SOLANA_CLUSTER === "mainnet-beta"
-    ? `https://explorer.solana.com/tx/${sig}`
-    : `https://explorer.solana.com/tx/${sig}?cluster=${SOLANA_CLUSTER}`;
 }
 
 interface ActivitySectionProps {
@@ -165,7 +159,7 @@ export function ActivitySection({ recentActivity }: ActivitySectionProps) {
               return activity.txSignature ? (
                 <a
                   key={`${activity.type}-${activity.time}`}
-                  href={explorerTxUrl(activity.txSignature)}
+                  href={explorerUrl("tx", activity.txSignature)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="act-row"

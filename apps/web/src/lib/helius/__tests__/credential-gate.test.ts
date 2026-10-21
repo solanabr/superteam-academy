@@ -5,6 +5,13 @@ import { Keypair } from "@solana/web3.js";
 
 vi.mock("server-only", () => ({}));
 
+// Credentials write their metadata URI into the NFT, and pinned-uri refuses
+// the test env's localhost origin against its devnet RPC. Set a public origin
+// before lib/env parses it.
+vi.hoisted(() => {
+  process.env.NEXT_PUBLIC_APP_URL = "https://academy.test";
+});
+
 // LX-E2 — the capstone credential gate must (a) withhold + queue the capstone
 // credential when there is no verified deploy, on BOTH the webhook path here
 // and the login drainer, and (b) leave the XP path completely untouched.

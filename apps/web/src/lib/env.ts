@@ -46,15 +46,13 @@ const publicEnvSchema = z.object({
   // is unrestricted, and server calls send no browser Origin — sharing one key
   // and origin-restricting it would break every server-side RPC/DAS read.
   NEXT_PUBLIC_SOLANA_RPC_URL: z.url(),
-  // The app's own absolute origin. REQUIRED — not cosmetic: several server
-  // paths interpolate it into strings that get PINNED ON-CHAIN or mailed out
-  // (certificate `external_url` + metadata URI in api/certificates/mint,
-  // lib/solana/onchain-queue, lib/helius/event-handlers, api/admin/courses/sync
-  // and api/admin/achievements/sync). Those sites keep a `?? ""` fallback as
-  // defense in depth, but with an unset var that fallback mints a RELATIVE URI
-  // ("/api/certificates/metadata?id=…") into an immutable Metaplex Core asset —
-  // unfixable after the fact. Validating here makes that state unreachable:
-  // boot/build fails loudly instead.
+  // The app's own absolute origin. REQUIRED — not cosmetic: every NFT metadata
+  // URI written on-chain (achievement types, course collections, credentials)
+  // is built from it through lib/metadata/pinned-uri.ts (which also refuses a
+  // loopback origin unless the RPC is a local validator), and email links use
+  // it too. An unset var would mint a RELATIVE URI into an immutable Metaplex
+  // Core asset — unfixable after the fact. Validating here makes that state
+  // unreachable: boot/build fails loudly instead.
   //
   // Dev/test default to http://localhost:3000 (the documented local origin, see
   // .env.example) so `pnpm dev` and the suites need no extra setup; in

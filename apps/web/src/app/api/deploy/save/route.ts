@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PublicKey } from "@solana/web3.js";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
+import {
+  LEARNER_DEPLOY_DISABLED_ERROR,
+  learnerDeployBlockFromEnv,
+  type LearnerDeployBlock,
+} from "@/lib/deploy/learner-deploy";
 import { getConnection } from "@/lib/solana/academy-program";
+import { isMainnetFailClosed } from "@/lib/solana/network";
 import {
   verifyProgramDeployment,
   type DeployVerificationResult,
@@ -36,8 +42,27 @@ const VERIFICATION_FAILED = "Program verification failed";
 // every legitimate failure response for no secrecy gain, so we don't.
 const MISSING_ACCOUNT_RETRY_DELAY_MS = 1_500;
 
+/**
+ * The in-lesson deploy is off (always on mainnet, elsewhere unless the flag is
+ * on), so no deploy is recorded either. Only a stale or scripted client gets
+ * here: the lesson renders a notice instead of the deploy panel.
+ */
+function deployDisabled(reason: LearnerDeployBlock): NextResponse {
+  logEvent({
+    event: "deploy-save.rejected",
+    context: { reason: `learner-deploy-${reason}` },
+  });
+  return NextResponse.json(
+    { error: LEARNER_DEPLOY_DISABLED_ERROR, reason },
+    { status: 403 }
+  );
+}
+
 export async function POST(request: NextRequest) {
   try {
+    const block = learnerDeployBlockFromEnv(getConnection().rpcEndpoint);
+    if (block) return deployDisabled(block);
+
     const supabase = await createClient();
     const {
       data: { user },
@@ -167,6 +192,16 @@ export async function POST(request: NextRequest) {
     let verification: DeployVerificationResult;
     try {
       const connection = getConnection();
+      // The label and the RPC host said not-mainnet above. The genesis hash
+      // is the one signal a mislabelled env can't fake; an unreadable one
+      // throws and lands in the 503 below.
+      if (
+        await isMainnetFailClosed(connection.rpcEndpoint, () =>
+          connection.getGenesisHash()
+        )
+      ) {
+        return deployDisabled("mainnet");
+      }
       verification = await verifyProgramDeployment(
         connection,
         programPubkey,

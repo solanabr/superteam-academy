@@ -20,6 +20,7 @@ import { fetchAchievementType } from "@/lib/solana/academy-reads";
 import { deployAchievementType } from "@/lib/solana/admin-signer";
 import { getMissingAchievementFields, isDraftId } from "@/lib/admin/sync-diff";
 import { writeAchievementOnChainStatus } from "@/lib/content/deployment-writes";
+import { achievementMetadataUri } from "@/lib/metadata/pinned-uri";
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
@@ -130,9 +131,19 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
   }
 
-  const metadataUri =
-    ach.metadataUri ??
-    `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/achievements/metadata/${achievementId}`;
+  // Always our own origin, never a URI from content: the type's URI is copied
+  // into every achievement NFT it awards and can't be changed afterwards. An
+  // origin that can't be pinned on this cluster refuses before anything is sent.
+  let metadataUri: string;
+  try {
+    metadataUri = achievementMetadataUri(achievementId);
+  } catch (err) {
+    console.error("[admin/achievements/sync] metadata URI refused:", err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Metadata URI refused" },
+      { status: 500 }
+    );
+  }
 
   const result = await deployAchievementType({
     achievementId,
