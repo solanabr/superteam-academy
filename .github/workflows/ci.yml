@@ -77,6 +77,13 @@ jobs:
               # must re-run it, and `package.json` / `pnpm-lock.yaml` above are
               # already the inputs it guards (the pnpm.overrides pins).
               - 'scripts/brace-glob-probe.mjs'
+              # `pnpm test:scripts` runs in this job: the root vitest config
+              # covers scripts/ and the program operator CLI, whose instruction
+              # builders read the committed program IDL.
+              - 'scripts/**'
+              - 'onchain-academy/scripts/**'
+              - 'onchain-academy/idl/**'
+              - 'vitest.config.ts'
               - '.github/workflows/ci.yml'
               # `pnpm test:hooks` runs in this job; its tests also read
               # settings.json and the required-check job names.
@@ -189,6 +196,12 @@ jobs:
         # The PreToolUse guards in .claude/hooks (git identity, CI-skip markers,
         # program deploys, merges). Plain node:test, no install needed.
         run: pnpm test:hooks
+
+      - name: Script tests
+        # Root vitest config (vitest.config.ts): repo-root scripts/ and the
+        # program operator CLI in onchain-academy/scripts/. No workspace package
+        # owns these, so `pnpm -r test` never reaches them.
+        run: pnpm test:scripts
 
   # ── E2E: Playwright, the 3 critical learner paths (#781) ────────────────────
   # Runs the learner-path specs against a PRODUCTION build (`next build &&

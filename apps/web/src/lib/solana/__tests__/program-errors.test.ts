@@ -11,7 +11,7 @@ const locales = { en, "pt-BR": ptBR, es } as const;
 /** Format a custom program error string the way RPC simulation surfaces it. */
 const hex = (code: number) => `custom program error: 0x${code.toString(16)}`;
 
-describe("parseProgramError — newly added codes (6031–6036)", () => {
+describe("parseProgramError — newly added codes (6031–6037)", () => {
   const added: [number, string, string][] = [
     [6031, "MintingPaused", "mintingPaused"],
     [6032, "WrongXpMint", "wrongXpMint"],
@@ -19,6 +19,7 @@ describe("parseProgramError — newly added codes (6031–6036)", () => {
     [6034, "StaleEnrollment", "staleEnrollment"],
     [6035, "OldMinterRoleMissing", "oldMinterRoleMissing"],
     [6036, "EnrollmentInProgress", "enrollmentInProgress"],
+    [6037, "CourseHasEnrollments", "courseHasEnrollments"],
   ];
 
   it.each(added)("maps hex code for %i → %s", (code, name, i18nKey) => {

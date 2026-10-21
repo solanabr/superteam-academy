@@ -3,8 +3,13 @@
 //! authority = Config PDA), and auto-registers the authority's backend
 //! MinterRole.
 //! Accounts: config (init, payer = authority) | xp_mint (signer, mut) |
-//! authority (signer, mut) | backend_minter_role (init, payer = authority) |
-//! system_program | token_program (address = Token-2022).
+//! authority (signer, mut, == program upgrade authority) | backend_minter_role
+//! (init, payer = authority) | system_program | token_program (address =
+//! Token-2022) | program_data (this program's ProgramData, owned by the
+//! upgradeable loader).
+//!
+//! Only the program's upgrade authority can initialize, so nobody else can
+//! claim Config between the deploy and the operator's own `initialize`.
 
 use pinocchio::{
     cpi::{Seed, Signer},
@@ -27,7 +32,8 @@ pub fn process(accounts: &mut [AccountView], _data: &[u8]) -> ProgramResult {
             authority,
             backend_minter_role,
             system_program,
-            token_program
+            token_program,
+            program_data
         ] = accounts
     );
 
@@ -35,6 +41,7 @@ pub fn process(accounts: &mut [AccountView], _data: &[u8]) -> ProgramResult {
     v::expect_signer(xp_mint)?;
     v::expect_signer(authority)?;
     v::expect_system_program(system_program)?;
+    v::expect_upgrade_authority(program_data, authority)?;
 
     // -- constraint phase ----------------------------------------------------
     // config `init`: the canonical PDA/bump are compile-time constants.

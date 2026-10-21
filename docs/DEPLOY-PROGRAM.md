@@ -1,4 +1,4 @@
-> Last synced: 2026-10-19
+> Last synced: 2026-10-21
 
 # Deploying the program to devnet
 
@@ -62,10 +62,11 @@ solana-keygen new --outfile wallets/signer.json
 
 # Program keypair — determines the program id. `grind` for a vanity address.
 solana-keygen new --outfile wallets/program-keypair.json
-
-# XP mint keypair — a signer to `initialize`, not a PDA.
-solana-keygen new --outfile wallets/xp-mint-keypair.json
 ```
+
+The XP mint keypair is a signer to `initialize`, not a PDA. `init-program.ts
+initialize` generates one and saves it under `onchain-academy/wallets/`, or
+takes an existing file with `--xp-mint-keypair <path>`.
 
 The already-provisioned fresh instance uses
 `onchain-academy/wallets/pinocchio-program-devnet-v2.json` and
@@ -173,6 +174,12 @@ solana program deploy "$ART/target/deploy-devnet/onchain_academy_pinocchio.so" \
 
 Fee payer and upgrade authority default to `~/.config/solana/id.json`.
 
+When an upgrade changes an instruction's accounts, ship the web app first. The
+release that records the enrollment rent payer adds a fourth `close_enrollment`
+account (the rent recipient) and a seventh `initialize` account (ProgramData).
+The app passes the recipient last, so the old program ignores it; an older app
+against the new program fails every unenroll.
+
 > **Helius only, never the public devnet endpoint.** A ~213 KB program deploy is
 > hundreds of sequential write transactions, and the public endpoint has
 > corrupted and failed deploys part-way through. In Claude Code sessions the
@@ -187,27 +194,49 @@ Fee payer and upgrade authority default to `~/.config/solana/id.json`.
 
 ## 6. Initialize
 
-One-time. It creates the Config PDA, creates the XP mint (Token-2022,
-NonTransferable + PermanentDelegate + MetadataPointer, 0 decimals), and
-auto-registers the authority as a `MinterRole` labelled `backend` with an
-unlimited cap. On devnet the deployer is both `authority` and `backend_signer`.
+One-time, and **right after the deploy**: only the program's upgrade
+authority can run `initialize`, and until it runs the program has no Config.
+It creates the Config PDA, creates the XP mint (Token-2022, NonTransferable +
+PermanentDelegate + MetadataPointer, 0 decimals), and registers the signer as
+`authority`, `backend_signer` and an uncapped `backend` minter.
 
-`scripts/initialize.ts` reads `../wallets/xp-mint-keypair.json` relative to the
-working directory, so run it from `scripts/`. There is no `ts-node` in the
-dependency tree — use `tsx`.
+`onchain-academy/scripts/init-program.ts` is the one entry point. Every write is
+a dry run until you add `--yes`, `--cluster` is required and checked against
+the RPC's genesis hash, and it never prints the RPC URL or a secret key. Its
+default paths (env files, the generated mint keypair) resolve from the script,
+not the working directory.
 
 ```bash
-cd onchain-academy
-
+export SOLANA_RPC_URL="$HELIUS_DEVNET_RPC"
 export ACADEMY_PROGRAM_ID=Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u
-export ANCHOR_PROVIDER_URL="$HELIUS_DEVNET_RPC"
-export ANCHOR_WALLET=~/.config/solana/id.json
+CLI="npx tsx scripts/init-program.ts"   # from onchain-academy/, like §5-8
 
-(cd scripts && npx tsx initialize.ts)
+# The signer is --keypair <path> or PROGRAM_AUTHORITY_SECRET; here, the upgrade authority.
+$CLI initialize --cluster devnet --keypair <upgrade-authority-keypair>          # dry run
+$CLI initialize --cluster devnet --keypair <upgrade-authority-keypair> --yes    # send
 ```
 
-A second run fails with "already initialized" — expected. The Config PDA's init
-constraint enforces single initialization.
+It refuses if Config exists or the signer isn't the upgrade authority, and
+after sending it reads Config back and checks authority, backend signer and
+mint. A newly generated mint keypair is saved as
+`onchain-academy/wallets/xp-mint-<pubkey>.json` (mode 0600); only the path and
+pubkey are printed.
+
+Then move the backend off the authority and cap its minter role:
+
+```bash
+# update_config(new_backend_signer); retires the uncapped ["minter", authority] role.
+$CLI rotate-backend --cluster devnet --keypair <authority-keypair> --backend <BACKEND_PUBKEY> --yes
+
+# register_minter for the backend: max_xp_per_call 100 by default, and an explicit lifetime cap.
+$CLI register-minter --cluster devnet --keypair <authority-keypair> --max-total-xp <budget> --yes
+
+$CLI status --cluster devnet
+```
+
+`set-paused --paused true|false` toggles the minting kill switch the same way.
+To hand `Config.authority` to another key, use
+`onchain-academy/scripts/rotate-config-authority.ts` after these steps.
 
 Token metadata is deferred: `initialize` sets the MetadataPointer extension but
 leaves the TokenMetadata initialization to a separate client transaction (an
@@ -247,7 +276,7 @@ solana program dump $ACADEMY_PROGRAM_ID /tmp/deployed.so --url "$HELIUS_DEVNET_R
 head -c "$(wc -c < "$ART/target/deploy-devnet/onchain_academy_pinocchio.so")" /tmp/deployed.so | shasum -a 256
 cat "$ART/program-hash-devnet.txt"
 
-npx tsx scripts/fetch-config.ts
+npx tsx scripts/init-program.ts status --cluster devnet
 
 spl-token display <XP_MINT_ADDRESS> \
   --program-id TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb
@@ -320,19 +349,31 @@ the `guard-solana` hook blocks program writes to mainnet.
 - [ ] Security audit completed.
 - [ ] The artifact you deploy matches the published reproducible-build hash
       ([PROGRAM-HASH.md](./PROGRAM-HASH.md)).
-- [ ] CU numbers checked against `onchain-academy/tests/CU_BASELINE.pinocchio.md`.
+- [ ] CU numbers checked against `onchain-academy/tests/CU_BASELINE.rust.md`.
 - [ ] Metaplex Core credential flow tested end to end on devnet.
 - [ ] Devnet testing over several days.
 - [ ] Frontend Lighthouse: Performance 90+, Accessibility 95+, Best Practices
       95+, SEO 90+.
 - [ ] The owner's explicit confirmation.
 
+### Initialize in the same sitting as the deploy
+
+- [ ] Deploy, then run `init-program.ts initialize --cluster mainnet` signed by
+      the upgrade authority before announcing anything. It refuses any other
+      signer, and reads Config back after sending.
+- [ ] `rotate-backend` to the backend key, then `register-minter` with an
+      explicit `--max-total-xp`.
+- [ ] If `Config.authority` should be a different key from the upgrade
+      authority, rotate it with `rotate-config-authority.ts`.
+- [ ] `init-program.ts status --cluster mainnet` shows the expected authority,
+      backend signer, XP mint and backend minter caps.
+
 ### Instructor credibility and track ladder
 
 `Course.creator`, `Course.track_id` and `Course.track_level` are set once at
 `create_course` and have no on-chain setter. The only fix is close and recreate,
-and the recreated course gets a new generation that rejects every existing
-enrollment, so enrolled learners lose their progress in that course. On mainnet
+and the program refuses to close a course anyone has ever enrolled in. After the
+first enrollment, a wrong value means publishing the course under a new id, so
 every course must be right before learners enroll.
 
 The source of truth for all three fields is the course content doc
@@ -382,9 +423,9 @@ In this order, before the platform opens to learners:
       keypair) and `ACADEMY_PROGRAM_ID` if the mainnet program id differs from
       the address in `idl/onchain_academy.json`.
 - [ ] Recreate any course with a wrong creator, track or level now, while nobody
-      is enrolled. The admin recreate refuses on mainnet once a course has an
-      enrollment, because a recreate wipes enrolled learners' progress.
+      is enrolled. Once a course has an enrollment the program refuses its
+      close, and the admin recreate refuses up front.
 - [ ] Only then, on a course already confirmed correct, the owner enrolls with
       his own account, finishes it, and checks that the credential shows the
       right instructor, track and level. That enrollment makes the course
-      non-recreatable on mainnet, which is why it comes last.
+      non-recreatable, which is why it comes last.

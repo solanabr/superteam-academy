@@ -1051,6 +1051,7 @@
     "staleEnrollment": "This enrollment belongs to an older version of the course. Please re-enroll to continue.",
     "oldMinterRoleMissing": "Backend rotation requires the previous backend minter role account.",
     "enrollmentInProgress": "An enrollment with completed lessons cannot be closed.",
+    "courseHasEnrollments": "A course that anyone has enrolled in cannot be closed.",
     "unknown": "Transaction failed. Please try again."
   },
   "community": {

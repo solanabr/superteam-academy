@@ -1051,6 +1051,7 @@
     "staleEnrollment": "Esta inscripción pertenece a una versión anterior del curso. Vuelve a inscribirte para continuar.",
     "oldMinterRoleMissing": "La rotación de backend requiere la cuenta anterior del rol de minter del backend.",
     "enrollmentInProgress": "Una inscripción con lecciones completadas no se puede cerrar.",
+    "courseHasEnrollments": "Un curso en el que alguien ya se inscribió no se puede cerrar.",
     "unknown": "La transacción falló. Inténtalo de nuevo."
   },
   "community": {

@@ -92,6 +92,12 @@ export interface CourseSnapshot {
   /** v1: `lesson_count`. v-next: popcount(`active_lessons`). Always populated. */
   liveLessonCount: number;
   /**
+   * `total_enrollments`, a high-water mark (`close_enrollment` never lowers
+   * it). Above 0, the program refuses `close_course`, so the course cannot be
+   * recreated.
+   */
+  totalEnrollments: number;
+  /**
    * The 256-bit live-lesson mask, hex-encoded via {@link maskToHex}. For v1
    * this is the dense mask synthesised from `lesson_count` (see
    * `academy-reads.ts#denseMask`); for v-next it is the raw `active_lessons`.
@@ -143,6 +149,7 @@ function toCourseSnapshot(pubkey: PublicKey, data: Buffer): CourseSnapshot {
     creator: decoded.creator.toBase58(),
     creatorRewardXp: decoded.creator_reward_xp,
     liveLessonCount: decoded.liveLessonCount,
+    totalEnrollments: decoded.total_enrollments,
     activeLessonsOrCount: maskToHex(decoded.activeLessons),
     contentTxId: bytesToHex(decoded.content_tx_id),
   };

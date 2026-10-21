@@ -18,6 +18,10 @@
 //! a dedicated treasury wallet without a program upgrade or a Config write.
 //! The signer requirement is what makes it safe — an arbitrary funded account
 //! cannot be named as payer without its own signature.
+//!
+//! The payer's address is recorded in the Enrollment (bytes 127..159, after the
+//! Borsh body), and `close_enrollment` refunds the rent to it, so whoever
+//! funded the account gets the rent back.
 
 use pinocchio::{
     cpi::{Seed, Signer},
@@ -77,7 +81,7 @@ pub fn process(accounts: &mut [AccountView], data: &[u8]) -> ProgramResult {
     let reuse_stale = {
         let ed = enrollment.try_borrow()?;
         enrollment.owned_by(&ID)
-            && ed.len() >= 8
+            && state::enrollment::is_known_size(ed.len())
             && ed[..8] == ACC_ENROLLMENT[..]
             && EnrollmentOffsets::parse(&ed)
                 .map(|off| off.course_gen(&ed) != current_gen)
@@ -177,6 +181,12 @@ pub fn process(accounts: &mut [AccountView], data: &[u8]) -> ProgramResult {
     {
         let mut d = enrollment.try_borrow_mut()?;
         state::enrollment::init(&mut d, course.address(), now, current_gen, bump);
+        // A reused stale enrollment keeps its size and its recorded payer: the
+        // account was funded by that payer, and this call adds no rent. A
+        // legacy 127-byte account stays legacy and refunds to the learner.
+        if !reuse_stale {
+            state::enrollment::set_payer(&mut d, payer.address());
+        }
     }
 
     let (version, new_total) = {

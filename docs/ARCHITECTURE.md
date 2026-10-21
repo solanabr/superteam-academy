@@ -388,20 +388,21 @@ ledger **fails closed** — a ledger error denies rather than allows.
 
 ## 5. On-chain integration
 
-The program is Pinocchio 0.11, 18 instructions, 6 PDA types, 37 errors, 18
+The program is Pinocchio 0.11, 18 instructions, 6 PDA types, 38 errors, 18
 events. [SPEC.md](./SPEC.md) is authoritative for layouts and validation order;
 what follows is only how the app touches it.
 
-| Instruction                                                                    | Signer            | Called from                        |
-| ------------------------------------------------------------------------------ | ----------------- | ---------------------------------- |
-| `initialize`, `update_config`, `close_course`                                  | Authority         | operator scripts                   |
-| `create_course`, `update_course`                                               | Authority         | `admin-signer.ts` (admin sync)     |
-| `create_achievement_type`, `deactivate_achievement_type`                       | Authority         | `admin-signer.ts` / scripts        |
-| `register_minter`, `update_minter`, `revoke_minter`                            | Authority         | operator scripts                   |
-| `enroll`                                                                       | Learner + payer   | `/api/enroll/sponsor` + client sig |
-| `close_enrollment`                                                             | Learner           | `instructions.ts`                  |
-| `complete_lesson`, `finalize_course`, `issue_credential`, `upgrade_credential` | Backend signer    | `academy-program.ts`               |
-| `reward_xp`, `award_achievement`                                               | Registered minter | quest drainer, achievement award   |
+| Instruction                                                                    | Signer            | Called from                               |
+| ------------------------------------------------------------------------------ | ----------------- | ----------------------------------------- |
+| `initialize` (upgrade authority), `update_config`                              | Authority         | `onchain-academy/scripts/init-program.ts` |
+| `create_course`, `update_course`                                               | Authority         | `admin-signer.ts` (admin sync)            |
+| `create_achievement_type`, `deactivate_achievement_type`                       | Authority         | `admin-signer.ts` / scripts               |
+| `close_course`                                                                 | Authority         | `admin-signer.ts` (admin recreate)        |
+| `register_minter`, `update_minter`, `revoke_minter`                            | Authority         | operator scripts                          |
+| `enroll`                                                                       | Learner + payer   | `/api/enroll/sponsor` + client sig        |
+| `close_enrollment`                                                             | Learner           | `instructions.ts` (rent to payer)         |
+| `complete_lesson`, `finalize_course`, `issue_credential`, `upgrade_credential` | Backend signer    | `academy-program.ts`                      |
+| `reward_xp`, `award_achievement`                                               | Registered minter | quest drainer, achievement award          |
 
 ### PDAs
 
@@ -409,7 +410,7 @@ what follows is only how the app touches it.
 | ------------------ | ---------------------------------------------------- | ----- |
 | Config             | `["config"]`                                         | 113 B |
 | Course             | `["course", course_id]`                              | 253 B |
-| Enrollment         | `["enrollment", course_id, learner]`                 | 127 B |
+| Enrollment         | `["enrollment", course_id, learner]`                 | 159 B |
 | MinterRole         | `["minter", minter]`                                 | 110 B |
 | AchievementType    | `["achievement", achievement_id]`                    | 338 B |
 | AchievementReceipt | `["achievement_receipt", achievement_id, recipient]` | 49 B  |
@@ -417,7 +418,12 @@ what follows is only how the app touches it.
 Config is the singleton root: it holds `authority`, the rotatable
 `backend_signer`, `xp_mint`, and the `paused` kill switch, and it is the update
 authority for every Metaplex Core collection. Enrollment holds the 256-bit
-`lesson_flags` bitmap, `completed_at`, and `credential_asset`.
+`lesson_flags` bitmap, `completed_at`, and `credential_asset`, and records its
+rent payer after the Borsh body (bytes 127..159); `close_enrollment` refunds
+that payer, so a sponsored enrollment's rent goes back to the sponsor.
+`enrollment-rent.ts` reads it for the client. A course anyone has enrolled in
+can't be closed (`close_course` refuses), so the admin recreate only works on a
+course with no enrollments.
 AchievementReceipt is a thin existence-proof PDA — a second award collides on
 init and errors.
 

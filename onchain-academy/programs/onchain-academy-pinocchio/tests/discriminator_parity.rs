@@ -41,6 +41,39 @@ fn program_ids() {
     );
     assert_eq!(mpl_core::ID.to_bytes(), *c::MPL_CORE_ID.as_array());
     assert_eq!([0u8; 32], *c::SYSTEM_PROGRAM_ID.as_array());
+    assert_eq!(
+        solana_program::bpf_loader_upgradeable::id().to_bytes(),
+        *c::BPF_LOADER_UPGRADEABLE_ID.as_array()
+    );
+}
+
+/// `initialize` parses the loader's ProgramData account by hand. Pin the
+/// offsets it reads (tag 3 at 0..4, authority option tag at 12, authority at
+/// 13..45) against the real bincode serialization.
+#[test]
+fn programdata_layout_matches_loader() {
+    use solana_program::bpf_loader_upgradeable::UpgradeableLoaderState;
+    let authority = Pubkey::new_unique();
+    let bytes = bincode::serialize(&UpgradeableLoaderState::ProgramData {
+        slot: 0x0102_0304_0506_0708,
+        upgrade_authority_address: Some(authority),
+    })
+    .unwrap();
+    assert_eq!(
+        bytes.len(),
+        UpgradeableLoaderState::size_of_programdata_metadata()
+    );
+    assert_eq!(bytes.len(), 45);
+    assert_eq!(&bytes[0..4], &3u32.to_le_bytes());
+    assert_eq!(bytes[12], 1);
+    assert_eq!(&bytes[13..45], authority.as_ref());
+
+    let immutable = bincode::serialize(&UpgradeableLoaderState::ProgramData {
+        slot: 0,
+        upgrade_authority_address: None,
+    })
+    .unwrap();
+    assert_eq!(immutable[12], 0);
 }
 
 #[test]
@@ -135,10 +168,10 @@ fn event_discriminators() {
 fn error_codes_and_log_lines() {
     // Independent oracle for the IDL `errors` table: (variant, name, message).
     // Numbers are 6000 + ordinal; the log line is the fixed AnchorError format
-    // `@coral-xyz/anchor`'s `AnchorError.parse` consumes. All 37 variants,
-    // including the three added post-Anchor (StaleEnrollment/OldMinterRoleMissing
-    // /EnrollmentInProgress), are pinned verbatim here.
-    let table: [(P, &str, &str); 37] = [
+    // `@coral-xyz/anchor`'s `AnchorError.parse` consumes. All 38 variants,
+    // including the four added post-Anchor (StaleEnrollment/OldMinterRoleMissing
+    // /EnrollmentInProgress/CourseHasEnrollments), are pinned verbatim here.
+    let table: [(P, &str, &str); 38] = [
         (P::Unauthorized, "Unauthorized", "Unauthorized signer"),
         (P::CourseNotActive, "CourseNotActive", "Course not active"),
         (
@@ -303,6 +336,11 @@ fn error_codes_and_log_lines() {
             P::EnrollmentInProgress,
             "EnrollmentInProgress",
             "Enrollment with completed lessons cannot be closed",
+        ),
+        (
+            P::CourseHasEnrollments,
+            "CourseHasEnrollments",
+            "Course with enrollments cannot be closed",
         ),
     ];
     for (i, (p, name, msg)) in table.into_iter().enumerate() {

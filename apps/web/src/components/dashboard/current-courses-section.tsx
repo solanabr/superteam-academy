@@ -17,6 +17,7 @@ import { startDynamicSocialSignIn } from "@/lib/dynamic/social";
 import { isDynamicEnabled } from "@/lib/dynamic/config";
 import { useDynamicSessionState } from "@/hooks/use-dynamic-session-state";
 import { buildCloseEnrollmentInstruction } from "@/lib/solana/instructions";
+import { fetchEnrollmentRentRecipient } from "@/lib/solana/enrollment-rent";
 import {
   findWalletMismatch,
   parseWalletAddress,
@@ -99,9 +100,9 @@ export function CurrentCoursesSection({
         return;
       }
 
-      // close_enrollment refunds rent to the learner and requires the learner
-      // to sign, so a wallet other than the linked one can only simulate to a
-      // bare failure.
+      // close_enrollment requires the learner to sign (the rent goes back to
+      // whoever paid it), so a wallet other than the linked one can only
+      // simulate to a bare failure.
       if (findWalletMismatch(learner.toBase58(), linkedWallet)) {
         setWalletPrompt("mismatch");
         return;
@@ -123,7 +124,18 @@ export function CurrentCoursesSection({
         ]);
 
       try {
-        const ix = buildCloseEnrollmentInstruction(courseId, learner);
+        // The rent goes back to whoever paid it: the sponsor for a sponsored
+        // enrollment, the learner otherwise.
+        const rentRecipient = await fetchEnrollmentRentRecipient(
+          connection,
+          courseId,
+          learner
+        );
+        const ix = buildCloseEnrollmentInstruction(
+          courseId,
+          learner,
+          rentRecipient
+        );
         const tx = new Transaction().add(ix);
 
         // Pre-simulate to catch program errors before wallet popup.

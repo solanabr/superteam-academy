@@ -46,25 +46,25 @@ instructions.
 
 | Instruction                   |     CU | % of 200k ceiling | Headroom |
 | ----------------------------- | -----: | ----------------: | -------: |
-| `initialize`                  | 15,662 |             7.83% |   92.17% |
+| `initialize`                  | 18,780 |             9.39% |   90.61% |
 | `update_config (pause)`       |    729 |             0.36% |   99.64% |
 | `update_config (resume)`      |    727 |             0.36% |   99.64% |
-| `create_course`               |  4,596 |             2.30% |   97.70% |
-| `update_course`               |  2,696 |             1.35% |   98.65% |
+| `create_course`               |  4,617 |             2.31% |   97.69% |
+| `update_course`               |  2,865 |             1.43% |   98.57% |
 | `register_minter`             |  4,323 |             2.16% |   97.84% |
 | `update_minter`               |  2,604 |             1.30% |   98.70% |
 | `revoke_minter`               |  2,628 |             1.31% |   98.69% |
-| `enroll`                      |  8,996 |             4.50% |   95.50% |
+| `enroll`                      |  8,980 |             4.49% |   95.51% |
 | `complete_lesson`             |  7,703 |             3.85% |   96.15% |
 | `finalize_course`             |  8,436 |             4.22% |   95.78% |
 | `reward_xp`                   |  6,103 |             3.05% |   96.95% |
-| `close_enrollment`            |  4,438 |             2.22% |   97.78% |
+| `close_enrollment`            |  4,524 |             2.26% |   97.74% |
 | `create_achievement_type`     | 11,106 |             5.55% |   94.45% |
 | `award_achievement`           | 36,449 |            18.22% |   81.78% |
 | `deactivate_achievement_type` |  2,926 |             1.46% |   98.54% |
 | `issue_credential`            | 31,135 |            15.57% |   84.43% |
 | `upgrade_credential`          | 37,009 |            18.50% |   81.50% |
-| `close_course`                |  8,522 |             4.26% |   95.74% |
+| `close_course`                |  8,682 |             4.34% |   95.66% |
 
 ## Ruling
 
@@ -93,12 +93,16 @@ there is no action to take today.
 
 ### Accepted drift
 
-| When       | Instruction | Change                 | Why                                                                                                                                                                            |
-| ---------- | ----------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 2026-08-11 | `enroll`    | 8,984 → 8,996 CU (+12) | #1004 split `payer` out of `learner` so the platform can fund a zero-SOL learner's Enrollment PDA. The cost is one extra account to load plus one extra `expect_signer` check. |
+| When       | Instruction                | Change                      | Why                                                                                                                                                                            |
+| ---------- | -------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-08-11 | `enroll`                   | 8,984 → 8,996 CU (+12)      | #1004 split `payer` out of `learner` so the platform can fund a zero-SOL learner's Enrollment PDA. The cost is one extra account to load plus one extra `expect_signer` check. |
+| 2026-10-21 | `initialize`               | 15,662 → 18,780 CU (+3,118) | Reads the ProgramData account and derives its address to check the signer is the upgrade authority. One-time instruction.                                                      |
+| 2026-10-21 | `update_course`            | 2,696 → 2,865 CU (+169)     | Write-time XP bounds and the non-empty mask check.                                                                                                                             |
+| 2026-10-21 | `close_course`             | 8,522 → 8,682 CU (+160)     | Parses the course to refuse one with enrollments.                                                                                                                              |
+| 2026-10-21 | `close_enrollment`         | 4,438 → 4,524 CU (+86)      | One more account, and the rent recipient check.                                                                                                                                |
+| 2026-10-21 | `create_course` / `enroll` | +21 / −16 CU                | XP bounds at create. `enroll` moved with codegen; its payer write is one 32-byte copy.                                                                                         |
 
-+12 CU is 0.006% of the ceiling and leaves `enroll` at 4.50% — the ruling above
-is unaffected. Worth recording rather than silently regenerating, because the
+Every change is well under 2% of the ceiling — the ruling above is unaffected. Worth recording rather than silently regenerating, because the
 gate exists precisely so that an account-list change cannot pass unnoticed.
 
 Note for whoever regenerates next: regenerate against the **pinned** toolchain,

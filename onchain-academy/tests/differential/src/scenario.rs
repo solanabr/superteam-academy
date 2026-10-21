@@ -25,6 +25,9 @@ impl Ctx {
         let mut h = DiffHarness::new();
         let authority = Keypair::new();
         h.airdrop(&authority.pubkey(), 500 * SOL);
+        // The platform authority deploys the program, so it is the upgrade
+        // authority `initialize` checks for.
+        h.set_upgrade_authority(Some(&authority.pubkey()));
 
         let xp_mint_kp = Keypair::new();
         h.run_ok(
@@ -104,6 +107,33 @@ impl Ctx {
             sponsor,
             &[learner],
         );
+    }
+
+    /// Overwrites `Course.total_enrollments` in place. Only for tests that
+    /// model state left by the program before `close_course` refused enrolled
+    /// courses (a course closed with live enrollments, then recreated).
+    pub fn set_course_total_enrollments(&mut self, course_id: &str, value: u32) {
+        let address = ixs::course_pda(course_id);
+        let mut account = self.h.svm.get_account(&address).expect("course exists");
+        let id_len = course_id.len();
+        // 12 + id + 106-byte fixed run -> prerequisite tag (must be None here),
+        // then creator_reward_xp (4), total_completions (4), total_enrollments.
+        let o_prereq = 12 + id_len + 106;
+        assert_eq!(account.data[o_prereq], 0, "helper assumes no prerequisite");
+        let o = o_prereq + 1 + 4 + 4;
+        account.data[o..o + 4].copy_from_slice(&value.to_le_bytes());
+        self.h.set_account(address, account);
+    }
+
+    /// `Course.total_enrollments` read back from the account.
+    pub fn course_total_enrollments(&self, course_id: &str) -> u32 {
+        let account = self
+            .h
+            .svm
+            .get_account(&ixs::course_pda(course_id))
+            .expect("course exists");
+        let o = 12 + course_id.len() + 106 + 1 + 4 + 4;
+        u32::from_le_bytes(account.data[o..o + 4].try_into().unwrap())
     }
 
     pub fn complete_lessons(&mut self, learner: &Keypair, course_id: &str, count: u8) {

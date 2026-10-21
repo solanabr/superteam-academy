@@ -61,6 +61,7 @@ fn cu_budget_within_baseline() {
     let mut h = Harness::new();
     let authority = kp(1);
     h.airdrop(&authority.pubkey(), 500 * SOL);
+    h.set_upgrade_authority(Some(&authority.pubkey()));
     let xp_mint = kp(2);
 
     // Collected in the canonical row order (matches the review-doc table).

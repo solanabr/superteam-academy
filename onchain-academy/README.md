@@ -124,20 +124,20 @@ All scripts run from the `onchain-academy/` directory:
 npx ts-node scripts/<script>.ts [args]
 ```
 
-| Script                  | Description                                                             |
-| ----------------------- | ----------------------------------------------------------------------- |
-| `initialize.ts`         | One-time program initialization                                         |
-| `create-mock-course.ts` | Create a test course                                                    |
-| `create-mock-track.ts`  | Create a Metaplex Core track collection (UMI)                           |
-| `enroll.ts`             | Enroll in a course                                                      |
-| `complete-lesson.ts`    | Complete a lesson for a learner                                         |
-| `finalize-course.ts`    | Finalize a completed course                                             |
-| `issue-credential.ts`   | Issue credential NFT                                                    |
-| `fetch-config.ts`       | Display Config PDA                                                      |
-| `fetch-course.ts`       | Display Course PDA                                                      |
-| `fetch-enrollment.ts`   | Display Enrollment with lesson progress                                 |
-| `check-xp.ts`           | Check XP balance for a wallet                                           |
-| **`e2e-flow.ts`**       | **Full learner flow: enroll → lessons → finalize → credential → close** |
+| Script                  | Description                                                                                            |
+| ----------------------- | ------------------------------------------------------------------------------------------------------ |
+| `init-program.ts`       | Operator CLI: initialize, rotate-backend, register-minter, set-paused, status (dry run unless `--yes`) |
+| `create-mock-course.ts` | Create a test course                                                                                   |
+| `create-mock-track.ts`  | Create a Metaplex Core track collection (UMI)                                                          |
+| `enroll.ts`             | Enroll in a course                                                                                     |
+| `complete-lesson.ts`    | Complete a lesson for a learner                                                                        |
+| `finalize-course.ts`    | Finalize a completed course                                                                            |
+| `issue-credential.ts`   | Issue credential NFT                                                                                   |
+| `fetch-config.ts`       | Display Config PDA                                                                                     |
+| `fetch-course.ts`       | Display Course PDA                                                                                     |
+| `fetch-enrollment.ts`   | Display Enrollment with lesson progress                                                                |
+| `check-xp.ts`           | Check XP balance for a wallet                                                                          |
+| **`e2e-flow.ts`**       | **Full learner flow: enroll → lessons → finalize → credential → close**                                |
 
 Scripts use hardcoded defaults matching the deployed mock data. Pass CLI args to override.
 

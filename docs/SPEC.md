@@ -27,11 +27,11 @@ The program records a learning platform's on-chain state: **courses**,
 learner **enrollments** (with per-lesson completion bitmaps), a soulbound
 **XP token** (Token-2022), soulbound **credential NFTs** and **achievement
 NFTs** (Metaplex Core), and a capability system of **minter roles** with XP
-caps. 18 instructions, 6 account types, 18 events, 34 custom errors.
+caps. 18 instructions, 6 account types, 18 events, 38 custom errors.
 
 ```text
                        ┌────────────────────────┐
-                       │   Config (PDA, 1×)     │  authority (Squads multisig)
+                       │   Config (PDA, 1×)     │  authority (platform admin)
                        │  authority             │  backend_signer (rotatable)
                        │  backend_signer        │  xp_mint  · paused (kill-switch)
                        └───────────┬────────────┘
@@ -66,10 +66,12 @@ key can therefore mint XP and credentials at will — bounded by the minter
 caps, the `MAX_XP_PER_MINT` ceiling, and the kill-switch — and must be
 rotated via `update_config` if compromised.
 
-`authority` (the platform multisig) can: rotate `backend_signer` and itself,
-pause/unpause minting, create/update/close courses, register/update/revoke
-minters, and create/deactivate achievement types. It cannot bypass PDAs or
-mint XP without the backend co-signature paths.
+`authority` (the platform admin key) can: rotate `backend_signer` and itself,
+pause/unpause minting, create/update courses, close a course nobody has
+enrolled in, register/update/revoke minters, and create/deactivate
+achievement types. It cannot bypass PDAs or mint XP without the backend
+co-signature paths. `initialize` is the one instruction gated on the
+program's **upgrade authority** instead (§5.1).
 
 ### External programs
 
@@ -138,61 +140,69 @@ or an `Option` changes state.
 | 40     | 32   | backend_signer | Pubkey                            | rotatable trusted signer |
 | 72     | 32   | xp_mint        | Pubkey                            | Token-2022 XP mint       |
 | 104    | 1    | paused         | bool                              | minting kill-switch      |
-| 105    | 7    | \_reserved     | `[u8;7]`                          | zero                     |
+| 105    | 4    | course_nonce   | u32                               | next Course generation   |
+| 109    | 3    | \_reserved     | `[u8;3]`                          | zero                     |
 | 112    | 1    | bump           | u8                                | canonical (255)          |
 
-`paused` occupies the first byte of the original 8-byte reserved area;
-legacy accounts deserialize it as `false`.
+`paused` and `course_nonce` occupy the original 8-byte reserved area; legacy
+accounts deserialize them as `false` / 0.
 
-### 4.2 Course — 224 bytes, seeds `["course", course_id]`
+### 4.2 Course — 253 bytes, seeds `["course", course_id]`
 
 Discriminator `[206,6,78,228,163,138,241,106]`. After the discriminator, true
 Borsh in this field order:
 
-| Field                        | Type             | Encoded size   | Constraints                                                 |
-| ---------------------------- | ---------------- | -------------- | ----------------------------------------------------------- |
-| course_id                    | String           | 4 + n (n ≤ 32) | non-empty                                                   |
-| creator ▲                    | Pubkey           | 32             | XP reward recipient (not an authority)                      |
-| content_tx_id ▲              | `[u8;32]`        | 32             | content reference (e.g. Arweave)                            |
-| version ▲                    | u16              | 2              | starts at 1; +1 per content update                          |
-| lesson_count ▲               | u8               | 1              | ≥ 1                                                         |
-| difficulty ▲                 | u8               | 1              | 1–3                                                         |
-| xp_per_lesson ▲              | u32              | 4              |                                                             |
-| track_id ▲                   | u16              | 2              |                                                             |
-| track_level ▲                | u8               | 1              |                                                             |
-| prerequisite ▲               | Option\<Pubkey\> | 1 (+32)        | prerequisite Course PDA                                     |
-| creator_reward_xp ▲          | u32              | 4              | per-completion creator reward                               |
-| min_completions_for_reward ▲ | u16              | 2              | reward window start                                         |
-| total_completions ▲          | u32              | 4              | counter                                                     |
-| total_enrollments ▲          | u32              | 4              | counter                                                     |
-| is_active ▲                  | bool             | 1              |                                                             |
-| created_at ▲                 | i64              | 8              |                                                             |
-| updated_at ▲                 | i64              | 8              |                                                             |
-| collection ▲                 | Pubkey           | 32             | mpl-core credential collection; `Pubkey::default()` = unset |
-| \_reserved ▲                 | `[u8;8]`         | 8              | zero                                                        |
-| bump ▲                       | u8               | 1              | canonical                                                   |
+| Field               | Type             | Encoded size   | Constraints                                                  |
+| ------------------- | ---------------- | -------------- | ------------------------------------------------------------ |
+| course_id           | String           | 4 + n (n ≤ 32) | non-empty                                                    |
+| creator ▲           | Pubkey           | 32             | XP reward recipient (not an authority); no setter            |
+| content_tx_id ▲     | `[u8;32]`        | 32             | content reference (e.g. Arweave)                             |
+| version ▲           | u16              | 2              | starts at 1; +1 per content update                           |
+| active_lessons ▲    | `[u64;4]`        | 32             | live lesson slots; never all zero                            |
+| difficulty ▲        | u8               | 1              | 1–3                                                          |
+| xp_per_lesson ▲     | u32              | 4              | ≤ 5000, and `xp_per_lesson × live / 2 ≤ 5000`                |
+| track_id ▲          | u16              | 2              | no setter                                                    |
+| track_level ▲       | u8               | 1              | no setter                                                    |
+| prerequisite ▲      | Option\<Pubkey\> | 1 (+32)        | prerequisite Course PDA                                      |
+| creator_reward_xp ▲ | u32              | 4              | per-finalize creator reward, ≤ 5000                          |
+| total_completions ▲ | u32              | 4              | counter                                                      |
+| total_enrollments ▲ | u32              | 4              | counter; never decreases                                     |
+| is_active ▲         | bool             | 1              |                                                              |
+| created_at ▲        | i64              | 8              |                                                              |
+| updated_at ▲        | i64              | 8              |                                                              |
+| collection ▲        | Pubkey           | 32             | mpl-core credential collection; `Pubkey::default()` = unset  |
+| generation ▲        | u32              | 4              | `Config.course_nonce` at creation; enrollments must match it |
+| \_reserved ▲        | `[u8;4]`         | 4              | zero                                                         |
+| bump ▲              | u8               | 1              | canonical                                                    |
 
 `course_id` and `prerequisite` are write-once (set at init); every other
-field's offset is stable for the account's lifetime. **Migration note**: the
-account grew 192 → 224 bytes when `collection` was added; pre-resize accounts
-cannot be deserialized and must be freed via `close_course` and recreated.
+field's offset is stable for the account's lifetime. `live` is the popcount
+of `active_lessons`. **Older layouts**: 192-byte (pre-`collection`) and
+224-byte (v1, `lesson_count: u8` + `min_completions_for_reward: u16`)
+accounts can still be freed by `close_course`; `create_course` only writes
+253-byte accounts.
 
-### 4.3 Enrollment — 127 bytes, seeds `["enrollment", course_id, learner]`
+### 4.3 Enrollment — 159 bytes, seeds `["enrollment", course_id, learner]`
 
-Discriminator `[249,210,64,145,197,241,57,51]`.
+Discriminator `[249,210,64,145,197,241,57,51]`. A Borsh body of at most 127
+bytes, then the rent payer at a fixed offset:
 
-| Field              | Type             | Encoded size | Notes                                                           |
-| ------------------ | ---------------- | ------------ | --------------------------------------------------------------- |
-| course             | Pubkey           | 32           | Course PDA                                                      |
-| enrolled_at        | i64              | 8            |                                                                 |
-| completed_at       | Option\<i64\>    | 1 (+8)       | None while in progress; set once by `finalize_course`           |
-| lesson_flags ▲     | `[u64;4]`        | 32           | 256-bit completion bitmap; lesson _i_ → word `i/64`, bit `i%64` |
-| credential_asset ▲ | Option\<Pubkey\> | 1 (+32)      | set once by `issue_credential`                                  |
-| \_reserved ▲       | `[u8;4]`         | 4            | zero                                                            |
-| bump ▲             | u8               | 1            | canonical                                                       |
+| Field              | Type             | Encoded size | Notes                                                         |
+| ------------------ | ---------------- | ------------ | ------------------------------------------------------------- |
+| course             | Pubkey           | 32           | Course PDA                                                    |
+| enrolled_at        | i64              | 8            |                                                               |
+| completed_at       | Option\<i64\>    | 1 (+8)       | None while in progress; set once by `finalize_course`         |
+| lesson_flags ▲     | `[u64;4]`        | 32           | 256-bit completion bitmap; slot _i_ → word `i/64`, bit `i%64` |
+| credential_asset ▲ | Option\<Pubkey\> | 1 (+32)      | set once by `issue_credential`                                |
+| course_gen ▲       | u32              | 4            | `Course.generation` at enroll (`_reserved` in the IDL)        |
+| bump ▲             | u8               | 1            | canonical                                                     |
+| payer              | Pubkey           | 32           | bytes 127..159; who funded the rent, refunded at close        |
 
 Both options transition **None → Some exactly once** and never revert, so the
-serialized length only grows (87 → 95 → 127 content bytes).
+serialized body only grows (87 → 95 → 127 bytes) and never reaches the payer.
+Borsh decoders read the body and ignore the payer as trailing bytes, so the
+IDL type has no `payer` field. Enrollments created before the payer was
+recorded are 127 bytes (body only).
 
 ### 4.4 MinterRole — 110 bytes, seeds `["minter", minter]`
 
@@ -267,6 +277,14 @@ One-time platform setup. **Args**: none.
 | 3   | backend_minter_role | w      | init at `["minter", authority]` (payer = authority, 110 B) |
 | 4   | system_program      |        | = System                                                   |
 | 5   | token_program       |        | = Token-2022 (2012)                                        |
+| 6   | program_data        |        | this program's ProgramData (see below)                     |
+
+`program_data` must be owned by the BPF upgradeable loader (3007), sit at
+`find_program_address([program_id], BPFLoaderUpgradeab1e…)` (2006), decode as
+`UpgradeableLoaderState::ProgramData` (3003), and name `authority` as its
+upgrade authority (6000). Only the upgrade authority can initialize, so
+nobody else can claim Config between the deploy and the operator's
+`initialize`; an immutable program cannot be initialized.
 
 **Effects** (in order): creates Config PDA; creates backend MinterRole PDA;
 creates the XP mint account (274 bytes = base mint + account-type byte +
@@ -275,7 +293,7 @@ extensions **before** the mint itself: NonTransferable, PermanentDelegate =
 Config PDA, MetadataPointer (authority = Config PDA, metadata = the mint
 itself), then `initialize_mint2` (decimals 0, mint authority = Config PDA, no
 freeze authority). Writes `Config { authority, backend_signer = authority,
-xp_mint, paused: false }` and `MinterRole { minter: authority, label:
+xp_mint, paused: false, course_nonce: 0 }` and `MinterRole { minter: authority, label:
 "backend", caps 0/0 (unlimited), active }`. Token metadata initialization is
 deferred to the client (Agave CPI-realloc restriction). **Events**: none.
 
@@ -284,18 +302,18 @@ deferred to the client (Agave CPI-realloc restriction). **Events**: none.
 **Args** (Borsh): `new_backend_signer: Option<Pubkey>`, `paused:
 Option<bool>`, `new_authority: Option<Pubkey>`.
 
-| #   | Account        | Access | Checks                                      |
-| --- | -------------- | ------ | ------------------------------------------- |
-| 0   | config         | w      | PDA; `config.authority == authority` @ 6000 |
-| 1   | authority      | s      |                                             |
-| 2…  | old MinterRole | w      | _optional remaining account_                |
+| #   | Account        | Access | Checks                                              |
+| --- | -------------- | ------ | --------------------------------------------------- |
+| 0   | config         | w      | PDA; `config.authority == authority` @ 6000         |
+| 1   | authority      | s      |                                                     |
+| 2   | old MinterRole | w      | _remaining account; required to rotate the backend_ |
 
 **Effects**: for each `Some` field, in this order —
 
-1. `new_backend_signer`: if a remaining account is present it must be a
-   program-owned MinterRole whose `minter == config.backend_signer` (any
-   violation → 6000) and is deactivated (`is_active = false`). Passing no
-   remaining account skips deactivation (deliberate, see §9.2). Sets
+1. `new_backend_signer`: remaining[0] must be the canonical
+   `["minter", config.backend_signer]` PDA (missing or wrong → 6035). If it
+   holds a live MinterRole it is deactivated (`is_active = false`); if the
+   old backend never held a role it is a no-op. Sets
    `config.backend_signer`; emits `ConfigUpdated{field:"backend_signer"}`.
 2. `paused`: sets the kill-switch; emits `MintingPauseSet{paused}`.
 3. `new_authority`: must not be the zero pubkey (→ 6000); sets
@@ -307,51 +325,65 @@ Option<bool>`, `new_authority: Option<Pubkey>`.
 **Args**: `course_id: String, creator: Pubkey, content_tx_id: [u8;32],
 lesson_count: u8, difficulty: u8, xp_per_lesson: u32, track_id: u16,
 track_level: u8, prerequisite: Option<Pubkey>, creator_reward_xp: u32,
-min_completions_for_reward: u16, collection: Option<Pubkey>`.
+collection: Option<Pubkey>`.
 
 | #   | Account        | Access | Checks                                                     |
 | --- | -------------- | ------ | ---------------------------------------------------------- |
-| 0   | course         | w      | init at `["course", course_id]` (payer = authority, 224 B) |
-| 1   | config         |        | PDA; `authority == config.authority` @ 6000                |
+| 0   | course         | w      | init at `["course", course_id]` (payer = authority, 253 B) |
+| 1   | config         | w      | PDA; `authority == config.authority` @ 6000                |
 | 2   | authority      | w,s    |                                                            |
 | 3   | system_program |        |                                                            |
 
 **Effects**: account creation happens **before** the handler's parameter
 checks (an existing PDA fails in the system program; a > 32-byte id aborts at
 seed derivation). Then requires id non-empty (6011), id ≤ 32 (6012),
-lesson_count ≥ 1 (6013), difficulty ∈ 1..=3 (6014). Writes the Course with
-`version = 1`, counters 0, `is_active = true`, `created_at = updated_at =
-now`, `collection = collection.unwrap_or_default()`. **Event**:
-`CourseCreated`.
+lesson_count ≥ 1 (6013), difficulty ∈ 1..=3 (6014), and the XP bounds
+(6033): `xp_per_lesson ≤ 5000`, `creator_reward_xp ≤ 5000`,
+`xp_per_lesson × lesson_count / 2 ≤ 5000` — the same amounts
+`complete_lesson` and `finalize_course` mint, so no mint in the course can
+exceed `MAX_XP_PER_MINT`. Takes `generation = config.course_nonce` and
+increments the nonce (checked, 6010). Writes the Course with `version = 1`,
+`active_lessons` = the dense mask of `lesson_count` slots, counters 0,
+`is_active = true`, `created_at = updated_at = now`, `collection =
+collection.unwrap_or_default()`. **Event**: `CourseCreated`.
 
 ### 5.4 `update_course` — `[81,217,18,192,129,233,129,231]`
 
 **Args**: `new_content_tx_id: Option<[u8;32]>, new_is_active: Option<bool>,
 new_xp_per_lesson: Option<u32>, new_creator_reward_xp: Option<u32>,
-new_min_completions_for_reward: Option<u16>, new_collection: Option<Pubkey>`.
+new_collection: Option<Pubkey>, new_active_lessons: Option<[u64;4]>` (the
+mask is 32 little-endian bytes on the wire).
 
 Accounts: config (PDA, `authority == config.authority` @ 6000), course (w,
 PDA over its stored `course_id`), authority (s).
 
-**Effects**: each `Some` field is applied; a content update also increments
-`version` (checked, → 6010). `new_collection` is **backfill-only**: allowed
+**Effects**: an all-zero `new_active_lessons` is refused (6013): it would
+make every enrollment finalizable with no lessons done. If any of
+`new_xp_per_lesson`, `new_creator_reward_xp`, `new_active_lessons` is Some,
+the resulting course must satisfy the §5.3 XP bounds, with `live` = popcount
+of the resulting mask (6033). Then each `Some` field is applied; a content
+update also increments `version` (checked, → 6010). `new_collection` is **backfill-only**: allowed
 only while `collection` is unset or unchanged (→ 6016) — re-pointing a live
 collection would orphan issued credentials. Always stamps `updated_at`.
 **Event**: `CourseUpdated`.
 
 ### 5.5 `close_course` — `[157,252,239,166,213,174,160,34]`
 
-**Args**: `course_id: String`. Migration tool for freeing Course PDAs
-(including stale 192-byte pre-resize accounts).
+**Args**: `course_id: String`. Frees a Course PDA nobody has enrolled in, so
+it can be recreated (including stale 192/224-byte accounts).
 
 Accounts: config (PDA, has-one authority @ 6000), course (w, **unchecked**:
 canonical-PDA check @ 2006, owner = program @ 6030), authority (s).
 
-**Effects**: requires the account to carry the Course discriminator (6030) —
-its only deserialization; drains all lamports to the authority (checked, →
-6010); truncates data to 0 and assigns the account back to the System
-program so `create_course` can recreate it. Enrollments for the id are
-untouched. **Event**: `CourseClosed`.
+**Effects**: requires the account to carry the Course discriminator (6030).
+A 253-byte account is parsed and must have `total_enrollments == 0`
+(6037); since `close_enrollment` never decrements the counter, a course
+anyone ever enrolled in can never be closed, so a close + recreate cannot
+reset learner progress (the fix for such a course is a new course id). Older
+layouts keep the discriminator-only check. Drains all lamports to the
+authority (checked, → 6010); truncates data to 0 and assigns the account back
+to the System program so `create_course` can recreate it. **Event**:
+`CourseClosed`.
 
 ### 5.6 `enroll` — `[58,12,36,3,142,28,1,43]`
 
@@ -360,7 +392,7 @@ untouched. **Event**: `CourseClosed`.
 | #   | Account                          | Access | Checks                                                              |
 | --- | -------------------------------- | ------ | ------------------------------------------------------------------- |
 | 0   | course                           | w      | PDA over the ARG course_id (stored bump) @ 2006                     |
-| 1   | enrollment                       | w      | init at `["enrollment", course_id, learner]` (payer = payer, 127 B) |
+| 1   | enrollment                       | w      | init at `["enrollment", course_id, learner]` (payer = payer, 159 B) |
 | 2   | learner                          | s      | consent + PDA seed; never debited (#1004)                           |
 | 3   | payer                            | w,s    | funds the Enrollment PDA rent; ANY signer                           |
 | 4   | system_program                   |        |                                                                     |
@@ -374,8 +406,11 @@ slots and self-pay, and sponsorship can move to a dedicated treasury wallet
 without a program upgrade. Its signer requirement is the safety property: an
 arbitrary funded account cannot be named as payer without its own signature.
 
-**Effects**: creates the enrollment PDA (re-enrolling on a live PDA fails in
-the system program — the intended double-enroll guard); requires
+**Effects**: creates the enrollment PDA (re-enrolling on a live PDA of the
+current course generation fails in the system program — the intended
+double-enroll guard). An existing 127- or 159-byte enrollment from an older
+generation is re-initialised in place instead, keeping its size and recorded
+payer (no rent is charged; the original payer funded it). Requires
 `course.is_active` (6001). If `course.prerequisite` is Some, ALL of the
 following must hold, each failing with 6007: two remaining accounts are
 present; both are owned by this program; remaining[0] key equals the
@@ -383,9 +418,10 @@ prerequisite; both deserialize as Course/Enrollment; the prerequisite
 enrollment's `course` equals the prerequisite; it is finalized
 (`completed_at` Some); and its address equals the canonical
 `["enrollment", prereq.course_id, learner]` PDA — i.e. the _enrolling
-learner's own_ completed enrollment. Writes the fresh Enrollment (options
-None, empty bitmap) and increments `course.total_enrollments` (checked →
-6010). **Event**: `Enrolled`.
+learner's own_ completed enrollment. Writes the fresh Enrollment body
+(options None, empty bitmap, `course_gen = course.generation`), records
+`payer` at bytes 127..159 of a newly created account, and increments
+`course.total_enrollments` (checked → 6010). **Event**: `Enrolled`.
 
 ### 5.7 `complete_lesson` — `[77,217,53,132,204,150,169,58]`
 
@@ -402,8 +438,9 @@ None, empty bitmap) and increments `course.total_enrollments` (checked →
 | 6   | backend_signer        | s      | `== config.backend_signer` @ 6000                                                            |
 | 7   | token_program         |        | = Token-2022 (2012)                                                                          |
 
-**Effects**: kill-switch off (6031); `lesson_index < lesson_count` (6002);
-bitmap bit unset (6003) → set it; `xp_per_lesson ≤ 5000` (6033); the token
+**Effects**: kill-switch off (6031); enrollment from the current course
+generation (6034); `lesson_index` is a live slot (its bit set in
+`active_lessons`, else 6002); bitmap bit unset (6003) → set it; `xp_per_lesson ≤ 5000` (6033); the token
 account must be a structurally valid, initialized Token-2022 account whose
 mint is `config.xp_mint` (6032) **and whose owner is the learner** (6000) —
 XP can only land in the learner's own account; mints `xp_per_lesson` signed
@@ -418,33 +455,40 @@ Accounts: config | course (w, PDA) | enrollment (w, PDA @ 2006, course-match
 creator_token_account (w, t22-owned @ 6000) | creator (`== course.creator` @ 6000) | xp_mint (w @ 6000) | backend_signer (s @ 6000) | token_program
 (2012).
 
-**Effects**: kill-switch off (6031); not already finalized (`completed_at`
-None, else 6005); popcount of the bitmap == `lesson_count` (6004); sets
-`completed_at = now`; increments `course.total_completions` (checked, 6010).
-**Completion bonus** = `xp_per_lesson × lesson_count / 2` (checked multiply →
-6010; ≤ 5000 → 6033); if > 0, minted to the learner after the same
-mint+owner ATA binding as 5.7. **Creator reward**: paid iff
-`total_completions ∈ [min_completions_for_reward,
-min_completions_for_reward + 100)` AND `creator_reward_xp > 0` — a bounded
-100-completion window that caps total creator XP per course at
-`100 × creator_reward_xp` and prevents unbounded post-threshold Sybil
-farming; the reward amount must be ≤ 5000 (6033) and the creator ATA is
-bound to mint + creator identity. **Event**: `CourseFinalized{ total_xp:
+**Effects**: kill-switch off (6031); enrollment from the current course
+generation (6034); not already finalized (`completed_at` None, else 6005);
+every live slot completed (`lesson_flags & active_lessons ==
+active_lessons`, else 6004); sets `completed_at = now`; increments
+`course.total_completions` (checked, 6010). **Completion bonus** =
+`xp_per_lesson × live / 2` (checked multiply → 6010; ≤ 5000 → 6033); if > 0,
+minted to the learner after the same mint+owner ATA binding as 5.7.
+**Creator reward**: `creator_reward_xp`, paid on every finalize when > 0
+(≤ 5000 → 6033); the creator ATA is bound to mint + creator identity. **Event**: `CourseFinalized{ total_xp:
 completed × xp_per_lesson (checked → 6010), bonus_xp, creator_xp }`.
 
 ### 5.9 `close_enrollment` — `[236,137,133,253,91,138,217,91]`
 
 **Args**: none. Learner-initiated unenroll.
 
-Accounts: course (PDA) | enrollment (w, PDA @ 2006, course-match @ 6009,
-closed to learner) | learner (w,s).
+| #   | Account        | Access | Checks                                                     |
+| --- | -------------- | ------ | ---------------------------------------------------------- |
+| 0   | course         |        | PDA                                                        |
+| 1   | enrollment     | w      | PDA @ 2006; course-match @ 6009                            |
+| 2   | learner        | w,s    |                                                            |
+| 3   | rent_recipient | w      | = the recorded payer (159 B) or the learner (127 B) @ 2012 |
+
+The rent goes back to whoever paid it. A 159-byte enrollment names its payer
+at bytes 127..159; a legacy 127-byte enrollment predates that and refunds the
+learner. Any other size fails 3003.
 
 **Effects**: refuses finalized or credentialed enrollments (6029) — they are
 permanent replay guards (closing one would free the PDA and allow re-earning
-XP); requires `now − enrolled_at > 86 400` seconds (24 h cooldown, 6008;
-subtraction checked → 6010). Emits `EnrollmentClosed{ completed: false,
-rent_reclaimed }` **then** drains lamports to the learner, assigns the
-account to the System program and truncates it to 0 bytes.
+XP); refuses an enrollment with any completed lesson (6036) — closing and
+re-enrolling would reset the bitmap and re-mint that XP; requires
+`now − enrolled_at > 86 400` seconds (24 h cooldown, 6008; subtraction
+checked → 6010). Emits `EnrollmentClosed{ completed: false, rent_reclaimed }`
+**then** drains lamports to `rent_recipient`, assigns the account to the
+System program and truncates it to 0 bytes.
 
 ### 5.10 `issue_credential` — `[255,193,171,224,68,171,194,87]`
 
@@ -631,42 +675,46 @@ Pubkey fields are 32 raw bytes. `initialize` emits nothing.
 
 Program errors (`Custom(6000 + n)`):
 
-| Code | Name                       | Message                                                      |
-| ---- | -------------------------- | ------------------------------------------------------------ |
-| 6000 | Unauthorized               | Unauthorized signer                                          |
-| 6001 | CourseNotActive            | Course not active                                            |
-| 6002 | LessonOutOfBounds          | Lesson index out of bounds                                   |
-| 6003 | LessonAlreadyCompleted     | Lesson already completed                                     |
-| 6004 | CourseNotCompleted         | Not all lessons completed                                    |
-| 6005 | CourseAlreadyFinalized     | Course already finalized                                     |
-| 6006 | CourseNotFinalized         | Course not finalized                                         |
-| 6007 | PrerequisiteNotMet         | Prerequisite not met                                         |
-| 6008 | UnenrollCooldown           | Close cooldown not met (24h)                                 |
-| 6009 | EnrollmentCourseMismatch   | Enrollment/course mismatch                                   |
-| 6010 | Overflow                   | Arithmetic overflow                                          |
-| 6011 | CourseIdEmpty              | Course ID is empty                                           |
-| 6012 | CourseIdTooLong            | Course ID exceeds max length                                 |
-| 6013 | InvalidLessonCount         | Lesson count must be at least 1                              |
-| 6014 | InvalidDifficulty          | Difficulty must be 1, 2, or 3                                |
-| 6015 | CredentialAssetMismatch    | Credential asset does not match enrollment record            |
-| 6016 | CollectionMismatch         | Collection does not match the course's credential collection |
-| 6017 | CredentialAlreadyIssued    | Credential already issued for this enrollment                |
-| 6018 | MinterNotActive            | Minter role is not active                                    |
-| 6019 | MinterAmountExceeded       | Amount exceeds minter's per-call limit                       |
-| 6020 | MinterCapExceeded          | Cumulative minted XP would exceed minter's total cap         |
-| 6021 | LabelTooLong               | Minter label exceeds max length                              |
-| 6022 | AchievementNotActive       | Achievement type is not active                               |
-| 6023 | AchievementSupplyExhausted | Achievement max supply reached                               |
-| 6024 | AchievementIdTooLong       | Achievement ID exceeds max length                            |
-| 6025 | AchievementNameTooLong     | Achievement name exceeds max length                          |
-| 6026 | AchievementUriTooLong      | Achievement URI exceeds max length                           |
-| 6027 | InvalidAmount              | Amount must be greater than zero                             |
-| 6028 | InvalidXpReward            | XP reward must be greater than zero                          |
-| 6029 | EnrollmentFinalized        | Finalized or credentialed enrollment cannot be closed        |
-| 6030 | InvalidCourseAccount       | Account is not a valid Course PDA                            |
-| 6031 | MintingPaused              | Minting is paused                                            |
-| 6032 | WrongXpMint                | Recipient token account mint does not match Config.xp_mint   |
-| 6033 | XpAmountExceedsMax         | XP amount exceeds the per-mint ceiling                       |
+| Code | Name                       | Message                                                            |
+| ---- | -------------------------- | ------------------------------------------------------------------ |
+| 6000 | Unauthorized               | Unauthorized signer                                                |
+| 6001 | CourseNotActive            | Course not active                                                  |
+| 6002 | LessonOutOfBounds          | Lesson index out of bounds                                         |
+| 6003 | LessonAlreadyCompleted     | Lesson already completed                                           |
+| 6004 | CourseNotCompleted         | Not all lessons completed                                          |
+| 6005 | CourseAlreadyFinalized     | Course already finalized                                           |
+| 6006 | CourseNotFinalized         | Course not finalized                                               |
+| 6007 | PrerequisiteNotMet         | Prerequisite not met                                               |
+| 6008 | UnenrollCooldown           | Close cooldown not met (24h)                                       |
+| 6009 | EnrollmentCourseMismatch   | Enrollment/course mismatch                                         |
+| 6010 | Overflow                   | Arithmetic overflow                                                |
+| 6011 | CourseIdEmpty              | Course ID is empty                                                 |
+| 6012 | CourseIdTooLong            | Course ID exceeds max length                                       |
+| 6013 | InvalidLessonCount         | Lesson count must be at least 1                                    |
+| 6014 | InvalidDifficulty          | Difficulty must be 1, 2, or 3                                      |
+| 6015 | CredentialAssetMismatch    | Credential asset does not match enrollment record                  |
+| 6016 | CollectionMismatch         | Collection does not match the course's credential collection       |
+| 6017 | CredentialAlreadyIssued    | Credential already issued for this enrollment                      |
+| 6018 | MinterNotActive            | Minter role is not active                                          |
+| 6019 | MinterAmountExceeded       | Amount exceeds minter's per-call limit                             |
+| 6020 | MinterCapExceeded          | Cumulative minted XP would exceed minter's total cap               |
+| 6021 | LabelTooLong               | Minter label exceeds max length                                    |
+| 6022 | AchievementNotActive       | Achievement type is not active                                     |
+| 6023 | AchievementSupplyExhausted | Achievement max supply reached                                     |
+| 6024 | AchievementIdTooLong       | Achievement ID exceeds max length                                  |
+| 6025 | AchievementNameTooLong     | Achievement name exceeds max length                                |
+| 6026 | AchievementUriTooLong      | Achievement URI exceeds max length                                 |
+| 6027 | InvalidAmount              | Amount must be greater than zero                                   |
+| 6028 | InvalidXpReward            | XP reward must be greater than zero                                |
+| 6029 | EnrollmentFinalized        | Finalized or credentialed enrollment cannot be closed              |
+| 6030 | InvalidCourseAccount       | Account is not a valid Course PDA                                  |
+| 6031 | MintingPaused              | Minting is paused                                                  |
+| 6032 | WrongXpMint                | Recipient token account mint does not match Config.xp_mint         |
+| 6033 | XpAmountExceedsMax         | XP amount exceeds the per-mint ceiling                             |
+| 6034 | StaleEnrollment            | Enrollment belongs to a superseded course generation               |
+| 6035 | OldMinterRoleMissing       | Backend rotation requires the previous backend minter role account |
+| 6036 | EnrollmentInProgress       | Enrollment with completed lessons cannot be closed                 |
+| 6037 | CourseHasEnrollments       | Course with enrollments cannot be closed                           |
 
 Framework-space errors surfaced by validation: 101
 InstructionFallbackNotFound, 102 InstructionDidNotDeserialize, 2000
@@ -687,10 +735,10 @@ token-program-style `InvalidAccountData` / `UninitializedAccount`.
 | MAX_ACHIEVEMENT_ID_LEN   | 32 bytes        | create_achievement_type                            |
 | MAX_ACHIEVEMENT_NAME_LEN | 64 bytes        | create_achievement_type                            |
 | MAX_ACHIEVEMENT_URI_LEN  | 128 bytes       | create_achievement_type                            |
-| CREATOR_REWARD_WINDOW    | 100 completions | finalize_course                                    |
 | Unenroll cooldown        | 86 400 s (24 h) | close_enrollment                                   |
 | XP mint decimals         | 0               | initialize                                         |
 | XP mint space            | 274 bytes       | initialize                                         |
+| Enrollment size          | 159 bytes       | enroll (127-byte body + 32-byte payer)             |
 
 ## 9. Protocol invariants & security notes
 
@@ -698,13 +746,9 @@ token-program-style `InvalidAccountData` / `UninitializedAccount`.
    paths (complete_lesson, finalize_course, reward_xp, award_achievement,
    issue_credential, upgrade_credential). Admin/course/minter management
    stays available while paused.
-2. **Backend rotation is permissive about the old role** (§5.2): when
-   `new_backend_signer` is set without passing the old MinterRole, the old
-   role stays active. The old key can then still co-sign nothing (it is no
-   longer `config.backend_signer`) but its MinterRole could be reused if the
-   key is ever re-appointed. Operational guidance: always pass the old role;
-   enforcing it on-chain is a known follow-up that would change the
-   instruction contract (the test suite exercises the permissive path).
+2. **Backend rotation retires the old role** (§5.2): rotating requires the
+   canonical `["minter", old_backend]` PDA (6035) and deactivates a live
+   role, so a re-appointed old key never inherits an active MinterRole.
 3. **Single-step authority rotation**: `new_authority` takes effect
    immediately (zero key rejected). A two-step nominate/accept flow needs 32
    bytes of new Config state — a layout migration (only 7 reserved bytes
@@ -717,16 +761,25 @@ token-program-style `InvalidAccountData` / `UninitializedAccount`.
    finalize_course, award_achievement) bind the destination ATA's mint AND
    owner; `reward_xp` binds mint only (no on-chain identity exists) and is
    bounded by the caps.
-6. **Creator-reward window arithmetic**: `min_completions_for_reward` is a
-   u16, so `min + 100` computed in u32 can never overflow; the
-   saturating add in the implementations is provably equivalent to a checked
-   add here.
+6. **XP bounds at write time**: `create_course` / `update_course` refuse
+   values a single mint could not carry (6033) and an all-zero lesson mask
+   (6013), so a course can never brick its own lessons or finalizes, and can
+   never be finalizable with zero lessons.
 7. **XP is soulbound**: the mint is NonTransferable; Config holds a
    PermanentDelegate (future clawback/administration) and is the only mint
    authority. Credentials/achievements carry
    `PermanentFreezeDelegate{frozen: true}` from creation.
 8. **No reentrancy surface**: all CPIs target fixed, validated program ids
    (Token-2022, mpl-core, System); no user-supplied program is ever invoked.
+9. **Rent goes back to its payer**: `close_enrollment` pays the recorded
+   payer (§5.9), so a sponsored enrollment's rent returns to the sponsor and
+   the learner, who must still sign, cannot redirect it.
+10. **A close + recreate cannot reset progress**: `close_course` refuses
+    any course with `total_enrollments > 0` (6037), and enrollments carry the
+    course generation, so no `Config.authority` instruction can wipe an
+    enrolled learner's bitmap.
+11. **Initialization is bound to the deployer**: only the program's upgrade
+    authority can run `initialize` (§5.1).
 
 ## Implementations
 

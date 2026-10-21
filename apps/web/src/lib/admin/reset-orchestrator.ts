@@ -27,6 +27,12 @@ import type { RecreateCourseResult, RecreatePlan } from "./recreate-course";
  * feature. The close lives inside `recreateCourse`; the orchestrator only
  * sequences calls to it and runs the B4 `verifyReset` between each.
  *
+ * ONLY NEVER-ENROLLED COURSES. The program refuses `close_course` on a course
+ * whose `total_enrollments` is above 0 (6037), and the counter never goes
+ * down, so a course anyone enrolled in can no longer be reset this way. The
+ * run refuses such courses up front (dry-run WOULD-BLOCK, execute STOP before
+ * the first close) instead of failing on-chain mid-run.
+ *
  * FAIL-CLOSED + STOP-LOUD are the whole point. Every integrity problem raises a
  * {@link ResetStopError} that the CLI prints and exits non-zero on. A verify
  * failure (or a `recreateCourse` throw) on course N halts the run BEFORE course
@@ -545,6 +551,45 @@ export function assertLiveLessonCountsPositive(snapshot: ResetSnapshot): void {
 }
 
 // -----------------------------------------------------------------------------
+// Zero-enrollment precondition (the program's close_course rule)
+// -----------------------------------------------------------------------------
+
+/**
+ * Shared by the execute-mode STOP and the dry-run WOULD-BLOCK. The program
+ * refuses `close_course` once a course has had an enrollment (6037), on both
+ * clusters, so the recreate would only fail on-chain.
+ */
+export const ENROLLED_REFUSAL =
+  "has had enrollments — the program refuses close_course on a course anyone " +
+  "enrolled in (CourseHasEnrollments), so it cannot be recreated; publish it " +
+  "under a new course id instead";
+
+/**
+ * Course ids whose `total_enrollments` is not 0. A missing or non-numeric
+ * counter can't prove zero, so it counts as enrolled.
+ */
+export function findEnrolledCourses(snapshot: ResetSnapshot): string[] {
+  return snapshot.courses
+    .filter(
+      (c) =>
+        !(typeof c.totalEnrollments === "number" && c.totalEnrollments === 0)
+    )
+    .map((c) => c.courseId);
+}
+
+/** Whole-run precondition: refuse the ENTIRE run if any course has had an enrollment. */
+export function assertNoEnrolledCourses(snapshot: ResetSnapshot): void {
+  const enrolled = findEnrolledCourses(snapshot);
+  if (enrolled.length > 0) {
+    throw new ResetStopError(
+      `${enrolled.length} course(s) ${ENROLLED_REFUSAL}. Course(s): ${enrolled.join(", ")}`,
+      enrolled,
+      "preflight"
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
 // The orchestrator
 // -----------------------------------------------------------------------------
 
@@ -621,6 +666,7 @@ export async function orchestrateReset(
     );
     const blockers: string[] = [];
     const zeroLessonCourses = new Set(findZeroLessonCourses(preSnapshot));
+    const enrolledCourses = new Set(findEnrolledCourses(preSnapshot));
     for (const courseId of courseIds) {
       const preCourse = preSnapshot.courses.find(
         (c) => c.courseId === courseId
@@ -635,6 +681,11 @@ export async function orchestrateReset(
       if (zeroLessonCourses.has(courseId)) {
         blockers.push(`${courseId}: ${ZERO_LESSON_REFUSAL}`);
         log(`  WOULD-BLOCK: ${ZERO_LESSON_REFUSAL}`);
+        continue;
+      }
+      if (enrolledCourses.has(courseId)) {
+        blockers.push(`${courseId}: ${ENROLLED_REFUSAL}`);
+        log(`  WOULD-BLOCK: ${ENROLLED_REFUSAL}`);
         continue;
       }
       try {
@@ -677,6 +728,8 @@ export async function orchestrateReset(
   // fail create_course (permanent PDA loss), so refuse the ENTIRE run here,
   // before the first close, rather than mid-loop after N courses are already down.
   assertLiveLessonCountsPositive(preSnapshot);
+  // Same for a course anyone enrolled in: the program would refuse its close.
+  assertNoEnrolledCourses(preSnapshot);
 
   const recreated: string[] = [];
   for (const courseId of courseIds) {

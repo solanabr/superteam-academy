@@ -40,9 +40,7 @@ How it is enforced, in layers:
   methods and returns the acting admin's id for attribution.
 
 > The old `ADMIN_SECRET` / HMAC-`admin_session`-cookie system is **retired** and
-> can be deleted from your Vercel environment. One straggler: the operator script
-> `scripts/init-program.ts` still reads `ADMIN_SECRET` as a bearer token for its
-> admin API calls, and is therefore broken against the current routes.
+> can be deleted from your Vercel environment.
 
 ## Required environment variables
 

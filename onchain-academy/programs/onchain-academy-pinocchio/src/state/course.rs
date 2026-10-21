@@ -260,6 +260,38 @@ impl CourseOffsets {
     }
 }
 
+/// Write-time XP bounds for `create_course` / `update_course`. Each value is
+/// checked against what one mint may carry, using the same formulas the mint
+/// sites apply, so no lesson or finalize in a course can exceed
+/// `MAX_XP_PER_MINT` (6033):
+/// * `complete_lesson` mints `xp_per_lesson`;
+/// * `finalize_course` mints `xp_per_lesson * live_lessons / 2` and
+///   `creator_reward_xp`.
+pub fn check_xp_bounds(
+    xp_per_lesson: u32,
+    creator_reward_xp: u32,
+    live_lessons: u32,
+) -> Result<(), ProgramError> {
+    use crate::consts::MAX_XP_PER_MINT;
+    use crate::errors::{academy, AcademyError};
+    if xp_per_lesson as u64 > MAX_XP_PER_MINT || creator_reward_xp as u64 > MAX_XP_PER_MINT {
+        return Err(academy(AcademyError::XpAmountExceedsMax));
+    }
+    let total_lesson_xp = (xp_per_lesson as u64)
+        .checked_mul(live_lessons as u64)
+        .ok_or_else(|| academy(AcademyError::Overflow))?;
+    if total_lesson_xp / 2 > MAX_XP_PER_MINT {
+        return Err(academy(AcademyError::XpAmountExceedsMax));
+    }
+    Ok(())
+}
+
+/// Popcount of a 4-word lesson mask.
+#[inline(always)]
+pub fn mask_popcount(mask: &[u64; 4]) -> u32 {
+    mask.iter().map(|w| w.count_ones()).sum()
+}
+
 /// Dense mask for a course's initial `lesson_count` lessons: bits
 /// `0..lesson_count` set. New courses are always dense; slots are retired later
 /// via `update_course(new_active_lessons)`, never at creation. `lesson_count` is

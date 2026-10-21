@@ -48,9 +48,19 @@ export function buildEnrollInstruction(
   });
 }
 
+/**
+ * `close_enrollment`. The rent goes to `rentRecipient`, which the program
+ * requires to be the payer recorded at enroll (or the learner for an
+ * enrollment that predates the payer field): read it with
+ * `fetchEnrollmentRentRecipient`. The learner still signs.
+ *
+ * The recipient is the fourth and last account, so a program build that reads
+ * only three accounts ignores it.
+ */
 export function buildCloseEnrollmentInstruction(
   courseId: string,
   learner: PublicKey,
+  rentRecipient: PublicKey,
   programId: PublicKey = getProgramId()
 ): TransactionInstruction {
   const [coursePDA] = findCoursePDA(courseId, programId);
@@ -63,7 +73,7 @@ export function buildCloseEnrollmentInstruction(
       { pubkey: coursePDA, isSigner: false, isWritable: false },
       { pubkey: enrollmentPDA, isSigner: false, isWritable: true },
       { pubkey: learner, isSigner: true, isWritable: true },
-      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+      { pubkey: rentRecipient, isSigner: false, isWritable: true },
     ],
     programId,
     data,

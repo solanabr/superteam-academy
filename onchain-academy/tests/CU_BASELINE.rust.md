@@ -8,25 +8,25 @@ Regenerate: `CU_BASELINE_REGEN=1 cargo test --manifest-path tests/differential/C
 
 | Instruction                 |    CU |
 | --------------------------- | ----: |
-| initialize                  | 15662 |
+| initialize                  | 18780 |
 | update_config (pause)       |   729 |
 | update_config (resume)      |   727 |
-| create_course               |  4596 |
-| update_course               |  2696 |
+| create_course               |  4617 |
+| update_course               |  2865 |
 | register_minter             |  4323 |
 | update_minter               |  2604 |
 | revoke_minter               |  2628 |
-| enroll                      |  8996 |
+| enroll                      |  8980 |
 | complete_lesson             |  7703 |
 | finalize_course             |  8436 |
 | reward_xp                   |  6103 |
-| close_enrollment            |  4438 |
+| close_enrollment            |  4524 |
 | create_achievement_type     | 11106 |
 | award_achievement           | 36449 |
 | deactivate_achievement_type |  2926 |
 | issue_credential            | 31135 |
 | upgrade_credential          | 37009 |
-| close_course                |  8522 |
+| close_course                |  8682 |
 
 **Measured 19 transactions across all 18 instructions.** `update_config` is
 measured for both pause and resume; every other instruction contributes one row.

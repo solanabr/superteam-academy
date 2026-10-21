@@ -23,16 +23,24 @@ fn same_seed_replays_the_same_sequence() {
         }
         (s.sequence, s.stats)
     };
-    let (seq_a, stats_a) = run(42);
-    let (seq_b, stats_b) = run(42);
-    assert_eq!(seq_a, seq_b);
-    assert_eq!(format!("{stats_a:?}"), format!("{stats_b:?}"));
+    let mut all = Vec::new();
+    for seed in [42u64, 7, 1234] {
+        let (seq_a, stats_a) = run(seed);
+        let (seq_b, stats_b) = run(seed);
+        assert_eq!(seq_a, seq_b, "seed {seed}");
+        assert_eq!(
+            format!("{stats_a:?}"),
+            format!("{stats_b:?}"),
+            "seed {seed}"
+        );
+        all.extend(seq_a);
+    }
     assert!(
-        seq_a.iter().any(|s| s.starts_with("warp(+")),
+        all.iter().any(|s| s.starts_with("warp(+")),
         "the clock never moved"
     );
     assert!(
-        seq_a.iter().any(|s| s.starts_with("hostile(")),
+        all.iter().any(|s| s.starts_with("hostile(")),
         "the hostile account swaps never ran"
     );
 }
@@ -66,6 +74,48 @@ fn flows_reach_their_success_paths() {
     assert!(
         stats.course_recreations > 0,
         "no course recreate succeeded: {stats:?}"
+    );
+    assert!(
+        stats.sponsored_enrollments > 0 && stats.sponsor_refunds > 0,
+        "no sponsored enrollment was enrolled and refunded: {stats:?}"
+    );
+    assert!(
+        stats.course_updates > 0,
+        "no update_course succeeded: {stats:?}"
+    );
+    assert!(
+        stats.stale_reenrollments > 0,
+        "no stale enrollment was re-initialised: {stats:?}"
+    );
+}
+
+/// The pre-mainnet guards must each be hit: an impostor `initialize`, a
+/// refused `update_course` (zero mask or XP over a mint) and a refused
+/// `close_course` on an enrolled course.
+#[test]
+fn hardening_guards_are_reached() {
+    let mut stats = Stats::default();
+    for seed in 0..12u64 {
+        let mut s = Session::new(seed);
+        if !s.init_iteration().expect("init") {
+            continue;
+        }
+        for _ in 0..40 {
+            s.step().expect("step");
+        }
+        stats.merge(&s.stats);
+    }
+    assert!(
+        stats.impostor_inits_rejected > 0,
+        "no impostor initialize was refused: {stats:?}"
+    );
+    assert!(
+        stats.course_update_rejections > 0,
+        "no bad update_course was refused: {stats:?}"
+    );
+    assert!(
+        stats.close_course_refusals > 0,
+        "close_course was never refused for an enrolled course: {stats:?}"
     );
 }
 

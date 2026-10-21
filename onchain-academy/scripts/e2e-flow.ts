@@ -152,6 +152,7 @@ async function main() {
           course: coursePda,
           enrollment: enrollmentPda,
           learner,
+          payer: learner,
           systemProgram: SystemProgram.programId,
         })
         .rpc();
@@ -336,6 +337,8 @@ async function main() {
         course: coursePda,
         enrollment: enrollmentPda,
         learner,
+        // This flow self-pays the enrollment, so the learner gets the rent.
+        rentRecipient: learner,
       })
       .rpc();
     console.log(`  ✓ Enrollment closed, rent reclaimed — ${txUrl(tx)}`);

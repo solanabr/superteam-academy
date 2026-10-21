@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
-import { buildEnrollInstruction } from "../instructions";
+import {
+  buildCloseEnrollmentInstruction,
+  buildEnrollInstruction,
+} from "../instructions";
 import { findCoursePDA, findEnrollmentPDA } from "../pda";
 
 /**
@@ -81,5 +84,47 @@ describe("buildEnrollInstruction", () => {
     // collide on a single enrollment account owned by the sponsor.
     expect(ix.keys[1]!.pubkey).toEqual(learnerPDA);
     expect(ix.keys[1]!.pubkey).not.toEqual(sponsorPDA);
+  });
+});
+
+describe("buildCloseEnrollmentInstruction", () => {
+  const learner = Keypair.generate().publicKey;
+
+  it("lays out course, enrollment, learner and the rent recipient last", () => {
+    const sponsor = Keypair.generate().publicKey;
+    const ix = buildCloseEnrollmentInstruction(
+      COURSE_ID,
+      learner,
+      sponsor,
+      PROGRAM_ID
+    );
+    const [coursePDA] = findCoursePDA(COURSE_ID, PROGRAM_ID);
+    const [enrollmentPDA] = findEnrollmentPDA(COURSE_ID, learner, PROGRAM_ID);
+
+    expect(ix.keys).toHaveLength(4);
+    expect(ix.keys[0]).toMatchObject({
+      pubkey: coursePDA,
+      isSigner: false,
+      isWritable: false,
+    });
+    expect(ix.keys[1]).toMatchObject({
+      pubkey: enrollmentPDA,
+      isSigner: false,
+      isWritable: true,
+    });
+    // The learner signs. It stays writable: a program build that predates the
+    // recorded payer refunds the learner and requires it.
+    expect(ix.keys[2]).toMatchObject({
+      pubkey: learner,
+      isSigner: true,
+      isWritable: true,
+    });
+    // The recipient is credited, so it must be writable, and never signs.
+    expect(ix.keys[3]).toMatchObject({
+      pubkey: sponsor,
+      isSigner: false,
+      isWritable: true,
+    });
+    expect(ix.programId).toEqual(PROGRAM_ID);
   });
 });

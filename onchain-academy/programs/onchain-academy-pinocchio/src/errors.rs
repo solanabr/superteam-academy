@@ -55,6 +55,7 @@ pub enum AcademyError {
     StaleEnrollment = 34,
     OldMinterRoleMissing = 35,
     EnrollmentInProgress = 36,
+    CourseHasEnrollments = 37,
 }
 
 macro_rules! anchor_log {
@@ -73,7 +74,7 @@ macro_rules! anchor_log {
 
 /// One pre-baked log line per `AcademyError` variant, indexed by ordinal.
 /// Names/numbers/messages match the IDL `errors` table verbatim.
-const ACADEMY_LOGS: [&str; 37] = [
+const ACADEMY_LOGS: [&str; 38] = [
     anchor_log!("Unauthorized", 6000, "Unauthorized signer"),
     anchor_log!("CourseNotActive", 6001, "Course not active"),
     anchor_log!("LessonOutOfBounds", 6002, "Lesson index out of bounds"),
@@ -190,6 +191,11 @@ const ACADEMY_LOGS: [&str; 37] = [
         "EnrollmentInProgress",
         6036,
         "Enrollment with completed lessons cannot be closed"
+    ),
+    anchor_log!(
+        "CourseHasEnrollments",
+        6037,
+        "Course with enrollments cannot be closed"
     ),
 ];
 

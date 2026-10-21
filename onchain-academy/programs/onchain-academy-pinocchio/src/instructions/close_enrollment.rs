@@ -1,20 +1,26 @@
 //! `close_enrollment()` — voluntary unenroll after a 24h cooldown; refuses
-//! finalized/credentialed enrollments (permanent replay guards).
+//! finalized/credentialed enrollments (permanent replay guards) and any
+//! enrollment with a completed lesson.
 //! Accounts: course (ro, PDA) | enrollment (mut, PDA, course-match @
-//! EnrollmentCourseMismatch, close = learner) | learner (signer, mut).
+//! EnrollmentCourseMismatch, close = rent_recipient) | learner (signer, mut) |
+//! rent_recipient (mut, address = the payer recorded at enroll).
+//!
+//! The rent goes back to whoever paid it: the payer stored in a 159-byte
+//! enrollment, or the learner for a legacy 127-byte enrollment that predates
+//! the payer field (they were the only possible recipient then).
 
 use pinocchio::{AccountView, ProgramResult};
 
 use crate::consts::*;
 use crate::cpi::system::close_account;
-use crate::errors::{academy, AcademyError};
+use crate::errors::{academy, fw, AcademyError, CONSTRAINT_ADDRESS};
 use crate::state::course::CourseOffsets;
-use crate::state::enrollment::EnrollmentOffsets;
+use crate::state::enrollment::{rent_recipient as expected_rent_recipient, EnrollmentOffsets};
 use crate::validation as v;
 use crate::{events, require, take_accounts};
 
 pub fn process(accounts: &mut [AccountView], _data: &[u8]) -> ProgramResult {
-    take_accounts!([course, enrollment, learner] = accounts);
+    take_accounts!([course, enrollment, learner, rent_recipient] = accounts);
 
     // -- extraction phase --------------------------------------------------
     v::expect_account(course, &ACC_COURSE)?;
@@ -57,6 +63,15 @@ pub fn process(accounts: &mut [AccountView], _data: &[u8]) -> ProgramResult {
         AcademyError::EnrollmentCourseMismatch,
     )?;
     v::expect_writable(learner)?;
+    // rent_recipient: `address = <recorded payer>` (legacy: the learner).
+    {
+        let d = enrollment.try_borrow()?;
+        let expected = expected_rent_recipient(&d, learner.address())?;
+        if rent_recipient.address() != &expected {
+            return Err(fw(CONSTRAINT_ADDRESS));
+        }
+    }
+    v::expect_writable(rent_recipient)?;
 
     // -- handler -------------------------------------------------------------
     let now = v::now()?;
@@ -92,5 +107,5 @@ pub fn process(accounts: &mut [AccountView], _data: &[u8]) -> ProgramResult {
         now,
     );
 
-    close_account(enrollment, learner)
+    close_account(enrollment, rent_recipient)
 }
