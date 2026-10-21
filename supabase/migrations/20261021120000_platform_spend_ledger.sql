@@ -19,8 +19,10 @@
 -- uses up the generation's sponsorship.
 --
 -- `superseded`: a pending sponsorship the learner abandoned (no on-chain trace
--- when they asked again). Settlement still follows it, so if it lands late its
--- spend is recorded.
+-- when they asked again). Settlement still follows it. If it lands after all
+-- it becomes `superseded_landed`: its spend is recorded and the app counts it
+-- as a used slot, but it stays out of the unique index, so it can never
+-- collide with the replacement that holds the slot.
 --
 -- `platform_alert_state` + `claim_platform_alert()` throttle the cron's balance
 -- snapshots and low-balance alerts across serverless invocations.
@@ -55,7 +57,12 @@ CREATE TABLE IF NOT EXISTS public.platform_spend (
   CONSTRAINT platform_spend_payer_role_check
     CHECK (payer_role IN ('sponsor', 'backend', 'authority')),
   CONSTRAINT platform_spend_status_check
-    CHECK (status IN ('pending', 'confirmed', 'failed', 'expired', 'superseded')),
+    CHECK (
+      status IN (
+        'pending', 'confirmed', 'failed', 'expired',
+        'superseded', 'superseded_landed'
+      )
+    ),
   CONSTRAINT platform_spend_amounts_check
     CHECK (
       COALESCE(fee_lamports, 0) >= 0

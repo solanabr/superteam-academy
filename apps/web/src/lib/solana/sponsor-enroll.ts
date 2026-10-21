@@ -4,7 +4,7 @@ import { after } from "next/server";
 import { PublicKey, Transaction } from "@solana/web3.js";
 import bs58 from "bs58";
 import {
-  findLiveSponsoredEnroll,
+  findSponsorshipRows,
   reserveSponsoredEnroll,
   supersedeSponsoredEnroll,
   type SponsorshipAction,
@@ -91,22 +91,31 @@ export class CourseNotOnChainError extends Error {
 }
 
 /**
- * Where the once-per slot stands. A pending row is settled first: it may have
- * landed (the slot is used), failed or expired (free again), or still be in
- * flight. A pending row the cluster has never seen was abandoned (a cancelled
- * or failed signature): it is superseded so the learner can try again at
- * once. If it lands after all, the replacement fails for a fee, and
- * settlement still records the late landing against the slot.
+ * Where the once-per slot stands, from every row for this key, settled inline
+ * in one pass (one signature-status lookup):
+ * - used: a sponsorship landed, including an abandoned one that landed after
+ *   all (`superseded_landed`), even if the cron has not seen it yet;
+ * - in flight: the live attempt, or an abandoned one, is landing right now;
+ * - free: nothing landed and nothing is landing. A live attempt the cluster
+ *   has never seen was abandoned (a cancelled or failed signature): it is
+ *   superseded so the learner can try again at once. If it lands later, the
+ *   next check finds it and the slot counts as used.
  */
 async function slotState(
   action: SponsorshipAction,
   key: SponsorshipKey
 ): Promise<"free" | "used" | "in_flight"> {
-  const prior = await findLiveSponsoredEnroll(action, key);
-  if (!prior) return "free";
-  if (prior.status === "confirmed") return "used";
+  const rows = await findSponsorshipRows(action, key);
+  const used = (status: string) =>
+    status === "confirmed" || status === "superseded_landed";
+  if (rows.some((r) => used(r.status))) return "used";
 
-  const settled = await settleRows([{ ...prior, status: "pending" }], {
+  const open = rows.filter(
+    (r) => r.status === "pending" || r.status === "superseded"
+  );
+  if (open.length === 0) return "free";
+
+  const settled = await settleRows(open, {
     ...defaultSettleDeps(getConnection()),
     // The settled event goes out after the response, not on the learner's
     // request path.
@@ -114,14 +123,26 @@ async function slotState(
       after(() => emitServerEvent(event));
     },
   });
-  const outcome: SettleOutcome = settled.get(prior.signature) ?? "pending";
-  if (outcome === "confirmed") return "used";
-  if (outcome === "unseen") {
-    return (await supersedeSponsoredEnroll(prior.signature))
-      ? "free"
-      : "in_flight";
+  const outcomeOf = (signature: string): SettleOutcome =>
+    settled.get(signature) ?? "pending";
+
+  if (open.some((r) => used(outcomeOf(r.signature)))) return "used";
+  // Seen on-chain but not final yet: a live or an abandoned attempt.
+  if (
+    open.some((r) => {
+      const outcome = outcomeOf(r.signature);
+      return outcome === "pending" || outcome === "superseded";
+    })
+  ) {
+    return "in_flight";
   }
-  return outcome === "pending" ? "in_flight" : "free";
+  const abandoned = open.find(
+    (r) => r.status === "pending" && outcomeOf(r.signature) === "unseen"
+  );
+  if (abandoned && !(await supersedeSponsoredEnroll(abandoned.signature))) {
+    return "in_flight";
+  }
+  return "free";
 }
 
 export async function buildSponsoredEnrollTransaction(

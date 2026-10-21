@@ -23,7 +23,7 @@ vi.mock("@/lib/solana/sponsor", () => ({ spendCluster: () => "devnet" }));
 vi.mock("@/lib/logging", () => ({ logEvent: h.logEvent }));
 
 import {
-  findLiveSponsoredEnroll,
+  findSponsorshipRows,
   LedgerUnavailableError,
   recordPlatformTx,
   recordSponsoredEnrollRefund,
@@ -159,9 +159,24 @@ describe("once per wallet and course", () => {
     await expect(reserveSponsoredEnroll(enroll("SIG2"))).resolves.toBe(
       "conflict"
     );
-    await expect(
-      findLiveSponsoredEnroll("enroll_sponsor", KEY)
-    ).resolves.toMatchObject({ signature: "SIG1", status: "confirmed" });
+    await expect(findSponsorshipRows("enroll_sponsor", KEY)).resolves.toEqual([
+      expect.objectContaining({ signature: "SIG1", status: "confirmed" }),
+    ]);
+  });
+
+  it("returns abandoned rows with the live one, but not settled-free ones", async () => {
+    await reserveSponsoredEnroll(enroll("A"));
+    await supersedeSponsoredEnroll("A");
+    await reserveSponsoredEnroll(enroll("B"));
+    await reserveSponsoredEnroll(enroll("X", { courseGeneration: 99 }));
+    h.db.tables.platform_spend![2]!.status = "expired";
+
+    const rows = await findSponsorshipRows("enroll_sponsor", KEY);
+
+    expect(rows.map((r) => [r.signature, r.status])).toEqual([
+      ["A", "superseded"],
+      ["B", "pending"],
+    ]);
   });
 
   it("is per course: another course is a separate slot", async () => {
@@ -252,6 +267,24 @@ describe("recordSponsoredEnrollRefund", () => {
       payer: "SponsorPubkey",
       payer_role: "sponsor",
       status: "pending",
+    });
+  });
+
+  it("also attributes a refund to an abandoned sponsorship that landed", async () => {
+    await reserveSponsoredEnroll(enroll("SIG1"));
+    h.db.tables.platform_spend![0]!.status = "superseded_landed";
+
+    await recordSponsoredEnrollRefund({
+      signature: "CLOSE_SIG",
+      wallet: "LearnerWallet",
+      courseId: "course-x",
+      programId: "ProgramA",
+      userId: "user-1",
+    });
+
+    expect(h.db.tables.platform_spend![1]).toMatchObject({
+      signature: "CLOSE_SIG",
+      action: "enroll_refund",
     });
   });
 

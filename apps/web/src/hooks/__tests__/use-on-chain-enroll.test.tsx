@@ -636,6 +636,28 @@ describe("useOnChainEnroll — once-per-course sponsorship", () => {
     expect(result.current.enrollError).toBeNull();
   });
 
+  it("treats an enrollment already on-chain as success, without self-paying (zero-SOL wallet)", async () => {
+    signIn();
+    stubDecline("SPONSOR_ALREADY_ENROLLED");
+    // A zero-SOL embedded wallet: a self-paid enroll would fail preflight.
+    programErrors.preflightTransaction.mockRejectedValue(
+      new Error("AccountNotFound")
+    );
+
+    const { result, onSuccess, onError } = await enroll();
+
+    expect(onSuccess).toHaveBeenCalledTimes(1);
+    expect(onError).not.toHaveBeenCalled();
+    expect(result.current.enrollError).toBeNull();
+    expect(toast.dispatchToast).toHaveBeenCalledWith(
+      "Enrolled successfully!",
+      "success"
+    );
+    expect(programErrors.preflightTransaction).not.toHaveBeenCalled();
+    expect(wallet.sendTransaction).not.toHaveBeenCalled();
+    expect(wallet.sendRawTransaction).not.toHaveBeenCalled();
+  });
+
   it("asks the learner to wait while a sponsored enrollment is in flight", async () => {
     signIn();
     stubDecline("SPONSOR_IN_FLIGHT");

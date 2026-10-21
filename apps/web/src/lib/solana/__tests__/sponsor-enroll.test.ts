@@ -21,7 +21,7 @@ const h = vi.hoisted(() => ({
 vi.mock("server-only", () => ({}));
 vi.mock("next/server", () => ({ after: vi.fn() }));
 vi.mock("@/lib/platform-spend/ledger", () => ({
-  findLiveSponsoredEnroll: h.findLive,
+  findSponsorshipRows: h.findLive,
   reserveSponsoredEnroll: h.reserve,
   supersedeSponsoredEnroll: h.supersede,
 }));
@@ -92,8 +92,8 @@ const KEY = {
   courseGeneration: GENERATION,
 };
 
-const priorRow = (status: string) => ({
-  signature: "PRIOR_SIG",
+const priorRow = (status: string, signature = "PRIOR_SIG") => ({
+  signature,
   status,
   last_valid_block_height: 100,
   created_at: "2026-10-21T00:00:00.000Z",
@@ -120,7 +120,7 @@ beforeEach(() => {
     lastValidBlockHeight: 500,
   });
   h.getMultipleAccountsInfo.mockResolvedValue([course, null]);
-  h.findLive.mockResolvedValue(null);
+  h.findLive.mockResolvedValue([]);
   h.reserve.mockResolvedValue("reserved");
   h.supersede.mockResolvedValue(true);
 });
@@ -197,7 +197,7 @@ describe("buildSponsoredEnrollTransaction", () => {
   });
 
   it("declines a plain close and re-enroll on the same generation", async () => {
-    h.findLive.mockResolvedValue(priorRow("confirmed"));
+    h.findLive.mockResolvedValue([priorRow("confirmed")]);
 
     await expect(build()).resolves.toEqual({
       ok: false,
@@ -208,7 +208,7 @@ describe("buildSponsoredEnrollTransaction", () => {
   });
 
   it("settles a pending sponsorship first, and declines if it landed", async () => {
-    h.findLive.mockResolvedValue(priorRow("pending"));
+    h.findLive.mockResolvedValue([priorRow("pending")]);
     h.settleRows.mockResolvedValue(new Map([["PRIOR_SIG", "confirmed"]]));
 
     await expect(build()).resolves.toEqual({
@@ -222,7 +222,7 @@ describe("buildSponsoredEnrollTransaction", () => {
   });
 
   it("asks the learner to wait while the earlier transaction is landing", async () => {
-    h.findLive.mockResolvedValue(priorRow("pending"));
+    h.findLive.mockResolvedValue([priorRow("pending")]);
     h.settleRows.mockResolvedValue(new Map([["PRIOR_SIG", "pending"]]));
 
     await expect(build()).resolves.toEqual({ ok: false, reason: "in_flight" });
@@ -231,7 +231,7 @@ describe("buildSponsoredEnrollTransaction", () => {
   });
 
   it("supersedes an abandoned sponsorship (no trace on-chain) and sponsors again", async () => {
-    h.findLive.mockResolvedValue(priorRow("pending"));
+    h.findLive.mockResolvedValue([priorRow("pending")]);
     h.settleRows.mockResolvedValue(new Map([["PRIOR_SIG", "unseen"]]));
 
     const result = await build();
@@ -242,7 +242,7 @@ describe("buildSponsoredEnrollTransaction", () => {
   });
 
   it("waits instead when the abandoned row settled between the read and the supersede", async () => {
-    h.findLive.mockResolvedValue(priorRow("pending"));
+    h.findLive.mockResolvedValue([priorRow("pending")]);
     h.settleRows.mockResolvedValue(new Map([["PRIOR_SIG", "unseen"]]));
     h.supersede.mockResolvedValue(false);
 
@@ -250,10 +250,78 @@ describe("buildSponsoredEnrollTransaction", () => {
     expect(h.reserve).not.toHaveBeenCalled();
   });
 
+  it("counts an abandoned sponsorship that landed after all as used", async () => {
+    h.findLive.mockResolvedValue([priorRow("superseded_landed", "A")]);
+
+    await expect(build()).resolves.toEqual({
+      ok: false,
+      reason: "already_sponsored",
+    });
+    expect(h.settleRows).not.toHaveBeenCalled();
+  });
+
+  it("settles abandoned rows inline: one that landed uses the slot even if the live one expired", async () => {
+    // A was superseded by B, then A was submitted and landed. No cron pass
+    // has run; B expired unsubmitted.
+    const a = priorRow("superseded", "A");
+    const b = priorRow("pending", "B");
+    h.findLive.mockResolvedValue([a, b]);
+    h.settleRows.mockResolvedValue(
+      new Map([
+        ["A", "superseded_landed"],
+        ["B", "expired"],
+      ])
+    );
+
+    await expect(build()).resolves.toEqual({
+      ok: false,
+      reason: "already_sponsored",
+    });
+    // Both settled in one pass (one signature-status lookup).
+    expect(h.settleRows).toHaveBeenCalledTimes(1);
+    expect(h.settleRows.mock.calls[0]?.[0]).toEqual([a, b]);
+    expect(h.supersede).not.toHaveBeenCalled();
+    expect(h.reserve).not.toHaveBeenCalled();
+  });
+
+  it("waits while an abandoned attempt is landing right now", async () => {
+    h.findLive.mockResolvedValue([
+      priorRow("superseded", "A"),
+      priorRow("pending", "B"),
+    ]);
+    h.settleRows.mockResolvedValue(
+      new Map([
+        ["A", "superseded"],
+        ["B", "unseen"],
+      ])
+    );
+
+    await expect(build()).resolves.toEqual({ ok: false, reason: "in_flight" });
+    expect(h.supersede).not.toHaveBeenCalled();
+  });
+
+  it("sponsors again when every abandoned attempt expired", async () => {
+    h.findLive.mockResolvedValue([
+      priorRow("superseded", "A"),
+      priorRow("pending", "B"),
+    ]);
+    h.settleRows.mockResolvedValue(
+      new Map([
+        ["A", "expired"],
+        ["B", "unseen"],
+      ])
+    );
+
+    const result = await build();
+
+    expect(h.supersede).toHaveBeenCalledWith("B");
+    expect(result.ok).toBe(true);
+  });
+
   it.each(["expired", "failed"])(
     "sponsors again once the earlier attempt %s without enrolling",
     async (outcome) => {
-      h.findLive.mockResolvedValue(priorRow("pending"));
+      h.findLive.mockResolvedValue([priorRow("pending")]);
       h.settleRows.mockResolvedValue(new Map([["PRIOR_SIG", outcome]]));
 
       const result = await build();

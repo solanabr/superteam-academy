@@ -63,6 +63,12 @@ type EnrollBuild =
   | { kind: "sponsorDeclined" }
   /** A sponsored enrollment for this course is still in flight. */
   | { kind: "sponsorInFlight" }
+  /**
+   * The route found this wallet's Enrollment for the course already on-chain
+   * (the DB row can lag the webhook). Nothing to send, and no self-pay: a
+   * zero-SOL wallet could not pay for an `enroll` that can only fail anyway.
+   */
+  | { kind: "alreadyEnrolled" }
   /** The sponsor built for a wallet that is not the one about to sign. */
   | { kind: "wrongLearner"; learner: string }
   /** Self-pay was the only route left, with no linked wallet to check against. */
@@ -116,6 +122,9 @@ async function buildEnrollTransaction(
     } else if (res.status === 409) {
       const data = (await res.json()) as { code?: string };
       if (data.code === "SPONSOR_IN_FLIGHT") return { kind: "sponsorInFlight" };
+      if (data.code === "SPONSOR_ALREADY_ENROLLED") {
+        return { kind: "alreadyEnrolled" };
+      }
       sponsorDeclined = data.code === "SPONSOR_ALREADY_USED";
     }
   } catch {
@@ -288,6 +297,12 @@ export function useOnChainEnroll({
         );
         if (build.kind === "wrongLearner") {
           reportMismatch(build.learner);
+          return;
+        }
+        // Same outcome as program error 0 below: the enrollment exists.
+        if (build.kind === "alreadyEnrolled") {
+          dispatchToast("Enrolled successfully!", "success");
+          onSuccess?.();
           return;
         }
         if (

@@ -23,6 +23,7 @@ import {
   type SpendRow,
 } from "../settle";
 import type { ServerEvent } from "../events";
+import { logEvent } from "@/lib/logging";
 
 const sponsor = Keypair.generate().publicKey;
 const backend = Keypair.generate().publicKey;
@@ -166,6 +167,7 @@ describe("settleRows", () => {
   let chain: Chain;
 
   beforeEach(() => {
+    vi.mocked(logEvent).mockClear();
     db = createFakeDb();
     db.tables.profiles!.push({
       id: "user-7",
@@ -294,7 +296,7 @@ describe("settleRows", () => {
     expect(events).toHaveLength(0);
   });
 
-  it("still records a superseded sponsorship that lands late", async () => {
+  it("records a superseded sponsorship that lands late as superseded_landed", async () => {
     const row = seed(db, {
       signature: "OLD",
       status: "superseded",
@@ -309,37 +311,51 @@ describe("settleRows", () => {
 
     const result = await settleRows([row], makeDeps(db, chain, events));
 
-    expect(result.get("OLD")).toBe("confirmed");
+    expect(result.get("OLD")).toBe("superseded_landed");
     expect(db.tables.platform_spend![0]).toMatchObject({
-      status: "confirmed",
+      status: "superseded_landed",
       rent_lamports: 1_500_000,
     });
     expect(events).toHaveLength(1);
+    expect(events[0]?.properties.status).toBe("confirmed");
   });
 
-  it("retries a late landing later while its replacement still holds the slot", async () => {
-    const old = seed(db, {
-      signature: "OLD",
-      status: "superseded",
-      action: "enroll_sponsor",
-      program_id: "P",
-      course_generation: 1,
-    } as Partial<SpendRow> & { signature: string });
-    seed(db, {
-      signature: "NEW",
-      action: "enroll_sponsor",
-      program_id: "P",
-      course_generation: 1,
-    } as Partial<SpendRow> & { signature: string });
-    chain.statuses.OLD = { confirmationStatus: "confirmed", err: null };
-    chain.txs.OLD = fakeTx([sponsor], [10_000], [5_000]);
+  it.each(["pending", "confirmed"])(
+    "records a late landing without fighting a %s replacement for the slot, once",
+    async (replacementStatus) => {
+      const slot = { program_id: "P", course_generation: 1 };
+      const old = seed(db, {
+        signature: "OLD",
+        status: "superseded",
+        action: "enroll_sponsor",
+        ...slot,
+      } as Partial<SpendRow> & { signature: string });
+      seed(db, {
+        signature: "NEW",
+        status: replacementStatus as SpendRow["status"],
+        action: "enroll_sponsor",
+        last_valid_block_height: 3_000, // still landable
+        ...slot,
+      } as Partial<SpendRow> & { signature: string });
+      chain.statuses.OLD = { confirmationStatus: "confirmed", err: null };
+      chain.txs.OLD = fakeTx([sponsor], [10_000], [5_000]);
+      const deps = makeDeps(db, chain, events);
 
-    const result = await settleRows([old], makeDeps(db, chain, events));
+      const result = await settleRows([old], deps);
+      // A second pass (the next cron tick) has nothing left to do.
+      await settlePendingSpend(deps.connection, deps);
 
-    expect(result.get("OLD")).toBe("superseded");
-    expect(db.tables.platform_spend![0]!.status).toBe("superseded");
-    expect(events).toHaveLength(0);
-  });
+      expect(result.get("OLD")).toBe("superseded_landed");
+      expect(db.tables.platform_spend![0]).toMatchObject({
+        status: "superseded_landed",
+        fee_lamports: 5_000,
+      });
+      expect(db.tables.platform_spend![1]!.status).toBe(replacementStatus);
+      expect(events).toHaveLength(1);
+      // No unique-index conflict, so nothing is logged and retried forever.
+      expect(vi.mocked(logEvent)).not.toHaveBeenCalled();
+    }
+  );
 
   it("stops taking rows once its deadline passes", async () => {
     const first = seed(db, {

@@ -143,6 +143,15 @@ describe("platform_spend migration", () => {
     await expect(enroll("SIG4")).resolves.toBeDefined();
   });
 
+  it("records a late-landed abandoned sponsorship without taking the slot", async () => {
+    await enroll("A", { status: "superseded" });
+    await enroll("C", { status: "confirmed" });
+    // A landing late next to a confirmed C: no unique-index conflict.
+    await expect(setStatus("A", "superseded_landed")).resolves.toBeUndefined();
+    // The slot is still C's alone.
+    await expect(enroll("D")).rejects.toThrow(/duplicate key/);
+  });
+
   it("sponsors a recreated course again: a new generation is a new slot", async () => {
     await enroll("SIG1", { status: "confirmed", generation: 7 });
     await expect(enroll("SIG2", { generation: 8 })).resolves.toBeDefined();

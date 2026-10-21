@@ -121,8 +121,9 @@ export interface SettleDeps {
 }
 
 /**
- * A row's state after a settle pass: its ledger status, or `unseen` for a
- * pending row the cluster has no trace of yet (it may never have been sent).
+ * A row's state after a settle pass: its ledger status, or `unseen` for an
+ * unresolved row the cluster has no trace of yet (it may never have been
+ * sent). An unresolved row the cluster has seen keeps its status.
  */
 export type SettleOutcome = SpendStatus | "unseen";
 
@@ -206,7 +207,14 @@ export async function settleRows(
         const keys = new Set(deps.platformKeys.keys());
         keys.add(row.payer);
         amounts = computeSpend(spendInputFromTx(tx), keys);
-        outcome = status.err ? "failed" : "confirmed";
+        // A superseded row that landed is recorded as `superseded_landed`,
+        // never `confirmed`: its replacement may hold the slot in the unique
+        // index, and the once-per check counts both states as a used slot.
+        outcome = status.err
+          ? "failed"
+          : row.status === "superseded"
+            ? "superseded_landed"
+            : "confirmed";
       }
     } else if (!status && canExpire) {
       const pastHeight =
@@ -220,10 +228,7 @@ export async function settleRows(
     }
 
     if (outcome === row.status) {
-      result.set(
-        row.signature,
-        row.status === "pending" && !status ? "unseen" : row.status
-      );
+      result.set(row.signature, status ? row.status : "unseen");
       continue;
     }
 
@@ -242,8 +247,6 @@ export async function settleRows(
       .eq("status", row.status)
       .select("signature");
     if (error) {
-      // Includes a superseded row that landed late while its replacement
-      // still holds the slot: retried next pass, once the replacement settles.
       logEvent({
         event: "SPEND_LEDGER_002",
         level: "error",
@@ -254,12 +257,17 @@ export async function settleRows(
     }
     result.set(row.signature, outcome);
     const won = (data ?? []).length === 1;
-    if (won && (outcome === "confirmed" || outcome === "failed")) {
+    if (
+      won &&
+      (outcome === "confirmed" ||
+        outcome === "superseded_landed" ||
+        outcome === "failed")
+    ) {
       events.push(
         spendSettledEvent({
           signature: row.signature,
           action: row.action,
-          status: outcome,
+          status: outcome === "failed" ? "failed" : "confirmed",
           payerRole: asPayerRole(row.payer_role),
           ...amounts,
           courseId: row.course_id,
@@ -346,11 +354,9 @@ export async function settlePendingSpend(
     pending: 0,
   };
   for (const outcome of statuses.values()) {
-    if (
-      outcome === "confirmed" ||
-      outcome === "failed" ||
-      outcome === "expired"
-    ) {
+    if (outcome === "confirmed" || outcome === "superseded_landed") {
+      summary.confirmed += 1;
+    } else if (outcome === "failed" || outcome === "expired") {
       summary[outcome] += 1;
     } else {
       summary.pending += 1;

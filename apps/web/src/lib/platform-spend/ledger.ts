@@ -26,7 +26,9 @@ export type SpendStatus =
   | "confirmed"
   | "failed"
   | "expired"
-  | "superseded";
+  | "superseded"
+  /** A superseded sponsorship that landed after all: spent, and a used slot. */
+  | "superseded_landed";
 
 /** The two actions that hold a once-per sponsorship slot. */
 export type SponsorshipAction = "enroll_sponsor" | "enroll_sponsor_reenroll";
@@ -139,7 +141,7 @@ export async function recordPlatformTx(
   }
 }
 
-export interface LiveSponsoredEnroll {
+export interface SponsorshipRow {
   signature: string;
   status: SpendStatus;
   last_valid_block_height: number | null;
@@ -153,15 +155,25 @@ export interface LiveSponsoredEnroll {
   cluster: string;
 }
 
+/** Statuses that say anything about the slot: held, used, or may still land. */
+const SLOT_STATUSES: SpendStatus[] = [
+  "pending",
+  "confirmed",
+  "superseded",
+  "superseded_landed",
+];
+
 /**
- * The sponsorship holding the once-per slot for this action and key, if any.
- * Throws {@link LedgerUnavailableError} on a DB error: the caller must fail
- * closed rather than sponsor without the check.
+ * Every sponsorship row for this action and key that bears on the once-per
+ * slot: the live one (pending or confirmed), abandoned ones that may still
+ * land (superseded) and abandoned ones that did (superseded_landed). Throws
+ * {@link LedgerUnavailableError} on a DB error: the caller must fail closed
+ * rather than sponsor without the check.
  */
-export async function findLiveSponsoredEnroll(
+export async function findSponsorshipRows(
   action: SponsorshipAction,
   key: SponsorshipKey
-): Promise<LiveSponsoredEnroll | null> {
+): Promise<SponsorshipRow[]> {
   const { data, error } = await createAdminClient()
     .from("platform_spend")
     .select(
@@ -173,11 +185,11 @@ export async function findLiveSponsoredEnroll(
     .eq("wallet", key.wallet)
     .eq("course_id", key.courseId)
     .eq("course_generation", key.courseGeneration)
-    .in("status", ["pending", "confirmed"])
-    .limit(1)
-    .maybeSingle();
+    .in("status", SLOT_STATUSES)
+    .order("created_at", { ascending: true })
+    .limit(50);
   if (error) throw new LedgerUnavailableError("read", error.message);
-  return data as LiveSponsoredEnroll | null;
+  return (data ?? []) as SponsorshipRow[];
 }
 
 /** Postgres unique_violation: another live sponsorship holds the slot. */
@@ -238,7 +250,7 @@ export async function recordSponsoredEnrollRefund(input: {
       .from("platform_spend")
       .select("payer, payer_role")
       .in("action", ["enroll_sponsor", "enroll_sponsor_reenroll"])
-      .eq("status", "confirmed")
+      .in("status", ["confirmed", "superseded_landed"])
       .eq("cluster", spendCluster())
       .eq("program_id", input.programId)
       .eq("wallet", input.wallet)
