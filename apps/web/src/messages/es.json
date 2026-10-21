@@ -1003,6 +1003,12 @@
       "remaining": "~{seconds}s restantes",
       "details": "Detalles de las transacciones",
       "waiting": "Esperando al servicio de la billetera — reintentando automáticamente"
+    },
+    "paused": {
+      "fundingTitle": "La financiación de la billetera está en pausa",
+      "fundingBody": "Por ahora no necesitas SOL de devnet en esta lección. El despliegue desde la lección vuelve pronto.",
+      "deployTitle": "El despliegue desde la lección vuelve pronto",
+      "deployBody": "Aún puedes completar esta lección: compila tu programa en el editor y luego responde el quiz."
     }
   },
   "programErrors": {

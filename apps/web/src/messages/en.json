@@ -1003,6 +1003,12 @@
       "remaining": "~{seconds}s left",
       "details": "Transaction details",
       "waiting": "Waiting for the wallet service — retrying automatically"
+    },
+    "paused": {
+      "fundingTitle": "Wallet funding is paused",
+      "fundingBody": "You don't need devnet SOL for this lesson right now. Deploying from the lesson is coming back soon.",
+      "deployTitle": "Deploying from the lesson is coming back soon",
+      "deployBody": "You can still finish this lesson: build your program in the editor, then answer the quiz."
     }
   },
   "programErrors": {

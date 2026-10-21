@@ -1003,6 +1003,12 @@
       "remaining": "~{seconds}s restantes",
       "details": "Detalhes das transações",
       "waiting": "Aguardando o serviço da carteira — tentando de novo automaticamente"
+    },
+    "paused": {
+      "fundingTitle": "O financiamento da carteira está pausado",
+      "fundingBody": "Você não precisa de SOL de devnet nesta lição por enquanto. O deploy direto pela lição volta em breve.",
+      "deployTitle": "O deploy pela lição volta em breve",
+      "deployBody": "Você ainda pode concluir esta lição: compile seu programa no editor e depois responda ao quiz."
     }
   },
   "programErrors": {
