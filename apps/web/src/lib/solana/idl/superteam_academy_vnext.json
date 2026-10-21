@@ -233,6 +233,15 @@
           "name": "learner",
           "writable": true,
           "signer": true
+        },
+        {
+          "name": "rent_recipient",
+          "docs": [
+            "Receives the enrollment's rent: the payer recorded at enroll (bytes 127..159",
+            "of a 159-byte enrollment), or the learner for a 127-byte enrollment created",
+            "before the payer was recorded."
+          ],
+          "writable": true
         }
       ],
       "args": []
@@ -686,6 +695,14 @@
         {
           "name": "token_program",
           "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        },
+        {
+          "name": "program_data",
+          "docs": [
+            "This program's ProgramData account (owned by the BPF upgradeable loader,",
+            "address = find_program_address([program_id], loader)). `authority` must be",
+            "its upgrade authority."
+          ]
         }
       ],
       "args": []
@@ -1472,8 +1489,23 @@
     },
     {
       "code": 6034,
-      "name": "LessonCountDecrease",
-      "msg": "Lesson count can only be increased, never decreased"
+      "name": "StaleEnrollment",
+      "msg": "Enrollment belongs to a superseded course generation"
+    },
+    {
+      "code": 6035,
+      "name": "OldMinterRoleMissing",
+      "msg": "Backend rotation requires the previous backend minter role account"
+    },
+    {
+      "code": 6036,
+      "name": "EnrollmentInProgress",
+      "msg": "Enrollment with completed lessons cannot be closed"
+    },
+    {
+      "code": 6037,
+      "name": "CourseHasEnrollments",
+      "msg": "Course with enrollments cannot be closed"
     }
   ],
   "types": [
