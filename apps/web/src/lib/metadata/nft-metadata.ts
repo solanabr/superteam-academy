@@ -1,12 +1,12 @@
 import { CONTENT_BLOB_BASE_URL } from "@/lib/content/blob-store.mjs";
-import type { AchievementDoc, CourseDoc } from "@/lib/content/types";
 import { siteUrl } from "./site-origin";
 
 /**
  * Metaplex JSON for the NFTs the platform creates from content: achievement
  * types (whose URI every awarded achievement copies) and course credential
- * collections. Built from the committed bundle only, so the document carries
- * nothing a learner wrote and nothing about who made the course.
+ * collections. Built from the committed bundle (or its append-only archive
+ * for ids that left content), so the document carries nothing a learner wrote
+ * and nothing about who made the course.
  */
 
 export const NFT_SYMBOL = "STACAD";
@@ -14,6 +14,25 @@ const PLATFORM = "Superteam Academy";
 
 /** Square brand mark, used when content has no image of its own. */
 export const BRAND_IMAGE_PATH = "/android-chrome-512x512.png";
+
+/** The achievement fields metadata is built from (bundle doc or archive entry). */
+export interface AchievementSource {
+  _id: string;
+  name?: unknown;
+  description?: unknown;
+  category?: unknown;
+  xpReward?: unknown;
+}
+
+/** The course fields metadata is built from (bundle doc or archive entry). */
+export interface CourseSource {
+  _id: string;
+  slug: { current: string };
+  title?: unknown;
+  description?: unknown;
+  difficulty?: unknown;
+  thumbnail?: unknown;
+}
 
 export interface NftAttribute {
   trait_type: string;
@@ -82,7 +101,7 @@ function build(
 }
 
 export function achievementMetadata(
-  doc: AchievementDoc,
+  doc: AchievementSource,
   origin: string
 ): NftMetadata {
   const name = text(doc.name) ?? doc._id;
@@ -106,7 +125,7 @@ export function achievementMetadata(
 }
 
 export function courseCollectionMetadata(
-  doc: CourseDoc,
+  doc: CourseSource,
   origin: string
 ): NftMetadata {
   const title = text(doc.title) ?? doc._id;

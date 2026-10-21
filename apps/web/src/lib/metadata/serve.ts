@@ -1,7 +1,12 @@
 import "server-only";
 
 import { NextResponse } from "next/server";
-import { achievementsById, coursesById } from "@/lib/content/store";
+import {
+  achievementsById,
+  archivedAchievementsById,
+  archivedCoursesById,
+  coursesById,
+} from "@/lib/content/store";
 import {
   achievementMetadata,
   courseCollectionMetadata,
@@ -38,18 +43,26 @@ function notFound(): NextResponse {
   );
 }
 
-/** Achievement type metadata by content `_id`; 404 for an id not in the bundle. */
+/**
+ * Achievement type metadata by content `_id`: the bundle first, then the
+ * archive of retired ids. 404 only for an id that was never compiled.
+ */
 export function achievementMetadataResponse(
   achievementId: string | null
 ): NextResponse {
-  const doc = achievementId ? achievementsById.get(achievementId) : undefined;
+  const doc = achievementId
+    ? (achievementsById.get(achievementId) ??
+      archivedAchievementsById.get(achievementId))
+    : undefined;
   return doc ? found(achievementMetadata(doc, siteOrigin())) : notFound();
 }
 
-/** Course credential collection metadata; 404 for a course not in the bundle. */
+/** Course credential collection metadata, with the same bundle-then-archive lookup. */
 export function courseCollectionMetadataResponse(
   courseId: string | null
 ): NextResponse {
-  const doc = courseId ? coursesById.get(courseId) : undefined;
+  const doc = courseId
+    ? (coursesById.get(courseId) ?? archivedCoursesById.get(courseId))
+    : undefined;
   return doc ? found(courseCollectionMetadata(doc, siteOrigin())) : notFound();
 }

@@ -71,7 +71,7 @@ function sortKeysDeep(value: unknown): unknown {
 }
 
 /** Prettier-stable JSON: 2-space indent, sorted keys, trailing newline. */
-function stableJson(value: unknown): string {
+export function stableJson(value: unknown): string {
   return `${JSON.stringify(sortKeysDeep(value), null, 2)}\n`;
 }
 

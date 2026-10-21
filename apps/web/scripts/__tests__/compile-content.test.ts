@@ -12,7 +12,12 @@ import { makeTar } from "../../src/lib/content/compile/__tests__/_fixtures";
 import { extractTarball } from "../../src/lib/content/compile/tarball";
 import { ContentValidationError } from "../../src/lib/content/compile/types";
 import type { RepoTree } from "../../src/lib/github/types";
-import { compileContent, compileBundle, writeBundle } from "../compile-content";
+import {
+  addMetadataArchive,
+  compileContent,
+  compileBundle,
+  writeBundle,
+} from "../compile-content";
 
 const WALLET = "BEe3xJDobWhxQ7zNrwaYR4zyEtptgmDuKvaLNZukih5R";
 
@@ -577,5 +582,39 @@ describe("writeBundle", () => {
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }
+  });
+});
+
+describe("addMetadataArchive", () => {
+  const modules = (courses: unknown[], achievements: unknown[]) =>
+    new Map([
+      ["courses.json", JSON.stringify(courses)],
+      ["achievements.json", JSON.stringify(achievements)],
+    ]);
+  const courseDoc = (id: string) => ({
+    _id: id,
+    _type: "course",
+    slug: { _type: "slug", current: id },
+    title: id,
+  });
+
+  it("carries ids from the committed archive into the new one", () => {
+    const first = modules([courseDoc("course-old")], []);
+    addMetadataArchive(first, null);
+    const committed = first.get("metadata-archive.json")!;
+
+    const next = modules([courseDoc("course-new")], []);
+    addMetadataArchive(next, committed);
+    const archive = JSON.parse(next.get("metadata-archive.json")!) as {
+      courses: { _id: string }[];
+    };
+    expect(archive.courses.map((c) => c._id)).toEqual([
+      "course-new",
+      "course-old",
+    ]);
+  });
+
+  it("refuses to overwrite an archive it can't parse", () => {
+    expect(() => addMetadataArchive(modules([], []), "{ broken")).toThrow();
   });
 });

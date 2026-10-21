@@ -59,7 +59,7 @@ describe("achievementMetadata", () => {
 
   it("falls back to the id and a generic description when fields are blank", () => {
     const m = achievementMetadata(
-      { _id: "achievement-x", _type: "achievement", name: " ", xpReward: 0 },
+      { _id: "achievement-x", name: " ", xpReward: 0 },
       ORIGIN
     );
     expect(m.name).toBe("achievement-x");
