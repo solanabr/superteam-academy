@@ -29,6 +29,7 @@ async function main() {
       course: coursePda,
       enrollment: enrollmentPda,
       learner,
+      payer: learner,
       systemProgram: SystemProgram.programId,
     })
     .rpc();
