@@ -8,7 +8,7 @@ use pinocchio::{
     AccountView, Address,
 };
 
-use crate::consts::{ID, SYSTEM_PROGRAM_ID};
+use crate::consts::{BPF_LOADER_UPGRADEABLE_ID, ID, SYSTEM_PROGRAM_ID};
 use crate::errors::*;
 
 /// Borsh instruction-argument reader over the raw bytes after the 8-byte
@@ -260,6 +260,46 @@ pub fn expect_config_pda(acct: &AccountView) -> Result<(), ProgramError> {
     } else {
         Err(fw(CONSTRAINT_SEEDS))
     }
+}
+
+// ---- Upgrade authority ------------------------------------------------------
+
+/// `UpgradeableLoaderState::ProgramData` as bincode lays it out: a u32 enum
+/// tag (3), the deploy slot (u64), then `Option<Pubkey>` as a 1-byte tag and
+/// 32 bytes. The program bytes follow these 45 bytes.
+const PROGRAMDATA_TAG: u32 = 3;
+const PROGRAMDATA_AUTHORITY_TAG: usize = 12;
+const PROGRAMDATA_AUTHORITY: usize = 13;
+const PROGRAMDATA_METADATA_LEN: usize = 45;
+
+/// Anchor's `program_data.upgrade_authority_address == Some(signer.key())`
+/// pattern: `program_data` must be owned by the upgradeable loader (3007), be
+/// this program's canonical ProgramData address (2006), decode as ProgramData
+/// (3003), and name `signer` as its upgrade authority (6000). An immutable
+/// program (no upgrade authority) fails the last check.
+pub fn expect_upgrade_authority(
+    program_data: &AccountView,
+    signer: &AccountView,
+) -> Result<(), ProgramError> {
+    if !program_data.owned_by(&BPF_LOADER_UPGRADEABLE_ID) {
+        return Err(fw(ACCOUNT_OWNED_BY_WRONG_PROGRAM));
+    }
+    let (expected, _) = Address::find_program_address(&[ID.as_array()], &BPF_LOADER_UPGRADEABLE_ID);
+    if program_data.address() != &expected {
+        return Err(fw(CONSTRAINT_SEEDS));
+    }
+    let data = program_data.try_borrow()?;
+    if data.len() < PROGRAMDATA_METADATA_LEN
+        || u32::from_le_bytes([data[0], data[1], data[2], data[3]]) != PROGRAMDATA_TAG
+    {
+        return Err(fw(ACCOUNT_DID_NOT_DESERIALIZE));
+    }
+    if data[PROGRAMDATA_AUTHORITY_TAG] != 1
+        || data[PROGRAMDATA_AUTHORITY..PROGRAMDATA_METADATA_LEN] != signer.address().as_array()[..]
+    {
+        return Err(academy(AcademyError::Unauthorized));
+    }
+    Ok(())
 }
 
 // ---- PDA checks -----------------------------------------------------------

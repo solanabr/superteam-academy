@@ -1,5 +1,9 @@
 //! `update_course(params { 6 × Option<_> })` — partial updates; bumps
 //! `version` when content changes; collection may only be set while unset.
+//! A new `active_lessons` mask must keep at least one live lesson (6013), and
+//! an update that touches `xp_per_lesson`, `creator_reward_xp` or the mask
+//! must leave the course within the per-mint XP bounds (6033, see
+//! `state::course::check_xp_bounds`).
 //! Accounts: config (ro, PDA, has_one authority @ Unauthorized) | course
 //! (mut, PDA) | authority (signer).
 
@@ -51,6 +55,41 @@ pub fn process(accounts: &mut [AccountView], data: &[u8]) -> ProgramResult {
     v::expect_writable(course)?;
 
     // -- handler -------------------------------------------------------------
+    let new_mask = match new_active_lessons {
+        Some(bytes) => {
+            let mut mask = [0u64; 4];
+            // Rust 1.98 clippy suggests as_chunks; keeping chunks_exact — an
+            // iteration-style rewrite in deployed program code buys nothing and
+            // risks perturbing the verifiable build.
+            #[allow(unknown_lints, clippy::chunks_exact_to_as_chunks)]
+            for (w, chunk) in bytes.chunks_exact(8).enumerate() {
+                // chunks_exact(8) over a [u8;32] always yields 8-byte chunks, so
+                // this can't fail — but propagate rather than unwrap (no
+                // unwrap/expect/panic in program code), mirroring Cursor::bytes32.
+                mask[w] = u64::from_le_bytes(
+                    chunk
+                        .try_into()
+                        .map_err(|_| fw(INSTRUCTION_DID_NOT_DESERIALIZE))?,
+                );
+            }
+            // An all-zero mask would make every enrollment finalizable with no
+            // lessons done.
+            require!(mask != [0u64; 4], AcademyError::InvalidLessonCount);
+            Some(mask)
+        }
+        None => None,
+    };
+    if new_xp_per_lesson.is_some() || new_creator_reward_xp.is_some() || new_mask.is_some() {
+        let d = course.try_borrow()?;
+        let xp = new_xp_per_lesson.unwrap_or_else(|| off.xp_per_lesson(&d));
+        let reward = new_creator_reward_xp.unwrap_or_else(|| off.creator_reward_xp(&d));
+        let live = match &new_mask {
+            Some(mask) => state::course::mask_popcount(mask),
+            None => off.live_lesson_count(&d),
+        };
+        state::course::check_xp_bounds(xp, reward, live)?;
+    }
+
     let now = v::now()?;
     let (version, collection) = {
         let mut d = course.try_borrow_mut()?;
@@ -72,22 +111,7 @@ pub fn process(accounts: &mut [AccountView], data: &[u8]) -> ProgramResult {
         if let Some(reward) = new_creator_reward_xp {
             off.set_creator_reward_xp(&mut d, reward);
         }
-        if let Some(bytes) = new_active_lessons {
-            let mut mask = [0u64; 4];
-            // Rust 1.98 clippy suggests as_chunks; keeping chunks_exact — an
-            // iteration-style rewrite in deployed program code buys nothing and
-            // risks perturbing the verifiable build.
-            #[allow(unknown_lints, clippy::chunks_exact_to_as_chunks)]
-            for (w, chunk) in bytes.chunks_exact(8).enumerate() {
-                // chunks_exact(8) over a [u8;32] always yields 8-byte chunks, so
-                // this can't fail — but propagate rather than unwrap (no
-                // unwrap/expect/panic in program code), mirroring Cursor::bytes32.
-                mask[w] = u64::from_le_bytes(
-                    chunk
-                        .try_into()
-                        .map_err(|_| fw(INSTRUCTION_DID_NOT_DESERIALIZE))?,
-                );
-            }
+        if let Some(mask) = new_mask {
             off.set_active_lessons(&mut d, &mask);
         }
         if let Some(collection) = new_collection {

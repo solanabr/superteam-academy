@@ -4,6 +4,8 @@
 //! authority @ Unauthorized) | authority (signer, mut) | system_program.
 //! `config` is writable so the monotonic `course_nonce` can advance; each
 //! course is stamped with the pre-increment value as its `generation`.
+//! XP values are bounded at write time (6033, `state::course::check_xp_bounds`)
+//! so no lesson or finalize mint in the course can exceed `MAX_XP_PER_MINT`.
 
 use pinocchio::{
     cpi::{Seed, Signer},
@@ -74,6 +76,7 @@ pub fn process(accounts: &mut [AccountView], data: &[u8]) -> ProgramResult {
         (1..=3).contains(&difficulty),
         AcademyError::InvalidDifficulty
     );
+    state::course::check_xp_bounds(xp_per_lesson, creator_reward_xp, lesson_count as u32)?;
 
     let now = v::now()?;
     let effective_collection = collection.unwrap_or(DEFAULT_ADDRESS);

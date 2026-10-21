@@ -20,11 +20,20 @@
 //! can reject an enrollment left over from a superseded course generation.
 //! It rides along the `completed_at` grow-shift and is re-planted (not zeroed)
 //! by the `credential_asset` transition.
+//!
+//! The Borsh body above is at most 127 bytes (both options Some). Accounts
+//! created by `enroll` are `ENROLLMENT_SIZE` (159) bytes and carry the rent
+//! payer at the fixed offset 127..159, outside the body: neither grow-shift
+//! reaches past byte 127, so the payer never moves, and Anchor-style decoders
+//! read the body and ignore the trailing 32 bytes. Accounts created before the
+//! payer was recorded are `LEGACY_ENROLLMENT_SIZE` (127) bytes and have none.
 
 use pinocchio::{error::ProgramError, Address};
 
 use super::*;
-use crate::consts::{ACC_ENROLLMENT, ENROLLMENT_SIZE};
+use crate::consts::{
+    ACC_ENROLLMENT, ENROLLMENT_PAYER_OFFSET, ENROLLMENT_SIZE, LEGACY_ENROLLMENT_SIZE,
+};
 use crate::errors::{fw, ACCOUNT_DID_NOT_DESERIALIZE};
 
 const O_COURSE: usize = 8;
@@ -134,6 +143,8 @@ impl EnrollmentOffsets {
         debug_assert!(!self.has_completed);
         let tail_start = O_COMPLETED_TAG + 1;
         let tail_len = self.o_bump() + 1 - tail_start;
+        // The shifted tail ends inside the Borsh body, before the payer.
+        debug_assert!(tail_start + 8 + tail_len <= LEGACY_ENROLLMENT_SIZE);
         let mut tail = [0u8; 72];
         tail[..tail_len].copy_from_slice(&data[tail_start..tail_start + tail_len]);
         data[O_COMPLETED_TAG] = 1;
@@ -153,23 +164,51 @@ impl EnrollmentOffsets {
         data[o_tag] = 1;
         write_address(data, o_tag + 1, asset);
         self.has_credential = true;
+        // Bump is the body's last byte and stays before the payer.
+        debug_assert!(self.o_bump() < LEGACY_ENROLLMENT_SIZE);
         let o_reserved = self.o_reserved();
         data[o_reserved..o_reserved + 4].copy_from_slice(&course_gen.to_le_bytes());
         data[self.o_bump()] = bump;
     }
 }
 
-/// Writes a fresh `Enrollment` (both options None, empty bitmap) into the
-/// account buffer. Zeroes first so it is also correct for re-initialising a
-/// stale-generation enrollment in place (see `enroll`), not only a freshly
-/// created zeroed account.
+/// Writes a fresh `Enrollment` body (both options None, empty bitmap) into
+/// bytes 0..127 of the account buffer. Zeroes the body first so it is also
+/// correct for re-initialising a stale-generation enrollment in place (see
+/// `enroll`), not only a freshly created zeroed account. The payer region of a
+/// 159-byte account is left untouched: `enroll` writes it on create and keeps
+/// it on reuse, since the original payer still funds the account.
 pub fn init(data: &mut [u8], course: &Address, enrolled_at: i64, course_gen: u32, bump: u8) {
-    debug_assert_eq!(data.len(), ENROLLMENT_SIZE);
-    data.fill(0);
+    debug_assert!(data.len() == ENROLLMENT_SIZE || data.len() == LEGACY_ENROLLMENT_SIZE);
+    data[..LEGACY_ENROLLMENT_SIZE].fill(0);
     data[0..8].copy_from_slice(&ACC_ENROLLMENT);
     write_address(data, O_COURSE, course);
     data[O_ENROLLED_AT..O_ENROLLED_AT + 8].copy_from_slice(&enrolled_at.to_le_bytes());
     // both options None: flags at 49, cred tag at 81, course_gen at 82, bump at 86.
     data[82..86].copy_from_slice(&course_gen.to_le_bytes());
     data[86] = bump;
+}
+
+/// True for the two allocation sizes an Enrollment can have.
+#[inline(always)]
+pub fn is_known_size(len: usize) -> bool {
+    len == ENROLLMENT_SIZE || len == LEGACY_ENROLLMENT_SIZE
+}
+
+/// Records the rent payer of a freshly created `ENROLLMENT_SIZE` account.
+#[inline(always)]
+pub fn set_payer(data: &mut [u8], payer: &Address) {
+    write_address(data, ENROLLMENT_PAYER_OFFSET, payer);
+}
+
+/// Who `close_enrollment` must refund: the recorded payer of a 159-byte
+/// account, or the learner for a legacy 127-byte account that predates the
+/// payer field. Any other size is not an Enrollment this program wrote.
+#[inline(always)]
+pub fn rent_recipient(data: &[u8], learner: &Address) -> Result<Address, ProgramError> {
+    match data.len() {
+        ENROLLMENT_SIZE => Ok(read_address(data, ENROLLMENT_PAYER_OFFSET)),
+        LEGACY_ENROLLMENT_SIZE => Ok(learner.clone()),
+        _ => Err(fw(ACCOUNT_DID_NOT_DESERIALIZE)),
+    }
 }

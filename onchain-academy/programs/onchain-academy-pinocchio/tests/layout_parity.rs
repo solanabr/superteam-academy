@@ -378,6 +378,121 @@ fn enrollment_credential_before_completed() {
     assert_eq!(parsed.bump(&d), 9);
 }
 
+// ---- Enrollment rent payer (bytes 127..159) -------------------------------
+
+#[test]
+fn enrollment_sizes() {
+    assert_eq!(c::LEGACY_ENROLLMENT_SIZE, 127, "Borsh body max");
+    assert_eq!(c::ENROLLMENT_SIZE, 159, "body + 32-byte payer");
+    assert_eq!(c::ENROLLMENT_PAYER_OFFSET, 127);
+    // The body's maximum: disc + course + enrolled_at + Some(i64) + flags +
+    // Some(pubkey) + course_gen + bump.
+    assert_eq!(8 + 32 + 8 + 9 + 32 + 33 + 4 + 1, c::LEGACY_ENROLLMENT_SIZE);
+}
+
+/// Drives both grow transitions, in both orders, on a 159-byte account and
+/// checks the payer never moves and the body ends at or before byte 127.
+#[test]
+fn enrollment_payer_survives_grow_transitions() {
+    let course = Pubkey::new_unique();
+    let asset = Pubkey::new_unique();
+    let payer = Pubkey::new_unique();
+    for completed_first in [true, false] {
+        let mut d = vec![0u8; c::ENROLLMENT_SIZE];
+        pstate::enrollment::init(&mut d, &addr(course), 10, 0xABCD_0123, 77);
+        pstate::enrollment::set_payer(&mut d, &addr(payer));
+        assert_eq!(rd_addr(&d, 127), payer.to_bytes(), "payer @127");
+
+        let mut off = pstate::enrollment::EnrollmentOffsets::parse(&d).unwrap();
+        off.set_lesson_flag_word(&mut d, 3, u64::MAX);
+        if completed_first {
+            off.set_completed_at(&mut d, 99);
+            assert_eq!(rd_addr(&d, 127), payer.to_bytes(), "after completed");
+            off.set_credential_asset(&mut d, &addr(asset));
+        } else {
+            off.set_credential_asset(&mut d, &addr(asset));
+            assert_eq!(rd_addr(&d, 127), payer.to_bytes(), "after credential");
+            off.set_completed_at(&mut d, 99);
+        }
+        assert_eq!(rd_addr(&d, 127), payer.to_bytes(), "payer after both grows");
+        // Fully grown body: bump is the last body byte, at 126.
+        assert_eq!(d[126], 77, "bump @126");
+
+        let parsed = pstate::enrollment::EnrollmentOffsets::parse(&d).unwrap();
+        assert_eq!(parsed.course_gen(&d), 0xABCD_0123);
+        assert_eq!(parsed.lesson_flag_word(&d, 3), u64::MAX);
+        assert_eq!(parsed.bump(&d), 77);
+        assert_eq!(
+            pstate::enrollment::rent_recipient(&d, &addr(Pubkey::new_unique()))
+                .unwrap()
+                .as_array(),
+            &payer.to_bytes()
+        );
+    }
+}
+
+/// The same body written into a legacy 127-byte buffer is byte-identical to the
+/// first 127 bytes of a 159-byte one, and the legacy recipient is the learner.
+#[test]
+fn enrollment_legacy_body_matches_and_refunds_learner() {
+    let course = Pubkey::new_unique();
+    let learner = Pubkey::new_unique();
+    let payer = Pubkey::new_unique();
+
+    let mut legacy = vec![0u8; c::LEGACY_ENROLLMENT_SIZE];
+    pstate::enrollment::init(&mut legacy, &addr(course), 5, 3, 250);
+    let mut current = vec![0u8; c::ENROLLMENT_SIZE];
+    pstate::enrollment::init(&mut current, &addr(course), 5, 3, 250);
+    pstate::enrollment::set_payer(&mut current, &addr(payer));
+    assert_eq!(&legacy[..], &current[..127]);
+
+    assert_eq!(
+        pstate::enrollment::rent_recipient(&legacy, &addr(learner))
+            .unwrap()
+            .as_array(),
+        &learner.to_bytes()
+    );
+    assert_eq!(
+        pstate::enrollment::rent_recipient(&current, &addr(learner))
+            .unwrap()
+            .as_array(),
+        &payer.to_bytes()
+    );
+    for bad in [0usize, 8, 126, 128, 158, 160] {
+        assert!(
+            pstate::enrollment::rent_recipient(&vec![0u8; bad], &addr(learner)).is_err(),
+            "size {bad}"
+        );
+    }
+    assert!(pstate::enrollment::is_known_size(127));
+    assert!(pstate::enrollment::is_known_size(159));
+    assert!(!pstate::enrollment::is_known_size(158));
+}
+
+/// Re-initialising a stale 159-byte enrollment in place (a recreated course)
+/// resets the body and keeps the recorded payer.
+#[test]
+fn enrollment_reinit_keeps_payer() {
+    let payer = Pubkey::new_unique();
+    let mut d = vec![0u8; c::ENROLLMENT_SIZE];
+    pstate::enrollment::init(&mut d, &addr(Pubkey::new_unique()), 1, 1, 9);
+    pstate::enrollment::set_payer(&mut d, &addr(payer));
+    let mut off = pstate::enrollment::EnrollmentOffsets::parse(&d).unwrap();
+    off.set_lesson_flag_word(&mut d, 0, 0b101);
+    off.set_completed_at(&mut d, 50);
+    off.set_credential_asset(&mut d, &addr(Pubkey::new_unique()));
+
+    let course = Pubkey::new_unique();
+    pstate::enrollment::init(&mut d, &addr(course), 2, 2, 9);
+    let parsed = pstate::enrollment::EnrollmentOffsets::parse(&d).unwrap();
+    assert_eq!(parsed.completed_at(&d), None);
+    assert_eq!(parsed.credential_asset(&d), None);
+    assert_eq!(parsed.completed_lessons(&d), 0);
+    assert_eq!(parsed.course_gen(&d), 2);
+    assert_eq!(&d[87..127], &[0u8; 40], "no stale bytes left in the body");
+    assert_eq!(rd_addr(&d, 127), payer.to_bytes(), "payer kept");
+}
+
 fn minter_role_case(label: &str) {
     // 0..8 disc | 8..40 minter | 40..44 label_len | 44..44+n label | then
     // max_xp_per_call | total_xp_minted | is_active | created_at | max_total_xp

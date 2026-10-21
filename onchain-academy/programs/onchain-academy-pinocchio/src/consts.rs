@@ -30,6 +30,11 @@ pub const TOKEN_2022_ID: Address =
     Address::from_str_const("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
 pub const MPL_CORE_ID: Address =
     Address::from_str_const("CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d");
+/// The BPF upgradeable loader. `initialize` reads this program's ProgramData
+/// account (owned by the loader, at `["<program id>"]` under the loader) to
+/// check that the signer is the upgrade authority.
+pub const BPF_LOADER_UPGRADEABLE_ID: Address =
+    Address::from_str_const("BPFLoaderUpgradeab1e11111111111111111111111");
 
 /// `["config"]` derives a single address for a fixed program id, so the PDA
 /// and its canonical bump are compile-time constants — this replaces a
@@ -68,7 +73,16 @@ pub const UNENROLL_COOLDOWN_SECS: i64 = 86_400;
 // Account sizes (allocation sizes; serialized content may be shorter)
 pub const CONFIG_SIZE: usize = 113;
 pub const COURSE_SIZE: usize = 253;
-pub const ENROLLMENT_SIZE: usize = 127;
+/// Enrollment allocation: the 127-byte Borsh body (its maximum, both options
+/// Some) followed by the rent payer at a fixed offset. The payer sits outside
+/// the variable-length body, so the option grow-shifts never move it and Borsh
+/// decoders ignore it as trailing bytes.
+pub const ENROLLMENT_SIZE: usize = 159;
+/// Enrollments created before the payer was recorded: the Borsh body only.
+/// `close_enrollment` refunds these to the learner.
+pub const LEGACY_ENROLLMENT_SIZE: usize = 127;
+/// Offset of the rent payer (32 bytes) in an `ENROLLMENT_SIZE` account.
+pub const ENROLLMENT_PAYER_OFFSET: usize = LEGACY_ENROLLMENT_SIZE;
 pub const MINTER_ROLE_SIZE: usize = 110;
 pub const ACHIEVEMENT_TYPE_SIZE: usize = 338;
 pub const ACHIEVEMENT_RECEIPT_SIZE: usize = 49;

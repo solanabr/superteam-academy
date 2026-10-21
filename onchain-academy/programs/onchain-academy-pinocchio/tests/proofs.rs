@@ -158,6 +158,7 @@ fn rent_formula_matches_solana() {
         CONFIG_SIZE,
         COURSE_SIZE,
         ENROLLMENT_SIZE,
+        LEGACY_ENROLLMENT_SIZE,
         MINTER_ROLE_SIZE,
         ACHIEVEMENT_TYPE_SIZE,
         ACHIEVEMENT_RECEIPT_SIZE,
@@ -230,6 +231,47 @@ fn minter_role_offsets_roundtrip_all_label_lengths() {
         assert_eq!(off.max_total_xp(&d), 100_000);
         assert_eq!(off.bump(&d), 253);
     }
+}
+
+// ---- 6. Write-time XP bounds ≡ the mint-time ceilings ----
+
+/// `check_xp_bounds` (create_course / update_course) accepts a course exactly
+/// when every mint that course can trigger passes the mint sites' own
+/// `<= MAX_XP_PER_MINT` checks: complete_lesson (`xp`), finalize bonus
+/// (`xp * live / 2`) and finalize creator reward. Swept over every live count
+/// a mask can hold and the xp values around each boundary.
+#[test]
+fn xp_bounds_match_mint_ceilings() {
+    let mint_ok = |xp: u32, reward: u32, live: u32| -> bool {
+        xp as u64 <= MAX_XP_PER_MINT
+            && reward as u64 <= MAX_XP_PER_MINT
+            && (xp as u64 * live as u64) / 2 <= MAX_XP_PER_MINT
+    };
+    let mut xps: Vec<u32> = vec![0, 1, 2, 15, 20, 39, 40, 41, 4_999, 5_000, 5_001, u32::MAX];
+    for live in 1u32..=256 {
+        let edge = (2 * MAX_XP_PER_MINT as u32 + 1) / live;
+        xps.extend([edge.saturating_sub(1), edge, edge + 1]);
+    }
+    for live in 0u32..=256 {
+        for &xp in &xps {
+            for reward in [0u32, 30, 5_000, 5_001, u32::MAX] {
+                assert_eq!(
+                    course::check_xp_bounds(xp, reward, live).is_ok(),
+                    mint_ok(xp, reward, live),
+                    "xp={xp} reward={reward} live={live}"
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn mask_popcount_matches_live_lesson_count() {
+    for n in 0u8..=255 {
+        let mask = course::dense_mask(n);
+        assert_eq!(course::mask_popcount(&mask), n as u32);
+    }
+    assert_eq!(course::mask_popcount(&[u64::MAX; 4]), 256);
 }
 
 // ---- Kani-ready unbounded proof harnesses (run under `cargo kani`) ----
