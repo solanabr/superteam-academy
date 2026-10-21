@@ -19,6 +19,7 @@ import {
   fetchAchievementReceipt,
 } from "@/lib/solana/academy-reads";
 import { describeTxError } from "@/lib/solana/describe-tx-error";
+import { recordSponsoredEnrollRefund } from "@/lib/platform-spend/ledger";
 import { getProgramId } from "@/lib/solana/pda";
 import { uploadCertificateMetadata } from "@/lib/solana/arweave";
 import { isCourseComplete } from "@/lib/solana/bitmap";
@@ -120,7 +121,7 @@ export async function handleEnrolled(
 
 export async function handleEnrollmentClosed(
   event: EnrollmentClosedEvent,
-  _txSignature: string
+  txSignature: string
 ): Promise<void> {
   const userId = await resolveUserId(event.learner);
   if (!userId) return;
@@ -147,6 +148,13 @@ export async function handleEnrollmentClosed(
       },
     });
   }
+
+  await recordSponsoredEnrollRefund({
+    signature: txSignature,
+    wallet: event.learner,
+    courseId,
+    userId,
+  });
 }
 
 // ---------------------------------------------------------------------------

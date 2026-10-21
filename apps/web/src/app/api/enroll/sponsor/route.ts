@@ -1,12 +1,18 @@
 import "server-only";
 
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { PublicKey } from "@solana/web3.js";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCourseById } from "@/lib/content/queries";
 import { describeProgramError } from "@/lib/solana/academy-program";
 import { buildSponsoredEnrollTransaction } from "@/lib/solana/sponsor-enroll";
+import { SponsorUnavailableError, spendCluster } from "@/lib/solana/sponsor";
+import {
+  emitServerEvent,
+  sponsorDeclinedEvent,
+  type SponsorDeclineReason,
+} from "@/lib/platform-spend/events";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { isCourseInMaintenance } from "@/lib/content/deployments";
 import { isPlatformFrozen } from "@/lib/platform/freeze";
@@ -14,13 +20,29 @@ import { platformFrozenResponse } from "@/lib/platform/freeze-http";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 
+/** Machine-readable decline codes; the client shows a translated message. */
+const DECLINE_CODES: Record<SponsorDeclineReason, string> = {
+  already_sponsored: "SPONSOR_ALREADY_USED",
+  in_flight: "SPONSOR_IN_FLIGHT",
+};
+
+const DECLINE_MESSAGES: Record<SponsorDeclineReason, string> = {
+  already_sponsored:
+    "This wallet's enrollment in this course was already sponsored once. Re-enrolling is paid by your wallet.",
+  in_flight:
+    "A sponsored enrollment for this course is still being processed. Try again in a minute.",
+};
+
 /**
  * Build a platform-sponsored `enroll` transaction (#1004).
  *
- * Returns a transaction already signed by the backend signer, which pays both
+ * Returns a transaction already signed by the sponsor wallet, which pays both
  * the fee and the Enrollment PDA rent. The caller's wallet co-signs and submits
  * it. That co-signature is required by the program, so this route cannot enrol
  * anyone on its own.
+ *
+ * A wallet is sponsored at most once per course, ever (enforced by the spend
+ * ledger). A second request gets a 409 with a decline `code` instead.
  *
  * THE LEARNER IS NOT TAKEN FROM THE REQUEST. It is read from the session's own
  * profile, so a caller can only ever have their own linked wallet sponsored.
@@ -127,14 +149,54 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const sponsored = await buildSponsoredEnrollTransaction(courseId, learner);
+    const sponsored = await buildSponsoredEnrollTransaction(
+      courseId,
+      learner,
+      user.id
+    );
+
+    if (!sponsored.ok) {
+      const reason = sponsored.reason;
+      // After the response: analytics must never hold up the learner.
+      after(() =>
+        emitServerEvent(
+          sponsorDeclinedEvent({
+            reason,
+            courseId,
+            userId: user.id,
+            cluster: spendCluster(),
+          })
+        )
+      );
+      return NextResponse.json(
+        { error: DECLINE_MESSAGES[reason], code: DECLINE_CODES[reason] },
+        {
+          status: 409,
+          ...(reason === "in_flight"
+            ? { headers: { "Retry-After": "90" } }
+            : {}),
+        }
+      );
+    }
 
     return NextResponse.json({
       success: true,
-      ...sponsored,
+      ...sponsored.transaction,
       learner: learner.toBase58(),
     });
   } catch (err: unknown) {
+    if (err instanceof SponsorUnavailableError) {
+      // Fail closed: nobody pays rather than the wrong key paying. The client
+      // falls back to a self-paid enrollment.
+      logError({ errorId: ERROR_IDS.ENROLL_SPONSOR_UNAVAILABLE, error: err });
+      return NextResponse.json(
+        {
+          error: "Sponsored enrollment is not available right now.",
+          code: "SPONSOR_UNAVAILABLE",
+        },
+        { status: 503 }
+      );
+    }
     logError({
       errorId: ERROR_IDS.ENROLL_SPONSOR_FAILED,
       error: err instanceof Error ? err : new Error(String(err)),

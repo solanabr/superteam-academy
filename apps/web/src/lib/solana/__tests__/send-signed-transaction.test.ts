@@ -20,12 +20,17 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // ---------------------------------------------------------------------------
 
 const h = vi.hoisted(() => ({
+  recordPlatformTx: vi.fn<(...args: unknown[]) => Promise<void>>(),
   sendRawTransaction: vi.fn<(...args: unknown[]) => Promise<string>>(),
   confirmTransaction:
     vi.fn<(...args: unknown[]) => Promise<{ value: { err: unknown } }>>(),
 }));
 
 vi.mock("server-only", () => ({}));
+
+vi.mock("@/lib/platform-spend/ledger", () => ({
+  recordPlatformTx: h.recordPlatformTx,
+}));
 
 vi.mock("@/lib/env.server", () => ({
   serverEnv: { SOLANA_RPC_URL: "http://localhost:8899" },
@@ -59,9 +64,14 @@ const TX = {
   rawTransaction: Buffer.from("signed-bytes"),
   blockhash: "BLOCKHASH",
   lastValidBlockHeight: 1000,
+  payer: "SponsorPubkey111",
+  payerRole: "sponsor" as const,
+  recipient: "LearnerPubkey111",
 };
 
 beforeEach(() => {
+  h.recordPlatformTx.mockReset();
+  h.recordPlatformTx.mockResolvedValue(undefined);
   h.sendRawTransaction.mockReset();
   h.sendRawTransaction.mockResolvedValue("MINT_SIG");
   h.confirmTransaction.mockReset();
@@ -74,6 +84,40 @@ describe("sendSignedTransaction", () => {
 
     expect(h.sendRawTransaction).toHaveBeenCalledTimes(1);
     expect(h.sendRawTransaction.mock.calls[0]?.[0]).toBe(TX.rawTransaction);
+  });
+
+  it("records the mint in the spend ledger once it is broadcast", async () => {
+    await sendSignedTransaction(TX);
+
+    expect(h.recordPlatformTx).toHaveBeenCalledTimes(1);
+    expect(h.recordPlatformTx).toHaveBeenCalledWith({
+      signature: "MINT_SIG",
+      action: "xp_mint",
+      wallet: "LearnerPubkey111",
+      payer: "SponsorPubkey111",
+      payerRole: "sponsor",
+      lastValidBlockHeight: 1000,
+    });
+  });
+
+  it("does not record a broadcast the node refused (nothing was spent)", async () => {
+    h.sendRawTransaction.mockRejectedValue(
+      new SendTransactionError({
+        action: "send",
+        signature: "MINT_SIG",
+        transactionMessage: "Transaction simulation failed: MintingPaused",
+      })
+    );
+
+    await sendSignedTransaction(TX).catch(() => undefined);
+    expect(h.recordPlatformTx).not.toHaveBeenCalled();
+  });
+
+  it("records an ambiguous transport failure, since the tx may still land", async () => {
+    h.sendRawTransaction.mockRejectedValue(new Error("ECONNRESET"));
+
+    await sendSignedTransaction(TX).catch(() => undefined);
+    expect(h.recordPlatformTx).toHaveBeenCalledTimes(1);
   });
 
   it("flags a node REJECTION as never-broadcast (the caller may release its claim)", async () => {

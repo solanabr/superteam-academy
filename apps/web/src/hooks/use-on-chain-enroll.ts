@@ -45,9 +45,24 @@ const TX_TIMEOUT_MS = 30_000;
  * Any failure falls through to the original path, so a funded wallet can still
  * enrol if sponsorship is down or unconfigured — this adds a cheaper route in,
  * not a new way to fail.
+ *
+ * A wallet is sponsored once per course. On a re-enrollment the route declines
+ * (409 `SPONSOR_ALREADY_USED`) and the learner self-pays, told why; if their
+ * wallet can't pay, they get that reason instead of a raw simulation error.
+ * `SPONSOR_IN_FLIGHT` means the previous sponsored transaction can still land,
+ * so the learner waits rather than paying for a second one.
  */
 type EnrollBuild =
-  | { kind: "tx"; tx: Transaction }
+  | {
+      kind: "tx";
+      tx: Transaction;
+      /** Self-paid because this wallet's sponsorship was already used. */
+      sponsorDeclined: boolean;
+    }
+  /** Sponsorship already used, and the self-paid fallback can't be paid. */
+  | { kind: "sponsorDeclined" }
+  /** A sponsored enrollment for this course is still in flight. */
+  | { kind: "sponsorInFlight" }
   /** The sponsor built for a wallet that is not the one about to sign. */
   | { kind: "wrongLearner"; learner: string }
   /** Self-pay was the only route left, with no linked wallet to check against. */
@@ -59,6 +74,7 @@ async function buildEnrollTransaction(
   linkedWallet: string | null,
   connection: Connection
 ): Promise<EnrollBuild> {
+  let sponsorDeclined = false;
   try {
     const res = await fetch("/api/enroll/sponsor", {
       method: "POST",
@@ -91,8 +107,16 @@ async function buildEnrollTransaction(
         );
         // Deliberately NOT preflighted — preflightTransaction assigns the
         // learner as fee payer, which would undo the sponsorship.
-        return { kind: "tx", tx: Transaction.from(bytes) };
+        return {
+          kind: "tx",
+          tx: Transaction.from(bytes),
+          sponsorDeclined: false,
+        };
       }
+    } else if (res.status === 409) {
+      const data = (await res.json()) as { code?: string };
+      if (data.code === "SPONSOR_IN_FLIGHT") return { kind: "sponsorInFlight" };
+      sponsorDeclined = data.code === "SPONSOR_ALREADY_USED";
     }
   } catch {
     // Fall through to self-pay.
@@ -107,8 +131,17 @@ async function buildEnrollTransaction(
   }
 
   const tx = new Transaction().add(buildEnrollInstruction(courseId, learner));
-  await preflightTransaction(tx, connection, learner);
-  return { kind: "tx", tx };
+  try {
+    await preflightTransaction(tx, connection, learner);
+  } catch (err) {
+    // Usually a wallet with no SOL: say why it isn't free this time. Code 0
+    // (the enrollment already exists) keeps its own handling below.
+    if (sponsorDeclined && parseProgramError(err).code !== 0) {
+      return { kind: "sponsorDeclined" };
+    }
+    throw err;
+  }
+  return { kind: "tx", tx, sponsorDeclined };
 }
 
 function withTimeout<T>(
@@ -257,12 +290,25 @@ export function useOnChainEnroll({
           reportMismatch(build.learner);
           return;
         }
-        if (build.kind === "unverifiedWallet") {
-          const msg = t("enrollNoLinkedWallet");
+        if (
+          build.kind === "unverifiedWallet" ||
+          build.kind === "sponsorDeclined" ||
+          build.kind === "sponsorInFlight"
+        ) {
+          const msg = t(
+            build.kind === "unverifiedWallet"
+              ? "enrollNoLinkedWallet"
+              : build.kind === "sponsorDeclined"
+                ? "enrollSponsorAlreadyUsed"
+                : "enrollSponsorInFlight"
+          );
           setEnrollError(msg);
           dispatchToast(msg, "warning");
           onError?.(msg);
           return;
+        }
+        if (build.sponsorDeclined) {
+          dispatchToast(t("enrollSponsorSelfPay"), "info");
         }
         const tx = build.tx;
         // The embedded wallet signs via Dynamic's MPC service — no prompt, no
