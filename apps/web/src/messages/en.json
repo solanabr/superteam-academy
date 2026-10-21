@@ -1003,6 +1003,14 @@
       "remaining": "~{seconds}s left",
       "details": "Transaction details",
       "waiting": "Waiting for the wallet service — retrying automatically"
+    },
+    "paused": {
+      "fundingTitle": "Wallet funding is paused",
+      "fundingBody": "You don't need any SOL for this lesson right now. Deploying from the lesson is coming back soon.",
+      "deployTitle": "Deploying from the lesson is coming back soon",
+      "deployBody": "You can still finish this lesson with the other steps on this page.",
+      "explorerTitle": "Sending transactions from the lesson is coming back soon",
+      "explorerBody": "You can still finish this lesson with the other steps on this page."
     }
   },
   "programErrors": {

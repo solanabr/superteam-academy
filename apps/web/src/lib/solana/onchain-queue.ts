@@ -14,6 +14,18 @@ import {
   bumpRetry,
 } from "@/lib/gamification/xp-queue-settlement";
 import {
+  credentialMetadataUri,
+  onChainSiteUrl,
+} from "@/lib/metadata/pinned-uri";
+import {
+  BACKOFF_BASE_MS,
+  DRAIN_LIMIT,
+  MAX_RETRIES,
+  groupByUser,
+  selectDueRows,
+  type DrainableRow,
+} from "@/lib/queue/selection";
+import {
   fetchAchievementReceipt,
   fetchEnrollment,
   fetchCourse,
@@ -33,14 +45,6 @@ import {
   isAlreadySatisfied,
   serializeQueueError,
 } from "./queue-errors";
-import {
-  BACKOFF_BASE_MS,
-  DRAIN_LIMIT,
-  MAX_RETRIES,
-  groupByUser,
-  selectDueRows,
-  type DrainableRow,
-} from "@/lib/queue/selection";
 
 type OnchainActionType =
   | "achievement"
@@ -469,7 +473,7 @@ async function drainRowsForUser(
               { trait_type: "Platform", value: "Superteam Academy" },
             ],
             properties: { category: "certificate", creators: [] },
-            external_url: `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/certificates`,
+            external_url: onChainSiteUrl("/certificates"),
             seller_fee_basis_points: 0,
           };
 
@@ -485,7 +489,7 @@ async function drainRowsForUser(
             );
           }
 
-          const metadataUri = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/certificates/metadata?id=${metadataRow.id}`;
+          const metadataUri = credentialMetadataUri(metadataRow.id);
 
           let mintAddress: PublicKey;
           let mintSignature: string;

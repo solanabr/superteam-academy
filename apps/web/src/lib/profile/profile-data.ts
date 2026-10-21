@@ -16,6 +16,7 @@ import {
 } from "@/lib/profiles/public-profile";
 import { getProgressService } from "@/lib/services";
 import { calculateLevel } from "@/lib/gamification/xp";
+import { explorerUrl } from "@/lib/solana/network";
 
 type DB = SupabaseClient<Database>;
 
@@ -145,15 +146,12 @@ async function shapeProfileContent(input: ShapeInput): Promise<ProfileContent> {
 
   const achievementMap = new Map(allAchievements.map((a) => [a.id, a]));
 
-  const network = process.env.NEXT_PUBLIC_SOLANA_NETWORK ?? "devnet";
-  const cluster = network === "mainnet" ? "mainnet-beta" : network;
-
   const achievements: Achievement[] = achievementRows.map((row) => {
     const def = achievementMap.get(row.achievement_id);
-    const explorerUrl = row.asset_address
-      ? `https://explorer.solana.com/address/${row.asset_address}?cluster=${cluster}`
+    const explorerLink = row.asset_address
+      ? explorerUrl("address", row.asset_address)
       : row.tx_signature
-        ? `https://explorer.solana.com/tx/${row.tx_signature}?cluster=${cluster}`
+        ? explorerUrl("tx", row.tx_signature)
         : undefined;
     return {
       id: row.achievement_id,
@@ -162,7 +160,7 @@ async function shapeProfileContent(input: ShapeInput): Promise<ProfileContent> {
       icon: def?.icon ?? "Award",
       category: (def?.category as Achievement["category"]) ?? "special",
       unlockedAt: new Date(row.unlocked_at ?? Date.now()),
-      explorerUrl,
+      explorerUrl: explorerLink,
       assetAddress: row.asset_address ?? undefined,
     };
   });

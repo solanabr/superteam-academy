@@ -1,6 +1,8 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { isLearnerDeployEnabled } from "@/lib/deploy/learner-deploy";
+import { DeployPausedNotice } from "@/components/deploy/deploy-paused-notice";
 import { BlockSkeleton } from "./block-skeleton";
 import type { BlockRenderProps } from "./types";
 
@@ -13,5 +15,8 @@ const WalletFundingCard = dynamic(
 );
 
 export function WalletFundingBlock(_props: BlockRenderProps) {
+  // Funding only exists to pay for the in-lesson deploy.
+  if (!isLearnerDeployEnabled())
+    return <DeployPausedNotice variant="funding" />;
   return <WalletFundingCard />;
 }

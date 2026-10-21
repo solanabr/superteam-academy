@@ -1,36 +1,27 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { explorerUrl, type SolanaCluster } from "@/lib/solana/network";
 import { cn, truncateAddress } from "@/lib/utils";
 
 interface ProofPillProps {
   address: string;
   type: "tx" | "account";
-  network: string;
+  /** Explorer cluster; defaults to the app's own. */
+  cluster?: SolanaCluster;
   className?: string;
   onClick?: React.MouseEventHandler<HTMLAnchorElement>;
-}
-
-function getExplorerUrl(
-  address: string,
-  type: "tx" | "account",
-  network: string
-): string {
-  const base = "https://explorer.solana.com";
-  const path = type === "tx" ? `/tx/${address}` : `/address/${address}`;
-  const cluster = network === "mainnet-beta" ? "" : `?cluster=${network}`;
-  return `${base}${path}${cluster}`;
 }
 
 export function ProofPill({
   address,
   type,
-  network,
+  cluster,
   className,
   onClick,
 }: ProofPillProps) {
   const t = useTranslations("common");
-  const url = getExplorerUrl(address, type, network);
+  const url = explorerUrl(type === "tx" ? "tx" : "address", address, cluster);
   const label = truncateAddress(address, 4, 4);
 
   return (

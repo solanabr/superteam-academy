@@ -1,0 +1,259 @@
+{
+  "achievements": [
+    {
+      "_id": "achievement-accepted",
+      "_type": "achievement",
+      "category": "community",
+      "description": "Have one of your answers accepted",
+      "name": "Accepted Answer",
+      "xpReward": 75
+    },
+    {
+      "_id": "achievement-bug-hunter",
+      "_type": "achievement",
+      "category": "special",
+      "description": "Report a verified bug in the platform",
+      "name": "Bug Hunter",
+      "xpReward": 250
+    },
+    {
+      "_id": "achievement-consistency-king",
+      "_type": "achievement",
+      "category": "streaks",
+      "description": "Maintain a 100-day learning streak",
+      "name": "Consistency King",
+      "xpReward": 400
+    },
+    {
+      "_id": "achievement-double-digits",
+      "_type": "achievement",
+      "category": "progress",
+      "description": "Complete 10 lessons",
+      "name": "Double Digits",
+      "xpReward": 80
+    },
+    {
+      "_id": "achievement-early-adopter",
+      "_type": "achievement",
+      "category": "special",
+      "description": "Join the platform during the first month",
+      "name": "Early Adopter",
+      "xpReward": 1000
+    },
+    {
+      "_id": "achievement-first-steps",
+      "_type": "achievement",
+      "category": "progress",
+      "description": "Complete your first lesson",
+      "name": "First Steps",
+      "xpReward": 25
+    },
+    {
+      "_id": "achievement-first-steps-path",
+      "_type": "achievement",
+      "category": "progress",
+      "description": "Complete every course in the Comece aqui path",
+      "name": "Comece aqui",
+      "xpReward": 200
+    },
+    {
+      "_id": "achievement-first-word",
+      "_type": "achievement",
+      "category": "community",
+      "description": "Start your first forum thread",
+      "name": "First Word",
+      "xpReward": 30
+    },
+    {
+      "_id": "achievement-fortnight",
+      "_type": "achievement",
+      "category": "streaks",
+      "description": "Maintain a 14-day learning streak",
+      "name": "Fortnight",
+      "xpReward": 125
+    },
+    {
+      "_id": "achievement-getting-traction",
+      "_type": "achievement",
+      "category": "progress",
+      "description": "Complete 5 lessons",
+      "name": "Getting Traction",
+      "xpReward": 50
+    },
+    {
+      "_id": "achievement-half-century",
+      "_type": "achievement",
+      "category": "progress",
+      "description": "Complete 50 lessons",
+      "name": "Half Century",
+      "xpReward": 250
+    },
+    {
+      "_id": "achievement-helping-hand",
+      "_type": "achievement",
+      "category": "community",
+      "description": "Post your first answer in the forum",
+      "name": "Helping Hand",
+      "xpReward": 30
+    },
+    {
+      "_id": "achievement-monthly-master",
+      "_type": "achievement",
+      "category": "streaks",
+      "description": "Maintain a 30-day learning streak",
+      "name": "Monthly Master",
+      "xpReward": 200
+    },
+    {
+      "_id": "achievement-speedrunner",
+      "_type": "achievement",
+      "category": "progress",
+      "description": "Complete the Solana Speedrun course",
+      "name": "Speedrunner",
+      "xpReward": 75
+    },
+    {
+      "_id": "achievement-three-day-spark",
+      "_type": "achievement",
+      "category": "streaks",
+      "description": "Maintain a 3-day learning streak",
+      "name": "Three-Day Spark",
+      "xpReward": 40
+    },
+    {
+      "_id": "achievement-twenty-five",
+      "_type": "achievement",
+      "category": "progress",
+      "description": "Complete 25 lessons",
+      "name": "Twenty-Five",
+      "xpReward": 150
+    },
+    {
+      "_id": "achievement-warmed-up",
+      "_type": "achievement",
+      "category": "progress",
+      "description": "Complete 3 lessons",
+      "name": "Warmed Up",
+      "xpReward": 40
+    },
+    {
+      "_id": "achievement-week-warrior",
+      "_type": "achievement",
+      "category": "streaks",
+      "description": "Maintain a 7-day learning streak",
+      "name": "Week Warrior",
+      "xpReward": 75
+    }
+  ],
+  "courses": [
+    {
+      "_id": "course-btc-to-sol-evolution",
+      "_type": "course",
+      "description": "Run, script, and explain every generation of blockchain from Bitcoin to Solana, then ship a personal ops bot that manages wallets and agents on both.",
+      "difficulty": "beginner",
+      "slug": {
+        "_type": "slug",
+        "current": "btc-to-sol-evolution"
+      },
+      "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/ed9740f6ea99a8d6f9b39863c9dda7a802d908f3b3e53b76fab0aeb85e5480a2.webp",
+      "title": "From Bitcoin to Solana: The Evolution of Blockchain Technology"
+    },
+    {
+      "_id": "course-digital-assets",
+      "_type": "course",
+      "description": "Read any live mint's bytes, build Token-2022 mints and Core/compressed NFT assets from raw instructions, then wire a working on-chain token economy — choosing the right primitive and proving it resolves. Expect to work locally: the labs install and use rustup, the Agave CLI, and surfpool's mainnet fork on your own machine, and a few steps touch devnet.",
+      "difficulty": "intermediate",
+      "slug": {
+        "_type": "slug",
+        "current": "digital-assets"
+      },
+      "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/13e4eac6bb418358a5905a77bb246c050c48ede85447e96d7496a80580cbf92b.webp",
+      "title": "Digital Assets, Tokenization & Token Extensions"
+    },
+    {
+      "_id": "course-mastering-anchor-v2",
+      "_type": "course",
+      "description": "Design, build, test, secure, and ship an Anchor V2 program to devnet against the 2.0.0-rc.1 release candidate, then migrate a 0.31/1.0 codebase to V2 with a map of what changed and why. This is a machine-on-your-desk course: you install and drive the V2 RC toolchain locally — anchor-cli via cargo and avm, rustup's Rust alongside it, and Docker for the solana-verify build — and you deploy to devnet. V2 is an unaudited RC, so the course ends by teaching you to decide honestly when it is the right call and when the maintained 1.x line still is. It does not teach Rust and it does not teach Anchor: it assumes you already ship Anchor programs and want the V2 delta.",
+      "difficulty": "advanced",
+      "slug": {
+        "_type": "slug",
+        "current": "mastering-anchor-v2"
+      },
+      "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/125aa5070a39197c2154db1343c82413565a5e630a8b3ef138761ba5eabefb26.webp",
+      "title": "Master Anchor V2"
+    },
+    {
+      "_id": "course-pilula-solana-superteam",
+      "_type": "course",
+      "description": "A pílula de 2 minutos: por que o sistema financeiro está migrando pra Solana, o truque que a deixa rápida, e como você ganha dinheiro nela pela Superteam Brasil.",
+      "difficulty": "beginner",
+      "slug": {
+        "_type": "slug",
+        "current": "pilula-solana-superteam"
+      },
+      "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/dcd61958ef8763df004b8eac96bd18464c554a8965544b3a7a87f1c71b70b8f5.webp",
+      "title": "Pílula Solana & Superteam"
+    },
+    {
+      "_id": "course-rust-ts-fundamentals",
+      "_type": "course",
+      "description": "Read and write the Rust and TypeScript that real web3 codebases are made of, then ship them: a TypeScript dashboard on Vercel, edge workers in both languages on Cloudflare, and a containerized Rust service on GHCR, all wired to live Solana data with one signed devnet transfer. This is a local-toolchain course, so expect to install as you build: Node in module one, rustup and cargo in module four, Docker in module six, and the Solana CLI in m08-l4, where a local validator stands by as the last-resort fallback for a dry devnet faucet.",
+      "difficulty": "beginner",
+      "slug": {
+        "_type": "slug",
+        "current": "rust-ts-fundamentals"
+      },
+      "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/42eecc4f97fe457c439637e55f773cb3ab028f24244762c20b5b3a99f086fa77.webp",
+      "title": "Rust & TypeScript Fundamentals for Web3"
+    },
+    {
+      "_id": "course-solana-hackathon-expert",
+      "_type": "course",
+      "description": "Take a problem you actually have to a submission-ready Colosseum package in one month: a working devnet demo, a deck, two videos and a GTM one-pager, and use a seasonal hackathon or an Earn side track as a rehearsal for the next Colosseum edition.",
+      "difficulty": "intermediate",
+      "slug": {
+        "_type": "slug",
+        "current": "solana-hackathon-expert"
+      },
+      "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/e47934ff7173f7f22e92495854ddd5268fc8b120c7e41f6937945d665c2f73f6.webp",
+      "title": "Solana Hackathon Expert: Build a Winning Project"
+    },
+    {
+      "_id": "course-solana-payments-commerce",
+      "_type": "course",
+      "description": "Take real money on Solana end to end: a stablecoin Solana Pay checkout and POS, a webhook-driven back office with reconciliation and refunds, non-custodial subscriptions with dunning, on/off ramps, and x402/MPP machine payments, assembled into one running commerce stack on devnet — where the course touches regulation, it is an engineering framing of the seams, not legal advice. This is a local-toolchain course from the first lab: module one already needs Node 24 and installs packages on your machine, module two adds the Anza Agave CLI (`solana` plus `spl-token`), and from there every lab runs npm workspaces locally against devnet; one step in module eight — `cargo install kora-cli` — additionally needs a Rust toolchain.",
+      "difficulty": "intermediate",
+      "slug": {
+        "_type": "slug",
+        "current": "solana-payments-commerce"
+      },
+      "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/4ef28e87c710413352c25a8a77ad3b3d3a8473cc084d9a4538b52948883060d4.webp",
+      "title": "Solana Payments & Commerce"
+    },
+    {
+      "_id": "course-solana-speedrun",
+      "_type": "course",
+      "description": "Por que o sistema financeiro está migrando para a Solana, como a tecnologia funciona de verdade, e seu primeiro ativo na mainnet — em menos de 10 minutos.",
+      "difficulty": "beginner",
+      "slug": {
+        "_type": "slug",
+        "current": "solana-speedrun"
+      },
+      "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/c2fec3063c434607e652d5684af9c94e05df0260e7fe3011d17bdbea2ed056db.webp",
+      "title": "Solana Speedrun: Inicie sua jornada onchain em minutos"
+    },
+    {
+      "_id": "course-visao-geral-solana",
+      "_type": "course",
+      "description": "Apresentar aos alunos a blockchain Solana, abordando sua história fundamental e arquitetura central. Usar analogias e recursos visuais para tornar conceitos complexos acessíveis a iniciantes.",
+      "difficulty": "beginner",
+      "slug": {
+        "_type": "slug",
+        "current": "visao-geral-solana"
+      },
+      "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/787ee598de4df34c7f3b71d56898b93005e5cf618da4f1ce4ba01306e502813b.jpg",
+      "title": "Visão Geral da Blockchain Solana"
+    }
+  ],
+  "version": 1
+}

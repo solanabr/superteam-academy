@@ -5,6 +5,7 @@ import achievementsJson from "@/content/generated/achievements.json";
 import coursesJson from "@/content/generated/courses.json";
 import l10nJson from "@/content/generated/l10n.json";
 import lessonsJson from "@/content/generated/lessons.json";
+import metadataArchiveJson from "@/content/generated/metadata-archive.json";
 import pathsJson from "@/content/generated/paths.json";
 import questsJson from "@/content/generated/quests.json";
 import skillsJson from "@/content/generated/skills.json";
@@ -18,6 +19,7 @@ import type {
   QuestDoc,
 } from "./types";
 import { buildStore } from "./build-store";
+import type { MetadataArchive } from "./compile/metadata-archive";
 
 /**
  * SECURITY: this module value-imports the generated content bundle, which
@@ -75,3 +77,18 @@ export const skillLabelBySlug: ReadonlyMap<string, string> = new Map(
     skill.label ? [[skill.slug, skill.label] as const] : []
   )
 );
+
+/**
+ * Every achievement and course ever compiled, including ones that have since
+ * left content (`compile/metadata-archive.ts`). Only the NFT metadata routes
+ * read it: a URI written on-chain must keep resolving after a retirement.
+ */
+const metadataArchive = metadataArchiveJson as unknown as MetadataArchive;
+export const archivedAchievementsById: ReadonlyMap<
+  string,
+  MetadataArchive["achievements"][number]
+> = new Map(metadataArchive.achievements.map((a) => [a._id, a]));
+export const archivedCoursesById: ReadonlyMap<
+  string,
+  MetadataArchive["courses"][number]
+> = new Map(metadataArchive.courses.map((c) => [c._id, c]));

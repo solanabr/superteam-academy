@@ -878,7 +878,6 @@ export interface AdminAchievement {
   category: string | null;
   xpReward: number | null;
   maxSupply: number | null;
-  metadataUri: string | null;
   onChainStatus: {
     status: string | null;
     achievementPda: string | null;
@@ -1041,7 +1040,6 @@ function toAdminAchievement(
     category: str(a.category),
     xpReward: num(a.xpReward),
     maxSupply: num(a.maxSupply),
-    metadataUri: str(a.metadataUri),
     onChainStatus: dep
       ? {
           status: dep.status,

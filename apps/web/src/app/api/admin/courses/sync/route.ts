@@ -47,6 +47,7 @@ import { slotsByCourseId } from "@/lib/content/store";
 import { SYNCED_SHA } from "@/lib/content/meta";
 import { MaskMismatchError } from "@/lib/github/types";
 import { deriveActiveMask } from "@/lib/github/content-commit";
+import { courseCollectionMetadataUri } from "@/lib/metadata/pinned-uri";
 import { ERROR_IDS } from "@/constants/errorIds";
 
 /**
@@ -206,6 +207,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const accountInfo = await connection.getAccountInfo(coursePda);
 
   if (!accountInfo) {
+    // The collection URI below is written on-chain and can't be changed. An
+    // origin that can't be pinned on this cluster refuses before the course
+    // is created.
+    let collectionMetadataUri: string;
+    try {
+      collectionMetadataUri = courseCollectionMetadataUri(courseId);
+    } catch (err) {
+      console.error("[admin/courses/sync] metadata URI refused:", err);
+      return NextResponse.json(
+        { error: err instanceof Error ? err.message : "Metadata URI refused" },
+        { status: 500 }
+      );
+    }
+
     // Resolve prerequisite PDA if configured
     let prerequisitePda: string | undefined;
     if (course.prerequisiteCourse) {
@@ -303,11 +318,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // CollectionMismatch until course.collection is bound).
     let collectionWarning: string | undefined;
     try {
-      const metadataUri = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/certificates/metadata/${courseId}`;
       const collectionResult = await deployCourseTrackCollection({
         courseId,
         courseName: course.title,
-        metadataUri,
+        metadataUri: collectionMetadataUri,
       });
       if (collectionResult.success && collectionResult.collectionAddress) {
         trackCollectionAddress = collectionResult.collectionAddress;
@@ -431,7 +445,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       // Only create a new collection when none exists in Sanity — recreating
       // one would orphan any credentials already minted into the old address.
       if (!trackCollectionAddress) {
-        const metadataUri = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/certificates/metadata/${courseId}`;
+        const metadataUri = courseCollectionMetadataUri(courseId);
         const collectionResult = await deployCourseTrackCollection({
           courseId,
           courseName: course.title,

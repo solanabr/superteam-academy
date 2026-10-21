@@ -33,7 +33,13 @@ import {
   compileBundle,
   compileContent,
   GENERATED_README,
+  stableJson,
 } from "../src/lib/content/compile/compile-bundle";
+import {
+  METADATA_ARCHIVE_FILE,
+  mergeMetadataArchive,
+  parseMetadataArchive,
+} from "../src/lib/content/compile/metadata-archive";
 import { extractTarball } from "../src/lib/content/compile/tarball";
 import { ContentValidationError } from "../src/lib/content/compile/types";
 
@@ -120,6 +126,28 @@ export function writeBundle(outDir: string, files: Map<string, string>): void {
   }
 }
 
+/**
+ * Add the NFT metadata archive to the compiled modules: the committed archive
+ * (read before `writeBundle` wipes the dir) merged with this bundle's
+ * achievements and courses. Append-only, so an id that leaves content keeps
+ * resolving at the metadata URI already written on-chain.
+ */
+export function addMetadataArchive(
+  files: Map<string, string>,
+  previousArchive: string | null
+): void {
+  const read = (name: string): unknown[] => {
+    const json = files.get(name);
+    if (json === undefined) throw new Error(`compiler emitted no ${name}`);
+    return JSON.parse(json) as unknown[];
+  };
+  const archive = mergeMetadataArchive(parseMetadataArchive(previousArchive), {
+    achievements: read("achievements.json"),
+    courses: read("courses.json"),
+  });
+  files.set(METADATA_ARCHIVE_FILE, stableJson(archive));
+}
+
 async function main(): Promise<void> {
   const here = path.dirname(fileURLToPath(import.meta.url));
   const lockPath = path.resolve(here, "../content.lock");
@@ -137,6 +165,12 @@ async function main(): Promise<void> {
     sha: lock.sha,
     compiledAt,
   });
+
+  const archivePath = path.join(outDir, METADATA_ARCHIVE_FILE);
+  addMetadataArchive(
+    files,
+    fs.existsSync(archivePath) ? fs.readFileSync(archivePath, "utf8") : null
+  );
 
   writeBundle(outDir, files);
 
