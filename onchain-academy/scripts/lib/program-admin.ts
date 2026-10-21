@@ -94,14 +94,52 @@ export function assertGenesis(cluster: Cluster, genesisHash: string): void {
   }
 }
 
+/**
+ * A value flag: `undefined` when absent. A flag given without a value (e.g.
+ * `--keypair --yes`) is an error, never a silent fallback to a default.
+ */
+export function flagValue(
+  flags: Record<string, string>,
+  name: string
+): string | undefined {
+  const raw = flags[name];
+  if (raw === undefined) return undefined;
+  if (raw === "true") throw new UsageError(`--${name} needs a value`);
+  return raw;
+}
+
+/** Where the signer comes from: `--keypair <path>`, else PROGRAM_AUTHORITY_SECRET. */
+export type SignerSource = { kind: "file"; path: string } | { kind: "env" };
+
+export function resolveSignerSource(
+  flags: Record<string, string>,
+  env: Record<string, string | undefined>
+): SignerSource {
+  const file = flagValue(flags, "keypair");
+  if (file !== undefined) return { kind: "file", path: file };
+  if (env.PROGRAM_AUTHORITY_SECRET) return { kind: "env" };
+  throw new UsageError(
+    "No signer: pass --keypair <path> or set PROGRAM_AUTHORITY_SECRET"
+  );
+}
+
+/** For the `[signer]` line: the source only, never key material. */
+export function describeSignerSource(source: SignerSource): string {
+  return source.kind === "file"
+    ? `file ${source.path}`
+    : "env PROGRAM_AUTHORITY_SECRET";
+}
+
 /** `--program-id`, else ACADEMY_PROGRAM_ID, else NEXT_PUBLIC_PROGRAM_ID. No default. */
 export function resolveProgramId(
   flags: Record<string, string>,
   env: Record<string, string | undefined>
 ): PublicKey {
   const raw =
-    flags["program-id"] ?? env.ACADEMY_PROGRAM_ID ?? env.NEXT_PUBLIC_PROGRAM_ID;
-  if (!raw || raw === "true") {
+    flagValue(flags, "program-id") ??
+    env.ACADEMY_PROGRAM_ID ??
+    env.NEXT_PUBLIC_PROGRAM_ID;
+  if (!raw) {
     throw new UsageError(
       "Program id required: --program-id <id>, or ACADEMY_PROGRAM_ID / NEXT_PUBLIC_PROGRAM_ID"
     );
@@ -117,14 +155,14 @@ export function parsePubkey(raw: string, what: string): PublicKey {
   }
 }
 
-/** A positive u64 from a flag; `required` flags have no default. */
+/** A u64 from a flag; without a `fallback` the flag is required. */
 export function parseU64(
   flags: Record<string, string>,
   name: string,
   fallback?: bigint
 ): bigint {
-  const raw = flags[name];
-  if (raw === undefined || raw === "true") {
+  const raw = flagValue(flags, name);
+  if (raw === undefined) {
     if (fallback !== undefined) return fallback;
     throw new UsageError(`--${name} <n> is required`);
   }
@@ -342,9 +380,12 @@ export function buildUpdateConfigIx(
 export interface RegisterMinterParams {
   minter: PublicKey;
   label: string;
+  /** Per-call cap; 0 means unlimited on-chain. */
   maxXpPerCall: bigint;
-  /** Lifetime cap; 0 would mean unlimited, which this tooling refuses. */
+  /** Lifetime cap; 0 means unlimited on-chain. */
   maxTotalXp: bigint;
+  /** Allow either cap to be 0 (unlimited). Refused unless explicitly set. */
+  allowUnlimited?: boolean;
 }
 
 /** `register_minter`, paid by the authority. */
@@ -356,10 +397,15 @@ export function buildRegisterMinterIx(
   if (Buffer.byteLength(params.label, "utf8") > MAX_LABEL_LEN) {
     throw new UsageError(`--label is longer than ${MAX_LABEL_LEN} bytes`);
   }
-  if (params.maxTotalXp === 0n) {
-    throw new UsageError(
-      "--max-total-xp must be greater than 0 (0 means unlimited on-chain)"
-    );
+  for (const [flag, value] of [
+    ["--max-xp-per-call", params.maxXpPerCall],
+    ["--max-total-xp", params.maxTotalXp],
+  ] as const) {
+    if (value === 0n && !params.allowUnlimited) {
+      throw new UsageError(
+        `${flag} must be greater than 0 (0 means unlimited on-chain; pass --allow-unlimited to mean it)`
+      );
+    }
   }
   return new TransactionInstruction({
     programId,

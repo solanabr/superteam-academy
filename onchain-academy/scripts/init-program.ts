@@ -11,7 +11,8 @@
  *                     program's upgrade authority. Run it right after deploy.
  *   rotate-backend    update_config(new_backend_signer), retiring the current
  *                     backend's ["minter", old] role.
- *   register-minter   register_minter with explicit caps (backend by default).
+ *   register-minter   register_minter with explicit caps (backend by default);
+ *                     a 0 cap is unlimited and needs --allow-unlimited.
  *   set-paused        update_config(paused): the minting kill switch.
  *
  * Every write is a dry run unless `--yes` is passed. Each one checks the signer
@@ -21,7 +22,9 @@
  * Flags:
  *   --cluster devnet|mainnet   required; the RPC's genesis hash must match
  *   --program-id <id>          else ACADEMY_PROGRAM_ID, else NEXT_PUBLIC_PROGRAM_ID
- *   --keypair <path>           signer keypair file; else PROGRAM_AUTHORITY_SECRET
+ *   --keypair <path>           signer keypair file; else PROGRAM_AUTHORITY_SECRET.
+ *                              A bare --keypair is an error. The signer's source
+ *                              and public key are printed, dry run or not.
  *   --yes                      send (otherwise print the plan only)
  *
  * The RPC comes from SOLANA_RPC_URL (else NEXT_PUBLIC_SOLANA_RPC_URL). Env vars
@@ -50,6 +53,8 @@ import {
   decodeConfig,
   decodeMinterRole,
   decodeProgramData,
+  describeSignerSource,
+  flagValue,
   keypairFromBytes,
   minterRolePda,
   parseArgs,
@@ -61,6 +66,7 @@ import {
   redactUrls,
   resolveCluster,
   resolveProgramId,
+  resolveSignerSource,
   writeKeypairFile,
   type Cluster,
   type ConfigState,
@@ -77,6 +83,7 @@ Commands:
   initialize        [--xp-mint-keypair <path>]
   rotate-backend    [--backend <pubkey>]          (default: BACKEND_SIGNER_SECRET's pubkey)
   register-minter   --max-total-xp <n> [--minter <pubkey>] [--label backend] [--max-xp-per-call 100]
+                    (a 0 cap is unlimited and needs --allow-unlimited)
   set-paused        --paused true|false
 
 Common flags: --program-id <id>  --keypair <path>  --yes`;
@@ -115,23 +122,29 @@ function loadEnvFile(): void {
   }
 }
 
+/**
+ * The signer, from `--keypair <path>` or PROGRAM_AUTHORITY_SECRET. A bare
+ * `--keypair` is an error, not a fallback to the env key. Prints the source
+ * and the public key (never the secret), in dry runs too.
+ */
 function signerFrom(flags: Record<string, string>): Keypair {
-  if (flags.keypair && flags.keypair !== "true") {
-    return readKeypairFile(path.resolve(flags.keypair));
+  const source = resolveSignerSource(flags, process.env);
+  let signer: Keypair;
+  if (source.kind === "file") {
+    signer = readKeypairFile(path.resolve(source.path));
+  } else {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(process.env.PROGRAM_AUTHORITY_SECRET ?? "");
+    } catch {
+      throw new UsageError("PROGRAM_AUTHORITY_SECRET is not a JSON byte array");
+    }
+    signer = keypairFromBytes(parsed, "PROGRAM_AUTHORITY_SECRET");
   }
-  const raw = process.env.PROGRAM_AUTHORITY_SECRET;
-  if (!raw) {
-    throw new UsageError(
-      "No signer: pass --keypair <path> or set PROGRAM_AUTHORITY_SECRET"
-    );
-  }
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    throw new UsageError("PROGRAM_AUTHORITY_SECRET is not a JSON byte array");
-  }
-  return keypairFromBytes(parsed, "PROGRAM_AUTHORITY_SECRET");
+  console.log(
+    `[signer] ${signer.publicKey.toBase58()} (from ${describeSignerSource(source)})`
+  );
+  return signer;
 }
 
 interface Ctx {
@@ -274,9 +287,9 @@ async function cmdInitialize(ctx: Ctx): Promise<void> {
     );
   }
 
-  const mintFlag = ctx.flags["xp-mint-keypair"];
+  const mintFlag = flagValue(ctx.flags, "xp-mint-keypair");
   let xpMint: Keypair;
-  if (mintFlag && mintFlag !== "true") {
+  if (mintFlag !== undefined) {
     xpMint = readKeypairFile(path.resolve(mintFlag));
     console.log(`XP mint (from file): ${xpMint.publicKey.toBase58()}`);
   } else {
@@ -329,8 +342,9 @@ async function cmdRotateBackend(ctx: Ctx): Promise<void> {
   requireAuthority(config, signer);
 
   let backend: PublicKey;
-  if (ctx.flags.backend && ctx.flags.backend !== "true") {
-    backend = parsePubkey(ctx.flags.backend, "--backend");
+  const backendFlag = flagValue(ctx.flags, "backend");
+  if (backendFlag !== undefined) {
+    backend = parsePubkey(backendFlag, "--backend");
   } else if (process.env.BACKEND_SIGNER_SECRET) {
     let parsed: unknown;
     try {
@@ -388,18 +402,19 @@ async function cmdRegisterMinter(ctx: Ctx): Promise<void> {
   const config = await requireConfig(ctx);
   requireAuthority(config, signer);
 
+  const minterFlag = flagValue(ctx.flags, "minter");
   const minter =
-    ctx.flags.minter && ctx.flags.minter !== "true"
-      ? parsePubkey(ctx.flags.minter, "--minter")
+    minterFlag !== undefined
+      ? parsePubkey(minterFlag, "--minter")
       : config.backendSigner;
-  const label =
-    ctx.flags.label && ctx.flags.label !== "true" ? ctx.flags.label : "backend";
+  const label = flagValue(ctx.flags, "label") ?? "backend";
   const maxXpPerCall = parseU64(
     ctx.flags,
     "max-xp-per-call",
     DEFAULT_BACKEND_MAX_XP_PER_CALL
   );
   const maxTotalXp = parseU64(ctx.flags, "max-total-xp");
+  const allowUnlimited = ctx.flags["allow-unlimited"] === "true";
 
   const rolePda = minterRolePda(minter, ctx.programId);
   if (await ctx.connection.getAccountInfo(rolePda)) {
@@ -414,7 +429,13 @@ async function cmdRegisterMinter(ctx: Ctx): Promise<void> {
     label,
     maxXpPerCall,
     maxTotalXp,
+    allowUnlimited,
   });
+  if (maxXpPerCall === 0n || maxTotalXp === 0n) {
+    console.log(
+      "WARNING: a cap of 0 is UNLIMITED on-chain (--allow-unlimited)."
+    );
+  }
   if (!(await sendOrDryRun(ctx, "register_minter", [ix], [signer]))) return;
 
   const role = await ctx.connection.getAccountInfo(rolePda);

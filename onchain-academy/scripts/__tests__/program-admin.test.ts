@@ -19,12 +19,15 @@ import {
   decodeProgramData,
   minterRolePda,
   parseArgs,
+  describeSignerSource,
+  flagValue,
   parseU64,
   programDataAddress,
   readKeypairFile,
   redactUrls,
   resolveCluster,
   resolveProgramId,
+  resolveSignerSource,
   writeKeypairFile,
 } from "../lib/program-admin";
 
@@ -261,7 +264,7 @@ describe("instructions", () => {
         maxXpPerCall: 100n,
         maxTotalXp: 0n,
       })
-    ).toThrow(/greater than 0/);
+    ).toThrow(/--max-total-xp must be greater than 0/);
     expect(() =>
       buildRegisterMinterIx(PROGRAM_ID, authority, {
         minter,
@@ -270,6 +273,80 @@ describe("instructions", () => {
         maxTotalXp: 1n,
       })
     ).toThrow(/label/);
+  });
+
+  it("register-minter refuses an unlimited per-call cap too, unless --allow-unlimited", () => {
+    const minter = Keypair.generate().publicKey;
+    const params = {
+      minter,
+      label: "backend",
+      maxXpPerCall: 0n,
+      maxTotalXp: 250_000n,
+    };
+    expect(() => buildRegisterMinterIx(PROGRAM_ID, authority, params)).toThrow(
+      /--max-xp-per-call must be greater than 0.*--allow-unlimited/
+    );
+
+    const ix = buildRegisterMinterIx(PROGRAM_ID, authority, {
+      ...params,
+      maxTotalXp: 0n,
+      allowUnlimited: true,
+    });
+    const decoded = decodeIx(ix.data) as {
+      data: {
+        params: {
+          max_xp_per_call: { toString(): string };
+          max_total_xp: { toString(): string };
+        };
+      };
+    };
+    expect(decoded.data.params.max_xp_per_call.toString()).toBe("0");
+    expect(decoded.data.params.max_total_xp.toString()).toBe("0");
+  });
+});
+
+describe("signer source", () => {
+  it("uses --keypair <path> over the env key", () => {
+    const source = resolveSignerSource(
+      { keypair: "wallets/upgrade.json" },
+      { PROGRAM_AUTHORITY_SECRET: "[1,2,3]" }
+    );
+    expect(source).toEqual({ kind: "file", path: "wallets/upgrade.json" });
+    expect(describeSignerSource(source)).toBe("file wallets/upgrade.json");
+  });
+
+  it("refuses a bare --keypair instead of falling back to the env key", () => {
+    // `--keypair --yes` parses as keypair="true".
+    const { flags } = parseArgs(["initialize", "--keypair", "--yes"]);
+    expect(() =>
+      resolveSignerSource(flags, { PROGRAM_AUTHORITY_SECRET: "[1,2,3]" })
+    ).toThrow(/--keypair needs a value/);
+  });
+
+  it("names the env source, and refuses when there is none", () => {
+    const source = resolveSignerSource({}, { PROGRAM_AUTHORITY_SECRET: "[1]" });
+    expect(describeSignerSource(source)).toBe("env PROGRAM_AUTHORITY_SECRET");
+    expect(() => resolveSignerSource({}, {})).toThrow(/No signer/);
+  });
+
+  it("refuses any value flag given without a value", () => {
+    expect(flagValue({}, "backend")).toBeUndefined();
+    expect(flagValue({ backend: "abc" }, "backend")).toBe("abc");
+    for (const name of [
+      "backend",
+      "minter",
+      "label",
+      "xp-mint-keypair",
+      "program-id",
+    ]) {
+      expect(() => flagValue({ [name]: "true" }, name)).toThrow(
+        /needs a value/
+      );
+    }
+    // A bare cap flag no longer falls back to its default.
+    expect(() =>
+      parseU64({ "max-xp-per-call": "true" }, "max-xp-per-call", 100n)
+    ).toThrow(/needs a value/);
   });
 });
 
