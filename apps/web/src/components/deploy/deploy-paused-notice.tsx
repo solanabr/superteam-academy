@@ -1,26 +1,34 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { RocketLaunch, Wallet } from "@phosphor-icons/react";
+import { PaperPlaneTilt, RocketLaunch, Wallet } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
+
+const ICONS = {
+  funding: Wallet,
+  deploy: RocketLaunch,
+  explorer: PaperPlaneTilt,
+} as const;
 
 interface DeployPausedNoticeProps {
   /** Which lesson block it stands in for. */
-  variant: "funding" | "deploy";
+  variant: keyof typeof ICONS;
   className?: string;
 }
 
 /**
- * Stands in for the wallet-funding card and the deploy panel while the
- * in-lesson deploy is off (`lib/deploy/learner-deploy.ts`). The lesson stays
- * completable without either, so the copy says so.
+ * Stands in for the wallet-funding card, the deploy panel and the program
+ * explorer while the in-lesson deploy is off (`lib/deploy/learner-deploy.ts`).
+ * None of them is required to complete a lesson, so the copy says so. It names
+ * no cluster: the same notice shows on mainnet and on a devnet with the flag
+ * off.
  */
 export function DeployPausedNotice({
   variant,
   className,
 }: DeployPausedNoticeProps) {
   const t = useTranslations("deploy.paused");
-  const Icon = variant === "funding" ? Wallet : RocketLaunch;
+  const Icon = ICONS[variant];
 
   return (
     <div

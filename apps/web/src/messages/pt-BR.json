@@ -1006,9 +1006,11 @@
     },
     "paused": {
       "fundingTitle": "O financiamento da carteira está pausado",
-      "fundingBody": "Você não precisa de SOL de devnet nesta lição por enquanto. O deploy direto pela lição volta em breve.",
+      "fundingBody": "Você não precisa de SOL nesta lição por enquanto. O deploy direto pela lição volta em breve.",
       "deployTitle": "O deploy pela lição volta em breve",
-      "deployBody": "Você ainda pode concluir esta lição: compile seu programa no editor e depois responda ao quiz."
+      "deployBody": "Você ainda pode concluir esta lição com os outros passos desta página.",
+      "explorerTitle": "O envio de transações pela lição volta em breve",
+      "explorerBody": "Você ainda pode concluir esta lição com os outros passos desta página."
     }
   },
   "programErrors": {

@@ -10,6 +10,7 @@ import es from "@/messages/es.json";
 import { WalletFundingBlock } from "../wallet-funding-block";
 import { DeployedProgramCardBlock } from "../deployed-program-card-block";
 import { CodeBlock } from "../code-block";
+import { ProgramExplorerBlock } from "../program-explorer-block";
 import type { BlockContext } from "../types";
 
 // Every dynamic import (funding card, deploy panel, challenge editor) renders
@@ -84,6 +85,11 @@ const deployBlock = {
   _type: "deployed-program-card" as const,
   key: "deployed",
 };
+const explorerBlock = {
+  _type: "program-explorer" as const,
+  key: "explorer",
+  idl: "{}",
+};
 
 beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_SOLANA_NETWORK", "devnet");
@@ -100,14 +106,15 @@ describe("deploy blocks with the in-lesson deploy on", () => {
     vi.stubEnv("NEXT_PUBLIC_LEARNER_DEPLOY_ENABLED", "true");
   });
 
-  it("mount the funding card and the deploy panel", () => {
+  it("mount the funding card, the deploy panel and the program explorer", () => {
     renderWithIntl(
       <>
         <WalletFundingBlock block={fundingBlock} ctx={makeCtx()} />
         <DeployedProgramCardBlock block={deployBlock} ctx={makeCtx()} />
+        <ProgramExplorerBlock block={explorerBlock} ctx={makeCtx()} />
       </>
     );
-    expect(screen.getAllByTestId("dynamic-stub")).toHaveLength(2);
+    expect(screen.getAllByTestId("dynamic-stub")).toHaveLength(3);
     expect(screen.queryByRole("status")).toBeNull();
   });
 
@@ -126,21 +133,47 @@ describe.each([
     vi.stubEnv("NEXT_PUBLIC_SOLANA_NETWORK", label);
   });
 
-  it("show a notice instead of the funding card and the deploy panel", () => {
+  it("show a notice instead of the funding card, the deploy panel and the program explorer", () => {
     renderWithIntl(
       <>
         <WalletFundingBlock block={fundingBlock} ctx={makeCtx()} />
         <DeployedProgramCardBlock block={deployBlock} ctx={makeCtx()} />
+        <ProgramExplorerBlock block={explorerBlock} ctx={makeCtx()} />
       </>
     );
     expect(screen.queryByTestId("dynamic-stub")).toBeNull();
     const notices = screen.getAllByRole("status");
-    expect(notices).toHaveLength(2);
+    expect(notices).toHaveLength(3);
     expect(notices[0]).toHaveTextContent("Wallet funding is paused");
     expect(notices[1]).toHaveTextContent(
       "Deploying from the lesson is coming back soon"
     );
     expect(notices[1]).toHaveTextContent("You can still finish this lesson");
+    expect(notices[2]).toHaveTextContent(
+      "Sending transactions from the lesson is coming back soon"
+    );
+  });
+
+  it("never names a cluster, so it reads right on mainnet too", () => {
+    for (const [locale, messages] of [
+      ["en", en],
+      ["pt-BR", ptBR],
+      ["es", es],
+    ] as const) {
+      const { container, unmount } = renderWithIntl(
+        <>
+          <WalletFundingBlock block={fundingBlock} ctx={makeCtx()} />
+          <DeployedProgramCardBlock block={deployBlock} ctx={makeCtx()} />
+          <ProgramExplorerBlock block={explorerBlock} ctx={makeCtx()} />
+        </>,
+        locale,
+        messages
+      );
+      expect(container.textContent?.toLowerCase()).not.toMatch(
+        /devnet|mainnet|testnet/
+      );
+      unmount();
+    }
   });
 
   it("let the code block submit without a deploy", () => {
