@@ -49,6 +49,7 @@ function course(overrides: Partial<CourseSnapshot> = {}): CourseSnapshot {
     creator: CREATOR,
     creatorRewardXp: 30,
     liveLessonCount: 3,
+    totalEnrollments: 0,
     activeLessonsOrCount: bitsToHex([0, 1, 2]),
     contentTxId: "00".repeat(32),
     ...overrides,

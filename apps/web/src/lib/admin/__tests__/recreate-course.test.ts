@@ -42,17 +42,8 @@ let dbThrows = false;
 // NEXT_PUBLIC_SOLANA_NETWORK label.
 let genesisHash = DEVNET_GENESIS_HASH;
 let genesisHashThrows = false;
-// Mainnet freeze re-check: the course as read back after deactivating it, and
-// the deactivation's slot as the RPC reports it (null = not seen).
-let recheckCourse: Record<string, unknown> | null = null;
-let deactivationSlot: number | null = 123;
 // Statuses the RPC reports for create signatures (getSignatureStatuses).
 let signatureStatuses: Map<string, { err: unknown }> = new Map();
-// Every getAccountInfo call, with its config, and an optional hook that can
-// throw to simulate a lagging or unreachable RPC.
-type ReadConfig = { commitment?: string; minContextSlot?: number } | string;
-let accountReads: Array<{ pda: string; config?: ReadConfig }> = [];
-let readHook: ((config?: ReadConfig) => void) | null = null;
 const MAINNET_GENESIS_HASH = "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d";
 // The RPC endpoint the mainnet course-identity guard reads (SOLANA_RPC_URL).
 // Independent of the label and the genesis hash, so a mainnet host can be
@@ -121,7 +112,6 @@ vi.mock("@/lib/solana/academy-reads", () => ({
     if (fetchCourseThrows) throw new Error("undecodable account layout");
     return onChainCourse;
   },
-  decodeCourse: () => recheckCourse,
 }));
 
 vi.mock("@/lib/content/deployment-writes", () => ({
@@ -157,20 +147,12 @@ vi.mock("@solana/web3.js", async (importOriginal) => {
   return {
     ...actual,
     Connection: class {
-      async getAccountInfo(pk: PublicKey, config?: ReadConfig) {
-        accountReads.push({ pda: pk.toBase58(), config });
-        readHook?.(config);
+      async getAccountInfo(pk: PublicKey) {
         return accounts.get(pk.toBase58()) ?? null;
       }
       async getGenesisHash() {
         if (genesisHashThrows) throw new Error("RPC unreachable");
         return genesisHash;
-      }
-      async getSignatureStatus() {
-        return {
-          context: { slot: 1 },
-          value: deactivationSlot == null ? null : { slot: deactivationSlot },
-        };
       }
       async getSignatureStatuses(signatures: string[]) {
         return {
@@ -242,9 +224,10 @@ beforeEach(() => {
   // The course exists on-chain (so there IS something to recreate).
   accounts = new Map([[coursePda(COURSE_ID), { lamports: 1 } as object]]);
   fetchCourseThrows = false;
+  // Nobody enrolled: the only state a recreate is allowed from.
   onChainCourse = {
-    total_completions: 42,
-    total_enrollments: 100,
+    total_completions: 0,
+    total_enrollments: 0,
     is_active: true,
     collection: COLLECTION,
     // H3: matches validCourse().lessonCount so the default happy path never
@@ -258,10 +241,6 @@ beforeEach(() => {
   dbThrows = false;
   genesisHash = DEVNET_GENESIS_HASH;
   genesisHashThrows = false;
-  recheckCourse = null;
-  deactivationSlot = 123;
-  accountReads = [];
-  readHook = null;
   rpcUrl = DEVNET_RPC;
   vi.clearAllMocks();
 });
@@ -331,70 +310,43 @@ describe("rail 4 — genesis hash and label must agree on devnet or mainnet", ()
 });
 
 // ---------------------------------------------------------------------------
-// MAINNET — only while nobody is enrolled. Pre-flight checks the live count;
-// after the gate, the course is deactivated (enroll is learner-signed, the gate
-// can't stop it) and the count is re-read before the close.
+// ZERO ENROLLMENTS, ON BOTH CLUSTERS. The program refuses close_course once a
+// course has had an enrollment (6037); the pre-flight refuses first with a
+// clear reason, and an enrollment that races the close leaves the course
+// intact.
 // ---------------------------------------------------------------------------
-describe("mainnet recreate — zero enrollments only", () => {
+describe.each([
+  ["devnet", DEVNET_GENESIS_HASH],
+  ["mainnet", MAINNET_GENESIS_HASH],
+])("recreate on %s — only while nobody has enrolled", (network, genesis) => {
   beforeEach(() => {
-    process.env.NEXT_PUBLIC_SOLANA_NETWORK = "mainnet";
-    genesisHash = MAINNET_GENESIS_HASH;
-    onChainCourse = { ...onChainCourse, total_enrollments: 0 };
-    recheckCourse = { is_active: false, total_enrollments: 0 };
+    process.env.NEXT_PUBLIC_SOLANA_NETWORK = network;
+    genesisHash = genesis;
   });
 
-  it("recreates a course with zero enrollments, deactivating it before the close", async () => {
+  it("recreates a course with zero enrollments without deactivating it first", async () => {
     const result = await recreateCourse(COURSE_ID);
 
     expect(result.action).toBe("recreated");
-    expect(calls.slice(0, 3)).toEqual(["gate:on", "deactivate", "close"]);
-    expect(calls).toContain("create");
-    // create_course sets is_active=true and the course was active before, so
-    // nothing re-deactivates it afterwards.
-    expect(calls.filter((c) => c === "deactivate")).toHaveLength(1);
+    expect(calls.slice(0, 3)).toEqual(["gate:on", "close", "create"]);
+    expect(calls).not.toContain("deactivate");
+    expect(result.lostCounters).toEqual({
+      totalCompletions: 0,
+      totalEnrollments: 0,
+    });
   });
 
-  it("refuses a course with one or more enrollments, touching nothing", async () => {
+  it("refuses a course anyone has enrolled in, touching nothing", async () => {
     onChainCourse = { ...onChainCourse, total_enrollments: 1 };
 
     const err = await captureError(recreateCourse(COURSE_ID));
 
     expect(err.phase).toBe("preflight");
     expect(err.courseIntact).toBe(true);
-    expect(err.message).toMatch(/1 enrollment\(s\)/);
+    expect(err.message).toMatch(/has had 1 enrollment\(s\)/);
+    expect(err.message).toMatch(/new course id/);
     expect(calls).toEqual([]);
-  });
-
-  it("refuses when an enrollment appears between the pre-flight read and the close", async () => {
-    recheckCourse = { is_active: false, total_enrollments: 1 };
-
-    const err = await captureError(recreateCourse(COURSE_ID));
-
-    expect(err.phase).toBe("freeze");
-    expect(err.courseIntact).toBe(true);
-    expect(err.message).toMatch(/someone enrolled after the pre-flight/i);
-    expect(err.message).toMatch(/deactivated and then re-activated/i);
-    // Deactivated, found the enrollment, re-activated, released the gate.
-    expect(calls).toEqual(["gate:on", "deactivate", "activate", "gate:off"]);
     expect(closeCoursePda).not.toHaveBeenCalled();
-  });
-
-  it("refuses when the course does not read back inactive", async () => {
-    recheckCourse = { is_active: true, total_enrollments: 0 };
-
-    const err = await captureError(recreateCourse(COURSE_ID));
-
-    expect(err.message).toMatch(/did not read back as inactive/i);
-    expect(closeCoursePda).not.toHaveBeenCalled();
-  });
-
-  it("refuses when the RPC has not seen the deactivation", async () => {
-    deactivationSlot = null;
-
-    const err = await captureError(recreateCourse(COURSE_ID));
-
-    expect(err.message).toMatch(/could not confirm the deactivation/i);
-    expect(calls).toEqual(["gate:on", "deactivate", "activate", "gate:off"]);
   });
 
   it("refuses when the live course cannot be read to prove zero enrollments", async () => {
@@ -404,6 +356,55 @@ describe("mainnet recreate — zero enrollments only", () => {
 
     expect(err.message).toMatch(/confirm it has no enrollments/i);
     expect(calls).toEqual([]);
+  });
+
+  it.each([
+    [
+      "the settled status",
+      'failed on-chain: {"InstructionError":[0,{"Custom":6037}]}',
+    ],
+    [
+      "a simulation",
+      "Transaction simulation failed: Error processing Instruction 0: custom program error: 0x1795; its blockhash expired before it landed",
+    ],
+  ])(
+    "names an enrollment that raced the close (%s), course intact",
+    async (_how, error) => {
+      closeResult = { outcome: "notLanded", error };
+
+      const err = await captureError(recreateCourse(COURSE_ID));
+
+      expect(err.phase).toBe("close");
+      expect(err.courseIntact).toBe(true);
+      expect(err.message).toMatch(/got an enrollment after the pre-flight/);
+      expect(err.message).toMatch(/nothing was destroyed/i);
+      expect(calls).toEqual(["gate:on", "close", "gate:off"]);
+      expect(deployCoursePda).not.toHaveBeenCalled();
+    }
+  );
+
+  it("recreates a course that was inactive and leaves it inactive", async () => {
+    onChainCourse = { ...onChainCourse, is_active: false };
+
+    const result = await recreateCourse(COURSE_ID);
+
+    expect(result.action).toBe("recreated");
+    expect(calls).toEqual([
+      "gate:on",
+      "close",
+      "create",
+      "bind+deactivate",
+      "db:synced",
+      "gate:off",
+      "changelog:recreated",
+    ]);
+  });
+});
+
+describe("mainnet recreate — creator rules", () => {
+  beforeEach(() => {
+    process.env.NEXT_PUBLIC_SOLANA_NETWORK = "mainnet";
+    genesisHash = MAINNET_GENESIS_HASH;
   });
 
   it("ignores allowUnusualCreator: creator == authority is refused", async () => {
@@ -416,149 +417,6 @@ describe("mainnet recreate — zero enrollments only", () => {
     expect(closeCoursePda).not.toHaveBeenCalled();
     expect(deployCoursePda).not.toHaveBeenCalled();
     expect(calls).toEqual([]);
-  });
-
-  it("puts is_active back when the close definitively did not land", async () => {
-    closeResult = {
-      outcome: "notLanded",
-      error: "its blockhash expired before it landed",
-    };
-
-    const err = await captureError(recreateCourse(COURSE_ID));
-
-    expect(err.phase).toBe("close");
-    expect(err.courseIntact).toBe(true);
-    expect(err.message).toMatch(/nothing was destroyed/i);
-    expect(err.message).toMatch(/deactivated and then re-activated/i);
-    expect(calls).toEqual([
-      "gate:on",
-      "deactivate",
-      "close",
-      "activate",
-      "gate:off",
-    ]);
-  });
-
-  it("sends no activate and keeps the gate when the close outcome is unknown", async () => {
-    closeResult = {
-      outcome: "unknown",
-      signature: "close-sig",
-      error: "RPC unreachable",
-    };
-
-    const err = await captureError(recreateCourse(COURSE_ID));
-
-    expect(err.courseIntact).toBe(false);
-    expect(err.message).toMatch(/UNKNOWN/);
-    expect(err.message).toMatch(/re-activate it/);
-    expect(calls).toEqual(["gate:on", "deactivate", "close"]);
-  });
-
-  it("re-reads the course pinned at the deactivation's slot", async () => {
-    deactivationSlot = 456;
-
-    await recreateCourse(COURSE_ID);
-
-    expect(accountReads).toContainEqual({
-      pda: coursePda(COURSE_ID),
-      config: { commitment: "confirmed", minContextSlot: 456 },
-    });
-  });
-
-  it("aborts fail-closed when the RPC has not reached the deactivation's slot", async () => {
-    readHook = (config) => {
-      if (typeof config === "object" && config.minContextSlot != null) {
-        throw new Error("Minimum context slot has not been reached");
-      }
-    };
-
-    const err = await captureError(recreateCourse(COURSE_ID));
-
-    expect(err.phase).toBe("freeze");
-    expect(err.courseIntact).toBe(true);
-    expect(err.message).toMatch(/minimum context slot/i);
-    expect(err.message).toMatch(/deactivated and then re-activated/i);
-    expect(calls).toEqual(["gate:on", "deactivate", "activate", "gate:off"]);
-    expect(closeCoursePda).not.toHaveBeenCalled();
-  });
-
-  describe("a deactivate that reports failure", () => {
-    beforeEach(() => {
-      vi.mocked(updateCoursePda).mockImplementationOnce(async () => {
-        calls.push("deactivate");
-        return {
-          success: false,
-          error: "Transaction was not confirmed in 30.00 seconds",
-        };
-      });
-    });
-
-    it("re-activates when it landed late (the course reads inactive)", async () => {
-      recheckCourse = { is_active: false, total_enrollments: 0 };
-
-      const err = await captureError(recreateCourse(COURSE_ID));
-
-      expect(err.phase).toBe("freeze");
-      expect(err.courseIntact).toBe(true);
-      expect(err.message).toMatch(/deactivated and then re-activated/i);
-      expect(calls).toEqual(["gate:on", "deactivate", "activate", "gate:off"]);
-      expect(closeCoursePda).not.toHaveBeenCalled();
-    });
-
-    it("sends no activate when it never landed (the course reads active)", async () => {
-      recheckCourse = { is_active: true, total_enrollments: 0 };
-
-      const err = await captureError(recreateCourse(COURSE_ID));
-
-      expect(err.phase).toBe("freeze");
-      expect(err.message).toMatch(/still reads as active/i);
-      expect(calls).toEqual(["gate:on", "deactivate", "gate:off"]);
-      expect(closeCoursePda).not.toHaveBeenCalled();
-    });
-
-    it("says the state is unknown when the re-read fails, and sends no activate", async () => {
-      readHook = () => {
-        if (calls.includes("deactivate")) throw new Error("RPC unreachable");
-      };
-
-      const err = await captureError(recreateCourse(COURSE_ID));
-
-      expect(err.phase).toBe("freeze");
-      expect(err.message).toMatch(/UNKNOWN/);
-      expect(calls).toEqual(["gate:on", "deactivate", "gate:off"]);
-    });
-  });
-
-  describe("a course already inactive at pre-flight", () => {
-    beforeEach(() => {
-      onChainCourse = { ...onChainCourse, is_active: false };
-    });
-
-    it("is recreated and left inactive", async () => {
-      const result = await recreateCourse(COURSE_ID);
-
-      expect(result.action).toBe("recreated");
-      expect(calls).toEqual([
-        "gate:on",
-        "deactivate",
-        "close",
-        "create",
-        "bind+deactivate",
-        "db:synced",
-        "gate:off",
-        "changelog:recreated",
-      ]);
-    });
-
-    it("stays inactive when the freeze aborts", async () => {
-      recheckCourse = { is_active: false, total_enrollments: 1 };
-
-      const err = await captureError(recreateCourse(COURSE_ID));
-
-      expect(err.phase).toBe("freeze");
-      expect(err.message).toMatch(/already inactive/i);
-      expect(calls).toEqual(["gate:on", "deactivate", "gate:off"]);
-    });
   });
 
   it("ignores allowUnusualCreator for the bypass log, since the override is not applied", async () => {
@@ -1003,11 +861,11 @@ describe("close → create happy path", () => {
     warn.mockRestore();
   });
 
-  it("REPORTS the counters the recreate destroys (they cannot be restored)", async () => {
+  it("reports the counters the recreate resets, which are zero by construction", async () => {
     const result = await recreateCourse(COURSE_ID);
     expect(result.lostCounters).toEqual({
-      totalCompletions: 42,
-      totalEnrollments: 100,
+      totalCompletions: 0,
+      totalEnrollments: 0,
     });
   });
 

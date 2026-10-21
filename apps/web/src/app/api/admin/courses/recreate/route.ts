@@ -15,23 +15,19 @@ import {
 } from "@/lib/admin/recreate-course";
 import { sanitizeReason } from "@/lib/admin/sanitize-reason";
 
-// 300 is the Vercel plan ceiling, as in api/build-program. Mainnet worst case
-// is about 250s (about 258s with every bound hit): reads ~4s, deactivate 31s,
-// a close that lands just before its blockhash expires ~83s (hard cap 90s),
-// three creates ~97s, one restore update 31s, DB writes ~2s. A kill mid-way
-// leaves the course inactive or down behind the maintenance gate, which
+// 300 is the Vercel plan ceiling, as in api/build-program. Worst case is about
+// 220s: reads ~4s, a close that lands just before its blockhash expires ~83s
+// (hard cap 90s), three creates ~97s, one restore update 31s, DB writes ~2s. A
+// kill mid-way leaves the course down behind the maintenance gate, which
 // expires after 10 minutes.
 export const maxDuration = 300;
 
 /**
- * preflight: refused, nothing touched. freeze (mainnet): stopped before the
- * close; the message says whether the course was re-activated or left
- * inactive. close/create: a server-side failure; `courseIntact: false` means
- * the course is down or its state is unknown.
+ * preflight: refused, nothing touched. close/create: a server-side failure;
+ * `courseIntact: false` means the course is down or its state is unknown.
  */
 const STATUS_BY_PHASE: Record<RecreatePhase, number> = {
   preflight: 400,
-  freeze: 409,
   close: 500,
   create: 500,
 };
@@ -42,8 +38,9 @@ const STATUS_BY_PHASE: Record<RecreatePhase, number> = {
  * `trackId`, `trackLevel`, `prerequisite`) that `update_course` cannot touch.
  * See `lib/admin/recreate-course.ts` for the full rationale, the non-atomicity
  * window this is built around, and the 4 safety rails (admin-auth, the H3
- * lesson-count default, the maintenance gate, and the cluster rail: devnet, or
- * mainnet only while the course has zero enrollments).
+ * lesson-count default, the maintenance gate, and the cluster rail). On both
+ * clusters a course can be recreated only while nobody has enrolled; the
+ * program enforces it too.
  *
  * Guards, in order:
  *   1. `requireAdminAuth` — the caller's Supabase session must belong to a user
@@ -62,7 +59,7 @@ const STATUS_BY_PHASE: Record<RecreatePhase, number> = {
  *      independent field naming the same course, mirroring the `confirm` gate
  *      above. Checked before any on-chain call is made.
  *   4. `recreateCourse` itself refuses (an unknown or mislabelled cluster, a
- *      mainnet course with enrollments, missing signer, bad creator, a
+ *      course anyone has enrolled in, missing signer, bad creator, a
  *      lesson-count superset, a concurrent recreate already in progress, ...)
  *      before anything is touched — see `preflightRecreate`. On mainnet
  *      `allowUnusualCreator` is ignored there, and `recreateCourse` logs the

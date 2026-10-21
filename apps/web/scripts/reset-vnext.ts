@@ -14,7 +14,11 @@
  * `recreateCourse` and runs the frozen B4 `verifyReset` between each. Its
  * cluster rail lives INSIDE `recreateCourse`'s preflight; this script adds its
  * own devnet-only genesis assert before `--execute`, so a reset never runs on
- * mainnet even though a single mainnet recreate with zero enrollments can.
+ * mainnet even though a single recreate of a never-enrolled course can.
+ *
+ * Only courses nobody ever enrolled in can be reset: the program refuses
+ * `close_course` once `total_enrollments` is above 0. The run refuses any
+ * enrolled course up front (dry-run WOULD-BLOCK, execute STOP before any close).
  *
  * SAFETY (default is DRY-RUN):
  *   - No `--execute`               → DRY-RUN: census + read-only per-course

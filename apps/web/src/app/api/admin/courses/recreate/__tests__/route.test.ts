@@ -276,24 +276,24 @@ describe("POST /api/admin/courses/recreate — error mapping", () => {
     );
   });
 
-  it("maps a mainnet freeze abort to 409, course intact, with what happened to is_active", async () => {
+  it("reports an enrollment that raced the close as a refused close, course intact", async () => {
     recreateCourse.mockRejectedValue(
       new RecreateCourseError(
-        'Course "x" now has 1 enrollment(s): someone enrolled after the pre-flight. It was deactivated and then re-activated. Nothing was closed.',
-        "freeze",
+        'Course "x" got an enrollment after the pre-flight, so the program refused the close (CourseHasEnrollments). It can no longer be recreated. The course is UNCHANGED and still deployed — nothing was destroyed.',
+        "close",
         true
       )
     );
     const res = await post({ courseId: COURSE_ID, confirm: COURSE_ID });
-    expect(res.status).toBe(409);
+    expect(res.status).toBe(500);
     const body = (await res.json()) as {
       phase: string;
       courseIntact: boolean;
       error: string;
     };
-    expect(body.phase).toBe("freeze");
+    expect(body.phase).toBe("close");
     expect(body.courseIntact).toBe(true);
-    expect(body.error).toMatch(/deactivated and then re-activated/);
+    expect(body.error).toMatch(/CourseHasEnrollments/);
   });
 
   it("maps a failed close to 500 but reports the course as intact", async () => {

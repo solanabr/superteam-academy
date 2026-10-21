@@ -12,8 +12,10 @@ import {
   assertCrossRpcForExecute,
   assertExpectedCoversCensus,
   assertLiveLessonCountsPositive,
+  assertNoEnrolledCourses,
   bindRecreate,
   buildExpected,
+  findEnrolledCourses,
   findZeroLessonCourses,
   formatCliError,
   orchestrateReset,
@@ -35,7 +37,8 @@ import {
 function mkCourse(
   courseId: string,
   creator = `creator-${courseId}`,
-  liveLessonCount = 5
+  liveLessonCount = 5,
+  totalEnrollments = 0
 ): CourseSnapshot {
   return {
     courseId,
@@ -44,6 +47,7 @@ function mkCourse(
     creator,
     creatorRewardXp: 30,
     liveLessonCount,
+    totalEnrollments,
     activeLessonsOrCount: "0".repeat(64),
     contentTxId: "00".repeat(32),
   };
@@ -469,6 +473,82 @@ describe("orchestrateReset — STOP-on-fail halts the loop (#356 §15.3)", () =>
     // STOPPED on the very first course; c2 never touched.
     expect(recreate).toHaveBeenCalledTimes(1);
     expect(recreate).toHaveBeenCalledWith("c1");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Zero-enrollment precondition — the program refuses close_course on a course
+// anyone enrolled in (6037), so the run refuses up front, on any cluster.
+// ---------------------------------------------------------------------------
+
+describe("zero-enrollment precondition", () => {
+  const twoCourses = () =>
+    buildExpected([
+      { _id: "c1", creatorWallet: "creator-c1" },
+      { _id: "c2", creatorWallet: "creator-c2" },
+    ]);
+
+  it("findEnrolledCourses flags any course with an enrollment, and an unreadable counter", () => {
+    const unreadable = {
+      ...mkCourse("c-unknown"),
+      totalEnrollments: undefined as unknown as number,
+    };
+    const snap = mkSnapshot([
+      mkCourse("c1"),
+      mkCourse("c-enrolled", "creator-c-enrolled", 5, 3),
+      unreadable,
+    ]);
+    expect(findEnrolledCourses(snap)).toEqual(["c-enrolled", "c-unknown"]);
+    expect(() =>
+      assertNoEnrolledCourses(mkSnapshot([mkCourse("c1")]))
+    ).not.toThrow();
+  });
+
+  it("EXECUTE: an enrolled course STOPs before ANY recreate call", async () => {
+    const { deps, recreate, snapshot } = mkDeps();
+    const pre = mkSnapshot([
+      mkCourse("c1"),
+      mkCourse("c2", "creator-c2", 5, 1),
+    ]);
+
+    try {
+      await orchestrateReset(deps, {
+        preSnapshot: pre,
+        expected: twoCourses(),
+        execute: true,
+      });
+      throw new Error("expected a STOP");
+    } catch (err) {
+      expect(err).toBeInstanceOf(ResetStopError);
+      expect((err as ResetStopError).phase).toBe("preflight");
+      expect((err as ResetStopError).failures).toEqual(["c2"]);
+      expect((err as ResetStopError).message).toMatch(/CourseHasEnrollments/);
+    }
+    expect(recreate).not.toHaveBeenCalled();
+    expect(snapshot).not.toHaveBeenCalled();
+  });
+
+  it("DRY-RUN: an enrolled course is a WOULD-BLOCK and is not preflighted", async () => {
+    const logs: string[] = [];
+    const { deps, recreate, preflight } = mkDeps({ log: (l) => logs.push(l) });
+    const pre = mkSnapshot([
+      mkCourse("c1"),
+      mkCourse("c2", "creator-c2", 5, 2),
+    ]);
+
+    await expect(
+      orchestrateReset(deps, {
+        preSnapshot: pre,
+        expected: twoCourses(),
+        execute: false,
+      })
+    ).rejects.toMatchObject({ phase: "preflight" });
+
+    expect(logs.some((l) => /WOULD-BLOCK: has had enrollments/.test(l))).toBe(
+      true
+    );
+    expect(recreate).not.toHaveBeenCalled();
+    expect(preflight).not.toHaveBeenCalledWith("c2");
   });
 });
 
