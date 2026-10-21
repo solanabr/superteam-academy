@@ -81,6 +81,11 @@ vi.mock("@/lib/solana/instructions", () => ({
     data: Buffer.alloc(0),
   })),
 }));
+// The enrollment was sponsored: its rent goes back to the sponsor.
+const sponsor = vi.hoisted(() => ({ key: null as unknown }));
+vi.mock("@/lib/solana/enrollment-rent", () => ({
+  fetchEnrollmentRentRecipient: vi.fn(() => Promise.resolve(sponsor.key)),
+}));
 vi.mock("@/lib/solana/program-errors", () => ({
   preflightTransaction: vi.fn(() => Promise.resolve()),
   parseProgramError: vi.fn(() => ({ i18nKey: null, fallback: "failed" })),
@@ -91,6 +96,8 @@ vi.mock("@/components/certificates/course-completion-mint", () => ({
   CourseCompletionMint: () => null,
 }));
 
+import { buildCloseEnrollmentInstruction } from "@/lib/solana/instructions";
+import { fetchEnrollmentRentRecipient } from "@/lib/solana/enrollment-rent";
 import { CurrentCoursesSection } from "../current-courses-section";
 
 function renderWithIntl(ui: ReactElement) {
@@ -134,6 +141,7 @@ beforeEach(() => {
   auth.walletAddress = null;
   auth.walletKind = null;
   dynamicEnabled.value = true;
+  sponsor.key = Keypair.generate().publicKey;
 });
 
 describe("CurrentCoursesSection — unenroll wallet resolution", () => {
@@ -157,6 +165,14 @@ describe("CurrentCoursesSection — unenroll wallet resolution", () => {
     // No adapter modal for an embedded-wallet learner — that was the dead end.
     expect(wallet.setVisible).not.toHaveBeenCalled();
     expect(wallet.sendTransaction).not.toHaveBeenCalled();
+    // The close refunds whoever paid the rent, read from the enrollment.
+    const learner = vi.mocked(fetchEnrollmentRentRecipient).mock.calls[0]![2];
+    expect(learner.toBase58()).toBe(address);
+    expect(buildCloseEnrollmentInstruction).toHaveBeenCalledWith(
+      course.courseId,
+      learner,
+      sponsor.key
+    );
   });
 
   it("explains before connecting when neither wallet exists", async () => {

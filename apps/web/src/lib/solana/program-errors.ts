@@ -209,6 +209,11 @@ const ERROR_MAP: Record<number, ProgramErrorEntry> = {
     i18nKey: "enrollmentInProgress",
     fallback: "An enrollment with completed lessons cannot be closed.",
   },
+  6037: {
+    name: "CourseHasEnrollments",
+    i18nKey: "courseHasEnrollments",
+    fallback: "A course that anyone has enrolled in cannot be closed.",
+  },
 };
 
 // Reverse lookup: error name → entry

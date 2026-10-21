@@ -1043,6 +1043,7 @@
     "staleEnrollment": "Esta matrícula pertence a uma versão anterior do curso. Matricule-se novamente para continuar.",
     "oldMinterRoleMissing": "A rotação de backend requer a conta anterior de papel de minter do backend.",
     "enrollmentInProgress": "Uma matrícula com aulas concluídas não pode ser encerrada.",
+    "courseHasEnrollments": "Um curso em que alguém já se matriculou não pode ser encerrado.",
     "unknown": "Transação falhou. Tente novamente."
   },
   "community": {
