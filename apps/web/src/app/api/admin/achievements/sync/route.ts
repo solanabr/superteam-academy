@@ -20,6 +20,7 @@ import { fetchAchievementType } from "@/lib/solana/academy-reads";
 import { deployAchievementType } from "@/lib/solana/admin-signer";
 import { getMissingAchievementFields, isDraftId } from "@/lib/admin/sync-diff";
 import { writeAchievementOnChainStatus } from "@/lib/content/deployment-writes";
+import { achievementMetadataUri } from "@/lib/metadata/site-origin";
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
@@ -130,9 +131,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
   }
 
-  const metadataUri =
-    ach.metadataUri ??
-    `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/achievements/metadata/${achievementId}`;
+  // Always our own origin, never a URI from content: the type's URI is copied
+  // into every achievement NFT it awards and can't be changed afterwards.
+  const metadataUri = achievementMetadataUri(achievementId);
 
   const result = await deployAchievementType({
     achievementId,

@@ -20,6 +20,7 @@ import { isPlatformFrozen } from "@/lib/platform/freeze";
 import { platformFrozenResponse } from "@/lib/platform/freeze-http";
 import { checkCapstoneCredentialGate } from "@/lib/credentials/capstone-gate";
 import { logError } from "@/lib/logging";
+import { credentialMetadataUri, siteUrl } from "@/lib/metadata/site-origin";
 import { ERROR_IDS } from "@/constants/errorIds";
 
 /**
@@ -258,7 +259,7 @@ export async function POST(request: NextRequest) {
         { trait_type: "Course Version", value: onChainCourse.version },
       ],
       properties: { category: "certificate", creators: [] },
-      external_url: `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/certificates`,
+      external_url: siteUrl("/certificates"),
       seller_fee_basis_points: 0,
     };
 
@@ -278,7 +279,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const appMetadataUri = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/certificates/metadata?id=${metadataRow.id}`;
+    const appMetadataUri = credentialMetadataUri(metadataRow.id);
 
     // Pin metadata to Arweave so the on-chain asset URI is permanent and
     // resolves independently of app uptime. Falls back to the app-served URL

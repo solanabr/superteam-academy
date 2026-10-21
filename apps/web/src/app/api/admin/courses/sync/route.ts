@@ -47,6 +47,7 @@ import { slotsByCourseId } from "@/lib/content/store";
 import { SYNCED_SHA } from "@/lib/content/meta";
 import { MaskMismatchError } from "@/lib/github/types";
 import { deriveActiveMask } from "@/lib/github/content-commit";
+import { courseCollectionMetadataUri } from "@/lib/metadata/site-origin";
 import { ERROR_IDS } from "@/constants/errorIds";
 
 /**
@@ -303,7 +304,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // CollectionMismatch until course.collection is bound).
     let collectionWarning: string | undefined;
     try {
-      const metadataUri = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/certificates/metadata/${courseId}`;
+      const metadataUri = courseCollectionMetadataUri(courseId);
       const collectionResult = await deployCourseTrackCollection({
         courseId,
         courseName: course.title,
@@ -431,7 +432,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       // Only create a new collection when none exists in Sanity — recreating
       // one would orphan any credentials already minted into the old address.
       if (!trackCollectionAddress) {
-        const metadataUri = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/certificates/metadata/${courseId}`;
+        const metadataUri = courseCollectionMetadataUri(courseId);
         const collectionResult = await deployCourseTrackCollection({
           courseId,
           courseName: course.title,
