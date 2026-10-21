@@ -353,20 +353,33 @@ fn initialize_requires_the_upgrade_authority() {
     assert_eq!(&cfg.data[8..40], owner.pubkey().as_ref());
 }
 
+/// An immutable program cannot be initialized. `SetAuthority(None)` only
+/// rewrites the 13-byte header, so the old authority's bytes are still in
+/// 13..45 with the option tag at 0: the tag, not the bytes, decides.
 #[test]
-fn initialize_refuses_an_immutable_program() {
-    let mut h = fresh_platform(None);
+fn immutable_program_with_stale_authority_bytes_refused() {
     let owner = Keypair::new();
+    let mut h = fresh_platform(Some(&owner.pubkey()));
+    h.set_upgrade_authority(None);
+    let programdata = h.svm.get_account(&ixs::programdata_pda()).unwrap();
+    assert_eq!(programdata.data[12], 0, "option tag None");
+    assert_eq!(
+        &programdata.data[13..45],
+        owner.pubkey().as_ref(),
+        "stale authority bytes left in place, as the loader leaves them"
+    );
+
     h.airdrop(&owner.pubkey(), 10 * SOL);
     let mint = Keypair::new();
     let ix = ixs::initialize(&mint.pubkey(), &owner.pubkey());
     h.run_expect_custom(
-        "no upgrade authority",
+        "stale authority bytes",
         &[ix],
         &owner,
         &[&mint],
         UNAUTHORIZED,
     );
+    assert!(h.svm.get_account(&ixs::config_pda()).is_none());
 }
 
 /// The ProgramData account must be the loader-owned, canonical one for this
