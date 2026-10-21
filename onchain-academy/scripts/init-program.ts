@@ -12,7 +12,8 @@
  *   rotate-backend    update_config(new_backend_signer), retiring the current
  *                     backend's ["minter", old] role.
  *   register-minter   register_minter with explicit caps (backend by default);
- *                     a 0 cap is unlimited and needs --allow-unlimited.
+ *                     a 0 per-call cap needs --allow-unlimited; the lifetime
+ *                     cap can never be 0.
  *   set-paused        update_config(paused): the minting kill switch.
  *
  * Every write is a dry run unless `--yes` is passed. Each one checks the signer
@@ -83,7 +84,7 @@ Commands:
   initialize        [--xp-mint-keypair <path>]
   rotate-backend    [--backend <pubkey>]          (default: BACKEND_SIGNER_SECRET's pubkey)
   register-minter   --max-total-xp <n> [--minter <pubkey>] [--label backend] [--max-xp-per-call 100]
-                    (a 0 cap is unlimited and needs --allow-unlimited)
+                    (--max-xp-per-call 0 needs --allow-unlimited; --max-total-xp is never 0)
   set-paused        --paused true|false
 
 Common flags: --program-id <id>  --keypair <path>  --yes`;
@@ -431,9 +432,9 @@ async function cmdRegisterMinter(ctx: Ctx): Promise<void> {
     maxTotalXp,
     allowUnlimited,
   });
-  if (maxXpPerCall === 0n || maxTotalXp === 0n) {
+  if (maxXpPerCall === 0n) {
     console.log(
-      "WARNING: a cap of 0 is UNLIMITED on-chain (--allow-unlimited)."
+      "WARNING: the per-call cap is UNLIMITED on-chain (--allow-unlimited)."
     );
   }
   if (!(await sendOrDryRun(ctx, "register_minter", [ix], [signer]))) return;

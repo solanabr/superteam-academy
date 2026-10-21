@@ -287,9 +287,16 @@ describe("instructions", () => {
       /--max-xp-per-call must be greater than 0.*--allow-unlimited/
     );
 
+    expect(() =>
+      buildRegisterMinterIx(PROGRAM_ID, authority, {
+        ...params,
+        maxTotalXp: 0n,
+        allowUnlimited: true,
+      })
+    ).toThrow(/--max-total-xp must be greater than 0.*never allowed/);
+
     const ix = buildRegisterMinterIx(PROGRAM_ID, authority, {
       ...params,
-      maxTotalXp: 0n,
       allowUnlimited: true,
     });
     const decoded = decodeIx(ix.data) as {
@@ -301,7 +308,7 @@ describe("instructions", () => {
       };
     };
     expect(decoded.data.params.max_xp_per_call.toString()).toBe("0");
-    expect(decoded.data.params.max_total_xp.toString()).toBe("0");
+    expect(decoded.data.params.max_total_xp.toString()).toBe("250000");
   });
 });
 

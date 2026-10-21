@@ -384,7 +384,11 @@ export interface RegisterMinterParams {
   maxXpPerCall: bigint;
   /** Lifetime cap; 0 means unlimited on-chain. */
   maxTotalXp: bigint;
-  /** Allow either cap to be 0 (unlimited). Refused unless explicitly set. */
+  /**
+   * Allow the per-call cap to be 0 (unlimited; MAX_XP_PER_MINT still bounds
+   * each call on-chain). The lifetime cap is the only lifetime bound on
+   * reward_xp and award_achievement, so it can never be 0.
+   */
   allowUnlimited?: boolean;
 }
 
@@ -397,15 +401,15 @@ export function buildRegisterMinterIx(
   if (Buffer.byteLength(params.label, "utf8") > MAX_LABEL_LEN) {
     throw new UsageError(`--label is longer than ${MAX_LABEL_LEN} bytes`);
   }
-  for (const [flag, value] of [
-    ["--max-xp-per-call", params.maxXpPerCall],
-    ["--max-total-xp", params.maxTotalXp],
-  ] as const) {
-    if (value === 0n && !params.allowUnlimited) {
-      throw new UsageError(
-        `${flag} must be greater than 0 (0 means unlimited on-chain; pass --allow-unlimited to mean it)`
-      );
-    }
+  if (params.maxXpPerCall === 0n && !params.allowUnlimited) {
+    throw new UsageError(
+      "--max-xp-per-call must be greater than 0 (0 means unlimited on-chain; pass --allow-unlimited to mean it)"
+    );
+  }
+  if (params.maxTotalXp === 0n) {
+    throw new UsageError(
+      "--max-total-xp must be greater than 0 (0 means unlimited on-chain, which is never allowed here)"
+    );
   }
   return new TransactionInstruction({
     programId,
