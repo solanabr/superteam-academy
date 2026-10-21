@@ -101,6 +101,23 @@ enrollment success moment that exists today is the on-chain path, which
 `enrollment_onchain` already covers. If a wallet-less enrollment path ships,
 instrument it as `enroll_completed { courseId, method }`.
 
+## Server-side events (platform spend)
+
+Sent from the server by `captureServerEvent()` (`server-capture.ts`): one
+`fetch` to PostHog's capture endpoint with the same project key, `$host` set to
+the app's host, a 2 s timeout, and no SDK. Builders live in
+`lib/platform-spend/events.ts`. Their properties are `snake_case`, matching the
+spend ledger columns the dashboard is built from. `distinct_id` is the learner's
+user id when known, else `platform` (sent with `$process_person_profile: false`).
+No wallet addresses or emails.
+
+| Event                      | Properties                                                                                                                                                           | Fires from                                                                                |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `platform_spend_settled`   | `action`, `status` (`confirmed` \| `failed`), `fee_lamports`, `rent_lamports`, `refund_lamports`, `net_lamports`, `payer_role`, `course_id?`, `cluster`, `signature` | the on-chain queue cron, once per transaction when its ledger row settles                 |
+| `sponsor_balance_snapshot` | `payer_role` (`sponsor` \| `backend`), `balance_lamports`, `cluster`                                                                                                 | the on-chain queue cron, at most hourly per wallet                                        |
+| `sponsor_low_balance`      | `payer_role`, `balance_lamports`, `threshold_lamports`, `cluster`                                                                                                    | the on-chain queue cron, when a wallet is under `SPONSOR_LOW_BALANCE_SOL` (every 4 h max) |
+| `sponsor_declined`         | `reason` (`already_sponsored` \| `in_flight` \| `already_enrolled`), `course_id`, `cluster`                                                                          | `/api/enroll/sponsor`, after the response, when the once-per-course rule refuses          |
+
 ## Onboarding funnel (E2/E7)
 
 The `/start` intake (#566, LX-A2). Helpers live in `events.ts`

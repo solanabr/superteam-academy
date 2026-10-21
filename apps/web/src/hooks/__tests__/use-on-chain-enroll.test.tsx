@@ -98,14 +98,20 @@ vi.mock("@/lib/solana/instructions", () => ({
   })),
 }));
 
-vi.mock("@/lib/solana/program-errors", () => ({
+const programErrors = vi.hoisted(() => ({
   preflightTransaction: vi.fn(() => Promise.resolve()),
-  parseProgramError: vi.fn(() => ({ code: null, fallback: "Enroll failed" })),
+  parseProgramError: vi.fn(() => ({
+    code: null as number | null,
+    fallback: "Enroll failed",
+  })),
 }));
+
+vi.mock("@/lib/solana/program-errors", () => programErrors);
 
 vi.mock("@/lib/analytics", () => ({ trackEvent: vi.fn() }));
 
-vi.mock("@/components/ui/toast-container", () => ({ dispatchToast: vi.fn() }));
+const toast = vi.hoisted(() => ({ dispatchToast: vi.fn() }));
+vi.mock("@/components/ui/toast-container", () => toast);
 
 // The hook wraps the instruction in a real web3.js Transaction; sendTransaction
 // is mocked, so the Transaction never needs a blockhash or signatures.
@@ -128,6 +134,13 @@ const COURSE_ID = "solana-101";
 
 beforeEach(() => {
   vi.clearAllMocks();
+  programErrors.preflightTransaction.mockImplementation(() =>
+    Promise.resolve()
+  );
+  programErrors.parseProgramError.mockImplementation(() => ({
+    code: null,
+    fallback: "Enroll failed",
+  }));
   wallet.publicKey = null;
   dynamic.account = null;
   dynamic.status = "none";
@@ -536,5 +549,123 @@ describe("useOnChainEnroll — Dynamic embedded wallet", () => {
 
     expect(wallet.sendTransaction).toHaveBeenCalledTimes(1);
     expect(dynamic.signWithDynamicWallet).not.toHaveBeenCalled();
+  });
+});
+
+describe("useOnChainEnroll — once-per-course sponsorship", () => {
+  /** Sponsor route declining with a 409 and the given code. */
+  function stubDecline(code: string) {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 409,
+        json: async () => ({ error: "declined", code }),
+      })
+    );
+  }
+
+  function signIn() {
+    const key = Keypair.generate().publicKey;
+    wallet.publicKey = key satisfies PublicKey;
+    auth.walletAddress = key.toBase58();
+    wallet.sendTransaction.mockResolvedValue("self-paid-sig");
+    wallet.confirmTransaction.mockResolvedValue({ value: { err: null } });
+  }
+
+  async function enroll() {
+    const onError = vi.fn();
+    const onSuccess = vi.fn();
+    const { result } = renderHook(() =>
+      useOnChainEnroll({
+        courseId: COURSE_ID,
+        userId: "user-1",
+        onRequireAuth: vi.fn(),
+        onError,
+        onSuccess,
+      })
+    );
+    await act(async () => {
+      await result.current.handleEnroll();
+    });
+    return { result, onError, onSuccess };
+  }
+
+  it("self-pays a re-enrollment and says why it isn't sponsored", async () => {
+    signIn();
+    stubDecline("SPONSOR_ALREADY_USED");
+
+    const { onSuccess } = await enroll();
+
+    expect(toast.dispatchToast).toHaveBeenCalledWith(
+      "enrollSponsorSelfPay",
+      "info"
+    );
+    expect(wallet.sendTransaction).toHaveBeenCalledTimes(1);
+    expect(onSuccess).toHaveBeenCalledTimes(1);
+  });
+
+  it("explains the decline when the wallet can't pay for itself", async () => {
+    signIn();
+    stubDecline("SPONSOR_ALREADY_USED");
+    programErrors.preflightTransaction.mockRejectedValue(
+      new Error("insufficient lamports")
+    );
+
+    const { result, onError } = await enroll();
+
+    expect(wallet.sendTransaction).not.toHaveBeenCalled();
+    expect(result.current.enrollError).toBe("enrollSponsorAlreadyUsed");
+    expect(onError).toHaveBeenCalledWith("enrollSponsorAlreadyUsed");
+  });
+
+  it("still treats an existing enrollment as success after a decline", async () => {
+    signIn();
+    stubDecline("SPONSOR_ALREADY_USED");
+    programErrors.preflightTransaction.mockRejectedValue(
+      new Error("custom program error: 0x0")
+    );
+    programErrors.parseProgramError.mockReturnValue({
+      code: 0,
+      fallback: "already in use",
+    });
+
+    const { result, onSuccess } = await enroll();
+
+    expect(onSuccess).toHaveBeenCalledTimes(1);
+    expect(result.current.enrollError).toBeNull();
+  });
+
+  it("treats an enrollment already on-chain as success, without self-paying (zero-SOL wallet)", async () => {
+    signIn();
+    stubDecline("SPONSOR_ALREADY_ENROLLED");
+    // A zero-SOL embedded wallet: a self-paid enroll would fail preflight.
+    programErrors.preflightTransaction.mockRejectedValue(
+      new Error("AccountNotFound")
+    );
+
+    const { result, onSuccess, onError } = await enroll();
+
+    expect(onSuccess).toHaveBeenCalledTimes(1);
+    expect(onError).not.toHaveBeenCalled();
+    expect(result.current.enrollError).toBeNull();
+    expect(toast.dispatchToast).toHaveBeenCalledWith(
+      "Enrolled successfully!",
+      "success"
+    );
+    expect(programErrors.preflightTransaction).not.toHaveBeenCalled();
+    expect(wallet.sendTransaction).not.toHaveBeenCalled();
+    expect(wallet.sendRawTransaction).not.toHaveBeenCalled();
+  });
+
+  it("asks the learner to wait while a sponsored enrollment is in flight", async () => {
+    signIn();
+    stubDecline("SPONSOR_IN_FLIGHT");
+
+    const { result } = await enroll();
+
+    expect(wallet.sendTransaction).not.toHaveBeenCalled();
+    expect(programErrors.preflightTransaction).not.toHaveBeenCalled();
+    expect(result.current.enrollError).toBe("enrollSponsorInFlight");
   });
 });

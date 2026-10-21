@@ -32,6 +32,36 @@ const usdNumOpt = z.preprocess(
   z.coerce.number().min(0).optional()
 );
 
+// An optional Solana keypair secret: a JSON array of 64 bytes, the format every
+// on-chain key here uses. Validated at boot so a malformed value fails loudly
+// instead of at the first transaction. The message never echoes the value.
+const keypairSecretOpt = z.preprocess(
+  (v) => (v === "" ? undefined : v),
+  z
+    .string()
+    .refine(isKeypairJson, "must be a JSON array of 64 bytes")
+    .optional()
+);
+
+function isKeypairJson(value: string): boolean {
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return (
+      Array.isArray(parsed) &&
+      parsed.length === 64 &&
+      parsed.every((b) => Number.isInteger(b) && b >= 0 && b <= 255)
+    );
+  } catch {
+    return false;
+  }
+}
+
+// An optional positive SOL amount. Unset or blank leaves it `undefined`.
+const solAmountOpt = z.preprocess(
+  (v) => (v === "" || v === undefined ? undefined : v),
+  z.coerce.number().gt(0).optional()
+);
+
 // A HARD-cap dollar amount. Identical to usdNum but rejects 0: a hard cap of $0
 // denies every request (self-DoS). Fail-closed makes that "safe" but silent —
 // so reject it loudly at boot instead of letting a fat-fingered `=0` take the
@@ -81,6 +111,15 @@ const serverEnvSchema = z.object({
   BACKEND_SIGNER_SECRET: optStr,
   XP_MINT_AUTHORITY_SECRET: optStr,
   PROGRAM_AUTHORITY_SECRET: optStr,
+  // Sponsor wallet: pays the fee and rent for sponsored enrollments and the fee
+  // (plus any rent the program lets us choose the payer for) on every other
+  // server-sent transaction, so learner usage is paid from one place
+  // (lib/solana/sponsor.ts). Unset on mainnet makes those sends fail closed;
+  // on devnet the backend signer pays instead, with a logged warning.
+  SPONSOR_SECRET: keypairSecretOpt,
+  // Low-balance alert threshold in SOL for the sponsor and backend signer
+  // wallets, checked by the on-chain queue cron. Unset disables the alert.
+  SPONSOR_LOW_BALANCE_SOL: solAmountOpt,
   // Anchor build-server proxy.
   BUILD_SERVER_URL: optUrl,
   BUILD_SERVER_API_KEY: optStr,
@@ -159,6 +198,8 @@ const parsed = serverEnvSchema.safeParse({
   BACKEND_SIGNER_SECRET: process.env.BACKEND_SIGNER_SECRET,
   XP_MINT_AUTHORITY_SECRET: process.env.XP_MINT_AUTHORITY_SECRET,
   PROGRAM_AUTHORITY_SECRET: process.env.PROGRAM_AUTHORITY_SECRET,
+  SPONSOR_SECRET: process.env.SPONSOR_SECRET,
+  SPONSOR_LOW_BALANCE_SOL: process.env.SPONSOR_LOW_BALANCE_SOL,
   BUILD_SERVER_URL: process.env.BUILD_SERVER_URL,
   BUILD_SERVER_API_KEY: process.env.BUILD_SERVER_API_KEY,
   MODERATION_WEBHOOK_URL: process.env.MODERATION_WEBHOOK_URL,

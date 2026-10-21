@@ -37,6 +37,10 @@ import {
   padContentTxId,
   assertMaskMatchesLockfile,
 } from "@/lib/github/content-commit";
+import {
+  recordPlatformTx,
+  type SpendAction,
+} from "@/lib/platform-spend/ledger";
 import IDL from "./idl/superteam_academy_vnext.json";
 import {
   findConfigPDA,
@@ -284,6 +288,22 @@ function initialize(): { ready: boolean } {
   );
 
   return { ready: true };
+}
+
+/** Spend-ledger row for an authority-paid admin write. Never throws. */
+async function recordAuthoritySpend(
+  signature: string,
+  action: SpendAction,
+  courseId?: string
+): Promise<void> {
+  if (!_authority) return;
+  await recordPlatformTx({
+    signature,
+    action,
+    courseId,
+    payer: _authority.publicKey.toBase58(),
+    payerRole: "authority",
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -743,6 +763,11 @@ export async function deployCoursePda(
         systemProgram: SystemProgram.programId,
       })
       .rpc();
+    await recordAuthoritySpend(
+      signature,
+      "admin_course_write",
+      params.courseId
+    );
 
     return { success: true, signature };
   } catch (err: unknown) {
@@ -830,6 +855,11 @@ export async function updateCoursePda(
         authority: _authority.publicKey,
       })
       .rpc();
+    await recordAuthoritySpend(
+      signature,
+      "admin_course_write",
+      params.courseId
+    );
 
     return { success: true, signature };
   } catch (err: unknown) {
@@ -899,6 +929,13 @@ export async function closeCoursePda(courseId: string): Promise<SettledResult> {
   }
 
   const result = await sendAndSettle(_connection, _authority, tx);
+  if (result.outcome !== "notLanded") {
+    await recordAuthoritySpend(
+      result.signature,
+      "admin_course_write",
+      courseId
+    );
+  }
   if (result.outcome !== "landed") {
     console.error(
       `[admin-signer] closeCoursePda(${courseId}): ${result.outcome}: ${result.error}`
@@ -986,6 +1023,7 @@ export async function deployAchievementType(
       })
       .signers([collectionKeypair])
       .rpc();
+    await recordAuthoritySpend(signature, "admin_achievement_write");
 
     return {
       success: true,
@@ -1042,6 +1080,11 @@ export async function deployCourseTrackCollection(params: {
       uri: params.metadataUri,
       updateAuthority: fromWeb3JsPublicKey(configPDA),
     }).sendAndConfirm(umi);
+    await recordAuthoritySpend(
+      bs58.encode(signature),
+      "admin_course_write",
+      params.courseId
+    );
 
     return {
       success: true,

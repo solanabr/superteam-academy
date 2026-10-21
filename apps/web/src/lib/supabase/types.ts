@@ -557,6 +557,82 @@ export type Database = {
         };
         Relationships: [];
       };
+      platform_alert_state: {
+        Row: {
+          key: string;
+          last_fired_at: string;
+        };
+        Insert: {
+          key: string;
+          last_fired_at: string;
+        };
+        Update: {
+          key?: string;
+          last_fired_at?: string;
+        };
+        Relationships: [];
+      };
+      platform_spend: {
+        Row: {
+          action: string;
+          cluster: string;
+          course_generation: number | null;
+          course_id: string | null;
+          created_at: string;
+          fee_lamports: number | null;
+          id: number;
+          last_valid_block_height: number | null;
+          payer: string;
+          payer_role: string;
+          program_id: string | null;
+          refund_lamports: number | null;
+          rent_lamports: number | null;
+          settled_at: string | null;
+          signature: string;
+          status: string;
+          user_id: string | null;
+          wallet: string | null;
+        };
+        Insert: {
+          action: string;
+          cluster: string;
+          course_generation?: number | null;
+          course_id?: string | null;
+          created_at?: string;
+          fee_lamports?: number | null;
+          last_valid_block_height?: number | null;
+          payer: string;
+          payer_role: string;
+          program_id?: string | null;
+          refund_lamports?: number | null;
+          rent_lamports?: number | null;
+          settled_at?: string | null;
+          signature: string;
+          status?: string;
+          user_id?: string | null;
+          wallet?: string | null;
+        };
+        Update: {
+          action?: string;
+          cluster?: string;
+          course_generation?: number | null;
+          course_id?: string | null;
+          created_at?: string;
+          fee_lamports?: number | null;
+          last_valid_block_height?: number | null;
+          payer?: string;
+          payer_role?: string;
+          program_id?: string | null;
+          refund_lamports?: number | null;
+          rent_lamports?: number | null;
+          settled_at?: string | null;
+          signature?: string;
+          status?: string;
+          user_id?: string | null;
+          wallet?: string | null;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           avatar_url: string | null;
@@ -1384,6 +1460,10 @@ export type Database = {
       claim_onchain_action: {
         Args: { p_id: string; p_stale_before: string };
         Returns: { id: string; attempt_count: number }[];
+      };
+      claim_platform_alert: {
+        Args: { p_key: string; p_min_interval_seconds: number };
+        Returns: boolean;
       };
       course_lesson_completion_counts: {
         Args: { p_course_id: string };

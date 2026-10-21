@@ -15,6 +15,8 @@ export async function notifyModeration(message: string): Promise<void> {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text: message, content: message }),
+      // A slow webhook must not hold up the caller (a flag request, the cron).
+      signal: AbortSignal.timeout(5_000),
     });
   } catch (err) {
     console.warn(
