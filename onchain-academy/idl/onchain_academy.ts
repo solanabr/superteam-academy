@@ -257,6 +257,15 @@ export type OnchainAcademy = {
           writable: true;
           signer: true;
         },
+        {
+          name: "rentRecipient";
+          docs: [
+            "Receives the enrollment's rent: the payer recorded at enroll (bytes 127..159",
+            "of a 159-byte enrollment), or the learner for a 127-byte enrollment created",
+            "before the payer was recorded.",
+          ];
+          writable: true;
+        },
       ];
       args: [];
     },
@@ -709,6 +718,14 @@ export type OnchainAcademy = {
         {
           name: "tokenProgram";
           address: "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
+        },
+        {
+          name: "programData";
+          docs: [
+            "This program's ProgramData account (owned by the BPF upgradeable loader,",
+            "address = find_program_address([program_id], loader)). `authority` must be",
+            "its upgrade authority.",
+          ];
         },
       ];
       args: [];
@@ -1507,6 +1524,11 @@ export type OnchainAcademy = {
       code: 6036;
       name: "enrollmentInProgress";
       msg: "Enrollment with completed lessons cannot be closed";
+    },
+    {
+      code: 6037;
+      name: "courseHasEnrollments";
+      msg: "Course with enrollments cannot be closed";
     },
   ];
   types: [
