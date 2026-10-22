@@ -1,5 +1,11 @@
 import type { Connection, Transaction } from "@solana/web3.js";
 import type { PublicKey } from "@solana/web3.js";
+import {
+  computeUnitLimitFromSimulation,
+  setComputeBudget,
+  writableAccounts,
+} from "./compute-budget";
+import { fetchPriorityFee } from "./priority-fee-client";
 
 /**
  * Centralized map of on-chain AcademyError codes → i18n keys.
@@ -294,6 +300,11 @@ export function parseProgramError(err: unknown): ParsedProgramError {
   return { code: null, name: null, i18nKey: null, fallback: raw };
 }
 
+export interface PreflightBudget {
+  /** Compute-unit limit when the simulation reports no units consumed. */
+  fallbackUnits: number;
+}
+
 /**
  * Pre-simulate a transaction via RPC before sending to the wallet.
  *
@@ -302,18 +313,37 @@ export function parseProgramError(err: unknown): ParsedProgramError {
  * the UI to hang. By simulating ourselves first, we catch program errors
  * immediately — the wallet popup is never opened.
  *
+ * With `budget`, a passing simulation also sets the compute budget: a limit
+ * sized from the units it consumed, and the priority-fee price for the
+ * accounts the transaction writes (fetched while it simulates).
+ *
  * Throws a structured error that `parseProgramError` can parse.
  */
 export async function preflightTransaction(
   tx: Transaction,
   connection: Connection,
-  feePayer: PublicKey
+  feePayer: PublicKey,
+  budget?: PreflightBudget
 ): Promise<void> {
   tx.feePayer = feePayer;
   tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
 
+  const price = budget
+    ? fetchPriorityFee(writableAccounts(tx.instructions, feePayer))
+    : null;
   const sim = await connection.simulateTransaction(tx);
-  if (!sim.value.err) return;
+  if (!sim.value.err) {
+    if (budget && price) {
+      setComputeBudget(tx, {
+        units: computeUnitLimitFromSimulation(
+          sim.value.unitsConsumed,
+          budget.fallbackUnits
+        ),
+        microLamports: await price,
+      });
+    }
+    return;
+  }
 
   // Extract hex error code from simulation logs
   const logs = sim.value.logs ?? [];

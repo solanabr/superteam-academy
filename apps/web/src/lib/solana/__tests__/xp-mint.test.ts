@@ -132,9 +132,10 @@ describe("mintXpToWallet", () => {
     const [, , options] = h.sendPlatformTransaction.mock.calls[0] as [
       unknown,
       unknown,
-      { feePayer: unknown; context: unknown },
+      { feePayer: unknown; computeUnits: number; context: unknown },
     ];
     expect(options.feePayer).toBe(SPONSOR);
+    expect(options.computeUnits).toBe(60_000);
     expect(options.context).toEqual({ action: "xp_mint", wallet: "WALLET" });
   });
 

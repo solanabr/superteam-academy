@@ -56,6 +56,12 @@ function isKeypairJson(value: string): boolean {
   }
 }
 
+// An optional non-negative integer. Unset or blank leaves it `undefined`.
+const nonNegativeIntOpt = z.preprocess(
+  (v) => (v === "" || v === undefined ? undefined : v),
+  z.coerce.number().int().min(0).optional()
+);
+
 // An optional positive SOL amount. Unset or blank leaves it `undefined`.
 const solAmountOpt = z.preprocess(
   (v) => (v === "" || v === undefined ? undefined : v),
@@ -120,6 +126,10 @@ const serverEnvSchema = z.object({
   // Low-balance alert threshold in SOL for the sponsor and backend signer
   // wallets, checked by the on-chain queue cron. Unset disables the alert.
   SPONSOR_LOW_BALANCE_SOL: solAmountOpt,
+  // Ceiling on the priority-fee price (micro-lamports per compute unit) of
+  // every transaction the app sends or builds (lib/solana/priority-fee.ts).
+  // Unset uses the code default; 0 stops paying priority fees.
+  PRIORITY_FEE_MAX_MICROLAMPORTS: nonNegativeIntOpt,
   // Anchor build-server proxy.
   BUILD_SERVER_URL: optUrl,
   BUILD_SERVER_API_KEY: optStr,
@@ -200,6 +210,7 @@ const parsed = serverEnvSchema.safeParse({
   PROGRAM_AUTHORITY_SECRET: process.env.PROGRAM_AUTHORITY_SECRET,
   SPONSOR_SECRET: process.env.SPONSOR_SECRET,
   SPONSOR_LOW_BALANCE_SOL: process.env.SPONSOR_LOW_BALANCE_SOL,
+  PRIORITY_FEE_MAX_MICROLAMPORTS: process.env.PRIORITY_FEE_MAX_MICROLAMPORTS,
   BUILD_SERVER_URL: process.env.BUILD_SERVER_URL,
   BUILD_SERVER_API_KEY: process.env.BUILD_SERVER_API_KEY,
   MODERATION_WEBHOOK_URL: process.env.MODERATION_WEBHOOK_URL,

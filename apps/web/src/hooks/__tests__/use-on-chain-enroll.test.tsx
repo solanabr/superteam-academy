@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { Keypair, type PublicKey } from "@solana/web3.js";
+import { COMPUTE_UNIT_LIMITS } from "@/lib/solana/compute-budget";
 import { useOnChainEnroll } from "../use-on-chain-enroll";
 
 // Mutable holders read lazily by the mock factories below, so each test can
@@ -233,6 +234,13 @@ describe("useOnChainEnroll — signed-in user (unchanged paths)", () => {
     });
 
     expect(wallet.sendTransaction).toHaveBeenCalledTimes(1);
+    // Self-paid: the preflight simulation also sizes the compute budget.
+    expect(programErrors.preflightTransaction).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      key,
+      { fallbackUnits: COMPUTE_UNIT_LIMITS.enroll }
+    );
     expect(wallet.confirmTransaction).toHaveBeenCalledWith(
       "mock-signature",
       "confirmed"

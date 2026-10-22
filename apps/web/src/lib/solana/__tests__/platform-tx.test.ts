@@ -1,21 +1,25 @@
 /* eslint-disable import/order -- vi.mock factories are hoisted above imports. */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
+  ComputeBudgetInstruction,
+  ComputeBudgetProgram,
   Keypair,
   SendTransactionError,
   Transaction,
   TransactionInstruction,
 } from "@solana/web3.js";
-import type { Connection } from "@solana/web3.js";
+import type { Connection, PublicKey } from "@solana/web3.js";
 import { ProgramError } from "@coral-xyz/anchor";
 import bs58 from "bs58";
 
 const h = vi.hoisted(() => ({
   record: vi.fn<(...args: unknown[]) => Promise<void>>(),
+  estimate: vi.fn<(...args: unknown[]) => Promise<number>>(),
 }));
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/platform-spend/ledger", () => ({ recordPlatformTx: h.record }));
+vi.mock("../priority-fee", () => ({ estimatePriorityFee: h.estimate }));
 
 import { sendPlatformTransaction } from "../platform-tx";
 
@@ -24,11 +28,16 @@ const backend = Keypair.generate();
 const program = Keypair.generate().publicKey;
 const BLOCKHASH = bs58.encode(Buffer.alloc(32, 3));
 
+const writableAccount = Keypair.generate().publicKey;
+
 function buildTx(): Transaction {
   return new Transaction().add(
     new TransactionInstruction({
       programId: program,
-      keys: [{ pubkey: backend.publicKey, isSigner: true, isWritable: false }],
+      keys: [
+        { pubkey: backend.publicKey, isSigner: true, isWritable: false },
+        { pubkey: writableAccount, isSigner: false, isWritable: true },
+      ],
       data: Buffer.from([0]),
     })
   );
@@ -56,9 +65,44 @@ const context = {
 beforeEach(() => {
   h.record.mockReset();
   h.record.mockResolvedValue(undefined);
+  h.estimate.mockReset();
+  h.estimate.mockResolvedValue(25_000);
 });
 
 describe("sendPlatformTransaction", () => {
+  it("puts the compute budget first, priced on the accounts the tx writes", async () => {
+    const { connection } = fakeConnection();
+    const tx = buildTx();
+
+    await sendPlatformTransaction(connection, tx, {
+      feePayer: { keypair: sponsor, role: "sponsor" },
+      signers: [backend],
+      computeUnits: 80_000,
+      context,
+    });
+
+    const [limitIx, priceIx, programIx] = tx.instructions;
+    expect(tx.instructions).toHaveLength(3);
+    expect(limitIx!.programId.equals(ComputeBudgetProgram.programId)).toBe(
+      true
+    );
+    expect(
+      ComputeBudgetInstruction.decodeSetComputeUnitLimit(limitIx!)
+    ).toEqual({ units: 80_000 });
+    expect(
+      ComputeBudgetInstruction.decodeSetComputeUnitPrice(priceIx!).microLamports
+    ).toBe(25_000n);
+    expect(programIx!.programId.equals(program)).toBe(true);
+    // Fee payer first, then the instruction's writable accounts.
+    const [, accounts] = h.estimate.mock.calls[0] as [unknown, PublicKey[]];
+    expect(accounts.map((a) => a.toBase58())).toEqual([
+      sponsor.publicKey.toBase58(),
+      writableAccount.toBase58(),
+    ]);
+    // Signed over the budgeted message.
+    expect(tx.verifySignatures()).toBe(true);
+  });
+
   it("makes the sponsor the fee payer and records the send in the ledger", async () => {
     const { conn, connection } = fakeConnection();
     const tx = buildTx();
@@ -66,6 +110,7 @@ describe("sendPlatformTransaction", () => {
     const signature = await sendPlatformTransaction(connection, tx, {
       feePayer: { keypair: sponsor, role: "sponsor" },
       signers: [backend],
+      computeUnits: 80_000,
       context,
     });
 
@@ -94,6 +139,7 @@ describe("sendPlatformTransaction", () => {
     await sendPlatformTransaction(connection, tx, {
       feePayer: { keypair: backend, role: "backend" },
       signers: [backend],
+      computeUnits: 80_000,
       context,
     });
 
@@ -115,6 +161,7 @@ describe("sendPlatformTransaction", () => {
       sendPlatformTransaction(connection, buildTx(), {
         feePayer: { keypair: sponsor, role: "sponsor" },
         signers: [backend],
+        computeUnits: 80_000,
         context,
       })
     ).rejects.toBe(refusal);
@@ -131,6 +178,7 @@ describe("sendPlatformTransaction", () => {
       sendPlatformTransaction(connection, buildTx(), {
         feePayer: { keypair: sponsor, role: "sponsor" },
         signers: [backend],
+        computeUnits: 80_000,
         context,
       })
     ).rejects.toBe(transport);
@@ -149,6 +197,7 @@ describe("sendPlatformTransaction", () => {
     const err = await sendPlatformTransaction(connection, buildTx(), {
       feePayer: { keypair: sponsor, role: "sponsor" },
       signers: [backend],
+      computeUnits: 80_000,
       context,
     }).catch((e: unknown) => e);
 
@@ -174,6 +223,7 @@ describe("sendPlatformTransaction", () => {
     const err = await sendPlatformTransaction(connection, buildTx(), {
       feePayer: { keypair: sponsor, role: "sponsor" },
       signers: [backend],
+      computeUnits: 80_000,
       context,
       idlErrors: new Map([[6003, "Lesson already completed"]]),
     }).catch((e: unknown) => e);

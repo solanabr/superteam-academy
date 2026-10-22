@@ -25,6 +25,7 @@ import {
 import { serverEnv } from "@/lib/env.server";
 import { resolveFeePayer } from "./sponsor";
 import { sendPlatformTransaction } from "./platform-tx";
+import { COMPUTE_UNIT_LIMITS } from "./compute-budget";
 
 // ---------------------------------------------------------------------------
 // Lazy-loaded singletons (initialized on first call)
@@ -138,6 +139,7 @@ export async function mintXpToWallet(
     const signature = await sendPlatformTransaction(_connection, tx, {
       feePayer,
       signers: [authority],
+      computeUnits: COMPUTE_UNIT_LIMITS.xpMint,
       context: { action: "xp_mint", wallet: walletAddress },
     });
 

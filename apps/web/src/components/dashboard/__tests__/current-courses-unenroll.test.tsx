@@ -98,6 +98,8 @@ vi.mock("@/components/certificates/course-completion-mint", () => ({
 
 import { buildCloseEnrollmentInstruction } from "@/lib/solana/instructions";
 import { fetchEnrollmentRentRecipient } from "@/lib/solana/enrollment-rent";
+import { preflightTransaction } from "@/lib/solana/program-errors";
+import { COMPUTE_UNIT_LIMITS } from "@/lib/solana/compute-budget";
 import { CurrentCoursesSection } from "../current-courses-section";
 
 function renderWithIntl(ui: ReactElement) {
@@ -172,6 +174,13 @@ describe("CurrentCoursesSection — unenroll wallet resolution", () => {
       course.courseId,
       learner,
       sponsor.key
+    );
+    // The preflight simulation also sizes the compute budget.
+    expect(preflightTransaction).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      learner,
+      { fallbackUnits: COMPUTE_UNIT_LIMITS.closeEnrollment }
     );
   });
 

@@ -12,27 +12,23 @@ Prior art: issues #121 (original CU measurement harness) and #222; PRs #221 and
 ## The budget
 
 The budget is the **Solana per-transaction compute limit of 200,000 CU** — the
-default a transaction gets when it does not request more. A transaction can raise
-its own ceiling up to 1,400,000 CU with a `ComputeBudgetProgram.SetComputeUnitLimit`
-instruction, but **the academy program never requests a bump**, so 200,000 CU is
-the real ceiling for every academy instruction.
+default a transaction gets per instruction when it does not request a limit. A
+transaction can request its own limit, up to 1,400,000 CU, with
+`ComputeBudgetProgram.SetComputeUnitLimit`.
 
-That "no bump" claim is verified, not assumed. Grepping the client and
-instruction builders for `setComputeUnitLimit` / `ComputeBudgetProgram` across
-the repo returns hits in exactly one place — `packages/deploy` — and those are
-the **BPF-loader program-upload path**, not academy instructions:
+Every transaction the web app sends or hands to a wallet requests a limit
+**below** that default, because the priority fee it also sets is charged on the
+requested limit (`apps/web/src/lib/solana/compute-budget.ts`). Learner-signed
+`enroll` and `close_enrollment` size it from their preflight simulation;
+everything else uses a fixed per-kind limit (`COMPUTE_UNIT_LIMITS`) of a few
+times what that transaction has consumed on devnet, ATA creation included. No
+academy instruction needs more than the default, so these numbers are measured
+against the 200,000 CU ceiling and the limits must stay above them with room
+for bump-search variance.
 
-- `packages/deploy/src/deploy.ts` sets `WRITE_CU_LIMIT = 10_000` on the _write_
-  transactions that upload the compiled `.so` to the chain in ~900-byte chunks
-  (`BpfLoaderUpgradeable` writes), plus a `SetComputeUnitPrice` for priority. This
-  is the learner/creator **course-deploy flow** uploading program bytecode — a
-  separate concern from the academy program's own instruction budget, and it is
-  a _floor_ raised for cheap loader writes, not the academy ceiling.
-
-No academy instruction builder (enroll, complete_lesson, issue_credential, …)
-attaches a `ComputeBudget` instruction. Therefore each academy instruction must
-fit inside the 200,000 CU default, and the numbers below are measured against
-that ceiling.
+`packages/deploy` sets its own limit and price on the BPF-loader write
+transactions that upload a learner's compiled `.so`. That is the learner deploy
+flow, a separate concern from the academy program's instruction budget.
 
 ## Per-instruction measurement
 
@@ -73,7 +69,7 @@ at **37,009 CU — 18.50% of the 200,000 CU ceiling** (81.50% headroom).
 Every other instruction sits at or below the next-heaviest (`award_achievement`,
 18.22%), and the median instruction (6,103 CU) is about
 3.1% of the ceiling. No instruction is anywhere near the point where a
-`ComputeBudget` bump would be required, and none requests one.
+`ComputeBudget` bump would be required.
 
 ### Heaviest trio — the mpl_core CPI instructions
 

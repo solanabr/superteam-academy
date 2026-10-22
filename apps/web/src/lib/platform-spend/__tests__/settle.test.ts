@@ -1,6 +1,6 @@
 /* eslint-disable import/order -- vi.mock factories are hoisted above imports. */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { Keypair } from "@solana/web3.js";
+import { ComputeBudgetProgram, Keypair } from "@solana/web3.js";
 import type { PublicKey } from "@solana/web3.js";
 import { createFakeDb, type FakeDb, type Row } from "./fake-db";
 
@@ -223,6 +223,36 @@ describe("settleRows", () => {
     // No wallet address anywhere in the event.
     expect(JSON.stringify(events[0])).not.toContain(learner.toBase58());
     expect(JSON.stringify(events[0])).not.toContain(sponsor.toBase58());
+  });
+
+  it("counts a priority fee in fee_lamports, not in rent", async () => {
+    // Two signatures at the base fee, plus the priority fee the compute
+    // budget asked for: 80,000 CU at 25,000 micro-lamports = 2,000 lamports.
+    // The runtime reports the sum as meta.fee.
+    const priorityFee = (80_000 * 25_000) / 1_000_000;
+    const fee = 2 * 5_000 + priorityFee;
+    const ataRent = 2_039_280;
+    const row = seed(db, { signature: "SIG1" });
+    chain.statuses.SIG1 = { confirmationStatus: "confirmed", err: null };
+    chain.txs.SIG1 = fakeTx(
+      [sponsor, backend, learner, ComputeBudgetProgram.programId],
+      [1_000_000_000, 1_000_000, 0, 1],
+      [1_000_000_000 - fee - ataRent, 1_000_000, ataRent, 1],
+      fee
+    );
+
+    await settleRows([row], makeDeps(db, chain, events));
+
+    expect(db.tables.platform_spend![0]).toMatchObject({
+      status: "confirmed",
+      fee_lamports: 12_000,
+      rent_lamports: ataRent,
+      refund_lamports: 0,
+    });
+    expect(events[0]?.properties).toMatchObject({
+      fee_lamports: 12_000,
+      net_lamports: 12_000 + ataRent,
+    });
   });
 
   it("emits exactly once per signature, even when two settlers race", async () => {
