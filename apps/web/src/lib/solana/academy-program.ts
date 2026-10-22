@@ -45,6 +45,12 @@ import {
   type PayerRole,
 } from "./sponsor";
 import { sendPlatformTransaction } from "./platform-tx";
+import {
+  COMPUTE_UNIT_LIMITS,
+  setComputeBudget,
+  writableAccounts,
+} from "./compute-budget";
+import { estimatePriorityFee } from "./priority-fee";
 
 export { getProgramId } from "./pda";
 
@@ -167,11 +173,13 @@ function sendAcademyTx(
   tx: Transaction,
   feePayer: FeePayer,
   signers: Keypair[],
+  computeUnits: number,
   context: SpendContext
 ): Promise<string> {
   return sendPlatformTransaction(getConnection(), tx, {
     feePayer,
     signers,
+    computeUnits,
     context,
     idlErrors: idlErrors(),
   });
@@ -267,11 +275,17 @@ export async function completeLesson(
     })
     .transaction();
 
-  return sendAcademyTx(tx, feePayer, [signer], {
-    action: "complete_lesson",
-    wallet: learner.toBase58(),
-    courseId,
-  });
+  return sendAcademyTx(
+    tx,
+    feePayer,
+    [signer],
+    COMPUTE_UNIT_LIMITS.completeLesson,
+    {
+      action: "complete_lesson",
+      wallet: learner.toBase58(),
+      courseId,
+    }
+  );
 }
 
 export async function finalizeCourse(
@@ -363,11 +377,17 @@ export async function finalizeCourse(
     })
     .transaction();
 
-  return sendAcademyTx(tx, feePayer, [signer], {
-    action: "finalize",
-    wallet: learner.toBase58(),
-    courseId,
-  });
+  return sendAcademyTx(
+    tx,
+    feePayer,
+    [signer],
+    COMPUTE_UNIT_LIMITS.finalizeCourse,
+    {
+      action: "finalize",
+      wallet: learner.toBase58(),
+      courseId,
+    }
+  );
 }
 
 export async function issueCredential(
@@ -417,11 +437,17 @@ export async function issueCredential(
     })
     .transaction();
 
-  const sig = await sendAcademyTx(tx, feePayer, [signer, credentialAsset], {
-    action: "credential",
-    wallet: learner.toBase58(),
-    courseId,
-  });
+  const sig = await sendAcademyTx(
+    tx,
+    feePayer,
+    [signer, credentialAsset],
+    COMPUTE_UNIT_LIMITS.issueCredential,
+    {
+      action: "credential",
+      wallet: learner.toBase58(),
+      courseId,
+    }
+  );
 
   return { signature: sig, mintAddress: credentialAsset.publicKey };
 }
@@ -547,10 +573,13 @@ export async function awardAchievement(
     })
     .transaction();
 
-  const sig = await sendAcademyTx(tx, feePayer, [signer, assetKeypair], {
-    action: "achievement",
-    wallet: recipient.toBase58(),
-  });
+  const sig = await sendAcademyTx(
+    tx,
+    feePayer,
+    [signer, assetKeypair],
+    COMPUTE_UNIT_LIMITS.awardAchievement,
+    { action: "achievement", wallet: recipient.toBase58() }
+  );
 
   return { signature: sig, assetAddress: assetKeypair.publicKey };
 }
@@ -590,8 +619,20 @@ export async function buildSignedRewardXpTx(
     feePayer
   );
 
-  const { blockhash, lastValidBlockHeight } =
-    await connection.getLatestBlockhash("confirmed");
+  // Priced and sized before signing: the signed bytes are what gets reserved
+  // and re-sent, so the fee is fixed here.
+  const [{ blockhash, lastValidBlockHeight }, microLamports] =
+    await Promise.all([
+      connection.getLatestBlockhash("confirmed"),
+      estimatePriorityFee(
+        connection,
+        writableAccounts(transaction.instructions, feePayer.keypair.publicKey)
+      ),
+    ]);
+  setComputeBudget(transaction, {
+    units: COMPUTE_UNIT_LIMITS.rewardXp,
+    microLamports,
+  });
   transaction.recentBlockhash = blockhash;
   transaction.feePayer = feePayer.keypair.publicKey;
   transaction.sign(feePayer.keypair, signer);

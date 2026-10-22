@@ -18,7 +18,11 @@ import {
   SystemProgram,
   TransactionExpiredTimeoutError,
 } from "@solana/web3.js";
-import type { PublicKeyInitData, Transaction } from "@solana/web3.js";
+import type {
+  PublicKeyInitData,
+  Transaction,
+  TransactionInstruction,
+} from "@solana/web3.js";
 import { AnchorProvider, Program } from "@coral-xyz/anchor";
 import type { Idl } from "@coral-xyz/anchor";
 import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
@@ -26,6 +30,7 @@ import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { mplCore, createCollectionV2 } from "@metaplex-foundation/mpl-core";
 import { generateSigner, keypairIdentity } from "@metaplex-foundation/umi";
 import {
+  fromWeb3JsInstruction,
   fromWeb3JsKeypair,
   fromWeb3JsPublicKey,
 } from "@metaplex-foundation/umi-web3js-adapters";
@@ -58,6 +63,12 @@ import {
   type UpdateCourseOnChainParams,
 } from "./course-write-params";
 import { getBackendSigner } from "./academy-program";
+import {
+  COMPUTE_UNIT_LIMITS,
+  setComputeBudget,
+  writableAccounts,
+} from "./compute-budget";
+import { estimatePriorityFee, priorityFeeInstructions } from "./priority-fee";
 import { fetchConfig } from "./academy-reads";
 import {
   CLUSTER_UNVERIFIED_MESSAGE,
@@ -71,6 +82,7 @@ import {
 
 interface MethodBuilder {
   accountsPartial(accounts: Record<string, PublicKey>): MethodBuilder;
+  preInstructions(ixs: TransactionInstruction[]): MethodBuilder;
   signers(signers: Keypair[]): MethodBuilder;
   rpc(): Promise<string>;
   transaction(): Promise<Transaction>;
@@ -753,9 +765,15 @@ export async function deployCoursePda(
     );
 
     const methods = _program.methods as unknown as AdminMethods;
+    const budget = await priorityFeeInstructions(
+      connection,
+      [_authority.publicKey, coursePDA],
+      COMPUTE_UNIT_LIMITS.createCourse
+    );
 
     const signature = await methods
       .createCourse(onChainParams)
+      .preInstructions(budget)
       .accountsPartial({
         course: coursePDA,
         config: configPDA,
@@ -819,7 +837,7 @@ export async function updateCoursePda(
   params: UpdateCourseAdminParams
 ): Promise<AdminSignerResult> {
   const { ready } = initialize();
-  if (!ready || !_program || !_authority) {
+  if (!ready || !_program || !_authority || !_connection) {
     return {
       success: false,
       error: "Admin signer not configured (PROGRAM_AUTHORITY_SECRET missing)",
@@ -846,9 +864,15 @@ export async function updateCoursePda(
       });
 
     const methods = _program.methods as unknown as AdminMethods;
+    const budget = await priorityFeeInstructions(
+      _connection,
+      [_authority.publicKey, coursePDA],
+      COMPUTE_UNIT_LIMITS.updateCourse
+    );
 
     const signature = await methods
       .updateCourse(onChainParams)
+      .preInstructions(budget)
       .accountsPartial({
         config: configPDA,
         course: coursePDA,
@@ -927,6 +951,13 @@ export async function closeCoursePda(courseId: string): Promise<SettledResult> {
   } catch (err: unknown) {
     return { outcome: "notLanded", error: errorText(err) };
   }
+  setComputeBudget(tx, {
+    units: COMPUTE_UNIT_LIMITS.closeCourse,
+    microLamports: await estimatePriorityFee(
+      _connection,
+      writableAccounts(tx.instructions, _authority.publicKey)
+    ),
+  });
 
   const result = await sendAndSettle(_connection, _authority, tx);
   if (result.outcome !== "notLanded") {
@@ -981,7 +1012,7 @@ export async function deployAchievementType(
   params: CreateAchievementAdminParams
 ): Promise<DeployAchievementResult> {
   const { ready } = initialize();
-  if (!ready || !_program || !_authority) {
+  if (!ready || !_program || !_authority || !_connection) {
     return {
       success: false,
       error: "Admin signer not configured (PROGRAM_AUTHORITY_SECRET missing)",
@@ -1009,9 +1040,15 @@ export async function deployAchievementType(
     };
 
     const methods = _program.methods as unknown as AdminMethods;
+    const budget = await priorityFeeInstructions(
+      _connection,
+      [_authority.publicKey, achievementTypePDA, collectionKeypair.publicKey],
+      COMPUTE_UNIT_LIMITS.createAchievementType
+    );
 
     const signature = await methods
       .createAchievementType(onChainParams)
+      .preInstructions(budget)
       .accountsPartial({
         config: configPDA,
         achievementType: achievementTypePDA,
@@ -1058,7 +1095,7 @@ export async function deployCourseTrackCollection(params: {
   metadataUri: string;
 }): Promise<DeployAchievementResult> {
   const { ready } = initialize();
-  if (!ready || !_authority) {
+  if (!ready || !_authority || !_connection) {
     return {
       success: false,
       error: "Admin signer not configured (PROGRAM_AUTHORITY_SECRET missing)",
@@ -1073,13 +1110,26 @@ export async function deployCourseTrackCollection(params: {
       .use(keypairIdentity(fromWeb3JsKeypair(_authority)));
 
     const collectionSigner = generateSigner(umi);
+    const budget = await priorityFeeInstructions(
+      _connection,
+      [_authority.publicKey, new PublicKey(collectionSigner.publicKey)],
+      COMPUTE_UNIT_LIMITS.createCollection
+    );
 
     const { signature } = await createCollectionV2(umi, {
       collection: collectionSigner,
       name: `${params.courseName} Credentials`,
       uri: params.metadataUri,
       updateAuthority: fromWeb3JsPublicKey(configPDA),
-    }).sendAndConfirm(umi);
+    })
+      .prepend(
+        budget.map((ix) => ({
+          instruction: fromWeb3JsInstruction(ix),
+          signers: [],
+          bytesCreatedOnChain: 0,
+        }))
+      )
+      .sendAndConfirm(umi);
     await recordAuthoritySpend(
       bs58.encode(signature),
       "admin_course_write",

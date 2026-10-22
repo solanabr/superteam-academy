@@ -14,12 +14,19 @@ import {
   type SpendContext,
 } from "@/lib/platform-spend/ledger";
 import type { FeePayer } from "./sponsor";
+import { setComputeBudget, writableAccounts } from "./compute-budget";
+import { estimatePriorityFee } from "./priority-fee";
 
 export interface SendPlatformTxOptions {
   /** Pays the fee and signs first, so its signature is the transaction id. */
   feePayer: FeePayer;
   /** Every other required signer (backend signer, fresh asset keypairs…). */
   signers?: Keypair[];
+  /**
+   * Compute-unit limit for the transaction (`COMPUTE_UNIT_LIMITS`). The
+   * priority fee is charged on it, so it is set per instruction kind.
+   */
+  computeUnits: number;
   context: SpendContext;
   /**
    * The program's IDL error map. When given, failures are translated the way
@@ -43,18 +50,29 @@ export interface SendPlatformTxOptions {
  * (`SendTransactionError`: preflight revert, bad signature) never reached the
  * cluster, costs nothing and is not recorded. Any other send error is
  * ambiguous, so the row is written and settlement decides.
+ *
+ * Prepends the compute budget: `computeUnits` as the limit and a priority fee
+ * priced on the accounts the transaction writes. The fee is part of the
+ * confirmed transaction's `meta.fee`, so settlement counts it with the rest.
  */
 export async function sendPlatformTransaction(
   connection: Connection,
   tx: Transaction,
   options: SendPlatformTxOptions
 ): Promise<string> {
-  const { feePayer, signers = [], context, idlErrors } = options;
+  const { feePayer, signers = [], computeUnits, context, idlErrors } = options;
   const translate = (err: unknown): unknown =>
     idlErrors ? (translateError(err, idlErrors) as unknown) : err;
 
-  const { blockhash, lastValidBlockHeight } =
-    await connection.getLatestBlockhash("confirmed");
+  const [{ blockhash, lastValidBlockHeight }, microLamports] =
+    await Promise.all([
+      connection.getLatestBlockhash("confirmed"),
+      estimatePriorityFee(
+        connection,
+        writableAccounts(tx.instructions, feePayer.keypair.publicKey)
+      ),
+    ]);
+  setComputeBudget(tx, { units: computeUnits, microLamports });
   tx.feePayer = feePayer.keypair.publicKey;
   tx.recentBlockhash = blockhash;
   // Transaction.sign dedupes by public key, so a fee payer that is also a

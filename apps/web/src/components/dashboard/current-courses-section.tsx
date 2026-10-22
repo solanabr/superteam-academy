@@ -17,6 +17,7 @@ import { startDynamicSocialSignIn } from "@/lib/dynamic/social";
 import { isDynamicEnabled } from "@/lib/dynamic/config";
 import { useDynamicSessionState } from "@/hooks/use-dynamic-session-state";
 import { buildCloseEnrollmentInstruction } from "@/lib/solana/instructions";
+import { COMPUTE_UNIT_LIMITS } from "@/lib/solana/compute-budget";
 import { fetchEnrollmentRentRecipient } from "@/lib/solana/enrollment-rent";
 import {
   findWalletMismatch,
@@ -139,8 +140,11 @@ export function CurrentCoursesSection({
         const tx = new Transaction().add(ix);
 
         // Pre-simulate to catch program errors before wallet popup.
-        // Backpack hangs if simulation fails inside sendTransaction.
-        await preflightTransaction(tx, connection, learner);
+        // Backpack hangs if simulation fails inside sendTransaction. A
+        // passing simulation also sets the compute budget.
+        await preflightTransaction(tx, connection, learner, {
+          fallbackUnits: COMPUTE_UNIT_LIMITS.closeEnrollment,
+        });
 
         // The embedded wallet signs via Dynamic's MPC service — no prompt,
         // no wallet-adapter.

@@ -9,6 +9,7 @@ import type { Connection, PublicKey } from "@solana/web3.js";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { truncateAddress } from "@/lib/utils";
 import { buildEnrollInstruction } from "@/lib/solana/instructions";
+import { COMPUTE_UNIT_LIMITS } from "@/lib/solana/compute-budget";
 import {
   findWalletMismatch,
   isSameWallet,
@@ -112,7 +113,8 @@ async function buildEnrollTransaction(
           c.charCodeAt(0)
         );
         // Deliberately NOT preflighted — preflightTransaction assigns the
-        // learner as fee payer, which would undo the sponsorship.
+        // learner as fee payer, which would undo the sponsorship. The server
+        // already set its compute budget.
         return {
           kind: "tx",
           tx: Transaction.from(bytes),
@@ -141,7 +143,11 @@ async function buildEnrollTransaction(
 
   const tx = new Transaction().add(buildEnrollInstruction(courseId, learner));
   try {
-    await preflightTransaction(tx, connection, learner);
+    // Sized from its own simulation, so the learner pays a priority fee on
+    // the units enroll needs rather than the 200k default.
+    await preflightTransaction(tx, connection, learner, {
+      fallbackUnits: COMPUTE_UNIT_LIMITS.enroll,
+    });
   } catch (err) {
     // Usually a wallet with no SOL: say why it isn't free this time. Code 0
     // (the enrollment already exists) keeps its own handling below.

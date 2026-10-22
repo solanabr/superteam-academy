@@ -1,6 +1,8 @@
 /* eslint-disable import/order -- vi.mock factories are hoisted above imports. */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
+  ComputeBudgetInstruction,
+  ComputeBudgetProgram,
   Keypair,
   PublicKey,
   Transaction,
@@ -16,6 +18,7 @@ const h = vi.hoisted(() => ({
   getPlatformFeePayer: vi.fn(),
   getLatestBlockhash: vi.fn(),
   getMultipleAccountsInfo: vi.fn(),
+  estimate: vi.fn(),
 }));
 
 vi.mock("server-only", () => ({}));
@@ -30,6 +33,7 @@ vi.mock("@/lib/platform-spend/settle", () => ({
   defaultSettleDeps: () => ({ admin: "admin" }),
 }));
 vi.mock("@/lib/platform-spend/events", () => ({ emitServerEvent: vi.fn() }));
+vi.mock("../priority-fee", () => ({ estimatePriorityFee: h.estimate }));
 vi.mock("../academy-program", () => ({
   getConnection: () => ({
     getLatestBlockhash: h.getLatestBlockhash,
@@ -73,6 +77,7 @@ import {
   buildSponsoredEnrollTransaction,
   CourseNotOnChainError,
 } from "../sponsor-enroll";
+import { COMPUTE_UNIT_LIMITS } from "../compute-budget";
 
 const sponsor = Keypair.generate();
 const learner = Keypair.generate().publicKey;
@@ -123,6 +128,7 @@ beforeEach(() => {
   h.findLive.mockResolvedValue([]);
   h.reserve.mockResolvedValue("reserved");
   h.supersede.mockResolvedValue(true);
+  h.estimate.mockResolvedValue(30_000);
 });
 
 describe("buildSponsoredEnrollTransaction", () => {
@@ -146,6 +152,39 @@ describe("buildSponsoredEnrollTransaction", () => {
       payerRole: "sponsor",
       lastValidBlockHeight: 500,
     });
+  });
+
+  it("sets the fixed enroll limit and the estimated price before the sponsor signs", async () => {
+    const result = await build();
+    if (!result.ok) throw new Error("expected a transaction");
+
+    const tx = Transaction.from(
+      Buffer.from(result.transaction.transaction, "base64")
+    );
+    const [limitIx, priceIx, enrollIx] = tx.instructions;
+    expect(tx.instructions).toHaveLength(3);
+    expect(limitIx!.programId.equals(ComputeBudgetProgram.programId)).toBe(
+      true
+    );
+    // A fixed limit: the sponsor's priority fee is bounded by limit x ceiling.
+    expect(
+      ComputeBudgetInstruction.decodeSetComputeUnitLimit(limitIx!)
+    ).toEqual({ units: COMPUTE_UNIT_LIMITS.enroll });
+    expect(
+      ComputeBudgetInstruction.decodeSetComputeUnitPrice(priceIx!).microLamports
+    ).toBe(30_000n);
+    expect(enrollIx!.programId.equals(PROGRAM)).toBe(true);
+    // The sponsor's signature covers the budget, so the learner can't change it.
+    const sponsorSig = tx.signatures.find((s) =>
+      s.publicKey.equals(sponsor.publicKey)
+    );
+    expect(sponsorSig?.signature).not.toBeNull();
+    expect(tx.verifySignatures(false)).toBe(true);
+    // Priced on what the sponsored transaction writes.
+    const [, accounts] = h.estimate.mock.calls[0] as [unknown, PublicKey[]];
+    expect(accounts.map((a) => a.toBase58())).toEqual([
+      sponsor.publicKey.toBase58(),
+    ]);
   });
 
   it("refuses when the Course account is not on-chain (no generation to key on)", async () => {

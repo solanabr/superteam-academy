@@ -6,6 +6,8 @@
 // that closeCoursePda waits for a definitive outcome.
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
+  ComputeBudgetInstruction,
+  ComputeBudgetProgram,
   Keypair,
   SendTransactionError,
   SystemProgram,
@@ -17,14 +19,23 @@ vi.mock("server-only", () => ({}));
 
 const h = vi.hoisted(() => {
   const rpc = vi.fn(async () => "create-sig");
+  const builder: Record<string, unknown> = { rpc };
+  builder.preInstructions = vi.fn(() => builder);
+  builder.accountsPartial = vi.fn(() => builder);
   return {
+    builder: builder as {
+      rpc: typeof rpc;
+      preInstructions: ReturnType<typeof vi.fn>;
+    },
+    estimate: vi.fn(async () => 10_000),
+    budgetIxs: vi.fn(async (..._args: unknown[]) => [] as unknown[]),
     env: {
       SOLANA_RPC_URL: "https://rpc.example.com",
       PROGRAM_AUTHORITY_SECRET: "",
       BACKEND_SIGNER_SECRET: "" as string | undefined,
     },
     rpc,
-    createCourse: vi.fn(() => ({ accountsPartial: () => ({ rpc }) })),
+    createCourse: vi.fn(() => builder),
     closeCourse: vi.fn(),
     getGenesisHash: vi.fn<() => Promise<string>>(),
     fetchConfig: vi.fn<() => Promise<unknown>>(),
@@ -36,6 +47,10 @@ const h = vi.hoisted(() => {
 });
 
 vi.mock("@/lib/env.server", () => ({ serverEnv: h.env }));
+vi.mock("../priority-fee", () => ({
+  estimatePriorityFee: h.estimate,
+  priorityFeeInstructions: h.budgetIxs,
+}));
 
 vi.mock("@coral-xyz/anchor", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@coral-xyz/anchor")>();
@@ -237,6 +252,23 @@ describe("deployCoursePda — mainnet course identity guard", () => {
     expect(h.createCourse).toHaveBeenCalledTimes(1);
   });
 
+  it("prepends the create_course compute budget", async () => {
+    h.getGenesisHash.mockResolvedValue(DEVNET_GENESIS);
+    const budget = [{ ix: "limit" }, { ix: "price" }];
+    h.budgetIxs.mockResolvedValueOnce(budget);
+
+    await deploy();
+
+    const [, accounts, units] = h.budgetIxs.mock.calls[0] as [
+      unknown,
+      { toBase58(): string }[],
+      number,
+    ];
+    expect(units).toBe(60_000);
+    expect(accounts[0]?.toBase58()).toBe(AUTHORITY.publicKey.toBase58());
+    expect(h.builder.preInstructions).toHaveBeenCalledWith(budget);
+  });
+
   it("leaves devnet unchanged: devnet genesis sends 0/0", async () => {
     h.getGenesisHash.mockResolvedValue(DEVNET_GENESIS);
 
@@ -359,6 +391,26 @@ describe("closeCoursePda — waits for a definitive outcome", () => {
       outcome: "landed",
       signature: expect.any(String) as string,
     });
+  });
+
+  it("sends the close with its compute budget first", async () => {
+    h.getSignatureStatus.mockResolvedValue(at(200, confirmed));
+
+    await close();
+
+    const [raw] = h.sendRawTransaction.mock.calls[0] as [Buffer];
+    const sent = Transaction.from(raw);
+    expect(sent.instructions).toHaveLength(3);
+    expect(
+      sent.instructions[0]!.programId.equals(ComputeBudgetProgram.programId)
+    ).toBe(true);
+    expect(
+      ComputeBudgetInstruction.decodeSetComputeUnitLimit(sent.instructions[0]!)
+    ).toEqual({ units: 60_000 });
+    expect(
+      ComputeBudgetInstruction.decodeSetComputeUnitPrice(sent.instructions[1]!)
+        .microLamports
+    ).toBe(10_000n);
   });
 
   it("keeps waiting past .rpc()'s 30s and reports a close that lands later as landed", async () => {

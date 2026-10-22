@@ -25,6 +25,12 @@ import {
   enrollmentCourseGeneration,
 } from "./course-generation";
 import { buildEnrollInstruction } from "./instructions";
+import {
+  COMPUTE_UNIT_LIMITS,
+  computeBudgetInstructions,
+  writableAccounts,
+} from "./compute-budget";
+import { estimatePriorityFee } from "./priority-fee";
 import { findCoursePDA, findEnrollmentPDA, getProgramId } from "./pda";
 
 /**
@@ -68,6 +74,12 @@ import { findCoursePDA, findEnrollmentPDA, getProgramId } from "./pda";
  * rent, so it is sponsored as `enroll_sponsor_reenroll` without using up the
  * generation's slot. A learner already enrolled in the current generation is
  * not sponsored: that `enroll` can only fail.
+ *
+ * The sponsor also pays the priority fee. Its limit is the fixed
+ * `COMPUTE_UNIT_LIMITS.enroll` and its price is clamped to
+ * `PRIORITY_FEE_MAX_MICROLAMPORTS`, so the most one sponsorship can add is
+ * their product. The learner co-signs after the sponsor, so the budget can't
+ * be changed without breaking the sponsor's signature.
  */
 export interface SponsoredEnrollTransaction {
   /** Base64 transaction, sponsor-signed, still missing the learner signature. */
@@ -192,10 +204,22 @@ export async function buildSponsoredEnrollTransaction(
     sponsor.keypair.publicKey
   );
 
-  const { blockhash, lastValidBlockHeight } =
-    await connection.getLatestBlockhash("confirmed");
+  const [{ blockhash, lastValidBlockHeight }, microLamports] =
+    await Promise.all([
+      connection.getLatestBlockhash("confirmed"),
+      estimatePriorityFee(
+        connection,
+        writableAccounts([instruction], sponsor.keypair.publicKey)
+      ),
+    ]);
 
-  const transaction = new Transaction().add(instruction);
+  const transaction = new Transaction().add(
+    ...computeBudgetInstructions({
+      units: COMPUTE_UNIT_LIMITS.enroll,
+      microLamports,
+    }),
+    instruction
+  );
   // The sponsor covers the fee as well as the rent — a wallet with no SOL
   // cannot be the fee payer either.
   transaction.feePayer = sponsor.keypair.publicKey;
