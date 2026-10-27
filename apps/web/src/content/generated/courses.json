@@ -173,8 +173,8 @@
     ],
     "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/ed9740f6ea99a8d6f9b39863c9dda7a802d908f3b3e53b76fab0aeb85e5480a2.webp",
     "title": "From Bitcoin to Solana: The Evolution of Blockchain Technology",
-    "trackId": 0,
-    "trackLevel": 0,
+    "trackId": 1,
+    "trackLevel": 3,
     "xpPerLesson": 20,
     "xpReward": 300
   },
@@ -466,8 +466,8 @@
     ],
     "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/13e4eac6bb418358a5905a77bb246c050c48ede85447e96d7496a80580cbf92b.webp",
     "title": "Digital Assets, Tokenization & Token Extensions",
-    "trackId": 0,
-    "trackLevel": 0,
+    "trackId": 3,
+    "trackLevel": 3,
     "xpPerLesson": 15,
     "xpReward": 420
   },
@@ -769,8 +769,8 @@
     ],
     "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/125aa5070a39197c2154db1343c82413565a5e630a8b3ef138761ba5eabefb26.webp",
     "title": "Master Anchor V2",
-    "trackId": 0,
-    "trackLevel": 0,
+    "trackId": 3,
+    "trackLevel": 4,
     "xpPerLesson": 18,
     "xpReward": 540
   },
@@ -1137,8 +1137,8 @@
     ],
     "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/42eecc4f97fe457c439637e55f773cb3ab028f24244762c20b5b3a99f086fa77.webp",
     "title": "Rust & TypeScript Fundamentals for Web3",
-    "trackId": 0,
-    "trackLevel": 0,
+    "trackId": 3,
+    "trackLevel": 1,
     "xpPerLesson": 15,
     "xpReward": 465
   },
@@ -1309,8 +1309,8 @@
     ],
     "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/e47934ff7173f7f22e92495854ddd5268fc8b120c7e41f6937945d665c2f73f6.webp",
     "title": "Solana Hackathon Expert: Build a Winning Project",
-    "trackId": 0,
-    "trackLevel": 0,
+    "trackId": 2,
+    "trackLevel": 1,
     "xpPerLesson": 20,
     "xpReward": 300
   },
@@ -1573,8 +1573,8 @@
     ],
     "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/4ef28e87c710413352c25a8a77ad3b3d3a8473cc084d9a4538b52948883060d4.webp",
     "title": "Solana Payments & Commerce",
-    "trackId": 0,
-    "trackLevel": 0,
+    "trackId": 3,
+    "trackLevel": 2,
     "xpPerLesson": 15,
     "xpReward": 360
   },
@@ -1634,8 +1634,8 @@
     ],
     "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/c2fec3063c434607e652d5684af9c94e05df0260e7fe3011d17bdbea2ed056db.webp",
     "title": "Solana Speedrun: Inicie sua jornada onchain em minutos",
-    "trackId": 0,
-    "trackLevel": 0,
+    "trackId": 1,
+    "trackLevel": 1,
     "xpPerLesson": 20,
     "xpReward": 80
   },
@@ -1791,8 +1791,8 @@
     ],
     "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/787ee598de4df34c7f3b71d56898b93005e5cf618da4f1ce4ba01306e502813b.jpg",
     "title": "Visão Geral da Blockchain Solana",
-    "trackId": 0,
-    "trackLevel": 0,
+    "trackId": 1,
+    "trackLevel": 2,
     "xpPerLesson": 20,
     "xpReward": 320
   }
