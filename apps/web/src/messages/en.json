@@ -594,7 +594,6 @@
     "mintDescription": "Claim your on-chain certificate as an NFT on Solana Devnet.",
     "deployRequired": "Deploy your capstone program to devnet to unlock this credential.",
     "completed": "Completed",
-    "mint": "Mint",
     "collection": "Superteam Academy Certificates",
     "notFound": "Certificate not found",
     "pageTitle": "My Certificates",
