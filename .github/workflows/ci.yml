@@ -249,9 +249,10 @@ jobs:
             nextcache-e2e-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
             nextcache-e2e-${{ runner.os }}-
 
-      # Pinned via package.json (@playwright/test 1.59.1); --with-deps pulls the
-      # OS libs the browser needs on the runner. openssl (for the mock cert) is
-      # pre-installed on ubuntu-latest.
+      # Pinned via apps/web/package.json (@playwright/test). ubuntu-latest is
+      # 26.04, which Playwright only recognises from 1.61; older versions refuse
+      # to install. --with-deps pulls the OS libs the browser needs on the
+      # runner. openssl (for the mock cert) is pre-installed on ubuntu-latest.
       - name: Install Playwright browser
         run: pnpm --filter web exec playwright install --with-deps chromium
 
