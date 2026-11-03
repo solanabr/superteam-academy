@@ -56,6 +56,21 @@
     },
     "version": 1
   },
+  "course-intro-web3-blockchain": {
+    "next": 8,
+    "retired": [],
+    "slots": {
+      "lesson-iwb-cafe-dolar-digital": 7,
+      "lesson-iwb-carteira-digital": 2,
+      "lesson-iwb-cartorios-validadores": 5,
+      "lesson-iwb-evolucao-web": 0,
+      "lesson-iwb-explorando-rede": 1,
+      "lesson-iwb-historico-valido": 4,
+      "lesson-iwb-intermediario": 3,
+      "lesson-iwb-toque-ao-pagamento": 6
+    },
+    "version": 1
+  },
   "course-mastering-anchor-v2": {
     "next": 30,
     "retired": [],
