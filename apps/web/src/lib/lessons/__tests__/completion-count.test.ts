@@ -72,8 +72,9 @@ describe("getLessonCompletionCount", () => {
   });
 
   // The lesson page renders inside its loading.tsx Suspense boundary, after
-  // Next has already handed the request's pending revalidations to waitUntil.
-  // A stale-entry refresh started there is untracked: the response ends, the
+  // Next has already handed the request's pending revalidations to waitUntil,
+  // and RSC navigations never hand them over at all. A stale-entry refresh
+  // started there is untracked: the response ends, the
   // instance is suspended with the RPC in flight, and the abort timer fires on
   // the next wake-up as LESSON_COMPLETION_COUNT_001. Registering the RPC with
   // after() keeps the invocation alive until it settles.

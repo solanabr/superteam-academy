@@ -40,9 +40,9 @@ async function loadCourseCompletionCounts(
 ): Promise<CompletionCounts | null> {
   try {
     const admin = createAdminClient();
-    // keepInvocationAlive: the lesson page renders under loading.tsx, so a
-    // stale-entry refresh started here is otherwise frozen mid-flight when the
-    // response ends (see lib/cache/keep-alive.ts).
+    // keepInvocationAlive: a stale-entry refresh started here (under the lesson
+    // page's loading.tsx, or on any RSC navigation) is otherwise frozen
+    // mid-flight when the response ends (see lib/cache/keep-alive.ts).
     const { data, error } = await keepInvocationAlive(
       admin
         .rpc("course_lesson_completion_counts", { p_course_id: courseId })
