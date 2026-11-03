@@ -870,6 +870,13 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
+    "path": "courses/intro-web3-blockchain/lessons/explorando-a-rede-solana/assets/card-aula-2.webp",
+    "sha256": "1689ba5cd6d686168929e9f947e3b9b8f5de9930476b2aceb12d14b89b28aea9",
+    "size": 50762
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
     "path": "courses/digital-assets/lessons/m08-l1-bonding-curves-graduation/assets/v03-flowchart.webp",
     "sha256": "168cc2a2fc9ee96841af586f09ed9baeb924b14eb9a37f78b1b63e65a17f8ff8",
     "size": 60294
@@ -1752,6 +1759,13 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
+    "path": "courses/intro-web3-blockchain/assets/banner.webp",
+    "sha256": "31aeebaaac353fe7304a5ad931ec59a3d8ea7648deb8860a74fcf526829daaff",
+    "size": 45286
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
     "path": "courses/rust-ts-fundamentals/lessons/m10-l1/assets/v07-table.webp",
     "sha256": "31eae3411facf3b492708d105144da86f51bea97703faf3193303e8622e91720",
     "size": 74944
@@ -2049,6 +2063,13 @@
     "path": "courses/btc-to-sol-evolution/lessons/your-first-solana-program/assets/v10-flowchart.webp",
     "sha256": "3a527210a852811ce0d84778d3d78eace1f65a2f3f4e6d5693049db777929a9c",
     "size": 43316
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/intro-web3-blockchain/lessons/um-cafe-pago-em-dolar-digital/assets/card-aula-8.webp",
+    "sha256": "3a6a9255ef71dc1d975c4274f70bf9dd15f4b5f3cdbbd1b679c484d23bcb9a9e",
+    "size": 53510
   },
   {
     "contentType": "image/webp",
@@ -2658,6 +2679,13 @@
     "path": "courses/digital-assets/lessons/m02-l4-native-metadata/assets/v03-diagram.webp",
     "sha256": "4ccbeed3b9e469677ea5ee45165383f83191f82acf211cec1f4d01725cd0ff5c",
     "size": 57974
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/intro-web3-blockchain/lessons/do-toque-ao-pagamento-confirmado/assets/card-aula-7.webp",
+    "sha256": "4d1b0bb68adc3ce0a2f0258cd797ec794de9df3a1859351c1a7a3f298a8d7ce6",
+    "size": 58250
   },
   {
     "contentType": "image/webp",
@@ -3873,6 +3901,13 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
+    "path": "courses/intro-web3-blockchain/lessons/cartorios-diario-oficial-e-validadores/assets/card-aula-6.webp",
+    "sha256": "717941999ab8c10c8ece19725af34a465c0b63e3cee49eb37d80b3b73f7e5d5e",
+    "size": 63298
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
     "path": "courses/solana-payments-commerce/lessons/m08-l1/assets/v04-flowchart.webp",
     "sha256": "718a946e8d8ed902f606d8c0728fa79319cdcc3ea9be8fec88d1d2598879b46a",
     "size": 57828
@@ -4282,6 +4317,13 @@
     "path": "courses/btc-to-sol-evolution/lessons/watch-the-mempool/assets/v08-flowchart.webp",
     "sha256": "7de0bfd40e3afedae35d65df12b4820cfc821fe1905e37636a554f70d5522f7b",
     "size": 46120
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/intro-web3-blockchain/lessons/quem-decide-qual-historico-e-valido/assets/card-aula-5.webp",
+    "sha256": "7e10b63d6e1a207c9045198ce7f6a712761dec1c20f95d4bda2ea66990a9018d",
+    "size": 61882
   },
   {
     "contentType": "image/webp",
@@ -6232,6 +6274,13 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
+    "path": "courses/intro-web3-blockchain/lessons/do-intermediario-ao-registro-distribuido/assets/card-aula-4.webp",
+    "sha256": "befb5eaee51350e05cd4ef85c28179f7638333a82f8f5468c1c340879b7d7dac",
+    "size": 59018
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
     "path": "courses/rust-ts-fundamentals/lessons/m08-l1/assets/v07-annotated-code.webp",
     "sha256": "bf12fcf01e35a2ef736ba1e4af5230ba3ba345c44354cfd3c2b4f7f2cb6a9a00",
     "size": 56300
@@ -6256,6 +6305,13 @@
     "path": "courses/btc-to-sol-evolution/lessons/state-lives-in-the-contract/assets/v03-diagram.webp",
     "sha256": "bf96837e109c4ff46374ca2d2495509f5f126822e7ad59c194e3899892946c1a",
     "size": 56494
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/intro-web3-blockchain/lessons/carteira-digital/assets/card-aula-3.webp",
+    "sha256": "bfe0099bbb79702da36a5410f99b4805dadbfc1965dc0ae47d9eefb7eaecaa18",
+    "size": 52226
   },
   {
     "contentType": "image/webp",
@@ -7936,6 +7992,13 @@
     "path": "courses/mastering-anchor-v2/lessons/m08-l2/assets/v05-timeline.webp",
     "sha256": "eecb25e41c0cae14ff74324f9f3648ff4b9aca26587f4468718b8927537eb3d4",
     "size": 60440
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/intro-web3-blockchain/lessons/evolucao-da-web-e-blockchain/assets/card-aula-1.webp",
+    "sha256": "ef0052ecf15249fccdf973c14d604e5cb3a6213744393754b0b6190afc82e9a7",
+    "size": 58740
   },
   {
     "contentType": "image/webp",

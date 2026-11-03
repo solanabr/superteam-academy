@@ -5735,6 +5735,1812 @@
     "title": "Cumulative checkpoint and close"
   },
   {
+    "_id": "lesson-iwb-cafe-dolar-digital",
+    "_type": "lesson",
+    "blocks": [
+      {
+        "_key": "header",
+        "_type": "prose",
+        "src": "# Um café pago em dólar digital\n"
+      },
+      {
+        "_key": "video",
+        "_type": "video",
+        "url": "https://www.youtube.com/watch?v=zsTT0QBkdus"
+      },
+      {
+        "_key": "content",
+        "_type": "prose",
+        "src": "![Cartão da aula: Um café pago em dólar digital. On-ramp, do real ao USDC. Solana Pay, da sua carteira para o comerciante. A palavra-chave é liquidação. Off-ramp, de volta ao mundo tradicional.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/3a6a9255ef71dc1d975c4274f70bf9dd15f4b5f3cdbbd1b679c484d23bcb9a9e.webp)\n\nVocê está em uma cafeteria e você lê lá: \"Aceitamos USDC, dólar digital, pela Solana\". Aí você fala: nossa, mas eu tenho reais na minha carteira, e vou pagar em dólar digital, vou pagar em USDC?\n\nVamos entender aqui, num passo a passo.\n\n## Primeiro passo: entender o USDC\n\nPrimeiro passo, você precisa entender que o USDC é um token e que você vai usar uma carteira digital para transferir esse valor para o comerciante, como você faz hoje aqui no Brasil usando o Pix.\n\n## Do real ao dólar digital\n\nBom, se você ainda não tem dólar digital, o USDC, você vai ter que se utilizar de um fornecedor. Ele tem um termo técnico, chamado on-ramp, onde você traz dinheiro do mundo tradicional para esse mundo cripto. Então você vai precisar verificar as condições de taxa, a quanto o pessoal compra, para você sair de real e chegar em USDC.\n\nPara trazer esse USDC para a sua carteira, você lembra que nós já falamos disso, você precisa dar o endereço, como uma chave Pix, para onde esse USDC deve ser encaminhado. Você pagou em real, a pessoa faz a conversão, e aí esse dólar digital, um token que busca acompanhar o dólar, vai para a sua carteira. Por isso você precisa dar o endereço.\n\nE sempre confira as transações, né? Veja se realmente o dinheiro que saiu em real foi transferido em USDC. Saiba que tem as taxas de serviço, então sempre faça a conta da conversão para saber se está tudo ok.\n\n## Pagar com Solana Pay\n\nUm instrumento que você pode usar nesse próximo passo é o Solana Pay. Como hoje nós temos métodos de pagamento de encostar o celular nas maquininhas, no Solana Pay você vai fazer essa transferência da sua carteira para o comerciante.\n\nCuidado: nessa etapa, essa transferência é feita pelo token USDC. Ele vai estar recebendo na outra ponta não reais, vai estar recebendo dólar digital. Lembra da plaquinha? Ela dizia que recebia USDC via Solana. É o que você está fazendo.\n\n## Conferir o destino\n\nA leitura da transferência, para onde vai o dinheiro lá no comerciante, pode ser feita através de um QR Code, como a gente também faz aqui com o Pix, né? Você tem uma chave, você pode bater lá no seu celular, pelo aplicativo, ler o QR Code e saber para onde vai. No Solana Pay é a mesma coisa, para direcionar corretamente o valor da conta do café que você está pagando.\n\n## A palavra-chave é liquidação\n\nVocê somente tem certeza de que a transação ocorreu de maneira efetiva quando a gente diz: a liquidação da operação aconteceu. Aí sim, aquele barulhinho que muitas vezes você escuta na máquina de cartão de crédito ou débito, tipo \"transação feita\". Aqui a palavra-chave é liquidação.\n\n## Voltar ao mundo tradicional\n\nEntão, agora o comerciante, de posse desse dólar digital, vai fazer, o termo agora é off-ramp. Ele vai sair do mundo cripto e vai voltar para o mundo tradicional, das finanças tradicionais. Por quê? Ele quer dinheiro, né? Ele quer real, ele quer dólar. Então ele também tem que fazer o caminho de converter o dólar digital para o dinheiro da moeda local.\n\n## Precisa converter?\n\nMas nem sempre você precisa fazer essa conversão. De repente esse dono da cafeteria compra café importado também e paga o fornecedor em USDC. Então ele não precisa converter para a moeda local, ele já paga o fornecedor em dólar digital. Isso é bacana.\n\nSe é uma empresa que faz transações internacionais, o fornecedor recebe dólar digital e é interessante para ele. Por quê? Porque ele também se utiliza dessa moeda para fazer as outras transações: comprar café, de repente pagar lá o streaming da cafeteria dele, de repente fazer a manutenção das máquinas de café.\n\nEntão ele também se utiliza desse meio de pagamento, que são as moedas digitais, como o USDC, que busca acompanhar o dólar. Ou, de repente, até o próprio SOL, com que ele paga as taxas da rede que está usando. De repente algum outro fornecedor também aceita até SOL. E tudo bem: dólar digital, SOL, a cripto que estiver sendo aceita.\n\n> **Nota editorial (2 de novembro de 2026).** Esta aula e o vídeo não são orientação jurídica. No Brasil, regras do Banco Central, como a Res BCB 521 e a Res BCB 561, podem se aplicar a pagamentos com stablecoins e a fluxos internacionais. Comerciantes e importadores devem verificar as regras aplicáveis antes de operar.\n\n## Para guardar\n\nOn-ramp é sair do real e chegar no USDC. Off-ramp é o caminho de volta para o mundo tradicional. No meio, o pagamento pelo Solana Pay, com o QR Code direcionando para a conta certa, e a palavra-chave é liquidação. E nem sempre precisa converter: o dólar digital também circula.\n"
+      },
+      {
+        "_key": "quiz",
+        "_type": "quiz",
+        "questions": [
+          {
+            "explanation": "On-ramp é a entrada no mundo cripto, off-ramp é a saída.",
+            "id": "q1",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "feedback": "Isso. Você usa um fornecedor para sair de real e chegar em USDC, conferindo as taxas.",
+                "id": "d",
+                "label": "Trazer dinheiro do mundo tradicional para o cripto"
+              },
+              {
+                "correct": false,
+                "feedback": "O QR Code entra na hora de conferir o destino. On-ramp vem antes, é a entrada.",
+                "id": "c",
+                "label": "Ler o QR Code com o destino do pagamento"
+              },
+              {
+                "correct": false,
+                "feedback": "Taxa da rede é outro assunto. On-ramp é sair do dinheiro tradicional e entrar no cripto.",
+                "id": "e",
+                "label": "Pagar as taxas da rede em SOL a um validador"
+              },
+              {
+                "correct": false,
+                "feedback": "Esse é o off-ramp, o caminho que o comerciante faz depois.",
+                "id": "a",
+                "label": "Voltar do cripto para o dinheiro da moeda local"
+              },
+              {
+                "correct": false,
+                "feedback": "Isso lembra o Solana Pay. On-ramp é a entrada no mundo cripto.",
+                "id": "b",
+                "label": "Encostar o celular para pagar na maquininha"
+              }
+            ],
+            "prompt": "O que é o on-ramp?"
+          },
+          {
+            "explanation": "Você pagou em real, a pessoa faz a conversão, e o dólar digital vai para o endereço que você informou.",
+            "id": "q2",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "feedback": "Isso. Você precisa dar o endereço, como uma chave Pix, para onde esse USDC deve ser encaminhado.",
+                "id": "e",
+                "label": "O seu endereço, como uma chave Pix"
+              },
+              {
+                "correct": false,
+                "feedback": "O que indica o destino do USDC é o endereço da carteira.",
+                "id": "c",
+                "label": "O número do cartão de crédito da carteira"
+              },
+              {
+                "correct": false,
+                "feedback": "Nunca! A frase de recuperação não sai da sua mão.",
+                "id": "b",
+                "label": "A sua frase de recuperação, por segurança"
+              },
+              {
+                "correct": false,
+                "feedback": "Nunca! Para receber, basta o endereço.",
+                "id": "a",
+                "label": "A sua chave privada, para ele depositar"
+              },
+              {
+                "correct": false,
+                "feedback": "Esse é o destino do pagamento do café. Aqui estamos trazendo o USDC para a sua carteira.",
+                "id": "d",
+                "label": "O QR Code da cafeteria que vai receber"
+              }
+            ],
+            "prompt": "O que você precisa dar ao fornecedor para o USDC chegar na sua carteira?"
+          },
+          {
+            "explanation": "Nessa etapa, a transferência é feita pelo token USDC: o comerciante recebe dólar digital.",
+            "id": "q3",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Crédito de teste é coisa de Devnet. Aqui é pagamento para valer, em USDC.",
+                "id": "d",
+                "label": "Um crédito de teste, até haver a liquidação"
+              },
+              {
+                "correct": false,
+                "feedback": "O valor chega em dólar digital. O off-ramp é uma escolha que vem depois.",
+                "id": "e",
+                "label": "Um comprovante, e o valor só no off-ramp"
+              },
+              {
+                "correct": false,
+                "feedback": "A rede é a Solana, mas a transferência é feita pelo token USDC.",
+                "id": "c",
+                "label": "SOL, porque o pagamento passa pela Solana"
+              },
+              {
+                "correct": false,
+                "feedback": "Cuidado nessa etapa. Ele recebe dólar digital. Converter para real é o off-ramp, depois.",
+                "id": "b",
+                "label": "Reais, convertidos na hora pelo Solana Pay"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso. Lembra da plaquinha? Ela dizia que recebia USDC via Solana. É o que você está fazendo.",
+                "id": "a",
+                "label": "Dólar digital, em USDC, e não reais"
+              }
+            ],
+            "prompt": "Pagamento com Solana Pay na cafeteria: o que o comerciante recebe na outra ponta?"
+          },
+          {
+            "explanation": "Você somente tem certeza de que a transação ocorreu de maneira efetiva quando a liquidação da operação aconteceu.",
+            "id": "q4",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "On-ramp é a entrada no mundo cripto. Isso vem bem antes.",
+                "id": "b",
+                "label": "On-ramp"
+              },
+              {
+                "correct": false,
+                "feedback": "Simulação é um ensaio antes de aprovar. Aqui queremos saber se já aconteceu.",
+                "id": "e",
+                "label": "Simulação"
+              },
+              {
+                "correct": false,
+                "feedback": "Conversão é o que acontece no on-ramp e no off-ramp, não a certeza do pagamento.",
+                "id": "a",
+                "label": "Conversão"
+              },
+              {
+                "correct": false,
+                "feedback": "Off-ramp é o comerciante voltando ao mundo tradicional, depois do pagamento.",
+                "id": "d",
+                "label": "Off-ramp"
+              },
+              {
+                "correct": true,
+                "feedback": "Essa é a palavra-chave. É aquele barulhinho da máquina de cartão, tipo transação feita.",
+                "id": "c",
+                "label": "Liquidação"
+              }
+            ],
+            "prompt": "Qual é a palavra-chave para ter certeza de que a transação ocorreu?"
+          },
+          {
+            "explanation": "Quem sai do real e chega em USDC faz o on-ramp. Quem sai do USDC e volta para a moeda local faz o off-ramp.",
+            "id": "q5",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "O comerciante está saindo do mundo cripto, então o caminho dele é o off-ramp.",
+                "id": "b",
+                "label": "On-ramp para os dois, em cada uma das conversões"
+              },
+              {
+                "correct": false,
+                "feedback": "Invertido. Sair de real e chegar em USDC é o on-ramp. O caminho de volta é o off-ramp.",
+                "id": "a",
+                "label": "Off-ramp para você, on-ramp para o comerciante"
+              },
+              {
+                "correct": false,
+                "feedback": "Você está entrando no mundo cripto, e isso é on-ramp. Off-ramp é o caminho de volta.",
+                "id": "c",
+                "label": "Off-ramp para os dois, em cada uma das conversões"
+              },
+              {
+                "correct": false,
+                "feedback": "Solana Pay é o instrumento do pagamento e liquidação é a palavra-chave da certeza. Aqui a pergunta é sobre a conversão.",
+                "id": "e",
+                "label": "Solana Pay para você, liquidação para o comerciante"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso. Você traz dinheiro do mundo tradicional para o cripto, e o comerciante faz o caminho de volta para a moeda local.",
+                "id": "d",
+                "label": "On-ramp para você, off-ramp para o comerciante"
+              }
+            ],
+            "prompt": "Você troca reais por USDC e, depois, o comerciante troca USDC por reais. Como se chamam esses dois caminhos, nessa ordem?"
+          }
+        ]
+      }
+    ],
+    "skills": [
+      "solana-pay",
+      "spl-tokens"
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "um-cafe-pago-em-dolar-digital"
+    },
+    "title": "Um café pago em dólar digital"
+  },
+  {
+    "_id": "lesson-iwb-carteira-digital",
+    "_type": "lesson",
+    "blocks": [
+      {
+        "_key": "header",
+        "_type": "prose",
+        "src": "# Carteira digital: será que você já usa?\n"
+      },
+      {
+        "_key": "video",
+        "_type": "video",
+        "url": "https://www.youtube.com/watch?v=tA8TwvRJtXU"
+      },
+      {
+        "_key": "content",
+        "_type": "prose",
+        "src": "![Cartão da aula: Carteira digital. Endereço público, você compartilha, como no Pix. Chave privada, o segredo que assina. Frase de recuperação, uma chave mestra. Custódia é o manobrista, na autocustódia a chave é sua.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/bfe0099bbb79702da36a5410f99b4805dadbfc1965dc0ae47d9eefb7eaecaa18.webp)\n\nCarteira digital, será que você já usa? Você bate lá o seu smartphone para pagar uma conta de um restaurante. O dinheiro saiu da sua conta corrente e pagou o restaurante.\n\nNo universo aqui da Solana, das carteiras digitais, nós temos a Phantom e a Solflare. Lá a carteira pode mostrar o seu saldo em SOL, que é o token nativo da rede Solana, e permitir que você autorize essas operações.\n\nMas atenção: como hoje acontece com o seu dinheiro em um banco, os ativos não ficam dentro do seu aplicativo. Eles estão lá, registrados na blockchain. É a carteira que administra as chaves e que permite essa movimentação.\n\nTrês conceitos fundamentais.\n\n## Endereço público\n\nPrimeiro, o endereço público. É uma sequência de letras e números que identifica uma conta. Para você receber SOL de um colega, você compartilha esse seu endereço público na rede Solana. É igual ao que você faz com o Pix.\n\nMas, cuidado, né? É possível consultar o que você fez. São informações públicas, como as movimentações e os saldos.\n\n## Chave privada\n\nSegundo conceito, a chave privada, diferente do endereço público. Ela é o segredo usado para assinar digitalmente as operações. Na cidade inteligente, seria a sua credencial para autorizar as movimentações dos ativos controlados por ela.\n\n## Frase de recuperação\n\nTerceiro conceito, muito importante: a frase de recuperação. O que é isso? Em muitas carteiras, você recebe uma sequência de palavras. Você tem que guardá-las. Ela permite reconstruir as chaves e recuperar o acesso. É como se fosse uma chave mestra.\n\nGuarde fora da internet, em local protegido, e somente a utilize quando você perder o acesso. Essa é a dica.\n\n> **Nota de segurança da lição (não está no vídeo).** A chave privada e a frase de recuperação não devem ser compartilhadas com ninguém, nem com quem disser que é do \"suporte\".\n\n## Custódia: alguém cuida por você\n\nTambém é necessário explicar dois termos: custódia e autocustódia.\n\nVamos voltar ao exemplo do estacionamento. Se eu chego em um estacionamento e tem manobrista, está aí: você entrega a chave e não se preocupa com mais nada. Lógico que você paga pelo estacionamento. Então ele vai lá, vai estacionar o carro, vai manobrar.\n\nNo caso de uma carteira cripto, vai ter uma empresa que vai cuidar de toda essa movimentação para você. Mas, lógico, igual a um banco: para você fazer a transação, você tem que fazer login e senha. Só que é o banco que vai fazer essa transação. E, às vezes, o banco está fora do ar, não é verdade?\n\nMas é algo com que você já está acostumado. Principalmente, eu entendo que é bom se você está começando nesse universo cripto.\n\n## Autocustódia: a chave é sua\n\nAgora, falando de autocustódia. Vamos voltar ao exemplo do estacionamento? Você não entrega as chaves. Você estaciona. A responsabilidade é toda sua. Se você ralar o carro, bater ou estacionar errado, ninguém vai te ajudar.\n\nMesma coisa lá na sua carteira cripto. Você vai fazer todo o processo de transferência. Então, não existe aquela frase: \"ah, esqueci, recuperação de senha\".\n\nÉ algo em que você tem que ter uma maturidade maior: saber o que você está fazendo, porque não vai ter ninguém para te ajudar. O processo é seu.\n\nExistem, inclusive, dispositivos físicos que você compra no mercado e que facilitam toda essa operação. Fica a dica.\n\n## Para guardar\n\nO endereço público você compartilha, como no Pix. A chave privada é o segredo que assina. A frase de recuperação é a chave mestra, guardada fora da internet. Com custódia, é o manobrista. Com autocustódia, a chave é sua e o processo é seu.\n"
+      },
+      {
+        "_key": "quiz",
+        "_type": "quiz",
+        "questions": [
+          {
+            "explanation": "O aplicativo não guarda os ativos: eles estão registrados na blockchain, e a carteira administra as chaves.",
+            "id": "q1",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "feedback": "Isso. Eles estão lá, registrados na blockchain. É a carteira que administra as chaves e permite a movimentação.",
+                "id": "c",
+                "label": "Registrados na blockchain, não no aplicativo"
+              },
+              {
+                "correct": false,
+                "feedback": "A frase reconstrói as chaves e recupera o acesso. Os ativos em si estão registrados na blockchain.",
+                "id": "d",
+                "label": "Na frase de recuperação que você guardou em casa"
+              },
+              {
+                "correct": false,
+                "feedback": "Mas atenção: os ativos não ficam dentro do seu aplicativo.",
+                "id": "a",
+                "label": "Dentro do aplicativo da carteira, no seu celular"
+              },
+              {
+                "correct": false,
+                "feedback": "O endereço identifica uma conta na rede. Os registros estão na blockchain, não fora dela.",
+                "id": "e",
+                "label": "No endereço público, fora da rede Solana"
+              },
+              {
+                "correct": false,
+                "feedback": "Não é a empresa do aplicativo que guarda os ativos. Eles estão registrados na blockchain.",
+                "id": "b",
+                "label": "Nos servidores de empresas como a Phantom e a Solflare"
+              }
+            ],
+            "prompt": "Onde ficam os seus ativos, afinal?"
+          },
+          {
+            "explanation": "Endereço público se compartilha. Chave privada e frase de recuperação, nunca.",
+            "id": "q2",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Cuidado! A chave privada é o segredo que assina. Essa não sai da sua mão.",
+                "id": "a",
+                "label": "A sua chave privada, para ele autorizar"
+              },
+              {
+                "correct": false,
+                "feedback": "Para receber, ninguém precisa entrar na sua carteira. Basta o endereço público.",
+                "id": "e",
+                "label": "O login e a senha da sua carteira digital"
+              },
+              {
+                "correct": false,
+                "feedback": "Jamais. A frase é a chave mestra, e guarde fora da internet.",
+                "id": "c",
+                "label": "A sua frase de recuperação, para achar a conta"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso, para receber você compartilha o endereço público. É igual ao que você faz com o Pix.",
+                "id": "b",
+                "label": "O seu endereço público, como numa chave Pix"
+              },
+              {
+                "correct": false,
+                "feedback": "Assinatura é para autorizar uma operação sua. Para receber, basta o endereço público.",
+                "id": "d",
+                "label": "Uma assinatura digital feita por você antes"
+              }
+            ],
+            "prompt": "Um colega vai te enviar SOL. O que você passa para ele?"
+          },
+          {
+            "explanation": "A frase de recuperação reconstrói as chaves e recupera o acesso. Por isso a nota de segurança da lição diz para não compartilhá-la com ninguém.",
+            "id": "q3",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Nem parte dela. A frase é uma chave mestra, e a nota de segurança da lição vale para ela inteira.",
+                "id": "b",
+                "label": "Passar só as primeiras palavras da sequência"
+              },
+              {
+                "correct": false,
+                "feedback": "A chave privada é o segredo que assina. A nota de segurança da lição vale para as duas.",
+                "id": "d",
+                "label": "Trocar pela chave privada, que é menos sensível"
+              },
+              {
+                "correct": false,
+                "feedback": "Isso é o contrário da dica: guarde fora da internet, em local protegido.",
+                "id": "c",
+                "label": "Enviar por e-mail, fora do aplicativo da carteira"
+              },
+              {
+                "correct": true,
+                "feedback": "Exato. É o que diz a nota de segurança da lição: chave privada e frase de recuperação não se compartilham, nem com o suporte.",
+                "id": "e",
+                "label": "Não compartilhar com ninguém, nem com o suporte"
+              },
+              {
+                "correct": false,
+                "feedback": "Não. Pela nota de segurança da lição, a frase não deve ser compartilhada com ninguém, nem com quem disser que é do suporte.",
+                "id": "a",
+                "label": "Passar, pois o suporte precisa dela para ajudar"
+              }
+            ],
+            "prompt": "Alguém do \"suporte\" pede a sua frase de recuperação para resolver um problema. Segundo a nota de segurança desta lição, o que fazer?"
+          },
+          {
+            "explanation": "Autocustódia exige uma maturidade maior: saber o que você está fazendo, porque o processo é seu.",
+            "id": "q4",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "feedback": "Isso. Você estaciona e a responsabilidade é toda sua. Não vai ter ninguém para te ajudar.",
+                "id": "c",
+                "label": "Na autocustódia, em que o processo é todo seu"
+              },
+              {
+                "correct": false,
+                "feedback": "Na custódia você entra com login e senha, é algo com que você já está acostumado.",
+                "id": "a",
+                "label": "Na custódia, em que uma empresa cuida por você"
+              },
+              {
+                "correct": false,
+                "feedback": "Isso é o risco da custódia: você depende do serviço. Não é a situação da pergunta.",
+                "id": "e",
+                "label": "Quando a empresa da carteira está fora do ar"
+              },
+              {
+                "correct": false,
+                "feedback": "No banco você está no modelo que já conhece, com alguém cuidando da operação.",
+                "id": "b",
+                "label": "No banco, quando você entra com login e senha"
+              },
+              {
+                "correct": false,
+                "feedback": "Com manobrista você entrega a chave. Esse é o exemplo de custódia.",
+                "id": "d",
+                "label": "Em todo estacionamento que tenha manobrista"
+              }
+            ],
+            "prompt": "Em qual situação não existe aquela frase \"ah, esqueci, recuperação de senha\"?"
+          },
+          {
+            "explanation": "Custódia é o manobrista: você entrega a chave, paga pelo serviço e depende de quem cuida para você.",
+            "id": "q5",
+            "multiSelect": true,
+            "options": [
+              {
+                "correct": true,
+                "feedback": "É verdade. Às vezes o banco está fora do ar, não é verdade? Na custódia é assim.",
+                "id": "c",
+                "label": "Se o serviço sair do ar, você depende dele"
+              },
+              {
+                "correct": false,
+                "feedback": "Lógico que você paga pelo estacionamento, assim como se paga pelo serviço.",
+                "id": "e",
+                "label": "Você não paga nada por esse serviço"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso. No caso da carteira cripto, vai ter uma empresa que cuida de toda a movimentação.",
+                "id": "a",
+                "label": "Uma empresa cuida da movimentação para você"
+              },
+              {
+                "correct": false,
+                "feedback": "Isso é da autocustódia, em que a responsabilidade é toda sua.",
+                "id": "d",
+                "label": "Ninguém pode te ajudar se algo der errado"
+              },
+              {
+                "correct": true,
+                "feedback": "Exato, igual a um banco, e é algo com que você já está acostumado.",
+                "id": "b",
+                "label": "Você entra com login e senha, como em um banco"
+              }
+            ],
+            "prompt": "Na custódia, como no estacionamento com manobrista, o que é verdade?"
+          }
+        ]
+      }
+    ],
+    "skills": [
+      "keypairs-wallets"
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "carteira-digital"
+    },
+    "title": "Carteira digital: será que você já usa?"
+  },
+  {
+    "_id": "lesson-iwb-cartorios-validadores",
+    "_type": "lesson",
+    "blocks": [
+      {
+        "_key": "header",
+        "_type": "prose",
+        "src": "# Cartórios, diário oficial e validadores\n"
+      },
+      {
+        "_key": "video",
+        "_type": "video",
+        "url": "https://www.youtube.com/watch?v=nKbye8tl7CE"
+      },
+      {
+        "_key": "content",
+        "_type": "prose",
+        "src": "![Cartão da aula: Cartórios, diário oficial e validadores. Vários cartórios digitais, cópias do mesmo livro. Blocos, volumes do diário oficial. Uma confirmação não é garantia mágica. Validadores seguem as regras do protocolo.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/717941999ab8c10c8ece19725af34a465c0b63e3cee49eb37d80b3b73f7e5d5e.webp)\n\n## Como uma blockchain funciona?\n\nEm uma cidade inteligente, pessoas andam de carro, pegam ônibus, pegam metrô, hospitais se movimentam. E esses dados? Bom, cada empresa tem seu banco de dados, a sua maneira de armazenar isso.\n\nA blockchain traz alguma vantagem? Sim, ela apresenta outra possibilidade: manter um histórico digital compartilhado entre essas diferentes entidades, cada uma seguindo uma regra.\n\nDado compartilhado é o grande segredo. Isso não significa que qualquer pessoa possa escrever qualquer informação. O registro é compartilhado, mas as alterações precisam seguir o protocolo.\n\n## Vários cartórios digitais\n\nPense em vários cartórios digitais que mantêm cópias sincronizadas do mesmo livro. Quando uma nova página é aceita, os participantes atualizam suas cópias.\n\nO histórico também é verificável. Em uma blockchain pública, qualquer pessoa pode consultar registros e verificar se determinada operação foi incluída. Entretanto, consultar não significa necessariamente conhecer a identidade real de todas as pessoas envolvidas.\n\nA ideia fundamental é simples. Em vez de depender apenas do arquivo mantido por uma única organização, vários participantes preservam e verificam o histórico.\n\n## Não é só um depósito de dados\n\nUma transação também pode registrar a transferência de um item digital, executar uma instrução do contrato inteligente, do smart contract, como a gente disse, e atualizar uma informação permitida pelo sistema.\n\nNa nossa cidade digital, que a gente sempre utiliza como exemplo, é como apresentar um documento solicitando uma mudança no cadastro. O pedido ainda precisa ser verificado: o sistema confere se a pessoa possui autorização, se os dados estão corretos e se as regras foram respeitadas.\n\nA blockchain, portanto, não é apenas um depósito de dados. Ela funciona como uma máquina de estados: recebe operações válidas e passa de uma situação anterior para uma nova situação.\n\n## Blocos, ordem temporal e confirmações\n\nAs transações circulam pelas ruas e chegam a uma estação. Nessa estação, elas são organizadas dentro de um bloco, e o bloco é conectado aos anteriores.\n\nAs transações válidas precisam ser organizadas. Em muitas blockchains, elas são reunidas em uma estrutura chamada de bloco. Cada bloco registra um conjunto de informações e mantém uma ligação criptográfica com o histórico anterior.\n\nPodemos imaginar os blocos como volumes numerados do diário oficial da cidade digital. Cada volume reúne acontecimentos aceitos em determinado momento e se conecta ao volume anterior. Essa sequência ajuda a estabelecer uma ordem. Primeiro aconteceu uma operação, depois outra.\n\nQuando uma transação é incluída em um bloco, dizemos que ela recebeu uma confirmação inicial. À medida que novos blocos são produzidos depois dele, aumentam suas confirmações. As confirmações tornam a reversão da transação progressivamente mais difícil, dependendo do funcionamento de cada rede.\n\nÉ importante usar uma expressão cuidadosa. Uma confirmação não representa uma garantia mágica e absoluta. Ela indica que a transação foi incluída no histórico aceito, e os blocos posteriores aumentam seu grau de consolidação. Quanto maior o valor ou o risco da operação, mais confirmações um serviço pode decidir aguardar.\n\n## Quem são os validadores?\n\nOs validadores são participantes responsáveis por colaborar com a verificação das operações e com a construção do histórico aceito pela rede. Na cidade blockchain, eles se parecem com agentes autorizados a verificar os documentos apresentados antes que uma mudança seja oficialmente registrada.\n\nQuando recebem uma transação, eles analisam questões como:\n\n- A assinatura digital é válida?\n- A pessoa possui os recursos que pretende transferir?\n- A operação respeita as regras do protocolo?\n- A mesma unidade de valor já foi utilizada em outra operação incompatível?\n\n## Propor e confirmar\n\nDependendo da blockchain, determinados validadores também podem ser escolhidos para propor ou produzir novos blocos. Outros validadores verificam a proposta e participam de sua confirmação.\n\nEles não decidem de acordo com as preferências pessoais. Devem executar as regras definidas pelo protocolo. Se aceitarem informações inválidas, outros participantes podem rejeitar sua proposta. Em algumas redes, podem existir penalidades econômicas.\n\n## Para guardar\n\nDado compartilhado é o grande segredo: vários cartórios, cópias sincronizadas do mesmo livro. Os blocos são os volumes do diário oficial da cidade digital. Uma confirmação não é uma garantia mágica e absoluta. E o validador não decide por preferência pessoal: ele executa as regras do protocolo.\n"
+      },
+      {
+        "_key": "quiz",
+        "_type": "quiz",
+        "questions": [
+          {
+            "explanation": "Vários cartórios digitais mantêm cópias sincronizadas do mesmo livro, seguindo o protocolo.",
+            "id": "q1",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Isso não significa que qualquer pessoa possa escrever qualquer informação. Há um protocolo.",
+                "id": "a",
+                "label": "Qualquer pessoa pode escrever qualquer informação nele"
+              },
+              {
+                "correct": false,
+                "feedback": "Esse é o cenário de hoje que a blockchain vem mudar, com um histórico compartilhado.",
+                "id": "c",
+                "label": "Cada empresa mantém o seu próprio banco de dados fechado"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso. O registro é compartilhado, mas as alterações precisam seguir o protocolo.",
+                "id": "b",
+                "label": "O registro é comum, e alterações seguem o protocolo"
+              },
+              {
+                "correct": false,
+                "feedback": "Pense em vários cartórios, com cópias sincronizadas do mesmo livro.",
+                "id": "d",
+                "label": "Só um cartório central pode alterar o seu livro"
+              },
+              {
+                "correct": false,
+                "feedback": "Quem decide o que entra são as regras do protocolo, não a ordem de chegada de ninguém.",
+                "id": "e",
+                "label": "Quem chega primeiro decide o que entra no livro"
+              }
+            ],
+            "prompt": "Dado compartilhado é o grande segredo. O que isso quer dizer?"
+          },
+          {
+            "explanation": "O histórico é verificável por qualquer pessoa, o que é diferente de identificar as pessoas envolvidas.",
+            "id": "q2",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "A chave privada não circula. O que é verificável é o histórico.",
+                "id": "b",
+                "label": "A chave privada de quem assinou cada operação"
+              },
+              {
+                "correct": false,
+                "feedback": "Em uma blockchain pública, qualquer pessoa pode consultar os registros.",
+                "id": "c",
+                "label": "Só os dados que o dono da conta permitiu que fossem mostrados"
+              },
+              {
+                "correct": false,
+                "feedback": "Pelo contrário: o histórico é verificável por qualquer pessoa.",
+                "id": "d",
+                "label": "Nada, porque o registro serve só aos validadores"
+              },
+              {
+                "correct": false,
+                "feedback": "Consultar não significa necessariamente conhecer a identidade real das pessoas.",
+                "id": "a",
+                "label": "A identidade real de todas as pessoas envolvidas nela"
+              },
+              {
+                "correct": true,
+                "feedback": "Exato. Você verifica a operação, mas consultar não significa conhecer a identidade real de todos.",
+                "id": "e",
+                "label": "Se a operação foi incluída, não necessariamente quem é a pessoa"
+              }
+            ],
+            "prompt": "Consultar uma blockchain pública mostra o quê?"
+          },
+          {
+            "explanation": "Como um pedido de mudança no cadastro: o sistema confere e, se estiver tudo certo, passa para a nova situação.",
+            "id": "q3",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "O sistema confere autorização, dados e regras. Vontade de dono não entra.",
+                "id": "e",
+                "label": "Decide cada pedido conforme a vontade do seu dono"
+              },
+              {
+                "correct": false,
+                "feedback": "Vários participantes preservam e verificam o histórico.",
+                "id": "c",
+                "label": "Funciona em um único computador central de toda a cidade"
+              },
+              {
+                "correct": false,
+                "feedback": "O pedido precisa ser verificado. Só operações válidas fazem a situação mudar.",
+                "id": "d",
+                "label": "Aceita qualquer operação, seja válida ou não, em ordem"
+              },
+              {
+                "correct": false,
+                "feedback": "Isso seria só um depósito de dados, e ela não é apenas isso.",
+                "id": "b",
+                "label": "Guarda os dados sem nunca mudar a situação já registrada"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso, não é apenas um depósito de dados. Passa de uma situação anterior para uma nova situação.",
+                "id": "a",
+                "label": "Recebe operações válidas e passa a uma nova situação"
+              }
+            ],
+            "prompt": "Por que eu digo que a blockchain funciona como uma máquina de estados?"
+          },
+          {
+            "explanation": "Quanto maior o valor ou o risco da operação, mais confirmações um serviço pode decidir aguardar.",
+            "id": "q4",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "feedback": "Isso. E os blocos posteriores aumentam o grau de consolidação.",
+                "id": "d",
+                "label": "Inclusão no histórico aceito, sem garantia absoluta"
+              },
+              {
+                "correct": false,
+                "feedback": "Validador não decide por preferência pessoal. Ele executa as regras do protocolo.",
+                "id": "c",
+                "label": "A aprovação pessoal de um validador conhecido"
+              },
+              {
+                "correct": false,
+                "feedback": "Confirmação pressupõe a inclusão. Ela indica que a transação entrou no histórico aceito.",
+                "id": "b",
+                "label": "O simples envio, com a transação fora de um bloco"
+              },
+              {
+                "correct": false,
+                "feedback": "É importante ser cuidadoso. Confirmação não é garantia mágica e absoluta.",
+                "id": "a",
+                "label": "Uma garantia mágica e absoluta de que nada mais muda"
+              },
+              {
+                "correct": false,
+                "feedback": "Confirmação fala do histórico, não de quem é a pessoa.",
+                "id": "e",
+                "label": "A prova da identidade real de quem fez aquela operação"
+              }
+            ],
+            "prompt": "Usando a expressão cuidadosa, o que uma confirmação representa?"
+          },
+          {
+            "explanation": "Os validadores são como agentes autorizados a verificar os documentos, seguindo as regras do protocolo.",
+            "id": "q5",
+            "multiSelect": true,
+            "options": [
+              {
+                "correct": true,
+                "feedback": "Sim, ele confere se a pessoa possui os recursos.",
+                "id": "b",
+                "label": "A pessoa possui os recursos que quer transferir?"
+              },
+              {
+                "correct": false,
+                "feedback": "Não! Validador não decide de acordo com as preferências pessoais.",
+                "id": "d",
+                "label": "Eu tenho simpatia por essa pessoa?"
+              },
+              {
+                "correct": true,
+                "feedback": "Sim, é a primeira da lista.",
+                "id": "a",
+                "label": "A assinatura digital é válida?"
+              },
+              {
+                "correct": false,
+                "feedback": "Não está no checklist. A verificação é da operação, não da identidade real.",
+                "id": "e",
+                "label": "Qual é a identidade real de quem enviou?"
+              },
+              {
+                "correct": true,
+                "feedback": "Sim. Ele deve executar as regras definidas pelo protocolo.",
+                "id": "c",
+                "label": "A operação respeita as regras do protocolo?"
+              }
+            ],
+            "prompt": "Quais destas perguntas estão no checklist do validador?"
+          }
+        ]
+      }
+    ],
+    "skills": [
+      "solana-fundamentals",
+      "confirmation"
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "cartorios-diario-oficial-e-validadores"
+    },
+    "title": "Cartórios, diário oficial e validadores"
+  },
+  {
+    "_id": "lesson-iwb-evolucao-web",
+    "_type": "lesson",
+    "blocks": [
+      {
+        "_key": "header",
+        "_type": "prose",
+        "src": "# A evolução da Web e blockchain\n"
+      },
+      {
+        "_key": "video",
+        "_type": "video",
+        "url": "https://www.youtube.com/watch?v=JJsjZXzwhbs"
+      },
+      {
+        "_key": "content",
+        "_type": "prose",
+        "src": "![Cartão da aula: A evolução da Web e blockchain. Web1, a cidade das vitrines. Web2, a cidade das plataformas. Web3, a cidade inteligente e descentralizada. A internet são as ruas e a web são os prédios.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/ef0052ecf15249fccdf973c14d604e5cb3a6213744393754b0b6190afc82e9a7.webp)\n\nOlá, sou o professor PhD Marcos Crivelaro. Estou aqui junto com a Solana para trazer aprendizado neste curso introdutório sobre Web3 e blockchain. Você vai aprender os conceitos e os fundamentos. O curso está muito legal. Faça ele inteirinho, até o final.\n\nTodos os dias você publica fotos, você está nas redes sociais, você sobe notícias da sua vida. Isso já faz parte do seu dia a dia. Mas imagine que, num determinado dia, você acorda e tudo isso sumiu. Porque essas redes sociais pertencem às grandes big techs, e de repente você não tem mais nada disso. Como é que você se sentiria?\n\nIsso significa que você gosta do serviço que essas empresas prestam. As big techs, com as suas redes sociais, possuem produtos e serviços maravilhosos. Mas pertencem a elas, sob as regras delas. E muitas vezes até você tem que pagar.\n\nEntão, é por isso que nós vamos falar de Web3 e blockchain. Porque sai dessa lógica de que tudo isso é delas. Isso também pode ser seu. Por isso você vai fazer este curso.\n\n## Cidades inteligentes (smart cities)\n\nVamos usar o exemplo das cidades inteligentes, as smart cities. As ruas representam a internet. Os prédios representam os sites e as aplicações da web.\n\nVamos explicar um pouquinho a diferença entre internet e web, porque o pessoal se confunde. A internet é a infraestrutura que conecta redes, computadores, celulares e outros dispositivos. A web é um sistema de páginas e aplicações interligadas que funciona sobre a internet. Na nossa cidade digital, a internet corresponde às nossas ruas e avenidas. E a web corresponde aos prédios e serviços construídos nessas ruas.\n\n## As regras de trânsito\n\nPara que equipamentos diferentes consigam trocar dados, todos precisam seguir regras comuns. Essas regras são chamadas de protocolos de comunicação.\n\nO TCP/IP, conjunto de protocolos de controle de transmissão e endereçamento na internet, organiza a comunicação entre redes. O DNS, sistema de nomes de domínio, ajuda a localizar os endereços dos sites. O HTTP, protocolo de transferência de hipertexto, é utilizado na comunicação entre navegadores e servidores da web.\n\nVocê não precisa decorar as siglas. Basta entender que esses protocolos funcionam como as regras de trânsito da cidade.\n\n## Como nasceu a web\n\nFiz uma pesquisa aqui e trago para vocês. Em 1989, o cientista britânico Tim Berners-Lee trabalhava no CERN, a Organização Europeia para Pesquisa Nuclear. Ele propôs um sistema para facilitar o compartilhamento de informações entre pesquisadores. A ideia era conectar documentos por meio de ligações chamadas hiperlinks.\n\nEm 1990, Berners-Lee desenvolveu componentes fundamentais da web, incluindo um navegador, um servidor e a linguagem HTML. Em 1993, o CERN disponibilizou a tecnologia abertamente, favorecendo sua expansão mundial.\n\nE aí nasceu a Web1. Esse nome não representa um período de datas exatas. É uma classificação didática, com as características predominantes de como a web era na década de 90. Vamos entender melhor?\n\n## Web1: a web da leitura\n\nA primeira fase da web ficou conhecida como Web1. Naquele período, muitos sites eram formados por páginas relativamente simples e com pouca interação. As empresas apresentavam produtos, as universidades apresentavam pesquisas e os jornais, as suas notícias. Então você conseguia ler notícias de jornais internacionais.\n\nVamos fazer a analogia aqui com a smart city. Nessa época da Web1, era uma web de leitura. Poucas pessoas tinham conhecimento técnico para publicar seus próprios conteúdos. Então imagine uma cidade com poucos prédios, alguns prédios de biblioteca, alguns prédios de comércio. Um bairro com pouca coisa, com pouco movimento e poucos imóveis.\n\n## Web2: a web participativa\n\nA Web2, não vou entregar a minha idade, mas eu vivi. Eu fui um dos primeiros a gostar de publicar em blog. Os meus blogs mais antigos são dessa época. Você não precisava mais ser um expert de programação para criar um website. As coisas começaram a ficar mais fáceis.\n\nEssa Web2 ganhou uma característica de participação da comunidade. Uma web participativa. É aí que surgiu a essência das redes sociais. Todo mundo quer participar. Uma rede social morre se o pessoal não participa.\n\nNão só as redes sociais. Lá atrás também tinha muito essa questão de o conteúdo ser criado de uma maneira colaborativa. Por exemplo, a Wikipedia: o sucesso da Wikipedia, onde as pessoas colaboravam na criação de conteúdo. Hoje isso ainda acontece bastante. Você tem sites como o GitHub, onde você coloca material, pode ser um software, por exemplo, e as pessoas podem colaborar até na programação e na escrita daquele documento que também pode estar publicado lá. Então a colaboração, guardem, é o ponto principal da Web2.\n\nVamos entender melhor o conceito de efeito da rede? Se as pessoas não publicam suas fotos, se no marketplace as pessoas não colocam nada para vender, esse site morre. Esse é o efeito da rede. Não adianta ter a tecnologia. As pessoas precisam começar a usar e fazer trocas entre elas.\n\nMas aí tem um problema que eu vou te contar. As plataformas facilitaram a comunicação e o acesso à informação. Entretanto, também concentraram os dados e as decisões. Publicamos conteúdos e construímos nossa reputação dentro desses sistemas administrados por essas empresas.\n\nÉ como utilizar uma casa construída sobre um terreno que pertence a outra pessoa. Podemos usar o espaço, mas o proprietário define as regras. Uma plataforma pode alterar o algoritmo, limitar as publicações e até suspender as suas contas ou encerrar um serviço.\n\nIsso não significa que essas plataformas sejam ruins. Só significa que esse modelo possui um controlador central e cria uma relação de dependência.\n\n## Web3: podemos controlar os nossos ativos digitais?\n\nEsse tipo de questionamento nos traz para a Web3. O termo está associado a blockchain, carteiras criptográficas, ativos digitais e aplicações que podem funcionar sobre uma infraestrutura distribuída.\n\nNa Web3, nós temos três termos que você precisa conhecer.\n\nA **wallet**, ou carteira criptográfica, é uma ferramenta utilizada para controlar as chaves digitais e autorizar operações. A carteira permite controlar as chaves necessárias para movimentar os ativos.\n\nO **token** é uma unidade digital registrada conforme as regras de uma rede.\n\nO **smart contract**, ou contrato inteligente, é um programa executado pela blockchain.\n\nPara compreender a Web3, imagine um cartório digital cujo registro não está armazenado somente em um computador central. Diversos computadores mantêm e verificam cópias do histórico, seguindo regras comuns.\n\nEsse registro distribuído pode ser implementado por uma blockchain, termo que significa cadeia de blocos. As informações são agrupadas em blocos conectados criptograficamente. Nenhum participante pode modificar sozinho o histórico reconhecido pela rede.\n\nA blockchain não torna toda informação automaticamente verdadeira. Ela ajuda a preservar e verificar aquilo que foi registrado segundo as regras do sistema. Essa ressalva é fundamental. A tecnologia protege o registro, mas não garante por si só que toda informação inserida corresponda à realidade externa.\n\n## Web1: a cidade das vitrines\n\nA Web1 pode ser comparada a uma cidade formada por edifícios institucionais, ruas de mão única e grandes painéis informativos. Poucas organizações construíam e controlavam os prédios digitais, enquanto a maioria das pessoas circulava pelas páginas e consumia o conteúdo disponível, sem participar de sua criação.\n\nOs sites funcionavam como vitrines. Podíamos olhar, consultar e ler, mas quase não existiam espaços para interação. Não havia blockchain nem carteiras cripto. As regras, os registros e as autorizações permaneciam centralizados nas mãos dos proprietários de cada edifício virtual.\n\n## Web2: a cidade das plataformas\n\nA Web2, que a gente ainda vive, representa uma cidade mais movimentada, com praças digitais, redes sociais, aplicativos, serviços sob demanda e edifícios conectados. Os moradores deixam de ser apenas espectadores e passam a criar conteúdos, avaliar serviços, compartilhar informações e interagir em tempo real.\n\nEntretanto, as grandes plataformas funcionam como proprietárias dos edifícios, das ruas e dos sistemas de controle. Armazenam os dados, definem as regras de circulação e podem permitir, limitar ou impedir o acesso. Embora o usuário participe intensamente da vida urbana digital, sua identidade e seus bens continuam guardados em sistemas centralizados, como se cada prédio exigisse um cadastro, uma chave e um regulamento diferente.\n\n## Web3: a cidade inteligente, programável e descentralizada\n\nFinalmente, a Web3 pode ser entendida como uma cidade inteligente construída sobre a blockchain, que funciona como um registro urbano compartilhado, transparente e resistente a alterações indevidas.\n\nAs carteiras cripto atuam como identidade, assinatura e chave digital do cidadão, permitindo acessar edifícios, realizar pagamentos, comprovar propriedade e interagir com os serviços, sem depender, obrigatoriamente, de uma única empresa intermediária.\n\nOs edifícios representam aplicações descentralizadas. As ruas são as redes blockchain, pelas quais circulam dados, ativos e transações. E os contratos inteligentes funcionam como regras urbanas, executadas automaticamente quando determinadas condições são atendidas.\n\n> **Nota editorial.** Na Solana, um contrato inteligente só é executado quando uma transação o chama.\n\nNessa cidade, cada blockchain pode possuir sua própria arquitetura, velocidade, custos e normas de governança, enquanto pontes digitais conectam diferentes redes. Assim, o cidadão deixa de ser apenas usuário de plataformas e passa a controlar melhor sua identidade, seus ativos e sua participação na economia digital. Mas ainda são necessários planejamento, segurança, inclusão e boa governança para que essa nova cidade seja verdadeiramente inteligente.\n\n## Uma nova visão\n\nAo encerrarmos este primeiro vídeo, você não deve ficar apenas com a impressão de que é um monte de tecnologia, um monte de tecnologia nova. Não, é uma nova visão. É uma discussão ampla, que busca entender quem está controlando as suas informações, os seus ativos, os seus imóveis.\n\nÉ isso que a Web3 traz de novidade. Ela traz confiança, traz a governança disso de uma maneira descentralizada, traz transparência e rastreabilidade.\n\nNo próximo vídeo, nós entenderemos mais, principalmente essa analogia de toda essa tecnologia com as cidades inteligentes, porque aí vai ficar mais fácil para você entender. Aguarde o próximo vídeo e até mais.\n\n## Para guardar\n\nA internet são as ruas, a web são os prédios, os protocolos são as regras de trânsito. A Web1 foi a cidade das vitrines, a Web2 é a cidade das plataformas e a Web3 é a cidade inteligente, onde a pergunta é uma só: quem está controlando as suas informações e os seus ativos?\n"
+      },
+      {
+        "_key": "quiz",
+        "_type": "quiz",
+        "questions": [
+          {
+            "explanation": "A internet é a infraestrutura, as ruas e avenidas. A web são os prédios e serviços construídos nessas ruas.",
+            "id": "q1",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "O cartório digital é a imagem da blockchain, o registro distribuído. A internet vem antes, é a infraestrutura.",
+                "id": "d",
+                "label": "O cartório digital da cidade"
+              },
+              {
+                "correct": false,
+                "feedback": "Essas são os protocolos, como TCP/IP, DNS e HTTP. A internet é o que eles organizam.",
+                "id": "b",
+                "label": "As regras de trânsito da cidade"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso. A internet é a infraestrutura que conecta, são as nossas ruas e avenidas. Os prédios construídos nelas são a web.",
+                "id": "c",
+                "label": "As ruas e as avenidas da cidade"
+              },
+              {
+                "correct": false,
+                "feedback": "Os moradores somos nós, os usuários. A internet é a infraestrutura que conecta redes e dispositivos.",
+                "id": "e",
+                "label": "Os moradores que circulam na cidade"
+              },
+              {
+                "correct": false,
+                "feedback": "Cuidado, o pessoal se confunde bem aqui. Os prédios e serviços são a web, que funciona sobre a internet.",
+                "id": "a",
+                "label": "Os prédios e os serviços da cidade"
+              }
+            ],
+            "prompt": "Na nossa cidade digital, o que a internet representa?"
+          },
+          {
+            "explanation": "Uma rede social morre se o pessoal não participa. Esse é o efeito da rede.",
+            "id": "q2",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "feedback": "É isso. Se as pessoas não publicam suas fotos, se ninguém coloca nada para vender, esse site morre.",
+                "id": "d",
+                "label": "Sem gente usando e trocando, o site morre"
+              },
+              {
+                "correct": false,
+                "feedback": "Na Web2 é o contrário: o proprietário do terreno continua definindo as regras.",
+                "id": "c",
+                "label": "O proprietário perde o controle das regras"
+              },
+              {
+                "correct": false,
+                "feedback": "Não falamos de preço aqui. O efeito da rede é sobre participação: sem participação, a rede morre.",
+                "id": "e",
+                "label": "Ela fica mais barata a cada novo usuário"
+              },
+              {
+                "correct": false,
+                "feedback": "Não adianta ter a tecnologia. As pessoas precisam começar a usar e fazer trocas entre elas.",
+                "id": "a",
+                "label": "Tecnologia boa garante o sucesso sozinha"
+              },
+              {
+                "correct": false,
+                "feedback": "Isso lembra a Web1. Na Web2 você não precisava mais ser um expert de programação.",
+                "id": "b",
+                "label": "Só quem programa consegue publicar nela"
+              }
+            ],
+            "prompt": "O que o efeito da rede diz sobre uma plataforma?"
+          },
+          {
+            "explanation": "As plataformas facilitaram a comunicação, mas concentraram os dados e as decisões. Podemos usar o espaço, mas o proprietário define as regras.",
+            "id": "q3",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Isso era a Web1, a web da leitura. A Web2 é justamente a web participativa.",
+                "id": "c",
+                "label": "Os sites só permitem a leitura de conteúdo"
+              },
+              {
+                "correct": true,
+                "feedback": "Exato. O modelo possui um controlador central e cria uma relação de dependência. É a casa no terreno de outra pessoa.",
+                "id": "b",
+                "label": "Há um controlador central e dependência"
+              },
+              {
+                "correct": false,
+                "feedback": "Não foi isso que eu disse. Essas plataformas possuem serviços maravilhosos. O ponto é quem controla.",
+                "id": "a",
+                "label": "As plataformas são ruins por natureza"
+              },
+              {
+                "correct": false,
+                "feedback": "Na Web2 ficou mais fácil: eu mesmo publicava em blog sem ser expert de programação.",
+                "id": "d",
+                "label": "Ninguém consegue publicar sem programar"
+              },
+              {
+                "correct": false,
+                "feedback": "Pelo contrário, todo mundo quer participar. O problema é que os dados e as decisões ficaram concentrados.",
+                "id": "e",
+                "label": "As pessoas não querem mais participar nela"
+              }
+            ],
+            "prompt": "Qual é o problema que eu aponto no modelo da Web2?"
+          },
+          {
+            "explanation": "A blockchain ajuda a preservar e verificar o que foi registrado segundo as regras, mas isso não significa que a informação inserida seja verdadeira.",
+            "id": "q4",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Essa ressalva é fundamental: a blockchain não torna toda informação automaticamente verdadeira.",
+                "id": "a",
+                "label": "Torna verdadeira toda informação inserida"
+              },
+              {
+                "correct": false,
+                "feedback": "Nenhum participante pode modificar sozinho o histórico reconhecido pela rede.",
+                "id": "b",
+                "label": "Deixa um participante corrigir o histórico"
+              },
+              {
+                "correct": false,
+                "feedback": "O cartório digital é justamente o oposto: diversos computadores mantêm e verificam cópias do histórico.",
+                "id": "d",
+                "label": "Guarda tudo em um único computador central"
+              },
+              {
+                "correct": false,
+                "feedback": "Não, ela ajuda a preservar e a verificar aquilo que foi registrado segundo as regras do sistema.",
+                "id": "e",
+                "label": "Apaga o conteúdo depois de ele ser verificado"
+              },
+              {
+                "correct": true,
+                "feedback": "Muito bem. A tecnologia protege o registro, mas não garante por si só que a informação corresponda à realidade externa.",
+                "id": "c",
+                "label": "Preserva o registro, sem atestar a realidade"
+              }
+            ],
+            "prompt": "O que a blockchain faz com uma informação registrada?"
+          },
+          {
+            "explanation": "Wallet controla as chaves, token é a unidade digital registrada e smart contract é o programa executado pela blockchain.",
+            "id": "q5",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "As fotos ficam nas plataformas das big techs. A carteira é identidade, assinatura e chave do cidadão.",
+                "id": "e",
+                "label": "Guarda as fotos das suas redes sociais"
+              },
+              {
+                "correct": false,
+                "feedback": "Esse é o smart contract, o contrato inteligente. A wallet controla chaves e autoriza operações.",
+                "id": "b",
+                "label": "Executa programas dentro da própria blockchain"
+              },
+              {
+                "correct": false,
+                "feedback": "Esse é o DNS, uma das regras de trânsito da cidade. Não tem relação com a carteira.",
+                "id": "d",
+                "label": "Localiza os endereços dos sites na internet"
+              },
+              {
+                "correct": false,
+                "feedback": "Esse é o token. A wallet é a ferramenta que controla as chaves.",
+                "id": "a",
+                "label": "É uma unidade registrada pelas regras da rede"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso. A wallet, ou carteira criptográfica, controla as chaves digitais e autoriza operações.",
+                "id": "c",
+                "label": "Controla as chaves e autoriza as operações"
+              }
+            ],
+            "prompt": "Qual frase descreve a wallet, um dos três termos da Web3?"
+          }
+        ]
+      }
+    ],
+    "skills": [
+      "solana-fundamentals"
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "evolucao-da-web-e-blockchain"
+    },
+    "title": "A evolução da Web e blockchain"
+  },
+  {
+    "_id": "lesson-iwb-explorando-rede",
+    "_type": "lesson",
+    "blocks": [
+      {
+        "_key": "header",
+        "_type": "prose",
+        "src": "# Explorando a rede Solana\n"
+      },
+      {
+        "_key": "video",
+        "_type": "video",
+        "url": "https://www.youtube.com/watch?v=mblv9tLmiTI"
+      },
+      {
+        "_key": "content",
+        "_type": "prose",
+        "src": "![Cartão da aula: Explorando a rede Solana. Mainnet, a cidade em operação. Devnet, a oficina dos aplicativos. Testnet, o campo de testes da infraestrutura. Para começar, basta navegar.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/1689ba5cd6d686168929e9f947e3b9b8f5de9930476b2aceb12d14b89b28aea9.webp)\n\nOlá, sou o professor Marcos Crivelaro. Venho aqui trazer novamente mais ensinamentos sobre o universo Solana e o universo blockchain. Vamos continuar aqui tendo como exemplo base uma cidade inteligente, uma smart city.\n\n## O que você faz ao chegar numa smart city?\n\nVocê chega numa smart city, o que você faz? Primeiro você observa, vai dar uma volta no seu quarteirão, ou de carro, se você chegou de carro. Depois você começa a experimentar alguns aplicativos que você baixou sobre a cidade: restaurantes, estacionamentos, hotéis, lazer. E depois você começa a fazer pagamentos. Então, você levou um cartão de crédito, de débito, você levou o dólar.\n\nVamos fazer essa mesma analogia aqui, conhecendo os ambientes onde a Solana está e focando principalmente numa transação.\n\nEntão, para começar, basta navegar, já que você está apenas conhecendo. Não precisamos nem instalar uma carteira nem inserir dinheiro nessa rede.\n\n## Exemplo: um aplicativo de estacionamento\n\nVamos dar um exemplo aqui bem focado: um aplicativo para estacionamento. Estacionamento a céu aberto, por exemplo. Com isso, a gente vai poder explicar três conceitos: Mainnet, Devnet e Testnet.\n\n### Mainnet\n\nVamos começar pela Mainnet. É a rede principal. Lá no estacionamento, que é aberto ao público, os motoristas utilizam o serviço e fazem o pagamento pelo uso desse estacionamento. Na Solana, é o ambiente em que as aplicações funcionam para valer. Os ativos podem ter valor econômico e os pagamentos são feitos.\n\n### Devnet\n\nOutro conceito é a Devnet. É o ambiente de aprendizagem e desenvolvimento. Seria a oficina em que a equipe experimenta o aplicativo antes de oferecê-lo aos motoristas. Nela, usamos token de teste, sem valor econômico. Ter 10 SOL de teste não significa ter 10 SOL para gastar na rede principal. É como receber créditos de demonstração para aprender a usar o estacionamento.\n\n### Testnet\n\nJá a Testnet tem foco nos testes da própria rede e dos validadores, os computadores que ajudam a verificar as operações e a chegar a um acordo sobre os registros. Na cidade, seria como testar a infraestrutura. Ela suporta mais movimento? Continua funcionando depois de uma atualização?\n\n### Para resumir\n\nMainnet é a cidade em operação. Devnet é a oficina dos aplicativos. E Testnet é o campo de testes da infraestrutura.\n\n## Como observar o movimento da cidade digital\n\nAgora, como observar o movimento dessa cidade digital? Usamos um explorador de blocos, como o Solana Explorer. Pense nele como um painel público de consulta. Você pesquisa uma operação e encontra informações registradas na blockchain, também chamadas de dados on-chain. Tudo isso sem conectar uma carteira.\n\nVamos entender os principais termos que estarão nessa tela?\n\nO **endereço** identifica uma conta na rede. O **saldo** mostra quantidades de determinado ativo. O **slot** é uma janela de tempo em que um validador tem a oportunidade de produzir um bloco. O **bloco** reúne registros de transações. A **assinatura** da transação funciona, para consulta, como um número de protocolo.\n\nE, finalmente, o **status** merece atenção. Faça duas perguntas. A operação deu certo? E o seu registro já foi confirmado pela rede? Uma operação pode estar finalizada e ter apresentado erro. Nesse caso, o registro da falha foi consolidado.\n\n## Atividade: explore a Devnet\n\nAgora, fica uma atividade para depois dessa explicação.\n\nAbra o [Solana Explorer](https://explorer.solana.com/?cluster=devnet), selecione Devnet e pesquise a assinatura de uma transferência simples de teste. Use esta, conferida na Devnet em 2 de novembro de 2026:\n\n`33R4sDVSKdCdLHNJzBGLRKtAKormi4WuiomRjPCbpBx5dALFutNGsxvpZoEUjF8VqvWYRorkNBMdvuDgpEtbmfJu`\n\nSe a Devnet não mostrar mais esse histórico, pesquise no mesmo Explorer o endereço `9B5XszUGdMaxCZ7uSQhPzdks5ZQSmWxrmzCSvtJ6Ns6g`, abra o histórico de transações dele (Transaction History) e escolha uma transferência simples da lista.\n\nIdentifique origem, destino, quantidade, taxa, slot e status. Observe as alterações de saldo. Quem paga a taxa pode perder um pouco mais do que o valor enviado. Percebeu? Você já consegue observar a rede sem movimentar seus próprios ativos.\n\n## Para guardar\n\nPara começar, basta navegar. Mainnet é a cidade em operação, Devnet é a oficina e Testnet é o campo de testes. E no status, sempre as duas perguntas: a operação deu certo? O registro já foi confirmado?\n"
+      },
+      {
+        "_key": "quiz",
+        "_type": "quiz",
+        "questions": [
+          {
+            "explanation": "Mainnet é a cidade em operação, Devnet é a oficina dos aplicativos e Testnet é o campo de testes da infraestrutura.",
+            "id": "q1",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "O nome engana. A Testnet testa a própria rede e os validadores. Aplicativo se experimenta na Devnet.",
+                "id": "e",
+                "label": "Testnet, porque todo teste de aplicativo é feito nela"
+              },
+              {
+                "correct": false,
+                "feedback": "Mesmo pequena, é a rede principal, com ativos de valor econômico. Experimentar antes dos motoristas é trabalho da oficina, a Devnet.",
+                "id": "d",
+                "label": "Mainnet, com uma quantia bem pequena de SOL real"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso, a Devnet é a oficina em que a equipe experimenta o aplicativo, com token de teste.",
+                "id": "c",
+                "label": "Devnet, com token de teste sem valor econômico"
+              },
+              {
+                "correct": false,
+                "feedback": "Mainnet é a cidade em operação. Lá os ativos podem ter valor econômico.",
+                "id": "a",
+                "label": "Mainnet, onde os pagamentos são feitos para valer"
+              },
+              {
+                "correct": false,
+                "feedback": "A Devnet é o ambiente certo, mas sem SOL real: nela usamos token de teste, sem valor econômico.",
+                "id": "b",
+                "label": "Devnet, com SOL real trazido da rede principal"
+              }
+            ],
+            "prompt": "Sua equipe vai experimentar o aplicativo de estacionamento antes de oferecê-lo aos motoristas. Em qual ambiente?"
+          },
+          {
+            "explanation": "Ter 10 SOL de teste não significa ter 10 SOL para gastar na rede principal.",
+            "id": "q2",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "O motivo é outro. O ponto é que esse token não tem valor econômico.",
+                "id": "e",
+                "label": "Não: SOL de teste só existe dentro de uma carteira"
+              },
+              {
+                "correct": false,
+                "feedback": "Não passa. São ambientes diferentes, e o token de teste não tem valor econômico.",
+                "id": "a",
+                "label": "Sim: o saldo da Devnet passa para a rede principal"
+              },
+              {
+                "correct": false,
+                "feedback": "Os validadores conferem as regras, mas nenhuma aprovação dá valor a um token de teste.",
+                "id": "c",
+                "label": "Sim: basta que os validadores aprovem a operação"
+              },
+              {
+                "correct": false,
+                "feedback": "A Testnet também não é lugar para gastar. Valor econômico mesmo, só na rede principal.",
+                "id": "d",
+                "label": "Depende: vale na Testnet, mas não vale na Mainnet"
+              },
+              {
+                "correct": true,
+                "feedback": "Exato. É como receber créditos de demonstração para aprender a usar o estacionamento.",
+                "id": "b",
+                "label": "Não: é crédito de demonstração sem valor econômico"
+              }
+            ],
+            "prompt": "Alguém diz: tenho 10 SOL de teste, então posso gastar 10 SOL na rede principal. E aí?"
+          },
+          {
+            "explanation": "O explorador de blocos é um painel público: você pesquisa uma operação e encontra os dados on-chain sem conectar carteira.",
+            "id": "q3",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Não precisa inserir dinheiro nessa rede. É um painel público de consulta.",
+                "id": "b",
+                "label": "Ter saldo na rede para pagar pela consulta"
+              },
+              {
+                "correct": false,
+                "feedback": "Os dados on-chain estão lá para consulta. Ninguém precisa autorizar você a olhar.",
+                "id": "c",
+                "label": "Pedir autorização a um validador da rede"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso. Pense no explorador como um painel público de consulta. Tudo isso sem conectar uma carteira.",
+                "id": "e",
+                "label": "Só pesquisar, sem conectar nenhuma carteira"
+              },
+              {
+                "correct": false,
+                "feedback": "Assinar é para autorizar operações. Só para observar, não entra chave nenhuma.",
+                "id": "d",
+                "label": "Assinar a consulta com a sua chave privada"
+              },
+              {
+                "correct": false,
+                "feedback": "Para começar, basta navegar. Não precisamos nem instalar uma carteira.",
+                "id": "a",
+                "label": "Instalar uma carteira e conectar antes de buscar"
+              }
+            ],
+            "prompt": "Para consultar uma operação no Solana Explorer, o que você precisa fazer?"
+          },
+          {
+            "explanation": "Faça duas perguntas separadas: a operação deu certo? E o seu registro já foi confirmado pela rede?",
+            "id": "q4",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Não é falha do painel. Ele está mostrando o que foi registrado na rede.",
+                "id": "e",
+                "label": "O Explorer travou e a operação precisa ser repetida"
+              },
+              {
+                "correct": false,
+                "feedback": "O registro não some. A falha fica lá, registrada, para quem quiser consultar.",
+                "id": "d",
+                "label": "A rede desfaz tudo e apaga o registro da operação"
+              },
+              {
+                "correct": false,
+                "feedback": "Finalizada quer dizer o contrário: esse registro, mesmo sendo de falha, foi consolidado.",
+                "id": "c",
+                "label": "O registro ainda pode sumir, pois não consolidou"
+              },
+              {
+                "correct": true,
+                "feedback": "Muito bem, por isso são duas perguntas: deu certo? E o registro já foi confirmado? Aqui, o registro da falha foi consolidado.",
+                "id": "a",
+                "label": "A falha ficou registrada e o registro consolidou"
+              },
+              {
+                "correct": false,
+                "feedback": "Cuidado. O erro diz que a operação não deu certo. Finalizada fala do registro.",
+                "id": "b",
+                "label": "A operação deu certo e o erro é só um aviso de tela"
+              }
+            ],
+            "prompt": "O status mostra uma operação finalizada, mas com erro. O que isso quer dizer?"
+          },
+          {
+            "explanation": "Endereço identifica a conta, saldo mostra a quantidade, slot é a janela de tempo, bloco reúne registros e a assinatura funciona como número de protocolo.",
+            "id": "q5",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Esse papel é da assinatura da transação.",
+                "id": "a",
+                "label": "O número de protocolo para consultar a transação"
+              },
+              {
+                "correct": false,
+                "feedback": "Esse é o bloco. O slot é a janela de tempo em que ele pode ser produzido.",
+                "id": "e",
+                "label": "O conjunto de registros de transações reunidos"
+              },
+              {
+                "correct": false,
+                "feedback": "Esse é o saldo.",
+                "id": "b",
+                "label": "A quantidade de um ativo que uma conta possui"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso. O slot é a janela de tempo em que um validador tem a oportunidade de produzir um bloco.",
+                "id": "d",
+                "label": "Uma janela de tempo para um validador produzir um bloco"
+              },
+              {
+                "correct": false,
+                "feedback": "Esse é o endereço.",
+                "id": "c",
+                "label": "A sequência que identifica uma conta na rede"
+              }
+            ],
+            "prompt": "Na tela do explorador, o que é o slot?"
+          }
+        ]
+      }
+    ],
+    "skills": [
+      "solana-fundamentals",
+      "transactions"
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "explorando-a-rede-solana"
+    },
+    "title": "Explorando a rede Solana"
+  },
+  {
+    "_id": "lesson-iwb-historico-valido",
+    "_type": "lesson",
+    "blocks": [
+      {
+        "_key": "header",
+        "_type": "prose",
+        "src": "# Quem decide qual histórico é válido?\n"
+      },
+      {
+        "_key": "video",
+        "_type": "video",
+        "url": "https://www.youtube.com/watch?v=rsHFRZgEeSI"
+      },
+      {
+        "_key": "content",
+        "_type": "prose",
+        "src": "![Cartão da aula: Quem decide qual histórico é válido? Mais blocos posteriores, maior consolidação. Nem toda blockchain é Bitcoin. Smart contract, uma região intermediária. A blockchain não elimina a confiança.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/7e10b63d6e1a207c9045198ce7f6a712761dec1c20f95d4bda2ea66990a9018d.webp)\n\n## Quem decide qual histórico é válido?\n\nPoW, Proof of Work, prova de trabalho. Sem uma autoridade central, a rede precisa determinar qual histórico será reconhecido como válido.\n\nNo Bitcoin, os mineradores reúnem transações e disputam o direito de propor um novo bloco. Para isso, realizam a Proof of Work, abreviada como PoW, ou prova de trabalho, que exige esforço computacional. Outros computadores, chamados nós, verificam se o bloco respeita as regras do protocolo.\n\nQuando aparecem históricos concorrentes, a rede tende a reconhecer aquele com maior trabalho computacional acumulado. Quanto mais blocos são adicionados depois de uma transação, mais difícil se torna reverter o seu registro.\n\n## Como as confirmações consolidam uma transferência?\n\nEntão, a transferência foi feita aqui, por exemplo, no bloco N: transferência registrada. Aí nós temos o bloco N+1, o N+2 e o N+3, onde tem a primeira confirmação, a segunda confirmação e a terceira confirmação.\n\nGuarde essa regra: mais blocos posteriores é igual a uma maior consolidação.\n\n## Tecnologias envolvidas\n\nTalvez você se pergunte: qual a tecnologia que está sendo utilizada? São várias. Nós temos os registros, temos criptografia, temos validação, temos consenso e também incentivos econômicos.\n\n## Bitcoin x bitcoin\n\nVamos entender alguns conceitos que confundem você, mas agora não irão mais confundir.\n\nBlockchain é uma estrutura de registros, uma forma de organizar registros em blocos conectados criptograficamente.\n\nO Bitcoin, com letra maiúscula, está ligado a uma rede e a um protocolo criados para operar um sistema de dinheiro eletrônico descentralizado, que esse é o principal princípio. O bitcoin, com letra inicial minúscula, indica a unidade monetária, também conhecida pela sigla BTC.\n\nEntão, aqui eu vou fazer uma frase de efeito para você guardar: **o Bitcoin utiliza uma blockchain, mas nem toda blockchain é Bitcoin.**\n\nPor exemplo, a Solana. Outras redes, como a Solana, surgiram com outras características, com outros objetivos e outras arquiteturas, que a gente vai falar na sequência.\n\n## Smart contracts: uma região intermediária\n\nO Bitcoin se demonstrou como uma boa rede de distribuição de valores, de compartilhamento de valores. Mas depois tivemos um patamar além, os chamados smart contracts, onde, digamos, um programa toma decisões.\n\nEntão, eu vou dizer aqui uma situação. Você quer comprar um carro, né? Tem aquela situação difícil: quem dá primeiro? Eu dou o dinheiro e depois você me dá o carro? Não, primeiro você me dá o carro e depois eu te dou o dinheiro?\n\nEntão, o smart contract permite criar uma região, digamos, intermediária, onde o comprador deposita o dinheiro, mas o vendedor não recebe nada até as condições serem atendidas. E, do outro lado, quem está transferindo o carro também não transfere direto para a outra pessoa. Fica numa região intermediária.\n\nQuando essas duas condições intermediárias estão ok, e tem lá uma regra, né? O carro vale tanto. E, se a pessoa depositou tanto, então está ok. As condições foram atingidas e o programa executa a venda desse veículo. Então, isso é o smart contract.\n\nVocê imagina isso, né? Eu aqui com duas pessoas no mesmo país, na mesma cidade, é uma coisa fácil. Agora, veja a maravilha disso quando estou fazendo uma negociação internacional, onde pode haver uma grande quantidade de valores monetários, e eu nem conheço as pessoas envolvidas do outro lado. É apenas uma relação comercial. Veja que segurança isso dá, que rapidez. Uma vez que as condições foram atendidas dos dois lados, a operação é executada. Não é uma maravilha?\n\n## O surgimento da Solana\n\nSurge uma nova região da nossa cidade digital: Solana, blockchain programável.\n\nNós temos aí, com o crescimento das aplicações, surgiram desafios de velocidade, capacidade e custo. Lembra que eu disse que não tinha apenas a rede do Bitcoin? A Solana começou a ser concebida em 2017 como uma blockchain programável de alto desempenho.\n\nEla utiliza a Proof of Stake, abreviada como PoS, ou prova de participação. Nesse sistema, validadores utilizam SOL recebido em delegação ou colocado em participação para colaborar com a segurança e a validação da rede.\n\nA Solana também nasceu com a Proof of History, PoH, chamada de prova de histórico. A PoH não é o consenso. É uma sequência criptográfica que ajuda a comprovar a ordem e a passagem do tempo entre os eventos.\n\n> **Nota editorial (2 de novembro de 2026).** O vídeo descreve o desenho com que a Solana foi lançada. Desde a época 1064, em 21 de outubro de 2026, a rede principal usa o Alpenglow, que mudou a forma como a rede vota e finaliza blocos e substituiu a Proof of History, conforme as propostas SIMD-0326 e SIMD-0384.\n\nCom o crescimento das aplicações em blockchain, algumas redes passaram a enfrentar congestionamentos, demora na confirmação e aumento das taxas. Para enfrentar esse desafio, Anatoly Yakovenko começou a desenvolver a Solana em 2017, e sua rede principal entrou em funcionamento em 2020.\n\nNa analogia com uma cidade inteligente, a Solana pode ser entendida como uma nova região digital planejada, com vias de grande capacidade e sistemas sincronizados. Sua proposta é permitir que pagamentos, jogos, mercados digitais e outras aplicações funcionem com rapidez e custos geralmente baixos.\n\n## A descentralização é uma escolha de arquitetura\n\nQuando você escolhe uma blockchain, você está tomando grandes decisões. Uma rede não é simplesmente centralizada ou descentralizada. A descentralização é um espectro. A validação pode estar distribuída entre muitos participantes, enquanto o desenvolvimento aparece concentrado em poucas equipes.\n\nA blockchain existe para permitir registros compartilhados entre participantes que não precisam confiar em uma única autoridade central. Ela não elimina a confiança. Ela modifica a maneira como essa confiança é construída, distribuída e verificada.\n\n## Para guardar\n\nMais blocos posteriores é igual a uma maior consolidação. O Bitcoin utiliza uma blockchain, mas nem toda blockchain é Bitcoin. O smart contract segura os dois lados numa região intermediária até as condições serem atendidas. E a blockchain não elimina a confiança: ela modifica a maneira como a confiança é construída.\n"
+      },
+      {
+        "_key": "quiz",
+        "_type": "quiz",
+        "questions": [
+          {
+            "explanation": "Bloco N registra a transferência. N+1, N+2 e N+3 vão consolidando esse registro.",
+            "id": "q1",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "feedback": "É essa a regra. Mais blocos posteriores é igual a uma maior consolidação.",
+                "id": "d",
+                "label": "Uma maior consolidação da transferência"
+              },
+              {
+                "correct": false,
+                "feedback": "É o contrário. Mais blocos posteriores consolidam o histórico.",
+                "id": "c",
+                "label": "Um histórico mais fácil de ser alterado"
+              },
+              {
+                "correct": false,
+                "feedback": "É o contrário: quanto mais blocos depois, mais difícil reverter.",
+                "id": "b",
+                "label": "Uma chance maior de reverter o registro"
+              },
+              {
+                "correct": false,
+                "feedback": "A disputa acontece a cada bloco. A regra aqui fala do que acontece com a transferência.",
+                "id": "e",
+                "label": "Uma nova disputa entre os mesmos mineradores"
+              },
+              {
+                "correct": false,
+                "feedback": "Não é sobre taxa. Mais blocos depois da transação tornam o registro mais difícil de reverter.",
+                "id": "a",
+                "label": "Uma taxa maior para quem fez a transferência"
+              }
+            ],
+            "prompt": "Guarde essa regra: mais blocos posteriores é igual a quê?"
+          },
+          {
+            "explanation": "Bitcoin com maiúscula é a rede e o protocolo. bitcoin com minúscula é a unidade monetária, o BTC. E nem toda blockchain é Bitcoin.",
+            "id": "q2",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "A Solana é outra rede, com outra arquitetura, não uma versão do Bitcoin.",
+                "id": "e",
+                "label": "A Solana é uma versão mais rápida da rede Bitcoin"
+              },
+              {
+                "correct": false,
+                "feedback": "Nem toda blockchain é Bitcoin. Outras redes têm outros objetivos e outras arquiteturas.",
+                "id": "c",
+                "label": "Toda blockchain é um Bitcoin, só muda a moeda usada na rede"
+              },
+              {
+                "correct": true,
+                "feedback": "Essa é a frase de efeito para você guardar. Outras redes, como a Solana, têm outras características e arquiteturas.",
+                "id": "a",
+                "label": "Bitcoin usa blockchain, mas nem toda blockchain é Bitcoin"
+              },
+              {
+                "correct": false,
+                "feedback": "Invertido. Com maiúscula, rede e protocolo. Com minúscula, a unidade monetária, o BTC.",
+                "id": "d",
+                "label": "bitcoin, com minúscula, é o protocolo que opera a rede"
+              },
+              {
+                "correct": false,
+                "feedback": "Não confunda. Blockchain é uma estrutura de registros, e o Bitcoin é uma rede que a utiliza.",
+                "id": "b",
+                "label": "Blockchain é apenas outro nome para a rede criada pelo Bitcoin"
+              }
+            ],
+            "prompt": "Qual destas frases está certa?"
+          },
+          {
+            "explanation": "O smart contract cria uma região intermediária: nenhum dos dois lados recebe direto, e o programa executa a venda quando as condições são atingidas.",
+            "id": "q3",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "feedback": "Isso. Quando as duas condições estão ok, o programa executa a venda. Não é uma maravilha?",
+                "id": "b",
+                "label": "Fica numa região intermediária até cumprir as condições"
+              },
+              {
+                "correct": false,
+                "feedback": "O programa só segue a regra. O dinheiro é o valor da venda.",
+                "id": "d",
+                "label": "Fica com o programa como pagamento pela execução"
+              },
+              {
+                "correct": false,
+                "feedback": "A graça é não depender dessa decisão: o programa executa quando as condições são atingidas.",
+                "id": "e",
+                "label": "Vai para um banco, que decide quando pode liberar"
+              },
+              {
+                "correct": false,
+                "feedback": "Não. O vendedor não recebe nada até as condições serem atendidas.",
+                "id": "a",
+                "label": "Vai direto para o vendedor assim que o comprador deposita"
+              },
+              {
+                "correct": false,
+                "feedback": "Se as condições foram atingidas, a venda é executada. O dinheiro não volta.",
+                "id": "c",
+                "label": "Volta para o comprador quando o carro é transferido pelo vendedor"
+              }
+            ],
+            "prompt": "Na compra do carro com smart contract, o que acontece com o dinheiro depositado?"
+          },
+          {
+            "explanation": "Proof of Stake é a prova de participação. Proof of History, a prova de histórico, não era o consenso: era uma sequência criptográfica.",
+            "id": "q4",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Nada disso. A PoH tratava da ordem e da passagem do tempo entre os eventos.",
+                "id": "e",
+                "label": "O registro da identidade real de cada participante"
+              },
+              {
+                "correct": false,
+                "feedback": "A delegação de SOL faz parte da Proof of Stake, a prova de participação.",
+                "id": "d",
+                "label": "A delegação de SOL aos validadores da rede"
+              },
+              {
+                "correct": false,
+                "feedback": "Cuidado com esse: a PoH não era o consenso.",
+                "id": "a",
+                "label": "O consenso que substituía o trabalho dos validadores"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso. A PoH era uma sequência criptográfica que ajudava a comprovar a ordem e a passagem do tempo entre os eventos.",
+                "id": "b",
+                "label": "Uma sequência que ajudava a comprovar ordem e tempo"
+              },
+              {
+                "correct": false,
+                "feedback": "Essa é a Proof of Work do Bitcoin. A Solana nasceu com outra proposta.",
+                "id": "c",
+                "label": "A disputa de mineradores para propor um novo bloco"
+              }
+            ],
+            "prompt": "Na origem da Solana, qual era o papel da Proof of History?"
+          },
+          {
+            "explanation": "A blockchain não elimina a confiança. Ela modifica a maneira como essa confiança é construída, distribuída e verificada.",
+            "id": "q5",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Lembre do espectro: desenvolvimento e validação podem estar distribuídos de formas diferentes.",
+                "id": "d",
+                "label": "Passa toda a confiança para os desenvolvedores"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso. Ela modifica a maneira como essa confiança é construída, distribuída e verificada.",
+                "id": "c",
+                "label": "Modifica como ela é construída e verificada"
+              },
+              {
+                "correct": false,
+                "feedback": "Ela existe justamente para não precisar confiar em uma única autoridade central.",
+                "id": "b",
+                "label": "Concentra a confiança em uma autoridade central"
+              },
+              {
+                "correct": false,
+                "feedback": "Confiança não vira moeda. O ponto é como ela é construída, distribuída e verificada.",
+                "id": "e",
+                "label": "Transforma a confiança em moeda da própria rede"
+              },
+              {
+                "correct": false,
+                "feedback": "Cuidado. Ela não elimina a confiança.",
+                "id": "a",
+                "label": "Elimina por completo a necessidade de confiar"
+              }
+            ],
+            "prompt": "O que a blockchain faz com a confiança?"
+          }
+        ]
+      }
+    ],
+    "skills": [
+      "solana-fundamentals"
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "quem-decide-qual-historico-e-valido"
+    },
+    "title": "Quem decide qual histórico é válido?"
+  },
+  {
+    "_id": "lesson-iwb-intermediario",
+    "_type": "lesson",
+    "blocks": [
+      {
+        "_key": "header",
+        "_type": "prose",
+        "src": "# Do intermediário ao registro distribuído\n"
+      },
+      {
+        "_key": "video",
+        "_type": "video",
+        "url": "https://www.youtube.com/watch?v=gMx5ONduM-M"
+      },
+      {
+        "_key": "content",
+        "_type": "prose",
+        "src": "![Cartão da aula: Do intermediário ao registro distribuído. Nenhuma cédula atravessa, é uma instrução. Copiar é fácil, o dinheiro digital precisa de registro. O problema é o gasto duplo. Em 2008, o Bitcoin e o livro-razão distribuído.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/befb5eaee51350e05cd4ef85c28179f7638333a82f8f5468c1c340879b7d7dac.webp)\n\nOlá, sou o professor Marcos Crivelaro e neste vídeo vamos explicar, com detalhes, como funciona a blockchain.\n\n## Transferir R$ 100 pelo celular\n\nVamos pegar aqui um exemplo. Quando você transfere R$ 100 pelo celular, nenhuma cédula atravessa fisicamente. O que acontece? É uma instrução, é uma ordem que diz para atualizar os registros. O saldo de uma conta vai diminuir e o saldo de outra conta vai aumentar.\n\n## Os intermediários\n\nMas, para que isso aconteça, nós temos que confiar em alguém. Em quem você está confiando? No banco. Também podem ser as operadoras de cartão, os sistemas de pagamento. E qual é o papel deles? Eles são intermediários. Eles estão no meio entre você e o envio do seu dinheiro, e também em como você recebe.\n\nE aí eu pergunto para você: seria possível viver sem eles, sem os intermediários?\n\nEles registram operações, eles podem identificar fraudes. Realmente eles têm a sua importância. Só que eles também cobram por esses serviços. Isso pode custar caro para as suas operações. E você também já deve ter passado por algum problema de eles estarem fora do ar. Mesmo pagando, você não consegue fazer as operações que deseja.\n\n## Copiar é fácil\n\nVamos contar aqui uma pequena história. Se eu entregar uma cédula a outra pessoa, deixo de possuir aquela cédula. Mas, se eu enviar uma fotografia digital, uma cópia pode continuar no meu computador. Essa facilidade para copiar arquivos é uma das grandes vantagens da internet.\n\nO problema aparece quando o arquivo pretende representar dinheiro. Se uma moeda digital fosse apenas uma imagem ou um arquivo, alguém poderia copiá-la e utilizá-la várias vezes.\n\nPor isso, o dinheiro digital precisa de algo além do arquivo. Ele precisa de um sistema capaz de registrar quem controla cada unidade e quais transferências já foram realizadas.\n\n## Gasto duplo\n\nEntão, vamos conferir. Uma das preocupações, quando você não tem uma instituição financeira no meio como intermediária, é o conceito do gasto duplo: uma pessoa pode tentar enviar as mesmas unidades digitais para duas pessoas, o mesmo valor, o mesmo dinheiro. Sem um banco, como é que nós podemos impedir que isso aconteça?\n\n## Bitcoin, 2008\n\nAí trazemos o whitepaper do Bitcoin, o documento de Satoshi Nakamoto, de 2008, que trouxe uma luz, uma solução para esse problema.\n\nSe a gente for definir isso rapidamente, é um sistema de dinheiro eletrônico ponto a ponto. O conceito descreve o quê? Descreve uma rede na qual os participantes interagem seguindo regras compartilhadas, sem uma instituição bancária que tome conta disso.\n\nO Bitcoin combinou conhecimentos anteriores de criptografia, assinaturas digitais e redes distribuídas. Em vez de manter o registro apenas em um banco, a rede Bitcoin distribui cópias do histórico entre diferentes computadores.\n\nEsse histórico é chamado de livro-razão distribuído. Livro-razão significa registro organizado das transações.\n\n## De onde vem o nome blockchain\n\nAs novas transações são reunidas em blocos. Cada bloco possui uma identificação criptográfica e uma referência ao bloco anterior. Forma-se, assim, uma sequência de blocos conectados. Daí vem o nome blockchain: *block* significa bloco e *chain* significa cadeia.\n\nAlterar um bloco antigo também afetaria as referências dos blocos posteriores.\n\n## Para guardar\n\nNenhuma cédula atravessa o celular: é uma instrução para atualizar registros. Sem intermediário, o problema é o gasto duplo. E a resposta do Bitcoin foi um livro-razão distribuído, com blocos conectados, em que mexer em um bloco antigo afeta os blocos posteriores.\n"
+      },
+      {
+        "_key": "quiz",
+        "_type": "quiz",
+        "questions": [
+          {
+            "explanation": "Nenhuma cédula atravessa fisicamente: é uma instrução para atualizar os registros.",
+            "id": "q1",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "O saldo muda pela atualização dos registros, sem depender de saque nenhum.",
+                "id": "e",
+                "label": "O saldo só muda quando o recebedor sacar"
+              },
+              {
+                "correct": false,
+                "feedback": "Se fosse arquivo, teríamos o problema da cópia. O que acontece é a atualização de registros.",
+                "id": "c",
+                "label": "Um arquivo com o valor é copiado para a outra conta"
+              },
+              {
+                "correct": false,
+                "feedback": "Nenhuma cédula atravessa fisicamente, nem digital. O que anda é uma ordem.",
+                "id": "a",
+                "label": "Uma cédula digital atravessa de um celular ao outro"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso. É uma ordem que diz para atualizar os registros: um saldo diminui e o outro aumenta.",
+                "id": "b",
+                "label": "Uma instrução manda atualizar os dois registros"
+              },
+              {
+                "correct": false,
+                "feedback": "Nenhuma cédula atravessa fisicamente. É uma instrução.",
+                "id": "d",
+                "label": "O banco envia cédulas para a outra agência"
+              }
+            ],
+            "prompt": "Quando você transfere R$ 100 pelo celular, o que de fato acontece?"
+          },
+          {
+            "explanation": "Banco, operadoras e sistemas de pagamento têm a sua importância, mas custam caro e podem ficar fora do ar.",
+            "id": "q2",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "feedback": "Isso. Registram operações e identificam fraudes, só que cobram por isso e às vezes estão fora do ar.",
+                "id": "e",
+                "label": "Têm sua importância, mas cobram e podem falhar"
+              },
+              {
+                "correct": false,
+                "feedback": "Eles cobram pelos serviços e você já deve ter passado por algum problema de eles estarem fora do ar.",
+                "id": "b",
+                "label": "Trabalham de graça e nunca ficam fora do ar"
+              },
+              {
+                "correct": false,
+                "feedback": "Eles estão no meio do seu dia a dia: banco, operadoras de cartão, sistemas de pagamento.",
+                "id": "c",
+                "label": "Só existem em transferências internacionais"
+              },
+              {
+                "correct": false,
+                "feedback": "Não foi isso. Eles registram operações e podem identificar fraudes, têm a sua importância.",
+                "id": "a",
+                "label": "Não têm importância nenhuma e só atrapalham"
+              },
+              {
+                "correct": false,
+                "feedback": "Eles registram operações. Nenhuma cédula atravessa nem fica guardada para cada transferência.",
+                "id": "d",
+                "label": "Guardam uma cédula física de cada transferência"
+              }
+            ],
+            "prompt": "O que eu digo sobre os intermediários?"
+          },
+          {
+            "explanation": "O dinheiro digital precisa de um sistema capaz de registrar quem controla cada unidade e quais transferências já foram realizadas.",
+            "id": "q3",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "feedback": "Exato. Copiar é uma grande vantagem da internet, e vira problema quando o arquivo representa dinheiro.",
+                "id": "a",
+                "label": "Porque alguém poderia copiá-la e usar várias vezes"
+              },
+              {
+                "correct": false,
+                "feedback": "Pelo contrário, o arquivo circula e é copiado com facilidade. Esse é o ponto.",
+                "id": "d",
+                "label": "Porque um arquivo só abre em quem o criou"
+              },
+              {
+                "correct": false,
+                "feedback": "O problema não é o tamanho, é a facilidade de copiar.",
+                "id": "b",
+                "label": "Porque arquivos são pesados demais para a internet"
+              },
+              {
+                "correct": false,
+                "feedback": "Enviar é fácil. O problema é que uma cópia pode continuar no computador de quem enviou.",
+                "id": "c",
+                "label": "Porque a internet não permite enviar arquivo de valor"
+              },
+              {
+                "correct": false,
+                "feedback": "O que o dinheiro digital precisa é de um sistema de registro, e o Bitcoin mostrou um caminho sem banco.",
+                "id": "e",
+                "label": "Porque todo arquivo de valor precisa de um banco"
+              }
+            ],
+            "prompt": "Por que uma moeda digital não pode ser apenas um arquivo?"
+          },
+          {
+            "explanation": "O gasto duplo é a preocupação de quando não há instituição financeira no meio.",
+            "id": "q4",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "feedback": "Isso, o mesmo valor, o mesmo dinheiro, para duas pessoas. Sem um banco, como é que nós impedimos isso?",
+                "id": "c",
+                "label": "Enviar as mesmas unidades digitais para duas pessoas"
+              },
+              {
+                "correct": false,
+                "feedback": "Isso seria uma distração sua. O gasto duplo é usar as mesmas unidades duas vezes.",
+                "id": "d",
+                "label": "Comprar duas vezes o mesmo produto em uma loja sem perceber"
+              },
+              {
+                "correct": false,
+                "feedback": "Não é sobre taxa. É tentar gastar duas vezes as mesmas unidades.",
+                "id": "a",
+                "label": "Pagar duas taxas ao banco pela mesma transferência feita"
+              },
+              {
+                "correct": false,
+                "feedback": "Aqui é quem envia que tenta enganar: as mesmas unidades para duas pessoas.",
+                "id": "b",
+                "label": "Receber em dobro por causa de uma falha do sistema bancário"
+              },
+              {
+                "correct": false,
+                "feedback": "O gasto duplo preocupa justamente quando não há instituição financeira no meio.",
+                "id": "e",
+                "label": "Usar dois intermediários na mesma operação"
+              }
+            ],
+            "prompt": "O que é o gasto duplo?"
+          },
+          {
+            "explanation": "Livro-razão significa registro organizado das transações, e na rede Bitcoin ele é distribuído entre diferentes computadores.",
+            "id": "q5",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "feedback": "Isso. Livro-razão é o registro organizado das transações, e a rede distribui cópias entre diferentes computadores.",
+                "id": "c",
+                "label": "Cópias do histórico mantidas por vários computadores"
+              },
+              {
+                "correct": false,
+                "feedback": "Isso é a carteira. O livro-razão é o histórico das transações.",
+                "id": "e",
+                "label": "O aplicativo que controla as chaves de cada usuário"
+              },
+              {
+                "correct": false,
+                "feedback": "Esse é o whitepaper. O livro-razão é o histórico das transações.",
+                "id": "b",
+                "label": "O documento de 2008 escrito por Satoshi Nakamoto"
+              },
+              {
+                "correct": false,
+                "feedback": "É o contrário: em vez de manter o registro em um banco, a rede distribui cópias.",
+                "id": "a",
+                "label": "Um registro único, guardado em um banco de confiança"
+              },
+              {
+                "correct": false,
+                "feedback": "O livro-razão registra transações, não é um cadastro de pessoas.",
+                "id": "d",
+                "label": "Uma lista das pessoas que já possuem a moeda"
+              }
+            ],
+            "prompt": "O que é o livro-razão distribuído do Bitcoin?"
+          }
+        ]
+      }
+    ],
+    "skills": [
+      "solana-fundamentals"
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "do-intermediario-ao-registro-distribuido"
+    },
+    "title": "Do intermediário ao registro distribuído"
+  },
+  {
+    "_id": "lesson-iwb-toque-ao-pagamento",
+    "_type": "lesson",
+    "blocks": [
+      {
+        "_key": "header",
+        "_type": "prose",
+        "src": "# Do toque no botão ao pagamento confirmado\n"
+      },
+      {
+        "_key": "video",
+        "_type": "video",
+        "url": "https://www.youtube.com/watch?v=FBRy-2WbwoA"
+      },
+      {
+        "_key": "content",
+        "_type": "prose",
+        "src": "![Cartão da aula: Do toque no botão ao pagamento confirmado. Antes de pagar, confira. Antes de assinar, entenda. Depois de enviar, verifique. Pagamento pendente? Não aperte enviar de novo.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/4d1b0bb68adc3ce0a2f0258cd797ec794de9df3a1859351c1a7a3f298a8d7ce6.webp)\n\nVocê já fez um pagamento pelo celular e ficou esperando aparecer \"concluído\"? Na Solana também existe um caminho entre tocar no botão e ter o pagamento confirmado. Vamos acompanhar esse processo?\n\nEntão, o nosso exemplo é o seguinte: você estacionou o carro e precisa pagar 5 USDC, 5 dólares digitais, pelo aplicativo. O USDC, lembrando, é um token que busca acompanhar o dólar.\n\n## Primeiro passo: conferir os dados\n\nO primeiro passo é conferir de qual conta sairá o pagamento, qual endereço receberá, qual ativo você está enviando e em qual quantidade. No nosso exemplo, 5 USDC da sua conta para o estacionamento, usando a rede Solana. É como conferir uma maquininha antes de aproximar o cartão.\n\n## Segundo passo: entender o pedido\n\nO segundo passo é entender o pedido. Esse pedido é chamado de transação. Dentro dele, nós temos as ordens, chamadas instruções. Imagine um envelope com uma lista de tarefas: transfira o pagamento e registre o período de estacionamento comprado. Muito bem, então uma aplicação pode reunir essas tarefas na mesma transação.\n\n## Terceiro passo: ler a prévia\n\nO terceiro passo é ler a prévia. Antes de aprovar, a carteira pode mostrar quanto sairá da sua conta, para onde irá e quais permissões serão dadas. Ela também pode fazer uma simulação, um ensaio, para identificar problemas como falta de saldo. Pense na revisão de uma compra antes de fechar o pedido. É o que você faz lá no seu carrinho de compras.\n\n## Quarto passo: assinar e enviar\n\nO quarto passo é assinar e enviar. Quando você aprova, a carteira usa a sua chave privada, lembra dela?, para criar uma assinatura digital. É como um selo que comprova a sua autorização. A rede verifica esse selo sem precisar receber a sua chave privada. Portanto, você autoriza o pagamento sem entregar o seu segredo.\n\nDepois, a transação é enviada. Mas atenção: enviada ainda não significa concluída.\n\n## Quinto passo: acompanhar a confirmação\n\nO quinto passo é acompanhar a confirmação. Você encontra três termos.\n\n**Processed**, ou processada. O computador da rede processou a operação em um bloco, mas esse registro ainda pode mudar.\n\n**Confirmed**, ou confirmada. O bloco recebeu votos suficientes dos validadores, considerando o peso de sua participação na rede.\n\n**Finalized**, ou finalizada. O registro alcançou o nível mais forte de confirmação usado pela Solana.\n\nPara lembrar: processamento inicial, confirmação coletiva e consolidação.\n\n> **Nota editorial (2 de novembro de 2026).** O vídeo descreve os três nomes como eles funcionavam antes do Alpenglow, ativo na rede principal desde 21 de outubro de 2026. Os três continuam existindo nas ferramentas, mas, segundo a Solana Foundation, `confirmed` e `finalized` agora descrevem o mesmo estado, e `confirmed` deve ser removido em uma versão futura.\n\nE confira duas coisas separadamente. O pagamento teve sucesso? O registro foi finalizado? Uma operação que falhou também pode ter seu registro de erro finalizado.\n\n## Quem paga a taxa da rede?\n\nAgora vamos entender as taxas. O estacionamento recebe USDC, lembra? Mas a taxa da rede é paga em SOL, por você ou por um serviço que pague a taxa em seu lugar. Existe uma taxa base relacionada às assinaturas exigidas.\n\n## Por último: conferir o comprovante\n\nPor último, confira o comprovante. Use a assinatura da transação como o número de protocolo no explorador da Solana. Confira destino, quantidade, taxa e resultado. Se a tela travar, consulte antes de pagar novamente. Uma transferência realizada não tem um botão geral de desfazer. Para um endereço novo, considere testar uma pequena quantia antes do restante.\n\n## Confira, entenda e verifique\n\nNossa rotina é simples. Antes de pagar, confira. Antes de assinar, entenda. E, depois de enviar, verifique.\n\nÚltima dica. Se o pagamento do estacionamento aparecer como pendente, não aperte \"enviar\" várias vezes. Cuidado. Primeiro, consulte a transação no explorador. Se você criar e autorizar um novo pagamento, pode acontecer de os dois serem concluídos.\n\nE, quando fizer uma transferência de teste, confirme que o destinatário realmente recebeu antes de enviar o restante. Isso é importante, hein? O teste ajuda a conferir o caminho, mas não garante que um site ou uma pessoa seja confiável. Cuidado.\n\n## Para guardar\n\nAntes de pagar, confira. Antes de assinar, entenda. Depois de enviar, verifique. Enviada ainda não significa concluída, a rede verifica o selo sem receber a sua chave privada e, se o pagamento estiver pendente, não aperte \"enviar\" de novo.\n"
+      },
+      {
+        "_key": "quiz",
+        "_type": "quiz",
+        "questions": [
+          {
+            "explanation": "A transação é o pedido, e dentro dela vão as ordens, chamadas instruções.",
+            "id": "q1",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "feedback": "Isso. Imagine um envelope com uma lista de tarefas: transfira o pagamento e registre o período comprado.",
+                "id": "c",
+                "label": "As ordens do envelope, como transferir"
+              },
+              {
+                "correct": false,
+                "feedback": "A prévia é o terceiro passo. Instruções são as tarefas do envelope.",
+                "id": "b",
+                "label": "A prévia que a carteira mostra para você"
+              },
+              {
+                "correct": false,
+                "feedback": "O selo é a assinatura digital. As instruções são as ordens.",
+                "id": "a",
+                "label": "O selo que comprova a sua autorização"
+              },
+              {
+                "correct": false,
+                "feedback": "A taxa é outro assunto. Instruções são as ordens dentro do pedido.",
+                "id": "d",
+                "label": "A taxa paga em SOL por cada assinatura"
+              },
+              {
+                "correct": false,
+                "feedback": "Esse papel é da assinatura da transação.",
+                "id": "e",
+                "label": "O número de protocolo usado no explorador"
+              }
+            ],
+            "prompt": "Dentro de uma transação, o que são as instruções?"
+          },
+          {
+            "explanation": "A carteira usa a chave privada para criar a assinatura. A rede verifica o selo, e o seu segredo fica com você.",
+            "id": "q2",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "A simulação é um ensaio da prévia. A carteira não é enviada para a rede.",
+                "id": "d",
+                "label": "Uma cópia da carteira, para simular a operação"
+              },
+              {
+                "correct": false,
+                "feedback": "Cuidado! Você autoriza o pagamento sem entregar o seu segredo.",
+                "id": "a",
+                "label": "A sua chave privada, para confirmar que é você"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso. A rede verifica esse selo sem precisar receber a sua chave privada.",
+                "id": "c",
+                "label": "A assinatura digital, sem receber a chave privada"
+              },
+              {
+                "correct": false,
+                "feedback": "Quem assina é a carteira, usando a chave privada. Login e senha não vão para a rede.",
+                "id": "e",
+                "label": "O login e a senha da conta em que você entrou"
+              },
+              {
+                "correct": false,
+                "feedback": "Jamais. A frase de recuperação nem entra nesse processo.",
+                "id": "b",
+                "label": "A frase de recuperação, para refazer as chaves"
+              }
+            ],
+            "prompt": "Quando você aprova o pagamento, o que a rede recebe?"
+          },
+          {
+            "explanation": "Antes de pagar, confira. Antes de assinar, entenda. E, depois de enviar, verifique.",
+            "id": "q3",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "feedback": "Isso. Primeiro, consulte a transação no explorador. Se a tela travar, consulte antes de pagar novamente.",
+                "id": "b",
+                "label": "Consultar a transação no explorador"
+              },
+              {
+                "correct": false,
+                "feedback": "Cuidado! Não aperte enviar várias vezes. Os dois pagamentos podem acabar sendo concluídos.",
+                "id": "a",
+                "label": "Apertar enviar de novo para garantir"
+              },
+              {
+                "correct": false,
+                "feedback": "Validador executa regras, não desfaz pagamento a pedido de ninguém.",
+                "id": "d",
+                "label": "Pedir a um validador que desfaça tudo"
+              },
+              {
+                "correct": false,
+                "feedback": "Uma transferência realizada não tem um botão geral de desfazer.",
+                "id": "e",
+                "label": "Usar o botão geral de desfazer da rede"
+              },
+              {
+                "correct": false,
+                "feedback": "Se você criar e autorizar um novo pagamento, pode acontecer de os dois serem concluídos.",
+                "id": "c",
+                "label": "Criar e autorizar um novo pagamento"
+              }
+            ],
+            "prompt": "O pagamento do estacionamento apareceu como pendente. O que fazer primeiro?"
+          },
+          {
+            "explanation": "O pagamento é em USDC, a taxa é em SOL, e existe uma taxa base relacionada às assinaturas exigidas.",
+            "id": "q4",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "O estacionamento recebe USDC, mas a taxa da rede é outra conta, paga em SOL.",
+                "id": "a",
+                "label": "Em USDC, descontada dos 5 dólares digitais"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso. O estacionamento recebe USDC, mas a taxa da rede é paga em SOL.",
+                "id": "e",
+                "label": "Em SOL, por você ou por um serviço em seu lugar"
+              },
+              {
+                "correct": false,
+                "feedback": "Existe uma taxa base relacionada às assinaturas exigidas.",
+                "id": "d",
+                "label": "Não há taxa quando o ativo enviado é USDC"
+              },
+              {
+                "correct": false,
+                "feedback": "É em SOL, mas não por quem recebe: é por você ou por um serviço em seu lugar.",
+                "id": "c",
+                "label": "Em SOL, sempre por quem recebe o pagamento"
+              },
+              {
+                "correct": false,
+                "feedback": "A taxa da rede é paga em SOL.",
+                "id": "b",
+                "label": "Em reais, cobrada pelo aplicativo da cidade"
+              }
+            ],
+            "prompt": "Você paga 5 USDC ao estacionamento. Em que é paga a taxa da rede?"
+          },
+          {
+            "explanation": "Esses nomes falam do registro, e hoje confirmed e finalized descrevem o mesmo estado, como diz a nota da lição. O sucesso do pagamento é outra pergunta.",
+            "id": "q5",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Finalized fala da força do registro, não do resultado do pagamento.",
+                "id": "c",
+                "label": "Sim: um registro finalizado sempre entrega os fundos a alguém"
+              },
+              {
+                "correct": false,
+                "feedback": "Quem ainda pode mudar é processed. Finalized é o nível mais forte de confirmação.",
+                "id": "d",
+                "label": "Não: finalized quer dizer que o registro ainda muda"
+              },
+              {
+                "correct": false,
+                "feedback": "Cuidado. Uma operação que falhou também pode ter seu registro de erro finalizado.",
+                "id": "b",
+                "label": "Sim: finalized só aparece quando o pagamento é bem-sucedido"
+              },
+              {
+                "correct": false,
+                "feedback": "Esses termos não são exclusivos de um ambiente. O ponto é separar sucesso e registro.",
+                "id": "e",
+                "label": "Não: finalized só existe na Devnet, não na Mainnet"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso. Confira duas coisas separadamente: o pagamento teve sucesso? O registro foi finalizado?",
+                "id": "a",
+                "label": "Não: uma operação que falhou também pode ser finalizada"
+              }
+            ],
+            "prompt": "Uma operação aparece como finalized. Isso prova que o pagamento teve sucesso?"
+          }
+        ]
+      }
+    ],
+    "skills": [
+      "transactions",
+      "confirmation",
+      "transaction-fees",
+      "signers"
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "do-toque-ao-pagamento-confirmado"
+    },
+    "title": "Do toque no botão ao pagamento confirmado"
+  },
+  {
     "_id": "lesson-mav2-m01-l1",
     "_type": "lesson",
     "blocks": [

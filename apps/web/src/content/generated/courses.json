@@ -174,7 +174,7 @@
     "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/ed9740f6ea99a8d6f9b39863c9dda7a802d908f3b3e53b76fab0aeb85e5480a2.webp",
     "title": "From Bitcoin to Solana: The Evolution of Blockchain Technology",
     "trackId": 1,
-    "trackLevel": 3,
+    "trackLevel": 4,
     "xpPerLesson": 20,
     "xpReward": 300
   },
@@ -470,6 +470,119 @@
     "trackLevel": 3,
     "xpPerLesson": 15,
     "xpReward": 420
+  },
+  {
+    "_id": "course-intro-web3-blockchain",
+    "_type": "course",
+    "creator": "Hc7Ww5QCkWZJXd3zGbnrodEEEoyfDrPQeJL8aMnrhuAz",
+    "creatorRewardXp": 30,
+    "description": "E se você acordasse e a sua vida digital tivesse sumido, porque ela pertence às big techs? Com o professor Marcos Crivelaro, você percorre a cidade digital, das vitrines da Web1 à cidade inteligente da Web3, entende como a blockchain e a Solana funcionam e paga um café em dólar digital. No fim, a pergunta é uma só: quem controla as suas informações e os seus ativos?",
+    "difficulty": "beginner",
+    "duration": 2,
+    "minCompletionsForReward": 0,
+    "modules": [
+      {
+        "_key": "a-cidade-digital",
+        "_type": "courseModule",
+        "key": "a-cidade-digital",
+        "lessons": [
+          {
+            "_key": "lesson-iwb-evolucao-web",
+            "_ref": "lesson-iwb-evolucao-web",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-iwb-explorando-rede",
+            "_ref": "lesson-iwb-explorando-rede",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "A cidade digital"
+      },
+      {
+        "_key": "sua-identidade-na-cidade",
+        "_type": "courseModule",
+        "key": "sua-identidade-na-cidade",
+        "lessons": [
+          {
+            "_key": "lesson-iwb-carteira-digital",
+            "_ref": "lesson-iwb-carteira-digital",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Sua identidade na cidade"
+      },
+      {
+        "_key": "como-a-blockchain-funciona",
+        "_type": "courseModule",
+        "key": "como-a-blockchain-funciona",
+        "lessons": [
+          {
+            "_key": "lesson-iwb-intermediario",
+            "_ref": "lesson-iwb-intermediario",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-iwb-historico-valido",
+            "_ref": "lesson-iwb-historico-valido",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-iwb-cartorios-validadores",
+            "_ref": "lesson-iwb-cartorios-validadores",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Como a blockchain funciona"
+      },
+      {
+        "_key": "pagando-na-pratica",
+        "_type": "courseModule",
+        "key": "pagando-na-pratica",
+        "lessons": [
+          {
+            "_key": "lesson-iwb-toque-ao-pagamento",
+            "_ref": "lesson-iwb-toque-ao-pagamento",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-iwb-cafe-dolar-digital",
+            "_ref": "lesson-iwb-cafe-dolar-digital",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Pagando na prática"
+      }
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "intro-web3-blockchain"
+    },
+    "sourceLocale": "pt-BR",
+    "tags": [
+      "confirmation",
+      "keypairs-wallets",
+      "signers",
+      "solana-fundamentals",
+      "solana-pay",
+      "spl-tokens",
+      "transaction-fees",
+      "transactions"
+    ],
+    "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/31aeebaaac353fe7304a5ad931ec59a3d8ea7648deb8860a74fcf526829daaff.webp",
+    "title": "Introdução à Web3 e Blockchain",
+    "trackId": 1,
+    "trackLevel": 1,
+    "xpPerLesson": 20,
+    "xpReward": 160
   },
   {
     "_id": "course-mastering-anchor-v2",
@@ -1635,7 +1748,7 @@
     "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/c2fec3063c434607e652d5684af9c94e05df0260e7fe3011d17bdbea2ed056db.webp",
     "title": "Solana Speedrun: Inicie sua jornada onchain em minutos",
     "trackId": 1,
-    "trackLevel": 1,
+    "trackLevel": 2,
     "xpPerLesson": 20,
     "xpReward": 80
   },
@@ -1792,7 +1905,7 @@
     "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/787ee598de4df34c7f3b71d56898b93005e5cf618da4f1ce4ba01306e502813b.jpg",
     "title": "Visão Geral da Blockchain Solana",
     "trackId": 1,
-    "trackLevel": 2,
+    "trackLevel": 3,
     "xpPerLesson": 20,
     "xpReward": 320
   }
