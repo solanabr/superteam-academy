@@ -47,7 +47,7 @@ export function CertificateCard({
           {/* Divider — gradient line */}
           <div className={CS.divider} />
 
-          {/* Meta row — 3 columns: Issued to, Date, Mint */}
+          {/* Meta row: Issued to, Date, and Mint on the full card only */}
           <div className={CS.metaRow}>
             {recipientName && (
               <div className={CS.metaItem}>
@@ -61,18 +61,20 @@ export function CertificateCard({
                 {certificate.mintedAt.toLocaleDateString()}
               </div>
             </div>
-            <div className={CS.metaItem}>
-              <div className={CS.metaKey}>
-                {isCompact ? t("mint") : t("mintAddress")}
+            {!isCompact && (
+              <div className={CS.metaItem}>
+                <div className={CS.metaKey}>{t("mintAddress")}</div>
+                {mintAddress !== null ? (
+                  <div className={cx(CS.metaVal, "font-mono text-xs")}>
+                    {truncateAddress(mintAddress)}
+                  </div>
+                ) : (
+                  <div className="text-xs italic text-text-3">
+                    {t("minting")}
+                  </div>
+                )}
               </div>
-              {mintAddress !== null ? (
-                <div className={cx(CS.metaVal, "font-mono text-xs")}>
-                  {truncateAddress(mintAddress)}
-                </div>
-              ) : (
-                <div className="text-xs italic text-text-3">{t("minting")}</div>
-              )}
-            </div>
+            )}
           </div>
 
           {/* Footer — proof pill + network */}

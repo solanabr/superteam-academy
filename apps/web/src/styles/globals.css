@@ -4946,8 +4946,9 @@ a.stat-receipt:active {
 }
 
 /* Profile certificate shelf (owner reference, 04-08): the design-system
-   diploma — gradient frame, eyebrow, open middle, RECIPIENT/COMPLETED/MINT
-   anchored to the bottom edge, proof pill only (no network line). */
+   diploma — gradient frame, eyebrow, open middle, RECIPIENT/COMPLETED
+   anchored to the bottom edge. The mint and proof live on the certificate
+   page the card links to. */
 .cert-slim .cert-inner {
   padding: 20px 22px;
 }
@@ -4956,16 +4957,12 @@ a.stat-receipt:active {
   flex-direction: column;
   min-height: 170px;
 }
-/* Meta stacks RECIPIENT over COMPLETED on the left; MINT holds the right
-   column — squarer 4-up cards read top-down (owner, 04-08). */
+/* Meta stacks RECIPIENT over COMPLETED — squarer 4-up cards read
+   top-down (owner, 04-08). */
 .cert-slim .cert-meta-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px 16px;
-}
-.cert-slim .cert-meta-item:nth-child(3) {
-  grid-column: 2;
-  grid-row: 1 / span 2;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
 }
 .cert-slim .cert-divider {
   margin-top: auto;
