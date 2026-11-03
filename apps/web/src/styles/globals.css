@@ -4955,14 +4955,13 @@ a.stat-receipt:active {
 .cert-slim .cert-body {
   display: flex;
   flex-direction: column;
-  min-height: 170px;
 }
-/* Meta stacks RECIPIENT over COMPLETED — squarer 4-up cards read
-   top-down (owner, 04-08). */
+/* RECIPIENT and COMPLETED sit side by side to keep the card short
+   (owner, 03-11). */
 .cert-slim .cert-meta-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
 }
 .cert-slim .cert-divider {
   margin-top: auto;
