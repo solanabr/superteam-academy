@@ -26,6 +26,9 @@ vi.mock("next/cache", () => ({
 const logError = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/logging", () => ({ logError }));
 
+const after = vi.hoisted(() => vi.fn());
+vi.mock("next/server", () => ({ after }));
+
 // `.rpc(...).abortSignal(signal)` — the builder is thenable, so the loader can
 // await the chain. abortSignal records the signal it was handed.
 const rpc = vi.hoisted(() => vi.fn());
@@ -47,6 +50,7 @@ vi.mock("@/lib/supabase/admin", () => ({
 beforeEach(() => {
   rpc.mockReset();
   logError.mockReset();
+  after.mockReset();
   signals.length = 0;
 });
 
@@ -65,6 +69,19 @@ describe("getLessonCompletionCount", () => {
     });
     expect(await getLessonCompletionCount("course-x", "lesson-nobody")).toBe(0);
     expect(logError).not.toHaveBeenCalled();
+  });
+
+  // The lesson page renders inside its loading.tsx Suspense boundary, after
+  // Next has already handed the request's pending revalidations to waitUntil.
+  // A stale-entry refresh started there is untracked: the response ends, the
+  // instance is suspended with the RPC in flight, and the abort timer fires on
+  // the next wake-up as LESSON_COMPLETION_COUNT_001. Registering the RPC with
+  // after() keeps the invocation alive until it settles.
+  it("keeps the invocation alive until the RPC settles", async () => {
+    rpc.mockResolvedValue({ data: [], error: null });
+    await getLessonCompletionCount("course-x", "lesson-a");
+    expect(after).toHaveBeenCalledTimes(1);
+    expect(after.mock.calls[0]?.[0]).toBeInstanceOf(Promise);
   });
 
   it("bounds the RPC with an abort signal", async () => {

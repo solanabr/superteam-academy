@@ -2,6 +2,7 @@ import "server-only";
 
 import { unstable_cache } from "next/cache";
 import { ERROR_IDS } from "@/constants/errorIds";
+import { keepInvocationAlive } from "@/lib/cache/keep-alive";
 import { logError } from "@/lib/logging";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -39,15 +40,18 @@ async function loadCourseCompletionCounts(
 ): Promise<CompletionCounts | null> {
   try {
     const admin = createAdminClient();
-    const { data, error } = await admin
-      .rpc("course_lesson_completion_counts", { p_course_id: courseId })
-      // Postgres answers this in ~11 ms (max 68 ms measured over 30 d) and
-      // PostgREST caps any statement at 8 s, so anything past a second is a
-      // stalled Vercel→Supabase socket, not a slow query. Unbounded, those
-      // sockets hung for minutes (p95 222 s) with the lesson render waiting on
-      // them; 1.5 s is ~100x the healthy round trip and caps what a decorative
-      // chip can ever add to TTFB.
-      .abortSignal(AbortSignal.timeout(COMPLETION_COUNTS_TIMEOUT_MS));
+    // keepInvocationAlive: the lesson page renders under loading.tsx, so a
+    // stale-entry refresh started here is otherwise frozen mid-flight when the
+    // response ends (see lib/cache/keep-alive.ts).
+    const { data, error } = await keepInvocationAlive(
+      admin
+        .rpc("course_lesson_completion_counts", { p_course_id: courseId })
+        // Postgres runs this in ~10 ms; the HTTP round trip through the
+        // Supabase gateway is p50 ~380 ms, p95 ~600 ms, max ~1.1 s (24 h of
+        // edge logs). 1.5 s caps what a decorative chip can add to TTFB on a
+        // cache miss.
+        .abortSignal(AbortSignal.timeout(COMPLETION_COUNTS_TIMEOUT_MS))
+    );
 
     if (error) throw new Error(error.message);
 

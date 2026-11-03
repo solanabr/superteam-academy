@@ -21,6 +21,9 @@ vi.mock("next/cache", () => ({
 const logError = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/logging", () => ({ logError }));
 
+const after = vi.hoisted(() => vi.fn());
+vi.mock("next/server", () => ({ after }));
+
 const rpc = vi.hoisted(() => vi.fn());
 const signals = vi.hoisted(() => [] as AbortSignal[]);
 vi.mock("@/lib/supabase/admin", () => ({
@@ -48,6 +51,7 @@ const ZEROS = {
 beforeEach(() => {
   rpc.mockReset();
   logError.mockReset();
+  after.mockReset();
   signals.length = 0;
 });
 
@@ -64,6 +68,16 @@ describe("getPlatformStats", () => {
     });
     expect(rpc).toHaveBeenCalledWith("get_platform_stats");
     expect(logError).not.toHaveBeenCalled();
+  });
+
+  it("keeps the invocation alive until the RPC settles", async () => {
+    rpc.mockResolvedValue({
+      data: [{ total_xp: 1, builders: 1, credentials: 1 }],
+      error: null,
+    });
+    await getPlatformStats();
+    expect(after).toHaveBeenCalledTimes(1);
+    expect(after.mock.calls[0]?.[0]).toBeInstanceOf(Promise);
   });
 
   it("is cached for 5 minutes under the platform-stats tag", () => {
