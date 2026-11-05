@@ -237,16 +237,28 @@ export function ChallengeInterface({
 
   // Below lg the output panel stacks under the editor, often past the fold, and
   // swipes on Monaco don't chain to the page, so bring a run's result into view.
+  // At lg a single editor is locked to the viewport, but several stack and the
+  // page scrolls, so they need it too.
+  //
+  // A passing deployable build is left alone: the deploy panel scrolls to itself
+  // on the same run, and this would pull the learner back off their next step.
+  // It has to check success because a compile error comes back with a uuid too.
   const outputPanelRef = useRef<HTMLDivElement>(null);
   const executionResult = challengeState.executionResult;
+  const lockedAtLg = !codePart;
   useEffect(() => {
     if (!executionResult) return;
-    if (window.matchMedia?.("(min-width: 1024px)").matches) return;
+    if (isDeployable && executionResult.success && executionResult.buildUuid) {
+      return;
+    }
+    if (lockedAtLg && window.matchMedia?.("(min-width: 1024px)").matches) {
+      return;
+    }
     outputPanelRef.current?.scrollIntoView?.({
       block: "nearest",
       behavior: prefersReducedMotion() ? "auto" : "smooth",
     });
-  }, [executionResult]);
+  }, [executionResult, isDeployable, lockedAtLg]);
 
   // Escape dismisses the Accepted card, alongside the close button and a click
   // on the backdrop. The card is not a modal — it never traps focus — so the
