@@ -22,6 +22,9 @@ interface TestOutPageProps {
  * that is out of scope or below the {@link MIN_TEST_OUT_POOL} floor renders a
  * localized "unavailable" panel instead of the challenge. Auth is checked here
  * for a clean sign-in prompt; the API enforces it independently.
+ *
+ * Off by decision: this file is deliberately not named `page.tsx`, so the URL
+ * is a real 404. To bring it back, rename it and flip `isTestOutEnabled`.
  */
 export default async function TestOutPage({ params }: TestOutPageProps) {
   const { locale, slug } = await params;

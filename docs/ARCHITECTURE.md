@@ -696,7 +696,7 @@ grouping:
 | Auth                | 6     | `wallet`, `dynamic`, `callback`, `nonce`, link/unlink           |
 | Admin               | 16    | sync, publish pin, insights, flags, freeze, resync, recreate    |
 | Content (public)    | 9     | bundle projections, deployment-gated                            |
-| Lessons + learning  | 7     | `complete`, `reflect`, `reveal-solution`, review, test-out      |
+| Lessons + learning  | 7     | `complete`, `reflect`, `reveal-solution`, review, test-out off  |
 | AI                  | 4     | tutor turn, log, reset, comprehension-check seal                |
 | Gamification/social | 6     | quests, leaderboards, referrals                                 |
 | Community           | 9     | see §9                                                          |
