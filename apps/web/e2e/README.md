@@ -44,11 +44,12 @@ no network, no on-chain tx. The learner "session" is a locally-minted cookie
 
 ## The three specs
 
-| Spec         | File                  | Auth           | What it locks in                                                                                                      |
-| ------------ | --------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Catalog gate | `catalog.spec.ts`     | none           | Anonymous `/en/courses` renders **only** active courses; a deactivated course is absent (#711 regression, permanent). |
-| Learn loop   | `learn-loop.spec.ts`  | mocked session | Signed-in, enrolled learner works a quiz-only lesson and reaches the completed state.                                 |
-| Unsubscribe  | `unsubscribe.spec.ts` | none           | **Skipped until #769** (email feature). GET bad token → failure page; POST always-200.                                |
+| Spec         | File                    | Auth           | What it locks in                                                                                                      |
+| ------------ | ----------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Catalog gate | `catalog.spec.ts`       | none           | Anonymous `/en/courses` renders **only** active courses; a deactivated course is absent (#711 regression, permanent). |
+| Learn loop   | `learn-loop.spec.ts`    | mocked session | Signed-in, enrolled learner works a quiz-only lesson and reaches the completed state.                                 |
+| Unsubscribe  | `unsubscribe.spec.ts`   | none           | **Skipped until #769** (email feature). GET bad token → failure page; POST always-200.                                |
+| Editor size  | `mobile-editor.spec.ts` | none           | The mounted Monaco stays usable from 375px to 1440px; typing and the go-to-editor link work at 375px.                 |
 
 ## Mock-boundary map
 
@@ -58,6 +59,7 @@ no network, no on-chain tx. The learner "session" is a locally-minted cookie
 | Browser session                           | test        | locally-minted `sb-127-auth-token` cookie (no network)                                                                                 |
 | Profile / enrollment / progress (browser) | mock server | `GET /rest/v1/{profiles,enrollments,user_progress}` fixtures                                                                           |
 | `getUser` (middleware, SSR)               | mock server | `POST /auth/v1/user`                                                                                                                   |
+| Monaco CDN (browser)                      | test        | `page.route` serves jsdelivr's `monaco-editor/min` from `node_modules` (mobile-editor spec only)                                       |
 | On-chain completion (`completeLesson`)    | test        | `page.route` fulfils `POST /api/lessons/complete` — the E2E owns the browser↔route seam; the chain seam is the unit suites' job (#751) |
 
 ## Determinism
@@ -68,5 +70,5 @@ no network, no on-chain tx. The learner "session" is a locally-minted cookie
 - Fixtures (`harness/fixtures.mjs`) are the single source of truth shared by the
   mock server and the specs.
 - No spec names a course or lesson. `pickTargets` picks them from the committed
-  bundle (the active and deactivated courses, a quiz-only lesson and its answer
-  key), so a content release never needs a spec edit.
+  bundle (the active and deactivated courses, a code lesson, a quiz-only lesson
+  and its answer key), so a content release never needs a spec edit.

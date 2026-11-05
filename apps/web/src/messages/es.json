@@ -296,6 +296,7 @@
     "savingProgress": "Guardando progreso...",
     "verdictJudging": "Evaluando tu envío…",
     "verdictAccepted": "Aceptado",
+    "goToEditor": "Ir al editor",
     "verdictRejected": "No aceptado",
     "completionFailedChallenge": "Tu código pasó las pruebas de ejemplo, pero no superó el conjunto completo del servidor, incluidos los casos ocultos que el navegador no ejecuta. Revisa tu solución y envíala de nuevo.",
     "completionFailedEnrollment": "No pudimos verificar tu inscripción on-chain en este curso. Vuelve a inscribirte e inténtalo de nuevo.",

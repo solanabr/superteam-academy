@@ -71,6 +71,27 @@ describe("pickTargets", () => {
     );
   });
 
+  it("picks a code lesson outside the deactivated course and keeps its course active", () => {
+    const { CODE_LESSON, DEPLOYMENTS, ACTIVE_COURSE_SLUGS } = pickTargets(
+      [
+        course("first", ["quiz"]),
+        course("second", []),
+        course("third", ["with-code"]),
+      ],
+      lessons
+    );
+    expect(CODE_LESSON).toEqual({
+      courseSlug: "third",
+      lessonSlug: "with-code",
+    });
+    expect(ACTIVE_COURSE_SLUGS).toEqual(["first", "third"]);
+    expect(DEPLOYMENTS.map((d) => [d.content_id, d.is_active])).toEqual([
+      ["course-first", true],
+      ["course-third", true],
+      ["course-second", false],
+    ]);
+  });
+
   it("fails loudly when no second listed course exists", () => {
     expect(() =>
       pickTargets(

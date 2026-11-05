@@ -54,18 +54,26 @@ function quizOnly(lesson) {
 export function pickTargets(bundleCourses, lessons) {
   const courses = bundleCourses.filter((c) => c.unlisted !== true);
   const lessonsById = new Map(lessons.map((l) => [l._id, l]));
-  const loop = courses
-    .flatMap((course) =>
-      course.modules.flatMap((m) =>
-        m.lessons.map((ref) => ({ course, lesson: lessonsById.get(ref._ref) }))
-      )
+  const courseLessons = courses.flatMap((course) =>
+    course.modules.flatMap((m) =>
+      m.lessons.map((ref) => ({ course, lesson: lessonsById.get(ref._ref) }))
     )
-    .find(({ lesson }) => quizOnly(lesson));
+  );
+  const loop = courseLessons.find(({ lesson }) => quizOnly(lesson));
   if (!loop) throw new Error("e2e: no quiz-only lesson in the bundle");
   const deactivated = courses.find((c) => c._id !== loop.course._id);
   if (!deactivated) {
     throw new Error("e2e: the bundle needs a second listed course");
   }
+  // The editor-layout target: a code lesson in a course that isn't the
+  // deactivated one, which would 404. It may share the learn-loop course.
+  const code = courseLessons.find(
+    ({ course, lesson }) =>
+      course._id !== deactivated._id &&
+      lesson?.blocks?.some((b) => b._type === "code")
+  );
+  if (!code) throw new Error("e2e: no code lesson in the bundle");
+  const active = [...new Set([loop.course, code.course])];
 
   return {
     // The catalog gate (#711 regression, spec 2). Rows shaped like the
@@ -77,13 +85,13 @@ export function pickTargets(bundleCourses, lessons) {
     // One of each keeps the spec's two-directional assertion, and both are real
     // bundle courses, so neither side can pass because the id does not exist.
     DEPLOYMENTS: [
-      {
-        content_id: loop.course._id,
+      ...active.map((course) => ({
+        content_id: course._id,
         kind: "course",
         status: "synced",
         is_active: true,
         achievement_pda: null,
-      },
+      })),
       {
         content_id: deactivated._id,
         kind: "course",
@@ -92,8 +100,13 @@ export function pickTargets(bundleCourses, lessons) {
         achievement_pda: null,
       },
     ],
-    ACTIVE_COURSE_SLUGS: [loop.course.slug.current],
+    ACTIVE_COURSE_SLUGS: active.map((course) => course.slug.current),
     DEACTIVATED_COURSE_SLUG: deactivated.slug.current,
+    // The editor-layout target (mobile-editor.spec.ts).
+    CODE_LESSON: {
+      courseSlug: code.course.slug.current,
+      lessonSlug: code.lesson.slug.current,
+    },
     // The learn-loop target (specs 1 and 4).
     LEARN_LOOP: {
       courseId: loop.course._id,
