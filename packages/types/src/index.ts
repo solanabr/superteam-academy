@@ -53,6 +53,8 @@ export type {
 
 export { PDA_SEEDS, setBit, checkBit, popcount } from "./onchain";
 
+export { stripHtmlComments } from "./html-comments";
+
 export type {
   ForumCategory,
   ThreadType,
