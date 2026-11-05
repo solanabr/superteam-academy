@@ -289,9 +289,14 @@
     "markComplete": "Marcar como Concluída",
     "lessonComplete": "Aula Concluída!",
     "challengeLocked": "Desafio concluído. O código está bloqueado.",
+    "codePartLabel": "Parte {number} de {total}",
+    "codePartSaved": "Salvo. Envie a parte {parts} para concluir esta lição.",
+    "codePartGoTo": "Ir para a parte {number}",
+    "codePartsUnfinished": "Envie todas as partes desta lição para concluí-la.",
     "savingProgress": "Salvando progresso...",
     "verdictJudging": "Avaliando seu envio…",
     "verdictAccepted": "Aceito",
+    "goToEditor": "Ir para o editor",
     "verdictRejected": "Não aceito",
     "completionFailedChallenge": "Seu código passou nos testes de exemplo, mas não passou na suíte completa do servidor — incluindo casos ocultos que o navegador não executa. Revise sua solução e envie novamente.",
     "completionFailedEnrollment": "Não conseguimos verificar sua matrícula on-chain neste curso. Matricule-se novamente e tente de novo.",
@@ -533,10 +538,9 @@
     "leagueSubtitle": "Seu grupo da semana — a classificação atual",
     "globalSubtitle": "XP de todos os tempos entre todos",
     "referrals": "Indicações",
-    "referralSubtitle": "Convide builders, ganhe pontos e prêmios a cada temporada",
+    "referralSubtitle": "Convide builders e ganhe pontos",
     "referralSeason": "Temporada {number}",
     "referralSeasonEnds": "Termina em {date}",
-    "referralSeasonRewards": "Os primeiros lugares ganham prêmios a cada temporada",
     "referralScoringInfo": "1 ponto quando alguém cria uma conta pelo seu link, mais 1 ponto para cada curso que essa pessoa concluir depois.",
     "referralScoringInfoLabel": "Como funcionam os pontos de indicação",
     "referralNoEntries": "Nenhuma indicação nesta temporada ainda — compartilhe seu link e abra o placar!",
@@ -1658,8 +1662,8 @@
     },
     "referral": {
       "title": "Um aviso honesto",
-      "body": "Todo curso aqui parte do princípio de que você já escreve JavaScript. Ainda não ensinamos programação do zero — o freeCodeCamp ensina, e ensina bem. Volte quando o JavaScript estiver confortável; enquanto isso, fique à vontade para explorar.",
-      "link": "Comece pelo currículo de JavaScript do freeCodeCamp"
+      "body": "Este primeiro curso explica a Web3 e a blockchain com vídeos e leituras, então você já pode começar. Os cursos em que você constrói partem do princípio de que você já sabe programar. Ainda não ensinamos isso do zero — o currículo de JavaScript do freeCodeCamp ensina, e ensina bem.",
+      "link": "Aprenda a programar com o currículo de JavaScript do freeCodeCamp"
     },
     "screen2": {
       "title": "O que você veio fazer?",

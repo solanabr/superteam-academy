@@ -245,7 +245,7 @@
     {
       "_id": "course-solana-speedrun",
       "_type": "course",
-      "description": "Por que o sistema financeiro está migrando para a Solana, como a tecnologia funciona de verdade, e seu primeiro ativo na mainnet — em menos de 10 minutos.",
+      "description": "Por que o sistema financeiro está migrando para a Solana, como a tecnologia funciona de verdade, e seu primeiro registro onchain, conferido com os próprios olhos — em menos de 10 minutos.",
       "difficulty": "beginner",
       "slug": {
         "_type": "slug",

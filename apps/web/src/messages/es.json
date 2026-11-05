@@ -289,9 +289,14 @@
     "markComplete": "Marcar como Completada",
     "lessonComplete": "¡Lección Completada!",
     "challengeLocked": "Desafío completado. El código está bloqueado.",
+    "codePartLabel": "Parte {number} de {total}",
+    "codePartSaved": "Guardado. Envía la parte {parts} para completar esta lección.",
+    "codePartGoTo": "Ir a la parte {number}",
+    "codePartsUnfinished": "Envía todas las partes de esta lección para completarla.",
     "savingProgress": "Guardando progreso...",
     "verdictJudging": "Evaluando tu envío…",
     "verdictAccepted": "Aceptado",
+    "goToEditor": "Ir al editor",
     "verdictRejected": "No aceptado",
     "completionFailedChallenge": "Tu código pasó las pruebas de ejemplo, pero no superó el conjunto completo del servidor, incluidos los casos ocultos que el navegador no ejecuta. Revisa tu solución y envíala de nuevo.",
     "completionFailedEnrollment": "No pudimos verificar tu inscripción on-chain en este curso. Vuelve a inscribirte e inténtalo de nuevo.",
@@ -533,10 +538,9 @@
     "leagueSubtitle": "Tu grupo de la semana — la clasificación actual",
     "globalSubtitle": "XP de todos los tiempos entre todos",
     "referrals": "Referidos",
-    "referralSubtitle": "Invita builders, gana puntos, gana premios cada temporada",
+    "referralSubtitle": "Invita builders y gana puntos",
     "referralSeason": "Temporada {number}",
     "referralSeasonEnds": "Termina el {date}",
-    "referralSeasonRewards": "Los primeros lugares ganan premios cada temporada",
     "referralScoringInfo": "1 punto cuando alguien crea una cuenta con tu enlace, más 1 punto por cada curso que complete después.",
     "referralScoringInfoLabel": "Cómo funcionan los puntos de referidos",
     "referralNoEntries": "Aún no hay referidos esta temporada — ¡comparte tu enlace y abre la tabla!",
@@ -1640,7 +1644,7 @@
     "progress": "Paso {current} de {total}",
     "screen1": {
       "title": "¿Ya has programado antes?",
-      "subtitle": "Esto solo sirve para llevarte a la primera lección adecuada — puedes cambiar cuando quieras."
+      "subtitle": "Esto solo sirve para orientarte — puedes cambiar cuando quieras."
     },
     "exp": {
       "jsTs": {
@@ -1653,13 +1657,13 @@
       },
       "new": {
         "label": "Aún no he programado de forma profesional",
-        "desc": "Empieza desde cero, una lección a la vez."
+        "desc": "Te llevamos al catálogo para que elijas por dónde empezar."
       }
     },
     "referral": {
       "title": "Un aviso honesto",
-      "body": "Cada curso aquí asume que ya escribes JavaScript. Todavía no enseñamos a programar desde cero — freeCodeCamp sí, y lo hace bien. Vuelve cuando JavaScript te resulte cómodo; mientras tanto, mira con calma.",
-      "link": "Empieza con el currículo de JavaScript de freeCodeCamp"
+      "body": "Todavía no tenemos en español un curso para quien empieza a programar, así que te llevaremos al catálogo, donde algunos cursos aún no están en español. Los cursos disponibles en español asumen que ya sabes programar. Todavía no enseñamos eso — el currículo de JavaScript de freeCodeCamp sí, y lo hace bien.",
+      "link": "Aprende a programar con el currículo de JavaScript de freeCodeCamp"
     },
     "screen2": {
       "title": "¿A qué vienes?",

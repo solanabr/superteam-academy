@@ -289,9 +289,14 @@
     "markComplete": "Mark as Complete",
     "lessonComplete": "Lesson Complete!",
     "challengeLocked": "Challenge complete. The code is locked.",
+    "codePartLabel": "Part {number} of {total}",
+    "codePartSaved": "Saved. Submit part {parts} to complete this lesson.",
+    "codePartGoTo": "Go to part {number}",
+    "codePartsUnfinished": "Submit every part of this lesson to complete it.",
     "savingProgress": "Saving progress...",
     "verdictJudging": "Judging your submission…",
     "verdictAccepted": "Accepted",
+    "goToEditor": "Go to editor",
     "verdictRejected": "Not accepted",
     "completionFailedChallenge": "Your code passed the sample tests, but the server's full test suite — including hidden edge cases the browser doesn't run — didn't pass. Revisit your solution and submit again.",
     "completionFailedEnrollment": "We couldn't verify your on-chain enrollment for this course. Please re-enroll and try again.",
@@ -533,10 +538,9 @@
     "leagueSubtitle": "Your weekly cohort — live standings",
     "globalSubtitle": "All-time XP across everyone",
     "referrals": "Referrals",
-    "referralSubtitle": "Invite builders, earn points, win season rewards",
+    "referralSubtitle": "Invite builders and earn points",
     "referralSeason": "Season {number}",
     "referralSeasonEnds": "Ends {date}",
-    "referralSeasonRewards": "Top places win rewards every season",
     "referralScoringInfo": "1 point when someone creates an account through your link, plus 1 point for every course they complete afterwards.",
     "referralScoringInfoLabel": "How referral points work",
     "referralNoEntries": "No referrals yet this season — share your link and open the board!",
@@ -1658,8 +1662,8 @@
     },
     "referral": {
       "title": "One honest heads-up",
-      "body": "Every course here assumes you already write JavaScript. We do not teach programming from scratch yet — freeCodeCamp does, and does it well. Come back when JavaScript feels comfortable; you are welcome to look around in the meantime.",
-      "link": "Start with freeCodeCamp's JavaScript curriculum"
+      "body": "This first course explains how Solana works through videos and reading, so you can start right away. The courses where you build assume you already know how to program. We do not teach that from scratch yet — freeCodeCamp's JavaScript curriculum does, and does it well.",
+      "link": "Learn to code with freeCodeCamp's JavaScript curriculum"
     },
     "screen2": {
       "title": "What are you here to do?",

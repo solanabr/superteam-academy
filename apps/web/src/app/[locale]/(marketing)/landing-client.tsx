@@ -495,9 +495,10 @@ export function LandingPageClient({
                   className="hero-seq flex flex-wrap gap-3"
                   style={{ "--seq": 4 } as React.CSSProperties}
                 >
-                  {/* LX-A1: primary hero CTA deep-links straight into flagship
-                      lesson 1 \u2014 one click, no auth modal (anonymous access
-                      works; auth is deferred to the first completion attempt). */}
+                  {/* LX-A1: primary hero CTA goes straight to this locale's hero
+                      course, or the catalog when none fits \u2014 one click, no auth
+                      modal (anonymous access works; auth is deferred to the first
+                      completion attempt). */}
                   <Button variant="push" size="lg" asChild>
                     <Link href={flagshipLessonHref}>
                       {t("exploreCourses")} {"\u2192"}
@@ -710,8 +711,8 @@ export function LandingPageClient({
             )}
 
             <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-              {/* LX-A1: bottom "Get Started" deep-links into flagship lesson 1
-                  instead of opening the auth modal. */}
+              {/* LX-A1: bottom "Get Started" follows the hero CTA instead of
+                  opening the auth modal. */}
               {!isLoggedIn && (
                 <Button variant="push" size="lg" asChild>
                   <Link href={flagshipLessonHref}>

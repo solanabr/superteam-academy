@@ -163,13 +163,6 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
-    "path": "courses/solana-speedrun/lessons/seu-momento-onchain/assets/v04-flowchart.webp",
-    "sha256": "042f668a84c46ec146ae26bdcaa87f50d8661683361062562da193cd7670fd1b",
-    "size": 37312
-  },
-  {
-    "contentType": "image/webp",
-    "ext": "webp",
     "path": "courses/mastering-anchor-v2/lessons/m09-l3/assets/v06-timeline.webp",
     "sha256": "04b7c5a8e3194adce848925d62e80be2ead3a7619015c3642f5b20d4f1bfe71a",
     "size": 76136
@@ -257,13 +250,6 @@
     "path": "courses/solana-speedrun/lessons/como-funciona/assets/v05-diagram.webp",
     "sha256": "0733f3450b5acb9aec6b87761830fc5f5d29ee55224c9c818a7b1c98ad2de3ea",
     "size": 41688
-  },
-  {
-    "contentType": "image/webp",
-    "ext": "webp",
-    "path": "courses/solana-speedrun/lessons/seu-momento-onchain/assets/v03-table.webp",
-    "sha256": "0767fe38f8c6d27e56516b00106edef4d48608a31db3d19124d241acf0bdf7bc",
-    "size": 48820
   },
   {
     "contentType": "image/webp",
@@ -3495,6 +3481,13 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
+    "path": "courses/solana-speedrun/lessons/seu-momento-onchain/assets/v01-flowchart.webp",
+    "sha256": "6475f7cccb2e37e63b0c32eaa46f605047729c41c6eaa02eb33f806200cf3bcd",
+    "size": 43616
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
     "path": "courses/mastering-anchor-v2/lessons/m05-l1/assets/v09-diagram.webp",
     "sha256": "65425574cd2cf36d1c2ca36a544436980a15d91c67cece6d82ef244eb503056a",
     "size": 51868
@@ -3519,6 +3512,13 @@
     "path": "courses/solana-hackathon-expert/lessons/rehearsal/assets/v01-table.webp",
     "sha256": "657759956a34afa0289f064106c9634b581b807a2b6a95e7963b632b6b01fc5e",
     "size": 99408
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/solana-speedrun/lessons/seu-momento-onchain/assets/v02-diagram.webp",
+    "sha256": "65f23c353e148675c27f3e8aa07660df40dd9c0c9a6f4c8737b5f4b265df37b9",
+    "size": 47286
   },
   {
     "contentType": "image/webp",
@@ -4125,6 +4125,13 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
+    "path": "courses/solana-speedrun/lessons/seu-momento-onchain/assets/v04-flowchart.webp",
+    "sha256": "7902184ba9f806ab578ab551314cce55365c09a39b8fd4fe2395d3a5db300cb5",
+    "size": 45412
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
     "path": "courses/solana-hackathon-expert/lessons/validation-sprint/assets/v01-table.webp",
     "sha256": "7947af68e1e235a9e5fb26bdd72c468e80a7038667d71f1aa6b599f3389bc8bb",
     "size": 67126
@@ -4562,6 +4569,13 @@
     "path": "courses/visao-geral-solana/lessons/analisando-a-arquitetura-da-solana-para-o-relatorio/assets/v03-sonda-rpc-coletando-evidencias.webp",
     "sha256": "85ed0385d406c623b8673506ad7f4b835ec765ce8fc19698d732ca02a5b48166",
     "size": 102818
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/solana-speedrun/lessons/seu-momento-onchain/assets/v03-table.webp",
+    "sha256": "86157be40bbb4e86c178aad7e34627c4972170fb7cf0ea11f7c89bdb7eafd2a7",
+    "size": 52968
   },
   {
     "contentType": "image/webp",
@@ -7142,13 +7156,6 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
-    "path": "courses/solana-speedrun/lessons/seu-momento-onchain/assets/v02-diagram.webp",
-    "sha256": "d59bac7abc4090e95880f8d11332a66c57091f60637a00f26e5d2d65b2444474",
-    "size": 42640
-  },
-  {
-    "contentType": "image/webp",
-    "ext": "webp",
     "path": "courses/solana-payments-commerce/lessons/m05-l3/assets/v02-flowchart.webp",
     "sha256": "d5f455abfc717244d87892609528832a202ab6c965149534e463bd6701472879",
     "size": 53044
@@ -7775,13 +7782,6 @@
     "path": "courses/visao-geral-solana/l10n/en/lessons/fluxo-de-transacoes-e-modelo-de-processamento/assets/v03-estagios-componentes-e-checkpoints.webp",
     "sha256": "e85aa5e6465b4fcd653b517ec8c88d745d9b572902bdd4caab03f6c311e33e9e",
     "size": 406298
-  },
-  {
-    "contentType": "image/webp",
-    "ext": "webp",
-    "path": "courses/solana-speedrun/lessons/seu-momento-onchain/assets/v01-flowchart.webp",
-    "sha256": "e8685f773d5ff55c75c46ec7b2438bdd1e807890005b06919b8354d2568c3043",
-    "size": 32772
   },
   {
     "contentType": "image/webp",
