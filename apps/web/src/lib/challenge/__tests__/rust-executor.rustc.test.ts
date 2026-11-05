@@ -10,50 +10,17 @@
  * `expectedOutput: "max=930,over=1"`, which rustc rejects, so the reference
  * solution failed every test.
  *
- * Skipped when rustc isn't on PATH.
+ * Skipped when rustc isn't on PATH, except in CI, where that fails.
  */
-import { spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, expect, it, vi } from "vitest";
 import type { AdminTestCase } from "@superteam-lms/types";
 
 vi.mock("server-only", () => ({}));
 import { runRustSubmission } from "../rust-executor";
-
-const HAS_RUSTC =
-  spawnSync("rustc", ["--version"], { stdio: "ignore" }).status === 0;
-
-/** Compile and run what the grader would have sent to the Playground. */
-function stubPlaygroundWithLocalRustc(): void {
-  vi.stubGlobal("fetch", async (_url: string, init: { body: string }) => {
-    const { code } = JSON.parse(init.body) as { code: string };
-    const dir = mkdtempSync(join(tmpdir(), "rust-executor-"));
-    try {
-      const src = join(dir, "main.rs");
-      const bin = join(dir, "main");
-      writeFileSync(src, code);
-      const build = spawnSync("rustc", ["--edition", "2021", "-o", bin, src], {
-        encoding: "utf8",
-      });
-      const run =
-        build.status === 0
-          ? spawnSync(bin, { encoding: "utf8", timeout: 10_000 })
-          : null;
-      return {
-        ok: true,
-        json: async () => ({
-          success: build.status === 0,
-          stdout: run?.stdout ?? "",
-          stderr: build.stderr + (run?.stderr ?? ""),
-        }),
-      } as unknown as Response;
-    } finally {
-      rmSync(dir, { recursive: true, force: true });
-    }
-  });
-}
+import {
+  describeWithRustc,
+  stubPlaygroundWithLocalRustc,
+} from "./fixtures/local-rustc";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -102,7 +69,7 @@ const STRING_VECTORS: AdminTestCase[] = [
   vector("t5", "vec![500, 499], 500", '"max=500,over=0"'),
 ];
 
-describe.skipIf(!HAS_RUSTC)("runRustSubmission against a real rustc", () => {
+describeWithRustc("runRustSubmission against a real rustc", () => {
   it("passes a String-returning fn when expectedOutput is a string literal", async () => {
     stubPlaygroundWithLocalRustc();
     const r = await runRustSubmission(LATENCY_REPORT, STRING_VECTORS);
