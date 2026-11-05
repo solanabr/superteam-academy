@@ -7,6 +7,7 @@
  * the platform works without observability.
  */
 import * as Sentry from "@sentry/nextjs";
+import { sentryPrivacyOptions } from "@/lib/analytics/sentry-scrub";
 
 const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
 
@@ -27,6 +28,7 @@ if (dsn) {
     environment: process.env.NODE_ENV,
     // 100% of transactions in dev, 10% in production.
     tracesSampleRate: process.env.NODE_ENV === "development" ? 1.0 : 0.1,
+    ...sentryPrivacyOptions,
     ...(release ? { release } : {}),
   });
 

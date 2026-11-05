@@ -11,6 +11,7 @@ import {
 import type { GeminiUsageMetadata } from "@/lib/ai/spend-ledger";
 import {
   modelForReflectionReply,
+  geminiHeaders,
   geminiUrl,
   MINIMAL_THINKING_CONFIG,
 } from "@/lib/ai/models";
@@ -130,9 +131,9 @@ export async function maybeGenerateReflectionReply({
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REPLY_TIMEOUT_MS);
   try {
-    const response = await fetch(`${geminiUrl(model)}?key=${apiKey}`, {
+    const response = await fetch(geminiUrl(model), {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: geminiHeaders(apiKey),
       signal: controller.signal,
       body: JSON.stringify({
         contents: [

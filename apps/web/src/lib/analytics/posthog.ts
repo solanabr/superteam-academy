@@ -12,16 +12,18 @@
  * 53-pageleave / 14-pageview gap observed 2026-08-19).
  */
 
+import { scrubPostHogEvent } from "./posthog-scrub";
+
 type PostHogInstance = {
   init: (apiKey: string, options: Record<string, unknown>) => void;
   capture: (eventName: string, properties?: Record<string, unknown>) => void;
-  identify: (distinctId: string, properties?: Record<string, unknown>) => void;
+  identify: (distinctId: string) => void;
   reset: () => void;
 };
 
 type QueuedCall =
   | { kind: "capture"; name: string; properties?: Record<string, unknown> }
-  | { kind: "identify"; userId: string; traits?: Record<string, unknown> }
+  | { kind: "identify"; userId: string }
   | { kind: "reset" };
 
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY ?? "";
@@ -47,7 +49,7 @@ function deliver(call: QueuedCall): void {
       posthog.capture(call.name, call.properties);
       break;
     case "identify":
-      posthog.identify(call.userId, call.traits);
+      posthog.identify(call.userId);
       break;
     case "reset":
       posthog.reset();
@@ -107,6 +109,15 @@ export async function initPostHog(): Promise<void> {
       capture_pageview: false, // we manage page views ourselves
       capture_pageleave: true,
       persistence: "localStorage+cookie",
+      before_send: scrubPostHogEvent,
+      // Replay stays off whatever the project settings say. The SDK checks this
+      // before it honours the remote flag. The masking below only matters if
+      // this line is ever removed; chat text carries `ph-no-capture`.
+      disable_session_recording: true,
+      session_recording: {
+        maskAllInputs: true,
+        blockSelector: ".monaco-editor",
+      },
     });
 
     posthog = ph;
@@ -136,13 +147,11 @@ export function trackPostHogEvent(
 }
 
 /**
- * Identify a user in PostHog. Buffered if called before init resolves.
+ * Identify a user in PostHog by id alone. Buffered if called before init
+ * resolves.
  */
-export function identifyPostHogUser(
-  userId: string,
-  traits?: Record<string, unknown>
-): void {
-  dispatch({ kind: "identify", userId, traits });
+export function identifyPostHogUser(userId: string): void {
+  dispatch({ kind: "identify", userId });
 }
 
 /**

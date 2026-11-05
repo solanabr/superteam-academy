@@ -28,6 +28,54 @@ async function loadModuleWithFailingImport(): Promise<PostHogModule> {
   return import("../posthog");
 }
 
+describe("PostHog init options", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.clearAllMocks();
+    vi.stubEnv("NEXT_PUBLIC_POSTHOG_KEY", "phc_test");
+    vi.stubEnv("NEXT_PUBLIC_POSTHOG_HOST", "https://ph.example.com");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.doUnmock("posthog-js");
+    vi.restoreAllMocks();
+  });
+
+  async function initOptions(): Promise<Record<string, unknown>> {
+    const { initPostHog } = await loadModule();
+    await initPostHog();
+    return mockPostHog.init.mock.calls[0]![1] as Record<string, unknown>;
+  }
+
+  it("pins session replay off, so a dashboard toggle can't start it", async () => {
+    expect((await initOptions()).disable_session_recording).toBe(true);
+  });
+
+  it("masks inputs and blocks the editor if replay is ever turned on", async () => {
+    expect((await initOptions()).session_recording).toEqual({
+      maskAllInputs: true,
+      blockSelector: ".monaco-editor",
+    });
+  });
+
+  it("sends every event through the scrubber", async () => {
+    const { scrubPostHogEvent } = await import("../posthog-scrub");
+
+    expect((await initOptions()).before_send).toBe(scrubPostHogEvent);
+  });
+
+  it("identifies by user id alone", async () => {
+    const { initPostHog, identifyPostHogUser } = await loadModule();
+    await initPostHog();
+
+    identifyPostHogUser("user-1");
+
+    expect(mockPostHog.identify).toHaveBeenCalledTimes(1);
+    expect(mockPostHog.identify.mock.calls[0]).toEqual(["user-1"]);
+  });
+});
+
 describe("PostHog pre-init queue", () => {
   beforeEach(() => {
     vi.resetModules();

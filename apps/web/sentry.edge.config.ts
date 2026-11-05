@@ -6,6 +6,7 @@
  * `NEXT_PUBLIC_SENTRY_DSN` is set, so it is a no-op when unconfigured.
  */
 import * as Sentry from "@sentry/nextjs";
+import { sentryPrivacyOptions } from "@/lib/analytics/sentry-scrub";
 
 const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
 
@@ -14,6 +15,7 @@ if (dsn) {
     dsn,
     environment: process.env.NODE_ENV,
     tracesSampleRate: process.env.NODE_ENV === "development" ? 1.0 : 0.1,
+    ...sentryPrivacyOptions,
   });
 
   // A malformed DSN makes `init` bail without a client — and with `debug`
