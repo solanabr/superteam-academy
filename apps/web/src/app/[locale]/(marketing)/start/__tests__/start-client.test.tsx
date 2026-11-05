@@ -175,10 +175,25 @@ describe("/start intake — E7 route override + a11y", () => {
     tap(/^Skip$/i);
     tap(/3 lessons a day/i);
 
-    expect(events.trackOnboardingRouteAccepted).toHaveBeenCalledWith(
-      true,
-      null
+    // No course was recommended, so there is no acceptance to record.
+    expect(events.trackOnboardingRouteAccepted).not.toHaveBeenCalled();
+    expect(events.trackOnboardingCompleted).toHaveBeenCalled();
+    expect(push).toHaveBeenCalledWith("/en/courses");
+  });
+
+  it("records no override when browsing with no course recommended", () => {
+    renderStart({
+      ...ROUTES,
+      3: { courseId: null, href: "/en/courses" },
+    });
+    tap(/haven't written code professionally/i);
+    tap(/Land a Solana developer role/i);
+    tap(/^Skip$/i);
+    fireEvent.click(
+      screen.getByRole("button", { name: /browse all courses/i })
     );
+
+    expect(events.trackOnboardingRouteAccepted).not.toHaveBeenCalled();
     expect(push).toHaveBeenCalledWith("/en/courses");
   });
 

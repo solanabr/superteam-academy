@@ -220,6 +220,7 @@ describe("marketing copy bounds (MAS-24 / BCB-561)", () => {
         expect(s.referral.body).toMatch(copy.catalog);
         expect(s.referral.body).not.toMatch(copy.firstCourse);
         expect(s.exp.new.desc).not.toMatch(copy.fromScratch);
+        expect(s.exp.new.desc).toMatch(copy.catalog);
         expect(s.screen1.subtitle).not.toMatch(copy.firstLesson);
       }
     });

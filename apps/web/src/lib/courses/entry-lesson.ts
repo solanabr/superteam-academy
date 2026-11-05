@@ -1,5 +1,5 @@
 import { getCourseLessons, getCourseSlugById } from "@/lib/content/queries";
-import { DEFAULT_SEGMENT, entryCourseFor } from "@/lib/courses/learner-segment";
+import { heroEntryCourseFor } from "@/lib/courses/learner-segment";
 
 /**
  * Resolves a content course id into its first-lesson deep-link for `locale`.
@@ -31,16 +31,12 @@ export async function resolveEntryLessonHref(
 }
 
 /**
- * The landing-page deep-link target (LX-A1): lesson 1 of the DEFAULT_SEGMENT
- * entry course for this locale, so an anonymous landing visitor and a /start
- * segment-1 completer converge on the same first lesson. Sync-gated identically
- * to the funnel routes.
+ * The landing-page CTA target (LX-A1): lesson 1 of this locale's hero course, or
+ * the catalog when no course suits an unknown visitor in this language.
+ * Sync-gated identically to the funnel routes.
  */
 export async function resolveFlagshipLessonHref(
   locale: string
 ): Promise<string> {
-  return resolveEntryLessonHref(
-    locale,
-    entryCourseFor(DEFAULT_SEGMENT, locale)
-  );
+  return resolveEntryLessonHref(locale, heroEntryCourseFor(locale));
 }

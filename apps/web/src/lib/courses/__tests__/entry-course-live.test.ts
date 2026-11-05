@@ -7,8 +7,8 @@ import { availableLocales, docSourceLocale } from "@/lib/content/localize";
 import { getCourseLessons } from "@/lib/content/queries";
 import { coursesById, l10nByCourseId, lessonsById } from "@/lib/content/store";
 import {
-  DEFAULT_SEGMENT,
   entryCourseFor,
+  heroEntryCourseFor,
   type LearnerSegment,
 } from "@/lib/courses/learner-segment";
 import { locales, type Locale } from "@/lib/i18n/config";
@@ -65,18 +65,18 @@ vi.mock("@/lib/content/deployments", async (importActual) => {
 const SEGMENTS: LearnerSegment[] = [1, 2, 3];
 
 /**
- * The routing table. Duplicated here on purpose — asserting the resolver
+ * The routing tables. Duplicated here on purpose — asserting the resolver
  * against a literal expectation is what makes an unintended table edit red.
- * The reasoning per cell lives next to the table in learner-segment.ts.
+ * The reasoning per cell lives next to the tables in learner-segment.ts.
  */
 const EXPECTED_ENTRY: Record<Locale, Record<LearnerSegment, string | null>> = {
   "pt-BR": {
-    1: "course-intro-web3-blockchain",
+    1: "course-rust-ts-fundamentals",
     2: "course-digital-assets",
     3: "course-intro-web3-blockchain",
   },
   en: {
-    1: "course-btc-to-sol-evolution",
+    1: "course-rust-ts-fundamentals",
     2: "course-digital-assets",
     3: "course-visao-geral-solana",
   },
@@ -87,13 +87,28 @@ const EXPECTED_ENTRY: Record<Locale, Record<LearnerSegment, string | null>> = {
   },
 };
 
-/** Every locale/segment pair that routes to a course rather than the catalog. */
-const ROUTED = locales.flatMap((locale) =>
-  SEGMENTS.flatMap((segment) => {
-    const courseId = entryCourseFor(segment, locale);
-    return courseId ? [{ locale, segment, courseId }] : [];
-  })
-);
+/** The landing hero, for a visitor who hasn't told us anything yet. */
+const EXPECTED_HERO: Record<Locale, string | null> = {
+  "pt-BR": "course-intro-web3-blockchain",
+  en: null,
+  es: null,
+};
+
+/** Every route, segment or hero, that goes to a course rather than the catalog. */
+const ROUTED: Array<{
+  locale: Locale;
+  segment: LearnerSegment | "hero";
+  courseId: string;
+}> = locales.flatMap((locale) => {
+  const hero = heroEntryCourseFor(locale);
+  return [
+    ...(hero ? [{ locale, segment: "hero" as const, courseId: hero }] : []),
+    ...SEGMENTS.flatMap((segment) => {
+      const courseId = entryCourseFor(segment, locale);
+      return courseId ? [{ locale, segment, courseId }] : [];
+    }),
+  ];
+});
 
 // Courses no longer in the bundle: the 5 CATALOG §3 retires (deactivated
 // on-chain) plus the track-1 ladder + EVM elective parked under `_draft/` in
@@ -122,6 +137,14 @@ describe("entry routing — live bundle", () => {
           `${locale} segment ${segment} entry course`
         ).toBe(EXPECTED_ENTRY[locale][segment]);
       }
+    }
+  });
+
+  it("matches the agreed hero table for every locale", () => {
+    for (const locale of locales) {
+      expect(heroEntryCourseFor(locale), `${locale} hero`).toBe(
+        EXPECTED_HERO[locale]
+      );
     }
   });
 
@@ -163,7 +186,10 @@ describe("entry routing — live bundle", () => {
     }
   });
 
-  it("a translated entry has every lesson translated, not just the course card", async () => {
+  // Overlays merge per leaf, so a lesson whose overlay exists but lacks a prose
+  // block still renders that block in the source language. Having the lesson
+  // key proves nothing; each prose block must carry translated text.
+  it("a translated entry carries every lesson's prose, not just the course card", async () => {
     for (const { locale, courseId } of ROUTED) {
       const doc = coursesById.get(courseId)!;
       if (docSourceLocale(doc) === locale) continue;
@@ -172,10 +198,24 @@ describe("entry routing — live bundle", () => {
       const overlay = l10nByCourseId.get(courseId)?.[locale]?.lessons ?? {};
       expect(lessons.length).toBeGreaterThan(0);
       for (const lesson of lessons) {
-        expect(
-          overlay[lesson._id],
-          `${courseId} lesson ${lesson._id} has no ${locale} translation`
-        ).toBeDefined();
+        const blocks = (lessonsById.get(lesson._id)?.blocks ?? []) as Array<{
+          _key: string;
+          _type: string;
+          src?: string;
+        }>;
+        const translated = (overlay[lesson._id]?.blocks ?? {}) as Record<
+          string,
+          { src?: unknown } | undefined
+        >;
+        const prose = blocks.filter((b) => b._type === "prose");
+        expect(prose.length, `${lesson._id} has no prose`).toBeGreaterThan(0);
+        for (const block of prose) {
+          const where = `${courseId} ${lesson._id}#${block._key} in ${locale}`;
+          const src = translated[block._key]?.src;
+          expect(typeof src, `${where} has no prose`).toBe("string");
+          expect((src as string).trim(), `${where} is empty`).not.toBe("");
+          expect(src, `${where} is untranslated`).not.toBe(block.src);
+        }
       }
     }
   });
@@ -207,17 +247,11 @@ describe("entry routing — live bundle", () => {
     ).resolves.toBe("/es/courses");
   });
 
-  it("the landing deep-link follows the default segment's entry per locale", async () => {
-    const heroSlug: Record<Locale, string> = {
-      "pt-BR": "intro-web3-blockchain",
-      en: "btc-to-sol-evolution",
-      es: "rust-ts-fundamentals",
-    };
-    for (const locale of locales) {
-      expect(EXPECTED_ENTRY[locale][DEFAULT_SEGMENT]).not.toBeNull();
-      expect(await resolveFlagshipLessonHref(locale)).toMatch(
-        new RegExp(`^/${locale}/courses/${heroSlug[locale]}/lessons/[^/]+$`)
-      );
-    }
+  it("the landing hero deep-links pt-BR and sends en and es to their catalogs", async () => {
+    expect(await resolveFlagshipLessonHref("pt-BR")).toMatch(
+      /^\/pt-BR\/courses\/intro-web3-blockchain\/lessons\/[^/]+$/
+    );
+    expect(await resolveFlagshipLessonHref("en")).toBe("/en/courses");
+    expect(await resolveFlagshipLessonHref("es")).toBe("/es/courses");
   });
 });

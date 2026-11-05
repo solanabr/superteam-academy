@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { getCourseLessons, getCourseSlugById } from "@/lib/content/queries";
-import { DEFAULT_SEGMENT, entryCourseFor } from "@/lib/courses/learner-segment";
+import { heroEntryCourseFor } from "@/lib/courses/learner-segment";
 import {
   resolveEntryLessonHref,
   resolveFlagshipLessonHref,
@@ -14,7 +14,7 @@ vi.mock("@/lib/content/queries", () => ({
 const slugOf = vi.mocked(getCourseSlugById);
 const lessonsOf = vi.mocked(getCourseLessons);
 
-const FLAGSHIP = entryCourseFor(DEFAULT_SEGMENT, "en")!;
+const HERO_PT = heroEntryCourseFor("pt-BR")!;
 
 beforeEach(() => {
   slugOf.mockReset();
@@ -64,23 +64,20 @@ describe("resolveEntryLessonHref — F1 sync gating", () => {
 });
 
 describe("resolveFlagshipLessonHref — landing deep-link (LX-A1)", () => {
-  it("targets the DEFAULT_SEGMENT entry course's first lesson", async () => {
+  it("targets the locale's hero course's first lesson", async () => {
     lessonsOf.mockResolvedValue([lesson("welcome")]);
-    const href = await resolveFlagshipLessonHref("en");
-    expect(slugOf).toHaveBeenCalledWith(FLAGSHIP);
-    expect(href).toBe(`/en/courses/${FLAGSHIP}/lessons/welcome`);
-  });
-
-  it("picks the entry course for the visitor's locale", async () => {
-    lessonsOf.mockResolvedValue([lesson("welcome")]);
-    const ptEntry = entryCourseFor(DEFAULT_SEGMENT, "pt-BR")!;
-    expect(ptEntry).not.toBe(FLAGSHIP);
     const href = await resolveFlagshipLessonHref("pt-BR");
-    expect(slugOf).toHaveBeenCalledWith(ptEntry);
-    expect(href).toBe(`/pt-BR/courses/${ptEntry}/lessons/welcome`);
+    expect(slugOf).toHaveBeenCalledWith(HERO_PT);
+    expect(href).toBe(`/pt-BR/courses/${HERO_PT}/lessons/welcome`);
   });
 
-  it("falls back to the catalog when the flagship course is unsynced", async () => {
+  it("goes to the catalog without a lookup when the locale has no hero course", async () => {
+    expect(await resolveFlagshipLessonHref("en")).toBe("/en/courses");
+    expect(slugOf).not.toHaveBeenCalled();
+    expect(lessonsOf).not.toHaveBeenCalled();
+  });
+
+  it("falls back to the catalog when the hero course is unsynced", async () => {
     lessonsOf.mockResolvedValue([]);
     const href = await resolveFlagshipLessonHref("pt-BR");
     expect(href).toBe("/pt-BR/courses");

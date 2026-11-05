@@ -66,28 +66,26 @@ export const SEGMENT_PATH_MODALITY: Record<
  * without the locale drops /en and /es visitors into Portuguese. A `null` entry
  * means no course fits that visitor, and they go to the catalog instead.
  *
- * - pt-BR 1/3: `course-intro-web3-blockchain`, first in the beginner path.
- * - en 1: `course-btc-to-sol-evolution`, written in English and hands-on from
- *   the first lesson. It leans on the terminal, which segment 1 already has.
- * - en 3: `course-visao-geral-solana`, the English translation of the concept
- *   course. It needs no toolchain, which is why segment 3 starts here.
- * - es 1: `course-rust-ts-fundamentals`, the only beginner course with a
- *   Spanish translation. It expects a learner who can already program.
- * - es 3: nothing in Spanish fits someone new to programming, so the catalog.
- * - all 2: `course-digital-assets`, the one course that opens by assuming
- *   Solana fundamentals without assuming Anchor, in all three languages.
+ * - Segment 1 (ships JS/TS): `course-rust-ts-fundamentals`, which expects a
+ *   working programmer who is new to Rust and web3. Translated into all three.
+ * - Segment 2 (ships on-chain): `course-digital-assets`, which opens by assuming
+ *   Solana fundamentals without assuming Anchor. Translated into all three.
+ * - Segment 3 (new to code): the no-code course each locale can read. pt-BR gets
+ *   `course-intro-web3-blockchain`, first in the beginner path; en gets the
+ *   English translation of `course-visao-geral-solana`; nothing in Spanish
+ *   fits, so es gets the catalog.
  */
 export const SEGMENT_ENTRY_COURSE: Record<
   Locale,
   Record<LearnerSegment, string | null>
 > = {
   "pt-BR": {
-    1: "course-intro-web3-blockchain",
+    1: "course-rust-ts-fundamentals",
     2: "course-digital-assets",
     3: "course-intro-web3-blockchain",
   },
   en: {
-    1: "course-btc-to-sol-evolution",
+    1: "course-rust-ts-fundamentals",
     2: "course-digital-assets",
     3: "course-visao-geral-solana",
   },
@@ -98,15 +96,35 @@ export const SEGMENT_ENTRY_COURSE: Record<
   },
 };
 
+/**
+ * The landing hero's entry course. It is its own table because a landing visitor
+ * has told us nothing yet: reusing a segment's cell would pick a course for
+ * someone we know about. Only pt-BR has a course that suits an unknown visitor,
+ * the first one in the beginner path. en and es get the catalog (`null`).
+ */
+export const HERO_ENTRY_COURSE: Record<Locale, string | null> = {
+  "pt-BR": "course-intro-web3-blockchain",
+  en: null,
+  es: null,
+};
+
+function knownLocale(locale: string): Locale {
+  return (locales as readonly string[]).includes(locale)
+    ? (locale as Locale)
+    : defaultLocale;
+}
+
 /** The course `segment` enters at in `locale`; `null` routes to the catalog. */
 export function entryCourseFor(
   segment: LearnerSegment,
   locale: string
 ): string | null {
-  const known = (locales as readonly string[]).includes(locale)
-    ? (locale as Locale)
-    : defaultLocale;
-  return SEGMENT_ENTRY_COURSE[known][segment];
+  return SEGMENT_ENTRY_COURSE[knownLocale(locale)][segment];
+}
+
+/** The course the landing hero enters at in `locale`; `null` routes to the catalog. */
+export function heroEntryCourseFor(locale: string): string | null {
+  return HERO_ENTRY_COURSE[knownLocale(locale)];
 }
 
 /**

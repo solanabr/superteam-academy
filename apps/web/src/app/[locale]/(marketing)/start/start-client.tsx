@@ -148,13 +148,17 @@ export function StartIntakeClient({
     trackOnboardingStepCompleted(4, n);
     if (experience && goal && segment) {
       trackOnboardingCompleted({ experience, goal, dailyGoal: n });
-      trackOnboardingRouteAccepted(true, recommendedCourseId);
+      if (recommendedCourseId) {
+        trackOnboardingRouteAccepted(true, recommendedCourseId);
+      }
       router.push(routes[segment].href);
     }
   }
 
   function browseAll() {
-    trackOnboardingRouteAccepted(false, recommendedCourseId);
+    if (recommendedCourseId) {
+      trackOnboardingRouteAccepted(false, recommendedCourseId);
+    }
     router.push(browseAllHref);
   }
 

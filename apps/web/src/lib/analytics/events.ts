@@ -184,12 +184,11 @@ export function trackOnboardingGoalCommitted(dailyGoal: number): void {
  * `onboarding_route_accepted` — E7 segment-routing acceptance. `accepted` is
  * true when the learner takes the recommended entry course, false when they
  * override via "Browse all courses". `recommendedCourseId` is the content id
- * the segment routed them to either way, or `null` when no course fits that
- * segment in the visitor's locale and the route is the catalog.
+ * the segment routed them to either way.
  */
 export function trackOnboardingRouteAccepted(
   accepted: boolean,
-  recommendedCourseId: string | null
+  recommendedCourseId: string
 ): void {
   trackEvent("onboarding_route_accepted", { accepted, recommendedCourseId });
 }
