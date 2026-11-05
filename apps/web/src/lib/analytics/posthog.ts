@@ -12,9 +12,13 @@
  * 53-pageleave / 14-pageview gap observed 2026-08-19).
  */
 
-import { scrubPostHogEvent } from "./posthog-scrub";
+import {
+  scrubPersistedPostHogState,
+  scrubPostHogEvent,
+  type PostHogPersistedState,
+} from "./posthog-scrub";
 
-type PostHogInstance = {
+type PostHogInstance = PostHogPersistedState & {
   init: (apiKey: string, options: Record<string, unknown>) => void;
   capture: (eventName: string, properties?: Record<string, unknown>) => void;
   identify: (distinctId: string) => void;
@@ -110,6 +114,12 @@ export async function initPostHog(): Promise<void> {
       capture_pageleave: true,
       persistence: "localStorage+cookie",
       before_send: scrubPostHogEvent,
+      // The app reads no flags, and a /flags request carries stored person
+      // properties without passing through before_send. This also stops the
+      // remote config load, so project settings no longer change what the SDK
+      // captures: what runs is what this object says.
+      advanced_disable_flags: true,
+      capture_performance: { web_vitals: true },
       // Replay stays off whatever the project settings say. The SDK checks this
       // before it honours the remote flag. The masking below only matters if
       // this line is ever removed; chat text carries `ph-no-capture`.
@@ -119,6 +129,8 @@ export async function initPostHog(): Promise<void> {
         blockSelector: ".monaco-editor",
       },
     });
+
+    scrubPersistedPostHogState(ph);
 
     posthog = ph;
     // Flush everything captured while the import was in flight, in order.

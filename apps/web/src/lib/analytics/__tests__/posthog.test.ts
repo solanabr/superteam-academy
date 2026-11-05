@@ -59,6 +59,16 @@ describe("PostHog init options", () => {
     });
   });
 
+  it("never calls /flags, which bypasses before_send", async () => {
+    expect((await initOptions()).advanced_disable_flags).toBe(true);
+  });
+
+  it("keeps web vitals on without the remote config that used to enable them", async () => {
+    expect((await initOptions()).capture_performance).toEqual({
+      web_vitals: true,
+    });
+  });
+
   it("sends every event through the scrubber", async () => {
     const { scrubPostHogEvent } = await import("../posthog-scrub");
 

@@ -18,6 +18,14 @@ const INCOMING_TOKEN = "telemetry-pipeline-incoming-token";
 // here would land in the envelope however the body is handled.
 const LEARNER_BODY = ["learner", "code", "and", "chat"].join("-");
 
+// An event processor throwing makes the SDK send an internal replacement event,
+// which bypasses beforeSend.
+const PROCESSOR_TRIGGER = "make the processor throw";
+const INTERNAL_MARKER = "processor threw";
+const INTERNAL_AUTH = "telemetry-pipeline-internal-auth";
+const INTERNAL_IP = "203.0.113.77";
+const INTERNAL_QUERY = "telemetry-pipeline-internal-query";
+
 describe("Sentry server pipeline", () => {
   const sent: string[] = [];
   let server: Server;
@@ -34,6 +42,9 @@ describe("Sentry server pipeline", () => {
       await new Promise((resolve) => req.on("end", resolve));
       if (req.url?.startsWith("/api/ai/partner")) {
         Sentry.captureException(new Error("handler failed"));
+      }
+      if (req.url?.startsWith("/api/internal")) {
+        Sentry.captureException(new Error(PROCESSOR_TRIGGER));
       }
       if (req.url?.includes("/envelope/")) {
         const raw = Buffer.concat(chunks);
@@ -57,7 +68,13 @@ describe("Sentry server pipeline", () => {
     vi.stubEnv("NODE_ENV", "development");
     Sentry = await import("@sentry/nextjs");
     await import("../../../../sentry.server.config");
-  });
+    Sentry.addEventProcessor((event) => {
+      if (event.exception?.values?.[0]?.value === PROCESSOR_TRIGGER) {
+        throw new Error(INTERNAL_MARKER);
+      }
+      return event;
+    });
+  }, 60_000);
 
   afterAll(async () => {
     await Sentry?.close?.();
@@ -118,5 +135,31 @@ describe("Sentry server pipeline", () => {
     expect.soft(out, "token in path").not.toContain(UNSUBSCRIBE);
     expect.soft(out, "incoming query").not.toContain(INCOMING_TOKEN);
     expect.soft(out, "request body").not.toContain(LEARNER_BODY);
+  });
+
+  it("scrubs the SDK's internal replacement event too", async () => {
+    sent.length = 0;
+
+    await fetch(`${base}/api/internal?token=${INTERNAL_QUERY}`, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${INTERNAL_AUTH}`,
+        "x-forwarded-for": INTERNAL_IP,
+        "x-vercel-id": "gru1::internal",
+      },
+    });
+    await Sentry.flush(2_000);
+
+    const events = sent
+      .flatMap((envelope) => envelope.split("\n"))
+      .filter((line) => line.includes(INTERNAL_MARKER));
+    expect(events.length).toBeGreaterThan(0);
+
+    const internal = events.join("\n");
+    expect(internal).toContain('"type":"internal"');
+    expect(internal).toContain("gru1::internal");
+    expect.soft(internal, "auth header").not.toContain(INTERNAL_AUTH);
+    expect.soft(internal, "client address").not.toContain(INTERNAL_IP);
+    expect.soft(internal, "query").not.toContain(INTERNAL_QUERY);
   });
 });

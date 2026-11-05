@@ -57,7 +57,9 @@ re-proposed (xpPerLesson is fixed on-chain; see the LX-C7 justified drop).
   below.
 - **Scrubbing**: every PostHog event passes through `posthog-scrub.ts` and every
   Sentry event, breadcrumb and span through `sentry-scrub.ts`. Session replay is
-  pinned off in `posthog.ts`. Tests pin both, so a change here is deliberate.
+  pinned off in `posthog.ts`, and `/flags` and remote config are disabled, so
+  project settings don't change what the SDK captures. Tests pin all of this.
+  GA4 gets the page URL with auth params removed (`stripAuthParams`).
 - **Typed helpers**: events with dedupe or shared shapes have helpers in
   `events.ts` — prefer those over raw `trackEvent` calls at new call sites.
 

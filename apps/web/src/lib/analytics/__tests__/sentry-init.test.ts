@@ -52,14 +52,20 @@ describe("Sentry.init options", () => {
   it.each(RUNTIMES)("%s init wires the shared scrubber", async (_n, load) => {
     const options = await optionsFrom(load);
     // After the load, so this is the module instance the config saw.
-    const { scrubSentryBreadcrumb, scrubSentryEvent, scrubSentrySpan } =
-      await import("../sentry-scrub");
+    const {
+      scrubSentryBreadcrumb,
+      scrubSentryEvent,
+      scrubSentrySpan,
+      sentryScrubIntegration,
+    } = await import("../sentry-scrub");
 
     expect(options.sendDefaultPii).toBe(false);
     expect(options.beforeSend).toBe(scrubSentryEvent);
     expect(options.beforeSendTransaction).toBe(scrubSentryEvent);
     expect(options.beforeSendSpan).toBe(scrubSentrySpan);
     expect(options.beforeBreadcrumb).toBe(scrubSentryBreadcrumb);
+    // beforeSend skips SDK-internal events; an event processor doesn't.
+    expect(options.integrations).toContain(sentryScrubIntegration);
   });
 
   it("server init never captures request bodies or local variables", async () => {

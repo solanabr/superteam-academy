@@ -1,6 +1,10 @@
 // @vitest-environment jsdom
-import { describe, it, expect } from "vitest";
-import { scrubPostHogEvent, type PostHogEvent } from "../posthog-scrub";
+import { describe, it, expect, vi } from "vitest";
+import {
+  scrubPersistedPostHogState,
+  scrubPostHogEvent,
+  type PostHogEvent,
+} from "../posthog-scrub";
 
 function event(overrides: Partial<PostHogEvent>): PostHogEvent {
   return { event: "$pageview", properties: {}, ...overrides };
@@ -168,5 +172,96 @@ describe("scrubPostHogEvent", () => {
 
   it("passes null through (an earlier hook rejected the event)", () => {
     expect(scrubPostHogEvent(null)).toBeNull();
+  });
+
+  it("truncates past the depth limit rather than passing values through", () => {
+    let deep: unknown = `${ORIGIN}/en?token=deep-secret`;
+    for (let i = 0; i < 20; i++) deep = { deep };
+
+    const out = scrubPostHogEvent(event({ properties: { deep } }));
+
+    expect(JSON.stringify(out)).not.toContain("deep-secret");
+    expect(JSON.stringify(out)).toContain("[truncated]");
+  });
+
+  it("clips long strings", () => {
+    const out = scrubPostHogEvent(
+      event({ properties: { $elements_chain: "a".repeat(100_000) } })
+    );
+
+    expect(
+      (out?.properties?.$elements_chain as string).length
+    ).toBeLessThanOrEqual(8_192);
+  });
+});
+
+describe("scrubPersistedPostHogState", () => {
+  function instance(props: Record<string, unknown>) {
+    return {
+      persistence: {
+        props,
+        register(next: Record<string, unknown>) {
+          Object.assign(this.props, next);
+        },
+        set_initial_person_info: vi.fn(),
+      },
+      sessionPersistence: {
+        props: {
+          $client_session_props: {
+            sessionId: "s1",
+            props: {
+              u: `${ORIGIN}/en?sessionToken=session-secret`,
+              r: "$direct",
+            },
+          },
+        } as Record<string, unknown>,
+        register(next: Record<string, unknown>) {
+          Object.assign(this.props, next);
+        },
+      },
+      get_session_id: vi.fn(),
+      resetPersonPropertiesForFlags: vi.fn(function (this: {
+        persistence: { props: Record<string, unknown> };
+      }) {
+        delete this.persistence.props.$stored_person_properties;
+      }),
+    };
+  }
+
+  it("clears stored person properties and sanitizes stored URLs", () => {
+    const ph = instance({
+      distinct_id: "user-1",
+      $stored_person_properties: { email: "learner@example.com" },
+      $initial_person_info: {
+        u: `${ORIGIN}/en?dynamicOauthCode=oauth-secret&utm_source=x`,
+        r: "https://accounts.google.com/?code=oauth-secret",
+      },
+    });
+
+    scrubPersistedPostHogState(ph);
+
+    expect(ph.persistence.props).toEqual({
+      distinct_id: "user-1",
+      $initial_person_info: {
+        u: `${ORIGIN}/en?utm_source=x`,
+        r: "https://accounts.google.com",
+      },
+    });
+    expect(JSON.stringify(ph.sessionPersistence.props)).not.toContain(
+      "session-secret"
+    );
+  });
+
+  it("writes initial URLs first, so a later capture can't store a raw one", () => {
+    const ph = instance({});
+
+    scrubPersistedPostHogState(ph);
+
+    expect(ph.persistence.set_initial_person_info).toHaveBeenCalledTimes(1);
+    expect(ph.get_session_id).toHaveBeenCalledTimes(1);
+  });
+
+  it("does nothing on an instance with no persistence", () => {
+    expect(() => scrubPersistedPostHogState({})).not.toThrow();
   });
 });

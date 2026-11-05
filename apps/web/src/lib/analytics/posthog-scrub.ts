@@ -23,9 +23,8 @@ const MAX_DEPTH = 8;
 
 function scrub(value: unknown, depth: number): unknown {
   if (typeof value === "string") return scrubText(value, URL_OPTIONS);
-  if (typeof value !== "object" || value === null || depth >= MAX_DEPTH) {
-    return value;
-  }
+  if (typeof value !== "object" || value === null) return value;
+  if (depth >= MAX_DEPTH) return "[truncated]";
   if (Array.isArray(value)) {
     return value.map((item) => scrub(item, depth + 1));
   }
@@ -52,4 +51,34 @@ export function scrubPostHogEvent<T extends PostHogEvent | null>(event: T): T {
     ...(event.$set ? { $set: scrubRecord(event.$set) } : {}),
     ...(event.$set_once ? { $set_once: scrubRecord(event.$set_once) } : {}),
   };
+}
+
+interface PostHogStore {
+  props: Record<string, unknown>;
+  register: (properties: Record<string, unknown>) => unknown;
+  set_initial_person_info?: () => void;
+}
+
+export interface PostHogPersistedState {
+  persistence?: PostHogStore;
+  sessionPersistence?: PostHogStore;
+  get_session_id?: () => unknown;
+  resetPersonPropertiesForFlags?: () => void;
+}
+
+/**
+ * Cleans what the SDK keeps in the browser. Stored state outlives a deploy and
+ * doesn't pass through `before_send` when the SDK reads it back.
+ *
+ * Initial person info and session props are written on first use, then never
+ * overwritten. Forcing those writes here means the values cleaned below are the
+ * ones that stay, even if the first capture comes while the URL still has params.
+ */
+export function scrubPersistedPostHogState(ph: PostHogPersistedState): void {
+  ph.resetPersonPropertiesForFlags?.();
+  ph.persistence?.set_initial_person_info?.();
+  ph.get_session_id?.();
+  for (const store of [ph.persistence, ph.sessionPersistence]) {
+    if (store) store.register(scrubRecord(store.props));
+  }
 }

@@ -1,4 +1,4 @@
-import type { Breadcrumb, Event } from "@sentry/nextjs";
+import type { Breadcrumb, Event, Stacktrace } from "@sentry/nextjs";
 import { scrubText, scrubUrl, stripQueryAndFragment } from "./telemetry-url";
 
 /**
@@ -8,7 +8,8 @@ import { scrubText, scrubUrl, stripQueryAndFragment } from "./telemetry-url";
  * Kept: stack frames, exception types, event and trace ids, tags, the route,
  * the method, status codes, the path of first-party URLs, the origin of
  * third-party ones. Dropped: query strings, cookies, every header off the
- * allowlist, request bodies, local variables, console breadcrumbs.
+ * allowlist, request bodies, local variables, console output past a leading
+ * `[errorId]`.
  */
 
 const REQUEST_HEADER_ALLOWLIST = new Set([
@@ -59,10 +60,9 @@ const URL_KEYS = new Set([
 const SHORT_CODE = /^[\w.-]{1,40}$/;
 
 function scrubString(text: string): string {
-  const scrubbed = scrubText(text);
-  return scrubbed.length > MAX_STRING_LENGTH
-    ? `${scrubbed.slice(0, MAX_STRING_LENGTH)}[truncated]`
-    : scrubbed;
+  if (text.length <= MAX_STRING_LENGTH) return scrubText(text);
+  // Cut first: the cost of scanning shouldn't depend on what an event carries.
+  return `${scrubText(text.slice(0, MAX_STRING_LENGTH))}[truncated]`;
 }
 
 function shouldDropKey(key: string, value: unknown): boolean {
@@ -77,7 +77,11 @@ function shouldDropKey(key: string, value: unknown): boolean {
   return CREDENTIAL_KEY.test(key);
 }
 
-function scrubValue(value: unknown, seen: WeakSet<object>, depth: number) {
+function scrubValue(
+  value: unknown,
+  seen: WeakSet<object> = new WeakSet(),
+  depth = 0
+): unknown {
   if (typeof value === "string") return scrubString(value);
   if (typeof value !== "object" || value === null) return value;
   if (depth >= MAX_DEPTH) return "[truncated]";
@@ -93,79 +97,196 @@ function scrubValue(value: unknown, seen: WeakSet<object>, depth: number) {
     if (shouldDropKey(normalized, item)) continue;
     out[key] =
       URL_KEYS.has(normalized) && typeof item === "string"
-        ? scrubString(scrubUrl(item))
+        ? scrubString(scrubUrl(item.slice(0, MAX_STRING_LENGTH)))
         : scrubValue(item, seen, depth + 1);
   }
   return out;
 }
 
-function scrubRecord<T>(record: T): T {
-  return scrubValue(record, new WeakSet(), 0) as T;
-}
-
 function scrubRequest(request: NonNullable<Event["request"]>) {
   const headers: Record<string, string> = {};
   for (const [name, value] of Object.entries(request.headers ?? {})) {
-    if (REQUEST_HEADER_ALLOWLIST.has(name.toLowerCase())) headers[name] = value;
+    if (REQUEST_HEADER_ALLOWLIST.has(name.toLowerCase())) {
+      if (typeof value === "string") headers[name] = scrubString(value);
+    }
   }
   return {
     ...(request.method ? { method: request.method } : {}),
     // An incoming request, so its path is the route, on whatever host served it.
-    ...(request.url ? { url: stripQueryAndFragment(request.url) } : {}),
+    ...(typeof request.url === "string"
+      ? { url: stripQueryAndFragment(request.url) }
+      : {}),
     headers,
   };
 }
+
+function scrubFrames(stacktrace: Stacktrace | undefined): void {
+  if (!Array.isArray(stacktrace?.frames)) return;
+  for (const frame of stacktrace.frames) {
+    delete frame.vars;
+    if (typeof frame.filename === "string") {
+      frame.filename = stripQueryAndFragment(frame.filename);
+    }
+    if (typeof frame.abs_path === "string") {
+      frame.abs_path = stripQueryAndFragment(frame.abs_path);
+    }
+  }
+}
+
+/** The `[errorId]` that `logError` leads with. All that's kept of a console line. */
+const CONSOLE_LABEL = /^\[[\w.:-]{1,64}\]/;
 
 /** `beforeBreadcrumb`. Null drops it: console arguments can hold anything. */
 export function scrubSentryBreadcrumb(
   breadcrumb: Breadcrumb
 ): Breadcrumb | null {
-  if (breadcrumb.category === "console") return null;
-  return {
-    ...breadcrumb,
-    ...(breadcrumb.message ? { message: scrubString(breadcrumb.message) } : {}),
-    ...(breadcrumb.data ? { data: scrubRecord(breadcrumb.data) } : {}),
-  };
+  try {
+    const { category, level, message, timestamp, data } = breadcrumb;
+    if (category === "console") {
+      const label =
+        typeof message === "string" ? CONSOLE_LABEL.exec(message)?.[0] : null;
+      if (!label) return null;
+      return {
+        category,
+        message: label,
+        ...(level ? { level } : {}),
+        ...(timestamp ? { timestamp } : {}),
+      };
+    }
+    return {
+      ...breadcrumb,
+      ...(message === undefined
+        ? {}
+        : { message: scrubValue(message) as string }),
+      ...(data ? { data: scrubValue(data) as Breadcrumb["data"] } : {}),
+    };
+  } catch {
+    return null;
+  }
 }
 
 /** `beforeSendSpan`, and applied to each child span of a transaction. */
 export function scrubSentrySpan<
   T extends { description?: string; data?: Record<string, unknown> },
 >(span: T): T {
-  return {
-    ...span,
-    ...(span.description ? { description: scrubString(span.description) } : {}),
-    ...(span.data ? { data: scrubRecord(span.data) } : {}),
-  };
+  try {
+    return {
+      ...span,
+      ...(span.description === undefined
+        ? {}
+        : { description: scrubValue(span.description) as string }),
+      ...(span.data ? { data: scrubValue(span.data) as T["data"] } : {}),
+    };
+  } catch {
+    // beforeSendSpan has to return a span, so return one with nothing in it.
+    return {} as T;
+  }
 }
 
-/** `beforeSend` and `beforeSendTransaction`. */
-export function scrubSentryEvent<T extends Event>(event: T): T {
+function scrubEventInPlace(event: Event): void {
   if (event.request) event.request = scrubRequest(event.request);
   if (event.user) {
     if (event.user.id !== undefined) event.user = { id: event.user.id };
     else delete event.user;
   }
-  if (event.message) event.message = scrubString(event.message);
-  if (event.logentry) event.logentry = scrubRecord(event.logentry);
-  if (event.transaction) event.transaction = scrubString(event.transaction);
-  if (event.extra) event.extra = scrubRecord(event.extra);
-  if (event.tags) event.tags = scrubRecord(event.tags);
-  if (event.contexts) event.contexts = scrubRecord(event.contexts);
-
-  for (const exception of event.exception?.values ?? []) {
-    if (exception.value) exception.value = scrubString(exception.value);
-    for (const frame of exception.stacktrace?.frames ?? []) delete frame.vars;
+  if (event.message !== undefined) {
+    event.message = scrubValue(event.message) as string;
+  }
+  if (event.logentry) event.logentry = scrubValue(event.logentry) as never;
+  if (event.transaction !== undefined) {
+    event.transaction = scrubValue(event.transaction) as string;
+  }
+  if (event.extra) event.extra = scrubValue(event.extra) as Event["extra"];
+  if (event.tags) event.tags = scrubValue(event.tags) as Event["tags"];
+  if (event.contexts) {
+    event.contexts = scrubValue(event.contexts) as Event["contexts"];
+  }
+  if (event.fingerprint !== undefined) {
+    event.fingerprint = Array.isArray(event.fingerprint)
+      ? (scrubValue(event.fingerprint) as string[])
+      : [];
   }
 
-  if (event.breadcrumbs) {
-    event.breadcrumbs = event.breadcrumbs
-      .map(scrubSentryBreadcrumb)
-      .filter((crumb): crumb is Breadcrumb => crumb !== null);
+  const exceptions = event.exception?.values;
+  for (const exception of Array.isArray(exceptions) ? exceptions : []) {
+    if (exception.type !== undefined) {
+      exception.type = scrubValue(exception.type) as string;
+    }
+    if (exception.value !== undefined) {
+      exception.value = scrubValue(exception.value) as string;
+    }
+    if (exception.mechanism?.data) {
+      exception.mechanism.data = scrubValue(
+        exception.mechanism.data
+      ) as NonNullable<typeof exception.mechanism.data>;
+    }
+    scrubFrames(exception.stacktrace);
   }
-  if (event.spans) event.spans = event.spans.map(scrubSentrySpan);
-  return event;
+
+  const threads = event.threads?.values;
+  for (const thread of Array.isArray(threads) ? threads : []) {
+    scrubFrames(thread.stacktrace);
+  }
+
+  // A debug image names the same file as a frame, and they're matched by value.
+  const images = event.debug_meta?.images;
+  for (const image of Array.isArray(images) ? images : []) {
+    if ("code_file" in image && typeof image.code_file === "string") {
+      image.code_file = stripQueryAndFragment(image.code_file);
+    }
+  }
+
+  if (event.breadcrumbs !== undefined) {
+    event.breadcrumbs = Array.isArray(event.breadcrumbs)
+      ? event.breadcrumbs
+          .map(scrubSentryBreadcrumb)
+          .filter((crumb): crumb is Breadcrumb => crumb !== null)
+      : [];
+  }
+  if (event.spans !== undefined) {
+    event.spans = Array.isArray(event.spans)
+      ? event.spans.map(scrubSentrySpan)
+      : [];
+  }
 }
+
+/**
+ * `beforeSend`, `beforeSendTransaction` and {@link sentryScrubIntegration}.
+ *
+ * Never throws: the SDK answers a throw here by sending a replacement event that
+ * skips `beforeSend`. If scrubbing fails, an error event goes out as its bare
+ * identity and a transaction is dropped.
+ */
+export function scrubSentryEvent<T extends Event>(event: T): T | null {
+  try {
+    scrubEventInPlace(event);
+    return event;
+  } catch {
+    if (event.type === "transaction") return null;
+    const { event_id, timestamp, platform, level, environment, release } =
+      event;
+    return {
+      event_id,
+      timestamp,
+      platform,
+      level,
+      environment,
+      release,
+      type: event.type,
+      message: "Event not sent: telemetry scrubbing failed",
+    } as T;
+  }
+}
+
+/**
+ * Scrubs as an event processor as well. `beforeSend` doesn't run on the event
+ * the SDK sends when processing throws, and that event still picks up request
+ * data. Listed last so it runs after the integrations that add data.
+ */
+export const sentryScrubIntegration = {
+  name: "TelemetryScrub",
+  processEvent: (event: Event) => scrubSentryEvent(event),
+};
 
 /** Spread into every `Sentry.init`. */
 export const sentryPrivacyOptions = {

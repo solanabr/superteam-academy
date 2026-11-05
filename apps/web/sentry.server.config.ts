@@ -9,6 +9,7 @@ import * as Sentry from "@sentry/nextjs";
 import {
   sentryPrivacyOptions,
   sentryRequestDataOptions,
+  sentryScrubIntegration,
 } from "@/lib/analytics/sentry-scrub";
 
 const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
@@ -28,6 +29,7 @@ if (dsn) {
         maxIncomingRequestBodySize: "none",
       }),
       Sentry.requestDataIntegration(sentryRequestDataOptions),
+      sentryScrubIntegration,
     ],
   });
 
