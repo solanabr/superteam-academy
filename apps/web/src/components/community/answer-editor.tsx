@@ -2,11 +2,9 @@
 
 import { useCallback, useId, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeHighlight from "rehype-highlight";
 import { PaperPlaneRight } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
+import { Markdown } from "@/components/ui/markdown";
 import { cn } from "@/lib/utils";
 
 /** Mirrors the answers route's body limit: the POST 400s past this, so the box
@@ -23,7 +21,7 @@ interface AnswerEditorProps {
  * boxed editor. One field that starts at a single row and grows, a lightweight
  * Preview text-toggle instead of a tab bar, the counter inline beside the
  * submit, and a compact primary button. Markdown still renders through the same
- * ReactMarkdown pipeline the thread and answers use (no rehypeRaw).
+ * `<Markdown>` the thread and answers use.
  */
 export function AnswerEditor({ threadId, onAnswerPosted }: AnswerEditorProps) {
   const t = useTranslations("community");
@@ -91,12 +89,7 @@ export function AnswerEditor({ threadId, onAnswerPosted }: AnswerEditorProps) {
           data-testid="answer-preview"
         >
           {body ? (
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeHighlight]}
-            >
-              {body}
-            </ReactMarkdown>
+            <Markdown>{body}</Markdown>
           ) : (
             <p className="italic text-[var(--text-2)]">
               {t("nothingToPreview")}

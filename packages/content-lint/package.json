@@ -15,6 +15,9 @@
     "@superteam-lms/challenge-executor": "workspace:*",
     "@superteam-lms/content-schema": "workspace:*",
     "@superteam-lms/types": "workspace:*",
+    "remark-gfm": "^4.0.1",
+    "remark-parse": "^11.0.0",
+    "unified": "^11.0.5",
     "yaml": "^2.8.2",
     "zod": "^4.4.3"
   },

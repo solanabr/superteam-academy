@@ -4,9 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeHighlight from "rehype-highlight";
 import { ArrowLeft } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/auth-provider";
@@ -20,6 +17,7 @@ import { AnswerEditor } from "@/components/community/answer-editor";
 import { FlagButton } from "@/components/community/flag-button";
 import { DeleteButton } from "@/components/community/delete-button";
 import { LevelBadge } from "@/components/gamification/level-badge";
+import { Markdown } from "@/components/ui/markdown";
 
 interface Author {
   username: string | null;
@@ -280,12 +278,7 @@ export function ThreadDetailClient({ shortId }: ThreadDetailClientProps) {
             larger than the page h1 above, so the question's own markdown
             could out-shout the question's title. */}
         <div className="prose prose-sm mt-3 max-w-none text-[var(--text)] dark:prose-invert prose-headings:font-display prose-headings:font-bold prose-h1:text-base prose-h2:text-[15px] prose-h3:text-sm prose-h4:text-sm">
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            rehypePlugins={[rehypeHighlight]}
-          >
-            {thread.body}
-          </ReactMarkdown>
+          <Markdown>{thread.body}</Markdown>
         </div>
 
         {/* Action row — the answers' idiom, applied to the question. */}

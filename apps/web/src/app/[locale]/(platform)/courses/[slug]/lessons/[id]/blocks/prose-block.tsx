@@ -9,11 +9,8 @@ import {
   type ReactNode,
 } from "react";
 import { useTranslations } from "next-intl";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeRaw from "rehype-raw";
-import rehypeHighlight from "rehype-highlight";
 import type { ProseBlockData } from "@superteam-lms/types";
+import { Markdown } from "@/components/ui/markdown";
 import type { BlockRenderProps } from "./types";
 
 function CodeBlockWithCopy({
@@ -139,13 +136,7 @@ export function ProseBlock({ block, ctx }: BlockRenderProps) {
     // the page column; inside a challenge's instructions rail it is the rail,
     // which is narrower than any cap this could carry.
     <div className="prose max-w-none dark:prose-invert">
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeRaw, rehypeHighlight]}
-        components={components}
-      >
-        {b.src}
-      </ReactMarkdown>
+      <Markdown components={components}>{b.src}</Markdown>
     </div>
   );
 }

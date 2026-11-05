@@ -3,10 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeHighlight from "rehype-highlight";
 import { LevelBadge } from "@/components/gamification/level-badge";
+import { Markdown } from "@/components/ui/markdown";
 import { cn } from "@/lib/utils";
 import { VoteButton } from "./vote-button";
 import { AcceptAnswerButton } from "./accept-answer-button";
@@ -129,12 +127,7 @@ export function AnswerCard({
               still renders an authored `#`/`##` larger than the question
               title above. */}
           <div className="prose prose-sm mt-2 max-w-none text-[var(--text)] dark:prose-invert prose-headings:font-display prose-headings:font-bold prose-h1:text-base prose-h2:text-[15px] prose-h3:text-sm prose-h4:text-sm">
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeHighlight]}
-            >
-              {answer.body}
-            </ReactMarkdown>
+            <Markdown>{answer.body}</Markdown>
           </div>
 
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--text-2)]">
