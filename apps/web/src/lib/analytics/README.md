@@ -125,13 +125,13 @@ The `/start` intake (#566, LX-A2). Helpers live in `events.ts`
 screen-1 tap. Payloads carry only closed-set option ids and the integer daily
 goal — never free text (the intake is tap-only).
 
-| Event                       | Payload                                      | Fires from                                                                                                                                   |
-| --------------------------- | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `onboarding_started`        | `{}`                                         | `trackOnboardingStarted()` — first interaction with `/start` screen 1 (not the page view)                                                    |
-| `onboarding_step_completed` | `{ step: 1 \| 2 \| 3 \| 4, choice }`         | `trackOnboardingStepCompleted()` — per screen; `choice` is the option id(s)/daily-goal int, `null` when the optional chips screen is skipped |
-| `onboarding_goal_committed` | `{ dailyGoal }`                              | `trackOnboardingGoalCommitted()` — E2 implementation-intention substrate (daily-goal picker)                                                 |
-| `onboarding_route_accepted` | `{ accepted: boolean, recommendedCourseId }` | `trackOnboardingRouteAccepted()` — E7: recommended entry taken vs "Browse all" override                                                      |
-| `onboarding_completed`      | `{ experience, goal, dailyGoal }`            | `trackOnboardingCompleted()` — intake finished; closed-set ids + daily-goal int, never free text                                             |
+| Event                       | Payload                                      | Fires from                                                                                                                                               |
+| --------------------------- | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `onboarding_started`        | `{}`                                         | `trackOnboardingStarted()` — first interaction with `/start` screen 1 (not the page view)                                                                |
+| `onboarding_step_completed` | `{ step: 1 \| 2 \| 3 \| 4, choice }`         | `trackOnboardingStepCompleted()` — per screen; `choice` is the option id(s)/daily-goal int, `null` when the optional chips screen is skipped             |
+| `onboarding_goal_committed` | `{ dailyGoal }`                              | `trackOnboardingGoalCommitted()` — E2 implementation-intention substrate (daily-goal picker)                                                             |
+| `onboarding_route_accepted` | `{ accepted: boolean, recommendedCourseId }` | `trackOnboardingRouteAccepted()` — E7: recommended entry taken vs "Browse all" override; the id is `null` when no course fits the segment in that locale |
+| `onboarding_completed`      | `{ experience, goal, dailyGoal }`            | `trackOnboardingCompleted()` — intake finished; closed-set ids + daily-goal int, never free text                                                         |
 
 ## Derived metrics
 

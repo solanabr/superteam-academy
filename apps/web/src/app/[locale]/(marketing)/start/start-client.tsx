@@ -47,7 +47,8 @@ import {
 } from "@/lib/analytics/events";
 
 export interface SegmentRoute {
-  courseId: string;
+  /** `null` when no course fits this segment in this locale (`href` is the catalog). */
+  courseId: string | null;
   href: string;
 }
 

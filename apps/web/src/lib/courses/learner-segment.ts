@@ -13,6 +13,8 @@
  * truth for the segment/goal TYPES and the app-side routing constant.
  */
 
+import { defaultLocale, locales, type Locale } from "@/lib/i18n/config";
+
 export type LearnerSegment = 1 | 2 | 3;
 
 /**
@@ -46,42 +48,66 @@ export const SEGMENT_PATH_MODALITY: Record<
 };
 
 /**
- * Launch routing table (LX-A3): each segment → the content course id it enters
- * after /start. This is an APP-SIDE constant on purpose — the spec rules out
+ * Launch routing table (LX-A3): each locale and segment → the content course id
+ * it enters after /start. This is an APP-SIDE constant on purpose — the spec rules out
  * path-schema metadata to avoid the two-repo content-staging cycle, so routing
  * changes ship with a code deploy, not a content.lock bump.
  *
  * Routing to a course that is absent from the bundle or deactivated on-chain
  * sends the /start funnel + landing deep-link to the catalog fallback: the
  * `resolveEntryLessonHref` sync gate keeps that from 404-ing, but the deep-link
- * into flagship lesson 1 goes dead — the regression this table exists to
- * prevent. `entry-course-live.test.ts` runs the real resolver against the real
- * bundle, so an entry that stops resolving is red, not silent.
+ * into lesson 1 goes dead — the regression this table exists to prevent.
+ * `entry-course-live.test.ts` runs the real resolver against the real bundle,
+ * so an entry that stops resolving or stops being readable in its locale is
+ * red, not silent.
  *
- * EVENT (2026-08-13): all three segments enter at `course-solana-speedrun`
- * for the Superteam Brasil in-person event — the landing deep-link was sending
- * booth visitors into the BTC-evolution course instead of the speedrun built
- * for the event. Revert to the alpha flagship (or the restored ladder) when
- * the event ends.
+ * Keyed by locale because a course only reads well in the languages it ships:
+ * an untranslated course still renders, in its source language, so a table
+ * without the locale drops /en and /es visitors into Portuguese. A `null` entry
+ * means no course fits that visitor, and they go to the catalog instead.
  *
- * TODO (public alpha, 2026-08-04): the alpha flagship stand-in
- * (`course-btc-to-sol-evolution`) is not the intended segmentation either. The 5-course "Zero to Deployed" ladder this table used to route
- * across (C1 solana-for-web-devs → C2 rust-for-program-devs → C3
- * building-your-first-solana-program → C4 dapp-and-sdk-with-kit → C5
- * stablecoin-payments) is parked under `_draft/` in academy-courses and is no
- * longer compiled into the bundle, so every previous entry id resolves to
- * nothing. The alpha catalog is two courses with no ladder to differentiate
- * across, which makes a per-segment entry meaningless today. Revisit when
- * track-1 restores: segments 1/3 back to the JS/TS on-ramp, segment 2 back to
- * the "enters here" rung that skips it.
+ * - pt-BR 1/3: `course-intro-web3-blockchain`, first in the beginner path.
+ * - en 1: `course-btc-to-sol-evolution`, written in English and hands-on from
+ *   the first lesson. It leans on the terminal, which segment 1 already has.
+ * - en 3: `course-visao-geral-solana`, the English translation of the concept
+ *   course. It needs no toolchain, which is why segment 3 starts here.
+ * - es 1: `course-rust-ts-fundamentals`, the only beginner course with a
+ *   Spanish translation. It expects a learner who can already program.
+ * - es 3: nothing in Spanish fits someone new to programming, so the catalog.
+ * - all 2: `course-digital-assets`, the one course that opens by assuming
+ *   Solana fundamentals without assuming Anchor, in all three languages.
  */
-const EVENT_ENTRY_COURSE = "course-solana-speedrun";
-
-export const SEGMENT_ENTRY_COURSE: Record<LearnerSegment, string> = {
-  1: EVENT_ENTRY_COURSE,
-  2: EVENT_ENTRY_COURSE,
-  3: EVENT_ENTRY_COURSE,
+export const SEGMENT_ENTRY_COURSE: Record<
+  Locale,
+  Record<LearnerSegment, string | null>
+> = {
+  "pt-BR": {
+    1: "course-intro-web3-blockchain",
+    2: "course-digital-assets",
+    3: "course-intro-web3-blockchain",
+  },
+  en: {
+    1: "course-btc-to-sol-evolution",
+    2: "course-digital-assets",
+    3: "course-visao-geral-solana",
+  },
+  es: {
+    1: "course-rust-ts-fundamentals",
+    2: "course-digital-assets",
+    3: null,
+  },
 };
+
+/** The course `segment` enters at in `locale`; `null` routes to the catalog. */
+export function entryCourseFor(
+  segment: LearnerSegment,
+  locale: string
+): string | null {
+  const known = (locales as readonly string[]).includes(locale)
+    ? (locale as Locale)
+    : defaultLocale;
+  return SEGMENT_ENTRY_COURSE[known][segment];
+}
 
 /**
  * Learner goal from /start screen 2. Consumed as path-page framing copy

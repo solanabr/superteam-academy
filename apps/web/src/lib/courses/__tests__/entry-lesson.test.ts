@@ -1,9 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { getCourseLessons, getCourseSlugById } from "@/lib/content/queries";
-import {
-  DEFAULT_SEGMENT,
-  SEGMENT_ENTRY_COURSE,
-} from "@/lib/courses/learner-segment";
+import { DEFAULT_SEGMENT, entryCourseFor } from "@/lib/courses/learner-segment";
 import {
   resolveEntryLessonHref,
   resolveFlagshipLessonHref,
@@ -17,7 +14,7 @@ vi.mock("@/lib/content/queries", () => ({
 const slugOf = vi.mocked(getCourseSlugById);
 const lessonsOf = vi.mocked(getCourseLessons);
 
-const FLAGSHIP = SEGMENT_ENTRY_COURSE[DEFAULT_SEGMENT];
+const FLAGSHIP = entryCourseFor(DEFAULT_SEGMENT, "en")!;
 
 beforeEach(() => {
   slugOf.mockReset();
@@ -57,6 +54,13 @@ describe("resolveEntryLessonHref — F1 sync gating", () => {
     // Absent course short-circuits before ever querying lessons.
     expect(lessonsOf).not.toHaveBeenCalled();
   });
+
+  it("goes to the locale catalog without a lookup when the table has no course", async () => {
+    const href = await resolveEntryLessonHref("es", null);
+    expect(href).toBe("/es/courses");
+    expect(slugOf).not.toHaveBeenCalled();
+    expect(lessonsOf).not.toHaveBeenCalled();
+  });
 });
 
 describe("resolveFlagshipLessonHref — landing deep-link (LX-A1)", () => {
@@ -65,6 +69,15 @@ describe("resolveFlagshipLessonHref — landing deep-link (LX-A1)", () => {
     const href = await resolveFlagshipLessonHref("en");
     expect(slugOf).toHaveBeenCalledWith(FLAGSHIP);
     expect(href).toBe(`/en/courses/${FLAGSHIP}/lessons/welcome`);
+  });
+
+  it("picks the entry course for the visitor's locale", async () => {
+    lessonsOf.mockResolvedValue([lesson("welcome")]);
+    const ptEntry = entryCourseFor(DEFAULT_SEGMENT, "pt-BR")!;
+    expect(ptEntry).not.toBe(FLAGSHIP);
+    const href = await resolveFlagshipLessonHref("pt-BR");
+    expect(slugOf).toHaveBeenCalledWith(ptEntry);
+    expect(href).toBe(`/pt-BR/courses/${ptEntry}/lessons/welcome`);
   });
 
   it("falls back to the catalog when the flagship course is unsynced", async () => {

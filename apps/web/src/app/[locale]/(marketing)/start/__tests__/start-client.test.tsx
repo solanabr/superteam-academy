@@ -35,11 +35,11 @@ const ROUTES: Record<LearnerSegment, SegmentRoute> = {
   },
 };
 
-function renderStart(): ReturnType<typeof render> {
+function renderStart(routes = ROUTES): ReturnType<typeof render> {
   const ui: ReactElement = (
     <NextIntlClientProvider locale="en" messages={messages}>
       <StartIntakeClient
-        routes={ROUTES}
+        routes={routes}
         dailyGoalOptions={[1, 3]}
         browseAllHref="/en/courses"
       />
@@ -163,6 +163,23 @@ describe("/start intake — E7 route override + a11y", () => {
     );
     expect(push).toHaveBeenCalledWith("/en/courses");
     expect(events.trackOnboardingCompleted).not.toHaveBeenCalled();
+  });
+
+  it("finishes in the catalog when the segment has no course in this locale", () => {
+    renderStart({
+      ...ROUTES,
+      3: { courseId: null, href: "/en/courses" },
+    });
+    tap(/haven't written code professionally/i);
+    tap(/Land a Solana developer role/i);
+    tap(/^Skip$/i);
+    tap(/3 lessons a day/i);
+
+    expect(events.trackOnboardingRouteAccepted).toHaveBeenCalledWith(
+      true,
+      null
+    );
+    expect(push).toHaveBeenCalledWith("/en/courses");
   });
 
   it("refers segment 3 out to freeCodeCamp without dead-ending the flow", () => {
