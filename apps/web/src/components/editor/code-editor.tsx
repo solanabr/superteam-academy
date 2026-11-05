@@ -13,20 +13,21 @@ import Editor, { type OnMount, type BeforeMount } from "@monaco-editor/react";
 import type { editor, IDisposable } from "monaco-editor";
 import { useTheme } from "next-themes";
 import { useTranslations } from "next-intl";
-import { superteamDark, superteamLight, THEME_MAP } from "./themes";
+import { formatCode } from "@/lib/editor/format-code";
+import { cn } from "@/lib/utils";
+import { tabFocusModeChord } from "@/lib/utils/keyboard";
 import type {
   CodeEditorProps,
   CodeEditorHandle,
   EditorLanguage,
 } from "./types";
-import { formatCode } from "@/lib/editor/format-code";
-import { cn } from "@/lib/utils";
-import { tabFocusModeChord } from "@/lib/utils/keyboard";
+import { superteamDark, superteamLight, THEME_MAP } from "./themes";
 
 const AUTOSAVE_DELAY_MS = 1000;
 
-function getStorageKey(lessonId: string): string {
-  return `superteam-lms-code-${lessonId}`;
+function getStorageKey(lessonId: string, storageScope?: string): string {
+  const key = `superteam-lms-code-${lessonId}`;
+  return storageScope ? `${key}::${storageScope}` : key;
 }
 
 function getMonacoLanguage(language: EditorLanguage): string {
@@ -64,6 +65,7 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
       value,
       onChange,
       readOnly = false,
+      storageScope,
       className,
     },
     ref
@@ -155,7 +157,9 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
 
         // Restore saved code from localStorage
         try {
-          const saved = localStorage.getItem(getStorageKey(lessonId));
+          const saved = localStorage.getItem(
+            getStorageKey(lessonId, storageScope)
+          );
           if (saved) {
             editorInstance.setValue(saved);
           }
@@ -163,7 +167,7 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
           // localStorage may be unavailable
         }
       },
-      [lessonId, hintId]
+      [lessonId, storageScope, hintId]
     );
 
     const handleChange = useCallback(
@@ -177,13 +181,13 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
         }
         autosaveTimerRef.current = setTimeout(() => {
           try {
-            localStorage.setItem(getStorageKey(lessonId), code);
+            localStorage.setItem(getStorageKey(lessonId, storageScope), code);
           } catch {
             // localStorage may be unavailable
           }
         }, AUTOSAVE_DELAY_MS);
       },
-      [lessonId, onChange]
+      [lessonId, storageScope, onChange]
     );
 
     // Sync external value changes (Reset / Show Solution) into Monaco
@@ -268,6 +272,10 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
               scrollbar: {
                 verticalScrollbarSize: 8,
                 horizontalScrollbarSize: 8,
+                // Editors stacked in one lesson fill the viewport and the page
+                // scrolls between them, so the wheel has to pass through once
+                // the editor reaches its end. Monaco can't update this later.
+                alwaysConsumeMouseWheel: !storageScope,
               },
               overviewRulerBorder: false,
               hideCursorInOverviewRuler: true,
@@ -308,9 +316,12 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
   }
 );
 
-export function resetEditorStorage(lessonId: string): void {
+export function resetEditorStorage(
+  lessonId: string,
+  storageScope?: string
+): void {
   try {
-    localStorage.removeItem(getStorageKey(lessonId));
+    localStorage.removeItem(getStorageKey(lessonId, storageScope));
   } catch {
     // localStorage may be unavailable
   }

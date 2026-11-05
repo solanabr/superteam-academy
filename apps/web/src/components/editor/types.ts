@@ -41,7 +41,29 @@ export interface CodeEditorProps {
   value?: string;
   onChange?: (code: string) => void;
   readOnly?: boolean;
+  /**
+   * Separates this editor's autosave from the lesson's other editors. Set only
+   * when a lesson has several code blocks: a single-block lesson stays on the
+   * lesson-only key, where existing learners' work is saved.
+   */
+  storageScope?: string;
   className?: string;
+}
+
+/** Where a code block sits in a lesson that has several of them. */
+export interface CodePart {
+  /** 1-based position among the lesson's code blocks. */
+  number: number;
+  total: number;
+  /** Numbers of the OTHER parts, for the jump buttons. */
+  otherParts: number[];
+  /** Other parts with no submitted code yet. Completion waits on these. */
+  pendingParts: number[];
+  /** This part's submitted code is being held for the completion POST. */
+  submitted: boolean;
+  /** The learner changed code they had already submitted. */
+  onSubmittedCodeEdited: () => void;
+  onJumpToPart: (number: number) => void;
 }
 
 export interface OutputPanelProps {
@@ -77,6 +99,10 @@ export interface ChallengeRunnerProps {
 
 export interface ChallengeInterfaceProps {
   lessonId: string;
+  /** The code block this editor belongs to; travels on the submission events. */
+  blockKey?: string;
+  /** Absent in a lesson with one code block. */
+  codePart?: CodePart;
   /** Content id of the parent course — analytics only (challenge lifecycle events). */
   courseId?: string;
   /** Sanity slug of the parent course — threaded to the AI Partner route. */
