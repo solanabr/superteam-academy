@@ -280,12 +280,11 @@ export function ReferralBoard({ currentUserId }: { currentUserId: string }) {
               {t("referralSeason", { number: season.number })}
               <ReferralScoringInfo />
             </p>
-            <p className="lb-league-sub">
-              {seasonEnds
-                ? t("referralSeasonEnds", { date: seasonEnds })
-                : null}{" "}
-              · {t("referralSeasonRewards")}
-            </p>
+            {seasonEnds && (
+              <p className="lb-league-sub">
+                {t("referralSeasonEnds", { date: seasonEnds })}
+              </p>
+            )}
           </div>
         </div>
       )}
