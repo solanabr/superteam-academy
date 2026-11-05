@@ -235,6 +235,19 @@ export function ChallengeInterface({
     return () => clearTimeout(id);
   }, [verdictFlash]);
 
+  // Below lg the output panel stacks under the editor, often past the fold, and
+  // swipes on Monaco don't chain to the page, so bring a run's result into view.
+  const outputPanelRef = useRef<HTMLDivElement>(null);
+  const executionResult = challengeState.executionResult;
+  useEffect(() => {
+    if (!executionResult) return;
+    if (window.matchMedia?.("(min-width: 1024px)").matches) return;
+    outputPanelRef.current?.scrollIntoView?.({
+      block: "nearest",
+      behavior: prefersReducedMotion() ? "auto" : "smooth",
+    });
+  }, [executionResult]);
+
   // Escape dismisses the Accepted card, alongside the close button and a click
   // on the backdrop. The card is not a modal — it never traps focus — so the
   // listener lives on the document.
@@ -968,7 +981,7 @@ export function ChallengeInterface({
               and the editor's `h-full` would collapse Monaco to 5px. */}
           <div
             ref={editorAreaRef}
-            className="relative h-[60svh] min-h-80 lg:h-auto lg:min-h-0 lg:flex-1"
+            className="relative h-[60vh] min-h-80 supports-[height:1svh]:h-[60svh] lg:h-auto lg:min-h-0 lg:flex-1"
           >
             <CodeEditor
               ref={editorHandle}
@@ -1159,7 +1172,8 @@ export function ChallengeInterface({
 
         {/* Output panel */}
         <div
-          className="order-3 shrink-0 lg:order-none"
+          ref={outputPanelRef}
+          className="order-3 shrink-0 max-lg:scroll-mt-28 lg:order-none"
           style={{ height: panelHeight, minHeight: 88 }}
         >
           <OutputPanel
