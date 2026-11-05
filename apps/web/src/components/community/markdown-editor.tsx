@@ -91,7 +91,7 @@ export function MarkdownEditor({
         />
       ) : (
         <div
-          className="prose prose-sm max-w-none bg-[var(--input)] p-4 text-[var(--text)] dark:prose-invert"
+          className="prose prose-sm max-w-none overflow-x-auto bg-[var(--input)] p-4 text-[var(--text)] dark:prose-invert"
           style={{ minHeight }}
         >
           {value ? (

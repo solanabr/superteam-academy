@@ -277,7 +277,7 @@ export function ThreadDetailClient({ shortId }: ThreadDetailClientProps) {
             scales the body copy but still renders an authored `#`/`##`
             larger than the page h1 above, so the question's own markdown
             could out-shout the question's title. */}
-        <div className="prose prose-sm mt-3 max-w-none text-[var(--text)] dark:prose-invert prose-headings:font-display prose-headings:font-bold prose-h1:text-base prose-h2:text-[15px] prose-h3:text-sm prose-h4:text-sm">
+        <div className="prose prose-sm mt-3 max-w-none overflow-x-auto text-[var(--text)] dark:prose-invert prose-headings:font-display prose-headings:font-bold prose-h1:text-base prose-h2:text-[15px] prose-h3:text-sm prose-h4:text-sm">
           <Markdown>{thread.body}</Markdown>
         </div>
 

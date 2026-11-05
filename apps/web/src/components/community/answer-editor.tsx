@@ -85,7 +85,7 @@ export function AnswerEditor({ threadId, onAnswerPosted }: AnswerEditorProps) {
 
       {isPreview ? (
         <div
-          className="prose prose-sm min-h-[44px] max-w-none rounded-md border border-[var(--border-default)] bg-[var(--input)] px-3 py-2 text-[var(--text)] dark:prose-invert prose-headings:font-display prose-headings:font-bold prose-h1:text-base prose-h2:text-[15px] prose-h3:text-sm prose-h4:text-sm"
+          className="prose prose-sm min-h-[44px] max-w-none overflow-x-auto rounded-md border border-[var(--border-default)] bg-[var(--input)] px-3 py-2 text-[var(--text)] dark:prose-invert prose-headings:font-display prose-headings:font-bold prose-h1:text-base prose-h2:text-[15px] prose-h3:text-sm prose-h4:text-sm"
           data-testid="answer-preview"
         >
           {body ? (

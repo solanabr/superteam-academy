@@ -136,7 +136,9 @@ export function ProseBlock({ block, ctx }: BlockRenderProps) {
     // the page column; inside a challenge's instructions rail it is the rail,
     // which is narrower than any cap this could carry.
     <div className="prose max-w-none dark:prose-invert">
-      <Markdown components={components}>{b.src}</Markdown>
+      <Markdown components={components} dropComments>
+        {b.src}
+      </Markdown>
     </div>
   );
 }
