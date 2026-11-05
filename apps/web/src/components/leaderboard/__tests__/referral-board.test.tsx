@@ -5,6 +5,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/messages/en.json";
+import es from "@/messages/es.json";
+import ptBR from "@/messages/pt-BR.json";
 
 import { ReferralBoard } from "../referral-board";
 
@@ -103,5 +105,39 @@ describe("ReferralBoard — sharing surface", () => {
         ([url]) => !String(url).includes("/api/referrals/me")
       )
     ).toBe(true);
+  });
+  it("shows the season end date on its own, with no prize line or stray separator", async () => {
+    mockEndpoints({
+      me: new Response("{}", { status: 401 }),
+      leaderboard: new Response(
+        JSON.stringify({
+          season: { number: 1, endsAt: "2026-12-31T12:00:00Z" },
+          standings: [],
+        })
+      ),
+    });
+
+    renderWithIntl(<ReferralBoard currentUserId="" />);
+
+    const ends = await screen.findByText(/^Ends /);
+    expect(ends.textContent).toBe("Ends Dec 31, 2026");
+  });
+});
+
+describe("referral copy — no prizes on offer", () => {
+  const PRIZE = /reward|prize|pr[eê]mi|recompens/i;
+
+  it.each([
+    ["en", messages],
+    ["pt-BR", ptBR],
+    ["es", es],
+  ])("%s promises no prize for referral rank", (_locale, catalog) => {
+    const copy = Object.entries(catalog.gamification).filter(([key]) =>
+      /^referral/i.test(key)
+    );
+    expect(copy.length).toBeGreaterThan(0);
+    for (const [key, value] of copy) {
+      expect(String(value), key).not.toMatch(PRIZE);
+    }
   });
 });
