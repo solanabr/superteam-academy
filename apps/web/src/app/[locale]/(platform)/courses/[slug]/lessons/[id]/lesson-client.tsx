@@ -18,6 +18,13 @@ import { AuthModal } from "@/components/auth/auth-modal";
 import { trackEvent } from "@/lib/analytics";
 import { completionErrorKey } from "@/lib/lessons/completion-error";
 import { isGateBlock } from "@/lib/lessons/gate-blocks";
+import {
+  CHALLENGE_PROOF_EVENT,
+  LESSON_COMPLETE_ERROR_EVENT,
+  LESSON_COMPLETE_EVENT,
+  dispatchLessonEvent,
+  onLessonEvent,
+} from "@/lib/lessons/lesson-events";
 import { createClient } from "@/lib/supabase/client";
 import { isCapstoneLesson } from "@/lib/credentials/capstone-identity";
 import { useAuth } from "@/lib/auth/auth-provider";
@@ -42,8 +49,24 @@ const DISCUSSION_ANCHOR_ID = "lesson-discussion";
 const TOPICS_ANCHOR_ID = "lesson-topics";
 const HINTS_ANCHOR_ID = "lesson-hints";
 
+/** Anchor for one part of a lesson with several code blocks. */
+const codePartAnchorId = (number: number) => `code-part-${number}`;
+
 /** Panel id for a section anchor — shared by the section header and its chip. */
 const panelIdFor = (anchorId: string) => `${anchorId}-panel`;
+
+/**
+ * Scrolls the page itself to a code part, just under the fixed header. Not
+ * scrollIntoView, which would also scroll the IDE's overflow-hidden ancestors.
+ */
+function jumpToCodePart(number: number): void {
+  const el = document.getElementById(codePartAnchorId(number));
+  if (!el) return;
+  window.scrollTo({
+    top: el.getBoundingClientRect().top + window.scrollY - 60,
+    behavior: scrollBehavior(),
+  });
+}
 
 /**
  * Opens a disclosure section and scrolls it into view. The scroll waits a frame
@@ -257,14 +280,40 @@ export function LessonPageClient({
     []
   );
 
-  /** The code block's proof travels on an event, not through `setProof`. */
-  const codeBlockKey =
-    lesson.blocks.find((b) => b._type === "code")?.key ?? null;
+  /**
+   * A code block's proof travels on an event, not through `setProof`, and the
+   * event names its block. With one code block there is only one place it can
+   * go, so a key-less event still lands.
+   */
+  const codeBlockKeys = useMemo(
+    () => lesson.blocks.filter((b) => b._type === "code").map((b) => b.key),
+    [lesson.blocks]
+  );
+  const [submittedCodeBlocks, setSubmittedCodeBlocks] = useState<
+    Record<string, boolean>
+  >({});
   const captureSubmittedCode = useCallback(
-    (code: string) => {
-      if (codeBlockKey) setProof(codeBlockKey, { code });
+    (blockKey: string | undefined, code: string) => {
+      const key =
+        blockKey ?? (codeBlockKeys.length === 1 ? codeBlockKeys[0] : undefined);
+      if (!key || !codeBlockKeys.includes(key)) return;
+      setProof(key, { code });
+      setSubmittedCodeBlocks((prev) =>
+        prev[key] ? prev : { ...prev, [key]: true }
+      );
     },
-    [codeBlockKey, setProof]
+    [codeBlockKeys, setProof]
+  );
+  const withdrawSubmittedCode = useCallback((blockKey: string) => {
+    delete proofsRef.current[blockKey];
+    setSubmittedCodeBlocks((prev) => ({ ...prev, [blockKey]: false }));
+  }, []);
+  /** Several code blocks: the lesson can't be submitted until each has code. */
+  const hasUnsubmittedCode = useCallback(
+    () =>
+      codeBlockKeys.length > 1 &&
+      codeBlockKeys.some((key) => !(key in proofsRef.current)),
+    [codeBlockKeys]
   );
   const resetBuild = useCallback(() => {
     setBuildUuid(null);
@@ -278,6 +327,8 @@ export function LessonPageClient({
     // #831: never persist preview work — a previewed lesson id would replay
     // against the live bundle on sign-in and fail there.
     if (readOnly) return;
+    // Replay grades every code block, so a partial set could only fail there.
+    if (hasUnsubmittedCode()) return;
     bankCompletion({
       courseId,
       courseSlug,
@@ -294,6 +345,7 @@ export function LessonPageClient({
     lesson.slug,
     lesson.title,
     submissionProofs,
+    hasUnsubmittedCode,
   ]);
 
   // Claim moment: bank first, THEN open the sign-in prompt with its "Later"
@@ -325,8 +377,8 @@ export function LessonPageClient({
     },
   });
 
-  const hasCodeBlock = lesson.blocks.some((b) => b._type === "code");
-  const codeBlockCount = lesson.blocks.filter((b) => b._type === "code").length;
+  const hasCodeBlock = codeBlockKeys.length > 0;
+  const codeBlockCount = codeBlockKeys.length;
   const hasQuizBlock = lesson.blocks.some((b) => b._type === "quiz");
 
   // Challenge pages are viewport-locked: the IDE column is sized to the screen,
@@ -486,11 +538,11 @@ export function LessonPageClient({
       setCompletionError(message);
       // Unstick the challenge editor's "saving" overlay and show the reason
       // there too (code submits originate from ChallengeInterface).
-      window.dispatchEvent(
-        new CustomEvent("superteam:lesson-complete-error", {
-          detail: { lessonId: lesson._id, message },
-        })
-      );
+      // No block key: the route doesn't say which block it refused.
+      dispatchLessonEvent(LESSON_COMPLETE_ERROR_EVENT, {
+        lessonId: lesson._id,
+        message,
+      });
     }
   }, [
     lesson._id,
@@ -516,38 +568,46 @@ export function LessonPageClient({
   // verdict then stayed rejected while the quiz sat finished above it. A submit
   // with an unfinished graded block never leaves the browser now; it says which
   // block is waiting, and clears itself when that block is done.
-  useEffect(() => {
-    const handleChallengeComplete = (e: Event) => {
-      const detail = (
-        e as CustomEvent<{ lessonId: string; submittedCode?: string }>
-      ).detail;
-      if (detail.lessonId !== lesson._id) return;
-      if (typeof detail.submittedCode === "string") {
-        captureSubmittedCode(detail.submittedCode);
-      }
-      if (!gateReady) {
-        const message = t("completeGateHint");
-        setCompletionError(message);
-        window.dispatchEvent(
-          new CustomEvent("superteam:lesson-complete-error", {
-            detail: { lessonId: lesson._id, message },
-          })
-        );
-        return;
-      }
-      handleComplete();
-    };
-
-    window.addEventListener(
-      "superteam:lesson-complete",
-      handleChallengeComplete
-    );
-    return () =>
-      window.removeEventListener(
-        "superteam:lesson-complete",
-        handleChallengeComplete
-      );
-  }, [lesson._id, handleComplete, captureSubmittedCode, gateReady, t]);
+  //
+  // The same goes for a code block with no submitted code: the server would 403
+  // the missing proof and write a false review item. The editor holds a part
+  // back while others are pending, so this only catches a part withdrawn while
+  // another sat at the enroll prompt. Refusals name the block that was submitted,
+  // so an editor already waiting isn't told it failed.
+  useEffect(
+    () =>
+      onLessonEvent(LESSON_COMPLETE_EVENT, (detail) => {
+        if (detail.lessonId !== lesson._id) return;
+        if (typeof detail.submittedCode === "string") {
+          captureSubmittedCode(detail.blockKey, detail.submittedCode);
+        }
+        const refuse = (message: string) => {
+          setCompletionError(message);
+          dispatchLessonEvent(LESSON_COMPLETE_ERROR_EVENT, {
+            lessonId: lesson._id,
+            blockKey: detail.blockKey,
+            message,
+          });
+        };
+        if (hasUnsubmittedCode()) {
+          refuse(t("codePartsUnfinished"));
+          return;
+        }
+        if (!gateReady) {
+          refuse(t("completeGateHint"));
+          return;
+        }
+        handleComplete();
+      }),
+    [
+      lesson._id,
+      handleComplete,
+      captureSubmittedCode,
+      hasUnsubmittedCode,
+      gateReady,
+      t,
+    ]
+  );
 
   // A gate-blocked submit leaves a rejection on the editor card. Once the block
   // it named is finished, that verdict is a lie — retire it rather than making
@@ -566,23 +626,17 @@ export function LessonPageClient({
   // passing code never rides `superteam:lesson-complete` (which drives an authed
   // completion). Capture it here as the code block's proof so `bankCurrentLesson`
   // banks a real submission, not an empty payload — the server re-grades it.
-  useEffect(() => {
-    const handleChallengeProof = (e: Event) => {
-      const detail = (
-        e as CustomEvent<{ lessonId: string; submittedCode?: string }>
-      ).detail;
-      if (detail.lessonId !== lesson._id) return;
-      if (typeof detail.submittedCode === "string") {
-        captureSubmittedCode(detail.submittedCode);
-      }
-    };
-    window.addEventListener("superteam:challenge-proof", handleChallengeProof);
-    return () =>
-      window.removeEventListener(
-        "superteam:challenge-proof",
-        handleChallengeProof
-      );
-  }, [lesson._id, captureSubmittedCode]);
+  // A part submitted while others are pending arrives here too.
+  useEffect(
+    () =>
+      onLessonEvent(CHALLENGE_PROOF_EVENT, (detail) => {
+        if (detail.lessonId !== lesson._id) return;
+        if (typeof detail.submittedCode === "string") {
+          captureSubmittedCode(detail.blockKey, detail.submittedCode);
+        }
+      }),
+    [lesson._id, captureSubmittedCode]
+  );
 
   // Build-complete events (deployable code blocks / deployed-program card).
   useEffect(() => {
@@ -829,13 +883,16 @@ export function LessonPageClient({
             // scroll: cancel the platform container's pt-8/pb-8 (#770) with
             // negative margins and become a fixed-height flex column
             // (100dvh minus the fixed header's 60px offset). Top bar is
-            // shrink-0; the IDE flex-fills the rest.
+            // shrink-0; the IDE flex-fills the rest. Several editors can't share
+            // one viewport, so they drop the height and each get their own.
             //
             // The same trick horizontally at lg: the fluid --page-gutter would
             // otherwise shrink the editor by ~34px a side on a laptop, so the
             // workspace bleeds it back out and re-applies its own 32px inset.
             // Below lg it keeps the page gutter like everything else.
-            "lg:page-gutter-bleed max-w-[1600px] space-y-0 lg:-mb-8 lg:-mt-8 lg:flex lg:h-[calc(100dvh-60px)] lg:flex-col lg:px-8"
+            `lg:page-gutter-bleed max-w-[1600px] space-y-0 lg:-mb-8 lg:-mt-8 lg:flex lg:flex-col lg:px-8 ${
+              codeBlockCount > 1 ? "" : "lg:h-[calc(100dvh-60px)]"
+            }`
           : // Reading lessons use the page's own column, the same one the
             // course page fills (#1206). They used to sit in a 768px band
             // centred inside it, which on a laptop left ~34% of the width
@@ -965,16 +1022,46 @@ export function LessonPageClient({
         <div className="mx-[calc(50%_-_50vw)] w-screen space-y-4 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:space-y-0">
           {codeBlocks.map((block, i) => {
             const Renderer = RENDERERS[block._type];
-            // Only the FIRST code block carries the instructions rail. A lesson
-            // with multiple code blocks would otherwise render the same
-            // instructionsSlot inside every editor (duplicated description +
-            // test cases). None ship today — this guards future content. (#457)
+            if (codeBlockCount === 1) {
+              return <Renderer key={block.key} block={block} ctx={codeCtx} />;
+            }
+            // Only the FIRST code block carries the instructions rail: every
+            // other editor would repeat the same description (#457). The tutor
+            // is off on the later ones too, because /api/ai/partner only loads
+            // the lesson's first code block and would coach against its tests.
+            const number = i + 1;
+            const numberOfKey = (key: string) => codeBlockKeys.indexOf(key) + 1;
             return (
-              <Renderer
+              <section
                 key={block.key}
-                block={block}
-                ctx={i === 0 ? codeCtx : ctx}
-              />
+                id={codePartAnchorId(number)}
+                data-code-part={number}
+                className="lg:flex lg:h-[calc(100dvh-60px)] lg:min-h-[560px] lg:flex-col"
+              >
+                <Renderer
+                  block={block}
+                  ctx={{
+                    ...(i === 0 ? codeCtx : { ...ctx, aiSuppressed: true }),
+                    codePart: {
+                      number,
+                      total: codeBlockCount,
+                      otherParts: codeBlockKeys
+                        .filter((key) => key !== block.key)
+                        .map(numberOfKey),
+                      pendingParts: codeBlockKeys
+                        .filter(
+                          (key) =>
+                            key !== block.key && !submittedCodeBlocks[key]
+                        )
+                        .map(numberOfKey),
+                      submitted: submittedCodeBlocks[block.key] === true,
+                      onSubmittedCodeEdited: () =>
+                        withdrawSubmittedCode(block.key),
+                      onJumpToPart: jumpToCodePart,
+                    },
+                  }}
+                />
+              </section>
             );
           })}
         </div>

@@ -25,6 +25,13 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { shouldShowEncouragement } from "@/lib/gamification/celebration";
 import { DEPLOY_EDITOR_ANCHOR_ID } from "@/lib/deploy/scroll";
+import {
+  CHALLENGE_PROOF_EVENT,
+  LESSON_COMPLETE_ERROR_EVENT,
+  LESSON_COMPLETE_EVENT,
+  dispatchLessonEvent,
+  onLessonEvent,
+} from "@/lib/lessons/lesson-events";
 import { CodeEditor, resetEditorStorage } from "./code-editor";
 import { canFormatLanguage } from "./formatting";
 import { Stopwatch } from "./stopwatch";
@@ -37,8 +44,6 @@ import type {
   CodeEditorHandle,
   ExecutionResult,
 } from "./types";
-
-const LESSON_COMPLETE_EVENT = "superteam:lesson-complete";
 
 /** The deploy success card asking for this lesson's normal submit. */
 const REQUEST_SUBMIT_EVENT = "superteam:request-submit";
@@ -60,10 +65,6 @@ function prefersReducedMotion(): boolean {
     window.matchMedia("(prefers-reduced-motion: reduce)").matches
   );
 }
-
-// Carries the passing code to lesson-client WITHOUT driving a completion, so an
-// anonymous learner's submission can be banked before they enroll (LX-A4c).
-const CHALLENGE_PROOF_EVENT = "superteam:challenge-proof";
 
 /**
  * Turns a run's test results into the compact summary string the AI Partner
@@ -87,6 +88,8 @@ function summarize(executionResult: ExecutionResult | null): string {
 
 export function ChallengeInterface({
   lessonId,
+  blockKey,
+  codePart,
   courseId,
   courseSlug,
   lessonSlug,
@@ -116,6 +119,10 @@ export function ChallengeInterface({
 
   // Default to true for backwards compatibility
   const isEnrolled = isEnrolledProp ?? true;
+
+  // A lesson with several code blocks keeps each one's saved work apart. A
+  // single-block lesson has no scope, so its keys stay what they always were.
+  const storageScope = codePart ? blockKey : undefined;
 
   const [code, setCode] = useState(initialCode);
   const [challengeState, setChallengeState] = useState<ChallengeState>({
@@ -274,11 +281,27 @@ export function ChallengeInterface({
   const [hasFailedRun, setHasFailedRun] = useState(false);
   const runButtonRef = useRef<HTMLButtonElement>(null);
 
-  const handleCodeChange = useCallback((newCode: string) => {
-    setCode(newCode);
-    // Editing after a rejection is the natural retry — clear the verdict.
-    setVerdict((v) => (v === "rejected" ? "idle" : v));
-  }, []);
+  // The code lesson-client holds as this part's proof. Once the editor stops
+  // matching it the proof is withdrawn, so a completion POST never carries code
+  // the learner has since changed.
+  const submittedCodeRef = useRef<string | null>(null);
+  const onSubmittedCodeEdited = codePart?.onSubmittedCodeEdited;
+
+  const handleCodeChange = useCallback(
+    (newCode: string) => {
+      setCode(newCode);
+      // Editing after a rejection is the natural retry — clear the verdict.
+      setVerdict((v) => (v === "rejected" ? "idle" : v));
+      if (
+        submittedCodeRef.current !== null &&
+        submittedCodeRef.current !== newCode
+      ) {
+        submittedCodeRef.current = null;
+        onSubmittedCodeEdited?.();
+      }
+    },
+    [onSubmittedCodeEdited]
+  );
 
   const handleResult = useCallback(
     (result: ExecutionResult) => {
@@ -401,12 +424,12 @@ export function ChallengeInterface({
     // editor is showing, so the lock covers it too.
     if (isComplete) return;
     setCode(initialCode);
-    resetEditorStorage(lessonId);
+    resetEditorStorage(lessonId, storageScope);
     setChallengeState({
       status: "idle",
       executionResult: null,
     });
-  }, [initialCode, lessonId, isComplete]);
+  }, [initialCode, lessonId, storageScope, isComplete]);
 
   const completeLesson = useCallback(() => {
     setPendingSubmit(false);
@@ -419,27 +442,47 @@ export function ChallengeInterface({
     // isAlreadyCompleted=true when done, which triggers the completion overlay.
     // The submitted code travels with the event so the server can re-validate
     // it authoritatively (the browser test pass is UX-only).
-    const event = new CustomEvent(LESSON_COMPLETE_EVENT, {
-      detail: { lessonId, submittedCode: code },
+    dispatchLessonEvent(LESSON_COMPLETE_EVENT, {
+      lessonId,
+      blockKey,
+      submittedCode: code,
     });
-    window.dispatchEvent(event);
-  }, [lessonId, onComplete, code]);
+  }, [lessonId, blockKey, onComplete, code]);
 
+  const pendingPartCount = codePart?.pendingParts.length ?? 0;
   const handleSubmit = useCallback(() => {
+    if (codePart) submittedCodeRef.current = code;
+    const stashProof = () =>
+      dispatchLessonEvent(CHALLENGE_PROOF_EVENT, {
+        lessonId,
+        blockKey,
+        submittedCode: code,
+      });
+    // Other parts still to go: hold this one and say so in the part strip. The
+    // verdict stays idle and enrolment waits for the last part, so the bank and
+    // the POST only ever see the whole lesson.
+    if (pendingPartCount > 0) {
+      stashProof();
+      return;
+    }
     if (!isEnrolled) {
       // Tests passed but not enrolled — prompt enrollment. Stash the passing
       // code first so it is banked if the learner is anonymous and chooses
       // "Later" at the sign-in prompt (LX-A4c).
-      window.dispatchEvent(
-        new CustomEvent(CHALLENGE_PROOF_EVENT, {
-          detail: { lessonId, submittedCode: code },
-        })
-      );
+      stashProof();
       setPendingSubmit(true);
       return;
     }
     completeLesson();
-  }, [isEnrolled, completeLesson, lessonId, code]);
+  }, [
+    codePart,
+    pendingPartCount,
+    isEnrolled,
+    completeLesson,
+    lessonId,
+    blockKey,
+    code,
+  ]);
 
   // A deployable lesson's Submit also lives on the deploy success card, next to
   // the program that was just deployed. It asks for the SAME submit — the
@@ -465,19 +508,17 @@ export function ChallengeInterface({
   // Server-side completion failed (e.g. a hidden test the browser never ran, or
   // a missing on-chain enrollment). lesson-client.tsx runs the completion API
   // and fires this with a localized reason; that IS the rejection verdict.
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent<{ lessonId: string; message: string }>)
-        .detail;
-      if (detail.lessonId !== lessonId) return;
-      setPendingSubmit(false);
-      setVerdict("rejected");
-      setRejectReason(detail.message);
-    };
-    window.addEventListener("superteam:lesson-complete-error", handler);
-    return () =>
-      window.removeEventListener("superteam:lesson-complete-error", handler);
-  }, [lessonId]);
+  useEffect(
+    () =>
+      onLessonEvent(LESSON_COMPLETE_ERROR_EVENT, (detail) => {
+        if (detail.lessonId !== lessonId) return;
+        if (detail.blockKey && detail.blockKey !== blockKey) return;
+        setPendingSubmit(false);
+        setVerdict("rejected");
+        setRejectReason(detail.message);
+      }),
+    [lessonId, blockKey]
+  );
 
   // A rejection the learner has since fixed (they finished the quiz the submit
   // was refused for) is no longer true. lesson-client says so; the card drops
@@ -686,6 +727,47 @@ export function ChallengeInterface({
           data-verdict={verdict}
           data-verdict-flash={verdictFlash ? "" : undefined}
         >
+          {/* Which part this is, and what the learner sees between parts: a
+              submitted part stays editable and says what's left, with the jump
+              to it. role="status" so saving a part is announced. */}
+          {codePart && (
+            <div className="flex shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-border bg-card px-3 py-1.5">
+              <p className="text-xs text-text-3">
+                <span className="font-display font-bold text-text">
+                  {t("codePartLabel", {
+                    number: codePart.number,
+                    total: codePart.total,
+                  })}
+                </span>{" "}
+                <span role="status">
+                  {codePart.submitted &&
+                    pendingPartCount > 0 &&
+                    verdict === "idle" &&
+                    t("codePartSaved", {
+                      parts: codePart.pendingParts.join(", "),
+                    })}
+                </span>
+              </p>
+              <div className="flex items-center gap-1">
+                {codePart.otherParts.map((part) => (
+                  <Button
+                    key={part}
+                    variant={
+                      codePart.submitted && codePart.pendingParts.includes(part)
+                        ? "push"
+                        : "ghost"
+                    }
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => codePart.onJumpToPart(part)}
+                  >
+                    {t("codePartGoTo", { number: part })}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Toolbar */}
           <div className="shrink-0 border-b border-border bg-card px-3 py-2.5">
             {/* Wraps rather than clips: the completed state adds both the
@@ -712,7 +794,11 @@ export function ChallengeInterface({
               <div className="flex items-center gap-1">
                 {/* Personal stopwatch (#942 follow-up) — client-only, per
                     lesson, never wired to XP or grading. */}
-                <Stopwatch lessonId={lessonId} />
+                <Stopwatch
+                  lessonId={
+                    storageScope ? `${lessonId}::${storageScope}` : lessonId
+                  }
+                />
                 {canFormat && (
                   <Button
                     variant="ghost"
@@ -869,6 +955,7 @@ export function ChallengeInterface({
             <CodeEditor
               ref={editorHandle}
               lessonId={lessonId}
+              storageScope={storageScope}
               initialCode={initialCode}
               language={language}
               value={code}

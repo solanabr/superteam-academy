@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import { render, screen, act, cleanup } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import type { EditorProps, Monaco, OnMount } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
-import { CodeEditor } from "../code-editor";
 import messages from "@/messages/en.json";
+import { CodeEditor, resetEditorStorage } from "../code-editor";
 
 const captured = vi.hoisted(() => ({
   props: null as unknown,
@@ -92,6 +92,98 @@ afterEach(() => {
   cleanup();
   // Remove any per-test platform override (restores jsdom's prototype getter).
   Reflect.deleteProperty(window.navigator, "platform");
+});
+
+describe("CodeEditor autosave storage", () => {
+  const LEGACY_KEY = "superteam-lms-code-lesson-test";
+
+  function renderScoped(storageScope?: string) {
+    return render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <CodeEditor
+          lessonId="lesson-test"
+          initialCode="const a = 1;"
+          language="typescript"
+          storageScope={storageScope}
+        />
+      </NextIntlClientProvider>
+    );
+  }
+
+  beforeEach(() => {
+    window.localStorage.clear();
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    window.localStorage.clear();
+  });
+
+  function typeInto(code: string) {
+    act(() => {
+      (editorProps().onChange as (value: string | undefined) => void)(code);
+      vi.advanceTimersByTime(1500);
+    });
+  }
+
+  it("keeps a single-block lesson on the lesson-only key", () => {
+    window.localStorage.setItem(LEGACY_KEY, "// saved before this change");
+    renderScoped();
+    const fake = mountFakeEditor();
+    expect(fake.instance.setValue).toHaveBeenCalledWith(
+      "// saved before this change"
+    );
+
+    typeInto("// new work");
+    expect(window.localStorage.getItem(LEGACY_KEY)).toBe("// new work");
+    expect(window.localStorage.length).toBe(1);
+  });
+
+  it("saves and restores two blocks of one lesson independently", () => {
+    renderScoped("first");
+    mountFakeEditor();
+    typeInto("// first");
+    cleanup();
+
+    renderScoped("second");
+    const second = mountFakeEditor();
+    expect(second.instance.setValue).not.toHaveBeenCalled();
+    typeInto("// second");
+    cleanup();
+
+    renderScoped("first");
+    const first = mountFakeEditor();
+    expect(first.instance.setValue).toHaveBeenCalledWith("// first");
+    expect(window.localStorage.getItem(LEGACY_KEY)).toBeNull();
+    expect(window.localStorage.length).toBe(2);
+  });
+
+  it("doesn't load the lesson-only key into a scoped editor", () => {
+    window.localStorage.setItem(LEGACY_KEY, "// whichever editor saved last");
+    renderScoped("first");
+    const fake = mountFakeEditor();
+    expect(fake.instance.setValue).not.toHaveBeenCalled();
+  });
+
+  it("resets only the scope it's given", () => {
+    renderScoped("first");
+    mountFakeEditor();
+    typeInto("// first");
+    cleanup();
+    renderScoped("second");
+    mountFakeEditor();
+    typeInto("// second");
+    window.localStorage.setItem(LEGACY_KEY, "// legacy");
+
+    resetEditorStorage("lesson-test", "second");
+    expect(window.localStorage.length).toBe(2);
+    expect(window.localStorage.getItem(LEGACY_KEY)).toBe("// legacy");
+
+    resetEditorStorage("lesson-test");
+    expect(window.localStorage.getItem(LEGACY_KEY)).toBeNull();
+    expect(window.localStorage.length).toBe(1);
+  });
 });
 
 describe("CodeEditor a11y (LX-C5)", () => {
