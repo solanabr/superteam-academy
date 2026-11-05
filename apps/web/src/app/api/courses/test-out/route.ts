@@ -16,9 +16,10 @@ import {
 import { resolveEntryLessonHref } from "@/lib/courses/entry-lesson";
 import { locales, defaultLocale, type Locale } from "@/lib/i18n/config";
 import { serverEnv } from "@/lib/env.server";
-import { logError } from "@/lib/logging";
+import { logError, logEvent } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 import {
+  isTestOutEnabled,
   selectTestOutQuestions,
   gatherCourseQuizQuestions,
   toPublicQuestion,
@@ -96,6 +97,15 @@ function coerceLocale(value: unknown): Locale {
     : defaultLocale;
 }
 
+/** Test-out is off by decision (see {@link isTestOutEnabled}). */
+function testOutDisabled(): NextResponse {
+  logEvent({ event: "test-out.rejected", context: { reason: "disabled" } });
+  return NextResponse.json(
+    { error: "Test-out is turned off.", reason: "disabled" },
+    { status: 403 }
+  );
+}
+
 /**
  * GET — fetch the test-out challenge for a course.
  *
@@ -104,6 +114,8 @@ function coerceLocale(value: unknown): Locale {
  * POST half will re-derive and grade.
  */
 export async function GET(request: NextRequest) {
+  if (!isTestOutEnabled()) return testOutDisabled();
+
   try {
     const supabase = await createClient();
     const {
@@ -156,6 +168,8 @@ export async function GET(request: NextRequest) {
  * the next course in the path. On a fail, nothing is mutated.
  */
 export async function POST(request: NextRequest) {
+  if (!isTestOutEnabled()) return testOutDisabled();
+
   try {
     if (
       !process.env.NEXT_PUBLIC_SUPABASE_URL ||

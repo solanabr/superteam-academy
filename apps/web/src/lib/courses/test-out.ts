@@ -17,6 +17,15 @@ import type { Course, QuizQuestionData } from "@superteam-lms/types";
  */
 
 /**
+ * Test-out is off by decision: the API refuses, and the page has no route (see
+ * `courses/[slug]/test-out/test-out-page.tsx`). Return `true` here and restore
+ * that route to bring it back; the rest of the feature stays in place.
+ */
+export function isTestOutEnabled(): boolean {
+  return false;
+}
+
+/**
  * Nominal challenge length (spec: "10-question course challenge"). A course
  * with a smaller authored quiz pool uses its whole pool; the actual count is
  * always reported to the client so the UI never claims 10 when fewer exist.
