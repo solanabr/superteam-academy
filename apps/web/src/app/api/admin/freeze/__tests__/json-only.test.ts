@@ -9,13 +9,14 @@ vi.mock("server-only", () => ({}));
 // the freeze writer are faked, so these cases run the route's actual auth seam.
 const h = vi.hoisted(() => ({
   setPlatformFrozen: vi.fn(async () => undefined),
+  session: { user: { id: "admin-1" } as { id: string } | null },
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: async () => ({
     auth: {
       getUser: async () => ({
-        data: { user: { id: "admin-1" } },
+        data: { user: h.session.user },
         error: null,
       }),
     },
@@ -55,6 +56,7 @@ const post = async (headers: Record<string, string>): Promise<Response> => {
 
 beforeEach(() => {
   h.setPlatformFrozen.mockClear();
+  h.session.user = { id: "admin-1" };
 });
 
 describe("POST /api/admin/freeze with the real auth check", () => {
@@ -64,14 +66,26 @@ describe("POST /api/admin/freeze with the real auth check", () => {
     expect(h.setPlatformFrozen).toHaveBeenCalledWith(true, undefined);
   });
 
-  it.each(["text/plain", "application/x-www-form-urlencoded"])(
-    "refuses %s from the same admin and writes nothing",
+  // fetch() labels a string body text/plain; `curl -d` sends a form type.
+  it.each(["text/plain;charset=UTF-8", "application/x-www-form-urlencoded"])(
+    "answers an admin's %s with a 415 naming the header, and writes nothing",
     async (contentType) => {
       const res = await post({ "content-type": contentType });
-      expect(res.status).toBe(401);
+      expect(res.status).toBe(415);
+      expect(((await res.json()) as { error: string }).error).toContain(
+        "application/json"
+      );
       expect(h.setPlatformFrozen).not.toHaveBeenCalled();
     }
   );
+
+  it("answers a non-admin's text/plain with the plain 401", async () => {
+    h.session.user = null;
+    const res = await post({ "content-type": "text/plain" });
+    expect(res.status).toBe(401);
+    expect(await res.json()).toEqual({ error: "Unauthorized" });
+    expect(h.setPlatformFrozen).not.toHaveBeenCalled();
+  });
 
   it("refuses a cross-site JSON request and writes nothing", async () => {
     const res = await post({

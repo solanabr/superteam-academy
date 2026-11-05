@@ -102,7 +102,7 @@ describe("page CSP (the one middleware actually serves)", () => {
     expect(buildCsp("abc123")).toContain("'nonce-abc123'");
   });
 
-  it.each(["script-src", "style-src", "worker-src", "connect-src"])(
+  it.each(["script-src", "style-src", "worker-src"])(
     "keeps %s on jsdelivr to the pinned Monaco path",
     (name) => {
       const jsdelivr = directive(`${name} `)!
@@ -118,12 +118,8 @@ describe("page CSP (the one middleware actually serves)", () => {
       .map((d) => d.trim())
       .filter((d) => d.includes("jsdelivr"))
       .map((d) => d.split(" ")[0]);
-    expect(others.sort()).toEqual([
-      "connect-src",
-      "script-src",
-      "style-src",
-      "worker-src",
-    ]);
+    // Not connect-src: Monaco loads scripts and styles, and fetches nothing.
+    expect(others.sort()).toEqual(["script-src", "style-src", "worker-src"]);
   });
 });
 

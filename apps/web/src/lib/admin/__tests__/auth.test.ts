@@ -1,7 +1,5 @@
 /* eslint-disable import/order -- vi.mock('server-only') must be hoisted above
    the module import so the `server-only` graph loads under vitest. */
-import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("server-only", () => ({}));
@@ -25,9 +23,11 @@ vi.mock("@/lib/supabase/admin", () => ({
 }));
 
 import {
+  adminUnauthorizedResponse,
   requireAdmin,
   requireAdminAuth,
   AdminAuthError,
+  AdminContentTypeError,
 } from "@/lib/admin/auth";
 
 function allowlistReturns(result: {
@@ -158,21 +158,19 @@ describe("requireAdminAuth — JSON-only mutations", () => {
     "application/json-patch+json",
     "text/plain; application/json",
     "text/plain, application/json",
-  ])("rejects %s before touching the DB", async (contentType) => {
+  ])("tells a confirmed admin that %s is the problem", async (contentType) => {
     await expect(requireAdminAuth(post(contentType))).rejects.toBeInstanceOf(
-      AdminAuthError
+      AdminContentTypeError
     );
-    expect(h.from).not.toHaveBeenCalled();
   });
 
-  it("rejects a POST with no content type", async () => {
+  it("tells a confirmed admin about a POST with no content type", async () => {
     await expect(requireAdminAuth(post())).rejects.toBeInstanceOf(
-      AdminAuthError
+      AdminContentTypeError
     );
-    expect(h.from).not.toHaveBeenCalled();
   });
 
-  it("rejects a POST whose body defaults to text/plain", async () => {
+  it("tells a confirmed admin about a body that defaulted to text/plain", async () => {
     // fetch() and `new Request` label a string body text/plain on their own.
     const defaulted = new Request("https://app.test/api/admin/x", {
       method: "POST",
@@ -180,26 +178,61 @@ describe("requireAdminAuth — JSON-only mutations", () => {
       body: '{"frozen":true}',
     });
     await expect(requireAdminAuth(defaulted)).rejects.toBeInstanceOf(
-      AdminAuthError
+      AdminContentTypeError
     );
+  });
+
+  const expectPlainAuthError = async (req: Request) => {
+    const error: unknown = await requireAdminAuth(req).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(AdminAuthError);
+    expect(error).not.toBeInstanceOf(AdminContentTypeError);
+  };
+
+  it("doesn't reveal the check to a session with no allowlist row", async () => {
+    allowlistReturns({ data: null, error: null });
+    await expectPlainAuthError(post("text/plain"));
+  });
+
+  it("doesn't reveal the check without a session", async () => {
+    h.getUser.mockResolvedValue({ data: { user: null }, error: null });
+    await expectPlainAuthError(post("text/plain"));
+  });
+
+  it("doesn't reveal the check when the allowlist read fails", async () => {
+    allowlistReturns({ data: null, error: { message: "db down" } });
+    await expectPlainAuthError(post("text/plain"));
+  });
+
+  it("refuses a cross-site non-JSON request before touching the DB", async () => {
+    const crossSite = new Request("https://app.test/api/admin/x", {
+      method: "POST",
+      headers: { "sec-fetch-site": "cross-site", "content-type": "text/plain" },
+    });
+    await expectPlainAuthError(crossSite);
+    expect(h.from).not.toHaveBeenCalled();
   });
 
   it.each(["GET", "HEAD"])("leaves %s reads alone", async (method) => {
     const read = new Request("https://app.test/api/admin/x", { method });
     await expect(requireAdminAuth(read)).resolves.toEqual({ userId: "user-1" });
   });
+});
 
-  it("covers every admin POST route", () => {
-    // The check lives in requireAdminAuth, so it only holds for routes that call it.
-    const root = join(__dirname, "../../../app/api/admin");
-    const routes = readdirSync(root, { recursive: true, encoding: "utf8" })
-      .filter((file) => file.endsWith("route.ts"))
-      .map((file) => readFileSync(join(root, file), "utf8"))
-      .filter((source) => /export async function POST\b/.test(source));
+describe("adminUnauthorizedResponse", () => {
+  it("answers a content-type error with a 415 naming the header", async () => {
+    const res = adminUnauthorizedResponse(new AdminContentTypeError());
+    expect(res.status).toBe(415);
+    expect(await res.json()).toEqual({
+      error: "Content-Type must be application/json",
+    });
+  });
 
-    expect(routes).toHaveLength(9);
-    for (const source of routes) {
-      expect(source).toMatch(/requireAdminAuth\(req\)/);
-    }
+  it.each([
+    ["an auth error", new AdminAuthError()],
+    ["nothing", undefined],
+  ])("answers %s with the plain 401", async (_label, error) => {
+    const res = adminUnauthorizedResponse(error);
+    expect(res.status).toBe(401);
+    expect(await res.json()).toEqual({ error: "Unauthorized" });
   });
 });

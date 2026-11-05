@@ -78,6 +78,42 @@ test("Monaco loads under the page CSP without a violation", async ({
   await page.keyboard.type("// typed-under-csp");
 
   await expect(monaco.locator(".view-lines")).toContainText("typed-under-csp");
+
+  // A worker that can't start under the policy leaves the editor looking fine,
+  // so ask one for a result. This call hangs, and the test times out, if not.
+  const diagnostics = await page.evaluate(async () => {
+    // Monaco 0.55's types mark this namespace deprecated and empty.
+    const { monaco: api } = window as unknown as {
+      monaco: {
+        editor: {
+          createModel(
+            value: string,
+            language: string
+          ): { uri: { toString(): string } };
+        };
+        languages: {
+          typescript: {
+            getTypeScriptWorker(): Promise<
+              (uri: unknown) => Promise<{
+                getSemanticDiagnostics(uri: string): Promise<unknown[]>;
+              }>
+            >;
+          };
+        };
+      };
+    };
+    const model = api.editor.createModel(
+      'const x: number = "a";',
+      "typescript"
+    );
+    const worker = await api.languages.typescript.getTypeScriptWorker();
+    const client = await worker(model.uri);
+    return client.getSemanticDiagnostics(model.uri.toString());
+  });
+  expect(diagnostics.length).toBeGreaterThan(0);
+  // Monaco can fall back to the main thread, so check a real worker exists too.
+  expect(page.workers().length).toBeGreaterThan(0);
+
   expect(await violations(page)).toEqual([]);
 });
 

@@ -142,8 +142,6 @@ export function buildCsp(nonce: string): string {
     [
       "connect-src 'self'",
       `${supabase.http} ${supabase.ws}`,
-      // Monaco fetches its source maps (loader.js.map, vs/*.map) from jsdelivr.
-      MONACO_CDN_SOURCE,
       ...solanaRpcSources(),
       "https://accounts.google.com https://*.googleapis.com",
       "https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://stats.g.doubleclick.net",

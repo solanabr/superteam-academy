@@ -32,8 +32,9 @@ No route inventory here: `find src/app/api -name route.ts` is the list, and a ta
   `admin/courses/reactivate`, `admin/courses/sync`, `admin/achievements/sync`, `admin/resync`,
   `admin/freeze`, `admin/publish/pin`, `admin/email/announce-course`. A recreate wipes enrolled
   learners' progress in that course, and on mainnet it must refuse once anyone has enrolled.
-- Admin mutations are JSON-only: `requireAdminAuth` returns 401 for a POST whose `Content-Type`
-  isn't `application/json`, so scripted callers must set it.
+- Admin mutations are JSON-only: `requireAdminAuth` throws `AdminContentTypeError` when a confirmed
+  admin's POST isn't `application/json`. Pass the caught error to `adminUnauthorizedResponse(e)`,
+  which answers 415; anyone else gets the plain 401.
 - Platform-paid or minting: `enroll/sponsor` (the platform pays the fee and rent; the learner comes
   from the session), `certificates/mint`, `lessons/complete` (on-chain completion and XP),
   `quests/daily` (quest XP), `ai/partner` (paid Gemini calls).

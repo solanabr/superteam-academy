@@ -10,6 +10,12 @@ export class AdminAuthError extends Error {
 }
 
 /**
+ * A confirmed admin sent a state-changing request that isn't JSON. Subclasses
+ * AdminAuthError so a route's existing catch still refuses the request.
+ */
+export class AdminContentTypeError extends AdminAuthError {}
+
+/**
  * Session-based admin check (replaces the retired ADMIN_SECRET/HMAC-cookie
  * system). Reads the Supabase session from the request cookies, then checks
  * the `admin_users` allowlist via the service-role client — the table has RLS
@@ -91,9 +97,10 @@ function isSameOriginRequest(req: Request): boolean {
 }
 
 /**
- * Admin mutations are JSON-only: every admin POST parses a JSON body, and an
- * HTML form can't send this media type. Safe methods carry no body, so they're
- * exempt. Compares the bare media type, ignoring case and parameters like charset.
+ * Admin mutations are JSON-only, on top of the same-origin check rather than in
+ * place of it: every admin POST parses a JSON body. Safe methods carry no body,
+ * so they're exempt. Compares the bare media type, ignoring case and parameters
+ * like charset.
  */
 function hasJsonContentType(req: Request): boolean {
   const method = req.method.toUpperCase();
@@ -107,32 +114,45 @@ function hasJsonContentType(req: Request): boolean {
  * Authorizes an admin API request via the caller's Supabase session and the
  * `admin_users` allowlist (see {@link requireAdmin}). Throws AdminAuthError if
  * the session is missing/invalid, the user is not on the allowlist, or a
- * state-changing request fails the same-origin (CSRF) or JSON content-type
- * check. Returns the acting admin's user id so routes can attribute logged
+ * state-changing request fails the same-origin (CSRF) check. Throws its
+ * AdminContentTypeError subclass if a confirmed admin's state-changing request
+ * isn't JSON. That check runs last so the distinct answer only ever reaches an
+ * admin. Returns the acting admin's user id so routes can attribute logged
  * actions.
  */
 export async function requireAdminAuth(
   req: Request
 ): Promise<{ userId: string }> {
-  if (!isSameOriginRequest(req) || !hasJsonContentType(req)) {
+  if (!isSameOriginRequest(req)) {
     throw new AdminAuthError();
   }
   const admin = await requireAdmin();
   if (!admin) {
     throw new AdminAuthError();
   }
+  if (!hasJsonContentType(req)) {
+    throw new AdminContentTypeError();
+  }
   return admin;
 }
 
 /**
- * Returns a 401 NextResponse for use in catch blocks.
+ * The response for an error caught from {@link requireAdminAuth}: a 415 for
+ * {@link AdminContentTypeError}, otherwise a 401. Handlers that accept a body
+ * must pass the error on, or an admin's missing header reads as a dead session.
  *
  * Usage:
  *   try { await requireAdminAuth(req) } catch (e) {
- *     if (e instanceof AdminAuthError) return adminUnauthorizedResponse();
+ *     if (e instanceof AdminAuthError) return adminUnauthorizedResponse(e);
  *     throw e;
  *   }
  */
-export function adminUnauthorizedResponse(): NextResponse {
+export function adminUnauthorizedResponse(error?: unknown): NextResponse {
+  if (error instanceof AdminContentTypeError) {
+    return NextResponse.json(
+      { error: "Content-Type must be application/json" },
+      { status: 415 }
+    );
+  }
   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 }

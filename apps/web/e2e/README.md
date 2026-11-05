@@ -50,7 +50,7 @@ no network, no on-chain tx. The learner "session" is a locally-minted cookie
 | Learn loop   | `learn-loop.spec.ts`    | mocked session | Signed-in, enrolled learner works a quiz-only lesson and reaches the completed state.                                 |
 | Unsubscribe  | `unsubscribe.spec.ts`   | none           | **Skipped until #769** (email feature). GET bad token → failure page; POST always-200.                                |
 | Editor size  | `mobile-editor.spec.ts` | none           | The mounted Monaco stays usable from 375px to 1440px; typing and the go-to-editor link work at 375px.                 |
-| Monaco CSP   | `monaco-csp.spec.ts`    | none           | Monaco runs with no CSP violation, and jsdelivr scripts outside its pinned path are refused.                          |
+| Monaco CSP   | `monaco-csp.spec.ts`    | none           | Monaco and a worker run with no CSP violation; jsdelivr scripts outside its pinned path are refused.                  |
 
 ## Mock-boundary map
 
