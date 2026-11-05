@@ -13,6 +13,11 @@ const EXT: Record<(typeof LANGUAGES)[number], string> = {
 /**
  * A single graded case. Lives in `tests.json`, not the block, because
  * `expectedOutput` is compared byte-for-byte and YAML coerces `1.0` to `1`.
+ *
+ * For a `standard` Rust block, `input` and `expectedOutput` are Rust source
+ * pasted into the generated harness (`let __expected__ = <expectedOutput>;`),
+ * so a `String` result is a string literal: the text `ok` is stored as `"\"ok\""`.
+ * Bare text doesn't compile and the reference solution fails every test.
  */
 export const TestCase = z.object({
   id: z.string().min(1),
