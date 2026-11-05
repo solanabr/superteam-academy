@@ -12,7 +12,18 @@ const { slotToLiveLessonId } = vi.hoisted(() => ({
 }));
 vi.mock("@/lib/courses/lesson-slot", () => ({ slotToLiveLessonId }));
 
-import { resolveLessonId } from "../resolvers";
+const { decodeCourse } = vi.hoisted(() => ({
+  decodeCourse: vi.fn<(data: Buffer) => { course_id: string }>(),
+}));
+vi.mock("@/lib/solana/academy-reads", () => ({ decodeCourse }));
+
+import { Connection, PublicKey } from "@solana/web3.js";
+import { getProgramId } from "@/lib/solana/pda";
+import {
+  clearCoursePdaCache,
+  resolveCourseId,
+  resolveLessonId,
+} from "../resolvers";
 
 // C3-shaped: a later-authored lesson keeps slot 5 while sitting at array pos 4
 // (an earlier lesson was retired), and slot 14 is retired entirely.
@@ -25,6 +36,65 @@ const LIVE = new Map<number, string>([
 beforeEach(() => {
   vi.clearAllMocks();
   slotToLiveLessonId.mockReturnValue(LIVE);
+});
+
+describe("resolveCourseId", () => {
+  const COURSE_PDA = new PublicKey(Buffer.alloc(32, 7)).toBase58();
+  const OTHER_OWNER = new PublicKey(
+    "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"
+  );
+
+  function connectionReturning(owner: PublicKey | null) {
+    const getAccountInfo = vi.fn(async () =>
+      owner ? { owner, data: Buffer.from([1, 2, 3]) } : null
+    );
+    return {
+      connection: { getAccountInfo } as unknown as Connection,
+      getAccountInfo,
+    };
+  }
+
+  beforeEach(() => {
+    clearCoursePdaCache();
+    decodeCourse.mockReturnValue({ course_id: "course-solana-101" });
+  });
+
+  it("resolves an account owned by our program", async () => {
+    const { connection } = connectionReturning(getProgramId());
+    await expect(resolveCourseId(COURSE_PDA, connection)).resolves.toBe(
+      "course-solana-101"
+    );
+  });
+
+  it("returns null without decoding an account another program owns", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const { connection } = connectionReturning(OTHER_OWNER);
+    await expect(resolveCourseId(COURSE_PDA, connection)).resolves.toBeNull();
+    expect(decodeCourse).not.toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledTimes(1);
+    warn.mockRestore();
+  });
+
+  it("does not cache a rejected account", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const rejected = connectionReturning(OTHER_OWNER);
+    await resolveCourseId(COURSE_PDA, rejected.connection);
+    await resolveCourseId(COURSE_PDA, rejected.connection);
+    expect(rejected.getAccountInfo).toHaveBeenCalledTimes(2);
+
+    const accepted = connectionReturning(getProgramId());
+    await expect(
+      resolveCourseId(COURSE_PDA, accepted.connection)
+    ).resolves.toBe("course-solana-101");
+    warn.mockRestore();
+  });
+
+  it("returns null when the account does not exist", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const { connection } = connectionReturning(null);
+    await expect(resolveCourseId(COURSE_PDA, connection)).resolves.toBeNull();
+    warn.mockRestore();
+  });
 });
 
 describe("resolveLessonId — event index is the slot, not array position (#741)", () => {
