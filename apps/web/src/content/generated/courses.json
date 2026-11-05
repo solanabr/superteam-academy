@@ -1696,7 +1696,7 @@
     "_type": "course",
     "creator": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
     "creatorRewardXp": 30,
-    "description": "Por que o sistema financeiro está migrando para a Solana, como a tecnologia funciona de verdade, e seu primeiro ativo na mainnet — em menos de 10 minutos.",
+    "description": "Por que o sistema financeiro está migrando para a Solana, como a tecnologia funciona de verdade, e seu primeiro registro onchain, conferido com os próprios olhos — em menos de 10 minutos.",
     "difficulty": "beginner",
     "duration": 0.25,
     "minCompletionsForReward": 0,
@@ -1731,7 +1731,7 @@
             "_weak": true
           }
         ],
-        "title": "Speedrun: da tese ao seu primeiro ativo onchain"
+        "title": "Speedrun: da tese ao seu primeiro registro onchain"
       }
     ],
     "slug": {

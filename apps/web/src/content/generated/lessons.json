@@ -14583,31 +14583,31 @@
         "tests": [
           {
             "description": "one slow target: max is 930ms and only it crosses the 500ms threshold",
-            "expectedOutput": "max=930,over=1",
+            "expectedOutput": "\"max=930,over=1\"",
             "id": "t1",
             "input": "vec![120, 340, 930], 500"
           },
           {
             "description": "a healthy fleet with one probe over the line",
-            "expectedOutput": "max=300,over=1",
+            "expectedOutput": "\"max=300,over=1\"",
             "id": "t2",
             "input": "vec![100, 200, 300], 250"
           },
           {
             "description": "everything is slow: all three latencies exceed the threshold",
-            "expectedOutput": "max=950,over=3",
+            "expectedOutput": "\"max=950,over=3\"",
             "id": "t3",
             "input": "vec![900, 901, 950], 100"
           },
           {
             "description": "an empty fixture list reports max=0 and zero over",
-            "expectedOutput": "max=0,over=0",
+            "expectedOutput": "\"max=0,over=0\"",
             "id": "t4",
             "input": "vec![], 500"
           },
           {
             "description": "over counts STRICTLY greater, exactly-at-threshold does not count",
-            "expectedOutput": "max=500,over=0",
+            "expectedOutput": "\"max=500,over=0\"",
             "id": "t5",
             "input": "vec![500, 499], 500"
           }
@@ -14941,37 +14941,37 @@
         "tests": [
           {
             "description": "a Pending target's first successful probe brings it Up",
-            "expectedOutput": "Up",
+            "expectedOutput": "\"Up\"",
             "id": "t1",
             "input": "\"Pending\", true, 0"
           },
           {
             "description": "one failure degrades an Up target, it does not kill it",
-            "expectedOutput": "Degraded",
+            "expectedOutput": "\"Degraded\"",
             "id": "t2",
             "input": "\"Up\", false, 1"
           },
           {
             "description": "a Degraded target under 3 consecutive failures stays Degraded",
-            "expectedOutput": "Degraded",
+            "expectedOutput": "\"Degraded\"",
             "id": "t3",
             "input": "\"Degraded\", false, 2"
           },
           {
             "description": "the third consecutive failure takes a Degraded target Down",
-            "expectedOutput": "Down",
+            "expectedOutput": "\"Down\"",
             "id": "t4",
             "input": "\"Degraded\", false, 3"
           },
           {
             "description": "a successful probe recovers a Down target straight to Up",
-            "expectedOutput": "Up",
+            "expectedOutput": "\"Up\"",
             "id": "t5",
             "input": "\"Down\", true, 0"
           },
           {
             "description": "an unknown state string is rejected as Invalid, never guessed",
-            "expectedOutput": "Invalid",
+            "expectedOutput": "\"Invalid\"",
             "id": "t6",
             "input": "\"Lost\", true, 0"
           }
@@ -15221,49 +15221,49 @@
         "tests": [
           {
             "description": "a well-formed target line parses into all three fields",
-            "expectedOutput": "OK api https://example.com/health 500",
+            "expectedOutput": "\"OK api https://example.com/health 500\"",
             "id": "t1",
             "input": "\"name=api;url=https://example.com/health;timeout_ms=500\""
           },
           {
             "description": "split on the FIRST '=' only, query-string '='s belong to the URL",
-            "expectedOutput": "OK rpc https://example.com/status?fmt=json&v=2 250",
+            "expectedOutput": "\"OK rpc https://example.com/status?fmt=json&v=2 250\"",
             "id": "t2",
             "input": "\"name=rpc;url=https://example.com/status?fmt=json&v=2;timeout_ms=250\""
           },
           {
             "description": "an unknown key is an error value, never silently ignored",
-            "expectedOutput": "ERR unknown key: retries",
+            "expectedOutput": "\"ERR unknown key: retries\"",
             "id": "t3",
             "input": "\"name=api;url=https://example.com/health;timeout_ms=500;retries=3\""
           },
           {
             "description": "a segment with no '=' is a bad pair",
-            "expectedOutput": "ERR bad pair: https://example.com",
+            "expectedOutput": "\"ERR bad pair: https://example.com\"",
             "id": "t4",
             "input": "\"name=api;https://example.com;timeout_ms=500\""
           },
           {
             "description": "only http:// and https:// schemes are legal probe targets",
-            "expectedOutput": "ERR invalid url: ftp://example.com",
+            "expectedOutput": "\"ERR invalid url: ftp://example.com\"",
             "id": "t5",
             "input": "\"name=api;url=ftp://example.com;timeout_ms=500\""
           },
           {
             "description": "a non-numeric timeout is an error, not a default",
-            "expectedOutput": "ERR invalid timeout_ms: fast",
+            "expectedOutput": "\"ERR invalid timeout_ms: fast\"",
             "id": "t6",
             "input": "\"name=api;url=https://example.com;timeout_ms=fast\""
           },
           {
             "description": "all three keys are required; missing keys are reported in fixed order",
-            "expectedOutput": "ERR missing key: timeout_ms",
+            "expectedOutput": "\"ERR missing key: timeout_ms\"",
             "id": "t7",
             "input": "\"name=api;url=https://example.com\""
           },
           {
             "description": "a trailing ';' produces an empty segment, which is ignored",
-            "expectedOutput": "OK api https://example.com 75",
+            "expectedOutput": "\"OK api https://example.com 75\"",
             "id": "t8",
             "input": "\"name=api;url=https://example.com;timeout_ms=75;\""
           }
@@ -24292,7 +24292,7 @@
       {
         "_key": "intro",
         "_type": "prose",
-        "src": "# Como isso é possível\n\nVocê já viu que a Solana é rápida e barata. Mas como uma rede aberta, sem dono, consegue ser mais veloz que o app do seu banco? Não é mágica. É uma decisão de arquitetura que as outras redes não tomaram. Vamos por partes.\n\nAntes da mecânica, a ideia grande. A Solana é um megacomputador global e descentralizado: um computador que ninguém pode desligar, censurar ou adulterar, mantido por milhares de máquinas independentes que se comportam como uma só. O que isso destrava é enorme: qualquer pessoa pode publicar um código que vira um serviço financeiro global, no ar 24 horas por dia, sem pedir permissão a banco nem a governo. É isso que torna possível tudo o que você viu na lição anterior. A pergunta desta lição é como esse computador consegue ser tão rápido.\n\n![Um globo de máquinas conectadas forma um único megacomputador e libera três superpoderes para quem programa: publicar serviços financeiros globais 24 horas por dia, sem pedir permissão e com alcance mundial imediato.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/090eeba49bee50144db2680885a60984f4b25fee5c0b6151751f47c72774e27f.webp)\n\nComece pela ideia central: na Solana, o código e os dados moram separados. Os programas (o código que roda) não guardam nada; todo o estado vive em contas, que são só caixinhas de dados. Cada saldo de token tem a sua própria conta, a ATA (Associated Token Account), derivada da sua carteira mais o token. Uma carteira, muitas contas.\n\n![Um diagrama separa o programa, que é só código, das contas que guardam os dados, com uma carteira ligada a várias contas de saldo.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/719f07280765ed5b3214726b8b276cfe877bdad3466009403391fb6d519a6875.webp)\n\nEssa separação é o que destrava a velocidade. Toda transação declara antes quais contas vai ler e escrever. Assim o motor da rede, chamado Sealevel, enxerga quais transações não se cruzam e roda todas ao mesmo tempo. Pense em vários caixas de supermercado abertos em paralelo, em vez de uma fila única, por mais rápida que ela seja.\n\n![Um fluxograma mostra transações independentes correndo em caixas paralelos ao mesmo tempo, enquanto as que disputam a mesma conta esperam na mesma fila.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/39984e79aaf02ca05a97bd776cb0bcfa3d66139fff178c2c2aaa625d9713168e.webp)\n\nE o congestionamento? Ele fica local. A prioridade é precificada por conta disputada (a rede chama isso de neighborhood fees, taxas de vizinhança). Se um show concorrido está vendendo ingressos onchain, quem briga por aquele ingresso paga mais. Seu envio de USDC ao lado continua custando centavos, porque toca outras contas. No Ethereum é o contrário: o estado global vira um gargalo e todo mundo paga o mesmo leilão.\n\n![Uma comparação mostra que na Solana só quem disputa o ingresso paga caro, enquanto no Ethereum um app concorrido encarece a taxa para todos.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/8dca368c32b98addbecefff2aec360a5f6b1b66504828d9452be8bc5e1c32c23.webp)\n\nFalta o tempo. Antes de a rede votar em qualquer coisa, o Proof of History (prova de histórico) já carimbou a ordem dos eventos. É um relógio criptográfico, uma corrente sequencial de cálculos que prova que uma coisa veio antes da outra. Ele não é o consenso; é o relógio em cima do qual o consenso acontece. Sobre esse relógio, o Tower BFT, o mecanismo de votação da família PBFT (um padrão clássico de consenso que aguenta falhas), registra os votos, e cada novo voto dobra o tempo de bloqueio dos anteriores, formando uma torre. Com a ordem já provada, a rede corta rodadas de conversa e fecha um bloco novo (slot) a cada 400ms.\n\n![Um diagrama mostra o relógio criptográfico carimbando a ordem dos eventos primeiro, e só depois a rede votando sobre essa ordem já fixada.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/0733f3450b5acb9aec6b87761830fc5f5d29ee55224c9c818a7b1c98ad2de3ea.webp)\n\n![Um diagrama empilha os votos numa torre em que cada novo voto no topo dobra o tempo de bloqueio dos votos abaixo dele.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/fbeed3910e681a64debd6ca92a3b449fafb486fe5258d0d5fa5b555c305843b8.webp)\n\nO preço disso? Declarar as contas antes cobra dos desenvolvedores e exige validadores com hardware forte. A Solana moveu a complexidade para quem constrói, para que quem usa tenha velocidade e taxa baixa. No próximo passo, você coloca isso em prática.\n"
+        "src": "# Como isso é possível\n\nVocê já viu que a Solana é rápida e barata. Mas como uma rede aberta, sem dono, consegue ser mais veloz que o app do seu banco? Não é mágica. É uma decisão de arquitetura que as outras redes não tomaram. Vamos por partes.\n\nAntes da mecânica, a ideia grande. A Solana é um megacomputador global e descentralizado: um computador que ninguém pode desligar, censurar ou adulterar, mantido por milhares de máquinas independentes que se comportam como uma só. O que isso destrava é enorme: qualquer pessoa pode publicar um código que vira um serviço financeiro global, no ar 24 horas por dia, sem pedir permissão a banco nem a governo. É isso que torna possível tudo o que você viu na lição anterior. A pergunta desta lição é como esse computador consegue ser tão rápido.\n\n![Um globo de máquinas conectadas forma um único megacomputador e libera três superpoderes para quem programa: publicar serviços financeiros globais 24 horas por dia, sem pedir permissão e com alcance mundial imediato.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/090eeba49bee50144db2680885a60984f4b25fee5c0b6151751f47c72774e27f.webp)\n\nComece pela ideia central: na Solana, o código e os dados moram separados. Os programas (o código que roda) não guardam nada; todo o estado vive em contas, que são só caixinhas de dados. Cada saldo de token tem a sua própria conta, a ATA (Associated Token Account), derivada da sua carteira mais o token. Uma carteira, muitas contas.\n\n![Um diagrama separa o programa, que é só código, das contas que guardam os dados, com uma carteira ligada a várias contas de saldo.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/719f07280765ed5b3214726b8b276cfe877bdad3466009403391fb6d519a6875.webp)\n\nEssa separação é o que destrava a velocidade. Toda transação declara antes quais contas vai ler e escrever. Assim o motor da rede, chamado Sealevel, enxerga quais transações não se cruzam e roda todas ao mesmo tempo. Pense em vários caixas de supermercado abertos em paralelo, em vez de uma fila única, por mais rápida que ela seja.\n\n![Um fluxograma mostra transações independentes correndo em caixas paralelos ao mesmo tempo, enquanto as que disputam a mesma conta esperam na mesma fila.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/39984e79aaf02ca05a97bd776cb0bcfa3d66139fff178c2c2aaa625d9713168e.webp)\n\nE o congestionamento? Ele fica local. A prioridade é precificada por conta disputada (a rede chama isso de neighborhood fees, taxas de vizinhança). Se um show concorrido está vendendo ingressos onchain, quem briga por aquele ingresso paga mais. Seu envio de USDC ao lado continua custando centavos, porque toca outras contas. No Ethereum é o contrário: o estado global vira um gargalo e todo mundo paga o mesmo leilão.\n\n![Uma comparação mostra que na Solana só quem disputa o ingresso paga caro, enquanto no Ethereum um app concorrido encarece a taxa para todos.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/8dca368c32b98addbecefff2aec360a5f6b1b66504828d9452be8bc5e1c32c23.webp)\n\nFalta o tempo. Antes de a rede votar em qualquer coisa, o Proof of History (prova de histórico) já carimbou a ordem dos eventos. É um relógio criptográfico, uma corrente sequencial de cálculos que prova que uma coisa veio antes da outra. Ele não é o consenso; é o relógio em cima do qual o consenso acontece. Sobre esse relógio, o Tower BFT, o mecanismo de votação da família PBFT (um padrão clássico de consenso que aguenta falhas), registra os votos, e cada novo voto dobra o tempo de bloqueio dos anteriores, formando uma torre. Com a ordem já provada, a rede corta rodadas de conversa e fecha um bloco novo (slot) a cada 400ms.\n\n![Um diagrama mostra o relógio criptográfico carimbando a ordem dos eventos primeiro, e só depois a rede votando sobre essa ordem já fixada.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/0733f3450b5acb9aec6b87761830fc5f5d29ee55224c9c818a7b1c98ad2de3ea.webp)\n\n![Um diagrama empilha os votos numa torre em que cada novo voto no topo dobra o tempo de bloqueio dos votos abaixo dele.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/fbeed3910e681a64debd6ca92a3b449fafb486fe5258d0d5fa5b555c305843b8.webp)\n\nO preço disso? Declarar as contas antes cobra dos desenvolvedores e exige validadores com hardware forte. A Solana moveu a complexidade para quem constrói, para que quem usa tenha velocidade e taxa baixa. Na última lição do curso, você vê isso numa transação sua.\n"
       },
       {
         "_key": "check",
@@ -24473,36 +24473,125 @@
       {
         "_key": "intro",
         "_type": "prose",
-        "src": "# Seu momento onchain\n\nChega de teoria. Nos próximos 60 segundos você coloca um ativo real, na mainnet real, dentro da sua carteira. E troca ele por brinde.\n\n![Um fluxograma vertical mostra os quatro passos do claim, do toque no botão até apresentar o cNFT no balcão de brindes como ticket.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/e8685f773d5ff55c75c46ec7b2438bdd1e807890005b06919b8354d2568c3043.webp)\n\nSiga os quatro passos, um de cada vez.\n\n1. Toque no botão de claim ou aponte a câmera para o QR. A página abre em `https://claim.PLACEHOLDER.superteam.fun`.\n2. Confirme com a mesma conta que você usou para entrar, seja o Google ou a sua wallet. Não feche a página antes da confirmação aparecer.\n3. Veja o cNFT surgir na carteira. Um cNFT é um NFT comprimido: um ativo de verdade na mainnet cujo mint custa frações de centavo, e é por isso que dá para entregar um para cada pessoa do evento. A transação é patrocinada: o evento paga a taxa por você, e esse modelo de fee-payer é padrão na Solana.\n4. Mostre o cNFT no balcão de brindes. Ele é o seu ticket, então não vá embora sem apresentar.\n\nSejamos honestos sobre o porquê: seu claim saiu de graça porque o evento bancou a taxa. Na mainnet real, uma transação custa frações de centavo, e nada além disso. Você acabou de usar exatamente a mesma infraestrutura que a BlackRock usa; a única diferença foi quem pagou os centavos.\n\n![Um diagrama coloca o seu cNFT na mainnet no centro, marca a taxa patrocinada e a mesma infra das instituições, e aponta o stand de onramp.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/d59bac7abc4090e95880f8d11332a66c57091f60637a00f26e5d2d65b2444474.webp)\n\nE aqui está o segredo: o cNFT foi só o treino. Essa mesma carteira que agora existe é a chave de tudo que você viu na lição 1. Basta um onramp: um PIX no stand, e reais viram dólar digital direto na sua carteira, sob o seu controle. A partir daí, quatro poderes se destravam.\n\n![Uma tabela lista os quatro poderes destravados pelo onramp: negociar em DEX, emprestar em protocolos de lending, render em vaults da Kamino e prover liquidez na Meteora.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/0767fe38f8c6d27e56516b00106edef4d48608a31db3d19124d241acf0bdf7bc.webp)\n\nE os líderes de cada categoria estão a um toque, rodando agora na mesma mainnet do seu cNFT: na [Jupiter](https://jup.ag) passa a maior parte das trocas da Solana; a [Kamino](https://kamino.finance) lidera lending e vaults (~US$ 2 bi geridos); e a [Meteora](https://meteora.ag) é a casa de quem fornece liquidez. Nada de cadastro, nada de fila: abriu, conectou a carteira, está dentro.\n\n![Um fluxograma leva o PIX do stand de onramp até a stablecoin na carteira e mostra três caminhos: guardar, render na vault da Kamino ou prover liquidez na Meteora.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/042f668a84c46ec146ae26bdcaa87f50d8661683361062562da193cd7670fd1b.webp)\n\nUma nota honesta antes de você sair correndo: rendimento em DeFi é variável, ninguém garante juro fixo, e todo protocolo tem risco. Comece pequeno, entenda o que está fazendo, e cresça no seu ritmo.\n\nQuer ir além de usar e **construir** nesse mundo? O próximo passo é o curso \"From Bitcoin to Solana\" (btc-to-sol-evolution): do primeiro hash ao seu próprio programa rodando na Solana (por enquanto, em inglês).\n\nPassa no stand de onramp e ativa em 2 minutos. Bem-vindo ao mundo onchain. 🚀\n"
+        "src": "# Seu momento onchain\n\nChega de teoria. Com a matrícula feita, cada lição que você conclui vira um registro na Solana. Agora você vai abrir essa prova com os próprios olhos, no mesmo painel público que qualquer pessoa usa para conferir a rede.\n\n![Um fluxograma vertical mostra quatro passos: abrir o Painel em Atividade, clicar numa lição concluída, ler Status, Fee e Fee payer no Explorer e concluir o curso para ver a credencial em Certificados.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/6475f7cccb2e37e63b0c32eaa46f605047729c41c6eaa02eb33f806200cf3bcd.webp)\n\nSiga os quatro passos, um de cada vez. Ainda não se matriculou? Use o botão **Matricular-se** antes (sem conta, o mesmo botão pede para você entrar antes). Lição lida antes da matrícula não conta: depois de se matricular, conclua as lições anteriores, passando nos quizzes, e volte para cá.\n\n1. Abra o **Painel** da Academy e desça até **Atividade**.\n2. Clique numa lição concluída que tenha uma setinha no canto da linha. O Solana Explorer abre direto naquela transação, na rede Devnet. Se você está matriculado e acabou de concluir uma lição, a linha inteira pode demorar um pouco a aparecer: espere e recarregue.\n3. Leia três campos. **Status** diz se deu certo, **Fee** mostra a taxa em SOL e **Fee payer** mostra quem pagou. Depois procure `CompleteLesson` e `MintTo` nos logs (aba **Programs & Logs** em tela larga, aba **Logs** em tela menor; no celular, role a página até os logs): é o programa da Academy marcando a sua lição e emitindo o seu XP.\n4. Passe no quiz abaixo e conclua esta lição. Com as quatro lições concluídas, a sua credencial do curso é emitida automaticamente e aparece em **Certificados**. Abra a credencial para encontrar o botão **Ver no Solana Explorer**. Se ela não aparecer, o **Painel** mostra o botão **Emitir Certificado**.\n\nSejamos honestos sobre o que esse registro é. A Academy roda hoje na devnet, a rede da Solana feita para testes. O SOL de lá não tem valor de mercado, e o seu XP e a sua credencial não são dinheiro nem ativo na mainnet: não dá para vender nem trocar por nada. O que eles são: registros públicos, que qualquer pessoa confere sem pedir permissão a ninguém. E o endereço em Fee payer não é o seu porque a Academy pagou a taxa por você. Esse modelo de fee-payer é padrão na Solana.\n\n![Um diagrama mostra o seu estudo registrado na devnet da Solana, com a taxa paga pela Academy e XP e credencial sem valor de mercado, e aponta a mainnet como um passo opcional, com dinheiro real.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/65f23c353e148675c27f3e8aa07660df40dd9c0c9a6f4c8737b5f4b265df37b9.webp)\n\nA mainnet é onde tudo o que você viu na lição 1 acontece com dinheiro de verdade. É um passo à parte: este curso não entrega nenhum ativo na mainnet, e a Academy não dá esse passo por você. Se um dia você quiser dar, o caminho costuma ser assim. Você precisa de uma carteira própria, como a [Phantom](https://phantom.com) ou a [Solflare](https://solflare.com), e de um onramp: um serviço que converte reais, muitas vezes por PIX, em dólar digital (stablecoin). A Academy não indica um onramp específico. Antes de usar um, compare as taxas, veja que cadastro ele exige e confirme se o valor cai na sua carteira ou fica numa conta dentro do serviço. Com o dólar digital na sua carteira, quatro poderes se destravam.\n\n![Uma tabela lista quatro poderes de quem usa a mainnet: negociar em DEX, emprestar em protocolos de lending, render em vaults da Kamino e prover liquidez na Meteora.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/86157be40bbb4e86c178aad7e34627c4972170fb7cf0ea11f7c89bdb7eafd2a7.webp)\n\nOs apps de cada categoria estão abertos agora, na mainnet: a [Jupiter](https://jup.ag) para trocas, a [Kamino](https://kamino.com) para lending e vaults (cofres que executam uma estratégia automática: você deposita e ela trabalha) e a [Meteora](https://meteora.ag) para quem fornece liquidez. Nada de fila: abriu, conectou a carteira, está dentro.\n\n![Um fluxograma leva o PIX num serviço de onramp até a stablecoin na carteira e mostra três caminhos: guardar, render na vault da Kamino ou prover liquidez na Meteora.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/7902184ba9f806ab578ab551314cce55365c09a39b8fd4fe2395d3a5db300cb5.webp)\n\nUma nota honesta antes de você sair correndo: na mainnet o dinheiro é de verdade, e uma transação errada não tem botão de desfazer. Rendimento em DeFi é variável, ninguém garante juro fixo, e todo protocolo tem risco. Nunca passe a sua frase de recuperação para ninguém. Comece pequeno, entenda o que está fazendo, e cresça no seu ritmo.\n\nVocê também não precisa de dinheiro nenhum para continuar. Quer ganhar pelo trabalho? O [Superteam Earn](https://superteam.fun/earn/) da lição anterior tem tarefas abertas. Quer **construir**? O próximo passo é o curso \"From Bitcoin to Solana\" (btc-to-sol-evolution): do primeiro hash ao seu próprio programa rodando na Solana (por enquanto, em inglês).\n\nAssim que tiver uma lição concluída com matrícula, abra o Painel e confira a sua transação. Bem-vindo ao mundo onchain. 🚀\n"
       },
       {
         "_key": "check",
         "_type": "quiz",
         "questions": [
           {
-            "explanation": "Onramp é a porta de entrada: converte reais em dólar digital que chega direto na sua carteira. De lá, você decide o que fazer: guardar, render numa vault ou negociar numa DEX.",
-            "id": "q1",
+            "explanation": "A devnet tem a mesma mecânica da mainnet (contas, transações, taxas), mas sem dinheiro real. Por isso o seu XP e a sua credencial provam o que você fez, sem valer nada no mercado.",
+            "id": "q4",
             "multiSelect": false,
             "options": [
               {
                 "correct": false,
-                "feedback": "Onramp não é custódia: ninguém segura seu dinheiro por você. O valor é convertido e cai direto na SUA carteira, sob seu controle.",
-                "id": "a",
-                "label": "Fica guardado numa conta da Superteam, que promete devolver quando você pedir"
+                "feedback": "Nada migra sozinho de uma rede para a outra. Devnet e mainnet são redes separadas.",
+                "id": "e",
+                "label": "Viram ativos da mainnet sozinhos depois de um tempo parados na carteira"
               },
               {
                 "correct": true,
-                "id": "b",
-                "label": "Vira dólar digital (stablecoin) direto na sua carteira, sob o seu controle"
+                "feedback": "Isso. Qualquer pessoa confere no Explorer, sem depender da sua palavra. Mas é prova de estudo, não dinheiro.",
+                "id": "a",
+                "label": "São registros públicos e verificáveis do seu estudo, sem valor de mercado"
               },
               {
                 "correct": false,
-                "feedback": "O onramp entrega stablecoin: dólar digital de valor estável, não um ativo volátil. Comprar SOL é uma escolha sua, depois, se você quiser.",
+                "feedback": "Devnet não é mainnet: nada ali tem valor de mercado, e as DEXs da mainnet não enxergam esses registros.",
+                "id": "b",
+                "label": "São ativos da mainnet, e você pode vender os dois numa DEX quando quiser"
+              },
+              {
+                "correct": false,
+                "feedback": "Estão na rede, sim: foi isso que você abriu no Explorer. Só que essa rede é a devnet.",
                 "id": "c",
-                "label": "Compra SOL automaticamente, e você precisa vender o token quando quiser sair"
+                "label": "Ficam só no banco de dados da Academy, sem nenhum registro na rede"
+              },
+              {
+                "correct": false,
+                "feedback": "A Academy não troca XP por dinheiro. Ganhar pelo trabalho é outro caminho: o Superteam Earn.",
+                "id": "d",
+                "label": "Valem dólar digital, que a Academy paga quando você conclui o curso"
               }
             ],
-            "prompt": "Você faz um PIX de R$ 50 no stand de onramp. O que acontece com o seu dinheiro?"
+            "prompt": "Seu XP e sua credencial da Academy estão na devnet. O que isso significa hoje?"
+          },
+          {
+            "explanation": "Fee payer é só quem paga a taxa. Nas lições, é a Academy; na mainnet, ao usar um app com a sua carteira, em geral é você, e custa frações de centavo.",
+            "id": "q5",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Pagar a taxa de uma transação não dá a ninguém acesso à sua carteira. Aqui é só a plataforma bancando o custo.",
+                "id": "c",
+                "label": "Alguém usou a sua carteira sem permissão, e é melhor trocar de conta agora"
+              },
+              {
+                "correct": false,
+                "feedback": "Pagar a taxa não é ter a sua chave. Tanto que a matrícula pede a assinatura da sua própria carteira.",
+                "id": "e",
+                "label": "A Academy guarda a chave da sua carteira e assina tudo no seu nome"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso. Toda transação tem um fee payer, e ele não precisa ser você. É a mesma ideia de quem patrocina o uso de um app.",
+                "id": "a",
+                "label": "A Academy pagou a taxa por você, num modelo de fee-payer padrão na Solana"
+              },
+              {
+                "correct": false,
+                "feedback": "A taxa existe e aparece no campo Fee. Na devnet ela só é paga em SOL sem valor de mercado.",
+                "id": "d",
+                "label": "A rede não cobrou taxa nenhuma, porque transações na devnet são de graça"
+              },
+              {
+                "correct": false,
+                "feedback": "Quem diz se deu certo é o campo Status. O Fee payer só mostra quem pagou.",
+                "id": "b",
+                "label": "A transação falhou, e a lição fica pendente até você pagar a taxa sozinho"
+              }
+            ],
+            "prompt": "No Explorer, o Fee payer da sua lição concluída é outro endereço, não a sua carteira. O que isso indica?"
+          },
+          {
+            "explanation": "Onramp é a porta de entrada: converte reais em dólar digital. Num que entrega direto, ele chega na sua carteira e você decide: guardar, render numa vault ou negociar numa DEX. Alguns serviços mantêm o saldo numa conta interna, por isso vale conferir antes.",
+            "id": "q1",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "feedback": "Isso. Com a stablecoin na sua carteira, o que fazer com ela é decisão sua.",
+                "id": "b",
+                "label": "Vira dólar digital (stablecoin) na sua carteira, sob o seu controle"
+              },
+              {
+                "correct": false,
+                "feedback": "A Superteam não guarda o seu dinheiro. Num onramp que entrega direto, o valor é convertido e cai na SUA carteira.",
+                "id": "a",
+                "label": "Fica numa conta da Superteam, que promete devolver quando você pedir"
+              },
+              {
+                "correct": false,
+                "feedback": "Onramp é dinheiro de verdade, fora da Academy, e chega na mainnet. A devnet é outra rede, sem dinheiro real.",
+                "id": "d",
+                "label": "Vira saldo na devnet, sem valor, até a Academy migrar você para a mainnet"
+              },
+              {
+                "correct": false,
+                "feedback": "Esse tipo de onramp entrega stablecoin: dólar digital de valor estável, não um ativo volátil. Comprar SOL é uma escolha sua, depois, se você quiser.",
+                "id": "c",
+                "label": "Compra SOL automaticamente, e você precisa vender o token para sair"
+              },
+              {
+                "correct": false,
+                "feedback": "A Solana não sabe o que é PIX. Quem recebe os reais é o serviço de onramp, que então envia a stablecoin.",
+                "id": "e",
+                "label": "Fica retido pela Solana por um tempo, até os validadores aprovarem o PIX"
+              }
+            ],
+            "prompt": "Você faz um PIX de R$ 50 num onramp que entrega direto na sua carteira. O que acontece com o dinheiro?"
           },
           {
             "explanation": "DEX é um mercado que roda em código na chain: você troca ativos direto da carteira, 24/7, sem intermediário segurando seu dinheiro. É por isso que 54% do volume global de DEX roda na Solana.",
@@ -24511,33 +24600,47 @@
             "options": [
               {
                 "correct": false,
-                "feedback": "Taxas existem: os centavos da rede e a taxa da pool. A vantagem da DEX é custódia e acesso, não gratuidade.",
-                "id": "a",
-                "label": "Não existe taxa nenhuma, então os preços são sempre melhores que nas corretoras"
+                "feedback": "O preço pode mudar entre a cotação e a execução. A vantagem da DEX é custódia e acesso, não preço garantido.",
+                "id": "d",
+                "label": "O protocolo garante o preço, então você nunca recebe menos do que viu na tela"
               },
               {
                 "correct": false,
                 "feedback": "É o contrário, e essa é a graça: não há aprovador humano. O contrato executa sozinho, e é daí que vem o acesso 24/7 sem depender de ninguém.",
                 "id": "b",
-                "label": "Um funcionário da corretora aprova cada operação, o que dá uma camada extra de segurança"
+                "label": "Um funcionário da corretora aprova cada operação, o que dá mais segurança"
               },
               {
                 "correct": true,
+                "feedback": "Isso. A vantagem é custódia e acesso: o mercado roda em código, e o dinheiro não sai do seu controle até a troca acontecer.",
                 "id": "c",
-                "label": "Você negocia direto da sua carteira, a qualquer hora, sem entregar a custódia do dinheiro a ninguém"
+                "label": "Você negocia direto da carteira, a qualquer hora, sem entregar a custódia a ninguém"
+              },
+              {
+                "correct": false,
+                "feedback": "Taxas existem: os centavos da rede e a taxa da pool. A vantagem da DEX é custódia e acesso, não gratuidade.",
+                "id": "a",
+                "label": "Não existe taxa nenhuma, então os preços são sempre melhores que nas corretoras"
               }
             ],
             "prompt": "Qual é a vantagem real de negociar numa DEX (corretora descentralizada)?"
           },
           {
-            "explanation": "Vault é um cofre programado: você deposita em 1 clique e a estratégia (emprestar, prover liquidez) roda sozinha, com o rendimento aparecendo na sua posição. A Kamino gere ~US$ 2 bi assim.",
+            "explanation": "Vault é um cofre programado: você deposita e a estratégia (emprestar, prover liquidez) roda sozinha, com o rendimento aparecendo na sua posição. Variável, e com risco.",
             "id": "q3",
             "multiSelect": false,
             "options": [
               {
                 "correct": true,
+                "feedback": "Isso. E lembre: o rendimento é variável e todo protocolo tem risco.",
                 "id": "a",
-                "label": "Executa uma estratégia de rendimento automatizada: você deposita em 1 clique e ela trabalha por você"
+                "label": "Executa uma estratégia de rendimento automática: você deposita e ela trabalha"
+              },
+              {
+                "correct": false,
+                "feedback": "Nenhum protocolo garante isso. Todo protocolo tem risco, e é por isso que a lição manda começar pequeno.",
+                "id": "d",
+                "label": "Garante que você nunca perde, porque o protocolo cobre qualquer prejuízo"
               },
               {
                 "correct": false,
@@ -24547,7 +24650,7 @@
               },
               {
                 "correct": false,
-                "feedback": "Rendimento em DeFi é variável e o depósito continua líquido: você entra e sai quando quiser. Juro fixo garantido é promessa de banco, não de protocolo.",
+                "feedback": "Rendimento em DeFi é variável, e ninguém garante juro fixo. Juro fixo garantido é promessa de banco, não de protocolo.",
                 "id": "c",
                 "label": "Trava o seu dinheiro por um ano em troca de juros fixos garantidos pelo protocolo"
               }
@@ -24576,7 +24679,7 @@
       {
         "_key": "intro",
         "_type": "prose",
-        "src": "# Superteam: sua porta de entrada\n\nO Superteam Brasil já facilitou mais de US$ 40 milhões levantados, amplificados e negociados entre os nossos membros. Não por sorteio, nem por indicação: por trabalho. Código, design, conteúdo. Se você entregou, você recebeu. Esta lição é o mapa de onde esse dinheiro está e como você pega o seu.\n\n![Quatro portas lado a lado, de mesma altura, representam os caminhos da Superteam: bounties no Earn, vagas no ecossistema, hackathons da Colosseum e a aceleração com cheque de US$ 250 mil.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/eb7c6c384ea8e06d71dfaeef9d49496bed759cbd3e62d65fdaa0a7bbd8e5fffe.webp)\n\nSão quatro portas, lado a lado. A primeira é o Superteam Earn: bounties abertos, com no mínimo 3 bounties técnicos open source garantidos por mês, mais os pontuais de eventos, conteúdo e design. A segunda são as vagas e trabalhos no ecossistema, de freela a fulltime. A terceira são os hackathons da Colosseum, onde os times vencedores já levantaram US$ 700 milhões. E a quarta é a aceleração, com cheque de US$ 250 mil pré-seed.\n\nBounty é tarefa aberta com prêmio. Pensa como a evolução do freelancing: em vez de caçar cliente e negociar escopo, o trabalho já está publicado, com preço na frente. Ninguém precisa te convidar, ninguém decide quem \"merece\". Você abre, compete, entrega boa vira pagamento. Foi assim que US$ 650 mil já saíram do Earn para a comunidade. A parte honesta: é competição, nem todo mundo ganha toda vez. Mas o que você produz fica seu. Portfólio público, rede, e a próxima chance a um clique.\n\nQuer a prova de que essas portas levam a empresa de verdade? Olha três brasileiros. Os três entraram pelo mesmo funil Superteam. O que muda é o prêmio que cada um levou.\n\n![Um funil único da Superteam se divide em três resultados: BlindPay no batch da Y Combinator, Cloak acelerada pela Colosseum e Triad Markets patrocinando a Breakpoint.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/f4e338568e886ad07ac7105f89a170cc05676fadc23456c960d6b0c26f6b1f18.webp)\n\nA BlindPay, API de pagamentos em stablecoin, venceu a trilha brasileira do hackathon e entrou no batch da Y Combinator.\n\nA Cloak, feita por estudantes do Inteli, captou R$ 1,3 milhão e foi para São Francisco receber aceleração da Colosseum.\n\n![Time da Cloak na Breakpoint: estudantes do Inteli que captaram R$ 1,3 milhão e entraram em aceleração em São Francisco](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/1fe215e170861331d56333672c1cbf5d7f6c7f1e39d1aa51c05bde943380c691.jpg)\n\nE a Triad Markets levantou capital anjo e virou patrocinadora da própria Breakpoint.\n\nZoom out. Um slide da Frictionless Capital colocou o número na mesa: 9 das 22 empresas de tecnologia mais rápidas a chegar em US$ 100 milhões de receita nasceram na Solana. A mais rápida delas, a Axiom, fez isso em 117 dias, recorde da Y Combinator.\n\n![Slide da Frictionless Capital: 9 das 22 empresas de tecnologia mais rápidas a US$ 100 milhões de receita nasceram na Solana](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/d9ad2c2d9dbee0b03fdea18675583b1047cf5e93f9c381e46b5f7d7c1d207001.webp)\n\nÉ pra isso que a gente está aqui: apoiar sua empresa, dar poder às suas finanças pessoais e corporativas, e levar seu sonho até as massas. O brinde que você vai reivindicar daqui a pouco? É, literalmente, seu primeiro earn. Bora.\n"
+        "src": "# Superteam: sua porta de entrada\n\nO Superteam Brasil já facilitou mais de US$ 40 milhões levantados, amplificados e negociados entre os nossos membros. Não por sorteio, nem por indicação: por trabalho. Código, design, conteúdo. Se você entregou, você recebeu. Esta lição é o mapa de onde esse dinheiro está e como você pega o seu.\n\n![Quatro portas lado a lado, de mesma altura, representam os caminhos da Superteam: bounties no Earn, vagas no ecossistema, hackathons da Colosseum e a aceleração com cheque de US$ 250 mil.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/eb7c6c384ea8e06d71dfaeef9d49496bed759cbd3e62d65fdaa0a7bbd8e5fffe.webp)\n\nSão quatro portas, lado a lado. A primeira é o Superteam Earn: bounties abertos, com no mínimo 3 bounties técnicos open source garantidos por mês, mais os pontuais de eventos, conteúdo e design. A segunda são as vagas e trabalhos no ecossistema, de freela a fulltime. A terceira são os hackathons da Colosseum, onde os times vencedores já levantaram US$ 700 milhões. E a quarta é a aceleração, com cheque de US$ 250 mil pré-seed.\n\nBounty é tarefa aberta com prêmio. Pensa como a evolução do freelancing: em vez de caçar cliente e negociar escopo, o trabalho já está publicado, com preço na frente. Ninguém precisa te convidar, ninguém decide quem \"merece\". Você abre, compete, entrega boa vira pagamento. Foi assim que US$ 650 mil já saíram do Earn para a comunidade. A parte honesta: é competição, nem todo mundo ganha toda vez. Mas o que você produz fica seu. Portfólio público, rede, e a próxima chance a um clique.\n\nQuer a prova de que essas portas levam a empresa de verdade? Olha três brasileiros. Os três entraram pelo mesmo funil Superteam. O que muda é o prêmio que cada um levou.\n\n![Um funil único da Superteam se divide em três resultados: BlindPay no batch da Y Combinator, Cloak acelerada pela Colosseum e Triad Markets patrocinando a Breakpoint.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/f4e338568e886ad07ac7105f89a170cc05676fadc23456c960d6b0c26f6b1f18.webp)\n\nA BlindPay, API de pagamentos em stablecoin, venceu a trilha brasileira do hackathon e entrou no batch da Y Combinator.\n\nA Cloak, feita por estudantes do Inteli, captou R$ 1,3 milhão e foi para São Francisco receber aceleração da Colosseum.\n\n![Time da Cloak na Breakpoint: estudantes do Inteli que captaram R$ 1,3 milhão e entraram em aceleração em São Francisco](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/1fe215e170861331d56333672c1cbf5d7f6c7f1e39d1aa51c05bde943380c691.jpg)\n\nE a Triad Markets levantou capital anjo e virou patrocinadora da própria Breakpoint.\n\nZoom out. Um slide da Frictionless Capital colocou o número na mesa: 9 das 22 empresas de tecnologia mais rápidas a chegar em US$ 100 milhões de receita nasceram na Solana. A mais rápida delas, a Axiom, fez isso em 117 dias, recorde da Y Combinator.\n\n![Slide da Frictionless Capital: 9 das 22 empresas de tecnologia mais rápidas a US$ 100 milhões de receita nasceram na Solana](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/d9ad2c2d9dbee0b03fdea18675583b1047cf5e93f9c381e46b5f7d7c1d207001.webp)\n\nÉ pra isso que a gente está aqui: apoiar sua empresa, dar poder às suas finanças pessoais e corporativas, e levar seu sonho até as massas. Na próxima lição, você vai abrir o registro onchain que o seu próprio estudo já deixou. Bora.\n"
       },
       {
         "_key": "check",
