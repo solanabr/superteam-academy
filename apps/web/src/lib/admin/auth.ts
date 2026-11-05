@@ -91,16 +91,30 @@ function isSameOriginRequest(req: Request): boolean {
 }
 
 /**
+ * Admin mutations are JSON-only: every admin POST parses a JSON body, and an
+ * HTML form can't send this media type. Safe methods carry no body, so they're
+ * exempt. Compares the bare media type, ignoring case and parameters like charset.
+ */
+function hasJsonContentType(req: Request): boolean {
+  const method = req.method.toUpperCase();
+  if (method === "GET" || method === "HEAD") return true;
+
+  const mediaType = req.headers.get("content-type")?.split(";")[0];
+  return mediaType?.trim().toLowerCase() === "application/json";
+}
+
+/**
  * Authorizes an admin API request via the caller's Supabase session and the
  * `admin_users` allowlist (see {@link requireAdmin}). Throws AdminAuthError if
  * the session is missing/invalid, the user is not on the allowlist, or a
- * state-changing request fails the same-origin (CSRF) check. Returns the
- * acting admin's user id so routes can attribute logged actions.
+ * state-changing request fails the same-origin (CSRF) or JSON content-type
+ * check. Returns the acting admin's user id so routes can attribute logged
+ * actions.
  */
 export async function requireAdminAuth(
   req: Request
 ): Promise<{ userId: string }> {
-  if (!isSameOriginRequest(req)) {
+  if (!isSameOriginRequest(req) || !hasJsonContentType(req)) {
     throw new AdminAuthError();
   }
   const admin = await requireAdmin();

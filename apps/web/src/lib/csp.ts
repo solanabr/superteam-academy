@@ -19,16 +19,21 @@
  *   `new Function()` in a Worker, and Monaco's tokenizer/worker bootstrap also
  *   relies on it. Removing it WILL break the editor and challenge runner.
  * - NO `'strict-dynamic'` — intentionally omitted. `@monaco-editor/react`
- *   loads Monaco's AMD `loader.js` + `vs/*` chunks from jsdelivr by host, and
- *   `'strict-dynamic'` would discard the host allowlist (breaking that CDN
- *   loader). Without it, nonce'd inline scripts and host-allowlisted external
- *   scripts (Monaco CDN, GA4, PostHog) coexist — exactly what we need.
+ *   loads Monaco's AMD `loader.js` + `vs/*` chunks from jsdelivr by URL, and
+ *   `'strict-dynamic'` would discard the allowlist (breaking that CDN loader).
+ *   Without it, nonce'd inline scripts and allowlisted external scripts (Monaco
+ *   CDN, GA4, PostHog) coexist — exactly what we need.
+ * - jsdelivr is allowed only at `MONACO_CDN_SOURCE` (`lib/editor/monaco-cdn.ts`),
+ *   the pinned Monaco path, which the loader reads too. CSP ignores a source's
+ *   path once a request has redirected, so keep same-origin redirects to our
+ *   own hosts.
  * - `'unsafe-inline'` is DROPPED for scripts (the point of this change). It is
  *   still present for `style-src` (Next.js injects inline CSS that can't be
  *   nonced easily — out of scope).
  */
 
 import { CONTENT_BLOB_BASE_URL } from "@/lib/content/blob-store.mjs";
+import { MONACO_CDN_SOURCE } from "@/lib/editor/monaco-cdn";
 
 /** Extracts the `scheme://host[:port]` origin from a URL, or null if invalid. */
 function originOf(url: string | undefined): string | null {
@@ -95,18 +100,18 @@ export function buildCsp(nonce: string): string {
 
     // Scripts: self + per-request nonce (Next.js inline bootstrap) + GA4 tag
     // loader + PostHog. 'unsafe-eval' for the code sandbox / Monaco; blob: for
-    // Monaco/worker bootstrap; jsdelivr for the Monaco editor loader
+    // Monaco/worker bootstrap; the pinned Monaco path for the editor loader
     // (@monaco-editor/react fetches loader.js + vs/* from the CDN). No
     // 'unsafe-inline' (replaced by the nonce) and no 'strict-dynamic' (see
     // module docblock).
-    `script-src 'self' 'nonce-${nonce}' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://www.googletagmanager.com https://*.posthog.com`,
+    `script-src 'self' 'nonce-${nonce}' 'unsafe-eval' blob: ${MONACO_CDN_SOURCE} https://www.googletagmanager.com https://*.posthog.com`,
 
     // Styles: 'unsafe-inline' required by Next.js inline CSS — out of scope
     // for nonce'ing. fonts.googleapis.com allows the Google Fonts stylesheet
-    // link; cdn.jsdelivr.net allows Monaco's editor.main.css — the
-    // challenge-runner editor loads its stylesheet from the CDN, so without
-    // this the editor renders unstyled/broken.
-    "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com",
+    // link; the Monaco path allows editor.main.css — the challenge-runner
+    // editor loads its stylesheet from the CDN, so without this the editor
+    // renders unstyled/broken.
+    `style-src 'self' 'unsafe-inline' ${MONACO_CDN_SOURCE} https://fonts.googleapis.com`,
 
     // Fonts: self-hosted via next/font + Google Fonts (gstatic serves the files).
     "font-src 'self' data: https://fonts.gstatic.com",
@@ -138,7 +143,7 @@ export function buildCsp(nonce: string): string {
       "connect-src 'self'",
       `${supabase.http} ${supabase.ws}`,
       // Monaco fetches its source maps (loader.js.map, vs/*.map) from jsdelivr.
-      "https://cdn.jsdelivr.net",
+      MONACO_CDN_SOURCE,
       ...solanaRpcSources(),
       "https://accounts.google.com https://*.googleapis.com",
       "https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://stats.g.doubleclick.net",
@@ -171,7 +176,7 @@ export function buildCsp(nonce: string): string {
 
     // Workers: code sandbox + Monaco spawn workers from blob: URLs; Monaco also
     // loads its language workers (ts/json/css/html) directly from jsdelivr.
-    "worker-src 'self' blob: https://cdn.jsdelivr.net",
+    `worker-src 'self' blob: ${MONACO_CDN_SOURCE}`,
 
     // Forms may post to self and the Google OAuth endpoint.
     "form-action 'self' https://accounts.google.com",

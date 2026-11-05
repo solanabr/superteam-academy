@@ -1,5 +1,7 @@
 /* eslint-disable import/order -- vi.mock('server-only') must be hoisted above
    the module import so the `server-only` graph loads under vitest. */
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("server-only", () => ({}));
@@ -95,7 +97,11 @@ describe("requireAdmin — fail-closed allowlist check", () => {
 describe("requireAdminAuth — route-facing wrapper", () => {
   const sameOriginPost = new Request("https://app.test/api/admin/x", {
     method: "POST",
-    headers: { "sec-fetch-site": "same-origin" },
+    headers: {
+      "sec-fetch-site": "same-origin",
+      "content-type": "application/json",
+    },
+    body: "{}",
   });
 
   it("returns the acting admin's userId for an allowlisted session", async () => {
@@ -120,5 +126,80 @@ describe("requireAdminAuth — route-facing wrapper", () => {
       AdminAuthError
     );
     expect(h.from).not.toHaveBeenCalled();
+  });
+});
+
+describe("requireAdminAuth — JSON-only mutations", () => {
+  const post = (contentType?: string) =>
+    new Request("https://app.test/api/admin/x", {
+      method: "POST",
+      headers: {
+        "sec-fetch-site": "same-origin",
+        ...(contentType ? { "content-type": contentType } : {}),
+      },
+    });
+
+  it.each([
+    "application/json",
+    "application/json; charset=utf-8",
+    "Application/JSON;charset=UTF-8",
+  ])("accepts %s", async (contentType) => {
+    await expect(requireAdminAuth(post(contentType))).resolves.toEqual({
+      userId: "user-1",
+    });
+  });
+
+  it.each([
+    "text/plain",
+    "text/plain;charset=UTF-8",
+    "application/x-www-form-urlencoded",
+    "multipart/form-data; boundary=x",
+    "application/jsonp",
+    "application/json-patch+json",
+    "text/plain; application/json",
+    "text/plain, application/json",
+  ])("rejects %s before touching the DB", async (contentType) => {
+    await expect(requireAdminAuth(post(contentType))).rejects.toBeInstanceOf(
+      AdminAuthError
+    );
+    expect(h.from).not.toHaveBeenCalled();
+  });
+
+  it("rejects a POST with no content type", async () => {
+    await expect(requireAdminAuth(post())).rejects.toBeInstanceOf(
+      AdminAuthError
+    );
+    expect(h.from).not.toHaveBeenCalled();
+  });
+
+  it("rejects a POST whose body defaults to text/plain", async () => {
+    // fetch() and `new Request` label a string body text/plain on their own.
+    const defaulted = new Request("https://app.test/api/admin/x", {
+      method: "POST",
+      headers: { "sec-fetch-site": "same-origin" },
+      body: '{"frozen":true}',
+    });
+    await expect(requireAdminAuth(defaulted)).rejects.toBeInstanceOf(
+      AdminAuthError
+    );
+  });
+
+  it.each(["GET", "HEAD"])("leaves %s reads alone", async (method) => {
+    const read = new Request("https://app.test/api/admin/x", { method });
+    await expect(requireAdminAuth(read)).resolves.toEqual({ userId: "user-1" });
+  });
+
+  it("covers every admin POST route", () => {
+    // The check lives in requireAdminAuth, so it only holds for routes that call it.
+    const root = join(__dirname, "../../../app/api/admin");
+    const routes = readdirSync(root, { recursive: true, encoding: "utf8" })
+      .filter((file) => file.endsWith("route.ts"))
+      .map((file) => readFileSync(join(root, file), "utf8"))
+      .filter((source) => /export async function POST\b/.test(source));
+
+    expect(routes).toHaveLength(9);
+    for (const source of routes) {
+      expect(source).toMatch(/requireAdminAuth\(req\)/);
+    }
   });
 });
