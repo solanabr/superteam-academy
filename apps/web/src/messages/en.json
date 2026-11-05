@@ -1661,8 +1661,8 @@
     },
     "referral": {
       "title": "One honest heads-up",
-      "body": "Every course here assumes you already write JavaScript. We do not teach programming from scratch yet — freeCodeCamp does, and does it well. Come back when JavaScript feels comfortable; you are welcome to look around in the meantime.",
-      "link": "Start with freeCodeCamp's JavaScript curriculum"
+      "body": "This first course explains how Solana works through videos and reading, so you can start right away. The courses where you build assume you already know how to program. We do not teach that from scratch yet — freeCodeCamp's JavaScript curriculum does, and does it well.",
+      "link": "Learn to code with freeCodeCamp's JavaScript curriculum"
     },
     "screen2": {
       "title": "What are you here to do?",

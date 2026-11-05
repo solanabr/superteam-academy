@@ -1,8 +1,5 @@
 import { getCourseLessons, getCourseSlugById } from "@/lib/content/queries";
-import {
-  DEFAULT_SEGMENT,
-  SEGMENT_ENTRY_COURSE,
-} from "@/lib/courses/learner-segment";
+import { heroEntryCourseFor } from "@/lib/courses/learner-segment";
 
 /**
  * Resolves a content course id into its first-lesson deep-link for `locale`.
@@ -14,12 +11,14 @@ import {
  * be deep-linked we fall back to the always-available catalog (`/courses`),
  * never a course/lesson page that would itself `notFound()` on an unsynced
  * course. This is the single source of truth for that gate, shared by the
- * landing deep-link (LX-A1) and the /start funnel routes (LX-A2).
+ * landing deep-link (LX-A1) and the /start funnel routes (LX-A2). A `null`
+ * course id, the table's "no course fits this visitor", goes to the catalog too.
  */
 export async function resolveEntryLessonHref(
   locale: string,
-  courseId: string
+  courseId: string | null
 ): Promise<string> {
+  if (!courseId) return `/${locale}/courses`;
   // Bundle-only slug read (#1050): the old getCourseById here paid a
   // service-role deployment round-trip per landing render for a field this
   // caller discards. The sync gate below (getCourseLessons) is unchanged.
@@ -32,13 +31,12 @@ export async function resolveEntryLessonHref(
 }
 
 /**
- * The flagship "Zero to Deployed" path's lesson 1 — the landing-page deep-link
- * target (LX-A1). The flagship entry is the DEFAULT_SEGMENT entry course, so an
- * anonymous landing visitor and a /start segment-1 completer converge on the
- * same first lesson. Sync-gated identically to the funnel routes.
+ * The landing-page CTA target (LX-A1): lesson 1 of this locale's hero course, or
+ * the catalog when no course suits an unknown visitor in this language.
+ * Sync-gated identically to the funnel routes.
  */
 export async function resolveFlagshipLessonHref(
   locale: string
 ): Promise<string> {
-  return resolveEntryLessonHref(locale, SEGMENT_ENTRY_COURSE[DEFAULT_SEGMENT]);
+  return resolveEntryLessonHref(locale, heroEntryCourseFor(locale));
 }
