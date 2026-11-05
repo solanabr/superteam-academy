@@ -1643,7 +1643,7 @@
     "progress": "Paso {current} de {total}",
     "screen1": {
       "title": "¿Ya has programado antes?",
-      "subtitle": "Esto solo sirve para llevarte a la primera lección adecuada — puedes cambiar cuando quieras."
+      "subtitle": "Esto solo sirve para orientarte — puedes cambiar cuando quieras."
     },
     "exp": {
       "jsTs": {
@@ -1656,13 +1656,13 @@
       },
       "new": {
         "label": "Aún no he programado de forma profesional",
-        "desc": "Empieza desde cero, una lección a la vez."
+        "desc": "Te contamos qué hay hoy en español y por dónde seguir."
       }
     },
     "referral": {
       "title": "Un aviso honesto",
-      "body": "Cada curso aquí asume que ya escribes JavaScript. Todavía no enseñamos a programar desde cero — freeCodeCamp sí, y lo hace bien. Vuelve cuando JavaScript te resulte cómodo; mientras tanto, mira con calma.",
-      "link": "Empieza con el currículo de JavaScript de freeCodeCamp"
+      "body": "Todavía no tenemos en español un curso para quien empieza a programar, así que te llevaremos al catálogo, donde algunos cursos aún no están en español. Los cursos disponibles en español asumen que ya sabes programar. Todavía no enseñamos eso — el currículo de JavaScript de freeCodeCamp sí, y lo hace bien.",
+      "link": "Aprende a programar con el currículo de JavaScript de freeCodeCamp"
     },
     "screen2": {
       "title": "¿A qué vienes?",

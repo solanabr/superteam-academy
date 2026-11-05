@@ -1661,8 +1661,8 @@
     },
     "referral": {
       "title": "Um aviso honesto",
-      "body": "Todo curso aqui parte do princípio de que você já escreve JavaScript. Ainda não ensinamos programação do zero — o freeCodeCamp ensina, e ensina bem. Volte quando o JavaScript estiver confortável; enquanto isso, fique à vontade para explorar.",
-      "link": "Comece pelo currículo de JavaScript do freeCodeCamp"
+      "body": "Este primeiro curso explica a Web3 e a blockchain com vídeos e leituras, então você já pode começar. Os cursos em que você constrói partem do princípio de que você já sabe programar. Ainda não ensinamos isso do zero — o currículo de JavaScript do freeCodeCamp ensina, e ensina bem.",
+      "link": "Aprenda a programar com o currículo de JavaScript do freeCodeCamp"
     },
     "screen2": {
       "title": "O que você veio fazer?",

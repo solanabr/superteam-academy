@@ -12,11 +12,51 @@
 // A literal scan of the marketing message subtrees in all three catalogs, so a
 // future copy edit that drifts across either line fails CI instead of shipping.
 import { describe, it, expect } from "vitest";
+import { entryCourseFor } from "@/lib/courses/learner-segment";
 import en from "@/messages/en.json";
 import es from "@/messages/es.json";
 import ptBR from "@/messages/pt-BR.json";
 
 const CATALOGS = { en, es, "pt-BR": ptBR } as const;
+
+/** Per-locale wording the /start segment-3 notice must or must not use. */
+const SEGMENT_3_COPY: Record<
+  keyof typeof CATALOGS,
+  Record<
+    | "noProgramming"
+    | "everyCourse"
+    | "firstCourse"
+    | "catalog"
+    | "fromScratch"
+    | "firstLesson",
+    RegExp
+  >
+> = {
+  en: {
+    noProgramming: /do not teach/i,
+    everyCourse: /every course/i,
+    firstCourse: /first course/i,
+    catalog: /catalog/i,
+    fromScratch: /ground up/i,
+    firstLesson: /first lesson/i,
+  },
+  "pt-BR": {
+    noProgramming: /não ensinamos/i,
+    everyCourse: /todo curso/i,
+    firstCourse: /primeiro curso/i,
+    catalog: /catálogo/i,
+    fromScratch: /do zero/i,
+    firstLesson: /primeira lição/i,
+  },
+  es: {
+    noProgramming: /no enseñamos/i,
+    everyCourse: /cada curso/i,
+    firstCourse: /primer curso/i,
+    catalog: /catálogo/i,
+    fromScratch: /desde cero/i,
+    firstLesson: /primera lección/i,
+  },
+};
 
 /** Namespaces that render on public marketing surfaces. */
 const MARKETING_NAMESPACES = ["landing"] as const;
@@ -35,9 +75,10 @@ const FORBIDDEN: Array<[string, RegExp]> = [
   ["remittance framing (es)", /\bremesa(s)?\b/i],
 ];
 
-// #906 — the "no experience needed" guard. Every course gates on working
-// JavaScript (#875), so unqualified beginners-welcome copy is a false promise
-// until the JS/TS rung (#579) exists. A claim is forbidden when a negation
+// #906 — the "no experience needed" guard. Concept courses aside, every course
+// needs working code skills (#875), and we still don't teach programming, so
+// unqualified beginners-welcome copy is a false promise until the JS/TS rung
+// (#579) exists. A claim is forbidden when a negation
 // lands on an experience noun *without* a topic scope: "no experience needed"
 // is a lie, "no Rust experience required" is the actual prerequisite copy.
 //
@@ -155,11 +196,32 @@ describe("marketing copy bounds (MAS-24 / BCB-561)", () => {
 
     // The /start intake keeps the segment-3 refer-out (freeCodeCamp); the
     // catalog banner and landing stat block were removed by owner call
-    // (2026-07-31) — only the /start referral copy remains load-bearing.
+    // (2026-07-31) — only the /start referral copy remains load-bearing. A
+    // concept course can be a non-programmer's first stop, but the courses
+    // where you build still need code, so the refer-out stays in every locale.
     it(`${locale} keeps the /start segment-3 refer-out`, () => {
       const s = (catalog as typeof en).start;
       expect(s.referral.body).toMatch(/(javascript)/i);
+      expect(s.referral.body).toMatch(
+        SEGMENT_3_COPY[locale as keyof typeof CATALOGS].noProgramming
+      );
       expect(s.referral.link).toMatch(/freecodecamp/i);
+    });
+
+    // The notice has to describe where this locale really sends segment 3.
+    it(`${locale} /start segment-3 copy matches that locale's route`, () => {
+      const s = (catalog as typeof en).start;
+      const copy = SEGMENT_3_COPY[locale as keyof typeof CATALOGS];
+      expect(s.referral.body).not.toMatch(copy.everyCourse);
+      if (entryCourseFor(3, locale)) {
+        expect(s.referral.body).toMatch(copy.firstCourse);
+        expect(s.referral.body).not.toMatch(copy.catalog);
+      } else {
+        expect(s.referral.body).toMatch(copy.catalog);
+        expect(s.referral.body).not.toMatch(copy.firstCourse);
+        expect(s.exp.new.desc).not.toMatch(copy.fromScratch);
+        expect(s.screen1.subtitle).not.toMatch(copy.firstLesson);
+      }
     });
 
     it(`${locale} never claims no experience is needed`, () => {

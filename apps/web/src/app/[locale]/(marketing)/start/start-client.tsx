@@ -225,11 +225,11 @@ export function StartIntakeClient({
         </Screen>
       )}
 
-      {/* #875 — segment-3 refer-out. A learner who self-IDs as "haven't
-          written code professionally yet" is out of scope for this wave (every
-          course gates on working JavaScript), and O-5's third branch used to
-          route them into the ladder with nothing said. Shown from the moment
-          they self-ID, without blocking them: the flow still completes. */}
+      {/* #875 — segment-3 refer-out. We don't teach programming, and the courses
+          where you build need it, so a learner who self-IDs as "haven't written
+          code professionally yet" is told so wherever this locale routes them.
+          Shown from the moment they self-ID, without blocking them: the flow
+          still completes. */}
       {segment === 3 && step > 1 && (
         <aside className="mb-6 rounded-xl border-[1.5px] border-border bg-subtle p-4">
           <p className="text-text-1 font-display text-sm font-bold">

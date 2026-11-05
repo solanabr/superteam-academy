@@ -5,7 +5,7 @@ vi.mock("server-only", () => ({}));
 import type { DeploymentStatus } from "@/lib/content/deployments";
 import { availableLocales, docSourceLocale } from "@/lib/content/localize";
 import { getCourseLessons } from "@/lib/content/queries";
-import { coursesById, l10nByCourseId } from "@/lib/content/store";
+import { coursesById, l10nByCourseId, lessonsById } from "@/lib/content/store";
 import {
   DEFAULT_SEGMENT,
   entryCourseFor,
@@ -176,6 +176,26 @@ describe("entry routing — live bundle", () => {
           overlay[lesson._id],
           `${courseId} lesson ${lesson._id} has no ${locale} translation`
         ).toBeDefined();
+      }
+    }
+  });
+
+  // The /start segment-3 notice calls this course videos and reading.
+  it("a segment-3 entry course has no code to write", async () => {
+    for (const locale of locales) {
+      const courseId = entryCourseFor(3, locale);
+      if (!courseId) continue;
+      const slug = (coursesById.get(courseId)!.slug as { current: string })
+        .current;
+      for (const { _id } of await getCourseLessons(slug)) {
+        const blocks = (lessonsById.get(_id)?.blocks ?? []) as Array<{
+          _type: string;
+        }>;
+        expect(blocks.length, `${_id} has no blocks`).toBeGreaterThan(0);
+        expect(
+          blocks.filter((b) => b._type === "code"),
+          `${courseId} lesson ${_id} has a code block`
+        ).toEqual([]);
       }
     }
   });
