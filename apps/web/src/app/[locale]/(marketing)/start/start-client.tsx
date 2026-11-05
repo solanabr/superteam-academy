@@ -166,8 +166,10 @@ export function StartIntakeClient({
     setStep((s) => (s > 1 ? ((s - 1) as 1 | 2 | 3 | 4) : s));
   }
 
+  // The document scrolls, not either <main>, and the fixed bottom nav covers
+  // its end below lg. This is the normal bottom padding plus the nav's height.
   return (
-    <main className="mx-auto flex min-h-[100dvh] w-full max-w-lg flex-col px-5 py-8 sm:py-12">
+    <main className="mx-auto flex min-h-[100dvh] w-full max-w-lg flex-col px-5 pb-[calc(var(--mobile-nav-height)+2rem)] pt-8 sm:pb-[calc(var(--mobile-nav-height)+3rem)] sm:pt-12 lg:pb-12">
       {/* Progress header */}
       <div className="mb-8 flex items-center gap-3">
         {step > 1 ? (
