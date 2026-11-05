@@ -56,14 +56,24 @@ const codePartAnchorId = (number: number) => `code-part-${number}`;
 const panelIdFor = (anchorId: string) => `${anchorId}-panel`;
 
 /**
- * Scrolls the page itself to a code part, just under the fixed header. Not
- * scrollIntoView, which would also scroll the IDE's overflow-hidden ancestors.
+ * Scrolls the page itself to a code part. Not scrollIntoView, which would also
+ * scroll the IDE's overflow-hidden ancestors.
+ *
+ * At lg the section is the IDE, and it lands under the fixed header. Below lg the
+ * section opens with the lesson text, so the target is the editor card, cleared
+ * of the fixed header plus the sticky top bar.
  */
 function jumpToCodePart(number: number): void {
-  const el = document.getElementById(codePartAnchorId(number));
-  if (!el) return;
+  const section = document.getElementById(codePartAnchorId(number));
+  if (!section) return;
+  const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
+  const target = isDesktop ? section : section.querySelector(".verdict-card");
+  if (!target) return;
   window.scrollTo({
-    top: el.getBoundingClientRect().top + window.scrollY - 60,
+    top:
+      target.getBoundingClientRect().top +
+      window.scrollY -
+      (isDesktop ? 60 : 112),
     behavior: scrollBehavior(),
   });
 }
@@ -234,6 +244,11 @@ export function LessonPageClient({
 
   const [isCompleted, setIsCompleted] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
+  // `isCompleting` can't stop a second submit in the same commit: two editors
+  // waiting at the enroll prompt both fire when enrolment lands.
+  const completionInFlightRef = useRef(false);
+  // Whether the sign-in prompt may say the learner's work is saved.
+  const [claimWorkBanked, setClaimWorkBanked] = useState(false);
   const [completionError, setCompletionError] = useState<string | null>(null);
   const [earnedXp, setEarnedXp] = useState<number | null>(null);
   const [isEnrolled, setIsEnrolled] = useState(false);
@@ -304,10 +319,15 @@ export function LessonPageClient({
     },
     [codeBlockKeys, setProof]
   );
-  const withdrawSubmittedCode = useCallback((blockKey: string) => {
-    delete proofsRef.current[blockKey];
-    setSubmittedCodeBlocks((prev) => ({ ...prev, [blockKey]: false }));
-  }, []);
+  const withdrawSubmittedCode = useCallback(
+    (blockKey: string) => {
+      delete proofsRef.current[blockKey];
+      setSubmittedCodeBlocks((prev) => ({ ...prev, [blockKey]: false }));
+      // A bank entry would replay code the learner has since changed.
+      removeBanked(courseId, lesson._id);
+    },
+    [courseId, lesson._id]
+  );
   /** Several code blocks: the lesson can't be submitted until each has code. */
   const hasUnsubmittedCode = useCallback(
     () =>
@@ -323,13 +343,19 @@ export function LessonPageClient({
   // Bank the work done on THIS lesson so an anonymous learner never loses it at
   // the sign-in wall (LX-A4c). Stores exactly the proofs the completion POST
   // would carry; on sign-in they replay server-side (which re-grades them).
-  const bankCurrentLesson = useCallback(() => {
+  // Returns whether an entry was written.
+  const bankCurrentLesson = useCallback((): boolean => {
     // #831: never persist preview work — a previewed lesson id would replay
     // against the live bundle on sign-in and fail there.
-    if (readOnly) return;
-    // Replay grades every code block, so a partial set could only fail there.
-    if (hasUnsubmittedCode()) return;
-    bankCompletion({
+    if (readOnly) return false;
+    // A code block with no proof means there's nothing to bank, and an older
+    // entry can't stand in for it. This only checks code blocks: an unanswered
+    // quiz still banks, as it does on every lesson.
+    if (hasUnsubmittedCode()) {
+      removeBanked(courseId, lesson._id);
+      return false;
+    }
+    return bankCompletion({
       courseId,
       courseSlug,
       lessonId: lesson._id,
@@ -348,11 +374,10 @@ export function LessonPageClient({
     hasUnsubmittedCode,
   ]);
 
-  // Claim moment: bank first, THEN open the sign-in prompt with its "Later"
-  // escape. Ordering matters — the modal's Later path relies on the work
-  // already being saved.
+  // Claim moment: bank first, THEN open the sign-in prompt. It offers its "Later"
+  // escape only if the write landed, since Later relies on the work being saved.
   const openClaimAuth = useCallback(() => {
-    bankCurrentLesson();
+    setClaimWorkBanked(bankCurrentLesson());
     setIsAuthModalOpen(true);
   }, [bankCurrentLesson]);
 
@@ -493,8 +518,9 @@ export function LessonPageClient({
     // #831: a previewed lesson is not in the live bundle, so completing it
     // would POST an unknown lessonId. Refuse before the request is built.
     if (readOnly) return;
-    if (isCompleted || isCompleting) return;
+    if (isCompleted || isCompleting || completionInFlightRef.current) return;
     if (hasLinkedWallet === false) return;
+    completionInFlightRef.current = true;
     setIsCompleting(true);
     setCompletionError(null);
     try {
@@ -543,6 +569,8 @@ export function LessonPageClient({
         lessonId: lesson._id,
         message,
       });
+    } finally {
+      completionInFlightRef.current = false;
     }
   }, [
     lesson._id,
@@ -1276,15 +1304,14 @@ export function LessonPageClient({
       )}
 
       {/* Programmatic auth modal — opened at the claim moment (the "tests
-          passed" enroll overlay, or the "Sign in to track" button). The work is
-          already banked before it opens, so it offers a "Later" escape framed as
-          "your progress is saved", never "discard" (LX-A4b). Controlled only
-          (#556). */}
+          passed" enroll overlay, or the "Sign in to track" button). When the work
+          was banked before it opened, it offers a "Later" escape framed as "your
+          progress is saved", never "discard" (LX-A4b). Controlled only (#556). */}
       {!userId && (
         <AuthModal
           open={isAuthModalOpen}
           onOpenChange={setIsAuthModalOpen}
-          showLater
+          showLater={claimWorkBanked}
         />
       )}
 
