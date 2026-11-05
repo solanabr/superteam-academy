@@ -296,6 +296,7 @@
     "savingProgress": "Saving progress...",
     "verdictJudging": "Judging your submission…",
     "verdictAccepted": "Accepted",
+    "goToEditor": "Go to editor",
     "verdictRejected": "Not accepted",
     "completionFailedChallenge": "Your code passed the sample tests, but the server's full test suite — including hidden edge cases the browser doesn't run — didn't pass. Revisit your solution and submit again.",
     "completionFailedEnrollment": "We couldn't verify your on-chain enrollment for this course. Please re-enroll and try again.",

@@ -19,6 +19,7 @@ export interface E2ETargets {
     achievement_pda: string | null;
   }>;
   ACTIVE_COURSE_SLUGS: readonly string[];
+  CODE_LESSON: { courseSlug: string; lessonSlug: string };
   DEACTIVATED_COURSE_SLUG: string;
   LEARN_LOOP: {
     courseId: string;

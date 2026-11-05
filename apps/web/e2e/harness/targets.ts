@@ -12,5 +12,9 @@ const bundle = (name: string): unknown =>
     )
   );
 
-export const { ACTIVE_COURSE_SLUGS, DEACTIVATED_COURSE_SLUG, LEARN_LOOP } =
-  pickTargets(bundle("courses"), bundle("lessons"));
+export const {
+  ACTIVE_COURSE_SLUGS,
+  CODE_LESSON,
+  DEACTIVATED_COURSE_SLUG,
+  LEARN_LOOP,
+} = pickTargets(bundle("courses"), bundle("lessons"));

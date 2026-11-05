@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   ArrowCounterClockwise,
+  ArrowDown,
   CheckCircle,
   Eye,
   Lightbulb,
@@ -187,6 +188,7 @@ export function ChallengeInterface({
 
   const editorHandle = useRef<CodeEditorHandle>(null);
   const editorAreaRef = useRef<HTMLDivElement>(null);
+  const editorAnchorId = useId();
 
   // challenge_started = first genuine interaction, never a page view. A
   // keystroke in the editor area is that signal for edit-first learners
@@ -232,6 +234,31 @@ export function ChallengeInterface({
     const id = setTimeout(() => setVerdictFlash(false), VERDICT_FLASH_MS);
     return () => clearTimeout(id);
   }, [verdictFlash]);
+
+  // Below lg the output panel stacks under the editor, often past the fold, and
+  // swipes on Monaco don't chain to the page, so bring a run's result into view.
+  // At lg a single editor is locked to the viewport, but several stack and the
+  // page scrolls, so they need it too.
+  //
+  // A passing deployable build is left alone: the deploy panel scrolls to itself
+  // on the same run, and this would pull the learner back off their next step.
+  // It has to check success because a compile error comes back with a uuid too.
+  const outputPanelRef = useRef<HTMLDivElement>(null);
+  const executionResult = challengeState.executionResult;
+  const lockedAtLg = !codePart;
+  useEffect(() => {
+    if (!executionResult) return;
+    if (isDeployable && executionResult.success && executionResult.buildUuid) {
+      return;
+    }
+    if (lockedAtLg && window.matchMedia?.("(min-width: 1024px)").matches) {
+      return;
+    }
+    outputPanelRef.current?.scrollIntoView?.({
+      block: "nearest",
+      behavior: prefersReducedMotion() ? "auto" : "smooth",
+    });
+  }, [executionResult, isDeployable, lockedAtLg]);
 
   // Escape dismisses the Accepted card, alongside the close button and a click
   // on the backdrop. The card is not a modal — it never traps focus — so the
@@ -628,7 +655,18 @@ export function ChallengeInterface({
             must not render an empty white rail card (#457 arrived with C1
             lesson 7's two-challenge layout). */}
           {taskSlot ? (
-            <div className="order-1 lg:order-none lg:shrink-0">{taskSlot}</div>
+            <div className="order-1 lg:order-none lg:shrink-0">
+              {/* The lesson text can run thousands of pixels above the editor
+                  once the panes stack. */}
+              <a
+                href={`#${isDeployable ? DEPLOY_EDITOR_ANCHOR_ID : editorAnchorId}`}
+                className="ml-4 mt-4 inline-flex items-center gap-1 text-sm font-bold text-primary underline-offset-2 hover:underline sm:ml-5 lg:hidden"
+              >
+                <ArrowDown size={14} weight="bold" aria-hidden="true" />
+                {t("goToEditor")}
+              </a>
+              {taskSlot}
+            </div>
           ) : null}
 
           {/* AI Partner — sized to its CONTENT, never a fixed box (#770). It used
@@ -721,9 +759,9 @@ export function ChallengeInterface({
             (CSS: .verdict-card in globals.css; reduced motion collapses the
             flash to an instant settle). */}
         <div
-          id={isDeployable ? DEPLOY_EDITOR_ANCHOR_ID : undefined}
+          id={isDeployable ? DEPLOY_EDITOR_ANCHOR_ID : editorAnchorId}
           tabIndex={isDeployable ? -1 : undefined}
-          className="verdict-card order-2 flex min-h-0 flex-col overflow-hidden outline-none lg:order-none lg:flex-1"
+          className="verdict-card order-2 flex min-h-0 flex-col overflow-hidden outline-none max-lg:scroll-mt-28 lg:order-none lg:flex-1"
           data-verdict={verdict}
           data-verdict-flash={verdictFlash ? "" : undefined}
         >
@@ -951,7 +989,12 @@ export function ChallengeInterface({
           )}
 
           {/* Editor */}
-          <div ref={editorAreaRef} className="relative min-h-0 flex-1">
+          {/* Below lg nothing up the tree has a definite height, so `flex-1`
+              and the editor's `h-full` would collapse Monaco to 5px. */}
+          <div
+            ref={editorAreaRef}
+            className="relative h-[60vh] min-h-80 supports-[height:1svh]:h-[60svh] lg:h-auto lg:min-h-0 lg:flex-1"
+          >
             <CodeEditor
               ref={editorHandle}
               lessonId={lessonId}
@@ -1141,7 +1184,8 @@ export function ChallengeInterface({
 
         {/* Output panel */}
         <div
-          className="order-3 shrink-0 lg:order-none"
+          ref={outputPanelRef}
+          className="order-3 shrink-0 max-lg:scroll-mt-28 lg:order-none"
           style={{ height: panelHeight, minHeight: 88 }}
         >
           <OutputPanel
