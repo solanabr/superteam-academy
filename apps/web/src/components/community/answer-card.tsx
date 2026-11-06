@@ -15,6 +15,7 @@ interface Author {
   username: string | null;
   avatar_url: string | null;
   level: number;
+  deleted?: boolean;
 }
 
 interface AnswerData {
@@ -112,7 +113,7 @@ export function AnswerCard({
               </Link>
             ) : (
               <span className="text-sm font-semibold text-[var(--text)]">
-                {t("anonymous")}
+                {answer.author.deleted ? t("deletedUser") : t("anonymous")}
               </span>
             )}
             {answer.author.level > 0 && (
