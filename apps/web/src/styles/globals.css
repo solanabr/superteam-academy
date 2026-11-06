@@ -6230,6 +6230,15 @@ a.act-row:focus-visible {
    PROSE TABLE OVERRIDES — polished tables inside lesson content
    Card-contained, alternating rows, bold header
 ═══════════════════════════════════════════════════════════════ */
+/* The table's own margins move here: inside a scroller they could no longer
+   collapse with the paragraphs around it, and the spacing would grow. */
+.prose-table-scroll {
+  margin-block: 26px;
+  overflow-x: auto;
+}
+.prose-table-scroll > table {
+  margin-block: 0;
+}
 .prose table {
   border-collapse: separate;
   border-spacing: 0;
