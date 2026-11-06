@@ -632,6 +632,16 @@
   [data-theme="dark"] .nav-pill {
     --pill-ink: var(--ink-line);
   }
+  /* Below xl the centred nav needs this room: the hexagon stays, the total goes. */
+  @media (max-width: 1279px) {
+    .nav-pill-rule,
+    .nav-pill-xp {
+      display: none;
+    }
+    .nav-pill {
+      padding: 0 8px;
+    }
+  }
 
   /* ── Achievement Medal Grid — V9 Superteam Academy ── */
 
@@ -1090,6 +1100,8 @@
   .segctl-track {
     display: flex;
     gap: 4px;
+    /* A rail wider than the phone scrolls inside its own track. */
+    max-width: 100%;
     overflow-x: auto;
     /* The track scrolls when it is narrower than its segments, but it must not
        reserve a scrollbar gutter for the possibility: on a classic-scrollbar
@@ -6230,6 +6242,25 @@ a.act-row:focus-visible {
    PROSE TABLE OVERRIDES — polished tables inside lesson content
    Card-contained, alternating rows, bold header
 ═══════════════════════════════════════════════════════════════ */
+/* A long token (inline code, a bare URL) wraps instead of widening the page,
+   except in a table, where breaking it letter by letter would crush the column:
+   the table scrolls instead. */
+.prose {
+  overflow-wrap: anywhere;
+}
+.prose table {
+  overflow-wrap: normal;
+}
+
+/* The table's own margins move here: inside a scroller they could no longer
+   collapse with the paragraphs around it, and the spacing would grow. */
+.prose-table-scroll {
+  margin-block: 26px;
+  overflow-x: auto;
+}
+.prose-table-scroll > table {
+  margin-block: 0;
+}
 .prose table {
   border-collapse: separate;
   border-spacing: 0;

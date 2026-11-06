@@ -448,7 +448,7 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
           {/* One action row: Check answer lives in the Next slot and morphs into
             the emphasized Next once the question is correct (owner, 2026-07-31).
             Non-stepper quizzes get the same morphing slot without Prev/Next. */}
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             {stepper ? (
               <Button
                 variant="secondary"
@@ -478,7 +478,7 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
               </Button>
             )}
             {!locked && q && (
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center justify-end gap-2">
                 <Button
                   variant="pushSuccess"
                   size="sm"

@@ -1,30 +1,13 @@
-import { join } from "node:path";
 import { test, expect, type Page } from "@playwright/test";
+import { serveMonacoLocally } from "./harness/monaco";
 import { CODE_LESSON } from "./harness/targets";
 
 // Below lg the editor's flex parent has no definite height, so a CSS regression
 // here collapses Monaco to a few pixels and only a rendered page shows it.
 const MIN_USABLE_HEIGHT = 250;
 
-const MONACO_MIN = join(__dirname, "../node_modules/monaco-editor/min");
-
-// Monaco's loader fetches from jsdelivr. Serve the same files from node_modules
-// so a CDN outage can't fail this spec, and it can't skip either: every
-// assertion below needs the mounted `.monaco-editor`, not the loading skeleton.
 async function openCodeLesson(page: Page) {
-  await page.route(
-    /^https:\/\/cdn\.jsdelivr\.net\/npm\/monaco-editor@[^/]+\/min\//,
-    (route) => {
-      const path = new URL(route.request().url()).pathname.replace(
-        /^\/npm\/monaco-editor@[^/]+\/min\//,
-        ""
-      );
-      return route.fulfill({
-        path: join(MONACO_MIN, path),
-        headers: { "access-control-allow-origin": "*" },
-      });
-    }
-  );
+  await serveMonacoLocally(page);
   await page.goto(
     `/en/courses/${CODE_LESSON.courseSlug}/lessons/${CODE_LESSON.lessonSlug}`
   );
