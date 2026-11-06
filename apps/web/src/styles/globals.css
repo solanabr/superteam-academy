@@ -632,6 +632,16 @@
   [data-theme="dark"] .nav-pill {
     --pill-ink: var(--ink-line);
   }
+  /* Below xl the centred nav needs this room: the hexagon stays, the total goes. */
+  @media (max-width: 1279px) {
+    .nav-pill-rule,
+    .nav-pill-xp {
+      display: none;
+    }
+    .nav-pill {
+      padding: 0 8px;
+    }
+  }
 
   /* ── Achievement Medal Grid — V9 Superteam Academy ── */
 

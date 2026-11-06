@@ -376,12 +376,20 @@ export function Header() {
                   className="hidden h-6 w-auto dark:block"
                 />
               </Link>
-              <BetaTag />
+              {/* The phone bar has no room for it next to the controls. The
+                  wrapper carries the display: `.beta-tag` sets its own outside
+                  Tailwind's layers, so a utility on the tag itself would lose. */}
+              <span className="hidden sm:inline-flex">
+                <BetaTag />
+              </span>
             </div>
 
             <div className="flex items-center gap-2">
               <LanguageSwitcher />
-              <ThemeToggle />
+              {/* Under 360px the longest sign-in label needs this slot. */}
+              <span className={cn("flex", !isLoggedIn && "max-[359px]:hidden")}>
+                <ThemeToggle />
+              </span>
               {authLoading ? (
                 <div className="h-9 w-9 animate-pulse rounded-full bg-[var(--card)]" />
               ) : isLoggedIn ? (
@@ -398,6 +406,7 @@ export function Header() {
                       variant="push"
                       size="sm"
                       label={tCommon("signIn")}
+                      className="max-[399px]:px-2"
                     />
                   }
                 />
