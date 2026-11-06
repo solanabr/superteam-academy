@@ -620,11 +620,6 @@ export const SUBMISSION_SHAPES: SubmissionShape[] = [
     ],
   },
   {
-    name: "a mutated fixture",
-    code: "function bump(position) { position.debt = 1; return 0; }",
-    tests: [t("position", "position.debt === 1")],
-  },
-  {
     name: "a fixture read as a free variable",
     code: "function len() { return data.length; }",
     tests: [t("data", "result === 15")],
@@ -640,7 +635,7 @@ export const SUBMISSION_SHAPES: SubmissionShape[] = [
     tests: [
       t(
         "payer",
-        "result.equals(payer.publicKey) && result === payer.publicKey && result.toBase58() === payer.publicKey.toBase58()"
+        "result.equals(payer.publicKey) && result.toBase58() === payer.publicKey.toBase58()"
       ),
     ],
   },
@@ -715,5 +710,54 @@ export const SUBMISSION_SHAPES: SubmissionShape[] = [
     name: "assertions with TextEncoder",
     code: "function enc() { return new TextEncoder().encode('hi'); }",
     tests: [t("", "new TextDecoder().decode(result) === 'hi'")],
+  },
+];
+
+/**
+ * Submissions that change the realm before an assertion reads a fixture. They
+ * replace shared builtins, so run them only somewhere disposable: a Worker or a
+ * vm context, never the test process's own realm.
+ */
+export const FIXTURE_ISOLATION_SHAPES: {
+  name: string;
+  code: string;
+  test: AdminTestCase;
+  passes: boolean;
+}[] = [
+  {
+    name: "a local named like the runner's builder",
+    code: "function go() { return 999; }\nconst __build__ = () => [[], [{ debt: 999 }]];",
+    test: t("position", "position.debt === result"),
+    passes: false,
+  },
+  {
+    name: "a replaced mock module export",
+    code: 'function go() { const m = __modules__["@solana/web3.js"]; const k = new m.PublicKey(new Uint8Array(32)); m.Keypair = { generate: () => ({ publicKey: k }) }; return k; }',
+    test: t("programId", "result.equals(programId)"),
+    passes: false,
+  },
+  {
+    name: "a replaced static on an imported mock",
+    code: 'import { Keypair, PublicKey } from "@solana/web3.js";\nfunction go() { const k = new PublicKey(new Uint8Array(32)); Keypair.generate = () => ({ publicKey: k }); return k; }',
+    test: t("programId", "result.equals(programId)"),
+    passes: false,
+  },
+  {
+    name: "a replaced array iterator",
+    code: "function go() { Array.prototype[Symbol.iterator] = function* () { yield { debt: 999 }; }; return 999; }",
+    test: t("position", "position.debt === result"),
+    passes: false,
+  },
+  {
+    name: "a replaced typed array constructor",
+    code: "function go() { globalThis.Uint8Array = function () { return { length: 999 }; }; return 999; }",
+    test: t("data", "data.length === result"),
+    passes: false,
+  },
+  {
+    name: "a correct answer that replaces Math.imul",
+    code: "function go(pk) { Math.imul = () => 0; return pk; }",
+    test: t("payer", "result.equals(payer.publicKey)"),
+    passes: true,
   },
 ];

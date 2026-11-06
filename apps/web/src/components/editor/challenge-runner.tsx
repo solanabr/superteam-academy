@@ -42,10 +42,33 @@ function toBase58(bytes) {
   return result;
 }
 
+let seededByte = null;
+
 function randomBytes(n) {
   const buf = new Uint8Array(n);
-  crypto.getRandomValues(buf);
+  if (seededByte) {
+    for (let i = 0; i < n; i++) buf[i] = seededByte();
+  } else {
+    crypto.getRandomValues(buf);
+  }
   return buf;
+}
+
+/* The same seed gives the same fixtures, so a test can build a second copy for
+   its assertion. Mirrors buildFixtures in the server executor. */
+function withSeed(seed, build) {
+  let state = seed | 0;
+  seededByte = function() {
+    state = (state + 0x6d2b79f5) | 0;
+    let t = Math.imul(state ^ (state >>> 15), 1 | state);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return (t ^ (t >>> 14)) & 255;
+  };
+  try {
+    return build();
+  } finally {
+    seededByte = null;
+  }
 }
 
 class MockPublicKey {
@@ -173,8 +196,8 @@ self.onmessage = async function(e) {
   var code = e.data.code;
   var mc = makeMockConsole();
   try {
-    var fn = new Function("__mockConsole__", "__modules__", "__stringify__", code);
-    var result = await fn(mc.mock, __modules__, __stringify__);
+    var fn = new Function("__mockConsole__", "__modules__", "__stringify__", "__withSeed__", code);
+    var result = await fn(mc.mock, __modules__, __stringify__, withSeed);
     self.postMessage({ result: result, output: mc.logs.join("\\n") });
   } catch (err) {
     self.postMessage({ error: (err && err.message) || String(err), output: mc.logs.join("\\n") });
@@ -431,6 +454,21 @@ function buildArgSetup(input: string): string {
   return lines.join("\n");
 }
 
+/** The names buildArgSetup binds, in order. */
+function fixtureNames(input: string): string[] {
+  if (!input.trim()) return [];
+  return input
+    .split(",")
+    .map((a) => a.trim())
+    .filter(
+      (arg) =>
+        !/^\d/.test(arg) &&
+        !/^-?\d*\.?\d+$/.test(arg) &&
+        !/^['"]/.test(arg) &&
+        !/^true$|^false$|^null$/.test(arg)
+    );
+}
+
 function buildCallArgs(input: string): string {
   if (!input.trim()) return "";
   return input
@@ -575,26 +613,58 @@ export async function runTestCase(
       `;
     }
 
-    // Fixtures sit outside the learner's scope, as on the server: a learner's
-    // own `data` shadows the fixture rather than clashing with it. The verdict
-    // comes back wrapped, so anything else means the learner's code returned
-    // from the top level, which the server rejects as a syntax error.
+    // Same shape as the server. Fixtures sit outside the learner's scope, so a
+    // learner's own `data` shadows the fixture rather than clashing with it. The
+    // assertion runs after that scope has ended, over a second copy of the
+    // fixtures from the same seed, built before any learner code, under a name
+    // that changes per run because learner code can still see this scope. Its
+    // locals live in a function inside the one binding the fixtures, so they
+    // take priority over a fixture of the same name.
+    //
+    // Anything other than the wrapped result means the learner's code returned
+    // from the top level, reported below as a syntax error. A top-level return
+    // of an object shaped like either wrapper still counts as a result here; the
+    // server rejects it as a syntax error, and the server's verdict is the one
+    // that completes a lesson.
+    const fixtures = fixtureNames(testCase.input);
+    const names = fixtures.join(", ");
+    const seed = Math.floor(Math.random() * 2 ** 32);
+    const expected = `__expected${seed}__`;
+    const expectedList = fixtures.map((_, i) => `${expected}[${i}]`).join(", ");
+    const argList = testCase.input.trim()
+      ? testCase.input
+          .split(",")
+          .map((_, i) => `__args__[${i}]`)
+          .join(", ")
+      : "";
     const wrappedCode = `
       return (async () => {
         "use strict";
         const console = __mockConsole__;
-        ${argSetup}
-        const __args__ = [${callArgs}];
-        return await (async () => {
+        const __build__ = () => __withSeed__(${seed}, () => {
+          ${argSetup}
+          return [[${callArgs}], [${names}]];
+        });
+        const ${expected} = __build__()[1];
+        const [__args__, [${names}]] = __build__();
+        const __run__ = await (async () => {
           ${transformed}
           ;
-          const __result__ = await ${fnName}(...__args__);
-          return {
-            __verdict__: (() => {
-              ${assertionCode}
-            })(),
-          };
+          return { __value__: await ${fnName}(${argList}) };
         })();
+        if (
+          __run__ === null ||
+          typeof __run__ !== "object" ||
+          !("__value__" in __run__)
+        ) {
+          return __run__;
+        }
+        const __result__ = __run__.__value__;
+        return {
+          __verdict__: ((${names}) => (() => {
+            ${assertionCode}
+          })())(${expectedList}),
+        };
       })();
     `;
 
