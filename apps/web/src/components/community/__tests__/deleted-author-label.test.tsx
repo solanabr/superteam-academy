@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import type { ReactNode } from "react";
 import en from "@/messages/en.json";
 import es from "@/messages/es.json";
 import ptBR from "@/messages/pt-BR.json";
+import { DangerTab } from "@/app/[locale]/(platform)/settings/_components/danger-tab";
 import { AnswerCard } from "../answer-card";
 import { ThreadCard } from "../thread-card";
 
@@ -14,6 +15,9 @@ vi.mock("@/i18n/routing", () => ({
     <a href={href}>{children}</a>
   ),
 }));
+
+vi.mock("@/lib/analytics", () => ({ resetUser: vi.fn() }));
+vi.mock("@/lib/supabase/client", () => ({ createClient: vi.fn() }));
 
 afterEach(cleanup);
 
@@ -96,6 +100,19 @@ describe("the forum's deleted-user label", () => {
 
     expect(screen.getByText(en.community.anonymous)).toBeTruthy();
     expect(screen.queryByText(en.community.deletedUser)).toBeNull();
+  });
+});
+
+describe("the delete dialog on a short screen", () => {
+  it("scrolls, so its buttons stay reachable with the longer copy", async () => {
+    render(withMessages(<DangerTab />));
+    fireEvent.click(
+      screen.getByRole("button", { name: en.settings.deleteAccountButton })
+    );
+
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog.className).toContain("overflow-y-auto");
+    expect(dialog.className).toContain("max-h-[90dvh]");
   });
 });
 
