@@ -1476,6 +1476,16 @@ export type Database = {
        * transaction; re-validates shell-ness in SQL and RAISEs rather than
        * merge on any doubt.
        */
+      /** Applies the account deletion policy. service_role only. */
+      delete_account_data: {
+        Args: { p_user_id: string };
+        Returns: undefined;
+      };
+      /** Removes AI spend IP rows older than the window. service_role only. */
+      purge_ai_spend_ip_rows: {
+        Args: { p_keep_days: number };
+        Returns: number;
+      };
       merge_wallet_shell_account: {
         Args: { p_target: string; p_shell: string; p_wallet: string };
         Returns: Record<string, unknown>;

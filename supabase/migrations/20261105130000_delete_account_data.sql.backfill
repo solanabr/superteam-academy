@@ -1,0 +1,14 @@
+-- HELD: not part of the migration. Run once, only with the owner's explicit OK.
+--
+-- Finishes accounts deleted before delete_account_data existed, merged wallet
+-- shells included. This REWRITES auth.users VALUES (email, metadata, phone, password)
+-- and removes auth.identities and sessions for every tombstoned account, and it
+-- can't be undone. Accounts that deleted themselves were refused sign-in until now;
+-- after this they can open a new account with the same identity.
+--
+-- Safe to re-run: the RPC is idempotent and leaves wallets a live account holds now.
+-- Avatar files aren't covered, since Storage refuses SQL deletes.
+
+SELECT public.delete_account_data(id)
+FROM public.profiles
+WHERE deleted_at IS NOT NULL;

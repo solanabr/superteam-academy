@@ -3,15 +3,14 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-const { getUser, signOut, update, eq, isRateLimited, updateUserById } =
+const { getUser, signOut, rpc, list, remove, isRateLimited, updateUserById } =
   vi.hoisted(() => ({
     getUser: vi.fn<() => Promise<unknown>>(),
     signOut: vi.fn(),
     updateUserById: vi.fn<() => Promise<{ error: unknown }>>(),
-    // (table, payload) — the route now writes two tables, and WHICH table gets
-    // which payload is the property under test.
-    update: vi.fn<(table: string, payload: unknown) => void>(),
-    eq: vi.fn<() => Promise<{ error: unknown }>>(),
+    rpc: vi.fn<(fn: string, args: unknown) => Promise<{ error: unknown }>>(),
+    list: vi.fn<(path: string) => Promise<unknown>>(),
+    remove: vi.fn<(paths: string[]) => Promise<{ error: unknown }>>(),
     isRateLimited: vi.fn<() => Promise<boolean>>(),
   }));
 
@@ -21,12 +20,8 @@ vi.mock("@/lib/supabase/server", () => ({
 
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
-    from: (table: string) => ({
-      update: (payload: unknown) => {
-        update(table, payload);
-        return { eq };
-      },
-    }),
+    rpc,
+    storage: { from: () => ({ list, remove }) },
     auth: { admin: { updateUserById } },
   }),
 }));
@@ -36,132 +31,133 @@ vi.mock("@/lib/logging", () => ({ logError: vi.fn() }));
 
 import { POST } from "../route";
 
-type Payload = Record<string, unknown>;
-const payloadFor = (table: string): Payload =>
-  update.mock.calls.find((c) => c[0] === table)![1] as Payload;
-
 beforeEach(() => {
-  vi.clearAllMocks();
+  vi.resetAllMocks();
   getUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
-  eq.mockResolvedValue({ error: null });
+  rpc.mockResolvedValue({ error: null });
+  list.mockResolvedValue({ data: [{ name: "avatar.jpg" }], error: null });
+  remove.mockResolvedValue({ error: null });
   isRateLimited.mockResolvedValue(false);
   signOut.mockResolvedValue({ error: null });
   updateUserById.mockResolvedValue({ error: null });
 });
 
-describe("account deletion anonymises the profile", () => {
-  it("nulls every external identifier, not just the display fields (#410)", async () => {
+describe("account deletion", () => {
+  it("runs the deletion policy RPC with the session's own id", async () => {
     const res = await POST();
+
     expect(res.status).toBe(200);
-
-    const p = payloadFor("profiles");
-    // These three are what actually re-identify a person. wallet_address also
-    // carries a UNIQUE constraint, so retaining it pins the wallet to a
-    // tombstoned row. Scrubbing bio/avatar while keeping these anonymises nothing.
-    expect(p).toHaveProperty("wallet_address", null);
-    expect(p).toHaveProperty("google_id", null);
-    expect(p).toHaveProperty("github_id", null);
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenCalledWith("delete_account_data", {
+      p_user_id: "user-1",
+    });
   });
 
-  it("scrubs the wallet from enrollments too, not just profiles", async () => {
-    await POST();
-    // enrollments carries its own wallet_address copy. Scrubbing only `profiles`
-    // would leave the wallet→user_id join intact one table over — the deletion
-    // would be cosmetic.
-    expect(payloadFor("enrollments")).toEqual({ wallet_address: null });
-  });
-
-  it("scrubs the display fields and tombstones the row", async () => {
+  it("removes the avatar file, scoped to the caller's own folder", async () => {
     await POST();
 
-    const p = payloadFor("profiles");
-    expect(p.bio).toBeNull();
-    expect(p.avatar_url).toBeNull();
-    expect(p.social_links).toBeNull();
-    expect(p.is_public).toBe(false);
-    expect(p.deleted_at).toEqual(expect.any(String));
-    expect(p.username).toMatch(/^deleted-user-[0-9a-f]{8}$/);
+    expect(list).toHaveBeenCalledWith("user-1");
+    expect(remove).toHaveBeenCalledWith(["user-1/avatar.jpg"]);
   });
 
-  it("opts the account out of every mail kind (#1129)", async () => {
+  it("skips the storage delete when there is no file", async () => {
+    list.mockResolvedValue({ data: [], error: null });
+
+    const res = await POST();
+
+    expect(res.status).toBe(200);
+    expect(remove).not.toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalled();
+  });
+
+  it("removes the file before the RPC, while the session can still retry", async () => {
     await POST();
-    const subs = payloadFor("email_subscriptions");
-    expect(subs.opt_in).toBe(false);
-    expect(subs.reminder_opt_in).toBe(false);
-    expect(subs.unsubscribed_at).toEqual(expect.any(String));
-    expect(subs.reminder_unsubscribed_at).toEqual(expect.any(String));
+
+    const removedAt = remove.mock.invocationCallOrder[0]!;
+    const rpcAt = rpc.mock.invocationCallOrder[0]!;
+    const signOutAt = signOut.mock.invocationCallOrder[0]!;
+    expect(removedAt).toBeLessThan(rpcAt);
+    expect(rpcAt).toBeLessThan(signOutAt);
   });
 
-  it("reports a failed opt-out instead of claiming success", async () => {
-    // Profile and enrollment writes land, the opt-out fails. A 200 here would
-    // keep the consent live with nothing telling the client to retry.
-    eq.mockResolvedValueOnce({ error: null })
-      .mockResolvedValueOnce({ error: null })
-      .mockResolvedValueOnce({ error: { message: "boom" } });
+  it.each([
+    [
+      "listing",
+      () => list.mockResolvedValue({ data: null, error: { message: "x" } }),
+    ],
+    ["removing", () => remove.mockResolvedValue({ error: { message: "x" } })],
+  ])(
+    "reports a failure %s the avatar and changes nothing else",
+    async (_label, arrange) => {
+      arrange();
+
+      const res = await POST();
+
+      expect(res.status).toBe(500);
+      expect(rpc).not.toHaveBeenCalled();
+      expect(signOut).not.toHaveBeenCalled();
+    }
+  );
+
+  it("reports a failed RPC and leaves the session so the client can retry", async () => {
+    rpc.mockResolvedValue({ error: { message: "boom" } });
 
     const res = await POST();
 
     expect(res.status).toBe(500);
+    expect(signOut).not.toHaveBeenCalled();
     expect(updateUserById).not.toHaveBeenCalled();
   });
 
-  it("scopes every write to the session-derived id, never client input", async () => {
+  it("clears the cookies and bans again after the RPC", async () => {
     await POST();
-    expect(eq).toHaveBeenCalledWith("id", "user-1");
-    expect(eq).toHaveBeenCalledWith("user_id", "user-1");
-  });
 
-  it("reports a failed enrollment scrub instead of claiming success", async () => {
-    // The profile write lands, the enrollment scrub fails. Returning 200 here
-    // would tell the user their wallet is gone while it is still joinable.
-    eq.mockResolvedValueOnce({ error: null }).mockResolvedValueOnce({
-      error: { message: "boom" },
-    });
-
-    const res = await POST();
-
-    expect(res.status).toBe(500);
-  });
-
-  // #1089 — middleware no longer kills tombstoned sessions per-request, so a
-  // failed revocation here would be an unbounded zombie session, not a
-  // cosmetic miss (adversarial review F1).
-  it("falls back to a permanent ban when signOut fails, and still succeeds", async () => {
-    signOut.mockResolvedValue({ error: { message: "gotrue down" } });
-
-    const res = await POST();
-
-    expect(res.status).toBe(200);
+    expect(signOut).toHaveBeenCalledTimes(1);
     expect(updateUserById).toHaveBeenCalledWith("user-1", {
       ban_duration: "876600h",
     });
   });
 
-  it("reports 500 when both signOut and the ban fallback fail", async () => {
+  // The RPC already revoked sessions and set the ban in its own transaction. A
+  // 500 here would send the client to retry an account it can no longer reach.
+  it("still succeeds when signOut and the second ban both fail", async () => {
     signOut.mockResolvedValue({ error: { message: "gotrue down" } });
     updateUserById.mockResolvedValue({ error: { message: "still down" } });
 
     const res = await POST();
 
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(200);
     expect(updateUserById).toHaveBeenCalledTimes(3);
   });
 
-  it("does not write when unauthenticated", async () => {
+  it("does nothing when unauthenticated", async () => {
     getUser.mockResolvedValue({ data: { user: null }, error: null });
 
     const res = await POST();
 
     expect(res.status).toBe(401);
-    expect(update).not.toHaveBeenCalled();
+    expect(rpc).not.toHaveBeenCalled();
+    expect(list).not.toHaveBeenCalled();
+    expect(signOut).not.toHaveBeenCalled();
   });
 
-  it("does not write when rate limited", async () => {
+  it("does nothing when rate limited", async () => {
     isRateLimited.mockResolvedValue(true);
 
     const res = await POST();
 
     expect(res.status).toBe(429);
-    expect(update).not.toHaveBeenCalled();
+    expect(rpc).not.toHaveBeenCalled();
+    expect(list).not.toHaveBeenCalled();
+  });
+
+  it("keeps the rate limit key on the session's own id", async () => {
+    await POST();
+
+    expect(isRateLimited).toHaveBeenCalledWith(
+      "account-delete",
+      "user-1",
+      expect.any(Object)
+    );
   });
 });

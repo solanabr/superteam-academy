@@ -23,6 +23,7 @@ interface Author {
   username: string | null;
   avatar_url: string | null;
   level: number;
+  deleted?: boolean;
 }
 
 interface Answer {
@@ -262,7 +263,7 @@ export function ThreadDetailClient({ shortId }: ThreadDetailClientProps) {
             <span className="flex items-center gap-1.5">
               <div className="h-5 w-5 rounded-full bg-[var(--primary-dim)]" />
               <span className="text-sm font-semibold text-[var(--text)]">
-                {t("anonymous")}
+                {thread.author.deleted ? t("deletedUser") : t("anonymous")}
               </span>
             </span>
           )}

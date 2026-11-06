@@ -12,6 +12,10 @@
     {
       "path": "/api/cron/onchain-queue",
       "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/ai-ip-retention",
+      "schedule": "0 7 * * *"
     }
   ]
 }

@@ -1,5 +1,6 @@
 import "server-only";
 
+import { createHash } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logEvent } from "@/lib/logging";
 import type { PayerRole } from "@/lib/solana/sponsor";
@@ -141,6 +142,17 @@ export async function recordPlatformTx(
   }
 }
 
+/**
+ * The values a wallet can appear under on a sponsored row: as itself, or as the
+ * one-way key `delete_account_data` leaves when its account is deleted. Keeps a
+ * wallet to one sponsorship even if it comes back on a new account. Must match the
+ * SQL in 20261105130000_delete_account_data.sql.
+ */
+export function sponsorshipWalletKeys(wallet: string): string[] {
+  const hash = createHash("sha256").update(wallet).digest("hex");
+  return [wallet, `deleted:${hash}`];
+}
+
 export interface SponsorshipRow {
   signature: string;
   status: SpendStatus;
@@ -182,7 +194,7 @@ export async function findSponsorshipRows(
     .eq("action", action)
     .eq("cluster", spendCluster())
     .eq("program_id", key.programId)
-    .eq("wallet", key.wallet)
+    .in("wallet", sponsorshipWalletKeys(key.wallet))
     .eq("course_id", key.courseId)
     .eq("course_generation", key.courseGeneration)
     .in("status", SLOT_STATUSES)
@@ -253,7 +265,7 @@ export async function recordSponsoredEnrollRefund(input: {
       .in("status", ["confirmed", "superseded_landed"])
       .eq("cluster", spendCluster())
       .eq("program_id", input.programId)
-      .eq("wallet", input.wallet)
+      .in("wallet", sponsorshipWalletKeys(input.wallet))
       .eq("course_id", input.courseId)
       .order("created_at", { ascending: false })
       .limit(1)

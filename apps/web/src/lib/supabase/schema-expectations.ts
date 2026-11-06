@@ -148,6 +148,17 @@ export const SCHEMA_EXPECTATIONS: readonly SchemaExpectation[] = [
   },
   {
     kind: "rpc",
+    // ⚠️ DESTRUCTIVE IF EVER CALLABLE. Safe here for the same reason as the two
+    // probes above: REVOKEd from anon/authenticated, so PostgREST answers 42501
+    // without running the body. The nil id matches no profile either way.
+    rpc: "delete_account_data",
+    args: { p_user_id: NIL_UUID },
+    migration: "20261105130000_delete_account_data.sql",
+    description:
+      "account deletion policy — a missing fn fails every deletion request",
+  },
+  {
+    kind: "rpc",
     // ⚠️ SIDE-EFFECTFUL IF EVER CALLABLE (it upserts the (user, lesson) row and
     // bumps a tier counter) — safe here for the same reason as the two probes
     // above: REVOKEd from PUBLIC/anon/authenticated, so the ANON client gets

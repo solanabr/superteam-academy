@@ -18,6 +18,9 @@ don't edit it by hand and don't run it to make changes.
   version of that function. Rewrites have dropped guards before.
 - If a route can't run without the new object, add it to
   `apps/web/src/lib/supabase/schema-expectations.ts`.
+- A new table, or a column pointing at a person, needs a decision in
+  `apps/web/src/lib/account/deletion-policy.ts` and in `delete_account_data`. A test fails until it
+  has one.
 
 ## Applying it
 
