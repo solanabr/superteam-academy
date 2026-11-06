@@ -80,6 +80,7 @@ describe("initGA4 dataLayer contract", () => {
       "dynamicOauthCode=oauth-code&dynamicOauthState=oauth-state&deviceRegistrationToken=device-token";
     const ATTRIBUTION = "utm_source=news&ref=abc&gclid=g1";
     const RETURN_URL = `/en/courses?${AUTH}&${ATTRIBUTION}`;
+    const ONE_HOUR_MS = 3_600_000;
 
     function scripts() {
       return document.querySelectorAll('script[src*="googletagmanager"]');
@@ -90,6 +91,7 @@ describe("initGA4 dataLayer contract", () => {
     });
 
     afterEach(() => {
+      vi.restoreAllMocks();
       vi.useRealTimers();
       window.history.replaceState(null, "", "/");
     });
@@ -130,7 +132,7 @@ describe("initGA4 dataLayer contract", () => {
       vi.advanceTimersByTime(1_000);
       expect(scripts()).toHaveLength(1);
 
-      vi.advanceTimersByTime(120_000);
+      vi.advanceTimersByTime(ONE_HOUR_MS);
       expect(scripts()).toHaveLength(1);
     });
 
@@ -144,19 +146,39 @@ describe("initGA4 dataLayer contract", () => {
       expect(scripts()).toHaveLength(1);
     });
 
-    it("removes params nothing else cleaned, keeps attribution, then loads", async () => {
+    it("never loads while the params stay, keeping the queued calls", async () => {
       window.history.replaceState(null, "", RETURN_URL);
-      const { initGA4 } = await import("../ga4");
+      const { initGA4, trackGA4Event, trackGA4PageView } =
+        await import("../ga4");
       initGA4();
+      trackGA4PageView("/en/courses");
+      trackGA4Event("lesson_completed");
+      const queued = window.dataLayer.length;
 
-      vi.advanceTimersByTime(59_000);
+      vi.advanceTimersByTime(ONE_HOUR_MS);
+
       expect(scripts()).toHaveLength(0);
-      expect(window.location.search).toContain("deviceRegistrationToken");
+      expect(window.dataLayer).toHaveLength(queued);
+      expect(window.location.search).toBe(`?${AUTH}&${ATTRIBUTION}`);
+    });
 
-      vi.advanceTimersByTime(2_000);
-      expect(window.location.pathname).toBe("/en/courses");
-      expect(window.location.search).toBe(`?${ATTRIBUTION}`);
-      expect(scripts()).toHaveLength(1);
+    it.each([
+      ["held", RETURN_URL],
+      ["clean", `/en/courses?${ATTRIBUTION}`],
+    ])("never touches history on a %s URL", async (_name, url) => {
+      window.history.replaceState(null, "", url);
+      const replaceState = vi.spyOn(window.history, "replaceState");
+      const pushState = vi.spyOn(window.history, "pushState");
+      const { initGA4, trackGA4Event, trackGA4PageView } =
+        await import("../ga4");
+      initGA4();
+      trackGA4PageView("/en/courses");
+      trackGA4Event("lesson_completed");
+
+      vi.advanceTimersByTime(ONE_HOUR_MS);
+
+      expect(replaceState).not.toHaveBeenCalled();
+      expect(pushState).not.toHaveBeenCalled();
     });
   });
 

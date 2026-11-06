@@ -35,7 +35,6 @@ const GA4_ID = process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID ?? "";
 let ga4Configured = false;
 
 const URL_CLEAN_POLL_MS = 250;
-const URL_CLEAN_DEADLINE_MS = 60_000;
 
 /**
  * The page's location with auth params removed. Campaign and referral params
@@ -74,27 +73,17 @@ function injectGtagScript(): void {
  * Until it loads, calls wait in the dataLayer with their location fields already
  * built, which keeps the landing page view and its attribution.
  *
- * The sign-in handlers remove the params after network calls, and may only mount
- * once a lazy chunk arrives, so the wait has to outlast a slow connection: taking
- * the params away sooner would lose the sign-in. If they're still there at the
- * deadline (a failed or stale return), they're removed from the URL here, because
- * gtag.js has no option that keeps the raw URL out of that page view.
+ * The URL belongs to the sign-in handlers, which read the params whenever they
+ * mount and remove them after network calls, so this only ever waits. If the
+ * params stay for the whole page load, gtag.js doesn't load for that page.
  */
 function loadGtagOnceUrlIsClean(): void {
   if (!hasAuthParams(window.location.href)) {
     injectGtagScript();
     return;
   }
-  const deadline = Date.now() + URL_CLEAN_DEADLINE_MS;
   const timer = window.setInterval(() => {
-    if (hasAuthParams(window.location.href)) {
-      if (Date.now() < deadline) return;
-      window.history.replaceState(
-        window.history.state,
-        "",
-        stripAuthParams(window.location.href)
-      );
-    }
+    if (hasAuthParams(window.location.href)) return;
     window.clearInterval(timer);
     injectGtagScript();
   }, URL_CLEAN_POLL_MS);
