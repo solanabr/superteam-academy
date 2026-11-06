@@ -534,6 +534,78 @@ describe("resource limits", () => {
     LOOSE_TIMEOUT_MS
   );
 
+  it.each([
+    [
+      "plain recursion",
+      "function go() { function f() { return f() + 1; } return f(); }",
+    ],
+    [
+      "recursion through a callback",
+      "function go() { const f = (n) => [n].map(f); return f(1); }",
+    ],
+    [
+      "recursion through a getter",
+      "function go() { const o = { get a() { return this.a; } }; return o.a; }",
+    ],
+    [
+      "recursion in a builtin: stringify",
+      "function go() { let o = []; for (let i = 0; i < 1e5; i++) o = [o]; return JSON.stringify(o); }",
+    ],
+    [
+      "recursion in a builtin: parse",
+      'function go() { return JSON.parse("[".repeat(1e6) + "]".repeat(1e6)); }',
+    ],
+    [
+      "recursion in a builtin: flat",
+      "function go() { let a = []; for (let i = 0; i < 1e5; i++) a = [a]; return a.flat(Infinity); }",
+    ],
+    [
+      "recursion through a Proxy chain",
+      "function go() { let p = {}; for (let i = 0; i < 2e5; i++) p = new Proxy(p, {}); return Object.getPrototypeOf(p); }",
+    ],
+  ])(
+    "fails %s as a wrong answer and stays usable",
+    async (_label, code) => {
+      await expectAllFailed(code, [testCase("", "result === 999")]);
+      expect(
+        (
+          await run("function add(a, b) { return a + b; }", [
+            testCase("2, 3", "result === 5"),
+          ])
+        ).passed
+      ).toBe(true);
+    },
+    LOOSE_TIMEOUT_MS
+  );
+
+  it(
+    "still grades the tests after one that overflows",
+    async () => {
+      const r = await run(
+        `function go(deep) {
+        if (!deep) return 1;
+        let o = [];
+        for (let i = 0; i < 1e5; i++) o = [o];
+        return JSON.stringify(o);
+      }`,
+        [testCase("true", "result === 999"), testCase("false", "result === 1")]
+      );
+      expect(r.results.map((t) => t.passed)).toEqual([false, true]);
+    },
+    LOOSE_TIMEOUT_MS
+  );
+
+  it(
+    "fails an assertion that overflows on a deep result",
+    async () => {
+      await expectAllFailed(
+        "function go() { let n = {}; for (let i = 0; i < 2e5; i++) n = { n }; return n; }",
+        [testCase("", "JSON.stringify(result).length > 0")]
+      );
+    },
+    LOOSE_TIMEOUT_MS
+  );
+
   it("reads a deep or cyclic result without overflowing", async () => {
     const r = await run(
       `function go() {
@@ -563,24 +635,30 @@ describe("submission shapes the server accepts", () => {
 });
 
 describe("WASM instance failure", () => {
+  const tests = [testCase("2, 3", "result === 5")];
+  const code = "function add(a, b) { return a + b; }";
+
   afterEach(() => {
     vi.doUnmock("quickjs-emscripten-core");
     vi.resetModules();
   });
 
-  it("reports the executor unavailable, then loads a new instance", async () => {
+  /** Loads the executor with the first `broken` instances failing every call. */
+  async function withBrokenInstances(broken: number) {
     const real = await vi.importActual<
       typeof import("quickjs-emscripten-core")
     >("quickjs-emscripten-core");
-    let loads = 0;
+    const state = { loads: 0 };
     vi.resetModules();
     vi.doMock("quickjs-emscripten-core", () => ({
       ...real,
       newQuickJSWASMModuleFromVariant: async (
         ...args: Parameters<typeof real.newQuickJSWASMModuleFromVariant>
       ) => {
-        loads += 1;
-        if (loads > 1) return real.newQuickJSWASMModuleFromVariant(...args);
+        state.loads += 1;
+        if (state.loads > broken) {
+          return real.newQuickJSWASMModuleFromVariant(...args);
+        }
         return {
           newRuntime() {
             throw new Error("Aborted");
@@ -590,17 +668,33 @@ describe("WASM instance failure", () => {
     }));
     const { runJsSubmission: fresh } =
       await import("@superteam-lms/challenge-executor");
-    const tests = [testCase("2, 3", "result === 5")];
-    const code = "function add(a, b) { return a + b; }";
+    return { fresh, state };
+  }
 
-    expect(await fresh(code, tests)).toEqual({
-      available: false,
-      reason: "executor_unavailable",
+  it("fails the test and carries on with a new instance", async () => {
+    const { fresh, state } = await withBrokenInstances(1);
+    expect(
+      await fresh(code, [...tests, { ...tests[0]!, id: "u" }])
+    ).toMatchObject({
+      available: true,
+      passed: false,
+      results: [
+        { id: "t", passed: false },
+        { id: "u", passed: true },
+      ],
     });
     expect(await fresh(code, tests)).toMatchObject({
       available: true,
       passed: true,
     });
-    expect(loads).toBe(2);
+    expect(state.loads).toBe(2);
+  });
+
+  it("reports the executor unavailable when a new instance fails too", async () => {
+    const { fresh } = await withBrokenInstances(2);
+    expect(await fresh(code, tests)).toEqual({
+      available: false,
+      reason: "executor_unavailable",
+    });
   });
 });

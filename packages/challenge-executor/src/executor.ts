@@ -67,6 +67,14 @@ const MEMORY_LIMIT_MB = 64;
  */
 const EXEC_TIMEOUT_MS = 5_000;
 
+/**
+ * Interpreter stack cap. Without one, deep recursion overflows the host's stack
+ * from inside the WASM frames instead of raising a catchable error in the VM. At
+ * this size ordinary recursion gets about 1,400 frames; much above it, a recursing
+ * callback can reach the host's limit first.
+ */
+const MAX_STACK_BYTES = 256 * 1024;
+
 /** Wall-clock budget for one submission across all its tests. */
 const SUBMISSION_BUDGET_MS = 15_000;
 
@@ -958,6 +966,7 @@ function withRuntime<T>(
 ): T {
   const runtime = quickjs.newRuntime();
   runtime.setMemoryLimit(MEMORY_LIMIT_MB * 1024 * 1024);
+  runtime.setMaxStackSize(MAX_STACK_BYTES);
   runtime.setInterruptHandler(() => Date.now() > deadline);
   const ctx = runtime.newContext();
   try {
@@ -1135,8 +1144,9 @@ function runAssertion(
 
 /**
  * Run one test case. Every wrong or failing submission comes back as a failed
- * test. Anything else that escapes means the WASM instance itself failed, which
- * the caller reports as an unavailable executor.
+ * test. Anything else that escapes means the WASM instance itself failed: native
+ * recursion in a builtin can overflow the host's stack below the interpreter's
+ * cap, which leaves the instance unusable. See runJsSubmission.
  */
 function runOneCase(
   quickjs: QuickJSWASMModule,
@@ -1167,6 +1177,22 @@ function runOneCase(
   }
 }
 
+/** Whether an instance can evaluate anything at all. */
+function instanceWorks(quickjs: QuickJSWASMModule): boolean {
+  try {
+    return withRuntime(
+      quickjs,
+      Date.now() + EXEC_TIMEOUT_MS,
+      (ctx, _runtime, scope) => {
+        const value = unwrapper(ctx, scope, Infinity)(ctx.evalCode("1 + 1"));
+        return ctx.getNumber(value) === 2;
+      }
+    );
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Run a JS/TS submission against every supplied test.
  *
@@ -1180,7 +1206,7 @@ export async function runJsSubmission(
   code: string,
   tests: AdminTestCase[]
 ): Promise<SubmissionRunResult> {
-  const quickjs = await loadQuickJS();
+  let quickjs = await loadQuickJS();
   if (!quickjs) return { available: false, reason: "executor_unavailable" };
 
   const failAll = (detail: string): SubmissionRunResult => ({
@@ -1216,14 +1242,22 @@ export async function runJsSubmission(
       try {
         outcome = runOneCase(quickjs, transpiled, test, submissionDeadline);
       } catch (err) {
-        // The WASM instance failed: the next load makes a new one, and this
-        // submission could not be judged.
+        // Drop the instance. If a new one works, this test broke the old one and
+        // it fails like any other. If not, nothing can be judged right now.
         console.error(
           "challenge executor instance failed:",
           err instanceof Error ? err.name : "unknown"
         );
         quickJsPromise = undefined;
-        return { available: false, reason: "executor_unavailable" };
+        quickjs = await loadQuickJS();
+        if (!quickjs || !instanceWorks(quickjs)) {
+          quickJsPromise = undefined;
+          return { available: false, reason: "executor_unavailable" };
+        }
+        outcome = {
+          passed: false,
+          detail: "Submission exceeded the sandbox's limits",
+        };
       }
     }
     results.push({ id: test.id, hidden: test.hidden === true, ...outcome });

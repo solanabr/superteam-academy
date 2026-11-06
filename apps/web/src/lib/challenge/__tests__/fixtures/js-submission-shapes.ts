@@ -194,6 +194,17 @@ export const SUBMISSION_SHAPES: SubmissionShape[] = [
     tests: addTests,
   },
 
+  {
+    name: "recursion a thousand frames deep",
+    code: "function sum(n) { return n === 0 ? 0 : n + sum(n - 1); }",
+    tests: [t("1000", "result === 500500")],
+  },
+  {
+    name: "recursion that catches its own overflow",
+    code: "function deep() { function f() { return f() + 1; } try { return f(); } catch (e) { return 1; } }",
+    tests: [t("", "result === 1")],
+  },
+
   // Result shapes.
   {
     name: "a boolean used as the verdict",
