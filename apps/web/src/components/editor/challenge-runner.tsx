@@ -613,14 +613,30 @@ export async function runTestCase(
       `;
     }
 
-    // Fixtures sit outside the learner's scope, as on the server: a learner's
-    // own `data` shadows the fixture rather than clashing with it. The assertion
-    // reads a second copy built from the same seed, also as on the server, so
-    // changes to the learner's copy don't reach it. The verdict comes back
-    // wrapped, so anything else means the learner's code never reached the end,
-    // which the server treats as a syntax error.
-    const names = fixtureNames(testCase.input).join(", ");
+    // Same shape as the server. Fixtures sit outside the learner's scope, so a
+    // learner's own `data` shadows the fixture rather than clashing with it. The
+    // assertion runs after that scope has ended, over a second copy of the
+    // fixtures from the same seed, built before any learner code, under a name
+    // that changes per run because learner code can still see this scope. Its
+    // locals live in a function inside the one binding the fixtures, so they
+    // take priority over a fixture of the same name.
+    //
+    // Anything other than the wrapped result means the learner's code returned
+    // from the top level, reported below as a syntax error. A top-level return
+    // of an object shaped like either wrapper still counts as a result here; the
+    // server rejects it as a syntax error, and the server's verdict is the one
+    // that completes a lesson.
+    const fixtures = fixtureNames(testCase.input);
+    const names = fixtures.join(", ");
     const seed = Math.floor(Math.random() * 2 ** 32);
+    const expected = `__expected${seed}__`;
+    const expectedList = fixtures.map((_, i) => `${expected}[${i}]`).join(", ");
+    const argList = testCase.input.trim()
+      ? testCase.input
+          .split(",")
+          .map((_, i) => `__args__[${i}]`)
+          .join(", ")
+      : "";
     const wrappedCode = `
       return (async () => {
         "use strict";
@@ -629,17 +645,26 @@ export async function runTestCase(
           ${argSetup}
           return [[${callArgs}], [${names}]];
         });
+        const ${expected} = __build__()[1];
         const [__args__, [${names}]] = __build__();
-        return await (async () => {
+        const __run__ = await (async () => {
           ${transformed}
           ;
-          const __result__ = await ${fnName}(...__args__);
-          return {
-            __verdict__: ((${names}) => {
-              ${assertionCode}
-            })(...__build__()[1]),
-          };
+          return { __value__: await ${fnName}(${argList}) };
         })();
+        if (
+          __run__ === null ||
+          typeof __run__ !== "object" ||
+          !("__value__" in __run__)
+        ) {
+          return __run__;
+        }
+        const __result__ = __run__.__value__;
+        return {
+          __verdict__: ((${names}) => (() => {
+            ${assertionCode}
+          })())(${expectedList}),
+        };
       })();
     `;
 
