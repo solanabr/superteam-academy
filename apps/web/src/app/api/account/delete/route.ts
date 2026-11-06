@@ -122,6 +122,31 @@ export async function POST(): Promise<NextResponse> {
       );
     }
 
+    // Consent ends with the account (#1129). The recipient RPCs also skip
+    // tombstoned profiles, but a live consent row must not outlive the request.
+    const { error: optOutError } = await admin
+      .from("email_subscriptions")
+      .update({
+        opt_in: false,
+        reminder_opt_in: false,
+        unsubscribed_at: now,
+        reminder_unsubscribed_at: now,
+        updated_at: now,
+      })
+      .eq("user_id", user.id);
+
+    if (optOutError) {
+      logError({
+        errorId: ERROR_IDS.ACCOUNT_DELETE_FAILED,
+        error: new Error(optOutError.message),
+        context: { route: "/api/account/delete", stage: "email_opt_out" },
+      });
+      return NextResponse.json(
+        { error: "Failed to process deletion" },
+        { status: 500 }
+      );
+    }
+
     // Revoke every session. This is NOT best-effort: middleware no longer
     // checks the tombstone per-request (#1089), so a deleted account whose
     // revocation silently failed would keep refreshing forever. The ban runs

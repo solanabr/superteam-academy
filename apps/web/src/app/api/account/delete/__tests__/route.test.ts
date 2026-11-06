@@ -83,7 +83,29 @@ describe("account deletion anonymises the profile", () => {
     expect(p.username).toMatch(/^deleted-user-[0-9a-f]{8}$/);
   });
 
-  it("scopes both writes to the session-derived id, never client input", async () => {
+  it("opts the account out of every mail kind (#1129)", async () => {
+    await POST();
+    const subs = payloadFor("email_subscriptions");
+    expect(subs.opt_in).toBe(false);
+    expect(subs.reminder_opt_in).toBe(false);
+    expect(subs.unsubscribed_at).toEqual(expect.any(String));
+    expect(subs.reminder_unsubscribed_at).toEqual(expect.any(String));
+  });
+
+  it("reports a failed opt-out instead of claiming success", async () => {
+    // Profile and enrollment writes land, the opt-out fails. A 200 here would
+    // keep the consent live with nothing telling the client to retry.
+    eq.mockResolvedValueOnce({ error: null })
+      .mockResolvedValueOnce({ error: null })
+      .mockResolvedValueOnce({ error: { message: "boom" } });
+
+    const res = await POST();
+
+    expect(res.status).toBe(500);
+    expect(updateUserById).not.toHaveBeenCalled();
+  });
+
+  it("scopes every write to the session-derived id, never client input", async () => {
     await POST();
     expect(eq).toHaveBeenCalledWith("id", "user-1");
     expect(eq).toHaveBeenCalledWith("user_id", "user-1");
