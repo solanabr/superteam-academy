@@ -6238,6 +6238,12 @@ a.act-row:focus-visible {
   --tw-prose-pre-code: var(--code-fg);
 }
 
+/* Typography puts literal backticks around inline code. */
+.prose code::before,
+.prose code::after {
+  content: none;
+}
+
 /* ═══════════════════════════════════════════════════════════════
    PROSE TABLE OVERRIDES — polished tables inside lesson content
    Card-contained, alternating rows, bold header
