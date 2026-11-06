@@ -299,6 +299,7 @@
     "goToEditor": "Ir al editor",
     "verdictRejected": "No aceptado",
     "completionFailedChallenge": "Tu código pasó las pruebas de ejemplo, pero no superó el conjunto completo del servidor, incluidos los casos ocultos que el navegador no ejecuta. Revisa tu solución y envíala de nuevo.",
+    "completionFailedChallengeLimit": "Tu código alcanzó los límites del corrector (tiempo, memoria o profundidad de recursión) antes de terminar, así que esto no cuenta como una respuesta incorrecta. Prueba una versión que haga menos trabajo o use menos recursión y envíala de nuevo.",
     "completionFailedEnrollment": "No pudimos verificar tu inscripción on-chain en este curso. Vuelve a inscribirte e inténtalo de nuevo.",
     "completionFailedGeneric": "No pudimos completar esta lección. Inténtalo de nuevo en un momento.",
     "completionRateLimited": "Estás completando lecciones muy rápido. Espera un momento e inténtalo de nuevo — tu progreso está guardado.",

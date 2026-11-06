@@ -325,10 +325,12 @@ export async function POST(request: NextRequest) {
         if (!result.ok) {
           // A genuine graded MISS (403) is a learning signal → capture it into the
           // review substrate keyed by this lesson (LX-B4). A 503 is "could not
-          // judge" (executor outage), not a miss — never captured. Best-effort:
-          // the helper never throws by contract, and the `.catch` here is a second
-          // guard so a review-write hiccup can NEVER change this deny response.
-          if (result.status === 403) {
+          // judge" (executor outage), not a miss — never captured, and neither is
+          // a run stopped at a sandbox limit, which says nothing about the answer.
+          // Best-effort: the helper never throws by contract, and the `.catch` here
+          // is a second guard so a review-write hiccup can NEVER change this deny
+          // response.
+          if (result.status === 403 && !result.limit) {
             await captureReviewFailure({
               userId: user.id,
               lessonId,
@@ -343,7 +345,9 @@ export async function POST(request: NextRequest) {
             result.status,
             "Block did not pass",
             result.status === 403
-              ? DENY_REASONS[type as GradedBlockType]
+              ? result.limit
+                ? "challenge_limit"
+                : DENY_REASONS[type as GradedBlockType]
               : undefined
           );
         }

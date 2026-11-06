@@ -18,6 +18,12 @@ describe("completionErrorKey — reason discriminator (#564)", () => {
     );
   });
 
+  it("challenge_limit → limit copy", () => {
+    expect(completionErrorKey(403, "challenge_limit", mixed)).toBe(
+      "completionFailedChallengeLimit"
+    );
+  });
+
   it("challenge_failed → challenge copy", () => {
     expect(completionErrorKey(403, "challenge_failed", mixed)).toBe(
       "completionFailedChallenge"
