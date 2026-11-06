@@ -15,16 +15,24 @@
  *     the QuickJS runtime. Allocation past the cap aborts execution.
  *   - A wall-clock TIMEOUT per evaluation (`EXEC_TIMEOUT_MS`) via an interrupt
  *     handler polled by the interpreter — infinite loops / busy-waits are killed.
+ *   - A wall-clock BUDGET per submission (`SUBMISSION_BUDGET_MS`) across all of
+ *     its tests.
  *   - No ambient host objects. `process`, `require`, `module`, Node's
  *     `globalThis` bindings, the filesystem, and the network do not exist inside
  *     the QuickJS context. We never expose a host function or object into it.
- *   - Only two values cross the boundary: a STRING of code goes in; a
- *     JSON-serialisable STRING result comes out (copied, never shared).
+ *   - Only strings cross the boundary, copied, never shared.
  *
- * The mock Solana SDK and console live ENTIRELY inside the sandbox, assembled
- * from source text, so the learner interacts only with sandbox-local objects.
- * A FRESH runtime + context is created per test case, so one submission cannot
- * carry state (or prototype/global poisoning) into another test.
+ * Each test runs in TWO fresh runtimes, one after the other:
+ *
+ *   1. The submission runtime evaluates the learner's code as a strict global
+ *      script, calls the entry point and encodes the result as a JSON snapshot.
+ *      Nothing else leaves it, and it is disposed before step 2 starts.
+ *   2. The assertion runtime has never seen learner code. It rebuilds the result
+ *      from the snapshot and evaluates the test's assertion to reach the verdict.
+ *
+ * So a submission can only choose the DATA an assertion reads, never the code
+ * that reads it. The encoder in step 1 is written defensively, but the verdict
+ * doesn't depend on it: whatever string step 1 yields, step 2 only parses it.
  *
  * DEGRADE-CLOSED
  * --------------
@@ -37,14 +45,16 @@
 import type { AdminTestCase } from "@superteam-lms/types";
 import {
   newQuickJSWASMModuleFromVariant,
+  Scope,
   type QuickJSWASMModule,
   type QuickJSContext,
   type QuickJSHandle,
+  type QuickJSRuntime,
 } from "quickjs-emscripten-core";
 // Single-file variant: the WASM is embedded (base64) in the JS module, so there
 // is no separate `.wasm` artifact to trace into the serverless bundle — it just
-// works on Vercel. "sync" = synchronous host↔VM calls (JS-level Promises inside
-// the VM are still driven via the job queue; see resolveToString).
+// works on Vercel. "sync" = synchronous host↔VM calls; VM Promises advance only
+// when the host pumps the job queue (see settle).
 import releaseSyncVariant from "@jitl/quickjs-singlefile-cjs-release-sync";
 
 /** Hard heap cap for the sandbox. Enough for SDK mocks + small programs. */
@@ -57,32 +67,24 @@ const MEMORY_LIMIT_MB = 64;
  */
 const EXEC_TIMEOUT_MS = 5_000;
 
-/**
- * Host-side hard guard, slightly longer than EXEC_TIMEOUT_MS. The in-sandbox
- * interrupt cannot fire on a quiescent pending promise (e.g.
- * `await new Promise(() => {})`) because there is no CPU activity to preempt and
- * no timers/event-loop in the VM, so such a promise never settles. This guard
- * abandons the evaluation (the runtime is then disposed), preventing a hung
- * request. Defense-in-depth, not the primary boundary.
- */
-const HOST_GUARD_MS = EXEC_TIMEOUT_MS + 1_000;
-
-/** Marker rejection raised when the host guard trips. */
-const HOST_GUARD = Symbol("host-guard");
-
-/** Race a promise against a host wall-clock guard. */
-function withHostGuard<T>(p: Promise<T>): Promise<T> {
-  let timer: ReturnType<typeof setTimeout>;
-  const guard = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(HOST_GUARD), HOST_GUARD_MS);
-  });
-  return Promise.race([p, guard]).finally(() =>
-    clearTimeout(timer)
-  ) as Promise<T>;
-}
+/** Wall-clock budget for one submission across all its tests. */
+const SUBMISSION_BUDGET_MS = 15_000;
 
 /** Upper bound on submission size we are willing to compile/run. */
 const MAX_CODE_BYTES = 100_000;
+
+/** How many VM jobs run before the host looks at the clock again. */
+const JOB_BATCH = 1_024;
+
+/**
+ * QuickJS eval flags: global script (0), JS_EVAL_FLAG_STRICT, JS_EVAL_FLAG_ASYNC.
+ * A global script gives `return` no function to return from, so at the top level
+ * it is a SyntaxError. The async flag still allows top-level await, and unlike a
+ * module the script takes every declaration a function body would, such as two
+ * functions with one name. quickjs-emscripten has no named option for the async
+ * flag; the executor test suite covers top-level await.
+ */
+const SUBMISSION_EVAL_FLAGS = (1 << 3) | (1 << 7);
 
 let quickJsPromise: Promise<QuickJSWASMModule | null> | undefined;
 
@@ -136,32 +138,16 @@ export async function isExecutorAvailable(): Promise<boolean> {
 /* ------------------------------------------------------------------------- */
 
 /**
- * Source text evaluated INSIDE the isolate to install the mock SDK + console
- * and expose a single `__runCase__(userCode, testJson)` entry point. This is a
- * faithful server port of the browser worker contract in
- * `components/editor/challenge-runner.tsx` (mock @solana/web3.js + spl-token,
- * mock console, arg-setup heuristics, type-shape + assertion evaluation), so a
- * submission that passes the visible tests in-browser is judged identically by
- * the server — the difference is solely that the SERVER also runs hidden tests
- * and is authoritative.
+ * The mock SDK, Web API polyfills and mock console both runtimes install. A
+ * server port of the browser worker contract in
+ * `components/editor/challenge-runner.tsx`, so a submission that passes the
+ * visible tests in-browser is judged identically by the server. The difference
+ * is solely that the SERVER also runs hidden tests and is authoritative.
  *
- * NOTE: pure strings/functions only. No host references. `__runCase__` returns
- * a JSON string; the host parses the copied-out string.
+ * NOTE: pure strings/functions only, no host references. It lands inside the
+ * IIFE of each runtime source below, so its names aren't globals.
  */
-const ISOLATE_RUNTIME_SOURCE = String.raw`
-"use strict";
-
-/* Capture pristine intrinsics the HARNESS relies on BEFORE any user code runs.
- * User code shares this realm's globals and could reassign \`globalThis.Function\`
- * or \`JSON.stringify\` to force a "pass" — the harness must build the test
- * wrapper and serialise its verdict through these private references, never the
- * (potentially poisoned) live globals. Fresh-context-per-test isolates one
- * submission's taint from the next; these captures additionally keep a
- * submission from corrupting its OWN test's harness readout. */
-var __Function__ = Function;
-var __jsonStringify__ = JSON.stringify;
-var __jsonParse__ = JSON.parse;
-
+const SANDBOX_LIBRARY_SOURCE = String.raw`
 /* Web-API polyfills QuickJS lacks. TextEncoder/TextDecoder are WHATWG APIs, not
  * core ECMAScript — the browser worker has them, this engine does not. Solana
  * byte-parsing challenges (e.g. decoding a username out of account data) use
@@ -304,7 +290,7 @@ Object.freeze(MockKeypair.prototype);
 Object.freeze(MockTransaction.prototype);
 Object.freeze(MockConnection.prototype);
 
-var __modules__ = {
+var modules = {
   "@solana/web3.js": {
     Keypair: MockKeypair,
     PublicKey: MockPublicKey,
@@ -328,6 +314,78 @@ function makeMockConsole() {
   }
   return { logs: logs, mock: { log: joiner(""), error: joiner("[error] "), warn: joiner("[warn] "), info: joiner("") } };
 }
+
+`;
+
+/**
+ * Evaluated before any learner code in the submission runtime. Yields the
+ * functions the host calls, and keeps them out of the global scope. Natives are
+ * captured here so learner code that replaces them only affects its own realm.
+ */
+const SUBMISSION_RUNTIME_SOURCE = String.raw`
+(function () {
+"use strict";
+${SANDBOX_LIBRARY_SOURCE}
+
+var apply = Reflect.apply;
+var ownKeys = Reflect.ownKeys;
+var getDesc = Object.getOwnPropertyDescriptor;
+var getProto = Object.getPrototypeOf;
+var defineProp = Object.defineProperty;
+var nullObject = Object.create.bind(Object, null);
+var isArray = Array.isArray;
+var stringify = JSON.stringify;
+var StringCtor = String;
+var FunctionCtor = Function;
+var TypeErrorCtor = TypeError;
+var RangeErrorCtor = RangeError;
+var Uint8ArrayCtor = Uint8Array;
+
+var MapCtor = Map;
+var mapGet = Map.prototype.get;
+var mapSet = Map.prototype.set;
+var mapHas = Map.prototype.has;
+var mapForEach = Map.prototype.forEach;
+var setForEach = Set.prototype.forEach;
+var dateTime = Date.prototype.getTime;
+var regexpSource = getDesc(RegExp.prototype, "source").get;
+var regexpFlags = getDesc(RegExp.prototype, "flags").get;
+var numberValue = Number.prototype.valueOf;
+var stringValue = String.prototype.valueOf;
+var booleanValue = Boolean.prototype.valueOf;
+var bigintString = BigInt.prototype.toString;
+var symbolDescription = getDesc(Symbol.prototype, "description").get;
+var typedProto = getProto(Uint8Array.prototype);
+var typedTag = getDesc(typedProto, Symbol.toStringTag).get;
+var typedBuffer = getDesc(typedProto, "buffer").get;
+var typedOffset = getDesc(typedProto, "byteOffset").get;
+var typedLength = getDesc(typedProto, "length").get;
+var bufferLength = getDesc(ArrayBuffer.prototype, "byteLength").get;
+var viewBuffer = getDesc(DataView.prototype, "buffer").get;
+var viewOffset = getDesc(DataView.prototype, "byteOffset").get;
+var viewLength = getDesc(DataView.prototype, "byteLength").get;
+var regexpIndex = /^(?:0|[1-9][0-9]*)$/;
+var regexpExec = RegExp.prototype.exec;
+var objectProto = Object.prototype;
+var errorProto = Error.prototype;
+var regexpProto = RegExp.prototype;
+
+var knownProtos = new MapCtor();
+function knownProto(ctor) { apply(mapSet, knownProtos, [ctor.prototype, true]); }
+[
+  Object, Array, Map, Set, WeakMap, WeakSet, Date, RegExp, Function, Number, String, Boolean,
+  Promise, Symbol, BigInt, ArrayBuffer, DataView, Error, TypeError, RangeError, SyntaxError,
+  ReferenceError, EvalError, URIError, Int8Array, Uint8Array, Uint8ClampedArray, Int16Array,
+  Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array, BigInt64Array, BigUint64Array,
+  MockPublicKey, MockKeypair, MockTransaction, MockConnection
+].forEach(knownProto);
+apply(mapSet, knownProtos, [typedProto, true]);
+
+var mockNames = new MapCtor();
+apply(mapSet, mockNames, [MockPublicKey.prototype, "PublicKey"]);
+apply(mapSet, mockNames, [MockKeypair.prototype, "Keypair"]);
+apply(mapSet, mockNames, [MockTransaction.prototype, "Transaction"]);
+apply(mapSet, mockNames, [MockConnection.prototype, "Connection"]);
 
 /* ---- code analysis (ports of challenge-runner helpers) ------------------ */
 
@@ -383,25 +441,21 @@ function detectFunctionName(code) {
   var m = stripComments(code).match(/(?:function\s+(\w+)\s*\(|(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s*)?\()/);
   return m ? (m[1] || m[2] || null) : null;
 }
-function functionHasParams(code, fnName) {
-  var re = new RegExp("(?:function\\s+" + fnName + "\\s*\\(([^)]*?)\\)|(?:const|let|var)\\s+" + fnName + "\\s*=\\s*(?:async\\s*)?\\(([^)]*?)\\))");
-  var m = stripComments(code).match(re);
-  if (!m) return false;
-  var params = (m[1] || m[2] || "").trim();
-  return params.length > 0;
-}
 
 var KEYPAIR_NAMES = { payer:1, sender:1, recipient:1, owner:1, authority:1, mint:1, senderKeypair:1, recipientKeypair:1, userKeypair:1 };
 var PUBKEY_NAMES = { programId:1, userPubkey:1, recipientPubkey:1, senderPublicKey:1, expectedOwner:1, tokenProgramId:1, systemProgramId:1, dataAccount:1 };
 
+
 function buildArgSetup(input) {
-  if (!input.trim()) return "";
+  var names = [];
+  if (!input.trim()) return { setup: "", names: names };
   var args = input.split(",").map(function (a) { return a.trim(); });
   var lines = [];
   for (var i = 0; i < args.length; i++) {
     var arg = args[i];
     if (/^\d/.test(arg) || /^-?\d*\.?\d+$/.test(arg)) continue;
     if (/^['"]/.test(arg) || /^true$|^false$|^null$/.test(arg)) continue;
+    names.push(arg);
     if (arg === "connection") lines.push('var ' + arg + ' = new (__modules__["@solana/web3.js"].Connection)("https://api.devnet.solana.com");');
     else if (KEYPAIR_NAMES[arg]) lines.push('var ' + arg + ' = __modules__["@solana/web3.js"].Keypair.generate();');
     else if (PUBKEY_NAMES[arg]) lines.push('var ' + arg + ' = __modules__["@solana/web3.js"].Keypair.generate().publicKey;');
@@ -412,7 +466,7 @@ function buildArgSetup(input) {
     else if (arg === "position") lines.push('var position = { collateral: 100, debt: 50, threshold: 1.5 };');
     else lines.push('var ' + arg + ' = {};');
   }
-  return lines.join("\n");
+  return { setup: lines.join("\n"), names: names };
 }
 function buildCallArgs(input) {
   if (!input.trim()) return "";
@@ -422,6 +476,343 @@ function buildCallArgs(input) {
     return t;
   }).join(", ");
 }
+
+/* ---- running a test ------------------------------------------------------ */
+
+function publish(name, value) {
+  defineProp(globalThis, name, { value: value, writable: true, configurable: true, enumerable: false });
+}
+publish("__modules__", modules);
+publish("console", makeMockConsole().mock);
+
+var callArgs = [];
+var fixtures = [];
+
+/* Builds the test's arguments and returns the entry point's name, or "" when the
+ * submission declares none. Runs before learner code. Fixtures become globals as
+ * well as arguments, so a function reading one as a free variable still works,
+ * and a learner's own binding of the same name shadows it without a clash. */
+function prepare(userCode, input) {
+  var fnName = detectFunctionName(userCode);
+  if (!fnName) return "";
+  var built = buildArgSetup(input);
+  var pairs = built.names.map(function (n) { return '["' + n + '", ' + n + "]"; });
+  var make = new FunctionCtor(
+    "__modules__",
+    '"use strict";\n' + built.setup + "\nreturn [[" + buildCallArgs(input) + "], [" + pairs.join(", ") + "]];"
+  );
+  var made = make(modules);
+  callArgs = made[0];
+  fixtures = made[1];
+  fixtures.forEach(function (pair) {
+    try { publish(pair[0], pair[1]); } catch (e) { /* e.g. a name the realm won't let go */ }
+  });
+  return fnName;
+}
+
+async function invoke(fn, fnName) {
+  if (typeof fn !== "function") throw new TypeErrorCtor(fnName + " is not a function");
+  return await apply(fn, undefined, callArgs);
+}
+
+function describe(err) {
+  var message = err && err.message;
+  return StringCtor(message || err);
+}
+
+/* ---- result snapshot ----------------------------------------------------- */
+/* Encodes a value graph as JSON. A value is a JSON primitive or a tagged array:
+ * [0, id] object, [1] undefined, [2, s] bigint, [3, s] non-finite number or -0,
+ * [4, s] symbol, [5] array hole, [6, s] accessor that threw. Objects go in a
+ * node table by id, so cycles and shared references survive. Getters run here,
+ * in the submission's realm, and only their values travel. */
+
+var MAX_VALUES = 1000000;
+var MAX_SNAPSHOT_CHARS = 16 * 1024 * 1024;
+var MAX_ARRAY_PROPS_LENGTH = 65536;
+
+function tryBrand(fn, value) {
+  try { return { value: apply(fn, value, []) }; } catch (e) { return null; }
+}
+function hasProto(value, proto) {
+  for (var p = getProto(value), depth = 0; p && depth < 64; p = getProto(p), depth++) {
+    if (p === proto) return true;
+  }
+  return false;
+}
+
+function encode(result) {
+  var ids = new MapCtor();
+  var queue = [];
+  var count = 0;
+
+  function ref(v) {
+    if (++count > MAX_VALUES) throw new RangeErrorCtor("Result too large");
+    switch (typeof v) {
+      case "string":
+      case "boolean":
+        return v;
+      case "number":
+        if (v !== v) return [3, "NaN"];
+        if (v === Infinity) return [3, "Infinity"];
+        if (v === -Infinity) return [3, "-Infinity"];
+        if (v === 0 && 1 / v < 0) return [3, "-0"];
+        return v;
+      case "undefined":
+        return [1];
+      case "bigint":
+        return [2, apply(bigintString, v, [])];
+      case "symbol":
+        return [4, apply(symbolDescription, v, []) || ""];
+    }
+    if (v === null) return null;
+    var id = apply(mapGet, ids, [v]);
+    if (id === undefined) {
+      id = queue.length;
+      apply(mapSet, ids, [v, id]);
+      queue[id] = v;
+    }
+    return [0, id];
+  }
+
+  function read(desc, receiver) {
+    if (!desc.get && !desc.set) return ref(desc.value);
+    if (!desc.get) return [1];
+    try {
+      return ref(apply(desc.get, receiver, []));
+    } catch (e) {
+      return [6, describe(e)];
+    }
+  }
+
+  /* Own string-keyed properties: [key, value, enumerable]. Inherited members of a
+   * non-builtin prototype (class methods, getters) are flattened onto the copy as
+   * non-enumerable, which is how they already read: visible by name, absent from
+   * Object.keys and JSON.stringify. */
+  function props(v, skip) {
+    var out = [];
+    var seen = nullObject();
+    function add(holder, inherited) {
+      var keys = ownKeys(holder);
+      for (var i = 0; i < keys.length; i++) {
+        var key = keys[i];
+        if (typeof key !== "string" || seen[key] || (skip && skip(key))) continue;
+        var desc = getDesc(holder, key);
+        if (!desc) continue;
+        seen[key] = true;
+        out[out.length] = [key, read(desc, v), !inherited && !!desc.enumerable];
+      }
+    }
+    add(v, false);
+    var p = getProto(v);
+    for (var depth = 0; p && depth < 64 && !apply(mapHas, knownProtos, [p]); depth++) {
+      add(p, true);
+      p = getProto(p);
+    }
+    return out;
+  }
+
+  function isIndex(key) { return apply(regexpExec, regexpIndex, [key]) !== null; }
+  function skipIndices(key) { return key === "length" || isIndex(key); }
+  function skipLastIndex(key) { return key === "lastIndex"; }
+  function skipFunctionOwn(key) {
+    return key === "length" || key === "name" || key === "prototype" || key === "caller" || key === "arguments";
+  }
+
+  function node(v) {
+    if (typeof v === "function") {
+      var nameDesc = getDesc(v, "name");
+      var lengthDesc = getDesc(v, "length");
+      return {
+        k: "f",
+        name: nameDesc && typeof nameDesc.value === "string" ? nameDesc.value : "",
+        len: lengthDesc && typeof lengthDesc.value === "number" ? lengthDesc.value : 0,
+        p: props(v, skipFunctionOwn)
+      };
+    }
+    var proto = getProto(v);
+    if (proto === objectProto) return { k: "o", p: props(v) };
+    if (proto === null) return { k: "o", bare: 1, p: props(v) };
+    if (isArray(v)) {
+      var length = v.length;
+      if (typeof length !== "number" || length > MAX_VALUES) throw new RangeErrorCtor("Result too large");
+      var items = [];
+      for (var i = 0; i < length; i++) {
+        var itemDesc = getDesc(v, i);
+        items[i] = itemDesc ? read(itemDesc, v) : [5];
+      }
+      return { k: "a", n: length, i: items, p: length < MAX_ARRAY_PROPS_LENGTH ? props(v, skipIndices) : [] };
+    }
+    var tag = apply(typedTag, v, []);
+    if (tag) {
+      return {
+        k: "t",
+        c: tag,
+        b: ref(apply(typedBuffer, v, [])),
+        o: apply(typedOffset, v, []),
+        n: apply(typedLength, v, []),
+        p: apply(typedLength, v, []) < MAX_ARRAY_PROPS_LENGTH ? props(v, skipIndices) : []
+      };
+    }
+    var mockName = apply(mapGet, mockNames, [proto]);
+    if (mockName) return { k: "k", c: mockName, p: props(v) };
+
+    var brand;
+    var entries = [];
+    if ((brand = tryBrand(bufferLength, v))) {
+      var bytes = new Uint8ArrayCtor(v);
+      var data = [];
+      for (var b = 0; b < bytes.length; b++) data[b] = bytes[b];
+      count += bytes.length;
+      if (count > MAX_VALUES) throw new RangeErrorCtor("Result too large");
+      return { k: "b", d: data };
+    }
+    if ((brand = tryBrand(viewLength, v))) {
+      return { k: "v", b: ref(apply(viewBuffer, v, [])), o: apply(viewOffset, v, []), n: brand.value };
+    }
+    if (tryBrand(function () { return apply(mapHas, this, [0]); }, v)) {
+      apply(mapForEach, v, [function (value, key) { entries[entries.length] = [ref(key), ref(value)]; }]);
+      return { k: "m", e: entries, p: props(v) };
+    }
+    var isSet = false;
+    try { apply(setForEach, v, [function (value) { entries[entries.length] = ref(value); }]); isSet = true; } catch (e) { isSet = false; }
+    if (isSet) return { k: "s", e: entries, p: props(v) };
+    if ((brand = tryBrand(dateTime, v))) return { k: "d", t: ref(brand.value), p: props(v) };
+    if (v !== regexpProto && (brand = tryBrand(regexpSource, v))) {
+      return { k: "r", s: brand.value, f: apply(regexpFlags, v, []), li: v.lastIndex, p: props(v, skipLastIndex) };
+    }
+    if ((brand = tryBrand(numberValue, v)) || (brand = tryBrand(booleanValue, v))) return { k: "x", v: ref(brand.value), p: props(v) };
+    if ((brand = tryBrand(stringValue, v))) return { k: "x", v: ref(brand.value), p: props(v, skipIndices) };
+    if (hasProto(v, errorProto)) {
+      var ctorDesc = getDesc(proto, "name");
+      return { k: "e", c: ctorDesc && typeof ctorDesc.value === "string" ? ctorDesc.value : "Error", p: props(v) };
+    }
+    return { k: "o", p: props(v) };
+  }
+
+  var root = ref(result);
+  var named = [];
+  for (var f = 0; f < fixtures.length; f++) named[f] = [fixtures[f][0], ref(fixtures[f][1])];
+
+  var nodes = [];
+  for (var n = 0; n < queue.length; n++) nodes[n] = node(queue[n]);
+  var snapshot = stringify({ root: root, fixtures: named, nodes: nodes });
+  if (snapshot.length > MAX_SNAPSHOT_CHARS) throw new RangeErrorCtor("Result too large");
+  return snapshot;
+}
+
+return { prepare: prepare, invoke: invoke, encode: encode, describe: describe };
+})()
+`;
+
+/**
+ * Evaluated in the assertion runtime, which never holds learner code. Rebuilds a
+ * snapshot and evaluates one test's assertion over it.
+ */
+const ASSERTION_RUNTIME_SOURCE = String.raw`
+(function () {
+"use strict";
+${SANDBOX_LIBRARY_SOURCE}
+
+var MOCKS = { PublicKey: MockPublicKey, Keypair: MockKeypair, Transaction: MockTransaction, Connection: MockConnection };
+var SDK_GLOBALS = ["Keypair", "PublicKey", "Connection", "Transaction", "SystemProgram", "LAMPORTS_PER_SOL"];
+SDK_GLOBALS.forEach(function (name) {
+  Object.defineProperty(globalThis, name, { value: modules["@solana/web3.js"][name], writable: true, configurable: true });
+});
+
+var TYPED = { Int8Array: Int8Array, Uint8Array: Uint8Array, Uint8ClampedArray: Uint8ClampedArray, Int16Array: Int16Array, Uint16Array: Uint16Array, Int32Array: Int32Array, Uint32Array: Uint32Array, Float32Array: Float32Array, Float64Array: Float64Array, BigInt64Array: BigInt64Array, BigUint64Array: BigUint64Array };
+var ERRORS = { Error: Error, TypeError: TypeError, RangeError: RangeError, SyntaxError: SyntaxError, ReferenceError: ReferenceError, EvalError: EvalError, URIError: URIError };
+var SPECIAL_NUMBERS = { "NaN": NaN, "Infinity": Infinity, "-Infinity": -Infinity, "-0": -0 };
+
+function lookup(table, key) {
+  if (!Object.prototype.hasOwnProperty.call(table, key)) throw new TypeError("Unreadable result");
+  return table[key];
+}
+
+/* Rebuilds the value graph from encode()'s format in the submission runtime. */
+function decode(snapshotJson) {
+  var snap = JSON.parse(snapshotJson);
+  var nodes = snap.nodes;
+  var objects = [];
+
+  function value(r) {
+    if (r === null || typeof r !== "object") return r;
+    switch (r[0]) {
+      case 0: return objects[r[1]];
+      case 1: return undefined;
+      case 2: return BigInt(r[1]);
+      case 3: return lookup(SPECIAL_NUMBERS, r[1]);
+      case 4: return Symbol(r[1]);
+    }
+    throw new TypeError("Unreadable result");
+  }
+  function define(target, key, r, enumerable) {
+    if (r !== null && typeof r === "object" && r[0] === 6) {
+      var message = String(r[1]);
+      Object.defineProperty(target, key, { get: function () { throw new Error(message); }, enumerable: enumerable, configurable: true });
+      return;
+    }
+    Object.defineProperty(target, key, { value: value(r), writable: true, enumerable: enumerable, configurable: true });
+  }
+  function shell(n) {
+    switch (n.k) {
+      case "o": return n.bare ? Object.create(null) : {};
+      case "a": return [];
+      case "m": return new Map();
+      case "s": return new Set();
+      case "d": return new Date(value(n.t));
+      case "r": {
+        var re = new RegExp(n.s, n.f);
+        re.lastIndex = n.li;
+        return re;
+      }
+      case "x": return Object(value(n.v));
+      case "e": return new (Object.prototype.hasOwnProperty.call(ERRORS, n.c) ? ERRORS[n.c] : Error)();
+      case "k": return Object.create(lookup(MOCKS, n.c).prototype);
+      case "f": {
+        var f = function () { throw new Error("A function in a result can't be called while grading"); };
+        Object.defineProperty(f, "name", { value: n.name, configurable: true });
+        Object.defineProperty(f, "length", { value: n.len, configurable: true });
+        return f;
+      }
+    }
+    return undefined;
+  }
+
+  /* Buffers first, since views are built on them, then everything else, then
+   * contents, once every object a reference can name exists. */
+  nodes.forEach(function (n, id) {
+    if (n.k === "b") objects[id] = Uint8Array.from(n.d).buffer;
+  });
+  nodes.forEach(function (n, id) {
+    if (n.k === "b") return;
+    if (n.k === "t") objects[id] = new (lookup(TYPED, n.c))(value(n.b), n.o, n.n);
+    else if (n.k === "v") objects[id] = new DataView(value(n.b), n.o, n.n);
+    else objects[id] = shell(n);
+    if (objects[id] === undefined) throw new TypeError("Unreadable result");
+  });
+  nodes.forEach(function (n, id) {
+    var o = objects[id];
+    if (n.k === "a") {
+      n.i.forEach(function (r, i) {
+        if (r !== null && typeof r === "object" && r[0] === 5) return;
+        if (r !== null && typeof r === "object" && r[0] === 6) define(o, String(i), r, true);
+        else o[i] = value(r);
+      });
+      o.length = n.n;
+    } else if (n.k === "m") {
+      n.e.forEach(function (e) { o.set(value(e[0]), value(e[1])); });
+    } else if (n.k === "s") {
+      n.e.forEach(function (r) { o.add(value(r)); });
+    }
+    (n.p || []).forEach(function (p) { define(o, p[0], p[1], p[2]); });
+  });
+
+  return { root: value(snap.root), fixtures: snap.fixtures.map(function (f) { return [f[0], value(f[1])]; }) };
+}
+
+/* ---- assertions ---------------------------------------------------------- */
+
 function isTypeShape(expected) {
   var match = expected.match(/^\{\s*(.+)\s*\}$/);
   if (!match || !match[1]) return null;
@@ -436,80 +827,59 @@ function isTypeShape(expected) {
   return Object.keys(pairs).length > 0 ? pairs : null;
 }
 
-/* ---- single test-case runner -------------------------------------------- */
-/* Mirrors runTestCase() in challenge-runner.tsx. Transpilation to plain JS is
- * done on the host (sucrase) before this runs, so userCode is already JS. */
 
-function runCase(userCode, test) {
-  var fnName = detectFunctionName(userCode);
-  if (!fnName) return { ok: false, detail: "No function found in submission" };
+var RESERVED_PARAMS = { __result__: 1, __modules__: 1, console: 1 };
 
-  var argSetup = buildArgSetup(test.input);
-  var callArgs = test.input.trim() ? buildCallArgs(test.input) : "";
-  var typeShape = isTypeShape(test.expectedOutput);
-
-  var assertionCode;
-  if (typeShape) {
-    var checks = [];
-    for (var key in typeShape) if (Object.prototype.hasOwnProperty.call(typeShape, key)) {
-      checks.push('typeof __result__["' + key + '"] === "' + typeShape[key] + '"');
-    }
-    assertionCode = 'return (' + checks.join(" && ") + ') ? "pass" : "fail: shape mismatch";';
-  } else {
-    assertionCode =
-      'var result = __result__;\n' +
-      'var transaction = __result__;\n' +
-      'if (typeof __result__ === "object" && __result__ !== null) {\n' +
-      '  var publicKey = __result__.publicKey;\n' +
-      '  var isValid = __result__.isValid;\n' +
-      '  var lamports = __result__.instructions && __result__.instructions[0] ? __result__.instructions[0].lamports : undefined;\n' +
-      '  var mintInfo = { decimals: 9 };\n' +
-      '}\n' +
-      'try {\n' +
-      '  var __assertion__ = (' + test.expectedOutput + ');\n' +
-      '  if (typeof __assertion__ === "boolean") return __assertion__ ? "pass" : "fail: assertion false";\n' +
-      '  if (typeof __assertion__ === "number" && isFinite(__assertion__)) return "numeric:" + __assertion__;\n' +
-      '  return String(__assertion__);\n' +
-      '} catch (e) { return "fail: " + ((e && e.message) || String(e)); }';
-  }
-
-  var mc = makeMockConsole();
-  var body =
-    '"use strict";\n' +
-    'return (async function(){\n' +
-    '  var console = __mc__;\n' +
-    userCode + '\n;\n' +
-    argSetup + '\n' +
-    '  var __result__ = await ' + fnName + '(' + callArgs + ');\n' +
-    '  return (function(){ ' + assertionCode + ' })();\n' +
-    '})();';
-
+/* Only a boolean true from the assertion passes a test. */
+function evaluate(snapshotJson, testJson) {
+  var outcome;
   try {
-    // Build the wrapper from the CAPTURED Function, so a submission that
-    // reassigned globalThis.Function cannot substitute its own wrapper factory.
-    var fn = new __Function__("__mc__", "__modules__", body);
-    var p = fn(mc.mock, __modules__);
-    return Promise.resolve(p).then(function (result) {
-      var passed = result === "pass" || result === true;
-      return { ok: passed, detail: passed ? "pass" : String(result).slice(0, 200) };
-    }, function (err) {
-      return { ok: false, detail: ((err && err.message) || String(err)).slice(0, 200) };
+    var test = JSON.parse(testJson);
+    var snap = decode(snapshotJson);
+    var typeShape = isTypeShape(test.expectedOutput);
+
+    var assertionCode;
+    if (typeShape) {
+      var checks = [];
+      for (var key in typeShape) if (Object.prototype.hasOwnProperty.call(typeShape, key)) {
+        checks.push('typeof __result__["' + key + '"] === "' + typeShape[key] + '"');
+      }
+      assertionCode = 'return (' + checks.join(" && ") + ') ? "pass" : "fail: shape mismatch";';
+    } else {
+      assertionCode =
+        'var result = __result__;\n' +
+        'var transaction = __result__;\n' +
+        'if (typeof __result__ === "object" && __result__ !== null) {\n' +
+        '  var publicKey = __result__.publicKey;\n' +
+        '  var isValid = __result__.isValid;\n' +
+        '  var lamports = __result__.instructions && __result__.instructions[0] ? __result__.instructions[0].lamports : undefined;\n' +
+        '  var mintInfo = { decimals: 9 };\n' +
+        '}\n' +
+        'try {\n' +
+        '  var __assertion__ = (' + test.expectedOutput + ');\n' +
+        '  if (typeof __assertion__ === "boolean") return __assertion__ ? "pass" : "fail: assertion false";\n' +
+        '  return "fail: expected a boolean, got " + String(__assertion__);\n' +
+        '} catch (e) { return "fail: " + ((e && e.message) || String(e)); }';
+    }
+
+    var names = ["__result__", "__modules__", "console"];
+    var values = [snap.root, modules, makeMockConsole().mock];
+    snap.fixtures.forEach(function (f) {
+      if (RESERVED_PARAMS[f[0]] || names.indexOf(f[0]) !== -1) return;
+      names.push(f[0]);
+      values.push(f[1]);
     });
+    var body = '"use strict";\nreturn (function(){ ' + assertionCode + ' })();';
+    var verdict = Function.apply(null, names.concat(body)).apply(undefined, values);
+    outcome = verdict === "pass" ? { ok: true, detail: "pass" } : { ok: false, detail: String(verdict).slice(0, 200) };
   } catch (err) {
-    return Promise.resolve({ ok: false, detail: ((err && err.message) || String(err)).slice(0, 200) });
+    outcome = { ok: false, detail: ((err && err.message) || String(err)).slice(0, 200) };
   }
+  return JSON.stringify(outcome);
 }
 
-/* Entry point invoked by the host. Returns a JSON STRING (copied out). Uses the
- * captured JSON intrinsics so a submission that reassigned JSON.parse /
- * JSON.stringify can neither smuggle a forged input nor forge the verdict that
- * crosses the boundary. */
-async function __runCase__(userCodeJson, testJson) {
-  var userCode = __jsonParse__(userCodeJson);
-  var test = __jsonParse__(testJson);
-  var r = await runCase(userCode, test);
-  return __jsonStringify__(r);
-}
+return evaluate;
+})()
 `;
 
 /* ------------------------------------------------------------------------- */
@@ -520,7 +890,8 @@ async function __runCase__(userCodeJson, testJson) {
  * Transpile a TS/JS submission to plain JS and rewrite `import`/`require` of the
  * mocked SDK modules to `__modules__` lookups — the server port of
  * `transformImports()` in the browser runner. This runs sucrase (a parser/
- * code-generator) on the host: it parses text, it does NOT execute it.
+ * code-generator) on the host: it parses text, it does NOT execute it. `export`
+ * has no meaning in a script, so sucrase rewrites it onto a local `exports`.
  */
 function transformImports(code: string): string {
   if (/import\s*\(/.test(code)) {
@@ -558,9 +929,10 @@ function transformImports(code: string): string {
   // Parsing-only; it never runs the submission.
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { transform } = require("sucrase") as typeof import("sucrase");
+  const hasExport = /\bexport\b/.test(transformed);
   try {
     transformed = transform(transformed, {
-      transforms: ["typescript"],
+      transforms: hasExport ? ["typescript", "imports"] : ["typescript"],
       disableESTransforms: true,
     }).code;
   } catch (err) {
@@ -568,79 +940,230 @@ function transformImports(code: string): string {
       `Syntax error: ${err instanceof Error ? err.message : String(err)}`
     );
   }
-  return transformed;
+  return hasExport ? `var exports = {};\n${transformed}` : transformed;
 }
 
 /* ------------------------------------------------------------------------- */
 /* Public API                                                                */
 /* ------------------------------------------------------------------------- */
 
-/**
- * Settle the VM-side Promise returned by `__runCase__` and copy its string
- * result out. QuickJS Promises advance only when their microtask queue is
- * pumped (`executePendingJobs`); we drain it, then await the host-side promise
- * `resolvePromise` bridges. A never-settling VM promise leaves the queue empty
- * and the awaited promise pending — the caller's host guard abandons it.
- */
-async function resolveToString(
-  ctx: QuickJSContext,
-  promiseHandle: QuickJSHandle
-): Promise<string> {
-  const settledPromise = ctx.resolvePromise(promiseHandle);
-  promiseHandle.dispose();
-  for (;;) {
-    const jobs = ctx.runtime.executePendingJobs();
-    if (jobs.error) {
-      jobs.error.dispose();
-      break;
-    }
-    if (jobs.value === 0) break; // nothing left to run
-  }
-  const settled = await settledPromise;
-  const valueHandle = ctx.unwrapResult(settled);
-  const out = ctx.getString(valueHandle);
-  valueHandle.dispose();
-  return out;
-}
+/** A test failed inside a runtime; `detail` is safe to report. */
+class TestFailure extends Error {}
 
-/**
- * Run one test case in a FRESH QuickJS runtime + context. A new runtime per test
- * means a submission cannot carry state — or `globalThis.Function` / prototype /
- * `JSON` poisoning — from one test into another (including hidden ones); the
- * whole engine instance is discarded after. Memory cap + interrupt-based timeout
- * are set on the runtime; the host guard (caller) covers a quiescent hang.
- */
-async function runOneCase(
+/** A fresh runtime with the heap cap and interrupt deadline, disposed after `fn`. */
+function withRuntime<T>(
   quickjs: QuickJSWASMModule,
-  userCodeJson: string,
-  testJson: string
-): Promise<{ passed: boolean; detail: string }> {
+  deadline: number,
+  fn: (ctx: QuickJSContext, runtime: QuickJSRuntime, scope: Scope) => T
+): T {
   const runtime = quickjs.newRuntime();
   runtime.setMemoryLimit(MEMORY_LIMIT_MB * 1024 * 1024);
-  const deadline = Date.now() + EXEC_TIMEOUT_MS;
   runtime.setInterruptHandler(() => Date.now() > deadline);
   const ctx = runtime.newContext();
   try {
-    // Install the harness + mock SDK into this context.
-    ctx.unwrapResult(ctx.evalCode(ISOLATE_RUNTIME_SOURCE)).dispose();
-    // Both args are JSON string literals embedded in the source — no host
-    // reference crosses the boundary.
-    const expr = `__runCase__(${JSON.stringify(userCodeJson)}, ${JSON.stringify(testJson)})`;
-    const promiseHandle = ctx.unwrapResult(ctx.evalCode(expr));
-    const raw = await withHostGuard(resolveToString(ctx, promiseHandle));
-    const parsed = JSON.parse(raw) as { ok: boolean; detail: string };
-    return { passed: parsed.ok === true, detail: parsed.detail };
-  } catch (err) {
-    if (err === HOST_GUARD)
-      return { passed: false, detail: "Execution timed out" };
-    // Interrupt (timeout) / OOM / syntax error / VM throw all land here.
-    return {
-      passed: false,
-      detail: (err instanceof Error ? err.message : String(err)).slice(0, 200),
-    };
+    return Scope.withScope((scope) => fn(ctx, runtime, scope));
   } finally {
     ctx.dispose();
     runtime.dispose();
+  }
+}
+
+/** Dump a VM error handle without trusting it; never throws. */
+function errorMessage(ctx: QuickJSContext, handle: QuickJSHandle): string {
+  try {
+    const dumped: unknown = ctx.dump(handle);
+    if (dumped && typeof dumped === "object") {
+      const { name, message } = dumped as { name?: unknown; message?: unknown };
+      const text = typeof message === "string" ? message : "Submission failed";
+      return name === "SyntaxError" ? `Syntax error: ${text}` : text;
+    }
+    return String(dumped);
+  } catch {
+    return "Submission failed";
+  }
+}
+
+/** Unwrap a VM call, turning a thrown value into a TestFailure. */
+function unwrapper(ctx: QuickJSContext, scope: Scope, deadline: number) {
+  return (result: ReturnType<QuickJSContext["evalCode"]>): QuickJSHandle => {
+    if (result.error) {
+      const detail =
+        Date.now() > deadline
+          ? "Execution timed out"
+          : errorMessage(ctx, result.error);
+      result.error.dispose();
+      throw new TestFailure(detail);
+    }
+    return scope.manage(result.value);
+  };
+}
+
+/**
+ * Pump the job queue until a VM promise settles and return its value handle
+ * (owned by the caller), or throw a TestFailure. Nothing in the VM can wake a
+ * promise but the queue, so pending with an empty queue means pending forever.
+ */
+function settle(
+  ctx: QuickJSContext,
+  runtime: QuickJSRuntime,
+  promise: QuickJSHandle,
+  deadline: number,
+  describeRejection: (error: QuickJSHandle) => string
+): QuickJSHandle {
+  let idle = false;
+  for (;;) {
+    const state = ctx.getPromiseState(promise);
+    if (state.type === "fulfilled") {
+      return state.notAPromise ? promise.dup() : state.value;
+    }
+    if (state.type === "rejected") {
+      const detail = describeRejection(state.error);
+      state.error.dispose();
+      throw new TestFailure(detail);
+    }
+    if (Date.now() > deadline) throw new TestFailure("Execution timed out");
+    if (idle) throw new TestFailure("Submission never finished");
+    const jobs = runtime.executePendingJobs(JOB_BATCH);
+    if (jobs.error) {
+      const detail =
+        Date.now() > deadline
+          ? "Execution timed out"
+          : errorMessage(ctx, jobs.error);
+      jobs.error.dispose();
+      throw new TestFailure(detail);
+    }
+    if (jobs.value === 0) idle = true;
+  }
+}
+
+/**
+ * Step 1: run the entry point in a fresh runtime and return the result snapshot.
+ * The runtime is gone by the time this returns.
+ */
+function runSubmission(
+  quickjs: QuickJSWASMModule,
+  code: string,
+  input: string,
+  deadline: number
+): string {
+  return withRuntime(quickjs, deadline, (ctx, runtime, scope) => {
+    const unwrap = unwrapper(ctx, scope, deadline);
+
+    const harness = unwrap(
+      ctx.evalCode(SUBMISSION_RUNTIME_SOURCE, "runtime.js", { strict: true })
+    );
+    const prepare = scope.manage(ctx.getProp(harness, "prepare"));
+    const invoke = scope.manage(ctx.getProp(harness, "invoke"));
+    const encode = scope.manage(ctx.getProp(harness, "encode"));
+    const describe = scope.manage(ctx.getProp(harness, "describe"));
+
+    // Submission-thrown values go through the realm's own copy of String.
+    const describeThrown = (error: QuickJSHandle): string => {
+      if (Date.now() > deadline) return "Execution timed out";
+      const described = ctx.callFunction(describe, ctx.undefined, error);
+      if (described.error) {
+        described.error.dispose();
+        return "Submission failed";
+      }
+      const text = ctx.getString(described.value);
+      described.value.dispose();
+      return text;
+    };
+
+    const name = ctx.getString(
+      unwrap(
+        ctx.callFunction(
+          prepare,
+          ctx.undefined,
+          scope.manage(ctx.newString(code)),
+          scope.manage(ctx.newString(input))
+        )
+      )
+    );
+    if (!name) throw new TestFailure("No function found in submission");
+
+    const script = unwrap(
+      ctx.evalCode(code, "submission.js", SUBMISSION_EVAL_FLAGS)
+    );
+    scope.manage(settle(ctx, runtime, script, deadline, describeThrown));
+
+    const entry = unwrap(ctx.evalCode(name, "entry.js", { strict: true }));
+    const pending = unwrap(
+      ctx.callFunction(
+        invoke,
+        ctx.undefined,
+        entry,
+        scope.manage(ctx.newString(name))
+      )
+    );
+    const result = scope.manage(
+      settle(ctx, runtime, pending, deadline, describeThrown)
+    );
+
+    const snapshot = unwrap(ctx.callFunction(encode, ctx.undefined, result));
+    return ctx.getString(snapshot);
+  });
+}
+
+/** Step 2: evaluate one assertion over a snapshot in a runtime with no learner code. */
+function runAssertion(
+  quickjs: QuickJSWASMModule,
+  snapshot: string,
+  testJson: string,
+  deadline: number
+): { passed: boolean; detail: string } {
+  return withRuntime(quickjs, deadline, (ctx, _runtime, scope) => {
+    const unwrap = unwrapper(ctx, scope, deadline);
+    const evaluate = unwrap(
+      ctx.evalCode(ASSERTION_RUNTIME_SOURCE, "assertions.js", { strict: true })
+    );
+    const verdict = unwrap(
+      ctx.callFunction(
+        evaluate,
+        ctx.undefined,
+        scope.manage(ctx.newString(snapshot)),
+        scope.manage(ctx.newString(testJson))
+      )
+    );
+    const parsed = JSON.parse(ctx.getString(verdict)) as {
+      ok: boolean;
+      detail: string;
+    };
+    return { passed: parsed.ok === true, detail: parsed.detail };
+  });
+}
+
+/**
+ * Run one test case. Every wrong or failing submission comes back as a failed
+ * test. Anything else that escapes means the WASM instance itself failed, which
+ * the caller reports as an unavailable executor.
+ */
+function runOneCase(
+  quickjs: QuickJSWASMModule,
+  code: string,
+  test: AdminTestCase,
+  submissionDeadline: number
+): { passed: boolean; detail: string } {
+  const testDeadline = () =>
+    Math.min(Date.now() + EXEC_TIMEOUT_MS, submissionDeadline);
+  try {
+    const snapshot = runSubmission(
+      quickjs,
+      code,
+      test.input ?? "",
+      testDeadline()
+    );
+    return runAssertion(
+      quickjs,
+      snapshot,
+      JSON.stringify({ expectedOutput: test.expectedOutput ?? "" }),
+      testDeadline()
+    );
+  } catch (err) {
+    if (err instanceof TestFailure) {
+      return { passed: false, detail: err.message.slice(0, 200) };
+    }
+    throw err;
   }
 }
 
@@ -649,8 +1172,9 @@ async function runOneCase(
  *
  * Contract: returns `{ available: false }` when the secure executor cannot run
  * — callers MUST deny completion in that case. When available, `passed` is true
- * only if EVERY test passed. Each test runs in its own fresh QuickJS instance
- * (see {@link runOneCase}), so one test cannot influence another.
+ * only if EVERY test passed. Each test runs in its own fresh QuickJS instances
+ * (see {@link runOneCase}), so one test cannot influence another. Tests still
+ * waiting when the budget runs out fail without running.
  */
 export async function runJsSubmission(
   code: string,
@@ -684,24 +1208,25 @@ export async function runJsSubmission(
     );
   }
 
-  const userCodeJson = JSON.stringify(transpiled);
+  const submissionDeadline = Date.now() + SUBMISSION_BUDGET_MS;
   const results: ServerTestResult[] = [];
   for (const test of tests) {
-    const testJson = JSON.stringify({
-      input: test.input ?? "",
-      expectedOutput: test.expectedOutput ?? "",
-    });
-    const { passed, detail } = await runOneCase(
-      quickjs,
-      userCodeJson,
-      testJson
-    );
-    results.push({
-      id: test.id,
-      hidden: test.hidden === true,
-      passed,
-      detail,
-    });
+    let outcome = { passed: false, detail: "Execution budget exceeded" };
+    if (Date.now() < submissionDeadline) {
+      try {
+        outcome = runOneCase(quickjs, transpiled, test, submissionDeadline);
+      } catch (err) {
+        // The WASM instance failed: the next load makes a new one, and this
+        // submission could not be judged.
+        console.error(
+          "challenge executor instance failed:",
+          err instanceof Error ? err.name : "unknown"
+        );
+        quickJsPromise = undefined;
+        return { available: false, reason: "executor_unavailable" };
+      }
+    }
+    results.push({ id: test.id, hidden: test.hidden === true, ...outcome });
   }
 
   return {

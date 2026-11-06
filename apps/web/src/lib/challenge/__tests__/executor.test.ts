@@ -185,8 +185,8 @@ describe.skipIf(!EXECUTOR_AVAILABLE)(
     // `new Function(...)` (the shared realm's globalThis.Function) and serialises
     // its verdict with `JSON.stringify`. A submission could poison those
     // intrinsics in test #1 (or its own test) to force every later/hidden test
-    // to "pass". Fix: a FRESH context per test + the harness builds/serialises
-    // through CAPTURED intrinsics. These hidden tests demand a value the poison
+    // to "pass". Fix: a FRESH runtime per test, and assertions evaluated in a
+    // runtime of their own. These hidden tests demand a value the poison
     // code does NOT compute (add(10,20)=30, asserted === 999), so a "pass" can
     // ONLY come from taint — each MUST stay failed.
     it.each([
@@ -250,12 +250,12 @@ describe.skipIf(!EXECUTOR_AVAILABLE)(
       expect(run.passed).toBe(false);
     }, 20_000);
 
-    it("aborts a quiescent never-settling promise via host guard (does not hang)", async () => {
+    it("fails a never-settling promise (does not hang)", async () => {
       const tests: AdminTestCase[] = [
         { id: "t", description: "hangs", input: "", expectedOutput: "true" },
       ];
-      // No CPU spin: the in-isolate timeout can't fire, so the host wall-clock
-      // guard must abandon the evaluation.
+      // No CPU spin, so the interrupt can't fire: the host sees an empty job
+      // queue with the promise still pending.
       const run = await runJsSubmission(
         "async function go() { await new Promise(function(){}); }",
         tests
