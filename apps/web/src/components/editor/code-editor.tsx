@@ -63,7 +63,6 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
       lessonId,
       initialCode,
       language,
-      value,
       onChange,
       readOnly = false,
       storageScope,
@@ -93,6 +92,12 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
       ref,
       () => ({
         getEditor: () => editorRef.current,
+        replaceCode: (code) => {
+          const editorInstance = editorRef.current;
+          if (editorInstance && editorInstance.getValue() !== code) {
+            editorInstance.setValue(code);
+          }
+        },
         format: async () => {
           const editorInstance = editorRef.current;
           const model = editorInstance?.getModel();
@@ -116,7 +121,6 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
     );
 
     const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const isExternalUpdate = useRef(false);
 
     const themeName =
       resolvedTheme === "light" ? THEME_MAP.light : THEME_MAP.dark;
@@ -190,19 +194,6 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
       },
       [lessonId, storageScope, onChange]
     );
-
-    // Sync external value changes (Reset / Show Solution) into Monaco
-    useEffect(() => {
-      if (value === undefined) return;
-      const editor = editorRef.current;
-      if (!editor) return;
-      const currentValue = editor.getValue();
-      if (currentValue !== value) {
-        isExternalUpdate.current = true;
-        editor.setValue(value);
-        isExternalUpdate.current = false;
-      }
-    }, [value]);
 
     // Cleanup autosave timer + focus listeners on unmount
     useEffect(() => {
