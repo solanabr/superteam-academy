@@ -330,6 +330,14 @@ export function ChallengeInterface({
     [onSubmittedCodeEdited]
   );
 
+  // For code that comes from outside the editor. The editor owns its text and
+  // `code` trails it, so `code` is never written back in: by the time React
+  // commits a change the learner may have typed more.
+  const replaceCode = useCallback((next: string) => {
+    setCode(next);
+    editorHandle.current?.replaceCode(next);
+  }, []);
+
   const handleResult = useCallback(
     (result: ExecutionResult) => {
       setChallengeState((prev) => ({
@@ -450,13 +458,13 @@ export function ChallengeInterface({
     // Resetting a completed challenge would wipe the accepted code the locked
     // editor is showing, so the lock covers it too.
     if (isComplete) return;
-    setCode(initialCode);
+    replaceCode(initialCode);
     resetEditorStorage(lessonId, storageScope);
     setChallengeState({
       status: "idle",
       executionResult: null,
     });
-  }, [initialCode, lessonId, storageScope, isComplete]);
+  }, [initialCode, lessonId, storageScope, isComplete, replaceCode]);
 
   const completeLesson = useCallback(() => {
     setPendingSubmit(false);
@@ -710,7 +718,7 @@ export function ChallengeInterface({
                 courseSlug={courseSlug}
                 getCode={() => code}
                 getTestSummary={() => summarize(challengeState.executionResult)}
-                onApply={(proposed) => setCode(proposed)}
+                onApply={replaceCode}
                 disabled={isComplete}
                 solutionPassed={challengeState.status === "success"}
                 hasRunTests={hasRunTests || isComplete}
@@ -1004,7 +1012,6 @@ export function ChallengeInterface({
               storageScope={storageScope}
               initialCode={initialCode}
               language={language}
-              value={code}
               onChange={handleCodeChange}
               // Locked once the submission is accepted. `isComplete` starts
               // true from the persisted `isAlreadyCompleted`, so the lock holds
