@@ -795,6 +795,10 @@ describe("resource limits", () => {
       "function go() { function f(n) { return n + f(n + 1); } return f(0); }",
     ],
     [
+      "a correct answer that recurses past the cap",
+      "function go() { function sum(n) { return n === 0 ? 0 : n + sum(n - 1); } return sum(2000); }",
+    ],
+    [
       "recursion in a builtin",
       "function go() { let o = []; for (let i = 0; i < 1e5; i++) o = [o]; return JSON.stringify(o); }",
     ],
