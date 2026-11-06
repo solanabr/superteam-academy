@@ -6,10 +6,11 @@
 // JWT. The learner "session" is a locally-minted cookie the specs attach; the
 // mock server signs nothing and verifies nothing. See e2e/README.md.
 
-// Fixed ports so the build-time-inlined NEXT_PUBLIC_SUPABASE_URL and the runtime
-// server agree. 54329 for the mock, 3100 for the app under `next start`.
-export const MOCK_PORT = 54329;
-export const APP_PORT = 3100;
+// One port pair so the build-time-inlined NEXT_PUBLIC_SUPABASE_URL and the runtime
+// server agree. 54329 for the mock, 3100 for the app under `next start`. The env
+// overrides let two worktrees run the harness at once.
+export const MOCK_PORT = Number(process.env.E2E_MOCK_PORT ?? 54329);
+export const APP_PORT = Number(process.env.E2E_APP_PORT ?? 3100);
 export const MOCK_SUPABASE_URL = `https://127.0.0.1:${MOCK_PORT}`;
 export const APP_BASE_URL = `http://127.0.0.1:${APP_PORT}`;
 
@@ -51,6 +52,68 @@ function quizOnly(lesson) {
   );
 }
 
+// Layout targets pick the worst case, so the check fails on the content that
+// breaks a phone, and they stay independent: the inline-code lesson has no table,
+// so a table fix can't turn that check green.
+// In characters, roughly what overflows the widest phone the spec checks (430px).
+// A smaller target would fit, and the check would pass without testing anything.
+const LONG_TOKEN = 50;
+const WIDE_TABLE = 50;
+const TABLE = /(?:^\s*\|.*\|\s*$\n?)+/gm;
+const proseOf = (lesson) =>
+  lesson.blocks
+    .filter((b) => b._type === "prose")
+    .map((b) => b.src)
+    .join("\n");
+// What a table can't shrink below: the longest word of each column, summed.
+const tableMinWidth = (lesson) =>
+  Math.max(
+    0,
+    ...(proseOf(lesson).match(TABLE) ?? []).map((table) => {
+      const columns = [];
+      for (const row of table.trim().split("\n")) {
+        row
+          .split("|")
+          .slice(1, -1)
+          .forEach((cell, i) => {
+            const longest = Math.max(
+              ...cell
+                .trim()
+                .split(/\s+/)
+                .map((word) => word.length)
+            );
+            columns[i] = Math.max(columns[i] ?? 0, longest);
+          });
+      }
+      return columns.reduce((sum, width) => sum + width, 0);
+    })
+  );
+const longestInlineToken = (lesson) =>
+  Math.max(
+    0,
+    ...[
+      ...proseOf(lesson)
+        .replace(/```[\s\S]*?```/g, "")
+        .matchAll(/`([^`\s]+)`/g),
+    ].map((m) => m[1].length)
+  );
+const worst = (entries, score) =>
+  entries.reduce(
+    (best, entry) => (score(entry) > score(best) ? entry : best),
+    entries[0]
+  );
+const wrongAnswerOf = (quiz) => {
+  const [question] = quiz.questions;
+  return [question.id, question.options.find((o) => !o.correct).id];
+};
+const lessonRef = (entry) =>
+  entry
+    ? {
+        courseSlug: entry.course.slug.current,
+        lessonSlug: entry.lesson.slug.current,
+      }
+    : null;
+
 export function pickTargets(bundleCourses, lessons) {
   const courses = bundleCourses.filter((c) => c.unlisted !== true);
   const lessonsById = new Map(lessons.map((l) => [l._id, l]));
@@ -73,7 +136,44 @@ export function pickTargets(bundleCourses, lessons) {
       lesson?.blocks?.some((b) => b._type === "code")
   );
   if (!code) throw new Error("e2e: no code lesson in the bundle");
-  const active = [...new Set([loop.course, code.course])];
+
+  const reachable = courseLessons.filter(
+    ({ course, lesson }) => course._id !== deactivated._id && lesson
+  );
+  const codeBlocks = ({ lesson }) =>
+    lesson.blocks.filter((b) => b._type === "code").length;
+  const reading = reachable.filter((entry) => codeBlocks(entry) === 0);
+  const table = worst(
+    reading.filter(({ lesson }) => tableMinWidth(lesson) >= WIDE_TABLE),
+    ({ lesson }) => tableMinWidth(lesson)
+  );
+  const inlineCode = worst(
+    reading.filter(
+      ({ lesson }) =>
+        tableMinWidth(lesson) === 0 && longestInlineToken(lesson) >= LONG_TOKEN
+    ),
+    ({ lesson }) => longestInlineToken(lesson)
+  );
+  const steppedQuizOf = (lesson) =>
+    lesson.blocks.find((b) => b._type === "quiz" && b.questions.length > 1);
+  const steppedQuiz = reading.find(({ lesson }) => steppedQuizOf(lesson));
+  // One code block fills the viewport; two scroll. The quiz in the single-block
+  // lesson is what used to escape its pane.
+  const singleCode = reachable.find(
+    (entry) =>
+      codeBlocks(entry) === 1 &&
+      entry.lesson.blocks.some((b) => b._type === "quiz")
+  );
+  const twoCode = reachable.find((entry) => codeBlocks(entry) > 1);
+  const active = [
+    ...new Set([
+      loop.course,
+      code.course,
+      ...[table, inlineCode, steppedQuiz, singleCode, twoCode].flatMap(
+        (entry) => (entry ? [entry.course] : [])
+      ),
+    ]),
+  ];
 
   return {
     // The catalog gate (#711 regression, spec 2). Rows shaped like the
@@ -106,6 +206,18 @@ export function pickTargets(bundleCourses, lessons) {
     CODE_LESSON: {
       courseSlug: code.course.slug.current,
       lessonSlug: code.lesson.slug.current,
+    },
+    // The layout targets (layout-overflow.spec.ts). Null when the bundle has no
+    // such lesson, so a small fixture bundle doesn't have to carry every shape.
+    LAYOUT_LESSONS: {
+      table: lessonRef(table),
+      inlineCode: lessonRef(inlineCode),
+      steppedQuiz: steppedQuiz && {
+        ...lessonRef(steppedQuiz),
+        wrongAnswer: wrongAnswerOf(steppedQuizOf(steppedQuiz.lesson)),
+      },
+      singleCode: lessonRef(singleCode),
+      twoCode: lessonRef(twoCode),
     },
     // The learn-loop target (specs 1 and 4).
     LEARN_LOOP: {

@@ -12,7 +12,13 @@ import type { ServerTestResult } from "@/lib/challenge/executor";
  */
 export type GradeResult =
   | { ok: true }
-  | { ok: false; status: 403 | 503; failedTests?: ServerTestResult[] };
+  | {
+      ok: false;
+      status: 403 | 503;
+      failedTests?: ServerTestResult[];
+      /** Every failed test stopped at a sandbox limit, so this isn't a wrong answer. */
+      limit?: true;
+    };
 
 /**
  * A grader is deterministic. It takes a projected block (`unknown` so the

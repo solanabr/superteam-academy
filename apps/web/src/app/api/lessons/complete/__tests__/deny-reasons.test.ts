@@ -151,6 +151,18 @@ describe("403 reason discriminator (#564)", () => {
     expect(((await res.json()) as DenyBody).reason).toBe("challenge_failed");
   });
 
+  it("code grade stopped by a limit → reason 'challenge_limit'", async () => {
+    getLessonByIdForGrading.mockResolvedValue({
+      blocks: [{ _type: "code", key: "c1" }],
+    });
+    codeGrader.mockResolvedValue({ ok: false, status: 403, limit: true });
+
+    const res = await call({ c1: { code: "deep" } });
+
+    expect(res.status).toBe(403);
+    expect(((await res.json()) as DenyBody).reason).toBe("challenge_limit");
+  });
+
   it("failed parsons grade → reason 'parsons_failed'", async () => {
     getLessonByIdForGrading.mockResolvedValue({
       blocks: [{ _type: "parsons", key: "p1" }],

@@ -90,9 +90,28 @@ function ProseBlockquote({
   );
 }
 
+/**
+ * A wide table scrolls inside its own box, so it can't widen the page. Focusable
+ * because a keyboard user has no other way to scroll it.
+ */
+function ProseTable({ children }: { children?: ReactNode }) {
+  const label = useTranslations("lesson")("tableScrollLabel");
+  return (
+    <div
+      role="region"
+      aria-label={label}
+      tabIndex={0}
+      className="prose-table-scroll focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <table>{children}</table>
+    </div>
+  );
+}
+
 const markdownComponents = {
   pre: CodeBlockWithCopy,
   blockquote: ProseBlockquote,
+  table: ProseTable,
 };
 
 /** Case/whitespace-insensitive comparison, so a stray trailing space in the

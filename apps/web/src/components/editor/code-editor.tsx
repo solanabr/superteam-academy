@@ -22,6 +22,7 @@ import type {
   EditorLanguage,
 } from "./types";
 import { superteamDark, superteamLight, THEME_MAP } from "./themes";
+import "./monaco-loader";
 
 const AUTOSAVE_DELAY_MS = 1000;
 

@@ -169,3 +169,43 @@ describe("gradeCode", () => {
     });
   });
 });
+
+describe("gradeCode limit verdicts", () => {
+  const result = (id: string, limit?: true) => ({
+    id,
+    hidden: false,
+    passed: false,
+    detail: "x",
+    ...(limit ? { limit } : {}),
+  });
+
+  it("flags a verdict where every failed test hit a limit", async () => {
+    isExecutorAvailable.mockResolvedValue(true);
+    runJsSubmission.mockResolvedValue({
+      available: true,
+      passed: false,
+      results: [
+        { id: "ok", hidden: false, passed: true, detail: "pass" },
+        result("a", true),
+        result("b", true),
+      ],
+    });
+    expect(await gradeCode(jsBlock, { code: "x" })).toMatchObject({
+      ok: false,
+      status: 403,
+      limit: true,
+    });
+  });
+
+  it("doesn't flag a verdict with a wrong answer among the failures", async () => {
+    isExecutorAvailable.mockResolvedValue(true);
+    runJsSubmission.mockResolvedValue({
+      available: true,
+      passed: false,
+      results: [result("a", true), result("b")],
+    });
+    const r = await gradeCode(jsBlock, { code: "x" });
+    expect(r).toMatchObject({ ok: false, status: 403 });
+    expect(r).not.toHaveProperty("limit");
+  });
+});
