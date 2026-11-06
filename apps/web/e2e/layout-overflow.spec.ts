@@ -52,7 +52,8 @@ async function expectNoSidewaysScroll(page: Page, width: number) {
 }
 
 /**
- * Is the control what a tap at its centre reaches? Measured at full scroll, the
+ * Does a tap anywhere on the control reach it? Checks its centre and just inside
+ * each edge, so a neighbour over half of it counts. Measured at full scroll, the
  * furthest a learner can go; centring it first would hide a fixed bar over it. A
  * control the page has scrolled past comes back only as far as the sticky bars.
  */
@@ -72,16 +73,26 @@ async function expectTappableAtFullScroll(control: Locator, name: string) {
       window.scrollBy({ top: top - barBottom, behavior: "instant" });
     }
     const rect = el.getBoundingClientRect();
-    const hit = document.elementFromPoint(
-      rect.left + rect.width / 2,
-      rect.top + rect.height / 2
-    );
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    const points = {
+      centre: [x, y],
+      left: [rect.left + 2, y],
+      right: [rect.right - 2, y],
+      top: [x, rect.top + 2],
+      bottom: [x, rect.bottom - 2],
+    };
     return {
-      tappable: !!hit && el.contains(hit),
+      covered: Object.entries(points)
+        .filter(([, [px, py]]) => {
+          const hit = document.elementFromPoint(px!, py!);
+          return !hit || !el.contains(hit);
+        })
+        .map(([where]) => where),
       insideScreen: rect.left >= 0 && rect.right <= window.innerWidth,
     };
   });
-  expect(measured, name).toEqual({ tappable: true, insideScreen: true });
+  expect(measured, name).toEqual({ covered: [], insideScreen: true });
 }
 
 const PHONES = [
@@ -217,37 +228,75 @@ async function expectHeaderControlsApart(page: Page) {
   }
 }
 
-for (const viewport of [
-  { width: 320, height: 568 },
-  { width: 390, height: 844 },
-  { width: 1024, height: 768 },
-]) {
-  const isMobile = viewport.width < 1024;
-  test.describe(`header at ${viewport.width}px`, () => {
-    test.use({ viewport, isMobile, hasTouch: isMobile });
+// Every width where a header rule changes, on both sides of it. Resizing one
+// page instead of reopening it keeps this to one load per locale.
+const HEADER_WIDTHS = [
+  {
+    isMobile: true,
+    widths: [320, 340, 359, 360, 375, 390, 399, 400, 430, 639, 640, 768, 1023],
+  },
+  { isMobile: false, widths: [1024, 1279, 1280, 1399, 1400, 1440, 1920] },
+];
 
-    test("controls stay apart, signed out", async ({ page }) => {
-      for (const locale of LOCALES) {
-        await page.goto(`/${locale}/courses`);
-        await signedOutHeader(page, locale);
-        await expectHeaderControlsApart(page);
-        if (isMobile) await expectNoSidewaysScroll(page, viewport.width);
-      }
+async function atWidth(page: Page, width: number) {
+  await page.setViewportSize({ width, height: 800 });
+  await page.evaluate(
+    () => new Promise((resolve) => requestAnimationFrame(resolve))
+  );
+}
+
+for (const { isMobile, widths } of HEADER_WIDTHS) {
+  test.describe(`header from ${widths[0]}px to ${widths.at(-1)}px`, () => {
+    test.use({
+      viewport: { width: widths[0]!, height: 800 },
+      isMobile,
+      hasTouch: isMobile,
     });
 
-    test("controls stay apart, signed in", async ({ page, context }) => {
-      await signInAsLearner(context);
-      for (const locale of LOCALES) {
+    for (const locale of LOCALES) {
+      test(`controls stay apart, signed out, ${locale}`, async ({ page }) => {
+        await page.goto(`/${locale}/courses`);
+        await signedOutHeader(page, locale);
+        const themeToggle = page
+          .locator("header")
+          .getByRole("button", { name: MESSAGES[locale].a11y.toggleTheme });
+        for (const width of widths) {
+          await atWidth(page, width);
+          await test.step(`${width}px`, async () => {
+            await expectHeaderControlsApart(page);
+            if (isMobile) await expectNoSidewaysScroll(page, width);
+            // It only gives way to the one label too long to sit beside it.
+            const givesWay =
+              width < 360 && MESSAGES[locale].common.signIn.length > 8;
+            await (givesWay
+              ? expect(themeToggle).toBeHidden()
+              : expect(themeToggle).toBeVisible());
+          });
+        }
+      });
+
+      test(`controls stay apart, signed in, ${locale}`, async ({
+        page,
+        context,
+      }) => {
+        await signInAsLearner(context);
         await page.goto(`/${locale}/courses`);
         await signedInHeader(page);
         // The chip starts at zero and fills in once the total arrives.
         if (!isMobile) {
-          await expect(page.locator("header .nav-pill")).toBeVisible();
+          await expect(
+            page.locator("header .nav-pill").locator(".nav-pill-num")
+          ).toBeAttached();
         }
-        await expectHeaderControlsApart(page);
-        if (isMobile) await expectNoSidewaysScroll(page, viewport.width);
-      }
-    });
+        for (const width of widths) {
+          await atWidth(page, width);
+          await test.step(`${width}px`, async () => {
+            await expectHeaderControlsApart(page);
+            if (isMobile) await expectNoSidewaysScroll(page, width);
+          });
+        }
+      });
+    }
   });
 }
 
