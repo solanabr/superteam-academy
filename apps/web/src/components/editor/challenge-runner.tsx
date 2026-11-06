@@ -29,7 +29,7 @@ type Translator = ReturnType<typeof useTranslations>;
 // ---------------------------------------------------------------------------
 
 /** Plain-JS source that runs inside the Worker.  No TypeScript, no imports. */
-const WORKER_SOURCE = `
+export const WORKER_SOURCE = `
 "use strict";
 
 /* ── Mock Solana SDK ─────────────────────────────────────────────────── */
@@ -234,6 +234,8 @@ function runInWorker(
 // The result is plain JS that gets sent to the worker.
 // ---------------------------------------------------------------------------
 
+// `export` has no meaning inside the worker's wrapper function, so sucrase
+// rewrites it onto a local `exports`. Mirrors the server executor.
 function transformImports(t: Translator, code: string): string {
   // F-46: Block dynamic import() syntax to prevent module loading bypass
   if (/import\s*\(/.test(code)) {
@@ -275,9 +277,10 @@ function transformImports(t: Translator, code: string): string {
   );
 
   // Strip all TypeScript syntax via sucrase
+  const hasExport = /\bexport\b/.test(transformed);
   try {
     const result = sucraseTransform(transformed, {
-      transforms: ["typescript"],
+      transforms: hasExport ? ["typescript", "imports"] : ["typescript"],
       disableESTransforms: true,
     });
     transformed = result.code;
@@ -286,7 +289,7 @@ function transformImports(t: Translator, code: string): string {
     throw new Error(t("syntaxError", { message }));
   }
 
-  return transformed;
+  return hasExport ? `var exports = {};\n${transformed}` : transformed;
 }
 
 // ---------------------------------------------------------------------------
@@ -480,19 +483,18 @@ async function captureConsoleOutput(
   try {
     const hasParams = fnName && functionHasParams(transformed, fnName);
 
+    let argSetup = "";
+    let callArgs = "";
     let autoCall = "";
     if (fnName && !hasParams) {
       autoCall = `
 const __res__ = await ${fnName}();
 if (__res__ !== undefined) console.log(typeof __res__ === "object" ? __stringify__(__res__, 2) : __res__);`;
     } else if (fnName && hasParams && firstTest) {
-      const argSetup = buildArgSetup(firstTest.input);
-      const callArgs = firstTest.input.trim()
-        ? buildCallArgs(firstTest.input)
-        : "";
+      argSetup = buildArgSetup(firstTest.input);
+      callArgs = firstTest.input.trim() ? buildCallArgs(firstTest.input) : "";
       autoCall = `
-${argSetup}
-const __res__ = await ${fnName}(${callArgs});
+const __res__ = await ${fnName}(...__args__);
 if (__res__ !== undefined) {
   console.log(${JSON.stringify(t("returnValueLabel"))});
   console.log(typeof __res__ === "object" ? __stringify__(__res__, 2) : __res__);
@@ -503,8 +505,13 @@ if (__res__ !== undefined) {
       return (async () => {
         "use strict";
         const console = __mockConsole__;
-        ${transformed}
-        ${autoCall}
+        ${argSetup}
+        const __args__ = [${callArgs}];
+        return await (async () => {
+          ${transformed}
+          ;
+          ${autoCall}
+        })();
       })();
     `;
 
@@ -516,7 +523,7 @@ if (__res__ !== undefined) {
   }
 }
 
-async function runTestCase(
+export async function runTestCase(
   t: Translator,
   code: string,
   testCase: TestCase
@@ -560,10 +567,7 @@ async function runTestCase(
           if (typeof __assertion__ === "boolean") {
             return __assertion__ ? "pass" : "fail: assertion false";
           }
-          if (typeof __assertion__ === "number" && isFinite(__assertion__)) {
-            return "numeric:" + __assertion__;
-          }
-          return String(__assertion__);
+          return "fail: expected a boolean, got " + String(__assertion__);
         } catch(e) {
           const msg = e instanceof Error ? e.message : String(e);
           return "fail: " + msg;
@@ -571,16 +575,25 @@ async function runTestCase(
       `;
     }
 
+    // Fixtures sit outside the learner's scope, as on the server: a learner's
+    // own `data` shadows the fixture rather than clashing with it. The verdict
+    // comes back wrapped, so anything else means the learner's code returned
+    // from the top level, which the server rejects as a syntax error.
     const wrappedCode = `
       return (async () => {
         "use strict";
         const console = __mockConsole__;
-        ${transformed}
-        ;
         ${argSetup}
-        const __result__ = await ${fnName}(${callArgs});
-        return (() => {
-          ${assertionCode}
+        const __args__ = [${callArgs}];
+        return await (async () => {
+          ${transformed}
+          ;
+          const __result__ = await ${fnName}(...__args__);
+          return {
+            __verdict__: (() => {
+              ${assertionCode}
+            })(),
+          };
         })();
       })();
     `;
@@ -591,8 +604,19 @@ async function runTestCase(
       return { testCase, passed: false, actualOutput: "", error };
     }
 
-    const passed = result === "pass" || result === true;
-    const actualOutput = passed ? "pass" : String(result);
+    const verdict = (result as { __verdict__?: unknown } | null | undefined)
+      ?.__verdict__;
+    if (verdict === undefined) {
+      return {
+        testCase,
+        passed: false,
+        actualOutput: "",
+        error: t("syntaxError", { message: "return outside a function" }),
+      };
+    }
+
+    const passed = verdict === "pass";
+    const actualOutput = passed ? "pass" : String(verdict);
 
     return { testCase, passed, actualOutput };
   } catch (err) {

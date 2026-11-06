@@ -299,6 +299,7 @@
     "goToEditor": "Go to editor",
     "verdictRejected": "Not accepted",
     "completionFailedChallenge": "Your code passed the sample tests, but the server's full test suite — including hidden edge cases the browser doesn't run — didn't pass. Revisit your solution and submit again.",
+    "completionFailedChallengeLimit": "Your code hit the grader's limits (time, memory or recursion depth) before it finished, so this doesn't count as a wrong answer. Try a version that does less work or recurses less deeply, then submit again.",
     "completionFailedEnrollment": "We couldn't verify your on-chain enrollment for this course. Please re-enroll and try again.",
     "completionFailedGeneric": "We couldn't complete this lesson. Please try again in a moment.",
     "completionRateLimited": "You're completing lessons very quickly. Please wait a little while and try again — your progress is safe.",

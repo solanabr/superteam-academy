@@ -15,6 +15,7 @@ export type CompletionDenyReason =
   | "quiz_failed"
   | "parsons_failed"
   | "challenge_failed"
+  | "challenge_limit"
   | "reflection_required"
   | "enrollment_missing";
 
@@ -23,6 +24,7 @@ export type CompletionErrorKey =
   | "completionFailedQuiz"
   | "completionFailedParsons"
   | "completionFailedChallenge"
+  | "completionFailedChallengeLimit"
   | "completionFailedReflection"
   | "completionFailedEnrollment"
   | "completionFailedGeneric"
@@ -38,6 +40,7 @@ const REASON_KEYS: Record<CompletionDenyReason, CompletionErrorKey> = {
   quiz_failed: "completionFailedQuiz",
   parsons_failed: "completionFailedParsons",
   challenge_failed: "completionFailedChallenge",
+  challenge_limit: "completionFailedChallengeLimit",
   reflection_required: "completionFailedReflection",
   enrollment_missing: "completionFailedEnrollment",
 };
