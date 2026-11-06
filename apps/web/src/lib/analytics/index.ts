@@ -13,7 +13,7 @@
  *   // Track events
  *   trackEvent("lesson_completed", { lessonId: "intro-1", xp: 50 });
  *   trackPageView("/en/courses/intro-to-solana");
- *   identifyUser("user-uuid", { walletAddress: "7xK..." });
+ *   identifyUser("user-uuid");
  *
  * The canonical event inventory (names, payload shapes, reserved names) is
  * documented in README.md next to this file; typed helpers with dedupe live
@@ -95,11 +95,8 @@ export function trackPageView(url: string): void {
 /**
  * Identify the current user across all configured providers.
  */
-export function identifyUser(
-  userId: string,
-  traits?: Record<string, unknown>
-): void {
-  identifyPostHogUser(userId, traits);
+export function identifyUser(userId: string): void {
+  identifyPostHogUser(userId);
   setSentryUser(userId);
 }
 

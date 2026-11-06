@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useTranslations } from "next-intl";
+import * as Sentry from "@sentry/nextjs";
 
 export default function PlatformError({
   error,
@@ -14,6 +15,12 @@ export default function PlatformError({
 
   useEffect(() => {
     console.error("[platform]", error);
+    Sentry.captureException(error, {
+      tags: {
+        surface: "platform",
+        ...(error.digest ? { error_digest: error.digest } : {}),
+      },
+    });
   }, [error]);
 
   return (
