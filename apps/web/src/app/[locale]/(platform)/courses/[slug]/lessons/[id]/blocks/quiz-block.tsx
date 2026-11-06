@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type ComponentProps,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   CaretDown,
@@ -20,29 +14,10 @@ import {
 } from "@phosphor-icons/react";
 import type { QuizBlockData, QuizQuestionData } from "@superteam-lms/types";
 import { Button } from "@/components/ui/button";
-import { Markdown } from "@/components/ui/markdown";
+import { QuizText } from "@/components/ui/quiz-text";
 import { cn } from "@/lib/utils";
 import { trackQuizChecked } from "@/lib/analytics/events";
 import type { BlockRenderProps } from "./types";
-
-const QUIZ_TEXT_COMPONENTS: ComponentProps<typeof Markdown>["components"] = {
-  p: ({ children }) => <>{children}</>,
-  code: ({ children }) => (
-    <code className="font-mono font-semibold [overflow-wrap:anywhere]">
-      {children}
-    </code>
-  ),
-};
-
-/**
- * Quiz copy is plain text, except that authors write inline code in backticks.
- * Only those strings go through Markdown, so a `*` or `1.` in the rest stays the
- * character the author typed.
- */
-function QuizText({ children }: { children: string }) {
-  if (!children.includes("`")) return children;
-  return <Markdown components={QUIZ_TEXT_COMPONENTS}>{children}</Markdown>;
-}
 
 /**
  * Snapshot of a question's last Check: the selection it judged and the verdict.
