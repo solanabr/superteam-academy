@@ -85,6 +85,25 @@ describe("ChallengeRunner with a BigInt", () => {
     expect(result.success).toBe(true);
   });
 
+  it.each([
+    ["an array", "console.log([7n]);", "7n"],
+    ["console.error", "console.error({ amount: 7n });", "7n"],
+    ["a bare BigInt", "console.log(7n);", "7n"],
+    ["a circular object", "const a = {}; a.self = a; console.log(a);", ""],
+    [
+      "an object that can't become a string",
+      "const a = Object.create(null); a.self = a; console.log(a);",
+      "",
+    ],
+  ])("keeps the run clean when logging %s", async (_name, logging, printed) => {
+    const result = await run(
+      `async function solve() { ${logging} return { amount: 5n }; }`
+    );
+    expect(result.error).toBeUndefined();
+    expect(result.output).toContain(printed);
+    expect(result.success).toBe(true);
+  });
+
   it("logs an object holding a BigInt", async () => {
     const result = await run(
       "async function solve() { console.log({ amount: 7n }); return { amount: 5n }; }"

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { transform as sucraseTransform } from "sucrase";
 import { useTranslations } from "next-intl";
 import { Play, CircleNotch } from "@phosphor-icons/react";
-import type { TestCase } from "@superteam-lms/types";
+import { CONSOLE_FORMAT_SOURCE, type TestCase } from "@superteam-lms/types";
 import { Keypair } from "@solana/web3.js";
 import { setCachedBinary } from "@superteam-lms/deploy";
 import { executeRustCode } from "@/lib/rust/execute";
@@ -151,21 +151,11 @@ const __modules__ = {
 
 /* ── Console mock ────────────────────────────────────────────────────── */
 
-/* JSON.stringify throws on a BigInt, which solutions return all the time. A value
-   that can't be printed must never read as the run failing. */
-function __stringify__(value, indent) {
-  try {
-    return JSON.stringify(value, function(_key, v) {
-      return typeof v === "bigint" ? v.toString() + "n" : v;
-    }, indent);
-  } catch (_err) {
-    return String(value);
-  }
-}
+${CONSOLE_FORMAT_SOURCE}
 
 function makeMockConsole() {
   var logs = [];
-  var fmt = function(a) { return typeof a === "object" ? __stringify__(a) : String(a); };
+  var fmt = __formatLogArg__;
   return {
     logs: logs,
     mock: {
