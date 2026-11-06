@@ -31,8 +31,9 @@
  *      from the snapshot and evaluates the test's assertion to reach the verdict.
  *
  * So a submission can only choose the DATA an assertion reads, never the code
- * that reads it. The encoder in step 1 is written defensively, but the verdict
- * doesn't depend on it: whatever string step 1 yields, step 2 only parses it.
+ * that reads it. Step 2 treats the snapshot as untrusted text: it checks every
+ * field against the format, builds nothing but plain data from it, and takes
+ * fixture names from the test. A snapshot that doesn't fit fails the test.
  *
  * DEGRADE-CLOSED
  * --------------
@@ -70,10 +71,17 @@ const EXEC_TIMEOUT_MS = 5_000;
 /**
  * Interpreter stack cap. Without one, deep recursion overflows the host's stack
  * from inside the WASM frames instead of raising a catchable error in the VM. At
- * this size ordinary recursion gets about 1,400 frames; much above it, a recursing
- * callback can reach the host's limit first.
+ * this size ordinary recursion gets about 1,700 frames. Past it, recursion reaches
+ * the host's limit first; runJsSubmission recovers from that, but the learner's
+ * own try/catch no longer sees the error.
  */
-const MAX_STACK_BYTES = 256 * 1024;
+const MAX_STACK_BYTES = 320 * 1024;
+
+/** Most values a result snapshot may hold, counting every array element. */
+const MAX_SNAPSHOT_VALUES = 1_000_000;
+
+/** Longest result snapshot accepted, in characters. */
+const MAX_SNAPSHOT_CHARS = 16 * 1024 * 1024;
 
 /** Wall-clock budget for one submission across all its tests. */
 const SUBMISSION_BUDGET_MS = 15_000;
@@ -98,15 +106,19 @@ let quickJsPromise: Promise<QuickJSWASMModule | null> | undefined;
 
 /**
  * Instantiate the QuickJS WASM module once, lazily. Returns null (never throws)
- * if instantiation fails so the caller can degrade closed.
+ * if instantiation fails so the caller can degrade closed. A run that breaks the
+ * instance clears `quickJsPromise`, so a caller already waiting on the old one
+ * loops round for its replacement.
  */
 async function loadQuickJS(): Promise<QuickJSWASMModule | null> {
-  if (quickJsPromise === undefined) {
-    quickJsPromise = newQuickJSWASMModuleFromVariant(releaseSyncVariant).catch(
-      () => null
-    );
+  for (;;) {
+    quickJsPromise ??= newQuickJSWASMModuleFromVariant(
+      releaseSyncVariant
+    ).catch(() => null);
+    const pending = quickJsPromise;
+    const quickjs = await pending;
+    if (pending === quickJsPromise) return quickjs;
   }
-  return quickJsPromise;
 }
 
 /** Result of running a single test case server-side. */
@@ -117,6 +129,9 @@ export interface ServerTestResult {
   passed: boolean;
   /** Short, non-sensitive diagnostic (never leaks the expected value verbatim). */
   detail: string;
+  /** The test stopped at a resource limit (time, heap, stack), so it says nothing
+   * about whether the answer was right. Never set on a passed test. */
+  limit?: true;
 }
 
 /** Aggregate outcome of running a submission against every test. */
@@ -156,6 +171,16 @@ export async function isExecutorAvailable(): Promise<boolean> {
  * IIFE of each runtime source below, so its names aren't globals.
  */
 const SANDBOX_LIBRARY_SOURCE = String.raw`
+/* The names a test's input binds. Numbers, strings and keywords bind nothing. */
+function fixtureNames(input) {
+  if (!input.trim()) return [];
+  return input.split(",").map(function (a) { return a.trim(); }).filter(function (arg) {
+    if (/^\d/.test(arg) || /^-?\d*\.?\d+$/.test(arg)) return false;
+    if (/^['"]/.test(arg) || /^true$|^false$|^null$/.test(arg)) return false;
+    return true;
+  });
+}
+
 /* Web-API polyfills QuickJS lacks. TextEncoder/TextDecoder are WHATWG APIs, not
  * core ECMAScript — the browser worker has them, this engine does not. Solana
  * byte-parsing challenges (e.g. decoding a username out of account data) use
@@ -342,6 +367,7 @@ var getProto = Object.getPrototypeOf;
 var defineProp = Object.defineProperty;
 var nullObject = Object.create.bind(Object, null);
 var isArray = Array.isArray;
+var arrayJoin = Array.prototype.join;
 var stringify = JSON.stringify;
 var StringCtor = String;
 var FunctionCtor = Function;
@@ -454,16 +480,10 @@ var KEYPAIR_NAMES = { payer:1, sender:1, recipient:1, owner:1, authority:1, mint
 var PUBKEY_NAMES = { programId:1, userPubkey:1, recipientPubkey:1, senderPublicKey:1, expectedOwner:1, tokenProgramId:1, systemProgramId:1, dataAccount:1 };
 
 
-function buildArgSetup(input) {
-  var names = [];
-  if (!input.trim()) return { setup: "", names: names };
-  var args = input.split(",").map(function (a) { return a.trim(); });
+function buildArgSetup(names) {
   var lines = [];
-  for (var i = 0; i < args.length; i++) {
-    var arg = args[i];
-    if (/^\d/.test(arg) || /^-?\d*\.?\d+$/.test(arg)) continue;
-    if (/^['"]/.test(arg) || /^true$|^false$|^null$/.test(arg)) continue;
-    names.push(arg);
+  for (var i = 0; i < names.length; i++) {
+    var arg = names[i];
     if (arg === "connection") lines.push('var ' + arg + ' = new (__modules__["@solana/web3.js"].Connection)("https://api.devnet.solana.com");');
     else if (KEYPAIR_NAMES[arg]) lines.push('var ' + arg + ' = __modules__["@solana/web3.js"].Keypair.generate();');
     else if (PUBKEY_NAMES[arg]) lines.push('var ' + arg + ' = __modules__["@solana/web3.js"].Keypair.generate().publicKey;');
@@ -474,7 +494,7 @@ function buildArgSetup(input) {
     else if (arg === "position") lines.push('var position = { collateral: 100, debt: 50, threshold: 1.5 };');
     else lines.push('var ' + arg + ' = {};');
   }
-  return { setup: lines.join("\n"), names: names };
+  return lines.join("\n");
 }
 function buildCallArgs(input) {
   if (!input.trim()) return "";
@@ -503,17 +523,16 @@ var fixtures = [];
 function prepare(userCode, input) {
   var fnName = detectFunctionName(userCode);
   if (!fnName) return "";
-  var built = buildArgSetup(input);
-  var pairs = built.names.map(function (n) { return '["' + n + '", ' + n + "]"; });
+  var names = fixtureNames(input);
   var make = new FunctionCtor(
     "__modules__",
-    '"use strict";\n' + built.setup + "\nreturn [[" + buildCallArgs(input) + "], [" + pairs.join(", ") + "]];"
+    '"use strict";\n' + buildArgSetup(names) + "\nreturn [[" + buildCallArgs(input) + "], [" + names.join(", ") + "]];"
   );
   var made = make(modules);
   callArgs = made[0];
   fixtures = made[1];
-  fixtures.forEach(function (pair) {
-    try { publish(pair[0], pair[1]); } catch (e) { /* e.g. a name the realm won't let go */ }
+  names.forEach(function (name, i) {
+    try { publish(name, fixtures[i]); } catch (e) { /* e.g. a name the realm won't let go */ }
   });
   return fnName;
 }
@@ -529,15 +548,33 @@ function describe(err) {
 }
 
 /* ---- result snapshot ----------------------------------------------------- */
-/* Encodes a value graph as JSON. A value is a JSON primitive or a tagged array:
+/* Encodes a value graph as JSON text, written out by hand so no toJSON is ever
+ * consulted. A value is a JSON primitive or a tagged array:
  * [0, id] object, [1] undefined, [2, s] bigint, [3, s] non-finite number or -0,
  * [4, s] symbol, [5] array hole, [6, s] accessor that threw. Objects go in a
  * node table by id, so cycles and shared references survive. Getters run here,
  * in the submission's realm, and only their values travel. */
 
-var MAX_VALUES = 1000000;
-var MAX_SNAPSHOT_CHARS = 16 * 1024 * 1024;
+var MAX_VALUES = ${MAX_SNAPSHOT_VALUES};
+var MAX_SNAPSHOT_CHARS = ${MAX_SNAPSHOT_CHARS};
 var MAX_ARRAY_PROPS_LENGTH = 65536;
+
+/* JSON text for the encoder's own tree, which only holds arrays, plain objects
+ * with fixed keys, and primitives. */
+function jsonText(x) {
+  if (x === null) return "null";
+  if (typeof x === "string") return stringify(x);
+  if (typeof x !== "object") return "" + x;
+  var parts = [];
+  var i;
+  if (isArray(x)) {
+    for (i = 0; i < x.length; i++) parts[i] = jsonText(x[i]);
+    return "[" + apply(arrayJoin, parts, [","]) + "]";
+  }
+  var keys = ownKeys(x);
+  for (i = 0; i < keys.length; i++) parts[i] = stringify(keys[i]) + ":" + jsonText(x[keys[i]]);
+  return "{" + apply(arrayJoin, parts, [","]) + "}";
+}
 
 function tryBrand(fn, value) {
   try { return { value: apply(fn, value, []) }; } catch (e) { return null; }
@@ -634,7 +671,7 @@ function encode(result) {
       return {
         k: "f",
         name: nameDesc && typeof nameDesc.value === "string" ? nameDesc.value : "",
-        len: lengthDesc && typeof lengthDesc.value === "number" ? lengthDesc.value : 0,
+        len: lengthDesc && lengthDesc.value >>> 0 === lengthDesc.value ? lengthDesc.value : 0,
         p: props(v, skipFunctionOwn)
       };
     }
@@ -687,7 +724,7 @@ function encode(result) {
     if (isSet) return { k: "s", e: entries, p: props(v) };
     if ((brand = tryBrand(dateTime, v))) return { k: "d", t: ref(brand.value), p: props(v) };
     if (v !== regexpProto && (brand = tryBrand(regexpSource, v))) {
-      return { k: "r", s: brand.value, f: apply(regexpFlags, v, []), li: v.lastIndex, p: props(v, skipLastIndex) };
+      return { k: "r", s: brand.value, f: apply(regexpFlags, v, []), li: v.lastIndex >>> 0 === v.lastIndex ? v.lastIndex : 0, p: props(v, skipLastIndex) };
     }
     if ((brand = tryBrand(numberValue, v)) || (brand = tryBrand(booleanValue, v))) return { k: "x", v: ref(brand.value), p: props(v) };
     if ((brand = tryBrand(stringValue, v))) return { k: "x", v: ref(brand.value), p: props(v, skipIndices) };
@@ -700,11 +737,11 @@ function encode(result) {
 
   var root = ref(result);
   var named = [];
-  for (var f = 0; f < fixtures.length; f++) named[f] = [fixtures[f][0], ref(fixtures[f][1])];
+  for (var f = 0; f < fixtures.length; f++) named[f] = ref(fixtures[f]);
 
   var nodes = [];
   for (var n = 0; n < queue.length; n++) nodes[n] = node(queue[n]);
-  var snapshot = stringify({ root: root, fixtures: named, nodes: nodes });
+  var snapshot = jsonText({ root: root, fixtures: named, nodes: nodes });
   if (snapshot.length > MAX_SNAPSHOT_CHARS) throw new RangeErrorCtor("Result too large");
   return snapshot;
 }
@@ -731,92 +768,152 @@ SDK_GLOBALS.forEach(function (name) {
 var TYPED = { Int8Array: Int8Array, Uint8Array: Uint8Array, Uint8ClampedArray: Uint8ClampedArray, Int16Array: Int16Array, Uint16Array: Uint16Array, Int32Array: Int32Array, Uint32Array: Uint32Array, Float32Array: Float32Array, Float64Array: Float64Array, BigInt64Array: BigInt64Array, BigUint64Array: BigUint64Array };
 var ERRORS = { Error: Error, TypeError: TypeError, RangeError: RangeError, SyntaxError: SyntaxError, ReferenceError: ReferenceError, EvalError: EvalError, URIError: URIError };
 var SPECIAL_NUMBERS = { "NaN": NaN, "Infinity": Infinity, "-Infinity": -Infinity, "-0": -0 };
+var MAX_VALUES = ${MAX_SNAPSHOT_VALUES};
+/* Longer than any bigint QuickJS can hold; parsing one is a native loop. */
+var MAX_BIGINT_CHARS = 400000;
+var MAX_LENGTH_FIELD = 4294967295;
 
-function lookup(table, key) {
-  if (!Object.prototype.hasOwnProperty.call(table, key)) throw new TypeError("Unreadable result");
+function unreadable() { throw new TypeError("Unreadable result"); }
+function owned(table, key) {
+  if (typeof key !== "string" || !Object.prototype.hasOwnProperty.call(table, key)) unreadable();
   return table[key];
 }
+function isOffset(x, limit) { return Number.isInteger(x) && x >= 0 && x < limit; }
+function list(x) { return Array.isArray(x) ? x : unreadable(); }
+function text(x) { return typeof x === "string" ? x : unreadable(); }
+function isHole(r) { return Array.isArray(r) && r[0] === 5; }
+function isThrowing(r) { return Array.isArray(r) && r[0] === 6; }
 
-/* Rebuilds the value graph from encode()'s format in the submission runtime. */
+/* Rebuilds the value graph from the snapshot, which is untrusted text. Every
+ * field is checked and whatever doesn't fit fails the test, so the outcome can
+ * only be plain data: an id reaches the node table and nothing else, a kind or
+ * class comes from a table above, and no key or string is ever evaluated. */
 function decode(snapshotJson) {
   var snap = JSON.parse(snapshotJson);
-  var nodes = snap.nodes;
+  if (snap === null || typeof snap !== "object" || Array.isArray(snap)) unreadable();
+  var nodes = list(snap.nodes);
+  var fixtures = list(snap.fixtures);
+  if (nodes.length > MAX_VALUES) unreadable();
   var objects = [];
 
   function value(r) {
     if (r === null || typeof r !== "object") return r;
+    if (!Array.isArray(r)) unreadable();
     switch (r[0]) {
-      case 0: return objects[r[1]];
-      case 1: return undefined;
-      case 2: return BigInt(r[1]);
-      case 3: return lookup(SPECIAL_NUMBERS, r[1]);
-      case 4: return Symbol(r[1]);
+      case 0:
+        if (!isOffset(r[1], nodes.length)) unreadable();
+        return objects[r[1]];
+      case 1:
+        return undefined;
+      case 2:
+        if (text(r[1]).length > MAX_BIGINT_CHARS || !/^-?[0-9]+$/.test(r[1])) unreadable();
+        return BigInt(r[1]);
+      case 3:
+        return owned(SPECIAL_NUMBERS, r[1]);
+      case 4:
+        return Symbol(text(r[1]));
     }
-    throw new TypeError("Unreadable result");
+    return unreadable();
+  }
+  function primitive(r, type) {
+    var v = value(r);
+    return typeof v === type ? v : unreadable();
   }
   function define(target, key, r, enumerable) {
-    if (r !== null && typeof r === "object" && r[0] === 6) {
-      var message = String(r[1]);
+    if (isThrowing(r)) {
+      var message = text(r[1]);
       Object.defineProperty(target, key, { get: function () { throw new Error(message); }, enumerable: enumerable, configurable: true });
       return;
     }
     Object.defineProperty(target, key, { value: value(r), writable: true, enumerable: enumerable, configurable: true });
   }
+  function bufferOf(r) {
+    if (!Array.isArray(r) || r[0] !== 0 || !isOffset(r[1], nodes.length)) unreadable();
+    var target = nodes[r[1]];
+    if (target === null || typeof target !== "object" || target.k !== "b") unreadable();
+    return objects[r[1]];
+  }
   function shell(n) {
     switch (n.k) {
-      case "o": return n.bare ? Object.create(null) : {};
-      case "a": return [];
-      case "m": return new Map();
-      case "s": return new Set();
-      case "d": return new Date(value(n.t));
+      case "o": return n.bare === 1 ? Object.create(null) : {};
+      case "a":
+        if (!isOffset(n.n, MAX_VALUES + 1) || list(n.i).length !== n.n) unreadable();
+        return [];
+      case "m": list(n.e); return new Map();
+      case "s": list(n.e); return new Set();
+      case "d": return new Date(primitive(n.t, "number"));
       case "r": {
-        var re = new RegExp(n.s, n.f);
+        var re = new RegExp(text(n.s), text(n.f));
+        if (!isOffset(n.li, MAX_LENGTH_FIELD)) unreadable();
         re.lastIndex = n.li;
         return re;
       }
-      case "x": return Object(value(n.v));
-      case "e": return new (Object.prototype.hasOwnProperty.call(ERRORS, n.c) ? ERRORS[n.c] : Error)();
-      case "k": return Object.create(lookup(MOCKS, n.c).prototype);
+      case "x": {
+        var boxed = value(n.v);
+        if (typeof boxed !== "number" && typeof boxed !== "string" && typeof boxed !== "boolean") unreadable();
+        return Object(boxed);
+      }
+      case "e": return new (Object.prototype.hasOwnProperty.call(ERRORS, text(n.c)) ? ERRORS[n.c] : Error)();
+      case "k": return Object.create(owned(MOCKS, n.c).prototype);
       case "f": {
+        if (!isOffset(n.len, MAX_LENGTH_FIELD)) unreadable();
         var f = function () { throw new Error("A function in a result can't be called while grading"); };
-        Object.defineProperty(f, "name", { value: n.name, configurable: true });
+        Object.defineProperty(f, "name", { value: text(n.name), configurable: true });
         Object.defineProperty(f, "length", { value: n.len, configurable: true });
         return f;
       }
+      case "t": return new (owned(TYPED, n.c))(bufferOf(n.b), n.o, n.n);
+      case "v": return new DataView(bufferOf(n.b), n.o, n.n);
     }
-    return undefined;
+    return unreadable();
   }
 
+  nodes.forEach(function (n) {
+    if (n === null || typeof n !== "object" || Array.isArray(n)) unreadable();
+  });
   /* Buffers first, since views are built on them, then everything else, then
-   * contents, once every object a reference can name exists. */
+   * contents, once every object a reference can name exists. Until then ids
+   * resolve to undefined, and a kind that needs a primitive rejects it. */
+  objects.length = nodes.length;
   nodes.forEach(function (n, id) {
-    if (n.k === "b") objects[id] = Uint8Array.from(n.d).buffer;
+    if (n.k !== "b") return;
+    var d = list(n.d);
+    var bytes = new Uint8Array(d.length);
+    d.forEach(function (b, i) {
+      if (!isOffset(b, 256)) unreadable();
+      bytes[i] = b;
+    });
+    objects[id] = bytes.buffer;
   });
   nodes.forEach(function (n, id) {
-    if (n.k === "b") return;
-    if (n.k === "t") objects[id] = new (lookup(TYPED, n.c))(value(n.b), n.o, n.n);
-    else if (n.k === "v") objects[id] = new DataView(value(n.b), n.o, n.n);
-    else objects[id] = shell(n);
-    if (objects[id] === undefined) throw new TypeError("Unreadable result");
+    if (n.k !== "b") objects[id] = shell(n);
   });
   nodes.forEach(function (n, id) {
     var o = objects[id];
     if (n.k === "a") {
       n.i.forEach(function (r, i) {
-        if (r !== null && typeof r === "object" && r[0] === 5) return;
-        if (r !== null && typeof r === "object" && r[0] === 6) define(o, String(i), r, true);
+        if (isHole(r)) return;
+        if (isThrowing(r)) define(o, String(i), r, true);
         else o[i] = value(r);
       });
       o.length = n.n;
     } else if (n.k === "m") {
-      n.e.forEach(function (e) { o.set(value(e[0]), value(e[1])); });
+      n.e.forEach(function (e) {
+        if (list(e).length !== 2) unreadable();
+        o.set(value(e[0]), value(e[1]));
+      });
     } else if (n.k === "s") {
       n.e.forEach(function (r) { o.add(value(r)); });
     }
-    (n.p || []).forEach(function (p) { define(o, p[0], p[1], p[2]); });
+    if (n.p === undefined) return;
+    list(n.p).forEach(function (p) {
+      var key = text(list(p)[0]);
+      if (n.k === "a" && (key === "length" || /^[0-9]+$/.test(key))) unreadable();
+      define(o, key, p[1], p[2] === true);
+    });
   });
 
-  return { root: value(snap.root), fixtures: snap.fixtures.map(function (f) { return [f[0], value(f[1])]; }) };
+  return { root: value(snap.root), fixtures: fixtures.map(value) };
 }
 
 /* ---- assertions ---------------------------------------------------------- */
@@ -836,7 +933,8 @@ function isTypeShape(expected) {
 }
 
 
-var RESERVED_PARAMS = { __result__: 1, __modules__: 1, console: 1 };
+var RESERVED_PARAMS = ["__result__", "__modules__", "console"];
+var IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
 
 /* Only a boolean true from the assertion passes a test. */
 function evaluate(snapshotJson, testJson) {
@@ -870,12 +968,15 @@ function evaluate(snapshotJson, testJson) {
         '} catch (e) { return "fail: " + ((e && e.message) || String(e)); }';
     }
 
-    var names = ["__result__", "__modules__", "console"];
+    /* Parameter names come from the test, and the snapshot only fills them in,
+     * by position. */
+    var names = RESERVED_PARAMS.slice();
     var values = [snap.root, modules, makeMockConsole().mock];
-    snap.fixtures.forEach(function (f) {
-      if (RESERVED_PARAMS[f[0]] || names.indexOf(f[0]) !== -1) return;
-      names.push(f[0]);
-      values.push(f[1]);
+    fixtureNames(test.input).forEach(function (name, i) {
+      if (!IDENTIFIER.test(name)) unreadable();
+      if (names.indexOf(name) !== -1) return;
+      names.push(name);
+      values.push(snap.fixtures[i]);
     });
     var body = '"use strict";\nreturn (function(){ ' + assertionCode + ' })();';
     var verdict = Function.apply(null, names.concat(body)).apply(undefined, values);
@@ -957,6 +1058,20 @@ function transformImports(code: string): string {
 
 /** A test failed inside a runtime; `detail` is safe to report. */
 class TestFailure extends Error {}
+
+/** One test's outcome, before its id is attached. */
+type TestOutcome = Pick<ServerTestResult, "passed" | "detail" | "limit">;
+
+/** The failures that come from the sandbox's limits and not the answer. */
+const LIMIT_DETAIL =
+  /^(?:fail: )?(?:Execution timed out|interrupted|stack overflow|out of memory|Result too large)$/;
+
+function failedOutcome(detail: string): TestOutcome {
+  const short = detail.slice(0, 200);
+  return LIMIT_DETAIL.test(short)
+    ? { passed: false, detail: short, limit: true }
+    : { passed: false, detail: short };
+}
 
 /** A fresh runtime with the heap cap and interrupt deadline, disposed after `fn`. */
 function withRuntime<T>(
@@ -1072,7 +1187,7 @@ function runSubmission(
       const described = ctx.callFunction(describe, ctx.undefined, error);
       if (described.error) {
         described.error.dispose();
-        return "Submission failed";
+        return errorMessage(ctx, error);
       }
       const text = ctx.getString(described.value);
       described.value.dispose();
@@ -1110,7 +1225,14 @@ function runSubmission(
     );
 
     const snapshot = unwrap(ctx.callFunction(encode, ctx.undefined, result));
-    return ctx.getString(snapshot);
+    if (ctx.typeof(snapshot) !== "string") {
+      throw new TestFailure("Result could not be read");
+    }
+    const text = ctx.getString(snapshot);
+    if (text.length > MAX_SNAPSHOT_CHARS) {
+      throw new TestFailure("Result too large");
+    }
+    return text;
   });
 }
 
@@ -1120,7 +1242,7 @@ function runAssertion(
   snapshot: string,
   testJson: string,
   deadline: number
-): { passed: boolean; detail: string } {
+): TestOutcome {
   return withRuntime(quickjs, deadline, (ctx, _runtime, scope) => {
     const unwrap = unwrapper(ctx, scope, deadline);
     const evaluate = unwrap(
@@ -1138,8 +1260,45 @@ function runAssertion(
       ok: boolean;
       detail: string;
     };
-    return { passed: parsed.ok === true, detail: parsed.detail };
+    return parsed.ok === true
+      ? { passed: true, detail: parsed.detail }
+      : failedOutcome(parsed.detail);
   });
+}
+
+/**
+ * Evaluate one assertion over a snapshot as step 2 of a run does. The snapshot is
+ * whatever text step 1 produced, so the tests feed this directly.
+ */
+export async function judgeSnapshot(
+  snapshot: string,
+  test: Pick<AdminTestCase, "input" | "expectedOutput">
+): Promise<TestOutcome> {
+  const quickjs = await loadQuickJS();
+  if (!quickjs) return { passed: false, detail: "executor_unavailable" };
+  try {
+    return judge(quickjs, snapshot, test, Date.now() + EXEC_TIMEOUT_MS);
+  } catch (err) {
+    if (err instanceof TestFailure) return failedOutcome(err.message);
+    throw err;
+  }
+}
+
+function judge(
+  quickjs: QuickJSWASMModule,
+  snapshot: string,
+  test: Pick<AdminTestCase, "input" | "expectedOutput">,
+  deadline: number
+): TestOutcome {
+  return runAssertion(
+    quickjs,
+    snapshot,
+    JSON.stringify({
+      input: test.input ?? "",
+      expectedOutput: test.expectedOutput ?? "",
+    }),
+    deadline
+  );
 }
 
 /**
@@ -1153,7 +1312,7 @@ function runOneCase(
   code: string,
   test: AdminTestCase,
   submissionDeadline: number
-): { passed: boolean; detail: string } {
+): TestOutcome {
   const testDeadline = () =>
     Math.min(Date.now() + EXEC_TIMEOUT_MS, submissionDeadline);
   try {
@@ -1163,16 +1322,9 @@ function runOneCase(
       test.input ?? "",
       testDeadline()
     );
-    return runAssertion(
-      quickjs,
-      snapshot,
-      JSON.stringify({ expectedOutput: test.expectedOutput ?? "" }),
-      testDeadline()
-    );
+    return judge(quickjs, snapshot, test, testDeadline());
   } catch (err) {
-    if (err instanceof TestFailure) {
-      return { passed: false, detail: err.message.slice(0, 200) };
-    }
+    if (err instanceof TestFailure) return failedOutcome(err.message);
     throw err;
   }
 }
@@ -1237,7 +1389,11 @@ export async function runJsSubmission(
   const submissionDeadline = Date.now() + SUBMISSION_BUDGET_MS;
   const results: ServerTestResult[] = [];
   for (const test of tests) {
-    let outcome = { passed: false, detail: "Execution budget exceeded" };
+    let outcome: TestOutcome = {
+      passed: false,
+      detail: "Execution budget exceeded",
+      limit: true,
+    };
     if (Date.now() < submissionDeadline) {
       try {
         outcome = runOneCase(quickjs, transpiled, test, submissionDeadline);
@@ -1257,6 +1413,7 @@ export async function runJsSubmission(
         outcome = {
           passed: false,
           detail: "Submission exceeded the sandbox's limits",
+          limit: true,
         };
       }
     }

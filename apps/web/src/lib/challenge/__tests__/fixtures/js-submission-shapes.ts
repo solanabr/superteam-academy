@@ -195,9 +195,9 @@ export const SUBMISSION_SHAPES: SubmissionShape[] = [
   },
 
   {
-    name: "recursion a thousand frames deep",
+    name: "recursion fifteen hundred frames deep",
     code: "function sum(n) { return n === 0 ? 0 : n + sum(n - 1); }",
-    tests: [t("1000", "result === 500500")],
+    tests: [t("1500", "result === 1125750")],
   },
   {
     name: "recursion that catches its own overflow",
@@ -424,6 +424,173 @@ export const SUBMISSION_SHAPES: SubmissionShape[] = [
     name: "a typed shape",
     code: "function shape() { return { a: 'x', b: 1, c: true, d: {} }; }",
     tests: [t("", "{ a: string, b: number, c: boolean, d: object }")],
+  },
+
+  // Value fidelity, nested where a top-level check wouldn't reach.
+  {
+    name: "undefined inside containers",
+    code: "function v() { return { a: [undefined, 1], m: new Map([['k', undefined]]) }; }",
+    tests: [
+      t(
+        "",
+        "result.a[0] === undefined && result.a.length === 2 && 0 in result.a && result.m.has('k') && result.m.get('k') === undefined"
+      ),
+    ],
+  },
+  {
+    name: "non-finite numbers and negative zero nested",
+    code: "function v() { return { n: NaN, i: -Infinity, z: -0, list: [Infinity] }; }",
+    tests: [
+      t(
+        "",
+        'Number.isNaN(result.n) && result.i === -Infinity && Object.is(result.z, -0) && result.list[0] === Infinity && JSON.stringify(result) === \'{"n":null,"i":null,"z":0,"list":[null]}\''
+      ),
+    ],
+  },
+  {
+    name: "bigints nested and negative",
+    code: "function v() { return { a: -5n, b: [2n ** 70n], m: new Map([[1n, 2n]]) }; }",
+    tests: [
+      t(
+        "",
+        "result.a === -5n && result.b[0] === 1180591620717411303424n && result.m.get(1n) === 2n"
+      ),
+    ],
+  },
+  {
+    name: "a Map keyed by objects",
+    code: "function v() { const k = { id: 1 }; return { k, m: new Map([[k, 'v'], ['s', k]]) }; }",
+    tests: [
+      t(
+        "",
+        "result.m.get(result.k) === 'v' && result.m.get('s') === result.k && [...result.m.keys()].length === 2"
+      ),
+    ],
+  },
+  {
+    name: "a Set of objects and NaN",
+    code: "function v() { const o = {}; return { o, s: new Set([o, NaN, -0]) }; }",
+    tests: [
+      t(
+        "",
+        "result.s.has(result.o) && result.s.has(NaN) && result.s.has(0) && result.s.size === 3"
+      ),
+    ],
+  },
+  {
+    name: "a nested Set inside a Map",
+    code: "function v() { return new Map([['a', new Set([new Map([['b', 1]])])]]); }",
+    tests: [t("", "[...result.get('a')][0].get('b') === 1")],
+  },
+  {
+    name: "a Date through JSON",
+    code: "function v() { return { d: new Date(86400000) }; }",
+    tests: [
+      t(
+        "",
+        "result.d instanceof Date && result.d.toISOString() === '1970-01-02T00:00:00.000Z' && JSON.stringify(result) === '{\"d\":\"1970-01-02T00:00:00.000Z\"}'"
+      ),
+    ],
+  },
+  {
+    name: "an invalid Date",
+    code: "function v() { return new Date(NaN); }",
+    tests: [t("", "result instanceof Date && Number.isNaN(result.getTime())")],
+  },
+  {
+    name: "typed arrays sharing a buffer",
+    code: "function v() { const b = new ArrayBuffer(8); const u = new Uint32Array(b); u[0] = 7; return { b8: new Uint8Array(b, 0, 4), u }; }",
+    tests: [
+      t(
+        "",
+        "result.b8[0] === 7 && result.b8.buffer === result.u.buffer && result.u.length === 2"
+      ),
+    ],
+  },
+  {
+    name: "every typed array kind",
+    code: "function v() { return [new Int8Array([-1]), new Uint8ClampedArray([300]), new Int16Array([-2]), new Int32Array([-3]), new Uint32Array([4]), new Float32Array([0.5]), new BigUint64Array([6n])]; }",
+    tests: [
+      t(
+        "",
+        "result[0][0] === -1 && result[1][0] === 255 && result[2][0] === -2 && result[3][0] === -3 && result[4][0] === 4 && result[5][0] === 0.5 && result[6][0] === 6n && result[0] instanceof Int8Array && result[6] instanceof BigUint64Array"
+      ),
+    ],
+  },
+  {
+    name: "a PublicKey through JSON and equals",
+    code: 'import { PublicKey } from "@solana/web3.js";\nfunction v() { const k = new PublicKey(new Uint8Array(32)); return { k, same: new PublicKey(new Uint8Array(32)) }; }',
+    tests: [
+      t(
+        "",
+        "result.k.equals(result.same) && result.k !== result.same && JSON.stringify(result.k) === JSON.stringify(result.k.toBase58()) && String(result.k) === result.k.toBase58()"
+      ),
+    ],
+  },
+  {
+    name: "a PublicKey-like plain object",
+    code: "function v() { return { toBase58: '111', bytes: new Uint8Array(32) }; }",
+    tests: [t("", "result.toBase58 === '111' && result.bytes.length === 32")],
+  },
+  {
+    name: "class instances nested with getters",
+    code: "class P { constructor(x) { this.x = x; } get double() { return this.x * 2; } }\nfunction v() { return { list: [new P(1), new P(2)] }; }",
+    tests: [
+      t(
+        "",
+        "result.list[1].double === 4 && result.list[0].x === 1 && result.list[0].constructor.name === 'P' && JSON.stringify(result.list[0]) === '{\"x\":1}'"
+      ),
+    ],
+  },
+  {
+    name: "a class with static and inherited members",
+    code: "class A { base() { return 1; } }\nclass B extends A { static s = 2; get g() { return 3; } }\nfunction v() { return { cls: B, inst: new B() }; }",
+    tests: [
+      t(
+        "",
+        "typeof result.cls === 'function' && result.cls.s === 2 && result.inst.g === 3 && typeof result.inst.base === 'function'"
+      ),
+    ],
+  },
+  {
+    name: "a Date, Map and class subclass",
+    code: "class M extends Map { get big() { return this.size > 0; } }\nfunction v() { const m = new M(); m.set('a', 1); return m; }",
+    tests: [
+      t(
+        "",
+        "result instanceof Map && result.get('a') === 1 && result.big === true"
+      ),
+    ],
+  },
+  {
+    name: "keys that look like the format",
+    code: "function v() { return { k: 'f', i: [0, 1], p: [[0]], d: [1], r: [5] }; }",
+    tests: [
+      t(
+        "",
+        "result.k === 'f' && result.i[1] === 1 && result.p[0][0] === 0 && result.d[0] === 1 && result.r[0] === 5"
+      ),
+    ],
+  },
+  {
+    name: "a __proto__ data key",
+    code: 'function v() { return JSON.parse(\'{"__proto__":{"x":1},"constructor":2}\'); }',
+    tests: [
+      t(
+        "",
+        "Object.keys(result).length === 2 && result.constructor === 2 && ({}).x === undefined"
+      ),
+    ],
+  },
+  {
+    name: "strings with quotes, newlines and surrogates",
+    code: "function v() { return ['a\"b', 'c\\nd', '\\ud83d\\ude00', '\\ud800']; }",
+    tests: [
+      t(
+        "",
+        "result[0].length === 3 && result[1].length === 3 && result[2].codePointAt(0) === 0x1f600 && result[3].charCodeAt(0) === 0xd800"
+      ),
+    ],
   },
 
   // Fixtures and the mock SDK.
