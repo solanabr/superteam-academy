@@ -353,6 +353,22 @@ describe("POST /api/ai/partner", () => {
     expect(serialized).not.toContain("B is correct because");
   });
 
+  it("sends the key in the x-goog-api-key header, never in the URL", async () => {
+    stubGeminiFetch(PROPOSE_GEMINI_TEXT);
+
+    const { POST } = await import("../partner/route");
+    await POST(makeRequest(VALID_BODY));
+
+    const [url, init] = vi.mocked(fetch).mock.calls[0] as unknown as [
+      string,
+      { headers: Record<string, string> },
+    ];
+    expect(new URL(url).search).toBe("");
+    expect(url).not.toContain(GEMINI_API_KEY);
+    expect(init.headers["x-goog-api-key"]).toBe(GEMINI_API_KEY);
+    expect(init.headers["Content-Type"]).toBe("application/json");
+  });
+
   it("calls the ladder spend exactly once on a successful paid call", async () => {
     stubGeminiFetch(PROPOSE_GEMINI_TEXT);
 

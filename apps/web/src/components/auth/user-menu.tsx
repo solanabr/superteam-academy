@@ -135,7 +135,7 @@ export function UserMenu({
 
           {/* Wallet address — right side of pill */}
           {truncatedWallet && (
-            <div className="flex items-center pl-1.5 pr-3">
+            <div className="hidden items-center pl-1.5 pr-3 sm:flex lg:hidden min-[1400px]:flex">
               <span className="font-mono text-xs font-medium text-text-2">
                 {truncatedWallet}
               </span>

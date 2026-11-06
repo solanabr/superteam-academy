@@ -43,7 +43,10 @@
  * never as a pass. See `runJsSubmission`'s return contract.
  */
 
-import type { AdminTestCase } from "@superteam-lms/types";
+import {
+  CONSOLE_FORMAT_SOURCE,
+  type AdminTestCase,
+} from "@superteam-lms/types";
 import {
   newQuickJSWASMModuleFromVariant,
   Scope,
@@ -339,9 +342,10 @@ var modules = {
   }
 };
 
+${CONSOLE_FORMAT_SOURCE}
 function makeMockConsole() {
   var logs = [];
-  var fmt = function (a) { return typeof a === "object" ? JSON.stringify(a) : String(a); };
+  var fmt = __formatLogArg__;
   function joiner(prefix) {
     return function () { var a = []; for (var i = 0; i < arguments.length; i++) a.push(fmt(arguments[i])); logs.push(prefix + a.join(" ")); };
   }

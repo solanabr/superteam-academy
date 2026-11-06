@@ -644,8 +644,11 @@ export function ChallengeInterface({
           ref={leftColRef}
           className={cn(
             // #942 item 4: a bordered card at lg (page background shows in the
-            // gutter around and between the panes).
-            "contents lg:flex lg:min-w-0 lg:flex-col lg:overflow-auto lg:rounded-[var(--r-lg)] lg:border lg:border-border lg:bg-card",
+            // gutter around and between the panes). `lg:relative` makes the
+            // scrolling pane the containing block of its absolute descendants:
+            // without it every `sr-only` deep in the text escapes the clip and
+            // stretches the page to the full height of the text.
+            "contents lg:relative lg:flex lg:min-w-0 lg:flex-col lg:overflow-auto lg:rounded-[var(--r-lg)] lg:border lg:border-border lg:bg-card",
             leftWidth === null ? "lg:flex-1" : "lg:shrink-0"
           )}
           style={leftWidth !== null ? { width: leftWidth } : undefined}

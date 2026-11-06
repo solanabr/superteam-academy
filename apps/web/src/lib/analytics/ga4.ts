@@ -7,11 +7,13 @@
 
 /* global window, document */
 
+import { stripAuthParams, stripQueryAndFragment } from "./telemetry-url";
+
 declare global {
   interface Window {
     gtag: (
       command: string,
-      targetOrEvent: string | Date,
+      targetOrEvent: string | Date | Record<string, unknown>,
       params?: Record<string, unknown>
     ) => void;
     // gtag.js consumes the raw `arguments` objects pushed by the stub — the
@@ -27,6 +29,20 @@ const GA4_ID = process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID ?? "";
 // injected by an extension or an embedded widget) would otherwise make init
 // silently skip our own stub and config, and no hit would ever be sent.
 let ga4Configured = false;
+
+/**
+ * The page's location with auth params removed. Campaign and referral params
+ * stay, since GA4 reads attribution from them. gtag.js would otherwise fall back
+ * to the raw `document.location` and `document.referrer`.
+ */
+function locationFields(): Record<string, string> {
+  return {
+    page_location: stripAuthParams(window.location.href),
+    ...(document.referrer
+      ? { page_referrer: stripAuthParams(document.referrer) }
+      : {}),
+  };
+}
 
 function isAvailable(): boolean {
   return (
@@ -67,6 +83,8 @@ export function initGA4(): void {
   };
 
   window.gtag("js", new Date());
+  // Before config, so nothing gtag.js sends on its own uses the raw URL.
+  window.gtag("set", locationFields());
   window.gtag("config", GA4_ID, {
     send_page_view: false, // we manage page views ourselves
   });
@@ -80,7 +98,7 @@ export function trackGA4Event(
   params?: Record<string, unknown>
 ): void {
   if (!isAvailable()) return;
-  window.gtag("event", name, params);
+  window.gtag("event", name, { ...params, ...locationFields() });
 }
 
 /**
@@ -91,9 +109,10 @@ export function trackGA4PageView(url: string): void {
   // Google's manual-pageview contract wants the FULL URL in page_location
   // (protocol included) plus page_title; page_path stays as a convenience
   // dimension for existing reports.
+  window.gtag("set", locationFields());
   window.gtag("event", "page_view", {
-    page_location: typeof window !== "undefined" ? window.location.href : url,
+    ...locationFields(),
     page_title: typeof document !== "undefined" ? document.title : undefined,
-    page_path: url,
+    page_path: stripQueryAndFragment(url),
   });
 }

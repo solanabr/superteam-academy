@@ -16,5 +16,6 @@ export const {
   ACTIVE_COURSE_SLUGS,
   CODE_LESSON,
   DEACTIVATED_COURSE_SLUG,
+  LAYOUT_LESSONS,
   LEARN_LOOP,
 } = pickTargets(bundle("courses"), bundle("lessons"));

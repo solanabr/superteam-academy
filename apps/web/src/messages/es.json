@@ -310,6 +310,7 @@
     "completionFailedParsons": "Las líneas aún no están en el orden correcto. Ordénalas arriba y envíalo de nuevo.",
     "completionFailedReflection": "Esta lección incluye una reflexión que aún no se ha enviado. Envía tu reflexión e inténtalo de nuevo.",
     "quizCheck": "Comprobar respuesta",
+    "tableScrollLabel": "Tabla con desplazamiento",
     "quizCorrect": "¡Correcto!",
     "quizIncorrect": "Todavía no — revisa tu respuesta e inténtalo de nuevo.",
     "quizExplanationLabel": "Explicación",

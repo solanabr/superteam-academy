@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { transform as sucraseTransform } from "sucrase";
 import { useTranslations } from "next-intl";
 import { Play, CircleNotch } from "@phosphor-icons/react";
-import type { TestCase } from "@superteam-lms/types";
+import { CONSOLE_FORMAT_SOURCE, type TestCase } from "@superteam-lms/types";
 import { Keypair } from "@solana/web3.js";
 import { setCachedBinary } from "@superteam-lms/deploy";
 import { executeRustCode } from "@/lib/rust/execute";
@@ -151,9 +151,11 @@ const __modules__ = {
 
 /* ── Console mock ────────────────────────────────────────────────────── */
 
+${CONSOLE_FORMAT_SOURCE}
+
 function makeMockConsole() {
   var logs = [];
-  var fmt = function(a) { return typeof a === "object" ? JSON.stringify(a) : String(a); };
+  var fmt = __formatLogArg__;
   return {
     logs: logs,
     mock: {
@@ -171,8 +173,8 @@ self.onmessage = async function(e) {
   var code = e.data.code;
   var mc = makeMockConsole();
   try {
-    var fn = new Function("__mockConsole__", "__modules__", code);
-    var result = await fn(mc.mock, __modules__);
+    var fn = new Function("__mockConsole__", "__modules__", "__stringify__", code);
+    var result = await fn(mc.mock, __modules__, __stringify__);
     self.postMessage({ result: result, output: mc.logs.join("\\n") });
   } catch (err) {
     self.postMessage({ error: (err && err.message) || String(err), output: mc.logs.join("\\n") });
@@ -487,7 +489,7 @@ async function captureConsoleOutput(
     if (fnName && !hasParams) {
       autoCall = `
 const __res__ = await ${fnName}();
-if (__res__ !== undefined) console.log(typeof __res__ === "object" ? JSON.stringify(__res__, null, 2) : __res__);`;
+if (__res__ !== undefined) console.log(typeof __res__ === "object" ? __stringify__(__res__, 2) : __res__);`;
     } else if (fnName && hasParams && firstTest) {
       argSetup = buildArgSetup(firstTest.input);
       callArgs = firstTest.input.trim() ? buildCallArgs(firstTest.input) : "";
@@ -495,7 +497,7 @@ if (__res__ !== undefined) console.log(typeof __res__ === "object" ? JSON.string
 const __res__ = await ${fnName}(...__args__);
 if (__res__ !== undefined) {
   console.log(${JSON.stringify(t("returnValueLabel"))});
-  console.log(typeof __res__ === "object" ? JSON.stringify(__res__, null, 2) : __res__);
+  console.log(typeof __res__ === "object" ? __stringify__(__res__, 2) : __res__);
 }`;
     }
 
@@ -549,7 +551,7 @@ export async function runTestCase(
       const checks = Object.entries(typeShape)
         .map(([key, type]) => `typeof __result__["${key}"] === "${type}"`)
         .join(" && ");
-      assertionCode = `return (${checks}) ? "pass" : "fail: got " + JSON.stringify(__result__);`;
+      assertionCode = `return (${checks}) ? "pass" : "fail: got " + __stringify__(__result__);`;
     } else {
       assertionCode = `
         const result = __result__;
