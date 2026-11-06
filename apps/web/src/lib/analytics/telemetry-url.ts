@@ -125,6 +125,23 @@ export function stripAuthParams(url: string): string {
   });
 }
 
+/**
+ * Whether the query or fragment holds a param {@link stripAuthParams} removes.
+ * A bare name doesn't count, so `#code` stays an ordinary in-page anchor. Not
+ * clipped: a param past the scrub limit still has to read as present.
+ */
+export function hasAuthParams(url: string): boolean {
+  const hash = url.indexOf("#");
+  const beforeHash = hash === -1 ? url : url.slice(0, hash);
+  const fragment = hash === -1 ? "" : url.slice(hash + 1);
+  const mark = beforeHash.indexOf("?");
+  const query = mark === -1 ? "" : beforeHash.slice(mark + 1);
+  return `${query}&${fragment}`.split("&").some((pair) => {
+    const equals = pair.indexOf("=");
+    return equals !== -1 && AUTH_PARAM.test(pair.slice(0, equals));
+  });
+}
+
 function scrubRelativePath(token: string, options: UrlScrubOptions): string {
   if (!/[?#]/.test(token)) return token;
   let slash = token.indexOf("/");
