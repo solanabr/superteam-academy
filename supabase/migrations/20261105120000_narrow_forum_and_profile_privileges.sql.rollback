@@ -1,7 +1,6 @@
--- Undoes 20261105120000_narrow_forum_and_profile_privileges.sql: restores the
--- previous grants and policies on threads, answers, votes and flags, and drops the
--- two triggers and their functions. Safe to run more than once. Not a migration
--- (the CLI only picks up *.sql); run it by hand if the migration has to come out.
+-- Undoes 20261105120000_narrow_forum_and_profile_privileges.sql, returning these
+-- tables to what the earlier migrations in this directory define. Safe to run more
+-- than once. Not a migration (the CLI only picks up *.sql); run it by hand.
 
 BEGIN;
 
@@ -17,13 +16,14 @@ DROP FUNCTION IF EXISTS public.reject_answer_on_locked_thread();
 REVOKE INSERT ON public.answers FROM authenticated;
 REVOKE INSERT ON public.flags FROM authenticated;
 
-GRANT INSERT, UPDATE, DELETE ON public.threads TO anon, authenticated;
-GRANT INSERT, UPDATE, DELETE ON public.answers TO anon, authenticated;
-GRANT INSERT, UPDATE, DELETE ON public.votes TO anon, authenticated;
-GRANT INSERT, UPDATE, DELETE ON public.flags TO anon, authenticated;
+GRANT INSERT, DELETE, TRUNCATE, REFERENCES, TRIGGER
+  ON public.threads, public.answers TO anon, authenticated;
+GRANT INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER
+  ON public.votes, public.flags TO anon, authenticated;
 
 GRANT UPDATE (title, body, type, category_id, course_id, lesson_id)
   ON public.threads TO authenticated;
+GRANT UPDATE (body) ON public.answers TO authenticated;
 
 DROP POLICY IF EXISTS "Authenticated users can create threads" ON public.threads;
 CREATE POLICY "Authenticated users can create threads"
@@ -34,6 +34,13 @@ CREATE POLICY "Authenticated users can create threads"
 DROP POLICY IF EXISTS "Authors can update own threads" ON public.threads;
 CREATE POLICY "Authors can update own threads"
   ON public.threads FOR UPDATE
+  TO authenticated
+  USING (author_id = auth.uid())
+  WITH CHECK (author_id = auth.uid());
+
+DROP POLICY IF EXISTS "Authors can update own answers" ON public.answers;
+CREATE POLICY "Authors can update own answers"
+  ON public.answers FOR UPDATE
   TO authenticated
   USING (author_id = auth.uid())
   WITH CHECK (author_id = auth.uid());

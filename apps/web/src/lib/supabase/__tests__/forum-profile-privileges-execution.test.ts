@@ -47,12 +47,11 @@ const earlierMigrations = readdirSync(MIGRATIONS)
 const FORUM_TABLES = ["threads", "answers", "votes", "flags"] as const;
 
 /**
- * Two grant shapes the migration has to land from. "chain" is what the
- * migrations alone leave behind. "table-level" is the shape Supabase default
- * privileges produce when every client role holds ALL on the table, which a
- * column-level REVOKE cannot narrow.
+ * The migration has to reach the same grants from any prior grant shape, so the
+ * suite starts from what the migration chain leaves and from a broad grant of
+ * everything.
  */
-type GrantShape = "chain" | "table-level";
+type GrantShape = "chain" | "broad";
 
 async function buildDb(shape: GrantShape): Promise<PGlite> {
   const db = new PGlite();
@@ -93,7 +92,7 @@ async function buildDb(shape: GrantShape): Promise<PGlite> {
     CREATE PUBLICATION supabase_realtime;
   `);
   for (const sql of earlierMigrations) await db.exec(sql);
-  if (shape === "table-level") {
+  if (shape === "broad") {
     await db.exec(
       `GRANT ALL ON ${FORUM_TABLES.map((t) => `public.${t}`).join(", ")}
          TO anon, authenticated, service_role;`
@@ -248,8 +247,9 @@ async function columnsOf(db: PGlite, table: string): Promise<string[]> {
 }
 
 const INSUFFICIENT_PRIVILEGE = { code: "42501" };
+const THREAD_CLOSED = "AC001";
 
-describe.each<GrantShape>(["chain", "table-level"])(
+describe.each<GrantShape>(["chain", "broad"])(
   "forum and profile privileges from the %s grant shape",
   (shape) => {
     let db: PGlite;
@@ -272,7 +272,7 @@ describe.each<GrantShape>(["chain", "table-level"])(
       // Every column, so a column added to the grant later fails here too.
       it.each([
         ["answers", "INSERT", ["thread_id", "author_id", "body"]],
-        ["answers", "UPDATE", ["body"]],
+        ["answers", "UPDATE", []],
         ["threads", "INSERT", []],
         ["threads", "UPDATE", []],
         ["votes", "INSERT", []],
@@ -306,23 +306,30 @@ describe.each<GrantShape>(["chain", "table-level"])(
       });
 
       it.each(FORUM_TABLES)(
-        "no client role can DELETE from %s, service_role can",
+        "no client role holds DELETE, TRUNCATE, REFERENCES or TRIGGER on %s, service_role does",
         async (table) => {
-          const r = await db.query<{
-            anon: boolean;
-            authed: boolean;
-            service: boolean;
-          }>(
-            `SELECT has_table_privilege('anon', $1, 'DELETE') AS anon,
-                    has_table_privilege('authenticated', $1, 'DELETE') AS authed,
-                    has_table_privilege('service_role', $1, 'DELETE') AS service`,
-            [`public.${table}`]
-          );
-          expect(r.rows[0]).toEqual({
-            anon: false,
-            authed: false,
-            service: true,
-          });
+          for (const privilege of [
+            "DELETE",
+            "TRUNCATE",
+            "REFERENCES",
+            "TRIGGER",
+          ]) {
+            const r = await db.query<{
+              anon: boolean;
+              authed: boolean;
+              service: boolean;
+            }>(
+              `SELECT has_table_privilege('anon', $1, $2) AS anon,
+                      has_table_privilege('authenticated', $1, $2) AS authed,
+                      has_table_privilege('service_role', $1, $2) AS service`,
+              [`public.${table}`, privilege]
+            );
+            expect(r.rows[0]).toEqual({
+              anon: false,
+              authed: false,
+              service: true,
+            });
+          }
         }
       );
 
@@ -363,16 +370,27 @@ describe.each<GrantShape>(["chain", "table-level"])(
         ]);
       });
 
-      it("keeps the write policies the routes use on answers and flags", async () => {
-        const r = await db.query<{ policyname: string }>(
-          `SELECT policyname FROM pg_policies
+      it("keeps only the INSERT policies the routes use on answers and flags, bound to the caller", async () => {
+        const r = await db.query<{
+          policyname: string;
+          cmd: string;
+          with_check: string;
+        }>(
+          `SELECT policyname, cmd, with_check FROM pg_policies
             WHERE schemaname = 'public' AND tablename IN ('answers', 'flags')
               AND cmd <> 'SELECT' ORDER BY 1`
         );
-        expect(r.rows.map((row) => row.policyname)).toEqual([
-          "Authenticated users can create answers",
-          "Authenticated users can create flags",
-          "Authors can update own answers",
+        expect(r.rows).toEqual([
+          {
+            policyname: "Authenticated users can create answers",
+            cmd: "INSERT",
+            with_check: "(author_id = auth.uid())",
+          },
+          {
+            policyname: "Authenticated users can create flags",
+            cmd: "INSERT",
+            with_check: "(reporter_id = auth.uid())",
+          },
         ]);
       });
     });
@@ -400,6 +418,7 @@ describe.each<GrantShape>(["chain", "table-level"])(
         ["vote_score", "9999"],
         ["thread_id", "NULL"],
         ["author_id", "NULL"],
+        ["body", "'Edited'"],
       ])("answers update of %s", async (column, value) => {
         const answer = await postAnswer(db, learner, thread);
         await expect(
@@ -663,35 +682,18 @@ describe.each<GrantShape>(["chain", "table-level"])(
         expect(row.rows[0]!.deleted_at).not.toBeNull();
       });
 
-      it("an author can still edit their answer body, and updated_at follows", async () => {
+      it("the accept route can still write answers through the admin client", async () => {
         const answer = await postAnswer(db, learner, thread);
-        await db.query(
-          `UPDATE public.answers SET updated_at = '2020-01-01' WHERE id = $1`,
-          [answer]
-        );
-        await asUser(
+        await asService(
           db,
-          learner,
-          `UPDATE public.answers SET body = 'Edited' WHERE id = $1`,
+          `UPDATE public.answers SET body = 'Edited by the service' WHERE id = $1`,
           [answer]
         );
-        const row = await db.query<{ body: string; updated_at: Date }>(
-          `SELECT body, updated_at FROM public.answers WHERE id = $1`,
+        const row = await db.query<{ body: string }>(
+          `SELECT body FROM public.answers WHERE id = $1`,
           [answer]
         );
-        expect(row.rows[0]!.body).toBe("Edited");
-        expect(row.rows[0]!.updated_at.getUTCFullYear()).toBeGreaterThan(2020);
-      });
-
-      it("someone else's answer body is untouched", async () => {
-        const answer = await postAnswer(db, learner, thread);
-        const r = await asUser(
-          db,
-          author,
-          `UPDATE public.answers SET body = 'Not my answer' WHERE id = $1`,
-          [answer]
-        );
-        expect(r.affectedRows).toBe(0);
+        expect(row.rows[0]!.body).toBe("Edited by the service");
       });
 
       it("signed-in and anonymous reads of threads, answers and votes", async () => {
@@ -707,7 +709,7 @@ describe.each<GrantShape>(["chain", "table-level"])(
       });
     });
 
-    describe("answers on locked threads", () => {
+    describe("answers on closed threads", () => {
       it("a moderator lock stops new answers, for every role", async () => {
         const t = await createThread(db, author);
         await postAnswer(db, learner, t);
@@ -717,9 +719,11 @@ describe.each<GrantShape>(["chain", "table-level"])(
           [t, author]
         );
 
-        await expect(postAnswer(db, learner, t)).rejects.toThrow(
-          /Thread is locked/
-        );
+        // The route turns this code into a 403.
+        await expect(postAnswer(db, learner, t)).rejects.toMatchObject({
+          code: THREAD_CLOSED,
+          message: "Thread is locked",
+        });
         await expect(postAnswer(db, author, t)).rejects.toThrow(
           /Thread is locked/
         );
@@ -756,7 +760,7 @@ describe.each<GrantShape>(["chain", "table-level"])(
         await expect(postAnswer(db, learner, t)).resolves.toBeDefined();
       });
 
-      it("answers already on a locked thread stay editable and removable", async () => {
+      it("answers already on a locked thread stay removable, and nobody can edit them", async () => {
         const t = await createThread(db, author);
         const answer = await postAnswer(db, learner, t);
         await asService(
@@ -764,17 +768,44 @@ describe.each<GrantShape>(["chain", "table-level"])(
           `SELECT public.moderate_lock_thread($1, NULL, $2)`,
           [t, author]
         );
-        await asUser(
-          db,
-          learner,
-          `UPDATE public.answers SET body = 'Edited after lock' WHERE id = $1`,
-          [answer]
-        );
+        await expect(
+          asUser(
+            db,
+            learner,
+            `UPDATE public.answers SET body = 'Edited after lock' WHERE id = $1`,
+            [answer]
+          )
+        ).rejects.toMatchObject(INSUFFICIENT_PRIVILEGE);
         await asService(db, `SELECT public.soft_delete_answer($1, $2)`, [
           answer,
           learner,
         ]);
       });
+
+      it.each([
+        ["its author", "soft_delete_thread($1, $2)"],
+        ["a moderator", "moderate_soft_delete_thread($1, NULL, $2)"],
+      ])(
+        "a thread removed by %s takes no new answers, for every role",
+        async (_who, call) => {
+          const t = await createThread(db, author);
+          await asService(db, `SELECT public.${call}`, [t, author]);
+
+          for (const poster of [learner, author]) {
+            await expect(postAnswer(db, poster, t)).rejects.toMatchObject({
+              code: THREAD_CLOSED,
+              message: "Thread is removed",
+            });
+          }
+          await expect(
+            asService(
+              db,
+              `INSERT INTO public.answers (thread_id, author_id, body) VALUES ($1, $2, 'x')`,
+              [t, learner]
+            )
+          ).rejects.toThrow(/Thread is removed/);
+        }
+      );
 
       it("an unknown thread still fails on the foreign key, not the lock check", async () => {
         await expect(
@@ -1145,22 +1176,22 @@ describe.each<GrantShape>(["chain", "table-level"])(
 );
 
 describe("migration properties", () => {
-  it("both grant shapes end in the same state", async () => {
+  it("reaches the same grants from any prior grant shape", async () => {
     const chain = await buildDb("chain");
-    const tableLevel = await buildDb("table-level");
+    const broad = await buildDb("broad");
     await chain.exec(migration);
-    await tableLevel.exec(migration);
+    await broad.exec(migration);
     const onForumTables = (lines: string[]) =>
       lines.filter((l) => !/^(table|column) profiles/.test(l));
-    expect(onForumTables(await snapshot(tableLevel))).toEqual(
+    expect(onForumTables(await snapshot(broad))).toEqual(
       onForumTables(await snapshot(chain))
     );
     await chain.close();
-    await tableLevel.close();
+    await broad.close();
   });
 
-  it("rollback restores the table-level shape exactly, and can be re-applied", async () => {
-    const db = await buildDb("table-level");
+  it("rollback returns to the migration chain's state exactly, and can be re-applied", async () => {
+    const db = await buildDb("chain");
     const before = await snapshot(db);
 
     await db.exec(migration);
@@ -1182,6 +1213,28 @@ describe("migration properties", () => {
     await db.close();
   });
 
+  it("rollback keeps client UPDATE on threads and answers column-scoped", async () => {
+    const db = await buildDb("chain");
+    await db.exec(migration);
+    await db.exec(rollback);
+    for (const role of ["anon", "authenticated"]) {
+      for (const table of ["threads", "answers"]) {
+        const r = await db.query<{ ok: boolean }>(
+          `SELECT has_table_privilege($1, $2, 'UPDATE') AS ok`,
+          [role, `public.${table}`]
+        );
+        expect(r.rows[0]!.ok).toBe(false);
+      }
+    }
+    expect(
+      await hasColumn(db, "authenticated", "answers", "is_accepted", "UPDATE")
+    ).toBe(false);
+    expect(
+      await hasColumn(db, "authenticated", "threads", "is_pinned", "UPDATE")
+    ).toBe(false);
+    await db.close();
+  });
+
   it("leaves the session as postgres", async () => {
     const db = await buildDb("chain");
     await db.exec(migration);
@@ -1193,7 +1246,7 @@ describe("migration properties", () => {
   it("applies and works when the table owner is not a superuser", async () => {
     // Supabase's postgres role owns the tables but is not a superuser. pglite's
     // is, which would hide anything that only works by bypassing privileges.
-    const db = await buildDb("table-level");
+    const db = await buildDb("chain");
     await db.exec(`
       CREATE ROLE table_owner NOSUPERUSER;
       GRANT ALL ON SCHEMA public TO table_owner;
@@ -1221,21 +1274,28 @@ describe("migration properties", () => {
     await db.close();
   });
 
-  it("the verify script is false on what changes before the migration, all true after", async () => {
-    const db = await buildDb("table-level");
-    const before = await db.query<{ kind: string; pass: boolean }>(verify);
-    expect(before.rows.filter((r) => r.kind === "stays" && !r.pass)).toEqual(
-      []
-    );
-    expect(before.rows.filter((r) => r.kind === "changes" && r.pass)).toEqual(
-      []
-    );
+  it("the verify script passes only once the migration is in", async () => {
+    const db = await buildDb("chain");
+    const before = await db.query<{ pass: boolean }>(verify);
+    expect(before.rows.some((r) => !r.pass)).toBe(true);
 
     await db.exec(migration);
     const after = await db.query<{ check_name: string; pass: boolean }>(verify);
     expect(after.rows.length).toBeGreaterThan(30);
     expect(after.rows.filter((r) => !r.pass)).toEqual([]);
     await db.close();
+  });
+
+  it("the answers route recognises the trigger's error code", () => {
+    const route = readFileSync(
+      resolve(
+        findRepoRoot(),
+        "apps/web/src/app/api/community/answers/route.ts"
+      ),
+      "utf8"
+    );
+    expect(route).toContain(`"${THREAD_CLOSED}"`);
+    expect(migration).toContain(`ERRCODE = '${THREAD_CLOSED}'`);
   });
 
   it("takes the row lock the counter triggers take, so answers cannot deadlock", () => {

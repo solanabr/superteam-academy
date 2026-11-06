@@ -1,25 +1,22 @@
 -- Limit client writes on the forum tables to what the app sends, reject answers
--- on locked threads, and move three profiles bookkeeping columns out of
--- self-service writes.
+-- on locked or removed threads, and move three profiles bookkeeping columns out
+-- of self-service writes.
 --
 -- Who writes what, checked against apps/web/src:
 --   threads  create_thread RPC and the accept route, both through the admin client
 --   votes    /api/community/votes, admin client only
 --   answers  /api/community/answers inserts through the user session; accept and
---            delete go through the admin client
+--            delete go through the admin client; no route edits an answer
 --   flags    /api/community/flags inserts through the user session; moderation
 --            goes through the admin client
 -- Triggers that keep counters on threads are SECURITY DEFINER and need no client
 -- privilege.
 --
--- A column-level REVOKE does nothing against a table-level grant, so each table
--- has its table-level writes revoked first (which also clears column grants) and
--- the columns granted back. That lands on the same result whatever the starting
--- grants were, and re-running it is a no-op.
+-- Each table has its client privileges revoked whole, which also clears column
+-- grants, and the needed columns granted back, so re-running this is a no-op.
 --
--- Rollback: `20261105120000_narrow_forum_and_profile_privileges.sql.rollback`
--- restores the previous grants and policies and drops both triggers.
--- Post-apply check: `20261105120000_narrow_forum_and_profile_privileges.sql.verify`.
+-- Rollback: `20261105120000_narrow_forum_and_profile_privileges.sql.rollback`.
+-- Check: `20261105120000_narrow_forum_and_profile_privileges.sql.verify`.
 
 BEGIN;
 
@@ -30,31 +27,38 @@ SET LOCAL lock_timeout = '5s';
 -- ── threads ─────────────────────────────────────────────────────────────────
 DROP POLICY IF EXISTS "Authenticated users can create threads" ON public.threads;
 DROP POLICY IF EXISTS "Authors can update own threads" ON public.threads;
-REVOKE INSERT, UPDATE, DELETE ON public.threads FROM anon, authenticated;
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER
+  ON public.threads FROM anon, authenticated;
 
 -- ── votes ───────────────────────────────────────────────────────────────────
 DROP POLICY IF EXISTS "Authenticated users can vote" ON public.votes;
 DROP POLICY IF EXISTS "Users can update own votes" ON public.votes;
 DROP POLICY IF EXISTS "Users can delete own votes" ON public.votes;
-REVOKE INSERT, UPDATE, DELETE ON public.votes FROM anon, authenticated;
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER
+  ON public.votes FROM anon, authenticated;
 
 -- ── answers ─────────────────────────────────────────────────────────────────
-REVOKE INSERT, UPDATE, DELETE ON public.answers FROM anon, authenticated;
+DROP POLICY IF EXISTS "Authors can update own answers" ON public.answers;
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER
+  ON public.answers FROM anon, authenticated;
 GRANT INSERT (thread_id, author_id, body) ON public.answers TO authenticated;
-GRANT UPDATE (body) ON public.answers TO authenticated;
 
 -- ── flags ───────────────────────────────────────────────────────────────────
-REVOKE INSERT, UPDATE, DELETE ON public.flags FROM anon, authenticated;
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER
+  ON public.flags FROM anon, authenticated;
 GRANT INSERT (reporter_id, thread_id, answer_id, reason, details)
   ON public.flags TO authenticated;
 
--- ── answers on locked threads ───────────────────────────────────────────────
+-- ── answers on locked or removed threads ────────────────────────────────────
 -- SECURITY DEFINER because the inserting role has no UPDATE on threads, which the
--- row lock requires, and RLS could hide the row. The lock makes a concurrent
--- moderator lock wait for this insert or be seen by it. NO KEY UPDATE is the mode
+-- row lock requires, and RLS hides removed threads. The lock makes a concurrent
+-- moderator action wait for this insert or be seen by it. NO KEY UPDATE is the mode
 -- the AFTER INSERT counter triggers take on this row anyway; a weaker share lock
 -- here would let two concurrent answers deadlock upgrading it. A missing thread
 -- falls through to the foreign key error.
+--
+-- AC001 is ours, so /api/community/answers can answer 403 on exactly this and
+-- leave every other insert failure a 500.
 CREATE OR REPLACE FUNCTION public.reject_answer_on_locked_thread()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -63,15 +67,19 @@ SET search_path = ''
 AS $$
 DECLARE
   v_is_locked BOOLEAN;
+  v_deleted_at TIMESTAMPTZ;
 BEGIN
-  SELECT is_locked INTO v_is_locked
+  SELECT is_locked, deleted_at INTO v_is_locked, v_deleted_at
     FROM public.threads
    WHERE id = NEW.thread_id
      FOR NO KEY UPDATE;
 
+  IF v_deleted_at IS NOT NULL THEN
+    RAISE EXCEPTION 'Thread is removed' USING ERRCODE = 'AC001';
+  END IF;
+
   IF v_is_locked THEN
-    RAISE EXCEPTION 'Thread is locked'
-      USING ERRCODE = 'insufficient_privilege';
+    RAISE EXCEPTION 'Thread is locked' USING ERRCODE = 'AC001';
   END IF;
 
   RETURN NEW;
