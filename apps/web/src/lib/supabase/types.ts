@@ -1486,6 +1486,11 @@ export type Database = {
         Args: { p_keep_days: number };
         Returns: number;
       };
+      /** Deleted accounts that still have an avatar file. service_role only. */
+      list_deleted_account_avatar_owners: {
+        Args: { p_limit: number };
+        Returns: string[];
+      };
       merge_wallet_shell_account: {
         Args: { p_target: string; p_shell: string; p_wallet: string };
         Returns: Record<string, unknown>;

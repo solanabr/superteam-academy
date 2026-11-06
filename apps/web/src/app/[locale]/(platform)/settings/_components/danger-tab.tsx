@@ -120,6 +120,9 @@ export function DangerTab() {
             <DialogDescription>
               {t("deleteAccountConfirmBody")}
             </DialogDescription>
+            <p className="text-sm text-text-2">
+              {t("deleteAccountConfirmOthers")}
+            </p>
           </DialogHeader>
 
           <div className="space-y-2">

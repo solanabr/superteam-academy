@@ -159,6 +159,24 @@ export const SCHEMA_EXPECTATIONS: readonly SchemaExpectation[] = [
   },
   {
     kind: "rpc",
+    // REVOKEd from anon/authenticated like the probes above, so PostgREST answers
+    // 42501 without running the body.
+    rpc: "purge_ai_spend_ip_rows",
+    args: { p_keep_days: 36500 },
+    migration: "20261105130000_delete_account_data.sql",
+    description:
+      "retention purge for AI spend IP rows — a missing fn fails the account-retention cron",
+  },
+  {
+    kind: "rpc",
+    rpc: "list_deleted_account_avatar_owners",
+    args: { p_limit: 1 },
+    migration: "20261105130000_delete_account_data.sql",
+    description:
+      "avatar sweep for deleted accounts — a missing fn fails the account-retention cron",
+  },
+  {
+    kind: "rpc",
     // ⚠️ SIDE-EFFECTFUL IF EVER CALLABLE (it upserts the (user, lesson) row and
     // bumps a tier counter) — safe here for the same reason as the two probes
     // above: REVOKEd from PUBLIC/anon/authenticated, so the ANON client gets

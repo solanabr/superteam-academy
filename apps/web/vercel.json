@@ -14,7 +14,7 @@
       "schedule": "*/15 * * * *"
     },
     {
-      "path": "/api/cron/ai-ip-retention",
+      "path": "/api/cron/account-retention",
       "schedule": "0 7 * * *"
     }
   ]

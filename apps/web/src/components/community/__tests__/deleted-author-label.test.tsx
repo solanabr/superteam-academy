@@ -123,21 +123,30 @@ describe("the delete dialog says what really happens", () => {
       s: en.settings,
       forum: /forum posts stay/i,
       label: en.community.deletedUser,
-      chain: /on-chain XP and credentials/i,
+      chain: /on-chain XP and credentials stay on the blockchain/i,
+      permanent: /stored permanently/i,
+      page: /credential page on the Academy goes away/i,
+      others: /outside services/i,
     },
     {
       name: "pt-BR",
       s: ptBR.settings,
       forum: /posts no fórum permanecem/i,
       label: ptBR.community.deletedUser,
-      chain: /XP on-chain e suas credenciais/i,
+      chain: /XP on-chain e suas credenciais permanecem na blockchain/i,
+      permanent: /armazenados de forma permanente/i,
+      page: /página da credencial na Academy deixa de existir/i,
+      others: /serviços externos/i,
     },
     {
       name: "es",
       s: es.settings,
       forum: /publicaciones en el foro permanecen/i,
       label: es.community.deletedUser,
-      chain: /XP on-chain y tus credenciales/i,
+      chain: /XP on-chain y tus credenciales permanecen en la blockchain/i,
+      permanent: /almacenados de forma permanente/i,
+      page: /página de la credencial en la Academy desaparece/i,
+      others: /servicios externos/i,
     },
   ];
 
@@ -146,8 +155,40 @@ describe("the delete dialog says what really happens", () => {
     expect(s.deleteAccountConfirmBody).toContain(label);
   });
 
-  it.each(cases)("$name: on-chain records stay", ({ s, chain }) => {
+  it.each(cases)("$name: on-chain records stay", ({ s, chain, permanent }) => {
     expect(s.deleteAccountConfirmBody).toMatch(chain);
+    expect(s.deleteAccountConfirmBody).toMatch(permanent);
+  });
+
+  it.each(cases)(
+    "$name: the Academy credential page goes away",
+    ({ s, page }) => {
+      expect(s.deleteAccountConfirmBody).toMatch(page);
+      expect(s.deleteAccountConfirmBody).not.toMatch(
+        /stay public|continuam públicas|siguen siendo públicas/i
+      );
+    }
+  );
+
+  it.each(cases)(
+    "$name: outside services are named separately",
+    ({ s, others }) => {
+      expect(s.deleteAccountConfirmOthers).toMatch(others);
+      expect(s.deleteAccountConfirmBody).not.toMatch(others);
+    }
+  );
+
+  it("shows both paragraphs", async () => {
+    render(withMessages(<DangerTab />));
+    fireEvent.click(
+      screen.getByRole("button", { name: en.settings.deleteAccountButton })
+    );
+
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog.textContent).toContain(en.settings.deleteAccountConfirmBody);
+    expect(dialog.textContent).toContain(
+      en.settings.deleteAccountConfirmOthers
+    );
   });
 
   it("no longer promises permanent deletion in the button", () => {

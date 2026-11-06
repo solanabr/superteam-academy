@@ -18,12 +18,15 @@
 --     where the data is scrubbed and a session still refreshes. A failed call changes
 --     nothing and the session survives, so the client can retry.
 --
--- COMING BACK: with the email and identities gone, the same person can sign up again
--- and gets a new account. The owner hasn't decided this. Refusing them would take a
--- stored hash of the identity, checked at the three sign-in routes.
+-- Once the email and identities are gone, signing in with the same identity creates
+-- a new account.
 --
--- Files: the avatar lives in Storage, which refuses SQL deletes, so the route
--- removes it through the API first.
+-- Usernames: the tombstone name is random, because a name derived from the id could
+-- be taken in advance. enforce_profile_tombstone_write keeps the prefix out of client
+-- hands and stops an unexpired token writing to a tombstone.
+--
+-- Files: the avatar lives in Storage, which refuses SQL deletes. The route removes it
+-- after this commits, and the account-retention cron finishes any it couldn't.
 --
 -- Idempotent: every statement is safe to repeat, and wallets now held by a live
 -- account are never touched, so a re-run after someone came back can't reach them.
@@ -37,8 +40,12 @@ SECURITY DEFINER
 SET search_path = ''
 AS $$
 DECLARE
-  v_now       TIMESTAMPTZ := now();
-  v_wallets   TEXT[];
+  v_now        TIMESTAMPTZ := now();
+  v_wallets    TEXT[];
+  v_email      TEXT;
+  v_username   TEXT;
+  v_deleted_at TIMESTAMPTZ;
+  v_candidate  TEXT;
   v_auth_table TEXT;
 BEGIN
   -- The profile write locks accept only service_role. set_config rather than SET
@@ -47,16 +54,21 @@ BEGIN
     'request.jwt.claims', '{"role":"service_role"}', true
   );
 
-  PERFORM 1 FROM public.profiles WHERE id = p_user_id FOR UPDATE;
+  SELECT p.username, p.deleted_at INTO v_username, v_deleted_at
+  FROM public.profiles p WHERE p.id = p_user_id FOR UPDATE;
   IF NOT FOUND THEN
     RAISE EXCEPTION 'delete_account_data: profile not found'
       USING ERRCODE = 'no_data_found';
   END IF;
 
+  SELECT u.email::text INTO v_email FROM auth.users u WHERE u.id = p_user_id;
+
   -- Every wallet this account held, including what an account deleted before this
-  -- function existed still shows only in its placeholder email or spend history. A
-  -- wallet a different live account holds now is theirs, as with a merged shell.
-  -- user_metadata is not a source: the user can write to it.
+  -- function existed still shows only in its auth row or spend history. GoTrue
+  -- lowercases emails, so a placeholder can't give back a base58 wallet: the real
+  -- case is in user_metadata, written at sign-up. The user can edit metadata too, so
+  -- it counts only when it matches the placeholder the server assigned. A wallet a
+  -- different live account holds now is theirs, as with a merged shell.
   SELECT COALESCE(array_agg(DISTINCT held.wallet), ARRAY[]::text[])
     INTO v_wallets
   FROM (
@@ -67,10 +79,10 @@ BEGIN
     SELECT s.wallet FROM public.platform_spend s
      WHERE s.user_id = p_user_id AND s.wallet NOT LIKE 'deleted:%'
     UNION ALL
-    SELECT split_part(u.email::text, '@', 1) FROM auth.users u
+    SELECT u.raw_user_meta_data ->> 'wallet_address' FROM auth.users u
      WHERE u.id = p_user_id
-       AND lower(u.email::text) LIKE '%@wallet.superteam-lms.local'
-       AND u.email::text NOT LIKE 'deleted-%'
+       AND lower(u.email::text) = lower(u.raw_user_meta_data ->> 'wallet_address')
+                                  || '@wallet.superteam-lms.local'
   ) held
   WHERE held.wallet IS NOT NULL
     AND held.wallet <> ''
@@ -110,8 +122,23 @@ BEGIN
     );
 
   -- ── profiles ─────────────────────────────────────────────────────────────────
+  -- A tombstone keeps the name it already has, so a re-run changes nothing.
+  IF v_deleted_at IS NULL OR v_username NOT LIKE 'deleted-user-%' THEN
+    v_username := NULL;
+    FOR i IN 1..5 LOOP
+      v_candidate := 'deleted-user-' || substr(md5(gen_random_uuid()::text), 1, 12);
+      IF NOT EXISTS (SELECT 1 FROM public.profiles o WHERE o.username = v_candidate) THEN
+        v_username := v_candidate;
+        EXIT;
+      END IF;
+    END LOOP;
+    IF v_username IS NULL THEN
+      RAISE EXCEPTION 'delete_account_data: no free tombstone name';
+    END IF;
+  END IF;
+
   UPDATE public.profiles SET
-    username = 'deleted-user-' || substr(md5(p_user_id::text), 1, 12),
+    username = v_username,
     display_name = NULL,
     bio = NULL,
     avatar_url = NULL,
@@ -204,21 +231,33 @@ BEGIN
     updated_at = v_now
   WHERE id = p_user_id;
 
-  FOREACH v_auth_table IN ARRAY ARRAY[
-    'identities', 'sessions', 'one_time_tokens', 'flow_state', 'mfa_factors',
-    'mfa_recovery_code_sets', 'webauthn_credentials', 'webauthn_challenges',
-    'oauth_consents', 'oauth_authorizations'
-  ] LOOP
-    -- Newer GoTrue tables may not exist everywhere; skip one that's absent rather
-    -- than fail every deletion.
-    IF to_regclass('auth.' || v_auth_table) IS NOT NULL THEN
-      EXECUTE format('DELETE FROM auth.%I WHERE user_id = $1', v_auth_table)
-        USING p_user_id;
-    END IF;
+  -- Every auth table keyed on the account, so one GoTrue adds later is covered. Only
+  -- tables this role can delete from: a new one must not fail every deletion.
+  FOR v_auth_table IN
+    SELECT c.relname
+    FROM pg_catalog.pg_class c
+    JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+    JOIN pg_catalog.pg_attribute a ON a.attrelid = c.oid
+    WHERE n.nspname = 'auth'
+      AND c.relkind = 'r'
+      AND c.relname <> 'users'
+      AND a.attname = 'user_id'
+      AND a.atttypid = 'uuid'::regtype
+      AND NOT a.attisdropped
+      AND has_table_privilege(c.oid, 'DELETE')
+  LOOP
+    EXECUTE format('DELETE FROM auth.%I WHERE user_id = $1', v_auth_table)
+      USING p_user_id;
   END LOOP;
 
   DELETE FROM auth.refresh_tokens WHERE user_id = p_user_id::text;
-  DELETE FROM auth.audit_log_entries WHERE payload ->> 'actor_id' = p_user_id::text;
+
+  -- The person is the actor on their own events. Admin API rows have a nil actor and
+  -- name them in traits, by id or by email.
+  DELETE FROM auth.audit_log_entries a
+  WHERE a.payload ->> 'actor_id' = p_user_id::text
+     OR a.payload -> 'traits' ->> 'user_id' = p_user_id::text
+     OR a.payload -> 'traits' ->> 'user_email' = v_email;
 END;
 $$;
 
@@ -249,5 +288,74 @@ $$;
 
 REVOKE ALL ON FUNCTION public.purge_ai_spend_ip_rows(INTEGER) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.purge_ai_spend_ip_rows(INTEGER) TO service_role;
+
+-- Accounts delete_account_data finished that still have an avatar file, for the
+-- account-retention cron. auth.users.deleted_at marks the ones it finished.
+CREATE OR REPLACE FUNCTION public.list_deleted_account_avatar_owners(p_limit INTEGER)
+RETURNS SETOF UUID
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+BEGIN
+  IF p_limit IS NULL OR p_limit < 1 THEN
+    RAISE EXCEPTION 'p_limit must be >= 1';
+  END IF;
+  RETURN QUERY
+  SELECT DISTINCT u.id
+  FROM auth.users u
+  JOIN public.profiles p ON p.id = u.id AND p.deleted_at IS NOT NULL
+  JOIN storage.objects o
+    ON o.bucket_id = 'avatars' AND split_part(o.name, '/', 1) = u.id::text
+  WHERE u.deleted_at IS NOT NULL
+  LIMIT p_limit;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.list_deleted_account_avatar_owners(INTEGER) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.list_deleted_account_avatar_owners(INTEGER) TO service_role;
+
+-- Own-row RLS says which row a caller may write, not which values. Same privileged
+-- test as enforce_profile_deleted_at_write, as its own trigger so the other locks'
+-- bodies stay untouched. Stops an unexpired token writing to a tombstone, and keeps
+-- the tombstone name prefix out of client hands. Only a change to the name is
+-- refused, so a no-op update on an existing row passes.
+CREATE OR REPLACE FUNCTION public.enforce_profile_tombstone_write()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = ''
+AS $$
+DECLARE
+  jwt_role TEXT;
+BEGIN
+  jwt_role := NULLIF(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role';
+  IF COALESCE(current_user = 'service_role' OR jwt_role = 'service_role', false) THEN
+    RETURN NEW;
+  END IF;
+
+  IF TG_OP = 'UPDATE' AND OLD.deleted_at IS NOT NULL THEN
+    RAISE EXCEPTION 'permission denied: a deleted account can''t be changed'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+
+  IF lower(NEW.username) LIKE 'deleted-user-%'
+     AND (TG_OP = 'INSERT' OR NEW.username IS DISTINCT FROM OLD.username) THEN
+    RAISE EXCEPTION 'permission denied: this username is reserved'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.enforce_profile_tombstone_write() FROM PUBLIC, anon, authenticated;
+
+DROP TRIGGER IF EXISTS trg_enforce_profile_tombstone_write ON public.profiles;
+CREATE TRIGGER trg_enforce_profile_tombstone_write
+  BEFORE INSERT OR UPDATE ON public.profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION public.enforce_profile_tombstone_write();
 
 COMMIT;

@@ -9,6 +9,8 @@ import { resolve } from "node:path";
 import type { PGlite } from "@electric-sql/pglite";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { DELETION_POLICY } from "@/lib/account/deletion-policy";
+import { recoveredCompletedAt } from "@/lib/lessons/recovered-completion";
+import { sponsorshipWalletKeys } from "@/lib/platform-spend/wallet-keys";
 import { buildFullLineage, findRepoRoot } from "./helpers/full-lineage";
 
 const VICTIM = "11111111-1111-4111-8111-111111111111";
@@ -16,6 +18,7 @@ const BYSTANDER = "22222222-2222-4222-8222-222222222222";
 const V_WALLET = "VictimWa11et1111111111111111111111111111111";
 const B_WALLET = "BystanderWa11et222222222222222222222222222";
 const V_EMAIL = "victim-private@example.com";
+const NIL_ACTOR = "00000000-0000-0000-0000-000000000000";
 const V_USERNAME = "victim_username";
 const V_DISPLAY = "victim Display Name";
 const V_IP = "203.0.113.77";
@@ -60,7 +63,13 @@ function perAccount(
   INSERT INTO auth.flow_state (user_id, provider_access_token) VALUES ('${id}', 'pat${tag}');
   INSERT INTO auth.mfa_factors (user_id, phone) VALUES ('${id}', '${phone}');
   INSERT INTO auth.audit_log_entries (payload, ip_address)
-  VALUES (json_build_object('actor_id', '${id}', 'actor_username', '${email}'), '${ip}');
+  VALUES (json_build_object('actor_id', '${id}', 'actor_username', '${email}'), '${ip}'),
+         (json_build_object('actor_id', '${NIL_ACTOR}', 'actor_username', 'service_role',
+            'action', 'user_modified',
+            'traits', json_build_object('user_id', '${id}', 'user_email', '${email}', 'user_phone', '${phone}')), '10.0.0.1'),
+         (json_build_object('actor_id', '${NIL_ACTOR}', 'actor_username', 'service_role',
+            'action', 'user_invited',
+            'traits', json_build_object('user_email', '${email}')), '10.0.0.1');
 
   UPDATE public.profiles SET
     username = '${username}', display_name = '${tag} Display Name', bio = '${tag} bio',
@@ -189,7 +198,20 @@ describe("delete_account_data", () => {
 
   beforeAll(async () => {
     db = await buildFullLineage();
+    await db.exec(`
+      CREATE TABLE auth.future_user_table (user_id uuid);
+      INSERT INTO auth.future_user_table VALUES ('${VICTIM}'), ('${BYSTANDER}');
+    `);
     await db.exec(SEED);
+    // The name the RPC would have used if it were derived from the id: someone
+    // holding it must not be able to block this account's deletion.
+    await db.exec(`
+      ${SERVICE_ON}
+      UPDATE public.profiles
+      SET username = 'deleted-user-${createHash("md5").update(VICTIM).digest("hex").slice(0, 12)}'
+      WHERE id = '${BYSTANDER}';
+      ${SERVICE_OFF}
+    `);
     await db.exec("CREATE SCHEMA snapshot;");
     for (const table of await publicTables(db)) {
       await db.exec(
@@ -290,6 +312,9 @@ describe("delete_account_data", () => {
       expect(p.is_public).toBe(false);
       expect(p.verified).toBe(false);
       expect(p.username).toMatch(/^deleted-user-[0-9a-f]{12}$/);
+      expect(p.username).not.toBe(
+        `deleted-user-${createHash("md5").update(VICTIM).digest("hex").slice(0, 12)}`
+      );
       expect(p.deleted_at).not.toBeNull();
       expect(p.deletion_requested_at).not.toBeNull();
     });
@@ -356,9 +381,11 @@ describe("delete_account_data", () => {
       const sponsored = await db.query<{ wallet: string }>(
         "SELECT wallet FROM public.platform_spend WHERE signature = 'sponsor-victim'"
       );
-      expect(sponsored.rows[0]!.wallet).toBe(
-        `deleted:${createHash("sha256").update(V_WALLET).digest("hex")}`
+      // The ledger's own lookup must find what the RPC wrote.
+      expect(sponsorshipWalletKeys(V_WALLET)).toContain(
+        sponsored.rows[0]!.wallet
       );
+      expect(sponsored.rows[0]!.wallet).not.toContain(V_WALLET);
     });
 
     it("scrub: consumed nonces stay consumed without wallet or IP", async () => {
@@ -523,6 +550,29 @@ describe("delete_account_data", () => {
       expect(u.banned_until).not.toBeNull();
     });
 
+    it("removes audit rows that name the person as actor or as target", async () => {
+      const { rows } = await db.query<{ r: string }>(
+        "SELECT payload::text AS r FROM auth.audit_log_entries"
+      );
+      expect(rows.filter((row) => row.r.includes(VICTIM))).toEqual([]);
+      expect(rows.filter((row) => row.r.includes(V_EMAIL))).toEqual([]);
+      // Actor row, traits row and email-only row for the other account.
+      expect(rows.filter((row) => row.r.includes("bystander"))).toHaveLength(3);
+    });
+
+    it("clears rows in an auth table added after this function was written", async () => {
+      const { rows } = await db.query(
+        "SELECT 1 FROM auth.future_user_table WHERE user_id = $1",
+        [VICTIM]
+      );
+      expect(rows).toHaveLength(0);
+      const other = await db.query(
+        "SELECT 1 FROM auth.future_user_table WHERE user_id = $1",
+        [BYSTANDER]
+      );
+      expect(other.rows).toHaveLength(1);
+    });
+
     it("revokes every session in the same transaction", async () => {
       for (const table of [
         "sessions",
@@ -544,8 +594,7 @@ describe("delete_account_data", () => {
     });
   });
 
-  // Owner decision pending. Today's behavior: once scrubbed, the same identity
-  // can open a new account. If the owner decides otherwise, these change.
+  // Once scrubbed, signing in with the same identity creates a new account.
   describe("coming back", () => {
     const NEW_ID = "33333333-3333-4333-8333-333333333333";
 
@@ -638,15 +687,62 @@ describe("delete_account_data", () => {
       expect(rows.map((r) => r.user_id)).toContain(BYSTANDER);
     });
 
-    it("a credential stays publicly readable", async () => {
+    describe("what an anonymous visitor reads", () => {
+      const asAnon = async <T>(fn: () => Promise<T>): Promise<T> => {
+        await db.exec(`
+          GRANT SELECT ON public.certificates, public.nft_metadata TO anon;
+          SET ROLE anon;
+        `);
+        try {
+          return await fn();
+        } finally {
+          await db.exec("RESET ROLE;");
+        }
+      };
+
+      it("the Academy credential page goes away", async () => {
+        const rows = await asAnon(async () => {
+          const r = await db.query(
+            "SELECT 1 FROM public.certificates WHERE user_id = $1",
+            [VICTIM]
+          );
+          return r.rows;
+        });
+        expect(rows).toHaveLength(0);
+      });
+
+      it("another account's credential is still there", async () => {
+        const rows = await asAnon(async () => {
+          const r = await db.query(
+            "SELECT 1 FROM public.certificates WHERE user_id = $1",
+            [BYSTANDER]
+          );
+          return r.rows;
+        });
+        expect(rows).toHaveLength(1);
+      });
+
+      it("the on-chain credential's metadata still resolves, without the name", async () => {
+        const rows = await asAnon(async () => {
+          const r = await db.query<{ data: { attributes: unknown[] } }>(
+            "SELECT data FROM public.nft_metadata WHERE id = $1",
+            [V_META_ID]
+          );
+          return r.rows;
+        });
+        expect(rows[0]!.data.attributes).toContainEqual({
+          trait_type: "Recipient",
+          value: "Deleted user",
+        });
+      });
+    });
+
+    it("the certificate row itself stays for the on-chain record", async () => {
       const { rows } = await db.query<Record<string, unknown>>(
-        "SELECT mint_address, metadata_uri FROM public.certificates WHERE user_id = $1",
+        "SELECT mint_address FROM public.certificates WHERE user_id = $1",
         [VICTIM]
       );
-      expect(rows[0]).toEqual({
-        mint_address: "mint-victim",
-        metadata_uri: `https://www.st.academy/api/certificates/metadata?id=${V_META_ID}`,
-      });
+      expect(rows[0]).toEqual({ mint_address: "mint-victim" });
     });
 
     it("the same XP award can't land twice on the kept ledger", async () => {
@@ -669,6 +765,10 @@ describe("delete_account_data, other starting states", () => {
   const SHARED_WALLET = "SharedWa11et777777777777777777777777777777";
   const OLD_META = "88888888-8888-4888-8888-888888888888";
   const TARGET_META = "99999999-1111-4999-8999-999999999999";
+  const SPOOFER = "12121212-1212-4212-8212-121212121212";
+  const SPOOFER_PLACEHOLDER = "13131313-1313-4313-8313-131313131313";
+  const UNLINKED_WALLET = "Un1inkedWa11et88888888888888888888888888888";
+  const UNLINKED_META = "14141414-1414-4414-8414-141414141414";
 
   beforeAll(async () => {
     const backfill = readFileSync(
@@ -683,7 +783,7 @@ describe("delete_account_data, other starting states", () => {
       ${SERVICE_ON}
       -- Deleted under the old route: profile scrubbed, auth row untouched.
       INSERT INTO auth.users (id, email, raw_user_meta_data)
-      VALUES ('${OLD}', '${OLD_WALLET}@wallet.superteam-lms.local',
+      VALUES ('${OLD}', '${OLD_WALLET.toLowerCase()}@wallet.superteam-lms.local',
               '{"wallet_address":"${OLD_WALLET}"}');
       UPDATE public.profiles SET username = 'deleted-user-abcd1234', wallet_address = NULL,
         deleted_at = '2026-08-01T00:00:00Z', deletion_requested_at = '2026-08-01T00:00:00Z'
@@ -693,9 +793,20 @@ describe("delete_account_data, other starting states", () => {
           jsonb_build_object('trait_type', 'Recipient', 'value', '${OLD_WALLET}'))));
 
       -- A merged shell: tombstoned, its wallet now owned by a live account.
-      INSERT INTO auth.users (id, email)
-      VALUES ('${SHELL}', '${SHARED_WALLET}@wallet.superteam-lms.local'),
-             ('${TARGET}', 'target@example.com');
+      INSERT INTO auth.users (id, email, raw_user_meta_data)
+      VALUES ('${SHELL}', '${SHARED_WALLET.toLowerCase()}@wallet.superteam-lms.local',
+              '{"wallet_address":"${SHARED_WALLET}"}'),
+             ('${TARGET}', 'target@example.com', '{}');
+
+      -- user_metadata is user-writable: claiming a wallet there must get nothing.
+      INSERT INTO auth.users (id, email, raw_user_meta_data)
+      VALUES ('${SPOOFER}', 'spoofer@example.com', '{"wallet_address":"${UNLINKED_WALLET}"}'),
+             ('${SPOOFER_PLACEHOLDER}', 'realwallet111@wallet.superteam-lms.local',
+              '{"wallet_address":"${UNLINKED_WALLET}"}');
+      UPDATE public.profiles SET deleted_at = now() WHERE id IN ('${SPOOFER}', '${SPOOFER_PLACEHOLDER}');
+      INSERT INTO public.nft_metadata (id, data) VALUES ('${UNLINKED_META}',
+        jsonb_build_object('attributes', jsonb_build_array(
+          jsonb_build_object('trait_type', 'Recipient', 'value', '${UNLINKED_WALLET}'))));
       UPDATE public.profiles SET deleted_at = now() WHERE id = '${SHELL}';
       UPDATE public.profiles SET wallet_address = '${SHARED_WALLET}' WHERE id = '${TARGET}';
       INSERT INTO public.nft_metadata (id, data) VALUES ('${TARGET_META}',
@@ -730,6 +841,18 @@ describe("delete_account_data, other starting states", () => {
     expect(await recipient(OLD_META)).toBe("Deleted user");
   });
 
+  it("a wallet claimed only in user_metadata is ignored", async () => {
+    expect(await recipient(UNLINKED_META)).toBe(UNLINKED_WALLET);
+  });
+
+  it("keeps a tombstone's existing deleted-user name", async () => {
+    const { rows } = await db.query<{ username: string }>(
+      "SELECT username FROM public.profiles WHERE id = $1",
+      [OLD]
+    );
+    expect(rows[0]!.username).toBe("deleted-user-abcd1234");
+  });
+
   it("the backfill keeps the original deletion date", async () => {
     const { rows } = await db.query<{ deleted_at: Date }>(
       "SELECT deleted_at FROM public.profiles WHERE id = $1",
@@ -757,19 +880,107 @@ describe("delete_account_data, other starting states", () => {
     ).rejects.toThrow(/not found/i);
   });
 
-  it("is service-role only", async () => {
-    const { rows } = await db.query<Record<string, boolean>>(
+  it.each([
+    "delete_account_data",
+    "purge_ai_spend_ip_rows",
+    "list_deleted_account_avatar_owners",
+  ])("%s is service-role only with a fixed search_path", async (fn) => {
+    const { rows } = await db.query<Record<string, unknown>>(
       `SELECT has_function_privilege('anon', p.oid, 'EXECUTE') AS anon,
               has_function_privilege('authenticated', p.oid, 'EXECUTE') AS authed,
               has_function_privilege('service_role', p.oid, 'EXECUTE') AS service,
-              p.prosecdef AS definer
-       FROM pg_proc p WHERE p.proname = 'delete_account_data'`
+              p.prosecdef AS definer,
+              p.proconfig AS config
+       FROM pg_proc p WHERE p.proname = $1`,
+      [fn]
     );
     expect(rows[0]).toEqual({
       anon: false,
       authed: false,
       service: true,
       definer: true,
+      config: ['search_path=""'],
+    });
+  });
+
+  describe("list_deleted_account_avatar_owners", () => {
+    const LIVE = "15151515-1515-4515-8515-151515151515";
+    const UNFINISHED = "17171717-1717-4717-8717-171717171717";
+
+    it("names only accounts the RPC finished that still have a file", async () => {
+      await db.exec(`
+        ${SERVICE_ON}
+        INSERT INTO auth.users (id, email) VALUES
+          ('${LIVE}', 'live-avatar@example.com'),
+          ('${UNFINISHED}', 'unfinished@example.com');
+        UPDATE public.profiles SET deleted_at = now() WHERE id = '${UNFINISHED}';
+        ${SERVICE_OFF}
+        INSERT INTO storage.objects (bucket_id, name) VALUES
+          ('avatars', '${OLD}/avatar.jpg'),
+          ('avatars', '${LIVE}/avatar.jpg'),
+          ('avatars', '${UNFINISHED}/avatar.jpg'),
+          ('other', '${SHELL}/avatar.jpg');
+      `);
+      const { rows } = await db.query<{ id: string }>(
+        "SELECT public.list_deleted_account_avatar_owners(10) AS id"
+      );
+      expect(rows.map((r) => r.id)).toEqual([OLD]);
+    });
+
+    it("refuses a limit below one", async () => {
+      await expect(
+        db.query("SELECT public.list_deleted_account_avatar_owners(0)")
+      ).rejects.toThrow(/p_limit/);
+    });
+  });
+
+  describe("profile writes outside the service role", () => {
+    const WRITER = "16161616-1616-4616-8616-161616161616";
+
+    beforeAll(async () => {
+      await db.exec(
+        `INSERT INTO auth.users (id, email) VALUES ('${WRITER}', 'writer@example.com');`
+      );
+    });
+
+    const setName = (id: string, name: string) =>
+      db.query("UPDATE public.profiles SET username = $2 WHERE id = $1", [
+        id,
+        name,
+      ]);
+
+    it.each(["deleted-user-abc", "Deleted-User-abc", "DELETED-USER-1"])(
+      "can't take the reserved name %s",
+      async (name) => {
+        await expect(setName(WRITER, name)).rejects.toThrow(/reserved/);
+      }
+    );
+
+    it("can't insert a profile under a reserved name", async () => {
+      await expect(
+        db.query(
+          "INSERT INTO public.profiles (id, username) VALUES (gen_random_uuid(), 'deleted-user-x')"
+        )
+      ).rejects.toThrow(/reserved/);
+    });
+
+    it("can still pick an ordinary name, including one near the prefix", async () => {
+      await setName(WRITER, "deleted_user_fan");
+      const { rows } = await db.query<{ username: string }>(
+        "SELECT username FROM public.profiles WHERE id = $1",
+        [WRITER]
+      );
+      expect(rows[0]!.username).toBe("deleted_user_fan");
+    });
+
+    it("can't change a tombstone at all", async () => {
+      await expect(
+        db.query("UPDATE public.profiles SET bio = 'back' WHERE id = $1", [OLD])
+      ).rejects.toThrow(/deleted account/);
+    });
+
+    it("the service role can still re-run the deletion", async () => {
+      await expect(run(db, OLD)).resolves.toBeDefined();
     });
   });
 });
@@ -806,5 +1017,128 @@ describe("purge_ai_spend_ip_rows", () => {
     await expect(
       db.query("SELECT public.purge_ai_spend_ip_rows(0)")
     ).rejects.toThrow(/keep_days/);
+  });
+});
+
+// A returning wallet starts with empty progress while its chain bits stay set, so
+// every lesson takes the route's already-complete path. Those rows don't count toward
+// today's quests.
+describe("delete and rejoin with the same wallet", () => {
+  let db: PGlite;
+  const WALLET = "Cyc1eWa11et9999999999999999999999999999999";
+  const QUESTS = JSON.stringify([
+    {
+      id: "q-lesson",
+      type: "lesson",
+      xpReward: 20,
+      targetValue: 1,
+      resetType: "daily",
+    },
+    {
+      id: "q-batch",
+      type: "lesson_batch",
+      xpReward: 40,
+      targetValue: 2,
+      resetType: "daily",
+    },
+    {
+      id: "q-challenge",
+      type: "challenge",
+      xpReward: 35,
+      targetValue: 1,
+      resetType: "daily",
+    },
+    {
+      id: "q-module",
+      type: "module",
+      xpReward: 60,
+      targetValue: 1,
+      resetType: "daily",
+    },
+  ]);
+  const accountId = (n: number) =>
+    `${String(n).repeat(8)}-aaaa-4aaa-8aaa-aaaaaaaaaaaa`;
+
+  const newAccount = async (id: string) => {
+    await db.exec(`
+      ${SERVICE_ON}
+      INSERT INTO auth.users (id, email) VALUES ('${id}', '${WALLET.toLowerCase()}@wallet.superteam-lms.local');
+      UPDATE public.profiles SET wallet_address = '${WALLET}' WHERE id = '${id}';
+      ${SERVICE_OFF}
+    `);
+    const { rows } = await db.query<{ created_at: Date }>(
+      "SELECT created_at FROM public.profiles WHERE id = $1",
+      [id]
+    );
+    return rows[0]!.created_at.toISOString();
+  };
+
+  const complete = (id: string, lesson: string, completedAt: string | null) =>
+    db.query(
+      `INSERT INTO public.user_progress (user_id, course_id, lesson_id, completed, completed_at)
+       VALUES ($1, 'course-1', $2, true, $3)
+       ON CONFLICT (user_id, lesson_id) DO NOTHING`,
+      [id, lesson, completedAt]
+    );
+
+  const evaluate = (id: string) =>
+    db.query(
+      `SELECT public.get_daily_quest_state($1, $2::jsonb, ARRAY['l1'],
+         '[{"id":"m1","lessonIds":["l1","l2"]}]'::jsonb)`,
+      [id, QUESTS]
+    );
+
+  const questCredits = async (id: string) => {
+    const { rows } = await db.query(
+      "SELECT 1 FROM public.pending_onchain_actions WHERE user_id = $1 AND action_type = 'quest_xp'",
+      [id]
+    );
+    return rows.length;
+  };
+
+  beforeAll(async () => {
+    db = await buildFullLineage();
+  }, 180_000);
+  afterAll(async () => {
+    await db.close();
+  });
+
+  // Seconds since epoch: the enrollment the first account made, before any return.
+  const enrolledAt = Math.floor(Date.now() / 1000) - 3600;
+
+  it("earns quest XP once, however many times it comes back", async () => {
+    const first = accountId(1);
+    await newAccount(first);
+    await complete(first, "l1", new Date().toISOString());
+    await complete(first, "l2", new Date().toISOString());
+    await evaluate(first);
+    expect(await questCredits(first)).toBe(4);
+    await db.query("SELECT public.delete_account_data($1)", [first]);
+
+    for (const n of [2, 3, 4]) {
+      const id = accountId(n);
+      const createdAt = await newAccount(id);
+      for (const lesson of ["l1", "l2"]) {
+        await complete(id, lesson, recoveredCompletedAt(enrolledAt, createdAt));
+      }
+      await evaluate(id);
+      expect(await questCredits(id), `cycle ${n}`).toBe(0);
+      // The progress itself is still recorded.
+      const { rows } = await db.query(
+        "SELECT 1 FROM public.user_progress WHERE user_id = $1 AND completed",
+        [id]
+      );
+      expect(rows).toHaveLength(2);
+      await db.query("SELECT public.delete_account_data($1)", [id]);
+    }
+  });
+
+  it("the same rows dated today do earn quest XP, so the test above can fail", async () => {
+    const id = accountId(5);
+    await newAccount(id);
+    await complete(id, "l1", new Date().toISOString());
+    await complete(id, "l2", new Date().toISOString());
+    await evaluate(id);
+    expect(await questCredits(id)).toBe(4);
   });
 });

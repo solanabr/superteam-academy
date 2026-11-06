@@ -1,10 +1,10 @@
 import "server-only";
 
-import { createHash } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logEvent } from "@/lib/logging";
 import type { PayerRole } from "@/lib/solana/sponsor";
 import { spendCluster } from "@/lib/solana/sponsor";
+import { sponsorshipWalletKeys } from "@/lib/platform-spend/wallet-keys";
 
 /**
  * What a platform-paid transaction did. Free text in the DB (a lowercase
@@ -140,17 +140,6 @@ export async function recordPlatformTx(
   } finally {
     clearTimeout(timer);
   }
-}
-
-/**
- * The values a wallet can appear under on a sponsored row: as itself, or as the
- * one-way key `delete_account_data` leaves when its account is deleted. Keeps a
- * wallet to one sponsorship even if it comes back on a new account. Must match the
- * SQL in 20261105130000_delete_account_data.sql.
- */
-export function sponsorshipWalletKeys(wallet: string): string[] {
-  const hash = createHash("sha256").update(wallet).digest("hex");
-  return [wallet, `deleted:${hash}`];
 }
 
 export interface SponsorshipRow {

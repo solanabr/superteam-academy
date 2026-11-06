@@ -3,16 +3,27 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-const { getUser, signOut, rpc, list, remove, isRateLimited, updateUserById } =
-  vi.hoisted(() => ({
-    getUser: vi.fn<() => Promise<unknown>>(),
-    signOut: vi.fn(),
-    updateUserById: vi.fn<() => Promise<{ error: unknown }>>(),
-    rpc: vi.fn<(fn: string, args: unknown) => Promise<{ error: unknown }>>(),
-    list: vi.fn<(path: string) => Promise<unknown>>(),
-    remove: vi.fn<(paths: string[]) => Promise<{ error: unknown }>>(),
-    isRateLimited: vi.fn<() => Promise<boolean>>(),
-  }));
+const {
+  getUser,
+  signOut,
+  rpc,
+  list,
+  remove,
+  isRateLimited,
+  updateUserById,
+  revalidateTag,
+  logError,
+} = vi.hoisted(() => ({
+  revalidateTag: vi.fn(),
+  logError: vi.fn(),
+  getUser: vi.fn<() => Promise<unknown>>(),
+  signOut: vi.fn(),
+  updateUserById: vi.fn<() => Promise<{ error: unknown }>>(),
+  rpc: vi.fn<(fn: string, args: unknown) => Promise<{ error: unknown }>>(),
+  list: vi.fn<(path: string) => Promise<unknown>>(),
+  remove: vi.fn<(paths: string[]) => Promise<{ error: unknown }>>(),
+  isRateLimited: vi.fn<() => Promise<boolean>>(),
+}));
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: async () => ({ auth: { getUser, signOut } }),
@@ -27,7 +38,11 @@ vi.mock("@/lib/supabase/admin", () => ({
 }));
 
 vi.mock("@/lib/rate-limit", () => ({ isRateLimited }));
-vi.mock("@/lib/logging", () => ({ logError: vi.fn() }));
+vi.mock("@/lib/logging", () => ({ logError }));
+vi.mock("next/cache", () => ({ revalidateTag, unstable_cache: vi.fn() }));
+vi.mock("@/lib/supabase/cookieless", () => ({
+  createCookielessClient: vi.fn(),
+}));
 
 import { POST } from "../route";
 
@@ -70,43 +85,76 @@ describe("account deletion", () => {
     expect(rpc).toHaveBeenCalled();
   });
 
-  it("removes the file before the RPC, while the session can still retry", async () => {
+  it("removes the file only after the RPC commits, so a failed RPC loses nothing", async () => {
     await POST();
 
-    const removedAt = remove.mock.invocationCallOrder[0]!;
     const rpcAt = rpc.mock.invocationCallOrder[0]!;
+    const listedAt = list.mock.invocationCallOrder[0]!;
+    const removedAt = remove.mock.invocationCallOrder[0]!;
     const signOutAt = signOut.mock.invocationCallOrder[0]!;
-    expect(removedAt).toBeLessThan(rpcAt);
-    expect(rpcAt).toBeLessThan(signOutAt);
+    expect(rpcAt).toBeLessThan(listedAt);
+    expect(listedAt).toBeLessThan(removedAt);
+    expect(removedAt).toBeLessThan(signOutAt);
   });
 
+  it("reports a failed RPC, keeps the avatar and leaves the session for a retry", async () => {
+    rpc.mockResolvedValue({ error: { message: "boom" } });
+
+    const res = await POST();
+
+    expect(res.status).toBe(500);
+    expect(list).not.toHaveBeenCalled();
+    expect(remove).not.toHaveBeenCalled();
+    expect(signOut).not.toHaveBeenCalled();
+    expect(updateUserById).not.toHaveBeenCalled();
+  });
+
+  it("a retry after a failed RPC runs the whole thing", async () => {
+    rpc.mockResolvedValueOnce({ error: { message: "boom" } });
+
+    expect((await POST()).status).toBe(500);
+    expect((await POST()).status).toBe(200);
+    expect(remove).toHaveBeenCalledTimes(1);
+  });
+
+  // The account is already deleted when these run, and a retry would get 401, so
+  // the file is left for the retention cron to finish.
   it.each([
     [
       "listing",
       () => list.mockResolvedValue({ data: null, error: { message: "x" } }),
     ],
     ["removing", () => remove.mockResolvedValue({ error: { message: "x" } })],
+    ["a throw while listing", () => list.mockRejectedValue(new Error("x"))],
   ])(
-    "reports a failure %s the avatar and changes nothing else",
+    "%s the avatar failing still succeeds and logs",
     async (_label, arrange) => {
       arrange();
 
       const res = await POST();
 
-      expect(res.status).toBe(500);
-      expect(rpc).not.toHaveBeenCalled();
-      expect(signOut).not.toHaveBeenCalled();
+      expect(res.status).toBe(200);
+      expect(rpc).toHaveBeenCalled();
+      expect(signOut).toHaveBeenCalled();
+      expect(logError).toHaveBeenCalled();
     }
   );
 
-  it("reports a failed RPC and leaves the session so the client can retry", async () => {
-    rpc.mockResolvedValue({ error: { message: "boom" } });
+  it("drops the deleted account from the cached leaderboard", async () => {
+    await POST();
 
-    const res = await POST();
+    expect(revalidateTag).toHaveBeenCalledWith("leaderboard");
+    expect(rpc.mock.invocationCallOrder[0]!).toBeLessThan(
+      revalidateTag.mock.invocationCallOrder[0]!
+    );
+  });
 
-    expect(res.status).toBe(500);
-    expect(signOut).not.toHaveBeenCalled();
-    expect(updateUserById).not.toHaveBeenCalled();
+  it("a cache failure can't fail a deletion that already committed", async () => {
+    revalidateTag.mockImplementation(() => {
+      throw new Error("no store");
+    });
+
+    expect((await POST()).status).toBe(200);
   });
 
   it("clears the cookies and bans again after the RPC", async () => {

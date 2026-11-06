@@ -34,7 +34,7 @@ Vercel deploys `main` on merge, so code can reach production before its schema e
 
 ## Operator gotcha
 
-`enforce_profile_wallet_write()` and `enforce_profile_deleted_at_write()` let only `service_role`
-change the guarded `profiles` columns. A bare `postgres` session, such as MCP `execute_sql` or the
+`enforce_profile_wallet_write()`, `enforce_profile_deleted_at_write()` and
+`enforce_profile_tombstone_write()` let only `service_role` change the guarded `profiles` values. A bare `postgres` session, such as MCP `execute_sql` or the
 SQL editor, raises `permission denied`. For a deliberate operator write, run `SET LOCAL ROLE
 service_role;` inside the transaction.

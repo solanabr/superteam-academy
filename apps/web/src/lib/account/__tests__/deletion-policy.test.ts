@@ -2,9 +2,14 @@
 // a person fails here until someone decides what deleting an account does to it.
 //
 // @vitest-environment node
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import type { PGlite } from "@electric-sql/pglite";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { DELETION_POLICY } from "@/lib/account/deletion-policy";
+import {
+  DELETION_POLICY,
+  DELETION_STORAGE_BUCKETS,
+} from "@/lib/account/deletion-policy";
 import {
   buildFullLineage,
   readMigration,
@@ -13,6 +18,9 @@ import {
 // A column by these names points at a person, whatever table it is in.
 const PERSON_COLUMN =
   /wallet|email|phone|ip_address|user_agent|username|display_name|(^|_)user_id$|author_id|reporter_id|referrer_id|referred_id|referred_by|actor_id|resolved_by|granted_by/;
+
+// On-chain references: kept deliberately, but only by a named decision.
+const CHAIN_REFERENCE = /signature|mint_address|asset_address/;
 
 describe("deletion policy", () => {
   let db: PGlite;
@@ -78,7 +86,11 @@ describe("deletion policy", () => {
     );
     const pointing = new Set([
       ...rows
-        .filter((r) => PERSON_COLUMN.test(r.column_name))
+        .filter(
+          (r) =>
+            PERSON_COLUMN.test(r.column_name) ||
+            CHAIN_REFERENCE.test(r.column_name)
+        )
         .map((r) => `${r.table_name}.${r.column_name}`),
       ...fks.rows.map(
         (r) => `${r.table_name.replace(/^public\./, "")}.${r.column_name}`
@@ -91,11 +103,75 @@ describe("deletion policy", () => {
     expect(undecided).toEqual([]);
   });
 
-  it("marks a table as holding no user data only when it has no such column", () => {
+  it("decides every text and JSON column, since any of them can hold a person", async () => {
+    const { rows } = await db.query<{
+      table_name: string;
+      column_name: string;
+    }>(
+      `SELECT c.table_name, c.column_name FROM information_schema.columns c
+       JOIN information_schema.tables t
+         ON t.table_schema = c.table_schema AND t.table_name = c.table_name
+       WHERE c.table_schema = 'public' AND t.table_type = 'BASE TABLE'
+         AND c.data_type IN ('text', 'character varying', 'json', 'jsonb', 'ARRAY', 'inet', 'USER-DEFINED')`
+    );
+    const undecided = rows
+      .filter((r) => !DELETION_POLICY[r.table_name]?.columns?.[r.column_name])
+      .map((r) => `${r.table_name}.${r.column_name}`)
+      .sort();
+    expect(undecided).toEqual([]);
+  });
+
+  it("marks a table as holding no user data only when nothing in it points at a person", () => {
     for (const [table, policy] of Object.entries(DELETION_POLICY)) {
-      if (policy.decision === "no_user_data") {
-        expect(policy.columns, table).toBeUndefined();
+      if (policy.decision !== "no_user_data") continue;
+      for (const column of Object.keys(policy.columns ?? {})) {
+        expect(PERSON_COLUMN.test(column), `${table}.${column}`).toBe(false);
       }
+    }
+  });
+
+  it("keeps the on-chain references it means to keep, by name", () => {
+    expect(DELETION_POLICY.certificates!.columns).toMatchObject({
+      tx_signature: "keep",
+      mint_address: "keep",
+    });
+    expect(DELETION_POLICY.user_achievements!.columns).toMatchObject({
+      tx_signature: "keep",
+      asset_address: "keep",
+    });
+    expect(DELETION_POLICY.platform_spend!.columns).toMatchObject({
+      signature: "keep",
+    });
+    for (const table of ["enrollments", "user_progress", "xp_transactions"]) {
+      expect(DELETION_POLICY[table]!.columns, table).toMatchObject({
+        tx_signature: "keep",
+      });
+    }
+  });
+
+  it("decides every storage bucket", async () => {
+    const { rows } = await db.query<{ id: string }>(
+      "SELECT id FROM storage.buckets"
+    );
+    const buckets = rows.map((r) => r.id);
+    expect(buckets.length).toBeGreaterThan(0);
+    expect(buckets.filter((b) => !DELETION_STORAGE_BUCKETS[b])).toEqual([]);
+  });
+
+  // A copy pinned to permanent storage can never be scrubbed, so what goes in it
+  // must be a value that is already public, not a chosen name.
+  it.each([
+    "src/app/api/certificates/mint/route.ts",
+    "src/lib/solana/onchain-queue.ts",
+    "src/lib/helius/event-handlers.ts",
+  ])("%s writes the wallet as the credential recipient", (file) => {
+    const source = readFileSync(resolve(process.cwd(), file), "utf8");
+    const recipients = [
+      ...source.matchAll(/trait_type: "Recipient",\s*value: ([^,]+),/g),
+    ].map((m) => m[1]!.trim());
+    expect(recipients.length).toBeGreaterThan(0);
+    for (const value of recipients) {
+      expect(value).not.toMatch(/username/);
     }
   });
 

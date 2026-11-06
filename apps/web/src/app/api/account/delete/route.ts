@@ -1,10 +1,13 @@
 import "server-only";
 
+import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isRateLimited } from "@/lib/rate-limit";
+import { removeAccountAvatar } from "@/lib/account/remove-avatar";
 import { revokeUserSessions } from "@/lib/auth/revoke-sessions";
+import { LEADERBOARD_CACHE_TAG } from "@/lib/leaderboard/global";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 
@@ -30,6 +33,21 @@ function failed(stage: string, error: unknown): NextResponse {
     { error: "Failed to process deletion" },
     { status: 500 }
   );
+}
+
+async function afterCommit(
+  stage: string,
+  step: () => Promise<void>
+): Promise<void> {
+  try {
+    await step();
+  } catch (err: unknown) {
+    logError({
+      errorId: ERROR_IDS.ACCOUNT_DELETE_FAILED,
+      error: err instanceof Error ? err : new Error(String(err)),
+      context: { route: "/api/account/delete", stage },
+    });
+  }
 }
 
 export async function POST(): Promise<NextResponse> {
@@ -63,47 +81,35 @@ export async function POST(): Promise<NextResponse> {
 
     const admin = createAdminClient();
 
-    // The avatar goes first. Storage refuses SQL deletes, so this can't join the
-    // RPC's transaction, and the RPC ends the session: anything left for afterwards
-    // could never be retried, and a public file would outlive the account.
-    const avatars = admin.storage.from("avatars");
-    const { data: files, error: listError } = await avatars.list(user.id);
-    if (listError) return failed("avatar_list", listError.message);
-    if (files && files.length > 0) {
-      const { error: removeError } = await avatars.remove(
-        files.map((file) => `${user.id}/${file.name}`)
-      );
-      if (removeError) return failed("avatar_remove", removeError.message);
-    }
-
-    // All or nothing. On failure nothing changed and the session is still good, so
-    // the client can retry.
+    // All or nothing. On failure nothing changed, the avatar is still there and the
+    // session is still good, so the client can retry.
     const { error: deleteError } = await admin.rpc("delete_account_data", {
       p_user_id: user.id,
     });
     if (deleteError) return failed("delete_account_data", deleteError.message);
 
     // The account is gone at this point: the RPC removed its sessions and set the
-    // ban. signOut clears this browser's cookies; GoTrue answers 403 for the session
-    // that no longer exists, and auth-js treats that as signed out. The ban through
-    // the API is a second layer. Neither can fail the request, because a retry would
-    // now get 401 for an account that was deleted.
-    const { error: signOutError } = await supabase.auth.signOut();
-    if (signOutError) {
-      logError({
-        errorId: ERROR_IDS.ACCOUNT_DELETE_FAILED,
-        error: new Error(signOutError.message),
-        context: { route: "/api/account/delete", stage: "sign_out" },
-      });
-    }
-    const revoked = await revokeUserSessions(admin, user.id);
-    if (!revoked.ok) {
-      logError({
-        errorId: ERROR_IDS.ACCOUNT_DELETE_FAILED,
-        error: revoked.error ?? new Error("session revocation (ban) failed"),
-        context: { route: "/api/account/delete", stage: "revoke_sessions" },
-      });
-    }
+    // ban. Nothing below can fail the request, because a retry would now get 401 for
+    // an account that was deleted. The account-retention cron finishes the avatar if
+    // this removal doesn't. signOut clears this browser's cookies; GoTrue answers 403
+    // for the session that no longer exists, and auth-js treats that as signed out.
+    // The ban through the API is a second layer.
+    await afterCommit("avatar", async () => {
+      await removeAccountAvatar(admin, user.id);
+    });
+    await afterCommit("leaderboard_cache", async () => {
+      revalidateTag(LEADERBOARD_CACHE_TAG);
+    });
+    await afterCommit("sign_out", async () => {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw new Error(error.message);
+    });
+    await afterCommit("revoke_sessions", async () => {
+      const revoked = await revokeUserSessions(admin, user.id);
+      if (!revoked.ok) {
+        throw revoked.error ?? new Error("session revocation (ban) failed");
+      }
+    });
 
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
