@@ -32,8 +32,11 @@
  *
  * So a submission can only choose the DATA an assertion reads, never the code
  * that reads it. Step 2 treats the snapshot as untrusted text: it checks every
- * field against the format, builds nothing but plain data from it, and takes
- * fixture names from the test. A snapshot that doesn't fit fails the test.
+ * field against the format and builds nothing but plain data from it, and the
+ * snapshot holds only the result. Each runtime builds the test's fixtures itself
+ * from the test's input and one seed the host chooses, so their random keys match
+ * while changes to the submission's copy stay out of the assertion's. A snapshot
+ * that doesn't fit fails the test.
  *
  * DEGRADE-CLOSED
  * --------------
@@ -242,9 +245,10 @@ function toBase58(bytes) {
   for (var i = 0; i < bytes.length; i++) result += BASE58_ALPHABET[bytes[i] % 58];
   return result;
 }
+var seededByte = null;
 function randomBytes(n) {
   var buf = new Uint8Array(n);
-  for (var i = 0; i < n; i++) buf[i] = (Math.random() * 256) | 0;
+  for (var i = 0; i < n; i++) buf[i] = seededByte ? seededByte() : (Math.random() * 256) | 0;
   return buf;
 }
 
@@ -343,6 +347,47 @@ var modules = {
 };
 
 ${CONSOLE_FORMAT_SOURCE}
+
+var KEYPAIR_NAMES = { payer:1, sender:1, recipient:1, owner:1, authority:1, mint:1, senderKeypair:1, recipientKeypair:1, userKeypair:1 };
+var PUBKEY_NAMES = { programId:1, userPubkey:1, recipientPubkey:1, senderPublicKey:1, expectedOwner:1, tokenProgramId:1, systemProgramId:1, dataAccount:1 };
+
+
+function buildArgSetup(names) {
+  var lines = [];
+  for (var i = 0; i < names.length; i++) {
+    var arg = names[i];
+    if (arg === "connection") lines.push('var ' + arg + ' = new (__modules__["@solana/web3.js"].Connection)("https://api.devnet.solana.com");');
+    else if (KEYPAIR_NAMES[arg]) lines.push('var ' + arg + ' = __modules__["@solana/web3.js"].Keypair.generate();');
+    else if (PUBKEY_NAMES[arg]) lines.push('var ' + arg + ' = __modules__["@solana/web3.js"].Keypair.generate().publicKey;');
+    else if (arg === "wallets") lines.push('var wallets = [__modules__["@solana/web3.js"].Keypair.generate().publicKey, __modules__["@solana/web3.js"].Keypair.generate().publicKey, __modules__["@solana/web3.js"].Keypair.generate().publicKey];');
+    else if (arg === "data" || arg === "buffer") lines.push('var ' + arg + ' = new Uint8Array([1, 5, 0, 0, 0, 6, 0, 0, 0, 83, 111, 108, 68, 101, 118]);');
+    else if (arg === "expectedSeeds") lines.push('var expectedSeeds = [new TextEncoder().encode("user")];');
+    else if (arg === "account") lines.push('var account = { owner: __modules__["@solana/web3.js"].Keypair.generate().publicKey, publicKey: __modules__["@solana/web3.js"].Keypair.generate().publicKey, lamports: 1000000, data: new Uint8Array([1,2,3]), executable: false };');
+    else if (arg === "position") lines.push('var position = { collateral: 100, debt: 50, threshold: 1.5 };');
+    else lines.push('var ' + arg + ' = {};');
+  }
+  return lines.join("\n");
+}
+/* Builds a test's fixtures from its input. The same input and seed give the same
+ * values in either runtime. Returns [[call arguments], [fixture values]]. */
+function buildFixtures(names, callArgs, seed) {
+  var state = seed | 0;
+  seededByte = function () {
+    state = (state + 0x6d2b79f5) | 0;
+    var t = Math.imul(state ^ (state >>> 15), 1 | state);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return (t ^ (t >>> 14)) & 255;
+  };
+  try {
+    return new Function(
+      "__modules__",
+      '"use strict";\n' + buildArgSetup(names) + "\nreturn [[" + callArgs + "], [" + names.join(", ") + "]];"
+    )(modules);
+  } finally {
+    seededByte = null;
+  }
+}
+
 function makeMockConsole() {
   var logs = [];
   var fmt = __formatLogArg__;
@@ -374,7 +419,6 @@ var isArray = Array.isArray;
 var arrayJoin = Array.prototype.join;
 var stringify = JSON.stringify;
 var StringCtor = String;
-var FunctionCtor = Function;
 var TypeErrorCtor = TypeError;
 var RangeErrorCtor = RangeError;
 var Uint8ArrayCtor = Uint8Array;
@@ -480,26 +524,6 @@ function detectFunctionName(code) {
   return m ? (m[1] || m[2] || null) : null;
 }
 
-var KEYPAIR_NAMES = { payer:1, sender:1, recipient:1, owner:1, authority:1, mint:1, senderKeypair:1, recipientKeypair:1, userKeypair:1 };
-var PUBKEY_NAMES = { programId:1, userPubkey:1, recipientPubkey:1, senderPublicKey:1, expectedOwner:1, tokenProgramId:1, systemProgramId:1, dataAccount:1 };
-
-
-function buildArgSetup(names) {
-  var lines = [];
-  for (var i = 0; i < names.length; i++) {
-    var arg = names[i];
-    if (arg === "connection") lines.push('var ' + arg + ' = new (__modules__["@solana/web3.js"].Connection)("https://api.devnet.solana.com");');
-    else if (KEYPAIR_NAMES[arg]) lines.push('var ' + arg + ' = __modules__["@solana/web3.js"].Keypair.generate();');
-    else if (PUBKEY_NAMES[arg]) lines.push('var ' + arg + ' = __modules__["@solana/web3.js"].Keypair.generate().publicKey;');
-    else if (arg === "wallets") lines.push('var wallets = [__modules__["@solana/web3.js"].Keypair.generate().publicKey, __modules__["@solana/web3.js"].Keypair.generate().publicKey, __modules__["@solana/web3.js"].Keypair.generate().publicKey];');
-    else if (arg === "data" || arg === "buffer") lines.push('var ' + arg + ' = new Uint8Array([1, 5, 0, 0, 0, 6, 0, 0, 0, 83, 111, 108, 68, 101, 118]);');
-    else if (arg === "expectedSeeds") lines.push('var expectedSeeds = [new TextEncoder().encode("user")];');
-    else if (arg === "account") lines.push('var account = { owner: __modules__["@solana/web3.js"].Keypair.generate().publicKey, publicKey: __modules__["@solana/web3.js"].Keypair.generate().publicKey, lamports: 1000000, data: new Uint8Array([1,2,3]), executable: false };');
-    else if (arg === "position") lines.push('var position = { collateral: 100, debt: 50, threshold: 1.5 };');
-    else lines.push('var ' + arg + ' = {};');
-  }
-  return lines.join("\n");
-}
 function buildCallArgs(input) {
   if (!input.trim()) return "";
   return input.split(",").map(function (a) {
@@ -518,25 +542,20 @@ publish("__modules__", modules);
 publish("console", makeMockConsole().mock);
 
 var callArgs = [];
-var fixtures = [];
 
 /* Builds the test's arguments and returns the entry point's name, or "" when the
  * submission declares none. Runs before learner code. Fixtures become globals as
  * well as arguments, so a function reading one as a free variable still works,
- * and a learner's own binding of the same name shadows it without a clash. */
-function prepare(userCode, input) {
+ * and a learner's own binding of the same name shadows it without a clash. This
+ * copy is the submission's own: the assertion runtime builds another. */
+function prepare(userCode, input, seed) {
   var fnName = detectFunctionName(userCode);
   if (!fnName) return "";
   var names = fixtureNames(input);
-  var make = new FunctionCtor(
-    "__modules__",
-    '"use strict";\n' + buildArgSetup(names) + "\nreturn [[" + buildCallArgs(input) + "], [" + names.join(", ") + "]];"
-  );
-  var made = make(modules);
+  var made = buildFixtures(names, buildCallArgs(input), seed);
   callArgs = made[0];
-  fixtures = made[1];
   names.forEach(function (name, i) {
-    try { publish(name, fixtures[i]); } catch (e) { /* e.g. a name the realm won't let go */ }
+    try { publish(name, made[1][i]); } catch (e) { /* e.g. a name the realm won't let go */ }
   });
   return fnName;
 }
@@ -560,7 +579,6 @@ function describe(err) {
  * in the submission's realm, and only their values travel. */
 
 var MAX_VALUES = ${MAX_SNAPSHOT_VALUES};
-var MAX_SNAPSHOT_CHARS = ${MAX_SNAPSHOT_CHARS};
 var MAX_ARRAY_PROPS_LENGTH = 65536;
 
 /* JSON text for the encoder's own tree, which only holds arrays, plain objects
@@ -740,14 +758,10 @@ function encode(result) {
   }
 
   var root = ref(result);
-  var named = [];
-  for (var f = 0; f < fixtures.length; f++) named[f] = ref(fixtures[f]);
 
   var nodes = [];
   for (var n = 0; n < queue.length; n++) nodes[n] = node(queue[n]);
-  var snapshot = jsonText({ root: root, fixtures: named, nodes: nodes });
-  if (snapshot.length > MAX_SNAPSHOT_CHARS) throw new RangeErrorCtor("Result too large");
-  return snapshot;
+  return jsonText({ root: root, nodes: nodes });
 }
 
 return { prepare: prepare, invoke: invoke, encode: encode, describe: describe };
@@ -796,7 +810,6 @@ function decode(snapshotJson) {
   var snap = JSON.parse(snapshotJson);
   if (snap === null || typeof snap !== "object" || Array.isArray(snap)) unreadable();
   var nodes = list(snap.nodes);
-  var fixtures = list(snap.fixtures);
   if (nodes.length > MAX_VALUES) unreadable();
   var objects = [];
 
@@ -917,7 +930,7 @@ function decode(snapshotJson) {
     });
   });
 
-  return { root: value(snap.root), fixtures: fixtures.map(value) };
+  return value(snap.root);
 }
 
 /* ---- assertions ---------------------------------------------------------- */
@@ -945,7 +958,7 @@ function evaluate(snapshotJson, testJson) {
   var outcome;
   try {
     var test = JSON.parse(testJson);
-    var snap = decode(snapshotJson);
+    var root = decode(snapshotJson);
     var typeShape = isTypeShape(test.expectedOutput);
 
     var assertionCode;
@@ -972,15 +985,15 @@ function evaluate(snapshotJson, testJson) {
         '} catch (e) { return "fail: " + ((e && e.message) || String(e)); }';
     }
 
-    /* Parameter names come from the test, and the snapshot only fills them in,
-     * by position. */
     var names = RESERVED_PARAMS.slice();
-    var values = [snap.root, modules, makeMockConsole().mock];
-    fixtureNames(test.input).forEach(function (name, i) {
-      if (!IDENTIFIER.test(name)) unreadable();
+    var values = [root, modules, makeMockConsole().mock];
+    var inputNames = fixtureNames(test.input);
+    if (!inputNames.every(function (name) { return IDENTIFIER.test(name); })) unreadable();
+    var built = buildFixtures(inputNames, "", test.seed)[1];
+    inputNames.forEach(function (name, i) {
       if (names.indexOf(name) !== -1) return;
       names.push(name);
-      values.push(snap.fixtures[i]);
+      values.push(built[i]);
     });
     var body = '"use strict";\nreturn (function(){ ' + assertionCode + ' })();';
     var verdict = Function.apply(null, names.concat(body)).apply(undefined, values);
@@ -1068,7 +1081,7 @@ type TestOutcome = Pick<ServerTestResult, "passed" | "detail" | "limit">;
 
 /** The failures that come from the sandbox's limits and not the answer. */
 const LIMIT_DETAIL =
-  /^(?:fail: )?(?:Execution timed out|interrupted|stack overflow|out of memory|Result too large)$/;
+  /^(?:fail: )?(?:Execution timed out|interrupted|stack overflow|out of memory(?: in regexp execution)?|BigInt is too large(?: to allocate)?|Result too large)$/;
 
 function failedOutcome(detail: string): TestOutcome {
   const short = detail.slice(0, 200);
@@ -1172,6 +1185,7 @@ function runSubmission(
   quickjs: QuickJSWASMModule,
   code: string,
   input: string,
+  seed: number,
   deadline: number
 ): string {
   return withRuntime(quickjs, deadline, (ctx, runtime, scope) => {
@@ -1204,7 +1218,8 @@ function runSubmission(
           prepare,
           ctx.undefined,
           scope.manage(ctx.newString(code)),
-          scope.manage(ctx.newString(input))
+          scope.manage(ctx.newString(input)),
+          scope.manage(ctx.newNumber(seed))
         )
       )
     );
@@ -1270,6 +1285,11 @@ function runAssertion(
   });
 }
 
+/** Fixture keys differ per test and match across a test's two runtimes. */
+function newFixtureSeed(): number {
+  return Math.floor(Math.random() * 2 ** 32);
+}
+
 /**
  * Evaluate one assertion over a snapshot as step 2 of a run does. The snapshot is
  * whatever text step 1 produced, so the tests feed this directly.
@@ -1281,7 +1301,13 @@ export async function judgeSnapshot(
   const quickjs = await loadQuickJS();
   if (!quickjs) return { passed: false, detail: "executor_unavailable" };
   try {
-    return judge(quickjs, snapshot, test, Date.now() + EXEC_TIMEOUT_MS);
+    return judge(
+      quickjs,
+      snapshot,
+      test,
+      newFixtureSeed(),
+      Date.now() + EXEC_TIMEOUT_MS
+    );
   } catch (err) {
     if (err instanceof TestFailure) return failedOutcome(err.message);
     throw err;
@@ -1292,6 +1318,7 @@ function judge(
   quickjs: QuickJSWASMModule,
   snapshot: string,
   test: Pick<AdminTestCase, "input" | "expectedOutput">,
+  seed: number,
   deadline: number
 ): TestOutcome {
   return runAssertion(
@@ -1300,6 +1327,7 @@ function judge(
     JSON.stringify({
       input: test.input ?? "",
       expectedOutput: test.expectedOutput ?? "",
+      seed,
     }),
     deadline
   );
@@ -1319,14 +1347,16 @@ function runOneCase(
 ): TestOutcome {
   const testDeadline = () =>
     Math.min(Date.now() + EXEC_TIMEOUT_MS, submissionDeadline);
+  const seed = newFixtureSeed();
   try {
     const snapshot = runSubmission(
       quickjs,
       code,
       test.input ?? "",
+      seed,
       testDeadline()
     );
-    return judge(quickjs, snapshot, test, testDeadline());
+    return judge(quickjs, snapshot, test, seed, testDeadline());
   } catch (err) {
     if (err instanceof TestFailure) return failedOutcome(err.message);
     throw err;
