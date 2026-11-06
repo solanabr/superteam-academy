@@ -129,10 +129,10 @@ describe("pickTargets", () => {
         stepped,
         twoCode,
         proseLesson("widest-hidden", `| ${"x".repeat(99)} |\n| - |\n`),
-        proseLesson("narrow", "| a | b |\n| - | - |\n"),
-        proseLesson("wide", "| aaaaaaaa | bbbbbbbb |\n| - | - |\n"),
-        proseLesson("short-code", "See `abc` here."),
-        proseLesson("long-code", "See `abcdefghij` here."),
+        proseLesson("narrow", `| ${"a".repeat(25)} | ${"b".repeat(25)} |\n`),
+        proseLesson("wide", `| ${"a".repeat(30)} | ${"b".repeat(30)} |\n`),
+        proseLesson("short-code", `See \`${"a".repeat(50)}\` here.`),
+        proseLesson("long-code", `See \`${"a".repeat(60)}\` here.`),
       ]
     );
     expect(LAYOUT_LESSONS.table?.lessonSlug).toBe("wide");
@@ -144,6 +144,21 @@ describe("pickTargets", () => {
     expect(LAYOUT_LESSONS.singleCode?.lessonSlug).toBe("with-code");
     expect(LAYOUT_LESSONS.twoCode?.lessonSlug).toBe("two-code");
     expect(ACTIVE_COURSE_SLUGS).toEqual(["first", "third"]);
+  });
+
+  it("offers no layout lesson when nothing is long enough to break a phone", () => {
+    const { LAYOUT_LESSONS } = pickTargets(
+      [course("first", ["quiz", "small", "with-code"]), course("second", [])],
+      [
+        ...lessons,
+        lesson("small", {
+          _type: "prose",
+          src: `| a | b |\n\nSee \`${"a".repeat(49)}\`.`,
+        } as Block),
+      ]
+    );
+    expect(LAYOUT_LESSONS.table).toBeNull();
+    expect(LAYOUT_LESSONS.inlineCode).toBeNull();
   });
 
   it("fails loudly when no second listed course exists", () => {

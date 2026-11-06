@@ -18,6 +18,9 @@ import { LevelBadge } from "@/components/gamification/level-badge";
 import { xpToNextLevel, calculateLevel } from "@/lib/gamification/xp";
 import { createClient } from "@/lib/supabase/client";
 
+/** In characters: the most a sign-in button holds beside the toggle at 320px. */
+const LONGEST_LABEL_BESIDE_TOGGLE = 8;
+
 // LX-B13 (#583): the leaderboard is intentionally NOT a primary nav CTA at
 // launch — it stays reachable via the user menu and the footer. Restore it
 // here when cohort leagues land (LX-B9).
@@ -386,8 +389,15 @@ export function Header() {
 
             <div className="flex items-center gap-2">
               <LanguageSwitcher />
-              {/* Under 360px the longest sign-in label needs this slot. */}
-              <span className={cn("flex", !isLoggedIn && "max-[359px]:hidden")}>
+              {/* Under 360px a long sign-in label needs this slot. */}
+              <span
+                className={cn(
+                  "flex",
+                  !isLoggedIn &&
+                    tCommon("signIn").length > LONGEST_LABEL_BESIDE_TOGGLE &&
+                    "max-[359px]:hidden"
+                )}
+              >
                 <ThemeToggle />
               </span>
               {authLoading ? (
@@ -407,6 +417,7 @@ export function Header() {
                       size="sm"
                       label={tCommon("signIn")}
                       className="max-[399px]:px-2"
+                      compactPending
                     />
                   }
                 />
