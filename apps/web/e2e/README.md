@@ -21,6 +21,9 @@ whole harness so ordering is deterministic:
 3. `next build` with the E2E env (skipped when `E2E_NO_BUILD=1`);
 4. `next start` on `:3100` with `NODE_EXTRA_CA_CERTS` pointing at the cert.
 
+`E2E_APP_PORT` and `E2E_MOCK_PORT` override the two ports, for running next to
+another worktree's harness. Set them for the whole command, build included.
+
 Prereqs: `pnpm --filter web exec playwright install chromium` once, and `openssl`
 on `PATH` (present on macOS and GitHub `ubuntu-latest`).
 
@@ -44,13 +47,14 @@ no network, no on-chain tx. The learner "session" is a locally-minted cookie
 
 ## The three specs
 
-| Spec         | File                    | Auth           | What it locks in                                                                                                      |
-| ------------ | ----------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Catalog gate | `catalog.spec.ts`       | none           | Anonymous `/en/courses` renders **only** active courses; a deactivated course is absent (#711 regression, permanent). |
-| Learn loop   | `learn-loop.spec.ts`    | mocked session | Signed-in, enrolled learner works a quiz-only lesson and reaches the completed state.                                 |
-| Unsubscribe  | `unsubscribe.spec.ts`   | none           | **Skipped until #769** (email feature). GET bad token → failure page; POST always-200.                                |
-| Editor size  | `mobile-editor.spec.ts` | none           | The mounted Monaco stays usable from 375px to 1440px; typing and the go-to-editor link work at 375px.                 |
-| Monaco CSP   | `monaco-csp.spec.ts`    | none           | Monaco and a worker run with no CSP violation; jsdelivr scripts outside its pinned path are refused.                  |
+| Spec         | File                      | Auth           | What it locks in                                                                                                        |
+| ------------ | ------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Catalog gate | `catalog.spec.ts`         | none           | Anonymous `/en/courses` renders **only** active courses; a deactivated course is absent (#711 regression, permanent).   |
+| Learn loop   | `learn-loop.spec.ts`      | mocked session | Signed-in, enrolled learner works a quiz-only lesson and reaches the completed state.                                   |
+| Unsubscribe  | `unsubscribe.spec.ts`     | none           | **Skipped until #769** (email feature). GET bad token → failure page; POST always-200.                                  |
+| Editor size  | `mobile-editor.spec.ts`   | none           | The mounted Monaco stays usable from 375px to 1440px; typing and the go-to-editor link work at 375px.                   |
+| Page layout  | `layout-overflow.spec.ts` | both           | No sideways page scroll on phones, header and quiz controls stay tappable, code lessons don't scroll into a blank page. |
+| Monaco CSP   | `monaco-csp.spec.ts`      | none           | Monaco and a worker run with no CSP violation; jsdelivr scripts outside its pinned path are refused.                    |
 
 ## Mock-boundary map
 

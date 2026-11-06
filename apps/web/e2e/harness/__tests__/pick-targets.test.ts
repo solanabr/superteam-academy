@@ -92,6 +92,60 @@ describe("pickTargets", () => {
     ]);
   });
 
+  it("picks the worst layout lessons outside the deactivated course", () => {
+    const proseLesson = (id: string, src: string) => ({
+      ...lesson(id, { _type: "prose", src } as Block),
+    });
+    const stepped = lesson("stepped", prose, {
+      _type: "quiz",
+      questions: [
+        {
+          id: "q1",
+          options: [
+            { id: "a", correct: true },
+            { id: "b", correct: false },
+          ],
+        },
+        single("q2", "a"),
+      ],
+    } as Block);
+    const twoCode = lesson("two-code", { _type: "code" }, { _type: "code" });
+    const { LAYOUT_LESSONS, ACTIVE_COURSE_SLUGS } = pickTargets(
+      [
+        course("first", ["quiz"]),
+        course("deactivated", ["widest-hidden"]),
+        course("third", [
+          "narrow",
+          "wide",
+          "short-code",
+          "long-code",
+          "stepped",
+          "with-code",
+          "two-code",
+        ]),
+      ],
+      [
+        ...lessons,
+        stepped,
+        twoCode,
+        proseLesson("widest-hidden", `| ${"x".repeat(99)} |\n| - |\n`),
+        proseLesson("narrow", "| a | b |\n| - | - |\n"),
+        proseLesson("wide", "| aaaaaaaa | bbbbbbbb |\n| - | - |\n"),
+        proseLesson("short-code", "See `abc` here."),
+        proseLesson("long-code", "See `abcdefghij` here."),
+      ]
+    );
+    expect(LAYOUT_LESSONS.table?.lessonSlug).toBe("wide");
+    expect(LAYOUT_LESSONS.inlineCode?.lessonSlug).toBe("long-code");
+    expect(LAYOUT_LESSONS.steppedQuiz).toMatchObject({
+      lessonSlug: "quiz",
+      wrongAnswer: ["q1", "a"],
+    });
+    expect(LAYOUT_LESSONS.singleCode?.lessonSlug).toBe("with-code");
+    expect(LAYOUT_LESSONS.twoCode?.lessonSlug).toBe("two-code");
+    expect(ACTIVE_COURSE_SLUGS).toEqual(["first", "third"]);
+  });
+
   it("fails loudly when no second listed course exists", () => {
     expect(() =>
       pickTargets(

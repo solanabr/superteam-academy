@@ -19,6 +19,7 @@ import { sealCheck } from "@/lib/ai/check-seal";
 import { applyEdits } from "@/lib/ai/apply-edits";
 import {
   modelForAction,
+  geminiHeaders,
   geminiUrl,
   MINIMAL_THINKING_CONFIG,
 } from "@/lib/ai/models";
@@ -513,9 +514,9 @@ export async function POST(request: NextRequest) {
       { socratic }
     );
 
-    const response = await fetch(`${geminiUrl(model)}?key=${GEMINI_API_KEY}`, {
+    const response = await fetch(geminiUrl(model), {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: geminiHeaders(GEMINI_API_KEY),
       body: JSON.stringify({
         contents: [
           {

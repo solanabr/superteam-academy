@@ -35,6 +35,18 @@ describe("ProseBlock markdown", () => {
     expect(c.querySelector("script, form, iframe")).toBeNull();
   });
 
+  it.each([
+    ["a block comment", "<!-- verify: note -->\n\nbody\n"],
+    ["an indented comment", "  <!-- verify: note -->\n\nbody\n"],
+    ["two comments on a line", "<!-- verify --> <!-- note -->\n\nbody\n"],
+    ["an inline comment", "body <!-- verify: note -->\n"],
+  ])("hides %s from the learner", (_name, src) => {
+    const c = renderProse(src);
+    expect(c.textContent).toContain("body");
+    expect(c.textContent).not.toContain("verify");
+    expect(c.textContent).not.toContain("<!--");
+  });
+
   it("numbers a title carrying a generic and shows it in full", () => {
     const title = "Your Account<T> is slow";
     const c = renderProse(`# ${title}\n`, title);

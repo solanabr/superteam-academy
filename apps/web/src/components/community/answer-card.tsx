@@ -126,7 +126,7 @@ export function AnswerCard({
           {/* Headings step DOWN explicitly: `prose-sm` scales body copy but
               still renders an authored `#`/`##` larger than the question
               title above. */}
-          <div className="prose prose-sm mt-2 max-w-none text-[var(--text)] dark:prose-invert prose-headings:font-display prose-headings:font-bold prose-h1:text-base prose-h2:text-[15px] prose-h3:text-sm prose-h4:text-sm">
+          <div className="prose prose-sm mt-2 max-w-none overflow-x-auto text-[var(--text)] dark:prose-invert prose-headings:font-display prose-headings:font-bold prose-h1:text-base prose-h2:text-[15px] prose-h3:text-sm prose-h4:text-sm">
             <Markdown>{answer.body}</Markdown>
           </div>
 

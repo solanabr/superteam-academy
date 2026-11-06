@@ -115,6 +115,36 @@ describe("gate 24 — raw HTML in learner prose", () => {
     expect(await gate24(repo(md))).toEqual([]);
   });
 
+  it.each([
+    ["indented one space", " <!-- a -->\n"],
+    ["indented two spaces", "  <!-- a -->\n"],
+    ["indented three spaces", "   <!-- a -->\n"],
+    ["two on a line", "<!-- a --> <!-- b -->\n"],
+    ["two with no gap", "<!-- a --><!-- b -->\n"],
+    ["over lines and indented", "  <!-- a\n  b -->\n"],
+    ["in a blockquote", ">  <!-- a --> <!-- b -->\n"],
+  ])("exempts a comment %s, which the renderer drops", async (_name, md) => {
+    expect(await gate24(repo(md))).toEqual([]);
+  });
+
+  it("names the text after a comment, which shows on the page unparsed", async () => {
+    const out = await gate24(repo("<!-- a --> trailing\n"));
+    expect(out).toHaveLength(1);
+    expect(out[0]?.message).toMatch(/`trailing`/);
+  });
+
+  it.each([
+    ["<!-- a --> <!-- b --> x\n", "`x`"],
+    ["  <!-- a --> <b>y</b>\n", "`<b>`"],
+    ["<!-- a\n\nnever closed\n", "`<!-- a`"],
+    ["<!-- <b> --> x\n", "`x`"],
+  ])("labels %j with something real", async (md, expected) => {
+    const out = await gate24(repo(md));
+    expect(out).toHaveLength(1);
+    expect(out[0]?.message).toContain(expected);
+    expect(out[0]?.message).not.toContain("``");
+  });
+
   it("flags markup sharing a line with a comment", async () => {
     const out = await gate24(repo("<!-- note --><div>x</div>\n"));
     expect(out).toHaveLength(1);
