@@ -2,6 +2,7 @@ import "server-only";
 
 import { unstable_cache } from "next/cache";
 import type { LeaderboardEntry } from "@superteam-lms/types";
+import { keepInvocationAlive } from "@/lib/cache/keep-alive";
 import { createCookielessClient } from "@/lib/supabase/cookieless";
 
 export type LeaderboardTimeframe = "weekly" | "monthly" | "alltime";
@@ -32,17 +33,16 @@ async function loadLeaderboard(
   timeframe: LeaderboardTimeframe
 ): Promise<LeaderboardEntry[]> {
   const supabase = createCookielessClient();
-  const { data, error } = await supabase
-    .rpc("get_leaderboard", {
-      p_timeframe: timeframe,
-      p_limit: 20,
-    })
-    // Postgres answers this in ~11 ms (max 214 ms over 30 d) and PostgREST caps
-    // any statement at 8 s, so a longer wait is a stalled Vercel→Supabase
-    // socket rather than a slow query. Unbounded it reached p95 182 s with the
-    // board render waiting on it; 2 s is far above the healthy round trip and
-    // turns a hung socket into a fast, loggable failure.
-    .abortSignal(AbortSignal.timeout(LEADERBOARD_TIMEOUT_MS));
+  const { data, error } = await keepInvocationAlive(
+    supabase
+      .rpc("get_leaderboard", {
+        p_timeframe: timeframe,
+        p_limit: 20,
+      })
+      // Runs in ~11 ms in Postgres, ~400 ms round trip through the gateway.
+      // 2 s turns a hung socket into a fast, loggable failure.
+      .abortSignal(AbortSignal.timeout(LEADERBOARD_TIMEOUT_MS))
+  );
 
   if (error) {
     // Throwing (not returning []) keeps the failure out of the data cache;

@@ -2,6 +2,7 @@ import "server-only";
 
 import { unstable_cache } from "next/cache";
 import { ERROR_IDS } from "@/constants/errorIds";
+import { keepInvocationAlive } from "@/lib/cache/keep-alive";
 import { logError } from "@/lib/logging";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -44,12 +45,14 @@ const PLATFORM_STATS_TIMEOUT_MS = 1_500;
 async function loadPlatformStats(): Promise<PlatformStats> {
   try {
     const supabase = createAdminClient();
-    const { data, error } = await supabase
-      .rpc("get_platform_stats")
-      // PostgREST caps statements at 8 s and this one runs in ~7 ms, so a
-      // longer wait is a stalled socket. [PLATFORM_STATS_001] Gateway Timeouts
-      // were this call hanging with the landing render behind it.
-      .abortSignal(AbortSignal.timeout(PLATFORM_STATS_TIMEOUT_MS));
+    const { data, error } = await keepInvocationAlive(
+      supabase
+        .rpc("get_platform_stats")
+        // Runs in ~7 ms in Postgres, p95 ~700 ms round trip through the
+        // gateway. [PLATFORM_STATS_001] Gateway Timeouts were this call
+        // hanging with the landing render behind it.
+        .abortSignal(AbortSignal.timeout(PLATFORM_STATS_TIMEOUT_MS))
+    );
 
     const row = data?.[0];
     if (error || !row) {
@@ -65,7 +68,9 @@ async function loadPlatformStats(): Promise<PlatformStats> {
     logError({
       errorId: ERROR_IDS.PLATFORM_STATS_RPC_FAILED,
       error: err instanceof Error ? err : new Error(String(err)),
-      context: { note: "platform stats degraded to zeros for this cache window" },
+      context: {
+        note: "platform stats degraded to zeros for this cache window",
+      },
     });
     return EMPTY_STATS;
   }
