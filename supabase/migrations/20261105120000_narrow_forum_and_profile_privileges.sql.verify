@@ -1,0 +1,93 @@
+-- POST-APPLY VERIFICATION for 20261105120000_narrow_forum_and_profile_privileges.sql
+--
+-- One read-only statement, so the SQL editor shows every check. Read the `pass`
+-- column: all true means applied correctly. Before the migration is applied, the
+-- checks marked `changes` are false and the checks marked `stays` are true.
+WITH cols(rel, role, priv, expected) AS (
+  VALUES
+    ('threads', 'authenticated', 'INSERT', ARRAY[]::text[]),
+    ('threads', 'authenticated', 'UPDATE', ARRAY[]::text[]),
+    ('threads', 'anon', 'INSERT', ARRAY[]::text[]),
+    ('threads', 'anon', 'UPDATE', ARRAY[]::text[]),
+    ('votes', 'authenticated', 'INSERT', ARRAY[]::text[]),
+    ('votes', 'authenticated', 'UPDATE', ARRAY[]::text[]),
+    ('votes', 'anon', 'INSERT', ARRAY[]::text[]),
+    ('votes', 'anon', 'UPDATE', ARRAY[]::text[]),
+    ('answers', 'authenticated', 'INSERT', ARRAY['author_id', 'body', 'thread_id']),
+    ('answers', 'authenticated', 'UPDATE', ARRAY['body']),
+    ('answers', 'anon', 'INSERT', ARRAY[]::text[]),
+    ('answers', 'anon', 'UPDATE', ARRAY[]::text[]),
+    ('flags', 'authenticated', 'INSERT', ARRAY['answer_id', 'details', 'reason', 'reporter_id', 'thread_id']),
+    ('flags', 'authenticated', 'UPDATE', ARRAY[]::text[]),
+    ('flags', 'anon', 'INSERT', ARRAY[]::text[]),
+    ('flags', 'anon', 'UPDATE', ARRAY[]::text[])
+),
+checks(sort, kind, check_name, expected, actual) AS (
+  SELECT 1, 'changes', c.role || ' ' || c.priv || ' on ' || c.rel,
+         array_to_string(c.expected, ','),
+         COALESCE((SELECT string_agg(a.attname, ',' ORDER BY a.attname)
+                     FROM pg_attribute a
+                    WHERE a.attrelid = ('public.' || c.rel)::regclass
+                      AND a.attnum > 0 AND NOT a.attisdropped
+                      AND has_column_privilege(c.role, a.attrelid, a.attnum, c.priv)), '')
+    FROM cols c
+  UNION ALL
+  SELECT 2, 'changes', 'no client DELETE on ' || t, 'false',
+         (has_table_privilege('anon', 'public.' || t, 'DELETE')
+          OR has_table_privilege('authenticated', 'public.' || t, 'DELETE'))::text
+    FROM unnest(ARRAY['threads', 'answers', 'votes', 'flags']) AS t
+  UNION ALL
+  SELECT 3, 'stays', 'service_role full write on ' || t, 'true',
+         (has_table_privilege('service_role', 'public.' || t, 'INSERT')
+          AND has_table_privilege('service_role', 'public.' || t, 'UPDATE')
+          AND has_table_privilege('service_role', 'public.' || t, 'DELETE'))::text
+    FROM unnest(ARRAY['threads', 'answers', 'votes', 'flags']) AS t
+  UNION ALL
+  SELECT 4, 'stays', 'client reads on ' || t, 'true',
+         (has_table_privilege('anon', 'public.' || t, 'SELECT')
+          AND has_table_privilege('authenticated', 'public.' || t, 'SELECT'))::text
+    FROM unnest(ARRAY['threads', 'answers', 'votes', 'flags']) AS t
+  UNION ALL
+  SELECT 5, 'changes', 'threads and votes keep read policies only', 'SELECT,SELECT',
+         (SELECT string_agg(cmd, ',' ORDER BY cmd) FROM pg_policies
+           WHERE schemaname = 'public' AND tablename IN ('threads', 'votes'))
+  UNION ALL
+  SELECT 6, 'stays', 'answers and flags keep their write policies', 'INSERT,INSERT,UPDATE',
+         (SELECT string_agg(cmd, ',' ORDER BY cmd) FROM pg_policies
+           WHERE schemaname = 'public' AND tablename IN ('answers', 'flags') AND cmd <> 'SELECT')
+  UNION ALL
+  SELECT 7, 'changes', 'trigger ' || t.name, 'O',
+         (SELECT tgenabled::text FROM pg_trigger WHERE tgname = t.name AND NOT tgisinternal)
+    FROM (VALUES ('trg_reject_answer_on_locked_thread'),
+                 ('trg_enforce_profile_bookkeeping_write')) AS t(name)
+  UNION ALL
+  SELECT 8, 'changes', 'function ' || f.name || ' definer, search_path', f.definer || ', search_path=""',
+         (SELECT p.prosecdef::text || ', ' || array_to_string(p.proconfig, ',')
+            FROM pg_proc p
+           WHERE p.pronamespace = 'public'::regnamespace AND p.proname = f.name)
+    FROM (VALUES ('reject_answer_on_locked_thread', 'true'),
+                 ('enforce_profile_bookkeeping_write', 'false')) AS f(name, definer)
+  UNION ALL
+  SELECT 9, 'changes', 'no client EXECUTE on ' || f.name, 'false',
+         (SELECT (has_function_privilege('anon', p.oid, 'EXECUTE')
+                  OR has_function_privilege('authenticated', p.oid, 'EXECUTE'))::text
+            FROM pg_proc p
+           WHERE p.pronamespace = 'public'::regnamespace AND p.proname = f.name)
+    FROM (VALUES ('reject_answer_on_locked_thread'),
+                 ('enforce_profile_bookkeeping_write')) AS f(name)
+  UNION ALL
+  SELECT 10, 'stays', 'wallet guard still locks its five columns',
+         'display_name,verified,verified_kind,wallet_address,wallet_kind',
+         (SELECT string_agg(DISTINCT m[1], ',' ORDER BY m[1])
+            FROM regexp_matches(
+                   pg_get_functiondef('public.enforce_profile_wallet_write()'::regprocedure),
+                   'NEW\.(\w+) IS DISTINCT FROM OLD\.\1', 'g') AS m)
+  UNION ALL
+  SELECT 11, 'stays', 'reroll cap constraint present', 'CHECK ((name_rerolls_used <= 3))',
+         (SELECT pg_get_constraintdef(oid) FROM pg_constraint
+           WHERE conrelid = 'public.profiles'::regclass
+             AND conname = 'chk_profiles_name_rerolls_max')
+)
+SELECT kind, check_name, expected, actual, actual IS NOT DISTINCT FROM expected AS pass
+  FROM checks
+ ORDER BY sort, check_name;
