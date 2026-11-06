@@ -25,6 +25,7 @@ import { getLessonSlot } from "@/lib/courses/lesson-slot";
 import { serverEnv } from "@/lib/env.server";
 import { isCourseInMaintenance } from "@/lib/content/deployments";
 import { scheduleQuestEvaluation } from "@/lib/gamification/quest-evaluation";
+import { recoveredCompletedAt } from "@/lib/lessons/recovered-completion";
 import { isPlatformFrozen } from "@/lib/platform/freeze";
 import { platformFrozenResponse } from "@/lib/platform/freeze-http";
 
@@ -381,7 +382,7 @@ export async function POST(request: NextRequest) {
       const supabaseAdmin = createAdminClient();
       const { data: profile } = await supabaseAdmin
         .from("profiles")
-        .select("wallet_address")
+        .select("wallet_address, created_at")
         .eq("id", user.id)
         .single();
 
@@ -487,7 +488,10 @@ export async function POST(request: NextRequest) {
               course_id: courseId,
               lesson_id: lessonId,
               completed: true,
-              completed_at: new Date().toISOString(),
+              completed_at: recoveredCompletedAt(
+                onChainEnrollment.enrolled_at,
+                profile.created_at
+              ),
               tx_signature: null,
               // Stores the on-chain SLOT (the true bitmap position), not array
               // order — see getLessonSlot. Historical rows written pre-#741 may
