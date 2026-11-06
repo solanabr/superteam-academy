@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ComponentProps,
+} from "react";
 import { useTranslations } from "next-intl";
 import {
   CaretDown,
@@ -14,9 +20,29 @@ import {
 } from "@phosphor-icons/react";
 import type { QuizBlockData, QuizQuestionData } from "@superteam-lms/types";
 import { Button } from "@/components/ui/button";
+import { Markdown } from "@/components/ui/markdown";
 import { cn } from "@/lib/utils";
 import { trackQuizChecked } from "@/lib/analytics/events";
 import type { BlockRenderProps } from "./types";
+
+const QUIZ_TEXT_COMPONENTS: ComponentProps<typeof Markdown>["components"] = {
+  p: ({ children }) => <>{children}</>,
+  code: ({ children }) => (
+    <code className="font-mono font-semibold [overflow-wrap:anywhere]">
+      {children}
+    </code>
+  ),
+};
+
+/**
+ * Quiz copy is plain text, except that authors write inline code in backticks.
+ * Only those strings go through Markdown, so a `*` or `1.` in the rest stays the
+ * character the author typed.
+ */
+function QuizText({ children }: { children: string }) {
+  if (!children.includes("`")) return children;
+  return <Markdown components={QUIZ_TEXT_COMPONENTS}>{children}</Markdown>;
+}
 
 /**
  * Snapshot of a question's last Check: the selection it judged and the verdict.
@@ -367,7 +393,7 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
                 tabIndex={-1}
                 className="rounded-sm font-display font-bold text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                {q.prompt}
+                <QuizText>{q.prompt}</QuizText>
               </legend>
               <div className="space-y-1.5">
                 {q.options.map((o) => {
@@ -396,7 +422,9 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
                         disabled={locked}
                         className="accent-primary"
                       />
-                      <span>{o.label}</span>
+                      <span className="min-w-0">
+                        <QuizText>{o.label}</QuizText>
+                      </span>
                     </label>
                   );
                 })}
@@ -426,9 +454,11 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
                     {chosenWithFeedback.map((o) => (
                       <p key={o.id} className="text-sm text-text">
                         {multi && (
-                          <span className="font-medium">{o.label}: </span>
+                          <span className="font-medium">
+                            <QuizText>{o.label}</QuizText>:{" "}
+                          </span>
                         )}
-                        {o.feedback}
+                        <QuizText>{o.feedback ?? ""}</QuizText>
                       </p>
                     ))}
                     {q.explanation && (
@@ -436,7 +466,9 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
                         <p className="font-display text-xs font-bold uppercase tracking-wide text-text-3">
                           {t("quizExplanationLabel")}
                         </p>
-                        <p className="text-sm text-text">{q.explanation}</p>
+                        <p className="text-sm text-text">
+                          <QuizText>{q.explanation}</QuizText>
+                        </p>
                       </div>
                     )}
                   </div>

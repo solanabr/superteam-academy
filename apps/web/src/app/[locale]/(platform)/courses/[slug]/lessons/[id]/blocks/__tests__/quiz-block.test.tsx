@@ -660,3 +660,51 @@ describe("QuizBlock — enrollment gate (owner 2026-09-15)", () => {
     expect(checkButton()).toBeInTheDocument();
   });
 });
+
+describe("QuizBlock inline code", () => {
+  const withCode: QuizBlockData = {
+    _type: "quiz",
+    key: "q-code",
+    questions: [
+      {
+        id: "q1",
+        prompt: "What does `commitment` set?",
+        multiSelect: false,
+        options: [
+          {
+            id: "a",
+            label: "The `processed` level",
+            correct: false,
+            feedback: "`processed` can still roll back.",
+          },
+          { id: "b", label: "2 * 3 *is* literal", correct: true },
+        ],
+        explanation: "Use `confirmed` by default.",
+      },
+    ],
+  };
+
+  it("renders backticks as code wherever the quiz shows authored text", () => {
+    const { container } = renderWithIntl(
+      <QuizBlock block={withCode} ctx={makeCtx()} />
+    );
+    fireEvent.click(screen.getByLabelText("The processed level"));
+    fireEvent.click(screen.getByRole("button", { name: "Check answer" }));
+
+    const codes = [...container.querySelectorAll("code")].map(
+      (code) => code.textContent
+    );
+    expect(codes).toEqual([
+      "commitment",
+      "processed",
+      "processed",
+      "confirmed",
+    ]);
+    expect(container.textContent).not.toContain("`");
+  });
+
+  it("leaves text without backticks exactly as the author typed it", () => {
+    renderWithIntl(<QuizBlock block={withCode} ctx={makeCtx()} />);
+    expect(screen.getByText("2 * 3 *is* literal")).toBeInTheDocument();
+  });
+});
