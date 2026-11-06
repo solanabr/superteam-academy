@@ -167,6 +167,64 @@ describe("CodeEditor autosave storage", () => {
     expect(fake.instance.setValue).not.toHaveBeenCalled();
   });
 
+  describe("reporting a restored draft", () => {
+    function mountWith(lessonId: string, storageScope?: string) {
+      const onChange = vi.fn();
+      render(
+        <NextIntlClientProvider locale="en" messages={messages}>
+          <CodeEditor
+            lessonId={lessonId}
+            initialCode="const a = 1;"
+            language="typescript"
+            storageScope={storageScope}
+            onChange={onChange}
+          />
+        </NextIntlClientProvider>
+      );
+      mountFakeEditor();
+      return onChange;
+    }
+
+    it("reports each part's own draft", () => {
+      window.localStorage.setItem(`${LEGACY_KEY}::first`, "// first");
+      window.localStorage.setItem(`${LEGACY_KEY}::second`, "// second");
+
+      expect(mountWith("lesson-test", "first").mock.calls).toEqual([
+        ["// first"],
+      ]);
+      expect(mountWith("lesson-test", "second").mock.calls).toEqual([
+        ["// second"],
+      ]);
+    });
+
+    it("doesn't report another lesson's draft", () => {
+      window.localStorage.setItem(LEGACY_KEY, "// other lesson");
+
+      expect(mountWith("lesson-other")).not.toHaveBeenCalled();
+    });
+
+    it("doesn't report the lesson-only key to a scoped part", () => {
+      window.localStorage.setItem(LEGACY_KEY, "// whichever saved last");
+
+      expect(mountWith("lesson-test", "first")).not.toHaveBeenCalled();
+    });
+
+    it("reports nothing when nothing was saved", () => {
+      expect(mountWith("lesson-test")).not.toHaveBeenCalled();
+    });
+
+    it("doesn't rewrite the saved draft", () => {
+      window.localStorage.setItem(LEGACY_KEY, "// saved");
+      const setItem = vi.spyOn(Storage.prototype, "setItem");
+
+      mountWith("lesson-test");
+      vi.advanceTimersByTime(1500);
+
+      expect(setItem).not.toHaveBeenCalled();
+      setItem.mockRestore();
+    });
+  });
+
   it("resets only the scope it's given", () => {
     renderScoped("first");
     mountFakeEditor();

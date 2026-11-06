@@ -167,12 +167,15 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
           );
           if (saved) {
             editorInstance.setValue(saved);
+            // The wrapper subscribes onChange after onMount returns, so it
+            // never reports this one. Run and Submit read the parent's copy.
+            onChange?.(saved);
           }
         } catch {
           // localStorage may be unavailable
         }
       },
-      [lessonId, storageScope, hintId]
+      [lessonId, storageScope, hintId, onChange]
     );
 
     const handleChange = useCallback(
