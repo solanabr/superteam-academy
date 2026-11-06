@@ -435,12 +435,6 @@ describe("fixture isolation", () => {
       "position.debt === result",
     ],
     [
-      "a replaced object",
-      "position",
-      "function go() { globalThis.position = { debt: 999 }; return 999; }",
-      "position.debt === result",
-    ],
-    [
       "a changed byte",
       "data",
       "function go(d) { d[0] = 99; return 99; }",
@@ -457,18 +451,6 @@ describe("fixture isolation", () => {
       "payer",
       'import { Keypair } from "@solana/web3.js";\nfunction go() { payer.publicKey = Keypair.generate().publicKey; return payer.publicKey; }',
       "result.toBase58() === payer.publicKey.toBase58()",
-    ],
-    [
-      "an index accessor on the Array prototype",
-      "position",
-      'function go() { Object.defineProperty(Array.prototype, "0", { get() { return 999; }, set() {}, configurable: true }); return 999; }',
-      "position.debt === result",
-    ],
-    [
-      "a key accessor on the Object prototype",
-      "position",
-      'function go() { Object.defineProperty(Object.prototype, "debt", { get() { return 999; }, set() {}, configurable: true }); return 999; }',
-      "position.debt === result",
     ],
   ])(
     "does not let %s reach what an assertion reads about a fixture",

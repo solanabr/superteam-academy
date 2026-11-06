@@ -712,3 +712,52 @@ export const SUBMISSION_SHAPES: SubmissionShape[] = [
     tests: [t("", "new TextDecoder().decode(result) === 'hi'")],
   },
 ];
+
+/**
+ * Submissions that change the realm before an assertion reads a fixture. They
+ * replace shared builtins, so run them only somewhere disposable: a Worker or a
+ * vm context, never the test process's own realm.
+ */
+export const FIXTURE_ISOLATION_SHAPES: {
+  name: string;
+  code: string;
+  test: AdminTestCase;
+  passes: boolean;
+}[] = [
+  {
+    name: "a local named like the runner's builder",
+    code: "function go() { return 999; }\nconst __build__ = () => [[], [{ debt: 999 }]];",
+    test: t("position", "position.debt === result"),
+    passes: false,
+  },
+  {
+    name: "a replaced mock module export",
+    code: 'function go() { const m = __modules__["@solana/web3.js"]; const k = new m.PublicKey(new Uint8Array(32)); m.Keypair = { generate: () => ({ publicKey: k }) }; return k; }',
+    test: t("programId", "result.equals(programId)"),
+    passes: false,
+  },
+  {
+    name: "a replaced static on an imported mock",
+    code: 'import { Keypair, PublicKey } from "@solana/web3.js";\nfunction go() { const k = new PublicKey(new Uint8Array(32)); Keypair.generate = () => ({ publicKey: k }); return k; }',
+    test: t("programId", "result.equals(programId)"),
+    passes: false,
+  },
+  {
+    name: "a replaced array iterator",
+    code: "function go() { Array.prototype[Symbol.iterator] = function* () { yield { debt: 999 }; }; return 999; }",
+    test: t("position", "position.debt === result"),
+    passes: false,
+  },
+  {
+    name: "a replaced typed array constructor",
+    code: "function go() { globalThis.Uint8Array = function () { return { length: 999 }; }; return 999; }",
+    test: t("data", "data.length === result"),
+    passes: false,
+  },
+  {
+    name: "a correct answer that replaces Math.imul",
+    code: "function go(pk) { Math.imul = () => 0; return pk; }",
+    test: t("payer", "result.equals(payer.publicKey)"),
+    passes: true,
+  },
+];

@@ -7,10 +7,14 @@
  * CI logs are public and the bundle holds the answer keys, so bundle assertions
  * name only lessons and test ids. Never assert on a raw result or `detail`.
  */
+import { createContext, runInContext } from "node:vm";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { AdminTestCase, TestCase } from "@superteam-lms/types";
 import { runJsSubmission } from "@/lib/challenge/executor";
-import { SUBMISSION_SHAPES } from "@/lib/challenge/__tests__/fixtures/js-submission-shapes";
+import {
+  FIXTURE_ISOLATION_SHAPES,
+  SUBMISSION_SHAPES,
+} from "@/lib/challenge/__tests__/fixtures/js-submission-shapes";
 import { lessonsById } from "@/lib/content/store";
 import { runTestCase, WORKER_SOURCE } from "../challenge-runner";
 
@@ -41,6 +45,19 @@ class InProcessWorker {
   }
 
   terminate() {}
+}
+
+/** The same, in a vm context of its own, for code that replaces shared builtins. */
+class ContextWorker extends InProcessWorker {
+  override postMessage(message: unknown) {
+    const self = {
+      onmessage: null as ((e: { data: unknown }) => unknown) | null,
+      postMessage: (data: unknown) => this.onmessage?.({ data }),
+    };
+    const context = createContext({ self, crypto });
+    runInContext(WORKER_SOURCE, context);
+    void self.onmessage?.({ data: message });
+  }
 }
 
 const translate = ((key: string) => key) as unknown as Parameters<
@@ -105,6 +122,11 @@ describe("browser runner and server executor", () => {
       "result === 5",
     ],
     [
+      "a misplaced statement holding the verdict word",
+      "function add() { return 0; }\nreturn 'pass';",
+      "result === 5",
+    ],
+    [
       "a misplaced statement behind a branch",
       "function add() { return 0; }\nif (1) return 1;",
       "result === 5",
@@ -152,6 +174,67 @@ describe("browser runner and server executor", () => {
       expect(await failedOnServer(code, tests)).toEqual(["t"]);
     }
   );
+
+  it.each([
+    ["transaction", "function go(t) { return 1; }", "result === 1", true],
+    ["result", "function go(r) { return 1; }", "result === 1", true],
+    ["publicKey", "function go() { return 1; }", "!!publicKey", false],
+    ["isValid", "function go() { return 1; }", "!!isValid", false],
+    ["mintInfo", "function go() { return 1; }", "!!mintInfo", false],
+    ["lamports", "function go() { return 1; }", "lamports === undefined", true],
+  ])(
+    "both read an assertion's own %s over a fixture of that name",
+    async (input, code, expectedOutput, passes) => {
+      const tests: AdminTestCase[] = [
+        { id: "t", description: "", input, expectedOutput },
+      ];
+      const expected = passes ? [] : ["t"];
+      expect(await failedInBrowser(code, tests)).toEqual(expected);
+      expect(await failedOnServer(code, tests)).toEqual(expected);
+    }
+  );
+
+  it.each(FIXTURE_ISOLATION_SHAPES)(
+    "both keep an assertion's fixtures apart from $name",
+    async ({ code, test, passes }) => {
+      const expected = passes ? [] : [test.id];
+      vi.stubGlobal("Worker", ContextWorker);
+      try {
+        expect(await failedInBrowser(code, [test])).toEqual(expected);
+      } finally {
+        vi.stubGlobal("Worker", InProcessWorker);
+      }
+      expect(await failedOnServer(code, [test])).toEqual(expected);
+    }
+  );
+
+  it("both read a fixture over a learner binding of the same name", async () => {
+    const code = "const data = 3;\nfunction len(d) { return d.length + data; }";
+    const tests: AdminTestCase[] = [
+      {
+        id: "t",
+        description: "",
+        input: "data",
+        expectedOutput: "result === data.length + 3",
+      },
+    ];
+    expect(await failedInBrowser(code, tests)).toEqual([]);
+    expect(await failedOnServer(code, tests)).toEqual([]);
+  });
+
+  it("both keep a learner's bindings out of the assertion", async () => {
+    const code = "const helper = 1;\nfunction go() { return 1; }";
+    const tests: AdminTestCase[] = [
+      {
+        id: "t",
+        description: "",
+        input: "",
+        expectedOutput: "typeof helper === 'number'",
+      },
+    ];
+    expect(await failedInBrowser(code, tests)).toEqual(["t"]);
+    expect(await failedOnServer(code, tests)).toEqual(["t"]);
+  });
 
   it("both match a fixture's value and key by content", async () => {
     const tests: AdminTestCase[] = [
