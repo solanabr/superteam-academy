@@ -1090,6 +1090,8 @@
   .segctl-track {
     display: flex;
     gap: 4px;
+    /* A rail wider than the phone scrolls inside its own track. */
+    max-width: 100%;
     overflow-x: auto;
     /* The track scrolls when it is narrower than its segments, but it must not
        reserve a scrollbar gutter for the possibility: on a classic-scrollbar
