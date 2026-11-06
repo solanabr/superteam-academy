@@ -151,9 +151,21 @@ const __modules__ = {
 
 /* ── Console mock ────────────────────────────────────────────────────── */
 
+/* JSON.stringify throws on a BigInt, which solutions return all the time. A value
+   that can't be printed must never read as the run failing. */
+function __stringify__(value, indent) {
+  try {
+    return JSON.stringify(value, function(_key, v) {
+      return typeof v === "bigint" ? v.toString() + "n" : v;
+    }, indent);
+  } catch (_err) {
+    return String(value);
+  }
+}
+
 function makeMockConsole() {
   var logs = [];
-  var fmt = function(a) { return typeof a === "object" ? JSON.stringify(a) : String(a); };
+  var fmt = function(a) { return typeof a === "object" ? __stringify__(a) : String(a); };
   return {
     logs: logs,
     mock: {
@@ -171,8 +183,8 @@ self.onmessage = async function(e) {
   var code = e.data.code;
   var mc = makeMockConsole();
   try {
-    var fn = new Function("__mockConsole__", "__modules__", code);
-    var result = await fn(mc.mock, __modules__);
+    var fn = new Function("__mockConsole__", "__modules__", "__stringify__", code);
+    var result = await fn(mc.mock, __modules__, __stringify__);
     self.postMessage({ result: result, output: mc.logs.join("\\n") });
   } catch (err) {
     self.postMessage({ error: (err && err.message) || String(err), output: mc.logs.join("\\n") });
@@ -482,7 +494,7 @@ async function captureConsoleOutput(
     if (fnName && !hasParams) {
       autoCall = `
 const __res__ = await ${fnName}();
-if (__res__ !== undefined) console.log(typeof __res__ === "object" ? JSON.stringify(__res__, null, 2) : __res__);`;
+if (__res__ !== undefined) console.log(typeof __res__ === "object" ? __stringify__(__res__, 2) : __res__);`;
     } else if (fnName && hasParams && firstTest) {
       const argSetup = buildArgSetup(firstTest.input);
       const callArgs = firstTest.input.trim()
@@ -493,7 +505,7 @@ ${argSetup}
 const __res__ = await ${fnName}(${callArgs});
 if (__res__ !== undefined) {
   console.log(${JSON.stringify(t("returnValueLabel"))});
-  console.log(typeof __res__ === "object" ? JSON.stringify(__res__, null, 2) : __res__);
+  console.log(typeof __res__ === "object" ? __stringify__(__res__, 2) : __res__);
 }`;
     }
 
@@ -542,7 +554,7 @@ async function runTestCase(
       const checks = Object.entries(typeShape)
         .map(([key, type]) => `typeof __result__["${key}"] === "${type}"`)
         .join(" && ");
-      assertionCode = `return (${checks}) ? "pass" : "fail: got " + JSON.stringify(__result__);`;
+      assertionCode = `return (${checks}) ? "pass" : "fail: got " + __stringify__(__result__);`;
     } else {
       assertionCode = `
         const result = __result__;
