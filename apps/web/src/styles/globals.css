@@ -6230,6 +6230,16 @@ a.act-row:focus-visible {
    PROSE TABLE OVERRIDES — polished tables inside lesson content
    Card-contained, alternating rows, bold header
 ═══════════════════════════════════════════════════════════════ */
+/* A long token (inline code, a bare URL) wraps instead of widening the page,
+   except in a table, where breaking it letter by letter would crush the column:
+   the table scrolls instead. */
+.prose {
+  overflow-wrap: anywhere;
+}
+.prose table {
+  overflow-wrap: normal;
+}
+
 /* The table's own margins move here: inside a scroller they could no longer
    collapse with the paragraphs around it, and the spacing would grow. */
 .prose-table-scroll {
