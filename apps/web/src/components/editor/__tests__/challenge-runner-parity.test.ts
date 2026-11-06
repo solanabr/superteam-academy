@@ -95,18 +95,18 @@ describe("browser runner and server executor", () => {
       "result",
     ],
     [
-      "a string standing in for the verdict",
+      "an assertion that yields a string",
       "function add() { return 'pass'; }",
       "result",
     ],
     [
-      "a top-level return",
-      "function add() { return 0; }\nreturn 'pass';",
+      "a misplaced statement",
+      "function add() { return 0; }\nreturn 1;",
       "result === 5",
     ],
     [
-      "a top-level return of true",
-      "function add() { return 0; }\nreturn true;",
+      "a misplaced statement behind a branch",
+      "function add() { return 0; }\nif (1) return 1;",
       "result === 5",
     ],
   ])("both fail %s", async (_label, code, expectedOutput) => {
@@ -115,6 +115,62 @@ describe("browser runner and server executor", () => {
     ];
     expect(await failedInBrowser(code, tests)).toEqual(["t"]);
     expect(await failedOnServer(code, tests)).toEqual(["t"]);
+  });
+
+  it.each([
+    [
+      "a changed field",
+      "position",
+      "function go(p) { p.debt = 1; return 1; }",
+      "position.debt === result",
+    ],
+    [
+      "a changed byte",
+      "data",
+      "function go(d) { d[0] = 9; return 9; }",
+      "data[0] === result",
+    ],
+    [
+      "identity with a fixture",
+      "position",
+      "function go(p) { return p; }",
+      "result === position",
+    ],
+    [
+      "identity with a fixture's key",
+      "payer",
+      "function go(pk) { return pk; }",
+      "result === payer.publicKey",
+    ],
+  ])(
+    "both read fixtures as the test built them: %s",
+    async (_label, input, code, expectedOutput) => {
+      const tests: AdminTestCase[] = [
+        { id: "t", description: "", input, expectedOutput },
+      ];
+      expect(await failedInBrowser(code, tests)).toEqual(["t"]);
+      expect(await failedOnServer(code, tests)).toEqual(["t"]);
+    }
+  );
+
+  it("both match a fixture's value and key by content", async () => {
+    const tests: AdminTestCase[] = [
+      {
+        id: "a",
+        description: "",
+        input: "position",
+        expectedOutput: "result.debt === position.debt",
+      },
+      {
+        id: "b",
+        description: "",
+        input: "payer",
+        expectedOutput: "result.equals(payer.publicKey)",
+      },
+    ];
+    const code = "function go(x) { return x; }";
+    expect(await failedInBrowser(code, tests)).toEqual([]);
+    expect(await failedOnServer(code, tests)).toEqual([]);
   });
 
   it("agree when a learner binding shares a fixture's name", async () => {

@@ -620,11 +620,6 @@ export const SUBMISSION_SHAPES: SubmissionShape[] = [
     ],
   },
   {
-    name: "a mutated fixture",
-    code: "function bump(position) { position.debt = 1; return 0; }",
-    tests: [t("position", "position.debt === 1")],
-  },
-  {
     name: "a fixture read as a free variable",
     code: "function len() { return data.length; }",
     tests: [t("data", "result === 15")],
@@ -640,7 +635,7 @@ export const SUBMISSION_SHAPES: SubmissionShape[] = [
     tests: [
       t(
         "payer",
-        "result.equals(payer.publicKey) && result === payer.publicKey && result.toBase58() === payer.publicKey.toBase58()"
+        "result.equals(payer.publicKey) && result.toBase58() === payer.publicKey.toBase58()"
       ),
     ],
   },

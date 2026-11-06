@@ -25,21 +25,14 @@ async function expectAllFailed(code: string, tests: AdminTestCase[]) {
 
 describe("submission syntax", () => {
   it.each([
-    ["after a function", 'function add(a, b) { return 0; }\nreturn "pass";'],
-    ["as true", "function add(a, b) { return 0; }\nreturn true;"],
-    ["in a block", 'function add(a, b) { return 0; }\n{ return "pass"; }'],
-    ["behind a branch", 'function add() { return 0; }\nif (1) return "pass";'],
-    [
-      "in a try",
-      'function add() { return 0; }\ntry { return "pass"; } catch {}',
-    ],
-    [
-      "after an await",
-      'function add() { return 0; }\nawait 0;\nreturn "pass";',
-    ],
-    ["before a function", 'return "pass";\nfunction add() { return 0; }'],
+    ["after a function", "function add(a, b) { return 0; }\nreturn 1;"],
+    ["in a block", "function add(a, b) { return 0; }\n{ return 1; }"],
+    ["behind a branch", "function add() { return 0; }\nif (1) return 1;"],
+    ["in a try", "function add() { return 0; }\ntry { return 1; } catch {}"],
+    ["after an await", "function add() { return 0; }\nawait 0;\nreturn 1;"],
+    ["before a function", "return 1;\nfunction add() { return 0; }"],
   ])(
-    "rejects a top-level return %s as a syntax error",
+    "treats a misplaced statement %s as a syntax error",
     async (_label, code) => {
       const r = await expectAllFailed(code, [testCase("2, 3", "result === 5")]);
       expect(r.results[0]?.detail).toMatch(/syntax error/i);
@@ -47,10 +40,7 @@ describe("submission syntax", () => {
   );
 
   it.each([
-    [
-      "an unbalanced brace",
-      'function add() { return 0; }\n}); return "pass"; (function () {',
-    ],
+    ["an unbalanced brace", "function add() { return 0; }\n}); (function () {"],
     ["an open block comment", "function add() { return 0; }\n/*"],
     ["an open template", "function add() { return 0; }\nconst t = `"],
     ["an open paren", "function add() { return 0; }\n("],
@@ -430,6 +420,76 @@ describe("assertion isolation", () => {
   });
 });
 
+describe("fixture isolation", () => {
+  it.each([
+    [
+      "a changed field",
+      "position",
+      "function go(p) { p.debt = 999; return 999; }",
+      "position.debt === result",
+    ],
+    [
+      "a changed field through a global",
+      "position",
+      "function go() { position.debt = 999; return 999; }",
+      "position.debt === result",
+    ],
+    [
+      "a replaced object",
+      "position",
+      "function go() { globalThis.position = { debt: 999 }; return 999; }",
+      "position.debt === result",
+    ],
+    [
+      "a changed byte",
+      "data",
+      "function go(d) { d[0] = 99; return 99; }",
+      "data[0] === result",
+    ],
+    [
+      "a replaced entry",
+      "wallets",
+      "function go(w) { w[0] = 1; return 1; }",
+      "wallets[0] === result",
+    ],
+    [
+      "a replaced key",
+      "payer",
+      'import { Keypair } from "@solana/web3.js";\nfunction go() { payer.publicKey = Keypair.generate().publicKey; return payer.publicKey; }',
+      "result.toBase58() === payer.publicKey.toBase58()",
+    ],
+    [
+      "an index accessor on the Array prototype",
+      "position",
+      'function go() { Object.defineProperty(Array.prototype, "0", { get() { return 999; }, set() {}, configurable: true }); return 999; }',
+      "position.debt === result",
+    ],
+    [
+      "a key accessor on the Object prototype",
+      "position",
+      'function go() { Object.defineProperty(Object.prototype, "debt", { get() { return 999; }, set() {}, configurable: true }); return 999; }',
+      "position.debt === result",
+    ],
+  ])(
+    "does not let %s reach what an assertion reads about a fixture",
+    async (_label, input, code, expectedOutput) => {
+      await expectAllFailed(code, [testCase(input, expectedOutput)]);
+    }
+  );
+
+  it("gives each run its own fixture keys, matching on both sides", async () => {
+    const code = "function go(pk) { return pk; }";
+    const tests = [testCase("payer", "payer.publicKey.toBase58()")];
+    const first = await run(code, tests);
+    const second = await run(code, tests);
+    expect(first.results[0]?.detail).not.toBe(second.results[0]?.detail);
+    expect(
+      (await run(code, [testCase("payer", "result.equals(payer.publicKey)")]))
+        .passed
+    ).toBe(true);
+  });
+});
+
 describe("snapshot handling", () => {
   const snapshot = (
     root: unknown,
@@ -460,17 +520,23 @@ describe("snapshot handling", () => {
     ["a name matching the assertion", [["__assertion__", true]]],
     ["more entries than the test has", [5, 5, 5]],
     ["a non-array entry", [{ name: "a" }]],
-  ])("takes no names from a snapshot with %s", async (_label, fixtures) => {
-    await denied(snapshot(1, [], fixtures), "false");
-    await denied(snapshot(1, [], fixtures), "result === 5");
-  });
+  ])(
+    "takes nothing but the result from a snapshot with %s",
+    async (_label, fixtures) => {
+      await denied(snapshot(1, [], fixtures), "false");
+      await denied(snapshot(1, [], fixtures), "result === 5");
+    }
+  );
 
-  it("reads fixtures by the test's own input", async () => {
-    const r = await judgeSnapshot(snapshot(1, [], [5]), {
-      input: "thing",
-      expectedOutput: "thing === 5 && result === 1",
-    });
-    expect(r.passed).toBe(true);
+  it("builds fixtures from the test, whatever the snapshot holds", async () => {
+    const forged = snapshot(1, [], [5]);
+    expect(
+      await judgeSnapshot(forged, {
+        input: "position",
+        expectedOutput: "position.debt === 50 && result === 1",
+      })
+    ).toMatchObject({ passed: true });
+    await denied(forged, "position === 5", "position");
   });
 
   it.each([
@@ -584,7 +650,6 @@ describe("snapshot handling", () => {
     ["a JSON number", "1"],
     ["a JSON array", "[]"],
     ["no node table", '{"root":1,"fixtures":[]}'],
-    ["no fixture list", '{"root":1,"nodes":[]}'],
     ["a node table object", '{"root":1,"fixtures":[],"nodes":{"length":1}}'],
     [
       "an over-long node table",
@@ -815,6 +880,40 @@ describe("resource limits", () => {
     async (_label, code) => {
       const r = await expectAllFailed(code, [testCase("", "result === 999")]);
       expect(r.results[0]).toMatchObject({ limit: true });
+    },
+    LOOSE_TIMEOUT_MS
+  );
+
+  it.each([
+    ["a BigInt power too large", "function go() { return 2n ** 100000000n; }"],
+    [
+      "a BigInt shift too large to allocate",
+      "function go() { return 1n << 100000000n; }",
+    ],
+    [
+      "a regexp out of memory",
+      'function go() { return /(?:a|b)*c/.exec("ab".repeat(1e7)); }',
+    ],
+  ])(
+    "marks %s as a limit",
+    async (_label, code) => {
+      const r = await expectAllFailed(code, [testCase("", "true")]);
+      expect(r.results[0]).toMatchObject({ limit: true });
+    },
+    LOOSE_TIMEOUT_MS
+  );
+
+  it(
+    "holds the snapshot to its size cap on the host",
+    async () => {
+      const r = await expectAllFailed(
+        'function go() { return "x".repeat(2 ** 24 + 1); }',
+        [testCase("", "true")]
+      );
+      expect(r.results[0]).toMatchObject({
+        detail: "Result too large",
+        limit: true,
+      });
     },
     LOOSE_TIMEOUT_MS
   );
