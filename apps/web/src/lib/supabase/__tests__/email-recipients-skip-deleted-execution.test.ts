@@ -36,7 +36,7 @@ const LINEAGE = [
   "20260804120000_recurring_lesson_plan.sql",
   "20260819190000_email_claim_consent_recheck.sql",
 ].map(readMigration);
-const FIX = readMigration("20261105120000_email_recipients_skip_deleted.sql");
+const FIX = readMigration("20261105121000_email_recipients_skip_deleted.sql");
 
 const STUB_SETUP = `
   CREATE ROLE anon;

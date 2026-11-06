@@ -101,6 +101,21 @@ describe("maybeGenerateReflectionReply", () => {
     expect(url).not.toContain("models/gemini-3.5-flash:");
   });
 
+  it("sends the key in the x-goog-api-key header, never in the URL", async () => {
+    const fetchMock = stubGeminiFetch("Nice work");
+    const { maybeGenerateReflectionReply } =
+      await import("../reflection-reply");
+    await maybeGenerateReflectionReply(INPUT);
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [
+      string,
+      { headers: Record<string, string> },
+    ];
+    expect(new URL(url).search).toBe("");
+    expect(url).not.toContain("test-gemini-key");
+    expect(init.headers["x-goog-api-key"]).toBe("test-gemini-key");
+    expect(init.headers["Content-Type"]).toBe("application/json");
+  });
+
   it("honours AI_MODEL_REFLECTION when it names a priced model", async () => {
     process.env.AI_MODEL_REFLECTION = "gemini-3.6-flash";
     const fetchMock = stubGeminiFetch("Nice work");

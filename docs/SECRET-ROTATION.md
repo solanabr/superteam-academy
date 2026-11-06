@@ -130,7 +130,8 @@ env value is deployed. Keep that gap to minutes.
 3. Stage the new value in the Vercel env. It takes effect on the next deploy, not
    before.
 4. Optionally freeze the platform (`POST /api/admin/freeze` with
-   `{ "frozen": true }`). Lesson completion and certificate minting then return
+   `Content-Type: application/json` and `{ "frozen": true }`; without that header
+   an admin gets a 415). Lesson completion and certificate minting then return
    503, and queued on-chain writes are deferred without spending their retry
    budget.
 5. Send the on-chain change, signed by the current authority:

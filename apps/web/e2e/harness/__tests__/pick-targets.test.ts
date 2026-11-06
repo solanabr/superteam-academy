@@ -92,6 +92,75 @@ describe("pickTargets", () => {
     ]);
   });
 
+  it("picks the worst layout lessons outside the deactivated course", () => {
+    const proseLesson = (id: string, src: string) => ({
+      ...lesson(id, { _type: "prose", src } as Block),
+    });
+    const stepped = lesson("stepped", prose, {
+      _type: "quiz",
+      questions: [
+        {
+          id: "q1",
+          options: [
+            { id: "a", correct: true },
+            { id: "b", correct: false },
+          ],
+        },
+        single("q2", "a"),
+      ],
+    } as Block);
+    const twoCode = lesson("two-code", { _type: "code" }, { _type: "code" });
+    const { LAYOUT_LESSONS, ACTIVE_COURSE_SLUGS } = pickTargets(
+      [
+        course("first", ["quiz"]),
+        course("deactivated", ["widest-hidden"]),
+        course("third", [
+          "narrow",
+          "wide",
+          "short-code",
+          "long-code",
+          "stepped",
+          "with-code",
+          "two-code",
+        ]),
+      ],
+      [
+        ...lessons,
+        stepped,
+        twoCode,
+        proseLesson("widest-hidden", `| ${"x".repeat(99)} |\n| - |\n`),
+        proseLesson("narrow", `| ${"a".repeat(25)} | ${"b".repeat(25)} |\n`),
+        proseLesson("wide", `| ${"a".repeat(30)} | ${"b".repeat(30)} |\n`),
+        proseLesson("short-code", `See \`${"a".repeat(50)}\` here.`),
+        proseLesson("long-code", `See \`${"a".repeat(60)}\` here.`),
+      ]
+    );
+    expect(LAYOUT_LESSONS.table?.lessonSlug).toBe("wide");
+    expect(LAYOUT_LESSONS.inlineCode?.lessonSlug).toBe("long-code");
+    expect(LAYOUT_LESSONS.steppedQuiz).toMatchObject({
+      lessonSlug: "quiz",
+      wrongAnswer: ["q1", "a"],
+    });
+    expect(LAYOUT_LESSONS.singleCode?.lessonSlug).toBe("with-code");
+    expect(LAYOUT_LESSONS.twoCode?.lessonSlug).toBe("two-code");
+    expect(ACTIVE_COURSE_SLUGS).toEqual(["first", "third"]);
+  });
+
+  it("offers no layout lesson when nothing is long enough to break a phone", () => {
+    const { LAYOUT_LESSONS } = pickTargets(
+      [course("first", ["quiz", "small", "with-code"]), course("second", [])],
+      [
+        ...lessons,
+        lesson("small", {
+          _type: "prose",
+          src: `| a | b |\n\nSee \`${"a".repeat(49)}\`.`,
+        } as Block),
+      ]
+    );
+    expect(LAYOUT_LESSONS.table).toBeNull();
+    expect(LAYOUT_LESSONS.inlineCode).toBeNull();
+  });
+
   it("fails loudly when no second listed course exists", () => {
     expect(() =>
       pickTargets(

@@ -6,6 +6,7 @@ import { CheckCircle, XCircle, ArrowClockwise } from "@phosphor-icons/react";
 import type { QuizQuestionData } from "@superteam-lms/types";
 import type { ReviewSessionItem } from "@/lib/review/interleave";
 import { Button } from "@/components/ui/button";
+import { QuizText } from "@/components/ui/quiz-text";
 
 type Phase = "answering" | "submitting" | "graded";
 type GradeResult = { passed: boolean; box: number };
@@ -112,7 +113,7 @@ export function ReviewQuizItem({ item, onGraded }: ReviewQuizItemProps) {
         return (
           <fieldset key={`${blockKey}:${q.id}`} className="space-y-2">
             <legend className="font-display font-bold text-text">
-              {q.prompt}
+              <QuizText>{q.prompt}</QuizText>
             </legend>
             <div className="space-y-1.5">
               {q.options.map((o) => {
@@ -141,7 +142,9 @@ export function ReviewQuizItem({ item, onGraded }: ReviewQuizItemProps) {
                       onChange={() => toggle(blockKey, q, o.id)}
                       className="accent-primary"
                     />
-                    <span>{o.label}</span>
+                    <span className="min-w-0">
+                      <QuizText>{o.label}</QuizText>
+                    </span>
                   </label>
                 );
               })}
@@ -151,7 +154,9 @@ export function ReviewQuizItem({ item, onGraded }: ReviewQuizItemProps) {
                 <p className="font-display text-xs font-bold uppercase tracking-wide text-text-3">
                   {t("explanationLabel")}
                 </p>
-                <p className="text-sm text-text">{q.explanation}</p>
+                <p className="text-sm text-text">
+                  <QuizText>{q.explanation}</QuizText>
+                </p>
               </div>
             )}
           </fieldset>

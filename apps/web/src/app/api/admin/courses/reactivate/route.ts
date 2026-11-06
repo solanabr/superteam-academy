@@ -24,7 +24,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     await requireAdminAuth(req);
   } catch (e) {
-    if (e instanceof AdminAuthError) return adminUnauthorizedResponse();
+    if (e instanceof AdminAuthError) return adminUnauthorizedResponse(e);
     throw e;
   }
 

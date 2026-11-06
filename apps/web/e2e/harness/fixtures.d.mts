@@ -10,6 +10,7 @@ export const LEARNER: {
   username: string;
   walletAddress: string;
 };
+type LessonRef = { courseSlug: string; lessonSlug: string } | null;
 export interface E2ETargets {
   DEPLOYMENTS: ReadonlyArray<{
     content_id: string;
@@ -21,6 +22,18 @@ export interface E2ETargets {
   ACTIVE_COURSE_SLUGS: readonly string[];
   CODE_LESSON: { courseSlug: string; lessonSlug: string };
   DEACTIVATED_COURSE_SLUG: string;
+  LAYOUT_LESSONS: {
+    table: LessonRef;
+    inlineCode: LessonRef;
+    steppedQuiz:
+      | (NonNullable<LessonRef> & {
+          /** [questionId, optionId]: an option of the first question that's wrong. */
+          wrongAnswer: readonly [string, string];
+        })
+      | null;
+    singleCode: LessonRef;
+    twoCode: LessonRef;
+  };
   LEARN_LOOP: {
     courseId: string;
     courseSlug: string;

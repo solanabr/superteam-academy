@@ -25,7 +25,7 @@ async function guard(
     return { userId };
   } catch (e) {
     if (e instanceof AdminAuthError)
-      return { denied: adminUnauthorizedResponse() };
+      return { denied: adminUnauthorizedResponse(e) };
     throw e;
   }
 }

@@ -129,7 +129,7 @@ export const SCHEMA_EXPECTATIONS: readonly SchemaExpectation[] = [
     // #896 re-scoped its token, recurring_lesson_plan made it gate on `days[]`,
     // #1129 made it skip deleted accounts).
     // A health-check failure should point at the definition to re-apply.
-    migration: "20261105120000_email_recipients_skip_deleted.sql",
+    migration: "20261105121000_email_recipients_skip_deleted.sql",
     description:
       "session-plan reminder claim (#869) — a missing fn silently sends nothing",
   },
@@ -142,7 +142,7 @@ export const SCHEMA_EXPECTATIONS: readonly SchemaExpectation[] = [
     // would claim zero rows and consume nobody's cap window.
     rpc: "claim_due_reengagement",
     args: { p_kind: "reengagement_7d", p_inactive_days: 100000 },
-    migration: "20261105120000_email_recipients_skip_deleted.sql",
+    migration: "20261105121000_email_recipients_skip_deleted.sql",
     description:
       "re-engagement claim + frequency cap (#899) — a missing fn silently sends nothing",
   },

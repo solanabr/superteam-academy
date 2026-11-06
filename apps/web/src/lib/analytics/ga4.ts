@@ -7,11 +7,17 @@
 
 /* global window, document */
 
+import {
+  hasAuthParams,
+  stripAuthParams,
+  stripQueryAndFragment,
+} from "./telemetry-url";
+
 declare global {
   interface Window {
     gtag: (
       command: string,
-      targetOrEvent: string | Date,
+      targetOrEvent: string | Date | Record<string, unknown>,
       params?: Record<string, unknown>
     ) => void;
     // gtag.js consumes the raw `arguments` objects pushed by the stub — the
@@ -28,6 +34,22 @@ const GA4_ID = process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID ?? "";
 // silently skip our own stub and config, and no hit would ever be sent.
 let ga4Configured = false;
 
+const URL_CLEAN_POLL_MS = 250;
+
+/**
+ * The page's location with auth params removed. Campaign and referral params
+ * stay, since GA4 reads attribution from them. gtag.js would otherwise fall back
+ * to the raw `document.location` and `document.referrer`.
+ */
+function locationFields(): Record<string, string> {
+  return {
+    page_location: stripAuthParams(window.location.href),
+    ...(document.referrer
+      ? { page_referrer: stripAuthParams(document.referrer) }
+      : {}),
+  };
+}
+
 function isAvailable(): boolean {
   return (
     typeof window !== "undefined" &&
@@ -36,21 +58,43 @@ function isAvailable(): boolean {
   );
 }
 
+function injectGtagScript(): void {
+  // Avoids loading gtag.js twice; a foreign tag doesn't stop the stub and config.
+  if (document.querySelector(`script[src*="googletagmanager"]`)) return;
+  const script = document.createElement("script");
+  script.async = true;
+  script.src = `https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`;
+  document.head.appendChild(script);
+}
+
 /**
- * Injects the GA4 `<script>` tags into `<head>`.
- * Safe to call multiple times — will only inject once.
+ * gtag.js's automatic history-change page view reports the URLs it sees itself,
+ * ignoring `set`, so it can't load while the address bar holds auth params.
+ * Until it loads, calls wait in the dataLayer with their location fields already
+ * built, which keeps the landing page view and its attribution.
+ *
+ * The URL belongs to the sign-in handlers, which read the params whenever they
+ * mount and remove them after network calls, so this only ever waits. If the
+ * params stay for the whole page load, gtag.js doesn't load for that page.
+ */
+function loadGtagOnceUrlIsClean(): void {
+  if (!hasAuthParams(window.location.href)) {
+    injectGtagScript();
+    return;
+  }
+  const timer = window.setInterval(() => {
+    if (hasAuthParams(window.location.href)) return;
+    window.clearInterval(timer);
+    injectGtagScript();
+  }, URL_CLEAN_POLL_MS);
+}
+
+/**
+ * Sets up the gtag stub and config, and loads gtag.js once the URL is clean.
+ * Safe to call multiple times — will only set up once.
  */
 export function initGA4(): void {
   if (typeof window === "undefined" || GA4_ID.length === 0) return;
-
-  // The selector only guards SCRIPT INJECTION (avoid loading gtag.js twice);
-  // stub + config below run regardless, gated by the module flag.
-  if (!document.querySelector(`script[src*="googletagmanager"]`)) {
-    const script = document.createElement("script");
-    script.async = true;
-    script.src = `https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`;
-    document.head.appendChild(script);
-  }
 
   if (ga4Configured) return;
   ga4Configured = true;
@@ -67,9 +111,13 @@ export function initGA4(): void {
   };
 
   window.gtag("js", new Date());
+  // Before config, so nothing gtag.js sends on its own uses the raw URL.
+  window.gtag("set", locationFields());
   window.gtag("config", GA4_ID, {
     send_page_view: false, // we manage page views ourselves
   });
+
+  loadGtagOnceUrlIsClean();
 }
 
 /**
@@ -80,7 +128,7 @@ export function trackGA4Event(
   params?: Record<string, unknown>
 ): void {
   if (!isAvailable()) return;
-  window.gtag("event", name, params);
+  window.gtag("event", name, { ...params, ...locationFields() });
 }
 
 /**
@@ -91,9 +139,10 @@ export function trackGA4PageView(url: string): void {
   // Google's manual-pageview contract wants the FULL URL in page_location
   // (protocol included) plus page_title; page_path stays as a convenience
   // dimension for existing reports.
+  window.gtag("set", locationFields());
   window.gtag("event", "page_view", {
-    page_location: typeof window !== "undefined" ? window.location.href : url,
+    ...locationFields(),
     page_title: typeof document !== "undefined" ? document.title : undefined,
-    page_path: url,
+    page_path: stripQueryAndFragment(url),
   });
 }

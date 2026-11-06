@@ -32,9 +32,10 @@ function fromRun(run: SubmissionRunResult): GradeResult {
   if (!run.available) return { ok: false, status: 503 };
   if (run.passed) return { ok: true };
   const failedTests = run.results.filter((r) => !r.passed);
-  return failedTests.length
-    ? { ok: false, status: 403, failedTests }
-    : { ok: false, status: 403 };
+  if (!failedTests.length) return { ok: false, status: 403 };
+  return failedTests.every((r) => r.limit)
+    ? { ok: false, status: 403, failedTests, limit: true }
+    : { ok: false, status: 403, failedTests };
 }
 
 /**

@@ -14,6 +14,7 @@ import {
 } from "@phosphor-icons/react";
 import type { QuizBlockData, QuizQuestionData } from "@superteam-lms/types";
 import { Button } from "@/components/ui/button";
+import { QuizText } from "@/components/ui/quiz-text";
 import { cn } from "@/lib/utils";
 import { trackQuizChecked } from "@/lib/analytics/events";
 import type { BlockRenderProps } from "./types";
@@ -367,7 +368,7 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
                 tabIndex={-1}
                 className="rounded-sm font-display font-bold text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                {q.prompt}
+                <QuizText>{q.prompt}</QuizText>
               </legend>
               <div className="space-y-1.5">
                 {q.options.map((o) => {
@@ -396,7 +397,9 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
                         disabled={locked}
                         className="accent-primary"
                       />
-                      <span>{o.label}</span>
+                      <span className="min-w-0">
+                        <QuizText>{o.label}</QuizText>
+                      </span>
                     </label>
                   );
                 })}
@@ -426,9 +429,11 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
                     {chosenWithFeedback.map((o) => (
                       <p key={o.id} className="text-sm text-text">
                         {multi && (
-                          <span className="font-medium">{o.label}: </span>
+                          <span className="font-medium">
+                            <QuizText>{o.label}</QuizText>:{" "}
+                          </span>
                         )}
-                        {o.feedback}
+                        <QuizText>{o.feedback ?? ""}</QuizText>
                       </p>
                     ))}
                     {q.explanation && (
@@ -436,7 +441,9 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
                         <p className="font-display text-xs font-bold uppercase tracking-wide text-text-3">
                           {t("quizExplanationLabel")}
                         </p>
-                        <p className="text-sm text-text">{q.explanation}</p>
+                        <p className="text-sm text-text">
+                          <QuizText>{q.explanation}</QuizText>
+                        </p>
                       </div>
                     )}
                   </div>
@@ -448,7 +455,7 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
           {/* One action row: Check answer lives in the Next slot and morphs into
             the emphasized Next once the question is correct (owner, 2026-07-31).
             Non-stepper quizzes get the same morphing slot without Prev/Next. */}
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             {stepper ? (
               <Button
                 variant="secondary"
@@ -478,7 +485,7 @@ export function QuizBlock({ block, ctx }: BlockRenderProps) {
               </Button>
             )}
             {!locked && q && (
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center justify-end gap-2">
                 <Button
                   variant="pushSuccess"
                   size="sm"

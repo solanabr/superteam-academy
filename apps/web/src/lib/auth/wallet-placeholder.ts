@@ -16,7 +16,7 @@
  * (`list_marketing_recipients`, `claim_due_session_reminders`,
  * `claim_due_reengagement`) apply the same predicate as
  * `lower(u.email) NOT LIKE '%@wallet.superteam-lms.local'` — see
- * supabase/migrations/20261105120000_email_recipients_skip_deleted.sql. A domain
+ * supabase/migrations/20261105121000_email_recipients_skip_deleted.sql. A domain
  * change must land in both languages.
  */
 

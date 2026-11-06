@@ -40,8 +40,9 @@ const cspDirectives = [
 
   // Scripts (API fallback): the user-facing app does NOT use this — its
   // middleware CSP replaces 'unsafe-inline' with a per-request nonce. API
-  // responses carry no inline scripts, so this is defense-in-depth only.
-  "script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: https://cdn.jsdelivr.net https://www.googletagmanager.com https://*.posthog.com",
+  // responses carry no inline scripts, so this is defense-in-depth only. No
+  // Monaco CDN source here: the editor never runs on an API response.
+  "script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: https://www.googletagmanager.com https://*.posthog.com",
 
   // Styles: 'unsafe-inline' required by Next.js inline CSS.
   // fonts.googleapis.com allows the Google Fonts stylesheet (DM Sans) link.
@@ -86,9 +87,8 @@ const cspDirectives = [
   // webview. Keep in sync with the per-request CSP in src/lib/csp.ts.
   "frame-src 'self' https://accounts.google.com https://www.youtube.com https://player.vimeo.com https://app.dynamicauth.com https://webview.dynamicauth.com",
 
-  // Workers: code sandbox + Monaco spawn workers from blob: URLs; Monaco also
-  // loads its language workers (ts/json/css/html) directly from the jsdelivr CDN.
-  "worker-src 'self' blob: https://cdn.jsdelivr.net",
+  // Workers: the code sandbox and Monaco spawn workers from blob: URLs.
+  "worker-src 'self' blob:",
 
   // Forms may post to self and the Google OAuth endpoint.
   "form-action 'self' https://accounts.google.com",

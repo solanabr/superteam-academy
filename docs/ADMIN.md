@@ -37,7 +37,10 @@ How it is enforced, in layers:
   layout's check does not gate a sibling's data fetch.
 - Every `/api/admin/*` route calls `requireAdminAuth()`, which adds a same-origin
   CSRF check (`Sec-Fetch-Site`, falling back to `Origin`) on state-changing
-  methods and returns the acting admin's id for attribution.
+  methods and returns the acting admin's id for attribution. Those methods must
+  also send `Content-Type: application/json`: `fetch` with a string body and
+  `curl -d` don't by default, and an admin who omits it gets a 415. Anyone else
+  gets the usual 401.
 
 > The old `ADMIN_SECRET` / HMAC-`admin_session`-cookie system is **retired** and
 > can be deleted from your Vercel environment.
