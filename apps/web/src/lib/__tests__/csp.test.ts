@@ -1,6 +1,9 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 import { CONTENT_BLOB_BASE_URL } from "@/lib/content/blob-store.mjs";
 import { buildCsp } from "@/lib/csp";
+import { MONACO_CDN_SOURCE } from "@/lib/editor/monaco-cdn";
 
 // buildCsp is what the MIDDLEWARE serves, and the middleware is what covers every
 // HTML page (matcher excludes /api). The CSP in next.config.mjs is attached only
@@ -97,5 +100,32 @@ describe("page CSP (the one middleware actually serves)", () => {
 
   it("threads the per-request nonce into script-src", () => {
     expect(buildCsp("abc123")).toContain("'nonce-abc123'");
+  });
+
+  it.each(["script-src", "style-src", "worker-src"])(
+    "keeps %s on jsdelivr to the pinned Monaco path",
+    (name) => {
+      const jsdelivr = directive(`${name} `)!
+        .split(" ")
+        .filter((source) => source.includes("jsdelivr"));
+      expect(jsdelivr).toEqual([MONACO_CDN_SOURCE]);
+    }
+  );
+
+  it("names jsdelivr nowhere else", () => {
+    const others = csp
+      .split(";")
+      .map((d) => d.trim())
+      .filter((d) => d.includes("jsdelivr"))
+      .map((d) => d.split(" ")[0]);
+    // Not connect-src: Monaco loads scripts and styles, and fetches nothing.
+    expect(others.sort()).toEqual(["script-src", "style-src", "worker-src"]);
+  });
+});
+
+describe("static /api CSP (next.config.mjs)", () => {
+  it("allows nothing from jsdelivr: Monaco never runs on an API response", () => {
+    const config = readFileSync(join(__dirname, "../../../next.config.mjs"));
+    expect(config.toString()).not.toContain("cdn.jsdelivr.net");
   });
 });
