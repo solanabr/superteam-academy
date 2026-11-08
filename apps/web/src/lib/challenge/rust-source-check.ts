@@ -8,15 +8,27 @@
 const SOURCE_MACROS =
   "include_str|include_bytes|include|file|module_path|env|option_env";
 
-const SOURCE_MACRO_USE = new RegExp(
-  `(?:::\\s*\\b(?:${SOURCE_MACROS})\\b)|(?:\\b(?:${SOURCE_MACROS})\\b\\s*(?:!|as\\b))`
-);
-
-/** Names a graded function has no use for, wherever they appear in code. */
-const DISALLOWED_WORDS =
-  /\b(?:macro_rules|extern|asm|global_asm|fs|File|OpenOptions|current_exe|PartialEq)\b/;
-
-const DERIVE_ATTRIBUTE = /#\s*\[\s*derive\s*\([^)]*\)\s*\]/g;
+/**
+ * Constructs a graded function has no use for. Each pattern names the construct,
+ * not a bare word, so an honest `T: PartialEq` bound, a variant called `File` or a
+ * variable called `fs` stays allowed.
+ */
+const DISALLOWED_CONSTRUCTS: RegExp[] = [
+  // a source or environment macro invoked, or renamed in a use
+  new RegExp(`\\b(?:${SOURCE_MACROS})\\s*!`),
+  new RegExp(`\\buse\\b[^;]*\\b(?:${SOURCE_MACROS})\\s+as\\b`),
+  // macro definitions, foreign code and inline assembly
+  /\bmacro_rules\s*!/,
+  /\bextern\b/,
+  /\b(?:global_)?asm\s*!/,
+  // std's filesystem, environment and process modules, however they're reached
+  /\bstd\s*::\s*(?:fs|env|process)\b/,
+  /\bstd\s*::\s*\{[^}]*\b(?:fs|env|process)\b/,
+  /\bstd\s+as\b/,
+  // a hand-written equality impl, or the trait renamed
+  /\bimpl\b[^{;]*\bPartialEq\b[^{;]*\bfor\b/,
+  /\bPartialEq\s+as\b/,
+];
 
 const isWordChar = (c: string | undefined): boolean =>
   c !== undefined && /[\p{L}\p{N}_]/u.test(c);
@@ -157,6 +169,5 @@ export function rustCodeOnly(source: string): string | null {
 export function hasDisallowedRustConstruct(source: string): boolean {
   const code = rustCodeOnly(source);
   if (code === null) return true;
-  if (SOURCE_MACRO_USE.test(code)) return true;
-  return DISALLOWED_WORDS.test(code.replace(DERIVE_ATTRIBUTE, " "));
+  return DISALLOWED_CONSTRUCTS.some((pattern) => pattern.test(code));
 }
