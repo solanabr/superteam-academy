@@ -65,9 +65,21 @@ const BLOCKED_PATTERNS: &[&str] = &[
     "proc_macro",
 ];
 
-/// The original raw-text patterns, still applied to the unstripped source, so the
-/// filter never accepts anything the earlier version rejected.
-const RAW_PATTERNS: &[&str] = &["include_bytes!", "include_str!", "env!(", "option_env!"];
+/// Every pattern the earlier filter matched on raw text, still applied to the
+/// unstripped source, so the filter never accepts anything the earlier version
+/// rejected.
+const RAW_PATTERNS: &[&str] = &[
+    "std::process",
+    "std::fs::",
+    "std::net::",
+    "std::env::",
+    "Command::new",
+    "include_bytes!",
+    "include_str!",
+    "env!(",
+    "option_env!",
+    "proc_macro",
+];
 
 /// Names that read host files or variables while compiling. They're blocked as
 /// whole identifiers, because macros can be renamed or passed to other macros.
@@ -762,15 +774,15 @@ mod tests {
     #[test]
     fn hiding_code_behind_a_quote_or_comment_marker_does_not_work() {
         for source in [
-            r#"const Q: char = '"'; const K: &str = env!("KEY");"#,
-            r#"const S: &str = "//"; const K: &str = env!("KEY");"#,
-            r#"const S: &str = "/*"; const K: &str = env!("KEY");"#,
-            r##"const S: &str = r#"a"#; const K: &str = env!("KEY");"##,
-            r#"const S: &[u8] = b"a\""; const K: &str = env!("KEY");"#,
-            r#"fn f<'a>(x: &'a str) -> &'a str { x } const K: &str = env!("KEY");"#,
-            "/* a /* nested */ b */ const K: &str = env!(\"KEY\");",
-            r#"/* never closed env!("KEY")"#,
-            r#"const S: &str = "never closed env!("#,
+            r#"const Q: char = '"'; const K: &str = env ! ("KEY");"#,
+            r#"const S: &str = "//"; const K: &str = env ! ("KEY");"#,
+            r#"const S: &str = "/*"; const K: &str = env ! ("KEY");"#,
+            r##"const S: &str = r#"a"#; const K: &str = env ! ("KEY");"##,
+            r#"const S: &[u8] = b"a\""; const K: &str = env ! ("KEY");"#,
+            r#"fn f<'a>(x: &'a str) -> &'a str { x } const K: &str = env ! ("KEY");"#,
+            "/* a /* nested */ b */ const K: &str = env ! (\"KEY\");",
+            r#"/* never closed env ! ("KEY")"#,
+            r#"const S: &str = "never closed env ! ("#,
         ] {
             assert!(is_blocked(source), "should block: {source}");
         }
@@ -779,9 +791,9 @@ mod tests {
     #[test]
     fn ordinary_programs_are_not_blocked_by_words_in_comments_or_strings() {
         for source in [
-            "// include the rent, read env vars, std::process is not available\nstruct A;",
+            "// include the rent and read env vars\nstruct A;",
             "/* see the env! macro and #[path = \"x\"] */ struct A;",
-            r#"const NOTE: &str = "include this env! std::fs:: path = x";"#,
+            r#"const NOTE: &str = "include this env! macro, path = x";"#,
             r##"const NOTE: &str = r#"include the file"#;"##,
             "let environment = 1; let include_fee = 2; let env_name = 3; let path_len = 4;",
             "fn f<'a>(x: &'a str) -> &'a str { x } const Q: char = '\\''; const N: u8 = b'x';",
