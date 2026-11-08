@@ -5,7 +5,8 @@ import { describe, expect, it } from "vitest";
 // Every platform-signed XP transaction gets its token account from
 // ensureXpTokenAccount, which funds at most once per wallet. A create built
 // next to the XP instruction would fund again after every close, so none of
-// the senders may build one.
+// the senders may build one. The one exception is the course creator's
+// account on finalize, which comes from creatorXpTokenAccount.
 const SENDERS = ["../academy-program.ts", "../xp-mint.ts"];
 
 describe("XP token account funding sites", () => {
@@ -20,8 +21,9 @@ describe("XP token account funding sites", () => {
       resolve(__dirname, "../academy-program.ts"),
       "utf8"
     );
-    // complete_lesson, finalize (learner and creator), award_achievement and
-    // reward_xp.
-    expect(source.match(/ensureXpTokenAccount\(/g)).toHaveLength(5);
+    // complete_lesson, finalize (learner), award_achievement and reward_xp.
+    expect(source.match(/ensureXpTokenAccount\(/g)).toHaveLength(4);
+    // finalize (creator).
+    expect(source.match(/creatorXpTokenAccount\(/g)).toHaveLength(1);
   });
 });

@@ -1,6 +1,11 @@
 /* eslint-disable import/order -- vi.mock factories are hoisted above imports. */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
+import {
+  Keypair,
+  PublicKey,
+  SendTransactionError,
+  Transaction,
+} from "@solana/web3.js";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_2022_PROGRAM_ID,
@@ -34,8 +39,15 @@ const h = vi.hoisted(() => ({
     txs: Map<string, ChainTx>;
     statuses: Map<string, { confirmationStatus: string; err: unknown }>;
     sent: Transaction[];
-    /** Whether a sent create lands (true) or is dropped (false). */
+    /**
+     * Whether a sent create lands at once (true) or is broadcast and held
+     * until the test lands it with `land(signature)` (false).
+     */
     landSends: boolean;
+    /** Broadcast creates the cluster has not reported yet. */
+    inflight: Map<string, () => void>;
+    /** The node rejects the next send at preflight. */
+    preflightFails: boolean;
     historyFails: boolean;
   },
   logEvent: vi.fn(),
@@ -101,6 +113,27 @@ function addHistory(address: PublicKey, tx: ChainTx) {
   h.chain.history.set(address.toBase58(), list);
 }
 
+/** A broadcast create lands: the account exists and its history shows it. */
+function landOnChain(tx: Transaction, signature: string) {
+  const create = tx.instructions.find((ix) =>
+    ix.programId.equals(ASSOCIATED_TOKEN_PROGRAM_ID)
+  )!;
+  const ata = create.keys[1]!.pubkey;
+  const keys = tx.compileMessage().accountKeys;
+  h.chain.accounts.set(ata.toBase58(), { owner: TOKEN_2022_PROGRAM_ID });
+  h.chain.statuses.set(signature, {
+    confirmationStatus: "confirmed",
+    err: null,
+  });
+  addHistory(ata, {
+    signature,
+    keys,
+    tokenAccountIndexes: [keys.findIndex((k) => k.equals(ata))],
+  });
+}
+
+const land = (signature: string) => h.chain.inflight.get(signature)!();
+
 const connection = {
   getAccountInfo: async (address: PublicKey) =>
     h.chain.accounts.get(address.toBase58()) ?? null,
@@ -113,25 +146,20 @@ const connection = {
   },
   sendRawTransaction: async (bytes: Buffer) => {
     const tx = Transaction.from(bytes);
+    if (h.chain.preflightFails) {
+      h.chain.preflightFails = false;
+      throw new SendTransactionError({
+        action: "send",
+        signature: bs58.encode(tx.signature!),
+        transactionMessage: "Transaction simulation failed",
+        logs: [],
+      });
+    }
     h.chain.sent.push(tx);
     const signature = bs58.encode(tx.signature!);
-    if (!h.chain.landSends) return signature;
-    const create = tx.instructions.find((ix) =>
-      ix.programId.equals(ASSOCIATED_TOKEN_PROGRAM_ID)
-    )!;
-    const ata = create.keys[1]!.pubkey;
-    const keys = tx.compileMessage().accountKeys;
-    const landed: ChainTx = {
-      signature,
-      keys,
-      tokenAccountIndexes: [keys.findIndex((k) => k.equals(ata))],
-    };
-    h.chain.accounts.set(ata.toBase58(), { owner: TOKEN_2022_PROGRAM_ID });
-    h.chain.statuses.set(signature, {
-      confirmationStatus: "confirmed",
-      err: null,
-    });
-    addHistory(ata, landed);
+    const apply = () => landOnChain(tx, signature);
+    if (h.chain.landSends) apply();
+    else h.chain.inflight.set(signature, apply);
     return signature;
   },
   confirmTransaction: async () => ({
@@ -218,6 +246,8 @@ beforeEach(() => {
     statuses: new Map(),
     sent: [],
     landSends: true,
+    inflight: new Map(),
+    preflightFails: false,
     historyFails: false,
   };
   h.logEvent.mockReset();
@@ -353,16 +383,53 @@ describe("ensureXpTokenAccount", () => {
     expect(h.chain.sent).toHaveLength(1);
   });
 
-  it("frees the slot of a funding that never reached the cluster", async () => {
+  it("keeps a broadcast create in flight while the cluster has not reported it", async () => {
+    const owner = Keypair.generate().publicKey;
+    // A is broadcast, its blockhash still valid, the cluster silent about it.
+    h.chain.landSends = false;
+    await ensure(owner, "lesson-a");
+    const a = fundRows()[0]!.signature as string;
+
+    // B a moment later: the account is still missing, and A may still land.
+    await expect(ensure(owner, "lesson-b")).rejects.toBeInstanceOf(
+      XpAccountFundingInFlightError
+    );
+    expect(createsSent()).toHaveLength(1);
+    expect(fundRows().map((r) => r.status)).toEqual(["pending"]);
+
+    // A lands and the learner closes the account: no second funding.
+    land(a);
+    learnerCloses(owner);
+    h.chain.history.clear();
+    await expect(ensure(owner, "lesson-c")).rejects.toBeInstanceOf(
+      XpAccountClosedError
+    );
+    expect(createsSent()).toHaveLength(1);
+  });
+
+  it("frees the slot once the broadcast create's blockhash has expired", async () => {
     const owner = Keypair.generate().publicKey;
     h.chain.landSends = false;
     await ensure(owner);
+    h.chain.blockHeight += 1_000;
     h.chain.landSends = true;
 
     await ensure(owner);
 
     expect(createsSent()).toHaveLength(2);
-    expect(fundRows().map((r) => r.status)).toEqual(["superseded", "pending"]);
+    expect(fundRows().map((r) => r.status)).toEqual(["expired", "pending"]);
+  });
+
+  it("frees the slot at once when the node rejects the create at preflight", async () => {
+    const owner = Keypair.generate().publicKey;
+    h.chain.preflightFails = true;
+    await expect(ensure(owner)).rejects.toBeInstanceOf(SendTransactionError);
+    expect(fundRows().map((r) => r.status)).toEqual(["failed"]);
+
+    await ensure(owner);
+
+    expect(createsSent()).toHaveLength(1);
+    expect(fundRows().map((r) => r.status)).toEqual(["failed", "pending"]);
   });
 
   describe("fails closed", () => {

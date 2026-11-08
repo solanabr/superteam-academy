@@ -1,9 +1,11 @@
 import "server-only";
 
 import {
+  SendTransactionError,
   Transaction,
   type Connection,
   type PublicKey,
+  type TransactionInstruction,
   type VersionedTransactionResponse,
 } from "@solana/web3.js";
 import {
@@ -13,10 +15,12 @@ import {
   getAssociatedTokenAddressSync,
 } from "@solana/spl-token";
 import {
+  failXpAccountFund,
   findXpAccountFundRows,
   reserveXpAccountFund,
   type XpAccountFundKey,
 } from "@/lib/platform-spend/ledger";
+import { logEvent } from "@/lib/logging";
 import { slotState } from "@/lib/platform-spend/slot";
 import { emitServerEvent } from "@/lib/platform-spend/events";
 import type { FeePayer } from "./sponsor";
@@ -49,8 +53,12 @@ const HISTORY_BATCH = 25;
  * unique index on (cluster, mint, wallet). Wallets the platform funded before
  * the ledger tracked this have no row, so a missing account is also checked
  * against its address's on-chain history: an account that existed and was
- * closed counts as funded. Any ledger or RPC failure throws, and nothing is
- * funded.
+ * closed counts as funded. A funding that was broadcast holds the slot until
+ * it lands or its blockhash expires; one the node refused at preflight frees
+ * it at once. Any ledger or RPC failure throws, and nothing is funded.
+ *
+ * The course creator's account on finalize uses
+ * {@link creatorXpTokenAccount} instead.
  */
 export async function ensureXpTokenAccount(
   connection: Connection,
@@ -79,7 +87,10 @@ export async function ensureXpTokenAccount(
   const slot = await slotState(
     await findXpAccountFundRows(key),
     connection,
-    emitServerEvent
+    emitServerEvent,
+    // The server broadcasts right after reserving, so an attempt the cluster
+    // hasn't reported yet may still land.
+    { unseenIsInFlight: true }
   );
   if (slot === "in_flight") throw new XpAccountFundingInFlightError(key.wallet);
   if (slot === "used" || (await existedBefore(connection, account))) {
@@ -87,38 +98,102 @@ export async function ensureXpTokenAccount(
   }
 
   const tx = new Transaction().add(
-    createAssociatedTokenAccountIdempotentInstruction(
-      feePayer.keypair.publicKey,
-      account,
-      owner,
-      mint,
-      TOKEN_2022_PROGRAM_ID,
-      ASSOCIATED_TOKEN_PROGRAM_ID
-    )
+    createInstruction(feePayer, account, owner, mint)
   );
-  await sendPlatformTransaction(connection, tx, {
-    feePayer,
-    computeUnits: COMPUTE_UNIT_LIMITS.xpAccountFund,
-    context: {
-      action: "xp_account_fund",
-      wallet: key.wallet,
-      courseId: context.courseId ?? null,
-    },
-    beforeSend: async ({ signature, lastValidBlockHeight }) => {
-      const reserved = await reserveXpAccountFund({
-        ...key,
-        signature,
+  let reservedSignature: string | null = null;
+  try {
+    await sendPlatformTransaction(connection, tx, {
+      feePayer,
+      computeUnits: COMPUTE_UNIT_LIMITS.xpAccountFund,
+      context: {
+        action: "xp_account_fund",
+        wallet: key.wallet,
         courseId: context.courseId ?? null,
-        payer: feePayer.keypair.publicKey.toBase58(),
-        payerRole: feePayer.role,
-        lastValidBlockHeight,
-      });
-      if (reserved === "conflict") {
-        throw new XpAccountFundingInFlightError(key.wallet);
-      }
+      },
+      beforeSend: async ({ signature, lastValidBlockHeight }) => {
+        const reserved = await reserveXpAccountFund({
+          ...key,
+          signature,
+          courseId: context.courseId ?? null,
+          payer: feePayer.keypair.publicKey.toBase58(),
+          payerRole: feePayer.role,
+          lastValidBlockHeight,
+        });
+        if (reserved === "conflict") {
+          throw new XpAccountFundingInFlightError(key.wallet);
+        }
+        reservedSignature = signature;
+      },
+    });
+  } catch (err) {
+    // The node answered with a refusal, or the transaction landed and failed:
+    // either way no account was created, so the slot is free again.
+    if (reservedSignature && err instanceof SendTransactionError) {
+      await failXpAccountFund(reservedSignature);
+    }
+    throw err;
+  }
+  return account;
+}
+
+/**
+ * The course creator's XP token account for `finalize_course`, which needs it
+ * for every learner who finishes the course. It is not held to the
+ * once-per-wallet slot, so a creator who closed theirs never stops their
+ * learners' finalize: when it is missing, the returned instruction creates it
+ * inside the finalize transaction, paid by `feePayer`, and each such create is
+ * logged with the creator's wallet.
+ */
+export async function creatorXpTokenAccount(
+  connection: Connection,
+  creator: PublicKey,
+  mint: PublicKey,
+  feePayer: FeePayer,
+  courseId: string
+): Promise<{
+  account: PublicKey;
+  createInstruction: TransactionInstruction | null;
+}> {
+  const account = getAssociatedTokenAddressSync(
+    mint,
+    creator,
+    false,
+    TOKEN_2022_PROGRAM_ID,
+    ASSOCIATED_TOKEN_PROGRAM_ID
+  );
+  const info = await connection.getAccountInfo(account, "confirmed");
+  if (info?.owner.equals(TOKEN_2022_PROGRAM_ID)) {
+    return { account, createInstruction: null };
+  }
+  logEvent({
+    event: "xp-account.creator-funded",
+    level: "warn",
+    context: {
+      creator: creator.toBase58(),
+      mint: mint.toBase58(),
+      courseId,
     },
   });
-  return account;
+  return {
+    account,
+    createInstruction: createInstruction(feePayer, account, creator, mint),
+  };
+}
+
+function createInstruction(
+  feePayer: FeePayer,
+  account: PublicKey,
+  owner: PublicKey,
+  mint: PublicKey
+): TransactionInstruction {
+  return createAssociatedTokenAccountIdempotentInstruction(
+    feePayer.keypair.publicKey,
+    account,
+    owner,
+    mint,
+    TOKEN_2022_PROGRAM_ID,
+    ASSOCIATED_TOKEN_PROGRAM_ID
+  );
 }
 
 /**

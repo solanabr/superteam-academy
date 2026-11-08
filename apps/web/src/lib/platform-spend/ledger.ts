@@ -274,6 +274,34 @@ export async function reserveXpAccountFund(
 }
 
 /**
+ * Mark a pending XP token account funding failed: the node refused its
+ * broadcast at preflight, so it never reached the cluster and its slot is
+ * free. Guarded on `pending`. Never throws: an unreleased row expires with its
+ * blockhash anyway.
+ */
+export async function failXpAccountFund(signature: string): Promise<void> {
+  try {
+    const { error } = await createAdminClient()
+      .from("platform_spend")
+      .update({ status: "failed" })
+      .eq("signature", signature)
+      .eq("action", "xp_account_fund")
+      .eq("status", "pending");
+    if (error) throw new Error(error.message);
+  } catch (err) {
+    logEvent({
+      event: "SPEND_LEDGER_001",
+      level: "error",
+      context: {
+        action: "xp_account_fund",
+        signature,
+        reason: err instanceof Error ? err.message : String(err),
+      },
+    });
+  }
+}
+
+/**
  * Release the slot held by a pending sponsorship (or XP token account
  * funding) that was abandoned.
  * Guarded on `pending`, so a row that settled in the meantime is left alone

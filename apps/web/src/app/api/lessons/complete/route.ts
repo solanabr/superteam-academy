@@ -613,7 +613,7 @@ export async function POST(request: NextRequest) {
                 "This lesson completion is already being processed. Please wait a moment and try again.",
               reason: "completion_in_progress",
             },
-            { status: 429, headers: { "Retry-After": "10" } }
+            { status: 429, headers: { "Retry-After": "30" } }
           );
         }
         throw err;

@@ -39,7 +39,7 @@ export const COMPUTE_UNIT_LIMITS = {
   closeEnrollment: 30_000,
   /** `complete_lesson`. */
   completeLesson: 80_000,
-  /** `finalize_course`. */
+  /** `finalize_course`, plus the creator's token account when it is missing. */
   finalizeCourse: 100_000,
   /** `issue_credential` (Metaplex Core asset create). */
   issueCredential: 100_000,

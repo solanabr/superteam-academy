@@ -46,7 +46,10 @@ import {
   writableAccounts,
 } from "./compute-budget";
 import { estimatePriorityFee } from "./priority-fee";
-import { ensureXpTokenAccount } from "./xp-token-account";
+import {
+  creatorXpTokenAccount,
+  ensureXpTokenAccount,
+} from "./xp-token-account";
 
 export { getProgramId } from "./pda";
 
@@ -312,7 +315,8 @@ export async function finalizeCourse(
   const creator = course.creator;
 
   // Both token accounts must exist (same owner constraint as completeLesson).
-  // Either one closed after its platform funding throws XpAccountClosedError.
+  // The learner's own closed account throws XpAccountClosedError. The
+  // creator's is recreated here when missing, so it never blocks a learner.
   const learnerTokenAccount = await ensureXpTokenAccount(
     getConnection(),
     learner,
@@ -320,15 +324,20 @@ export async function finalizeCourse(
     feePayer,
     { courseId }
   );
-  const creatorTokenAccount = await ensureXpTokenAccount(
+  const creatorAccount = await creatorXpTokenAccount(
     getConnection(),
     creator,
     xpMint,
-    feePayer
+    feePayer,
+    courseId
   );
+  const creatorTokenAccount = creatorAccount.account;
 
   const tx = await methods
     .finalizeCourse()
+    .preInstructions(
+      creatorAccount.createInstruction ? [creatorAccount.createInstruction] : []
+    )
     .accountsPartial({
       config: configPDA,
       course: coursePDA,

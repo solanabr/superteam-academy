@@ -307,7 +307,10 @@ vi.mock("@/lib/supabase/admin", () => {
 });
 
 import { retryPendingOnchainActions } from "../onchain-queue";
-import { XpAccountClosedError } from "../xp-account-errors";
+import {
+  XpAccountClosedError,
+  XpAccountFundingInFlightError,
+} from "../xp-account-errors";
 import { MAX_RETRIES } from "@/lib/gamification/xp-queue-settlement";
 
 const USER_ID = "user-1";
@@ -1442,10 +1445,10 @@ describe("retryPendingOnchainActions — closed XP token account", () => {
     const patch = patchFor("r-ach-closed");
     expect(patch?.resolved_at).toBeUndefined();
     expect(patch?.retry_count).toBeUndefined();
-    expect(patch?.last_error).toBe("xp-account-closed:learner");
+    expect(patch?.last_error).toBe("xp-account-closed");
   });
 
-  it("stops a course_finalize row on the refusal, naming a creator's account", async () => {
+  it("stops a course_finalize row on the refusal", async () => {
     h.rows = [
       {
         id: "r-cf-closed",
@@ -1456,9 +1459,7 @@ describe("retryPendingOnchainActions — closed XP token account", () => {
       },
     ];
     h.fetchEnrollment.mockResolvedValue({ completed_at: null });
-    h.finalizeCourse.mockRejectedValue(
-      new XpAccountClosedError("CREATOR_WALLET", "MINT")
-    );
+    h.finalizeCourse.mockRejectedValue(closed());
 
     await retryPendingOnchainActions(USER_ID);
 
@@ -1468,7 +1469,7 @@ describe("retryPendingOnchainActions — closed XP token account", () => {
     const patch = patchFor("r-cf-closed");
     expect(patch?.resolved_at).toBeUndefined();
     expect(patch?.retry_count).toBeUndefined();
-    expect(patch?.last_error).toBe("xp-account-closed:creator");
+    expect(patch?.last_error).toBe("xp-account-closed");
   });
 
   it("stops a quest_xp_mint row before claiming or sending anything", async () => {
@@ -1490,7 +1491,30 @@ describe("retryPendingOnchainActions — closed XP token account", () => {
     const patch = patchFor("r-mint-closed");
     expect(patch?.resolved_at).toBeUndefined();
     expect(patch?.retry_count).toBeUndefined();
-    expect(patch?.last_error).toBe("xp-account-closed:learner");
+    expect(patch?.last_error).toBe("xp-account-closed");
+  });
+
+  it("defers a funding still in flight without spending a retry", async () => {
+    h.rows = [
+      {
+        id: "r-ach-inflight",
+        action_type: "achievement",
+        reference_id: "first-steps",
+        retry_count: 1,
+        payload: {},
+      },
+    ];
+    h.awardAchievement.mockRejectedValue(
+      new XpAccountFundingInFlightError("WALLET_ADDR")
+    );
+
+    await retryPendingOnchainActions(USER_ID);
+
+    expect(h.awardAchievement).toHaveBeenCalledTimes(1);
+    const patch = patchFor("r-ach-inflight");
+    expect(patch?.resolved_at).toBeUndefined();
+    expect(patch?.retry_count).toBeUndefined();
+    expect(patch?.last_error).toBe("xp-account-funding-in-flight");
   });
 
   it("still retries an ordinary failure", async () => {

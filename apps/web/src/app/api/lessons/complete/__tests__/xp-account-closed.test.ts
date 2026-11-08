@@ -151,6 +151,8 @@ describe("closed XP token account", () => {
     const res = await call();
 
     expect(res.status).toBe(429);
+    // Matches the in-flight bucket's 30 s window.
+    expect(res.headers.get("Retry-After")).toBe("30");
     const body = (await res.json()) as { reason?: string };
     expect(body.reason).toBe("completion_in_progress");
     expect(upsertProgress).not.toHaveBeenCalled();

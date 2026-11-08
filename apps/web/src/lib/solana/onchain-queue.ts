@@ -40,7 +40,10 @@ import {
   TransactionNotBroadcastError,
 } from "./academy-program";
 import { getProgramId } from "./pda";
-import { XpAccountClosedError } from "./xp-account-errors";
+import {
+  XpAccountClosedError,
+  XpAccountFundingInFlightError,
+} from "./xp-account-errors";
 import {
   ALREADY_SATISFIED_ERROR_CODES,
   isAlreadySatisfied,
@@ -74,7 +77,7 @@ type PendingActionRow =
 // ---------------------------------------------------------------------------
 
 // A closed XP token account is not retried: nothing changes until its owner
-// recreates it.
+// recreates it. Nor is a funding in flight: it clears on a later drain.
 export async function withRetry<T>(
   fn: () => Promise<T>,
   attempts = 3
@@ -83,7 +86,13 @@ export async function withRetry<T>(
     try {
       return await fn();
     } catch (err) {
-      if (i === attempts - 1 || err instanceof XpAccountClosedError) throw err;
+      if (
+        i === attempts - 1 ||
+        err instanceof XpAccountClosedError ||
+        err instanceof XpAccountFundingInFlightError
+      ) {
+        throw err;
+      }
       await new Promise((r) => setTimeout(r, 500 * (i + 1)));
     }
   }
@@ -830,15 +839,20 @@ async function drainRowsForUser(
       // non-Error throw writes the literal "[object Object]" (two prod rows
       // carry exactly that). The helper names both cases and appends the
       // program error code, the signature and a log excerpt when present.
-      // The recipient's XP token account is closed and its one platform
+      // The learner's XP token account is closed and its one platform
       // funding is used. Retrying can't change that, so stop: leave the row
       // unresolved without spending the retry budget, and the drain after the
-      // owner recreates the account goes through.
+      // learner recreates the account goes through. A funding still in flight
+      // is deferred the same way and clears on a later drain.
       if (err instanceof XpAccountClosedError) {
-        await deferForXpAccountClosed(
+        await deferForXpAccount(adminClient, row, "xp-account-closed");
+        continue;
+      }
+      if (err instanceof XpAccountFundingInFlightError) {
+        await deferForXpAccount(
           adminClient,
           row,
-          err.owner === profile.wallet_address ? "learner" : "creator"
+          "xp-account-funding-in-flight"
         );
         continue;
       }
@@ -1163,24 +1177,24 @@ async function deferForMintCap(
   }
 }
 
-// Closed XP token account deferral. Same contract as the deferrals above: leave
-// the row unresolved, record whose account it is, do NOT touch retry_count.
-// Log-and-swallow a marker-write failure for the same F5 reason.
-async function deferForXpAccountClosed(
+// XP token account deferral (closed, or funding in flight). Same contract as
+// the deferrals above: leave the row unresolved, record why, do NOT touch
+// retry_count. Log-and-swallow a marker-write failure for the same F5 reason.
+async function deferForXpAccount(
   adminClient: AdminClient,
   row: PendingActionRow,
-  whose: "learner" | "creator"
+  marker: "xp-account-closed" | "xp-account-funding-in-flight"
 ): Promise<void> {
   try {
     const { error } = await adminClient
       .from("pending_onchain_actions")
-      .update({ last_error: `xp-account-closed:${whose}` })
+      .update({ last_error: marker })
       .eq("id", row.id);
     if (error) throw new Error(error.message);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error(
-      `[onchain-queue] failed to write xp-account-closed marker for row ${row.id}: ${message}`
+      `[onchain-queue] failed to write ${marker} marker for row ${row.id}: ${message}`
     );
   }
 }

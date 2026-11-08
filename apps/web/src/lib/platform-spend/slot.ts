@@ -12,17 +12,24 @@ export type SlotState = "free" | "used" | "in_flight";
  * - used: a transaction for it landed, including an abandoned one that landed
  *   after all (`superseded_landed`), even if the cron has not seen it yet;
  * - in flight: the live attempt, or an abandoned one, is landing right now;
- * - free: nothing landed and nothing is landing. A live attempt the cluster
- *   has never seen was abandoned (a cancelled or failed signature): it is
- *   superseded so the slot can be used again at once. If it lands later, the
- *   next check finds it and the slot counts as used.
+ * - free: nothing landed and nothing is landing. By default a live attempt
+ *   the cluster has never seen was abandoned (a sponsored transaction the
+ *   learner never submitted): it is superseded so the slot can be used again
+ *   at once. If it lands later, the next check finds it and the slot counts as
+ *   used.
+ *
+ * With `unseenIsInFlight`, for transactions the server broadcast itself right
+ * after reserving, an unseen attempt may still land, so it holds the slot
+ * until settlement expires it past its last valid block height (or it is
+ * marked failed when the node refused it).
  *
  * `emit` sends the settled events; the caller decides when they go out.
  */
 export async function slotState(
   rows: SponsorshipRow[],
   connection: Parameters<typeof defaultSettleDeps>[0],
-  emit: (event: ServerEvent) => Promise<void>
+  emit: (event: ServerEvent) => Promise<void>,
+  options: { unseenIsInFlight?: boolean } = {}
 ): Promise<SlotState> {
   const used = (status: string) =>
     status === "confirmed" || status === "superseded_landed";
@@ -47,6 +54,12 @@ export async function slotState(
       const outcome = outcomeOf(r.signature);
       return outcome === "pending" || outcome === "superseded";
     })
+  ) {
+    return "in_flight";
+  }
+  if (
+    options.unseenIsInFlight &&
+    open.some((r) => outcomeOf(r.signature) === "unseen")
   ) {
     return "in_flight";
   }
