@@ -85,6 +85,11 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
+      // AC001 is reject_answer_on_locked_thread: the thread was locked or removed
+      // after the check above. Its message is one of two fixed strings.
+      if (error.code === "AC001") {
+        return NextResponse.json({ error: error.message }, { status: 403 });
+      }
       return NextResponse.json(
         { error: "Failed to create answer" },
         { status: 500 }

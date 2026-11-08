@@ -75,6 +75,113 @@ describe("initGA4 dataLayer contract", () => {
     ).toHaveLength(1);
   });
 
+  describe("loading gtag.js after the sign-in return", () => {
+    const AUTH =
+      "dynamicOauthCode=oauth-code&dynamicOauthState=oauth-state&deviceRegistrationToken=device-token";
+    const ATTRIBUTION = "utm_source=news&ref=abc&gclid=g1";
+    const RETURN_URL = `/en/courses?${AUTH}&${ATTRIBUTION}`;
+    const ONE_HOUR_MS = 3_600_000;
+
+    function scripts() {
+      return document.querySelectorAll('script[src*="googletagmanager"]');
+    }
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+      vi.useRealTimers();
+      window.history.replaceState(null, "", "/");
+    });
+
+    it("loads straight away when the URL carries only attribution", async () => {
+      window.history.replaceState(null, "", `/en/courses?${ATTRIBUTION}`);
+      const { initGA4 } = await import("../ga4");
+      initGA4();
+
+      expect(scripts()).toHaveLength(1);
+      expect(window.location.search).toBe(`?${ATTRIBUTION}`);
+    });
+
+    it("holds the script while the URL has auth params, queuing the landing page view", async () => {
+      window.history.replaceState(null, "", RETURN_URL);
+      const { initGA4, trackGA4PageView } = await import("../ga4");
+      initGA4();
+      trackGA4PageView("/en/courses");
+      vi.advanceTimersByTime(5_000);
+
+      expect(scripts()).toHaveLength(0);
+      const pageView = (window.dataLayer as IArguments[]).at(-1)!;
+      expect(pageView[1]).toBe("page_view");
+      expect(pageView[2].page_location).toBe(
+        `${window.location.origin}/en/courses?${ATTRIBUTION}`
+      );
+    });
+
+    it("loads once the URL is clean, and only once", async () => {
+      window.history.replaceState(null, "", RETURN_URL);
+      const { initGA4 } = await import("../ga4");
+      initGA4();
+      initGA4();
+      vi.advanceTimersByTime(1_000);
+      expect(scripts()).toHaveLength(0);
+
+      window.history.replaceState(null, "", "/en/courses");
+      vi.advanceTimersByTime(1_000);
+      expect(scripts()).toHaveLength(1);
+
+      vi.advanceTimersByTime(ONE_HOUR_MS);
+      expect(scripts()).toHaveLength(1);
+    });
+
+    it("loads after a client navigation away from the auth params", async () => {
+      window.history.replaceState(null, "", RETURN_URL);
+      const { initGA4 } = await import("../ga4");
+      initGA4();
+
+      window.history.pushState(null, "", "/en/dashboard");
+      vi.advanceTimersByTime(1_000);
+      expect(scripts()).toHaveLength(1);
+    });
+
+    it("never loads while the params stay, keeping the queued calls", async () => {
+      window.history.replaceState(null, "", RETURN_URL);
+      const { initGA4, trackGA4Event, trackGA4PageView } =
+        await import("../ga4");
+      initGA4();
+      trackGA4PageView("/en/courses");
+      trackGA4Event("lesson_completed");
+      const queued = window.dataLayer.length;
+
+      vi.advanceTimersByTime(ONE_HOUR_MS);
+
+      expect(scripts()).toHaveLength(0);
+      expect(window.dataLayer).toHaveLength(queued);
+      expect(window.location.search).toBe(`?${AUTH}&${ATTRIBUTION}`);
+    });
+
+    it.each([
+      ["held", RETURN_URL],
+      ["clean", `/en/courses?${ATTRIBUTION}`],
+    ])("never touches history on a %s URL", async (_name, url) => {
+      window.history.replaceState(null, "", url);
+      const replaceState = vi.spyOn(window.history, "replaceState");
+      const pushState = vi.spyOn(window.history, "pushState");
+      const { initGA4, trackGA4Event, trackGA4PageView } =
+        await import("../ga4");
+      initGA4();
+      trackGA4PageView("/en/courses");
+      trackGA4Event("lesson_completed");
+
+      vi.advanceTimersByTime(ONE_HOUR_MS);
+
+      expect(replaceState).not.toHaveBeenCalled();
+      expect(pushState).not.toHaveBeenCalled();
+    });
+  });
+
   describe("location fields", () => {
     const SECRETS = ["oauth-code", "oauth-state", "device-token", "hash-token"];
     const RAW =

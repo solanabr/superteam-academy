@@ -7,7 +7,11 @@
 
 /* global window, document */
 
-import { stripAuthParams, stripQueryAndFragment } from "./telemetry-url";
+import {
+  hasAuthParams,
+  stripAuthParams,
+  stripQueryAndFragment,
+} from "./telemetry-url";
 
 declare global {
   interface Window {
@@ -29,6 +33,8 @@ const GA4_ID = process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID ?? "";
 // injected by an extension or an embedded widget) would otherwise make init
 // silently skip our own stub and config, and no hit would ever be sent.
 let ga4Configured = false;
+
+const URL_CLEAN_POLL_MS = 250;
 
 /**
  * The page's location with auth params removed. Campaign and referral params
@@ -52,21 +58,43 @@ function isAvailable(): boolean {
   );
 }
 
+function injectGtagScript(): void {
+  // Avoids loading gtag.js twice; a foreign tag doesn't stop the stub and config.
+  if (document.querySelector(`script[src*="googletagmanager"]`)) return;
+  const script = document.createElement("script");
+  script.async = true;
+  script.src = `https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`;
+  document.head.appendChild(script);
+}
+
 /**
- * Injects the GA4 `<script>` tags into `<head>`.
- * Safe to call multiple times — will only inject once.
+ * gtag.js's automatic history-change page view reports the URLs it sees itself,
+ * ignoring `set`, so it can't load while the address bar holds auth params.
+ * Until it loads, calls wait in the dataLayer with their location fields already
+ * built, which keeps the landing page view and its attribution.
+ *
+ * The URL belongs to the sign-in handlers, which read the params whenever they
+ * mount and remove them after network calls, so this only ever waits. If the
+ * params stay for the whole page load, gtag.js doesn't load for that page.
+ */
+function loadGtagOnceUrlIsClean(): void {
+  if (!hasAuthParams(window.location.href)) {
+    injectGtagScript();
+    return;
+  }
+  const timer = window.setInterval(() => {
+    if (hasAuthParams(window.location.href)) return;
+    window.clearInterval(timer);
+    injectGtagScript();
+  }, URL_CLEAN_POLL_MS);
+}
+
+/**
+ * Sets up the gtag stub and config, and loads gtag.js once the URL is clean.
+ * Safe to call multiple times — will only set up once.
  */
 export function initGA4(): void {
   if (typeof window === "undefined" || GA4_ID.length === 0) return;
-
-  // The selector only guards SCRIPT INJECTION (avoid loading gtag.js twice);
-  // stub + config below run regardless, gated by the module flag.
-  if (!document.querySelector(`script[src*="googletagmanager"]`)) {
-    const script = document.createElement("script");
-    script.async = true;
-    script.src = `https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`;
-    document.head.appendChild(script);
-  }
 
   if (ga4Configured) return;
   ga4Configured = true;
@@ -88,6 +116,8 @@ export function initGA4(): void {
   window.gtag("config", GA4_ID, {
     send_page_view: false, // we manage page views ourselves
   });
+
+  loadGtagOnceUrlIsClean();
 }
 
 /**

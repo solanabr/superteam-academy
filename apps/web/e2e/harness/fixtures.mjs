@@ -55,6 +55,10 @@ function quizOnly(lesson) {
 // Layout targets pick the worst case, so the check fails on the content that
 // breaks a phone, and they stay independent: the inline-code lesson has no table,
 // so a table fix can't turn that check green.
+// In characters, roughly what overflows the widest phone the spec checks (430px).
+// A smaller target would fit, and the check would pass without testing anything.
+const LONG_TOKEN = 50;
+const WIDE_TABLE = 50;
 const TABLE = /(?:^\s*\|.*\|\s*$\n?)+/gm;
 const proseOf = (lesson) =>
   lesson.blocks
@@ -140,13 +144,13 @@ export function pickTargets(bundleCourses, lessons) {
     lesson.blocks.filter((b) => b._type === "code").length;
   const reading = reachable.filter((entry) => codeBlocks(entry) === 0);
   const table = worst(
-    reading.filter(({ lesson }) => tableMinWidth(lesson) > 0),
+    reading.filter(({ lesson }) => tableMinWidth(lesson) >= WIDE_TABLE),
     ({ lesson }) => tableMinWidth(lesson)
   );
   const inlineCode = worst(
     reading.filter(
       ({ lesson }) =>
-        tableMinWidth(lesson) === 0 && longestInlineToken(lesson) > 0
+        tableMinWidth(lesson) === 0 && longestInlineToken(lesson) >= LONG_TOKEN
     ),
     ({ lesson }) => longestInlineToken(lesson)
   );

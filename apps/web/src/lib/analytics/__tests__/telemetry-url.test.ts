@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { scrubText, scrubUrl, stripAuthParams } from "../telemetry-url";
+import {
+  hasAuthParams,
+  scrubText,
+  scrubUrl,
+  stripAuthParams,
+} from "../telemetry-url";
 
 describe("scrubText", () => {
   it("drops query and fragment from a path after a separator", () => {
@@ -31,8 +36,9 @@ describe("scrubText", () => {
   });
 
   // Every shape sits just under the clip, so what's measured is the scan itself.
-  // A bounded scan takes single-digit milliseconds on these and an unbounded one
-  // takes over a second, so the budget sits well clear of both.
+  // A bounded scan takes single-digit milliseconds on these and a quadratic one
+  // takes around 100. One run can spike past the budget on a GC pause or a busy
+  // machine, but a bad pattern is slow on all of them, so the fastest run counts.
   const ADVERSARIAL: Array<[string, string]> = [
     ["hyphenated path", `/en/${"a-".repeat(4_000)}`],
     ["hyphenated word", "a-".repeat(4_000)],
@@ -49,10 +55,13 @@ describe("scrubText", () => {
   ];
 
   it.each(ADVERSARIAL)("stays fast on %s", (_name, input) => {
-    const start = performance.now();
-    scrubText(input);
+    const runs = Array.from({ length: 5 }, () => {
+      const start = performance.now();
+      scrubText(input);
+      return performance.now() - start;
+    });
 
-    expect(performance.now() - start).toBeLessThan(500);
+    expect(Math.min(...runs)).toBeLessThan(50);
   });
 });
 
@@ -61,6 +70,36 @@ describe("scrubUrl", () => {
     expect(scrubUrl(`/${"a".repeat(100_000)}`).length).toBeLessThanOrEqual(
       8_192
     );
+  });
+});
+
+describe("hasAuthParams", () => {
+  it.each([
+    "https://a.test/en?dynamicOauthCode=c",
+    "https://a.test/en?dynamicOauthState=s",
+    "https://a.test/en?deviceRegistrationToken=t",
+    "https://a.test/en?utm_source=x&code=c",
+    "/en?email=a@b.c",
+    "https://a.test/en#access_token=t",
+    "https://a.test/en?utm_source=x#state=s&ok=1",
+  ])("flags %s", (url) => {
+    expect(hasAuthParams(url)).toBe(true);
+  });
+
+  it.each([
+    "https://a.test/en",
+    "https://a.test/token/en",
+    "https://a.test/en?utm_source=x&utm_campaign=y&ref=r&gclid=g",
+    "https://a.test/en#code",
+    "https://a.test/en#section=2",
+    "https://a.test/en?",
+  ])("passes %s", (url) => {
+    expect(hasAuthParams(url)).toBe(false);
+  });
+
+  it("agrees with stripAuthParams", () => {
+    const url = "https://a.test/en?deviceRegistrationToken=t&utm_source=x";
+    expect(hasAuthParams(stripAuthParams(url))).toBe(false);
   });
 });
 
