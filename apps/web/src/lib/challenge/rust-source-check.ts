@@ -15,20 +15,48 @@ const SOURCE_MACROS =
  */
 const DISALLOWED_CONSTRUCTS: RegExp[] = [
   // a source or environment macro invoked, or renamed in a use
-  new RegExp(`\\b(?:${SOURCE_MACROS})\\s*!`),
+  new RegExp(`\\b(?:${SOURCE_MACROS})\\s*!(?!=)`),
   new RegExp(`\\buse\\b[^;]*\\b(?:${SOURCE_MACROS})\\s+as\\b`),
   // macro definitions, foreign code and inline assembly
-  /\bmacro_rules\s*!/,
+  /\bmacro_rules\s*!(?!=)/,
   /\bextern\b/,
-  /\b(?:global_)?asm\s*!/,
+  /\b(?:global_)?asm\s*!(?!=)/,
   // std's filesystem, environment and process modules, however they're reached
   /\bstd\s*::\s*(?:fs|env|process)\b/,
   /\bstd\s*::\s*\{[^}]*\b(?:fs|env|process)\b/,
   /\bstd\s+as\b/,
-  // a hand-written equality impl, or the trait renamed
-  /\bimpl\b[^{;]*\bPartialEq\b[^{;]*\bfor\b/,
+  /\bstd\s*::\s*\*/,
+  /\bstd\s*::\s*\{[^}]*(?:\bself\b|\*)/,
+  // the trait renamed (a hand-written impl is checked by implementsPartialEq)
   /\bPartialEq\s+as\b/,
 ];
+
+/**
+ * True if some `impl` block implements PartialEq by hand. Only the trait position
+ * counts, between the impl's own generics and `for`, so a `T: PartialEq` bound
+ * in the generics stays allowed.
+ */
+function implementsPartialEq(code: string): boolean {
+  for (const match of code.matchAll(/\bimpl\b/g)) {
+    let i = (match.index ?? 0) + "impl".length;
+    while (/\s/.test(code[i] ?? "")) i += 1;
+    if (code[i] === "<") {
+      let depth = 0;
+      for (; i < code.length; i += 1) {
+        if (code[i] === "<") depth += 1;
+        else if (code[i] === ">" && code[i - 1] !== "-") depth -= 1;
+        if (depth === 0) break;
+      }
+      i += 1;
+    }
+    const rest = code.slice(i);
+    const end = rest.search(/\bfor\b|[{;]/);
+    if (end === -1 || !/^\s*for\b/.test(rest.slice(end))) continue;
+    if (/\bPartialEq\b/.test(rest.slice(0, end).replace(/<[^]*$/, "")))
+      return true;
+  }
+  return false;
+}
 
 const isWordChar = (c: string | undefined): boolean =>
   c !== undefined && /[\p{L}\p{N}_]/u.test(c);
@@ -169,5 +197,8 @@ export function rustCodeOnly(source: string): string | null {
 export function hasDisallowedRustConstruct(source: string): boolean {
   const code = rustCodeOnly(source);
   if (code === null) return true;
-  return DISALLOWED_CONSTRUCTS.some((pattern) => pattern.test(code));
+  return (
+    DISALLOWED_CONSTRUCTS.some((pattern) => pattern.test(code)) ||
+    implementsPartialEq(code)
+  );
 }

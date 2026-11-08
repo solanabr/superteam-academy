@@ -24,6 +24,10 @@ describe("hasDisallowedRustConstruct", () => {
     "impl core::cmp::PartialEq<i64> for Y { }",
     "use std::cmp::PartialEq as Q;",
     "impl<T> std::cmp::PartialEq<T> for Y { }",
+    "impl<T: Clone> PartialEq<T> for Y<T> { }",
+    "use std::*;",
+    "use std::{self as s};",
+    "use std::{io, *};",
     // a literal or comment that looks open doesn't hide what follows it
     "const Q: char = '\"'; use std::fs;",
     'const S: &str = "//"; use std::fs;',
@@ -56,6 +60,14 @@ describe("hasDisallowedRustConstruct", () => {
     "fn f() -> u8 { C::env() }",
     "#[cfg_attr(all(), derive(PartialEq))] struct A;",
     "use std::fmt::Display;",
+    "fn f(file: u8) -> bool { file != 0 }",
+    "fn f(env: u8, prod: u8) -> bool { env != prod }",
+    "fn f(include: bool, x: bool) -> bool { include != x }",
+    "trait Has<T> { fn has(&self, x: &T) -> bool; } impl<T: PartialEq> Has<T> for Vec<T> { fn has(&self, x: &T) -> bool { self.contains(x) } }",
+    "impl<T: PartialEq<Vec<u8>>> Has<T> for S { }",
+    "impl<T> std::fmt::Display for P<T> where T: PartialEq { }",
+    "impl<T: PartialEq> S<T> { fn eq_all(&self) -> bool { true } }",
+    "fn f() -> impl Iterator<Item = u8> { 0..1 }",
   ])("allows %s", (source) => {
     expect(hasDisallowedRustConstruct(source)).toBe(false);
   });
