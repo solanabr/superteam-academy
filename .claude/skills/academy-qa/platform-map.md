@@ -65,14 +65,13 @@ landing hero. When a course seems "missing", check both before filing it.
 
 Full table in `apps/web/src/app/api/CLAUDE.md`. The ones that matter here:
 
-| Route                             | Why it matters                                                                                                                                            |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/api/lessons/complete`           | The completion write: XP award, auto-finalize, achievements. This is where completion is _gated_ — challenge validation alone does not complete a lesson. |
-| `/api/lessons/validate-challenge` | Server-side challenge check (UX pass/fail)                                                                                                                |
-| `/api/ai/partner/verify`          | Server-side grading of comprehension checks                                                                                                               |
-| `/api/certificates/mint`          | Credential mint + retry queue                                                                                                                             |
-| `/api/certificates/metadata`      | The metadata an explorer/employer resolves                                                                                                                |
-| `/api/enroll/sponsor`             | Platform-sponsored enrolment (learner is read from the session, never the body)                                                                           |
+| Route                        | Why it matters                                                                                                                                            |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/api/lessons/complete`      | The completion write: XP award, auto-finalize, achievements. This is where completion is _gated_ — challenge validation alone does not complete a lesson. |
+| `/api/ai/partner/verify`     | Server-side grading of comprehension checks                                                                                                               |
+| `/api/certificates/mint`     | Credential mint + retry queue                                                                                                                             |
+| `/api/certificates/metadata` | The metadata an explorer/employer resolves                                                                                                                |
+| `/api/enroll/sponsor`        | Platform-sponsored enrolment (learner is read from the session, never the body)                                                                           |
 
 Server-side limits that already exist (verify they hold rather than
 re-proposing them): max 100 XP per lesson completion, max 2000 per generic
