@@ -145,12 +145,17 @@ export async function ensureXpTokenAccount(
  * The node simulated the transaction and refused it, so it was never
  * forwarded. web3.js reports every JSON-RPC error body as a
  * SendTransactionError (with action "simulate" whenever preflight is on), so
- * only the node's own simulation-failure message counts.
+ * only the node's own simulation-failure message counts. A gateway that fans
+ * the bytes out to several upstreams can return a lagging upstream's
+ * "Blockhash not found" or "already been processed" after another upstream
+ * forwarded, so those two wait for expiry instead.
  */
 function rejectedAtPreflight(err: unknown): boolean {
+  if (!(err instanceof SendTransactionError)) return false;
+  const message = err.transactionError.message;
   return (
-    err instanceof SendTransactionError &&
-    /Transaction simulation failed/.test(err.transactionError.message)
+    /Transaction simulation failed/.test(message) &&
+    !/Blockhash not found|already been processed/.test(message)
   );
 }
 

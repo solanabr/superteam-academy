@@ -50,9 +50,9 @@ const h = vi.hoisted(() => ({
     preflightFails: boolean;
     /**
      * The next send is forwarded to the cluster, then the gateway answers
-     * with a JSON-RPC error body anyway.
+     * with a JSON-RPC error body carrying this message anyway.
      */
-    forwardThenError: boolean;
+    forwardThenError: string | null;
     /** The next create lands and fails on-chain. */
     landFails: boolean;
     historyFails: boolean;
@@ -179,11 +179,12 @@ const connection = {
     if (h.chain.landSends) apply();
     else h.chain.inflight.set(signature, apply);
     if (h.chain.forwardThenError) {
-      h.chain.forwardThenError = false;
+      const transactionMessage = h.chain.forwardThenError;
+      h.chain.forwardThenError = null;
       throw new SendTransactionError({
         action: "simulate",
         signature: "",
-        transactionMessage: "Internal error: request timed out",
+        transactionMessage,
       });
     }
     return signature;
@@ -274,7 +275,7 @@ beforeEach(() => {
     landSends: true,
     inflight: new Map(),
     preflightFails: false,
-    forwardThenError: false,
+    forwardThenError: null,
     landFails: false,
     historyFails: false,
   };
@@ -460,31 +461,40 @@ describe("ensureXpTokenAccount", () => {
     expect(fundRows().map((r) => r.status)).toEqual(["failed", "pending"]);
   });
 
-  it("keeps the slot when the gateway errors after forwarding the create", async () => {
-    const owner = Keypair.generate().publicKey;
-    h.chain.landSends = false;
-    h.chain.forwardThenError = true;
-    await expect(ensure(owner, "lesson-a")).rejects.toBeInstanceOf(
-      SendTransactionError
-    );
-    const a = fundRows()[0]!.signature as string;
-    expect(fundRows().map((r) => r.status)).toEqual(["pending"]);
+  // A gateway that fans the same bytes out to several upstreams can answer
+  // with a lagging upstream's simulation failure after another one forwarded.
+  it.each([
+    "Internal error: request timed out",
+    "Transaction simulation failed: Blockhash not found",
+    "Transaction simulation failed: This transaction has already been processed",
+  ])(
+    "keeps the slot when the gateway answers %j after forwarding the create",
+    async (message) => {
+      const owner = Keypair.generate().publicKey;
+      h.chain.landSends = false;
+      h.chain.forwardThenError = message;
+      await expect(ensure(owner, "lesson-a")).rejects.toBeInstanceOf(
+        SendTransactionError
+      );
+      const a = fundRows()[0]!.signature as string;
+      expect(fundRows().map((r) => r.status)).toEqual(["pending"]);
 
-    // B must not fund while A can still land.
-    await expect(ensure(owner, "lesson-b")).rejects.toBeInstanceOf(
-      XpAccountFundingInFlightError
-    );
-    expect(createsSent()).toHaveLength(1);
+      // B must not fund while A can still land.
+      await expect(ensure(owner, "lesson-b")).rejects.toBeInstanceOf(
+        XpAccountFundingInFlightError
+      );
+      expect(createsSent()).toHaveLength(1);
 
-    // A lands after all; a close afterwards gets no second funding.
-    land(a);
-    learnerCloses(owner);
-    h.chain.history.clear();
-    await expect(ensure(owner, "lesson-c")).rejects.toBeInstanceOf(
-      XpAccountClosedError
-    );
-    expect(createsSent()).toHaveLength(1);
-  });
+      // A lands after all; a close afterwards gets no second funding.
+      land(a);
+      learnerCloses(owner);
+      h.chain.history.clear();
+      await expect(ensure(owner, "lesson-c")).rejects.toBeInstanceOf(
+        XpAccountClosedError
+      );
+      expect(createsSent()).toHaveLength(1);
+    }
+  );
 
   it("frees the slot at once when the create landed and failed", async () => {
     const owner = Keypair.generate().publicKey;
