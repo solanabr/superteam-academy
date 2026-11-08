@@ -236,6 +236,79 @@ describe("browser runner and server executor", () => {
     expect(await failedOnServer(code, tests)).toEqual(["t"]);
   });
 
+  const sdkImport =
+    'import { Keypair, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from "@solana/web3.js";\n';
+  it.each([
+    [
+      "a class check against PublicKey",
+      "payer",
+      "function go(k) { return k; }",
+      "result instanceof PublicKey",
+    ],
+    [
+      "a new PublicKey",
+      "",
+      "function go() { return new PublicKey(new Uint8Array(32)); }",
+      "result.equals(new PublicKey(new Uint8Array(32)))",
+    ],
+    [
+      "a class check against Transaction",
+      "sender, recipient",
+      "function go(from, to) { return new Transaction().add(SystemProgram.transfer({ fromPubkey: from, toPubkey: to, lamports: LAMPORTS_PER_SOL })); }",
+      "result instanceof Transaction && result.instructions.length === 1",
+    ],
+    [
+      "Keypair.fromSecretKey",
+      "",
+      "function go() { return Keypair.generate(); }",
+      "Keypair.fromSecretKey(result.secretKey).secretKey.length === 64",
+    ],
+  ])(
+    "both give an assertion the SDK for %s",
+    async (_label, input, code, expectedOutput) => {
+      const tests: AdminTestCase[] = [
+        { id: "t", description: "", input, expectedOutput },
+      ];
+      expect(await failedInBrowser(sdkImport + code, tests)).toEqual([]);
+      expect(await failedOnServer(sdkImport + code, tests)).toEqual([]);
+    }
+  );
+
+  it("both give an assertion the SDK when the submission doesn't import it", async () => {
+    const tests: AdminTestCase[] = [
+      {
+        id: "t",
+        description: "",
+        input: "",
+        expectedOutput: "typeof Keypair.generate === 'function'",
+      },
+    ];
+    expect(await failedInBrowser("function go() { return 1; }", tests)).toEqual(
+      []
+    );
+    expect(await failedOnServer("function go() { return 1; }", tests)).toEqual(
+      []
+    );
+  });
+
+  it("both let a fixture named like an SDK export shadow it", async () => {
+    const tests: AdminTestCase[] = [
+      {
+        id: "t",
+        description: "",
+        input: "Keypair",
+        expectedOutput:
+          "typeof Keypair === 'object' && Keypair.generate === undefined",
+      },
+    ];
+    expect(
+      await failedInBrowser("function go(k) { return 1; }", tests)
+    ).toEqual([]);
+    expect(await failedOnServer("function go(k) { return 1; }", tests)).toEqual(
+      []
+    );
+  });
+
   it("both match a fixture's value and key by content", async () => {
     const tests: AdminTestCase[] = [
       {
