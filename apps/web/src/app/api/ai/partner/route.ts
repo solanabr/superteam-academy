@@ -10,9 +10,12 @@ import {
   appendAssistLog,
 } from "@/lib/ai/assist-budget";
 import {
-  checkAiSpend,
-  recordAiSpend,
+  reserveAiSpend,
+  settleAiSpend,
+  releaseAiSpend,
   degradedMaxTokens,
+  worstCaseMicroUsd,
+  inputTokenBound,
 } from "@/lib/ai/spend-ledger";
 import type { GeminiUsageMetadata } from "@/lib/ai/spend-ledger";
 import { sealCheck } from "@/lib/ai/check-seal";
@@ -23,6 +26,7 @@ import {
   geminiUrl,
   MINIMAL_THINKING_CONFIG,
 } from "@/lib/ai/models";
+import type { GeminiModel } from "@/lib/ai/models";
 import {
   buildStaticPrefix,
   buildDynamicSuffix,
@@ -59,14 +63,6 @@ const MAX_MESSAGE_CHARS = 4_000;
 const MAX_SLUG_CHARS = 256;
 const MAX_TEST_SUMMARY_CHARS = 2_000;
 
-// Conservative input-token estimate for the spend-ledger fallback (#724) when a
-// billed 200 carries no usageMetadata to measure. The prompt is prefix (task +
-// public tests + solution + tutor notes) + suffix (code ≤8k chars + message ≤4k
-// chars); at ~4 chars/token that input tops out near this figure. Over-estimating
-// here is deliberate — an unmeasurable billed call should read as more spend, not
-// less. Only used when the metered estimate is zero.
-const SPEND_FALLBACK_PROMPT_TOKENS = 6_000;
-
 // The Gemini generateContent envelope, narrowed to the fields this route reads.
 // Typed (not `any`) so the defensive parse below stays type-safe.
 interface GeminiEnvelope {
@@ -77,7 +73,7 @@ interface GeminiEnvelope {
   // `cachedContentTokenCount` is part of GeminiUsageMetadata itself now — it is
   // BILLING input (cached prompt tokens carry the cached-input discount), not
   // just the debug counter it was when this route widened the type locally.
-  // Keeping it on the shared shape is what makes it reach recordAiSpend below.
+  // Keeping it on the shared shape is what makes it reach settleAiSpend below.
   usageMetadata?: GeminiUsageMetadata;
 }
 
@@ -113,6 +109,53 @@ const VALID_ACTIONS: readonly PartnerAction[] = [
 
 function isPartnerAction(value: string): value is PartnerAction {
   return (VALID_ACTIONS as readonly string[]).includes(value);
+}
+
+// One generateContent request this turn could send, with what the spend ledger
+// needs to price it. `inputTokens` is the body's UTF-8 byte length, an upper
+// bound on the input tokens Gemini can bill for it (prompt text plus response
+// schema).
+interface TurnRequest {
+  model: GeminiModel;
+  body: string;
+  inputTokens: number;
+  outputTokens: number;
+}
+
+function turnRequest(
+  action: PartnerAction,
+  prompt: string,
+  socratic: boolean,
+  degraded: boolean
+): TurnRequest {
+  const budget = maxTokensFor(action, { socratic });
+  // Degrade-first (#591): past a soft spend cap, halve the output budget
+  // (floored to stay usable) to cut the dominant cost before any refusal.
+  // Socratic hint/ask turns run at the hint-sized cap (one diagnostic
+  // question); propose keeps its full budget at every tier.
+  const outputTokens = degraded ? degradedMaxTokens(budget) : budget;
+  const body = JSON.stringify({
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    generationConfig: {
+      temperature: 0.3,
+      maxOutputTokens: outputTokens,
+      // Every routed model is a thinking model and thinking tokens share
+      // the maxOutputTokens budget (and bill at the output rate); keep
+      // thinking at the model's floor. NOTE the 3.x API rejects the 2.5-era
+      // `thinkingBudget: 0` with a 400, and the enum floor is "minimal" —
+      // NOT "low", which burns real thinking tokens and truncates small
+      // budgets (AIE-05 round-2 correction; see lib/ai/models.ts).
+      thinkingConfig: MINIMAL_THINKING_CONFIG,
+      responseMimeType: "application/json",
+      responseSchema: responseSchemaFor(action),
+    },
+  });
+  return {
+    model: modelForAction(action, { socratic }),
+    body,
+    inputTokens: inputTokenBound(body),
+    outputTokens,
+  };
 }
 
 // The raw parsed JSON body, pre-validation — fields are `unknown`-shaped
@@ -396,79 +439,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
   }
 
-  // Daily SPEND gate (#591) — the cost ceiling on the Superteam-sponsored key,
-  // separate from the per-lesson assist quota below. Reads today's accumulated
-  // micro-USD for this account, this IP, and the global envelope and picks a
-  // tier. FAIL CLOSED: a ledger error denies (503), never serves unmetered. This
-  // runs BEFORE spendAssist so a hard-cap / ledger-outage denial does not burn
-  // one of the learner's paid assists.
-  //
-  // Bounded TOCTOU residual (#724 minor): the check reads accumulated spend, then
-  // the request bills, then recordAiSpend writes — so N requests already in
-  // flight when the hard cap is crossed can each still bill, overshooting by up
-  // to ~N × the per-call cost (a full-budget propose ≈ $0.006). N is bounded by
-  // this route's fail-closed limiters (20/min per user, 600/min per IP), so the
-  // worst-case overshoot is small and self-limiting, not unbounded — an accepted
-  // residual, not a hole. Tightening it would require reserving spend before the
-  // call (a pre-charge/settle), which is not worth the latency at these amounts.
-  const spendGate = await checkAiSpend(user.id, clientIp);
-  if (spendGate.decision === "denied") {
-    // Both the hard-cap and the fail-closed ledger-outage return 503 with a
-    // `spendCapped` flag the client localizes; `reason` distinguishes them for
-    // logs/tests without changing the learner-facing copy.
-    return NextResponse.json(
-      {
-        error: "AI tutor daily limit reached",
-        spendCapped: true,
-        reason: spendGate.reason,
-      },
-      { status: 503 }
-    );
-  }
-  // Over a soft cap → degrade: serve with a shorter output budget (the dominant
-  // cost lever) rather than refusing. "Degrade first, then stop" (owner).
-  const degraded = spendGate.decision === "degraded";
-
-  // Every request that reaches this route is a METERED AI turn — free authored
-  // hints are served client-side from the block's `hints` ladder and never hit
-  // this route. Spend one assist-LADDER turn atomically before calling Gemini
-  // (#864): the SECURITY DEFINER RPC resolves the tier server-side (2 free →
-  // 8 metered → 20 Socratic, per (user, lesson)) and reports which tier this
-  // turn landed in. A denial means the whole ladder is spent — the community
-  // handoff (spec §4.2 turn 31): the client degrades to the forum link, never
-  // a paywall shape. Budget is keyed by the lesson id.
-  const spend = await spendAssistTurn(user.id, lesson._id);
-  if (!spend.allowed) {
-    return NextResponse.json({ budgetExhausted: true, counts: spend.counts });
-  }
-  // Socratic tier (§4.4): flip the default contract for hint/ask to ONE
-  // diagnostic question (prompt suffix below) at a hint-sized output cap.
-  // `propose` keeps its full diff contract at every tier — the §4.2 ruling —
-  // and `review` is post-pass and unaffected.
-  const socratic = spend.tier === "socratic";
-
-  // Resolve the model for THIS turn once: the same value drives the endpoint,
-  // the failure logs, and the ledger's pricing, so they can't disagree.
-  const model = modelForAction(action, { socratic });
-
-  // Whether Gemini has BILLED us for this request. Flips true the instant the
-  // model returns a 2xx (`response.ok`) — a non-2xx or a network throw means it
-  // never ran. This gates the refund: we hand the assist back ONLY when we were
-  // not billed. A successful-but-useless generation (empty, non-JSON, or
-  // MAX_TOKENS truncation) is billed cost and is NOT refunded, closing the hole
-  // where reliably triggering truncation bought unlimited billed calls against a
-  // quota that never decremented (AIE-10/-11). The CAUSE — attacker-triggerable
-  // truncation — is closed by spec item 3a (diff-propose + MAX_CODE_CHARS 8k),
-  // implemented here: propose emits compact edits at a 2,048-token cap, so there
-  // is no full-file echo to inflate and no deterministic MAX_TOKENS to trigger.
-  let billed = false;
+  // Build every request this turn could send before anything is spent, so the
+  // spend hold below can be sized from the real request. The ladder tier (and
+  // with it the Socratic prompt, model and cap) is only known after
+  // spendAssistTurn, which runs after the spend gate, so build both variants.
+  // A throw here (a malformed block, a builder error) happens before any
+  // spend, so it has nothing to refund.
+  let turns: Array<Record<"full" | "degraded", TurnRequest>>;
   try {
-    // Prompt-building lives INSIDE the try on purpose: any throw here (a
-    // malformed block, a builder error) is PRE-billing — `billed` is still
-    // false — so the catch refunds it under `if (!billed)`. Nothing built here
-    // is referenced after the try, so widening the boundary changes no other
-    // semantics.
-
     // Post-D4 every test is public; feed them all to the prompt.
     const visibleTests = codeBlock.tests.map((t) => ({
       description: t.description,
@@ -502,48 +480,117 @@ export async function POST(request: NextRequest) {
       tutorNotes,
       language: codeBlock.language,
     });
-    const suffix = buildDynamicSuffix(
-      {
-        lessonSlug,
-        courseSlug,
-        action,
-        message,
-        code,
-        testSummary,
-      },
-      { socratic }
+    // Index 0 is the turn below the Socratic tier, index 1 the Socratic turn.
+    turns = [false, true].map((socratic) => {
+      const prompt =
+        prefix +
+        "\n\n" +
+        buildDynamicSuffix(
+          { lessonSlug, courseSlug, action, message, code, testSummary },
+          { socratic }
+        );
+      return {
+        full: turnRequest(action, prompt, socratic, false),
+        degraded: turnRequest(action, prompt, socratic, true),
+      };
+    });
+  } catch (error) {
+    console.error("AI partner prompt build failed:", error);
+    return NextResponse.json(
+      { error: "Failed to get response", billed: false },
+      { status: 500 }
+    );
+  }
+  const holdFor = (tier: "full" | "degraded") =>
+    Math.max(
+      ...turns.map((t) =>
+        worstCaseMicroUsd(
+          t[tier].model,
+          t[tier].inputTokens,
+          t[tier].outputTokens
+        )
+      )
     );
 
+  // Daily SPEND gate (#591) — the cost ceiling on the Superteam-sponsored key,
+  // separate from the per-lesson assist quota below. Holds this turn's
+  // worst-case cost against the account, IP and global caps (and the newcomer
+  // pool for a low-trust account) and picks the tier, in one SQL transaction.
+  // The hold is the larger of the two possible turns, input priced at the
+  // request body's byte length and output at its full budget, so the settle
+  // after the call can only lower it. The hold is settled to the actual cost
+  // once Gemini bills, or released if it never does. FAIL CLOSED: a ledger
+  // error denies (503), never serves unmetered. This runs BEFORE
+  // spendAssistTurn so a hard-cap / ledger-outage denial does not burn one of
+  // the learner's paid assists.
+  //
+  // Output alone, from MODEL_RATES: ask on gemini-3.6-flash at its 4,096-token
+  // budget is 4,096 × $7.50/M ≈ $0.031; propose (2,048) ≈ $0.015; review
+  // (1,536) ≈ $0.012; a flash-lite hint (512) at $2.50/M ≈ $0.0013. Input adds
+  // bytes × $1.50/M (3.6-flash) or $0.30/M (flash-lite).
+  const spendGate = await reserveAiSpend(user.id, clientIp, {
+    fullMicroUsd: holdFor("full"),
+    degradedMicroUsd: holdFor("degraded"),
+  });
+  if (spendGate.decision === "denied") {
+    // Both the hard-cap and the fail-closed ledger-outage return 503 with a
+    // `spendCapped` flag the client localizes; `reason` distinguishes them for
+    // logs/tests without changing the learner-facing copy.
+    return NextResponse.json(
+      {
+        error: "AI tutor daily limit reached",
+        spendCapped: true,
+        reason: spendGate.reason,
+      },
+      { status: 503 }
+    );
+  }
+  // Over a soft cap, or when only the shorter budget fits → degrade: serve with
+  // a shorter output budget (the dominant cost lever) rather than refusing.
+  // "Degrade first, then stop" (owner).
+  const degraded = spendGate.decision === "degraded";
+  const { reservation } = spendGate;
+
+  // Every request that reaches this route is a METERED AI turn — free authored
+  // hints are served client-side from the block's `hints` ladder and never hit
+  // this route. Spend one assist-LADDER turn atomically before calling Gemini
+  // (#864): the SECURITY DEFINER RPC resolves the tier server-side (2 free →
+  // 8 metered → 20 Socratic, per (user, lesson)) and reports which tier this
+  // turn landed in. A denial means the whole ladder is spent — the community
+  // handoff (spec §4.2 turn 31): the client degrades to the forum link, never
+  // a paywall shape. Budget is keyed by the lesson id.
+  const spend = await spendAssistTurn(user.id, lesson._id);
+  if (!spend.allowed) {
+    await releaseAiSpend(reservation);
+    return NextResponse.json({ budgetExhausted: true, counts: spend.counts });
+  }
+  // Socratic tier (§4.4): flip the default contract for hint/ask to ONE
+  // diagnostic question (prompt suffix) at a hint-sized output cap.
+  // `propose` keeps its full diff contract at every tier — the §4.2 ruling —
+  // and `review` is post-pass and unaffected.
+  const socratic = spend.tier === "socratic";
+  const turn = turns[socratic ? 1 : 0]![degraded ? "degraded" : "full"];
+
+  // Resolve the model for THIS turn once: the same value drives the endpoint,
+  // the failure logs, and the ledger's pricing, so they can't disagree.
+  const model = turn.model;
+
+  // Whether Gemini has BILLED us for this request. Flips true the instant the
+  // model returns a 2xx (`response.ok`) — a non-2xx or a network throw means it
+  // never ran. This gates the refund: we hand the assist back ONLY when we were
+  // not billed. A successful-but-useless generation (empty, non-JSON, or
+  // MAX_TOKENS truncation) is billed cost and is NOT refunded, closing the hole
+  // where reliably triggering truncation bought unlimited billed calls against a
+  // quota that never decremented (AIE-10/-11). The CAUSE — attacker-triggerable
+  // truncation — is closed by spec item 3a (diff-propose + MAX_CODE_CHARS 8k),
+  // implemented here: propose emits compact edits at a 2,048-token cap, so there
+  // is no full-file echo to inflate and no deterministic MAX_TOKENS to trigger.
+  let billed = false;
+  try {
     const response = await fetch(geminiUrl(model), {
       method: "POST",
       headers: geminiHeaders(GEMINI_API_KEY),
-      body: JSON.stringify({
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: prefix + "\n\n" + suffix }],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.3,
-          // Degrade-first (#591): past a soft spend cap, halve the output budget
-          // (floored to stay usable) to cut the dominant cost before any refusal.
-          // Socratic hint/ask turns run at the hint-sized cap (one diagnostic
-          // question); propose keeps its full budget at every tier.
-          maxOutputTokens: degraded
-            ? degradedMaxTokens(maxTokensFor(action, { socratic }))
-            : maxTokensFor(action, { socratic }),
-          // Every routed model is a thinking model and thinking tokens share
-          // the maxOutputTokens budget (and bill at the output rate); keep
-          // thinking at the model's floor. NOTE the 3.x API rejects the 2.5-era
-          // `thinkingBudget: 0` with a 400, and the enum floor is "minimal" —
-          // NOT "low", which burns real thinking tokens and truncates small
-          // budgets (AIE-05 round-2 correction; see lib/ai/models.ts).
-          thinkingConfig: MINIMAL_THINKING_CONFIG,
-          responseMimeType: "application/json",
-          responseSchema: responseSchemaFor(action),
-        },
-      }),
+      body: turn.body,
     });
 
     if (!response.ok) {
@@ -558,6 +605,7 @@ export async function POST(request: NextRequest) {
       // here) but Gemini never ran — refund exactly the ladder tier the spend
       // landed in so a failed call doesn't burn one of the learner's turns.
       await refundAssistTurn(user.id, lesson._id, spend.tier);
+      await releaseAiSpend(reservation);
       // Surface the upstream status (not Gemini's raw body) so a config-side
       // failure (403 API-not-enabled / key-restricted, 404 model, 429 quota)
       // is diagnosable from the Network tab, not just the server logs.
@@ -589,17 +637,17 @@ export async function POST(request: NextRequest) {
     } catch {
       data = undefined;
     }
-    // Record the ACTUAL cost of this billed generation into the spend ledger
-    // (#591) from usageMetadata — prompt + candidate + thinking tokens, thinking
-    // billed at the output rate and the cached slice of the prompt billed at the
+    // Settle the hold to the ACTUAL cost of this billed generation (#591) from
+    // usageMetadata — prompt + candidate + thinking tokens, thinking billed at
+    // the output rate and the cached slice of the prompt billed at the
     // cached-input rate. Runs on EVERY billed path (empty / non-JSON /
     // truncated all still cost tokens). When usageMetadata is ABSENT (e.g. a
     // non-JSON 200) the ledger books a CONSERVATIVE fallback — full output budget
-    // + a generous input estimate — instead of $0, so an unmeasurable-but-billed
-    // call is never under-reported. Awaited for the same Vercel-freeze reason as
-    // recordBilledAssist. Never throws.
-    await recordAiSpend(user.id, clientIp, model, data?.usageMetadata, {
-      promptTokens: SPEND_FALLBACK_PROMPT_TOKENS,
+    // + the request's byte length as input — instead of $0, so an
+    // unmeasurable-but-billed call is never under-reported. Awaited for the same
+    // Vercel-freeze reason as recordBilledAssist. Never throws.
+    await settleAiSpend(reservation, model, data?.usageMetadata, {
+      promptTokens: turn.inputTokens,
       outputTokens: maxTokensFor(action),
     });
     // Prompt-cache observability — useful for tuning the cache-shaped prefix, but
@@ -752,6 +800,7 @@ export async function POST(request: NextRequest) {
     // billed success (the AIE-10 line-411 correction).
     if (!billed) {
       await refundAssistTurn(user.id, lesson._id, spend.tier);
+      await releaseAiSpend(reservation);
     }
     return NextResponse.json(
       { error: "Failed to get response", billed },
