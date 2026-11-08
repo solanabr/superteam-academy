@@ -1749,6 +1749,40 @@ export type Database = {
           request_count: number;
         }[];
       };
+      reserve_ai_spend: {
+        Args: {
+          p_user_id: string;
+          p_ip: string;
+          p_full_micro_usd: number;
+          p_degraded_micro_usd: number;
+          p_account_soft: number;
+          p_account_hard: number;
+          p_ip_soft: number;
+          p_ip_hard: number;
+          p_global_soft: number;
+          p_global_hard: number;
+          p_newcomer_soft: number;
+          p_newcomer_hard: number;
+        };
+        Returns: {
+          decision: string;
+          reserved_micro_usd: number;
+          reserved_day: string;
+          low_trust: boolean;
+        }[];
+      };
+      settle_ai_spend: {
+        Args: {
+          p_user_id: string;
+          p_ip: string;
+          p_spend_day: string;
+          p_low_trust: boolean;
+          p_reserved_micro_usd: number;
+          p_actual_micro_usd: number;
+          p_billed: boolean;
+        };
+        Returns: undefined;
+      };
       award_xp: {
         Args: {
           p_amount: number;

@@ -15,15 +15,25 @@ vi.mock("@/lib/env.server", () => ({
 const isRateLimited = vi.fn();
 vi.mock("@/lib/rate-limit", () => ({ isRateLimited }));
 
-// The reply now runs under the #591 ledger (#724). Mock the gate so the tests
-// control the decision; degradedMaxTokens stays the real pure helper.
-const checkAiSpend = vi.fn();
-const recordAiSpend = vi.fn();
-vi.mock("@/lib/ai/spend-ledger", () => ({
-  checkAiSpend,
-  recordAiSpend,
-  degradedMaxTokens: (base: number) => Math.max(256, Math.floor(base / 2)),
+// The reply runs under the #591 ledger (#724). Mock the reservation so the
+// tests control the decision; the pure helpers stay real.
+const reserveAiSpend = vi.fn();
+const settleAiSpend = vi.fn();
+const releaseAiSpend = vi.fn();
+vi.mock("@/lib/ai/spend-ledger", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/ai/spend-ledger")>()),
+  reserveAiSpend,
+  settleAiSpend,
+  releaseAiSpend,
 }));
+
+const HOLD = {
+  userId: "user-1",
+  ip: "203.0.113.7",
+  spendDay: "2026-11-08",
+  lowTrust: true,
+  reservedMicroUsd: 2180,
+};
 
 const INPUT = {
   userId: "user-1",
@@ -47,8 +57,9 @@ function stubGeminiFetch(text: string, ok = true, usageMetadata?: unknown) {
 beforeEach(() => {
   vi.clearAllMocks();
   isRateLimited.mockResolvedValue(false);
-  checkAiSpend.mockResolvedValue({ decision: "full" });
-  recordAiSpend.mockResolvedValue(undefined);
+  reserveAiSpend.mockResolvedValue({ decision: "full", reservation: HOLD });
+  settleAiSpend.mockResolvedValue(undefined);
+  releaseAiSpend.mockResolvedValue(undefined);
   process.env.GEMINI_API_KEY = "test-gemini-key";
   process.env.OPENENDED_AI_REPLY = "1";
 });
@@ -185,7 +196,10 @@ describe("maybeGenerateReflectionReply", () => {
   });
 
   it("SKIPS the reply (null, no model call) when the spend cap denies", async () => {
-    checkAiSpend.mockResolvedValue({ decision: "denied", reason: "spend_cap" });
+    reserveAiSpend.mockResolvedValue({
+      decision: "denied",
+      reason: "spend_cap",
+    });
     const fetchMock = stubGeminiFetch("should not run");
     const { maybeGenerateReflectionReply } =
       await import("../reflection-reply");
@@ -193,11 +207,11 @@ describe("maybeGenerateReflectionReply", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("SKIPS the reply when the ledger is unreachable (fail-closed via checkAiSpend)", async () => {
-    // checkAiSpend fails closed on its own — a ledger outage resolves to
+  it("SKIPS the reply when the ledger is unreachable (fail-closed via reserveAiSpend)", async () => {
+    // reserveAiSpend fails closed on its own — a ledger outage resolves to
     // "denied"/ledger_unavailable, which the reply treats as skip. Never 503s
     // the seal (that lives in the route, unaffected).
-    checkAiSpend.mockResolvedValue({
+    reserveAiSpend.mockResolvedValue({
       decision: "denied",
       reason: "ledger_unavailable",
     });
@@ -208,16 +222,50 @@ describe("maybeGenerateReflectionReply", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("gates on account + IP + global via checkAiSpend(userId, ip)", async () => {
-    stubGeminiFetch("hi");
+  it("reserves the reply's worst case for the user and IP before the call", async () => {
+    const fetchMock = stubGeminiFetch("hi");
     const { maybeGenerateReflectionReply } =
       await import("../reflection-reply");
     await maybeGenerateReflectionReply(INPUT);
-    expect(checkAiSpend).toHaveBeenCalledWith("user-1", "203.0.113.7");
+    // flash-lite, 3000 input tokens: 512 out → 900 + 1280 = 2180; degraded 256
+    // out → 900 + 640 = 1540.
+    expect(reserveAiSpend).toHaveBeenCalledWith("user-1", "203.0.113.7", {
+      fullMicroUsd: 2180,
+      degradedMicroUsd: 1540,
+    });
+    expect(fetchMock.mock.invocationCallOrder[0]!).toBeGreaterThan(
+      reserveAiSpend.mock.invocationCallOrder[0]!
+    );
+  });
+
+  it("releases the hold when the model call is not ok", async () => {
+    stubGeminiFetch("", false);
+    const { maybeGenerateReflectionReply } =
+      await import("../reflection-reply");
+    await maybeGenerateReflectionReply(INPUT);
+    expect(releaseAiSpend).toHaveBeenCalledWith(HOLD);
+    expect(settleAiSpend).not.toHaveBeenCalled();
+  });
+
+  it("releases the hold when fetch throws", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => {
+        throw new Error("network down");
+      })
+    );
+    const { maybeGenerateReflectionReply } =
+      await import("../reflection-reply");
+    await maybeGenerateReflectionReply(INPUT);
+    expect(releaseAiSpend).toHaveBeenCalledWith(HOLD);
+    expect(settleAiSpend).not.toHaveBeenCalled();
   });
 
   it("degrades to a shorter output budget over a soft cap (still replies)", async () => {
-    checkAiSpend.mockResolvedValue({ decision: "degraded" });
+    reserveAiSpend.mockResolvedValue({
+      decision: "degraded",
+      reservation: HOLD,
+    });
     const fetchMock = vi.fn(async (_url: string, init: { body: string }) => {
       void init;
       return {
@@ -241,7 +289,7 @@ describe("maybeGenerateReflectionReply", () => {
     expect(body.generationConfig.maxOutputTokens).toBe(256);
   });
 
-  it("records the spend on a successful billed reply (usageMetadata → ledger)", async () => {
+  it("settles the spend on a successful billed reply (usageMetadata → ledger)", async () => {
     const usageMetadata = {
       promptTokenCount: 300,
       candidatesTokenCount: 120,
@@ -250,9 +298,8 @@ describe("maybeGenerateReflectionReply", () => {
     const { maybeGenerateReflectionReply } =
       await import("../reflection-reply");
     await maybeGenerateReflectionReply(INPUT);
-    expect(recordAiSpend).toHaveBeenCalledWith(
-      "user-1",
-      "203.0.113.7",
+    expect(settleAiSpend).toHaveBeenCalledWith(
+      HOLD,
       "gemini-3.5-flash-lite",
       usageMetadata,
       { promptTokens: 3000, outputTokens: 512 }
@@ -265,22 +312,21 @@ describe("maybeGenerateReflectionReply", () => {
       await import("../reflection-reply");
     await maybeGenerateReflectionReply(INPUT);
     // usage undefined, but the conservative fallback shape is still passed so
-    // recordAiSpend books a non-zero estimate rather than $0.
-    expect(recordAiSpend).toHaveBeenCalledWith(
-      "user-1",
-      "203.0.113.7",
+    // settleAiSpend books a non-zero estimate rather than $0.
+    expect(settleAiSpend).toHaveBeenCalledWith(
+      HOLD,
       "gemini-3.5-flash-lite",
       undefined,
       { promptTokens: 3000, outputTokens: 512 }
     );
   });
 
-  it("does NOT record spend when the model call was not billed (non-ok)", async () => {
+  it("does NOT settle spend when the model call was not billed (non-ok)", async () => {
     stubGeminiFetch("", false);
     const { maybeGenerateReflectionReply } =
       await import("../reflection-reply");
     await maybeGenerateReflectionReply(INPUT);
-    expect(recordAiSpend).not.toHaveBeenCalled();
+    expect(settleAiSpend).not.toHaveBeenCalled();
   });
 
   it("returns null when the model call is not ok", async () => {

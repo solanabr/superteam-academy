@@ -380,9 +380,13 @@ Gemini over raw REST (no SDK). Per-action model routing lives in `models.ts`:
 cheap models for hints and Socratic turns, the larger model for ask/propose/
 review. Spend is metered in micro-USD into the `ai_spend_ledger` table across
 three dimensions (account, IP, global) with soft and hard caps per
-America/São_Paulo day. Over a soft cap the tutor degrades to a shorter output
-budget; over a hard cap it denies with a 503. Unlike the rate limiter, the spend
-ledger **fails closed** — a ledger error denies rather than allows.
+America/São_Paulo day, plus a shared pool for accounts with no completed lesson
+or under 24 hours old. Before each model call `reserve_ai_spend` holds the
+call's worst-case cost against those caps in one transaction; after it,
+`settle_ai_spend` books the actual cost. Over a soft cap the tutor degrades to a
+shorter output budget; when the hold doesn't fit under a hard cap it denies with
+a 503. Unlike the rate limiter, the spend ledger **fails closed** — a ledger
+error denies rather than allows.
 
 ---
 

@@ -11,8 +11,10 @@ vi.mock("@/lib/supabase/admin", () => ({
 import {
   estimateSpendMicroUsd,
   degradedMaxTokens,
-  checkAiSpend,
-  recordAiSpend,
+  worstCaseMicroUsd,
+  reserveAiSpend,
+  settleAiSpend,
+  releaseAiSpend,
   ratesFor,
   getAiSpendToday,
 } from "../spend-ledger";
@@ -20,7 +22,7 @@ import { MODEL_RATES } from "../models";
 
 // The wrapper reads caps from serverEnv, which in tests takes the env.server
 // defaults: account soft/hard $0.50/$1.50, IP $2/$5, global
-// $14/$25. Micro-USD = USD×1e6. Rates are PER MODEL since #868; the pre-existing
+// $14/$25, newcomer pool $2/$3. Micro-USD = USD×1e6. Rates are PER MODEL since #868; the pre-existing
 // cases below were written against $0.30/$2.50, which is exactly flash-lite's
 // sheet, so they pin the cheap tier explicitly.
 const LITE = "gemini-3.5-flash-lite" as const;
@@ -169,101 +171,87 @@ describe("degradedMaxTokens", () => {
   });
 });
 
-function mockCheck(row: unknown, error: unknown = null) {
+function mockReserve(row: unknown, error: unknown = null) {
   rpc.mockResolvedValue({ data: [row], error });
 }
 
-describe("checkAiSpend", () => {
-  it("returns full when every dimension is under its soft cap", async () => {
-    mockCheck({
-      account_micro_usd: 0,
-      ip_micro_usd: 0,
-      global_micro_usd: 0,
+const RESERVED_ROW = {
+  decision: "full",
+  reserved_micro_usd: "24360", // BIGINT arrives as a string from PostgREST
+  reserved_day: "2026-11-08",
+  low_trust: true,
+};
+
+const AMOUNTS = { fullMicroUsd: 24_360, degradedMicroUsd: 16_680 };
+
+describe("worstCaseMicroUsd", () => {
+  it("prices the whole prompt uncached and the whole output budget", () => {
+    // 6000 × 1.50 + 2048 × 7.50 = 9000 + 15360.
+    expect(worstCaseMicroUsd(FLASH_36, 6000, 2048)).toBe(24_360);
+    // 3000 × 0.30 + 512 × 2.50 = 900 + 1280.
+    expect(worstCaseMicroUsd(LITE, 3000, 512)).toBe(2180);
+  });
+});
+
+describe("reserveAiSpend", () => {
+  it("sends both tier amounts and every cap in micro-USD from env defaults", async () => {
+    mockReserve(RESERVED_ROW);
+    await reserveAiSpend("u", "1.2.3.4", AMOUNTS);
+    expect(rpc).toHaveBeenCalledWith("reserve_ai_spend", {
+      p_user_id: "u",
+      p_ip: "1.2.3.4",
+      p_full_micro_usd: 24_360,
+      p_degraded_micro_usd: 16_680,
+      p_account_soft: 500_000,
+      p_account_hard: 1_500_000,
+      p_ip_soft: 2_000_000,
+      p_ip_hard: 5_000_000,
+      p_global_soft: 14_000_000,
+      p_global_hard: 25_000_000,
+      p_newcomer_soft: 2_000_000,
+      p_newcomer_hard: 3_000_000,
     });
-    expect(await checkAiSpend("u", "1.2.3.4")).toEqual({ decision: "full" });
   });
 
-  it("degrades when a dimension crosses its soft cap (account $0.50)", async () => {
-    mockCheck({
-      account_micro_usd: 600_000, // $0.60 > $0.50 soft, < $1.50 hard
-      ip_micro_usd: 0,
-      global_micro_usd: 0,
+  it("returns the tier and the hold to settle later", async () => {
+    mockReserve(RESERVED_ROW);
+    expect(await reserveAiSpend("u", "1.2.3.4", AMOUNTS)).toEqual({
+      decision: "full",
+      reservation: {
+        userId: "u",
+        ip: "1.2.3.4",
+        spendDay: "2026-11-08",
+        lowTrust: true,
+        reservedMicroUsd: 24_360,
+      },
     });
-    expect(await checkAiSpend("u", "1.2.3.4")).toEqual({
+  });
+
+  it("passes a degraded decision through", async () => {
+    mockReserve({
+      ...RESERVED_ROW,
       decision: "degraded",
+      reserved_micro_usd: 16_680,
+      low_trust: false,
     });
-  });
-
-  it("denies (spend_cap) when the account hard cap is reached ($1.50)", async () => {
-    mockCheck({
-      account_micro_usd: 1_500_000,
-      ip_micro_usd: 0,
-      global_micro_usd: 0,
-    });
-    expect(await checkAiSpend("u", "1.2.3.4")).toEqual({
-      decision: "denied",
-      reason: "spend_cap",
-    });
-  });
-
-  it("denies (spend_cap) when the IP hard cap is reached ($5)", async () => {
-    mockCheck({
-      account_micro_usd: 0,
-      ip_micro_usd: 5_000_000,
-      global_micro_usd: 0,
-    });
-    expect(await checkAiSpend("u", "1.2.3.4")).toEqual({
-      decision: "denied",
-      reason: "spend_cap",
-    });
-  });
-
-  it("denies (spend_cap) when the GLOBAL hard cap is reached ($25)", async () => {
-    mockCheck({
-      account_micro_usd: 0,
-      ip_micro_usd: 0,
-      global_micro_usd: 25_000_000,
-    });
-    expect(await checkAiSpend("u", "1.2.3.4")).toEqual({
-      decision: "denied",
-      reason: "spend_cap",
-    });
-  });
-
-  it("coerces BIGINT-as-string totals from PostgREST before comparing", async () => {
-    mockCheck({
-      account_micro_usd: "600000", // string, still > soft
-      ip_micro_usd: "0",
-      global_micro_usd: "0",
-    });
-    expect(await checkAiSpend("u", "1.2.3.4")).toEqual({
+    const gate = await reserveAiSpend("u", "1.2.3.4", AMOUNTS);
+    expect(gate).toMatchObject({
       decision: "degraded",
+      reservation: { reservedMicroUsd: 16_680, lowTrust: false },
+    });
+  });
+
+  it("denies (spend_cap) when the ledger has no room", async () => {
+    mockReserve({ ...RESERVED_ROW, decision: "denied", reserved_micro_usd: 0 });
+    expect(await reserveAiSpend("u", "1.2.3.4", AMOUNTS)).toEqual({
+      decision: "denied",
+      reason: "spend_cap",
     });
   });
 
   it("FAILS CLOSED (denied/ledger_unavailable) on an RPC error", async () => {
-    mockCheck(null, { message: "connection refused" });
-    expect(await checkAiSpend("u", "1.2.3.4")).toEqual({
-      decision: "denied",
-      reason: "ledger_unavailable",
-    });
-  });
-
-  it("FAILS CLOSED on a missing row", async () => {
-    rpc.mockResolvedValue({ data: [], error: null });
-    expect(await checkAiSpend("u", "1.2.3.4")).toEqual({
-      decision: "denied",
-      reason: "ledger_unavailable",
-    });
-  });
-
-  it("FAILS CLOSED on non-numeric totals", async () => {
-    mockCheck({
-      account_micro_usd: "not-a-number",
-      ip_micro_usd: 0,
-      global_micro_usd: 0,
-    });
-    expect(await checkAiSpend("u", "1.2.3.4")).toEqual({
+    mockReserve(null, { message: "connection refused" });
+    expect(await reserveAiSpend("u", "1.2.3.4", AMOUNTS)).toEqual({
       decision: "denied",
       reason: "ledger_unavailable",
     });
@@ -271,11 +259,34 @@ describe("checkAiSpend", () => {
 
   it("FAILS CLOSED when the rpc call itself throws", async () => {
     rpc.mockRejectedValue(new Error("boom"));
-    expect(await checkAiSpend("u", "1.2.3.4")).toEqual({
+    expect(await reserveAiSpend("u", "1.2.3.4", AMOUNTS)).toEqual({
       decision: "denied",
       reason: "ledger_unavailable",
     });
   });
+
+  it("FAILS CLOSED on a missing row", async () => {
+    rpc.mockResolvedValue({ data: [], error: null });
+    expect(await reserveAiSpend("u", "1.2.3.4", AMOUNTS)).toEqual({
+      decision: "denied",
+      reason: "ledger_unavailable",
+    });
+  });
+
+  for (const [label, patch] of [
+    ["an unknown decision", { decision: "maybe" }],
+    ["a non-numeric hold", { reserved_micro_usd: "lots" }],
+    ["a missing day", { reserved_day: null }],
+    ["a non-boolean low_trust", { low_trust: "yes" }],
+  ] as const) {
+    it(`FAILS CLOSED on ${label}`, async () => {
+      mockReserve({ ...RESERVED_ROW, ...patch });
+      expect(await reserveAiSpend("u", "1.2.3.4", AMOUNTS)).toEqual({
+        decision: "denied",
+        reason: "ledger_unavailable",
+      });
+    });
+  }
 });
 
 describe("ratesFor (per-model pricing, #868)", () => {
@@ -315,134 +326,121 @@ describe("ratesFor (per-model pricing, #868)", () => {
   });
 });
 
-describe("recordAiSpend", () => {
-  it("bills the SAME usage differently per routed model", async () => {
-    // Red at main: `recordAiSpend` took no model there and priced every call at
-    // one global rate pair, so a 3.6-flash turn was booked at flash-lite prices
-    // (under-reporting the sponsor's burn ~3×).
+const HOLD = {
+  userId: "u",
+  ip: "1.2.3.4",
+  spendDay: "2026-11-08",
+  lowTrust: true,
+  reservedMicroUsd: 24_360,
+};
+
+function settleArgs(actual: number, billed = true) {
+  return {
+    p_user_id: "u",
+    p_ip: "1.2.3.4",
+    p_spend_day: "2026-11-08",
+    p_low_trust: true,
+    p_reserved_micro_usd: 24_360,
+    p_actual_micro_usd: actual,
+    p_billed: billed,
+  };
+}
+
+describe("settleAiSpend", () => {
+  it("settles the hold to the metered cost of the routed model", async () => {
+    // Before #868 the ledger took no model and priced every call at one
+    // global rate pair. The same usage must price per model.
     rpc.mockResolvedValue({ data: null, error: null });
     const usage = { promptTokenCount: 1000, candidatesTokenCount: 500 };
 
-    await recordAiSpend("u", "1.2.3.4", FLASH_36, usage);
+    await settleAiSpend(HOLD, FLASH_36, usage);
     // 1000×1.50 = 1500 input; 500×7.50 = 3750 output → 5250 micro-USD.
-    expect(rpc).toHaveBeenLastCalledWith(
-      "record_ai_spend",
-      expect.objectContaining({ p_micro_usd: 5250 })
-    );
+    expect(rpc).toHaveBeenLastCalledWith("settle_ai_spend", settleArgs(5250));
 
-    await recordAiSpend("u", "1.2.3.4", LITE, usage);
+    await settleAiSpend(HOLD, LITE, usage);
     // Same tokens on the cheap tier: 1000×0.30 + 500×2.50 = 1550.
-    expect(rpc).toHaveBeenLastCalledWith(
-      "record_ai_spend",
-      expect.objectContaining({ p_micro_usd: 1550 })
-    );
+    expect(rpc).toHaveBeenLastCalledWith("settle_ai_spend", settleArgs(1550));
   });
 
-  it("books the cached-input discount end-to-end at the routed model's rates", async () => {
+  it("books the cached-input discount at the routed model's rates", async () => {
     rpc.mockResolvedValue({ data: null, error: null });
     // 3.6-flash: 4000 prompt of which 3500 cached → 500×1.50 = 750;
-    // 3500×0.15 = 525; output 200×7.50 = 1500. Total 2775 (vs 7500 if the
-    // cached slice were billed at the full input rate).
-    await recordAiSpend("u", "1.2.3.4", FLASH_36, {
+    // 3500×0.15 = 525; output 200×7.50 = 1500. Total 2775.
+    await settleAiSpend(HOLD, FLASH_36, {
       promptTokenCount: 4000,
       cachedContentTokenCount: 3500,
       candidatesTokenCount: 200,
     });
-    expect(rpc).toHaveBeenLastCalledWith(
-      "record_ai_spend",
-      expect.objectContaining({ p_micro_usd: 2775 })
-    );
-  });
-
-  it("prices the conservative fallback at the routed model's rates too", async () => {
-    rpc.mockResolvedValue({ data: null, error: null });
-    // No usageMetadata on a billed 3.6-flash call: 3000×1.50 + 512×7.50 = 8340.
-    await recordAiSpend("u", "1.2.3.4", FLASH_36, undefined, {
-      promptTokens: 3000,
-      outputTokens: 512,
-    });
-    expect(rpc).toHaveBeenLastCalledWith(
-      "record_ai_spend",
-      expect.objectContaining({ p_micro_usd: 8340 })
-    );
-  });
-
-  it("books the computed micro-USD via record_ai_spend", async () => {
-    rpc.mockResolvedValue({ data: null, error: null });
-
-    await recordAiSpend("u", "1.2.3.4", LITE, {
-      promptTokenCount: 1000,
-      candidatesTokenCount: 500,
-    });
-
-    expect(rpc).toHaveBeenCalledWith("record_ai_spend", {
-      p_user_id: "u",
-      p_ip: "1.2.3.4",
-      p_micro_usd: 1550,
-    });
-  });
-
-  it("never throws when the record RPC errors (best-effort audit)", async () => {
-    rpc.mockResolvedValue({ data: null, error: { message: "down" } });
-    await expect(
-      recordAiSpend("u", "1.2.3.4", LITE, { promptTokenCount: 10 })
-    ).resolves.toBeUndefined();
-  });
-
-  it("never throws when the record RPC rejects", async () => {
-    rpc.mockRejectedValue(new Error("network"));
-    await expect(
-      recordAiSpend("u", "1.2.3.4", LITE, { promptTokenCount: 10 })
-    ).resolves.toBeUndefined();
+    expect(rpc).toHaveBeenLastCalledWith("settle_ai_spend", settleArgs(2775));
   });
 
   it("books a CONSERVATIVE fallback when usageMetadata is absent (#724)", async () => {
     rpc.mockResolvedValue({ data: null, error: null });
-    // usage undefined → metered estimate is 0 → fall back to the caller's shape.
     // 3000 input × 0.30 = 900; 512 output × 2.50 = 1280; total 2180 micro.
-    await recordAiSpend("u", "1.2.3.4", LITE, undefined, {
+    await settleAiSpend(HOLD, LITE, undefined, {
       promptTokens: 3000,
       outputTokens: 512,
     });
-    expect(rpc).toHaveBeenCalledWith("record_ai_spend", {
-      p_user_id: "u",
-      p_ip: "1.2.3.4",
-      p_micro_usd: 2180,
+    expect(rpc).toHaveBeenLastCalledWith("settle_ai_spend", settleArgs(2180));
+  });
+
+  it("prices the fallback at the routed model's rates too", async () => {
+    rpc.mockResolvedValue({ data: null, error: null });
+    // 3000×1.50 + 512×7.50 = 8340.
+    await settleAiSpend(HOLD, FLASH_36, undefined, {
+      promptTokens: 3000,
+      outputTokens: 512,
     });
+    expect(rpc).toHaveBeenLastCalledWith("settle_ai_spend", settleArgs(8340));
   });
 
   it("prefers the METERED estimate over the fallback when usage is present", async () => {
     rpc.mockResolvedValue({ data: null, error: null });
-    // Real usage present → 1000×0.30 + 500×2.50 = 1550; the fallback is ignored.
-    await recordAiSpend(
-      "u",
-      "1.2.3.4",
+    await settleAiSpend(
+      HOLD,
       LITE,
       { promptTokenCount: 1000, candidatesTokenCount: 500 },
       { promptTokens: 9999, outputTokens: 9999 }
     );
-    expect(rpc).toHaveBeenCalledWith(
-      "record_ai_spend",
-      expect.objectContaining({ p_micro_usd: 1550 })
-    );
+    expect(rpc).toHaveBeenLastCalledWith("settle_ai_spend", settleArgs(1550));
   });
 
   it("falls back when usage is present but measures zero", async () => {
     rpc.mockResolvedValue({ data: null, error: null });
-    await recordAiSpend(
-      "u",
-      "1.2.3.4",
+    await settleAiSpend(
+      HOLD,
       LITE,
       {},
-      {
-        promptTokens: 3000,
-        outputTokens: 512,
-      }
+      { promptTokens: 3000, outputTokens: 512 }
     );
-    expect(rpc).toHaveBeenCalledWith(
-      "record_ai_spend",
-      expect.objectContaining({ p_micro_usd: 2180 })
-    );
+    expect(rpc).toHaveBeenLastCalledWith("settle_ai_spend", settleArgs(2180));
+  });
+
+  it("never throws when the settle RPC errors", async () => {
+    rpc.mockResolvedValue({ data: null, error: { message: "down" } });
+    await expect(
+      settleAiSpend(HOLD, LITE, { promptTokenCount: 10 })
+    ).resolves.toBeUndefined();
+  });
+
+  it("never throws when the settle RPC rejects", async () => {
+    rpc.mockRejectedValue(new Error("network"));
+    await expect(
+      settleAiSpend(HOLD, LITE, { promptTokenCount: 10 })
+    ).resolves.toBeUndefined();
+  });
+});
+
+describe("releaseAiSpend", () => {
+  it("returns the whole hold and counts no request", async () => {
+    rpc.mockResolvedValue({ data: null, error: null });
+    await releaseAiSpend(HOLD);
+    expect(rpc).toHaveBeenCalledWith("settle_ai_spend", settleArgs(0, false));
+  });
+
+  it("never throws when the RPC fails", async () => {
+    rpc.mockRejectedValue(new Error("network"));
+    await expect(releaseAiSpend(HOLD)).resolves.toBeUndefined();
   });
 });
 
