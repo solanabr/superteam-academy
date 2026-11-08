@@ -5,9 +5,11 @@
 -- claim_referral still records the referral (referred_by + the 'signup' row in
 -- referral_events) under its existing rules. What changes is how points are
 -- read: a referral_events row scores for its referrer only when the referred
--- account is not deleted and has at least one completed lesson in
--- user_progress. Every points read goes through referral_scored_events below,
--- so the public board and the referrer's own totals give the same numbers.
+-- account has at least one completed lesson in user_progress. A referred
+-- account deleted later keeps its rows (lib/account/deletion-policy.ts), so a
+-- point it already earned stays. Every points read goes through
+-- referral_scored_events below, so the public board and the referrer's own
+-- totals give the same numbers.
 --
 -- WHEN A POINT LANDS
 --   scored_at = GREATEST(event created_at, the referred learner's first
@@ -57,7 +59,6 @@ AS $$
     re.kind,
     GREATEST(re.created_at, first_lesson.completed_at) AS scored_at
   FROM public.referral_events re
-  JOIN public.profiles referred ON referred.id = re.referred_id
   JOIN LATERAL (
     SELECT up.completed_at
     FROM public.user_progress up
@@ -66,8 +67,7 @@ AS $$
     ORDER BY up.completed_at ASC NULLS LAST
     LIMIT 1
   ) first_lesson ON true
-  WHERE referred.deleted_at IS NULL
-    AND (p_referrer_id IS NULL OR re.referrer_id = p_referrer_id);
+  WHERE p_referrer_id IS NULL OR re.referrer_id = p_referrer_id;
 $$;
 
 REVOKE EXECUTE ON FUNCTION public.referral_scored_events(UUID) FROM PUBLIC, anon, authenticated;

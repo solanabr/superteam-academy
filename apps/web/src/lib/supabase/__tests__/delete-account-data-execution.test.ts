@@ -680,14 +680,11 @@ describe("delete_account_data", () => {
       expect(board.rows.map((r) => r.user_id)).not.toContain(VICTIM);
     });
 
-    // The referral_events row is kept (see the "keep" case above), but a
-    // deleted referred account no longer scores for its referrer
-    // (20261108130000_referral_score_after_lesson).
-    it("the referral board stops counting the deleted account's referral", async () => {
+    it("the referral board still counts the other person's points", async () => {
       const { rows } = await db.query<{ user_id: string }>(
         "SELECT user_id FROM public.get_referral_leaderboard(99, 20)"
       );
-      expect(rows.map((r) => r.user_id)).not.toContain(BYSTANDER);
+      expect(rows.map((r) => r.user_id)).toContain(BYSTANDER);
     });
 
     describe("what an anonymous visitor reads", () => {

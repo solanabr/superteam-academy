@@ -224,15 +224,15 @@ describe("referral scoring waits for the referred learner's first lesson", () =>
     });
   });
 
-  it("a tombstoned referred account does not count, even with lessons", async () => {
+  it("a referred learner who completed a lesson and later deleted still counts", async () => {
     await claim(pg, referred(1), REFERRER);
     await claim(pg, referred(2), REFERRER);
     await completeLesson(pg, referred(1), "lesson-1");
-    await completeLesson(pg, referred(2), "lesson-1");
     await pg.exec(
-      `UPDATE public.profiles SET deleted_at = now() WHERE id = '${referred(2)}'`
+      `UPDATE public.profiles SET deleted_at = now() WHERE id IN ('${referred(1)}', '${referred(2)}')`
     );
 
+    // referred(1) keeps scoring; referred(2) never completed a lesson.
     expect(await boardPoints(pg)).toEqual({ [REFERRER]: 1 });
     expect(await ownTotals(pg, REFERRER)).toEqual({
       seasonPoints: 1,
