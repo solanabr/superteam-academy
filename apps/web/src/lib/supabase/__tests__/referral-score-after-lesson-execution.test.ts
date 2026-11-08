@@ -170,6 +170,20 @@ describe("referral scoring waits for the referred learner's first lesson", () =>
     expect((await ownTotals(pg, REFERRER)).seasonPoints).toBe(0);
   });
 
+  it("a completed row with no completed_at does not count; a dated one does", async () => {
+    await claim(pg, referred(1), REFERRER);
+    await claim(pg, referred(2), REFERRER);
+    await completeLesson(pg, referred(1), "lesson-1", "NULL");
+    await completeLesson(pg, referred(2), "lesson-1");
+
+    // Only referred(2) scores.
+    expect(await boardPoints(pg)).toEqual({ [REFERRER]: 1 });
+    expect(await ownTotals(pg, REFERRER)).toEqual({
+      seasonPoints: 1,
+      referredSignups: 1,
+    });
+  });
+
   it("scores 1 once the referred learner completes one lesson", async () => {
     await claim(pg, referred(1), REFERRER);
     await completeLesson(pg, referred(1), "lesson-1");

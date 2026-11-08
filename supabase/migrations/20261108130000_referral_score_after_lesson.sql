@@ -37,10 +37,9 @@
 
 -- ── 1. referral_scored_events ───────────────────────────────────────────────
 -- One row per referral_events row that scores. p_referrer_id NULL = every
--- referrer. The LATERAL picks the referred learner's earliest completed lesson;
--- no completed lesson means no row, so the event doesn't score. A completed row
--- with a NULL completed_at still qualifies, and GREATEST then falls back to the
--- event time.
+-- referrer. The LATERAL picks the referred learner's earliest completed lesson
+-- that has a completed_at; with none, there is no row and the event doesn't
+-- score.
 CREATE OR REPLACE FUNCTION public.referral_scored_events(p_referrer_id UUID DEFAULT NULL)
 RETURNS TABLE (
   referrer_id UUID,
@@ -64,7 +63,8 @@ AS $$
     FROM public.user_progress up
     WHERE up.user_id = re.referred_id
       AND up.completed = true
-    ORDER BY up.completed_at ASC NULLS LAST
+      AND up.completed_at IS NOT NULL
+    ORDER BY up.completed_at ASC
     LIMIT 1
   ) first_lesson ON true
   WHERE p_referrer_id IS NULL OR re.referrer_id = p_referrer_id;
