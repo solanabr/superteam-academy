@@ -1,4 +1,5 @@
 /* eslint-disable import/order -- vi.mock factories are hoisted above imports. */
+import { createHash } from "node:crypto";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createFakeDb, type FakeDb } from "./fake-db";
 
@@ -245,6 +246,50 @@ describe("once per wallet and course", () => {
     await expect(reserveSponsoredEnroll(enroll("SIG1"))).rejects.toBeInstanceOf(
       LedgerUnavailableError
     );
+  });
+});
+
+describe("a wallet whose account was deleted", () => {
+  // delete_account_data rewrites the wallet on sponsored rows to this one-way key.
+  const scrubbed = (wallet: string) =>
+    `deleted:${createHash("sha256").update(wallet).digest("hex")}`;
+
+  it("still holds its sponsorship slot", async () => {
+    await reserveSponsoredEnroll(enroll("SIG1"));
+    h.db.tables.platform_spend![0]!.status = "confirmed";
+    h.db.tables.platform_spend![0]!.wallet = scrubbed("LearnerWallet");
+
+    const rows = await findSponsorshipRows("enroll_sponsor", KEY);
+
+    expect(rows.map((r) => r.signature)).toEqual(["SIG1"]);
+  });
+
+  it("doesn't match a different wallet's scrubbed row", async () => {
+    await reserveSponsoredEnroll(enroll("SIG1"));
+    h.db.tables.platform_spend![0]!.status = "confirmed";
+    h.db.tables.platform_spend![0]!.wallet = scrubbed("SomeoneElse");
+
+    await expect(findSponsorshipRows("enroll_sponsor", KEY)).resolves.toEqual(
+      []
+    );
+  });
+
+  it("still records the refund when the enrollment is closed", async () => {
+    await reserveSponsoredEnroll(enroll("SIG1"));
+    h.db.tables.platform_spend![0]!.status = "confirmed";
+    h.db.tables.platform_spend![0]!.wallet = scrubbed("LearnerWallet");
+
+    await recordSponsoredEnrollRefund({
+      signature: "CLOSE_SIG",
+      wallet: "LearnerWallet",
+      courseId: "course-x",
+      programId: "ProgramA",
+      userId: null,
+    });
+
+    expect(
+      h.db.tables.platform_spend!.some((r) => r.signature === "CLOSE_SIG")
+    ).toBe(true);
   });
 });
 

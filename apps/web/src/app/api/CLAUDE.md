@@ -39,6 +39,7 @@ No route inventory here: `find src/app/api -name route.ts` is the list, and a ta
   from the session), `certificates/mint`, `lessons/complete` (on-chain completion and XP),
   `quests/daily` (quest XP), `ai/partner` (paid Gemini calls).
 - Identity: `auth/*` (SIWS nonce, wallet, OAuth callback redirect sanitizing, Dynamic, link and
-  unlink), `account/delete`.
+  unlink), `account/delete` (a new table holding user data needs a decision in
+  `lib/account/deletion-policy.ts` and in `delete_account_data`).
 - Inbound: `webhooks/helius` (verifies `HELIUS_WEBHOOK_SECRET`), `teach/preview/*` (password-gated,
   read-only, compiles a PR in memory; never fetch a host derived from user input).

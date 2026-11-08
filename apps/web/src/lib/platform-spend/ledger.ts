@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { logEvent } from "@/lib/logging";
 import type { PayerRole } from "@/lib/solana/sponsor";
 import { spendCluster } from "@/lib/solana/sponsor";
+import { sponsorshipWalletKeys } from "@/lib/platform-spend/wallet-keys";
 
 /**
  * What a platform-paid transaction did. Free text in the DB (a lowercase
@@ -182,7 +183,7 @@ export async function findSponsorshipRows(
     .eq("action", action)
     .eq("cluster", spendCluster())
     .eq("program_id", key.programId)
-    .eq("wallet", key.wallet)
+    .in("wallet", sponsorshipWalletKeys(key.wallet))
     .eq("course_id", key.courseId)
     .eq("course_generation", key.courseGeneration)
     .in("status", SLOT_STATUSES)
@@ -253,7 +254,7 @@ export async function recordSponsoredEnrollRefund(input: {
       .in("status", ["confirmed", "superseded_landed"])
       .eq("cluster", spendCluster())
       .eq("program_id", input.programId)
-      .eq("wallet", input.wallet)
+      .in("wallet", sponsorshipWalletKeys(input.wallet))
       .eq("course_id", input.courseId)
       .order("created_at", { ascending: false })
       .limit(1)

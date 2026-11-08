@@ -16,12 +16,14 @@ const state = vi.hoisted(() => ({
   tables: {} as Record<string, unknown[]>,
   single: {} as Record<string, unknown>,
   fromCalls: [] as string[],
+  // The one service-role read: which hidden authors are deleted accounts.
+  adminFromCalls: [] as string[],
   selectArgs: [] as string[],
 }));
 
-function makeClient() {
+function makeClient(role: "session" | "admin" = "session") {
   const from = (table: string) => {
-    state.fromCalls.push(table);
+    (role === "admin" ? state.adminFromCalls : state.fromCalls).push(table);
     const result = { data: state.tables[table] ?? null, error: null };
     const builder: Record<string, unknown> = {
       select: (arg?: unknown) => {
@@ -32,6 +34,7 @@ function makeClient() {
       limit: () => builder,
       eq: () => builder,
       in: () => builder,
+      not: () => builder,
       or: () => builder,
       order: () => builder,
       textSearch: () => builder,
@@ -55,7 +58,7 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: async () => makeClient(),
 }));
 vi.mock("@/lib/supabase/admin", () => ({
-  createAdminClient: () => makeClient(),
+  createAdminClient: () => makeClient("admin"),
 }));
 vi.mock("@/lib/env.server", () => ({ serverEnv: {} }));
 vi.mock("@/lib/gamification/achievements", () => ({
@@ -73,6 +76,7 @@ beforeEach(() => {
   state.tables = {};
   state.single = {};
   state.fromCalls = [];
+  state.adminFromCalls = [];
   state.selectArgs = [];
   delete process.env.NEXT_PUBLIC_SUPABASE_URL;
 });
@@ -109,12 +113,14 @@ describe("GET /api/community/threads — author identity via public_profiles", (
       username: "alice",
       avatar_url: "a.png",
       level: 3,
+      deleted: false,
     });
     // Private/missing author degrades to the anonymous shape, not a crash.
     expect(body.threads[1].author).toEqual({
       username: null,
       avatar_url: null,
       level: 0,
+      deleted: false,
     });
   });
 });
@@ -142,6 +148,7 @@ describe("GET /api/community/search — author identity via public_profiles", ()
       username: null,
       avatar_url: null,
       level: 0,
+      deleted: false,
     });
   });
 });
@@ -172,11 +179,13 @@ describe("GET /api/community/threads/[id] — thread + answer authors via public
       username: "alice",
       avatar_url: "a.png",
       level: 3,
+      deleted: false,
     });
     expect(body.answers[0].author).toEqual({
       username: null,
       avatar_url: null,
       level: 0,
+      deleted: false,
     });
   });
 });
