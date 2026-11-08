@@ -12,6 +12,10 @@ import { ERROR_IDS } from "@/constants/errorIds";
  * referred learner completes (record_referral_course_completion). The partial
  * unique indexes on referral_events make both once-only rules DB invariants,
  * so every caller here is free to retry or replay.
+ *
+ * A recorded point scores only once the referred learner has completed a
+ * lesson (migration 20261108130000_referral_score_after_lesson.sql). Both
+ * reads below go through that rule in SQL.
  */
 
 /** The shape /api/referrals/leaderboard serves per row. */
@@ -122,7 +126,9 @@ export async function getReferralLeaderboard(
 
 /**
  * A learner's own referral stats for the current season: their share code
- * (minted on first ask), season points, and lifetime referred-signup count.
+ * (minted on first ask), season points, and lifetime count of referred signups
+ * that score. Both numbers come from get_own_referral_totals, which counts
+ * through the same scoring rule as the public board, so the two agree.
  */
 export async function getOwnReferralStats(userId: string): Promise<{
   code: string;
@@ -132,12 +138,10 @@ export async function getOwnReferralStats(userId: string): Promise<{
 }> {
   const supabase = createAdminClient();
 
-  // The code mint, the season lookup and the lifetime signup count don't
-  // depend on each other — run them in one round instead of four serial hops
-  // (this route sat behind a visible spinner on the leaderboard card). Only
-  // the season-points count needs the season's window, so it goes second.
+  // The code mint and the season lookup don't depend on each other, so they
+  // run in one round; the totals need the season window and go second.
   const nowIso = new Date().toISOString();
-  const [codeRes, seasonRes, signupRes] = await Promise.all([
+  const [codeRes, seasonRes] = await Promise.all([
     supabase.rpc("get_or_create_referral_code", { p_user_id: userId }),
     supabase
       .from("referral_seasons")
@@ -146,11 +150,6 @@ export async function getOwnReferralStats(userId: string): Promise<{
       .order("number", { ascending: false })
       .limit(1)
       .maybeSingle(),
-    supabase
-      .from("referral_events")
-      .select("id", { count: "exact", head: true })
-      .eq("referrer_id", userId)
-      .eq("kind", "signup"),
   ]);
 
   const { data: code, error: codeError } = codeRes;
@@ -166,24 +165,23 @@ export async function getOwnReferralStats(userId: string): Promise<{
         endsAt: seasonData.ends_at,
       }
     : null;
-  if (signupRes.error) throw new Error(signupRes.error.message);
 
-  let seasonPoints = 0;
-  if (season) {
-    const { count, error } = await supabase
-      .from("referral_events")
-      .select("id", { count: "exact", head: true })
-      .eq("referrer_id", userId)
-      .gte("created_at", season.startsAt)
-      .lt("created_at", season.endsAt);
-    if (error) throw new Error(error.message);
-    seasonPoints = count ?? 0;
-  }
+  // A null window (no season yet) gives 0 season points.
+  const { data: totals, error: totalsError } = await supabase.rpc(
+    "get_own_referral_totals",
+    {
+      p_user_id: userId,
+      p_season_starts_at: season?.startsAt ?? null,
+      p_season_ends_at: season?.endsAt ?? null,
+    }
+  );
+  if (totalsError) throw new Error(totalsError.message);
+  const row = totals?.[0];
 
   return {
     code,
-    seasonPoints,
-    referredSignups: signupRes.count ?? 0,
+    seasonPoints: Number(row?.season_points ?? 0),
+    referredSignups: Number(row?.referred_signups ?? 0),
     season,
   };
 }

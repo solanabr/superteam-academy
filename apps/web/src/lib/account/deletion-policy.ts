@@ -247,7 +247,7 @@ export const DELETION_POLICY: Record<string, TablePolicy> = {
   },
   referral_events: {
     decision: "keep",
-    why: "One row is the other person's point. Holds only ids once the profile's code and link are gone.",
+    why: "The other person's referral record. Holds only ids once the profile's code and link are gone. A deleted referred account stops scoring.",
     columns: {
       referrer_id: "keep",
       referred_id: "keep",

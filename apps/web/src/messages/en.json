@@ -543,7 +543,7 @@
     "referralSubtitle": "Invite builders and earn points",
     "referralSeason": "Season {number}",
     "referralSeasonEnds": "Ends {date}",
-    "referralScoringInfo": "1 point when someone creates an account through your link, plus 1 point for every course they complete afterwards.",
+    "referralScoringInfo": "1 point when someone who created an account through your link completes their first lesson, plus 1 point for every course they complete.",
     "referralScoringInfoLabel": "How referral points work",
     "referralNoEntries": "No referrals yet this season — share your link and open the board!",
     "referralPoints": "{points, plural, one {# pt} other {# pts}}",

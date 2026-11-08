@@ -1810,6 +1810,17 @@ export type Database = {
         };
         Returns: string;
       };
+      get_own_referral_totals: {
+        Args: {
+          p_user_id: string;
+          p_season_starts_at: string | null;
+          p_season_ends_at: string | null;
+        };
+        Returns: {
+          season_points: number;
+          referred_signups: number;
+        }[];
+      };
       get_platform_stats: {
         Args: Record<string, never>;
         Returns: {
