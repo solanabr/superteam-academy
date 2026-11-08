@@ -432,6 +432,97 @@ describe("settle", () => {
   });
 });
 
+describe("a bucket row missing at lock time", () => {
+  // An account deletion running between reserve's insert and its lock removes
+  // the account row. pglite can't interleave two sessions, so a trigger that
+  // skips the insert leaves the same state: no row to lock.
+  async function withSkippedInsert(scope: string, run: () => Promise<void>) {
+    await db.exec(`
+      CREATE FUNCTION public.test_skip_scope() RETURNS trigger
+      LANGUAGE plpgsql AS $$
+      BEGIN
+        IF NEW.scope = '${scope}' THEN RETURN NULL; END IF;
+        RETURN NEW;
+      END $$;
+      CREATE TRIGGER test_skip_scope BEFORE INSERT ON public.ai_spend_ledger
+        FOR EACH ROW EXECUTE FUNCTION public.test_skip_scope();
+    `);
+    try {
+      await run();
+    } finally {
+      await db.exec(`
+        DROP TRIGGER test_skip_scope ON public.ai_spend_ledger;
+        DROP FUNCTION public.test_skip_scope();
+      `);
+    }
+  }
+
+  for (const [scope, user] of [
+    ["account", ESTABLISHED],
+    ["ip", ESTABLISHED],
+    ["global", ESTABLISHED],
+    ["newcomer", FRESH[0]!],
+  ] as const) {
+    it(`denies when the ${scope} row is gone`, async () => {
+      await withSkippedInsert(scope, async () => {
+        const r = await reserve(user, "ip-1", 100, 100);
+        expect(r).toMatchObject({ decision: "denied", reserved_micro_usd: 0 });
+      });
+      const { rows } = await db.query<{ micro_usd: string | number }>(
+        `SELECT micro_usd FROM public.ai_spend_ledger`
+      );
+      expect(rows.every((x) => Number(x.micro_usd) === 0)).toBe(true);
+    });
+  }
+});
+
+describe("lock order", () => {
+  // record_ai_spend upserts account, ip, global. The new functions take the
+  // same rows in the same order so an old call and a new one can't deadlock.
+  const sql = readMigration(MIGRATION);
+  const body = (fn: string) =>
+    sql.slice(
+      sql.indexOf(`CREATE OR REPLACE FUNCTION public.${fn}(`),
+      sql.indexOf(
+        "$$;",
+        sql.indexOf(`CREATE OR REPLACE FUNCTION public.${fn}(`)
+      )
+    );
+
+  function order(text: string, marks: string[]): number[] {
+    return marks.map((m) => text.indexOf(m));
+  }
+
+  it("reserve inserts and locks account, ip, global, newcomer", () => {
+    const reserve = body("reserve_ai_spend");
+    const insert = reserve.slice(reserve.indexOf("INSERT INTO"));
+    const ins = order(insert, ["('account'", "('ip'", "('global'"]);
+    expect(ins.every((i) => i >= 0)).toBe(true);
+    expect([...ins].sort((a, b) => a - b)).toEqual(ins);
+
+    const locks = order(reserve, [
+      "INTO v_account",
+      "INTO v_ip_total",
+      "INTO v_global",
+      "INTO v_pool",
+    ]);
+    expect(locks.every((i) => i >= 0)).toBe(true);
+    expect([...locks].sort((a, b) => a - b)).toEqual(locks);
+  });
+
+  it("settle locks in the same order", () => {
+    const settle = body("settle_ai_spend");
+    const orderBy = settle.slice(settle.indexOf("ORDER BY CASE"));
+    const ranks = order(orderBy, [
+      "WHEN 'account' THEN 1",
+      "WHEN 'ip'      THEN 2",
+      "WHEN 'global'  THEN 3",
+    ]);
+    expect(ranks.every((i) => i >= 0)).toBe(true);
+    expect(orderBy.indexOf("FOR UPDATE")).toBeGreaterThan(ranks[2]!);
+  });
+});
+
 describe("bad input raises and books nothing", () => {
   const cases: Array<[string, () => Promise<unknown>]> = [
     [

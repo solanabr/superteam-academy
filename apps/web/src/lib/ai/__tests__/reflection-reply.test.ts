@@ -42,6 +42,13 @@ const INPUT = {
   reflection: "A dApp.",
 };
 
+// The body sent on the first model call, and its UTF-8 byte length: the input
+// side of the spend hold.
+function sentBytes(fetchMock: { mock: { calls: unknown[][] } }): number {
+  const init = fetchMock.mock.calls[0]![1] as { body: string };
+  return Buffer.byteLength(init.body, "utf8");
+}
+
 function stubGeminiFetch(text: string, ok = true, usageMetadata?: unknown) {
   const fetchMock = vi.fn(async () => ({
     ok,
@@ -227,14 +234,31 @@ describe("maybeGenerateReflectionReply", () => {
     const { maybeGenerateReflectionReply } =
       await import("../reflection-reply");
     await maybeGenerateReflectionReply(INPUT);
-    // flash-lite, 3000 input tokens: 512 out → 900 + 1280 = 2180; degraded 256
-    // out → 900 + 640 = 1540.
+    // flash-lite: input at the sent body's byte length × $0.30/M, output 512
+    // (degraded 256, same body length) × $2.50/M.
+    const input = sentBytes(fetchMock);
     expect(reserveAiSpend).toHaveBeenCalledWith("user-1", "203.0.113.7", {
-      fullMicroUsd: 2180,
-      degradedMicroUsd: 1540,
+      fullMicroUsd: Math.round(input * 0.3 + 512 * 2.5),
+      degradedMicroUsd: Math.round(input * 0.3 + 256 * 2.5),
     });
     expect(fetchMock.mock.invocationCallOrder[0]!).toBeGreaterThan(
       reserveAiSpend.mock.invocationCallOrder[0]!
+    );
+  });
+
+  it("holds at least the byte length of a long reflection", async () => {
+    const fetchMock = stubGeminiFetch("hi");
+    const { maybeGenerateReflectionReply } =
+      await import("../reflection-reply");
+    await maybeGenerateReflectionReply({
+      ...INPUT,
+      reflection: "é".repeat(10_000),
+    });
+    const input = sentBytes(fetchMock);
+    expect(input).toBeGreaterThan(20_000);
+    const [, , amounts] = reserveAiSpend.mock.calls[0]!;
+    expect(amounts.fullMicroUsd).toBeGreaterThanOrEqual(
+      Math.round(input * 0.3 + 512 * 2.5)
     );
   });
 
@@ -294,7 +318,7 @@ describe("maybeGenerateReflectionReply", () => {
       promptTokenCount: 300,
       candidatesTokenCount: 120,
     };
-    stubGeminiFetch("Great reflection!", true, usageMetadata);
+    const fetchMock = stubGeminiFetch("Great reflection!", true, usageMetadata);
     const { maybeGenerateReflectionReply } =
       await import("../reflection-reply");
     await maybeGenerateReflectionReply(INPUT);
@@ -302,12 +326,12 @@ describe("maybeGenerateReflectionReply", () => {
       HOLD,
       "gemini-3.5-flash-lite",
       usageMetadata,
-      { promptTokens: 3000, outputTokens: 512 }
+      { promptTokens: sentBytes(fetchMock), outputTokens: 512 }
     );
   });
 
   it("still books spend with a conservative fallback when usageMetadata is absent", async () => {
-    stubGeminiFetch("Great reflection!"); // no usageMetadata
+    const fetchMock = stubGeminiFetch("Great reflection!"); // no usageMetadata
     const { maybeGenerateReflectionReply } =
       await import("../reflection-reply");
     await maybeGenerateReflectionReply(INPUT);
@@ -317,7 +341,7 @@ describe("maybeGenerateReflectionReply", () => {
       HOLD,
       "gemini-3.5-flash-lite",
       undefined,
-      { promptTokens: 3000, outputTokens: 512 }
+      { promptTokens: sentBytes(fetchMock), outputTokens: 512 }
     );
   });
 

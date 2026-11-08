@@ -97,11 +97,11 @@ BEGIN
     );
 
   -- Make sure today's rows exist so they can be locked. Rows are always taken in
-  -- (scope, scope_key) order: account, global, ip, newcomer.
+  -- the order record_ai_spend upserts them: account, ip, global, then newcomer.
   INSERT INTO public.ai_spend_ledger (scope, scope_key, spend_day)
   VALUES ('account', p_user_id::text, v_day),
-         ('global',  '',              v_day),
-         ('ip',      v_ip,            v_day)
+         ('ip',      v_ip,            v_day),
+         ('global',  '',              v_day)
   ON CONFLICT (scope, scope_key, spend_day) DO NOTHING;
   IF v_low_trust THEN
     INSERT INTO public.ai_spend_ledger (scope, scope_key, spend_day)
@@ -112,16 +112,24 @@ BEGIN
   SELECT l.micro_usd INTO v_account FROM public.ai_spend_ledger l
    WHERE l.scope = 'account' AND l.scope_key = p_user_id::text AND l.spend_day = v_day
    FOR UPDATE;
-  SELECT l.micro_usd INTO v_global FROM public.ai_spend_ledger l
-   WHERE l.scope = 'global' AND l.scope_key = '' AND l.spend_day = v_day
-   FOR UPDATE;
   SELECT l.micro_usd INTO v_ip_total FROM public.ai_spend_ledger l
    WHERE l.scope = 'ip' AND l.scope_key = v_ip AND l.spend_day = v_day
+   FOR UPDATE;
+  SELECT l.micro_usd INTO v_global FROM public.ai_spend_ledger l
+   WHERE l.scope = 'global' AND l.scope_key = '' AND l.spend_day = v_day
    FOR UPDATE;
   IF v_low_trust THEN
     SELECT l.micro_usd INTO v_pool FROM public.ai_spend_ledger l
      WHERE l.scope = 'newcomer' AND l.scope_key = '' AND l.spend_day = v_day
      FOR UPDATE;
+  END IF;
+
+  -- A row removed between the insert and the lock (an account deletion running
+  -- at the same time) leaves its total NULL. Deny rather than skip that cap.
+  IF v_account IS NULL OR v_ip_total IS NULL OR v_global IS NULL
+     OR (v_low_trust AND v_pool IS NULL) THEN
+    RETURN QUERY SELECT 'denied'::text, 0::bigint, v_day, v_low_trust;
+    RETURN;
   END IF;
 
   v_over_soft := v_account >= p_account_soft
@@ -195,14 +203,20 @@ BEGIN
 
   v_delta := p_actual_micro_usd - p_reserved_micro_usd;
 
-  -- Same lock order as reserve_ai_spend.
+  -- Same lock order as reserve_ai_spend and record_ai_spend: account, ip,
+  -- global, newcomer.
   PERFORM 1 FROM public.ai_spend_ledger l
    WHERE l.spend_day = p_spend_day
      AND (   (l.scope = 'account'  AND l.scope_key = p_user_id::text)
-          OR (l.scope = 'global'   AND l.scope_key = '')
           OR (l.scope = 'ip'       AND l.scope_key = v_ip)
+          OR (l.scope = 'global'   AND l.scope_key = '')
           OR (p_low_trust AND l.scope = 'newcomer' AND l.scope_key = ''))
-   ORDER BY l.scope, l.scope_key
+   ORDER BY CASE l.scope
+              WHEN 'account' THEN 1
+              WHEN 'ip'      THEN 2
+              WHEN 'global'  THEN 3
+              ELSE 4
+            END
    FOR UPDATE;
 
   UPDATE public.ai_spend_ledger l
@@ -211,8 +225,8 @@ BEGIN
          updated_at = now()
    WHERE l.spend_day = p_spend_day
      AND (   (l.scope = 'account'  AND l.scope_key = p_user_id::text)
-          OR (l.scope = 'global'   AND l.scope_key = '')
           OR (l.scope = 'ip'       AND l.scope_key = v_ip)
+          OR (l.scope = 'global'   AND l.scope_key = '')
           OR (p_low_trust AND l.scope = 'newcomer' AND l.scope_key = ''));
 END;
 $$;

@@ -12,6 +12,7 @@ import {
   estimateSpendMicroUsd,
   degradedMaxTokens,
   worstCaseMicroUsd,
+  inputTokenBound,
   reserveAiSpend,
   settleAiSpend,
   releaseAiSpend,
@@ -190,6 +191,14 @@ describe("worstCaseMicroUsd", () => {
     expect(worstCaseMicroUsd(FLASH_36, 6000, 2048)).toBe(24_360);
     // 3000 × 0.30 + 512 × 2.50 = 900 + 1280.
     expect(worstCaseMicroUsd(LITE, 3000, 512)).toBe(2180);
+  });
+});
+
+describe("inputTokenBound", () => {
+  it("counts UTF-8 bytes, not characters", () => {
+    expect(inputTokenBound("abc")).toBe(3);
+    expect(inputTokenBound("é")).toBe(2);
+    expect(inputTokenBound("日本")).toBe(6);
   });
 });
 

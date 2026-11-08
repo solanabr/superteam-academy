@@ -41,6 +41,23 @@ vi.mock("@/lib/ai/spend-ledger", async (importOriginal) => ({
   releaseAiSpend,
 }));
 
+// The request body the route sent to Gemini on its first call, and its UTF-8
+// byte length: the input side of the spend hold.
+function sentBody(): string {
+  const f = globalThis.fetch as unknown as {
+    mock: { calls: Array<[unknown, { body: string }]> };
+  };
+  return f.mock.calls[0]![1].body;
+}
+const bytes = (body: string) => Buffer.byteLength(body, "utf8");
+// micro-USD = tokens × $/MTok, rounded once, as estimateSpendMicroUsd does.
+const micro = (
+  input: number,
+  inRate: number,
+  output: number,
+  outRate: number
+) => Math.round(input * inRate + output * outRate);
+
 const HOLD = {
   userId: "user-1",
   ip: "203.0.113.9",
@@ -553,24 +570,25 @@ describe("POST /api/ai/partner", () => {
     expect(refundAssistTurn).toHaveBeenCalledWith("user-1", "lesson-1", "free");
   });
 
-  it("refunds a PRE-billing throw during prompt building (billed still false)", async () => {
-    // The prompt-building block is inside the widened try. A throw there — here
-    // the visibleTests map blows up on a malformed code block (tests: null) —
-    // happens before any Gemini call, so it is pre-billing: the catch refunds it
-    // under `if (!billed)` and records no billed assist.
+  it("a throw while building the prompt spends nothing (500, no hold, no assist)", async () => {
+    // The prompt is built before the spend hold and the ladder spend, so a
+    // throw there — here the visibleTests map blows up on a malformed code
+    // block (tests: null) — has nothing to refund or release.
     getLessonBySlug.mockResolvedValue({
       ...LESSON,
       blocks: [LESSON.blocks[0], { ...LESSON.blocks[1], tests: null }],
     });
-    stubGeminiFetch(PROPOSE_GEMINI_TEXT); // never reached
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
 
     const { POST } = await import("../partner/route");
     const res = await POST(makeRequest(VALID_BODY));
 
     expect(res.status).toBe(500);
-    expect(refundAssistTurn).toHaveBeenCalledTimes(1);
-    expect(refundAssistTurn).toHaveBeenCalledWith("user-1", "lesson-1", "free");
-    expect(recordBilledAssist).not.toHaveBeenCalled();
+    expect(reserveAiSpend).not.toHaveBeenCalled();
+    expect(spendAssistTurn).not.toHaveBeenCalled();
+    expect(refundAssistTurn).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 
   it("returns 429 when rate limited", async () => {
@@ -1192,12 +1210,14 @@ describe("POST /api/ai/partner", () => {
     const { POST } = await import("../partner/route");
     await POST(makeRequest(VALID_BODY));
 
-    // propose on gemini-3.6-flash, 6000 input tokens: full budget 2048 →
-    // 6000×1.50 + 2048×7.50 = 24360; degraded 1024 → 9000 + 7680 = 16680.
+    // propose on gemini-3.6-flash: input at the sent body's byte length, output
+    // at 2048 (degraded 1024; same body length). Socratic doesn't change a
+    // propose prompt, so the sent body is the largest.
+    const input = bytes(sentBody());
     expect(reserveAiSpend).toHaveBeenCalledTimes(1);
     expect(reserveAiSpend).toHaveBeenCalledWith("user-1", "203.0.113.9", {
-      fullMicroUsd: 24_360,
-      degradedMicroUsd: 16_680,
+      fullMicroUsd: micro(input, 1.5, 2048, 7.5),
+      degradedMicroUsd: micro(input, 1.5, 1024, 7.5),
     });
     expect(spendAssistTurn.mock.invocationCallOrder[0]!).toBeGreaterThan(
       reserveAiSpend.mock.invocationCallOrder[0]!
@@ -1210,24 +1230,67 @@ describe("POST /api/ai/partner", () => {
     const { POST } = await import("../partner/route");
     await POST(makeRequest({ ...VALID_BODY, action: "ask", message: "why?" }));
 
-    // The Socratic tier (flash-lite, 512) is cheaper, so the non-Socratic
-    // budget is the bound: 6000×1.50 + 4096×7.50 = 39720; degraded 2048 → 24360.
+    // The Socratic turn (flash-lite, 512) is cheaper, so the non-Socratic turn
+    // that was sent is the bound: 3.6-flash at 4096 out, degraded 2048.
+    const input = bytes(sentBody());
     expect(reserveAiSpend).toHaveBeenCalledWith("user-1", "203.0.113.9", {
-      fullMicroUsd: 39_720,
-      degradedMicroUsd: 24_360,
+      fullMicroUsd: micro(input, 1.5, 4096, 7.5),
+      degradedMicroUsd: micro(input, 1.5, 2048, 7.5),
     });
   });
 
-  it("reserves a hint at flash-lite prices", async () => {
+  it("holds at least the byte length of a large prompt", async () => {
+    // A long lesson brief plus every learner field at its cap, in two-byte
+    // characters: far more input than any fixed estimate.
+    getLessonBySlug.mockResolvedValue({
+      ...LESSON,
+      blocks: [
+        { ...LESSON.blocks[0], src: "é".repeat(30_000) },
+        LESSON.blocks[1],
+      ],
+    });
+    stubGeminiFetch(JSON.stringify({ type: "answer", text: "Because." }));
+
+    const { POST } = await import("../partner/route");
+    const res = await POST(
+      makeRequest({
+        ...VALID_BODY,
+        action: "ask",
+        code: "é".repeat(8_000),
+        message: "é".repeat(4_000),
+        testSummary: "é".repeat(2_000),
+      })
+    );
+
+    expect(res.status).toBe(200);
+    const input = bytes(sentBody());
+    expect(input).toBeGreaterThan(2 * (30_000 + 8_000 + 4_000 + 2_000));
+    const [, , amounts] = reserveAiSpend.mock.calls[0]!;
+    expect(amounts.fullMicroUsd).toBeGreaterThanOrEqual(
+      micro(input, 1.5, 4096, 7.5)
+    );
+    expect(amounts.degradedMicroUsd).toBeGreaterThanOrEqual(
+      micro(input, 1.5, 2048, 7.5)
+    );
+  });
+
+  it("reserves a hint at flash-lite prices, sized by the longer Socratic prompt", async () => {
+    // Land on the Socratic tier so the sent body is the Socratic one, which
+    // carries the extra instructions and so is the larger of the two hints.
+    spendAssistTurn.mockResolvedValue({
+      allowed: true,
+      tier: "socratic",
+      counts: { free: 2, metered: 8, socratic: 1 },
+    });
     stubGeminiFetch(JSON.stringify({ type: "hint", text: "Check the bound." }));
 
     const { POST } = await import("../partner/route");
     await POST(makeRequest({ ...VALID_BODY, action: "hint" }));
 
-    // 6000×0.30 + 512×2.50 = 3080; degraded 256 → 1800 + 640 = 2440.
+    const input = bytes(sentBody());
     expect(reserveAiSpend).toHaveBeenCalledWith("user-1", "203.0.113.9", {
-      fullMicroUsd: 3080,
-      degradedMicroUsd: 2440,
+      fullMicroUsd: micro(input, 0.3, 512, 2.5),
+      degradedMicroUsd: micro(input, 0.3, 256, 2.5),
     });
   });
 
@@ -1327,9 +1390,9 @@ describe("POST /api/ai/partner", () => {
       generationConfig: { maxOutputTokens: number };
     };
     expect(sent.generationConfig.maxOutputTokens).toBe(2048);
-    // The actual usage is booked against the ledger with the request's IP, plus
-    // a conservative fallback (full output budget + generous input) used only
-    // when usageMetadata is absent (#724).
+    // The hold is settled to the actual usage, with a conservative fallback
+    // (full output budget + the request's byte length as input) used only when
+    // usageMetadata is absent (#724).
     expect(settleAiSpend).toHaveBeenCalledTimes(1);
     expect(settleAiSpend).toHaveBeenCalledWith(
       HOLD,
@@ -1339,7 +1402,7 @@ describe("POST /api/ai/partner", () => {
         candidatesTokenCount: 500,
         thoughtsTokenCount: 0,
       },
-      { promptTokens: 6000, outputTokens: 2048 }
+      { promptTokens: bytes(sentBody()), outputTokens: 2048 }
     );
   });
 
@@ -1371,7 +1434,7 @@ describe("POST /api/ai/partner", () => {
       HOLD,
       "gemini-3.6-flash",
       undefined,
-      { promptTokens: 6000, outputTokens: 2048 }
+      { promptTokens: bytes(sentBody()), outputTokens: 2048 }
     );
     // Not refunded — Gemini billed us.
     expect(refundAssistTurn).not.toHaveBeenCalled();

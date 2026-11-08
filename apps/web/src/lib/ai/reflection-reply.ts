@@ -9,6 +9,7 @@ import {
   releaseAiSpend,
   degradedMaxTokens,
   worstCaseMicroUsd,
+  inputTokenBound,
 } from "@/lib/ai/spend-ledger";
 import type { GeminiUsageMetadata } from "@/lib/ai/spend-ledger";
 import {
@@ -51,12 +52,35 @@ import {
 // to spend the whole budget on the visible response.
 const MAX_OUTPUT_TOKENS = 512;
 
-// Conservative input-token estimate for the spend ledger: the input side of the
-// worst case held before the call, and of the fallback booked when a billed 200
-// carries no usageMetadata (#724). The prompt is the block prompt + the learner
-// reflection (≤10k chars, ~2.5k tokens); round up so an unmeasurable billed
-// call reads as more spend, not less.
-const SPEND_PROMPT_TOKENS = 3_000;
+// The generateContent body for one reply. The spend ledger prices its input side
+// at the body's byte length (inputTokenBound), an upper bound on billed tokens.
+function replyBody(
+  prompt: string,
+  reflection: string,
+  maxOutputTokens: number
+): string {
+  return JSON.stringify({
+    contents: [
+      {
+        role: "user",
+        parts: [
+          {
+            text:
+              "You are a supportive Solana instructor giving brief, encouraging feedback " +
+              "on a learner's written reflection. Two or three sentences, no code. Do not grade.\n\n" +
+              `Prompt: ${prompt}\n\nLearner reflection: ${reflection}`,
+          },
+        ],
+      },
+    ],
+    generationConfig: {
+      temperature: 0.4,
+      maxOutputTokens,
+      // 3.x floor — the 2.5-era `thinkingBudget: 0` 400s (see models.ts).
+      thinkingConfig: MINIMAL_THINKING_CONFIG,
+    },
+  });
+}
 
 // The Gemini generateContent envelope, narrowed to the fields this helper reads.
 // Typed (not `any`) so the defensive parse below stays type-safe.
@@ -124,24 +148,24 @@ export async function maybeGenerateReflectionReply({
   // SKIPS the reply and the seal still ships (degrade never blocks, AIE-21).
   // Over a soft cap, degrade to a shorter reply rather than skipping.
   const model = modelForReflectionReply();
+  const fullBody = replyBody(prompt, reflection, MAX_OUTPUT_TOKENS);
+  const degradedTokens = degradedMaxTokens(MAX_OUTPUT_TOKENS);
+  const degradedBody = replyBody(prompt, reflection, degradedTokens);
   const gate = await reserveAiSpend(userId, ip, {
     fullMicroUsd: worstCaseMicroUsd(
       model,
-      SPEND_PROMPT_TOKENS,
+      inputTokenBound(fullBody),
       MAX_OUTPUT_TOKENS
     ),
     degradedMicroUsd: worstCaseMicroUsd(
       model,
-      SPEND_PROMPT_TOKENS,
-      degradedMaxTokens(MAX_OUTPUT_TOKENS)
+      inputTokenBound(degradedBody),
+      degradedTokens
     ),
   });
   if (gate.decision === "denied") return null;
   const { reservation } = gate;
-  const outputTokens =
-    gate.decision === "degraded"
-      ? degradedMaxTokens(MAX_OUTPUT_TOKENS)
-      : MAX_OUTPUT_TOKENS;
+  const body = gate.decision === "degraded" ? degradedBody : fullBody;
 
   // Whether Gemini billed this call: true once it answered 2xx. A call that
   // never got that far returns its hold.
@@ -153,27 +177,7 @@ export async function maybeGenerateReflectionReply({
       method: "POST",
       headers: geminiHeaders(apiKey),
       signal: controller.signal,
-      body: JSON.stringify({
-        contents: [
-          {
-            role: "user",
-            parts: [
-              {
-                text:
-                  "You are a supportive Solana instructor giving brief, encouraging feedback " +
-                  "on a learner's written reflection. Two or three sentences, no code. Do not grade.\n\n" +
-                  `Prompt: ${prompt}\n\nLearner reflection: ${reflection}`,
-              },
-            ],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.4,
-          maxOutputTokens: outputTokens,
-          // 3.x floor — the 2.5-era `thinkingBudget: 0` 400s (see models.ts).
-          thinkingConfig: MINIMAL_THINKING_CONFIG,
-        },
-      }),
+      body,
     });
 
     if (!response.ok) {
@@ -208,7 +212,7 @@ export async function maybeGenerateReflectionReply({
       data = undefined;
     }
     await settleAiSpend(reservation, model, data?.usageMetadata, {
-      promptTokens: SPEND_PROMPT_TOKENS,
+      promptTokens: inputTokenBound(body),
       outputTokens: MAX_OUTPUT_TOKENS,
     });
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;

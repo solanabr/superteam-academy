@@ -199,6 +199,16 @@ export function worstCaseMicroUsd(
   );
 }
 
+/**
+ * An upper bound on the input tokens a request body can be billed for: its
+ * UTF-8 byte length. Every token covers at least one byte of the text it
+ * encodes, and the serialized body also carries the response schema and
+ * config, which only adds to the count.
+ */
+export function inputTokenBound(body: string): number {
+  return Buffer.byteLength(body, "utf8");
+}
+
 const DECISIONS: ReadonlySet<string> = new Set(["full", "degraded", "denied"]);
 
 /**
