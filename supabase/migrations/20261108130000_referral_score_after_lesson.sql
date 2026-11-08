@@ -1,29 +1,29 @@
 -- ============================================================================
--- Migration: referral_score_after_lesson — from Season 2, a referral scores once
--- the referred learner has completed a lesson
+-- Migration: referral_score_after_lesson — a referral created after this
+-- migration scores once the referred learner has completed a lesson
 --
 -- claim_referral still records the referral (referred_by + the 'signup' row in
 -- referral_events) under its existing rules. What changes is how points are
--- read: a referral_events row created from Season 2 on scores for its referrer
--- only when the referred account has at least one dated completed lesson in
--- user_progress. A row created inside Season 1 scores as before this
--- migration, at its created_at, lesson or not. A referred
--- account deleted later keeps its rows (lib/account/deletion-policy.ts), so a
--- point it already earned stays. Every points read goes through
--- referral_scored_events below, so the public board and the referrer's own
--- totals give the same numbers.
+-- read: a referral_events row created at or after the cutoff below scores for
+-- its referrer only when the referred account has at least one dated completed
+-- lesson in user_progress. A row created before the cutoff scores as it did
+-- before this migration, at its created_at, lesson or not. A referred account
+-- deleted later keeps its rows (lib/account/deletion-policy.ts), so a point it
+-- already earned stays. Every points read goes through referral_scored_events
+-- below, so the public board and the referrer's own totals give the same
+-- numbers.
 --
--- WHICH EVENTS ARE SEASON 1
---   Read from the referral_seasons row with number = 1: an event whose
---   created_at falls in that row's [starts_at, ends_at) window. No date is
---   written here. Without a Season 1 row, every event needs a lesson.
+-- THE CUTOFF
+--   referral_scoring_cutoff holds one row whose lesson_required_from is set to
+--   now() the first time this migration runs. ON CONFLICT DO NOTHING keeps
+--   that value on a re-run. With no row, every event needs a lesson.
 --
 -- WHEN A POINT LANDS
---   Season 1 events: scored_at = created_at, as before. Later events:
+--   Before the cutoff: scored_at = created_at, as before. From the cutoff:
 --   scored_at = GREATEST(created_at, the referred learner's first dated
---   completed lesson). Season windows test scored_at, so a referral claimed
---   between seasons, or near the end of one, scores in the season its first
---   lesson lands, and a closed season's standings don't change afterwards.
+--   completed lesson). Season windows bucket points by scored_at, so a referral
+--   whose first lesson comes in a later season scores in that season, and a
+--   closed season's standings don't change afterwards.
 --
 -- WHY A READ-TIME JOIN AND NOT A STORED STATUS
 --   The rule is computed from user_progress when points are read, so there is
@@ -32,6 +32,8 @@
 --   (user_id, completed_at DESC), from 20260731170000_reengagement_pipeline.
 --
 -- WHAT THIS ADDS / REPLACES
+--   referral_scoring_cutoff                   new table, RLS on, no policies,
+--                                             no anon/authenticated grants
 --   referral_scored_events(UUID)              new, service_role
 --   get_own_referral_totals(UUID, TZ, TZ)     new, service_role
 --   get_referral_leaderboard(INT, INT)        replaced; body carried forward from
@@ -39,16 +41,33 @@
 --     and username filters kept), now counting referral_scored_events rows and
 --     breaking ties on the earliest scored_at. Grant re-stated unchanged.
 --
--- Idempotent: CREATE OR REPLACE throughout, no data change. Not wrapped in
--- BEGIN/COMMIT: the Supabase CLI and MCP apply_migration wrap the file already.
+-- Idempotent: IF NOT EXISTS / ON CONFLICT DO NOTHING / CREATE OR REPLACE. Not
+-- wrapped in BEGIN/COMMIT: the Supabase CLI and MCP apply_migration wrap the
+-- file already.
 -- ============================================================================
 
--- ── 1. referral_scored_events ───────────────────────────────────────────────
+-- ── 1. referral_scoring_cutoff ──────────────────────────────────────────────
+-- Single row (the singleton CHECK, as platform_freeze). Read only by
+-- referral_scored_events.
+CREATE TABLE IF NOT EXISTS public.referral_scoring_cutoff (
+  id BOOLEAN PRIMARY KEY DEFAULT true,
+  lesson_required_from TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT referral_scoring_cutoff_singleton CHECK (id = true)
+);
+
+INSERT INTO public.referral_scoring_cutoff (id, lesson_required_from)
+VALUES (true, now())
+ON CONFLICT (id) DO NOTHING;
+
+ALTER TABLE public.referral_scoring_cutoff ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE public.referral_scoring_cutoff FROM PUBLIC, anon, authenticated;
+
+-- ── 2. referral_scored_events ───────────────────────────────────────────────
 -- One row per referral_events row that scores. p_referrer_id NULL = every
--- referrer. season_one matches events created inside Season 1's window. The
--- LATERAL picks the referred learner's earliest completed lesson that has a
--- completed_at. An event scores when it is a Season 1 event or that lesson
--- exists.
+-- referrer. The LATERAL picks the referred learner's earliest completed lesson
+-- that has a completed_at. An event scores when it was created before the
+-- cutoff or that lesson exists. With no cutoff row the cutoff comparison is
+-- NULL, so the lesson is required.
 CREATE OR REPLACE FUNCTION public.referral_scored_events(p_referrer_id UUID DEFAULT NULL)
 RETURNS TABLE (
   referrer_id UUID,
@@ -66,14 +85,11 @@ AS $$
     re.referred_id,
     re.kind,
     CASE
-      WHEN season_one.number IS NOT NULL THEN re.created_at
+      WHEN re.created_at < cutoff.lesson_required_from THEN re.created_at
       ELSE GREATEST(re.created_at, first_lesson.completed_at)
     END AS scored_at
   FROM public.referral_events re
-  LEFT JOIN public.referral_seasons season_one
-    ON season_one.number = 1
-   AND re.created_at >= season_one.starts_at
-   AND re.created_at < season_one.ends_at
+  LEFT JOIN public.referral_scoring_cutoff cutoff ON cutoff.id = true
   LEFT JOIN LATERAL (
     SELECT up.completed_at
     FROM public.user_progress up
@@ -84,13 +100,16 @@ AS $$
     LIMIT 1
   ) first_lesson ON true
   WHERE (p_referrer_id IS NULL OR re.referrer_id = p_referrer_id)
-    AND (season_one.number IS NOT NULL OR first_lesson.completed_at IS NOT NULL);
+    AND (
+      re.created_at < cutoff.lesson_required_from
+      OR first_lesson.completed_at IS NOT NULL
+    );
 $$;
 
 REVOKE EXECUTE ON FUNCTION public.referral_scored_events(UUID) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.referral_scored_events(UUID) TO service_role;
 
--- ── 2. get_own_referral_totals ──────────────────────────────────────────────
+-- ── 3. get_own_referral_totals ──────────────────────────────────────────────
 -- The signed-in referrer's numbers for /api/referrals/me: points scored inside
 -- the given season window, and the lifetime count of referred signups that
 -- score. The caller resolves the season window; a NULL window (no season yet)
@@ -121,7 +140,7 @@ $$;
 REVOKE EXECUTE ON FUNCTION public.get_own_referral_totals(UUID, TIMESTAMPTZ, TIMESTAMPTZ) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.get_own_referral_totals(UUID, TIMESTAMPTZ, TIMESTAMPTZ) TO service_role;
 
--- ── 3. get_referral_leaderboard ─────────────────────────────────────────────
+-- ── 4. get_referral_leaderboard ─────────────────────────────────────────────
 -- Season resolution unchanged. Unchanged: LANGUAGE plpgsql, STABLE, SECURITY
 -- DEFINER, `SET search_path = ''`, and the anon + authenticated EXECUTE grant.
 CREATE OR REPLACE FUNCTION public.get_referral_leaderboard(

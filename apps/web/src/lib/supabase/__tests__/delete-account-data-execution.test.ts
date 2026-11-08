@@ -153,7 +153,8 @@ const SEED = `
 
   INSERT INTO public.referral_seasons (number, starts_at, ends_at) VALUES (99, now() - interval '1 day', now() + interval '30 days');
   INSERT INTO public.referral_events (referrer_id, referred_id, kind) VALUES ('${BYSTANDER}', '${VICTIM}', 'signup');
-  -- A referral scores once the referred learner has a dated completed lesson.
+  -- This referral is created after the scoring cutoff, so it scores only
+  -- through the victim's dated completed lesson.
   UPDATE public.user_progress SET completed_at = now() WHERE user_id = '${VICTIM}';
 
   INSERT INTO public.league_cohorts (id, week_start, tier, member_count)

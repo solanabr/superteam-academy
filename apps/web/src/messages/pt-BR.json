@@ -543,7 +543,7 @@
     "referralSubtitle": "Convide builders e ganhe pontos",
     "referralSeason": "Temporada {number}",
     "referralSeasonEnds": "Termina em {date}",
-    "referralScoringInfo": "1 ponto quando alguém entra pelo seu link, mais 1 por curso concluído. A partir da Temporada 2, os pontos contam após a primeira aula.",
+    "referralScoringInfo": "1 ponto quando alguém entra pelo seu link e conclui a primeira aula, mais 1 por curso que concluir.",
     "referralScoringInfoLabel": "Como funcionam os pontos de indicação",
     "referralNoEntries": "Nenhuma indicação nesta temporada ainda — compartilhe seu link e abra o placar!",
     "referralPoints": "{points, plural, one {# pt} other {# pts}}",
