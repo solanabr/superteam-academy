@@ -126,14 +126,51 @@ export async function ensureXpTokenAccount(
       },
     });
   } catch (err) {
-    // The node answered with a refusal, or the transaction landed and failed:
-    // either way no account was created, so the slot is free again.
-    if (reservedSignature && err instanceof SendTransactionError) {
+    // Only proof that no account was created frees the slot early. Any other
+    // error (a gateway can return an error body after forwarding) leaves the
+    // row pending until the funding lands or its blockhash expires.
+    if (
+      reservedSignature &&
+      (rejectedAtPreflight(err) ||
+        (await landedAndFailed(connection, reservedSignature)))
+    ) {
       await failXpAccountFund(reservedSignature);
     }
     throw err;
   }
   return account;
+}
+
+/**
+ * The node simulated the transaction and refused it, so it was never
+ * forwarded. web3.js reports every JSON-RPC error body as a
+ * SendTransactionError (with action "simulate" whenever preflight is on), so
+ * only the node's own simulation-failure message counts.
+ */
+function rejectedAtPreflight(err: unknown): boolean {
+  return (
+    err instanceof SendTransactionError &&
+    /Transaction simulation failed/.test(err.transactionError.message)
+  );
+}
+
+/** The transaction is confirmed on-chain with an error, so nothing changed. */
+async function landedAndFailed(
+  connection: Connection,
+  signature: string
+): Promise<boolean> {
+  try {
+    const { value } = await connection.getSignatureStatuses([signature]);
+    const status = value[0];
+    return (
+      !!status?.err &&
+      (status.confirmationStatus === "confirmed" ||
+        status.confirmationStatus === "finalized")
+    );
+  } catch {
+    // Unknown: leave the row for settlement.
+    return false;
+  }
 }
 
 /**

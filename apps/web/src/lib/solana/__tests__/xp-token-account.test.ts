@@ -48,6 +48,13 @@ const h = vi.hoisted(() => ({
     inflight: Map<string, () => void>;
     /** The node rejects the next send at preflight. */
     preflightFails: boolean;
+    /**
+     * The next send is forwarded to the cluster, then the gateway answers
+     * with a JSON-RPC error body anyway.
+     */
+    forwardThenError: boolean;
+    /** The next create lands and fails on-chain. */
+    landFails: boolean;
     historyFails: boolean;
   },
   logEvent: vi.fn(),
@@ -146,25 +153,44 @@ const connection = {
   },
   sendRawTransaction: async (bytes: Buffer) => {
     const tx = Transaction.from(bytes);
+    const signature = bs58.encode(tx.signature!);
+    // web3.js turns any JSON-RPC error body into a SendTransactionError, with
+    // action "simulate" whenever preflight is on.
     if (h.chain.preflightFails) {
       h.chain.preflightFails = false;
       throw new SendTransactionError({
-        action: "send",
-        signature: bs58.encode(tx.signature!),
-        transactionMessage: "Transaction simulation failed",
+        action: "simulate",
+        signature: "",
+        transactionMessage:
+          "Transaction simulation failed: Error processing Instruction 0: custom program error: 0x1",
         logs: [],
       });
     }
     h.chain.sent.push(tx);
-    const signature = bs58.encode(tx.signature!);
+    if (h.chain.landFails) {
+      h.chain.landFails = false;
+      h.chain.statuses.set(signature, {
+        confirmationStatus: "confirmed",
+        err: { InstructionError: [0, "Custom"] },
+      });
+      return signature;
+    }
     const apply = () => landOnChain(tx, signature);
     if (h.chain.landSends) apply();
     else h.chain.inflight.set(signature, apply);
+    if (h.chain.forwardThenError) {
+      h.chain.forwardThenError = false;
+      throw new SendTransactionError({
+        action: "simulate",
+        signature: "",
+        transactionMessage: "Internal error: request timed out",
+      });
+    }
     return signature;
   },
-  confirmTransaction: async () => ({
+  confirmTransaction: async ({ signature }: { signature: string }) => ({
     context: { slot: 1 },
-    value: { err: null },
+    value: { err: h.chain.statuses.get(signature)?.err ?? null },
   }),
   getEpochInfo: async () => ({
     epoch: 1,
@@ -248,6 +274,8 @@ beforeEach(() => {
     landSends: true,
     inflight: new Map(),
     preflightFails: false,
+    forwardThenError: false,
+    landFails: false,
     historyFails: false,
   };
   h.logEvent.mockReset();
@@ -429,6 +457,44 @@ describe("ensureXpTokenAccount", () => {
     await ensure(owner);
 
     expect(createsSent()).toHaveLength(1);
+    expect(fundRows().map((r) => r.status)).toEqual(["failed", "pending"]);
+  });
+
+  it("keeps the slot when the gateway errors after forwarding the create", async () => {
+    const owner = Keypair.generate().publicKey;
+    h.chain.landSends = false;
+    h.chain.forwardThenError = true;
+    await expect(ensure(owner, "lesson-a")).rejects.toBeInstanceOf(
+      SendTransactionError
+    );
+    const a = fundRows()[0]!.signature as string;
+    expect(fundRows().map((r) => r.status)).toEqual(["pending"]);
+
+    // B must not fund while A can still land.
+    await expect(ensure(owner, "lesson-b")).rejects.toBeInstanceOf(
+      XpAccountFundingInFlightError
+    );
+    expect(createsSent()).toHaveLength(1);
+
+    // A lands after all; a close afterwards gets no second funding.
+    land(a);
+    learnerCloses(owner);
+    h.chain.history.clear();
+    await expect(ensure(owner, "lesson-c")).rejects.toBeInstanceOf(
+      XpAccountClosedError
+    );
+    expect(createsSent()).toHaveLength(1);
+  });
+
+  it("frees the slot at once when the create landed and failed", async () => {
+    const owner = Keypair.generate().publicKey;
+    h.chain.landFails = true;
+    await expect(ensure(owner)).rejects.toThrow();
+    expect(fundRows().map((r) => r.status)).toEqual(["failed"]);
+
+    await ensure(owner);
+
+    expect(createsSent()).toHaveLength(2);
     expect(fundRows().map((r) => r.status)).toEqual(["failed", "pending"]);
   });
 
