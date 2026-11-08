@@ -322,6 +322,14 @@ export const SCHEMA_EXPECTATIONS: readonly SchemaExpectation[] = [
     description:
       "balance snapshot and low-balance alert throttle — the cron skips both without it",
   },
+  {
+    kind: "column",
+    table: "platform_spend",
+    column: "token_mint",
+    migration: "20261108140000_xp_account_funding_slot.sql",
+    description:
+      "XP token account funding slot — a missing XP token account is not funded without it, so new wallets can't complete a lesson",
+  },
 ];
 
 // PostgREST "not found in schema cache" + Postgres undefined-object SQLSTATEs.

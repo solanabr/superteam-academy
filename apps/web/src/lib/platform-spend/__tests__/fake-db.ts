@@ -1,8 +1,9 @@
 /**
  * In-memory stand-in for the slice of the Supabase query builder the spend
- * ledger uses, with the table's two unique rules: `signature`, and one live
- * (pending or confirmed) sponsorship row per (action, cluster, program,
- * wallet, course, course generation).
+ * ledger uses, with the table's unique rules: `signature`, one live (pending
+ * or confirmed) sponsorship row per (action, cluster, program, wallet, course,
+ * course generation), and one live XP token account funding row per (cluster,
+ * mint, wallet).
  * The real constraints are exercised against Postgres in
  * `platform-spend-ledger-execution.test.ts`; this keeps the TS logic tests
  * honest about the same rules without a database.
@@ -16,6 +17,13 @@ export interface FakeDb {
   tables: Record<string, Row[]>;
   /** Next write on `table` fails with this error instead of running. */
   failNext: (table: string, error: { code?: string; message: string }) => void;
+  /** Next read on `table` fails with this error instead of running. */
+  failNextRead: (
+    table: string,
+    error: { code?: string; message: string }
+  ) => void;
+  /** Next read on `table` returns no rows, as if it ran before a write. */
+  hideNextRead: (table: string) => void;
   from: (table: string) => QueryBuilder;
 }
 
@@ -45,14 +53,30 @@ const SLOT_KEY = [
   "course_id",
   "course_generation",
 ] as const;
+const XP_ACCOUNT_FUND_KEY = ["cluster", "token_mint", "wallet"] as const;
 
 function violatesOncePer(rows: Row[], row: Row, except?: Row): boolean {
-  const holdsSlot = (r: Row) =>
-    SPONSORSHIP.has(String(r.action)) && LIVE.has(String(r.status));
-  if (!holdsSlot(row)) return false;
-  return rows.some(
-    (r) =>
-      r !== except && holdsSlot(r) && SLOT_KEY.every((k) => r[k] === row[k])
+  const rules: {
+    holds: (r: Row) => boolean;
+    key: readonly string[];
+  }[] = [
+    {
+      holds: (r) =>
+        SPONSORSHIP.has(String(r.action)) && LIVE.has(String(r.status)),
+      key: SLOT_KEY,
+    },
+    {
+      holds: (r) =>
+        r.action === "xp_account_fund" && LIVE.has(String(r.status)),
+      key: XP_ACCOUNT_FUND_KEY,
+    },
+  ];
+  return rules.some(
+    ({ holds, key }) =>
+      holds(row) &&
+      rows.some(
+        (r) => r !== except && holds(r) && key.every((k) => r[k] === row[k])
+      )
   );
 }
 
@@ -61,6 +85,8 @@ const UNIQUE = { code: "23505", message: "duplicate key value" };
 export function createFakeDb(): FakeDb {
   const tables: Record<string, Row[]> = { platform_spend: [], profiles: [] };
   const failures = new Map<string, { code?: string; message: string }>();
+  const readFailures = new Map<string, { code?: string; message: string }>();
+  const hiddenReads = new Set<string>();
 
   function from(table: string): QueryBuilder {
     const rows = (tables[table] ??= []);
@@ -78,6 +104,14 @@ export function createFakeDb(): FakeDb {
         const error = failures.get(table);
         failures.delete(table);
         return { data: null, error };
+      }
+      if (op === "select" && readFailures.has(table)) {
+        const error = readFailures.get(table);
+        readFailures.delete(table);
+        return { data: null, error };
+      }
+      if (op === "select" && hiddenReads.delete(table)) {
+        return { data: single ? null : [], error: null };
       }
       if (op === "insert" || op === "upsert") {
         const row: Row = {
@@ -174,6 +208,8 @@ export function createFakeDb(): FakeDb {
   return {
     tables,
     failNext: (table, error) => failures.set(table, error),
+    failNextRead: (table, error) => readFailures.set(table, error),
+    hideNextRead: (table) => hiddenReads.add(table),
     from,
   };
 }

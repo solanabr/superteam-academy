@@ -304,6 +304,7 @@
     "completionFailedGeneric": "We couldn't complete this lesson. Please try again in a moment.",
     "completionRateLimited": "You're completing lessons very quickly. Please wait a little while and try again — your progress is safe.",
     "completionInProgress": "This lesson is already being completed. Give it a moment and try again — your progress is safe.",
+    "completionFailedXpAccountClosed": "Your XP token account was closed, so XP can't be sent to it. Recreate it from your wallet (you pay the small account deposit), then complete the lesson again.",
     "completionFailedQuiz": "One or more quiz answers aren't correct yet. Check your answers above and submit again.",
     "harnessMissingSymbol": "The verification harness could not find what the lesson asks for: {symbol}",
     "harnessMismatch": "Your code does not match what the harness expects",

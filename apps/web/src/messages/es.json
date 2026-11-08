@@ -304,6 +304,7 @@
     "completionFailedGeneric": "No pudimos completar esta lección. Inténtalo de nuevo en un momento.",
     "completionRateLimited": "Estás completando lecciones muy rápido. Espera un momento e inténtalo de nuevo — tu progreso está guardado.",
     "completionInProgress": "Esta lección ya se está completando. Espera un instante e inténtalo de nuevo — tu progreso está guardado.",
+    "completionFailedXpAccountClosed": "Tu cuenta de token de XP fue cerrada, así que no se puede enviar XP a ella. Vuelve a crearla desde tu billetera (tú pagas el pequeño depósito de la cuenta) y completa la lección otra vez.",
     "completionFailedQuiz": "Una o más respuestas del quiz aún no son correctas. Revisa tus respuestas arriba y envíalo de nuevo.",
     "harnessMissingSymbol": "La verificación de la lección no encontró lo que pide: {symbol}",
     "harnessMismatch": "Tu código no coincide con lo que espera la verificación de la lección",

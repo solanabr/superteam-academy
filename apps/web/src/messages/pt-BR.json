@@ -304,6 +304,7 @@
     "completionFailedGeneric": "Não foi possível concluir esta lição. Tente novamente em instantes.",
     "completionRateLimited": "Você está concluindo lições muito rápido. Aguarde um pouco e tente novamente — seu progresso está salvo.",
     "completionInProgress": "Esta lição já está sendo concluída. Aguarde um instante e tente novamente — seu progresso está salvo.",
+    "completionFailedXpAccountClosed": "Sua conta de token de XP foi fechada, então o XP não pode ser enviado para ela. Crie-a novamente pela sua carteira (você paga o pequeno depósito da conta) e conclua a lição de novo.",
     "completionFailedQuiz": "Uma ou mais respostas do quiz ainda não estão corretas. Revise suas respostas acima e envie novamente.",
     "harnessMissingSymbol": "A verificação da lição não encontrou o que ela pede: {symbol}",
     "harnessMismatch": "Seu código não corresponde ao que a verificação da lição espera",

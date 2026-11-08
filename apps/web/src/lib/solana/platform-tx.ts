@@ -34,6 +34,16 @@ export interface SendPlatformTxOptions {
    * ProgramError keep working.
    */
   idlErrors?: Map<number, string>;
+  /**
+   * Runs once the transaction is signed and before it is broadcast, with the
+   * signature it will land under. A throw stops the send. Used to reserve a
+   * once-per ledger row under that signature; the ledger write after the
+   * broadcast then finds the row and leaves it alone.
+   */
+  beforeSend?: (signed: {
+    signature: string;
+    lastValidBlockHeight: number;
+  }) => Promise<void>;
 }
 
 /**
@@ -60,7 +70,14 @@ export async function sendPlatformTransaction(
   tx: Transaction,
   options: SendPlatformTxOptions
 ): Promise<string> {
-  const { feePayer, signers = [], computeUnits, context, idlErrors } = options;
+  const {
+    feePayer,
+    signers = [],
+    computeUnits,
+    context,
+    idlErrors,
+    beforeSend,
+  } = options;
   const translate = (err: unknown): unknown =>
     idlErrors ? (translateError(err, idlErrors) as unknown) : err;
 
@@ -80,6 +97,7 @@ export async function sendPlatformTransaction(
   tx.sign(feePayer.keypair, ...signers);
   if (!tx.signature) throw new Error("transaction failed to sign");
   const signature = bs58.encode(tx.signature);
+  await beforeSend?.({ signature, lastValidBlockHeight });
 
   let sendError: unknown = null;
   try {

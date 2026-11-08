@@ -37,18 +37,20 @@ export const COMPUTE_UNIT_LIMITS = {
   enroll: 40_000,
   /** Learner-sent `close_enrollment`, when its simulation reports no units. */
   closeEnrollment: 30_000,
-  /** XP token account (idempotent create) + `complete_lesson`. */
+  /** `complete_lesson`. */
   completeLesson: 80_000,
-  /** Learner and creator token accounts + `finalize_course`. */
+  /** `finalize_course`. */
   finalizeCourse: 100_000,
   /** `issue_credential` (Metaplex Core asset create). */
   issueCredential: 100_000,
-  /** Recipient token account + `award_achievement` (Core mint + XP). */
+  /** `award_achievement` (Core mint + XP). */
   awardAchievement: 150_000,
-  /** Recipient token account + `reward_xp`. */
+  /** `reward_xp`. */
   rewardXp: 80_000,
-  /** Recipient token account + Token-2022 `mint_to`. */
+  /** Token-2022 `mint_to`. */
   xpMint: 60_000,
+  /** One Token-2022 XP token account create (ensureXpTokenAccount). */
+  xpAccountFund: 50_000,
   createCourse: 60_000,
   updateCourse: 40_000,
   closeCourse: 60_000,

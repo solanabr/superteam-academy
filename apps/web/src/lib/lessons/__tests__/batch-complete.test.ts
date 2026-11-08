@@ -34,6 +34,7 @@ vi.mock("@/lib/courses/lesson-slot", () => ({
 }));
 
 import { batchCompleteCourse, BatchCompleteError } from "../batch-complete";
+import { XpAccountClosedError } from "@/lib/solana/xp-account-errors";
 
 const WALLET = {
   toBase58: () => "wallet",
@@ -223,6 +224,19 @@ describe("batchCompleteCourse", () => {
     });
     // The loop continued past the failure (index 3 was still attempted).
     expect(h.completeLesson).toHaveBeenCalledTimes(4);
+  });
+
+  it("stops at a closed XP token account instead of trying every lesson", async () => {
+    h.fetchEnrollment.mockResolvedValue({ lesson_flags: [0n] });
+    h.completeLesson.mockRejectedValue(
+      new XpAccountClosedError("wallet", "MINT")
+    );
+
+    await expect(
+      batchCompleteCourse({ userId: "u", courseId: "course-x", wallet: WALLET })
+    ).rejects.toMatchObject({ code: "xp_account_closed" });
+    expect(h.completeLesson).toHaveBeenCalledTimes(1);
+    expect(h.upsert).not.toHaveBeenCalled();
   });
 
   it("throws enrollment_missing when there is no on-chain enrollment", async () => {

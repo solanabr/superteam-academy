@@ -9,6 +9,7 @@ const h = vi.hoisted(() => ({
   getAccount: vi.fn(),
   getAssociatedTokenAddressSync: vi.fn(() => ({ toBase58: () => "ATA" })),
   burn: vi.fn(),
+  ensureXpTokenAccount: vi.fn(),
 }));
 
 vi.mock("server-only", () => ({}));
@@ -59,6 +60,9 @@ vi.mock("../sponsor", () => ({ resolveFeePayer: h.resolveFeePayer }));
 vi.mock("../platform-tx", () => ({
   sendPlatformTransaction: h.sendPlatformTransaction,
 }));
+vi.mock("../xp-token-account", () => ({
+  ensureXpTokenAccount: h.ensureXpTokenAccount,
+}));
 
 const SPONSOR = {
   keypair: { publicKey: { toBase58: () => "SPONSOR" } },
@@ -83,6 +87,7 @@ async function loadXpMint(env: Record<string, string | undefined>) {
 beforeEach(() => {
   vi.clearAllMocks();
   h.resolveFeePayer.mockResolvedValue(SPONSOR);
+  h.ensureXpTokenAccount.mockResolvedValue({ toBase58: () => "ATA" });
 });
 
 describe("mintXpToWallet", () => {
@@ -114,7 +119,7 @@ describe("mintXpToWallet", () => {
     expect(h.sendPlatformTransaction).not.toHaveBeenCalled();
   });
 
-  it("mints via Token-2022 in one sponsor-paid tx and returns the signature + amount", async () => {
+  it("mints via Token-2022 in a sponsor-paid tx with no create, and returns the signature + amount", async () => {
     h.sendPlatformTransaction.mockResolvedValue("mint-sig");
 
     const { mintXpToWallet } = await loadXpMint({
@@ -127,16 +132,44 @@ describe("mintXpToWallet", () => {
     const mintArgs = h.createMintTo.mock.calls[0];
     expect(mintArgs).toContain(50); // amount
     expect(mintArgs).toContain("TOKEN2022"); // Token-2022 program id
-    // The sponsor funds the token account, not the mint authority.
-    expect(h.createAta.mock.calls[0]?.[0]).toBe(SPONSOR.keypair.publicKey);
-    const [, , options] = h.sendPlatformTransaction.mock.calls[0] as [
+    // The token account goes through the one funding helper, paid by the
+    // sponsor; the mint transaction itself creates nothing.
+    const [, owner, mint, payer] = h.ensureXpTokenAccount.mock.calls[0] as [
       unknown,
+      { toBase58: () => string },
+      { toBase58: () => string },
       unknown,
+    ];
+    expect(owner.toBase58()).toBe("WALLET");
+    expect(mint.toBase58()).toBe("MINT");
+    expect(payer).toBe(SPONSOR);
+    expect(h.createAta).not.toHaveBeenCalled();
+    const [, tx, options] = h.sendPlatformTransaction.mock.calls[0] as [
+      unknown,
+      { instructions: unknown[] },
       { feePayer: unknown; computeUnits: number; context: unknown },
     ];
+    expect(tx.instructions).toEqual([{ ix: "mint-to" }]);
     expect(options.feePayer).toBe(SPONSOR);
     expect(options.computeUnits).toBe(60_000);
     expect(options.context).toEqual({ action: "xp_mint", wallet: "WALLET" });
+  });
+
+  it("reports a closed XP account as its own reason and sends nothing", async () => {
+    const { mintXpToWallet } = await loadXpMint({
+      NEXT_PUBLIC_XP_MINT_ADDRESS: "MINT",
+      XP_MINT_AUTHORITY_SECRET: VALID_SECRET,
+    });
+    // Imported after the module reset, so it is the class xp-mint checks.
+    const { XpAccountClosedError } = await import("../xp-account-errors");
+    h.ensureXpTokenAccount.mockRejectedValue(
+      new XpAccountClosedError("WALLET", "MINT")
+    );
+    expect(await mintXpToWallet("WALLET", 10)).toEqual({
+      success: false,
+      error: "xp_account_closed",
+    });
+    expect(h.sendPlatformTransaction).not.toHaveBeenCalled();
   });
 
   it("returns the error message when the send throws", async () => {
