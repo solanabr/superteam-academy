@@ -93,7 +93,7 @@ async function seasonWindow(
 async function ownTotals(
   pg: PGlite,
   userId: string,
-  season = 1
+  season = 2
 ): Promise<{ seasonPoints: number; referredSignups: number }> {
   const w = await seasonWindow(pg, season);
   const r = await pg.query<{ season_points: string; referred_signups: string }>(
@@ -108,18 +108,29 @@ async function ownTotals(
   };
 }
 
-/** One open season covering now, so the default board and season 1 agree. */
-const ONE_OPEN_SEASON = `
+/**
+ * Season 1 closed, Season 2 open now. A claim made "now" is a Season 2
+ * referral, which needs a dated lesson; Season 1 referrals score as they did
+ * before the migration.
+ */
+const SEASONS = `
   DELETE FROM public.referral_seasons;
-  INSERT INTO public.referral_seasons (number, starts_at, ends_at)
-  VALUES (1, now() - interval '30 days', now() + interval '60 days');
+  INSERT INTO public.referral_seasons (number, starts_at, ends_at) VALUES
+    (1, now() - interval '60 days', now() - interval '10 days'),
+    (2, now() - interval '10 days', now() + interval '80 days');
+`;
+
+/** Move a referred learner's referral rows back in time. */
+const backdateClaim = (referredId: string, interval: string): string => `
+  UPDATE public.referral_events SET created_at = now() - interval '${interval}'
+  WHERE referred_id = '${referredId}';
 `;
 
 const RESET = `
   DELETE FROM public.referral_events;
   DELETE FROM public.user_progress;
   UPDATE public.profiles SET referred_by = NULL, deleted_at = NULL;
-  ${ONE_OPEN_SEASON}
+  ${SEASONS}
 `;
 
 describe("referral scoring waits for the referred learner's first lesson", () => {
@@ -287,31 +298,41 @@ describe("referral scoring waits for the referred learner's first lesson", () =>
   });
 
   describe("seasons", () => {
-    const TWO_SEASONS = `
-      DELETE FROM public.referral_seasons;
-      INSERT INTO public.referral_seasons (number, starts_at, ends_at) VALUES
-        (1, now() - interval '60 days', now() - interval '10 days'),
-        (2, now() - interval '10 days', now() + interval '80 days');
-    `;
-
-    it("a claim from a closed season scores in the season its first lesson lands", async () => {
-      await pg.exec(TWO_SEASONS);
+    it("a Season 1 referral with no lesson scores 1, in Season 1", async () => {
       await claim(pg, referred(1), REFERRER);
-      await pg.exec(`
-        UPDATE public.referral_events SET created_at = now() - interval '20 days'
-        WHERE referred_id = '${referred(1)}';
-      `);
-      await completeLesson(pg, referred(1), "lesson-1");
+      await pg.exec(backdateClaim(referred(1), "20 days"));
 
-      expect(await boardPoints(pg, 1)).toEqual({});
-      expect(await boardPoints(pg, 2)).toEqual({ [REFERRER]: 1 });
-      expect(await boardPoints(pg)).toEqual({ [REFERRER]: 1 });
-      expect((await ownTotals(pg, REFERRER, 1)).seasonPoints).toBe(0);
-      expect((await ownTotals(pg, REFERRER, 2)).seasonPoints).toBe(1);
+      expect(await boardPoints(pg, 1)).toEqual({ [REFERRER]: 1 });
+      expect(await boardPoints(pg, 2)).toEqual({});
+      expect(await ownTotals(pg, REFERRER, 1)).toEqual({
+        seasonPoints: 1,
+        referredSignups: 1,
+      });
+      expect((await ownTotals(pg, REFERRER, 2)).seasonPoints).toBe(0);
     });
 
-    it("a lesson completed before the claim scores at claim time", async () => {
-      await pg.exec(TWO_SEASONS);
+    it("a Season 1 referral whose first lesson comes in Season 2 stays in Season 1", async () => {
+      await claim(pg, referred(1), REFERRER);
+      await pg.exec(backdateClaim(referred(1), "20 days"));
+      await completeLesson(pg, referred(1), "lesson-1");
+
+      expect(await boardPoints(pg, 1)).toEqual({ [REFERRER]: 1 });
+      expect(await boardPoints(pg, 2)).toEqual({});
+    });
+
+    it("a Season 2 referral scores 0 without a lesson and 1 with a dated one", async () => {
+      await claim(pg, referred(1), REFERRER);
+      expect(await boardPoints(pg, 2)).toEqual({});
+      expect((await ownTotals(pg, REFERRER, 2)).seasonPoints).toBe(0);
+
+      await completeLesson(pg, referred(1), "lesson-1");
+      expect(await boardPoints(pg, 2)).toEqual({ [REFERRER]: 1 });
+      expect(await boardPoints(pg)).toEqual({ [REFERRER]: 1 });
+      expect((await ownTotals(pg, REFERRER, 2)).seasonPoints).toBe(1);
+      expect(await boardPoints(pg, 1)).toEqual({});
+    });
+
+    it("a lesson completed before a Season 2 claim scores at claim time", async () => {
       await completeLesson(
         pg,
         referred(1),
@@ -324,24 +345,28 @@ describe("referral scoring waits for the referred learner's first lesson", () =>
       expect(await boardPoints(pg, 2)).toEqual({ [REFERRER]: 1 });
     });
 
-    it("a point that qualified inside a closed season stays in it", async () => {
-      await pg.exec(TWO_SEASONS);
-      await claim(pg, referred(1), REFERRER);
+    it("a claim between seasons needs a lesson and scores in the next season", async () => {
       await pg.exec(`
-        UPDATE public.referral_events SET created_at = now() - interval '40 days'
-        WHERE referred_id = '${referred(1)}';
+        UPDATE public.referral_seasons SET starts_at = now() - interval '5 days'
+        WHERE number = 2;
       `);
-      await completeLesson(
-        pg,
-        referred(1),
-        "lesson-1",
-        "now() - interval '35 days'"
-      );
-      await completeLesson(pg, referred(1), "lesson-2");
-
-      expect(await boardPoints(pg, 1)).toEqual({ [REFERRER]: 1 });
+      await claim(pg, referred(1), REFERRER);
+      await pg.exec(backdateClaim(referred(1), "7 days"));
+      expect(await boardPoints(pg, 1)).toEqual({});
       expect(await boardPoints(pg, 2)).toEqual({});
-      expect((await ownTotals(pg, REFERRER, 1)).seasonPoints).toBe(1);
+
+      await completeLesson(pg, referred(1), "lesson-1");
+      expect(await boardPoints(pg, 1)).toEqual({});
+      expect(await boardPoints(pg, 2)).toEqual({ [REFERRER]: 1 });
+    });
+
+    it("without a Season 1 row, every referral needs a lesson", async () => {
+      await pg.exec(`DELETE FROM public.referral_seasons WHERE number = 1`);
+      await claim(pg, referred(1), REFERRER);
+      await pg.exec(backdateClaim(referred(1), "20 days"));
+
+      expect(await boardPoints(pg, 2)).toEqual({});
+      expect((await ownTotals(pg, REFERRER, 2)).referredSignups).toBe(0);
     });
   });
 
@@ -406,15 +431,15 @@ describe("before the migration (red proof)", () => {
     await pg.exec(SERVICE_ON);
     await createAccount(pg, REFERRER, "referrer_one");
     await createAccount(pg, referred(1), "learner_1");
-    await pg.exec(ONE_OPEN_SEASON);
+    await pg.exec(SEASONS);
   }, 120_000);
 
   afterAll(async () => {
     await pg?.close();
   });
 
-  it("the old board scores a referral whose learner never completed a lesson", async () => {
+  it("the old board scores a Season 2 referral whose learner never completed a lesson", async () => {
     expect(await claim(pg, referred(1), REFERRER)).toBe("claimed");
-    expect(await boardPoints(pg)).toEqual({ [REFERRER]: 1 });
+    expect(await boardPoints(pg, 2)).toEqual({ [REFERRER]: 1 });
   });
 });

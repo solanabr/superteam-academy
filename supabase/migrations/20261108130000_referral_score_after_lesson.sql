@@ -1,21 +1,29 @@
 -- ============================================================================
--- Migration: referral_score_after_lesson — a referral scores once the referred
--- learner has completed a lesson
+-- Migration: referral_score_after_lesson — from Season 2, a referral scores once
+-- the referred learner has completed a lesson
 --
 -- claim_referral still records the referral (referred_by + the 'signup' row in
 -- referral_events) under its existing rules. What changes is how points are
--- read: a referral_events row scores for its referrer only when the referred
--- account has at least one completed lesson in user_progress. A referred
+-- read: a referral_events row created from Season 2 on scores for its referrer
+-- only when the referred account has at least one dated completed lesson in
+-- user_progress. A row created inside Season 1 scores as before this
+-- migration, at its created_at, lesson or not. A referred
 -- account deleted later keeps its rows (lib/account/deletion-policy.ts), so a
 -- point it already earned stays. Every points read goes through
 -- referral_scored_events below, so the public board and the referrer's own
 -- totals give the same numbers.
 --
+-- WHICH EVENTS ARE SEASON 1
+--   Read from the referral_seasons row with number = 1: an event whose
+--   created_at falls in that row's [starts_at, ends_at) window. No date is
+--   written here. Without a Season 1 row, every event needs a lesson.
+--
 -- WHEN A POINT LANDS
---   scored_at = GREATEST(event created_at, the referred learner's first
+--   Season 1 events: scored_at = created_at, as before. Later events:
+--   scored_at = GREATEST(created_at, the referred learner's first dated
 --   completed lesson). Season windows test scored_at, so a referral claimed
---   near the end of one season whose first lesson comes in the next scores in
---   the next, and a closed season's standings don't change afterwards.
+--   between seasons, or near the end of one, scores in the season its first
+--   lesson lands, and a closed season's standings don't change afterwards.
 --
 -- WHY A READ-TIME JOIN AND NOT A STORED STATUS
 --   The rule is computed from user_progress when points are read, so there is
@@ -37,9 +45,10 @@
 
 -- ── 1. referral_scored_events ───────────────────────────────────────────────
 -- One row per referral_events row that scores. p_referrer_id NULL = every
--- referrer. The LATERAL picks the referred learner's earliest completed lesson
--- that has a completed_at; with none, there is no row and the event doesn't
--- score.
+-- referrer. season_one matches events created inside Season 1's window. The
+-- LATERAL picks the referred learner's earliest completed lesson that has a
+-- completed_at. An event scores when it is a Season 1 event or that lesson
+-- exists.
 CREATE OR REPLACE FUNCTION public.referral_scored_events(p_referrer_id UUID DEFAULT NULL)
 RETURNS TABLE (
   referrer_id UUID,
@@ -56,9 +65,16 @@ AS $$
     re.referrer_id,
     re.referred_id,
     re.kind,
-    GREATEST(re.created_at, first_lesson.completed_at) AS scored_at
+    CASE
+      WHEN season_one.number IS NOT NULL THEN re.created_at
+      ELSE GREATEST(re.created_at, first_lesson.completed_at)
+    END AS scored_at
   FROM public.referral_events re
-  JOIN LATERAL (
+  LEFT JOIN public.referral_seasons season_one
+    ON season_one.number = 1
+   AND re.created_at >= season_one.starts_at
+   AND re.created_at < season_one.ends_at
+  LEFT JOIN LATERAL (
     SELECT up.completed_at
     FROM public.user_progress up
     WHERE up.user_id = re.referred_id
@@ -67,7 +83,8 @@ AS $$
     ORDER BY up.completed_at ASC
     LIMIT 1
   ) first_lesson ON true
-  WHERE p_referrer_id IS NULL OR re.referrer_id = p_referrer_id;
+  WHERE (p_referrer_id IS NULL OR re.referrer_id = p_referrer_id)
+    AND (season_one.number IS NOT NULL OR first_lesson.completed_at IS NOT NULL);
 $$;
 
 REVOKE EXECUTE ON FUNCTION public.referral_scored_events(UUID) FROM PUBLIC, anon, authenticated;
