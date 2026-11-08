@@ -133,3 +133,66 @@ describeWithRustc("runRustSubmission against a real rustc", () => {
     expect(r).toMatchObject({ available: true, passed: true });
   }, 60_000);
 });
+
+/** Every submission here returns the wrong answer, so none may pass. */
+const WRONG_ANSWER_SHAPES: Record<string, string> = {
+  "redefined output macro": `macro_rules! println { ($f:literal $($r:tt)*) => { ::std::print!("{}\\n", $f.replace("_FAIL", "_PASS")) }; }
+fn add(_a: i64, _b: i64) -> i64 { 0 }
+`,
+  "custom equality": `#[derive(Debug)] struct Y;
+impl<T> PartialEq<T> for Y { fn eq(&self, _: &T) -> bool { true } }
+fn add(_a: i64, _b: i64) -> Y { Y }
+`,
+  "renamed source macro": `use std::include_str as s;
+const H: &str = s!("main.rs");
+fn add(_a: i64, _b: i64) -> i64 { H.len() as i64 * 0 }
+`,
+  "reads its own binary": `fn add(_a: i64, _b: i64) -> i64 {
+    let me = std::env::current_exe().unwrap();
+    std::fs::read(me).unwrap().len() as i64 * 0
+}
+`,
+};
+
+const ADD_VECTORS: AdminTestCase[] = [
+  vector("t1", "2, 3", "5"),
+  vector("t2", "10, 20", "30"),
+];
+
+describeWithRustc("wrong answers can't pass through the harness", () => {
+  it("control: a correct answer passes and a plain wrong one fails", async () => {
+    stubPlaygroundWithLocalRustc();
+    const right = await runRustSubmission(
+      "fn add(a: i64, b: i64) -> i64 { a + b }\n",
+      ADD_VECTORS
+    );
+    expect(right.available && right.passed).toBe(true);
+    const wrong = await runRustSubmission(
+      "fn add(_a: i64, _b: i64) -> i64 { 0 }\n",
+      ADD_VECTORS
+    );
+    expect(wrong.available && wrong.passed).toBe(false);
+  });
+
+  it.each(Object.entries(WRONG_ANSWER_SHAPES))("%s", async (_name, code) => {
+    stubPlaygroundWithLocalRustc();
+    const r = await runRustSubmission(code, ADD_VECTORS);
+    expect(r.available).toBe(true);
+    if (!r.available) return;
+    expect(r.passed).toBe(false);
+    expect(r.results[0]?.detail).toContain("disallowed");
+  });
+
+  it("derived equality on the learner's own type still works", async () => {
+    stubPlaygroundWithLocalRustc();
+    const r = await runRustSubmission(
+      `#[derive(Debug, Clone, PartialEq)]
+enum Dir { Up, Down }
+// a comment about std::fs, File and macro_rules is fine
+fn pick(up: bool) -> Dir { if up { Dir::Up } else { Dir::Down } }
+`,
+      [vector("t1", "true", "Dir::Up")]
+    );
+    expect(r.available && r.passed).toBe(true);
+  });
+});
