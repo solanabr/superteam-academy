@@ -616,10 +616,11 @@ export async function runTestCase(
     // Same shape as the server. Fixtures sit outside the learner's scope, so a
     // learner's own `data` shadows the fixture rather than clashing with it. The
     // assertion runs after that scope has ended, over a second copy of the
-    // fixtures from the same seed, built before any learner code, under a name
-    // that changes per run because learner code can still see this scope. Its
-    // locals live in a function inside the one binding the fixtures, so they
-    // take priority over a fixture of the same name.
+    // fixtures from the same seed and a copy of the mock SDK's exports, both
+    // taken before any learner code. Fixtures shadow SDK names and the
+    // assertion's own locals shadow fixtures, in that order, as on the server.
+    // Learner code can still reach this outer scope, so the browser verdict
+    // is a preview; the server's is the one that counts.
     //
     // Anything other than the wrapped result means the learner's code returned
     // from the top level, reported below as a syntax error. A top-level return
@@ -629,8 +630,9 @@ export async function runTestCase(
     const fixtures = fixtureNames(testCase.input);
     const names = fixtures.join(", ");
     const seed = Math.floor(Math.random() * 2 ** 32);
-    const expected = `__expected${seed}__`;
-    const expectedList = fixtures.map((_, i) => `${expected}[${i}]`).join(", ");
+    const expectedList = fixtures
+      .map((_, i) => `__expected__[${i}]`)
+      .join(", ");
     const argList = testCase.input.trim()
       ? testCase.input
           .split(",")
@@ -645,7 +647,8 @@ export async function runTestCase(
           ${argSetup}
           return [[${callArgs}], [${names}]];
         });
-        const ${expected} = __build__()[1];
+        const __expected__ = __build__()[1];
+        const __sdk__ = { ...__modules__["@solana/web3.js"] };
         const [__args__, [${names}]] = __build__();
         const __run__ = await (async () => {
           ${transformed}
@@ -661,9 +664,10 @@ export async function runTestCase(
         }
         const __result__ = __run__.__value__;
         return {
-          __verdict__: ((${names}) => (() => {
-            ${assertionCode}
-          })())(${expectedList}),
+          __verdict__: (({ Keypair, PublicKey, Connection, Transaction, SystemProgram, LAMPORTS_PER_SOL }) =>
+            ((${names}) => (() => {
+              ${assertionCode}
+            })())(${expectedList}))(__sdk__),
         };
       })();
     `;
