@@ -192,8 +192,8 @@ export function ChallengeInterface({
 
   // challenge_started = first genuine interaction, never a page view. A
   // keystroke in the editor area is that signal for edit-first learners
-  // (CodeEditor's onChange also fires for the localStorage restore on mount,
-  // so it can't be used); run-first learners are covered in handleResult.
+  // (CodeEditor also calls onChange with a draft it restores on mount, so
+  // onChange can't be used); run-first learners are covered in handleResult.
   // trackChallengeStarted dedupes per lesson per session.
   useEffect(() => {
     const el = editorAreaRef.current;

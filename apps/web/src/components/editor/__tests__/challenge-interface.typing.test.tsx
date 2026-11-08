@@ -115,6 +115,25 @@ beforeEach(() => {
 
 afterEach(cleanup);
 
+describe("a restored draft", () => {
+  it("is the code Run gets, before any edit", () => {
+    window.localStorage.setItem("superteam-lms-code-lesson-1", "// my draft");
+    renderInterface();
+    expect(h.runnerCode).toBe(STARTER);
+
+    mountEditor();
+
+    expect(h.runnerCode).toBe("// my draft");
+  });
+
+  it("leaves Run on the starter when nothing was saved", () => {
+    renderInterface();
+    mountEditor();
+
+    expect(h.runnerCode).toBe(STARTER);
+  });
+});
+
 describe("typing ahead of a React commit", () => {
   it("keeps text typed after the change React is committing", () => {
     renderInterface();
