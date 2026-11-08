@@ -1,27 +1,55 @@
 import "server-only";
 
-import crypto from "crypto";
+import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isRateLimited } from "@/lib/rate-limit";
+import { removeAccountAvatar } from "@/lib/account/remove-avatar";
 import { revokeUserSessions } from "@/lib/auth/revoke-sessions";
+import { LEADERBOARD_CACHE_TAG } from "@/lib/leaderboard/global";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
-import type { Database } from "@/lib/supabase/types";
 
-// POST /api/account/delete — user-initiated data-deletion request (readiness G6).
+// POST /api/account/delete — user-initiated account deletion.
 //
-// Soft-delete + anonymize the CALLER'S OWN profile, then sign them out. We never
-// hard-delete: on-chain XP and credential NFTs are immutable and bound to the
-// wallet, and DB history is referenced by those artifacts. The migration
-// (…_account_deletion.sql) drops soft-deleted profiles out of every public read.
+// Accounts are anonymized, not removed: on-chain XP and credentials can't be
+// erased, and forum posts stay under a "deleted user" label. What happens to each
+// table is listed in lib/account/deletion-policy.ts and applied in one transaction
+// by delete_account_data, which also revokes the sessions.
 //
 // SECURITY — own-account-only. The target user id is derived SOLELY from the
 // Supabase server session (auth.getUser(), read from the request cookies). The
 // request body is never read, so there is no field a caller could set to name,
-// spoof, or influence a different user_id. Every write below is scoped
-// .eq("id", user.id) with that session-derived id. This mirrors /api/auth/unlink.
+// spoof, or influence a different user_id. This mirrors /api/auth/unlink.
+
+function failed(stage: string, error: unknown): NextResponse {
+  logError({
+    errorId: ERROR_IDS.ACCOUNT_DELETE_FAILED,
+    error: error instanceof Error ? error : new Error(String(error)),
+    context: { route: "/api/account/delete", stage },
+  });
+  return NextResponse.json(
+    { error: "Failed to process deletion" },
+    { status: 500 }
+  );
+}
+
+async function afterCommit(
+  stage: string,
+  step: () => Promise<void>
+): Promise<void> {
+  try {
+    await step();
+  } catch (err: unknown) {
+    logError({
+      errorId: ERROR_IDS.ACCOUNT_DELETE_FAILED,
+      error: err instanceof Error ? err : new Error(String(err)),
+      context: { route: "/api/account/delete", stage },
+    });
+  }
+}
+
 export async function POST(): Promise<NextResponse> {
   try {
     // Server client bound to the request cookies. getUser() re-validates the
@@ -51,112 +79,40 @@ export async function POST(): Promise<NextResponse> {
       );
     }
 
-    // Service-role write, scoped to the caller's own row. A short random suffix
-    // keeps the scrubbed username unique (username has a UNIQUE constraint) and
-    // non-identifying. deleted_at/deletion_requested_at tombstone the row so the
-    // public reads updated by the migration stop surfacing it; is_public=false
-    // is belt-and-suspenders with those reads.
     const admin = createAdminClient();
-    const now = new Date().toISOString();
-    const anonUsername = `deleted-user-${crypto.randomBytes(4).toString("hex")}`;
 
-    // Every external identifier goes, not just the display fields (#410). These
-    // three are what actually re-identify a person: the wallet is a public
-    // on-chain handle, and google_id/github_id are stable provider subject ids.
-    // Scrubbing bio/avatar while keeping them anonymises nothing.
-    const update: Database["public"]["Tables"]["profiles"]["Update"] = {
-      username: anonUsername,
-      bio: null,
-      avatar_url: null,
-      social_links: null,
-      wallet_address: null,
-      // Follows wallet_address: with no wallet there is nothing to describe,
-      // and a stale kind would out-live the wallet it referred to.
-      wallet_kind: null,
-      google_id: null,
-      github_id: null,
-      is_public: false,
-      deleted_at: now,
-      deletion_requested_at: now,
-    };
+    // All or nothing. On failure nothing changed, the avatar is still there and the
+    // session is still good, so the client can retry.
+    const { error: deleteError } = await admin.rpc("delete_account_data", {
+      p_user_id: user.id,
+    });
+    if (deleteError) return failed("delete_account_data", deleteError.message);
 
-    const { error: updateError } = await admin
-      .from("profiles")
-      .update(update)
-      .eq("id", user.id);
-
-    if (updateError) {
-      logError({
-        errorId: ERROR_IDS.ACCOUNT_DELETE_FAILED,
-        error: new Error(updateError.message),
-        context: { route: "/api/account/delete", stage: "anonymize" },
-      });
-      return NextResponse.json(
-        { error: "Failed to process deletion" },
-        { status: 500 }
-      );
-    }
-
-    // enrollments carries its own copy of wallet_address (written by the Helius
-    // webhook and by admin resync). Scrubbing only `profiles` would leave the
-    // wallet→user_id join intact one table over, so the deletion would be
-    // cosmetic. Nothing reads this column — it has writers only — so nulling it
-    // is safe. Enrollment rows themselves are kept: on-chain XP and credentials
-    // are immutable and reference them.
-    const { error: enrollmentError } = await admin
-      .from("enrollments")
-      .update({ wallet_address: null })
-      .eq("user_id", user.id);
-
-    if (enrollmentError) {
-      // The profile is already anonymised; report the failure rather than
-      // pretending the deletion was complete, so it can be retried.
-      logError({
-        errorId: ERROR_IDS.ACCOUNT_DELETE_FAILED,
-        error: new Error(enrollmentError.message),
-        context: { route: "/api/account/delete", stage: "scrub_enrollments" },
-      });
-      return NextResponse.json(
-        { error: "Failed to process deletion" },
-        { status: 500 }
-      );
-    }
-
-    // Revoke every session. This is NOT best-effort: middleware no longer
-    // checks the tombstone per-request (#1089), so a deleted account whose
-    // revocation silently failed would keep refreshing forever. The ban runs
-    // UNCONDITIONALLY — GoTrue's signOut swallows 401/403 as success without
-    // revoking anything, and the ban is the one mechanism that provably kills
-    // refresh tokens (banning a deleted account is harmless). signOut still
-    // runs first to clear the caller's cookies. Only when BOTH mechanisms
-    // fail does the route report 500 so the client retries — the scrub is
-    // idempotent.
-    const { error: signOutError } = await supabase.auth.signOut();
-    const revoked = await revokeUserSessions(admin, user.id);
-    if (!revoked.ok) {
-      logError({
-        errorId: ERROR_IDS.ACCOUNT_DELETE_FAILED,
-        error: revoked.error ?? new Error("session revocation (ban) failed"),
-        context: { route: "/api/account/delete", stage: "revoke_sessions" },
-      });
-      if (signOutError) {
-        return NextResponse.json(
-          { error: "Failed to process deletion" },
-          { status: 500 }
-        );
+    // The account is gone at this point: the RPC removed its sessions and set the
+    // ban. Nothing below can fail the request, because a retry would now get 401 for
+    // an account that was deleted. The account-retention cron finishes the avatar if
+    // this removal doesn't. signOut clears this browser's cookies; GoTrue answers 403
+    // for the session that no longer exists, and auth-js treats that as signed out.
+    // The ban through the API is a second layer.
+    await afterCommit("avatar", async () => {
+      await removeAccountAvatar(admin, user.id);
+    });
+    await afterCommit("leaderboard_cache", async () => {
+      revalidateTag(LEADERBOARD_CACHE_TAG);
+    });
+    await afterCommit("sign_out", async () => {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw new Error(error.message);
+    });
+    await afterCommit("revoke_sessions", async () => {
+      const revoked = await revokeUserSessions(admin, user.id);
+      if (!revoked.ok) {
+        throw revoked.error ?? new Error("session revocation (ban) failed");
       }
-    }
+    });
 
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
-    logError({
-      errorId: ERROR_IDS.ACCOUNT_DELETE_FAILED,
-      error: err instanceof Error ? err : new Error(String(err)),
-      context: { route: "/api/account/delete" },
-    });
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return failed("unexpected", err);
   }
 }

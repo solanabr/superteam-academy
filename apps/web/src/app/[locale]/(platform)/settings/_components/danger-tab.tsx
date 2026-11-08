@@ -20,8 +20,8 @@ import { createClient } from "@/lib/supabase/client";
 //
 // Two-step guard: a confirmation dialog PLUS a type-to-confirm input (the user
 // must type the literal confirmation word). On success we clear the local
-// Supabase session and hard-redirect to the localized landing page. Copy makes
-// explicit that on-chain XP and credentials are permanent and cannot be erased.
+// Supabase session and hard-redirect to the localized landing page. Copy says what
+// goes, and what stays: forum posts as "deleted user", on-chain XP and credentials.
 
 // Word the user must type to arm the delete button. This is the ENGLISH source
 // token that also appears translated in the label copy; keeping it fixed (not
@@ -111,7 +111,8 @@ export function DangerTab() {
         open={dialogOpen}
         onOpenChange={(open) => (open ? setDialogOpen(true) : closeDialog())}
       >
-        <DialogContent>
+        {/* The copy is long: on a short screen the buttons must stay reachable. */}
+        <DialogContent className="max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-danger">
               {t("deleteAccountConfirmTitle")}
@@ -119,6 +120,9 @@ export function DangerTab() {
             <DialogDescription>
               {t("deleteAccountConfirmBody")}
             </DialogDescription>
+            <p className="text-sm text-text-2">
+              {t("deleteAccountConfirmOthers")}
+            </p>
           </DialogHeader>
 
           <div className="space-y-2">

@@ -126,9 +126,10 @@ export const SCHEMA_EXPECTATIONS: readonly SchemaExpectation[] = [
     rpc: "claim_due_session_reminders",
     args: { p_weekday: "mon" },
     // Attribution = the LAST migration to define this function (#869 created it,
-    // #896 re-scoped its token, recurring_lesson_plan made it gate on `days[]`).
+    // #896 re-scoped its token, recurring_lesson_plan made it gate on `days[]`,
+    // #1129 made it skip deleted accounts).
     // A health-check failure should point at the definition to re-apply.
-    migration: "20260804120000_recurring_lesson_plan.sql",
+    migration: "20261105121000_email_recipients_skip_deleted.sql",
     description:
       "session-plan reminder claim (#869) — a missing fn silently sends nothing",
   },
@@ -141,9 +142,38 @@ export const SCHEMA_EXPECTATIONS: readonly SchemaExpectation[] = [
     // would claim zero rows and consume nobody's cap window.
     rpc: "claim_due_reengagement",
     args: { p_kind: "reengagement_7d", p_inactive_days: 100000 },
-    migration: "20260731170000_reengagement_pipeline.sql",
+    migration: "20261105121000_email_recipients_skip_deleted.sql",
     description:
       "re-engagement claim + frequency cap (#899) — a missing fn silently sends nothing",
+  },
+  {
+    kind: "rpc",
+    // ⚠️ DESTRUCTIVE IF EVER CALLABLE. Safe here for the same reason as the two
+    // probes above: REVOKEd from anon/authenticated, so PostgREST answers 42501
+    // without running the body. The nil id matches no profile either way.
+    rpc: "delete_account_data",
+    args: { p_user_id: NIL_UUID },
+    migration: "20261105130000_delete_account_data.sql",
+    description:
+      "account deletion policy — a missing fn fails every deletion request",
+  },
+  {
+    kind: "rpc",
+    // REVOKEd from anon/authenticated like the probes above, so PostgREST answers
+    // 42501 without running the body.
+    rpc: "purge_ai_spend_ip_rows",
+    args: { p_keep_days: 36500 },
+    migration: "20261105130000_delete_account_data.sql",
+    description:
+      "retention purge for AI spend IP rows — a missing fn fails the account-retention cron",
+  },
+  {
+    kind: "rpc",
+    rpc: "list_deleted_account_avatar_owners",
+    args: { p_limit: 1 },
+    migration: "20261105130000_delete_account_data.sql",
+    description:
+      "avatar sweep for deleted accounts — a missing fn fails the account-retention cron",
   },
   {
     kind: "rpc",

@@ -13,6 +13,7 @@ interface ThreadCardAuthor {
   username: string | null;
   avatar_url: string | null;
   level: number;
+  deleted?: boolean;
 }
 
 interface ThreadCardProps {
@@ -150,7 +151,7 @@ export function ThreadCard({
             <span className="flex items-center gap-1">
               <div className="h-3.5 w-3.5 rounded-full bg-[var(--primary-dim)]" />
               <span className="max-w-[7rem] truncate sm:max-w-[10rem]">
-                {t("anonymous")}
+                {author.deleted ? t("deletedUser") : t("anonymous")}
               </span>
             </span>
           )}
