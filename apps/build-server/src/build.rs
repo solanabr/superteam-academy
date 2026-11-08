@@ -65,6 +65,10 @@ const BLOCKED_PATTERNS: &[&str] = &[
     "proc_macro",
 ];
 
+/// The original raw-text patterns, still applied to the unstripped source, so the
+/// filter never accepts anything the earlier version rejected.
+const RAW_PATTERNS: &[&str] = &["include_bytes!", "include_str!", "env!(", "option_env!"];
+
 /// Names that read host files or variables while compiling. They're blocked as
 /// whole identifiers, because macros can be renamed or passed to other macros.
 const BLOCKED_IDENTIFIERS: &[&str] = &[
@@ -317,6 +321,12 @@ impl BuildService {
     fn check_blocked_patterns(files: &Files) -> Result<(), AppError> {
         for [path, content] in files {
             let file = path.trim_start_matches('/');
+            if let Some(pattern) = RAW_PATTERNS.iter().find(|p| content.contains(**p)) {
+                return Err(AppError::InvalidRequest(format!(
+                    "Blocked pattern '{pattern}' found in {file}. \
+                     Solana programs cannot use host system APIs."
+                )));
+            }
             let code = code_only(content).ok_or_else(|| {
                 AppError::InvalidRequest(format!("Unterminated comment or string found in {file}."))
             })?;
@@ -772,12 +782,21 @@ mod tests {
             "// include the rent, read env vars, std::process is not available\nstruct A;",
             "/* see the env! macro and #[path = \"x\"] */ struct A;",
             r#"const NOTE: &str = "include this env! std::fs:: path = x";"#,
-            r##"const NOTE: &str = r#"include_str!("x")"#;"##,
+            r##"const NOTE: &str = r#"include the file"#;"##,
             "let environment = 1; let include_fee = 2; let env_name = 3; let path_len = 4;",
             "fn f<'a>(x: &'a str) -> &'a str { x } const Q: char = '\\''; const N: u8 = b'x';",
         ] {
             assert!(!is_blocked(source), "should allow: {source}");
         }
+    }
+
+    #[test]
+    fn earlier_raw_patterns_still_reject_even_inside_comments() {
+        assert!(is_blocked(
+            r#"// env!("KEY")
+struct A;"#
+        ));
+        assert!(is_blocked(r#"const S: &str = "include_str!";"#));
     }
 
     #[test]
