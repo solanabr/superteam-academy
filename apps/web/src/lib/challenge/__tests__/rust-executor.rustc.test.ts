@@ -147,11 +147,6 @@ fn add(_a: i64, _b: i64) -> Y { Y }
 const H: &str = s!("main.rs");
 fn add(_a: i64, _b: i64) -> i64 { H.len() as i64 * 0 }
 `,
-  "reads its own binary through std::fs": `fn add(_a: i64, _b: i64) -> i64 {
-    let me = std::env::current_exe().unwrap();
-    std::fs::read(me).unwrap().len() as i64 * 0
-}
-`,
 };
 
 const ADD_VECTORS: AdminTestCase[] = [

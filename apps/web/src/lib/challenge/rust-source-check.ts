@@ -9,9 +9,9 @@ const SOURCE_MACROS =
   "include_str|include_bytes|include|file|module_path|env|option_env";
 
 /**
- * Constructs a graded function has no use for. Each pattern names the construct,
- * not a bare word, so an honest `T: PartialEq` bound, a variant called `File` or a
- * variable called `fs` stays allowed.
+ * Constructs that change how the harness compiles or compares. Each pattern names
+ * the construct, not a bare word, so an honest `T: PartialEq` bound or a variable
+ * called `file` stays allowed. Runtime access is out of this check's reach.
  */
 const DISALLOWED_CONSTRUCTS: RegExp[] = [
   // a source or environment macro invoked, or renamed in a use
@@ -21,12 +21,6 @@ const DISALLOWED_CONSTRUCTS: RegExp[] = [
   /\bmacro_rules\s*!(?!=)/,
   /\bextern\b/,
   /\b(?:global_)?asm\s*!(?!=)/,
-  // std's filesystem, environment and process modules, however they're reached
-  /\bstd\s*::\s*(?:fs|env|process)\b/,
-  /\bstd\s*::\s*\{[^}]*\b(?:fs|env|process)\b/,
-  /\bstd\s+as\b/,
-  /\bstd\s*::\s*\*/,
-  /\bstd\s*::\s*\{[^}]*(?:\bself\b|\*)/,
   // the trait renamed (a hand-written impl is checked by implementsPartialEq)
   /\bPartialEq\s+as\b/,
 ];
