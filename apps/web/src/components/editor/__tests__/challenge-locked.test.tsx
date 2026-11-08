@@ -39,7 +39,7 @@ vi.mock("../code-editor", async () => {
       return React.createElement("textarea", {
         "data-testid": "editor",
         readOnly: props.readOnly,
-        defaultValue: props.value,
+        defaultValue: props.initialCode,
       });
     }),
     resetEditorStorage: h.resetEditorStorage,
@@ -101,7 +101,7 @@ describe("completed challenge is locked", () => {
     renderInterface(true);
     expect(editorProps()?.readOnly).toBe(true);
     // The learner's own accepted code, not the starter reset.
-    expect(editorProps()?.value).toBe(ACCEPTED_CODE);
+    expect(editorProps()?.initialCode).toBe(ACCEPTED_CODE);
   });
 
   it("locks Reset and Format with an announced reason, keeping them focusable", () => {

@@ -38,7 +38,6 @@ export interface CodeEditorProps {
   lessonId: string;
   initialCode: string;
   language: EditorLanguage;
-  value?: string;
   onChange?: (code: string) => void;
   readOnly?: boolean;
   /**
@@ -151,6 +150,8 @@ export interface ChallengeInterfaceProps {
 
 export interface CodeEditorHandle {
   getEditor: () => editor.IStandaloneCodeEditor | null;
+  /** Replaces the buffer with code from outside the editor. Clears undo. */
+  replaceCode: (code: string) => void;
   /**
    * Reformats the buffer with Prettier (see `lib/editor/format-code` for why
    * not Monaco's built-in formatter). The status is deliberately reported

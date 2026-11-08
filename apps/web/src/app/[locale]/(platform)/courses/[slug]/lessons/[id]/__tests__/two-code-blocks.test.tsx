@@ -97,7 +97,6 @@ vi.mock("@/components/editor/code-editor", async () => {
     CodeEditor: React.forwardRef(function MockCodeEditor(
       props: {
         initialCode: string;
-        value?: string;
         storageScope?: string;
         onChange?: (code: string) => void;
       },
@@ -106,7 +105,6 @@ vi.mock("@/components/editor/code-editor", async () => {
       return React.createElement("textarea", {
         "data-testid": `editor:${props.initialCode}`,
         "data-storage-scope": props.storageScope,
-        value: props.value,
         onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) =>
           props.onChange?.(e.target.value),
       });
