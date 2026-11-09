@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import type { CodeBlockData } from "@superteam-lms/types";
 import { isLearnerDeployEnabled } from "@/lib/deploy/learner-deploy";
@@ -30,6 +30,20 @@ export function CodeBlock({ block, ctx }: BlockRenderProps) {
     void import("@/components/editor/challenge-interface");
   }, []);
 
+  // The learner can change with the lesson open: a sign-out or another
+  // sign-in in a second tab arrives here without a reload. When the code on
+  // screen belonged to a signed-in learner, the editor starts over with the
+  // next owner's drafts, so their code is neither shown, run nor saved under
+  // someone else. Signing in keeps the code, so work done signed out can be
+  // submitted.
+  const userId = ctx.userId ?? null;
+  const [owner, setOwner] = useState(userId);
+  const [session, setSession] = useState(0);
+  if (userId !== owner) {
+    setOwner(userId);
+    if (owner !== null) setSession((n) => n + 1);
+  }
+
   // The editor opens the drafts of whoever is signed in, so it waits until
   // that's known rather than open, and then save over, the wrong ones.
   if (ctx.authPending) return <ChallengeSkeleton />;
@@ -53,8 +67,9 @@ export function CodeBlock({ block, ctx }: BlockRenderProps) {
     <div className="overflow-hidden border-t border-border bg-card lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:border-t-0 lg:bg-transparent lg:p-2">
       <div className="flex w-full flex-col overflow-hidden lg:min-h-0 lg:flex-1">
         <ChallengeInterface
+          key={session}
           lessonId={ctx.lesson._id}
-          userId={ctx.userId ?? null}
+          userId={userId}
           blockKey={b.key}
           codePart={ctx.codePart}
           courseId={ctx.courseId}
