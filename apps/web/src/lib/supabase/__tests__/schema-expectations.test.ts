@@ -74,17 +74,18 @@ describe("checkSchemaExpectations (#731)", () => {
     const result = await checkSchemaExpectations(
       makeClient({
         rpcErrors: {
-          check_ai_spend: {
+          reserve_ai_spend: {
             code: "PGRST202",
-            message: "Could not find the function public.check_ai_spend",
+            message: "Could not find the function public.reserve_ai_spend",
           },
         },
       })
     );
     expect(result.ok).toBe(false);
-    expect(
-      result.missing.some((m) => m.object === "function check_ai_spend")
-    ).toBe(true);
+    const miss = result.missing.find(
+      (m) => m.object === "function reserve_ai_spend"
+    );
+    expect(miss?.migration).toBe("20261108120000_ai_spend_newcomer_pool.sql");
   });
 
   // #864 assist ladder: the exact #945-class gap this check exists to close —
@@ -140,11 +141,38 @@ describe("checkSchemaExpectations (#731)", () => {
     });
   });
 
+  it("the AI spend reserve probe passes zero hard caps (raises before writing even if it ran)", () => {
+    const reserve = SCHEMA_EXPECTATIONS.find(
+      (e) => e.kind === "rpc" && e.rpc === "reserve_ai_spend"
+    );
+    expect(reserve).toBeDefined();
+    expect(reserve?.kind === "rpc" ? reserve.args : {}).toMatchObject({
+      p_full_micro_usd: 0,
+      p_degraded_micro_usd: 0,
+      p_account_hard: 0,
+      p_ip_hard: 0,
+      p_global_hard: 0,
+      p_newcomer_hard: 0,
+    });
+  });
+
+  it("the AI spend settle probe moves nothing and counts nothing (inert even if it ran)", () => {
+    const settle = SCHEMA_EXPECTATIONS.find(
+      (e) => e.kind === "rpc" && e.rpc === "settle_ai_spend"
+    );
+    expect(settle).toBeDefined();
+    expect(settle?.kind === "rpc" ? settle.args : {}).toMatchObject({
+      p_reserved_micro_usd: 0,
+      p_actual_micro_usd: 0,
+      p_billed: false,
+    });
+  });
+
   it("permission-denied on an rpc means PRESENT (exists, just not callable by anon)", async () => {
     const result = await checkSchemaExpectations(
       makeClient({
         rpcErrors: {
-          check_ai_spend: { code: "42501", message: "permission denied" },
+          reserve_ai_spend: { code: "42501", message: "permission denied" },
         },
       })
     );

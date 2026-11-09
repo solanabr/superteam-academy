@@ -27,15 +27,44 @@ vi.mock("@/lib/rate-limit", () => ({
   getClientIp,
 }));
 
-// #591 spend ledger. checkAiSpend gates the call fail-closed; recordAiSpend
-// books the cost. degradedMaxTokens is the real pure helper (halve, floor 256).
-const checkAiSpend = vi.fn();
-const recordAiSpend = vi.fn();
-vi.mock("@/lib/ai/spend-ledger", () => ({
-  checkAiSpend,
-  recordAiSpend,
-  degradedMaxTokens: (base: number) => Math.max(256, Math.floor(base / 2)),
+// #591 spend ledger. reserveAiSpend holds the turn's worst case before the
+// call and fails closed; settleAiSpend books the actual cost; releaseAiSpend
+// returns the hold of a call that was never billed. The pure helpers
+// (worstCaseMicroUsd, degradedMaxTokens) are the real ones.
+const reserveAiSpend = vi.fn();
+const settleAiSpend = vi.fn();
+const releaseAiSpend = vi.fn();
+vi.mock("@/lib/ai/spend-ledger", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/ai/spend-ledger")>()),
+  reserveAiSpend,
+  settleAiSpend,
+  releaseAiSpend,
 }));
+
+// The request body the route sent to Gemini on its first call, and its UTF-8
+// byte length: the input side of the spend hold.
+function sentBody(): string {
+  const f = globalThis.fetch as unknown as {
+    mock: { calls: Array<[unknown, { body: string }]> };
+  };
+  return f.mock.calls[0]![1].body;
+}
+const bytes = (body: string) => Buffer.byteLength(body, "utf8");
+// micro-USD = tokens × $/MTok, rounded once, as estimateSpendMicroUsd does.
+const micro = (
+  input: number,
+  inRate: number,
+  output: number,
+  outRate: number
+) => Math.round(input * inRate + output * outRate);
+
+const HOLD = {
+  userId: "user-1",
+  ip: "203.0.113.9",
+  spendDay: "2026-11-08",
+  lowTrust: false,
+  reservedMicroUsd: 24_360,
+};
 
 const getLessonBySlug = vi.fn();
 vi.mock("@/lib/content/queries", () => ({
@@ -160,8 +189,9 @@ beforeEach(() => {
   appendAssistLog.mockReset();
   isRateLimited.mockReset();
   getLessonBySlug.mockReset();
-  checkAiSpend.mockReset();
-  recordAiSpend.mockReset();
+  reserveAiSpend.mockReset();
+  settleAiSpend.mockReset();
+  releaseAiSpend.mockReset();
 
   // Happy-path defaults; individual tests override as needed.
   getUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
@@ -176,8 +206,9 @@ beforeEach(() => {
   recordBilledAssist.mockResolvedValue(undefined);
   appendAssistLog.mockResolvedValue(undefined);
   // Under every spend cap by default → serve at full budget.
-  checkAiSpend.mockResolvedValue({ decision: "full" });
-  recordAiSpend.mockResolvedValue(undefined);
+  reserveAiSpend.mockResolvedValue({ decision: "full", reservation: HOLD });
+  settleAiSpend.mockResolvedValue(undefined);
+  releaseAiSpend.mockResolvedValue(undefined);
 });
 
 afterEach(() => {
@@ -539,24 +570,25 @@ describe("POST /api/ai/partner", () => {
     expect(refundAssistTurn).toHaveBeenCalledWith("user-1", "lesson-1", "free");
   });
 
-  it("refunds a PRE-billing throw during prompt building (billed still false)", async () => {
-    // The prompt-building block is inside the widened try. A throw there — here
-    // the visibleTests map blows up on a malformed code block (tests: null) —
-    // happens before any Gemini call, so it is pre-billing: the catch refunds it
-    // under `if (!billed)` and records no billed assist.
+  it("a throw while building the prompt spends nothing (500, no hold, no assist)", async () => {
+    // The prompt is built before the spend hold and the ladder spend, so a
+    // throw there — here the visibleTests map blows up on a malformed code
+    // block (tests: null) — has nothing to refund or release.
     getLessonBySlug.mockResolvedValue({
       ...LESSON,
       blocks: [LESSON.blocks[0], { ...LESSON.blocks[1], tests: null }],
     });
-    stubGeminiFetch(PROPOSE_GEMINI_TEXT); // never reached
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
 
     const { POST } = await import("../partner/route");
     const res = await POST(makeRequest(VALID_BODY));
 
     expect(res.status).toBe(500);
-    expect(refundAssistTurn).toHaveBeenCalledTimes(1);
-    expect(refundAssistTurn).toHaveBeenCalledWith("user-1", "lesson-1", "free");
-    expect(recordBilledAssist).not.toHaveBeenCalled();
+    expect(reserveAiSpend).not.toHaveBeenCalled();
+    expect(spendAssistTurn).not.toHaveBeenCalled();
+    expect(refundAssistTurn).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 
   it("returns 429 when rate limited", async () => {
@@ -1172,18 +1204,165 @@ describe("POST /api/ai/partner", () => {
 
   // --- #591: daily spend ledger gate (per-account / per-IP / global) ---
 
-  it("checks the spend ledger with the user id and client IP before spending", async () => {
+  it("reserves the turn's worst case with the user id and client IP before spending", async () => {
     stubGeminiFetch(PROPOSE_GEMINI_TEXT);
 
     const { POST } = await import("../partner/route");
     await POST(makeRequest(VALID_BODY));
 
-    expect(checkAiSpend).toHaveBeenCalledTimes(1);
-    expect(checkAiSpend).toHaveBeenCalledWith("user-1", "203.0.113.9");
+    // propose on gemini-3.6-flash: input at the sent body's byte length, output
+    // at 2048 (degraded 1024; same body length). Socratic doesn't change a
+    // propose prompt, so the sent body is the largest.
+    const input = bytes(sentBody());
+    expect(reserveAiSpend).toHaveBeenCalledTimes(1);
+    expect(reserveAiSpend).toHaveBeenCalledWith("user-1", "203.0.113.9", {
+      fullMicroUsd: micro(input, 1.5, 2048, 7.5),
+      degradedMicroUsd: micro(input, 1.5, 1024, 7.5),
+    });
+    expect(spendAssistTurn.mock.invocationCallOrder[0]!).toBeGreaterThan(
+      reserveAiSpend.mock.invocationCallOrder[0]!
+    );
+  });
+
+  it("reserves the largest budget an action can reach (ask: 4096 on 3.6-flash)", async () => {
+    stubGeminiFetch(JSON.stringify({ type: "answer", text: "Because." }));
+
+    const { POST } = await import("../partner/route");
+    await POST(makeRequest({ ...VALID_BODY, action: "ask", message: "why?" }));
+
+    // The Socratic turn (flash-lite, 512) is cheaper, so the non-Socratic turn
+    // that was sent is the bound: 3.6-flash at 4096 out, degraded 2048.
+    const input = bytes(sentBody());
+    expect(reserveAiSpend).toHaveBeenCalledWith("user-1", "203.0.113.9", {
+      fullMicroUsd: micro(input, 1.5, 4096, 7.5),
+      degradedMicroUsd: micro(input, 1.5, 2048, 7.5),
+    });
+  });
+
+  it("holds at least the byte length of a large prompt", async () => {
+    // A long lesson brief plus every learner field at its cap, in two-byte
+    // characters: far more input than any fixed estimate.
+    getLessonBySlug.mockResolvedValue({
+      ...LESSON,
+      blocks: [
+        { ...LESSON.blocks[0], src: "é".repeat(30_000) },
+        LESSON.blocks[1],
+      ],
+    });
+    stubGeminiFetch(JSON.stringify({ type: "answer", text: "Because." }));
+
+    const { POST } = await import("../partner/route");
+    const res = await POST(
+      makeRequest({
+        ...VALID_BODY,
+        action: "ask",
+        code: "é".repeat(8_000),
+        message: "é".repeat(4_000),
+        testSummary: "é".repeat(2_000),
+      })
+    );
+
+    expect(res.status).toBe(200);
+    const input = bytes(sentBody());
+    expect(input).toBeGreaterThan(2 * (30_000 + 8_000 + 4_000 + 2_000));
+    const [, , amounts] = reserveAiSpend.mock.calls[0]!;
+    expect(amounts.fullMicroUsd).toBeGreaterThanOrEqual(
+      micro(input, 1.5, 4096, 7.5)
+    );
+    expect(amounts.degradedMicroUsd).toBeGreaterThanOrEqual(
+      micro(input, 1.5, 2048, 7.5)
+    );
+  });
+
+  it("reserves a hint at flash-lite prices, sized by the longer Socratic prompt", async () => {
+    // Land on the Socratic tier so the sent body is the Socratic one, which
+    // carries the extra instructions and so is the larger of the two hints.
+    spendAssistTurn.mockResolvedValue({
+      allowed: true,
+      tier: "socratic",
+      counts: { free: 2, metered: 8, socratic: 1 },
+    });
+    stubGeminiFetch(JSON.stringify({ type: "hint", text: "Check the bound." }));
+
+    const { POST } = await import("../partner/route");
+    await POST(makeRequest({ ...VALID_BODY, action: "hint" }));
+
+    const input = bytes(sentBody());
+    expect(reserveAiSpend).toHaveBeenCalledWith("user-1", "203.0.113.9", {
+      fullMicroUsd: micro(input, 0.3, 512, 2.5),
+      degradedMicroUsd: micro(input, 0.3, 256, 2.5),
+    });
+  });
+
+  it("releases the hold when the ladder is exhausted (no model call)", async () => {
+    spendAssistTurn.mockResolvedValue({
+      allowed: false,
+      tier: "exhausted",
+      counts: { free: 2, metered: 8, socratic: 20 },
+    });
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const { POST } = await import("../partner/route");
+    await POST(makeRequest(VALID_BODY));
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(releaseAiSpend).toHaveBeenCalledWith(HOLD);
+    expect(settleAiSpend).not.toHaveBeenCalled();
+  });
+
+  it("releases the hold when Gemini returns !ok (never billed)", async () => {
+    stubGeminiFetch("", { ok: false });
+
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest(VALID_BODY));
+
+    expect(res.status).toBe(502);
+    expect(releaseAiSpend).toHaveBeenCalledWith(HOLD);
+    expect(settleAiSpend).not.toHaveBeenCalled();
+  });
+
+  it("releases the hold on a throw before Gemini bills", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => {
+        throw new Error("boom");
+      })
+    );
+
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest(VALID_BODY));
+
+    expect(res.status).toBe(500);
+    expect(releaseAiSpend).toHaveBeenCalledWith(HOLD);
+    expect(settleAiSpend).not.toHaveBeenCalled();
+  });
+
+  it("settles, never releases, a billed call that throws afterwards", async () => {
+    stubGeminiFetch(PROPOSE_GEMINI_TEXT);
+    appendAssistLog.mockRejectedValue(new Error("log store down"));
+
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest(VALID_BODY));
+
+    expect(res.status).toBe(500);
+    expect(settleAiSpend).toHaveBeenCalledTimes(1);
+    expect(releaseAiSpend).not.toHaveBeenCalled();
+  });
+
+  it("settles a billed but unusable reply (empty output) without releasing", async () => {
+    stubGeminiFetch("");
+
+    const { POST } = await import("../partner/route");
+    const res = await POST(makeRequest(VALID_BODY));
+
+    expect(res.status).toBe(502);
+    expect(settleAiSpend).toHaveBeenCalledTimes(1);
+    expect(releaseAiSpend).not.toHaveBeenCalled();
   });
 
   it("under cap: serves at the FULL output budget and records the spend", async () => {
-    checkAiSpend.mockResolvedValue({ decision: "full" });
+    reserveAiSpend.mockResolvedValue({ decision: "full", reservation: HOLD });
     const fetchSpy = vi.fn(async (_url: string, init: { body: string }) => {
       void init;
       return {
@@ -1211,27 +1390,26 @@ describe("POST /api/ai/partner", () => {
       generationConfig: { maxOutputTokens: number };
     };
     expect(sent.generationConfig.maxOutputTokens).toBe(2048);
-    // The actual usage is booked against the ledger with the request's IP, plus
-    // a conservative fallback (full output budget + generous input) used only
-    // when usageMetadata is absent (#724).
-    expect(recordAiSpend).toHaveBeenCalledTimes(1);
-    expect(recordAiSpend).toHaveBeenCalledWith(
-      "user-1",
-      "203.0.113.9",
+    // The hold is settled to the actual usage, with a conservative fallback
+    // (full output budget + the request's byte length as input) used only when
+    // usageMetadata is absent (#724).
+    expect(settleAiSpend).toHaveBeenCalledTimes(1);
+    expect(settleAiSpend).toHaveBeenCalledWith(
+      HOLD,
       "gemini-3.6-flash",
       {
         promptTokenCount: 1000,
         candidatesTokenCount: 500,
         thoughtsTokenCount: 0,
       },
-      { promptTokens: 6000, outputTokens: 2048 }
+      { promptTokens: bytes(sentBody()), outputTokens: 2048 }
     );
   });
 
   it("records spend on a 200 with a NON-JSON body (billed but unparseable, #724)", async () => {
     // The 200 billed us, but response.json() throws — the ordering fix must still
     // book the spend (with the fallback) and the billed-assist, then 502.
-    checkAiSpend.mockResolvedValue({ decision: "full" });
+    reserveAiSpend.mockResolvedValue({ decision: "full", reservation: HOLD });
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => ({
@@ -1249,22 +1427,24 @@ describe("POST /api/ai/partner", () => {
     expect(res.status).toBe(502);
     // Billed audit + spend both recorded despite the unparseable body.
     expect(recordBilledAssist).toHaveBeenCalledTimes(1);
-    expect(recordAiSpend).toHaveBeenCalledTimes(1);
+    expect(settleAiSpend).toHaveBeenCalledTimes(1);
     // usageMetadata is undefined (no parse), so the conservative fallback carries
     // the estimate — never $0 for a real billed call.
-    expect(recordAiSpend).toHaveBeenCalledWith(
-      "user-1",
-      "203.0.113.9",
+    expect(settleAiSpend).toHaveBeenCalledWith(
+      HOLD,
       "gemini-3.6-flash",
       undefined,
-      { promptTokens: 6000, outputTokens: 2048 }
+      { promptTokens: bytes(sentBody()), outputTokens: 2048 }
     );
     // Not refunded — Gemini billed us.
     expect(refundAssistTurn).not.toHaveBeenCalled();
   });
 
   it("soft cap: DEGRADES to a shorter output budget but still serves (200)", async () => {
-    checkAiSpend.mockResolvedValue({ decision: "degraded" });
+    reserveAiSpend.mockResolvedValue({
+      decision: "degraded",
+      reservation: HOLD,
+    });
     const fetchSpy = vi.fn(async (_url: string, init: { body: string }) => {
       void init;
       return {
@@ -1290,11 +1470,11 @@ describe("POST /api/ai/partner", () => {
     expect(sent.generationConfig.maxOutputTokens).toBe(1024);
     // A degraded call is still a real paid, billed, booked call.
     expect(spendAssistTurn).toHaveBeenCalledTimes(1);
-    expect(recordAiSpend).toHaveBeenCalledTimes(1);
+    expect(settleAiSpend).toHaveBeenCalledTimes(1);
   });
 
   it("hard cap: DENIES with 503 + spendCapped, spends no assist, calls no model", async () => {
-    checkAiSpend.mockResolvedValue({
+    reserveAiSpend.mockResolvedValue({
       decision: "denied",
       reason: "spend_cap",
     });
@@ -1307,15 +1487,15 @@ describe("POST /api/ai/partner", () => {
 
     expect(res.status).toBe(503);
     expect(json).toMatchObject({ spendCapped: true, reason: "spend_cap" });
-    // No assist burned, no model call, no spend recorded — the gate is before spend.
+    // No assist burned, no model call, nothing settled — the gate is before spend.
     expect(spendAssistTurn).not.toHaveBeenCalled();
     expect(fetchSpy).not.toHaveBeenCalled();
-    expect(recordAiSpend).not.toHaveBeenCalled();
+    expect(settleAiSpend).not.toHaveBeenCalled();
   });
 
   it("ledger unreachable: FAILS CLOSED with 503, never serving unmetered", async () => {
-    // checkAiSpend returns "denied" on any ledger error (fail-closed contract).
-    checkAiSpend.mockResolvedValue({
+    // reserveAiSpend returns "denied" on any ledger error (fail-closed contract).
+    reserveAiSpend.mockResolvedValue({
       decision: "denied",
       reason: "ledger_unavailable",
     });
@@ -1336,7 +1516,7 @@ describe("POST /api/ai/partner", () => {
   });
 
   it("does not leak the solution in a hard-cap 503 body", async () => {
-    checkAiSpend.mockResolvedValue({
+    reserveAiSpend.mockResolvedValue({
       decision: "denied",
       reason: "spend_cap",
     });
@@ -1443,9 +1623,8 @@ describe("POST /api/ai/partner — Socratic tier (#864)", () => {
     expect(String(fetchSpy.mock.calls[0]![0])).toContain(
       "models/gemini-3.5-flash-lite:generateContent"
     );
-    expect(recordAiSpend).toHaveBeenCalledWith(
-      "user-1",
-      "203.0.113.9",
+    expect(settleAiSpend).toHaveBeenCalledWith(
+      HOLD,
       "gemini-3.5-flash-lite",
       expect.anything(),
       expect.anything()
@@ -1515,9 +1694,8 @@ describe("POST /api/ai/partner — per-action model routing (#868)", () => {
     expect(String(fetchSpy.mock.calls[0]![0])).toContain(
       "models/gemini-3.5-flash-lite:generateContent"
     );
-    expect(recordAiSpend).toHaveBeenCalledWith(
-      "user-1",
-      "203.0.113.9",
+    expect(settleAiSpend).toHaveBeenCalledWith(
+      HOLD,
       "gemini-3.5-flash-lite",
       expect.anything(),
       expect.anything()
@@ -1572,7 +1750,7 @@ describe("POST /api/ai/partner — per-action model routing (#868)", () => {
     expect(res.status).toBe(502);
     // Exactly one upstream attempt: no retry against a different model.
     expect(fetchSpy).toHaveBeenCalledTimes(1);
-    expect(recordAiSpend).not.toHaveBeenCalled();
+    expect(settleAiSpend).not.toHaveBeenCalled();
     expect(refundAssistTurn).toHaveBeenCalledTimes(1);
   });
 });
