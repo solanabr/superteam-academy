@@ -328,6 +328,10 @@ export const DELETION_POLICY: Record<string, TablePolicy> = {
     why: "Configuration.",
     columns: { reason: "keep" },
   },
+  referral_scoring_cutoff: {
+    decision: "no_user_data",
+    why: "Configuration.",
+  },
   referral_seasons: {
     decision: "no_user_data",
     why: "Configuration.",

@@ -309,6 +309,18 @@ export const SCHEMA_EXPECTATIONS: readonly SchemaExpectation[] = [
   },
   {
     kind: "rpc",
+    rpc: "get_own_referral_totals",
+    args: {
+      p_user_id: NIL_UUID,
+      p_season_starts_at: null,
+      p_season_ends_at: null,
+    },
+    migration: "20261108130000_referral_score_after_lesson.sql",
+    description:
+      "a referrer's own season points and signups — a missing fn 500s /api/referrals/me",
+  },
+  {
+    kind: "rpc",
     rpc: "moderate_soft_delete_thread",
     args: { p_thread_id: NIL_UUID, p_flag_id: NIL_UUID, p_actor_id: NIL_UUID },
     migration: "20260820160000_moderation_actions.sql",

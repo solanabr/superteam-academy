@@ -153,6 +153,9 @@ const SEED = `
 
   INSERT INTO public.referral_seasons (number, starts_at, ends_at) VALUES (99, now() - interval '1 day', now() + interval '30 days');
   INSERT INTO public.referral_events (referrer_id, referred_id, kind) VALUES ('${BYSTANDER}', '${VICTIM}', 'signup');
+  -- This referral is created after the scoring cutoff, so it scores only
+  -- through the victim's dated completed lesson.
+  UPDATE public.user_progress SET completed_at = now() WHERE user_id = '${VICTIM}';
 
   INSERT INTO public.league_cohorts (id, week_start, tier, member_count)
   VALUES ('99999999-9999-4999-8999-999999999999', date_trunc('week', current_date)::date, 1, 2);

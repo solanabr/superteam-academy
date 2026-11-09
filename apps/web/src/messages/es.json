@@ -544,7 +544,7 @@
     "referralSubtitle": "Invita builders y gana puntos",
     "referralSeason": "Temporada {number}",
     "referralSeasonEnds": "Termina el {date}",
-    "referralScoringInfo": "1 punto cuando alguien crea una cuenta con tu enlace, más 1 punto por cada curso que complete después.",
+    "referralScoringInfo": "1 punto cuando alguien se une con tu enlace y completa su primera lección, más 1 por cada curso que complete.",
     "referralScoringInfoLabel": "Cómo funcionan los puntos de referidos",
     "referralNoEntries": "Aún no hay referidos esta temporada — ¡comparte tu enlace y abre la tabla!",
     "referralPoints": "{points, plural, one {# pt} other {# pts}}",
