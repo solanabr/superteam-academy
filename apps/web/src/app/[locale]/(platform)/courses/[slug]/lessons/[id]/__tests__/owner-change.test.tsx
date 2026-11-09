@@ -19,6 +19,7 @@ import type { EditorProps, Monaco } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
 import type { Lesson } from "@superteam-lms/types";
 import messages from "@/messages/en.json";
+import { markTabLeaving } from "@/lib/lessons/tab-leaving";
 import { LessonPageClient } from "../lesson-client";
 
 interface FakeEditor {
@@ -228,10 +229,20 @@ beforeEach(() => {
   );
 });
 
+const realLocation = window.location;
+
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
   vi.unstubAllGlobals();
+  Object.defineProperty(window, "location", {
+    value: realLocation,
+    writable: true,
+  });
+  // Clears a leaving mark, as a page restored from the back/forward cache does.
+  window.dispatchEvent(
+    Object.assign(new Event("pageshow"), { persisted: true })
+  );
 });
 
 describe("a change of signed-in learner while the lesson is open", () => {
@@ -247,12 +258,18 @@ describe("a change of signed-in learner while the lesson is open", () => {
     expect(h.reload).toHaveBeenCalledTimes(1);
   });
 
-  it("leaves a tab alone that is already leaving, as after its own sign-out", async () => {
+  it("leaves the tab alone when its own sign-out is taking it away", async () => {
     const page = await open("user-a");
-    // The menu's sign-out navigates away before the auth change renders here.
-    window.dispatchEvent(new Event("beforeunload"));
+    markTabLeaving();
     page.as(null);
     expect(h.reload).not.toHaveBeenCalled();
+  });
+
+  it("still reloads after a click that fired beforeunload but stayed, like a download", async () => {
+    const page = await open("user-a");
+    window.dispatchEvent(new Event("beforeunload"));
+    page.as(null);
+    expect(h.reload).toHaveBeenCalledTimes(1);
   });
 
   it("reloads when a learner signs in from another tab, so their own draft opens", async () => {

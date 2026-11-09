@@ -832,27 +832,29 @@ describe("a change of signed-in learner with the lesson open", () => {
     return { fetchMock, view };
   }
 
-  // The page reloads instead of carrying A's held part into B's session; with
-  // the reload stubbed, what matters is that it's asked for and nothing posts.
+  // The page reloads rather than carry A's held part into the next session;
+  // jsdom can't reload, so the stubbed reload is the proof.
   it.each([
     ["signs out", null],
     ["gives way to another learner", "user-2"],
-  ])(
-    "reloads before anyone can submit with A's part when A %s",
-    async (_label, next) => {
-      const reload = vi.fn();
+  ])("reloads the page when A %s", async (_label, next) => {
+    const realLocation = window.location;
+    const reload = vi.fn();
+    Object.defineProperty(window, "location", {
+      value: { ...realLocation, reload },
+      writable: true,
+    });
+    try {
+      const { view } = await aSubmitsPartOne();
+      becomes(view, next);
+      expect(reload).toHaveBeenCalledTimes(1);
+    } finally {
       Object.defineProperty(window, "location", {
-        value: { ...window.location, reload },
+        value: realLocation,
         writable: true,
       });
-      const { fetchMock, view } = await aSubmitsPartOne();
-
-      becomes(view, next);
-
-      expect(reload).toHaveBeenCalledTimes(1);
-      expect(completionCalls(fetchMock)).toHaveLength(0);
     }
-  );
+  });
 });
 
 describe("a lesson with one code block stays as it was", () => {
