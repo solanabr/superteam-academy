@@ -793,6 +793,88 @@ describe("a lesson with two code blocks", () => {
   });
 });
 
+describe("a change of signed-in learner with the lesson open", () => {
+  // Another tab's sign-out or sign-in reaches this one without a reload.
+  function becomes(
+    view: ReturnType<typeof renderLesson>,
+    userId: string | null
+  ) {
+    h.auth.userId = userId;
+    view.rerender(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <LessonPageClient
+          lesson={twoBlocksNoQuiz}
+          allLessons={[
+            {
+              _id: "lesson-1",
+              title: "L",
+              slug: twoBlocksNoQuiz.slug,
+            } as never,
+          ]}
+          locale="en"
+          courseSlug="payments"
+          courseId="course-1"
+          courseXpPerLesson={30}
+        />
+      </NextIntlClientProvider>
+    );
+  }
+
+  async function aSubmitsPartOne() {
+    const fetchMock = stubFetch();
+    const view = renderLesson(twoBlocksNoQuiz);
+    await flushAuthRead();
+    fireEvent.change(screen.getByTestId(`editor:${PART_ONE}`), {
+      target: { value: "// A's part one" },
+    });
+    submit(PART_ONE);
+    await screen.findByText(/Submit part 2 to complete this lesson/);
+    return { fetchMock, view };
+  }
+
+  const carriesA = (fetchMock: FetchMock) =>
+    completionCalls(fetchMock).some(([, init]) =>
+      String(init.body).includes("A's part one")
+    );
+
+  it("doesn't carry a submitted part over to the next learner", async () => {
+    const { fetchMock, view } = await aSubmitsPartOne();
+
+    becomes(view, "user-2");
+    await flushAuthRead();
+    submit(PART_TWO);
+
+    await screen.findByText(/Submit part 1 to complete this lesson/);
+    expect(completionCalls(fetchMock)).toHaveLength(0);
+
+    submit(PART_ONE);
+    await waitFor(() => expect(completionCalls(fetchMock)).toHaveLength(1));
+    expect(postedProofs(fetchMock)).toEqual({
+      first: { code: PART_ONE },
+      second: { code: PART_TWO },
+    });
+  });
+
+  it("doesn't bank a signed-in learner's part for whoever signs in next", async () => {
+    const { fetchMock, view } = await aSubmitsPartOne();
+
+    becomes(view, null);
+    await flushAuthRead();
+    submit(PART_TWO);
+    await screen.findByText(/Submit part 1 to complete this lesson/);
+    submit(PART_ONE);
+    fireEvent.click(await screen.findByRole("button", { name: "Enroll Now" }));
+    await screen.findByTestId("claim-modal");
+
+    expect(carriesA(fetchMock)).toBe(false);
+    expect(readBank()).toHaveLength(1);
+    expect(readBank()[0]!.proofs).toEqual({
+      first: { code: PART_ONE },
+      second: { code: PART_TWO },
+    });
+  });
+});
+
 describe("a lesson with one code block stays as it was", () => {
   it("completes on its one submit, with the proof under the block key", async () => {
     const fetchMock = stubFetch();
