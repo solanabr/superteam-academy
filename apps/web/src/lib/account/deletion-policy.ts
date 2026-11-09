@@ -201,7 +201,7 @@ export const DELETION_POLICY: Record<string, TablePolicy> = {
   },
   platform_spend: {
     decision: "scrub",
-    why: "Spend totals stay. The wallet goes; sponsored rows keep a one-way key so a wallet is still sponsored only once.",
+    why: "Spend totals stay. The wallet goes; sponsored and XP token account funding rows keep a one-way key so a wallet is still sponsored and funded only once.",
     columns: {
       user_id: "keep",
       wallet: "scrub",
@@ -209,6 +209,7 @@ export const DELETION_POLICY: Record<string, TablePolicy> = {
       action: "keep",
       course_id: "keep",
       program_id: "keep",
+      token_mint: "keep",
       payer: "keep",
       payer_role: "keep",
       cluster: "keep",

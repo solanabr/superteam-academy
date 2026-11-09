@@ -11,12 +11,7 @@ import {
 } from "@solana/web3.js";
 import { AnchorError, BN, parseIdlErrors } from "@coral-xyz/anchor";
 import bs58 from "bs58";
-import {
-  getAssociatedTokenAddressSync,
-  createAssociatedTokenAccountIdempotentInstruction,
-  TOKEN_2022_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-} from "@solana/spl-token";
+import { TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import type { Idl } from "@coral-xyz/anchor";
 import { AnchorProvider, Program } from "@coral-xyz/anchor";
 import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
@@ -51,6 +46,10 @@ import {
   writableAccounts,
 } from "./compute-budget";
 import { estimatePriorityFee } from "./priority-fee";
+import {
+  creatorXpTokenAccount,
+  ensureXpTokenAccount,
+} from "./xp-token-account";
 
 export { getProgramId } from "./pda";
 
@@ -239,30 +238,19 @@ export async function completeLesson(
   const config = await accounts.config.fetch(configPDA);
   const xpMint = config.xpMint as PublicKey;
 
-  const learnerTokenAccount = getAssociatedTokenAddressSync(
-    xpMint,
-    learner,
-    false,
-    TOKEN_2022_PROGRAM_ID,
-    ASSOCIATED_TOKEN_PROGRAM_ID
-  );
-
-  // Ensure the learner's XP token account exists before calling completeLesson.
-  // The program constraint checks `learner_token_account.owner == spl_token_2022`,
-  // so the ATA must be initialized. The idempotent variant is a no-op if it
-  // already exists, making this safe to include unconditionally.
-  const createAtaIx = createAssociatedTokenAccountIdempotentInstruction(
-    feePayer.keypair.publicKey,
-    learnerTokenAccount,
+  // The program requires an initialized Token-2022 account
+  // (`learner_token_account.owner == spl_token_2022`). Throws
+  // XpAccountClosedError when the learner closed one the platform funded.
+  const learnerTokenAccount = await ensureXpTokenAccount(
+    getConnection(),
     learner,
     xpMint,
-    TOKEN_2022_PROGRAM_ID,
-    ASSOCIATED_TOKEN_PROGRAM_ID
+    feePayer,
+    { courseId }
   );
 
   const tx = await methods
     .completeLesson(lessonIndex)
-    .preInstructions([createAtaIx])
     .accountsPartial({
       config: configPDA,
       course: coursePDA,
@@ -326,43 +314,30 @@ export async function finalizeCourse(
   const xpMint = config.xpMint as PublicKey;
   const creator = course.creator;
 
-  const learnerTokenAccount = getAssociatedTokenAddressSync(
-    xpMint,
-    learner,
-    false,
-    TOKEN_2022_PROGRAM_ID,
-    ASSOCIATED_TOKEN_PROGRAM_ID
-  );
-
-  const creatorTokenAccount = getAssociatedTokenAddressSync(
-    xpMint,
-    creator,
-    false,
-    TOKEN_2022_PROGRAM_ID,
-    ASSOCIATED_TOKEN_PROGRAM_ID
-  );
-
-  // Ensure both token accounts exist before finalization (same owner constraint as completeLesson).
-  const createLearnerAtaIx = createAssociatedTokenAccountIdempotentInstruction(
-    feePayer.keypair.publicKey,
-    learnerTokenAccount,
+  // Both token accounts must exist (same owner constraint as completeLesson).
+  // The learner's own closed account throws XpAccountClosedError. The
+  // creator's is recreated here when missing, so it never blocks a learner.
+  const learnerTokenAccount = await ensureXpTokenAccount(
+    getConnection(),
     learner,
     xpMint,
-    TOKEN_2022_PROGRAM_ID,
-    ASSOCIATED_TOKEN_PROGRAM_ID
+    feePayer,
+    { courseId }
   );
-  const createCreatorAtaIx = createAssociatedTokenAccountIdempotentInstruction(
-    feePayer.keypair.publicKey,
-    creatorTokenAccount,
+  const creatorAccount = await creatorXpTokenAccount(
+    getConnection(),
     creator,
     xpMint,
-    TOKEN_2022_PROGRAM_ID,
-    ASSOCIATED_TOKEN_PROGRAM_ID
+    feePayer,
+    courseId
   );
+  const creatorTokenAccount = creatorAccount.account;
 
   const tx = await methods
     .finalizeCourse()
-    .preInstructions([createLearnerAtaIx, createCreatorAtaIx])
+    .preInstructions(
+      creatorAccount.createInstruction ? [creatorAccount.createInstruction] : []
+    )
     .accountsPartial({
       config: configPDA,
       course: coursePDA,
@@ -523,12 +498,11 @@ export async function awardAchievement(
   const xpMint = config.xpMint as PublicKey;
   const collection = achievementType.collection as PublicKey;
 
-  const recipientTokenAccount = getAssociatedTokenAddressSync(
-    xpMint,
+  const recipientTokenAccount = await ensureXpTokenAccount(
+    getConnection(),
     recipient,
-    false,
-    TOKEN_2022_PROGRAM_ID,
-    ASSOCIATED_TOKEN_PROGRAM_ID
+    xpMint,
+    feePayer
   );
 
   const assetKeypair = Keypair.generate();
@@ -539,21 +513,10 @@ export async function awardAchievement(
     program.programId
   );
 
-  const createRecipientAtaIx =
-    createAssociatedTokenAccountIdempotentInstruction(
-      feePayer.keypair.publicKey,
-      recipientTokenAccount,
-      recipient,
-      xpMint,
-      TOKEN_2022_PROGRAM_ID,
-      ASSOCIATED_TOKEN_PROGRAM_ID
-    );
-
   // `payer` funds the receipt and the asset: program-charged rent, so it stays
-  // on the backend signer. The sponsor pays the fee and the token account.
+  // on the backend signer. The sponsor pays the fee.
   const tx = await methods
     .awardAchievement()
-    .preInstructions([createRecipientAtaIx])
     .accountsPartial({
       config: configPDA,
       achievementType: achievementTypePDA,
@@ -748,26 +711,17 @@ async function buildRewardXpTransaction(
   const config = await accounts.config.fetch(configPDA);
   const xpMint = config.xpMint as PublicKey;
 
-  const recipientTokenAccount = getAssociatedTokenAddressSync(
-    xpMint,
-    recipient,
-    false,
-    TOKEN_2022_PROGRAM_ID,
-    ASSOCIATED_TOKEN_PROGRAM_ID
-  );
-
-  const createAtaIx = createAssociatedTokenAccountIdempotentInstruction(
-    feePayer.keypair.publicKey,
-    recipientTokenAccount,
+  // Sent on its own before this transaction is built, so the signed reward_xp
+  // bytes never carry a create.
+  const recipientTokenAccount = await ensureXpTokenAccount(
+    getConnection(),
     recipient,
     xpMint,
-    TOKEN_2022_PROGRAM_ID,
-    ASSOCIATED_TOKEN_PROGRAM_ID
+    feePayer
   );
 
   const transaction = await methods
     .rewardXp(new BN(amount), memo)
-    .preInstructions([createAtaIx])
     .accountsPartial({
       config: configPDA,
       minterRole: minterRolePDA,

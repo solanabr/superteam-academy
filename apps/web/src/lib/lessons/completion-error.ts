@@ -29,7 +29,8 @@ export type CompletionErrorKey =
   | "completionFailedEnrollment"
   | "completionFailedGeneric"
   | "completionRateLimited"
-  | "completionInProgress";
+  | "completionInProgress"
+  | "completionFailedXpAccountClosed";
 
 interface LessonShape {
   hasCodeBlock: boolean;
@@ -54,6 +55,10 @@ export function completionErrorKey(
   reason: string | undefined,
   { hasCodeBlock, hasQuizBlock }: LessonShape
 ): CompletionErrorKey {
+  // The learner's XP token account is closed and its one platform funding is
+  // used: only the learner can fix it, so say how.
+  if (reason === "xp_account_closed") return "completionFailedXpAccountClosed";
+
   // A throttle is not a failure, and must not read like one. Without this the
   // 429 fell through to the generic "something went wrong", so a whole cohort
   // sharing one NAT would see an outage and retry — each retry burning another

@@ -12,12 +12,14 @@ import { getLessonSlot } from "@/lib/courses/lesson-slot";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 import { TEST_OUT_MAX_XP } from "@/lib/courses/test-out";
+import { XpAccountClosedError } from "@/lib/solana/xp-account-errors";
 
 export type BatchCompleteErrorCode =
   | "course_not_found"
   | "enrollment_missing"
   | "xp_unavailable"
-  | "xp_cap_exceeded";
+  | "xp_cap_exceeded"
+  | "xp_account_closed";
 
 /**
  * A precondition failure the caller maps to an HTTP status. Distinct from a
@@ -219,6 +221,12 @@ export async function batchCompleteCourse(params: {
       }
       newlyCompleted++;
     } catch (err: unknown) {
+      // Every later lesson needs the same account, so stop here. Lessons that
+      // already landed stay; a re-run after the learner recreates the account
+      // completes the rest.
+      if (err instanceof XpAccountClosedError) {
+        throw new BatchCompleteError("xp_account_closed", err.message);
+      }
       // Isolate the failure: the learner passed, so partial progress is real and
       // must persist. Re-running the test-out (idempotent via the bitmap re-read)
       // retries only the lessons still unset.

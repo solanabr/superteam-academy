@@ -6,15 +6,10 @@ import bs58 from "bs58";
 import {
   findSponsorshipRows,
   reserveSponsoredEnroll,
-  supersedeSponsoredEnroll,
   type SponsorshipAction,
   type SponsorshipKey,
 } from "@/lib/platform-spend/ledger";
-import {
-  defaultSettleDeps,
-  settleRows,
-  type SettleOutcome,
-} from "@/lib/platform-spend/settle";
+import { slotState, type SlotState } from "@/lib/platform-spend/slot";
 import {
   emitServerEvent,
   type SponsorDeclineReason,
@@ -102,59 +97,17 @@ export class CourseNotOnChainError extends Error {
   }
 }
 
-/**
- * Where the once-per slot stands, from every row for this key, settled inline
- * in one pass (one signature-status lookup):
- * - used: a sponsorship landed, including an abandoned one that landed after
- *   all (`superseded_landed`), even if the cron has not seen it yet;
- * - in flight: the live attempt, or an abandoned one, is landing right now;
- * - free: nothing landed and nothing is landing. A live attempt the cluster
- *   has never seen was abandoned (a cancelled or failed signature): it is
- *   superseded so the learner can try again at once. If it lands later, the
- *   next check finds it and the slot counts as used.
- */
-async function slotState(
+/** The sponsorship slot for this action and key (see slotState). */
+async function sponsorshipSlot(
   action: SponsorshipAction,
   key: SponsorshipKey
-): Promise<"free" | "used" | "in_flight"> {
+): Promise<SlotState> {
   const rows = await findSponsorshipRows(action, key);
-  const used = (status: string) =>
-    status === "confirmed" || status === "superseded_landed";
-  if (rows.some((r) => used(r.status))) return "used";
-
-  const open = rows.filter(
-    (r) => r.status === "pending" || r.status === "superseded"
-  );
-  if (open.length === 0) return "free";
-
-  const settled = await settleRows(open, {
-    ...defaultSettleDeps(getConnection()),
-    // The settled event goes out after the response, not on the learner's
-    // request path.
-    emit: async (event) => {
-      after(() => emitServerEvent(event));
-    },
+  // The settled event goes out after the response, not on the learner's
+  // request path.
+  return slotState(rows, getConnection(), async (event) => {
+    after(() => emitServerEvent(event));
   });
-  const outcomeOf = (signature: string): SettleOutcome =>
-    settled.get(signature) ?? "pending";
-
-  if (open.some((r) => used(outcomeOf(r.signature)))) return "used";
-  // Seen on-chain but not final yet: a live or an abandoned attempt.
-  if (
-    open.some((r) => {
-      const outcome = outcomeOf(r.signature);
-      return outcome === "pending" || outcome === "superseded";
-    })
-  ) {
-    return "in_flight";
-  }
-  const abandoned = open.find(
-    (r) => r.status === "pending" && outcomeOf(r.signature) === "unseen"
-  );
-  if (abandoned && !(await supersedeSponsoredEnroll(abandoned.signature))) {
-    return "in_flight";
-  }
-  return "free";
 }
 
 export async function buildSponsoredEnrollTransaction(
@@ -193,7 +146,7 @@ export async function buildSponsoredEnrollTransaction(
     programId: programId.toBase58(),
     courseGeneration: generation,
   };
-  const slot = await slotState(action, key);
+  const slot = await sponsorshipSlot(action, key);
   if (slot === "used") return { ok: false, reason: "already_sponsored" };
   if (slot === "in_flight") return { ok: false, reason: "in_flight" };
 

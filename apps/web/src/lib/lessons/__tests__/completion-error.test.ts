@@ -72,6 +72,17 @@ describe("completionErrorKey — fallback without a reason (deploy skew)", () =>
   });
 });
 
+describe("completionErrorKey — closed XP token account", () => {
+  it("maps the reason to its own copy, whatever the status", () => {
+    expect(completionErrorKey(409, "xp_account_closed", mixed)).toBe(
+      "completionFailedXpAccountClosed"
+    );
+    expect(completionErrorKey(403, "xp_account_closed", quizOnly)).toBe(
+      "completionFailedXpAccountClosed"
+    );
+  });
+});
+
 describe("completionErrorKey — non-403 statuses", () => {
   it("429 → rate-limit notice (a throttle is not a failure)", () => {
     expect(completionErrorKey(429, undefined, mixed)).toBe(

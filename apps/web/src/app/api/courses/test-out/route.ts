@@ -342,7 +342,9 @@ export async function POST(request: NextRequest) {
       const status =
         err.code === "enrollment_missing"
           ? 403
-          : err.code === "xp_cap_exceeded" || err.code === "xp_unavailable"
+          : err.code === "xp_cap_exceeded" ||
+              err.code === "xp_unavailable" ||
+              err.code === "xp_account_closed"
             ? 409
             : 404;
       return NextResponse.json(

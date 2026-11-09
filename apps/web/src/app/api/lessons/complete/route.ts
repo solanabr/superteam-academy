@@ -20,6 +20,11 @@ import {
   getProgramId,
 } from "@/lib/solana/academy-program";
 import { fetchEnrollment, fetchCourse } from "@/lib/solana/academy-reads";
+import {
+  XP_ACCOUNT_CLOSED,
+  XpAccountClosedError,
+  XpAccountFundingInFlightError,
+} from "@/lib/solana/xp-account-errors";
 import { isLessonComplete } from "@/lib/solana/bitmap";
 import { getLessonSlot } from "@/lib/courses/lesson-slot";
 import { serverEnv } from "@/lib/env.server";
@@ -580,12 +585,39 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Execute on-chain completeLesson
-      const signature = await onChainCompleteLesson(
-        courseId,
-        walletPubkey,
-        lessonSlot
-      );
+      // Execute on-chain completeLesson. A closed XP token account the
+      // platform already funded is the learner's to recreate; a funding still
+      // in flight clears in seconds.
+      let signature: string;
+      try {
+        signature = await onChainCompleteLesson(
+          courseId,
+          walletPubkey,
+          lessonSlot
+        );
+      } catch (err) {
+        if (err instanceof XpAccountClosedError) {
+          return NextResponse.json(
+            {
+              error:
+                "Your XP token account was closed. Recreate it from your wallet, then try again.",
+              reason: XP_ACCOUNT_CLOSED,
+            },
+            { status: 409 }
+          );
+        }
+        if (err instanceof XpAccountFundingInFlightError) {
+          return NextResponse.json(
+            {
+              error:
+                "This lesson completion is already being processed. Please wait a moment and try again.",
+              reason: "completion_in_progress",
+            },
+            { status: 429, headers: { "Retry-After": "30" } }
+          );
+        }
+        throw err;
+      }
 
       // Write directly to Supabase so progress is visible on the dashboard
       // immediately, without depending on Helius webhook delivery timing.

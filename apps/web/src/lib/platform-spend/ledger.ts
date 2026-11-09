@@ -19,6 +19,8 @@ export type SpendAction =
   | "credential"
   | "achievement"
   | "xp_mint"
+  /** The platform's one funded create of a wallet's XP token account. */
+  | "xp_account_fund"
   | "admin_course_write"
   | "admin_achievement_write";
 
@@ -44,6 +46,16 @@ export interface SponsorshipKey {
   courseId: string;
   programId: string;
   courseGeneration: number;
+}
+
+/**
+ * What an XP token account funding slot is keyed on (with the cluster): the
+ * owner and the XP mint, so a wallet gets one funded create per mint, whatever
+ * course or action needed the account.
+ */
+export interface XpAccountFundKey {
+  wallet: string;
+  tokenMint: string;
 }
 
 /**
@@ -76,6 +88,8 @@ export interface PlatformTxRecord extends SpendContext {
   /** Sponsorship rows only: the rest of the once-per key. */
   programId?: string | null;
   courseGeneration?: number | null;
+  /** XP token account funding rows only: the mint of the funded account. */
+  tokenMint?: string | null;
 }
 
 /** A ledger write must never hold up the transaction it describes. */
@@ -95,6 +109,8 @@ function toRow(record: PlatformTxRecord) {
     cluster: spendCluster(),
     status: "pending" as const,
     last_valid_block_height: record.lastValidBlockHeight ?? null,
+    // Only funding rows name the column, so other writes don't depend on it.
+    ...(record.tokenMint ? { token_mint: record.tokenMint } : {}),
   };
 }
 
@@ -142,6 +158,7 @@ export async function recordPlatformTx(
   }
 }
 
+/** A ledger row that bears on a once-per slot (sponsorship or XP funding). */
 export interface SponsorshipRow {
   signature: string;
   status: SpendStatus;
@@ -193,6 +210,31 @@ export async function findSponsorshipRows(
   return (data ?? []) as SponsorshipRow[];
 }
 
+/**
+ * Every XP token account funding row for this wallet and mint that bears on
+ * its once-per slot, with the same statuses as {@link findSponsorshipRows}.
+ * Throws {@link LedgerUnavailableError} on a DB error, so the caller refuses to
+ * fund rather than skip the check.
+ */
+export async function findXpAccountFundRows(
+  key: XpAccountFundKey
+): Promise<SponsorshipRow[]> {
+  const { data, error } = await createAdminClient()
+    .from("platform_spend")
+    .select(
+      "signature, status, last_valid_block_height, created_at, payer, payer_role, action, user_id, wallet, course_id, cluster"
+    )
+    .eq("action", "xp_account_fund")
+    .eq("cluster", spendCluster())
+    .eq("token_mint", key.tokenMint)
+    .in("wallet", sponsorshipWalletKeys(key.wallet))
+    .in("status", SLOT_STATUSES)
+    .order("created_at", { ascending: true })
+    .limit(50);
+  if (error) throw new LedgerUnavailableError("read", error.message);
+  return (data ?? []) as SponsorshipRow[];
+}
+
 /** Postgres unique_violation: another live sponsorship holds the slot. */
 const UNIQUE_VIOLATION = "23505";
 
@@ -215,7 +257,53 @@ export async function reserveSponsoredEnroll(
 }
 
 /**
- * Release the slot held by a pending sponsorship the learner abandoned.
+ * Reserve the wallet's XP token account funding slot by inserting the pending
+ * row for the funding transaction, before it is broadcast. `conflict` means a
+ * live funding for this wallet and mint already exists. Any other DB error
+ * throws {@link LedgerUnavailableError}, so nothing is funded.
+ */
+export async function reserveXpAccountFund(
+  record: Omit<PlatformTxRecord, "action"> & XpAccountFundKey
+): Promise<"reserved" | "conflict"> {
+  const { error } = await createAdminClient()
+    .from("platform_spend")
+    .insert(toRow({ ...record, action: "xp_account_fund" }));
+  if (!error) return "reserved";
+  if (error.code === UNIQUE_VIOLATION) return "conflict";
+  throw new LedgerUnavailableError("reserve", error.message);
+}
+
+/**
+ * Mark a pending XP token account funding failed: the node refused its
+ * broadcast at preflight, so it never reached the cluster and its slot is
+ * free. Guarded on `pending`. Never throws: an unreleased row expires with its
+ * blockhash anyway.
+ */
+export async function failXpAccountFund(signature: string): Promise<void> {
+  try {
+    const { error } = await createAdminClient()
+      .from("platform_spend")
+      .update({ status: "failed" })
+      .eq("signature", signature)
+      .eq("action", "xp_account_fund")
+      .eq("status", "pending");
+    if (error) throw new Error(error.message);
+  } catch (err) {
+    logEvent({
+      event: "SPEND_LEDGER_001",
+      level: "error",
+      context: {
+        action: "xp_account_fund",
+        signature,
+        reason: err instanceof Error ? err.message : String(err),
+      },
+    });
+  }
+}
+
+/**
+ * Release the slot held by a pending sponsorship (or XP token account
+ * funding) that was abandoned.
  * Guarded on `pending`, so a row that settled in the meantime is left alone
  * and this returns `false`. Settlement keeps following a superseded row, so a
  * late landing is still recorded.

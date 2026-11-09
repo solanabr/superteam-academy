@@ -16,7 +16,6 @@ import "server-only";
 import { Connection, Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import {
   burn,
-  createAssociatedTokenAccountIdempotentInstruction,
   createMintToInstruction,
   getAccount,
   getAssociatedTokenAddressSync,
@@ -26,6 +25,8 @@ import { serverEnv } from "@/lib/env.server";
 import { resolveFeePayer } from "./sponsor";
 import { sendPlatformTransaction } from "./platform-tx";
 import { COMPUTE_UNIT_LIMITS } from "./compute-budget";
+import { ensureXpTokenAccount } from "./xp-token-account";
+import { XP_ACCOUNT_CLOSED, XpAccountClosedError } from "./xp-account-errors";
 
 // ---------------------------------------------------------------------------
 // Lazy-loaded singletons (initialized on first call)
@@ -86,10 +87,12 @@ export interface XpTxResult {
 /**
  * Mint Token-2022 XP tokens to a user's wallet.
  *
- * Creates the user's Associated Token Account if it doesn't exist and mints
- * `amount` XP tokens, in one transaction. The sponsor wallet pays the fee and
- * the token account rent (the mint authority on devnet without
- * `SPONSOR_SECRET`); the mint authority only signs the mint.
+ * Makes sure the user's XP token account exists (ensureXpTokenAccount, which
+ * funds it at most once per wallet), then mints `amount` XP tokens. The sponsor
+ * wallet pays the fees and that one create (the mint authority on devnet
+ * without `SPONSOR_SECRET`); the mint authority only signs the mint. A closed
+ * account the platform already funded comes back as
+ * `error: "xp_account_closed"` with nothing minted.
  *
  * This function is non-blocking for the lesson completion flow —
  * callers should fire-and-forget or await but not fail the request
@@ -112,20 +115,13 @@ export async function mintXpToWallet(
       role: "authority",
     }));
 
-    const ata = getAssociatedTokenAddressSync(
-      _xpMint,
+    const ata = await ensureXpTokenAccount(
+      _connection,
       recipient,
-      false,
-      TOKEN_2022_PROGRAM_ID
+      _xpMint,
+      feePayer
     );
     const tx = new Transaction().add(
-      createAssociatedTokenAccountIdempotentInstruction(
-        feePayer.keypair.publicKey,
-        ata,
-        recipient,
-        _xpMint,
-        TOKEN_2022_PROGRAM_ID
-      ),
       createMintToInstruction(
         _xpMint,
         ata,
@@ -145,6 +141,9 @@ export async function mintXpToWallet(
 
     return { success: true, signature, amount };
   } catch (err: unknown) {
+    if (err instanceof XpAccountClosedError) {
+      return { success: false, error: XP_ACCOUNT_CLOSED };
+    }
     const message = err instanceof Error ? err.message : String(err);
     console.error(
       `[xp-mint] Failed to mint ${amount} XP to ${walletAddress}: ${message}`
