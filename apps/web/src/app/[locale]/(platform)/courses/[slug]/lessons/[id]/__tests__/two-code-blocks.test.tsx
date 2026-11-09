@@ -832,47 +832,27 @@ describe("a change of signed-in learner with the lesson open", () => {
     return { fetchMock, view };
   }
 
-  const carriesA = (fetchMock: FetchMock) =>
-    completionCalls(fetchMock).some(([, init]) =>
-      String(init.body).includes("A's part one")
-    );
+  // The page reloads instead of carrying A's held part into B's session; with
+  // the reload stubbed, what matters is that it's asked for and nothing posts.
+  it.each([
+    ["signs out", null],
+    ["gives way to another learner", "user-2"],
+  ])(
+    "reloads before anyone can submit with A's part when A %s",
+    async (_label, next) => {
+      const reload = vi.fn();
+      Object.defineProperty(window, "location", {
+        value: { ...window.location, reload },
+        writable: true,
+      });
+      const { fetchMock, view } = await aSubmitsPartOne();
 
-  it("doesn't carry a submitted part over to the next learner", async () => {
-    const { fetchMock, view } = await aSubmitsPartOne();
+      becomes(view, next);
 
-    becomes(view, "user-2");
-    await flushAuthRead();
-    submit(PART_TWO);
-
-    await screen.findByText(/Submit part 1 to complete this lesson/);
-    expect(completionCalls(fetchMock)).toHaveLength(0);
-
-    submit(PART_ONE);
-    await waitFor(() => expect(completionCalls(fetchMock)).toHaveLength(1));
-    expect(postedProofs(fetchMock)).toEqual({
-      first: { code: PART_ONE },
-      second: { code: PART_TWO },
-    });
-  });
-
-  it("doesn't bank a signed-in learner's part for whoever signs in next", async () => {
-    const { fetchMock, view } = await aSubmitsPartOne();
-
-    becomes(view, null);
-    await flushAuthRead();
-    submit(PART_TWO);
-    await screen.findByText(/Submit part 1 to complete this lesson/);
-    submit(PART_ONE);
-    fireEvent.click(await screen.findByRole("button", { name: "Enroll Now" }));
-    await screen.findByTestId("claim-modal");
-
-    expect(carriesA(fetchMock)).toBe(false);
-    expect(readBank()).toHaveLength(1);
-    expect(readBank()[0]!.proofs).toEqual({
-      first: { code: PART_ONE },
-      second: { code: PART_TWO },
-    });
-  });
+      expect(reload).toHaveBeenCalledTimes(1);
+      expect(completionCalls(fetchMock)).toHaveLength(0);
+    }
+  );
 });
 
 describe("a lesson with one code block stays as it was", () => {

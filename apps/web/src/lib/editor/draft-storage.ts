@@ -3,11 +3,17 @@
  * user has their own drafts and signed-out use has one set of its own, so a
  * second account on a shared browser never opens or runs the first one's code.
  *
- * Drafts saved before the key named its owner sit on the lesson-only key. The
- * first signed-in user to open that lesson takes it, once, and it is deleted;
- * signed-out use leaves it where it is. Most of those drafts belong to the one
- * learner who uses the browser, and this keeps them without letting more than
- * one account ever see a given one.
+ * A signed-in user who opens a lesson part with no draft of their own takes
+ * one over, once: it moves to their key and the source is deleted, so no other
+ * account ever sees it. Signed-out use takes nothing over.
+ * - The signed-out draft comes first. It is the newer of the two, and it is
+ *   usually what this learner did just before signing in, which reloads the
+ *   page.
+ * - Otherwise the lesson-only key, where every draft was saved before keys
+ *   named an owner. Most of those belong to the one learner who uses the
+ *   browser.
+ * A user who already has a draft keeps it, and both sources stay where they
+ * are.
  *
  * Every access is wrapped: localStorage can be missing or throw.
  */
@@ -35,34 +41,47 @@ function get(key: string): string | null {
   }
 }
 
+/** The key a user with no draft of their own would take over, if any. */
+function claimableKey(
+  lessonId: string,
+  scope: string | undefined,
+  userId: UserId
+): string | null {
+  if (!userId || get(draftKey(lessonId, scope, userId)) !== null) return null;
+  for (const key of [
+    draftKey(lessonId, scope, null),
+    legacyKey(lessonId, scope),
+  ]) {
+    if (get(key) !== null) return key;
+  }
+  return null;
+}
+
 /** The draft to show, or null for the starter. Writes nothing. */
 export function readDraft(
   lessonId: string,
   scope: string | undefined,
   userId: UserId
 ): string | null {
-  const own = get(draftKey(lessonId, scope, userId));
-  if (own !== null) return own || null;
-  return userId ? get(legacyKey(lessonId, scope)) || null : null;
+  const source =
+    claimableKey(lessonId, scope, userId) ?? draftKey(lessonId, scope, userId);
+  return get(source) || null;
 }
 
-/** As readDraft, and moves a legacy draft to this user's key. */
+/** As readDraft, and moves a draft taken over to this user's key. */
 export function restoreDraft(
   lessonId: string,
   scope: string | undefined,
   userId: UserId
 ): string | null {
   const draft = readDraft(lessonId, scope, userId);
-  const key = draftKey(lessonId, scope, userId);
-  if (userId && get(key) === null) {
-    const legacy = get(legacyKey(lessonId, scope));
-    if (legacy !== null) {
-      try {
-        localStorage.setItem(key, legacy);
-        localStorage.removeItem(legacyKey(lessonId, scope));
-      } catch {
-        // Left in place; the next open tries again.
-      }
+  const source = claimableKey(lessonId, scope, userId);
+  if (source !== null) {
+    try {
+      localStorage.setItem(draftKey(lessonId, scope, userId), get(source)!);
+      localStorage.removeItem(source);
+    } catch {
+      // Left in place; the next open tries again.
     }
   }
   return draft;

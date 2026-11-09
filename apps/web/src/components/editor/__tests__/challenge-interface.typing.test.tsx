@@ -191,6 +191,24 @@ describe("a restored draft", () => {
     removeItem.mockRestore();
   });
 
+  it("is the signed-out draft for a user with none, without moving it yet", () => {
+    window.localStorage.setItem(`${KEY}::second@anon`, "// tried signed out");
+    const setItem = vi.spyOn(Storage.prototype, "setItem");
+    const removeItem = vi.spyOn(Storage.prototype, "removeItem");
+
+    renderInterface({
+      userId: "user-1",
+      blockKey: "second",
+      codePart: part(2),
+    });
+
+    expect(runCode()).toBe("// tried signed out");
+    expect(setItem).not.toHaveBeenCalled();
+    expect(removeItem).not.toHaveBeenCalled();
+    setItem.mockRestore();
+    removeItem.mockRestore();
+  });
+
   it("isn't another user's draft", () => {
     window.localStorage.setItem(`${KEY}@user:user-1`, "// theirs");
     window.localStorage.setItem(KEY, "// saved before");

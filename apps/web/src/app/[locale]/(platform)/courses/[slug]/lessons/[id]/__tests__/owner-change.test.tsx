@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 // The signed-in learner can change while a lesson stays open: a sign-out or a
 // different sign-in in another tab reaches this one with no reload. These run
-// the real lesson page, ChallengeInterface and CodeEditor over a fake Monaco.
+// the real lesson page, ChallengeInterface and CodeEditor over a fake Monaco,
+// with the page reload stubbed.
 import {
   describe,
   it,
@@ -39,6 +40,7 @@ const h = vi.hoisted(() => ({
   },
   mounts: [] as FakeEditor[],
   getCode: null as (() => string) | null,
+  reload: vi.fn(),
 }));
 
 // Mounts itself the way Monaco does once loaded, and reports keystrokes
@@ -140,7 +142,6 @@ vi.mock("@/components/editor/challenge-runner", () => ({
 }));
 
 const STARTER = "// starter";
-const KEY = "superteam-lms-code-lesson-1";
 const lesson = {
   _id: "lesson-1",
   title: "One rung",
@@ -190,11 +191,6 @@ async function open(userId: string | null) {
   };
 }
 
-function typeAndSave(next: string) {
-  act(() => screenNow().type(next));
-  act(() => vi.advanceTimersByTime(1500));
-}
-
 // Load the editor chunk once up front: its first import is slow on a busy
 // machine and isn't what these tests measure.
 beforeAll(async () => {
@@ -228,6 +224,12 @@ beforeEach(() => {
   localStorage.clear();
   h.mounts = [];
   h.getCode = null;
+  h.reload.mockReset();
+  h.auth.isLoading = false;
+  Object.defineProperty(window, "location", {
+    value: { ...window.location, reload: h.reload },
+    writable: true,
+  });
   vi.stubGlobal(
     "fetch",
     vi.fn(() => Promise.resolve({ ok: false }))
@@ -241,79 +243,40 @@ afterEach(() => {
 });
 
 describe("a change of signed-in learner while the lesson is open", () => {
-  it("opens the next owner's draft and never saves the last one's code", async () => {
-    localStorage.setItem(`${KEY}@user:user-a`, "// A's work");
-    localStorage.setItem(`${KEY}@user:user-b`, "// B's older draft");
+  it("reloads when the signed-in learner signs out", async () => {
     const page = await open("user-a");
-    expect(screenNow().value).toBe("// A's work");
-    vi.useFakeTimers();
-
-    // Signed out in another tab.
     page.as(null);
-    expect(screenNow().value).toBe(STARTER);
-    expect(h.getCode?.()).toBe(STARTER);
-    typeAndSave(`${STARTER}\n// signed out`);
-    expect(localStorage.getItem(`${KEY}@anon`)).toBe(
-      `${STARTER}\n// signed out`
-    );
-
-    // B signs in in another tab. Work done signed out stays on screen.
-    page.as("user-b");
-    expect(screenNow().value).toBe(`${STARTER}\n// signed out`);
-    typeAndSave(`${STARTER}\n// signed out\n// B`);
-
-    // Straight from B to A and back.
-    page.as("user-a");
-    expect(screenNow().value).toBe("// A's work");
-    page.as("user-b");
-    expect(screenNow().value).toBe(`${STARTER}\n// signed out\n// B`);
-    expect(h.getCode?.()).toBe(`${STARTER}\n// signed out\n// B`);
-
-    expect(localStorage.getItem(`${KEY}@user:user-a`)).toBe("// A's work");
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i)!;
-      if (!key.endsWith("@user:user-a")) {
-        expect(localStorage.getItem(key)).not.toContain("A's work");
-      }
-    }
+    expect(h.reload).toHaveBeenCalledTimes(1);
   });
 
-  it("gives A's draft back when A signs out and in again without typing", async () => {
-    localStorage.setItem(`${KEY}@user:user-a`, "// A's work");
+  it("reloads when another learner signs in", async () => {
     const page = await open("user-a");
-    vi.useFakeTimers();
-
-    page.as(null);
-    expect(screenNow().value).toBe(STARTER);
-    page.as("user-a");
-
-    expect(screenNow().value).toBe("// A's work");
-    typeAndSave("// A's work\n// more");
-    expect(localStorage.getItem(`${KEY}@user:user-a`)).toBe(
-      "// A's work\n// more"
-    );
-  });
-
-  it("opens the user's draft when a signed-out visitor who typed nothing signs in", async () => {
-    localStorage.setItem(`${KEY}@user:user-a`, "// A's work");
-    const page = await open(null);
-    expect(screenNow().value).toBe(STARTER);
-
-    page.as("user-a");
-
-    expect(screenNow().value).toBe("// A's work");
-    expect(h.getCode?.()).toBe("// A's work");
+    page.as("user-b");
+    expect(h.reload).toHaveBeenCalledTimes(1);
   });
 
   it("keeps a signed-out learner's code on screen when they sign in", async () => {
     const page = await open(null);
     act(() => screenNow().type("// passing work"));
-    const before = h.mounts.length;
 
     page.as("user-a");
 
-    expect(h.mounts).toHaveLength(before);
+    expect(h.reload).not.toHaveBeenCalled();
+    expect(h.mounts).toHaveLength(1);
     expect(screenNow().value).toBe("// passing work");
     expect(h.getCode?.()).toBe("// passing work");
+  });
+
+  it("doesn't reload when sign-in first resolves, or for the same learner", async () => {
+    h.auth.isLoading = true;
+    h.auth.userId = null;
+    const view = render(ui());
+    h.auth.isLoading = false;
+    h.auth.userId = "user-a";
+    view.rerender(ui());
+    await waitFor(() => expect(h.mounts).toHaveLength(1), { timeout: 15_000 });
+    view.rerender(ui());
+
+    expect(h.reload).not.toHaveBeenCalled();
   });
 });

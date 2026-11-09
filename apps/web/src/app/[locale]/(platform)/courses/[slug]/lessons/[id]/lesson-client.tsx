@@ -217,45 +217,7 @@ async function completeLessonAPI(
   return res.json() as Promise<CompletionResponse>;
 }
 
-/**
- * The lesson page for whoever is signed in. Almost everything it holds belongs
- * to that learner: drafts, submitted parts and quiz answers, completion and
- * enrolment, the last build. A sign-out or another sign-in in a second tab
- * reaches this tab without a reload, so when a signed-in learner gives way to
- * anyone else the page starts over for the next one.
- *
- * Signing in from signed out keeps the page if the learner worked on it while
- * signed out, so that work can still be submitted; otherwise it starts over
- * and opens the learner's own drafts.
- */
-export function LessonPageClient(props: LessonPageClientProps) {
-  const { userId, isLoading } = useAuth();
-  // undefined until sign-in first resolves; that first answer is not a change.
-  const [owner, setOwner] = useState<string | null | undefined>(
-    isLoading ? undefined : userId
-  );
-  const [session, setSession] = useState(0);
-  const [workedSignedOut, setWorkedSignedOut] = useState(false);
-  if (!isLoading && userId !== owner) {
-    setOwner(userId);
-    setWorkedSignedOut(false);
-    const keep = owner === undefined || (owner === null && workedSignedOut);
-    if (!keep) setSession((n) => n + 1);
-  }
-
-  // A completion banked for this lesson belongs to whoever banked it.
-  const { courseId, lesson } = props;
-  useEffect(() => {
-    if (session > 0) removeBanked(courseId, lesson._id);
-  }, [session, courseId, lesson._id]);
-
-  const onSignedOutWork = useCallback(() => setWorkedSignedOut(true), []);
-  return (
-    <LessonPage key={session} {...props} onSignedOutWork={onSignedOutWork} />
-  );
-}
-
-function LessonPage({
+export function LessonPageClient({
   lesson,
   allLessons,
   skills = [],
@@ -270,8 +232,7 @@ function LessonPage({
   hrefBase,
   readOnly = false,
   videoEmbeds,
-  onSignedOutWork,
-}: LessonPageClientProps & { onSignedOutWork: () => void }) {
+}: LessonPageClientProps) {
   // Live catalogue unless a caller overrides it (#831 teacher preview).
   const linkBase = hrefBase ?? `/${locale}/courses`;
   const t = useTranslations("lesson");
@@ -281,20 +242,24 @@ function LessonPage({
 
   const { userId, profile: authProfile, isLoading: authLoading } = useAuth();
 
+  // A sign-out or another sign-in in a second tab reaches this one without a
+  // reload; every auth change made in this tab ends in a page load. So when the
+  // signed-in learner gives way, reload: their code, held parts, answers and
+  // build don't stay on a page that now belongs to someone else. Signing in
+  // from signed out keeps the page, so work done signed out can be submitted.
+  const ownerRef = useRef<string | null | undefined>(undefined);
+  useEffect(() => {
+    if (authLoading) return;
+    const previous = ownerRef.current;
+    ownerRef.current = userId;
+    if (previous && previous !== userId) window.location.reload();
+  }, [authLoading, userId]);
+
   const [isCompleted, setIsCompleted] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
   // `isCompleting` can't stop a second submit in the same commit: two editors
   // waiting at the enroll prompt both fire when enrolment lands.
   const completionInFlightRef = useRef(false);
-  // A completion still in flight when the page starts over for another learner
-  // must not report into the new page.
-  const liveRef = useRef(true);
-  useEffect(() => {
-    liveRef.current = true;
-    return () => {
-      liveRef.current = false;
-    };
-  }, []);
   // Whether the sign-in prompt may say the learner's work is saved.
   const [claimWorkBanked, setClaimWorkBanked] = useState(false);
   const [completionError, setCompletionError] = useState<string | null>(null);
@@ -597,7 +562,6 @@ function LessonPage({
         });
       }
     } catch (err) {
-      if (!liveRef.current) return;
       setIsCompleting(false);
       // The route's `reason` discriminator picks the copy — a failed quiz no
       // longer reads as a broken enrollment (#564). 429 stays a throttle
@@ -983,11 +947,6 @@ function LessonPage({
             // here was the only reason the two screens disagreed.
             "space-y-6"
       }`}
-      // Signed-out work on this page keeps it when the learner then signs in.
-      onKeyDownCapture={userId ? undefined : onSignedOutWork}
-      onInputCapture={userId ? undefined : onSignedOutWork}
-      onChangeCapture={userId ? undefined : onSignedOutWork}
-      onPasteCapture={userId ? undefined : onSignedOutWork}
     >
       <CourseLanguageNotice
         sourceLocale={courseSourceLocale}

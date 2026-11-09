@@ -193,14 +193,17 @@ describe("CodeEditor autosave storage", () => {
       );
     });
 
-    it("keeps signed-out work apart from a user's", () => {
+    it("keeps signed-out work apart from a user's own draft", () => {
+      window.localStorage.setItem(keyFor("user:user-a"), "// a's work");
       renderScoped();
       mountFakeEditor();
       typeInto("// signed out");
       cleanup();
 
       renderScoped(undefined, "user-a");
-      expect(mountFakeEditor().instance.setValue).not.toHaveBeenCalled();
+      expect(mountFakeEditor().instance.setValue).toHaveBeenCalledWith(
+        "// a's work"
+      );
       cleanup();
 
       renderScoped();
@@ -220,6 +223,61 @@ describe("CodeEditor autosave storage", () => {
       expect(window.localStorage.getItem(keyFor("user:user-a", "second"))).toBe(
         "// a, part two"
       );
+    });
+  });
+
+  describe("a draft saved while signed out", () => {
+    it("goes to a user who signs in with no draft of their own", () => {
+      window.localStorage.setItem(keyFor("anon"), "// tried it signed out");
+
+      renderScoped(undefined, "user-a");
+      expect(mountFakeEditor().instance.setValue).toHaveBeenCalledWith(
+        "// tried it signed out"
+      );
+      expect(window.localStorage.getItem(keyFor("anon"))).toBeNull();
+      expect(window.localStorage.getItem(keyFor("user:user-a"))).toBe(
+        "// tried it signed out"
+      );
+      cleanup();
+
+      renderScoped(undefined, "user-b");
+      expect(mountFakeEditor().instance.setValue).not.toHaveBeenCalled();
+    });
+
+    it("moves with its part", () => {
+      window.localStorage.setItem(keyFor("anon", "second"), "// part two");
+
+      renderScoped("second", "user-a");
+      expect(mountFakeEditor().instance.setValue).toHaveBeenCalledWith(
+        "// part two"
+      );
+      expect(window.localStorage.getItem(keyFor("anon", "second"))).toBeNull();
+    });
+
+    it("never replaces a user's own draft", () => {
+      window.localStorage.setItem(keyFor("anon"), "// signed out");
+      window.localStorage.setItem(keyFor("user:user-a"), "// a's work");
+
+      renderScoped(undefined, "user-a");
+      expect(mountFakeEditor().instance.setValue).toHaveBeenCalledWith(
+        "// a's work"
+      );
+      expect(window.localStorage.getItem(keyFor("anon"))).toBe("// signed out");
+      expect(window.localStorage.getItem(keyFor("user:user-a"))).toBe(
+        "// a's work"
+      );
+    });
+
+    it("comes before a draft saved before drafts were per user", () => {
+      window.localStorage.setItem(keyFor("anon"), "// signed out");
+      window.localStorage.setItem(LEGACY_KEY, "// saved before");
+
+      renderScoped(undefined, "user-a");
+      expect(mountFakeEditor().instance.setValue).toHaveBeenCalledWith(
+        "// signed out"
+      );
+      expect(window.localStorage.getItem(keyFor("anon"))).toBeNull();
+      expect(window.localStorage.getItem(LEGACY_KEY)).toBe("// saved before");
     });
   });
 
