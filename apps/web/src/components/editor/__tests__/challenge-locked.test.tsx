@@ -148,7 +148,7 @@ describe("ChallengeRunner run button when complete", () => {
     return render(
       <NextIntlClientProvider locale="en" messages={messages}>
         <ChallengeRunner
-          code={ACCEPTED_CODE}
+          getCode={() => ACCEPTED_CODE}
           tests={tests}
           language="rust"
           onResult={onResult as (r: ExecutionResult) => void}

@@ -78,6 +78,10 @@ export interface BlockContext {
   sectionsSlot?: ReactNode;
   /** Set on each code block of a lesson that has several. */
   codePart?: CodePart;
+  /** The signed-in learner, or null. A code editor opens this user's drafts. */
+  userId?: string | null;
+  /** Sign-in is still resolving, so a code editor can't know whose drafts to open. */
+  authPending?: boolean;
   /**
    * Server-side YouTube embeddability verdicts, keyed by video block key
    * (`lib/video/embeddability`). A key whose verdict is `embeddable: false`

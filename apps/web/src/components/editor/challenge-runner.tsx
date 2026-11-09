@@ -968,7 +968,7 @@ async function runBuildChallenge(
 // ---------------------------------------------------------------------------
 
 export function ChallengeRunner({
-  code,
+  getCode,
   tests,
   language,
   buildType,
@@ -1002,6 +1002,7 @@ export function ChallengeRunner({
     // Guarded here as well as on the button, so a programmatic click (the
     // attempt-gate nudge focuses this ref) can't re-enter either.
     if (isComplete) return;
+    const code = getCode();
     setIsRunning(true);
 
     // Use setTimeout to allow UI to update before executing
@@ -1061,7 +1062,7 @@ export function ChallengeRunner({
         setIsRunning(false);
       }
     }, 50);
-  }, [code, tests, language, buildType, starter, onResult, isComplete, t]);
+  }, [getCode, tests, language, buildType, starter, onResult, isComplete, t]);
 
   const showSubmit =
     allPassed && !isComplete && !isJudging && (!isDeployable || deployComplete);

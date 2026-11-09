@@ -96,13 +96,17 @@ afterEach(() => {
 });
 
 describe("CodeEditor autosave storage", () => {
+  // The lesson-only key every draft used before drafts were kept per user.
   const LEGACY_KEY = "superteam-lms-code-lesson-test";
+  const keyFor = (owner: string, scope?: string) =>
+    `${LEGACY_KEY}${scope ? `::${scope}` : ""}@${owner}`;
 
-  function renderScoped(storageScope?: string) {
+  function renderScoped(storageScope?: string, userId: string | null = null) {
     return render(
       <NextIntlClientProvider locale="en" messages={messages}>
         <CodeEditor
           lessonId="lesson-test"
+          userId={userId}
           initialCode="const a = 1;"
           language="typescript"
           storageScope={storageScope}
@@ -128,16 +132,14 @@ describe("CodeEditor autosave storage", () => {
     });
   }
 
-  it("keeps a single-block lesson on the lesson-only key", () => {
-    window.localStorage.setItem(LEGACY_KEY, "// saved before this change");
+  it("keeps a single-block lesson's key unscoped", () => {
+    window.localStorage.setItem(keyFor("anon"), "// saved earlier");
     renderScoped();
     const fake = mountFakeEditor();
-    expect(fake.instance.setValue).toHaveBeenCalledWith(
-      "// saved before this change"
-    );
+    expect(fake.instance.setValue).toHaveBeenCalledWith("// saved earlier");
 
     typeInto("// new work");
-    expect(window.localStorage.getItem(LEGACY_KEY)).toBe("// new work");
+    expect(window.localStorage.getItem(keyFor("anon"))).toBe("// new work");
     expect(window.localStorage.length).toBe(1);
   });
 
@@ -156,15 +158,124 @@ describe("CodeEditor autosave storage", () => {
     renderScoped("first");
     const first = mountFakeEditor();
     expect(first.instance.setValue).toHaveBeenCalledWith("// first");
-    expect(window.localStorage.getItem(LEGACY_KEY)).toBeNull();
+    expect(window.localStorage.getItem(keyFor("anon"))).toBeNull();
     expect(window.localStorage.length).toBe(2);
   });
 
   it("doesn't load the lesson-only key into a scoped editor", () => {
     window.localStorage.setItem(LEGACY_KEY, "// whichever editor saved last");
-    renderScoped("first");
+    renderScoped("first", "user-a");
     const fake = mountFakeEditor();
     expect(fake.instance.setValue).not.toHaveBeenCalled();
+    expect(window.localStorage.getItem(LEGACY_KEY)).toBe(
+      "// whichever editor saved last"
+    );
+  });
+
+  describe("per user", () => {
+    it("never opens another user's draft", () => {
+      renderScoped(undefined, "user-a");
+      mountFakeEditor();
+      typeInto("// a's work");
+      cleanup();
+
+      renderScoped(undefined, "user-b");
+      const b = mountFakeEditor();
+      expect(b.instance.setValue).not.toHaveBeenCalled();
+      typeInto("// b's work");
+      cleanup();
+
+      renderScoped(undefined, "user-a");
+      const a = mountFakeEditor();
+      expect(a.instance.setValue).toHaveBeenCalledWith("// a's work");
+      expect(window.localStorage.getItem(keyFor("user:user-b"))).toBe(
+        "// b's work"
+      );
+    });
+
+    it("keeps signed-out work apart from a user's", () => {
+      renderScoped();
+      mountFakeEditor();
+      typeInto("// signed out");
+      cleanup();
+
+      renderScoped(undefined, "user-a");
+      expect(mountFakeEditor().instance.setValue).not.toHaveBeenCalled();
+      cleanup();
+
+      renderScoped();
+      expect(mountFakeEditor().instance.setValue).toHaveBeenCalledWith(
+        "// signed out"
+      );
+    });
+
+    it("keeps each part of a lesson apart per user", () => {
+      renderScoped("second", "user-a");
+      mountFakeEditor();
+      typeInto("// a, part two");
+      cleanup();
+
+      renderScoped("second", "user-b");
+      expect(mountFakeEditor().instance.setValue).not.toHaveBeenCalled();
+      expect(window.localStorage.getItem(keyFor("user:user-a", "second"))).toBe(
+        "// a, part two"
+      );
+    });
+  });
+
+  describe("a draft saved before drafts were per user", () => {
+    it("goes to the first user to open the lesson, once", () => {
+      window.localStorage.setItem(LEGACY_KEY, "// saved before");
+
+      renderScoped(undefined, "user-a");
+      expect(mountFakeEditor().instance.setValue).toHaveBeenCalledWith(
+        "// saved before"
+      );
+      expect(window.localStorage.getItem(LEGACY_KEY)).toBeNull();
+      expect(window.localStorage.getItem(keyFor("user:user-a"))).toBe(
+        "// saved before"
+      );
+      cleanup();
+
+      renderScoped(undefined, "user-b");
+      expect(mountFakeEditor().instance.setValue).not.toHaveBeenCalled();
+    });
+
+    it("moves with its part", () => {
+      window.localStorage.setItem(`${LEGACY_KEY}::second`, "// part two");
+
+      renderScoped("second", "user-a");
+      expect(mountFakeEditor().instance.setValue).toHaveBeenCalledWith(
+        "// part two"
+      );
+      expect(window.localStorage.getItem(`${LEGACY_KEY}::second`)).toBeNull();
+      expect(window.localStorage.getItem(keyFor("user:user-a", "second"))).toBe(
+        "// part two"
+      );
+    });
+
+    it("stays where it is while signed out", () => {
+      window.localStorage.setItem(LEGACY_KEY, "// saved before");
+
+      renderScoped();
+      expect(mountFakeEditor().instance.setValue).not.toHaveBeenCalled();
+      typeInto("// signed out");
+
+      expect(window.localStorage.getItem(LEGACY_KEY)).toBe("// saved before");
+    });
+
+    it("doesn't replace a draft the user already has", () => {
+      window.localStorage.setItem(LEGACY_KEY, "// saved before");
+      window.localStorage.setItem(keyFor("user:user-a"), "// newer");
+
+      renderScoped(undefined, "user-a");
+      expect(mountFakeEditor().instance.setValue).toHaveBeenCalledWith(
+        "// newer"
+      );
+      expect(window.localStorage.getItem(keyFor("user:user-a"))).toBe(
+        "// newer"
+      );
+    });
   });
 
   describe("reporting a restored draft", () => {
@@ -186,8 +297,8 @@ describe("CodeEditor autosave storage", () => {
     }
 
     it("reports each part's own draft", () => {
-      window.localStorage.setItem(`${LEGACY_KEY}::first`, "// first");
-      window.localStorage.setItem(`${LEGACY_KEY}::second`, "// second");
+      window.localStorage.setItem(keyFor("anon", "first"), "// first");
+      window.localStorage.setItem(keyFor("anon", "second"), "// second");
 
       expect(mountWith("lesson-test", "first").mock.calls).toEqual([
         ["// first"],
@@ -198,13 +309,13 @@ describe("CodeEditor autosave storage", () => {
     });
 
     it("doesn't report another lesson's draft", () => {
-      window.localStorage.setItem(LEGACY_KEY, "// other lesson");
+      window.localStorage.setItem(keyFor("anon"), "// other lesson");
 
       expect(mountWith("lesson-other")).not.toHaveBeenCalled();
     });
 
     it("doesn't report the lesson-only key to a scoped part", () => {
-      window.localStorage.setItem(LEGACY_KEY, "// whichever saved last");
+      window.localStorage.setItem(keyFor("anon"), "// whichever saved last");
 
       expect(mountWith("lesson-test", "first")).not.toHaveBeenCalled();
     });
@@ -214,7 +325,7 @@ describe("CodeEditor autosave storage", () => {
     });
 
     it("doesn't rewrite the saved draft", () => {
-      window.localStorage.setItem(LEGACY_KEY, "// saved");
+      window.localStorage.setItem(keyFor("anon"), "// saved");
       const setItem = vi.spyOn(Storage.prototype, "setItem");
 
       mountWith("lesson-test");
@@ -225,22 +336,31 @@ describe("CodeEditor autosave storage", () => {
     });
   });
 
-  it("resets only the scope it's given", () => {
-    renderScoped("first");
+  it("resets only the scope and user it's given", () => {
+    renderScoped("first", "user-a");
     mountFakeEditor();
     typeInto("// first");
     cleanup();
-    renderScoped("second");
+    renderScoped("second", "user-a");
     mountFakeEditor();
     typeInto("// second");
-    window.localStorage.setItem(LEGACY_KEY, "// legacy");
+    cleanup();
+    renderScoped("second", "user-b");
+    mountFakeEditor();
+    typeInto("// b's second");
 
-    resetEditorStorage("lesson-test", "second");
-    expect(window.localStorage.length).toBe(2);
-    expect(window.localStorage.getItem(LEGACY_KEY)).toBe("// legacy");
+    resetEditorStorage("lesson-test", "second", "user-a");
+    expect(window.localStorage.getItem(keyFor("user:user-a", "second"))).toBe(
+      null
+    );
+    expect(window.localStorage.getItem(keyFor("user:user-a", "first"))).toBe(
+      "// first"
+    );
+    expect(window.localStorage.getItem(keyFor("user:user-b", "second"))).toBe(
+      "// b's second"
+    );
 
-    resetEditorStorage("lesson-test");
-    expect(window.localStorage.getItem(LEGACY_KEY)).toBeNull();
+    resetEditorStorage("lesson-test", "first", "user-a");
     expect(window.localStorage.length).toBe(1);
   });
 });

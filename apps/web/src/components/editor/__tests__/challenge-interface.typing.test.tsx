@@ -15,13 +15,23 @@ import { NextIntlClientProvider } from "next-intl";
 import type { EditorProps, Monaco } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
 import messages from "@/messages/en.json";
+import {
+  LESSON_COMPLETE_EVENT,
+  onLessonEvent,
+} from "@/lib/lessons/lesson-events";
 import { ChallengeInterface } from "../challenge-interface";
+import type { CodePart } from "../types";
 
 const h = vi.hoisted(() => ({
   editorProps: null as unknown,
   onApply: null as ((proposed: string) => void) | null,
-  runnerCode: null as string | null,
+  aiGetCode: null as (() => string) | null,
+  runnerGetCode: null as (() => string) | null,
+  onSubmit: null as (() => void) | null,
 }));
+
+/** The code Run would get if it were clicked now. */
+const runCode = () => h.runnerGetCode?.();
 
 vi.mock("@monaco-editor/react", () => ({
   __esModule: true,
@@ -36,19 +46,25 @@ vi.mock("next-themes", () => ({
 }));
 vi.mock("../output-panel", () => ({ OutputPanel: () => null }));
 vi.mock("../challenge-runner", () => ({
-  ChallengeRunner: (props: { code: string }) => {
-    h.runnerCode = props.code;
+  ChallengeRunner: (props: { getCode: () => string; onSubmit: () => void }) => {
+    h.runnerGetCode = props.getCode;
+    h.onSubmit = props.onSubmit;
     return null;
   },
 }));
 vi.mock("../ai-partner/ai-partner-pane", () => ({
-  AiPartnerPane: (props: { onApply: (proposed: string) => void }) => {
+  AiPartnerPane: (props: {
+    onApply: (proposed: string) => void;
+    getCode: () => string;
+  }) => {
     h.onApply = props.onApply;
+    h.aiGetCode = props.getCode;
     return null;
   },
 }));
 
 const STARTER = "// starter";
+const KEY = "superteam-lms-code-lesson-1";
 
 /**
  * A Monaco that reports content changes the way the real one does. The wrapper
@@ -88,11 +104,16 @@ function mountEditor() {
   return { model, setValue, keystroke };
 }
 
-function renderInterface() {
+function renderInterface(
+  opts: { userId?: string | null; blockKey?: string; codePart?: CodePart } = {}
+) {
   render(
     <NextIntlClientProvider locale="en" messages={messages}>
       <ChallengeInterface
         lessonId="lesson-1"
+        userId={opts.userId}
+        blockKey={opts.blockKey}
+        codePart={opts.codePart}
         courseId="course-1"
         courseSlug="course"
         lessonSlug="lesson"
@@ -110,27 +131,116 @@ beforeEach(() => {
   window.localStorage.clear();
   h.editorProps = null;
   h.onApply = null;
-  h.runnerCode = null;
+  h.aiGetCode = null;
+  h.runnerGetCode = null;
+  h.onSubmit = null;
 });
 
 afterEach(cleanup);
 
+function part(number: number): CodePart {
+  return {
+    number,
+    total: 2,
+    otherParts: [3 - number],
+    pendingParts: [3 - number],
+    submitted: false,
+    onSubmittedCodeEdited: () => {},
+    onJumpToPart: () => {},
+  };
+}
+
 describe("a restored draft", () => {
   it("is the code Run gets, before any edit", () => {
-    window.localStorage.setItem("superteam-lms-code-lesson-1", "// my draft");
+    window.localStorage.setItem(`${KEY}@anon`, "// my draft");
     renderInterface();
-    expect(h.runnerCode).toBe(STARTER);
-
     mountEditor();
 
-    expect(h.runnerCode).toBe("// my draft");
+    expect(runCode()).toBe("// my draft");
+  });
+
+  it("is the code Run gets before the editor has loaded", () => {
+    window.localStorage.setItem(`${KEY}@user:user-1`, "// my draft");
+    renderInterface({ userId: "user-1" });
+
+    expect(runCode()).toBe("// my draft");
+  });
+
+  it("gives each part of a lesson its own draft before the editor loads", () => {
+    window.localStorage.setItem(`${KEY}::first@anon`, "// first");
+    window.localStorage.setItem(`${KEY}::second@anon`, "// second");
+
+    renderInterface({ blockKey: "first", codePart: part(1) });
+    expect(runCode()).toBe("// first");
+    cleanup();
+    renderInterface({ blockKey: "second", codePart: part(2) });
+    expect(runCode()).toBe("// second");
+  });
+
+  it("is a draft saved before drafts were per user, without moving it yet", () => {
+    window.localStorage.setItem(KEY, "// saved before");
+    const setItem = vi.spyOn(Storage.prototype, "setItem");
+    const removeItem = vi.spyOn(Storage.prototype, "removeItem");
+
+    renderInterface({ userId: "user-1" });
+
+    expect(runCode()).toBe("// saved before");
+    expect(setItem).not.toHaveBeenCalled();
+    expect(removeItem).not.toHaveBeenCalled();
+    setItem.mockRestore();
+    removeItem.mockRestore();
+  });
+
+  it("isn't another user's draft", () => {
+    window.localStorage.setItem(`${KEY}@user:user-1`, "// theirs");
+    window.localStorage.setItem(KEY, "// saved before");
+
+    renderInterface({ userId: "user-2" });
+    expect(runCode()).toBe("// saved before");
+    cleanup();
+    renderInterface();
+    expect(runCode()).toBe(STARTER);
   });
 
   it("leaves Run on the starter when nothing was saved", () => {
     renderInterface();
+    expect(runCode()).toBe(STARTER);
     mountEditor();
 
-    expect(h.runnerCode).toBe(STARTER);
+    expect(runCode()).toBe(STARTER);
+  });
+});
+
+describe("code read when the learner acts", () => {
+  // The editor holds text React hasn't committed yet.
+  function typeAhead() {
+    renderInterface();
+    const { model, keystroke } = mountEditor();
+    act(() => keystroke("// committed"));
+    model.value = "// typed, not committed";
+  }
+
+  it("Run gets what's in the editor", () => {
+    typeAhead();
+    expect(runCode()).toBe("// typed, not committed");
+  });
+
+  it("Submit sends what's in the editor", () => {
+    const submitted: (string | undefined)[] = [];
+    const off = onLessonEvent(LESSON_COMPLETE_EVENT, (d) =>
+      submitted.push(d.submittedCode)
+    );
+    typeAhead();
+
+    act(() => h.onSubmit?.());
+
+    off();
+    expect(submitted).toEqual(["// typed, not committed"]);
+  });
+
+  it("the AI Partner reads what's in the editor", () => {
+    typeAhead();
+    expect(h.aiGetCode?.()).toBe("// typed, not committed");
   });
 });
 
@@ -150,7 +260,7 @@ describe("typing ahead of a React commit", () => {
 
     act(() => keystroke("abc"));
     expect(model.value).toBe("abc");
-    expect(h.runnerCode).toBe("abc");
+    expect(runCode()).toBe("abc");
   });
 });
 
@@ -163,11 +273,11 @@ describe("code replaced from outside the editor", () => {
     fireEvent.click(screen.getByLabelText("Reset Code"));
 
     expect(model.value).toBe(STARTER);
-    expect(h.runnerCode).toBe(STARTER);
+    expect(runCode()).toBe(STARTER);
   });
 
   it("Reset clears a restored draft the learner hasn't edited", () => {
-    window.localStorage.setItem("superteam-lms-code-lesson-1", "// my draft");
+    window.localStorage.setItem(`${KEY}@anon`, "// my draft");
     renderInterface();
     const { model } = mountEditor();
     expect(model.value).toBe("// my draft");
@@ -185,7 +295,7 @@ describe("code replaced from outside the editor", () => {
 
     expect(setValue).toHaveBeenCalledWith("// proposed");
     expect(model.value).toBe("// proposed");
-    expect(h.runnerCode).toBe("// proposed");
+    expect(runCode()).toBe("// proposed");
   });
 
   it("leaves the editor alone when the code already matches", () => {

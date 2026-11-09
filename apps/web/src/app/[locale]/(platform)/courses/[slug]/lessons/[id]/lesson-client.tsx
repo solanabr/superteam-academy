@@ -704,6 +704,8 @@ export function LessonPageClient({
       resetBuild,
       canSubmit: gateReady,
       videoEmbeds,
+      userId,
+      authPending: authLoading,
     }),
     [
       lesson,
@@ -726,6 +728,8 @@ export function LessonPageClient({
       resetBuild,
       gateReady,
       videoEmbeds,
+      userId,
+      authLoading,
     ]
   );
 
