@@ -5,31 +5,51 @@ import { MODEL_RATES } from "@/lib/ai/models";
 import type { GeminiModel, ModelRates } from "@/lib/ai/models";
 
 // AI tutor spend ledger (#591). The AI Partner spends a Superteam-sponsored
-// Gemini key; `challenge_assists` counts turns, not cost. This module gates and
-// records the ACTUAL micro-USD spend against per-account, per-IP, and global
-// daily ceilings (America/Sao_Paulo days), enforced by the ai_spend_ledger
-// RPCs. It fails CLOSED: any check error denies (503), never waves traffic
-// through unmetered on the platform-funded key — the assist-budget contract
+// Gemini key; `challenge_assists` counts turns, not cost. This module books the
+// micro-USD spend against per-account, per-IP and global daily ceilings
+// (America/Sao_Paulo days), plus a shared pool for low-trust accounts, through
+// the ai_spend_ledger RPCs.
+//
+// Each billed call is reserve → model call → settle. `reserveAiSpend` holds the
+// call's worst-case cost against every hard cap in one SQL transaction before
+// the model runs; `settleAiSpend` replaces the hold with the actual cost after;
+// `releaseAiSpend` returns the hold of a call that was never billed. Reserving
+// fails CLOSED: any ledger error denies (503), the assist-budget contract
 // (#590), the opposite of check_rate_limit's fail-open.
 
 const MICRO_PER_USD = 1_000_000;
 
 /**
- * The route's spend decision for a single request, chosen BEFORE the model call
- * from today's accumulated spend:
- *   - "full"     — under every soft cap; serve at the normal output budget.
- *   - "degraded" — at/over a soft cap; serve with a shorter output budget.
- *   - "denied"   — at/over a hard cap, OR the ledger was unreachable (fail
- *                  closed). The route 503s; no assist is spent.
+ * The ledger's decision for one request, made by reserve_ai_spend:
+ *   - "full"     — under every soft cap and the full-budget worst case fits;
+ *                  serve at the normal output budget.
+ *   - "degraded" — over a soft cap, or only the shorter budget's worst case
+ *                  fits; serve with the shorter output budget.
+ *   - "denied"   — neither fits under the hard caps, OR the ledger was
+ *                  unreachable (fail closed). Nothing is held.
  */
 export type SpendDecision = "full" | "degraded" | "denied";
 
 export type SpendDenyReason = "spend_cap" | "ledger_unavailable";
 
-export interface SpendGate {
-  decision: SpendDecision;
-  reason?: SpendDenyReason;
+/**
+ * A hold booked by `reserveAiSpend`. Pass it back unchanged to
+ * `settleAiSpend` or `releaseAiSpend`: the settle applies to the same buckets
+ * (including the newcomer pool when `lowTrust`) on the same `spendDay`.
+ */
+export interface SpendReservation {
+  userId: string;
+  ip: string;
+  /** America/Sao_Paulo day the hold was booked on, `YYYY-MM-DD`. */
+  spendDay: string;
+  /** Decided in SQL: no completed lesson, or a profile under 24 hours old. */
+  lowTrust: boolean;
+  reservedMicroUsd: number;
 }
+
+export type SpendGate =
+  | { decision: "full" | "degraded"; reservation: SpendReservation }
+  | { decision: "denied"; reason: SpendDenyReason };
 
 interface SpendCapsMicroUsd {
   accountSoft: number;
@@ -38,6 +58,8 @@ interface SpendCapsMicroUsd {
   ipHard: number;
   globalSoft: number;
   globalHard: number;
+  newcomerSoft: number;
+  newcomerHard: number;
 }
 
 // Pricing is PER MODEL (#868): the route bills different models per action, so
@@ -77,6 +99,12 @@ function capsMicroUsd(): SpendCapsMicroUsd {
     ipHard: Math.round(serverEnv.AI_SPEND_IP_HARD_USD * MICRO_PER_USD),
     globalSoft: Math.round(serverEnv.AI_SPEND_GLOBAL_SOFT_USD * MICRO_PER_USD),
     globalHard: Math.round(serverEnv.AI_SPEND_GLOBAL_HARD_USD * MICRO_PER_USD),
+    newcomerSoft: Math.round(
+      serverEnv.AI_SPEND_NEWCOMER_SOFT_USD * MICRO_PER_USD
+    ),
+    newcomerHard: Math.round(
+      serverEnv.AI_SPEND_NEWCOMER_HARD_USD * MICRO_PER_USD
+    ),
   };
 }
 
@@ -156,78 +184,147 @@ export function degradedMaxTokens(base: number): number {
 }
 
 /**
- * Read today's accumulated spend across all three dimensions and pick a tier.
- * FAIL CLOSED: an RPC error, a missing row, or a non-numeric total all deny with
- * `ledger_unavailable` — the ledger going dark must never wave unmetered traffic
- * through onto the sponsor's card.
+ * The most one generation can cost: the whole prompt at the uncached input rate
+ * and the whole output budget at the output rate (thinking tokens draw from the
+ * same budget). What `reserveAiSpend` holds before the call.
  */
-export async function checkAiSpend(
+export function worstCaseMicroUsd(
+  model: GeminiModel,
+  promptTokens: number,
+  outputTokens: number
+): number {
+  return estimateSpendMicroUsd(
+    { promptTokenCount: promptTokens, candidatesTokenCount: outputTokens },
+    ratesFor(model)
+  );
+}
+
+/**
+ * An upper bound on the input tokens a request body can be billed for: its
+ * UTF-8 byte length. Every token covers at least one byte of the text it
+ * encodes, and the serialized body also carries the response schema and
+ * config, which only adds to the count.
+ */
+export function inputTokenBound(body: string): number {
+  return Buffer.byteLength(body, "utf8");
+}
+
+const DECISIONS: ReadonlySet<string> = new Set(["full", "degraded", "denied"]);
+
+/**
+ * Hold this request's worst-case cost before the model call. The caller passes
+ * the worst case at the full and at the degraded output budget; the SQL picks
+ * the tier, checks it fits under every hard cap (and the newcomer pool for a
+ * low-trust account) and books it, all in one transaction.
+ *
+ * FAIL CLOSED: an RPC error, a missing row or a malformed row all deny with
+ * `ledger_unavailable` — the ledger going dark must never wave unmetered
+ * traffic through onto the sponsor's card.
+ */
+export async function reserveAiSpend(
   userId: string,
-  ip: string
+  ip: string,
+  amounts: { fullMicroUsd: number; degradedMicroUsd: number }
 ): Promise<SpendGate> {
   const caps = capsMicroUsd();
+  const unavailable: SpendGate = {
+    decision: "denied",
+    reason: "ledger_unavailable",
+  };
   try {
-    const { data, error } = await createAdminClient().rpc("check_ai_spend", {
+    const { data, error } = await createAdminClient().rpc("reserve_ai_spend", {
       p_user_id: userId,
       p_ip: ip,
+      p_full_micro_usd: amounts.fullMicroUsd,
+      p_degraded_micro_usd: amounts.degradedMicroUsd,
+      p_account_soft: caps.accountSoft,
+      p_account_hard: caps.accountHard,
+      p_ip_soft: caps.ipSoft,
+      p_ip_hard: caps.ipHard,
+      p_global_soft: caps.globalSoft,
+      p_global_hard: caps.globalHard,
+      p_newcomer_soft: caps.newcomerSoft,
+      p_newcomer_hard: caps.newcomerHard,
     });
     const row = Array.isArray(data) ? data[0] : data;
     if (error || !row) {
       console.warn(
-        "[spend-ledger] check failed, denying:",
+        "[spend-ledger] reserve failed, denying:",
         error?.message ?? JSON.stringify(data)
       );
-      return { decision: "denied", reason: "ledger_unavailable" };
+      return unavailable;
     }
     // BIGINT can arrive as a string from PostgREST; coerce and re-validate.
-    const account = Number(row.account_micro_usd);
-    const perIp = Number(row.ip_micro_usd);
-    const global = Number(row.global_micro_usd);
-    if (![account, perIp, global].every(Number.isFinite)) {
-      console.warn("[spend-ledger] non-numeric totals, denying:", row);
-      return { decision: "denied", reason: "ledger_unavailable" };
-    }
-
+    const reserved = Number(row.reserved_micro_usd);
     if (
-      account >= caps.accountHard ||
-      perIp >= caps.ipHard ||
-      global >= caps.globalHard
+      typeof row.decision !== "string" ||
+      !DECISIONS.has(row.decision) ||
+      !Number.isFinite(reserved) ||
+      reserved < 0 ||
+      typeof row.reserved_day !== "string" ||
+      typeof row.low_trust !== "boolean"
     ) {
+      console.warn("[spend-ledger] malformed reserve row, denying:", row);
+      return unavailable;
+    }
+    if (row.decision === "denied") {
       return { decision: "denied", reason: "spend_cap" };
     }
-    if (
-      account >= caps.accountSoft ||
-      perIp >= caps.ipSoft ||
-      global >= caps.globalSoft
-    ) {
-      return { decision: "degraded" };
-    }
-    return { decision: "full" };
+    return {
+      decision: row.decision as "full" | "degraded",
+      reservation: {
+        userId,
+        ip,
+        spendDay: row.reserved_day,
+        lowTrust: row.low_trust,
+        reservedMicroUsd: reserved,
+      },
+    };
   } catch (err) {
-    console.warn("[spend-ledger] check threw, denying:", err);
-    return { decision: "denied", reason: "ledger_unavailable" };
+    console.warn("[spend-ledger] reserve threw, denying:", err);
+    return unavailable;
+  }
+}
+
+async function settle(
+  reservation: SpendReservation,
+  actualMicroUsd: number,
+  billed: boolean
+): Promise<void> {
+  try {
+    const { error } = await createAdminClient().rpc("settle_ai_spend", {
+      p_user_id: reservation.userId,
+      p_ip: reservation.ip,
+      p_spend_day: reservation.spendDay,
+      p_low_trust: reservation.lowTrust,
+      p_reserved_micro_usd: reservation.reservedMicroUsd,
+      p_actual_micro_usd: actualMicroUsd,
+      p_billed: billed,
+    });
+    if (error) {
+      console.warn("[spend-ledger] settle failed:", error.message);
+    }
+  } catch (err) {
+    console.warn("[spend-ledger] settle threw:", err);
   }
 }
 
 /**
- * Record the actual micro-USD cost of a billed generation into all three daily
- * buckets, priced at the ROUTED MODEL's rates (#868) — the caller passes the
- * model it actually called, so a flash-lite Socratic turn is not billed at
- * 3.6-flash prices (or vice versa). Best-effort: called only after Gemini has billed us, on the paid
- * path, and must never break the reply the learner is owed, so it never throws.
- * A recording failure loses one data point of audit, not correctness — the CAP
- * is enforced by `checkAiSpend`, which fails closed on its own.
+ * Replace a hold with the actual micro-USD cost of the billed generation,
+ * priced at the ROUTED MODEL's rates (#868) — the caller passes the model it
+ * actually called. Never throws: it runs after Gemini has billed us and must
+ * not break the reply the learner is owed. If it fails, the hold stays booked
+ * at its worst case, which over-counts rather than under-counts.
  *
  * `fallback` books a CONSERVATIVE estimate when `usage` is absent or measures
  * zero — a billed call whose 200 body was non-JSON, or that carried no
- * usageMetadata, still cost tokens, and booking $0 would silently under-report
- * true key burn (#724). Pass the caller's own worst-case shape (its full output
- * budget + a generous input estimate); it is used ONLY when the metered estimate
- * is zero, so a normal metered call is unaffected.
+ * usageMetadata, still cost tokens, and booking $0 would under-report true key
+ * burn (#724). Pass the caller's own worst-case shape (its full output budget +
+ * a generous input estimate); it is used ONLY when the metered estimate is
+ * zero, so a normal metered call is unaffected.
  */
-export async function recordAiSpend(
-  userId: string,
-  ip: string,
+export async function settleAiSpend(
+  reservation: SpendReservation,
   model: GeminiModel,
   usage: GeminiUsageMetadata | undefined,
   fallback?: { promptTokens: number; outputTokens: number }
@@ -243,18 +340,18 @@ export async function recordAiSpend(
       r
     );
   }
-  try {
-    const { error } = await createAdminClient().rpc("record_ai_spend", {
-      p_user_id: userId,
-      p_ip: ip,
-      p_micro_usd: microUsd,
-    });
-    if (error) {
-      console.warn("[spend-ledger] record failed:", error.message);
-    }
-  } catch (err) {
-    console.warn("[spend-ledger] record threw:", err);
-  }
+  await settle(reservation, microUsd, true);
+}
+
+/**
+ * Return the whole hold of a call Gemini never billed (a non-2xx, a throw
+ * before the response, or a request that stopped before the model call). Counts
+ * no request. Never throws; if it fails, the hold stays booked.
+ */
+export async function releaseAiSpend(
+  reservation: SpendReservation
+): Promise<void> {
+  await settle(reservation, 0, false);
 }
 
 /**

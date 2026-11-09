@@ -91,11 +91,43 @@ export const SCHEMA_EXPECTATIONS: readonly SchemaExpectation[] = [
   },
   {
     kind: "rpc",
-    rpc: "check_ai_spend",
-    args: { p_user_id: NIL_UUID, p_ip: "" },
-    migration: "20260726180000_ai_spend_ledger.sql",
+    // Writes if it ever runs, so the args are inert as well: a hard cap of 0
+    // makes the body raise before it touches the ledger.
+    rpc: "reserve_ai_spend",
+    args: {
+      p_user_id: NIL_UUID,
+      p_ip: "",
+      p_full_micro_usd: 0,
+      p_degraded_micro_usd: 0,
+      p_account_soft: 0,
+      p_account_hard: 0,
+      p_ip_soft: 0,
+      p_ip_hard: 0,
+      p_global_soft: 0,
+      p_global_hard: 0,
+      p_newcomer_soft: 0,
+      p_newcomer_hard: 0,
+    },
+    migration: "20261108120000_ai_spend_newcomer_pool.sql",
     description:
-      "AI-tutor spend ceiling (#720) — a missing fn fails the tutor closed",
+      "AI-tutor spend hold before every model call — reserveAiSpend fails closed, so a missing fn denies every AI tutor turn",
+  },
+  {
+    kind: "rpc",
+    // A zero hold settled to zero, not billed: moves nothing and counts nothing.
+    rpc: "settle_ai_spend",
+    args: {
+      p_user_id: NIL_UUID,
+      p_ip: "",
+      p_spend_day: "1970-01-01",
+      p_low_trust: false,
+      p_reserved_micro_usd: 0,
+      p_actual_micro_usd: 0,
+      p_billed: false,
+    },
+    migration: "20261108120000_ai_spend_newcomer_pool.sql",
+    description:
+      "AI-tutor spend settle after every model call — without it every hold stays at its worst case and the caps fill early",
   },
   {
     kind: "column",

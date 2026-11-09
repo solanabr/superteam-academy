@@ -4,9 +4,12 @@ import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 import { serverEnv } from "@/lib/env.server";
 import {
-  checkAiSpend,
-  recordAiSpend,
+  reserveAiSpend,
+  settleAiSpend,
+  releaseAiSpend,
   degradedMaxTokens,
+  worstCaseMicroUsd,
+  inputTokenBound,
 } from "@/lib/ai/spend-ledger";
 import type { GeminiUsageMetadata } from "@/lib/ai/spend-ledger";
 import {
@@ -28,12 +31,13 @@ import {
 // fired in prod. Still requires GEMINI_API_KEY; unset key keeps it dark.
 // When live, this reply spends the
 // SAME sponsored GEMINI_API_KEY as the AI Partner, so — per #724 — it now runs
-// UNDER the #591 spend ledger: the same fail-closed checkAiSpend gate and
-// recordAiSpend booking (account + IP + global caps), and a fail-CLOSED reply
-// limiter. A denied reply is skipped, not 503'd — the seal still ships. This
-// helper deliberately does NOT touch the assist-budget ledger
-// (spendAssist/refundAssist): the reflection reply is not a code-challenge
-// assist and must not draw from that per-lesson quota.
+// UNDER the #591 spend ledger: the same fail-closed reserveAiSpend hold and
+// settleAiSpend booking (account + IP + global caps, and the newcomer pool for
+// a low-trust account), and a fail-CLOSED reply limiter. A denied reply is
+// skipped, not 503'd — the seal still ships. This helper deliberately does NOT
+// touch the assist-budget ledger (spendAssist/refundAssist): the reflection
+// reply is not a code-challenge assist and must not draw from that per-lesson
+// quota.
 
 // Model: routed, not pinned (#868). This reply is the textbook cheap-tier case
 // — ONE unstructured note, hard-capped at 512 output tokens, best-effort, and
@@ -48,12 +52,35 @@ import {
 // to spend the whole budget on the visible response.
 const MAX_OUTPUT_TOKENS = 512;
 
-// Conservative input-token estimate for the spend-ledger fallback (#724) when a
-// billed 200 carries no usageMetadata. The prompt is the block prompt + the
-// learner reflection (≤10k chars, ~2.5k tokens); round up so an unmeasurable
-// billed call reads as more spend, not less. Used only when the metered estimate
-// is zero.
-const SPEND_FALLBACK_PROMPT_TOKENS = 3_000;
+// The generateContent body for one reply. The spend ledger prices its input side
+// at the body's byte length (inputTokenBound), an upper bound on billed tokens.
+function replyBody(
+  prompt: string,
+  reflection: string,
+  maxOutputTokens: number
+): string {
+  return JSON.stringify({
+    contents: [
+      {
+        role: "user",
+        parts: [
+          {
+            text:
+              "You are a supportive Solana instructor giving brief, encouraging feedback " +
+              "on a learner's written reflection. Two or three sentences, no code. Do not grade.\n\n" +
+              `Prompt: ${prompt}\n\nLearner reflection: ${reflection}`,
+          },
+        ],
+      },
+    ],
+    generationConfig: {
+      temperature: 0.4,
+      maxOutputTokens,
+      // 3.x floor — the 2.5-era `thinkingBudget: 0` 400s (see models.ts).
+      thinkingConfig: MINIMAL_THINKING_CONFIG,
+    },
+  });
+}
 
 // The Gemini generateContent envelope, narrowed to the fields this helper reads.
 // Typed (not `any`) so the defensive parse below stays type-safe.
@@ -115,19 +142,34 @@ export async function maybeGenerateReflectionReply({
   }
 
   // Daily SPEND gate (#724): this reply spends the same sponsored key as the AI
-  // Partner, so it sits under the SAME #591 ledger — account + IP + global caps.
-  // checkAiSpend fails closed on its own (a ledger outage returns "denied"), so a
-  // denied decision — hard cap OR ledger down — SKIPS the reply and the seal
-  // still ships (degrade never blocks, AIE-21). Over a soft cap, degrade to a
-  // shorter reply rather than skipping.
-  let outputTokens = MAX_OUTPUT_TOKENS;
-  const gate = await checkAiSpend(userId, ip);
-  if (gate.decision === "denied") return null;
-  if (gate.decision === "degraded") {
-    outputTokens = degradedMaxTokens(MAX_OUTPUT_TOKENS);
-  }
-
+  // Partner, so it sits under the SAME #591 ledger. reserveAiSpend holds the
+  // reply's worst case before the call and fails closed on its own (a ledger
+  // outage returns "denied"), so a denied decision — hard cap OR ledger down —
+  // SKIPS the reply and the seal still ships (degrade never blocks, AIE-21).
+  // Over a soft cap, degrade to a shorter reply rather than skipping.
   const model = modelForReflectionReply();
+  const fullBody = replyBody(prompt, reflection, MAX_OUTPUT_TOKENS);
+  const degradedTokens = degradedMaxTokens(MAX_OUTPUT_TOKENS);
+  const degradedBody = replyBody(prompt, reflection, degradedTokens);
+  const gate = await reserveAiSpend(userId, ip, {
+    fullMicroUsd: worstCaseMicroUsd(
+      model,
+      inputTokenBound(fullBody),
+      MAX_OUTPUT_TOKENS
+    ),
+    degradedMicroUsd: worstCaseMicroUsd(
+      model,
+      inputTokenBound(degradedBody),
+      degradedTokens
+    ),
+  });
+  if (gate.decision === "denied") return null;
+  const { reservation } = gate;
+  const body = gate.decision === "degraded" ? degradedBody : fullBody;
+
+  // Whether Gemini billed this call: true once it answered 2xx. A call that
+  // never got that far returns its hold.
+  let billed = false;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REPLY_TIMEOUT_MS);
   try {
@@ -135,27 +177,7 @@ export async function maybeGenerateReflectionReply({
       method: "POST",
       headers: geminiHeaders(apiKey),
       signal: controller.signal,
-      body: JSON.stringify({
-        contents: [
-          {
-            role: "user",
-            parts: [
-              {
-                text:
-                  "You are a supportive Solana instructor giving brief, encouraging feedback " +
-                  "on a learner's written reflection. Two or three sentences, no code. Do not grade.\n\n" +
-                  `Prompt: ${prompt}\n\nLearner reflection: ${reflection}`,
-              },
-            ],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.4,
-          maxOutputTokens: outputTokens,
-          // 3.x floor — the 2.5-era `thinkingBudget: 0` 400s (see models.ts).
-          thinkingConfig: MINIMAL_THINKING_CONFIG,
-        },
-      }),
+      body,
     });
 
     if (!response.ok) {
@@ -173,21 +195,24 @@ export async function maybeGenerateReflectionReply({
         error: new Error(`Gemini reply HTTP ${response.status}`),
         context: { model, detail },
       });
+      // Last, so a throw above releases once, in the catch.
+      await releaseAiSpend(reservation);
       return null;
     }
 
     // Billed past here (2xx). Parse DEFENSIVELY so a non-JSON 200 can't throw
-    // past the spend booking, then record the cost on the SAME ledger — with a
-    // conservative fallback when usageMetadata is absent, so a billed reply is
-    // never under-reported (#724). Best-effort: recordAiSpend never throws.
+    // past the spend booking, then settle the hold to the cost on the SAME
+    // ledger — with a conservative fallback when usageMetadata is absent, so a
+    // billed reply is never under-reported (#724). settleAiSpend never throws.
+    billed = true;
     let data: ReflectionEnvelope | undefined;
     try {
       data = (await response.json()) as ReflectionEnvelope;
     } catch {
       data = undefined;
     }
-    await recordAiSpend(userId, ip, model, data?.usageMetadata, {
-      promptTokens: SPEND_FALLBACK_PROMPT_TOKENS,
+    await settleAiSpend(reservation, model, data?.usageMetadata, {
+      promptTokens: inputTokenBound(body),
       outputTokens: MAX_OUTPUT_TOKENS,
     });
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -196,6 +221,7 @@ export async function maybeGenerateReflectionReply({
       : null;
   } catch {
     // Includes the AbortError thrown when the timeout fires.
+    if (!billed) await releaseAiSpend(reservation);
     return null;
   } finally {
     clearTimeout(timeout);
