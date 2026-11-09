@@ -242,17 +242,33 @@ export function LessonPageClient({
 
   const { userId, profile: authProfile, isLoading: authLoading } = useAuth();
 
-  // A sign-out or another sign-in in a second tab reaches this one without a
-  // reload; every auth change made in this tab ends in a page load. So when the
-  // signed-in learner gives way, reload: their code, held parts, answers and
-  // build don't stay on a page that now belongs to someone else. Signing in
-  // from signed out keeps the page, so work done signed out can be submitted.
+  // A sign-out or sign-in in a second tab reaches this one without a reload;
+  // every auth change made in this tab ends in a page load. Reload here too, so
+  // the page always belongs to whoever is signed in: the last learner's code,
+  // held parts, answers and build don't stay, and the new one's own drafts
+  // open. Work typed signed out is in the signed-out draft, which a user with
+  // no draft of their own takes over (lib/editor/draft-storage).
+  //
+  // The tab that signed out hears its own change too, after it has started
+  // navigating away, and a reload then would cancel that navigation.
+  // `beforeunload` fires as a navigation starts, so a tab that left in the last
+  // few seconds is left to finish.
   const ownerRef = useRef<string | null | undefined>(undefined);
+  const leftAtRef = useRef(0);
+  useEffect(() => {
+    const leaving = () => {
+      leftAtRef.current = Date.now();
+    };
+    window.addEventListener("beforeunload", leaving);
+    return () => window.removeEventListener("beforeunload", leaving);
+  }, []);
   useEffect(() => {
     if (authLoading) return;
     const previous = ownerRef.current;
     ownerRef.current = userId;
-    if (previous && previous !== userId) window.location.reload();
+    if (previous === undefined || previous === userId) return;
+    if (Date.now() - leftAtRef.current < 5000) return;
+    window.location.reload();
   }, [authLoading, userId]);
 
   const [isCompleted, setIsCompleted] = useState(false);

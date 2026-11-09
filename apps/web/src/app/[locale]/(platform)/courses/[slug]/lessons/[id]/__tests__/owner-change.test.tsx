@@ -13,13 +13,7 @@ import {
   afterEach,
 } from "vitest";
 import { useEffect, useRef } from "react";
-import {
-  render,
-  act,
-  cleanup,
-  fireEvent,
-  waitFor,
-} from "@testing-library/react";
+import { render, cleanup, fireEvent, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import type { EditorProps, Monaco } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
@@ -177,8 +171,6 @@ function ui() {
   );
 }
 
-const screenNow = () => h.mounts.at(-1)!;
-
 async function open(userId: string | null) {
   h.auth.userId = userId;
   const view = render(ui());
@@ -255,16 +247,18 @@ describe("a change of signed-in learner while the lesson is open", () => {
     expect(h.reload).toHaveBeenCalledTimes(1);
   });
 
-  it("keeps a signed-out learner's code on screen when they sign in", async () => {
-    const page = await open(null);
-    act(() => screenNow().type("// passing work"));
-
-    page.as("user-a");
-
+  it("leaves a tab alone that is already leaving, as after its own sign-out", async () => {
+    const page = await open("user-a");
+    // The menu's sign-out navigates away before the auth change renders here.
+    window.dispatchEvent(new Event("beforeunload"));
+    page.as(null);
     expect(h.reload).not.toHaveBeenCalled();
-    expect(h.mounts).toHaveLength(1);
-    expect(screenNow().value).toBe("// passing work");
-    expect(h.getCode?.()).toBe("// passing work");
+  });
+
+  it("reloads when a learner signs in from another tab, so their own draft opens", async () => {
+    const page = await open(null);
+    page.as("user-a");
+    expect(h.reload).toHaveBeenCalledTimes(1);
   });
 
   it("doesn't reload when sign-in first resolves, or for the same learner", async () => {
