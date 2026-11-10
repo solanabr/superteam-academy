@@ -25,14 +25,15 @@ describe("resolvePublicProfileByWallet", () => {
       username: "alice",
       avatar_url: "https://example.com/a.png",
       bio: "Rust developer",
-      social_links: { twitter: "alice_dev" },
+      social_links: { github: "alice" },
+      x_username: "alice_dev",
     });
 
     const profile = await resolvePublicProfileByWallet(client, WALLET);
 
     expect(from).toHaveBeenCalledWith("public_profiles");
     expect(select).toHaveBeenCalledWith(
-      "username, display_name, verified, verified_kind, avatar_url, bio, social_links"
+      "username, display_name, verified, verified_kind, avatar_url, bio, social_links, x_username"
     );
     expect(eq).toHaveBeenCalledWith("wallet_address", WALLET);
     expect(profile).toEqual({
@@ -42,7 +43,8 @@ describe("resolvePublicProfileByWallet", () => {
       verifiedKind: null,
       avatarUrl: "https://example.com/a.png",
       bio: "Rust developer",
-      socialLinks: { twitter: "alice_dev" },
+      socialLinks: { github: "alice" },
+      xUsername: "alice_dev",
     });
   });
 
@@ -70,6 +72,7 @@ describe("resolvePublicProfileByWallet", () => {
       avatarUrl: null,
       bio: null,
       socialLinks: null,
+      xUsername: null,
     });
   });
 });

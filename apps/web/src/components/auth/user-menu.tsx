@@ -133,14 +133,12 @@ export function UserMenu({
             <AvatarFallback className="text-sm">{initials}</AvatarFallback>
           </Avatar>
 
-          {/* Wallet address — right side of pill */}
-          {truncatedWallet && (
-            <div className="hidden items-center pl-1.5 pr-3 sm:flex lg:hidden min-[1400px]:flex">
-              <span className="font-mono text-xs font-medium text-text-2">
-                {truncatedWallet}
-              </span>
-            </div>
-          )}
+          {/* Account name — right side of pill. The wallet is in the menu. */}
+          <div className="hidden min-w-0 items-center pl-1.5 pr-3 sm:flex lg:hidden min-[1400px]:flex">
+            <span className="max-w-[160px] truncate font-display text-[13px] font-bold text-text-2">
+              {username}
+            </span>
+          </div>
         </button>
       </DropdownMenuTrigger>
 
