@@ -37,7 +37,8 @@ describe("InstructorCard — resolved public profile", () => {
           verifiedKind: null,
           avatarUrl: "https://example.com/a.png",
           bio: "Rust developer",
-          socialLinks: { twitter: "alice_dev", github: "alice" },
+          socialLinks: { github: "alice" },
+          xUsername: null,
         }}
       />
     );
@@ -45,10 +46,6 @@ describe("InstructorCard — resolved public profile", () => {
     const nameLink = screen.getByRole("link", { name: "alice" });
     expect(nameLink).toHaveAttribute("href", "/en/profile/alice");
     expect(screen.getByText("Rust developer")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /X$/ })).toHaveAttribute(
-      "href",
-      "https://x.com/alice_dev"
-    );
     expect(screen.getByRole("link", { name: /GitHub/ })).toHaveAttribute(
       "href",
       "https://github.com/alice"
@@ -68,6 +65,7 @@ describe("InstructorCard — resolved public profile", () => {
           avatarUrl: null,
           bio: null,
           socialLinks: null,
+          xUsername: null,
         }}
       />
     );
@@ -87,6 +85,7 @@ describe("InstructorCard — teacher identity (#997)", () => {
     avatarUrl: null,
     bio: null,
     socialLinks: null,
+    xUsername: null as string | null,
   };
 
   it("shows the admin-set display name instead of the generated username", () => {
@@ -137,5 +136,48 @@ describe("InstructorCard — teacher identity (#997)", () => {
   it("shows NO badge for an unverified teacher", () => {
     renderWithIntl(<InstructorCard creatorWallet={WALLET} profile={base} />);
     expect(screen.queryByRole("img", { name: /verified/i })).toBeNull();
+  });
+});
+
+describe("InstructorCard — linked X account", () => {
+  const base = {
+    username: "brave-anchor-9000",
+    displayName: "Ana Souza" as string | null,
+    verified: true,
+    verifiedKind: null,
+    avatarUrl: null,
+    bio: null,
+    socialLinks: null,
+    xUsername: null as string | null,
+  };
+
+  it("puts an X link to the linked handle next to the verified badge", () => {
+    renderWithIntl(
+      <InstructorCard
+        creatorWallet={WALLET}
+        profile={{ ...base, xUsername: "ana_dev" }}
+      />
+    );
+
+    const xLink = screen.getByRole("link", { name: "@ana_dev on X" });
+    expect(xLink).toHaveAttribute("href", "https://x.com/ana_dev");
+    expect(xLink).toHaveAttribute("target", "_blank");
+    // Same line as the name and badge, not down in the socials row.
+    const badge = screen.getByRole("img", { name: /verified teacher/i });
+    expect(badge.parentElement).toBe(xLink.parentElement);
+  });
+
+  it("shows no X link without a linked account, even with a typed handle", () => {
+    renderWithIntl(
+      <InstructorCard
+        creatorWallet={WALLET}
+        profile={{ ...base, socialLinks: { twitter: "someone_else" } }}
+      />
+    );
+
+    expect(screen.queryByRole("link", { name: /on X/ })).toBeNull();
+    expect(
+      screen.queryByRole("link", { name: /someone_else/ })
+    ).not.toBeInTheDocument();
   });
 });

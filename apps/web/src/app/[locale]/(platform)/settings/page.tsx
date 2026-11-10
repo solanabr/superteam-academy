@@ -15,10 +15,10 @@ import { DangerTab } from "./_components/danger-tab";
 interface ProfileData {
   username: string;
   bio: string;
-  twitter: string;
   github: string;
   discord: string;
   nameRerollsUsed: number;
+  xUsername: string | null;
 }
 
 const VALID_TABS = ["profile", "account", "privacy", "danger"] as const;
@@ -46,10 +46,10 @@ export default function SettingsPage() {
   const [profileData, setProfileData] = useState<ProfileData>({
     username: "",
     bio: "",
-    twitter: "",
     github: "",
     discord: "",
     nameRerollsUsed: 0,
+    xUsername: null,
   });
 
   // ── Account data (passed to AccountTab as initial values) ───────
@@ -84,7 +84,7 @@ export default function SettingsPage() {
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select(
-          "username, bio, social_links, is_public, wallet_address, avatar_url"
+          "username, bio, social_links, is_public, wallet_address, avatar_url, x_username"
         )
         .eq("id", user.id)
         .single();
@@ -97,7 +97,6 @@ export default function SettingsPage() {
 
       if (profile) {
         const socialLinks = (profile.social_links ?? {}) as {
-          twitter?: string;
           github?: string;
           discord?: string;
         };
@@ -122,10 +121,10 @@ export default function SettingsPage() {
         setProfileData({
           username: profile.username ?? "",
           bio: profile.bio ?? "",
-          twitter: socialLinks.twitter ?? "",
           github: socialLinks.github ?? "",
           discord: socialLinks.discord ?? "",
           nameRerollsUsed,
+          xUsername: profile.x_username ?? null,
         });
       }
 

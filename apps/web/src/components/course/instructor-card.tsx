@@ -2,19 +2,15 @@
 
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
-import {
-  User,
-  TwitterLogo,
-  GithubLogo,
-  DiscordLogo,
-} from "@phosphor-icons/react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { User, GithubLogo, DiscordLogo } from "@phosphor-icons/react";
 import { truncateAddress } from "@/lib/utils";
 import {
   profileDisplayName,
   type PublicProfile,
 } from "@/lib/profiles/public-profile";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { VerifiedBadge } from "@/components/profile/verified-badge";
+import { XProfileLink } from "@/components/profile/x-profile-link";
 
 interface InstructorCardProps {
   /** The course's on-chain `Course.creator` wallet (issue #478). */
@@ -42,9 +38,8 @@ export function InstructorCard({
   const socials = profile?.socialLinks;
   // Editorial name when an admin has set one, generated username otherwise.
   const name = profile ? profileDisplayName(profile) : null;
-  const hasSocials = Boolean(
-    socials && (socials.twitter || socials.github || socials.discord)
-  );
+  // X is not in this row: a linked X account sits next to the name instead.
+  const hasSocials = Boolean(socials && (socials.github || socials.discord));
 
   return (
     <div className="flex items-start gap-3">
@@ -81,6 +76,9 @@ export function InstructorCard({
               {profile.verified && (
                 <VerifiedBadge kind={profile.verifiedKind} className="ml-1" />
               )}
+              {profile.xUsername && (
+                <XProfileLink username={profile.xUsername} className="ml-1" />
+              )}
             </>
           ) : (
             <span className="font-mono text-text-3">
@@ -97,16 +95,6 @@ export function InstructorCard({
 
         {hasSocials && (
           <div className="mt-1 flex items-center gap-2.5">
-            {socials?.twitter && (
-              <a
-                href={`https://x.com/${socials.twitter}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 text-[11px] font-medium text-text-3 transition-colors hover:text-text"
-              >
-                <TwitterLogo size={12} weight="bold" aria-hidden="true" />X
-              </a>
-            )}
             {socials?.github && (
               <a
                 href={`https://github.com/${socials.github}`}

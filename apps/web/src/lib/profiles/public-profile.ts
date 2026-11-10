@@ -53,6 +53,12 @@ export interface PublicProfile {
   avatarUrl: string | null;
   bio: string | null;
   socialLinks: SocialLinks | null;
+  /**
+   * Handle of the X account the author linked through X OAuth, or `null`.
+   * Proven, unlike `socialLinks.twitter`, which was typed and is no longer
+   * shown.
+   */
+  xUsername: string | null;
 }
 
 /** The name to show for a profile: editorial name first, generated one second. */
@@ -81,7 +87,7 @@ export async function resolvePublicProfileByWallet(
   const { data } = await supabase
     .from("public_profiles")
     .select(
-      "username, display_name, verified, verified_kind, avatar_url, bio, social_links"
+      "username, display_name, verified, verified_kind, avatar_url, bio, social_links, x_username"
     )
     .eq("wallet_address", wallet)
     .maybeSingle();
@@ -100,5 +106,6 @@ export async function resolvePublicProfileByWallet(
     avatarUrl: data.avatar_url,
     bio: data.bio,
     socialLinks: (data.social_links as SocialLinks | null) ?? null,
+    xUsername: data.x_username ?? null,
   };
 }

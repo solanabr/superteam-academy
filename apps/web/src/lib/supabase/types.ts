@@ -659,6 +659,8 @@ export type Database = {
           wallet_address: string | null;
           wallet_kind: string | null;
           wallet_xp_synced_at: string | null;
+          x_id: string | null;
+          x_username: string | null;
         };
         Insert: {
           avatar_url?: string | null;
@@ -685,6 +687,8 @@ export type Database = {
           wallet_address?: string | null;
           wallet_kind?: string | null;
           wallet_xp_synced_at?: string | null;
+          x_id?: string | null;
+          x_username?: string | null;
         };
         Update: {
           avatar_url?: string | null;
@@ -711,6 +715,8 @@ export type Database = {
           wallet_address?: string | null;
           wallet_kind?: string | null;
           wallet_xp_synced_at?: string | null;
+          x_id?: string | null;
+          x_username?: string | null;
         };
         Relationships: [];
       };
@@ -1439,6 +1445,7 @@ export type Database = {
           verified: boolean | null;
           verified_kind: string | null;
           wallet_address: string | null;
+          x_username: string | null;
         };
         Relationships: [];
       };

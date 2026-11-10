@@ -37,6 +37,8 @@ export interface ProfileUser {
     github?: string;
     discord?: string;
   };
+  /** Handle of the X account linked through X OAuth, or null. */
+  xUsername: string | null;
   isPublic?: boolean;
 }
 
@@ -241,7 +243,7 @@ export async function fetchPublicProfile(
   const { data: profile, error: profileError } = await supabase
     .from("public_profiles")
     .select(
-      "id, username, display_name, verified, verified_kind, bio, avatar_url, social_links, created_at"
+      "id, username, display_name, verified, verified_kind, bio, avatar_url, social_links, x_username, created_at"
     )
     .eq("username", username)
     .single();
@@ -299,6 +301,7 @@ export async function fetchPublicProfile(
     avatarUrl: profile.avatar_url ?? "",
     joinedAt: new Date(profile.created_at ?? Date.now()),
     socialLinks: socialLinksOf(profile.social_links),
+    xUsername: profile.x_username ?? null,
   };
 
   return {
@@ -381,6 +384,7 @@ export async function fetchOwnProfile(
     avatarUrl: profile.avatar_url ?? "",
     joinedAt: new Date(profile.created_at ?? Date.now()),
     socialLinks: socialLinksOf(profile.social_links),
+    xUsername: profile.x_username ?? null,
     isPublic: profile.is_public ?? true,
   };
 

@@ -77,6 +77,14 @@ export const SCHEMA_EXPECTATIONS: readonly SchemaExpectation[] = [
   },
   {
     kind: "column",
+    table: "public_profiles",
+    column: "x_username",
+    migration: "20261110120000_profiles_x_account.sql",
+    description:
+      "linked X handle — selected by the same course-page and public-profile reads as display_name/verified, so its absence 400s both",
+  },
+  {
+    kind: "column",
     table: "user_xp",
     column: "streak_freezes",
     migration: "20260726190000_streak_forgiveness.sql",

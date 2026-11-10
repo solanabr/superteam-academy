@@ -1,12 +1,13 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { GithubLogo, TwitterLogo, DiscordLogo } from "@phosphor-icons/react";
+import { GithubLogo, XLogo, DiscordLogo } from "@phosphor-icons/react";
+import type { VerifiedKind } from "@/lib/profiles/public-profile";
+import { xProfileUrl } from "@/lib/profiles/x-account";
+import { xpToNextLevel } from "@/lib/gamification/xp";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LevelBadge } from "@/components/gamification/level-badge";
 import { VerifiedBadge } from "@/components/profile/verified-badge";
-import type { VerifiedKind } from "@/lib/profiles/public-profile";
-import { xpToNextLevel } from "@/lib/gamification/xp";
 
 interface ProfileHeroPanelProps {
   user: {
@@ -21,10 +22,11 @@ interface ProfileHeroPanelProps {
     avatarUrl: string;
     joinedAt: Date;
     socialLinks: {
-      twitter?: string;
       github?: string;
       discord?: string;
     };
+    /** Handle of the X account linked through X OAuth, or null. */
+    xUsername?: string | null;
     isPublic?: boolean;
   };
   stats: {
@@ -99,18 +101,20 @@ export function ProfileHeroPanel({
             </p>
 
             {/* Social Links */}
-            {(user.socialLinks.twitter ||
+            {(user.xUsername ||
               user.socialLinks.github ||
               user.socialLinks.discord) && (
               <div className="flex items-center gap-2 pt-1">
-                {user.socialLinks.twitter && (
+                {user.xUsername && (
                   <a
-                    href={`https://x.com/${user.socialLinks.twitter}`}
+                    href={xProfileUrl(user.xUsername)}
                     target="_blank"
                     rel="noopener noreferrer"
+                    aria-label={t("onX", { handle: user.xUsername })}
                     className="flex items-center gap-1 rounded-full border border-border bg-[var(--input)] px-2.5 py-1 font-mono text-[11px] font-medium text-text-2 transition-colors hover:text-text"
                   >
-                    <TwitterLogo size={12} weight="bold" aria-hidden="true" />X
+                    <XLogo size={12} weight="bold" aria-hidden="true" />@
+                    {user.xUsername}
                   </a>
                 )}
                 {user.socialLinks.github && (
